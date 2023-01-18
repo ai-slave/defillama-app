@@ -381,9 +381,9 @@ function ProtocolContainer({
 					</Name>
 
 					<StatWrapper>
-						<Stat>
-							<span>Total Value Locked</span>
-							<span>{formattedNum(totalVolume || '0', true)}</span>
+						<Stat as="dl">
+							<dt>Total Value Locked<span className="hidden"> in {name}</span></dt>
+							<dd>{formattedNum(totalVolume || '0', true)}</dd>
 						</Stat>
 
 						{!isParentProtocol && (
@@ -398,7 +398,7 @@ function ProtocolContainer({
 
 					{tvls.length > 0 && (
 						<DetailsTable>
-							<caption>Chain Breakdown</caption>
+							<caption><span className="hidden">{name}</span> TVL Breakdown</caption>
 							<tbody>
 								{tvls.map((chainTvl) => (
 									<tr key={chainTvl[0]}>
@@ -463,16 +463,17 @@ function ProtocolContainer({
 			<SectionHeader>Information</SectionHeader>
 			<InfoWrapper>
 				<Section>
-					<h3>Protocol Information</h3>
+					<h3>About {name}</h3>
 					{description && <p>{description}</p>}
 
 					{category && (
-						<FlexRow>
-							<span>Category</span>
-							<span>: </span>
-							<Link href={category.toLowerCase() === 'cex' ? '/cexs' : `/protocols/${category.toLowerCase()}`}>
-								{category}
-							</Link>
+						<FlexRow as="dl">
+							<dt>Category:</dt>
+							<dd>
+								<Link href={category.toLowerCase() === 'cex' ? '/cexs' : `/protocols/${category.toLowerCase()}`}>
+									{category}
+								</Link>
+							</dd>
 						</FlexRow>
 					)}
 
@@ -563,9 +564,9 @@ function ProtocolContainer({
 
 				{similarProtocols && similarProtocols.length > 0 && (
 					<Section>
-						<h3>Competitors</h3>
+						<h3>{name} Competitors</h3>
 
-						<LinksWrapper>
+						<LinksWrapper as="ul">
 							{similarProtocols.map((similarProtocol) => (
 								<Link href={`/protocol/${slug(similarProtocol.name)}`} passHref key={similarProtocol.name}>
 									<a target="_blank" style={{ textDecoration: 'underline' }}>{`${similarProtocol.name} ($${toK(
