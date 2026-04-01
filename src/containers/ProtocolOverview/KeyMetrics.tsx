@@ -827,7 +827,7 @@ const Raises = (props: IKeyMetricsProps) => {
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 function buildSwapUrl(chain: { chain: string; address: string }) {
-	return `https://swap.defillama.com/?chain=${chain.chain}&from=${ZERO_ADDRESS}&to=${chain.address}&tab=swap&ref=defillama`
+	return `https://swap.defillama.com/?chain=${chain.chain}&from=${ZERO_ADDRESS}&to=${chain.address}&tab=swap&utm_source=defillama&utm_medium=buy_button&utm_content=protocol_page`
 }
 
 function BuyOnLlamaswap({
