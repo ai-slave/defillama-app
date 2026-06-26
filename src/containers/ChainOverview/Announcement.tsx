@@ -1,6 +1,8 @@
 import { Announcement } from '~/components/Announcement'
 import { TokenLogo } from '~/components/TokenLogo'
+import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
+import { getMainSiteIrDashboard } from '../Investors/mainSiteDashboards'
 import { useAuthContext } from '../Subscription/auth'
 
 const NEAR_CHAIN_ICON = chainIconUrl('near')
@@ -8,6 +10,10 @@ const NEAR_CHAIN_ICON = chainIconUrl('near')
 export const ChainOverviewAnnouncement = ({ chainName }: { chainName?: string }) => {
 	const { user } = useAuthContext()
 	const normalizedChainName = chainName?.toLowerCase()
+	// is_llama users get the in-page Investor Relations tab on chains that have a main-site IR dashboard,
+	// so don't also show them the external IR announcement banner (mirrors ProtocolOverview/Layout.tsx).
+	const showsInPageIr =
+		user?.flags?.is_llama === true && !!chainName && !!getMainSiteIrDashboard('chain', slug(chainName))
 
 	if (chainName === 'MegaETH') {
 		return (
@@ -18,6 +24,7 @@ export const ChainOverviewAnnouncement = ({ chainName }: { chainName?: string })
 	}
 
 	if (normalizedChainName === 'near') {
+		if (showsInPageIr) return null
 		return (
 			<Announcement
 				announcementId="near-investor-relations"
@@ -46,6 +53,7 @@ export const ChainOverviewAnnouncement = ({ chainName }: { chainName?: string })
 	}
 
 	if (chainName === 'Sonic') {
+		if (showsInPageIr) return null
 		return (
 			<Announcement
 				announcementId="sonic-investor-relations"

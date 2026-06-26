@@ -18,3 +18,8 @@ const DASHBOARD_REGISTRY: Record<string, () => Promise<DashboardModule>> = {
 export function getDashboardModule(dashboardId: string) {
 	return DASHBOARD_REGISTRY[dashboardId]?.() ?? null
 }
+
+/** Whether a dashboardId has a registered module, without loading it. */
+export function isDashboardRegistered(dashboardId: string): boolean {
+	return dashboardId in DASHBOARD_REGISTRY
+}

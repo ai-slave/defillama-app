@@ -6,6 +6,8 @@ import { getMetricFiltersLabel } from '~/components/Filters/options'
 import { Icon } from '~/components/Icon'
 import { BasicLink, ButtonLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import { IrTabLabel } from '~/containers/Investors/IrTabLabel'
+import { getMainSiteIrDashboard } from '~/containers/Investors/mainSiteDashboards'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import Layout from '~/layout'
 import { slug } from '~/utils'
@@ -35,7 +37,8 @@ const tabs = {
 	options: { id: 'options', name: 'Options Volume', route: '/protocol/options' },
 	tokenRights: { id: 'tokenRights', name: 'Token Rights', route: '/protocol/token-rights' },
 	governance: { id: 'governance', name: 'Governance', route: '/protocol/governance' },
-	forks: { id: 'forks', name: 'Forks', route: '/protocol/forks' }
+	forks: { id: 'forks', name: 'Forks', route: '/protocol/forks' },
+	investorRelations: { id: 'investorRelations', name: 'Investor Relations', route: '/protocol/investor-relations' }
 } as const
 
 const standaloneCanonicals: Partial<Record<keyof typeof tabs, string>> = {
@@ -198,6 +201,8 @@ export function ProtocolOverviewLayout({
 	}, [metrics])
 
 	const entitySlug = slug(name)
+	const irDashboard = isCEX ? undefined : getMainSiteIrDashboard('protocol', entitySlug)
+	const showInvestorRelations = !!irDashboard && user?.flags?.is_llama === true
 	const cexMarketsRouteSlug = cexMarketsSlug ? slug(cexMarketsSlug) : null
 	const shouldNoIndex = !standaloneCanonicals[tab] || noIndexProtocolSlugs.has(entitySlug)
 	const canonicalUrl = isCEX
@@ -222,7 +227,7 @@ export function ProtocolOverviewLayout({
 	const resolvedDescription =
 		seoDescription ||
 		`Track ${name} metrics on DefiLlama. DefiLlama is committed to providing accurate data without ads or sponsored content, as well as transparency.`
-	const dashboardAnnouncement = protocolDashboardAnnouncements[entitySlug]
+	const dashboardAnnouncement = showInvestorRelations ? undefined : protocolDashboardAnnouncements[entitySlug]
 	const dashboardAnnouncementHref =
 		dashboardAnnouncement?.includeReferrer && user?.id
 			? `${dashboardAnnouncement.href}?referrer=${encodeURIComponent(user.id)}`
@@ -423,6 +428,20 @@ export function ProtocolOverviewLayout({
 								{pt.name}
 							</ButtonLink>
 						))}
+					{showInvestorRelations && irDashboard ? (
+						<ButtonLink
+							href={`/protocol/investor-relations/${entitySlug}`}
+							data-active={tab === 'investorRelations'}
+							className="relative flex shrink-0 items-center gap-1 border-b-2 border-(--form-control-border) px-4 py-1 font-semibold whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)"
+						>
+							<IrTabLabel
+								label={irDashboard.tabLabel}
+								tooltip={irDashboard.tabTooltip}
+								gradient={irDashboard.brandGradient}
+								active={tab === 'investorRelations'}
+							/>
+						</ButtonLink>
+					) : null}
 				</div>
 				<EntityQuestionsStrip
 					questions={entityQuestions || []}
