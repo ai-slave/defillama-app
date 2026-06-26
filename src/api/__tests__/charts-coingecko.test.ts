@@ -2,23 +2,17 @@ import type { NextApiRequest } from 'next'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
-const { fetchCoinGeckoChartByIdWithCacheFallbackMock, fetchJsonMock, recordRouteRuntimeErrorMock } = vi.hoisted(() => ({
-	fetchCoinGeckoChartByIdWithCacheFallbackMock: vi.fn(),
-	fetchJsonMock: vi.fn(),
-	recordRouteRuntimeErrorMock: vi.fn()
-}))
+const { fetchCoinGeckoChartByIdWithCacheFallbackMock, fetchCoinGeckoCoinByIdOrThrowMock, recordRouteRuntimeErrorMock } =
+	vi.hoisted(() => ({
+		fetchCoinGeckoChartByIdWithCacheFallbackMock: vi.fn(),
+		fetchCoinGeckoCoinByIdOrThrowMock: vi.fn(),
+		recordRouteRuntimeErrorMock: vi.fn()
+	}))
 
 vi.mock('~/api/coingecko', () => ({
-	fetchCoinGeckoChartByIdWithCacheFallback: fetchCoinGeckoChartByIdWithCacheFallbackMock
+	fetchCoinGeckoChartByIdWithCacheFallback: fetchCoinGeckoChartByIdWithCacheFallbackMock,
+	fetchCoinGeckoCoinByIdOrThrow: fetchCoinGeckoCoinByIdOrThrowMock
 }))
-
-vi.mock('~/utils/async', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('~/utils/async')>()
-	return {
-		...actual,
-		fetchJson: fetchJsonMock
-	}
-})
 
 vi.mock('~/utils/telemetry', () => ({
 	recordRouteRuntimeError: recordRouteRuntimeErrorMock,
@@ -65,13 +59,13 @@ describe('/api/public/tokens/charts/coingecko/[geckoId]', () => {
 		)
 
 		expect(fetchCoinGeckoChartByIdWithCacheFallbackMock).not.toHaveBeenCalled()
-		expect(fetchJsonMock).not.toHaveBeenCalled()
+		expect(fetchCoinGeckoCoinByIdOrThrowMock).not.toHaveBeenCalled()
 		expect(res.status).toHaveBeenCalledWith(400)
 		expect(res.json).toHaveBeenCalledWith({ error: 'Invalid geckoId parameter' })
 	})
 
-	it('normalizes finite supply values from the cache server', async () => {
-		fetchJsonMock.mockResolvedValueOnce({ data: { total_supply: 123 } })
+	it('normalizes finite supply values from the CoinGecko coin detail', async () => {
+		fetchCoinGeckoCoinByIdOrThrowMock.mockResolvedValueOnce({ market_data: { total_supply: 123 } })
 		const res = createMockNextApiResponse()
 
 		await handler(
@@ -89,8 +83,8 @@ describe('/api/public/tokens/charts/coingecko/[geckoId]', () => {
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', expect.stringContaining('s-maxage='))
 	})
 
-	it('returns null supply when the cache server has no supply value', async () => {
-		fetchJsonMock.mockResolvedValueOnce({ data: {} })
+	it('returns null supply when the coin detail has no supply value', async () => {
+		fetchCoinGeckoCoinByIdOrThrowMock.mockResolvedValueOnce({ market_data: {} })
 		const res = createMockNextApiResponse()
 
 		await handler(
@@ -107,8 +101,8 @@ describe('/api/public/tokens/charts/coingecko/[geckoId]', () => {
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store')
 	})
 
-	it('returns null supply when the cache server returns a non-finite supply value', async () => {
-		fetchJsonMock.mockResolvedValueOnce({ data: { total_supply: Infinity } })
+	it('returns null supply when the coin detail returns a non-finite supply value', async () => {
+		fetchCoinGeckoCoinByIdOrThrowMock.mockResolvedValueOnce({ market_data: { total_supply: Infinity } })
 		const res = createMockNextApiResponse()
 
 		await handler(
@@ -125,8 +119,8 @@ describe('/api/public/tokens/charts/coingecko/[geckoId]', () => {
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store')
 	})
 
-	it('returns null supply when the cache server has no supply record', async () => {
-		fetchJsonMock.mockRejectedValueOnce(new Error('https://cache.llama.fi/supply/missing: [404] Not Found'))
+	it('returns null supply when the coin detail has no market data', async () => {
+		fetchCoinGeckoCoinByIdOrThrowMock.mockResolvedValueOnce({})
 		const res = createMockNextApiResponse()
 
 		await handler(
@@ -144,9 +138,30 @@ describe('/api/public/tokens/charts/coingecko/[geckoId]', () => {
 		expect(recordRouteRuntimeErrorMock).not.toHaveBeenCalled()
 	})
 
-	it('reports cache server failures when loading supply fails for a reason other than not found', async () => {
-		const error = new Error('https://cache.llama.fi/supply/aave: [500] Upstream unavailable')
-		fetchJsonMock.mockRejectedValueOnce(error)
+	it('returns null supply when CoinGecko has no coin record', async () => {
+		fetchCoinGeckoCoinByIdOrThrowMock.mockRejectedValueOnce(
+			new Error('https://api.coingecko.com/api/v3/coins/missing: [404] Not Found')
+		)
+		const res = createMockNextApiResponse()
+
+		await handler(
+			{
+				method: 'GET',
+				query: { geckoId: 'missing', kind: 'supply' },
+				url: '/api/public/tokens/charts/coingecko/missing'
+			} as unknown as NextApiRequest,
+			res
+		)
+
+		expect(res.status).toHaveBeenCalledWith(200)
+		expect(res.json).toHaveBeenCalledWith({ totalSupply: null })
+		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store')
+		expect(recordRouteRuntimeErrorMock).not.toHaveBeenCalled()
+	})
+
+	it('reports CoinGecko failures when loading supply fails', async () => {
+		const error = new Error('https://api.coingecko.com/api/v3/coins/aave: [500] Upstream unavailable')
+		fetchCoinGeckoCoinByIdOrThrowMock.mockRejectedValueOnce(error)
 		const res = createMockNextApiResponse()
 
 		await handler(

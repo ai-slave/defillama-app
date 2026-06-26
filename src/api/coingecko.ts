@@ -205,16 +205,7 @@ const DEFAULT_FETCH_COIN_DETAIL_OPTIONS: Required<FetchCoinGeckoCoinByIdOptions>
 	dexPairFormat: 'contract_address'
 }
 
-/**
- * Fetch CoinGecko coin metadata from GET /coins/{id}.
- * Query flags control which optional sections CoinGecko includes in the response body.
- */
-export async function fetchCoinGeckoCoinById<TOptions extends FetchCoinGeckoCoinByIdOptions | undefined = undefined>(
-	geckoId: string,
-	options?: TOptions
-): Promise<CoinGeckoCoinDetailResultForOptions<TOptions>> {
-	if (!geckoId) return {} as CoinGeckoCoinDetailResultForOptions<TOptions>
-
+function createCoinGeckoCoinByIdUrl(geckoId: string, options?: FetchCoinGeckoCoinByIdOptions): URL {
 	const query = { ...DEFAULT_FETCH_COIN_DETAIL_OPTIONS, ...options }
 	const url = createCoinGeckoUrl(`/coins/${encodeURIComponent(geckoId)}`)
 	setQueryParam(url, 'localization', query.localization)
@@ -225,8 +216,33 @@ export async function fetchCoinGeckoCoinById<TOptions extends FetchCoinGeckoCoin
 	setQueryParam(url, 'sparkline', query.sparkline)
 	setQueryParam(url, 'include_categories_details', query.includeCategoriesDetails)
 	setQueryParam(url, 'dex_pair_format', query.dexPairFormat)
+	return url
+}
 
-	return fetchCoinGeckoJson<CoinGeckoCoinDetailResponseForOptions<TOptions>>(url.pathname, url).catch(
+/**
+ * Fetch CoinGecko coin metadata from GET /coins/{id} and propagate upstream errors.
+ * Use this when missing data and upstream failures need different route behavior.
+ */
+export async function fetchCoinGeckoCoinByIdOrThrow<
+	TOptions extends FetchCoinGeckoCoinByIdOptions | undefined = undefined
+>(geckoId: string, options?: TOptions): Promise<CoinGeckoCoinDetailResponseForOptions<TOptions>> {
+	if (!geckoId) throw new Error('[fetchCoinGeckoCoinByIdOrThrow] geckoId is required')
+
+	const url = createCoinGeckoCoinByIdUrl(geckoId, options)
+	return fetchCoinGeckoJson<CoinGeckoCoinDetailResponseForOptions<TOptions>>(url.pathname, url)
+}
+
+/**
+ * Fetch CoinGecko coin metadata from GET /coins/{id}.
+ * Query flags control which optional sections CoinGecko includes in the response body.
+ */
+export async function fetchCoinGeckoCoinById<TOptions extends FetchCoinGeckoCoinByIdOptions | undefined = undefined>(
+	geckoId: string,
+	options?: TOptions
+): Promise<CoinGeckoCoinDetailResultForOptions<TOptions>> {
+	if (!geckoId) return {} as CoinGeckoCoinDetailResultForOptions<TOptions>
+
+	return fetchCoinGeckoCoinByIdOrThrow(geckoId, options).catch(
 		() => ({}) as CoinGeckoCoinDetailResultForOptions<TOptions>
 	)
 }

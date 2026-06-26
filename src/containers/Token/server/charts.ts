@@ -1,10 +1,8 @@
-import { fetchCoinGeckoChartByIdWithCacheFallback } from '~/api/coingecko'
-import { CACHE_SERVER } from '~/constants'
+import { fetchCoinGeckoChartByIdWithCacheFallback, fetchCoinGeckoCoinByIdOrThrow } from '~/api/coingecko'
 import { isHttpNotFoundMessage } from '~/server/api/common'
 import { queryString } from '~/server/api/params'
 import { badRequest, ok } from '~/server/api/respond'
 import { defineApiRoute } from '~/server/api/types'
-import { fetchJson } from '~/utils/async'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
 
 const CHART_CACHE_CONTROL = 'public, s-maxage=3600, stale-while-revalidate=600'
@@ -17,8 +15,16 @@ const VALID_GECKO_ID = /^[A-Za-z0-9._-]{1,80}$/
 
 async function fetchTokenTotalSupply(geckoId: string): Promise<number | null> {
 	try {
-		const data = await fetchJson<{ data?: { total_supply?: number | null } }>(`${CACHE_SERVER}/supply/${geckoId}`)
-		const rawSupply = data?.data?.total_supply ?? null
+		const coin = await fetchCoinGeckoCoinByIdOrThrow(geckoId, {
+			localization: false,
+			tickers: false,
+			marketData: true,
+			communityData: false,
+			developerData: false,
+			sparkline: false,
+			includeCategoriesDetails: false
+		})
+		const rawSupply = coin?.market_data?.total_supply ?? null
 		return rawSupply != null && Number.isFinite(rawSupply) ? rawSupply : null
 	} catch (error) {
 		if (isHttpNotFoundMessage(error)) return null
@@ -43,7 +49,7 @@ export const coingeckoChart = defineApiRoute({
 		try {
 			if (kind === 'supply') {
 				// Supply is not part of the CoinGecko chart payload; it comes from the
-				// cache-server supply snapshot while price charts use the CG cache path.
+				// CoinGecko coin detail endpoint while price charts use the CG cache path.
 				const totalSupply = await fetchTokenTotalSupply(geckoId)
 				if (totalSupply === null) {
 					return ok({ totalSupply }, NO_STORE_HEADERS)

@@ -5,7 +5,6 @@ import { fetchCoinPriceByCoinGeckoIdViaLlamaPrices } from '~/api/pricing'
 import type { ProtocolLiquidityTokensResponse } from '~/api/types'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/types'
 import { formatLineChart } from '~/components/ECharts/utils'
-import { CACHE_SERVER } from '~/constants'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { normalizeChartPointsToMs } from '~/containers/ProtocolOverview/chartSeries.utils'
 import { fetchRaisesByDefillamaId } from '~/containers/Raises/api'
@@ -15,7 +14,6 @@ import type { RawTreasuriesResponse } from '~/containers/Treasuries/api.types'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
 import { fetchYieldConfig, type YieldConfigResponse } from '~/containers/Yields/queries.server'
 import { slug } from '~/utils'
-import { fetchJson } from '~/utils/async'
 import type { IProtocolLlamaswapChain, IProtocolMetadata, ITokenListEntry } from '~/utils/metadata/types'
 import type { TokenDirectoryRecord } from '~/utils/tokenDirectory'
 
@@ -421,13 +419,6 @@ function buildTokenLiquiditySummary({
 	return rows.length > 0 ? { pools: rows, total } : null
 }
 
-async function fetchTotalSupply(geckoId: string): Promise<number | null> {
-	const data = await fetchJson<{ data?: { total_supply?: number } }>(`${CACHE_SERVER}/supply/${geckoId}`).catch(
-		() => null
-	)
-	return data?.data?.total_supply ?? null
-}
-
 export function buildTokenOverviewRawChartData({
 	chart,
 	totalSupply,
@@ -524,24 +515,22 @@ export async function getTokenOverviewData({
 	const shouldFetchCoinDetail = Boolean(geckoId && needsCoinDetailFallback(tokenEntry))
 	const totalSupply = tokenEntry?.max_supply ?? tokenEntry?.total_supply ?? null
 
-	const [cgChart, coinDetail, currentPriceViaLlama, protocolData, raisesData, treasuries, fetchedTotalSupply] =
-		await Promise.all([
-			geckoId ? fetchCoinGeckoChartByIdWithCacheFallback(geckoId).catch(() => null) : Promise.resolve(null),
-			shouldFetchCoinDetail ? fetchTokenOverviewCoinDetail(geckoId) : Promise.resolve(null),
-			geckoId ? fetchCoinPriceByCoinGeckoIdViaLlamaPrices(geckoId).catch(() => null) : Promise.resolve(null),
-			shouldFetchProtocolData ? fetchProtocolOverviewMetrics(protocolSlug!).catch(() => null) : Promise.resolve(null),
-			source.kind === 'prefetched'
-				? Promise.resolve(source.raises)
-				: shouldFetchRaises
-					? fetchRaisesByDefillamaId(chainDefiLlamaId ?? protocolDefiLlamaId!).catch(() => [] as RawRaise[])
-					: Promise.resolve(null),
-			source.kind === 'prefetched'
-				? Promise.resolve(source.treasury)
-				: shouldFetchTreasury
-					? fetchTreasuryById(`${protocolDefiLlamaId}-treasury`).catch(() => null)
-					: Promise.resolve(null),
-			geckoId ? fetchTotalSupply(geckoId) : Promise.resolve(null)
-		])
+	const [cgChart, coinDetail, currentPriceViaLlama, protocolData, raisesData, treasuries] = await Promise.all([
+		geckoId ? fetchCoinGeckoChartByIdWithCacheFallback(geckoId).catch(() => null) : Promise.resolve(null),
+		shouldFetchCoinDetail ? fetchTokenOverviewCoinDetail(geckoId) : Promise.resolve(null),
+		geckoId ? fetchCoinPriceByCoinGeckoIdViaLlamaPrices(geckoId).catch(() => null) : Promise.resolve(null),
+		shouldFetchProtocolData ? fetchProtocolOverviewMetrics(protocolSlug!).catch(() => null) : Promise.resolve(null),
+		source.kind === 'prefetched'
+			? Promise.resolve(source.raises)
+			: shouldFetchRaises
+				? fetchRaisesByDefillamaId(chainDefiLlamaId ?? protocolDefiLlamaId!).catch(() => [] as RawRaise[])
+				: Promise.resolve(null),
+		source.kind === 'prefetched'
+			? Promise.resolve(source.treasury)
+			: shouldFetchTreasury
+				? fetchTreasuryById(`${protocolDefiLlamaId}-treasury`).catch(() => null)
+				: Promise.resolve(null)
+	])
 
 	const [yieldsConfig, liquidityInfo] =
 		source.kind === 'prefetched'
@@ -584,7 +573,7 @@ export async function getTokenOverviewData({
 			adjustedSupply != null && marketData.currentPrice != null ? adjustedSupply * marketData.currentPrice : null,
 		rawChartData: buildTokenOverviewRawChartData({
 			chart: cgChart,
-			totalSupply: totalSupply ?? fetchedTotalSupply,
+			totalSupply: totalSupply ?? marketDataFallback.maxSupply ?? marketDataFallback.totalSupply,
 			includeCharts: prefetchedCharts
 		})
 	}

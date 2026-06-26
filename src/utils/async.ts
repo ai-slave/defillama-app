@@ -34,7 +34,6 @@ const REGEXP_SPECIAL_CHARS = /[.*+?^${}()|[\]\\]/g
 const PUBLIC_SINGLEFLIGHT_HOSTS = new Set([
 	'api.llama.fi',
 	'pro-api.llama.fi',
-	'fe-cache.llama.fi',
 	'defillama-datasets.llama.fi',
 	'raw.githubusercontent.com',
 	'yields.llama.fi',

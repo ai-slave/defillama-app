@@ -6,9 +6,7 @@ import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
 import { fetchCoinPrices } from '~/api/pricing'
 import { Icon } from '~/components/Icon'
 import { LocalLoader } from '~/components/Loaders'
-import { CACHE_SERVER } from '~/constants'
 import { CoinsPicker } from '~/containers/Correlations'
-import { fetchJson } from '~/utils/async'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { CompareTokenProtocol } from './types'
 
@@ -25,13 +23,15 @@ const compareTypes: CompareType[] = [
 	{ label: 'Fees', value: 'fees' }
 ]
 
-type SupplyResponse = { data?: { total_supply?: string | number | null } }
+function getTokenFdvSupply(coin: IResponseCGMarketsAPI): number | null {
+	const supply = coin.max_supply ?? coin.total_supply
+	return supply != null && Number.isFinite(supply) ? supply : null
+}
 
 function getCompareValues(
 	type: string,
 	coin0: IResponseCGMarketsAPI,
 	coin1: IResponseCGMarketsAPI,
-	fdvData: [{ coins: Record<string, { price?: number }> }, SupplyResponse, SupplyResponse],
 	protocolsByGeckoId: Map<string, CompareTokenProtocol>,
 	protocolsByName: Map<string, CompareTokenProtocol>
 ): [number | null, number | null] {
@@ -42,9 +42,7 @@ function getCompareValues(
 		case 'mcap':
 			return [coin0.market_cap ?? null, coin1.market_cap ?? null]
 		case 'fdv': {
-			const supply0 = Number(fdvData[1]?.data?.total_supply)
-			const supply1 = Number(fdvData[2]?.data?.total_supply)
-			return [Number.isFinite(supply0) ? supply0 : null, Number.isFinite(supply1) ? supply1 : null]
+			return [getTokenFdvSupply(coin0), getTokenFdvSupply(coin1)]
 		}
 		case 'volume':
 			return [coin0.total_volume ?? null, coin1.total_volume ?? null]
@@ -63,7 +61,6 @@ function computeComparison(
 	compareType: CompareType,
 	selectedCoins: Array<IResponseCGMarketsAPI | undefined>,
 	coinPrices: number[],
-	fdvData: [{ coins: Record<string, { price?: number }> }, SupplyResponse, SupplyResponse],
 	protocolsByGeckoId: Map<string, CompareTokenProtocol>,
 	protocolsByName: Map<string, CompareTokenProtocol>
 ): { newPrice: number; increase: number } | null {
@@ -71,7 +68,7 @@ function computeComparison(
 	const coin1 = selectedCoins[1]
 	if (!coin0 || !coin1) return null
 
-	const [val0, val1] = getCompareValues(compareType.value, coin0, coin1, fdvData, protocolsByGeckoId, protocolsByName)
+	const [val0, val1] = getCompareValues(compareType.value, coin0, coin1, protocolsByGeckoId, protocolsByName)
 	if (val0 == null || val1 == null || !Number.isFinite(val0) || !Number.isFinite(val1) || val0 === 0) return null
 
 	const basePrice = coinPrices[0]
@@ -127,34 +124,19 @@ export function CompareTokens({
 		}
 	}, [coinParam, typeParam, coinsDataById])
 
-	const { data: fdvData = null } = useQuery({
-		queryKey: ['compare-tokens', 'fdv', ...coins],
-		queryFn:
-			coins.length === 2
-				? () =>
-						Promise.all([
-							fetchCoinPrices(coins.map((c) => `coingecko:${c}`)).then((fetchedCoins) => ({ coins: fetchedCoins })),
-							fetchJson<SupplyResponse>(`${CACHE_SERVER}/supply/${coins[0]}`),
-							fetchJson<SupplyResponse>(`${CACHE_SERVER}/supply/${coins[1]}`)
-						])
-				: () => null,
+	const { data: priceData = null } = useQuery({
+		queryKey: ['compare-tokens', 'prices', ...coins],
+		queryFn: coins.length === 2 ? () => fetchCoinPrices(coins.map((c) => `coingecko:${c}`)) : () => null,
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 0
 	})
 
 	const comparison = useMemo(() => {
-		if (fdvData == null || coins.length !== 2) return null
-		const coinPrices = coins.map((c) => fdvData[0].coins[`coingecko:${c}`]?.price ?? NaN)
-		return computeComparison(
-			compareType,
-			selectedCoins,
-			coinPrices,
-			fdvData as [{ coins: Record<string, { price?: number }> }, SupplyResponse, SupplyResponse],
-			protocolsByGeckoId,
-			protocolsByName
-		)
-	}, [fdvData, coins, compareType, selectedCoins, protocolsByGeckoId, protocolsByName])
+		if (priceData == null || coins.length !== 2) return null
+		const coinPrices = coins.map((c) => priceData[`coingecko:${c}`]?.price ?? NaN)
+		return computeComparison(compareType, selectedCoins, coinPrices, protocolsByGeckoId, protocolsByName)
+	}, [priceData, coins, compareType, selectedCoins, protocolsByGeckoId, protocolsByName])
 
 	const dialogStore = Ariakit.useDialogStore()
 
@@ -274,7 +256,7 @@ export function CompareTokens({
 					</Ariakit.Menu>
 				</Ariakit.MenuProvider>
 				{coins.length === 2 ? (
-					fdvData == null ? (
+					priceData == null ? (
 						<div className="m-auto flex min-h-[360px] items-center justify-center">
 							<LocalLoader />
 						</div>

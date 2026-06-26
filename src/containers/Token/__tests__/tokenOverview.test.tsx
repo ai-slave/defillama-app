@@ -352,17 +352,11 @@ beforeEach(() => {
 			{ project: 'pool-two', chain: 'Base', symbol: 'TEST', tvlUsd: 25 }
 		]
 	})
-	mocks.fetchJson.mockImplementation((url: string) => {
-		if (url.includes('/supply/')) {
-			return Promise.resolve({ data: { total_supply: 1000 } })
+	mocks.fetchJson.mockResolvedValue({
+		protocols: {
+			'pool-one': { name: 'Pool One' },
+			'pool-two': { name: 'Pool Two' }
 		}
-
-		return Promise.resolve({
-			protocols: {
-				'pool-one': { name: 'Pool One' },
-				'pool-two': { name: 'Pool Two' }
-			}
-		})
 	})
 	mocks.useFetchTokenOverviewChartData.mockImplementation(({ overview }: { overview: TokenOverviewData }) => ({
 		rawChartData: overview.rawChartData,
@@ -661,16 +655,10 @@ describe('tokenOverview helpers', () => {
 	})
 
 	it('keeps liquidity rows when yields metadata is missing a protocol display name', async () => {
-		mocks.fetchJson.mockImplementation((url: string) => {
-			if (url.includes('/supply/')) {
-				return Promise.resolve({ data: { total_supply: 1000 } })
+		mocks.fetchJson.mockResolvedValue({
+			protocols: {
+				'pool-one': {}
 			}
-
-			return Promise.resolve({
-				protocols: {
-					'pool-one': {}
-				}
-			})
 		})
 
 		const result = await getTokenOverviewData({
