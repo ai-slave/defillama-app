@@ -329,30 +329,33 @@ export const getProtocolsByChain = async ({
 						if (!parentTvl[chainOrExtraTvlKey]) {
 							parentTvl[chainOrExtraTvlKey] = {}
 						}
+						const childTvlSection = child.tvl[chainOrExtraTvlKey]
+						const parentTvlSection = parentTvl[chainOrExtraTvlKey]
 						for (const currentOrPreviousTvlKey in child.tvl[chainOrExtraTvlKey]) {
-							if (
-								child.deprecated &&
-								child.tvl[chainOrExtraTvlKey].tvl === 0 &&
-								PREVIOUS_TVL_KEYS_SET.has(currentOrPreviousTvlKey)
-							) {
+							if (child.deprecated && childTvlSection.tvl === 0 && PREVIOUS_TVL_KEYS_SET.has(currentOrPreviousTvlKey)) {
 								continue
 							}
 
-							const currValue = child.tvl[chainOrExtraTvlKey][currentOrPreviousTvlKey]
+							const currValue = childTvlSection[currentOrPreviousTvlKey]
 
 							// Skip if accumulator is already null (don't override)
-							if (parentTvl[chainOrExtraTvlKey][currentOrPreviousTvlKey] === null) {
+							if (parentTvlSection[currentOrPreviousTvlKey] === null) {
 								continue
 							}
 
 							if (currValue == null) {
-								// If current value is null, propagate null to parent only for these keys
 								if (PREVIOUS_TVL_KEYS_SET.has(currentOrPreviousTvlKey)) {
-									parentTvl[chainOrExtraTvlKey][currentOrPreviousTvlKey] = null
+									// Zero-current extra sections without history should not erase other children's history.
+									if (childTvlSection.tvl === 0) {
+										if (parentTvlSection[currentOrPreviousTvlKey] === undefined) {
+											parentTvlSection[currentOrPreviousTvlKey] = 0
+										}
+									} else {
+										parentTvlSection[currentOrPreviousTvlKey] = null
+									}
 								}
 							} else {
-								parentTvl[chainOrExtraTvlKey][currentOrPreviousTvlKey] =
-									(parentTvl[chainOrExtraTvlKey][currentOrPreviousTvlKey] ?? 0) + currValue
+								parentTvlSection[currentOrPreviousTvlKey] = (parentTvlSection[currentOrPreviousTvlKey] ?? 0) + currValue
 							}
 						}
 					}

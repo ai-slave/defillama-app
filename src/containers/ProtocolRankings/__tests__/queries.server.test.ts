@@ -441,6 +441,63 @@ describe('getProtocolsByChain parent aggregation', () => {
 		})
 	})
 
+	it('keeps parent extra TVL history when a zero-current child has no extra history', async () => {
+		fetchAdapterChainMetricsMock.mockResolvedValue({ protocols: [] })
+		getAdapterChainOverviewMock.mockResolvedValue({ protocols: [] })
+		fetchProtocolsMock.mockResolvedValue({
+			chains: ['Ethereum'],
+			parentProtocols: [{ id: 'parent#alpha', name: 'Alpha Parent', chains: ['Ethereum'], mcap: 300 }],
+			protocols: [
+				liteProtocol({
+					defillamaId: 'child-alpha-one',
+					name: 'Alpha One Raw',
+					chains: ['Ethereum'],
+					parentProtocol: 'parent#alpha',
+					tvl: 100,
+					tvlPrevDay: 100,
+					tvlPrevWeek: 100,
+					tvlPrevMonth: 100,
+					chainTvls: {
+						Ethereum: tvlEntry(100, 100, 100, 100),
+						borrowed: tvlEntry(50, 40, 25, 10)
+					}
+				}),
+				liteProtocol({
+					defillamaId: 'child-alpha-two',
+					name: 'Alpha Two Raw',
+					chains: ['Ethereum'],
+					parentProtocol: 'parent#alpha',
+					tvl: 200,
+					tvlPrevDay: 200,
+					tvlPrevWeek: 200,
+					tvlPrevMonth: 200,
+					chainTvls: {
+						Ethereum: tvlEntry(200, 200, 200, 200),
+						borrowed: tvlEntry(0, null, null, null)
+					}
+				})
+			]
+		})
+
+		const data = await getProtocolsByChain({
+			chain: 'All',
+			chainMetadata,
+			protocolMetadata: protocolMetadata as any
+		})
+
+		const parent = data?.protocols.find((protocol) => protocol.name === 'Alpha Parent')
+		expect(parent?.tvl?.borrowed).toEqual(tvlEntry(50, 40, 25, 10))
+
+		const [withBorrowed] = applyProtocolTvlSettings({
+			protocols: parent ? [parent] : [],
+			extraTvlsEnabled: { borrowed: true },
+			minTvl: null,
+			maxTvl: null
+		})
+		expect(withBorrowed?.tvl?.default).toEqual(tvlEntry(350, 340, 325, 310))
+		expect(withBorrowed?.tvlChange?.change1d).toBeCloseTo(2.941176)
+	})
+
 	it('keeps parent P/F null when a child fee row has only current fees and no annualized denominator', async () => {
 		fetchAdapterChainMetricsMock.mockImplementation(({ dataType }: { dataType?: string }) => {
 			if (dataType === 'dailyRevenue' || dataType === 'dailyHoldersRevenue') {
