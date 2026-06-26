@@ -504,6 +504,95 @@ describe('/api/public/chains/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'protocol not found' })
 	})
 
+	const chainActivityProtocolRows = [
+		{ label: 'Active Addresses', adapterType: 'active-users', dataType: undefined },
+		{ label: 'New Addresses', adapterType: 'new-users', dataType: undefined },
+		{ label: 'Transactions', adapterType: 'active-users', dataType: 'dailyTransactionsCount' }
+	] as const
+
+	it.each(chainActivityProtocolRows)('accepts $label as adapter-protocol entity=chain', async (row) => {
+		resolveProtocolParamMock.mockResolvedValue(null)
+		resolveChainParamMock.mockResolvedValue({
+			canonicalName: 'Ethereum',
+			canonicalSlug: 'ethereum',
+			metadata: { name: 'Ethereum' }
+		})
+		const req = {
+			method: 'GET',
+			query: {
+				kind: 'adapter-protocol',
+				entity: 'chain',
+				adapterType: row.adapterType,
+				protocol: 'ethereum',
+				...(row.dataType ? { dataType: row.dataType } : null)
+			}
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(resolveProtocolParamMock).not.toHaveBeenCalled()
+		expect(fetchAdapterProtocolChartDataMock).toHaveBeenCalledWith({
+			adapterType: row.adapterType,
+			protocol: 'Ethereum',
+			...(row.dataType ? { dataType: row.dataType } : null)
+		})
+		expect(res.status).toHaveBeenCalledWith(200)
+	})
+
+	it('does not accept Gas Used as adapter-protocol entity=chain', async () => {
+		resolveProtocolParamMock.mockResolvedValue(null)
+		resolveChainParamMock.mockResolvedValue({
+			canonicalName: 'Ethereum',
+			canonicalSlug: 'ethereum',
+			metadata: { name: 'Ethereum' }
+		})
+		const req = {
+			method: 'GET',
+			query: {
+				kind: 'adapter-protocol',
+				entity: 'chain',
+				adapterType: 'active-users',
+				protocol: 'ethereum',
+				dataType: 'dailyGasUsed'
+			}
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(resolveChainParamMock).not.toHaveBeenCalled()
+		expect(fetchAdapterProtocolChartDataMock).not.toHaveBeenCalled()
+		expect(res.status).toHaveBeenCalledWith(404)
+		expect(res.json).toHaveBeenCalledWith({ error: 'protocol not found' })
+	})
+
+	it.each(chainActivityProtocolRows)('does not use legacy omitted-entity chain fallback for $label', async (row) => {
+		resolveProtocolParamMock.mockResolvedValue(null)
+		resolveChainParamMock.mockResolvedValue({
+			canonicalName: 'Ethereum',
+			canonicalSlug: 'ethereum',
+			metadata: { name: 'Ethereum' }
+		})
+		const req = {
+			method: 'GET',
+			query: {
+				kind: 'adapter-protocol',
+				adapterType: row.adapterType,
+				protocol: 'ethereum',
+				...(row.dataType ? { dataType: row.dataType } : null)
+			}
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(resolveChainParamMock).not.toHaveBeenCalled()
+		expect(fetchAdapterProtocolChartDataMock).not.toHaveBeenCalled()
+		expect(res.status).toHaveBeenCalledWith(404)
+		expect(res.json).toHaveBeenCalledWith({ error: 'protocol not found' })
+	})
+
 	it('accepts Bridged TVL chart requests only for chainAssets chains', async () => {
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Hyperliquid L1',

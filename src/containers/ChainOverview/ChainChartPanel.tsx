@@ -40,7 +40,7 @@ const chainChartCategories = {
 	Revenue: ['Chain Fees', 'Chain Revenue', 'App Fees', 'App Revenue'],
 	Volume: ['DEXs Volume', 'Perps Volume'],
 	Token: ['Token Price', 'Token Mcap', 'Token Volume', 'Token Incentives'],
-	Activity: ['Active Addresses', 'New Addresses', 'Transactions', 'Gas Used'],
+	Activity: ['Active Addresses', 'New Addresses', 'Transactions'],
 	Fundraising: ['Raises'],
 	Development: ['Core Developers', 'Devs Commits']
 } as const satisfies Record<string, readonly ChainChartLabels[]>
@@ -71,7 +71,6 @@ interface ChainChartPanelProps {
 	hasBarChart: boolean
 	groupBy: ChartTimeGroupingWithCumulative
 	chainGeckoId: string | null
-	gasUsedValueSymbol: string
 	finalCharts: any
 	valueSymbol: string
 	isFetchingChartData: boolean
@@ -90,7 +89,6 @@ export function ChainChartPanel({
 	hasBarChart,
 	groupBy,
 	chainGeckoId,
-	gasUsedValueSymbol,
 	finalCharts,
 	valueSymbol,
 	isFetchingChartData,
@@ -102,10 +100,9 @@ export function ChainChartPanel({
 	const chartRenderModel = useMemo(
 		() => ({
 			chartData: finalCharts,
-			valueSymbol,
-			gasUsedValueSymbol
+			valueSymbol
 		}),
-		[finalCharts, valueSymbol, gasUsedValueSymbol]
+		[finalCharts, valueSymbol]
 	)
 	const deferredChartRenderModel = useDeferredValue(chartRenderModel)
 
@@ -445,7 +442,6 @@ export function ChainChartPanel({
 						<ChainCoreChart
 							chartData={deferredChartRenderModel.chartData}
 							valueSymbol={deferredChartRenderModel.valueSymbol}
-							gasUsedValueSymbol={deferredChartRenderModel.gasUsedValueSymbol}
 							isThemeDark={darkMode}
 							groupBy={groupBy}
 							onReady={handleChartReady}

@@ -46,6 +46,22 @@ const feeRevenueChartRows: Array<{ label: ChainChartLabels; expectedUrl: string 
 	}
 ]
 
+const activityChartRows: Array<{ label: ChainChartLabels; expectedUrl: string }> = [
+	{
+		label: 'Active Addresses',
+		expectedUrl: '/api/public/chains/charts?kind=adapter-protocol&entity=chain&adapterType=active-users&protocol=Base'
+	},
+	{
+		label: 'New Addresses',
+		expectedUrl: '/api/public/chains/charts?kind=adapter-protocol&entity=chain&adapterType=new-users&protocol=Base'
+	},
+	{
+		label: 'Transactions',
+		expectedUrl:
+			'/api/public/chains/charts?kind=adapter-protocol&entity=chain&adapterType=active-users&protocol=Base&dataType=dailyTransactionsCount'
+	}
+]
+
 function Probe({
 	toggledCharts,
 	feesSettings = {}
@@ -86,6 +102,13 @@ describe('ChainOverview chart metric semantics', () => {
 	})
 
 	it.each(feeRevenueChartRows)('builds the current $label chart API URL', ({ label, expectedUrl }) => {
+		renderToStaticMarkup(<Probe toggledCharts={[label]} />)
+
+		expect(mocks.fetchJson).toHaveBeenCalledTimes(1)
+		expect(mocks.fetchJson).toHaveBeenCalledWith(expectedUrl)
+	})
+
+	it.each(activityChartRows)('builds the current $label chart API URL', ({ label, expectedUrl }) => {
 		renderToStaticMarkup(<Probe toggledCharts={[label]} />)
 
 		expect(mocks.fetchJson).toHaveBeenCalledTimes(1)

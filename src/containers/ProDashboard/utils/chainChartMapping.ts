@@ -14,7 +14,6 @@ const CHAIN_TO_DASHBOARD_CHART_TYPE: Record<ChainChartLabels, string | null> = {
 	'Active Addresses': 'activeUsers',
 	'New Addresses': 'newUsers',
 	Transactions: 'txs',
-	'Gas Used': 'gasUsed',
 	Raises: null,
 	'Net Inflows': 'stablecoinInflows',
 	'Core Developers': null,

@@ -330,9 +330,10 @@ export const useFetchChainChartData = ({
 		queryFn: () =>
 			fetchJson<Array<[number, number]>>(
 				buildChainChartApiUrl({
-					kind: 'adapter-chain',
+					kind: 'adapter-protocol',
+					entity: 'chain',
 					adapterType: 'active-users',
-					chain: selectedChain
+					protocol: selectedChain
 				})
 			)
 				.then((values) => normalizeActivityChart(values))
@@ -348,9 +349,10 @@ export const useFetchChainChartData = ({
 		queryFn: () =>
 			fetchJson<Array<[number, number]>>(
 				buildChainChartApiUrl({
-					kind: 'adapter-chain',
+					kind: 'adapter-protocol',
+					entity: 'chain',
 					adapterType: 'new-users',
-					chain: selectedChain
+					protocol: selectedChain
 				})
 			)
 				.then((values) => normalizeActivityChart(values))
@@ -366,9 +368,10 @@ export const useFetchChainChartData = ({
 		queryFn: () =>
 			fetchJson<Array<[number, number]>>(
 				buildChainChartApiUrl({
-					kind: 'adapter-chain',
+					kind: 'adapter-protocol',
+					entity: 'chain',
 					adapterType: 'active-users',
-					chain: selectedChain,
+					protocol: selectedChain,
 					dataType: 'dailyTransactionsCount'
 				})
 			)
@@ -379,26 +382,6 @@ export const useFetchChainChartData = ({
 		retry: 0,
 		enabled: isTransactionsEnabled
 	})
-	const isGasUsedEnabled = toggledChartsSet.has('Gas Used')
-	const { data: gasUsedData = null, isLoading: fetchingGasUsed } = useQuery<Array<[number, number]> | null>({
-		queryKey: ['chain-overview', 'gas-used', selectedChain],
-		queryFn: () =>
-			fetchJson<Array<[number, number]>>(
-				buildChainChartApiUrl({
-					kind: 'adapter-chain',
-					adapterType: 'active-users',
-					chain: selectedChain,
-					dataType: 'dailyGasUsed'
-				})
-			)
-				.then((values) => normalizeActivityChart(values))
-				.catch(() => null),
-		staleTime: 60 * 60 * 1000,
-		refetchOnWindowFocus: false,
-		retry: 0,
-		enabled: isGasUsedEnabled
-	})
-
 	const isBridgedTvlEnabled = toggledChartsSet.has('Bridged TVL')
 	const { data: bridgedTvlData = null, isLoading: fetchingBridgedTvlData } = useQuery({
 		queryKey: ['chain-overview', 'bridged-tvl', selectedChain],
@@ -499,10 +482,6 @@ export const useFetchChainChartData = ({
 
 		if (fetchingTransactions) {
 			loadingCharts.push('Transactions')
-		}
-
-		if (fetchingGasUsed) {
-			loadingCharts.push('Gas Used')
 		}
 
 		if (fetchingBridgedTvlData) {
@@ -685,16 +664,6 @@ export const useFetchChainChartData = ({
 			})
 		}
 
-		if (isGasUsedEnabled && gasUsedData) {
-			const chartName: ChainChartLabels = 'Gas Used' as const
-			charts[chartName] = formatBarChart({
-				data: gasUsedData,
-				groupBy,
-				denominationPriceHistory: null,
-				dateInMs: true
-			})
-		}
-
 		if (isBridgedTvlEnabled && bridgedTvlData) {
 			const chartName: ChainChartLabels = 'Bridged TVL' as const
 			charts[chartName] = formatLineChart({
@@ -803,9 +772,6 @@ export const useFetchChainChartData = ({
 		fetchingTransactions,
 		isTransactionsEnabled,
 		transactionsData,
-		fetchingGasUsed,
-		isGasUsedEnabled,
-		gasUsedData,
 		fetchingBridgedTvlData,
 		isBridgedTvlEnabled,
 		bridgedTvlData,

@@ -44,50 +44,44 @@ export function Stats(props: IStatsProps) {
 
 	const { isAuthenticated } = useAuthContext()
 
-	const { toggledCharts, DENOMINATIONS, chainGeckoId, gasUsedSymbol, hasAtleasOneBarChart, groupBy, denomination } =
-		useMemo(() => {
-			let CHAIN_SYMBOL = props.chainTokenInfo?.token_symbol ?? null
-			let chainGeckoId = props.chainTokenInfo?.gecko_id ?? null
-			let gasUsedSymbol = CHAIN_SYMBOL
+	const { toggledCharts, DENOMINATIONS, chainGeckoId, hasAtleasOneBarChart, groupBy, denomination } = useMemo(() => {
+		let CHAIN_SYMBOL = props.chainTokenInfo?.token_symbol ?? null
+		let chainGeckoId = props.chainTokenInfo?.gecko_id ?? null
 
-			if (props.metadata.name !== 'All') {
-				const gasToken = chainCoingeckoIdsForGasNotMcap[props.metadata.name]
-				gasUsedSymbol = gasToken?.symbol ?? gasUsedSymbol
+		if (props.metadata.name !== 'All') {
+			const gasToken = chainCoingeckoIdsForGasNotMcap[props.metadata.name]
 
-				if (!chainGeckoId) {
-					chainGeckoId = gasToken?.geckoId ?? null
-				}
-
-				if (!CHAIN_SYMBOL) {
-					CHAIN_SYMBOL = gasToken?.symbol ?? null
-				}
+			if (!chainGeckoId) {
+				chainGeckoId = gasToken?.geckoId ?? null
 			}
 
-			const DENOMINATIONS = CHAIN_SYMBOL ? ['USD', CHAIN_SYMBOL] : ['USD']
-
-			const toggledCharts = props.charts.filter((tchart, index) =>
-				index === 0
-					? searchParams.get(chainCharts[tchart]) !== 'false'
-					: searchParams.get(chainCharts[tchart]) === 'true'
-			) as ChainChartLabels[]
-
-			const hasAtleasOneBarChart = toggledCharts.some((chart) => BAR_CHARTS.includes(chart))
-			const groupByParam = searchParams.get('groupBy')
-
-			const groupBy = hasAtleasOneBarChart && groupByParam ? (normalizeChartInterval(groupByParam) ?? 'daily') : 'daily'
-
-			const currencyInSearchParams = searchParams.get('currency')?.toLowerCase()
-
-			return {
-				DENOMINATIONS,
-				chainGeckoId,
-				gasUsedSymbol,
-				hasAtleasOneBarChart,
-				toggledCharts,
-				groupBy,
-				denomination: DENOMINATIONS.find((d) => d.toLowerCase() === currencyInSearchParams) ?? 'USD'
+			if (!CHAIN_SYMBOL) {
+				CHAIN_SYMBOL = gasToken?.symbol ?? null
 			}
-		}, [searchParams, props.chainTokenInfo, props.metadata.name, props.charts])
+		}
+
+		const DENOMINATIONS = CHAIN_SYMBOL ? ['USD', CHAIN_SYMBOL] : ['USD']
+
+		const toggledCharts = props.charts.filter((tchart, index) =>
+			index === 0 ? searchParams.get(chainCharts[tchart]) !== 'false' : searchParams.get(chainCharts[tchart]) === 'true'
+		) as ChainChartLabels[]
+
+		const hasAtleasOneBarChart = toggledCharts.some((chart) => BAR_CHARTS.includes(chart))
+		const groupByParam = searchParams.get('groupBy')
+
+		const groupBy = hasAtleasOneBarChart && groupByParam ? (normalizeChartInterval(groupByParam) ?? 'daily') : 'daily'
+
+		const currencyInSearchParams = searchParams.get('currency')?.toLowerCase()
+
+		return {
+			DENOMINATIONS,
+			chainGeckoId,
+			hasAtleasOneBarChart,
+			toggledCharts,
+			groupBy,
+			denomination: DENOMINATIONS.find((d) => d.toLowerCase() === currencyInSearchParams) ?? 'USD'
+		}
+	}, [searchParams, props.chainTokenInfo, props.metadata.name, props.charts])
 
 	const { totalValueUSD, change24h, valueChange24hUSD, finalCharts, valueSymbol, isFetchingChartData, failedMetrics } =
 		useFetchChainChartData({
@@ -244,7 +238,6 @@ export function Stats(props: IStatsProps) {
 					hasBarChart={hasAtleasOneBarChart}
 					groupBy={groupBy}
 					chainGeckoId={chainGeckoId}
-					gasUsedValueSymbol={gasUsedSymbol ?? valueSymbol}
 					finalCharts={finalCharts}
 					valueSymbol={valueSymbol}
 					isFetchingChartData={isFetchingChartData}

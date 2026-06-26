@@ -137,6 +137,22 @@ export function shouldShowChainOverviewBridgedTvlChart({
 	return chain !== 'All' && !!currentChainMetadata.chainAssets
 }
 
+export function fetchChainActivityProtocolMetricTotal({
+	chain,
+	adapterType,
+	dataType
+}: {
+	chain: string
+	adapterType: 'active-users' | 'new-users'
+	dataType?: 'dailyTransactionsCount'
+}): Promise<number | null> {
+	return fetchAdapterProtocolMetrics({
+		protocol: chain,
+		adapterType,
+		...(dataType ? { dataType } : null)
+	}).then((data) => data?.total24h ?? null)
+}
+
 function toFeeExtraTotals(data: FeeExtraTotals | null | undefined): FeeExtraTotals | null {
 	if (!data || !hasAnyFeeExtraTotals(data)) return null
 	const totals: FeeExtraTotals = {}
@@ -375,27 +391,27 @@ export async function getChainOverviewData({
 			timePhase('active_users', () =>
 				!currentChainMetadata.chainActiveUsers
 					? Promise.resolve(null)
-					: fetchAdapterChainMetrics({
+					: fetchChainActivityProtocolMetricTotal({
 							chain: currentChainMetadata.name,
 							adapterType: 'active-users'
-						}).then((data) => data?.total24h ?? null)
+						})
 			),
 			timePhase('transactions', () =>
 				!currentChainMetadata.txCount
 					? Promise.resolve(null)
-					: fetchAdapterChainMetrics({
+					: fetchChainActivityProtocolMetricTotal({
 							chain: currentChainMetadata.name,
 							adapterType: 'active-users',
 							dataType: 'dailyTransactionsCount'
-						}).then((data) => data?.total24h ?? null)
+						})
 			),
 			timePhase('new_users', () =>
 				!currentChainMetadata.chainNewUsers
 					? Promise.resolve(null)
-					: fetchAdapterChainMetrics({
+					: fetchChainActivityProtocolMetricTotal({
 							chain: currentChainMetadata.name,
 							adapterType: 'new-users'
-						}).then((data) => data?.total24h ?? null)
+						})
 			),
 			timePhase('raises', () => fetchRaises()),
 			timePhase('treasuries', () => (chain === 'All' ? Promise.resolve(null) : fetchTreasuries())),
@@ -665,9 +681,6 @@ export async function getChainOverviewData({
 		}
 		if (currentChainMetadata.txCount) {
 			charts.push('Transactions')
-		}
-		if (currentChainMetadata.gasUsed) {
-			charts.push('Gas Used')
 		}
 		if (chain === 'All') {
 			charts.push('Raises')

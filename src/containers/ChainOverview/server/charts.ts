@@ -58,6 +58,18 @@ async function resolveCanonicalChainNativeFeeExtraProtocolParam(chain: string): 
 	return chainRoute?.metadata.chainFees || chainRoute?.metadata.chainRevenue ? chainRoute.canonicalName : null
 }
 
+function isChainActivityProtocolAdapter(adapterType: string, dataType: string | undefined): boolean {
+	if (adapterType === 'active-users') return dataType == null || dataType === 'dailyTransactionsCount'
+	return adapterType === 'new-users' && dataType == null
+}
+
+async function resolveCanonicalChainActivityProtocolParam(chain: string): Promise<string | null> {
+	if (chain.toLowerCase() === 'all') return null
+	const { resolveChainParam } = await import('~/containers/ChainOverview/server/routes')
+	const chainRoute = await resolveChainParam(chain)
+	return chainRoute?.canonicalName ?? null
+}
+
 async function resolveCanonicalAdapterProtocolParam(
 	protocol: string,
 	adapterType: string,
@@ -73,6 +85,9 @@ async function resolveCanonicalAdapterProtocolParam(
 		}
 		if (isChainNativeFeeExtra) {
 			return resolveCanonicalChainNativeFeeExtraProtocolParam(protocol)
+		}
+		if (isChainActivityProtocolAdapter(adapterType, dataType)) {
+			return resolveCanonicalChainActivityProtocolParam(protocol)
 		}
 		return null
 	}
