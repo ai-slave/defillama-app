@@ -1,8 +1,19 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getFastJsonTimeoutMs } from '~/utils/async'
 
-const fetchAdapterProtocolChartData = vi.fn()
-const fetchProtocolTvlChart = vi.fn().mockResolvedValue([])
+const fetchAdapterProtocolChartData = vi.hoisted(() => vi.fn())
+const fetchProtocolTvlChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
+const fetchTreasuries = vi.hoisted(() => vi.fn().mockResolvedValue([]))
+const fetchJson = vi.hoisted(() => vi.fn().mockResolvedValue({ content_elements: [] }))
+const optionalPageData = vi.hoisted(() =>
+	vi.fn(async (_label: string, run: () => Promise<unknown>, fallback: unknown) => {
+		try {
+			return await run()
+		} catch {
+			return fallback
+		}
+	})
+)
 
 vi.mock('~/api', () => ({
 	fetchBlockExplorers: vi.fn().mockResolvedValue([]),
@@ -36,16 +47,20 @@ vi.mock('~/containers/ProtocolLists/api', () => ({
 }))
 
 vi.mock('~/containers/Treasuries/api', () => ({
-	fetchTreasuries: vi.fn().mockResolvedValue([])
+	fetchTreasuries
 }))
 
 vi.mock('~/utils/async', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('~/utils/async')>()
 	return {
 		...actual,
-		fetchJson: vi.fn().mockResolvedValue({ content_elements: [] })
+		fetchJson
 	}
 })
+
+vi.mock('~/utils/optionalPageData', () => ({
+	optionalPageData
+}))
 
 vi.mock('../api', () => ({
 	fetchProtocolExpenses: vi.fn().mockResolvedValue([]),
@@ -72,6 +87,11 @@ describe('getProtocolOverviewPageData', () => {
 		fetchAdapterProtocolChartData.mockClear()
 		fetchProtocolTvlChart.mockResolvedValue([])
 		fetchProtocolTvlChart.mockClear()
+		fetchTreasuries.mockResolvedValue([])
+		fetchTreasuries.mockClear()
+		fetchJson.mockResolvedValue({ content_elements: [] })
+		fetchJson.mockClear()
+		optionalPageData.mockClear()
 	})
 
 	it('default-toggles secondary charts without server-prefetching their series', async () => {
@@ -151,6 +171,48 @@ describe('getProtocolOverviewPageData', () => {
 		} finally {
 			logSpy.mockRestore()
 		}
+	})
+
+	it('builds protocol page data when optional treasury data fails', async () => {
+		fetchTreasuries.mockRejectedValueOnce(new Error('treasury timeout'))
+		const { getProtocolOverviewPageData } = await import('../queries')
+
+		const data = await getProtocolOverviewPageData({
+			protocolId: 'test-protocol',
+			currentProtocolMetadata: {
+				displayName: 'Test Protocol',
+				treasury: true
+			} as never,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			protocolLlamaswapDataset: {}
+		})
+
+		expect(data.treasury).toBeNull()
+		expect(optionalPageData).toHaveBeenCalledWith('protocol:test-protocol:treasury', expect.any(Function), null)
+	})
+
+	it('builds protocol page data when optional yields data fails', async () => {
+		fetchJson.mockRejectedValueOnce(new Error('yields timeout'))
+		const { getProtocolOverviewPageData } = await import('../queries')
+
+		const data = await getProtocolOverviewPageData({
+			protocolId: 'test-protocol',
+			currentProtocolMetadata: {
+				displayName: 'Test Protocol',
+				yields: true
+			} as never,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			protocolLlamaswapDataset: {}
+		})
+
+		expect(data.yields).toBeNull()
+		expect(optionalPageData).toHaveBeenCalledWith('protocol:test-protocol:yields', expect.any(Function), null)
 	})
 
 	it('calculates outstanding FDV from cached emissions supply metrics', async () => {

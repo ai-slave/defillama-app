@@ -8,7 +8,8 @@ import { fetchJson } from '~/utils/async'
 export async function fetchEntityQuestions(
 	entitySlug: string,
 	entityType: 'protocol' | 'chain' | 'page',
-	context?: Record<string, any>
+	context?: Record<string, any>,
+	options?: { throwOnError?: boolean }
 ): Promise<EntityQuestionsResponse> {
 	try {
 		let data: EntityQuestionsResponse
@@ -24,7 +25,8 @@ export async function fetchEntityQuestions(
 			)
 		}
 		return { questions: data.questions ?? [], suggestGlobal: data.suggestGlobal ?? false }
-	} catch {
+	} catch (error) {
+		if (options?.throwOnError) throw error
 		return { questions: [], suggestGlobal: false }
 	}
 }

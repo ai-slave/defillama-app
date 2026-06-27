@@ -23,6 +23,7 @@ import { fetchJson, getFastJsonTimeoutMs, getSlowJsonTimeoutMs } from '~/utils/a
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { buildProtocolOverviewHallmarks } from '~/utils/hallmarks'
 import type { IChainMetadata, IProtocolMetadata, ProtocolLlamaswapMetadata } from '~/utils/metadata/types'
+import { optionalPageData } from '~/utils/optionalPageData'
 import { fetchProtocolExpenses, fetchProtocolOverviewMetrics, fetchProtocolTvlChart } from './api'
 import type { IProtocolValueChart, IProtocolMetricsV2, IProtocolExpenses } from './api.types'
 import { resolveProtocolCategory } from './category'
@@ -133,6 +134,8 @@ export const getProtocolOverviewPageData = async ({
 	const currentProtocolSlug = slug(displayName)
 	const oracleProtocolName = (oracleProtocols as Record<string, string>)[displayName] ?? null
 	const isOracleProtocol = Boolean(oracleProtocolName)
+	const optionalProtocolData = <T,>(label: string, run: () => Promise<T>, fallback: T): Promise<T> =>
+		optionalPageData(`protocol:${currentProtocolSlug}:${label}`, run, fallback)
 	const feeExtraMetricPromise = (extra: FeeExtraConfig) =>
 		currentProtocolMetadata[extra.protocolMetadataField]
 			? fetchAdapterProtocolMetrics({
@@ -332,104 +335,169 @@ export const getProtocolOverviewPageData = async ({
 				}).then((data) => formatAdapterData({ data, methodologyKey: 'optionsNotionalVolume' }))
 			: Promise.resolve(null),
 		currentProtocolMetadata.treasury
-			? fetchTreasuries()
-					.then(
-						(res: Array<{ id: string; tokenBreakdowns?: Record<string, number | null> }>) =>
-							res.find((item) => item.id === `${protocolId}-treasury`)?.tokenBreakdowns ?? null
-					)
-					.then((res): IProtocolOverviewPageData['treasury'] => {
-						if (!res) return null
-						return {
-							majors: res.majors ?? null,
-							stablecoins: res.stablecoins ?? null,
-							ownTokens: res.ownTokens ?? null,
-							others: res.others ?? null,
-							total: [res.majors, res.stablecoins, res.ownTokens, res.others].reduce(
-								(acc: number, curr) => acc + +(curr ?? 0),
-								0
+			? optionalProtocolData(
+					'treasury',
+					() =>
+						fetchTreasuries()
+							.then(
+								(res: Array<{ id: string; tokenBreakdowns?: Record<string, number | null> }>) =>
+									res.find((item) => item.id === `${protocolId}-treasury`)?.tokenBreakdowns ?? null
 							)
-						}
-					})
+							.then((res): IProtocolOverviewPageData['treasury'] => {
+								if (!res) return null
+								return {
+									majors: res.majors ?? null,
+									stablecoins: res.stablecoins ?? null,
+									ownTokens: res.ownTokens ?? null,
+									others: res.others ?? null,
+									total: [res.majors, res.stablecoins, res.ownTokens, res.others].reduce(
+										(acc: number, curr) => acc + +(curr ?? 0),
+										0
+									)
+								}
+							}),
+					null
+				)
 			: Promise.resolve(null),
 		currentProtocolMetadata.yields
-			? fetchJson<IYieldsDataResult>(YIELD_POOLS_API, { timeout: getSlowJsonTimeoutMs() })
-			: null,
+			? optionalProtocolData(
+					'yields',
+					() => fetchJson<IYieldsDataResult>(YIELD_POOLS_API, { timeout: getSlowJsonTimeoutMs() }),
+					null
+				)
+			: Promise.resolve(null),
 		currentProtocolMetadata?.incentives && protocolId
-			? getProtocolIncentivesFromAggregatedEmissions({
-					protocolId,
-					protocolDisplayName: currentProtocolMetadata.displayName ?? ''
-				})
-			: null,
+			? optionalProtocolData(
+					'incentives',
+					() =>
+						getProtocolIncentivesFromAggregatedEmissions({
+							protocolId,
+							protocolDisplayName: currentProtocolMetadata.displayName ?? ''
+						}),
+					null
+				)
+			: Promise.resolve(null),
 		currentProtocolMetadata?.emissions && protocolId
 			? (emissionsSupplyMetrics[currentProtocolSlug]?.supplyMetrics?.adjustedSupply ?? null)
 			: null,
 		currentProtocolMetadata.activeUsers
-			? fetchAdapterProtocolMetrics({
-					protocol: currentProtocolMetadata.displayName,
-					adapterType: 'active-users'
-				}).then((data) => data?.total24h ?? null)
+			? optionalProtocolData(
+					'active_users',
+					() =>
+						fetchAdapterProtocolMetrics({
+							protocol: currentProtocolMetadata.displayName,
+							adapterType: 'active-users'
+						}).then((data) => data?.total24h ?? null),
+					null
+				)
 			: Promise.resolve(null),
 		currentProtocolMetadata.newUsers
-			? fetchAdapterProtocolMetrics({
-					protocol: currentProtocolMetadata.displayName,
-					adapterType: 'new-users'
-				}).then((data) => data?.total24h ?? null)
+			? optionalProtocolData(
+					'new_users',
+					() =>
+						fetchAdapterProtocolMetrics({
+							protocol: currentProtocolMetadata.displayName,
+							adapterType: 'new-users'
+						}).then((data) => data?.total24h ?? null),
+					null
+				)
 			: Promise.resolve(null),
 		currentProtocolMetadata.txCount
-			? fetchAdapterProtocolMetrics({
-					protocol: currentProtocolMetadata.displayName,
-					adapterType: 'active-users',
-					dataType: 'dailyTransactionsCount'
-				}).then((data) => data?.total24h ?? null)
+			? optionalProtocolData(
+					'transactions',
+					() =>
+						fetchAdapterProtocolMetrics({
+							protocol: currentProtocolMetadata.displayName,
+							adapterType: 'active-users',
+							dataType: 'dailyTransactionsCount'
+						}).then((data) => data?.total24h ?? null),
+					null
+				)
 			: Promise.resolve(null),
 		currentProtocolMetadata.gasUsed
-			? fetchAdapterProtocolMetrics({
-					protocol: currentProtocolMetadata.displayName,
-					adapterType: 'active-users',
-					dataType: 'dailyGasUsed'
-				}).then((data) => data?.total24h ?? null)
+			? optionalProtocolData(
+					'gas_used',
+					() =>
+						fetchAdapterProtocolMetrics({
+							protocol: currentProtocolMetadata.displayName,
+							adapterType: 'active-users',
+							dataType: 'dailyGasUsed'
+						}).then((data) => data?.total24h ?? null),
+					null
+				)
 			: Promise.resolve(null),
 		currentProtocolMetadata.expenses && protocolId
-			? fetchProtocolExpenses().then((data) => data.find((item) => item.protocolId === protocolId) ?? null)
-			: null,
+			? optionalProtocolData(
+					'expenses',
+					() => fetchProtocolExpenses().then((data) => data.find((item) => item.protocolId === protocolId) ?? null),
+					null
+				)
+			: Promise.resolve(null),
 		currentProtocolMetadata.liquidity
-			? fetchJson<IYieldsConfigResult>(YIELD_CONFIG_API, { timeout: getSlowJsonTimeoutMs() })
-			: null,
-		currentProtocolMetadata?.liquidity ? fetchLiquidityTokensDataset() : [],
+			? optionalProtocolData(
+					'liquidity_yields_config',
+					() => fetchJson<IYieldsConfigResult>(YIELD_CONFIG_API, { timeout: getSlowJsonTimeoutMs() }),
+					null
+				)
+			: Promise.resolve(null),
+		currentProtocolMetadata?.liquidity
+			? optionalProtocolData('liquidity_tokens', () => fetchLiquidityTokensDataset(), [])
+			: Promise.resolve([]),
 		fetchProtocols().catch((): ProtocolsResponse => ({ protocols: [], chains: [], parentProtocols: [] })),
 		currentProtocolMetadata.bridge
-			? fetchBridgeVolumeBySlug(slug(currentProtocolMetadata.displayName)).then((data) => data.dailyVolumes || null)
-			: null,
-		getProtocolIncomeStatement({ metadata: currentProtocolMetadata }),
-		oracleProtocolName
-			? fetchOracleProtocolChart({ protocol: oracleProtocolName }).then((data): Array<[number, number]> | null =>
-					normalizeChartPointsToMs(data)
+			? optionalProtocolData(
+					'bridge_volume',
+					() =>
+						fetchBridgeVolumeBySlug(slug(currentProtocolMetadata.displayName)).then(
+							(data) => data.dailyVolumes || null
+						),
+					null
 				)
-			: null,
+			: Promise.resolve(null),
+		optionalProtocolData(
+			'income_statement',
+			() => getProtocolIncomeStatement({ metadata: currentProtocolMetadata }),
+			null
+		),
 		oracleProtocolName
-			? fetchOracleMetrics().then((data): Record<string, number> | null => {
-					const protocolTvsByOracle = data?.oraclesTVS?.[oracleProtocolName]
-					if (!protocolTvsByOracle) return null
-					const tvs: Record<string, number> = {}
+			? optionalProtocolData(
+					'oracle_chart',
+					() =>
+						fetchOracleProtocolChart({ protocol: oracleProtocolName }).then((data): Array<[number, number]> | null =>
+							normalizeChartPointsToMs(data)
+						),
+					null
+				)
+			: Promise.resolve(null),
+		oracleProtocolName
+			? optionalProtocolData(
+					'oracle_metrics',
+					() =>
+						fetchOracleMetrics().then((data): Record<string, number> | null => {
+							const protocolTvsByOracle = data?.oraclesTVS?.[oracleProtocolName]
+							if (!protocolTvsByOracle) return null
+							const tvs: Record<string, number> = {}
 
-					const displayNameTvs = protocolTvsByOracle[displayName]
-					const slugNameTvs = protocolTvsByOracle[slug(displayName)]
-					const selectedProtocolTvs: Record<string, Record<string, number>> = displayNameTvs
-						? { [displayName]: displayNameTvs }
-						: slugNameTvs
-							? { [slug(displayName)]: slugNameTvs }
-							: (protocolTvsByOracle as unknown as Record<string, Record<string, number>>)
-					for (const protocolKey in selectedProtocolTvs) {
-						const chainTvs = selectedProtocolTvs[protocolKey]
-						for (const chain in chainTvs) {
-							const nestedValue = Number(chainTvs[chain])
-							if (!Number.isFinite(nestedValue)) continue
-							tvs[chain] = (tvs[chain] ?? 0) + nestedValue
-						}
-					}
-					return Object.keys(tvs).length > 0 ? tvs : null
-				})
-			: null,
+							const displayNameTvs = protocolTvsByOracle[displayName]
+							const slugNameTvs = protocolTvsByOracle[slug(displayName)]
+							const selectedProtocolTvs: Record<string, Record<string, number>> = displayNameTvs
+								? { [displayName]: displayNameTvs }
+								: slugNameTvs
+									? { [slug(displayName)]: slugNameTvs }
+									: (protocolTvsByOracle as unknown as Record<string, Record<string, number>>)
+							for (const protocolKey in selectedProtocolTvs) {
+								const chainTvs = selectedProtocolTvs[protocolKey]
+								for (const chain in chainTvs) {
+									const nestedValue = Number(chainTvs[chain])
+									if (!Number.isFinite(nestedValue)) continue
+									tvs[chain] = (tvs[chain] ?? 0) + nestedValue
+								}
+							}
+							return Object.keys(tvs).length > 0 ? tvs : null
+						}),
+					null
+				)
+			: Promise.resolve(null),
 		fetchBlockExplorers().catch((): BlockExplorersResponse => [])
 	])
 

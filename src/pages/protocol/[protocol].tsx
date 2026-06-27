@@ -6,6 +6,7 @@ import { getProtocolOverviewPageData } from '~/containers/ProtocolOverview/queri
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import { optionalPageData } from '~/utils/optionalPageData'
 import { createRoutePhaseTimer, withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 import { addRouteTelemetryAttributes } from '~/utils/telemetry'
@@ -67,7 +68,11 @@ export const getStaticProps = withPerformanceLogging(
 			}
 
 			const { questions: entityQuestions } = await phaseTimer.time('entity_questions', () =>
-				fetchEntityQuestions(normalizedName, 'protocol')
+				optionalPageData(
+					`protocol:${normalizedName}:entity_questions`,
+					() => fetchEntityQuestions(normalizedName, 'protocol', undefined, { throwOnError: true }),
+					{ questions: [], suggestGlobal: false }
+				)
 			)
 
 			return { props: { ...data, entityQuestions }, revalidate: maxAgeForNext([22]) }
