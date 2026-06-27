@@ -310,7 +310,8 @@ function makeDimensionProtocolChart(opts: {
 		paramLabel: 'Protocol',
 		optionsUrl: `${SERVER_URL}/overview/${opts.adapterType}?${OVERVIEW_QS}${dtParam}`,
 		extractOptions: extractOverviewProtocolOptions,
-		buildUrl: (param: string) => `${V2_SERVER_URL}/chart/${opts.adapterType}/protocol/${param}${dtChartParam}`,
+		buildUrl: (param: string) =>
+			`${V2_SERVER_URL}/chart/${opts.adapterType}/protocol/${encodeURIComponent(param)}${dtChartParam}`,
 		extractRows: extractTimestampValuePairs,
 		categoryBreakdown: { kind: 'dimension', adapterType: opts.adapterType, dataType: opts.dataType }
 	}
@@ -338,7 +339,7 @@ function makeDimensionChainChart(opts: {
 		buildUrl: (param: string) =>
 			param === 'all'
 				? `${V2_SERVER_URL}/chart/${opts.adapterType}${dtChartParam}`
-				: `${V2_SERVER_URL}/chart/${opts.adapterType}/chain/${param}${dtChartParam}`,
+				: `${V2_SERVER_URL}/chart/${opts.adapterType}/chain/${encodeURIComponent(param)}${dtChartParam}`,
 		extractRows: extractTimestampValuePairs
 	}
 }
@@ -374,7 +375,8 @@ function makeDimensionCategoryChart(opts: {
 		paramLabel: 'Category',
 		optionsUrl: `${SERVER_URL}/overview/${opts.adapterType}?${OVERVIEW_QS}${dtParam}`,
 		extractOptions: extractOverviewCategoryOptions,
-		buildUrl: (param: string) => `${V2_SERVER_URL}/chart/${opts.adapterType}/category/${param}${dtChartParam}`,
+		buildUrl: (param: string) =>
+			`${V2_SERVER_URL}/chart/${opts.adapterType}/category/${encodeURIComponent(param)}${dtChartParam}`,
 		extractRows: extractTimestampValuePairs
 	}
 }
@@ -420,7 +422,7 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 				return extractRWACategoryRows(await resp.json())
 			}
 			const [assetResp, assetsResp] = await Promise.all([
-				fetchWithPoolingOnServer(`${RWA_SERVER_URL}/chart/chain/${param}/asset-breakdown`),
+				fetchWithPoolingOnServer(`${RWA_SERVER_URL}/chart/chain/${encodeURIComponent(param)}/asset-breakdown`),
 				fetchWithPoolingOnServer(`${RWA_SERVER_URL}/current?z=0`)
 			])
 			if (!assetResp.ok || !assetsResp.ok) return []
@@ -481,7 +483,7 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 			}
 			return [...chainMcap.entries()].sort(([, a], [, b]) => b - a).map(([c]) => ({ label: c, value: c }))
 		},
-		buildUrl: (param: string) => `${RWA_SERVER_URL}/chart/chain/${param}/asset-breakdown`,
+		buildUrl: (param: string) => `${RWA_SERVER_URL}/chart/chain/${encodeURIComponent(param)}/asset-breakdown`,
 		extractRows: (json) => {
 			if (!json || typeof json !== 'object' || Array.isArray(json)) return []
 			const onChainMcap: any[] = json.onChainMcap ?? []
@@ -522,11 +524,11 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 			}
 			return [...catMcap.entries()].sort(([, a], [, b]) => b - a).map(([c]) => ({ label: c, value: rwaSlug(c) }))
 		},
-		buildUrl: (param: string) => `${RWA_SERVER_URL}/chart/category/${param}/asset-breakdown`,
+		buildUrl: (param: string) => `${RWA_SERVER_URL}/chart/category/${encodeURIComponent(param)}/asset-breakdown`,
 		extractRows: () => [],
 		customFetch: async (param: string) => {
 			const [chartResp, assetsResp] = await Promise.all([
-				fetchWithPoolingOnServer(`${RWA_SERVER_URL}/chart/category/${param}/asset-breakdown`),
+				fetchWithPoolingOnServer(`${RWA_SERVER_URL}/chart/category/${encodeURIComponent(param)}/asset-breakdown`),
 				fetchWithPoolingOnServer(`${RWA_SERVER_URL}/current?z=0`)
 			])
 			if (!chartResp.ok || !assetsResp.ok) return []
@@ -575,7 +577,7 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 				.sort((a: any, b: any) => sumRecord(b.circulating) - sumRecord(a.circulating))
 				.map((a: any) => ({ label: `${a.name} (${a.symbol})`, value: a.id }))
 		},
-		buildUrl: (param: string) => `${STABLECOINS_SERVER_URL}/stablecoin/${param}`,
+		buildUrl: (param: string) => `${STABLECOINS_SERVER_URL}/stablecoin/${encodeURIComponent(param)}`,
 		extractRows: (json) => {
 			const tokens: any[] = json?.tokens ?? []
 			return tokens
@@ -604,7 +606,7 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 					.map((c: any) => ({ label: c.name, value: c.name }))
 			]
 		},
-		buildUrl: (param: string) => `${STABLECOINS_SERVER_URL}/stablecoincharts2/${param}`,
+		buildUrl: (param: string) => `${STABLECOINS_SERVER_URL}/stablecoincharts2/${encodeURIComponent(param)}`,
 		extractRows: (json) => {
 			const points: any[] = json?.aggregated ?? []
 			return points
@@ -631,7 +633,7 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 				.sort((a: any, b: any) => (Number(b?.currentTvl) || 0) - (Number(a?.currentTvl) || 0))
 				.map((c: any) => ({ label: c.name, value: toSlug(c.slug) }))
 		},
-		buildUrl: (param: string) => `${V2_SERVER_URL}/chart/tvl/protocol/${param}`,
+		buildUrl: (param: string) => `${V2_SERVER_URL}/chart/tvl/protocol/${encodeURIComponent(param)}`,
 		extractRows: (json) => {
 			const pairs = extractTimestampValuePairs(json)
 			if (pairs.length < 2) return []
@@ -658,7 +660,7 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 		paramLabel: 'Protocol',
 		optionsUrl: `${SERVER_URL}/lite/protocols2?zz=16`,
 		extractOptions: extractLiteProtocolOptions,
-		buildUrl: (param: string) => `${V2_SERVER_URL}/chart/tvl/protocol/${param}`,
+		buildUrl: (param: string) => `${V2_SERVER_URL}/chart/tvl/protocol/${encodeURIComponent(param)}`,
 		extractRows: extractTimestampValuePairs,
 		categoryBreakdown: { kind: 'tvl' }
 	},
@@ -671,7 +673,7 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 		paramLabel: 'Protocol',
 		optionsUrl: `${SERVER_URL}/lite/protocols2?zz=16`,
 		extractOptions: extractActiveLoansProtocolOptions,
-		buildUrl: (param: string) => `${V2_SERVER_URL}/chart/tvl/protocol/${param}?key=borrowed`,
+		buildUrl: (param: string) => `${V2_SERVER_URL}/chart/tvl/protocol/${encodeURIComponent(param)}?key=borrowed`,
 		extractRows: extractTimestampValuePairs
 	},
 	{
@@ -692,7 +694,8 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 					.map((c: any) => ({ label: c.name, value: c.name }))
 			]
 		},
-		buildUrl: (param: string) => (param === 'all' ? `${SERVER_URL}/lite/charts` : `${SERVER_URL}/lite/charts/${param}`),
+		buildUrl: (param: string) =>
+			param === 'all' ? `${SERVER_URL}/lite/charts` : `${SERVER_URL}/lite/charts/${encodeURIComponent(param)}`,
 		extractRows: extractLiteChartRows
 	},
 	{
@@ -713,7 +716,7 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 				.sort((a: string, b: string) => a.localeCompare(b))
 				.map((c: string) => ({ label: c, value: toSlug(c) }))
 		},
-		buildUrl: (param: string) => `${SERVER_URL}/charts/categories/${param}`,
+		buildUrl: (param: string) => `${SERVER_URL}/charts/categories/${encodeURIComponent(param)}`,
 		extractRows: extractLiteChartRows
 	},
 
@@ -1007,7 +1010,7 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 				.sort((a: any, b: any) => (Number(b?.lastDailyVolume) || 0) - (Number(a?.lastDailyVolume) || 0))
 				.map((c: any) => ({ label: c.name, value: c.name }))
 		},
-		buildUrl: (param: string) => `${BRIDGES_SERVER_URL}/bridgevolume/${param}`,
+		buildUrl: (param: string) => `${BRIDGES_SERVER_URL}/bridgevolume/${encodeURIComponent(param)}`,
 		extractRows: extractBridgeVolumeRows
 	},
 
@@ -1029,7 +1032,7 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 					value: p.pool
 				}))
 		},
-		buildUrl: (param: string) => `${YIELDS_SERVER_URL}/chart/${param}`,
+		buildUrl: (param: string) => `${YIELDS_SERVER_URL}/chart/${encodeURIComponent(param)}`,
 		extractRows: extractYieldChartRows
 	},
 
@@ -1047,7 +1050,7 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 				.sort(([, a], [, b]) => (Number(b) || 0) - (Number(a) || 0))
 				.map(([name]) => ({ label: name, value: toSlug(name) }))
 		},
-		buildUrl: (param: string) => `${V2_SERVER_URL}/chart/oracle/protocol/${param}`,
+		buildUrl: (param: string) => `${V2_SERVER_URL}/chart/oracle/protocol/${encodeURIComponent(param)}`,
 		extractRows: extractTimestampValuePairs
 	}
 ]
