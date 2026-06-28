@@ -249,6 +249,7 @@ interface UnclaimedPipeline {
 		pnlUsd: number
 		allTimeHarvestedUsd: number
 		lastHarvestDate: string | null
+		lastHarvestUsd: number
 	}>
 	aeroLocks: Array<{ nft: string; locked: string; rewards: string; usd: number; unlock: string | null }>
 	convex: Array<{ type: string; status: string; usd: number; unlock: string | null; isClaimable: boolean }>

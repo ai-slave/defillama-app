@@ -1,7 +1,16 @@
 import { lazy } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/types'
 import { useTvlData, chartToTs, seriesPairs, zoomStartPct, defaultZoomOptions } from './api'
-import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, UtilBar, fmtUsd } from './ui'
+import {
+	KpiCard,
+	ChartCard,
+	SectionHeader,
+	ChartSkeleton,
+	SimpleTable,
+	UtilBar,
+	fmtUsd,
+	dollarPctChartOptions
+} from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -233,7 +242,13 @@ export default function Tvl() {
 									title={m.name || m.marketId}
 									subtitle={`${m.chain}${m.source ? ` · ${m.source}` : ''}`}
 								>
-									<MultiSeriesChart series={series as any} valueSymbol="$" yAxisSymbols={['$', '%']} height="300px" />
+									<MultiSeriesChart
+										series={series as any}
+										valueSymbol="$"
+										yAxisSymbols={['$', '%']}
+										height="300px"
+										chartOptions={dollarPctChartOptions}
+									/>
 								</ChartCard>
 							)
 						})}

@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query'
-import { chainIconUrl } from '~/utils/icons'
 
 interface Metadata {
 	projectName: string
@@ -58,11 +57,20 @@ export default function ThorchainHeader() {
 
 	return (
 		<header className="flex items-center gap-3 rounded-lg border border-(--cards-border) bg-(--cards-bg) px-4 py-2.5">
-			<img
-				src={chainIconUrl('thorchain', 64)}
-				alt="THORChain"
-				className="size-8 shrink-0 rounded-full bg-(--cards-bg) object-contain"
-			/>
+			{/* RUNE token mark, inlined so the dashboard owns it (no asset file dependency). */}
+			<svg viewBox="0 0 300 300" role="img" aria-label="THORChain" className="size-8 shrink-0">
+				<circle cx="150" cy="150" r="150" fill="url(#rune-logo)" />
+				<path
+					d="M54 265L207.721 197.386L159.058 145.843L54 265ZM110.471 94.3804L159.134 145.843L246 35L110.471 94.3804Z"
+					fill="white"
+				/>
+				<defs>
+					<linearGradient id="rune-logo" x1="300" y1="150.23" x2="0" y2="150.23" gradientUnits="userSpaceOnUse">
+						<stop stopColor="#33FF99" />
+						<stop offset="1" stopColor="#00CCFF" />
+					</linearGradient>
+				</defs>
+			</svg>
 			<div className="leading-tight">
 				<span className="text-sm font-semibold text-(--text-primary)">{data?.projectName ?? 'THORChain'}</span>
 			</div>

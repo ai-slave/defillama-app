@@ -1,5 +1,29 @@
 import * as React from 'react'
+import { formatTooltipChartDate, formatTooltipValue } from '~/components/ECharts/formatters'
 import { Tooltip } from '~/components/Tooltip'
+
+// MultiSeriesChart's tooltip formats every series with a single valueSymbol, so a '%' series sharing
+// a chart with '$' series (supply/borrow vs utilization) shows as '$'. Override just the tooltip
+// formatter via chartOptions — keeps the shared chart component untouched. Series carrying '%' in
+// their name (e.g. "Utilization %") render as a percentage; everything else as USD.
+export const dollarPctChartOptions = {
+	tooltip: {
+		formatter: (params: any[]) => {
+			const date = formatTooltipChartDate(params[0].value[0], 'daily')
+			const rows = params
+				.filter((p: any) => p.value[1] != null && p.value[1] !== '-')
+				.map(
+					(p: any) =>
+						`<li style="list-style:none">${p.marker}${p.seriesName}&nbsp;&nbsp;${formatTooltipValue(
+							p.value[1],
+							p.seriesName.includes('%') ? '%' : '$'
+						)}</li>`
+				)
+				.join('')
+			return date + rows
+		}
+	}
+}
 
 export function KpiCard({
 	label,

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useCustomServerData } from '~/containers/Investors/CustomServerDataContext'
+import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import { ChainBreakdownChart } from './ChainBreakdownChart'
 import type { ThorchainChainIncome } from './serverData'
@@ -17,6 +18,7 @@ import {
 	SegToggle,
 	TimeBarCard,
 	ToggledTimeChart,
+	useAdapterSeries,
 	useThorchainData
 } from './ui'
 
@@ -118,9 +120,32 @@ const BURN_KPIS: [string, string][] = [
 export default function Financials() {
 	const { data } = useThorchainData<FinancialsData>('financials')
 	const chainIncome = useCustomServerData<ThorchainChainIncome>('thorchainChainIncome')
+	// Fees & revenue KPIs from the DefiLlama thorchain-dex adapter (same cache keys as the Overview),
+	// so each window matches across tabs. Bespoke splits with no DefiLlama equivalent — Nodes & Pools
+	// Share and Top Chain by Fees — stay on the ir-server.
+	const fees = useAdapterSeries('dex-fees', () => ProtocolCharts.fees(DEX))
+	const revenue = useAdapterSeries('dex-revenue', () => ProtocolCharts.revenue(DEX))
+	const holdersRev = useAdapterSeries('dex-holders-revenue', () => ProtocolCharts.holdersRevenue(DEX))
+	const supplySide = useAdapterSeries('dex-supply-side-revenue', () =>
+		ProtocolCharts.summary(DEX, 'fees', 'dailySupplySideRevenue')
+	)
+	const protocolRev = useAdapterSeries('dex-protocol-revenue', () =>
+		ProtocolCharts.summary(DEX, 'fees', 'dailyProtocolRevenue')
+	)
+	const userFees = useAdapterSeries('dex-user-fees', () => ProtocolCharts.summary(DEX, 'fees', 'dailyUserFees'))
 	if (!data) return <PageLoader />
 
 	const { kpis, distribution, affiliate, burn } = data
+	const f = fees.data
+	const r = revenue.data
+	// Revenue margin = lifetime revenue / lifetime fees, computed from the same DefiLlama series.
+	const margin: KpiT | undefined =
+		r && f?.lifetime.value
+			? {
+					value: r.lifetime.value / f.lifetime.value,
+					formatted: `${((r.lifetime.value / f.lifetime.value) * 100).toFixed(1)}%`
+				}
+			: undefined
 
 	return (
 		<div className="flex flex-col gap-10">
@@ -128,26 +153,26 @@ export default function Financials() {
 				<SectionHeader>Fees & Revenue</SectionHeader>
 
 				<KpiBand label="Fees">
-					<Kpi kpi={kpis.feesLifetime} label="Lifetime" />
-					<Kpi kpi={kpis.fees1y} label="1Y" />
-					<Kpi kpi={kpis.fees30d} label="30d" />
-					<Kpi kpi={kpis.fees7d} label="7d" />
+					<Kpi kpi={f?.lifetime} label="Lifetime" />
+					<Kpi kpi={f?.y1} label="1Y" />
+					<Kpi kpi={f?.d30} label="30d" />
+					<Kpi kpi={f?.d7} label="7d" />
 				</KpiBand>
 
 				<KpiBand label="Revenue">
-					<Kpi kpi={kpis.revenueLifetime} label="Lifetime" />
-					<Kpi kpi={kpis.revenue1y} label="1Y" />
-					<Kpi kpi={kpis.revenue30d} label="30d" />
-					<Kpi kpi={kpis.revenueMargin} label="Margin" />
+					<Kpi kpi={r?.lifetime} label="Lifetime" />
+					<Kpi kpi={r?.y1} label="1Y" />
+					<Kpi kpi={r?.d30} label="30d" />
+					<Kpi kpi={margin} label="Margin" />
 				</KpiBand>
 
 				<KpiBand label="Revenue Composition">
-					<Kpi kpi={kpis.userFeesLifetime} label="User Fees (Lifetime)" />
-					<Kpi kpi={kpis.supplySideRevenueLifetime} label="Supply-side (Lifetime)" />
-					<Kpi kpi={kpis.protocolRevenueLifetime} label="Protocol (Lifetime)" />
-					<Kpi kpi={kpis.holdersRevenueLifetime} label="Holders (Lifetime)" />
-					<Kpi kpi={kpis.supplySideRevenue30d} label="Supply-side (30d)" />
-					<Kpi kpi={kpis.holdersRevenue30d} label="Holders (30d)" />
+					<Kpi kpi={userFees.data?.lifetime} label="User Fees (Lifetime)" />
+					<Kpi kpi={supplySide.data?.lifetime} label="Supply-side (Lifetime)" />
+					<Kpi kpi={protocolRev.data?.lifetime} label="Protocol (Lifetime)" />
+					<Kpi kpi={holdersRev.data?.lifetime} label="Holders (Lifetime)" />
+					<Kpi kpi={supplySide.data?.d30} label="Supply-side (30d)" />
+					<Kpi kpi={holdersRev.data?.d30} label="Holders (30d)" />
 					<Kpi kpi={kpis.nodesPoolsShare} label="Nodes & Pools Share" />
 					<Kpi kpi={kpis.topChainByFees} label="Top Chain by Fees" />
 				</KpiBand>

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, useMemo, useState } from 'react'
 import type { IBarChartProps, IChartProps, IHBarChartProps, IPieChartProps } from '~/components/ECharts/types'
+import { formattedNum } from '~/utils'
 import {
 	barStacks,
 	chartToData,
@@ -24,6 +25,43 @@ export function useThorchainData<T>(fn: string) {
 			const res = await fetch(`/api/public/thorchain/${fn}`)
 			if (!res.ok) throw new Error(`THORChain ${fn} error: ${res.status}`)
 			return res.json()
+		},
+		staleTime: 10 * 60 * 1000,
+		refetchOnWindowFocus: false
+	})
+}
+
+const DAY = 86400
+
+export interface SeriesKpis {
+	lifetime: KpiT
+	y1: KpiT
+	d30: KpiT
+	d7: KpiT
+}
+
+function windowKpi(series: [number, number][], days?: number): KpiT {
+	const last = series[series.length - 1][0]
+	const cutoff = days ? last - days * DAY : -Infinity
+	const sum = series.reduce((acc, [t, v]) => (t > cutoff ? acc + (v || 0) : acc), 0)
+	return { value: sum, formatted: formattedNum(sum, true) }
+}
+
+// Trailing-window USD sums of a DefiLlama daily series, fetched once and cached by `key`. The
+// Overview and Financials KPIs share these cache keys so the same metric reads identical numbers
+// in both tabs (single source — DefiLlama — instead of mixing in the ir-server's own totals).
+export function useAdapterSeries(key: string, fetcher: () => Promise<[number, number][]>) {
+	return useQuery<SeriesKpis | null>({
+		queryKey: ['thorchain-adapter-series', key],
+		queryFn: async () => {
+			const series = await fetcher()
+			if (!series?.length) return null
+			return {
+				lifetime: windowKpi(series),
+				y1: windowKpi(series, 365),
+				d30: windowKpi(series, 30),
+				d7: windowKpi(series, 7)
+			}
 		},
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false

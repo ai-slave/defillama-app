@@ -364,7 +364,12 @@ export default function Revenue() {
 						{ key: 'grossPnlUsd', label: 'Gross PnL', right: true, render: (r) => fmtUsd(r.grossPnlUsd) },
 						{ key: 'feeRate', label: 'Fee', right: true, render: (r) => `${((r.feeRate ?? 0) * 100).toFixed(1)}%` },
 						{ key: 'pnlUsd', label: 'Unclaimed Yield', right: true, render: (r) => fmtUsd(r.pnlUsd) },
-						{ key: 'lastHarvestDate', label: 'Last Harvest', right: true, render: (r) => r.lastHarvestDate || '—' }
+						{
+							key: 'lastHarvestDate',
+							label: 'Last Harvest',
+							right: true,
+							render: (r) => (r.lastHarvestDate ? `${r.lastHarvestDate} · ${fmtUsd(r.lastHarvestUsd)}` : '—')
+						}
 					]}
 				/>
 			</SubSectionCard>

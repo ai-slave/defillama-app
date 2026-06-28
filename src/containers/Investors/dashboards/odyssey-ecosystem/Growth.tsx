@@ -1,7 +1,7 @@
 import { lazy, useState } from 'react'
 import type { IChartProps, IMultiSeriesChartProps } from '~/components/ECharts/types'
 import { useGrowthData, chartToTs, type LooprDailyRow } from './api'
-import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd } from './ui'
+import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd, dollarPctChartOptions } from './ui'
 
 const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -255,7 +255,13 @@ export default function Growth() {
 				<>
 					<SectionHeader>Morpho Market · Supply / Borrow / Utilization</SectionHeader>
 					<ChartCard title="Featured Morpho market" subtitle="Daily supply / borrow / utilization">
-						<MultiSeriesChart series={morphoMarket as any} valueSymbol="$" yAxisSymbols={['$', '%']} height="340px" />
+						<MultiSeriesChart
+							series={morphoMarket as any}
+							valueSymbol="$"
+							yAxisSymbols={['$', '%']}
+							height="340px"
+							chartOptions={dollarPctChartOptions}
+						/>
 					</ChartCard>
 				</>
 			)}
@@ -274,7 +280,13 @@ export default function Growth() {
 							}))
 							return (
 								<ChartCard key={m.id} title={m.title || m.label} subtitle="Daily supply / borrow / utilization">
-									<MultiSeriesChart series={series as any} valueSymbol="$" yAxisSymbols={['$', '%']} height="300px" />
+									<MultiSeriesChart
+										series={series as any}
+										valueSymbol="$"
+										yAxisSymbols={['$', '%']}
+										height="300px"
+										chartOptions={dollarPctChartOptions}
+									/>
 								</ChartCard>
 							)
 						})}
