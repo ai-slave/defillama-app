@@ -79,7 +79,7 @@ export const MAIN_SITE_IR_DASHBOARDS: MainSiteIrDashboard[] = [
 		slug: 'sonic',
 		entityName: 'Sonic',
 		customOnly: true,
-		brandGradient: 'linear-gradient(90deg, #fac461, #e3570a, #3b5d88, #203f55)',
+		brandGradient: 'linear-gradient(90deg, #fac461, #fe7d2d, #e3570a)',
 		tabLabel: 'Investor Relations',
 		tabTooltip: IR_TAB_TOOLTIP
 	},

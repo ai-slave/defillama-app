@@ -22,9 +22,18 @@ interface SubscribeArgs {
 	newsletters: NewsletterKey[]
 }
 
+interface MediaKitArgs {
+	email: string
+}
+
 export interface NewsletterSubscribeResponse {
 	email: string
 	result: Partial<Record<NewsletterKey, string>>
+}
+
+export interface MediaKitEmailResponse {
+	email: string
+	sent: true
 }
 
 export function shouldShowNewsletterSignup(user: AuthModel | null | undefined): boolean {
@@ -46,7 +55,7 @@ export interface NewsletterSuccessToast {
 }
 
 const DEFAULT_SUCCESS_TOAST: NewsletterSuccessToast = {
-	title: 'Subscribed! Check your inbox to confirm.'
+	title: 'Subscribed to selected newsletters'
 }
 
 export function useNewsletterSubscription({
@@ -88,6 +97,29 @@ export function useNewsletterSubscription({
 		},
 		onError: (err) => {
 			toast.error(getUserFacingErrorMessage(err, 'Could not subscribe. Please try again.'))
+		}
+	})
+}
+
+export function useMediaKitEmail() {
+	return useMutation<MediaKitEmailResponse, Error, MediaKitArgs>({
+		mutationFn: async ({ email }) => {
+			const res = await fetch(`${AUTH_SERVER}/newsletter/subscribe`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ email, mediaKit: true })
+			})
+			await handleSimpleFetchResponse(res)
+			return (await res.json()) as MediaKitEmailResponse
+		},
+		onSuccess: () => {
+			successToast({
+				title: 'Media kit sent',
+				description: 'Check your inbox for the PDF link.'
+			})
+		},
+		onError: (err) => {
+			toast.error(getUserFacingErrorMessage(err, 'Could not send the media kit. Please try again.'))
 		}
 	})
 }

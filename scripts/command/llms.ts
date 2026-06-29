@@ -265,6 +265,11 @@ const OPTIONAL_LINKS: LlmsLink[] = [
 		description: 'DefiLlama research articles and market analysis.'
 	},
 	{
+		title: 'Newsletters',
+		url: '/newsletters',
+		description: 'Subscribe to DefiLlama newsletters and research updates.'
+	},
+	{
 		title: 'Research sitemap',
 		url: '/research/sitemap.xml',
 		description: 'Sitemap for DefiLlama research pages.'

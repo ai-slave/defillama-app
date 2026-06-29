@@ -2,13 +2,10 @@ import Link from 'next/link'
 import { type ChangeEvent, type FormEvent, useId, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { ResearchIcon } from '~/components/ResearchIcon'
-import { FEATURES_SERVER } from '~/constants'
-import { useNewsletterSubscription } from '~/hooks/useNewsletterSubscription'
+import { useMediaKitEmail } from '~/hooks/useNewsletterSubscription'
 
-const MEDIA_KIT_URL = `${FEATURES_SERVER.replace(/\/$/, '')}/uploads/media-kit.pdf`
 const BRAND_KIT_URL = 'https://defillama.com/defillama-press-kit.zip'
-const NEWSLETTER_URL =
-	'https://newsletter.defillama.com/?utm_source=defillama&utm_medium=research&utm_campaign=research_footer'
+const NEWSLETTER_URL = '/newsletters'
 
 type FooterLink = { label: string; href: string; external?: boolean }
 type FooterColumnDef = { title: string; links: FooterLink[] }
@@ -193,36 +190,31 @@ function FooterAccordion({ title, links }: FooterColumnDef) {
 	)
 }
 
-function FooterNewsletter() {
-	const mutation = useNewsletterSubscription({
-		successMessage: { title: 'Subscribed to our mailing list!' }
-	})
+function FooterMediaKit() {
+	const mutation = useMediaKitEmail()
 	const [email, setEmail] = useState('')
-	const [isSubscribed, setIsSubscribed] = useState(false)
+	const [isSent, setIsSent] = useState(false)
 
 	const isPending = mutation.isPending
 	const trimmedEmail = email.trim()
-	const canSubmit = !isPending && !isSubscribed && trimmedEmail.length > 0
+	const canSubmit = !isPending && !isSent && trimmedEmail.length > 0
 
 	const onEmailChange = (e: ChangeEvent<HTMLInputElement>) => {
 		setEmail(e.target.value)
-		if (isSubscribed) setIsSubscribed(false)
+		if (isSent) setIsSent(false)
 	}
 
 	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault()
 		if (!canSubmit) return
-		mutation.mutate(
-			{ email: trimmedEmail, newsletters: ['newsletter', 'research'] },
-			{ onSuccess: () => setIsSubscribed(true) }
-		)
+		mutation.mutate({ email: trimmedEmail }, { onSuccess: () => setIsSent(true) })
 	}
 
 	return (
 		<div className="flex flex-col gap-4">
-			<h2 className={headingClassName}>Subscribe &amp; get our media kit</h2>
+			<h2 className={headingClassName}>Get our media kit</h2>
 			<p className={`max-w-sm ${descriptionClassName}`}>
-				Join DefiLlama Research and instantly unlock our full media kit.
+				Explore our product overviews, package details, key differentiators, and essential information.
 			</p>
 			<form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
 				<input
@@ -237,33 +229,27 @@ function FooterNewsletter() {
 				<button
 					type="submit"
 					aria-busy={isPending}
-					disabled={isPending || isSubscribed}
+					disabled={!canSubmit}
 					className={`${primaryButtonClassName} shrink-0 disabled:opacity-70 ${
 						isPending ? 'disabled:cursor-wait' : 'disabled:cursor-not-allowed'
 					}`}
 				>
 					{isPending ? (
 						<span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-					) : isSubscribed ? (
-						'Subscribed'
+					) : isSent ? (
+						'Sent'
 					) : (
-						'Subscribe'
+						'Send media kit'
 					)}
 				</button>
 			</form>
-			<a
-				href={MEDIA_KIT_URL}
-				target="_blank"
-				rel="noopener noreferrer"
-				className={`${descriptionClassName} inline-flex w-fit items-center gap-2 underline underline-offset-4 transition-opacity hover:opacity-60`}
-			>
-				<ResearchIcon name="research-media-kit" width={16} height={16} aria-hidden />
-				Download media kit
-			</a>
-			<a
+			{isSent ? (
+				<p role="status" className={descriptionClassName}>
+					Check your inbox for the media kit link.
+				</p>
+			) : null}
+			<Link
 				href={NEWSLETTER_URL}
-				target="_blank"
-				rel="noopener noreferrer"
 				className={`${headingClassName} group mt-1 inline-flex w-fit items-center gap-1.5 transition-opacity hover:opacity-60`}
 			>
 				DefiLlama newsletters
@@ -273,7 +259,7 @@ function FooterNewsletter() {
 					width={14}
 					className="transition-transform duration-200 group-hover:translate-x-0.5"
 				/>
-			</a>
+			</Link>
 		</div>
 	)
 }
@@ -312,12 +298,12 @@ export function ResearchFooter({ maxWidthClassName = 'max-w-7xl' }: { maxWidthCl
 							<FooterColumn key={col.title} title={col.title} links={col.links} />
 						))}
 						<div className="w-full lg:w-auto lg:max-w-sm">
-							<FooterNewsletter />
+							<FooterMediaKit />
 						</div>
 					</div>
 
 					<div className="flex flex-col md:hidden">
-						<FooterNewsletter />
+						<FooterMediaKit />
 						<nav aria-label="Footer links" className="mt-8 border-t border-(--cards-border)">
 							{FOOTER_COLUMNS.map((col) => (
 								<FooterAccordion key={col.title} title={col.title} links={col.links} />

@@ -247,7 +247,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 						</button>
 						{noneSelected ? (
 							<p id={helperId} className="text-xs text-(--sub-text-muted)">
-								Select at least one newsletter.
+								Choose at least one newsletter.
 							</p>
 						) : null}
 					</div>
@@ -270,7 +270,7 @@ function NewsletterSuccess({
 		return (
 			<div role="status" className="flex items-center gap-2 text-sm text-(--text-primary)">
 				<Icon name="check-circle" height={20} width={20} className="shrink-0 text-(--sub-brand-primary)" />
-				<span>Subscribed — check your inbox to confirm.</span>
+				<span>Subscribed to selected newsletters.</span>
 			</div>
 		)
 	}
@@ -281,9 +281,9 @@ function NewsletterSuccess({
 				<Icon name="check-circle" height={28} width={28} className="text-(--sub-brand-primary)" />
 			</div>
 			<div className="flex flex-col gap-1">
-				<span className="text-base font-medium text-(--sub-ink-primary) dark:text-white">You're subscribed</span>
+				<span className="text-base font-medium text-(--sub-ink-primary) dark:text-white">You are subscribed</span>
 				<p className="max-w-[360px] text-xs leading-4 text-(--sub-text-muted)">
-					Confirmation sent to <span className="font-medium">{email}</span>. Check your inbox to confirm.
+					<span className="font-medium">{email}</span> is subscribed to the selected newsletters.
 				</p>
 			</div>
 			<button
