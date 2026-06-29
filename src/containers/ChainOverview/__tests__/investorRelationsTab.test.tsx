@@ -14,7 +14,7 @@ function setupChainMocks({ user, query }: { user: unknown; query: Record<string,
 		InvestorRelationsView: () => React.createElement('div', null, 'IR-VIEW-MARKER')
 	}))
 	vi.doMock('~/components/RowLinksWithDropdown', () => ({
-		RowLinksWithDropdown: () => null
+		RowLinksWithDropdown: () => React.createElement('div', null, 'CHAIN-LINKS-MARKER')
 	}))
 	vi.doMock('~/components/EntityQuestionsStrip', () => ({
 		EntityQuestionsStrip: () => null
@@ -107,5 +107,36 @@ describe('Chain Investor Relations tab', () => {
 		const markup = renderToStaticMarkup(React.createElement(ChainOverview, chainProps('Ethereum')))
 
 		expect(markup).not.toContain('Investor Relations')
+	})
+
+	it('renders chain warning banners directly below the announcement before layout metrics', async () => {
+		vi.doMock('~/layout', () => ({
+			default: ({ announcement, children }: { announcement?: React.ReactNode; children?: React.ReactNode }) =>
+				React.createElement(
+					React.Fragment,
+					null,
+					announcement,
+					React.createElement('div', null, 'METRICS-MARKER'),
+					children
+				)
+		}))
+		vi.doMock('~/containers/ChainOverview', () => ({
+			ChainOverview: () => React.createElement('div', null, 'OVERVIEW-MARKER')
+		}))
+		vi.doMock('~/containers/ChainOverview/Announcement', () => ({
+			ChainOverviewAnnouncement: () => React.createElement('div', null, 'ANNOUNCEMENT-MARKER')
+		}))
+		vi.doMock('~/containers/ChainOverview/WarningBanners', () => ({
+			ChainWarningBanners: () => React.createElement('div', null, 'WARNING-MARKER')
+		}))
+
+		const { default: ChainPage } = await import('../../../pages/chain/[chain]')
+		const markup = renderToStaticMarkup(
+			React.createElement(ChainPage as React.ComponentType<any>, chainProps('Arbitrum Nova'))
+		)
+
+		expect(markup.indexOf('ANNOUNCEMENT-MARKER')).toBeLessThan(markup.indexOf('WARNING-MARKER'))
+		expect(markup.indexOf('WARNING-MARKER')).toBeLessThan(markup.indexOf('METRICS-MARKER'))
+		expect(markup.indexOf('METRICS-MARKER')).toBeLessThan(markup.indexOf('OVERVIEW-MARKER'))
 	})
 })

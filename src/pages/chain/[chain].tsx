@@ -4,6 +4,7 @@ import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { ChainOverview } from '~/containers/ChainOverview'
 import { ChainOverviewAnnouncement } from '~/containers/ChainOverview/Announcement'
 import { getChainOverviewData } from '~/containers/ChainOverview/queries.server'
+import { ChainWarningBanners } from '~/containers/ChainOverview/WarningBanners'
 import { fetchEntityQuestions } from '~/containers/LlamaAI/api'
 import Layout from '~/layout'
 import { slug } from '~/utils'
@@ -112,7 +113,12 @@ export default function Chain(props: InferGetStaticPropsType<typeof getStaticPro
 			metricFilters={props.tvlAndFeesOptions}
 			metricFiltersLabel={getMetricFiltersLabel(props.tvlAndFeesOptions) ?? undefined}
 			pageName={pageName}
-			announcement={<ChainOverviewAnnouncement chainName={props.metadata.name} />}
+			announcement={
+				<>
+					<ChainOverviewAnnouncement chainName={props.metadata.name} />
+					<ChainWarningBanners warningBanners={props.warningBanners} chainName={props.metadata.name} />
+				</>
+			}
 		>
 			<ChainOverview {...props} />
 		</Layout>

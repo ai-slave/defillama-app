@@ -50,7 +50,7 @@ import { applyTvlOverlapBaseAdjustment } from '~/utils/tvl'
 import type { ChainChartLabels } from './constants'
 import { fetchHomepageUnlocksSummary } from './homepageUnlocks.server'
 import type { IChainOverviewData, ILiteChart } from './types'
-import { formatChainAssets } from './utils'
+import { formatChainAssets, getChainWarningBanners } from './utils'
 
 const FEE_EXTRA_PHASE_BY_SETTING = {
 	bribes: {
@@ -62,6 +62,12 @@ const FEE_EXTRA_PHASE_BY_SETTING = {
 		app: 'app_token_tax'
 	}
 } as const
+
+type ChainConfigResult = {
+	stablecoins: Array<string> | null
+	website: string | null
+	warningBanners: IChainOverviewData['warningBanners']
+}
 
 function emptyLiteChart(): ILiteChart {
 	return {
@@ -355,7 +361,7 @@ export async function getChainOverviewData({
 			chainIncentives,
 			datInflows,
 			stablecoinsData,
-			chainStablecoins,
+			chainConfig,
 			rwaStats
 		]: [
 			ILiteChart,
@@ -385,7 +391,7 @@ export async function getChainOverviewData({
 			ChainIncentivesSummary | null,
 			{ chart: Array<[number, number]>; total30d: number } | null,
 			StablecoinsListResponse | null,
-			Array<string> | null,
+			ChainConfigResult | null,
 			IRWAStatsResponse | null
 		] = await Promise.all([
 			timePhase(
@@ -551,12 +557,17 @@ export async function getChainOverviewData({
 				fallback: null
 			}),
 			timePhase(
-				'chain_stablecoins',
+				'chain_config',
 				() =>
 					chain !== 'All'
-						? fetchLlamaConfig().then(
-								(data) => data.chainCoingeckoIds?.[currentChainMetadata.name]?.stablecoins ?? null
-							)
+						? fetchLlamaConfig().then((data) => {
+								const config = data.chainCoingeckoIds?.[currentChainMetadata.name]
+								return {
+									stablecoins: config?.stablecoins ?? null,
+									website: config?.url ?? null,
+									warningBanners: config?.warningBanners ?? []
+								}
+							})
 						: Promise.resolve(null),
 				{ fallback: null }
 			),
@@ -831,10 +842,12 @@ export async function getChainOverviewData({
 			isDataAvailable,
 			datInflows: datInflows ?? null,
 			chainStablecoins:
-				chainStablecoins?.map((coin) => {
+				chainConfig?.stablecoins?.map((coin) => {
 					const coinData = stablecoinsData?.peggedAssets?.find((c) => c.gecko_id === coin)
 					return { name: coinData?.name ?? coin, url: `/stablecoin/${coin}`, symbol: coinData?.symbol ?? null }
-				}) ?? null
+				}) ?? null,
+			website: chainConfig?.website ?? null,
+			warningBanners: getChainWarningBanners(chainConfig?.warningBanners)
 		}
 		stopOverviewTransform?.()
 		return result

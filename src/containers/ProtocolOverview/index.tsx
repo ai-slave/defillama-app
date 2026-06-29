@@ -161,6 +161,11 @@ function ProtocolHeader({
 					</Tooltip>
 				) : null}
 				<span className="ml-auto flex items-center justify-end gap-2">
+					{props.website ? (
+						<a href={props.website} target="_blank" rel="noopener noreferrer" aria-label={`${props.name} website`}>
+							<Icon name="link" width={16} height={16} className="shrink-0" />
+						</a>
+					) : null}
 					<Bookmark readableName={props.name} />
 				</span>
 			</Tag>

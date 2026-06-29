@@ -97,7 +97,15 @@ export interface IChainOverviewData {
 		total30d: number
 	} | null
 	chainStablecoins: Array<{ name: string; url: string; symbol: string | null }> | null
+	website: string | null
+	warningBanners?: Array<IChainWarningBanner>
 	entityQuestions?: string[]
+}
+
+interface IChainWarningBanner {
+	message: string
+	until?: number | string
+	level: 'low' | 'alert' | 'rug'
 }
 
 export interface ILiteChart {

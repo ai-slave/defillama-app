@@ -453,6 +453,79 @@ describe('ProtocolOverview SEO contract', () => {
 
 		expect(capturedTab).toBe('information')
 	})
+
+	it('renders a protocol website link in the header', async () => {
+		vi.doMock('next/router', () => ({
+			useRouter: () => ({ query: {} })
+		}))
+		vi.doMock('~/api/client', () => ({
+			useGetTokenPrice: () => ({ data: null, isLoading: false })
+		}))
+		vi.doMock('../helpers', () => ({
+			useFinalTVL: () => ({
+				tvl: 0,
+				tvlByChain: [],
+				oracleTvs: 0,
+				oracleTvsByChain: [],
+				toggleOptions: undefined
+			}),
+			getPrimaryValueLabelType: () => ({
+				title: 'Total Value Locked',
+				byChainTitle: 'TVL by chain'
+			})
+		}))
+		vi.doMock('~/components/Bookmark', () => ({
+			Bookmark: () => null
+		}))
+		vi.doMock('~/components/Icon', () => ({
+			Icon: () => null
+		}))
+		vi.doMock('~/components/SEO', () => ({
+			LinkPreviewCard: () => null
+		}))
+		vi.doMock('~/components/TokenLogo', () => ({
+			TokenLogo: () => null
+		}))
+		vi.doMock('~/components/Tooltip', () => ({
+			Tooltip: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children)
+		}))
+		vi.doMock('../AdditionalInfo', () => ({
+			AdditionalInfo: () => null
+		}))
+		vi.doMock('../KeyMetrics', () => ({
+			KeyMetrics: () => null
+		}))
+		vi.doMock('../ProtocolChartPanel', () => ({
+			ProtocolChartPanel: () => null
+		}))
+		vi.doMock('../Layout', () => ({
+			ProtocolOverviewLayout: ({ children }: { children?: React.ReactNode }) =>
+				React.createElement(React.Fragment, null, children)
+		}))
+
+		const { ProtocolOverview } = await import('../index')
+		const props = {
+			name: 'Aave',
+			category: 'Lending',
+			metrics,
+			chartDenominations: [],
+			token: {
+				symbol: 'AAVE'
+			},
+			website: 'https://aave.com',
+			isCEX: false,
+			deprecated: false,
+			hasKeyMetrics: false,
+			incomeStatement: null,
+			seoTitle: 'Aave',
+			seoDescription: 'Aave protocol overview'
+		} as Parameters<typeof ProtocolOverview>[0]
+
+		const markup = renderToStaticMarkup(React.createElement(ProtocolOverview, props))
+
+		expect(markup).toContain('href="https://aave.com"')
+		expect(markup).toContain('aria-label="Aave website"')
+	})
 })
 
 describe('ProtocolInfo category links', () => {

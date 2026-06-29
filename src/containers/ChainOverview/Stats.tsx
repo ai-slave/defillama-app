@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { Bookmark } from '~/components/Bookmark'
 import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
 import { DWMC_GROUPING_OPTIONS_LOWERCASE, type LowercaseDwmcGrouping } from '~/components/ECharts/ChartGroupingSelector'
+import { Icon } from '~/components/Icon'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/components/Tooltip'
 import { chainCoingeckoIdsForGasNotMcap } from '~/constants/chainTokens'
@@ -137,7 +138,19 @@ export function Stats(props: IStatsProps) {
 					<h1 className="flex flex-nowrap items-center gap-2 *:last:ml-auto">
 						<TokenLogo name={props.metadata.name} kind="chain" size={24} alt={`Logo of ${props.metadata.name}`} />
 						<span className="text-xl font-semibold">{props.metadata.name}</span>
-						<Bookmark readableName={props.metadata.name} isChain />
+						<span className="ml-auto flex items-center justify-end gap-2">
+							{props.website ? (
+								<a
+									href={props.website}
+									target="_blank"
+									rel="noopener noreferrer"
+									aria-label={`${props.metadata.name} website`}
+								>
+									<Icon name="link" width={16} height={16} className="shrink-0" />
+								</a>
+							) : null}
+							<Bookmark readableName={props.metadata.name} isChain />
+						</span>
 					</h1>
 				) : null}
 				{props.protocols.length > 0 ? (
