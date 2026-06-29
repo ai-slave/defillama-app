@@ -614,7 +614,10 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 					rwaClassificationOptions: props.rwaClassificationOptions,
 					accessModelOptions: props.accessModelOptions,
 					issuers: props.issuers,
-					categorySlug: props.categorySlug
+					chainSlug: props.chainSlug,
+					categorySlug: props.categorySlug,
+					platformSlug: props.platformSlug,
+					assetGroupSlug: props.assetGroupSlug
 				}}
 				selections={{
 					selectedAssetNames,

@@ -8,36 +8,25 @@ import type { ExcludeQueryKey } from './types'
 // - include="None" => "none selected"
 // - include=[...] or include="..." => explicit include selection(s)
 // - exclude=[...] or exclude="..." => start from all, then remove excludes
-export const updateQueryFromSelected = (
-	router: NextRouter,
+export const getQueryUpdatesFromSelected = (
 	includeKey: string,
 	excludeKey: ExcludeQueryKey,
 	allKeys: string[],
 	// 'None' is a sentinel meaning "nothing selected" — keep it explicit in the type
 	values: string[] | string | 'None' | null,
-	defaultSelectedValues?: string[],
-	options?: {
-		resetPage?: boolean
-		pushQueryUpdates?: (updates: Record<string, string | string[] | undefined>) => void
-	}
-) => {
+	defaultSelectedValues?: string[]
+): Record<string, string | string[] | undefined> => {
 	const updates: Record<string, string | string[] | undefined> = {}
 
 	const setOrDelete = (key: string, value: string | string[] | null) => {
 		updates[key] = value === null ? undefined : value
 	}
-	const pushUpdates = () => {
-		const payload = options?.resetPage ? { ...updates, page: undefined } : updates
-		if (options?.pushQueryUpdates) {
-			options.pushQueryUpdates(payload)
-			return
-		}
-		void pushShallowQuery(router, payload)
-	}
 
 	const validSet = new Set(allKeys)
 	const defaultSelected = defaultSelectedValues ? defaultSelectedValues.filter((value) => validSet.has(value)) : null
 	const defaultIsAll = !defaultSelected || defaultSelected.length === allKeys.length
+	const defaultSelection = defaultSelected ?? allKeys
+	const defaultSelectionSet = new Set(defaultSelection)
 
 	let nextValues = values
 
@@ -46,18 +35,20 @@ export const updateQueryFromSelected = (
 		if (defaultIsAll) {
 			setOrDelete(includeKey, null)
 			setOrDelete(excludeKey, null)
-			pushUpdates()
-			return
+			return updates
 		}
 		nextValues = allKeys
 	}
 
-	// None selected => explicit sentinel (and clear excludes)
-	if (nextValues === 'None' || (Array.isArray(nextValues) && nextValues.length === 0)) {
+	if (nextValues === 'None') {
+		if (defaultSelection.length === 0) {
+			setOrDelete(includeKey, null)
+			setOrDelete(excludeKey, null)
+			return updates
+		}
 		setOrDelete(includeKey, 'None')
 		setOrDelete(excludeKey, null)
-		pushUpdates()
-		return
+		return updates
 	}
 
 	// Single-select value: always write include="..."
@@ -65,28 +56,30 @@ export const updateQueryFromSelected = (
 		if (defaultSelected?.length === 1 && defaultSelected[0] === nextValues) {
 			setOrDelete(includeKey, null)
 			setOrDelete(excludeKey, null)
-			pushUpdates()
-			return
+			return updates
 		}
 		setOrDelete(includeKey, nextValues)
 		setOrDelete(excludeKey, null)
-		pushUpdates()
-		return
+		return updates
 	}
 
 	const selected = nextValues.filter((v) => validSet.has(v))
 	const selectedSet = new Set(selected)
 
 	// Default selection => no params
-	const defaultSelection = defaultSelected ?? allKeys
-	const defaultSelectionSet = new Set(defaultSelection)
 	const isDefaultSelection =
 		selected.length === defaultSelection.length && selected.every((value) => defaultSelectionSet.has(value))
 	if (isDefaultSelection) {
 		setOrDelete(includeKey, null)
 		setOrDelete(excludeKey, null)
-		pushUpdates()
-		return
+		return updates
+	}
+
+	// None selected => explicit sentinel (and clear excludes)
+	if (selected.length === 0) {
+		setOrDelete(includeKey, 'None')
+		setOrDelete(excludeKey, null)
+		return updates
 	}
 
 	const excluded = allKeys.filter((k) => !selectedSet.has(k))
@@ -102,5 +95,27 @@ export const updateQueryFromSelected = (
 		setOrDelete(includeKey, selected.length === 1 ? selected[0] : selected)
 	}
 
-	pushUpdates()
+	return updates
+}
+
+export const updateQueryFromSelected = (
+	router: NextRouter,
+	includeKey: string,
+	excludeKey: ExcludeQueryKey,
+	allKeys: string[],
+	// 'None' is a sentinel meaning "nothing selected" — keep it explicit in the type
+	values: string[] | string | 'None' | null,
+	defaultSelectedValues?: string[],
+	options?: {
+		resetPage?: boolean
+		pushQueryUpdates?: (updates: Record<string, string | string[] | undefined>) => void
+	}
+) => {
+	const updates = getQueryUpdatesFromSelected(includeKey, excludeKey, allKeys, values, defaultSelectedValues)
+	const payload = options?.resetPage ? { ...updates, page: undefined } : updates
+	if (options?.pushQueryUpdates) {
+		options.pushQueryUpdates(payload)
+		return
+	}
+	void pushShallowQuery(router, payload)
 }

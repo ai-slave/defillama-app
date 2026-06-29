@@ -495,7 +495,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 				<Icon name="settings" className="size-3.5 text-(--text-tertiary)" />
 			</Ariakit.DialogDisclosure>
 			<Ariakit.Dialog
-				className="fixed inset-(--inset) top-0 right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-[85dvh] min-h-[40dvh] w-full max-w-full flex-col overflow-hidden rounded-t-xl border border-[color-mix(in_oklch,black_8%,transparent)] bg-(--app-bg) pb-[max(0px,env(safe-area-inset-bottom))] shadow-[0_24px_64px_-16px_rgb(0_0_0/0.45),0_0_0_1px_color-mix(in_oklch,black_4%,transparent)] max-sm:drawer sm:mb-auto sm:h-fit sm:max-h-[min(760px,calc(100%-32px))] sm:min-h-[initial] sm:max-w-[min(calc(100%-32px),860px)] sm:rounded-xl sm:pb-0 dark:border-[color-mix(in_oklch,white_9%,transparent)] dark:shadow-[0_24px_64px_-16px_rgb(0_0_0/0.6),0_0_0_1px_color-mix(in_oklch,white_3%,transparent)_inset]"
+				className="fixed inset-(--inset) top-0 right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-[85dvh] min-h-[40dvh] w-full max-w-full flex-col overflow-hidden rounded-t-xl border border-[color-mix(in_oklch,black_8%,transparent)] bg-(--cards-bg) pb-[max(0px,env(safe-area-inset-bottom))] shadow-[0_24px_64px_-16px_rgb(0_0_0/0.45),0_0_0_1px_color-mix(in_oklch,black_4%,transparent)] max-sm:drawer sm:mb-auto sm:h-fit sm:max-h-[min(760px,calc(100%-32px))] sm:min-h-[initial] sm:max-w-[min(calc(100%-32px),860px)] sm:rounded-xl sm:pb-0 dark:border-[color-mix(in_oklch,white_9%,transparent)] dark:shadow-[0_24px_64px_-16px_rgb(0_0_0/0.6),0_0_0_1px_color-mix(in_oklch,white_3%,transparent)_inset]"
 				unmountOnHide
 			>
 				<div className="flex items-center justify-between gap-3 border-b border-(--cards-border) px-4 py-3">
@@ -617,7 +617,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 					</section>
 				</div>
 
-				<div className="flex items-center justify-between gap-2 border-t border-(--cards-border) bg-(--app-bg) px-4 py-3">
+				<div className="flex items-center justify-between gap-2 border-t border-(--cards-border) bg-(--cards-bg) px-4 py-3">
 					{draftFilters.length > 0 ? (
 						<button
 							type="button"

@@ -1,6 +1,6 @@
 import type { NextRouter } from 'next/router'
 import { describe, expect, it, vi } from 'vitest'
-import { updateQueryFromSelected } from '../query'
+import { getQueryUpdatesFromSelected, updateQueryFromSelected } from '../query'
 
 const router = {} as NextRouter
 
@@ -29,6 +29,22 @@ describe('updateQueryFromSelected', () => {
 
 		expect(pushQueryUpdates).toHaveBeenCalledWith({
 			include: 'a',
+			exclude: undefined
+		})
+	})
+})
+
+describe('getQueryUpdatesFromSelected', () => {
+	it('serializes empty selections as None when the default is not empty', () => {
+		expect(getQueryUpdatesFromSelected('include', 'exclude', ['a', 'b'], [], ['a', 'b'])).toEqual({
+			include: 'None',
+			exclude: undefined
+		})
+	})
+
+	it('clears params for empty selections when the default is also empty', () => {
+		expect(getQueryUpdatesFromSelected('include', 'exclude', ['a', 'b'], [], [])).toEqual({
+			include: undefined,
 			exclude: undefined
 		})
 	})
