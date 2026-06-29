@@ -3,6 +3,7 @@ import { type ChangeEvent, type FormEvent, useId, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { useMediaKitEmail } from '~/hooks/useNewsletterSubscription'
+import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const BRAND_KIT_URL = 'https://defillama.com/defillama-press-kit.zip'
 const NEWSLETTER_URL = '/newsletters'
@@ -207,7 +208,16 @@ function FooterMediaKit() {
 	const handleSubmit = (e: FormEvent) => {
 		e.preventDefault()
 		if (!canSubmit) return
-		mutation.mutate({ email: trimmedEmail }, { onSuccess: () => setIsSent(true) })
+		const submittedEmail = trimmedEmail
+		mutation.mutate(
+			{ email: submittedEmail },
+			{
+				onSuccess: () => {
+					trackUmamiEvent('research-media-kit-email-sent', { email: submittedEmail })
+					setIsSent(true)
+				}
+			}
+		)
 	}
 
 	return (
