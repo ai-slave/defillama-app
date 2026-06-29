@@ -1,4 +1,4 @@
-import type { ITokenRightsData } from '~/containers/TokenRights/api.types'
+import type { ITokenRightsData } from '~/containers/TokenRights/types'
 import { extractYieldPoolTokens } from '~/containers/Yields/domain/poolFilters'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import type { ProtocolLlamaswapMetadata } from '~/utils/metadata/types'

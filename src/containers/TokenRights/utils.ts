@@ -1,17 +1,13 @@
+import type { IRawTokenRightsEntry } from './api.types'
 import type {
-	IRawTokenRightsEntry,
 	ITokenRightsData,
 	ITokenRightsParsedAddress,
-	ITokenRightsParsedLink
-} from './api.types'
+	ITokenRightsParsedLink,
+	ITokenRightsTokenDisplay
+} from './types'
 
-/**
- * Trim whitespace / trailing newlines. Returns `null` when the result is empty.
- */
-export function trimOrNull(val: string | undefined | null): string | null {
-	if (val == null) return null
-	const trimmed = val.trim()
-	return trimmed === '' ? null : trimmed
+function optionalText(value: string | undefined): string | null {
+	return value?.trim() || null
 }
 
 const MARKDOWN_LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g
@@ -21,7 +17,7 @@ const ANGLE_BRACKET_URL_RE = /<(https?:\/\/[^>]+)>/g
  * Extract structured links from a string containing markdown `[label](url)` and/or
  * angle-bracket `<url>` patterns.
  */
-export function parseMarkdownLinks(raw: string | undefined | null): ITokenRightsParsedLink[] {
+function parseMarkdownLinks(raw: string | undefined): ITokenRightsParsedLink[] {
 	if (!raw) return []
 
 	const links: ITokenRightsParsedLink[] = []
@@ -39,11 +35,7 @@ export function parseMarkdownLinks(raw: string | undefined | null): ITokenRights
 		const url = match[1].trim()
 		if (!seen.has(url)) {
 			seen.add(url)
-			try {
-				links.push({ label: new URL(url).hostname, url })
-			} catch {
-				links.push({ label: url, url })
-			}
+			links.push({ label: new URL(url).hostname, url })
 		}
 	}
 
@@ -51,6 +43,8 @@ export function parseMarkdownLinks(raw: string | undefined | null): ITokenRights
 }
 
 const PIPE_PAIR_RE = /^(.+?)\s*\|\s*(.+)$/
+const ACTIVE_STATUS_VALUES = new Set(['active', 'on', 'yes'])
+const INACTIVE_TOKEN_VALUES = new Set(['', 'n/a', 'na', 'none', 'no', 'off', 'unknown'])
 
 /**
  * Parse the "Foundation Multisigs / Addresses" field which uses mixed formats:
@@ -59,7 +53,7 @@ const PIPE_PAIR_RE = /^(.+?)\s*\|\s*(.+)$/
  *   - bare hex addresses
  *   - bare URLs / angle-bracket URLs
  */
-export function parseAddresses(raw: string | undefined | null): ITokenRightsParsedAddress[] {
+function parseAddresses(raw: string | undefined): ITokenRightsParsedAddress[] {
 	if (!raw) return []
 
 	const results: ITokenRightsParsedAddress[] = []
@@ -107,66 +101,132 @@ export function findProtocolEntry(data: IRawTokenRightsEntry[], defillamaId: str
 	return data.find((entry) => entry['DefiLlama ID'] === defillamaId) ?? null
 }
 
+function parseTokenDisplay(tokens: string[]): ITokenRightsTokenDisplay & { tokens: string[] } {
+	const values = tokens
+	const displayTokens: string[] = []
+	let fallbackToken = 'N/A'
+	let hasFallbackToken = false
+
+	for (const token of values) {
+		if (!hasFallbackToken && token.trim()) {
+			fallbackToken = token
+			hasFallbackToken = true
+		}
+		if (!INACTIVE_TOKEN_VALUES.has(normalizeTokenRightsValue(token))) {
+			displayTokens.push(token)
+		}
+	}
+
+	return { tokens: values, displayTokens, fallbackToken }
+}
+
+function isActiveStatus(value: string): boolean {
+	return ACTIVE_STATUS_VALUES.has(normalizeTokenRightsValue(value))
+}
+
+function normalizeTokenRightsValue(value: string): string {
+	return value.trim().toLowerCase()
+}
+
+function splitUtilityLabels(value: string | null): string[] {
+	if (!value) return []
+	return value
+		.split(/[,;\n]+/)
+		.map((item) => item.trim())
+		.filter(Boolean)
+}
+
+function formatList(values: string[]): string | null {
+	const activeValues: string[] = []
+	for (const value of values) {
+		if (value.trim()) activeValues.push(value)
+	}
+	return activeValues.length > 0 ? activeValues.join(', ') : null
+}
+
+function formatDateLabel(value: string): string {
+	return new Date(value).toLocaleDateString(undefined, {
+		day: '2-digit',
+		month: 'short',
+		year: 'numeric'
+	})
+}
+
 /**
  * Transform a raw API entry into the fully predictable `ITokenRightsData` structure
  * consumed by the UI. Every section is always present; nullable fields use `null`.
  */
 export function parseTokenRightsEntry(raw: IRawTokenRightsEntry): ITokenRightsData {
+	const overviewTokens = parseTokenDisplay(raw.Token)
+	const utility = optionalText(raw.Utility)
+	const lastUpdated = raw['Last Updated'].trim()
+	const governanceDecisionTokens = parseTokenDisplay(raw['Governance Decisions'])
+	const fundraising = raw.Fundraising ?? []
+
 	return {
 		overview: {
 			protocolName: raw['Protocol Name'],
-			tokens: raw.Token ?? [],
+			tokens: overviewTokens.tokens,
+			identityTokens: overviewTokens.displayTokens,
 			tokenTypes: raw['Token Type'] ?? [],
-			description: raw['Brief description'] ?? '',
-			utility: trimOrNull(raw.Utility),
-			lastUpdated: trimOrNull(raw['Last Updated'])
+			description: raw['Brief description']?.trim() ?? '',
+			utility,
+			utilityItems: splitUtilityLabels(utility),
+			lastUpdated,
+			lastUpdatedLabel: formatDateLabel(lastUpdated)
 		},
 		governance: {
-			summary: raw['Governance Details (Summary)'] ?? '',
-			decisionTokens: raw['Governance Decisions'] ?? [],
-			details: trimOrNull(raw['Governance details']),
+			summary: raw['Governance Details (Summary)']?.trim() ?? '',
+			decisionTokens: governanceDecisionTokens.tokens,
+			decisionTokenDisplay: {
+				displayTokens: governanceDecisionTokens.displayTokens,
+				fallbackToken: governanceDecisionTokens.fallbackToken
+			},
+			details: optionalText(raw['Governance details']),
 			links: parseMarkdownLinks(raw['Governance Links'])
 		},
 		decisions: {
 			treasury: {
-				tokens: raw['Treasury Decisions'] ?? [],
-				details: trimOrNull(raw['Treasury Details'])
+				...parseTokenDisplay(raw['Treasury Decisions']),
+				details: optionalText(raw['Treasury Details'])
 			},
 			revenue: {
-				tokens: raw['Revenue Decisions'] ?? [],
-				details: trimOrNull(raw['Revenue Details'])
+				...parseTokenDisplay(raw['Revenue Decisions']),
+				details: optionalText(raw['Revenue Details'])
 			}
 		},
 		economic: {
-			summary: trimOrNull(raw['Economic Rights (Summary)']),
-			feeSwitchStatus: raw['Fee Switch Status'] ?? 'OFF',
-			feeSwitchDetails: trimOrNull(raw['Fee Switch Details']),
+			summary: optionalText(raw['Economic Rights (Summary)']),
+			feeSwitchStatus: raw['Fee Switch Status'],
+			feeSwitchDetails: optionalText(raw['Fee Switch Details']),
 			links: parseMarkdownLinks(raw['Economic Links'])
 		},
 		valueAccrual: {
-			primary: trimOrNull(raw['Value Accrual']),
-			details: trimOrNull(raw['Value Accrual Details']),
+			primary: optionalText(raw['Value Accrual']),
+			details: optionalText(raw['Value Accrual Details']),
 			buybacks: {
-				tokens: raw.Buybacks ?? [],
-				details: trimOrNull(raw['Buyback Details'])
+				...parseTokenDisplay(raw.Buybacks),
+				details: optionalText(raw['Buyback Details'])
 			},
 			dividends: {
-				tokens: raw.Dividends ?? [],
-				details: trimOrNull(raw['Dividends Details'])
+				...parseTokenDisplay(raw.Dividends),
+				details: optionalText(raw['Dividends Details'])
 			},
 			burns: {
-				status: raw.Burns ?? 'N/A',
-				details: trimOrNull(raw['Burn Details'])
+				status: raw.Burns,
+				isActive: isActiveStatus(raw.Burns),
+				details: optionalText(raw['Burn Details'])
 			}
 		},
 		alignment: {
-			fundraising: raw.Fundraising ?? [],
-			raiseDetails: trimOrNull(raw['Raise Details']),
+			fundraising,
+			fundraisingLabel: formatList(fundraising),
+			raiseDetails: optionalText(raw['Raise Details']),
 			associatedEntities: raw['Associated Entities'] ?? [],
-			equityRevenueCapture: trimOrNull(raw['Equity Revenue Capture']),
-			equityStatement: trimOrNull(raw['Equity Statement']),
-			ipAndBrand: trimOrNull(raw['IP & Brand']),
-			domain: trimOrNull(raw.Domain),
+			equityRevenueCapture: optionalText(raw['Equity Revenue Capture']),
+			equityStatement: optionalText(raw['Equity Statement']),
+			ipAndBrand: optionalText(raw['IP & Brand']),
+			domain: optionalText(raw.Domain),
 			links: parseMarkdownLinks(raw['Ownership Links'])
 		},
 		resources: {

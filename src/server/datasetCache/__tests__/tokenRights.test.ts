@@ -38,6 +38,7 @@ const makeEntry = (protocolName: string, defillamaId: string): IRawTokenRightsEn
 	Dividends: [],
 	Burns: 'N/A',
 	'Associated Entities': [],
+	'Last Updated': '2026-04-15',
 	'DefiLlama ID': defillamaId
 })
 

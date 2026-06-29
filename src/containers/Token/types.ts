@@ -1,5 +1,5 @@
 import type { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
-import type { ITokenRightsData } from '~/containers/TokenRights/api.types'
+import type { ITokenRightsData } from '~/containers/TokenRights/types'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import type { TokenBorrowRoutesResponse } from './tokenBorrowRoutes.types'
 import type { TokenOverviewData } from './tokenOverview'

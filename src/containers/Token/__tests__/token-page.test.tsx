@@ -6,12 +6,13 @@ import { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/querie
 import { getTokenRiskData } from '~/containers/Token/queries'
 import type { TokenOverviewData } from '~/containers/Token/tokenOverview'
 import type { TokenPageProps, TokenPageSection } from '~/containers/Token/types'
-import type { ITokenRightsData } from '~/containers/TokenRights/api.types'
+import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import {
 	fetchTokenRightsEntries,
 	fetchTokenRightsEntryByDefillamaId,
 	fetchTokenRightsEntryByName
 } from '~/containers/TokenRights/server/dataset'
+import { parseTokenRightsEntry } from '~/containers/TokenRights/utils'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
 import { getTokenBorrowRoutes, getTokenYieldsRows } from '~/containers/Yields/server/dataset'
 import type { IYieldTableRow, IYieldsOptimizerTableRow } from '~/containers/Yields/Tables/types'
@@ -28,53 +29,25 @@ const { capturedTokenNavSections, renderedTokenSections } = vi.hoisted(() => ({
 	renderedTokenSections: [] as string[]
 }))
 
-const tokenRightsFixture: ITokenRightsData = {
-	overview: {
-		protocolName: 'Bitcoin',
-		tokens: ['BTC'],
-		tokenTypes: ['Governance'],
-		description: 'desc',
-		utility: null,
-		lastUpdated: null
-	},
-	governance: {
-		summary: 'gov summary',
-		decisionTokens: ['BTC'],
-		details: null,
-		links: []
-	},
-	decisions: {
-		treasury: { tokens: ['BTC'], details: null },
-		revenue: { tokens: ['N/A'], details: null }
-	},
-	economic: {
-		summary: null,
-		feeSwitchStatus: 'OFF',
-		feeSwitchDetails: null,
-		links: []
-	},
-	valueAccrual: {
-		primary: null,
-		details: null,
-		buybacks: { tokens: ['N/A'], details: null },
-		dividends: { tokens: ['N/A'], details: null },
-		burns: { status: 'N/A', details: null }
-	},
-	alignment: {
-		fundraising: [],
-		raiseDetails: null,
-		associatedEntities: [],
-		equityRevenueCapture: null,
-		equityStatement: null,
-		ipAndBrand: null,
-		domain: null,
-		links: []
-	},
-	resources: {
-		addresses: [],
-		reports: []
-	}
+const tokenRightsEntryFixture: IRawTokenRightsEntry = {
+	'Protocol Name': 'Bitcoin',
+	Token: ['BTC'],
+	'Token Type': ['Governance'],
+	'Brief description': 'desc',
+	'Governance Details (Summary)': 'gov summary',
+	'Governance Decisions': ['BTC'],
+	'Treasury Decisions': ['BTC'],
+	'Revenue Decisions': ['N/A'],
+	'Fee Switch Status': 'OFF',
+	Buybacks: ['N/A'],
+	Dividends: ['N/A'],
+	Burns: 'N/A',
+	'Associated Entities': [],
+	'Last Updated': '2026-04-15',
+	'DefiLlama ID': 'bitcoin'
 }
+
+const tokenRightsFixture = parseTokenRightsEntry(tokenRightsEntryFixture)
 
 const overviewFixture: TokenOverviewData = {
 	name: 'Bitcoin',
@@ -942,6 +915,7 @@ describe('token page', () => {
 				Dividends: ['N/A'],
 				Burns: 'N/A',
 				'Associated Entities': [],
+				'Last Updated': '2026-04-15',
 				'DefiLlama ID': 'parent#chainlink'
 			}
 		]
@@ -992,13 +966,13 @@ describe('token page', () => {
 			'token-rights-and-value-accrual',
 			'token-usage'
 		])
-		expect(tokenRightsSection?.tokenRightsData.overview).toEqual({
+		expect(tokenRightsSection?.tokenRightsData.overview).toMatchObject({
 			protocolName: 'Chainlink',
 			tokens: ['LINK'],
 			tokenTypes: ['Governance'],
 			description: 'desc',
 			utility: null,
-			lastUpdated: null
+			lastUpdated: '2026-04-15'
 		})
 	})
 
@@ -1018,6 +992,7 @@ describe('token page', () => {
 				Dividends: ['N/A'],
 				Burns: 'N/A',
 				'Associated Entities': [],
+				'Last Updated': '2026-04-15',
 				'DefiLlama ID': '4266'
 			}
 		]
@@ -1055,13 +1030,13 @@ describe('token page', () => {
 		if (!('props' in result)) throw new Error('expected props')
 
 		const tokenRightsSection = findTokenPageSection(result.props.sections, 'token-rights-and-value-accrual')
-		expect(tokenRightsSection?.tokenRightsData.overview).toEqual({
+		expect(tokenRightsSection?.tokenRightsData.overview).toMatchObject({
 			protocolName: 'Backpack',
 			tokens: ['BP', 'sBP'],
 			tokenTypes: ['Utility'],
 			description: 'desc',
 			utility: null,
-			lastUpdated: null
+			lastUpdated: '2026-04-15'
 		})
 		expect(tokenPageSectionIds(result.props.sections)).toEqual([
 			'token-overview',
@@ -1089,6 +1064,7 @@ describe('token page', () => {
 				Dividends: ['N/A'],
 				Burns: 'N/A',
 				'Associated Entities': [],
+				'Last Updated': '2026-04-15',
 				'DefiLlama ID': 'parent#hyperliquid'
 			}
 		]
@@ -1151,6 +1127,7 @@ describe('token page', () => {
 				Dividends: ['N/A'],
 				Burns: 'N/A',
 				'Associated Entities': [],
+				'Last Updated': '2026-04-15',
 				'DefiLlama ID': '9999'
 			}
 		]

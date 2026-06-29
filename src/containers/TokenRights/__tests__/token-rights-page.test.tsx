@@ -88,6 +88,7 @@ function tokenRightsEntry(overrides: Record<string, unknown>) {
 		Burns: 'N/A',
 		'Value Accrual': 'N/A',
 		'Equity Revenue Capture': 'Unknown',
+		'Last Updated': '2026-04-15',
 		'DefiLlama ID': '1',
 		...overrides
 	}

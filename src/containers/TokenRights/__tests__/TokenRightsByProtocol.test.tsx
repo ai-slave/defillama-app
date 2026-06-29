@@ -1,7 +1,8 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
-import type { ITokenRightsData } from '../api.types'
+import type { IRawTokenRightsEntry } from '../api.types'
 import { TokenRightsByProtocol } from '../TokenRightsByProtocol'
+import { parseTokenRightsEntry } from '../utils'
 
 vi.mock('~/components/Copy', () => ({
 	CopyHelper: () => null
@@ -27,69 +28,68 @@ vi.mock('~/utils', () => ({
 	formattedNum: (value: number) => String(value)
 }))
 
-const baseTokenRightsData: ITokenRightsData = {
-	overview: {
-		protocolName: 'Test Protocol',
-		tokens: ['TEST'],
-		tokenTypes: ['Governance'],
-		description: 'Protocol description',
-		utility: null,
-		lastUpdated: null
-	},
-	governance: {
-		summary: 'Governance summary',
-		decisionTokens: ['TEST'],
-		details: null,
-		links: []
-	},
-	decisions: {
-		treasury: { tokens: ['TEST'], details: null },
-		revenue: { tokens: ['TEST'], details: null }
-	},
-	economic: {
-		summary: null,
-		feeSwitchStatus: 'OFF',
-		feeSwitchDetails: null,
-		links: []
-	},
-	valueAccrual: {
-		primary: 'Buybacks',
-		details: 'Value accrues via buybacks.',
-		buybacks: { tokens: ['TEST'], details: null },
-		dividends: { tokens: ['N/A'], details: null },
-		burns: { status: 'N/A', details: null }
-	},
-	alignment: {
-		fundraising: [],
-		raiseDetails: null,
-		associatedEntities: [],
-		equityRevenueCapture: null,
-		equityStatement: null,
-		ipAndBrand: null,
-		domain: null,
-		links: []
-	},
-	resources: {
-		addresses: [],
-		reports: []
-	}
+const baseTokenRightsEntry: IRawTokenRightsEntry = {
+	'Protocol Name': 'Test Protocol',
+	Token: ['TEST'],
+	'Token Type': ['Governance'],
+	'Brief description': 'Protocol description',
+	'Governance Details (Summary)': 'Governance summary',
+	'Governance Decisions': ['TEST'],
+	'Treasury Decisions': ['TEST'],
+	'Revenue Decisions': ['TEST'],
+	'Fee Switch Status': 'OFF',
+	Buybacks: ['TEST'],
+	Dividends: ['N/A'],
+	Burns: 'N/A',
+	'Value Accrual': 'Buybacks',
+	'Value Accrual Details': 'Value accrues via buybacks.',
+	'Associated Entities': [],
+	'Last Updated': '2026-04-15',
+	'DefiLlama ID': 'test-protocol'
 }
 
+const baseTokenRightsData = parseTokenRightsEntry(baseTokenRightsEntry)
+
 describe('TokenRightsByProtocol', () => {
+	it('renders the overview view by default with a details toggle', () => {
+		const html = renderToStaticMarkup(
+			<TokenRightsByProtocol name="Test Protocol" symbol="TEST" raises={null} tokenRightsData={baseTokenRightsData} />
+		)
+
+		expect(html).toContain('Overview')
+		expect(html).toContain('Details')
+		expect(html).toContain('Token rights summary')
+		expect(html).toContain('Primary Value Accrual')
+		expect(html).not.toContain('Governance Rights')
+	})
+
+	it('filters inactive token labels from overview identity pills', () => {
+		const html = renderToStaticMarkup(
+			<TokenRightsByProtocol
+				name="Test Protocol"
+				symbol="TEST"
+				raises={null}
+				headerVariant="embedded"
+				tokenRightsData={parseTokenRightsEntry({ ...baseTokenRightsEntry, Token: ['N/A', 'TEST'] })}
+			/>
+		)
+
+		expect(html).toContain('TEST')
+		expect(html).not.toContain('N/A')
+	})
+
 	it('hides the primary value accrual card when the primary value is N/A', () => {
 		const html = renderToStaticMarkup(
 			<TokenRightsByProtocol
 				name="Test Protocol"
 				symbol="TEST"
 				raises={null}
-				tokenRightsData={{
-					...baseTokenRightsData,
-					valueAccrual: {
-						...baseTokenRightsData.valueAccrual,
-						primary: 'N/A',
-						details: 'No primary accrual mechanism.'
-					}
-				}}
+				initialView="details"
+				tokenRightsData={parseTokenRightsEntry({
+					...baseTokenRightsEntry,
+					'Value Accrual': 'N/A',
+					'Value Accrual Details': 'No primary accrual mechanism.'
+				})}
 			/>
 		)
 
@@ -103,13 +103,11 @@ describe('TokenRightsByProtocol', () => {
 				name="Test Protocol"
 				symbol="TEST"
 				raises={null}
-				tokenRightsData={{
-					...baseTokenRightsData,
-					valueAccrual: {
-						...baseTokenRightsData.valueAccrual,
-						primary: null
-					}
-				}}
+				initialView="details"
+				tokenRightsData={parseTokenRightsEntry({
+					...baseTokenRightsEntry,
+					'Value Accrual': undefined
+				})}
 			/>
 		)
 
