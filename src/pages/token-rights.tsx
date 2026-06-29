@@ -612,7 +612,7 @@ const columns = [
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
 					{href ? (
-						<Link href={href} className={nameClassName}>
+						<Link href={`${row.original.href}#token-rights`} className={nameClassName}>
 							{name}
 						</Link>
 					) : (

@@ -1073,6 +1073,68 @@ describe('token page', () => {
 		expect(fetchTokenRightsEntryByDefillamaId).not.toHaveBeenCalled()
 	})
 
+	it('getStaticProps falls back to protocol id when a token rights chain id has no row', async () => {
+		state.tokenRightsEntries = [
+			{
+				'Protocol Name': 'Hyperliquid',
+				Token: ['HYPE'],
+				'Token Type': ['Governance'],
+				'Brief description': 'desc',
+				'Governance Details (Summary)': 'gov summary',
+				'Governance Decisions': ['HYPE'],
+				'Treasury Decisions': ['HYPE'],
+				'Revenue Decisions': ['HYPE'],
+				'Fee Switch Status': 'ON',
+				Buybacks: ['HYPE'],
+				Dividends: ['N/A'],
+				Burns: 'N/A',
+				'Associated Entities': [],
+				'DefiLlama ID': 'parent#hyperliquid'
+			}
+		]
+		state.tokensJson = {
+			hype: {
+				name: 'Hyperliquid',
+				symbol: 'HYPE',
+				token_nk: 'coingecko:hyperliquid',
+				chainId: 'hyperliquid',
+				protocolId: 'parent#hyperliquid',
+				tokenRights: true
+			}
+		}
+		state.tokenlist = {
+			hyperliquid: {
+				symbol: 'hype',
+				current_price: 10,
+				price_change_percentage_24h: 0,
+				market_cap: 100,
+				fully_diluted_valuation: 150,
+				total_volume: 50,
+				circulating_supply: 20,
+				max_supply: 1000
+			}
+		}
+
+		const result = await getStaticProps({ params: { token: 'HYPE' } } as never)
+
+		expect('props' in result).toBe(true)
+		if (!('props' in result)) throw new Error('expected props')
+
+		expect(tokenPageSectionIds(result.props.sections)).toEqual([
+			'token-overview',
+			'token-rights-and-value-accrual',
+			'token-usage'
+		])
+		expect(
+			findTokenPageSection(result.props.sections, 'token-rights-and-value-accrual')?.tokenRightsData.overview
+		).toMatchObject({
+			protocolName: 'Hyperliquid',
+			tokens: ['HYPE']
+		})
+		expect(fetchTokenRightsEntryByDefillamaId).toHaveBeenNthCalledWith(1, 'hyperliquid')
+		expect(fetchTokenRightsEntryByDefillamaId).toHaveBeenNthCalledWith(2, 'parent#hyperliquid')
+	})
+
 	it('getStaticProps skips token rights for flagged tokens without a matching row', async () => {
 		state.tokenRightsEntries = [
 			{

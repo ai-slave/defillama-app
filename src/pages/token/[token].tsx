@@ -180,18 +180,27 @@ export const getStaticProps = withPerformanceLogging<TokenPageProps, TokenRouteP
 			})
 		})()
 
+		const tokenRightsDefillamaIds = Array.from(
+			new Set(
+				[record.chainId, record.protocolId].filter(
+					(defillamaId): defillamaId is string => typeof defillamaId === 'string' && defillamaId.length > 0
+				)
+			)
+		)
 		const tokenRightsPromise = record.tokenRights
 			? (async () => {
 					try {
-						const defillamaId = record.chainId || record.protocolId || null
-						const rawEntry = defillamaId
-							? await fetchTokenRightsEntryByDefillamaId(defillamaId)
-							: await fetchTokenRightsEntryByName(record.name)
+						for (const defillamaId of tokenRightsDefillamaIds) {
+							const rawEntry = await fetchTokenRightsEntryByDefillamaId(defillamaId)
+							if (rawEntry) return parseTokenRightsEntry(rawEntry)
+						}
+						const rawEntry =
+							tokenRightsDefillamaIds.length === 0 ? await fetchTokenRightsEntryByName(record.name) : null
 						return rawEntry ? parseTokenRightsEntry(rawEntry) : null
 					} catch (error) {
 						return downgradeTokenPageError(
 							error,
-							`Failed to load token rights data for ${record.chainId || record.protocolId}`,
+							`Failed to load token rights data for ${tokenRightsDefillamaIds.join(', ') || record.name}`,
 							null
 						)
 					}
