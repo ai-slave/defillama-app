@@ -1,7 +1,7 @@
 'use no memo'
 
 import { flexRender, type RowData, type Table as ReactTable } from '@tanstack/react-table'
-import { createContext, startTransition, useContext, useMemo } from 'react'
+import { createContext, startTransition, useContext, useMemo, type CSSProperties } from 'react'
 import { Icon } from '~/components/Icon'
 import { LoadingSpinner } from '~/components/Loaders'
 import {
@@ -18,6 +18,7 @@ interface PaginatedTableProps<T extends RowData> {
 	table: ReactTable<T>
 	pageSizeOptions: readonly number[]
 	className?: string
+	style?: CSSProperties
 	tableClassName?: string
 	interactionDisabled?: boolean
 }
@@ -84,6 +85,7 @@ export function PaginatedTable<T extends RowData>({
 	table,
 	pageSizeOptions,
 	className,
+	style,
 	tableClassName,
 	interactionDisabled = false
 }: PaginatedTableProps<T>) {
@@ -108,7 +110,7 @@ export function PaginatedTable<T extends RowData>({
 
 	return (
 		<DisplayRowNumbersContext.Provider value={displayRowNumbers}>
-			<div className={`flex flex-col gap-3 ${className ?? ''}`}>
+			<div className={`flex flex-col gap-3 ${className ?? ''}`} style={style}>
 				<TokenPageTableShell className="bg-(--cards-bg)">
 					<TokenPageTableScroller className="bg-(--cards-bg)">
 						{interactionDisabled ? (

@@ -7,6 +7,7 @@ import type { IProtocolRaise } from '~/containers/ProtocolOverview/api.types'
 import { formatRaiseAmount } from '~/containers/Raises/utils'
 import { formattedNum } from '~/utils'
 import type { ITokenRightsData, ITokenRightsParsedLink, ITokenRightsTokenDisplay } from './types'
+import { formatFeeSwitchStatus, getTokenRightsPrimaryValueLabel } from './utils'
 
 const TOOLTIPS = {
 	'Governance Decisions':
@@ -73,8 +74,8 @@ export function TokenRightsByProtocol({
 		alignment.domain !== null ||
 		alignment.links.length > 0
 
-	const hasPrimaryValueAccrual =
-		valueAccrual.primary !== 'N/A' && (valueAccrual.primary !== null || valueAccrual.details !== null)
+	const primaryValueLabel = getTokenRightsPrimaryValueLabel(valueAccrual.primary)
+	const hasPrimaryValueAccrual = primaryValueLabel !== null || valueAccrual.details !== null
 	const hasEquityStatement = alignment.equityStatement !== null
 	// On the dedicated protocol page the header already states "$SYMBOL Token Rights", so the
 	// overview card shouldn't repeat the name; surface the token-variant pills in the header instead.
@@ -251,8 +252,8 @@ export function TokenRightsByProtocol({
 									title="Primary Value Accrual"
 									tooltip="The main mechanism by which value accrues to token holders"
 								>
-									{valueAccrual.primary !== null && valueAccrual.primary !== 'N/A' ? (
-										<span className="text-xs font-semibold tracking-wider uppercase">{valueAccrual.primary}</span>
+									{primaryValueLabel !== null ? (
+										<span className="text-xs font-semibold tracking-wider uppercase">{primaryValueLabel}</span>
 									) : null}
 									{valueAccrual.details !== null ? (
 										<p className="text-sm text-(--text-secondary)">{valueAccrual.details}</p>
@@ -402,7 +403,8 @@ function TokenRightsOverviewView({
 }) {
 	const { overview, governance, decisions, economic, valueAccrual, alignment } = tokenRightsData
 	const displayName = overview.protocolName || name
-	const primaryValue = valueAccrual.primary ?? 'N/A'
+	const primaryValueLabel = getTokenRightsPrimaryValueLabel(valueAccrual.primary)
+	const hasPrimaryValueAccrual = primaryValueLabel !== null || valueAccrual.details !== null
 	const pieSegments = [
 		{ label: 'Treasury', active: decisions.treasury.displayTokens.length > 0 },
 		{ label: 'Revenue', active: decisions.revenue.displayTokens.length > 0 },
@@ -474,15 +476,21 @@ function TokenRightsOverviewView({
 						</div>
 					) : null}
 
-					<div className="rounded-md border border-green-600/30 bg-green-600/10 p-3">
-						<div className="text-xs font-medium tracking-wider text-(--text-label) uppercase">
-							Primary Value Accrual
+					{hasPrimaryValueAccrual ? (
+						<div className="rounded-md border border-green-600/30 bg-green-600/10 p-3">
+							<div className="text-xs font-medium tracking-wider text-(--text-label) uppercase">
+								Primary Value Accrual
+							</div>
+							{primaryValueLabel !== null ? (
+								<div className="mt-1.5 text-base font-semibold text-green-700 dark:text-green-400">
+									{primaryValueLabel}
+								</div>
+							) : null}
+							{valueAccrual.details !== null ? (
+								<p className="mt-1.5 text-sm text-(--text-secondary)">{valueAccrual.details}</p>
+							) : null}
 						</div>
-						<div className="mt-1.5 text-base font-semibold text-green-700 dark:text-green-400">{primaryValue}</div>
-						{valueAccrual.details !== null ? (
-							<p className="mt-1.5 text-sm text-(--text-secondary)">{valueAccrual.details}</p>
-						) : null}
-					</div>
+					) : null}
 
 					<div className="thin-scrollbar overflow-x-auto">
 						<div className="grid min-w-[640px] grid-cols-[repeat(4,minmax(max-content,1fr))] overflow-hidden rounded-md border border-(--cards-border)">
@@ -587,19 +595,6 @@ const PIE_SEGMENT_PATHS = [
 	'M 110 110 L 76 168.89 A 68 68 0 0 1 42 110 Z',
 	'M 110 110 L 42 110 A 68 68 0 0 1 76 51.11 Z'
 ] as const
-
-function formatFeeSwitchStatus(value: string): string {
-	switch (value) {
-		case 'ON':
-			return 'On'
-		case 'OFF':
-			return 'Off'
-		case 'PENDING':
-			return 'Pending'
-		default:
-			return value || 'Unknown'
-	}
-}
 
 // ---------------------------------------------------------------------------
 // Shared primitives

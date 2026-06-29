@@ -170,6 +170,7 @@ export const allApiRoutePaths = [
 	'thorchain/token',
 	'thorchain/volume',
 	'token-liquidations/[symbol]',
+	'tokens',
 	'tokens/charts/coingecko/[geckoId]',
 	'token-unlocks/[protocol]',
 	'token-usage/[symbol]',

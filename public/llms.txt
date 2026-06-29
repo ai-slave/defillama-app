@@ -67,6 +67,7 @@ Important interpretation notes:
 ## Optional
 
 - [DefiLlama Research](https://defillama.com/research): DefiLlama research articles and market analysis.
+- [Newsletters](https://defillama.com/newsletters): Subscribe to DefiLlama newsletters and research updates.
 - [Research sitemap](https://defillama.com/research/sitemap.xml): Sitemap for DefiLlama research pages.
 - [LlamaSwap](https://swap.defillama.com): DEX aggregator that searches routes across DEX aggregators.
 - [LlamaPay](https://llamapay.io): DeFi payment processor.

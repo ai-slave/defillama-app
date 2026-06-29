@@ -78,7 +78,7 @@ describe('TokenRightsByProtocol', () => {
 		expect(html).not.toContain('N/A')
 	})
 
-	it('hides the primary value accrual card when the primary value is N/A', () => {
+	it('shows primary value accrual details without rendering N/A as the primary value', () => {
 		const html = renderToStaticMarkup(
 			<TokenRightsByProtocol
 				name="Test Protocol"
@@ -93,8 +93,26 @@ describe('TokenRightsByProtocol', () => {
 			/>
 		)
 
+		expect(html).toContain('Primary Value Accrual')
+		expect(html).toContain('No primary accrual mechanism.')
+		expect(html).not.toContain('tracking-wider uppercase">N/A</span>')
+	})
+
+	it('hides the primary value accrual card when primary value and details are absent', () => {
+		const html = renderToStaticMarkup(
+			<TokenRightsByProtocol
+				name="Test Protocol"
+				symbol="TEST"
+				raises={null}
+				tokenRightsData={parseTokenRightsEntry({
+					...baseTokenRightsEntry,
+					'Value Accrual': 'N/A',
+					'Value Accrual Details': undefined
+				})}
+			/>
+		)
+
 		expect(html).not.toContain('Primary Value Accrual')
-		expect(html).not.toContain('No primary accrual mechanism.')
 	})
 
 	it('still shows the primary value accrual card when details exist and the primary value is null', () => {

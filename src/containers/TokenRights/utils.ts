@@ -10,6 +10,23 @@ function optionalText(value: string | undefined): string | null {
 	return value?.trim() || null
 }
 
+export function getTokenRightsPrimaryValueLabel(value: string | null): string | null {
+	return value === null || value === 'N/A' ? null : value
+}
+
+export function formatFeeSwitchStatus(value: string): string {
+	switch (value) {
+		case 'ON':
+			return 'On'
+		case 'OFF':
+			return 'Off'
+		case 'PENDING':
+			return 'Pending'
+		default:
+			return value || 'Unknown'
+	}
+}
+
 const MARKDOWN_LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g
 const ANGLE_BRACKET_URL_RE = /<(https?:\/\/[^>]+)>/g
 

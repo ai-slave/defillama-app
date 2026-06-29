@@ -531,6 +531,18 @@
       ]
     },
     {
+      "name": "Tokens",
+      "route": "/tokens",
+      "category": "Token",
+      "description": "Token rankings by market cap, price performance, volume, revenue, unlocks, and token rights",
+      "searchKeywords": [
+        "tokens",
+        "crypto tokens",
+        "token rankings",
+        "token market cap"
+      ]
+    },
+    {
       "name": "RWA: Overview",
       "route": "/rwa",
       "category": "RWA",

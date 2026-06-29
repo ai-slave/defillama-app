@@ -1,0 +1,267 @@
+import { describe, expect, it } from 'vitest'
+import type { MarketSegmentSummary } from '~/containers/Markets/api.types'
+import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
+import type { MetadataCache } from '~/utils/metadata/artifactContract'
+import type { TokensRawAdapterChainMetrics, TokensRawCoinGeckoMarket, TokensRawMarketsList } from '../api.types'
+import { buildTokensSourceRows } from '../queries'
+
+function marketSegment(overrides: Partial<MarketSegmentSummary>): MarketSegmentSummary {
+	return {
+		exchange_count: 1,
+		funding_rate_8h: null,
+		leverage_max: null,
+		leverage_min: null,
+		market_count: 1,
+		oi_prev_usd: null,
+		oi_usd: null,
+		price: null,
+		price_change_24h: null,
+		volume_24h: 0,
+		volume_prev_24h: null,
+		...overrides
+	}
+}
+
+function adapterMetric(defillamaId: string, total24h: number): TokensRawAdapterChainMetrics['protocols'][number] {
+	return {
+		defillamaId,
+		total24h
+	} as TokensRawAdapterChainMetrics['protocols'][number]
+}
+
+function tokenRightsEntry(overrides: Partial<IRawTokenRightsEntry>): IRawTokenRightsEntry {
+	return {
+		'Protocol Name': 'Ethena',
+		Token: ['ENA'],
+		'Last Updated': '2026-04-14',
+		'Governance Decisions': ['ENA'],
+		'Treasury Decisions': ['N/A'],
+		'Revenue Decisions': ['sENA'],
+		'Fee Switch Status': 'Pending',
+		Buybacks: ['None'],
+		Dividends: ['sUSDe'],
+		Burns: 'Active',
+		'DefiLlama ID': 'ethena',
+		...overrides
+	}
+}
+
+describe('buildTokensSourceRows', () => {
+	it('precomputes token rows from tokenlist, markets, adapter metrics, unlocks, and rights data', () => {
+		const nowSec = 1_800_000_000
+		const tokens: TokensRawCoinGeckoMarket[] = [
+			{
+				id: 'ethena',
+				name: 'Ethena',
+				symbol: 'ena',
+				current_price: 2,
+				image: 'https://example.com/ena.png',
+				market_cap: 1000,
+				fully_diluted_valuation: 2000,
+				market_cap_rank: 15,
+				price_change_percentage_1h_in_currency: 1.5,
+				price_change_percentage_24h_in_currency: -2.5,
+				price_change_percentage_7d_in_currency: 7,
+				price_change_percentage_30d_in_currency: 30,
+				last_updated: '2026-06-29T00:00:00Z'
+			},
+			{
+				id: 'unmapped',
+				name: 'Unmapped',
+				symbol: 'none',
+				current_price: 1,
+				market_cap: 50
+			}
+		]
+		const markets: TokensRawMarketsList = {
+			last_updated: '2026-06-29T01:00:00Z',
+			tokens: [
+				{
+					symbol: 'ENA',
+					exchange_count: 3,
+					market_count: 4,
+					tags: [],
+					total_oi_usd: 325,
+					total_volume_24h: 350,
+					segments: {
+						spot: marketSegment({ price: 2.1, volume_24h: 100 }),
+						linear_perp: marketSegment({ volume_24h: 200, oi_usd: 300 }),
+						inverse_perp: marketSegment({ volume_24h: 50, oi_usd: 25 })
+					}
+				}
+			]
+		}
+		const metadata = {
+			tokenDirectory: {
+				ethena: {
+					name: 'Ethena',
+					symbol: 'ENA',
+					token_nk: 'coingecko:ethena',
+					protocolId: 'ethena',
+					route: '/token/ENA',
+					logo: '/ena.png'
+				}
+			},
+			protocolMetadata: {
+				ethena: {
+					name: 'Ethena',
+					displayName: 'Ethena',
+					gecko_id: 'ethena',
+					perps: true
+				}
+			},
+			emissionsSupplyMetrics: {
+				ethena: {
+					name: 'Ethena',
+					supplyMetrics: {
+						maxSupply: 1000,
+						adjustedSupply: 600,
+						tbdAmount: 0,
+						incentiveAmount: 0,
+						nonIncentiveAmount: 600
+					}
+				}
+			}
+		} as unknown as MetadataCache
+
+		const result = buildTokensSourceRows({
+			tokens,
+			markets,
+			tokenRightsEntries: [tokenRightsEntry({})],
+			fees: [adapterMetric('ethena', 11)],
+			revenue: [adapterMetric('ethena', 22)],
+			holdersRevenue: [adapterMetric('ethena', 5.5)],
+			unlocks: [
+				{
+					name: 'Ethena',
+					token: 'ENA',
+					gecko_id: 'ethena',
+					maxSupply: 1000,
+					totalLocked: 400,
+					tPrice: 2,
+					events: [
+						{
+							timestamp: nowSec + 10,
+							noOfTokens: [5, 5]
+						}
+					],
+					upcomingEvent: [
+						{
+							timestamp: nowSec + 10,
+							noOfTokens: [12]
+						}
+					]
+				}
+			],
+			metadata,
+			nowSec
+		})
+
+		expect(result.updatedAt).toBe('2026-06-29T01:00:00Z')
+		expect(result.stats).toMatchObject({
+			totalMarketCap: 1050,
+			marketCapWeightedChange24h: -2.5,
+			spotVolume24h: 100,
+			perpsVolume24h: 250,
+			openInterest24h: 325,
+			unlock30dUsd: 20,
+			upcomingUnlockUsd: 24
+		})
+
+		const ethena = result.rows[0]
+		expect(ethena).toMatchObject({
+			id: 'ethena',
+			logo: '/ena.png',
+			href: '/token/ENA',
+			price: 2,
+			priceChange24h: -2.5,
+			outstandingFdv: 1200,
+			unlockedPercent: 60,
+			spotVolume24h: 100,
+			perpsVolume24h: 250,
+			openInterest24h: 325,
+			fees24h: 11,
+			revenue24h: 22,
+			holdersRevenue24h: 5.5,
+			trsPercent: 25,
+			unlock30dUsd: 20,
+			upcomingUnlockUsd: 24
+		})
+		expect(ethena.rights).toMatchObject({
+			protocolName: 'Ethena',
+			primaryValue: null,
+			governance: true,
+			treasury: false,
+			revenue: true,
+			feeSwitchStatus: 'Pending',
+			buybacks: false,
+			dividends: true,
+			burns: true,
+			burnsStatus: 'Active'
+		})
+
+		expect(result.rows[1]).toMatchObject({
+			id: 'unmapped',
+			href: null,
+			rights: null
+		})
+	})
+
+	it('does not join symbol-only market metrics when multiple tokens share the symbol', () => {
+		const result = buildTokensSourceRows({
+			tokens: [
+				{
+					id: 'first-duplicate',
+					name: 'First Duplicate',
+					symbol: 'dup',
+					current_price: 1,
+					market_cap: 100
+				},
+				{
+					id: 'second-duplicate',
+					name: 'Second Duplicate',
+					symbol: 'dup',
+					current_price: 2,
+					market_cap: 200
+				}
+			],
+			markets: {
+				last_updated: '',
+				tokens: [
+					{
+						symbol: 'DUP',
+						exchange_count: 1,
+						market_count: 1,
+						tags: [],
+						total_oi_usd: 50,
+						total_volume_24h: 100,
+						segments: {
+							spot: marketSegment({ price: 10, volume_24h: 100 }),
+							linear_perp: marketSegment({ volume_24h: 200, oi_usd: 50 })
+						}
+					}
+				]
+			},
+			tokenRightsEntries: [],
+			fees: [],
+			revenue: [],
+			holdersRevenue: [],
+			unlocks: [],
+			metadata: {
+				tokenDirectory: {},
+				protocolMetadata: {},
+				emissionsSupplyMetrics: {}
+			} as unknown as MetadataCache,
+			nowSec: 1_800_000_000
+		})
+
+		expect(result.rows.map((row) => row.spotVolume24h)).toEqual([null, null])
+		expect(result.rows.map((row) => row.perpsVolume24h)).toEqual([null, null])
+		expect(result.rows.map((row) => row.openInterest24h)).toEqual([null, null])
+		expect(result.stats).toMatchObject({
+			spotVolume24h: 0,
+			perpsVolume24h: 0,
+			openInterest24h: 0
+		})
+	})
+})

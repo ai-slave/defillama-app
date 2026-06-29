@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 
 type DebouncedFunction<T extends (...args: any[]) => void> = ((...args: Parameters<T>) => void) & {
 	cancel: () => void
@@ -11,45 +11,49 @@ export function useDebouncedCallback<T extends (...args: any[]) => void>(
 	callback: T,
 	delay: number
 ): DebouncedFunction<T> {
-	const [pendingArgs, setPendingArgs] = useState<Parameters<T> | null>(null)
+	const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+	const pendingArgsRef = useRef<Parameters<T> | null>(null)
 	const normalizedDelay = normalizeDelay(delay)
 
 	const onInvoke = useEffectEvent((args: Parameters<T>) => {
 		callback(...args)
 	})
 
-	const flush = useEffectEvent(() => {
-		if (pendingArgs != null) {
-			onInvoke(pendingArgs)
-			setPendingArgs(null)
+	const cancel = useCallback(() => {
+		if (timeoutRef.current != null) {
+			clearTimeout(timeoutRef.current)
+			timeoutRef.current = null
 		}
-	})
+		pendingArgsRef.current = null
+	}, [])
 
-	const debounced: DebouncedFunction<T> = Object.assign(
-		((...args: Parameters<T>) => {
-			setPendingArgs(args)
-		}) as DebouncedFunction<T>,
-		{
-			cancel: () => {
-				setPendingArgs(null)
-			},
-			flush
-		}
-	)
+	const flush = useCallback(() => {
+		const pendingArgs = pendingArgsRef.current
+		cancel()
+		if (pendingArgs != null) onInvoke(pendingArgs)
+	}, [cancel])
 
 	useEffect(() => {
-		if (pendingArgs === null) return
-		const timeoutId = setTimeout(() => {
-			onInvoke(pendingArgs)
-			setPendingArgs(null)
-		}, normalizedDelay)
+		return cancel
+	}, [cancel])
 
-		return () => {
-			clearTimeout(timeoutId)
-		}
-	}, [normalizedDelay, pendingArgs])
-
-	return debounced
+	return useMemo(
+		() =>
+			Object.assign(
+				((...args: Parameters<T>) => {
+					cancel()
+					pendingArgsRef.current = args
+					timeoutRef.current = setTimeout(() => {
+						const pendingArgs = pendingArgsRef.current
+						timeoutRef.current = null
+						pendingArgsRef.current = null
+						if (pendingArgs != null) onInvoke(pendingArgs)
+					}, normalizedDelay)
+				}) as DebouncedFunction<T>,
+				{ cancel, flush }
+			),
+		[cancel, flush, normalizedDelay]
+	)
 }
 
 export function useDebouncedValue<T>(value: T, delay: number): T {

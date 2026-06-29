@@ -3,6 +3,7 @@ import { slug } from '~/utils'
 import {
 	fetchCexMarketsSlugIndexFromCache,
 	fetchExchangeMarketsListFromCache,
+	fetchTokenMarketsListFromCache,
 	fetchTokenMarketsSymbolIndexFromCache
 } from './dataset.cache'
 import {
@@ -20,6 +21,14 @@ function fetchExchangeMarketsList() {
 		domain: 'markets',
 		readCache: fetchExchangeMarketsListFromCache,
 		readNetwork: fetchExchangeMarketsListFromNetwork
+	})
+}
+
+export function fetchTokenMarketsList() {
+	return readThroughDatasetCache({
+		domain: 'markets',
+		readCache: fetchTokenMarketsListFromCache,
+		readNetwork: fetchTokenMarketsListFromNetwork
 	})
 }
 

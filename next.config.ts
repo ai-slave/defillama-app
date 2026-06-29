@@ -35,6 +35,7 @@ const nextConfig: NextConfig = {
 			'token-rights',
 			'risk'
 		),
+		'/tokens': datasetCacheIncludes('markets', 'token-rights'),
 		'/token-rights': datasetCacheIncludes('token-rights'),
 		'/protocol/token-rights/*': datasetCacheIncludes('token-rights'),
 		'/protocol/yields/*': datasetCacheIncludes('yields'),
@@ -44,6 +45,7 @@ const nextConfig: NextConfig = {
 		'/api/public/yields': datasetCacheIncludes('yields'),
 		'/api/public/yields/pools': datasetCacheIncludes('yields'),
 		'/api/public/yields/token-borrow-routes': datasetCacheIncludes('yields'),
+		'/api/public/tokens': datasetCacheIncludes('markets', 'token-rights'),
 		'/api/private/token-liquidations/*': datasetCacheIncludes('liquidations'),
 		'/api/private/liquidations': datasetCacheIncludes('liquidations'),
 		'/api/private/liquidations/*': datasetCacheIncludes('liquidations'),
