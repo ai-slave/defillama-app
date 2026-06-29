@@ -6,6 +6,7 @@ export type EquityComparisonOperator = '>' | '>=' | '<' | '<='
 export type EquityNumericOperator = EquityComparisonOperator | 'between'
 export type EquityCategoricalMode = 'include' | 'exclude'
 export type EquityFilterFormat = 'currency' | 'percent' | 'number'
+export const EQUITY_FILTERS_QUERY_KEY = 'filters'
 export type EquityFilterCategory =
 	| 'company'
 	| 'market'
@@ -222,7 +223,7 @@ export function parseEquityFilterNumber(input: string): number | undefined {
 	const cleaned = input.trim().toLowerCase().replaceAll(',', '').replaceAll('$', '').replaceAll('%', '')
 	if (!cleaned) return undefined
 
-	const match = cleaned.match(/^(-?(?:\d+\.?\d*|\.\d+))\s*([kmbt])?$/)
+	const match = cleaned.match(/^(-?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)\s*([kmbt])?$/)
 	if (!match) return undefined
 
 	const base = Number(match[1])
@@ -234,6 +235,126 @@ export function parseEquityFilterNumber(input: string): number | undefined {
 	if (suffix === 'b') return base * 1_000_000_000
 	if (suffix === 't') return base * 1_000_000_000_000
 	return base
+}
+
+function encodeEquityFilterQueryValue(value: string): string {
+	return encodeURIComponent(value)
+}
+
+function decodeEquityFilterQueryValue(value: string): string | null {
+	try {
+		return decodeURIComponent(value)
+	} catch {
+		return null
+	}
+}
+
+function comparisonOperatorToQueryOperator(operator: EquityComparisonOperator): string {
+	if (operator === '>') return 'gt'
+	if (operator === '>=') return 'gte'
+	if (operator === '<') return 'lt'
+	return 'lte'
+}
+
+function queryOperatorToComparisonOperator(operator: string): EquityComparisonOperator | null {
+	if (operator === 'gt') return '>'
+	if (operator === 'gte') return '>='
+	if (operator === 'lt') return '<'
+	if (operator === 'lte') return '<='
+	return null
+}
+
+function parseEquityCategoricalFilterSegment(
+	id: string,
+	operator: string,
+	rawValue: string
+): EquityActiveCategoricalFilter | null {
+	const config = EQUITY_CATEGORICAL_FILTER_CONFIG_BY_ID.get(id as EquityCategoricalFilterId)
+	if (!config) return null
+	if (operator !== 'in' && operator !== 'out') return null
+
+	const values: string[] = []
+	for (const rawPart of rawValue.split(',')) {
+		const value = decodeEquityFilterQueryValue(rawPart)?.trim()
+		if (value) values.push(value)
+	}
+	if (values.length === 0) return null
+
+	return {
+		kind: 'categorical',
+		id: config.id,
+		mode: operator === 'out' ? 'exclude' : 'include',
+		values: values as NonEmptyArray<string>
+	}
+}
+
+function parseEquityNumericFilterSegment(
+	id: string,
+	operator: string,
+	rawValue: string
+): EquityActiveNumericComparisonFilter | EquityActiveNumericRangeFilter | null {
+	const config = EQUITY_NUMERIC_FILTER_CONFIG_BY_ID.get(id as EquityNumericFilterId)
+	if (!config) return null
+
+	if (operator === 'between') {
+		const [rawMin, rawMax] = rawValue.split(',')
+		if (!rawMin || !rawMax) return null
+		const minValue = parseEquityFilterNumber(decodeEquityFilterQueryValue(rawMin) ?? '')
+		const maxValue = parseEquityFilterNumber(decodeEquityFilterQueryValue(rawMax) ?? '')
+		if (minValue === undefined || maxValue === undefined) return null
+
+		return {
+			kind: 'numericRange',
+			id: config.id,
+			minValue: Math.min(minValue, maxValue),
+			maxValue: Math.max(minValue, maxValue)
+		}
+	}
+
+	const comparisonOperator = queryOperatorToComparisonOperator(operator)
+	if (!comparisonOperator) return null
+
+	const value = parseEquityFilterNumber(decodeEquityFilterQueryValue(rawValue) ?? '')
+	if (value === undefined) return null
+
+	return { kind: 'numeric', id: config.id, operator: comparisonOperator, value }
+}
+
+export function parseEquityFiltersQuery(param: string | string[] | null | undefined): EquityActiveFilter[] {
+	const values = Array.isArray(param) ? param : param ? [param] : []
+	const filtersById = new Map<EquityFilterId, EquityActiveFilter>()
+
+	for (const value of values) {
+		for (const segment of value.split(';')) {
+			if (!segment) continue
+			const [id, operator, rawFilterValue, extra] = segment.split(':')
+			if (!id || !operator || !rawFilterValue || extra !== undefined) continue
+
+			const filter =
+				parseEquityCategoricalFilterSegment(id, operator, rawFilterValue) ??
+				parseEquityNumericFilterSegment(id, operator, rawFilterValue)
+			if (filter) filtersById.set(filter.id, filter)
+		}
+	}
+
+	return Array.from(filtersById.values())
+}
+
+export function serializeEquityFiltersQuery(filters: EquityActiveFilter[]): string | undefined {
+	const segments: string[] = []
+
+	for (const filter of filters) {
+		if (filter.kind === 'categorical') {
+			const operator = filter.mode === 'exclude' ? 'out' : 'in'
+			segments.push(`${filter.id}:${operator}:${filter.values.map(encodeEquityFilterQueryValue).join(',')}`)
+		} else if (filter.kind === 'numericRange') {
+			segments.push(`${filter.id}:between:${filter.minValue},${filter.maxValue}`)
+		} else {
+			segments.push(`${filter.id}:${comparisonOperatorToQueryOperator(filter.operator)}:${filter.value}`)
+		}
+	}
+
+	return segments.length > 0 ? segments.join(';') : undefined
 }
 
 export function draftEquityFilterToActive(filter: EquityDraftFilter): EquityActiveFilter | null {

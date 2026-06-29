@@ -13,7 +13,7 @@ import {
 	useReactTable
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { startTransition, useCallback, useDeferredValue, useMemo, useState } from 'react'
+import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
@@ -26,7 +26,13 @@ import { abbreviateNumber } from '~/utils'
 import { equityCountryFlagUrl } from '~/utils/icons'
 import { readSingleQueryValue, pushShallowQuery } from '~/utils/routerQuery'
 import { EquitiesFiltersDialog, EquityActiveFilterPills } from './EquityFiltersDialog'
-import { filterEquityCompanies, type EquityActiveFilter } from './filters'
+import {
+	EQUITY_FILTERS_QUERY_KEY,
+	filterEquityCompanies,
+	parseEquityFiltersQuery,
+	serializeEquityFiltersQuery,
+	type EquityActiveFilter
+} from './filters'
 import {
 	applyEquityFilterColumnVisibility,
 	getEquityFilterDefaultSorting,
@@ -700,6 +706,8 @@ function EquitiesRankingsTable({
 	onFiltersChange: (filters: EquityActiveFilter[]) => void
 }) {
 	const [tableState, setTableState] = useState(() => buildInitialTableState(preset))
+	const filtersQuery = useMemo(() => serializeEquityFiltersQuery(filters) ?? '', [filters])
+	const handledFiltersRef = useRef({ filters, filtersQuery })
 	const { columnFilters, sorting, columnVisibility, pagination, searchValue } = tableState
 	const deferredSearchValue = useDeferredValue(searchValue)
 	const searchQuery = deferredSearchValue.trim()
@@ -823,22 +831,39 @@ function EquitiesRankingsTable({
 		setTableState((state) => ({ ...state, searchValue: value }))
 	}
 
-	const setFiltersAndResetPage = (nextFilters: EquityActiveFilter[]) => {
-		setTableState((state) => {
-			const fallbackSorting = PRESET_SORTING[preset]
-			const shouldUpdateSorting = shouldUpdateEquityFilterDefaultSorting({
-				currentSorting: state.sorting,
-				previousFilters: filters,
-				fallbackSorting
+	const updateTableStateForFilters = useCallback(
+		(previousFilters: EquityActiveFilter[], nextFilters: EquityActiveFilter[]) => {
+			setTableState((state) => {
+				const fallbackSorting = PRESET_SORTING[preset]
+				const shouldUpdateSorting = shouldUpdateEquityFilterDefaultSorting({
+					currentSorting: state.sorting,
+					previousFilters,
+					fallbackSorting
+				})
+				return {
+					...state,
+					sorting: shouldUpdateSorting
+						? getEquityFilterDefaultSorting({ filters: nextFilters, fallbackSorting })
+						: state.sorting,
+					pagination: { ...state.pagination, pageIndex: 0 }
+				}
 			})
-			return {
-				...state,
-				sorting: shouldUpdateSorting
-					? getEquityFilterDefaultSorting({ filters: nextFilters, fallbackSorting })
-					: state.sorting,
-				pagination: { ...state.pagination, pageIndex: 0 }
-			}
-		})
+		},
+		[preset]
+	)
+
+	useEffect(() => {
+		const handledFilters = handledFiltersRef.current
+		if (handledFilters.filtersQuery === filtersQuery) return
+
+		handledFiltersRef.current = { filters, filtersQuery }
+		updateTableStateForFilters(handledFilters.filters, filters)
+	}, [filters, filtersQuery, updateTableStateForFilters])
+
+	const applyFilters = (nextFilters: EquityActiveFilter[]) => {
+		const nextFiltersQuery = serializeEquityFiltersQuery(nextFilters) ?? ''
+		updateTableStateForFilters(filters, nextFilters)
+		handledFiltersRef.current = { filters: nextFilters, filtersQuery: nextFiltersQuery }
 		onFiltersChange(nextFilters)
 	}
 
@@ -860,7 +885,7 @@ function EquitiesRankingsTable({
 						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
 					/>
 				</label>
-				<EquitiesFiltersDialog companies={companies} filters={filters} onFiltersChange={setFiltersAndResetPage} />
+				<EquitiesFiltersDialog companies={companies} filters={filters} onFiltersChange={applyFilters} />
 				<SelectWithCombobox
 					allValues={columnOptions}
 					selectedValues={selectedColumns}
@@ -875,10 +900,7 @@ function EquitiesRankingsTable({
 					smol
 				/>
 			</div>
-			<EquityActiveFilterPills
-				filters={filters}
-				onRemove={(id) => setFiltersAndResetPage(filters.filter((f) => f.id !== id))}
-			/>
+			<EquityActiveFilterPills filters={filters} onRemove={(id) => applyFilters(filters.filter((f) => f.id !== id))} />
 			<PaginatedTable table={table} pageSizeOptions={PAGE_SIZE_OPTIONS} tableClassName="min-w-max!" />
 		</div>
 	)
@@ -886,12 +908,13 @@ function EquitiesRankingsTable({
 
 export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProps) {
 	const router = useRouter()
+	const filtersQueryParam = router.query[EQUITY_FILTERS_QUERY_KEY]
 	const selectedPreset = useMemo(
 		() => getPresetFromQuery(readSingleQueryValue(router.query.rankBy)),
 		[router.query.rankBy]
 	)
+	const filters = useMemo(() => parseEquityFiltersQuery(filtersQueryParam), [filtersQueryParam])
 	const [isMorePresetsManuallyOpen, setIsMorePresetsManuallyOpen] = useState(false)
-	const [filters, setFilters] = useState<EquityActiveFilter[]>([])
 
 	const selectPreset = useCallback(
 		(preset: EquitiesPreset) => {
@@ -899,6 +922,15 @@ export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProp
 			void pushShallowQuery(router, { rankBy: PRESET_QUERY_SLUGS[preset] })
 		},
 		[router, selectedPreset]
+	)
+
+	const setFilters = useCallback(
+		(nextFilters: EquityActiveFilter[]) => {
+			void pushShallowQuery(router, {
+				[EQUITY_FILTERS_QUERY_KEY]: serializeEquityFiltersQuery(nextFilters)
+			})
+		},
+		[router]
 	)
 
 	const isMorePresetActive = EQUITIES_MORE_PRESETS.some((preset) => preset === selectedPreset)
