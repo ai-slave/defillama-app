@@ -252,6 +252,10 @@ function withTelemetryTargetAttribute(event: TelemetryEvent): TelemetryEvent {
 
 function producer(runtime: TelemetryRuntime) {
 	const serviceVersion = firstProcessEnvValue([
+		// NEXT_BUILD_ID is baked into the image at build (= the built commit), so it
+		// reflects what's actually running; the rest are runtime envs Coolify sets
+		// to latest HEAD, which can differ from this image.
+		'NEXT_BUILD_ID',
 		'SOURCE_COMMIT',
 		'VERCEL_GIT_COMMIT_SHA',
 		'NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA',

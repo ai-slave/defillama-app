@@ -51,9 +51,26 @@ ARG LOGGER_API_URL
 ARG BUILD_STATUS_WEBHOOK
 ARG BUILD_NOTIFY_USERS
 
+# Promote the commit SHA into the build environment so next.config's
+# generateBuildId (resolveBuildIdFromEnv) pins BUILD_ID to the commit. This makes
+# the id deterministic and identical across the segment servers built from the
+# same commit, instead of a random per-build id that diverges between boxes and
+# causes cross-segment /_next chunk + data 404s after a deploy.
+ENV SOURCE_COMMIT=${SOURCE_COMMIT}
+ENV VERCEL_GIT_COMMIT_SHA=${VERCEL_GIT_COMMIT_SHA}
+ENV NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA=${NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA}
+ENV GITHUB_SHA=${GITHUB_SHA}
+
 RUN bash ./scripts/build.sh
 
 FROM node-base AS runner
+
+# Bake the built commit so runtime code (telemetry, cache-jitter seed) reports
+# the commit that was actually built. Coolify injects a runtime SOURCE_COMMIT
+# equal to latest HEAD, which can differ from this image; NEXT_BUILD_ID is not
+# injected at runtime, so this baked value stays authoritative.
+ARG SOURCE_COMMIT
+ENV NEXT_BUILD_ID=${SOURCE_COMMIT}
 
 ENV NODE_ENV=production
 ENV HOSTNAME="0.0.0.0"
