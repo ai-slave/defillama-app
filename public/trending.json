@@ -1,5 +1,14 @@
 [
   {
+    "name": "Tokens",
+    "route": "/tokens",
+    "category": "Trending",
+    "description": "Token rankings by market cap, price performance, volume, revenue, unlocks, and token rights",
+    "tags": [
+      "New"
+    ]
+  },
+  {
     "name": "Overview",
     "route": "/",
     "category": "Trending",

@@ -1118,6 +1118,12 @@
       ]
     },
     {
+      "name": "Tokens",
+      "route": "/tokens",
+      "icon": "tag",
+      "isNew": true
+    },
+    {
       "name": "Equities",
       "route": "/equities",
       "icon": "trending-up",
