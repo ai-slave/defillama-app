@@ -10,6 +10,8 @@ import { SortIcon } from '~/components/Table/SortIcon'
 import { Tooltip } from '~/components/Tooltip'
 import { useMedia } from '~/hooks/useMedia'
 
+export type VirtualTableLayout = 'fixed' | 'auto'
+
 interface ITableProps<T extends RowData = RowData> {
 	instance: Table<T>
 	skipVirtualization?: boolean
@@ -21,6 +23,7 @@ interface ITableProps<T extends RowData = RowData> {
 	useStickyHeader?: boolean
 	scrollMargin?: number
 	rowRankById?: Map<string, number>
+	tableLayout?: VirtualTableLayout
 }
 
 const isGroupingColumn = (columnId?: string) => typeof columnId === 'string' && columnId.startsWith('__group_')
@@ -144,6 +147,7 @@ export function VirtualTable<T extends RowData>({
 	useStickyHeader = true,
 	scrollMargin,
 	rowRankById,
+	tableLayout = 'fixed',
 	className,
 	style,
 	...props
@@ -440,6 +444,7 @@ export function VirtualTable<T extends RowData>({
 		!skipVirtualization && lastVirtualItem
 			? Math.max(0, rowVirtualizer.getTotalSize() - (lastVirtualItem.end - rowScrollMargin))
 			: 0
+	const useColumnWidths = tableLayout === 'fixed'
 
 	const renderHeaderRows = ({ isStickyMirror = false }: { isStickyMirror?: boolean } = {}) =>
 		headerGroups.map((headerGroup) => {
@@ -535,16 +540,18 @@ export function VirtualTable<T extends RowData>({
 					style={{
 						width: '100%',
 						minWidth: '100%',
-						tableLayout: 'fixed',
+						tableLayout,
 						borderCollapse: 'separate',
 						borderSpacing: 0
 					}}
 				>
-					<colgroup>
-						{visibleLeafColumns.map((column) => (
-							<col key={column.id} className={column.columnDef.meta?.headerClassName} />
-						))}
-					</colgroup>
+					{useColumnWidths ? (
+						<colgroup>
+							{visibleLeafColumns.map((column) => (
+								<col key={column.id} className={column.columnDef.meta?.headerClassName} />
+							))}
+						</colgroup>
+					) : null}
 
 					<thead ref={tableHeaderRef} style={{ display: 'table-header-group', zIndex: 10 }}>
 						{renderHeaderRows()}

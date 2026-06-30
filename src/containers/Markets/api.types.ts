@@ -236,6 +236,21 @@ interface ExchangeMetadataFeeToken {
 	symbol: string
 }
 
+interface ExchangeMetadataPromotion {
+	ends_at?: string | null
+	excluded_regions?: string[]
+	label: string
+	priority?: number | null
+	regions?: string[]
+	source?: ExchangeMetadataSource
+	starts_at?: string | null
+	subtitle?: string | null
+	terms_url?: string | null
+	title: string
+	type: 'deposit_bonus' | 'cashback' | 'fee_discount' | 'prize_draw' | 'referral' | 'other'
+	url?: string | null
+}
+
 type ExchangeMetadataMicaStatus = 'active' | 'in-progress'
 
 // One flat row per exchange from `exchanges/metadata-list.json` — the MiCA/EU
@@ -250,6 +265,7 @@ export interface ExchangeMetadataListEntry {
 	fee_token: ExchangeMetadataFeeToken | null
 	inflows_24h_usd: number | null
 	kyc_required: boolean | null
+	kyc_summary?: string | null
 	last_verified: string | null
 	mica_licensed: boolean
 	mica_member_state: string | null
@@ -259,6 +275,7 @@ export interface ExchangeMetadataListEntry {
 	own_token_pct: number | null
 	perp_fee: ExchangeMetadataFee
 	products: string[]
+	promotions?: ExchangeMetadataPromotion[]
 	ref_link: string | null
 	reserves_source_url: string | null
 	reserves_usd: number | null

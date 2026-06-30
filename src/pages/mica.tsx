@@ -32,7 +32,7 @@ export default function MicaPage({ exchanges }: MicaPageProps) {
 	return (
 		<Layout
 			title="MiCA-regulated exchanges - DefiLlama"
-			description="Compare MiCA-licensed crypto exchanges available in the EU: regulatory status, supported products, KYC requirements, and trading fees — targeted to each exchange's EU entity."
+			description="Compare MiCA-licensed crypto exchanges available in the EU by liquidity, trading fees, perps availability, and KYC requirements."
 			canonicalUrl="/mica"
 			pageName={pageName}
 		>

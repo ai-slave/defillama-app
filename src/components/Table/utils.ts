@@ -238,7 +238,9 @@ export function prepareTableCsv<T>({ instance, filename }: { instance: Table<T>;
 	filename: string
 	rows: Array<Array<CsvCell>>
 } {
-	const columns = instance.getVisibleLeafColumns().filter((column) => !column.columnDef.meta?.hidden)
+	const columns = instance
+		.getVisibleLeafColumns()
+		.filter((column) => !column.columnDef.meta?.hidden || column.columnDef.meta?.csvOnly)
 	const tableRows = instance.getPrePaginationRowModel().rows
 	if (columns.length === 0) return { filename, rows: [] }
 
@@ -253,6 +255,8 @@ export function prepareTableCsv<T>({ instance, filename }: { instance: Table<T>;
 
 	const rows: Array<Array<CsvCell>> = tableRows.map((row) =>
 		columns.map((column) => {
+			const csvValue = column.columnDef.meta?.csvValue
+			if (csvValue) return csvValue(row.original)
 			const value = row.getValue(column.id)
 			if (value == null) return ''
 			if (typeof value === 'number') return Number.isFinite(value) ? value : ''

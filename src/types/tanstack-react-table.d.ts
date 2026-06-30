@@ -1,4 +1,5 @@
 import type { RowData } from '@tanstack/react-table'
+import type { CsvCell } from '~/utils/csvCell'
 
 declare module '@tanstack/react-table' {
 	interface ColumnMeta<TData extends RowData, TValue> {
@@ -9,6 +10,8 @@ declare module '@tanstack/react-table' {
 		cellClassName?: string
 		hidden?: boolean
 		csvHeader?: string
+		csvOnly?: boolean
+		csvValue?: (row: TData) => CsvCell
 		/**
 		 * Type-only field to satisfy linters about unused generics.
 		 * Not used at runtime.

@@ -16,7 +16,7 @@ import * as React from 'react'
 import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
 import { Icon } from '~/components/Icon'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { VirtualTable } from '~/components/Table/Table'
+import { VirtualTable, type VirtualTableLayout } from '~/components/Table/Table'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from './utils'
 import type { ColumnOrdersByBreakpoint } from './utils'
 
@@ -38,6 +38,8 @@ interface ITableWithSearchBaseProps<T extends RowData> {
 	rowSize?: number | null
 	compact?: boolean
 	embedded?: boolean
+	skipVirtualization?: boolean
+	tableLayout?: VirtualTableLayout
 	getSubRows?: (row: T) => T[] | undefined
 	showColumnSelect?: boolean
 	columnSelectLabel?: string
@@ -70,6 +72,8 @@ export function TableWithSearch<T extends RowData>({
 	rowSize = null,
 	compact = false,
 	embedded = false,
+	skipVirtualization = false,
+	tableLayout = 'fixed',
 	showColumnSelect = false,
 	columnSelectLabel = 'Columns',
 	csvFileName = null,
@@ -198,7 +202,13 @@ export function TableWithSearch<T extends RowData>({
 		return (
 			<>
 				{controls}
-				<VirtualTable instance={instance} rowSize={rowSize ?? undefined} compact={compact} />
+				<VirtualTable
+					instance={instance}
+					rowSize={rowSize ?? undefined}
+					compact={compact}
+					skipVirtualization={skipVirtualization}
+					tableLayout={tableLayout}
+				/>
 			</>
 		)
 	}
@@ -206,7 +216,13 @@ export function TableWithSearch<T extends RowData>({
 	return (
 		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
 			{controls}
-			<VirtualTable instance={instance} rowSize={rowSize ?? undefined} compact={compact} />
+			<VirtualTable
+				instance={instance}
+				rowSize={rowSize ?? undefined}
+				compact={compact}
+				skipVirtualization={skipVirtualization}
+				tableLayout={tableLayout}
+			/>
 		</div>
 	)
 }

@@ -26,7 +26,7 @@ const columns = [
 	})
 ]
 
-function TestVirtualTable({ rowSize }: { rowSize?: number }) {
+function TestVirtualTable({ rowSize, tableLayout }: { rowSize?: number; tableLayout?: 'fixed' | 'auto' }) {
 	const data: TestRow[] = Array.from({ length: 40 }, (_, index) => ({
 		name: `Asset ${index + 1}`,
 		mcap: index + 1
@@ -37,7 +37,7 @@ function TestVirtualTable({ rowSize }: { rowSize?: number }) {
 		getCoreRowModel: getCoreRowModel()
 	})
 
-	return <VirtualTable instance={instance} rowSize={rowSize} />
+	return <VirtualTable instance={instance} rowSize={rowSize} tableLayout={tableLayout} />
 }
 
 describe('VirtualTable SSR', () => {
@@ -47,5 +47,12 @@ describe('VirtualTable SSR', () => {
 		expect(html).toContain('Asset 1')
 		expect(html).toContain('Asset 2')
 		expect(html).not.toContain('Asset 40')
+	})
+
+	it('can render auto table layout without fixed column widths', () => {
+		const html = renderToStaticMarkup(<TestVirtualTable tableLayout="auto" />)
+
+		expect(html).toContain('table-layout:auto')
+		expect(html).not.toContain('<colgroup')
 	})
 })

@@ -832,7 +832,7 @@
       "name": "MiCA Exchanges",
       "route": "/mica",
       "category": "Others",
-      "description": "MiCA-regulated crypto exchanges in the EU: licensing and member state, supported products, KYC requirements, reserves, and trading fees",
+      "description": "MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements",
       "searchKeywords": [
         "mica",
         "mica licensed exchanges",
