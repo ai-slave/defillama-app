@@ -11,11 +11,31 @@ import { pushShallowQuery, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import type { ExchangeMetadataListEntry } from './api.types'
 
 const PERP_PRODUCT = 'perp'
-const PRIORITY_EXCHANGES = ['okx', 'bybit', 'coinbase', 'cryptocom'] as const
+const PRIORITY_EXCHANGES = ['okx', 'bybit', 'coinbase', 'cryptocom', 'gate', 'kraken', 'bitstamp'] as const
 const PRIORITY_EXCHANGE_RANK: Map<string, number> = new Map(
 	PRIORITY_EXCHANGES.map((exchange, index) => [exchange, index])
 )
+type FeeKind = 'spot' | 'perp'
+type FeeTone = 'low' | 'medium' | 'high'
 type ExchangePromotion = NonNullable<ExchangeMetadataListEntry['promotions']>[number]
+
+const SPOT_FEE_TIER_LIMITS = { low: 0.001, medium: 0.004 }
+
+const FEE_TONE_CLASS: Record<FeeTone, string> = {
+	low: 'border-(--success)/30 bg-(--success)/10 text-(--success)',
+	medium: 'border-(--warning)/30 bg-(--warning)/10 text-(--warning)',
+	high: 'border-(--error)/50 bg-(--cards-bg) text-(--error)'
+}
+
+const FEE_TONE_LABEL: Record<FeeTone, string> = {
+	low: 'Low fee',
+	medium: 'Medium fee',
+	high: 'High fee'
+}
+
+const SPOT_LIQUIDITY_HELP = 'Aggregated spot orderbook bid and ask depth within 2% of mid price for EU-available spot.'
+const PERP_LIQUIDITY_HELP =
+	'Aggregated perps orderbook bid and ask depth within 2% of mid price for EU-available perps.'
 
 export function selectActivePromotion(
 	row: ExchangeMetadataListEntry,
@@ -191,13 +211,41 @@ function formatDepthPair(bid: number, ask: number) {
 	return `${formatLiquidity(bid)} bid / ${formatLiquidity(ask)} ask`
 }
 
-function FeePairCell({ fee }: { fee: ExchangeMetadataListEntry['spot_fee'] | ExchangeMetadataListEntry['perp_fee'] }) {
+function getSpotFeeTone(fee: ExchangeMetadataListEntry['spot_fee']) {
+	const value = fee.taker ?? fee.maker
+	if (value == null) return null
+
+	if (value <= SPOT_FEE_TIER_LIMITS.low) return 'low'
+	if (value <= SPOT_FEE_TIER_LIMITS.medium) return 'medium'
+	return 'high'
+}
+
+function FeePairCell({
+	fee,
+	kind
+}: {
+	fee: ExchangeMetadataListEntry['spot_fee'] | ExchangeMetadataListEntry['perp_fee']
+	kind: FeeKind
+}) {
 	const maker = formatFee(fee.maker)
 	const taker = formatFee(fee.taker)
 	if (!maker && !taker) return null
+	const formattedFee = maker && taker ? `${maker} / ${taker}` : (maker ?? taker)
+
+	if (kind === 'perp') {
+		return <span className="whitespace-nowrap tabular-nums">{formattedFee}</span>
+	}
+
+	const tone = getSpotFeeTone(fee)
+	const label = tone ? FEE_TONE_LABEL[tone] : null
 
 	return (
-		<span className="whitespace-nowrap tabular-nums">{maker && taker ? `${maker} / ${taker}` : (maker ?? taker)}</span>
+		<span
+			className={`inline-flex rounded-md border px-2 py-0.5 text-xs font-normal whitespace-nowrap tabular-nums ${tone ? FEE_TONE_CLASS[tone] : 'border-(--cards-border) text-(--text-primary)'}`}
+			aria-label={label ? `${formattedFee}. ${label}; lower fees are better.` : formattedFee}
+		>
+			{formattedFee}
+		</span>
 	)
 }
 
@@ -215,16 +263,31 @@ function PerpsCell({ available }: { available: boolean }) {
 	)
 }
 
-function LiquidityCell({ bid, ask, isPartialCoverage }: { bid: number; ask: number; isPartialCoverage: boolean }) {
+function LiquidityCell({
+	bid,
+	ask,
+	isPartialCoverage,
+	helperText
+}: {
+	bid: number
+	ask: number
+	isPartialCoverage: boolean
+	helperText: string
+}) {
 	const total = bid + ask
 	if (total === 0) return null
 
 	const tooltip = [formatDepthPair(bid, ask), isPartialCoverage ? 'Partial coverage' : null].filter(Boolean).join('\n')
 
 	return (
-		<Tooltip content={tooltip} className="justify-end">
-			<span className="whitespace-nowrap tabular-nums">{formatLiquidity(total)}</span>
-		</Tooltip>
+		<span className="inline-flex items-center justify-end gap-1.5">
+			<Tooltip content={tooltip} className="justify-end">
+				<span className="whitespace-nowrap tabular-nums">{formatLiquidity(total)}</span>
+			</Tooltip>
+			<Tooltip content={helperText}>
+				<Icon name="help-circle" height={13} width={13} className="shrink-0 text-(--text-tertiary)" />
+			</Tooltip>
+		</span>
 	)
 }
 
@@ -300,12 +363,13 @@ const columns: ColumnDef<ExchangeMetadataListEntry, any>[] = [
 				bid={row.original.depth_summary.spot_bid_depth_2pct_usd}
 				ask={row.original.depth_summary.spot_ask_depth_2pct_usd}
 				isPartialCoverage={row.original.depth_summary.isPartialCoverage}
+				helperText={SPOT_LIQUIDITY_HELP}
 			/>
 		),
 		meta: {
 			headerClassName: 'w-[132px] min-w-[120px] whitespace-nowrap',
 			align: 'end' as const,
-			headerHelperText: 'Aggregated spot orderbook bid and ask depth within 2% of mid price for EU-available spot.'
+			headerHelperText: SPOT_LIQUIDITY_HELP
 		}
 	}),
 	columnHelper.accessor(getPerpDepthLiquidity, {
@@ -316,18 +380,19 @@ const columns: ColumnDef<ExchangeMetadataListEntry, any>[] = [
 				bid={row.original.depth_summary.perp_bid_depth_2pct_usd}
 				ask={row.original.depth_summary.perp_ask_depth_2pct_usd}
 				isPartialCoverage={row.original.depth_summary.isPartialCoverage}
+				helperText={PERP_LIQUIDITY_HELP}
 			/>
 		),
 		meta: {
 			headerClassName: 'w-[132px] min-w-[120px] whitespace-nowrap',
 			align: 'end' as const,
-			headerHelperText: 'Aggregated perps orderbook bid and ask depth within 2% of mid price for EU-available perps.'
+			headerHelperText: PERP_LIQUIDITY_HELP
 		}
 	}),
 	columnHelper.accessor((row) => row.spot_fee.taker ?? undefined, {
 		id: 'spot_fees',
 		header: 'Spot fees',
-		cell: ({ row }) => <FeePairCell fee={row.original.spot_fee} />,
+		cell: ({ row }) => <FeePairCell fee={row.original.spot_fee} kind="spot" />,
 		meta: {
 			headerClassName: 'w-[108px] min-w-[100px] whitespace-nowrap',
 			align: 'end' as const,
@@ -346,7 +411,7 @@ const columns: ColumnDef<ExchangeMetadataListEntry, any>[] = [
 	columnHelper.accessor((row) => row.perp_fee.taker ?? undefined, {
 		id: 'perp_fees',
 		header: 'Perp fees',
-		cell: ({ row }) => <FeePairCell fee={row.original.perp_fee} />,
+		cell: ({ row }) => <FeePairCell fee={row.original.perp_fee} kind="perp" />,
 		meta: {
 			headerClassName: 'w-[108px] min-w-[100px] whitespace-nowrap',
 			align: 'end' as const,

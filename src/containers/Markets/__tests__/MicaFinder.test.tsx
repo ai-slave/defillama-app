@@ -124,6 +124,30 @@ describe('rankMicaRows', () => {
 				volume_24h_usd: 1
 			}),
 			row({
+				display_name: 'Bitstamp',
+				exchange: 'bitstamp',
+				secondary: false,
+				products: ['spot'],
+				spot_fee: { maker: 0, taker: 0.01 },
+				volume_24h_usd: 1
+			}),
+			row({
+				display_name: 'Gate',
+				exchange: 'gate',
+				secondary: false,
+				products: ['spot'],
+				spot_fee: { maker: 0, taker: 0.01 },
+				volume_24h_usd: 1
+			}),
+			row({
+				display_name: 'Kraken',
+				exchange: 'kraken',
+				secondary: false,
+				products: ['spot'],
+				spot_fee: { maker: 0, taker: 0.01 },
+				volume_24h_usd: 1
+			}),
+			row({
 				display_name: 'PerpBroker',
 				exchange: 'perpbroker',
 				secondary: true,
@@ -167,6 +191,9 @@ describe('rankMicaRows', () => {
 			'Bybit',
 			'Coinbase',
 			'Crypto.com Exchange',
+			'Gate',
+			'Kraken',
+			'Bitstamp',
 			'CheapSpot',
 			'PerpBroker',
 			'PerpMajor',
