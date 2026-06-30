@@ -155,7 +155,7 @@ function BrandHero() {
 
 				<div className="grid w-full max-w-[280px] gap-6 justify-self-center pt-2 lg:justify-self-start lg:pt-0">
 					<a
-						href="#research-media-kit"
+						href="mailto:research@defillama.com"
 						className="inline-flex h-13 items-center justify-center gap-2 rounded-full bg-white px-5 text-base font-medium whitespace-nowrap text-[#3A8BFF] transition-opacity hover:opacity-90"
 					>
 						<span>Contact us</span>
