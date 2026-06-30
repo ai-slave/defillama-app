@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { ResearchIcon } from '~/components/ResearchIcon'
-import { FEATURES_SERVER } from '~/constants'
 import { ArticleApiError, getAuthorBySlug, type ArticleAuthorResponse } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
 import { isResearcher } from '~/containers/Articles/ArticlesAccessGate'
@@ -156,13 +155,11 @@ function BrandHero() {
 
 				<div className="grid w-full max-w-[280px] gap-6 justify-self-center pt-2 lg:justify-self-start lg:pt-0">
 					<a
-						href={`${FEATURES_SERVER.replace(/\/$/, '')}/uploads/media-kit.pdf`}
-						target="_blank"
-						rel="noopener noreferrer"
+						href="#research-media-kit"
 						className="inline-flex h-13 items-center justify-center gap-2 rounded-full bg-white px-5 text-base font-medium whitespace-nowrap text-[#3A8BFF] transition-opacity hover:opacity-90"
 					>
-						<span>Explore our media kit</span>
-						<ResearchIcon name="research-media-kit" className="size-7 shrink-0" />
+						<span>Contact us</span>
+						<Icon name="mail" className="size-5 shrink-0" />
 					</a>
 					<BasicLink
 						href="https://calendly.com/research-defillama/30min"

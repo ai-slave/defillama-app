@@ -221,7 +221,7 @@ function FooterMediaKit() {
 	}
 
 	return (
-		<div className="flex flex-col gap-4">
+		<div id="research-media-kit" className="flex scroll-mt-6 flex-col gap-4">
 			<h2 className={headingClassName}>Get our media kit</h2>
 			<p className={`max-w-sm ${descriptionClassName}`}>
 				Explore our product overviews, package details, key differentiators, and essential information.
