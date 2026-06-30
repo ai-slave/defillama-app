@@ -34,7 +34,7 @@ describe('newsletter and media-kit split', () => {
 		const html = renderWithQueryClient(<ResearchFooter />)
 
 		expect(html).toContain('Get our media kit')
-		expect(html).toContain('Send media kit')
+		expect(html).toContain('Get the media kit')
 		expect(html).toContain('href="/newsletters"')
 		expect(html).toContain('DefiLlama newsletters')
 		expect(html).not.toContain('Subscribe &amp; get our media kit')

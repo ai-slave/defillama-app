@@ -249,7 +249,7 @@ function FooterMediaKit() {
 					) : isSent ? (
 						'Sent'
 					) : (
-						'Send media kit'
+						'Get the media kit'
 					)}
 				</button>
 			</form>
