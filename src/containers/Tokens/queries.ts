@@ -138,10 +138,18 @@ function getTokenRightsSummary(parsed: ITokenRightsData): TokensRightsSummary {
 	const burns = parsed.valueAccrual.burns.isActive
 	const dividends = parsed.valueAccrual.dividends.displayTokens.length > 0
 	const buybacks = parsed.valueAccrual.buybacks.displayTokens.length > 0
+	const structuralDistribution = dividends || buybacks
 	const governance = parsed.governance.decisionTokenDisplay.displayTokens.length > 0
 
 	return {
-		pieGradient: getRightsPieGradient({ treasury, revenue, burns, dividends, buybacks, governance }),
+		pieGradient: getRightsPieGradient({
+			treasury,
+			revenue,
+			burns,
+			dividends: structuralDistribution,
+			buybacks: structuralDistribution,
+			governance
+		}),
 		protocolName: parsed.overview.protocolName,
 		identityTokens: parsed.overview.identityTokens,
 		utilityItems: parsed.overview.utilityItems,

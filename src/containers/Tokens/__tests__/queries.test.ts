@@ -199,12 +199,93 @@ describe('buildTokensSourceRows', () => {
 			burns: true,
 			burnsStatus: 'Active'
 		})
+		expect(ethena.rights?.pieGradient).toContain('var(--success) 180deg 240deg')
+		expect(ethena.rights?.pieGradient).toContain('var(--success) 240deg 300deg')
 
 		expect(result.rows[1]).toMatchObject({
 			id: 'unmapped',
 			href: null,
 			rights: null
 		})
+	})
+
+	it('paints buyback and dividend pie slices by shared structural value accrual', () => {
+		const metadata = {
+			tokenDirectory: {
+				buybacks: {
+					name: 'Buybacks Only',
+					symbol: 'BUY',
+					token_nk: 'coingecko:buybacks',
+					protocolId: 'buybacks'
+				},
+				none: {
+					name: 'No Accrual',
+					symbol: 'NONE',
+					token_nk: 'coingecko:none',
+					protocolId: 'none'
+				}
+			},
+			protocolMetadata: {},
+			emissionsSupplyMetrics: {}
+		} as unknown as MetadataCache
+
+		const result = buildTokensSourceRows({
+			tokens: [
+				{
+					id: 'buybacks',
+					name: 'Buybacks Only',
+					symbol: 'buy',
+					current_price: 1,
+					market_cap: 100
+				},
+				{
+					id: 'none',
+					name: 'No Accrual',
+					symbol: 'none',
+					current_price: 1,
+					market_cap: 100
+				}
+			],
+			markets: { last_updated: '', tokens: [] },
+			tokenRightsEntries: [
+				tokenRightsEntry({
+					'Protocol Name': 'Buybacks Only',
+					Token: ['BUY'],
+					'Governance Decisions': ['None'],
+					'Revenue Decisions': ['None'],
+					Buybacks: ['BUY'],
+					Dividends: ['None'],
+					Burns: 'None',
+					'DefiLlama ID': 'buybacks'
+				}),
+				tokenRightsEntry({
+					'Protocol Name': 'No Accrual',
+					Token: ['NONE'],
+					'Governance Decisions': ['None'],
+					'Revenue Decisions': ['None'],
+					Buybacks: ['None'],
+					Dividends: ['None'],
+					Burns: 'None',
+					'DefiLlama ID': 'none'
+				})
+			],
+			fees: [],
+			revenue: [],
+			holdersRevenue: [],
+			unlocks: [],
+			metadata,
+			nowSec: 1_800_000_000
+		})
+
+		const buybacksOnly = result.rows.find((row) => row.id === 'buybacks')?.rights
+		const noAccrual = result.rows.find((row) => row.id === 'none')?.rights
+
+		expect(buybacksOnly).toMatchObject({ buybacks: true, dividends: false })
+		expect(buybacksOnly?.pieGradient).toContain('var(--success) 180deg 240deg')
+		expect(buybacksOnly?.pieGradient).toContain('var(--success) 240deg 300deg')
+		expect(noAccrual).toMatchObject({ buybacks: false, dividends: false })
+		expect(noAccrual?.pieGradient).toContain('var(--error) 180deg 240deg')
+		expect(noAccrual?.pieGradient).toContain('var(--error) 240deg 300deg')
 	})
 
 	it('does not join symbol-only market metrics when multiple tokens share the symbol', () => {

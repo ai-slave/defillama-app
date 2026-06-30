@@ -167,13 +167,24 @@ function RightsChipList({ items, tone, wrap = false }: { items: string[]; tone: 
 	)
 }
 
-function RightsTokenValue({ items, inactiveLabel }: { items: string[]; inactiveLabel: string }) {
-	if (items.length === 0) return <RightsToneText label={inactiveLabel} tone={rightsStatusTone(inactiveLabel)} />
+function RightsTokenValue({
+	items,
+	inactiveLabel,
+	inactiveTone
+}: {
+	items: string[]
+	inactiveLabel: string
+	inactiveTone?: RightsTone
+}) {
+	if (items.length === 0) {
+		return <RightsToneText label={inactiveLabel} tone={inactiveTone ?? rightsStatusTone(inactiveLabel)} />
+	}
 	return <RightsChipList items={items} tone="positive" wrap />
 }
 
 function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
 	const hasPrimaryValueAccrual = rights.primaryValue !== null || rights.primaryDetails !== null
+	const hasStructuralDistribution = rights.buybacks || rights.dividends
 	const coreFields: Array<{ label: string; tone: RightsTone; value: React.ReactNode }> = [
 		{
 			label: 'Governance',
@@ -192,13 +203,25 @@ function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
 		},
 		{
 			label: 'Buybacks',
-			tone: rights.buybacks ? 'positive' : 'negative',
-			value: <RightsTokenValue items={rights.buybackTokens} inactiveLabel="None" />
+			tone: hasStructuralDistribution ? 'positive' : 'negative',
+			value: (
+				<RightsTokenValue
+					items={rights.buybackTokens}
+					inactiveLabel="None"
+					inactiveTone={hasStructuralDistribution ? 'neutral' : 'negative'}
+				/>
+			)
 		},
 		{
 			label: 'Dividends',
-			tone: rights.dividends ? 'positive' : 'negative',
-			value: <RightsTokenValue items={rights.dividendTokens} inactiveLabel="None" />
+			tone: hasStructuralDistribution ? 'positive' : 'negative',
+			value: (
+				<RightsTokenValue
+					items={rights.dividendTokens}
+					inactiveLabel="None"
+					inactiveTone={hasStructuralDistribution ? 'neutral' : 'negative'}
+				/>
+			)
 		},
 		{
 			label: 'Burns',

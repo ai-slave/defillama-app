@@ -405,12 +405,14 @@ function TokenRightsOverviewView({
 	const displayName = overview.protocolName || name
 	const primaryValueLabel = getTokenRightsPrimaryValueLabel(valueAccrual.primary)
 	const hasPrimaryValueAccrual = primaryValueLabel !== null || valueAccrual.details !== null
+	const hasStructuralDistribution =
+		valueAccrual.dividends.displayTokens.length > 0 || valueAccrual.buybacks.displayTokens.length > 0
 	const pieSegments = [
 		{ label: 'Treasury', active: decisions.treasury.displayTokens.length > 0 },
 		{ label: 'Revenue', active: decisions.revenue.displayTokens.length > 0 },
 		{ label: 'Burns', active: valueAccrual.burns.isActive },
-		{ label: 'Dividends', active: valueAccrual.dividends.displayTokens.length > 0 },
-		{ label: 'Buybacks', active: valueAccrual.buybacks.displayTokens.length > 0 },
+		{ label: 'Dividends', active: hasStructuralDistribution },
+		{ label: 'Buybacks', active: hasStructuralDistribution },
 		{ label: 'Governance', active: governance.decisionTokenDisplay.displayTokens.length > 0 }
 	]
 	const rightsFields = [
@@ -437,11 +439,23 @@ function TokenRightsOverviewView({
 		},
 		{
 			label: 'Buybacks',
-			value: <OverviewTokenValue display={valueAccrual.buybacks} inactiveLabel="None" />
+			value: (
+				<OverviewTokenValue
+					display={valueAccrual.buybacks}
+					inactiveLabel="None"
+					inactiveTone={hasStructuralDistribution ? 'neutral' : 'negative'}
+				/>
+			)
 		},
 		{
 			label: 'Dividends',
-			value: <OverviewTokenValue display={valueAccrual.dividends} inactiveLabel="None" />
+			value: (
+				<OverviewTokenValue
+					display={valueAccrual.dividends}
+					inactiveLabel="None"
+					inactiveTone={hasStructuralDistribution ? 'neutral' : 'negative'}
+				/>
+			)
 		},
 		{
 			label: 'Burns',
@@ -558,9 +572,17 @@ function TokenRightsPieChart({ segments }: { segments: Array<{ label: string; ac
 	)
 }
 
-function OverviewTokenValue({ display, inactiveLabel }: { display: ITokenRightsTokenDisplay; inactiveLabel: string }) {
+function OverviewTokenValue({
+	display,
+	inactiveLabel,
+	inactiveTone = 'negative'
+}: {
+	display: ITokenRightsTokenDisplay
+	inactiveLabel: string
+	inactiveTone?: StatusTone
+}) {
 	if (display.displayTokens.length === 0) {
-		return <TokenRightsToneText label={inactiveLabel} tone="negative" />
+		return <TokenRightsToneText label={inactiveLabel} tone={inactiveTone} />
 	}
 	return <TokenRightsChipList items={display.displayTokens} tone="positive" variant="overview" />
 }
