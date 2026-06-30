@@ -17,9 +17,63 @@ const PRIORITY_EXCHANGE_RANK: Map<string, number> = new Map(
 )
 type FeeKind = 'spot' | 'perp'
 type FeeTone = 'low' | 'medium' | 'high'
+type IconName = React.ComponentProps<typeof Icon>['name']
+type KycRequirementKey = 'id' | 'selfie' | 'poa' | 'profile' | 'quiz'
 type ExchangePromotion = NonNullable<ExchangeMetadataListEntry['promotions']>[number]
 
 const SPOT_FEE_TIER_LIMITS = { low: 0.001, medium: 0.004 }
+
+type KycRequirementIndicator = {
+	key: KycRequirementKey
+	label: string
+	icon: IconName
+	className: string
+}
+
+const KYC_REQUIREMENT_BY_TOKEN: Record<string, KycRequirementIndicator> = {
+	id: {
+		key: 'id',
+		label: 'Government ID',
+		icon: 'id-card',
+		className: 'border-sky-500/30 bg-sky-500/10 text-sky-600 dark:text-sky-400'
+	},
+	selfie: {
+		key: 'selfie',
+		label: 'Liveness / selfie check',
+		icon: 'scan-face',
+		className: 'border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400'
+	},
+	poa: {
+		key: 'poa',
+		label: 'Proof of address',
+		icon: 'house-plug',
+		className: 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+	},
+	'source-of-income': {
+		key: 'profile',
+		label: 'Income / economic profile',
+		icon: 'briefcase-business',
+		className: 'border-teal-500/30 bg-teal-500/10 text-teal-600 dark:text-teal-400'
+	},
+	profile: {
+		key: 'profile',
+		label: 'Income / economic profile',
+		icon: 'briefcase-business',
+		className: 'border-teal-500/30 bg-teal-500/10 text-teal-600 dark:text-teal-400'
+	},
+	'mifid quiz': {
+		key: 'quiz',
+		label: 'Trading knowledge quiz',
+		icon: 'clipboard-check',
+		className: 'border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+	},
+	quiz: {
+		key: 'quiz',
+		label: 'Trading knowledge quiz',
+		icon: 'clipboard-check',
+		className: 'border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+	}
+}
 
 const FEE_TONE_CLASS: Record<FeeTone, string> = {
 	low: 'border-(--success)/30 bg-(--success)/10 text-(--success)',
@@ -211,6 +265,18 @@ function formatDepthPair(bid: number, ask: number) {
 	return `${formatLiquidity(bid)} bid / ${formatLiquidity(ask)} ask`
 }
 
+export function getKycRequirementIndicators(kycShort: string): KycRequirementIndicator[] {
+	const indicators: KycRequirementIndicator[] = []
+	const seen = new Set<KycRequirementKey>()
+	for (const token of kycShort.split('+')) {
+		const indicator = KYC_REQUIREMENT_BY_TOKEN[token.trim().toLowerCase()]
+		if (!indicator || seen.has(indicator.key)) continue
+		seen.add(indicator.key)
+		indicators.push(indicator)
+	}
+	return indicators
+}
+
 function getSpotFeeTone(fee: ExchangeMetadataListEntry['spot_fee']) {
 	const value = fee.taker ?? fee.maker
 	if (value == null) return null
@@ -291,15 +357,58 @@ function LiquidityCell({
 	)
 }
 
+function KycSummaryHovercard({ summary }: { summary: string }) {
+	return (
+		<Ariakit.HovercardProvider placement="left-start" showTimeout={0} hideTimeout={80}>
+			<Ariakit.HovercardAnchor
+				render={<button />}
+				type="button"
+				className="inline-flex size-7 items-center justify-center rounded-md border border-(--cards-border) text-(--text-tertiary) hover:border-(--text-tertiary) hover:bg-(--link-hover-bg) hover:text-(--text-primary) focus-visible:border-(--text-tertiary) focus-visible:bg-(--link-hover-bg) focus-visible:text-(--text-primary)"
+				aria-label="Full KYC requirements"
+			>
+				<Icon name="file-text" height={14} width={14} />
+			</Ariakit.HovercardAnchor>
+			<Ariakit.Hovercard
+				unmountOnHide
+				gutter={6}
+				className="z-50 w-96 max-w-[calc(100vw-32px)] rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) p-3 text-sm leading-snug text-(--text-primary) shadow-lg dark:border-[hsl(204,3%,32%)]"
+				portal
+			>
+				<span className="block break-words whitespace-pre-wrap">{summary}</span>
+			</Ariakit.Hovercard>
+		</Ariakit.HovercardProvider>
+	)
+}
+
 function KycCell({ row }: { row: ExchangeMetadataListEntry }) {
 	if (row.kyc_required == null) return <span className="text-(--text-disabled)">–</span>
 	if (!row.kyc_required) return <span className="text-(--success)">No KYC</span>
 
-	const summary = row.kyc_summary || 'Required'
+	const shortSummary = row.kyc_short || 'Required'
+	const summary = row.kyc_summary || shortSummary
+	const requirements = getKycRequirementIndicators(shortSummary)
+	if (!requirements.length) {
+		return (
+			<Tooltip content={summary}>
+				<span className="block truncate text-sm">{shortSummary}</span>
+			</Tooltip>
+		)
+	}
+
 	return (
-		<Tooltip content={summary}>
-			<span className="block truncate text-sm">{summary}</span>
-		</Tooltip>
+		<span className="inline-flex items-center gap-1.5" aria-label={summary}>
+			{requirements.map((requirement) => (
+				<Tooltip key={requirement.key} content={requirement.label}>
+					<span
+						className={`inline-flex size-7 items-center justify-center rounded-md border ${requirement.className}`}
+						aria-label={requirement.label}
+					>
+						<Icon name={requirement.icon} height={15} width={15} />
+					</span>
+				</Tooltip>
+			))}
+			{summary !== shortSummary ? <KycSummaryHovercard summary={summary} /> : null}
+		</span>
 	)
 }
 

@@ -274,6 +274,7 @@ export interface ExchangeMetadataListEntry {
 	fee_token: ExchangeMetadataFeeToken | null
 	inflows_24h_usd: number | null
 	kyc_required: boolean | null
+	kyc_short: string | null
 	kyc_summary?: string | null
 	last_verified: string | null
 	mica_licensed: boolean

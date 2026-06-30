@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ExchangeMetadataListEntry } from '../api.types'
-import { filterMicaRows, rankMicaRows, selectActivePromotion } from '../MicaFinder'
+import { filterMicaRows, getKycRequirementIndicators, rankMicaRows, selectActivePromotion } from '../MicaFinder'
 
 function row(over: Partial<ExchangeMetadataListEntry>): ExchangeMetadataListEntry {
 	return {
@@ -20,6 +20,7 @@ function row(over: Partial<ExchangeMetadataListEntry>): ExchangeMetadataListEntr
 		fee_token: null,
 		inflows_24h_usd: null,
 		kyc_required: null,
+		kyc_short: null,
 		kyc_summary: null,
 		last_verified: null,
 		mica_licensed: false,
@@ -199,6 +200,18 @@ describe('rankMicaRows', () => {
 			'PerpMajor',
 			'ExpensiveSpot'
 		])
+	})
+})
+
+describe('getKycRequirementIndicators', () => {
+	it('uses kyc_short for compact ID, selfie, and proof-of-address indicators', () => {
+		const indicators = getKycRequirementIndicators('ID + selfie + PoA')
+		expect(indicators.map((indicator) => indicator.key)).toEqual(['id', 'selfie', 'poa'])
+	})
+
+	it('supports all compact KYC requirement tokens', () => {
+		const indicators = getKycRequirementIndicators('ID + selfie + PoA + source-of-income + MiFID quiz')
+		expect(indicators.map((indicator) => indicator.key)).toEqual(['id', 'selfie', 'poa', 'profile', 'quiz'])
 	})
 })
 
