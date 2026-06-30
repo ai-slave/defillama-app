@@ -42,7 +42,7 @@ describe('newsletter and media-kit split', () => {
 		expect(html).not.toContain('/uploads/media-kit.pdf')
 	})
 
-	it('starts the newsletters page with no selected newsletters', () => {
+	it('starts the newsletters page with both newsletters selected', () => {
 		const html = renderWithQueryClient(<NewslettersPage />)
 
 		expect(html).toContain('Choose your DefiLlama newsletters')
@@ -52,15 +52,18 @@ describe('newsletter and media-kit split', () => {
 		expect(html).toContain('Pick your publications')
 		expect(html).toContain('Coming soon')
 		expect(html).toContain('Research is marked as coming soon, but the list is open.')
-		expect(html).toContain('Choose at least one newsletter.')
-		expect(html).toContain('No newsletters selected yet')
+		expect(html).toContain('2/2 selected')
+		expect(html).toContain('2 publications selected.')
+		expect(html).toContain('DefiLlama Newsletter + DefiLlama Research')
 		expect(html).toContain('/assets/defillama-newsletter-logo-light.png')
 		expect(html).toContain('/assets/defillama-newsletter-logo-dark.png')
 		expect(html).toContain('/assets/research_logo.webp')
 		expect(html).toContain('/assets/research_logo_dark.webp')
-		expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Choose a newsletter<\/button>/)
-		expect(html.match(/aria-pressed="false"/g)).toHaveLength(2)
-		expect(html).not.toContain('aria-pressed="true"')
+		expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Enter email<\/button>/)
+		expect(html.match(/aria-pressed="true"/g)).toHaveLength(2)
+		expect(html).not.toContain('aria-pressed="false"')
+		expect(html).not.toContain('Choose at least one newsletter.')
+		expect(html).not.toContain('No newsletters selected yet')
 		expect(html).not.toContain('Choose your stream')
 		expect(html).not.toContain('Subscription starts after you submit')
 		expect(html).not.toContain('Media-kit requests are handled separately from this page.')

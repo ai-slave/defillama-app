@@ -6,8 +6,8 @@ import { NEWSLETTERS, type NewsletterKey, useNewsletterSubscription } from '~/ho
 import Layout from '~/layout'
 
 const initialSelected: Record<NewsletterKey, boolean> = {
-	newsletter: false,
-	research: false
+	newsletter: true,
+	research: true
 }
 
 const newsletterDetails: Record<
@@ -232,17 +232,19 @@ export default function NewslettersPage() {
 												) : null}
 											</span>
 											<span className="flex min-w-0 flex-col gap-3">
-												<span className="flex flex-wrap items-center gap-3">
-													<span className="text-xs font-semibold tracking-[0.14em] text-(--link-text) uppercase">
-														{details.eyebrow}
-													</span>
-													{isComingSoon ? (
-														<span className="inline-flex h-7 items-center rounded-full border border-(--cards-border) bg-(--bg-main) px-2.5 text-[11px] font-semibold text-(--text-secondary)">
-															Coming soon
+												<span className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+													<span className="flex min-w-0 flex-wrap items-center gap-3">
+														<span className="text-xs font-semibold tracking-[0.14em] text-(--link-text) uppercase">
+															{details.eyebrow}
 														</span>
-													) : null}
+														{isComingSoon ? (
+															<span className="inline-flex h-7 items-center rounded-full border border-(--cards-border) bg-(--bg-main) px-2.5 text-[11px] font-semibold whitespace-nowrap text-(--text-secondary)">
+																Coming soon
+															</span>
+														) : null}
+													</span>
 													<span
-														className={`ml-auto inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors ${
+														className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold whitespace-nowrap transition-colors ${
 															on
 																? 'border-(--link-text) bg-(--link-text) text-white'
 																: 'border-(--cards-border) text-(--text-secondary)'
