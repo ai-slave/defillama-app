@@ -3,6 +3,7 @@ import type { ReactElement, ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { ResearchFooter } from '~/containers/Articles/landing/ResearchFooter'
+import { ResearchHero } from '~/containers/Articles/landing/ResearchHero'
 import NewslettersPage from '~/pages/newsletters'
 import defillamaPages from '~/public/pages.json'
 
@@ -46,9 +47,11 @@ describe('newsletter and media-kit split', () => {
 
 		expect(html).toContain('Choose your DefiLlama newsletters')
 		expect(html).toContain('Available newsletters')
-		expect(html).toContain('Market updates, research, or both')
+		expect(html).toContain('Market updates live, research soon')
 		expect(html).toContain('Pick the lists you want to receive at this email.')
 		expect(html).toContain('Pick your publications')
+		expect(html).toContain('Coming soon')
+		expect(html).toContain('Research is marked as coming soon, but the list is open.')
 		expect(html).toContain('Choose at least one newsletter.')
 		expect(html).toContain('No newsletters selected yet')
 		expect(html).toContain('/assets/defillama-newsletter-logo-light.png')
@@ -62,6 +65,14 @@ describe('newsletter and media-kit split', () => {
 		expect(html).not.toContain('Subscription starts after you submit')
 		expect(html).not.toContain('Media-kit requests are handled separately from this page.')
 		expect(html).not.toContain('We send a confirmation email before adding you to the selected list.')
+	})
+
+	it('links the research hero newsletter icon to the newsletters page', () => {
+		const html = renderWithQueryClient(<ResearchHero title="Research" subtitle="Market intelligence" reports={[]} />)
+
+		expect(html).toContain('href="/newsletters"')
+		expect(html).toContain('aria-label="Subscribe to DefiLlama newsletters"')
+		expect(html).not.toContain('newsletter.defillama.com')
 	})
 
 	it('does not expose newsletters as a main navbar item', () => {

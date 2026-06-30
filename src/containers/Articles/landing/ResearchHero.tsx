@@ -71,12 +71,7 @@ export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, rep
 							<Link href="/research/feed" aria-label="Subscribe via RSS">
 								<ResearchIcon name="rss" width={36} height={36} aria-hidden />
 							</Link>
-							<Link
-								href="https://newsletter.defillama.com/?utm_source=defillama&utm_medium=research&utm_campaign=research_hero"
-								aria-label="Subscribe to the DefiLlama newsletter"
-								rel="noopener noreferrer"
-								target="_blank"
-							>
+							<Link href="/newsletters" aria-label="Subscribe to DefiLlama newsletters">
 								<ResearchIcon name="newsletter" width={36} height={36} className="text-white" aria-hidden />
 							</Link>
 						</div>
