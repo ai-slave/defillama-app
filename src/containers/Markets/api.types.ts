@@ -236,6 +236,14 @@ interface ExchangeMetadataFeeToken {
 	symbol: string
 }
 
+interface ExchangeMetadataDepthSummary {
+	isPartialCoverage: boolean
+	perp_ask_depth_2pct_usd: number
+	perp_bid_depth_2pct_usd: number
+	spot_ask_depth_2pct_usd: number
+	spot_bid_depth_2pct_usd: number
+}
+
 interface ExchangeMetadataPromotion {
 	ends_at?: string | null
 	excluded_regions?: string[]
@@ -259,6 +267,7 @@ export interface ExchangeMetadataListEntry {
 	available_regions: string[]
 	clean_reserves_usd: number | null
 	defillama_slug: string | null
+	depth_summary: ExchangeMetadataDepthSummary
 	display_name: string
 	eu_status: ExchangeMetadataEuStatus | null
 	exchange: string

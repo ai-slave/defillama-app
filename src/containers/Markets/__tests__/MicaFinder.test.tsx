@@ -7,6 +7,13 @@ function row(over: Partial<ExchangeMetadataListEntry>): ExchangeMetadataListEntr
 		available_regions: [],
 		clean_reserves_usd: null,
 		defillama_slug: null,
+		depth_summary: {
+			isPartialCoverage: false,
+			perp_ask_depth_2pct_usd: 0,
+			perp_bid_depth_2pct_usd: 0,
+			spot_ask_depth_2pct_usd: 0,
+			spot_bid_depth_2pct_usd: 0
+		},
 		display_name: 'X',
 		eu_status: null,
 		exchange: 'x',
@@ -74,6 +81,13 @@ describe('rankMicaRows', () => {
 				exchange: 'cheapspot',
 				secondary: false,
 				products: ['spot'],
+				depth_summary: {
+					isPartialCoverage: false,
+					perp_ask_depth_2pct_usd: 0,
+					perp_bid_depth_2pct_usd: 0,
+					spot_ask_depth_2pct_usd: 150,
+					spot_bid_depth_2pct_usd: 150
+				},
 				spot_fee: { maker: 0, taker: 0.0005 },
 				volume_24h_usd: 100_000
 			}),
@@ -114,6 +128,13 @@ describe('rankMicaRows', () => {
 				exchange: 'perpbroker',
 				secondary: true,
 				products: ['spot', 'perp'],
+				depth_summary: {
+					isPartialCoverage: false,
+					perp_ask_depth_2pct_usd: 75,
+					perp_bid_depth_2pct_usd: 75,
+					spot_ask_depth_2pct_usd: 25,
+					spot_bid_depth_2pct_usd: 25
+				},
 				spot_fee: { maker: 0, taker: 0.001 },
 				volume_24h_usd: 100
 			}),
@@ -122,6 +143,13 @@ describe('rankMicaRows', () => {
 				exchange: 'perpmajor',
 				secondary: false,
 				products: ['spot', 'perp'],
+				depth_summary: {
+					isPartialCoverage: false,
+					perp_ask_depth_2pct_usd: 50,
+					perp_bid_depth_2pct_usd: 50,
+					spot_ask_depth_2pct_usd: 25,
+					spot_bid_depth_2pct_usd: 25
+				},
 				spot_fee: { maker: 0, taker: 0.002 },
 				volume_24h_usd: 50
 			}),

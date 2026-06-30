@@ -120,19 +120,19 @@ function ExchangeNameCell({ row }: { row: ExchangeMetadataListEntry }) {
 	const promotion = selectActivePromotion(row)
 
 	return (
-		<span className="flex min-w-0 items-center gap-2">
-			<span className="min-w-0">
+		<span className="flex w-full min-w-0 items-center gap-2">
+			<span className="min-w-0 flex-1">
 				{outbound ? (
 					<a
 						href={outbound}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="min-w-0 truncate text-sm font-medium text-(--link-text) hover:underline"
+						className="block truncate text-sm font-medium text-(--link-text) hover:underline"
 					>
 						{row.display_name}
 					</a>
 				) : (
-					<span className="truncate text-sm font-medium text-(--text-primary)">{row.display_name}</span>
+					<span className="block truncate text-sm font-medium text-(--text-primary)">{row.display_name}</span>
 				)}
 			</span>
 			<span className="ml-auto flex shrink-0 items-center gap-1.5">
@@ -142,10 +142,11 @@ function ExchangeNameCell({ row }: { row: ExchangeMetadataListEntry }) {
 						href={outbound}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="inline-flex size-7 items-center justify-center rounded-md bg-(--link-button) text-(--link-text) hover:bg-(--link-button-hover)"
-						aria-label={`Open ${row.display_name}`}
+						className="inline-flex h-7 items-center gap-1 rounded-md bg-(--link-button) px-2.5 text-xs font-medium text-(--link-text) hover:bg-(--link-button-hover)"
+						aria-label={`Trade on ${row.display_name}`}
 					>
-						<Icon name="arrow-up-right" height={14} width={14} />
+						Trade
+						<Icon name="arrow-up-right" height={13} width={13} />
 					</a>
 				) : null}
 			</span>
@@ -162,22 +163,41 @@ function hasProduct(row: ExchangeMetadataListEntry, product: string) {
 }
 
 function formatFee(fee: number | null | undefined) {
-	return fee == null ? '–' : `${formatPercentage(fee * 100)}%`
+	return fee == null ? null : `${formatPercentage(fee * 100)}%`
 }
 
-function FeePairCell({
-	fee,
-	available = true
-}: {
-	fee: ExchangeMetadataListEntry['spot_fee'] | ExchangeMetadataListEntry['perp_fee']
-	available?: boolean
-}) {
-	if (!available || (fee.maker == null && fee.taker == null))
-		return <span className="whitespace-nowrap text-(--text-disabled)">–</span>
+function getDepthLiquidity(row: ExchangeMetadataListEntry) {
+	return getSpotDepthLiquidity(row) + getPerpDepthLiquidity(row)
+}
+
+function getSpotDepthLiquidity(row: ExchangeMetadataListEntry) {
+	const depth = row.depth_summary
+	return depth.spot_bid_depth_2pct_usd + depth.spot_ask_depth_2pct_usd
+}
+
+function getPerpDepthLiquidity(row: ExchangeMetadataListEntry) {
+	const depth = row.depth_summary
+	return depth.perp_bid_depth_2pct_usd + depth.perp_ask_depth_2pct_usd
+}
+
+function formatLiquidity(value: number) {
+	return abbreviateNumber(value, 2, '$') ?? '–'
+}
+
+function formatDepthPair(bid: number, ask: number) {
+	if (bid === 0 && ask === 0) return null
+	if (bid === 0) return `${formatLiquidity(ask)} ask`
+	if (ask === 0) return `${formatLiquidity(bid)} bid`
+	return `${formatLiquidity(bid)} bid / ${formatLiquidity(ask)} ask`
+}
+
+function FeePairCell({ fee }: { fee: ExchangeMetadataListEntry['spot_fee'] | ExchangeMetadataListEntry['perp_fee'] }) {
+	const maker = formatFee(fee.maker)
+	const taker = formatFee(fee.taker)
+	if (!maker && !taker) return null
+
 	return (
-		<span className="whitespace-nowrap tabular-nums">
-			{formatFee(fee.maker)} / {formatFee(fee.taker)}
-		</span>
+		<span className="whitespace-nowrap tabular-nums">{maker && taker ? `${maker} / ${taker}` : (maker ?? taker)}</span>
 	)
 }
 
@@ -192,6 +212,19 @@ function PerpsCell({ available }: { available: boolean }) {
 			<Icon name="x" height={16} width={16} />
 			<span className="text-sm">No</span>
 		</span>
+	)
+}
+
+function LiquidityCell({ bid, ask, isPartialCoverage }: { bid: number; ask: number; isPartialCoverage: boolean }) {
+	const total = bid + ask
+	if (total === 0) return null
+
+	const tooltip = [formatDepthPair(bid, ask), isPartialCoverage ? 'Partial coverage' : null].filter(Boolean).join('\n')
+
+	return (
+		<Tooltip content={tooltip} className="justify-end">
+			<span className="whitespace-nowrap tabular-nums">{formatLiquidity(total)}</span>
+		</Tooltip>
 	)
 }
 
@@ -221,7 +254,7 @@ const columns: ColumnDef<ExchangeMetadataListEntry, any>[] = [
 		header: 'Exchange',
 		enableSorting: false,
 		cell: ({ row }) => <ExchangeNameCell row={row.original} />,
-		meta: { headerClassName: 'w-[180px] min-w-[160px]' }
+		meta: { headerClassName: 'w-[260px] min-w-[240px]' }
 	}),
 	columnHelper.accessor((row) => row.ref_link || row.website || undefined, {
 		id: 'website',
@@ -259,14 +292,36 @@ const columns: ColumnDef<ExchangeMetadataListEntry, any>[] = [
 			csvHeader: 'Promotion URL'
 		}
 	}),
-	columnHelper.accessor((row) => row.volume_24h_usd ?? undefined, {
-		id: 'liquidity',
-		header: 'Liquidity',
-		cell: ({ getValue }) => abbreviateNumber(getValue(), 2, '$') ?? <span className="text-(--text-disabled)">–</span>,
+	columnHelper.accessor(getSpotDepthLiquidity, {
+		id: 'spot_liquidity',
+		header: 'Spot liquidity',
+		cell: ({ row }) => (
+			<LiquidityCell
+				bid={row.original.depth_summary.spot_bid_depth_2pct_usd}
+				ask={row.original.depth_summary.spot_ask_depth_2pct_usd}
+				isPartialCoverage={row.original.depth_summary.isPartialCoverage}
+			/>
+		),
 		meta: {
-			headerClassName: 'w-[104px] min-w-[96px]',
+			headerClassName: 'w-[132px] min-w-[120px] whitespace-nowrap',
 			align: 'end' as const,
-			headerHelperText: '24h trading volume for comparing where liquidity is deepest.'
+			headerHelperText: 'Aggregated spot orderbook bid and ask depth within 2% of mid price for EU-available spot.'
+		}
+	}),
+	columnHelper.accessor(getPerpDepthLiquidity, {
+		id: 'perp_liquidity',
+		header: 'Perp liquidity',
+		cell: ({ row }) => (
+			<LiquidityCell
+				bid={row.original.depth_summary.perp_bid_depth_2pct_usd}
+				ask={row.original.depth_summary.perp_ask_depth_2pct_usd}
+				isPartialCoverage={row.original.depth_summary.isPartialCoverage}
+			/>
+		),
+		meta: {
+			headerClassName: 'w-[132px] min-w-[120px] whitespace-nowrap',
+			align: 'end' as const,
+			headerHelperText: 'Aggregated perps orderbook bid and ask depth within 2% of mid price for EU-available perps.'
 		}
 	}),
 	columnHelper.accessor((row) => row.spot_fee.taker ?? undefined, {
@@ -288,10 +343,10 @@ const columns: ColumnDef<ExchangeMetadataListEntry, any>[] = [
 			headerHelperText: 'Whether perpetuals are available to EU users.'
 		}
 	}),
-	columnHelper.accessor((row) => (hasProduct(row, PERP_PRODUCT) ? (row.perp_fee.taker ?? undefined) : undefined), {
+	columnHelper.accessor((row) => row.perp_fee.taker ?? undefined, {
 		id: 'perp_fees',
 		header: 'Perp fees',
-		cell: ({ row }) => <FeePairCell fee={row.original.perp_fee} available={hasProduct(row.original, PERP_PRODUCT)} />,
+		cell: ({ row }) => <FeePairCell fee={row.original.perp_fee} />,
 		meta: {
 			headerClassName: 'w-[108px] min-w-[100px] whitespace-nowrap',
 			align: 'end' as const,
@@ -341,7 +396,7 @@ export function rankMicaRows(rows: ExchangeMetadataListEntry[]): ExchangeMetadat
 	return [...rows].sort(
 		(a, b) =>
 			(PRIORITY_EXCHANGE_RANK.get(a.exchange) ?? Infinity) - (PRIORITY_EXCHANGE_RANK.get(b.exchange) ?? Infinity) ||
-			(b.volume_24h_usd ?? -Infinity) - (a.volume_24h_usd ?? -Infinity) ||
+			getDepthLiquidity(b) - getDepthLiquidity(a) ||
 			(a.secondary ? 1 : 0) - (b.secondary ? 1 : 0) ||
 			(a.spot_fee.taker ?? Infinity) - (b.spot_fee.taker ?? Infinity) ||
 			a.display_name.localeCompare(b.display_name)
