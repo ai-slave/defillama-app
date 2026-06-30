@@ -233,7 +233,7 @@ export const datasets: DatasetDefinition[] = [
 		name: 'Protocols (TVL)',
 		description: 'All protocols with current TVL, market cap, and chain breakdown',
 		category: 'TVL',
-		url: `${SERVER_URL}/lite/protocols2?zz=16`,
+		url: `${SERVER_URL}/lite/protocols2?zz=17`,
 		defaultSortField: 'tvl',
 		chainFilterType: 'protocols',
 		fields: [

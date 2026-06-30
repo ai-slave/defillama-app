@@ -44,7 +44,7 @@ describe('direct API helpers', () => {
 			SERVER_URL: 'https://api.example.com'
 		})
 
-		const url = asUrl(withDirectApiAuth('https://api.example.com/equities/v1/companies?zz=16'))
+		const url = asUrl(withDirectApiAuth('https://api.example.com/equities/v1/companies?zz=17'))
 
 		expect(url.searchParams.get('x-llama-equity-secret')).toBe('equities-secret')
 		expect(url.searchParams.get('x-llama-pro-key')).toBeNull()
@@ -57,7 +57,7 @@ describe('direct API helpers', () => {
 			EQUITIES_SERVER_URL: 'https://equities.example.com/v1'
 		})
 
-		const url = asUrl(withDirectApiAuth('https://equities.example.com/v1/companies?zz=16'))
+		const url = asUrl(withDirectApiAuth('https://equities.example.com/v1/companies?zz=17'))
 
 		expect(url.searchParams.get('x-llama-equity-secret')).toBe('core-secret')
 	})
@@ -68,7 +68,7 @@ describe('direct API helpers', () => {
 			SERVER_URL: 'https://core.example.com/api'
 		})
 
-		const input = new URL('https://core.example.com/api/config?x-llama-pro-key=old-secret&zz=16')
+		const input = new URL('https://core.example.com/api/config?x-llama-pro-key=old-secret&zz=17')
 		const output = withDirectApiAuth(input)
 
 		expect(output).toBeInstanceOf(URL)
@@ -82,7 +82,7 @@ describe('direct API helpers', () => {
 			LIQUIDATIONS_SERVER_URL_V2: 'https://liquidations.example.com'
 		})
 
-		const input = new Request('https://liquidations.example.com/all?zz=16', {
+		const input = new Request('https://liquidations.example.com/all?zz=17', {
 			headers: { 'x-test': '1' },
 			method: 'POST',
 			body: 'body'
@@ -104,8 +104,8 @@ describe('direct API helpers', () => {
 
 		expect(withDirectApiAuth('/api/local')).toBe('/api/local')
 		expect(withDirectApiAuth('not a url')).toBe('not a url')
-		expect(withDirectApiAuth('https://datasets.example.com/tokenlist/sorted.json?zz=16')).toBe(
-			'https://datasets.example.com/tokenlist/sorted.json?zz=16'
+		expect(withDirectApiAuth('https://datasets.example.com/tokenlist/sorted.json?zz=17')).toBe(
+			'https://datasets.example.com/tokenlist/sorted.json?zz=17'
 		)
 	})
 
@@ -114,8 +114,8 @@ describe('direct API helpers', () => {
 			SERVER_URL: 'https://core.example.com/api'
 		})
 
-		expect(withDirectApiAuth('https://core.example.com/api/config?zz=16')).toBe(
-			'https://core.example.com/api/config?zz=16'
+		expect(withDirectApiAuth('https://core.example.com/api/config?zz=17')).toBe(
+			'https://core.example.com/api/config?zz=17'
 		)
 	})
 })

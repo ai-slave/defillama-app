@@ -28,22 +28,22 @@ function responseForUrl(url: string): unknown {
 		return { categories: [], tags: [], tagCategoryMap: {}, configs: {} }
 	}
 	if (url.endsWith('/chains2')) return { categories: ['EVM'] }
-	if (url.endsWith('/cexs?zz=16')) return { cexs: [], cg_volume_cexs: ['binance'] }
-	if (url.includes('/rwa/list?zz=16') || url === 'https://rwa.example.com/list?zz=16') {
+	if (url.endsWith('/cexs?zz=17')) return { cexs: [], cg_volume_cexs: ['binance'] }
+	if (url.includes('/rwa/list?zz=17') || url === 'https://rwa.example.com/list?zz=17') {
 		return { canonicalMarketIds: [], platforms: [], chains: [], categories: [], assetGroups: [], idMap: {} }
 	}
-	if (url.includes('/rwa-perps/list?zz=16') || url === 'https://rwa-perps.example.com/list?zz=16') {
+	if (url.includes('/rwa-perps/list?zz=17') || url === 'https://rwa-perps.example.com/list?zz=17') {
 		return { contracts: [], venues: [], categories: [], assetGroups: [], total: 0 }
 	}
-	if (url.includes('/tokenlist/rankings.json?zz=16')) return []
+	if (url.includes('/tokenlist/rankings.json?zz=17')) return []
 	if (url.includes('/config/smol/token.json')) return {}
-	if (url.includes('/liquidations/all?zz=16') || url === 'https://liquidations.example.com/all?zz=16') {
+	if (url.includes('/liquidations/all?zz=17') || url === 'https://liquidations.example.com/all?zz=17') {
 		return { data: {}, tokens: {}, validThresholds: [], timestamp: 0 }
 	}
 	if (url.includes('/bridges?includeChains=true')) return { bridges: [], chains: [] }
 	if (url.includes('/emissionsSupplyMetrics')) return {}
 	if (url.endsWith('/emissions')) return []
-	if (url.includes('/equities/v1/companies-list?zz=16') || url.endsWith('/v1/companies-list?zz=16')) {
+	if (url.includes('/equities/v1/companies-list?zz=17') || url.endsWith('/v1/companies-list?zz=17')) {
 		return [{ ticker: 'NVDA', companyName: 'NVIDIA Corporation', country: 'US', countryName: 'United States' }]
 	}
 	throw new Error(`unexpected URL: ${url}`)
@@ -68,14 +68,14 @@ describe('metadata source adapters', () => {
 		expect(sources.protocols).toEqual({ 'parent#aave': { name: 'aave', tvl: true } })
 		expect(sources.equitiesCompanyRoutes).toEqual([{ ticker: 'NVDA', country: 'US' }])
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(
-			'https://api.llama.fi/config/smol/appMetadata-protocols.json?zz=16',
+			'https://api.llama.fi/config/smol/appMetadata-protocols.json?zz=17',
 			{ timeout: 180_000 }
 		)
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://api.llama.fi/rwa/list?zz=16', {
+		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://api.llama.fi/rwa/list?zz=17', {
 			timeout: 180_000
 		})
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(
-			'https://defillama-datasets.llama.fi/tokenlist/rankings.json?zz=16',
+			'https://defillama-datasets.llama.fi/tokenlist/rankings.json?zz=17',
 			{ timeout: 180_000 }
 		)
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://api.llama.fi/config/smol/token.json', {
@@ -89,7 +89,7 @@ describe('metadata source adapters', () => {
 			'https://defillama-datasets.llama.fi/emissionsSupplyMetrics',
 			{ timeout: 180_000 }
 		)
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://api.llama.fi/equities/v1/companies-list?zz=16', {
+		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://api.llama.fi/equities/v1/companies-list?zz=17', {
 			timeout: 180_000
 		})
 		expect(fetchEmissionsProtocolsListMock).toHaveBeenCalledWith({ timeout: 180_000 })
@@ -102,7 +102,7 @@ describe('metadata source adapters', () => {
 		await fetchCoreMetadataSources()
 
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(
-			'https://pro-api.llama.fi/secret-key/api/config/smol/appMetadata-protocols.json?zz=16',
+			'https://pro-api.llama.fi/secret-key/api/config/smol/appMetadata-protocols.json?zz=17',
 			{ timeout: 180_000 }
 		)
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://api.llama.fi/config/smol/token.json', {
@@ -116,7 +116,7 @@ describe('metadata source adapters', () => {
 			timeout: 180_000
 		})
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(
-			'https://pro-api.llama.fi/secret-key/equities/v1/companies-list?zz=16',
+			'https://pro-api.llama.fi/secret-key/equities/v1/companies-list?zz=17',
 			{ timeout: 180_000 }
 		)
 	})
@@ -135,27 +135,27 @@ describe('metadata source adapters', () => {
 		await fetchCoreMetadataSources()
 
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(
-			'https://core.example.com/api/config/smol/appMetadata-protocols.json?zz=16',
+			'https://core.example.com/api/config/smol/appMetadata-protocols.json?zz=17',
 			{ timeout: 180_000 }
 		)
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://rwa.example.com/list?zz=16', {
+		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://rwa.example.com/list?zz=17', {
 			timeout: 180_000
 		})
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://rwa-perps.example.com/list?zz=16', {
+		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://rwa-perps.example.com/list?zz=17', {
 			timeout: 180_000
 		})
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(
-			'https://datasets.example.com/tokenlist/rankings.json?zz=16',
+			'https://datasets.example.com/tokenlist/rankings.json?zz=17',
 			{ timeout: 180_000 }
 		)
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://liquidations.example.com/all?zz=16', {
+		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://liquidations.example.com/all?zz=17', {
 			timeout: 180_000
 		})
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(
 			'https://bridges.example.com/bridges?includeChains=true',
 			{ timeout: 180_000 }
 		)
-		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://equities.example.com/v1/companies-list?zz=16', {
+		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://equities.example.com/v1/companies-list?zz=17', {
 			timeout: 180_000
 		})
 	})
@@ -163,7 +163,7 @@ describe('metadata source adapters', () => {
 	it('logs the named metadata source when an upstream request fails', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
 		fetchWithPoolingOnServerMock.mockImplementation((url: string) => {
-			if (url.endsWith('/cexs?zz=16')) {
+			if (url.endsWith('/cexs?zz=17')) {
 				return Promise.resolve(new Response('upstream failed', { status: 503 }))
 			}
 			return Promise.resolve(jsonResponse(responseForUrl(url)))
