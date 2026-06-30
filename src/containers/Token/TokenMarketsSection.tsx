@@ -23,7 +23,7 @@ import type {
 	MarketVenue,
 	TokenMarketsResponse
 } from '~/containers/Markets/api.types'
-import { ChangeCell, FundingCell, MetricStat, renderUsd } from '~/containers/Markets/marketMetrics'
+import { ChangeCell, FundingCell, MetricStat } from '~/containers/Markets/marketMetrics'
 import type { Segment } from '~/containers/Markets/segments'
 import { pctChange } from '~/containers/Markets/utils'
 import { formattedNum } from '~/utils'
@@ -299,13 +299,13 @@ function HeaderStrip({ rows, totals, showOi }: { rows: MarketPair[]; totals: Mar
 			<MetricStat label="Pairs" value={formattedNum(totals.pair_count)} />
 			<MetricStat
 				label="24h Volume"
-				value={renderUsd(totals.total_volume_24h)}
+				value={totals.total_volume_24h == null ? '–' : formattedNum(totals.total_volume_24h, true)}
 				sub={<ChangeCell fraction={pctChange(metrics.volume, metrics.volumePrev)} />}
 			/>
 			{showOi ? (
 				<MetricStat
 					label="Open Interest"
-					value={renderUsd(totals.total_oi_usd)}
+					value={totals.total_oi_usd == null ? '–' : formattedNum(totals.total_oi_usd, true)}
 					sub={<ChangeCell fraction={pctChange(metrics.oi, metrics.oiPrev)} />}
 				/>
 			) : null}

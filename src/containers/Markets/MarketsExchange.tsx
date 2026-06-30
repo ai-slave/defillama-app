@@ -10,7 +10,7 @@ import { MarketsLineChart } from './MarketsLineChart'
 import { MarketsPageHeader } from './MarketsPageHeader'
 import { MarketsSegmentTabs } from './MarketsSegmentTabs'
 import { resolveSegment, type Segment, SEGMENT_IDS, segmentHasOi } from './segments'
-import { ChangeCell, renderUsd, VenueBadge } from './shared'
+import { ChangeCell, VenueBadge } from './shared'
 import { EMPTY_PIVOTED_SERIES, filterExchangeSeriesBySegment, pctChange, pivotExchangeSeries } from './utils'
 
 const STALE_TIME = 60 * 60 * 1000
@@ -31,13 +31,13 @@ function ExchangeStatStrip({ totals, segment }: { totals: ExchangeMarketCategory
 		<div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
 			<Stat
 				label="24h Volume"
-				value={renderUsd(totals?.total_volume_24h)}
+				value={totals?.total_volume_24h == null ? '–' : formattedNum(totals?.total_volume_24h, true)}
 				sub={<ChangeCell fraction={pctChange(totals?.total_volume_24h, totals?.total_volume_prev_24h)} />}
 			/>
 			{hasOi ? (
 				<Stat
 					label="Open Interest"
-					value={renderUsd(totals?.total_oi_usd)}
+					value={totals?.total_oi_usd == null ? '–' : formattedNum(totals?.total_oi_usd, true)}
 					sub={<ChangeCell fraction={pctChange(totals?.total_oi_usd, totals?.total_oi_prev_usd)} />}
 				/>
 			) : null}

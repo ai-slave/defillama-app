@@ -829,6 +829,19 @@
       "oldName": "CEX Transparency"
     },
     {
+      "name": "MiCA Exchanges",
+      "route": "/mica",
+      "category": "Others",
+      "description": "MiCA-regulated crypto exchanges in the EU: licensing and member state, supported products, KYC requirements, reserves, and trading fees",
+      "searchKeywords": [
+        "mica",
+        "mica licensed exchanges",
+        "eu crypto exchanges",
+        "mica casp",
+        "regulated exchanges"
+      ]
+    },
+    {
       "name": "Recently Listed Protocols",
       "route": "/recent",
       "category": "Others",

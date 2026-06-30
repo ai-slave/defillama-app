@@ -1,9 +1,10 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
 import type { ReactNode } from 'react'
+import { formattedNum } from '~/utils'
 import type { MarketPair } from './api.types'
 import { FundingCell } from './marketMetrics'
 import { type Segment, segmentHasOi } from './segments'
-import { ChangeCell, renderFunding8h, renderPrice, renderUsd } from './shared'
+import { ChangeCell, renderFunding8h, renderPrice } from './shared'
 import { pctChange } from './utils'
 
 const columnHelper = createColumnHelper<MarketPair>()
@@ -112,7 +113,7 @@ function buildMarketPairColumns(segment: Segment, config: MarketPairColumnConfig
 		columnHelper.accessor((row) => row.volume_24h ?? undefined, {
 			id: 'volume_24h',
 			header: '24h Volume',
-			cell: ({ row }) => renderUsd(row.original.volume_24h),
+			cell: ({ row }) => (row.original.volume_24h == null ? '–' : formattedNum(row.original.volume_24h, true)),
 			meta: { headerClassName: 'w-[120px]', align: 'end' as const }
 		}),
 		columnHelper.accessor((row) => pctChange(row.volume_24h, row.volume_prev_24h) ?? undefined, {
@@ -128,7 +129,7 @@ function buildMarketPairColumns(segment: Segment, config: MarketPairColumnConfig
 			columnHelper.accessor((row) => row.oi_usd ?? undefined, {
 				id: 'oi_usd',
 				header: 'Open Interest',
-				cell: ({ row }) => renderUsd(row.original.oi_usd),
+				cell: ({ row }) => (row.original.oi_usd == null ? '–' : formattedNum(row.original.oi_usd, true)),
 				meta: { headerClassName: config.oiHeaderClassName, align: 'end' as const }
 			}),
 			columnHelper.accessor((row) => pctChange(row.oi_usd, row.oi_prev_usd) ?? undefined, {

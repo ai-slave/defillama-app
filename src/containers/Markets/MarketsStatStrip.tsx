@@ -1,6 +1,6 @@
 import { formattedNum } from '~/utils'
 import { type Segment, segmentHasOi } from './segments'
-import { ChangeCell, renderUsd } from './shared'
+import { ChangeCell } from './shared'
 import type { SymbolStat } from './types'
 import { pctChange, segmentTotals, sentimentCounts, TOP_N, topSymbols } from './utils'
 
@@ -23,13 +23,13 @@ export function MarketsStatStrip({ rows, segment }: { rows: SymbolStat[]; segmen
 		<div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
 			<Stat
 				label="24h Volume"
-				value={renderUsd(totals.volume_24h)}
+				value={totals.volume_24h == null ? '–' : formattedNum(totals.volume_24h, true)}
 				sub={<ChangeCell fraction={pctChange(totals.volume_24h, totals.volume_prev_24h)} />}
 			/>
 			{hasOi ? (
 				<Stat
 					label="Open Interest"
-					value={renderUsd(totals.oi_usd)}
+					value={totals.oi_usd == null ? '–' : formattedNum(totals.oi_usd, true)}
 					sub={<ChangeCell fraction={pctChange(totals.oi_usd, totals.oi_prev_usd)} />}
 				/>
 			) : null}

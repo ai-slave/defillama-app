@@ -1,8 +1,9 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { formattedNum } from '~/utils'
 import { type Segment, segmentHasOi } from './segments'
-import { ChangeCell, ExchangeName, renderUsd, VenueBadge } from './shared'
+import { ChangeCell, ExchangeName, VenueBadge } from './shared'
 import type { ExchangeListRow } from './types'
 import { pctChange } from './utils'
 
@@ -32,7 +33,7 @@ function buildColumns(segment: Segment, totalVolume: number): ColumnDef<Exchange
 		columnHelper.accessor('total_volume_24h', {
 			id: 'total_volume_24h',
 			header: '24h Volume',
-			cell: ({ getValue }) => renderUsd(getValue()),
+			cell: ({ getValue }) => (getValue() == null ? '–' : formattedNum(getValue(), true)),
 			meta: { headerClassName: 'w-[120px]', align: 'end' as const }
 		}),
 		columnHelper.accessor((row) => pctChange(row.total_volume_24h, row.total_volume_prev_24h) ?? undefined, {
@@ -60,7 +61,7 @@ function buildColumns(segment: Segment, totalVolume: number): ColumnDef<Exchange
 			columnHelper.accessor((row) => row.total_oi_usd ?? undefined, {
 				id: 'total_oi_usd',
 				header: 'OI',
-				cell: ({ row }) => renderUsd(row.original.total_oi_usd),
+				cell: ({ row }) => (row.original.total_oi_usd == null ? '–' : formattedNum(row.original.total_oi_usd, true)),
 				meta: { headerClassName: 'w-[120px]', align: 'end' as const }
 			}),
 			columnHelper.accessor((row) => pctChange(row.total_oi_usd, row.total_oi_prev_usd) ?? undefined, {

@@ -37,11 +37,27 @@ describe('markets upstream api', () => {
 		expect(mocks.fetchJson).toHaveBeenCalledWith('https://markets.example.com/exchanges/list.json')
 	})
 
+	it('requests the exchange metadata list', async () => {
+		const upstream = await import('../server/upstream')
+
+		await upstream.fetchExchangeMetadataListFromNetwork()
+
+		expect(mocks.fetchJson).toHaveBeenCalledWith('https://markets.example.com/exchanges/metadata-list.json')
+	})
+
 	it('requests an exchange markets index from the upstream markets server', async () => {
 		const upstream = await import('../server/upstream')
 
 		await upstream.fetchExchangeMarketsFromNetwork('Binance')
 
 		expect(mocks.fetchJson).toHaveBeenCalledWith('https://markets.example.com/exchanges/binance/index.json')
+	})
+
+	it('requests exchange metadata from the upstream markets server', async () => {
+		const upstream = await import('../server/upstream')
+
+		await upstream.fetchExchangeMetadataFromNetwork('Binance')
+
+		expect(mocks.fetchJson).toHaveBeenCalledWith('https://markets.example.com/exchanges/binance/metadata.json')
 	})
 })

@@ -2,6 +2,7 @@ import type { Segment } from './segments'
 
 export type MarketVenue = 'dex' | 'cex'
 export type MarketType = 'spot' | 'perpetual'
+export type ExchangeMetadataEuStatus = 'available' | 'leaving' | 'restricted' | 'unavailable'
 
 export interface MarketSegmentSummary {
 	exchange_count: number
@@ -223,4 +224,144 @@ export interface ExchangeMarketsResponse {
 	total_oi_prev_usd: number | null
 	total_volume_24h: number
 	total_volume_prev_24h: number | null
+}
+
+interface ExchangeMetadataFee {
+	maker: number | null
+	taker: number | null
+}
+
+interface ExchangeMetadataFeeToken {
+	discount_pct: number | null
+	symbol: string
+}
+
+type ExchangeMetadataMicaStatus = 'active' | 'in-progress'
+
+// One flat row per exchange from `exchanges/metadata-list.json` — the MiCA/EU
+// migration feed. Drives defillama.com/mica.
+export interface ExchangeMetadataListEntry {
+	available_regions: string[]
+	clean_reserves_usd: number | null
+	defillama_slug: string | null
+	display_name: string
+	eu_status: ExchangeMetadataEuStatus | null
+	exchange: string
+	fee_token: ExchangeMetadataFeeToken | null
+	inflows_24h_usd: number | null
+	kyc_required: boolean | null
+	last_verified: string | null
+	mica_licensed: boolean
+	mica_member_state: string | null
+	mica_status: ExchangeMetadataMicaStatus | null
+	native_token: string | null
+	oi_usd: number | null
+	own_token_pct: number | null
+	perp_fee: ExchangeMetadataFee
+	products: string[]
+	ref_link: string | null
+	reserves_source_url: string | null
+	reserves_usd: number | null
+	restricted_regions: string[]
+	// Feature-light / lower-priority MiCA venue (broker, bank, ramp). Curated on the
+	// backend; the feed is emitted secondary-last, alpha within tier.
+	secondary: boolean
+	spot_fee: ExchangeMetadataFee
+	volume_24h_usd: number | null
+	website: string | null
+}
+
+export interface ExchangeMetadataListResponse {
+	exchanges: ExchangeMetadataListEntry[]
+	last_updated: string
+}
+
+interface ExchangeMetadataSource {
+	asOf?: string
+	note?: string
+	url: string
+}
+
+interface ExchangeMetadataLinkValue {
+	label: string
+	url: string
+}
+
+type ExchangeMetadataTableCell = string | number | boolean | string[] | ExchangeMetadataLinkValue | null
+
+type ExchangeMetadataFieldValue =
+	| string
+	| number
+	| boolean
+	| string[]
+	| ExchangeMetadataLinkValue
+	| ExchangeMetadataLinkValue[]
+	| Record<string, ExchangeMetadataTableCell>[]
+
+type ExchangeMetadataFieldType =
+	| 'badge'
+	| 'bool'
+	| 'link'
+	| 'links'
+	| 'number'
+	| 'pct'
+	| 'pills'
+	| 'table'
+	| 'text'
+	| 'usd'
+
+type ExchangeMetadataTone = 'caution' | 'neutral'
+
+interface ExchangeMetadataTableColumn {
+	align?: string
+	format?: string
+	key: string
+	label: string
+}
+
+interface ExchangeMetadataField {
+	columns?: ExchangeMetadataTableColumn[]
+	comparable: boolean
+	key: string
+	label: string
+	source?: ExchangeMetadataSource
+	tone?: ExchangeMetadataTone
+	type: ExchangeMetadataFieldType
+	value: ExchangeMetadataFieldValue
+}
+
+interface ExchangeMetadataGroup {
+	fields: ExchangeMetadataField[]
+	fromPor?: boolean
+	key: string
+	source?: ExchangeMetadataSource
+	title: string
+}
+
+interface ExchangeMetadataKpi {
+	key: string
+	label: string
+	source?: ExchangeMetadataSource
+	tone?: ExchangeMetadataTone
+	type: ExchangeMetadataFieldType
+	value: ExchangeMetadataFieldValue
+}
+
+interface ExchangeMetadataToken {
+	symbol: string
+	url: string
+}
+
+export interface ExchangeMetadataResponse {
+	defillama: {
+		cex_url: string
+		slug: string
+	} | null
+	display_name: string
+	exchange: string
+	groups: ExchangeMetadataGroup[]
+	kpis: ExchangeMetadataKpi[]
+	last_updated: string
+	native_token: ExchangeMetadataToken | null
+	website: string | null
 }

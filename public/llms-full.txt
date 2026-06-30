@@ -197,6 +197,7 @@ Common usage examples:
 - [Net Project Treasury](https://defillama.com/net-project-treasury): Value of tokens owned by a protocol, excluding its own token Category: Treasury.
 - [Treasury: Entities](https://defillama.com/entities): Treasury by entity Category: Treasury.
 - [CEXs](https://defillama.com/cexs): Sum of assets held on centralized exchanges Category: Others.
+- [MiCA Exchanges](https://defillama.com/mica): MiCA-regulated crypto exchanges in the EU: licensing and member state, supported products, KYC requirements, reserves, and trading fees Category: Others.
 - [Recently Listed Protocols](https://defillama.com/recent): List of recently listed protocols Category: Others.
 - [Narrative Tracker](https://defillama.com/narrative-tracker): MCap-Weighted category performance to track narrative changes in the ecosystem Category: Others.
 - [Staked ETH by Protocol](https://defillama.com/lst): Total value of ETH staked on LSTs Category: Others.

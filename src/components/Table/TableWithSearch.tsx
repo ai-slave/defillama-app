@@ -176,6 +176,7 @@ export function TableWithSearch<T extends RowData>({
 					/>
 				</label>
 			) : null}
+			{typeof customFilters === 'function' ? customFilters() : customFilters}
 			{showColumnSelect ? (
 				<SelectWithCombobox
 					allValues={columnsOptions}
@@ -187,7 +188,6 @@ export function TableWithSearch<T extends RowData>({
 					variant="filter-responsive"
 				/>
 			) : null}
-			{typeof customFilters === 'function' ? customFilters() : customFilters}
 			{csvFileName ? (
 				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: csvFileName })} smol />
 			) : null}

@@ -1,13 +1,6 @@
 import type { ReactNode } from 'react'
 import { PercentChange } from '~/components/PercentChange'
-import { formattedNum } from '~/utils'
 import { toPercent } from './utils'
-
-/** USD value, dash when null. */
-export function renderUsd(value: number | null | undefined): string {
-	if (value == null) return '–'
-	return formattedNum(value, true)
-}
 
 /** Fractional change rendered as a signed, coloured percent. */
 export function ChangeCell({ fraction }: { fraction: number | null | undefined }) {

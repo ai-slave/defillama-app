@@ -1,13 +1,13 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { formattedNum } from '~/utils'
 import { type Segment, segmentHasOi } from './segments'
 import {
 	ChangeCell,
 	renderFunding8h,
 	renderLeverage,
 	renderPrice,
-	renderUsd,
 	SentimentBadge,
 	TagPills,
 	TokenName,
@@ -44,7 +44,7 @@ function buildColumns(segment: Segment, knownTokenSlugs: KnownTokenSlugs): Colum
 		columnHelper.accessor('volume_24h', {
 			id: 'volume_24h',
 			header: '24h Volume',
-			cell: ({ getValue }) => renderUsd(getValue()),
+			cell: ({ getValue }) => (getValue() == null ? '–' : formattedNum(getValue(), true)),
 			meta: { headerClassName: 'w-[120px]', align: 'end' as const }
 		}),
 		columnHelper.accessor((row) => pctChange(row.volume_24h, row.volume_prev_24h) ?? undefined, {
@@ -60,7 +60,7 @@ function buildColumns(segment: Segment, knownTokenSlugs: KnownTokenSlugs): Colum
 			columnHelper.accessor((row) => row.oi_usd ?? undefined, {
 				id: 'oi_usd',
 				header: 'Open Interest',
-				cell: ({ row }) => renderUsd(row.original.oi_usd),
+				cell: ({ row }) => (row.original.oi_usd == null ? '–' : formattedNum(row.original.oi_usd, true)),
 				meta: { headerClassName: 'w-[120px]', align: 'end' as const }
 			}),
 			columnHelper.accessor((row) => pctChange(row.oi_usd, row.oi_prev_usd) ?? undefined, {
