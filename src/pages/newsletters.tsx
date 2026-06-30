@@ -16,6 +16,7 @@ const newsletterDetails: Record<
 		eyebrow: string
 		description: string
 		bestFor: string
+		comingSoon?: boolean
 		bullets: string[]
 		logo: {
 			src: string
@@ -45,6 +46,7 @@ const newsletterDetails: Record<
 		eyebrow: 'Research publication',
 		description: 'Reports, interviews, roundtables, and institutional market intelligence from DefiLlama Research.',
 		bestFor: 'For analysts, teams, and institutional readers.',
+		comingSoon: true,
 		bullets: ['New research report releases', 'Interviews and roundtable drops', 'Strategic market analysis'],
 		logo: {
 			src: '/assets/research_logo.webp',
@@ -84,7 +86,7 @@ export default function NewslettersPage() {
 	const helperText = noneSelected
 		? 'Choose at least one newsletter.'
 		: `${selectedKeys.length} publication${selectedKeys.length === 1 ? '' : 's'} selected.`
-	const visibleSelectionText = `${selectedKeys.length}/2 selected`
+	const visibleSelectionText = `${selectedKeys.length}/${NEWSLETTERS.length} selected`
 	const selectedSummary = noneSelected ? 'No newsletters selected yet' : selectedLabels.join(' + ')
 	const buttonText = noneSelected
 		? 'Choose a newsletter'
@@ -146,7 +148,8 @@ export default function NewslettersPage() {
 								Choose your DefiLlama newsletters
 							</h1>
 							<p className="max-w-2xl text-base leading-7 text-(--text-secondary)">
-								Market updates from the DefiLlama team and deeper research from the research desk. Choose one or both.
+								Market updates from the DefiLlama team are live now. You can also join the research list before it
+								starts sending.
 							</p>
 						</div>
 
@@ -155,7 +158,7 @@ export default function NewslettersPage() {
 								Available newsletters
 							</p>
 							<p className="text-xl leading-tight font-semibold text-(--text-primary)">
-								Market updates, research, or both
+								Market updates live, research soon
 							</p>
 							<p className="text-sm leading-6 text-(--text-secondary)">
 								Pick the lists you want to receive at this email.
@@ -171,7 +174,7 @@ export default function NewslettersPage() {
 										Pick your publications
 									</h2>
 									<p className="mt-2 max-w-2xl text-sm leading-6 text-(--text-secondary)">
-										Toggle either publication below. You can subscribe to one list or both lists.
+										Subscribe to either publication below. Research is marked as coming soon, but the list is open.
 									</p>
 								</div>
 								<p className="text-sm font-medium text-(--link-text)" aria-live="polite">
@@ -188,6 +191,7 @@ export default function NewslettersPage() {
 								{NEWSLETTERS.map(({ key, label }) => {
 									const on = selected[key]
 									const details = newsletterDetails[key]
+									const isComingSoon = details.comingSoon === true
 									return (
 										<button
 											key={key}
@@ -195,7 +199,9 @@ export default function NewslettersPage() {
 											aria-pressed={on}
 											onClick={() => toggle(key)}
 											disabled={isPending}
-											className={`group relative flex w-full flex-col gap-4 overflow-hidden rounded-lg border p-5 text-left transition-[border-color,background-color,transform] duration-200 disabled:cursor-not-allowed disabled:opacity-60 motion-safe:hover:-translate-y-0.5 ${
+											className={`group relative flex w-full flex-col gap-4 overflow-hidden rounded-lg border p-5 text-left transition-[border-color,background-color,transform] duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${
+												!isPending ? 'motion-safe:hover:-translate-y-0.5' : ''
+											} ${
 												on
 													? 'border-(--link-text) bg-(--link-button)'
 													: 'border-(--cards-border) bg-(--cards-bg) hover:border-(--link-text)/50'
@@ -230,6 +236,11 @@ export default function NewslettersPage() {
 													<span className="text-xs font-semibold tracking-[0.14em] text-(--link-text) uppercase">
 														{details.eyebrow}
 													</span>
+													{isComingSoon ? (
+														<span className="inline-flex h-7 items-center rounded-full border border-(--cards-border) bg-(--bg-main) px-2.5 text-[11px] font-semibold text-(--text-secondary)">
+															Coming soon
+														</span>
+													) : null}
 													<span
 														className={`ml-auto inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors ${
 															on
