@@ -1,6 +1,7 @@
 import { matchSorter } from 'match-sorter'
 import { fetchCoinGeckoTokensListFromDataset } from '~/api/coingecko'
-import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
+import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
+import { geckoTokenIconUrl } from '~/utils/icons'
 import metadataCache from '~/utils/metadata'
 import type { PageAssetMarket, PageAssetSearchHit } from '../pageAssetMarket'
 
@@ -45,18 +46,12 @@ const getGeckoRouteMap = makeCache(() => {
 	return Promise.resolve(map)
 })
 
-function normalizeImage(image?: string): string | null {
-	const trimmed = image?.trim()
-	if (!trimmed || trimmed === 'missing.png' || trimmed.endsWith('/missing.png')) return null
-	return trimmed
-}
-
-function toMarket(row: IResponseCGMarketsAPI, route: string | null): PageAssetMarket {
+function toMarket(row: IResponseCGTokenRankingsDatasetItem, route: string | null): PageAssetMarket {
 	return {
 		geckoId: row.id,
 		symbol: (row.symbol ?? '').toUpperCase(),
 		name: row.name,
-		image: normalizeImage(row.image),
+		image: geckoTokenIconUrl(row.id),
 		price: typeof row.current_price === 'number' ? row.current_price : null,
 		change24h: typeof row.price_change_percentage_24h === 'number' ? row.price_change_percentage_24h : null,
 		route
@@ -67,7 +62,7 @@ export async function lookupPageAssets(ids: Array<string>): Promise<Array<PageAs
 	const wanted = Array.from(new Set(ids.map((id) => id.trim()).filter(Boolean)))
 	if (wanted.length === 0) return []
 	const [list, routeMap] = await Promise.all([getTokenList(), getGeckoRouteMap()])
-	const byId = new Map<string, IResponseCGMarketsAPI>()
+	const byId = new Map<string, IResponseCGTokenRankingsDatasetItem>()
 	for (const row of list) {
 		if (row?.id && !byId.has(row.id)) byId.set(row.id, row)
 	}
@@ -93,6 +88,6 @@ export async function searchPageAssets(query: string, limit = 25): Promise<Array
 			geckoId: row.id,
 			symbol: (row.symbol ?? '').toUpperCase(),
 			name: row.name,
-			image: normalizeImage(row.image)
+			image: geckoTokenIconUrl(row.id)
 		}))
 }

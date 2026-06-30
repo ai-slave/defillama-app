@@ -18,7 +18,8 @@ import type {
 	FetchCoinGeckoExchangesOptions,
 	FetchCoinGeckoSimplePriceOptions,
 	GeckoIdResponse,
-	IResponseCGMarketsAPI
+	IResponseCGMarketsAPI,
+	IResponseCGTokenRankingsDatasetItem
 } from './coingecko.types'
 
 const COINGECKO_API_BASE_URL = COINGECKO_KEY
@@ -26,7 +27,7 @@ const COINGECKO_API_BASE_URL = COINGECKO_KEY
 	: 'https://api.coingecko.com/api/v3'
 
 const COINGECKO_REQUEST_HEADERS = COINGECKO_KEY ? { 'x-cg-pro-api-key': COINGECKO_KEY } : undefined
-const TOKEN_LIST_API_URL = `${DATASETS_SERVER_URL}/tokenlist/sorted.json`
+const TOKEN_LIST_API_URL = `${DATASETS_SERVER_URL}/tokenlist/rankings.json`
 const COINGECKO_EXCHANGES_MAX_PAGE_SIZE = 250
 const CG_CHART_CACHE_TTL_SECONDS = 60 * 60
 const CG_CHART_LOCAL_API_PATH = '/api/public/tokens/charts/coingecko'
@@ -95,10 +96,10 @@ function isCGMarketsApiItem(value: unknown): value is IResponseCGMarketsAPI {
 }
 
 /**
- * Fetch the full sorted CoinGecko token list from the DefiLlama datasets mirror.
+ * Fetch the ranked CoinGecko token market list from the DefiLlama datasets mirror.
  * This is not a direct CoinGecko API call.
  */
-export async function fetchCoinGeckoTokensListFromDataset(): Promise<Array<IResponseCGMarketsAPI>> {
+export async function fetchCoinGeckoTokensListFromDataset(): Promise<Array<IResponseCGTokenRankingsDatasetItem>> {
 	const data = await fetchJson<unknown>(TOKEN_LIST_API_URL)
 	if (!Array.isArray(data)) {
 		throw new Error(`[fetchCoinGeckoTokensListFromDataset] Expected array response from ${TOKEN_LIST_API_URL}`)

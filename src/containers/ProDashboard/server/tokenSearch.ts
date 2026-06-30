@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { fetchCoinGeckoTokensListFromDataset } from '~/api/coingecko'
+import { geckoTokenIconUrl } from '~/utils/icons'
 import { recordRouteRuntimeError, withApiRouteTelemetry } from '~/utils/telemetry'
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -28,11 +29,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 			if (!token.symbol) continue
 
 			const name = token.name || token.symbol
-			const logo = token.image || token.image2 || null
 			options.push({
 				value: token.symbol,
 				label: `${name} (${token.symbol.toUpperCase()})`,
-				logo: logo?.replace('/0/', '') ?? null
+				logo: geckoTokenIconUrl(token.id)
 			})
 		}
 

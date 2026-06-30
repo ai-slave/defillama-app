@@ -100,7 +100,7 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		),
 		fetchNamedMetadataSource(
 			'token list API',
-			fetchMetadataJson<RawTokenListItem[]>(`${datasetsBase}/tokenlist/sorted.json?zz=16`)
+			fetchMetadataJson<RawTokenListItem[]>(`${datasetsBase}/tokenlist/rankings.json?zz=16`)
 		),
 		fetchNamedMetadataSource('token directory API', fetchMetadataJson<TokenDirectory>(TOKEN_DIRECTORY_API)),
 		fetchNamedMetadataSource(

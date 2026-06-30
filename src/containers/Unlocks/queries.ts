@@ -27,7 +27,7 @@ type UnlockCurrentPrice = {
 }
 type RawTokenlistEntry = Partial<UnlockTokenlistEntry> & { id?: unknown }
 
-const TOKEN_LIST_API_URL = `${DATASETS_SERVER_URL}/tokenlist/sorted.json`
+const TOKEN_LIST_API_URL = `${DATASETS_SERVER_URL}/tokenlist/rankings.json`
 let unlockTokenlistPromise: Promise<UnlockTokenlist> | null = null
 
 function buildEmissionsDataset(chartData: Array<EmissionsChartRow>, stacks: string[]): EmissionsDataset {

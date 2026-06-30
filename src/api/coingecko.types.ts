@@ -98,6 +98,8 @@ export interface IResponseCGMarketsAPI {
 	total_volume?: number | null
 }
 
+export type IResponseCGTokenRankingsDatasetItem = Omit<IResponseCGMarketsAPI, 'image' | 'image2'>
+
 export interface CgMarketChartResponse {
 	prices?: Array<[number, number]>
 	market_caps?: Array<[number, number]>

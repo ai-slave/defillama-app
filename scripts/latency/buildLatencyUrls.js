@@ -219,8 +219,8 @@ const SOURCES = {
 			.filter(Boolean)
 	},
 	tokens: async () => {
-		const list = await fetchJson('https://defillama-datasets.llama.fi/tokenlist/sorted.json')
-		// sorted by market cap desc → reverse for tail
+		const list = await fetchJson('https://defillama-datasets.llama.fi/tokenlist/rankings.json')
+		// ranked by market cap desc → reverse for tail
 		return list
 			.map((t) => t && (t.symbol || t.name))
 			.filter(Boolean)

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { MarketSegmentSummary } from '~/containers/Markets/api.types'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
-import type { TokensRawAdapterChainMetrics, TokensRawCoinGeckoMarket, TokensRawMarketsList } from '../api.types'
+import type { TokensRawAdapterChainMetrics, TokensRawCoinGeckoRanking, TokensRawMarketsList } from '../api.types'
 import { buildTokensSourceRows } from '../queries'
 
 function marketSegment(overrides: Partial<MarketSegmentSummary>): MarketSegmentSummary {
@@ -22,10 +22,15 @@ function marketSegment(overrides: Partial<MarketSegmentSummary>): MarketSegmentS
 	}
 }
 
-function adapterMetric(defillamaId: string, total24h: number): TokensRawAdapterChainMetrics['protocols'][number] {
+function adapterMetric(
+	defillamaId: string,
+	total24h: number,
+	parentProtocol?: string
+): TokensRawAdapterChainMetrics['protocols'][number] {
 	return {
 		defillamaId,
-		total24h
+		total24h,
+		parentProtocol
 	} as TokensRawAdapterChainMetrics['protocols'][number]
 }
 
@@ -49,13 +54,12 @@ function tokenRightsEntry(overrides: Partial<IRawTokenRightsEntry>): IRawTokenRi
 describe('buildTokensSourceRows', () => {
 	it('precomputes token rows from tokenlist, markets, adapter metrics, unlocks, and rights data', () => {
 		const nowSec = 1_800_000_000
-		const tokens: TokensRawCoinGeckoMarket[] = [
+		const tokens: TokensRawCoinGeckoRanking[] = [
 			{
 				id: 'ethena',
 				name: 'Ethena',
 				symbol: 'ena',
 				current_price: 2,
-				image: 'https://example.com/ena.png',
 				market_cap: 1000,
 				fully_diluted_valuation: 2000,
 				market_cap_rank: 15,
@@ -204,8 +208,111 @@ describe('buildTokensSourceRows', () => {
 
 		expect(result.rows[1]).toMatchObject({
 			id: 'unmapped',
+			logo: 'https://token-icons.llamao.fi/icons/tokens/gecko/unmapped?w=48&h=48',
 			href: null,
 			rights: null
+		})
+	})
+
+	it('keeps same-symbol token rows on their canonical token directory routes', () => {
+		const result = buildTokensSourceRows({
+			tokens: [
+				{
+					id: 'data',
+					name: 'DATA',
+					symbol: 'data',
+					current_price: 1,
+					market_cap: 100
+				},
+				{
+					id: 'streamr',
+					name: 'Streamr',
+					symbol: 'data',
+					current_price: 2,
+					market_cap: 200
+				}
+			],
+			markets: { last_updated: '', tokens: [] },
+			tokenRightsEntries: [],
+			fees: [],
+			revenue: [],
+			holdersRevenue: [],
+			unlocks: [],
+			metadata: {
+				tokenDirectory: {
+					data: {
+						name: 'DATA',
+						symbol: 'DATA',
+						token_nk: 'coingecko:data',
+						route: '/token/DATA'
+					},
+					streamr: {
+						name: 'Streamr',
+						symbol: 'DATA',
+						token_nk: 'coingecko:streamr',
+						route: '/token/Streamr'
+					}
+				},
+				protocolMetadata: {},
+				emissionsSupplyMetrics: {}
+			} as unknown as MetadataCache,
+			nowSec: 1_800_000_000
+		})
+
+		expect(result.rows.map((row) => row.href)).toEqual(['/token/DATA', '/token/Streamr'])
+	})
+
+	it('prioritizes parent protocol matches for adapter metrics', () => {
+		const result = buildTokensSourceRows({
+			tokens: [
+				{
+					id: 'hyperliquid',
+					name: 'Hyperliquid',
+					symbol: 'hype',
+					current_price: 1,
+					market_cap: 100
+				}
+			],
+			markets: { last_updated: '', tokens: [] },
+			tokenRightsEntries: [],
+			fees: [
+				adapterMetric('hyperliquid-perps', 10, 'parent#hyperliquid'),
+				adapterMetric('hyperliquid-spot-orderbook', 20, 'parent#hyperliquid')
+			],
+			revenue: [adapterMetric('parent#hyperliquid', 100), adapterMetric('hyperliquid-perps', 7, 'parent#hyperliquid')],
+			holdersRevenue: [adapterMetric('hyperliquid-perps', 25, 'parent#hyperliquid')],
+			unlocks: [],
+			metadata: {
+				tokenDirectory: {
+					hype: {
+						name: 'Hyperliquid',
+						symbol: 'HYPE',
+						token_nk: 'coingecko:hyperliquid',
+						route: '/token/HYPE'
+					}
+				},
+				protocolMetadata: {
+					'hyperliquid-perps': {
+						name: 'Hyperliquid Perps',
+						displayName: 'Hyperliquid Perps',
+						gecko_id: 'hyperliquid'
+					},
+					'parent#hyperliquid': {
+						name: 'hyperliquid',
+						displayName: 'Hyperliquid',
+						gecko_id: 'hyperliquid'
+					}
+				},
+				emissionsSupplyMetrics: {}
+			} as unknown as MetadataCache,
+			nowSec: 1_800_000_000
+		})
+
+		expect(result.rows[0]).toMatchObject({
+			fees24h: 30,
+			revenue24h: 100,
+			holdersRevenue24h: 25,
+			trsPercent: 25
 		})
 	})
 

@@ -35,7 +35,7 @@ function responseForUrl(url: string): unknown {
 	if (url.includes('/rwa-perps/list?zz=16') || url === 'https://rwa-perps.example.com/list?zz=16') {
 		return { contracts: [], venues: [], categories: [], assetGroups: [], total: 0 }
 	}
-	if (url.includes('/tokenlist/sorted.json?zz=16')) return []
+	if (url.includes('/tokenlist/rankings.json?zz=16')) return []
 	if (url.includes('/config/smol/token.json')) return {}
 	if (url.includes('/liquidations/all?zz=16') || url === 'https://liquidations.example.com/all?zz=16') {
 		return { data: {}, tokens: {}, validThresholds: [], timestamp: 0 }
@@ -75,7 +75,7 @@ describe('metadata source adapters', () => {
 			timeout: 180_000
 		})
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(
-			'https://defillama-datasets.llama.fi/tokenlist/sorted.json?zz=16',
+			'https://defillama-datasets.llama.fi/tokenlist/rankings.json?zz=16',
 			{ timeout: 180_000 }
 		)
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://api.llama.fi/config/smol/token.json', {
@@ -145,7 +145,7 @@ describe('metadata source adapters', () => {
 			timeout: 180_000
 		})
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(
-			'https://datasets.example.com/tokenlist/sorted.json?zz=16',
+			'https://datasets.example.com/tokenlist/rankings.json?zz=16',
 			{ timeout: 180_000 }
 		)
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://liquidations.example.com/all?zz=16', {

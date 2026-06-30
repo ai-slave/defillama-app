@@ -18,7 +18,7 @@ import type { MetadataCache } from '~/utils/metadata/artifactContract'
 import { getCanonicalTokenRoute, type TokenDirectoryRecord } from '~/utils/tokenDirectory'
 import type {
 	TokensRawAdapterChainMetrics,
-	TokensRawCoinGeckoMarket,
+	TokensRawCoinGeckoRanking,
 	TokensRawMarketsList,
 	TokensRawProtocolEmission,
 	TokensRawTokenRightsEntry
@@ -78,7 +78,11 @@ function buildTokenDirectoryIndexes(metadata: MetadataCache): TokenDirectoryInde
 
 	for (const protocolId in metadata.protocolMetadata) {
 		const geckoId = metadata.protocolMetadata[protocolId].gecko_id?.toLowerCase()
-		if (geckoId && !protocolIdByGeckoId.has(geckoId)) protocolIdByGeckoId.set(geckoId, protocolId)
+		if (!geckoId) continue
+		const currentProtocolId = protocolIdByGeckoId.get(geckoId)
+		if (!currentProtocolId || (!currentProtocolId.startsWith('parent#') && protocolId.startsWith('parent#'))) {
+			protocolIdByGeckoId.set(geckoId, protocolId)
+		}
 	}
 
 	return { byGeckoId, protocolIdByGeckoId }
@@ -86,13 +90,22 @@ function buildTokenDirectoryIndexes(metadata: MetadataCache): TokenDirectoryInde
 
 function buildMetricMap(rows: AdapterProtocolMetric[]): Map<string, number> {
 	const map = new Map<string, number>()
+	const parentTotals = new Map<string, number>()
+
 	for (const row of rows) {
 		map.set(row.defillamaId, row.total24h)
+		if (row.parentProtocol)
+			parentTotals.set(row.parentProtocol, (parentTotals.get(row.parentProtocol) ?? 0) + row.total24h)
 	}
+
+	for (const [parentProtocol, total24h] of parentTotals) {
+		if (!map.has(parentProtocol)) map.set(parentProtocol, total24h)
+	}
+
 	return map
 }
 
-function buildUniqueTokenSymbols(tokens: TokensRawCoinGeckoMarket[]): Set<string> {
+function buildUniqueTokenSymbols(tokens: TokensRawCoinGeckoRanking[]): Set<string> {
 	const counts = new Map<string, number>()
 	for (const token of tokens) {
 		const symbol = token.symbol.toUpperCase()
@@ -283,7 +296,7 @@ function sumSegments(
 	return hasValue ? total : null
 }
 
-function getSearchKey(token: TokensRawCoinGeckoMarket, record: TokenDirectoryRecord | undefined): string {
+function getSearchKey(token: TokensRawCoinGeckoRanking, record: TokenDirectoryRecord | undefined): string {
 	return `${token.id} ${token.name} ${token.symbol} ${record?.name ?? ''} ${record?.symbol ?? ''}`.toLowerCase()
 }
 
@@ -307,7 +320,7 @@ function getUnlockedPercentFromSupplyMetrics(
 	return Math.max(0, Math.min(100, (adjustedSupply / maxSupply) * 100))
 }
 
-function firstUpdatedAt(tokens: TokensRawCoinGeckoMarket[], markets: TokensRawMarketsList): string | null {
+function firstUpdatedAt(tokens: TokensRawCoinGeckoRanking[], markets: TokensRawMarketsList): string | null {
 	if (markets.last_updated) return markets.last_updated
 	for (const token of tokens) {
 		if (token.last_updated) return token.last_updated
@@ -373,7 +386,7 @@ export function buildTokensSourceRows({
 	metadata,
 	nowSec
 }: {
-	tokens: TokensRawCoinGeckoMarket[]
+	tokens: TokensRawCoinGeckoRanking[]
 	markets: TokensRawMarketsList
 	tokenRightsEntries: TokensRawTokenRightsEntry[]
 	fees: AdapterProtocolMetric[]
@@ -475,7 +488,7 @@ export function buildTokensSourceRows({
 export async function getTokensSourceData(): Promise<TokensSourceData> {
 	return cachedResult(
 		'tokens-source-rows',
-		'v5',
+		'v7',
 		{
 			ttlMs: TOKENS_SOURCE_TTL_MS,
 			ttlJitter: 0.2,

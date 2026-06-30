@@ -157,9 +157,21 @@ function RightsChip({ label, tone }: { label: string; tone: RightsTone }) {
 	)
 }
 
-function RightsChipList({ items, tone, wrap = false }: { items: string[]; tone: RightsTone; wrap?: boolean }) {
+function RightsChipList({
+	items,
+	tone,
+	wrap = false,
+	align = 'start'
+}: {
+	items: string[]
+	tone: RightsTone
+	wrap?: boolean
+	align?: 'start' | 'end'
+}) {
 	return (
-		<span className={`flex min-w-0 items-center gap-1 ${wrap ? 'flex-wrap' : 'flex-nowrap'}`}>
+		<span
+			className={`flex min-w-0 items-center gap-1 ${wrap ? 'flex-wrap' : 'flex-nowrap'} ${align === 'end' ? 'w-full justify-end text-right' : ''}`}
+		>
 			{items.map((item, index) => (
 				<RightsChip key={`${item}-${index}`} label={item} tone={tone} />
 			))}
@@ -179,7 +191,7 @@ function RightsTokenValue({
 	if (items.length === 0) {
 		return <RightsToneText label={inactiveLabel} tone={inactiveTone ?? rightsStatusTone(inactiveLabel)} />
 	}
-	return <RightsChipList items={items} tone="positive" wrap />
+	return <RightsChipList items={items} tone="positive" wrap align="end" />
 }
 
 function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
@@ -280,7 +292,7 @@ function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
 								<span className={`size-1.5 shrink-0 rounded-full ${RIGHTS_DOT_TONE_CLASSES[field.tone]}`} />
 								{field.label}
 							</span>
-							<span className="flex min-w-0 justify-end">{field.value}</span>
+							<span className="flex min-w-0 items-center justify-end text-right">{field.value}</span>
 						</div>
 					))}
 				</div>
@@ -289,7 +301,7 @@ function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
 					{extraFields.map((field) => (
 						<div key={field.label} className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3">
 							<span className="text-xs font-medium whitespace-nowrap text-(--text-secondary)">{field.label}</span>
-							<span className="flex min-w-0 justify-end">{field.value}</span>
+							<span className="flex min-w-0 items-center justify-end text-right">{field.value}</span>
 						</div>
 					))}
 				</div>
@@ -297,21 +309,23 @@ function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
 				{rights.utilityItems.length > 0 || rights.fundraisingLabel || rights.associatedEntities.length > 0 ? (
 					<div className="grid gap-2 border-t border-(--cards-border) pt-2">
 						{rights.utilityItems.length > 0 ? (
-							<div className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] gap-3">
+							<div className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3">
 								<span className="text-xs font-medium whitespace-nowrap text-(--text-secondary)">Utility</span>
-								<RightsChipList items={rights.utilityItems} tone="neutral" wrap />
+								<RightsChipList items={rights.utilityItems} tone="neutral" wrap align="end" />
 							</div>
 						) : null}
 						{rights.fundraisingLabel ? (
-							<div className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] gap-3">
+							<div className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3">
 								<span className="text-xs font-medium whitespace-nowrap text-(--text-secondary)">Fundraising</span>
-								<RightsToneText label={rights.fundraisingLabel} tone="neutral" />
+								<span className="flex min-w-0 items-center justify-end text-right">
+									<RightsToneText label={rights.fundraisingLabel} tone="neutral" />
+								</span>
 							</div>
 						) : null}
 						{rights.associatedEntities.length > 0 ? (
-							<div className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] gap-3">
+							<div className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3">
 								<span className="text-xs font-medium whitespace-nowrap text-(--text-secondary)">Entities</span>
-								<RightsChipList items={rights.associatedEntities} tone="neutral" wrap />
+								<RightsChipList items={rights.associatedEntities} tone="neutral" wrap align="end" />
 							</div>
 						) : null}
 					</div>

@@ -1,4 +1,4 @@
-export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 5
+export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 6
 
 export const TOKENS_SORT_KEYS = [
 	'rank',
