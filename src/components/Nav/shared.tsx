@@ -85,7 +85,7 @@ export function NavItemContent({
 					</span>
 				) : null}
 				{isNew ? (
-					<span className="flex shrink-0 items-center gap-1 rounded-md bg-(--old-blue) px-1.5 py-0.5 text-[10px] font-bold text-white">
+					<span className="flex shrink-0 items-center gap-1 rounded-md bg-(--old-blue) px-1.5 py-0.5 text-[10px] font-bold text-white group-data-[linkactive=true]/link:bg-white group-data-[linkactive=true]/link:text-(--old-blue)">
 						<Icon name="sparkles" height={10} width={10} />
 						<span>New</span>
 					</span>

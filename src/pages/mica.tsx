@@ -11,7 +11,7 @@ type MicaPageProps = {
 
 const SPOT_PRODUCT = 'spot'
 const PERP_PRODUCT = 'perp'
-const EXCLUDED_EXCHANGES = new Set(['backpack', 'bybit'])
+const EXCLUDED_EXCHANGES = new Set(['backpack'])
 
 function shouldShowMicaExchange(exchange: ExchangeMetadataListEntry) {
 	if (EXCLUDED_EXCHANGES.has(exchange.exchange)) return false
