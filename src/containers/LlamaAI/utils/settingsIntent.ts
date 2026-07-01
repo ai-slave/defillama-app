@@ -1,4 +1,4 @@
-export const SETTINGS_TAB_IDS = ['persona', 'app', 'capabilities', 'integrations', 'lab'] as const
+export const SETTINGS_TAB_IDS = ['persona', 'app', 'capabilities', 'integrations', 'memory', 'lab'] as const
 
 export type SettingsTabId = (typeof SETTINGS_TAB_IDS)[number]
 

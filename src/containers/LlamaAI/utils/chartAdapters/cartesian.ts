@@ -536,9 +536,18 @@ export function adaptCartesianChartData(
 
 		let categoryLogos: string[] | undefined
 		if (axisType === 'category') {
-			const allLogos = buildAxisLogoUrls(config.axes.x.entityType, config.axes.x.logoCategories)
-			if (allLogos?.length) {
-				categoryLogos = categoryOrder.map((_, i) => allLogos[i] ?? '')
+			const logoCats = config.axes.x.logoCategories
+			const allLogos = buildAxisLogoUrls(config.axes.x.entityType, logoCats)
+			if (allLogos?.length && logoCats?.length) {
+				// logoCats is built per-row on the backend (sorted, with duplicates), while categoryOrder is the
+				// de-duplicated unique x-values built here. Match by value, not index, or stacked/multi-series charts
+				// attach logos to the wrong categories.
+				const logoByCategory = new Map<string, string>()
+				for (let i = 0; i < logoCats.length; i++) {
+					const key = String(logoCats[i]).toLowerCase()
+					if (allLogos[i] && !logoByCategory.has(key)) logoByCategory.set(key, allLogos[i])
+				}
+				categoryLogos = categoryOrder.map((cat) => logoByCategory.get(String(cat).toLowerCase()) ?? '')
 			}
 		}
 

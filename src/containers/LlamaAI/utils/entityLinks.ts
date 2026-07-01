@@ -13,6 +13,8 @@ export function getEntityUrl(type: string, slug: string): string {
 			return `/stablecoin/${slug}`
 		case 'cex':
 			return `/cex/${slug}`
+		case 'equity':
+			return `/equities/${slug}`
 		default:
 			return `/${type}/${slug}`
 	}

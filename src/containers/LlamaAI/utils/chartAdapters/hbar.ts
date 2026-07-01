@@ -23,15 +23,25 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 		const primarySeries = config.series[0]
 		if (!primarySeries) throw new Error('No series configuration found')
 
+		const logoCats = config.axes.x.logoCategories
+		const allLogos = buildAxisLogoUrls(config.axes.x.entityType, logoCats)
+		// logoCats is built per-row on the backend (sorted, may include duplicates); match by category value
+		// rather than row index so logos can't drift off their bars when ordering differs.
+		const logoByCategory = allLogos?.length && logoCats?.length ? new Map<string, string>() : undefined
+		if (logoByCategory && logoCats && allLogos) {
+			for (let i = 0; i < logoCats.length; i++) {
+				const key = String(logoCats[i]).toLowerCase()
+				if (allLogos[i] && !logoByCategory.has(key)) logoByCategory.set(key, allLogos[i])
+			}
+		}
 		const chartData: Array<[string, number]> = []
-		const allLogos = buildAxisLogoUrls(config.axes.x.entityType, config.axes.x.logoCategories)
-		const logos = allLogos ? [] : undefined
+		const logos = logoByCategory ? [] : undefined
 		for (let index = 0; index < rawData.length; index++) {
 			const record = rawData[index] as Record<string, unknown>
 			const category = record[primarySeries.dataMapping.xField] ?? 'Unknown'
 			const value = parseStringNumber(record[primarySeries.dataMapping.yField])
 			chartData.push([String(category), value])
-			if (logos) logos.push(allLogos[index] ?? '')
+			if (logos) logos.push(logoByCategory!.get(String(category).toLowerCase()) ?? '')
 		}
 
 		const colors = getNDistinctColors(chartData.length)

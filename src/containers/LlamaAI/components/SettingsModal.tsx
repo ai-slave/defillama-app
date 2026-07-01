@@ -1,9 +1,11 @@
 import * as Ariakit from '@ariakit/react'
 import { memo, useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { Icon } from '~/components/Icon'
+import type { MemoryEntry } from '~/containers/LlamaAI/api/agentHome'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
 import { getIntegrationRowResetKey, IntegrationRow } from '~/containers/LlamaAI/components/IntegrationRow'
 import { SlackIntegrationRow } from '~/containers/LlamaAI/components/SlackIntegrationRow'
+import { useAgentHomeData } from '~/containers/LlamaAI/hooks/useAgentHomeData'
 import {
 	type EffortOption,
 	type LlamaAISettings,
@@ -89,6 +91,7 @@ export const SettingsModal = memo(function SettingsModal({
 	const [notifPermission, setNotifPermission] = useState<NotificationPermission | 'unsupported'>('unsupported')
 	const [isRequestingNotif, setIsRequestingNotif] = useState(false)
 	const [activeTab, setActiveTab] = useState<TabId>('persona')
+	const agentHome = useAgentHomeData(isOpen && activeTab === 'memory')
 	const textareaRef = useRef<HTMLTextAreaElement>(null)
 	const baselineRef = useRef(settings.customInstructions.trim())
 	const draftValueRef = useRef(settings.customInstructions)
@@ -323,7 +326,8 @@ export const SettingsModal = memo(function SettingsModal({
 		{ id: 'persona', label: 'Persona', icon: 'pencil' },
 		{ id: 'app', label: 'App', icon: 'gear-settings' },
 		{ id: 'capabilities', label: 'Capabilities', icon: 'sparkles' },
-		{ id: 'integrations', label: 'Integrations', icon: 'link' }
+		{ id: 'integrations', label: 'Integrations', icon: 'link' },
+		{ id: 'memory', label: 'Memory', icon: 'sparkles' }
 	]
 	if (isDark) tabs.push({ id: 'lab', label: 'Lab', icon: 'flame' })
 
@@ -614,6 +618,139 @@ export const SettingsModal = memo(function SettingsModal({
 								</div>
 							)}
 
+							{activeTab === 'memory' && (
+								<div className="space-y-6">
+									{agentHome.memories.data?.available === false ? (
+										<SettingsCard>
+											<p className="px-4 py-3.5 text-xs text-[#777] dark:text-[#919296]">
+												Memory is available on paid plans.
+											</p>
+										</SettingsCard>
+									) : (
+										<>
+											<div className="space-y-3">
+												<SectionHeading
+													title="About you"
+													subtitle="Facts the assistant remembers about you across chats."
+												/>
+												<MemoryList
+													entries={agentHome.memories.data?.user}
+													isLoading={agentHome.memories.isLoading}
+													emptyText="Nothing remembered yet."
+													onDelete={(id) => agentHome.deleteMemoryMutation.mutate(id)}
+													deleting={agentHome.deleteMemoryMutation.isPending}
+												/>
+												{(agentHome.memories.data?.user.length ?? 0) > 0 ? (
+													<button
+														type="button"
+														onClick={() => agentHome.clearMemoriesMutation.mutate('user')}
+														disabled={agentHome.clearMemoriesMutation.isPending}
+														className="text-xs font-medium text-[#999] transition-colors hover:text-red-500 disabled:opacity-50 dark:text-[#666]"
+													>
+														Clear all
+													</button>
+												) : null}
+											</div>
+
+											<div className="space-y-3">
+												<SectionHeading
+													title="Assistant notes"
+													subtitle="Environment and convention notes the assistant keeps for itself."
+												/>
+												<MemoryList
+													entries={agentHome.memories.data?.memory}
+													isLoading={agentHome.memories.isLoading}
+													emptyText="No notes yet."
+													onDelete={(id) => agentHome.deleteMemoryMutation.mutate(id)}
+													deleting={agentHome.deleteMemoryMutation.isPending}
+												/>
+												{(agentHome.memories.data?.memory.length ?? 0) > 0 ? (
+													<button
+														type="button"
+														onClick={() => agentHome.clearMemoriesMutation.mutate('memory')}
+														disabled={agentHome.clearMemoriesMutation.isPending}
+														className="text-xs font-medium text-[#999] transition-colors hover:text-red-500 disabled:opacity-50 dark:text-[#666]"
+													>
+														Clear all
+													</button>
+												) : null}
+											</div>
+
+											<div className="space-y-3">
+												<SectionHeading
+													title="Skills"
+													subtitle="Workflows saved in your workspace. Archive one to stop the assistant using it."
+												/>
+												<SettingsCard>
+													{agentHome.skills.isLoading ? (
+														<p className="px-4 py-3.5 text-xs text-[#777] dark:text-[#919296]">Loading…</p>
+													) : (agentHome.skills.data?.active.length ?? 0) === 0 ? (
+														<p className="px-4 py-3.5 text-xs text-[#777] dark:text-[#919296]">No skills yet.</p>
+													) : (
+														agentHome.skills.data!.active.map((skill, i) => (
+															<div key={skill.name}>
+																{i > 0 ? <RowDivider /> : null}
+																<div className="flex items-start justify-between gap-4 px-4 py-3.5">
+																	<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+																		<p className="m-0 flex items-center gap-2 text-[13.5px] font-medium text-[#1a1a1a] dark:text-white">
+																			{skill.name}
+																			<span className="rounded bg-black/[0.05] px-1.5 py-0.5 text-[10px] font-normal text-[#777] dark:bg-white/[0.06] dark:text-[#919296]">
+																				{skill.createdBy === 'agent' ? 'learned by assistant' : 'added by you'}
+																			</span>
+																		</p>
+																		<p className="m-0 text-xs leading-relaxed text-[#777] dark:text-[#919296]">
+																			{skill.description}
+																		</p>
+																	</div>
+																	{skill.pinned ? (
+																		<span className="shrink-0 px-2 py-1 text-xs text-[#999] dark:text-[#666]">
+																			Pinned
+																		</span>
+																	) : (
+																		<button
+																			type="button"
+																			onClick={() => agentHome.archiveSkillMutation.mutate(skill.name)}
+																			disabled={agentHome.archiveSkillMutation.isPending}
+																			className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-[#999] transition-colors hover:bg-black/[0.04] hover:text-red-500 disabled:opacity-50 dark:text-[#666] dark:hover:bg-white/[0.04]"
+																		>
+																			Archive
+																		</button>
+																	)}
+																</div>
+															</div>
+														))
+													)}
+												</SettingsCard>
+												{(agentHome.skills.data?.archived.length ?? 0) > 0 ? (
+													<details className="text-xs">
+														<summary className="cursor-pointer text-[#999] dark:text-[#666]">
+															Archived ({agentHome.skills.data!.archived.length})
+														</summary>
+														<div className="mt-2 space-y-2">
+															{agentHome.skills.data!.archived.map((skill) => (
+																<div key={skill.name} className="flex items-center justify-between gap-4">
+																	<span className="min-w-0 flex-1 truncate text-[#777] dark:text-[#919296]">
+																		{skill.name}
+																	</span>
+																	<button
+																		type="button"
+																		onClick={() => agentHome.restoreSkillMutation.mutate(skill.name)}
+																		disabled={agentHome.restoreSkillMutation.isPending}
+																		className="shrink-0 font-medium text-[#1853A8] disabled:opacity-50 dark:text-[#4B86DB]"
+																	>
+																		Restore
+																	</button>
+																</div>
+															))}
+														</div>
+													</details>
+												) : null}
+											</div>
+										</>
+									)}
+								</div>
+							)}
+
 							{activeTab === 'lab' && isDark ? (
 								<div className="space-y-5">
 									<SectionHeading title="Experimental" subtitle="Bleeding-edge modes. Things may get weird." />
@@ -692,6 +829,49 @@ function SettingsCard({ children }: { children: React.ReactNode }) {
 
 function RowDivider() {
 	return <div className="mx-4 h-px bg-black/[0.05] dark:bg-white/[0.05]" />
+}
+
+function MemoryList({
+	entries,
+	isLoading,
+	emptyText,
+	onDelete,
+	deleting
+}: {
+	entries: MemoryEntry[] | undefined
+	isLoading: boolean
+	emptyText: string
+	onDelete: (id: string) => void
+	deleting: boolean
+}) {
+	return (
+		<SettingsCard>
+			{isLoading ? (
+				<p className="px-4 py-3.5 text-xs text-[#777] dark:text-[#919296]">Loading…</p>
+			) : (entries?.length ?? 0) === 0 ? (
+				<p className="px-4 py-3.5 text-xs text-[#777] dark:text-[#919296]">{emptyText}</p>
+			) : (
+				entries!.map((entry, i) => (
+					<div key={entry.id}>
+						{i > 0 ? <RowDivider /> : null}
+						<div className="flex items-start justify-between gap-4 px-4 py-3.5">
+							<p className="m-0 min-w-0 flex-1 text-[13px] whitespace-pre-wrap text-[#1a1a1a] dark:text-white">
+								{entry.text}
+							</p>
+							<button
+								type="button"
+								onClick={() => onDelete(entry.id)}
+								disabled={deleting}
+								className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-[#999] transition-colors hover:bg-black/[0.04] hover:text-red-500 disabled:opacity-50 dark:text-[#666] dark:hover:bg-white/[0.04]"
+							>
+								Delete
+							</button>
+						</div>
+					</div>
+				))
+			)}
+		</SettingsCard>
+	)
 }
 
 function ToggleRow({
