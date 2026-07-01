@@ -12,6 +12,12 @@ type MicaPageProps = {
 const SPOT_PRODUCT = 'spot'
 const PERP_PRODUCT = 'perp'
 const EXCLUDED_EXCHANGES = new Set(['backpack'])
+const MICA_REF_LINKS_BY_EXCHANGE: Partial<Record<string, string>> = {
+	coinbase: 'https://coinbase-consumer.sjv.io/JkBQRQ',
+	cryptocom: 'https://cryptocom.sjv.io/E02YKK',
+	gate: 'https://eu.gate.com/signup?ref_type=103&ref=VFVMVL5EUQ',
+	okx: 'https://okx.com/join/33619708'
+}
 
 function shouldShowMicaExchange(exchange: ExchangeMetadataListEntry) {
 	if (EXCLUDED_EXCHANGES.has(exchange.exchange)) return false
@@ -62,7 +68,7 @@ function getMicaExchange(exchange: ExchangeMetadataListEntry): MicaExchange {
 		perp_fee: hasPerps ? exchange.perp_fee : { maker: null, taker: null },
 		products: getMicaProducts(exchange),
 		promotions: getMicaPromotions(exchange),
-		ref_link: exchange.ref_link,
+		ref_link: MICA_REF_LINKS_BY_EXCHANGE[exchange.exchange] ?? exchange.ref_link,
 		secondary: exchange.secondary,
 		spot_fee: hasSpot ? exchange.spot_fee : { maker: null, taker: null },
 		website: exchange.website
