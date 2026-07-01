@@ -18,7 +18,8 @@ const MICA_REF_LINKS_BY_EXCHANGE: Partial<Record<string, string>> = {
 	gate: 'https://eu.gate.com/signup?ref_type=103&ref=VFVMVL5EUQ',
 	okx: 'https://okx.com/join/33619708',
 	kraken: 'https://proinvite.kraken.com/9f1e/ygb8jngg',
-	bybit: 'https://www.bybit.eu/en-EU/?affiliate_id=163070'
+	bybit: 'https://www.bybit.eu/en-EU/?affiliate_id=163070',
+	backpack: 'https://backpack.exchange/join/tnk6icla',
 }
 
 function shouldShowMicaExchange(exchange: ExchangeMetadataListEntry) {
