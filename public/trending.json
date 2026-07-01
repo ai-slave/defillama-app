@@ -1,12 +1,18 @@
 [
   {
-    "name": "Tokens",
-    "route": "/tokens",
+    "name": "MiCA",
+    "route": "/mica",
     "category": "Trending",
-    "description": "Token rankings by market cap, price performance, volume, revenue, unlocks, and token rights",
+    "description": "MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements",
     "tags": [
       "New"
     ]
+  },
+  {
+    "name": "Tokens",
+    "route": "/tokens",
+    "category": "Trending",
+    "description": "Token rankings by market cap, price performance, volume, revenue, unlocks, and token rights"
   },
   {
     "name": "Overview",

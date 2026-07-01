@@ -831,6 +831,7 @@
     {
       "name": "MiCA Exchanges",
       "route": "/mica",
+      "isNew": true,
       "category": "Others",
       "description": "MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements",
       "searchKeywords": [
@@ -1118,16 +1119,20 @@
       ]
     },
     {
+      "name": "MiCA",
+      "route": "/mica",
+      "icon": "clipboard-check",
+      "isNew": true
+    },
+    {
       "name": "Tokens",
       "route": "/tokens",
-      "icon": "tag",
-      "isNew": true
+      "icon": "tag"
     },
     {
       "name": "Equities",
       "route": "/equities",
-      "icon": "trending-up",
-      "isNew": true
+      "icon": "trending-up"
     },
     {
       "name": "Support",
@@ -1147,13 +1152,11 @@
     {
       "name": "Investor Relations",
       "route": "https://investors.defillama.com",
-      "icon": "trending-up",
-      "isNew": true
+      "icon": "trending-up"
     },
     {
       "name": "DefiLlama Research",
-      "route": "/research",
-      "isNew": true
+      "route": "/research"
     }
   ],
   "Premium": [

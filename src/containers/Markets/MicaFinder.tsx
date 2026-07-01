@@ -19,7 +19,37 @@ type FeeKind = 'spot' | 'perp'
 type FeeTone = 'low' | 'medium' | 'high'
 type IconName = React.ComponentProps<typeof Icon>['name']
 type KycRequirementKey = 'id' | 'selfie' | 'poa' | 'profile' | 'quiz'
-type ExchangePromotion = NonNullable<ExchangeMetadataListEntry['promotions']>[number]
+type ExchangePromotion = {
+	ends_at?: string | null
+	label: string
+	priority?: number | null
+	source?: { url: string } | null
+	starts_at?: string | null
+	subtitle?: string | null
+	terms_url?: string | null
+	title: string
+	url?: string | null
+}
+
+export type MicaExchange = Pick<
+	ExchangeMetadataListEntry,
+	| 'depth_summary'
+	| 'display_name'
+	| 'eu_status'
+	| 'exchange'
+	| 'kyc_required'
+	| 'kyc_short'
+	| 'kyc_summary'
+	| 'mica_licensed'
+	| 'perp_fee'
+	| 'products'
+	| 'ref_link'
+	| 'secondary'
+	| 'spot_fee'
+	| 'website'
+> & {
+	promotions?: ExchangePromotion[]
+}
 
 const SPOT_FEE_TIER_LIMITS = { low: 0.001, medium: 0.004 }
 
@@ -92,7 +122,7 @@ const PERP_LIQUIDITY_HELP =
 	'Aggregated perps orderbook bid and ask depth within 2% of mid price for EU-available perps.'
 
 export function selectActivePromotion(
-	row: ExchangeMetadataListEntry,
+	row: MicaExchange,
 	today = new Date().toISOString().slice(0, 10)
 ): ExchangePromotion | null {
 	const promotions = row.promotions?.filter((promotion) => {
@@ -189,7 +219,7 @@ function PromotionGift({ promotion, exchangeName }: { promotion: ExchangePromoti
 
 // Single link per row -> the exchange site (our referral when we have one, else
 // the plain website). Opens in a new tab.
-function ExchangeNameCell({ row }: { row: ExchangeMetadataListEntry }) {
+function ExchangeNameCell({ row }: { row: MicaExchange }) {
 	const outbound = row.ref_link || row.website
 	const promotion = selectActivePromotion(row)
 
@@ -228,11 +258,11 @@ function ExchangeNameCell({ row }: { row: ExchangeMetadataListEntry }) {
 	)
 }
 
-function PromotionCsvCell({ row }: { row: ExchangeMetadataListEntry }) {
+function PromotionCsvCell({ row }: { row: MicaExchange }) {
 	return selectActivePromotion(row)?.label || <span className="text-(--text-disabled)">–</span>
 }
 
-function hasProduct(row: ExchangeMetadataListEntry, product: string) {
+function hasProduct(row: MicaExchange, product: string) {
 	return row.products.includes(product)
 }
 
@@ -240,16 +270,16 @@ function formatFee(fee: number | null | undefined) {
 	return fee == null ? null : `${formatPercentage(fee * 100)}%`
 }
 
-function getDepthLiquidity(row: ExchangeMetadataListEntry) {
+function getDepthLiquidity(row: MicaExchange) {
 	return getSpotDepthLiquidity(row) + getPerpDepthLiquidity(row)
 }
 
-function getSpotDepthLiquidity(row: ExchangeMetadataListEntry) {
+function getSpotDepthLiquidity(row: MicaExchange) {
 	const depth = row.depth_summary
 	return depth.spot_bid_depth_2pct_usd + depth.spot_ask_depth_2pct_usd
 }
 
-function getPerpDepthLiquidity(row: ExchangeMetadataListEntry) {
+function getPerpDepthLiquidity(row: MicaExchange) {
 	const depth = row.depth_summary
 	return depth.perp_bid_depth_2pct_usd + depth.perp_ask_depth_2pct_usd
 }
@@ -277,7 +307,7 @@ export function getKycRequirementIndicators(kycShort: string): KycRequirementInd
 	return indicators
 }
 
-function getSpotFeeTone(fee: ExchangeMetadataListEntry['spot_fee']) {
+function getSpotFeeTone(fee: MicaExchange['spot_fee']) {
 	const value = fee.taker ?? fee.maker
 	if (value == null) return null
 
@@ -286,13 +316,7 @@ function getSpotFeeTone(fee: ExchangeMetadataListEntry['spot_fee']) {
 	return 'high'
 }
 
-function FeePairCell({
-	fee,
-	kind
-}: {
-	fee: ExchangeMetadataListEntry['spot_fee'] | ExchangeMetadataListEntry['perp_fee']
-	kind: FeeKind
-}) {
+function FeePairCell({ fee, kind }: { fee: MicaExchange['spot_fee'] | MicaExchange['perp_fee']; kind: FeeKind }) {
 	const maker = formatFee(fee.maker)
 	const taker = formatFee(fee.taker)
 	if (!maker && !taker) return null
@@ -380,7 +404,7 @@ function KycSummaryHovercard({ summary }: { summary: string }) {
 	)
 }
 
-function KycCell({ row }: { row: ExchangeMetadataListEntry }) {
+function KycCell({ row }: { row: MicaExchange }) {
 	if (row.kyc_required == null) return <span className="text-(--text-disabled)">–</span>
 	if (!row.kyc_required) return <span className="text-(--success)">No KYC</span>
 
@@ -418,9 +442,9 @@ function KycCell({ row }: { row: ExchangeMetadataListEntry }) {
 // Sortable columns return a sortable primitive from accessorFn, with `?? undefined`
 // so missing values sort last; non-sortable columns set enableSorting: false.
 // ---------------------------------------------------------------------------
-const columnHelper = createColumnHelper<ExchangeMetadataListEntry>()
+const columnHelper = createColumnHelper<MicaExchange>()
 
-const columns: ColumnDef<ExchangeMetadataListEntry, any>[] = [
+const columns: ColumnDef<MicaExchange, any>[] = [
 	columnHelper.accessor('display_name', {
 		id: 'display_name',
 		header: 'Exchange',
@@ -551,10 +575,7 @@ const PRODUCT_KEYS = new Set([PERP_PRODUCT])
 const DEFAULT_SORTING: { id: string; desc: boolean }[] = []
 
 /** Pure row filter — MiCA + EU-usable gate, then product AND-match. Exported for testing. */
-export function filterMicaRows(
-	rows: ExchangeMetadataListEntry[],
-	opts: { products: string[] }
-): ExchangeMetadataListEntry[] {
+export function filterMicaRows(rows: MicaExchange[], opts: { products: string[] }): MicaExchange[] {
 	return rows.filter((row) => {
 		if (!row.mica_licensed) return false
 		if (row.eu_status && row.eu_status !== 'available') return false
@@ -566,7 +587,7 @@ export function filterMicaRows(
 /** Default display order: hand-picked lead venues first, then deeper liquidity,
  *  full-feature venues, and cheaper spot taker fee. Pure — returns a new array.
  *  Exported for testing. */
-export function rankMicaRows(rows: ExchangeMetadataListEntry[]): ExchangeMetadataListEntry[] {
+export function rankMicaRows(rows: MicaExchange[]): MicaExchange[] {
 	return [...rows].sort(
 		(a, b) =>
 			(PRIORITY_EXCHANGE_RANK.get(a.exchange) ?? Infinity) - (PRIORITY_EXCHANGE_RANK.get(b.exchange) ?? Infinity) ||
@@ -580,7 +601,7 @@ export function rankMicaRows(rows: ExchangeMetadataListEntry[]): ExchangeMetadat
 // ---------------------------------------------------------------------------
 // Container
 // ---------------------------------------------------------------------------
-export function MicaFinder({ exchanges }: { exchanges: ExchangeMetadataListEntry[] }) {
+export function MicaFinder({ exchanges }: { exchanges: MicaExchange[] }) {
 	const router = useRouter()
 
 	const selectedProducts = React.useMemo(
