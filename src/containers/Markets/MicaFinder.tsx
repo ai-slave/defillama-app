@@ -40,8 +40,11 @@ export type MicaExchange = Pick<
 	| 'kyc_required'
 	| 'kyc_short'
 	| 'kyc_summary'
+	| 'market_count'
 	| 'mica_licensed'
 	| 'perp_fee'
+	| 'mica_regulator'
+	| 'own_eu_orderbook'
 	| 'products'
 	| 'ref_link'
 	| 'secondary'
@@ -120,6 +123,7 @@ const FEE_TONE_LABEL: Record<FeeTone, string> = {
 const SPOT_LIQUIDITY_HELP = 'Aggregated spot orderbook bid and ask depth within 2% of mid price for EU-available spot.'
 const PERP_LIQUIDITY_HELP =
 	'Aggregated perps orderbook bid and ask depth within 2% of mid price for EU-available perps.'
+const MARKET_COUNT_HELP = 'Number of trading markets available to EU users in the metadata feed.'
 
 export function selectActivePromotion(
 	row: MicaExchange,
@@ -436,6 +440,21 @@ function KycCell({ row }: { row: MicaExchange }) {
 	)
 }
 
+function MarketCountCell({ row }: { row: MicaExchange }) {
+	if (row.market_count == null) return null
+
+	return (
+		<span className="inline-flex items-center justify-end gap-1.5">
+			<span className="whitespace-nowrap tabular-nums">{row.market_count.toLocaleString('en-US')}</span>
+			{row.own_eu_orderbook ? (
+				<Tooltip content={`${MARKET_COUNT_HELP}\nOwn EU orderbook.`} className="justify-end">
+					<Icon name="help-circle" height={13} width={13} className="shrink-0 text-(--text-tertiary)" />
+				</Tooltip>
+			) : null}
+		</span>
+	)
+}
+
 // ---------------------------------------------------------------------------
 // Columns — compact preferred/min widths. The page opts into `table-layout: auto`,
 // so these guide the browser instead of forcing a fixed column grid.
@@ -563,7 +582,32 @@ const columns: ColumnDef<MicaExchange, any>[] = [
 				headerHelperText: 'Documents and verification steps required to use the exchange.'
 			}
 		}
-	)
+	),
+	columnHelper.accessor((row) => row.market_count ?? undefined, {
+		id: 'market_count',
+		header: 'Markets',
+		cell: ({ row }) => <MarketCountCell row={row.original} />,
+		meta: {
+			headerClassName: 'w-[96px] min-w-[90px] whitespace-nowrap',
+			align: 'end' as const,
+			headerHelperText: MARKET_COUNT_HELP
+		}
+	}),
+	columnHelper.accessor((row) => row.mica_regulator ?? undefined, {
+		id: 'mica_regulator',
+		header: 'Regulator',
+		enableSorting: false,
+		cell: ({ getValue }) =>
+			getValue() ? (
+				<Tooltip content={getValue()}>
+					<span className="block text-sm whitespace-nowrap">{getValue()}</span>
+				</Tooltip>
+			) : null,
+		meta: {
+			headerClassName: 'w-[420px] min-w-[360px]',
+			headerHelperText: 'National competent authority that authorized or supervises the MiCA license.'
+		}
+	})
 ]
 
 // ---------------------------------------------------------------------------

@@ -277,11 +277,14 @@ export interface ExchangeMetadataListEntry {
 	kyc_short: string | null
 	kyc_summary?: string | null
 	last_verified: string | null
+	market_count: number | null
 	mica_licensed: boolean
 	mica_member_state: string | null
+	mica_regulator: string | null
 	mica_status: ExchangeMetadataMicaStatus | null
 	native_token: string | null
 	oi_usd: number | null
+	own_eu_orderbook: boolean | null
 	own_token_pct: number | null
 	perp_fee: ExchangeMetadataFee
 	products: string[]
