@@ -234,6 +234,7 @@ Common usage examples:
 - [Yields](https://defillama.com/yields)
 - [Stablecoins](https://defillama.com/stablecoins)
 - [RWA](https://defillama.com/rwa)
+- [MiCA](https://defillama.com/mica)
 - [Support](https://defillama.com/support)
 - [DefiLlama Research](https://defillama.com/research)
 

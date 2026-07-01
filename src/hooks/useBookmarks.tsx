@@ -6,7 +6,7 @@ import { useUserConfig } from './useUserConfig'
 
 const SYNC_DEBOUNCE_MS = 1000
 
-export function useBookmarks(type: 'defi' | 'yields' | 'chains') {
+export function useBookmarks(type: 'defi' | 'yields' | 'chains' | 'tokens') {
 	const { isAuthenticated } = useAuthContext()
 	const { saveUserConfig, isLoadingConfig } = useUserConfig()
 	const localWatchlist = useWatchlistManager(type)

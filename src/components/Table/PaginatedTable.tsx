@@ -1,7 +1,15 @@
 'use no memo'
 
-import { flexRender, type RowData, type Table as ReactTable } from '@tanstack/react-table'
-import { createContext, startTransition, useContext, useMemo, type CSSProperties } from 'react'
+import { flexRender, type Row, type RowData, type Table as ReactTable } from '@tanstack/react-table'
+import {
+	createContext,
+	Fragment,
+	startTransition,
+	useContext,
+	useMemo,
+	type CSSProperties,
+	type ReactNode
+} from 'react'
 import { Icon } from '~/components/Icon'
 import { LoadingSpinner } from '~/components/Loaders'
 import {
@@ -21,6 +29,8 @@ interface PaginatedTableProps<T extends RowData> {
 	style?: CSSProperties
 	tableClassName?: string
 	interactionDisabled?: boolean
+	/** Render an expanded panel beneath a row when `row.getIsExpanded()` is true. Spans all columns. */
+	renderSubComponent?: (row: Row<T>) => ReactNode
 }
 
 const DisplayRowNumbersContext = createContext<Map<string, number> | null>(null)
@@ -87,7 +97,8 @@ export function PaginatedTable<T extends RowData>({
 	className,
 	style,
 	tableClassName,
-	interactionDisabled = false
+	interactionDisabled = false,
+	renderSubComponent
 }: PaginatedTableProps<T>) {
 	const rows = table.getRowModel().rows
 	const rowCount = table.getRowCount()
@@ -179,23 +190,35 @@ export function PaginatedTable<T extends RowData>({
 								))}
 							</thead>
 							<tbody>
-								{rows.map((row) => (
-									<tr key={row.id} className="border-b border-(--cards-border) last:border-b-0">
-										{row.getVisibleCells().map((cell) => {
-											const align = cell.column.columnDef.meta?.align ?? 'start'
+								{rows.map((row) => {
+									const isExpanded = renderSubComponent != null && row.getIsExpanded()
+									return (
+										<Fragment key={row.id}>
+											<tr className={`border-b border-(--cards-border) ${isExpanded ? '' : 'last:border-b-0'}`}>
+												{row.getVisibleCells().map((cell) => {
+													const align = cell.column.columnDef.meta?.align ?? 'start'
 
-											return (
-												<TokenPageTableBodyCell
-													key={cell.id}
-													textAlign={align}
-													className={cell.column.columnDef.meta?.cellClassName}
-												>
-													{flexRender(cell.column.columnDef.cell, cell.getContext())}
-												</TokenPageTableBodyCell>
-											)
-										})}
-									</tr>
-								))}
+													return (
+														<TokenPageTableBodyCell
+															key={cell.id}
+															textAlign={align}
+															className={cell.column.columnDef.meta?.cellClassName}
+														>
+															{flexRender(cell.column.columnDef.cell, cell.getContext())}
+														</TokenPageTableBodyCell>
+													)
+												})}
+											</tr>
+											{isExpanded ? (
+												<tr className="border-b border-(--cards-border) last:border-b-0">
+													<td colSpan={visibleLeafColumns.length} className="bg-(--cards-bg) p-0">
+														{renderSubComponent!(row)}
+													</td>
+												</tr>
+											) : null}
+										</Fragment>
+									)
+								})}
 							</tbody>
 						</TokenPageTable>
 					</TokenPageTableScroller>

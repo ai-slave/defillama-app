@@ -5,20 +5,38 @@ import { useBookmarks } from '~/hooks/useBookmarks'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { BasicLink } from './Link'
 
+type WatchlistType = 'defi' | 'yields' | 'chains' | 'tokens'
+
+const WATCHLIST_PATHS: Record<WatchlistType, string> = {
+	defi: '/watchlist',
+	chains: '/watchlist',
+	yields: '/yields/watchlist',
+	tokens: '/watchlist?tab=tokens'
+}
+
 interface IBookmarkProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 	readableName: string
 	configID?: string
 	isChain?: boolean
+	watchlistType?: WatchlistType
+	itemKey?: string
 }
 
-export function Bookmark({ readableName, configID, isChain, ...props }: IBookmarkProps) {
+export function Bookmark({
+	readableName,
+	configID,
+	isChain,
+	watchlistType: watchlistTypeProp,
+	itemKey,
+	...props
+}: IBookmarkProps) {
 	const router = useRouter()
 
 	const isYieldsPage = router.pathname.includes('/yields')
-	const urlPath = isYieldsPage ? '/yields/watchlist' : '/watchlist'
 
-	const watchlistType = isChain ? 'chains' : isYieldsPage ? 'yields' : 'defi'
-	const watchlistNameKey = isYieldsPage ? (configID ?? readableName) : readableName
+	const watchlistType: WatchlistType = watchlistTypeProp ?? (isChain ? 'chains' : isYieldsPage ? 'yields' : 'defi')
+	const urlPath = WATCHLIST_PATHS[watchlistType]
+	const watchlistNameKey = itemKey ?? (watchlistType === 'yields' ? (configID ?? readableName) : readableName)
 
 	const { savedProtocols, addProtocol, removeProtocol } = useBookmarks(watchlistType)
 

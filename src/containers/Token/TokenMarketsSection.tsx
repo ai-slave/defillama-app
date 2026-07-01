@@ -373,10 +373,15 @@ function Tabs<T extends string>({
 
 interface TokenMarketsSectionProps {
 	tokenSymbol: string
+	/** 'section' (default) renders the full page card with an anchored heading. 'embedded' renders just the
+	 *  tabs + table for use inside another surface (e.g. an expandable table row). */
+	variant?: 'section' | 'embedded'
 }
 
-export function TokenMarketsSection({ tokenSymbol }: TokenMarketsSectionProps) {
-	const [venueTab, setVenueTab] = useReducer((_: VenueTabId, next: VenueTabId) => next, 'dex')
+export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenMarketsSectionProps) {
+	const embedded = variant === 'embedded'
+	// The watchlist panel shows all venues (CEX + DEX) by default; the token detail page keeps its DEX default.
+	const [venueTab, setVenueTab] = useReducer((_: VenueTabId, next: VenueTabId) => next, embedded ? 'all' : 'dex')
 	const [categoryTab, setCategoryTab] = useReducer((_: Segment, next: Segment) => next, 'spot')
 
 	const { data, error, isLoading } = useQuery({
@@ -486,73 +491,89 @@ export function TokenMarketsSection({ tokenSymbol }: TokenMarketsSectionProps) {
 	)
 
 	if (isLoading) {
+		const loader = (
+			<div className="flex min-h-[200px] items-center justify-center p-3">
+				<LocalLoader />
+			</div>
+		)
+		if (embedded) return loader
 		return (
 			<section className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
 				{sectionHeader}
-				<div className="flex min-h-[360px] items-center justify-center p-3">
-					<LocalLoader />
-				</div>
+				{loader}
 			</section>
 		)
 	}
 
-	if (error || !data) {
+	const isEmpty = Boolean(error) || !data || visibleVenueTabs.length === 0 || rows.length === 0
+	if (isEmpty) {
+		if (embedded) {
+			return (
+				<div className="flex min-h-[120px] items-center justify-center p-4 text-sm text-(--text-secondary)">
+					No market data available for this token.
+				</div>
+			)
+		}
 		return null
 	}
 
-	if (visibleVenueTabs.length === 0 || rows.length === 0) {
-		return null
+	const content = (
+		<>
+			<Tabs
+				tabs={visibleVenueTabs}
+				activeTab={selectedVenueTab}
+				onChange={(id) => setVenueTab(id)}
+				ariaLabel="Market venue"
+			/>
+
+			<HeaderStrip rows={rows} totals={totals} showOi={isPerpCategory} />
+
+			<div className="flex w-full flex-wrap items-center justify-end gap-3">
+				<div className="mr-auto flex items-center overflow-x-auto">
+					<Tabs
+						tabs={visibleCategoryTabs}
+						activeTab={selectedCategoryTab}
+						onChange={(id) => setCategoryTab(id)}
+						ariaLabel="Market category"
+					/>
+				</div>
+				<label className="relative w-full max-w-full sm:max-w-[280px]">
+					<span className="sr-only">Search exchanges</span>
+					<Icon
+						name="search"
+						height={16}
+						width={16}
+						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
+					/>
+					<input
+						value={(table.getColumn('exchange')?.getFilterValue() as string | undefined) ?? ''}
+						onChange={(event) => table.getColumn('exchange')?.setFilterValue(event.currentTarget.value || undefined)}
+						placeholder="Search exchanges..."
+						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+					/>
+				</label>
+				<CSVDownloadButton
+					prepareCsv={() =>
+						prepareTableCsv({
+							instance: table,
+							filename: `token-markets-${tokenSymbol}-${selectedVenueTab}-${selectedCategoryTab}`
+						})
+					}
+					smol
+				/>
+			</div>
+			<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} />
+		</>
+	)
+
+	if (embedded) {
+		return <div className="flex flex-col gap-3 p-3">{content}</div>
 	}
 
 	return (
 		<section className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
 			{sectionHeader}
-			<div className="flex flex-col gap-3 p-3">
-				<Tabs
-					tabs={visibleVenueTabs}
-					activeTab={selectedVenueTab}
-					onChange={(id) => setVenueTab(id)}
-					ariaLabel="Market venue"
-				/>
-
-				<HeaderStrip rows={rows} totals={totals} showOi={isPerpCategory} />
-
-				<div className="flex w-full flex-wrap items-center justify-end gap-3">
-					<div className="mr-auto flex items-center overflow-x-auto">
-						<Tabs
-							tabs={visibleCategoryTabs}
-							activeTab={selectedCategoryTab}
-							onChange={(id) => setCategoryTab(id)}
-							ariaLabel="Market category"
-						/>
-					</div>
-					<label className="relative w-full max-w-full sm:max-w-[280px]">
-						<span className="sr-only">Search exchanges</span>
-						<Icon
-							name="search"
-							height={16}
-							width={16}
-							className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-						/>
-						<input
-							value={(table.getColumn('exchange')?.getFilterValue() as string | undefined) ?? ''}
-							onChange={(event) => table.getColumn('exchange')?.setFilterValue(event.currentTarget.value || undefined)}
-							placeholder="Search exchanges..."
-							className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
-						/>
-					</label>
-					<CSVDownloadButton
-						prepareCsv={() =>
-							prepareTableCsv({
-								instance: table,
-								filename: `token-markets-${tokenSymbol}-${selectedVenueTab}-${selectedCategoryTab}`
-							})
-						}
-						smol
-					/>
-				</div>
-				<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} />
-			</div>
+			<div className="flex flex-col gap-3 p-3">{content}</div>
 		</section>
 	)
 }

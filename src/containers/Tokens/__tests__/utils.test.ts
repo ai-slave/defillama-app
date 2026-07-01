@@ -144,4 +144,33 @@ describe('getTokensPageFromRows', () => {
 
 		expect(result.rows.map((item) => item.id)).toEqual(['uniswap', 'ethena', 'aave', 'curve', 'no-market-cap'])
 	})
+
+	it('filters to the requested ids (case-insensitive) for the watchlist', () => {
+		const result = getPage(rows, {
+			ids: 'AAVE,Uniswap',
+			sortBy: 'marketCap',
+			pageSize: '20'
+		})
+
+		expect(result.rows.map((item) => item.id)).toEqual(['uniswap', 'aave'])
+		expect(result.total).toBe(2)
+	})
+
+	it('combines the ids filter with search', () => {
+		const result = getPage(rows, {
+			ids: 'aave,uniswap',
+			search: 'uni',
+			pageSize: '20'
+		})
+
+		expect(result.rows.map((item) => item.id)).toEqual(['uniswap'])
+		expect(result.total).toBe(1)
+	})
+
+	it('returns nothing when an ids param is present but empty', () => {
+		const result = getPage(rows, { ids: '', pageSize: '20' })
+
+		expect(result.rows).toEqual([])
+		expect(result.total).toBe(0)
+	})
 })

@@ -488,7 +488,7 @@ export function buildTokensSourceRows({
 export async function getTokensSourceData(): Promise<TokensSourceData> {
 	return cachedResult(
 		'tokens-source-rows',
-		'v7',
+		'v8',
 		{
 			ttlMs: TOKENS_SOURCE_TTL_MS,
 			ttlJitter: 0.2,

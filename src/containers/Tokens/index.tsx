@@ -1,5 +1,6 @@
 import { createColumnHelper, getCoreRowModel, useReactTable, type ColumnDef } from '@tanstack/react-table'
 import * as React from 'react'
+import { Bookmark } from '~/components/Bookmark'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
@@ -16,7 +17,9 @@ import type {
 import { useTokensServerTable } from './useTokensServerTable'
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100] as const
-const TOKENS_TABLE_WIDTH_EXCLUDING_RANK = 2244
+export const TOKENS_TABLE_WIDTH_EXCLUDING_RANK = 2244
+// Width of the optional "Markets" expander column (added only in the expandable/watchlist variant).
+export const TOKENS_MARKETS_EXPANDER_COLUMN_WIDTH = 104
 const columnHelper = createColumnHelper<TokensTableRow>()
 
 type RightsTone = 'positive' | 'negative' | 'warning' | 'neutral'
@@ -53,7 +56,7 @@ type TokensTableStyle = React.CSSProperties & {
 	'--tokens-table-min-width': string
 }
 
-function getRankColumnWidth(rows: TokensTableRow[]): number {
+export function getRankColumnWidth(rows: TokensTableRow[]): number {
 	let maxDigits = 1
 	for (const row of rows) {
 		const digits = String(row.rowNumber).length
@@ -98,23 +101,26 @@ function ProgressPercentValue({
 }
 
 function TokenCell({ row }: { row: { original: TokensTableRow } }) {
-	const content = (
-		<span className="flex min-w-0 items-center gap-2">
-			<TokenLogo src={row.original.logo} size={24} alt={`Logo of ${row.original.name}`} />
-			<span className="min-w-0">
-				<span className="block overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap">
-					{row.original.name}
-				</span>
-				<span className="block text-xs text-(--text-secondary)">{row.original.symbol}</span>
-			</span>
+	const { name, symbol, logo, href, id } = row.original
+	const label = (
+		<span className="min-w-0">
+			<span className="block overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap">{name}</span>
+			<span className="block text-xs text-(--text-secondary)">{symbol}</span>
 		</span>
 	)
 
-	if (!row.original.href) return content
 	return (
-		<BasicLink href={row.original.href} className="text-(--link-text) hover:underline">
-			{content}
-		</BasicLink>
+		<span className="relative flex min-w-0 items-center gap-2 pl-5">
+			<Bookmark watchlistType="tokens" itemKey={id} readableName={symbol} data-lgonly data-bookmark />
+			<TokenLogo src={logo} size={24} alt={`Logo of ${name}`} />
+			{href ? (
+				<BasicLink href={href} className="min-w-0 text-(--link-text) hover:underline">
+					{label}
+				</BasicLink>
+			) : (
+				label
+			)}
+		</span>
 	)
 }
 
@@ -350,7 +356,7 @@ function RightsPie({ rights }: { rights: TokensRightsSummary | null }) {
 	)
 }
 
-const columns: ColumnDef<TokensTableRow>[] = [
+const baseColumns: ColumnDef<TokensTableRow>[] = [
 	columnHelper.accessor((row) => row.rank ?? undefined, {
 		id: 'rank',
 		header: '#',
@@ -574,6 +580,44 @@ const columns: ColumnDef<TokensTableRow>[] = [
 	})
 ]
 
+const expanderColumn: ColumnDef<TokensTableRow> = columnHelper.display({
+	id: 'expander',
+	header: 'Markets',
+	enableSorting: false,
+	cell: ({ row }) => {
+		const isExpanded = row.getIsExpanded()
+		return (
+			<button
+				type="button"
+				onClick={row.getToggleExpandedHandler()}
+				aria-expanded={isExpanded}
+				className="flex items-center gap-1 rounded-md border border-(--form-control-border) px-2 py-1 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+			>
+				Markets
+				<Icon
+					name="chevron-down"
+					height={12}
+					width={12}
+					className={`transition-transform duration-100 ${isExpanded ? 'rotate-180' : ''}`}
+				/>
+			</button>
+		)
+	},
+	meta: {
+		headerClassName: 'w-[104px] min-w-[104px]',
+		headerHelperText: 'Show the exchanges and trading pairs this token is available on'
+	}
+})
+
+export function buildTokensColumns({ expandable = false }: { expandable?: boolean } = {}): ColumnDef<TokensTableRow>[] {
+	if (!expandable) return baseColumns
+	const cols = baseColumns.slice()
+	const nameIndex = cols.findIndex((col) => col.id === 'name')
+	const insertAt = nameIndex >= 0 ? nameIndex + 1 : cols.length
+	cols.splice(insertAt, 0, expanderColumn)
+	return cols
+}
+
 function TokensStatsChange({ value, tone }: { value: string | null; tone: TokensDisplayTone }) {
 	if (value === null) return null
 	return <span className={`text-sm font-medium tabular-nums ${VALUE_TONE_CLASSES[tone]}`}>{value}</span>
@@ -670,7 +714,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 	}
 	const table = useReactTable({
 		data: serverTable.rows,
-		columns,
+		columns: buildTokensColumns(),
 		state: {
 			pagination: serverTable.pagination,
 			sorting: serverTable.sorting

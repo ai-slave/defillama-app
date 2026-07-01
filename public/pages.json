@@ -831,9 +831,9 @@
     {
       "name": "MiCA Exchanges",
       "route": "/mica",
-      "isNew": true,
       "category": "Others",
       "description": "MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements",
+      "isNew": true,
       "searchKeywords": [
         "mica",
         "mica licensed exchanges",

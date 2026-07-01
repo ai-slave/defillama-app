@@ -96,7 +96,8 @@ export function useUserConfig() {
 					const watchlistKeys = [
 						WATCHLIST_KEYS.DEFI_WATCHLIST,
 						WATCHLIST_KEYS.YIELDS_WATCHLIST,
-						WATCHLIST_KEYS.CHAINS_WATCHLIST
+						WATCHLIST_KEYS.CHAINS_WATCHLIST,
+						WATCHLIST_KEYS.TOKENS_WATCHLIST
 					] as const
 
 					for (const key of watchlistKeys) {
@@ -112,7 +113,8 @@ export function useUserConfig() {
 					const selectedKeys = [
 						WATCHLIST_KEYS.DEFI_SELECTED_PORTFOLIO,
 						WATCHLIST_KEYS.YIELDS_SELECTED_PORTFOLIO,
-						WATCHLIST_KEYS.CHAINS_SELECTED_PORTFOLIO
+						WATCHLIST_KEYS.CHAINS_SELECTED_PORTFOLIO,
+						WATCHLIST_KEYS.TOKENS_SELECTED_PORTFOLIO
 					] as const
 
 					for (const key of selectedKeys) {

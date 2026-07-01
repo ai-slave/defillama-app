@@ -37,18 +37,22 @@ export const WATCHLIST_KEYS = {
 	DEFI_WATCHLIST: 'DEFI_WATCHLIST',
 	YIELDS_WATCHLIST: 'YIELDS_WATCHLIST',
 	CHAINS_WATCHLIST: 'CHAINS_WATCHLIST',
+	TOKENS_WATCHLIST: 'TOKENS_WATCHLIST',
 	DEFI_SELECTED_PORTFOLIO: 'DEFI_SELECTED_PORTFOLIO',
 	YIELDS_SELECTED_PORTFOLIO: 'YIELDS_SELECTED_PORTFOLIO',
-	CHAINS_SELECTED_PORTFOLIO: 'CHAINS_SELECTED_PORTFOLIO'
+	CHAINS_SELECTED_PORTFOLIO: 'CHAINS_SELECTED_PORTFOLIO',
+	TOKENS_SELECTED_PORTFOLIO: 'TOKENS_SELECTED_PORTFOLIO'
 } as const
 
 const {
 	DEFI_WATCHLIST,
 	YIELDS_WATCHLIST,
 	CHAINS_WATCHLIST,
+	TOKENS_WATCHLIST,
 	DEFI_SELECTED_PORTFOLIO,
 	YIELDS_SELECTED_PORTFOLIO,
-	CHAINS_SELECTED_PORTFOLIO
+	CHAINS_SELECTED_PORTFOLIO,
+	TOKENS_SELECTED_PORTFOLIO
 } = WATCHLIST_KEYS
 
 // DEFI
@@ -168,9 +172,11 @@ export type AppStorage = SettingsStore & {
 	[DEFI_WATCHLIST]?: WatchlistStore
 	[YIELDS_WATCHLIST]?: WatchlistStore
 	[CHAINS_WATCHLIST]?: WatchlistStore
+	[TOKENS_WATCHLIST]?: WatchlistStore
 	[DEFI_SELECTED_PORTFOLIO]?: string
 	[YIELDS_SELECTED_PORTFOLIO]?: string
 	[CHAINS_SELECTED_PORTFOLIO]?: string
+	[TOKENS_SELECTED_PORTFOLIO]?: string
 	[SAVED_DOWNLOADS]?: SavedDownload[]
 	[RECENT_DOWNLOADS]?: SavedDownload[]
 	tableViews?: CustomView[]
@@ -436,14 +442,23 @@ export function useYieldFilters() {
 	}
 }
 
-export function useWatchlistManager(type: 'defi' | 'yields' | 'chains') {
-	const watchlistKey = type === 'defi' ? DEFI_WATCHLIST : type === 'yields' ? YIELDS_WATCHLIST : CHAINS_WATCHLIST
+export function useWatchlistManager(type: 'defi' | 'yields' | 'chains' | 'tokens') {
+	const watchlistKey =
+		type === 'defi'
+			? DEFI_WATCHLIST
+			: type === 'yields'
+				? YIELDS_WATCHLIST
+				: type === 'tokens'
+					? TOKENS_WATCHLIST
+					: CHAINS_WATCHLIST
 	const selectedPortfolioKey =
 		type === 'defi'
 			? DEFI_SELECTED_PORTFOLIO
 			: type === 'yields'
 				? YIELDS_SELECTED_PORTFOLIO
-				: CHAINS_SELECTED_PORTFOLIO
+				: type === 'tokens'
+					? TOKENS_SELECTED_PORTFOLIO
+					: CHAINS_SELECTED_PORTFOLIO
 
 	const snapshot = useSyncExternalStore(
 		subscribeToLocalStorage,

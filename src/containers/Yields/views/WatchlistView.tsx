@@ -98,11 +98,12 @@ export function YieldsWatchlistContainer({ protocolsDict }) {
 
 export const WatchListTabs = () => {
 	const router = useRouter()
+	const isTokensTab = router.pathname === '/watchlist' && router.query.tab === 'tokens'
 	return (
 		<nav className="relative flex w-full max-w-fit items-center gap-2 border-b-2 border-(--form-control-border) text-xs font-semibold">
 			<BasicLink
 				href={'/watchlist'}
-				data-active={router.pathname === '/watchlist'}
+				data-active={router.pathname === '/watchlist' && !isTokensTab}
 				className="relative bottom-[-2px] shrink-0 border-b-2 border-transparent px-2.5 py-1 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:border-(--old-blue)"
 			>
 				DeFi
@@ -114,6 +115,14 @@ export const WatchListTabs = () => {
 				className="relative bottom-[-2px] shrink-0 border-b-2 border-transparent px-2.5 py-1 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:border-(--old-blue)"
 			>
 				Yields
+			</BasicLink>
+
+			<BasicLink
+				href={'/watchlist?tab=tokens'}
+				data-active={isTokensTab}
+				className="relative bottom-[-2px] shrink-0 border-b-2 border-transparent px-2.5 py-1 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:border-(--old-blue)"
+			>
+				Tokens
 			</BasicLink>
 		</nav>
 	)

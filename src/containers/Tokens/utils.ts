@@ -181,14 +181,15 @@ export function getTokensStatsDisplay(stats: TokensPageStats): TokensPageStatsDi
 	}
 }
 
-function rowMatches(row: TokensSourceRow, search: string): boolean {
+function rowMatches(row: TokensSourceRow, search: string, requestedIds: Set<string> | null): boolean {
+	if (requestedIds != null && !requestedIds.has(row.id.toLowerCase())) return false
 	return search === '' || row.searchKey.includes(search)
 }
 
-function countMatchingRows(rows: TokensSourceRow[], search: string): number {
+function countMatchingRows(rows: TokensSourceRow[], search: string, requestedIds: Set<string> | null): number {
 	let total = 0
 	for (const row of rows) {
-		if (row.searchKey.includes(search)) total++
+		if (rowMatches(row, search, requestedIds)) total++
 	}
 	return total
 }
@@ -196,13 +197,14 @@ function countMatchingRows(rows: TokensSourceRow[], search: string): number {
 function collectSortedRows(
 	sortedRows: TokensSourceRow[],
 	search: string,
+	requestedIds: Set<string> | null,
 	start: number,
 	end: number,
 	pageRows: TokensTableRow[]
 ): void {
 	let matched = 0
 	for (const row of sortedRows) {
-		if (!rowMatches(row, search)) continue
+		if (!rowMatches(row, search, requestedIds)) continue
 		if (matched >= start) pageRows.push(toTableRow(row, matched + 1))
 		matched++
 		if (matched >= end) return
@@ -216,6 +218,7 @@ function hasSameSortValue(a: TokensSourceRow, b: TokensSourceRow, sortBy: Tokens
 function collectDescendingRows(
 	index: TokensSortIndex,
 	search: string,
+	requestedIds: Set<string> | null,
 	start: number,
 	end: number,
 	pageRows: TokensTableRow[]
@@ -231,7 +234,7 @@ function collectDescendingRows(
 
 		for (let j = groupStart; j <= i; j++) {
 			const row = index.rows[j]
-			if (!rowMatches(row, search)) continue
+			if (!rowMatches(row, search, requestedIds)) continue
 			if (matched >= start) pageRows.push(toTableRow(row, matched + 1))
 			matched++
 			if (matched >= end) return
@@ -242,7 +245,7 @@ function collectDescendingRows(
 
 	for (let j = index.nullStart; j < index.rows.length; j++) {
 		const row = index.rows[j]
-		if (!rowMatches(row, search)) continue
+		if (!rowMatches(row, search, requestedIds)) continue
 		if (matched >= start) pageRows.push(toTableRow(row, matched + 1))
 		matched++
 		if (matched >= end) return
@@ -253,16 +256,29 @@ function collectPageRows(
 	index: TokensSortIndex,
 	sortDesc: boolean,
 	search: string,
+	requestedIds: Set<string> | null,
 	start: number,
 	end: number
 ): TokensTableRow[] {
 	const pageRows: TokensTableRow[] = []
 	if (sortDesc) {
-		collectDescendingRows(index, search, start, end, pageRows)
+		collectDescendingRows(index, search, requestedIds, start, end, pageRows)
 	} else {
-		collectSortedRows(index.rows, search, start, end, pageRows)
+		collectSortedRows(index.rows, search, requestedIds, start, end, pageRows)
 	}
 	return pageRows
+}
+
+function parseRequestedIds(value: ParsedUrlQuery[string]): Set<string> | null {
+	// Absent param => no id filter. A present param (even if it parses to nothing) filters to its set,
+	// so a malformed/empty `ids=` matches nothing rather than leaking the full token list.
+	if (value == null) return null
+	const raw = Array.isArray(value) ? value.join(',') : value
+	const ids = raw
+		.split(',')
+		.map((id) => id.trim().toLowerCase())
+		.filter(Boolean)
+	return new Set(ids)
 }
 
 export function getTokensPageFromRows(
@@ -273,7 +289,11 @@ export function getTokensPageFromRows(
 ): TokensPageResponse {
 	const pageQuery = getTokensPageQuery(query)
 	const normalizedSearch = pageQuery.search.toLowerCase()
-	const total = normalizedSearch === '' ? rows.length : countMatchingRows(rows, normalizedSearch)
+	const requestedIds = parseRequestedIds(query.ids)
+	const total =
+		normalizedSearch === '' && requestedIds == null
+			? rows.length
+			: countMatchingRows(rows, normalizedSearch, requestedIds)
 	const pageCount = Math.max(1, Math.ceil(total / pageQuery.pageSize))
 	const page = Math.min(pageQuery.page, pageCount)
 	const start = (page - 1) * pageQuery.pageSize
@@ -282,7 +302,14 @@ export function getTokensPageFromRows(
 	return {
 		...base,
 		schemaVersion: TOKENS_PAGE_RESPONSE_SCHEMA_VERSION,
-		rows: collectPageRows(sortIndexes[pageQuery.sortBy], pageQuery.sortDesc, normalizedSearch, start, end),
+		rows: collectPageRows(
+			sortIndexes[pageQuery.sortBy],
+			pageQuery.sortDesc,
+			normalizedSearch,
+			requestedIds,
+			start,
+			end
+		),
 		total,
 		page,
 		pageSize: pageQuery.pageSize,

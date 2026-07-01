@@ -33,7 +33,7 @@ export function TokenPageTableScroller({
 	...props
 }: HTMLAttributes<HTMLDivElement> & { children: ReactNode }) {
 	return (
-		<div className={clsx('relative overflow-x-auto', className)} {...props}>
+		<div data-table-scroller className={clsx('relative overflow-x-auto', className)} {...props}>
 			{children}
 		</div>
 	)
