@@ -11,7 +11,7 @@ type MicaPageProps = {
 
 const SPOT_PRODUCT = 'spot'
 const PERP_PRODUCT = 'perp'
-const EXCLUDED_EXCHANGES = new Set(['backpack'])
+const EXCLUDED_EXCHANGES = new Set(['backpack', 'bybit'])
 const MICA_REF_LINKS_BY_EXCHANGE: Partial<Record<string, string>> = {
 	coinbase: 'https://coinbase-consumer.sjv.io/JkBQRQ',
 	cryptocom: 'https://cryptocom.sjv.io/E02YKK',
