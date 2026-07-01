@@ -43,34 +43,20 @@ ARG COOLIFY_CONTAINER_NAME
 ARG COOLIFY_RESOURCE_UUID
 ARG COOLIFY_FQDN
 ARG COOLIFY_URL
-ARG VERCEL_GIT_COMMIT_SHA
-ARG NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA
-ARG GITHUB_SHA
 ARG LOGGER_API_KEY
 ARG LOGGER_API_URL
 ARG BUILD_STATUS_WEBHOOK
 ARG BUILD_NOTIFY_USERS
 
 # Promote the commit SHA into the build environment so next.config's
-# generateBuildId (resolveBuildIdFromEnv) pins BUILD_ID to the commit. This makes
-# the id deterministic and identical across the segment servers built from the
-# same commit, instead of a random per-build id that diverges between boxes and
-# causes cross-segment /_next chunk + data 404s after a deploy.
+# generateBuildId pins BUILD_ID to the commit when the platform provides a SHA.
+# If these args are blank, the build command falls back to the minimal .git
+# metadata allowed through .dockerignore.
 ENV SOURCE_COMMIT=${SOURCE_COMMIT}
-ENV VERCEL_GIT_COMMIT_SHA=${VERCEL_GIT_COMMIT_SHA}
-ENV NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA=${NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA}
-ENV GITHUB_SHA=${GITHUB_SHA}
 
 RUN bash ./scripts/build.sh
 
-FROM node-base AS runner
-
-# Bake the built commit so runtime code (telemetry, cache-jitter seed) reports
-# the commit that was actually built. Coolify injects a runtime SOURCE_COMMIT
-# equal to latest HEAD, which can differ from this image; NEXT_BUILD_ID is not
-# injected at runtime, so this baked value stays authoritative.
-ARG SOURCE_COMMIT
-ENV NEXT_BUILD_ID=${SOURCE_COMMIT}
+FROM bun-base AS runner
 
 ENV NODE_ENV=production
 ENV HOSTNAME="0.0.0.0"
@@ -84,11 +70,11 @@ RUN groupadd --system --gid 1001 nodejs \
 RUN mkdir .next && chown nextjs:nodejs .next
 
 COPY --from=builder --chown=nextjs:nodejs /usr/src/app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /usr/src/app/.next/BUILD_ID ./.next/BUILD_ID
 COPY --from=builder --chown=nextjs:nodejs /usr/src/app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /usr/src/app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /usr/src/app/scripts ./scripts
 COPY --from=builder --chown=nextjs:nodejs /usr/src/app/node_modules/@next/env ./node_modules/@next/env
-COPY --from=builder --chown=nextjs:nodejs /usr/src/app/node_modules/jiti ./node_modules/jiti
 
 USER nextjs
 

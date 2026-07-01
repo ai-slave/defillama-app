@@ -1,26 +1,17 @@
 import type { NextConfig } from 'next'
+import { resolveBuildCommitSha } from './scripts/command/buildIdentity'
 import { getDatasetCacheTraceIncludes, type DatasetDomain } from './src/server/datasetCache/registry'
 import { legacyRedirects } from './src/server/routeRegistry/legacyRedirects'
 
 const datasetCacheIncludes = (...domains: DatasetDomain[]) => getDatasetCacheTraceIncludes(...domains)
-const buildIdEnvKeys = [
-	'SOURCE_COMMIT',
-	'VERCEL_GIT_COMMIT_SHA',
-	'NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA',
-	'GITHUB_SHA'
-] as const
 
-function resolveBuildIdFromEnv(): string | null {
-	for (const key of buildIdEnvKeys) {
-		const value = process.env[key]?.trim()
-		if (value) return value
-	}
-	return null
+function resolveBuildId(): string | null {
+	return resolveBuildCommitSha({ env: process.env, projectDir: process.cwd() }) || null
 }
 
 const nextConfig: NextConfig = {
 	output: 'standalone',
-	generateBuildId: resolveBuildIdFromEnv,
+	generateBuildId: resolveBuildId,
 	outputFileTracingIncludes: {
 		'/*': ['./.cache/app-metadata/**/*'],
 		'/cex/*': datasetCacheIncludes('markets'),

@@ -26,6 +26,14 @@ function createNow() {
 		.mockReturnValue(new Date('2026-01-01T00:00:05.000Z'))
 }
 
+function runDeployBuildTest(options: Parameters<typeof runDeployBuild>[0] = {}) {
+	return runDeployBuild({
+		env: testEnv(),
+		readGitCommitSha: () => 'test-git-sha',
+		...options
+	})
+}
+
 afterEach(async () => {
 	vi.unstubAllGlobals()
 	telemetryMock.flushTelemetry.mockClear()
@@ -39,7 +47,7 @@ describe('deploy build pipeline', () => {
 		const syncArtifacts = vi.fn()
 		const notify = vi.fn()
 
-		const result = await runDeployBuild({
+		const result = await runDeployBuildTest({
 			branchName: 'main',
 			findBuildId: vi.fn().mockResolvedValue(''),
 			logger: createMemoryLogger(),
@@ -70,7 +78,7 @@ describe('deploy build pipeline', () => {
 			.mockResolvedValueOnce(new Response('', { status: 200 }))
 		vi.stubGlobal('fetch', fetchImpl)
 
-		const result = await runDeployBuild({
+		const result = await runDeployBuildTest({
 			env: testEnv({
 				BUILD_NOTIFY_USERS: '1,2',
 				BUILD_STATUS_WEBHOOK: 'https://discord.example/webhook',
@@ -110,7 +118,7 @@ describe('deploy build pipeline', () => {
 			.mockResolvedValueOnce(new Response('', { status: 200 }))
 		vi.stubGlobal('fetch', fetchImpl)
 
-		const result = await runDeployBuild({
+		const result = await runDeployBuildTest({
 			env: testEnv({
 				BUILD_STATUS_WEBHOOK: 'https://discord.example/webhook',
 				LOGGER_API_URL: 'https://logs.example'
@@ -135,7 +143,7 @@ describe('deploy build pipeline', () => {
 	})
 
 	it('keeps the build result when notification throws', async () => {
-		const result = await runDeployBuild({
+		const result = await runDeployBuildTest({
 			findBuildId: vi.fn().mockResolvedValue(''),
 			logger: createMemoryLogger(),
 			now: createNow(),
@@ -152,7 +160,7 @@ describe('deploy build pipeline', () => {
 		const logger = createMemoryLogger()
 		const notify = vi.fn()
 
-		const result = await runDeployBuild({
+		const result = await runDeployBuildTest({
 			findBuildId: vi.fn().mockRejectedValue(new Error('manifest unreadable')),
 			logger,
 			now: createNow(),
@@ -171,7 +179,7 @@ describe('deploy build pipeline', () => {
 	it('skips artifact sync when Next fails', async () => {
 		const syncArtifacts = vi.fn()
 
-		const result = await runDeployBuild({
+		const result = await runDeployBuildTest({
 			findBuildId: vi.fn().mockResolvedValue(''),
 			logger: createMemoryLogger(),
 			now: createNow(),
@@ -189,7 +197,7 @@ describe('deploy build pipeline', () => {
 		const syncArtifacts = vi.fn()
 		const notify = vi.fn()
 
-		const result = await runDeployBuild({
+		const result = await runDeployBuildTest({
 			findBuildId: vi.fn().mockResolvedValue('build-id'),
 			logger: createMemoryLogger(),
 			now: createNow(),
@@ -211,8 +219,8 @@ describe('deploy build pipeline', () => {
 	it('records a build complete telemetry marker after artifact sync', async () => {
 		const syncArtifacts = vi.fn()
 
-		const result = await runDeployBuild({
-			env: testEnv({ COOLIFY_BRANCH: 'main', GITHUB_SHA: 'abcdef123456', SOURCE_COMMIT: '' }),
+		const result = await runDeployBuildTest({
+			env: testEnv({ COOLIFY_BRANCH: 'main', SOURCE_COMMIT: 'abcdef123456' }),
 			findBuildId: vi.fn().mockResolvedValue('build-id'),
 			logger: createMemoryLogger(),
 			now: createNow(),
@@ -242,8 +250,37 @@ describe('deploy build pipeline', () => {
 		expect(telemetryMock.flushTelemetry).toHaveBeenCalledWith({ runtime: 'build', timeoutMs: 2000 })
 	})
 
+	it('uses git fallback as the build commit when commit env vars are blank', async () => {
+		const logger = createMemoryLogger()
+
+		const result = await runDeployBuildTest({
+			env: testEnv({ COOLIFY_BRANCH: 'main', SOURCE_COMMIT: '' }),
+			findBuildId: vi.fn().mockResolvedValue('abcdef123456'),
+			logger,
+			now: createNow(),
+			notify: vi.fn(),
+			readGitCommitSha: () => 'abcdef123456',
+			runNextBuild: vi.fn().mockResolvedValue({ exitCode: 0, signal: null, stdoutTail: '' }),
+			runPrepare: vi.fn().mockResolvedValue(0),
+			syncArtifacts: vi.fn()
+		})
+
+		expect(result.status).toBe('success')
+		expect(logger.output.join('')).toContain('Commit: abcdef123456')
+		expect(telemetryMock.recordDomainEvent).toHaveBeenCalledWith(
+			'build.complete',
+			'info',
+			'main',
+			'Build completed on main',
+			expect.objectContaining({
+				build_id: 'abcdef123456',
+				commit_sha: 'abcdef123456'
+			})
+		)
+	})
+
 	it('records failed build telemetry markers', async () => {
-		const result = await runDeployBuild({
+		const result = await runDeployBuildTest({
 			env: testEnv({ COOLIFY_BRANCH: 'main', SOURCE_COMMIT: 'abcdef123456' }),
 			findBuildId: vi.fn().mockResolvedValue(''),
 			logger: createMemoryLogger(),

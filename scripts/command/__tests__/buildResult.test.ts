@@ -34,4 +34,14 @@ describe('build result', () => {
 
 		expect(await findNextBuildId(projectDir)).toBe('static-id')
 	})
+
+	it('prefers the authoritative Next BUILD_ID file', async () => {
+		const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), 'build-result-test-'))
+		tempDirs.push(projectDir)
+		await fs.mkdir(path.join(projectDir, '.next', 'static-id'), { recursive: true })
+		await fs.writeFile(path.join(projectDir, '.next', 'BUILD_ID'), 'file-id\n')
+		await fs.writeFile(path.join(projectDir, '.next', 'static-id', '_buildManifest.js'), '')
+
+		expect(await findNextBuildId(projectDir)).toBe('file-id')
+	})
 })

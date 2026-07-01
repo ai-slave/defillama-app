@@ -8,8 +8,8 @@
 	"scripts": {
 		"analyze": "next experimental-analyze",
 		"build": "node --max-old-space-size=6144 ./scripts/command/runPreparedNext.mjs production build --webpack",
-		"build:deploy": "node ./scripts/command/runTsCommand.mjs scripts/command/deployBuildCli.ts",
-		"build:metadata": "node ./scripts/command/runTsCommand.mjs scripts/command/prepareCli.ts",
+		"build:deploy": "bun ./scripts/command/deployBuildCli.ts",
+		"build:metadata": "bun ./scripts/command/prepareCli.ts",
 		"build:next": "next build",
 		"dev": "next dev",
 		"dev:prepared": "node ./scripts/command/runPreparedNext.mjs development dev",
@@ -87,7 +87,6 @@
 		"@types/react": "19.2.14",
 		"@typescript/native-preview": "7.0.0-dev.20260527.2",
 		"babel-plugin-react-compiler": "1.0.0",
-		"jiti": "2.6.1",
 		"oxfmt": "0.48.0",
 		"oxlint": "1.63.0",
 		"oxlint-tsgolint": "0.22.1",

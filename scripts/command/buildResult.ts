@@ -84,6 +84,8 @@ async function findBuildManifest(dir: string): Promise<string> {
 }
 
 export async function findNextBuildId(projectDir: string): Promise<string> {
+	const buildId = await fs.readFile(path.join(projectDir, '.next', 'BUILD_ID'), 'utf8').catch(() => '')
+	if (buildId.trim()) return buildId.trim()
 	const buildManifest = await findBuildManifest(path.join(projectDir, '.next'))
 	return buildManifest ? path.basename(path.dirname(buildManifest)) : ''
 }

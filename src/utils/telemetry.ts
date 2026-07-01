@@ -252,9 +252,9 @@ function withTelemetryTargetAttribute(event: TelemetryEvent): TelemetryEvent {
 
 function producer(runtime: TelemetryRuntime) {
 	const serviceVersion = firstProcessEnvValue([
-		// NEXT_BUILD_ID is baked into the image at build (= the built commit), so it
-		// reflects what's actually running; the rest are runtime envs Coolify sets
-		// to latest HEAD, which can differ from this image.
+		// Docker exports NEXT_BUILD_ID from .next/BUILD_ID, so it reflects the
+		// Next build actually running. Runtime SOURCE_COMMIT can point at newer
+		// HEAD during image rollout, so keep it behind the build id.
 		'NEXT_BUILD_ID',
 		'SOURCE_COMMIT',
 		'VERCEL_GIT_COMMIT_SHA',

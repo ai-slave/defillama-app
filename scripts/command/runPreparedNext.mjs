@@ -56,10 +56,7 @@ function run(command, args, envOverrides = {}) {
 	})
 }
 
-const prepareExitCode = await run(process.execPath, [
-	path.join(repoRoot, 'scripts', 'command', 'runTsCommand.mjs'),
-	'scripts/command/prepareCli.ts'
-])
+const prepareExitCode = await run('bun', [path.join(repoRoot, 'scripts', 'command', 'prepareCli.ts')])
 if (prepareExitCode !== 0) {
 	process.exitCode = prepareExitCode
 } else {

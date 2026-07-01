@@ -7,6 +7,11 @@ SHUTDOWN_TIMEOUT_SECONDS="${SHUTDOWN_TIMEOUT_SECONDS:-10}"
 PRESTART_PID=""
 SERVER_PID=""
 
+if [ -z "${NEXT_BUILD_ID:-}" ] && [ -r ".next/BUILD_ID" ]; then
+	NEXT_BUILD_ID="$(cat .next/BUILD_ID)"
+	export NEXT_BUILD_ID
+fi
+
 signal_child() {
 	pid="$1"
 	signal="$2"

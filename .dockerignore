@@ -1,5 +1,9 @@
 node_modules
 .next
-.git
+.git/*
+!.git/HEAD
+!.git/refs/
+!.git/refs/**
+!.git/packed-refs
 .env*
 !.env.example

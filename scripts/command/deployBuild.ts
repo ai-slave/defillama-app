@@ -2,6 +2,7 @@ import path from 'node:path'
 import { flushTelemetry, recordDomainEvent } from '~/utils/telemetry'
 import { syncBuildArtifacts } from './artifactSync'
 import { detectBranchName } from './branch'
+import { commitShaFromEnv, createBuildCommitEnv } from './buildIdentity'
 import { sendBuildNotification } from './buildNotification'
 import { createBuildResult, findNextBuildId, formatBuildResultSummary, type BuildResult } from './buildResult'
 import type { CommandLogger } from './logger'
@@ -20,6 +21,7 @@ type DeployBuildOptions = {
 	now?: () => Date
 	notify?: (result: BuildResult) => Promise<unknown>
 	projectDir?: string
+	readGitCommitSha?: (projectDir: string) => string
 	runNextBuild?: (logger: CommandLogger) => Promise<RunChildResult>
 	runPrepare?: () => Promise<number>
 	syncArtifacts?: (result: BuildResult) => Promise<unknown>
@@ -54,23 +56,6 @@ function formatNextBuildFailure(result: RunChildResult): string {
 	return `Next.js build failed with exit code ${result.exitCode ?? 1}`
 }
 
-function firstEnvValue(env: NodeJS.ProcessEnv, keys: readonly string[]): string {
-	for (const key of keys) {
-		const value = env[key]?.trim()
-		if (value) return value
-	}
-	return ''
-}
-
-function detectCommitSha(env: NodeJS.ProcessEnv): string {
-	return firstEnvValue(env, [
-		'SOURCE_COMMIT',
-		'VERCEL_GIT_COMMIT_SHA',
-		'NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA',
-		'GITHUB_SHA'
-	])
-}
-
 function finishedAtFromBuildResult(result: BuildResult): string {
 	return new Date(Date.parse(result.startedAt) + result.durationMs).toISOString()
 }
@@ -86,7 +71,7 @@ async function recordBuildCompleteTelemetry(result: BuildResult, env: NodeJS.Pro
 		{
 			branch,
 			build_id: result.buildId,
-			commit_sha: detectCommitSha(env),
+			commit_sha: commitShaFromEnv(env),
 			duration_ms: result.durationMs,
 			exit_code: result.exitCode,
 			finished_at: finishedAtFromBuildResult(result),
@@ -107,19 +92,27 @@ export async function runDeployBuild({
 	now = () => new Date(),
 	notify,
 	projectDir = process.cwd(),
+	readGitCommitSha,
 	runNextBuild,
 	runPrepare,
 	syncArtifacts
 }: DeployBuildOptions = {}): Promise<BuildResult> {
 	const buildLogPath = logPath ?? path.join(projectDir, 'build.log')
-	const buildLogger = logger ?? createTeeLogger({ logPath: buildLogPath, redactor: createSecretRedactor(env) })
+	const buildEnv = createBuildCommitEnv({ env, projectDir, readGitCommitSha })
+	const buildLogger = logger ?? createTeeLogger({ logPath: buildLogPath, redactor: createSecretRedactor(buildEnv) })
 	const startedAt = now()
-	const resolvedBranchName = branchName ?? detectBranchName(env)
+	const resolvedBranchName = branchName ?? detectBranchName(buildEnv)
+	const commitSha = commitShaFromEnv(buildEnv)
 
 	buildLogger.log('')
 	buildLogger.log('=======================')
 	buildLogger.log('New build started')
 	if (resolvedBranchName) buildLogger.log(`Branch: ${resolvedBranchName}`)
+	if (commitSha) {
+		buildLogger.log(`Commit: ${commitSha}`)
+	} else {
+		buildLogger.log('Commit: unavailable; Next.js will generate a random build ID')
+	}
 	buildLogger.log('=======================')
 	buildLogger.log('')
 
@@ -127,7 +120,7 @@ export async function runDeployBuild({
 		runPrepare ??
 		(async () => {
 			const result = await runPreparationCommand({
-				env,
+				env: buildEnv,
 				logger: buildLogger,
 				prefix: '[build:prepare]',
 				repoRoot: projectDir
@@ -138,7 +131,7 @@ export async function runDeployBuild({
 
 	if (exitCode === 0) {
 		buildLogger.log('Next.js build started')
-		const runNextBuildStep = runNextBuild ?? createDefaultNextBuildRunner({ activeChildren, env, projectDir })
+		const runNextBuildStep = runNextBuild ?? createDefaultNextBuildRunner({ activeChildren, env: buildEnv, projectDir })
 		const nextResult = await runNextBuildStep(buildLogger)
 		exitCode = nextResult.exitCode ?? 1
 		if (exitCode === 0 && !nextResult.signal) {
@@ -176,7 +169,7 @@ export async function runDeployBuild({
 			((buildResult: BuildResult) =>
 				syncBuildArtifacts({
 					activeChildren,
-					env,
+					env: buildEnv,
 					logger: buildLogger,
 					projectDir,
 					result: buildResult
@@ -185,15 +178,16 @@ export async function runDeployBuild({
 	} else {
 		buildLogger.log('Build failed, skipping .next artifact sync')
 	}
-	await recordBuildCompleteTelemetry(result, env)
+	await recordBuildCompleteTelemetry(result, buildEnv)
 
 	buildLogger.flush()
 	buildLogger.close()
-	const notificationLogger = createRedactedConsoleLogger(env)
+	const notificationLogger = createRedactedConsoleLogger(buildEnv)
 	try {
 		const notifyStep =
 			notify ??
-			((buildResult: BuildResult) => sendBuildNotification({ env, logger: notificationLogger, result: buildResult }))
+			((buildResult: BuildResult) =>
+				sendBuildNotification({ env: buildEnv, logger: notificationLogger, result: buildResult }))
 		await notifyStep(result)
 	} catch (error) {
 		notificationLogger.log('Build notification failed:', error)
