@@ -11,7 +11,6 @@ type MicaPageProps = {
 
 const SPOT_PRODUCT = 'spot'
 const PERP_PRODUCT = 'perp'
-const EXCLUDED_EXCHANGES = new Set(['backpack'])
 const MICA_REF_LINKS_BY_EXCHANGE: Partial<Record<string, string>> = {
 	coinbase: 'https://coinbase-consumer.sjv.io/JkBQRQ',
 	cryptocom: 'https://cryptocom.sjv.io/E02YKK',
@@ -19,11 +18,10 @@ const MICA_REF_LINKS_BY_EXCHANGE: Partial<Record<string, string>> = {
 	okx: 'https://okx.com/join/33619708',
 	kraken: 'https://proinvite.kraken.com/9f1e/ygb8jngg',
 	bybit: 'https://www.bybit.eu/en-EU/?affiliate_id=163070',
-	backpack: 'https://backpack.exchange/join/tnk6icla',
+	backpack: 'https://backpack.exchange/join/tnk6icla'
 }
 
 function shouldShowMicaExchange(exchange: ExchangeMetadataListEntry) {
-	if (EXCLUDED_EXCHANGES.has(exchange.exchange)) return false
 	if (!exchange.mica_licensed) return false
 	if (exchange.eu_status && exchange.eu_status !== 'available') return false
 	return true
