@@ -14,7 +14,6 @@ Check it out live at: https://defillama.com
 - Responsive design for all devices
 
 ## Local Setup
-
 #### 1. Clone the repository:
 
 ```bash
