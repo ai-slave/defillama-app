@@ -1,5 +1,5 @@
-import type { ExchangeMetadataListEntry } from '~/containers/Markets/api.types'
 import { Announcement } from '~/components/Announcement'
+import type { ExchangeMetadataListEntry } from '~/containers/Markets/api.types'
 import { MicaFinder, type MicaExchange } from '~/containers/Markets/MicaFinder'
 import { fetchExchangeMetadataListFromNetwork } from '~/containers/Markets/server/upstream'
 import Layout from '~/layout'

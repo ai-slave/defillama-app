@@ -191,12 +191,12 @@ describe('rankMicaRows', () => {
 			})
 		]
 		expect(rankMicaRows(rows).map((r) => r.display_name)).toEqual([
-			'OKX',
+			'Bybit',
 			'Coinbase',
 			'Crypto.com Exchange',
 			'Gate',
+			'OKX',
 			'Kraken',
-			'Bybit',
 			'Bitstamp',
 			'CheapSpot',
 			'PerpBroker',
