@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
+import { type CellContext, type ColumnDef, createColumnHelper, flexRender } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { Checkbox } from '~/components/Checkbox'
@@ -610,6 +610,43 @@ const columns: ColumnDef<MicaExchange, any>[] = [
 	})
 ]
 
+// Bybit row highlight — wraps each column's cell renderer with a full-bleed tint (and, on the
+// first/sticky column, a left accent bar) instead of touching the shared table renderer, which
+// every other table on the site also uses. The overlay is absolutely positioned within the cell
+// (`relative` + `z-0` below make the <td> its containing block and stacking context) so it fills
+// exactly the cell's padding box without needing to know the row's rendered height up front.
+const BYBIT_TINT = 'color-mix(in oklch, var(--success) 16%, var(--cards-bg))'
+const BYBIT_ACCENT = 'color-mix(in oklch, var(--success) 85%, black 15%)'
+
+function withBybitRowHighlight(cols: ColumnDef<MicaExchange, any>[]): ColumnDef<MicaExchange, any>[] {
+	return cols.map((column, index) => ({
+		...column,
+		meta: {
+			...column.meta,
+			cellClassName: [column.meta?.cellClassName, 'relative z-0'].filter(Boolean).join(' ')
+		},
+		cell: (ctx: CellContext<MicaExchange, any>) => {
+			const content = flexRender(column.cell, ctx)
+			if (ctx.row.original.exchange !== 'bybit') return content
+			return (
+				<>
+					<span
+						aria-hidden="true"
+						className="absolute inset-0 -z-10"
+						style={{
+							background: BYBIT_TINT,
+							boxShadow: index === 0 ? `inset 3px 0 0 0 ${BYBIT_ACCENT}` : undefined
+						}}
+					/>
+					{content}
+				</>
+			)
+		}
+	}))
+}
+
+const HIGHLIGHTED_COLUMNS = withBybitRowHighlight(columns)
+
 // ---------------------------------------------------------------------------
 // Product filter — keys match the feed's segment availability list.
 // ---------------------------------------------------------------------------
@@ -680,7 +717,7 @@ export function MicaFinder({ exchanges }: { exchanges: MicaExchange[] }) {
 	return (
 		<TableWithSearch
 			data={data}
-			columns={columns}
+			columns={HIGHLIGHTED_COLUMNS}
 			columnToSearch="display_name"
 			placeholder="Search exchange..."
 			sortingState={DEFAULT_SORTING}

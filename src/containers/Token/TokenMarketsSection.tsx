@@ -261,12 +261,27 @@ const PERP_COLUMNS: ColumnDef<MarketPair, any>[] = [
 	takerFeeColumn
 ]
 
+const byVolumeDesc = (a: MarketPair, b: MarketPair) => (b.volume_24h ?? 0) - (a.volume_24h ?? 0)
+
+/** CEX/All tabs' natural (unsorted) row order: bybit's single highest-volume pair goes first,
+ *  everything else (including bybit's other pairs, if any) sorted by volume behind it. `rows`
+ *  is always pre-scoped to one category (spot/linear_perp/inverse_perp) by the caller, so a
+ *  token's spot pairs never compete with its perp pairs for the top spot.
+ *  Only applies while no column sort is active; clicking a header sorts all rows evenly.
+ *  Exported for testing. */
+export function rankRowsBybitFirst(rows: MarketPair[]): MarketPair[] {
+	const topBybit = rows.filter((row) => row.exchange === 'bybit').sort(byVolumeDesc)[0]
+	if (!topBybit) return [...rows].sort(byVolumeDesc)
+	const rest = rows.filter((row) => row !== topBybit)
+	return [topBybit, ...rest.sort(byVolumeDesc)]
+}
+
 function getCategoryRows(data: TokenMarketsResponse, venue: VenueTabId, category: Segment): MarketPair[] {
 	if (venue === 'dex') return data.dex[category] ?? []
-	if (venue === 'cex') return data.cex[category] ?? []
+	if (venue === 'cex') return rankRowsBybitFirst(data.cex[category] ?? [])
 	const dexRows = data.dex[category] ?? []
 	const cexRows = data.cex[category] ?? []
-	return [...dexRows, ...cexRows].sort((a, b) => (b.volume_24h ?? 0) - (a.volume_24h ?? 0))
+	return rankRowsBybitFirst([...dexRows, ...cexRows])
 }
 
 function getCategoryTotals(data: TokenMarketsResponse, venue: VenueTabId, category: Segment): MarketCategoryTotals {
@@ -455,8 +470,11 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 	// Reset sort + search whenever the user switches venue or category, matching the prior
 	// remount-on-key behavior. Pagination auto-resets when the `data` reference changes via
 	// TanStack's default autoResetPageIndex.
+	// CEX and All start with no active sort — rows already come pre-ranked (bybit's top pair
+	// first, then volume) from rankRowsBybitFirst — so no header shows a sort indicator until
+	// the user picks a column. DEX keeps the plain volume-desc default sort.
 	useEffect(() => {
-		table.resetSorting()
+		table.setSorting(selectedVenueTab === 'dex' ? DEFAULT_SORTING : [])
 		table.resetColumnFilters()
 	}, [selectedVenueTab, selectedCategoryTab, table])
 
