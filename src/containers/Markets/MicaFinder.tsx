@@ -11,7 +11,7 @@ import { pushShallowQuery, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import type { ExchangeMetadataListEntry } from './api.types'
 
 const PERP_PRODUCT = 'perp'
-const PRIORITY_EXCHANGES = ['coinbase', 'cryptocom', 'gate', 'okx', 'kraken', 'bitstamp', 'bybit', 'backpack'] as const
+const PRIORITY_EXCHANGES = ['bybit', 'coinbase', 'cryptocom', 'gate', 'okx', 'kraken', 'bitstamp', 'backpack'] as const
 const PRIORITY_EXCHANGE_RANK: Map<string, number> = new Map(
 	PRIORITY_EXCHANGES.map((exchange, index) => [exchange, index])
 )
