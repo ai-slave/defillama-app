@@ -273,6 +273,35 @@
 	}
 }
 
+/*
+  Smoothly grow/collapse a native <details> instead of snapping the layout taller in one
+  frame, which jolts everything below it down. Progressive enhancement: browsers that lack
+  ::details-content / interpolate-size simply keep the instant native open — the content is
+  never height-clamped there, so this can only ever soften, never hide.
+*/
+@utility smooth-disclosure {
+	interpolate-size: allow-keywords;
+	&::details-content {
+		block-size: 0;
+		overflow: clip;
+		opacity: 0;
+		transition:
+			block-size 280ms ease,
+			content-visibility 280ms allow-discrete,
+			opacity 200ms ease;
+	}
+	&[open]::details-content {
+		block-size: auto;
+		opacity: 1;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.smooth-disclosure::details-content {
+		transition: none;
+	}
+}
+
 @utility vf-row-counter {
 	counter-reset: vf-row var(--vf-row-offset, 0);
 	& > .vf-row[data-depth='0'] {

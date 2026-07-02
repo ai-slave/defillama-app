@@ -4,9 +4,10 @@ import { Icon } from '~/components/Icon'
 
 interface CopyHelperProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 	toCopy: string
+	size?: number
 }
 
-export function CopyHelper({ toCopy, ...props }: CopyHelperProps) {
+export function CopyHelper({ toCopy, size = 14, ...props }: CopyHelperProps) {
 	const [copied, setCopied] = useState(false)
 	const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	useEffect(() => {
@@ -34,7 +35,11 @@ export function CopyHelper({ toCopy, ...props }: CopyHelperProps) {
 			aria-label="Copy"
 			{...props}
 		>
-			{copied ? <Icon name="check-circle" height={14} width={14} /> : <Icon name="copy" height={14} width={14} />}
+			{copied ? (
+				<Icon name="check-circle" height={size} width={size} />
+			) : (
+				<Icon name="copy" height={size} width={size} />
+			)}
 		</button>
 	)
 }

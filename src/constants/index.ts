@@ -52,6 +52,11 @@ export const LIQUIDATIONS_SERVER_URL_V2 =
 export const RISK_SERVER_URL =
 	getDirectUrlEnv('RISK_SERVER_URL') ?? (API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/risks` : 'https://risks.llama.fi')
 export const MARKETS_SERVER_URL = API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/markets` : 'https://markets.llama.fi'
+export const VAULT_RISK_SERVER_URL =
+	getDirectUrlEnv('VAULT_RISK_SERVER_URL') ??
+	(API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/vault-risk` : 'https://vault-risk.llama.fi')
+export const VAULT_RISK_API = `${VAULT_RISK_SERVER_URL}/v1/vault-risks`
+export const PROTOCOL_RISK_API = `${VAULT_RISK_SERVER_URL}/v1/protocol-risks`
 
 // Core llama APIs
 export const CONFIG_API = `${SERVER_URL}/config`

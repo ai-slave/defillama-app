@@ -1,0 +1,276 @@
+import { useMemo } from 'react'
+import type { BlockExplorersResponse } from '~/api/types'
+import { Icon } from '~/components/Icon'
+import { TokenLogo } from '~/components/TokenLogo'
+import { CollateralView } from './components/CollateralView'
+import { FreshnessFooter } from './components/FreshnessFooter'
+import { PositionProvider } from './components/PositionControl'
+import { RiskTabs, type RiskTab } from './components/RiskTabs'
+import { RiskVerdict } from './components/RiskVerdict'
+import { ScenarioByExit } from './components/ScenarioByExit'
+import { isDisplayedScenario } from './components/scenarioShared'
+import { TrustPanel } from './components/TrustPanel'
+import { buildVaultRiskVM, isDustCollateral } from './derive'
+import { prettyProtocolSlug } from './format'
+import type { VaultRiskData, VaultRiskVM } from './types'
+
+const SECTION_ID = 'vault-risk'
+
+// Public anchors: ConditionsTree links ref=oracle_config leaves to #vault-risk-collateral.
+const ID_SCENARIOS = 'vault-risk-scenarios'
+const ID_COLLATERAL = 'vault-risk-collateral'
+const ID_TRUST = 'vault-risk-trust'
+
+interface VaultRiskSectionProps {
+	data: VaultRiskData | null
+	poolName: string
+	chain: string
+	explorers?: BlockExplorersResponse
+}
+
+function Chip({ children }: { children: React.ReactNode }) {
+	return (
+		<span className="inline-flex items-center gap-1.5 rounded-full border border-(--cards-border) bg-(--bg-main) px-2 py-0.5 text-xs text-(--text-secondary)">
+			{children}
+		</span>
+	)
+}
+
+function ChainChip({ chain }: { chain: string }) {
+	return (
+		<Chip>
+			<TokenLogo name={chain.toLowerCase()} kind="chain" size={14} />
+			{chain}
+		</Chip>
+	)
+}
+
+// Shared shell so the populated and empty states read as the same section.
+function Shell({
+	poolName,
+	chips,
+	children
+}: {
+	poolName: string
+	chips?: React.ReactNode
+	children: React.ReactNode
+}) {
+	return (
+		<section className="flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
+			<div className="flex flex-col gap-3 border-b border-(--cards-border) p-3 sm:p-4">
+				<div className="flex flex-wrap items-start justify-between gap-3">
+					<div className="min-w-0">
+						<h2
+							className="group relative flex min-w-0 scroll-mt-24 items-center gap-1 text-xl font-bold"
+							id={SECTION_ID}
+						>
+							Risk
+							<a
+								aria-hidden="true"
+								tabIndex={-1}
+								href={`#${SECTION_ID}`}
+								className="absolute top-0 right-0 z-10 flex size-full items-center"
+							/>
+							<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
+						</h2>
+						<p className="mt-1 max-w-3xl text-sm text-(--text-secondary)">
+							{`Depositing into ${poolName || 'this pool'} means underwriting risks you usually can't see: how much you could lose, whether you'd get out in time, and what would cover it.`}
+						</p>
+					</div>
+					{chips ? <div className="flex flex-wrap items-center gap-1.5">{chips}</div> : null}
+				</div>
+			</div>
+			<div className="flex flex-1 flex-col divide-y divide-(--cards-border)">{children}</div>
+		</section>
+	)
+}
+
+// One flat zone per chapter, separated by hairlines instead of nested boxes.
+function Zone({ id, className, children }: { id?: string; className?: string; children: React.ReactNode }) {
+	return (
+		<div id={id} className={`scroll-mt-24 p-4 sm:p-5 ${className ?? ''}`}>
+			{children}
+		</div>
+	)
+}
+
+// Coverage is being compiled, not absent. Static under reduced motion.
+function ScanningRadar() {
+	return (
+		<div aria-hidden className="relative size-24">
+			{[0, 16, 32].map((inset) => (
+				<div key={inset} className="absolute rounded-full border border-(--cards-border)" style={{ inset }} />
+			))}
+			<div
+				className="absolute inset-0 animate-[spin_6s_linear_infinite] rounded-full motion-reduce:animate-none"
+				style={{
+					background: 'conic-gradient(from 0deg, color-mix(in srgb, var(--primary) 22%, transparent), transparent 30%)'
+				}}
+			/>
+			<span className="absolute top-1/2 left-1/2 size-1.5 -translate-1/2 rounded-full bg-(--primary)" />
+		</div>
+	)
+}
+
+// The "coverage is compiling" state, shared by the embedded section and the standalone
+// /risk page — an uncovered pool shows "scanning", never a bare "no data" line.
+export function VaultRiskUnmapped({
+	poolName,
+	protocolId,
+	chain
+}: {
+	poolName: string
+	protocolId?: string | null
+	chain?: string | null
+}) {
+	return (
+		<Shell
+			poolName={poolName}
+			chips={
+				protocolId || chain ? (
+					<>
+						{protocolId ? <Chip>{protocolId}</Chip> : null}
+						{chain ? <ChainChip chain={chain} /> : null}
+					</>
+				) : undefined
+			}
+		>
+			<div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
+				<ScanningRadar />
+				<p className="text-sm font-medium text-(--text-primary)">Risk scenarios for this pool aren&apos;t mapped yet</p>
+				<p className="max-w-md text-xs text-(--text-secondary)">
+					Coverage is rolling out across protocols. This pool will populate as its scenarios are compiled and verified
+					on-chain.
+				</p>
+			</div>
+		</Shell>
+	)
+}
+
+export function VaultRiskSection({ data, poolName, chain, explorers }: VaultRiskSectionProps) {
+	// A malformed fixture must never crash the pool page — degrade to "no usable data".
+	const vm = useMemo<VaultRiskVM | null>(() => {
+		if (!data) return null
+		try {
+			return buildVaultRiskVM(data, explorers)
+		} catch {
+			return null
+		}
+	}, [data, explorers])
+
+	// Memoized so RiskTabs' hashchange effect doesn't re-subscribe on unrelated re-renders;
+	// above the early returns to keep hook order stable.
+	const tabs = useMemo<RiskTab[]>(() => {
+		if (!vm) return []
+		return [
+			{
+				id: ID_COLLATERAL,
+				icon: 'layers',
+				label: 'Collateral',
+				count: vm.collateral.filter((c) => !isDustCollateral(c)).length,
+				content: (
+					<CollateralView
+						collateral={vm.collateral}
+						explorers={explorers}
+						protocolId={vm.protocolId}
+						poolType={vm.poolType}
+						supplyUsd={vm.supplyUsd}
+						allocatedUsd={vm.allocatedUsd}
+						idleUsd={vm.idleUsd}
+						trustScope={vm.protocol?.aggregate_trust_scope}
+						marketOracles={vm.marketOracles}
+						oracleDependencies={vm.oracleDependencies}
+						oracleExposure={vm.oracleExposure}
+						chain={vm.chain}
+					/>
+				)
+			},
+			{
+				id: ID_SCENARIOS,
+				icon: 'trending-up',
+				iconFlipY: true,
+				label: 'Scenarios',
+				count: vm.scenarios.filter(isDisplayedScenario).length,
+				content: <ScenarioByExit scenarios={vm.scenarios} protocol={vm.protocol} supplyUsd={vm.supplyUsd} />
+			},
+			{
+				id: ID_TRUST,
+				icon: 'users',
+				label: 'Trust',
+				content: (
+					<TrustPanel
+						protocol={vm.protocol}
+						explorers={explorers}
+						chain={vm.chain}
+						poolType={vm.poolType}
+						scenarios={vm.scenarios}
+						vaultRoles={vm.vaultRoles}
+						vaultDependencies={vm.vaultExternalDependencies}
+						nowIso={vm.freshness?.last_run}
+						incidents={vm.realizedIncidents}
+					/>
+				)
+			}
+		]
+	}, [vm, explorers])
+
+	// No risk record at all → stay silent rather than advertise on every uncovered pool.
+	if (!data) return null
+
+	// Has a record but nothing usable → say so honestly instead of a blank gap. Chain chip
+	// only when a protocol resolved.
+	if (!vm || vm.scenarios.length === 0) {
+		const protocolId = vm?.protocolId ?? data.vault?.protocol_id
+		const chainName = vm?.chain ?? data.vault?.chain ?? chain
+		return <VaultRiskUnmapped poolName={poolName} protocolId={protocolId} chain={protocolId ? chainName : null} />
+	}
+
+	const poolTypeLabel = vm.poolType === 'vault' ? 'Vault (aggregates across markets)' : 'Market'
+
+	// One source for the verdict's track-record fact and the trust panel's history strip;
+	// from the VM's history list so a suppressed scenario never drops a real loss.
+	const incidents = vm.realizedIncidents
+
+	return (
+		<PositionProvider>
+			<Shell
+				poolName={poolName}
+				chips={
+					<>
+						<Chip>
+							<TokenLogo name={vm.protocolId} kind="token" size={14} />
+							{prettyProtocolSlug(vm.protocolId)}
+						</Chip>
+						<ChainChip chain={vm.chain} />
+						<Chip>{poolTypeLabel}</Chip>
+					</>
+				}
+			>
+				<Zone className="overflow-hidden">
+					<RiskVerdict
+						headline={vm.headline}
+						scenarios={vm.scenarios}
+						collateral={vm.collateral}
+						stress={vm.stress}
+						supplyUsd={vm.supplyUsd}
+						exit={vm.exitReadiness}
+						audits={vm.protocol?.audits ?? []}
+						incidents={incidents}
+					/>
+				</Zone>
+
+				<RiskTabs tabs={tabs} defaultId={ID_COLLATERAL} />
+
+				<Zone>
+					<FreshnessFooter
+						freshness={vm.freshness}
+						protocolFreshness={vm.protocolFreshness}
+						protocolId={vm.protocolId}
+						lastUpdatedTs={vm.lastUpdatedTs}
+						stale={vm.stale}
+					/>
+				</Zone>
+			</Shell>
+		</PositionProvider>
+	)
+}

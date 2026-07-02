@@ -1,0 +1,182 @@
+import { formattedNum } from '~/utils'
+import { formatVerified } from '../format'
+import { toneClasses, type Tone } from '../kindMeta'
+import type { Audit, CollateralVM, ExitReadinessVM, HeadlineVM, ScenarioVM, Stress } from '../types'
+import type { HistoryIncident } from './HistoryStrip'
+import { LossCurve, type LossVizProps } from './LossCurve'
+import { PositionControl, usePositionUsd } from './PositionControl'
+
+// One orient block in the three-question strip; severity is carried by the value's tone +
+// label, never by the block.
+function QuestionBlock({ label, children }: { label: string; children: React.ReactNode }) {
+	return (
+		<div className="flex flex-col gap-1.5 bg-(--cards-bg) p-3">
+			<span className="text-[10px] font-medium tracking-wide text-(--text-secondary) uppercase">{label}</span>
+			{children}
+		</div>
+	)
+}
+
+function Stat({ value, sub }: { value: React.ReactNode; sub?: React.ReactNode }) {
+	return (
+		<div className="flex flex-col gap-0.5">
+			<span className="text-sm font-semibold text-(--text-primary) tabular-nums">{value}</span>
+			{sub ? <span className="text-xs text-(--text-secondary)">{sub}</span> : null}
+		</div>
+	)
+}
+
+// "Recorded" phrasing on the clean case — absence of evidence, not a proven zero.
+function trackRecordSummary(incidents: HistoryIncident[]): { label: string; tone: Tone; detail: string | null } {
+	const totalLost = incidents.reduce((a, i) => a + (i.usdLost || 0), 0)
+	const totalRecovered = incidents.reduce((a, i) => a + Math.min(i.usdRecovered || 0, i.usdLost || 0), 0)
+	if (!incidents.length) return { label: 'No pool-level losses recorded', tone: 'good', detail: null }
+	const n = incidents.length === 1 ? '1 incident' : `${incidents.length} incidents`
+	if (totalLost > 0 && totalRecovered >= totalLost) return { label: `${n} · made whole`, tone: 'good', detail: null }
+	return {
+		label: `${formattedNum(totalLost, true)} lost`,
+		tone: 'danger',
+		detail: `${n}${totalRecovered > 0 ? `, ${formattedNum(totalRecovered, true)} recovered` : ', not recovered'}`
+	}
+}
+
+function auditsPhrase(audits: Audit[]): string {
+	if (!audits.length) return 'no audits on record'
+	const latest = audits
+		.map((a) => a.date)
+		.filter(Boolean)
+		.sort()
+		.at(-1)
+	return `${audits.length} audits${latest ? `, latest ${formatVerified(latest)}` : ''}`
+}
+
+export function RiskVerdict({
+	headline,
+	scenarios,
+	collateral,
+	stress,
+	supplyUsd,
+	exit,
+	audits,
+	incidents
+}: {
+	headline: HeadlineVM
+	scenarios: ScenarioVM[]
+	collateral: CollateralVM[]
+	stress?: Stress | null
+	supplyUsd: number
+	exit: ExitReadinessVM
+	audits: Audit[]
+	incidents: HistoryIncident[]
+}) {
+	const worst = headline.worstCaseMaxUsd
+	const noEscape = headline.worstCaseWindow?.kind === 'no-escape'
+
+	// "Your deposit": when set, depositor-facing dollar figures scale pro-rata to your slice.
+	const [position, setPosition] = usePositionUsd()
+	const personal = position != null && position > 0 && supplyUsd > 0
+	const ratio = personal ? position / supplyUsd : 1
+
+	const avail = exit.availableLiquidityUsd
+	const util = exit.utilization != null ? ` (${Math.round(exit.utilization * 100)}% utilized)` : ''
+	const withdrawable =
+		exit.poolType === 'market' && avail != null
+			? personal
+				? position <= avail
+					? `your ${formattedNum(position, true)} could exit today — ${formattedNum(avail, true)} withdrawable${util}`
+					: `you couldn't fully exit today — ${formattedNum(avail, true)} withdrawable${util}`
+				: `${formattedNum(avail, true)} withdrawable now${util}`
+			: 'withdraw via underlying markets'
+
+	// "Can I exit?" — only timelocked governance changes give a window; every other modeled
+	// failure is no-warning.
+	const escapableCount = scenarios.filter((s) => s.status === 'computed' && s.actingWindow.kind === 'window').length
+	const exitWindowLabel = exit.bestExitWindow
+		? exit.bestExitWindow.maxSec >= 86400
+			? `${Math.round(exit.bestExitWindow.maxSec / 86400)}-day`
+			: exit.bestExitWindow.label.replace(' withdraw window', '')
+		: null
+	const exitValue = exit.poolType === 'market' && avail != null ? withdrawable : 'Via underlying markets'
+	const exitCaveat =
+		escapableCount > 0 && exitWindowLabel
+			? `only governance changes give a ${exitWindowLabel} timelock to exit — every other modeled failure is no-warning`
+			: 'every modeled failure here hits with no warning'
+
+	const covPct = worst > 0 ? Math.min(100, Math.round((headline.coverageTotalUsd / worst) * 100)) : 0
+	const fullyCovered = worst > 0 && headline.coverageTotalUsd >= worst
+
+	const tr = trackRecordSummary(incidents)
+	// "No losses" earns green; a realized loss reads in neutral ink — never a red number.
+	const trToneCls = tr.tone === 'good' ? toneClasses('good').text : ''
+	const trackSub = [tr.detail, auditsPhrase(audits)].filter(Boolean).join(' · ')
+
+	const lossProps: LossVizProps = {
+		scenarios,
+		collateral,
+		stress: stress ?? null,
+		supplyUsd,
+		worstUsd: worst,
+		worstTitle: headline.worstCaseTitle,
+		noEscape,
+		ratio,
+		personal,
+		position,
+		coverageUsd: headline.coverageTotalUsd
+	}
+
+	return (
+		<div className="relative flex flex-col gap-5">
+			<div className="flex flex-col gap-3">
+				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
+					{/* neutral phrasing until a deposit is entered — "I/lose" only once scaled */}
+					<span className="text-[10px] font-medium tracking-wide text-(--text-secondary) uppercase">
+						{personal ? 'How much could I lose?' : 'How much could be lost?'}
+					</span>
+					{supplyUsd > 0 && worst > 0 ? <PositionControl position={position} onChange={setPosition} /> : null}
+				</div>
+				{worst > 0 ? (
+					<LossCurve {...lossProps} />
+				) : (
+					<p className="text-sm text-(--text-secondary)">No quantified loss scenarios for this pool yet.</p>
+				)}
+			</div>
+
+			<div className="grid grid-cols-1 gap-px overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-border) sm:grid-cols-3">
+				<QuestionBlock label="Can I exit?">
+					<Stat value={exitValue} sub={exitCaveat} />
+				</QuestionBlock>
+
+				<QuestionBlock label="What backs it?">
+					<Stat
+						value={
+							worst <= 0 ? (
+								'—'
+							) : fullyCovered ? (
+								<span className={toneClasses('good').text}>Could cover in full</span>
+							) : covPct > 0 ? (
+								`${covPct}% backstop`
+							) : (
+								'No committed backstop'
+							)
+						}
+						sub={
+							// "could cover", never "covers": coverage is committed capacity, not a settled
+							// promise — most layers still need a vote before a depositor sees anything.
+							worst <= 0
+								? undefined
+								: fullyCovered
+									? `${formattedNum(headline.coverageTotalUsd, true)} committed could cover the worst case`
+									: covPct > 0
+										? `${formattedNum(headline.coverageTotalUsd, true)} committed against ${formattedNum(worst * ratio, true)}`
+										: 'nothing committed would cover a loss'
+						}
+					/>
+				</QuestionBlock>
+
+				<QuestionBlock label="Track record">
+					<Stat value={<span className={trToneCls}>{tr.label}</span>} sub={trackSub || undefined} />
+				</QuestionBlock>
+			</div>
+		</div>
+	)
+}

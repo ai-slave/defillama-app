@@ -7,6 +7,7 @@ import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
 import { CopyHelper } from '~/components/Copy'
 import { formatTvlApyTooltip } from '~/components/ECharts/formatters'
 import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import { BasicLink } from '~/components/Link'
 import { LocalLoader } from '~/components/Loaders'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { CHART_COLORS } from '~/constants/colors'
@@ -49,7 +50,7 @@ const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC
 const EMPTY_CHART_DATA: any[] = []
 const EMPTY_TVL_APY_DATASET = { source: [] as any[], dimensions: ['timestamp', 'APY', 'TVL'] }
 
-type YieldPoolPageProps = YieldPoolPageData
+type YieldPoolPageProps = YieldPoolPageData & { hasRisk: boolean }
 
 const getServerSidePropsHandler: GetServerSideProps<YieldPoolPageProps> = async ({ params, res }) => {
 	const poolParam = params?.pool
@@ -63,8 +64,13 @@ const getServerSidePropsHandler: GetServerSideProps<YieldPoolPageProps> = async 
 		return { notFound: true }
 	}
 
-	const { getYieldPoolPageData } = await import('~/containers/Yields/server/dataset')
-	const result = await getYieldPoolPageData(poolId)
+	const [{ getYieldPoolPageData }, { hasVaultRisk }] = await Promise.all([
+		import('~/containers/Yields/server/dataset'),
+		import('~/containers/Yields/VaultRisk/loader')
+	])
+	// The risk-entry check only needs the pool id, so it runs alongside the pool data
+	// (hasVaultRisk never throws — it resolves false on any failure).
+	const [result, hasRisk] = await Promise.all([getYieldPoolPageData(poolId), hasVaultRisk(poolId)])
 
 	if (!result.data) {
 		return { notFound: true }
@@ -78,7 +84,7 @@ const getServerSidePropsHandler: GetServerSideProps<YieldPoolPageProps> = async 
 		)
 	)
 
-	return { props: result.data }
+	return { props: { ...result.data, hasRisk } }
 }
 
 const tvlApyCharts = [
@@ -518,7 +524,17 @@ const EMPTY_LIQUIDITY_DATASET: MultiSeriesChart2Dataset = {
 	dimensions: ['timestamp', 'Supplied', 'Borrowed', 'Available']
 }
 
-const PageView = ({ pool, config, poolId }: { pool: IYieldTableRow; config: any; poolId: string }) => {
+const PageView = ({
+	pool,
+	config,
+	poolId,
+	hasRisk
+}: {
+	pool: IYieldTableRow
+	config: any
+	poolId: string
+	hasRisk: boolean
+}) => {
 	const isClient = useIsClient()
 	const { hasActiveSubscription } = useAuthContext()
 	const { onRequestUpgrade, modal } = useYieldsUpgradePrompt()
@@ -874,7 +890,18 @@ const PageView = ({ pool, config, poolId }: { pool: IYieldTableRow; config: any;
 						</span>
 					</p>
 
-					<CSVDownloadButton prepareCsv={prepareCsv} smol className="mt-auto mr-auto" />
+					<div className="mt-auto flex flex-wrap items-center justify-between gap-2">
+						{hasRisk ? (
+							<BasicLink
+								href={`/yields/pool/${poolId}/risk`}
+								className="group flex items-center gap-1.5 rounded-md bg-(--link-button) px-2.5 py-1.5 text-sm font-medium text-(--link-text) transition-colors hover:bg-(--link-button-hover)"
+							>
+								View risk data
+								<span className="transition-transform group-hover:translate-x-0.5">→</span>
+							</BasicLink>
+						) : null}
+						<CSVDownloadButton prepareCsv={prepareCsv} smol />
+					</div>
 				</div>
 
 				<div className="col-span-2 rounded-md border border-(--cards-border) bg-(--cards-bg)">
@@ -1118,7 +1145,7 @@ const liquidityChartColors: Record<string, string> = {
 const LIQUIDITY_LEGEND_OPTIONS: string[] = ['Supplied', 'Borrowed', 'Available']
 
 export default function YieldPoolPage(props: YieldPoolPageProps) {
-	const { poolId, pool, config } = props
+	const { poolId, pool, config, hasRisk } = props
 	const chain = pool.chains?.[0] ?? ''
 
 	const poolName = pool.poolMeta ? `${pool.pool} (${pool.poolMeta})` : (pool.pool ?? '')
@@ -1134,7 +1161,7 @@ export default function YieldPoolPage(props: YieldPoolPageProps) {
 
 	return (
 		<Layout title={title} description={description} canonicalUrl={poolId ? `/yields/pool/${poolId}` : null}>
-			<PageView pool={pool} config={config} poolId={poolId} />
+			<PageView pool={pool} config={config} poolId={poolId} hasRisk={hasRisk} />
 		</Layout>
 	)
 }

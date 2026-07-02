@@ -1,0 +1,996 @@
+import { describe, expect, it } from 'vitest'
+import { anyHasAnchors } from '../components/scenarioShared'
+import {
+	buildCollateral,
+	buildScenarios,
+	buildVaultRiskVM,
+	collateralDepegLossUsd,
+	collateralMarketBreakLossUsd,
+	coverageForScenario,
+	depegLossUsd,
+	marketBreakPresentation,
+	mergeCoverage,
+	parseActingWindow,
+	resolveRef,
+	vaultDepegLossUsd,
+	vaultDepegLossUsdAtDrops
+} from '../derive'
+import type { VaultRiskFixture } from '../types'
+import {
+	makeCollateral,
+	makeCoverage,
+	makeGovernance,
+	makeLoss,
+	makeProtocolRiskFixture,
+	makeRoleEntity,
+	makeScenario,
+	makeStress,
+	makeStressAnchor,
+	makeVaultRiskData,
+	makeVaultRiskFixture,
+	makeVaultRoles
+} from './factories'
+
+// buildScenarios' dependency bag isn't exported; the three fields are all it reads.
+const scenarioDeps = () => ({ realizedByScenario: new Map(), coverageVMs: [], oracleByAddr: new Map() }) as never
+
+describe('parseActingWindow', () => {
+	it('event → no-escape regardless of seconds', () => {
+		expect(parseActingWindow({ window_type: 'event', time_window_sec: { min: 0, max: 86400 } })).toMatchObject({
+			kind: 'no-escape'
+		})
+	})
+	it('exit → withdraw window with humanized label', () => {
+		const w = parseActingWindow({ window_type: 'exit', time_window_sec: { min: 86400, max: 604800 } })
+		expect(w.kind).toBe('window')
+		expect(w.label).toContain('1 day')
+		expect(w.label).toContain('7 days')
+	})
+})
+
+describe('buildScenarios (grouping + status)', () => {
+	// A vault whose oracle scenario is fanned across two assets (one scenario_id, two rows),
+	// plus a data_gap and a no_loss row so grouping, per-asset rollup and status ordering are
+	// all exercised at once.
+	const fannedVault = () =>
+		makeVaultRiskFixture({
+			vault_specific_risks: [
+				makeScenario({
+					id: 'oc-wbtc',
+					scenario_id: 'market-oracle-compromise',
+					kind: 'oracle-hack',
+					asset: { chain: 'ethereum', symbol: 'WBTC', address: '0xa1' },
+					loss: makeLoss({ status: 'computed', max_usd: 300, min_usd: 300 })
+				}),
+				makeScenario({
+					id: 'oc-weth',
+					scenario_id: 'market-oracle-compromise',
+					kind: 'oracle-hack',
+					asset: { chain: 'ethereum', symbol: 'WETH', address: '0xa2' },
+					loss: makeLoss({ status: 'computed', max_usd: 100, min_usd: 100 })
+				}),
+				makeScenario({
+					id: 'stale',
+					scenario_id: 'oracle-staleness',
+					loss: makeLoss({ status: 'data_gap', max_usd: 0, min_usd: 0 })
+				}),
+				makeScenario({
+					id: 'outage',
+					scenario_id: 'api-indexer-outage',
+					loss: makeLoss({ status: 'no_loss', max_usd: 0, min_usd: 0 })
+				})
+			]
+		})
+
+	it('collapses fanned per-asset scenarios into one row per scenario_id with perAsset breakdown', () => {
+		const v = fannedVault()
+		const scenarios = buildScenarios(v, scenarioDeps())
+		const distinctIds = new Set(v.vault_specific_risks.map((s) => s.scenario_id))
+		expect(scenarios.length).toBe(distinctIds.size)
+		expect(scenarios.length).toBeLessThan(v.vault_specific_risks.length)
+		const oracle = scenarios.find((s) => s.scenarioId === 'market-oracle-compromise')
+		expect(oracle?.perAsset && oracle.perAsset.length).toBeGreaterThan(1)
+		// perAsset sorted desc by loss
+		const losses = oracle!.perAsset!.map((p) => p.lossMaxUsd)
+		expect([...losses].sort((a, b) => b - a)).toEqual(losses)
+	})
+
+	it('aggregates grouped magnitude as the sum of computed per-asset max_usd', () => {
+		const v = fannedVault()
+		const scenarios = buildScenarios(v, scenarioDeps())
+		const oracle = scenarios.find((s) => s.scenarioId === 'market-oracle-compromise')!
+		// 300 + 100 across the two computed rows sharing the scenario_id
+		expect(oracle.lossMaxUsd).toBeCloseTo(400, 2)
+	})
+
+	it('sorts computed first, then data_gap, then no_loss', () => {
+		const v = fannedVault()
+		const scenarios = buildScenarios(v, scenarioDeps())
+		const rank = { computed: 0, data_gap: 1, no_loss: 2 } as const
+		const ranks = scenarios.map((s) => rank[s.status as keyof typeof rank])
+		expect([...ranks].sort((a, b) => a - b)).toEqual(ranks)
+	})
+
+	it('matches realized incidents by scenario_id', () => {
+		const vm = buildVaultRiskVM(
+			makeVaultRiskData({
+				vault_specific_risks: [
+					makeScenario({ scenario_id: 'smart-contract-bug', loss: makeLoss({ status: 'computed', max_usd: 500 }) })
+				],
+				realized_incidents: [
+					{
+						scenario_id: 'smart-contract-bug',
+						description: 'A past exploit',
+						incidents: [{ date: '2023-05-01', usd_lost: 1000, usd_recovered: 0 }]
+					}
+				]
+			})
+		)
+		const withRealized = vm.scenarios.filter((s) => s.realized)
+		expect(withRealized.length).toBeGreaterThanOrEqual(1)
+		expect(withRealized[0].realized!.incidents.length).toBeGreaterThan(0)
+	})
+})
+
+describe('mergeCoverage + coverageForScenario', () => {
+	// vault + protocol coverage with (a) an exact duplicate across both, (b) differing
+	// priorities, (c) an excl-own-tokens cap, (d) a scenario-scoped layer.
+	const dup = makeCoverage({
+		kind: 'umbrella',
+		access: 'gov_vote',
+		cap_usd: 1000,
+		priority: 1,
+		applies_to: ['gov-capture']
+	})
+	const vaultCov = () =>
+		makeVaultRiskFixture({
+			coverage: [dup, makeCoverage({ kind: 'treasury', access: 'instant', cap_usd: 500, priority: 0 })]
+		})
+	const protoCov = () =>
+		makeProtocolRiskFixture({
+			coverage: [
+				dup, // exact duplicate of the vault umbrella → must collapse
+				makeCoverage({
+					kind: 'insurance-protocol',
+					access: 'gov_vote',
+					cap_usd: 2000,
+					cap_usd_excl_own_tokens: 1500,
+					priority: 2
+				})
+			]
+		})
+
+	it('merges vault+protocol coverage, dedupes duplicates, prefers excl-own-tokens cap, sorts by priority', () => {
+		const v = vaultCov()
+		const p = protoCov()
+		const merged = mergeCoverage(v, p)
+		const rawLen = (v.coverage?.length ?? 0) + (p.coverage?.length ?? 0)
+		expect(merged.length).toBeLessThanOrEqual(rawLen)
+		const keys = merged.map((c) => `${c.kind}:${c.access}:${c.rawCapUsd}:${c.capUsd}`)
+		expect(new Set(keys).size).toBe(keys.length)
+		const priorities = merged.map((c) => c.priority)
+		expect([...priorities].sort((a, b) => a - b)).toEqual(priorities)
+		const exclCap = merged.find((c) => c.excludesOwnTokens)
+		expect(exclCap).toBeTruthy()
+		expect(exclCap!.capUsd).toBeLessThanOrEqual(exclCap!.rawCapUsd)
+	})
+
+	it('deduped coverage total is not inflated by vault/protocol overlap', () => {
+		// the umbrella repeats on both vault and protocol → collapses to the unique set
+		const merged = mergeCoverage(vaultCov(), protoCov())
+		const keys = new Set(merged.map((c) => `${c.kind}:${c.rawCapUsd}`))
+		expect(keys.size).toBe(merged.length)
+	})
+
+	it('filters coverage by applies_to', () => {
+		const merged = mergeCoverage(vaultCov(), protoCov())
+		const matched = coverageForScenario(merged, 'gov-capture')
+		expect(matched.length).toBeGreaterThan(0)
+		expect(matched.every((c) => c.appliesTo.includes('gov-capture'))).toBe(true)
+	})
+})
+
+describe('buildHeadline', () => {
+	it('worst-case excludes non-computed; uncovered = worst − coverage; blast radius = max collateral trust', () => {
+		const vm = buildVaultRiskVM(
+			makeVaultRiskData({
+				pool_total_supply_usd: 1_000_000,
+				vault_specific_risks: [
+					makeScenario({ scenario_id: 'oracle-hack-chainlink', loss: makeLoss({ status: 'computed', max_usd: 500 }) }),
+					// a huge data_gap must never win the worst case (not a complete figure)
+					makeScenario({ scenario_id: 'oracle-staleness', loss: makeLoss({ status: 'data_gap', max_usd: 999_999 }) })
+				],
+				collateral_risks: [
+					makeCollateral({ aggregate_trust_usd: 700 }),
+					makeCollateral({ aggregate_trust_usd: 300, token: { chain: 'ethereum', symbol: 'B', address: '0xb' } })
+				],
+				coverage: [
+					makeCoverage({ kind: 'umbrella', access: 'gov_vote', cap_usd: 300, applies_to: ['oracle-hack-chainlink'] })
+				]
+			})
+		)
+		const h = vm.headline
+		expect(h.worstCaseMaxUsd).toBeCloseTo(500, 2)
+		expect(h.coverageTotalUsd).toBeCloseTo(300, 2)
+		expect(h.uncoveredMaxUsd).toBeCloseTo(Math.max(0, h.worstCaseMaxUsd - h.coverageTotalUsd), 2)
+		expect(h.uncoveredMaxUsd).toBeCloseTo(200, 2)
+		expect(h.aggregateTrustUsd).toBeCloseTo(700, 2)
+	})
+
+	it('ties at the loss cap break toward no-escape, and coverage is scoped to that scenario', () => {
+		const vm = buildVaultRiskVM(
+			makeVaultRiskData({
+				pool_total_supply_usd: 1_000_000,
+				vault_specific_risks: [
+					// exit-window scenario, tied on loss with the no-escape one below
+					makeScenario({
+						scenario_id: 'smart-contract-bug',
+						loss: makeLoss({ status: 'computed', max_usd: 500, window_type: 'exit' })
+					}),
+					makeScenario({
+						scenario_id: 'oracle-hack-chainlink',
+						loss: makeLoss({ status: 'computed', max_usd: 500, window_type: 'event' })
+					})
+				],
+				coverage: [
+					makeCoverage({ kind: 'umbrella', access: 'gov_vote', cap_usd: 300, applies_to: ['oracle-hack-chainlink'] }),
+					// discretionary money never counts, even though it names the worst case
+					makeCoverage({
+						kind: 'treasury',
+						access: 'discretionary',
+						cap_usd: 9_999,
+						applies_to: ['oracle-hack-chainlink']
+					})
+				]
+			})
+		)
+		const h = vm.headline
+		expect(h.worstCaseScenarioId).toBe('oracle-hack-chainlink')
+		expect(h.worstCaseWindow?.kind).toBe('no-escape')
+		// only the committed layer naming the worst case counts (300), not the discretionary 9_999
+		expect(h.coverageTotalUsd).toBeCloseTo(300, 2)
+		const blind = vm.coverage.reduce((a, c) => a + c.capUsd, 0)
+		expect(h.coverageTotalUsd).toBeLessThan(blind)
+	})
+
+	it('among tied no-escape scenarios, the least-covered one is the worst case', () => {
+		// two no-escape scenarios tied on loss; only one is covered → the uncovered one is worst,
+		// and the headline must not borrow the other's backstop.
+		const vm = buildVaultRiskVM(
+			makeVaultRiskData({
+				pool_total_supply_usd: 1_000_000,
+				vault_specific_risks: [
+					makeScenario({
+						scenario_id: 'oracle-hack-chainlink',
+						loss: makeLoss({ status: 'computed', max_usd: 500, window_type: 'event' })
+					}),
+					makeScenario({
+						scenario_id: 'smart-contract-bug',
+						loss: makeLoss({ status: 'computed', max_usd: 500, window_type: 'event' })
+					})
+				],
+				coverage: [
+					makeCoverage({ kind: 'umbrella', access: 'gov_vote', cap_usd: 500, applies_to: ['oracle-hack-chainlink'] })
+				]
+			})
+		)
+		const h = vm.headline
+		expect(h.worstCaseScenarioId).toBe('smart-contract-bug')
+		expect(h.worstCaseWindow?.kind).toBe('no-escape')
+		const umbrella = vm.coverage.find((c) => c.kind === 'umbrella')!
+		expect(umbrella.appliesTo.includes('smart-contract-bug')).toBe(false)
+		expect(h.coverageTotalUsd).toBeLessThan(umbrella.capUsd + 1)
+	})
+
+	it('maps the server-computed exposure split and trusts its invariants', () => {
+		const vm = buildVaultRiskVM(
+			makeVaultRiskData({
+				pool_total_supply_usd: 1_000_000,
+				allocated_usd: 400_000,
+				idle_usd: 600_000,
+				collateral_risks: [
+					makeCollateral({
+						token: { chain: 'ethereum', symbol: 'A', address: '0xa' },
+						market_loss_ceiling_usd: 500_000,
+						vault_allocation_usd: 400_000,
+						exposure_usd: 300_000,
+						exposure_pct: 0.3,
+						liquidation_threshold: 0.8,
+						bad_debt_at_price_zero_usd: 300_000
+					}),
+					makeCollateral({
+						token: { chain: 'ethereum', symbol: 'B', address: '0xb' },
+						market_loss_ceiling_usd: 200_000,
+						vault_allocation_usd: 150_000,
+						exposure_usd: 100_000,
+						exposure_pct: 0.1,
+						liquidation_threshold: 0.8,
+						bad_debt_at_price_zero_usd: 100_000
+					})
+				]
+			})
+		)
+		expect(vm.collateral.length).toBeGreaterThan(0)
+		for (const c of vm.collateral) {
+			expect(c.exposureUsd).toBeLessThanOrEqual(c.marketLossCeilingUsd + 1)
+			expect(c.exposureUsd).toBeLessThanOrEqual(vm.supplyUsd * 1.001)
+			if (c.allocationUsd != null) expect(c.exposureUsd).toBeLessThanOrEqual(c.allocationUsd + 1)
+			expect(c.magnitudePct).toBeLessThanOrEqual(1)
+		}
+		for (let i = 1; i < vm.collateral.length; i++) {
+			expect(collateralMarketBreakLossUsd(vm.collateral[i - 1])).toBeGreaterThanOrEqual(
+				collateralMarketBreakLossUsd(vm.collateral[i])
+			)
+		}
+		expect(vm.allocatedUsd).not.toBeNull()
+		expect(vm.idleUsd).not.toBeNull()
+	})
+
+	it('does not count discretionary coverage as a committed backstop', () => {
+		const d = makeVaultRiskData({
+			pool_total_supply_usd: 1_000_000,
+			vault_specific_risks: [
+				makeScenario({ scenario_id: 'gov-capture', loss: makeLoss({ status: 'computed', max_usd: 500 }) })
+			],
+			coverage: [
+				makeCoverage({ kind: 'treasury', access: 'discretionary', cap_usd: 5_000, applies_to: ['gov-capture'] })
+			]
+		})
+		const merged = mergeCoverage(d.vault, d.protocol)
+		expect(merged.some((c) => c.kind === 'treasury' && c.access === 'discretionary')).toBe(true)
+		const vm = buildVaultRiskVM(d)
+		expect(vm.headline.coverageTotalUsd).toBe(0)
+		expect(vm.headline.worstCaseCovered).toBe(false)
+	})
+})
+
+describe('buildVaultRiskVM exit readiness', () => {
+	it('vault → null live liquidity; market → populated', () => {
+		const vaultVm = buildVaultRiskVM(
+			makeVaultRiskData({ pool_type: 'vault', available_liquidity_usd: null, utilization: null })
+		)
+		expect(vaultVm.poolType).toBe('vault')
+		expect(vaultVm.exitReadiness.availableLiquidityUsd).toBeNull()
+		const marketVm = buildVaultRiskVM(
+			makeVaultRiskData({ pool_type: 'market', available_liquidity_usd: 200_000, utilization: 0.5 })
+		)
+		expect(marketVm.poolType).toBe('market')
+		expect(typeof marketVm.exitReadiness.utilization).toBe('number')
+	})
+
+	it('magnitudePct is 0 for non-computed and within (0,1] for the worst computed', () => {
+		const vm = buildVaultRiskVM(
+			makeVaultRiskData({
+				vault_specific_risks: [
+					makeScenario({ scenario_id: 'smart-contract-bug', loss: makeLoss({ status: 'computed', max_usd: 500 }) }),
+					makeScenario({ scenario_id: 'oracle-staleness', loss: makeLoss({ status: 'data_gap', max_usd: 0 }) })
+				]
+			})
+		)
+		for (const s of vm.scenarios) {
+			if (s.status !== 'computed') expect(s.magnitudePct).toBe(0)
+		}
+		const top = vm.scenarios.find((s) => s.status === 'computed')
+		expect(top!.magnitudePct).toBeGreaterThan(0)
+	})
+})
+
+describe('depositor cap (loss never exceeds pool supply)', () => {
+	it('clamps a scenario that exceeds supply and preserves the raw ceiling', () => {
+		const supply = 1_000
+		const vm = buildVaultRiskVM(
+			makeVaultRiskData({
+				pool_total_supply_usd: supply,
+				vault_specific_risks: [
+					makeScenario({
+						scenario_id: 'wide-crypto-drop',
+						loss: makeLoss({ status: 'computed', max_usd: supply * 10, min_usd: supply * 10 })
+					})
+				]
+			})
+		)
+		const capped = vm.scenarios.find((s) => s.cappedAtSupply)
+		expect(capped).toBeTruthy()
+		expect(capped!.rawLossMaxUsd!).toBeGreaterThan(vm.supplyUsd)
+		expect(capped!.lossMaxUsd).toBe(vm.supplyUsd)
+	})
+
+	it('no scenario reports a depositor loss above supply', () => {
+		const supply = 1_000
+		const vm = buildVaultRiskVM(
+			makeVaultRiskData({
+				pool_total_supply_usd: supply,
+				vault_specific_risks: [
+					makeScenario({
+						scenario_id: 'wide-crypto-drop',
+						loss: makeLoss({ status: 'computed', max_usd: supply * 10 })
+					})
+				]
+			})
+		)
+		expect(vm.headline.worstCaseMaxUsd).toBeLessThanOrEqual(vm.supplyUsd)
+		for (const s of vm.scenarios) {
+			if (s.status === 'computed') expect(s.lossMaxUsd).toBeLessThanOrEqual(vm.supplyUsd)
+		}
+	})
+})
+
+describe('resolveRef', () => {
+	const p = makeProtocolRiskFixture({
+		external_dependencies: [
+			{ id: 'chainlink', kind: 'oracle', name: 'Chainlink', source_url: 'https://chain.link' },
+			{ id: 'l2.sequencer', kind: 'infra', name: 'L2 Sequencer', source_url: 'https://seq' }
+		]
+	})
+	it('oracle_config → in-page anchor', () => {
+		expect(resolveRef('oracle_config', p)).toMatchObject({ anchor: true })
+	})
+	it('entity.aspect → resolves prefix to a dependency with aspect label', () => {
+		const r = resolveRef('chainlink.multisig', p)
+		expect(r.label.toLowerCase()).toContain('chainlink')
+		expect(r.label).toContain('multisig')
+	})
+	it('exact dotted id resolves to its dependency', () => {
+		expect(resolveRef('l2.sequencer', p).url).toBe('https://seq')
+	})
+	it('unknown ref falls back to a plain label', () => {
+		expect(resolveRef('cross-chain-message-bus', p)).toEqual({ label: 'cross-chain-message-bus' })
+	})
+})
+
+describe('depegLossUsd (what-if curve)', () => {
+	it('returns 0 while the drop stays inside the liquidation buffer', () => {
+		expect(depegLossUsd(0.1, 0.83, 1_000_000)).toBe(0)
+		expect(depegLossUsd(0.17, 0.83, 1_000_000)).toBe(0) // exactly at the buffer edge
+	})
+	it('reaches the full bad-debt ceiling at −100%', () => {
+		expect(depegLossUsd(1, 0.83, 1_000_000)).toBeCloseTo(1_000_000)
+	})
+	it('interpolates linearly past the buffer', () => {
+		// LT 0.5 → buffer 0.5; a 75% drop is halfway through the at-risk band
+		expect(depegLossUsd(0.75, 0.5, 1_000_000)).toBeCloseTo(500_000)
+	})
+	it('LT of 1 means no buffer: loss scales with the whole drop', () => {
+		expect(depegLossUsd(0.25, 1, 1_000_000)).toBeCloseTo(250_000)
+	})
+	it('LT of 0 (or below) uses the full bad-debt cap', () => {
+		expect(depegLossUsd(1, 0, 1_000_000)).toBe(1_000_000)
+	})
+	it('clamps drops outside 0–1', () => {
+		expect(depegLossUsd(1.5, 0.83, 1_000_000)).toBeCloseTo(1_000_000)
+		expect(depegLossUsd(-0.2, 0.83, 1_000_000)).toBe(0)
+	})
+})
+
+describe('fixture fields reach the VM (passthrough)', () => {
+	// One rich vault carrying every optional lane the section renders, so the passthrough
+	// assertions all read from a single, legible construction.
+	const richData = () =>
+		makeVaultRiskData(
+			{
+				pool_total_supply_usd: 1_000_000,
+				risk_tier: {
+					tier: 'moderate',
+					relative_band: 'moderate',
+					capped_by: [],
+					facts: [{ label: 'Audited by two firms', polarity: 'good' }],
+					limited_data: false
+				},
+				vault_roles: makeVaultRoles({
+					owner: makeRoleEntity({ address: '0xowner', kind: 'contract' }),
+					allocators: []
+				}),
+				collateral_risks: [
+					makeCollateral({
+						liquidation_threshold: 0.8,
+						bad_debt_at_price_zero_usd: 1_000,
+						exposure_usd: 1_000,
+						exposure_pct: 0.3,
+						market_loss_ceiling_usd: 2_000,
+						oracle_providers: ['Chainlink'],
+						oracle_addresses: ['0xfeed'],
+						feed_kinds: ['aggregator'],
+						vault_market_share: 0.5
+					})
+				],
+				stress: makeStress({ anchors: [makeStressAnchor({ drop_pct: 30, bad_debt_usd: 125 })], ceiling_usd: 1_000 }),
+				oracle_dependencies: [
+					{
+						admin_address: '0xadmin',
+						admin_kind: 'safe',
+						vendors: ['Chainlink'],
+						collateral_symbols: ['TOK'],
+						exposure_usd: 1_000,
+						exposure_pct: 0.5
+					}
+				],
+				market_oracles: [],
+				external_dependencies: [{ id: 'dep-1', kind: 'oracle', name: 'Dep', relevance: 'principal' }]
+			},
+			{ governance: makeGovernance({ top10_clears_quorum: true, voting_power_top10_tokens: 1_000 }) }
+		)
+
+	it('maps depeg anchors onto collateral rows', () => {
+		const vm = buildVaultRiskVM(richData())
+		const row = vm.collateral.find((c) => c.liquidationThreshold != null)
+		expect(row).toBeDefined()
+		expect(row!.liquidationThreshold).toBeGreaterThan(0)
+		expect(row!.liquidationThreshold).toBeLessThanOrEqual(1)
+		expect(row!.badDebtAtZeroUsd).toBeGreaterThan(0)
+	})
+
+	it('passes the vault role registry through (and null when absent)', () => {
+		const vm = buildVaultRiskVM(richData())
+		expect(vm.vaultRoles?.owner?.address).toMatch(/^0x/)
+		expect(['safe', 'contract', 'eoa', 'unknown']).toContain(vm.vaultRoles?.owner?.kind)
+		expect(Array.isArray(vm.vaultRoles?.allocators)).toBe(true)
+		const market = buildVaultRiskVM(makeVaultRiskData({ pool_type: 'market' }))
+		expect(market.vaultRoles).toBeNull()
+	})
+
+	it('exposes the governance quorum verdict on the protocol fixture', () => {
+		const p = makeProtocolRiskFixture({
+			governance: makeGovernance({ top10_clears_quorum: true, voting_power_top10_tokens: 1_000 })
+		})
+		expect(p.governance?.top10_clears_quorum).toBe(true)
+		expect(p.governance?.voting_power_top10_tokens).toBeGreaterThan(0)
+	})
+
+	it('passes the relative risk_tier through (band + facts, never a score)', () => {
+		const vm = buildVaultRiskVM(richData())
+		expect(vm.riskTier).not.toBeNull()
+		expect(['lower', 'moderate', 'higher']).toContain(vm.riskTier!.tier)
+		expect(Array.isArray(vm.riskTier!.facts)).toBe(true)
+		for (const f of vm.riskTier!.facts) expect(['good', 'caution']).toContain(f.polarity)
+		expect((vm.riskTier as any).score).toBeUndefined()
+	})
+
+	it('binds collateral exposurePct to a 0–1 share and surfaces oracle vendors/addresses', () => {
+		const vm = buildVaultRiskVM(richData())
+		expect(vm.collateral.length).toBeGreaterThan(0)
+		for (const c of vm.collateral) {
+			expect(c.exposurePct).toBeGreaterThanOrEqual(0)
+			expect(c.exposurePct).toBeLessThanOrEqual(1.001)
+			expect(Array.isArray(c.oracleProviders)).toBe(true)
+			expect(Array.isArray(c.oracleAddresses)).toBe(true)
+			expect(Array.isArray(c.feedKinds)).toBe(true)
+		}
+	})
+
+	it('passes stress, market_oracles, scoped deps and freshness flags through', () => {
+		const vm = buildVaultRiskVM(richData())
+		expect(Array.isArray(vm.stress?.anchors)).toBe(true)
+		expect(vm.stress!.ceiling_usd).toBeGreaterThanOrEqual(0)
+		expect(Array.isArray(vm.marketOracles)).toBe(true)
+		expect(Array.isArray(vm.oracleDependencies)).toBe(true)
+		for (const o of vm.oracleDependencies) {
+			expect(o.admin_address).toMatch(/^0x/)
+			expect(['safe', 'guardian-set', 'contract', 'eoa']).toContain(o.admin_kind)
+			expect(o.exposure_usd).toBeGreaterThanOrEqual(0)
+		}
+		for (const c of vm.collateral)
+			expect(c.vaultMarketShare === null || typeof c.vaultMarketShare === 'number').toBe(true)
+		expect(Array.isArray(vm.vaultExternalDependencies)).toBe(true)
+		for (const d of vm.vaultExternalDependencies) {
+			if (d.relevance) expect(['principal', 'governance', 'rewards', 'ui']).toContain(d.relevance)
+		}
+		expect(typeof vm.stale).toBe('boolean')
+	})
+})
+
+describe('vault depeg stress curve', () => {
+	// Replaces the former corpus-wide scan over every on-disk fixture (which depended on the
+	// gitignored fixture dir) with a deterministic, hand-derived check: for a single collateral
+	// with borrowed debt 1_000 at LT 0.8 and a 1_000 zero-price ceiling, the no-liquidation bad
+	// debt is debt × max(0, 1 − (1−drop)/LT), so −30% → 125, −50% → 375, −100% → 1_000.
+	const stressVault = () =>
+		makeVaultRiskFixture({
+			collateral_risks: [
+				makeCollateral({
+					liquidation_threshold: 0.8,
+					collateral_borrowed_debt_usd: 1_000,
+					bad_debt_at_price_zero_usd: 1_000,
+					vault_allocation_usd: null
+				})
+			],
+			stress: makeStress({
+				anchors: [
+					makeStressAnchor({ drop_pct: 30, bad_debt_usd: 125 }),
+					makeStressAnchor({ drop_pct: 50, bad_debt_usd: 375 })
+				],
+				ceiling_usd: 1_000
+			})
+		})
+
+	it('the FE stress helper reproduces every served stress anchor and the ceiling', () => {
+		const v = stressVault()
+		const collateral = buildCollateral(v)
+		for (const anchor of v.stress!.anchors) {
+			expect(vaultDepegLossUsd(collateral, anchor.drop_pct / 100)).toBeCloseTo(anchor.bad_debt_usd, 2)
+		}
+		expect(vaultDepegLossUsd(collateral, 1)).toBeCloseTo(v.stress!.ceiling_usd, 2)
+		expect(vaultDepegLossUsd(collateral, 0.1)).toBeLessThan(vaultDepegLossUsd(collateral, 0.3)) // monotonic
+	})
+
+	it('a macro-crash pool renders its served per-drop curve with zero committed coverage and no pool incidents', () => {
+		const vm = buildVaultRiskVM(
+			makeVaultRiskData({
+				protocol_id: 'morpho-blue',
+				pool_total_supply_usd: 1_000_000,
+				vault_specific_risks: [
+					makeScenario({
+						scenario_id: 'wide-crypto-drop',
+						kind: 'macro',
+						loss: makeLoss({
+							status: 'computed',
+							max_usd: 200_000,
+							by_anchor: [
+								{ drop_pct: 10, loss_usd: 20_000 },
+								{ drop_pct: 30, loss_usd: 80_000 },
+								{ drop_pct: 50, loss_usd: 150_000 }
+							]
+						})
+					})
+				],
+				coverage: [makeCoverage({ kind: 'treasury', access: 'discretionary', cap_usd: 5_000 })],
+				realized_incidents: [],
+				stress: makeStress({
+					anchors: [makeStressAnchor({ drop_pct: 30, bad_debt_usd: 80_000 })],
+					ceiling_usd: 200_000
+				})
+			})
+		)
+		const crash = vm.scenarios.find((s) => s.scenarioId === 'wide-crypto-drop')!
+		expect(crash.status).toBe('computed')
+		expect(crash.lossByAnchor?.length ?? 0).toBeGreaterThan(0)
+		expect(vm.headline.coverageTotalUsd).toBe(0)
+		expect(vm.realizedIncidents).toHaveLength(0)
+		expect(anyHasAnchors(vm.scenarios)).toBe(true)
+	})
+})
+
+describe('collateral depeg math (inline rows)', () => {
+	it('does not invent depeg loss from exposure when bad-debt attribution is missing', () => {
+		const row = {
+			liquidationThreshold: 0.86,
+			borrowedDebtUsd: 1_000_000,
+			badDebtAtZeroUsd: null,
+			badDebtMarkets: [],
+			allocationUsd: 1_000_000,
+			exposureUsd: 1_000_000
+		}
+		expect(collateralDepegLossUsd(row, 1)).toBe(0)
+		expect(vaultDepegLossUsd([row], 1)).toBe(0)
+		expect(collateralMarketBreakLossUsd(row)).toBe(1_000_000)
+	})
+
+	it('keeps oracle-drain separate from the market-break bad-debt number', () => {
+		const row = {
+			liquidationThreshold: 0.86,
+			borrowedDebtUsd: 208,
+			badDebtAtZeroUsd: 208,
+			badDebtMarkets: [],
+			allocationUsd: 231,
+			exposureUsd: 231,
+			drainableUsd: 23
+		}
+		expect(collateralMarketBreakLossUsd(row)).toBe(208)
+	})
+
+	it('sums per-market bad-debt curves with each market LLTV', () => {
+		const row = {
+			liquidationThreshold: 0.8,
+			borrowedDebtUsd: 300,
+			badDebtAtZeroUsd: 300,
+			badDebtMarkets: [
+				{ lltv: 0.5, badDebtAtZeroUsd: 100 },
+				{ lltv: 0.8, badDebtAtZeroUsd: 200 }
+			],
+			allocationUsd: null
+		}
+		expect(collateralDepegLossUsd(row, 0.3)).toBeCloseTo(25)
+	})
+
+	it('uses borrowed debt as the single-collateral slope and bad-debt-at-zero as the cap', () => {
+		const row = {
+			liquidationThreshold: 0.8,
+			borrowedDebtUsd: 1_000,
+			badDebtAtZeroUsd: 500,
+			badDebtMarkets: [],
+			allocationUsd: null
+		}
+		expect(collateralDepegLossUsd(row, 0.5)).toBeCloseTo(375)
+		expect(collateralDepegLossUsd(row, 1)).toBeCloseTo(500)
+	})
+
+	it('sums custom-by-asset drops into one vault loss', () => {
+		const rows = [
+			{
+				address: '0xcb',
+				liquidationThreshold: 0.8,
+				borrowedDebtUsd: 1_000,
+				badDebtAtZeroUsd: 1_000,
+				badDebtMarkets: [],
+				allocationUsd: null
+			},
+			{
+				address: '0xws',
+				liquidationThreshold: 0.8,
+				borrowedDebtUsd: 1_000,
+				badDebtAtZeroUsd: 1_000,
+				badDebtMarkets: [],
+				allocationUsd: null
+			},
+			{
+				address: '0xce',
+				liquidationThreshold: 0.95,
+				borrowedDebtUsd: 200,
+				badDebtAtZeroUsd: 200,
+				badDebtMarkets: [{ lltv: 0.95, badDebtAtZeroUsd: 200 }],
+				allocationUsd: null
+			}
+		]
+		const drops = new Map([
+			['0xcb', 0.3],
+			['0xws', 0],
+			['0xce', 0.1]
+		])
+		const expectedCbBtc = 1_000 * (1 - 0.7 / 0.8)
+		const expectedCbEth = 200 * (1 - 0.9 / 0.95)
+		expect(vaultDepegLossUsdAtDrops(rows, (c) => drops.get(c.address)!)).toBeCloseTo(expectedCbBtc + expectedCbEth)
+	})
+})
+
+// bad_debt_basis → presentation only (magnitude unchanged): never dress an unmodeled ceiling
+// as a precise loss, a confident zero as missing data, or a market-wide estimate as precise.
+describe('marketBreakPresentation (bad_debt_basis rendering)', () => {
+	it('unmodeled basis → "unmodeled" with exposure as a ceiling, never a precise loss', () => {
+		const row = {
+			badDebtBasis: 'unmodeled' as const,
+			badDebtAtZeroUsd: null,
+			badDebtMarkets: [],
+			borrowedDebtUsd: null,
+			liquidationThreshold: 0.9,
+			allocationUsd: 50_000,
+			exposureUsd: 10_000
+		}
+		expect(marketBreakPresentation(row)).toEqual({ kind: 'unmodeled', ceilingUsd: 10_000 })
+	})
+
+	it('absent basis + null bad-debt (legacy) also reads as unmodeled, not exposure-as-loss', () => {
+		const row = {
+			badDebtBasis: null,
+			badDebtAtZeroUsd: null,
+			badDebtMarkets: [],
+			borrowedDebtUsd: null,
+			liquidationThreshold: null,
+			allocationUsd: null,
+			exposureUsd: 7_000
+		}
+		expect(marketBreakPresentation(row)).toEqual({ kind: 'unmodeled', ceilingUsd: 7_000 })
+	})
+
+	it('position-scan modeled to exactly $0 → confident-zero (a borrow-disabled reserve)', () => {
+		const row = {
+			badDebtBasis: 'position-scan' as const,
+			badDebtAtZeroUsd: 0,
+			badDebtMarkets: [],
+			borrowedDebtUsd: 0,
+			liquidationThreshold: 0.83,
+			allocationUsd: 286_000,
+			exposureUsd: 286_000
+		}
+		expect(marketBreakPresentation(row)).toEqual({ kind: 'confident-zero' })
+	})
+
+	it('position-scan with a positive figure → precise (not approximate)', () => {
+		const row = {
+			badDebtBasis: 'position-scan' as const,
+			badDebtAtZeroUsd: 500,
+			badDebtMarkets: [],
+			borrowedDebtUsd: 1_000,
+			liquidationThreshold: 0.8,
+			allocationUsd: null,
+			exposureUsd: 2_000
+		}
+		expect(marketBreakPresentation(row)).toEqual({ kind: 'modeled', usd: 500, approximate: false })
+	})
+
+	it('market-wide basis → modeled but flagged approximate', () => {
+		const row = {
+			badDebtBasis: 'market-wide' as const,
+			badDebtAtZeroUsd: 92_904_124,
+			badDebtMarkets: [],
+			borrowedDebtUsd: 113_743_107,
+			liquidationThreshold: null,
+			allocationUsd: 77_495_559,
+			exposureUsd: 77_495_559
+		}
+		expect(marketBreakPresentation(row)).toEqual({ kind: 'modeled', usd: 77_495_559, approximate: true })
+	})
+
+	it('absent basis with a real figure stays precise (no regression)', () => {
+		const row = {
+			badDebtBasis: null,
+			badDebtAtZeroUsd: 300,
+			badDebtMarkets: [],
+			borrowedDebtUsd: 300,
+			liquidationThreshold: 0.93,
+			allocationUsd: null,
+			exposureUsd: 40_000
+		}
+		expect(marketBreakPresentation(row)).toEqual({ kind: 'modeled', usd: 300, approximate: false })
+	})
+})
+
+describe('buildCollateral — oracle explanation fields', () => {
+	const coll = (symbol: string, address: string, oracle_type = 'hybrid') => ({
+		token: { chain: 'ethereum', symbol, address },
+		oracle_type,
+		market_loss_ceiling_usd: 0,
+		exposure_usd: 0,
+		aggregate_trust_usd: 0,
+		vault_count: 0
+	})
+	// buildCollateral only reads oracle_config / market_oracles / supply / collateral_risks — cast a
+	// minimal fixture rather than hand-build every unrelated required field.
+	const build = (fixture: any) =>
+		buildCollateral({ pool_total_supply_usd: 0, collateral_risks: [], ...fixture } as unknown as VaultRiskFixture)
+
+	it('surfaces mechanism_summary, base_leg, quote_leg and pt_pricing from oracle_config', () => {
+		const [c] = build({
+			collateral_risks: [coll('PT-x', '0xAA')],
+			oracle_config: [
+				{
+					type: 'hybrid',
+					asset_address: '0xaa', // matched case-insensitively against the token address
+					oracle_address: '0xfeed',
+					mechanism_summary: 'PT-x uses a Pendle linear-discount PT model.',
+					base_leg: 'Pendle linear-discount PT rate',
+					quote_leg: 'No independent quote feed identified',
+					pt_pricing: 'linear_discount'
+				}
+			]
+		})
+		expect(c.oracleMechanism).toBe('PT-x uses a Pendle linear-discount PT model.')
+		expect(c.oracleBaseLeg).toBe('Pendle linear-discount PT rate')
+		expect(c.oracleQuoteLeg).toBe('No independent quote feed identified')
+		expect(c.ptPricing).toBe('linear_discount')
+	})
+
+	it('falls back to the collateral market oracle when oracle_config lacks the fields', () => {
+		const [c] = build({
+			collateral_risks: [coll('siUSD', '0xBB')],
+			oracle_config: [{ type: 'hybrid', asset_address: '0xbb', oracle_address: '0xfeed' }],
+			market_oracles: [
+				{
+					market_id: '0x1',
+					collateral_asset: { symbol: 'siUSD', address: '0xBB', chain: 'ethereum' },
+					mechanism_summary: 'siUSD uses a composite oracle path.',
+					base_leg: 'Composite base price path',
+					quote_leg: 'No independent quote feed identified'
+				}
+			]
+		})
+		expect(c.oracleMechanism).toBe('siUSD uses a composite oracle path.')
+		expect(c.oracleBaseLeg).toBe('Composite base price path')
+		expect(c.ptPricing).toBeNull()
+	})
+
+	it('prefers oracle_config over the market oracle, and stays null when neither resolves', () => {
+		const rows = build({
+			collateral_risks: [coll('A', '0xCC'), coll('B', '0xDD')],
+			oracle_config: [
+				{ type: 'hybrid', asset_address: '0xcc', oracle_address: '0x1', mechanism_summary: 'from config' }
+			],
+			market_oracles: [
+				{
+					market_id: '0x2',
+					collateral_asset: { symbol: 'A', address: '0xCC', chain: 'ethereum' },
+					mechanism_summary: 'from market'
+				}
+			]
+		})
+		const withCfg = rows.find((r) => r.symbol === 'A')!
+		const bare = rows.find((r) => r.symbol === 'B')!
+		expect(withCfg.oracleMechanism).toBe('from config')
+		expect(bare.oracleMechanism).toBeNull()
+		expect(bare.oracleBaseLeg).toBeNull()
+		expect(bare.oracleQuoteLeg).toBeNull()
+		expect(bare.oracleLegs).toBeNull()
+		expect(bare.ptPricing).toBeNull()
+	})
+
+	it('surfaces resolved oracle legs from oracle_config, falls back to the market oracle, else null', () => {
+		const [fromCfg] = build({
+			collateral_risks: [coll('cbETH', '0xEE')],
+			oracle_config: [
+				{
+					type: 'market',
+					asset_address: '0xee',
+					oracle_address: '0xfeed',
+					legs: [
+						{ slot: 'base1', description: 'CBETH / ETH', vendor: 'Chainlink', kind: 'market' },
+						{ slot: 'base2', description: 'ETH / USD', vendor: 'Chainlink', kind: 'market' },
+						{ slot: 'quote1', description: 'USDC / USD', vendor: 'Chainlink', kind: 'market' }
+					]
+				}
+			]
+		})
+		expect(fromCfg.oracleLegs?.map((l) => l.description)).toEqual(['CBETH / ETH', 'ETH / USD', 'USDC / USD'])
+
+		const [fromMarket] = build({
+			collateral_risks: [coll('weETH', '0xFF')],
+			oracle_config: [{ type: 'hybrid', asset_address: '0xff', oracle_address: '0xfeed' }],
+			market_oracles: [
+				{
+					market_id: '0x1',
+					collateral_asset: { symbol: 'weETH', address: '0xFF', chain: 'ethereum' },
+					legs: [{ slot: 'base1', description: 'weETH / ETH', vendor: 'RedStone', kind: 'exchange-rate' }]
+				}
+			]
+		})
+		expect(fromMarket.oracleLegs?.[0]).toMatchObject({ description: 'weETH / ETH', kind: 'exchange-rate' })
+
+		const [none] = build({
+			collateral_risks: [coll('X', '0x11')],
+			oracle_config: [{ type: 'hybrid', asset_address: '0x11', oracle_address: '0xfeed' }]
+		})
+		expect(none.oracleLegs).toBeNull()
+	})
+})
+
+describe('buildCollateral — oracle badge (server-authoritative)', () => {
+	const collRow = (o: any) => ({
+		token: { chain: 'ethereum', symbol: o.symbol ?? 'TOK', address: o.address },
+		oracle_type: o.oracle_type ?? 'hybrid',
+		feed_kinds: o.feed_kinds ?? [],
+		oracle_providers: o.oracle_providers ?? [],
+		market_loss_ceiling_usd: 0,
+		exposure_usd: 0,
+		aggregate_trust_usd: 0,
+		vault_count: 0
+	})
+	const cfg = (o: any) => ({
+		type: o.type ?? 'hybrid',
+		asset_address: o.address,
+		oracle_address: '0xfeed',
+		feed_kind: o.feed_kind,
+		provider: o.provider
+	})
+	const typeOf = (coll: any, config?: any): string | undefined =>
+		buildCollateral({
+			pool_total_supply_usd: 0,
+			collateral_risks: [coll],
+			oracle_config: config ? [config] : []
+		} as unknown as VaultRiskFixture)[0].oracleType
+
+	it('takes the collateral oracle_type verbatim — no FE re-derivation from feed signals', () => {
+		expect(
+			typeOf(
+				collRow({ symbol: 'cbETH', address: '0xAA', oracle_type: 'hybrid' }),
+				cfg({ address: '0xAA', feed_kind: 'aggregator', provider: ['Chainlink'] })
+			)
+		).toBe('hybrid')
+		expect(
+			typeOf(
+				collRow({ symbol: 'cbETH', address: '0xAB', oracle_type: 'market' }),
+				cfg({ address: '0xAB', type: 'market', feed_kind: 'aggregator', provider: ['Chainlink'] })
+			)
+		).toBe('market')
+	})
+
+	it('keeps every stored type exactly as served (hardcoded / aum / hybrid)', () => {
+		expect(typeOf(collRow({ address: '0xEE', oracle_type: 'hardcoded' }))).toBe('hardcoded')
+		expect(typeOf(collRow({ address: '0xEF', oracle_type: 'aum' }))).toBe('aum')
+		expect(typeOf(collRow({ address: '0xF0', oracle_type: 'hybrid' }))).toBe('hybrid')
+	})
+
+	it('uses the collateral oracle_type even with no oracle_config entry', () => {
+		expect(
+			typeOf(
+				collRow({ address: '0xFF', oracle_type: 'market', feed_kinds: ['aggregator'], oracle_providers: ['Chainlink'] })
+			)
+		).toBe('market')
+	})
+})
