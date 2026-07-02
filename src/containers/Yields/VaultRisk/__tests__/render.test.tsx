@@ -463,6 +463,98 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('Per-collateral exposure ceilings are listed below')
 	})
 
+	it('keeps the vendor row when a resolved admin covers only a sliver of its exposure (managed-wrapper gap)', async () => {
+		const d = aaveData()
+		// USDe-on-Base shape: one resolved admin (the vendor Safe behind small aggregator feeds)
+		// carries dust, while most of the vendor's exposure flows through a managed wrapper whose
+		// admin is unresolved. The vendor row must survive so the header total stays explained.
+		d.vault.oracle_dependencies = [
+			{
+				admin_address: '0x0000000000000000000000000000000000000adm',
+				admin_kind: 'safe',
+				multisig: '4/9',
+				vendors: ['Chainlink'],
+				collateral_symbols: ['WETH'],
+				exposure_usd: 0.02,
+				exposure_pct: 0.000000001
+			}
+		]
+		const vm = buildVaultRiskVM(d)
+		const html = await render(
+			<CollateralView
+				collateral={vm.collateral}
+				protocolId={vm.protocolId}
+				poolType={vm.poolType}
+				oracleExposure={vm.oracleExposure}
+				oracleDependencies={vm.oracleDependencies}
+				chain={vm.chain}
+			/>
+		)
+		expect(html).toContain('a 4/9 Safe multisig') // the resolved admin row still renders
+		expect(html).toContain('on-chain control not resolved') // …and so does the $8m vendor row
+		// with an admin row covering (nearly) all of the vendor's exposure, the vendor row is deduped
+		d.vault.oracle_dependencies[0].exposure_usd = 8_000_000
+		const vm2 = buildVaultRiskVM(d)
+		const html2 = await render(
+			<CollateralView
+				collateral={vm2.collateral}
+				protocolId={vm2.protocolId}
+				poolType={vm2.poolType}
+				oracleExposure={vm2.oracleExposure}
+				oracleDependencies={vm2.oracleDependencies}
+				chain={vm2.chain}
+			/>
+		)
+		expect(html2).toContain('a 4/9 Safe multisig')
+		expect(html2).not.toContain('on-chain control not resolved')
+	})
+
+	it('renders vendorless drainable exposure as explicit rows instead of dropping it (sUSDe / mHYPER shapes)', async () => {
+		const d = aaveData()
+		// sUSDe shape: immutable ERC4626 exchange rate — no vendor, no admin anywhere.
+		Object.assign(d.vault.collateral_risks[0], {
+			token: { chain: 'ethereum', symbol: 'sUSDe', address: d.vault.collateral_risks[0].token.address },
+			oracle_providers: [],
+			feed_kinds: ['exchange-rate'],
+			drainable_usd: 3_500_000
+		})
+		// mHYPER shape: composite feed whose vendor the resolver could not identify.
+		Object.assign(d.vault.collateral_risks[1], {
+			token: { chain: 'ethereum', symbol: 'mHYPER', address: d.vault.collateral_risks[1].token.address },
+			oracle_providers: [],
+			feed_kinds: ['composite'],
+			drainable_usd: 300_000
+		})
+		d.vault.oracle_exposure = {
+			by_type: [],
+			by_provider: [
+				{ provider: 'none', exposure_usd: 3_800_000, exposure_pct: 0.19, collateral_symbols: ['sUSDe', 'mHYPER'] }
+			]
+		}
+		d.vault.oracle_dependencies = []
+		const vm = buildVaultRiskVM(d)
+		const html = await render(
+			<CollateralView
+				collateral={vm.collateral}
+				protocolId={vm.protocolId}
+				poolType={vm.poolType}
+				supplyUsd={vm.supplyUsd}
+				oracleExposure={vm.oracleExposure}
+				oracleDependencies={vm.oracleDependencies}
+				chain={vm.chain}
+			/>
+		)
+		// the panel renders at all (previously: no proven vendor + no admins → null, header total orphaned)
+		expect(html).toContain('Oracle dependencies')
+		// the immutable exchange rate is named for what it is, not "control not resolved"
+		expect(html).toContain('On-chain exchange rate')
+		expect(html).toContain('no external feed or admin')
+		expect(html).toContain('mispriceable only via the issuing contract')
+		// the unidentified-vendor gap stays an honest, visible row
+		expect(html).toContain('Unidentified feeds')
+		expect(html).toContain('vendor and on-chain control not resolved')
+	})
+
 	it('aave collateral renders each bad_debt_basis distinctly (precise / approx / confident-zero / unmodeled)', async () => {
 		const d = aaveData()
 		// confident-zero: a borrow-disabled reserve scanned to exactly $0 bad debt (oracle-drain still real)

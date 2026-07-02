@@ -209,6 +209,7 @@ export function CollateralView({
 			<OracleDependencies
 				providers={oracleExposure?.by_provider ?? []}
 				deps={oracleDependencies}
+				collateral={collateral}
 				chain={chain}
 				explorers={explorers}
 				totalDrainableUsd={totalDrainableUsd}
