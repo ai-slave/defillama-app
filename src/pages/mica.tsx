@@ -1,4 +1,5 @@
 import type { ExchangeMetadataListEntry } from '~/containers/Markets/api.types'
+import { Announcement } from '~/components/Announcement'
 import { MicaFinder, type MicaExchange } from '~/containers/Markets/MicaFinder'
 import { fetchExchangeMetadataListFromNetwork } from '~/containers/Markets/server/upstream'
 import Layout from '~/layout'
@@ -109,6 +110,10 @@ export default function MicaPage({ exchanges }: MicaPageProps) {
 			canonicalUrl="/mica"
 			pageName={pageName}
 		>
+			<Announcement notCancellable>
+				We have negotiated deals with some exchanges to offer 20% fee discounts to users that sign up through our links
+			</Announcement>
+
 			{exchanges.length ? (
 				<MicaFinder exchanges={exchanges} />
 			) : (
