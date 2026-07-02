@@ -158,7 +158,15 @@ function promotionLinks(promotion: ExchangePromotion) {
 	return links
 }
 
-function PromotionGift({ promotion, exchangeName }: { promotion: ExchangePromotion; exchangeName: string }) {
+function PromotionGift({
+	promotion,
+	exchange,
+	exchangeName
+}: {
+	promotion: ExchangePromotion
+	exchange: string
+	exchangeName: string
+}) {
 	const subtitle = cleanPromotionSubtitle(promotion)
 	const links = promotionLinks(promotion)
 
@@ -202,6 +210,9 @@ function PromotionGift({ promotion, exchangeName }: { promotion: ExchangePromoti
 								href={link.href}
 								target="_blank"
 								rel="noopener noreferrer"
+								data-umami-event="mica-promotion-click"
+								data-umami-event-exchange={exchange}
+								data-umami-event-link={link.label}
 								className="flex items-center gap-2 px-3 py-2 text-xs text-(--text-primary) hover:bg-(--link-hover-bg)"
 							>
 								<Icon name="gift" height={12} width={12} className="shrink-0 text-(--link-text)" />
@@ -226,6 +237,12 @@ function PromotionGift({ promotion, exchangeName }: { promotion: ExchangePromoti
 function ExchangeNameCell({ row }: { row: MicaExchange }) {
 	const outbound = row.ref_link || row.website
 	const promotion = selectActivePromotion(row)
+	// Native umami click tracking — the tracker auto-reports any element with these attributes.
+	const trackProps = {
+		'data-umami-event': 'mica-exchange-click',
+		'data-umami-event-exchange': row.exchange,
+		'data-umami-event-type': row.ref_link ? 'ref' : 'website'
+	}
 
 	return (
 		<span className="flex w-full min-w-0 items-center gap-2">
@@ -235,6 +252,8 @@ function ExchangeNameCell({ row }: { row: MicaExchange }) {
 						href={outbound}
 						target="_blank"
 						rel="noopener noreferrer"
+						{...trackProps}
+						data-umami-event-placement="name"
 						className="block truncate text-sm font-medium text-(--link-text) hover:underline"
 					>
 						{row.display_name}
@@ -244,12 +263,16 @@ function ExchangeNameCell({ row }: { row: MicaExchange }) {
 				)}
 			</span>
 			<span className="ml-auto flex shrink-0 items-center gap-1.5">
-				{promotion ? <PromotionGift promotion={promotion} exchangeName={row.display_name} /> : null}
+				{promotion ? (
+					<PromotionGift promotion={promotion} exchange={row.exchange} exchangeName={row.display_name} />
+				) : null}
 				{outbound ? (
 					<a
 						href={outbound}
 						target="_blank"
 						rel="noopener noreferrer"
+						{...trackProps}
+						data-umami-event-placement="trade"
 						className="inline-flex h-7 items-center gap-1 rounded-md bg-(--link-button) px-2.5 text-xs font-medium text-(--link-text) hover:bg-(--link-button-hover)"
 						aria-label={`Trade on ${row.display_name}`}
 					>
