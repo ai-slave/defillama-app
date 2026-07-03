@@ -1135,6 +1135,20 @@
       "icon": "trending-up"
     },
     {
+      "name": "Market Makers",
+      "route": "/market-makers",
+      "icon": "star",
+      "requireForgdPreview": true,
+      "searchKeywords": [
+        "market maker",
+        "leaderboard",
+        "forgd",
+        "depth",
+        "spread",
+        "volume"
+      ]
+    },
+    {
       "name": "Support",
       "route": "/support",
       "icon": "headset"

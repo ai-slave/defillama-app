@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
+import { hasForgdPreview } from '~/containers/MarketMakers/AccessGate'
 import { useGetLiteDashboards } from '~/containers/ProDashboard/hooks/useDashboardAPI'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { useStorageItem } from '~/contexts/localStorageStore'
@@ -17,6 +18,7 @@ type DefillamaPage = {
 	oldCategory?: string
 	oldName?: string
 	requireLlama?: boolean
+	requireForgdPreview?: boolean
 }
 
 type DefillamaPages = Record<string, DefillamaPage[]> & {
@@ -91,11 +93,12 @@ export function Nav({ metricFilters }: { metricFilters?: { name: string; key: st
 	const { isAuthenticated, user } = useAuthContext()
 	const shouldSkipLanding = isAuthenticated
 	const isLlamaUser = user?.flags?.is_llama === true
+	const hasForgd = hasForgdPreview(user)
 
 	const mainLinks = useMemo(() => {
-		const main = mainPages.filter((p) => !p.requireLlama || isLlamaUser)
+		const main = mainPages.filter((p) => (!p.requireLlama || isLlamaUser) && (!p.requireForgdPreview || hasForgd))
 		const premium = premiumPages
-			.filter((p) => !p.requireLlama || isLlamaUser)
+			.filter((p) => (!p.requireLlama || isLlamaUser) && (!p.requireForgdPreview || hasForgd))
 			.map((p) => {
 				const route = normalizeAiRoute(p.route, shouldSkipLanding)
 				return route !== p.route ? { ...p, route } : p
@@ -104,7 +107,7 @@ export function Nav({ metricFilters }: { metricFilters?: { name: string; key: st
 			{ category: 'Main', pages: main },
 			{ category: 'Premium', pages: premium }
 		]
-	}, [shouldSkipLanding, isLlamaUser])
+	}, [shouldSkipLanding, isLlamaUser, hasForgd])
 
 	const userDashboards = useMemo(
 		() =>
