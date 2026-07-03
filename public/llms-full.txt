@@ -235,6 +235,7 @@ Common usage examples:
 - [Stablecoins](https://defillama.com/stablecoins)
 - [RWA](https://defillama.com/rwa)
 - [MiCA](https://defillama.com/mica)
+- [Market Makers](https://defillama.com/market-makers)
 - [Support](https://defillama.com/support)
 - [DefiLlama Research](https://defillama.com/research)
 

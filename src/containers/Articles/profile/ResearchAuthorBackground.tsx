@@ -1,28 +1,15 @@
 /**
  * Decorative backgrounds for /research/authors/defillama-research.
  *
- * Uses the original Figma gradient exports, but sized with `object-cover`
- * against containers that track the actual layout instead of fixed artboard
- * math — so the art scales cleanly at every viewport without stretching or
- * cutting off. The webps are semi-transparent, so cropping a smooth gradient
- * is invisible and the fade always blends into the page background.
+ * Pure CSS gradients (colors sampled from the original Figma webp exports),
+ * sized against containers that track the actual layout — so the art scales
+ * cleanly at every viewport without stretching or cutting off, and light/dark
+ * variants are just CSS variables instead of separate raster assets.
  */
 
-const AUTHOR_BG = '/assets/research/author-bg'
+import { ResearchHeaderWash } from '~/containers/Articles/ResearchHeaderWash'
 
 const BOTTOM_FADE_MASK = 'linear-gradient(to bottom, #000 0%, #000 80%, transparent 100%)'
-
-function HeaderWash({ src, className }: { src: string; className: string }) {
-	return (
-		<div
-			aria-hidden
-			className={`pointer-events-none absolute inset-x-0 top-0 h-[calc(100%+min(22vw,240px))] overflow-hidden select-none ${className}`}
-			style={{ maskImage: BOTTOM_FADE_MASK, WebkitMaskImage: BOTTOM_FADE_MASK }}
-		>
-			<img src={src} alt="" aria-hidden className="size-full object-cover object-top" />
-		</div>
-	)
-}
 
 /**
  * Blue wash behind the hero. Render as the first child of a `relative`
@@ -30,20 +17,19 @@ function HeaderWash({ src, className }: { src: string; className: string }) {
  */
 export function ResearchAuthorHeaderGradient() {
 	return (
-		<>
-			<HeaderWash src={`${AUTHOR_BG}/header-bg-light-desktop.webp`} className="dark:hidden" />
-			<HeaderWash src={`${AUTHOR_BG}/header-bg-dark-desktop.webp`} className="hidden dark:block" />
-		</>
+		<div
+			aria-hidden
+			className="pointer-events-none absolute inset-x-0 top-0 h-[calc(100%+min(22vw,240px))] overflow-hidden select-none"
+			style={{ maskImage: BOTTOM_FADE_MASK, WebkitMaskImage: BOTTOM_FADE_MASK }}
+		>
+			<ResearchHeaderWash />
+		</div>
 	)
 }
 
-function Glow({ lightSrc, darkSrc, className }: { lightSrc: string; darkSrc: string; className: string }) {
-	return (
-		<>
-			<img src={lightSrc} alt="" aria-hidden className={`absolute select-none dark:hidden ${className}`} />
-			<img src={darkSrc} alt="" aria-hidden className={`absolute hidden select-none dark:block ${className}`} />
-		</>
-	)
+/** `className` must set `--glow` (with a `dark:` override) for the gradient color. */
+function Glow({ gradient, className }: { gradient: string; className: string }) {
+	return <div aria-hidden className={`absolute ${className}`} style={{ backgroundImage: gradient }} />
 }
 
 /** Soft blue glows along the page edges, anchored responsively instead of to a fixed artboard. */
@@ -51,27 +37,25 @@ export function ResearchAuthorBackground() {
 	return (
 		<div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden select-none">
 			<Glow
-				lightSrc={`${AUTHOR_BG}/blue-blob-top-left-light.webp`}
-				darkSrc={`${AUTHOR_BG}/blue-blob-top-left-dark.webp`}
-				className="top-0 left-0 w-[min(34vw,508px)]"
+				gradient="radial-gradient(ellipse 55% 80% at 0% 22%, var(--glow) 0%, transparent 100%)"
+				className="top-0 left-0 aspect-[7/8] w-[min(34vw,508px)] [--glow:rgba(33,122,250,0.55)] dark:[--glow:rgba(0,47,111,0.9)]"
 			/>
 			<Glow
-				lightSrc={`${AUTHOR_BG}/blue-blob-light.webp`}
-				darkSrc={`${AUTHOR_BG}/blue-blob-dark.webp`}
-				className="top-[min(9vw,137px)] right-0 w-[min(30vw,451px)]"
+				gradient="radial-gradient(ellipse 55% 45% at 100% 50%, var(--glow) 0%, transparent 100%)"
+				className="top-[min(9vw,137px)] right-0 aspect-[4/7] w-[min(30vw,451px)] [--glow:rgba(33,122,250,0.42)] dark:[--glow:rgba(1,60,141,0.81)]"
 			/>
 			<Glow
-				lightSrc={`${AUTHOR_BG}/blue-blob-bottom-left-light.webp`}
-				darkSrc={`${AUTHOR_BG}/blue-blob-bottom-left-dark.webp`}
-				className="top-[min(56vw,849px)] left-0 w-[min(34vw,508px)]"
+				gradient="radial-gradient(ellipse 60% 55% at 0% 50%, var(--glow) 0%, transparent 100%)"
+				className="top-[min(56vw,849px)] left-0 aspect-[2/3] w-[min(34vw,508px)] [--glow:rgba(32,121,248,0.67)] dark:[--glow:rgba(1,59,140,0.67)]"
 			/>
-			<div aria-hidden className="absolute inset-x-0 top-[55%] bottom-0 opacity-75 sm:hidden">
-				<Glow
-					lightSrc={`${AUTHOR_BG}/pill-bg-mobile-light.webp`}
-					darkSrc={`${AUTHOR_BG}/pill-bg-mobile-dark.webp`}
-					className="inset-0 size-full object-fill"
-				/>
-			</div>
+			<div
+				aria-hidden
+				className="absolute inset-x-0 top-[55%] bottom-0 opacity-75 sm:hidden"
+				style={{
+					backgroundImage:
+						'radial-gradient(ellipse 105% 80% at 0% 75%, rgba(74,140,252,0.75) 0%, rgba(103,175,253,0.55) 35%, rgba(125,201,253,0.35) 60%, rgba(133,207,252,0) 100%)'
+				}}
+			/>
 		</div>
 	)
 }
