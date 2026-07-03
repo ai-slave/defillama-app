@@ -894,6 +894,12 @@ export async function getRWAAssetData({ assetId }: { assetId: string }): Promise
 						breakdown: getSortedBreakdownEntries(aggregatedMetrics.breakdowns.defiActiveTvlByProtocol)
 					}
 				: null,
+			defiActiveTvlByChain: defiActiveTvlBreakdown
+				? {
+						total: aggregatedMetrics.totals.defiActiveTvl,
+						breakdown: getSortedBreakdownEntries(aggregatedMetrics.breakdowns.defiActiveTvlByChain)
+					}
+				: null,
 			chartDataset,
 			...yieldMatch
 		}

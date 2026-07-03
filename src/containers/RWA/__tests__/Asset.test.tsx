@@ -52,4 +52,50 @@ describe('RWAAssetPage', () => {
 		expect(html).not.toContain('Parent Platform')
 		expect(html).not.toContain('/rwa/platform/')
 	})
+
+	it('renders per-chain metric values in chain cards', () => {
+		const html = renderToStaticMarkup(
+			<RWAAssetPage
+				asset={{
+					...baseAsset,
+					chain: ['Ethereum', 'Solana'],
+					primaryChain: 'Ethereum',
+					contracts: {
+						Ethereum: ['0x1234567890abcdef'],
+						Solana: ['GyWg1234566phr']
+					},
+					onChainMcap: {
+						total: 150,
+						breakdown: [
+							['Ethereum', 100],
+							['Solana', 50]
+						]
+					},
+					activeMcap: {
+						total: 80,
+						breakdown: [['Ethereum', 80]]
+					},
+					defiActiveTvl: {
+						total: 25,
+						breakdown: [['Aave', 25]]
+					},
+					defiActiveTvlByChain: {
+						total: 25,
+						breakdown: [['Ethereum', 25]]
+					}
+				}}
+			/>
+		)
+
+		expect(html).toContain('Onchain Marketcap')
+		expect(html).toContain('Active Marketcap')
+		expect(html).toContain('DeFi Active TVL')
+		expect(html).toContain('$100')
+		expect(html).toContain('$80')
+		expect(html).toContain('$25')
+		expect(html).toContain('$50')
+		expect(html).toMatch(/Solana[\s\S]*Onchain Marketcap[\s\S]*\$50/)
+		expect(html).toMatch(/Solana[\s\S]*Active Marketcap<\/dt><dd class="[^"]*">-<\/dd>/)
+		expect(html).toMatch(/Solana[\s\S]*DeFi Active TVL<\/dt><dd class="[^"]*">-<\/dd>/)
+	})
 })

@@ -210,23 +210,47 @@ const ContractItem = ({ address, explorerUrl }: { address: string; explorerUrl?:
 	)
 }
 
+type ChainMetricValues = {
+	onChainMcap: number | null
+	activeMcap: number | null
+	defiActiveTvl: number | null
+}
+
+function getChainMetricValue(breakdown: Array<[string, number]> | undefined, chain: string): number | null {
+	for (const [breakdownChain, value] of breakdown ?? []) {
+		if (rwaSlug(breakdownChain) === rwaSlug(chain)) return value
+	}
+	return null
+}
+
+const ChainMetricItem = ({ label, value }: { label: string; value: number | null }) => (
+	<div className="flex items-center justify-between gap-2 text-xs">
+		<dt className="text-(--text-disabled)">{label}</dt>
+		<dd className="text-right font-jetbrains font-medium whitespace-nowrap">
+			{value == null ? '-' : formattedNum(value, true)}
+		</dd>
+	</div>
+)
+
 const ChainBadge = ({
 	chain,
 	isPrimary = false,
 	showPrimaryStyle = true,
 	contracts,
-	contractUrls
+	contractUrls,
+	metrics
 }: {
 	chain: string
 	isPrimary?: boolean
 	showPrimaryStyle?: boolean
 	contracts?: string[]
 	contractUrls?: Record<string, string>
+	metrics: ChainMetricValues
 }) => {
 	return (
-		<div className="flex items-center gap-1.5 rounded-md border border-(--cards-border) p-2">
-			<img src={chainIconUrl(chain)} alt={chain} className="size-5 rounded-full" loading="lazy" />
-			<div className="flex flex-col">
+		<div className="flex items-start gap-1.5 rounded-md border border-(--cards-border) p-2">
+			<img src={chainIconUrl(chain)} alt={chain} className="mt-0.5 size-5 rounded-full" loading="lazy" />
+			<div className="flex min-w-0 flex-1 flex-col">
 				<div className="flex items-center gap-1.5">
 					<p className="text-sm font-medium">{chain}</p>
 					{isPrimary && showPrimaryStyle ? (
@@ -242,6 +266,11 @@ const ChainBadge = ({
 						))}
 					</>
 				) : null}
+				<dl className="mt-1.5 grid gap-1 border-t border-(--cards-border) pt-1.5">
+					<ChainMetricItem label={definitions.onChainMcap.label} value={metrics.onChainMcap} />
+					<ChainMetricItem label={definitions.activeMcap.label} value={metrics.activeMcap} />
+					<ChainMetricItem label={definitions.defiActiveTvl.label} value={metrics.defiActiveTvl} />
+				</dl>
 			</div>
 		</div>
 	)
@@ -906,6 +935,11 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 								isPrimary={chain === asset.primaryChain}
 								contracts={asset.contracts?.[chain]}
 								contractUrls={asset.contractUrls?.[chain]}
+								metrics={{
+									onChainMcap: getChainMetricValue(onChainMcap?.breakdown, chain),
+									activeMcap: getChainMetricValue(activeMcap?.breakdown, chain),
+									defiActiveTvl: getChainMetricValue(asset.defiActiveTvlByChain?.breakdown, chain)
+								}}
 							/>
 						))}
 					</div>
