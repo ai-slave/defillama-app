@@ -1,8 +1,8 @@
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { getChainsByAdapterAllChains, getChainsByAdapterChartData } from '~/containers/AdapterMetrics/queries'
 import { PAGE_DATA_RESULT_TTL_MS } from '~/server/api/common'
-import { badRequest, ok, upstreamError } from '~/server/api/respond'
-import { cachedResult } from '~/server/api/resultCache'
+import { badRequest, okSerializedJson, upstreamError } from '~/server/api/respond'
+import { cachedJsonResult } from '~/server/api/resultCache'
 import { defineApiRoute } from '~/server/api/types'
 import { PAGE_DATA_CACHE_CONTROL } from '~/server/pageData/cache'
 import { getFirstQueryParam } from '~/server/pageData/query'
@@ -25,7 +25,7 @@ export const dimensionAdapterChainsChart = defineApiRoute({
 		}
 
 		try {
-			const chartData = await cachedResult(
+			const payload = await cachedJsonResult(
 				'page-data-dimension-adapters-chains-chart',
 				JSON.stringify([adapterType, dataType]),
 				{ ttlMs: PAGE_DATA_RESULT_TTL_MS, ttlJitter: 0.2 },
@@ -45,7 +45,7 @@ export const dimensionAdapterChainsChart = defineApiRoute({
 					})
 				}
 			)
-			return ok({ chartData })
+			return okSerializedJson(payload)
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch dimension adapter chart data')

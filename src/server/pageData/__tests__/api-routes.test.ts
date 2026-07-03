@@ -50,6 +50,10 @@ import categoriesChartsHandler from '~/pages/api/public/page-data/categories/cha
 import chainsChartsHandler from '~/pages/api/public/page-data/chains/charts'
 import dimensionAdapterChainsChartHandler from '~/pages/api/public/page-data/dimension-adapters/chains-chart'
 
+function expectSerializedJson(res: ReturnType<typeof createMockNextApiResponse>, expected: unknown) {
+	expect(res.send).toHaveBeenCalledWith(JSON.stringify(expected))
+}
+
 describe('page data chart api routes', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
@@ -74,7 +78,7 @@ describe('page data chart api routes', () => {
 		})
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', expect.stringContaining('public, s-maxage='))
 		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith({
+		expectSerializedJson(res, {
 			chartSource: [{ timestamp: 1, Dexes: 100 }],
 			extraTvlCharts: {}
 		})
@@ -108,8 +112,8 @@ describe('page data chart api routes', () => {
 		})
 		expect(commaRes.status).toHaveBeenCalledWith(200)
 		expect(repeatedRes.status).toHaveBeenCalledWith(200)
-		expect(commaRes.json).toHaveBeenCalledWith(payload)
-		expect(repeatedRes.json).toHaveBeenCalledWith(payload)
+		expectSerializedJson(commaRes, payload)
+		expectSerializedJson(repeatedRes, payload)
 	})
 
 	it('returns cacheable chains chart data', async () => {
@@ -133,7 +137,7 @@ describe('page data chart api routes', () => {
 		})
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', expect.stringContaining('public, s-maxage='))
 		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith({
+		expectSerializedJson(res, {
 			tvlChartsByChain: { tvl: { Ethereum: { 1: 100 } } },
 			totalTvlByDate: { tvl: { 1: 100 } }
 		})
@@ -169,11 +173,11 @@ describe('page data chart api routes', () => {
 		})
 		expect(commaRes.status).toHaveBeenCalledWith(200)
 		expect(repeatedRes.status).toHaveBeenCalledWith(200)
-		expect(commaRes.json).toHaveBeenCalledWith({
+		expectSerializedJson(commaRes, {
 			tvlChartsByChain: { tvl: { Ethereum: { 1: 100 } } },
 			totalTvlByDate: { tvl: { 1: 100 } }
 		})
-		expect(repeatedRes.json).toHaveBeenCalledWith({
+		expectSerializedJson(repeatedRes, {
 			tvlChartsByChain: { tvl: { Ethereum: { 1: 100 } } },
 			totalTvlByDate: { tvl: { 1: 100 } }
 		})
@@ -220,11 +224,9 @@ describe('page data chart api routes', () => {
 		})
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', expect.stringContaining('public, s-maxage='))
 		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith({
-			chartData: {
-				dimensions: ['timestamp', 'Ethereum'],
-				source: [{ timestamp: 1, Ethereum: 100 }]
-			}
+		expectSerializedJson(res, {
+			dimensions: ['timestamp', 'Ethereum'],
+			source: [{ timestamp: 1, Ethereum: 100 }]
 		})
 	})
 

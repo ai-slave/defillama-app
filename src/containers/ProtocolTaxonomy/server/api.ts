@@ -1,7 +1,7 @@
 import { getProtocolsCategoriesChartData } from '~/containers/ProtocolTaxonomy/queries'
 import { PAGE_DATA_RESULT_TTL_MS } from '~/server/api/common'
-import { ok, upstreamError } from '~/server/api/respond'
-import { cachedResult } from '~/server/api/resultCache'
+import { okSerializedJson, upstreamError } from '~/server/api/respond'
+import { cachedJsonResult } from '~/server/api/resultCache'
 import { defineApiRoute } from '~/server/api/types'
 import { PAGE_DATA_CACHE_CONTROL } from '~/server/pageData/cache'
 import { getCommaSeparatedQueryParam } from '~/server/pageData/query'
@@ -13,7 +13,7 @@ export const categoriesCharts = defineApiRoute({
 	handle: async (req) => {
 		try {
 			const extraTvlTypes = getCommaSeparatedQueryParam(req.query.extraTvlTypes)
-			const chartData = await cachedResult(
+			const chartData = await cachedJsonResult(
 				'page-data-categories-charts',
 				JSON.stringify(extraTvlTypes),
 				{ ttlMs: PAGE_DATA_RESULT_TTL_MS, ttlJitter: 0.2 },
@@ -22,7 +22,7 @@ export const categoriesCharts = defineApiRoute({
 						extraTvlTypes
 					})
 			)
-			return ok(chartData)
+			return okSerializedJson(chartData)
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch categories chart data')

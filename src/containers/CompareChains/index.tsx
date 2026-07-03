@@ -71,14 +71,12 @@ type CompareQueryResult = {
 }
 
 const getChainData = async (chain: string): Promise<ChainDataResult> => {
-	const { chain: chainData } = (await fetchJson(`/api/dynamic/cache/chain/${chain}`)) as {
-		chain: {
-			chainOverviewData: IChainOverviewData
-			dexVolumeChart: IAdapterChainOverview['totalDataChart']
-			chainFeesChart: IAdapterProtocolOverview['totalDataChart']
-			chainRevenueChart: IAdapterProtocolOverview['totalDataChart']
-		}
-	}
+	const chainData = await fetchJson<{
+		chainOverviewData: IChainOverviewData
+		dexVolumeChart: IAdapterChainOverview['totalDataChart']
+		chainFeesChart: IAdapterProtocolOverview['totalDataChart']
+		chainRevenueChart: IAdapterProtocolOverview['totalDataChart']
+	}>(`/api/dynamic/cache/chain/${chain}?zz=17`)
 
 	return {
 		chainFeesChart: chainData.chainFeesChart ?? null,

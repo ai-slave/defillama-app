@@ -237,18 +237,36 @@ describe('route metadata guards', () => {
 
 		expect(getObjectCacheMock).toHaveBeenCalledWith('object-chain-ethereum')
 		expect(fetchChainMock).toHaveBeenCalledWith(expect.objectContaining({ chain: 'Ethereum' }))
-		expect(setObjectCacheMock).toHaveBeenCalledWith('object-chain-ethereum', expect.anything())
+		expect(setObjectCacheMock).toHaveBeenCalledWith('object-chain-ethereum', { chainOverviewData: null })
+		expect(res.send).toHaveBeenCalledWith(JSON.stringify({ chainOverviewData: null }))
 	})
 
 	it('chain cache API returns cached canonical responses without fetching', async () => {
 		const res = createMockNextApiResponse()
-		const cachedData = { chain: { chainOverviewData: { name: 'Ethereum' } } }
+		metadataCache.chainMetadata.polygon = { name: 'Polygon', id: 'polygon' }
+		metadataCache.chainRouteKeyBySlug.polygon = 'polygon'
+		const cachedData = { chainOverviewData: { name: 'Polygon' } }
 		getObjectCacheMock.mockResolvedValueOnce(cachedData)
 
-		await chainCacheHandler({ query: { chain: 'ethereum' } } as unknown as NextApiRequest, res)
+		await chainCacheHandler({ query: { chain: 'polygon' } } as unknown as NextApiRequest, res)
 
-		expect(getObjectCacheMock).toHaveBeenCalledWith('object-chain-ethereum')
-		expect(res.json).toHaveBeenCalledWith(cachedData)
+		expect(getObjectCacheMock).toHaveBeenCalledWith('object-chain-polygon')
+		expect(res.send).toHaveBeenCalledWith(JSON.stringify(cachedData))
+		expect(fetchChainMock).not.toHaveBeenCalled()
+		expect(setObjectCacheMock).not.toHaveBeenCalled()
+	})
+
+	it('chain cache API unwraps legacy object-cache entries', async () => {
+		const res = createMockNextApiResponse()
+		metadataCache.chainMetadata.arbitrum = { name: 'Arbitrum', id: 'arbitrum' }
+		metadataCache.chainRouteKeyBySlug.arbitrum = 'arbitrum'
+		const chainData = { chainOverviewData: { name: 'Arbitrum' } }
+		getObjectCacheMock.mockResolvedValueOnce({ chain: chainData })
+
+		await chainCacheHandler({ query: { chain: 'arbitrum' } } as unknown as NextApiRequest, res)
+
+		expect(getObjectCacheMock).toHaveBeenCalledWith('object-chain-arbitrum')
+		expect(res.send).toHaveBeenCalledWith(JSON.stringify(chainData))
 		expect(fetchChainMock).not.toHaveBeenCalled()
 		expect(setObjectCacheMock).not.toHaveBeenCalled()
 	})

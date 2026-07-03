@@ -1,7 +1,7 @@
 import { getChainsByCategoryChartData } from '~/containers/ChainsByCategory/queries'
 import { PAGE_DATA_RESULT_TTL_MS } from '~/server/api/common'
-import { ok, upstreamError } from '~/server/api/respond'
-import { cachedResult } from '~/server/api/resultCache'
+import { okSerializedJson, upstreamError } from '~/server/api/respond'
+import { cachedJsonResult } from '~/server/api/resultCache'
 import { defineApiRoute } from '~/server/api/types'
 import { PAGE_DATA_CACHE_CONTROL } from '~/server/pageData/cache'
 import { getCommaSeparatedQueryParam, getFirstQueryParam } from '~/server/pageData/query'
@@ -16,7 +16,7 @@ export const chainsCharts = defineApiRoute({
 			const sampledChart = getFirstQueryParam(req.query.sampledChart) === 'true'
 			const extraTvlTypes = getCommaSeparatedQueryParam(req.query.extraTvlTypes)
 			const cacheKey = JSON.stringify([category, sampledChart, extraTvlTypes])
-			const body = await cachedResult(
+			const body = await cachedJsonResult(
 				'page-data-chains-charts',
 				cacheKey,
 				{ ttlMs: PAGE_DATA_RESULT_TTL_MS, ttlJitter: 0.2 },
@@ -32,7 +32,7 @@ export const chainsCharts = defineApiRoute({
 					}
 				}
 			)
-			return ok(body)
+			return okSerializedJson(body)
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch chains chart data')

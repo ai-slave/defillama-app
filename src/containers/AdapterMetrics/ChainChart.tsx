@@ -1125,7 +1125,7 @@ export const ChainsByAdapterChart = ({
 		retry: 0,
 		enabled: shouldFetchBaseChartData
 	})
-	const currentChartData = baseChartData?.chartData ?? chartData
+	const currentChartData = baseChartData ?? chartData
 
 	const { data: bribesChartData, error: bribesChartError } = useQuery({
 		queryKey: ['adapter-chain-breakdown-chart', adapterType, chartName, 'dailyBribesRevenue'],

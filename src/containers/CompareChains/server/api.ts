@@ -1,18 +1,29 @@
 import { fetchChain } from '~/containers/CompareChains/chainFetcher'
 import { queryString } from '~/server/api/params'
-import { badRequest, notFound, ok } from '~/server/api/respond'
-import { cachedResult } from '~/server/api/resultCache'
+import { badRequest, notFound, okSerializedJson } from '~/server/api/respond'
+import { cachedJsonResult } from '~/server/api/resultCache'
 import { defineApiRoute } from '~/server/api/types'
 import { getObjectCache, setObjectCache } from '~/utils/cache-client'
 
 // fetchChain fans out to many upstream calls and averages multiple seconds,
 // so on top of the shared object cache the assembled response is memoized in
-// process (keyed by the raw chain param) and concurrent identical requests
+// process (keyed by canonical chain slug) and concurrent identical requests
 // share one computation.
 const CHAIN_RESULT_TTL_MS = 5 * 60 * 1000
+const CHAIN_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=600'
+
+type ChainCachePayload = Awaited<ReturnType<typeof fetchChain>>
+
+function unwrapChainCachePayload(value: unknown): ChainCachePayload {
+	if (value && typeof value === 'object' && 'chain' in value) {
+		return (value as { chain: ChainCachePayload }).chain
+	}
+	return value as ChainCachePayload
+}
 
 export const chainCache = defineApiRoute({
 	route: '/api/dynamic/cache/chain/[chain]',
+	cacheControl: CHAIN_CACHE_CONTROL,
 	handle: async (req) => {
 		const chainParam = queryString(req.query, 'chain')
 		if (typeof chainParam !== 'string' || chainParam.length === 0) {
@@ -28,16 +39,16 @@ export const chainCache = defineApiRoute({
 			return notFound('Chain not found')
 		}
 
-		const response = await cachedResult(
+		const response = await cachedJsonResult(
 			'chain-cache',
-			chainParam,
+			chainRoute.canonicalSlug,
 			{ ttlMs: CHAIN_RESULT_TTL_MS, ttlJitter: 0.2 },
 			async () => {
 				const cacheKey = `object-chain-${chainRoute.canonicalSlug}`
 
 				const cachedData = await getObjectCache(cacheKey)
 				if (cachedData) {
-					return cachedData
+					return unwrapChainCachePayload(cachedData)
 				}
 
 				const chainData = await fetchChain({
@@ -46,12 +57,11 @@ export const chainCache = defineApiRoute({
 					categoriesAndTagsMetadata: metadataCache.categoriesAndTags,
 					protocolMetadata: metadataCache.protocolMetadata
 				})
-				const freshData = { chain: chainData }
 
-				await setObjectCache(cacheKey, freshData)
-				return freshData
+				await setObjectCache(cacheKey, chainData)
+				return chainData
 			}
 		)
-		return ok(response)
+		return okSerializedJson(response)
 	}
 })
