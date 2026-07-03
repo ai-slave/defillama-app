@@ -153,7 +153,7 @@ function ArticlesLandingInner({ initialData }: { initialData: ArticlesPageProps 
 	}
 
 	return (
-		<div className="bg-top-center bg-[url(/assets/research/dotted-bg.webp)] bg-no-repeat pb-5 lg:bg-contain">
+		<div className="pb-5">
 			<ResearchHero
 				title="Bespoke Digital Asset Research and Market Intelligence"
 				subtitle="Independent and trusted in-depth analysis of digital asset markets for institutional strategy and decision-making."

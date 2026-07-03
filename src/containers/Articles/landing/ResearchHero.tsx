@@ -12,9 +12,20 @@ interface ResearchHeroProps {
 
 export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, reports }) => {
 	return (
-		<div className="pt-[32px] text-white lg:pt-[45px]">
+		<div className="text-white">
 			<div>
-				<div className="flex flex-col items-center">
+				<div className="relative isolate flex flex-col items-center pt-[32px] lg:pt-[45px]">
+					<div
+						aria-hidden
+						className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[calc(100%+min(18vw,200px))] overflow-hidden select-none"
+					>
+						<img
+							src="/assets/research/dotted-bg.webp"
+							alt=""
+							aria-hidden
+							className="size-full object-cover object-top"
+						/>
+					</div>
 					<img src="/assets/research_logo_dark.webp" alt="DefiLlama" width={229} height={72} />
 					<h1 className="mt-[35px] mb-[12px] text-center text-[22px] leading-[130%] font-semibold lg:mb-[16px] lg:text-[32px]">
 						{title}

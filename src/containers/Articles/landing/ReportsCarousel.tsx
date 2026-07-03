@@ -485,7 +485,9 @@ export const ReportsCarousel: React.FC<ReportsCarouselProps> = (props) => {
 					ref={containerRef}
 					className={clsx(
 						'relative mx-auto',
-						isMobile ? 'flex h-[354px] w-full justify-center' : 'h-[309px] w-full min-w-[300px] overflow-visible'
+						isMobile
+							? 'flex h-[354px] w-full justify-center overflow-x-clip'
+							: 'h-[309px] w-full min-w-[300px] overflow-visible'
 					)}
 					onMouseEnter={() => setIsHovered(true)}
 					onMouseLeave={() => setIsHovered(false)}
