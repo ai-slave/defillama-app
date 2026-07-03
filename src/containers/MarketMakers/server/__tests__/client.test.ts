@@ -31,8 +31,14 @@ describe('forgdFetch', () => {
 		)
 	})
 
-	it('throws when API_KEY_FORGD is missing', async () => {
+	it('omits the Authorization header when API_KEY_FORGD is missing', async () => {
 		vi.stubEnv('API_KEY_FORGD', '')
-		await expect(forgdFetch('/whoami')).rejects.toThrow('API_KEY_FORGD')
+		fetchJson.mockResolvedValue({ ok: true })
+		const out = await forgdFetch('/whoami')
+		expect(out).toEqual({ ok: true })
+		expect(fetchJson).toHaveBeenCalledWith(
+			'https://dev.quant.api.forgd.com/api/v1/public/whoami',
+			expect.objectContaining({ headers: undefined })
+		)
 	})
 })

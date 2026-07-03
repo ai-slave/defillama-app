@@ -14,10 +14,10 @@ export function buildForgdUrl(path: string, query?: ForgdQuery): string {
 }
 
 export async function forgdFetch<T = unknown>(path: string, query?: ForgdQuery): Promise<T> {
-	const key = process.env.API_KEY_FORGD
-	if (!key) throw new Error('API_KEY_FORGD is not configured')
+	const key = process.env.API_KEY_FORGD?.trim()
+	const headers = key ? { Authorization: `Bearer ${key}` } : undefined
 	return fetchJson<T>(buildForgdUrl(path, query), {
 		timeout: 30_000,
-		headers: { Authorization: `Bearer ${key}` }
+		headers
 	})
 }
