@@ -55,6 +55,16 @@ export function isExploitedPool(project: string, symbol: string): boolean {
 	return exploitedProjects.includes(project) || exploitedTokens.some((t) => symbol?.toUpperCase().includes(t))
 }
 
+// Pools with a known de-pegged underlying stablecoin, surfaced with a warning on the APY column.
+// Matched on project display name + pool symbol (same approach as the specific-pool checks in Pools.tsx).
+export const depeggedPools: Array<{ project: string; symbol: string }> = [
+	{ project: 'Apyx Protocol', symbol: 'APXUSD' }
+]
+
+export function isDepeggedPool(project: string, symbol: string): boolean {
+	return depeggedPools.some((p) => p.project === project && symbol?.toUpperCase().includes(p.symbol.toUpperCase()))
+}
+
 export const disclaimer =
 	"DefiLlama doesn't audit nor endorse any of the protocols listed, we just focus on providing accurate data. Ape at your own risk."
 

@@ -19,7 +19,7 @@ import { QuestionHelper } from '~/components/QuestionHelper'
 import { PaginatedTable, usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
 import { Tooltip } from '~/components/Tooltip'
 import { useAuthContext } from '~/containers/Subscription/auth'
-import { earlyExit, isExploitedPool, lockupsRewards } from '~/containers/Yields/constants'
+import { earlyExit, isDepeggedPool, isExploitedPool, lockupsRewards } from '~/containers/Yields/constants'
 import { useIsClient } from '~/hooks/useIsClient'
 import { formattedNum } from '~/utils'
 import { decodePoolsColumnVisibilityQuery } from '../queryState'
@@ -32,14 +32,9 @@ import { useYieldsUpgradePrompt } from './useYieldsUpgradePrompt'
 
 const uniswapV3 = 'For Uniswap V3 we assume a price range of +/- 30% (+/- 0.1% for stable pools) around current price.'
 
-// A pool's underlying stablecoin is flagged as de-pegged once its price drifts >=5% from $1.
-// 5-10% drift shows an amber warning; >=10% escalates to red. Shared by the Peg column and the APY warning icon.
-const DEPEG_AMBER_PCT = 5
+// The APY-column warning is pinned to specific pools with a known de-pegged underlying (see isDepeggedPool).
+// When live peg data is available, a drift of >=10% from $1 escalates the icon from amber to red.
 const DEPEG_RED_PCT = 10
-
-function isDepegged(deviation: number | null | undefined): deviation is number {
-	return deviation != null && Math.abs(deviation) >= DEPEG_AMBER_PCT
-}
 
 function PegHealthIndicator({
 	deviation,
@@ -53,9 +48,9 @@ function PegHealthIndicator({
 	const dotClass = deviation > 0 ? 'bg-(--success)' : deviation < 0 ? 'bg-(--error)' : 'bg-(--text-disabled)'
 	const sign = deviation > 0 ? '+' : ''
 	const priceStr = price != null ? `$${price.toFixed(4)}` : null
-	const depeg = isDepegged(deviation)
+	const depeg = Math.abs(deviation) >= 2
 	const deviationStr = `${sign}${deviation.toFixed(4)}%`
-	const depegWarning = depeg ? 'De-pegged by 5%+\n' : ''
+	const depegWarning = depeg ? 'De-pegged by 2%+\n' : ''
 	const tooltipText = priceStr ? `${depegWarning}${priceStr} (${deviationStr})` : `${depegWarning}${deviationStr}`
 	return (
 		<Tooltip content={tooltipText} className="justify-end">
@@ -115,20 +110,23 @@ interface PoolsTableConfigContext {
 }
 
 function DepegWarningIcon({
+	project,
+	symbol,
 	deviation,
 	price
 }: {
+	project: string
+	symbol: string
 	deviation: number | null | undefined
 	price: number | null | undefined
 }) {
-	if (!isDepegged(deviation)) return null
-	const severe = Math.abs(deviation) >= DEPEG_RED_PCT
+	if (!isDepeggedPool(project, symbol)) return null
+	const severe = deviation != null && Math.abs(deviation) >= DEPEG_RED_PCT
 	const colorClass = severe ? 'text-red-500 dark:text-red-400' : 'text-amber-500 dark:text-amber-400'
-	const sign = deviation > 0 ? '+' : ''
+	const sign = deviation != null && deviation > 0 ? '+' : ''
 	const priceStr = price != null ? `, currently $${price.toFixed(4)}` : ''
-	const message = `This pool's underlying stablecoin is de-pegged${priceStr} (${sign}${deviation.toFixed(
-		2
-	)}% from its $1 peg). The advertised APY may not reflect realizable returns. Proceed with caution.`
+	const deviationStr = deviation != null ? ` (${sign}${deviation.toFixed(2)}% from its $1 peg)` : ''
+	const message = `This pool's underlying stablecoin is de-pegged${priceStr}${deviationStr}. The advertised APY may not reflect realizable returns. Proceed with caution.`
 	return (
 		<Tooltip content={message}>
 			<Icon name="alert-triangle" height={14} width={14} className={`shrink-0 ${colorClass}`} />
@@ -247,7 +245,12 @@ function createPoolsColumns({ hasPremiumAccess, isClient, serverMode, onRequestU
 								}
 							/>
 						) : null}
-						<DepegWarningIcon deviation={info.row.original.pegDeviation} price={info.row.original.pegPrice} />
+						<DepegWarningIcon
+							project={info.row.original.project}
+							symbol={info.row.original.pool}
+							deviation={info.row.original.pegDeviation}
+							price={info.row.original.pegPrice}
+						/>
 						<PercentChange percent={info.getValue()} noSign fontWeight={700} />
 					</span>
 				)
