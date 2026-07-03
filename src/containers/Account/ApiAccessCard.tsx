@@ -48,6 +48,31 @@ export function ApiAccessCard({
 		}
 	}
 
+	if (!apiKey) {
+		return (
+			<div className="flex flex-col gap-4 rounded-2xl border border-(--sub-border-slate-100) bg-white p-4 dark:border-(--sub-border-strong) dark:bg-(--sub-surface-dark)">
+				<div className="flex items-center gap-2">
+					<Icon name="cli" height={28} width={28} className="text-(--sub-ink-primary) dark:text-white" />
+					<span className="text-base leading-5 font-medium text-(--sub-ink-primary) dark:text-white">API Access</span>
+				</div>
+
+				<div className="flex flex-col items-center gap-4 rounded-lg bg-(--sub-surface-panel) px-4 py-8 text-center dark:bg-(--sub-ink-primary)">
+					<p className="max-w-sm text-sm text-(--sub-text-muted)">
+						You don't have an API key yet. Generate one to start making requests to the DefiLlama API.
+					</p>
+					<button
+						onClick={onRegenerateKey}
+						disabled={isRegenerateLoading}
+						className="flex h-11 items-center gap-2 rounded-lg bg-(--sub-brand-primary) px-6 text-sm font-medium text-white disabled:opacity-50"
+					>
+						<Icon name="key" height={16} width={16} />
+						{isRegenerateLoading ? 'Generating...' : 'Generate API Key'}
+					</button>
+				</div>
+			</div>
+		)
+	}
+
 	return (
 		<div className="flex flex-col gap-4 rounded-2xl border border-(--sub-border-slate-100) bg-white p-4 dark:border-(--sub-border-strong) dark:bg-(--sub-surface-dark)">
 			{/* Header */}
