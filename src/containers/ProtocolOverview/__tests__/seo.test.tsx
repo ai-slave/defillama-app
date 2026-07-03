@@ -44,6 +44,8 @@ const metrics: IProtocolPageMetrics = {
 	newUsers: false,
 	txCount: false,
 	gasUsed: false,
+	liquidationVolume: false,
+	collateralLiquidated: false,
 	borrowed: false,
 	tokenRights: false
 }

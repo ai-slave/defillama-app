@@ -8,7 +8,7 @@ vi.mock('~/utils/async', () => ({
 	fetchJson: fetchJsonMock
 }))
 
-import { fetchAdapterChainChartData, fetchAdapterChainMetrics } from '../api'
+import { fetchAdapterChainChartData, fetchAdapterChainMetrics, fetchAdapterMetrics } from '../api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '../constants'
 
 describe('dimension adapter api telemetry', () => {
@@ -37,6 +37,28 @@ describe('dimension adapter api telemetry', () => {
 				}
 			}
 		})
+	})
+
+	it('fetches aggregate liquidations metrics by data type', async () => {
+		fetchJsonMock.mockResolvedValue({ protocols: [] })
+
+		await fetchAdapterMetrics({
+			adapterType: ADAPTER_TYPES.LIQUIDATIONS,
+			dataType: ADAPTER_DATA_TYPES.DAILY_COLLATERAL_LIQUIDATED
+		})
+
+		expect(fetchJsonMock).toHaveBeenCalledWith(
+			expect.stringContaining('/metrics/liquidations?dataType=dailyCollateralLiquidated'),
+			{
+				timeout: 30_000,
+				telemetry: {
+					attributes: {
+						adapter_type: 'liquidations',
+						data_type: 'dailyCollateralLiquidated'
+					}
+				}
+			}
+		)
 	})
 
 	it('adds dimension context to chain chart fetch telemetry', async () => {

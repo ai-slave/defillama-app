@@ -296,6 +296,8 @@ const Methodology = (props: IProtocolOverviewPageData) => {
 			<MethodologyByAdapter adapter={props.bridgeAggregatorVolume} title="Bridge Aggregator Volume" />
 			<MethodologyByAdapter adapter={props.optionsPremiumVolume} title="Options Premium Volume" />
 			<MethodologyByAdapter adapter={props.optionsNotionalVolume} title="Options Notional Volume" />
+			<MethodologyByAdapter adapter={props.liquidationVolume} title="Liquidation Volume" />
+			<MethodologyByAdapter adapter={props.collateralLiquidated} title="Collateral Liquidated" />
 			{props.incentives?.methodology ? (
 				<>
 					<p>

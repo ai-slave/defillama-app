@@ -20,6 +20,8 @@ const PROTOCOL_TO_DASHBOARD_CHART_TYPE: Record<ProtocolChartsLabels, string | nu
 	'Perp Aggregator Volume': 'perpsAggregators',
 	'Bridge Aggregator Volume': 'bridgeAggregators',
 	'DEX Aggregator Volume': 'aggregators',
+	'Liquidation Volume': null,
+	'Collateral Liquidated': null,
 	Unlocks: 'unlocks',
 	Incentives: 'incentives',
 	Staking: null,

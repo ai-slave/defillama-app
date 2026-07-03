@@ -12,7 +12,8 @@ export enum ADAPTER_TYPES {
 	NORMALIZED_VOLUME = 'normalized-volume',
 	NFT_VOLUME = 'nft-volume',
 	ACTIVE_USERS = 'active-users',
-	NEW_USERS = 'new-users'
+	NEW_USERS = 'new-users',
+	LIQUIDATIONS = 'liquidations'
 }
 
 export enum ADAPTER_DATA_TYPES {
@@ -35,7 +36,9 @@ export enum ADAPTER_DATA_TYPES {
 	DAILY_ACTIVE_USERS = 'dailyActiveUsers',
 	DAILY_NEW_USERS = 'dailyNewUsers',
 	DAILY_TRANSACTIONS_COUNT = 'dailyTransactionsCount',
-	DAILY_GAS_USED = 'dailyGasUsed'
+	DAILY_GAS_USED = 'dailyGasUsed',
+	DAILY_LIQUIDATION_VOLUME = 'dailyLiquidationVolume',
+	DAILY_COLLATERAL_LIQUIDATED = 'dailyCollateralLiquidated'
 }
 
 export const ADAPTER_DATA_TYPE_KEYS = {
@@ -57,7 +60,9 @@ export const ADAPTER_DATA_TYPE_KEYS = {
 	dailyActiveUsers: 'dau',
 	dailyNewUsers: 'dnu',
 	dailyTransactionsCount: 'dtc',
-	dailyGasUsed: 'dgu'
+	dailyGasUsed: 'dgu',
+	dailyLiquidationVolume: 'dlv',
+	dailyCollateralLiquidated: 'dcl'
 } as const
 
 type ChainMetadataKey = Extract<keyof IChainMetadata, string>

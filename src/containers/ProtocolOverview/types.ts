@@ -37,6 +37,8 @@ export interface IProtocolPageMetrics {
 	newUsers: boolean
 	txCount: boolean
 	gasUsed: boolean
+	liquidationVolume: boolean
+	collateralLiquidated: boolean
 	borrowed: boolean
 	tokenRights: boolean
 }
@@ -101,6 +103,8 @@ export interface IProtocolOverviewPageData {
 	bridgeAggregatorVolume: IAdapterOverview | null
 	optionsPremiumVolume: IAdapterOverview | null
 	optionsNotionalVolume: IAdapterOverview | null
+	liquidationVolume: IAdapterOverview | null
+	collateralLiquidated: IAdapterOverview | null
 	bridgeVolume: Array<{ date: string; depositUSD: number; withdrawUSD: number }> | null
 	incentives?: {
 		emissions24h: number

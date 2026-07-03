@@ -49,6 +49,7 @@ Examples include:
 - options premium volume and options notional volume
 - bridge aggregator volume
 - open interest and normalized volume
+- protocol liquidation volume and collateral liquidated
 
 For these pages, do not reason from `dataType` alone. Check `adapterType` and `dataType` together.
 
@@ -67,6 +68,19 @@ Examples of ambiguous pairings:
 - `dailyVolume` is used by DEXs, perps, DEX aggregators, and perp aggregators. The metadata flag depends on `adapterType`.
 - `dailyNotionalVolume` is used by DEX notional volume and options notional volume. The metadata flag depends on `adapterType`.
 - Fee subtypes such as bribes and token taxes gate on fee metadata but are not the same product concept as Chain Fees or App Fees. Product fee-family pages may add them to displayed totals when their toggles are enabled.
+
+### Protocol Liquidations
+
+Protocol liquidation metrics are adapter-backed metrics exposed through the `liquidations` adapter namespace. They are distinct from the Liquidations product page, which tracks collateral at risk of liquidation.
+
+- Metadata flags: `liquidationVolume` and `collateralLiquidated`
+- Adapter type: `liquidations`
+- Data types: `dailyLiquidationVolume` and `dailyCollateralLiquidated`
+- Aggregate metrics: `/v2/metrics/liquidations?dataType=dailyLiquidationVolume` and `/v2/metrics/liquidations?dataType=dailyCollateralLiquidated`
+- Protocol metrics: `/v2/metrics/liquidations/protocol/:protocol?dataType=dailyLiquidationVolume` and `/v2/metrics/liquidations/protocol/:protocol?dataType=dailyCollateralLiquidated`
+- Protocol charts: `/v2/chart/liquidations/protocol/:protocol?dataType=...`
+
+These responses use the same period totals and chart tuple contracts as other adapter-backed protocol metrics. On `/protocol/:protocol`, gate them through protocol metadata flags before fetching.
 
 Keep route flow visible from the page file. If repeated adapter metadata rules need centralization, prefer a small AdapterMetrics-local descriptor unless another container or public API endpoint consumes the same invariant.
 

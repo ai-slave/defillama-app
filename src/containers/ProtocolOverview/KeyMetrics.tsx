@@ -33,6 +33,8 @@ type KeyMetricsOptionalFields = Partial<
 		| 'bridgeAggregatorVolume'
 		| 'optionsPremiumVolume'
 		| 'optionsNotionalVolume'
+		| 'liquidationVolume'
+		| 'collateralLiquidated'
 		| 'openInterest'
 		| 'fees'
 		| 'revenue'
@@ -63,6 +65,8 @@ type AdapterOverviewKey =
 	| 'bridgeAggregatorVolume'
 	| 'optionsPremiumVolume'
 	| 'optionsNotionalVolume'
+	| 'liquidationVolume'
+	| 'collateralLiquidated'
 
 interface StandardMetricConfig {
 	dataProp: AdapterOverviewKey
@@ -109,6 +113,18 @@ const STANDARD_METRICS: StandardMetricConfig[] = [
 		definitionKey: 'optionsNotional',
 		label: 'Options Notional Volume',
 		dataType: 'Options Notional Volume'
+	},
+	{
+		dataProp: 'liquidationVolume',
+		definitionKey: 'liquidationVolume',
+		label: 'Liquidation Volume',
+		dataType: 'Liquidation Volume'
+	},
+	{
+		dataProp: 'collateralLiquidated',
+		definitionKey: 'collateralLiquidated',
+		label: 'Collateral Liquidated',
+		dataType: 'Collateral Liquidated'
 	}
 ]
 

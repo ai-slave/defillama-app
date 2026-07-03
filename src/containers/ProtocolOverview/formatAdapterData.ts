@@ -12,7 +12,9 @@ const commonMethodology = {
 	perpsAggregators: definitions.perpsAggregators.common,
 	bridgeAggregators: definitions.bridgeAggregators.common,
 	optionsPremiumVolume: definitions.optionsPremium.common,
-	optionsNotionalVolume: definitions.optionsNotional.common
+	optionsNotionalVolume: definitions.optionsNotional.common,
+	liquidationVolume: definitions.liquidationVolume.common,
+	collateralLiquidated: definitions.collateralLiquidated.common
 }
 
 export function formatAdapterData({

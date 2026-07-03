@@ -85,6 +85,20 @@ const expectedDescriptors = {
 		clientQueryKey: 'bridge-aggregator-volume',
 		metricKeys: ['bridgeAggregators'],
 		renderKind: 'bar'
+	},
+	'Liquidation Volume': {
+		request: { adapterType: 'liquidations', dataType: 'dailyLiquidationVolume' },
+		methodologyKey: 'LiquidationVolume',
+		clientQueryKey: 'liquidation-volume',
+		metricKeys: ['liquidationVolume'],
+		renderKind: 'bar'
+	},
+	'Collateral Liquidated': {
+		request: { adapterType: 'liquidations', dataType: 'dailyCollateralLiquidated' },
+		methodologyKey: 'CollateralLiquidated',
+		clientQueryKey: 'collateral-liquidated',
+		metricKeys: ['collateralLiquidated'],
+		renderKind: 'bar'
 	}
 } as const
 
@@ -150,6 +164,17 @@ describe('ProtocolOverview adapter chart descriptors', () => {
 		})
 		expect(descriptorsByLabel['Perp Aggregator Volume']?.chartRequest).toEqual({
 			adapterType: 'aggregator-derivatives'
+		})
+	})
+
+	it('keeps liquidation metrics on the liquidations adapter with separate data types', () => {
+		expect(descriptorsByLabel['Liquidation Volume']?.chartRequest).toEqual({
+			adapterType: 'liquidations',
+			dataType: 'dailyLiquidationVolume'
+		})
+		expect(descriptorsByLabel['Collateral Liquidated']?.chartRequest).toEqual({
+			adapterType: 'liquidations',
+			dataType: 'dailyCollateralLiquidated'
 		})
 	})
 })

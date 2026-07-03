@@ -32,7 +32,6 @@ import {
 
 type ChartInterval = ChartTimeGroupingWithCumulative
 type AdapterChartState = { data: Array<[number, number]> | null; isLoading: boolean; enabled: boolean }
-type NonFeeAdapterChartDescriptorLabel = Exclude<AdapterChartDescriptorLabel, 'Fees' | 'Revenue' | 'Holders Revenue'>
 
 const buildChartRowsFromTimestampRecord = (
 	valuesByTimestamp: Record<string, number>,
@@ -367,16 +366,19 @@ export const useFetchProtocolChartData = ({
 		queries: adapterChartConfigs.map(({ queryOptions }) => queryOptions)
 	})
 
-	const adapterChartStates = {} as Record<AdapterChartDescriptorLabel, AdapterChartState>
-	for (let i = 0; i < adapterChartConfigs.length; i++) {
-		const { descriptor, enabled, prefetchedData } = adapterChartConfigs[i]
-		const result = adapterChartQueryResults[i]
-		adapterChartStates[descriptor.label] = {
-			data: (result.data as Array<[number, number]> | null | undefined) ?? prefetchedData,
-			isLoading: result.isLoading,
-			enabled
+	const adapterChartStates = useMemo(() => {
+		const states = {} as Record<AdapterChartDescriptorLabel, AdapterChartState>
+		for (let i = 0; i < adapterChartConfigs.length; i++) {
+			const { descriptor, enabled, prefetchedData } = adapterChartConfigs[i]
+			const result = adapterChartQueryResults[i]
+			states[descriptor.label] = {
+				data: (result.data as Array<[number, number]> | null | undefined) ?? prefetchedData,
+				isLoading: result.isLoading,
+				enabled
+			}
 		}
-	}
+		return states
+	}, [adapterChartConfigs, adapterChartQueryResults])
 
 	const feesChartState = adapterChartStates.Fees
 	const revenueChartState = adapterChartStates.Revenue
@@ -446,51 +448,10 @@ export const useFetchProtocolChartData = ({
 	const enabledBribesChartError = isBribesEnabled ? bribesChartError : null
 	const enabledTokenTaxesChartError = isTokenTaxesEnabled ? tokenTaxesChartError : null
 
-	const dexVolumeChartState = adapterChartStates['DEX Volume']
-	const dexNotionalVolumeChartState = adapterChartStates['DEX Notional Volume']
-	const perpsVolumeChartState = adapterChartStates['Perp Volume']
-	const openInterestChartState = adapterChartStates['Open Interest']
-	const optionsPremiumVolumeChartState = adapterChartStates['Options Premium Volume']
-	const optionsNotionalVolumeChartState = adapterChartStates['Options Notional Volume']
-	const dexAggregatorsVolumeChartState = adapterChartStates['DEX Aggregator Volume']
-	const perpsAggregatorsVolumeChartState = adapterChartStates['Perp Aggregator Volume']
-	const bridgeAggregatorsVolumeChartState = adapterChartStates['Bridge Aggregator Volume']
-
-	const isDexVolumeEnabled = dexVolumeChartState.enabled
-	const dexVolumeDataChart = dexVolumeChartState.data
-	const fetchingDexVolume = dexVolumeChartState.isLoading
-
-	const isDexNotionalVolumeEnabled = dexNotionalVolumeChartState.enabled
-	const dexNotionalVolumeDataChart = dexNotionalVolumeChartState.data
-	const fetchingDexNotionalVolume = dexNotionalVolumeChartState.isLoading
-
-	const isPerpsVolumeEnabled = perpsVolumeChartState.enabled
-	const perpsVolumeDataChart = perpsVolumeChartState.data
-	const fetchingPerpVolume = perpsVolumeChartState.isLoading
-
-	const isOpenInterestEnabled = openInterestChartState.enabled
-	const openInterestDataChart = openInterestChartState.data
-	const fetchingOpenInterest = openInterestChartState.isLoading
-
-	const isOptionsPremiumVolumeEnabled = optionsPremiumVolumeChartState.enabled
-	const optionsPremiumVolumeDataChart = optionsPremiumVolumeChartState.data
-	const fetchingOptionsPremiumVolume = optionsPremiumVolumeChartState.isLoading
-
-	const isOptionsNotionalVolumeEnabled = optionsNotionalVolumeChartState.enabled
-	const optionsNotionalVolumeDataChart = optionsNotionalVolumeChartState.data
-	const fetchingOptionsNotionalVolume = optionsNotionalVolumeChartState.isLoading
-
-	const isDexAggregatorsVolumeEnabled = dexAggregatorsVolumeChartState.enabled
-	const dexAggregatorsVolumeDataChart = dexAggregatorsVolumeChartState.data
-	const fetchingDexAggregatorVolume = dexAggregatorsVolumeChartState.isLoading
-
-	const isPerpsAggregatorsVolumeEnabled = perpsAggregatorsVolumeChartState.enabled
-	const perpsAggregatorsVolumeDataChart = perpsAggregatorsVolumeChartState.data
-	const fetchingPerpAggregatorVolume = perpsAggregatorsVolumeChartState.isLoading
-
-	const isBridgeAggregatorsVolumeEnabled = bridgeAggregatorsVolumeChartState.enabled
-	const bridgeAggregatorsVolumeDataChart = bridgeAggregatorsVolumeChartState.data
-	const fetchingBridgeAggregatorVolume = bridgeAggregatorsVolumeChartState.isLoading
+	const nonFeeAdapterChartDescriptors = useMemo(
+		() => ADAPTER_CHART_DESCRIPTORS.filter((descriptor) => descriptor.renderKind !== 'feeFamily'),
+		[]
+	)
 
 	const isUnlocksEnabled = !!(
 		(toggledMetrics.unlocks === 'true' || toggledMetrics.incentives === 'true') &&
@@ -654,21 +615,10 @@ export const useFetchProtocolChartData = ({
 				isLoading: isHoldersRevenueEnabled && (fetchingHoldersRevenue || fetchingBribes || fetchingTokenTaxes),
 				label: 'Holders Revenue'
 			},
-			{ isLoading: isDexVolumeEnabled && fetchingDexVolume, label: 'DEX Volume' },
-			{ isLoading: isDexNotionalVolumeEnabled && fetchingDexNotionalVolume, label: 'DEX Notional Volume' },
-			{ isLoading: isPerpsVolumeEnabled && fetchingPerpVolume, label: 'Perp Volume' },
-			{ isLoading: isOpenInterestEnabled && fetchingOpenInterest, label: 'Open Interest' },
-			{ isLoading: isOptionsPremiumVolumeEnabled && fetchingOptionsPremiumVolume, label: 'Options Premium Volume' },
-			{
-				isLoading: isOptionsNotionalVolumeEnabled && fetchingOptionsNotionalVolume,
-				label: 'Options Notional Volume'
-			},
-			{ isLoading: isDexAggregatorsVolumeEnabled && fetchingDexAggregatorVolume, label: 'DEX Aggregator Volume' },
-			{ isLoading: isPerpsAggregatorsVolumeEnabled && fetchingPerpAggregatorVolume, label: 'Perp Aggregator Volume' },
-			{
-				isLoading: isBridgeAggregatorsVolumeEnabled && fetchingBridgeAggregatorVolume,
-				label: 'Bridge Aggregator Volume'
-			},
+			...nonFeeAdapterChartDescriptors.map((descriptor) => {
+				const state = adapterChartStates[descriptor.label]
+				return { isLoading: state.enabled && state.isLoading, label: descriptor.label }
+			}),
 			{ isLoading: isUnlocksToggled && fetchingUnlocksAndIncentives, label: 'Unlocks' },
 			{ isLoading: isIncentivesToggled && fetchingUnlocksAndIncentives, label: 'Incentives' },
 			{ isLoading: isTreasuryToggled && fetchingTreasury, label: 'Treasury' },
@@ -755,24 +705,10 @@ export const useFetchProtocolChartData = ({
 		if (feeFamilyCharts.revenue.length > 0) charts['Revenue'] = feeFamilyCharts.revenue
 		if (feeFamilyCharts.holdersRevenue.length > 0) charts['Holders Revenue'] = feeFamilyCharts.holdersRevenue
 
-		const adapterChartData: Record<NonFeeAdapterChartDescriptorLabel, Array<[number, number]> | null> = {
-			'DEX Volume': dexVolumeDataChart,
-			'DEX Notional Volume': dexNotionalVolumeDataChart,
-			'Perp Volume': perpsVolumeDataChart,
-			'Open Interest': openInterestDataChart,
-			'Options Premium Volume': optionsPremiumVolumeDataChart,
-			'Options Notional Volume': optionsNotionalVolumeDataChart,
-			'DEX Aggregator Volume': dexAggregatorsVolumeDataChart,
-			'Perp Aggregator Volume': perpsAggregatorsVolumeDataChart,
-			'Bridge Aggregator Volume': bridgeAggregatorsVolumeDataChart
-		}
-
-		for (const descriptor of ADAPTER_CHART_DESCRIPTORS) {
-			if (descriptor.renderKind === 'feeFamily') continue
-			const label = descriptor.label as NonFeeAdapterChartDescriptorLabel
-			const chart = adapterChartData[label]
+		for (const descriptor of nonFeeAdapterChartDescriptors) {
+			const chart = adapterChartStates[descriptor.label].data
 			if (!chart) continue
-			charts[label] =
+			charts[descriptor.label] =
 				descriptor.renderKind === 'line'
 					? formatLineChart({ data: chart, groupBy, denominationPriceHistory })
 					: formatBarChart({ data: chart, groupBy, denominationPriceHistory })
@@ -975,15 +911,8 @@ export const useFetchProtocolChartData = ({
 		isFeesEnabled,
 		isRevenueEnabled,
 		isHoldersRevenueEnabled,
-		isDexVolumeEnabled,
-		isDexNotionalVolumeEnabled,
-		isPerpsVolumeEnabled,
-		isOpenInterestEnabled,
-		isOptionsPremiumVolumeEnabled,
-		isOptionsNotionalVolumeEnabled,
-		isDexAggregatorsVolumeEnabled,
-		isPerpsAggregatorsVolumeEnabled,
-		isBridgeAggregatorsVolumeEnabled,
+		nonFeeAdapterChartDescriptors,
+		adapterChartStates,
 		fetchingFees,
 		feesDataChart,
 		fetchingRevenue,
@@ -996,24 +925,6 @@ export const useFetchProtocolChartData = ({
 		fetchingTokenTaxes,
 		enabledTokenTaxesDataChart,
 		enabledTokenTaxesChartError,
-		fetchingDexVolume,
-		dexVolumeDataChart,
-		fetchingDexNotionalVolume,
-		dexNotionalVolumeDataChart,
-		fetchingPerpVolume,
-		perpsVolumeDataChart,
-		fetchingOpenInterest,
-		openInterestDataChart,
-		fetchingOptionsPremiumVolume,
-		optionsPremiumVolumeDataChart,
-		fetchingOptionsNotionalVolume,
-		optionsNotionalVolumeDataChart,
-		fetchingDexAggregatorVolume,
-		dexAggregatorsVolumeDataChart,
-		fetchingPerpAggregatorVolume,
-		perpsAggregatorsVolumeDataChart,
-		fetchingBridgeAggregatorVolume,
-		bridgeAggregatorsVolumeDataChart,
 		fetchingTvs,
 		tvsData,
 		fetchingUnlocksAndIncentives,

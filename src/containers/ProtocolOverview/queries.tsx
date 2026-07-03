@@ -101,6 +101,8 @@ export const getProtocolMetricFlags = ({
 		newUsers: !!metadata.newUsers,
 		txCount: !!metadata.txCount,
 		gasUsed: !!metadata.gasUsed,
+		liquidationVolume: !!metadata.liquidationVolume,
+		collateralLiquidated: !!metadata.collateralLiquidated,
 		borrowed: !!metadata.borrowed,
 		tokenRights: !!metadata.tokenRights
 	}
@@ -169,6 +171,8 @@ export const getProtocolOverviewPageData = async ({
 		bridgeAggregatorVolumeData,
 		optionsPremiumVolumeData,
 		optionsNotionalVolumeData,
+		liquidationVolumeData,
+		collateralLiquidatedData,
 		treasury,
 		yieldsData,
 		incentives,
@@ -189,6 +193,8 @@ export const getProtocolOverviewPageData = async ({
 	]: [
 		IProtocolDataExtended,
 		IProtocolTvlChartSeedResult,
+		Awaited<ReturnType<typeof formatAdapterData>>,
+		Awaited<ReturnType<typeof formatAdapterData>>,
 		Awaited<ReturnType<typeof formatAdapterData>>,
 		Awaited<ReturnType<typeof formatAdapterData>>,
 		Awaited<ReturnType<typeof formatAdapterData>>,
@@ -333,6 +339,20 @@ export const getProtocolOverviewPageData = async ({
 					dataType: 'dailyNotionalVolume',
 					protocol: currentProtocolMetadata.displayName ?? ''
 				}).then((data) => formatAdapterData({ data, methodologyKey: 'optionsNotionalVolume' }))
+			: Promise.resolve(null),
+		currentProtocolMetadata.liquidationVolume
+			? fetchAdapterProtocolMetrics({
+					adapterType: 'liquidations',
+					dataType: 'dailyLiquidationVolume',
+					protocol: currentProtocolMetadata.displayName ?? ''
+				}).then((data) => formatAdapterData({ data, methodologyKey: 'LiquidationVolume' }))
+			: Promise.resolve(null),
+		currentProtocolMetadata.collateralLiquidated
+			? fetchAdapterProtocolMetrics({
+					adapterType: 'liquidations',
+					dataType: 'dailyCollateralLiquidated',
+					protocol: currentProtocolMetadata.displayName ?? ''
+				}).then((data) => formatAdapterData({ data, methodologyKey: 'CollateralLiquidated' }))
 			: Promise.resolve(null),
 		currentProtocolMetadata.treasury
 			? optionalProtocolData(
@@ -579,6 +599,8 @@ export const getProtocolOverviewPageData = async ({
 		bridgeAggregatorVolumeData?.totalAllTime ||
 		optionsPremiumVolumeData?.totalAllTime ||
 		optionsNotionalVolumeData?.totalAllTime ||
+		liquidationVolumeData?.totalAllTime ||
+		collateralLiquidatedData?.totalAllTime ||
 		openInterestData?.total24h != null ||
 		bridgeVolumeData?.length ||
 		bribesData?.totalAllTime ||
@@ -715,6 +737,8 @@ export const getProtocolOverviewPageData = async ({
 		hasDexAggregatorVolume: Boolean(dexAggregatorVolumeData),
 		hasPerpAggregatorVolume: Boolean(perpAggregatorVolumeData),
 		hasBridgeAggregatorVolume: Boolean(bridgeAggregatorVolumeData),
+		hasLiquidationVolume: Boolean(liquidationVolumeData),
+		hasCollateralLiquidated: Boolean(collateralLiquidatedData),
 		hasBridgeVolume: Boolean(bridgeVolumeData),
 		hasUnlocks: Boolean(currentProtocolMetadata.emissions),
 		hasIncentives: Boolean(incentives),
@@ -878,6 +902,8 @@ export const getProtocolOverviewPageData = async ({
 		bridgeAggregatorVolume: bridgeAggregatorVolumeData,
 		optionsPremiumVolume: optionsPremiumVolumeData,
 		optionsNotionalVolume: optionsNotionalVolumeData,
+		liquidationVolume: liquidationVolumeData,
+		collateralLiquidated: collateralLiquidatedData,
 		bridgeVolume: bridgeVolumeData || null,
 		treasury,
 		unlocks: null,
@@ -953,6 +979,8 @@ export const getProtocolOverviewPageData = async ({
 			bridgeAggregatorVolumeData?.defaultChartView ??
 			optionsPremiumVolumeData?.defaultChartView ??
 			optionsNotionalVolumeData?.defaultChartView ??
+			liquidationVolumeData?.defaultChartView ??
+			collateralLiquidatedData?.defaultChartView ??
 			'daily',
 		seoTitle,
 		seoDescription,

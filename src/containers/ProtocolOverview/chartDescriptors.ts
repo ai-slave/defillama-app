@@ -17,6 +17,8 @@ type AdapterChartMetricKey = keyof Pick<
 	| 'dexAggregators'
 	| 'perpsAggregators'
 	| 'bridgeAggregators'
+	| 'liquidationVolume'
+	| 'collateralLiquidated'
 >
 export type AdapterChartRenderKind = 'feeFamily' | 'bar' | 'line'
 
@@ -137,6 +139,24 @@ export const ADAPTER_CHART_DESCRIPTORS = [
 		methodologyKey: 'bridgeAggregators',
 		clientQueryKey: 'bridge-aggregator-volume',
 		metricKeys: ['bridgeAggregators'],
+		renderKind: 'bar'
+	},
+	{
+		label: 'Liquidation Volume',
+		chartRequest: { adapterType: 'liquidations', dataType: 'dailyLiquidationVolume' },
+		metricsRequest: { adapterType: 'liquidations', dataType: 'dailyLiquidationVolume' },
+		methodologyKey: 'LiquidationVolume',
+		clientQueryKey: 'liquidation-volume',
+		metricKeys: ['liquidationVolume'],
+		renderKind: 'bar'
+	},
+	{
+		label: 'Collateral Liquidated',
+		chartRequest: { adapterType: 'liquidations', dataType: 'dailyCollateralLiquidated' },
+		metricsRequest: { adapterType: 'liquidations', dataType: 'dailyCollateralLiquidated' },
+		methodologyKey: 'CollateralLiquidated',
+		clientQueryKey: 'collateral-liquidated',
+		metricKeys: ['collateralLiquidated'],
 		renderKind: 'bar'
 	}
 ] as const satisfies ReadonlyArray<IAdapterChartDescriptor>

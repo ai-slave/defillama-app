@@ -21,6 +21,8 @@ interface IBuildAvailableChartsParams {
 	hasDexAggregatorVolume: boolean
 	hasPerpAggregatorVolume: boolean
 	hasBridgeAggregatorVolume: boolean
+	hasLiquidationVolume: boolean
+	hasCollateralLiquidated: boolean
 	hasBridgeVolume: boolean
 	hasUnlocks: boolean
 	hasIncentives: boolean
@@ -58,6 +60,8 @@ export function buildAvailableCharts(params: IBuildAvailableChartsParams): Proto
 	if (params.hasDexAggregatorVolume) charts.push('DEX Aggregator Volume')
 	if (params.hasPerpAggregatorVolume) charts.push('Perp Aggregator Volume')
 	if (params.hasBridgeAggregatorVolume) charts.push('Bridge Aggregator Volume')
+	if (params.hasLiquidationVolume) charts.push('Liquidation Volume')
+	if (params.hasCollateralLiquidated) charts.push('Collateral Liquidated')
 	if (params.hasBridgeVolume) charts.push('Bridge Volume')
 	if (params.hasUnlocks) charts.push('Unlocks')
 	if (params.hasIncentives) charts.push('Incentives')

@@ -95,6 +95,8 @@ const baseMetrics: IProtocolPageMetrics = {
 	newUsers: false,
 	txCount: false,
 	gasUsed: false,
+	liquidationVolume: false,
+	collateralLiquidated: false,
 	borrowed: false,
 	tokenRights: false
 }
@@ -137,6 +139,8 @@ const feeProps: ProbeProps = {
 	bridgeAggregatorVolume: null,
 	optionsPremiumVolume: null,
 	optionsNotionalVolume: null,
+	liquidationVolume: null,
+	collateralLiquidated: null,
 	bridgeVolume: null,
 	treasury: null,
 	unlocks: null,
@@ -224,6 +228,28 @@ describe('ProtocolOverview chart metric semantics', () => {
 			[timestampMs, 200],
 			[timestampMs + 86_400_000, 300]
 		])
+	})
+
+	it('fetches descriptor-driven liquidation charts', () => {
+		probeProps = {
+			...feeProps,
+			metrics: { ...baseMetrics, collateralLiquidated: true },
+			toggledMetrics: makeToggledMetrics({ collateralLiquidated: 'true' }),
+			availableCharts: ['Collateral Liquidated'],
+			feesSettings: {}
+		}
+
+		mocks.useQuery.mockImplementation((options: QueryOptions) => {
+			if (options.queryKey[2] === 'collateral-liquidated') {
+				return { data: [[timestamp, 123]], isLoading: false }
+			}
+			return { data: null, isLoading: false }
+		})
+
+		renderToStaticMarkup(<Probe />)
+
+		expect(mocks.lastResult?.finalCharts['Collateral Liquidated']).toEqual([[timestampMs, 123]])
+		expect(mocks.lastResult?.failedMetrics).toEqual([])
 	})
 
 	it('keeps cumulative fee-family charts in selected denomination units', () => {

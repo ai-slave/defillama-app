@@ -360,6 +360,24 @@ export const definitions = {
       "change7dover7d": "Change of last 7 days sum of the notional value over the previous 7 days sum of the notional value",
     }
   },
+  "liquidationVolume": {
+    "common": "USD value of positions liquidated by the protocol",
+    "protocol": {
+      "24h": "USD value of positions liquidated by the protocol in the last 24 hours",
+      "7d": "USD value of positions liquidated by the protocol in the last 7 days",
+      "30d": "USD value of positions liquidated by the protocol in the last 30 days",
+      "cumulative": "Total USD value of positions liquidated by the protocol since tracking began"
+    }
+  },
+  "collateralLiquidated": {
+    "common": "USD value of collateral seized during protocol liquidations",
+    "protocol": {
+      "24h": "USD value of collateral seized during protocol liquidations in the last 24 hours",
+      "7d": "USD value of collateral seized during protocol liquidations in the last 7 days",
+      "30d": "USD value of collateral seized during protocol liquidations in the last 30 days",
+      "cumulative": "Total USD value of collateral seized during protocol liquidations since tracking began"
+    }
+  },
   "openInterest": {
     "common": "Total notional value of all outstanding perpetual futures positions",
     "protocol": "Total notional value of all outstanding perpetual futures positions",

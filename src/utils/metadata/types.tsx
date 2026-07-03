@@ -76,6 +76,8 @@ export interface IProtocolMetadata {
 	newUsers?: boolean
 	txCount?: boolean
 	gasUsed?: boolean
+	liquidationVolume?: boolean
+	collateralLiquidated?: boolean
 	gecko_id?: string
 	cex?: boolean
 }

@@ -73,6 +73,8 @@ const metrics: IProtocolPageMetrics = {
 	newUsers: false,
 	txCount: false,
 	gasUsed: false,
+	liquidationVolume: false,
+	collateralLiquidated: false,
 	borrowed: false,
 	tokenRights: false
 }
@@ -131,6 +133,51 @@ describe('KeyMetrics', () => {
 		expect(markup).toContain('$120')
 		expect(markup).toContain('$180')
 		expect(markup.indexOf('Base')).toBeLessThan(markup.indexOf('Ethereum'))
+	})
+
+	it('renders liquidation adapter summaries like other standard adapter metrics', async () => {
+		const markup = await renderKeyMetrics({
+			...baseProps,
+			liquidationVolume: {
+				total24h: 12,
+				total7d: 70,
+				total30d: 300,
+				total1y: null,
+				annualized1y: null,
+				totalAllTime: 1500,
+				chainBreakdown: null
+			},
+			collateralLiquidated: {
+				total24h: 4,
+				total7d: 28,
+				total30d: 120,
+				total1y: null,
+				annualized1y: null,
+				totalAllTime: 700,
+				chainBreakdown: {
+					Ethereum: {
+						total24h: 1,
+						total7d: 8,
+						total30d: 20,
+						totalAllTime: 100
+					},
+					Base: {
+						total24h: 3,
+						total7d: 20,
+						total30d: 100,
+						totalAllTime: 600
+					}
+				}
+			}
+		})
+
+		expect(markup).toContain('Liquidation Volume 30d')
+		expect(markup).toContain('Collateral Liquidated 30d')
+		expect(markup).toContain('Cumulative Collateral Liquidated')
+		expect(markup).toContain('Base')
+		expect(markup).toContain('Ethereum')
+		expect(markup).toContain('$100')
+		expect(markup).toContain('$20')
 	})
 
 	it('uses the annualized1y fees value for annualized metrics when available', async () => {

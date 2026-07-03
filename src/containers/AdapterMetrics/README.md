@@ -16,6 +16,11 @@ Common route families owned here:
 - `/bridge-aggregators`, `/open-interest`, `/normalized-volume`
 - each supported `/chains` or `/chain/[chain]` variant for those metric families
 
+Protocol overview pages also use the AdapterMetrics fetch contract for the `liquidations` namespace:
+
+- `dailyLiquidationVolume`
+- `dailyCollateralLiquidated`
+
 For a broader route-to-container map, see `src/containers/README.md`.
 
 ## Main Files
@@ -83,6 +88,7 @@ Important rules:
 - Always reason about `adapterType` and `dataType` together.
 - `dailyVolume` is shared across DEXs, perps, DEX aggregators, and perp aggregators.
 - `dailyNotionalVolume` is shared across DEX notional and options notional paths.
+- `liquidations` is currently consumed as protocol overview metrics/charts, not as an AdapterMetrics ranking page.
 - `getChainMetadataKey(adapterType, dataType)` is the local source for AdapterMetrics chain metadata flag disambiguation.
 - Do not move a rule into `src/metrics` unless another container or public API endpoint consumes the same invariant.
 

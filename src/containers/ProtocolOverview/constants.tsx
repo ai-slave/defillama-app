@@ -20,6 +20,8 @@ export const protocolCharts = {
 	'Perp Aggregator Volume': 'perpAggregatorVolume',
 	'Bridge Aggregator Volume': 'bridgeAggregatorVolume',
 	'DEX Aggregator Volume': 'dexAggregatorVolume',
+	'Liquidation Volume': 'liquidationVolume',
+	'Collateral Liquidated': 'collateralLiquidated',
 	Unlocks: 'unlocks',
 	Incentives: 'incentives',
 	Staking: 'staking_tvl',
@@ -73,6 +75,8 @@ export const yAxisByChart: {
 	'Perp Aggregator Volume': 'DEX Volume',
 	'Bridge Aggregator Volume': 'DEX Volume',
 	'DEX Aggregator Volume': 'DEX Volume',
+	'Liquidation Volume': 'DEX Volume',
+	'Collateral Liquidated': 'DEX Volume',
 	Unlocks: 'Unlocks',
 	'Active Addresses': 'Active Addresses',
 	'New Addresses': 'Active Addresses',
@@ -106,6 +110,7 @@ export const protocolChartCategories = {
 		'NFT Volume',
 		'Bridge Volume'
 	],
+	Liquidations: ['Liquidation Volume', 'Collateral Liquidated'],
 	Bridge: ['Bridge Deposits', 'Bridge Withdrawals'],
 	Activity: ['Active Addresses', 'New Addresses', 'Transactions', 'Gas Used', 'Tweets'],
 	Governance: ['Total Proposals', 'Successful Proposals', 'Max Votes']
@@ -118,6 +123,7 @@ export const protocolChartCategoryOrder: ProtocolChartCategory[] = [
 	'Token',
 	'Revenue',
 	'Volume',
+	'Liquidations',
 	'Bridge',
 	'Activity',
 	'Governance'
@@ -149,7 +155,9 @@ export const BAR_CHARTS: ProtocolChartsLabels[] = [
 	'Options Notional Volume',
 	'Perp Aggregator Volume',
 	'Bridge Aggregator Volume',
-	'Bridge Volume'
+	'Bridge Volume',
+	'Liquidation Volume',
+	'Collateral Liquidated'
 ]
 
 // Oracle protocols with their own TVS entries (display name -> oracle name)

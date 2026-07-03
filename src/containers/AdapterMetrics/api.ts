@@ -12,6 +12,36 @@ import type {
 import { ADAPTER_TYPES, ADAPTER_DATA_TYPES } from './constants'
 
 /**
+ * Fetch aggregate adapter metrics for a data type.
+ */
+export async function fetchAdapterMetrics({
+	adapterType,
+	dataType,
+	category
+}: {
+	adapterType: `${ADAPTER_TYPES}`
+	dataType?: `${ADAPTER_DATA_TYPES}`
+	category?: string
+}): Promise<IAdapterChainMetrics> {
+	const metricsUrl = new URL(`${V2_SERVER_URL}/metrics/${adapterType}${category ? `/category/${slug(category)}` : ''}`)
+
+	if (dataType) {
+		metricsUrl.searchParams.set('dataType', dataType)
+	}
+
+	return fetchJson<IAdapterChainMetrics>(metricsUrl.toString(), {
+		timeout: 30_000,
+		telemetry: {
+			attributes: {
+				adapter_type: adapterType,
+				...(dataType ? { data_type: dataType } : null),
+				...(category ? { category } : null)
+			}
+		}
+	})
+}
+
+/**
  * Fetch adapter metrics for a chain and data type.
  */
 export async function fetchAdapterChainMetrics({
