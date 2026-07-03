@@ -1,9 +1,6 @@
 import type { RowData } from '@tanstack/react-table'
-<<<<<<< market-makers
 import type { CSSProperties } from 'react'
-=======
 import type { CsvCell } from '~/utils/csvCell'
->>>>>>> main
 
 declare module '@tanstack/react-table' {
 	interface ColumnMeta<TData extends RowData, TValue> {
