@@ -1,5 +1,23 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { rwaOverviewBreakdown } from '~/containers/RWA/server/api'
 import { parseOverviewBreakdownRequest } from '~/pages/api/public/rwa/overview-breakdown'
+import { resultBody } from '~/server/api/__tests__/resultBody'
+
+const mocks = vi.hoisted(() => ({
+	fetchRWACategoryBreakdownChartData: vi.fn()
+}))
+
+vi.mock('~/containers/RWA/api', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('~/containers/RWA/api')>()
+	return {
+		...actual,
+		fetchRWACategoryBreakdownChartData: mocks.fetchRWACategoryBreakdownChartData
+	}
+})
+
+beforeEach(() => {
+	vi.clearAllMocks()
+})
 
 describe('parseOverviewBreakdownRequest', () => {
 	it('accepts platform requests when both flags are false', () => {
@@ -105,5 +123,34 @@ describe('parseOverviewBreakdownRequest', () => {
 				}
 			})
 		).toBeNull()
+	})
+})
+
+describe('rwaOverviewBreakdown', () => {
+	it('returns serialized transformed breakdown data', async () => {
+		mocks.fetchRWACategoryBreakdownChartData.mockResolvedValue([{ timestamp: 1, Treasuries: 42 }])
+
+		const result = await rwaOverviewBreakdown.handle({
+			method: 'GET',
+			url: '',
+			headers: {},
+			query: {
+				breakdown: 'category',
+				key: 'activeMcap',
+				includeStablecoin: 'false',
+				includeGovernance: 'false'
+			}
+		})
+
+		expect(result).toMatchObject({
+			status: 200,
+			serializedJson: expect.any(String),
+			responseBytes: expect.any(Number),
+			headers: { 'Content-Type': 'application/json; charset=utf-8' }
+		})
+		expect(resultBody(result)).toEqual({
+			source: [{ timestamp: 1000, Treasuries: 42 }],
+			dimensions: ['timestamp', 'Treasuries']
+		})
 	})
 })

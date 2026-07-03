@@ -1,5 +1,23 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { rwaPerpsOverviewBreakdown } from '~/containers/RWA/server/api'
 import { parseOverviewBreakdownRequest } from '~/pages/api/public/rwa/perps/overview-breakdown'
+import { resultBody } from '~/server/api/__tests__/resultBody'
+
+const mocks = vi.hoisted(() => ({
+	fetchRWAPerpsOverviewBreakdownChartData: vi.fn()
+}))
+
+vi.mock('~/containers/RWA/Perps/api', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('~/containers/RWA/Perps/api')>()
+	return {
+		...actual,
+		fetchRWAPerpsOverviewBreakdownChartData: mocks.fetchRWAPerpsOverviewBreakdownChartData
+	}
+})
+
+beforeEach(() => {
+	vi.clearAllMocks()
+})
 
 describe('parseOverviewBreakdownRequest', () => {
 	it('accepts overview requests without a target', () => {
@@ -132,5 +150,32 @@ describe('parseOverviewBreakdownRequest', () => {
 				}
 			})
 		).toBeNull()
+	})
+})
+
+describe('rwaPerpsOverviewBreakdown', () => {
+	it('returns serialized transformed breakdown data', async () => {
+		mocks.fetchRWAPerpsOverviewBreakdownChartData.mockResolvedValue([{ timestamp: 1, Hyperliquid: 3, GMX: 5 }])
+
+		const result = await rwaPerpsOverviewBreakdown.handle({
+			method: 'GET',
+			url: '',
+			headers: {},
+			query: {
+				breakdown: 'venue',
+				key: 'openInterest'
+			}
+		})
+
+		expect(result).toMatchObject({
+			status: 200,
+			serializedJson: expect.any(String),
+			responseBytes: expect.any(Number),
+			headers: { 'Content-Type': 'application/json; charset=utf-8' }
+		})
+		expect(resultBody(result)).toEqual({
+			source: [{ timestamp: 1000, Hyperliquid: 3, GMX: 5 }],
+			dimensions: ['timestamp', 'GMX', 'Hyperliquid']
+		})
 	})
 })

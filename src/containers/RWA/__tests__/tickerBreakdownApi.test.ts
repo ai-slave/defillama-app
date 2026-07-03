@@ -1,9 +1,27 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { rwaAssetBreakdown } from '~/containers/RWA/server/api'
 import {
 	buildAssetBreakdownUrl,
 	normalizeAssetBreakdownRows,
 	parseAssetBreakdownRequest
 } from '~/pages/api/public/rwa/asset-breakdown'
+import { resultBody } from '~/server/api/__tests__/resultBody'
+
+const mocks = vi.hoisted(() => ({
+	fetchJson: vi.fn()
+}))
+
+vi.mock('~/utils/async', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('~/utils/async')>()
+	return {
+		...actual,
+		fetchJson: mocks.fetchJson
+	}
+})
+
+beforeEach(() => {
+	vi.clearAllMocks()
+})
 
 describe('parseAssetBreakdownRequest', () => {
 	it('rejects requests when inclusion flags are omitted', () => {
@@ -109,6 +127,39 @@ describe('parseAssetBreakdownRequest', () => {
 				}
 			})
 		).toBeNull()
+	})
+})
+
+describe('rwaAssetBreakdown', () => {
+	it('returns serialized normalized rows for the requested metric', async () => {
+		mocks.fetchJson.mockResolvedValue({
+			onChainMcap: [
+				{ timestamp: 2, Alpha: 20 },
+				{ timestamp: 1, Alpha: 10 }
+			]
+		})
+
+		const result = await rwaAssetBreakdown.handle({
+			method: 'GET',
+			url: '',
+			headers: {},
+			query: {
+				key: 'onChainMcap',
+				includeStablecoin: 'false',
+				includeGovernance: 'false'
+			}
+		})
+
+		expect(result).toMatchObject({
+			status: 200,
+			serializedJson: expect.any(String),
+			responseBytes: expect.any(Number),
+			headers: { 'Content-Type': 'application/json; charset=utf-8' }
+		})
+		expect(resultBody(result)).toEqual([
+			{ timestamp: 1000, Alpha: 10 },
+			{ timestamp: 2000, Alpha: 20 }
+		])
 	})
 })
 

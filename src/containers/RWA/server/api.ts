@@ -32,8 +32,8 @@ import {
 	parseOptionalStringTarget
 } from '~/containers/RWA/requestParsers'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
-import { notFound, ok, badRequest, upstreamError } from '~/server/api/respond'
-import { cachedResult } from '~/server/api/resultCache'
+import { notFound, okSerializedJson, badRequest, upstreamError } from '~/server/api/respond'
+import { cachedJsonResult } from '~/server/api/resultCache'
 import { defineApiRoute, type ApiQuery } from '~/server/api/types'
 import { fetchJson } from '~/utils/async'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
@@ -225,7 +225,7 @@ export const rwaOverviewBreakdown = defineApiRoute({
 		}
 
 		try {
-			const dataset = await cachedResult(
+			const result = await cachedJsonResult(
 				'rwa-overview-breakdown',
 				buildOverviewBreakdownCacheKey(request),
 				{ ttlMs: RWA_BREAKDOWN_RESULT_TTL_MS, ttlJitter: 0.2 },
@@ -237,7 +237,7 @@ export const rwaOverviewBreakdown = defineApiRoute({
 					return toOverviewBreakdownChartDataset(rows, request)
 				}
 			)
-			return ok(dataset)
+			return okSerializedJson(result)
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch upstream chart data')
@@ -327,7 +327,7 @@ export const rwaPerpsOverviewBreakdown = defineApiRoute({
 				return notFound('RWA perps target not found')
 			}
 
-			const dataset = await cachedResult(
+			const result = await cachedJsonResult(
 				'rwa-perps-overview-breakdown',
 				buildPerpsOverviewBreakdownCacheKey(request),
 				{ ttlMs: RWA_BREAKDOWN_RESULT_TTL_MS, ttlJitter: 0.2 },
@@ -339,7 +339,7 @@ export const rwaPerpsOverviewBreakdown = defineApiRoute({
 					return toRWAPerpsBreakdownChartDataset(rows)
 				}
 			)
-			return ok(dataset)
+			return okSerializedJson(result)
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch upstream chart data')
@@ -393,7 +393,7 @@ export const rwaPerpsContractBreakdown = defineApiRoute({
 				return notFound('RWA perps target not found')
 			}
 
-			const dataset = await cachedResult(
+			const result = await cachedJsonResult(
 				'rwa-perps-contract-breakdown',
 				buildPerpsContractBreakdownCacheKey(request),
 				{ ttlMs: RWA_BREAKDOWN_RESULT_TTL_MS, ttlJitter: 0.2 },
@@ -405,7 +405,7 @@ export const rwaPerpsContractBreakdown = defineApiRoute({
 					return toRWAPerpsBreakdownChartDataset(rows)
 				}
 			)
-			return ok(dataset)
+			return okSerializedJson(result)
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch upstream chart data')
@@ -415,7 +415,7 @@ export const rwaPerpsContractBreakdown = defineApiRoute({
 
 export const rwaAssetBreakdown = defineApiRoute({
 	route: '/api/public/rwa/asset-breakdown',
-	cacheControl: 'public, s-maxage=3600, stale-while-revalidate=1800',
+	cacheControl: RWA_BREAKDOWN_CACHE_CONTROL,
 	handle: async (req) => {
 		const request = parseAssetBreakdownRequest(req)
 
@@ -429,10 +429,10 @@ export const rwaAssetBreakdown = defineApiRoute({
 			}
 
 			const cacheKey = buildAssetBreakdownCacheKey(request)
-			const rows = await cachedResult(
+			const result = await cachedJsonResult(
 				'rwa-asset-breakdown',
 				cacheKey,
-				{ ttlMs: 30 * 60 * 1000, ttlJitter: 0.2 },
+				{ ttlMs: RWA_BREAKDOWN_RESULT_TTL_MS, ttlJitter: 0.2, maxEntries: 192 },
 				async () => {
 					const raw = await fetchJson<IRWAChartDataByAsset>(buildAssetBreakdownUrl(request), {
 						timeout: 30_000
@@ -440,7 +440,7 @@ export const rwaAssetBreakdown = defineApiRoute({
 					return normalizeAssetBreakdownRows(raw[request.key] ?? [])
 				}
 			)
-			return ok(rows)
+			return okSerializedJson(result)
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch upstream chart data')
