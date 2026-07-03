@@ -2,7 +2,6 @@ import { RISK_SERVER_URL } from '~/constants'
 import type { TokenMarketsResponse } from '~/containers/Markets/api.types'
 import { fetchJson } from '~/utils/async'
 import type { TokenRiskBorrowCapacityResponse } from './api.types'
-import type { RiskTimelineResponse } from './tokenRiskTimeline.types'
 
 export async function getTokenRiskBorrowCapacityFromNetwork(): Promise<TokenRiskBorrowCapacityResponse> {
 	const data = await fetchJson<TokenRiskBorrowCapacityResponse>(`${RISK_SERVER_URL}/get-borrow-capacity-by-asset`)
@@ -11,13 +10,6 @@ export async function getTokenRiskBorrowCapacityFromNetwork(): Promise<TokenRisk
 
 export async function getTokenRiskBorrowCapacity(): Promise<TokenRiskBorrowCapacityResponse> {
 	return getTokenRiskBorrowCapacityFromNetwork()
-}
-
-export async function getTokenRiskTimeline(tokenSymbol: string): Promise<RiskTimelineResponse> {
-	const data = await fetchJson<RiskTimelineResponse>(
-		`${RISK_SERVER_URL}/risk-timeline/${encodeURIComponent(tokenSymbol)}`
-	)
-	return data
 }
 
 export async function fetchTokenMarkets(tokenSymbol: string): Promise<TokenMarketsResponse> {

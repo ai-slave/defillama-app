@@ -18,8 +18,6 @@ import { getTokenOverviewData, TOKEN_OVERVIEW_DEFAULT_CHARTS } from '~/container
 import { TokenOverviewSection } from '~/containers/Token/TokenOverviewSection'
 import { TokenPageSectionNav } from '~/containers/Token/TokenPageSectionNav'
 import { TokenRisksSection } from '~/containers/Token/TokenRisksSection'
-import { getTokenRiskTimelineData } from '~/containers/Token/tokenRiskTimeline.server'
-import { TokenRiskTimelineSection } from '~/containers/Token/TokenRiskTimelineSection'
 import { resolveTokenUnlockSlug } from '~/containers/Token/tokenUnlocks'
 import { TokenUnlocksSection } from '~/containers/Token/TokenUnlocksSection'
 import { TokenUsageSection } from '~/containers/Token/TokenUsageSection'
@@ -240,13 +238,6 @@ export const getStaticProps = withPerformanceLogging<TokenPageProps, TokenRouteP
 				)
 			: Promise.resolve([])
 
-		const tokenRiskTimelinePromise = record.symbol
-			? getTokenRiskTimelineData(record.symbol).catch((error) => {
-					console.error(`Failed to load token risk timeline data for ${record.symbol}`, error)
-					return null
-				})
-			: Promise.resolve(null)
-
 		const [
 			overview,
 			tokenRightsData,
@@ -255,7 +246,6 @@ export const getStaticProps = withPerformanceLogging<TokenPageProps, TokenRouteP
 			tokenBorrowRoutesData,
 			hasLiquidations,
 			tokenRiskData,
-			tokenRiskTimelineData,
 			hasMarkets
 		] = await Promise.all([
 			overviewPromise,
@@ -267,7 +257,6 @@ export const getStaticProps = withPerformanceLogging<TokenPageProps, TokenRouteP
 			),
 			liquidationsPromise,
 			tokenRiskPromise,
-			tokenRiskTimelinePromise,
 			marketsAvailablePromise
 		])
 
@@ -290,7 +279,6 @@ export const getStaticProps = withPerformanceLogging<TokenPageProps, TokenRouteP
 			tokenRightsData,
 			incomeStatement,
 			tokenRiskData,
-			tokenRiskTimelineData,
 			hasLiquidations,
 			hasMarkets,
 			resolvedUnlocksSlug,
@@ -372,9 +360,6 @@ const TOKEN_SECTION_RENDERERS = {
 		/>
 	),
 	'token-risks': ({ section }) => <TokenRisksSection tokenSymbol={section.tokenSymbol} riskData={section.riskData} />,
-	'token-risk-timeline': ({ section }) => (
-		<TokenRiskTimelineSection tokenSymbol={section.tokenSymbol} timelineData={section.timelineData} />
-	),
 	'token-rights-and-value-accrual': ({ section }) => (
 		<TokenRightsByProtocol
 			name={section.name}

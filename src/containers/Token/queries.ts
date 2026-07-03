@@ -22,7 +22,6 @@ import {
 	TOKEN_RISK_LIMITATIONS_COMMON,
 	TOKEN_RISK_LIMITATION_MIN_BAD_DEBT_NULLS
 } from './tokenRisk.utils'
-import type { RiskTimelineResponse } from './tokenRiskTimeline.types'
 import type {
 	TokenBorrowRoutesHydration,
 	TokenIncomeStatementData,
@@ -106,7 +105,6 @@ export function getTokenPageSections({
 	tokenRightsData,
 	incomeStatement,
 	tokenRiskData,
-	tokenRiskTimelineData,
 	hasLiquidations,
 	hasMarkets,
 	resolvedUnlocksSlug,
@@ -124,7 +122,6 @@ export function getTokenPageSections({
 		hasIncentives: boolean
 	} | null
 	tokenRiskData: TokenRiskResponse | null
-	tokenRiskTimelineData: RiskTimelineResponse | null
 	hasLiquidations: boolean
 	hasMarkets: boolean
 	resolvedUnlocksSlug: string | null
@@ -159,14 +156,6 @@ export function getTokenPageSections({
 			label: 'Risks',
 			tokenSymbol: record.symbol,
 			riskData: tokenRiskData
-		})
-	}
-	if (tokenRiskTimelineData) {
-		sections.push({
-			id: 'token-risk-timeline',
-			label: 'Risk Timeline',
-			tokenSymbol: record.symbol,
-			timelineData: tokenRiskTimelineData
 		})
 	}
 	if (hasMarkets) {

@@ -22,7 +22,6 @@ import type { IProtocolMetadata } from '~/utils/metadata/types'
 import type { TokenDirectory } from '~/utils/tokenDirectory'
 import type { TokenRiskResponse } from '../tokenRisk.types'
 import { buildTokenRiskProtocolSummaries } from '../tokenRisk.utils'
-import type { RiskTimelineResponse } from '../tokenRiskTimeline.types'
 
 const { capturedTokenNavSections, renderedTokenSections } = vi.hoisted(() => ({
 	capturedTokenNavSections: [] as Array<{ id: string; label: string }>,
@@ -97,7 +96,6 @@ const state: {
 	emissionsSupplyMetrics: ProtocolEmissionSupplyMetricsMap
 	incomeStatementData: unknown
 	tokenRiskData: TokenRiskResponse | null
-	tokenRiskTimelineData: RiskTimelineResponse | null
 	initialYieldsRows: unknown[]
 	initialTokenBorrowRoutesData: unknown
 	tokenlist: Record<string, unknown>
@@ -117,7 +115,6 @@ const state: {
 	emissionsSupplyMetrics: {},
 	incomeStatementData: null,
 	tokenRiskData: null,
-	tokenRiskTimelineData: null,
 	initialYieldsRows: [],
 	initialTokenBorrowRoutesData: null,
 	tokenlist: {
@@ -156,7 +153,6 @@ function resetState() {
 	state.emissionsSupplyMetrics = {}
 	state.incomeStatementData = null
 	state.tokenRiskData = null
-	state.tokenRiskTimelineData = null
 	state.initialYieldsRows = []
 	state.initialTokenBorrowRoutesData = null
 	state.tokenlist = {
@@ -340,13 +336,6 @@ vi.mock('~/containers/Token/TokenRisksSection', () => ({
 	}
 }))
 
-vi.mock('~/containers/Token/TokenRiskTimelineSection', () => ({
-	TokenRiskTimelineSection: () => {
-		renderedTokenSections.push('token-risk-timeline')
-		return null
-	}
-}))
-
 vi.mock('~/containers/Token/TokenIncomeStatementSection', () => ({
 	TokenIncomeStatementSection: () => {
 		renderedTokenSections.push('token-income-statement')
@@ -457,10 +446,6 @@ vi.mock('~/containers/ProtocolOverview/queries', () => ({
 vi.mock('~/containers/Token/queries', async (importOriginal) => ({
 	...(await importOriginal<typeof import('~/containers/Token/queries')>()),
 	getTokenRiskData: vi.fn(() => Promise.resolve(state.tokenRiskData))
-}))
-
-vi.mock('~/containers/Token/tokenRiskTimeline.server', () => ({
-	getTokenRiskTimelineData: vi.fn(() => Promise.resolve(state.tokenRiskTimelineData))
 }))
 
 vi.mock('~/containers/Yields/server/dataset', () => ({

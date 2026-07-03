@@ -4,7 +4,6 @@ import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import type { TokenBorrowRoutesResponse } from './tokenBorrowRoutes.types'
 import type { TokenOverviewData } from './tokenOverview'
 import type { TokenRiskResponse } from './tokenRisk.types'
-import type { RiskTimelineResponse } from './tokenRiskTimeline.types'
 
 export type TokenIncomeStatementData = NonNullable<Awaited<ReturnType<typeof getProtocolIncomeStatement>>>
 
@@ -64,12 +63,6 @@ export type TokenPageSection =
 			label: 'Risks'
 			tokenSymbol: string
 			riskData: TokenRiskResponse
-	  }
-	| {
-			id: 'token-risk-timeline'
-			label: 'Risk Timeline'
-			tokenSymbol: string
-			timelineData: RiskTimelineResponse
 	  }
 	| {
 			id: 'token-rights-and-value-accrual'
