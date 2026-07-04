@@ -19,7 +19,8 @@ const MICA_REF_LINKS_BY_EXCHANGE: Partial<Record<string, string>> = {
 	okx: 'https://okx.com/join/DEFILLAMA',
 	kraken: 'https://proinvite.kraken.com/9f1e/ygb8jngg',
 	bybit: 'https://partner.bybit.com/b/DEFILLAMA',
-	backpack: 'https://backpack.exchange/join/tnk6icla'
+	backpack: 'https://backpack.exchange/join/tnk6icla',
+	nexo: 'https://nexo.sjv.io/c/7455292/918878/12544'
 }
 
 function shouldShowMicaExchange(exchange: ExchangeMetadataListEntry) {
