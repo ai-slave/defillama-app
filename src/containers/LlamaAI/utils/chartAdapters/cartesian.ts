@@ -2,7 +2,7 @@ import { formatChartValue } from '~/components/ECharts/formatters'
 import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import type { ChartConfiguration, ChartDataSeries } from '~/containers/LlamaAI/types'
 import {
-	buildAxisLogoUrls,
+	buildLogoByCategory,
 	getChartColor,
 	oldBlue,
 	parseStringNumber
@@ -536,17 +536,10 @@ export function adaptCartesianChartData(
 
 		let categoryLogos: string[] | undefined
 		if (axisType === 'category') {
-			const logoCats = config.axes.x.logoCategories
-			const allLogos = buildAxisLogoUrls(config.axes.x.entityType, logoCats)
-			if (allLogos?.length && logoCats?.length) {
-				// logoCats is built per-row on the backend (sorted, with duplicates), while categoryOrder is the
-				// de-duplicated unique x-values built here. Match by value, not index, or stacked/multi-series charts
-				// attach logos to the wrong categories.
-				const logoByCategory = new Map<string, string>()
-				for (let i = 0; i < logoCats.length; i++) {
-					const key = String(logoCats[i]).toLowerCase()
-					if (allLogos[i] && !logoByCategory.has(key)) logoByCategory.set(key, allLogos[i])
-				}
+			// matched by lowercased category value, not index — categoryOrder is de-duplicated while backend
+			// logo data is per-row, so index matching attaches logos to the wrong categories.
+			const logoByCategory = buildLogoByCategory(config.axes.x)
+			if (logoByCategory) {
 				categoryLogos = categoryOrder.map((cat) => logoByCategory.get(String(cat).toLowerCase()) ?? '')
 			}
 		}

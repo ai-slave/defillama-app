@@ -16,6 +16,7 @@ export interface ChartConfiguration {
 			valueSymbol?: string
 			entityType?: 'protocol' | 'chain' | 'token' | 'stablecoin' | 'equity'
 			logoCategories?: string[]
+			logoKeys?: Record<string, string>
 		}
 		yAxes: Array<{
 			id: string
