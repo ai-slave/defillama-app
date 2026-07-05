@@ -3,6 +3,7 @@ import type {
 	EmissionsChartRow,
 	EmissionsChartConfig,
 	EmissionEvent,
+	Insider,
 	ProtocolEmission,
 	TokenAllocationSplit
 } from './api.types'
@@ -39,4 +40,5 @@ export interface ProtocolEmissionResult {
 	unlockUsdChart: unknown[] | null
 	tbdSections: string[]
 	forecastSections: string[]
+	insiders: { methodology: string; addresses: Insider[] }
 }

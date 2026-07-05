@@ -907,7 +907,8 @@ export function createEmptyProtocolEmissionResult(): ProtocolEmissionResult {
 		tokenPrice: {},
 		unlockUsdChart: null,
 		tbdSections: EMPTY_TBD_SECTIONS,
-		forecastSections: EMPTY_FORECAST_SECTIONS
+		forecastSections: EMPTY_FORECAST_SECTIONS,
+		insiders: { methodology: '', addresses: [] }
 	}
 }
 
@@ -1048,7 +1049,11 @@ export const getProtocolEmissons = async (
 			tokenPrice,
 			unlockUsdChart: res.unlockUsdChart ?? null,
 			tbdSections: extractSections(res, 'isTBD'),
-			forecastSections: extractSections(res, 'isForecast')
+			forecastSections: extractSections(res, 'isForecast'),
+			insiders: {
+				methodology: res.insiders?.methodology ?? '',
+				addresses: res.insiders?.addresses ?? []
+			}
 		}
 	} catch (e) {
 		console.log(e)

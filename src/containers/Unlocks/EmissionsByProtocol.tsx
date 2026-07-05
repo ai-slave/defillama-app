@@ -15,7 +15,8 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { capitalizeFirstLetter, firstDayOfMonth, formattedNum, lastDayOfWeek, slug } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
-import type { EmissionsChartConfig, EmissionsDataset } from './api.types'
+import type { EmissionsChartConfig, EmissionsDataset, Insider } from './api.types'
+import { InsidersTable } from './InsidersTable'
 import { Pagination } from './Pagination'
 import type { ProtocolEmissionResult } from './types'
 import { UpcomingEvent } from './UpcomingEvent'
@@ -76,6 +77,7 @@ interface IEmission {
 	meta: Partial<TokenData>
 	tbdSections?: string[]
 	forecastSections?: string[]
+	insiders?: { methodology: string; addresses: Insider[] }
 }
 
 const getExtendedColors = ({
@@ -1125,6 +1127,10 @@ const ChartContainer = ({
 					) : null}
 				</div>
 			</div>
+
+			{data.insiders && data.insiders.addresses.length > 0 ? (
+				<InsidersTable insiders={data.insiders.addresses} methodology={data.insiders.methodology} token={data.token} />
+			) : null}
 
 			{data.token &&
 			Object.keys(tokenAllocation.current).length > 0 &&

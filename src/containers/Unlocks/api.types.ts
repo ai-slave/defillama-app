@@ -39,6 +39,27 @@ export interface ProtocolEmission {
 	unlocksPerDay?: number | null
 }
 
+export interface InsiderAllocation {
+	category: string
+	allocationSection?: string
+	received: number
+}
+
+export interface Insider {
+	address: string
+	label?: string
+	allocations: InsiderAllocation[]
+	received: number
+	balance: number
+	staked: number
+	transferredOut: number
+}
+
+export interface InsidersPayload {
+	methodology: string
+	addresses: Insider[]
+}
+
 export interface ProtocolEmissionDetail {
 	name: string
 	gecko_id?: string | null
@@ -77,6 +98,7 @@ export interface ProtocolEmissionDetail {
 	componentData?: {
 		sections?: Record<string, { isTBD?: boolean; isForecast?: boolean; colorFrom?: string; [key: string]: unknown }>
 	} | null
+	insiders?: InsidersPayload | null
 }
 
 export interface EmissionSupplyMetrics {
