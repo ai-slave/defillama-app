@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import { useMemo, useRef, useState } from 'react'
 import { Icon } from '~/components/Icon'
+import { BasicLink } from '~/components/Link'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/components/MetricPrimitives'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { definitions } from '~/public/definitions'
@@ -918,6 +919,14 @@ const TokenLiquidity = (props: IKeyMetricsProps) => {
 
 const TokenCGData = (props: IKeyMetricsProps) => {
 	if (!props.tokenCGData) return null
+	const priceLabel = `${props.token?.symbol ? `$${props.token.symbol}` : 'Token'} Price`
+	const linkedPriceLabel = props.token?.tokenPageRoute ? (
+		<BasicLink href={props.token.tokenPageRoute} className="text-(--link-text) hover:underline">
+			{priceLabel}
+		</BasicLink>
+	) : (
+		priceLabel
+	)
 	return (
 		<>
 			{props.tokenCGData?.marketCap?.current != null ? (
@@ -925,18 +934,12 @@ const TokenCGData = (props: IKeyMetricsProps) => {
 			) : null}
 			{props.tokenCGData?.price?.current != null ? (
 				props.tokenCGData.price.ath != null || props.tokenCGData.price.atl != null ? (
-					<MetricSection
-						label={`${props.token?.symbol ? `$${props.token.symbol}` : 'Token'} Price`}
-						value={props.formatPrice(props.tokenCGData.price.current)}
-					>
+					<MetricSection label={linkedPriceLabel} value={props.formatPrice(props.tokenCGData.price.current)}>
 						<SubMetricRow label="All Time High" value={props.formatPrice(props.tokenCGData.price.ath)} />
 						<SubMetricRow label="All Time Low" value={props.formatPrice(props.tokenCGData.price.atl)} />
 					</MetricSection>
 				) : (
-					<MetricRow
-						label={`${props.token?.symbol ? `$${props.token.symbol}` : 'Token'} Price`}
-						value={props.formatPrice(props.tokenCGData.price.current)}
-					/>
+					<MetricRow label={linkedPriceLabel} value={props.formatPrice(props.tokenCGData.price.current)} />
 				)
 			) : null}
 			{props.tokenCGData?.fdv?.current != null ? (

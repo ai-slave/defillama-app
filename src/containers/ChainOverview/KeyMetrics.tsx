@@ -450,18 +450,27 @@ function BridgedTvlSection({
 function ChainTokenInfo({ chainTokenInfo }: { chainTokenInfo: IChainOverviewData['chainTokenInfo'] }) {
 	if (!chainTokenInfo?.token_symbol) return null
 
+	const tokenLabel = (text: string) =>
+		chainTokenInfo.tokenPageRoute ? (
+			<BasicLink href={chainTokenInfo.tokenPageRoute} className="text-(--link-text) hover:underline">
+				{text}
+			</BasicLink>
+		) : (
+			text
+		)
+
 	return (
 		<>
 			<ChainMetricRow
-				label={`$${chainTokenInfo.token_symbol} Price`}
+				label={tokenLabel(`$${chainTokenInfo.token_symbol} Price`)}
 				value={formatNullableCurrency(chainTokenInfo.current_price)}
 			/>
 			<ChainMetricRow
-				label={`$${chainTokenInfo.token_symbol} Market Cap`}
+				label={tokenLabel(`$${chainTokenInfo.token_symbol} Market Cap`)}
 				value={formatNullableCurrency(chainTokenInfo.market_cap)}
 			/>
 			<ChainMetricRow
-				label={`$${chainTokenInfo.token_symbol} FDV`}
+				label={tokenLabel(`$${chainTokenInfo.token_symbol} FDV`)}
 				value={formatNullableCurrency(chainTokenInfo.fully_diluted_valuation)}
 			/>
 		</>

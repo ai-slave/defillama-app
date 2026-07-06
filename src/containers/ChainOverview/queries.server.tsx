@@ -46,6 +46,7 @@ import type {
 } from '~/utils/metadata/types'
 import { recordOptionalPageDataFailure } from '~/utils/optionalPageData'
 import type { RoutePhaseTimer } from '~/utils/perf'
+import { findTokenPageRoute, type TokenDirectory } from '~/utils/tokenDirectory'
 import { applyTvlOverlapBaseAdjustment } from '~/utils/tvl'
 import type { ChainChartLabels } from './constants'
 import { fetchHomepageUnlocksSummary } from './homepageUnlocks.server'
@@ -241,6 +242,7 @@ export async function getChainOverviewData({
 	categoriesAndTagsMetadata,
 	protocolLlamaswapDataset = null,
 	rwaChainsForActiveMcap = null,
+	tokenDirectory = null,
 	phaseTimer
 }: {
 	chain: string
@@ -249,6 +251,7 @@ export async function getChainOverviewData({
 	categoriesAndTagsMetadata: ICategoriesAndTags
 	protocolLlamaswapDataset?: ProtocolLlamaswapMetadata | null
 	rwaChainsForActiveMcap?: string[] | null
+	tokenDirectory?: TokenDirectory | null
 	phaseTimer?: RoutePhaseTimer
 }): Promise<IChainOverviewData | null> {
 	const currentChainMetadata: IChainMetadata =
@@ -776,6 +779,10 @@ export async function getChainOverviewData({
 					? {
 							gecko_id: currentChainMetadata.gecko_id ?? null,
 							token_symbol: currentChainMetadata.tokenSymbol ?? null,
+							tokenPageRoute: findTokenPageRoute(tokenDirectory, {
+								defillamaId: currentChainMetadata.id,
+								geckoId: currentChainMetadata.gecko_id
+							}),
 							current_price: cgData?.market_data?.current_price?.usd ?? null,
 							market_cap: cgData?.market_data?.market_cap?.usd ?? null,
 							fully_diluted_valuation: cgData?.market_data?.fully_diluted_valuation?.usd ?? null,

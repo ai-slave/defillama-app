@@ -60,6 +60,19 @@ export function findTokenDirectoryRecordByGeckoId(
 	return null
 }
 
+export function findTokenPageRoute(
+	tokenDirectory: TokenDirectory | null | undefined,
+	{ defillamaId, geckoId }: { defillamaId?: string | null; geckoId?: string | null }
+): string | null {
+	if (!tokenDirectory) return null
+
+	const record =
+		(defillamaId ? findTokenDirectoryRecordByDefillamaId(tokenDirectory, defillamaId) : null) ??
+		findTokenDirectoryRecordByGeckoId(tokenDirectory, geckoId)
+
+	return record ? getCanonicalTokenRoute(record) : null
+}
+
 export function findTokenDirectoryRecordByDefillamaId(
 	tokens: TokenDirectory,
 	defillamaId: string

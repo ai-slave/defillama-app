@@ -73,6 +73,7 @@ export interface IProtocolOverviewPageData {
 		gecko_id: string | null
 		gecko_url: string | null
 		explorer_url: string | null
+		tokenPageRoute?: string | null
 	}
 	category?: string | null
 	tags?: Array<string> | null

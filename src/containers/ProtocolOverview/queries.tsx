@@ -24,6 +24,7 @@ import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { buildProtocolOverviewHallmarks } from '~/utils/hallmarks'
 import type { IChainMetadata, IProtocolMetadata, ProtocolLlamaswapMetadata } from '~/utils/metadata/types'
 import { optionalPageData } from '~/utils/optionalPageData'
+import { findTokenPageRoute, type TokenDirectory } from '~/utils/tokenDirectory'
 import { fetchProtocolExpenses, fetchProtocolOverviewMetrics, fetchProtocolTvlChart } from './api'
 import type { IProtocolValueChart, IProtocolMetricsV2, IProtocolExpenses } from './api.types'
 import { resolveProtocolCategory } from './category'
@@ -121,7 +122,8 @@ export const getProtocolOverviewPageData = async ({
 	tokenlist,
 	cgExchangeIdentifiers,
 	emissionsSupplyMetrics,
-	protocolLlamaswapDataset
+	protocolLlamaswapDataset,
+	tokenDirectory = null
 }: {
 	protocolId: string
 	currentProtocolMetadata: IProtocolMetadata
@@ -131,6 +133,7 @@ export const getProtocolOverviewPageData = async ({
 	cgExchangeIdentifiers: string[]
 	emissionsSupplyMetrics: ProtocolEmissionSupplyMetricsMap
 	protocolLlamaswapDataset?: ProtocolLlamaswapMetadata
+	tokenDirectory?: TokenDirectory | null
 }): Promise<IProtocolOverviewPageData> => {
 	const displayName = currentProtocolMetadata.displayName ?? ''
 	const currentProtocolSlug = slug(displayName)
@@ -880,6 +883,10 @@ export const getProtocolOverviewPageData = async ({
 					: (protocolData.tokenCGData?.symbol ?? null),
 			gecko_id: tokenGeckoId,
 			gecko_url: tokenGeckoId ? `https://www.coingecko.com/en/coins/${tokenGeckoId}` : null,
+			tokenPageRoute: findTokenPageRoute(tokenDirectory, {
+				defillamaId: String(protocolData.id),
+				geckoId: tokenGeckoId
+			}),
 			explorer_url:
 				getBlockExplorerNew({
 					apiResponse: blockExplorersData,
