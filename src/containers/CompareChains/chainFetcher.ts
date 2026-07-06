@@ -1,24 +1,28 @@
 import { getAdapterChainOverview, getAdapterProtocolOverview } from '~/containers/AdapterMetrics/queries'
 import { getChainOverviewData } from '~/containers/ChainOverview/queries.server'
 import type { ICategoriesAndTags, IChainMetadata, IProtocolMetadata } from '~/utils/metadata/types'
+import type { TokenDirectory } from '~/utils/tokenDirectory'
 
 export const fetchChain = async ({
 	chain,
 	chainMetadata,
 	categoriesAndTagsMetadata,
-	protocolMetadata
+	protocolMetadata,
+	tokenDirectory = null
 }: {
 	chain: string
 	chainMetadata: Record<string, IChainMetadata>
 	categoriesAndTagsMetadata: ICategoriesAndTags
 	protocolMetadata: Record<string, IProtocolMetadata>
+	tokenDirectory?: TokenDirectory | null
 }) => {
 	const [chainOverviewData, dexVolumeData, chainFeesData, chainRevenueData] = await Promise.all([
 		getChainOverviewData({
 			chain,
 			chainMetadata,
 			protocolMetadata,
-			categoriesAndTagsMetadata
+			categoriesAndTagsMetadata,
+			tokenDirectory
 		}),
 		getAdapterChainOverview({
 			adapterType: 'dexs',

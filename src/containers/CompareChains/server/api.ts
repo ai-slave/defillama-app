@@ -55,7 +55,8 @@ export const chainCache = defineApiRoute({
 					chain: chainRoute.canonicalName,
 					chainMetadata: metadataCache.chainMetadata,
 					categoriesAndTagsMetadata: metadataCache.categoriesAndTags,
-					protocolMetadata: metadataCache.protocolMetadata
+					protocolMetadata: metadataCache.protocolMetadata,
+					tokenDirectory: metadataCache.tokenDirectory
 				})
 
 				await setObjectCache(cacheKey, chainData)
