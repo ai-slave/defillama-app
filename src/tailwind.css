@@ -236,8 +236,13 @@
 }
 
 @utility thin-scrollbar {
+	/*
+	  Not --bg-border: that now resolves to a 12%-alpha stroke, too faint for
+	  a scrollbar thumb. Semi-transparent neutral stays visible on any
+	  surface in both modes (≈ the pre-refresh thumb grays).
+	*/
 	scrollbar-width: thin;
-	scrollbar-color: var(--bg-border) transparent;
+	scrollbar-color: color-mix(in srgb, var(--ld-neutral-500) 55%, transparent) transparent;
 	&::-webkit-scrollbar {
 		width: 6px;
 		height: 6px;
@@ -246,11 +251,11 @@
 		background: transparent;
 	}
 	&::-webkit-scrollbar-thumb {
-		background: var(--bg-border);
+		background: color-mix(in srgb, var(--ld-neutral-500) 55%, transparent);
 		border-radius: 3px;
 	}
 	&::-webkit-scrollbar-thumb:hover {
-		background: var(--bg-muted);
+		background: var(--ld-neutral-500);
 	}
 }
 
@@ -450,66 +455,92 @@
 		src: url('/fonts/jetbrains.ttf') format('truetype');
 	}
 
+	/*
+	  Legacy variables, re-pointed at the Llama Design System semantics
+	  (src/styles/semantics.css). The --ld-* tokens flip under html.dark, so
+	  aliased variables need no dark override — only the remaining literals
+	  are re-declared in html.dark below. Do not add new consumers of these
+	  names: new code uses the registered utilities (bg-surface, text-primary,
+	  border-medium, …) directly. See design.md.
+	*/
 	:root {
 		/* Text Colors */
-		--text-primary: oklch(0.239 0 0); /* Main text */
-		--text-secondary: oklch(0.47 0.025 273.6); /* Secondary text */
-		--text-tertiary: oklch(0.644 0.022 270.1); /* Tertiary text */
-		--text-form: oklch(0.45 0 0); /* Form controls & buttons */
-		--text-label: oklch(0.4 0 0); /* Labels & descriptions */
-		--text-meta: oklch(0.556 0 0); /* Metadata & governance */
-		--text-disabled: oklch(0.56 0 0); /* Disabled text */
+		--text-primary: var(--ld-text-primary); /* Main text */
+		--text-secondary: var(--ld-text-secondary); /* Secondary text */
+		--text-tertiary: var(--ld-text-tertiary); /* Tertiary text */
+		--text-form: var(--ld-text-secondary); /* Form controls & buttons */
+		--text-label: var(--ld-text-secondary); /* Labels & descriptions */
+		--text-meta: var(--ld-text-tertiary); /* Metadata & governance */
+		/*
+		  Deliberately NOT --ld-text-disabled: Figma's Text/disabled (#dedede)
+		  is for disabled controls, but this legacy variable is used across
+		  ~46 files as "dimmed but readable" (flagged TVL values, descriptions,
+		  metadata). Tertiary matches the old readable gray in both modes.
+		*/
+		--text-disabled: var(--ld-text-tertiary); /* Disabled text */
 
 		/* Background Colors */
-		--bg-main: oklch(0.985 0 0); /* Main background */
-		--bg-secondary: oklch(0.979 0.003 264.5); /* Secondary background */
-		--bg-tertiary: oklch(0.949 0.005 275); /* Tertiary background */
-		--bg-border: oklch(0.859 0.013 276.1); /* Border background */
-		--bg-muted: oklch(0.644 0.022 270.1); /* Muted background */
-		--bg-card: oklch(1 0 0); /* Card background */
+		/*
+		  Surface, not elevated-1: consumers are floating surfaces (tooltips,
+		  menus, dropdowns) that were near-white in light mode; elevated-1
+		  made them visibly gray. In dark they now match card color and rely
+		  on the border for separation — the Figma overlay pattern.
+		*/
+		--bg-main: var(--ld-bg-surface); /* Main background */
+		--bg-secondary: var(--ld-bg-surface-elevated-1); /* Secondary background */
+		--bg-tertiary: var(--ld-bg-surface-elevated-2); /* Tertiary background */
+		--bg-border: var(--ld-border-medium); /* Border background */
+		--bg-muted: var(--ld-text-tertiary); /* Muted background */
+		--bg-card: var(--ld-bg-surface); /* Card background */
 		--bg-glass: oklch(0.991 0.001 106.4); /* Glass background */
-		--bg-input: oklch(0.95 0 0); /* Input/form background */
+		--bg-surface: var(--ld-bg-surface-elevated-1); /* Surface highlight (was dark-only) */
+		--bg-input: var(--ld-bg-surface-elevated-1); /* Input/form background */
 
 		/* Brand Colors */
-		--primary: oklch(0.527 0.178 269.6);
-		--primary-hover: oklch(0.527 0.178 269.6 / 0.2);
+		--primary: var(--ld-bg-brand);
+		--primary-hover: var(--ld-bg-brand-muted);
 
 		/* Utility Colors */
-		--divider: oklch(0.289 0 0 / 0.035);
-		--link: oklch(0.558 0.165 257.8);
-		--blue: oklch(0.609 0.182 257.3);
+		--divider: var(--ld-border-subtle);
+		--link: var(--ld-text-link);
+		--blue: var(--ld-bg-brand);
 		--dlnews: oklch(0.241 0.056 240.6);
 		--apy-pink: oklch(0.673 0.237 356.7);
 		--apy-blue: oklch(0.65 0.152 257.5);
 
 		/* Link Colors */
-		--link-bg: oklch(0.953 0.015 257.2);
-		--link-hover-bg: oklch(0.905 0.034 265.2);
-		--link-text: oklch(0.535 0.179 258.6); /* should be oklch(0.535 0.179 258.6) */
-		--link-active-bg: oklch(0.535 0.179 258.6);
+		--link-bg: var(--ld-bg-brand-muted); /* Figma bg-brand-transparent: 12% light / 20% dark */
+		/*
+		  Interim literals: hover needs one alpha step above --link-bg and the
+		  library has no token for it yet (flagged to design). Dark override
+		  below.
+		*/
+		--link-hover-bg: #1f67d233;
+		--link-text: var(--ld-text-link);
+		--link-active-bg: var(--ld-bg-brand);
 
 		/* Button Colors */
-		--btn-bg: oklch(0.937 0 0);
-		--btn-hover-bg: oklch(0.952 0 0);
-		--btn2-bg: oklch(0.527 0.178 269.6 / 0.1);
+		--btn-bg: var(--ld-bg-surface-elevated-1);
+		--btn-hover-bg: var(--ld-bg-surface-elevated-2);
+		--btn2-bg: var(--ld-bg-brand-muted);
 		--btn2-hover-bg: oklch(0.571 0.191 258.5 / 0.2);
-		--btn2-text: oklch(0.527 0.178 269.6);
+		--btn2-text: var(--ld-bg-brand);
 		--switch-bg: oklch(0.533 0.18 259 / 0.25);
 		--switch-border: oklch(0.533 0.18 259 / 0.5);
 		--link-button: oklch(0.533 0.18 259 / 0.12);
 		--link-button-hover: oklch(0.533 0.18 259 / 0.24);
 
 		/* Status Colors */
-		--success: oklch(0.549 0.181 143.4);
-		--error: oklch(0.584 0.236 29.6);
-		--warning: oklch(0.666 0.157 58.3);
+		--success: var(--ld-text-data-up);
+		--error: var(--ld-text-data-down);
+		--warning: var(--ld-text-warning);
 
 		/* Layout Colors */
-		--app-bg: oklch(0.976 0 0);
-		--cards-bg: oklch(1 0.001 106.4);
-		--cards-border: oklch(0.9 0 0);
-		--form-control-border: oklch(0.9 0 0);
-		--old-blue: oklch(0.533 0.18 259);
+		--app-bg: var(--ld-bg-page);
+		--cards-bg: var(--ld-bg-surface);
+		--cards-border: var(--ld-border-medium);
+		--form-control-border: var(--ld-border-medium);
+		--old-blue: var(--ld-bg-brand);
 	}
 
 	* {
@@ -524,58 +555,13 @@
 	}
 
 	html.dark {
-		/* Text Colors */
-		--text-primary: oklch(0.985 0 0); /* Main text */
-		--text-secondary: oklch(0.824 0.009 271.3); /* Secondary text */
-		--text-tertiary: oklch(0.553 0.029 270.9); /* Tertiary text */
-		--text-form: oklch(0.75 0 0); /* Form controls & buttons */
-		--text-label: oklch(0.845 0 0); /* Labels & descriptions */
-		--text-meta: oklch(0.735 0 0); /* Metadata & governance */
-		--text-disabled: oklch(0.65 0 0); /* Disabled text */
-
-		/* Background Colors */
-		--bg-main: oklch(0.259 0.01 260.7); /* Main background */
-		--bg-secondary: oklch(0.305 0.013 267.1); /* Secondary background */
-		--bg-tertiary: oklch(0.387 0.019 269.6); /* Tertiary background */
-		--bg-border: oklch(0.47 0.025 273.6); /* Border background */
-		--bg-muted: oklch(0.47 0.025 273.6); /* Muted background */
-		--bg-card: oklch(0 0 0); /* Card background */
+		/*
+		  Everything aliased to --ld-* tokens in :root flips automatically;
+		  only variables that still carry a literal dark value live here.
+		*/
 		--bg-glass: oklch(0.157 0.012 206.6 / 0.7); /* Glass background */
-		--bg-surface: oklch(0.21 0.008 274.5); /* Surface background */
-		--bg-input: oklch(0.292 0.005 248); /* Input/form background */
-
-		/* Brand Colors */
-		--primary: oklch(0.571 0.191 258.5);
-		--primary-hover: oklch(0.571 0.191 258.5 / 0.2);
-
-		/* Utility Colors */
-		--divider: oklch(0.289 0 0 / 0.435);
-		--link: oklch(0.642 0.193 258);
 		--dlnews: oklch(1 0 0);
-
-		/* Link Colors */
-		--link-bg: oklch(0.228 0.027 255.8);
-		--link-hover-bg: oklch(0.27 0.038 256.7);
-		--link-text: oklch(0.699 0.141 256.9);
-
-		/* Button Colors */
-		--btn-bg: oklch(0.261 0.012 270.9);
-		--btn-hover-bg: oklch(0.286 0.013 272.9);
-		--btn2-bg: oklch(0.571 0.191 258.5 / 0.1);
-		--btn2-hover-bg: oklch(0.571 0.191 258.5 / 0.2);
-		--btn2-text: oklch(0.571 0.191 258.5);
-
-		/* Status Colors */
-		--success: oklch(0.692 0.181 145.5);
-		--error: oklch(0.621 0.19 27.1);
-		--warning: oklch(0.82 0.147 81.2);
-
-		/* Layout Colors */
-		--app-bg: oklch(0.148 0.004 228.8);
-		--cards-bg: oklch(0.194 0.004 229);
-		--cards-border: oklch(0.255 0.002 247.9);
-		--form-control-border: oklch(0.318 0.008 240.1);
-		--old-blue: oklch(0.571 0.191 258.5);
+		--link-hover-bg: #1f67d24d; /* one alpha step above dark --link-bg (20%) */
 	}
 
 	body {
