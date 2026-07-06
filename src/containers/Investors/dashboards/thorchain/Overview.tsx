@@ -1,5 +1,6 @@
+import { useMemo } from 'react'
 import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
-import { FeeRevenueChart, MetricTrendChart, SeriesAreaChart } from './ChainBreakdownChart'
+import { ApiTrendChart, FeeRevenueChart } from './ChainBreakdownChart'
 import type { ApiTableData, Chart, Distribution, Kpi as KpiT } from './transform'
 import {
 	ApiTable,
@@ -8,10 +9,12 @@ import {
 	Kpi,
 	KpiGrid,
 	PageLoader,
+	PlaceholderCard,
 	SectionHeader,
 	TimeAreaCard,
 	useAdapterSeries,
-	useThorchainData
+	useThorchainData,
+	useThorchainDefs
 } from './ui'
 
 interface OverviewData {
@@ -24,133 +27,116 @@ interface OverviewData {
 
 const DEX = 'thorchain-dex'
 
-const GRID = 'grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4'
+const GRID = 'grid grid-cols-2 gap-3 lg:grid-cols-4'
 
+// THORChain is one integrated DEX — no separate "Chain" vs "DEX" accounting (per the
+// protocol's review). Headline KPIs are the lifetime income-statement figures from
+// the DefiLlama thorchain-dex adapter; TVL and its chart live in the Liquidity section.
 export default function Overview() {
 	const { data } = useThorchainData<OverviewData>('overview')
-	// DEX liquidity composition currently lives on the network endpoint.
+	// Liquidity composition currently lives on the network endpoint.
 	const { data: net } = useThorchainData<{ liquidity?: LiquidityData }>('network')
-	// Chain & DEX fee/revenue/volume KPIs come from DefiLlama adapters (chain → native `thorchain`,
-	// DEX → `thorchain-dex`), shared with the Financials tab via the same cache keys.
-	const chainFees = useAdapterSeries('chain-fees', () => ProtocolCharts.fees('thorchain'))
-	const chainRevenue = useAdapterSeries('chain-revenue', () => ProtocolCharts.revenue('thorchain'))
-	const dexFees = useAdapterSeries('dex-fees', () => ProtocolCharts.fees(DEX))
-	const dexRevenue = useAdapterSeries('dex-revenue', () => ProtocolCharts.revenue(DEX))
-	const dexHoldersRevenue = useAdapterSeries('dex-holders-revenue', () => ProtocolCharts.holdersRevenue(DEX))
-	const dexSupplySideRevenue = useAdapterSeries('dex-supply-side-revenue', () =>
+	const defs = useThorchainDefs()
+	const fees = useAdapterSeries('dex-fees', () => ProtocolCharts.fees(DEX))
+	const revenue = useAdapterSeries('dex-revenue', () => ProtocolCharts.revenue(DEX))
+	const holdersRevenue = useAdapterSeries('dex-holders-revenue', () => ProtocolCharts.holdersRevenue(DEX))
+	const supplySideRevenue = useAdapterSeries('dex-supply-side-revenue', () =>
 		ProtocolCharts.summary(DEX, 'fees', 'dailySupplySideRevenue')
 	)
-	const dexVolume = useAdapterSeries('dex-volume', () => ProtocolCharts.volume(DEX))
+	// Volume from the ir-server volume payload (Midgard daily history, same series as the
+	// Volume tab — same query key, so the tab loads instantly). The DefiLlama dex-volume
+	// series reads ~0.5% lower and would disagree with the Volume tab's lifetime KPI.
+	const { data: vol } = useThorchainData<{ kpis: Record<string, KpiT | undefined>; volumeChart: Chart }>('volume')
+	// Overview shows the TOTAL only — the by-type split stays on the Volume tab.
+	const totalVolumeChart: Chart | null = useMemo(() => {
+		const c = vol?.volumeChart
+		if (!c) return null
+		const total = c.dates.map((_, i) => c.series.reduce((sum, s) => sum + (s.data[i] ?? 0), 0))
+		return { ...c, title: 'Swap Volume', series: [{ name: 'Volume', type: 'bar', data: total }] }
+	}, [vol])
 	if (!data) return <PageLoader />
-
-	const chain = data.kpis.thorchain ?? {}
-	const dex = data.kpis.thorchainDex ?? {}
 
 	return (
 		<div className="flex flex-col gap-10">
-			{/* DEX data first. */}
+			{/* No section header — the page header above already carries the THORChain identity. */}
 			<section className="flex flex-col gap-6">
-				<SectionHeader>THORChain DEX</SectionHeader>
 				<div className={GRID}>
-					<Kpi kpi={dex.tvl} label="DEX TVL" />
-					<Kpi kpi={dexVolume.data?.d30} label="DEX Volume (30d)" />
-					<Kpi kpi={dexFees.data?.d30} label="Fees (30d)" />
-					<Kpi kpi={dexRevenue.data?.d30} label="Revenue (30d)" />
-					<Kpi kpi={dexHoldersRevenue.data?.d30} label="Holders Revenue (30d)" />
-					<Kpi kpi={dexSupplySideRevenue.data?.d30} label="Supply-side Revenue (30d)" />
+					<Kpi kpi={fees.data?.lifetime} label="Fees (Lifetime)" def={defs.fees} />
+					<Kpi
+						kpi={supplySideRevenue.data?.lifetime}
+						label="Supply-Side Revenue (Lifetime)"
+						def={defs.supplySideRevenue}
+					/>
+					<Kpi kpi={revenue.data?.lifetime} label="Revenue (Lifetime)" def={defs.revenue} />
+					<Kpi kpi={holdersRevenue.data?.lifetime} label="Holders Revenue (Lifetime)" def={defs.holdersRevenue} />
 				</div>
 
-				<SeriesAreaChart
-					title="DEX TVL"
-					subtitle="Pooled liquidity in the THORChain DEX."
-					name="TVL"
-					value={dex.tvl?.formatted}
-					zoomDays={60}
-					queryKey={['thorchain-dex-tvl']}
-					queryFn={() => ProtocolCharts.tvl(DEX)}
-				/>
-				<FeeRevenueChart
-					source="dex"
-					title="DEX Fees & Revenue"
-					subtitle="Swap fees and protocol revenue from the THORChain DEX adapter."
-				/>
-				<MetricTrendChart
-					title="DEX Volume"
-					subtitle="Cumulative swap volume."
-					name="Volume"
-					queryKey={['thorchain-dex-volume']}
-					queryFn={() => ProtocolCharts.volume(DEX)}
-					defaultView="cumulative"
-				/>
-			</section>
+				<FeeRevenueChart source="dex" title="Fees & Revenue" subtitle="Swap fees and protocol revenue." />
 
-			{net?.liquidity && <LiquiditySection liquidity={net.liquidity} />}
-
-			{/* Chain data at the bottom. */}
-			<section className="flex flex-col gap-6">
-				<SectionHeader>THORChain (Chain)</SectionHeader>
 				<div className={GRID}>
-					<Kpi kpi={chain.tvl} label="TVL" />
-					<Kpi kpi={chainFees.data?.d30} label="Chain Fees (30d)" />
-					<Kpi kpi={chainRevenue.data?.d30} label="Chain Revenue (30d)" />
+					<Kpi kpi={vol?.kpis.volumeLifetime} label="Volume (Lifetime)" />
 				</div>
-
-				<TimeAreaCard
-					chart={data.tvlChart}
-					subtitle="Total value locked across the THORChain chain."
-					value={chain.tvl?.formatted}
-				/>
-				<FeeRevenueChart source="chain" title="Chain Fees & Revenue" subtitle="Chain-level app fees and revenue." />
+				<ApiTrendChart chart={totalVolumeChart} subtitle="Cumulative swap volume." defaultView="cumulative" />
 			</section>
+
+			{net?.liquidity ? (
+				<LiquiditySection liquidity={net.liquidity} tvlChart={data.tvlChart} tvl={data.kpis.thorchain?.tvl} />
+			) : (
+				<section className="flex flex-col gap-6">
+					<SectionHeader>Liquidity</SectionHeader>
+					<PlaceholderCard
+						title="Liquidity"
+						subtitle="Pool-level liquidity data unavailable."
+						note="network.liquidity"
+					/>
+				</section>
+			)}
 		</div>
 	)
 }
 
-export interface LiquidityData {
-	tvlChart: Chart
-	tvlByChainChart: Chart
+interface LiquidityData {
 	distribution: Distribution
 	chainDistribution: Distribution
-	tokenBreakdown: Distribution
-	tokenValues: ApiTableData
 	poolDepthChart: Chart
 	pools: ApiTableData
 	kpis: Record<string, KpiT | undefined>
 }
 
-const LIQUIDITY_KPIS: [string, string][] = [
-	['tvl', 'TVL'],
-	['pooledLiquidity', 'Pooled Liquidity'],
-	['poolCount', 'Pools'],
-	['majorsShare', 'Majors Share'],
-	['stablecoinsShare', 'Stablecoins Share'],
-	['topPoolByDepth', 'Top Pool by Depth']
-]
-
-// DEX liquidity: pooled-liquidity composition (by token / asset class / chain), pool depth
-// and pools. The TVL it composes is the DEX/pooled-liquidity TVL, shown separately above.
-// Data comes from the network endpoint's `liquidity` object.
-function LiquiditySection({ liquidity }: { liquidity: LiquidityData }) {
+// Liquidity: TVL + pooled-liquidity composition, with the by-blockchain split leading
+// (per the protocol's review). Data comes from the network endpoint's `liquidity` object.
+function LiquiditySection({ liquidity, tvlChart, tvl }: { liquidity: LiquidityData; tvlChart: Chart; tvl?: KpiT }) {
+	const defs = useThorchainDefs()
+	const LIQUIDITY_KPIS: Array<[string, string, string | undefined]> = [
+		['tvl', 'TVL', defs.tvl],
+		['poolCount', 'Pools', undefined],
+		['blockchains', 'Blockchains', undefined],
+		['majorsShare', 'Majors Share', undefined],
+		['stablecoinsShare', 'Stablecoins Share', undefined],
+		['topPoolByDepth', 'Top Pool by Depth', undefined]
+	]
+	// Connected-blockchain count derived from the by-chain distribution, so the KPI
+	// always agrees with the donut below.
+	const blockchainCount = liquidity.chainDistribution?.data?.length ?? 0
+	const kpis = {
+		...liquidity.kpis,
+		blockchains: blockchainCount > 0 ? { value: blockchainCount, formatted: String(blockchainCount) } : undefined
+	}
 	return (
 		<section className="flex flex-col gap-6">
-			<SectionHeader>DEX Liquidity</SectionHeader>
-			<KpiGrid kpis={liquidity.kpis} items={LIQUIDITY_KPIS} />
+			<SectionHeader>Liquidity</SectionHeader>
+			{/* 6 KPIs at 3-per-row on desktop: [TVL, Pools, Blockchains] / [Majors, Stables, Top Pool]. */}
+			<KpiGrid kpis={kpis} items={LIQUIDITY_KPIS} cols={3} />
+
+			<TimeAreaCard chart={tvlChart} subtitle="Total value locked, as measured by DefiLlama." value={tvl?.formatted} />
 
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-				<DonutCard dist={liquidity.tokenBreakdown} subtitle="Pooled liquidity by token." />
-				<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-					<h3 className="mb-3 text-sm font-semibold text-(--text-primary)">
-						{liquidity.tokenValues.title ?? 'Token Values'}
-					</h3>
-					<ApiTable table={liquidity.tokenValues} maxHeight="420px" />
-				</div>
+				<DonutCard dist={liquidity.chainDistribution} subtitle="Liquidity by connected blockchain." />
+				<DonutCard dist={liquidity.distribution} subtitle="Liquidity by asset class." />
 			</div>
 
-			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-				<DonutCard dist={liquidity.distribution} subtitle="Pooled liquidity by asset class." />
-				<DonutCard dist={liquidity.chainDistribution} subtitle="Pooled liquidity by connected chain." />
-			</div>
-
+			{/* One pool/token view: every THORChain pool IS a single token, so the old
+			    "Token Breakdown" donut and "Token Values" table duplicated these two. */}
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<CategoryBarCard chart={liquidity.poolDepthChart} />
 				<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">

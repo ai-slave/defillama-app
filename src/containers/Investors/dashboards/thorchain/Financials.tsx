@@ -1,10 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { useCustomServerData } from '~/containers/Investors/CustomServerDataContext'
 import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
-import { ChainBreakdownChart } from './ChainBreakdownChart'
-import type { ThorchainChainIncome } from './serverData'
+import { ApiTrendChart, ChainBreakdownChart } from './ChainBreakdownChart'
 import type { ApiTableData, Chart, Distribution, Kpi as KpiT } from './transform'
 import {
 	ApiTable,
@@ -12,46 +10,32 @@ import {
 	DonutCard,
 	Kpi,
 	KpiBand,
-	KpiGrid,
 	PageLoader,
+	PlaceholderCard,
 	SectionHeader,
 	SegToggle,
-	TimeBarCard,
-	ToggledTimeChart,
 	useAdapterSeries,
-	useThorchainData
+	useThorchainData,
+	useThorchainDefs,
+	type SeriesKpis
 } from './ui'
 
-// DefiLlama protocol slug carrying THORChain's fees/revenue/income-statement (the DEX adapter).
+// DefiLlama protocol slug carrying THORChain's fees/revenue/income-statement.
 const DEX = 'thorchain-dex'
 const NAME = 'THORChain'
 
-// Same setup as odyssey's MetronomeIncomeStatement: render the shared ProtocolOverview component with
-// a Table/Sankey toggle. The DEX statement comes from the internal income-statement route (`protocol`);
-// the chain statement is pre-fetched server-side (`statement`) since the chain isn't a DefiLlama
-// protocol and that route can't resolve it.
-function ThorchainIncomeStatement({
-	protocol,
-	title,
-	subtitle,
-	statement
-}: {
-	protocol?: string
-	title: string
-	subtitle?: string
-	statement?: ThorchainChainIncome
-}) {
+// Same setup as odyssey's MetronomeIncomeStatement: render the shared ProtocolOverview
+// component with a Table/Sankey toggle, fed by the internal income-statement route.
+function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle?: string }) {
 	const [view, setView] = useState<'table' | 'sankey'>('table')
 	const query = useQuery({
-		queryKey: ['thorchain-income-statement', protocol],
-		queryFn: () => fetch(`/api/public/income-statement?protocol=${protocol}`).then((r) => (r.ok ? r.json() : null)),
-		enabled: !statement && Boolean(protocol),
+		queryKey: ['thorchain-income-statement', DEX],
+		queryFn: () => fetch(`/api/public/income-statement?protocol=${DEX}`).then((r) => (r.ok ? r.json() : null)),
 		retry: 2,
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
-	const data = statement ?? query.data
-	const isLoading = !statement && query.isLoading
+	const data = query.data
 	const hasData =
 		data?.data && (['monthly', 'quarterly', 'yearly'] as const).some((k) => Object.keys(data.data[k] ?? {}).length > 0)
 
@@ -70,14 +54,14 @@ function ThorchainIncomeStatement({
 				/>
 			}
 		>
-			{isLoading ? (
+			{query.isLoading ? (
 				<div className="flex h-[320px] items-center justify-center text-xs text-(--text-tertiary)">Loading…</div>
 			) : hasData ? (
 				<IncomeStatement
 					name={NAME}
 					incomeStatement={data}
 					view={view}
-					anchorId={`thorchain-income-${protocol ?? 'chain'}`}
+					anchorId="thorchain-income"
 					showTitles={false}
 					className="border-none bg-transparent p-0"
 				/>
@@ -96,35 +80,17 @@ interface FinancialsData {
 	affiliate: {
 		leaderboard: ApiTableData
 		topShareDonut: Distribution
-		monthlyChart: Chart
+		dailyChart: Chart
 		kpis: Record<string, KpiT | undefined>
 	} | null
-	burn: { burnChart: Chart; kpis: Record<string, KpiT | undefined> }
 }
-
-const AFFILIATE_KPIS: [string, string][] = [
-	['affiliateLifetime', 'Affiliate (Lifetime)'],
-	['affiliate30d', 'Affiliate (30d)'],
-	['topAffiliate', 'Top Affiliate'],
-	['affiliateCount', 'Affiliates']
-]
-
-const BURN_KPIS: [string, string][] = [
-	['burnedLifetime', 'Burned (Lifetime)'],
-	['burnedLifetimeUsd', 'Burned USD (Lifetime)'],
-	['burned30d', 'Burned (30d)'],
-	['burned30dUsd', 'Burned USD (30d)'],
-	['burnRate', 'Burn Rate']
-]
 
 export default function Financials() {
 	const { data } = useThorchainData<FinancialsData>('financials')
-	const chainIncome = useCustomServerData<ThorchainChainIncome>('thorchainChainIncome')
-	// Fees & revenue KPIs from the DefiLlama thorchain-dex adapter (same cache keys as the Overview),
-	// so each window matches across tabs. Bespoke splits with no DefiLlama equivalent — Nodes & Pools
-	// Share and Top Chain by Fees — stay on the ir-server.
+	const defs = useThorchainDefs()
+	// Fees & composition KPIs from the DefiLlama thorchain-dex adapter (same cache keys as
+	// the Overview), so each window matches across tabs. All windows are Lifetime / 1Y / 30D / 7D.
 	const fees = useAdapterSeries('dex-fees', () => ProtocolCharts.fees(DEX))
-	const revenue = useAdapterSeries('dex-revenue', () => ProtocolCharts.revenue(DEX))
 	const holdersRev = useAdapterSeries('dex-holders-revenue', () => ProtocolCharts.holdersRevenue(DEX))
 	const supplySide = useAdapterSeries('dex-supply-side-revenue', () =>
 		ProtocolCharts.summary(DEX, 'fees', 'dailySupplySideRevenue')
@@ -132,20 +98,17 @@ export default function Financials() {
 	const protocolRev = useAdapterSeries('dex-protocol-revenue', () =>
 		ProtocolCharts.summary(DEX, 'fees', 'dailyProtocolRevenue')
 	)
-	const userFees = useAdapterSeries('dex-user-fees', () => ProtocolCharts.summary(DEX, 'fees', 'dailyUserFees'))
 	if (!data) return <PageLoader />
 
-	const { kpis, distribution, affiliate, burn } = data
-	const f = fees.data
-	const r = revenue.data
-	// Revenue margin = lifetime revenue / lifetime fees, computed from the same DefiLlama series.
-	const margin: KpiT | undefined =
-		r && f?.lifetime.value
-			? {
-					value: r.lifetime.value / f.lifetime.value,
-					formatted: `${((r.lifetime.value / f.lifetime.value) * 100).toFixed(1)}%`
-				}
-			: undefined
+	const { distribution, affiliate } = data
+
+	// Fees in its own group; the revenue lines it decomposes into share one
+	// "Composition" group below (a 4-wide grid, so each line reads as one row).
+	const composition: Array<{ label: string; def?: string; data?: SeriesKpis | null }> = [
+		{ label: 'Supply-Side Revenue', def: defs.supplySideRevenue, data: supplySide.data },
+		{ label: 'Protocol Revenue', def: defs.protocolRevenue, data: protocolRev.data },
+		{ label: 'Holders Revenue', def: defs.holdersRevenue, data: holdersRev.data }
+	]
 
 	return (
 		<div className="flex flex-col gap-10">
@@ -153,60 +116,64 @@ export default function Financials() {
 				<SectionHeader>Fees & Revenue</SectionHeader>
 
 				<KpiBand label="Fees">
-					<Kpi kpi={f?.lifetime} label="Lifetime" />
-					<Kpi kpi={f?.y1} label="1Y" />
-					<Kpi kpi={f?.d30} label="30d" />
-					<Kpi kpi={f?.d7} label="7d" />
+					<Kpi kpi={fees.data?.lifetime} label="Lifetime" def={defs.fees} />
+					<Kpi kpi={fees.data?.y1} label="1Y" />
+					<Kpi kpi={fees.data?.d30} label="30D" />
+					<Kpi kpi={fees.data?.d7} label="7D" />
 				</KpiBand>
 
-				<KpiBand label="Revenue">
-					<Kpi kpi={r?.lifetime} label="Lifetime" />
-					<Kpi kpi={r?.y1} label="1Y" />
-					<Kpi kpi={r?.d30} label="30d" />
-					<Kpi kpi={margin} label="Margin" />
-				</KpiBand>
-
-				<KpiBand label="Revenue Composition">
-					<Kpi kpi={userFees.data?.lifetime} label="User Fees (Lifetime)" />
-					<Kpi kpi={supplySide.data?.lifetime} label="Supply-side (Lifetime)" />
-					<Kpi kpi={protocolRev.data?.lifetime} label="Protocol (Lifetime)" />
-					<Kpi kpi={holdersRev.data?.lifetime} label="Holders (Lifetime)" />
-					<Kpi kpi={supplySide.data?.d30} label="Supply-side (30d)" />
-					<Kpi kpi={holdersRev.data?.d30} label="Holders (30d)" />
-					<Kpi kpi={kpis.nodesPoolsShare} label="Nodes & Pools Share" />
-					<Kpi kpi={kpis.topChainByFees} label="Top Chain by Fees" />
+				<KpiBand label="Composition">
+					{composition.flatMap(({ label, def, data: d }) => [
+						<Kpi key={`${label}-lifetime`} kpi={d?.lifetime} label={`${label} (Lifetime)`} def={def} />,
+						<Kpi key={`${label}-1y`} kpi={d?.y1} label={`${label} (1Y)`} />,
+						<Kpi key={`${label}-30d`} kpi={d?.d30} label={`${label} (30D)`} />,
+						<Kpi key={`${label}-7d`} kpi={d?.d7} label={`${label} (7D)`} />
+					])}
 				</KpiBand>
 
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-					<ChainBreakdownChart metric="fees" title="DEX Fees by Chain" />
-					<ChainBreakdownChart metric="revenue" title="DEX Revenue by Chain" />
+					<ChainBreakdownChart metric="fees" title="Fees by Chain" />
+					<ChainBreakdownChart metric="revenue" title="Revenue by Chain" />
 				</div>
 
 				<DonutCard
 					dist={distribution}
-					subtitle="30-day system income split across nodes, LPs, TCY stakers, funds and burn."
+					subtitle="Protocol-defined split of system income: 75% nodes & LPs, 10% TCY stakers, 5% dev fund, 5% marketing fund, 5% burn."
 				/>
 			</section>
 
-			{/* Internal DefiLlama income statements (odyssey pattern), one per protocol, each with a Table/Sankey toggle. */}
 			<section className="flex flex-col gap-6">
-				<SectionHeader>Income Statements</SectionHeader>
-				<ThorchainIncomeStatement
-					title="THORChain (Chain) Income Statement"
-					subtitle="Chain-level fees & revenue across all THORChain activity."
-					statement={chainIncome}
-				/>
-				<ThorchainIncomeStatement
-					protocol={DEX}
-					title="THORChain DEX Income Statement"
-					subtitle="Swap fees & protocol revenue from the THORChain DEX adapter."
-				/>
+				<SectionHeader>Income Statement</SectionHeader>
+				<ThorchainIncomeStatement title="THORChain Income Statement" subtitle="Fees & protocol revenue." />
 			</section>
 
+			{!affiliate && (
+				<section className="flex flex-col gap-6">
+					<SectionHeader>Affiliate Fees</SectionHeader>
+					<PlaceholderCard
+						title="Affiliate Fees"
+						subtitle="Affiliate fee feed unavailable."
+						note="raynalytics daily-affiliate-fees"
+					/>
+				</section>
+			)}
 			{affiliate && (
 				<section className="flex flex-col gap-6">
 					<SectionHeader>Affiliate Fees</SectionHeader>
-					<KpiGrid kpis={affiliate.kpis} items={AFFILIATE_KPIS} />
+					{/* "Included in total fees" lives in the (i) tooltip, not a second header. */}
+					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+						<Kpi kpi={affiliate.kpis.affiliateLifetime} label="Lifetime" def={defs.affiliateFees} />
+						<Kpi kpi={affiliate.kpis.affiliate1y} label="1Y" />
+						<Kpi kpi={affiliate.kpis.affiliate30d} label="30D" />
+						<Kpi kpi={affiliate.kpis.affiliate7d} label="7D" />
+						<Kpi kpi={affiliate.kpis.topAffiliate} label="Top Affiliate" />
+						<Kpi kpi={affiliate.kpis.affiliateCount} label="Affiliates" />
+						<Kpi kpi={affiliate.kpis.affiliateVolumeLifetime} label="Affiliate Volume (Lifetime)" />
+					</div>
+					<ApiTrendChart
+						chart={affiliate.dailyChart}
+						subtitle="Affiliate fees paid to integrating wallets and interfaces."
+					/>
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 						<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
 							<h3 className="mb-3 text-sm font-semibold text-(--text-primary)">
@@ -216,15 +183,8 @@ export default function Financials() {
 						</div>
 						<DonutCard dist={affiliate.topShareDonut} subtitle="Share of lifetime affiliate fees." />
 					</div>
-					<TimeBarCard chart={affiliate.monthlyChart} />
 				</section>
 			)}
-
-			<section className="flex flex-col gap-6">
-				<SectionHeader>RUNE Burn</SectionHeader>
-				<KpiGrid kpis={burn.kpis} items={BURN_KPIS} />
-				<ToggledTimeChart chart={burn.burnChart} value={burn.kpis.burned30d?.formatted} />
-			</section>
 		</div>
 	)
 }

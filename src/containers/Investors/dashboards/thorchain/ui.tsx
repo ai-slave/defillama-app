@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, useMemo, useState } from 'react'
+import { lazy } from 'react'
 import type { IBarChartProps, IChartProps, IHBarChartProps, IPieChartProps } from '~/components/ECharts/types'
+import { useMedia } from '~/hooks/useMedia'
 import { formattedNum } from '~/utils'
 import {
 	barStacks,
 	chartToData,
-	cumulativeChart,
 	unitSymbol,
 	type ApiTableData,
 	type Chart,
@@ -29,6 +29,13 @@ export function useThorchainData<T>(fn: string) {
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
+}
+
+// One-line financial-term definitions served by the ir-server (metadata.definitions),
+// surfaced as (i) tooltips so every Fees/Revenue term is defined in place.
+export function useThorchainDefs(): Record<string, string> {
+	const { data } = useThorchainData<{ definitions?: Record<string, string> }>('metadata')
+	return data?.definitions ?? {}
 }
 
 const DAY = 86400
@@ -82,11 +89,11 @@ export const PALETTE = [
 	'#ff9f45',
 	'#7ee787'
 ]
-export const colorMap = (names: string[]): Record<string, string> =>
+const colorMap = (names: string[]): Record<string, string> =>
 	Object.fromEntries(names.map((n, i) => [n, PALETTE[i % PALETTE.length]]))
 
 const THREE_MONTHS = 90
-export function lastNDaysZoom(len: number, days = THREE_MONTHS): any {
+function lastNDaysZoom(len: number, days = THREE_MONTHS): any {
 	if (len <= days) return undefined
 	const start = ((len - days) / len) * 100
 	return {
@@ -99,10 +106,17 @@ export function lastNDaysZoom(len: number, days = THREE_MONTHS): any {
 
 // ---------------------------------------------------------------- KPI + layout
 
-export function KpiCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function KpiCard({ label, value, sub, def }: { label: string; value: string; sub?: string; def?: string }) {
 	return (
 		<div className="flex flex-col gap-1.5 rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<span className="text-[11px] font-medium tracking-wider text-(--text-tertiary) uppercase">{label}</span>
+			<span className="flex items-center gap-1 text-[11px] font-medium tracking-wider text-(--text-tertiary) uppercase">
+				{label}
+				{def && (
+					<span title={def} className="cursor-help normal-case" aria-label={def}>
+						ⓘ
+					</span>
+				)}
+			</span>
 			<span className="font-jetbrains text-xl font-semibold tracking-tight text-(--text-primary) tabular-nums">
 				{value}
 			</span>
@@ -121,7 +135,7 @@ export function KpiGrid({
 	cols = 4
 }: {
 	kpis: Record<string, KpiT | undefined>
-	items: [string, string][]
+	items: Array<[string, string] | [string, string, string | undefined]>
 	label?: string
 	cols?: 3 | 4
 }) {
@@ -129,9 +143,9 @@ export function KpiGrid({
 		<div
 			className={`grid gap-3 ${cols === 3 ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'}`}
 		>
-			{items.map(([key, lbl]) => {
+			{items.map(([key, lbl, def]) => {
 				const k = kpis[key]
-				return k ? <KpiCard key={key} label={lbl} value={k.formatted} /> : null
+				return k ? <KpiCard key={key} label={lbl} value={k.formatted} def={def} /> : null
 			})}
 		</div>
 	)
@@ -150,8 +164,8 @@ export function SectionHeader({ children }: { children: React.ReactNode }) {
 
 // Single KPI that degrades to a placeholder when the backend hasn't shipped the
 // field yet. `note` names the awaited API path so it's obvious what to wire later.
-export function Kpi({ kpi, label, note }: { kpi?: KpiT; label: string; note?: string }) {
-	if (kpi) return <KpiCard label={label} value={kpi.formatted} />
+export function Kpi({ kpi, label, note, def }: { kpi?: KpiT; label: string; note?: string; def?: string }) {
+	if (kpi) return <KpiCard label={label} value={kpi.formatted} def={def} />
 	return (
 		<div className="flex flex-col gap-1.5 rounded-lg border border-dashed border-(--cards-border) bg-(--cards-bg) p-4">
 			<span className="text-[11px] font-medium tracking-wider text-(--text-tertiary) uppercase">{label}</span>
@@ -163,7 +177,7 @@ export function Kpi({ kpi, label, note }: { kpi?: KpiT; label: string; note?: st
 	)
 }
 
-// A labeled group of KPIs (e.g. "THORChain (Chain)" vs "THORChain DEX").
+// A labeled group of KPIs (e.g. the "Fees" vs "Revenue" bands on Financials).
 export function KpiBand({ label, children }: { label: string; children: React.ReactNode }) {
 	return (
 		<div className="flex flex-col gap-3">
@@ -283,19 +297,24 @@ export function TimeAreaCard({
 	chart,
 	subtitle,
 	value,
-	valueSymbol
+	valueSymbol,
+	fullRange,
+	control
 }: {
 	chart: Chart
 	subtitle?: string
 	value?: string
 	valueSymbol?: string
+	/** Open showing the whole history instead of default-zooming to the last 90 days. */
+	fullRange?: boolean
+	control?: React.ReactNode
 }) {
 	if (!chart?.series?.length)
 		return <PlaceholderCard title={chart?.title ?? ''} subtitle={subtitle} note="empty series" />
 	const data = chartToData(chart)
 	const stacks = chart.series.map((s) => s.name)
 	return (
-		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} value={value}>
+		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} value={value} control={control}>
 			<AreaChart
 				chartData={data}
 				stacks={stacks}
@@ -305,7 +324,7 @@ export function TimeAreaCard({
 				title=""
 				height="360px"
 				hideGradient={stacks.length > 1}
-				chartOptions={lastNDaysZoom(data.length)}
+				chartOptions={fullRange ? undefined : lastNDaysZoom(data.length)}
 			/>
 		</ChartCard>
 	)
@@ -316,18 +335,20 @@ export function TimeBarCard({
 	chart,
 	subtitle,
 	value,
-	valueSymbol
+	valueSymbol,
+	control
 }: {
 	chart: Chart
 	subtitle?: string
 	value?: string
 	valueSymbol?: string
+	control?: React.ReactNode
 }) {
 	if (!chart?.series?.length)
 		return <PlaceholderCard title={chart?.title ?? ''} subtitle={subtitle} note="empty series" />
 	const data = chartToData(chart)
 	return (
-		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} value={value}>
+		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} value={value} control={control}>
 			<BarChart
 				chartData={data}
 				stacks={barStacks(chart)}
@@ -337,71 +358,6 @@ export function TimeBarCard({
 				height="360px"
 				chartOptions={lastNDaysZoom(data.length)}
 			/>
-		</ChartCard>
-	)
-}
-
-// Daily bars with a client-side Daily ↔ Cumulative toggle (cumulative = running
-// sum, rendered as overlaid lines). Backend only ships the daily series.
-export function ToggledTimeChart({
-	chart,
-	subtitle,
-	value,
-	valueSymbol
-}: {
-	chart: Chart
-	subtitle?: string
-	value?: string
-	valueSymbol?: string
-}) {
-	const [view, setView] = useState<'daily' | 'cumulative'>('daily')
-	const daily = useMemo(() => chartToData(chart), [chart])
-	const cumulative = useMemo(() => chartToData(cumulativeChart(chart)), [chart])
-	if (!chart?.series?.length)
-		return <PlaceholderCard title={chart?.title ?? ''} subtitle={subtitle} note="empty series" />
-	const sym = valueSymbol ?? unitSymbol(chart.unit)
-	const names = chart.series.map((s) => s.name)
-	const data = view === 'daily' ? daily : cumulative
-	return (
-		<ChartCard
-			title={chart.title ?? ''}
-			subtitle={subtitle ?? chart.subtitle}
-			value={value}
-			control={
-				<SegToggle
-					options={[
-						{ value: 'daily', label: 'Daily' },
-						{ value: 'cumulative', label: 'Cumulative' }
-					]}
-					value={view}
-					onChange={(v) => setView(v)}
-				/>
-			}
-		>
-			{view === 'daily' ? (
-				<BarChart
-					chartData={data}
-					stacks={barStacks(chart)}
-					stackColors={colorMap(names)}
-					valueSymbol={sym}
-					title=""
-					height="360px"
-					chartOptions={lastNDaysZoom(data.length)}
-				/>
-			) : (
-				<AreaChart
-					chartData={data}
-					stacks={names}
-					stackColors={colorMap(names)}
-					color={THOR_TEAL}
-					valueSymbol={sym}
-					title=""
-					height="360px"
-					isStackedChart={names.length > 1}
-					hideGradient={names.length > 1}
-					chartOptions={lastNDaysZoom(data.length)}
-				/>
-			)}
 		</ChartCard>
 	)
 }
@@ -438,16 +394,23 @@ export function DonutCard({
 	subtitle?: string
 	valueSymbol?: string
 }) {
+	// On narrow screens a right-hand vertical legend squeezes the pie into a sliver;
+	// drop the legend below the chart instead.
+	const isSmall = useMedia('(max-width: 640px)')
 	return (
 		<ChartCard title={dist.title ?? ''} subtitle={subtitle}>
 			<PieChart
 				chartData={dist.data.map((d) => ({ name: d.name, value: d.value }))}
 				stackColors={colorMap(dist.data.map((d) => d.name))}
 				valueSymbol={valueSymbol}
-				radius={['45%', '72%']}
+				radius={isSmall ? ['38%', '60%'] : ['45%', '72%']}
 				height="360px"
 				showLegend
-				legendPosition={{ orient: 'vertical', left: 'right', top: 'middle' }}
+				legendPosition={
+					isSmall
+						? { orient: 'horizontal', left: 'center', bottom: 0 }
+						: { orient: 'vertical', left: 'right', top: 'middle' }
+				}
 			/>
 		</ChartCard>
 	)
@@ -488,53 +451,6 @@ export function ApiTable({ table, maxHeight }: { table: ApiTableData; maxHeight?
 						</div>
 					))
 				)}
-			</div>
-		</div>
-	)
-}
-
-// ------------------------------------------------------------------- pendulum
-
-// Incentive Pendulum: where bonded RUNE sits versus its optimal share. The marker
-// is the 2:1 target (~66.7% bonded); the fill is the current bonded share.
-export function PendulumBar({
-	bondedSharePct,
-	optimalBondedSharePct,
-	state
-}: {
-	bondedSharePct: number
-	optimalBondedSharePct: number
-	state: string
-}) {
-	const pct = Math.max(0, Math.min(100, bondedSharePct))
-	const optimal = Math.max(0, Math.min(100, optimalBondedSharePct))
-	const under = bondedSharePct < optimalBondedSharePct
-	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<div className="mb-3 flex flex-wrap items-end justify-between gap-2">
-				<div>
-					<h3 className="text-sm font-semibold text-(--text-primary)">Incentive Pendulum</h3>
-					<p className="mt-0.5 text-xs text-(--text-tertiary)">{state}</p>
-				</div>
-				<span className="font-jetbrains text-xl font-semibold text-(--text-primary) tabular-nums">
-					{pct.toFixed(1)}% bonded
-				</span>
-			</div>
-			<div className="relative h-3 w-full rounded-full bg-(--divider)">
-				<div
-					className="absolute top-0 left-0 h-3 rounded-full"
-					style={{ width: `${pct}%`, background: under ? '#f5b66b' : THOR_TEAL }}
-				/>
-				<div
-					className="absolute top-[-3px] h-[18px] w-0.5 bg-(--text-primary)"
-					style={{ left: `${optimal}%` }}
-					title={`Optimal ${optimal.toFixed(1)}%`}
-				/>
-			</div>
-			<div className="mt-1.5 flex justify-between font-jetbrains text-[10px] text-(--text-tertiary) tabular-nums">
-				<span>Nodes (bonded)</span>
-				<span>Target {optimal.toFixed(1)}%</span>
-				<span>LPs (pooled)</span>
 			</div>
 		</div>
 	)

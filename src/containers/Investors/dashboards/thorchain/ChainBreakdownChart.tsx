@@ -4,6 +4,7 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/types'
 import ProtocolChartBuilderData from '~/containers/ProDashboard/services/ProtocolChartBuilderData'
 import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
 import { getGroupedTimestampSec } from '~/containers/ProDashboard/utils'
+import { parseDateToUnix, type Chart } from './transform'
 import { ChartCard, PALETTE, SegToggle, THOR_TEAL } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -141,7 +142,19 @@ export function ChainBreakdownChart({
 		queryFn: () => ProtocolChartBuilderData.getProtocolChainData(protocol, metric, undefined, limit),
 		...QUERY_OPTS
 	})
-	const series = useMemo(() => (data?.series ?? []) as RawSeries[], [data])
+	// The API returns chains unordered and spells the chain "Thorchain" — order the
+	// legend by lifetime size (catch-all "Others" bucket last) and fix the casing.
+	const series = useMemo(() => {
+		const total = (s: RawSeries) => s.data.reduce((t, [, v]) => t + (v || 0), 0)
+		return ((data?.series ?? []) as RawSeries[])
+			.map((s) => (s.name === 'Thorchain' ? { ...s, name: 'THORChain' } : s))
+			.sort((a, b) => {
+				const aOthers = a.name.startsWith('Others'),
+					bOthers = b.name.startsWith('Others')
+				if (aOthers !== bOthers) return aOthers ? 1 : -1
+				return total(b) - total(a)
+			})
+	}, [data])
 	const chartSeries = useMemo(() => aggregate(series, view, true), [series, view])
 	return (
 		<TrendCard
@@ -154,6 +167,75 @@ export function ChainBreakdownChart({
 			isLoading={isLoading}
 			isError={isError}
 		/>
+	)
+}
+
+// An ir-server Chart payload rendered with the same Daily / Monthly / Quarterly /
+// Cumulative toggle as the DefiLlama-sourced trend charts. Series sharing a `stack`
+// stay stacked in the daily/monthly/quarterly bar views.
+export function ApiTrendChart({
+	chart,
+	subtitle,
+	valueSymbol = '$',
+	defaultView = 'day'
+}: {
+	chart?: Chart | null
+	subtitle?: string
+	valueSymbol?: string
+	defaultView?: View
+}) {
+	const [view, setView] = useState<View>(defaultView)
+	const rawSeries = useMemo(() => {
+		if (!chart?.dates?.length) return []
+		return chart.series.map((s) => ({
+			name: s.name,
+			data: chart.dates.map((d, i) => [parseDateToUnix(d), s.data?.[i] ?? 0] as [number, number])
+		}))
+	}, [chart])
+	const stacked = Boolean(chart?.series?.some((s) => s.stack))
+	const chartSeries = useMemo(() => aggregate(rawSeries, view, stacked), [rawSeries, view, stacked])
+	return (
+		<TrendCard
+			title={chart?.title ?? ''}
+			subtitle={subtitle ?? chart?.subtitle}
+			valueSymbol={valueSymbol}
+			view={view}
+			setView={setView}
+			chartSeries={chartSeries}
+			isLoading={false}
+		/>
+	)
+}
+
+// Two-series overlay with the second series on its own right-hand axis — e.g. the
+// RUNE price line over swap-volume bars. Expects an ir-server Chart whose first
+// series is the bar (left axis) and second the line (right axis).
+export function DualAxisChart({ chart, subtitle }: { chart?: Chart | null; subtitle?: string }) {
+	const series = useMemo(() => {
+		if (!chart?.dates?.length) return []
+		const colors = [THOR_TEAL, GOLD]
+		return chart.series.map((s, i) => ({
+			name: s.name,
+			type: (s.type ?? 'line') as 'line' | 'bar',
+			color: colors[i % colors.length],
+			yAxisIndex: i,
+			// Keep the overlay line un-filled so it doesn't obscure the bars below.
+			...(s.type === 'line' ? { areaStyle: { opacity: 0 } } : {}),
+			data: chart.dates.map((d, j) => [parseDateToUnix(d), s.data?.[j] ?? 0] as [number, number])
+		}))
+	}, [chart])
+	if (!chart?.series?.length) return null
+	return (
+		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle}>
+			<MultiSeriesChart
+				series={series}
+				valueSymbol="$"
+				yAxisSymbols={['$', '$']}
+				groupBy="daily"
+				height="360px"
+				chartOptions={CHART_OPTIONS}
+			/>
+		</ChartCard>
 	)
 }
 
@@ -207,106 +289,5 @@ export function FeeRevenueChart({
 			isLoading={fees.isLoading || revenue.isLoading}
 			isError={fees.isError || revenue.isError}
 		/>
-	)
-}
-
-// Single flow metric (e.g. volume) as a total, with the daily/cumulative toggle.
-export function MetricTrendChart({
-	title,
-	subtitle,
-	name,
-	queryKey,
-	queryFn,
-	valueSymbol = '$',
-	defaultView = 'cumulative',
-	color = THOR_TEAL
-}: {
-	title: string
-	subtitle?: string
-	name: string
-	queryKey: unknown[]
-	queryFn: () => Promise<Pts>
-	valueSymbol?: string
-	defaultView?: View
-	color?: string
-}) {
-	const [view, setView] = useState<View>(defaultView)
-	const { data, isLoading, isError } = useQuery({ queryKey, queryFn, ...QUERY_OPTS })
-	const rawSeries = useMemo(() => (data?.length ? [{ name, data, color }] : []), [data, name, color])
-	const chartSeries = useMemo(() => aggregate(rawSeries, view, false), [rawSeries, view])
-	return (
-		<TrendCard
-			title={title}
-			subtitle={subtitle}
-			valueSymbol={valueSymbol}
-			view={view}
-			setView={setView}
-			chartSeries={chartSeries}
-			isLoading={isLoading}
-			isError={isError}
-		/>
-	)
-}
-
-// Single stock metric (TVL, price) as an area line with a dataZoom scroll slider.
-// `value` shows a headline figure inline (like the TVL number); `zoomDays` default-zooms
-// to the last N days (older history still reachable by scrolling the slider).
-export function SeriesAreaChart({
-	title,
-	subtitle,
-	name,
-	queryKey,
-	queryFn,
-	valueSymbol = '$',
-	color = THOR_TEAL,
-	value,
-	zoomDays
-}: {
-	title: string
-	subtitle?: string
-	name: string
-	queryKey: unknown[]
-	queryFn: () => Promise<Pts>
-	valueSymbol?: string
-	color?: string
-	value?: string
-	zoomDays?: number
-}) {
-	const { data, isLoading, isError } = useQuery({ queryKey, queryFn, ...QUERY_OPTS })
-	const series = useMemo(
-		() => (data?.length ? [{ name, data, color, type: 'line' as const, areaStyle: {} }] : []),
-		[data, name, color]
-	)
-	const opts = useMemo(() => {
-		if (!zoomDays || !data || data.length <= zoomDays) return CHART_OPTIONS
-		const start = ((data.length - zoomDays) / data.length) * 100
-		return {
-			...CHART_OPTIONS,
-			dataZoom: [
-				{ start, end: 100 },
-				{ start, end: 100 }
-			]
-		}
-	}, [zoomDays, data])
-	return (
-		<ChartCard title={title} subtitle={subtitle} value={value}>
-			{isLoading ? (
-				<div className="flex h-[360px] items-center justify-center text-xs text-(--text-tertiary)">Loading…</div>
-			) : isError ? (
-				<div className="flex h-[360px] items-center justify-center text-xs text-(--text-tertiary)">
-					Failed to load data
-				</div>
-			) : !series.length ? (
-				<div className="flex h-[360px] items-center justify-center text-xs text-(--text-tertiary)">No data</div>
-			) : (
-				<MultiSeriesChart
-					series={series}
-					valueSymbol={valueSymbol}
-					groupBy="daily"
-					height="360px"
-					chartOptions={opts}
-				/>
-			)}
-		</ChartCard>
 	)
 }

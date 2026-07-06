@@ -1,56 +1,134 @@
-import type { Chart, Kpi } from './transform'
-import { KpiGrid, PageLoader, PlaceholderCard, SectionHeader, TimeBarCard, useThorchainData } from './ui'
+import { useState } from 'react'
+import { ApiTrendChart } from './ChainBreakdownChart'
+import type { Chart, Kpi as KpiT } from './transform'
+import {
+	Kpi,
+	KpiGrid,
+	PageLoader,
+	PlaceholderCard,
+	SectionHeader,
+	SegToggle,
+	TimeAreaCard,
+	TimeBarCard,
+	useThorchainData
+} from './ui'
+
+// Each granularity is its OWN distinct-count dataset from raynalytics — the toggle
+// switches datasets, it never aggregates (summing daily uniques would double-count
+// wallets active on several days).
+type WalletView = 'daily' | 'monthly' | 'quarterly' | 'yearly' | 'cumulative'
+const WALLET_VIEWS: { value: WalletView; label: string }[] = [
+	{ value: 'daily', label: 'Daily' },
+	{ value: 'monthly', label: 'Monthly' },
+	{ value: 'quarterly', label: 'Quarterly' },
+	{ value: 'yearly', label: 'Yearly' },
+	{ value: 'cumulative', label: 'Cumulative' }
+]
 
 interface VolumeData {
-	kpis: Record<string, Kpi | undefined>
+	kpis: Record<string, KpiT | undefined>
 	volumeChart: Chart
 	volumeByChainChart?: Chart
+	uniqueWalletsCharts?: Partial<Record<WalletView, Chart | null>>
 	swapCountChart: Chart
 }
 
-const KPI_ITEMS: [string, string][] = [
+const VOLUME_KPIS: [string, string][] = [
 	['volumeLifetime', 'Volume (Lifetime)'],
-	['volume30d', 'Volume (30d)'],
-	['avgDailyVolume30d', 'Avg Daily Volume (30d)'],
-	['allTimeSwaps', 'All-Time Swaps'],
-	['swaps30d', 'Swaps (30d)'],
-	['avgDailySwaps30d', 'Avg Daily Swaps (30d)'],
-	['nativeShare30d', 'Native Share (30d)'],
-	['tradeShare30d', 'Trade Acct Share (30d)'],
-	['securedShare30d', 'Secured Share (30d)']
+	['volume30d', 'Volume (30D)'],
+	['avgDailyVolume30d', 'Avg Daily Volume (30D)']
 ]
 
+const SWAP_KPIS: [string, string][] = [
+	['allTimeSwaps', 'All-Time Swaps'],
+	['swaps30d', 'Swaps (30D)'],
+	['avgDailySwaps30d', 'Avg Daily Swaps (30D)']
+]
+
+const TYPE_KPIS: [string, string][] = [
+	['nativeShare30d', 'Native Assets (30D)'],
+	['tradeShare30d', 'Trade Assets (30D)'],
+	['securedShare30d', 'Secured Assets (30D)']
+]
+
+// Full-width charts, each with Daily / Monthly / Quarterly / Cumulative views.
+// All charts cover full history since April 2021 (by-chain via raynalytics).
 export default function Volume() {
 	const { data } = useThorchainData<VolumeData>('volume')
+	const [walletView, setWalletView] = useState<WalletView>('daily')
 	if (!data) return <PageLoader />
+
+	const walletChart = data.uniqueWalletsCharts?.[walletView]
+	const walletToggle = (
+		<SegToggle<WalletView>
+			options={WALLET_VIEWS.filter((v) => data.uniqueWalletsCharts?.[v.value])}
+			value={walletView}
+			onChange={setWalletView}
+		/>
+	)
 
 	return (
 		<div className="flex flex-col gap-6">
 			<SectionHeader>Swap Volume</SectionHeader>
-			<KpiGrid kpis={data.kpis} items={KPI_ITEMS} cols={3} />
-
-			{/* By chain from ir-server (Midgard): DefiLlama attributes all THORChain volume to one chain. */}
+			<KpiGrid kpis={data.kpis} items={VOLUME_KPIS} cols={3} />
 			{data.volumeByChainChart?.series?.length ? (
-				<TimeBarCard
-					chart={data.volumeByChainChart}
-					subtitle="Daily swap volume per source chain."
-					value={data.kpis.volume30d?.formatted}
-				/>
+				<ApiTrendChart chart={data.volumeByChainChart} subtitle="Swap volume per source chain." />
 			) : (
 				<PlaceholderCard
-					title="Daily Swap Volume by Chain"
-					subtitle="Daily swap volume per source chain."
+					title="Swap Volume by Chain"
+					subtitle="Swap volume per source chain."
 					note="volume.volumeByChainChart"
 				/>
 			)}
 
-			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-				<TimeBarCard chart={data.swapCountChart} valueSymbol="" value={data.kpis.swaps30d?.formatted} />
-				<TimeBarCard
-					chart={data.volumeChart}
-					subtitle="Split by swap type — native swaps, trade accounts and secured assets."
+			<SectionHeader>Unique Wallets</SectionHeader>
+			<div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+				<Kpi kpi={data.kpis.uniqueWalletsLifetime} label="Unique Wallets (Lifetime)" note="unique-wallets feed" />
+				<Kpi
+					kpi={data.kpis.uniqueWallets30d}
+					label="Unique Wallets (30D)"
+					def="Distinct wallets that transacted in the latest complete calendar month — a stand-in for a rolling 30-day distinct count, which has no data source (daily uniques can't be summed without double-counting)."
+					note="monthly uniques feed"
+				/>
+				<Kpi
+					kpi={data.kpis.avgDailyActiveWallets30d}
+					label="Avg Daily Unique Wallets (30D)"
+					def="Average of the daily distinct-wallet counts over the trailing 30 days."
+					note="daily uniques feed"
 				/>
 			</div>
+			{walletChart ? (
+				walletView === 'cumulative' ? (
+					<TimeAreaCard
+						chart={walletChart}
+						valueSymbol=""
+						subtitle="Total unique wallets over time."
+						control={walletToggle}
+						fullRange
+					/>
+				) : (
+					<TimeBarCard
+						chart={walletChart}
+						valueSymbol=""
+						subtitle="Distinct wallets transacting in each period — every timeframe is its own distinct count."
+						control={walletToggle}
+					/>
+				)
+			) : (
+				<PlaceholderCard
+					title="Unique Wallets"
+					subtitle="Distinct wallets per period — awaiting feed."
+					note="raynalytics unique-wallet endpoints"
+				/>
+			)}
+
+			<SectionHeader>Swaps</SectionHeader>
+			<KpiGrid kpis={data.kpis} items={SWAP_KPIS} cols={3} />
+			<ApiTrendChart chart={data.swapCountChart} valueSymbol="" />
+
+			<SectionHeader>Swap Types</SectionHeader>
+			<KpiGrid kpis={data.kpis} items={TYPE_KPIS} cols={3} />
+			<ApiTrendChart chart={data.volumeChart} subtitle="Split by swap type." />
 		</div>
 	)
 }

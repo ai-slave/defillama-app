@@ -1,82 +1,134 @@
-import { useQuery } from '@tanstack/react-query'
-import { COINS_SERVER_URL } from '~/constants'
-import { formattedNum } from '~/utils'
-import { SeriesAreaChart } from './ChainBreakdownChart'
-import type { Chart, Kpi } from './transform'
-import { KpiGrid, PageLoader, SectionHeader, TimeBarCard, useThorchainData } from './ui'
+import { ApiTrendChart, DualAxisChart } from './ChainBreakdownChart'
+import type { Chart, Kpi as KpiT } from './transform'
+import { Kpi, KpiGrid, PageLoader, PlaceholderCard, SectionHeader, TimeAreaCard, useThorchainData } from './ui'
 
 interface TokenData {
-	rune: { kpis: Record<string, Kpi | undefined> }
-	tcy: { yieldChart: Chart; kpis: Record<string, Kpi | undefined> }
-}
-
-// RUNE price from DefiLlama's public coins API (no CG_KEY needed, unlike the cg-chart route).
-async function fetchRunePrice(): Promise<Array<[number, number]>> {
-	const res = await fetch(`${COINS_SERVER_URL}/chart/coingecko:thorchain?span=400&period=1d`)
-	if (!res.ok) return []
-	const json = await res.json()
-	const prices: Array<{ timestamp: number; price: number }> = json?.coins?.['coingecko:thorchain']?.prices ?? []
-	return prices.map((p) => [p.timestamp, p.price] as [number, number])
+	rune: { kpis: Record<string, KpiT | undefined> }
+	runePriceChart: Chart
+	priceVolumeChart: Chart
+	burn: { burnChart: Chart; cumulativeBurnChart: Chart; kpis: Record<string, KpiT | undefined> }
+	tcy: {
+		yieldChart: Chart
+		priceChart: Chart | null
+		aprChart: Chart | null
+		protocolOwnedChart?: Chart | null
+		kpis: Record<string, KpiT | undefined>
+	}
 }
 
 const RUNE_KPIS: [string, string][] = [
 	['marketCap', 'Market Cap'],
 	['fdv', 'FDV'],
+	['mcapFdv', 'Market Cap / FDV'],
 	['circulatingSupply', 'Circulating Supply'],
-	['totalSupply', 'Total Supply']
+	['totalSupply', 'Total Supply'],
+	['reserveRune', 'Reserve']
 ]
 
-const TCY_KPIS: [string, string][] = [
-	['tcySupply', 'Supply'],
-	['tcyMarketCap', 'Market Cap'],
-	['tcyFeeShare', 'Fee Share'],
-	['tcyYield30d', 'Yield (30d)'],
-	['tcyYieldLifetime', 'Yield (Lifetime)'],
-	['tcyYieldLifetimeUsd', 'Yield USD (Lifetime)'],
-	['annualizedTcyYield', 'Annualized Yield']
+// RUNE-denominated only — USD burn figures dropped per the protocol's review.
+const BURN_KPIS: [string, string][] = [
+	['burnedLifetime', 'Burned (Lifetime)'],
+	['burned30d', 'Burned (30D)'],
+	['burnRate', 'Burn Rate']
 ]
 
 export default function Token() {
+	// Both price charts come pre-built from the ir-server with the DefiLlama market
+	// price as the line — Midgard's pool-derived price freezes during trading halts
+	// (e.g. Jul–Oct 2021 read ~$4.7 vs the real ~$7.7) so it's never used for price.
+	// The line shares one date axis with the Midgard swap-volume bars: no mismatch.
 	const { data } = useThorchainData<TokenData>('token')
-	const tcyPrice = useQuery({
-		queryKey: ['thorchain-tcy-price'],
-		queryFn: async (): Promise<number | null> => {
-			const res = await fetch(`${COINS_SERVER_URL}/prices/current/coingecko:tcy`)
-			if (!res.ok) return null
-			const json = await res.json()
-			return json?.coins?.['coingecko:tcy']?.price ?? null
-		},
-		staleTime: 10 * 60 * 1000,
-		refetchOnWindowFocus: false
-	})
 	if (!data) return <PageLoader />
 
-	const supply = data.tcy.kpis.tcySupply?.value
-	const tcyMarketCap =
-		tcyPrice.data != null && supply != null
-			? { value: tcyPrice.data * supply, formatted: formattedNum(tcyPrice.data * supply, true) }
-			: undefined
-	const tcyKpis = { ...data.tcy.kpis, tcyMarketCap }
+	const runePriceChart = data.runePriceChart
+	const priceVolumeChart = data.priceVolumeChart
+	const tcy = data.tcy.kpis
 
 	return (
 		<div className="flex flex-col gap-10">
 			<section className="flex flex-col gap-6">
 				<SectionHeader>RUNE</SectionHeader>
-				<KpiGrid kpis={data.rune.kpis} items={RUNE_KPIS} />
-				<SeriesAreaChart
-					title="RUNE Price"
-					subtitle="RUNE spot price over time."
-					name="RUNE Price"
-					value={data.rune.kpis.runePrice?.formatted}
-					queryKey={['thorchain-rune-price']}
-					queryFn={fetchRunePrice}
-				/>
+				<KpiGrid kpis={data.rune.kpis} items={RUNE_KPIS} cols={3} />
+				{runePriceChart && (
+					<TimeAreaCard
+						chart={runePriceChart}
+						subtitle="Daily RUNE price (DefiLlama)."
+						value={data.rune.kpis.runePrice?.formatted}
+						fullRange
+					/>
+				)}
+				{priceVolumeChart?.series?.length ? (
+					<DualAxisChart
+						chart={priceVolumeChart}
+						subtitle="RUNE price (right axis, DefiLlama) against THORChain swap volume (left axis)."
+					/>
+				) : (
+					<PlaceholderCard
+						title="RUNE Price vs Swap Volume"
+						subtitle="RUNE price against THORChain swap volume."
+						note="token.priceVolumeChart"
+					/>
+				)}
 			</section>
 
 			<section className="flex flex-col gap-6">
 				<SectionHeader>TCY</SectionHeader>
-				<KpiGrid kpis={tcyKpis} items={TCY_KPIS} />
-				<TimeBarCard chart={data.tcy.yieldChart} value={data.tcy.kpis.tcyYield30d?.formatted} />
+				<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+					<Kpi kpi={tcy.tcyMarketCap} label="Market Cap" />
+					<Kpi kpi={tcy.tcyFdv} label="FDV" />
+					<Kpi kpi={tcy.tcyMcapFdv} label="Market Cap / FDV" />
+					<Kpi kpi={tcy.tcyMcapToRuneMcap} label="TCY MCap / RUNE MCap" />
+					<Kpi kpi={tcy.tcyCirculating} label="Circulating Supply" />
+					<Kpi kpi={tcy.tcySupply} label="Total Supply" />
+					<Kpi kpi={tcy.tcyProtocolOwned} label="Protocol Owned" note="thorchain/tcy_protocol_owned" />
+					<Kpi kpi={tcy.tcyUnclaimed} label="Unclaimed" />
+				</div>
+				{data.tcy.priceChart ? (
+					<TimeAreaCard chart={data.tcy.priceChart} value={tcy.tcyPrice?.formatted} />
+				) : (
+					<PlaceholderCard
+						title="TCY Price"
+						subtitle="TCY price feed unavailable."
+						note="coins.llama.fi coingecko:tcy"
+					/>
+				)}
+				{data.tcy.aprChart ? (
+					<TimeAreaCard
+						chart={data.tcy.aprChart}
+						subtitle="Trailing-7d annualized staking yield (raynalytics, real historical staked balance)."
+						value={tcy.tcyApr?.formatted}
+					/>
+				) : (
+					<PlaceholderCard
+						title="TCY Staking APR"
+						subtitle="Needs both the rewards and TCY price feeds."
+						note="token.tcy.aprChart"
+					/>
+				)}
+				{data.tcy.protocolOwnedChart ? (
+					<TimeAreaCard
+						chart={data.tcy.protocolOwnedChart}
+						valueSymbol=""
+						subtitle="TCY held by the protocol's POL position, since May 2025."
+						value={tcy.tcyProtocolOwned?.formatted}
+					/>
+				) : (
+					<PlaceholderCard
+						title="Protocol Owned TCY"
+						subtitle="Protocol-owned TCY over time — awaiting feed."
+						note="raynalytics treasury-pol-tcy-balance"
+					/>
+				)}
+			</section>
+
+			<section className="flex flex-col gap-6">
+				<SectionHeader>RUNE Burn</SectionHeader>
+				<KpiGrid kpis={data.burn.kpis} items={BURN_KPIS} cols={3} />
+				<ApiTrendChart
+					chart={data.burn.burnChart}
+					subtitle="RUNE permanently burned from system income."
+					valueSymbol=""
+				/>
 			</section>
 		</div>
 	)

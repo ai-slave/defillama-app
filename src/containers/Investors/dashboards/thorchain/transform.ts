@@ -7,7 +7,7 @@ export interface Kpi {
 	formatted: string
 }
 
-export interface ChartSeries {
+interface ChartSeries {
 	name: string
 	type?: 'bar' | 'line'
 	data: number[]
@@ -68,16 +68,4 @@ export function chartToData(chart: Chart | undefined): Array<Record<string, numb
 // non-stacked series render side by side rather than stacked).
 export function barStacks(chart: Chart): Record<string, string> {
 	return Object.fromEntries(chart.series.map((s) => [s.name, s.stack ?? s.name]))
-}
-
-// Running-sum each series — powers the client-side Daily ↔ Cumulative toggle so
-// the backend only has to ship daily series (see docs/thorchain-ir-api-spec.md §2).
-export function cumulativeChart(chart: Chart): Chart {
-	return {
-		...chart,
-		series: chart.series.map((s) => {
-			let acc = 0
-			return { ...s, data: s.data.map((v) => (acc += Number.isFinite(v) ? v : 0)) }
-		})
-	}
 }
