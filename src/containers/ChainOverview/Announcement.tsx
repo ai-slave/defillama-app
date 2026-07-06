@@ -16,14 +16,6 @@ export const ChainOverviewAnnouncement = ({ chainName }: { chainName?: string })
 	const showsInPageIr =
 		user?.flags?.is_llama === true && !!chainName && !!getMainSiteIrDashboard('chain', slug(chainName))
 
-	if (chainName === 'MegaETH') {
-		return (
-			<Announcement announcementId="megaeth-ethena-tvl" version="2026-05-06" warning>
-				Most of MegaETH TVL comes from Ethena depositing it&apos;s balance sheet
-			</Announcement>
-		)
-	}
-
 	if (normalizedChainName === 'near') {
 		if (showsInPageIr) return null
 		return (
