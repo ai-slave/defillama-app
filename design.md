@@ -79,27 +79,29 @@ CSS variables carry an `--ld-` prefix until the legacy variables of the same nam
 
 ## Typography
 
-From the Figma library text styles. Utilities land in PR 3; the family decision (Inter Display vs current Inter var) is pending with design.
+From the Figma library text styles, implemented as utilities in [`src/styles/typography.css`](src/styles/typography.css). The family decision (Inter Display vs current Inter var) is pending with design.
 
-| Style          | Size / Line height | Weight | Family         |
-| -------------- | ------------------ | ------ | -------------- |
-| `heading-lg`   | 32 / 42            | 600    | Inter          |
-| `heading-sm`   | 20 / 28            | 600    | Inter          |
-| `heading-xs`   | 18 / 22            | 600    | Inter          |
-| `label-xl`     | 18 / 20            | 500    | Inter          |
-| `label-lg`     | 16 / 20            | 500    | Inter          |
-| `label-md`     | 14 / 17            | 500    | Inter          |
-| `label-sm`     | 12 / 16            | 500    | Inter          |
-| `label-xs`     | 10 / 12            | 500    | Inter          |
-| `body-xl`      | 18 / 24            | 400    | Inter          |
-| `body-lg`      | 16 / 24            | 400    | Inter          |
-| `body-md`      | 14 / 21            | 400    | Inter          |
-| `body-sm`      | 12 / 16            | 400    | Inter          |
-| `body-xs`      | 10 / 14            | 400    | Inter          |
-| `mono-xl`      | 24 / 24            | 700    | JetBrains Mono |
-| `mono-md`      | 14 / 19            | 400    | JetBrains Mono |
-| `mono-sm`      | 12 / 16            | 400    | JetBrains Mono |
-| `mono-sm-bold` | 12 / 16            | 700    | JetBrains Mono |
+| Style          | Size | Weight | Family         |
+| -------------- | ---- | ------ | -------------- |
+| `heading-lg`   | 32   | 600    | Inter          |
+| `heading-sm`   | 20   | 600    | Inter          |
+| `heading-xs`   | 18   | 600    | Inter          |
+| `label-xl`     | 18   | 500    | Inter          |
+| `label-lg`     | 16   | 500    | Inter          |
+| `label-md`     | 14   | 500    | Inter          |
+| `label-sm`     | 12   | 500    | Inter          |
+| `label-xs`     | 10   | 500    | Inter          |
+| `body-xl`      | 18   | 400    | Inter          |
+| `body-lg`      | 16   | 400    | Inter          |
+| `body-md`      | 14   | 400    | Inter          |
+| `body-sm`      | 12   | 400    | Inter          |
+| `body-xs`      | 10   | 400    | Inter          |
+| `mono-xl`      | 24   | 700    | JetBrains Mono |
+| `mono-md`      | 14   | 400    | JetBrains Mono |
+| `mono-sm`      | 12   | 400    | JetBrains Mono |
+| `mono-sm-bold` | 12   | 700    | JetBrains Mono |
+
+Sizes in the table are Figma px for reference; the utilities implement them in **rem** (px ÷ 16) so user browser font-size preferences are respected — same basis as Tailwind's built-in `text-*` scale. Line heights are **not** copied from Figma: each band ships one unitless ratio (`heading` 1.3, `label` 1.2, `body` 1.5, `mono` 1.35) and that's the end of it — no `leading-[…]`, no `tracking-[…]` one-offs, no pixel leading. Vertical rhythm belongs to containers (`gap`, `padding`, `min-h`), not to text metrics. (1px hairline borders and canvas chart fonts stay px on purpose.)
 
 `label-*` (medium) carries single-line scannable text: table headers, nav, form labels, metadata. `body-*` (regular) is multi-line copy. `mono-*` sets numbers, addresses, and code — prefer it wherever figures must align. `label-md` and `body-sm` cover most UI text. Do not set arbitrary font sizes (`text-[10px]`) — the ramp includes 10px and 12px steps for exactly that use.
 
@@ -108,6 +110,7 @@ From the Figma library text styles. Utilities land in PR 3; the family decision 
 - **Spacing** is a 4px-based scale: 0, 2, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36, 40, 56, 64, 80, 96 — i.e. the standard Tailwind scale; no arbitrary `p-[10px]` values.
 - **Rhythm:** 8px inside a group, 16px between groups, 32–40px between sections. Default card padding 16px; 8–12px for dense/compact cards.
 - **Border width** is 1px in almost all cases.
+- **Layout is gap/padding/min-h driven.** Figma values for margins, absolute offsets, and per-element line heights are rendering artifacts of the design tool — do not transcribe them. Space siblings with flex/grid `gap`, size boxes with `padding` and `min-h`, and let text wrap naturally. Margins are reserved for opting out of a parent's rhythm (`mt-auto`, negative bleed), not for building it.
 
 | Radius | Tailwind       | Use                               |
 | ------ | -------------- | --------------------------------- |
@@ -124,11 +127,13 @@ Chart **series** colors come from `CHART_COLORS` + `getNDistinctColors` (golden-
 
 Chart **chrome** (axis labels, gridlines, legend, dataZoom, PNG-export framing) uses the `--ld-chart-*` tokens in `semantics.css`. These are seeded with the exact pre-refresh literals and are deliberately decoupled from the text/border semantics so refactoring can never change chart rendering. The accent tokens (`--ld-chart-up/down/-alt`) are consumed only when a Figma frame explicitly restyles a specific chart, as part of that page's redesign PR.
 
-ECharts renders to canvas and cannot read `var()`: resolve tokens in JS via `getComputedStyle` (see `useChartTheme`, PR 3), re-resolved when the theme flips.
+**Chart consistency debt** (visual changes, scheduled for page sweeps — never as refactoring side effects): axis label color varies per chart (`ink(1)` in shared defaults, `ink(0.8)` in HBar/Scatter/Netflow, `ink(0.6)` on Candlestick's secondary axis) and should converge on one token — per the Figma frames, likely tertiary gray rather than full black/white; gridline alpha varies (0.02/0.03 vs 0.05 in Candlestick); Candlestick's light-mode candles use `#018a13`/`#e60d02` instead of the Figma `data-up/down` values its dark mode already matches; tooltip backgrounds vary (ECharts default, `#1e1e1e`-based in UnlocksTreemap, ink-based in Sankey) and should become surface tokens. The `--ld-chart-up/down/-alt` accents exist for exactly these fixes.
+
+ECharts renders to canvas and cannot read `var()`: resolve tokens through [`src/components/ECharts/chartTheme.ts`](src/components/ECharts/chartTheme.ts) — `useChartTheme(isThemeDark)` in components, `getChartTheme(isDark)` in plain functions. Never read `--ld-chart-*` by hand and never reintroduce `isDark ? literal : literal` color forks; the per-chart-type configs still carrying them (Treemap, Candlestick, …) migrate to the hook during their page sweeps.
 
 ## Utility & reuse policy
 
-- **Reuse lives in React components** (Card, Button, …), not in `@apply` composites. A component owns its class string in one place.
+- **Reuse lives in React components** (Card, Button, …), not in `@apply` composites. A component owns its class string in one place. [`src/components/Card.tsx`](src/components/Card.tsx) is the card surface — constrained `padding` variants, `className` for layout placement only; all new cards use it, existing cards migrate during page sweeps.
 - `@utility` is allowed only for **small, flat, variant-free** declaration sets (a border color, a type style). No `@apply` chains with embedded `hover:`/`dark:` variants — that pattern re-emits its full body per variant and is why the legacy `dialog`/`pro-btn-*` utilities are quarantined, not multiplied.
 - Prefer registered utilities (`bg-surface`) over arbitrary-value syntax (`bg-(--ld-bg-surface)`) in all new code.
 
@@ -140,6 +145,7 @@ ECharts renders to canvas and cannot read `var()`: resolve tokens in JS via `get
 - Don't introduce a new token for a one-off value — either it maps to an existing semantic or it goes to design for a library decision first.
 - Don't use `bg-surface-elevated-*` as page-level fills; they are for nested emphasis.
 - Don't restate brand blue, premium gold, or any palette hex inline; if a needed token is missing, that's a design.md/library gap to raise, not a literal to paste.
+- `bun run lint:tokens` enforces the above as a ratchet: existing debt is baselined in `scripts/design-token-baseline.json`, and the check fails only if hex-in-className, `dark:*-[#hex]`, or arbitrary-font-size counts increase. After removing debt, run with `--update` to lock in the improvement.
 
 ## Migration status
 
@@ -147,7 +153,7 @@ ECharts renders to canvas and cannot read `var()`: resolve tokens in JS via `get
 | ----- | ------------------------------------------------------------------------------------- | ------- |
 | PR 1  | Token foundation, legacy quarantine, chart tokens, this doc                           | open    |
 | PR 2  | Legacy vars re-pointed at semantics (global re-skin) — gated on font + success/error  | pending |
-| PR 3  | Card primitive, type-ramp utilities, `useChartTheme`, lint guardrails                 | pending |
+| PR 3  | Card primitive, type-ramp utilities, `useChartTheme`, lint guardrails                 | this PR |
 | PR 4+ | Page sweeps vs Figma frames: home/chain → metrics → protocol → tvl → unlocks → rights | pending |
 
 Legacy namespaces (`--sub-*`, `--pro-*`, `--sl-*`, `--signin-*`, and the pre-refresh `--text-*`/`--bg-*`/`--cards-*` globals) are quarantined in `src/styles/legacy-*.css` / `tailwind.css`. Do not add new consumers; they are deleted as surfaces migrate.

@@ -12,6 +12,7 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useMemo } from 'react'
 import { useMedia } from '~/hooks/useMedia'
+import { useChartTheme } from './chartTheme'
 import { formatChartEmphasisDate, formatTooltipChartDate, formatTooltipValue } from './formatters'
 
 const CHART_SYMBOLS: Record<string, string> = {
@@ -102,6 +103,7 @@ export function useDefaults({
 	seriesValueSymbols
 }: IUseDefaultsProps) {
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
+	const chartTheme = useChartTheme(isThemeDark)
 
 	const defaults = useMemo(() => {
 		const graphic = {
@@ -122,7 +124,7 @@ export function useDefaults({
 					textStyle: {
 						fontFamily: 'sans-serif',
 						fontWeight: 600,
-						color: isThemeDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+						color: chartTheme.text
 					},
 					left: 15
 				}
@@ -244,7 +246,7 @@ export function useDefaults({
 						padding: 8,
 						boxShadow: 'none',
 						textStyle: {
-							color: isThemeDark ? 'white' : 'black'
+							color: chartTheme.text
 						}
 					}
 				: {})
@@ -351,7 +353,7 @@ export function useDefaults({
 						padding: 8,
 						boxShadow: 'none',
 						textStyle: {
-							color: isThemeDark ? 'white' : 'black'
+							color: chartTheme.text
 						}
 					}
 				: {})
@@ -366,18 +368,18 @@ export function useDefaults({
 				fontWeight: 400
 			},
 			axisLabel: {
-				color: isThemeDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+				color: chartTheme.text
 			},
 			axisLine: {
 				lineStyle: {
-					color: isThemeDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)',
+					color: chartTheme.text,
 					opacity: 0.2
 				}
 			},
 			splitLine: {
 				lineStyle: {
-					color: isThemeDark ? '#ffffff' : '#000000',
-					opacity: isThemeDark ? 0.02 : 0.03
+					// gridline token is pre-multiplied (color × the old opacity)
+					color: chartTheme.gridline
 				}
 			}
 		}
@@ -392,18 +394,18 @@ export function useDefaults({
 			},
 			axisLabel: {
 				formatter: (value) => formatTooltipValue(value, valueSymbol),
-				color: isThemeDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+				color: chartTheme.text
 			},
 			axisLine: {
 				lineStyle: {
-					color: isThemeDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)',
+					color: chartTheme.text,
 					opacity: 0.1
 				}
 			},
 			splitLine: {
 				lineStyle: {
-					color: isThemeDark ? '#ffffff' : '#000000',
-					opacity: isThemeDark ? 0.02 : 0.03
+					// gridline token is pre-multiplied (color × the old opacity)
+					color: chartTheme.gridline
 				}
 			}
 		}
@@ -413,7 +415,7 @@ export function useDefaults({
 				fontFamily: 'sans-serif',
 				fontSize: 12,
 				fontWeight: 400,
-				color: isThemeDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+				color: chartTheme.text
 			},
 			top: !hideLegend && isSmall && title ? 30 : 0,
 			right: !hideLegend && isSmall && title ? null : 12
@@ -431,15 +433,15 @@ export function useDefaults({
 				left: 12,
 				right: 12,
 				textStyle: {
-					color: isThemeDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+					color: chartTheme.text
 				},
-				borderColor: isThemeDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
+				borderColor: chartTheme.zoomBorder,
 				handleStyle: {
-					borderColor: isThemeDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)',
-					color: isThemeDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.4)'
+					borderColor: chartTheme.zoomHandleBorder,
+					color: chartTheme.zoomHandleFill
 				},
 				moveHandleStyle: {
-					color: isThemeDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)'
+					color: chartTheme.zoomBorder
 				},
 				selectedDataBackground: {
 					lineStyle: {
@@ -451,15 +453,15 @@ export function useDefaults({
 				},
 				emphasis: {
 					handleStyle: {
-						borderColor: isThemeDark ? 'rgba(255, 255, 255, 1)' : '#000',
-						color: isThemeDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)'
+						borderColor: chartTheme.zoomEmphasisBorder,
+						color: chartTheme.zoomHandleBorder
 					},
 					moveHandleStyle: {
-						borderColor: isThemeDark ? 'rgba(255, 255, 255, 1)' : '#000',
-						color: isThemeDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'
+						borderColor: chartTheme.zoomEmphasisBorder,
+						color: chartTheme.zoomEmphasisMoveFill
 					}
 				},
-				fillerColor: isThemeDark ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)',
+				fillerColor: chartTheme.zoomFiller,
 				labelFormatter: formatChartEmphasisDate
 			}
 		]
@@ -468,6 +470,7 @@ export function useDefaults({
 	}, [
 		color,
 		isThemeDark,
+		chartTheme,
 		isSmall,
 		title,
 		tooltipSort,

@@ -70,19 +70,23 @@
 	   them (PR 3) is pixel-identical by construction. Charts must not
 	   change visually as a side effect of the token refresh.
 	------------------------------------------------------------------ */
-	--ld-chart-text: rgba(0, 0, 0, 1); /* axis labels, titles, always-on tooltips */
+	--ld-chart-text: rgba(0, 0, 0, 1); /* titles, axis labels, legend & dataZoom text, always-on tooltips */
 	--ld-chart-gridline: rgba(0, 0, 0, 0.03); /* splitLine color × opacity, pre-multiplied */
-	--ld-chart-legend-border: rgba(0, 0, 0, 0.4);
-	--ld-chart-legend-active-border: rgba(0, 0, 0, 0.9);
-	--ld-chart-legend-active-text: rgba(255, 255, 255, 0.4); /* inverted on purpose */
-	--ld-chart-zoom-handle-border: #000;
-	--ld-chart-zoom-text: rgba(0, 0, 0, 0.9);
-	--ld-chart-zoom-text-disabled: rgba(0, 0, 0, 0.2);
+	--ld-chart-area-gradient-to: rgba(255, 255, 255, 0.2); /* bottom stop of series area fades */
+	--ld-chart-zoom-border: rgba(0, 0, 0, 0.4); /* dataZoom frame + move-handle fill */
+	--ld-chart-zoom-handle-border: rgba(0, 0, 0, 0.9); /* also emphasis handle fill */
+	--ld-chart-zoom-handle-fill: rgba(255, 255, 255, 0.4); /* inverted on purpose */
+	--ld-chart-zoom-emphasis-border: #000;
+	--ld-chart-zoom-emphasis-move-fill: rgba(0, 0, 0, 0.2);
 	--ld-chart-zoom-filler: rgba(255, 255, 255, 0.1); /* inverted on purpose */
 	--ld-chart-export-bg: #ffffff;
 	--ld-chart-export-text: #000000;
 	--ld-chart-export-text-muted: rgba(0, 0, 0, 0.8);
-	--ld-chart-export-logo-bg: #ffffff;
+	--ld-chart-export-legend-text: rgba(0, 0, 0, 0.9);
+	--ld-chart-export-legend-inactive: rgba(0, 0, 0, 0.5);
+	--ld-chart-logo-bg: #ffffff; /* logo chip behind category/axis logos, live + export */
+	--ld-chart-export-label-stroke: rgba(0, 0, 0, 0.45); /* treemap label outline (black in both modes) */
+	--ld-chart-treemap-label: #111; /* treemap upper label, live + export */
 
 	/* Chart accents (design-driven; consumed only in per-page redesign
 	   sweeps, never as a bulk swap). Fixed across modes per the library. */
@@ -130,17 +134,21 @@ html.dark {
 	/* Chart chrome (today's exact dark literals) */
 	--ld-chart-text: rgba(255, 255, 255, 1);
 	--ld-chart-gridline: rgba(255, 255, 255, 0.02);
-	--ld-chart-legend-border: rgba(255, 255, 255, 0.4);
-	--ld-chart-legend-active-border: rgba(255, 255, 255, 0.9);
-	--ld-chart-legend-active-text: rgba(0, 0, 0, 0.4);
-	--ld-chart-zoom-handle-border: rgba(255, 255, 255, 1);
-	--ld-chart-zoom-text: rgba(255, 255, 255, 0.9);
-	--ld-chart-zoom-text-disabled: rgba(255, 255, 255, 0.2);
+	--ld-chart-area-gradient-to: rgba(0, 0, 0, 0.2);
+	--ld-chart-zoom-border: rgba(255, 255, 255, 0.4);
+	--ld-chart-zoom-handle-border: rgba(255, 255, 255, 0.9);
+	--ld-chart-zoom-handle-fill: rgba(0, 0, 0, 0.4);
+	--ld-chart-zoom-emphasis-border: rgba(255, 255, 255, 1);
+	--ld-chart-zoom-emphasis-move-fill: rgba(255, 255, 255, 0.2);
 	--ld-chart-zoom-filler: rgba(0, 0, 0, 0.1);
 	--ld-chart-export-bg: #0b1214;
 	--ld-chart-export-text: #ffffff;
 	--ld-chart-export-text-muted: rgba(255, 255, 255, 0.8);
-	--ld-chart-export-logo-bg: #1a1a1a;
+	--ld-chart-export-legend-text: rgba(255, 255, 255, 0.9);
+	--ld-chart-export-legend-inactive: rgba(255, 255, 255, 0.5);
+	--ld-chart-logo-bg: #1a1a1a;
+	--ld-chart-export-label-stroke: rgba(0, 0, 0, 0.7);
+	--ld-chart-treemap-label: #fff;
 }
 
 /* ----------------------------------------------------------------------------

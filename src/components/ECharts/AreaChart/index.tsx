@@ -9,6 +9,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { slug } from '~/utils'
 import { ChartContainer } from '../ChartContainer'
 import { ChartHeader } from '../ChartHeader'
+import { getChartTheme } from '../chartTheme'
 import { buildHallmarksMarkLine } from '../hallmarks'
 import type { IChartProps } from '../types'
 import { useDefaults } from '../useDefaults'
@@ -99,7 +100,7 @@ export default function AreaChart({
 						},
 						{
 							offset: 1,
-							color: isThemeDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.2)'
+							color: getChartTheme(isThemeDark).areaGradientTo
 						}
 					])
 				},
@@ -147,7 +148,7 @@ export default function AreaChart({
 												},
 												{
 													offset: 1,
-													color: isThemeDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.2)'
+													color: getChartTheme(isThemeDark).areaGradientTo
 												}
 											])
 										: null

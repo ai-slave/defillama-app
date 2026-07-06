@@ -9,6 +9,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { formattedNum } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
+import { getChartTheme } from '../chartTheme'
 
 echarts.use([TitleComponent, TooltipComponent, ToolboxComponent, EChartTreemap, CanvasRenderer])
 
@@ -169,7 +170,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 						upperLabel: {
 							show: true,
 							formatter: `${month} - ${formattedNum(monthInfo.value, true)}`,
-							color: isDark ? '#ffffff' : '#000000',
+							color: getChartTheme(isDark).ink(1),
 							fontSize: 13,
 							fontWeight: 600
 						}
@@ -202,7 +203,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 					upperLabel: {
 						show: true,
 						formatter: `${year} - ${formattedNum(yearInfo.value, true)}`,
-						color: isDark ? '#ffffff' : '#000000',
+						color: getChartTheme(isDark).ink(1),
 						fontSize: 14,
 						fontWeight: 700
 					}
@@ -217,7 +218,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 						upperLabel: {
 							show: true,
 							formatter: `${month} - ${formattedNum(monthInfo.value, true)}`,
-							color: isDark ? '#ffffff' : '#000000',
+							color: getChartTheme(isDark).ink(1),
 							fontSize: 12,
 							fontWeight: 600
 						}
@@ -260,7 +261,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 				textStyle: {
 					fontFamily: 'sans-serif',
 					fontWeight: 600,
-					color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+					color: getChartTheme(isDark).text
 				}
 			},
 			tooltip: {
@@ -286,10 +287,10 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 					return content
 				},
 				backgroundColor: isDark ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-				borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
+				borderColor: getChartTheme(isDark).ink(0.15),
 				borderWidth: 1,
 				textStyle: {
-					color: isDark ? '#ffffff' : '#000000'
+					color: getChartTheme(isDark).ink(1)
 				}
 			},
 			toolbox: {
@@ -299,11 +300,11 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 					}
 				},
 				iconStyle: {
-					borderColor: isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'
+					borderColor: getChartTheme(isDark).ink(0.6)
 				},
 				emphasis: {
 					iconStyle: {
-						borderColor: isDark ? '#ffffff' : '#000000'
+						borderColor: getChartTheme(isDark).ink(1)
 					}
 				},
 				right: 8,
@@ -328,11 +329,11 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 					upperLabel: {
 						show: true,
 						height: 28,
-						color: isDark ? '#ffffff' : '#000000',
+						color: getChartTheme(isDark).ink(1),
 						fontSize: 13,
 						fontWeight: 600,
 						textShadowBlur: 2,
-						textShadowColor: isDark ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.8)'
+						textShadowColor: getChartTheme(isDark).inkInverted(0.8)
 					},
 					itemStyle: {
 						borderColor: isDark ? '#555555' : '#d0d0d0',
@@ -359,13 +360,13 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 							upperLabel: {
 								show: true,
 								height: 26,
-								color: isDark ? '#ffffff' : '#000000',
+								color: getChartTheme(isDark).ink(1),
 								fontSize: 12,
 								fontWeight: 600
 							},
 							emphasis: {
 								itemStyle: {
-									borderColor: isDark ? '#ffffff' : '#000000',
+									borderColor: getChartTheme(isDark).ink(1),
 									borderWidth: 3
 								}
 							}
@@ -381,7 +382,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 								itemStyle: {
 									borderWidth: 3,
 									shadowBlur: 8,
-									shadowColor: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'
+									shadowColor: getChartTheme(isDark).ink(0.3)
 								}
 							}
 						}
@@ -394,7 +395,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 							textStyle: {
 								fontFamily: 'sans-serif',
 								fontWeight: 500,
-								color: isDark ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.95)'
+								color: getChartTheme(isDark).ink(0.95)
 							}
 						},
 						emphasis: {
@@ -403,7 +404,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 								borderColor: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.4)'
 							},
 							textStyle: {
-								color: isDark ? '#ffffff' : '#000000'
+								color: getChartTheme(isDark).ink(1)
 							}
 						}
 					}

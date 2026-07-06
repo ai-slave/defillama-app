@@ -17,6 +17,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { formattedNum } from '~/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
+import { getChartTheme } from '../chartTheme'
 import type { IScatterChartProps } from '../types'
 import { isIconUrlValid, validateIconUrl } from '../utils'
 
@@ -101,7 +102,7 @@ export default function ScatterChart({
 					position: 'right' as const,
 					formatter: (params: any) => params.value?.[2] || '',
 					fontSize: 10,
-					color: isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)'
+					color: getChartTheme(isDark).ink(0.8)
 				}
 			: undefined
 
@@ -224,7 +225,7 @@ export default function ScatterChart({
 						textStyle: {
 							fontFamily: 'sans-serif',
 							fontWeight: 600,
-							color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+							color: getChartTheme(isDark).text
 						}
 					}
 				: undefined,
@@ -266,7 +267,7 @@ export default function ScatterChart({
 					},
 					axisLabel: {
 						formatter: '{value}',
-						color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)',
+						color: getChartTheme(isDark).text,
 						inside: true
 					},
 					splitLine: {
@@ -290,7 +291,7 @@ export default function ScatterChart({
 					},
 					axisLabel: {
 						formatter: '{value}',
-						color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)',
+						color: getChartTheme(isDark).text,
 						inside: true
 					},
 					splitLine: {

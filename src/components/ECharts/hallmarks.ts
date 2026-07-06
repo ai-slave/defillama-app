@@ -1,3 +1,5 @@
+import { getChartTheme } from './chartTheme'
+
 export function buildHallmarksMarkLine({
 	hallmarks,
 	isThemeDark,
@@ -13,7 +15,7 @@ export function buildHallmarksMarkLine({
 		label: {
 			position: 'end' as const,
 			width: 200,
-			color: isThemeDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)',
+			color: getChartTheme(isThemeDark).text,
 			fontFamily: 'sans-serif',
 			overflow: 'truncate' as const,
 			rotate: 0,

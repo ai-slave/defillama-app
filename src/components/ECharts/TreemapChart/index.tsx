@@ -12,6 +12,7 @@ import { useCallback, useEffect, useId, useMemo, useRef } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { formattedNum } from '~/utils'
+import { getChartTheme } from '../chartTheme'
 import type { ITreemapChartProps } from '../types'
 import {
 	formatRwaTreemapBoxLabel,
@@ -144,7 +145,7 @@ export default function TreemapChart({
 							textStyle: {
 								fontFamily: 'sans-serif',
 								fontWeight: 600,
-								color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+								color: getChartTheme(isDark).text
 							}
 						}
 					}),
@@ -252,7 +253,7 @@ export default function TreemapChart({
 										textStyle: {
 											fontFamily: 'sans-serif',
 											fontWeight: 400,
-											color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+											color: getChartTheme(isDark).text
 										}
 									}
 								}),
@@ -332,7 +333,7 @@ export default function TreemapChart({
 					upperLabel: {
 						show: true,
 						height: 20,
-						color: isDark ? '#fff' : '#111',
+						color: getChartTheme(isDark).treemapLabel,
 						...(isRwaVariant ? { formatter: formatRwaUpperLabel } : {})
 					},
 					itemStyle: {

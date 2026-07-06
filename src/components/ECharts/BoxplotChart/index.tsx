@@ -16,6 +16,7 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useId, useMemo, useRef } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
+import { getChartTheme } from '../chartTheme'
 
 echarts.use([
 	CanvasRenderer,
@@ -100,7 +101,7 @@ export default function BoxplotChart({ chartData }: IChartProps) {
 				textStyle: {
 					fontFamily: 'sans-serif',
 					fontWeight: 600,
-					color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+					color: getChartTheme(isDark).text
 				}
 			},
 			tooltip: {
@@ -124,7 +125,7 @@ export default function BoxplotChart({ chartData }: IChartProps) {
 					fontWeight: 500
 				},
 				axisLabel: {
-					color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+					color: getChartTheme(isDark).text
 				},
 				splitLine: {
 					lineStyle: {
@@ -142,7 +143,7 @@ export default function BoxplotChart({ chartData }: IChartProps) {
 					fontWeight: 600
 				},
 				axisLabel: {
-					color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+					color: getChartTheme(isDark).text
 				},
 				splitLine: {
 					lineStyle: {
@@ -170,15 +171,15 @@ export default function BoxplotChart({ chartData }: IChartProps) {
 					end: 100,
 					filterMode: 'none',
 					textStyle: {
-						color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+						color: getChartTheme(isDark).text
 					},
-					borderColor: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
+					borderColor: getChartTheme(isDark).zoomBorder,
 					handleStyle: {
-						borderColor: isDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)',
-						color: isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.4)'
+						borderColor: getChartTheme(isDark).zoomHandleBorder,
+						color: getChartTheme(isDark).zoomHandleFill
 					},
 					moveHandleStyle: {
-						color: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)'
+						color: getChartTheme(isDark).zoomBorder
 					},
 					selectedDataBackground: {
 						lineStyle: {
@@ -190,15 +191,15 @@ export default function BoxplotChart({ chartData }: IChartProps) {
 					},
 					emphasis: {
 						handleStyle: {
-							borderColor: isDark ? 'rgba(255, 255, 255, 1)' : '#000',
-							color: isDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)'
+							borderColor: getChartTheme(isDark).zoomEmphasisBorder,
+							color: getChartTheme(isDark).zoomHandleBorder
 						},
 						moveHandleStyle: {
-							borderColor: isDark ? 'rgba(255, 255, 255, 1)' : '#000',
-							color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'
+							borderColor: getChartTheme(isDark).zoomEmphasisBorder,
+							color: getChartTheme(isDark).zoomEmphasisMoveFill
 						}
 					},
-					fillerColor: isDark ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)'
+					fillerColor: getChartTheme(isDark).zoomFiller
 				}
 			],
 			series: [

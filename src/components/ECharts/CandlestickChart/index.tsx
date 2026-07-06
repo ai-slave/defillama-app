@@ -15,6 +15,7 @@ import { oldBlue } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
+import { getChartTheme } from '../chartTheme'
 import { formatChartEmphasisDate, formatTooltipChartDate, formatTooltipValue } from '../formatters'
 import type { ICandlestickChartProps } from '../types'
 
@@ -84,12 +85,12 @@ export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_IND
 				boundaryGap: false,
 				axisLine: {
 					onZero: false,
-					lineStyle: { color: isThemeDark ? 'rgba(255,255,255,1)' : 'rgba(0,0,0,1)', opacity: 0.2 }
+					lineStyle: { color: getChartTheme(isThemeDark).text, opacity: 0.2 }
 				},
 				splitLine: { show: false },
 				min: 'dataMin',
 				max: 'dataMax',
-				axisLabel: { color: isThemeDark ? 'rgba(255,255,255,1)' : 'rgba(0,0,0,1)' }
+				axisLabel: { color: getChartTheme(isThemeDark).text }
 			},
 			{
 				type: 'time',
@@ -97,7 +98,7 @@ export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_IND
 				boundaryGap: false,
 				axisLine: {
 					onZero: false,
-					lineStyle: { color: isThemeDark ? 'rgba(255,255,255,1)' : 'rgba(0,0,0,1)', opacity: 0.2 }
+					lineStyle: { color: getChartTheme(isThemeDark).text, opacity: 0.2 }
 				},
 				axisTick: { show: false },
 				splitLine: { show: false },
@@ -112,14 +113,14 @@ export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_IND
 				scale: true,
 				splitArea: {
 					show: true,
-					areaStyle: { color: [isThemeDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)', ''] }
+					areaStyle: { color: [getChartTheme(isThemeDark).ink(0.02), ''] }
 				},
 				axisLabel: {
 					formatter: (v) => formatTooltipValue(v, '$'),
-					color: isThemeDark ? 'rgba(255,255,255,1)' : 'rgba(0,0,0,1)'
+					color: getChartTheme(isThemeDark).text
 				},
-				axisLine: { lineStyle: { color: isThemeDark ? 'rgba(255,255,255,1)' : 'rgba(0,0,0,1)', opacity: 0.1 } },
-				splitLine: { lineStyle: { color: isThemeDark ? '#fff' : '#000', opacity: isThemeDark ? 0.02 : 0.03 } }
+				axisLine: { lineStyle: { color: getChartTheme(isThemeDark).text, opacity: 0.1 } },
+				splitLine: { lineStyle: { color: getChartTheme(isThemeDark).gridline } }
 			},
 			{
 				scale: true,
@@ -165,10 +166,10 @@ export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_IND
 				min: isOscillator ? 0 : undefined,
 				max: isOscillator ? 100 : undefined,
 				splitNumber: 2,
-				axisLabel: { show: true, fontSize: 10, color: isThemeDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' },
+				axisLabel: { show: true, fontSize: 10, color: getChartTheme(isThemeDark).ink(0.6) },
 				axisLine: { show: false },
 				axisTick: { show: false },
-				splitLine: { lineStyle: { color: isThemeDark ? '#fff' : '#000', opacity: 0.05 } }
+				splitLine: { lineStyle: { color: getChartTheme(isThemeDark).ink(0.05) } }
 			})
 		}
 
@@ -190,7 +191,7 @@ export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_IND
 				show: overlays.length > 0 || panels.length > 0,
 				top: 0,
 				right: 12,
-				textStyle: { color: isThemeDark ? '#fff' : '#000', fontSize: 11 }
+				textStyle: { color: getChartTheme(isThemeDark).text, fontSize: 11 }
 			},
 			tooltip: {
 				trigger: 'axis',
@@ -225,15 +226,15 @@ export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_IND
 					bottom: 10,
 					start: 0,
 					end: 100,
-					textStyle: { color: isThemeDark ? 'rgba(255,255,255,1)' : 'rgba(0,0,0,1)' },
-					borderColor: isThemeDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+					textStyle: { color: getChartTheme(isThemeDark).text },
+					borderColor: getChartTheme(isThemeDark).zoomBorder,
 					handleStyle: {
-						borderColor: isThemeDark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.9)',
-						color: isThemeDark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.4)'
+						borderColor: getChartTheme(isThemeDark).zoomHandleBorder,
+						color: getChartTheme(isThemeDark).zoomHandleFill
 					},
-					moveHandleStyle: { color: isThemeDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' },
+					moveHandleStyle: { color: getChartTheme(isThemeDark).zoomBorder },
 					selectedDataBackground: { lineStyle: { color: oldBlue }, areaStyle: { color: oldBlue } },
-					fillerColor: isThemeDark ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)',
+					fillerColor: getChartTheme(isThemeDark).zoomFiller,
 					labelFormatter: formatChartEmphasisDate
 				}
 			]

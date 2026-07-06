@@ -1,0 +1,120 @@
+/* ----------------------------------------------------------------------------
+   Llama Design System — Type ramp
+
+   Sizes and weights follow the Figma library text styles (see design.md).
+   Sizes are rem (Figma px ÷ 16) so user browser font-size preferences are
+   respected, matching Tailwind's own text-* scale.
+   Line heights are deliberately NOT copied from Figma: each band ships one
+   unitless ratio, and vertical rhythm comes from gap / padding / min-h on
+   containers — never from leading, margins, or pixel line-height tweaks.
+
+   Each utility is a small, flat, variant-free declaration set per the
+   @utility policy. Family comes from the body font (Inter) except mono-*,
+   which sets JetBrains Mono.
+
+   Use these instead of arbitrary font sizes: the ramp includes 10px and 12px
+   steps (label-xs/body-xs, label-sm/body-sm) that cover the text-[10px] /
+   text-[11px] cases. label-* (medium) is single-line scannable text: table
+   headers, nav, form labels, metadata. body-* (regular) is multi-line copy.
+   mono-* sets numbers, addresses, and code.
+---------------------------------------------------------------------------- */
+
+@theme {
+	--leading-heading: 1.3;
+	--leading-label: 1.2;
+	--leading-body: 1.5;
+	--leading-mono: 1.35;
+}
+
+@utility heading-lg {
+	font-size: 2rem;
+	line-height: var(--leading-heading);
+	font-weight: 600;
+}
+@utility heading-sm {
+	font-size: 1.25rem;
+	line-height: var(--leading-heading);
+	font-weight: 600;
+}
+@utility heading-xs {
+	font-size: 1.125rem;
+	line-height: var(--leading-heading);
+	font-weight: 600;
+}
+
+@utility label-xl {
+	font-size: 1.125rem;
+	line-height: var(--leading-label);
+	font-weight: 500;
+}
+@utility label-lg {
+	font-size: 1rem;
+	line-height: var(--leading-label);
+	font-weight: 500;
+}
+@utility label-md {
+	font-size: 0.875rem;
+	line-height: var(--leading-label);
+	font-weight: 500;
+}
+@utility label-sm {
+	font-size: 0.75rem;
+	line-height: var(--leading-label);
+	font-weight: 500;
+}
+@utility label-xs {
+	font-size: 0.625rem;
+	line-height: var(--leading-label);
+	font-weight: 500;
+}
+
+@utility body-xl {
+	font-size: 1.125rem;
+	line-height: var(--leading-body);
+	font-weight: 400;
+}
+@utility body-lg {
+	font-size: 1rem;
+	line-height: var(--leading-body);
+	font-weight: 400;
+}
+@utility body-md {
+	font-size: 0.875rem;
+	line-height: var(--leading-body);
+	font-weight: 400;
+}
+@utility body-sm {
+	font-size: 0.75rem;
+	line-height: var(--leading-body);
+	font-weight: 400;
+}
+@utility body-xs {
+	font-size: 0.625rem;
+	line-height: var(--leading-body);
+	font-weight: 400;
+}
+
+@utility mono-xl {
+	font-family: var(--font-jetbrains);
+	font-size: 1.5rem;
+	line-height: var(--leading-mono);
+	font-weight: 700;
+}
+@utility mono-md {
+	font-family: var(--font-jetbrains);
+	font-size: 0.875rem;
+	line-height: var(--leading-mono);
+	font-weight: 400;
+}
+@utility mono-sm {
+	font-family: var(--font-jetbrains);
+	font-size: 0.75rem;
+	line-height: var(--leading-mono);
+	font-weight: 400;
+}
+@utility mono-sm-bold {
+	font-family: var(--font-jetbrains);
+	font-size: 0.75rem;
+	line-height: var(--leading-mono);
+	font-weight: 700;
+}

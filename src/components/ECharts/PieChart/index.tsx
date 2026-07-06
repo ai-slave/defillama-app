@@ -11,6 +11,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { formattedNum } from '~/utils'
 import { ChartContainer } from '../ChartContainer'
 import { ChartHeader } from '../ChartHeader'
+import { getChartTheme } from '../chartTheme'
 import { formatTooltipValue } from '../formatters'
 import type { IPieChartProps } from '../types'
 
@@ -201,7 +202,7 @@ export default function PieChart({
 			type: 'pie',
 			label: {
 				fontFamily: 'sans-serif',
-				color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)',
+				color: getChartTheme(isDark).text,
 				formatter: (x) => {
 					return `${x.name}: (${formatPercent(x.value)})`
 				},
@@ -324,7 +325,7 @@ export default function PieChart({
 				// If everything fits, right-align looks cleaner. If truncated, left-align maximizes readable label length.
 				align: legendAlign,
 				textStyle: {
-					color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)', // Default color
+					color: getChartTheme(isDark).text, // Default color
 					...(legendTextStyle || {}) // Apply overrides from prop
 				},
 				formatter: function (name: string) {

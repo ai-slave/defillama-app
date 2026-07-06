@@ -3,6 +3,7 @@ import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
+import { getChartTheme } from '~/components/ECharts/chartTheme'
 import { Icon } from '~/components/Icon'
 import { LoadingSpinner } from '~/components/Loaders'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
@@ -344,7 +345,7 @@ function buildTreemapExportLabelGraphics(chart: echarts.ECharts, isDark: boolean
 	const baseX = Number(layoutInfo.x ?? 0)
 	const baseY = Number(layoutInfo.y ?? 0)
 	const labelFill = '#fff'
-	const labelStroke = isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.45)'
+	const labelStroke = getChartTheme(isDark).exportLabelStroke
 
 	const getNodeLabel = (node: any, includeValue: boolean) => {
 		const formatted = stripRichText(String(seriesModel.getFormattedLabel?.(node.dataIndex, 'normal') ?? '')).trim()
@@ -561,7 +562,7 @@ async function composeLogoOverlay(opts: {
 	ctx.drawImage(chartImg, 0, 0)
 	ctx.scale(dpr, dpr)
 
-	const logoBgColor = isDark ? '#1a1a1a' : '#ffffff'
+	const logoBgColor = getChartTheme(isDark).logoBg
 
 	if (logosData.kind === 'cartesian-x') {
 		const centerY = chartCssHeight - gridBottom + EXPORT_CATEGORY_LOGO_GAP / 2 + EXPORT_CATEGORY_LOGO_SIZE / 2
@@ -590,7 +591,7 @@ async function composeLogoOverlay(opts: {
 	} else {
 		ctx.font = EXPORT_HBAR_LABEL_FONT
 		ctx.textBaseline = 'middle'
-		ctx.fillStyle = isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)'
+		ctx.fillStyle = getChartTheme(isDark).exportTextMuted
 		const textX = EXPORT_HBAR_LEFT_PAD + EXPORT_HBAR_LOGO_SIZE + EXPORT_HBAR_LOGO_GAP
 		for (let i = 0; i < logosData.categories.length; i++) {
 			const y = tempChart.convertToPixel({ yAxisIndex: 0 }, i)
@@ -647,7 +648,7 @@ async function composeTreemapExportFrame(opts: {
 	ctx.drawImage(chartImg, 0, 0)
 	ctx.scale(dpr, dpr)
 
-	const backgroundColor = isDark ? '#0b1214' : '#ffffff'
+	const backgroundColor = getChartTheme(isDark).exportBg
 	ctx.fillStyle = backgroundColor
 	ctx.fillRect(0, 0, IMAGE_EXPORT_WIDTH, Math.max(0, topInset))
 	ctx.fillRect(0, topInset, TREEMAP_EXPORT_SIDE_PADDING, exportHeight - topInset)
@@ -677,7 +678,7 @@ async function composeTreemapExportFrame(opts: {
 		}
 		ctx.font = '600 28px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
 		ctx.textBaseline = 'top'
-		ctx.fillStyle = isDark ? '#ffffff' : '#000000'
+		ctx.fillStyle = getChartTheme(isDark).exportText
 		ctx.fillText(title, textX, BASE_TOP_PADDING)
 	}
 
@@ -931,11 +932,11 @@ function adjustSeriesForExport(opts: {
 						name: {
 							fontSize: 18,
 							fontWeight: 'normal',
-							color: isDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)'
+							color: getChartTheme(isDark).exportLegendText
 						},
 						desc: {
 							fontSize: 12,
-							color: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)'
+							color: getChartTheme(isDark).exportLegendInactive
 						}
 					}
 				},
@@ -1023,7 +1024,7 @@ function adjustSeriesForExport(opts: {
 			const exportUpperLabel = {
 				...sourceUpperLabel,
 				show: sourceUpperLabel.show !== false,
-				color: sourceUpperLabel.color ?? (isDark ? '#fff' : '#111'),
+				color: sourceUpperLabel.color ?? getChartTheme(isDark).treemapLabel,
 				formatter:
 					typeof sourceUpperLabel.formatter === 'function'
 						? sourceUpperLabel.formatter
@@ -1088,7 +1089,7 @@ function buildExportTitle(opts: {
 		textStyle: {
 			fontSize: 28,
 			fontWeight: 600,
-			color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)',
+			color: getChartTheme(isDark).text,
 			rich: iconBase64
 				? {
 						icon: {
@@ -1234,7 +1235,7 @@ async function renderClonedChartExport(
 					show: true,
 					textStyle: {
 						fontSize: EXPORT_FONT_SIZE,
-						color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+						color: getChartTheme(isDark).text
 					},
 					itemHeight: 24,
 					itemWidth: 48,
@@ -1265,7 +1266,7 @@ async function renderClonedChartExport(
 
 		const baseDataURL = await getChartPngDataURL(tempChart, {
 			pixelRatio: 2,
-			backgroundColor: isDark ? '#0b1214' : '#ffffff',
+			backgroundColor: getChartTheme(isDark).exportBg,
 			excludeComponents: ['toolbox', 'dataZoom']
 		})
 		const exportDataURL = flags.isTreemapChart

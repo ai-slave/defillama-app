@@ -31,6 +31,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { formatNum, formattedNum, slug } from '~/utils'
 import { ChartContainer } from '../ChartContainer'
 import { ChartHeader } from '../ChartHeader'
+import { getChartTheme } from '../chartTheme'
 import { isTooltipDataRecord, formatChartEmphasisDate, formatTooltipChartDate } from '../formatters'
 import { buildHallmarksMarkLine } from '../hallmarks'
 import type { IMultiSeriesChart2Props } from '../types'
@@ -111,7 +112,7 @@ function createEndLabel({
 		formatter: text,
 		fontSize: 16,
 		fontWeight: 'bold',
-		color: isThemeDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+		color: getChartTheme(isThemeDark).ink(0.3),
 		offset
 	}
 }
@@ -184,7 +185,7 @@ function buildSeries({
 								{ offset: 0, color: resolvedColor },
 								{
 									offset: 1,
-									color: isThemeDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.2)'
+									color: getChartTheme(isThemeDark).areaGradientTo
 								}
 							])
 						}
@@ -555,7 +556,7 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 	const tooltipGroupBy = groupBySafe === 'cumulative' ? 'daily' : groupBySafe
 
 	const defaultChartSettings = useMemo(() => {
-		const themeColor = isThemeDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+		const themeColor = getChartTheme(isThemeDark).text
 
 		const graphic = {
 			type: 'image',
@@ -576,7 +577,7 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 			axisLabel: { color: themeColor },
 			axisLine: { lineStyle: { color: themeColor, opacity: 0.2 } },
 			splitLine: {
-				lineStyle: { color: isThemeDark ? '#ffffff' : '#000000', opacity: isThemeDark ? 0.02 : 0.03 }
+				lineStyle: { color: getChartTheme(isThemeDark).gridline }
 			}
 		}
 
@@ -591,7 +592,7 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 			},
 			axisLine: { lineStyle: { color: themeColor, opacity: 0.1 } },
 			splitLine: {
-				lineStyle: { color: isThemeDark ? '#ffffff' : '#000000', opacity: isThemeDark ? 0.02 : 0.03 }
+				lineStyle: { color: getChartTheme(isThemeDark).gridline }
 			}
 		}
 
@@ -613,25 +614,25 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 				left: 12,
 				right: 12,
 				textStyle: { color: themeColor },
-				borderColor: isThemeDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
+				borderColor: getChartTheme(isThemeDark).zoomBorder,
 				handleStyle: {
-					borderColor: isThemeDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)',
-					color: isThemeDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.4)'
+					borderColor: getChartTheme(isThemeDark).zoomHandleBorder,
+					color: getChartTheme(isThemeDark).zoomHandleFill
 				},
 				moveHandleStyle: {
-					color: isThemeDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)'
+					color: getChartTheme(isThemeDark).zoomBorder
 				},
 				emphasis: {
 					handleStyle: {
-						borderColor: isThemeDark ? 'rgba(255, 255, 255, 1)' : '#000',
-						color: isThemeDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)'
+						borderColor: getChartTheme(isThemeDark).zoomEmphasisBorder,
+						color: getChartTheme(isThemeDark).zoomHandleBorder
 					},
 					moveHandleStyle: {
-						borderColor: isThemeDark ? 'rgba(255, 255, 255, 1)' : '#000',
-						color: isThemeDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'
+						borderColor: getChartTheme(isThemeDark).zoomEmphasisBorder,
+						color: getChartTheme(isThemeDark).zoomEmphasisMoveFill
 					}
 				},
-				fillerColor: isThemeDark ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)',
+				fillerColor: getChartTheme(isThemeDark).zoomFiller,
 				labelFormatter: formatChartEmphasisDate
 			}
 		]
@@ -1083,7 +1084,7 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 			const chartHeight = inst.getHeight()
 			if (typeof chartHeight !== 'number' || !Number.isFinite(chartHeight)) return
 			const centerY = chartHeight - gridBottom + CATEGORY_LOGO_BOTTOM_GAP / 2 + CATEGORY_LOGO_SIZE / 2
-			const darkBg = isThemeDark ? '#1a1a1a' : '#fff'
+			const darkBg = getChartTheme(isThemeDark).logoBg
 			for (let i = 0; i < categoryValues.length; i++) {
 				const url = categoryLogos?.[i]
 				if (!url) continue

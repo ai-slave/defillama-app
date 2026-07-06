@@ -11,6 +11,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { abbreviateNumber } from '~/utils'
 import { ChartContainer } from '../ChartContainer'
 import { ChartHeader } from '../ChartHeader'
+import { getChartTheme } from '../chartTheme'
 import { formatTooltipValue } from '../formatters'
 import type { ISankeyChartProps } from '../types'
 
@@ -100,7 +101,7 @@ export default function SankeyChart({
 				position: orient === 'horizontal' ? 'right' : 'bottom',
 				fontFamily: 'sans-serif',
 				fontSize: 14,
-				color: isDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)',
+				color: getChartTheme(isDark).ink(0.9),
 				formatter: (params: any) => {
 					// Use displayValue if provided, otherwise use calculated value
 					const displayValue = nodeMetadata.displayValues[params.name]
@@ -127,11 +128,11 @@ export default function SankeyChart({
 					name: {
 						fontSize: 14,
 						fontWeight: 'normal',
-						color: isDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)'
+						color: getChartTheme(isDark).ink(0.9)
 					},
 					desc: {
 						fontSize: 10,
-						color: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)'
+						color: getChartTheme(isDark).ink(0.5)
 					}
 				}
 			},
@@ -169,10 +170,10 @@ export default function SankeyChart({
 				trigger: 'item',
 				triggerOn: 'mousemove',
 				confine: true,
-				backgroundColor: isDark ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-				borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+				backgroundColor: getChartTheme(isDark).inkInverted(0.9),
+				borderColor: getChartTheme(isDark).ink(0.2),
 				textStyle: {
-					color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+					color: getChartTheme(isDark).text
 				},
 				formatter: (params: any) => {
 					if (params.dataType === 'edge') {
@@ -191,7 +192,7 @@ export default function SankeyChart({
 					const valueWithPercent = percentageLabel ? `${valueToShow} (${percentageLabel})` : valueToShow
 					const description = nodeMetadata.descriptions[params.name]
 					if (description) {
-						return `<strong>${params.name}</strong><br/>${valueWithPercent}<br/><span style="color: ${isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)'}; font-size: 11px;">${description}</span>`
+						return `<strong>${params.name}</strong><br/>${valueWithPercent}<br/><span style="color: ${getChartTheme(isDark).ink(0.7)}; font-size: 11px;">${description}</span>`
 					}
 					return `${params.name}<br/>${valueWithPercent}`
 				}

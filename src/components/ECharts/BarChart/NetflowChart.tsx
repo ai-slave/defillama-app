@@ -7,6 +7,7 @@ import { TagGroup } from '~/components/TagGroup'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { capitalizeFirstLetter, formattedNum } from '~/utils'
+import { getChartTheme } from '../chartTheme'
 
 echarts.use([BarChart, TooltipComponent, GridComponent, CanvasRenderer])
 
@@ -121,13 +122,13 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 				position: 'top',
 				splitLine: {
 					lineStyle: {
-						color: isThemeDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+						color: getChartTheme(isThemeDark).ink(0.1),
 						type: 'dashed'
 					}
 				},
 				axisLabel: {
 					formatter: (value) => formattedNum(value),
-					color: isThemeDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)'
+					color: getChartTheme(isThemeDark).ink(0.8)
 				}
 			},
 			yAxis: {
@@ -137,7 +138,7 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 				splitLine: { show: false },
 				data: chains,
 				axisLabel: {
-					color: isThemeDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)',
+					color: getChartTheme(isThemeDark).ink(0.8),
 					fontSize: 13,
 					padding: [0, 0, 0, 50]
 				},

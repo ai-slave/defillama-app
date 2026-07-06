@@ -4,6 +4,7 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useId, useRef } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { getChartTheme } from '../chartTheme'
 import { formatTooltipValue } from '../formatters'
 import type { IHBarChartProps } from '../types'
 
@@ -69,7 +70,7 @@ export default function HBarChart({
 			return item
 		})
 
-		const textColor = isThemeDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)'
+		const textColor = getChartTheme(isThemeDark).ink(0.8)
 		const yAxisLabelWidth = getYAxisLabelWidth(chartDom.clientWidth || 600)
 		const watermarkHeight = 40
 		const watermarkWidth = Math.round((389 / 133) * watermarkHeight)
@@ -115,7 +116,7 @@ export default function HBarChart({
 					},
 					splitLine: {
 						lineStyle: {
-							color: isThemeDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+							color: getChartTheme(isThemeDark).ink(0.1)
 						}
 					}
 				},
@@ -177,7 +178,7 @@ export default function HBarChart({
 					img.alt = ''
 					img.loading = 'lazy'
 					img.decoding = 'async'
-					img.style.cssText = `width:${LOGO_SIZE}px;height:${LOGO_SIZE}px;border-radius:50%;object-fit:cover;background:${isThemeDark ? '#1a1a1a' : '#fff'};display:inline-block;vertical-align:middle;`
+					img.style.cssText = `width:${LOGO_SIZE}px;height:${LOGO_SIZE}px;border-radius:50%;object-fit:cover;background:${getChartTheme(isThemeDark).logoBg};display:inline-block;vertical-align:middle;`
 					img.onerror = () => {
 						const spacer = document.createElement('span')
 						spacer.style.cssText = spacerCss

@@ -4,6 +4,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartCleanup } from '~/hooks/useChartCleanup'
 import { useChartResize } from '~/hooks/useChartResize'
 import { ChartContainer } from '../ChartContainer'
+import { getChartTheme } from '../chartTheme'
 import { formatTooltipValue } from '../formatters'
 import { METRIC_UNIT_GROUP_SYMBOL, resolveSeriesAxisLayout } from '../metricGroups'
 import { useDefaults } from '../useDefaults'
@@ -119,7 +120,7 @@ export default function MultiSeriesChart({
 							},
 							{
 								offset: 1,
-								color: isThemeDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.2)'
+								color: getChartTheme(isThemeDark).areaGradientTo
 							}
 						])
 					}

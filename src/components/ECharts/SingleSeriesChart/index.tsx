@@ -2,6 +2,7 @@ import * as echarts from 'echarts/core'
 import { useEffect, useEffectEvent, useId, useMemo, useRef } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
+import { getChartTheme } from '../chartTheme'
 import { buildHallmarksMarkLine } from '../hallmarks'
 import type { ISingleSeriesChartProps } from '../types'
 import { useDefaults } from '../useDefaults'
@@ -64,7 +65,7 @@ export default function SingleSeriesChart({
 					},
 					{
 						offset: 1,
-						color: isThemeDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.2)'
+						color: getChartTheme(isThemeDark).areaGradientTo
 					}
 				])
 			},

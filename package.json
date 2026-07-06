@@ -16,6 +16,7 @@
 		"format": "oxfmt --write",
 		"format:check": "oxfmt --check",
 		"lint": "oxlint",
+		"lint:tokens": "node scripts/check-design-tokens.mjs",
 		"prepare": "git config core.hooksPath .githooks || true",
 		"start": "next start",
 		"start:docker": "sh ./scripts/docker-entrypoint.sh .next/standalone/server.js",
