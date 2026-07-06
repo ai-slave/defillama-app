@@ -1,0 +1,427 @@
+/* ----------------------------------------------------------------------------
+   LEGACY — Pro Dashboard / Investor Relations styles (quarantined)
+
+   Pre-refresh tokens and utilities used only by the Pro Dashboard
+   (containers/ProDashboard, Downloads, AddToDashboard) and the embedded
+   investors dashboard (containers/Investors). Do not add new consumers;
+   these surfaces get their own pass against the Llama Design System and
+   this file is deleted when that lands.
+
+   Moved verbatim from tailwind.css (no value changes). The only removal is
+   the old `@utility dark` block that re-declared the pro dark-mode variables:
+   it duplicated the `html.dark &` overrides already inside
+   `@utility pro-dashboard` with identical values, so it was dead weight.
+---------------------------------------------------------------------------- */
+
+@theme {
+	--color-pro-purple-100: oklch(0.935 0.02 286); /* Grayish/off-white */
+	--color-pro-purple-200: oklch(0.78 0.12 283.45); /* Muted purple */
+	--color-pro-purple-300: oklch(0.612 0.213 278.1); /* Vibrant purple */
+	--color-pro-purple-400: oklch(0.41 0.13 279.09); /* Deep purple */
+
+	--color-pro-blue-100: oklch(0.935 0.02 257); /* Light blue/gray */
+	--color-pro-blue-200: oklch(0.78 0.12 257); /* Muted blue */
+	--color-pro-blue-300: oklch(0.612 0.213 257); /* Vibrant blue */
+	--color-pro-blue-400: oklch(0.41 0.13 257); /* Deep blue */
+
+	--color-pro-green-100: oklch(0.935 0.02 143); /* Light green/gray */
+	--color-pro-green-200: oklch(0.78 0.12 143); /* Muted green */
+	--color-pro-green-300: oklch(0.612 0.213 143); /* Vibrant green */
+	--color-pro-green-400: oklch(0.41 0.13 143); /* Deep green */
+
+	--color-pro-gold-100: oklch(0.94 0.01 71.72); /* Light version of pro-gold-400 */
+	--color-pro-gold-200: oklch(0.78 0.08 60); /* Medium gold */
+	--color-pro-gold-300: oklch(0.612 0.15 60); /* Vibrant gold */
+	--color-pro-gold-400: oklch(0.41 0.12 60); /* Deep gold */
+}
+
+/* ------------------------- Pro Dashboard Utilities ------------------------- */
+@utility pro-dashboard {
+	--pro-text1: #0a0a0a;
+	--pro-text2: #2d2d2d;
+	--pro-text3: #4a4a4a;
+
+	--pro-bg1: #ffffff;
+	--pro-bg2: #f0f0f0;
+	--pro-bg3: #e0e0e0;
+	--pro-bg4: #cccccc;
+	--pro-bg7: rgba(255, 255, 255, 0.95);
+	--pro-bg8: rgba(35, 91, 255, 0.1);
+
+	--pro-divider: rgba(0, 0, 0, 0.3);
+	--pro-border: rgba(0, 0, 0, 0.3);
+	--pro-glass-border: rgba(0, 0, 0, 0.3);
+
+	html.dark & {
+		--pro-text1: var(--text-primary);
+		--pro-text2: var(--text-secondary);
+		--pro-text3: var(--text-tertiary);
+
+		--pro-bg1: #070e0f;
+		--pro-bg2: #0a1011;
+		--pro-bg3: #0d1516;
+		--pro-bg4: #101a1c;
+		--pro-bg7: rgba(7, 14, 15, 0.7);
+		--pro-bg8: rgba(35, 91, 255, 0.1);
+
+		--pro-divider: rgba(255, 255, 255, 0.1);
+		--pro-border: rgba(255, 255, 255, 0.2);
+		--pro-glass-border: rgba(255, 255, 255, 0.3);
+	}
+
+	& .pro-text1 {
+		color: var(--pro-text1);
+	}
+	& .pro-text2 {
+		color: var(--pro-text2);
+	}
+	& .pro-text3 {
+		color: var(--pro-text3);
+	}
+
+	& .pro-bg1 {
+		background-color: var(--pro-bg1);
+	}
+	& .pro-bg2 {
+		background-color: var(--pro-bg2);
+	}
+	& .pro-bg3 {
+		background-color: var(--pro-bg3);
+	}
+	& .pro-bg7 {
+		background-color: var(--pro-bg7);
+	}
+
+	& .pro-border {
+		border-color: var(--pro-border);
+	}
+	& .pro-divider {
+		border-color: var(--pro-divider);
+	}
+
+	& .pro-glass {
+		background-color: var(--pro-bg7);
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+		border: 1px solid var(--pro-glass-border);
+	}
+
+	& .pro-hover-bg:hover {
+		background-color: var(--pro-bg3);
+	}
+}
+
+.investors-dashboard {
+	--pro-text1: #1a1d23;
+	--pro-text2: #555962;
+	--pro-text3: #8b8f99;
+
+	--pro-bg1: #ffffff;
+	--pro-bg2: #f5f6f8;
+	--pro-bg3: #ebedf0;
+	--pro-bg4: #dfe1e6;
+	--pro-bg7: rgba(255, 255, 255, 0.92);
+	--pro-bg8: rgba(33, 114, 229, 0.06);
+
+	--pro-divider: rgba(0, 0, 0, 0.06);
+	--pro-border: rgba(0, 0, 0, 0.08);
+	--pro-glass-border: rgba(33, 114, 229, 0.12);
+
+	--app-bg: #f0f2f5;
+	--cards-bg: #ffffff;
+	--cards-border: rgba(0, 0, 0, 0.06);
+	--form-control-border: rgba(0, 0, 0, 0.1);
+	--old-blue: #2172e5;
+	--text-primary: #1a1d23;
+	--text-secondary: #555962;
+	--text-tertiary: #8b8f99;
+	--text-label: #6e727c;
+	--text-form: #555962;
+
+	--sl-accent: #2172e5;
+	--sl-accent-hover: #1a5ecc;
+	--sl-accent-muted: rgba(33, 114, 229, 0.08);
+	--sl-sidebar-bg: #ffffff;
+	--sl-sidebar-border: rgba(0, 0, 0, 0.06);
+	--sl-text-brand: rgba(0, 0, 0, 0.45);
+	--sl-stroke-brand: #0090b3;
+	--sl-hover-bg: rgba(0, 0, 0, 0.04);
+	--sl-divider: rgba(0, 0, 0, 0.06);
+	--sl-btn-inactive-bg: rgba(0, 0, 0, 0.04);
+	--sl-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+
+	html.dark & {
+		--pro-text1: #cdd0d5;
+		--pro-text2: #6e727c;
+		--pro-text3: #3e4148;
+
+		--pro-bg1: #08090c;
+		--pro-bg2: #0c0e13;
+		--pro-bg3: #12141a;
+		--pro-bg4: #181a22;
+		--pro-bg7: rgba(8, 9, 12, 0.85);
+		--pro-bg8: rgba(33, 114, 229, 0.07);
+
+		--pro-divider: rgba(255, 255, 255, 0.04);
+		--pro-border: rgba(255, 255, 255, 0.06);
+		--pro-glass-border: rgba(33, 114, 229, 0.1);
+
+		--app-bg: #060709;
+		--cards-bg: #0c0e13;
+		--cards-border: rgba(255, 255, 255, 0.04);
+		--form-control-border: rgba(255, 255, 255, 0.07);
+		--text-primary: #cdd0d5;
+		--text-secondary: #6e727c;
+		--text-tertiary: #3e4148;
+		--text-label: #555962;
+		--text-form: #6e727c;
+
+		--sl-accent: #2172e5;
+		--sl-accent-hover: #3b8af0;
+		--sl-accent-muted: rgba(33, 114, 229, 0.1);
+		--sl-sidebar-bg: #0a0b0f;
+		--sl-sidebar-border: rgba(255, 255, 255, 0.04);
+		--sl-text-brand: rgba(255, 255, 255, 0.4);
+		--sl-stroke-brand: #00d4ff;
+		--sl-hover-bg: rgba(255, 255, 255, 0.04);
+		--sl-divider: rgba(255, 255, 255, 0.04);
+		--sl-btn-inactive-bg: rgba(255, 255, 255, 0.05);
+		--sl-card-shadow: none;
+	}
+}
+
+.investors-dashboard.investors-dashboard-embedded,
+html.dark .investors-dashboard.investors-dashboard-embedded {
+	--app-bg: inherit;
+	--cards-bg: inherit;
+	--cards-border: inherit;
+	--form-control-border: inherit;
+	--old-blue: inherit;
+	--text-primary: inherit;
+	--text-secondary: inherit;
+	--text-tertiary: inherit;
+	--text-label: inherit;
+	--text-form: inherit;
+}
+
+.investors-dashboard {
+	& .sl-sidebar {
+		background: var(--sl-sidebar-bg);
+		border-right: 1px solid var(--sl-sidebar-border);
+		box-shadow: var(--sl-card-shadow);
+	}
+
+	& .sl-tab-active {
+		background-color: var(--sl-accent-muted);
+		color: var(--sl-accent);
+		border-left: 2px solid var(--sl-accent);
+	}
+
+	& .sl-tab-inactive {
+		color: var(--text-secondary);
+		border-left: 2px solid transparent;
+		&:hover {
+			color: var(--text-primary);
+			background-color: var(--sl-accent-muted);
+		}
+	}
+
+	& .sl-powered-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		padding: 4px 10px;
+		border: 1px solid rgba(33, 114, 229, 0.15);
+		border-radius: 6px;
+		background: rgba(33, 114, 229, 0.05);
+	}
+
+	& .sl-powered-brand {
+		background: linear-gradient(135deg, #2172e5 0%, #5b9bf0 50%, #2172e5 100%);
+		background-size: 200% auto;
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+
+	& [data-umami-event='csv-download'],
+	& [data-umami-event='export-csv'],
+	& [data-btn='colors'] {
+		display: none;
+	}
+}
+
+@keyframes sl-pulse-glow {
+	0%,
+	100% {
+		opacity: 0.5;
+		filter: drop-shadow(0 0 4px rgba(33, 114, 229, 0.1));
+	}
+	50% {
+		opacity: 1;
+		filter: drop-shadow(0 0 24px rgba(33, 114, 229, 0.4)) drop-shadow(0 0 8px rgba(33, 114, 229, 0.2));
+	}
+}
+
+.sl-loader {
+	animation: sl-pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes ir-rise {
+	from {
+		opacity: 0;
+		transform: translateY(16px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+.ir-rise {
+	animation: ir-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes ir-stamp-cell {
+	0%,
+	2% {
+		opacity: 0;
+	}
+	6% {
+		opacity: 1;
+	}
+	24% {
+		opacity: 1;
+	}
+	30%,
+	100% {
+		opacity: 0;
+	}
+}
+
+@keyframes ir-stamp-check {
+	0%,
+	6% {
+		stroke-dashoffset: 26;
+	}
+	14% {
+		stroke-dashoffset: 0;
+	}
+	100% {
+		stroke-dashoffset: 0;
+	}
+}
+
+.ir-stamp {
+	opacity: 0;
+	animation: ir-stamp-cell 14s linear infinite;
+}
+
+.ir-stamp-check {
+	stroke-dasharray: 26;
+	stroke-dashoffset: 26;
+	animation: ir-stamp-check 14s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ir-rise,
+	.ir-stamp,
+	.ir-stamp-check {
+		animation: none;
+	}
+}
+
+@utility pro-text1 {
+	.pro-dashboard & {
+		color: var(--pro-text1);
+	}
+}
+
+@utility pro-text2 {
+	.pro-dashboard & {
+		color: var(--pro-text2);
+	}
+}
+
+@utility pro-text3 {
+	.pro-dashboard & {
+		color: var(--pro-text3);
+	}
+}
+
+@utility pro-bg1 {
+	.pro-dashboard & {
+		background-color: var(--pro-bg1);
+	}
+}
+
+@utility pro-bg2 {
+	.pro-dashboard & {
+		background-color: var(--pro-bg2);
+	}
+}
+
+@utility pro-bg3 {
+	.pro-dashboard & {
+		background-color: var(--pro-bg3);
+	}
+}
+
+@utility pro-bg7 {
+	.pro-dashboard & {
+		background-color: var(--pro-bg7);
+	}
+}
+
+@utility pro-border {
+	.pro-dashboard & {
+		border-color: var(--pro-border);
+	}
+}
+
+@utility pro-divider {
+	.pro-dashboard & {
+		border-color: var(--pro-divider);
+	}
+}
+
+@utility pro-glass {
+	.pro-dashboard & {
+		background-color: var(--pro-bg7);
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+		border: 1px solid var(--pro-glass-border);
+	}
+}
+
+@utility pro-hover-bg {
+	.pro-dashboard &:hover {
+		background-color: var(--pro-bg3);
+	}
+}
+
+@utility pro-info-card {
+	.pro-dashboard & {
+		border-radius: 0.3rem;
+		background-image: linear-gradient(to top, rgba(35, 91, 255, 0), rgba(35, 91, 255, 0.15));
+	}
+	.pro-dashboard &:hover {
+		background-color: rgba(17, 30, 78, 0.25);
+	}
+}
+
+@utility pro-btn-purple {
+	@apply bg-pro-purple-100 text-pro-purple-400 hover:bg-pro-purple-300/20 focus-visible:bg-pro-purple-300/20 dark:bg-pro-purple-300/20 dark:text-pro-purple-200 hover:dark:bg-pro-purple-300/30 focus-visible:dark:bg-pro-purple-300/30;
+}
+
+@utility pro-btn-purple-outline {
+	@apply border border-pro-purple-100 text-pro-purple-400 hover:bg-pro-purple-300/20 focus-visible:bg-pro-purple-300/20 dark:border-pro-purple-300/20 dark:text-pro-purple-200 hover:dark:bg-pro-purple-300/30 focus-visible:dark:bg-pro-purple-300/30;
+}
+
+@utility pro-btn-blue {
+	@apply bg-pro-blue-100 text-pro-blue-400 hover:bg-pro-blue-300/20 focus-visible:bg-pro-blue-300/20 dark:bg-pro-blue-300/20 dark:text-pro-blue-200 hover:dark:bg-pro-blue-300/30 focus-visible:dark:bg-pro-blue-300/30;
+}
+
+@utility pro-btn-blue-outline {
+	@apply border border-pro-blue-100 text-pro-blue-400 hover:bg-pro-blue-300/20 focus-visible:bg-pro-blue-300/20 dark:border-pro-blue-300/20 dark:text-pro-blue-200 hover:dark:bg-pro-blue-300/30 focus-visible:dark:bg-pro-blue-300/30;
+}

@@ -36,7 +36,7 @@
 		"@rainbow-me/rainbowkit": "2.2.10",
 		"@stripe/react-stripe-js": "6.3.0",
 		"@stripe/stripe-js": "9.4.0",
-		"@tailwindcss/typography": "0.5.19",
+		"@tailwindcss/typography": "0.5.20",
 		"@tanstack/react-query": "5.100.9",
 		"@tanstack/react-query-devtools": "5.100.9",
 		"@tanstack/react-table": "8.21.3",
@@ -82,7 +82,7 @@
 		"wagmi": "2.19.5"
 	},
 	"devDependencies": {
-		"@tailwindcss/postcss": "4.2.4",
+		"@tailwindcss/postcss": "4.3.2",
 		"@types/node": "25.6.2",
 		"@types/react": "19.2.14",
 		"@typescript/native-preview": "7.0.0-dev.20260527.2",
@@ -91,7 +91,7 @@
 		"oxlint": "1.63.0",
 		"oxlint-tsgolint": "0.22.1",
 		"postcss": "8.5.14",
-		"tailwindcss": "4.2.4",
+		"tailwindcss": "4.3.2",
 		"typescript": "6.0.3",
 		"vitest": "4.1.5"
 	},

@@ -1,0 +1,197 @@
+/* ----------------------------------------------------------------------------
+   Llama Design System — Semantic tokens
+
+   Source of truth: the "Llama Design System" Figma team library (Semantics
+   collection), values verified per-mode from the redesigned page frames
+   (home/chain, metrics, protocol, protocol-tvl, unlocks, token-rights).
+
+   Naming: 1:1 with the Figma variable names, with the fixes agreed with
+   design (Text/links+Text/branded → link; Background/bg-interactive → brand;
+   bg-brand-transparent/-subtle → brand-muted/-faint). The --ld- prefix
+   exists only to avoid colliding with the legacy variables of the same name
+   (--text-primary, --bg-surface, …) that still carry pre-refresh values —
+   PR 2 points those legacy variables at these tokens.
+
+   Mode handling: light values on :root, dark overrides under html.dark.
+   Never create *-light/*-dark suffixed pairs — the mode lives in the
+   selector, not the token name.
+---------------------------------------------------------------------------- */
+
+:root {
+	/* Background */
+	--ld-bg-page: #f7f7f7; /* Background/bg-page */
+	--ld-bg-surface: #ffffff; /* Background/bg-surface */
+	--ld-bg-surface-elevated-1: #eeeeee; /* Background/bg-surface-elevated1 */
+	--ld-bg-surface-elevated-2: #dedede; /* Background/bg-surface-elevated2 */
+	--ld-bg-brand: var(--ld-blue-500); /* Background/bg-interactive */
+	--ld-bg-brand-muted: #1f67d21f; /* Background/bg-brand-transparent */
+	--ld-bg-brand-faint: #1f67d20f; /* Background/bg-brand-transparent-subtle */
+	--ld-bg-screen-dim: #090b0c33; /* Background/bg-screen-dim-subtle */
+
+	/* Text */
+	--ld-text-primary: #090b0c; /* Text/primary */
+	--ld-text-secondary: #484848; /* Text/secondary */
+	--ld-text-tertiary: var(--ld-neutral-500); /* Text/tertiary (same in dark) */
+	--ld-text-disabled: #dedede; /* Text/disabled */
+	--ld-text-link: #1853a8; /* Text/links = Text/branded */
+	--ld-text-on-brand: #ffffff; /* Text/on-brand [fixed] */
+	--ld-text-data-up: #32933f; /* Text/data-up */
+	--ld-text-data-down: #b53b35; /* Text/data-down */
+	--ld-text-data-up-alt: var(--ld-blue-500); /* Text/data-up-alternative [fixed] */
+	--ld-text-data-down-alt: var(--ld-violet-500); /* Text/data-down-alternative [fixed] */
+	/* TODO(design): light value for Text/Warning not yet published in the
+	   library pages; using the legacy warning orange until confirmed. */
+	--ld-text-warning: #a15d23;
+
+	/* Stroke (alpha-based: layers correctly on any surface) */
+	--ld-border-very-subtle: #090b0c08; /* Stroke/stroke-very-subtle */
+	--ld-border-subtle: #090b0c0f; /* Stroke/stroke-subtle */
+	--ld-border-medium: #090b0c1f; /* Stroke/stroke-medium */
+	--ld-border-strong: #090b0c82; /* Stroke/stroke-strong */
+	--ld-border-brand: var(--ld-blue-500); /* Stroke/stroke-brand */
+	--ld-border-divider: #eeeeee; /* Stroke/divider-subtle */
+
+	/* States */
+	--ld-hover-brand: #1f67d21f; /* States/hover — brand tint (Figma name
+	   "hover-neutral-normal" is a known misnomer; rename requested) */
+	/* TODO(design): light value for States/hover-neutral-subtle unobserved;
+	   mirrored from the dark 3% white as 3% black until confirmed. */
+	--ld-hover-neutral: #090b0c08;
+
+	/* Chips */
+	--ld-chip-bg: #dedede; /* Chips/bg-default */
+	--ld-chip-text: #484848; /* Chips/text-default */
+
+	/* ------------------------------------------------------------------
+	   Chart tokens.
+	   Chrome tokens carry TODAY'S exact literal values from the ECharts
+	   configs (useDefaults.tsx, ChartPngExportButton.tsx) — deliberately
+	   NOT mapped onto the text/stroke semantics above, so that consuming
+	   them (PR 3) is pixel-identical by construction. Charts must not
+	   change visually as a side effect of the token refresh.
+	------------------------------------------------------------------ */
+	--ld-chart-text: rgba(0, 0, 0, 1); /* axis labels, titles, always-on tooltips */
+	--ld-chart-gridline: rgba(0, 0, 0, 0.03); /* splitLine color × opacity, pre-multiplied */
+	--ld-chart-legend-border: rgba(0, 0, 0, 0.4);
+	--ld-chart-legend-active-border: rgba(0, 0, 0, 0.9);
+	--ld-chart-legend-active-text: rgba(255, 255, 255, 0.4); /* inverted on purpose */
+	--ld-chart-zoom-handle-border: #000;
+	--ld-chart-zoom-text: rgba(0, 0, 0, 0.9);
+	--ld-chart-zoom-text-disabled: rgba(0, 0, 0, 0.2);
+	--ld-chart-zoom-filler: rgba(255, 255, 255, 0.1); /* inverted on purpose */
+	--ld-chart-export-bg: #ffffff;
+	--ld-chart-export-text: #000000;
+	--ld-chart-export-text-muted: rgba(0, 0, 0, 0.8);
+	--ld-chart-export-logo-bg: #ffffff;
+
+	/* Chart accents (design-driven; consumed only in per-page redesign
+	   sweeps, never as a bulk swap). Fixed across modes per the library. */
+	--ld-chart-up: var(--ld-green-500);
+	--ld-chart-down: var(--ld-red-500);
+	--ld-chart-up-alt: var(--ld-blue-500);
+	--ld-chart-down-alt: var(--ld-violet-500);
+}
+
+html.dark {
+	/* Background */
+	--ld-bg-page: #090b0c;
+	--ld-bg-surface: #131516;
+	--ld-bg-surface-elevated-1: #181a1b;
+	--ld-bg-surface-elevated-2: var(--ld-neutral-800);
+	--ld-bg-brand-muted: #1f67d233;
+	/* TODO(design): dark value for bg-brand-transparent-subtle unobserved;
+	   one alpha step below muted until confirmed. */
+	--ld-bg-brand-faint: #1f67d21f;
+
+	/* Text */
+	--ld-text-primary: #ffffff;
+	--ld-text-secondary: #c6c6c6;
+	--ld-text-disabled: #2f3336;
+	--ld-text-link: #4b86db;
+	--ld-text-data-up: var(--ld-green-500);
+	--ld-text-data-down: var(--ld-red-500);
+	--ld-text-warning: #ffa455; /* Text/Warning */
+
+	/* Stroke */
+	--ld-border-very-subtle: #ffffff08;
+	--ld-border-subtle: #ffffff0f;
+	--ld-border-medium: #ffffff1f;
+	--ld-border-strong: #ffffff29;
+	--ld-border-divider: var(--ld-neutral-800);
+
+	/* States */
+	--ld-hover-brand: #1f67d233;
+	--ld-hover-neutral: #ffffff08; /* States/hover-neutral-subtle */
+
+	/* Chips */
+	--ld-chip-bg: var(--ld-neutral-800);
+	--ld-chip-text: #c6c6c6;
+
+	/* Chart chrome (today's exact dark literals) */
+	--ld-chart-text: rgba(255, 255, 255, 1);
+	--ld-chart-gridline: rgba(255, 255, 255, 0.02);
+	--ld-chart-legend-border: rgba(255, 255, 255, 0.4);
+	--ld-chart-legend-active-border: rgba(255, 255, 255, 0.9);
+	--ld-chart-legend-active-text: rgba(0, 0, 0, 0.4);
+	--ld-chart-zoom-handle-border: rgba(255, 255, 255, 1);
+	--ld-chart-zoom-text: rgba(255, 255, 255, 0.9);
+	--ld-chart-zoom-text-disabled: rgba(255, 255, 255, 0.2);
+	--ld-chart-zoom-filler: rgba(0, 0, 0, 0.1);
+	--ld-chart-export-bg: #0b1214;
+	--ld-chart-export-text: #ffffff;
+	--ld-chart-export-text-muted: rgba(255, 255, 255, 0.8);
+	--ld-chart-export-logo-bg: #1a1a1a;
+}
+
+/* ----------------------------------------------------------------------------
+   Tailwind utility registration.
+   `inline` means unused entries emit nothing — this block adds zero CSS
+   until a component actually uses a class, so it is safe pre-migration.
+   Gives first-class utilities with autocomplete: bg-surface, text-primary,
+   text-data-up, bg-brand-muted, … (preferred over `bg-(--var)` arbitrary
+   values in all new code).
+---------------------------------------------------------------------------- */
+@theme inline {
+	--color-page: var(--ld-bg-page);
+	--color-surface: var(--ld-bg-surface);
+	--color-surface-elevated-1: var(--ld-bg-surface-elevated-1);
+	--color-surface-elevated-2: var(--ld-bg-surface-elevated-2);
+	--color-brand: var(--ld-bg-brand);
+	--color-brand-muted: var(--ld-bg-brand-muted);
+	--color-brand-faint: var(--ld-bg-brand-faint);
+	--color-on-brand: var(--ld-text-on-brand);
+	/* Text hierarchy — by convention text-* only (bg-primary would be
+	   nonsense; enforced by review, documented in design.md) */
+	--color-primary: var(--ld-text-primary);
+	--color-secondary: var(--ld-text-secondary);
+	--color-tertiary: var(--ld-text-tertiary);
+	--color-disabled: var(--ld-text-disabled);
+	--color-link: var(--ld-text-link);
+	--color-data-up: var(--ld-text-data-up);
+	--color-data-down: var(--ld-text-data-down);
+	--color-data-up-alt: var(--ld-text-data-up-alt);
+	--color-data-down-alt: var(--ld-text-data-down-alt);
+	--color-warning: var(--ld-text-warning);
+}
+
+/* Border-color utilities get explicit names ("--color-border-subtle" would
+   generate the class `border-border-subtle`). Small, flat, variant-free —
+   within the @utility policy in design.md. */
+@utility border-very-subtle {
+	border-color: var(--ld-border-very-subtle);
+}
+@utility border-subtle {
+	border-color: var(--ld-border-subtle);
+}
+@utility border-medium {
+	border-color: var(--ld-border-medium);
+}
+@utility border-strong {
+	border-color: var(--ld-border-strong);
+}
+@utility border-brand {
+	border-color: var(--ld-border-brand);
+}
+@utility border-divider {
+	border-color: var(--ld-border-divider);
+}
