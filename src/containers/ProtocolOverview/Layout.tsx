@@ -432,23 +432,24 @@ export function ProtocolOverviewLayout({
 						<ButtonLink
 							href={`/protocol/investor-relations/${entitySlug}`}
 							data-active={tab === 'investorRelations'}
-							className="relative flex shrink-0 items-center gap-1 border-b-2 border-(--form-control-border) px-4 py-1 font-semibold whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)"
+							className="relative flex shrink-0 items-center gap-1.5 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)"
 						>
 							<IrTabLabel
 								label={irDashboard.tabLabel}
-								tooltip={irDashboard.tabTooltip}
 								gradient={irDashboard.brandGradient}
 								active={tab === 'investorRelations'}
 							/>
 						</ButtonLink>
 					) : null}
 				</div>
-				<EntityQuestionsStrip
-					questions={entityQuestions || []}
-					entitySlug={slug(name)}
-					entityType="protocol"
-					entityName={name}
-				/>
+				{tab !== 'investorRelations' ? (
+					<EntityQuestionsStrip
+						questions={entityQuestions || []}
+						entitySlug={slug(name)}
+						entityType="protocol"
+						entityName={name}
+					/>
+				) : null}
 				{children}
 			</div>
 		</Layout>

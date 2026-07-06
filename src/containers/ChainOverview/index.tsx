@@ -55,18 +55,13 @@ export function ChainOverview(props: IChainOverviewData) {
 						<button
 							onClick={() => goToTab('investor-relations')}
 							data-active={irActive}
-							className="relative flex shrink-0 items-center gap-1 border-b-2 border-(--form-control-border) px-4 py-1 font-semibold whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)"
+							className="relative flex shrink-0 items-center gap-1.5 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)"
 						>
-							<IrTabLabel
-								label={irDashboard.tabLabel}
-								tooltip={irDashboard.tabTooltip}
-								gradient={irDashboard.brandGradient}
-								active={irActive}
-							/>
+							<IrTabLabel label={irDashboard.tabLabel} gradient={irDashboard.brandGradient} active={irActive} />
 						</button>
 					</div>
 				) : null}
-				{props.metadata.name !== 'All' ? (
+				{props.metadata.name !== 'All' && !irActive ? (
 					<EntityQuestionsStrip
 						questions={props.entityQuestions || []}
 						entitySlug={entitySlug}

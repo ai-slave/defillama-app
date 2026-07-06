@@ -1,3 +1,4 @@
+import { AttestedBadge } from '~/containers/Investors/AttestedBadge'
 import { tokenIconUrl } from '~/utils/icons'
 import { useMetadata } from './api'
 
@@ -72,6 +73,7 @@ export default function OdysseyHeader() {
 	return (
 		<header className="flex items-center gap-4 rounded-lg border border-(--cards-border) bg-(--cards-bg) px-4 py-2.5">
 			<OdysseyLogo />
+			<AttestedBadge />
 			<nav className="ml-auto flex items-center gap-0.5">
 				{buildLinks(meta).map(({ label, url, icon }) => (
 					<a

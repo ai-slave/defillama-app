@@ -17,7 +17,7 @@ function setupChainMocks({ user, query }: { user: unknown; query: Record<string,
 		RowLinksWithDropdown: () => React.createElement('div', null, 'CHAIN-LINKS-MARKER')
 	}))
 	vi.doMock('~/components/EntityQuestionsStrip', () => ({
-		EntityQuestionsStrip: () => null
+		EntityQuestionsStrip: () => React.createElement('div', null, 'QUESTIONS-MARKER')
 	}))
 	vi.doMock('~/components/Icon', () => ({
 		Icon: () => null
@@ -66,6 +66,7 @@ describe('Chain Investor Relations tab', () => {
 		expect(markup).toContain('Investor Relations')
 		expect(markup).toContain('Overview')
 		expect(markup).not.toContain('IR-VIEW-MARKER')
+		expect(markup).toContain('QUESTIONS-MARKER')
 	})
 
 	it('renders the Investor Relations view (not the Overview) when ?tab=investor-relations is set', async () => {
@@ -78,6 +79,7 @@ describe('Chain Investor Relations tab', () => {
 		// fallback, so assert the Overview branch is NOT taken (its content is absent) instead.
 		expect(markup).not.toContain('OVERVIEW-MARKER')
 		expect(markup).toContain('Investor Relations')
+		expect(markup).not.toContain('QUESTIONS-MARKER')
 	})
 
 	it('hides the Investor Relations tab for a non-llama user', async () => {

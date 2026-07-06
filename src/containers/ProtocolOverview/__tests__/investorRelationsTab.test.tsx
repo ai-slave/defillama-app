@@ -53,7 +53,7 @@ function setupLayoutMocks(user: unknown) {
 		MenuItem: ({ children }: { children: React.ReactNode }) => React.createElement('div', null, children)
 	}))
 	vi.doMock('~/components/EntityQuestionsStrip', () => ({
-		EntityQuestionsStrip: () => null
+		EntityQuestionsStrip: () => React.createElement('div', null, 'QUESTIONS-MARKER')
 	}))
 	vi.doMock('~/components/Icon', () => ({
 		Icon: () => null
@@ -84,7 +84,7 @@ afterEach(() => {
 })
 
 describe('Protocol Investor Relations tab', () => {
-	it('shows the gradient Investor Relations tab for an is_llama user on an IR protocol', async () => {
+	it('shows the Investor Relations tab for an is_llama user on an IR protocol', async () => {
 		setupLayoutMocks({ flags: { is_llama: true } })
 
 		const { ProtocolOverviewLayout } = await import('../Layout')

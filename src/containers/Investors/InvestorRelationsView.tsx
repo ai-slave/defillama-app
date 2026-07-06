@@ -72,7 +72,9 @@ function PillStrip({
  * Renders an Investor Relations dashboard module (loaded by `dashboardId` from the ungated registry)
  * inside the main site, under its own pill-strip sub-nav. Shared by the protocol IR subroute and the
  * chain IR tab. The `investors-dashboard pro-dashboard` wrapper provides the CSS variables the dashboard
- * components depend on (`--pro-*`, `--sl-*`), matching the standalone IR shell.
+ * components depend on (`--pro-*`, `--sl-*`); `investors-dashboard-embedded` re-points the surface
+ * tokens (`--cards-*`, `--text-*`, ...) back to the site theme so the content sits in the page flow
+ * instead of reproducing the standalone IR shell.
  */
 export function InvestorRelationsView({
 	dashboardId,
@@ -117,7 +119,7 @@ export function InvestorRelationsView({
 		<AppMetadataProvider>
 			<CustomServerDataContext.Provider value={customServerData ?? {}}>
 				<ContentReadyContext.Provider value={NOOP}>
-					<div className="investors-dashboard flex flex-col gap-4 rounded-xl border pro-dashboard border-(--cards-border) bg-(--app-bg) p-4 md:p-5">
+					<div className="investors-dashboard investors-dashboard-embedded flex flex-col gap-4 pro-dashboard">
 						{HeaderComponent ? (
 							<Suspense fallback={null}>
 								<HeaderComponent />

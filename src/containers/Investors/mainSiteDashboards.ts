@@ -30,12 +30,7 @@ export interface MainSiteIrDashboard {
 	brandGradient: string
 	/** Tab label on the main site, e.g. "Investor Relations" or "Enterprise Dashboard". */
 	tabLabel: string
-	/** Short blurb shown in the tab's info tooltip. */
-	tabTooltip: string
 }
-
-const IR_TAB_TOOLTIP = 'Official, DefiLlama-attested metrics, reports & calls — one link for your investors.'
-const ENTERPRISE_TAB_TOOLTIP = 'DefiLlama-attested ecosystem analytics & reports for your investors.'
 
 export const MAIN_SITE_IR_DASHBOARDS: MainSiteIrDashboard[] = [
 	{
@@ -46,8 +41,7 @@ export const MAIN_SITE_IR_DASHBOARDS: MainSiteIrDashboard[] = [
 		entityName: 'Spark',
 		customOnly: false,
 		brandGradient: 'linear-gradient(90deg, #FA43BD, #FFA930)',
-		tabLabel: 'Investor Relations',
-		tabTooltip: IR_TAB_TOOLTIP
+		tabLabel: 'Investor Relations'
 	},
 	{
 		irProjectId: 'near',
@@ -57,8 +51,7 @@ export const MAIN_SITE_IR_DASHBOARDS: MainSiteIrDashboard[] = [
 		entityName: 'NEAR',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #00C1DE, #00E4AA, #00EC97)',
-		tabLabel: 'Investor Relations',
-		tabTooltip: IR_TAB_TOOLTIP
+		tabLabel: 'Investor Relations'
 	},
 	{
 		// NEAR exists as both a chain (/chain/Near) and a protocol (/protocol/near); surface IR on both.
@@ -69,8 +62,7 @@ export const MAIN_SITE_IR_DASHBOARDS: MainSiteIrDashboard[] = [
 		entityName: 'NEAR',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #00C1DE, #00E4AA, #00EC97)',
-		tabLabel: 'Investor Relations',
-		tabTooltip: IR_TAB_TOOLTIP
+		tabLabel: 'Investor Relations'
 	},
 	{
 		irProjectId: 'sonic',
@@ -80,8 +72,7 @@ export const MAIN_SITE_IR_DASHBOARDS: MainSiteIrDashboard[] = [
 		entityName: 'Sonic',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #fac461, #fe7d2d, #e3570a)',
-		tabLabel: 'Investor Relations',
-		tabTooltip: IR_TAB_TOOLTIP
+		tabLabel: 'Investor Relations'
 	},
 	{
 		irProjectId: 'odyssey-ecosystem',
@@ -91,8 +82,7 @@ export const MAIN_SITE_IR_DASHBOARDS: MainSiteIrDashboard[] = [
 		entityName: 'Odyssey Ecosystem',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd)',
-		tabLabel: 'Enterprise Dashboard',
-		tabTooltip: ENTERPRISE_TAB_TOOLTIP
+		tabLabel: 'Enterprise Dashboard'
 	}
 ]
 

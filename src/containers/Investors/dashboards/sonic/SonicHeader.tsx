@@ -1,3 +1,4 @@
+import { AttestedBadge } from '~/containers/Investors/AttestedBadge'
 const LINK_ICONS: Record<string, React.ReactNode> = {
 	website: (
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4 shrink-0">
@@ -91,6 +92,7 @@ export default function SonicHeader() {
 	return (
 		<header className="flex items-center gap-4 rounded-lg border border-(--cards-border) bg-(--cards-bg) px-4 py-2.5">
 			<SonicLogo />
+			<AttestedBadge />
 			<nav className="ml-auto flex items-center gap-0.5">
 				{Object.entries(LINKS).map(([key, url]) => (
 					<a

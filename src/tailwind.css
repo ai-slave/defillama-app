@@ -559,6 +559,20 @@
 	}
 }
 
+.investors-dashboard.investors-dashboard-embedded,
+html.dark .investors-dashboard.investors-dashboard-embedded {
+	--app-bg: inherit;
+	--cards-bg: inherit;
+	--cards-border: inherit;
+	--form-control-border: inherit;
+	--old-blue: inherit;
+	--text-primary: inherit;
+	--text-secondary: inherit;
+	--text-tertiary: inherit;
+	--text-label: inherit;
+	--text-form: inherit;
+}
+
 .investors-dashboard {
 	& .sl-sidebar {
 		background: var(--sl-sidebar-bg);
