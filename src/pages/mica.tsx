@@ -18,7 +18,7 @@ const MICA_REF_LINKS_BY_EXCHANGE: Partial<Record<string, string>> = {
 	gate: 'https://eu.gate.com/signup?ref_type=103&ref=VFVMVL5EUQ',
 	okx: 'https://okx.com/join/DEFILLAMA',
 	kraken: 'https://proinvite.kraken.com/9f1e/ygb8jngg',
-	bybit: 'https://partner.bybit.com/b/DEFILLAMA',
+	bybit: 'https://www.bybit.eu/en-EU/MoveYourFunds/?affiliate_id=163070&group_id=1964335&group_type=1',
 	backpack: 'https://backpack.exchange/join/tnk6icla',
 	nexo: 'https://nexo.sjv.io/c/7455292/918878/12544'
 }
