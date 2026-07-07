@@ -6,6 +6,8 @@ import { V2_SERVER_URL } from '~/constants'
 import { chainCoingeckoIdsForGasNotMcap } from '~/constants/chainTokens'
 import { CHART_COLORS } from '~/constants/colors'
 import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
+import { listArticles } from '~/containers/Articles/api'
+import { articleHref } from '~/containers/Articles/landing/utils'
 import { fetchBridgeVolumeBySlug } from '~/containers/Bridges/api'
 import { governanceIdsToApis } from '~/containers/Governance/api'
 import { getProtocolIncentivesFromAggregatedEmissions } from '~/containers/Incentives/queries'
@@ -156,6 +158,20 @@ export const getProtocolOverviewPageData = async ({
 			: Promise.resolve(null)
 	const bribesDataPromise = feeExtraMetricPromise(FEE_EXTRA_CONFIG_BY_SETTING.bribes)
 	const tokenTaxDataPromise = feeExtraMetricPromise(FEE_EXTRA_CONFIG_BY_SETTING.tokentax)
+	const researchReportsPromise = optionalProtocolData(
+		'research',
+		() =>
+			listArticles({ tags: [currentProtocolSlug], section: 'report', limit: 3, sort: 'newest' }).then(
+				(res): IProtocolOverviewPageData['articles'] =>
+					res.items.map((article) => ({
+						headline: article.title,
+						date: article.displayDate ?? article.publishedAt ?? article.updatedAt,
+						href: articleHref(article),
+						imgSrc: article.coverImage?.url ?? null
+					}))
+			),
+		[]
+	)
 
 	const [
 		protocolData,
@@ -916,7 +932,7 @@ export const getProtocolOverviewPageData = async ({
 		unlocks: null,
 		governance: null,
 		yields,
-		articles: [],
+		articles: await researchReportsPromise,
 		incentives,
 		users:
 			activeUsers || newUsers || transactions || gasUsd
