@@ -101,6 +101,7 @@ export const makeVaultRoles = (o: Partial<VaultRoles> = {}): VaultRoles => ({
 	owner: null,
 	curator: null,
 	guardian: null,
+	sentinels: [],
 	...o
 })
 

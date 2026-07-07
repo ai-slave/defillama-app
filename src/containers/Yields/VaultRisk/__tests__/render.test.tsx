@@ -763,6 +763,53 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('Governance owner') // per-chain 5/9 rows collapsed to one role
 	})
 
+	it('sentinels fill the veto slot: listed like allocators, capability joined by role, no unguarded state', async () => {
+		// newer Morpho vaults appoint sentinels instead of a guardian — same veto role, several holders
+		const roles = makeVaultRoles({
+			curator: makeRoleEntity({ kind: 'safe', address: '0x00000000000000000000000000000000000000c1' }),
+			guardian: null,
+			sentinels: [
+				makeRoleEntity({
+					kind: 'safe',
+					address: '0x00000000000000000000000000000000000000f1',
+					threshold: { m: 3, n: 5 }
+				}),
+				makeRoleEntity({ kind: 'eoa', address: '0x00000000000000000000000000000000000000f2' })
+			]
+		})
+		const protocol = makeProtocolRiskFixture({
+			role_capabilities: [
+				{
+					role: 'sentinel',
+					role_label: 'Sentinel',
+					reaches_principal: false,
+					gate: 'veto-only',
+					summary: 'Cancels queued curator changes and de-risks allocations.'
+				}
+			]
+		})
+		const html = await render(<TrustPanel protocol={protocol} vaultRoles={roles} />)
+		expect(html).toContain('Sentinels') // the many-holder veto row
+		expect(html).toContain('1 multisig · 1 EOA') // collapsed line summarizes the holders
+		expect(html).toContain('Safety role · veto only') // capability marker joined on role: 'sentinel'
+		expect(html).toContain('Cancels queued curator changes') // authored summary, not the static fallback
+		// sentinels ARE the veto role — the guardian-absence danger state must not fire
+		expect(html).not.toContain('none appointed')
+		expect(html).not.toContain('No veto — unguarded')
+	})
+
+	it('keys the unguarded state on guardian null AND sentinels empty', async () => {
+		const roles = makeVaultRoles({
+			curator: makeRoleEntity({ kind: 'safe', address: '0x00000000000000000000000000000000000000c1' }),
+			guardian: null,
+			sentinels: []
+		})
+		const html = await render(<TrustPanel protocol={makeProtocolRiskFixture()} vaultRoles={roles} />)
+		expect(html).toContain('none appointed') // the guardian row renders its absence…
+		expect(html).toContain('No veto — unguarded') // …with the danger marker
+		expect(html).not.toContain('Sentinels')
+	})
+
 	it('shows the scenario stress toggle only when the backend serves loss.by_anchor', async () => {
 		// morpho-blue carries the per-drop curve → the [−10/−30/−50/Worst] control renders
 		const morpho = await render(<VaultRiskSection data={morphoData()} poolName="x" chain="ethereum" />)

@@ -319,12 +319,14 @@ export interface RoleEntity {
 	threshold?: { m: number; n: number } // present on `safe` → render "m-of-n multisig"
 }
 
-// Per-vault role registry. null registry = feed unavailable; guardian null INSIDE a registry
-// = no guardian appointed (nobody can veto the curator).
+// Per-vault role registry. null registry = feed unavailable. The veto role is guardian OR
+// sentinels (newer Morpho vaults) — never both; guardian null AND sentinels empty = nobody
+// can cancel a malicious curator change during the timelock.
 export interface VaultRoles {
 	owner: RoleEntity | null
 	curator: RoleEntity | null
 	guardian: RoleEntity | null
+	sentinels?: RoleEntity[] // veto-only safety role; several addresses may hold it
 	pending_owner?: RoleEntity | null // non-null = ownership transfer in flight
 	timelock_sec?: number | null // role-action exit window for depositors
 	allocators?: RoleEntity[]

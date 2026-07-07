@@ -64,6 +64,8 @@ const ROLE_FALLBACK: Record<string, string> = {
 	curator:
 		'Sets supply caps and picks which markets the vault lends into — the role that shapes what you are exposed to.',
 	guardian: 'Can veto a curator’s timelocked change before it executes. The danger is its absence.',
+	sentinel:
+		'Can cancel pending curator changes, cut caps, and pull funds back to idle — a veto-only safety role that cannot introduce new risk.',
 	allocator: 'Moves liquidity between the markets the curator has already approved.'
 }
 
@@ -122,25 +124,30 @@ function entityBreakdown(entities: RoleEntity[]): string {
 	return parts.join(' · ')
 }
 
-function AllocatorsDisclosure({
-	allocators,
+// A many-holder role (allocators, sentinels) collapsed to one counted line.
+function RoleListDisclosure({
+	roleName,
+	roleKey,
+	entities,
 	capability,
 	linkChain,
 	explorers
 }: {
-	allocators: RoleEntity[]
+	roleName: string
+	roleKey: string
+	entities: RoleEntity[]
 	capability?: RoleCapability
 	linkChain: string
 	explorers?: BlockExplorersResponse
 }) {
 	const marker = operatorMarker(capability, false)
-	const summary = capability?.summary ?? ROLE_FALLBACK.allocator
+	const summary = capability?.summary ?? ROLE_FALLBACK[roleKey]
 	return (
 		<details className="group py-1">
 			<summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 py-1">
-				<span className="w-20 shrink-0 text-sm font-medium text-(--text-primary)">Allocators</span>
+				<span className="w-20 shrink-0 text-sm font-medium text-(--text-primary)">{roleName}</span>
 				<span className="text-xs text-(--text-secondary)">
-					{allocators.length} · {entityBreakdown(allocators)}
+					{entities.length} · {entityBreakdown(entities)}
 				</span>
 				<span className="ml-auto flex items-center gap-2.5">
 					{/* same quiet grammar as the legend: tone dot + muted text, never alarm ink */}
@@ -161,7 +168,7 @@ function AllocatorsDisclosure({
 					<p className="mb-1.5 max-w-prose text-xs leading-relaxed text-(--text-secondary)">{summary}</p>
 				) : null}
 				<ul className="flex flex-col divide-y divide-(--cards-border)">
-					{allocators.map((a) => (
+					{entities.map((a) => (
 						<li key={a.address} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-1.5">
 							<EntityBadge entity={a} />
 							<span className="flex items-center gap-2.5">
@@ -169,7 +176,7 @@ function AllocatorsDisclosure({
 								<AddressActions
 									address={a.address}
 									url={explorerUrl(a.address, linkChain, explorers)}
-									label="allocator address"
+									label={`${roleKey} address`}
 								/>
 							</span>
 						</li>
@@ -200,6 +207,7 @@ export function VaultRolesBlock({
 	const owner = asRoleEntity(roles.owner)
 	const curator = asRoleEntity(roles.curator)
 	const guardian = asRoleEntity(roles.guardian)
+	const sentinels = (roles.sentinels ?? []).map(asRoleEntity).filter((s): s is RoleEntity => s != null)
 	const pendingOwner = asRoleEntity(roles.pending_owner)
 	const allocators = (roles.allocators ?? []).map(asRoleEntity).filter((a): a is RoleEntity => a != null)
 	// reference the data snapshot, not the render clock — deterministic across SSR/hydration
@@ -299,17 +307,32 @@ export function VaultRolesBlock({
 					) : null}
 				</div>
 				<div className="flex flex-col divide-y divide-(--cards-border)">
-					<OperatorLine
-						roleName={caps.get('guardian')?.role_label ?? 'Guardian'}
-						roleKey="guardian"
-						entity={guardian}
-						capability={caps.get('guardian')}
-						linkChain={linkChain}
-						explorers={explorers}
-					/>
+					{/* the veto slot: guardian OR sentinels (never both); neither = unguarded, the danger state */}
+					{guardian || !sentinels.length ? (
+						<OperatorLine
+							roleName={caps.get('guardian')?.role_label ?? 'Guardian'}
+							roleKey="guardian"
+							entity={guardian}
+							capability={caps.get('guardian')}
+							linkChain={linkChain}
+							explorers={explorers}
+						/>
+					) : null}
+					{sentinels.length ? (
+						<RoleListDisclosure
+							roleName="Sentinels"
+							roleKey="sentinel"
+							entities={sentinels}
+							capability={caps.get('sentinel')}
+							linkChain={linkChain}
+							explorers={explorers}
+						/>
+					) : null}
 					{allocators.length ? (
-						<AllocatorsDisclosure
-							allocators={allocators}
+						<RoleListDisclosure
+							roleName="Allocators"
+							roleKey="allocator"
+							entities={allocators}
 							capability={caps.get('allocator')}
 							linkChain={linkChain}
 							explorers={explorers}
