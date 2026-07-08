@@ -5,6 +5,7 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue, useMemo, useState, type ReactNode } from 'react'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ButtonStyled/ChartRestoreButton'
+import { ChartGroupingSelector, DWM_GROUPING_OPTIONS_LOWERCASE } from '~/components/ECharts/ChartGroupingSelector'
 import type {
 	IHBarChartProps,
 	IMultiSeriesChart2Props,
@@ -12,7 +13,7 @@ import type {
 	ITreemapChartProps,
 	MultiSeriesChart2SeriesConfig
 } from '~/components/ECharts/types'
-import { preparePieChartData } from '~/components/ECharts/utils'
+import { groupMultiSeriesBarChartDataset, preparePieChartData } from '~/components/ECharts/utils'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { LoadingDots } from '~/components/Loaders'
@@ -64,12 +65,14 @@ import {
 	getRWAPerpsChartMetricOptions,
 	getRWAPerpsTimeSeriesModeQueryValue,
 	getRWAPerpsChartMetricQueryValue,
+	getRWAPerpsVolumeGroupByQueryValue,
 	getRWAPerpsTreemapNestedByLabel,
 	getRWAPerpsTreemapNestedByOptions,
 	getRWAPerpsTreemapNestedByQueryValue,
 	getRWAPerpsChartViewOptions,
 	getRWAPerpsChartViewQueryValueForMode,
 	parseRWAPerpsChartState,
+	parseRWAPerpsVolumeGroupBy,
 	setRWAPerpsChartBreakdown,
 	setRWAPerpsTimeSeriesMode,
 	setRWAPerpsTreemapNestedBy,
@@ -1636,6 +1639,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const router = useRouter()
 	const chartDefaults = { timeSeriesBreakdown: props.defaultTimeSeriesBreakdown }
 	const chartState = parseRWAPerpsChartState(router.query, props.mode, chartDefaults)
+	const volumeGroupBy = parseRWAPerpsVolumeGroupBy(router.query.groupBy)
 	const chartMetricLabel = getRWAPerpsChartMetricLabel(chartState.metric, d)
 	const chartMetricOptions = getRWAPerpsChartMetricOptions(d)
 	const chartViewOptions = getRWAPerpsChartViewOptions()
@@ -1857,12 +1861,19 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 			})
 		: fetchedTimeSeriesDataset
 	const shouldShowTotalOverlay = chartState.timeSeriesMode === 'breakdown' && chartState.metric !== 'volume24h'
-	const selectedTimeSeriesDataset =
+	const ungroupedTimeSeriesDataset =
 		chartState.timeSeriesMode === 'grouped'
 			? groupRWAPerpsTimeSeriesDataset(rawTimeSeriesDataset)
 			: shouldShowTotalOverlay
 				? appendRWAPerpsTimeSeriesDatasetTotal(rawTimeSeriesDataset)
 				: rawTimeSeriesDataset
+	const selectedTimeSeriesDataset = useMemo(
+		() =>
+			chartState.metric === 'volume24h'
+				? groupMultiSeriesBarChartDataset({ dataset: ungroupedTimeSeriesDataset, groupBy: volumeGroupBy })
+				: ungroupedTimeSeriesDataset,
+		[chartState.metric, ungroupedTimeSeriesDataset, volumeGroupBy]
+	)
 
 	const timeSeriesCharts = buildRWAPerpsTimeSeriesCharts({
 		metric: chartState.metric,
@@ -1902,10 +1913,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	)
 	const deferredPieChartData = useDeferredValue(pieChartData)
 	const deferredTimeSeriesDataset = useDeferredValue(selectedTimeSeriesDataset)
-	const hasTimeSeriesHistory = useMemo(
-		() => hasEnoughTimeSeriesHistory(deferredTimeSeriesDataset),
-		[deferredTimeSeriesDataset]
-	)
+	const hasTimeSeriesHistory = useMemo(() => hasEnoughTimeSeriesHistory(rawTimeSeriesDataset), [rawTimeSeriesDataset])
 	const pieChartColors = useMemo(() => {
 		const colorMap: Record<string, string> = {}
 		for (const [index, item] of deferredPieChartData.entries()) {
@@ -2145,6 +2153,15 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 								size="md"
 							/>
 						) : null}
+						{chartState.metric === 'volume24h' ? (
+							<ChartGroupingSelector
+								value={volumeGroupBy}
+								options={DWM_GROUPING_OPTIONS_LOWERCASE}
+								onValueChange={(nextGroupBy) => {
+									void pushShallowQuery(router, { groupBy: getRWAPerpsVolumeGroupByQueryValue(nextGroupBy) })
+								}}
+							/>
+						) : null}
 						<ChartExportButtons
 							chartInstance={timeSeriesChartInstance}
 							filename={timeSeriesFilename}
@@ -2181,6 +2198,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 								chartOptions={{ legend: { data: timeSeriesLegendNames } }}
 								hideDefaultLegend={false}
 								showTotalInTooltip={!deferredTimeSeriesDataset.dimensions.includes('Total')}
+								groupBy={chartState.metric === 'volume24h' ? volumeGroupBy : undefined}
 								valueSymbol={valueSymbol}
 								onReady={handleTimeSeriesChartReady}
 							/>

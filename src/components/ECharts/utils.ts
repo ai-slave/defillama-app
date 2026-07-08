@@ -1,4 +1,8 @@
-import type { ChartTimeGrouping, ChartTimeGroupingWithCumulative } from '~/components/ECharts/types'
+import type {
+	ChartTimeGrouping,
+	ChartTimeGroupingWithCumulative,
+	MultiSeriesChart2Dataset
+} from '~/components/ECharts/types'
 import { firstDayOfMonth, firstDayOfQuarter, firstDayOfYear, lastDayOfWeek, toNiceCsvDate } from '~/utils'
 
 /** Generate a random 6-digit hex colour string (e.g. `"#a3f04c"`). */
@@ -216,6 +220,44 @@ export function ensureChronologicalRows<T extends { timestamp?: number | string 
 	}
 
 	return rows
+}
+
+export function groupMultiSeriesBarChartDataset<TDataset extends MultiSeriesChart2Dataset>({
+	dataset,
+	groupBy
+}: {
+	dataset: TDataset
+	groupBy: ChartTimeGroupingWithCumulative
+}): TDataset {
+	if (groupBy === 'daily') return dataset
+
+	const rowsByTimestamp = new Map<number, MultiSeriesChart2Dataset['source'][number]>()
+
+	for (const dimension of dataset.dimensions) {
+		if (dimension === 'timestamp') continue
+
+		const points: Array<[number, number]> = []
+		for (const row of dataset.source) {
+			const value = row[dimension]
+			if (value != null) points.push([row.timestamp as number, value as number])
+		}
+
+		for (const [timestamp, value] of formatBarChart({
+			data: points,
+			groupBy,
+			dateInMs: true,
+			denominationPriceHistory: null
+		})) {
+			const row = rowsByTimestamp.get(timestamp) ?? { timestamp }
+			row[dimension] = value
+			rowsByTimestamp.set(timestamp, row)
+		}
+	}
+
+	return {
+		...dataset,
+		source: ensureChronologicalRows(Array.from(rowsByTimestamp.values()))
+	} as TDataset
 }
 
 /**

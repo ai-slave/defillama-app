@@ -10,7 +10,9 @@ import {
 	getRWAPerpsTimeSeriesModeOptions,
 	getRWAPerpsTimeSeriesModeQueryValue,
 	getRWAPerpsTreemapNestedByOptions,
+	getRWAPerpsVolumeGroupByQueryValue,
 	parseRWAPerpsChartState,
+	parseRWAPerpsVolumeGroupBy,
 	setRWAPerpsChartView
 } from '../chartState'
 
@@ -25,6 +27,15 @@ const chartLabels = {
 } as const
 
 describe('parseRWAPerpsChartState', () => {
+	it('normalizes volume date grouping query values', () => {
+		expect(parseRWAPerpsVolumeGroupBy(undefined)).toBe('daily')
+		expect(parseRWAPerpsVolumeGroupBy('monthly')).toBe('monthly')
+		expect(parseRWAPerpsVolumeGroupBy(['yearly'])).toBe('yearly')
+		expect(parseRWAPerpsVolumeGroupBy('cumulative')).toBe('daily')
+		expect(getRWAPerpsVolumeGroupByQueryValue('daily')).toBeUndefined()
+		expect(getRWAPerpsVolumeGroupByQueryValue('quarterly')).toBe('quarterly')
+	})
+
 	it('normalizes legacy hbar query values', () => {
 		const state = parseRWAPerpsChartState({ chartView: 'bar' }, 'overview')
 		expect(state.view).toBe('hbar')

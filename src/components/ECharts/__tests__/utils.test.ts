@@ -5,6 +5,7 @@ import {
 	formatLineChart,
 	getBucketTimestampMs,
 	getBucketTimestampSec,
+	groupMultiSeriesBarChartDataset,
 	mergeDeep,
 	prepareChartCsv,
 	preparePieChartData
@@ -20,6 +21,26 @@ const weekBucketJan21 = toMs(2024, 1, 21)
 const weekBucketJan28 = toMs(2024, 1, 28)
 
 describe('formatBarChart', () => {
+	it('groups multi-series bar datasets by interval', () => {
+		const dataset = {
+			dimensions: ['timestamp', 'A', 'B'],
+			source: [
+				{ timestamp: toMs(2024, 1, 15), A: 10, B: 5 },
+				{ timestamp: toMs(2024, 1, 20), A: 15 },
+				{ timestamp: toMs(2024, 2, 1), A: 30, B: 20 }
+			]
+		}
+
+		expect(groupMultiSeriesBarChartDataset({ dataset, groupBy: 'monthly' })).toEqual({
+			dimensions: ['timestamp', 'A', 'B'],
+			source: [
+				{ timestamp: toMs(2024, 1, 1), A: 25, B: 5 },
+				{ timestamp: toMs(2024, 2, 1), A: 30, B: 20 }
+			]
+		})
+		expect(groupMultiSeriesBarChartDataset({ dataset, groupBy: 'daily' })).toBe(dataset)
+	})
+
 	it('exports canonical bucket helpers for week/month/quarter/year', () => {
 		expect(getBucketTimestampSec(toSec(2024, 1, 17) + 13 * 60 * 60, 'daily')).toBe(toSec(2024, 1, 17))
 		expect(getBucketTimestampSec(toSec(2024, 1, 17), 'weekly')).toBe(toSec(2024, 1, 21))

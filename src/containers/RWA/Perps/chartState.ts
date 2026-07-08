@@ -1,4 +1,5 @@
 import type { ParsedUrlQuery } from 'querystring'
+import { DWM_GROUPING_OPTIONS_LOWERCASE, type LowercaseDwmGrouping } from '~/components/ECharts/ChartGroupingSelector'
 import { readSingleQueryValue } from '~/utils/routerQuery'
 import type {
 	RWAPerpsAssetGroupNonTimeSeriesBreakdown,
@@ -275,6 +276,14 @@ export function parseRWAPerpsChartState(
 	return { mode, view, metric, breakdown, timeSeriesMode, treemapNestedBy }
 }
 
+export function parseRWAPerpsVolumeGroupBy(value: string | string[] | null | undefined): LowercaseDwmGrouping {
+	const normalizedValue = (Array.isArray(value) ? value[0] : value)?.toLowerCase()
+	if (DWM_GROUPING_OPTIONS_LOWERCASE.some((option) => option.value === normalizedValue)) {
+		return normalizedValue as LowercaseDwmGrouping
+	}
+	return 'daily'
+}
+
 export function setRWAPerpsChartView(state: RWAPerpsChartState, view: RWAPerpsChartView): RWAPerpsChartState {
 	const breakdown = normalizeBreakdown(state.mode, view, state.breakdown)
 	const treemapBreakdown =
@@ -337,6 +346,10 @@ export function getRWAPerpsChartMetricQueryValue(metric: RWAPerpsChartMetricKey)
 
 export function getRWAPerpsTimeSeriesModeQueryValue(timeSeriesMode: RWAPerpsTimeSeriesMode) {
 	return timeSeriesMode === DEFAULT_TIME_SERIES_MODE ? undefined : timeSeriesMode
+}
+
+export function getRWAPerpsVolumeGroupByQueryValue(groupBy: LowercaseDwmGrouping) {
+	return groupBy === 'daily' ? undefined : groupBy
 }
 
 export function getRWAPerpsChartBreakdownQueryValue(state: RWAPerpsChartState, defaults?: RWAPerpsChartDefaults) {

@@ -711,6 +711,19 @@ describe('RWAPerpsDashboard treemap controls', () => {
 		expect(html).toContain('Markets')
 		expect(html).toContain('Asset Group')
 		expect(html).toContain('Total')
+		expect(html).not.toContain('aria-label="Weekly"')
+	})
+
+	it('renders date grouping controls for volume time-series charts', () => {
+		routerQuery = { chartView: 'timeSeries', chartType: 'volume24h' }
+		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
+
+		expect(html).toContain('aria-label="Daily"')
+		expect(html).toContain('aria-label="Weekly"')
+		expect(html).toContain('aria-label="Monthly"')
+		expect(html).toContain('aria-label="Quarterly"')
+		expect(html).toContain('aria-label="Yearly"')
+		expect(html).not.toContain('aria-label="Cumulative"')
 	})
 
 	it('renders the selected time-series breakdown label when selected', () => {

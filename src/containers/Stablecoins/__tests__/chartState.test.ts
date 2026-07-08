@@ -84,6 +84,7 @@ describe('stablecoin chart state', () => {
 
 	it('parses volume grouping query values once for all stablecoin pages', () => {
 		expect(parseStablecoinVolumeGroupBy('weekly')).toBe('weekly')
+		expect(parseStablecoinVolumeGroupBy('cumulative')).toBe('cumulative')
 		expect(parseStablecoinVolumeGroupBy(['monthly', 'weekly'])).toBe('monthly')
 		expect(parseStablecoinVolumeGroupBy('invalid')).toBe('daily')
 	})

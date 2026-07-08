@@ -1,4 +1,9 @@
-import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import type {
+	ChartTimeGroupingWithCumulative,
+	MultiSeriesChart2Dataset,
+	MultiSeriesChart2SeriesConfig
+} from '~/components/ECharts/types'
+import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/utils'
 import { CHART_COLORS } from '~/constants/colors'
 import { getDominancePercent } from '~/utils'
 import type { IBuildStablecoinChartDataResult, IBuildStablecoinChartDataParams } from './utils'
@@ -324,5 +329,17 @@ export const buildTokenInflowsPayload = (params: IBuildStablecoinChartDataParams
 		})),
 		stacked: true,
 		showTotalInTooltip: true
+	}
+}
+
+export const groupStablecoinBarChartPayload = (
+	payload: StablecoinChartSeriesPayload,
+	groupBy: ChartTimeGroupingWithCumulative
+): StablecoinChartSeriesPayload => {
+	if (groupBy === 'daily') return payload
+
+	return {
+		...payload,
+		dataset: groupMultiSeriesBarChartDataset({ dataset: payload.dataset, groupBy })
 	}
 }

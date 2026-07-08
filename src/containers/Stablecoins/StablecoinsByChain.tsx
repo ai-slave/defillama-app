@@ -27,7 +27,7 @@ import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } f
 import { Tooltip } from '~/components/Tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import type { StablecoinsChartConfig } from '~/containers/ProDashboard/types'
-import type { StablecoinChartSeriesPayload } from '~/containers/Stablecoins/chartSeries'
+import { groupStablecoinBarChartPayload, type StablecoinChartSeriesPayload } from '~/containers/Stablecoins/chartSeries'
 import {
 	createStablecoinOverviewChartMode,
 	getStablecoinDashboardChartType,
@@ -83,8 +83,6 @@ interface StablecoinsByChainProps {
 	defaultChartData: StablecoinChartSeriesPayload
 	entityQuestions?: string[]
 }
-
-const INFLOWS_TOOLTIP_FORMATTER = createInflowsTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
 
 export function StablecoinsByChain({
 	selectedChain = 'All',
@@ -246,6 +244,7 @@ export function StablecoinsByChain({
 
 	const dashboardChartType = getStablecoinDashboardChartType(chartType, chartView)
 	const isVolumeChart = volumeChartKind != null
+	const isGroupedBarChart = isVolumeChart || chartType === 'inflows'
 	const overviewChartType = getStablecoinOverviewSeriesChart(chartType, chartView)
 	const isMarketCapTableChart =
 		chartType === 'marketCap' && (chartView === 'pie' || chartView === 'hbar' || chartView === 'treemap')
@@ -333,9 +332,16 @@ export function StablecoinsByChain({
 		() => (volumeChartQuery.data ? groupStablecoinVolumeChartPayload(volumeChartQuery.data, volumeGroupBy) : null),
 		[volumeChartQuery.data, volumeGroupBy]
 	)
+	const groupedSelectedChartData = React.useMemo(
+		() =>
+			chartType === 'inflows' && selectedChartData
+				? groupStablecoinBarChartPayload(selectedChartData, volumeGroupBy)
+				: selectedChartData,
+		[chartType, selectedChartData, volumeGroupBy]
+	)
 
 	const deferredChainsCirculatingValues = React.useDeferredValue(chainsCirculatingValues)
-	const deferredSelectedChartData = React.useDeferredValue(selectedChartData)
+	const deferredSelectedChartData = React.useDeferredValue(groupedSelectedChartData)
 	const deferredVolumeChartData = React.useDeferredValue(groupedVolumeChartData)
 	const isVolumeChartLoading =
 		deferredVolumeChartData == null &&
@@ -468,7 +474,7 @@ export function StablecoinsByChain({
 						chartView === 'treemap' ? null : (
 							<AddToDashboardButton chartConfig={stablecoinsChartConfig} smol />
 						)}
-						{isVolumeChart ? (
+						{isGroupedBarChart ? (
 							<ChartGroupingSelector
 								value={volumeGroupBy}
 								options={DWMC_GROUPING_OPTIONS_LOWERCASE}
@@ -515,12 +521,13 @@ export function StablecoinsByChain({
 							onReady={handleChartReady}
 							tokenInflowNames={tokenInflowNames}
 							state={tokenInflowsChartState}
+							groupBy={volumeGroupBy}
 						/>
 					) : (
 						<MultiSeriesChartPanel
 							state={activeChartState}
 							hideDefaultLegend={!showDefaultLegend}
-							groupBy={isVolumeChart ? volumeGroupBy : undefined}
+							groupBy={isGroupedBarChart ? volumeGroupBy : undefined}
 							onReady={handleChartReady}
 						/>
 					)}
@@ -537,14 +544,20 @@ export function StablecoinsByChain({
 function TokenInflowsChartPanel({
 	onReady,
 	tokenInflowNames,
-	state
+	state,
+	groupBy
 }: {
 	onReady: (instance: echarts.ECharts | null) => void
 	tokenInflowNames: string[]
 	state: MultiSeriesChartState
+	groupBy: LowercaseDwmcGrouping
 }) {
 	const [selectedTokenInflows, setSelectedTokenInflows] = React.useState<string[]>(() => tokenInflowNames)
 	const selectedTokenInflowsSet = new Set(selectedTokenInflows)
+	const inflowsTooltipFormatter = React.useMemo(
+		() => createInflowsTooltipFormatter({ groupBy, valueSymbol: '$' }),
+		[groupBy]
+	)
 
 	return (
 		<>
@@ -566,8 +579,9 @@ function TokenInflowsChartPanel({
 				state={state}
 				selectedCharts={selectedTokenInflowsSet}
 				chartOptions={
-					selectedTokenInflowsSet.size > 1 ? { tooltip: { formatter: INFLOWS_TOOLTIP_FORMATTER } } : undefined
+					selectedTokenInflowsSet.size > 1 ? { tooltip: { formatter: inflowsTooltipFormatter } } : undefined
 				}
+				groupBy={groupBy}
 				onReady={onReady}
 			/>
 		</>

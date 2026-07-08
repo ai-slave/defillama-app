@@ -3,7 +3,7 @@ import type {
 	MultiSeriesChart2Dataset,
 	MultiSeriesChart2SeriesConfig
 } from '~/components/ECharts/types'
-import { ensureChronologicalRows, formatBarChart } from '~/components/ECharts/utils'
+import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/utils'
 import { CHART_COLORS } from '~/constants/colors'
 import type {
 	StablecoinVolumeBreakdownChartPoint,
@@ -197,33 +197,8 @@ export const groupStablecoinVolumeChartPayload = (
 ): StablecoinVolumeChartPayload => {
 	if (groupBy === 'daily') return payload
 
-	const dimensions = payload.dataset.dimensions
-	const rowsByTimestamp = new Map<number, MultiSeriesChart2Dataset['source'][number]>()
-
-	for (const dimension of dimensions) {
-		if (dimension === 'timestamp') continue
-		const points: Array<[number, number]> = []
-		for (const row of payload.dataset.source) {
-			const value = row[dimension]
-			if (value != null) points.push([row.timestamp as number, value as number])
-		}
-		for (const [timestamp, value] of formatBarChart({
-			data: points,
-			groupBy,
-			dateInMs: true,
-			denominationPriceHistory: null
-		})) {
-			const row = rowsByTimestamp.get(timestamp) ?? { timestamp }
-			row[dimension] = value
-			rowsByTimestamp.set(timestamp, row)
-		}
-	}
-
 	return {
 		...payload,
-		dataset: {
-			dimensions,
-			source: ensureChronologicalRows(Array.from(rowsByTimestamp.values()))
-		}
+		dataset: groupMultiSeriesBarChartDataset({ dataset: payload.dataset, groupBy })
 	}
 }

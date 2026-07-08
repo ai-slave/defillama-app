@@ -2,7 +2,9 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartGroupingSelector, DWM_GROUPING_OPTIONS_LOWERCASE } from '~/components/ECharts/ChartGroupingSelector'
 import type { MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/utils'
 import { LoadingDots } from '~/components/Loaders'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -19,6 +21,7 @@ import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
 import { pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import type { RWAChartDataset } from '../chartDataset'
+import { getRWAPerpsVolumeGroupByQueryValue, parseRWAPerpsVolumeGroupBy } from './chartState'
 import { perpsDefinitions as d } from './definitions'
 import {
 	appendRWAPerpsTimeSeriesDatasetTotal,
@@ -175,6 +178,7 @@ export function RWAPerpsOverviewChart({
 	const router = useRouter()
 	const chartType = getRWAPerpsOverviewChartType(readSingleQueryValue(router.query.chartType))
 	const timeSeriesMode = getRWAPerpsOverviewTimeSeriesMode(readSingleQueryValue(router.query.timeSeriesMode))
+	const volumeGroupBy = parseRWAPerpsVolumeGroupBy(router.query.groupBy)
 	const isDefaultState = chartType === DEFAULT_CHART_TYPE
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['rwa-perps-overview-breakdown', breakdown, chartType],
@@ -190,12 +194,19 @@ export function RWAPerpsOverviewChart({
 		[rawDataset]
 	)
 	const shouldShowTotalOverlay = timeSeriesMode === 'breakdown' && chartType !== 'volume24h'
-	const dataset =
+	const ungroupedDataset =
 		timeSeriesMode === 'grouped'
 			? groupRWAPerpsTimeSeriesDataset(rawDataset)
 			: shouldShowTotalOverlay
 				? appendRWAPerpsTimeSeriesDatasetTotal(rawDataset)
 				: rawDataset
+	const dataset = useMemo(
+		() =>
+			chartType === 'volume24h'
+				? groupMultiSeriesBarChartDataset({ dataset: ungroupedDataset, groupBy: volumeGroupBy })
+				: ungroupedDataset,
+		[chartType, ungroupedDataset, volumeGroupBy]
+	)
 	const showLoadingState = !isDefaultState && isLoading
 	const chartSeries = useMemo<Array<MultiSeriesChart2SeriesConfig>>(
 		() =>
@@ -224,7 +235,19 @@ export function RWAPerpsOverviewChart({
 				: dataset,
 		[dataset, selectedStacks, stackOptions, timeSeriesMode]
 	)
-	const hasTimeSeriesHistory = useMemo(() => hasEnoughTimeSeriesHistory(selectedDataset), [selectedDataset])
+	const selectedHistoryDataset = useMemo(
+		() =>
+			chartType === 'volume24h' && timeSeriesMode === 'breakdown'
+				? getRWAPerpsChartDatasetForSelectedStacks(ungroupedDataset, selectedStacks, stackOptions)
+				: chartType === 'volume24h'
+					? ungroupedDataset
+					: selectedDataset,
+		[chartType, selectedDataset, selectedStacks, stackOptions, timeSeriesMode, ungroupedDataset]
+	)
+	const hasTimeSeriesHistory = useMemo(
+		() => hasEnoughTimeSeriesHistory(selectedHistoryDataset),
+		[selectedHistoryDataset]
+	)
 	const showStackSelect = timeSeriesMode === 'breakdown' && stackOptions.length > 1
 	const visibleCharts = useMemo(
 		() =>
@@ -279,6 +302,15 @@ export function RWAPerpsOverviewChart({
 					variant="filter"
 					size="md"
 				/>
+				{chartType === 'volume24h' ? (
+					<ChartGroupingSelector
+						value={volumeGroupBy}
+						options={DWM_GROUPING_OPTIONS_LOWERCASE}
+						onValueChange={(nextGroupBy) => {
+							void pushShallowQuery(router, { groupBy: getRWAPerpsVolumeGroupByQueryValue(nextGroupBy) })
+						}}
+					/>
+				) : null}
 				{showStackSelect ? (
 					<SelectWithCombobox
 						allValues={stackOptions}
@@ -332,6 +364,7 @@ export function RWAPerpsOverviewChart({
 						selectedCharts={visibleCharts}
 						onReady={handleChartReady}
 						valueSymbol={chartType === 'markets' ? '' : '$'}
+						groupBy={chartType === 'volume24h' ? volumeGroupBy : undefined}
 					/>
 				</Suspense>
 			)}

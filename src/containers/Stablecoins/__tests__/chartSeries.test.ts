@@ -3,7 +3,8 @@ import {
 	buildAreaPayload,
 	buildDominancePayload,
 	buildTokenInflowsPayload,
-	buildTotalMcapPayload
+	buildTotalMcapPayload,
+	groupStablecoinBarChartPayload
 } from '../chartSeries'
 import { formatPeggedChainsData } from '../utils'
 
@@ -166,6 +167,45 @@ describe('stablecoin chart series builders', () => {
 		expect(payload.showTotalInTooltip).toBe(true)
 		expect(payload.charts.every((chart) => chart.type === 'bar' && chart.stack === 'tokenInflows')).toBe(true)
 		expect(payload.charts.every((chart) => chart.large === false)).toBe(true)
+	})
+
+	it('groups stablecoin inflow bar payloads by the selected interval', () => {
+		const payload = {
+			dataset: {
+				dimensions: ['timestamp', 'Inflows'],
+				source: [
+					{ timestamp: Date.UTC(2024, 0, 3), Inflows: 100 },
+					{ timestamp: Date.UTC(2024, 0, 20), Inflows: -25 },
+					{ timestamp: Date.UTC(2024, 1, 1), Inflows: 50 }
+				]
+			},
+			charts: [{ type: 'bar' as const, name: 'Inflows', encode: { x: 'timestamp', y: 'Inflows' } }],
+			stacked: false,
+			showTotalInTooltip: false
+		}
+
+		expect(groupStablecoinBarChartPayload(payload, 'monthly')).toEqual({
+			...payload,
+			dataset: {
+				dimensions: ['timestamp', 'Inflows'],
+				source: [
+					{ timestamp: Date.UTC(2024, 0, 1), Inflows: 75 },
+					{ timestamp: Date.UTC(2024, 1, 1), Inflows: 50 }
+				]
+			}
+		})
+		expect(groupStablecoinBarChartPayload(payload, 'cumulative')).toEqual({
+			...payload,
+			dataset: {
+				dimensions: ['timestamp', 'Inflows'],
+				source: [
+					{ timestamp: Date.UTC(2024, 0, 3), Inflows: 100 },
+					{ timestamp: Date.UTC(2024, 0, 20), Inflows: 75 },
+					{ timestamp: Date.UTC(2024, 1, 1), Inflows: 125 }
+				]
+			}
+		})
+		expect(groupStablecoinBarChartPayload(payload, 'daily')).toBe(payload)
 	})
 })
 
