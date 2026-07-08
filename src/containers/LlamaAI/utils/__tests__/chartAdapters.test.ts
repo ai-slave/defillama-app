@@ -88,6 +88,215 @@ describe('chart adapters', () => {
 		])
 	})
 
+	it('matches an entityFilter with a string value against numeric row values', () => {
+		const numericSeriesConfig = {
+			...baseConfig,
+			type: 'bar',
+			axes: {
+				x: { field: 'exchange', label: 'exchange', type: 'category' as const },
+				yAxes: [{ id: 'y1', fields: ['round_trip_slippage_bps'], label: 'bps', position: 'left' as const }]
+			},
+			series: [
+				{
+					name: '$10K Trade',
+					type: 'bar' as const,
+					yAxisId: 'y1',
+					metricClass: 'stock' as const,
+					dataMapping: {
+						xField: 'exchange',
+						yField: 'round_trip_slippage_bps',
+						entityFilter: { field: 'trade_size_usd', value: '10000' }
+					},
+					styling: {}
+				},
+				{
+					name: '$50K Trade',
+					type: 'bar' as const,
+					yAxisId: 'y1',
+					metricClass: 'stock' as const,
+					dataMapping: {
+						xField: 'exchange',
+						yField: 'round_trip_slippage_bps',
+						entityFilter: { field: 'trade_size_usd', value: '50000' }
+					},
+					styling: {}
+				}
+			],
+			dataTransformation: { timeField: '', metrics: ['round_trip_slippage_bps'] }
+		} satisfies ChartConfiguration
+
+		const result = adaptCartesianChartData(numericSeriesConfig, [
+			{ exchange: 'binance', trade_size_usd: 10000, round_trip_slippage_bps: 20.1 },
+			{ exchange: 'binance', trade_size_usd: 50000, round_trip_slippage_bps: 40.2 },
+			{ exchange: 'gate', trade_size_usd: 10000, round_trip_slippage_bps: 21.5 },
+			{ exchange: 'gate', trade_size_usd: 50000, round_trip_slippage_bps: 42.0 }
+		])
+
+		expect(result.props.dataset.source).toEqual([
+			{ category: 'binance', '$10K Trade': 20.1, '$50K Trade': 40.2 },
+			{ category: 'gate', '$10K Trade': 21.5, '$50K Trade': 42.0 }
+		])
+	})
+
+	it('honors explicit per-slice colors on a pie via config.seriesColors', () => {
+		const pieConfig = {
+			...baseConfig,
+			type: 'pie',
+			seriesColors: { Uniswap: '#ff007a', Curve: '#0000ff' },
+			series: [{ ...baseConfig.series[0]!, dataMapping: { xField: 'protocol', yField: 'v' } }]
+		} satisfies ChartConfiguration
+		const result = adaptPieChartData(pieConfig, [
+			{ protocol: 'Uniswap', v: 100 },
+			{ protocol: 'Curve', v: 60 },
+			{ protocol: 'Balancer', v: 30 }
+		])
+		expect(result.props.stackColors!.Uniswap).toBe('#ff007a')
+		expect(result.props.stackColors!.Curve).toBe('#0000ff')
+		// unspecified slice falls back to the palette (any non-empty color)
+		expect(result.props.stackColors!.Balancer).toMatch(/^#|rgb/)
+		expect(result.props.stackColors!.Balancer).not.toBe('#ff007a')
+	})
+
+	it('rotates a crowded category x-axis so long labels do not drop, and reserves grid bottom', () => {
+		const cfg = {
+			...baseConfig,
+			type: 'bar',
+			axes: {
+				x: { field: 'venue', label: 'venue', type: 'category' as const },
+				yAxes: [{ id: 'y1', fields: ['v'], label: 'v', position: 'left' as const }]
+			},
+			series: [
+				{
+					name: 'V',
+					type: 'bar' as const,
+					yAxisId: 'y1',
+					metricClass: 'stock' as const,
+					dataMapping: { xField: 'venue', yField: 'v' },
+					styling: {}
+				}
+			],
+			dataTransformation: { timeField: '', metrics: ['v'] }
+		} satisfies ChartConfiguration
+		const rows = [
+			'Bitvavo (MiCA)',
+			'Bybit.eu (MiCA)',
+			'Gate (MiCA)',
+			'Backpack (MiCA)',
+			'Bitget (Global)',
+			'KuCoin (Global)',
+			'Binance (Global)',
+			'MEXC (Global)'
+		].map((venue, i) => ({ venue, v: 20 + i }))
+
+		const out = adaptCartesianChartData(cfg, rows)
+		expect(out.props.chartOptions.xAxis.axisLabel).toMatchObject({ interval: 0, rotate: 35 })
+		expect(out.props.chartOptions.grid.bottom).toBeGreaterThan(44)
+	})
+
+	it('leaves a small, short-label category axis flat', () => {
+		const cfg = {
+			...baseConfig,
+			type: 'bar',
+			axes: {
+				x: { field: 'venue', label: 'venue', type: 'category' as const },
+				yAxes: [{ id: 'y1', fields: ['v'], label: 'v', position: 'left' as const }]
+			},
+			series: [
+				{
+					name: 'V',
+					type: 'bar' as const,
+					yAxisId: 'y1',
+					metricClass: 'stock' as const,
+					dataMapping: { xField: 'venue', yField: 'v' },
+					styling: {}
+				}
+			],
+			dataTransformation: { timeField: '', metrics: ['v'] }
+		} satisfies ChartConfiguration
+		const out = adaptCartesianChartData(cfg, [
+			{ venue: 'ETH', v: 1 },
+			{ venue: 'BTC', v: 2 },
+			{ venue: 'SOL', v: 3 }
+		])
+		expect(out.props.chartOptions.xAxis.axisLabel).toBeUndefined()
+	})
+
+	it('builds grouped series for a multi-series hbar (two bars per category)', () => {
+		const groupedHBar = {
+			...baseConfig,
+			type: 'hbar',
+			axes: {
+				x: { field: 'venue', label: 'venue', type: 'category' as const },
+				yAxes: [{ id: 'y1', fields: ['btc', 'eth'], label: 'bps', position: 'left' as const }]
+			},
+			series: [
+				{
+					name: 'BTC',
+					type: 'hbar' as const,
+					yAxisId: 'y1',
+					metricClass: 'stock' as const,
+					dataMapping: { xField: 'venue', yField: 'btc' },
+					styling: { color: '#2f7ef6' }
+				},
+				{
+					name: 'ETH',
+					type: 'hbar' as const,
+					yAxisId: 'y1',
+					metricClass: 'stock' as const,
+					dataMapping: { xField: 'venue', yField: 'eth' },
+					styling: { color: '#e11d48' }
+				}
+			],
+			dataTransformation: { timeField: '', metrics: ['btc', 'eth'] }
+		} satisfies ChartConfiguration
+
+		const result = adaptHBarChartData(groupedHBar, [
+			{ venue: 'Bitvavo', btc: 67, eth: 71 },
+			{ venue: 'Gate', btc: 22, eth: 21 },
+			{ venue: 'MEXC', btc: 15, eth: 20 }
+		])
+
+		// categories preserved in order via the fallback `data` array
+		expect(result.data.map(([c]) => c)).toEqual(['Bitvavo', 'Gate', 'MEXC'])
+		// two grouped series, each aligned to the categories, honoring the per-series color
+		expect(result.props.series).toEqual([
+			{ name: 'BTC', values: [67, 22, 15], color: '#2f7ef6' },
+			{ name: 'ETH', values: [71, 21, 20], color: '#e11d48' }
+		])
+	})
+
+	it('honors per-category seriesColors on a single-series hbar (editor recolor)', () => {
+		const hbar = {
+			...baseConfig,
+			type: 'hbar',
+			seriesColors: { binance: '#ff007a' },
+			series: [{ ...baseConfig.series[0]!, type: 'hbar' as const, styling: {} }]
+		} satisfies ChartConfiguration
+		const result = adaptHBarChartData(hbar, [
+			{ x: 'binance', y: 20 },
+			{ x: 'gate', y: 21 }
+		])
+		expect(result.props.colors![0]).toBe('#ff007a') // binance overridden
+		expect(result.props.colors![1]).not.toBe('#ff007a') // gate keeps the palette
+	})
+
+	it('gives hbar bars distinct colors regardless of the series styling.color the tool stamps', () => {
+		// the backend stamps styling.color = palette[0] on every series, including single-series hbar;
+		// hbar must ignore it and keep per-bar distinct colors (a ranking chart, not one flat color).
+		const hbar = {
+			...baseConfig,
+			type: 'hbar',
+			series: [{ ...baseConfig.series[0]!, type: 'hbar' as const, styling: { color: '#2563eb' } }]
+		} satisfies ChartConfiguration
+
+		const result = adaptHBarChartData(hbar, [
+			{ x: 'binance', y: 20.1 },
+			{ x: 'gate', y: 21.5 }
+		])
+		expect(result.props.colors).toHaveLength(2)
+		expect(new Set(result.props.colors).size).toBe(2)
+	})
+
 	it('filters scatter rows with missing or non-numeric coordinates', () => {
 		const result = adaptScatterChartData(baseConfig, [
 			{ x: 1, y: 2, protocol: 'valid' },

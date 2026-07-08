@@ -18,6 +18,10 @@ interface HBarRendererProps {
 	color?: string
 	colors?: string[]
 	logos?: string[]
+	series?: Array<{ name: string; values: number[]; color: string }>
+	valueAxisMin?: number | 'dataMin'
+	valueAxisMax?: number | 'dataMax'
+	valueAxisInterval?: number
 }
 
 interface BaseChartRenderPlan {
@@ -82,7 +86,18 @@ export function buildRenderPlan(
 					categoryLogos: state.showLabels ? adaptedChart.props.categoryLogos : undefined,
 					// Match legacy LlamaAI behavior only for charts that previously rendered through
 					// the old MultiSeriesChart component. Other cartesian charts keep MSC2 defaults.
-					hideDefaultLegend: usedLegacyMultiSeriesChart ? false : undefined
+					// An explicit legend.show overrides that default.
+					hideDefaultLegend:
+						config.legend?.show === true
+							? false
+							: config.legend?.show === false
+								? true
+								: usedLegacyMultiSeriesChart
+									? false
+									: undefined,
+					// Log-scale conflicts with stacked/percentage (both need a 0 baseline), so gate it off there.
+					logScale: capabilities.allowLogScale && state.logScale && !state.stacked && !state.percentage,
+					logEligibleYAxes: capabilities.logEligibleYAxes
 				},
 				controls,
 				exportModel,
@@ -125,7 +140,11 @@ export function buildRenderPlan(
 					valueSymbol: adaptedChart.props.valueSymbol,
 					color: config.series[0]?.styling?.color || oldBlue,
 					colors: adaptedChart.props.colors,
-					logos: state.showLabels ? adaptedChart.props.logos : undefined
+					logos: state.showLabels ? adaptedChart.props.logos : undefined,
+					series: adaptedChart.props.series,
+					valueAxisMin: adaptedChart.props.valueAxisMin,
+					valueAxisMax: adaptedChart.props.valueAxisMax,
+					valueAxisInterval: adaptedChart.props.valueAxisInterval
 				},
 				controls,
 				exportModel,

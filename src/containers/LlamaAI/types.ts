@@ -7,6 +7,9 @@ export interface ChartConfiguration {
 	title: string
 	description: string
 	valueSymbol?: string
+	/** Explicit colors keyed by slice/point name — used by pie & scatter, which color per-category not per-series. */
+	seriesColors?: Record<string, string>
+	source?: string
 
 	axes: {
 		x: {
@@ -26,6 +29,8 @@ export interface ChartConfiguration {
 			scale?: 'linear' | 'log'
 			valueSymbol?: string
 			min?: number | 'dataMin'
+			max?: number | 'dataMax'
+			interval?: number
 		}>
 	}
 
@@ -53,6 +58,7 @@ export interface ChartConfiguration {
 
 	hallmarks?: Array<[number] | [number, string]>
 	hallmarkStyle?: 'event-rail' | 'mark-line'
+	legend?: { show?: boolean }
 
 	displayOptions?: {
 		canStack: boolean
@@ -64,6 +70,34 @@ export interface ChartConfiguration {
 		defaultLogScale?: boolean
 		showLabels?: boolean
 	}
+}
+
+/** User-editable presentation fields sent to POST /agentic/update-chart-style. Data bindings are not editable. */
+export interface ChartStylePatch {
+	title?: string
+	description?: string
+	source?: string
+	valueSymbol?: string
+	type?: ChartConfiguration['type']
+	seriesColors?: Record<string, string>
+	showLabels?: boolean
+	defaultStacked?: boolean
+	defaultPercentage?: boolean
+	defaultLogScale?: boolean
+	hallmarkStyle?: 'mark-line' | 'event-rail'
+	hallmarks?: Array<[number, string]>
+	legend?: { show?: boolean }
+	xAxisLabel?: string
+	yAxes?: Array<{
+		id: string
+		label?: string
+		position?: 'left' | 'right'
+		valueSymbol?: string
+		min?: number | 'dataMin'
+		max?: number | 'dataMax'
+		interval?: number
+	}>
+	series?: Array<{ name?: string; color?: string; opacity?: number; type?: 'line' | 'bar' | 'area' }>
 }
 
 export interface CsvExport {

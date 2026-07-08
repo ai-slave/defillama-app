@@ -37,6 +37,7 @@ import { isTooltipDataRecord, formatChartEmphasisDate, formatTooltipChartDate } 
 import { buildHallmarksMarkLine } from '../hallmarks'
 import type { IMultiSeriesChart2Props } from '../types'
 import { mergeDeep } from '../utils'
+import { applyLogScaleToYAxes } from './logScale'
 
 echarts.use([
 	CanvasRenderer,
@@ -1004,7 +1005,7 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 				axisTick: { ...(finalXAxis?.axisTick ?? {}), show: false }
 			}
 		}
-		const finalYAxisBase =
+		const finalYAxisBase = applyLogScaleToYAxes(
 			finalYAxis && finalYAxis.length > 0
 				? finalYAxis
 				: [
@@ -1012,7 +1013,10 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 							...yAxis,
 							...(expandTo100Percent ? { max: 100, min: 0 } : {})
 						}
-					]
+					],
+			props.logScale,
+			props.logEligibleYAxes
+		)
 		const eventStripYAxisIndex = finalYAxisBase.length
 		const finalYAxisWithEvents = shouldShowEventRail ? [...finalYAxisBase, createEventStripYAxis()] : finalYAxisBase
 		const finalSeries = shouldShowEventRail
@@ -1165,7 +1169,9 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 		isThemeDark,
 		effectiveCharts,
 		categoryLogos,
-		hasCategoryLogos
+		hasCategoryLogos,
+		props.logScale,
+		props.logEligibleYAxes
 	])
 
 	return (

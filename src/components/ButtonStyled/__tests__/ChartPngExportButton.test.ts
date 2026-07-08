@@ -1,6 +1,43 @@
 import { describe, expect, it } from 'vitest'
+import { scaleXAxisForExport, scaleYAxisForExport } from '../ChartPngExportButton'
+
+describe('scaleXAxisForExport', () => {
+	it('keeps every rotated category label in the export instead of re-hiding overlaps', () => {
+		const [scaled] = scaleXAxisForExport([
+			{ type: 'category', axisLabel: { interval: 0, rotate: 35, hideOverlap: false } }
+		])
+		expect(scaled.axisLabel).toMatchObject({ interval: 0, rotate: 35, hideOverlap: false, fontSize: 24 })
+	})
+
+	it('hides overlaps for a normal (non-rotated) axis', () => {
+		const [scaled] = scaleXAxisForExport([{ type: 'category', axisLabel: {} }])
+		expect(scaled.axisLabel.hideOverlap).toBe(true)
+	})
+})
 import { getChartExportIconFetchUrl } from '../chartPngExportIcon'
 import { computeExportLayout } from '../chartPngExportLayout'
+
+describe('scaleYAxisForExport', () => {
+	// EXPORT_FONT_SIZE = 24; on-screen category labels use the ECharts default 12px font.
+	it('scales the category-label width cap by the font ratio so the doubled export font keeps the same visible length', () => {
+		// horizontal bar y-axis: venue names truncated to 120px at 12px on screen ("Bybit.eu (MiCA)" fits)
+		const [scaled] = scaleYAxisForExport([{ type: 'category', axisLabel: { width: 120, overflow: 'truncate' } }], true)
+		// 120 * 24 / 12 = 240 → same character capacity at the doubled font
+		expect(scaled.axisLabel.width).toBe(240)
+		expect(scaled.axisLabel.fontSize).toBe(24)
+	})
+
+	it('honors an explicit on-screen label fontSize when computing the ratio', () => {
+		const [scaled] = scaleYAxisForExport([{ axisLabel: { width: 120, fontSize: 16 } }], true)
+		// 120 * 24 / 16 = 180
+		expect(scaled.axisLabel.width).toBe(180)
+	})
+
+	it('leaves a value axis (no width cap) uncapped', () => {
+		const [scaled] = scaleYAxisForExport([{ type: 'value', axisLabel: {} }], false)
+		expect(scaled.axisLabel.width).toBeUndefined()
+	})
+})
 
 describe('computeExportLayout', () => {
 	it('reserves legend space for a single exported metric', () => {

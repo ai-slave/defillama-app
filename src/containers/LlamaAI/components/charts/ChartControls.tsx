@@ -70,7 +70,11 @@ export function ChartControls({
 
 	return (
 		<div className="flex flex-wrap items-center justify-end gap-1 border-b border-[#e6e6e6] p-2 pt-0 dark:border-[#222324]">
-			{controls.title ? <p className="mr-auto text-base font-semibold">{controls.title}</p> : null}
+			{controls.title ? (
+				<p className="w-full min-w-0 truncate text-base font-semibold" title={controls.title}>
+					{controls.title}
+				</p>
+			) : null}
 			{controls.showGrouping ? (
 				<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-(--text-form)">
 					{controls.groupingOptions.map((interval) => (

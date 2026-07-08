@@ -747,12 +747,22 @@ async function loadCircularIcon(url: string): Promise<string | null> {
 
 // --- Axis scaling for export ---
 
-function scaleXAxisForExport(xAxis: any[]): any[] {
+export function scaleXAxisForExport(xAxis: any[]): any[] {
 	return xAxis.map((axis) => {
+		const sourceLabel = axis.axisLabel ?? {}
+		// A crowded category axis rotates its labels and forces every one on (interval:0). Keep them
+		// all in the export — re-hiding overlaps at the doubled font would silently drop the very
+		// labels the rotation was added to save.
+		const isRotated = typeof sourceLabel.rotate === 'number' && sourceLabel.rotate !== 0
 		const scaled: any = {
 			...axis,
 			nameTextStyle: { ...(axis.nameTextStyle ?? {}), fontSize: EXPORT_FONT_SIZE },
-			axisLabel: { ...(axis.axisLabel ?? {}), fontSize: EXPORT_FONT_SIZE, inside: false, hideOverlap: true }
+			axisLabel: {
+				...sourceLabel,
+				fontSize: EXPORT_FONT_SIZE,
+				inside: false,
+				hideOverlap: !isRotated
+			}
 		}
 		if (axis.name) {
 			scaled.nameGap = Math.max(axis.nameGap ?? 15, 36)
@@ -761,12 +771,28 @@ function scaleXAxisForExport(xAxis: any[]): any[] {
 	})
 }
 
-function scaleYAxisForExport(yAxis: any[], isHorizontalBarChart: boolean): any[] {
+export function scaleYAxisForExport(yAxis: any[], isHorizontalBarChart: boolean): any[] {
 	return yAxis.map((axis) => {
+		const sourceAxisLabel = axis.axisLabel ?? {}
+		// The on-screen axisLabel.width is a truncation cap sized for the on-screen font. Export doubles the
+		// font (EXPORT_FONT_SIZE), so the same cap chops labels ("Bybit.eu (MiCA)" -> "Bybit.eu (Mi..."). Scale
+		// the cap by the same font ratio so the visible label length is preserved in the PNG.
+		const sourceLabelFontSize =
+			typeof sourceAxisLabel.fontSize === 'number' && sourceAxisLabel.fontSize > 0 ? sourceAxisLabel.fontSize : 12
+		const scaledLabelWidth =
+			typeof sourceAxisLabel.width === 'number' && Number.isFinite(sourceAxisLabel.width)
+				? Math.round((sourceAxisLabel.width * EXPORT_FONT_SIZE) / sourceLabelFontSize)
+				: sourceAxisLabel.width
 		const scaled: any = {
 			...axis,
 			nameTextStyle: { ...(axis.nameTextStyle ?? {}), fontSize: EXPORT_FONT_SIZE },
-			axisLabel: { ...(axis.axisLabel ?? {}), fontSize: EXPORT_FONT_SIZE, inside: false, hideOverlap: true },
+			axisLabel: {
+				...sourceAxisLabel,
+				fontSize: EXPORT_FONT_SIZE,
+				inside: false,
+				hideOverlap: true,
+				...(scaledLabelWidth != null ? { width: scaledLabelWidth } : {})
+			},
 			axisLine: {
 				...(axis.axisLine ?? {}),
 				lineStyle: { ...(axis.axisLine?.lineStyle ?? {}), width: 2 }

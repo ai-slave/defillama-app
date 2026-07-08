@@ -1,14 +1,14 @@
 import { BarChart } from 'echarts/charts'
-import { GraphicComponent, GridComponent, TooltipComponent } from 'echarts/components'
+import { GraphicComponent, GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useEffectEvent, useId, useRef } from 'react'
+import { useEffect, useEffectEvent, useId, useRef, useState } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { getChartTheme } from '../chartTheme'
 import { formatTooltipValue } from '../formatters'
 import type { IHBarChartProps } from '../types'
 
-echarts.use([CanvasRenderer, BarChart, GraphicComponent, GridComponent, TooltipComponent])
+echarts.use([CanvasRenderer, BarChart, GraphicComponent, GridComponent, LegendComponent, TooltipComponent])
 
 function getYAxisLabelWidth(containerWidth: number) {
 	return Math.min(Math.max(containerWidth * 0.2, 100), 300)
@@ -40,8 +40,13 @@ export default function HBarChart({
 	color = '#1f77b4',
 	colors,
 	logos,
+	series,
+	valueAxisMin,
+	valueAxisMax,
+	valueAxisInterval,
 	onReady
 }: IHBarChartProps) {
+	const grouped = series != null && series.length > 1
 	const id = useId()
 	const [isThemeDark] = useDarkModeManager()
 	const chartRef = useRef<echarts.ECharts | null>(null)
@@ -50,7 +55,35 @@ export default function HBarChart({
 		onReady?.(instance)
 	})
 
-	const hasLogos = !!(logos && logos.length === categories.length && logos.some(Boolean))
+	// All-or-nothing logos: sparse icons (some 404) look worse than none and throw off left-margin
+	// alignment between sibling charts. Preload every logo and only enable the overlay if ALL load.
+	const [logosAllLoaded, setLogosAllLoaded] = useState(false)
+	useEffect(() => {
+		const complete = !!logos && logos.length === categories.length && logos.every(Boolean)
+		if (!complete) {
+			setLogosAllLoaded(false)
+			return
+		}
+		let cancelled = false
+		Promise.all(
+			logos!.map(
+				(url) =>
+					new Promise<boolean>((resolve) => {
+						const img = new Image()
+						img.onload = () => resolve(true)
+						img.onerror = () => resolve(false)
+						img.src = url
+					})
+			)
+		).then((results) => {
+			if (!cancelled) setLogosAllLoaded(results.every(Boolean))
+		})
+		return () => {
+			cancelled = true
+		}
+	}, [logos, categories])
+
+	const hasLogos = logosAllLoaded
 
 	useEffect(() => {
 		const chartDom = document.getElementById(id)
@@ -69,6 +102,16 @@ export default function HBarChart({
 			if (barColor) item.itemStyle = { color: barColor }
 			return item
 		})
+
+		const barSeries = grouped
+			? series!.map((s) => ({
+					name: s.name,
+					type: 'bar' as const,
+					data: s.values,
+					itemStyle: { color: s.color },
+					barMaxWidth: 22
+				}))
+			: [{ type: 'bar' as const, data: seriesData, emphasis: { focus: 'series' as const } }]
 
 		const textColor = getChartTheme(isThemeDark).ink(0.8)
 		const yAxisLabelWidth = getYAxisLabelWidth(chartDom.clientWidth || 600)
@@ -100,16 +143,30 @@ export default function HBarChart({
 						}
 					}
 				],
+				...(grouped
+					? {
+							legend: {
+								show: true,
+								top: 8,
+								left: 'center',
+								textStyle: { color: textColor },
+								data: series!.map((s) => s.name)
+							}
+						}
+					: {}),
 				grid: {
 					left: leftGridWidth,
 					right: 12,
-					top: 12,
+					top: grouped ? 40 : 12,
 					bottom: 12,
 					outerBoundsMode: 'same',
 					outerBoundsContain: hasLogos ? undefined : 'axisLabel'
 				},
 				xAxis: {
 					type: 'value',
+					...(valueAxisMin !== undefined ? { min: valueAxisMin } : {}),
+					...(valueAxisMax !== undefined ? { max: valueAxisMax } : {}),
+					...(valueAxisInterval !== undefined ? { interval: valueAxisInterval } : {}),
 					axisLabel: {
 						color: textColor,
 						formatter: (value: number) => formatTooltipValue(value, valueSymbol)
@@ -138,13 +195,7 @@ export default function HBarChart({
 						return `<div style="font-weight: 600; margin-bottom: 4px;">${p.name}</div><div>${formatTooltipValue(numericValue, valueSymbol)}</div>`
 					}
 				},
-				series: [
-					{
-						type: 'bar',
-						data: seriesData,
-						emphasis: { focus: 'series' }
-					}
-				]
+				series: barSeries
 			},
 			true
 		)
@@ -228,7 +279,22 @@ export default function HBarChart({
 				instance.dispose()
 			}
 		}
-	}, [id, categories, values, valueSymbol, color, colors, logos, hasLogos, isThemeDark])
+	}, [
+		id,
+		categories,
+		values,
+		valueSymbol,
+		color,
+		colors,
+		logos,
+		series,
+		grouped,
+		valueAxisMin,
+		valueAxisMax,
+		valueAxisInterval,
+		hasLogos,
+		isThemeDark
+	])
 
 	return (
 		<div style={{ position: 'relative', height }}>

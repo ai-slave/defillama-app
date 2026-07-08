@@ -37,7 +37,9 @@ export function adaptPieChartData(config: ChartConfiguration, rawData: ChartData
 
 		const stackColors: Record<string, string> = {}
 		for (let index = 0; index < pieData.length; index++) {
-			stackColors[pieData[index].name] = getChartColor(pieData[index].name, index, oldBlue)
+			const name = pieData[index].name
+			// Honor an explicit per-slice color from the config; fall back to the palette.
+			stackColors[name] = config.seriesColors?.[name] ?? getChartColor(name, index, oldBlue)
 		}
 
 		return {

@@ -121,6 +121,7 @@ function ConversationMessageItem({
 	onShare,
 	sessionId,
 	readOnly,
+	isSharedView,
 	isLlama,
 	isLatestAssistant,
 	onActionClick,
@@ -138,6 +139,7 @@ function ConversationMessageItem({
 	onShare?: (messageId?: string) => void
 	sessionId: string | null
 	readOnly: boolean
+	isSharedView?: boolean
 	isLlama: boolean
 	isLatestAssistant?: boolean
 	onActionClick?: (message: string) => void
@@ -156,6 +158,7 @@ function ConversationMessageItem({
 			isDraft={isDraft}
 			sessionId={sessionId}
 			readOnly={readOnly}
+			isSharedView={isSharedView}
 			isLlama={isLlama}
 			isLatestAssistant={isLatestAssistant}
 			onActionClick={onActionClick}
@@ -663,6 +666,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 											onShare={onShare}
 											sessionId={sessionId}
 											readOnly={readOnly}
+											isSharedView={isSharedView}
 											isLlama={isLlama}
 											isLatestAssistant={message.id === lastAssistantId}
 											onActionClick={!readOnly && !isStreaming ? handleActionClick : undefined}
@@ -732,6 +736,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 													onShare={onShare}
 													sessionId={sessionId}
 													readOnly={readOnly}
+													isSharedView={isSharedView}
 													isLlama={isLlama}
 													isLatestAssistant={!item.isDraft && message.id === lastAssistantId}
 													onActionClick={!item.isDraft && !readOnly && !isStreaming ? handleActionClick : undefined}

@@ -92,6 +92,12 @@ export interface IHBarChartProps {
 	color?: string
 	colors?: string[]
 	logos?: string[]
+	/** When set (2+ entries) the chart renders grouped bars — one bar per series per category — with a legend. */
+	series?: Array<{ name: string; values: number[]; color: string }>
+	/** value-axis (horizontal, x) controls — hbar's value axis is the x-axis */
+	valueAxisMin?: number | 'dataMin'
+	valueAxisMax?: number | 'dataMax'
+	valueAxisInterval?: number
 	onReady?: (instance: echarts.ECharts | null) => void
 }
 
@@ -227,6 +233,10 @@ export type IMultiSeriesChart2Props = MultiSeriesChart2BaseProps & {
 	 * - object: explicitly control which buttons are shown and export metadata.
 	 */
 	exportButtons?: MultiSeriesChart2ExportButtons
+	/** When true, log-scale the eligible value y-axes (from the Log/Linear toggle). */
+	logScale?: boolean
+	/** Y-axis indices that are log-eligible (all-positive); only these are log-scaled. */
+	logEligibleYAxes?: number[]
 }
 
 export interface ICandlestickChartProps {

@@ -426,7 +426,13 @@ export function adaptCartesianChartData(
 					if (typeof rowValue === 'string' && typeof value === 'string') {
 						return rowValue.toLowerCase() === value.toLowerCase()
 					}
-					return rowValue === value
+					if (rowValue === value) {
+						return true
+					}
+					if (rowValue == null || value == null) {
+						return false
+					}
+					return String(rowValue).toLowerCase() === String(value).toLowerCase()
 				})
 			}
 
@@ -490,9 +496,19 @@ export function adaptCartesianChartData(
 		const chartOptions: Record<string, any> = {}
 
 		if (axisType === 'category') {
+			// Long/many category labels overlap on a vertical axis and ECharts silently hides some
+			// (interval:'auto'). When crowded, force every label to show and tilt them so all stay
+			// readable, and reserve bottom room so the tilted text isn't clipped.
+			const categoryLabels = categoryOrder.map((c) => String(c))
+			const maxLabelLength = categoryLabels.reduce((m, c) => Math.max(m, c.length), 0)
+			const crowded = categoryLabels.length > 6 || maxLabelLength > 10
 			chartOptions.xAxis = {
 				type: 'category',
-				boundaryGap: true
+				boundaryGap: true,
+				...(crowded ? { axisLabel: { interval: 0, rotate: 35, hideOverlap: false } } : {})
+			}
+			if (crowded) {
+				chartOptions.grid = { ...(chartOptions.grid ?? {}), bottom: Math.min(44 + maxLabelLength * 3, 120) }
 			}
 			chartOptions.tooltip = {
 				formatter: createCategoryTooltipFormatter(config.valueSymbol ?? '', charts)
@@ -515,7 +531,9 @@ export function adaptCartesianChartData(
 						...(existingAxis?.axisLabel ?? {}),
 						formatter: (value: number) => formatChartValue(value, valueSymbol)
 					},
-					...(axis.min !== undefined ? { min: axis.min } : {})
+					...(axis.min !== undefined ? { min: axis.min } : {}),
+					...(axis.max !== undefined ? { max: axis.max } : {}),
+					...(axis.interval !== undefined ? { interval: axis.interval } : {})
 				}
 			})
 		} else {

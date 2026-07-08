@@ -1,8 +1,22 @@
-import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
+import {
+	lazy,
+	memo,
+	type ReactNode,
+	Suspense,
+	useCallback,
+	useEffect,
+	useMemo,
+	useReducer,
+	useRef,
+	useState
+} from 'react'
+import { createPortal } from 'react-dom'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
 import { Icon } from '~/components/Icon'
+import { updateChartStyle } from '~/containers/LlamaAI/api/updateChartStyle'
 import { ChartControls } from '~/containers/LlamaAI/components/charts/ChartControls'
-import type { ChartConfiguration, ChartDataByKey, ChartDataSeries } from '~/containers/LlamaAI/types'
+import { ChartStyleEditor } from '~/containers/LlamaAI/components/charts/ChartStyleEditor'
+import type { ChartConfiguration, ChartDataByKey, ChartDataSeries, ChartStylePatch } from '~/containers/LlamaAI/types'
 import type { AdaptedChartData } from '~/containers/LlamaAI/utils/chartAdapter'
 import { adaptCandlestickData, adaptChartData } from '~/containers/LlamaAI/utils/chartAdapter'
 import {
@@ -13,8 +27,11 @@ import {
 import { areChartDataEqual, areChartsEqual, areStringArraysEqual } from '~/containers/LlamaAI/utils/chartComparison'
 import { ChartDataTransformer } from '~/containers/LlamaAI/utils/chartDataTransformer'
 import { buildRenderPlan, type ChartRenderPlan } from '~/containers/LlamaAI/utils/chartRenderPlan'
+import { useAuthContext } from '~/containers/Subscription/auth'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+
+const noop = () => {}
 
 const CandlestickChart = lazy(() => import('~/components/ECharts/CandlestickChart'))
 const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
@@ -31,6 +48,7 @@ interface ChartRendererProps {
 	resizeTrigger?: number
 	sessionId?: string | null
 	messageId?: string
+	readOnly?: boolean
 }
 
 interface SingleChartProps {
@@ -40,6 +58,7 @@ interface SingleChartProps {
 	title?: string
 	sessionId?: string | null
 	messageId?: string
+	readOnly?: boolean
 }
 
 type ChartAction =
@@ -220,9 +239,56 @@ function tryBuildPresentation(
 	}
 }
 
-function SingleChart({ config, data, isActive, title, sessionId, messageId }: SingleChartProps) {
+function SingleChart({ config: baseConfig, data, isActive, title, sessionId, messageId, readOnly }: SingleChartProps) {
+	// authorizedFetch/user come from the shared auth context — real under the LlamaAI provider, an
+	// empty object (→ no editor) in ProDashboard, so this is safe everywhere ChartRenderer renders.
+	const { authorizedFetch, user } = useAuthContext()
+	// Owner style edits render as a local override on top of the persisted config (live preview);
+	// the override is kept after a successful save (the server returns the applied config).
+	const [override, setOverride] = useState<ChartConfiguration | null>(null)
+	const [editing, setEditing] = useState(false)
+	const config = override ?? baseConfig
+	const canEdit =
+		!readOnly && !!authorizedFetch && !!user?.id && !!sessionId && !!messageId && config.type !== 'candlestick'
+
+	const handleSaveStyle = useCallback(
+		async (patch: ChartStylePatch) => {
+			if (!authorizedFetch || !sessionId || !messageId) return
+			const updated = await updateChartStyle(authorizedFetch, {
+				sessionId,
+				messageId,
+				chartId: baseConfig.id,
+				style: patch
+			})
+			setOverride(updated)
+		},
+		[authorizedFetch, sessionId, messageId, baseConfig.id]
+	)
+
+	// category names (bars/slices) for per-category color pickers on single-series hbar & pie
+	const editorCategories = useMemo(() => {
+		const field = config.axes?.x?.field
+		if (!field || !Array.isArray(data)) return []
+		const seen = new Set<string>()
+		const out: string[] = []
+		for (const row of data) {
+			const v = (row as Record<string, unknown>)?.[field]
+			const key = v == null ? 'Unknown' : String(v)
+			if (!seen.has(key)) {
+				seen.add(key)
+				out.push(key)
+			}
+		}
+		return out
+	}, [data, config])
+
 	const [chartState, dispatch] = useReducer(chartReducer, config, createInitialChartState)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
+	useEffect(() => {
+		if (!editing) return
+		const t = setTimeout(() => window.dispatchEvent(new CustomEvent('chartResize')), 60)
+		return () => clearTimeout(t)
+	}, [editing])
 	const handleStackedChange = useCallback((stacked: boolean) => dispatch({ type: 'SET_STACKED', payload: stacked }), [])
 	const handlePercentageChange = useCallback(
 		(percentage: boolean) => dispatch({ type: 'SET_PERCENTAGE', payload: percentage }),
@@ -319,9 +385,95 @@ function SingleChart({ config, data, isActive, title, sessionId, messageId }: Si
 					sessionId={sessionId}
 					messageId={messageId}
 				/>
+				{canEdit ? (
+					<button
+						onClick={() => setEditing((v) => !v)}
+						title="Edit chart style"
+						className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-[#666] hover:text-black dark:text-[#919296] dark:hover:text-white"
+					>
+						<Icon name="settings" height={14} width={14} />
+					</button>
+				) : null}
 			</ChartControls>
 			{chartContent}
+			{editing && canEdit ? (
+				<ChartEditorModal title={chartTitle} onClose={() => setEditing(false)}>
+					<div className="flex flex-1 items-center justify-center overflow-auto p-5">
+						<div className="w-full">{renderChartContent(renderPlan, `${chartKey}-edit`, noop)}</div>
+					</div>
+					<div className="flex w-full shrink-0 flex-col overflow-y-auto border-t border-[#ececec] bg-[#f8f9fb] lg:w-[340px] lg:border-t-0 lg:border-l dark:border-[#232427] dark:bg-[#101114]">
+						<ChartStyleEditor
+							config={config}
+							original={baseConfig}
+							caps={renderPlan.controls}
+							categories={editorCategories}
+							view={{
+								logScale: normalizedState.logScale,
+								stacked: normalizedState.stacked,
+								showLabels: normalizedState.showLabels,
+								percentage: normalizedState.percentage
+							}}
+							onView={(key, value) => {
+								if (key === 'logScale') handleLogScaleChange(value)
+								else if (key === 'stacked') handleStackedChange(value)
+								else if (key === 'percentage') handlePercentageChange(value)
+								else handleLabelsChange(value)
+							}}
+							onPreview={setOverride}
+							onReset={() => setOverride(null)}
+							onSave={handleSaveStyle}
+							onClose={() => setEditing(false)}
+						/>
+					</div>
+				</ChartEditorModal>
+			) : null}
 		</div>
+	)
+}
+
+function ChartEditorModal({ title, onClose, children }: { title?: string; onClose: () => void; children: ReactNode }) {
+	useEffect(() => {
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') onClose()
+		}
+		document.addEventListener('keydown', onKey)
+		const prevOverflow = document.body.style.overflow
+		document.body.style.overflow = 'hidden'
+		return () => {
+			document.removeEventListener('keydown', onKey)
+			document.body.style.overflow = prevOverflow
+		}
+	}, [onClose])
+
+	return createPortal(
+		<div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+			<div className="absolute inset-0 bg-black/60" onClick={onClose} />
+			<div className="relative flex h-[85vh] max-h-[560px] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-[#ececec] bg-white shadow-2xl lg:flex-row dark:border-[#232427] dark:bg-[#0d0e11]">
+				<div className="flex items-center justify-between border-b border-[#ececec] px-4 py-2.5 lg:hidden dark:border-[#232427]">
+					<span className="truncate text-sm font-semibold text-(--text-form)">{title ?? 'Edit chart'}</span>
+					<button
+						onClick={onClose}
+						aria-label="Close editor"
+						className="rounded p-1 text-[#999] hover:bg-black/5 hover:text-black dark:text-[#6f757e] dark:hover:bg-white/5 dark:hover:text-white"
+					>
+						<svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
+							<path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+						</svg>
+					</button>
+				</div>
+				<button
+					onClick={onClose}
+					aria-label="Close editor"
+					className="absolute top-2.5 right-2.5 z-10 hidden rounded p-1 text-[#999] hover:bg-black/5 hover:text-black lg:block dark:text-[#6f757e] dark:hover:bg-white/5 dark:hover:text-white"
+				>
+					<svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
+						<path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+					</svg>
+				</button>
+				{children}
+			</div>
+		</div>,
+		document.body
 	)
 }
 
@@ -357,11 +509,12 @@ export function ChartRenderer({
 	chartTypes,
 	resizeTrigger = 0,
 	sessionId,
-	messageId
+	messageId,
+	readOnly
 }: ChartRendererProps) {
 	return (
 		<ChartRendererMemoized
-			{...{ charts, chartData, isLoading, hasError, chartTypes, resizeTrigger, sessionId, messageId }}
+			{...{ charts, chartData, isLoading, hasError, chartTypes, resizeTrigger, sessionId, messageId, readOnly }}
 		/>
 	)
 }
@@ -374,7 +527,8 @@ function ChartRendererImpl({
 	chartTypes,
 	resizeTrigger = 0,
 	sessionId,
-	messageId
+	messageId,
+	readOnly
 }: ChartRendererProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const [activeTabIndex, setActiveTab] = useReducer((state: number, action: number) => action, 0)
@@ -455,6 +609,7 @@ function ChartRendererImpl({
 						title={chart.title}
 						sessionId={sessionId}
 						messageId={messageId}
+						readOnly={readOnly}
 					/>
 				)
 			})}
@@ -469,6 +624,7 @@ const ChartRendererMemoized = memo(ChartRendererImpl, (prev, next) => {
 		prev.resizeTrigger === next.resizeTrigger &&
 		prev.sessionId === next.sessionId &&
 		prev.messageId === next.messageId &&
+		prev.readOnly === next.readOnly &&
 		areStringArraysEqual(prev.chartTypes, next.chartTypes) &&
 		areChartsEqual(prev.charts, next.charts) &&
 		areChartDataEqual(prev.chartData, next.chartData)

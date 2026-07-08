@@ -128,6 +128,7 @@ function ArtifactBlockRenderer({
 	isStreaming,
 	sessionId,
 	messageId,
+	readOnly,
 	onImageClick
 }: {
 	block: Extract<MessageRenderBlock, { type: 'chart' | 'csv' | 'md' | 'alert' | 'dashboard' | 'image' }>
@@ -135,6 +136,7 @@ function ArtifactBlockRenderer({
 	isStreaming: boolean
 	sessionId?: string | null
 	messageId?: string
+	readOnly?: boolean
 	onImageClick?: (url: string) => void
 }) {
 	if (block.type === 'chart') {
@@ -149,6 +151,7 @@ function ArtifactBlockRenderer({
 				chartData={artifact.chartData}
 				sessionId={sessionId}
 				messageId={messageId}
+				readOnly={readOnly}
 			/>
 		)
 	}
@@ -235,6 +238,7 @@ function MessageContentBlock({
 	advancedProvenance,
 	onTableFullscreenOpen,
 	messageId,
+	readOnly,
 	onImageClick
 }: {
 	block: MessageRenderBlock
@@ -247,6 +251,7 @@ function MessageContentBlock({
 	advancedProvenance?: boolean
 	onTableFullscreenOpen?: () => void
 	messageId?: string
+	readOnly?: boolean
 	onImageClick?: (url: string) => void
 }) {
 	if (block.type === 'action-group') {
@@ -279,6 +284,7 @@ function MessageContentBlock({
 			isStreaming={isStreaming}
 			sessionId={sessionId}
 			messageId={messageId}
+			readOnly={readOnly}
 			onImageClick={onImageClick}
 		/>
 	)
@@ -295,7 +301,8 @@ function InlineContent({
 	advancedProvenance,
 	showToolDetails = false,
 	onTableFullscreenOpen,
-	onImageClick
+	onImageClick,
+	readOnly
 }: {
 	message: Message
 	toolExecutions?: ToolExecution[]
@@ -306,6 +313,7 @@ function InlineContent({
 	hackerMode?: boolean
 	advancedProvenance?: boolean
 	showToolDetails?: boolean
+	readOnly?: boolean
 	onTableFullscreenOpen?: () => void
 	onImageClick?: (url: string) => void
 }) {
@@ -330,6 +338,7 @@ function InlineContent({
 						advancedProvenance={advancedProvenance}
 						onTableFullscreenOpen={onTableFullscreenOpen}
 						messageId={message.id}
+						readOnly={readOnly}
 						onImageClick={onImageClick}
 					/>
 				</div>
@@ -353,6 +362,7 @@ export function MessageBubble({
 	sessionId,
 	isDraft = false,
 	readOnly = false,
+	isSharedView = false,
 	isLlama = false,
 	isLatestAssistant = false,
 	onActionClick,
@@ -371,6 +381,7 @@ export function MessageBubble({
 	sessionId: string | null
 	isDraft?: boolean
 	readOnly?: boolean
+	isSharedView?: boolean
 	isLlama?: boolean
 	isLatestAssistant?: boolean
 	onActionClick?: (message: string) => void
@@ -619,6 +630,7 @@ export function MessageBubble({
 				showToolDetails={isLlama}
 				onTableFullscreenOpen={onTableFullscreenOpen}
 				onImageClick={setPreviewImage}
+				readOnly={readOnly || isSharedView}
 			/>
 			<ImagePreviewModal
 				imageUrl={previewImage}
