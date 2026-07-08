@@ -1,4 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
+import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { PercentChange } from '~/components/PercentChange'
 import { TokenLogo } from '~/components/TokenLogo'
 import { formattedNum } from '~/utils'
@@ -14,6 +15,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 				<div className="flex items-center gap-2">
 					<TokenLogo name={row.original.name} kind="chain" alt={`Logo of ${row.original.name}`} size={24} />
 					<span className="font-medium pro-text1">{row.original.name}</span>
+					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 				</div>
 			)
 		}

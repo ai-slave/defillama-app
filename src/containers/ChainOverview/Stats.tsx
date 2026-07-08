@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import toast from 'react-hot-toast'
 import { Bookmark } from '~/components/Bookmark'
 import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
 import { DWMC_GROUPING_OPTIONS_LOWERCASE, type LowercaseDwmcGrouping } from '~/components/ECharts/ChartGroupingSelector'
 import { Icon } from '~/components/Icon'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -138,6 +139,7 @@ export function Stats(props: IStatsProps) {
 					<h1 className="flex flex-nowrap items-center gap-2 *:last:ml-auto">
 						<TokenLogo name={props.metadata.name} kind="chain" size={24} alt={`Logo of ${props.metadata.name}`} />
 						<span className="heading-xs">{props.metadata.name}</span>
+						{props.metadata.deprecated ? <DeprecatedEntityText /> : null}
 						<span className="ml-auto flex items-center justify-end gap-2">
 							{props.website ? (
 								<a

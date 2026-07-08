@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
@@ -17,7 +18,6 @@ import { Select } from '~/components/Select/Select'
 import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Tooltip } from '~/components/Tooltip'
 import type { StablecoinAssetChartConfig } from '~/containers/ProDashboard/types'
 import type { StablecoinChartSeriesPayload } from '~/containers/Stablecoins/chartSeries'
 import {
@@ -261,11 +261,7 @@ export const PeggedAssetInfo = ({
 						<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} size={24} />
 						<span className="font-bold">{name}</span>
 						{symbol && symbol !== '-' ? <span className="font-normal">({symbol})</span> : null}
-						{peggedAssetData.deprecated ? (
-							<Tooltip content="Deprecated protocol" className="text-(--error)">
-								<Icon name="alert-triangle" height={18} width={18} />
-							</Tooltip>
-						) : null}
+						{peggedAssetData.deprecated ? <DeprecatedProtocolMarker size={18} /> : null}
 					</h1>
 
 					<p className="flex flex-col">

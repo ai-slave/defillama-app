@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { lazy, Suspense } from 'react'
+import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { PercentChange } from '~/components/PercentChange'
@@ -171,12 +172,15 @@ function buildColumns(metric: ExtraTvlMetric) {
 						<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
 
 						<span className="-my-2 flex flex-col">
-							<BasicLink
-								href={`/protocol/${row.original.slug}?${chartParam}`}
-								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
-							>
-								{value}
-							</BasicLink>
+							<span className="flex items-center gap-1 overflow-hidden">
+								<BasicLink
+									href={`/protocol/${row.original.slug}?${chartParam}`}
+									className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
+								>
+									{value}
+								</BasicLink>
+								{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
+							</span>
 
 							<Tooltip
 								content={<ProtocolChainsComponent chains={row.original.chains} />}

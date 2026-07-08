@@ -1,6 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
@@ -56,12 +57,15 @@ const LSDColumn = [
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo src={row.original.logo} alt={`Logo of ${row.original.name}`} data-lgonly />
-					<BasicLink
-						href={`/protocol/${nameSlug}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
-					>
-						{getValue()}
-					</BasicLink>
+					<span className="flex items-center gap-1 overflow-hidden">
+						<BasicLink
+							href={`/protocol/${nameSlug}`}
+							className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+						>
+							{getValue()}
+						</BasicLink>
+						{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
+					</span>
 				</span>
 			)
 		},

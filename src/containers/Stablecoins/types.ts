@@ -37,6 +37,7 @@ export interface PeggedChainsPageData {
 	chainCirculatings: IFormattedStablecoinChainRow[]
 	chainList: string[]
 	chainsGroupbyParent: Record<string, Record<string, string[]>>
+	deprecatedChains: Record<string, true>
 	change1d: string
 	change7d: string
 	change30d: string

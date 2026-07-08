@@ -12,6 +12,7 @@ export interface IExtraTvlProtocolRow {
 	slug: string
 	category: string | null
 	chains: string[]
+	deprecated?: boolean
 	value: number
 	change_1m: number | null
 	subRows?: IExtraTvlProtocolRow[]
@@ -40,6 +41,7 @@ export interface ITokenMetricProtocolRow {
 	slug: string
 	category: string | null
 	chains: string[]
+	deprecated?: boolean
 	value: number | null
 	subRows?: ITokenMetricProtocolRow[]
 }

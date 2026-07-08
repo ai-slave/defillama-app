@@ -4,6 +4,7 @@ import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ButtonStyled/ChartRestoreButton'
+import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
@@ -82,6 +83,7 @@ interface StablecoinsByChainProps {
 	availablePegTypes: string[]
 	defaultChartData: StablecoinChartSeriesPayload
 	entityQuestions?: string[]
+	deprecated?: boolean
 }
 
 export function StablecoinsByChain({
@@ -91,7 +93,8 @@ export function StablecoinsByChain({
 	availableBackings,
 	availablePegTypes,
 	defaultChartData,
-	entityQuestions
+	entityQuestions,
+	deprecated
 }: StablecoinsByChainProps) {
 	const router = useRouter()
 	const chartMode = React.useMemo(() => createStablecoinOverviewChartMode(selectedChain), [selectedChain])
@@ -392,7 +395,10 @@ export function StablecoinsByChain({
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
 				<Card border="subtle" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					<div className="flex flex-col">
-						<h1 className="text-(--text-label)">Total {title}</h1>
+						<h1 className="flex items-center gap-2 text-(--text-label)">
+							<span>Total {title}</span>
+							{deprecated ? <DeprecatedEntityText /> : null}
+						</h1>
 						<p className="font-jetbrains text-2xl font-semibold">{mcapToDisplay}</p>
 					</div>
 					<details className="group text-base">

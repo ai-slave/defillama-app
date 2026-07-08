@@ -57,6 +57,7 @@ interface ChainsWithStablecoinsProps {
 	chainCirculatings: IFormattedStablecoinChainRow[]
 	chainList: string[]
 	chainsGroupbyParent: Record<string, Record<string, string[]>>
+	deprecatedChains: Record<string, true>
 	change1d: string
 	change7d: string
 	change30d: string
@@ -72,6 +73,7 @@ export function ChainsWithStablecoins({
 	chainCirculatings,
 	chainList: _chainList,
 	chainsGroupbyParent,
+	deprecatedChains,
 	change1d,
 	change7d,
 	change30d,
@@ -392,7 +394,7 @@ export function ChainsWithStablecoins({
 				</Panel>
 			</div>
 
-			<StablecoinsChainsTable data={groupedChains} />
+			<StablecoinsChainsTable data={groupedChains} deprecatedChains={deprecatedChains} />
 		</>
 	)
 }

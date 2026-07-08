@@ -3,6 +3,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
 import { searchApi } from '~/api'
+import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { LoadingDots } from '~/components/Loaders'
@@ -326,6 +327,7 @@ const SearchItem = ({
 	onSelect?: () => void
 }) => {
 	const router = useRouter()
+	const deprecatedContent = route.type ? `Deprecated ${route.type.toLowerCase()}` : 'Deprecated'
 	return (
 		<Ariakit.ComboboxItem
 			className="flex flex-wrap items-center gap-2 px-3 py-2 body-md text-primary cv-auto-40 outline-none hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row"
@@ -360,7 +362,7 @@ const SearchItem = ({
 					<span className="text-tertiary">{route.subName}</span>
 				</>
 			) : null}
-			{route.deprecated ? <span className="text-xs text-(--error)">(Deprecated)</span> : null}
+			{route.deprecated ? <DeprecatedEntityMarker content={deprecatedContent} /> : null}
 			{route.hideType ? null : recent ? (
 				<Icon name="clock" height={12} width={12} className="ml-auto" />
 			) : (

@@ -18,6 +18,7 @@ type StablecoinsByChainPageProps = PeggedOverviewPageData & {
 	availableBackings: string[]
 	availablePegTypes: string[]
 	entityQuestions?: string[]
+	deprecated?: boolean
 }
 
 export const getStaticProps = withPerformanceLogging<StablecoinsByChainPageProps>(
@@ -85,7 +86,13 @@ export const getStaticProps = withPerformanceLogging<StablecoinsByChainPageProps
 		)
 
 		return {
-			props: { ...props, availableBackings, availablePegTypes, entityQuestions },
+			props: {
+				...props,
+				availableBackings,
+				availablePegTypes,
+				entityQuestions,
+				...(metadata.deprecated ? { deprecated: true } : {})
+			},
 			revalidate: maxAgeForNext([22])
 		}
 	}
@@ -117,7 +124,8 @@ export default function StablecoinsByChainPage({
 	availableBackings,
 	availablePegTypes,
 	defaultChartData,
-	entityQuestions
+	entityQuestions,
+	deprecated
 }: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
@@ -134,6 +142,7 @@ export default function StablecoinsByChainPage({
 				availablePegTypes={availablePegTypes}
 				defaultChartData={defaultChartData}
 				entityQuestions={entityQuestions}
+				deprecated={deprecated}
 			/>
 		</Layout>
 	)

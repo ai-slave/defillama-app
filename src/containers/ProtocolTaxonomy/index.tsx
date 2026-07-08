@@ -1,6 +1,7 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
 import { lazy, Suspense, useDeferredValue, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
@@ -289,12 +290,15 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
 					<span className="-my-2 flex flex-col">
-						<BasicLink
-							href={`/protocol/${row.original.slug}`}
-							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
-						>
-							{value}
-						</BasicLink>
+						<span className="flex items-center gap-1 overflow-hidden">
+							<BasicLink
+								href={`/protocol/${row.original.slug}`}
+								className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+							>
+								{value}
+							</BasicLink>
+							{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
+						</span>
 						<Tooltip
 							content={<ProtocolChainsComponent chains={row.original.chains} />}
 							className="text-[0.7rem] text-secondary"

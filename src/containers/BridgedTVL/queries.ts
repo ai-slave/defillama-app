@@ -1,5 +1,6 @@
 import { slug } from '~/utils'
 import { sluggify } from '~/utils/cache-client'
+import { getDeprecatedChainsByName, isDeprecatedChain } from '~/utils/metadata/deprecatedChains'
 import type { IChainMetadata } from '~/utils/metadata/types'
 import { fetchChainAssetsFlows1d, fetchChainAssetsHistoricalFlows, fetchChainsAssets } from './api'
 import type { RawChainAsset, RawChainAssetsFlowEntry, RawChainsAssetsResponse } from './api.types'
@@ -9,6 +10,8 @@ interface BridgedTVLData {
 	assets: RawChainsAssetsResponse
 	flows1d: Record<string, RawChainAssetsFlowEntry> | null
 	chainData: RawChainAsset | null
+	deprecated?: boolean
+	deprecatedChains: Record<string, true>
 	inflows: Array<Record<string, number>>
 	tokenInflowNames: string[]
 }
@@ -54,11 +57,14 @@ export async function getBridgedTVLByChain({
 		(a, b) => Number(b[1].total?.total?.split('.')?.[0] ?? 0) - Number(a[1].total?.total?.split('.')?.[0] ?? 0)
 	)
 	const chainLinks: { label: string; to: string }[] = [{ label: 'All', to: '/bridged' }]
+	const deprecatedChainNames: string[] = []
 	for (const [assetKey] of assetEntries) {
 		const slugChain = slug(assetKey)
+		const currentChainMetadata = chainMetadata[slugChain]
 
-		if (!chainMetadata[slugChain]?.chainAssets) continue
+		if (!currentChainMetadata?.chainAssets) continue
 
+		deprecatedChainNames.push(assetKey)
 		chainLinks.push({ label: assetKey, to: `/bridged/${slugChain}` })
 	}
 
@@ -67,6 +73,8 @@ export async function getBridgedTVLByChain({
 		assets,
 		flows1d,
 		chainData,
+		...(chain && isDeprecatedChain(chainMetadata, chain) ? { deprecated: true } : {}),
+		deprecatedChains: getDeprecatedChainsByName(chainMetadata, deprecatedChainNames),
 		inflows,
 		tokenInflowNames: Array.from(tokenInflowNames)
 	}

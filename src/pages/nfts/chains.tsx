@@ -4,14 +4,18 @@ import { NftsByChain, type INftChainRow } from '~/containers/Nft/NftsByChain'
 import Layout from '~/layout'
 import { chainIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import { isDeprecatedChain } from '~/utils/metadata/deprecatedChains'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging(`nfts/chains`, async () => {
-	const data = await fetchAdapterChainMetrics({
-		adapterType: 'nft-volume',
-		chain: 'All',
-		dataType: 'dailyVolume'
-	})
+	const [data, metadataCache] = await Promise.all([
+		fetchAdapterChainMetrics({
+			adapterType: 'nft-volume',
+			chain: 'All',
+			dataType: 'dailyVolume'
+		}),
+		import('~/utils/metadata').then((m) => m.default)
+	])
 
 	if (!data) throw new Error('Missing page data for route=/nfts/chains')
 
@@ -19,7 +23,8 @@ export const getStaticProps = withPerformanceLogging(`nfts/chains`, async () => 
 		return {
 			name: chain.displayName,
 			logo: chainIconUrl(chain.slug),
-			total24h: chain.total24h ?? 0
+			total24h: chain.total24h ?? 0,
+			...(isDeprecatedChain(metadataCache.chainMetadata, chain.displayName) ? { deprecated: true } : {})
 		}
 	})
 

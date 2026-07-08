@@ -13,6 +13,7 @@ import { useRouter } from 'next/router'
 import { startTransition, useMemo, useState, type ReactNode } from 'react'
 import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
 import { FullOldViewButton } from '~/components/ButtonStyled/FullOldViewButton'
+import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
@@ -301,6 +302,7 @@ export function AdapterByChain(props: IProps) {
 							<h1 className="flex flex-nowrap items-center gap-2">
 								<TokenLogo name={props.chain} kind="chain" size={24} alt={`Logo of ${props.chain}`} />
 								<span className="heading-sm">{props.chain}</span>
+								{props.deprecated ? <DeprecatedEntityText /> : null}
 							</h1>
 						) : props.total24h != null ? (
 							<div className="flex flex-col">

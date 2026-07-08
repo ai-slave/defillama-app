@@ -9,6 +9,7 @@ import {
 import { matchSorter } from 'match-sorter'
 import Link from 'next/link'
 import { startTransition, useDeferredValue, useMemo, useState } from 'react'
+import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { Icon } from '~/components/Icon'
 import { VirtualTable } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -39,6 +40,7 @@ interface TokenRightsListItem {
 	name: string
 	logo: string
 	href: string | null
+	deprecated?: boolean
 	tokens: string[]
 	holdersRevenue24h: number | null
 	governanceRights: [boolean, boolean, boolean]
@@ -131,6 +133,12 @@ export const getStaticProps = withPerformanceLogging('token-rights', async () =>
 		liteProtocols,
 		parentProtocols
 	)
+	const deprecatedProtocolIds = new Set(
+		liteProtocols
+			.filter((protocol) => protocol.deprecated)
+			.map((protocol) => String(protocol.defillamaId ?? protocol.id ?? ''))
+			.filter(Boolean)
+	)
 
 	const protocols: TokenRightsListItem[] = []
 	const skippedEntries: SkippedTokenRightsEntry[] = []
@@ -141,7 +149,8 @@ export const getStaticProps = withPerformanceLogging('token-rights', async () =>
 			protocolMetadata,
 			tokenDirectory,
 			cexs,
-			holdersRevenueByDefillamaId
+			holdersRevenueByDefillamaId,
+			deprecatedProtocolIds
 		})
 
 		if (resolved.type === 'linked') {
@@ -170,13 +179,15 @@ function resolveTokenRightsListItem(
 		protocolMetadata,
 		tokenDirectory,
 		cexs,
-		holdersRevenueByDefillamaId
+		holdersRevenueByDefillamaId,
+		deprecatedProtocolIds
 	}: {
 		chainMetadata: Record<string, IChainMetadata>
 		protocolMetadata: Record<string, IProtocolMetadata>
 		tokenDirectory: TokenDirectory
 		cexs: ICexItem[]
 		holdersRevenueByDefillamaId: Record<string, number>
+		deprecatedProtocolIds: Set<string>
 	}
 ): TokenRightsLinkResolution {
 	const defillamaId = entry['DefiLlama ID']?.trim() || null
@@ -236,7 +247,16 @@ function resolveTokenRightsListItem(
 	}
 
 	if (!tokenRecord) {
-		return { type: 'linked', item: buildTokenRightsListItem({ entry, name, href: null, holdersRevenueByDefillamaId }) }
+		return {
+			type: 'linked',
+			item: buildTokenRightsListItem({
+				entry,
+				name,
+				href: null,
+				holdersRevenueByDefillamaId,
+				deprecated: deprecatedProtocolIds.has(defillamaId)
+			})
+		}
 	}
 
 	return {
@@ -246,7 +266,8 @@ function resolveTokenRightsListItem(
 			name,
 			logo: tokenRecord.logo ?? tokenIconUrl(name),
 			href: tokenRecord.route ?? null,
-			holdersRevenueByDefillamaId
+			holdersRevenueByDefillamaId,
+			deprecated: deprecatedProtocolIds.has(defillamaId)
 		})
 	}
 }
@@ -256,13 +277,15 @@ function buildTokenRightsListItem({
 	name,
 	logo,
 	href,
-	holdersRevenueByDefillamaId
+	holdersRevenueByDefillamaId,
+	deprecated
 }: {
 	entry: IRawTokenRightsEntry
 	name: string
 	logo?: string
 	href: string | null
 	holdersRevenueByDefillamaId: Record<string, number>
+	deprecated?: boolean
 }): TokenRightsListItem {
 	const hasBuybacks = hasActiveTokens(entry.Buybacks)
 	const hasDividends = hasActiveTokens(entry.Dividends)
@@ -273,6 +296,7 @@ function buildTokenRightsListItem({
 		name,
 		logo: logo ?? tokenIconUrl(name),
 		href,
+		...(deprecated ? { deprecated: true } : {}),
 		tokens: entry.Token ?? [],
 		holdersRevenue24h: holdersRevenueByDefillamaId[entry['DefiLlama ID']] ?? null,
 		governanceRights: [
@@ -610,14 +634,22 @@ const columns = [
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
 					{href ? (
-						<Link
-							href={`${row.original.href}#token-rights`}
-							className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
-						>
-							{name}
-						</Link>
+						<span className="flex items-center gap-1 overflow-hidden">
+							<Link
+								href={`${row.original.href}#token-rights`}
+								className="min-w-0 overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
+							>
+								{name}
+							</Link>
+							{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
+						</span>
 					) : (
-						<span className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-primary">{name}</span>
+						<span className="flex items-center gap-1 overflow-hidden">
+							<span className="min-w-0 overflow-hidden label-md text-ellipsis whitespace-nowrap text-primary">
+								{name}
+							</span>
+							{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
+						</span>
 					)}
 				</span>
 			)

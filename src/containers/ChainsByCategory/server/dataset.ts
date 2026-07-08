@@ -29,6 +29,7 @@ export async function fetchChainsDatasetRows({
 		name: chain.name,
 		icon: chainIconUrl(chain.name),
 		protocols: chain.protocols || 0,
+		deprecated: chain.deprecated === true,
 		users: chain.activeUsers24h ?? null,
 		change_1d: chain.change_1d ?? null,
 		change_7d: chain.change_7d ?? null,

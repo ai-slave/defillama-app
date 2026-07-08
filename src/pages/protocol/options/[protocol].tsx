@@ -1,16 +1,15 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { lazy, Suspense, useDeferredValue, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/ChartGroupingSelector'
 import { ensureChronologicalRows, formatBarChart } from '~/components/ECharts/utils'
-import { Icon } from '~/components/Icon'
 import { Select } from '~/components/Select/Select'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Tooltip } from '~/components/Tooltip'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { CHART_COLORS } from '~/constants/colors'
 import { DimensionProtocolChartByType } from '~/containers/AdapterMetrics/ProtocolChart'
@@ -251,11 +250,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 					<h1 className="flex flex-wrap items-center gap-2 text-xl">
 						<TokenLogo name={props.name} kind="token" size={24} alt={`Logo of ${props.name}`} />
 						<span className="font-bold">{props.name}</span>
-						{props.deprecated ? (
-							<Tooltip content="Deprecated protocol" className="text-(--error)">
-								<Icon name="alert-triangle" height={16} width={16} />
-							</Tooltip>
-						) : null}
+						{props.deprecated ? <DeprecatedProtocolMarker size={16} /> : null}
 					</h1>
 					<KeyMetrics {...props} formatPrice={(value) => formattedNum(value, true)} />
 				</Panel>

@@ -51,6 +51,7 @@ export async function getLSDPageData(): Promise<LSTOverviewProps> {
 		fetchLsdRates().catch((): ILsdRateApiItem[] => []),
 		fetchEthPrice().catch(() => null)
 	])
+	const deprecatedByProtocolName = new Map(protocols.map((protocol) => [protocol.name, protocol.deprecated === true]))
 
 	// filter for LSDs
 	const lsdProtocols: string[] = []
@@ -203,7 +204,14 @@ export async function getLSDPageData(): Promise<LSTOverviewProps> {
 	const tokenTvls: Array<
 		Pick<
 			ILSTTokenRow,
-			'name' | 'logo' | 'mcap' | 'stakedEth' | 'stakedEthInUsd' | 'stakedEthPctChange7d' | 'stakedEthPctChange30d'
+			| 'name'
+			| 'logo'
+			| 'deprecated'
+			| 'mcap'
+			| 'stakedEth'
+			| 'stakedEthInUsd'
+			| 'stakedEthPctChange7d'
+			| 'stakedEthPctChange30d'
 		>
 	> = []
 	for (const protocol of chartData) {
@@ -251,6 +259,7 @@ export async function getLSDPageData(): Promise<LSTOverviewProps> {
 		tokenTvls.push({
 			name: protocol.name,
 			logo: protocol.logo,
+			deprecated: deprecatedByProtocolName.get(protocol.name) === true,
 			mcap: protocol.mcap,
 			stakedEth: correctedEth,
 			stakedEthInUsd: ethInUsd,

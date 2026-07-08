@@ -6,6 +6,7 @@ import type { ForkBreakdownChartData, ForkOverviewPageData } from './types'
 interface ForksOverviewDisplayRow {
 	name: string
 	logo?: string | null
+	deprecated?: boolean
 	forkedProtocols: number
 	parentTvl: number | null
 	tvl: number
@@ -86,6 +87,7 @@ export function buildForksOverviewDisplayData({
 		tableData.push({
 			name,
 			...(baseRow?.logo ? { logo: baseRow.logo } : {}),
+			...(baseRow?.deprecated ? { deprecated: true } : {}),
 			forkedProtocols: baseRow?.forkedProtocols ?? 0,
 			parentTvl,
 			tvl,

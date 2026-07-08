@@ -6,6 +6,7 @@ import { CHART_COLORS } from '~/constants/colors'
 import { getNDistinctColors, slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
+import { isDeprecatedChain } from '~/utils/metadata/deprecatedChains'
 import {
 	fetchBridgeDayStats,
 	fetchBridges,
@@ -565,7 +566,10 @@ export async function getBridgeOverviewPageData(chain, options: { includeBridgeT
 }
 
 export async function getBridgeChainsPageData() {
-	const { chains } = await getBridges()
+	const [{ chains }, metadataCache] = await Promise.all([
+		getBridges(),
+		import('~/utils/metadata').then((m) => m.default)
+	])
 
 	let chartDataByChain: RawBridgeVolumePoint[][] = []
 	const chainToChartDataIndex: Record<string, number> = {}
@@ -636,7 +640,10 @@ export async function getBridgeChainsPageData() {
 		prevDayDataByChain,
 		netflowsDataDay,
 		netflowsDataWeek
-	})
+	}).map((chain) => ({
+		...chain,
+		...(isDeprecatedChain(metadataCache.chainMetadata, chain.name) ? { deprecated: true } : {})
+	}))
 
 	const chartRows: Array<{ date: number; [key: string]: number }> = []
 	for (const date in chartData) {

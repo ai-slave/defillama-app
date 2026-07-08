@@ -10,6 +10,7 @@ interface IChainTvl {
 	name: string
 	symbol: string
 	protocols: number
+	deprecated?: boolean
 	extraTvl: {
 		borrowed?: {
 			tvl: number
@@ -126,6 +127,7 @@ export type IFormattedDataWithExtraTvlBase = {
 	mcaptvl: number | null
 	name: string
 	protocols: IChain['protocols']
+	deprecated?: boolean
 	stablesMcap: IChain['stablesMcap']
 	dexVolume24h: IChain['dexVolume24h']
 	dexVolume7d: IChain['dexVolume7d']

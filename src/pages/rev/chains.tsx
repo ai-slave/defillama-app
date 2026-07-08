@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table'
+import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -73,6 +74,7 @@ const columns = [
 							{value}
 						</BasicLink>
 					</span>
+					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 				</span>
 			)
 		},

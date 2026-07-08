@@ -773,6 +773,7 @@ export async function getProtocolTaxonomyPageData(
 			slug: slug(protocol.name),
 			logo: protocol.logo,
 			chains: Array.from(new Set([...(adapterProtocolData?.chains ?? []), ...protocol.chains])),
+			...(protocol.deprecated ? { deprecated: true } : {}),
 			tvl,
 			extraTvls,
 			mcap: protocol.mcap ?? null,
@@ -837,10 +838,6 @@ export async function getProtocolTaxonomyPageData(
 			}
 			return acc
 		}, {})
-
-		if (extraTvls.excludeParent != null && tvl != null) {
-			tvl = Math.max(0, tvl - extraTvls.excludeParent)
-		}
 
 		const borrowed = extraTvls.borrowed ?? null
 		const supplied = borrowed && tvl != null && tvl > 0 ? borrowed + tvl : null

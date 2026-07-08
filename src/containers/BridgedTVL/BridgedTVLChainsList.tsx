@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { useMemo } from 'react'
+import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
@@ -12,13 +13,14 @@ interface BridgedTVLChainsListProps {
 	assets: RawChainsAssetsResponse
 	chains: Array<{ label: string; to: string }>
 	flows1d: Record<string, RawChainAssetsFlowEntry> | null
+	deprecatedChains: Record<string, true>
 }
 
 const DEFAULT_SORTING_STATE = [{ id: 'total', desc: true }]
 
 const columnHelper = createColumnHelper<IBridgedRow>()
 
-export function BridgedTVLChainsList({ assets, chains, flows1d }: BridgedTVLChainsListProps) {
+export function BridgedTVLChainsList({ assets, chains, flows1d, deprecatedChains }: BridgedTVLChainsListProps) {
 	const data = useMemo(() => {
 		const rows: IBridgedRow[] = []
 		for (const name in assets) {
@@ -28,13 +30,14 @@ export function BridgedTVLChainsList({ assets, chains, flows1d }: BridgedTVLChai
 			const chainFlows = flows1d?.[name]
 			rows.push({
 				name,
+				deprecated: deprecatedChains[name] === true,
 				...chainAssets,
 				change_24h: chainFlows?.total?.perc
 			})
 		}
 		rows.sort((a, b) => Number(b.total?.total ?? 0) - Number(a.total?.total ?? 0))
 		return rows
-	}, [assets, flows1d])
+	}, [assets, flows1d, deprecatedChains])
 
 	return (
 		<>
@@ -55,7 +58,7 @@ const bridgedColumns = [
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
-		cell: ({ getValue }) => {
+		cell: ({ getValue, row }) => {
 			const value = getValue()
 			return (
 				<span className="relative flex items-center gap-2">
@@ -67,6 +70,7 @@ const bridgedColumns = [
 					>
 						{value}
 					</BasicLink>
+					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 				</span>
 			)
 		},

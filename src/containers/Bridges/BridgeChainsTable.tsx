@@ -10,6 +10,7 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { VirtualTable } from '~/components/Table/Table'
@@ -30,6 +31,7 @@ type BridgeChainsTableRow = {
 	prevWeekUsdDeposits?: number
 	prevWeekUsdWithdrawals?: number
 	topTokenWithdrawnSymbol?: string
+	deprecated?: boolean
 }
 
 const columnHelper = createColumnHelper<BridgeChainsTableRow>()
@@ -38,7 +40,7 @@ const bridgeChainsColumn = [
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
-		cell: ({ getValue }) => {
+		cell: ({ getValue, row }) => {
 			const value = getValue()
 			return (
 				<span className="flex items-center gap-2">
@@ -50,6 +52,7 @@ const bridgeChainsColumn = [
 					>
 						{value}
 					</BasicLink>
+					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 				</span>
 			)
 		},

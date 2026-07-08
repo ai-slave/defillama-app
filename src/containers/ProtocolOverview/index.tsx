@@ -2,10 +2,10 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense } from 'react'
 import { useGetTokenPrice } from '~/api/client'
 import { Bookmark } from '~/components/Bookmark'
+import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { Icon } from '~/components/Icon'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Tooltip } from '~/components/Tooltip'
 import { formattedNum } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { AdditionalInfo } from './AdditionalInfo'
@@ -153,11 +153,7 @@ function ProtocolHeader({
 				{props.token?.symbol && props.token.symbol !== '-' ? (
 					<span className="font-normal">({props.token.symbol})</span>
 				) : null}
-				{props.deprecated ? (
-					<Tooltip content="Deprecated protocol" className="text-(--error)">
-						<Icon name="alert-triangle" height={18} width={18} />
-					</Tooltip>
-				) : null}
+				{props.deprecated ? <DeprecatedProtocolMarker size={18} /> : null}
 				<span className="ml-auto flex items-center justify-end gap-4">
 					{props.website ? (
 						<a

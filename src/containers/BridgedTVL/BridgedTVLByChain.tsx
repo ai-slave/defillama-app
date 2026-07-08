@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/formatters'
 import type { IPieChartProps } from '~/components/ECharts/types'
 import { preparePieChartData } from '~/components/ECharts/utils'
@@ -39,6 +40,7 @@ interface BridgedTVLByChainProps {
 	inflows: Array<Record<string, number>>
 	tokenInflowNames: string[]
 	chainName?: string
+	deprecated?: boolean
 }
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
@@ -72,7 +74,8 @@ export function BridgedTVLByChain({
 	chain,
 	inflows,
 	tokenInflowNames,
-	chainName = 'All Chains'
+	chainName = 'All Chains',
+	deprecated
 }: BridgedTVLByChainProps) {
 	const [chartType, setChartType] = React.useState<ChainAssetKey | 'inflows'>('total')
 	const { chartInstance: exportChartInstance, handleChartReady: onChartReady } = useGetChartInstance()
@@ -154,6 +157,7 @@ export function BridgedTVLByChain({
 					<h1 className="mb-3 flex items-center gap-2 heading-sm">
 						<TokenLogo name={chain} kind="chain" size={24} alt={`Logo of ${chain}`} />
 						<FormattedName text={chainName + ' Bridged TVL'} fontWeight={700} />
+						{deprecated ? <DeprecatedEntityText /> : null}
 					</h1>
 
 					<p className="mb-3 flex flex-col gap-1 text-base">

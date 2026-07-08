@@ -8,6 +8,7 @@ interface ForkLink {
 export interface ForkTableDataRow {
 	name: string
 	logo?: string | null
+	deprecated?: boolean
 	tvl: number
 	forkedProtocols: number
 	parentTvl: number | null

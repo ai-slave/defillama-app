@@ -2,6 +2,7 @@
 export interface ILSTTokenRow {
 	name: string
 	logo: string
+	deprecated?: boolean
 	mcap: number | null
 	stakedEth: number
 	stakedEthInUsd: number

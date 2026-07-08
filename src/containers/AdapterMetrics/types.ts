@@ -69,6 +69,7 @@ export interface IAdapterByChainPageData {
 	openInterest: number | null
 	entityQuestions?: string[]
 	activeLiquidity: number | null
+	deprecated?: boolean
 }
 
 export interface IChainsByAdapterPageData {
@@ -86,6 +87,7 @@ export interface IChainsByAdapterPageData {
 		openInterest?: number | null
 		activeLiquidity?: number | null
 		warning?: string
+		deprecated?: boolean
 	}>
 	allChains: Array<string>
 }
@@ -97,5 +99,6 @@ export interface IChainsByREVPageData {
 		logo: string
 		total24h: number | null
 		total30d: number | null
+		deprecated?: boolean
 	}>
 }

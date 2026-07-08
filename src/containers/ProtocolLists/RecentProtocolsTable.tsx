@@ -13,6 +13,7 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { Bookmark } from '~/components/Bookmark'
 import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { TVLRange } from '~/components/Filters/TVLRange'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
@@ -242,9 +243,7 @@ const protocolsColumns = [
 								className="flex items-center gap-1 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 							>
 								<span className="overflow-hidden text-ellipsis whitespace-nowrap hover:underline">{value}</span>
-								<Tooltip content="Deprecated" className="text-(--error)">
-									<Icon name="alert-triangle" height={14} width={14} />
-								</Tooltip>
+								<DeprecatedProtocolMarker />
 							</BasicLink>
 						) : (
 							<BasicLink

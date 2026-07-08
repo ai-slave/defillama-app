@@ -306,7 +306,8 @@ export const getChainsByCategory = async ({
 				const activeUsers7d = activeUsersByDisplayName[chain.name]?.total7d ?? null
 				const activeUsers30d = activeUsersByDisplayName[chain.name]?.total30d ?? null
 
-				const protocols = chainMetadata[name]?.protocolCount ?? chain.protocols ?? 0
+				const currentChainMetadata = chainMetadata[name]
+				const protocols = currentChainMetadata?.protocolCount ?? chain.protocols ?? 0
 
 				const tvl = normalizeChainsBaseTvlValue(chain.tvl, {
 					doublecounted: extraTvl?.doublecounted?.tvl,
@@ -337,6 +338,7 @@ export const getChainsByCategory = async ({
 					...chain,
 					extraTvl,
 					protocols,
+					deprecated: currentChainMetadata?.deprecated === true,
 					stablesMcap,
 					dexVolume24h,
 					dexVolume7d,

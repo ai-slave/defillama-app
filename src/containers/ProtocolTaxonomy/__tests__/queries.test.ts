@@ -138,6 +138,28 @@ const makeAdapterProtocol = ({
 		linkedProtocols: []
 	}) as IAdapterChainMetrics['protocols'][number]
 
+const makeLiteProtocol = ({
+	defillamaId,
+	name,
+	...overrides
+}: Partial<ProtocolLite> & { defillamaId: string; name: string }): ProtocolLite => ({
+	defillamaId,
+	name,
+	symbol: '',
+	logo: '',
+	url: '',
+	category: 'Interface',
+	tags: [],
+	chains: ['Ethereum'],
+	chainTvls: {},
+	tvl: 0,
+	tvlPrevDay: 0,
+	tvlPrevWeek: 0,
+	tvlPrevMonth: 0,
+	mcap: null,
+	...overrides
+})
+
 describe('ProtocolTaxonomy queries', () => {
 	beforeEach(() => {
 		const liteProtocols: ProtocolLite[] = []
@@ -340,6 +362,64 @@ describe('ProtocolTaxonomy queries', () => {
 				}
 			}
 		})
+	})
+
+	it('keeps category parent TVL as the visible child sum when a child has excluded parent overlap', async () => {
+		fetchProtocolsMock.mockResolvedValue({
+			protocols: [
+				makeLiteProtocol({
+					defillamaId: 'jupiter-lend',
+					name: 'Jupiter Lend',
+					category: 'Lending',
+					chains: ['Solana'],
+					parentProtocol: 'parent#jupiter',
+					tvl: 988,
+					chainTvls: {
+						Solana: { tvl: 988, tvlPrevDay: 900, tvlPrevWeek: 800, tvlPrevMonth: 700 },
+						excludeParent: { tvl: 545, tvlPrevDay: 500, tvlPrevWeek: 400, tvlPrevMonth: 300 }
+					}
+				}),
+				makeLiteProtocol({
+					defillamaId: 'jupiter-orderbook',
+					name: 'Jupiter Orderbook',
+					category: 'Lending',
+					chains: ['Solana'],
+					parentProtocol: 'parent#jupiter',
+					tvl: 4,
+					chainTvls: {
+						Solana: { tvl: 4, tvlPrevDay: 3, tvlPrevWeek: 2, tvlPrevMonth: 1 }
+					}
+				})
+			],
+			parentProtocols: [{ id: 'parent#jupiter', name: 'Jupiter', chains: ['Solana'], logo: '', mcap: 1000 }],
+			chains: ['Solana']
+		})
+		fetchAdapterChainMetricsMock.mockResolvedValue(makeAdapterMetrics([]))
+		fetchAdapterChainChartDataMock.mockResolvedValue([])
+		fetchJsonMock.mockResolvedValue({ Lending: ['Solana'] })
+
+		const result = await getProtocolTaxonomyPageData({
+			kind: 'category',
+			category: 'Lending',
+			categoriesAndTags: {
+				categories: ['Lending'],
+				tags: [],
+				tagCategoryMap: {},
+				configs: {
+					Lending: {
+						category: 'Lending',
+						slug: 'lending'
+					}
+				}
+			},
+			chainMetadata: {}
+		})
+
+		expect(result).not.toBeNull()
+		const parent = result?.protocols.find((protocol) => protocol.name === 'Jupiter')
+		expect(parent?.tvl).toBe(992)
+		expect(parent?.extraTvls.excludeParent).toBe(545)
+		expect(parent?.subRows?.map((row) => row.name)).toEqual(['Jupiter Lend', 'Jupiter Orderbook'])
 	})
 
 	it('merges adapter-only interface protocols and preserves both dex and perp metrics', async () => {

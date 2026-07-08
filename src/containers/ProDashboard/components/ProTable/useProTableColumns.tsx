@@ -4,6 +4,7 @@ import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
 import { Parser } from 'expr-eval'
 import * as React from 'react'
 import { Bookmark } from '~/components/Bookmark'
+import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { Icon } from '~/components/Icon'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
@@ -410,9 +411,7 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 								className="flex items-center gap-1 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
 							>
 								<span className="overflow-hidden text-ellipsis whitespace-nowrap hover:underline">{value}</span>
-								<Tooltip content="Deprecated" className="text-(--error)">
-									<Icon name="alert-triangle" height={14} width={14} />
-								</Tooltip>
+								<DeprecatedProtocolMarker />
 							</BasicLink>
 						) : (
 							<BasicLink

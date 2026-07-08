@@ -13,6 +13,7 @@ import { useRouter } from 'next/router'
 import { startTransition, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { Bookmark } from '~/components/Bookmark'
 import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { TVLRange } from '~/components/Filters/TVLRange'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
@@ -605,12 +606,15 @@ const columns = [
 					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
 
 					<span className="-my-2 flex flex-col">
-						<BasicLink
-							href={`/protocol/${row.original.slug}`}
-							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
-						>
-							{value}
-						</BasicLink>
+						<span className="flex items-center gap-1 overflow-hidden">
+							<BasicLink
+								href={`/protocol/${row.original.slug}`}
+								className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+							>
+								{value}
+							</BasicLink>
+							{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
+						</span>
 
 						<Tooltip
 							content={<ProtocolChainsComponent chains={row.original.chains} />}

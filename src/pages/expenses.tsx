@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import type { InferGetStaticPropsType } from 'next'
+import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
@@ -48,6 +49,12 @@ type ExpenseRow = InferGetStaticPropsType<typeof getStaticProps>['expenses'][num
 
 const columnHelper = createColumnHelper<ExpenseRow>()
 
+function isDeprecatedProtocol(
+	protocol: ExpenseRow['protocol']
+): protocol is Extract<ExpenseRow['protocol'], { deprecated?: boolean }> {
+	return !!protocol && 'deprecated' in protocol && protocol.deprecated === true
+}
+
 export default function Protocols(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
@@ -80,12 +87,15 @@ const columns = [
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo src={row.original.protocol?.logo} data-lgonly alt={`Logo of ${value}`} />
-					<BasicLink
-						href={`/protocol/${slug(value)}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
-					>
-						{value}
-					</BasicLink>
+					<span className="flex items-center gap-1 overflow-hidden">
+						<BasicLink
+							href={`/protocol/${slug(value)}`}
+							className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+						>
+							{value}
+						</BasicLink>
+						{isDeprecatedProtocol(row.original.protocol) ? <DeprecatedProtocolMarker /> : null}
+					</span>
 				</span>
 			)
 		},

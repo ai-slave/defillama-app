@@ -289,6 +289,7 @@ export async function getExtraTvlByChain({
 			slug: slug(protocol.name),
 			category: protocol.category,
 			chains: (protocol.defillamaId ? protocolMetadata[protocol.defillamaId]?.chains : null) ?? protocol.chains ?? [],
+			...(protocol.deprecated ? { deprecated: true } : {}),
 			value: totalValue,
 			change_1m: pct != null ? Number(pct.toFixed(2)) : null
 		}
@@ -398,6 +399,7 @@ function buildTokenMetricProtocols({
 			slug: slug(protocol.name),
 			category: protocol.category,
 			chains: (protocol.defillamaId ? protocolMetadata[protocol.defillamaId]?.chains : null) ?? protocol.chains ?? [],
+			...(protocol.deprecated ? { deprecated: true } : {}),
 			value: getValue(protocol)
 		}
 

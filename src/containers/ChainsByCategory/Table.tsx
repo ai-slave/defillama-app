@@ -12,6 +12,7 @@ import {
 import * as React from 'react'
 import { Bookmark } from '~/components/Bookmark'
 import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { TVLRange } from '~/components/Filters/TVLRange'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
@@ -272,6 +273,7 @@ const columns = [
 					>
 						{value}
 					</BasicLink>
+					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 				</span>
 			)
 		},

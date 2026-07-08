@@ -13,6 +13,7 @@ import {
 import { formattedNum, getPercentChange, slug } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { getObjectCache, setObjectCache } from '~/utils/cache-client'
+import { getDeprecatedChainsByName } from '~/utils/metadata/deprecatedChains'
 import {
 	fetchStablecoinAssetApi,
 	fetchStablecoinAssetsApi,
@@ -556,7 +557,10 @@ const getStablecoinChainsSource = async (): Promise<StablecoinChainsSource> => {
 }
 
 export async function getStablecoinChainsPageData(): Promise<PeggedChainsPageData> {
-	const source = await getStablecoinChainsSource()
+	const [source, metadataCache] = await Promise.all([
+		getStablecoinChainsSource(),
+		import('~/utils/metadata').then((m) => m.default)
+	])
 
 	const totalMcapCurrent = getPrevStablecoinTotalFromChart(source.chartData, 0, 'totalCirculatingUSD')
 	const totalMcapPrevDay = getPrevStablecoinTotalFromChart(source.chartData, 1, 'totalCirculatingUSD')
@@ -570,11 +574,13 @@ export async function getStablecoinChainsPageData(): Promise<PeggedChainsPageDat
 	const change1d_nol = formattedNum(String((totalMcapCurrent ?? 0) - (totalMcapPrevDay ?? 0)), true)
 	const change7d_nol = formattedNum(String((totalMcapCurrent ?? 0) - (totalMcapPrevWeek ?? 0)), true)
 	const change30d_nol = formattedNum(String((totalMcapCurrent ?? 0) - (totalMcapPrevMonth ?? 0)), true)
+	const deprecatedChains = getDeprecatedChainsByName(metadataCache.chainMetadata, source.chainList)
 
 	return {
 		chainCirculatings: source.chainCirculatings,
 		chainList: source.chainList,
 		chainsGroupbyParent: source.chainsGroupbyParent,
+		deprecatedChains,
 		change1d: toSignedChangeLabel(change1d),
 		change7d: toSignedChangeLabel(change7d),
 		change30d: toSignedChangeLabel(change30d),

@@ -7,6 +7,7 @@ import { feeRevenueMetrics, getChainNativeFeeRevenueRankingMetric } from '~/metr
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { chainIconUrl } from '~/utils/icons'
+import { getDeprecatedChainNames, isDeprecatedChain } from '~/utils/metadata/deprecatedChains'
 import type { IChainMetadata } from '~/utils/metadata/types'
 import { recordRuntimeError } from '~/utils/telemetry'
 import { buildAdapterByChainReadModel } from './adapterByChainReadModel'
@@ -275,9 +276,13 @@ export const getAdapterByChainPageData = async ({
 		openInterestChartData: openInterestData?.totalDataChart ?? [],
 		activeLiquidityChartData: activeLiquidityData?.totalDataChart ?? []
 	})
+	const metadataCache = chain === 'All' ? null : await import('~/utils/metadata').then((m) => m.default)
 
 	return {
 		chain,
+		...(chain !== 'All' && metadataCache && isDeprecatedChain(metadataCache.chainMetadata, chain)
+			? { deprecated: true }
+			: {}),
 		chains: [
 			{ label: 'All', to: `/${route}` },
 			...data.allChains.map((chainName) => ({ label: chainName, to: `/${route}/chain/${slug(chainName)}` }))
@@ -311,6 +316,7 @@ export const getChainsByFeesAdapterPageData = async ({
 }): Promise<IChainsByAdapterPageData> => {
 	try {
 		const allChainsSet = new Set<string>()
+		const deprecatedChains = getDeprecatedChainNames(chainMetadata)
 		const metric = getChainNativeFeeRevenueRankingMetric(dataType)
 
 		for (const chain in chainMetadata) {
@@ -377,6 +383,7 @@ export const getChainsByFeesAdapterPageData = async ({
 					total24h: c.total24h ?? null,
 					total7d: c.total7d ?? null,
 					total30d: c.total30d ?? null,
+					...(deprecatedChains[c.name] ? { deprecated: true } : {}),
 					...(warning ? { warning } : {}),
 					...(bribesByChain[c.name] ? { bribes: bribesByChain[c.name] } : {}),
 					...(tokenTaxesByChain[c.name] ? { tokenTax: tokenTaxesByChain[c.name] } : {})
@@ -412,6 +419,7 @@ export const getChainsByAdapterPageData = async ({
 }): Promise<IChainsByAdapterPageData> => {
 	try {
 		const allChains = getChainsByAdapterAllChains({ adapterType, dataType, chainMetadata })
+		const deprecatedChains = getDeprecatedChainNames(chainMetadata)
 
 		const getOptionalOverview = ({
 			enabled,
@@ -504,6 +512,7 @@ export const getChainsByAdapterPageData = async ({
 				total24h: chainsData[chain]?.['24h'] ?? null,
 				total7d: chainsData[chain]?.['7d'] ?? null,
 				total30d: chainsData[chain]?.['30d'] ?? null,
+				...(deprecatedChains[chain] ? { deprecated: true } : {}),
 				...(warning ? { warning } : {}),
 				...(bribes ? { bribes } : {}),
 				...(tokenTax ? { tokenTax } : {}),
@@ -580,7 +589,8 @@ export const getChainsByREVPageData = async ({
 				slug: chain,
 				logo: chainIconUrl(chain),
 				total24h: (chainFees?.total24h ?? 0) + revProtocols24h,
-				total30d: (chainFees?.total30d ?? 0) + revProtocols30d
+				total30d: (chainFees?.total30d ?? 0) + revProtocols30d,
+				...(chainMetadata[chain].deprecated ? { deprecated: true } : {})
 			})
 		}
 

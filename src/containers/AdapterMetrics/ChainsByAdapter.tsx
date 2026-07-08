@@ -12,6 +12,7 @@ import {
 import { startTransition, useMemo, useState } from 'react'
 import { Announcement } from '~/components/Announcement'
 import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { VirtualTable } from '~/components/Table/Table'
@@ -170,6 +171,7 @@ const NameColumn = (route: string) =>
 					>
 						{value}
 					</BasicLink>
+					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 					{row.original.warning ? (
 						<Tooltip content={row.original.warning}>
 							<Icon name="alert-triangle" height={14} width={14} className="shrink-0 text-(--warning)" />

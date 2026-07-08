@@ -10,6 +10,7 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { Icon } from '~/components/Icon'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
@@ -77,9 +78,7 @@ const stablecoinsColumns = [
 							className="flex items-center gap-1 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 						>
 							<span className="overflow-hidden text-ellipsis whitespace-nowrap hover:underline">{getValue()}</span>
-							<Tooltip content="Deprecated" className="text-(--error)">
-								<Icon name="alert-triangle" height={14} width={14} />
-							</Tooltip>
+							<DeprecatedProtocolMarker />
 						</BasicLink>
 					) : (
 						<BasicLink

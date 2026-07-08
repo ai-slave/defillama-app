@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo } from 'react'
+import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { BasicLink } from '~/components/Link'
 import { LoadingDots } from '~/components/Loaders'
 import { QuestionHelper } from '~/components/QuestionHelper'
@@ -70,12 +71,15 @@ export const OracleOverview = ({
 
 							<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
 
-							<BasicLink
-								href={`/protocol/${slug(name)}`}
-								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text)"
-							>
-								{name}
-							</BasicLink>
+							<span className="flex items-center gap-1 overflow-hidden">
+								<BasicLink
+									href={`/protocol/${slug(name)}`}
+									className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text)"
+								>
+									{name}
+								</BasicLink>
+								{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
+							</span>
 						</span>
 					)
 				},

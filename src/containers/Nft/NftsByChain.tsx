@@ -1,4 +1,5 @@
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
+import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -8,6 +9,7 @@ export interface INftChainRow {
 	name: string
 	logo: string
 	total24h: number
+	deprecated?: boolean
 }
 
 interface INftsByChainProps {
@@ -52,6 +54,7 @@ const columns = [
 					>
 						{value}
 					</BasicLink>
+					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 				</span>
 			)
 		},

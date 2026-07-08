@@ -58,6 +58,7 @@ export async function getForksListPageData(): Promise<ForkOverviewPageData | nul
 			return {
 				name: forkName,
 				logo: parentProtocol?.logo ?? null,
+				deprecated: parentProtocol?.deprecated === true,
 				tvl,
 				forkedProtocols,
 				parentTvl: parentTvl ?? null,

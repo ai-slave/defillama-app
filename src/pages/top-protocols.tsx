@@ -8,6 +8,7 @@ import {
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -15,7 +16,6 @@ import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
-import { basicProtocolPropertiesToKeepV1List } from '~/containers/ProtocolLists/utils.old'
 import { protocolCategoryConfig } from '~/containers/ProtocolTaxonomy/constants'
 import { TVL_SETTINGS_KEYS } from '~/contexts/LocalStorage'
 import Layout from '~/layout'
@@ -33,14 +33,12 @@ const excludeCategories = new Set(['Bridge', 'Canonical Bridge', 'Staking Pool']
 
 type TopProtocolsRow = {
 	chain: string
-} & Record<string, string | undefined>
+} & Record<string, string | boolean | undefined>
 
 const COLUMN_HELPER = createColumnHelper<TopProtocolsRow>()
 
 export const getStaticProps = withPerformanceLogging('top-protocols', async () => {
-	const { protocols, chains } = await fetchProtocols().then(
-		basicProtocolPropertiesToKeepV1List(['name', 'extraTvl', 'chainTvls', 'category'])
-	)
+	const { protocols, chains } = await fetchProtocols()
 	const topProtocolPerChainAndCategory = {}
 
 	for (const p of protocols) {
@@ -58,7 +56,7 @@ export const getStaticProps = withPerformanceLogging('top-protocols', async () =
 			const currentTopProtocol = topProtocolPerChainAndCategory[chain][category]
 
 			if (currentTopProtocol == null || tvl > currentTopProtocol[1]) {
-				topProtocolPerChainAndCategory[chain][category] = [name, tvl]
+				topProtocolPerChainAndCategory[chain][category] = [name, tvl, p.deprecated === true]
 			}
 		}
 	}
@@ -73,6 +71,7 @@ export const getStaticProps = withPerformanceLogging('top-protocols', async () =
 		for (const cat in categories) {
 			uniqueCategories.add(cat)
 			values[cat] = categories[cat][0]
+			values[`${cat}Deprecated`] = categories[cat][2]
 		}
 		data.push({ chain, ...values })
 	}
@@ -163,11 +162,16 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 				enableSorting: false,
 				cell: (info) => {
 					const protocolName = info.getValue()
-					return protocolName ? (
-						<BasicLink href={`/protocol/${slug(protocolName)}`} className="text-sm font-medium text-link">
-							{protocolName}
-						</BasicLink>
-					) : null
+					if (typeof protocolName !== 'string' || !protocolName) return null
+					const deprecated = info.row.original[`${cat}Deprecated`] === true
+					return (
+						<span className="flex items-center gap-1">
+							<BasicLink href={`/protocol/${slug(protocolName)}`} className="text-sm font-medium text-link">
+								{protocolName}
+							</BasicLink>
+							{deprecated ? <DeprecatedProtocolMarker /> : null}
+						</span>
+					)
 				},
 				meta: {
 					headerClassName: 'w-[min(200px,40vw)]',

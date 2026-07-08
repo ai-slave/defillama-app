@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router'
 import { lazy, Suspense } from 'react'
+import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { Icon } from '~/components/Icon'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
@@ -98,6 +99,7 @@ export function ChainOverview(props: IChainOverviewData) {
 										/>
 									}
 									title={props.metadata.name}
+									actions={props.metadata.deprecated ? <DeprecatedEntityText /> : null}
 								/>
 								<PanelStatus>We don't track any protocols with TVL, Fees, Revenue or Volume on this chain</PanelStatus>
 							</>

@@ -11,6 +11,7 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { PercentChange } from '~/components/PercentChange'
@@ -26,6 +27,7 @@ import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
 
 type StablecoinsByChainRow = ReturnType<typeof useGroupChainsPegged>[number]
+type StablecoinsChainsTableMeta = { deprecatedChains: Record<string, true> }
 type DominanceCell = NonNullable<StablecoinsByChainRow['dominance']>
 const columnHelper = createColumnHelper<StablecoinsByChainRow>()
 
@@ -33,9 +35,10 @@ const stablecoinsByChainColumns = [
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
-		cell: ({ getValue, row }) => {
+		cell: ({ getValue, row, table }) => {
 			const value = getValue()
 			const isSubRow = value.startsWith('Bridged from')
+			const deprecatedChains = (table.options.meta as StablecoinsChainsTableMeta | undefined)?.deprecatedChains ?? {}
 
 			return (
 				<span
@@ -78,6 +81,7 @@ const stablecoinsByChainColumns = [
 							>
 								{value}
 							</BasicLink>
+							{deprecatedChains[value] ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 						</>
 					)}
 				</span>
@@ -161,7 +165,13 @@ const stablecoinsByChainColumns = [
 	})
 ]
 
-export function StablecoinsChainsTable({ data }: { data: StablecoinsByChainRow[] }) {
+export function StablecoinsChainsTable({
+	data,
+	deprecatedChains
+}: {
+	data: StablecoinsByChainRow[]
+	deprecatedChains: Record<string, true>
+}) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'mcap', desc: true }])
 	const [expanded, setExpanded] = React.useState<ExpandedState>({})
@@ -176,6 +186,9 @@ export function StablecoinsChainsTable({ data }: { data: StablecoinsByChainRow[]
 		},
 		defaultColumn: {
 			sortUndefined: 'last'
+		},
+		meta: {
+			deprecatedChains
 		},
 		enableSortingRemoval: false,
 		onExpandedChange: (updater) => React.startTransition(() => setExpanded(updater)),

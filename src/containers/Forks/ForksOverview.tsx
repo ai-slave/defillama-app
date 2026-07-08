@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
+import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { BasicLink } from '~/components/Link'
 import { LoadingDots } from '~/components/Loaders'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
@@ -29,12 +30,15 @@ const forksColumn = [
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
-					<BasicLink
-						href={`/forks/${slug(name)}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
-					>
-						{name}
-					</BasicLink>
+					<span className="flex items-center gap-1 overflow-hidden">
+						<BasicLink
+							href={`/forks/${slug(name)}`}
+							className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+						>
+							{name}
+						</BasicLink>
+						{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
+					</span>
 				</span>
 			)
 		},

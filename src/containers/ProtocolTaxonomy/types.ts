@@ -20,6 +20,7 @@ interface IProtocolByCategory {
 	slug: string
 	logo: string
 	chains: Array<string>
+	deprecated?: boolean
 	tvl: number | null
 	extraTvls: Record<string, number>
 	mcap: number | null

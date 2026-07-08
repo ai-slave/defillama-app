@@ -1,6 +1,7 @@
 import { type ColumnDef, createColumnHelper, type SortingState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
+import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
@@ -187,12 +188,15 @@ function defaultColumns(type: TokenMetricType) {
 
 						{row.original.chains.length ? (
 							<span className="-my-2 flex flex-col">
-								<BasicLink
-									href={`/${basePath}/${row.original.slug}${chartQuery}`}
-									className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
-								>
-									{value}
-								</BasicLink>
+								<span className="flex items-center gap-1 overflow-hidden">
+									<BasicLink
+										href={`/${basePath}/${row.original.slug}${chartQuery}`}
+										className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
+									>
+										{value}
+									</BasicLink>
+									{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
+								</span>
 
 								<Tooltip
 									content={<ProtocolChainsComponent chains={row.original.chains} />}
@@ -202,12 +206,15 @@ function defaultColumns(type: TokenMetricType) {
 								</Tooltip>
 							</span>
 						) : (
-							<BasicLink
-								href={`/${basePath}/${row.original.slug}${chartQuery}`}
-								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
-							>
-								{value}
-							</BasicLink>
+							<span className="flex items-center gap-1 overflow-hidden">
+								<BasicLink
+									href={`/${basePath}/${row.original.slug}${chartQuery}`}
+									className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
+								>
+									{value}
+								</BasicLink>
+								{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
+							</span>
 						)}
 					</span>
 				)

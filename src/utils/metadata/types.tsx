@@ -23,6 +23,7 @@ export interface IChainMetadata {
 	github?: boolean
 	id: string
 	protocolCount?: number
+	deprecated?: boolean
 	incentives?: boolean
 	chainActiveUsers?: boolean
 	chainNewUsers?: boolean
@@ -55,6 +56,7 @@ export interface IProtocolMetadata {
 	optionsNotionalVolume?: boolean
 	perpsAggregators?: boolean
 	bridgeAggregators?: boolean
+	deprecated?: boolean
 	displayName?: string
 	chains?: Array<string>
 	hacks?: boolean
