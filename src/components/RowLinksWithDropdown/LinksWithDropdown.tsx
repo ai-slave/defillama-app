@@ -271,7 +271,7 @@ export function LinksWithDropdown({
 					}
 					isActive={isLinkInDropdown}
 					options={links}
-					className="mr-1 data-[active=true]:bg-(--old-blue) data-[active=true]:text-white"
+					className="mr-1 ml-1 data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-on-brand"
 				/>
 			) : null}
 		</>
@@ -286,7 +286,7 @@ function LinkItem({
 	return (
 		<BasicLink
 			href={option.to}
-			className="rounded-md bg-(--link-bg) px-2.5 py-1 text-xs font-medium whitespace-nowrap text-(--link-text) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:bg-(--link-active-bg) data-[active=true]:text-white"
+			className="rounded-sm bg-brand-muted px-2 py-1 body-sm whitespace-nowrap text-link hover:bg-hover-row focus-visible:bg-hover-row data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-on-brand"
 			data-active={isActive}
 			{...props}
 		>

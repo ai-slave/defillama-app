@@ -4,6 +4,7 @@ import { Icon } from '~/components/Icon'
 import { LinkToMetricOrToolPage, usePinnedRoutes } from '~/components/Metrics'
 import Layout from '~/layout'
 import defillamaPages from '~/public/pages.json'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 
 export default function Tools() {
 	const searchInputId = useId()
@@ -29,17 +30,12 @@ export default function Tools() {
 			<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
 				<h1 className="text-2xl font-bold">Tools</h1>
 				<div className="relative">
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
-					<input
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+					<Input
 						id={searchInputId}
 						type="text"
 						placeholder="Search..."
-						className="dark:placeholder:[#919296] min-h-8 w-full rounded-md border-(--bg-input) bg-(--bg-input) p-1.5 pl-7 text-black outline-hidden placeholder:text-[#666] dark:text-white"
+						className={searchFieldInputPlacementStyles}
 						onInput={(e) => setSearchValue(e.currentTarget.value)}
 					/>
 				</div>

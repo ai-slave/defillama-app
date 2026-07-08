@@ -13,22 +13,22 @@ export function Toast() {
 			containerStyle={{ zIndex: 99999 }}
 			toastOptions={{
 				style: {
-					background: 'var(--cards-bg)',
-					color: 'var(--text-primary)',
-					border: '1px solid var(--cards-border)',
+					background: 'var(--ld-bg-surface-elevated-1)',
+					color: 'var(--ld-text-primary)',
+					border: '1px solid var(--ld-border-medium)',
 					borderRadius: '8px',
 					fontSize: '14px'
 				},
 				success: {
 					iconTheme: {
 						primary: 'var(--success)',
-						secondary: 'var(--bg-card)'
+						secondary: 'var(--ld-bg-surface-elevated-1)'
 					}
 				},
 				error: {
 					iconTheme: {
 						primary: 'var(--error)',
-						secondary: 'var(--bg-card)'
+						secondary: 'var(--ld-bg-surface-elevated-1)'
 					}
 				}
 			}}
@@ -45,8 +45,8 @@ export function successToast({ title, description }: { title: string; descriptio
 	}
 	return toast.success(
 		<div className="flex flex-col gap-1">
-			<p className="font-semibold text-(--text-primary)">{title}</p>
-			<p className="text-[#484848] dark:text-[#C6C6C6]">{description}</p>
+			<p className="font-semibold text-primary">{title}</p>
+			<p className="text-secondary">{description}</p>
 		</div>,
 		{ duration: SUCCESS_TOAST_DURATION }
 	)
@@ -56,16 +56,16 @@ export function errorToast({ title, description }: { title: string; description:
 	return toast.error(
 		(t) => (
 			<div className="flex flex-col gap-2">
-				<p className="flex items-center gap-2 text-base font-semibold text-[#B53B35] dark:text-[#E24A42]">
+				<p className="flex items-center gap-2 text-base font-semibold text-(--error)">
 					<Icon name="alert-triangle" height={16} width={16} />
 					<span>{title}</span>
-					<button onClick={() => toast.dismiss(t.id)} className="ml-auto text-black dark:text-white">
+					<button onClick={() => toast.dismiss(t.id)} className="ml-auto text-primary">
 						<Icon name="circle-x" height={16} width={16} />
 
 						<span className="sr-only">Close</span>
 					</button>
 				</p>
-				<p className="text-[#484848] dark:text-[#C6C6C6]">{description}</p>
+				<p className="text-secondary">{description}</p>
 			</div>
 		),
 		{

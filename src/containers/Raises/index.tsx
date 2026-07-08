@@ -3,6 +3,8 @@ import * as React from 'react'
 import { Announcement } from '~/components/Announcement'
 import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { RaisesFilters } from '~/containers/Raises/Filters'
+import { Card } from '~/ui/Card'
+import { Panel } from '~/ui/Panel'
 import { formattedNum } from '~/utils'
 import { useRaisesData } from './hooks'
 import { RaisesTable } from './Table'
@@ -77,19 +79,23 @@ const RaisesContainer = ({ raises, investors, rounds, sectors, chains, investorN
 			/>
 
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-5 xl:col-span-1">
-					<p className="flex flex-col gap-1 text-base">
+				<Card
+					border="subtle"
+					padding="sm"
+					className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1"
+				>
+					<p className="flex flex-col gap-1">
 						<span className="text-(--text-label)">Total Funding Rounds</span>
 						<span className="font-jetbrains text-2xl font-semibold">{filteredRaisesList.length}</span>
 					</p>
-					<p className="flex flex-col gap-1 text-base">
+					<p className="flex flex-col gap-1">
 						<span className="text-(--text-label)">Total Funding Amount</span>
 						<span className="font-jetbrains text-2xl font-semibold">${formattedNum(totalAmountRaised)}</span>
 					</p>
-				</div>
+				</Card>
 
-				<div className="col-span-2 rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<React.Suspense fallback={<div className="min-h-[398px]" />}>
+				<Panel className="col-span-2">
+					<React.Suspense fallback={<div className="min-h-[406px]" />}>
 						<MultiSeriesChart2
 							dataset={deferredMonthlyInvestmentChart.dataset}
 							charts={deferredMonthlyInvestmentChart.charts}
@@ -103,7 +109,7 @@ const RaisesContainer = ({ raises, investors, rounds, sectors, chains, investorN
 							}}
 						/>
 					</React.Suspense>
-				</div>
+				</Panel>
 			</div>
 
 			<RaisesTable raises={filteredRaisesList} />

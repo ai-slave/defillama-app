@@ -6,9 +6,15 @@ import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons
 import type { MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
 import { LoadingDots } from '~/components/Loaders'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import type { ExcludeQueryKey } from '~/components/Select/types'
+import {
+	chartSegmentedControlButtonStyles,
+	chartSegmentedControlGroupStyles,
+	type ExcludeQueryKey
+} from '~/components/Select/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
 import { isTrueQueryParam, pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam } from '~/utils/routerQuery'
@@ -213,13 +219,13 @@ export function RWAOverviewBreakdownChart({
 	}
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-3 pb-0">
-				<div className="mr-auto flex flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-xs font-medium text-(--text-form)">
+		<Panel>
+			<ChartPanelToolbar className="justify-end">
+				<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
 					{CHART_TYPE_OPTIONS.map(({ key, label }) => (
 						<button
 							key={`rwa-breakdown-chart-type-${key}`}
-							className="shrink-0 px-2 py-1 text-sm whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:font-medium data-[active=true]:text-(--link-text)"
+							className={chartSegmentedControlButtonStyles}
 							data-active={chartType === key}
 							onClick={() => onSelectChartType(key)}
 						>
@@ -237,6 +243,7 @@ export function RWAOverviewBreakdownChart({
 						label={stackLabel}
 						labelType="smol"
 						variant="filter"
+						size="md"
 						portal
 					/>
 				) : null}
@@ -246,13 +253,17 @@ export function RWAOverviewBreakdownChart({
 					title={`RWA ${CHART_TYPE_OPTIONS.find((option) => option.key === chartType)?.label ?? 'Breakdown'}`}
 					smol
 				/>
-			</div>
+			</ChartPanelToolbar>
 			{error ? (
-				<p className="flex min-h-[360px] items-center justify-center text-xs text-(--error)">
+				<p role="alert" className="flex min-h-[360px] items-center justify-center body-sm text-data-down">
 					{getErrorMessage(error)}
 				</p>
 			) : showLoadingState ? (
-				<p className="flex min-h-[360px] items-center justify-center">
+				<p
+					role="status"
+					aria-live="polite"
+					className="flex min-h-[360px] items-center justify-center body-sm text-tertiary"
+				>
 					Loading
 					<LoadingDots />
 				</p>
@@ -268,6 +279,6 @@ export function RWAOverviewBreakdownChart({
 					/>
 				</Suspense>
 			)}
-		</div>
+		</Panel>
 	)
 }

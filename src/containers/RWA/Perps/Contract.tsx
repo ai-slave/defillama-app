@@ -13,6 +13,12 @@ import { MetricRow, MetricSection, SubMetricRow } from '~/components/MetricPrimi
 import { PercentChange } from '~/components/PercentChange'
 import { Tooltip } from '~/components/Tooltip'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Button, buttonStyles } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar, chartPanelToolbarActionsStyles } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { rwaSlug } from '../rwaSlug'
@@ -93,10 +99,8 @@ function RWAPerpsContractHeader({
 	const link = contract.contract.link
 
 	return (
-		<Tag className="flex min-w-0 items-center justify-between gap-2 text-xl">
-			<span className="min-w-0 overflow-hidden font-bold text-ellipsis whitespace-nowrap">
-				{contract.contract.contract}
-			</span>
+		<Tag className="flex min-w-0 items-center justify-between gap-2 heading-xs">
+			<span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{contract.contract.contract}</span>
 			{link ? (
 				<Tooltip content="Open market website" placement="top">
 					<a
@@ -104,7 +108,7 @@ function RWAPerpsContractHeader({
 						target="_blank"
 						rel="noopener noreferrer"
 						aria-label={`Open ${contract.contract.contract} website`}
-						className="ml-auto flex size-7 shrink-0 items-center justify-center rounded-md text-(--text-label) hover:bg-(--link-hover-bg) hover:text-(--link-text) focus-visible:bg-(--link-hover-bg) focus-visible:text-(--link-text)"
+						className={`${buttonStyles({ variant: 'ghost', size: 'sm', square: true })} ml-auto`}
 					>
 						<Icon name="external-link" className="size-4" />
 					</a>
@@ -118,7 +122,7 @@ function RWAPerpsContractPriceSummary({ contract }: { contract: IRWAPerpsContrac
 	return (
 		<div className="flex flex-nowrap items-end justify-between gap-8">
 			<div className="flex flex-col">
-				<Tooltip content={d.price.description} className="text-(--text-label) underline decoration-dotted">
+				<Tooltip content={d.price.description} className="text-secondary underline decoration-dotted">
 					{d.price.label}
 				</Tooltip>
 				<p className="min-h-8 overflow-hidden font-jetbrains text-2xl font-semibold text-ellipsis whitespace-nowrap">
@@ -131,7 +135,7 @@ function RWAPerpsContractPriceSummary({ contract }: { contract: IRWAPerpsContrac
 					<span className="overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap">
 						<PercentChange percent={contract.market.priceChange24h} fontWeight={600} />
 					</span>
-					<span className="text-(--text-label)">24h</span>
+					<span className="text-secondary">24h</span>
 				</p>
 			) : null}
 		</div>
@@ -203,11 +207,11 @@ function RWAPerpsContractInfoCard({ contract }: { contract: IRWAPerpsContractDat
 	const desktopInfoColumns = [infoRows.slice(0, midpoint), infoRows.slice(midpoint)].filter((rows) => rows.length > 0)
 	const renderInfoRowValue = (row: (typeof infoRows)[number]) =>
 		row.label === d.venue.label ? (
-			<BasicLink href={`/rwa/perps/venue/${rwaSlug(row.value)}`} className="text-(--link-text) hover:underline">
+			<BasicLink href={`/rwa/perps/venue/${rwaSlug(row.value)}`} className="text-link hover:underline">
 				{row.value}
 			</BasicLink>
 		) : row.label === 'Website' ? (
-			<a href={row.value} target="_blank" rel="noopener noreferrer" className="text-(--link-text) hover:underline">
+			<a href={row.value} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
 				{row.value}
 			</a>
 		) : (
@@ -215,11 +219,9 @@ function RWAPerpsContractInfoCard({ contract }: { contract: IRWAPerpsContractDat
 		)
 
 	return (
-		<section className="col-span-full flex flex-col gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 xl:p-4">
-			<h2 className="text-base font-semibold">Market Information</h2>
-			{contract.contract.description ? (
-				<p className="text-sm text-(--text-label)">{contract.contract.description}</p>
-			) : null}
+		<Card as="section" padding="sm" border="subtle" className="col-span-full flex flex-col gap-2">
+			<h2 className="label-lg">Market Information</h2>
+			{contract.contract.description ? <p className="body-sm text-secondary">{contract.contract.description}</p> : null}
 			<div className="flex flex-col xl:hidden">
 				{infoRows.map((row) => (
 					<MetricRow key={row.label} label={row.label} tooltip={row.tooltip} value={renderInfoRowValue(row)} />
@@ -234,7 +236,7 @@ function RWAPerpsContractInfoCard({ contract }: { contract: IRWAPerpsContractDat
 					</div>
 				))}
 			</div>
-		</section>
+		</Card>
 	)
 }
 
@@ -265,22 +267,25 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 	const contractSlugBase = contract.contract.contract.replace(/:/g, '-').toLowerCase()
 
 	return (
-		<div className="flex flex-col gap-3">
-			<div className="flex flex-wrap items-center justify-start gap-2">
+		<div className="flex flex-col gap-2">
+			<ChartPanelToolbar>
 				<Ariakit.DialogProvider store={metricsDialogStore}>
-					<Ariakit.DialogDisclosure className="flex shrink-0 cursor-pointer items-center justify-between gap-2 rounded-md border border-(--cards-border) bg-white px-2 py-1 font-normal hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) dark:bg-[#181A1C]">
+					<Ariakit.DialogDisclosure className={buttonStyles({ size: 'md' })}>
 						<span>Add Metrics</span>
 						<Icon name="plus" className="size-3.5" />
 					</Ariakit.DialogDisclosure>
-					<Ariakit.Dialog className="dialog gap-3 max-sm:drawer sm:w-full" unmountOnHide>
-						<span className="flex items-center justify-between gap-1">
-							<Ariakit.DialogHeading className="text-2xl font-bold">Add metrics to chart</Ariakit.DialogHeading>
-							<Ariakit.DialogDismiss className="ml-auto p-2 opacity-50">
-								<Icon name="x" className="size-5" />
+					<Ariakit.Dialog className={dialogSurfaceStyles} unmountOnHide>
+						<div className="flex items-center gap-2 border-b border-subtle p-2">
+							<DialogHeading>Add metrics to chart</DialogHeading>
+							<Ariakit.DialogDismiss
+								render={<Button type="button" variant="ghost" size="md" square className="ml-auto" />}
+								aria-label="Close dialog"
+							>
+								<Icon name="x" className="size-4" />
 							</Ariakit.DialogDismiss>
-						</span>
+						</div>
 
-						<div className="flex flex-wrap gap-2">
+						<div className="flex flex-wrap gap-2 p-2">
 							{RWA_PERPS_CONTRACT_CHART_METRICS.map((metric) => {
 								const isActive = enabledMetrics.includes(metric.key)
 								return (
@@ -294,7 +299,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 											)
 										}}
 										data-active={isActive}
-										className="flex items-center gap-1 rounded-full border border-(--old-blue) px-2 py-1 hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:bg-(--old-blue) data-[active=true]:text-white"
+										className={metricOptionChipStyles}
 									>
 										<span>{metric.label}</span>
 										{isActive ? <Icon name="x" className="size-3.5" /> : <Icon name="plus" className="size-3.5" />}
@@ -311,7 +316,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 
 					return (
 						<label
-							className="relative flex cursor-pointer flex-nowrap items-center gap-1 text-sm last-of-type:mr-auto"
+							className="relative flex cursor-pointer flex-nowrap items-center gap-1 label-sm last-of-type:mr-auto"
 							key={metric.key}
 						>
 							<input
@@ -323,10 +328,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 								}}
 								className="peer absolute size-[1em] opacity-[0.00001]"
 							/>
-							<span
-								className="flex items-center gap-1 rounded-full border-2 px-2 py-1 text-xs"
-								style={{ borderColor: metric.color }}
-							>
+							<span className={metricChipStyles} style={{ borderColor: metric.color }}>
 								<span>{metric.label}</span>
 								<Icon name="x" className="size-3.5" />
 							</span>
@@ -334,7 +336,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 					)
 				})}
 
-				<div className="ml-auto flex flex-wrap justify-end gap-1">
+				<div className={chartPanelToolbarActionsStyles}>
 					<ChartGroupingSelector
 						value={groupBy}
 						onValueChange={(nextGroupBy) => {
@@ -349,7 +351,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 						smol
 					/>
 				</div>
-			</div>
+			</ChartPanelToolbar>
 
 			{deferredChartSpec.charts.length > 0 && deferredChartSpec.dataset.source.length > 0 ? (
 				<Suspense fallback={<div className="min-h-[360px]" />}>
@@ -363,11 +365,19 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 					/>
 				</Suspense>
 			) : enabledMetrics.length === 0 ? (
-				<p className="flex min-h-[360px] items-center justify-center text-sm text-(--text-label)">
+				<p
+					role="status"
+					aria-live="polite"
+					className="flex min-h-[360px] items-center justify-center body-sm text-tertiary"
+				>
 					Select at least one metric.
 				</p>
 			) : (
-				<p className="flex min-h-[360px] items-center justify-center text-sm text-(--text-label)">
+				<p
+					role="status"
+					aria-live="polite"
+					className="flex min-h-[360px] items-center justify-center body-sm text-tertiary"
+				>
 					No chart data available for the selected metrics.
 				</p>
 			)}
@@ -379,24 +389,24 @@ export function RWAPerpsContractPage({ contract }: { contract: IRWAPerpsContract
 	return (
 		<article className="flex flex-col gap-2">
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
-				<div className="col-span-1 hidden flex-col gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:flex xl:min-h-[360px]">
+				<Card padding="sm" border="subtle" className="col-span-1 hidden flex-col gap-6 xl:flex xl:min-h-[360px]">
 					<RWAPerpsContractHeader contract={contract} headingAs="h1" />
 					<RWAPerpsContractSummaryMetrics contract={contract} />
-				</div>
+				</Card>
 
 				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
-					<div className="col-span-full flex flex-col gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-						<div className="flex flex-col gap-6 xl:hidden">
+					<Panel className="col-span-full">
+						<div className="flex flex-col gap-6 p-2 xl:hidden">
 							<RWAPerpsContractHeader contract={contract} headingAs="h1" />
 							<RWAPerpsContractPriceSummary contract={contract} />
 						</div>
 
 						<RWAPerpsContractChartPanel contract={contract} />
-					</div>
+					</Panel>
 
-					<div className="col-span-full flex flex-col gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:hidden">
+					<Card padding="sm" border="subtle" className="col-span-full flex flex-col gap-6 xl:hidden">
 						<RWAPerpsContractMetricsList contract={contract} />
-					</div>
+					</Card>
 				</div>
 
 				<RWAPerpsContractInfoCard contract={contract} />

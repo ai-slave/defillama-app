@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { Panel } from '~/ui/Panel'
 import type { LiquidationsOverviewPageProps } from './api.types'
 import { LiquidationsDistributionChart } from './LiquidationsDistributionChart'
 import { LiquidationsSummaryStats } from './Summary'
@@ -36,7 +37,7 @@ export function LiquidationsOverview(props: LiquidationsOverviewPageProps) {
 				/>
 			</div>
 
-			<div className="mt-2 rounded-md border border-(--cards-border) bg-(--cards-bg)">
+			<Panel className="mt-2">
 				{activeTab === 'protocols' ? (
 					<LiquidationsProtocolsTable
 						rows={props.protocolRows}
@@ -54,7 +55,7 @@ export function LiquidationsOverview(props: LiquidationsOverviewPageProps) {
 						}
 					/>
 				)}
-			</div>
+			</Panel>
 		</>
 	)
 }

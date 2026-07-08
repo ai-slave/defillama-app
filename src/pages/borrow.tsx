@@ -9,6 +9,18 @@ import { buildBorrowRowsQueryString, type BorrowPageRow } from '~/containers/Yie
 import { disclaimer } from '~/containers/Yields/constants'
 import { useBorrowRows } from '~/containers/Yields/queries.client'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
+import { inputStyles } from '~/ui/Input'
+import {
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName,
+	popoverRowStyles,
+	popoverSearchBlockWithBottomPaddingStyles,
+	popoverSeeMoreStyles,
+	popoverSingleSelectCheckStyles,
+	popoverSurfaceStyles
+} from '~/ui/Popover'
+import { Switch } from '~/ui/Switch'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { getQueryValue, pushShallowQuery } from '~/utils/routerQuery'
@@ -60,7 +72,7 @@ export default function YieldBorrow(data) {
 				{disclaimer}
 			</Announcement>
 			<div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-start">
-				<div className="w-full shrink-0 rounded-md border border-(--cards-border) bg-(--cards-bg) lg:w-[340px]">
+				<Card className="w-full shrink-0 lg:w-[340px]" border="subtle" padding="none">
 					<div className="relative flex flex-col p-4">
 						<TokensSelect
 							label="Borrow"
@@ -73,7 +85,7 @@ export default function YieldBorrow(data) {
 							<button
 								aria-label="Swap borrow and collateral"
 								onClick={handleSwap}
-								className="inline-flex size-8 items-center justify-center rounded-full border border-(--form-control-border) bg-(--cards-bg) text-(--text-tertiary) transition-all hover:scale-105 hover:border-(--primary) hover:text-(--primary) focus-visible:border-(--primary) focus-visible:text-(--primary) active:scale-95"
+								className="inline-flex size-8 items-center justify-center rounded-full border border-medium bg-surface text-tertiary transition-all hover:scale-105 hover:border-brand hover:text-link focus-visible:border-brand focus-visible:text-link active:scale-95"
 								title="Swap borrow and collateral"
 							>
 								<Icon name="repeat" className="size-4" />
@@ -89,49 +101,46 @@ export default function YieldBorrow(data) {
 					</div>
 
 					{borrowToken && !collateralToken ? (
-						<p className="border-t border-(--cards-border) px-4 py-2.5 text-center text-sm text-(--warning)">
+						<p className="border-t border-subtle px-4 py-2.5 text-center body-sm text-(--warning)">
 							Select collateral to see real borrow cost
 						</p>
 					) : null}
 
 					{hasSelection ? (
-						<label className="group flex cursor-pointer items-center justify-between border-t border-(--cards-border) px-4 py-3 transition-colors hover:bg-(--btn-bg)">
-							<span className="text-sm text-(--text-secondary) select-none">Include Incentives</span>
-							<span
-								data-checked={includeIncentives}
-								className="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border border-(--form-control-border) bg-(--btn-bg) transition-colors data-[checked=true]:border-(--primary) data-[checked=true]:bg-(--primary)"
-							>
-								<span
-									className="pointer-events-none block size-3.5 translate-x-0.5 rounded-full bg-(--text-tertiary) shadow-sm transition-transform data-[checked=true]:translate-x-[17px] data-[checked=true]:bg-white"
-									data-checked={includeIncentives}
-								/>
-							</span>
-							<input
-								type="checkbox"
+						<div className="border-t border-subtle px-4 py-3 hover:bg-hover-row">
+							<Switch
+								label="Include Incentives"
+								value="includeIncentives"
 								checked={includeIncentives}
 								onChange={() => {
 									void pushShallowQuery(router, { incentives: includeIncentives ? undefined : 'true' })
 								}}
-								className="sr-only"
+								className="flex-row-reverse justify-between"
 							/>
-						</label>
+						</div>
 					) : null}
-				</div>
+				</Card>
 
 				<div className="min-w-0 flex-1">
 					{hasSelection && isLoading && !rowsData ? (
-						<p className="flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-5">
-							Loading borrow routes...
-						</p>
+						<div
+							role="status"
+							className="flex flex-1 items-center justify-center rounded-[8px] border border-subtle bg-surface p-5 body-sm text-secondary"
+						>
+							<p>Loading borrow routes...</p>
+						</div>
 					) : hasSelection && isError ? (
-						<p className="flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-5">
-							Couldn't load borrow routes.
-						</p>
+						<div
+							role="alert"
+							className="flex flex-1 items-center justify-center rounded-[8px] border border-subtle bg-surface p-5 body-sm text-secondary"
+						>
+							<p>Couldn't load borrow routes.</p>
+						</div>
 					) : hasSelection ? (
 						<PoolsList pools={filteredPools} />
 					) : (
-						<div className="flex flex-col items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) px-6 py-16 text-center">
-							<p className="text-base text-(--text-secondary)">
+						<div className="flex flex-col items-center justify-center rounded-[8px] border border-subtle bg-surface px-6 py-16 text-center">
+							<p className="body-sm text-secondary">
 								Select a token to borrow and collateral to compare rates across protocols
 							</p>
 						</div>
@@ -205,15 +214,15 @@ const TokensSelect = ({
 				}}
 			>
 				<Ariakit.SelectProvider value={selectedValue} setValue={onChange}>
-					<Ariakit.SelectLabel className="text-[11px] font-semibold tracking-widest text-(--text-tertiary) uppercase">
+					<Ariakit.SelectLabel className="label-xs tracking-widest text-tertiary uppercase">
 						{label}
 					</Ariakit.SelectLabel>
 					<Ariakit.Select
 						className={`group flex cursor-pointer flex-nowrap items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-all ${
 							tokenInSearchData
-								? 'border border-(--primary)/30 bg-(--primary)/5 font-semibold text-(--text-primary) hover:border-(--primary)/50 hover:bg-(--primary)/10'
-								: 'border border-(--form-control-border) bg-(--btn-bg) text-(--text-tertiary) hover:border-(--bg-border) hover:bg-(--btn-hover-bg)'
-						} focus-visible:border-(--primary) focus-visible:ring-1 focus-visible:ring-(--primary)/30`}
+								? 'border border-brand bg-brand-muted font-semibold text-primary hover:bg-hover-row'
+								: 'border border-medium bg-page text-tertiary hover:bg-hover-row'
+						} focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand/30`}
 					>
 						{tokenInSearchData ? (
 							<span className="truncate">
@@ -233,35 +242,34 @@ const TokensSelect = ({
 						sameWidth
 						gutter={4}
 						wrapperProps={{
-							className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
+							className: popoverMobileWrapperClassName
 						}}
-						className="z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-lg border border-(--cards-border) bg-(--bg-main) shadow-lg max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,60dvh)] lg:max-h-(--popover-available-height)"
+						className={popoverSurfaceStyles}
 					>
-						<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
+						<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 							<Icon name="x" className="size-5" />
 						</Ariakit.PopoverDismiss>
 
-						<div className="p-2">
-							<Ariakit.Combobox
-								placeholder="Search tokens..."
-								className="w-full rounded-md border border-(--form-control-border) bg-(--bg-input) px-3 py-2 text-sm transition-colors outline-none placeholder:text-(--text-tertiary) focus:border-(--primary)"
-							/>
+						<div className={popoverSearchBlockWithBottomPaddingStyles}>
+							<Ariakit.Combobox placeholder="Search tokens..." className={`w-full ${inputStyles}`} />
 						</div>
 
 						{matches.length > 0 ? (
-							<Ariakit.ComboboxList ref={comboboxRef} className="px-1 pb-1">
+							<Ariakit.ComboboxList ref={comboboxRef}>
 								{matches.slice(0, viewableMatches).map((option) => (
 									<Ariakit.SelectItem
 										key={`${queryParam}-${option.symbol}`}
 										value={option.symbol}
-										className="group flex shrink-0 cursor-pointer items-center gap-3 rounded-md px-2.5 py-2 text-sm cv-auto-37 hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)"
+										className={popoverRowStyles}
 										render={<Ariakit.ComboboxItem />}
 									>
 										<span className="truncate">
 											{option.symbol === 'USD_STABLES' ? searchData[option.symbol].name : option.symbol}
 										</span>
 										{option.symbol === selectedValue ? (
-											<Icon name="check" className="ml-auto size-3.5 shrink-0 text-(--primary)" />
+											<span className={popoverSingleSelectCheckStyles(true)} aria-hidden>
+												<Icon name="check" className="size-3" />
+											</span>
 										) : null}
 									</Ariakit.SelectItem>
 								))}
@@ -270,7 +278,7 @@ const TokensSelect = ({
 										value="__see_more__"
 										setValueOnClick={false}
 										hideOnClick={false}
-										className="w-full cursor-pointer rounded-md px-2.5 py-2 text-sm text-(--link) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-active-item:bg-(--link-hover-bg)"
+										className={popoverSeeMoreStyles}
 										onClick={handleSeeMore}
 									>
 										See more...
@@ -278,7 +286,7 @@ const TokensSelect = ({
 								) : null}
 							</Ariakit.ComboboxList>
 						) : (
-							<p className="px-3 py-6 text-center text-sm text-(--text-tertiary)">No results found</p>
+							<p className="px-3 py-6 text-center body-sm text-tertiary">No results found</p>
 						)}
 					</Ariakit.SelectPopover>
 				</Ariakit.SelectProvider>
@@ -354,34 +362,34 @@ const PoolsList = ({ pools }: { pools: Array<BorrowPageRow> }) => {
 	const showAvailable = Boolean(borrow)
 
 	return (
-		<div className="flex w-full flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex items-center border-b border-(--cards-border)">
+		<Card className="flex w-full flex-col overflow-hidden" border="subtle" padding="none">
+			<div className="flex items-center border-b border-subtle">
 				<button
-					className="px-4 py-2.5 text-sm font-medium transition-colors data-[selected=false]:text-(--text-tertiary) data-[selected=true]:text-(--text-primary) data-[selected=true]:shadow-[inset_0_-2px_0_var(--primary)]"
+					className="px-4 py-2.5 label-sm transition-colors data-[selected=false]:text-tertiary data-[selected=true]:text-primary data-[selected=true]:shadow-[inset_0_-2px_0_var(--color-brand)]"
 					onClick={() => setTab('safe')}
 					data-selected={tab === 'safe'}
 				>
 					Safe
 				</button>
 				<button
-					className="px-4 py-2.5 text-sm font-medium transition-colors data-[selected=false]:text-(--text-tertiary) data-[selected=true]:text-(--text-primary) data-[selected=true]:shadow-[inset_0_-2px_0_var(--primary)]"
+					className="px-4 py-2.5 label-sm transition-colors data-[selected=false]:text-tertiary data-[selected=true]:text-primary data-[selected=true]:shadow-[inset_0_-2px_0_var(--color-brand)]"
 					onClick={() => setTab('degen')}
 					data-selected={tab === 'degen'}
 				>
 					Degen
 				</button>
-				<span className="ml-auto pr-4 text-xs text-(--text-tertiary)">
+				<span className="ml-auto pr-4 label-sm text-tertiary">
 					{finalPools.length} {finalPools.length === 1 ? 'result' : 'results'}
 				</span>
 			</div>
 
 			{finalPools.length === 0 ? (
-				<p className="px-4 py-12 text-center text-sm text-(--text-tertiary)">No pools found for this pair</p>
+				<p className="px-4 py-12 text-center body-sm text-tertiary">No pools found for this pair</p>
 			) : (
 				<div className="overflow-x-auto">
 					<table className="w-full">
 						<thead>
-							<tr className="border-b border-(--cards-border) text-left text-xs text-(--text-tertiary)">
+							<tr className="border-b border-subtle text-left label-sm text-tertiary">
 								<th className="px-4 py-2.5 font-medium">Protocol</th>
 								<th className="px-4 py-2.5 font-medium">{apyLabel}</th>
 								<th className="px-4 py-2.5 font-medium">Chain</th>
@@ -394,30 +402,28 @@ const PoolsList = ({ pools }: { pools: Array<BorrowPageRow> }) => {
 								return (
 									<tr
 										key={pool.projectName + pool.chain}
-										className="border-b border-(--cards-border) transition-colors last:border-b-0 hover:bg-(--btn-bg)"
+										className="border-b border-subtle transition-colors last:border-b-0 hover:bg-hover-row"
 									>
 										<td className="px-4 py-3">
 											<span className="flex items-center gap-2">
 												<TokenLogo name={pool.projectName} kind="token" size={20} alt={`Logo of ${pool.projectName}`} />
-												<span className="text-sm font-medium">{pool.projectName}</span>
+												<span className="label-md">{pool.projectName}</span>
 											</span>
 										</td>
 										<td className="px-4 py-3">
-											<span
-												className={`text-sm font-medium tabular-nums ${apy >= 0 ? 'text-(--success)' : 'text-(--error)'}`}
-											>
+											<span className={`label-md tabular-nums ${apy >= 0 ? 'text-data-up' : 'text-data-down'}`}>
 												{apy.toLocaleString(undefined, { maximumFractionDigits: 2 })}%
 											</span>
 										</td>
 										<td className="px-4 py-3">
 											<span className="flex items-center gap-2">
 												<TokenLogo name={pool.chain} kind="chain" size={18} alt={`Logo of ${pool.chain}`} />
-												<span className="text-sm text-(--text-secondary)">{pool.chain}</span>
+												<span className="body-md text-secondary">{pool.chain}</span>
 											</span>
 										</td>
 										{showAvailable ? (
 											<td className="px-4 py-3 text-right">
-												<span className="text-sm text-(--text-secondary) tabular-nums">
+												<span className="body-md text-secondary tabular-nums">
 													{pool.borrow.totalAvailableUsd
 														? `$${(pool.borrow.totalAvailableUsd / 1e6).toLocaleString(undefined, {
 																maximumFractionDigits: 1
@@ -433,6 +439,6 @@ const PoolsList = ({ pools }: { pools: Array<BorrowPageRow> }) => {
 					</table>
 				</div>
 			)}
-		</div>
+		</Card>
 	)
 }

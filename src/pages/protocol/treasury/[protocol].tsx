@@ -6,7 +6,6 @@ import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons
 import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { LocalLoader } from '~/components/Loaders'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { Switch } from '~/components/Switch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
@@ -17,6 +16,11 @@ import type { IProtocolPageMetrics } from '~/containers/ProtocolOverview/types'
 import { useProtocolBreakdownCharts } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
+import { Panel } from '~/ui/Panel'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { Switch } from '~/ui/Switch'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { tokenIconUrl } from '~/utils/icons'
@@ -71,9 +75,9 @@ function TokensBreakdownPieChartCard({
 	const exportTitle = `${protocolName} Treasury by Token`
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">Tokens Breakdown</h2>
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+			<ChartPanelToolbar className="justify-end">
+				<h2 className="mr-auto heading-xs">Tokens Breakdown</h2>
 				{allTokens.length > 1 ? (
 					<SelectWithCombobox
 						allValues={allTokens}
@@ -82,6 +86,7 @@ function TokensBreakdownPieChartCard({
 						label="Token"
 						labelType="smol"
 						variant="filter"
+						size="md"
 						portal
 					/>
 				) : null}
@@ -91,11 +96,11 @@ function TokensBreakdownPieChartCard({
 					title={exportTitle}
 					iconUrl={exportIconUrl}
 				/>
-			</div>
+			</ChartPanelToolbar>
 			<React.Suspense fallback={<div className="min-h-[360px]" />}>
 				<PieChart chartData={filteredChartData} onReady={handleChartReady} />
 			</React.Suspense>
-		</div>
+		</Panel>
 	)
 }
 
@@ -118,16 +123,16 @@ function HistoricalTreasuryChartCard({
 	const exportTitle = `${protocolName} Historical Treasury`
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">Historical Treasury</h2>
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+			<ChartPanelToolbar className="justify-end">
+				<h2 className="mr-auto heading-xs">Historical Treasury</h2>
 				<ChartExportButtons
 					chartInstance={chartInstance}
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
 				/>
-			</div>
+			</ChartPanelToolbar>
 			<React.Suspense fallback={<div className="min-h-[360px]" />}>
 				<MultiSeriesChart2
 					dataset={dataset}
@@ -137,7 +142,7 @@ function HistoricalTreasuryChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</div>
+		</Panel>
 	)
 }
 
@@ -172,9 +177,9 @@ function TokensMultiSeriesChartCard({
 	const exportTitle = `${protocolName} Treasury ${title}`
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">{title}</h2>
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+			<ChartPanelToolbar className="justify-end">
+				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allTokens.length > 1 ? (
 					<SelectWithCombobox
 						allValues={allTokens}
@@ -183,6 +188,7 @@ function TokensMultiSeriesChartCard({
 						label="Token"
 						labelType="smol"
 						variant="filter"
+						size="md"
 						portal
 					/>
 				) : null}
@@ -192,7 +198,7 @@ function TokensMultiSeriesChartCard({
 					title={exportTitle}
 					iconUrl={exportIconUrl}
 				/>
-			</div>
+			</ChartPanelToolbar>
 			<React.Suspense fallback={<div className="min-h-[360px]" />}>
 				<MultiSeriesChart2
 					dataset={dataset}
@@ -202,7 +208,7 @@ function TokensMultiSeriesChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</div>
+		</Panel>
 	)
 }
 
@@ -335,25 +341,26 @@ export default function Protocols(props: TreasuryPageProps) {
 			seoTitle={props.seoTitle}
 			seoDescription={props.seoDescription}
 		>
-			<div className="col-span-full flex flex-wrap items-center justify-end gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-				<div className="mr-auto flex items-center gap-2">
-					<TokenLogo name={props.name} kind="token" size={24} alt={`Logo of ${props.name}`} />
-					<h1 className="text-xl font-bold">{props.name} Treasury</h1>
-				</div>
-				{hasOwnTokens ? (
-					<Switch
-						value="includeOwnTokens"
-						label="Include own tokens"
-						checked={includeOwnTokens}
-						onChange={toggleIncludeOwnTokens}
-						className="ml-auto gap-2"
-					/>
-				) : null}
-			</div>
+			<EntityTitleStrip
+				className="col-span-full"
+				media={<TokenLogo name={props.name} kind="token" size={28} alt={`Logo of ${props.name}`} />}
+				title={`${props.name} Treasury`}
+				actions={
+					hasOwnTokens ? (
+						<Switch
+							value="includeOwnTokens"
+							label="Include own tokens"
+							checked={includeOwnTokens}
+							onChange={toggleIncludeOwnTokens}
+							className="gap-2"
+						/>
+					) : null
+				}
+			/>
 			{isLoading ? (
-				<div className="flex min-h-[360px] flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+				<PanelLoadingStatus label={`Loading ${props.name} treasury`}>
 					<LocalLoader />
-				</div>
+				</PanelLoadingStatus>
 			) : (
 				<div className="grid grid-cols-2 gap-2">
 					{tokenBreakdownPieChart?.length ? (
@@ -405,15 +412,13 @@ export default function Protocols(props: TreasuryPageProps) {
 				</div>
 			)}
 			{errors.length > 0 ? (
-				<div className="col-span-full flex min-h-[360px] flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-					<p className="text-(--error)">
-						Failed to fetch{' '}
-						{Array.from(new Set(errors.map((e) => CHART_CATEGORY_LABELS[e.category])))
-							.filter(Boolean)
-							.join(', ')}{' '}
-						APIs
-					</p>
-				</div>
+				<PanelStatus variant="error" className="col-span-full">
+					Failed to fetch{' '}
+					{Array.from(new Set(errors.map((e) => CHART_CATEGORY_LABELS[e.category])))
+						.filter(Boolean)
+						.join(', ')}{' '}
+					APIs
+				</PanelStatus>
 			) : null}
 		</ProtocolOverviewLayout>
 	)

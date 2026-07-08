@@ -19,6 +19,16 @@ import calendarEvents from '~/constants/calendar'
 import { fetchAllProtocolEmissions } from '~/containers/Unlocks/api'
 import type { ProtocolEmission } from '~/containers/Unlocks/api.types'
 import Layout from '~/layout'
+import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import {
+	popoverActionBarStyles,
+	popoverActionButtonStyles,
+	popoverMultiSelectCheckStyles,
+	popoverRowWithBorderStyles,
+	popoverSurfaceStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName
+} from '~/ui/Popover'
 import { formatPercentage, slug, toNiceDayMonthYear, toNiceHour } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -157,7 +167,7 @@ export default function Protocols({ emissions }) {
 
 			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
 				<div className="flex flex-wrap items-center gap-4 p-3 *:last:ml-auto">
-					<h1 className="text-xl font-semibold">Crypto Calendar</h1>
+					<h1 className="heading-sm">Crypto Calendar</h1>
 
 					<Ariakit.SelectProvider
 						value={selectedOptions}
@@ -184,21 +194,19 @@ export default function Protocols({ emissions }) {
 							unmountOnHide
 							gutter={6}
 							hideOnInteractOutside
-							wrapperProps={{
-								className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
-							}}
-							className="z-10 flex max-h-[60dvh] min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:drawer max-sm:rounded-b-none dark:border-[hsl(204,3%,32%)]"
+							wrapperProps={{ className: popoverMobileWrapperClassName }}
+							className={popoverSurfaceStyles}
 						>
-							<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
+							<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 								<Icon name="x" className="size-5" />
 							</Ariakit.PopoverDismiss>
 
-							<span className="sticky top-0 z-1 flex flex-wrap justify-between gap-1 border-b border-(--form-control-border) bg-(--bg-main) text-xs text-(--link)">
+							<span className={popoverActionBarStyles}>
 								<button
 									onClick={() => {
 										void pushShallowQuery(router, { type: 'None' })
 									}}
-									className="p-3"
+									className={popoverActionButtonStyles}
 								>
 									Clear
 								</button>
@@ -206,20 +214,18 @@ export default function Protocols({ emissions }) {
 									onClick={() => {
 										void pushShallowQuery(router, { type: 'All' })
 									}}
-									className="p-3"
+									className={popoverActionButtonStyles}
 								>
 									Toggle all
 								</button>
 							</span>
 
 							{options.map((value) => (
-								<Ariakit.SelectItem
-									key={`calendar-type-${value}`}
-									value={value}
-									className="flex shrink-0 cursor-pointer items-center justify-between gap-4 border-b border-(--form-control-border) px-3 py-2 cv-auto-37 last-of-type:rounded-b-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)"
-								>
+								<Ariakit.SelectItem key={`calendar-type-${value}`} value={value} className={popoverRowWithBorderStyles}>
 									<span>{value}</span>
-									<Ariakit.SelectItemCheck className="flex size-3 shrink-0 items-center justify-center rounded-xs border border-[#28a2b5]" />
+									<span className={popoverMultiSelectCheckStyles(selectedOptionsSet.has(value))} aria-hidden>
+										{selectedOptionsSet.has(value) ? <Icon name="check" className="size-3" /> : null}
+									</span>
 								</Ariakit.SelectItem>
 							))}
 						</Ariakit.SelectPopover>
@@ -227,17 +233,12 @@ export default function Protocols({ emissions }) {
 
 					<label className="relative w-full sm:max-w-[280px]">
 						<span className="sr-only">Search events...</span>
-						<Icon
-							name="search"
-							height={16}
-							width={16}
-							className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-						/>
+						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						<input
 							name="search"
 							onInput={(e) => setProjectName(e.currentTarget.value)}
 							placeholder="Search events..."
-							className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+							className={searchFieldInputStyles}
 						/>
 					</label>
 				</div>

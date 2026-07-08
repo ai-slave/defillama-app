@@ -24,6 +24,7 @@ import { UnconstrainedSmolLineChart } from '~/containers/Unlocks/UnconstrainedSm
 import { UpcomingEvent } from '~/containers/Unlocks/UpcomingEvent'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import type { FormSubmitEvent } from '~/types/forms'
+import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { formattedNum, slug } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
@@ -316,17 +317,12 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 
 				<label className="relative w-full sm:max-w-[280px]">
 					<span className="sr-only">Search projects...</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
 						name="search"
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search projects..."
-						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+						className={searchFieldInputStyles}
 					/>
 				</label>
 			</div>

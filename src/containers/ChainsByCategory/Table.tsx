@@ -25,6 +25,8 @@ import { Tooltip } from '~/components/Tooltip'
 import { CHAINS_CATEGORY_GROUP_SETTINGS, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
+import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
 import type { IFormattedDataWithExtraTvl } from './types'
 
@@ -113,24 +115,19 @@ export function ChainsByCategoryTable({
 
 	return (
 		<div className={`isolate ${borderless ? '' : 'rounded-md border border-(--cards-border) bg-(--cards-bg)'}`}>
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2">
-				<label className="relative mr-auto w-full sm:max-w-[280px]">
+			<TableToolbar className="justify-end">
+				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search chains</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search..."
-						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+						className={searchFieldInputStyles}
 					/>
 				</label>
 
-				<div className="flex items-center gap-2 max-sm:w-full max-sm:flex-col">
-					<div className="flex w-full items-center gap-2 sm:w-auto">
+				<div className="flex items-center gap-1.5 max-sm:w-full max-sm:flex-col">
+					<div className="flex w-full items-center gap-1.5 sm:w-auto">
 						{showByGroup ? (
 							<SelectWithCombobox
 								allValues={CHAINS_CATEGORY_GROUP_SETTINGS}
@@ -140,6 +137,7 @@ export function ChainsByCategoryTable({
 								label={'Group Chains'}
 								labelType="smol"
 								variant="filter-responsive"
+								size="md"
 							/>
 						) : null}
 						<SelectWithCombobox
@@ -150,13 +148,18 @@ export function ChainsByCategoryTable({
 							label={'Columns'}
 							labelType="smol"
 							variant="filter-responsive"
+							size="md"
 						/>
 					</div>
 
-					<TVLRange triggerClassName="w-full sm:w-auto" />
-					<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: 'defillama-chains' })} smol />
+					<TVLRange triggerClassName="w-full sm:w-auto" size="md" />
+					<CSVDownloadButton
+						prepareCsv={() => prepareTableCsv({ instance, filename: 'defillama-chains' })}
+						smol
+						size="md"
+					/>
 				</div>
-			</div>
+			</TableToolbar>
 			<VirtualTable instance={instance} useStickyHeader={useStickyHeader} />
 		</div>
 	)

@@ -104,7 +104,7 @@ export function ChatLanding({
 
 	return (
 		<div className="llamaai-chat-width mx-auto flex h-full w-full flex-col gap-2.5 overflow-hidden px-2.5">
-			<div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2.5 lg:mt-[100px] lg:flex-none lg:justify-start">
+			<div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2.5 lg:mt-25 lg:flex-none lg:justify-start">
 				<img src="/assets/llamaai/llama-ai.svg" alt="LlamaAI" className="object-contain" width={64} height={77} />
 				{greetingTip && greetingTip.cta.kind !== 'none' ? (
 					<span className="inline-flex items-center gap-1.5 rounded-full border border-[#e8c089]/30 bg-[#e8c089]/[0.07] px-2.5 py-1 text-[10px] font-medium tracking-[0.18em] text-[#a17f47] uppercase dark:text-[#e8c089]/85">

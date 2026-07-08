@@ -2,6 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { createElement } from 'react'
 import { Icon } from '~/components/Icon'
 import { TokenLogo } from '~/components/TokenLogo'
+import { buttonStyles } from '~/ui/Button'
 import { heatmapClass, percentileOpacity, rankOpacity } from '../colors'
 import type { ColumnConfig, DisplayMode } from '../constants'
 import { selectCellNumber } from '../constants'
@@ -32,8 +33,7 @@ function detailsButton(row: LeaderboardRow, onSelectMM: (id: string, name: strin
 		{
 			type: 'button',
 			onClick: () => onSelectMM(row.marketMakerId, row.marketMakerName),
-			className:
-				'inline-flex h-7 shrink-0 items-center justify-center gap-1 rounded-md border border-(--form-control-border) bg-(--cards-bg) px-3 text-xs font-semibold text-(--text-primary) hover:bg-(--link-hover-bg)'
+			className: buttonStyles({ size: 'md' })
 		},
 		'Details',
 		createElement(Icon, { name: 'arrow-right', height: 12, width: 12 })
@@ -58,7 +58,7 @@ export function buildRankColumns({ columns, mode, rowCount, onSelectMM }: IBuild
 				{
 					type: 'button',
 					onClick: () => onSelectMM(row.original.marketMakerId, row.original.marketMakerName),
-					className: 'flex items-center gap-2 text-(--link-text) hover:underline'
+					className: 'flex items-center gap-2 text-link hover:underline'
 				},
 				createElement(TokenLogo, { src: row.original.marketMakerImageUrl, size: 24 }),
 				createElement('span', { className: 'truncate' }, row.original.marketMakerName)
@@ -90,14 +90,14 @@ export function buildRankColumns({ columns, mode, rowCount, onSelectMM }: IBuild
 					createElement(
 						'div',
 						{
-							className: `flex flex-1 items-center border-b border-(--divider) px-3 py-3${heatCls ? ` ${heatCls}` : ''}`
+							className: `flex flex-1 items-center border-b border-subtle px-3 py-3${heatCls ? ` ${heatCls}` : ''}`
 						},
 						metricCell
 					),
 					createElement(
 						'div',
 						{
-							className: 'flex items-center border-b border-l border-(--divider) bg-(--cards-bg) px-3 py-3'
+							className: 'flex items-center border-b border-l border-subtle bg-surface px-3 py-3'
 						},
 						detailsButton(row.original, onSelectMM)
 					)

@@ -182,7 +182,7 @@ export default function Research() {
 	return (
 		<div className="flex flex-col gap-8">
 			<div className="flex flex-col gap-2 rounded-xl border border-(--cards-border) bg-(--cards-bg) p-6">
-				<h1 className="text-xl font-bold text-(--text-primary)">Reports & Research</h1>
+				<h1 className="heading-sm text-(--text-primary)">Reports & Research</h1>
 				<p className="max-w-2xl text-sm leading-relaxed text-(--text-secondary)">
 					Independent analysis, technical papers, and foundational resources covering NEAR&apos;s investment case,
 					architecture, and ecosystem growth.
@@ -190,7 +190,7 @@ export default function Research() {
 			</div>
 
 			<div>
-				<h2 className="mb-4 text-lg font-semibold tracking-tight text-(--text-primary)">Reports</h2>
+				<h2 className="mb-4 heading-xs tracking-tight text-(--text-primary)">Reports</h2>
 				<div className="flex flex-col gap-3">
 					{REPORTS.map((report) => (
 						<ReportCard key={report.title} {...report} />
@@ -199,7 +199,7 @@ export default function Research() {
 			</div>
 
 			<div>
-				<h2 className="mb-4 text-lg font-semibold tracking-tight text-(--text-primary)">Papers</h2>
+				<h2 className="mb-4 heading-xs tracking-tight text-(--text-primary)">Papers</h2>
 				<div className="grid grid-cols-1 gap-3 md:grid-cols-2">
 					{RESEARCH_PAPERS.map((paper) => (
 						<PaperCard key={paper.title} {...paper} />
@@ -208,7 +208,7 @@ export default function Research() {
 			</div>
 
 			<div>
-				<h2 className="mb-4 text-lg font-semibold tracking-tight text-(--text-primary)">About NEAR</h2>
+				<h2 className="mb-4 heading-xs tracking-tight text-(--text-primary)">About NEAR</h2>
 				<div className="flex flex-col gap-2.5">
 					{ABOUT_NEAR.map((resource) => (
 						<LinkItem key={resource.title} {...resource} />

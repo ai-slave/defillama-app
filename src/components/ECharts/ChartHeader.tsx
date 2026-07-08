@@ -1,3 +1,5 @@
+import { chartPanelToolbarStyles } from '~/ui/Toolbar'
+
 interface ChartHeaderProps {
 	title?: string
 	headingAs?: 'h1' | 'h2'
@@ -14,8 +16,8 @@ export function ChartHeader({
 	className
 }: ChartHeaderProps) {
 	return title || customComponents || exportButtons ? (
-		<div className={className ?? 'mb-2 flex flex-wrap items-center justify-end gap-2 px-2'}>
-			{title ? <HeadingTag className="mr-auto text-base font-semibold">{title}</HeadingTag> : null}
+		<div className={className ?? `${chartPanelToolbarStyles} justify-end`}>
+			{title ? <HeadingTag className="mr-auto heading-xs">{title}</HeadingTag> : null}
 			{customComponents ?? null}
 			{exportButtons ?? null}
 		</div>

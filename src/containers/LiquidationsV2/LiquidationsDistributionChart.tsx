@@ -5,7 +5,11 @@ import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons
 import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { CHART_COLORS } from '~/constants/colors'
+import { Card } from '~/ui/Card'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formatNum, formattedNum, slug } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type {
@@ -85,8 +89,8 @@ function LiquidationsDistributionChartCard({
 	chartInstanceRef: React.MutableRefObject<ECharts | null>
 }) {
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex flex-wrap items-center gap-2 p-2">
+		<Panel>
+			<ChartPanelToolbar>
 				{displayOptions.hideTokenSelector ? (
 					<div className="mr-auto" />
 				) : (
@@ -102,10 +106,7 @@ function LiquidationsDistributionChartCard({
 							singleSelect
 							labelType="none"
 							variant="filter"
-							triggerProps={{
-								className:
-									'flex items-center justify-between gap-2 rounded-md border border-(--old-blue) bg-(--link-bg) px-2 py-1.5 text-xs font-medium text-(--link-text) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)'
-							}}
+							size="md"
 							portal
 						/>
 						{chartState.tokenTotalUsd != null ? (
@@ -126,36 +127,37 @@ function LiquidationsDistributionChartCard({
 						label={chartState.breakdownLabel}
 						labelType="none"
 						variant="filter"
+						size="md"
 					/>
 				) : null}
-				<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-xs font-medium text-(--text-form)">
+				<div className={chartSegmentedControlGroupStyles}>
 					<button
 						data-active={chartState.mode === 'cumulative'}
 						onClick={() => setChartMode('cumulative')}
-						className="inline-flex shrink-0 items-center justify-center px-3 py-1.5 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:bg-(--old-blue) data-[active=true]:text-white"
+						className={`${chartSegmentedControlButtonStyles} inline-flex items-center justify-center`}
 					>
 						Cumulative
 					</button>
 					<button
 						data-active={chartState.mode === 'distribution'}
 						onClick={() => setChartMode('distribution')}
-						className="inline-flex shrink-0 items-center justify-center px-3 py-1.5 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:bg-(--old-blue) data-[active=true]:text-white"
+						className={`${chartSegmentedControlButtonStyles} inline-flex items-center justify-center`}
 					>
 						Distribution
 					</button>
 				</div>
-				<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-xs font-medium text-(--text-form)">
+				<div className={chartSegmentedControlGroupStyles}>
 					<button
 						data-active={chartState.metric === 'usd'}
 						onClick={() => setMetric('usd')}
-						className="inline-flex shrink-0 items-center justify-center px-3 py-1.5 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:bg-(--old-blue) data-[active=true]:text-white"
+						className={`${chartSegmentedControlButtonStyles} inline-flex items-center justify-center`}
 					>
 						USD
 					</button>
 					<button
 						data-active={chartState.metric === 'amount'}
 						onClick={() => setMetric('amount')}
-						className="inline-flex shrink-0 items-center justify-center px-3 py-1.5 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:bg-(--old-blue) data-[active=true]:text-white"
+						className={`${chartSegmentedControlButtonStyles} inline-flex items-center justify-center`}
 					>
 						Amount
 					</button>
@@ -178,7 +180,7 @@ function LiquidationsDistributionChartCard({
 					iconUrl={iconUrl}
 					smol
 				/>
-			</div>
+			</ChartPanelToolbar>
 			<React.Suspense fallback={<div className="min-h-[360px]" />}>
 				<MultiSeriesChart2
 					dataset={deferredChartModel.dataset}
@@ -194,7 +196,7 @@ function LiquidationsDistributionChartCard({
 			<div className="flex items-center justify-end gap-1 px-4 pb-3 text-xs text-(--text-label) italic opacity-70">
 				<span>Snapshot {new Date(timestamp * 1000).toUTCString()}</span>
 			</div>
-		</div>
+		</Panel>
 	)
 }
 
@@ -651,10 +653,10 @@ export function LiquidationsDistributionChart({
 
 	if (chart.tokens.length === 0) {
 		return (
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-5">
-				<h2 className="text-lg font-semibold">{title ?? 'Liquidation Distribution'}</h2>
-				<p className="mt-3 text-sm text-(--text-label)">No liquidation chart data available for this view.</p>
-			</div>
+			<Card border="subtle">
+				<h2 className="heading-xs">{title ?? 'Liquidation Distribution'}</h2>
+				<p className="mt-3 body-sm text-tertiary">No liquidation chart data available for this view.</p>
+			</Card>
 		)
 	}
 

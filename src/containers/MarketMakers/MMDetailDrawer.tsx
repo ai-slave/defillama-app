@@ -3,6 +3,7 @@ import { type ComponentProps, useEffect, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Button } from '~/ui/Button'
 import { AccentBadge, SecondaryBadge, StatusBadge, TimeframeBadge } from './badges'
 import { BreakdownTables, BreakdownTablesSkeleton } from './BreakdownTable'
 import {
@@ -38,7 +39,7 @@ function asStr(value: unknown): string | null {
 
 const FALLBACK = '—'
 const NA = 'N/A'
-const CARD_BORDER = 'border border-(--cards-border)'
+const CARD_BORDER = 'rounded-[8px] border border-subtle bg-surface'
 const EMPTY_SECTIONS = { depth: {}, volume: {}, spread: {}, kpi: {} }
 
 const INTEGRATION_LABEL: Record<'full' | 'partial' | 'none', string> = {
@@ -127,16 +128,11 @@ function venueList(value: unknown): Venue[] {
 
 function WebsiteButton({ href }: { href: string }) {
 	return (
-		<BasicLink
-			href={href}
-			target="_blank"
-			rel="noopener noreferrer"
-			className="inline-flex h-8 items-center gap-1.5 rounded-md border border-(--form-control-border) px-3 text-sm font-medium text-(--text-form) hover:bg-(--link-hover-bg)"
-		>
+		<Button as={BasicLink} href={href} target="_blank" rel="noopener noreferrer" size="md">
 			<Icon name="globe" height={14} width={14} />
 			Website
 			<Icon name="arrow-up-right" height={14} width={14} />
-		</BasicLink>
+		</Button>
 	)
 }
 
@@ -144,7 +140,7 @@ function BadgeRow({ title, items }: { title: string; items: string[] }) {
 	if (items.length === 0) return null
 	return (
 		<section className="flex flex-col gap-2">
-			<h3 className="text-base font-semibold">{title}</h3>
+			<h3 className="label-md text-primary">{title}</h3>
 			<div className="flex flex-wrap gap-2">
 				{items.map((item) => (
 					<AccentBadge key={item} className="h-8">
@@ -160,13 +156,10 @@ function VenueSection({ title, venues }: { title: string; venues: Venue[] }) {
 	if (venues.length === 0) return null
 	return (
 		<section className="flex flex-col gap-2">
-			<h3 className="text-base font-semibold">{title}</h3>
+			<h3 className="label-md text-primary">{title}</h3>
 			<div className="flex flex-wrap gap-2">
 				{venues.map((venue) => (
-					<span
-						key={venue.key}
-						className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm ${CARD_BORDER}`}
-					>
+					<span key={venue.key} className={`inline-flex items-center gap-1.5 px-2 py-1 body-sm ${CARD_BORDER}`}>
 						{venue.icon ? (
 							<img src={venue.icon} alt={venue.name} width={18} height={18} className="rounded-full" />
 						) : null}
@@ -182,8 +175,8 @@ function BulletList({ title, items }: { title: string; items: string[] }) {
 	if (items.length === 0) return null
 	return (
 		<section className="flex flex-col gap-2">
-			<h3 className="text-base font-semibold">{title}</h3>
-			<ul className="list-disc pl-5 text-sm text-(--text-secondary)">
+			<h3 className="label-md text-primary">{title}</h3>
+			<ul className="list-disc pl-5 body-sm text-secondary">
 				{items.map((item) => (
 					<li key={item}>{item}</li>
 				))}
@@ -228,11 +221,11 @@ function DrawerBody({
 	if (detail.isPending || breakdown.isPending || performance.isPending) {
 		return (
 			<div className="flex flex-col gap-6 p-4">
-				<div className="h-6 w-2/3 animate-pulse rounded bg-(--divider)" />
-				<div className="h-24 w-full animate-pulse rounded bg-(--divider)" />
+				<div className="h-6 w-2/3 animate-pulse rounded bg-surface-elevated-2" />
+				<div className="h-24 w-full animate-pulse rounded bg-surface-elevated-2" />
 				<BreakdownTablesSkeleton />
-				<div className="h-64 w-full animate-pulse rounded bg-(--divider)" />
-				<div className="h-40 w-full animate-pulse rounded bg-(--divider)" />
+				<div className="h-64 w-full animate-pulse rounded bg-surface-elevated-2" />
+				<div className="h-40 w-full animate-pulse rounded bg-surface-elevated-2" />
 			</div>
 		)
 	}
@@ -256,9 +249,9 @@ function DrawerBody({
 			<section className="flex flex-col gap-3">
 				<div className="flex items-center gap-2">
 					{logo ? <TokenLogo src={logo} size={28} alt={name} /> : null}
-					<h3 className="text-base font-semibold">About {name}</h3>
+					<h3 className="heading-xs">About {name}</h3>
 				</div>
-				<p className="text-sm text-(--text-secondary)">{description}</p>
+				<p className="body-sm text-secondary">{description}</p>
 				<div className="flex flex-wrap items-center gap-2">
 					<StatusBadge status={status ?? 'none'} label={integrationLabel(status)} className="h-8 px-3" />
 					{country ? <SecondaryBadge className="h-8">{`HQ: ${country.flag} ${country.name}`}</SecondaryBadge> : null}
@@ -268,14 +261,14 @@ function DrawerBody({
 
 			<section className="flex flex-col gap-3">
 				<div className="flex flex-wrap items-center gap-2">
-					<h3 className="text-base font-semibold">Leaderboards Performance</h3>
+					<h3 className="heading-xs">Leaderboards Performance</h3>
 					<TimeframeBadge label={badge} />
 				</div>
 				<RadarChart scores={scores} />
-				<div className={`flex flex-col rounded-md p-3 ${CARD_BORDER}`}>
+				<div className={`flex flex-col p-3 ${CARD_BORDER}`}>
 					{SCORE_ROWS.map((row) => (
 						<div key={row.key} className="flex h-8 items-center justify-between text-sm">
-							<span className="text-(--text-secondary)">{row.label}</span>
+							<span className="text-secondary">{row.label}</span>
 							<span className="font-medium">{(scores[row.key] ?? 0).toFixed(2)}/10.00</span>
 						</div>
 					))}
@@ -291,14 +284,14 @@ function DrawerBody({
 					return (
 						<div
 							key={card.rankKey}
-							className={`flex flex-col gap-2 rounded-md p-3 sm:flex-row sm:items-start sm:justify-between sm:gap-3 ${CARD_BORDER}`}
+							className={`flex flex-col gap-2 p-3 sm:flex-row sm:items-start sm:justify-between sm:gap-3 ${CARD_BORDER}`}
 						>
 							<div className="flex flex-col gap-1">
 								<h4 className="flex items-center gap-2 text-sm font-semibold">
-									<Icon name={card.icon} height={16} width={16} className="shrink-0 text-(--text-secondary)" />
+									<Icon name={card.icon} height={16} width={16} className="shrink-0 text-secondary" />
 									{card.label}
 								</h4>
-								<p className="text-sm text-(--text-secondary)">
+								<p className="body-sm text-secondary">
 									Outperformed {percentileLabel}% of their peers {card.suffix}
 								</p>
 							</div>
@@ -312,12 +305,12 @@ function DrawerBody({
 			</section>
 
 			<section className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-				<div className={`flex min-h-20 flex-col justify-center gap-1 rounded-md p-4 ${CARD_BORDER}`}>
-					<span className="text-sm text-(--text-secondary)">Active Engagements in Forgd</span>
+				<div className={`flex min-h-20 flex-col justify-center gap-1 p-4 ${CARD_BORDER}`}>
+					<span className="body-sm text-secondary">Active Engagements in Forgd</span>
 					<span className="text-xl font-bold">{activeEngagements == null ? FALLBACK : activeEngagements}</span>
 				</div>
-				<div className={`flex min-h-20 flex-col justify-center gap-1 rounded-md p-4 ${CARD_BORDER}`}>
-					<span className="text-sm text-(--text-secondary)">Avg. FDV of Projects in Forgd</span>
+				<div className={`flex min-h-20 flex-col justify-center gap-1 p-4 ${CARD_BORDER}`}>
+					<span className="body-sm text-secondary">Avg. FDV of Projects in Forgd</span>
 					<span className="text-xl font-bold">
 						{avgFdv == null ? FALLBACK : `$${Math.round(avgFdv).toLocaleString('en-US')}`}
 					</span>

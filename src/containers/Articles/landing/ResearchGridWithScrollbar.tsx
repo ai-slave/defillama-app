@@ -64,7 +64,7 @@ function ResearchGridWithScrollbarScroller({ articles, pageWidget, onHeightChang
 	return (
 		<div ref={containerRef}>
 			<div className="thin-scrollbar h-[calc(160px_*_2_+_32px_*_1)] overflow-y-auto sm:h-[var(--scroller-height,_calc(288px_*_2_+_32px_*_1))]">
-				<div ref={gridRef} className="grid grid-cols-2 gap-[32px] pr-4">
+				<div ref={gridRef} className="grid grid-cols-2 gap-8 pr-4">
 					{articles.map((article, i) => (
 						<Link
 							key={article.id}
@@ -84,7 +84,7 @@ function ResearchGridWithScrollbarScroller({ articles, pageWidget, onHeightChang
 								) : null}
 							</div>
 							{i === 0 && <InViewAnalytics eventParams={[article, 'widget_impression', pageWidget]} />}
-							<div className="flex grow flex-col pt-[16px]">
+							<div className="flex grow flex-col pt-4">
 								<div className="line-clamp-4 text-[16px] leading-[150%] font-semibold text-[#0d1e3b] group-hover:text-[#0c2956] group-hover:opacity-70 dark:text-white dark:group-hover:text-white/70">
 									{article.title}
 								</div>

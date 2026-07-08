@@ -6,6 +6,7 @@ import { BasicLink } from '~/components/Link'
 import { LocalLoader } from '~/components/Loaders'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 
 export function useTokenPrivateSectionAccess() {
 	const signInDialogStore = Ariakit.useDialogStore()
@@ -29,7 +30,7 @@ export function TokenPrivateSectionGate({
 	errorMessage,
 	emptyMessage,
 	headerActions,
-	bodyClassName = 'flex flex-1 flex-col p-3',
+	bodyClassName = 'flex flex-1 flex-col p-2',
 	children
 }: {
 	access: TokenPrivateSectionAccess
@@ -53,13 +54,9 @@ export function TokenPrivateSectionGate({
 
 	return (
 		<>
-			<section
-				className={`flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)${
-					hasPlaceholderState ? ' min-h-[80dvh] sm:min-h-[572px]' : ''
-				}`}
-			>
-				<div className="flex flex-wrap items-start justify-between gap-3 border-b border-(--cards-border) p-3">
-					<h2 className="group relative flex scroll-mt-24 items-center gap-1 text-xl font-bold" id={sectionId}>
+			<Panel className={hasPlaceholderState ? 'min-h-[80dvh] sm:min-h-[572px]' : undefined}>
+				<PanelHeader>
+					<PanelTitle className="group relative flex scroll-mt-24 items-center gap-1" id={sectionId}>
 						{title}
 						<a
 							aria-hidden="true"
@@ -68,10 +65,10 @@ export function TokenPrivateSectionGate({
 							className="absolute top-0 right-0 z-10 flex size-full items-center"
 						/>
 						<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
-					</h2>
+					</PanelTitle>
 
 					{headerActions}
-				</div>
+				</PanelHeader>
 
 				<div className={sectionBodyClassName}>
 					{isGateLoading ? (
@@ -81,7 +78,7 @@ export function TokenPrivateSectionGate({
 					) : !isAuthenticated || !hasActiveSubscription ? (
 						<div className="flex flex-1 items-center justify-center px-4 text-center">
 							{!isAuthenticated ? (
-								<p className="text-sm text-(--text-label)">
+								<p className="body-sm text-secondary">
 									An{' '}
 									<button type="button" onClick={signInDialogStore.show} className="underline">
 										active subscription
@@ -89,7 +86,7 @@ export function TokenPrivateSectionGate({
 									is required to view {contentLabel}.
 								</p>
 							) : (
-								<p className="text-sm text-(--text-label)">
+								<p className="body-sm text-secondary">
 									An{' '}
 									<BasicLink
 										href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
@@ -103,17 +100,17 @@ export function TokenPrivateSectionGate({
 						</div>
 					) : error != null ? (
 						<div className="flex flex-1 items-center justify-center px-4 text-center">
-							<p className="max-w-md text-sm text-(--text-label)">{error.message || errorMessage}</p>
+							<p className="max-w-md body-sm text-secondary">{error.message || errorMessage}</p>
 						</div>
 					) : emptyMessage != null ? (
 						<div className="flex flex-1 items-center justify-center px-4 text-center">
-							<p className="text-sm text-(--text-label)">{emptyMessage}</p>
+							<p className="body-sm text-secondary">{emptyMessage}</p>
 						</div>
 					) : (
 						children
 					)}
 				</div>
-			</section>
+			</Panel>
 
 			<SignInModal store={signInDialogStore} hideWhenAuthenticated={false} />
 		</>

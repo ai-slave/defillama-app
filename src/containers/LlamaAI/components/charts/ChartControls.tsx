@@ -105,6 +105,7 @@ export function ChartControls({
 					label={controls.state.cumulative ? 'Cumulative' : 'Individual'}
 					labelType="none"
 					variant="filter"
+					popoverVariant="legacy"
 				/>
 			) : null}
 
@@ -120,6 +121,7 @@ export function ChartControls({
 					label={controls.state.stacked ? 'Stacked' : 'Separate'}
 					labelType="none"
 					variant="filter"
+					popoverVariant="legacy"
 				/>
 			) : null}
 
@@ -134,6 +136,7 @@ export function ChartControls({
 					label={controls.state.percentage ? '% Percentage' : '$ Absolute'}
 					labelType="none"
 					variant="filter"
+					popoverVariant="legacy"
 				/>
 			) : null}
 
@@ -148,6 +151,7 @@ export function ChartControls({
 					label={controls.state.logScale ? 'Scale: Log' : 'Scale: Linear'}
 					labelType="none"
 					variant="filter"
+					popoverVariant="legacy"
 				/>
 			) : null}
 
@@ -162,6 +166,7 @@ export function ChartControls({
 					label={controls.state.showHallmarks ? 'Hallmarks: On' : 'Hallmarks: Off'}
 					labelType="none"
 					variant="filter"
+					popoverVariant="legacy"
 				/>
 			) : null}
 
@@ -176,6 +181,7 @@ export function ChartControls({
 					label={controls.state.showLabels ? 'Labels: On' : 'Labels: Off'}
 					labelType="none"
 					variant="filter"
+					popoverVariant="legacy"
 				/>
 			) : null}
 			{children}

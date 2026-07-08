@@ -167,9 +167,9 @@ export function ArticlePageAssetPicker({
 					))}
 				</ul>
 			) : (
-				<p className="rounded-lg border border-dashed border-(--cards-border) px-3 py-3 text-center text-[11px] leading-snug text-(--text-tertiary)">
-					No assets yet. Search above to add the tokens this article covers.
-				</p>
+				<div className="rounded-lg border border-dashed border-(--cards-border) px-3 py-3 text-center text-[11px] leading-snug text-(--text-tertiary)">
+					<p>No assets yet. Search above to add the tokens this article covers.</p>
+				</div>
 			)}
 		</div>
 	)

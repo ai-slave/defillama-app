@@ -4,7 +4,7 @@ import type {
 	CexAnalyticsMetric,
 	CexAnalyticsSnapshotResponse,
 	CexAnalyticsTotalsPoint
-} from '~/containers/ProDashboard/types'
+} from '~/containers/Cexs/api.types'
 import { fetchJson } from '~/utils/async'
 
 const FIVE_MINUTES = 5 * 60 * 1000

@@ -13,10 +13,14 @@ import { preparePieChartData } from '~/components/ECharts/utils'
 import { FormattedName } from '~/components/FormattedName'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { LinkPreviewCard } from '~/components/SEO'
 import { VirtualTable } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Card } from '~/ui/Card'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import type { RawChainAsset } from './api.types'
@@ -146,8 +150,8 @@ export function BridgedTVLByChain({
 			<LinkPreviewCard cardName={chainName} token={chain} />
 			<RowLinksWithDropdown links={chains} activeLink={chainName} />
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<div className="col-span-2 flex w-full flex-col gap-3 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-5 xl:col-span-1">
-					<h1 className="mb-3 flex items-center gap-2 text-xl font-semibold">
+				<Card border="subtle" className="col-span-2 flex w-full flex-col gap-3 overflow-x-auto xl:col-span-1">
+					<h1 className="mb-3 flex items-center gap-2 heading-sm">
 						<TokenLogo name={chain} kind="chain" size={24} alt={`Logo of ${chain}`} />
 						<FormattedName text={chainName + ' Bridged TVL'} fontWeight={700} />
 					</h1>
@@ -183,14 +187,14 @@ export function BridgedTVLByChain({
 							<span className="font-jetbrains">{formattedNum(chainData?.ownTokens.total, true)}</span>
 						</p>
 					) : null}
-				</div>
-				<div className="col-span-2 flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-						<div className="mr-auto flex flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-xs font-medium text-(--text-form)">
+				</Card>
+				<Panel className="col-span-2">
+					<ChartPanelToolbar className="justify-end">
+						<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
 							{chartTypes.map(({ type, name }) =>
 								Boolean(chainData?.[type]?.total) && chainData?.[type]?.total !== '0' ? (
 									<button
-										className="shrink-0 px-3 py-1.5 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:bg-(--old-blue) data-[active=true]:text-white"
+										className={chartSegmentedControlButtonStyles}
 										data-active={chartType === type}
 										onClick={() => setChartType(type)}
 										key={'bridged-' + name}
@@ -201,7 +205,7 @@ export function BridgedTVLByChain({
 							)}
 							{inflows ? (
 								<button
-									className="shrink-0 px-3 py-1.5 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:bg-(--old-blue) data-[active=true]:text-white"
+									className={chartSegmentedControlButtonStyles}
 									data-active={chartType === 'inflows'}
 									onClick={() => setChartType('inflows')}
 								>
@@ -210,7 +214,7 @@ export function BridgedTVLByChain({
 							) : null}
 							{chainData?.ownTokens?.total ? (
 								<button
-									className="shrink-0 px-3 py-1.5 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:bg-(--old-blue) data-[active=true]:text-white"
+									className={chartSegmentedControlButtonStyles}
 									data-active={chartType === 'ownTokens'}
 									onClick={() => setChartType('ownTokens')}
 								>
@@ -226,6 +230,7 @@ export function BridgedTVLByChain({
 								label="Token"
 								labelType="smol"
 								variant="filter"
+								size="md"
 								portal
 							/>
 						) : null}
@@ -235,7 +240,7 @@ export function BridgedTVLByChain({
 							title={exportTitle}
 							iconUrl={chainIconUrl(chain)}
 						/>
-					</div>
+					</ChartPanelToolbar>
 					{chartType !== 'inflows' ? (
 						<React.Suspense fallback={<div className="min-h-[360px]" />}>
 							<PieChart chartData={deferredPieChartData} valueSymbol="" onReady={onChartReady} />
@@ -256,7 +261,7 @@ export function BridgedTVLByChain({
 							/>
 						</React.Suspense>
 					) : null}
-				</div>
+				</Panel>
 			</div>
 			{chartType !== 'inflows' ? <VirtualTable instance={instance} skipVirtualization /> : null}
 		</>

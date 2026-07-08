@@ -112,12 +112,12 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceDataset, dom
 			canonicalUrl={`/languages`}
 			pageName={pageName}
 		>
-			<h1 className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 text-xl font-semibold">
+			<h1 className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 heading-sm">
 				Breakdown by Smart Contract Languages
 			</h1>
 
 			<div className="relative rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<React.Suspense fallback={<div className="h-[398px]" />}>
+				<React.Suspense fallback={<div className="h-[406px]" />}>
 					<MultiSeriesChart2
 						dataset={tvlDataset}
 						charts={tvlCharts}
@@ -129,7 +129,7 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceDataset, dom
 				</React.Suspense>
 			</div>
 			<div className="relative rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<React.Suspense fallback={<div className="h-[398px]" />}>
+				<React.Suspense fallback={<div className="h-[406px]" />}>
 					<MultiSeriesChart2
 						dataset={dominanceDataset}
 						charts={dominanceCharts}
@@ -142,7 +142,7 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceDataset, dom
 			</div>
 
 			<div className="relative rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<React.Suspense fallback={<div className="h-[398px]" />}>
+				<React.Suspense fallback={<div className="h-[406px]" />}>
 					<MultiSeriesChart2
 						dataset={osDataset}
 						charts={osCharts}

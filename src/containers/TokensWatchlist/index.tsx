@@ -31,6 +31,7 @@ import type { TokensTableRow } from '~/containers/Tokens/types'
 import { WatchListTabs } from '~/containers/Yields/views/WatchlistView'
 import { DEFAULT_PORTFOLIO_NAME } from '~/contexts/LocalStorage'
 import { useBookmarks } from '~/hooks/useBookmarks'
+import { Card } from '~/ui/Card'
 import { fetchJson } from '~/utils/async'
 import { mergeMarketsSummary } from './marketsMerge'
 
@@ -128,9 +129,9 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 		return (
 			<>
 				<WatchListTabs />
-				<div className="flex min-h-[360px] flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+				<Card padding="sm" border="subtle" className="flex min-h-[360px] flex-1 items-center justify-center">
 					<LocalLoader />
-				</div>
+				</Card>
 			</>
 		)
 	}
@@ -142,11 +143,11 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 			<WatchListTabs />
 			<div className="flex flex-col gap-2">
 				<TokensPortfolioSelection />
-				<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<Card padding="none" border="subtle">
 					<div className="flex flex-wrap items-center gap-2 p-2">
 						<div className="mr-auto">
 							<h2 className="text-base font-semibold">Tokens</h2>
-							<p className="text-xs text-(--text-disabled)">
+							<p className="text-xs text-secondary">
 								Select or deselect tokens for the "{selectedPortfolio}" portfolio
 							</p>
 						</div>
@@ -157,6 +158,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 							label={savedTokenIds.length > 0 ? 'Tokens' : 'Add tokens'}
 							labelType="smol"
 							variant="filter"
+							size="md"
 							portal
 						/>
 					</div>
@@ -170,6 +172,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 							pageSizeOptions={PAGE_SIZE_OPTIONS}
 							style={tableStyle}
 							tableClassName="min-w-[var(--tokens-table-min-width)]"
+							shell="none"
 							interactionDisabled={isFetching}
 							renderSubComponent={(row: Row<TokensTableRow>) => <ExpandedTokenMarkets symbol={row.original.symbol} />}
 						/>
@@ -180,7 +183,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 							<p className="mt-1 text-xs text-(--text-secondary) opacity-75">Use the selector above to add tokens</p>
 						</div>
 					)}
-				</div>
+				</Card>
 			</div>
 		</>
 	)
@@ -207,7 +210,7 @@ function ExpandedTokenMarkets({ symbol }: { symbol: string }) {
 	return (
 		<div
 			ref={ref}
-			className="sticky left-0 z-10 border-t border-(--cards-border) bg-(--cards-bg)"
+			className="sticky left-0 z-10 border-t border-divider bg-surface"
 			style={{ width: width ? `${width}px` : undefined }}
 		>
 			<TokenMarketsSection tokenSymbol={symbol} variant="embedded" />
@@ -220,7 +223,7 @@ function TokensPortfolioSelection() {
 	const { portfolios, selectedPortfolio, addPortfolio, removePortfolio, setSelectedPortfolio } = useBookmarks('tokens')
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+		<Card padding="none" border="subtle">
 			<div className="flex flex-wrap items-center gap-2 p-2">
 				<h1 className="mr-auto text-base font-semibold">Portfolio</h1>
 				<Menu
@@ -256,6 +259,6 @@ function TokensPortfolioSelection() {
 					</button>
 				) : null}
 			</div>
-		</div>
+		</Card>
 	)
 }

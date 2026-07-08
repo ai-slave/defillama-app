@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { Card } from '~/ui/Card'
 import { type Segment, segmentHasOi } from './segments'
 import { CategoryLink, ChangeCell, TokenName, type KnownTokenSlugs } from './shared'
 import type { CategoryStat, SymbolStat } from './types'
@@ -11,15 +12,15 @@ interface MoverRow {
 
 function MoverColumn({ rows, empty }: { rows: MoverRow[]; empty: string }) {
 	if (rows.length === 0) {
-		return <div className="px-3 py-2 text-xs text-(--text-disabled)">{empty}</div>
+		return <div className="px-3 py-2 label-sm text-tertiary">{empty}</div>
 	}
 	return (
 		<table className="w-full">
 			<tbody>
 				{rows.map((row, i) => (
-					<tr key={i} className="border-t border-(--cards-border) first:border-t-0">
-						<td className="px-3 py-1.5 text-xs">{row.name}</td>
-						<td className="px-3 py-1.5 text-right text-xs">
+					<tr key={i} className="border-t border-subtle first:border-t-0">
+						<td className="px-3 py-1.5 label-sm">{row.name}</td>
+						<td className="px-3 py-1.5 text-right label-sm">
 							<ChangeCell fraction={row.value} />
 						</td>
 					</tr>
@@ -43,21 +44,19 @@ function MoverCard<T extends Parameters<typeof moverValue>[0]>({
 	const { gainers, losers } = selectMovers(rows, metricKey)
 	const toRows = (list: T[]): MoverRow[] => list.map((r) => ({ name: nameOf(r), value: moverValue(r, metricKey) }))
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="border-b border-(--cards-border) px-3 py-2 text-sm font-semibold">{label}</div>
-			<div className="grid grid-cols-2 border-b border-(--cards-border)">
-				<span className="border-r border-(--cards-border) px-3 py-1 text-[10px] tracking-wider text-(--success) uppercase">
-					Gainers
-				</span>
-				<span className="px-3 py-1 text-[10px] tracking-wider text-(--error) uppercase">Losers</span>
+		<Card padding="none" border="subtle" className="overflow-hidden">
+			<div className="border-b border-subtle px-3 py-2 label-md">{label}</div>
+			<div className="grid grid-cols-2 border-b border-subtle">
+				<span className="border-r border-subtle px-3 py-1 label-sm text-data-up uppercase">Gainers</span>
+				<span className="px-3 py-1 label-sm text-data-down uppercase">Losers</span>
 			</div>
 			<div className="grid grid-cols-2">
-				<div className="border-r border-(--cards-border)">
+				<div className="border-r border-subtle">
 					<MoverColumn rows={toRows(gainers)} empty="— none —" />
 				</div>
 				<MoverColumn rows={toRows(losers)} empty="— none —" />
 			</div>
-		</div>
+		</Card>
 	)
 }
 
@@ -76,7 +75,7 @@ function MoverRowSet<T extends Parameters<typeof moverValue>[0]>({
 	const gridCols = metricKeys.length >= 3 ? 'md:grid-cols-2 xl:grid-cols-3' : 'md:grid-cols-2'
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="text-[10px] tracking-wider text-(--text-label) uppercase">{title}</div>
+			<div className="label-sm text-secondary uppercase">{title}</div>
 			<div className={`grid grid-cols-1 gap-2 ${gridCols}`}>
 				{metricKeys.map((metric) => (
 					<MoverCard key={metric.key} label={metric.label} rows={rows} metricKey={metric.key} nameOf={nameOf} />

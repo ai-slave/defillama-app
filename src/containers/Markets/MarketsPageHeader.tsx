@@ -19,7 +19,7 @@ export function MarketsPageHeader({
 	return (
 		<header className="flex flex-col gap-3">
 			{showBack ? (
-				<BasicLink href={backHref} shallow className="w-fit text-sm text-(--link-text) hover:underline">
+				<BasicLink href={backHref} shallow className="w-fit label-md text-link hover:underline">
 					← {backLabel}
 				</BasicLink>
 			) : null}
@@ -28,7 +28,7 @@ export function MarketsPageHeader({
 					<h1 className="text-2xl font-semibold capitalize">{title}</h1>
 					{meta}
 				</div>
-				{description ? <p className="text-sm text-(--text-label)">{description}</p> : null}
+				{description ? <p className="body-sm text-secondary">{description}</p> : null}
 			</div>
 		</header>
 	)

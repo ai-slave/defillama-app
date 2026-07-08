@@ -5,6 +5,9 @@ import { Icon } from '~/components/Icon'
 import { LoadingSpinner } from '~/components/Loaders'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { setSignupSource } from '~/containers/Subscription/signupSource'
+import { Button } from '~/ui/Button'
+import { Input, inputStyles } from '~/ui/Input'
+import { popoverMobileDismissStyles, popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
 import { toNiceDayMonthAndYear, toNiceDayMonthAndYearAndTime } from '~/utils'
 
 const SubscribeProModal = lazy(() =>
@@ -107,6 +110,7 @@ export const DateFilter = ({
 		<>
 			<Ariakit.PopoverProvider>
 				<Ariakit.PopoverDisclosure
+					render={<Button size="md" className="relative" />}
 					onClick={(e) => {
 						if (!isSubscribed) {
 							e.preventDefault()
@@ -115,17 +119,16 @@ export const DateFilter = ({
 						}
 					}}
 					aria-busy={isLoading}
-					className="relative flex cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
 				>
 					{isLoading ? (
-						<span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full border border-(--cards-border) bg-(--cards-bg) shadow-xs">
+						<span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full border border-medium bg-surface shadow-xs">
 							<LoadingSpinner size={12} />
 							<span className="sr-only">Loading custom range inflows</span>
 						</span>
 					) : null}
 					<span>Custom Range Inflows</span>
 					{startDate != null || endDate != null ? (
-						<span className="text-(--link-text)">
+						<span className="text-link">
 							{' '}
 							{startDate != null
 								? isAtMidnight(startDate)
@@ -147,12 +150,10 @@ export const DateFilter = ({
 					hideOnInteractOutside
 					gutter={6}
 					overflowPadding={16} // distance from the boundary edges
-					wrapperProps={{
-						className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
-					}}
-					className="z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,60dvh)] lg:max-h-(--popover-available-height) dark:border-[hsl(204,3%,32%)]"
+					wrapperProps={{ className: popoverMobileWrapperClassName }}
+					className={popoverSurfaceStyles}
 				>
-					<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
+					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 						<Icon name="x" className="size-5" />
 					</Ariakit.PopoverDismiss>
 
@@ -187,11 +188,11 @@ export const DateFilter = ({
 							className="flex flex-col gap-3 p-3"
 						>
 							<label className="flex flex-col gap-1">
-								<span>Start Date</span>
-								<input
+								<span className="label-sm text-secondary">Start Date</span>
+								<Input
 									type="date"
 									name="startDate"
-									className="h-9 w-full cursor-pointer rounded-md border border-(--form-control-border) bg-white px-3 py-1 text-black disabled:opacity-50 dark:bg-black dark:text-white dark:scheme-dark"
+									className="w-full cursor-pointer dark:scheme-dark"
 									value={localStartDate}
 									max={maxDate}
 									onChange={handleStartDateChange}
@@ -199,10 +200,10 @@ export const DateFilter = ({
 								/>
 							</label>
 							<label className="flex flex-col gap-1">
-								<span>Start Hour (optional)</span>
+								<span className="label-sm text-secondary">Start Hour (optional)</span>
 								<select
 									name="startHour"
-									className="h-9 w-full rounded-md border border-(--form-control-border) bg-white px-3 py-1 text-black disabled:opacity-50 dark:bg-black dark:text-white"
+									className={`${inputStyles} w-full`}
 									value={localStartHour}
 									onChange={handleStartHourChange}
 								>
@@ -214,11 +215,11 @@ export const DateFilter = ({
 								</select>
 							</label>
 							<label className="flex flex-col gap-1">
-								<span>End Date</span>
-								<input
+								<span className="label-sm text-secondary">End Date</span>
+								<Input
 									type="date"
 									name="endDate"
-									className="h-9 w-full cursor-pointer rounded-md border border-(--form-control-border) bg-white px-3 py-1 text-black disabled:opacity-50 dark:bg-black dark:text-white dark:scheme-dark"
+									className="w-full cursor-pointer dark:scheme-dark"
 									value={localEndDate}
 									max={maxDate}
 									onChange={handleEndDateChange}
@@ -226,10 +227,10 @@ export const DateFilter = ({
 								/>
 							</label>
 							<label className="flex flex-col gap-1">
-								<span>End Hour (optional)</span>
+								<span className="label-sm text-secondary">End Hour (optional)</span>
 								<select
 									name="endHour"
-									className="h-9 w-full rounded-md border border-(--form-control-border) bg-white px-3 py-1 text-black disabled:opacity-50 dark:bg-black dark:text-white"
+									className={`${inputStyles} w-full`}
 									value={localEndHour}
 									onChange={handleEndHourChange}
 								>
@@ -241,19 +242,18 @@ export const DateFilter = ({
 								</select>
 							</label>
 							<div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row">
-								<button
-									type="reset"
-									className="inline-flex h-9 w-full items-center justify-center rounded-md bg-black/5 px-4 text-sm font-medium whitespace-nowrap hover:bg-black/10 disabled:opacity-50 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:focus-visible:bg-white/20"
-								>
+								<Button type="reset" variant="secondary" size="md" className="w-full sm:w-auto sm:flex-1">
 									Clear
-								</button>
-								<button
+								</Button>
+								<Button
 									type="submit"
 									disabled={!localStartDate || !localEndDate}
-									className="inline-flex h-9 w-full items-center justify-center rounded-md bg-(--link-active-bg) px-4 text-sm font-medium whitespace-nowrap text-white disabled:opacity-50"
+									variant="primary"
+									size="md"
+									className="w-full sm:w-auto sm:flex-1"
 								>
 									Apply Filter
-								</button>
+								</Button>
 							</div>
 						</form>
 					</div>

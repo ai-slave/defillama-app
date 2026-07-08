@@ -14,6 +14,7 @@ import { Icon } from '~/components/Icon'
 import { Menu } from '~/components/Menu'
 import { QuestionHelper } from '~/components/QuestionHelper'
 import { Select } from '~/components/Select/Select'
+import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/components/Tooltip'
@@ -36,6 +37,11 @@ import {
 import { useCalcCirculating, useGroupBridgeData } from '~/containers/Stablecoins/hooks'
 import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/containers/Stablecoins/queries.client'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { buttonStyles } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { Checkbox } from '~/ui/Checkbox'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { capitalizeFirstLetter, formattedNum, slug } from '~/utils'
 import { peggedAssetIconUrl } from '~/utils/icons'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
@@ -58,6 +64,7 @@ const risksHelperTexts: Record<string, string> = {
 
 const ASSET_CHART_MODE = { page: 'asset' } as const
 const UNRELEASED_QUERY_KEY = 'unreleased'
+const INFO_ACTION_STYLES = buttonStyles({ size: 'md' })
 
 export default function PeggedContainer(props: PeggedAssetPageProps) {
 	return (
@@ -249,7 +256,7 @@ export const PeggedAssetInfo = ({
 		<>
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
 				{/* Stats card */}
-				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-5 xl:col-span-1">
+				<Card border="subtle" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					<h1 className="flex flex-wrap items-center gap-2 text-xl">
 						<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} size={24} />
 						<span className="font-bold">{name}</span>
@@ -262,51 +269,48 @@ export const PeggedAssetInfo = ({
 					</h1>
 
 					<p className="flex flex-col">
-						<span className="text-(--text-label)">Market Cap</span>
-						<span className="min-h-8 font-jetbrains text-2xl font-semibold">
-							{formattedNum(displayedMarketCap ?? '0', true)}
-						</span>
+						<span className="label-md text-(--text-label)">Market Cap</span>
+						<span className="min-h-8 mono-xl">{formattedNum(displayedMarketCap ?? '0', true)}</span>
 					</p>
 
 					<div className="flex flex-col">
-						<p className="flex flex-wrap justify-between gap-4 border-b border-(--cards-border) py-1 first:pt-0 last:border-none last:pb-0">
-							<span className="text-(--text-label)">Price</span>
-							<span className="font-jetbrains">{price === null ? '-' : formattedNum(price, true)}</span>
+						<p className="flex flex-wrap justify-between gap-4 border-b border-very-subtle py-1 first:pt-0 last:border-none last:pb-0">
+							<span className="label-md text-(--text-label)">Price</span>
+							<span className="mono-md">{price === null ? '-' : formattedNum(price, true)}</span>
 						</p>
 						{displayedTotalCirculating != null ? (
-							<p className="flex flex-wrap justify-between gap-4 border-b border-(--cards-border) py-1 first:pt-0 last:border-none last:pb-0">
-								<span className="text-(--text-label)">Total Circulating</span>
-								<span className="font-jetbrains">{formattedNum(displayedTotalCirculating)}</span>
+							<p className="flex flex-wrap justify-between gap-4 border-b border-very-subtle py-1 first:pt-0 last:border-none last:pb-0">
+								<span className="label-md text-(--text-label)">Total Circulating</span>
+								<span className="mono-md">{formattedNum(displayedTotalCirculating)}</span>
 							</p>
 						) : null}
 						{unreleased != null && unreleased > 0 ? (
-							<p className="flex flex-wrap items-center justify-between gap-4 border-b border-(--cards-border) py-1 first:pt-0 last:border-none last:pb-0">
-								<label className="flex cursor-pointer items-center gap-2 text-(--text-label)">
-									<input
-										type="checkbox"
-										value={UNRELEASED_QUERY_KEY}
-										checked={includeUnreleased}
-										onChange={onUnreleasedToggle}
-									/>
-									<span style={{ opacity: includeUnreleased ? 1 : 0.7 }}>
-										{capitalizeFirstLetter(UNRELEASED_QUERY_KEY)}
+							<p className="flex flex-wrap items-center justify-between gap-4 border-b border-very-subtle py-1 first:pt-0 last:border-none last:pb-0">
+								<Checkbox
+									variant="inline"
+									checked={includeUnreleased}
+									onChange={onUnreleasedToggle}
+									value={UNRELEASED_QUERY_KEY}
+								>
+									<span className="flex items-center gap-1">
+										<span>{capitalizeFirstLetter(UNRELEASED_QUERY_KEY)}</span>
+										<QuestionHelper text="Use this option to choose whether to include coins that have been minted but have never been circulating." />
 									</span>
-									<QuestionHelper text="Use this option to choose whether to include coins that have been minted but have never been circulating." />
-								</label>
-								<span className="font-jetbrains">{formattedNum(unreleased)}</span>
+								</Checkbox>
+								<span className="mono-md">{formattedNum(unreleased)}</span>
 							</p>
 						) : null}
 					</div>
-				</div>
+				</Card>
 
 				{/* Chart */}
-				<div className="col-span-2 flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-						<div className="mr-auto flex flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-xs font-medium text-(--text-form)">
+				<Panel className="col-span-2">
+					<ChartPanelToolbar className="justify-end">
+						<div className={`mr-auto ${chartSegmentedControlGroupStyles}`}>
 							{chartTypeOptions.map(({ key, name: optionName }) => (
 								<button
 									key={key}
-									className="shrink-0 px-2 py-1 text-sm whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:font-medium data-[active=true]:text-(--link-text)"
+									className={chartSegmentedControlButtonStyles}
 									data-active={chartType === key}
 									onClick={() => onChartTypeChange(key)}
 								>
@@ -321,6 +325,7 @@ export const PeggedAssetInfo = ({
 							label={getStablecoinChartViewLabel(chartView)}
 							labelType="none"
 							variant="filter"
+							size="md"
 						/>
 						{chartType === 'volume' ? null : <AddToDashboardButton chartConfig={dashboardChartConfig} smol />}
 						{chartType === 'volume' ? (
@@ -336,7 +341,7 @@ export const PeggedAssetInfo = ({
 							title={getImageExportTitle()}
 							iconUrl={peggedAssetIconUrl(name)}
 						/>
-					</div>
+					</ChartPanelToolbar>
 					{chartType === 'marketCap' && chartView === 'pie' ? (
 						<React.Suspense fallback={<div className="h-[360px] w-full" />}>
 							<PieChart chartData={chainsCirculatingValues} onReady={handleChartReady} />
@@ -359,76 +364,60 @@ export const PeggedAssetInfo = ({
 							onReady={handleChartReady}
 						/>
 					)}
-				</div>
+				</Panel>
 
 				{/* Additional info cards */}
 				{hasInfo ? (
 					<div className="col-span-full">
-						<div className="col-span-1 flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:p-4">
-							<h2 className="text-base font-semibold">Stablecoin Information</h2>
-							{description ? <p>{description}</p> : null}
+						<Card as="section" padding="sm" border="subtle" className="flex flex-col gap-3 body-md">
+							<h2 className="heading-xs">Stablecoin Information</h2>
+							{description ? <p className="body-md">{description}</p> : null}
 							{pegMechanism ? (
-								<p className="flex items-center gap-1">
-									<span>Category:</span>
-									<span>{pegMechanism}</span>
-									<QuestionHelper text={risksHelperTexts[pegMechanism] || 'No additional info available'} />
+								<p className="flex flex-wrap items-center gap-2">
+									<span className="label-md text-tertiary">Category:</span>
+									<span className="inline-flex items-center gap-1 label-md text-primary">
+										{pegMechanism}
+										<QuestionHelper text={risksHelperTexts[pegMechanism] || 'No additional info available'} />
+									</span>
 								</p>
 							) : null}
 							{mintRedeemDescription ? (
-								<p className="flex flex-col gap-1">
-									<span className="font-medium">Minting and Redemption</span>
-									<span className="text-(--text-label)">{mintRedeemDescription}</span>
-								</p>
+								<>
+									<p className="label-md text-tertiary">Minting and Redemption</p>
+									<p className="body-md text-primary">{mintRedeemDescription}</p>
+								</>
 							) : null}
 							<p className="flex items-center gap-1">
-								<span className="flex flex-nowrap items-center gap-1">
+								<span className="flex flex-nowrap items-center gap-1 label-md text-tertiary">
 									<span>Audits</span>
 									<QuestionHelper text="Audits are not a security guarantee" />
 									<span>:</span>
 								</span>
 								{auditLinks != null && auditLinks.length > 0 ? (
-									<Menu
-										name="Yes"
-										options={auditLinks}
-										isExternal
-										className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
-									/>
+									<Menu name="Yes" options={auditLinks} isExternal className={INFO_ACTION_STYLES} />
 								) : (
 									<span>No</span>
 								)}
 							</p>
-							<div className="flex flex-wrap gap-2">
+							<div className="flex flex-wrap gap-3">
 								{url ? (
-									<a
-										href={url}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
-									>
-										<Icon name="earth" className="size-3" />
+									<a href={url} target="_blank" rel="noopener noreferrer" className={INFO_ACTION_STYLES}>
+										<Icon name="earth" className="size-4" />
 										<span>Website</span>
+										<Icon name="arrow-up-right" className="size-4" />
 									</a>
 								) : null}
 								{twitter ? (
-									<a
-										href={twitter}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
-									>
-										<Icon name="twitter" className="size-3" />
+									<a href={twitter} target="_blank" rel="noopener noreferrer" className={INFO_ACTION_STYLES}>
+										<Icon name="twitter" className="size-4" />
 										<span>Twitter</span>
+										<Icon name="arrow-up-right" className="size-4" />
 									</a>
 								) : null}
 								{blockExplorerUrl ? (
-									<a
-										href={blockExplorerUrl}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
-									>
+									<a href={blockExplorerUrl} target="_blank" rel="noopener noreferrer" className={INFO_ACTION_STYLES}>
 										<span>{blockExplorerName}</span>
-										<Icon name="arrow-up-right" height={14} width={14} />
+										<Icon name="arrow-up-right" className="size-4" />
 									</a>
 								) : null}
 								{onCoinGecko === 'true' && gecko_id ? (
@@ -436,10 +425,10 @@ export const PeggedAssetInfo = ({
 										href={`https://www.coingecko.com/en/coins/${gecko_id}`}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
+										className={INFO_ACTION_STYLES}
 									>
 										<span>CoinGecko</span>
-										<Icon name="arrow-up-right" height={14} width={14} />
+										<Icon name="arrow-up-right" className="size-4" />
 									</a>
 								) : null}
 								{gecko_id ? (
@@ -447,14 +436,15 @@ export const PeggedAssetInfo = ({
 										href={`https://github.com/DefiLlama/peggedassets-server/tree/master/src/adapters/peggedAssets/${gecko_id}`}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
+										className={INFO_ACTION_STYLES}
 									>
-										<Icon name="github" className="size-3" />
+										<Icon name="github" className="size-4" />
 										<span>Check the code</span>
+										<Icon name="arrow-up-right" className="size-4" />
 									</a>
 								) : null}
 							</div>
-						</div>
+						</Card>
 					</div>
 				) : null}
 			</div>
@@ -481,21 +471,29 @@ function SelectedAssetChart({
 }) {
 	if (isLoading) {
 		return (
-			<div className="flex h-[360px] w-full items-center justify-center text-sm text-(--text-label)">
+			<div
+				role="status"
+				aria-live="polite"
+				className="flex h-[360px] w-full items-center justify-center body-sm text-tertiary"
+			>
 				Loading chart...
 			</div>
 		)
 	}
 	if (isError || !data) {
 		return (
-			<div className="flex h-[360px] w-full items-center justify-center text-sm text-(--text-label)">
+			<div role="alert" className="flex h-[360px] w-full items-center justify-center body-sm text-data-down">
 				Chart unavailable
 			</div>
 		)
 	}
 	if (data.charts.length === 0 || data.dataset.source.length === 0) {
 		return (
-			<div className="flex h-[360px] w-full items-center justify-center text-sm text-(--text-label)">
+			<div
+				role="status"
+				aria-live="polite"
+				className="flex h-[360px] w-full items-center justify-center body-sm text-tertiary"
+			>
 				Chart unavailable
 			</div>
 		)

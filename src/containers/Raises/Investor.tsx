@@ -15,6 +15,10 @@ import { Icon } from '~/components/Icon'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { RaisesFilters } from '~/containers/Raises/Filters'
+import { Card } from '~/ui/Card'
+import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { useRaisesData } from './hooks'
 import { raisesColumnOrders, raisesColumns } from './Table'
@@ -55,27 +59,22 @@ function RaisesByInvestorTable({ raises }: { raises: IRaise[] }) {
 	useSortColumnOrders({ instance, columnOrders: raisesColumnOrders })
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-3">
-				<label className="relative mr-auto w-full sm:max-w-[280px]">
+		<Panel>
+			<TableToolbar className="items-center justify-end">
+				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search projects...</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
 						name="search"
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search projects..."
-						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+						className={searchFieldInputStyles}
 					/>
 				</label>
-				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: 'raises' })} smol />
-			</div>
+				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: 'raises' })} smol size="md" />
+			</TableToolbar>
 			<VirtualTable instance={instance} />
-		</div>
+		</Panel>
 	)
 }
 
@@ -145,8 +144,8 @@ export const InvestorContainer = ({
 			/>
 
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-5 xl:col-span-1">
-					<h1 className="text-xl font-semibold">{investorName}</h1>
+				<Card border="subtle" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+					<h1 className="heading-sm">{investorName}</h1>
 
 					<details className="group text-base">
 						<summary>
@@ -170,9 +169,9 @@ export const InvestorContainer = ({
 							</p>
 						))}
 					</details>
-				</div>
-				<div className="col-span-2 rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<React.Suspense fallback={<div className="min-h-[398px]" />}>
+				</Card>
+				<Panel className="col-span-2">
+					<React.Suspense fallback={<div className="min-h-[406px]" />}>
 						<MultiSeriesChart2
 							dataset={deferredFundingRoundsByMonthChart.dataset}
 							charts={deferredFundingRoundsByMonthChart.charts}
@@ -186,12 +185,12 @@ export const InvestorContainer = ({
 							}}
 						/>
 					</React.Suspense>
-				</div>
+				</Panel>
 			</div>
 
 			<div className="grid grid-cols-2 gap-1">
-				<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-					<React.Suspense fallback={<div className="min-h-[398px]" />}>
+				<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+					<React.Suspense fallback={<div className="min-h-[406px]" />}>
 						<PieChart
 							chartData={deferredInvestmentByRounds}
 							title="Investment by Rounds"
@@ -204,9 +203,9 @@ export const InvestorContainer = ({
 							}}
 						/>
 					</React.Suspense>
-				</div>
-				<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-					<React.Suspense fallback={<div className="min-h-[398px]" />}>
+				</Panel>
+				<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+					<React.Suspense fallback={<div className="min-h-[406px]" />}>
 						<PieChart
 							chartData={deferredRaisesByCategory}
 							title="Investments by Category"
@@ -219,7 +218,7 @@ export const InvestorContainer = ({
 							}}
 						/>
 					</React.Suspense>
-				</div>
+				</Panel>
 			</div>
 			<RaisesByInvestorTable raises={filteredRaisesList} />
 		</>

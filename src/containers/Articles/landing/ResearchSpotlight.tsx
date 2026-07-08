@@ -49,7 +49,7 @@ export const ResearchSpotlight: React.FC<ResearchSpotlightProps> = ({ title, art
 				<ResearchIcon name="spotlight" width={32} height={32} aria-hidden />
 				<TitleLine title={title} />
 			</div>
-			<div className={clsx('grid grid-cols-1 gap-[12px] lg:gap-[28px]', getSpotlightGridCols(count))}>
+			<div className={clsx('grid grid-cols-1 gap-3 lg:gap-7', getSpotlightGridCols(count))}>
 				{articles.map((article, i) => (
 					<Link
 						key={article.id}
@@ -75,7 +75,7 @@ export const ResearchSpotlight: React.FC<ResearchSpotlightProps> = ({ title, art
 						{i === 0 && (
 							<InViewAnalytics eventParams={[article, 'widget_impression', 'DefiLlama Research Spotlight widget']} />
 						)}
-						<div className="flex grow flex-col py-[16px]">
+						<div className="flex grow flex-col py-4">
 							<div
 								className={clsx(
 									'font-semibold text-[#0d1e3b] group-hover:text-[#0c2956] group-hover:opacity-70 dark:text-white dark:group-hover:text-white/70',
@@ -86,7 +86,7 @@ export const ResearchSpotlight: React.FC<ResearchSpotlightProps> = ({ title, art
 							>
 								{article.title}
 							</div>
-							<time className="mt-[10px] hidden text-[14px] font-medium text-[#787878] lg:block dark:text-white">
+							<time className="mt-2.5 hidden text-[14px] font-medium text-[#787878] lg:block dark:text-white">
 								{formatDate(article.displayDate ?? article.publishedAt)}
 							</time>
 						</div>

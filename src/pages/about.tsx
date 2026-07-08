@@ -49,7 +49,7 @@ function AboutPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 			canonicalUrl={`/about`}
 		>
 			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
-				<h1 className="text-lg font-semibold">About DefiLlama</h1>
+				<h1 className="heading-xs">About DefiLlama</h1>
 				<hr className="border-black/20 dark:border-white/20" />
 				<p>
 					DefiLlama is the largest TVL aggregator for DeFi (Decentralized Finance). Our data is fully{' '}
@@ -77,7 +77,7 @@ function AboutPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 
 			{props.protocols && props.chains ? (
 				<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
-					<h2 className="text-lg font-semibold">Stats</h2>
+					<h2 className="heading-xs">Stats</h2>
 					<hr className="border-black/20 dark:border-white/20" />
 					<div>
 						<p>We track:</p>
@@ -93,7 +93,7 @@ function AboutPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 			) : null}
 
 			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
-				<h2 className="text-lg font-semibold">Contact</h2>
+				<h2 className="heading-xs">Contact</h2>
 				<hr className="border-black/20 dark:border-white/20" />
 				<p>
 					The best way to contact us and the one in which you'll get a reply the fastest is through our{' '}
@@ -133,7 +133,7 @@ function AboutPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 			</div>
 
 			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
-				<h2 className="text-lg font-semibold">Acknowledgements</h2>
+				<h2 className="heading-xs">Acknowledgements</h2>
 				<hr className="border-black/20 dark:border-white/20" />
 				<p>
 					Thanks to{' '}

@@ -54,7 +54,7 @@ function ReportError() {
 					onSubmit={onSubmit}
 					className="flex w-full flex-col gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3"
 				>
-					<h1 className="mb-3 text-center text-xl font-semibold">Report Error</h1>
+					<h1 className="mb-3 text-center heading-sm">Report Error</h1>
 					<label className="flex flex-col gap-1">
 						<span>Chain / Protocol / Institution</span>
 						<input

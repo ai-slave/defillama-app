@@ -7,6 +7,8 @@ import { getChartTheme } from '~/components/ECharts/chartTheme'
 import { Icon } from '~/components/Icon'
 import { LoadingSpinner } from '~/components/Loaders'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { buttonStyles } from '~/ui/Button'
+import { menuSurfaceStyles, popoverMenuItemStyles } from '~/ui/Popover'
 import { downloadDataURL } from '~/utils/download'
 import { getChartExportIconFetchUrl } from './chartPngExportIcon'
 import {
@@ -1305,8 +1307,7 @@ async function renderClonedChartExport(
 
 // --- Component ---
 
-const DEFAULT_CLASSNAME =
-	'flex items-center justify-center gap-1 rounded-md border border-blue-500 px-2 py-1.5 text-xs text-blue-500 hover:bg-(--link-hover-bg) hover:text-black dark:hover:text-white focus-visible:bg-(--link-hover-bg) focus-visible:text-white disabled:text-(--text-disabled)'
+const DEFAULT_CLASSNAME = buttonStyles({ size: 'md' })
 
 interface ChartPngExportButtonProps {
 	chartInstance: () => echarts.ECharts | null
@@ -1429,16 +1430,12 @@ export function ChartPngExportButton({
 				<span>{smol ? '.png' : 'Image'}</span>
 			</Ariakit.PopoverDisclosure>
 
-			<Ariakit.Popover
-				gutter={8}
-				unmountOnHide
-				className="z-50 flex flex-col rounded-lg border border-(--cards-border) bg-(--cards-bg) py-1 shadow-lg"
-			>
+			<Ariakit.Popover gutter={8} unmountOnHide className={`${menuSurfaceStyles} z-50`}>
 				<button
 					data-umami-event="export-image"
 					data-umami-event-page={router.pathname}
 					type="button"
-					className="flex items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-(--link-hover-bg)"
+					className={popoverMenuItemStyles}
 					onClick={() => void handleDownload()}
 				>
 					<Icon name="download-paper" height={14} width={14} />
@@ -1448,7 +1445,7 @@ export function ChartPngExportButton({
 					data-umami-event="copy-image"
 					data-umami-event-page={router.pathname}
 					type="button"
-					className="flex items-center gap-2 px-3 py-2 text-xs transition-colors hover:bg-(--link-hover-bg)"
+					className={popoverMenuItemStyles}
 					onClick={() => void handleCopyToClipboard()}
 				>
 					<Icon name="copy" height={14} width={14} />

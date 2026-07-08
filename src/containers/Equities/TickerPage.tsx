@@ -6,6 +6,10 @@ import { TagGroup } from '~/components/TagGroup'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import defs from '~/public/equities-definitions.json'
+import { Card } from '~/ui/Card'
+import { Panel } from '~/ui/Panel'
+import { TabLink, tabTrackStyles } from '~/ui/Tab'
+import { ChartPanelToolbar, chartPanelToolbarActionsStyles } from '~/ui/Toolbar'
 import { abbreviateNumber } from '~/utils'
 import { equityCountryFlagUrl } from '~/utils/icons'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -182,7 +186,7 @@ function EquityTitle({ ticker, country, name }: Pick<IEquityTickerPageProps, 'ti
 			<TokenLogo kind="equities" name={ticker} country={country} alt={`Logo of ${ticker}`} />
 			<h1 className="flex flex-wrap items-center gap-2 text-xl">
 				<span className="font-bold">{name}</span>
-				<span className="font-normal text-(--text-disabled)">
+				<span className="font-normal text-secondary">
 					({ticker}:{country})
 				</span>
 			</h1>
@@ -268,7 +272,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 		<article className="flex flex-col gap-2">
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
 				{/* Desktop: left stats panel */}
-				<div className="col-span-1 hidden flex-col gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:flex xl:min-h-[360px]">
+				<Card border="subtle" padding="sm" className="col-span-1 hidden flex-col gap-6 xl:flex xl:min-h-[360px]">
 					<EquityTitle ticker={props.ticker} country={props.country} name={props.name} />
 					<p className="flex flex-col">
 						<span className="text-(--text-label)">{defs.marketCap.label}</span>
@@ -277,12 +281,12 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 						</span>
 					</p>
 					<EquityKeyMetrics summary={props.summary} />
-				</div>
+				</Card>
 
 				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
-					<div className="col-span-full flex flex-col gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+					<Panel className="col-span-full">
 						{/* Mobile: name + market cap */}
-						<div className="flex flex-col gap-6 xl:hidden">
+						<div className="flex flex-col gap-6 p-2 pb-0 xl:hidden">
 							<EquityTitle ticker={props.ticker} country={props.country} name={props.name} />
 							<p className="flex flex-col">
 								<span className="text-(--text-label)">{defs.marketCap.label}</span>
@@ -292,15 +296,15 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							</p>
 						</div>
 
-						<div className="flex flex-wrap items-center justify-end gap-2">
-							<h2 className="mr-auto text-base font-semibold">Price History</h2>
+						<ChartPanelToolbar className="justify-end">
+							<h2 className="mr-auto heading-xs">Price History</h2>
 							<TagGroup
 								selectedValue={activeTimeframe}
 								setValue={setActiveTimeframe}
 								values={EQUITIES_PRICE_HISTORY_TIMEFRAMES}
 							/>
 							<ChartExportButtons chartInstance={priceChartInstance} filename={exportFilename} title={exportTitle} />
-						</div>
+						</ChartPanelToolbar>
 						<Suspense fallback={<div className="min-h-[360px]" />}>
 							<MultiSeriesChart2
 								dataset={activePriceHistoryChart.dataset}
@@ -312,22 +316,22 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								onReady={handlePriceChartReady}
 							/>
 						</Suspense>
-					</div>
+					</Panel>
 
 					{/* Mobile: key metrics below chart */}
-					<div className="col-span-full flex flex-col gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:hidden">
+					<Card border="subtle" padding="sm" className="col-span-full flex flex-col gap-6 xl:hidden">
 						<EquityKeyMetrics summary={props.summary} />
-					</div>
+					</Card>
 				</div>
 
-				<div className="col-span-full flex flex-col gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-					<div className="flex flex-wrap items-center gap-2">
+				<Panel className="col-span-full">
+					<ChartPanelToolbar>
 						<TagGroup
 							selectedValue={activeFundamentalChart}
 							setValue={setActiveFundamentalChart}
 							values={EQUITY_FUNDAMENTAL_CHART_OPTIONS}
 						/>
-						<div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+						<div className={chartPanelToolbarActionsStyles}>
 							<TagGroup
 								selectedValue={activeDimensionPeriod}
 								setValue={setActiveDimensionPeriod}
@@ -339,7 +343,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								title={fundamentalsExportTitle}
 							/>
 						</div>
-					</div>
+					</ChartPanelToolbar>
 					<Suspense fallback={<div className="min-h-[320px]" />}>
 						<MultiSeriesChart2
 							dataset={activeFundamentalsChart.dataset}
@@ -351,29 +355,29 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							onReady={handleFundamentalsChartReady}
 						/>
 					</Suspense>
-				</div>
+				</Panel>
 			</div>
 
-			<nav className="flex w-full overflow-x-auto text-xs font-medium" role="tablist" aria-label="Ticker sections">
+			<nav className={tabTrackStyles} role="tablist" aria-label="Ticker sections">
 				{TABS.map((tab) => (
-					<button
+					<TabLink
+						as="button"
 						key={tab}
 						type="button"
 						role="tab"
 						aria-selected={activeTab === tab}
 						onClick={() => setActiveTab(tab)}
 						data-active={activeTab === tab}
-						className="shrink-0 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) data-[active=true]:border-(--primary)"
 					>
 						{TAB_LABELS[tab]}
-					</button>
+					</TabLink>
 				))}
 			</nav>
 
 			{activeTab === 'overview' ? (
 				<div className="grid grid-cols-1 gap-2 xl:grid-cols-2" role="tabpanel" aria-label="Overview">
-					<section className="flex flex-col gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-						<h2 className="text-base font-semibold">Market Data</h2>
+					<Card as="section" border="subtle" padding="sm" className="flex flex-col gap-3">
+						<h2 className="heading-xs">Market Data</h2>
 						<div className="flex flex-col">
 							<MetricRow
 								label={defs.currentPrice.label}
@@ -466,10 +470,10 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								value={formatMetricValue(props.summary.enterpriseValueToEbitda)}
 							/>
 						</div>
-					</section>
+					</Card>
 
-					<section className="flex flex-col gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-						<h2 className="text-base font-semibold">Profile</h2>
+					<Card as="section" border="subtle" padding="sm" className="flex flex-col gap-3">
+						<h2 className="heading-xs">Profile</h2>
 						<div className="flex flex-col">
 							<MetricRow label="Ticker" value={props.ticker} />
 							<MetricRow
@@ -497,7 +501,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 											href={props.metadata.website}
 											target="_blank"
 											rel="noopener noreferrer"
-											className="text-(--link-text) hover:underline"
+											className="text-link hover:underline"
 										>
 											{props.metadata.website}
 										</a>
@@ -515,13 +519,11 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								value={<span suppressHydrationWarning>{formatEquitiesDateTime(props.summary.updatedAt)}</span>}
 							/>
 						</div>
-						{props.metadata.description ? (
-							<p className="text-sm leading-relaxed text-(--text-secondary)">{props.metadata.description}</p>
-						) : null}
-					</section>
+						{props.metadata.description ? <p className="body-sm text-secondary">{props.metadata.description}</p> : null}
+					</Card>
 
-					<section className="flex flex-col gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-						<h2 className="text-base font-semibold">Financials</h2>
+					<Card as="section" border="subtle" padding="sm" className="flex flex-col gap-3">
+						<h2 className="heading-xs">Financials</h2>
 						<div className="flex flex-col">
 							<MetricRow
 								label={defs.revenueTTM.label}
@@ -589,10 +591,10 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								value={formatMetricValue(props.summary.stockBasedCompensationTTM, '$')}
 							/>
 						</div>
-					</section>
+					</Card>
 
-					<section className="flex flex-col gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-						<h2 className="text-base font-semibold">Balance Sheet</h2>
+					<Card as="section" border="subtle" padding="sm" className="flex flex-col gap-3">
+						<h2 className="heading-xs">Balance Sheet</h2>
 						<div className="flex flex-col">
 							<MetricRow
 								label={defs.cashAndCashEquivalents.label}
@@ -620,7 +622,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								value={formatMetricValue(props.summary.totalDebt, '$')}
 							/>
 						</div>
-					</section>
+					</Card>
 				</div>
 			) : null}
 
@@ -631,16 +633,16 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 			{activeTab === 'tokens' ? <EquitiesTokensTable tokens={props.onchain.tokens} ticker={props.ticker} /> : null}
 			{activeTab === 'markets' ? <EquitiesMarketsTable markets={props.onchain.perps} ticker={props.ticker} /> : null}
 
-			<footer className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+			<Card as="footer" border="subtle" padding="sm">
 				<h2 className="text-sm font-semibold">Attribution</h2>
-				<p className="mt-1 text-xs text-(--text-disabled)">
+				<p className="mt-1 text-xs text-tertiary">
 					Market and statements data provided by{' '}
 					<a href="https://twelvedata.com" target="_blank" rel="noopener noreferrer" className="underline">
 						Twelve Data
 					</a>
 					. Filings data from SEC EDGAR.
 				</p>
-			</footer>
+			</Card>
 		</article>
 	)
 }

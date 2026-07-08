@@ -34,7 +34,7 @@ export function MarketsCharts({
 
 	return (
 		<div className="flex flex-col gap-2">
-			<h2 className="text-base font-semibold">Trends · 30d</h2>
+			<h2 className="heading-xs">Trends · 30d</h2>
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 				<MarketsAreaChart title="Volume by exchange" series={volByExchange} />
 				{hasOi ? <MarketsAreaChart title="Open interest by exchange" series={oiByExchange} /> : null}

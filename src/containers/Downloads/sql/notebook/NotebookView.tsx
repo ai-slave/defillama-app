@@ -287,7 +287,7 @@ export function NotebookView({
 						className={`inline-flex items-center gap-1.5 rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
 							promoteRunAll
 								? 'bg-(--primary) px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90'
-								: 'border border-(--divider) bg-(--cards-bg) px-2.5 py-1.5 text-xs font-medium text-(--text-primary) hover:border-(--primary)/40 hover:text-(--primary)'
+								: 'border border-(--divider) bg-surface px-2.5 py-1.5 text-xs font-medium text-(--text-primary) hover:border-(--primary)/40 hover:text-(--primary)'
 						}`}
 					>
 						{runningAny ? (
@@ -434,7 +434,7 @@ function AddMenu({ onAdd, variant }: { onAdd: (type: NotebookCellType) => void; 
 	const triggerCls =
 		variant === 'between'
 			? 'relative z-10 inline-flex size-5 items-center justify-center rounded-full border border-(--divider) bg-(--app-bg) text-(--text-tertiary) opacity-0 transition-all group-hover:opacity-100 group-focus-within:opacity-100 hover:border-(--primary)/50 hover:text-(--primary) aria-expanded:opacity-100 aria-expanded:border-(--primary)/50 aria-expanded:text-(--primary)'
-			: 'inline-flex items-center gap-1.5 rounded-md border border-(--divider) bg-(--cards-bg) px-2.5 py-1 text-[11.5px] font-medium text-(--text-secondary) transition-colors hover:border-(--primary)/40 hover:text-(--primary)'
+			: 'inline-flex items-center gap-1.5 rounded-md border border-(--divider) bg-surface px-2.5 py-1 text-[11.5px] font-medium text-(--text-secondary) transition-colors hover:border-(--primary)/40 hover:text-(--primary)'
 	return (
 		<Ariakit.MenuProvider>
 			<Ariakit.MenuButton className={triggerCls} aria-label="Add cell">
@@ -444,7 +444,7 @@ function AddMenu({ onAdd, variant }: { onAdd: (type: NotebookCellType) => void; 
 			<Ariakit.Menu
 				gutter={4}
 				unmountOnHide
-				className="z-40 min-w-[160px] rounded-md border border-(--divider) bg-(--cards-bg) p-1 text-xs text-(--text-primary) shadow-lg"
+				className="z-40 min-w-[160px] rounded-lg border border-medium bg-surface-elevated-1 p-1 text-xs text-(--text-primary) shadow-lg"
 			>
 				<AddMenuItem onClick={() => onAdd('sql')} label="SQL" hint="Query" tone="primary" />
 				<AddMenuItem onClick={() => onAdd('chart')} label="Chart" hint="Visualize" tone="gold" />
@@ -469,7 +469,7 @@ function AddMenuItem({
 	return (
 		<Ariakit.MenuItem
 			onClick={onClick}
-			className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-(--link-hover-bg)"
+			className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row"
 		>
 			<span aria-hidden className={`size-1.5 shrink-0 rounded-full ${dot}`} />
 			<span className="flex-1 font-medium">{label}</span>

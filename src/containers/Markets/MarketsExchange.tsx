@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
 import { LocalLoader } from '~/components/Loaders'
+import { Card } from '~/ui/Card'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { formattedNum } from '~/utils'
 import { fetchMarketsExchange, fetchMarketsExchangeSeries } from './api'
 import type { ExchangeMarketCategoryData } from './api.types'
@@ -17,11 +19,11 @@ const STALE_TIME = 60 * 60 * 1000
 
 function Stat({ label, value, sub }: { label: string; value: React.ReactNode; sub?: React.ReactNode }) {
 	return (
-		<div className="flex flex-1 flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-			<span className="text-xs text-(--text-label)">{label}</span>
+		<Card padding="sm" border="subtle" className="flex flex-1 flex-col gap-1">
+			<span className="label-sm text-secondary">{label}</span>
 			<span className="font-jetbrains text-lg font-semibold">{value}</span>
-			{sub != null ? <span className="text-xs text-(--text-label)">{sub}</span> : null}
-		</div>
+			{sub != null ? <span className="label-sm text-secondary">{sub}</span> : null}
+		</Card>
 	)
 }
 
@@ -116,17 +118,13 @@ export function MarketsExchange({
 			/>
 
 			{isLoading ? (
-				<div className="flex min-h-[360px] items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<PanelLoadingStatus>
 					<LocalLoader />
-				</div>
+				</PanelLoadingStatus>
 			) : isError || !data ? (
-				<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-6 text-center text-sm text-(--text-label)">
-					Failed to load exchange.
-				</div>
+				<PanelStatus variant="error">Failed to load exchange.</PanelStatus>
 			) : pairs.length === 0 ? (
-				<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-6 text-center text-sm text-(--text-label)">
-					No markets recorded for this venue.
-				</div>
+				<PanelStatus>No markets recorded for this venue.</PanelStatus>
 			) : (
 				<div className="flex flex-col gap-5">
 					<ExchangeStatStrip totals={segmentData} segment={activeSegment} />

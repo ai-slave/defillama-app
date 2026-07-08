@@ -11,6 +11,8 @@ import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv } from '~/components/Table/utils'
+import { Panel } from '~/ui/Panel'
+import { TableToolbar } from '~/ui/Toolbar'
 import { abbreviateNumber } from '~/utils'
 import type { IEquitiesOnchainMarketRow, IEquitiesOnchainTokenRow } from './types'
 import { formatEquitiesDateTime } from './utils'
@@ -58,7 +60,7 @@ const marketsColumns = [
 		header: 'Contract',
 		enableSorting: false,
 		cell: ({ getValue }) => (
-			<BasicLink href={rwaPerpsContractHref(getValue())} className="text-(--link-text) hover:underline">
+			<BasicLink href={rwaPerpsContractHref(getValue())} className="text-link hover:underline">
 				{getValue()}
 			</BasicLink>
 		),
@@ -104,10 +106,7 @@ const marketsColumns = [
 		enableSorting: false,
 		cell: ({ getValue, row }) =>
 			row.original.exchangeProtocolSlug ? (
-				<BasicLink
-					href={protocolHref(row.original.exchangeProtocolSlug)}
-					className="text-(--link-text) hover:underline"
-				>
+				<BasicLink href={protocolHref(row.original.exchangeProtocolSlug)} className="text-link hover:underline">
 					{getValue()}
 				</BasicLink>
 			) : (
@@ -123,7 +122,7 @@ const marketsColumns = [
 		enableSorting: false,
 		cell: ({ getValue, row }) =>
 			row.original.rwaPlatformSlug ? (
-				<BasicLink href={rwaPlatformHref(row.original.rwaPlatformSlug)} className="text-(--link-text) hover:underline">
+				<BasicLink href={rwaPlatformHref(row.original.rwaPlatformSlug)} className="text-link hover:underline">
 					{getValue()}
 				</BasicLink>
 			) : (
@@ -142,7 +141,7 @@ const marketsColumns = [
 				href={getValue()}
 				target="_blank"
 				rel="noopener noreferrer"
-				className="inline-flex items-center gap-1 text-(--link-text) hover:underline"
+				className="inline-flex items-center gap-1 text-link hover:underline"
 			>
 				Open
 				<Icon name="arrow-up-right" height={14} width={14} />
@@ -172,7 +171,7 @@ const tokensColumns = [
 		header: 'Asset',
 		enableSorting: false,
 		cell: ({ getValue }) => (
-			<BasicLink href={rwaAssetHref(getValue())} className="text-(--link-text) hover:underline">
+			<BasicLink href={rwaAssetHref(getValue())} className="text-link hover:underline">
 				{getValue()}
 			</BasicLink>
 		),
@@ -185,10 +184,7 @@ const tokensColumns = [
 		header: 'Platform',
 		enableSorting: false,
 		cell: ({ getValue, row }) => (
-			<BasicLink
-				href={rwaPlatformHref(row.original.issuerRwaPlatformSlug)}
-				className="text-(--link-text) hover:underline"
-			>
+			<BasicLink href={rwaPlatformHref(row.original.issuerRwaPlatformSlug)} className="text-link hover:underline">
 				{getValue()}
 			</BasicLink>
 		),
@@ -225,9 +221,9 @@ const tokensColumns = [
 
 function EmptyState({ children }: { children: React.ReactNode }) {
 	return (
-		<p className="rounded-md border border-dashed border-(--cards-border) p-3 text-sm text-(--text-secondary)">
-			{children}
-		</p>
+		<div className="rounded-[8px] border border-dashed border-subtle bg-surface p-3 body-sm text-secondary">
+			<p>{children}</p>
+		</div>
 	)
 }
 
@@ -249,16 +245,17 @@ export function EquitiesMarketsTable({ markets, ticker }: { markets: IEquitiesOn
 	})
 
 	return (
-		<section className="col-span-full flex flex-col gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:p-4">
-			<div className="flex flex-wrap items-center justify-end gap-2">
+		<Panel className="col-span-full">
+			<TableToolbar className="justify-end">
 				<CSVDownloadButton
 					prepareCsv={() => prepareTableCsv({ instance: table, filename: `equities-${ticker.toLowerCase()}-markets` })}
 					smol
+					size="md"
 				/>
-			</div>
+			</TableToolbar>
 			{data.length === 0 ? <EmptyState>No on-chain markets found for {ticker}.</EmptyState> : null}
-			<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} />
-		</section>
+			<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} shell="none" />
+		</Panel>
 	)
 }
 
@@ -280,15 +277,16 @@ export function EquitiesTokensTable({ tokens, ticker }: { tokens: IEquitiesOncha
 	})
 
 	return (
-		<section className="col-span-full flex flex-col gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:p-4">
-			<div className="flex flex-wrap items-center justify-end gap-2">
+		<Panel className="col-span-full">
+			<TableToolbar className="justify-end">
 				<CSVDownloadButton
 					prepareCsv={() => prepareTableCsv({ instance: table, filename: `equities-${ticker.toLowerCase()}-tokens` })}
 					smol
+					size="md"
 				/>
-			</div>
+			</TableToolbar>
 			{data.length === 0 ? <EmptyState>No tokenized assets found for {ticker}.</EmptyState> : null}
-			<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} />
-		</section>
+			<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} shell="none" />
+		</Panel>
 	)
 }

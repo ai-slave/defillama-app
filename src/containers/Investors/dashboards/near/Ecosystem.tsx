@@ -135,7 +135,7 @@ function ChartSkeleton({ title }: { title: string }) {
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-lg font-semibold tracking-tight text-(--text-primary)">{children}</h2>
+	return <h2 className="heading-xs tracking-tight text-(--text-primary)">{children}</h2>
 }
 
 export default function Ecosystem() {
@@ -207,7 +207,7 @@ export default function Ecosystem() {
 			<div className="flex flex-col gap-2 rounded-xl border border-(--cards-border) bg-(--cards-bg) p-6">
 				<div className="flex items-center gap-3">
 					<NearIcon />
-					<h1 className="text-xl font-bold text-(--text-primary)">Ecosystem</h1>
+					<h1 className="heading-sm text-(--text-primary)">Ecosystem</h1>
 				</div>
 				<p className="max-w-2xl text-sm leading-relaxed text-(--text-secondary)">
 					Live metrics across NEAR Intents, base-chain activity, and token supply.

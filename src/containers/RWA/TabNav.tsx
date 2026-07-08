@@ -1,4 +1,5 @@
 import { ButtonLink } from '~/components/Link'
+import { TabLink, tabTrackStyles } from '~/ui/Tab'
 
 const tabs = [
 	{ id: 'overview', name: 'Overview', route: '/rwa' },
@@ -12,16 +13,11 @@ export type RWATab = (typeof tabs)[number]['id']
 
 export function RWATabNav({ active }: { active: RWATab }) {
 	return (
-		<nav className="flex w-full overflow-x-auto text-xs font-medium">
+		<nav className={tabTrackStyles}>
 			{tabs.map((tab) => (
-				<ButtonLink
-					key={tab.id}
-					href={tab.route}
-					data-active={tab.id === active}
-					className="shrink-0 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) data-[active=true]:border-(--primary)"
-				>
+				<TabLink as={ButtonLink} key={tab.id} href={tab.route} data-active={tab.id === active}>
 					{tab.name}
-				</ButtonLink>
+				</TabLink>
 			))}
 		</nav>
 	)

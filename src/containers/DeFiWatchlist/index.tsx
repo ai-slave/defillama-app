@@ -119,8 +119,8 @@ export function DefiWatchlistContainer({
 				<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
 					<div className="flex flex-wrap items-center gap-2 p-2">
 						<div className="mr-auto">
-							<h2 className="text-base font-semibold">Protocols</h2>
-							<p className="text-xs text-(--text-disabled)">
+							<h2 className="heading-xs">Protocols</h2>
+							<p className="text-xs text-secondary">
 								Select or deselect protocols for the "{selectedPortfolio}" portfolio
 							</p>
 						</div>
@@ -148,8 +148,8 @@ export function DefiWatchlistContainer({
 				<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
 					<div className="flex flex-wrap items-center gap-2 p-2">
 						<div className="mr-auto">
-							<h2 className="text-base font-semibold">Chains</h2>
-							<p className="text-xs text-(--text-disabled)">
+							<h2 className="heading-xs">Chains</h2>
+							<p className="text-xs text-secondary">
 								Select or deselect chains for the "{selectedPortfolio}" portfolio
 							</p>
 						</div>
@@ -366,7 +366,7 @@ function PortfolioNotifications({
 		<Ariakit.DialogProvider store={dialogStore}>
 			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
 				<div className="mb-2">
-					<h2 className="mb-0.5 text-base font-semibold">Email Notifications</h2>
+					<h2 className="mb-0.5 heading-xs">Email Notifications</h2>
 					<p className="text-xs text-(--text-secondary)">
 						{preferences ? (
 							preferences.active ? (
@@ -655,7 +655,7 @@ function PortfolioSelection() {
 	return (
 		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
 			<div className="flex flex-wrap items-center gap-2 p-2">
-				<h1 className="mr-auto text-base font-semibold">Portfolio</h1>
+				<h1 className="mr-auto heading-xs">Portfolio</h1>
 				<Menu
 					name={selectedPortfolio.length > 100 ? selectedPortfolio.substring(0, 100) + '...' : selectedPortfolio}
 					key={`${selectedPortfolio}-${portfolios.length}`}
@@ -762,7 +762,7 @@ function TopMovers({ protocols }: TopMoversProps) {
 	return (
 		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
 			<div className="flex flex-wrap items-center gap-2 p-2">
-				<h2 className="mr-auto text-base font-semibold">Top Movers</h2>
+				<h2 className="mr-auto heading-xs">Top Movers</h2>
 
 				<label className="flex cursor-pointer items-center gap-1.5">
 					<input
@@ -803,7 +803,7 @@ function TopMovers({ protocols }: TopMoversProps) {
 			<div className="grid grid-cols-1 gap-4 p-3 pt-1 sm:grid-cols-3">
 				{(['1d', '7d', '1m'] as const).map((period) => (
 					<div key={period}>
-						<span className="mb-1.5 block text-xs font-medium text-(--text-disabled) uppercase">
+						<span className="mb-1.5 block text-xs font-medium text-secondary uppercase">
 							{period === '1d' ? '24 Hours' : period === '7d' ? '7 Days' : '30 Days'}
 						</span>
 
@@ -846,7 +846,7 @@ function TopMovers({ protocols }: TopMoversProps) {
 								))}
 							</div>
 						) : (
-							<p className="py-3 text-center text-xs text-(--text-disabled)">No movers</p>
+							<p className="py-3 text-center text-xs text-tertiary">No movers</p>
 						)}
 					</div>
 				))}

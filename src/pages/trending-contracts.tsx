@@ -121,7 +121,7 @@ export default function TrendingContracts() {
 		>
 			<div className="flex flex-1 flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
 				<div className="flex flex-wrap items-center gap-5 p-3">
-					<h1 className="mr-auto text-xl font-semibold">Trending Contracts</h1>
+					<h1 className="mr-auto heading-sm">Trending Contracts</h1>
 					<TagGroup selectedValue={value} setValue={setValue} values={TIME_VALUES} />
 					<TagGroup
 						selectedValue={chain}

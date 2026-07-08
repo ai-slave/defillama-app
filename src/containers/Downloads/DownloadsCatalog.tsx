@@ -7,6 +7,7 @@ import { LoadingSpinner } from '~/components/Loaders'
 import { TrialCsvLimitModal } from '~/components/TrialCsvLimitModal'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import {
 	chartDatasets,
 	chartDatasetCategories,
@@ -214,7 +215,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 						className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
 							activeTab === tab
 								? 'bg-(--primary) text-white shadow-sm'
-								: 'text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)'
+								: 'text-(--text-secondary) hover:bg-hover-row hover:text-(--text-primary)'
 						}`}
 					>
 						{tab}
@@ -225,18 +226,13 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 			{activeTab !== 'Saved' ? (
 				<label className="relative">
 					<span className="sr-only">Search datasets</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
-					<input
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+					<Input
 						type="text"
 						inputMode="search"
 						placeholder="Search..."
 						onInput={(e) => setSearchValue(e.currentTarget.value)}
-						className="min-h-8 w-full rounded-md border-(--bg-input) bg-(--bg-input) p-1.5 pl-7 text-base text-black placeholder:text-[#666] dark:text-white dark:placeholder-[#919296]"
+						className={searchFieldInputPlacementStyles}
 					/>
 				</label>
 			) : null}
@@ -291,7 +287,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 				<div className="flex flex-col gap-8">
 					{filteredDatasetsByCategory.map(({ category, items }) => (
 						<section key={category} className="flex flex-col gap-3">
-							<h2 className="text-lg font-semibold text-(--text-primary)">{category}</h2>
+							<h2 className="heading-xs text-(--text-primary)">{category}</h2>
 							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 								{items.map((dataset) => {
 									const disabled = !!isUserLoading
@@ -301,7 +297,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 											type="button"
 											disabled={disabled}
 											onClick={() => handleCardClick(dataset)}
-											className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-(--form-control-border) bg-(--bg-primary) p-5 text-left transition-all duration-150 hover:border-(--primary)/40 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+											className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium bg-(--bg-primary) p-5 text-left transition-all duration-150 hover:border-(--primary)/40 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
 										>
 											<div className="flex items-start justify-between gap-3">
 												<div className="flex items-center gap-3">
@@ -362,7 +358,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 
 					{filteredChartsByCategory.map(({ category, items }) => (
 						<section key={`chart-${category}`} className="flex flex-col gap-3">
-							<h2 className="text-lg font-semibold text-(--text-primary)">{category}</h2>
+							<h2 className="heading-xs text-(--text-primary)">{category}</h2>
 							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 								{items.map((dataset) => {
 									const disabled = !!isUserLoading
@@ -372,7 +368,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 											type="button"
 											disabled={disabled}
 											onClick={() => handleChartCardClick(dataset)}
-											className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-(--form-control-border) bg-(--bg-primary) p-5 text-left transition-all duration-150 hover:border-(--primary)/40 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+											className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium bg-(--bg-primary) p-5 text-left transition-all duration-150 hover:border-(--primary)/40 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
 										>
 											<div className="flex items-start justify-between gap-3">
 												<div className="flex items-center gap-3">
@@ -391,7 +387,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 												/>
 											</div>
 											<p className="text-sm text-(--text-secondary)">{dataset.description}</p>
-											<span className="inline-flex w-fit items-center gap-1 rounded-full bg-(--link-hover-bg) px-2 py-0.5 text-xs text-(--text-tertiary)">
+											<span className="inline-flex w-fit items-center gap-1 rounded-full bg-hover-row px-2 py-0.5 text-xs text-(--text-tertiary)">
 												Select {dataset.paramLabel}
 											</span>
 										</button>
@@ -467,7 +463,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 			{trialLimitOpen ? <TrialCsvLimitModal isOpen={trialLimitOpen} onClose={() => setTrialLimitOpen(false)} /> : null}
 
 			<section className="mt-8 flex flex-col gap-4 border-t border-(--divider) pt-8">
-				<h2 className="text-lg font-semibold text-(--text-primary)">FAQ</h2>
+				<h2 className="heading-xs text-(--text-primary)">FAQ</h2>
 				<div className="divide-y divide-(--divider) border-y border-(--divider)">
 					<FaqItem question="How do I subscribe to download data from DefiLlama?">
 						DefiLlama data is available to subscribers of our Pro and API plans. Learn more about these plans{' '}
@@ -622,7 +618,7 @@ function RecentDownloadsStrip({
 									type="button"
 									onClick={() => onRun(preset)}
 									title={`Run ${preset.name}`}
-									className="group relative flex min-w-0 flex-1 flex-col gap-1 py-2.5 pr-3 pl-4 text-left transition-colors hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) focus-visible:outline-none"
+									className="group relative flex min-w-0 flex-1 flex-col gap-1 py-2.5 pr-3 pl-4 text-left transition-colors hover:bg-hover-row focus-visible:bg-hover-row focus-visible:outline-none"
 								>
 									<span
 										className={`absolute top-3 bottom-3 left-2 w-0.5 rounded-full ${style.accent} opacity-40 transition-opacity group-hover:opacity-100`}
@@ -636,7 +632,7 @@ function RecentDownloadsStrip({
 											{style.label}
 										</span>
 										{i === 0 ? (
-											<span className="ml-auto rounded-sm bg-(--primary)/15 px-1 py-px text-[9px] font-semibold tracking-wide text-(--primary) uppercase">
+											<span className="ml-auto rounded-sm bg-(--primary)/15 px-1 py-px label-sm tracking-wide text-(--primary) uppercase">
 												New
 											</span>
 										) : null}
@@ -838,7 +834,7 @@ function SavedDownloadRow({
 					handleRowActivate(e)
 				}
 			}}
-			className="group relative flex cursor-pointer items-center gap-3 border-t border-(--divider) py-3.5 pr-3 pl-4 transition-colors first:border-t-0 hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) focus-visible:outline-none"
+			className="group relative flex cursor-pointer items-center gap-3 border-t border-(--divider) py-3.5 pr-3 pl-4 transition-colors first:border-t-0 hover:bg-hover-row focus-visible:bg-hover-row focus-visible:outline-none"
 		>
 			<span
 				className={`absolute top-2 bottom-2 left-1 w-0.5 rounded-full ${style.accent} opacity-30 transition-all group-hover:opacity-100 group-focus-visible:opacity-100`}
@@ -961,7 +957,7 @@ function DeletePresetDialog({
 		>
 			<div
 				onClick={(e) => e.stopPropagation()}
-				className="flex w-full max-w-sm flex-col gap-3 rounded-xl border border-(--cards-border) bg-(--cards-bg) p-5 shadow-2xl"
+				className="flex w-full max-w-sm flex-col gap-3 rounded-xl border border-subtle bg-surface p-5 shadow-2xl"
 			>
 				<div className="flex items-start gap-3">
 					<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-red-500/10">
@@ -981,7 +977,7 @@ function DeletePresetDialog({
 					<button
 						type="button"
 						onClick={onClose}
-						className="rounded-md border border-(--divider) px-3 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+						className="rounded-md border border-(--divider) px-3 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
 					>
 						Cancel
 					</button>

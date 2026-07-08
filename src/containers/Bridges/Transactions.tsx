@@ -15,9 +15,15 @@ import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { LoadingDots } from '~/components/Loaders'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { selectTriggerStyles } from '~/components/Select/types'
 import { VirtualTable } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useDateRangeValidation } from '~/hooks/useDateRangeValidation'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { inputStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug, toNiceDayAndHour } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { fetchBridgeTransactionsClient } from './api'
@@ -64,9 +70,7 @@ const truncateMiddle = (value: string, lead = 6, tail = 4) => {
 const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplorers>['data']) => [
 	columnHelper.accessor('timestamp', {
 		header: 'Timestamp',
-		cell: ({ getValue }) => (
-			<span className="whitespace-nowrap text-(--text-secondary)">{toNiceDayAndHour(getValue())}</span>
-		),
+		cell: ({ getValue }) => <span className="whitespace-nowrap text-secondary">{toNiceDayAndHour(getValue())}</span>,
 		meta: {
 			headerClassName: 'w-[160px]'
 		}
@@ -74,10 +78,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 	columnHelper.accessor('bridge_name', {
 		header: 'Bridge',
 		cell: ({ row }) => (
-			<BasicLink
-				href={`/bridge/${row.original.bridge_slug}`}
-				className="font-medium text-(--link-text) hover:underline"
-			>
+			<BasicLink href={`/bridge/${row.original.bridge_slug}`} className="font-medium text-link hover:underline">
 				{row.original.bridge_name}
 			</BasicLink>
 		),
@@ -120,7 +121,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 		header: 'Token',
 		cell: ({ getValue, row }) => {
 			const value = getValue() ?? ''
-			if (!value) return <span className="text-(--text-tertiary)">—</span>
+			if (!value) return <span className="text-tertiary">—</span>
 
 			const looksLikeAddress = /^0x[0-9a-fA-F]{4,}$/.test(value) || value.includes(':')
 			const explorer = looksLikeAddress
@@ -134,7 +135,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 
 			if (!explorer) {
 				return (
-					<span className="font-mono text-xs text-(--text-secondary)" title={value}>
+					<span className="font-mono text-xs text-secondary" title={value}>
 						{truncateMiddle(value, 8, 4)}
 					</span>
 				)
@@ -144,7 +145,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 					href={explorer.url}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="inline-flex items-center gap-1 font-mono text-xs text-(--link-text) hover:underline"
+					className="inline-flex items-center gap-1 font-mono text-xs text-link hover:underline"
 					title={value}
 				>
 					{truncateMiddle(value, 8, 4)}
@@ -172,7 +173,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 		header: 'USD Value',
 		cell: ({ getValue }) => {
 			const value = getValue()
-			if (value == null) return <span className="text-(--text-tertiary)">—</span>
+			if (value == null) return <span className="text-tertiary">—</span>
 			return <span className="font-medium tabular-nums">{formattedNum(value, true)}</span>
 		},
 		meta: {
@@ -184,7 +185,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 		header: 'From',
 		cell: ({ getValue, row }) => {
 			const value = getValue()
-			if (!value) return <span className="text-(--text-tertiary)">—</span>
+			if (!value) return <span className="text-tertiary">—</span>
 			const explorer = getBlockExplorerNew({
 				apiResponse: blockExplorersData ?? [],
 				address: value,
@@ -198,7 +199,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 					href={explorer.url}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="inline-flex items-center gap-1 text-(--link-text) hover:underline"
+					className="inline-flex items-center gap-1 text-link hover:underline"
 					title={value}
 				>
 					{display}
@@ -214,7 +215,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 		header: 'To',
 		cell: ({ getValue, row }) => {
 			const value = getValue()
-			if (!value) return <span className="text-(--text-tertiary)">—</span>
+			if (!value) return <span className="text-tertiary">—</span>
 			const explorer = getBlockExplorerNew({
 				apiResponse: blockExplorersData ?? [],
 				address: value,
@@ -228,7 +229,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 					href={explorer.url}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="inline-flex items-center gap-1 text-(--link-text) hover:underline"
+					className="inline-flex items-center gap-1 text-link hover:underline"
 					title={value}
 				>
 					{display}
@@ -244,7 +245,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 		header: 'Transaction',
 		cell: ({ getValue, row }) => {
 			const value = getValue()
-			if (!value) return <span className="text-(--text-tertiary)">—</span>
+			if (!value) return <span className="text-tertiary">—</span>
 			const explorer = getBlockExplorerNew({
 				apiResponse: blockExplorersData ?? [],
 				address: value,
@@ -263,7 +264,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 					href={explorer.url}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="inline-flex items-center gap-1 text-(--link-text) hover:underline"
+					className="inline-flex items-center gap-1 text-link hover:underline"
 					title={value}
 				>
 					<span className="font-mono text-xs">{truncateMiddle(value)}</span>
@@ -378,32 +379,31 @@ interface StatCardProps {
 }
 
 function StatCard({ label, value, sublabel, accent = 'default' }: StatCardProps) {
-	const accentClass =
-		accent === 'success' ? 'text-(--success)' : accent === 'error' ? 'text-(--error)' : 'text-(--text-primary)'
+	const accentClass = accent === 'success' ? 'text-(--success)' : accent === 'error' ? 'text-(--error)' : 'text-primary'
 	return (
-		<div className="flex flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
-			<span className="text-xs font-medium tracking-wide text-(--text-label) uppercase">{label}</span>
+		<Card border="subtle" className="flex flex-col gap-1">
+			<span className="label-sm text-secondary uppercase">{label}</span>
 			<span className={`text-2xl font-semibold tabular-nums ${accentClass}`}>{value}</span>
-			{sublabel ? <span className="text-xs text-(--text-tertiary)">{sublabel}</span> : null}
-		</div>
+			{sublabel ? <span className="label-sm text-tertiary">{sublabel}</span> : null}
+		</Card>
 	)
 }
 
 function EmptyState({ hasFetched }: { hasFetched: boolean }) {
 	return (
-		<div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-(--cards-border) bg-(--cards-bg) px-6 py-16 text-center">
-			<div className="flex size-12 items-center justify-center rounded-full bg-(--link-bg) text-(--link-text)">
+		<Card border="subtle" className="flex min-h-[240px] flex-col items-center justify-center gap-3 text-center">
+			<div className="flex size-12 items-center justify-center rounded-full bg-brand-muted text-link">
 				<Icon name={hasFetched ? 'search' : 'activity'} height={22} width={22} />
 			</div>
 			<h2 className="text-lg font-semibold">
 				{hasFetched ? 'No transactions in this range' : 'Explore bridge transaction data'}
 			</h2>
-			<p className="max-w-md text-sm text-(--text-label)">
+			<p className="max-w-md body-sm text-secondary">
 				{hasFetched
 					? 'Try a wider date range or a different bridge. Transactions may be sparse for smaller bridges or short windows.'
 					: 'Pick a bridge and a date range, then fetch transactions. Results can be filtered, sorted, and exported as CSV.'}
 			</p>
-		</div>
+		</Card>
 	)
 }
 
@@ -513,19 +513,20 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 	return (
 		<div className="flex flex-col gap-6">
 			<header className="flex flex-col gap-2">
-				<h1 className="text-2xl font-bold tracking-tight md:text-3xl">Bridge Transactions</h1>
-				<p className="max-w-2xl text-sm text-(--text-label)">
+				<h1 className="heading-md">Bridge Transactions</h1>
+				<p className="max-w-2xl body-sm text-secondary">
 					Download cross-chain bridge transaction data by protocol and time window. Results include deposits,
 					withdrawals, USD value, and explorer links — exportable as CSV.
 				</p>
 			</header>
 
-			<form
+			<Card
+				as="form"
 				onSubmit={handleSubmit}
-				className="grid grid-cols-1 gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4 md:grid-cols-[minmax(240px,1.4fr)_repeat(2,minmax(150px,1fr))_auto] md:items-end"
+				className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(240px,1.4fr)_repeat(2,minmax(150px,1fr))_auto] md:items-end"
 			>
 				<label className="flex flex-col gap-1.5">
-					<span className="text-xs font-medium tracking-wide text-(--text-label) uppercase">Bridge</span>
+					<span className="label-sm text-secondary uppercase">Bridge</span>
 					<SelectWithCombobox
 						allValues={bridgeOptions}
 						selectedValues={selectedBridge}
@@ -534,13 +535,12 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 						label={selectedBridge[0] ?? 'Select a bridge'}
 						labelType="none"
 						triggerProps={{
-							className:
-								'flex h-9 w-full cursor-pointer items-center justify-between gap-2 rounded-md border border-(--form-control-border) bg-(--bg-input) px-3 text-sm text-(--text-primary) hover:bg-(--link-bg) focus-visible:border-(--link-text) focus-visible:outline-none data-[state=open]:border-(--link-text)'
+							className: `${selectTriggerStyles('filter', 'md')} w-full`
 						}}
 					/>
 				</label>
 				<label className="flex flex-col gap-1.5">
-					<span className="text-xs font-medium tracking-wide text-(--text-label) uppercase">Start Date</span>
+					<span className="label-sm text-secondary uppercase">Start Date</span>
 					<input
 						type="date"
 						name="startDate"
@@ -548,11 +548,11 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 						onChange={(e) => handleStartDateChange(e.target.value)}
 						max={maxDate}
 						required
-						className="h-9 cursor-pointer rounded-md border border-(--form-control-border) bg-(--bg-input) px-3 text-sm text-(--text-primary) focus:border-(--link-text) focus:outline-none dark:scheme-dark"
+						className={`${inputStyles} cursor-pointer dark:scheme-dark`}
 					/>
 				</label>
 				<label className="flex flex-col gap-1.5">
-					<span className="text-xs font-medium tracking-wide text-(--text-label) uppercase">End Date</span>
+					<span className="label-sm text-secondary uppercase">End Date</span>
 					<input
 						type="date"
 						name="endDate"
@@ -561,14 +561,10 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 						min={startDate}
 						max={maxDate}
 						required
-						className="h-9 cursor-pointer rounded-md border border-(--form-control-border) bg-(--bg-input) px-3 text-sm text-(--text-primary) focus:border-(--link-text) focus:outline-none dark:scheme-dark"
+						className={`${inputStyles} cursor-pointer dark:scheme-dark`}
 					/>
 				</label>
-				<button
-					type="submit"
-					className="flex h-9 items-center justify-center gap-2 rounded-md bg-(--link-bg) px-5 text-sm font-semibold whitespace-nowrap text-(--link-text) transition-colors hover:bg-(--link-hover-bg) focus-visible:outline-2 focus-visible:outline-(--link-text) disabled:cursor-not-allowed disabled:opacity-60"
-					disabled={isPending || !selectedBridge[0]}
-				>
+				<Button type="submit" variant="primary" size="md" disabled={isPending || !selectedBridge[0]}>
 					{isPending ? (
 						<>
 							Fetching
@@ -580,35 +576,38 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 							Fetch Transactions
 						</>
 					)}
-				</button>
+				</Button>
 
 				{formError ? (
-					<p className="col-span-full flex items-center gap-2 rounded-md border border-(--error)/30 bg-(--error)/10 px-3 py-2 text-sm text-(--error)">
+					<div
+						role="alert"
+						className="col-span-full flex items-center gap-2 rounded-md border border-(--error)/30 bg-(--error)/10 px-3 py-2 text-sm text-(--error)"
+					>
 						<Icon name="alert-triangle" height={14} width={14} />
-						{formError}
-					</p>
+						<p>{formError}</p>
+					</div>
 				) : null}
-			</form>
+			</Card>
 
 			{isPending ? (
-				<div className="flex flex-col items-center gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) px-6 py-16 text-center">
+				<Card border="subtle" className="flex min-h-[200px] flex-col items-center justify-center gap-3 text-center">
 					<LoadingDots />
-					<p className="text-sm text-(--text-label)">
+					<p className="body-sm text-secondary">
 						Fetching transactions. Large ranges may take a moment as we page through results.
 					</p>
-				</div>
+				</Card>
 			) : null}
 
 			{!isPending && stats && fetchedContext ? (
 				<div className="flex flex-col gap-4">
-					<div className="flex flex-wrap items-center gap-2 text-xs text-(--text-label)">
-						<span className="inline-flex items-center gap-1.5 rounded-full border border-(--cards-border) bg-(--cards-bg) px-2.5 py-1 font-medium text-(--text-primary)">
+					<div className="flex flex-wrap items-center gap-2 label-sm text-secondary">
+						<span className="inline-flex items-center gap-1.5 rounded-full border border-subtle bg-surface px-2.5 py-1 font-medium text-primary">
 							{fetchedContext.bridgeName}
 						</span>
-						<span className="text-(--text-tertiary)">
+						<span className="text-tertiary">
 							{formatDateLabel(fetchedContext.startDate)} → {formatDateLabel(fetchedContext.endDate)}
 						</span>
-						<span className="text-(--text-tertiary)">
+						<span className="text-tertiary">
 							· {stats.uniqueChains} chain{stats.uniqueChains === 1 ? '' : 's'}
 						</span>
 					</div>
@@ -716,35 +715,30 @@ function TransactionsTable({
 	}, [instance, csvFileName])
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex w-full flex-wrap items-center justify-end gap-3 p-3">
-				<h2 className="mr-auto text-lg font-semibold">Transactions</h2>
+		<Panel>
+			<TableToolbar className="w-full justify-end">
+				<h2 className="mr-auto label-md">Transactions</h2>
 				<label className="relative w-full max-w-full sm:max-w-[280px]">
 					<span className="sr-only">Search transactions</span>
-					<Icon
-						name="search"
-						height={14}
-						width={14}
-						className="absolute top-0 bottom-0 left-2.5 my-auto text-(--text-tertiary)"
-					/>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
 						value={globalFilter}
 						onChange={(e) => setGlobalFilter(e.target.value)}
 						placeholder="Search hash, address, token, chain…"
-						className="h-8 w-full rounded-md border border-(--form-control-border) bg-(--bg-input) pr-2 pl-7 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+						className={searchFieldInputStyles}
 					/>
 				</label>
-				<span className="text-xs whitespace-nowrap text-(--text-label)">
+				<span className="body-sm whitespace-nowrap text-secondary">
 					{filteredCount === data.length
 						? `${formattedNum(filteredCount)} rows`
 						: `${formattedNum(filteredCount)} of ${formattedNum(data.length)}`}
 				</span>
-				<CSVDownloadButton prepareCsv={prepareCsv} smol />
-			</div>
+				<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />
+			</TableToolbar>
 
 			<VirtualTable instance={instance} rowSize={48} />
 
-			<div className="flex flex-wrap items-center justify-between gap-3 border-t border-(--cards-border) p-3 text-xs text-(--text-label)">
+			<div className="flex flex-wrap items-center justify-between gap-3 border-t border-subtle p-3 label-sm text-secondary">
 				<span className="tabular-nums">
 					{filteredCount === 0
 						? 'No rows'
@@ -766,7 +760,7 @@ function TransactionsTable({
 					>
 						<Icon name="chevron-left" height={14} width={14} />
 					</PagerButton>
-					<span className="px-2 font-medium text-(--text-primary) tabular-nums">
+					<span className="px-2 font-medium text-primary tabular-nums">
 						{pageCount === 0 ? '0 / 0' : `${pageIndex + 1} / ${pageCount}`}
 					</span>
 					<PagerButton
@@ -795,7 +789,7 @@ function TransactionsTable({
 								instance.setPageIndex(0)
 							})
 						}
-						className="h-7 rounded-md border border-(--form-control-border) bg-(--bg-input) px-2 text-xs text-(--text-primary) focus:border-(--link-text) focus:outline-none"
+						className={selectTriggerStyles('filter', 'md')}
 					>
 						{PAGE_SIZE_OPTIONS.map((size) => (
 							<option key={size} value={size}>
@@ -805,20 +799,14 @@ function TransactionsTable({
 					</select>
 				</label>
 			</div>
-		</div>
+		</Panel>
 	)
 }
 
 function PagerButton({ children, disabled, onClick, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
 	return (
-		<button
-			type="button"
-			onClick={onClick}
-			disabled={disabled}
-			className="flex size-7 items-center justify-center rounded-md border border-(--cards-border) text-(--text-secondary) transition-colors hover:bg-(--link-bg) hover:text-(--link-text) disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
-			{...rest}
-		>
+		<Button type="button" onClick={onClick} disabled={disabled} square {...rest}>
 			{children}
-		</button>
+		</Button>
 	)
 }

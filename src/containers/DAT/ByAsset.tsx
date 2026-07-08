@@ -8,6 +8,8 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { Tooltip } from '~/components/Tooltip'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import type { IDATOverviewDataByAssetProps } from './types'
 
@@ -36,29 +38,29 @@ export function DATByAsset({
 		<>
 			<RowLinksWithDropdown links={allAssets} activeLink={metadata.name} />
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:col-span-1">
+				<Panel padding="md" className="col-span-2 w-full gap-6 overflow-x-auto xl:col-span-1">
 					<Tooltip
 						render={<h1 />}
 						content={`Institutions that own ${metadata.name} as part of their corporate treasury`}
-						className="text-xl font-semibold"
+						className="heading-sm"
 					>
 						{metadata.name} Treasury Holdings
 					</Tooltip>
 					<div className="flex flex-col">
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+						<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 							<span className="text-(--text-label)">Total Institution</span>
 							<span className="ml-auto font-jetbrains">{metadata.companies}</span>
 						</p>
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+						<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 							<span className="text-(--text-label)">Total Holdings</span>
 							<span className="ml-auto font-jetbrains">{`${formattedNum(metadata.totalAmount, false)} ${metadata.ticker}`}</span>
 						</p>
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+						<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 							<span className="text-(--text-label)">Total USD Value</span>
 							<span className="ml-auto font-jetbrains">{formattedNum(metadata.totalUsdValue, true)}</span>
 						</p>
 						{metadata.circSupplyPerc != null ? (
-							<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+							<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 								<span className="text-(--text-label)">% of {metadata.ticker} Circulating Supply</span>
 								<span className="ml-auto font-jetbrains">
 									{metadata.circSupplyPerc.toLocaleString(undefined, { maximumFractionDigits: 3 })}%
@@ -66,12 +68,12 @@ export function DATByAsset({
 							</p>
 						) : null}
 					</div>
-					<BasicLink href="/report-error" className="mt-auto mr-auto pt-4 text-left text-(--text-form) underline">
+					<BasicLink href="/report-error" className="mt-auto mr-auto pt-4 text-left text-tertiary underline">
 						Report incorrect data
 					</BasicLink>
-				</div>
-				<div className="col-span-2 flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<Suspense fallback={<div className="min-h-[398px]" />}>
+				</Panel>
+				<Panel className="col-span-2">
+					<Suspense fallback={<div className="min-h-[406px]" />}>
 						<MultiSeriesChart2
 							dataset={dailyFlowsChart.dataset}
 							charts={dailyFlowsChart.charts}
@@ -91,7 +93,7 @@ export function DATByAsset({
 							}}
 						/>
 					</Suspense>
-				</div>
+				</Panel>
 			</div>
 			<div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
 				<MNAVChart
@@ -319,9 +321,9 @@ function MNAVChart({
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	return (
-		<div className="col-span-1 rounded-md border border-(--cards-border) bg-(--cards-bg) xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">{title}</h2>
+		<Panel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+			<ChartPanelToolbar className="justify-end">
+				<h2 className="mr-auto heading-xs">{title}</h2>
 				<SelectWithCombobox
 					allValues={institutionsNames}
 					selectedValues={selectedInstitution}
@@ -329,6 +331,7 @@ function MNAVChart({
 					label="Institutions"
 					labelType="smol"
 					variant="filter"
+					size="md"
 					portal
 				/>
 				<ChartExportButtons
@@ -336,7 +339,7 @@ function MNAVChart({
 					filename={`${metadata.name}-${title}`}
 					title={`${metadata.name} ${title}`}
 				/>
-			</div>
+			</ChartPanelToolbar>
 			<Suspense fallback={<div className="min-h-[360px]" />}>
 				<MultiSeriesChart2
 					charts={data.charts}
@@ -347,6 +350,6 @@ function MNAVChart({
 					onReady={handleChartReady}
 				/>
 			</Suspense>
-		</div>
+		</Panel>
 	)
 }

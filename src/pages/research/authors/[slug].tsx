@@ -283,7 +283,7 @@ function ResearchArticleLists({ articles }: { articles: ArticleDocument[] }) {
 			</ol>
 
 			{/* desktop: two columns of cards */}
-			<div className="hidden grid-cols-2 gap-x-[52px] lg:grid">
+			<div className="hidden grid-cols-2 gap-x-13 lg:grid">
 				<ResearchArticleColumn articles={leftColumn} />
 				<ResearchArticleColumn articles={rightColumn} />
 			</div>

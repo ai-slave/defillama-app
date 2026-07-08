@@ -164,15 +164,15 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 			</div>
 
 			{error ? (
-				<p className="rounded-md border border-red-500/30 bg-red-500/5 px-3 py-2 text-xs text-red-500">
-					{error instanceof ArticleApiError ? error.message : `Failed to load ${definition.label}`}
-				</p>
+				<div role="alert" className="rounded-md border border-red-500/30 bg-red-500/5 px-3 py-2 text-xs text-red-500">
+					<p>{error instanceof ArticleApiError ? error.message : `Failed to load ${definition.label}`}</p>
+				</div>
 			) : isLoading ? (
 				<p className="text-sm text-(--text-tertiary)">Loading…</p>
 			) : items.length === 0 ? (
-				<p className="rounded-md border border-dashed border-(--cards-border) bg-(--app-bg)/40 p-3 text-center text-xs text-(--text-tertiary)">
-					No articles tagged as {definition.label.toLowerCase()} yet.
-				</p>
+				<div className="rounded-md border border-dashed border-(--cards-border) bg-(--app-bg)/40 p-3 text-center text-xs text-(--text-tertiary)">
+					<p>No articles tagged as {definition.label.toLowerCase()} yet.</p>
+				</div>
 			) : canReorder ? (
 				<ReorderableEditorialTagList
 					items={items}

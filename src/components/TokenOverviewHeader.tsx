@@ -1,4 +1,5 @@
 import { TokenLogo } from '~/components/TokenLogo'
+import { Card } from '~/ui/Card'
 import { formattedNum } from '~/utils'
 
 type TokenOverviewHeaderProps = {
@@ -30,35 +31,30 @@ export function TokenOverviewHeader({
 
 	return (
 		<>
-			<div className="flex w-full items-center gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+			<Card border="subtle" padding="sm" className="flex w-full items-center gap-3">
 				<TokenLogo name={name} kind="token" alt={`Logo of ${name}`} />
-				<h1 className="text-xl font-semibold">{title ?? name}</h1>
+				<h1 className="heading-sm">{title ?? name}</h1>
 
 				{price != null ? (
 					<>
-						<span className="mx-1 h-5 w-px bg-(--cards-border)" />
-						<span className="text-base font-semibold">${formattedNum(price)}</span>
+						<span className="mx-1 h-5 border-l border-subtle" />
+						<span className="label-lg">${formattedNum(price)}</span>
 						{percentChange !== null && percentChange !== undefined ? (
-							<span
-								className="text-sm font-medium"
-								style={{
-									color: percentChange > 0 ? 'rgba(18, 182, 0, 0.7)' : 'rgba(211, 0, 0, 0.7)'
-								}}
-							>
+							<span className={`label-sm ${percentChange >= 0 ? 'text-data-up' : 'text-data-down'}`}>
 								{percentChange > 0 ? '+' : null}
 								{percentChange}%
 							</span>
 						) : null}
 					</>
 				) : null}
-			</div>
+			</Card>
 
 			{hasStats ? (
-				<div className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2 rounded-md border border-(--cards-border) bg-(--cards-bg) px-4 py-3">
+				<Card border="subtle" padding="sm" className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2">
 					{circSupply != null ? (
 						<div className="flex items-baseline gap-1.5">
-							<span className="text-sm text-(--text-label)">Circ. Supply</span>
-							<span className="text-sm font-medium">
+							<span className="body-sm text-secondary">Circ. Supply</span>
+							<span className="label-sm">
 								{formattedNum(circSupply)} {symbol}
 							</span>
 						</div>
@@ -66,8 +62,8 @@ export function TokenOverviewHeader({
 
 					{maxSupply != null ? (
 						<div className="flex items-baseline gap-1.5">
-							<span className="text-sm text-(--text-label)">Max Supply</span>
-							<span className="text-sm font-medium">
+							<span className="body-sm text-secondary">Max Supply</span>
+							<span className="label-sm">
 								{maxSupply !== Infinity ? formattedNum(maxSupply) : '∞'} {symbol}
 							</span>
 						</div>
@@ -75,25 +71,25 @@ export function TokenOverviewHeader({
 
 					{mcap != null ? (
 						<div className="flex items-baseline gap-1.5">
-							<span className="text-sm text-(--text-label)">MCap</span>
-							<span className="text-sm font-medium">${formattedNum(mcap)}</span>
+							<span className="body-sm text-secondary">MCap</span>
+							<span className="label-sm">${formattedNum(mcap)}</span>
 						</div>
 					) : null}
 
 					{fdv != null ? (
 						<div className="flex items-baseline gap-1.5">
-							<span className="text-sm text-(--text-label)">FDV</span>
-							<span className="text-sm font-medium">${formattedNum(fdv)}</span>
+							<span className="body-sm text-secondary">FDV</span>
+							<span className="label-sm">${formattedNum(fdv)}</span>
 						</div>
 					) : null}
 
 					{volume24h != null ? (
 						<div className="flex items-baseline gap-1.5">
-							<span className="text-sm text-(--text-label)">Vol 24h</span>
-							<span className="text-sm font-medium">${formattedNum(volume24h)}</span>
+							<span className="body-sm text-secondary">Vol 24h</span>
+							<span className="label-sm">${formattedNum(volume24h)}</span>
 						</div>
 					) : null}
-				</div>
+				</Card>
 			) : null}
 		</>
 	)

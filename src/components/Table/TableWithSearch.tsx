@@ -17,6 +17,14 @@ import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
 import { Icon } from '~/components/Icon'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { VirtualTable, type VirtualTableLayout } from '~/components/Table/Table'
+import { Card } from '~/ui/Card'
+import {
+	searchFieldIconStyles,
+	searchFieldInlineWrapperStyles,
+	searchFieldInputStyles,
+	searchFieldWrapperStyles
+} from '~/ui/Input'
+import { TableToolbar } from '~/ui/Toolbar'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from './utils'
 import type { ColumnOrdersByBreakpoint } from './utils'
 
@@ -147,36 +155,21 @@ export function TableWithSearch<T extends RowData>({
 	useSortColumnOrders({ instance, columnOrders })
 
 	const controls = (
-		<div className="flex w-full flex-wrap items-center justify-end gap-3 p-3">
+		<TableToolbar className="w-full justify-end">
 			{leadingControls || header ? (
-				<div className="mr-auto flex items-center gap-3 overflow-x-auto">
+				<div className="mr-auto flex items-center gap-2 overflow-x-auto">
 					{leadingControls ? <div className="flex items-center overflow-x-auto">{leadingControls}</div> : null}
-					{header ? (
-						<HeadingTag
-							className={
-								leadingControls ? 'text-sm font-medium whitespace-nowrap text-(--text-label)' : 'text-lg font-semibold'
-							}
-						>
-							{header}
-						</HeadingTag>
-					) : null}
+					{header ? <HeadingTag className="label-md whitespace-nowrap">{header}</HeadingTag> : null}
 				</div>
 			) : null}
 			{columnToSearch ? (
-				<label
-					className={`relative w-full max-w-full sm:max-w-[280px] ${!leadingControls && !header ? 'mr-auto' : ''}`}
-				>
+				<label className={leadingControls || header ? searchFieldInlineWrapperStyles : searchFieldWrapperStyles}>
 					<span className="sr-only">{placeholder}</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder={placeholder}
-						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+						className={searchFieldInputStyles}
 					/>
 				</label>
 			) : null}
@@ -190,12 +183,13 @@ export function TableWithSearch<T extends RowData>({
 					label={columnSelectLabel}
 					labelType="smol"
 					variant="filter-responsive"
+					size="md"
 				/>
 			) : null}
 			{csvFileName ? (
-				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: csvFileName })} smol />
+				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: csvFileName })} smol size="md" />
 			) : null}
-		</div>
+		</TableToolbar>
 	)
 
 	if (embedded) {
@@ -214,7 +208,7 @@ export function TableWithSearch<T extends RowData>({
 	}
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+		<Card padding="none" border="subtle">
 			{controls}
 			<VirtualTable
 				instance={instance}
@@ -223,6 +217,6 @@ export function TableWithSearch<T extends RowData>({
 				skipVirtualization={skipVirtualization}
 				tableLayout={tableLayout}
 			/>
-		</div>
+		</Card>
 	)
 }

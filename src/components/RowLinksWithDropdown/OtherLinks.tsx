@@ -4,6 +4,15 @@ import { useRouter } from 'next/router'
 import { startTransition, useMemo, useRef, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { LoadingSpinner } from '~/components/Loaders'
+import { inputStyles } from '~/ui/Input'
+import {
+	menuSurfaceStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName,
+	popoverRowWithBorderStyles,
+	popoverSearchBlockWithBottomPaddingStyles,
+	popoverSeeMoreStyles
+} from '~/ui/Popover'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 
 interface IProps {
@@ -46,31 +55,26 @@ export function OtherLinks({ options, name, isActive, className }: IProps) {
 			<Ariakit.MenuProvider>
 				<Ariakit.MenuButton
 					data-active={isActive}
-					className={`my-auto flex h-6 items-center gap-4 rounded-md bg-[#E2E2E2] px-2.5 py-1 text-xs font-medium whitespace-nowrap text-black dark:bg-[#303032] dark:text-white ${
+					className={`my-auto flex items-center gap-0.5 rounded-md bg-surface-elevated-2 py-1 pr-1 pl-2 body-sm whitespace-nowrap text-primary ${
 						className ?? ''
 					}`}
 				>
 					<span>{name}</span>
-					<Ariakit.MenuButtonArrow className="relative top-px" />
+					<Icon name="chevron-down" className="size-3 shrink-0" />
 				</Ariakit.MenuButton>
 
 				<Ariakit.Menu
 					unmountOnHide={false}
 					hideOnInteractOutside
 					gutter={6}
-					wrapperProps={{
-						className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
-					}}
-					className="z-10 flex thin-scrollbar h-[calc(100dvh-80px)] min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:drawer max-sm:rounded-b-none sm:max-h-[60dvh] lg:h-full lg:max-h-(--popover-available-height) dark:border-[hsl(204,3%,32%)]"
+					wrapperProps={{ className: popoverMobileWrapperClassName }}
+					className={`${menuSurfaceStyles} lg:h-full`}
 				>
-					<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
+					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 						<Icon name="x" className="size-5" />
 					</Ariakit.PopoverDismiss>
-					<span className="relative mb-2 p-3">
-						<Ariakit.Combobox
-							placeholder="Search..."
-							className="w-full rounded-md bg-white px-3 py-1 text-base dark:bg-black"
-						/>
+					<span className={popoverSearchBlockWithBottomPaddingStyles}>
+						<Ariakit.Combobox placeholder="Search..." className={`w-full ${inputStyles}`} />
 					</span>
 					{matches.length > 0 ? (
 						<Ariakit.ComboboxList ref={comboboxRef}>
@@ -82,7 +86,7 @@ export function OtherLinks({ options, name, isActive, className }: IProps) {
 									value="__see_more__"
 									setValueOnClick={false}
 									hideOnClick={false}
-									className="w-full cursor-pointer px-3 py-4 text-left text-(--link) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-active-item:bg-(--link-hover-bg)"
+									className={popoverSeeMoreStyles}
 									onClick={handleSeeMore}
 								>
 									See more...
@@ -90,7 +94,7 @@ export function OtherLinks({ options, name, isActive, className }: IProps) {
 							) : null}
 						</Ariakit.ComboboxList>
 					) : (
-						<p className="px-3 py-6 text-center text-(--text-primary)">No results found</p>
+						<p className="px-3 py-6 text-center text-tertiary">No results found</p>
 					)}
 				</Ariakit.Menu>
 			</Ariakit.MenuProvider>
@@ -115,7 +119,7 @@ const Item = ({ label, to }: { label: string; to: string }) => {
 				}
 			}}
 			render={<Ariakit.ComboboxItem value={label} setValueOnClick={false} />}
-			className="group flex shrink-0 cursor-pointer items-center gap-4 border-b border-(--form-control-border) px-3 py-2 cv-auto-37 last-of-type:rounded-b-md data-active-item:bg-(--primary-hover)"
+			className={`${popoverRowWithBorderStyles} group justify-start gap-4`}
 		>
 			<span>{label}</span>
 			{loading ? <LoadingSpinner size={12} /> : null}

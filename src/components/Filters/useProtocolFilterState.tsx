@@ -15,7 +15,7 @@ export function useProtocolsFilterState(options: { key: string; name: string }[]
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const [extraFeesEnabled] = useLocalStorageSettingsManager('fees')
 
-	const selectedValues = useMemo(() => {
+	const selectedValues = useMemo<string[]>(() => {
 		const filters = options.flatMap((o) => (isMetricSettingKey(o.key) ? [o.key] : []))
 		return filters.filter((key) => (isTvlSettingsKey(key) ? extraTvlsEnabled[key] : extraFeesEnabled[key]))
 	}, [extraTvlsEnabled, extraFeesEnabled, options])

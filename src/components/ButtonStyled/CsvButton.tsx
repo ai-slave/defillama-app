@@ -8,6 +8,7 @@ import { TrialCsvLimitModal } from '~/components/TrialCsvLimitModal'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { setSignupSource } from '~/containers/Subscription/signupSource'
 import { useIsClient } from '~/hooks/useIsClient'
+import { Button } from '~/ui/Button'
 import { slug } from '~/utils'
 import { downloadCSV } from '~/utils/download'
 
@@ -18,6 +19,7 @@ const SubscribeProModal = lazy(() =>
 interface CSVDownloadButtonProps {
 	// Common props
 	className?: string
+	size?: 'sm' | 'md'
 	replaceClassName?: boolean
 	smol?: boolean
 	children?: ReactNode
@@ -90,7 +92,7 @@ function csvDownloadButtonReducer(
 
 // use children to pass in the text
 export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
-	const { className, replaceClassName, smol, children, free } = props
+	const { className, replaceClassName, smol, children, free, size = 'sm' } = props
 	const [state, dispatch] = useReducer(csvDownloadButtonReducer, initialCSVDownloadButtonState)
 	const { staticLoading, shouldRenderModal, trialCsvLimitOpen } = state
 	const { isAuthenticated, loaders, hasActiveSubscription, isTrial } = useAuthContext()
@@ -106,6 +108,19 @@ export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
 	})
 	const isClient = useIsClient()
 	const router = useRouter()
+	const buttonContent = (
+		<>
+			{!isLoading || !isClient ? (
+				<Icon name="download-paper" className="size-3 shrink-0" />
+			) : (
+				<LoadingSpinner size={12} />
+			)}
+
+			{children || (
+				<span className="overflow-hidden text-ellipsis whitespace-nowrap">{smol ? '.csv' : 'Download .csv'}</span>
+			)}
+		</>
+	)
 
 	const runDownload = useCallback(
 		async (forceLoading = false) => {
@@ -167,31 +182,32 @@ export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
 
 	return (
 		<>
-			<button
-				data-umami-event="export-csv"
-				data-umami-event-page={router.pathname}
-				className={
-					replaceClassName
-						? className
-						: `flex items-center justify-center gap-1 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) ${
-								className ?? ''
-							}`
-				}
-				onClick={() => {
-					void handleButtonClick()
-				}}
-				disabled={isClient ? isLoading : true}
-			>
-				{!isLoading || !isClient ? (
-					<Icon name="download-paper" className="size-3 shrink-0" />
-				) : (
-					<LoadingSpinner size={12} />
-				)}
-
-				{children || (
-					<span className="overflow-hidden text-ellipsis whitespace-nowrap">{smol ? '.csv' : 'Download .csv'}</span>
-				)}
-			</button>
+			{replaceClassName ? (
+				<button
+					data-umami-event="export-csv"
+					data-umami-event-page={router.pathname}
+					className={className}
+					onClick={() => {
+						void handleButtonClick()
+					}}
+					disabled={isClient ? isLoading : true}
+				>
+					{buttonContent}
+				</button>
+			) : (
+				<Button
+					data-umami-event="export-csv"
+					data-umami-event-page={router.pathname}
+					size={size}
+					className={className}
+					onClick={() => {
+						void handleButtonClick()
+					}}
+					disabled={isClient ? isLoading : true}
+				>
+					{buttonContent}
+				</Button>
+			)}
 			{shouldRenderModal ? (
 				<Suspense fallback={<></>}>
 					<SubscribeProModal dialogStore={subscribeModalStore} />

@@ -10,6 +10,8 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
@@ -178,9 +180,9 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 
 	return (
 		<>
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<div className="flex flex-row flex-wrap items-center justify-end gap-2 p-3">
-					<h1 className="mr-auto text-xl font-semibold">TVL by Category</h1>
+			<Panel>
+				<ChartPanelToolbar className="justify-end">
+					<h1 className="mr-auto heading-xs">TVL by Category</h1>
 					<SelectWithCombobox
 						allValues={categories}
 						selectedValues={selectedCategories}
@@ -188,15 +190,23 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 						label="Categories"
 						labelType="smol"
 						variant="filter"
+						size="md"
 					/>
 					<ChartExportButtons chartInstance={chartInstance} filename="categories-tvl" title="Protocol TVL" />
-				</div>
+				</ChartPanelToolbar>
 				{shouldFetchChartData && chartDataQuery.isLoading ? (
-					<div className="flex min-h-[360px] items-center justify-center text-(--text-tertiary)">
+					<div
+						role="status"
+						aria-live="polite"
+						className="flex min-h-[360px] items-center justify-center text-tertiary"
+					>
 						<LocalLoader />
 					</div>
 				) : chartErrorMessage ? (
-					<div className="flex min-h-[360px] items-center justify-center p-4 text-center text-sm text-(--text-tertiary)">
+					<div
+						role="alert"
+						className="flex min-h-[360px] items-center justify-center p-4 text-center body-sm text-data-down"
+					>
 						Failed to load chart data: {chartErrorMessage}
 					</div>
 				) : (
@@ -211,16 +221,9 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 						/>
 					</React.Suspense>
 				)}
-			</div>
+			</Panel>
 
-			<React.Suspense
-				fallback={
-					<div
-						style={{ minHeight: `${categories.length * 50 + 200}px` }}
-						className="rounded-md border border-(--cards-border) bg-(--cards-bg)"
-					/>
-				}
-			>
+			<React.Suspense fallback={<Panel style={{ minHeight: `${categories.length * 50 + 200}px` }} />}>
 				<TableWithSearch
 					data={finalCategoriesList}
 					columns={categoriesColumns}

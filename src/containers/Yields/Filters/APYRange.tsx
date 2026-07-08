@@ -8,9 +8,10 @@ import { pushYieldsQuery } from '../queryUpdates.client'
 interface IAPYRange {
 	nestedMenu?: boolean
 	placement?: Ariakit.PopoverStoreProps['placement']
+	size?: 'sm' | 'md'
 }
 
-export function APYRange({ nestedMenu, placement }: IAPYRange) {
+export function APYRange({ nestedMenu, placement, size }: IAPYRange) {
 	const router = useRouter()
 
 	const handleSubmit = (e) => {
@@ -67,6 +68,7 @@ export function APYRange({ nestedMenu, placement }: IAPYRange) {
 			onSubmit={handleSubmit}
 			onClear={handleClear}
 			nestedMenu={nestedMenu}
+			size={size}
 			min={min}
 			max={max}
 			placement={placement}

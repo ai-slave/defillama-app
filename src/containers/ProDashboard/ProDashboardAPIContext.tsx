@@ -13,6 +13,7 @@ import {
 	useSyncExternalStore
 } from 'react'
 import toast from 'react-hot-toast'
+import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import pb from '~/utils/pocketbase'
 import { type CustomTimePeriod, dashboardReducer, initDashboardState, type TimePeriod } from './dashboardReducer'
@@ -21,8 +22,6 @@ import { useDashboardStream } from './hooks/useDashboardStream'
 import { ProxyAuthTokenContext, StreamDoneContext, useChartsData, useProtocolsAndChains } from './queries'
 import { type Dashboard, matchesDashboardKey } from './services/DashboardAPI'
 import type {
-	CexAnalyticsMetric,
-	CexAnalyticsView,
 	Chain,
 	ChartBuilderConfig,
 	ChartConfig,

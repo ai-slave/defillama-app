@@ -16,10 +16,6 @@ const inputCls =
 	'h-10 w-full rounded-lg border border-(--form-control-border) bg-(--signin-input-bg) px-3 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--primary) focus:outline-none'
 const primaryBtnCls =
 	'h-10 w-full rounded-lg bg-(--primary) text-sm font-medium text-white disabled:bg-(--signin-btn-disabled-bg) disabled:text-(--signin-btn-disabled-text)'
-const outlineBtnCls =
-	'flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-(--form-control-border) text-sm font-medium text-(--text-primary) transition-colors hover:bg-(--signin-outline-hover-bg)'
-const signInDialogCls =
-	'dialog top-1/2 right-auto bottom-auto left-1/2 m-0 max-h-[90dvh] min-h-0 w-[calc(100vw-32px)] max-w-[331px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-(--signin-bg) px-5 pt-6 pb-5 shadow-2xl max-sm:max-h-[calc(100dvh-48px)] max-sm:rounded-[20px] max-sm:px-4 max-sm:pt-5 max-sm:pb-6'
 
 const WalletSignInButton = dynamic<WalletSignInButtonProps>(
 	() => import('./WalletSignInButton').then((module) => module.WalletSignInButton),
@@ -45,7 +41,11 @@ export function SignInDialog({
 	suppressVerifyEmailPrompt?: boolean
 }) {
 	return (
-		<Ariakit.Dialog store={store} className={signInDialogCls} unmountOnHide>
+		<Ariakit.Dialog
+			store={store}
+			className="dialog top-1/2 right-auto bottom-auto left-1/2 m-0 max-h-[90dvh] min-h-0 w-[calc(100vw-32px)] max-w-[331px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-(--signin-bg) px-5 pt-6 pb-5 shadow-2xl max-sm:max-h-[calc(100dvh-48px)] max-sm:rounded-[20px] max-sm:px-4 max-sm:pt-5 max-sm:pb-6"
+			unmountOnHide
+		>
 			<div>
 				<SignInFlow
 					dialogStore={store}
@@ -246,7 +246,7 @@ export function SignInFlow({
 
 				<button
 					type="button"
-					className={outlineBtnCls}
+					className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-(--form-control-border) text-sm font-medium text-(--text-primary) transition-colors hover:bg-(--signin-outline-hover-bg)"
 					onClick={handleGithubSignIn}
 					disabled={signInWithGithubMutation.isPending}
 				>

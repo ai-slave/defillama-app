@@ -1,4 +1,5 @@
 import { type Dispatch, type SetStateAction, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import {
 	DEFAULT_COLUMN_ORDER,
 	DEFAULT_ROW_HEADERS,
@@ -7,8 +8,6 @@ import {
 import type { CustomTimePeriod, DashboardAction, DashboardState, TimePeriod } from './dashboardReducer'
 import type { Dashboard } from './services/DashboardAPI'
 import {
-	type CexAnalyticsMetric,
-	type CexAnalyticsView,
 	type AdvancedTvlChartConfig,
 	type AdvancedTvlChartType,
 	type BorrowedChartConfig,

@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { useQueries } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import type { NextRouter } from 'next/router'
@@ -7,7 +6,6 @@ import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { ensureChronologicalRows } from '~/components/ECharts/utils'
 import { feesOptions } from '~/components/Filters/options'
 import { useProtocolsFilterState } from '~/components/Filters/useProtocolFilterState'
-import { Icon } from '~/components/Icon'
 import { LocalLoader } from '~/components/Loaders'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
 import { Select } from '~/components/Select/Select'
@@ -15,6 +13,7 @@ import type { IAdapterChainOverview, IAdapterProtocolOverview } from '~/containe
 import { Stats } from '~/containers/ChainOverview/Stats'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { getNDistinctColors } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import {
@@ -382,7 +381,7 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 						</div>
 					) : (
 						<div className="relative rounded-md border border-(--cards-border) bg-(--cards-bg)">
-							<React.Suspense fallback={<div className="min-h-[398px]" />}>
+							<React.Suspense fallback={<div className="min-h-[406px]" />}>
 								<MultiSeriesChart2
 									dataset={chartData.dataset}
 									charts={chartData.charts}
@@ -422,33 +421,7 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 }
 
 function FailedCompareChainsPopover({ failedChains }: { failedChains: string[] }) {
-	if (failedChains.length === 0) {
-		return null
-	}
-
-	return (
-		<Ariakit.PopoverProvider>
-			<Ariakit.PopoverDisclosure className="absolute right-2 bottom-2 z-10 flex items-center justify-center rounded-full border border-(--cards-border) bg-(--bg-main) p-1.5 text-(--error) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)">
-				<Icon name="alert-triangle" className="size-3.5" />
-				<span className="sr-only">Show failed chain APIs</span>
-			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				unmountOnHide
-				hideOnInteractOutside
-				gutter={6}
-				className="z-10 mr-1 flex max-h-[calc(100dvh-80px)] w-[min(calc(100vw-16px),300px)] flex-col gap-1 overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) p-2 text-xs dark:border-[hsl(204,3%,32%)]"
-			>
-				<p className="font-medium text-(--error)">Failed to load data for:</p>
-				<ul className="pl-4">
-					{failedChains.map((chain) => (
-						<li key={chain} className="list-disc">
-							{chain}
-						</li>
-					))}
-				</ul>
-			</Ariakit.Popover>
-		</Ariakit.PopoverProvider>
-	)
+	return <FailedDataPopover items={failedChains} ariaLabel="Show failed chain APIs" />
 }
 
 function useChainsChartFilterState() {

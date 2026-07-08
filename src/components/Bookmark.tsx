@@ -28,6 +28,7 @@ export function Bookmark({
 	isChain,
 	watchlistType: watchlistTypeProp,
 	itemKey,
+	className,
 	...props
 }: IBookmarkProps) {
 	const router = useRouter()
@@ -75,7 +76,7 @@ export function Bookmark({
 			onClick={onClick}
 			style={buttonStyle}
 			{...props}
-			className="-left-0.5 shrink-0 data-[bookmark=true]:absolute data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block"
+			className={`-left-0.5 shrink-0 data-[bookmark=true]:absolute data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block ${className ?? ''}`}
 		>
 			<Icon name="bookmark" width={16} height={16} className="shrink-0" />
 			<span className="sr-only">Bookmark</span>

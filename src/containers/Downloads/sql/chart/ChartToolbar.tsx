@@ -160,7 +160,7 @@ function SegmentedControl<T extends string>({
 						className={`rounded-[3px] px-2 py-1 font-mono text-[10.5px] transition-colors ${
 							active
 								? 'bg-(--primary) text-white'
-								: 'text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)'
+								: 'text-(--text-secondary) hover:bg-hover-row hover:text-(--text-primary)'
 						}`}
 					>
 						{opt.label}
@@ -192,14 +192,14 @@ function PickerChip({
 			<Ariakit.MenuProvider>
 				<Ariakit.MenuButton
 					aria-label={label}
-					className="inline-flex max-w-[200px] items-center gap-1 rounded-md border border-(--divider) bg-(--bg-primary) px-2 py-1 font-mono text-[11px] text-(--text-primary) hover:bg-(--link-hover-bg)"
+					className="inline-flex max-w-[200px] items-center gap-1 rounded-md border border-(--divider) bg-(--bg-primary) px-2 py-1 font-mono text-[11px] text-(--text-primary) hover:bg-hover-row"
 				>
 					<span className="truncate">{value == null ? '—' : optionLabel ? optionLabel(value) : value}</span>
 					<Icon name="chevron-down" className="size-3 shrink-0" />
 				</Ariakit.MenuButton>
 				<Ariakit.Menu
 					gutter={4}
-					className="z-50 max-h-64 overflow-auto rounded-md border border-(--divider) bg-(--cards-bg) p-1 shadow-lg"
+					className="z-50 max-h-64 overflow-auto rounded-lg border border-medium bg-surface-elevated-1 p-1 shadow-lg"
 				>
 					{options.length === 0 ? (
 						<div className="px-2 py-1 text-[11px] text-(--text-tertiary)">No options</div>
@@ -208,8 +208,8 @@ function PickerChip({
 							<Ariakit.MenuItem
 								key={opt}
 								onClick={() => onChange(opt)}
-								className={`flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 font-mono text-[11px] text-(--text-primary) hover:bg-(--link-hover-bg) ${
-									opt === value ? 'bg-(--link-hover-bg)' : ''
+								className={`flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 font-mono text-[11px] text-(--text-primary) hover:bg-hover-row ${
+									opt === value ? 'bg-hover-row' : ''
 								}`}
 							>
 								<span className="truncate">{optionLabel ? optionLabel(opt) : opt}</span>
@@ -259,14 +259,14 @@ function YSeriesPicker({
 				<Ariakit.MenuButton
 					aria-label="Y series"
 					disabled={splitByActive}
-					className="inline-flex max-w-[240px] items-center gap-1 rounded-md border border-(--divider) bg-(--bg-primary) px-2 py-1 font-mono text-[11px] text-(--text-primary) hover:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-60"
+					className="inline-flex max-w-[240px] items-center gap-1 rounded-md border border-(--divider) bg-(--bg-primary) px-2 py-1 font-mono text-[11px] text-(--text-primary) hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60"
 				>
 					<span className="truncate">{label}</span>
 					<Icon name="chevron-down" className="size-3 shrink-0" />
 				</Ariakit.MenuButton>
 				<Ariakit.Menu
 					gutter={4}
-					className="z-50 flex max-h-[60vh] w-[280px] flex-col gap-1 overflow-auto rounded-md border border-(--divider) bg-(--cards-bg) p-2 shadow-lg"
+					className="z-50 flex max-h-[60vh] w-[280px] flex-col gap-1 overflow-auto rounded-lg border border-medium bg-surface-elevated-1 p-2 shadow-lg"
 				>
 					{yCols.length > 0 ? (
 						<div className="flex flex-col gap-1">
@@ -301,7 +301,7 @@ function YSeriesPicker({
 									key={name}
 									hideOnClick={false}
 									onClick={() => onToggle(name)}
-									className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 font-mono text-[11px] text-(--text-primary) hover:bg-(--link-hover-bg)"
+									className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 font-mono text-[11px] text-(--text-primary) hover:bg-hover-row"
 								>
 									<Icon name="plus" className="size-3 text-(--text-tertiary)" />
 									<span className="truncate">{name}</span>

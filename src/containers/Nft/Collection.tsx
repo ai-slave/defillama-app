@@ -5,9 +5,9 @@ import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { FormattedName } from '~/components/FormattedName'
 import { Icon } from '~/components/Icon'
 import { LocalLoader } from '~/components/Loaders'
-import { Switch } from '~/components/Switch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getNFTCollection } from '~/containers/Nft/queries'
+import { Switch } from '~/ui/Switch'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { ICollectionScatterChartProps, IOrderBookChartProps } from './types'
 
@@ -124,14 +124,14 @@ export function NFTCollectionContainer() {
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 				{floorHistory?.source?.length > 0 ? (
 					<div className="relative rounded-md border border-(--cards-border) bg-(--cards-bg) only:col-span-full">
-						<React.Suspense fallback={<div className="h-[398px]" />}>
+						<React.Suspense fallback={<div className="h-[406px]" />}>
 							<MultiSeriesChart2 dataset={floorHistory} valueSymbol="ETH" title="Floor Price" />
 						</React.Suspense>
 					</div>
 				) : null}
 				{orderbook?.length > 0 ? (
 					<div className="relative rounded-md border border-(--cards-border) bg-(--cards-bg) only:col-span-full">
-						<React.Suspense fallback={<div className="h-[398px]" />}>
+						<React.Suspense fallback={<div className="h-[406px]" />}>
 							<OrderbookChart chartData={orderbook} />
 						</React.Suspense>
 					</div>

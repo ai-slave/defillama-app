@@ -5,6 +5,8 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { Card } from '~/ui/Card'
+import { Panel } from '~/ui/Panel'
 import { formattedNum, getTokenDominance, slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
@@ -61,17 +63,17 @@ export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData 
 		<>
 			<RowLinksWithDropdown links={forkLinks} activeLink={fork} alternativeOthersText="Others" />
 			{isLoading ? (
-				<div className="flex flex-1 flex-col items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
-					<p className="flex items-center gap-1">
+				<Panel padding="md" className="flex-1 items-center justify-center">
+					<p role="status" aria-live="polite" className="flex items-center gap-1 body-sm text-tertiary">
 						Loading
 						<LoadingDots />
 					</p>
-				</div>
+				</Panel>
 			) : (
 				<>
 					<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-						<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-5 xl:col-span-1">
-							<h1 className="flex items-center gap-2 text-xl font-semibold">
+						<Card border="subtle" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+							<h1 className="flex items-center gap-2 heading-sm">
 								<TokenLogo name={fork} kind="token" size={24} alt={`Logo of ${fork}`} />
 								{fork}
 							</h1>
@@ -85,10 +87,10 @@ export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData 
 									{dominanceText == null ? 'N/A' : `${dominanceText}%`}
 								</span>
 							</p>
-						</div>
+						</Card>
 
-						<div className="col-span-2 rounded-md border border-(--cards-border) bg-(--cards-bg)">
-							<Suspense fallback={<div className="min-h-[398px]" />}>
+						<Panel className="col-span-2">
+							<Suspense fallback={<div className="min-h-[406px]" />}>
 								<MultiSeriesChart2
 									dataset={dataset}
 									charts={charts}
@@ -102,16 +104,9 @@ export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData 
 									}}
 								/>
 							</Suspense>
-						</div>
+						</Panel>
 					</div>
-					<Suspense
-						fallback={
-							<div
-								style={{ minHeight: `${protocolTableData.length * 50 + 200}px` }}
-								className="rounded-md border border-(--cards-border) bg-(--cards-bg)"
-							/>
-						}
-					>
+					<Suspense fallback={<Panel style={{ minHeight: `${protocolTableData.length * 50 + 200}px` }} />}>
 						<ChainProtocolsTable protocols={protocolTableData} useStickyHeader={false} />
 					</Suspense>
 				</>

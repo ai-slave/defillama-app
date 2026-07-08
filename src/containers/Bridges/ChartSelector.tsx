@@ -1,7 +1,13 @@
 import * as Ariakit from '@ariakit/react'
 import * as React from 'react'
-import { FormattedName } from '~/components/FormattedName'
 import { Icon } from '~/components/Icon'
+import { selectTriggerStyles } from '~/components/Select/types'
+import {
+	popoverRowWithBorderStyles,
+	popoverSurfaceStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName
+} from '~/ui/Popover'
 
 interface IProps {
 	options: string[]
@@ -16,8 +22,8 @@ export function ChartSelector({ options, selectedChart, onClick }: IProps) {
 
 	return (
 		<Ariakit.SelectProvider value={selectedChart} setValue={onItemClick}>
-			<Ariakit.Select className="z-10 mr-auto flex cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-(--form-control-border) p-2 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)">
-				<FormattedName text={selectedChart} maxCharacters={20} fontSize={'16px'} fontWeight={600} />
+			<Ariakit.Select className={`${selectTriggerStyles('filter', 'md')} z-10 mr-auto`}>
+				<span className="truncate">{selectedChart}</span>
 				<Ariakit.SelectArrow />
 			</Ariakit.Select>
 
@@ -25,12 +31,10 @@ export function ChartSelector({ options, selectedChart, onClick }: IProps) {
 				unmountOnHide
 				hideOnInteractOutside
 				gutter={6}
-				wrapperProps={{
-					className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
-				}}
-				className="z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,60dvh)] lg:max-h-(--popover-available-height) dark:border-[hsl(204,3%,32%)]"
+				wrapperProps={{ className: popoverMobileWrapperClassName }}
+				className={popoverSurfaceStyles}
 			>
-				<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
+				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 					<Icon name="x" className="size-5" />
 				</Ariakit.PopoverDismiss>
 
@@ -41,7 +45,7 @@ export function ChartSelector({ options, selectedChart, onClick }: IProps) {
 						focusOnHover
 						setValueOnClick={false}
 						onClick={() => onItemClick(option)}
-						className="flex shrink-0 cursor-pointer items-center justify-between gap-4 border-b border-(--form-control-border) px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)"
+						className={popoverRowWithBorderStyles}
 					>
 						{option}
 					</Ariakit.SelectItem>

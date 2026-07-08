@@ -1,6 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import { useRef } from 'react'
 import { Icon } from '~/components/Icon'
+import { Button } from '~/ui/Button'
+import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { Input } from '~/ui/Input'
 
 export function DialogForm({
 	open,
@@ -22,21 +25,18 @@ export function DialogForm({
 			onClose={() => setOpen(false)}
 			modal={true}
 			initialFocus={inputRef}
-			className="dialog fixed top-[50%] left-[50%] flex h-fit w-8/10 max-w-150 translate-x-[-50%] translate-y-[-50%] flex-col gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-6 sm:w-1/2 lg:w-1/3"
+			className={`${dialogSurfaceStyles} [--dialog-width:480px]`}
 		>
-			<div className="flex items-center justify-between gap-2">
-				<Ariakit.DialogHeading className="text-lg font-medium">{title}</Ariakit.DialogHeading>
-				<Ariakit.DialogDismiss
-					className="-my-2 ml-auto rounded-lg p-2 text-(--text-tertiary) hover:bg-(--divider) hover:text-(--text-primary)"
-					onClick={() => setOpen(false)}
-					aria-label="Close"
-				>
-					<Icon name="x" height={20} width={20} />
+			<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
+				<DialogHeading>{title}</DialogHeading>
+				<Ariakit.DialogDismiss render={<Button variant="ghost" size="md" square />} aria-label="Close">
+					<Icon name="x" className="size-4" />
 					<span className="sr-only">Close dialog</span>
 				</Ariakit.DialogDismiss>
 			</div>
 			<form
 				id="newPortfolio"
+				className="flex flex-col gap-3 px-4 py-3"
 				onSubmit={(e) => {
 					e.preventDefault()
 					const form = e.target as HTMLFormElement
@@ -49,22 +49,15 @@ export function DialogForm({
 				}}
 			>
 				<label className="flex flex-col gap-1">
-					<span className="text-sm text-(--text-secondary)">{description}</span>
-					<input
-						ref={inputRef}
-						required
-						className="rounded-md border border-(--form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-white"
-						name="name"
-					/>
+					<span className="body-sm text-secondary">{description}</span>
+					<Input ref={inputRef} required name="name" />
 				</label>
 			</form>
-			<button
-				type="submit"
-				form="newPortfolio"
-				className="mt-3 rounded-md bg-(--link-active-bg) p-3 text-white disabled:opacity-50"
-			>
-				Save
-			</button>
+			<div className="flex justify-end border-t border-subtle bg-surface px-4 py-3">
+				<Button type="submit" form="newPortfolio" variant="primary" size="md">
+					Save
+				</Button>
+			</div>
 		</Ariakit.Dialog>
 	)
 }

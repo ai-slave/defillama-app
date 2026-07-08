@@ -127,15 +127,19 @@ export function ChainsByCategory({
 			) : null}
 
 			{showSharedChartState ? (
-				<div className="grid min-h-[398px] grid-cols-1 place-items-center rounded-md border border-(--cards-border) bg-(--cards-bg) xl:grid-cols-2">
-					<div className="xl:col-span-2">
+				<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
+					<div className="relative isolate flex min-h-[406px] flex-col items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-4 text-center text-sm text-(--text-tertiary)">
 						{chartErrorMessage ? <ChainsChartError message={chartErrorMessage} /> : <LocalLoader />}
 					</div>
+					<div
+						className="relative isolate flex min-h-[406px] flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)"
+						aria-hidden="true"
+					/>
 				</div>
 			) : (
 				<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-					<div className="relative isolate flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-						<React.Suspense fallback={<div className="min-h-[398px]" />}>
+					<div className="relative isolate flex min-h-[406px] flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
+						<React.Suspense fallback={<ChainsChartPanelFallback />}>
 							<PieChart
 								chartData={pieChartData}
 								stackColors={colorsByChain}
@@ -143,8 +147,8 @@ export function ChainsByCategory({
 							/>
 						</React.Suspense>
 					</div>
-					<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-						<React.Suspense fallback={<div className="min-h-[398px]" />}>
+					<div className="relative isolate flex min-h-[406px] flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
+						<React.Suspense fallback={<ChainsChartPanelFallback />}>
 							<MultiSeriesChart2
 								dataset={dominanceCharts.dataset}
 								charts={dominanceCharts.charts}
@@ -174,12 +178,17 @@ export function ChainsByCategory({
 	)
 }
 
-function ChainsChartError({ message }: { message: string }) {
+function ChainsChartPanelFallback() {
 	return (
-		<div className="flex min-h-[398px] items-center justify-center p-4 text-center text-sm text-(--text-tertiary)">
-			Failed to load chart data: {message}
-		</div>
+		<>
+			<div className="h-10 shrink-0" aria-hidden="true" />
+			<div className="min-h-[360px] flex-1" />
+		</>
 	)
+}
+
+function ChainsChartError({ message }: { message: string }) {
+	return <p role="alert">Failed to load chart data: {message}</p>
 }
 
 const useFormatChartData = ({

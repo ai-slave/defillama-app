@@ -13,6 +13,7 @@ import { BasicLink } from '~/components/Link'
 import { Select } from '~/components/Select/Select'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import type { ETFOverviewProps, IETFSnapshotRow } from './types'
@@ -131,7 +132,7 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 			<div className="grid grid-cols-1 gap-1 xl:grid-cols-3">
 				<div className="flex flex-col gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
 					<div>
-						<h1 className="text-xl font-semibold">Daily Stats</h1>
+						<h1 className="heading-sm">Daily Stats</h1>
 						<span className="text-xs text-(--text-label)">{lastUpdated}</span>
 					</div>
 
@@ -163,8 +164,8 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 					</div>
 				</div>
 				<div className="flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-2">
-					<div className="flex flex-wrap justify-end gap-2 p-2 pb-0">
-						<h2 className="mr-auto text-lg font-semibold">Flows (Source: Farside)</h2>
+					<ChartPanelToolbar className="justify-end">
+						<h2 className="mr-auto heading-xs">Flows (Source: Farside)</h2>
 						<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 						<Select
 							allValues={ASSET_VALUES}
@@ -173,10 +174,11 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 							label={'ETF'}
 							labelType="smol"
 							variant="filter-responsive"
+							size="md"
 							portal
 						/>
 						<ChartExportButtons chartInstance={chartInstance} filename="etf-flows" title="ETF Flows" />
-					</div>
+					</ChartPanelToolbar>
 					<React.Suspense fallback={<div className="min-h-[360px]" />}>
 						<MultiSeriesChart2
 							dataset={finalCharts.dataset}

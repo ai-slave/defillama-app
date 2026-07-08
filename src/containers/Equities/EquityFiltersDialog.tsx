@@ -4,6 +4,11 @@ import { Icon } from '~/components/Icon'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { Tooltip } from '~/components/Tooltip'
 import { useMedia } from '~/hooks/useMedia'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { Input, searchFieldIconStyles } from '~/ui/Input'
+import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles, popoverSurfaceStyles } from '~/ui/Popover'
 import {
 	activeEquityFiltersToDraft,
 	countActiveEquityFilters,
@@ -78,7 +83,7 @@ function FilterDescription({ config }: { config: EquityFilterConfig }) {
 
 	return (
 		<Tooltip content={config.description} placement="top">
-			<Icon name="circle-help" className="size-3 text-(--text-tertiary)" />
+			<Icon name="circle-help" className="size-3 text-tertiary" />
 		</Tooltip>
 	)
 }
@@ -92,23 +97,17 @@ function OperatorSelect({
 }) {
 	return (
 		<Ariakit.SelectProvider value={value} setValue={(nextValue) => onChange(nextValue as EquityNumericOperator)}>
-			<Ariakit.Select className="flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-(--form-control-border) bg-(--bg-input) px-2.5 text-xs text-(--text-primary) outline-hidden hover:bg-(--btn-hover-bg) focus:border-(--old-blue)">
+			<Ariakit.Select className="flex min-h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-[8px] border border-medium bg-page px-3 py-1.5 label-sm text-primary outline-hidden hover:bg-hover-row focus:border-brand">
 				<Ariakit.SelectValue />
 				<Ariakit.SelectArrow />
 			</Ariakit.Select>
-			<Ariakit.SelectPopover
-				portal
-				gutter={4}
-				sameWidth
-				className="z-100 rounded-md border border-(--cards-border) bg-(--bg-main) py-1 shadow-lg"
-			>
+			<Ariakit.SelectPopover portal gutter={4} sameWidth className={`${popoverSurfaceStyles} z-100`}>
 				{OPERATOR_OPTIONS.map((operator) => (
-					<Ariakit.SelectItem
-						key={operator.value}
-						value={operator.value}
-						className="cursor-pointer px-2.5 py-1.5 text-xs text-(--text-primary) hover:bg-(--btn-hover-bg) data-active-item:bg-(--btn-hover-bg)"
-					>
-						{operator.label}
+					<Ariakit.SelectItem key={operator.value} value={operator.value} className={popoverRowWithBorderStyles}>
+						<span>{operator.label}</span>
+						<span className={popoverSingleSelectCheckStyles(operator.value === value)} aria-hidden>
+							<Icon name="check" className="size-3" />
+						</span>
 					</Ariakit.SelectItem>
 				))}
 			</Ariakit.SelectPopover>
@@ -132,7 +131,7 @@ function ModeToggle({
 		<div
 			role="group"
 			aria-label="Match mode"
-			className="flex h-8 shrink-0 items-center gap-0.5 rounded-md border border-(--form-control-border) bg-(--bg-input) p-0.5 text-xs"
+			className="flex min-h-8 shrink-0 items-center gap-0.5 rounded-[8px] border border-medium bg-page p-0.5 label-sm"
 		>
 			{MODE_OPTIONS.map((option) => (
 				<button
@@ -141,7 +140,7 @@ function ModeToggle({
 					onClick={() => onChange(option.value)}
 					data-active={value === option.value}
 					aria-pressed={value === option.value}
-					className="flex h-full cursor-pointer items-center rounded-sm px-2.5 font-medium text-(--text-tertiary) hover:text-(--text-primary) data-[active=true]:bg-(--old-blue) data-[active=true]:text-white"
+					className="flex cursor-pointer items-center self-stretch rounded-md px-2.5 text-tertiary hover:text-primary data-[active=true]:bg-brand data-[active=true]:text-on-brand"
 				>
 					{option.label}
 				</button>
@@ -164,17 +163,17 @@ function NumericInput({
 	suffix?: string
 }) {
 	return (
-		<label className="flex h-8 min-w-0 flex-1 items-center gap-1 rounded-md border border-(--form-control-border) bg-(--bg-input) px-2 text-xs text-(--text-primary) focus-within:border-(--old-blue)">
-			{prefix ? <span className="text-(--text-tertiary)">{prefix}</span> : null}
+		<label className="flex min-h-8 min-w-0 flex-1 items-center gap-1 rounded-[8px] border border-medium bg-page px-3 py-1.5 label-sm text-primary focus-within:border-brand">
+			{prefix ? <span className="text-tertiary">{prefix}</span> : null}
 			<input
 				type="text"
 				inputMode="decimal"
 				value={value}
 				onChange={(event) => onChange(event.currentTarget.value)}
 				placeholder={placeholder}
-				className="min-w-0 flex-1 bg-transparent outline-hidden placeholder:text-(--text-tertiary)"
+				className="min-w-0 flex-1 bg-transparent outline-hidden placeholder:text-tertiary"
 			/>
-			{suffix ? <span className="text-(--text-tertiary)">{suffix}</span> : null}
+			{suffix ? <span className="text-tertiary">{suffix}</span> : null}
 		</label>
 	)
 }
@@ -275,23 +274,19 @@ function NumericFilterEditor({
 	}
 
 	return (
-		<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+		<Card border="subtle" padding="sm" className="flex flex-col gap-2">
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex min-w-0 items-center gap-1.5">
-					<span className="truncate text-xs font-semibold text-(--text-primary)">{config.label}</span>
+					<span className="truncate label-sm text-primary">{config.label}</span>
 					<FilterDescription config={config} />
-					<span className="rounded-full bg-(--btn-bg) px-1.5 py-0.5 text-[9px] font-medium text-(--text-tertiary) uppercase">
+					<span className="rounded-full bg-surface-elevated-2 px-1.5 py-0.5 label-xs text-tertiary uppercase">
 						{CATEGORY_LABELS[config.category]}
 					</span>
 				</div>
-				<button
-					type="button"
-					onClick={onRemove}
-					className="rounded p-1 text-(--text-tertiary) hover:bg-(--btn-hover-bg) hover:text-(--text-primary)"
-				>
+				<Button type="button" variant="ghost" size="sm" square onClick={onRemove}>
 					<Icon name="x" className="size-3.5" />
 					<span className="sr-only">Remove {config.label} filter</span>
-				</button>
+				</Button>
 			</div>
 			<div className="flex items-center gap-2">
 				<OperatorSelect value={operator} onChange={updateOperator} />
@@ -322,7 +317,7 @@ function NumericFilterEditor({
 					/>
 				)}
 			</div>
-		</div>
+		</Card>
 	)
 }
 
@@ -344,22 +339,18 @@ function CategoricalFilterEditor({
 	const valueLabel = CATEGORICAL_VALUE_LABELS[config.field]
 
 	return (
-		<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+		<Card border="subtle" padding="sm" className="flex flex-col gap-2">
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex min-w-0 items-center gap-1.5">
-					<span className="truncate text-xs font-semibold text-(--text-primary)">{config.label}</span>
-					<span className="rounded-full bg-(--btn-bg) px-1.5 py-0.5 text-[9px] font-medium text-(--text-tertiary) uppercase">
+					<span className="truncate label-sm text-primary">{config.label}</span>
+					<span className="rounded-full bg-surface-elevated-2 px-1.5 py-0.5 label-xs text-tertiary uppercase">
 						{CATEGORY_LABELS[config.category]}
 					</span>
 				</div>
-				<button
-					type="button"
-					onClick={onRemove}
-					className="rounded p-1 text-(--text-tertiary) hover:bg-(--btn-hover-bg) hover:text-(--text-primary)"
-				>
+				<Button type="button" variant="ghost" size="sm" square onClick={onRemove}>
 					<Icon name="x" className="size-3.5" />
 					<span className="sr-only">Remove {config.label} filter</span>
-				</button>
+				</Button>
 			</div>
 			<div className="flex items-center gap-2">
 				<ModeToggle value={mode} onChange={(nextMode) => onUpdate({ ...filter, mode: nextMode })} />
@@ -374,15 +365,15 @@ function CategoricalFilterEditor({
 					selectAllScope="matches"
 					searchPlaceholder={`Search ${valueLabel.toLowerCase()}...`}
 					emptyLabel="No matches found"
-					popoverClassName="z-100 shadow-lg max-sm:h-[88dvh]! max-sm:max-h-[88dvh] max-sm:w-full sm:min-w-[260px] sm:max-h-[min(360px,60dvh)]! lg:max-h-[min(360px,60dvh)]!"
+					popoverClassName="z-100 max-sm:h-[88dvh]! max-sm:max-h-[88dvh] max-sm:w-full sm:min-w-[260px] sm:max-h-[min(360px,60dvh)]! lg:max-h-[min(360px,60dvh)]!"
 					triggerProps={{
 						'aria-label': `${valueLabel} values`,
 						className:
-							'flex h-8 min-w-0 flex-1 cursor-pointer items-center gap-1.5 rounded-md border border-(--form-control-border) bg-(--bg-input) px-2.5 text-xs text-(--text-primary) outline-hidden hover:bg-(--btn-hover-bg) focus:border-(--old-blue)'
+							'label-sm flex min-h-8 min-w-0 flex-1 cursor-pointer items-center gap-1.5 rounded-[8px] border border-medium bg-page px-3 py-1.5 text-primary outline-hidden hover:bg-hover-row focus:border-brand'
 					}}
 				/>
 			</div>
-		</div>
+		</Card>
 	)
 }
 
@@ -487,56 +478,49 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={handleOpenChange}>
-			<Ariakit.DialogDisclosure className="flex cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)">
-				<span className="flex min-w-4 items-center justify-center rounded-full border border-(--form-control-border) px-1 py-0.25 text-[10px] leading-none">
+			<Ariakit.DialogDisclosure render={<Button type="button" size="md" />}>
+				<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 text-[10px] leading-none">
 					{activeCount}
 				</span>
 				<span>Filters</span>
-				<Icon name="settings" className="size-3.5 text-(--text-tertiary)" />
+				<Icon name="settings" className="size-3.5 text-tertiary" />
 			</Ariakit.DialogDisclosure>
 			<Ariakit.Dialog
-				className="fixed inset-(--inset) top-0 right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-[85dvh] min-h-[40dvh] w-full max-w-full flex-col overflow-hidden rounded-t-xl border border-[color-mix(in_oklch,black_8%,transparent)] bg-(--cards-bg) pb-[max(0px,env(safe-area-inset-bottom))] shadow-[0_24px_64px_-16px_rgb(0_0_0/0.45),0_0_0_1px_color-mix(in_oklch,black_4%,transparent)] max-sm:drawer sm:mb-auto sm:h-fit sm:max-h-[min(760px,calc(100%-32px))] sm:min-h-[initial] sm:max-w-[min(calc(100%-32px),860px)] sm:rounded-xl sm:pb-0 dark:border-[color-mix(in_oklch,white_9%,transparent)] dark:shadow-[0_24px_64px_-16px_rgb(0_0_0/0.6),0_0_0_1px_color-mix(in_oklch,white_3%,transparent)_inset]"
+				className={`${dialogSurfaceStyles} [--dialog-width:860px] sm:max-h-[min(760px,calc(100%-32px))]`}
 				unmountOnHide
 			>
-				<div className="flex items-center justify-between gap-3 border-b border-(--cards-border) px-4 py-3">
+				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 					<div className="flex items-baseline gap-2.5">
-						<Ariakit.DialogHeading className="text-[15px] font-semibold tracking-tight text-(--text-primary)">
-							Filters
-						</Ariakit.DialogHeading>
-						<span className="text-xs text-(--text-tertiary) tabular-nums">
+						<DialogHeading>Filters</DialogHeading>
+						<span className="text-xs text-tertiary tabular-nums">
 							{draftActiveCount}/{EQUITY_FILTER_CONFIGS.length}
 						</span>
 					</div>
-					<Ariakit.DialogDismiss className="-mr-1 rounded-md p-1.5 text-(--text-tertiary) hover:bg-(--link-hover-bg) hover:text-(--text-primary) focus-visible:bg-(--link-hover-bg)">
+					<Ariakit.DialogDismiss render={<Button type="button" variant="ghost" size="md" square className="-mr-1" />}>
 						<Icon name="x" className="size-4" />
 						<span className="sr-only">Close</span>
 					</Ariakit.DialogDismiss>
 				</div>
 
-				<div className="border-b border-(--cards-border) px-4 py-3">
+				<div className="border-b border-subtle px-4 py-3">
 					<label className="relative block">
 						<span className="sr-only">Search filters</span>
-						<Icon
-							name="search"
-							height={16}
-							width={16}
-							className="pointer-events-none absolute top-0 bottom-0 left-2.5 my-auto text-(--text-tertiary)"
-						/>
-						<input
+						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<Input
 							type="text"
 							name="search"
 							inputMode="search"
 							placeholder={`Search ${EQUITY_FILTER_CONFIGS.length} filters...`}
 							autoFocus={!isSmallScreen}
 							value={search}
-							className="min-h-9 w-full rounded-md border border-(--cards-border) bg-(--bg-input) py-1.5 pr-9 pl-8 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--old-blue) focus:outline-none"
+							className="w-full pr-9 pl-8"
 							onChange={(event) => setSearch(event.currentTarget.value)}
 						/>
 						{search ? (
 							<button
 								type="button"
 								onClick={() => setSearch('')}
-								className="absolute top-0 right-2 bottom-0 my-auto flex size-5 items-center justify-center rounded text-(--text-tertiary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+								className="absolute top-0 right-2 bottom-0 my-auto flex size-5 items-center justify-center rounded text-tertiary hover:bg-hover-row hover:text-primary"
 							>
 								<Icon name="x" className="size-3.5" />
 								<span className="sr-only">Clear search</span>
@@ -546,18 +530,16 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 				</div>
 
 				<div className="flex min-h-0 flex-1 flex-col overflow-y-auto sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] sm:overflow-hidden">
-					<section className="order-2 flex min-h-0 flex-col border-t border-(--cards-border) max-sm:shrink-0 sm:order-1 sm:border-t-0 sm:border-r">
-						<div className="border-b border-(--cards-border) px-4 py-2">
-							<h3 className="text-xs font-medium text-(--text-secondary)">Browse filters</h3>
+					<section className="order-2 flex min-h-0 flex-col border-t border-subtle max-sm:shrink-0 sm:order-1 sm:border-t-0 sm:border-r">
+						<div className="border-b border-subtle px-4 py-2">
+							<h3 className="text-xs font-medium text-secondary">Browse filters</h3>
 						</div>
 						<div className="flex thin-scrollbar flex-1 flex-col gap-5 overflow-y-auto p-4 max-sm:overflow-visible">
 							{groupedAvailableFilters.map((group) => (
 								<section key={group.key} className="flex flex-col gap-2">
 									<div className="flex items-baseline gap-1.5">
-										<span className="text-[10px] font-medium tracking-[0.08em] text-(--text-tertiary) uppercase">
-											{group.label}
-										</span>
-										<span className="text-[10px] text-(--text-tertiary)/70 tabular-nums">· {group.filters.length}</span>
+										<span className="label-xs tracking-wide text-tertiary uppercase">{group.label}</span>
+										<span className="text-[10px] text-tertiary/70 tabular-nums">· {group.filters.length}</span>
 									</div>
 									<div className="flex flex-wrap gap-1">
 										{group.filters.map((config) => (
@@ -565,9 +547,9 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 												key={config.id}
 												type="button"
 												onClick={() => addFilter(config)}
-												className="group flex items-center gap-1.5 rounded-full border border-(--cards-border) bg-transparent px-2.5 py-1 text-xs text-(--text-primary) transition-[background-color,border-color,color] duration-150 ease-out hover:border-(--old-blue) hover:bg-(--link-hover-bg) focus-visible:border-(--old-blue) focus-visible:bg-(--link-hover-bg)"
+												className="group flex items-center gap-1.5 rounded-full border border-subtle bg-transparent px-2.5 py-1 text-xs text-primary transition-[background-color,border-color,color] duration-150 ease-out hover:border-brand hover:bg-hover-row focus-visible:border-brand focus-visible:bg-hover-row"
 											>
-												<Icon name="plus" className="size-3 text-(--text-tertiary) group-hover:text-(--old-blue)" />
+												<Icon name="plus" className="size-3 text-tertiary group-hover:text-link" />
 												<span>{config.label}</span>
 											</button>
 										))}
@@ -577,11 +559,11 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 
 							{groupedAvailableFilters.length === 0 ? (
 								<div className="flex flex-col items-center gap-1 py-8 text-center">
-									<p className="text-sm text-(--text-secondary)">No filters match "{search}".</p>
+									<p className="text-sm text-secondary">No filters match "{search}".</p>
 									<button
 										type="button"
 										onClick={() => setSearch('')}
-										className="text-xs text-(--text-tertiary) underline-offset-2 hover:text-(--text-primary) hover:underline"
+										className="text-xs text-tertiary underline-offset-2 hover:text-primary hover:underline"
 									>
 										Clear search
 									</button>
@@ -591,8 +573,8 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 					</section>
 
 					<section className="order-1 flex min-h-0 flex-col max-sm:shrink-0 sm:order-2">
-						<div className="border-b border-(--cards-border) px-4 py-2">
-							<h3 className="text-xs font-medium text-(--text-secondary)">Active filters</h3>
+						<div className="border-b border-subtle px-4 py-2">
+							<h3 className="text-xs font-medium text-secondary">Active filters</h3>
 						</div>
 						<div className="flex thin-scrollbar flex-1 flex-col gap-2 overflow-y-auto p-4 max-sm:overflow-visible">
 							{draftFilters.length > 0 ? (
@@ -608,7 +590,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 									/>
 								))
 							) : (
-								<div className="rounded-md border border-dashed border-(--cards-border) bg-(--cards-bg) p-4 text-sm text-(--text-tertiary)">
+								<div className="rounded-md border border-dashed border-subtle bg-surface p-4 text-sm text-tertiary">
 									<span className="sm:hidden">Add filters from the list below to narrow the table.</span>
 									<span className="max-sm:hidden">Add filters from the left to narrow the table.</span>
 								</div>
@@ -617,25 +599,20 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 					</section>
 				</div>
 
-				<div className="flex items-center justify-between gap-2 border-t border-(--cards-border) bg-(--cards-bg) px-4 py-3">
+				<div className="flex items-center justify-between gap-2 border-t border-subtle bg-surface px-4 py-3">
 					{draftFilters.length > 0 ? (
-						<button
-							type="button"
-							onClick={() => setDraftFilters([])}
-							className="text-xs text-(--text-tertiary) underline-offset-2 hover:text-(--text-primary) hover:underline"
-						>
+						<Button type="button" variant="ghost" size="md" onClick={() => setDraftFilters([])}>
 							Clear all
-						</button>
+						</Button>
 					) : (
-						<span className="text-xs text-(--text-tertiary)">No filters selected</span>
+						<span className="text-xs text-tertiary">No filters selected</span>
 					)}
-					<button
-						type="button"
-						onClick={commitFilters}
-						className="rounded-md bg-(--old-blue) px-3 py-1.5 text-sm font-medium text-white hover:brightness-110 focus-visible:brightness-110"
-					>
-						Done
-					</button>
+					<div className="flex items-center gap-2">
+						<Ariakit.DialogDismiss render={<Button type="button" size="md" />}>Cancel</Ariakit.DialogDismiss>
+						<Button type="button" variant="primary" size="md" onClick={commitFilters}>
+							Done
+						</Button>
+					</div>
 				</div>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>
@@ -658,7 +635,7 @@ export function EquityActiveFilterPills({
 					key={filter.id}
 					type="button"
 					onClick={() => onRemove(filter.id)}
-					className="group flex items-center gap-1 rounded-full border border-[color-mix(in_oklch,var(--old-blue)_45%,transparent)] bg-[color-mix(in_oklch,var(--old-blue)_14%,transparent)] px-2 py-1 text-xs text-(--text-primary) hover:bg-(--link-hover-bg)"
+					className="group flex items-center gap-1 rounded-full border border-brand bg-brand-muted px-2 py-1 text-xs text-primary hover:bg-hover-row"
 				>
 					<span>{formatEquityActiveFilter(filter)}</span>
 					<Icon name="x" className="size-3 opacity-60 group-hover:opacity-100" />

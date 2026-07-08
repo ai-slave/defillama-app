@@ -164,11 +164,7 @@ function createColumns({
 				const configID = row.original.configID
 				if (!configID) return null
 				return (
-					<BasicLink
-						href={`/yields/pool/${configID}`}
-						target="_blank"
-						className="text-sm font-medium text-(--link-text)"
-					>
+					<BasicLink href={`/yields/pool/${configID}`} target="_blank" className="label-md text-link">
 						<ImageWithFallback
 							src={`https://yield-charts.llama.fi/yield-chart/${configID}`}
 							alt=""

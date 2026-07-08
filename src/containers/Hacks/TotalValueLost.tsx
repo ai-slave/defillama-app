@@ -114,6 +114,7 @@ export function TotalValueLostContainer({ protocols }: IProtocolTotalValueLostIn
 					label="Columns"
 					labelType="smol"
 					variant="filter-responsive"
+					size="md"
 				/>
 			)}
 			csvFileName="total-value-lost-in-hacks"

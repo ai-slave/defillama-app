@@ -1,6 +1,7 @@
 import { BasicLink } from '~/components/Link'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { useIsClient } from '~/hooks/useIsClient'
+import { SidebarDivider } from './shared'
 
 export const PremiumHeader = () => {
 	const { hasActiveSubscription, isAuthenticated, loaders } = useAuthContext()
@@ -11,7 +12,7 @@ export const PremiumHeader = () => {
 
 	return (
 		<>
-			<hr className="my-2 -ml-1.5 border-black/20 max-lg:hidden dark:border-white/20" />
+			<SidebarDivider className="my-2 -ml-1.5 max-lg:hidden" />
 			<p className="mb-1 flex items-center gap-2">
 				<span className="text-xs font-medium tracking-wide opacity-65">PREMIUM</span>
 				<BasicLink

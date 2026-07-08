@@ -5,6 +5,7 @@ import {
 	type LowercaseDwmGrouping
 } from '~/components/ECharts/ChartGroupingSelector'
 import { TagGroup } from '~/components/TagGroup'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import {
 	BRIDGE_VOLUME_METRIC_TYPES,
 	BRIDGE_VOLUME_VIEW_TYPES,
@@ -36,7 +37,7 @@ export function BridgeVolumeChart({ data, height, onReady, headerStart, headerEn
 
 	return (
 		<>
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2">
+			<ChartPanelToolbar className="justify-end">
 				{headerStart}
 				<ChartGroupingSelector
 					value={timePeriod}
@@ -55,7 +56,7 @@ export function BridgeVolumeChart({ data, height, onReady, headerStart, headerEn
 					values={BRIDGE_VOLUME_METRIC_TYPES}
 				/>
 				{headerEnd}
-			</div>
+			</ChartPanelToolbar>
 
 			<Suspense fallback={<div style={{ height: height ?? '360px' }} />}>
 				{/* TODO: Add a subtle stale-state indicator if we revisit deferred transitions UX. */}

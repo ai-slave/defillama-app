@@ -8,6 +8,7 @@ type QueryUpdates = Record<string, string | string[] | undefined>
 
 export function TVLRange({
 	variant = 'primary',
+	size,
 	nestedMenu,
 	triggerClassName,
 	placement,
@@ -16,6 +17,7 @@ export function TVLRange({
 	pushQueryUpdates
 }: {
 	variant?: 'primary' | 'secondary'
+	size?: 'sm' | 'md'
 	nestedMenu?: boolean
 	triggerClassName?: string
 	placement?: Ariakit.PopoverStoreProps['placement']
@@ -86,6 +88,7 @@ export function TVLRange({
 			onSubmit={handleSubmit}
 			onClear={handleClear}
 			variant={variant}
+			size={size}
 			nestedMenu={nestedMenu}
 			min={min}
 			max={max}

@@ -52,6 +52,7 @@ export function YieldsWatchlistContainer({ protocolsDict }) {
 							setSelectedPortfolio(value)
 						}}
 						className="relative flex min-w-[100px] cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+						popoverVariant="legacy"
 						data-umami-event="yields-watchlist-portfolio-switch"
 					/>
 					<DialogForm
@@ -100,11 +101,11 @@ export const WatchListTabs = () => {
 	const router = useRouter()
 	const isTokensTab = router.pathname === '/watchlist' && router.query.tab === 'tokens'
 	return (
-		<nav className="relative flex w-full max-w-fit items-center gap-2 border-b-2 border-(--form-control-border) text-xs font-semibold">
+		<nav className="relative flex w-full max-w-fit items-center gap-2 border-b border-subtle">
 			<BasicLink
 				href={'/watchlist'}
 				data-active={router.pathname === '/watchlist' && !isTokensTab}
-				className="relative bottom-[-2px] shrink-0 border-b-2 border-transparent px-2.5 py-1 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:border-(--old-blue)"
+				className="relative shrink-0 cursor-pointer px-3 py-2 label-md whitespace-nowrap text-tertiary after:absolute after:right-1 after:bottom-0 after:left-1 after:h-0.5 after:rounded-t-xs after:bg-brand after:opacity-0 hover:text-secondary focus-visible:text-secondary data-[active=true]:text-primary data-[active=true]:after:opacity-100"
 			>
 				DeFi
 			</BasicLink>
@@ -112,7 +113,7 @@ export const WatchListTabs = () => {
 			<BasicLink
 				href={'/yields/watchlist'}
 				data-active={router.pathname === '/yields/watchlist'}
-				className="relative bottom-[-2px] shrink-0 border-b-2 border-transparent px-2.5 py-1 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:border-(--old-blue)"
+				className="relative shrink-0 cursor-pointer px-3 py-2 label-md whitespace-nowrap text-tertiary after:absolute after:right-1 after:bottom-0 after:left-1 after:h-0.5 after:rounded-t-xs after:bg-brand after:opacity-0 hover:text-secondary focus-visible:text-secondary data-[active=true]:text-primary data-[active=true]:after:opacity-100"
 			>
 				Yields
 			</BasicLink>
@@ -120,7 +121,7 @@ export const WatchListTabs = () => {
 			<BasicLink
 				href={'/watchlist?tab=tokens'}
 				data-active={isTokensTab}
-				className="relative bottom-[-2px] shrink-0 border-b-2 border-transparent px-2.5 py-1 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:border-(--old-blue)"
+				className="relative shrink-0 cursor-pointer px-3 py-2 label-md whitespace-nowrap text-tertiary after:absolute after:right-1 after:bottom-0 after:left-1 after:h-0.5 after:rounded-t-xs after:bg-brand after:opacity-0 hover:text-secondary focus-visible:text-secondary data-[active=true]:text-primary data-[active=true]:after:opacity-100"
 			>
 				Tokens
 			</BasicLink>

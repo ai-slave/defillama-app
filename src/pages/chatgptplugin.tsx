@@ -7,12 +7,12 @@ function PluginPage() {
 			description="Access DefiLlama DeFi data through the ChatGPT plugin. Query TVL, protocol stats, chain data, and more using natural language."
 			canonicalUrl={`/chatgptplugin`}
 		>
-			<h1 className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 text-xl font-semibold">
+			<h1 className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 heading-sm">
 				DefiLlama ChatGPT Plugin
 			</h1>
 
 			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
-				<h2 className="text-lg font-semibold">About</h2>
+				<h2 className="heading-xs">About</h2>
 				<hr className="border-black/20 dark:border-white/20" />
 				<p>
 					DefiLlama is the most popular DeFi (Decentralized Finance) data aggregator. The DefiLlama ChatGPT plugin
@@ -21,7 +21,7 @@ function PluginPage() {
 			</div>
 
 			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
-				<h2 className="text-lg font-semibold">Best Practices</h2>
+				<h2 className="heading-xs">Best Practices</h2>
 				<hr className="border-black/20 dark:border-white/20" />
 				<p>To achieve the best results from the plugin, follow these steps:</p>
 				<p>1. Ask "What features do you have?" to see the most recent feature list.</p>
@@ -50,7 +50,7 @@ function PluginPage() {
 			</div>
 
 			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
-				<h2 className="text-lg font-semibold">Legal</h2>
+				<h2 className="heading-xs">Legal</h2>
 				<hr className="border-black/20 dark:border-white/20" />
 				<p>
 					The DefiLlama ChatGPT plugin does not sell user data. The plugin does not collect any identifying user data.

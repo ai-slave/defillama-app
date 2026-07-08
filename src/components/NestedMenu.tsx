@@ -1,4 +1,13 @@
 import * as Ariakit from '@ariakit/react'
+import { buttonStyles } from '~/ui/Button'
+import {
+	legacyNestedMenuButtonStyles,
+	legacyNestedMenuRootButtonStyles,
+	legacyNestedMenuRootFilterButtonStyles,
+	legacyNestedMenuSurfaceStyles,
+	menuSurfaceStyles,
+	popoverRowStyles
+} from '~/ui/Popover'
 import { Icon } from './Icon'
 
 interface NestedMenuItemProps extends Ariakit.MenuItemProps {
@@ -13,6 +22,7 @@ interface NestedMenuProps extends Ariakit.MenuButtonProps<'div'> {
 	label: React.ReactNode
 	menuPortal?: boolean
 	buttonVariant?: 'default' | 'filter'
+	popoverVariant?: 'default' | 'legacy'
 	ref?: React.Ref<HTMLDivElement>
 }
 
@@ -22,26 +32,29 @@ export function NestedMenu({
 	ref,
 	menuPortal = false,
 	buttonVariant = 'default',
+	popoverVariant = 'default',
 	...props
 }: NestedMenuProps) {
 	const menu = Ariakit.useMenuStore()
 	const shouldPortalMenu = menuPortal || Boolean(menu.parent)
 
-	const rootButtonClassName =
-		buttonVariant === 'filter'
-			? 'relative flex cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)'
-			: 'flex items-center justify-between gap-3 rounded-md bg-(--btn-bg) px-3 py-2 hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)'
+	const useLegacyPopover = popoverVariant === 'legacy'
+	const rootButtonClassName = useLegacyPopover
+		? buttonVariant === 'filter'
+			? legacyNestedMenuRootFilterButtonStyles
+			: legacyNestedMenuRootButtonStyles
+		: buttonVariant === 'filter'
+			? buttonStyles({ size: 'sm' })
+			: buttonStyles({ size: 'md' })
+	const nestedButtonClassName = useLegacyPopover ? legacyNestedMenuButtonStyles : popoverRowStyles
+	const surfaceStyles = useLegacyPopover ? legacyNestedMenuSurfaceStyles : menuSurfaceStyles
 
 	return (
 		<Ariakit.MenuProvider store={menu}>
 			<Ariakit.MenuButton
 				ref={ref}
 				{...props}
-				className={`${
-					!menu.parent
-						? rootButtonClassName
-						: 'flex cursor-pointer items-center justify-between gap-3 rounded-md px-3 py-2 hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)'
-				} ${props.className ?? ''}`}
+				className={`${!menu.parent ? rootButtonClassName : nestedButtonClassName} ${props.className ?? ''}`}
 				render={menu.parent ? <NestedMenuItem hideOnClick={false} render={props.render} /> : undefined}
 			>
 				<span className="label">{label}</span>
@@ -57,7 +70,7 @@ export function NestedMenu({
 					className:
 						'max-sm:fixed! max-sm:right-0! max-sm:bottom-0! max-sm:left-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
 				}}
-				className={`${menu.parent ? 'z-20' : 'z-10'} flex thin-scrollbar flex-col gap-1 rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:h-[calc(100dvh-80px)] max-sm:overflow-auto max-sm:overscroll-contain max-sm:rounded-b-none max-sm:p-2 sm:max-h-[60dvh] sm:overflow-x-hidden sm:overflow-y-auto sm:overscroll-contain sm:p-0 dark:border-[hsl(204,3%,32%)] ${
+				className={`${surfaceStyles} ${menu.parent ? 'z-20' : 'z-10'} ${
 					menu.parent ? 'max-sm:drawer-to-left' : 'max-sm:drawer'
 				}`}
 			>

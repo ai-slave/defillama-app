@@ -1,4 +1,6 @@
 import { TokenLogo, type LogoKind } from '~/components/TokenLogo'
+import { Card } from '~/ui/Card'
+import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { formattedNum } from '~/utils'
 
 export function LiquidationsPageHeader({
@@ -11,11 +13,11 @@ export function LiquidationsPageHeader({
 	logo?: { name: string; kind: Exclude<LogoKind, 'equities'> } | null
 }) {
 	return (
-		<div className="flex w-full items-center gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) px-4 py-3">
-			{logo ? <TokenLogo name={logo.name} kind={logo.kind} size={24} alt={`Logo of ${logo.name}`} /> : null}
-			<h1 className="text-xl font-bold text-(--text-primary)">{title}</h1>
-			{rightText ? <span className="ml-auto text-sm text-(--text-label)">{rightText}</span> : null}
-		</div>
+		<EntityTitleStrip
+			media={logo ? <TokenLogo name={logo.name} kind={logo.kind} size={28} alt={`Logo of ${logo.name}`} /> : null}
+			title={title}
+			actions={rightText ? <span className="body-sm text-tertiary">{rightText}</span> : null}
+		/>
 	)
 }
 
@@ -25,7 +27,7 @@ export function LiquidationsSummaryStats({
 	items: Array<{ label: string; value: number; isUsd?: boolean }>
 }) {
 	return (
-		<div className="flex min-h-[42px] w-full flex-wrap items-center gap-x-5 gap-y-2 rounded-md border border-(--cards-border) bg-(--cards-bg) px-3.5 py-2.5">
+		<Card padding="sm" border="subtle" className="flex min-h-[42px] w-full flex-wrap items-center gap-x-5 gap-y-2">
 			{items.map((item) => (
 				<div key={item.label} className="flex items-baseline gap-1.5">
 					<span className="text-sm text-(--text-label)">{item.label}</span>
@@ -34,6 +36,6 @@ export function LiquidationsSummaryStats({
 					</span>
 				</div>
 			))}
-		</div>
+		</Card>
 	)
 }

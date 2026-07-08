@@ -65,7 +65,7 @@ function DonationsPage({ protocols }) {
 			canonicalUrl={`/donations`}
 		>
 			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
-				<h1 className="text-lg font-semibold">Affiliate links</h1>
+				<h1 className="heading-xs">Affiliate links</h1>
 				<hr className="border-black/20 dark:border-white/20" />
 				<div className="flex flex-col gap-3">
 					<p>

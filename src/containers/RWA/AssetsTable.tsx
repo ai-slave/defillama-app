@@ -20,6 +20,9 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { Tooltip } from '~/components/Tooltip'
+import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatNum, formattedNum } from '~/utils'
 import type { IRWAAssetsOverview } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
@@ -108,44 +111,43 @@ export function RWAAssetsTable({
 	}
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<h1 className="mr-auto p-3 text-lg font-semibold">Assets Rankings</h1>
-			<div className="flex flex-wrap items-center justify-end gap-2 p-3">
-				<label className="relative mr-auto w-full sm:max-w-[280px]">
-					<span className="sr-only">Search assets</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
+		<Panel>
+			<TableToolbar className="justify-end">
+				<h1 className="mr-auto label-md">Assets Rankings</h1>
+				<TableToolbarControlGroup className="justify-end lg:flex-nowrap">
+					<label className={searchFieldInlineWrapperStyles}>
+						<span className="sr-only">Search assets</span>
+						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<input
+							onInput={(e) => setSearchValue(e.currentTarget.value)}
+							placeholder="Search assets..."
+							className={searchFieldInputStyles}
+						/>
+					</label>
+					<SelectWithCombobox
+						allValues={columnsOptions}
+						selectedValues={selectedColumns}
+						setSelectedValues={setColumnOptions}
+						nestedMenu={false}
+						label={'Columns'}
+						labelType="smol"
+						variant="filter-responsive"
+						size="md"
 					/>
-					<input
-						onInput={(e) => setSearchValue(e.currentTarget.value)}
-						placeholder="Search assets..."
-						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+					<CSVDownloadButton
+						prepareCsv={() =>
+							prepareTableCsv({
+								instance,
+								filename: `rwa-assets${selectedChain !== 'All' ? `-${selectedChain.toLowerCase()}` : ''}`
+							})
+						}
+						smol
+						size="md"
 					/>
-				</label>
-				<SelectWithCombobox
-					allValues={columnsOptions}
-					selectedValues={selectedColumns}
-					setSelectedValues={setColumnOptions}
-					nestedMenu={false}
-					label={'Columns'}
-					labelType="smol"
-					variant="filter-responsive"
-				/>
-				<CSVDownloadButton
-					prepareCsv={() =>
-						prepareTableCsv({
-							instance,
-							filename: `rwa-assets${selectedChain !== 'All' ? `-${selectedChain.toLowerCase()}` : ''}`
-						})
-					}
-					smol
-				/>
-			</div>
+				</TableToolbarControlGroup>
+			</TableToolbar>
 			<VirtualTable instance={instance} />
-		</div>
+		</Panel>
 	)
 }
 
@@ -238,17 +240,15 @@ function createColumns(includeRwaPerps: boolean) {
 								<>
 									<BasicLink
 										href={info.row.original.detailHref}
-										className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+										className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
 									>
 										{info.row.original.assetName}
 									</BasicLink>
-									<span className="text-[0.7rem] text-(--text-disabled)">
-										{getAssetSecondaryLabel(info.row.original)}
-									</span>
+									<span className="label-sm text-secondary">{getAssetSecondaryLabel(info.row.original)}</span>
 								</>
 							) : (
 								<>
-									<span className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap">
+									<span className="overflow-hidden label-md text-ellipsis whitespace-nowrap">
 										{info.row.original.assetName}
 									</span>
 								</>
@@ -363,7 +363,7 @@ function createColumns(includeRwaPerps: boolean) {
 					return (
 						<BasicLink
 							href={`/rwa/platform/${rwaSlug(platforms[0])}`}
-							className="overflow-hidden text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+							className="overflow-hidden text-ellipsis whitespace-nowrap text-link hover:underline"
 						>
 							{value}
 						</BasicLink>
@@ -494,10 +494,10 @@ function createColumns(includeRwaPerps: boolean) {
 							content={valueDescription}
 							className={clsx(
 								'justify-end',
-								value === 'Permissioned' && 'text-(--warning)',
-								value === 'Permissionless' && 'text-(--success)',
-								value === 'Non-transferable' && 'text-(--error)',
-								value === 'Custodial Only' && 'text-(--error)'
+								value === 'Permissioned' && 'text-warning',
+								value === 'Permissionless' && 'text-data-up',
+								value === 'Non-transferable' && 'text-data-down',
+								value === 'Custodial Only' && 'text-data-down'
 							)}
 						>
 							{value}
@@ -508,10 +508,10 @@ function createColumns(includeRwaPerps: boolean) {
 					<span
 						className={clsx(
 							'inline-block max-w-full overflow-hidden text-ellipsis whitespace-nowrap',
-							value === 'Permissioned' && 'text-(--warning)',
-							value === 'Permissionless' && 'text-(--success)',
-							value === 'Non-transferable' && 'text-(--error)',
-							value === 'Custodial Only' && 'text-(--error)'
+							value === 'Permissioned' && 'text-warning',
+							value === 'Permissionless' && 'text-data-up',
+							value === 'Non-transferable' && 'text-data-down',
+							value === 'Custodial Only' && 'text-data-down'
 						)}
 					>
 						{value}
@@ -564,7 +564,7 @@ function createColumns(includeRwaPerps: boolean) {
 					return (
 						<Tooltip
 							content={tooltipContent}
-							className={`inline-block max-w-full justify-end overflow-hidden text-ellipsis whitespace-nowrap ${isTrueRWA ? 'text-(--success)' : ''}`}
+							className={`inline-block max-w-full justify-end overflow-hidden text-ellipsis whitespace-nowrap ${isTrueRWA ? 'text-data-up' : ''}`}
 						>
 							{value}
 						</Tooltip>
@@ -601,7 +601,7 @@ function createColumns(includeRwaPerps: boolean) {
 			id: 'redeemable',
 			header: definitions.redeemable.label,
 			cell: (info) => (
-				<span className={info.getValue() ? 'text-(--success)' : 'text-(--error)'}>
+				<span className={info.getValue() ? 'text-data-up' : 'text-data-down'}>
 					{info.getValue() != null ? (info.getValue() ? 'Yes' : 'No') : null}
 				</span>
 			),
@@ -615,7 +615,7 @@ function createColumns(includeRwaPerps: boolean) {
 			id: 'attestations',
 			header: definitions.attestations.label,
 			cell: (info) => (
-				<span className={info.getValue() ? 'text-(--success)' : 'text-(--error)'}>
+				<span className={info.getValue() ? 'text-data-up' : 'text-data-down'}>
 					{info.getValue() != null ? (info.getValue() ? 'Yes' : 'No') : null}
 				</span>
 			),
@@ -629,8 +629,8 @@ function createColumns(includeRwaPerps: boolean) {
 			id: 'cexListed',
 			header: definitions.cexListed.label,
 			cell: (info) => (
-				<span className={info.getValue() ? 'text-(--success)' : 'text-(--error)'}>
-					{info.getValue() ? (info.getValue() ? 'Yes' : 'No') : null}
+				<span className={info.getValue() ? 'text-data-up' : 'text-data-down'}>
+					{info.getValue() != null ? (info.getValue() ? 'Yes' : 'No') : null}
 				</span>
 			),
 			meta: {
@@ -643,8 +643,8 @@ function createColumns(includeRwaPerps: boolean) {
 			id: 'kycForMintRedeem',
 			header: definitions.kycForMintRedeem.label,
 			cell: (info) => (
-				<span className={info.getValue() ? 'text-(--warning)' : 'text-(--success)'}>
-					{info.getValue() ? (info.getValue() ? 'Yes' : 'No') : null}
+				<span className={info.getValue() ? 'text-warning' : 'text-data-up'}>
+					{info.getValue() != null ? (info.getValue() ? 'Yes' : 'No') : null}
 				</span>
 			),
 			meta: {
@@ -657,8 +657,8 @@ function createColumns(includeRwaPerps: boolean) {
 			id: 'kycAllowlistedWhitelistedToTransferHold',
 			header: definitions.kycAllowlistedWhitelistedToTransferHold.label,
 			cell: (info) => (
-				<span className={info.getValue() ? 'text-(--warning)' : 'text-(--success)'}>
-					{info.getValue() ? (info.getValue() ? 'Yes' : 'No') : null}
+				<span className={info.getValue() ? 'text-warning' : 'text-data-up'}>
+					{info.getValue() != null ? (info.getValue() ? 'Yes' : 'No') : null}
 				</span>
 			),
 			meta: {
@@ -671,7 +671,7 @@ function createColumns(includeRwaPerps: boolean) {
 			id: 'transferable',
 			header: definitions.transferable.label,
 			cell: (info) => (
-				<span className={info.getValue() ? 'text-(--success)' : 'text-(--error)'}>
+				<span className={info.getValue() ? 'text-data-up' : 'text-data-down'}>
 					{info.getValue() != null ? (info.getValue() ? 'Yes' : 'No') : null}
 				</span>
 			),
@@ -685,7 +685,7 @@ function createColumns(includeRwaPerps: boolean) {
 			id: 'selfCustody',
 			header: definitions.selfCustody.label,
 			cell: (info) => (
-				<span className={info.getValue() ? 'text-(--success)' : 'text-(--error)'}>
+				<span className={info.getValue() ? 'text-data-up' : 'text-data-down'}>
 					{info.getValue() != null ? (info.getValue() ? 'Yes' : 'No') : null}
 				</span>
 			),

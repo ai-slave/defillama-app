@@ -1,6 +1,8 @@
 import { getCoreRowModel, getSortedRowModel, type SortingState, useReactTable } from '@tanstack/react-table'
 import * as React from 'react'
 import { LocalLoader } from '~/components/Loaders'
+import { Button } from '~/ui/Button'
+import { Panel, PanelHeader } from '~/ui/Panel'
 import { type ColumnConfig, type DisplayMode, type Threshold } from '../constants'
 import { RefineButton } from '../RefineButton'
 import { StickyTable } from '../StickyTable'
@@ -51,33 +53,29 @@ export function RankTable({
 	})
 
 	return (
-		<div className="flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex flex-wrap items-center gap-2 border-b border-(--cards-border) p-4">
-				<span className="text-base font-semibold">Rank</span>
+		<Panel>
+			<PanelHeader>
+				<span className="heading-xs">Rank</span>
 				{threshold && setThreshold ? <ThresholdSelect value={threshold} setValue={setThreshold} /> : null}
-				<div className="ml-auto flex flex-wrap items-center gap-2">
+				<div className="ml-auto flex flex-wrap items-center gap-1.5">
 					<ShowAsControl mode={mode} setMode={setMode} />
 					<RefineButton onClick={onRefine} />
 				</div>
-			</div>
+			</PanelHeader>
 			{isLoading ? (
 				<div className="flex min-h-[240px] items-center justify-center p-8">
 					<LocalLoader />
 				</div>
 			) : rows.length === 0 ? (
 				<div className="flex min-h-[240px] flex-col items-center justify-center gap-3 p-8 text-center">
-					<p className="text-(--text-secondary)">Your filter preferences did not provide any result</p>
-					<button
-						type="button"
-						onClick={onRefine}
-						className="rounded-md border border-(--form-control-border) px-3 py-1.5 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg)"
-					>
+					<p className="body-sm text-secondary">Your filter preferences did not provide any result</p>
+					<Button type="button" onClick={onRefine} size="md">
 						Reset
-					</button>
+					</Button>
 				</div>
 			) : (
 				<StickyTable headerGroups={instance.getHeaderGroups()} rows={instance.getRowModel().rows} />
 			)}
-		</div>
+		</Panel>
 	)
 }

@@ -59,7 +59,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 	return (
 		<div
 			ref={parentRef}
-			className="relative thin-scrollbar max-h-[420px] overflow-auto rounded-[4px] border border-(--divider) bg-(--cards-bg)"
+			className="relative thin-scrollbar max-h-[420px] overflow-auto rounded-[4px] border border-(--divider) bg-surface"
 		>
 			<div style={{ width: Math.max(totalWidth, 0), minWidth: '100%' }}>
 				<div
@@ -68,7 +68,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 					style={{
 						gridTemplateColumns: gridTemplate,
 						height: HEADER_HEIGHT,
-						background: 'var(--cards-bg)'
+						background: 'var(--ld-bg-surface)'
 					}}
 				>
 					{columnMeta.map((col, i) => {

@@ -219,6 +219,7 @@ export function YieldAttributes({ pathname, nestedMenu }: { pathname: string; ne
 			label="Attributes"
 			labelType="regular"
 			nestedMenu={nestedMenu}
+			popoverVariant="legacy"
 			includeQueryKey="attribute"
 			excludeQueryKey="excludeAttribute"
 			pushQueryUpdates={(updates) => {

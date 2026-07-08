@@ -6,13 +6,16 @@ import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset 
 import { ensureChronologicalRows } from '~/components/ECharts/utils'
 import { LoadingDots, LocalLoader } from '~/components/Loaders'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { Switch } from '~/components/Switch'
 import { TagGroup } from '~/components/TagGroup'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetProtocolEmissions } from '~/containers/Unlocks/queries.client'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
+import { Card } from '~/ui/Card'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { Switch } from '~/ui/Switch'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { capitalizeFirstLetter, firstDayOfMonth, formattedNum, lastDayOfWeek, slug } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { EmissionsChartConfig, EmissionsDataset, Insider } from './api.types'
@@ -384,13 +387,13 @@ function TokenHeader({
 	percentChange: number | null
 }) {
 	return (
-		<div className="flex w-full items-center gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+		<div className="flex w-full items-center gap-3 rounded-lg border border-subtle bg-surface p-3">
 			<TokenLogo name={name} kind="token" alt={`Logo of ${name}`} />
 			<h1 className="text-xl font-semibold">{name}</h1>
 
 			{tokenPrice != null ? (
 				<>
-					<span className="mx-1 h-5 w-px bg-(--cards-border)" />
+					<span className="mx-1 h-5 w-px bg-border-medium" />
 					<span className="text-base font-semibold">${formattedNum(tokenPrice)}</span>
 					{percentChange !== null ? (
 						<span
@@ -424,7 +427,7 @@ function TokenStats({
 }) {
 	if (tokenCircSupply == null && tokenMaxSupply == null && tokenMcap == null && tokenVolume == null) return null
 	return (
-		<div className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2 rounded-md border border-(--cards-border) bg-(--cards-bg) px-4 py-3">
+		<div className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-subtle bg-surface px-4 py-3">
 			{tokenCircSupply != null ? (
 				<div className="flex items-baseline gap-1.5">
 					<span className="text-sm text-(--text-label)">Circ. Supply</span>
@@ -468,23 +471,25 @@ function TokenAllocationBars({
 	stackColors: Record<string, string>
 }) {
 	return (
-		<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-			<h3 className="text-base font-semibold">Token Allocation</h3>
-			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+		<Panel className="overflow-hidden">
+			<PanelHeader>
+				<PanelTitle as="h3">Token Allocation</PanelTitle>
+			</PanelHeader>
+			<div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2">
 				{(['current', 'final'] as const).map((phase) => {
 					const entries = phase === 'current' ? tokenAllocation.current : tokenAllocation.final
 					if (!entries) return null
 					const sorted = Object.entries(entries).sort(([, a], [, b]) => b - a)
 					return (
 						<div key={phase} className="flex flex-col gap-1.5">
-							<span className="text-xs font-medium tracking-wide text-(--text-label) uppercase">{phase}</span>
+							<span className="label-md text-primary">{capitalizeFirstLetter(phase)}</span>
 							{sorted.map(([cat, perc]) => (
-								<div key={cat} className="flex flex-col gap-0.5">
-									<div className="flex items-baseline justify-between text-sm">
-										<span>{capitalizeFirstLetter(cat)}</span>
-										<span className="font-medium tabular-nums">{perc}%</span>
+								<div key={cat} className="flex flex-col gap-1">
+									<div className="flex items-center justify-between gap-2">
+										<span className="body-md text-primary">{capitalizeFirstLetter(cat)}</span>
+										<span className="mono-md text-secondary">{perc}%</span>
 									</div>
-									<div className="h-1.5 w-full overflow-hidden rounded-full bg-(--cards-border)">
+									<div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated-2">
 										<div
 											className="h-full rounded-full"
 											style={{
@@ -499,7 +504,7 @@ function TokenAllocationBars({
 					)
 				})}
 			</div>
-		</div>
+		</Panel>
 	)
 }
 
@@ -514,23 +519,23 @@ function SourcesNotesSection({
 	return (
 		<div className="flex flex-wrap gap-2 *:flex-1">
 			{notes && notes.length > 0 ? (
-				<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-					<h3 className="text-base font-semibold">Notes</h3>
-					<ul className="list-disc space-y-1 pl-4 text-sm text-(--text-secondary)">
+				<Card as="section" padding="sm" border="subtle" className="flex flex-col gap-3">
+					<h3 className="heading-xs">Notes</h3>
+					<ul className="flex list-disc flex-col gap-2 pl-5 body-md text-primary">
 						{notes.map((note) => (
 							<li key={note}>{note}</li>
 						))}
 					</ul>
-				</div>
+				</Card>
 			) : null}
 			{futures?.openInterest != null || futures?.fundingRate != null ? (
-				<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-					<h3 className="text-base font-semibold">Futures</h3>
-					<div className="flex flex-col gap-1 text-sm">
+				<Card as="section" padding="sm" border="subtle" className="flex flex-col gap-3">
+					<h3 className="heading-xs">Futures</h3>
+					<div className="flex flex-col gap-1 body-md text-primary">
 						{futures.openInterest != null ? <p>{`Open Interest: $${formattedNum(futures.openInterest)}`}</p> : null}
 						{futures.fundingRate != null ? <p>{`Funding Rate: ${futures.fundingRate}%`}</p> : null}
 					</div>
-				</div>
+				</Card>
 			) : null}
 		</div>
 	)
@@ -986,9 +991,9 @@ const ChartContainer = ({
 
 			<div className="flex flex-col gap-2">
 				{categoriesFromData.length > 0 && rawChartData.length > 0 ? (
-					<div className="relative rounded-md border border-(--cards-border) bg-(--cards-bg)">
-						<div className="flex flex-wrap items-center justify-end gap-2 p-2">
-							<h3 className="mr-auto text-base font-semibold">Schedule</h3>
+					<Panel>
+						<ChartPanelToolbar className="justify-end">
+							<h3 className="mr-auto heading-xs">Schedule</h3>
 							{hasGroupAllocationData ? (
 								<Switch
 									label="Group Allocation"
@@ -1043,6 +1048,7 @@ const ChartContainer = ({
 									void setQueryParam('groupBy', v === 'D' ? undefined : v)
 								}}
 								values={TIME_GROUPINGS}
+								className="min-h-8"
 							/>
 							<SelectWithCombobox
 								allValues={formattedAvailableCategories}
@@ -1051,13 +1057,14 @@ const ChartContainer = ({
 								label="Categories"
 								labelType="smol"
 								variant="filter"
+								size="md"
 							/>
 							<ChartExportButtons
 								chartInstance={exportChartInstance}
 								filename={`${data.name}-unlock-schedule`}
 								title={`${data.name} Unlock Schedule`}
 							/>
-						</div>
+						</ChartPanelToolbar>
 						{isPriceOrMcapLoading ? (
 							<div className="flex min-h-[360px] items-center justify-center">
 								<p className="flex items-center gap-1">
@@ -1082,13 +1089,13 @@ const ChartContainer = ({
 								/>
 							</Suspense>
 						)}
-					</div>
+					</Panel>
 				) : null}
 
 				<div className="grid grid-cols-2 gap-2">
 					{data.pieChartData?.[dataType] && data.stackColors[dataType] ? (
-						<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-							<Suspense fallback={<div className="min-h-[398px]" />}>
+						<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+							<Suspense fallback={<div className="min-h-[406px]" />}>
 								<PieChart
 									showLegend
 									title="Allocation"
@@ -1105,12 +1112,12 @@ const ChartContainer = ({
 									exportButtons={allocationExportButtons}
 								/>
 							</Suspense>
-						</div>
+						</Panel>
 					) : null}
 
 					{unlockedPercent > 0 ? (
-						<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-							<Suspense fallback={<div className="min-h-[398px]" />}>
+						<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+							<Suspense fallback={<div className="min-h-[406px]" />}>
 								<PieChart
 									showLegend
 									title={`Unlocked ${unlockedPercent.toFixed(2)}%`}
@@ -1123,7 +1130,7 @@ const ChartContainer = ({
 									exportButtons={unlockedExportButtons}
 								/>
 							</Suspense>
-						</div>
+						</Panel>
 					) : null}
 				</div>
 			</div>
@@ -1139,10 +1146,14 @@ const ChartContainer = ({
 			) : null}
 
 			{data.events?.length > 0 ? (
-				<div className="flex w-full flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-					<h3 className="text-base font-semibold">Unlock Events</h3>
-					<Pagination startIndex={upcomingEventIndex} items={paginationItems} />
-				</div>
+				<Panel className="w-full overflow-hidden">
+					<PanelHeader>
+						<PanelTitle as="h3">Unlock Events</PanelTitle>
+					</PanelHeader>
+					<div className="p-3">
+						<Pagination startIndex={upcomingEventIndex} items={paginationItems} />
+					</div>
+				</Panel>
 			) : null}
 
 			<SourcesNotesSection notes={data.notes} futures={data.futures} />

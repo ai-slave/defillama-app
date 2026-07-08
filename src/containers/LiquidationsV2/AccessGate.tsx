@@ -5,6 +5,7 @@ import { LocalLoader } from '~/components/Loaders'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { Panel } from '~/ui/Panel'
 import type { NavLink } from './api.types'
 
 interface LiquidationsShellChromeProps {
@@ -48,9 +49,9 @@ function LiquidationsShellCard({
 				activeChainLink={activeChainLink}
 			/>
 
-			<div className="flex min-h-[380px] w-full flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg)">
+			<Panel className="min-h-[380px] w-full flex-1 items-center justify-center">
 				<div className="flex max-w-xl flex-col items-center gap-3 px-6 py-8 text-center">{children}</div>
-			</div>
+			</Panel>
 		</>
 	)
 }

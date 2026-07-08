@@ -1,4 +1,5 @@
-import { Switch } from '~/components/Switch'
+import { TagGroup } from '~/components/TagGroup'
+import { Switch } from '~/ui/Switch'
 import { TIMEFRAMES, type Timeframe } from '../constants'
 import { Drawer } from '../Drawer'
 import { SlidersIcon } from '../icons'
@@ -30,10 +31,10 @@ export function RefineDrawer({
 			}
 		>
 			<div className="flex flex-col gap-4 p-4">
-				<p className="text-sm text-(--text-secondary)">
+				<p className="body-md text-secondary">
 					Select the parameters to view the market maker rankings with a more detailed view.
 				</p>
-				<div className="rounded-lg bg-(--link-hover-bg) px-4 py-3">
+				<div className="rounded-[8px] bg-brand-muted p-3">
 					<Switch
 						className="w-full flex-row-reverse justify-between font-semibold"
 						label="Apply preferences to all leaderboards"
@@ -42,24 +43,16 @@ export function RefineDrawer({
 						onChange={(e) => setApplyToAll(e.target.checked)}
 					/>
 				</div>
-				<div className="flex flex-col gap-3 rounded-lg border border-(--cards-border) p-4">
-					<span className="text-base font-semibold">Timeframe</span>
-					<div className="grid grid-cols-2 gap-2">
-						{TIMEFRAMES.map((tf) => (
-							<button
-								key={tf}
-								type="button"
-								onClick={() => setTimeframe(tf)}
-								className={`rounded-lg border px-4 py-3 text-sm font-semibold ${
-									tf === timeframe
-										? 'border-(--text-primary) bg-(--text-primary) text-(--cards-bg)'
-										: 'border-(--form-control-border) text-(--text-primary) hover:bg-(--link-hover-bg)'
-								}`}
-							>
-								{tf}
-							</button>
-						))}
-					</div>
+				<div className="flex flex-col gap-3 rounded-[8px] border border-subtle p-4">
+					<span className="label-md text-primary">Timeframe</span>
+					<TagGroup
+						selectedValue={timeframe}
+						setValue={setTimeframe}
+						values={TIMEFRAMES}
+						variant="responsive"
+						size="md"
+						className="w-full"
+					/>
 				</div>
 			</div>
 		</Drawer>

@@ -37,14 +37,14 @@ export function ResearchSpotlightColumn({ title, articles, sharedHeight }: Resea
 				<div className="mb-[26px]">
 					<TitleLine title={title} />
 				</div>
-				<div className="flex flex-col gap-y-[64px]">
+				<div className="flex flex-col gap-y-16">
 					<div>
 						<div ref={containerRef} className={`thin-scrollbar overflow-y-auto ${containerHeight}`}>
-							<div className="flex flex-col gap-y-[24px]">
+							<div className="flex flex-col gap-y-6">
 								{articles.map((article, i) => (
 									<Link
 										key={article.id}
-										className="group relative top-0 flex gap-[16px]"
+										className="group relative top-0 flex gap-4"
 										href={articleHref(article)}
 										onClick={() =>
 											pushResearchAnalyticsEvent(article, 'widget_click', 'DefiLlama Research Spotlight column')
@@ -62,7 +62,7 @@ export function ResearchSpotlightColumn({ title, articles, sharedHeight }: Resea
 											) : null}
 										</div>
 
-										<div className="flex grow flex-col justify-between gap-[7px] pr-[12px]">
+										<div className="flex grow flex-col justify-between gap-[7px] pr-3">
 											<div
 												className={`line-clamp-3 leading-[135%] font-medium text-[#0d1e3b] group-hover:text-[#0c2956] group-hover:opacity-70 dark:text-white dark:group-hover:text-white/70 ${'text-[16px]'}`}
 											>

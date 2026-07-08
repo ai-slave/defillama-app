@@ -54,14 +54,14 @@ function ModeBand({ mode, onChange }: { mode: DownloadsMode; onChange: (next: Do
 		: 'Run live SQL across every DefiLlama dataset — joins, rolling windows, and instant CSV exports.'
 
 	return (
-		<div className="flex flex-col gap-3 rounded-xl border border-(--sub-brand-primary)/25 bg-linear-to-br from-(--sub-brand-primary)/8 to-(--cards-bg) p-3 sm:flex-row sm:items-center sm:gap-5 sm:p-4">
+		<div className="flex flex-col gap-3 rounded-xl border border-(--sub-brand-primary)/25 bg-linear-to-br from-(--sub-brand-primary)/8 to-surface p-3 sm:flex-row sm:items-center sm:gap-5 sm:p-4">
 			<div className="flex flex-col gap-0.5">
 				<span className="text-sm font-semibold tracking-tight text-(--text-primary)">{title}</span>
 				<span className="text-xs leading-relaxed text-(--text-secondary)">{subtitle}</span>
 			</div>
 			{isSql ? null : (
 				<div aria-hidden className="hidden shrink-0 items-center sm:ml-auto sm:flex">
-					<span className="rounded-md border border-(--divider) bg-(--cards-bg) px-2.5 py-1 font-mono text-[10.5px] tracking-tight">
+					<span className="rounded-md border border-(--divider) bg-surface px-2.5 py-1 font-mono text-[10.5px] tracking-tight">
 						<span className="font-semibold text-(--sub-brand-primary)">SELECT</span>
 						<span className="text-(--text-tertiary)"> * </span>
 						<span className="font-semibold text-(--sub-brand-primary)">FROM</span>

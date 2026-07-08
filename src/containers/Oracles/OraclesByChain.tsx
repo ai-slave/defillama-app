@@ -7,6 +7,7 @@ import { LoadingDots } from '~/components/Loaders'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { Panel } from '~/ui/Panel'
 import { formattedNum, slug } from '~/utils'
 import { getEnabledExtraTvlApiKeys, getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
 import { buildOraclesByChainDominanceData, buildOraclesByChainTableAndPieData } from './byChainData'
@@ -64,23 +65,27 @@ export const OraclesByChain = ({
 			<RowLinksWithDropdown links={chainLinks} activeLink={activeLink} />
 
 			<div className="flex flex-col gap-2 xl:flex-row">
-				<div className="relative isolate flex flex-1 flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<React.Suspense fallback={<div className="min-h-[398px]" />}>
+				<Panel className="isolate flex-1">
+					<React.Suspense fallback={<div className="min-h-[406px]" />}>
 						<PieChart
 							chartData={tableAndPieData.pieData}
 							stackColors={oraclesColors}
 							exportButtons={{ png: true, csv: true, filename: 'oracles-tvs-pie', pngTitle: 'Oracles TVS' }}
 						/>
 					</React.Suspense>
-				</div>
-				<div className="flex-1 rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				</Panel>
+				<Panel className="flex-1">
 					{isFetchingExtraBreakdowns ? (
-						<p className="my-auto flex min-h-[398px] items-center justify-center gap-1 text-center text-xs">
+						<div
+							role="status"
+							aria-live="polite"
+							className="my-auto flex min-h-[406px] items-center justify-center gap-1 text-center body-sm text-tertiary"
+						>
 							Loading
 							<LoadingDots />
-						</p>
+						</div>
 					) : (
-						<React.Suspense fallback={<div className="min-h-[398px]" />}>
+						<React.Suspense fallback={<div className="min-h-[406px]" />}>
 							<MultiSeriesChart2
 								dataset={dominanceData.dominanceDataset}
 								charts={dominanceData.dominanceCharts}
@@ -91,17 +96,10 @@ export const OraclesByChain = ({
 							/>
 						</React.Suspense>
 					)}
-				</div>
+				</Panel>
 			</div>
 
-			<React.Suspense
-				fallback={
-					<div
-						style={{ minHeight: `${tableAndPieData.tableData.length * 50 + 200}px` }}
-						className="rounded-md border border-(--cards-border) bg-(--cards-bg)"
-					/>
-				}
-			>
+			<React.Suspense fallback={<Panel style={{ minHeight: `${tableAndPieData.tableData.length * 50 + 200}px` }} />}>
 				<TableWithSearch
 					data={tableAndPieData.tableData}
 					columns={columns}

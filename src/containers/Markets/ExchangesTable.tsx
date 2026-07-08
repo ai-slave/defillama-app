@@ -1,5 +1,6 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
+import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/components/Select/types'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { formattedNum } from '~/utils'
 import { type Segment, segmentHasOi } from './segments'
@@ -113,7 +114,7 @@ export function ExchangesTable({ exchanges, segment }: { exchanges: ExchangeList
 
 	const leadingControls = (
 		<div
-			className="flex shrink-0 items-center overflow-hidden rounded-md border border-(--form-control-border) text-xs"
+			className={`${TAG_GROUP_VARIANTS.solid.container} ${TAG_GROUP_SIZES.md}`}
 			role="group"
 			aria-label="Venue filter"
 		>
@@ -123,7 +124,7 @@ export function ExchangesTable({ exchanges, segment }: { exchanges: ExchangeList
 					type="button"
 					data-active={venue === option.id}
 					onClick={() => setVenue(option.id)}
-					className="border-l border-(--form-control-border) px-2 py-1 text-(--text-label) first:border-l-0 hover:bg-(--btn-hover-bg) data-[active=true]:bg-(--btn-hover-bg) data-[active=true]:text-(--text-primary)"
+					className={TAG_GROUP_VARIANTS.solid.button}
 				>
 					{option.label}
 				</button>

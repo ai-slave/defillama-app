@@ -24,7 +24,7 @@ export default function Roundup({ messages, date }: { messages: Array<string | A
 			</Announcement>
 
 			<div className="flex flex-col gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-				<h1 className="text-center text-xl font-semibold">{`🦙 Llama News Round-Up ${date ?? ''}`}</h1>
+				<h1 className="text-center heading-sm">{`🦙 Llama News Round-Up ${date ?? ''}`}</h1>
 
 				<div className="mx-auto flex max-w-lg flex-col gap-2 text-base">
 					{messages.map((x) => {

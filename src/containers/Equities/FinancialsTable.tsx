@@ -4,6 +4,9 @@ import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
 import { Icon } from '~/components/Icon'
 import { TagGroup } from '~/components/TagGroup'
 import { Tooltip } from '~/components/Tooltip'
+import { tableIconHitTargetStyles } from '~/ui/IconHitTarget'
+import { Panel } from '~/ui/Panel'
+import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IEquitiesStatementsResponse } from './api.types'
 import { formatEquitiesStatementCellValue } from './financialsFormatting'
@@ -135,7 +138,7 @@ function FinancialRow({
 	return (
 		<>
 			<tr className="group">
-				<th className="w-[28%] overflow-hidden border border-black/10 bg-(--cards-bg) p-2 text-left font-semibold text-ellipsis whitespace-nowrap group-hover:bg-(--link-hover-bg) dark:border-white/10">
+				<th className="w-[28%] overflow-hidden border border-subtle bg-surface p-2 text-left font-semibold text-ellipsis whitespace-nowrap group-hover:bg-hover-row">
 					<div
 						className="flex items-center gap-1"
 						onClick={(event) => {
@@ -153,7 +156,7 @@ function FinancialRow({
 									event.stopPropagation()
 									setIsExpanded((expanded) => !expanded)
 								}}
-								className="-ml-1 flex size-5 shrink-0 items-center justify-center rounded-sm text-(--text-secondary) transition-transform hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+								className={tableIconHitTargetStyles}
 							>
 								<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} height={14} width={14} />
 							</button>
@@ -166,7 +169,7 @@ function FinancialRow({
 				{headerIndexes.map((index) => (
 					<td
 						key={`${row.id}-${index}`}
-						className="overflow-hidden border border-black/10 p-2 text-left font-medium text-ellipsis whitespace-nowrap group-hover:bg-(--link-hover-bg) dark:border-white/10"
+						className="overflow-hidden border border-subtle p-2 text-left font-medium text-ellipsis whitespace-nowrap group-hover:bg-hover-row"
 					>
 						{formatEquitiesStatementCellValue(row.label, row.values[index] ?? null)}
 					</td>
@@ -174,14 +177,14 @@ function FinancialRow({
 			</tr>
 			{hasSubRows && isExpanded
 				? row.subRows?.map((subRow) => (
-						<tr key={subRow.id} className="group text-(--text-secondary)">
-							<th className="w-[28%] overflow-hidden border border-black/10 bg-(--cards-bg) p-2 pl-9 text-left font-normal text-ellipsis whitespace-nowrap italic group-hover:bg-(--link-hover-bg) dark:border-white/10">
+						<tr key={subRow.id} className="group text-secondary">
+							<th className="w-[28%] overflow-hidden border border-subtle bg-surface p-2 pl-9 text-left font-normal text-ellipsis whitespace-nowrap italic group-hover:bg-hover-row">
 								<span className="overflow-hidden text-ellipsis whitespace-nowrap">{subRow.label}</span>
 							</th>
 							{headerIndexes.map((index) => (
 								<td
 									key={`${subRow.id}-${index}`}
-									className="overflow-hidden border border-black/10 p-2 text-left font-normal text-ellipsis whitespace-nowrap group-hover:bg-(--link-hover-bg) dark:border-white/10"
+									className="overflow-hidden border border-subtle p-2 text-left font-normal text-ellipsis whitespace-nowrap group-hover:bg-hover-row"
 								>
 									{formatEquitiesStatementCellValue(subRow.label, subRow.values[index] ?? null)}
 								</td>
@@ -244,10 +247,10 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 	}
 
 	return (
-		<div className="col-span-full flex flex-col gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:p-4">
-			<div className="flex flex-wrap items-center justify-between gap-1">
-				<h2 className="text-base font-semibold">Financials</h2>
-				<div className="ml-auto flex flex-wrap items-center gap-2">
+		<Panel className="col-span-full">
+			<TableToolbar className="justify-between">
+				<h2 className="heading-xs">Financials</h2>
+				<TableToolbarControlGroup className="ml-auto">
 					<TagGroup
 						selectedValue={statementType}
 						setValue={(value) => startTransition(() => setStatementType(value))}
@@ -258,9 +261,9 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 						setValue={(value) => startTransition(() => setPeriodType(value))}
 						values={PERIOD_OPTIONS}
 					/>
-					<CSVDownloadButton prepareCsv={prepareCsv} smol />
-				</div>
-			</div>
+					<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />
+				</TableToolbarControlGroup>
+			</TableToolbar>
 
 			<div className="relative overflow-x-auto">
 				<div className="pointer-events-none sticky left-0 z-0 h-0 w-full max-sm:hidden" style={{ top: '50%' }}>
@@ -282,7 +285,7 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 				<table className="z-10 w-full border-collapse">
 					<thead>
 						<tr>
-							<th className="min-w-[220px] overflow-hidden border border-black/10 bg-(--app-bg) p-2 text-left font-semibold text-ellipsis whitespace-nowrap dark:border-white/10">
+							<th className="min-w-[220px] overflow-hidden border border-subtle bg-page p-2 text-left font-semibold text-ellipsis whitespace-nowrap">
 								Name
 							</th>
 							{headerIndexes.map((index, position) => {
@@ -298,7 +301,7 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 								return (
 									<th
 										key={`${statementType}-${periodType}-${periodData.periodEnding[index]}`}
-										className="min-w-[132px] overflow-hidden border border-black/10 bg-(--app-bg) p-2 text-left font-semibold text-ellipsis whitespace-nowrap dark:border-white/10"
+										className="min-w-[132px] overflow-hidden border border-subtle bg-page p-2 text-left font-semibold text-ellipsis whitespace-nowrap"
 									>
 										<Tooltip content={tooltipContent}>
 											<span className="underline decoration-dotted underline-offset-3">
@@ -322,6 +325,6 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 					</tbody>
 				</table>
 			</div>
-		</div>
+		</Panel>
 	)
 }

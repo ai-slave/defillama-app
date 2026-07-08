@@ -113,11 +113,11 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 				<div className="relative flex flex-col gap-2">
 					<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
 						{isLoading || !router.isReady ? (
-							<div className="flex h-full min-h-[398px] w-full items-center justify-center">
+							<div className="flex h-full min-h-[406px] w-full items-center justify-center">
 								<LocalLoader />
 							</div>
 						) : (
-							<React.Suspense fallback={<div className="min-h-[398px]" />}>
+							<React.Suspense fallback={<div className="min-h-[406px]" />}>
 								<MultiSeriesChart2
 									dataset={dataset}
 									charts={charts}

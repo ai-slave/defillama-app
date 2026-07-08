@@ -16,6 +16,9 @@ import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
+import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
 
 type BridgeChainsTableRow = {
@@ -43,7 +46,7 @@ const bridgeChainsColumn = [
 					<TokenLogo name={value} kind="chain" data-lgonly alt={`Logo of ${value}`} />
 					<BasicLink
 						href={`/bridges/${slug(value)}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text)"
+						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link"
 					>
 						{value}
 					</BasicLink>
@@ -181,27 +184,22 @@ export function BridgeChainsTable({ data }: { data: BridgeChainsTableRow[] }) {
 	})
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex items-center justify-between gap-2 p-3">
-				<h1 className="mr-auto text-lg font-semibold">Chains</h1>
+		<Panel>
+			<TableToolbar className="items-center justify-between">
+				<h1 className="mr-auto label-md">Chains</h1>
 				<label className="relative w-full sm:max-w-[280px]">
 					<span className="sr-only">Search...</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
 						name="search"
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search..."
-						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+						className={searchFieldInputStyles}
 					/>
 				</label>
-				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: 'bridge-chains' })} smol />
-			</div>
+				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: 'bridge-chains' })} smol size="md" />
+			</TableToolbar>
 			<VirtualTable instance={instance} />
-		</div>
+		</Panel>
 	)
 }

@@ -68,7 +68,7 @@ const bridgesColumn = [
 					) : null}
 					<BasicLink
 						href={`/bridge/${linkValue}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text)"
+						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link"
 					>
 						{value}
 					</BasicLink>

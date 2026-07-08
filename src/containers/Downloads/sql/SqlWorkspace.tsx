@@ -1025,7 +1025,7 @@ function StatusStrip({
 	const runTone = error ? 'error' : busy ? 'busy' : lastRun ? 'ready' : 'muted'
 
 	return (
-		<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-(--divider) bg-(--cards-bg) px-3 py-2 text-xs text-(--text-secondary)">
+		<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-(--divider) bg-surface px-3 py-2 text-xs text-(--text-secondary)">
 			<span className="flex items-center gap-1.5">
 				<StatusDot tone={envTone} />
 				<span className="text-(--text-tertiary)">LlamaSQL</span>
@@ -1095,7 +1095,7 @@ function TabNav({ tab, onChange, savedCount }: { tab: SqlTab; onChange: (next: S
 					>
 						{t.label}
 						{showCount ? (
-							<span className="rounded-sm bg-(--link-hover-bg) px-1.5 py-px text-[10px] font-semibold text-(--text-tertiary) tabular-nums">
+							<span className="rounded-sm bg-hover-row px-1.5 py-px text-[10px] font-semibold text-(--text-tertiary) tabular-nums">
 								{savedCount}
 							</span>
 						) : null}
@@ -1149,7 +1149,7 @@ function EditorRunBar({
 				type="button"
 				onClick={onSave}
 				disabled={!canRun}
-				className="inline-flex items-center gap-1.5 rounded-md border border-(--divider) bg-(--cards-bg) px-3 py-1.5 text-xs font-medium text-(--text-primary) transition-colors hover:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-40"
+				className="inline-flex items-center gap-1.5 rounded-md border border-(--divider) bg-surface px-3 py-1.5 text-xs font-medium text-(--text-primary) transition-colors hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
 			>
 				<Icon name="bookmark" className="size-3.5" />
 				Save
@@ -1205,7 +1205,7 @@ function SavedQueriesTab({
 
 	if (savedQueries.length === 0) {
 		return (
-			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--divider) bg-(--cards-bg)/40 px-6 py-12 text-center">
+			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--divider) bg-surface/40 px-6 py-12 text-center">
 				<Icon name="bookmark" className="size-6 text-(--text-tertiary)" />
 				<p className="text-sm text-(--text-secondary)">No saved queries yet.</p>
 				<p className="max-w-sm text-xs text-(--text-tertiary)">
@@ -1263,7 +1263,7 @@ function SavedQueriesTab({
 								onClick={() => setRenamingId(q.id)}
 								aria-label={`Rename ${q.name}`}
 								disabled={busy}
-								className="flex size-7 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) disabled:cursor-not-allowed disabled:opacity-40"
+								className="flex size-7 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:cursor-not-allowed disabled:opacity-40"
 							>
 								<Icon name="pencil" className="size-3.5" />
 							</button>

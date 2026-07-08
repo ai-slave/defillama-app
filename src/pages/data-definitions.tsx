@@ -5,7 +5,7 @@ import Layout from '~/layout'
 const Definition = ({ header, id, children }: { header: string; id: string; children: React.ReactNode }) => {
 	return (
 		<section aria-labelledby={`${id}-title`} id={id} className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
-			<h2 className="group relative flex items-center gap-1 text-lg font-semibold" id={`${id}-title`}>
+			<h2 className="group relative flex items-center gap-1 heading-xs" id={`${id}-title`}>
 				{header}
 				<a
 					aria-hidden="true"
@@ -28,7 +28,7 @@ export default function DataDefinitions() {
 			description="Glossary of DeFi metrics including TVL, Fees, Revenue, FDV, DEX Volume, Holders Revenue, App Fees, and REV."
 			canonicalUrl={`/data-definitions`}
 		>
-			<h1 className="rounded-md bg-(--cards-bg) p-3 text-xl font-semibold">Data Definitions</h1>
+			<h1 className="rounded-md bg-(--cards-bg) p-3 heading-sm">Data Definitions</h1>
 
 			<Definition header="TVL" id="tvl">
 				<p>For protocols: Value of all coins held in smart contracts of the protocol</p>

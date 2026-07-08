@@ -217,7 +217,7 @@ export const SignInForm = ({
 										id={signInEmailInputId}
 										type="email"
 										required
-										className="w-full rounded-lg border border-[#39393E] bg-[#222429] py-2 pr-2.5 pl-[36px] text-white transition-all duration-200 placeholder:text-[#8a8c90] focus:border-[#5C5CF9] focus:ring-1 focus:ring-[#5C5CF9] focus:outline-hidden sm:py-2.5"
+										className="w-full rounded-lg border border-[#39393E] bg-[#222429] py-2 pr-2.5 pl-9 text-white transition-all duration-200 placeholder:text-[#8a8c90] focus:border-[#5C5CF9] focus:ring-1 focus:ring-[#5C5CF9] focus:outline-hidden sm:py-2.5"
 										value={email}
 										onChange={(e) => setEmail(e.target.value)}
 									/>
@@ -236,7 +236,7 @@ export const SignInForm = ({
 										id={signInPasswordInputId}
 										type="password"
 										required
-										className="w-full rounded-lg border border-[#39393E] bg-[#222429] py-2 pr-2.5 pl-[36px] text-white transition-all duration-200 placeholder:text-[#8a8c90] focus:border-[#5C5C] focus:ring-1 focus:ring-[#5C5CF9] focus:outline-hidden sm:py-2.5"
+										className="w-full rounded-lg border border-[#39393E] bg-[#222429] py-2 pr-2.5 pl-9 text-white transition-all duration-200 placeholder:text-[#8a8c90] focus:border-[#5C5C] focus:ring-1 focus:ring-[#5C5CF9] focus:outline-hidden sm:py-2.5"
 										value={password}
 										onChange={(e) => setPassword(e.target.value)}
 									/>

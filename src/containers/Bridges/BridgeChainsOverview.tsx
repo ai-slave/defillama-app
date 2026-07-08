@@ -5,6 +5,8 @@ import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { BridgeChainsTable } from '~/containers/Bridges/BridgeChainsTable'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 
 const MultiSeriesChart2 = lazy(
 	() => import('~/components/ECharts/MultiSeriesChart2')
@@ -19,8 +21,8 @@ export function BridgeChainsOverview({ allChains, tableData, chart }) {
 
 	return (
 		<>
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
+			<Panel>
+				<ChartPanelToolbar className="justify-end">
 					<SelectWithCombobox
 						allValues={allChains}
 						selectedValues={selectedChains}
@@ -28,6 +30,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }) {
 						label="Chain"
 						labelType="smol"
 						variant="filter"
+						size="md"
 						portal
 					/>
 					<ChartExportButtons
@@ -35,7 +38,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }) {
 						filename={`bridge-inflows-by-chain`}
 						title="Bridge Inflows"
 					/>
-				</div>
+				</ChartPanelToolbar>
 
 				{chart?.dataset?.source?.length > 0 ? (
 					<Suspense fallback={<div className="h-[360px]" />}>
@@ -52,7 +55,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }) {
 						/>
 					</Suspense>
 				) : null}
-			</div>
+			</Panel>
 			<BridgeChainsTable data={tableData} />
 		</>
 	)

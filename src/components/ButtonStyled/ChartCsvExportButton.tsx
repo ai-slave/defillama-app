@@ -1,5 +1,6 @@
 import type * as echarts from 'echarts/core'
 import { useCallback } from 'react'
+import { buttonStyles } from '~/ui/Button'
 import { toNiceCsvDate } from '~/utils'
 import type { CsvCell } from '~/utils/csvCell'
 import { CSVDownloadButton } from './CsvButton'
@@ -258,8 +259,7 @@ interface ChartCsvExportButtonProps {
 	onExport?: (info: { filename: string }) => void
 }
 
-const DEFAULT_CLASSNAME =
-	'flex items-center justify-center gap-1 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) disabled:text-(--text-disabled)'
+const DEFAULT_CLASSNAME = buttonStyles({ size: 'md' })
 
 export function ChartCsvExportButton({
 	chartInstance,

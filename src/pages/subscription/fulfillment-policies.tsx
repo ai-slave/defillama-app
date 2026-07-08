@@ -10,7 +10,7 @@ export default function FulfillmentPolicies() {
 			description="DefiLlama subscription refund and cancellation policies."
 			canonicalUrl="/subscription/fulfillment-policies"
 		>
-			<div className="mx-auto mb-[64px] flex w-full max-w-xl flex-col gap-8 text-[#d5d5d5]">
+			<div className="mx-auto mb-16 flex w-full max-w-xl flex-col gap-8 text-[#d5d5d5]">
 				<h1 className="text-center text-3xl font-bold text-white">Fulfillment Policies</h1>
 
 				<div className="flex flex-col gap-3">

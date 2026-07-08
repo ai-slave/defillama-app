@@ -335,6 +335,7 @@ export default function AreaChart({
 									label={legendTitle}
 									labelType="smol"
 									variant="filter"
+									size="md"
 									portal
 								/>
 							) : null

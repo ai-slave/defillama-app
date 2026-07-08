@@ -17,6 +17,8 @@ import {
 	pctChange,
 	pivotExchangeSeries
 } from '~/containers/Markets/utils'
+import { Card } from '~/ui/Card'
+import { Panel } from '~/ui/Panel'
 import { formattedNum } from '~/utils'
 import { fetchExchangeMarkets } from './api'
 
@@ -150,8 +152,11 @@ export function CexMarketsSection({ exchange, name }: CexMarketsSectionProps) {
 	}, [data])
 
 	const sectionHeader = (
-		<div className="flex flex-wrap items-center justify-between gap-2 border-b border-(--cards-border) p-3">
-			<h2 className="group relative flex scroll-mt-24 items-center gap-1 text-xl font-bold" id={CEX_MARKETS_SECTION_ID}>
+		<Card as="header" padding="md" border="subtle" className="flex flex-wrap items-center gap-x-3 gap-y-2">
+			<h2
+				className="group relative mr-auto flex scroll-mt-24 items-center gap-1 heading-xs"
+				id={CEX_MARKETS_SECTION_ID}
+			>
 				Markets
 				<a
 					aria-hidden="true"
@@ -162,20 +167,23 @@ export function CexMarketsSection({ exchange, name }: CexMarketsSectionProps) {
 				<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
 			</h2>
 			{lastUpdated ? (
-				<span className="text-xs text-(--text-label)" title={lastUpdated.absolute}>
+				<span className="body-sm text-tertiary" title={lastUpdated.absolute}>
 					Updated {lastUpdated.relative}
 				</span>
 			) : null}
-		</div>
+		</Card>
 	)
 
 	if (isLoading) {
 		return (
-			<section className="col-span-full rounded-md border border-(--cards-border) bg-(--cards-bg)">
+			<section className="col-span-full flex flex-col gap-2">
 				{sectionHeader}
-				<div className="flex min-h-[360px] items-center justify-center p-3">
-					<LocalLoader />
-				</div>
+				<Panel>
+					<div role="status" aria-live="polite" className="flex min-h-[360px] items-center justify-center p-2">
+						<LocalLoader />
+						<span className="sr-only">Loading {name} markets</span>
+					</div>
+				</Panel>
 			</section>
 		)
 	}
@@ -185,9 +193,9 @@ export function CexMarketsSection({ exchange, name }: CexMarketsSectionProps) {
 	}
 
 	return (
-		<section className="col-span-full rounded-md border border-(--cards-border) bg-(--cards-bg)">
+		<section className="col-span-full flex flex-col gap-2">
 			{sectionHeader}
-			<div className="flex flex-col gap-5 p-3">
+			<div className="flex flex-col gap-2">
 				<MarketsSummary data={data} />
 
 				<MarketsSegmentTabs
@@ -197,7 +205,7 @@ export function CexMarketsSection({ exchange, name }: CexMarketsSectionProps) {
 					availableSegments={visibleCategoryTabs}
 				/>
 
-				<div className="flex flex-col gap-5">
+				<div className="flex flex-col gap-2">
 					<HeaderStrip data={data} category={selectedCategoryTab} showOi={hasOi} />
 
 					<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">

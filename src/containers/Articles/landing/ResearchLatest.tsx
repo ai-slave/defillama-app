@@ -22,7 +22,7 @@ function TitleOverlay({
 	title: string
 	placement: TitlePlacement
 }>) {
-	const base = 'absolute z-20 bg-[#0C2956]/70 p-[16px] text-[16px] font-semibold leading-[150%] text-white'
+	const base = 'absolute z-20 bg-[#0C2956]/70 p-4 text-[16px] font-semibold leading-[150%] text-white'
 
 	const titleClamp = 'line-clamp-3 lg:line-clamp-4'
 
@@ -98,7 +98,7 @@ const ContentCard = ({
 			) : null}
 		</div>
 
-		<span className="absolute top-[12px] left-[12px] rounded-[4px] border border-white px-[8px] py-[2px] text-[10px] font-semibold text-white uppercase backdrop-blur-sm">
+		<span className="absolute top-[12px] left-[12px] rounded-[4px] border border-white px-2 py-0.5 text-[10px] font-semibold text-white uppercase backdrop-blur-sm">
 			{item.label}
 		</span>
 
@@ -122,18 +122,18 @@ export const ResearchLatest: React.FC<ResearchLatestProps> = ({ articles = [] })
 
 	return (
 		<div>
-			<div className="mb-[32px]">
+			<div className="mb-8">
 				<TitleLine title="Latest from DefiLlama Research" />
 			</div>
 
-			<div className="mb-[16px] grid grid-cols-1 gap-[12px] lg:mb-[32px] lg:grid-cols-2 lg:gap-[20px]">
-				<div className="flex flex-col gap-[12px] lg:h-[490px] lg:flex-row lg:gap-[20px]">
+			<div className="mb-4 grid grid-cols-1 gap-3 lg:mb-8 lg:grid-cols-2 lg:gap-5">
+				<div className="flex flex-col gap-3 lg:h-[490px] lg:flex-row lg:gap-5">
 					{item1 ? (
 						<div className="h-[200px] w-full lg:h-full lg:w-1/2">
 							<ContentCard item={item1} titlePlacement="bottom" className="h-full" />
 						</div>
 					) : null}
-					<div className="flex w-full gap-[12px] lg:flex lg:h-full lg:w-1/2 lg:flex-col lg:gap-[20px]">
+					<div className="flex w-full gap-3 lg:flex lg:h-full lg:w-1/2 lg:flex-col lg:gap-5">
 						{item2 ? (
 							<div className="h-[250px] w-1/2 lg:h-[calc((100%-20px)*286/473)] lg:w-full">
 								<ContentCard item={item2} titlePlacement="bottom" className="h-full" />
@@ -147,8 +147,8 @@ export const ResearchLatest: React.FC<ResearchLatestProps> = ({ articles = [] })
 					</div>
 				</div>
 
-				<div className="flex flex-col gap-[12px] lg:h-full lg:gap-[20px]">
-					<div className="flex gap-[12px] lg:h-[calc((100%-20px)*211/474)] lg:gap-[20px]">
+				<div className="flex flex-col gap-3 lg:h-full lg:gap-5">
+					<div className="flex gap-3 lg:h-[calc((100%-20px)*211/474)] lg:gap-5">
 						{item4 ? (
 							<div className="h-[250px] w-1/2 lg:h-full">
 								<ContentCard item={item4} titlePlacement="bottom" className="h-full" />
@@ -168,7 +168,7 @@ export const ResearchLatest: React.FC<ResearchLatestProps> = ({ articles = [] })
 				</div>
 			</div>
 
-			<div className="grid grid-cols-2 gap-[12px] lg:flex lg:flex-wrap lg:justify-start">
+			<div className="grid grid-cols-2 gap-3 lg:flex lg:flex-wrap lg:justify-start">
 				{NAV_ITEMS.map((cat) => (
 					<Link
 						key={cat.id}

@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { LocalLoader } from '~/components/Loaders'
+import { Panel } from '~/ui/Panel'
 import { type PivotedSeries, toLineSeries } from './utils'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -29,18 +30,18 @@ export function MarketsLineChart({
 	const lineSeries = React.useMemo(() => toLineSeries(series), [series])
 	const hasData = lineSeries.length > 0 && series.chartData.length > 0
 	return (
-		<div className="flex min-h-[360px] flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-			<div className="mb-2 flex flex-col">
-				<span className="text-[10px] tracking-wider text-(--text-label) uppercase">30 days · tracking health</span>
-				<span className="text-sm font-semibold">{title}</span>
+		<Panel className="min-h-[360px]">
+			<div className="flex flex-col px-2 pt-2 pb-0">
+				<span className="label-sm text-secondary uppercase">30 days · tracking health</span>
+				<span className="label-md">{title}</span>
 			</div>
 			{hasData ? (
 				<React.Suspense fallback={FALLBACK}>
 					<MultiSeriesChart series={lineSeries} valueSymbol={valueSymbol} chartOptions={CHART_OPTIONS} height="280px" />
 				</React.Suspense>
 			) : (
-				<div className="flex flex-1 items-center justify-center text-xs text-(--text-disabled)">no data</div>
+				<div className="flex flex-1 items-center justify-center label-sm text-tertiary">no data</div>
 			)}
-		</div>
+		</Panel>
 	)
 }

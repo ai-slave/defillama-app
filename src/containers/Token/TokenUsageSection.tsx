@@ -13,15 +13,16 @@ import { startTransition, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
 import { ChartRestoreButton } from '~/components/ButtonStyled/ChartRestoreButton'
 import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
-import { Checkbox } from '~/components/Checkbox'
 import type { ITreemapChartProps } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
+import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { fetchProtocolsByTokenClient } from '~/containers/TokenUsage/api'
 import { buildTokenUsageTreemapTreeData } from '~/containers/TokenUsage/treemap'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Checkbox } from '~/ui/Checkbox'
 import { formattedNum } from '~/utils'
 import { DEFAULT_TABLE_PAGE_SIZE, resolveUpdater, TABLE_PAGE_SIZE_OPTIONS } from './tableUtils'
 import { TokenPrivateSectionGate, useTokenPrivateSectionAccess } from './TokenPrivateSectionGate'
@@ -63,13 +64,13 @@ const columns = [
 					{href ? (
 						<BasicLink
 							href={href}
-							className={`min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline ${TOKEN_USAGE_NAME_MAX_WIDTH}`}
+							className={`min-w-0 overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline ${TOKEN_USAGE_NAME_MAX_WIDTH}`}
 						>
 							{value}
 						</BasicLink>
 					) : (
 						<span
-							className={`min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap ${TOKEN_USAGE_NAME_MAX_WIDTH}`}
+							className={`min-w-0 overflow-hidden label-md text-ellipsis whitespace-nowrap ${TOKEN_USAGE_NAME_MAX_WIDTH}`}
 						>
 							{value}
 						</span>
@@ -181,7 +182,7 @@ export function TokenUsageSection({
 			emptyMessage={filteredRows.length === 0 ? 'No token usage entries found.' : null}
 			headerActions={
 				isAuthenticated && hasActiveSubscription && rows ? (
-					<div className="flex flex-wrap items-center gap-2 max-sm:w-full">
+					<div className="flex flex-wrap items-center gap-1.5 max-sm:w-full">
 						<Checkbox
 							variant="filter"
 							value="includeCentralizedExchanges"
@@ -195,12 +196,12 @@ export function TokenUsageSection({
 						>
 							Include CEXs
 						</Checkbox>
-						<div className="flex w-fit flex-nowrap items-center overflow-hidden rounded-md border border-(--form-control-border) text-xs font-medium text-(--text-form)">
+						<div className={chartSegmentedControlGroupStyles}>
 							<button
 								type="button"
 								data-active={view === 'list'}
 								onClick={() => setView('list')}
-								className="flex shrink-0 items-center gap-1 px-2 py-1.5 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:bg-(--old-blue) data-[active=true]:text-white"
+								className={`${chartSegmentedControlButtonStyles} flex items-center gap-1`}
 							>
 								<Icon name="align-left" height={14} width={14} />
 								<span>List</span>
@@ -209,7 +210,7 @@ export function TokenUsageSection({
 								type="button"
 								data-active={view === 'treemap'}
 								onClick={() => setView('treemap')}
-								className="flex shrink-0 items-center gap-1 px-2 py-1.5 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:bg-(--old-blue) data-[active=true]:text-white"
+								className={`${chartSegmentedControlButtonStyles} flex items-center gap-1`}
 							>
 								<Icon name="layout-grid" height={14} width={14} />
 								<span>Treemap</span>
@@ -233,6 +234,7 @@ export function TokenUsageSection({
 								})
 							}
 							smol
+							size="md"
 						/>
 					</div>
 				) : null

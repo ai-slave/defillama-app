@@ -14,8 +14,8 @@ const PLAN_TIER: Record<PlanKey, number> = { free: 0, pro: 1, api: 2, enterprise
 
 const cardWrapperStyles = {
 	highlighted:
-		'w-full flex-[1_1_280px] flex flex-col gap-[10px] rounded-[24px] bg-(--sub-brand-primary) px-[2px] pt-[2px] pb-3 sm:max-w-[330px]',
-	default: 'w-full flex-[1_1_280px] flex flex-col sm:max-w-[330px] sm:gap-[10px] sm:pb-3'
+		'w-full flex-[1_1_280px] flex flex-col gap-2.5 rounded-[24px] bg-(--sub-brand-primary) px-0.5 pt-0.5 pb-3 sm:max-w-[330px]',
+	default: 'w-full flex-[1_1_280px] flex flex-col sm:max-w-[330px] sm:gap-2.5 sm:pb-3'
 }
 
 const cardShellStyles = {
@@ -504,8 +504,6 @@ export function ComparisonCell({
 	tooltip?: string
 }) {
 	const selectedStyle = isSelected ? `relative z-10 ${selectedColumnStyles.active}` : selectedColumnStyles.inactive
-	const borderColor =
-		'border-(--sub-border-slate-150) dark:border-(--sub-surface-elevated-2) md:border-(--sub-border-light) dark:md:border-(--sub-surface-elevated-2)'
 	const borderEnd = plan === 'enterprise' ? 'border-r' : ''
 	const isIncluded = value === 'check'
 	const isLimited = value === 'limited'
@@ -514,7 +512,7 @@ export function ComparisonCell({
 		<div
 			role="cell"
 			aria-label={isIncluded ? 'Included' : isLimited ? 'Limited' : 'Not included'}
-			className={`box-border flex w-[132px] shrink-0 items-center justify-center self-stretch ${isSelected || hideBorderLeft ? '' : 'border-l'} text-center md:w-[146px] ${borderColor} ${selectedStyle} ${borderEnd} ${className}`}
+			className={`box-border flex w-[132px] shrink-0 items-center justify-center self-stretch ${isSelected || hideBorderLeft ? '' : 'border-l'} border-(--sub-border-slate-150) text-center md:w-[146px] md:border-(--sub-border-light) dark:border-(--sub-surface-elevated-2) dark:md:border-(--sub-surface-elevated-2) ${selectedStyle} ${borderEnd} ${className}`}
 		>
 			{isIncluded ? (
 				<Icon name="check" height={24} width={24} className="text-(--sub-brand-secondary)" aria-hidden="true" />

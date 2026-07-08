@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Panel, PanelHeader } from '~/ui/Panel'
 import { usePerformanceIndex } from '../client'
 import { DocsDrawer } from '../DocsDrawer'
 import { MarketMakersOutro } from '../MarketMakersOutro'
@@ -30,9 +31,9 @@ export function PerformanceIndex(props: PerformanceIndexProps) {
 
 	return (
 		<>
-			<div className="flex flex-col gap-4 p-4">
+			<div className="flex flex-col gap-2">
 				<MarketMakersTabs active="Performance Index" />
-				<div className="flex flex-col gap-6">
+				<div className="flex flex-col gap-2">
 					<SectionHeader
 						title="Forgd Market Maker Performance Index Leaderboard"
 						description="Data-driven Market Maker rankings derived from 500+ engagements, evaluating historical execution, reliability, and ecosystem integration."
@@ -41,16 +42,16 @@ export function PerformanceIndex(props: PerformanceIndexProps) {
 					/>
 					<Podium rows={performanceRows} aggregated={aggregated} />
 					<Superlatives aggregated={aggregated} period={period} />
-					<div className="flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-						<div className="flex items-center justify-between gap-2 border-b border-(--cards-border) p-4">
-							<h2 className="text-lg font-semibold">Ranking</h2>
-							<div className="flex items-center gap-2">
+					<Panel>
+						<PanelHeader className="justify-between">
+							<h2 className="heading-xs">Ranking</h2>
+							<div className="flex items-center gap-1.5">
 								<AboutButton onClick={() => setDocsOpen(true)} />
 								<RefineButton onClick={() => setRefineOpen(true)} />
 							</div>
-						</div>
+						</PanelHeader>
 						<ScoresTable rows={performanceRows} onSelectMM={selectMM} />
-					</div>
+					</Panel>
 					<Definitions />
 					<MarketMakersOutro />
 				</div>

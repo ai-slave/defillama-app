@@ -22,6 +22,8 @@ import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
 import { buildHallmarksWithGenuineSpikes } from '~/utils/hallmarks'
 import { tokenIconUrl } from '~/utils/icons'
@@ -186,7 +188,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 			seoDescription={props.seoDescription}
 		>
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
-				<div className="col-span-1 flex flex-col gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:min-h-[360px]">
+				<Panel padding="sm" className="col-span-1 gap-6 xl:min-h-[360px]">
 					<h1 className="flex flex-wrap items-center gap-2 text-xl">
 						<TokenLogo name={props.name} kind="token" size={24} alt={`Logo of ${props.name}`} />
 						<span className="font-bold">{props.name}</span>
@@ -197,9 +199,9 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 						) : null}
 					</h1>
 					<KeyMetrics {...props} formatPrice={(value) => formattedNum(value, true)} />
-				</div>
-				<div className="col-span-1 rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-[2/-1]">
-					<div className="flex items-center justify-end gap-2 p-2 pb-0">
+				</Panel>
+				<Panel className="col-span-1 xl:col-[2/-1]">
+					<ChartPanelToolbar className="justify-end">
 						<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 						<ChartExportButtons
 							chartInstance={chartInstance}
@@ -207,7 +209,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							title={props.name}
 							iconUrl={tokenIconUrl(props.name)}
 						/>
-					</div>
+					</ChartPanelToolbar>
 					<Suspense fallback={<div className="min-h-[360px]" />}>
 						<MultiSeriesChart2
 							dataset={deferredFinalCharts.dataset}
@@ -218,11 +220,11 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							onReady={handleChartReady}
 						/>
 					</Suspense>
-				</div>
+				</Panel>
 			</div>
 			<div className="grid grid-cols-2 gap-2">
 				{props.protocolChains?.length > 1 ? (
-					<div className="col-span-full rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:only:col-span-full">
+					<Panel className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
 							chartType="chain"
 							protocolName={slug(props.name)}
@@ -232,10 +234,10 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							hallmarks={props.hallmarks ?? undefined}
 							title="Bridge Aggregator Volume by chain"
 						/>
-					</div>
+					</Panel>
 				) : null}
 				{props.protocolVersions?.length > 1 ? (
-					<div className="col-span-full rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:only:col-span-full">
+					<Panel className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
 							chartType="version"
 							protocolName={slug(props.name)}
@@ -245,7 +247,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							hallmarks={props.hallmarks ?? undefined}
 							title="Bridge Aggregator Volume by protocol version"
 						/>
-					</div>
+					</Panel>
 				) : null}
 			</div>
 		</ProtocolOverviewLayout>

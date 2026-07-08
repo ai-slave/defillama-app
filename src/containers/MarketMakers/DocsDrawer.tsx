@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { BasicLink } from '~/components/Link'
+import { Button } from '~/ui/Button'
 import { docsAsset, FigureRadar, FigureTable } from './DocsFigures'
 import { Drawer } from './Drawer'
 
@@ -60,8 +61,8 @@ const INTERPRET = [
 	{ term: 'Integration Level', rest: 'reflects the degree of integration with Forgd’s data consumption systems.' }
 ]
 
-const TH = 'bg-[#0b0e26] px-4 py-2.5 text-center font-medium text-white'
-const TD = 'border-b border-(--cards-border) px-4 py-2 text-(--text-secondary)'
+const TH = 'bg-[#0b0e26] px-4 py-2.5 text-center label-sm text-white'
+const TD = 'border-b border-subtle px-4 py-2 body-sm text-secondary'
 
 function DocFileIcon() {
 	return (
@@ -130,9 +131,9 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 			widthClassName="sm:max-w-2xl lg:max-w-5xl"
 		>
 			<div className="flex flex-col gap-4 md:flex-row md:gap-6">
-				<nav className="md:w-64 md:shrink-0 md:self-stretch md:border-r md:border-(--cards-border)">
+				<nav className="md:w-64 md:shrink-0 md:self-stretch md:border-r md:border-subtle">
 					<div className="md:sticky md:top-0">
-						<p className="border-b border-(--cards-border) px-5 py-4 text-base font-semibold">Table of Contents</p>
+						<p className="border-b border-subtle px-5 py-4 heading-xs">Table of Contents</p>
 						<ul className="flex flex-col gap-4 px-4 py-6">
 							{TOC.map((item) => {
 								const active = item.id === activeId
@@ -143,8 +144,8 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 											onClick={() => scrollToSection(item.id)}
 											className={`flex w-full cursor-pointer border-l-2 pl-3 text-left text-base whitespace-nowrap ${
 												active
-													? 'border-(--link-text) font-medium text-(--link-text)'
-													: 'border-transparent text-(--text-primary) hover:text-(--link-text)'
+													? 'border-brand font-medium text-link'
+													: 'border-transparent text-primary hover:text-link'
 											}`}
 										>
 											{item.label}
@@ -157,22 +158,19 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 				</nav>
 
 				<div className="flex min-w-0 flex-1 flex-col gap-8 p-4">
-					<div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-(--cards-border) bg-(--link-hover-bg) p-4">
+					<div className="flex flex-wrap items-center justify-between gap-2 rounded-[8px] border border-subtle bg-brand-muted p-2">
 						<div className="flex items-center gap-2">
 							<DocFileIcon />
 							<p className="text-sm font-medium">Looking for the full Market Maker Leaderboard documentation?</p>
 						</div>
-						<BasicLink
-							href="/market-makers/documentation"
-							className="shrink-0 rounded-lg bg-(--link-text) px-3 py-1.5 text-sm font-medium text-white hover:opacity-90"
-						>
+						<Button as={BasicLink} href="/market-makers/documentation" variant="primary" size="md">
 							Read the Docs
-						</BasicLink>
+						</Button>
 					</div>
 
 					<section id="overview" className="flex scroll-mt-4 flex-col gap-5">
-						<h2 className="text-[18px] font-semibold">Overview</h2>
-						<p className="text-[16px] text-(--text-secondary)">
+						<h2 className="heading-xs">Overview</h2>
+						<p className="body-lg text-secondary">
 							The Performance Index ranks market makers based on a proprietary composite score derived from 50+
 							quantitative and qualitative variables across their tracked engagements. It provides a unified view of
 							overall performance by aggregating granular trading KPIs, including liquidity provision, execution
@@ -188,20 +186,20 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 					</section>
 
 					<section id="calculation-methodology" className="flex scroll-mt-4 flex-col gap-5">
-						<h2 className="text-[18px] font-semibold">Calculation Methodology</h2>
-						<p className="text-[16px] text-(--text-secondary)">
+						<h2 className="heading-xs">Calculation Methodology</h2>
+						<p className="body-lg text-secondary">
 							The Performance Index is calculated using a proprietary weighted composite model that incorporates over 50
 							underlying KPIs. These KPIs are measured at a granular level and may differentiate across specific
 							dimensions (e.g., depth at varying thresholds, bid vs. ask side behavior, and execution characteristics).
 						</p>
-						<p className="text-[16px] text-(--text-secondary)">
+						<p className="body-lg text-secondary">
 							Each KPI contributes to the composite score with its own weighting, reflecting its relative importance
 							within the overall evaluation framework. In addition to quantitative trading metrics, select
 							infrastructure and capability-based attributes, such as integrations, API support, and trading coverage,
 							are also incorporated into the composite calculation. The global weights of each metric are as follows:
 						</p>
-						<div className="overflow-x-auto rounded-lg border border-(--cards-border)">
-							<table className="w-full border-collapse text-[12px]">
+						<div className="overflow-x-auto rounded-[8px] border border-subtle">
+							<table className="w-full border-collapse body-sm">
 								<thead>
 									<tr>
 										<th className={TH}>Metric</th>
@@ -218,7 +216,7 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 								</tbody>
 							</table>
 						</div>
-						<p className="text-[16px] text-(--text-secondary)">
+						<p className="body-lg text-secondary">
 							The Trading KPI component evaluates a market maker’s performance across four core dimensions: liquidity
 							depth, execution quality, capital efficiency, and operational reliability. Depth is measured at +/- 0.50%,
 							+/- 1.00%, & +/- 2.00% in both USD and % of market, with a bias toward bid-side liquidity. Execution
@@ -226,8 +224,8 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 							while loan utilization measures how efficiently capital is deployed. Uptime and bid-ask spread reflect
 							consistency and quote competitiveness. The weightings and rankings of all Trading KPIs are below:
 						</p>
-						<div className="overflow-x-auto rounded-lg border border-(--cards-border)">
-							<table className="w-full border-collapse text-[12px]">
+						<div className="overflow-x-auto rounded-[8px] border border-subtle">
+							<table className="w-full border-collapse body-sm">
 								<thead>
 									<tr>
 										<th className={TH}>Metric</th>
@@ -246,24 +244,24 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 								</tbody>
 							</table>
 						</div>
-						<p className="text-[12px] text-(--text-tertiary)">
+						<p className="body-sm text-tertiary">
 							All values are aggregated across each market maker’s active engagements tracked by Forgd and are
 							recalculated dynamically based on the selected timeframe.
 						</p>
 					</section>
 
 					<section id="how-to-interpret" className="flex scroll-mt-4 flex-col gap-5">
-						<h2 className="text-[18px] font-semibold">How to Interpret</h2>
-						<p className="text-[16px] text-(--text-secondary)">
+						<h2 className="heading-xs">How to Interpret</h2>
+						<p className="body-lg text-secondary">
 							The composite score represents a relative measure of overall performance across all included dimensions.
 							Higher-ranked market makers have demonstrated stronger aggregate performance across the full set of
 							evaluated KPIs and attributes within the selected timeframe. Supporting columns should be used to
 							contextualize the composite score. For example:
 						</p>
-						<ol className="flex list-decimal flex-col gap-2 pl-5 text-[16px] text-(--text-secondary)">
+						<ol className="flex list-decimal flex-col gap-2 pl-5 body-lg text-secondary">
 							{INTERPRET.map((item) => (
 								<li key={item.term}>
-									<span className="font-medium text-(--text-primary)">{item.term}</span> {item.rest}
+									<span className="font-medium text-primary">{item.term}</span> {item.rest}
 								</li>
 							))}
 						</ol>
@@ -271,15 +269,15 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 							src={docsAsset('radar_mm_details.png')}
 							alt="Market Maker detail view — Leaderboard Performance radar"
 						/>
-						<p className="text-[16px] text-(--text-secondary)">
+						<p className="body-lg text-secondary">
 							Market makers may share the same rank in cases where composite scores are equivalent when rounded to one
 							decimal place.
 						</p>
 					</section>
 
 					<section id="filtering" className="flex scroll-mt-4 flex-col gap-5">
-						<h2 className="text-[18px] font-semibold">Filtering</h2>
-						<p className="text-[16px] text-(--text-secondary)">
+						<h2 className="heading-xs">Filtering</h2>
+						<p className="body-lg text-secondary">
 							Timeframe filtering can be configured under the “Refine” button at the top right of the table. All
 							Performance Index values, including the composite score, rankings, and supporting metrics, are
 							recalculated dynamically based on the selected timeframe.

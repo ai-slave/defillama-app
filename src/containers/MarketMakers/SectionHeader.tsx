@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { TimeframeBadge } from './badges'
 import { ArrowRightIcon } from './icons'
+import { forgdPrimaryLinkStyles } from './styles'
 
 export function RfqButton() {
 	return (
@@ -8,7 +11,7 @@ export function RfqButton() {
 			href="https://www.forgd.com/tools/engage-a-market-maker"
 			target="_blank"
 			rel="noreferrer noopener"
-			className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#030021] px-3.5 py-2 text-sm font-semibold text-white hover:opacity-90"
+			className={forgdPrimaryLinkStyles}
 		>
 			<span className="hidden min-[713px]:inline">Conduct a Market Maker RFQ</span>
 			<span className="min-[713px]:hidden">Conduct an RFQ</span>
@@ -19,28 +22,20 @@ export function RfqButton() {
 
 export function DocsActionButton({ onClick }: { onClick: () => void }) {
 	return (
-		<button
-			type="button"
-			onClick={onClick}
-			className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-(--form-control-border) px-3 py-1.5 text-sm font-medium text-(--text-primary) hover:bg-(--link-hover-bg)"
-		>
+		<Button type="button" onClick={onClick} size="md">
 			Documentation
 			<ArrowRightIcon />
-		</button>
+		</Button>
 	)
 }
 
 export function AboutButton({ onClick }: { onClick: () => void }) {
 	return (
-		<button
-			type="button"
-			onClick={onClick}
-			className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-(--form-control-border) px-3 py-1.5 text-sm font-medium text-(--text-primary) hover:bg-(--link-hover-bg)"
-		>
+		<Button type="button" onClick={onClick} size="md">
 			<span className="hidden min-[713px]:inline">About this Leaderboard</span>
 			<span className="min-[713px]:hidden">About</span>
 			<ArrowRightIcon />
-		</button>
+		</Button>
 	)
 }
 
@@ -56,14 +51,14 @@ export function SectionHeader({
 	action?: ReactNode
 }) {
 	return (
-		<div className="rounded-md bg-(--cards-bg) p-4">
+		<Card border="subtle">
 			<div className="hidden min-[1120px]:flex min-[1120px]:items-end min-[1120px]:justify-between min-[1120px]:gap-4">
 				<div className="flex flex-col gap-1">
 					<div className="flex items-center gap-2">
-						<h1 className="text-xl font-semibold">{title}</h1>
+						<h1 className="heading-sm">{title}</h1>
 						<TimeframeBadge label={badge} />
 					</div>
-					<p className="max-w-[660px] text-sm text-(--text-secondary)">{description}</p>
+					<p className="max-w-[660px] body-sm text-secondary">{description}</p>
 				</div>
 				{action}
 			</div>
@@ -73,10 +68,10 @@ export function SectionHeader({
 					{action}
 				</div>
 				<div className="flex flex-col gap-1">
-					<h1 className="text-xl font-semibold">{title}</h1>
-					<p className="max-w-[660px] text-sm text-(--text-secondary)">{description}</p>
+					<h1 className="heading-sm">{title}</h1>
+					<p className="max-w-[660px] body-sm text-secondary">{description}</p>
 				</div>
 			</div>
-		</div>
+		</Card>
 	)
 }

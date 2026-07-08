@@ -6,6 +6,7 @@ import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
 import { Icon } from '~/components/Icon'
 import { TagGroup } from '~/components/TagGroup'
 import { useIsClient } from '~/hooks/useIsClient'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { FAQ } from './Faq'
 import type { PricePoint } from './hooks'
@@ -48,22 +49,17 @@ export function CoinsPicker({ coinsData, selectCoin, dialogStore, selectedCoins 
 		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog className="dialog gap-3 sm:max-w-[400px]" unmountOnHide>
 				<div className="flex items-center gap-2">
-					<Ariakit.DialogHeading className="text-base font-semibold">Add Token</Ariakit.DialogHeading>
+					<Ariakit.DialogHeading className="heading-xs">Add Token</Ariakit.DialogHeading>
 					<Ariakit.DialogDismiss className="-my-2 ml-auto rounded-lg p-2 text-(--text-tertiary) hover:bg-(--divider) hover:text-(--text-primary)">
 						<Icon name="x" height={20} width={20} />
 					</Ariakit.DialogDismiss>
 				</div>
 				<div className="relative">
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
-					<input
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+					<Input
 						onInput={(e) => setSearch(e.currentTarget.value)}
 						placeholder="Search token..."
-						className="min-h-8 w-full rounded-md border-(--bg-input) bg-(--bg-input) p-1.5 pl-7 text-base text-black outline-hidden placeholder:text-[#666] dark:text-white dark:placeholder:text-[#919296]"
+						className={searchFieldInputPlacementStyles}
 					/>
 				</div>
 
@@ -342,7 +338,7 @@ export default function Correlations({ coinsData }: CorrelationsProps) {
 	return (
 		<>
 			<div className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-				<h1 className="text-xl font-semibold">Correlations Matrix</h1>
+				<h1 className="heading-sm">Correlations Matrix</h1>
 				<TagGroup selectedValue={period} setValue={setPeriod} values={PERIODS} className="ml-auto" />
 			</div>
 

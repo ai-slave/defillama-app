@@ -13,9 +13,13 @@ import type {
 import { LoadingDots } from '~/components/Loaders'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { Select } from '~/components/Select/Select'
+import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { Tooltip } from '~/components/Tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { Card } from '~/ui/Card'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
 import { pushShallowQuery, toQueryString } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview, RWAAssetChartTarget } from './api.types'
@@ -461,11 +465,11 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	)
 
 	const chartTypeSwitch = (
-		<div className="mr-auto flex flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-xs font-medium text-(--text-form)">
+		<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
 			{chartMetricOptions.map(({ key, label }) => (
 				<button
 					key={`pie-chart-type-${key}`}
-					className="shrink-0 px-2 py-1 text-sm whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:font-medium data-[active=true]:text-(--link-text)"
+					className={chartSegmentedControlButtonStyles}
 					data-active={chartTypeKey === key}
 					onClick={() => {
 						void pushShallowQuery(router, { chartType: getChartMetricQueryValue(key) })
@@ -488,6 +492,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			label={chartViewOptions.find(({ key }) => key === chartView)?.name ?? chartViewOptions[0].name}
 			labelType="none"
 			variant="filter"
+			size="md"
 		/>
 	)
 	const chartBreakdownOptions = getChartBreakdownOptions(chartState)
@@ -518,6 +523,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			label={chartBreakdownLabel}
 			labelType="none"
 			variant="filter"
+			size="md"
 		/>
 	)
 
@@ -543,6 +549,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			label={chartBreakdownLabel}
 			labelType="none"
 			variant="filter"
+			size="md"
 		/>
 	)
 	const treemapNestedByLabel = getTreemapNestedByLabel(treemapNestedBy)
@@ -558,6 +565,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			label={`Nested by: ${treemapNestedByLabel}`}
 			labelType="none"
 			variant="filter"
+			size="md"
 		/>
 	)
 
@@ -663,59 +671,59 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 				}}
 			/>
 			<div className="flex flex-col gap-2 md:flex-row md:items-center">
-				<p className="flex flex-1 flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
+				<Card border="subtle" padding="sm" className="flex flex-1 flex-col gap-1">
 					<Tooltip
 						content={definitions.totalActiveMcap.description}
 						className="text-(--text-label) underline decoration-dotted"
 					>
 						{definitions.totalActiveMcap.label}
 					</Tooltip>
-					<span className="font-jetbrains text-2xl font-medium">{formattedNum(totalActiveMcap, true)}</span>
-				</p>
-				<p className="flex flex-1 flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
+					<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalActiveMcap, true)}</span>
+				</Card>
+				<Card border="subtle" padding="sm" className="flex flex-1 flex-col gap-1">
 					<Tooltip
 						content={definitions.totalOnChainMcap.description}
 						className="text-(--text-label) underline decoration-dotted"
 					>
 						{definitions.totalOnChainMcap.label}
 					</Tooltip>
-					<span className="font-jetbrains text-2xl font-medium">{formattedNum(totalOnChainMcap, true)}</span>
-				</p>
-				<p className="flex flex-1 flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
+					<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalOnChainMcap, true)}</span>
+				</Card>
+				<Card border="subtle" padding="sm" className="flex flex-1 flex-col gap-1">
 					<Tooltip
 						content={definitions.totalDefiActiveTvl.description}
 						className="text-(--text-label) underline decoration-dotted"
 					>
 						{definitions.totalDefiActiveTvl.label}
 					</Tooltip>
-					<span className="font-jetbrains text-2xl font-medium">{formattedNum(totalOnChainDeFiActiveTvl, true)}</span>
-				</p>
+					<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalOnChainDeFiActiveTvl, true)}</span>
+				</Card>
 				{includeRwaPerps ? (
-					<p className="flex flex-1 flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
+					<Card border="subtle" padding="sm" className="flex flex-1 flex-col gap-1">
 						<Tooltip
 							content={perpsDefinitions.totalOpenInterest.description}
 							className="text-(--text-label) underline decoration-dotted"
 						>
 							RWA Perps OI
 						</Tooltip>
-						<span className="font-jetbrains text-2xl font-medium">{formattedNum(totalOpenInterest, true)}</span>
-					</p>
+						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalOpenInterest, true)}</span>
+					</Card>
 				) : null}
-				<p className="flex flex-1 flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
+				<Card border="subtle" padding="sm" className="flex flex-1 flex-col gap-1">
 					<Tooltip
 						content={definitions.totalAssetIssuers.description}
 						className="text-(--text-label) underline decoration-dotted"
 					>
 						{definitions.totalAssetIssuers.label}
 					</Tooltip>
-					<span className="font-jetbrains text-2xl font-medium">{formattedNum(totalIssuersCount, false)}</span>
-				</p>
+					<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalIssuersCount, false)}</span>
+				</Card>
 			</div>
 			{showCharts ? (
 				<>
 					{chartView === 'timeSeries' ? (
-						<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-							<div className="flex flex-wrap items-center justify-end gap-2 p-3">
+						<Panel>
+							<ChartPanelToolbar className="justify-end">
 								{chartTypeSwitch}
 								{chartViewSwitch}
 								{timeSeriesChartBreakdownSwitch}
@@ -725,11 +733,17 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 									filename={timeSeriesChartFilename}
 									title={exportChartTitle}
 								/>
-							</div>
+							</ChartPanelToolbar>
 							{chartError ? (
-								<p className="flex min-h-[360px] items-center justify-center text-xs text-(--error)">{chartError}</p>
+								<p role="alert" className="flex min-h-[360px] items-center justify-center body-sm text-data-down">
+									{chartError}
+								</p>
 							) : isChartLoading ? (
-								<p className="flex min-h-[360px] items-center justify-center gap-1">
+								<p
+									role="status"
+									aria-live="polite"
+									className="flex min-h-[360px] items-center justify-center gap-1 body-sm text-tertiary"
+								>
 									Loading
 									<LoadingDots />
 								</p>
@@ -744,15 +758,11 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 									/>
 								</Suspense>
 							)}
-						</div>
+						</Panel>
 					) : null}
 					{chartView === 'pie' || chartView === 'treemap' || chartView === 'hbar' ? (
-						<div
-							className={`flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) ${
-								chartView === 'treemap' ? 'min-h-[652px]' : 'min-h-[412px]'
-							}`}
-						>
-							<div className="flex flex-wrap items-center justify-end gap-2 p-3 pb-0">
+						<Panel className={chartView === 'treemap' ? 'min-h-[660px]' : 'min-h-[420px]'}>
+							<ChartPanelToolbar className="justify-end">
 								{chartTypeSwitch}
 								{chartViewSwitch}
 								{pieChartBreakdownSwitch}
@@ -767,7 +777,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 									filename={nonTimeSeriesChartFilename}
 									title={exportChartTitle}
 								/>
-							</div>
+							</ChartPanelToolbar>
 							<Suspense fallback={<div className={chartView === 'treemap' ? 'min-h-[600px]' : 'min-h-[360px]'} />}>
 								{chartView === 'pie' ? (
 									<PieChart
@@ -796,7 +806,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 									/>
 								)}
 							</Suspense>
-						</div>
+						</Panel>
 					) : null}
 				</>
 			) : null}

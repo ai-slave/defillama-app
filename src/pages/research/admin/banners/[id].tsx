@@ -30,7 +30,7 @@ function EditBannerInner({ id }: { id: string }) {
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load banner'
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-red-500/30 bg-red-500/5 p-6">
-				<h1 className="text-xl font-semibold text-(--text-primary)">Couldn't load banner</h1>
+				<h1 className="heading-sm text-(--text-primary)">Couldn't load banner</h1>
 				<p className="text-sm text-(--text-secondary)">{message}</p>
 				<Link href="/research/admin/banners" className="text-sm text-(--link-text) hover:underline">
 					Back to banners

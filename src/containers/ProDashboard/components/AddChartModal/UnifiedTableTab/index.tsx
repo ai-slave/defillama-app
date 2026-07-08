@@ -9,6 +9,7 @@ import { setSignupSource } from '~/containers/Subscription/signupSource'
 const SubscribeProModal = lazy(() =>
 	import('~/components/SubscribeCards/SubscribeProCard').then((m) => ({ default: m.SubscribeProModal }))
 )
+import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import type { IEquitiesCompanyApiItem } from '~/containers/Equities/api.types'
 import { buildEquityTickerCountrySlug } from '~/containers/Equities/utils'
 import { UNIFIED_TABLE_COLUMN_DICTIONARY } from '~/containers/ProDashboard/components/UnifiedTable/config/ColumnDictionary'
@@ -16,13 +17,7 @@ import {
 	UNIFIED_TABLE_PRESETS,
 	UNIFIED_TABLE_PRESETS_BY_ID
 } from '~/containers/ProDashboard/components/UnifiedTable/config/PresetRegistry'
-import type {
-	CexAnalyticsMetric,
-	CexAnalyticsView,
-	TableFilters,
-	UnifiedRowHeaderType,
-	UnifiedTableConfig
-} from '~/containers/ProDashboard/types'
+import type { TableFilters, UnifiedRowHeaderType, UnifiedTableConfig } from '~/containers/ProDashboard/types'
 import { useProDashboardEditorActions } from '../../../ProDashboardAPIContext'
 import { ProxyAuthTokenContext } from '../../../queries'
 import { fetchEquitiesCompaniesViaProxy } from '../../../services/fetchViaProxy'

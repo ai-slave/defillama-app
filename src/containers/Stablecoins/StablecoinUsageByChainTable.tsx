@@ -19,6 +19,9 @@ import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { useGroupBridgeData } from '~/containers/Stablecoins/hooks'
+import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 
 type StablecoinByChainRow = ReturnType<typeof useGroupBridgeData>[number]
@@ -70,7 +73,7 @@ const stablecoinsByChainColumns = [
 							<TokenLogo name={row.original.name} kind="chain" data-lgonly alt={`Logo of ${row.original.name}`} />
 							<BasicLink
 								href={`/stablecoins/${row.original.name}`}
-								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text)"
+								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link"
 							>
 								{getValue()}
 							</BasicLink>
@@ -92,7 +95,7 @@ const stablecoinsByChainColumns = [
 			return (
 				<>
 					{value.link ? (
-						<BasicLink href={value.link} className="text-sm font-medium text-(--link-text)">
+						<BasicLink href={value.link} className="text-sm font-medium text-link">
 							{value.name}
 						</BasicLink>
 					) : (
@@ -189,25 +192,20 @@ export function StablecoinByChainUsageTable({ data }: { data: StablecoinByChainR
 	})
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex items-center justify-between p-3">
-				<h3 className="text-base font-semibold">Stablecoins Usage by Chain</h3>
-				<label className="relative ml-auto w-full sm:max-w-[280px]">
+		<Panel>
+			<TableToolbar className="items-center justify-between">
+				<h3 className="label-md">Stablecoins Usage by Chain</h3>
+				<label className={`${searchFieldInlineWrapperStyles} ml-auto`}>
 					<span className="sr-only">Search</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search..."
-						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+						className={searchFieldInputStyles}
 					/>
 				</label>
-			</div>
+			</TableToolbar>
 			<VirtualTable instance={instance} />
-		</div>
+		</Panel>
 	)
 }

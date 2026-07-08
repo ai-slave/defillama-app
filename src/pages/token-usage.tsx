@@ -13,7 +13,6 @@ import { Announcement } from '~/components/Announcement'
 import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
 import { ChartRestoreButton } from '~/components/ButtonStyled/ChartRestoreButton'
 import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
-import { Checkbox } from '~/components/Checkbox'
 import type { ITreemapChartProps } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
@@ -29,6 +28,12 @@ import { buildTokenUsageTreemapTreeData } from '~/containers/TokenUsage/treemap'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import Layout from '~/layout'
+import { Checkbox } from '~/ui/Checkbox'
+import { searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { popoverRowWithBorderStyles, popoverSurfaceStyles } from '~/ui/Popover'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { ChartPanelToolbar, chartPanelToolbarActionsStyles } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
@@ -115,109 +120,99 @@ export default function Tokens() {
 
 			<Search />
 
-			<div className="flex w-full flex-1 flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				{isLoading || !router.isReady ? (
-					<div className="mx-auto flex min-h-[380px] w-full flex-1 items-center justify-center">
-						<LocalLoader />
-					</div>
-				) : error ? (
-					<div className="mx-auto flex min-h-[380px] w-full flex-1 items-center justify-center">
-						<p className="text-center text-sm">{error.message}</p>
-					</div>
-				) : !tokenSymbol ? (
-					<div className="mx-auto flex min-h-[380px] w-full flex-1 items-center justify-center">
-						<p className="text-center text-sm">No token selected</p>
-					</div>
-				) : !isAuthenticated || !hasActiveSubscription ? (
-					<div className="mx-auto flex min-h-[380px] w-full flex-1 items-center justify-center">
-						{!isAuthenticated ? (
-							<p className="text-center text-sm">
-								An{' '}
-								<button onClick={signInDialogStore.show} className="underline">
-									active subscription
-								</button>{' '}
-								is required to view token usage.
-							</p>
-						) : (
-							<p className="text-center text-sm">
-								An{' '}
-								<BasicLink href="/subscription" className="underline">
-									active subscription
-								</BasicLink>{' '}
-								is required to view token usage.
-							</p>
-						)}
-					</div>
-				) : !protocols || protocols.length === 0 ? (
-					<div className="mx-auto flex min-h-[380px] w-full flex-1 items-center justify-center">
-						<p className="text-center text-sm">No protocols found</p>
-					</div>
-				) : (
-					<>
-						<div className="flex flex-wrap items-center justify-between gap-2 p-3">
-							<div className="flex w-full grow text-lg font-semibold sm:w-auto">{`${tokenSymbol.toUpperCase()} usage in protocols`}</div>
+			{isLoading || !router.isReady ? (
+				<PanelLoadingStatus className="min-h-[380px]">
+					<LocalLoader />
+				</PanelLoadingStatus>
+			) : error ? (
+				<PanelStatus variant="error" className="min-h-[380px]">
+					{error.message}
+				</PanelStatus>
+			) : !tokenSymbol ? (
+				<PanelStatus className="min-h-[380px]">No token selected</PanelStatus>
+			) : !isAuthenticated || !hasActiveSubscription ? (
+				<PanelStatus className="min-h-[380px]">
+					{!isAuthenticated ? (
+						<>
+							An{' '}
+							<button type="button" onClick={signInDialogStore.show} className="underline">
+								active subscription
+							</button>{' '}
+							is required to view token usage.
+						</>
+					) : (
+						<>
+							An{' '}
+							<BasicLink href="/subscription" className="underline">
+								active subscription
+							</BasicLink>{' '}
+							is required to view token usage.
+						</>
+					)}
+				</PanelStatus>
+			) : !protocols || protocols.length === 0 ? (
+				<PanelStatus className="min-h-[380px]">No protocols found</PanelStatus>
+			) : (
+				<Panel className="w-full flex-1">
+					<ChartPanelToolbar className="items-center justify-between">
+						<h2 className="mr-auto flex w-full grow heading-xs sm:w-auto">{`${tokenSymbol.toUpperCase()} usage in protocols`}</h2>
 
-							<div className="flex items-center gap-2 max-sm:w-full">
-								<Checkbox
-									variant="filter"
-									value="includeCentraliseExchanges"
-									checked={includeCentraliseExchanges}
-									onChange={() => {
-										void pushShallowQuery(router, {
-											includecex: !includeCentraliseExchanges ? 'true' : undefined
-										})
-									}}
-								>
-									Include CEXs
-								</Checkbox>
-								{treemapTreeData.length > 0 ? (
-									<>
-										<ChartRestoreButton chartInstance={treemapChartInstance} />
-										<ChartPngExportButton
-											chartInstance={treemapChartInstance}
-											filename={tokenUsageExportFilename}
-											title={tokenUsageExportTitle}
-										/>
-									</>
-								) : null}
-								<CSVDownloadButton
-									prepareCsv={() =>
-										prepareTableCsv({
-											instance: tableInstance,
-											filename: `protocols-by-token-${tokenSymbol}`
-										})
-									}
-									smol
-								/>
-							</div>
+						<div className={`${chartPanelToolbarActionsStyles} max-sm:w-full`}>
+							<Checkbox
+								variant="filter"
+								value="includeCentraliseExchanges"
+								checked={includeCentraliseExchanges}
+								onChange={() => {
+									void pushShallowQuery(router, {
+										includecex: !includeCentraliseExchanges ? 'true' : undefined
+									})
+								}}
+							>
+								Include CEXs
+							</Checkbox>
+							{treemapTreeData.length > 0 ? (
+								<>
+									<ChartRestoreButton chartInstance={treemapChartInstance} />
+									<ChartPngExportButton
+										chartInstance={treemapChartInstance}
+										filename={tokenUsageExportFilename}
+										title={tokenUsageExportTitle}
+									/>
+								</>
+							) : null}
+							<CSVDownloadButton
+								prepareCsv={() =>
+									prepareTableCsv({
+										instance: tableInstance,
+										filename: `protocols-by-token-${tokenSymbol}`
+									})
+								}
+								smol
+								size="md"
+							/>
 						</div>
+					</ChartPanelToolbar>
 
-						{treemapTreeData.length > 0 ? (
-							<Suspense fallback={<div style={{ height: '480px' }} />}>
-								<TreemapChart
-									treeData={treemapTreeData}
-									variant="rwa"
-									height="480px"
-									valueLabel="Amount"
-									valueSymbol="$"
-									onReady={handleTreemapChartReady}
-								/>
-							</Suspense>
-						) : null}
-
-						<Suspense
-							fallback={
-								<div
-									style={{ minHeight: `${filteredProtocols.length * 50 + 200}px` }}
-									className="rounded-md border border-(--cards-border) bg-(--cards-bg)"
-								/>
-							}
-						>
-							<VirtualTable instance={tableInstance} />
+					{treemapTreeData.length > 0 ? (
+						<Suspense fallback={<div style={{ height: '480px' }} />}>
+							<TreemapChart
+								treeData={treemapTreeData}
+								variant="rwa"
+								height="480px"
+								valueLabel="Amount"
+								valueSymbol="$"
+								onReady={handleTreemapChartReady}
+							/>
 						</Suspense>
-					</>
-				)}
-			</div>
+					) : null}
+
+					<Suspense
+						fallback={<div style={{ minHeight: `${filteredProtocols.length * 50 + 200}px` }} className="bg-surface" />}
+					>
+						<VirtualTable instance={tableInstance} />
+					</Suspense>
+				</Panel>
+			)}
 			<SignInModal store={signInDialogStore} hideWhenAuthenticated={false} />
 		</Layout>
 	)
@@ -328,11 +323,7 @@ const Search = () => {
 					)}
 				</button>
 
-				<Ariakit.Combobox
-					placeholder="Search tokens..."
-					autoSelect
-					className="min-h-8 w-full rounded-md border border-(--cards-border) bg-(--app-bg) px-2 py-1 pl-7 text-black dark:text-white"
-				/>
+				<Ariakit.Combobox placeholder="Search tokens..." autoSelect className={searchFieldInputStyles} />
 			</span>
 
 			<Ariakit.ComboboxPopover
@@ -340,14 +331,14 @@ const Search = () => {
 				hideOnInteractOutside
 				gutter={6}
 				sameWidth
-				className="z-10 flex thin-scrollbar max-h-(--popover-available-height) flex-col overflow-auto overscroll-contain rounded-b-md border border-t-0 border-(--cards-border) bg-(--cards-bg) max-sm:h-[calc(100dvh-80px)]"
+				className={popoverSurfaceStyles}
 			>
 				{isLoading ? (
-					<p className="px-3 py-6 text-center text-(--text-primary)">Loading...</p>
+					<p className="px-3 py-6 text-center body-sm text-primary">Loading...</p>
 				) : error ? (
-					<p className="px-3 py-6 text-center text-(--text-primary)">{`Error: ${error.message}`}</p>
+					<p className="px-3 py-6 text-center body-sm text-primary">{`Error: ${error.message}`}</p>
 				) : !data?.length ? (
-					<p className="px-3 py-6 text-center text-(--text-primary)">No results found</p>
+					<p className="px-3 py-6 text-center body-sm text-primary">No results found</p>
 				) : (
 					<Ariakit.ComboboxList ref={comboboxRef}>
 						{data.map((tokenResult) => (
@@ -362,7 +353,7 @@ const Search = () => {
 								focusOnHover
 								hideOnClick={false}
 								setValueOnClick={true}
-								className="flex cursor-pointer items-center gap-4 px-3 py-2 text-base text-(--text-primary) outline-hidden hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) aria-disabled:opacity-50 data-active-item:bg-(--primary-hover)"
+								className={`${popoverRowWithBorderStyles} justify-start gap-4 aria-disabled:opacity-50`}
 							>
 								{tokenResult?.logo ? (
 									<TokenLogo src={tokenResult?.logo} alt={`Logo of ${tokenResult?.name ?? ''}`} />

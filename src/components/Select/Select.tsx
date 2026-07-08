@@ -4,10 +4,27 @@ import * as React from 'react'
 import { Icon } from '~/components/Icon'
 import { NestedMenu, NestedMenuItem } from '~/components/NestedMenu'
 import { Tooltip } from '~/components/Tooltip'
+import {
+	legacyPopoverActionButtonStyles,
+	legacyPopoverActionBarStyles,
+	legacyPopoverSeeMoreStyles,
+	legacyPopoverSelectCheckStyles,
+	legacySelectPopoverRowStyles,
+	legacySelectPopoverSurfaceStyles,
+	popoverActionBarStyles,
+	popoverActionButtonStyles,
+	popoverMultiSelectCheckStyles,
+	popoverRowWithBorderStyles,
+	popoverSeeMoreStyles,
+	popoverSingleSelectCheckStyles,
+	popoverSurfaceStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName
+} from '~/ui/Popover'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 import { updateQueryFromSelected } from './query'
-import type { ExcludeQueryKey, SelectValues, SelectTriggerVariant } from './types'
-import { SELECT_TRIGGER_VARIANTS } from './types'
+import type { ExcludeQueryKey, SelectValues, SelectTriggerSize, SelectTriggerVariant } from './types'
+import { selectTriggerStyles } from './types'
 
 interface ISelectBase {
 	allValues: SelectValues
@@ -16,11 +33,13 @@ interface ISelectBase {
 	nestedMenu?: boolean
 	labelType?: 'regular' | 'smol' | 'none'
 	variant?: SelectTriggerVariant
+	size?: SelectTriggerSize
 	triggerProps?: Ariakit.SelectProps
 	portal?: boolean
 	placement?: Ariakit.SelectProviderProps['placement']
 	defaultSelectedValues?: string[]
 	unmountOnHide?: boolean
+	popoverVariant?: 'default' | 'legacy'
 }
 
 interface ISelectWithUrlParams extends ISelectBase {
@@ -62,10 +81,12 @@ export function Select(props: ISelect) {
 		nestedMenu,
 		labelType = 'regular',
 		variant,
+		size,
 		triggerProps,
 		portal,
 		placement = 'bottom-start',
-		unmountOnHide = true
+		unmountOnHide = true,
+		popoverVariant = 'default'
 	} = props
 	const router = useRouter()
 	const labelText = typeof label === 'string' ? label : typeof label === 'number' ? String(label) : 'Select'
@@ -171,9 +192,40 @@ export function Select(props: ISelect) {
 	const canSelectOnlyOne = typeof selectedValues === 'string'
 	const showCheckboxes = !canSelectOnlyOne
 	const selectedCount = canSelectOnlyOne ? (selectedValues ? 1 : 0) : selectedValues.length
+	const isOptionSelected = React.useCallback(
+		(value: string) => (Array.isArray(selectedValues) ? selectedValues.includes(value) : selectedValues === value),
+		[selectedValues]
+	)
+	const useLegacyPopover = popoverVariant === 'legacy' || variant === 'pro'
+	const actionBarStyles = useLegacyPopover ? legacyPopoverActionBarStyles : popoverActionBarStyles
+	const actionButtonStyles = useLegacyPopover ? legacyPopoverActionButtonStyles : popoverActionButtonStyles
+	const rowStyles = useLegacyPopover ? legacySelectPopoverRowStyles : popoverRowWithBorderStyles
+	const seeMoreStyles = useLegacyPopover ? legacyPopoverSeeMoreStyles : popoverSeeMoreStyles
+	const surfaceStyles = useLegacyPopover ? legacySelectPopoverSurfaceStyles : popoverSurfaceStyles
 
 	const selectRef = React.useRef<HTMLDivElement>(null)
 	const nestedMenuRef = React.useRef<HTMLDivElement>(null)
+
+	const renderCheck = (value: string) => {
+		if (useLegacyPopover) {
+			return showCheckboxes ? (
+				<Ariakit.SelectItemCheck className={legacyPopoverSelectCheckStyles} />
+			) : (
+				<Ariakit.SelectItemCheck className="ml-auto" />
+			)
+		}
+
+		const selected = isOptionSelected(value)
+		return showCheckboxes ? (
+			<span className={popoverMultiSelectCheckStyles(selected)} aria-hidden>
+				{selected ? <Icon name="check" className="size-3" /> : null}
+			</span>
+		) : (
+			<span className={popoverSingleSelectCheckStyles(selected)} aria-hidden>
+				{selected ? <Icon name="check" className="size-3" /> : null}
+			</span>
+		)
+	}
 
 	const handleSeeMore = (e: React.MouseEvent<HTMLDivElement>) => {
 		e.preventDefault()
@@ -192,14 +244,18 @@ export function Select(props: ISelect) {
 					setSelectedValues(values)
 				}}
 			>
-				<NestedMenu label={label} render={<button type="button" />}>
+				<NestedMenu
+					label={label}
+					render={<button type="button" />}
+					popoverVariant={useLegacyPopover ? 'legacy' : popoverVariant}
+				>
 					<div ref={nestedMenuRef}>
 						{showCheckboxes ? (
-							<span className="sticky top-0 z-1 flex flex-wrap justify-between gap-1 border-b border-(--form-control-border) bg-(--bg-main) text-xs text-(--link)">
-								<button onClick={clearAll} className="p-3">
+							<span className={actionBarStyles}>
+								<button onClick={clearAll} className={actionButtonStyles}>
 									Deselect All
 								</button>
-								<button onClick={toggleAll} className="p-3">
+								<button onClick={toggleAll} className={actionButtonStyles}>
 									Select All
 								</button>
 							</span>
@@ -224,7 +280,7 @@ export function Select(props: ISelect) {
 									/>
 								}
 								hideOnClick={false}
-								className="flex shrink-0 cursor-pointer items-center justify-start gap-4 border-b border-(--form-control-border) px-3 py-2 cv-auto-37 last-of-type:rounded-b-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)"
+								className={rowStyles}
 							>
 								{typeof option === 'string' ? (
 									<span>{option}</span>
@@ -236,11 +292,7 @@ export function Select(props: ISelect) {
 								) : (
 									<span>{isSelectOption(option) ? option.name : option}</span>
 								)}
-								{showCheckboxes ? (
-									<Ariakit.SelectItemCheck className="ml-auto flex size-3 shrink-0 items-center justify-center rounded-xs border border-[#28a2b5]" />
-								) : (
-									<Ariakit.SelectItemCheck className="ml-auto" />
-								)}
+								{renderCheck(getOptionKey(option))}
 							</NestedMenuItem>
 						))}
 						{allValues.length > viewableMatches ? (
@@ -248,7 +300,7 @@ export function Select(props: ISelect) {
 								value="__see_more__"
 								setValueOnClick={false}
 								hideOnClick={false}
-								className="w-full cursor-pointer px-3 py-4 text-(--link) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-active-item:bg-(--link-hover-bg)"
+								className={seeMoreStyles}
 								onClick={handleSeeMore}
 							>
 								See more...
@@ -269,13 +321,13 @@ export function Select(props: ISelect) {
 			placement={placement}
 		>
 			<Ariakit.Select
-				className={SELECT_TRIGGER_VARIANTS[variant ?? 'default']}
+				className={selectTriggerStyles(variant, size)}
 				aria-label={`${labelText} dropdown`}
 				{...triggerProps}
 			>
 				{labelType === 'smol' ? (
 					<span className="flex items-center gap-1">
-						<span className="flex min-w-4 items-center justify-center rounded-full border border-(--form-control-border) px-1 py-0.25 text-[10px] leading-none">
+						<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 text-[10px] leading-none">
 							{selectedCount}
 						</span>
 						<span>{label}</span>
@@ -283,7 +335,7 @@ export function Select(props: ISelect) {
 				) : labelType === 'regular' && selectedCount > 0 ? (
 					<>
 						<span>{label}: </span>
-						<span className="text-(--link)">
+						<span className={useLegacyPopover ? 'text-(--link)' : 'text-link'}>
 							{canSelectOnlyOne
 								? selectedValues
 								: selectedValues.length > 2
@@ -300,25 +352,23 @@ export function Select(props: ISelect) {
 				unmountOnHide={unmountOnHide}
 				hideOnInteractOutside
 				gutter={6}
-				wrapperProps={{
-					className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
-				}}
-				className="z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,60dvh)] lg:max-h-(--popover-available-height) dark:border-[hsl(204,3%,32%)]"
+				wrapperProps={{ className: popoverMobileWrapperClassName }}
+				className={surfaceStyles}
 				portal={portal || false}
 				ref={selectRef}
 			>
-				<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
+				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 					<Icon name="x" className="size-5" />
 				</Ariakit.PopoverDismiss>
 
 				{allValues.length > 0 ? (
 					<>
 						{showCheckboxes ? (
-							<span className="sticky top-0 z-1 flex flex-wrap justify-between gap-1 border-b border-(--form-control-border) bg-(--bg-main) text-xs text-(--link)">
-								<button onClick={clearAll} className="p-3">
+							<span className={actionBarStyles}>
+								<button onClick={clearAll} className={actionButtonStyles}>
 									Deselect All
 								</button>
-								<button onClick={toggleAll} className="p-3">
+								<button onClick={toggleAll} className={actionButtonStyles}>
 									Select All
 								</button>
 							</span>
@@ -339,7 +389,7 @@ export function Select(props: ISelect) {
 											}
 										: undefined
 								}
-								className="group flex shrink-0 cursor-pointer items-center justify-start gap-4 border-b border-(--form-control-border) px-3 py-2 cv-auto-37 last-of-type:rounded-b-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)"
+								className={`${rowStyles} group justify-start ${useLegacyPopover ? 'gap-4' : 'gap-2'}`}
 							>
 								{typeof option === 'string' ? (
 									<span>{option}</span>
@@ -358,16 +408,12 @@ export function Select(props: ISelect) {
 											e.stopPropagation()
 											selectOnlyOne(getOptionKey(option))
 										}}
-										className="invisible text-xs font-medium text-(--link) underline group-hover:visible group-focus-visible:visible"
+										className="invisible body-xs text-link underline group-hover:visible group-focus-visible:visible"
 									>
 										Only
 									</button>
 								) : null}
-								{canSelectOnlyOne ? (
-									<Ariakit.SelectItemCheck className="ml-auto" />
-								) : (
-									<Ariakit.SelectItemCheck className="ml-auto flex size-3 shrink-0 items-center justify-center rounded-xs border border-[#28a2b5]" />
-								)}
+								{renderCheck(getOptionKey(option))}
 							</Ariakit.SelectItem>
 						))}
 						{allValues.length > viewableMatches ? (
@@ -375,7 +421,7 @@ export function Select(props: ISelect) {
 								value="__see_more__"
 								setValueOnClick={false}
 								hideOnClick={false}
-								className="w-full cursor-pointer px-3 py-4 text-(--link) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-active-item:bg-(--link-hover-bg)"
+								className={seeMoreStyles}
 								onClick={handleSeeMore}
 							>
 								See more...
@@ -383,7 +429,7 @@ export function Select(props: ISelect) {
 						) : null}
 					</>
 				) : (
-					<p className="px-3 py-6 text-center text-(--text-primary)">No results found</p>
+					<p className="px-3 py-6 text-center body-sm text-primary">No results found</p>
 				)}
 			</Ariakit.SelectPopover>
 		</Ariakit.SelectProvider>

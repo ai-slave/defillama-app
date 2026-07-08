@@ -31,8 +31,8 @@ export const ResearchReportHighlight: React.FC<ResearchReportHighlightProps> = (
 			<div className="pb-[15px] lg:pb-[26px]">
 				<TitleLine title="Report highlight" />
 			</div>
-			<div className="grid grow grid-cols-1 gap-[32px] lg:grid-cols-[397fr_719fr] lg:gap-[48px]">
-				<div className="flex flex-col gap-[24px]">
+			<div className="grid grow grid-cols-1 gap-8 lg:grid-cols-[397fr_719fr] lg:gap-12">
+				<div className="flex flex-col gap-6">
 					{sponsorLogoUrl ? (
 						<div className="space-y-2">
 							<div className="text-[9px] tracking-[0.18em] text-[#1D1D1D]/60 uppercase dark:text-white/60">
@@ -64,7 +64,7 @@ export const ResearchReportHighlight: React.FC<ResearchReportHighlightProps> = (
 						className="thin-scrollbar max-h-[270px] flex-1 overflow-y-auto lg:min-h-[var(--min-height)]"
 						style={sharedHeight ? ({ '--min-height': `${sharedHeight}px` } as CSSProperties) : undefined}
 					>
-						<div className="flex flex-col justify-between gap-[24px]">
+						<div className="flex flex-col justify-between gap-6">
 							{excerpt ? (
 								<div className="text-[14px] leading-[150%] text-[#1D1D1D]/90 dark:text-white">
 									<p className="mb-2 whitespace-break-spaces last:mb-0">{excerpt}</p>
@@ -73,7 +73,7 @@ export const ResearchReportHighlight: React.FC<ResearchReportHighlightProps> = (
 						</div>
 					</div>
 
-					<div className="mt-auto flex items-center justify-end gap-4 pt-[8px]">
+					<div className="mt-auto flex items-center justify-end gap-4 pt-2">
 						{pdfUrl ? (
 							<DownloadPdfLink
 								article={highlight}

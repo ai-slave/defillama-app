@@ -7,7 +7,7 @@ export default function PrivacyPolicy() {
 			description="DefiLlama privacy policy covering data collection, usage, and your rights."
 			canonicalUrl="/privacy-policy"
 		>
-			<div className="mx-auto mb-[64px] flex w-full max-w-3xl flex-col gap-8 text-[#d5d5d5]">
+			<div className="mx-auto mb-16 flex w-full max-w-3xl flex-col gap-8 text-[#d5d5d5]">
 				<h1 className="text-center text-3xl font-bold text-white">Privacy Policy</h1>
 				<p>
 					This Privacy Policy explains how information about you is collected, used, and disclosed by DefiLlama. This
@@ -25,7 +25,7 @@ export default function PrivacyPolicy() {
 				</p>
 
 				<div className="flex flex-col gap-3">
-					<h2 className="text-xl font-semibold text-white">1. Collection of Information.</h2>
+					<h2 className="heading-sm text-white">1. Collection of Information.</h2>
 					<p>
 						<span className="font-medium text-white">1.1</span> Information You Provide to Us. We collect information
 						you provide directly to us. The types of information we may collect include your digital asset wallet
@@ -70,7 +70,7 @@ export default function PrivacyPolicy() {
 				</div>
 
 				<div className="flex flex-col gap-3">
-					<h2 className="text-xl font-semibold text-white">2. Use of Information.</h2>
+					<h2 className="heading-sm text-white">2. Use of Information.</h2>
 					<div>
 						<p>
 							<span className="font-medium text-white">2.1</span> We may use information about you for various purposes,
@@ -99,7 +99,7 @@ export default function PrivacyPolicy() {
 				</div>
 
 				<div className="flex flex-col gap-3">
-					<h2 className="text-xl font-semibold text-white">3. Sharing of Information.</h2>
+					<h2 className="heading-sm text-white">3. Sharing of Information.</h2>
 					<div>
 						<p>
 							<span className="font-medium text-white">3.1</span> We may use share information about you as follows or
@@ -136,7 +136,7 @@ export default function PrivacyPolicy() {
 				</div>
 
 				<div className="flex flex-col gap-3">
-					<h2 className="text-xl font-semibold text-white">4. Security</h2>
+					<h2 className="heading-sm text-white">4. Security</h2>
 					<p>
 						<span className="font-medium text-white">4.1</span> Security procedures are in place to protect the
 						confidentiality of your data. We use encryption to protect your information in transit (e.g., HTTPS/TLS) and
@@ -146,7 +146,7 @@ export default function PrivacyPolicy() {
 				</div>
 
 				<div className="flex flex-col gap-3">
-					<h2 className="text-xl font-semibold text-white">5. Transfer of Information</h2>
+					<h2 className="heading-sm text-white">5. Transfer of Information</h2>
 					<p>
 						<span className="font-medium text-white">5.1</span> All our servers are in the EU and all data is hosted
 						there. This is also true for our analytics provider, Fathom, but your data might be exposed to some
@@ -155,7 +155,7 @@ export default function PrivacyPolicy() {
 				</div>
 
 				<div className="flex flex-col gap-3">
-					<h2 className="text-xl font-semibold text-white">6. Your Choices</h2>
+					<h2 className="heading-sm text-white">6. Your Choices</h2>
 					<p>
 						<span className="font-medium text-white">6.1</span> You may update, correct or delete information about you
 						at any time emailing us at{' '}
@@ -168,7 +168,7 @@ export default function PrivacyPolicy() {
 				</div>
 
 				<div className="flex flex-col gap-3">
-					<h2 className="text-xl font-semibold text-white">7. Contact Us</h2>
+					<h2 className="heading-sm text-white">7. Contact Us</h2>
 					<p>
 						<span className="font-medium text-white">7.1</span> If you have any questions about this Privacy Policy,
 						please contact us by email at{' '}

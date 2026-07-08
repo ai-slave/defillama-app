@@ -116,8 +116,8 @@ function TableRow<T extends RowData>({
 							key={cell.id}
 							data-lighter={stripedBg && i % 2 === 0}
 							data-chainpage={isChainPage}
-							className={`overflow-hidden border-t border-r border-(--divider) p-3 text-ellipsis whitespace-nowrap ${
-								compact ? 'border-r-0 border-t-black/10 px-5 dark:border-t-white/10' : ''
+							className={`overflow-hidden border-t border-r border-divider p-3 text-ellipsis whitespace-nowrap ${
+								compact ? 'border-r-0 px-5' : ''
 							} ${cell.column.columnDef.meta?.cellClassName ?? ''}`}
 							style={{
 								textAlign,
@@ -125,9 +125,9 @@ function TableRow<T extends RowData>({
 								position: isSticky ? 'sticky' : undefined,
 								left: isSticky ? 0 : undefined,
 								zIndex: isSticky ? 1 : undefined,
-								background: isSticky ? 'var(--cards-bg)' : undefined,
+								background: isSticky ? 'var(--ld-bg-surface)' : undefined,
 								borderRightColor: isSticky ? 'transparent' : undefined,
-								boxShadow: isSticky && !compact ? '-1px 0 0 var(--divider) inset' : undefined
+								boxShadow: isSticky && !compact ? '-1px 0 0 var(--ld-border-divider) inset' : undefined
 							}}
 						>
 							{flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -358,7 +358,7 @@ export function VirtualTable<T extends RowData>({
 							overflow-x: auto;
 							overflow-y: hidden;
 							z-index: 999;
-							background-color: var(--cards-bg);
+							background-color: var(--ld-bg-surface);
 							display: block;
 							width: ${scrollbarWidth}px;
 							left: ${scrollbarLeft}px;
@@ -372,7 +372,7 @@ export function VirtualTable<T extends RowData>({
 							overflow-x: auto;
 							overflow-y: hidden;
 							z-index: 999;
-							background-color: var(--cards-bg);
+							background-color: var(--ld-bg-surface);
 							display: none;
 						`
 					}
@@ -423,11 +423,11 @@ export function VirtualTable<T extends RowData>({
 
 	if (hasNoVisibleColumns) {
 		return (
-			<div className="flex min-h-[400px] flex-col items-center justify-center gap-4 rounded-md bg-(--cards-bg) p-8 text-center">
-				<Icon name="eye-off" height={48} width={48} className="text-(--text-tertiary)" />
+			<div className="flex min-h-[400px] flex-col items-center justify-center gap-4 rounded-md bg-surface p-8 text-center">
+				<Icon name="eye-off" height={48} width={48} className="text-tertiary" />
 				<div className="flex flex-col gap-2">
-					<h3 className="text-lg font-semibold text-(--text-primary)">No columns selected</h3>
-					<p className="text-sm text-(--text-secondary)">
+					<h3 className="text-lg font-semibold text-primary">No columns selected</h3>
+					<p className="text-sm text-secondary">
 						Please select at least one column from the Columns menu to view the table data.
 					</p>
 				</div>
@@ -487,14 +487,14 @@ export function VirtualTable<T extends RowData>({
 											? 'translateX(calc(var(--vf-header-scroll-left, 0px) * -1))'
 											: undefined,
 									zIndex: isSticky ? 20 : undefined,
-									background: 'var(--cards-bg)',
+									background: 'var(--ld-bg-surface)',
 									borderRightColor: isSticky ? 'transparent' : undefined,
-									boxShadow: isSticky && !compact ? '-1px 0 0 0 var(--divider) inset' : undefined
+									boxShadow: isSticky && !compact ? '-1px 0 0 0 var(--ld-border-divider) inset' : undefined
 								}}
-								className={`overflow-hidden border-r border-(--divider) p-3 text-ellipsis whitespace-nowrap last:border-r-0 ${
+								className={`overflow-hidden border-r border-divider p-3 text-ellipsis whitespace-nowrap last:border-r-0 ${
 									rowSpannedHeader || headerGroup.depth === 0 || isGroupedChildHeader ? 'border-t' : ''
 								} ${rowSpannedHeader || isLastHeaderRow ? 'border-b' : ''} ${
-									compact ? 'h-[50px] border-r-0 border-t-black/10 px-5 dark:border-t-white/10' : ''
+									compact ? 'h-[50px] border-r-0 px-5' : ''
 								} ${isRepeatedLeafHeader ? 'p-0' : ''} ${isLeafHeader ? (meta?.headerClassName ?? '') : ''}`}
 							>
 								{isRepeatedLeafHeader ? null : (
@@ -531,7 +531,7 @@ export function VirtualTable<T extends RowData>({
 				{...props}
 				ref={tableContainerRef}
 				className={clsx(
-					'relative isolate thin-scrollbar w-full overflow-x-auto overflow-y-visible overscroll-x-contain rounded-md bg-(--cards-bg)',
+					'relative isolate thin-scrollbar w-full overflow-x-auto overflow-y-visible overscroll-x-contain rounded-md bg-surface',
 					className
 				)}
 				style={{ maxWidth: '100%', WebkitOverflowScrolling: 'touch', ...style }}
@@ -619,7 +619,7 @@ export function VirtualTable<T extends RowData>({
 				{stickyHeaderLayout ? (
 					<div
 						aria-hidden="true"
-						className="overflow-hidden bg-(--cards-bg)"
+						className="overflow-hidden bg-surface"
 						style={{
 							position: 'fixed',
 							top: 0,
@@ -668,7 +668,7 @@ export function VirtualTable<T extends RowData>({
 						overflowY: 'hidden',
 						zIndex: 999,
 						display: 'none',
-						backgroundColor: 'var(--cards-bg)'
+						backgroundColor: 'var(--ld-bg-surface)'
 					}}
 				>
 					<div ref={stickyScrollbarContentRef} style={{ height: '1px' }} />

@@ -72,7 +72,7 @@ export function ArticleEditorHeader({
 }: ArticleEditorHeaderProps) {
 	return (
 		<header
-			className={`mb-8 flex flex-wrap items-center justify-between gap-3 border-b py-4 lg:-mx-[80px] lg:px-2 xl:-mx-[170px] xl:px-4 ${
+			className={`mb-8 flex flex-wrap items-center justify-between gap-3 border-b py-4 lg:-mx-20 lg:px-2 xl:-mx-[170px] xl:px-4 ${
 				isPublished ? 'border-emerald-500/25' : 'border-(--cards-border)'
 			}`}
 		>

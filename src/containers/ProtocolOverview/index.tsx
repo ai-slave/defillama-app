@@ -66,7 +66,7 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 				isCEX={props.isCEX}
 			/>
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
-				<div className="col-span-1 row-[2/3] hidden flex-col gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:row-[1/2] xl:flex xl:min-h-[360px]">
+				<div className="col-span-1 row-[2/3] hidden flex-col gap-6 rounded-lg border border-subtle bg-surface p-2 xl:row-[1/2] xl:flex xl:min-h-[360px]">
 					<ProtocolHeader
 						props={props}
 						oracleTvs={oracleTvs}
@@ -85,7 +85,7 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 					/>
 				</div>
 				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
-					<div className="col-span-full flex flex-col gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+					<div className="col-span-full flex flex-col gap-6 rounded-lg border border-subtle bg-surface p-2">
 						<div className="flex flex-col gap-6 xl:hidden">
 							<ProtocolHeader
 								props={props}
@@ -97,14 +97,12 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 								headingAs="div"
 							/>
 						</div>
-						<Suspense
-							fallback={<div className="min-h-[400px] rounded-md border border-(--cards-border) bg-(--cards-bg)" />}
-						>
+						<Suspense fallback={<div className="min-h-[400px] rounded-lg border border-subtle bg-surface" />}>
 							<ProtocolChartPanel {...props} />
 						</Suspense>
 					</div>
 					{props.hasKeyMetrics ? (
-						<div className="col-span-full flex flex-col gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:hidden">
+						<div className="col-span-full flex flex-col gap-6 rounded-lg border border-subtle bg-surface p-2 xl:hidden">
 							<KeyMetrics
 								{...props}
 								formatPrice={formatPrice}
@@ -160,13 +158,22 @@ function ProtocolHeader({
 						<Icon name="alert-triangle" height={18} width={18} />
 					</Tooltip>
 				) : null}
-				<span className="ml-auto flex items-center justify-end gap-2">
+				<span className="ml-auto flex items-center justify-end gap-4">
 					{props.website ? (
-						<a href={props.website} target="_blank" rel="noopener noreferrer" aria-label={`${props.name} website`}>
+						<a
+							href={props.website}
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label={`${props.name} website`}
+							className="flex shrink-0 items-center justify-center rounded-full p-0.5 text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary"
+						>
 							<Icon name="link" width={16} height={16} className="shrink-0" />
 						</a>
 					) : null}
-					<Bookmark readableName={props.name} />
+					<Bookmark
+						readableName={props.name}
+						className="rounded-full p-0.5 hover:bg-hover-row focus-visible:bg-hover-row"
+					/>
 				</span>
 			</Tag>
 			{props.oracleTvs ? (

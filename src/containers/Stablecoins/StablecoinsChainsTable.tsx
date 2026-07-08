@@ -20,6 +20,9 @@ import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { useGroupChainsPegged } from '~/containers/Stablecoins/hooks'
 import { CHAINS_CATEGORY_GROUP_SETTINGS, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
 
 type StablecoinsByChainRow = ReturnType<typeof useGroupChainsPegged>[number]
@@ -71,7 +74,7 @@ const stablecoinsByChainColumns = [
 							<TokenLogo name={value} kind="chain" data-lgonly alt={`Logo of ${value}`} />
 							<BasicLink
 								href={`/stablecoins/${slug(value)}`}
-								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 							>
 								{value}
 							</BasicLink>
@@ -204,20 +207,15 @@ export function StablecoinsChainsTable({ data }: { data: StablecoinsByChainRow[]
 	}, [groupTvls])
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex items-center justify-between p-3">
-				<label className="relative mr-auto w-full sm:max-w-[280px]">
+		<Panel>
+			<TableToolbar className="items-center justify-between">
+				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search..."
-						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+						className={searchFieldInputStyles}
 					/>
 				</label>
 				<SelectWithCombobox
@@ -228,10 +226,15 @@ export function StablecoinsChainsTable({ data }: { data: StablecoinsByChainRow[]
 					label={'Group Chains'}
 					labelType="smol"
 					variant="filter-responsive"
+					size="md"
 				/>
-				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: 'stablecoins-chains' })} smol />
-			</div>
+				<CSVDownloadButton
+					prepareCsv={() => prepareTableCsv({ instance, filename: 'stablecoins-chains' })}
+					smol
+					size="md"
+				/>
+			</TableToolbar>
 			<VirtualTable instance={instance} />
-		</div>
+		</Panel>
 	)
 }

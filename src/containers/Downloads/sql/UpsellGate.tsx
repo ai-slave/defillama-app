@@ -221,7 +221,7 @@ export function UpsellGate({ isAuthenticated, isTrial }: UpsellGateProps) {
 
 function PricingCard({ isAuthenticated, subscriptionHref }: { isAuthenticated: boolean; subscriptionHref: string }) {
 	return (
-		<div className="flex flex-col gap-6 rounded-xl border border-(--sub-brand-primary)/30 bg-(--cards-bg) p-6 shadow-sm lg:sticky lg:top-4">
+		<div className="flex flex-col gap-6 rounded-xl border border-(--sub-brand-primary)/30 bg-surface p-6 shadow-sm lg:sticky lg:top-4">
 			<div className="flex items-center gap-2">
 				<span aria-hidden className="inline-block size-1.5 rounded-full bg-(--sub-brand-primary)" />
 				<span className="font-mono text-[11px] font-semibold tracking-[0.18em] text-(--sub-brand-primary) uppercase">
@@ -302,7 +302,7 @@ function FeatureTile({
 
 function ShowcasePane({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: (next: TabKey) => void }) {
 	return (
-		<div className="flex flex-col overflow-hidden rounded-xl border border-(--divider) bg-(--cards-bg) shadow-sm">
+		<div className="flex flex-col overflow-hidden rounded-xl border border-(--divider) bg-surface shadow-sm">
 			<TabStrip activeTab={activeTab} onTabChange={onTabChange} />
 			{activeTab === 'notebook' ? <NotebookBody /> : null}
 			{activeTab === 'sql' ? <QueryBody /> : null}
@@ -329,8 +329,8 @@ function TabStrip({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: 
 						onClick={() => onTabChange(t.key)}
 						className={`group -mb-px flex h-8 max-w-[220px] min-w-[148px] shrink-0 items-center gap-2 rounded-t-md border border-b-0 px-2.5 transition-colors ${
 							isActive
-								? 'border-(--divider) bg-(--cards-bg) text-(--text-primary)'
-								: 'border-transparent text-(--text-secondary) hover:bg-(--link-hover-bg)/40 hover:text-(--text-primary)'
+								? 'border-(--divider) bg-surface text-(--text-primary)'
+								: 'border-transparent text-(--text-secondary) hover:bg-hover-row/40 hover:text-(--text-primary)'
 						}`}
 					>
 						<span className="flex size-3 shrink-0 items-center justify-center" aria-hidden>
@@ -350,9 +350,7 @@ function TabStrip({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: 
 						<span
 							aria-hidden
 							className={`grid size-4 shrink-0 place-items-center rounded-sm transition-opacity ${
-								isActive
-									? 'opacity-50 hover:bg-(--link-hover-bg)/60 hover:opacity-100'
-									: 'opacity-0 group-hover:opacity-50'
+								isActive ? 'opacity-50 hover:bg-hover-row/60 hover:opacity-100' : 'opacity-0 group-hover:opacity-50'
 							}`}
 						>
 							<Icon name="x" className="size-2.5" />
@@ -364,7 +362,7 @@ function TabStrip({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: 
 				type="button"
 				title="New tab (⌘T)"
 				onClick={(e) => e.preventDefault()}
-				className="-mb-px ml-auto inline-flex size-7 shrink-0 items-center justify-center self-center rounded-md text-(--text-tertiary) transition-colors hover:bg-(--link-hover-bg)/40 hover:text-(--text-secondary)"
+				className="-mb-px ml-auto inline-flex size-7 shrink-0 items-center justify-center self-center rounded-md text-(--text-tertiary) transition-colors hover:bg-hover-row/40 hover:text-(--text-secondary)"
 			>
 				<Icon name="plus" className="size-3.5" />
 			</button>
@@ -529,7 +527,7 @@ function ChartNotebookCell() {
 				name="cell_3"
 				badge="chart"
 				action={
-					<span className="inline-flex items-center gap-1.5 rounded-md border border-(--divider) bg-(--cards-bg) px-2 py-0.5 font-mono text-[10.5px] text-(--text-secondary)">
+					<span className="inline-flex items-center gap-1.5 rounded-md border border-(--divider) bg-surface px-2 py-0.5 font-mono text-[10.5px] text-(--text-secondary)">
 						<span className="text-(--text-tertiary)">source</span>
 						<span className="text-(--text-primary)">cell_2</span>
 						<span aria-hidden className="text-(--text-tertiary)/60">
@@ -560,8 +558,8 @@ function CellShell({ focused, children }: { focused: boolean; children: ReactNod
 		<div
 			className={`relative rounded-md border transition-colors ${
 				focused
-					? 'border-(--sub-brand-primary)/45 bg-(--cards-bg) shadow-[0_0_0_2px_color-mix(in_oklch,var(--sub-brand-primary)_10%,transparent)]'
-					: 'border-(--divider) bg-(--cards-bg)/60 hover:border-(--divider)'
+					? 'border-(--sub-brand-primary)/45 bg-surface shadow-[0_0_0_2px_color-mix(in_oklch,var(--sub-brand-primary)_10%,transparent)]'
+					: 'border-(--divider) bg-surface/60 hover:border-(--divider)'
 			}`}
 		>
 			{children}
@@ -614,7 +612,7 @@ function AddCellChip({ dot, label }: { dot: string; label: string }) {
 		<button
 			type="button"
 			onClick={(e) => e.preventDefault()}
-			className="inline-flex items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors hover:bg-(--link-hover-bg)/40 hover:text-(--text-primary)"
+			className="inline-flex items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors hover:bg-hover-row/40 hover:text-(--text-primary)"
 		>
 			<span aria-hidden className={`size-1.5 rounded-full ${dot}`} />
 			<span className="font-mono">{label}</span>
@@ -740,7 +738,7 @@ function GridTable<T>({ rows, cols }: { rows: T[]; cols: TableCol<T>[] }) {
 		<div className="thin-scrollbar overflow-x-auto">
 			<div style={{ width: totalWidth, minWidth: '100%' }}>
 				<div
-					className="grid border-b border-(--divider) bg-(--cards-bg) font-mono text-[11px] text-(--text-secondary)"
+					className="grid border-b border-(--divider) bg-surface font-mono text-[11px] text-(--text-secondary)"
 					style={{ gridTemplateColumns: gridTemplate, height: 42 }}
 				>
 					{cols.map((col) => {

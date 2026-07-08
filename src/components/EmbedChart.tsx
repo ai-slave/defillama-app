@@ -4,6 +4,8 @@ import * as React from 'react'
 import { Icon } from '~/components/Icon'
 import { useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { FEE_EXTRA_CONFIGS } from '~/metrics/feeExtras'
+import { buttonStyles } from '~/ui/Button'
+import { popoverSurfaceStyles } from '~/ui/Popover'
 import { CopyHelper } from './Copy'
 
 export function EmbedChart() {
@@ -49,8 +51,8 @@ export function EmbedChart() {
 
 	return (
 		<Ariakit.PopoverProvider>
-			<Ariakit.PopoverDisclosure className="flex items-center justify-center rounded-md border border-(--form-control-border) p-2 text-sm font-medium text-(--text-form)! hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)">
-				<Icon name="code" height={12} width={12} />
+			<Ariakit.PopoverDisclosure className={buttonStyles({ square: true, size: 'md' })}>
+				<Icon name="code" height={16} width={16} />
 				<span className="sr-only">Embed Chart</span>
 			</Ariakit.PopoverDisclosure>
 
@@ -58,10 +60,12 @@ export function EmbedChart() {
 				unmountOnHide
 				hideOnInteractOutside
 				gutter={6}
-				className="z-10 mr-1 flex max-h-[calc(100dvh-80px)] w-[min(calc(100vw-16px),320px)] flex-col items-end gap-2 overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) p-1 text-xs lg:mr-4 lg:max-h-(--popover-available-height) dark:border-[hsl(204,3%,32%)]"
+				className={`${popoverSurfaceStyles} mr-1 w-[min(calc(100vw-16px),320px)] lg:mr-4`}
 			>
-				<code className="block rounded-md bg-white p-2 text-xs break-all sm:text-sm dark:bg-black">{url}</code>
-				<CopyHelper toCopy={url} />
+				<span className="flex flex-col items-end gap-2 p-3">
+					<code className="block rounded-lg bg-page p-2 text-xs break-all">{url}</code>
+					<CopyHelper toCopy={url} />
+				</span>
 			</Ariakit.Popover>
 		</Ariakit.PopoverProvider>
 	)

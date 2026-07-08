@@ -118,9 +118,9 @@ export default function MicaPage({ exchanges }: MicaPageProps) {
 			{exchanges.length ? (
 				<MicaFinder exchanges={exchanges} />
 			) : (
-				<p className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-12 text-center text-sm text-(--text-label)">
-					Exchange directory is being updated. Please check back shortly.
-				</p>
+				<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-12 text-center text-sm text-(--text-label)">
+					<p>Exchange directory is being updated. Please check back shortly.</p>
+				</div>
 			)}
 		</Layout>
 	)

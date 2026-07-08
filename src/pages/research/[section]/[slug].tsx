@@ -208,7 +208,7 @@ function SectionArticleContent({
 	if (!expectedSection) {
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-6">
-				<h1 className="text-xl font-semibold text-(--text-primary)">Section not found</h1>
+				<h1 className="heading-sm text-(--text-primary)">Section not found</h1>
 				<Link href="/research" className="text-sm text-(--link-text) hover:underline">
 					Browse all research →
 				</Link>
@@ -223,7 +223,7 @@ function SectionArticleContent({
 	if (!article && !error) {
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-6">
-				<h1 className="text-xl font-semibold text-(--text-primary)">Research not found</h1>
+				<h1 className="heading-sm text-(--text-primary)">Research not found</h1>
 				<Link href="/research" className="text-sm text-(--link-text) hover:underline">
 					Browse all research →
 				</Link>
@@ -235,7 +235,7 @@ function SectionArticleContent({
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load research'
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-red-500/30 bg-red-500/5 p-6">
-				<h1 className="text-xl font-semibold text-(--text-primary)">Couldn't load research</h1>
+				<h1 className="heading-sm text-(--text-primary)">Couldn't load research</h1>
 				<p className="text-sm text-(--text-secondary)">{message}</p>
 			</div>
 		)

@@ -1,5 +1,6 @@
 import clsx from 'clsx'
 import * as React from 'react'
+import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { Tooltip } from '~/components/Tooltip'
 import type { ChartTimeGrouping, ChartTimeGroupingWithCumulative } from './types'
 
@@ -68,13 +69,7 @@ export function ChartGroupingSelector<T extends string>({
 	)
 
 	return (
-		<div
-			role="radiogroup"
-			className={clsx(
-				'flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-(--text-form)',
-				className
-			)}
-		>
+		<div role="radiogroup" className={clsx(chartSegmentedControlGroupStyles, className)}>
 			{options.map((option) => {
 				const shortLabel = option.shortLabel ?? option.label.slice(0, 1).toUpperCase()
 				return (
@@ -84,10 +79,7 @@ export function ChartGroupingSelector<T extends string>({
 							role="radio"
 							aria-checked={value === option.value}
 							aria-label={option.label}
-							className={clsx(
-								'shrink-0 px-2 py-1 text-sm whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:font-medium data-[active=true]:text-(--link-text)',
-								buttonClassName
-							)}
+							className={clsx(chartSegmentedControlButtonStyles, buttonClassName)}
 							data-active={value === option.value}
 							onClick={() => handleValueChange(option.value)}
 						>

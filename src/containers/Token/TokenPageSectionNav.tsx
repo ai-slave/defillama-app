@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { TabLink, tabTrackStyles } from '~/ui/Tab'
 
 type TokenPageSectionNavItem = {
 	id: string
@@ -145,13 +146,13 @@ export function TokenPageSectionNav({ sections }: { sections: TokenPageSectionNa
 	if (sections.length === 0) return null
 
 	return (
-		<div className="sticky top-0 z-20 overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<nav ref={navRef} className="flex w-full overflow-x-auto text-sm font-medium" aria-label="Token page sections">
+		<div className="sticky top-0 z-20 bg-surface">
+			<nav ref={navRef} className={tabTrackStyles} aria-label="Token page sections">
 				{sections.map((section) => {
 					const isActive = activeSectionId === section.id
 
 					return (
-						<a
+						<TabLink
 							key={section.id}
 							href={`#${section.id}`}
 							ref={(element) => {
@@ -167,10 +168,9 @@ export function TokenPageSectionNav({ sections }: { sections: TokenPageSectionNa
 								clickLockTargetId.current = section.id
 							}}
 							data-active={isActive}
-							className="shrink-0 border-b-2 border-transparent px-4 py-3 whitespace-nowrap text-(--text-secondary) hover:bg-(--btn-hover-bg) hover:text-(--text-primary) focus-visible:bg-(--btn-hover-bg) focus-visible:text-(--text-primary) data-[active=true]:border-(--primary) data-[active=true]:text-(--text-primary)"
 						>
 							{section.label}
-						</a>
+						</TabLink>
 					)
 				})}
 			</nav>

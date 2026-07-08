@@ -3,6 +3,8 @@ import dayjs from 'dayjs'
 import { useEffect, useEffectEvent, useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Card } from '~/ui/Card'
+import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileDismissStyles } from '~/ui/Popover'
 import { formattedNum } from '~/utils'
 import { generateGoogleCalendarUrl } from '~/utils/calendar'
 
@@ -17,7 +19,7 @@ interface CalendarButtonProps {
 
 const ProtocolPageButton = () => {
 	return (
-		<Ariakit.MenuButton className="flex items-center gap-2 rounded-sm p-2 hover:bg-(--bg-secondary)">
+		<Ariakit.MenuButton className="flex items-center gap-2 rounded-sm p-2 hover:bg-hover-row focus-visible:bg-hover-row">
 			<Icon name="calendar-plus" width={16} height={16} />
 			Add to Calendar
 		</Ariakit.MenuButton>
@@ -40,14 +42,8 @@ const CalendarButton = ({ event, tokenName, tokenValue, isProtocolPage }: Calend
 		<Ariakit.MenuProvider>
 			{isProtocolPage ? <ProtocolPageButton /> : <RegularButton />}
 
-			<Ariakit.Menu
-				unmountOnHide
-				hideOnInteractOutside
-				gutter={8}
-				className="z-10 flex thin-scrollbar max-h-[60dvh] min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-(--cards-border) bg-(--cards-bg) text-(--text-primary) shadow-sm max-sm:drawer max-sm:rounded-b-none"
-				portal
-			>
-				<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
+			<Ariakit.Menu unmountOnHide hideOnInteractOutside gutter={8} className={`${menuSurfaceStyles} shadow-sm`} portal>
+				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 					<Icon name="x" className="size-5" />
 				</Ariakit.PopoverDismiss>
 
@@ -63,7 +59,7 @@ const CalendarButton = ({ event, tokenName, tokenValue, isProtocolPage }: Calend
 							rel="noopener noreferrer"
 						/>
 					}
-					className="flex shrink-0 cursor-pointer items-center gap-2 border-b border-(--bg-border) px-3 py-2 cv-auto-37 first-of-type:rounded-t-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)"
+					className={`${popoverMenuItemStyles} border-b border-subtle`}
 				>
 					<Icon name="external-link" width={16} height={16} />
 					Google Calendar
@@ -75,7 +71,7 @@ const CalendarButton = ({ event, tokenName, tokenValue, isProtocolPage }: Calend
 							href={`/api/dynamic/calendar/${tokenName}?timestamp=${event.timestamp}&value=${tokenValue ?? ''}&name=${tokenName}`}
 						/>
 					}
-					className="flex shrink-0 cursor-pointer items-center gap-2 px-3 py-2 cv-auto-37 last-of-type:rounded-b-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)"
+					className={popoverMenuItemStyles}
 				>
 					<Icon name="download-cloud" width={16} height={16} />
 					Other Calendars Apps
@@ -293,12 +289,16 @@ export const UpcomingEvent = ({
 		const LineTag = variant === 'protocol' ? 'div' : 'span'
 		const iconSize = variant === 'protocol' ? 14 : 16
 		const rowClass = variant === 'protocol' ? 'flex flex-col gap-0.5' : 'flex flex-col gap-1'
+		const lineClass = variant === 'protocol' ? 'body-md text-primary' : 'text-sm'
+		const subLineClass = variant === 'protocol' ? 'body-sm text-secondary' : 'text-xs text-(--text-meta)'
+		const suffixClass = variant === 'protocol' ? 'body-sm text-secondary' : 'text-xs text-(--text-meta)'
+		const valueClass = variant === 'protocol' ? '' : 'font-medium'
 		const isLinearPerDay = item.unlockType === 'linear' && item.displayUnit === 'per day'
 		const isOngoing = item.endTime != null && nowSec >= item.timestamp && nowSec <= item.endTime
 
 		return (
 			<RowTag className={rowClass} key={`${item.name}-${item.totalAmount}-${index}`}>
-				<LineTag className="flex items-center justify-between gap-2 text-sm">
+				<LineTag className={`flex items-center justify-between gap-2 ${lineClass}`}>
 					<span className="flex items-center gap-1.5">
 						{item.name}
 						{isOngoing ? ' (Ongoing)' : null}
@@ -316,19 +316,19 @@ export const UpcomingEvent = ({
 							</Ariakit.Tooltip>
 						</Ariakit.TooltipProvider>
 					</span>
-					<span className="inline-flex items-baseline gap-1 font-medium">
+					<span className={`inline-flex items-baseline gap-1 ${valueClass}`.trim()}>
 						{item.usdValue ? formattedNum(item.usdValue, true) : '-'}
-						{isLinearPerDay ? <span className="text-xs text-(--text-meta)">/ day</span> : null}
+						{isLinearPerDay ? <span className={suffixClass}>/ day</span> : null}
 					</span>
 				</LineTag>
-				<LineTag className="flex items-center justify-between gap-2 text-xs text-(--text-meta)">
+				<LineTag className={`flex items-center justify-between gap-2 ${subLineClass}`}>
 					<span>
 						{item.percentage != null ? `${formattedNum(item.percentage)}%` : '-'}{' '}
 						{item.percentageFloat ? <>({formattedNum(item.percentageFloat)}% of float)</> : null}
 					</span>
 					<span className="inline-flex items-baseline gap-1">
 						{formattedNum(isLinearPerDay ? item.perDayAmount : item.totalAmount)} {tokenSymbol}
-						{isLinearPerDay ? <span className="text-xs text-(--text-meta)">/ day</span> : null}
+						{isLinearPerDay ? <span className={suffixClass}>/ day</span> : null}
 					</span>
 				</LineTag>
 			</RowTag>
@@ -347,16 +347,15 @@ export const UpcomingEvent = ({
 
 	if (isProtocolPage) {
 		return (
-			<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-				<div className="flex items-center justify-between gap-2">
-					<div className="flex flex-col">
-						<span className="text-xs text-(--text-label)">{hasLinear ? 'Daily Unlock Rate' : 'Unlock Value'}</span>
-						<span className="text-sm font-semibold">
+			<Card as="article" padding="md" border="subtle" radius="large" className="flex flex-col gap-2.5">
+				<div className="flex items-start justify-between gap-3">
+					<div className="flex min-w-0 flex-col">
+						<span className="body-md text-primary">{hasLinear ? 'Daily Unlock Rate' : 'Unlock Value'}</span>
+						<span className="body-md text-primary">
 							{hasLinear ? (
 								dailyValue ? (
 									<>
-										{formattedNum(dailyValue, true)}{' '}
-										<span className="text-xs font-normal text-(--text-meta)">/ day</span>
+										{formattedNum(dailyValue, true)} <span className="body-sm text-secondary">/ day</span>
 									</>
 								) : (
 									<span>{formattedNum(unlockPercent)}%</span>
@@ -368,40 +367,40 @@ export const UpcomingEvent = ({
 							)}
 						</span>
 						{hasLinear && linearDurationDays > 0 ? (
-							<span className="text-xs text-(--text-meta)">
+							<span className="body-sm text-secondary">
 								Linear over {formatDuration(linearDurationDays)}
 								{tokenValue ? <> · Total: {formattedNum(tokenValue, true)}</> : null}
 							</span>
 						) : unlockPercent ? (
-							<span className="text-xs text-(--text-meta)">
+							<span className="body-sm text-secondary">
 								{tokenValue ? formattedNum(unlockPercent) + '%' : null}
 								{unlockPercentFloat ? <> ({formattedNum(unlockPercentFloat)}% of float)</> : null}
 							</span>
 						) : null}
 					</div>
-					<div className="flex flex-col items-end">
-						<span className="text-sm font-medium">
+					<div className="flex shrink-0 flex-col items-end">
+						<span className="body-md text-primary">
 							{timestamp ? dayjs(timestamp * 1e3).format('MMM D, YYYY') : null}
 						</span>
-						<span className="text-xs text-(--text-meta)">
+						<span className="body-sm text-secondary">
 							{timestamp ? `${dayjs(timestamp * 1e3).format('h:mm A')} GMT${dayjs(timestamp * 1e3).format('Z')}` : ''}
 						</span>
 						{timeLeft > 0 ? (
 							<span
-								className="mt-1 rounded-md bg-(--bg-border) px-2 py-1 text-xs font-medium tabular-nums"
+								className="mt-1 rounded-md bg-surface-elevated-2 px-2 py-0.5 label-sm text-primary tabular-nums"
 								suppressHydrationWarning
 							>
 								{formatCountdownBadge(days, hours, minutes, seconds)}
 							</span>
 						) : (
-							<span className="mt-1 rounded-md bg-(--bg-border) px-2 py-1 text-xs font-medium">
+							<span className="mt-1 rounded-md bg-surface-elevated-2 px-2 py-0.5 label-sm text-primary">
 								{formatTimeAgo(timestamp)}
 							</span>
 						)}
 					</div>
 				</div>
-				<hr className="border-(--bg-border)" />
-				<div className="flex flex-col gap-3">
+				<hr className="border-subtle" />
+				<div className="flex flex-col gap-2">
 					{currentUnlockBreakdown.map((item, i) => renderBreakdownRow(item, 'protocol', i))}
 				</div>
 				{timeLeft > 0 ? (
@@ -412,7 +411,7 @@ export const UpcomingEvent = ({
 						isProtocolPage={isProtocolPage}
 					/>
 				) : null}
-			</div>
+			</Card>
 		)
 	}
 

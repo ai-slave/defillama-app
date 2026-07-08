@@ -2,6 +2,12 @@ import type { ChangeEventHandler } from 'react'
 import { LoadingSpinner } from '~/components/Loaders'
 import { QuestionHelper } from '~/components/QuestionHelper'
 
+/* ----------------------------------------------------------------------------
+   Switch — design.md form-control recipe (Figma node 6298:54913).
+   40x24 rounded-full track, 16px knob; on = bg-brand, off = elevated-2.
+   Label is label-sm at gap-2.
+---------------------------------------------------------------------------- */
+
 export const Switch = ({
 	label,
 	checked,
@@ -20,7 +26,9 @@ export const Switch = ({
 	isLoading?: boolean
 }) => {
 	return (
-		<label className={`relative isolate flex cursor-pointer flex-nowrap items-center gap-1 text-sm ${className ?? ''}`}>
+		<label
+			className={`relative isolate flex cursor-pointer flex-nowrap items-center gap-2 label-sm ${className ?? ''}`}
+		>
 			<input
 				type="checkbox"
 				value={value}
@@ -29,15 +37,11 @@ export const Switch = ({
 				className="peer absolute size-[1em] opacity-[0.00001]"
 			/>
 			<span
-				className={`border ${
-					checked ? 'border-(--switch-border) bg-(--switch-bg)' : 'border-(--bg-input) bg-(--bg-input)'
-				} h-4.5 w-[34px] rounded p-0.5`}
+				className={`h-6 w-10 shrink-0 rounded-full p-1 transition-colors ${checked ? 'bg-brand' : 'bg-surface-elevated-2'}`}
 			>
-				{!checked ? (
-					<span className="mr-auto block size-3 shrink-0 rounded-[3px] bg-[#707A7A]"></span>
-				) : (
-					<span className="ml-auto block size-3 shrink-0 rounded-[3px] bg-(--old-blue)"></span>
-				)}
+				<span
+					className={`block size-4 rounded-full bg-white shadow-xs transition-transform ${checked ? 'translate-x-4' : ''}`}
+				></span>
 			</span>
 			{help ? (
 				<span className="flex items-center gap-1">

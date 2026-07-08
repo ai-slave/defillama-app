@@ -2,6 +2,7 @@ import { useState, type RefObject } from 'react'
 import { Icon } from '~/components/Icon'
 import { LoadingSpinner } from '~/components/Loaders'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { buttonStyles } from '~/ui/Button'
 import { downloadDataURL } from '~/utils/download'
 interface KeyMetricsPngExportButtonProps {
 	containerRef: RefObject<HTMLDivElement | null>
@@ -292,7 +293,7 @@ export function KeyMetricsPngExportButton({
 				void handleExport()
 			}}
 			disabled={isLoading}
-			className="flex items-center justify-center gap-1 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) disabled:opacity-60"
+			className={buttonStyles()}
 			title="Download Key Metrics as PNG"
 		>
 			{isLoading ? <LoadingSpinner size={12} /> : <Icon name="download-paper" height={12} width={12} />}

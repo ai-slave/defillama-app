@@ -180,6 +180,7 @@ export function DashboardDiscovery({
 									</>
 								}
 								labelType="none"
+								popoverVariant="legacy"
 								triggerProps={{
 									className:
 										'flex items-center justify-between gap-1 rounded-md border border-(--form-control-border) px-2 py-1.5'
@@ -206,6 +207,7 @@ export function DashboardDiscovery({
 									</>
 								}
 								labelType="none"
+								popoverVariant="legacy"
 								triggerProps={{
 									className:
 										'flex items-center justify-between gap-1 rounded-md border border-(--form-control-border) px-2 py-1.5'
@@ -229,6 +231,7 @@ export function DashboardDiscovery({
 										</>
 									}
 									labelType="none"
+									popoverVariant="legacy"
 									triggerProps={{
 										className:
 											'flex items-center justify-between gap-1 rounded-md border border-(--form-control-border) px-2 py-1.5'

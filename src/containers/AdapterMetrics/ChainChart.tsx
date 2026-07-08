@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import * as React from 'react'
@@ -12,7 +11,6 @@ import {
 } from '~/components/ECharts/ChartGroupingSelector'
 import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
 import { ensureChronologicalRows, formatBarChart, formatLineChart } from '~/components/ECharts/utils'
-import { Icon } from '~/components/Icon'
 import { LocalLoader } from '~/components/Loaders'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -28,6 +26,9 @@ import {
 	isFeeExtraEligibleAdapterMetric,
 	type FeeExtraMetric as FeesExtraMetric
 } from '~/metrics/feeExtras'
+import { FailedDataPopover } from '~/ui/FailedDataPopover'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { getErrorMessage, normalizeError } from '~/utils/error'
 import { chainIconUrl } from '~/utils/icons'
@@ -770,8 +771,8 @@ export const AdapterByChainChart = ({
 	}, [breakdownChartState, chain, chartName])
 
 	return (
-		<div className="relative col-span-2 flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex flex-row flex-wrap items-center justify-start gap-2 p-2 pb-0">
+		<Panel className="col-span-2">
+			<ChartPanelToolbar>
 				<Select
 					allValues={CHART_VIEW_MODE_OPTIONS}
 					selectedValues={chartViewMode}
@@ -779,6 +780,7 @@ export const AdapterByChainChart = ({
 					label={chartViewMode}
 					labelType="none"
 					variant="filter"
+					size="md"
 				/>
 				{chartViewMode === 'Breakdown' ? (
 					<Select
@@ -796,6 +798,7 @@ export const AdapterByChainChart = ({
 						label={breakdownChartKindLabel}
 						labelType="none"
 						variant="filter"
+						size="md"
 					/>
 				) : null}
 				{chartViewMode === 'Breakdown' && breakdownChartState.chartKind === 'bar' ? (
@@ -806,6 +809,7 @@ export const AdapterByChainChart = ({
 						label={breakdownBarValueModeLabel ?? 'Absolute'}
 						labelType="none"
 						variant="filter"
+						size="md"
 					/>
 				) : null}
 				{chartViewMode === 'Breakdown' && breakdownChartState.chartKind === 'bar' ? (
@@ -816,6 +820,7 @@ export const AdapterByChainChart = ({
 						label={breakdownBarLayoutLabel ?? 'Stacked'}
 						labelType="none"
 						variant="filter"
+						size="md"
 					/>
 				) : null}
 				{chartViewMode === 'Breakdown' ? (
@@ -833,7 +838,7 @@ export const AdapterByChainChart = ({
 					/>
 				) : null}
 				{chartViewMode === 'Combined' && chain ? <AddToDashboardButton chartConfig={multiChart} smol /> : null}
-				<div className="ml-auto flex items-center justify-end gap-2">
+				<div className="ml-auto flex items-center justify-end gap-1.5">
 					{chartViewMode === 'Breakdown' && protocolOptions.length > 0 ? (
 						<SelectWithCombobox
 							allValues={protocolOptions}
@@ -844,6 +849,7 @@ export const AdapterByChainChart = ({
 							label="Protocols"
 							labelType="smol"
 							variant="filter"
+							size="md"
 							portal
 						/>
 					) : null}
@@ -871,7 +877,7 @@ export const AdapterByChainChart = ({
 						/>
 					)}
 				</div>
-			</div>
+			</ChartPanelToolbar>
 			{chartViewMode === 'Breakdown' && breakdownChartDataState.kind === 'error' ? (
 				<p className="flex min-h-[360px] items-center justify-center text-xs text-(--error)">
 					{breakdownChartDataState.message}
@@ -938,7 +944,7 @@ export const AdapterByChainChart = ({
 				</React.Suspense>
 			)}
 			<FailedFeesMetricsPopover failedMetrics={failedMetrics} />
-		</div>
+		</Panel>
 	)
 }
 
@@ -1312,8 +1318,8 @@ export const ChainsByAdapterChart = ({
 		deferredChartPresentation.data.length > 0
 
 	return (
-		<div className="relative col-span-2 flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex flex-row flex-wrap items-center justify-start gap-2 p-2 pb-0">
+		<Panel className="col-span-2">
+			<ChartPanelToolbar>
 				<Select
 					allValues={CHART_KIND_OPTIONS}
 					selectedValues={
@@ -1329,6 +1335,7 @@ export const ChainsByAdapterChart = ({
 					label={chartKindLabel}
 					labelType="none"
 					variant="filter"
+					size="md"
 				/>
 				{chartState.chartKind === 'bar' ? (
 					<Select
@@ -1338,6 +1345,7 @@ export const ChainsByAdapterChart = ({
 						label={barValueModeLabel ?? 'Absolute'}
 						labelType="none"
 						variant="filter"
+						size="md"
 					/>
 				) : null}
 				{chartState.chartKind === 'bar' ? (
@@ -1348,6 +1356,7 @@ export const ChainsByAdapterChart = ({
 						label={barLayoutLabel ?? 'Stacked'}
 						labelType="none"
 						variant="filter"
+						size="md"
 					/>
 				) : null}
 				<ChartGroupingSelector
@@ -1355,7 +1364,7 @@ export const ChainsByAdapterChart = ({
 					onValueChange={onChangeChartInterval}
 					options={DWMC_GROUPING_OPTIONS_LOWERCASE}
 				/>
-				<div className="ml-auto flex items-center justify-end gap-2">
+				<div className="ml-auto flex items-center justify-end gap-1.5">
 					<SelectWithCombobox
 						allValues={allChains}
 						selectedValues={selectedChains}
@@ -1365,6 +1374,7 @@ export const ChainsByAdapterChart = ({
 						label="Chains"
 						labelType="smol"
 						variant="filter"
+						size="md"
 						portal
 					/>
 					{chartState.chartKind === 'treemap' ? <ChartRestoreButton chartInstance={exportChartInstance} /> : null}
@@ -1377,7 +1387,7 @@ export const ChainsByAdapterChart = ({
 						/>
 					) : null}
 				</div>
-			</div>
+			</ChartPanelToolbar>
 			<React.Suspense
 				fallback={
 					<div
@@ -1388,12 +1398,12 @@ export const ChainsByAdapterChart = ({
 				}
 			>
 				{isBaseChartLoading ? (
-					<div className="flex items-center justify-center text-(--text-tertiary)" style={{ height: chartHeight }}>
+					<div className="flex items-center justify-center text-tertiary" style={{ height: chartHeight }}>
 						<LocalLoader />
 					</div>
 				) : baseChartErrorMessage ? (
 					<div
-						className="flex items-center justify-center p-4 text-center text-sm text-(--text-tertiary)"
+						className="flex items-center justify-center p-4 text-center body-sm text-tertiary"
 						style={{ height: chartHeight }}
 					>
 						Failed to load chart data: {baseChartErrorMessage}
@@ -1429,36 +1439,16 @@ export const ChainsByAdapterChart = ({
 				)}
 			</React.Suspense>
 			<FailedFeesMetricsPopover failedMetrics={failedMetrics} />
-		</div>
+		</Panel>
 	)
 }
 
 function FailedFeesMetricsPopover({ failedMetrics }: { failedMetrics: FeesExtraMetric[] }) {
-	if (failedMetrics.length === 0) {
-		return null
-	}
-
 	return (
-		<Ariakit.PopoverProvider>
-			<Ariakit.PopoverDisclosure className="absolute right-2 bottom-2 z-10 flex items-center justify-center rounded-full border border-(--cards-border) bg-(--bg-main) p-1.5 text-(--error) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)">
-				<Icon name="alert-triangle" className="size-3.5" />
-				<span className="sr-only">Show failed metric APIs</span>
-			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				unmountOnHide
-				hideOnInteractOutside
-				gutter={6}
-				className="z-10 mr-1 flex max-h-[calc(100dvh-80px)] w-[min(calc(100vw-16px),300px)] flex-col gap-1 overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) p-2 text-xs dark:border-[hsl(204,3%,32%)]"
-			>
-				<p className="font-medium text-(--error)">Failed to load data for:</p>
-				<ul className="pl-4">
-					{failedMetrics.map((metric) => (
-						<li key={metric} className="list-disc">
-							{FEES_EXTRA_METRIC_LABEL[metric]}
-						</li>
-					))}
-				</ul>
-			</Ariakit.Popover>
-		</Ariakit.PopoverProvider>
+		<FailedDataPopover
+			items={failedMetrics}
+			ariaLabel="Show failed metric APIs"
+			getLabel={(metric) => FEES_EXTRA_METRIC_LABEL[metric]}
+		/>
 	)
 }

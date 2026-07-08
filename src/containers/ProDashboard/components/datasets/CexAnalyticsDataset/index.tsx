@@ -13,15 +13,15 @@ import {
 } from '@tanstack/react-table'
 import { lazy, Suspense, useContext, useEffect, useMemo, useState, type FC, type ReactNode } from 'react'
 import { useTableSearch } from '~/components/Table/utils'
-import { useProDashboardTime } from '~/containers/ProDashboard/ProDashboardAPIContext'
-import { filterDataByTimePeriod, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import type {
 	CexAnalyticsMarketSharePoint,
 	CexAnalyticsMetric,
 	CexAnalyticsSnapshotResponse,
-	CexAnalyticsTotalsPoint,
-	ProtocolsTableConfig
-} from '~/containers/ProDashboard/types'
+	CexAnalyticsTotalsPoint
+} from '~/containers/Cexs/api.types'
+import { useProDashboardTime } from '~/containers/ProDashboard/ProDashboardAPIContext'
+import { filterDataByTimePeriod, StreamDoneContext } from '~/containers/ProDashboard/queries'
+import type { ProtocolsTableConfig } from '~/containers/ProDashboard/types'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
 import { formattedNum } from '~/utils'
 import { downloadCSV } from '~/utils/download'

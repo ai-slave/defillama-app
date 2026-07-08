@@ -1,6 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import { lazy, Suspense, useRef, useState } from 'react'
 import { Icon } from '~/components/Icon'
+import { Button } from '~/ui/Button'
+import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { Input, inputStyles } from '~/ui/Input'
 import { formatValue } from '../../utils'
 import { useAuthContext } from '../Subscription/auth'
 import { setSignupSource } from '../Subscription/signupSource'
@@ -217,155 +220,142 @@ export function CustomColumnModal({
 	return (
 		<>
 			<Ariakit.DialogProvider store={dialogStore}>
-				<Ariakit.Dialog className="dialog gap-3" unmountOnHide>
-					<Ariakit.DialogDismiss
-						onClick={dialogStore.toggle}
-						className="absolute top-3 right-3 rounded-lg p-1.5 text-(--text-tertiary) hover:bg-(--divider) hover:text-(--text-primary)"
-						aria-label="Close modal"
-					>
-						<Icon name="x" height={20} width={20} />
-					</Ariakit.DialogDismiss>
-					<Ariakit.DialogHeading className="mb-4 text-lg font-bold">Add Custom Column</Ariakit.DialogHeading>
-					<label className="flex flex-col gap-1">
-						<span>Column Name</span>
-						<input
-							className="rounded-md border border-(--form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-white"
-							value={state.name}
-							onChange={(e) => setState((prev) => ({ ...prev, name: e.target.value }))}
-							placeholder="Custom Column"
-						/>
-					</label>
-					<label className="flex flex-col gap-1">
-						<span>Formula</span>
-						<div className="relative">
-							{state.fieldWarning && !state.error ? (
-								<div className="mb-2 flex items-center gap-2 rounded-sm border border-yellow-400 bg-yellow-100 px-3 py-2 text-sm font-semibold text-yellow-700">
-									<Icon name="help-circle" height={18} width={18} />
-									<span>{state.fieldWarning}</span>
-								</div>
-							) : null}
-							{state.error ? (
-								<div className="mb-2 flex items-center gap-2 rounded-sm border border-red-400 bg-red-100 px-3 py-2 text-sm font-semibold text-red-700">
-									<Icon name="alert-triangle" height={18} width={18} />
-									<span>{state.error}</span>
-								</div>
-							) : null}
-							<input
-								ref={inputRef}
-								className={`w-full rounded-md border bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-white ${
-									state.error ? 'border-red-400' : 'border-(--form-control-border)'
-								} text-(--text-primary) focus:border-transparent focus:ring-2 focus:ring-(--primary) focus:outline-hidden`}
-								value={state.formula}
-								onChange={handleFormulaChange}
-								onKeyDown={handleKeyDown}
-								placeholder="e.g. revenue_30d / tvl"
-								autoComplete="off"
+				<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:560px]`} unmountOnHide>
+					<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
+						<DialogHeading>Add Custom Column</DialogHeading>
+						<Ariakit.DialogDismiss render={<Button variant="ghost" size="md" square />} aria-label="Close modal">
+							<Icon name="x" className="size-4" />
+						</Ariakit.DialogDismiss>
+					</div>
+					<div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-3">
+						<label className="flex flex-col gap-1">
+							<span className="label-sm text-secondary">Column Name</span>
+							<Input
+								value={state.name}
+								onChange={(e) => setState((prev) => ({ ...prev, name: e.target.value }))}
+								placeholder="Custom Column"
 							/>
-							{state.showSuggestions ? (
-								<ul className="absolute right-0 left-0 z-10 mt-1 max-h-40 overflow-y-auto overscroll-contain rounded-lg border border-(--divider) bg-(--cards-bg) shadow-sm">
-									{state.suggestions.map((s, i) => (
-										<li
-											key={s.name || s}
-											className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-(--text-primary) ${
-												i === state.highlighted ? 'bg-(--primary-hover)' : ''
-											}`}
-											onMouseDown={(e) => {
-												e.stopPropagation()
-												handleSuggestionClick(s)
-											}}
-										>
-											{s.type === 'function' || s.type === 'operator' ? (
-												<span className="text-(--primary)">ƒ</span>
-											) : (
-												''
-											)}
-											<span>{s.name || s}</span>
-										</li>
-									))}
-								</ul>
-							) : null}
-						</div>
-					</label>
-					<label className="flex flex-col gap-1">
-						<span>Format</span>
-						<div>
-							<select
-								className="w-full rounded-md border border-(--form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-white"
-								value={state.formatType}
-								onChange={(e) => setState((prev) => ({ ...prev, formatType: e.target.value }))}
-							>
-								<option value="auto">Auto</option>
-								<option value="number">Number</option>
-								<option value="usd">USD</option>
-								<option value="percent">Percent</option>
-								<option value="string">String</option>
-								<option value="boolean">Boolean (checkmark)</option>
-							</select>
-							{state.formatType === 'auto' && state.formula.trim() && !hasFormulaError ? (
-								<div className="mt-1 text-sm text-(--text-secondary)">
-									Auto will format as:{' '}
-									{(() => {
-										const formulaWithPaths = replaceAliases(state.formula)
-										const result = evaluateFormula(formulaWithPaths, sampleRow)
-										if (!result.error) {
-											if (typeof result.value === 'boolean') return 'Boolean'
-											if (typeof result.value === 'number') {
-												if (result.value >= 0 && result.value <= 1) return 'Percent'
-												if (Math.abs(result.value) > 1000) return 'USD'
-												return 'Number'
+						</label>
+						<label className="flex flex-col gap-1">
+							<span className="label-sm text-secondary">Formula</span>
+							<div className="relative">
+								{state.fieldWarning && !state.error ? (
+									<div className="mb-2 flex items-center gap-2 rounded-sm border border-yellow-400 bg-yellow-100 px-3 py-2 text-sm font-semibold text-yellow-700">
+										<Icon name="help-circle" height={18} width={18} />
+										<span>{state.fieldWarning}</span>
+									</div>
+								) : null}
+								{state.error ? (
+									<div className="mb-2 flex items-center gap-2 rounded-sm border border-red-400 bg-red-100 px-3 py-2 text-sm font-semibold text-red-700">
+										<Icon name="alert-triangle" height={18} width={18} />
+										<span>{state.error}</span>
+									</div>
+								) : null}
+								<input
+									ref={inputRef}
+									className={`${inputStyles} w-full ${state.error ? 'border-red-400 focus:border-red-400' : ''}`}
+									value={state.formula}
+									onChange={handleFormulaChange}
+									onKeyDown={handleKeyDown}
+									placeholder="e.g. revenue_30d / tvl"
+									autoComplete="off"
+								/>
+								{state.showSuggestions ? (
+									<ul className="absolute right-0 left-0 z-10 mt-1 max-h-40 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1">
+										{state.suggestions.map((s, i) => (
+											<li
+												key={s.name || s}
+												className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-primary ${
+													i === state.highlighted ? 'bg-hover-row' : ''
+												}`}
+												onMouseDown={(e) => {
+													e.stopPropagation()
+													handleSuggestionClick(s)
+												}}
+											>
+												{s.type === 'function' || s.type === 'operator' ? <span className="text-link">ƒ</span> : ''}
+												<span>{s.name || s}</span>
+											</li>
+										))}
+									</ul>
+								) : null}
+							</div>
+						</label>
+						<label className="flex flex-col gap-1">
+							<span className="label-sm text-secondary">Format</span>
+							<div>
+								<select
+									className={`${inputStyles} w-full`}
+									value={state.formatType}
+									onChange={(e) => setState((prev) => ({ ...prev, formatType: e.target.value }))}
+								>
+									<option value="auto">Auto</option>
+									<option value="number">Number</option>
+									<option value="usd">USD</option>
+									<option value="percent">Percent</option>
+									<option value="string">String</option>
+									<option value="boolean">Boolean (checkmark)</option>
+								</select>
+								{state.formatType === 'auto' && state.formula.trim() && !hasFormulaError ? (
+									<div className="mt-1 body-sm text-secondary">
+										Auto will format as:{' '}
+										{(() => {
+											const formulaWithPaths = replaceAliases(state.formula)
+											const result = evaluateFormula(formulaWithPaths, sampleRow)
+											if (!result.error) {
+												if (typeof result.value === 'boolean') return 'Boolean'
+												if (typeof result.value === 'number') {
+													if (result.value >= 0 && result.value <= 1) return 'Percent'
+													if (Math.abs(result.value) > 1000) return 'USD'
+													return 'Number'
+												}
+												return 'String'
 											}
-											return 'String'
-										}
-										return 'Unknown'
-									})()}
-								</div>
-							) : null}
+											return 'Unknown'
+										})()}
+									</div>
+								) : null}
+							</div>
+						</label>
+						<div className="flex flex-col gap-1">
+							<p className="label-sm text-secondary">Available fields:</p>
+							<ul className="grid max-h-32 grid-cols-2 gap-x-4 gap-y-1 overflow-y-auto rounded-[8px] border border-medium bg-page p-2">
+								{AVAILABLE_FIELDS.map((f) => (
+									<li key={f}>
+										<code
+											className="cursor-pointer rounded-sm bg-surface px-1 py-0.5 text-link hover:bg-hover-row"
+											onClick={() => handleSuggestionClick({ name: f, type: 'field' })}
+										>
+											{f}
+										</code>
+									</li>
+								))}
+							</ul>
 						</div>
-					</label>
-					<div className="flex flex-col gap-1">
-						<p>Available fields:</p>
-						<ul className="grid max-h-32 grid-cols-2 gap-x-4 gap-y-1 overflow-y-auto rounded-md border border-(--form-control-border) bg-white p-2 dark:bg-black">
-							{AVAILABLE_FIELDS.map((f) => (
-								<li key={f}>
-									<code
-										className="cursor-pointer rounded-sm bg-(--bg-main) px-1 py-0.5 text-(--primary) hover:bg-(--divider)"
-										onClick={() => handleSuggestionClick({ name: f, type: 'field' })}
-									>
-										{f}
-									</code>
-								</li>
-							))}
-						</ul>
-					</div>
-					{state.formula.trim() && !hasFormulaError ? (
-						<div className="mb-2 text-sm">
-							<span className="font-semibold text-(--text-secondary)">Preview: </span>
-							<span className="rounded-sm bg-(--bg-main) px-2 py-1 text-(--text-primary)">{preview}</span>
+						{state.formula.trim() && !hasFormulaError ? (
+							<div className="body-sm">
+								<span className="font-semibold text-secondary">Preview: </span>
+								<span className="rounded-sm bg-page px-2 py-1 text-primary">{preview}</span>
+							</div>
+						) : null}
+						<div className="body-sm text-secondary">
+							<a
+								href="https://docs.llama.fi/analysts/custom-columns"
+								target="_blank"
+								className="text-link hover:underline"
+								rel="noreferrer"
+							>
+								Learn more on how to create custom columns
+							</a>
 						</div>
-					) : null}
-					<div className="text-sm text-(--text-secondary)">
-						<a
-							href="https://docs.llama.fi/analysts/custom-columns"
-							target="_blank"
-							className="text-(--primary) hover:underline"
-							rel="noreferrer"
-						>
-							Learn more on how to create custom columns
-						</a>
 					</div>
-					<div className="mt-4 flex justify-end gap-2">
-						<button
-							className="rounded-lg bg-transparent px-4 py-2 text-(--text-secondary) hover:bg-(--btn-hover-bg)"
-							onClick={dialogStore.toggle}
-						>
+					<div className="flex justify-end gap-2 border-t border-subtle bg-surface px-4 py-3">
+						<Button type="button" size="md" onClick={dialogStore.toggle}>
 							Cancel
-						</button>
-						<button
-							className="rounded-lg bg-(--primary) px-4 py-2 text-white shadow-md hover:bg-(--primary-hover)"
-							onClick={handleSave}
-						>
+						</Button>
+						<Button type="button" variant="primary" size="md" onClick={handleSave}>
 							Save
-						</button>
+						</Button>
 					</div>
 				</Ariakit.Dialog>
 			</Ariakit.DialogProvider>

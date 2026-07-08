@@ -1,3 +1,4 @@
+import { Card } from '~/ui/Card'
 import { formattedNum } from '~/utils'
 import { type Segment, segmentHasOi } from './segments'
 import { ChangeCell } from './shared'
@@ -6,11 +7,11 @@ import { pctChange, segmentTotals, sentimentCounts, TOP_N, topSymbols } from './
 
 function Stat({ label, value, sub }: { label: string; value: React.ReactNode; sub?: React.ReactNode }) {
 	return (
-		<div className="flex flex-1 flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-			<span className="text-xs text-(--text-label)">{label}</span>
-			<span className="font-jetbrains text-lg font-semibold">{value}</span>
-			{sub != null ? <span className="text-xs text-(--text-label)">{sub}</span> : null}
-		</div>
+		<Card padding="sm" border="subtle" className="flex flex-1 flex-col gap-1">
+			<span className="label-sm text-secondary">{label}</span>
+			<span className="mono-xl">{value}</span>
+			{sub != null ? <span className="label-sm text-secondary">{sub}</span> : null}
+		</Card>
 	)
 }
 

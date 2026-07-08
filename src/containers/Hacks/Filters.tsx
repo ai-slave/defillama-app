@@ -4,6 +4,8 @@ import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLay
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TagGroup } from '~/components/TagGroup'
 import { useRangeFilter } from '~/hooks/useRangeFilter'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
 type FormSubmitHandler = NonNullable<React.ComponentProps<'form'>['onSubmit']>
@@ -105,8 +107,8 @@ export function HacksFilters({
 	}
 
 	return (
-		<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-1">
-			<ResponsiveFilterLayout desktopClassName="hidden min-h-[68px] flex-wrap content-start items-center gap-2 min-[1400px]:min-h-[30px] sm:flex">
+		<Card border="subtle" padding="sm" className="flex flex-col gap-2">
+			<ResponsiveFilterLayout desktopClassName="hidden min-h-8 flex-wrap items-center gap-1.5 sm:flex">
 				{(nestedMenu) => (
 					<Filters
 						chainOptions={chainOptions}
@@ -128,7 +130,7 @@ export function HacksFilters({
 					/>
 				)}
 			</ResponsiveFilterLayout>
-		</div>
+		</Card>
 	)
 }
 
@@ -158,6 +160,7 @@ const Filters = ({
 				label="Chains"
 				labelType="smol"
 				variant="filter-responsive"
+				size="md"
 				nestedMenu={isMobile}
 				includeQueryKey="chain"
 				excludeQueryKey="excludeChain"
@@ -181,6 +184,7 @@ const Filters = ({
 				onSubmit={handleAmountSubmit}
 				onClear={handleAmountClear}
 				placement="bottom-start"
+				size="md"
 				nestedMenu={isMobile}
 			/>
 
@@ -190,6 +194,7 @@ const Filters = ({
 				label="Classification"
 				labelType="smol"
 				variant="filter-responsive"
+				size="md"
 				nestedMenu={isMobile}
 				includeQueryKey="class"
 				excludeQueryKey="excludeClass"
@@ -200,25 +205,24 @@ const Filters = ({
 				label="Techniques"
 				labelType="smol"
 				variant="filter-responsive"
+				size="md"
 				nestedMenu={isMobile}
 				includeQueryKey="tech"
 				excludeQueryKey="excludeTech"
 			/>
 
-			<div className="px-3 py-2 md:ml-auto md:flex-row md:items-center md:px-0 md:py-0">
+			<div className="px-3 py-2 sm:ml-auto sm:flex-row sm:items-center sm:px-0 sm:py-0">
 				<TagGroup setValue={setSelectedTime} selectedValue={selectedTimeLabel} values={timeOptions} />
 			</div>
-			<button
+			<Button
+				type="button"
+				size="md"
 				onClick={onClearAll}
 				disabled={!hasActiveFilters}
-				className={
-					isMobile
-						? 'relative flex w-full cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md px-3 py-2 text-(--text-primary) hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) disabled:cursor-not-allowed disabled:opacity-40'
-						: 'relative flex cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-40'
-				}
+				className={isMobile ? 'w-full justify-between' : undefined}
 			>
 				Reset filters
-			</button>
+			</Button>
 		</>
 	)
 }

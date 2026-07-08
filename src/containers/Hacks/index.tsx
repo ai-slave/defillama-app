@@ -22,6 +22,10 @@ import { TagGroup } from '~/components/TagGroup'
 import { Tooltip } from '~/components/Tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Card } from '~/ui/Card'
+import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar, TableToolbar } from '~/ui/Toolbar'
 import { firstDayOfMonth, formattedNum, toNiceDayMonthAndYear } from '~/utils'
 import { isParamNone, parseArrayParam, parseExcludeParam, parseNumberQueryParam } from '~/utils/routerQuery'
 import { HacksFilters } from './Filters'
@@ -71,29 +75,24 @@ function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 	}, [router.isReady, router.query.search, setProjectName])
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex items-center justify-end gap-2 p-3">
-				<label className="relative mr-auto w-full sm:max-w-[280px]">
+		<Panel>
+			<TableToolbar className="justify-end">
+				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search projects...</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
 						ref={searchInputRef}
 						name="search"
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search projects..."
-						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+						className={searchFieldInputStyles}
 					/>
 				</label>
 
-				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: 'hacks' })} smol free />
-			</div>
+				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: 'hacks' })} smol free size="md" />
+			</TableToolbar>
 			<VirtualTable instance={instance} />
-		</div>
+		</Panel>
 	)
 }
 
@@ -341,7 +340,11 @@ export const HacksContainer = ({
 				selectedClassifications={selectedClassifications}
 			/>
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-5 xl:col-span-1">
+				<Card
+					border="subtle"
+					padding="sm"
+					className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1"
+				>
 					<div className="flex flex-col">
 						<h1 className="text-(--text-label)">Total Value Hacked (USD)</h1>
 						<p className="font-jetbrains text-2xl font-semibold">{displayTotalHacked}</p>
@@ -354,16 +357,16 @@ export const HacksContainer = ({
 						<span className="text-(--text-label)">Total Value Hacked in Bridges (USD)</span>
 						<span className="font-jetbrains text-2xl font-semibold">{displayTotalRugs}</span>
 					</p>
-				</div>
-				<div className="col-span-2 flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0 *:first:mr-auto">
+				</Card>
+				<Panel className="col-span-2">
+					<ChartPanelToolbar className="justify-end *:first:mr-auto">
 						<TagGroup setValue={setChartType} selectedValue={chartType} values={chartTypeList} />
 						<ChartExportButtons
 							chartInstance={exportChartInstance}
 							filename="total-value-hacked"
 							title="Total Value Hacked"
 						/>
-					</div>
+					</ChartPanelToolbar>
 					{chartType === 'Monthly Sum' ? (
 						<React.Suspense fallback={<div className="min-h-[360px]" />}>
 							<MultiSeriesChart2
@@ -378,7 +381,7 @@ export const HacksContainer = ({
 							<PieChart chartData={deferredPieChartData} onReady={handleChartReady} />
 						</React.Suspense>
 					)}
-				</div>
+				</Panel>
 			</div>
 			<HacksTable data={filteredData} />
 		</>

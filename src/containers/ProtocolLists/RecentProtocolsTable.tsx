@@ -19,7 +19,6 @@ import { BasicLink } from '~/components/Link'
 import { PercentChange } from '~/components/PercentChange'
 import { QuestionHelper } from '~/components/QuestionHelper'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { Switch } from '~/components/Switch'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -27,6 +26,10 @@ import { Tooltip } from '~/components/Tooltip'
 import { removedCategoriesFromChainTvlSet } from '~/containers/ProtocolRankings/constants'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { Switch } from '~/ui/Switch'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug, toNiceDaysAgo } from '~/utils'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { IRecentProtocol } from './types'
@@ -131,27 +134,22 @@ export function RecentlyListedProtocolsTable({
 	}, [instance, categories, selectedCategories])
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-3">
-				<label className="relative mr-auto w-full sm:max-w-[280px]">
+		<Panel>
+			<TableToolbar className="justify-end">
+				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search protocols</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search protocols..."
-						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+						className={searchFieldInputStyles}
 					/>
 				</label>
 
-				<div className="flex items-start gap-2 max-sm:w-full max-sm:flex-col sm:items-center">
+				<div className="flex items-start gap-1.5 max-sm:w-full max-sm:flex-col sm:items-center">
 					{forkedList ? <HideForkedProtocols /> : null}
 
-					<div className="flex w-full items-center gap-2 sm:w-auto">
+					<div className="flex w-full items-center gap-1.5 sm:w-auto">
 						<SelectWithCombobox
 							label="Chains"
 							allValues={chainList}
@@ -160,6 +158,7 @@ export function RecentlyListedProtocolsTable({
 							excludeQueryKey="excludeChain"
 							labelType="smol"
 							variant="filter-responsive"
+							size="md"
 						/>
 						{categories.length > 0 ? (
 							<SelectWithCombobox
@@ -170,16 +169,17 @@ export function RecentlyListedProtocolsTable({
 								excludeQueryKey="excludeCategory"
 								labelType="smol"
 								variant="filter-responsive"
+								size="md"
 							/>
 						) : null}
-						<TVLRange triggerClassName="w-full sm:w-auto" />
+						<TVLRange triggerClassName="w-full sm:w-auto" size="md" />
 					</div>
 
-					<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: csvFileName })} smol />
+					<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: csvFileName })} smol size="md" />
 				</div>
-			</div>
+			</TableToolbar>
 			<VirtualTable instance={instance} />
-		</div>
+		</Panel>
 	)
 }
 
@@ -239,7 +239,7 @@ const protocolsColumns = [
 						{row.original?.deprecated ? (
 							<BasicLink
 								href={`/protocol/${slug(value)}`}
-								className="flex items-center gap-1 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+								className="flex items-center gap-1 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 							>
 								<span className="overflow-hidden text-ellipsis whitespace-nowrap hover:underline">{value}</span>
 								<Tooltip content="Deprecated" className="text-(--error)">
@@ -249,7 +249,7 @@ const protocolsColumns = [
 						) : (
 							<BasicLink
 								href={`/protocol/${slug(value)}`}
-								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 							>
 								{`${value}`}
 							</BasicLink>
@@ -287,10 +287,7 @@ const protocolsColumns = [
 		cell: ({ getValue }) => {
 			const value = getValue()
 			return value ? (
-				<BasicLink
-					href={getCategoryRoute(slug(value))}
-					className="text-sm font-medium whitespace-nowrap text-(--link-text)"
-				>
+				<BasicLink href={getCategoryRoute(slug(value))} className="text-sm font-medium whitespace-nowrap text-link">
 					{value}
 				</BasicLink>
 			) : (
@@ -402,7 +399,7 @@ function ProtocolTvlCell({ value, rowValues }: { value: unknown; rowValues: Prot
 			) : null}
 			<span
 				style={{
-					color: rowValues.strikeTvl ? 'var(--text-disabled)' : 'inherit'
+					color: rowValues.strikeTvl ? 'var(--color-tertiary)' : 'inherit'
 				}}
 			>
 				{tvlValue != null ? formattedNum(tvlValue, true) : null}

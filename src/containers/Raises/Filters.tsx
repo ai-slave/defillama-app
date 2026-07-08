@@ -5,6 +5,8 @@ import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLay
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { RaisesSearch } from '~/containers/Raises/Search'
 import { useRangeFilter } from '~/hooks/useRangeFilter'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
 interface IDropdownMenusProps {
@@ -25,11 +27,11 @@ interface IDropdownMenusProps {
 export function RaisesFilters(props: IDropdownMenusProps) {
 	const HeadingTag = props.headingAs ?? 'h2'
 	return (
-		<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-			<HeadingTag className="text-lg font-semibold">{props.header}</HeadingTag>
+		<Card border="subtle" padding="sm" className="flex flex-col gap-2">
+			<HeadingTag className="heading-xs">{props.header}</HeadingTag>
 			<RaisesSearch list={props.investors} />
 			<ResponsiveFilterLayout>{(nestedMenu) => <Filters {...props} nestedMenu={nestedMenu} />}</ResponsiveFilterLayout>
-		</div>
+		</Card>
 	)
 }
 
@@ -119,7 +121,9 @@ function Filters({
 
 			<RaisedRange nestedMenu={nestedMenu} placement="bottom-start" />
 
-			<button
+			<Button
+				type="button"
+				size="md"
 				onClick={() => {
 					// Clear only query params while keeping the route.
 					void pushShallowQuery(
@@ -140,10 +144,9 @@ function Filters({
 					)
 				}}
 				disabled={!hasActiveFilters}
-				className="relative flex cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-40"
 			>
 				Reset all filters
-			</button>
+			</Button>
 		</>
 	)
 }

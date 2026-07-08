@@ -295,7 +295,7 @@ const ShowcaseSection = ({
 }) => (
 	<section className="mx-auto max-w-[1100px] px-4 py-12 sm:px-6 md:px-8 md:py-20">
 		<div
-			className={`grid grid-cols-1 items-center gap-8 md:gap-[60px] ${reversed ? 'md:grid-cols-[45fr_55fr]' : 'md:grid-cols-[55fr_45fr]'}`}
+			className={`grid grid-cols-1 items-center gap-8 md:gap-15 ${reversed ? 'md:grid-cols-[45fr_55fr]' : 'md:grid-cols-[55fr_45fr]'}`}
 		>
 			<div className={reversed ? 'md:order-2' : ''}>
 				<p className="mb-3 text-[13px] font-semibold tracking-[2px] text-[#2172E5] uppercase">{overline}</p>
@@ -467,7 +467,7 @@ export default function SheetsContainer() {
 
 	return (
 		<>
-			<section className="mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-4 pt-12 pb-[60px] sm:px-6 md:grid-cols-2 md:gap-[60px] md:px-8 md:pt-20">
+			<section className="mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-4 pt-12 pb-15 sm:px-6 md:grid-cols-2 md:gap-15 md:px-8 md:pt-20">
 				<div className="flex flex-col gap-5">
 					<h2 className="text-[24px] font-bold tracking-[-0.02em] text-[#2172E5]">DefiLlama Sheets</h2>
 					<h1 className="text-[clamp(32px,4vw,48px)] leading-[1.15] font-extrabold tracking-[-0.03em]">

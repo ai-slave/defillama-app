@@ -26,7 +26,7 @@ export function PinnedPages({ pinnedPages, asPath }: { pinnedPages: Array<TNavLi
 				{pinnedPages.length > 1 ? (
 					<button
 						type="button"
-						className={`inline-flex rounded-md px-2 py-1 text-[11px] font-semibold tracking-wide text-(--text-tertiary) uppercase hover:bg-black/5 focus-visible:bg-black/5 dark:hover:bg-white/10 dark:focus-visible:bg-white/10 ${
+						className={`inline-flex rounded-md px-2 py-1 label-sm tracking-wide text-(--text-tertiary) uppercase hover:bg-black/5 focus-visible:bg-black/5 dark:hover:bg-white/10 dark:focus-visible:bg-white/10 ${
 							isReordering ? '' : 'invisible group-focus-within/pinned:visible group-hover/pinned:visible'
 						}`}
 						onClick={() => setIsReordering((value) => !value)}
@@ -37,7 +37,7 @@ export function PinnedPages({ pinnedPages, asPath }: { pinnedPages: Array<TNavLi
 			</div>
 			{isReordering ? (
 				<>
-					<p className="text-[11px] text-(--text-tertiary)">Drag to reorder, click X to unpin</p>
+					<p className="body-sm text-(--text-tertiary)">Drag to reorder, click X to unpin</p>
 					<React.Suspense fallback={<div className="min-h-[40px]" />}>
 						<ReorderablePinnedPages pinnedPages={pinnedPages} />
 					</React.Suspense>

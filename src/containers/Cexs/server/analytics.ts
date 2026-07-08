@@ -2,7 +2,7 @@ import type {
 	CexAnalyticsMarketSharePoint,
 	CexAnalyticsSnapshotResponse,
 	CexAnalyticsTotalsPoint
-} from '~/containers/ProDashboard/types'
+} from '~/containers/Cexs/api.types'
 import { llamaDb } from '~/server/db/llama'
 import metadataCache from '~/utils/metadata'
 

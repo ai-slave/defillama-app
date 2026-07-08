@@ -4,6 +4,14 @@ import { useRouter } from 'next/router'
 import { startTransition, useMemo, useRef, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { LoadingSpinner } from '~/components/Loaders'
+import { searchFieldInputStyles } from '~/ui/Input'
+import {
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName,
+	popoverMenuItemStyles,
+	popoverSeeMoreStyles,
+	popoverSurfaceStyles
+} from '~/ui/Popover'
 import { slug } from '~/utils'
 
 export function RaisesSearch({ list }: { list?: string[] }) {
@@ -56,11 +64,11 @@ export function RaisesSearch({ list }: { list?: string[] }) {
 					hideOnInteractOutside
 					gutter={6}
 					wrapperProps={{
-						className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! w-full!'
+						className: `${popoverMobileWrapperClassName} w-full!`
 					}}
-					className="z-10 flex thin-scrollbar max-h-(--popover-available-height) flex-col overflow-auto overscroll-contain rounded-b-md border border-t-0 border-(--cards-border) bg-(--cards-bg) max-sm:h-[calc(100dvh-80px)] max-sm:drawer"
+					className={`${popoverSurfaceStyles} thin-scrollbar max-h-(--popover-available-height)`}
 				>
-					<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
+					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 						<Icon name="x" className="size-5" />
 					</Ariakit.PopoverDismiss>
 					{matches.length ? (
@@ -73,7 +81,7 @@ export function RaisesSearch({ list }: { list?: string[] }) {
 									value="__see_more__"
 									setValueOnClick={false}
 									hideOnClick={false}
-									className="w-full cursor-pointer px-4 pt-4 pb-7 text-left text-(--link) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-active-item:bg-(--link-hover-bg)"
+									className={popoverSeeMoreStyles}
 									onClick={handleSeeMore}
 								>
 									See more...
@@ -81,7 +89,7 @@ export function RaisesSearch({ list }: { list?: string[] }) {
 							) : null}
 						</Ariakit.ComboboxList>
 					) : (
-						<p className="px-3 py-6 text-center text-(--text-primary)">No results found</p>
+						<p className="px-3 py-6 text-center body-sm text-primary">No results found</p>
 					)}
 				</Ariakit.ComboboxPopover>
 			</Ariakit.ComboboxProvider>
@@ -105,11 +113,15 @@ function Input({ open, setOpen, placeholder, hideIcon, onSearchTermChange }: IIn
 	return (
 		<>
 			{!hideIcon ? (
-				<button onClick={() => setOpen?.((prev) => !prev)} className="absolute top-2 left-2 opacity-50">
+				<button
+					type="button"
+					onClick={() => setOpen?.((prev) => !prev)}
+					className="absolute top-0 bottom-0 left-3 my-auto text-tertiary hover:text-primary focus-visible:text-primary"
+				>
 					{open ? (
 						<>
 							<span className="sr-only">Close Search</span>
-							<Icon name="x" height={18} width={18} />
+							<Icon name="x" height={16} width={16} />
 						</>
 					) : (
 						<>
@@ -127,7 +139,7 @@ function Input({ open, setOpen, placeholder, hideIcon, onSearchTermChange }: IIn
 				onChange={(e) => {
 					onSearchTermChange?.(e.target.value)
 				}}
-				className="w-full rounded-md border border-(--cards-border) bg-(--app-bg) px-2 py-1 pl-7 text-black dark:text-white"
+				className={searchFieldInputStyles}
 			/>
 		</>
 	)
@@ -152,7 +164,7 @@ const Row = ({ name, setOpen }: { name: string; setOpen: (open: boolean) => void
 			hideOnClick={false}
 			setValueOnClick={false}
 			disabled={loading}
-			className="flex cursor-pointer items-center gap-4 p-3 text-(--text-primary) outline-hidden hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) aria-disabled:opacity-50 data-active-item:bg-(--primary-hover)"
+			className={`${popoverMenuItemStyles} aria-disabled:opacity-50`}
 		>
 			<span>{name}</span>
 			{loading ? <LoadingSpinner size={12} /> : null}

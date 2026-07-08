@@ -19,6 +19,10 @@ import { Tooltip } from '~/components/Tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import { useYieldChartData } from '~/containers/Yields/queries.client'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Button, buttonStyles } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import type { IRWAAssetData } from './api.types'
@@ -29,6 +33,7 @@ import { rwaSlug } from './rwaSlug'
 import { RWAYieldsTable } from './RWAYieldsTable'
 
 const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const assetHeaderLinkButtonStyles = buttonStyles({ variant: 'secondary', size: 'md' })
 
 interface ClassificationItemProps {
 	label: string
@@ -50,7 +55,7 @@ const ClassificationItem = ({ label, value, positive, description }: Classificat
 					? positive
 						? 'border-green-600/30 bg-green-600/10'
 						: 'border-red-600/30 bg-red-600/10'
-					: 'border-(--cards-border) bg-(--cards-bg)'
+					: 'border-subtle bg-surface'
 			}`}
 		>
 			<p className="flex flex-col gap-1">
@@ -60,12 +65,12 @@ const ClassificationItem = ({ label, value, positive, description }: Classificat
 							? positive
 								? 'text-green-700 dark:text-green-400'
 								: 'text-red-700 dark:text-red-400'
-							: 'text-(--text-label)'
+							: 'text-secondary'
 					}`}
 				>
 					{label}
 				</span>
-				{description ? <span className="text-sm text-(--text-disabled)">{description}</span> : null}
+				{description ? <span className="body-sm text-secondary">{description}</span> : null}
 			</p>
 			{isBoolean ? (
 				<Icon
@@ -103,7 +108,7 @@ const KYCItem = ({
 				>
 					{label}
 				</span>
-				{description ? <span className="text-sm text-(--text-disabled)">{description}</span> : null}
+				{description ? <span className="body-sm text-secondary">{description}</span> : null}
 			</p>
 			<Icon
 				name={required ? 'alert-triangle' : 'check-circle'}
@@ -114,10 +119,10 @@ const KYCItem = ({
 }
 
 const SectionCard = ({ title, children }: { title: React.ReactNode; children: React.ReactNode }) => (
-	<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-		<h2 className="font-semibold">{title}</h2>
+	<section className="flex flex-col gap-2">
+		<h2 className="heading-xs">{title}</h2>
 		{children}
-	</div>
+	</section>
 )
 
 type DefiActiveTvlBreakdownRow = {
@@ -183,7 +188,7 @@ function DefiActiveTvlBreakdownTable({ breakdown, total }: { breakdown: Array<[s
 		getPaginationRowModel: getPaginationRowModel()
 	})
 
-	return <PaginatedTable table={table} pageSizeOptions={DEFI_ACTIVE_TVL_BREAKDOWN_PAGE_SIZE_OPTIONS} />
+	return <PaginatedTable table={table} pageSizeOptions={DEFI_ACTIVE_TVL_BREAKDOWN_PAGE_SIZE_OPTIONS} shell="none" />
 }
 
 const ContractItem = ({ address, explorerUrl }: { address: string; explorerUrl?: string }) => {
@@ -195,13 +200,13 @@ const ContractItem = ({ address, explorerUrl }: { address: string; explorerUrl?:
 					href={explorerUrl}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="flex items-center gap-1 text-xs break-all hover:underline"
+					className="flex items-center gap-1 label-sm break-all hover:underline"
 				>
 					{truncatedAddress}
 					<Icon name="external-link" className="size-3 shrink-0" />
 				</a>
 			) : (
-				<p className="flex items-center gap-1 text-xs break-all">
+				<p className="flex items-center gap-1 label-sm break-all">
 					<span>{truncatedAddress}</span>
 					<CopyHelper toCopy={address} className="size-3" />
 				</p>
@@ -224,8 +229,8 @@ function getChainMetricValue(breakdown: Array<[string, number]> | undefined, cha
 }
 
 const ChainMetricItem = ({ label, value }: { label: string; value: number | null }) => (
-	<div className="flex items-center justify-between gap-2 text-xs">
-		<dt className="text-(--text-disabled)">{label}</dt>
+	<div className="flex items-center justify-between gap-2 label-sm">
+		<dt className="text-secondary">{label}</dt>
 		<dd className="text-right font-jetbrains font-medium whitespace-nowrap">
 			{value == null ? '-' : formattedNum(value, true)}
 		</dd>
@@ -248,15 +253,15 @@ const ChainBadge = ({
 	metrics: ChainMetricValues
 }) => {
 	return (
-		<div className="flex items-start gap-1.5 rounded-md border border-(--cards-border) p-2">
+		<Card padding="sm" border="subtle" className="flex items-start gap-1.5">
 			<img src={chainIconUrl(chain)} alt={chain} className="mt-0.5 size-5 rounded-full" loading="lazy" />
 			<div className="flex min-w-0 flex-1 flex-col">
 				<div className="flex items-center gap-1.5">
-					<p className="text-sm font-medium">{chain}</p>
+					<p className="label-md">{chain}</p>
 					{isPrimary && showPrimaryStyle ? (
-						<p className="rounded-full border border-blue-500/30 bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:text-blue-300">
+						<span className="rounded-full border border-brand bg-brand-muted px-1.5 py-0.5 label-sm text-link">
 							Primary
-						</p>
+						</span>
 					) : null}
 				</div>
 				{contracts && contracts.length > 0 ? (
@@ -266,13 +271,13 @@ const ChainBadge = ({
 						))}
 					</>
 				) : null}
-				<dl className="mt-1.5 grid gap-1 border-t border-(--cards-border) pt-1.5">
+				<dl className="mt-1.5 grid gap-1 border-t border-very-subtle pt-1.5">
 					<ChainMetricItem label={definitions.onChainMcap.label} value={metrics.onChainMcap} />
 					<ChainMetricItem label={definitions.activeMcap.label} value={metrics.activeMcap} />
 					<ChainMetricItem label={definitions.defiActiveTvl.label} value={metrics.defiActiveTvl} />
 				</dl>
 			</div>
-		</div>
+		</Card>
 	)
 }
 
@@ -340,111 +345,78 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 	return (
 		<div className="flex flex-col gap-2">
 			{/* Header */}
-			<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+			<Card padding="sm" border="subtle" className="flex flex-col gap-2">
 				<div className="flex flex-wrap items-center gap-2">
-					<h1 className="text-xl font-bold">{displayName}</h1>
-					{asset.ticker ? <p className="text-(--text-disabled)">({asset.ticker})</p> : null}
+					<h1 className="heading-xs">{displayName}</h1>
+					{asset.ticker ? <p className="body-md text-tertiary">({asset.ticker})</p> : null}
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
 					{asset.website ? (
 						asset.website.length > 1 ? (
-							<Menu
-								name="Website"
-								options={asset.website}
-								isExternal
-								className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
-							/>
+							<Menu name="Website" options={asset.website} isExternal className={assetHeaderLinkButtonStyles} />
 						) : (
-							<a
+							<Button
+								as="a"
 								key={asset.website[0]}
 								href={asset.website[0]}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
+								size="md"
 							>
 								<Icon name="external-link" className="size-3" />
 								Website
-							</a>
+							</Button>
 						)
 					) : null}
 					{asset.twitter ? (
 						asset.twitter.length > 1 ? (
-							<Menu
-								name="Twitter"
-								options={asset.twitter}
-								isExternal
-								className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
-							/>
+							<Menu name="Twitter" options={asset.twitter} isExternal className={assetHeaderLinkButtonStyles} />
 						) : (
-							<a
+							<Button
+								as="a"
 								key={asset.twitter[0]}
 								href={asset.twitter[0]}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
+								size="md"
 							>
 								<Icon name="external-link" className="size-3" />
 								Twitter
-							</a>
+							</Button>
 						)
 					) : null}
 					{asset.linkedin ? (
-						<a
-							href={asset.linkedin}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
-						>
+						<Button as="a" href={asset.linkedin} target="_blank" rel="noopener noreferrer" size="md">
 							<Icon name="external-link" className="size-3" />
 							LinkedIn
-						</a>
+						</Button>
 					) : null}
 					{asset.docs ? (
-						<a
-							href={asset.docs}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
-						>
+						<Button as="a" href={asset.docs} target="_blank" rel="noopener noreferrer" size="md">
 							<Icon name="external-link" className="size-3" />
 							Docs
-						</a>
+						</Button>
 					) : null}
 					{asset.rwaGithub != null ? (
-						<a
-							href={asset.rwaGithub}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
-						>
+						<Button as="a" href={asset.rwaGithub} target="_blank" rel="noopener noreferrer" size="md">
 							<Icon name="external-link" className="size-3" />
 							GitHub
-						</a>
+						</Button>
 					) : null}
 					{typeof asset.discord === 'string' ? (
-						<a
-							href={asset.discord}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
-						>
+						<Button as="a" href={asset.discord} target="_blank" rel="noopener noreferrer" size="md">
 							<Icon name="external-link" className="size-3" />
 							Discord
-						</a>
+						</Button>
 					) : null}
 					{typeof asset.telegram === 'string' ? (
-						<a
-							href={asset.telegram}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
-						>
+						<Button as="a" href={asset.telegram} target="_blank" rel="noopener noreferrer" size="md">
 							<Icon name="external-link" className="size-3" />
 							Telegram
-						</a>
+						</Button>
 					) : null}
 				</div>
-			</div>
+			</Card>
 
 			{/* Stats Row */}
 			<div className="flex flex-col gap-2 lg:flex-row">
@@ -459,11 +431,9 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							definitions.onChainMcap.description
 						)
 					}
-					render={
-						<p className="flex flex-1 flex-col items-start gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3" />
-					}
+					render={<Card padding="sm" border="subtle" className="flex flex-1 flex-col items-start gap-1" />}
 				>
-					<span className="text-(--text-label) underline decoration-dotted">{definitions.onChainMcap.label}</span>
+					<span className="text-secondary underline decoration-dotted">{definitions.onChainMcap.label}</span>
 					<span className="font-jetbrains text-xl font-semibold">
 						{onChainMcap?.total != null ? formattedNum(onChainMcap.total, true) : '-'}
 					</span>
@@ -480,11 +450,9 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							definitions.activeMcap.description
 						)
 					}
-					render={
-						<p className="flex flex-1 flex-col items-start gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3" />
-					}
+					render={<Card padding="sm" border="subtle" className="flex flex-1 flex-col items-start gap-1" />}
 				>
-					<span className="text-(--text-label) underline decoration-dotted">{definitions.activeMcap.label}</span>
+					<span className="text-secondary underline decoration-dotted">{definitions.activeMcap.label}</span>
 					<span className="font-jetbrains text-xl font-semibold">
 						{activeMcap?.total != null ? formattedNum(activeMcap.total, true) : '-'}
 					</span>
@@ -501,37 +469,35 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							definitions.defiActiveTvl.description
 						)
 					}
-					render={
-						<p className="flex flex-1 flex-col items-start gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3" />
-					}
+					render={<Card padding="sm" border="subtle" className="flex flex-1 flex-col items-start gap-1" />}
 				>
-					<span className="text-(--text-label) underline decoration-dotted">{definitions.defiActiveTvl.label}</span>
+					<span className="text-secondary underline decoration-dotted">{definitions.defiActiveTvl.label}</span>
 					<span className="font-jetbrains text-xl font-semibold">
 						{defiActiveTv?.total != null ? formattedNum(defiActiveTv.total, true) : '$0'}
 					</span>
 				</Tooltip>
 
 				{asset.price != null ? (
-					<p className="flex flex-1 flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-						<span className="text-(--text-label)">{asset.ticker ?? 'Token'} Price</span>
+					<Card padding="sm" border="subtle" className="flex flex-1 flex-col gap-1">
+						<span className="text-secondary">{asset.ticker ?? 'Token'} Price</span>
 						<span className="font-jetbrains text-xl font-semibold">{formattedNum(asset.price, true)}</span>
-					</p>
+					</Card>
 				) : null}
-				<p className="flex flex-1 flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-					<span className="text-(--text-label)">Chains</span>
+				<Card padding="sm" border="subtle" className="flex flex-1 flex-col gap-1">
+					<span className="text-secondary">Chains</span>
 					<span className="font-jetbrains text-xl font-semibold">{asset.chain?.length ?? 0}</span>
-				</p>
+				</Card>
 				{asset.nativeYieldCurrent != null ? (
-					<p className="flex flex-1 flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-						<span className="text-(--text-label)">Native Yield</span>
+					<Card padding="sm" border="subtle" className="flex flex-1 flex-col gap-1">
+						<span className="text-secondary">Native Yield</span>
 						<span className="font-jetbrains text-xl font-semibold">{asset.nativeYieldCurrent.toFixed(2)}%</span>
-					</p>
+					</Card>
 				) : null}
 			</div>
 
 			{asset.chartDataset && asset.chartDataset.source.length > 0 ? (
-				<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<Suspense fallback={<div className="min-h-[398px]" />}>
+				<Panel>
+					<Suspense fallback={<div className="min-h-[406px]" />}>
 						<MultiSeriesChart2
 							charts={timeSeriesCharts}
 							dataset={asset.chartDataset}
@@ -544,7 +510,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							}}
 						/>
 					</Suspense>
-				</div>
+				</Panel>
 			) : null}
 
 			<div className="grid gap-2 lg:grid-cols-2">
@@ -553,10 +519,10 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 					{/* Token Properties */}
 					<SectionCard title="Token Properties">
 						<div className="grid grid-cols-2 gap-2">
-							<p className="flex flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+							<Card padding="sm" border="subtle" className="flex flex-col gap-1">
 								<Tooltip
 									content={definitions.category.description}
-									className="text-(--text-label) underline decoration-dotted"
+									className="text-secondary underline decoration-dotted"
 								>
 									{definitions.category.label}
 								</Tooltip>
@@ -564,10 +530,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 									<span className="flex flex-wrap items-center gap-1 font-medium">
 										{asset.category.map((category, idx) => (
 											<span key={category} className="flex items-center gap-0.5">
-												<BasicLink
-													href={`/rwa/category/${rwaSlug(category)}`}
-													className="text-(--link-text) hover:underline"
-												>
+												<BasicLink href={`/rwa/category/${rwaSlug(category)}`} className="text-link hover:underline">
 													{category}
 												</BasicLink>
 												{definitions.category.values?.[category] ? (
@@ -580,11 +543,11 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 								) : (
 									<span className="font-medium">-</span>
 								)}
-							</p>
-							<p className="flex flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+							</Card>
+							<Card padding="sm" border="subtle" className="flex flex-col gap-1">
 								<Tooltip
 									content={definitions.assetClass.description}
-									className="text-(--text-label) underline decoration-dotted"
+									className="text-secondary underline decoration-dotted"
 								>
 									{definitions.assetClass.label}
 								</Tooltip>
@@ -603,34 +566,31 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 								) : (
 									<span className="font-medium">-</span>
 								)}
-							</p>
-							<p className="flex flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-								<Tooltip
-									content={definitions.type.description}
-									className="text-(--text-label) underline decoration-dotted"
-								>
+							</Card>
+							<Card padding="sm" border="subtle" className="flex flex-col gap-1">
+								<Tooltip content={definitions.type.description} className="text-secondary underline decoration-dotted">
 									{definitions.type.label}
 								</Tooltip>
 								<span className="font-medium">{asset.type || '-'}</span>
-							</p>
-							<p className="flex flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+							</Card>
+							<Card padding="sm" border="subtle" className="flex flex-col gap-1">
 								<Tooltip
 									content={definitions.rwaClassification.description}
-									className="text-(--text-label) underline decoration-dotted"
+									className="text-secondary underline decoration-dotted"
 								>
 									{definitions.rwaClassification.label}
 								</Tooltip>
-								<span className={`flex items-center gap-1 font-medium ${asset.trueRWA ? 'text-(--success)' : ''}`}>
+								<span className={`flex items-center gap-1 font-medium ${asset.trueRWA ? 'text-data-up' : ''}`}>
 									{asset.rwaClassification || '-'}
 									{asset.rwaClassificationDescription ? (
 										<QuestionHelper text={asset.rwaClassificationDescription} />
 									) : null}
 								</span>
-							</p>
-							<p className="flex flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+							</Card>
+							<Card padding="sm" border="subtle" className="flex flex-col gap-1">
 								<Tooltip
 									content={definitions.accessModel.description}
-									className="text-(--text-label) underline decoration-dotted"
+									className="text-secondary underline decoration-dotted"
 								>
 									{definitions.accessModel.label}
 								</Tooltip>
@@ -638,24 +598,21 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 									{asset.accessModel || '-'}
 									{asset.accessModelDescription ? <QuestionHelper text={asset.accessModelDescription} /> : null}
 								</span>
-							</p>
+							</Card>
 							{hasParentPlatformName ? (
-								<p className="flex flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-									<span className="text-(--text-label)">Parent Platform</span>
+								<Card padding="sm" border="subtle" className="flex flex-col gap-1">
+									<span className="text-secondary">Parent Platform</span>
 									<span className="flex flex-wrap items-center gap-x-1 font-medium">
 										{parentPlatforms.map((platform, idx) => (
 											<span key={`${platform}-${idx}`} className="flex items-center gap-0.5">
-												<BasicLink
-													href={`/rwa/platform/${rwaSlug(platform)}`}
-													className="text-(--link-text) hover:underline"
-												>
+												<BasicLink href={`/rwa/platform/${rwaSlug(platform)}`} className="text-link hover:underline">
 													{platform}
 												</BasicLink>
 												{idx < parentPlatforms.length - 1 ? ',' : null}
 											</span>
 										))}
 									</span>
-								</p>
+								</Card>
 							) : null}
 						</div>
 					</SectionCard>
@@ -710,7 +667,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							<p className="flex flex-col gap-1">
 								<Tooltip
 									content={definitions.issuer.description}
-									className="text-(--text-label) underline decoration-dotted"
+									className="text-secondary underline decoration-dotted"
 								>
 									{definitions.issuer.label}
 								</Tooltip>
@@ -720,7 +677,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 								<p className="flex flex-col gap-1">
 									<Tooltip
 										content={definitions.isin.description}
-										className="text-(--text-label) underline decoration-dotted"
+										className="text-secondary underline decoration-dotted"
 									>
 										{definitions.isin.label}
 									</Tooltip>
@@ -731,7 +688,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 								<p className="flex flex-col gap-1">
 									<Tooltip
 										content={definitions.registryInformation.description}
-										className="text-(--text-label) underline decoration-dotted"
+										className="text-secondary underline decoration-dotted"
 									>
 										{definitions.registryInformation.label}
 									</Tooltip>
@@ -742,7 +699,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 								<p className="flex flex-col gap-1">
 									<Tooltip
 										content={definitions.source.description}
-										className="text-(--text-label) underline decoration-dotted"
+										className="text-secondary underline decoration-dotted"
 									>
 										{definitions.source.label}
 									</Tooltip>
@@ -752,7 +709,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 											href={link}
 											target="_blank"
 											rel="noopener noreferrer"
-											className="flex items-center gap-1 font-medium break-all text-(--link-text) hover:underline"
+											className="flex items-center gap-1 font-medium break-all text-link hover:underline"
 										>
 											<Icon name="external-link" className="size-4 shrink-0" />
 											{link}
@@ -771,21 +728,21 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 									href={asset.oracleProofLink}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="flex items-center justify-between gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 hover:bg-(--link-hover-bg)"
+									className="flex items-center justify-between gap-2 rounded-[8px] border border-subtle bg-surface p-2 hover:bg-hover-row"
 								>
 									<span className="flex items-center gap-2">
-										<Icon name="check-circle" className="size-4 text-(--text-label)" />
+										<Icon name="check-circle" className="size-4 text-secondary" />
 										<span className="flex flex-col">
-											<span className="text-sm font-medium">{asset.oracleProvider ?? 'Oracle Proof'}</span>
-											<span className="text-xs text-(--text-disabled)">View oracle proof details</span>
+											<span className="label-md">{asset.oracleProvider ?? 'Oracle Proof'}</span>
+											<span className="label-sm text-secondary">View oracle proof details</span>
 										</span>
 									</span>
-									<Icon name="external-link" className="size-3 text-(--text-disabled)" />
+									<Icon name="external-link" className="size-3 text-tertiary" />
 								</a>
 							) : (
-								<p className="flex items-center justify-between gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-									<span className="text-sm font-medium">{asset.oracleProvider}</span>
-								</p>
+								<Card padding="sm" border="subtle" className="flex items-center justify-between gap-2">
+									<span className="label-md">{asset.oracleProvider}</span>
+								</Card>
 							)}
 						</SectionCard>
 					) : null}
@@ -801,13 +758,13 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 						>
 							{asset.dateOfLastAttestation != null ? (
 								<p className="mb-2 flex flex-col gap-1">
-									<span className="text-(--text-label)">Date of Last Attestation</span>
+									<span className="text-secondary">Date of Last Attestation</span>
 									<span className="font-medium">{asset.dateOfLastAttestation}</span>
 								</p>
 							) : null}
 							{attestationFrequency != null ? (
 								<p className="mb-2 flex flex-col gap-1">
-									<span className="text-(--text-label)">Attestation Frequency</span>
+									<span className="text-secondary">Attestation Frequency</span>
 									<span className="font-medium">{attestationFrequency}</span>
 								</p>
 							) : null}
@@ -817,16 +774,16 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 									href={link}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="flex items-center justify-between gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 hover:bg-(--link-hover-bg)"
+									className="flex items-center justify-between gap-2 rounded-[8px] border border-subtle bg-surface p-2 hover:bg-hover-row"
 								>
 									<span className="flex items-center gap-2">
-										<Icon name="check-circle" className="size-4 text-(--text-label)" />
+										<Icon name="check-circle" className="size-4 text-secondary" />
 										<span className="flex flex-col">
-											<span className="text-sm font-medium">View Attestations</span>
-											<span className="text-xs text-(--text-disabled)">Third-party verification reports</span>
+											<span className="label-md">View Attestations</span>
+											<span className="label-sm text-secondary">Third-party verification reports</span>
 										</span>
 									</span>
-									<Icon name="external-link" className="size-3 text-(--text-disabled)" />
+									<Icon name="external-link" className="size-3 text-tertiary" />
 								</a>
 							))}
 						</SectionCard>
@@ -836,13 +793,14 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 
 			{/* Description Notes */}
 			{asset.descriptionNotes ? (
-				<SectionCard title="Notes">
-					<ul className="list-disc space-y-1 pl-5 text-sm text-(--text-secondary)">
+				<Card as="section" padding="sm" border="subtle" className="flex flex-col gap-3">
+					<h2 className="heading-xs">Notes</h2>
+					<ul className="flex list-disc flex-col gap-2 pl-5 body-md text-primary">
 						{asset.descriptionNotes.map((note, idx) => (
 							<li key={`${keyBase}-note-${idx}-${note.slice(0, 50)}`}>{note}</li>
 						))}
 					</ul>
-				</SectionCard>
+				</Card>
 			) : null}
 
 			{defiActiveTv?.breakdown != null && defiActiveTv.breakdown.length > 0 ? (
@@ -856,13 +814,11 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 					className={`grid gap-2 ${(isLoadingYieldChart || nativeYieldDataset) && displayPools.length > 0 ? 'lg:grid-cols-2' : ''}`}
 				>
 					{asset.nativeYieldPoolId && (isLoadingYieldChart || nativeYieldDataset) ? (
-						<div className="relative flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
+						<Panel className="overflow-hidden">
 							<div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-[#cc3e82] to-transparent" />
-							<div className="flex flex-wrap items-start justify-end gap-2 p-3 pb-0">
+							<ChartPanelToolbar className="items-start">
 								<p className="mr-auto flex flex-col">
-									<span className="text-xs font-medium tracking-wide text-(--text-disabled) uppercase">
-										Native Yield
-									</span>
+									<span className="label-sm text-secondary uppercase">Native Yield</span>
 									{asset.nativeYieldCurrent != null ? (
 										<span className="font-jetbrains text-3xl font-bold tracking-tight text-[#cc3e82]">
 											{asset.nativeYieldCurrent.toFixed(2)}%
@@ -874,10 +830,14 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 									filename={nativeYieldExportFilename}
 									title={nativeYieldExportTitle}
 								/>
-							</div>
+							</ChartPanelToolbar>
 
 							{isLoadingYieldChart ? (
-								<p className="flex min-h-[360px] flex-1 items-center justify-center gap-1">
+								<p
+									role="status"
+									aria-live="polite"
+									className="flex min-h-[360px] flex-1 items-center justify-center gap-1 body-sm text-tertiary"
+								>
 									Loading
 									<LoadingDots />
 								</p>
@@ -896,13 +856,13 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							)}
 
 							{asset.issuer ? (
-								<p className="p-3 pt-0 text-xs text-(--text-disabled)">Historical APY from {asset.issuer}</p>
+								<p className="px-2 pb-2 label-sm text-tertiary">Historical APY from {asset.issuer}</p>
 							) : null}
-						</div>
+						</Panel>
 					) : null}
 
 					{displayPools.length > 0 ? (
-						<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+						<Card padding="sm" border="subtle" className="flex flex-col gap-2">
 							<div className="flex items-center justify-between">
 								<h2 className="font-semibold">
 									{hasMorePools
@@ -912,14 +872,14 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 								{hasMorePools && asset.ticker ? (
 									<a
 										href={`/yields?token=${encodeURIComponent(asset.ticker)}&attribute=no_il&attribute=single_exposure`}
-										className="text-xs font-medium text-(--link-text) hover:underline"
+										className="label-sm text-link hover:underline"
 									>
 										View all {yieldPoolsTotal} →
 									</a>
 								) : null}
 							</div>
 							<RWAYieldsTable data={displayPools} compact={isCompactYields} />
-						</div>
+						</Card>
 					) : null}
 				</div>
 			) : null}

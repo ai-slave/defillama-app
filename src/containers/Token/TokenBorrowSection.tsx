@@ -5,9 +5,13 @@ import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLay
 import { Icon } from '~/components/Icon'
 import { LoadingSpinner, LocalLoader } from '~/components/Loaders'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { PaginatedYieldsOptimizerTable } from '~/containers/Yields/Tables/Optimizer'
 import type { IYieldsOptimizerTableRow } from '~/containers/Yields/Tables/types'
 import type { FormSubmitEvent } from '~/types/forms'
+import { Button } from '~/ui/Button'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { TableToolbar } from '~/ui/Toolbar'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
 import { filterBorrowRows } from './TokenBorrowSection.utils'
 import { TokenDeferredPaginationControls } from './TokenDeferredPaginationControls'
@@ -73,7 +77,7 @@ function TokenBorrowAvailableRange({
 				hasRange ? (
 					<>
 						<span>Available: </span>
-						<span className="text-(--link)">{`${minAvailable !== '' ? formatAvailableTriggerValue(minAvailable) : 'min'} - ${
+						<span className="text-link">{`${minAvailable !== '' ? formatAvailableTriggerValue(minAvailable) : 'min'} - ${
 							maxAvailable !== '' ? formatAvailableTriggerValue(maxAvailable) : 'max'
 						}`}</span>
 					</>
@@ -85,6 +89,7 @@ function TokenBorrowAvailableRange({
 			onSubmit={handleSubmit}
 			onClear={handleClear}
 			nestedMenu={nestedMenu}
+			size="md"
 			min={minAvailable}
 			max={maxAvailable}
 			minLabel="Min Available"
@@ -267,14 +272,10 @@ export function TokenBorrowSection({
 	)
 
 	return (
-		<section
-			className={`flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)${
-				hasPlaceholderState ? ' min-h-[80dvh] sm:min-h-[572px]' : ''
-			}`}
-		>
-			<div className="flex flex-wrap items-start justify-between gap-3 border-b border-(--cards-border) p-3">
-				<h2
-					className="group relative flex min-w-0 scroll-mt-24 items-center gap-1 text-xl font-bold"
+		<Panel className={hasPlaceholderState ? 'min-h-[80dvh] sm:min-h-[572px]' : undefined}>
+			<PanelHeader>
+				<PanelTitle
+					className="group relative flex min-w-0 scroll-mt-24 items-center gap-1"
 					id={TOKEN_BORROW_SECTION_ID}
 				>
 					Borrow
@@ -285,43 +286,45 @@ export function TokenBorrowSection({
 						className="absolute top-0 right-0 z-10 flex size-full items-center"
 					/>
 					<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
-				</h2>
+				</PanelTitle>
 				{!showInitialLoader && !error && summaryText ? (
-					<p className="text-sm text-(--text-secondary) sm:text-right">{summaryText}</p>
+					<p className="body-sm text-secondary sm:text-right">{summaryText}</p>
 				) : null}
-			</div>
+			</PanelHeader>
 
-			<div className="flex flex-1 flex-col gap-3 p-3">
-				<div className="flex flex-1 flex-col gap-3">
-					<div className="flex flex-wrap items-center gap-2 border-b border-(--cards-border) pb-3">
-						<button
-							type="button"
-							onClick={() => setActiveTab('use')}
-							data-selected={activeTab === 'use'}
-							className="rounded-md border border-(--cards-border) px-3 py-2 text-sm font-medium transition-colors data-[selected=true]:border-(--primary) data-[selected=true]:bg-(--primary)/10 data-[selected=true]:text-(--primary)"
-						>
-							{`Use ${tokenSymbol}`}
-						</button>
-						<button
-							type="button"
-							onClick={() => setActiveTab('borrow')}
-							data-selected={activeTab === 'borrow'}
-							className="rounded-md border border-(--cards-border) px-3 py-2 text-sm font-medium transition-colors data-[selected=true]:border-(--primary) data-[selected=true]:bg-(--primary)/10 data-[selected=true]:text-(--primary)"
-						>
-							{`Borrow ${tokenSymbol}`}
-						</button>
-					</div>
+			<div className="flex flex-1 flex-col gap-2 p-2">
+				<div className="flex flex-1 flex-col gap-2">
+					<TableToolbar>
+						<div className={chartSegmentedControlGroupStyles}>
+							<button
+								type="button"
+								onClick={() => setActiveTab('use')}
+								data-active={activeTab === 'use'}
+								className={chartSegmentedControlButtonStyles}
+							>
+								{`Use ${tokenSymbol}`}
+							</button>
+							<button
+								type="button"
+								onClick={() => setActiveTab('borrow')}
+								data-active={activeTab === 'borrow'}
+								className={chartSegmentedControlButtonStyles}
+							>
+								{`Borrow ${tokenSymbol}`}
+							</button>
+						</div>
+					</TableToolbar>
 					{showInitialLoader ? (
 						<div className="flex flex-1 items-center justify-center">
 							<LocalLoader />
 						</div>
 					) : error && rows.length === 0 ? (
 						<div className="flex flex-1 items-center justify-center px-4 text-center">
-							<p className="text-sm text-(--text-label)">{error.message}</p>
+							<p className="body-sm text-secondary">{error.message}</p>
 						</div>
 					) : rows.length === 0 ? (
 						<div className="flex flex-1 items-center justify-center px-4 text-center">
-							<p className="text-sm text-(--text-label)">
+							<p className="body-sm text-secondary">
 								{activeTab === 'use'
 									? `No borrow routes found using ${tokenSymbol} as collateral.`
 									: `No routes found to borrow ${tokenSymbol} with supported collateral.`}
@@ -329,59 +332,58 @@ export function TokenBorrowSection({
 						</div>
 					) : (
 						<>
-							<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-								<div className="p-1">
-									<ResponsiveFilterLayout>
-										{(nestedMenu) => (
-											<>
-												<SelectWithCombobox
-													label="Chains"
-													allValues={chainList}
-													selectedValues={selectedChains}
-													setSelectedValues={setSelectedChains}
-													nestedMenu={nestedMenu}
-													labelType={selectedChains.length === chainList.length ? 'none' : 'regular'}
-												/>
-												<TokenBorrowAvailableRange
-													minAvailable={minAvailable}
-													maxAvailable={maxAvailable}
-													setMinAvailable={setMinAvailable}
-													setMaxAvailable={setMaxAvailable}
-													nestedMenu={nestedMenu}
-												/>
-												{hasActiveFilters ? (
-													<button
-														type="button"
-														onClick={() => {
-															setSelectedChains(null)
-															setMinAvailable('')
-															setMaxAvailable('')
-														}}
-														className="rounded-md bg-(--btn-bg) px-3 py-2 text-xs text-(--text-primary) hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)"
-													>
-														Reset filters
-													</button>
-												) : null}
-											</>
-										)}
-									</ResponsiveFilterLayout>
-								</div>
-							</div>
+							<TableToolbar>
+								<ResponsiveFilterLayout desktopClassName="hidden min-h-8 flex-wrap gap-1.5 sm:flex">
+									{(nestedMenu) => (
+										<>
+											<SelectWithCombobox
+												label="Chains"
+												allValues={chainList}
+												selectedValues={selectedChains}
+												setSelectedValues={setSelectedChains}
+												nestedMenu={nestedMenu}
+												size="md"
+												labelType={selectedChains.length === chainList.length ? 'none' : 'regular'}
+											/>
+											<TokenBorrowAvailableRange
+												minAvailable={minAvailable}
+												maxAvailable={maxAvailable}
+												setMinAvailable={setMinAvailable}
+												setMaxAvailable={setMaxAvailable}
+												nestedMenu={nestedMenu}
+											/>
+											{hasActiveFilters ? (
+												<Button
+													type="button"
+													size="md"
+													onClick={() => {
+														setSelectedChains(null)
+														setMinAvailable('')
+														setMaxAvailable('')
+													}}
+												>
+													Reset filters
+												</Button>
+											) : null}
+										</>
+									)}
+								</ResponsiveFilterLayout>
+							</TableToolbar>
 							{error ? (
-								<div className="rounded-md border border-red-500/30 bg-red-500/5 px-3 py-2 text-sm text-(--text-label)">
+								<div className="rounded-[8px] border border-medium bg-surface-elevated-1 px-3 py-2 body-sm text-data-down">
 									{error.message}
 								</div>
 							) : null}
 
 							{filteredRows.length === 0 && !isFetchingFullData ? (
-								<div className="flex flex-1 flex-col items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-									<p className="p-2">{`No ${tabLabel.toLowerCase()} routes match current filters.`}</p>
+								<div className="flex flex-1 items-center justify-center p-2 text-center body-sm text-tertiary">
+									<p>{`No ${tabLabel.toLowerCase()} routes match current filters.`}</p>
 								</div>
 							) : (
 								<div className="relative flex flex-col gap-3">
 									{showBackgroundLoading ? (
-										<div className="absolute inset-0 z-20 flex items-center justify-center rounded-md bg-(--app-bg)/60 backdrop-blur-[1px]">
-											<div className="flex items-center gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) px-3 py-2 text-sm text-(--text-secondary) shadow-xs">
+										<div className="absolute inset-0 z-20 flex items-center justify-center rounded-[8px] bg-page/60 backdrop-blur-[1px]">
+											<div className="flex items-center gap-2 rounded-[8px] border border-medium bg-surface-elevated-1 px-3 py-2 body-sm text-secondary shadow-xs">
 												<LoadingSpinner size={12} />
 												<span>Loading full dataset...</span>
 											</div>
@@ -414,6 +416,6 @@ export function TokenBorrowSection({
 					)}
 				</div>
 			</div>
-		</section>
+		</Panel>
 	)
 }

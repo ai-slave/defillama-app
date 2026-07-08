@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
 import { LocalLoader } from '~/components/Loaders'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import {
 	fetchMarketsCategories,
 	fetchMarketsCategorySeries,
@@ -92,7 +93,7 @@ export function MarketsHome({
 		<div className="flex flex-col gap-5">
 			<header className="flex flex-col gap-1.5">
 				<h1 className="text-2xl font-semibold">Markets</h1>
-				<p className="text-sm text-(--text-label)">Per-asset spot and perpetual metrics merged across venues.</p>
+				<p className="body-sm text-secondary">Per-asset spot and perpetual metrics merged across venues.</p>
 			</header>
 			<MarketsSegmentTabs
 				activeSegment={activeSegment}
@@ -102,18 +103,18 @@ export function MarketsHome({
 			/>
 
 			{tokensQuery.isLoading ? (
-				<div className="flex min-h-[360px] items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<PanelLoadingStatus>
 					<LocalLoader />
-				</div>
+				</PanelLoadingStatus>
 			) : tokensQuery.isError || segmentTokens.length === 0 ? (
-				<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-6 text-center text-sm text-(--text-label)">
+				<PanelStatus variant={tokensQuery.isError ? 'error' : 'empty'}>
 					{tokensQuery.isError ? 'Failed to load market data.' : 'No data for this segment.'}
-				</div>
+				</PanelStatus>
 			) : (
 				<div className="flex flex-col gap-5">
 					<MarketsStatStrip rows={segmentTokens} segment={activeSegment} />
 					<div className="flex flex-col gap-2">
-						<h2 className="text-base font-semibold">Movers · 24h</h2>
+						<h2 className="heading-xs">Movers · 24h</h2>
 						<MomentumCards
 							categories={segmentCategories}
 							tokens={segmentTokens}

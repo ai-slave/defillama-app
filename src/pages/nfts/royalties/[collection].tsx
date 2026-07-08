@@ -95,7 +95,7 @@ export default function Collection() {
 				</div>
 
 				<div className="col-span-full rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<Suspense fallback={<div className="min-h-[398px]" />}>
+					<Suspense fallback={<div className="min-h-[406px]" />}>
 						<MultiSeriesChart2
 							dataset={chartData.dataset}
 							charts={chartData.charts}

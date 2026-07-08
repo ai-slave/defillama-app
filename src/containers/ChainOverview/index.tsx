@@ -9,6 +9,10 @@ import { IrTabLabel } from '~/containers/Investors/IrTabLabel'
 import { getMainSiteIrDashboard } from '~/containers/Investors/mainSiteDashboards'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import { useAuthContext } from '~/containers/Subscription/auth'
+import { Card } from '~/ui/Card'
+import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
+import { PanelStatus } from '~/ui/Status'
+import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { slug } from '~/utils'
 import { SmolStats } from './SmolStats'
 import { Stats } from './Stats'
@@ -44,22 +48,20 @@ export function ChainOverview(props: IChainOverviewData) {
 			<RowLinksWithDropdown links={props.allChains} activeLink={props.metadata.name} />
 			<div className="isolate flex flex-1 flex-col gap-2">
 				{showInvestorRelations && irDashboard ? (
-					<div className="flex w-full shrink-0 overflow-x-auto text-xs font-medium">
-						<button
-							onClick={() => goToTab(undefined)}
-							data-active={!irActive}
-							className="shrink-0 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) data-[active=true]:border-(--primary)"
-						>
+					<nav className={tabTrackStyles}>
+						<TabLink as="button" type="button" onClick={() => goToTab(undefined)} data-active={!irActive}>
 							Overview
-						</button>
-						<button
+						</TabLink>
+						<TabLink
+							as="button"
+							type="button"
 							onClick={() => goToTab('investor-relations')}
 							data-active={irActive}
-							className="relative flex shrink-0 items-center gap-1.5 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)"
+							className="flex items-center gap-1.5"
 						>
 							<IrTabLabel label={irDashboard.tabLabel} gradient={irDashboard.brandGradient} active={irActive} />
-						</button>
-					</div>
+						</TabLink>
+					</nav>
 				) : null}
 				{props.metadata.name !== 'All' && !irActive ? (
 					<EntityQuestionsStrip
@@ -86,31 +88,32 @@ export function ChainOverview(props: IChainOverviewData) {
 							</>
 						) : (
 							<>
-								<div className="flex flex-1 flex-col gap-10 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-									<h1 className="flex flex-nowrap items-center gap-2">
+								<EntityTitleStrip
+									media={
 										<TokenLogo
 											name={props.metadata.name}
 											kind="chain"
-											size={24}
+											size={28}
 											alt={`Logo of ${props.metadata.name}`}
 										/>
-										<span className="text-xl font-semibold">{props.metadata.name}</span>
-									</h1>
-									<p className="my-auto py-10 text-center text-sm text-(--text-form)">
-										We don't track any protocols with TVL, Fees, Revenue or Volume on this chain
-									</p>
-								</div>
+									}
+									title={props.metadata.name}
+								/>
+								<PanelStatus>We don't track any protocols with TVL, Fees, Revenue or Volume on this chain</PanelStatus>
 							</>
 						)}
 						{props.metadata.name === 'All' ? (
-							<div className="relative isolate flex thin-scrollbar shrink-0 flex-nowrap items-center gap-1 overflow-x-auto overflow-y-hidden">
+							<div className="relative isolate flex thin-scrollbar shrink-0 flex-nowrap items-center gap-2 overflow-x-auto overflow-y-hidden">
 								{linksToOtherLlamaApps.map((app) => (
-									<a
+									<Card
+										as="a"
 										target="_blank"
 										rel="noreferrer noopener"
 										href={app.href}
 										key={`llama-app-${app.href}`}
-										className="relative flex max-h-[64px] w-full max-w-[70vw] min-w-[270px] flex-1 items-center gap-2.5 overflow-hidden rounded-lg border border-(--cards-bg) bg-(--cards-bg) p-2.5"
+										padding="sm"
+										border="subtle"
+										className="relative flex max-h-[64px] w-full max-w-[70vw] min-w-[270px] flex-1 items-center gap-2.5 overflow-hidden"
 									>
 										{app.background}
 										<>{app.icon}</>
@@ -125,7 +128,7 @@ export function ChainOverview(props: IChainOverviewData) {
 											)}
 										</span>
 										<Icon name="arrow-up-right-2" className="size-6 shrink-0" />
-									</a>
+									</Card>
 								))}
 							</div>
 						) : null}

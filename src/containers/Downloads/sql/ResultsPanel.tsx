@@ -49,7 +49,7 @@ export function ResultsPanel({
 
 	if (!result && !busy) {
 		return (
-			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--divider) bg-(--cards-bg)/40 px-6 py-10 text-center">
+			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--divider) bg-surface/40 px-6 py-10 text-center">
 				<Icon name="bar-chart-2" className="size-5 text-(--text-tertiary)" />
 				<p className="text-sm text-(--text-secondary)">
 					Run a query to see results here. Press{' '}
@@ -67,7 +67,7 @@ export function ResultsPanel({
 
 	if (!result && busy) {
 		return (
-			<div className="flex h-24 items-center justify-center gap-2.5 rounded-md border border-(--divider) bg-(--cards-bg) px-4 text-sm text-(--text-secondary)">
+			<div className="flex h-24 items-center justify-center gap-2.5 rounded-md border border-(--divider) bg-surface px-4 text-sm text-(--text-secondary)">
 				<LoadingSpinner size={14} />
 				<span>{busyMessage}</span>
 			</div>
@@ -120,7 +120,7 @@ function ViewToggle({
 		<div
 			role="tablist"
 			aria-label="Results view"
-			className={`inline-flex items-center gap-0.5 rounded-md border border-(--divider) bg-(--cards-bg) p-0.5 ${
+			className={`inline-flex items-center gap-0.5 rounded-md border border-(--divider) bg-surface p-0.5 ${
 				disabled ? 'pointer-events-none opacity-50' : ''
 			}`}
 		>
@@ -157,7 +157,7 @@ function ToggleButton({
 			className={`flex items-center gap-1.5 rounded-sm px-2 py-1 text-[11px] font-medium transition-colors ${
 				active
 					? 'bg-(--primary) text-white shadow-sm'
-					: 'text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)'
+					: 'text-(--text-secondary) hover:bg-hover-row hover:text-(--text-primary)'
 			}`}
 		>
 			<Icon name={icon} className="size-3" />

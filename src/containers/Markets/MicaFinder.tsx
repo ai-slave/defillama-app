@@ -2,10 +2,11 @@ import * as Ariakit from '@ariakit/react'
 import { type CellContext, type ColumnDef, createColumnHelper, flexRender } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import { Checkbox } from '~/components/Checkbox'
 import { Icon } from '~/components/Icon'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { Tooltip } from '~/components/Tooltip'
+import { Checkbox } from '~/ui/Checkbox'
+import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { abbreviateNumber, formatPercentage } from '~/utils'
 import { pushShallowQuery, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import type { ExchangeMetadataListEntry } from './api.types'
@@ -109,9 +110,9 @@ const KYC_REQUIREMENT_BY_TOKEN: Record<string, KycRequirementIndicator> = {
 }
 
 const FEE_TONE_CLASS: Record<FeeTone, string> = {
-	low: 'border-(--success)/30 bg-(--success)/10 text-(--success)',
-	medium: 'border-(--warning)/30 bg-(--warning)/10 text-(--warning)',
-	high: 'border-(--error)/50 bg-(--cards-bg) text-(--error)'
+	low: 'border-data-up bg-data-up/10 text-data-up',
+	medium: 'border-warning bg-warning/10 text-warning',
+	high: 'border-data-down bg-surface text-data-down'
 }
 
 const FEE_TONE_LABEL: Record<FeeTone, string> = {
@@ -175,7 +176,7 @@ function PromotionGift({
 			<Ariakit.HovercardAnchor
 				render={<button />}
 				type="button"
-				className="inline-flex size-7 shrink-0 items-center justify-center rounded-md border border-(--cards-border) bg-(--bg-main) text-(--text-secondary) hover:border-(--text-tertiary) hover:bg-(--link-hover-bg) hover:text-(--text-primary) focus-visible:border-(--text-tertiary) focus-visible:bg-(--link-hover-bg) focus-visible:text-(--text-primary)"
+				className="inline-flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-subtle bg-surface text-secondary hover:border-strong hover:bg-hover-row hover:text-primary focus-visible:border-strong focus-visible:bg-hover-row focus-visible:text-primary"
 				aria-label={`${exchangeName} promotion: ${promotion.label}`}
 			>
 				<Icon name="gift" height={15} width={15} />
@@ -183,27 +184,27 @@ function PromotionGift({
 			<Ariakit.Hovercard
 				unmountOnHide
 				gutter={6}
-				className="z-50 w-72 max-w-[calc(100vw-32px)] overflow-hidden rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) text-sm shadow-lg dark:border-[hsl(204,3%,32%)]"
+				className={`${popoverHovercardSurfaceStyles} w-72 max-w-[calc(100vw-32px)] overflow-hidden p-0`}
 				portal
 			>
 				<span className="flex flex-col gap-3 p-3">
 					<span className="flex items-start gap-2">
-						<span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-md border border-(--cards-border) bg-(--bg-main) text-(--text-secondary)">
+						<span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-subtle bg-surface text-secondary">
 							<Icon name="gift" height={15} width={15} />
 						</span>
 						<span className="flex min-w-0 flex-col gap-1">
-							<span className="text-sm font-semibold text-(--text-primary)">{promotion.title}</span>
-							<span className="text-xs font-medium text-(--link-text)">{promotion.label}</span>
+							<span className="label-md text-primary">{promotion.title}</span>
+							<span className="label-sm text-link">{promotion.label}</span>
 						</span>
 					</span>
-					{subtitle ? <span className="text-sm leading-snug text-(--text-secondary)">{subtitle}</span> : null}
-					<span className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-(--text-tertiary)">
+					{subtitle ? <span className="body-sm text-secondary">{subtitle}</span> : null}
+					<span className="flex flex-wrap gap-x-3 gap-y-1 label-sm text-tertiary">
 						{promotion.ends_at ? <span>Ends {promotion.ends_at}</span> : null}
 						{hasTermsCopy(promotion) ? <span>T&Cs apply</span> : null}
 					</span>
 				</span>
 				{links.length ? (
-					<span className="flex flex-col border-t border-(--cards-border)">
+					<span className="flex flex-col border-t border-subtle">
 						{links.map((link) => (
 							<a
 								key={`${link.label}:${link.href}`}
@@ -213,16 +214,11 @@ function PromotionGift({
 								data-umami-event="mica-promotion-click"
 								data-umami-event-exchange={exchange}
 								data-umami-event-link={link.label}
-								className="flex items-center gap-2 px-3 py-2 text-xs text-(--text-primary) hover:bg-(--link-hover-bg)"
+								className="flex items-center gap-2 px-3 py-2 label-sm text-primary hover:bg-hover-row"
 							>
-								<Icon name="gift" height={12} width={12} className="shrink-0 text-(--link-text)" />
+								<Icon name="gift" height={12} width={12} className="shrink-0 text-link" />
 								<span>{link.label}</span>
-								<Icon
-									name="arrow-up-right"
-									height={12}
-									width={12}
-									className="ml-auto shrink-0 text-(--text-tertiary)"
-								/>
+								<Icon name="arrow-up-right" height={12} width={12} className="ml-auto shrink-0 text-tertiary" />
 							</a>
 						))}
 					</span>
@@ -254,12 +250,12 @@ function ExchangeNameCell({ row }: { row: MicaExchange }) {
 						rel="noopener noreferrer"
 						{...trackProps}
 						data-umami-event-placement="name"
-						className="block truncate text-sm font-medium text-(--link-text) hover:underline"
+						className="block truncate label-md text-link hover:underline"
 					>
 						{row.display_name}
 					</a>
 				) : (
-					<span className="block truncate text-sm font-medium text-(--text-primary)">{row.display_name}</span>
+					<span className="block truncate label-md text-primary">{row.display_name}</span>
 				)}
 			</span>
 			<span className="ml-auto flex shrink-0 items-center gap-1.5">
@@ -273,7 +269,7 @@ function ExchangeNameCell({ row }: { row: MicaExchange }) {
 						rel="noopener noreferrer"
 						{...trackProps}
 						data-umami-event-placement="trade"
-						className="inline-flex h-7 items-center gap-1 rounded-md bg-(--link-button) px-2.5 text-xs font-medium text-(--link-text) hover:bg-(--link-button-hover)"
+						className="inline-flex h-7 items-center gap-1 rounded-md border border-medium px-2.5 label-sm text-link hover:bg-hover-row"
 						aria-label={`Trade on ${row.display_name}`}
 					>
 						Trade
@@ -286,7 +282,7 @@ function ExchangeNameCell({ row }: { row: MicaExchange }) {
 }
 
 function PromotionCsvCell({ row }: { row: MicaExchange }) {
-	return selectActivePromotion(row)?.label || <span className="text-(--text-disabled)">–</span>
+	return selectActivePromotion(row)?.label || <span className="text-tertiary">–</span>
 }
 
 function hasProduct(row: MicaExchange, product: string) {
@@ -358,7 +354,7 @@ function FeePairCell({ fee, kind }: { fee: MicaExchange['spot_fee'] | MicaExchan
 
 	return (
 		<span
-			className={`inline-flex rounded-md border px-2 py-0.5 text-xs font-normal whitespace-nowrap tabular-nums ${tone ? FEE_TONE_CLASS[tone] : 'border-(--cards-border) text-(--text-primary)'}`}
+			className={`inline-flex rounded-md border px-2 py-0.5 label-sm whitespace-nowrap tabular-nums ${tone ? FEE_TONE_CLASS[tone] : 'border-subtle text-primary'}`}
 			aria-label={label ? `${formattedFee}. ${label}; lower fees are better.` : formattedFee}
 		>
 			{formattedFee}
@@ -368,14 +364,14 @@ function FeePairCell({ fee, kind }: { fee: MicaExchange['spot_fee'] | MicaExchan
 
 function PerpsCell({ available }: { available: boolean }) {
 	return available ? (
-		<span className="inline-flex items-center gap-1 text-(--success)" aria-label="Perps available">
+		<span className="inline-flex items-center gap-1 text-data-up" aria-label="Perps available">
 			<Icon name="check" height={16} width={16} />
-			<span className="text-sm">Yes</span>
+			<span className="body-sm">Yes</span>
 		</span>
 	) : (
-		<span className="inline-flex items-center gap-1 text-(--text-disabled)" aria-label="Perps unavailable">
+		<span className="inline-flex items-center gap-1 text-tertiary" aria-label="Perps unavailable">
 			<Icon name="x" height={16} width={16} />
-			<span className="text-sm">No</span>
+			<span className="body-sm">No</span>
 		</span>
 	)
 }
@@ -402,7 +398,7 @@ function LiquidityCell({
 				<span className="whitespace-nowrap tabular-nums">{formatLiquidity(total)}</span>
 			</Tooltip>
 			<Tooltip content={helperText}>
-				<Icon name="help-circle" height={13} width={13} className="shrink-0 text-(--text-tertiary)" />
+				<Icon name="help-circle" height={13} width={13} className="shrink-0 text-tertiary" />
 			</Tooltip>
 		</span>
 	)
@@ -414,7 +410,7 @@ function KycSummaryHovercard({ summary }: { summary: string }) {
 			<Ariakit.HovercardAnchor
 				render={<button />}
 				type="button"
-				className="inline-flex size-7 items-center justify-center rounded-md border border-(--cards-border) text-(--text-tertiary) hover:border-(--text-tertiary) hover:bg-(--link-hover-bg) hover:text-(--text-primary) focus-visible:border-(--text-tertiary) focus-visible:bg-(--link-hover-bg) focus-visible:text-(--text-primary)"
+				className="inline-flex size-7 items-center justify-center rounded-[8px] border border-subtle text-tertiary hover:border-strong hover:bg-hover-row hover:text-primary focus-visible:border-strong focus-visible:bg-hover-row focus-visible:text-primary"
 				aria-label="Full KYC requirements"
 			>
 				<Icon name="file-text" height={14} width={14} />
@@ -422,7 +418,7 @@ function KycSummaryHovercard({ summary }: { summary: string }) {
 			<Ariakit.Hovercard
 				unmountOnHide
 				gutter={6}
-				className="z-50 w-96 max-w-[calc(100vw-32px)] rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) p-3 text-sm leading-snug text-(--text-primary) shadow-lg dark:border-[hsl(204,3%,32%)]"
+				className={`${popoverHovercardSurfaceStyles} w-96 max-w-[calc(100vw-32px)] p-3 leading-snug text-primary`}
 				portal
 			>
 				<span className="block break-words whitespace-pre-wrap">{summary}</span>
@@ -432,8 +428,8 @@ function KycSummaryHovercard({ summary }: { summary: string }) {
 }
 
 function KycCell({ row }: { row: MicaExchange }) {
-	if (row.kyc_required == null) return <span className="text-(--text-disabled)">–</span>
-	if (!row.kyc_required) return <span className="text-(--success)">No KYC</span>
+	if (row.kyc_required == null) return <span className="text-tertiary">–</span>
+	if (!row.kyc_required) return <span className="text-data-up">No KYC</span>
 
 	const shortSummary = row.kyc_short || 'Required'
 	const summary = row.kyc_summary || shortSummary
@@ -441,7 +437,7 @@ function KycCell({ row }: { row: MicaExchange }) {
 	if (!requirements.length) {
 		return (
 			<Tooltip content={summary}>
-				<span className="block truncate text-sm">{shortSummary}</span>
+				<span className="block truncate body-sm">{shortSummary}</span>
 			</Tooltip>
 		)
 	}
@@ -471,7 +467,7 @@ function MarketCountCell({ row }: { row: MicaExchange }) {
 			<span className="whitespace-nowrap tabular-nums">{row.market_count.toLocaleString('en-US')}</span>
 			{row.own_eu_orderbook ? (
 				<Tooltip content={`${MARKET_COUNT_HELP}\nOwn EU orderbook.`} className="justify-end">
-					<Icon name="help-circle" height={13} width={13} className="shrink-0 text-(--text-tertiary)" />
+					<Icon name="help-circle" height={13} width={13} className="shrink-0 text-tertiary" />
 				</Tooltip>
 			) : null}
 		</span>
@@ -498,7 +494,7 @@ const columns: ColumnDef<MicaExchange, any>[] = [
 		id: 'website',
 		header: 'Website',
 		enableSorting: false,
-		cell: ({ getValue }) => getValue() || <span className="text-(--text-disabled)">–</span>,
+		cell: ({ getValue }) => getValue() || <span className="text-tertiary">–</span>,
 		meta: {
 			headerClassName: 'w-[180px] min-w-[180px]',
 			hidden: true,
@@ -522,7 +518,7 @@ const columns: ColumnDef<MicaExchange, any>[] = [
 		id: 'promotion_url',
 		header: 'Promotion URL',
 		enableSorting: false,
-		cell: ({ getValue }) => getValue() || <span className="text-(--text-disabled)">–</span>,
+		cell: ({ getValue }) => getValue() || <span className="text-tertiary">–</span>,
 		meta: {
 			headerClassName: 'w-[180px] min-w-[180px]',
 			hidden: true,
@@ -623,7 +619,7 @@ const columns: ColumnDef<MicaExchange, any>[] = [
 		cell: ({ getValue }) =>
 			getValue() ? (
 				<Tooltip content={getValue()}>
-					<span className="block text-sm whitespace-nowrap">{getValue()}</span>
+					<span className="block body-sm whitespace-nowrap">{getValue()}</span>
 				</Tooltip>
 			) : null,
 		meta: {
@@ -638,9 +634,6 @@ const columns: ColumnDef<MicaExchange, any>[] = [
 // every other table on the site also uses. The overlay is absolutely positioned within the cell
 // (`relative` + `z-0` below make the <td> its containing block and stacking context) so it fills
 // exactly the cell's padding box without needing to know the row's rendered height up front.
-const BYBIT_TINT = 'color-mix(in oklch, var(--success) 16%, var(--cards-bg))'
-const BYBIT_ACCENT = 'color-mix(in oklch, var(--success) 85%, black 15%)'
-
 function withBybitRowHighlight(cols: ColumnDef<MicaExchange, any>[]): ColumnDef<MicaExchange, any>[] {
 	return cols.map((column, index) => ({
 		...column,
@@ -657,8 +650,8 @@ function withBybitRowHighlight(cols: ColumnDef<MicaExchange, any>[]): ColumnDef<
 						aria-hidden="true"
 						className="absolute inset-0 -z-10"
 						style={{
-							background: BYBIT_TINT,
-							boxShadow: index === 0 ? `inset 3px 0 0 0 ${BYBIT_ACCENT}` : undefined
+							background: 'color-mix(in oklch, var(--success) 16%, var(--ld-bg-surface))',
+							boxShadow: index === 0 ? 'inset 3px 0 0 0 color-mix(in oklch, var(--success) 85%, black 15%)' : undefined
 						}}
 					/>
 					{content}

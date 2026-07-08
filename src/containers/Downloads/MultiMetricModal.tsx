@@ -522,7 +522,7 @@ export function MultiMetricModal({
 				}}
 			>
 				<Ariakit.Dialog
-					className="fixed inset-0 z-50 m-auto flex max-h-[90dvh] min-h-[55dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col overflow-hidden rounded-xl border border-(--cards-border) bg-(--cards-bg) shadow-2xl sm:w-[calc(100vw-2rem)]"
+					className="fixed inset-0 z-50 m-auto flex max-h-[90dvh] min-h-[55dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col overflow-hidden rounded-xl border border-subtle bg-surface shadow-2xl sm:w-[calc(100vw-2rem)]"
 					portal
 					unmountOnHide
 					backdrop={<div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" />}
@@ -531,7 +531,7 @@ export function MultiMetricModal({
 						<div className="flex items-center gap-3 px-4 py-2.5">
 							<div className="mr-auto min-w-0">
 								<div className="flex items-center gap-2">
-									<h2 className="truncate text-base font-semibold">{param ? param.label : 'Combined report'}</h2>
+									<h2 className="truncate heading-xs">{param ? param.label : 'Combined report'}</h2>
 									<span className="rounded-full bg-(--primary)/15 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-(--primary) uppercase">
 										Combined
 									</span>
@@ -543,7 +543,7 @@ export function MultiMetricModal({
 								<button
 									type="button"
 									onClick={() => setShowSaveDialog(true)}
-									className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) sm:flex"
+									className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) sm:flex"
 									title="Save as preset"
 								>
 									<Icon name="bookmark" className="size-3.5" />
@@ -556,7 +556,7 @@ export function MultiMetricModal({
 									type="button"
 									onClick={() => void handleCopyLink()}
 									disabled={!currentConfig}
-									className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) disabled:opacity-40 sm:flex"
+									className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:opacity-40 sm:flex"
 									title="Copy shareable link"
 								>
 									<Icon name="link" className="size-3.5" />
@@ -586,7 +586,7 @@ export function MultiMetricModal({
 							<button
 								type="button"
 								onClick={onClose}
-								className="rounded-md p-1.5 text-(--text-tertiary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+								className="rounded-md p-1.5 text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
 								aria-label="Close"
 							>
 								<Icon name="x" className="size-4" />
@@ -659,7 +659,7 @@ export function MultiMetricModal({
 										<button
 											type="button"
 											onClick={() => setDateRange(null)}
-											className="mt-1 rounded-md border border-(--divider) px-3 py-1 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+											className="mt-1 rounded-md border border-(--divider) px-3 py-1 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
 										>
 											Clear date range
 										</button>
@@ -780,7 +780,7 @@ function ParamPickerEmpty({
 
 				<div className="w-full">
 					<Ariakit.PopoverProvider store={popoverStore}>
-						<Ariakit.PopoverDisclosure className="group flex w-full items-center justify-between gap-3 rounded-lg border border-(--form-control-border) bg-(--bg-primary) px-3.5 py-2.5 text-sm transition-colors hover:border-(--primary)/50 focus:border-(--primary) focus:ring-2 focus:ring-(--primary)/20 focus:outline-none">
+						<Ariakit.PopoverDisclosure className="group flex w-full items-center justify-between gap-3 rounded-lg border border-medium bg-(--bg-primary) px-3.5 py-2.5 text-sm transition-colors hover:border-(--primary)/50 focus:border-(--primary) focus:ring-2 focus:ring-(--primary)/20 focus:outline-none">
 							<span className="flex items-center gap-2 text-(--text-tertiary)">
 								<Icon name="search" className="size-4" />
 								Search a {labels.singular}
@@ -795,7 +795,7 @@ function ParamPickerEmpty({
 							portal
 							unmountOnHide
 							sameWidth
-							className="z-[70] flex max-h-96 flex-col overflow-hidden rounded-lg border border-(--divider) bg-(--cards-bg) shadow-xl"
+							className="z-[70] flex max-h-96 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
 						>
 							<div className="border-b border-(--divider) px-3 py-2">
 								<input
@@ -819,7 +819,7 @@ function ParamPickerEmpty({
 												setSearch('')
 												popoverStore.hide()
 											}}
-											className={`flex w-full items-center gap-2 py-1.5 pr-3 text-left text-xs text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) ${opt.isChild ? 'pl-7' : 'pl-3'}`}
+											className={`flex w-full items-center gap-2 py-1.5 pr-3 text-left text-xs text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) ${opt.isChild ? 'pl-7' : 'pl-3'}`}
 										>
 											<span className="size-1.5 shrink-0 rounded-full bg-(--text-tertiary)/30" />
 											<span className="truncate">{opt.label}</span>
@@ -947,7 +947,7 @@ function PreviewTable({
 			className={`relative thin-scrollbar min-h-0 flex-1 ${isPreview ? 'overflow-x-auto overflow-y-hidden' : 'overflow-auto'}`}
 		>
 			<table className="w-full text-xs">
-				<thead className="sticky top-0 z-10 bg-(--cards-bg)">
+				<thead className="sticky top-0 z-10 bg-surface">
 					<tr>
 						{headers.map((h) => (
 							<th
@@ -997,9 +997,12 @@ function PreviewTable({
 				</tbody>
 			</table>
 			{!isPreview && rows.length > PREVIEW_ROWS ? (
-				<p className="border-t border-(--divider) bg-(--cards-bg) px-3 py-2 text-[11px] text-(--text-tertiary)">
-					Showing first {PREVIEW_ROWS.toLocaleString()} of {rows.length.toLocaleString()} rows · download for full data
-				</p>
+				<div className="border-t border-(--divider) bg-surface px-3 py-2 text-[11px] text-(--text-tertiary)">
+					<p>
+						Showing first {PREVIEW_ROWS.toLocaleString()} of {rows.length.toLocaleString()} rows · download for full
+						data
+					</p>
+				</div>
 			) : null}
 			{isPreview ? (
 				<>
@@ -1013,7 +1016,7 @@ function PreviewTable({
 							WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)'
 						}}
 					/>
-					<div className="absolute inset-x-0 bottom-0 z-50 border-t border-(--divider) bg-(--cards-bg) px-6 py-5">
+					<div className="absolute inset-x-0 bottom-0 z-50 border-t border-(--divider) bg-surface px-6 py-5">
 						<div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
 							<p className="text-sm font-semibold text-(--text-primary)">
 								This is a preview — subscribe to download full datasets
@@ -1098,7 +1101,7 @@ function MetricsSidebar({
 						<div
 							key={metric.slug}
 							className={`flex items-center gap-1.5 border-b border-(--divider) px-2.5 py-2 text-xs transition-colors ${
-								isActive ? 'bg-(--link-hover-bg)' : 'hover:bg-(--link-hover-bg)'
+								isActive ? 'bg-hover-row' : 'hover:bg-hover-row'
 							}`}
 						>
 							<button
@@ -1206,7 +1209,7 @@ function ParamPickerPopover({
 	return (
 		<Ariakit.PopoverProvider store={popoverStore}>
 			<Ariakit.PopoverDisclosure
-				className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) ${
+				className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-hover-row hover:text-(--text-primary) ${
 					value ? 'border-(--divider) text-(--text-secondary)' : 'border-(--primary)/40 text-(--primary)'
 				}`}
 			>
@@ -1223,7 +1226,7 @@ function ParamPickerPopover({
 				gutter={6}
 				portal
 				unmountOnHide
-				className="z-[60] flex max-h-96 w-80 flex-col overflow-hidden rounded-lg border border-(--divider) bg-(--cards-bg) shadow-xl"
+				className="z-[60] flex max-h-96 w-80 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
 			>
 				<div className="flex items-center justify-center border-b border-(--divider) px-3 py-2">
 					<ParamTypeToggle paramType={paramType} onChange={onChangeParamType} size="sm" />
@@ -1252,7 +1255,7 @@ function ParamPickerPopover({
 										setSearch('')
 										popoverStore.hide()
 									}}
-									className={`flex w-full items-center gap-2 py-1.5 pr-3 text-left text-xs transition-colors hover:bg-(--link-hover-bg) ${
+									className={`flex w-full items-center gap-2 py-1.5 pr-3 text-left text-xs transition-colors hover:bg-hover-row ${
 										isSelected ? 'text-(--text-primary)' : 'text-(--text-secondary)'
 									} ${opt.isChild ? 'pl-7' : 'pl-3'}`}
 								>
@@ -1320,7 +1323,7 @@ function MetricMultiPickerPopover({
 
 	return (
 		<Ariakit.PopoverProvider>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)">
+			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary)">
 				<Icon name="chevron-down" className="size-3.5" />
 				<span>{triggerLabel}</span>
 				{selected.length > 0 ? (
@@ -1331,7 +1334,7 @@ function MetricMultiPickerPopover({
 				gutter={6}
 				portal
 				unmountOnHide
-				className="z-[60] flex max-h-[28rem] w-80 flex-col overflow-hidden rounded-lg border border-(--divider) bg-(--cards-bg) shadow-xl"
+				className="z-[60] flex max-h-[28rem] w-80 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
 			>
 				<div className="flex items-center justify-between gap-2 border-b border-(--divider) px-3 py-2">
 					<span className="text-xs font-medium text-(--text-secondary)">
@@ -1373,7 +1376,7 @@ function MetricMultiPickerPopover({
 											disabled={disabled}
 											onClick={() => onToggle(metric.slug)}
 											title={disabled ? `Max ${maxSelections} metrics` : metric.description}
-											className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-40 ${
+											className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40 ${
 												isSelected ? 'text-(--text-primary)' : 'text-(--text-secondary)'
 											}`}
 										>

@@ -18,8 +18,6 @@ function ToolbarButton({
 	onClick: () => void
 	title?: string
 }) {
-	const baseClass =
-		'flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed'
 	const toneClass =
 		tone === 'danger'
 			? active
@@ -29,7 +27,12 @@ function ToolbarButton({
 				? 'bg-(--link-button) text-(--link-text)'
 				: 'text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)'
 	return (
-		<button type="button" title={title ?? label} onClick={onClick} className={`${baseClass} ${toneClass}`}>
+		<button
+			type="button"
+			title={title ?? label}
+			onClick={onClick}
+			className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed ${toneClass}`}
+		>
 			<span>{label}</span>
 			{typeof indicator === 'boolean' ? (
 				<span

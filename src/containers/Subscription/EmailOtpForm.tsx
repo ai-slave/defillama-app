@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormSubmitEvent } from '~/types/forms'
 
-const inputCls =
-	'h-10 w-full rounded-lg border border-(--form-control-border) bg-(--signin-input-bg) px-3 text-center text-base tracking-[0.4em] text-(--text-primary) placeholder:text-(--text-tertiary) placeholder:tracking-normal focus:border-(--primary) focus:outline-none'
-const primaryBtnCls =
-	'h-10 w-full rounded-lg bg-(--primary) text-sm font-medium text-white disabled:bg-(--signin-btn-disabled-bg) disabled:text-(--signin-btn-disabled-text)'
-
 const RESEND_COOLDOWN_MS = 30_000
 
 export function EmailOtpForm({
@@ -102,14 +97,18 @@ export function EmailOtpForm({
 					maxLength={6}
 					required
 					placeholder="000000"
-					className={inputCls}
+					className="h-10 w-full rounded-lg border border-(--form-control-border) bg-(--signin-input-bg) px-3 text-center text-base tracking-[0.4em] text-(--text-primary) placeholder:tracking-normal placeholder:text-(--text-tertiary) focus:border-(--primary) focus:outline-none"
 					value={otp}
 					onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
 					autoFocus
 				/>
 			</label>
 
-			<button type="submit" disabled={loaders.verifyOtp || otp.length !== 6} className={primaryBtnCls}>
+			<button
+				type="submit"
+				disabled={loaders.verifyOtp || otp.length !== 6}
+				className="h-10 w-full rounded-lg bg-(--primary) text-sm font-medium text-white disabled:bg-(--signin-btn-disabled-bg) disabled:text-(--signin-btn-disabled-text)"
+			>
 				{loaders.verifyOtp ? 'Verifying...' : 'Verify email'}
 			</button>
 

@@ -313,13 +313,14 @@ export default function BarChart({
 									label={customLegendName}
 									labelType="smol"
 									variant="filter"
+									size="md"
 									portal
 								/>
 							) : null
 						}
 						exportButtons={
 							<>
-								{!hideDownloadButton ? <CSVDownloadButton prepareCsv={prepareCsv} smol /> : null}
+								{!hideDownloadButton ? <CSVDownloadButton prepareCsv={prepareCsv} smol size="md" /> : null}
 								{shouldEnableExport ? (
 									<ChartPngExportButton
 										chartInstance={exportChartInstance}

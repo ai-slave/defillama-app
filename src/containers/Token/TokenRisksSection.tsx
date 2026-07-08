@@ -11,6 +11,9 @@ import { startTransition, useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Card } from '~/ui/Card'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { formattedNum } from '~/utils'
 import { DEFAULT_TABLE_PAGE_SIZE, resolveUpdater, TABLE_PAGE_SIZE_OPTIONS } from './tableUtils'
 import type {
@@ -87,14 +90,14 @@ function ProtocolExposureSummaryText({
 function ChainBreakdownTooltipContent({ chainBreakdowns }: { chainBreakdowns: TokenRiskChainExposureSummary[] }) {
 	return (
 		<div className="w-80 max-w-[calc(100vw-2rem)] space-y-2 text-xs">
-			<p className="font-medium text-(--text-primary)">Breakdown by chain</p>
+			<p className="font-medium text-primary">Breakdown by chain</p>
 			<div className="space-y-1">
 				{chainBreakdowns.map((chain) => (
 					<div
 						key={`${chain.chain}-${chain.chainDisplayName}`}
-						className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-0.5 border-b border-(--cards-border) pb-1.5 last:border-b-0 last:pb-0"
+						className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-0.5 border-b border-very-subtle pb-1.5 last:border-b-0 last:pb-0"
 					>
-						<span className="flex min-w-0 items-center gap-1.5 font-medium text-(--text-primary)">
+						<span className="flex min-w-0 items-center gap-1.5 font-medium text-primary">
 							<TokenLogo
 								name={chain.chainDisplayName}
 								kind="chain"
@@ -104,15 +107,15 @@ function ChainBreakdownTooltipContent({ chainBreakdowns }: { chainBreakdowns: To
 							/>
 							<span className="truncate">{chain.chainDisplayName}</span>
 						</span>
-						<span className="text-right text-(--text-primary)">
+						<span className="text-right text-primary">
 							{formatUsd(chain.totalCurrentMaxBorrowUsd + (chain.totalMinBadDebtAtPriceZeroUsd ?? 0))}
 						</span>
-						<span className="text-(--text-secondary)">Bad debt if hacked</span>
-						<span className="text-right text-(--text-secondary)">
+						<span className="text-secondary">Bad debt if hacked</span>
+						<span className="text-right text-secondary">
 							{formatMinBadDebtValue(chain.totalMinBadDebtAtPriceZeroUsd, chain.minBadDebtAtPriceZeroCoverage)}
 						</span>
-						<span className="text-(--text-secondary)">Additional borrowable</span>
-						<span className="text-right text-(--text-secondary)">{formatUsd(chain.totalCurrentMaxBorrowUsd)}</span>
+						<span className="text-secondary">Additional borrowable</span>
+						<span className="text-right text-secondary">{formatUsd(chain.totalCurrentMaxBorrowUsd)}</span>
 					</div>
 				))}
 			</div>
@@ -130,19 +133,14 @@ function ProtocolChainsLabel({ chainBreakdowns }: { chainBreakdowns: TokenRiskCh
 				render={
 					<button
 						type="button"
-						className="cursor-help text-left text-xs text-(--text-secondary) underline decoration-dotted underline-offset-2 hover:text-(--text-primary) focus-visible:text-(--text-primary)"
+						className="cursor-help text-left text-xs text-secondary underline decoration-dotted underline-offset-2 hover:text-primary focus-visible:text-primary"
 						aria-label={`Show ${label} exposure breakdown by chain`}
 					/>
 				}
 			>
 				{label}
 			</Ariakit.HovercardAnchor>
-			<Ariakit.Hovercard
-				className="z-50 max-h-[calc(100dvh-80px)] overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) p-2 text-sm shadow-sm lg:max-h-(--popover-available-height) dark:border-[hsl(204,3%,32%)]"
-				gutter={6}
-				portal
-				unmountOnHide
-			>
+			<Ariakit.Hovercard className={`${popoverHovercardSurfaceStyles} p-3`} gutter={6} portal unmountOnHide>
 				<ChainBreakdownTooltipContent chainBreakdowns={chainBreakdowns} />
 			</Ariakit.Hovercard>
 		</Ariakit.HovercardProvider>
@@ -170,7 +168,7 @@ function createExposureColumns(methodologies: TokenRiskResponse['exposures']['me
 			cell: ({ row, getValue }) => (
 				<div className="flex flex-col">
 					<span>{getValue()}</span>
-					<span className="font-mono text-xs text-(--text-secondary)">{row.original.assetAddress}</span>
+					<span className="font-mono text-xs text-secondary">{row.original.assetAddress}</span>
 				</div>
 			),
 			meta: {
@@ -235,11 +233,11 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 	}
 
 	return (
-		<section className="flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex flex-wrap items-start justify-between gap-3 border-b border-(--cards-border) p-3">
+		<Panel>
+			<PanelHeader>
 				<div className="min-w-0">
-					<h2
-						className="group relative flex min-w-0 scroll-mt-24 items-center gap-1 text-xl font-bold"
+					<PanelTitle
+						className="group relative flex min-w-0 scroll-mt-24 items-center gap-1"
 						id={TOKEN_RISKS_SECTION_ID}
 					>
 						Risks
@@ -250,18 +248,18 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 							className="absolute top-0 right-0 z-10 flex size-full items-center"
 						/>
 						<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
-					</h2>
-					<p className="mt-1 max-w-4xl text-sm text-(--text-secondary)">
+					</PanelTitle>
+					<p className="mt-1 max-w-4xl text-sm text-secondary">
 						How much debt can be issued against {tokenSymbol} as collateral across lending protocols.
 					</p>
 				</div>
-			</div>
+			</PanelHeader>
 
-			<div className="flex flex-1 flex-col gap-3 p-3">
-				<div className="rounded-md border border-(--cards-border) p-4">
-					<p className="text-sm text-(--text-secondary)">Maximum possible exposure to {tokenSymbol}</p>
-					<p className="mt-1 text-2xl font-semibold text-(--text-primary)">{formatUsd(totalMaxExposureUsd)}</p>
-					<p className="mt-1 text-sm text-(--text-secondary)">
+			<div className="flex flex-1 flex-col gap-2 p-2">
+				<Card border="subtle">
+					<p className="text-sm text-secondary">Maximum possible exposure to {tokenSymbol}</p>
+					<p className="mt-1 text-2xl font-semibold text-primary">{formatUsd(totalMaxExposureUsd)}</p>
+					<p className="mt-1 text-sm text-secondary">
 						{formatUsd(exposures.summary.totalCurrentMaxBorrowUsd)} (max additional borrows against {tokenSymbol})
 						{exposures.summary.totalMinBadDebtAtPriceZeroUsd == null ? null : (
 							<>
@@ -271,14 +269,14 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 							</>
 						)}
 					</p>
-				</div>
+				</Card>
 
-				<div className="rounded-md border border-(--cards-border) p-3">
+				<Card border="subtle" padding="sm">
 					<div className="space-y-3">
 						{exposures.protocolSummaries.map((summary) => (
 							<div
 								key={summary.protocol}
-								className="flex flex-col gap-2 border-b border-(--cards-border) pb-3 last:border-b-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+								className="flex flex-col gap-2 border-b border-very-subtle pb-3 last:border-b-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
 							>
 								<div className="min-w-0">
 									<div className="flex items-center gap-2">
@@ -289,9 +287,9 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 											alt={`Logo of ${summary.protocolDisplayName}`}
 											title={summary.protocol}
 										/>
-										<p className="font-medium text-(--text-primary)">{summary.protocolDisplayName}</p>
+										<p className="font-medium text-primary">{summary.protocolDisplayName}</p>
 									</div>
-									<p className="mt-1 text-sm text-(--text-secondary)">
+									<p className="mt-1 text-sm text-secondary">
 										<ProtocolExposureSummaryText summary={summary} tokenSymbol={tokenSymbol} />
 									</p>
 									<div className="mt-1">
@@ -301,10 +299,10 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 							</div>
 						))}
 					</div>
-				</div>
+				</Card>
 
-				<details className="group rounded-md border border-(--cards-border) bg-(--app-bg) p-3">
-					<summary className="-m-3 flex cursor-pointer list-none items-center justify-between gap-3 p-3 text-sm font-medium">
+				<Card as="details" border="subtle" padding="sm" className="group">
+					<summary className="-m-2 flex cursor-pointer list-none items-center justify-between gap-3 p-2 text-sm font-medium">
 						<span>Methodology and limitations</span>
 						<Icon
 							name="chevron-down"
@@ -313,25 +311,24 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 							className="shrink-0 transition-transform duration-200 group-open:rotate-180"
 						/>
 					</summary>
-					<p className="mt-2 text-sm text-(--text-secondary)">
+					<p className="mt-2 text-sm text-secondary">
 						Showing collateral exposure for {tokenSymbol} on{' '}
-						<span className="font-medium text-(--text-primary)">{selectedCandidateDisplayName}</span>.{' '}
-						<span className="font-medium text-(--text-primary)">Max Borrowable</span> uses the backend&apos;s{' '}
-						liquidity-bounded borrow-capacity metric (`collateralMaxBorrowUsdLiquidity`) for the maximum additional USD
-						debt that can be issued against the asset right now.{' '}
-						<span className="font-medium text-(--text-primary)">Bad Debt at $0</span> is the minimum known bad debt if
-						the collateral asset price goes to zero; null rows are excluded from this total rather than treated as zero,
-						so totals may remain lower bounds.
+						<span className="font-medium text-primary">{selectedCandidateDisplayName}</span>.{' '}
+						<span className="font-medium text-primary">Max Borrowable</span> uses the backend&apos;s liquidity-bounded
+						borrow-capacity metric (`collateralMaxBorrowUsdLiquidity`) for the maximum additional USD debt that can be
+						issued against the asset right now. <span className="font-medium text-primary">Bad Debt at $0</span> is the
+						minimum known bad debt if the collateral asset price goes to zero; null rows are excluded from this total
+						rather than treated as zero, so totals may remain lower bounds.
 					</p>
-					<ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-(--text-secondary)">
+					<ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-secondary">
 						{riskData.limitations.map((limitation) => (
 							<li key={limitation}>{limitation}</li>
 						))}
 					</ul>
-				</details>
+				</Card>
 
-				<details className="group rounded-md border border-(--cards-border) bg-(--app-bg) p-3">
-					<summary className="-m-3 flex cursor-pointer list-none items-center justify-between gap-3 p-3 text-sm font-medium">
+				<Card as="details" border="subtle" padding="sm" className="group">
+					<summary className="-m-2 flex cursor-pointer list-none items-center justify-between gap-3 p-2 text-sm font-medium">
 						<span>Show exposure details</span>
 						<Icon
 							name="chevron-down"
@@ -340,13 +337,18 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 							className="shrink-0 transition-transform duration-200 group-open:rotate-180"
 						/>
 					</summary>
-					<p className="mt-2 text-sm text-(--text-secondary)">
+					<p className="mt-2 text-sm text-secondary">
 						Each row is one protocol-chain exposure for {tokenSymbol} as collateral. Bad debt at $0 totals remain lower
 						bounds when a row is marked partial.
 					</p>
-					<PaginatedTable table={exposureTable} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} className="mt-3" />
-				</details>
+					<PaginatedTable
+						table={exposureTable}
+						pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+						className="mt-3"
+						shell="none"
+					/>
+				</Card>
 			</div>
-		</section>
+		</Panel>
 	)
 }

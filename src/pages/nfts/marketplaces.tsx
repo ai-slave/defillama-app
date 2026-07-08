@@ -201,8 +201,8 @@ function Marketplaces({ data, volume, dominance, trades, dominanceTrade, marketp
 				<div className="flex items-center justify-between gap-2 p-2">
 					<TagGroup selectedValue={viewType} setValue={(v) => setViewType(v)} values={VIEW_TYPES} className="ml-auto" />
 				</div>
-				<div className="grid grid-cols-1 *:col-span-1 xl:min-h-[398px] xl:grid-cols-2">
-					<React.Suspense fallback={<div className="h-[398px] w-full" />}>
+				<div className="grid grid-cols-1 *:col-span-1 xl:min-h-[406px] xl:grid-cols-2">
+					<React.Suspense fallback={<div className="h-[406px] w-full" />}>
 						<MultiSeriesChart2
 							title="Volume"
 							dataset={viewType === 'Relative' ? relativeVolumeDataset : absoluteVolumeDataset}
@@ -221,7 +221,7 @@ function Marketplaces({ data, volume, dominance, trades, dominanceTrade, marketp
 						/>
 					</React.Suspense>
 
-					<React.Suspense fallback={<div className="h-[398px] w-full" />}>
+					<React.Suspense fallback={<div className="h-[406px] w-full" />}>
 						<MultiSeriesChart2
 							title="Trades"
 							dataset={viewType === 'Relative' ? relativeTradesDataset : absoluteTradesDataset}

@@ -94,7 +94,7 @@ export default function Protocols({ bridgeData, ...props }) {
 			seoTitle={props.seoTitle}
 			seoDescription={props.seoDescription}
 		>
-			<div className="flex flex-col gap-10 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
+			<div className="flex flex-col gap-10 rounded-lg border border-subtle bg-surface p-4">
 				<BridgeInfo {...bridgeData} />
 			</div>
 		</ProtocolOverviewLayout>

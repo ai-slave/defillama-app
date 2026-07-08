@@ -8,6 +8,8 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { Card } from '~/ui/Card'
+import { Panel } from '~/ui/Panel'
 import { formattedNum, getTokenDominance, slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import {
@@ -98,7 +100,7 @@ export const OracleOverview = ({
 					return (
 						<span className="flex items-center justify-center gap-1">
 							{strikeText ? <QuestionHelper text={strikeText} /> : null}
-							<span className={strikeText ? 'text-(--text-disabled)' : ''}>{formattedNum(row.original.tvl, true)}</span>
+							<span className={strikeText ? 'text-tertiary' : ''}>{formattedNum(row.original.tvl, true)}</span>
 						</span>
 					)
 				},
@@ -210,8 +212,8 @@ export const OracleOverview = ({
 			<RowLinksWithDropdown links={chainLinks} activeLink={chain ?? 'All'} />
 
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-5 xl:col-span-1">
-					<h1 className="text-xl font-semibold">{displayOracle}</h1>
+				<Card border="subtle" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+					<h1 className="heading-sm">{displayOracle}</h1>
 					<p className="flex flex-col">
 						<span className="text-(--text-label)">Total Value Secured (USD)</span>
 						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalValue, true)}</span>
@@ -222,16 +224,20 @@ export const OracleOverview = ({
 							{dominanceText === null ? 'N/A' : `${dominanceText}%`}
 						</span>
 					</p>
-				</div>
+				</Card>
 
-				<div className="col-span-2 rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<Panel className="col-span-2">
 					{isFetchingExtraSeries ? (
-						<p className="my-auto flex min-h-[398px] items-center justify-center gap-1 text-center text-xs">
+						<div
+							role="status"
+							aria-live="polite"
+							className="my-auto flex min-h-[406px] items-center justify-center gap-1 text-center body-sm text-tertiary"
+						>
 							Loading
 							<LoadingDots />
-						</p>
+						</div>
 					) : (
-						<Suspense fallback={<div className="min-h-[398px]" />}>
+						<Suspense fallback={<div className="min-h-[406px]" />}>
 							<MultiSeriesChart2
 								dataset={dataset}
 								charts={charts}
@@ -246,17 +252,10 @@ export const OracleOverview = ({
 							/>
 						</Suspense>
 					)}
-				</div>
+				</Panel>
 			</div>
 
-			<Suspense
-				fallback={
-					<div
-						style={{ minHeight: `${tableData.length * 50 + 200}px` }}
-						className="rounded-md border border-(--cards-border) bg-(--cards-bg)"
-					/>
-				}
-			>
+			<Suspense fallback={<Panel style={{ minHeight: `${tableData.length * 50 + 200}px` }} />}>
 				<TableWithSearch
 					data={tableData}
 					columns={protocolColumns}

@@ -3,10 +3,10 @@ import Select, { type Props } from 'react-select'
 const customStyles: NonNullable<Props['styles']> = {
 	control: (provided) => ({
 		...provided,
-		background: 'var(--cards-bg)',
+		background: 'var(--ld-bg-surface)',
 		padding: '2px',
 		borderRadius: '6px',
-		border: '1px solid var(--form-control-border)',
+		border: '1px solid var(--ld-border-medium)',
 		color: 'var(--text-primary)',
 		boxShadow: 'none',
 		margin: 0,
@@ -18,7 +18,7 @@ const customStyles: NonNullable<Props['styles']> = {
 	}),
 	menu: (provided) => ({
 		...provided,
-		background: 'var(--cards-bg)',
+		background: 'var(--ld-bg-surface)',
 		zIndex: 10
 	}),
 	option: (provided, state) => ({

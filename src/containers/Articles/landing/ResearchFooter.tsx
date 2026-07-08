@@ -54,10 +54,7 @@ const LEGAL_LINKS: FooterLink[] = [
 const headingClassName = 'font-extrabold text-xs uppercase leading-tight tracking-widest text-(--text-primary)'
 const linkClassName = 'font-medium text-sm leading-snug text-(--text-primary) transition-opacity hover:opacity-60'
 const descriptionClassName = 'font-light text-sm leading-relaxed text-(--text-secondary)'
-const legalTextClassName = 'font-light text-xs leading-tight text-(--text-tertiary)'
 const legalLinkClassName = 'font-light text-xs leading-tight text-(--text-tertiary) transition-opacity hover:opacity-60'
-const primaryButtonClassName =
-	'flex h-10 items-center justify-center gap-2 rounded-full bg-(--link-text) px-6 text-sm font-semibold text-white transition-opacity hover:opacity-90'
 
 function FooterLinkItem({ link }: { link: FooterLink }) {
 	if (link.external) {
@@ -240,7 +237,7 @@ function FooterMediaKit() {
 					type="submit"
 					aria-busy={isPending}
 					disabled={!canSubmit}
-					className={`${primaryButtonClassName} shrink-0 disabled:opacity-70 ${
+					className={`flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-(--link-text) px-6 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-70 ${
 						isPending ? 'disabled:cursor-wait' : 'disabled:cursor-not-allowed'
 					}`}
 				>
@@ -277,7 +274,9 @@ function FooterMediaKit() {
 function FooterLegalBar() {
 	return (
 		<div className="mt-10 flex flex-col items-center gap-4 border-t border-(--cards-border) pt-6 text-center sm:mt-6 sm:flex-row sm:items-center sm:justify-between sm:text-left">
-			<p className={legalTextClassName}>© DefiLlama Research. All rights reserved.</p>
+			<p className="text-xs leading-tight font-light text-(--text-tertiary)">
+				© DefiLlama Research. All rights reserved.
+			</p>
 			<ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:justify-start">
 				{LEGAL_LINKS.map((link) => (
 					<li key={link.label}>

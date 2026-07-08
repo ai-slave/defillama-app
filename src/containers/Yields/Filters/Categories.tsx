@@ -30,6 +30,7 @@ export function FiltersByCategory({
 			selectedValues={selectedCategories}
 			nestedMenu={nestedMenu}
 			labelType={labelType ? labelType : !category || category === 'All' ? 'none' : 'regular'}
+			popoverVariant="legacy"
 			includeQueryKey="category"
 			excludeQueryKey="excludeCategory"
 			pushQueryUpdates={(updates) => {

@@ -1041,6 +1041,7 @@ const PageView = ({
 									label="Filter"
 									labelType="smol"
 									variant="filter"
+									popoverVariant="legacy"
 									portal
 								/>
 								<AddToDashboardButton chartConfig={getYieldsChartConfig('pool-liquidity')} smol />

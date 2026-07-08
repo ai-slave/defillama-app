@@ -51,7 +51,7 @@ export const FullOldViewButton = () => {
 			<Tooltip
 				content={tooltipContent}
 				render={<button onClick={handleClick} disabled={isLoading} />}
-				className="flex cursor-pointer items-center gap-2 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-50"
+				className="flex cursor-pointer items-center gap-2 rounded-md border border-medium px-2 py-1.5 text-xs font-medium text-secondary hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:opacity-50"
 			>
 				{isClient && isLoading ? <LoadingSpinner size={14} /> : <Icon name="plus" height={14} width={14} />}
 				<span>Open in Dashboard</span>

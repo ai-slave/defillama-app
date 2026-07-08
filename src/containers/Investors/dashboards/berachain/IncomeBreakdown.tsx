@@ -81,7 +81,7 @@ function KpiSkeleton({ label }: { label: string }) {
 }
 
 function SectionHeader({ title }: { title: string }) {
-	return <h2 className="text-lg font-semibold tracking-tight text-(--text-primary)">{title}</h2>
+	return <h2 className="heading-xs tracking-tight text-(--text-primary)">{title}</h2>
 }
 
 function getCumulativeTotal(data: Record<string, number>[], key: string) {

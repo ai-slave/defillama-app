@@ -146,7 +146,7 @@ function ArticlesLandingInner({ initialData }: { initialData: ArticlesPageProps 
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load articles'
 		return (
 			<div className="mx-auto grid w-full max-w-3xl gap-3 border border-red-500/30 bg-red-500/5 p-6">
-				<h1 className="text-xl font-semibold text-(--text-primary)">Couldn&apos;t load research</h1>
+				<h1 className="heading-sm text-(--text-primary)">Couldn&apos;t load research</h1>
 				<p className="text-sm text-red-500">{message}</p>
 			</div>
 		)
@@ -207,9 +207,9 @@ function ArticlesLandingInner({ initialData }: { initialData: ArticlesPageProps 
 					<div id="reports">
 						{(landingData?.highlight ?? []).length > 0 ? (
 							<ResearchSectionWithSharedHeightProvider>
-								<div className="grid grid-cols-1 gap-[36px] lg:grid-cols-[725fr_403fr]">
+								<div className="grid grid-cols-1 gap-9 lg:grid-cols-[725fr_403fr]">
 									<ResearchReportHighlightWithHeight highlight={(landingData?.highlight ?? [])[0]} />
-									<div className="flex flex-col gap-y-[64px]">
+									<div className="flex flex-col gap-y-16">
 										<ResearchWidgetWithScrollbarWithHeight
 											id="insights"
 											title="Insights"
@@ -226,7 +226,7 @@ function ArticlesLandingInner({ initialData }: { initialData: ArticlesPageProps 
 					<div id="clients">
 						<TitleLine title="Trusted by" />
 
-						<div className="mt-[24px] space-y-[48px]">
+						<div className="mt-6 space-y-12">
 							<ResearchTrustedByCarousel />
 
 							<ResearchSocialMediaMentions />
@@ -234,7 +234,7 @@ function ArticlesLandingInner({ initialData }: { initialData: ArticlesPageProps 
 					</div>
 
 					<ResearchSectionWithSharedHeightProvider>
-						<div className="grid grid-cols-1 gap-[36px] lg:grid-cols-[665fr_428fr]">
+						<div className="grid grid-cols-1 gap-9 lg:grid-cols-[665fr_428fr]">
 							<div>
 								<ResearchGridWithScrollbar
 									id="more-reports"
@@ -243,7 +243,7 @@ function ArticlesLandingInner({ initialData }: { initialData: ArticlesPageProps 
 									pageWidget="DL Research More Reports widget"
 								/>
 							</div>
-							<div className="flex flex-col gap-y-[64px]">
+							<div className="flex flex-col gap-y-16">
 								<ResearchSpotlightColumnWithHeight
 									title="Explore Spotlights"
 									articles={landingData?.spotlightColumn ?? []}

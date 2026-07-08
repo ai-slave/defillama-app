@@ -43,7 +43,7 @@ function buildSearchUrl(pathname: string, params: { q?: string; tag?: string; se
 
 function ResultBadge({ children }: { children: React.ReactNode }) {
 	return (
-		<span className="rounded-[4px] border border-white px-[8px] py-[3px] text-[10px] font-semibold tracking-[0.04em] text-white uppercase backdrop-blur-[2px]">
+		<span className="rounded-[4px] border border-white px-2 py-[3px] text-[10px] font-semibold tracking-[0.04em] text-white uppercase backdrop-blur-[2px]">
 			{children}
 		</span>
 	)
@@ -184,7 +184,7 @@ function ResultCard({ article }: { article: ArticleDocument }) {
 	const cover = resolveCover(article)
 	const sectionLabel = article.section ? humanizeTag(article.section) : null
 	return (
-		<li className="group relative top-0 grid grid-cols-1 gap-[14px] py-[22px] transition-all duration-200 ease-out hover:top-[-2px] sm:grid-cols-[clamp(180px,28vw,260px)_minmax(0,1fr)] sm:gap-[24px]">
+		<li className="group relative top-0 grid grid-cols-1 gap-3.5 py-[22px] transition-all duration-200 ease-out hover:top-[-2px] sm:grid-cols-[clamp(180px,28vw,260px)_minmax(0,1fr)] sm:gap-6">
 			<Link
 				href={articleHref(article)}
 				aria-label={article.title}
@@ -209,13 +209,13 @@ function ResultCard({ article }: { article: ArticleDocument }) {
 					</span>
 				) : null}
 			</Link>
-			<div className="grid content-start gap-[10px]">
+			<div className="grid content-start gap-2.5">
 				<Link href={articleHref(article)} className="block">
 					<h3 className="text-[19px] leading-[130%] font-semibold tracking-tight text-[#0c2956] transition-colors group-hover:text-[#237BFF] sm:text-[22px] dark:text-white dark:group-hover:text-[#9ec5ff]">
 						{article.title}
 					</h3>
 					{article.excerpt || article.subtitle ? (
-						<p className="mt-[10px] line-clamp-2 text-[14px] leading-[150%] text-[#0c2956]/70 dark:text-white/70">
+						<p className="mt-2.5 line-clamp-2 text-[14px] leading-[150%] text-[#0c2956]/70 dark:text-white/70">
 							{article.excerpt || article.subtitle}
 						</p>
 					) : null}
@@ -257,7 +257,7 @@ function Pagination({
 	const nextPage = Math.min(totalPages, page + 1)
 
 	const btnBase =
-		'inline-flex items-center gap-2 rounded-[4px] px-[14px] py-[7px] text-[12px] font-semibold tracking-[0.08em] uppercase transition-colors'
+		'inline-flex items-center gap-2 rounded-[4px] px-3.5 py-[7px] text-[12px] font-semibold tracking-[0.08em] uppercase transition-colors'
 	const enabledStyle =
 		'bg-[#D7E7FE] text-[#3A8BFF] hover:bg-[#bcd6fb] dark:border dark:border-white/40 dark:bg-transparent dark:text-white dark:hover:bg-white/10'
 	const disabledStyle =
@@ -407,7 +407,7 @@ export default function ResearchSearch() {
 
 				<ResultsTitle query={query} tag={tag} />
 
-				<div className="flex items-center gap-x-[12px] text-[#0c2956]/55 dark:text-white/55">
+				<div className="flex items-center gap-x-3 text-[#0c2956]/55 dark:text-white/55">
 					<span className="font-jetbrains text-[10px] tracking-[0.18em] uppercase tabular-nums">
 						{resultsLoading ? 'Loading…' : `${totalItems.toLocaleString()} ${totalItems === 1 ? 'result' : 'results'}`}
 					</span>

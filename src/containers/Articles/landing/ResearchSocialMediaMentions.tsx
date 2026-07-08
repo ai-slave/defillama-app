@@ -83,10 +83,10 @@ const QuoteBlock: React.FC<{
 	const textColor = variant === 'secondary' ? 'text-[#237bff]' : 'text-white'
 
 	const textStyles = mobile
-		? 'text-[16px] leading-[20px] text-center px-[26px] py-[12px]'
+		? 'text-[16px] leading-[20px] text-center px-[26px] py-3'
 		: size === 'small'
-			? 'text-[20px] leading-[28px] text-center px-[45px] py-[20px]'
-			: 'text-[20px] leading-[24px] px-[30px] py-[20px]'
+			? 'text-[20px] leading-[28px] text-center px-[45px] py-5'
+			: 'text-[20px] leading-[24px] px-[30px] py-5'
 
 	const containerHeight = mobile ? 'h-[160px] min-h-[160px]' : 'h-[215px]'
 
@@ -95,7 +95,7 @@ const QuoteBlock: React.FC<{
 			href={quote.social_media_link || '#'}
 			target="_blank"
 			rel="noopener noreferrer"
-			className={`flex grow flex-col gap-[16px] rounded-[4px] p-[13px] ${bgColor} ${containerHeight}`}
+			className={`flex grow flex-col gap-4 rounded-[4px] p-[13px] ${bgColor} ${containerHeight}`}
 		>
 			{quote.quote && (
 				<blockquote className={`relative font-semibold ${textStyles} ${textColor}`}>
@@ -152,7 +152,7 @@ const MobileSlide: React.FC<{ quote: MentionQuote; tweetId: string; variant?: 'p
 	tweetId,
 	variant = 'primary'
 }) => (
-	<div className="flex w-full min-w-0 shrink-0 flex-col gap-[10px]">
+	<div className="flex w-full min-w-0 shrink-0 flex-col gap-2.5">
 		<div className="h-[160px] w-full shrink-0">
 			<QuoteBlock quote={quote} variant={variant} mobile />
 		</div>
@@ -172,17 +172,17 @@ const BlockContent: React.FC<{ block: MentionBlock; isEven: boolean }> = ({ bloc
 	if (!hasContent) return null
 
 	return (
-		<div className="grid w-[992px] gap-[24px]" style={{ gridTemplateColumns: '252px 716px' }}>
-			<div className={`flex gap-[24px] ${isEven ? 'flex-col-reverse' : 'flex-col'}`}>
+		<div className="grid w-[992px] gap-6" style={{ gridTemplateColumns: '252px 716px' }}>
+			<div className={`flex gap-6 ${isEven ? 'flex-col-reverse' : 'flex-col'}`}>
 				<QuoteBlock quote={quote1} size="small" />
 				<TweetWidget tweetId={quote1.x_post_id} />
 			</div>
-			<div className="flex flex-col gap-[24px]">
-				<div className={`flex gap-[24px] ${isEven ? 'flex-row-reverse' : 'flex-row'}`}>
+			<div className="flex flex-col gap-6">
+				<div className={`flex gap-6 ${isEven ? 'flex-row-reverse' : 'flex-row'}`}>
 					<TweetWidget tweetId={quote2.x_post_id} />
 					<QuoteBlock quote={quote2} />
 				</div>
-				<div className={`flex gap-[24px] ${isEven ? 'flex-row-reverse' : 'flex-row'}`}>
+				<div className={`flex gap-6 ${isEven ? 'flex-row-reverse' : 'flex-row'}`}>
 					<QuoteBlock quote={quote3} variant="secondary" />
 					<TweetWidget tweetId={quote3.x_post_id} />
 				</div>
@@ -274,7 +274,7 @@ const AutoplayCarousel: React.FC<AutoplayCarouselProps> = ({
 				{slides}
 			</div>
 			{showDots && slides.length > 1 && (
-				<div className="mt-[16px] flex justify-center gap-[8px]">
+				<div className="mt-4 flex justify-center gap-2">
 					{slides.map((_, idx) => (
 						<button
 							key={idx}
@@ -322,5 +322,5 @@ export const ResearchSocialMediaMentions: React.FC = () => {
 		return <AutoplayCarousel slides={mobileSlides} containerClassName="snap-x snap-mandatory" showDots />
 	}
 
-	return <AutoplayCarousel slides={desktopSlides} containerClassName="snap-x snap-mandatory gap-[24px]" />
+	return <AutoplayCarousel slides={desktopSlides} containerClassName="snap-x snap-mandatory gap-6" />
 }

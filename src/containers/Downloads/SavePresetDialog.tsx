@@ -45,20 +45,20 @@ export function SavePresetDialog({
 			}}
 		>
 			<Ariakit.Dialog
-				className="fixed inset-0 z-60 m-auto flex h-fit w-[calc(100vw-2rem)] max-w-md flex-col gap-4 rounded-xl border border-(--cards-border) bg-(--cards-bg) p-5 shadow-2xl"
+				className="fixed inset-0 z-60 m-auto flex h-fit w-[calc(100vw-2rem)] max-w-md flex-col gap-4 rounded-xl border border-subtle bg-surface p-5 shadow-2xl"
 				portal
 				unmountOnHide
 				backdrop={<div className="fixed inset-0 z-50 bg-black/40" />}
 			>
 				<div className="flex items-start justify-between gap-3">
 					<div className="flex flex-col gap-1">
-						<h2 className="text-base font-semibold">{title}</h2>
+						<h2 className="heading-xs">{title}</h2>
 						{description ? <p className="text-xs text-(--text-tertiary)">{description}</p> : null}
 					</div>
 					<button
 						type="button"
 						onClick={onClose}
-						className="rounded-md p-1.5 text-(--text-tertiary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+						className="rounded-md p-1.5 text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
 					>
 						<Icon name="x" className="size-4" />
 					</button>
@@ -92,7 +92,7 @@ export function SavePresetDialog({
 						<button
 							type="button"
 							onClick={onClose}
-							className="rounded-md border border-(--divider) px-3 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+							className="rounded-md border border-(--divider) px-3 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
 						>
 							Cancel
 						</button>

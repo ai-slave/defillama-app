@@ -2,6 +2,13 @@ import * as Ariakit from '@ariakit/react'
 import { useProtocolsFilterState } from '~/components/Filters/useProtocolFilterState'
 import { Icon } from '~/components/Icon'
 import { DARK_MODE, useDarkModeManager } from '~/contexts/LocalStorage'
+import {
+	popoverMultiSelectCheckStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName,
+	popoverRowWithBorderStyles,
+	popoverSurfaceStyles
+} from '~/ui/Popover'
 
 const EMPTY_FILTERS: { name: string; key: string }[] = []
 
@@ -20,34 +27,27 @@ export function Settings({ metricFilters = EMPTY_FILTERS }: { metricFilters?: { 
 				unmountOnHide={false}
 				hideOnInteractOutside
 				gutter={6}
-				wrapperProps={{
-					className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
-				}}
-				className="z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,60dvh)] lg:max-h-(--popover-available-height) dark:border-[hsl(204,3%,32%)]"
+				wrapperProps={{ className: popoverMobileWrapperClassName }}
+				className={popoverSurfaceStyles}
 			>
-				<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
+				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 					<Icon name="x" className="size-5" />
 				</Ariakit.PopoverDismiss>
 
-				<h2 className="mx-3 my-2 text-(--text-secondary)">Settings</h2>
-				<hr className="border-black/20 dark:border-white/20" />
+				<h2 className="px-3 py-2 label-sm text-secondary">Settings</h2>
 				{metricFilters.map((option) => (
-					<Ariakit.SelectItem
-						value={option.key}
-						key={option.key}
-						className="flex items-center justify-between gap-3 px-3 py-2"
-					>
+					<Ariakit.SelectItem value={option.key} key={option.key} className={popoverRowWithBorderStyles}>
 						{option.name}
-						<Ariakit.SelectItemCheck />
+						<span className={popoverMultiSelectCheckStyles(selectedValues.includes(option.key))} aria-hidden>
+							{selectedValues.includes(option.key) ? <Icon name="check" className="size-3" /> : null}
+						</span>
 					</Ariakit.SelectItem>
 				))}
-				<Ariakit.SelectItem
-					value={DARK_MODE}
-					onClick={() => toggleDarkMode()}
-					className="flex items-center justify-between gap-3 px-3 py-2"
-				>
+				<Ariakit.SelectItem value={DARK_MODE} onClick={() => toggleDarkMode()} className={popoverRowWithBorderStyles}>
 					Dark Mode
-					<Ariakit.SelectItemCheck checked={darkMode} />
+					<span className={popoverMultiSelectCheckStyles(darkMode)} aria-hidden>
+						{darkMode ? <Icon name="check" className="size-3" /> : null}
+					</span>
 				</Ariakit.SelectItem>
 			</Ariakit.SelectPopover>
 		</Ariakit.SelectProvider>

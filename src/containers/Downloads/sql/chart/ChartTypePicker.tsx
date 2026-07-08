@@ -191,7 +191,7 @@ export function ChartTypePicker({ value, onChange, classified }: ChartTypePicker
 									active
 										? 'bg-(--primary) text-white shadow-sm'
 										: available
-											? 'text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)'
+											? 'text-(--text-secondary) hover:bg-hover-row hover:text-(--text-primary)'
 											: 'cursor-not-allowed text-(--text-tertiary)/50'
 								}`}
 							>

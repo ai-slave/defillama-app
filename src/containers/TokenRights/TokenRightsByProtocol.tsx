@@ -1,10 +1,12 @@
 import { useState, type ReactNode } from 'react'
 import { CopyHelper } from '~/components/Copy'
 import { Icon } from '~/components/Icon'
+import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/components/Tooltip'
 import type { IProtocolRaise } from '~/containers/ProtocolOverview/api.types'
 import { formatRaiseAmount } from '~/containers/Raises/utils'
+import { Card } from '~/ui/Card'
 import { formattedNum } from '~/utils'
 import type { ITokenRightsData, ITokenRightsParsedLink, ITokenRightsTokenDisplay } from './types'
 import { formatFeeSwitchStatus, getTokenRightsPrimaryValueLabel } from './utils'
@@ -84,14 +86,12 @@ export function TokenRightsByProtocol({
 	return (
 		<div
 			id={isEmbedded ? EMBEDDED_TOKEN_RIGHTS_SECTION_ID : undefined}
-			className={
-				isEmbedded ? 'scroll-mt-24 rounded-md border border-(--cards-border) bg-(--cards-bg)' : 'grid grid-cols-1 gap-2'
-			}
+			className={isEmbedded ? 'scroll-mt-24 rounded-[8px] border border-subtle bg-surface' : 'grid grid-cols-1 gap-2'}
 		>
 			{showHeader ? (
 				headerVariant === 'embedded' ? (
-					<div className="flex flex-wrap items-center gap-2 border-b border-(--cards-border) p-3">
-						<h2 className="group relative flex items-center gap-1 text-xl font-bold">
+					<div className="flex flex-wrap items-center gap-2 border-b border-very-subtle p-2">
+						<h2 className="group relative flex items-center gap-1 heading-xs">
 							Token Rights and Value Accrual
 							<a
 								aria-hidden="true"
@@ -108,9 +108,9 @@ export function TokenRightsByProtocol({
 						/>
 					</div>
 				) : (
-					<header className="flex flex-wrap items-center gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+					<Card as="header" padding="sm" border="subtle" className="flex flex-wrap items-center gap-2">
 						<TokenLogo name={name} kind="token" size={24} alt={`Logo of ${name}`} />
-						<h1 className="text-xl font-bold">{symbol ? `$${symbol}` : name} Token Rights</h1>
+						<h1 className="heading-xs">{symbol ? `$${symbol}` : name} Token Rights</h1>
 						{overview.identityTokens.length > 0 ? (
 							<TokenRightsChipList items={overview.identityTokens} tone="positive" variant="overview" />
 						) : null}
@@ -119,20 +119,20 @@ export function TokenRightsByProtocol({
 							updatedLabel={overview.lastUpdatedLabel}
 							onChange={setActiveView}
 						/>
-					</header>
+					</Card>
 				)
 			) : null}
 
-			<div className={isEmbedded ? 'p-3' : undefined}>
+			<div className={isEmbedded ? 'p-2' : undefined}>
 				{activeView === 'overview' ? (
 					<TokenRightsOverviewView name={name} tokenRightsData={tokenRightsData} showIdentity={showCardIdentity} />
 				) : (
-					<div className="grid gap-3 xl:grid-cols-2">
+					<div className="grid gap-2 xl:grid-cols-2">
 						{/* ── Left column ── */}
-						<div className="flex flex-col gap-3">
+						<div className="flex flex-col gap-2">
 							{/* Overview */}
 							<SectionCard title="Overview">
-								<dl className="divide-y divide-(--cards-border) empty:hidden">
+								<dl className="empty:hidden">
 									{overview.identityTokens.length > 0 ? (
 										<KeyValueRow label="Token(s)">
 											<TokenRightsChipList items={overview.identityTokens} tone="positive" variant="details" />
@@ -149,12 +149,12 @@ export function TokenRightsByProtocol({
 										</KeyValueRow>
 									) : null}
 								</dl>
-								<p className="text-sm text-(--text-secondary)">{overview.description}</p>
+								<p className="body-sm text-secondary">{overview.description}</p>
 							</SectionCard>
 
 							{/* Governance & Decisions */}
 							<SectionCard title="Governance Rights" badge="Control">
-								<p className="text-sm text-(--text-secondary)">{governance.summary}</p>
+								<p className="body-sm text-secondary">{governance.summary}</p>
 								<RightsRow
 									label="Governance Decisions"
 									tooltip={TOOLTIPS['Governance Decisions']}
@@ -190,27 +190,27 @@ export function TokenRightsByProtocol({
 							{resources.addresses.length > 0 || resources.reports.length > 0 ? (
 								<SectionCard title="Resources">
 									{resources.addresses.length > 0 ? (
-										<div className="flex flex-col gap-2 text-sm">
+										<div className="flex flex-col gap-2 body-sm">
 											{resources.addresses.every((a) => !a.label) ? (
-												<h3 className="text-(--text-label)">Foundation Multisigs / Addresses</h3>
+												<h3 className="text-secondary">Foundation Multisigs / Addresses</h3>
 											) : null}
 											{resources.addresses.map((a, i) => {
 												const isLink = a.value.startsWith('http://') || a.value.startsWith('https://')
 												return (
 													<div key={`${a.value}-${i}`} className="flex min-w-0 flex-col gap-0.5">
-														{a.label ? <span className="text-(--text-label)">{a.label}</span> : null}
+														{a.label ? <span className="text-secondary">{a.label}</span> : null}
 														{isLink ? (
 															<a
 																href={a.value}
 																target="_blank"
 																rel="noopener noreferrer"
-																className="truncate text-(--link) underline"
+																className="truncate text-link underline"
 															>
 																{a.value}
 															</a>
 														) : (
 															<div className="flex items-center justify-between gap-4">
-																<span className="truncate font-mono text-(--text-secondary)">{a.value}</span>
+																<span className="truncate font-mono text-secondary">{a.value}</span>
 																<CopyHelper toCopy={a.value} />
 															</div>
 														)}
@@ -221,9 +221,8 @@ export function TokenRightsByProtocol({
 									) : null}
 									{resources.reports.length > 0 ? (
 										<>
-											<hr className="my-2 border-(--cards-border)" />
-											<div className="flex flex-col gap-2 text-sm">
-												{/* <h3 className="font-medium text-(--text-label)">Latest Treasury / Token Report</h3> */}
+											<hr className="my-2 border-subtle" />
+											<div className="flex flex-col gap-2 body-sm">
 												{resources.reports.map((r) => (
 													<div key={r.url} className="flex items-center justify-between gap-4">
 														<span>{r.label}</span>
@@ -231,7 +230,7 @@ export function TokenRightsByProtocol({
 															href={r.url}
 															target="_blank"
 															rel="noopener noreferrer"
-															className="inline-flex shrink-0 items-center gap-1 text-blue-500 hover:underline"
+															className="inline-flex shrink-0 items-center gap-1 label-sm text-link hover:underline"
 														>
 															{tryHostname(r.url)}
 															<Icon name="external-link" className="size-3.5" />
@@ -246,17 +245,15 @@ export function TokenRightsByProtocol({
 						</div>
 
 						{/* ── Right column ── */}
-						<div className="flex flex-col gap-3">
+						<div className="flex flex-col gap-2">
 							{hasPrimaryValueAccrual ? (
 								<GreenCard
 									title="Primary Value Accrual"
 									tooltip="The main mechanism by which value accrues to token holders"
 								>
-									{primaryValueLabel !== null ? (
-										<span className="text-xs font-semibold tracking-wider uppercase">{primaryValueLabel}</span>
-									) : null}
+									{primaryValueLabel !== null ? <span className="label-sm uppercase">{primaryValueLabel}</span> : null}
 									{valueAccrual.details !== null ? (
-										<p className="text-sm text-(--text-secondary)">{valueAccrual.details}</p>
+										<p className="body-sm text-secondary">{valueAccrual.details}</p>
 									) : null}
 								</GreenCard>
 							) : null}
@@ -266,15 +263,13 @@ export function TokenRightsByProtocol({
 									title="Equity Statement"
 									tooltip="Protocol statement on the relationship between equity and token holders, and how value ultimately flows or may flow in the future"
 								>
-									<p className="text-sm text-(--text-secondary)">{alignment.equityStatement}</p>
+									<p className="body-sm text-secondary">{alignment.equityStatement}</p>
 								</GreenCard>
 							) : null}
 
 							{/* Economic Rights & Value Accrual */}
 							<SectionCard title="Economic Rights" badge="Value Capture">
-								{economic.summary !== null ? (
-									<p className="text-sm text-(--text-secondary)">{economic.summary}</p>
-								) : null}
+								{economic.summary !== null ? <p className="body-sm text-secondary">{economic.summary}</p> : null}
 								<RightsRow label="Buybacks" tooltip={TOOLTIPS['Buybacks']} details={valueAccrual.buybacks.details}>
 									<DetailsTokenList display={valueAccrual.buybacks} />
 								</RightsRow>
@@ -297,7 +292,7 @@ export function TokenRightsByProtocol({
 									{raises && raises.length > 0 ? (
 										<RaiseHistorySection tooltip={TOOLTIPS['Raise History']} raises={raises} />
 									) : null}
-									<dl className="divide-y divide-(--cards-border) empty:hidden">
+									<dl className="empty:hidden">
 										{alignment.fundraising.length > 0 ? (
 											<KeyValueRow label="Fundraising" tooltip={TOOLTIPS['Fundraising']}>
 												<TokenRightsChipList items={alignment.fundraising} tone="neutral" variant="details" />
@@ -351,7 +346,7 @@ function TokenRightsHeaderControls({
 	return (
 		<div className="ml-auto flex flex-wrap items-center justify-end gap-2">
 			<TokenRightsViewToggle activeView={activeView} onChange={onChange} />
-			{updatedLabel ? <span className="text-xs text-(--text-secondary)">Updated {updatedLabel}</span> : null}
+			{updatedLabel ? <span className="label-sm text-secondary">Updated {updatedLabel}</span> : null}
 		</div>
 	)
 }
@@ -364,11 +359,7 @@ function TokenRightsViewToggle({
 	onChange: (view: TokenRightsView) => void
 }) {
 	return (
-		<div
-			role="tablist"
-			aria-label="Token rights view"
-			className="inline-flex items-center gap-1 rounded-md border border-(--cards-border) bg-(--app-bg) p-0.5"
-		>
+		<div role="tablist" aria-label="Token rights view" className={chartSegmentedControlGroupStyles}>
 			{(['overview', 'details'] as const).map((view) => {
 				const active = activeView === view
 				return (
@@ -377,12 +368,9 @@ function TokenRightsViewToggle({
 						type="button"
 						role="tab"
 						aria-selected={active}
+						data-active={active}
 						onClick={() => onChange(view)}
-						className={`rounded-sm px-3 py-1 text-xs font-semibold transition-colors ${
-							active
-								? 'bg-(--primary) text-white shadow-sm'
-								: 'text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)'
-						}`}
+						className={chartSegmentedControlButtonStyles}
 					>
 						{view === 'overview' ? 'Overview' : 'Details'}
 					</button>
@@ -468,22 +456,22 @@ function TokenRightsOverviewView({
 	]
 
 	return (
-		<section className="w-full rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
-			<div className="grid max-w-[1040px] gap-4 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-center">
-				<div className="flex min-w-0 flex-col items-center gap-4">
+		<Card as="section" padding="sm" border="subtle" className="w-full">
+			<div className="grid max-w-[1040px] gap-2 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-center">
+				<div className="flex min-w-0 flex-col items-center gap-2">
 					<TokenRightsPieChart segments={pieSegments} />
 					{overview.utilityItems.length > 0 ? (
 						<div className="flex w-full flex-col items-center gap-2">
-							<div className="text-xs font-medium tracking-wider text-(--text-label) uppercase">Utility</div>
+							<div className="label-sm text-secondary uppercase">Utility</div>
 							<TokenRightsChipList items={overview.utilityItems} tone="neutral" variant="overview" wrap />
 						</div>
 					) : null}
 				</div>
 
-				<div className="flex min-w-0 flex-col gap-3">
+				<div className="flex min-w-0 flex-col gap-2">
 					{showIdentity ? (
 						<div className="flex flex-wrap items-center gap-2">
-							<h3 className="text-lg font-bold">{displayName}</h3>
+							<h3 className="heading-xs">{displayName}</h3>
 							{overview.identityTokens.length > 0 ? (
 								<TokenRightsChipList items={overview.identityTokens} tone="positive" variant="overview" />
 							) : null}
@@ -491,31 +479,25 @@ function TokenRightsOverviewView({
 					) : null}
 
 					{hasPrimaryValueAccrual ? (
-						<div className="rounded-md border border-green-600/30 bg-green-600/10 p-3">
-							<div className="text-xs font-medium tracking-wider text-(--text-label) uppercase">
-								Primary Value Accrual
-							</div>
+						<div className="rounded-[8px] border border-green-600/30 bg-green-600/10 p-2">
+							<div className="label-sm text-secondary uppercase">Primary Value Accrual</div>
 							{primaryValueLabel !== null ? (
-								<div className="mt-1.5 text-base font-semibold text-green-700 dark:text-green-400">
-									{primaryValueLabel}
-								</div>
+								<div className="mt-1.5 label-lg text-green-700 dark:text-green-400">{primaryValueLabel}</div>
 							) : null}
 							{valueAccrual.details !== null ? (
-								<p className="mt-1.5 text-sm text-(--text-secondary)">{valueAccrual.details}</p>
+								<p className="mt-1.5 body-md text-secondary">{valueAccrual.details}</p>
 							) : null}
 						</div>
 					) : null}
 
 					<div className="thin-scrollbar overflow-x-auto">
-						<div className="grid min-w-[640px] grid-cols-[repeat(4,minmax(max-content,1fr))] overflow-hidden rounded-md border border-(--cards-border)">
+						<div className="grid min-w-[640px] grid-cols-[repeat(4,minmax(max-content,1fr))] overflow-hidden rounded-[8px] border border-subtle">
 							{rightsFields.map((field) => (
 								<div
 									key={field.label}
-									className="min-w-max border-r border-b border-(--cards-border) px-3 py-2.5 [&:nth-child(4n)]:border-r-0 [&:nth-child(n+5)]:border-b-0"
+									className="min-w-max border-r border-b border-subtle p-2 [&:nth-child(4n)]:border-r-0 [&:nth-child(n+5)]:border-b-0"
 								>
-									<div className="mb-1 text-xs font-medium tracking-wider text-(--text-label) uppercase">
-										{field.label}
-									</div>
+									<div className="mb-1 label-sm text-secondary uppercase">{field.label}</div>
 									{field.value}
 								</div>
 							))}
@@ -523,16 +505,16 @@ function TokenRightsOverviewView({
 					</div>
 
 					{alignment.fundraisingLabel || alignment.associatedEntities.length > 0 ? (
-						<div className="flex flex-wrap items-start gap-x-8 gap-y-4 border-t border-(--cards-border) pt-3">
+						<div className="flex flex-wrap items-start gap-x-8 gap-y-2 border-t border-subtle pt-2">
 							{alignment.fundraisingLabel ? (
 								<div className="flex min-w-max flex-col gap-1.5">
-									<div className="text-xs font-medium tracking-wider text-(--text-label) uppercase">Fundraising</div>
+									<div className="label-sm text-secondary uppercase">Fundraising</div>
 									<TokenRightsToneText label={alignment.fundraisingLabel} tone="neutral" />
 								</div>
 							) : null}
 							{alignment.associatedEntities.length > 0 ? (
 								<div className="flex min-w-0 flex-col gap-1.5">
-									<div className="text-xs font-medium tracking-wider text-(--text-label) uppercase">Entities</div>
+									<div className="label-sm text-secondary uppercase">Entities</div>
 									<TokenRightsChipList items={alignment.associatedEntities} tone="neutral" variant="overview" wrap />
 								</div>
 							) : null}
@@ -540,7 +522,7 @@ function TokenRightsOverviewView({
 					) : null}
 				</div>
 			</div>
-		</section>
+		</Card>
 	)
 }
 
@@ -552,7 +534,7 @@ function TokenRightsPieChart({ segments }: { segments: Array<{ label: string; ac
 					key={segment.label}
 					d={PIE_SEGMENT_PATHS[index]}
 					fill={segment.active ? 'var(--success)' : 'var(--error)'}
-					stroke="var(--cards-bg)"
+					stroke="var(--ld-bg-surface)"
 					strokeWidth="4"
 				/>
 			))}
@@ -563,7 +545,7 @@ function TokenRightsPieChart({ segments }: { segments: Array<{ label: string; ac
 					y={label.y}
 					textAnchor="middle"
 					transform={label.rotate ? `rotate(${label.rotate} ${label.x} ${label.y})` : undefined}
-					className="fill-(--text-secondary) text-[13px] font-bold"
+					className="fill-secondary text-[13px] font-bold"
 				>
 					{label.text}
 				</text>
@@ -630,13 +612,13 @@ const CHIP_TONE_CLASSES: Record<TokenRightsChipVariant, Record<StatusTone, strin
 		positive: 'border-green-600/30 bg-green-600/10 text-green-700 dark:text-green-400',
 		negative: 'border-red-600/30 bg-red-600/10 text-red-700 dark:text-red-400',
 		warning: 'border-amber-600/30 bg-amber-600/10 text-amber-700 dark:text-amber-400',
-		neutral: 'border-(--cards-border) bg-(--cards-bg) text-(--text-secondary)'
+		neutral: 'border-medium bg-surface text-secondary'
 	},
 	details: {
 		positive: 'border-green-600/30 bg-green-600/10 text-green-700 dark:text-green-400',
 		negative: 'border-red-600/30 bg-red-600/10 text-red-700 dark:text-red-400',
 		warning: 'border-amber-600/30 bg-amber-600/10 text-amber-700 dark:text-amber-400',
-		neutral: 'border-(--cards-border) bg-(--app-bg) text-(--text-secondary)'
+		neutral: 'border-medium bg-surface-elevated-1 text-secondary'
 	}
 }
 
@@ -644,11 +626,11 @@ const TEXT_TONE_CLASSES: Record<StatusTone, string> = {
 	positive: 'text-green-700 dark:text-green-400',
 	negative: 'text-red-600 dark:text-red-400',
 	warning: 'text-amber-600 dark:text-amber-400',
-	neutral: 'text-(--text-secondary)'
+	neutral: 'text-secondary'
 }
 
 function TokenRightsToneText({ label, tone }: { label: string; tone: StatusTone }) {
-	return <span className={`text-sm font-medium whitespace-nowrap ${TEXT_TONE_CLASSES[tone]}`}>{label}</span>
+	return <span className={`label-md whitespace-nowrap ${TEXT_TONE_CLASSES[tone]}`}>{label}</span>
 }
 
 function TokenRightsChipList({
@@ -684,7 +666,7 @@ function TokenRightsChip({
 	const shapeClass = variant === 'overview' ? 'rounded-md px-2 py-0.5 font-medium' : 'rounded-full px-2.5 py-0.5'
 	return (
 		<span
-			className={`inline-flex w-fit shrink-0 items-center border text-sm whitespace-nowrap ${shapeClass} ${CHIP_TONE_CLASSES[variant][tone]}`}
+			className={`inline-flex w-fit shrink-0 items-center border label-sm whitespace-nowrap ${shapeClass} ${CHIP_TONE_CLASSES[variant][tone]}`}
 		>
 			{label}
 		</span>
@@ -693,25 +675,23 @@ function TokenRightsChip({
 
 function SectionCard({ title, badge, children }: { title: string; badge?: string; children: ReactNode }) {
 	return (
-		<section className="flex flex-col gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+		<Card as="section" padding="sm" border="subtle" className="flex flex-col gap-2">
 			<div className="flex items-center justify-between">
-				<h2 className="text-base font-semibold">{title}</h2>
-				{badge ? (
-					<span className="text-xs font-medium tracking-wider text-(--text-secondary) uppercase">{badge}</span>
-				) : null}
+				<h2 className="label-lg">{title}</h2>
+				{badge ? <span className="label-sm text-secondary uppercase">{badge}</span> : null}
 			</div>
 			{children}
-		</section>
+		</Card>
 	)
 }
 
 function GreenCard({ title, tooltip, children }: { title: string; tooltip: string; children: ReactNode }) {
 	return (
-		<section className="flex flex-col gap-3 rounded-md border border-green-600/30 bg-green-600/10 p-3">
+		<section className="flex flex-col gap-2 rounded-[8px] border border-green-600/30 bg-green-600/10 p-2">
 			<Tooltip
 				content={tooltip}
 				render={<h2 />}
-				className="w-fit text-base font-semibold text-green-700 underline decoration-dotted dark:text-green-400"
+				className="w-fit label-lg text-green-700 underline decoration-dotted dark:text-green-400"
 			>
 				{title}
 			</Tooltip>
@@ -722,17 +702,17 @@ function GreenCard({ title, tooltip, children }: { title: string; tooltip: strin
 
 function KeyValueRow({ label, tooltip, children }: { label: string; tooltip?: string; children: ReactNode }) {
 	return (
-		<div className="flex items-center justify-between gap-4 py-2.5">
+		<div className="flex items-center justify-between gap-4 border-b border-subtle py-2 last:border-b-0">
 			{tooltip ? (
 				<Tooltip
 					content={tooltip}
 					render={<dt />}
-					className="shrink-0 text-sm text-(--text-secondary) underline decoration-dotted"
+					className="shrink-0 body-sm text-secondary underline decoration-dotted"
 				>
 					{label}
 				</Tooltip>
 			) : (
-				<dt className="shrink-0 text-sm text-(--text-secondary)">{label}</dt>
+				<dt className="shrink-0 body-sm text-secondary">{label}</dt>
 			)}
 			<dd className="flex flex-wrap items-center justify-end gap-1.5">{children}</dd>
 		</div>
@@ -749,7 +729,7 @@ function InlineLinks({ links }: { links: ITokenRightsParsedLink[] }) {
 					href={l.url}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="inline-flex items-center gap-1 text-sm text-blue-500 hover:underline"
+					className="inline-flex items-center gap-1 label-sm text-link hover:underline"
 				>
 					<Icon name="external-link" className="size-3 shrink-0" />
 					{l.label}
@@ -783,18 +763,18 @@ function RightsRow({
 	children: ReactNode
 }) {
 	return (
-		<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-white/2 p-3 dark:bg-white/3">
+		<div className="flex flex-col gap-2 rounded-[8px] border border-subtle bg-surface-elevated-1 p-2">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				{tooltip ? (
-					<Tooltip content={tooltip} render={<h3 />} className="text-sm font-bold underline decoration-dotted">
+					<Tooltip content={tooltip} render={<h3 />} className="label-md underline decoration-dotted">
 						{label}
 					</Tooltip>
 				) : (
-					<h3 className="text-sm font-bold">{label}</h3>
+					<h3 className="label-md">{label}</h3>
 				)}
 				{children}
 			</div>
-			{details !== null ? <p className="text-sm text-(--text-secondary)">{details}</p> : null}
+			{details !== null ? <p className="body-sm text-secondary">{details}</p> : null}
 		</div>
 	)
 }
@@ -803,23 +783,23 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: IP
 	const totalAmount = raises.reduce((sum, r) => sum + (r.amount || 0), 0)
 
 	return (
-		<div className="flex flex-col gap-3">
+		<div className="flex flex-col gap-2">
 			<div className="flex items-center justify-between">
 				{tooltip ? (
-					<Tooltip content={tooltip} render={<h3 />} className="text-sm font-semibold underline decoration-dotted">
+					<Tooltip content={tooltip} render={<h3 />} className="label-md underline decoration-dotted">
 						Raise History
 					</Tooltip>
 				) : (
-					<h3 className="text-sm font-semibold">Raise History</h3>
+					<h3 className="label-md">Raise History</h3>
 				)}
-				<span className="text-xs text-(--text-secondary)">
+				<span className="label-sm text-secondary">
 					{raises.length} round{raises.length !== 1 ? 's' : ''} · {formattedNum(totalAmount * 1_000_000, true)} total
 				</span>
 			</div>
 			<div className="overflow-x-auto">
-				<table className="w-full text-left text-sm">
+				<table className="w-full text-left body-sm">
 					<thead>
-						<tr className="border-b border-(--cards-border) text-xs font-medium tracking-wider text-(--text-label) uppercase">
+						<tr className="border-b border-subtle label-sm text-secondary uppercase">
 							<th className="pr-4 pb-3">Date</th>
 							<th className="pr-4 pb-3 text-right">Amount</th>
 							<th className="pr-4 pb-3">Round</th>
@@ -831,7 +811,7 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: IP
 						{raises.map((r, i) => {
 							const valuation = formatRaiseAmount(r.valuation)
 							return (
-								<tr key={`${r.date}-${r.round}-${i}`} className="border-b border-(--cards-border) last:border-0">
+								<tr key={`${r.date}-${r.round}-${i}`} className="border-b border-subtle last:border-0">
 									<td className="py-2.5 pr-4 whitespace-nowrap">
 										{r.date
 											? new Date(r.date * 1000).toLocaleDateString(undefined, {
@@ -854,7 +834,7 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: IP
 												href={r.source}
 												target="_blank"
 												rel="noopener noreferrer"
-												className="text-(--text-secondary) hover:text-(--text-primary)"
+												className="text-secondary hover:text-primary"
 											>
 												<Icon name="external-link" className="size-3.5" />
 											</a>

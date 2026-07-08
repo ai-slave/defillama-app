@@ -159,7 +159,7 @@ const columns = [
 
 							<Tooltip
 								content={<ProtocolChainsComponent chains={row.original.chains} />}
-								className="text-[0.7rem] text-(--text-disabled)"
+								className="text-[0.7rem] text-secondary"
 							>
 								{`${row.original.chains.length} chain${row.original.chains.length > 1 ? 's' : ''}`}
 							</Tooltip>

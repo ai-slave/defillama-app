@@ -238,7 +238,7 @@ export const CategoryPerformanceContainer = ({
 	return (
 		<>
 			<div className="flex flex-col gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-				{isCoinPage && categoryName ? <h1 className="text-xl font-semibold">Category: {categoryName ?? ''}</h1> : null}
+				{isCoinPage && categoryName ? <h1 className="heading-sm">Category: {categoryName ?? ''}</h1> : null}
 				<p className="text-sm text-(--text-secondary)">
 					MCap-Weighted Category Performance: Shows how a category of coins has performed over your chosen time period
 					and in your selected denomination (e.g., $, BTC). Method: 1. calculating the percentage change for each
@@ -291,6 +291,7 @@ export const CategoryPerformanceContainer = ({
 									label={isCoinPage ? 'Coins' : 'Categories'}
 									labelType="smol"
 									variant="filter"
+									size="md"
 									portal
 								/>
 							) : null}

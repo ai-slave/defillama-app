@@ -27,7 +27,7 @@ function ProductCard({
 }) {
 	return (
 		<div className="flex flex-col gap-3 rounded-xl border border-(--cards-border) bg-(--cards-bg) p-6 transition-all hover:border-(--sl-accent)/20 hover:shadow-md">
-			<h3 className="text-base font-semibold text-(--text-primary)">{title}</h3>
+			<h3 className="heading-xs text-(--text-primary)">{title}</h3>
 			<div className="flex flex-col gap-3 text-sm leading-relaxed text-(--text-secondary)">{children}</div>
 			{links && links.length > 0 && (
 				<div className="mt-auto flex flex-wrap gap-x-4 gap-y-2 pt-1">
@@ -48,7 +48,7 @@ export default function Products() {
 			<div className="flex flex-col gap-4 rounded-xl border border-(--cards-border) bg-(--cards-bg) p-6">
 				<div className="flex items-center gap-3">
 					<NearIcon />
-					<h1 className="text-xl font-bold text-(--text-primary)">Protocol</h1>
+					<h1 className="heading-sm text-(--text-primary)">Protocol</h1>
 				</div>
 				<p className="max-w-3xl text-[15px] leading-relaxed text-(--text-secondary)">
 					NEAR is the unified commerce layer for assets and agents. NEAR is where cross-chain execution is unified,
@@ -129,7 +129,7 @@ export default function Products() {
 
 			<div className="rounded-xl border border-(--cards-border) bg-(--cards-bg) p-6 transition-all hover:border-(--sl-accent)/20 hover:shadow-md">
 				<div className="flex items-center justify-between">
-					<h3 className="text-base font-semibold text-(--text-primary)">Governance: House of Stake</h3>
+					<h3 className="heading-xs text-(--text-primary)">Governance: House of Stake</h3>
 					<ExternalLink href="https://houseofstake.org/">houseofstake.org</ExternalLink>
 				</div>
 				<p className="mt-3 max-w-3xl text-sm leading-relaxed text-(--text-secondary)">

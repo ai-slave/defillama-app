@@ -1,5 +1,15 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo } from 'react'
+import { buttonStyles } from '~/ui/Button'
+import {
+	legacyMenuSurfaceStyles,
+	legacyPopoverExternalRowStyles,
+	legacyPopoverRowStyles,
+	menuSurfaceStyles,
+	popoverRowWithBorderStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName
+} from '~/ui/Popover'
 import { Icon } from './Icon'
 import { BasicLink } from './Link'
 
@@ -10,23 +20,34 @@ interface IMenuProps {
 	onItemClick?: (value: string) => void
 	className?: string
 	portal?: boolean
+	popoverVariant?: 'default' | 'legacy'
 }
 
-export function Menu({ options, name, isExternal, onItemClick, className, portal, ...props }: IMenuProps) {
+export function Menu({
+	options,
+	name,
+	isExternal,
+	onItemClick,
+	className,
+	portal,
+	popoverVariant,
+	...props
+}: IMenuProps) {
 	const { _options } = useMemo(() => {
 		return {
 			_options: typeof options === 'string' ? [options] : options
 		}
 	}, [options])
+	const surfaceStyles = popoverVariant === 'legacy' ? legacyMenuSurfaceStyles : menuSurfaceStyles
+	const rowStyles = popoverVariant === 'legacy' ? legacyPopoverRowStyles : popoverRowWithBorderStyles
+	const externalRowStyles =
+		popoverVariant === 'legacy' ? legacyPopoverExternalRowStyles : `${popoverRowWithBorderStyles} block`
 
 	return (
 		<Ariakit.MenuProvider>
 			<Ariakit.MenuButton
 				{...props}
-				className={
-					className ??
-					'relative flex max-w-fit cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md bg-(--btn2-bg) px-3 py-2 text-(--text-primary) hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)'
-				}
+				className={className ?? `${buttonStyles({ size: 'md' })} max-w-fit justify-between`}
 			>
 				{name}
 				<Ariakit.MenuButtonArrow />
@@ -35,13 +56,11 @@ export function Menu({ options, name, isExternal, onItemClick, className, portal
 				unmountOnHide
 				hideOnInteractOutside
 				gutter={8}
-				wrapperProps={{
-					className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
-				}}
-				className="z-10 flex thin-scrollbar h-[calc(100dvh-80px)] min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:drawer max-sm:rounded-b-none sm:max-h-[60dvh] sm:max-w-md lg:h-full lg:max-h-(--popover-available-height) dark:border-[hsl(204,3%,32%)]"
+				wrapperProps={{ className: popoverMobileWrapperClassName }}
+				className={surfaceStyles}
 				portal={portal || false}
 			>
-				<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
+				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 					<Icon name="x" className="size-5" />
 				</Ariakit.PopoverDismiss>
 
@@ -50,7 +69,7 @@ export function Menu({ options, name, isExternal, onItemClick, className, portal
 						<Ariakit.MenuItem
 							key={value + i}
 							onClick={() => onItemClick(value)}
-							className="flex shrink-0 cursor-pointer items-center justify-between gap-4 overflow-hidden border-b border-(--form-control-border) px-3 py-2 text-ellipsis whitespace-nowrap cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)"
+							className={`${rowStyles} text-ellipsis whitespace-nowrap`}
 						>
 							{value}
 						</Ariakit.MenuItem>
@@ -58,7 +77,7 @@ export function Menu({ options, name, isExternal, onItemClick, className, portal
 						<Ariakit.MenuItem
 							render={<a href={value} target="_blank" rel="noopener noreferrer" />}
 							key={value + i}
-							className="shrink-0 cursor-pointer overflow-hidden border-b border-(--form-control-border) px-3 py-2 text-ellipsis whitespace-nowrap cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)"
+							className={externalRowStyles}
 						>
 							{value}
 						</Ariakit.MenuItem>
@@ -66,7 +85,7 @@ export function Menu({ options, name, isExternal, onItemClick, className, portal
 						<Ariakit.MenuItem
 							key={value + i}
 							render={<BasicLink href={value} />}
-							className="flex shrink-0 cursor-pointer items-center justify-between gap-4 overflow-hidden border-b border-(--form-control-border) px-3 py-2 text-ellipsis whitespace-nowrap cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)"
+							className={`${rowStyles} text-ellipsis whitespace-nowrap`}
 						>
 							{value}
 						</Ariakit.MenuItem>

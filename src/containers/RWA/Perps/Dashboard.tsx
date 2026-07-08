@@ -5,7 +5,6 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue, useMemo, useState, type ReactNode } from 'react'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ButtonStyled/ChartRestoreButton'
-import { Checkbox } from '~/components/Checkbox'
 import type {
 	IHBarChartProps,
 	IMultiSeriesChart2Props,
@@ -22,13 +21,23 @@ import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { getQueryUpdatesFromSelected } from '~/components/Select/query'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import type { ExcludeQueryKey } from '~/components/Select/types'
+import {
+	chartSegmentedControlButtonStyles,
+	chartSegmentedControlGroupStyles,
+	type ExcludeQueryKey
+} from '~/components/Select/types'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { Tooltip } from '~/components/Tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import { limitRwaHorizontalBarData, type RWAChartDataset, type RWAChartRow } from '~/containers/RWA/chartDataset'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { Checkbox } from '~/ui/Checkbox'
+import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
@@ -113,10 +122,6 @@ const EMPTY_DATASET: RWAChartDataset = { source: [], dimensions: ['timestamp'] }
 const PIE_CHART_RADIUS = ['50%', '70%'] as [string, string]
 const FOREX_ASSET_CLASS = 'Forex Perps'
 const UNKNOWN_FILTER_VALUE = 'Unknown'
-const FILTER_BUTTON_CLASS =
-	'relative flex cursor-pointer flex-nowrap items-center justify-center gap-2 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs font-medium whitespace-nowrap text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-40'
-const FILTER_EDIT_BUTTON_CLASS =
-	'relative ml-auto flex min-h-7 cursor-pointer flex-nowrap items-center justify-center gap-1.5 rounded-sm px-2 py-1 text-xs font-medium whitespace-nowrap text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)'
 
 type RWAPerpsMarketFilterKey =
 	| 'venue'
@@ -268,7 +273,7 @@ const overviewColumns = [
 				<span className="vf-row-index shrink-0" aria-hidden="true" />
 				<BasicLink
 					href={`/rwa/perps/contract/${encodeURIComponent(info.row.original.contract)}`}
-					className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+					className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
 				>
 					{info.row.original.contract}
 				</BasicLink>
@@ -285,7 +290,7 @@ const overviewColumns = [
 		cell: (info) => (
 			<BasicLink
 				href={`/rwa/perps/venue/${rwaSlug(info.getValue())}`}
-				className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+				className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
 			>
 				{info.getValue()}
 			</BasicLink>
@@ -312,7 +317,7 @@ const overviewColumns = [
 			info.getValue() ? (
 				<BasicLink
 					href={`/rwa/perps/asset-group/${rwaSlug(info.getValue())}`}
-					className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+					className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
 				>
 					{info.getValue()}
 				</BasicLink>
@@ -638,7 +643,7 @@ const venueColumns = [
 				<span className="vf-row-index shrink-0" aria-hidden="true" />
 				<BasicLink
 					href={`/rwa/perps/contract/${encodeURIComponent(info.row.original.contract)}`}
-					className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+					className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
 				>
 					{info.row.original.contract}
 				</BasicLink>
@@ -666,7 +671,7 @@ const venueColumns = [
 			info.getValue() ? (
 				<BasicLink
 					href={`/rwa/perps/asset-group/${rwaSlug(info.getValue())}`}
-					className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+					className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
 				>
 					{info.getValue()}
 				</BasicLink>
@@ -1136,7 +1141,7 @@ function RWAPerpsActiveFilterPills({ pills }: { pills: RWAPerpsActiveFilterPill[
 					key={pill.id}
 					type="button"
 					onClick={pill.onRemove}
-					className="group flex items-center gap-1 rounded-full border border-[color-mix(in_oklch,var(--old-blue)_45%,transparent)] bg-[color-mix(in_oklch,var(--old-blue)_14%,transparent)] px-2 py-0.5 text-xs text-(--text-primary) hover:bg-(--link-hover-bg)"
+					className="group flex items-center gap-1 rounded-full border border-brand bg-brand-muted px-2 py-0.5 label-sm text-primary hover:bg-hover-row"
 				>
 					<span>{pill.label}</span>
 					<Icon name="x" className="size-3 opacity-60 group-hover:opacity-100" />
@@ -1149,7 +1154,7 @@ function RWAPerpsActiveFilterPills({ pills }: { pills: RWAPerpsActiveFilterPill[
 function DialogPanelSection({ title, children }: { title: string; children: ReactNode }) {
 	return (
 		<section className="flex flex-col gap-2">
-			<h3 className="text-[10px] font-medium tracking-[0.08em] text-(--text-tertiary) uppercase">{title}</h3>
+			<h3 className="label-xs tracking-wide text-tertiary uppercase">{title}</h3>
 			{children}
 		</section>
 	)
@@ -1175,33 +1180,33 @@ function RWAPerpsMarketFilters({
 	const hasActiveFilters = hasResettableRWAPerpsFilterQueryParam(router.query, showForexToggle && includeForex)
 
 	return (
-		<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="grid grid-cols-2 gap-2 p-1 sm:flex sm:flex-wrap sm:items-center">
+		<Card border="subtle" padding="sm" className="flex flex-col gap-2">
+			<div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
 				{filters.length > 0 ? (
-					<div className="col-span-2 flex flex-wrap items-center gap-1 rounded-md border border-(--form-control-border) bg-(--cards-bg) px-1 sm:col-auto">
+					<>
 						<RWAPerpsActiveFilterPills pills={activeFilterPills} />
 						<RWAPerpsFiltersDialog
 							filters={filters}
 							selectedFilterCount={selectedFilterCount}
 							hasActiveFilterPills={activeFilterPills.length > 0}
 						/>
-					</div>
+					</>
 				) : null}
 				{showForexToggle ? (
 					<Checkbox variant="filter" value="includeForex" checked={includeForex} onChange={onToggleIncludeForex}>
 						<span className="whitespace-nowrap">Forex Perps</span>
 					</Checkbox>
 				) : null}
-				<button
+				<Button
 					type="button"
+					size="md"
 					onClick={() => clearRWAPerpsFilterQueryKeys(router, [...PERPS_MARKET_FILTER_QUERY_KEYS, 'includeForex'])}
 					disabled={!hasActiveFilters}
-					className={FILTER_BUTTON_CLASS}
 				>
 					Reset filters
-				</button>
+				</Button>
 			</div>
-		</div>
+		</Card>
 	)
 }
 
@@ -1233,25 +1238,23 @@ function RWAPerpsFiltersDialog({
 
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={handleOpenChange}>
-			<Ariakit.DialogDisclosure className={FILTER_EDIT_BUTTON_CLASS}>
-				<span className="flex min-w-4 items-center justify-center rounded-full border border-(--form-control-border) px-1 py-0.25 text-[10px] leading-none">
+			<Ariakit.DialogDisclosure render={<Button type="button" size="md" />}>
+				<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 label-xs">
 					{selectedFilterCount}
 				</span>
 				<span>{hasActiveFilterPills ? 'Edit' : 'Filters'}</span>
-				<Icon name="pencil" className="size-3 text-(--text-tertiary)" />
+				<Icon name="pencil" className="size-3 text-tertiary" />
 			</Ariakit.DialogDisclosure>
 			<Ariakit.Dialog
-				className="fixed inset-(--inset) top-0 right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-[85dvh] min-h-[40dvh] w-full max-w-full flex-col overflow-hidden rounded-t-xl border border-[color-mix(in_oklch,black_8%,transparent)] bg-(--cards-bg) pb-[max(0px,env(safe-area-inset-bottom))] shadow-[0_24px_64px_-16px_rgb(0_0_0/0.45),0_0_0_1px_color-mix(in_oklch,black_4%,transparent)] max-sm:drawer sm:mb-auto sm:h-fit sm:max-h-[min(760px,calc(100%-32px))] sm:min-h-[initial] sm:max-w-[min(calc(100%-32px),900px)] sm:rounded-xl sm:pb-0 dark:border-[color-mix(in_oklch,white_9%,transparent)] dark:shadow-[0_24px_64px_-16px_rgb(0_0_0/0.6),0_0_0_1px_color-mix(in_oklch,white_3%,transparent)_inset]"
+				className={`${dialogSurfaceStyles} [--dialog-width:900px] sm:max-h-[min(760px,calc(100%-32px))]`}
 				unmountOnHide
 			>
-				<div className="flex items-center justify-between gap-3 border-b border-(--cards-border) px-4 py-3">
+				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 					<div className="flex items-baseline gap-2.5">
-						<Ariakit.DialogHeading className="text-[15px] font-semibold tracking-tight text-(--text-primary)">
-							Filters
-						</Ariakit.DialogHeading>
-						<span className="text-xs text-(--text-tertiary) tabular-nums">{draftSelectedCount} selected</span>
+						<DialogHeading>Filters</DialogHeading>
+						<span className="label-sm text-tertiary tabular-nums">{draftSelectedCount} selected</span>
 					</div>
-					<Ariakit.DialogDismiss className="-mr-1 rounded-md p-1.5 text-(--text-tertiary) hover:bg-(--link-hover-bg) hover:text-(--text-primary) focus-visible:bg-(--link-hover-bg)">
+					<Ariakit.DialogDismiss render={<Button variant="ghost" size="md" square className="-mr-1" />}>
 						<Icon name="x" className="size-4" />
 						<span className="sr-only">Close</span>
 					</Ariakit.DialogDismiss>
@@ -1262,28 +1265,24 @@ function RWAPerpsFiltersDialog({
 					<RWAPerpsActiveDraftFilters filters={filters} draft={draft} onDraftChange={setDraft} />
 				</div>
 
-				<div className="flex items-center justify-end gap-2 border-t border-(--cards-border) bg-(--cards-bg) px-4 py-3">
+				<div className="flex items-center justify-end gap-2 border-t border-subtle bg-surface px-4 py-3">
 					{draft.activeIds.length > 0 ? (
-						<button
+						<Button
 							type="button"
+							variant="ghost"
+							size="md"
 							onClick={() => setDraft((current) => ({ ...current, activeIds: [] }))}
-							className="mr-auto text-xs text-(--text-tertiary) underline-offset-2 hover:text-(--text-primary) hover:underline"
+							className="mr-auto"
 						>
 							Clear all
-						</button>
+						</Button>
 					) : (
-						<span className="mr-auto text-xs text-(--text-tertiary)">No filters selected</span>
+						<span className="mr-auto label-sm text-tertiary">No filters selected</span>
 					)}
-					<Ariakit.DialogDismiss className="rounded-md border border-(--form-control-border) px-3 py-1.5 text-sm font-medium text-(--text-primary) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)">
-						Cancel
-					</Ariakit.DialogDismiss>
-					<button
-						type="button"
-						onClick={saveDraft}
-						className="rounded-md bg-(--old-blue) px-3 py-1.5 text-sm font-medium text-white hover:brightness-110 focus-visible:brightness-110"
-					>
+					<Ariakit.DialogDismiss render={<Button size="md" />}>Cancel</Ariakit.DialogDismiss>
+					<Button type="button" variant="primary" size="md" onClick={saveDraft}>
 						Save filters
-					</button>
+					</Button>
 				</div>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>
@@ -1303,9 +1302,9 @@ function RWAPerpsFilterBrowser({
 	const availableFilters = filters.filter((filter) => !activeIds.has(filter.id))
 
 	return (
-		<section className="order-2 flex min-h-0 flex-col border-t border-(--cards-border) max-sm:shrink-0 sm:order-1 sm:border-t-0 sm:border-r">
-			<div className="border-b border-(--cards-border) px-4 py-2">
-				<h3 className="text-xs font-medium text-(--text-secondary)">Browse filters</h3>
+		<section className="order-2 flex min-h-0 flex-col border-t border-subtle max-sm:shrink-0 sm:order-1 sm:border-t-0 sm:border-r">
+			<div className="border-b border-subtle px-4 py-2">
+				<h3 className="label-sm text-secondary">Browse filters</h3>
 			</div>
 			<div className="flex thin-scrollbar flex-1 flex-col gap-5 overflow-y-auto p-4 max-sm:overflow-visible">
 				{availableFilters.length > 0 ? (
@@ -1318,16 +1317,16 @@ function RWAPerpsFilterBrowser({
 									onClick={() => {
 										onDraftChange((current) => addRWAPerpsDraftFilter(current, filter))
 									}}
-									className="group flex items-center gap-1.5 rounded-full border border-(--cards-border) bg-transparent px-2.5 py-1 text-xs text-(--text-primary) transition-[background-color,border-color,color] duration-150 ease-out hover:border-(--old-blue) hover:bg-(--link-hover-bg) focus-visible:border-(--old-blue) focus-visible:bg-(--link-hover-bg)"
+									className="group flex items-center gap-1.5 rounded-full border border-subtle bg-transparent px-2.5 py-1 label-sm text-primary transition-[background-color,border-color,color] duration-150 ease-out hover:border-brand hover:bg-hover-row focus-visible:border-brand focus-visible:bg-hover-row"
 								>
-									<Icon name="plus" className="size-3 text-(--text-tertiary) group-hover:text-(--old-blue)" />
+									<Icon name="plus" className="size-3 text-tertiary group-hover:text-link" />
 									<span>{filter.label}</span>
 								</button>
 							))}
 						</div>
 					</DialogPanelSection>
 				) : (
-					<div className="rounded-md border border-dashed border-(--cards-border) bg-(--cards-bg) p-4 text-sm text-(--text-tertiary)">
+					<div className="rounded-md border border-dashed border-subtle bg-surface p-4 body-sm text-tertiary">
 						All filters are active.
 					</div>
 				)}
@@ -1351,8 +1350,8 @@ function RWAPerpsActiveDraftFilters({
 
 	return (
 		<section className="order-1 flex min-h-0 flex-col max-sm:shrink-0 sm:order-2">
-			<div className="border-b border-(--cards-border) px-4 py-2">
-				<h3 className="text-xs font-medium text-(--text-secondary)">Active filters</h3>
+			<div className="border-b border-subtle px-4 py-2">
+				<h3 className="label-sm text-secondary">Active filters</h3>
 			</div>
 			<div className="flex thin-scrollbar flex-1 flex-col gap-2 overflow-y-auto p-4 max-sm:overflow-visible">
 				{activeFilters.length > 0 ? (
@@ -1360,7 +1359,7 @@ function RWAPerpsActiveDraftFilters({
 						<RWAPerpsDraftFilterEditor key={filter.id} filter={filter} draft={draft} onDraftChange={onDraftChange} />
 					))
 				) : (
-					<div className="rounded-md border border-dashed border-(--cards-border) bg-(--cards-bg) p-4 text-sm text-(--text-tertiary)">
+					<div className="rounded-md border border-dashed border-subtle bg-surface p-4 body-sm text-tertiary">
 						Add filters from the list to narrow the table.
 					</div>
 				)}
@@ -1381,22 +1380,24 @@ function RWAPerpsDraftFilterEditor({
 	const selectedValues = draft.selectValues[filter.id] ?? []
 
 	return (
-		<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+		<Card border="subtle" padding="sm" className="flex flex-col gap-2">
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex min-w-0 items-center gap-1.5">
-					<span className="truncate text-xs font-semibold text-(--text-primary)">{filter.label}</span>
-					<span className="rounded-full bg-(--btn-bg) px-1.5 py-0.5 text-[9px] font-medium text-(--text-tertiary) uppercase">
+					<span className="truncate label-sm text-primary">{filter.label}</span>
+					<span className="rounded-full bg-surface-elevated-2 px-1.5 py-0.5 label-sm text-tertiary uppercase">
 						Market Field
 					</span>
 				</div>
-				<button
+				<Button
 					type="button"
+					variant="ghost"
+					size="sm"
+					square
 					onClick={() => onDraftChange((current) => removeRWAPerpsDraftFilter(current, filter.id))}
-					className="rounded p-1 text-(--text-tertiary) hover:bg-(--btn-hover-bg) hover:text-(--text-primary)"
 				>
 					<Icon name="x" className="size-3.5" />
 					<span className="sr-only">Remove {filter.label} filter</span>
-				</button>
+				</Button>
 			</div>
 			<SelectWithCombobox
 				allValues={filter.options}
@@ -1415,14 +1416,14 @@ function RWAPerpsDraftFilterEditor({
 				selectAllScope="matches"
 				searchPlaceholder={`Search ${filter.label.toLowerCase()}...`}
 				emptyLabel="No matches found"
-				popoverClassName="z-100 shadow-lg max-sm:h-[88dvh]! max-sm:max-h-[88dvh] max-sm:w-full sm:min-w-[260px] sm:max-h-[min(360px,60dvh)]! lg:max-h-[min(360px,60dvh)]!"
+				popoverClassName="z-100 max-sm:h-[88dvh]! max-sm:max-h-[88dvh] max-sm:w-full sm:min-w-[260px] sm:max-h-[min(360px,60dvh)]! lg:max-h-[min(360px,60dvh)]!"
 				triggerProps={{
 					'aria-label': `${filter.label} values`,
 					className:
-						'flex h-8 min-w-0 cursor-pointer items-center gap-1.5 rounded-md border border-(--form-control-border) bg-(--bg-input) px-2.5 text-xs text-(--text-primary) outline-hidden hover:bg-(--btn-hover-bg) focus:border-(--old-blue)'
+						'flex min-h-8 min-w-0 cursor-pointer items-center gap-1.5 rounded-[8px] border border-medium bg-page px-3 py-1.5 label-sm text-primary outline-hidden hover:bg-hover-row focus:border-brand'
 				}}
 			/>
-		</div>
+		</Card>
 	)
 }
 
@@ -1560,16 +1561,16 @@ const StatCard = ({
 	changeTooltip?: string
 }) => {
 	const changeDecorationClass =
-		change == null ? '' : change > 0 ? 'text-(--success)' : change < 0 ? 'text-(--error)' : 'text-(--text-secondary)'
+		change == null ? '' : change > 0 ? 'text-data-up' : change < 0 ? 'text-data-down' : 'text-secondary'
 
 	return (
-		<p className="flex flex-1 flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
+		<Card border="subtle" className="flex flex-1 flex-col gap-1">
 			{tooltip ? (
-				<Tooltip content={tooltip} className="text-(--text-label) underline decoration-dotted">
+				<Tooltip content={tooltip} className="text-secondary underline decoration-dotted">
 					{label}
 				</Tooltip>
 			) : (
-				<span className="text-(--text-label)">{label}</span>
+				<span className="text-secondary">{label}</span>
 			)}
 			<span className="flex items-end justify-between gap-2 font-jetbrains">
 				<span className="text-2xl font-medium">{value}</span>
@@ -1590,7 +1591,7 @@ const StatCard = ({
 					)
 				) : null}
 			</span>
-		</p>
+		</Card>
 	)
 }
 
@@ -2006,11 +2007,11 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	}
 
 	const timeSeriesMetricSwitch = (
-		<div className="mr-auto flex flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-xs font-medium text-(--text-form)">
+		<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
 			{chartMetricOptions.map(({ key, name }) => (
 				<button
 					key={`rwa-perps-chart-metric-${key}`}
-					className="shrink-0 px-2 py-1 text-sm whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:font-medium data-[active=true]:text-(--link-text)"
+					className={chartSegmentedControlButtonStyles}
 					data-active={chartState.metric === key}
 					onClick={() => {
 						void pushShallowQuery(router, {
@@ -2087,11 +2088,17 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 			) : null}
 			{showForexToggle ? (
 				<>
-					<p className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 text-sm text-(--text-label) md:flex-row md:items-center md:justify-between">
-						The RWA Perpetuals Dashboard only covers real world assets such as stocks, RWA tokens, forex, and other
-						significant financial indices on decentralized exchanges. This excludes digital assets such as BTC or ETH
-						perpetual contracts and all RWA perpetual contracts on centralized exchanges.
-					</p>
+					<Card
+						padding="sm"
+						border="subtle"
+						className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+					>
+						<p className="body-sm text-tertiary">
+							The RWA Perpetuals Dashboard only covers real world assets such as stocks, RWA tokens, forex, and other
+							significant financial indices on decentralized exchanges. This excludes digital assets such as BTC or ETH
+							perpetual contracts and all RWA perpetual contracts on centralized exchanges.
+						</p>
+					</Card>
 				</>
 			) : null}
 			<RWAPerpsMarketFilters
@@ -2113,8 +2120,8 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 				))}
 			</div>
 			{chartState.view === 'timeSeries' ? (
-				<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<div className="flex flex-wrap items-center justify-end gap-2 p-3">
+				<Panel>
+					<ChartPanelToolbar className="justify-end">
 						{timeSeriesMetricSwitch}
 						<Select
 							allValues={chartViewOptions}
@@ -2125,6 +2132,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							}
 							labelType="none"
 							variant="filter"
+							size="md"
 						/>
 						{showBreakdownSelect ? (
 							<Select
@@ -2134,6 +2142,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 								label={breakdownLabel}
 								labelType="none"
 								variant="filter"
+								size="md"
 							/>
 						) : null}
 						<ChartExportButtons
@@ -2142,18 +2151,26 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							title={`${pageLabel} ${chartMetricLabel}`}
 							smol
 						/>
-					</div>
+					</ChartPanelToolbar>
 					{timeSeriesQuery.error ? (
-						<p className="flex min-h-[360px] items-center justify-center text-xs text-(--error)">
+						<p role="alert" className="flex min-h-[360px] items-center justify-center body-sm text-data-down">
 							{getErrorMessage(timeSeriesQuery.error)}
 						</p>
 					) : timeSeriesQuery.isLoading && !shouldUseInitialTimeSeriesDataset ? (
-						<p className="flex min-h-[360px] items-center justify-center gap-1">
+						<p
+							role="status"
+							aria-live="polite"
+							className="flex min-h-[360px] items-center justify-center gap-1 body-sm text-tertiary"
+						>
 							Loading
 							<LoadingDots />
 						</p>
 					) : !hasTimeSeriesHistory ? (
-						<p className="flex min-h-[360px] items-center justify-center text-sm text-(--text-secondary)">
+						<p
+							role="status"
+							aria-live="polite"
+							className="flex min-h-[360px] items-center justify-center body-sm text-tertiary"
+						>
 							Only a single snapshot is available; time-series history is not available for this selection yet.
 						</p>
 					) : (
@@ -2169,12 +2186,10 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							/>
 						</Suspense>
 					)}
-				</div>
+				</Panel>
 			) : (
-				<div
-					className={`flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) ${chartState.view === 'treemap' ? 'min-h-[652px]' : 'min-h-[412px]'}`}
-				>
-					<div className="flex flex-wrap items-center justify-end gap-2 p-3 pb-0">
+				<Panel className={chartState.view === 'treemap' ? 'min-h-[660px]' : 'min-h-[420px]'}>
+					<ChartPanelToolbar className="justify-end">
 						{timeSeriesMetricSwitch}
 						<Select
 							allValues={chartViewOptions}
@@ -2185,6 +2200,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							}
 							labelType="none"
 							variant="filter"
+							size="md"
 						/>
 						{showBreakdownSelect ? (
 							<Select
@@ -2194,6 +2210,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 								label={breakdownLabel}
 								labelType="none"
 								variant="filter"
+								size="md"
 							/>
 						) : null}
 						{showTreemapNestedBySelect ? (
@@ -2204,6 +2221,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 								label={`Nested by: ${treemapNestedByLabel}`}
 								labelType="none"
 								variant="filter"
+								size="md"
 							/>
 						) : null}
 						{chartState.view === 'treemap' ? <ChartRestoreButton chartInstance={treemapChartInstance} /> : null}
@@ -2213,9 +2231,13 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							title={`${pageLabel} ${chartMetricLabel}`}
 							smol
 						/>
-					</div>
+					</ChartPanelToolbar>
 					{snapshotBreakdownRows.length === 0 ? (
-						<p className="flex min-h-[360px] items-center justify-center text-sm text-(--text-secondary)">
+						<p
+							role="status"
+							aria-live="polite"
+							className="flex min-h-[360px] items-center justify-center body-sm text-tertiary"
+						>
 							No chart data available.
 						</p>
 					) : (
@@ -2248,7 +2270,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							)}
 						</Suspense>
 					)}
-				</div>
+				</Panel>
 			)}
 			<TableWithSearch
 				data={currentRows}

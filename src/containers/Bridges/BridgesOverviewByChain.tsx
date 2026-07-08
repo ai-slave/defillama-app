@@ -4,12 +4,17 @@ import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
 import type { IPieChartProps } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
-import { Switch } from '~/components/Switch'
+import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { BridgesTable, type BridgesTableHandle } from '~/containers/Bridges/BridgesTable'
 import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { ChartSelector } from '~/containers/Bridges/ChartSelector'
 import { useBuildBridgeChartData } from '~/containers/Bridges/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Card } from '~/ui/Card'
+import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { Switch } from '~/ui/Switch'
+import { ChartPanelToolbar, TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, getPrevVolumeFromChart, slug, toNiceCsvDate } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { BridgesLargeTxsTable, type BridgesLargeTxsTableHandle } from './BridgesLargeTxsTable'
@@ -54,6 +59,15 @@ const BRIDGE_CHAIN_CHART_OPTIONS = [
 ]
 const EMPTY_CHAINS: string[] = []
 const EMPTY_PROTOCOLS: any[] = []
+const CHART_VIEW_OPTIONS = [
+	{ key: 'netflow' as const, label: 'Net Flows By Chain' },
+	{ key: 'volume' as const, label: 'Bridge Volume' }
+]
+const TABLE_VIEW_OPTIONS = [
+	{ key: 'bridges' as const, label: 'Bridges' },
+	{ key: 'messaging' as const, label: 'Messaging Protocols' },
+	{ key: 'largeTxs' as const, label: 'Large Txs' }
+]
 
 const handleRouting = (selectedChain: string) => {
 	if (selectedChain === 'All') return `/bridges`
@@ -265,7 +279,11 @@ export function BridgesOverviewByChain({
 			<RowLinksWithDropdown links={chainOptions} activeLink={selectedChain} />
 
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-5 xl:col-span-1">
+				<Card
+					border="subtle"
+					padding="sm"
+					className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1"
+				>
 					<div className="flex flex-col">
 						<h1 className="text-(--text-label)">Total volume (24h)</h1>
 						<p className="font-jetbrains text-2xl font-semibold">{formattedNum(dayTotalVolume, true)}</p>
@@ -279,28 +297,24 @@ export function BridgesOverviewByChain({
 						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(monthTotalVolume, true)}</span>
 					</p>
 
-					<CSVDownloadButton prepareCsv={prepareCsv} smol className="mt-auto mr-auto" />
-				</div>
-				<div className="col-span-2 flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
+					<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" className="mt-auto mr-auto" />
+				</Card>
+				<Panel className="col-span-2">
 					{selectedChain === 'All' ? (
 						<>
-							<div className="flex items-center justify-end gap-2 border-b border-(--cards-border) pr-1">
-								<div className="mr-auto flex items-center">
-									<button
-										className="flex items-center justify-center border-b-2 border-transparent px-4 py-2.5 text-xs font-medium whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:border-(--old-blue) data-[active=true]:text-(--old-blue)"
-										data-active={chartView === 'netflow'}
-										onClick={() => setChartView('netflow')}
-									>
-										Net Flows By Chain
-									</button>
-
-									<button
-										className="flex items-center justify-center border-b-2 border-transparent px-4 py-2.5 text-xs font-medium whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:border-(--old-blue) data-[active=true]:text-(--old-blue)"
-										onClick={() => setChartView('volume')}
-										data-active={chartView === 'volume'}
-									>
-										Bridge Volume
-									</button>
+							<ChartPanelToolbar className="justify-end">
+								<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
+									{CHART_VIEW_OPTIONS.map((option) => (
+										<button
+											key={option.key}
+											type="button"
+											className={chartSegmentedControlButtonStyles}
+											data-active={chartView === option.key}
+											onClick={() => setChartView(option.key)}
+										>
+											{option.label}
+										</button>
+									))}
 								</div>
 
 								<ChartExportButtons
@@ -308,7 +322,7 @@ export function BridgesOverviewByChain({
 									filename={chartView === 'volume' ? 'bridge-volume' : 'bridge-netflow-by-chain'}
 									title={chartView === 'volume' ? 'Bridge Volume' : 'Bridge Net Flows'}
 								/>
-							</div>
+							</ChartPanelToolbar>
 
 							{chartView === 'netflow' ? (
 								<React.Suspense fallback={<div className="min-h-[600px]" />}>
@@ -321,7 +335,7 @@ export function BridgesOverviewByChain({
 					) : (
 						<>
 							{chartType !== 'Bridge Volume' && (
-								<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
+								<ChartPanelToolbar className="justify-end">
 									<ChartSelector
 										options={BRIDGE_CHAIN_CHART_OPTIONS}
 										selectedChart={chartType}
@@ -333,7 +347,7 @@ export function BridgesOverviewByChain({
 										title={`${selectedChain} ${chartType}`}
 										iconUrl={selectedChainIconUrl}
 									/>
-								</div>
+								</ChartPanelToolbar>
 							)}
 							{chartType === 'Bridge Volume' ? (
 								<BridgeVolumeChart
@@ -403,33 +417,23 @@ export function BridgesOverviewByChain({
 							) : null}
 						</>
 					)}
-				</div>
+				</Panel>
 			</div>
 
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<div className="flex w-full flex-wrap items-center justify-end gap-3 p-3">
-					<div className="mr-auto flex items-center overflow-x-auto">
-						<button
-							className="shrink-0 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) data-[active=true]:border-(--primary)"
-							data-active={activeTab === 'bridges'}
-							onClick={() => setActiveTab('bridges')}
-						>
-							Bridges
-						</button>
-						<button
-							className="shrink-0 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) data-[active=true]:border-(--primary)"
-							data-active={activeTab === 'messaging'}
-							onClick={() => setActiveTab('messaging')}
-						>
-							Messaging Protocols
-						</button>
-						<button
-							className="shrink-0 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) data-[active=true]:border-(--primary)"
-							data-active={activeTab === 'largeTxs'}
-							onClick={() => setActiveTab('largeTxs')}
-						>
-							Large Txs
-						</button>
+			<Panel>
+				<TableToolbar className="w-full justify-end">
+					<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
+						{TABLE_VIEW_OPTIONS.map((option) => (
+							<button
+								key={option.key}
+								type="button"
+								className={chartSegmentedControlButtonStyles}
+								data-active={activeTab === option.key}
+								onClick={() => setActiveTab(option.key)}
+							>
+								{option.label}
+							</button>
+						))}
 					</div>
 
 					{activeTab === 'bridges' ? (
@@ -441,22 +445,19 @@ export function BridgesOverviewByChain({
 						/>
 					) : null}
 
-					<label className="relative w-full max-w-full sm:max-w-[280px]">
-						<span className="sr-only">Search bridges</span>
-						<Icon
-							name="search"
-							height={16}
-							width={16}
-							className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-						/>
-						<input
-							onInput={(e) => setSearchValue(e.currentTarget.value)}
-							placeholder="Search..."
-							className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
-						/>
-					</label>
-					<CSVDownloadButton prepareCsv={prepareActiveTabCsv} smol />
-				</div>
+					{activeTab === 'largeTxs' ? null : (
+						<label className="relative w-full max-w-full sm:max-w-[280px]">
+							<span className="sr-only">Search bridges</span>
+							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+							<input
+								onInput={(e) => setSearchValue(e.currentTarget.value)}
+								placeholder="Search..."
+								className={searchFieldInputStyles}
+							/>
+						</label>
+					)}
+					<CSVDownloadButton prepareCsv={prepareActiveTabCsv} smol size="md" />
+				</TableToolbar>
 
 				{activeTab === 'largeTxs' ? (
 					<>
@@ -481,7 +482,7 @@ export function BridgesOverviewByChain({
 						}
 					/>
 				)}
-			</div>
+			</Panel>
 		</>
 	)
 }

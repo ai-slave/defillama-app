@@ -55,7 +55,7 @@ export function ResultsChart({ result, chartConfig, onChartConfigChange }: Resul
 		<div className="flex flex-col gap-3">
 			<ChartToolbar config={resolvedConfig} classified={classified} onChange={patch} />
 
-			<div className="flex flex-col gap-2 rounded-md border border-(--divider) bg-(--cards-bg) p-2">
+			<div className="flex flex-col gap-2 rounded-md border border-(--divider) bg-surface p-2">
 				<div className="flex items-center justify-end gap-1.5">
 					<ChartExportButton
 						chartInstance={getChartInstance}

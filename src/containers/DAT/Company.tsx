@@ -9,6 +9,9 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TagGroup } from '~/components/TagGroup'
 import { Tooltip } from '~/components/Tooltip'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Card } from '~/ui/Card'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import type { IDATCompanyPageProps } from './types'
 
@@ -62,23 +65,27 @@ export function DATCompany(props: IDATCompanyPageProps) {
 	return (
 		<>
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:col-span-1">
+				<Card
+					padding="sm"
+					border="subtle"
+					className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1"
+				>
 					<h1 className="text-xl font-semibold">{props.name}</h1>
 					<div className="flex flex-col">
 						{props.assetsBreakdown.length > 1 ? (
 							<>
-								<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+								<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 									<span className="text-(--text-label)">Assets in Holdings</span>
 									<span className="ml-auto font-jetbrains">{props.assets.join(', ')}</span>
 								</p>
 								{props.totalUsdValue != null ? (
-									<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+									<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 										<span className="text-(--text-label)">Assets Today's Value (USD)</span>
 										<span className="ml-auto font-jetbrains">{formattedNum(props.totalUsdValue, true)}</span>
 									</p>
 								) : null}
 								{props.totalCost != null ? (
-									<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+									<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 										<span className="text-(--text-label)">Assets Cost Basis</span>
 										<span className="ml-auto font-jetbrains">
 											{props.totalCost != null ? formattedNum(props.totalCost, true) : '-'}
@@ -93,7 +100,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								key={`${props.ticker}-${asset.name}`}
 								open={props.assetsBreakdown.length === 1 && index === 0}
 							>
-								<summary className="flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 group-last:border-none group-open:border-none group-open:font-semibold">
+								<summary className="flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 group-last:border-none group-open:border-none group-open:font-semibold">
 									<span className="text-(--text-label)">Total {asset.name}</span>
 									<Icon
 										name="chevron-down"
@@ -106,19 +113,19 @@ export function DATCompany(props: IDATCompanyPageProps) {
 									</span>
 								</summary>
 								<div className="mb-3 flex flex-col">
-									<p className="justify-stat flex flex-wrap gap-4 border-b border-dashed border-(--cards-border) py-1 last:border-none">
+									<p className="justify-stat flex flex-wrap gap-4 border-b border-dashed border-very-subtle py-1 last:border-none">
 										<span className="text-(--text-label)">Today's Value (USD)</span>
 										<span className="ml-auto justify-end overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap">
 											{asset.usdValue != null ? formattedNum(asset.usdValue, true) : null}
 										</span>
 									</p>
-									<p className="justify-stat flex flex-wrap gap-4 border-b border-dashed border-(--cards-border) py-1 last:border-none">
+									<p className="justify-stat flex flex-wrap gap-4 border-b border-dashed border-very-subtle py-1 last:border-none">
 										<span className="text-(--text-label)">Cost Basis</span>
 										<span className="ml-auto justify-end overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap">
 											{asset.cost != null ? formattedNum(asset.cost, true) : '-'}
 										</span>
 									</p>
-									<p className="justify-stat flex flex-wrap gap-4 border-b border-dashed border-(--cards-border) py-1 last:border-none">
+									<p className="justify-stat flex flex-wrap gap-4 border-b border-dashed border-very-subtle py-1 last:border-none">
 										<span className="text-(--text-label)">Average Purchase Price</span>
 										<span className="ml-auto justify-end overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap">
 											{asset.avgPrice != null ? formattedNum(asset.avgPrice, true) : '-'}
@@ -127,24 +134,24 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								</div>
 							</details>
 						))}
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+						<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 							<span className="text-(--text-label)">First Announcement</span>
 							<span className="ml-auto font-jetbrains">
 								{props.firstAnnouncementDate != null ? dayjs(props.firstAnnouncementDate).format('MMM D, YYYY') : null}
 							</span>
 						</p>
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+						<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 							<span className="text-(--text-label)">Latest Announcement</span>
 							<span className="ml-auto font-jetbrains">
 								{props.lastAnnouncementDate != null ? dayjs(props.lastAnnouncementDate).format('MMM D, YYYY') : null}
 							</span>
 						</p>
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+						<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 							<span className="text-(--text-label)">Total Transactions</span>
 							<span className="ml-auto font-jetbrains">{props.transactions.length}</span>
 						</p>
 						{props.price != null ? (
-							<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+							<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 								<span className="text-(--text-label)">${props.ticker} price</span>
 								{props.priceChange24h != null ? (
 									<Tooltip
@@ -166,7 +173,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							</p>
 						) : null}
 						{props.realized_mNAV != null ? (
-							<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+							<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 								<Tooltip
 									content="Market Net Asset Value based only on the current outstanding common shares, with no dilution considered"
 									className="text-(--text-label) underline decoration-dotted"
@@ -177,7 +184,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							</p>
 						) : null}
 						{props.realistic_mNAV != null ? (
-							<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+							<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 								<Tooltip
 									content="Market Net asset value adjusted for expected dilution from in-the-money options and convertibles that are likely to be exercised"
 									className="text-(--text-label) underline decoration-dotted"
@@ -188,7 +195,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							</p>
 						) : null}
 						{props.max_mNAV != null ? (
-							<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+							<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 								<Tooltip
 									content={`Market Net Asset Value under the fully diluted scenario, assuming every warrant, option, and convertible is exercised (the most conservative/worst-case view)`}
 									className="text-(--text-label) underline decoration-dotted"
@@ -202,10 +209,10 @@ export function DATCompany(props: IDATCompanyPageProps) {
 					<BasicLink href="/report-error" className="mt-auto mr-auto pt-4 text-left text-(--text-form) underline">
 						Report incorrect data
 					</BasicLink>
-				</div>
-				<div className="col-span-2 flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<div className="flex items-center justify-end gap-2 p-2 pb-0">
-						<h2 className="mr-auto text-base font-semibold">Cumulative Holdings Over Time</h2>
+				</Card>
+				<Panel className="col-span-2">
+					<ChartPanelToolbar className="justify-end">
+						<h2 className="mr-auto heading-xs">Cumulative Holdings Over Time</h2>
 						{props.assets.length > 1 ? (
 							<TagGroup
 								selectedValue={selectedAsset}
@@ -219,7 +226,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							filename={`${props.name}-holdings`}
 							title={holdingsExportTitle}
 						/>
-					</div>
+					</ChartPanelToolbar>
 					<Suspense fallback={<div className="min-h-[360px]" />}>
 						{chartData != null ? (
 							<MultiSeriesChart2
@@ -234,12 +241,12 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							<div className="h-[360px]" />
 						)}
 					</Suspense>
-				</div>
+				</Panel>
 			</div>
 			<div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
 				{props.mNAVChart != null ? (
-					<div className="col-span-1 rounded-md border border-(--cards-border) bg-(--cards-bg) xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-						<Suspense fallback={<div className="min-h-[398px]" />}>
+					<Panel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+						<Suspense fallback={<div className="min-h-[406px]" />}>
 							<MultiSeriesChart2
 								dataset={props.mNAVChart.dataset}
 								charts={props.mNAVChart.charts}
@@ -254,11 +261,11 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								}}
 							/>
 						</Suspense>
-					</div>
+					</Panel>
 				) : null}
 				{props.fdChart != null ? (
-					<div className="col-span-1 rounded-md border border-(--cards-border) bg-(--cards-bg) xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-						<Suspense fallback={<div className="min-h-[398px]" />}>
+					<Panel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+						<Suspense fallback={<div className="min-h-[406px]" />}>
 							<MultiSeriesChart2
 								dataset={props.fdChart.dataset}
 								charts={props.fdChart.charts}
@@ -273,20 +280,20 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								}}
 							/>
 						</Suspense>
-					</div>
+					</Panel>
 				) : null}
 				{props.ohlcvChartData != null ? (
-					<div className="col-span-full min-h-[480px] rounded-md border border-(--cards-border) bg-(--cards-bg)">
-						<h2 className="mr-auto p-2 text-base font-semibold">Share Price</h2>
+					<Panel className="col-span-full min-h-[480px]">
+						<h2 className="mr-auto p-2 heading-xs">Share Price</h2>
 						<Suspense fallback={<div className="h-[480px]" />}>
 							<CandlestickChart data={props.ohlcvChartData} />
 						</Suspense>
-						<p className="p-2 text-xs text-(--text-disabled)">Source: Yahoo Finance</p>
-					</div>
+						<p className="p-2 text-xs text-tertiary">Source: Yahoo Finance</p>
+					</Panel>
 				) : null}
 				{props.totalAssetValueChart != null ? (
-					<div className="col-span-full rounded-md border border-(--cards-border) bg-(--cards-bg)">
-						<Suspense fallback={<div className="min-h-[398px]" />}>
+					<Panel className="col-span-full">
+						<Suspense fallback={<div className="min-h-[406px]" />}>
 							<MultiSeriesChart2
 								dataset={props.totalAssetValueChart.dataset}
 								charts={props.totalAssetValueChart.charts}
@@ -300,7 +307,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								}}
 							/>
 						</Suspense>
-					</div>
+					</Panel>
 				) : null}
 			</div>
 			<TableWithSearch
@@ -409,7 +416,7 @@ const columns = [
 		},
 		enableSorting: false,
 		meta: {
-			headerClassName: 'w-[100px]'
+			headerClassName: 'w-[120px]'
 		}
 	}),
 	columnHelper.accessor('source_note', {

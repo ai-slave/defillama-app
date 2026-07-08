@@ -8,6 +8,7 @@ import { LocalLoader } from '~/components/Loaders'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
+import { CexChartPanel, cexChartFallback } from '~/containers/Cexs/CexChartPanel'
 import { fetchProtocolOverviewMetrics, fetchProtocolTvlTokenBreakdownChart } from '~/containers/ProtocolOverview/api'
 import type { IProtocolTokenBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
@@ -19,6 +20,9 @@ import {
 } from '~/containers/ProtocolOverview/utils'
 import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Card } from '~/ui/Card'
+import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { formattedNum, slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -158,28 +162,32 @@ function MultiSeriesChartCard({
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">{title}</h2>
-				{allValues.length > 1 ? (
-					<SelectWithCombobox
-						allValues={allValues}
-						selectedValues={selected}
-						setSelectedValues={setSelected}
-						label={filterLabel}
-						labelType="smol"
-						variant="filter"
-						portal
+		<CexChartPanel
+			title={title}
+			controls={
+				<>
+					{allValues.length > 1 ? (
+						<SelectWithCombobox
+							allValues={allValues}
+							selectedValues={selected}
+							setSelectedValues={setSelected}
+							label={filterLabel}
+							labelType="smol"
+							variant="filter"
+							size="md"
+							portal
+						/>
+					) : null}
+					<ChartExportButtons
+						chartInstance={chartInstance}
+						filename={exportFilenameBase}
+						title={exportTitle}
+						iconUrl={exportIconUrl}
 					/>
-				) : null}
-				<ChartExportButtons
-					chartInstance={chartInstance}
-					filename={exportFilenameBase}
-					title={exportTitle}
-					iconUrl={exportIconUrl}
-				/>
-			</div>
-			<React.Suspense fallback={<div className="min-h-[360px]" />}>
+				</>
+			}
+		>
+			<React.Suspense fallback={cexChartFallback}>
 				<MultiSeriesChart2
 					dataset={dataset}
 					charts={charts}
@@ -189,7 +197,7 @@ function MultiSeriesChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</div>
+		</CexChartPanel>
 	)
 }
 
@@ -219,31 +227,35 @@ function PieChartCard({
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">{title}</h2>
-				{allValues.length > 1 ? (
-					<SelectWithCombobox
-						allValues={allValues}
-						selectedValues={selectedValues}
-						setSelectedValues={setSelectedValues}
-						label="Backing"
-						labelType="smol"
-						variant="filter"
-						portal
+		<CexChartPanel
+			title={title}
+			controls={
+				<>
+					{allValues.length > 1 ? (
+						<SelectWithCombobox
+							allValues={allValues}
+							selectedValues={selectedValues}
+							setSelectedValues={setSelectedValues}
+							label="Backing"
+							labelType="smol"
+							variant="filter"
+							size="md"
+							portal
+						/>
+					) : null}
+					<ChartExportButtons
+						chartInstance={chartInstance}
+						filename={exportFilenameBase}
+						title={exportTitle}
+						iconUrl={exportIconUrl}
 					/>
-				) : null}
-				<ChartExportButtons
-					chartInstance={chartInstance}
-					filename={exportFilenameBase}
-					title={exportTitle}
-					iconUrl={exportIconUrl}
-				/>
-			</div>
-			<React.Suspense fallback={<div className="min-h-[360px]" />}>
+				</>
+			}
+		>
+			<React.Suspense fallback={cexChartFallback}>
 				<PieChart chartData={filteredChartData} onReady={handleChartReady} />
 			</React.Suspense>
-		</div>
+		</CexChartPanel>
 	)
 }
 
@@ -520,21 +532,23 @@ export default function CEXStablecoins(props: {
 			tab="stablecoins"
 			isCEX={true}
 		>
-			<div className="flex items-center gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-				<TokenLogo name={props.name} kind="token" size={24} alt={`Logo of ${props.name}`} />
-				<h1 className="text-xl font-bold">{props.name}</h1>
-			</div>
+			<EntityTitleStrip
+				media={<TokenLogo name={props.name} kind="token" size={28} alt={`Logo of ${props.name}`} />}
+				title={props.name}
+			/>
 			{isLoading ? (
-				<div className="flex min-h-[360px] flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+				<PanelLoadingStatus>
 					<LocalLoader />
-				</div>
+				</PanelLoadingStatus>
 			) : !data ? (
-				<div className="flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-					<p className="text-(--text-label)">No stablecoin data available for this exchange</p>
-				</div>
+				<PanelStatus>No stablecoin data available for this exchange</PanelStatus>
 			) : (
 				<>
-					<div className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2 rounded-md border border-(--cards-border) bg-(--cards-bg) px-4 py-3">
+					<Card
+						border="subtle"
+						padding="strip"
+						className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2"
+					>
 						<div className="flex items-baseline gap-1.5">
 							<span className="text-sm text-(--text-label)">Total Stablecoin in CEX</span>
 							<span className="text-sm font-medium">{currentTotal ? formattedNum(currentTotal, true) : '-'}</span>
@@ -560,7 +574,7 @@ export default function CEXStablecoins(props: {
 								</div>
 							</>
 						) : null}
-					</div>
+					</Card>
 
 					<div className="grid grid-cols-2 gap-2">
 						{totalStablecoinsDataset ? (

@@ -29,6 +29,13 @@ const RULES = [
 		id: 'arbitrary-font-size',
 		description: 'arbitrary font size (use the type ramp: label-sm, body-xs, …)',
 		pattern: /text-\[(?:\d+(?:\.\d+)?px|0?\.\d+rem)\]/g
+	},
+	{
+		id: 'arbitrary-spacing',
+		description: 'arbitrary margin/padding/gap value (use the space palette: p-2, gap-4, … — see design.md)',
+		// calc()/env()/min()/max()/var() are excluded: those express layout
+		// relationships that cannot come from the palette.
+		pattern: /(?<![a-zA-Z0-9-])-?(?:[mp][trblxyes]?|gap(?:-[xy])?|space-[xy])-\[(?!(?:calc|env|min|max|var)\()[^\]]+\]/g
 	}
 ]
 

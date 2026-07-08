@@ -82,13 +82,13 @@ function buildMarketPairColumns(segment: Segment, config: MarketPairColumnConfig
 			header: 'Pair',
 			enableSorting: false,
 			cell: ({ getValue, row }) => {
-				const label = <span className="text-sm uppercase">{getValue()}</span>
+				const label = <span className="label-md uppercase">{getValue()}</span>
 				return row.original.pair_url ? (
 					<a
 						href={row.original.pair_url}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="text-(--link-text) hover:underline"
+						className="text-link hover:underline"
 					>
 						{label}
 					</a>

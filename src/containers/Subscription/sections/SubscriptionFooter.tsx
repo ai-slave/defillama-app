@@ -80,7 +80,7 @@ export function SubscriptionFooter() {
 			</footer>
 
 			{/* Desktop */}
-			<footer className="hidden px-[128px] pb-8 md:block">
+			<footer className="hidden px-32 pb-8 md:block">
 				<div className="h-px w-full bg-(--sub-desktop-table-border)" />
 				<div className="mt-8 flex flex-col gap-6">
 					<div className="flex items-center justify-between">

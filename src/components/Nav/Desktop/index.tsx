@@ -3,7 +3,7 @@ import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { Account } from '../Account'
 import { PremiumHeader } from '../PremiumHeader'
-import { LinkToPage } from '../shared'
+import { LinkToPage, SidebarDivider } from '../shared'
 import { ThemeSwitch } from '../ThemeSwitch'
 import type { TNavLink, TNavLinks, TOldNavLink } from '../types'
 import { PinnedPages } from './PinnedPages'
@@ -26,7 +26,7 @@ export function DesktopNav({
 	const isResearch = asPath.startsWith('/research')
 	return (
 		<span className="desktop-nav-shell col-span-1 max-lg:hidden">
-			<nav className="sticky top-0 bottom-0 left-0 isolate col-span-1 flex thin-scrollbar h-screen flex-col gap-1 overflow-y-auto bg-(--app-bg) py-4 *:pl-4">
+			<nav className="sticky top-0 bottom-0 left-0 isolate col-span-1 flex thin-scrollbar h-screen flex-col gap-1 overflow-x-hidden overflow-y-auto bg-(--app-bg) py-4 *:pl-4">
 				<BasicLink href={isResearch ? '/research' : '/'} className="mb-4 w-fit shrink-0">
 					<span className="sr-only">
 						{isResearch ? 'Navigate to DefiLlama Research' : 'Navigate to DeFi Dashboard'}
@@ -54,7 +54,7 @@ export function DesktopNav({
 					</span>
 				</BasicLink>
 
-				<div className="flex flex-1 flex-col gap-1 overflow-y-auto">
+				<div className="flex flex-1 flex-col gap-1 overflow-x-hidden overflow-y-auto">
 					{mainLinks.map(({ category, pages }) => (
 						<div key={`desktop-nav-${category}`} className="group flex flex-col">
 							{category === 'Premium' ? <PremiumHeader /> : null}
@@ -78,7 +78,7 @@ export function DesktopNav({
 							<span>Old Menu</span>
 							<Icon name="chevron-down" className="size-4 shrink-0 group-open:rotate-180" />
 						</summary>
-						<div className="border-l border-black/20 pl-2 dark:border-white/20">
+						<div className="border-l border-subtle pl-2">
 							{oldMetricLinks.map(({ name, route, pages }: TOldNavLink) => (
 								<React.Fragment key={`old-nav-desktop-${name}-${route ?? ''}`}>
 									{pages ? (
@@ -87,7 +87,7 @@ export function DesktopNav({
 												<span>{name}</span>
 												<Icon name="chevron-down" className="size-4 shrink-0 group-open/second:rotate-180" />
 											</summary>
-											<div className="border-l border-black/20 pl-2 dark:border-white/20">
+											<div className="border-l border-subtle pl-2">
 												{pages.map(({ name: pageName, route: pageRoute }) => (
 													<LinkToPage
 														key={`old-desktop-nav-${pageName}-${pageRoute}`}
@@ -128,7 +128,7 @@ export function DesktopNav({
 				</div>
 
 				<div className="sticky bottom-0 flex w-full flex-col gap-2 bg-(--app-bg)">
-					<hr className="-ml-1.5 border-black/20 pb-1 dark:border-white/20" />
+					<SidebarDivider className="-ml-1.5 pb-1" />
 					<Account asPath={asPath} />
 					<ThemeSwitch />
 				</div>
@@ -155,7 +155,7 @@ function NavDetailsSection({ category, pages, asPath }: { category: string; page
 				<span>{category}</span>
 				<Icon name="chevron-up" className="size-4 shrink-0 group-open:rotate-180" />
 			</summary>
-			<div className="border-l border-black/20 pl-2 dark:border-white/20">
+			<div className="border-l border-subtle pl-2">
 				{pages.map(({ name, route, icon, attention }, index) => (
 					<div key={`desktop-nav-${name}-${route}`} ref={index === pages.length - 1 ? lastItemRef : null}>
 						<LinkToPage route={route} name={name} icon={icon} attention={attention} asPath={asPath} />

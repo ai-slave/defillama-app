@@ -4,6 +4,9 @@ import type { InputHTMLAttributes, ReactNode } from 'react'
 import { Icon } from '~/components/Icon'
 import { NestedMenu } from '~/components/NestedMenu'
 import type { FormSubmitHandler } from '~/types/forms'
+import { Button } from '~/ui/Button'
+import { Input } from '~/ui/Input'
+import { popoverMobileDismissStyles, popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
 
 interface IFilterBetweenRange {
 	name: string
@@ -14,6 +17,7 @@ interface IFilterBetweenRange {
 	min: number | string | null
 	max: number | string | null
 	variant?: 'primary' | 'secondary'
+	size?: 'sm' | 'md'
 	triggerClassName?: string
 	placement?: Ariakit.PopoverStoreProps['placement']
 	minLabel?: string
@@ -21,14 +25,6 @@ interface IFilterBetweenRange {
 	minInputProps?: InputHTMLAttributes<HTMLInputElement>
 	maxInputProps?: InputHTMLAttributes<HTMLInputElement>
 }
-
-const baseClasses = 'flex items-center justify-between gap-2 py-1.5 text-xs rounded-md cursor-pointer flex-nowrap'
-
-const variantClasses = {
-	primary:
-		'px-2 relative border border-(--form-control-border) text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) font-medium',
-	secondary: 'px-3 bg-(--btn-bg) hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) text-(--text-primary)'
-} as const
 
 export function FilterBetweenRange({
 	name: _name,
@@ -39,6 +35,7 @@ export function FilterBetweenRange({
 	min,
 	max,
 	variant = 'primary',
+	size = 'sm',
 	triggerClassName,
 	placement = 'bottom-end',
 	minLabel = 'Min',
@@ -69,7 +66,21 @@ export function FilterBetweenRange({
 
 	return (
 		<Ariakit.PopoverProvider store={popover}>
-			<Ariakit.PopoverDisclosure className={clsx(baseClasses, variantClasses[variant], triggerClassName)}>
+			<Ariakit.PopoverDisclosure
+				className={clsx(
+					'flex cursor-pointer flex-nowrap items-center justify-between gap-2 label-sm',
+					{
+						primary: 'relative border border-medium text-primary hover:bg-hover-row focus-visible:bg-hover-row',
+						secondary:
+							'bg-surface-elevated-1 text-primary hover:bg-surface-elevated-2 focus-visible:bg-surface-elevated-2'
+					}[variant],
+					{
+						sm: 'min-h-6 rounded-md px-2 py-0.5',
+						md: 'min-h-8 rounded-[8px] px-3 py-1.5'
+					}[size],
+					triggerClassName
+				)}
+			>
 				{trigger}
 				<Ariakit.PopoverDisclosureArrow className="size-3 shrink-0" />
 			</Ariakit.PopoverDisclosure>
@@ -79,12 +90,10 @@ export function FilterBetweenRange({
 				hideOnInteractOutside
 				gutter={6}
 				overflowPadding={16} // distance from the boundary edges
-				wrapperProps={{
-					className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
-				}}
-				className="z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,60dvh)] lg:max-h-(--popover-available-height) dark:border-[hsl(204,3%,32%)]"
+				wrapperProps={{ className: popoverMobileWrapperClassName }}
+				className={popoverSurfaceStyles}
 			>
-				<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
+				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 					<Icon name="x" className="size-5" />
 				</Ariakit.PopoverDismiss>
 
@@ -133,39 +142,21 @@ function Form({
 	return (
 		<form onSubmit={onSubmit} onReset={onClear} className="flex flex-col gap-3 p-3">
 			<label className="flex flex-col gap-1">
-				<span>{minLabel}</span>
-				<input
-					type="number"
-					name="min"
-					className="h-9 w-full rounded-md border border-(--form-control-border) bg-white px-3 py-1 text-black disabled:opacity-50 dark:bg-black dark:text-white"
-					defaultValue={min ?? ''}
-					{...minInputProps}
-				/>
+				<span className="label-sm text-secondary">{minLabel}</span>
+				<Input type="number" name="min" defaultValue={min ?? ''} {...minInputProps} className="w-full" />
 			</label>
 			<label className="flex flex-col gap-1">
-				<span>{maxLabel}</span>
-				<input
-					type="number"
-					name="max"
-					className="h-9 w-full rounded-md border border-(--form-control-border) bg-white px-3 py-1 text-black disabled:opacity-50 dark:bg-black dark:text-white"
-					defaultValue={max ?? ''}
-					{...maxInputProps}
-				/>
+				<span className="label-sm text-secondary">{maxLabel}</span>
+				<Input type="number" name="max" defaultValue={max ?? ''} {...maxInputProps} className="w-full" />
 			</label>
 
-			<div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row">
-				<button
-					type="reset"
-					className="inline-flex h-9 w-full items-center justify-center rounded-md bg-black/5 px-4 text-sm font-medium whitespace-nowrap hover:bg-black/10 disabled:opacity-50 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:focus-visible:bg-white/20"
-				>
+			<div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+				<Button type="reset" size="md" className="w-full">
 					Clear
-				</button>
-				<button
-					type="submit"
-					className="inline-flex h-9 w-full items-center justify-center rounded-md bg-(--link-active-bg) px-4 text-sm font-medium whitespace-nowrap text-white disabled:opacity-50"
-				>
+				</Button>
+				<Button type="submit" variant="primary" size="md" className="w-full">
 					Apply Filter
-				</button>
+				</Button>
 			</div>
 		</form>
 	)

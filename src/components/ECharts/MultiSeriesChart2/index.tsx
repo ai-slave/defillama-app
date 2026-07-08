@@ -28,6 +28,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
+import { chartPanelToolbarStyles } from '~/ui/Toolbar'
 import { formatNum, formattedNum, slug } from '~/utils'
 import { ChartContainer } from '../ChartContainer'
 import { ChartHeader } from '../ChartHeader'
@@ -1183,7 +1184,7 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 					<ChartHeader
 						title={title}
 						headingAs={headingAs}
-						className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0"
+						className={`${chartPanelToolbarStyles} justify-end`}
 						exportButtons={
 							<ChartExportButtons
 								chartInstance={chartInstance}

@@ -68,7 +68,7 @@ export function UpcomingUnlocksChart({ data, className }: { data: Array<UnlockEn
 				{hoveredIndex != null ? (
 					<div
 						ref={tooltipRef}
-						className="pointer-events-none fixed z-10 rounded border border-[#ccc] bg-white px-[10px] py-[5px] text-[14px] leading-normal whitespace-nowrap text-[#666] shadow-md dark:border-[#555] dark:bg-[#1a1a1a] dark:text-[#d1d5db]"
+						className="pointer-events-none fixed z-10 rounded border border-[#ccc] bg-white px-2.5 py-[5px] text-[14px] leading-normal whitespace-nowrap text-[#666] shadow-md dark:border-[#555] dark:bg-[#1a1a1a] dark:text-[#d1d5db]"
 					>
 						<p>{formatTooltipChartDate(data[hoveredIndex].date, 'daily')}</p>
 						<p style={{ fontWeight: 'bold', marginBottom: '4px' }}>Total: ${formattedNum(data[hoveredIndex].total)}</p>

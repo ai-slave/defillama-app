@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Icon } from '~/components/Icon'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/components/Tooltip'
+import { Button } from '~/ui/Button'
 import { StatusBadge } from '../badges'
 import { formatComposite } from '../format'
 import type { IntegrationStatus, PerformanceRow } from './types'
@@ -49,12 +50,12 @@ function HeaderWithTooltip({ label, tooltip, glyph = '?' }: { label: string; too
 }
 
 function renderScore(value: number | null) {
-	if (value == null) return <span className="text-(--text-tertiary)">N/A</span>
+	if (value == null) return <span className="text-tertiary">N/A</span>
 	return <span>{value.toFixed(2)}</span>
 }
 
 function renderComposite(value: number | null) {
-	if (value == null) return <span className="text-(--text-tertiary)">N/A</span>
+	if (value == null) return <span className="text-tertiary">N/A</span>
 	return <span>{formatComposite(value)}</span>
 }
 
@@ -88,7 +89,7 @@ export function buildPerformanceColumns({ onSelectMM, rankById }: IBuildPerforma
 			<button
 				type="button"
 				onClick={() => onSelectMM(row.original.marketMakerId, row.original.marketMakerName)}
-				className="flex items-center gap-2 text-(--link-text) hover:underline"
+				className="flex items-center gap-2 text-link hover:underline"
 			>
 				<TokenLogo src={row.original.marketMakerImageUrl} size={24} />
 				<span className="truncate">{row.original.marketMakerName}</span>
@@ -104,14 +105,14 @@ export function buildPerformanceColumns({ onSelectMM, rankById }: IBuildPerforma
 		cell: ({ row }) => (
 			<div className="flex items-center gap-2">
 				{renderStatusBadge(row.original.integrationStatus)}
-				<button
+				<Button
 					type="button"
+					size="md"
 					onClick={() => onSelectMM(row.original.marketMakerId, row.original.marketMakerName)}
-					className="inline-flex h-7 shrink-0 items-center justify-center gap-1 rounded-md border border-(--form-control-border) px-3 text-xs font-semibold text-(--text-primary) hover:bg-(--link-hover-bg)"
 				>
 					Details
 					<Icon name="arrow-right" height={12} width={12} />
-				</button>
+				</Button>
 			</div>
 		),
 		sortUndefined: 'last',

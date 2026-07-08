@@ -76,6 +76,7 @@ export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) 
 								label={'Category'}
 								labelType="smol"
 								variant="filter-responsive"
+								size="md"
 							/>
 						) : null}
 					</>
@@ -188,14 +189,14 @@ function defaultColumns(type: TokenMetricType) {
 							<span className="-my-2 flex flex-col">
 								<BasicLink
 									href={`/${basePath}/${row.original.slug}${chartQuery}`}
-									className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+									className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 								>
 									{value}
 								</BasicLink>
 
 								<Tooltip
 									content={<ProtocolChainsComponent chains={row.original.chains} />}
-									className="text-[0.7rem] text-(--text-disabled)"
+									className="text-[0.7rem] text-secondary"
 								>
 									{`${row.original.chains.length} chain${row.original.chains.length > 1 ? 's' : ''}`}
 								</Tooltip>
@@ -203,7 +204,7 @@ function defaultColumns(type: TokenMetricType) {
 						) : (
 							<BasicLink
 								href={`/${basePath}/${row.original.slug}${chartQuery}`}
-								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 							>
 								{value}
 							</BasicLink>
@@ -222,7 +223,7 @@ function defaultColumns(type: TokenMetricType) {
 				const value = getValue()
 				if (!value) return null
 				return (
-					<BasicLink href={getCategoryRoute(slug(value))} className="text-sm font-medium text-(--link-text)">
+					<BasicLink href={getCategoryRoute(slug(value))} className="text-sm font-medium text-link">
 						{value}
 					</BasicLink>
 				)

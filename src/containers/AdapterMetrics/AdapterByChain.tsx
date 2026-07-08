@@ -36,6 +36,10 @@ import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { setStorageItem } from '~/contexts/localStorageStore'
 import { addFeeExtrasToRowTotals, hasEnabledFeeExtras, isFeeExtraEligibleAdapterMetric } from '~/metrics/feeExtras'
 import { definitions } from '~/public/definitions'
+import { Card } from '~/ui/Card'
+import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug, getMarketCapToAnnualizedMetricRatio } from '~/utils'
 import { parseExcludeParam } from '~/utils/routerQuery'
 import { AdapterByChainChart } from './ChainChart'
@@ -288,11 +292,15 @@ export function AdapterByChain(props: IProps) {
 			) : null}
 			{showChartPanel ? (
 				<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-					<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:col-span-1">
+					<Card
+						border="subtle"
+						padding="sm"
+						className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1"
+					>
 						{props.chain !== 'All' ? (
 							<h1 className="flex flex-nowrap items-center gap-2">
 								<TokenLogo name={props.chain} kind="chain" size={24} alt={`Logo of ${props.chain}`} />
-								<span className="text-xl font-semibold">{props.chain}</span>
+								<span className="heading-sm">{props.chain}</span>
 							</h1>
 						) : props.total24h != null ? (
 							<div className="flex flex-col">
@@ -311,11 +319,11 @@ export function AdapterByChain(props: IProps) {
 									{(() => {
 										const definition = pageTypeByDefinition[props.type]?.['24h']
 										return definition ? (
-											<Tooltip content={definition} className="text-(--text-label) underline decoration-dotted">
+											<Tooltip content={definition} className="body-sm text-secondary underline decoration-dotted">
 												{metricName} (24h)
 											</Tooltip>
 										) : (
-											<span className="text-(--text-label)">{metricName} (24h)</span>
+											<span className="body-sm text-secondary">{metricName} (24h)</span>
 										)
 									})()}
 									<span className="min-h-8 overflow-hidden font-jetbrains text-2xl font-semibold text-ellipsis whitespace-nowrap">
@@ -327,61 +335,57 @@ export function AdapterByChain(props: IProps) {
 
 						<div className="flex flex-col">
 							{props.openInterest ? (
-								<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+								<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 									<Tooltip
 										content={definitions.openInterest.chain}
-										className="text-(--text-label) underline decoration-dotted"
+										className="body-sm text-secondary underline decoration-dotted"
 									>
 										Open Interest
 									</Tooltip>
-									<span className="ml-auto font-jetbrains">{formattedNum(props.openInterest, true)}</span>
+									<span className="ml-auto mono-md">{formattedNum(props.openInterest, true)}</span>
 								</p>
 							) : null}
 							{props.activeLiquidity != null ? (
-								<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+								<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 									<Tooltip
 										content={definitions.activeLiquidity.chain}
-										className="text-(--text-label) underline decoration-dotted"
+										className="body-sm text-secondary underline decoration-dotted"
 									>
 										Active Liquidity
 									</Tooltip>
-									<span className="ml-auto font-jetbrains">{formattedNum(props.activeLiquidity, true)}</span>
+									<span className="ml-auto mono-md">{formattedNum(props.activeLiquidity, true)}</span>
 								</p>
 							) : null}
 							{props.total30d != null ? (
-								<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+								<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 									{(() => {
 										const definition = pageTypeByDefinition[props.type]?.['30d']
 										return definition ? (
-											<Tooltip content={definition} className="text-(--text-label) underline decoration-dotted">
+											<Tooltip content={definition} className="body-sm text-secondary underline decoration-dotted">
 												{metricName} (30d)
 											</Tooltip>
 										) : (
-											<span className="text-(--text-label)">{metricName} (30d)</span>
+											<span className="body-sm text-secondary">{metricName} (30d)</span>
 										)
 									})()}
-									<span className="ml-auto font-jetbrains">{formattedNum(props.total30d, true)}</span>
+									<span className="ml-auto mono-md">{formattedNum(props.total30d, true)}</span>
 								</p>
 							) : null}
 							{props.change_7dover7d != null ? (
-								<p className="group flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 last:border-none">
+								<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
 									<Tooltip
 										content="Change of last 7d volume over the previous 7d volume"
-										className="text-(--text-label) underline decoration-dotted"
+										className="body-sm text-secondary underline decoration-dotted"
 									>
 										Weekly Change
 									</Tooltip>
-									<span
-										className={`ml-auto font-jetbrains ${
-											props.change_7dover7d >= 0 ? 'text-(--success)' : 'text-(--error)'
-										}`}
-									>
+									<span className={`ml-auto mono-md ${props.change_7dover7d >= 0 ? 'text-data-up' : 'text-data-down'}`}>
 										{`${props.change_7dover7d >= 0 ? '+' : ''}${props.change_7dover7d}%`}
 									</span>
 								</p>
 							) : null}
 						</div>
-					</div>
+					</Card>
 					<AdapterByChainChart
 						chartData={props.chartData}
 						adapterType={props.adapterType}
@@ -393,20 +397,15 @@ export function AdapterByChain(props: IProps) {
 				</div>
 			) : null}
 			{props.chain === 'All' ? <NewsletterSignup layout="strip" /> : null}
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<div className="flex flex-wrap items-center justify-end gap-4 p-2">
-					<label className="relative mr-auto w-full sm:max-w-[280px]">
+			<Panel>
+				<TableToolbar className="justify-end">
+					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search protocols</span>
-						<Icon
-							name="search"
-							height={16}
-							width={16}
-							className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-						/>
+						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						<input
 							onInput={(e) => setProjectName(e.currentTarget.value)}
 							placeholder="Search..."
-							className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+							className={searchFieldInputStyles}
 						/>
 					</label>
 					<SelectWithCombobox
@@ -417,6 +416,7 @@ export function AdapterByChain(props: IProps) {
 						label={'Columns'}
 						labelType="smol"
 						variant="filter-responsive"
+						size="md"
 					/>
 					{props.categories.length > 0 ? (
 						<SelectWithCombobox
@@ -428,16 +428,18 @@ export function AdapterByChain(props: IProps) {
 							label={'Category'}
 							labelType="smol"
 							variant="filter-responsive"
+							size="md"
 						/>
 					) : null}
 					{SUPPORTED_OLD_VIEWS.includes(props.type) ? <FullOldViewButton /> : null}
 					<CSVDownloadButton
 						prepareCsv={() => prepareTableCsv({ instance, filename: `${props.type}-${props.chain}-protocols` })}
 						smol
+						size="md"
 					/>
-				</div>
+				</TableToolbar>
 				<VirtualTable instance={instance} rowSize={64} compact rowRankById={rowRankById} />
-			</div>
+			</Panel>
 		</>
 	)
 }
@@ -603,7 +605,7 @@ const NameColumn = (type: IProps['type']) =>
 						<span className="flex min-w-0 items-center gap-1">
 							<BasicLink
 								href={`/${basePath}/${row.original.slug}${chartKey ? `?tvl=false&events=false&${chartKey}=true` : ''}`}
-								className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+								className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 							>
 								{value}
 							</BasicLink>
@@ -617,7 +619,7 @@ const NameColumn = (type: IProps['type']) =>
 						{row.original.chains ? (
 							<Tooltip
 								content={<ProtocolChainsComponent chains={row.original.chains} />}
-								className="text-[0.7rem] text-(--text-disabled)"
+								className="text-[0.7rem] text-secondary"
 							>
 								{`${row.original.chains.length} chain${row.original.chains.length > 1 ? 's' : ''}`}
 							</Tooltip>
@@ -637,7 +639,7 @@ const categoryColumn = (align?: 'center') =>
 		enableSorting: false,
 		cell: ({ getValue }) =>
 			getValue() ? (
-				<BasicLink href={getCategoryRoute(slug(getValue()))} className="text-sm font-medium text-(--link-text)">
+				<BasicLink href={getCategoryRoute(slug(getValue()))} className="text-sm font-medium text-link">
 					{getValue()}
 				</BasicLink>
 			) : (
@@ -728,7 +730,7 @@ const doubleCountedMetricColumn = (
 				return (
 					<span className="flex items-center justify-center gap-1">
 						<QuestionHelper text="This protocol is a wrapper interface over another protocol. Its volume is excluded from totals to avoid double-counting the underlying protocol's volume" />
-						<span className="text-(--text-disabled)">{formattedNum(info.getValue(), true)}</span>
+						<span className="text-tertiary">{formattedNum(info.getValue(), true)}</span>
 					</span>
 				)
 			}
@@ -770,7 +772,7 @@ const reportedPerpVolumeColumn = (
 						{helpers.map((helper) => (
 							<QuestionHelper key={`${info.row.original.name}-${helper}`} text={helper} />
 						))}
-						<span className={info.row.original.doublecounted ? 'text-(--text-disabled)' : ''}>
+						<span className={info.row.original.doublecounted ? 'text-tertiary' : ''}>
 							{formattedNum(info.getValue(), true)}
 						</span>
 					</span>
@@ -802,7 +804,7 @@ const openInterestMetricColumn = (
 				return (
 					<span className={`flex items-center ${align === 'center' ? 'justify-center' : 'justify-end'} gap-1`}>
 						<QuestionHelper text="This protocol is a wrapper interface over another protocol. Its open interest is excluded from totals to avoid double-counting the underlying protocol's open interest" />
-						<span className="text-(--text-disabled)">{formattedNum(info.getValue(), true)}</span>
+						<span className="text-tertiary">{formattedNum(info.getValue(), true)}</span>
 					</span>
 				)
 			}

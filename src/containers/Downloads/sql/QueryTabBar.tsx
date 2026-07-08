@@ -139,14 +139,14 @@ export function QueryTabBar({
 							bottom: menu.anchor.y
 						})}
 						gutter={2}
-						className="z-50 min-w-[200px] rounded-md border border-(--divider) bg-(--cards-bg) p-1 text-xs text-(--text-primary) shadow-lg"
+						className="z-50 min-w-[200px] rounded-lg border border-medium bg-surface-elevated-1 p-1 text-xs text-(--text-primary) shadow-lg"
 					>
 						<Ariakit.MenuItem
 							onClick={() => {
 								setRenamingId(menu.id)
 								setMenu(null)
 							}}
-							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-(--link-hover-bg)"
+							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row"
 						>
 							<Icon name="pencil" className="size-3 text-(--text-tertiary)" />
 							Rename
@@ -156,7 +156,7 @@ export function QueryTabBar({
 								onDuplicate(menu.id)
 								setMenu(null)
 							}}
-							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-(--link-hover-bg)"
+							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row"
 						>
 							<Icon name="copy" className="size-3 text-(--text-tertiary)" />
 							Duplicate
@@ -167,7 +167,7 @@ export function QueryTabBar({
 									onConvertToNotebook(menu.id)
 									setMenu(null)
 								}}
-								className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-(--link-hover-bg)"
+								className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row"
 							>
 								<Icon name="layers" className="size-3 text-(--text-tertiary)" />
 								Convert to notebook
@@ -180,7 +180,7 @@ export function QueryTabBar({
 								onClose(menu.id)
 								setMenu(null)
 							}}
-							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-40"
+							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
 						>
 							<Icon name="x" className="size-3 text-(--text-tertiary)" />
 							Close
@@ -191,7 +191,7 @@ export function QueryTabBar({
 								onCloseOthers(menu.id)
 								setMenu(null)
 							}}
-							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-40"
+							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
 						>
 							<Icon name="x" className="size-3 text-(--text-tertiary)" />
 							Close others
@@ -202,7 +202,7 @@ export function QueryTabBar({
 								onCloseToRight(menu.id)
 								setMenu(null)
 							}}
-							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-40"
+							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
 						>
 							<Icon name="arrow-right" className="size-3 text-(--text-tertiary)" />
 							Close tabs to the right
@@ -220,17 +220,17 @@ function NewTabMenu({ onNewTab, onNewNotebook }: { onNewTab: () => void; onNewNo
 			<Ariakit.MenuButton
 				aria-label="New tab"
 				title="New tab (⌘T)"
-				className="sticky right-0 mb-px ml-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-(--app-bg) text-(--text-tertiary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+				className="sticky right-0 mb-px ml-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-(--app-bg) text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
 			>
 				<Icon name="plus" className="size-3.5" />
 			</Ariakit.MenuButton>
 			<Ariakit.Menu
 				gutter={4}
-				className="z-50 min-w-[180px] rounded-md border border-(--divider) bg-(--cards-bg) p-1 text-xs text-(--text-primary) shadow-lg"
+				className="z-50 min-w-[180px] rounded-lg border border-medium bg-surface-elevated-1 p-1 text-xs text-(--text-primary) shadow-lg"
 			>
 				<Ariakit.MenuItem
 					onClick={onNewTab}
-					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-(--link-hover-bg)"
+					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row"
 				>
 					<Icon name="file-text" className="size-3 text-(--text-tertiary)" />
 					<span className="flex-1">New query tab</span>
@@ -238,7 +238,7 @@ function NewTabMenu({ onNewTab, onNewNotebook }: { onNewTab: () => void; onNewNo
 				</Ariakit.MenuItem>
 				<Ariakit.MenuItem
 					onClick={onNewNotebook}
-					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-(--link-hover-bg)"
+					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row"
 				>
 					<Icon name="layers" className="size-3 text-(--text-tertiary)" />
 					<span className="flex-1">New notebook tab</span>
@@ -275,12 +275,6 @@ function TabPill({
 	onContextMenu,
 	activeRef
 }: TabPillProps) {
-	const base =
-		'group relative flex h-8 min-w-[120px] max-w-[240px] shrink-0 items-center gap-1.5 rounded-t-md border-x border-t px-2.5 pr-1.5 text-[13px] transition-colors before:pointer-events-none before:absolute before:-left-px before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-px before:bg-(--divider)/70 first:before:hidden aria-selected:before:hidden hover:before:hidden [[aria-selected=true]+&]:before:hidden'
-	const activeCls = 'border-(--divider) bg-(--app-bg) text-(--text-primary)'
-	const inactiveCls =
-		'border-transparent bg-transparent text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)'
-
 	const handleMouseDown = (e: React.MouseEvent) => {
 		if (e.button === 1 && canClose) {
 			e.preventDefault()
@@ -303,7 +297,11 @@ function TabPill({
 			onDoubleClick={onStartRename}
 			onContextMenu={onContextMenu}
 			title={isNotebook ? `Notebook · ${tab.title}` : tab.title}
-			className={`${base} ${active ? activeCls : inactiveCls}`}
+			className={`group relative flex h-8 max-w-[240px] min-w-[120px] shrink-0 items-center gap-1.5 rounded-t-md border-x border-t px-2.5 pr-1.5 text-[13px] transition-colors before:pointer-events-none before:absolute before:top-1/2 before:-left-px before:h-4 before:w-px before:-translate-y-1/2 before:bg-(--divider)/70 first:before:hidden hover:before:hidden aria-selected:before:hidden [[aria-selected=true]+&]:before:hidden ${
+				active
+					? 'border-(--divider) bg-(--app-bg) text-(--text-primary)'
+					: 'border-transparent bg-transparent text-(--text-secondary) hover:bg-hover-row hover:text-(--text-primary)'
+			}`}
 		>
 			<span aria-hidden className="flex size-3 shrink-0 items-center justify-center">
 				{running ? (
@@ -334,7 +332,7 @@ function TabPill({
 						onClose()
 					}}
 					onMouseDown={(e) => e.stopPropagation()}
-					className={`flex size-5 shrink-0 items-center justify-center rounded-sm text-(--text-tertiary) transition-opacity hover:bg-(--link-hover-bg) hover:text-(--text-primary) ${
+					className={`flex size-5 shrink-0 items-center justify-center rounded-sm text-(--text-tertiary) transition-opacity hover:bg-hover-row hover:text-(--text-primary) ${
 						active
 							? 'opacity-60 hover:opacity-100'
 							: 'opacity-0 group-focus-within:opacity-60 group-hover:opacity-60 hover:!opacity-100'

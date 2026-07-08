@@ -18,6 +18,9 @@ import { VirtualTable } from '~/components/Table/Table'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { Tooltip } from '~/components/Tooltip'
+import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, toNiceDayMonthYear } from '~/utils'
 import type { IRaise } from './types'
 import { formatRaiseAmount } from './utils'
@@ -193,21 +196,16 @@ export function RaisesTable({ raises }: { raises: IRaise[] }) {
 	})
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-3">
-				<label className="relative mr-auto w-full sm:max-w-[280px]">
+		<Panel>
+			<TableToolbar className="items-center justify-end">
+				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search projects...</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
 						name="search"
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search projects..."
-						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+						className={searchFieldInputStyles}
 					/>
 				</label>
 				<a
@@ -219,10 +217,10 @@ export function RaisesTable({ raises }: { raises: IRaise[] }) {
 					<span className="whitespace-nowrap">Methodology & biases</span>
 					<Icon name="external-link" height={12} width={12} />
 				</a>
-				<CSVDownloadButton prepareCsv={() => prepareRaisesCsv(instance)} smol />
-			</div>
+				<CSVDownloadButton prepareCsv={() => prepareRaisesCsv(instance)} smol size="md" />
+			</TableToolbar>
 
 			<VirtualTable instance={instance} />
-		</div>
+		</Panel>
 	)
 }

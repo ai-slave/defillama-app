@@ -79,7 +79,7 @@ export const KPI_ROWS: BreakdownRowConfig[] = [
 
 export const BREAKDOWN_SKELETON_ROWS = { depth: 24, volume: 9, spread: 2, kpi: 4 } as const
 
-const BORDER = 'border-(--cards-border)'
+const BORDER = 'border-subtle'
 
 function HeadCell({
 	children,
@@ -96,7 +96,7 @@ function HeadCell({
 }) {
 	const dir = sortKey && sort?.key === sortKey ? sort.dir : false
 	return (
-		<th className={`border-b ${BORDER} px-3 py-2 text-left text-xs font-medium text-(--text-tertiary)`}>
+		<th className={`border-b ${BORDER} px-3 py-2 text-left label-sm text-tertiary`}>
 			{sortKey && onSort ? (
 				<button
 					type="button"
@@ -126,14 +126,12 @@ function BreakdownRow({ row, data }: { row: BreakdownRowConfig; data: Dict }) {
 
 	return (
 		<tr className={`border-b ${BORDER} last:border-b-0`}>
-			<td className="px-3 py-2 text-left text-sm whitespace-normal text-(--text-secondary) sm:whitespace-nowrap">
-				{row.label}
-			</td>
-			<td className="px-3 py-2 text-left text-sm font-medium tabular-nums">{valueText}</td>
-			<td className={`px-3 py-2 text-center text-sm tabular-nums ${percentileHeat}`}>
+			<td className="px-3 py-2 text-left body-sm whitespace-normal text-secondary sm:whitespace-nowrap">{row.label}</td>
+			<td className="px-3 py-2 text-left body-sm font-medium tabular-nums">{valueText}</td>
+			<td className={`px-3 py-2 text-center body-sm tabular-nums ${percentileHeat}`}>
 				{percentile == null ? 'N/A' : `${Math.round(percentile)}%`}
 			</td>
-			<td className={`px-3 py-2 text-center text-sm tabular-nums ${rankHeat}`}>{rank == null ? 'N/A' : rank}</td>
+			<td className={`px-3 py-2 text-center body-sm tabular-nums ${rankHeat}`}>{rank == null ? 'N/A' : rank}</td>
 		</tr>
 	)
 }
@@ -175,10 +173,10 @@ export function BreakdownTable({
 	return (
 		<div className="flex flex-col gap-2">
 			<div className="flex flex-wrap items-center gap-2">
-				<h4 className="text-sm font-semibold">{title}, Detailed Breakdown</h4>
+				<h4 className="label-md">{title}, Detailed Breakdown</h4>
 				<TimeframeBadge label={badge} />
 			</div>
-			<div className={`thin-scrollbar overflow-x-auto rounded-md border ${BORDER}`}>
+			<div className={`thin-scrollbar overflow-x-auto rounded-[8px] border ${BORDER}`}>
 				<table className="w-full border-collapse">
 					<thead>
 						<tr>
@@ -210,11 +208,11 @@ export function BreakdownTable({
 export function BreakdownTableSkeleton({ title, rowCount }: { title: string; rowCount: number }) {
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="h-5 w-2/3 animate-pulse rounded bg-(--divider)" />
-			<div className={`flex flex-col gap-1 rounded-md border ${BORDER} p-3`}>
+			<div className="h-5 w-2/3 animate-pulse rounded bg-surface-elevated-2" />
+			<div className={`flex flex-col gap-1 rounded-[8px] border ${BORDER} bg-surface p-3`}>
 				<span className="sr-only">{title} loading</span>
 				{Array.from({ length: rowCount }).map((_, i) => (
-					<div key={i} className="h-6 w-full animate-pulse rounded bg-(--divider)" />
+					<div key={i} className="h-6 w-full animate-pulse rounded bg-surface-elevated-2" />
 				))}
 			</div>
 		</div>

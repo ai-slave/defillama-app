@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { LiquidationsTableTabs } from '~/containers/LiquidationsV2/TableTabs'
+import { Panel } from '~/ui/Panel'
 import { formattedNum } from '~/utils'
 import { fetchTokenLiquidationsForAliases } from '../LiquidationsV2/api'
 import type { OverviewChainRow, OverviewProtocolRow, TokenLiquidationsSectionData } from '../LiquidationsV2/api.types'
@@ -54,7 +55,7 @@ const protocolColumns = [
 			return (
 				<span className="flex items-center gap-2">
 					<TokenLogo name={protocol} kind="token" data-lgonly alt={`Logo of ${protocol}`} />
-					<BasicLink href={`/liquidations/${row.original.slug}`} className="text-(--link-text) hover:underline">
+					<BasicLink href={`/liquidations/${row.original.slug}`} className="text-link hover:underline">
 						{protocol}
 					</BasicLink>
 				</span>
@@ -179,7 +180,7 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 			isLoading={isLoading}
 			error={error}
 			errorMessage="Failed to load token liquidations."
-			bodyClassName="flex flex-col gap-2 p-3"
+			bodyClassName="flex flex-col gap-2 p-2"
 		>
 			{data ? (
 				<>
@@ -201,7 +202,7 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 						tokenStateMode="local"
 					/>
 
-					<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+					<Panel>
 						{activeTab === 'protocols' ? (
 							<DeferredTableWithSearch
 								data={data.protocolRows}
@@ -225,7 +226,7 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 								sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
 							/>
 						)}
-					</div>
+					</Panel>
 				</>
 			) : null}
 		</TokenPrivateSectionGate>

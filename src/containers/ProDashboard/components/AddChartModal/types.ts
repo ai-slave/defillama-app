@@ -1,6 +1,5 @@
+import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import type {
-	CexAnalyticsMetric,
-	CexAnalyticsView,
 	ChartConfig,
 	DashboardItemConfig,
 	MetricAggregator,

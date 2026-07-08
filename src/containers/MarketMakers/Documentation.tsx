@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Icon } from '~/components/Icon'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { docsAsset, FigureDualTable, FigureRadar, FigureTable } from './DocsFigures'
 import { MarketMakersOutro } from './MarketMakersOutro'
 import { MarketMakersTabs } from './MarketMakersTabs'
@@ -374,14 +376,10 @@ function ShareButton() {
 		} catch {}
 	}
 	return (
-		<button
-			type="button"
-			onClick={onShare}
-			className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-(--form-control-border) px-3 py-1.5 text-sm font-medium text-(--text-primary) hover:bg-(--link-hover-bg)"
-		>
+		<Button type="button" onClick={onShare} size="md">
 			{copied ? 'Copied' : 'Share'}
 			<Icon name={copied ? 'check-circle' : 'share'} className="size-3.5" />
-		</button>
+		</Button>
 	)
 }
 
@@ -398,8 +396,8 @@ function TocList({ active, onNavigate }: { active: string; onNavigate?: () => vo
 						aria-current={isActive ? 'true' : undefined}
 						className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
 							isActive
-								? 'bg-(--link-hover-bg) font-medium text-(--text-primary)'
-								: 'text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)'
+								? 'bg-hover-row font-medium text-primary'
+								: 'text-secondary hover:bg-hover-row hover:text-primary'
 						}`}
 					>
 						{item.label}
@@ -414,39 +412,39 @@ function TocAccordion({ active }: { active: string }) {
 	const [open, setOpen] = useState(false)
 	const activeLabel = TOC_ITEMS.find((i) => i.id === active)?.label ?? 'Table of Contents'
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) min-[1120px]:hidden">
+		<Card padding="none" border="subtle" className="min-[1120px]:hidden">
 			<button
 				type="button"
 				onClick={() => setOpen((v) => !v)}
 				aria-expanded={open}
-				className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-semibold text-(--text-primary)"
+				className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left label-sm text-primary"
 			>
 				<span className="min-w-0 truncate">
-					<span className="text-(--text-tertiary)">Contents: </span>
+					<span className="text-tertiary">Contents: </span>
 					{activeLabel}
 				</span>
 				<Icon
 					name="chevron-down"
-					className={`size-4 shrink-0 text-(--text-tertiary) transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
+					className={`size-4 shrink-0 text-tertiary transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
 				/>
 			</button>
 			<div
 				className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
 			>
 				<div className="overflow-hidden">
-					<div className="border-t border-(--cards-border) p-1">
+					<div className="border-t border-subtle p-1">
 						<TocList active={active} onNavigate={() => setOpen(false)} />
 					</div>
 				</div>
 			</div>
-		</div>
+		</Card>
 	)
 }
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
 	return (
 		<section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-24">
-			<h2 id={`${id}-title`} className="text-xl font-semibold text-(--link-text) min-[1120px]:text-2xl">
+			<h2 id={`${id}-title`} className="heading-sm text-primary">
 				{title}
 			</h2>
 			<div className="mt-4 flex flex-col gap-4">{children}</div>
@@ -455,23 +453,23 @@ function Section({ id, title, children }: { id: string; title: string; children:
 }
 
 function SubHeading({ children }: { children: ReactNode }) {
-	return <h3 className="mt-4 text-base font-semibold text-(--link-text)">{children}</h3>
+	return <h3 className="mt-4 heading-xs text-primary">{children}</h3>
 }
 
 function Lead({ label, children }: { label: string; children: ReactNode }) {
 	return (
-		<p className="text-sm leading-relaxed text-(--text-secondary)">
-			<span className="font-semibold text-(--text-primary)">{label}</span> {children}
+		<p className="body-sm leading-relaxed text-secondary">
+			<span className="font-semibold text-primary">{label}</span> {children}
 		</p>
 	)
 }
 
 function P({ children }: { children: ReactNode }) {
-	return <p className="text-sm leading-relaxed text-(--text-secondary)">{children}</p>
+	return <p className="body-sm leading-relaxed text-secondary">{children}</p>
 }
 
 function Bullets({ items, ordered = false }: { items: ReactNode[]; ordered?: boolean }) {
-	const cls = 'ml-5 flex flex-col gap-2 text-sm leading-relaxed text-(--text-secondary)'
+	const cls = 'ml-5 flex flex-col gap-2 body-sm leading-relaxed text-secondary'
 	const inner = items.map((item, i) => (
 		<li key={i} className={ordered ? 'list-decimal' : 'list-disc'}>
 			{item}
@@ -482,7 +480,7 @@ function Bullets({ items, ordered = false }: { items: ReactNode[]; ordered?: boo
 
 function WeightTable({ rows, showRanking = true }: { rows: WeightRow[]; showRanking?: boolean }) {
 	return (
-		<div className="overflow-hidden rounded-xl border border-(--cards-border)">
+		<div className="overflow-hidden rounded-[8px] border border-subtle">
 			<div className="overflow-x-auto">
 				<table className="w-full border-collapse text-sm">
 					<thead>
@@ -492,13 +490,13 @@ function WeightTable({ rows, showRanking = true }: { rows: WeightRow[]; showRank
 							{showRanking ? <th className="w-28 px-4 py-3 text-center font-medium">Ranking</th> : null}
 						</tr>
 					</thead>
-					<tbody className="divide-y divide-(--divider)">
+					<tbody>
 						{rows.map((row, i) => (
-							<tr key={i} className="bg-(--cards-bg)">
-								<td className="px-4 py-2.5 text-(--text-primary)">{row.metric}</td>
-								<td className="px-4 py-2.5 text-center text-(--text-secondary) tabular-nums">{row.weighting}</td>
+							<tr key={i} className="border-t border-subtle bg-surface first:border-t-0">
+								<td className="px-4 py-2.5 text-primary">{row.metric}</td>
+								<td className="px-4 py-2.5 text-center text-secondary tabular-nums">{row.weighting}</td>
 								{showRanking ? (
-									<td className="px-4 py-2.5 text-center text-(--text-secondary) tabular-nums">{row.ranking}</td>
+									<td className="px-4 py-2.5 text-center text-secondary tabular-nums">{row.ranking}</td>
 								) : null}
 							</tr>
 						))}
@@ -510,18 +508,18 @@ function WeightTable({ rows, showRanking = true }: { rows: WeightRow[]; showRank
 }
 
 function Divider() {
-	return <div role="separator" className="h-px bg-(--divider)" />
+	return <div role="separator" className="border-t border-very-subtle" />
 }
 
 function GlossaryItem({ entry }: { entry: GlossaryEntry }) {
 	return (
 		<div className="flex flex-col gap-2">
-			<p className="text-sm leading-relaxed text-(--text-secondary)">
-				<span className="font-semibold text-(--text-primary)">{entry.term}:</span> {entry.def}
+			<p className="body-sm leading-relaxed text-secondary">
+				<span className="font-semibold text-primary">{entry.term}:</span> {entry.def}
 			</p>
 			{entry.bullets ? <Bullets items={entry.bullets} /> : null}
 			{entry.code ? (
-				<pre className="overflow-x-auto rounded-md bg-(--app-bg) p-3 text-xs text-(--text-primary)">
+				<pre className="overflow-x-auto rounded-md bg-page p-3 text-xs text-primary">
 					<code>{entry.code}</code>
 				</pre>
 			) : null}
@@ -535,11 +533,11 @@ export function MarketMakersDocumentation() {
 
 	return (
 		<>
-			<div className="flex flex-col gap-4 p-1 min-[1120px]:p-4">
+			<div className="flex flex-col gap-2">
 				<MarketMakersTabs active="Documentation" />
-				<div className="rounded-md bg-(--cards-bg) p-4 min-[1120px]:p-6">
-					<div className="mb-4 flex items-center justify-between gap-3 border-b border-(--divider) pb-4 min-[1120px]:hidden">
-						<span className="text-sm text-(--text-secondary)">Last Updated: {LAST_UPDATED}</span>
+				<Card padding="md" border="subtle">
+					<div className="mb-4 flex items-center justify-between gap-3 border-b border-very-subtle pb-4 min-[1120px]:hidden">
+						<span className="body-sm text-secondary">Last Updated: {LAST_UPDATED}</span>
 						<ShareButton />
 					</div>
 
@@ -551,14 +549,12 @@ export function MarketMakersDocumentation() {
 						<div className="min-w-0 min-[1120px]:pr-8">
 							<div className="mx-auto w-full max-w-[820px]">
 								<div className="hidden h-9 items-center justify-between gap-3 min-[1120px]:flex">
-									<span className="text-sm text-(--text-secondary)">Last Updated: {LAST_UPDATED}</span>
+									<span className="body-sm text-secondary">Last Updated: {LAST_UPDATED}</span>
 									<ShareButton />
 								</div>
-								<div className="mt-3 hidden h-px bg-(--divider) min-[1120px]:block" />
+								<div className="mt-3 hidden border-t border-very-subtle min-[1120px]:block" />
 								<div className="flex w-full flex-col gap-10 min-[1120px]:pt-6">
-									<h1 className="text-2xl font-bold text-(--link-text) min-[1120px]:text-3xl">
-										Market Maker Leaderboard Documentation
-									</h1>
+									<h1 className="heading-md text-primary">Market Maker Leaderboard Documentation</h1>
 
 									<div id="introduction" aria-labelledby="introduction-title" className="scroll-mt-24">
 										<span id="introduction-title" className="sr-only">
@@ -578,49 +574,49 @@ export function MarketMakersDocumentation() {
 									<Section id="preface" title="1. Preface & Market Maker Leaderboard Overview">
 										<P>
 											Forgd's Market Maker Leaderboard provides data-driven insights on{' '}
-											<span className="font-semibold text-(--text-primary)">40+ institutional liquidity providers</span>{' '}
-											across key performance metrics to measure top-of-book spreads, depth of liquidity, fill order
-											volume and KPI adherence. These metrics are calculated and updated on a daily basis across
-											hundreds of engagements for live token projects that utilize Forgd to monitor Market Maker trade
-											activity via our free-to-use dashboards. There are five distinct leaderboards: Performance Index,
-											Depth Leaderboard, Volume Leaderboard, Spread Leaderboard, and KPI Adherence Leaderboard. A high
-											level description of each can be found below:
+											<span className="font-semibold text-primary">40+ institutional liquidity providers</span> across
+											key performance metrics to measure top-of-book spreads, depth of liquidity, fill order volume and
+											KPI adherence. These metrics are calculated and updated on a daily basis across hundreds of
+											engagements for live token projects that utilize Forgd to monitor Market Maker trade activity via
+											our free-to-use dashboards. There are five distinct leaderboards: Performance Index, Depth
+											Leaderboard, Volume Leaderboard, Spread Leaderboard, and KPI Adherence Leaderboard. A high level
+											description of each can be found below:
 										</P>
 										<Bullets
 											items={[
 												<>
-													<span className="font-semibold text-(--text-primary)">The Performance Index</span> shows
-													market maker ranks across all key performance metrics with additional information regarding
-													their integration level with Forgd, their trading coverage & capabilities, and ancillary
-													information (exchange coverage, non-market making services, active engagements shared with
-													Forgd, and more). This allows Forgd to calculate a proprietary composite score derived from
-													50+ quantitative and qualitative variables.
+													<span className="font-semibold text-primary">The Performance Index</span> shows market maker
+													ranks across all key performance metrics with additional information regarding their
+													integration level with Forgd, their trading coverage & capabilities, and ancillary information
+													(exchange coverage, non-market making services, active engagements shared with Forgd, and
+													more). This allows Forgd to calculate a proprietary composite score derived from 50+
+													quantitative and qualitative variables.
 												</>,
 												<>
-													<span className="font-semibold text-(--text-primary)">The Depth Leaderboard</span> displays
-													the average depth of liquidity for each market maker across +/- 0.50%, +/- 1.00%, & +/- 2.00%
-													for all of their respective active engagements being tracked by Forgd. Both the average
-													notional depth and the average percentage of all depth is provided on a per market maker
-													basis. Additionally, the average depth loan utilization is calculated for each market maker.
+													<span className="font-semibold text-primary">The Depth Leaderboard</span> displays the average
+													depth of liquidity for each market maker across +/- 0.50%, +/- 1.00%, & +/- 2.00% for all of
+													their respective active engagements being tracked by Forgd. Both the average notional depth
+													and the average percentage of all depth is provided on a per market maker basis. Additionally,
+													the average depth loan utilization is calculated for each market maker.
 												</>,
 												<>
-													<span className="font-semibold text-(--text-primary)">The Volume Leaderboard</span> provides
-													insights to the average maker fill order volume, the average taker fill order volume, the
-													average total fill order volume (maker + taker), and the average volume loan utilization for
-													each market maker across all of their active engagements that Forgd tracks.
+													<span className="font-semibold text-primary">The Volume Leaderboard</span> provides insights
+													to the average maker fill order volume, the average taker fill order volume, the average total
+													fill order volume (maker + taker), and the average volume loan utilization for each market
+													maker across all of their active engagements that Forgd tracks.
 												</>,
 												<>
-													<span className="font-semibold text-(--text-primary)">The Spread Leaderboard</span> shows the
-													average volume-weighted bid-ask spread across each market maker's active engagements. By using
-													the volume-weighted bid-ask spread, we account for the notional size of orders at the best bid
-													and the best ask, providing a more accurate reflection of implied transaction costs.
+													<span className="font-semibold text-primary">The Spread Leaderboard</span> shows the average
+													volume-weighted bid-ask spread across each market maker's active engagements. By using the
+													volume-weighted bid-ask spread, we account for the notional size of orders at the best bid and
+													the best ask, providing a more accurate reflection of implied transaction costs.
 												</>,
 												<>
-													<span className="font-semibold text-(--text-primary)">The KPI Adherence Leaderboard</span>{' '}
-													tracks the uptime of market makers across their active engagements using industry standard
-													KPIs (depth +/- 0.50%, +/- 1.00%, & +/- 2.00%, and top-of-book spreads). This measures the
-													consistency with which market makers meet predefined performance thresholds, calculated as the
-													proportion of successful KPI outcomes over time using a daily binary pass/fail framework.
+													<span className="font-semibold text-primary">The KPI Adherence Leaderboard</span> tracks the
+													uptime of market makers across their active engagements using industry standard KPIs (depth
+													+/- 0.50%, +/- 1.00%, & +/- 2.00%, and top-of-book spreads). This measures the consistency
+													with which market makers meet predefined performance thresholds, calculated as the proportion
+													of successful KPI outcomes over time using a daily binary pass/fail framework.
 												</>
 											]}
 										/>
@@ -740,15 +736,15 @@ export function MarketMakersDocumentation() {
 										<Bullets
 											items={[
 												<>
-													<span className="font-semibold text-(--text-primary)">% of Total Depth</span> is calculated as
-													each market maker's average share of aggregate depth across all resting bids and offers within
-													the selected threshold, relative to the total depth provided by all market makers.
+													<span className="font-semibold text-primary">% of Total Depth</span> is calculated as each
+													market maker's average share of aggregate depth across all resting bids and offers within the
+													selected threshold, relative to the total depth provided by all market makers.
 												</>,
 												<>
-													<span className="font-semibold text-(--text-primary)">Depth Loan Utilization</span> is
-													calculated as the ratio of loaned inventory utilized to support quoted depth relative to the
-													total average depth provided. Values exceeding 100% indicate that quoted depth exceeds the
-													amount of loaned inventory and should be interpreted with caution.
+													<span className="font-semibold text-primary">Depth Loan Utilization</span> is calculated as
+													the ratio of loaned inventory utilized to support quoted depth relative to the total average
+													depth provided. Values exceeding 100% indicate that quoted depth exceeds the amount of loaned
+													inventory and should be interpreted with caution.
 												</>
 											]}
 										/>
@@ -816,14 +812,13 @@ export function MarketMakersDocumentation() {
 										<Bullets
 											items={[
 												<>
-													<span className="font-semibold text-(--text-primary)">Average Total Volume</span> is
-													calculated as the sum of maker and taker fill volumes.
+													<span className="font-semibold text-primary">Average Total Volume</span> is calculated as the
+													sum of maker and taker fill volumes.
 												</>,
 												<>
-													<span className="font-semibold text-(--text-primary)">Volume Loan Utilization</span> is
-													calculated as the average total executed volume per period divided by the amount of loaned
-													inventory. This reflects the level of trading activity generated relative to available
-													inventory.
+													<span className="font-semibold text-primary">Volume Loan Utilization</span> is calculated as
+													the average total executed volume per period divided by the amount of loaned inventory. This
+													reflects the level of trading activity generated relative to available inventory.
 												</>
 											]}
 										/>
@@ -841,11 +836,11 @@ export function MarketMakersDocumentation() {
 										<Bullets
 											items={[
 												<>
-													<span className="font-semibold text-(--text-primary)">Maker Fill Volume</span> reflects
-													passive execution, where trades occur against resting liquidity provided by the market maker.
+													<span className="font-semibold text-primary">Maker Fill Volume</span> reflects passive
+													execution, where trades occur against resting liquidity provided by the market maker.
 												</>,
 												<>
-													<span className="font-semibold text-(--text-primary)">Taker Fill Volume</span> reflects active
+													<span className="font-semibold text-primary">Taker Fill Volume</span> reflects active
 													execution, where the market maker is crossing the spread to trade against existing liquidity.
 												</>
 											]}
@@ -919,7 +914,7 @@ export function MarketMakersDocumentation() {
 											]}
 										/>
 										<P>The total fill volume in this example is $2.36m, allowing us to calculate VWAS as:</P>
-										<pre className="overflow-x-auto rounded-md bg-(--app-bg) p-3 text-xs text-(--text-primary)">
+										<pre className="overflow-x-auto rounded-md bg-page p-3 text-xs text-primary">
 											<code>
 												VWAS = [(1.0m×5) + (0.75m×10) + (0.5m×10) + (0.1m×50) + (0.01m×100)] / 2.36m ≈ 9.96 bps (~10
 												bps)
@@ -1035,21 +1030,19 @@ export function MarketMakersDocumentation() {
 							</div>
 						</div>
 
-						<aside className="hidden min-[1120px]:block min-[1120px]:border-l min-[1120px]:border-(--divider) min-[1120px]:pl-8">
+						<aside className="hidden min-[1120px]:block min-[1120px]:border-l min-[1120px]:border-subtle min-[1120px]:pl-8">
 							<div className="sticky top-6">
 								<div className="flex h-9 items-center">
-									<span className="text-xs font-semibold tracking-wide text-(--text-tertiary) uppercase">
-										Table of Contents
-									</span>
+									<span className="label-sm text-tertiary uppercase">Table of Contents</span>
 								</div>
-								<div className="mt-3 h-px bg-(--divider)" />
+								<div className="mt-3 border-t border-very-subtle" />
 								<div className="pt-6">
 									<TocList active={active} />
 								</div>
 							</div>
 						</aside>
 					</div>
-				</div>
+				</Card>
 				<div className="mt-6">
 					<MarketMakersOutro />
 				</div>

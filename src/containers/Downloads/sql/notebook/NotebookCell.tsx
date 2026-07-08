@@ -98,8 +98,8 @@ export const NotebookCell = forwardRef<SqlCellHandle, NotebookCellProps>(functio
 			}}
 			className={`group relative flex flex-col gap-2 rounded-md border px-3 py-2 transition-colors ${
 				focused
-					? 'border-(--primary)/50 bg-(--cards-bg) shadow-[0_0_0_1px_var(--primary)]/20'
-					: 'border-(--divider) bg-(--cards-bg)/60 hover:border-(--divider) hover:bg-(--cards-bg)'
+					? 'border-(--primary)/50 bg-surface shadow-[0_0_0_1px_var(--primary)]/20'
+					: 'border-(--divider) bg-surface/60 hover:border-(--divider) hover:bg-surface'
 			}`}
 		>
 			{staleGutter ? (
@@ -257,21 +257,21 @@ function CellMenu({
 	return (
 		<Ariakit.MenuProvider>
 			<Ariakit.MenuButton
-				className="flex size-6 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+				className="flex size-6 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
 				aria-label="Cell actions"
 			>
 				<Icon name="ellipsis" className="size-3.5" />
 			</Ariakit.MenuButton>
 			<Ariakit.Menu
 				gutter={4}
-				className="z-40 min-w-[180px] rounded-md border border-(--divider) bg-(--cards-bg) p-1 text-xs text-(--text-primary) shadow-lg"
+				className="z-40 min-w-[180px] rounded-lg border border-medium bg-surface-elevated-1 p-1 text-xs text-(--text-primary) shadow-lg"
 			>
 				{cellType === 'sql' ? (
 					<>
 						<Ariakit.MenuItem
 							disabled={isFirst}
 							onClick={onRunAbove}
-							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-40"
+							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
 						>
 							<Icon name="chevron-up" className="size-3 text-(--text-tertiary)" />
 							Run cells above
@@ -279,7 +279,7 @@ function CellMenu({
 						<Ariakit.MenuItem
 							disabled={isLast}
 							onClick={onRunBelow}
-							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-40"
+							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
 						>
 							<Icon name="chevron-down" className="size-3 text-(--text-tertiary)" />
 							Run cells below
@@ -290,7 +290,7 @@ function CellMenu({
 				<Ariakit.MenuItem
 					disabled={isFirst}
 					onClick={onMoveUp}
-					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-40"
+					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
 				>
 					<Icon name="arrow-up" className="size-3 text-(--text-tertiary)" />
 					Move up
@@ -298,7 +298,7 @@ function CellMenu({
 				<Ariakit.MenuItem
 					disabled={isLast}
 					onClick={onMoveDown}
-					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-40"
+					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
 				>
 					<Icon name="arrow-down" className="size-3 text-(--text-tertiary)" />
 					Move down
@@ -308,7 +308,7 @@ function CellMenu({
 					<Ariakit.MenuItem
 						key={t}
 						onClick={() => onConvertType(t)}
-						className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-(--link-hover-bg)"
+						className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row"
 					>
 						<Icon name="repeat" className="size-3 text-(--text-tertiary)" />
 						Convert to {t === 'sql' ? 'SQL' : t === 'markdown' ? 'Markdown' : 'Chart'}

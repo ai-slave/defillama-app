@@ -1,3 +1,5 @@
+import { Card } from '~/ui/Card'
+
 const DEFINITIONS: { term: string; description: string }[] = [
 	{
 		term: 'Trading KPIs',
@@ -33,19 +35,19 @@ const DEFINITIONS: { term: string; description: string }[] = [
 
 export function Definitions() {
 	return (
-		<div className="flex flex-col gap-3 rounded-md bg-(--cards-bg) p-4">
-			<h2 className="text-lg font-semibold">Definitions</h2>
+		<Card border="subtle" className="flex flex-col gap-3">
+			<h2 className="heading-xs">Definitions</h2>
 			<div className="flex flex-col text-sm">
 				{DEFINITIONS.map((def) => (
 					<div
 						key={def.term}
-						className="flex flex-col gap-1 border-b border-(--divider) py-3 last:border-b-0 sm:flex-row sm:items-center sm:gap-4"
+						className="flex flex-col gap-1 border-b border-subtle py-3 last:border-b-0 sm:flex-row sm:items-center sm:gap-4"
 					>
 						<span className="font-medium sm:w-[220px] sm:shrink-0">{def.term}</span>
-						<span className="text-(--text-secondary)">{def.description}</span>
+						<span className="text-secondary">{def.description}</span>
 					</div>
 				))}
 			</div>
-		</div>
+		</Card>
 	)
 }

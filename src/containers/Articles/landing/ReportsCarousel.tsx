@@ -103,7 +103,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 	const pdfUrl = article.reportPdf?.url ?? null
 
 	const imageBlock = (
-		<div className="space-y-[12px] bg-white" style={{ aspectRatio: `${IMG_ASPECT.w}/${IMG_ASPECT.h}` }}>
+		<div className="space-y-3 bg-white" style={{ aspectRatio: `${IMG_ASPECT.w}/${IMG_ASPECT.h}` }}>
 			{imgUrl ? (
 				<img
 					src={imgUrl}
@@ -131,7 +131,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 				!isMobile && 'md:group-hover:translate-y-0'
 			)}
 		>
-			<p className="my-[12px] line-clamp-4 text-[11px] leading-[150%] font-normal lg:text-[11px]">
+			<p className="my-3 line-clamp-4 text-[11px] leading-[150%] font-normal lg:text-[11px]">
 				{blurb || article.title}
 			</p>
 			{addOverlayLink ? (

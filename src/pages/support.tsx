@@ -107,7 +107,7 @@ function Support() {
 			) : null}
 
 			<div className="mx-auto flex w-full max-w-lg flex-col gap-4 lg:mt-4 xl:mt-11 xl:ml-[calc(228px-16px)]">
-				<h1 className="text-center text-xl font-semibold">Support</h1>
+				<h1 className="text-center heading-sm">Support</h1>
 
 				<div className="flex flex-col gap-3">
 					<a
@@ -165,7 +165,7 @@ function Support() {
 							<div className="flex flex-col gap-1">
 								<label htmlFor="support-name" className="flex items-center gap-1">
 									<span>Name</span>
-									<span className="mt-[2px] text-xs text-gray-500">(Optional)</span>
+									<span className="mt-0.5 text-xs text-gray-500">(Optional)</span>
 								</label>
 								<input
 									id="support-name"
@@ -178,7 +178,7 @@ function Support() {
 							<div className="flex flex-col gap-1">
 								<label htmlFor="support-email" className="flex items-center gap-1">
 									<span>Email</span>
-									<span className="mt-[2px] text-xs text-gray-500">(Optional)</span>
+									<span className="mt-0.5 text-xs text-gray-500">(Optional)</span>
 								</label>
 								<input
 									id="support-email"

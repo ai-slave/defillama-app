@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { Panel } from '~/ui/Panel'
 import { tokenIconUrl } from '~/utils/icons'
 import type { LiquidationsChainPageProps } from './api.types'
 import { LiquidationsDistributionChart } from './LiquidationsDistributionChart'
@@ -45,7 +46,7 @@ export function LiquidationsChainPage(props: LiquidationsChainPageProps) {
 				/>
 			</div>
 
-			<div className="mt-2 rounded-md border border-(--cards-border) bg-(--cards-bg)">
+			<Panel className="mt-2">
 				{activeTab === 'chains' ? (
 					<LiquidationsProtocolChainsTable
 						rows={props.chainRows}
@@ -65,7 +66,7 @@ export function LiquidationsChainPage(props: LiquidationsChainPageProps) {
 						}
 					/>
 				)}
-			</div>
+			</Panel>
 		</>
 	)
 }

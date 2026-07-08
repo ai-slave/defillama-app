@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { Icon } from '~/components/Icon'
 import { TokenLogo } from '~/components/TokenLogo'
+import { popoverHovercardSurfaceStyles, popoverMenuItemStyles } from '~/ui/Popover'
 import type { IProtocolLlamaswapChain } from '~/utils/metadata/types'
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
@@ -44,7 +45,7 @@ export function BuyOnLlamaswap({
 				href={buildSwapUrl(primaryChain, placement)}
 				className={
 					size === 'small'
-						? `flex items-center gap-1 rounded-md bg-(--primary)/10 px-1.5 py-0.5 text-[10px] font-medium text-(--primary) hover:bg-(--primary)/20`
+						? `flex items-center gap-1 rounded-md bg-(--primary)/10 px-1.5 py-0.5 label-sm text-(--primary) hover:bg-(--primary)/20`
 						: `flex items-center gap-1 rounded-full border-2 border-(--old-blue) bg-(--old-blue) px-2 py-1 text-xs font-medium text-white hover:bg-(--old-blue)/80`
 				}
 			>
@@ -60,7 +61,7 @@ export function BuyOnLlamaswap({
 				render={<button />}
 				className={
 					size === 'small'
-						? `flex items-center gap-1 rounded-md bg-(--primary)/10 px-1.5 py-0.5 text-[10px] font-medium text-(--primary) hover:bg-(--primary)/20`
+						? `flex items-center gap-1 rounded-md bg-(--primary)/10 px-1.5 py-0.5 label-sm text-(--primary) hover:bg-(--primary)/20`
 						: `flex items-center gap-1 rounded-full border-2 border-(--old-blue) bg-(--old-blue) px-2 py-1 text-xs font-medium text-white hover:bg-(--old-blue)/80`
 				}
 			>
@@ -70,26 +71,22 @@ export function BuyOnLlamaswap({
 			<Ariakit.Hovercard
 				unmountOnHide
 				gutter={6}
-				className="z-10 flex min-w-[180px] flex-col overflow-auto rounded-lg border border-[hsl(204,20%,88%)] bg-(--bg-main) shadow-lg dark:border-[hsl(204,3%,32%)]"
+				className={`${popoverHovercardSurfaceStyles} flex min-w-[180px] flex-col`}
 				portal
 			>
-				<span className="px-3 pt-2 pb-1 text-[10px] font-medium tracking-wide text-(--text-form) uppercase">
-					Select chain
-				</span>
+				<span className="px-3 pt-2 pb-1 label-sm text-secondary">Select chain</span>
 				{chains.map((chain) => (
 					<a
 						key={`${chain.chain}:${chain.address}`}
 						href={buildSwapUrl(chain, placement)}
 						target="_blank"
 						rel="noreferrer noopener"
-						className="flex items-center gap-2.5 px-3 py-2 text-xs last-of-type:rounded-b-lg hover:bg-(--primary-hover)"
+						className={`${popoverMenuItemStyles} rounded-md`}
 					>
 						<TokenLogo name={chain.displayName} kind="chain" size={18} />
 						<span className="capitalize">{chain.displayName}</span>
 						{chain.best ? (
-							<span className="ml-auto rounded-full bg-(--primary)/10 px-1.5 py-0.5 text-[10px] text-(--primary)">
-								Best
-							</span>
+							<span className="ml-auto rounded-full bg-brand-muted px-1.5 py-0.5 label-sm text-link">Best</span>
 						) : null}
 					</a>
 				))}

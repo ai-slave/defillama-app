@@ -18,18 +18,18 @@ export const MetricRow = ({
 	value,
 	extra,
 	className = '',
-	valueClassName = 'ml-auto font-jetbrains',
+	valueClassName = 'mono-md-bold ml-auto',
 	dashed = false
 }: MetricRowProps) => (
 	<p
-		className={`group flex flex-wrap justify-start gap-4 border-b ${dashed ? 'border-dashed' : ''} border-(--cards-border) py-1 last:border-none ${className}`.trim()}
+		className={`group flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b ${dashed ? 'border-dashed' : ''} border-very-subtle py-1 last:border-none ${className}`.trim()}
 	>
 		{tooltip ? (
-			<Tooltip content={tooltip} className="text-(--text-label) underline decoration-dotted">
+			<Tooltip content={tooltip} className="body-md text-tertiary underline decoration-dotted">
 				{label}
 			</Tooltip>
 		) : (
-			<span className="text-(--text-label)">{label}</span>
+			<span className="body-md text-tertiary">{label}</span>
 		)}
 		{extra}
 		<span className={valueClassName}>{value}</span>
@@ -44,7 +44,7 @@ export const SubMetricRow = ({
 	value,
 	extra,
 	className = '',
-	valueClassName = 'ml-auto font-jetbrains'
+	valueClassName = 'mono-md ml-auto'
 }: SubMetricRowProps) => (
 	<MetricRow
 		label={label}
@@ -76,22 +76,22 @@ export const MetricSection = ({
 	children,
 	defaultOpen = false,
 	className = '',
-	valueClassName = 'ml-auto font-jetbrains'
+	valueClassName = 'mono-md-bold ml-auto'
 }: MetricSectionProps) => (
 	<details className={`group/metric ${className}`.trim()} open={defaultOpen}>
-		<summary className="flex flex-wrap justify-start gap-4 border-b border-(--cards-border) py-1 group-last/metric:border-none group-open/metric:border-none group-open/metric:font-semibold">
+		<summary className="flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b border-very-subtle py-1 group-last/metric:border-none group-open/metric:border-none group-open/metric:font-semibold">
 			{tooltip ? (
-				<span title={tooltip ?? undefined} className="text-(--text-label) underline decoration-dotted">
+				<span title={tooltip ?? undefined} className="body-md text-tertiary underline decoration-dotted">
 					{label}
 				</span>
 			) : (
-				<span className="text-(--text-label)">{label}</span>
+				<span className="body-md text-tertiary">{label}</span>
 			)}
 			<Icon
 				name="chevron-down"
 				height={16}
 				width={16}
-				className="relative top-0.5 -ml-3 transition-transform duration-100 group-open/metric:rotate-180"
+				className="relative top-1 text-tertiary transition-transform duration-100 group-open/metric:rotate-180"
 			/>
 			{extra}
 			{value != null ? <span className={valueClassName}>{value}</span> : null}
@@ -112,15 +112,15 @@ export const SubMetricSection = ({
 	defaultOpen?: boolean
 }) => (
 	<details className="group/sub" open={defaultOpen}>
-		<summary className="flex flex-wrap justify-start gap-4 border-b border-dashed border-(--cards-border) py-1 group-last/sub:border-none group-open/sub:border-none group-open/sub:font-semibold">
-			<span className="text-(--text-label)">{label}</span>
+		<summary className="flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b border-dashed border-very-subtle py-1 group-last/sub:border-none group-open/sub:border-none group-open/sub:font-semibold">
+			<span className="body-md text-tertiary">{label}</span>
 			<Icon
 				name="chevron-down"
 				height={16}
 				width={16}
-				className="relative top-0.5 -ml-3 transition-transform duration-100 group-open/sub:rotate-180"
+				className="relative top-1 text-tertiary transition-transform duration-100 group-open/sub:rotate-180"
 			/>
-			{value != null ? <span className="ml-auto font-jetbrains">{value}</span> : null}
+			{value != null ? <span className="ml-auto mono-md">{value}</span> : null}
 		</summary>
 		{children ? <div className="mb-3 flex flex-col">{children}</div> : null}
 	</details>

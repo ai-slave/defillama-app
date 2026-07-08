@@ -102,9 +102,7 @@ function TableChip({
 	return (
 		<div
 			className={`group flex items-stretch overflow-hidden rounded-md border transition-colors ${
-				open
-					? 'border-(--primary)/60 bg-(--primary)/5'
-					: 'border-(--divider) bg-(--cards-bg) hover:border-(--primary)/40'
+				open ? 'border-(--primary)/60 bg-(--primary)/5' : 'border-(--divider) bg-surface hover:border-(--primary)/40'
 			}`}
 		>
 			<button
@@ -151,7 +149,7 @@ function PendingChip({ table }: { table: PendingTable }) {
 					? 'border-red-500/50 bg-red-500/5 text-red-600 dark:text-red-300'
 					: loading
 						? 'border-(--primary)/40 bg-(--primary)/5 text-(--text-primary)'
-						: 'border-(--divider) bg-(--cards-bg)/40 text-(--text-secondary)'
+						: 'border-(--divider) bg-surface/40 text-(--text-secondary)'
 			} ${loading ? 'animate-pulse' : ''}`}
 		>
 			<span className="flex size-3 shrink-0 items-center justify-center">
@@ -177,7 +175,7 @@ function PendingChip({ table }: { table: PendingTable }) {
 
 function ColumnDrawer({ table, onClose }: { table: RegisteredTable; onClose: () => void }) {
 	return (
-		<div className="rounded-md border border-(--divider) bg-(--cards-bg) px-3 py-2.5">
+		<div className="rounded-md border border-(--divider) bg-surface px-3 py-2.5">
 			<div className="flex items-baseline justify-between gap-3">
 				<div className="flex flex-wrap items-baseline gap-2 text-xs">
 					<span className="font-mono font-semibold text-(--text-primary)">{table.name}</span>
@@ -189,7 +187,7 @@ function ColumnDrawer({ table, onClose }: { table: RegisteredTable; onClose: () 
 					type="button"
 					onClick={onClose}
 					aria-label="Close column list"
-					className="flex size-6 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+					className="flex size-6 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
 				>
 					<Icon name="x" className="size-3" />
 				</button>
@@ -225,7 +223,7 @@ function EmptyTablesPrompt({
 	totalSchemaCount: number
 }) {
 	return (
-		<div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-(--divider) bg-(--cards-bg)/60 px-3 py-2 text-xs text-(--text-secondary)">
+		<div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-(--divider) bg-surface/60 px-3 py-2 text-xs text-(--text-secondary)">
 			<span className="text-(--text-primary)">
 				No tables loaded — type a table name in SQL to auto-load on run, or pick from the catalogue.
 			</span>

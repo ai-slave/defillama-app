@@ -1,6 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import type { ReactNode } from 'react'
 import { Icon } from '~/components/Icon'
+import { Button } from '~/ui/Button'
+import { DialogHeading } from '~/ui/Dialog'
 
 export function Drawer({
 	open,
@@ -18,20 +20,20 @@ export function Drawer({
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={(value) => !value && onClose()}>
 			<Ariakit.Dialog
-				className={`fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-full translate-x-full flex-col border-l border-(--cards-border) bg-(--cards-bg) shadow-2xl transition-transform duration-300 ease-in-out data-enter:translate-x-0 data-leave:translate-x-full ${widthClassName}`}
+				className={`fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-full translate-x-full flex-col border-l border-medium bg-surface-elevated-1 shadow-[0_24px_64px_-16px_rgb(0_0_0/0.45)] transition-transform duration-300 ease-in-out data-enter:translate-x-0 data-leave:translate-x-full dark:shadow-[0_24px_64px_-16px_rgb(0_0_0/0.6)] ${widthClassName}`}
 				backdrop={
-					<div className="fixed inset-0 z-40 bg-black/60 opacity-0 transition-opacity duration-300 ease-in-out data-enter:opacity-100" />
+					<div className="fixed inset-0 z-40 bg-screen-dim opacity-0 transition-opacity duration-300 ease-in-out data-enter:opacity-100" />
 				}
 				portal
 				unmountOnHide
 			>
-				<div className="flex items-center justify-between gap-2 border-b border-(--cards-border) p-4">
-					<Ariakit.DialogHeading className="text-lg font-medium">{title}</Ariakit.DialogHeading>
+				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
+					<DialogHeading>{title}</DialogHeading>
 					<Ariakit.DialogDismiss
-						className="-my-1 rounded-lg p-2 text-(--text-tertiary) hover:bg-(--divider) hover:text-(--text-primary)"
+						render={<Button type="button" variant="ghost" size="md" square className="-mr-1" />}
 						aria-label="Close"
 					>
-						<Icon name="x" height={20} width={20} />
+						<Icon name="x" height={16} width={16} />
 						<span className="sr-only">Close drawer</span>
 					</Ariakit.DialogDismiss>
 				</div>

@@ -215,7 +215,7 @@ export function SelectItemsStep() {
 					</button>
 				</div>
 				<div className="relative">
-					<div className="flex h-[32px] items-center gap-2 overflow-x-auto scroll-smooth pr-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+					<div className="flex h-[32px] [scrollbar-width:none] items-center gap-2 overflow-x-auto scroll-smooth pr-6 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
 						{state.selectedItems.length > 0 ? (
 							selectedLabels.map((item) => (
 								<div

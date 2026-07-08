@@ -42,7 +42,7 @@ const renderLogo = (item: Logo) => (
 		href={item.link}
 		rel="nofollow noopener noreferrer"
 		target="_blank"
-		className="relative inline-flex h-[56px] w-[131px] shrink-0 items-center justify-center rounded-[6px] border border-[#8CB3EF] bg-white px-[18px] py-[12px] lg:h-[96px] lg:w-[236px] lg:px-[36px]"
+		className="relative inline-flex h-[56px] w-[131px] shrink-0 items-center justify-center rounded-[6px] border border-[#8CB3EF] bg-white px-[18px] py-3 lg:h-[96px] lg:w-[236px] lg:px-9"
 	>
 		<img
 			src={item.logo}
@@ -59,7 +59,7 @@ const getMobileItems = (items: React.ReactNode[]): React.ReactNode[] => {
 	for (let i = 0; i < items.length; i += 2) {
 		const slideItems = items.slice(i, i + 2)
 		mobileItems.push(
-			<div key={`slide-${i}`} className="grid shrink-0 grid-cols-1 gap-[16px]">
+			<div key={`slide-${i}`} className="grid shrink-0 grid-cols-1 gap-4">
 				{slideItems.map((item, index) => (
 					<div key={`slide-${i}-item-${index}`} className="flex items-center justify-center">
 						{item}
@@ -143,12 +143,12 @@ const LogosCarousel: React.FC<LogosCarouselProps> = ({ items, speed = SPEED_PX_P
 			onTouchStart={pause}
 			onTouchEnd={resume}
 			onTouchCancel={resume}
-			className="no-scrollbar flex gap-[16px] overflow-hidden"
+			className="no-scrollbar flex gap-4 overflow-hidden"
 		>
-			<div ref={firstSetRef} className="flex shrink-0 gap-[16px]">
+			<div ref={firstSetRef} className="flex shrink-0 gap-4">
 				{items}
 			</div>
-			<div className="flex shrink-0 gap-[16px]" aria-hidden="true">
+			<div className="flex shrink-0 gap-4" aria-hidden="true">
 				{items}
 			</div>
 		</div>

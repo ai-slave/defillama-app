@@ -23,7 +23,7 @@ export function ColorPicker({ value, fallback, onChange }: ColorPickerProps) {
 			/>
 			<Ariakit.Popover
 				gutter={6}
-				className="z-50 flex flex-col gap-2 rounded-md border border-(--divider) bg-(--cards-bg) p-2 shadow-lg"
+				className="z-50 flex flex-col gap-2 rounded-lg border border-medium bg-surface-elevated-1 p-2 shadow-lg"
 			>
 				<div className="grid grid-cols-5 gap-1">
 					{CHART_COLORS.map((c) => (
@@ -53,7 +53,7 @@ export function ColorPicker({ value, fallback, onChange }: ColorPickerProps) {
 					<button
 						type="button"
 						onClick={() => onChange(null)}
-						className="rounded-sm px-1.5 py-0.5 font-mono text-[10.5px] text-(--text-tertiary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+						className="rounded-sm px-1.5 py-0.5 font-mono text-[10.5px] text-(--text-tertiary) hover:bg-hover-row hover:text-(--text-primary)"
 					>
 						reset
 					</button>

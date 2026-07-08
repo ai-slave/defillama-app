@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
 import { LocalLoader } from '~/components/Loaders'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { fetchMarketsCategoryPage } from './api'
 import { MarketsAreaChart } from './MarketsAreaChart'
 import { MarketsLineChart } from './MarketsLineChart'
@@ -85,17 +86,13 @@ export function MarketsCategory({
 			/>
 
 			{isLoading ? (
-				<div className="flex min-h-[360px] items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<PanelLoadingStatus>
 					<LocalLoader />
-				</div>
+				</PanelLoadingStatus>
 			) : isError || !data ? (
-				<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-6 text-center text-sm text-(--text-label)">
-					Failed to load category.
-				</div>
+				<PanelStatus variant="error">Failed to load category.</PanelStatus>
 			) : segmentTokens.length === 0 ? (
-				<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-6 text-center text-sm text-(--text-label)">
-					No data for this segment.
-				</div>
+				<PanelStatus>No data for this segment.</PanelStatus>
 			) : (
 				<div className="flex flex-col gap-5">
 					<MarketsStatStrip rows={segmentTokens} segment={activeSegment} />

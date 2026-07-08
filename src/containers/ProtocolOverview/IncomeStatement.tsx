@@ -11,6 +11,7 @@ import {
 	TokenPageTableScroller,
 	TokenPageTableShell
 } from '~/components/Table/helpers'
+import { TagGroup } from '~/components/TagGroup'
 import { Tooltip } from '~/components/Tooltip'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { abbreviateNumber } from '~/utils'
@@ -548,16 +549,13 @@ export const IncomeStatement = ({
 
 	return (
 		<div
-			className={`col-span-full flex flex-col gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:p-4 ${
+			className={`col-span-full flex flex-col gap-4 rounded-lg border border-subtle bg-surface p-2 xl:p-4 ${
 				className ?? ''
 			}`}
 		>
 			<div className="flex flex-wrap items-center justify-between gap-1">
 				{showTitles ? (
-					<h2
-						className={`group relative flex items-center gap-1 text-base font-semibold ${titleClassName ?? ''}`}
-						id={headerId}
-					>
+					<h2 className={`group relative flex items-center gap-1 heading-xs ${titleClassName ?? ''}`} id={headerId}>
 						Income Statement for {name}
 						<a
 							aria-hidden="true"
@@ -570,21 +568,15 @@ export const IncomeStatement = ({
 				) : null}
 				{showTable ? (
 					<div className="ml-auto flex items-center gap-2">
-						<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-(--text-form)">
-							{incomeStatementGroupByOptions.map((groupOption) => (
-								<button
-									key={`income-statement-${groupOption}`}
-									className="shrink-0 px-2 py-1 text-sm whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:font-medium data-[active=true]:text-(--link-text)"
-									data-active={groupOption === groupBy}
-									onClick={() => {
-										startTransition(() => setGroupBy(groupOption))
-									}}
-								>
-									{groupOption}
-								</button>
-							))}
-						</div>
-						<CSVDownloadButton prepareCsv={prepareTableCsv} smol />
+						<TagGroup
+							values={incomeStatementGroupByOptions}
+							selectedValue={groupBy}
+							setValue={(groupOption) => {
+								startTransition(() => setGroupBy(groupOption))
+							}}
+							className="min-h-8"
+						/>
+						<CSVDownloadButton prepareCsv={prepareTableCsv} smol size="md" />
 					</div>
 				) : null}
 			</div>
@@ -738,34 +730,26 @@ export const IncomeStatement = ({
 			) : null}
 
 			{showSankey ? (
-				<div className={`border-(--cards-border) ${showTable ? 'border-t pt-4' : ''}`}>
+				<div className={`border-subtle ${showTable ? 'border-t pt-4' : ''}`}>
 					{sankeyData.nodes.length > 0 ? (
 						<Suspense
 							fallback={
-								<div className="flex h-[450px] items-center justify-center text-(--text-secondary)">
-									Loading chart...
-								</div>
+								<div className="flex h-[450px] items-center justify-center text-secondary">Loading chart...</div>
 							}
 						>
 							<div className="mb-2 flex flex-wrap items-center gap-2 px-2">
-								{showTitles ? <h3 className="mr-auto text-base font-semibold">Income Flow Visualization</h3> : null}
-								<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-(--text-form)">
-									{incomeStatementGroupByOptions.map((groupOption) => (
-										<button
-											key={`sankey-group-${groupOption}`}
-											className="shrink-0 px-2 py-1 text-sm whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:font-medium data-[active=true]:text-(--link-text)"
-											data-active={groupOption === sankeyGroupBy}
-											onClick={() => {
-												startTransition(() => {
-													setSankeyGroupBy(groupOption)
-													setSelectedSankeyPeriod(null)
-												})
-											}}
-										>
-											{groupOption}
-										</button>
-									))}
-								</div>
+								{showTitles ? <h3 className="mr-auto heading-xs">Income Flow Visualization</h3> : null}
+								<TagGroup
+									values={incomeStatementGroupByOptions}
+									selectedValue={sankeyGroupBy}
+									setValue={(groupOption) => {
+										startTransition(() => {
+											setSankeyGroupBy(groupOption)
+											setSelectedSankeyPeriod(null)
+										})
+									}}
+									className="min-h-8"
+								/>
 								{sankeyGroupBy !== 'Cumulative' && sankeyPeriodSelectOptions.length > 0 ? (
 									<Select
 										allValues={sankeyPeriodSelectOptions}
@@ -773,10 +757,8 @@ export const IncomeStatement = ({
 										setSelectedValues={(value) => startTransition(() => setSelectedSankeyPeriod(value as string))}
 										label={sankeyPeriodLabel}
 										labelType="none"
-										triggerProps={{
-											className:
-												'flex cursor-pointer flex-nowrap items-center gap-2 rounded-md border border-(--form-control-border) bg-(--cards-bg) px-2 py-1 text-sm text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)'
-										}}
+										variant="filter"
+										size="md"
 									/>
 								) : null}
 								<ChartPngExportButton
@@ -794,7 +776,7 @@ export const IncomeStatement = ({
 							/>
 						</Suspense>
 					) : (
-						<div className="flex h-[200px] items-center justify-center text-(--text-secondary)">
+						<div className="flex h-[200px] items-center justify-center text-secondary">
 							No data available for the selected period
 						</div>
 					)}
@@ -853,7 +835,7 @@ const IncomeStatementByLabel = ({
 									e.stopPropagation()
 									setIsExpanded((expanded) => !expanded)
 								}}
-								className="-ml-1 flex size-5 shrink-0 items-center justify-center rounded-sm text-(--text-secondary) transition-transform hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+								className="-ml-1 flex size-5 shrink-0 items-center justify-center rounded-sm text-secondary transition-transform hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
 							>
 								<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} height={14} width={14} />
 							</button>
@@ -902,10 +884,7 @@ const IncomeStatementByLabel = ({
 			{hasBreakdownRows && isExpanded ? (
 				<>
 					{breakdownByLabels.map((breakdownlabel) => (
-						<tr
-							key={`${protocolName}-${groupBy}-${dataType}-${breakdownlabel}`}
-							className="group text-(--text-secondary)"
-						>
+						<tr key={`${protocolName}-${groupBy}-${dataType}-${breakdownlabel}`} className="group text-secondary">
 							<TokenPageTableIncomeHeaderCell
 								sticky
 								className="w-[36%] pl-9 font-normal italic group-hover:bg-(--link-hover-bg)"

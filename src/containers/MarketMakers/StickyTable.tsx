@@ -12,14 +12,16 @@ function colWidth(index: number): CSSProperties | undefined {
 	return { minWidth: DATA_MIN_WIDTH }
 }
 
+const STICKY_CELL_BACKGROUND = 'var(--ld-bg-surface)'
+
 function stickyStyle(index: number): CSSProperties | undefined {
-	if (index === 0) return { position: 'sticky', left: 0, zIndex: 2, background: 'var(--cards-bg)' }
+	if (index === 0) return { position: 'sticky', left: 0, zIndex: 2, background: STICKY_CELL_BACKGROUND }
 	if (index === 1)
 		return {
 			position: 'sticky',
 			left: RANK_WIDTH,
 			zIndex: 2,
-			background: 'var(--cards-bg)',
+			background: STICKY_CELL_BACKGROUND,
 			boxShadow: '-1px 0 0 var(--divider) inset'
 		}
 	return undefined
@@ -27,9 +29,7 @@ function stickyStyle(index: number): CSSProperties | undefined {
 
 export function SortArrow({ dir }: { dir: false | 'asc' | 'desc' }) {
 	return (
-		<span
-			className={`shrink-0 text-[10px] leading-none ${dir ? 'text-(--text-primary)' : 'text-(--text-tertiary) opacity-40'}`}
-		>
+		<span className={`shrink-0 label-xs ${dir ? 'text-primary' : 'text-tertiary opacity-40'}`}>
 			{dir === 'asc' ? '↑' : '↓'}
 		</span>
 	)
@@ -52,7 +52,7 @@ export function StickyTable<T>({ headerGroups, rows }: { headerGroups: HeaderGro
 									<th
 										key={header.id}
 										style={{ ...colWidth(index), textAlign: align, ...stickyStyle(index) }}
-										className="border-b border-(--divider) px-3 py-2 font-medium whitespace-nowrap text-(--text-secondary)"
+										className="border-b border-subtle px-3 py-2 font-medium whitespace-nowrap text-secondary"
 									>
 										{canSort ? (
 											<button
@@ -89,7 +89,7 @@ export function StickyTable<T>({ headerGroups, rows }: { headerGroups: HeaderGro
 									<td
 										key={cell.id}
 										style={{ ...colWidth(index), textAlign: align, ...stickyStyle(index), ...cellStyle }}
-										className={`border-b border-(--divider) px-3 py-3 align-middle ${cell.column.columnDef.meta?.cellClassName ?? ''} ${cellClass ?? ''}`}
+										className={`border-b border-subtle px-3 py-3 align-middle ${cell.column.columnDef.meta?.cellClassName ?? ''} ${cellClass ?? ''}`}
 									>
 										{flexRender(cell.column.columnDef.cell, cell.getContext())}
 									</td>

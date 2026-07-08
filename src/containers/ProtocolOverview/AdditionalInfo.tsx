@@ -11,10 +11,13 @@ import { Tooltip } from '~/components/Tooltip'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { setSignupSource } from '~/containers/Subscription/signupSource'
+import { buttonStyles } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { formattedNum, slug } from '~/utils'
 import type { IProtocolOverviewPageData } from './types'
 
 const EMPTY_COMPETITORS: Array<{ name: string; tvl: number }> = []
+const INFO_ACTION_STYLES = buttonStyles({ size: 'md' })
 
 const SubscribeProModal = lazy(() =>
 	import('~/components/SubscribeCards/SubscribeProCard').then((module) => ({ default: module.SubscribeProModal }))
@@ -26,7 +29,7 @@ interface SectionHeaderProps {
 }
 
 const SectionHeader = ({ id, children }: SectionHeaderProps) => (
-	<h2 className="group relative flex items-center gap-1 text-base font-semibold" id={id}>
+	<h2 className="group relative flex items-center gap-1 heading-xs" id={id}>
 		{children}
 		<a
 			aria-hidden="true"
@@ -79,8 +82,8 @@ const Articles = (props: IProtocolOverviewPageData) => {
 	if (!props.articles?.length) return null
 
 	return (
-		<div className="col-span-1 flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:p-4">
-			<div className="flex items-center justify-between">
+		<Card as="section" padding="sm" border="subtle" className="col-span-1 flex flex-col gap-3 body-md">
+			<div className="flex items-center justify-between gap-3">
 				<SectionHeader id="research">Latest from DefiLlama Research</SectionHeader>
 				<BasicLink href="/research" className="shrink-0">
 					<span className="relative block h-6 w-[76px]">
@@ -107,27 +110,27 @@ const Articles = (props: IProtocolOverviewPageData) => {
 				<BasicLink
 					key={`research_card_${article.href}`}
 					href={article.href}
-					className="flex flex-col gap-3 rounded-md bg-(--btn2-bg) p-2 hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
+					className="flex flex-col gap-3 rounded-md border border-very-subtle bg-surface p-2 hover:bg-hover-row focus-visible:bg-hover-row"
 				>
 					{article.imgSrc ? (
 						<img
-							className="h-[100px] w-full shrink-0 rounded-sm object-cover"
+							className="h-[100px] w-full shrink-0 rounded-md object-cover"
 							src={article.imgSrc}
 							alt={article.headline}
 						/>
 					) : null}
 					<div className="flex flex-col justify-between gap-3">
-						<p className="text-sm font-medium break-keep whitespace-pre-wrap">{article.headline}</p>
+						<p className="label-md break-keep whitespace-pre-wrap text-primary">{article.headline}</p>
 						<div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-							<p className="text-xs">{dayjs.utc(article.date).format('MMMM D, YYYY')}</p>
-							<p className="flex flex-nowrap items-center justify-between rounded-md font-semibold">
+							<p className="label-sm text-tertiary">{dayjs.utc(article.date).format('MMMM D, YYYY')}</p>
+							<p className="flex flex-nowrap items-center justify-between gap-1 label-sm text-primary">
 								<span>Read report</span> <Icon name="arrow-up-right" height={14} width={14} />
 							</p>
 						</div>
 					</div>
 				</BasicLink>
 			))}
-		</div>
+		</Card>
 	)
 }
 
@@ -136,11 +139,11 @@ function Users(props: IProtocolOverviewPageData) {
 	if (!users) return null
 
 	return (
-		<div className="col-span-1 flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:p-4">
-			<h2 className="mr-auto font-semibold underline decoration-dotted">
+		<Card as="section" padding="sm" border="subtle" className="col-span-1 flex flex-col gap-3 body-md">
+			<h2 className="mr-auto heading-xs underline decoration-dotted">
 				<Tooltip
 					content="This only counts users that interact with protocol directly (so not through another contract, such as a DEX aggregator), and only on arbitrum, avax, bsc, ethereum, xdai, optimism, polygon."
-					className="mr-auto font-semibold underline decoration-dotted"
+					className="mr-auto heading-xs underline decoration-dotted"
 				>
 					User Activity
 				</Tooltip>
@@ -157,7 +160,7 @@ function Users(props: IProtocolOverviewPageData) {
 				) : null}
 				{users.gasUsd != null ? <MetricRow label="Gas Used (24h)" value={formattedNum(users.gasUsd, true)} /> : null}
 			</div>
-		</div>
+		</Card>
 	)
 }
 
@@ -165,39 +168,32 @@ export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
 	const categoryHref = props.category ? getCategoryRoute(slug(props.category)) : null
 
 	return (
-		<div className="col-span-1 flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:p-4">
+		<Card as="section" padding="sm" border="subtle" className="col-span-1 flex flex-col gap-3 body-md">
 			<SectionHeader id="protocol-information">
 				{props.isCEX ? 'Exchange Information' : 'Protocol Information'}
 			</SectionHeader>
 			{props.description ? <p>{props.description}</p> : null}
 			{props.category && categoryHref ? (
-				<div className="flex flex-wrap items-center gap-2">
-					<span className="text-sm font-medium text-(--text-label)">Category</span>
-					<BasicLink
-						href={categoryHref}
-						className="inline-flex items-center rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
-					>
+				<p className="flex flex-wrap items-center gap-2">
+					<span className="label-md text-tertiary">Category:</span>
+					<BasicLink href={categoryHref} className={INFO_ACTION_STYLES}>
 						{props.category}
+						<Icon name="arrow-up-right" className="size-4" />
 					</BasicLink>
-				</div>
+				</p>
 			) : null}
 			{props.tags?.length ? <p className="flex items-center gap-1">Sub Category: {props.tags.join(', ')}</p> : null}
 
 			{props.audits ? (
 				<>
 					<p className="flex items-center gap-1">
-						<span className="flex flex-nowrap items-center gap-1">
+						<span className="flex flex-nowrap items-center gap-1 label-md text-tertiary">
 							<span>Audits</span>
 							<QuestionHelper text="Audits are not a security guarantee" />
 							<span>:</span>
 						</span>
 						{props.audits.auditLinks.length > 0 ? (
-							<Menu
-								name="Yes"
-								options={props.audits.auditLinks}
-								isExternal
-								className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
-							/>
+							<Menu name="Yes" options={props.audits.auditLinks} isExternal className={INFO_ACTION_STYLES} />
 						) : (
 							<span>No</span>
 						)}
@@ -205,64 +201,68 @@ export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
 					{props.audits.note ? <p>Audit Note: {props.audits.note}</p> : null}
 				</>
 			) : null}
-			<div className="flex flex-wrap gap-2">
+			<div className="flex flex-wrap gap-3">
 				{props.website ? (
 					<a
 						href={props.website}
-						className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
+						className={INFO_ACTION_STYLES}
 						target="_blank"
 						rel="noopener noreferrer"
 						data-umami-event="protocol-website-click"
 						data-umami-event-protocol={props.name}
 						data-umami-event-referral={props.isWebsiteReferral ? 'true' : 'false'}
 					>
-						<Icon name="earth" className="size-3" />
+						<Icon name="earth" className="size-4" />
 						<span>Website</span>
+						<Icon name="arrow-up-right" className="size-4" />
 					</a>
 				) : null}
 				{props.github?.length
 					? props.github.map((github) => (
 							<a
 								href={`https://github.com/${github}`}
-								className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
+								className={INFO_ACTION_STYLES}
 								target="_blank"
 								rel="noopener noreferrer"
 								key={`${props.name}-github-${github}`}
 							>
-								<Icon name="github" className="size-3" />
+								<Icon name="github" className="size-4" />
 								<span>{props.github?.length === 1 ? 'GitHub' : github}</span>
+								<Icon name="arrow-up-right" className="size-4" />
 							</a>
 						))
 					: null}
 				{props.twitter ? (
 					<a
 						href={`https://x.com/${props.twitter}`}
-						className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
+						className={INFO_ACTION_STYLES}
 						target="_blank"
 						rel="noopener noreferrer"
 					>
-						<Icon name="twitter" className="size-3" />
+						<Icon name="twitter" className="size-4" />
 						<span>Twitter</span>
+						<Icon name="arrow-up-right" className="size-4" />
 					</a>
 				) : null}
 				{props.safeHarbor ? (
 					<a
 						href={`https://safeharbor.securityalliance.org/database/${slug(props.name)}`}
-						className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
+						className={INFO_ACTION_STYLES}
 						target="_blank"
 						rel="noopener noreferrer"
 					>
 						Safe Harbor Agreement
+						<Icon name="arrow-up-right" className="size-4" />
 					</a>
 				) : null}
 			</div>
-		</div>
+		</Card>
 	)
 }
 
 const Methodology = (props: IProtocolOverviewPageData) => {
 	return (
-		<div className="col-span-1 flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:p-4">
+		<Card as="section" padding="sm" border="subtle" className="col-span-1 flex flex-col gap-3 body-md">
 			<SectionHeader id="methodology">Methodology</SectionHeader>
 			{!props.oracleTvs && props.tvlMethodologyUrl ? (
 				<a href={props.tvlMethodologyUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
@@ -327,7 +327,7 @@ const Methodology = (props: IProtocolOverviewPageData) => {
 					<span className="font-medium">Treasury:</span> <span>Value of tokens owned by the protocol</span>
 				</a>
 			) : null}
-		</div>
+		</Card>
 	)
 }
 
@@ -402,7 +402,7 @@ function Yields(props: IProtocolOverviewPageData) {
 	if (!yields) return null
 	const averageApy = yields.averageAPY == null ? '-' : `${formattedNum(yields.averageAPY, false)}%`
 	return (
-		<div className="col-span-1 flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:p-4">
+		<Card as="section" padding="sm" border="subtle" className="col-span-1 flex flex-col gap-3 body-md">
 			<SectionHeader id="yields">Yields</SectionHeader>
 			<div>
 				<MetricRow label="Pools Tracked" value={yields.noOfPoolsTracked} />
@@ -410,25 +410,25 @@ function Yields(props: IProtocolOverviewPageData) {
 			</div>
 			<ButtonLink
 				href={`/yields?project=${props.otherProtocols ? props.otherProtocols.slice(1).join('&project=') : props.name}`}
-				className="mr-auto flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
+				className={`${INFO_ACTION_STYLES} mr-auto`}
 			>
 				<span>View all Yields</span>
 				<Icon name="arrow-right" className="size-4" />
 			</ButtonLink>
-		</div>
+		</Card>
 	)
 }
 
 const Hacks = (props: IProtocolOverviewPageData) => {
 	if (!props.hacks?.length) return null
 	return (
-		<div className="col-span-1 flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:p-4">
+		<Card as="section" padding="sm" border="subtle" className="col-span-1 flex flex-col gap-3 body-md">
 			<SectionHeader id="hacks">Hacks</SectionHeader>
 			<div className="flex flex-col">
 				{props.hacks.map((hack) => (
 					<div
 						key={`${props.name}-hack-${hack.date}`}
-						className="flex flex-col gap-1 border-b border-(--cards-border) py-2 first:pt-0 last:border-none last:pb-0"
+						className="flex flex-col gap-1 border-b border-very-subtle py-2 first:pt-0 last:border-none last:pb-0"
 					>
 						{hack.date ? (
 							<p>
@@ -484,7 +484,7 @@ const Hacks = (props: IProtocolOverviewPageData) => {
 					</div>
 				))}
 			</div>
-		</div>
+		</Card>
 	)
 }
 
@@ -534,7 +534,7 @@ const Competitors = (props: IProtocolOverviewPageData) => {
 	const canOpenComparison = !loaders.userLoading && isAuthenticated && hasActiveSubscription
 	if (competitors.length === 0) return null
 	return (
-		<div className="col-span-1 flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:p-4">
+		<Card as="section" padding="sm" border="subtle" className="col-span-1 flex flex-col gap-3 body-md">
 			<div className="flex items-center justify-between gap-2">
 				<SectionHeader id="competitors">Competitors</SectionHeader>
 				{comparisonHref ? (
@@ -546,7 +546,7 @@ const Competitors = (props: IProtocolOverviewPageData) => {
 							setSignupSource('protocol-comparison')
 							subscribeModalStore.show()
 						}}
-						className="rounded-md border border-(--primary) px-2 py-1.5 text-xs text-(--primary) hover:bg-(--primary)/10 focus-visible:bg-(--primary)/10"
+						className={INFO_ACTION_STYLES}
 					>
 						Create comparison dashboard
 					</ButtonLink>
@@ -568,6 +568,6 @@ const Competitors = (props: IProtocolOverviewPageData) => {
 					<SubscribeProModal dialogStore={subscribeModalStore} />
 				</Suspense>
 			) : null}
-		</div>
+		</Card>
 	)
 }

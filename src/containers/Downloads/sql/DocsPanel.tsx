@@ -2,6 +2,7 @@ import { matchSorter } from 'match-sorter'
 import { Fragment, useDeferredValue, useMemo, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { Icon } from '~/components/Icon'
+import { Input, searchFieldIconStyles } from '~/ui/Input'
 import {
 	COOKBOOK_SNIPPETS,
 	COOKBOOK_TAGS,
@@ -108,7 +109,7 @@ function Snippet({ snippet, onApplyAndRun }: { snippet: CookbookSnippet; onApply
 						onClick={() => copy(snippet.sql)}
 						aria-label="Copy SQL"
 						title="Copy SQL"
-						className="flex size-7 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+						className="flex size-7 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
 					>
 						<Icon name="copy" className="size-3.5" />
 					</button>
@@ -478,19 +479,14 @@ function SearchBar({
 		<div className="flex flex-col gap-2">
 			<label className="relative">
 				<span className="sr-only">Search</span>
-				<Icon
-					name="search"
-					height={14}
-					width={14}
-					className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-				/>
-				<input
+				<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+				<Input
 					type="text"
 					inputMode="search"
 					placeholder={placeholder}
 					value={value}
 					onInput={(e) => onChange(e.currentTarget.value)}
-					className="min-h-8 w-full rounded-md border-(--bg-input) bg-(--bg-input) p-1.5 pl-7 text-sm text-black placeholder:text-[#666] dark:text-white dark:placeholder-[#919296]"
+					className="w-full pr-8 pl-8"
 				/>
 				{value ? (
 					<button
@@ -512,7 +508,7 @@ function SearchBar({
 
 function EmptyResults({ label }: { label: string }) {
 	return (
-		<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--divider) bg-(--cards-bg)/40 px-6 py-12 text-center">
+		<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--divider) bg-surface/40 px-6 py-12 text-center">
 			<Icon name="search" className="size-5 text-(--text-tertiary)" />
 			<p className="text-sm text-(--text-secondary)">{label}</p>
 		</div>

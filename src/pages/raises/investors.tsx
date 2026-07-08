@@ -13,12 +13,16 @@ import { Icon } from '~/components/Icon'
 import { IconsRow } from '~/components/IconsRow'
 import { toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
+import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/components/Select/types'
 import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
 import { Tooltip } from '~/components/Tooltip'
 import { getInvestorsPageData } from '~/containers/Raises/queries'
 import type { IInvestorsPageData, IInvestorTimespan } from '~/containers/Raises/types'
 import Layout from '~/layout'
+import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel, PanelTitle } from '~/ui/Panel'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -178,28 +182,23 @@ const ActiveInvestors = ({ investors }: IInvestorsPageData) => {
 			canonicalUrl={`/raises/investors`}
 			pageName={pageName}
 		>
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<div className="flex flex-wrap items-center justify-end gap-2 p-3">
-					<h1 className="mr-auto text-xl font-semibold">Deals by Investors</h1>
+			<Panel>
+				<TableToolbar className="items-center justify-end">
+					<PanelTitle as="h1">Deals by Investors</PanelTitle>
 					<label className="relative w-full sm:max-w-[280px]">
 						<span className="sr-only">Search investors...</span>
-						<Icon
-							name="search"
-							height={16}
-							width={16}
-							className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-						/>
+						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						<input
 							name="search"
 							onInput={(e) => setInvestorName(e.currentTarget.value)}
 							placeholder="Search investors..."
-							className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+							className={searchFieldInputStyles}
 						/>
 					</label>
-					<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-(--text-form)">
+					<div className={`${TAG_GROUP_VARIANTS.solid.container} ${TAG_GROUP_SIZES.md}`}>
 						{allPeriods.map((dataInterval) => (
 							<button
-								className="shrink-0 px-2 py-1.5 text-xs font-medium whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:bg-(--old-blue) data-[active=true]:text-white"
+								className={TAG_GROUP_VARIANTS.solid.button}
 								data-active={dataInterval.value === selectedPeriod}
 								onClick={() => {
 									void pushShallowQuery(router, { period: dataInterval.value })
@@ -210,9 +209,9 @@ const ActiveInvestors = ({ investors }: IInvestorsPageData) => {
 							</button>
 						))}
 					</div>
-				</div>
+				</TableToolbar>
 				<VirtualTable instance={instance} />
-			</div>
+			</Panel>
 		</Layout>
 	)
 }

@@ -14,7 +14,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 			{props.chain === 'All' ? (
 				<>
 					{props.unlocks?.chart?.length > 0 ? (
-						<div className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:min-h-[71px] xl:flex-row xl:flex-nowrap xl:gap-2 xl:*:last:flex-1">
+						<div className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 rounded-lg border border-subtle bg-surface p-2 xl:min-h-[71px] xl:flex-row xl:flex-nowrap xl:gap-2 xl:*:last:flex-1">
 							<div className="flex flex-col gap-1">
 								<Tooltip
 									render={<BasicLink href="/unlocks" />}
@@ -24,7 +24,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 									Upcoming Unlocks
 								</Tooltip>
 								{props.unlocks.chart?.length > 0 ? (
-									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-(--text-form)">{`${formattedNum(
+									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-tertiary">{`${formattedNum(
 										props.unlocks.total14d,
 										true
 									)} over 14 days`}</p>
@@ -37,7 +37,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 						</div>
 					) : null}
 					{props.dexs?.chart?.length > 0 ? (
-						<div className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:min-h-[71px] xl:flex-row xl:flex-nowrap xl:gap-2 xl:*:last:flex-1">
+						<div className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 rounded-lg border border-subtle bg-surface p-2 xl:min-h-[71px] xl:flex-row xl:flex-nowrap xl:gap-2 xl:*:last:flex-1">
 							<div className="flex flex-col gap-1">
 								<Tooltip
 									render={<BasicLink href={props.metadata.name === 'All' ? '/dexs' : `/dexs/chain/${chainSlug}`} />}
@@ -47,7 +47,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 									DEXs Volume
 								</Tooltip>
 								{props.dexs.chart?.length > 0 ? (
-									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-(--text-form)">{`${formattedNum(
+									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-tertiary">{`${formattedNum(
 										props.dexs.total24h,
 										true
 									)} (24h)`}</p>
@@ -57,7 +57,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 						</div>
 					) : null}
 					{props.etfs?.length > 0 ? (
-						<div className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:min-h-[71px] xl:flex-row xl:flex-nowrap xl:gap-2 xl:*:last:flex-1">
+						<div className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 rounded-lg border border-subtle bg-surface p-2 xl:min-h-[71px] xl:flex-row xl:flex-nowrap xl:gap-2 xl:*:last:flex-1">
 							<div className="flex flex-col gap-1">
 								<Tooltip
 									render={<BasicLink href="/etfs" />}
@@ -67,7 +67,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 									ETF Inflows
 								</Tooltip>
 								{props.etfs?.length > 0 ? (
-									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-(--text-form)">{`${formattedNum(
+									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-tertiary">{`${formattedNum(
 										props.etfs[props.etfs.length - 1][1],
 										true
 									)} (24h)`}</p>
@@ -77,7 +77,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 						</div>
 					) : null}
 					{props.datInflows?.chart?.length > 0 ? (
-						<div className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+						<div className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 rounded-lg border border-subtle bg-surface p-2">
 							<div className="flex flex-col gap-1 xl:flex-row xl:items-start xl:justify-between">
 								<Tooltip
 									render={<BasicLink href="/digital-asset-treasuries" />}
@@ -87,7 +87,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 									DAT Inflows
 								</Tooltip>
 								{props.datInflows.chart?.length > 0 ? (
-									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-(--text-form)">{`${formattedNum(
+									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-tertiary">{`${formattedNum(
 										props.datInflows.total30d,
 										true
 									)} (30d)`}</p>
@@ -102,7 +102,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 					) : null}
 				</>
 			) : props.dexs?.chart?.length > 0 ? (
-				<div className="col-span-1 flex h-[196px] flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+				<div className="col-span-1 flex h-[196px] flex-col gap-1 rounded-lg border border-subtle bg-surface p-2">
 					<Tooltip
 						render={<BasicLink href={props.metadata.name === 'All' ? '/dexs' : `/dexs/chain/${chainSlug}`} />}
 						className="text-sm font-semibold"
@@ -113,7 +113,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 						DEXs Volume
 					</Tooltip>
 					{props.dexs.chart?.length > 0 ? (
-						<p className="overflow-hidden text-ellipsis whitespace-nowrap text-(--text-form)">{`${formattedNum(
+						<p className="overflow-hidden text-ellipsis whitespace-nowrap text-tertiary">{`${formattedNum(
 							props.dexs.total24h,
 							true
 						)} (24h)`}</p>
@@ -122,7 +122,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 				</div>
 			) : null}
 			{props.chainFees?.topProtocolsChart?.length > 0 ? (
-				<div className="col-span-1 flex h-[196px] flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+				<div className="col-span-1 flex h-[196px] flex-col gap-1 rounded-lg border border-subtle bg-surface p-2">
 					<div className="flex items-start justify-between gap-4">
 						<Tooltip
 							render={<BasicLink href={props.metadata.name === 'All' ? '/fees' : `/fees/chain/${chainSlug}`} />}
@@ -134,14 +134,14 @@ export const SmolStats = (props: IChainOverviewData) => {
 							Fees Paid
 						</Tooltip>
 						{props.chainFees.feesGenerated24h != null ? (
-							<p className="text-(--text-form)">{`${formattedNum(props.chainFees.feesGenerated24h ?? 0, true)} (24h)`}</p>
+							<p className="text-tertiary">{`${formattedNum(props.chainFees.feesGenerated24h ?? 0, true)} (24h)`}</p>
 						) : null}
 					</div>
 					<FeesGeneratedChart series={props.chainFees.topProtocolsChart} />
 				</div>
 			) : null}
 			{props.stablecoins?.mcapChartData?.length > 0 ? (
-				<div className="col-span-1 flex h-[196px] flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+				<div className="col-span-1 flex h-[196px] flex-col gap-1 rounded-lg border border-subtle bg-surface p-2">
 					<Tooltip
 						placement="top-start"
 						render={<BasicLink href={props.metadata.name === 'All' ? '/stablecoins' : `/stablecoins/${chainSlug}`} />}
@@ -154,7 +154,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 					</Tooltip>
 					{props.stablecoins.mcap != null ? (
 						<>
-							<p className="overflow-hidden text-ellipsis whitespace-nowrap text-(--text-form)">{`${formattedNum(
+							<p className="overflow-hidden text-ellipsis whitespace-nowrap text-tertiary">{`${formattedNum(
 								props.stablecoins.mcap,
 								true
 							)}`}</p>
@@ -166,7 +166,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 								>
 									{`${+props.stablecoins.change7d >= 0 ? '+' : ''}${props.stablecoins.change7d}%`}
 								</span>
-								<span className="text-(--text-form)">7d</span>
+								<span className="text-tertiary">7d</span>
 							</p>
 						</>
 					) : null}

@@ -65,6 +65,7 @@ export function ProtocolInformationCard({
 								options={config.audit_links}
 								isExternal
 								className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
+								popoverVariant="legacy"
 							/>
 						) : (
 							<span>No</span>

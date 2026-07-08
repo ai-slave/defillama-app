@@ -100,7 +100,7 @@ vi.mock('~/components/Loaders', () => ({
 	LocalLoader: () => <div>loader</div>
 }))
 
-vi.mock('~/components/Switch', () => ({
+vi.mock('~/ui/Switch', () => ({
 	Switch: ({ label }: { label: string }) => <div>{label}</div>
 }))
 

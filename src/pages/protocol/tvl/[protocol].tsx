@@ -17,6 +17,10 @@ import { useProtocolBreakdownCharts } from '~/containers/ProtocolOverview/usePro
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { TVL_SETTINGS_KEYS_SET, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
+import { Panel } from '~/ui/Panel'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -144,9 +148,9 @@ function ChainsChartCard({
 	const deferredCharts = React.useDeferredValue(charts)
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">{title}</h2>
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+			<ChartPanelToolbar className="justify-end">
+				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allValues.length > 1 ? (
 					<SelectWithCombobox
 						allValues={allValues}
@@ -155,6 +159,7 @@ function ChainsChartCard({
 						label="Chain"
 						labelType="smol"
 						variant="filter"
+						size="md"
 						portal
 					/>
 				) : null}
@@ -164,7 +169,7 @@ function ChainsChartCard({
 					title={exportTitle}
 					iconUrl={exportIconUrl}
 				/>
-			</div>
+			</ChartPanelToolbar>
 			<React.Suspense fallback={<div className="min-h-[360px]" />}>
 				<MultiSeriesChart2
 					dataset={deferredDataset}
@@ -175,7 +180,7 @@ function ChainsChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</div>
+		</Panel>
 	)
 }
 
@@ -207,9 +212,9 @@ function TokenLineChartCard({
 	const deferredCharts = React.useDeferredValue(charts)
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">{title}</h2>
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+			<ChartPanelToolbar className="justify-end">
+				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allValues.length > 1 ? (
 					<SelectWithCombobox
 						allValues={allValues}
@@ -218,6 +223,7 @@ function TokenLineChartCard({
 						label="Token"
 						labelType="smol"
 						variant="filter"
+						size="md"
 						portal
 					/>
 				) : null}
@@ -227,7 +233,7 @@ function TokenLineChartCard({
 					title={exportTitle}
 					iconUrl={exportIconUrl}
 				/>
-			</div>
+			</ChartPanelToolbar>
 			<React.Suspense fallback={<div className="min-h-[360px]" />}>
 				<MultiSeriesChart2
 					dataset={deferredDataset}
@@ -238,7 +244,7 @@ function TokenLineChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</div>
+		</Panel>
 	)
 }
 
@@ -275,9 +281,9 @@ function TokensBreakdownPieChartCard({
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">{title}</h2>
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+			<ChartPanelToolbar className="justify-end">
+				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allTokens.length > 1 ? (
 					<SelectWithCombobox
 						allValues={allTokens}
@@ -286,6 +292,7 @@ function TokensBreakdownPieChartCard({
 						label="Token"
 						labelType="smol"
 						variant="filter"
+						size="md"
 						portal
 					/>
 				) : null}
@@ -295,11 +302,11 @@ function TokensBreakdownPieChartCard({
 					title={exportTitle}
 					iconUrl={exportIconUrl}
 				/>
-			</div>
+			</ChartPanelToolbar>
 			<React.Suspense fallback={<div className="min-h-[360px]" />}>
 				<PieChart chartData={deferredChartData} onReady={handleChartReady} />
 			</React.Suspense>
-		</div>
+		</Panel>
 	)
 }
 
@@ -322,16 +329,16 @@ function USDInflowsChartCard({
 	const deferredDataset = React.useDeferredValue(dataset)
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">{title}</h2>
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+			<ChartPanelToolbar className="justify-end">
+				<h2 className="mr-auto heading-xs">{title}</h2>
 				<ChartExportButtons
 					chartInstance={chartInstance}
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={exportIconUrl}
 				/>
-			</div>
+			</ChartPanelToolbar>
 			<React.Suspense fallback={<div className="min-h-[360px]" />}>
 				<MultiSeriesChart2
 					dataset={deferredDataset}
@@ -341,7 +348,7 @@ function USDInflowsChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</div>
+		</Panel>
 	)
 }
 
@@ -371,9 +378,9 @@ function InflowsByTokenChartCard({
 	const deferredCharts = React.useDeferredValue(charts)
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">{title}</h2>
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+			<ChartPanelToolbar className="justify-end">
+				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allValues.length > 1 ? (
 					<SelectWithCombobox
 						allValues={allValues}
@@ -382,6 +389,7 @@ function InflowsByTokenChartCard({
 						label="Token"
 						labelType="smol"
 						variant="filter"
+						size="md"
 						portal
 					/>
 				) : null}
@@ -391,7 +399,7 @@ function InflowsByTokenChartCard({
 					title={exportTitle}
 					iconUrl={exportIconUrl}
 				/>
-			</div>
+			</ChartPanelToolbar>
 			<React.Suspense fallback={<div className="min-h-[360px]" />}>
 				<MultiSeriesChart2
 					dataset={deferredDataset}
@@ -405,7 +413,7 @@ function InflowsByTokenChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</div>
+		</Panel>
 	)
 }
 
@@ -460,21 +468,19 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 			seoTitle={props.seoTitle}
 			seoDescription={props.seoDescription}
 		>
-			<div className="flex items-center gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-				<TokenLogo name={props.name} kind="token" size={24} alt={`Logo of ${props.name}`} />
-				<h1 className="text-xl font-bold">{props.name} TVL Breakdown</h1>
-			</div>
+			<EntityTitleStrip
+				media={<TokenLogo name={props.name} kind="token" size={28} alt={`Logo of ${props.name}`} />}
+				title={`${props.name} TVL Breakdown`}
+			/>
 			{isLoading ? (
-				<div className="flex min-h-[360px] flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+				<PanelLoadingStatus label={`Loading ${props.name} TVL breakdown`}>
 					<LocalLoader />
-				</div>
+				</PanelLoadingStatus>
 			) : props.chainsUnique.length <= 1 && !props.metrics.inflows ? (
-				<div className="col-span-2 flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-					<p className="text-(--text-label)">
-						Breakdown charts are not available for this protocol as it operates on a single chain and token composition
-						data is not accurately trackable.
-					</p>
-				</div>
+				<PanelStatus className="col-span-full">
+					Breakdown charts are not available for this protocol as it operates on a single chain and token composition
+					data is not accurately trackable.
+				</PanelStatus>
 			) : (
 				<div className="grid grid-cols-2 gap-2">
 					{chainsDataset && chainsUnique?.length > 1 ? (
@@ -554,15 +560,13 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 				</div>
 			)}
 			{errors.length > 0 ? (
-				<div className="col-span-2 flex min-h-[360px] flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-					<p className="text-(--error)">
-						Failed to fetch{' '}
-						{Array.from(new Set(errors.map((e) => CHART_CATEGORY_LABELS[e.category])))
-							.filter(Boolean)
-							.join(', ')}{' '}
-						APIs
-					</p>
-				</div>
+				<PanelStatus variant="error" className="col-span-full">
+					Failed to fetch{' '}
+					{Array.from(new Set(errors.map((e) => CHART_CATEGORY_LABELS[e.category])))
+						.filter(Boolean)
+						.join(', ')}{' '}
+					APIs
+				</PanelStatus>
 			) : null}
 		</ProtocolOverviewLayout>
 	)

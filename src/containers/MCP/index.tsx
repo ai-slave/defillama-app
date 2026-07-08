@@ -356,7 +356,7 @@ function ToolCategoryGroup({
 					<polyline points="9 18 15 12 9 6" />
 				</svg>
 				{label}
-				<span className="font-normal tracking-normal text-(--text-disabled) normal-case">({tools.length})</span>
+				<span className="font-normal tracking-normal text-tertiary normal-case">({tools.length})</span>
 			</button>
 			{open && (
 				<div id={panelId} className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -407,7 +407,7 @@ export default function MCPContainer() {
 							Connect your AI agent to DefiLlama data. Ask questions about TVL, yields, token prices, protocol metrics,
 							stablecoins, bridges, ETFs, and more. Your agent gets the answers directly.
 						</p>
-						<p className="mb-6 text-[13px] text-(--text-disabled)">
+						<p className="mb-6 text-[13px] text-tertiary">
 							Requires an API plan. Uses the same credits as your DefiLlama API key.
 						</p>
 						<div className="flex flex-wrap gap-3">
@@ -482,10 +482,12 @@ export default function MCPContainer() {
 					</StepCard>
 				</div>
 
-				<p className="mt-4 rounded-md border border-(--cards-border) bg-(--bg-card) px-4 py-3 text-[13px] leading-relaxed text-(--text-tertiary)">
-					Note: each DefiLlama account can only be connected to one MCP client at a time. Connecting a new client will
-					disconnect the previous one.
-				</p>
+				<div className="mt-4 rounded-md border border-(--cards-border) bg-(--bg-card) px-4 py-3 text-[13px] leading-relaxed text-(--text-tertiary)">
+					<p>
+						Note: each DefiLlama account can only be connected to one MCP client at a time. Connecting a new client will
+						disconnect the previous one.
+					</p>
+				</div>
 
 				{/* LlamaAI Upsell */}
 				<a

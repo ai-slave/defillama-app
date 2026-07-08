@@ -53,7 +53,7 @@ export function TokenUnlocksSection({ resolvedUnlocksSlug }: { resolvedUnlocksSl
 			isLoading={isLoading}
 			error={unlocksError}
 			errorMessage="Failed to load token unlocks."
-			bodyClassName="flex flex-col gap-2 p-3"
+			bodyClassName="flex flex-col gap-2 p-2"
 		>
 			{data ? (
 				<DeferredUnlocksCharts

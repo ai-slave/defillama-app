@@ -3,6 +3,16 @@ import { matchSorter } from 'match-sorter'
 import * as React from 'react'
 import { Icon } from '~/components/Icon'
 import type { ISearchItem } from '~/components/Search/types'
+import { selectTriggerStyles } from '~/components/Select/types'
+import { inputStyles } from '~/ui/Input'
+import {
+	popoverRowWithBorderStyles,
+	popoverSearchBlockWithBottomPaddingStyles,
+	popoverSeeMoreStyles,
+	popoverSurfaceStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName
+} from '~/ui/Popover'
 
 interface IProps {
 	options: ISearchItem[]
@@ -55,7 +65,7 @@ export function BridgeChainSelector({ options, currentChain, handleClick }: IPro
 					handleClick(values)
 				}}
 			>
-				<Ariakit.Select className="relative flex cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-(--form-control-border) p-2 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)">
+				<Ariakit.Select className={selectTriggerStyles('filter', 'md')}>
 					{currentChain}
 					<Ariakit.SelectArrow className="ml-auto" />
 				</Ariakit.Select>
@@ -63,19 +73,16 @@ export function BridgeChainSelector({ options, currentChain, handleClick }: IPro
 					unmountOnHide
 					hideOnInteractOutside
 					gutter={6}
-					wrapperProps={{
-						className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
-					}}
-					className="z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,60dvh)] lg:max-h-(--popover-available-height) dark:border-[hsl(204,3%,32%)]"
+					wrapperProps={{ className: popoverMobileWrapperClassName }}
+					className={popoverSurfaceStyles}
 				>
-					<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
+					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 						<Icon name="x" className="size-5" />
 					</Ariakit.PopoverDismiss>
 
-					<Ariakit.Combobox
-						placeholder="Search..."
-						className="m-3 mb-0 rounded-md bg-white px-3 py-1 text-base dark:bg-black"
-					/>
+					<span className={popoverSearchBlockWithBottomPaddingStyles}>
+						<Ariakit.Combobox placeholder="Search..." className={`${inputStyles} w-full`} />
+					</span>
 
 					{matches.length > 0 ? (
 						<>
@@ -84,7 +91,7 @@ export function BridgeChainSelector({ options, currentChain, handleClick }: IPro
 									<Ariakit.SelectItem
 										key={`bridge-chain-${option.name}`}
 										value={option.name}
-										className="group flex shrink-0 cursor-pointer items-center gap-4 border-b border-(--form-control-border) px-3 py-2 cv-auto-37 last-of-type:rounded-b-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)"
+										className={`${popoverRowWithBorderStyles} group justify-start gap-4`}
 										render={<Ariakit.ComboboxItem />}
 									>
 										<span>{option.name}</span>
@@ -95,7 +102,7 @@ export function BridgeChainSelector({ options, currentChain, handleClick }: IPro
 										value="__see_more__"
 										setValueOnClick={false}
 										hideOnClick={false}
-										className="w-full cursor-pointer px-3 py-4 text-(--link) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-active-item:bg-(--link-hover-bg)"
+										className={popoverSeeMoreStyles}
 										onClick={handleSeeMore}
 									>
 										See more...
@@ -104,7 +111,7 @@ export function BridgeChainSelector({ options, currentChain, handleClick }: IPro
 							</Ariakit.ComboboxList>
 						</>
 					) : (
-						<p className="px-3 py-6 text-center text-(--text-primary)">No results found</p>
+						<p className="px-3 py-6 text-center body-sm text-primary">No results found</p>
 					)}
 				</Ariakit.SelectPopover>
 			</Ariakit.SelectProvider>

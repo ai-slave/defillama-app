@@ -142,9 +142,7 @@ export default function CexMarketsPage({
 			seoTitle={`${name} Markets - DefiLlama`}
 			seoDescription={`Track ${name} spot and perpetual markets on DefiLlama.`}
 		>
-			<div className="grid grid-cols-1 gap-2">
-				<CexMarketsSection exchange={cexMarketsExchange} name={name} />
-			</div>
+			<CexMarketsSection exchange={cexMarketsExchange} name={name} />
 		</ProtocolOverviewLayout>
 	)
 }

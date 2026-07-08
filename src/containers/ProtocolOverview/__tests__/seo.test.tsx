@@ -583,6 +583,6 @@ describe('ProtocolInfo category links', () => {
 
 		expect(markup).toContain('href="/protocols/prediction-market"')
 		expect(markup).toContain('Prediction Market')
-		expect(markup).toContain('Category')
+		expect(markup).toContain('Category:')
 	})
 })

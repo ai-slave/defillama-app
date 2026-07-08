@@ -5,6 +5,10 @@ import { ResearchIcon } from '~/components/ResearchIcon'
 
 type NavIconName = IIcon['name']
 
+export function SidebarDivider({ className = '' }: { className?: string }) {
+	return <hr className={`w-full max-w-53 border-t border-subtle ${className}`} />
+}
+
 export function LinkToPage({
 	route,
 	name,

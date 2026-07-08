@@ -65,7 +65,7 @@ function ResearchInterviewsContent({ articles, pageWidget }: ResearchInterviewsC
 					/>
 				) : null}
 			</div>
-			<div className={clsx('mt-[12px] flex grow flex-col', isBig ? 'lg:h-[90px]' : 'lg:h-[65px]')}>
+			<div className={clsx('mt-3 flex grow flex-col', isBig ? 'lg:h-[90px]' : 'lg:h-[65px]')}>
 				{isFirst && <InViewAnalytics eventParams={[article, 'widget_impression', pageWidget]} />}
 				<div
 					className={clsx(
@@ -80,16 +80,12 @@ function ResearchInterviewsContent({ articles, pageWidget }: ResearchInterviewsC
 	)
 
 	return (
-		<div className="grid grid-cols-1 gap-[36px] lg:grid-cols-[725fr_403fr]">
+		<div className="grid grid-cols-1 gap-9 lg:grid-cols-[725fr_403fr]">
 			<div className="flex flex-col">
-				<div ref={leftColumnInnerRef} className="flex flex-col gap-[24px]">
-					<div className="grid grid-cols-2 gap-[24px]">
-						{firstRow.map((article, i) => cardLink(article, i === 0, true))}
-					</div>
+				<div ref={leftColumnInnerRef} className="flex flex-col gap-6">
+					<div className="grid grid-cols-2 gap-6">{firstRow.map((article, i) => cardLink(article, i === 0, true))}</div>
 					{secondRow.length > 0 && (
-						<div className="grid grid-cols-3 gap-[16px]">
-							{secondRow.map((article) => cardLink(article, false, false))}
-						</div>
+						<div className="grid grid-cols-3 gap-4">{secondRow.map((article) => cardLink(article, false, false))}</div>
 					)}
 				</div>
 			</div>
@@ -105,11 +101,11 @@ function ResearchInterviewsContent({ articles, pageWidget }: ResearchInterviewsC
 								: undefined
 					}
 				>
-					<ul className="flex flex-col gap-[12px] pr-2">
+					<ul className="flex flex-col gap-3 pr-2">
 						{rightArticles.map((article) => (
 							<li key={article.id}>
 								<Link
-									className="group flex items-center gap-[16px]"
+									className="group flex items-center gap-4"
 									href={articleHref(article)}
 									onClick={() => pushResearchAnalyticsEvent(article, 'widget_click', pageWidget)}
 								>
@@ -149,7 +145,7 @@ export const ResearchInterviews: React.FC<Props> = ({ title, articles }) => {
 
 	return (
 		<div id="interviews">
-			<div className="mb-[24px]">
+			<div className="mb-6">
 				<TitleLine title={title} />
 			</div>
 			<ResearchSectionWithSharedHeightProvider>

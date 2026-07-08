@@ -26,7 +26,7 @@ export function ResearchWidgetWithScrollbar({ id, title, articles, onHeightChang
 			<div className="mb-[26px]">
 				<TitleLine title={title} />
 			</div>
-			<div className="flex flex-col gap-y-[64px]">
+			<div className="flex flex-col gap-y-16">
 				<div>
 					<ResearchWidgetWithScrollbarScroller articles={articles} onHeightChange={onHeightChange} />
 					<div className="mt-auto shrink-0 pt-[18px] text-right">
@@ -54,11 +54,11 @@ function ResearchWidgetWithScrollbarScroller({ articles, onHeightChange }: Resea
 	return (
 		<div style={style}>
 			<div className={`thin-scrollbar overflow-y-auto ${containerHeight}`}>
-				<div className="flex flex-col gap-y-[12px] lg:gap-y-[24px]">
+				<div className="flex flex-col gap-y-3 lg:gap-y-6">
 					{articles.map((article) => (
 						<Link
 							key={article.id}
-							className="group relative top-0 flex gap-[16px] overflow-hidden rounded-lg"
+							className="group relative top-0 flex gap-4 overflow-hidden rounded-lg"
 							href={articleHref(article)}
 						>
 							<div className="relative aspect-[85/65] w-[85px] min-w-[85px] overflow-hidden rounded-[7px] group-hover:brightness-[0.8] lg:aspect-[120/70] lg:w-[120px] lg:min-w-[120px]">
@@ -73,7 +73,7 @@ function ResearchWidgetWithScrollbarScroller({ articles, onHeightChange }: Resea
 								) : null}
 							</div>
 
-							<div className="flex grow flex-col justify-between gap-[7px] pr-[20px]">
+							<div className="flex grow flex-col justify-between gap-[7px] pr-5">
 								<div className="line-clamp-3 text-[16px] leading-[135%] font-semibold text-[#0d1e3b] group-hover:text-[#0c2956] group-hover:opacity-70 dark:text-white dark:group-hover:text-white/70">
 									{article.title}
 								</div>

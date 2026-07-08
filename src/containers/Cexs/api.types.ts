@@ -31,3 +31,45 @@ export interface RawCexsResponse {
 export interface RawCexInflowsResponse {
 	outflows?: number | null
 }
+
+export type CexAnalyticsView = 'summary' | 'comparison' | 'spot-vs-derivatives' | 'market-share'
+export type CexAnalyticsMetric = 'spot' | 'derivatives'
+
+export interface CexAnalyticsSnapshotRow {
+	venue: string
+	spotVolume24h: number
+	derivativesVolume24h: number
+	spotShare: number
+	derivativesShare: number
+	derivativesToSpotRatio: number | null
+	openInterest: number | null
+	avgLeverage: number | null
+	cleanTvl: number | null
+	volumeToTvl: number | null
+}
+
+export interface CexAnalyticsSummary {
+	totalSpotVolume: number
+	totalDerivativesVolume: number
+	totalOpenInterest: number
+	totalCleanTvl: number
+	weightedAvgLeverage: number | null
+	loadedAt: string | null
+}
+
+export interface CexAnalyticsSnapshotResponse {
+	rows: CexAnalyticsSnapshotRow[]
+	summary: CexAnalyticsSummary
+}
+
+export interface CexAnalyticsTotalsPoint {
+	date: number
+	spotVolume: number
+	derivativesVolume: number
+}
+
+export interface CexAnalyticsMarketSharePoint {
+	date: number
+	venue: string
+	share: number
+}

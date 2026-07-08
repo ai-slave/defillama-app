@@ -17,6 +17,12 @@ import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/c
 import type { ProtocolLite, ParentProtocolLite } from '~/containers/ProtocolLists/api.types'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -433,6 +439,7 @@ function TokenRightsPage({ protocols }: { protocols: TokenRightsListItem[] }) {
 	const [searchValue, setSearchValue] = useState('')
 	const [sorting, setSorting] = useState<SortingState>(DEFAULT_TOKEN_RIGHTS_SORTING)
 	const deferredSearchValue = useDeferredValue(searchValue)
+	const seoDescription = `Compare governance, economic, and ownership rights across ${protocols.length} DeFi protocols`
 
 	const filteredProtocols = useMemo(
 		() => filterTokenRightsRows(protocols, activeFilters, deferredSearchValue),
@@ -460,60 +467,53 @@ function TokenRightsPage({ protocols }: { protocols: TokenRightsListItem[] }) {
 	return (
 		<Layout
 			title="DeFi Token Rights by Project - DefiLlama"
-			description="Explore token holder rights across DeFi protocols — governance, economic rights, value accrual, and alignment."
+			description={seoDescription}
 			canonicalUrl="/token-rights"
+			pageName={['Token Rights']}
 		>
 			<div className="flex flex-col gap-2">
-				<header className="flex min-h-[72px] w-full flex-col justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) px-4 py-3">
-					<h1 className="text-xl font-semibold">Token Rights</h1>
-					<p className="mt-1 text-sm text-(--text-secondary)">
-						Compare governance, economic, and ownership rights across {protocols.length} DeFi protocols
-					</p>
-				</header>
-
-				<div className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2 rounded-md border border-(--cards-border) bg-(--cards-bg) px-4 py-3">
+				<Card
+					padding="strip"
+					border="subtle"
+					className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2"
+				>
 					<InlineStat value={filteredProtocols.length} label="Protocols" />
 					<InlineStat value={stats.feeSwitchOn} label="Fee Switch ON" />
 					<InlineStat value={stats.buybacks} label="Active Buybacks" />
 					<InlineStat value={stats.dividends} label="Dividends" />
-				</div>
+				</Card>
 
-				<div className="flex flex-col gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
-					<div className="flex flex-wrap items-center gap-2">
-						<span className="mr-2 text-xs font-semibold tracking-widest text-(--text-label) uppercase">Filters</span>
+				<Panel>
+					<TableToolbar>
+						<span className="mr-1 label-sm text-tertiary">Filters</span>
 						{TOKEN_RIGHTS_FILTERS.map((filter) => (
-							<button
+							<Button
 								key={filter.key}
 								type="button"
 								onClick={() => toggleFilter(filter.key)}
-								data-active={activeFilters.includes(filter.key)}
-								className="rounded-md border border-(--form-control-border) bg-(--app-bg) px-3 py-1.5 text-sm text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) data-[active=true]:border-(--link-text) data-[active=true]:bg-(--link-hover-bg) data-[active=true]:text-(--link-text)"
+								variant={activeFilters.includes(filter.key) ? 'outline' : 'secondary'}
+								size="md"
 							>
 								{filter.label}
-							</button>
+							</Button>
 						))}
 						<label className="relative ml-auto w-full max-w-full sm:max-w-[280px]">
 							<span className="sr-only">Search protocol</span>
-							<Icon
-								name="search"
-								height={16}
-								width={16}
-								className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-							/>
+							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 							<input
 								onInput={(event) => {
 									setSearchValue(event.currentTarget.value)
 								}}
 								placeholder="Search protocol..."
-								className="w-full rounded-md border border-(--form-control-border) bg-(--app-bg) p-1.5 pl-7 text-sm text-(--text-primary) placeholder:text-(--text-tertiary)"
+								className={searchFieldInputStyles}
 							/>
 						</label>
-					</div>
+					</TableToolbar>
 
-					<div className="overflow-hidden rounded-md border border-(--cards-border)">
+					<div className="overflow-hidden">
 						<VirtualTable instance={table} rowSize={58} skipVirtualization />
 						{filteredProtocols.length === 0 ? (
-							<div className="flex min-h-[180px] items-center justify-center border-t border-(--divider) px-4 text-center text-sm text-(--text-secondary)">
+							<div className="flex min-h-[180px] items-center justify-center border-t border-subtle px-4 text-center body-sm text-secondary">
 								No protocols found for these filters
 							</div>
 						) : null}
@@ -521,13 +521,13 @@ function TokenRightsPage({ protocols }: { protocols: TokenRightsListItem[] }) {
 
 					<TokenRightsLegend />
 
-					<footer className="flex flex-wrap items-center justify-between gap-2 border-t border-(--cards-border) pt-4 text-sm text-(--text-secondary)">
+					<footer className="flex flex-wrap items-center justify-between gap-2 border-t border-subtle p-2 body-sm text-secondary">
 						<span>
 							{latestUpdated ? `Last updated: ${latestUpdated} - ` : null}
 							{filteredProtocols.length} protocols shown
 						</span>
 					</footer>
-				</div>
+				</Panel>
 			</div>
 		</Layout>
 	)
@@ -604,21 +604,20 @@ const columns = [
 		cell: ({ getValue, row }) => {
 			const name = getValue()
 			const href = row.original.href
-			const nameClassName =
-				'overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline'
 
 			return (
 				<span className="flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
 					{href ? (
-						<Link href={`${row.original.href}#token-rights`} className={nameClassName}>
+						<Link
+							href={`${row.original.href}#token-rights`}
+							className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
+						>
 							{name}
 						</Link>
 					) : (
-						<span className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--text-primary)">
-							{name}
-						</span>
+						<span className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-primary">{name}</span>
 					)}
 				</span>
 			)
@@ -636,7 +635,7 @@ const columns = [
 		enableSorting: true,
 		cell: ({ getValue }) => {
 			const value = getValue()
-			return value == null ? <span className="text-(--text-tertiary)">-</span> : formattedNum(value, true)
+			return value == null ? <span className="text-tertiary">-</span> : formattedNum(value, true)
 		},
 		meta: {
 			headerClassName: 'w-[150px]',
@@ -689,7 +688,7 @@ const columns = [
 					className="whitespace-nowrap"
 				/>
 			) : (
-				<span className="text-(--text-tertiary)">-</span>
+				<span className="text-tertiary">-</span>
 			)
 		},
 		meta: {
@@ -715,7 +714,7 @@ function InlineStat({ value, label }: { value: number; label: string }) {
 	return (
 		<div className="flex items-baseline gap-1.5">
 			<span className="text-sm text-(--text-label)">{label}</span>
-			<span className="text-sm font-medium">{value}</span>
+			<span className="text-sm font-medium text-primary">{value}</span>
 		</div>
 	)
 }
@@ -726,7 +725,7 @@ function TokenPills({ tokens }: { tokens: string[] }) {
 			{tokens.map((token) => (
 				<span
 					key={token}
-					className="rounded-md border border-green-600/40 bg-green-600/10 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-400"
+					className="rounded-md border border-green-600/40 bg-green-600/10 px-2 py-0.5 label-sm text-green-700 dark:text-green-400"
 				>
 					{token}
 				</span>
@@ -772,7 +771,7 @@ function RightsDots({ rights, labels }: { rights: [boolean, boolean, boolean]; l
 			<Ariakit.Hovercard
 				unmountOnHide
 				gutter={6}
-				className="z-50 max-h-[calc(100dvh-80px)] w-max max-w-[calc(100vw-32px)] overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) p-2 text-sm lg:max-h-(--popover-available-height) dark:border-[hsl(204,3%,32%)]"
+				className={`${popoverHovercardSurfaceStyles} w-max max-w-[calc(100vw-32px)] p-2`}
 			>
 				{content}
 			</Ariakit.Hovercard>
@@ -781,7 +780,7 @@ function RightsDots({ rights, labels }: { rights: [boolean, boolean, boolean]; l
 }
 
 function FeeSwitchBadge({ status, details }: { status: TokenRightsFeeSwitchStatus; details: string | null }) {
-	if (status === 'UNKNOWN') return <span className="text-(--text-tertiary)">-</span>
+	if (status === 'UNKNOWN') return <span className="text-tertiary">-</span>
 	const tooltip = details ?? TOKEN_RIGHTS_PILL_TOOLTIPS.feeSwitch
 	if (status === 'ON') {
 		return <TooltipStatusPill label="ON" tone="positive" tooltip={tooltip} />
@@ -793,7 +792,7 @@ function FeeSwitchBadge({ status, details }: { status: TokenRightsFeeSwitchStatu
 }
 
 function EquityCaptureBadge({ value, details }: { value: string | null; details: string | null }) {
-	if (!value) return <span className="text-(--text-tertiary)">-</span>
+	if (!value) return <span className="text-tertiary">-</span>
 	const tooltip = details ?? TOKEN_RIGHTS_PILL_TOOLTIPS.equityRevenueCapture
 	if (value === 'No') {
 		return <TooltipStatusPill label="No" tone="positive" tooltip={tooltip} />
@@ -817,9 +816,9 @@ function getStatusPillClassName(tone: StatusPillTone, extraClassName = '') {
 				? 'border-red-600/40 bg-red-600/10 text-red-700 dark:text-red-400'
 				: tone === 'pending'
 					? 'border-amber-600/40 bg-amber-600/10 text-amber-700 dark:text-amber-400'
-					: 'border-(--cards-border) bg-(--app-bg) text-(--text-secondary)'
+					: 'border-medium bg-page text-secondary'
 
-	return `mx-auto inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium ${toneClassName} ${extraClassName}`
+	return `mx-auto inline-flex items-center justify-center rounded-md border px-2 py-0.5 label-sm ${toneClassName} ${extraClassName}`
 }
 
 function TooltipStatusPill({
@@ -858,8 +857,8 @@ function StatusPill({
 
 function TokenRightsLegend() {
 	return (
-		<div className="flex flex-wrap items-center gap-x-8 gap-y-3 text-sm text-(--text-secondary)">
-			<span className="text-xs font-semibold tracking-widest text-(--text-label) uppercase">Legend</span>
+		<div className="flex flex-wrap items-center gap-x-8 gap-y-2 body-sm text-secondary">
+			<span className="label-sm text-secondary uppercase">Legend</span>
 			<span className="inline-flex items-center gap-2">
 				<span className="size-3 rounded-full bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.55)]" />
 				Active

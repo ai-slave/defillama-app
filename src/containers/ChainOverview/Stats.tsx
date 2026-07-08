@@ -130,14 +130,14 @@ export function Stats(props: IStatsProps) {
 	return (
 		<div className="relative isolate grid h-full grid-cols-2 gap-2 xl:grid-cols-3">
 			<div
-				className={`col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 ${
+				className={`col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-lg border border-subtle bg-surface px-2 py-3 ${
 					props.hideChart ? 'xl:col-span-full' : 'xl:col-span-1'
 				}`}
 			>
 				{props.metadata.name !== 'All' ? (
 					<h1 className="flex flex-nowrap items-center gap-2 *:last:ml-auto">
 						<TokenLogo name={props.metadata.name} kind="chain" size={24} alt={`Logo of ${props.metadata.name}`} />
-						<span className="text-xl font-semibold">{props.metadata.name}</span>
+						<span className="heading-xs">{props.metadata.name}</span>
 						<span className="ml-auto flex items-center justify-end gap-2">
 							{props.website ? (
 								<a
@@ -194,16 +194,16 @@ export function Stats(props: IStatsProps) {
 							<Tooltip
 								content={`${formattedNum(valueChange24hUSD, true)}`}
 								render={<p />}
-								className="relative bottom-0.5 flex flex-nowrap items-center gap-2"
+								className="relative bottom-0.5 flex flex-nowrap items-center gap-1"
 							>
 								<span
-									className={`overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap underline decoration-dotted ${
-										change24h >= 0 ? 'text-(--success)' : 'text-(--error)'
+									className={`overflow-hidden mono-md text-ellipsis whitespace-nowrap underline decoration-dotted ${
+										change24h >= 0 ? 'text-data-up' : 'text-data-down'
 									}`}
 								>
 									{`${change24h > 0 ? '+' : ''}${change24h.toFixed(2)}%`}
 								</span>
-								<span className="text-(--text-label)">24h</span>
+								<span className="body-md text-tertiary">24h</span>
 							</Tooltip>
 						) : null}
 					</div>

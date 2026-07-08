@@ -15,6 +15,10 @@ import { useProtocolBreakdownCharts } from '~/containers/ProtocolOverview/usePro
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
+import { Panel } from '~/ui/Panel'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -62,9 +66,9 @@ function MultiSeriesChartCard({
 	const exportTitle = `${protocolName} ${title}`
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">{title}</h2>
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+			<ChartPanelToolbar className="justify-end">
+				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allSeries.length > 1 ? (
 					<SelectWithCombobox
 						allValues={allSeries}
@@ -73,6 +77,7 @@ function MultiSeriesChartCard({
 						label={seriesLabel}
 						labelType="smol"
 						variant="filter"
+						size="md"
 						portal
 					/>
 				) : null}
@@ -82,7 +87,7 @@ function MultiSeriesChartCard({
 					title={exportTitle}
 					iconUrl={exportIconUrl}
 				/>
-			</div>
+			</ChartPanelToolbar>
 			<React.Suspense fallback={<div className="min-h-[360px]" />}>
 				<MultiSeriesChart2
 					dataset={dataset}
@@ -92,7 +97,7 @@ function MultiSeriesChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</div>
+		</Panel>
 	)
 }
 
@@ -124,9 +129,9 @@ function TokensBreakdownPieChartCard({
 	const exportTitle = `${protocolName} Active Loans Tokens Breakdown (USD)`
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">Active Loans Tokens Breakdown (USD)</h2>
+		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+			<ChartPanelToolbar className="justify-end">
+				<h2 className="mr-auto heading-xs">Active Loans Tokens Breakdown (USD)</h2>
 				{allTokens.length > 1 ? (
 					<SelectWithCombobox
 						allValues={allTokens}
@@ -135,6 +140,7 @@ function TokensBreakdownPieChartCard({
 						label="Token"
 						labelType="smol"
 						variant="filter"
+						size="md"
 						portal
 					/>
 				) : null}
@@ -144,11 +150,11 @@ function TokensBreakdownPieChartCard({
 					title={exportTitle}
 					iconUrl={exportIconUrl}
 				/>
-			</div>
+			</ChartPanelToolbar>
 			<React.Suspense fallback={<div className="min-h-[360px]" />}>
 				<PieChart chartData={filteredChartData} onReady={handleChartReady} />
 			</React.Suspense>
-		</div>
+		</Panel>
 	)
 }
 
@@ -265,18 +271,16 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 			seoTitle={props.seoTitle}
 			seoDescription={props.seoDescription}
 		>
-			<div className="flex items-center gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-				<TokenLogo name={props.name} kind="token" size={24} alt={`Logo of ${props.name}`} />
-				<h1 className="text-xl font-bold">{props.name} Active Loans</h1>
-			</div>
+			<EntityTitleStrip
+				media={<TokenLogo name={props.name} kind="token" size={28} alt={`Logo of ${props.name}`} />}
+				title={`${props.name} Active Loans`}
+			/>
 			{isLoading ? (
-				<div className="flex min-h-[360px] flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+				<PanelLoadingStatus label={`Loading ${props.name} active loans`}>
 					<LocalLoader />
-				</div>
+				</PanelLoadingStatus>
 			) : !hasBreakdownMetrics ? (
-				<div className="col-span-full flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-					<p className="text-(--text-label)">Breakdown metrics are not available</p>
-				</div>
+				<PanelStatus className="col-span-full">Breakdown metrics are not available</PanelStatus>
 			) : (
 				<div className="grid grid-cols-2 gap-2">
 					{borrowedByChainDataset && chainsUnique.length > 1 ? (

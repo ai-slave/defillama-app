@@ -8,6 +8,7 @@
 
 /* Documentation mentions utility names; it must not drive codegen. */
 @source not '../design.md';
+@source not '../design-sweep-todo.md';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -226,6 +227,15 @@
 	::file-selector-button {
 		border-color: var(--color-gray-200, currentcolor);
 	}
+
+	/* One focus ring everywhere. Replaces the UA default (Chrome's dual-tone
+	   white+blue ring reads as a "double outline" on dark surfaces, and every
+	   browser draws its own variant). Components may additionally paint
+	   bg-hover-row on :focus-visible, but the ring is this single rule. */
+	:focus-visible {
+		outline: 2px solid var(--ld-border-brand);
+		outline-offset: 1px;
+	}
 }
 
 /* ------------------------------ Core Utilities ------------------------------ */
@@ -437,14 +447,26 @@
 	@font-face {
 		font-family: 'Inter-fallback';
 		size-adjust: 107%;
+		ascent-override: 96.9%;
+		descent-override: 24.2%;
+		line-gap-override: 0%;
 		src: local('Arial');
 	}
 
+	/* ascent/descent overrides: the shipped Inter var carries 1.00em ascent /
+	   0.25em descent (usWin-style), which parks the baseline too low — caps
+	   text sat ~2px high in every flex-centered control ("more space below
+	   than above"). Normalizing to Inter's hhea metrics makes
+	   (ascent − capHeight) = descent = 0.242em, so glyphs center optically
+	   at any line-height. Measured live: ink gaps balanced to <0.5px. */
 	@font-face {
 		font-family: 'Inter var';
 		font-style: normal;
 		font-weight: 100 900;
 		font-display: swap;
+		ascent-override: 96.9%;
+		descent-override: 24.2%;
+		line-gap-override: 0%;
 		src: url('/fonts/inter.woff2') format('woff2');
 	}
 
@@ -473,12 +495,11 @@
 		--text-label: var(--ld-text-secondary); /* Labels & descriptions */
 		--text-meta: var(--ld-text-tertiary); /* Metadata & governance */
 		/*
-		  Deliberately NOT --ld-text-disabled: Figma's Text/disabled (#dedede)
-		  is for disabled controls, but this legacy variable is used across
-		  ~46 files as "dimmed but readable" (flagged TVL values, descriptions,
-		  metadata). Tertiary matches the old readable gray in both modes.
+		  Deliberately NOT --ld-text-disabled: Figma's Text/disabled is for
+		  disabled controls. This legacy variable means "dimmed but readable"
+		  while old callsites migrate to text-secondary/text-tertiary.
 		*/
-		--text-disabled: var(--ld-text-tertiary); /* Disabled text */
+		--text-disabled: var(--ld-text-tertiary); /* Legacy dimmed-readable alias */
 
 		/* Background Colors */
 		/*

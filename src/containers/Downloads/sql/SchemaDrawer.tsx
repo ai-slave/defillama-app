@@ -52,7 +52,7 @@ export function SchemaDrawer({
 				backdrop={
 					<div className="fixed inset-0 z-40 bg-black/20 opacity-0 transition-opacity duration-150 data-enter:opacity-100 dark:bg-black/40" />
 				}
-				className="fixed top-0 right-0 bottom-0 z-50 flex w-full max-w-[640px] drawer-to-left flex-col overflow-hidden border-l border-(--divider) bg-(--cards-bg) shadow-2xl sm:max-w-[560px] lg:max-w-[640px]"
+				className="fixed top-0 right-0 bottom-0 z-50 flex w-full max-w-[640px] drawer-to-left flex-col overflow-hidden border-l border-(--divider) bg-surface shadow-2xl sm:max-w-[560px] lg:max-w-[640px]"
 			>
 				<header className="flex items-start justify-between gap-3 border-b border-(--divider) bg-(--app-bg)/40 px-5 py-3.5">
 					<div className="flex min-w-0 flex-col gap-0.5">
@@ -70,7 +70,7 @@ export function SchemaDrawer({
 					<Ariakit.DialogDismiss
 						onClick={onClose}
 						aria-label="Close SQL reference"
-						className="flex size-7 shrink-0 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+						className="flex size-7 shrink-0 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
 					>
 						<Icon name="x" className="size-4" />
 					</Ariakit.DialogDismiss>

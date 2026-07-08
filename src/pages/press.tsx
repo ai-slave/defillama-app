@@ -46,12 +46,10 @@ function PressPage() {
 			description={`DefiLlama is used across a large number of media organisations, governments, and financial institutions notably by the US Treasury and the ECB.`}
 			canonicalUrl={`/press`}
 		>
-			<h1 className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 text-xl font-semibold">
-				Press & Media
-			</h1>
+			<h1 className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 heading-sm">Press & Media</h1>
 
 			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
-				<h2 className="text-lg font-semibold">About DefiLlama</h2>
+				<h2 className="heading-xs">About DefiLlama</h2>
 				<hr className="border-black/20 dark:border-white/20" />
 				<p>
 					DefiLlama is the largest data aggregator for DeFi (Decentralized Finance). Our data is fully open-source and
@@ -68,7 +66,7 @@ function PressPage() {
 			</div>
 
 			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
-				<h2 className="text-lg font-semibold">Contact</h2>
+				<h2 className="heading-xs">Contact</h2>
 				<hr className="border-black/20 dark:border-white/20" />
 				<p>
 					The best way to contact us and the one in which you'll get a reply the fastest is through our{' '}
@@ -96,7 +94,7 @@ function PressPage() {
 			</div>
 
 			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
-				<h2 className="text-lg font-semibold">Press</h2>
+				<h2 className="heading-xs">Press</h2>
 				<hr className="border-black/20 dark:border-white/20" />
 
 				<p>DefiLlama Data is free to use by anyone for press usage. Attribution is always appreciated.</p>
@@ -118,7 +116,7 @@ function PressPage() {
 			</div>
 
 			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
-				<h2 className="text-lg font-semibold">Branding Assets</h2>
+				<h2 className="heading-xs">Branding Assets</h2>
 				<hr className="border-black/20 dark:border-white/20" />
 				<p>
 					We have a few guidelines for using our brand resources. These ensure that our brand is always recognizable and

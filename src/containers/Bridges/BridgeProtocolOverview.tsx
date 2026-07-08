@@ -17,6 +17,11 @@ import { BridgeTokensTable } from '~/containers/Bridges/BridgeTokensTable'
 import { AddressesTableSwitch } from '~/containers/Bridges/TableSwitch'
 import { BRIDGES_SHOWING_ADDRESSES, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar, TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, getPercentChange, slug } from '~/utils'
 import {
 	buildBridgeProtocolAllChainsVolumeData,
@@ -114,29 +119,33 @@ export const BridgeInfo = ({
 
 	return (
 		<>
-			<div className="flex items-center justify-between gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-				<h1 className="flex flex-nowrap items-center gap-1 text-xl font-semibold">
-					<TokenLogo src={logo} size={24} alt={`Logo of ${displayName}`} />
-					<span>{displayName}</span>
-				</h1>
-				<BridgeChainSelector
-					currentChain={currentChain}
-					options={chainOptions}
-					handleClick={(chain) => {
-						setChain(chain)
-						if (chain === 'All Chains') {
-							setChartType('Volume')
-						} else {
-							setChartType('Inflows')
-						}
-					}}
-				/>
-			</div>
+			<EntityTitleStrip
+				media={<TokenLogo src={logo} size={28} alt={`Logo of ${displayName}`} />}
+				title={displayName}
+				actions={
+					<BridgeChainSelector
+						currentChain={currentChain}
+						options={chainOptions}
+						handleClick={(chain) => {
+							setChain(chain)
+							if (chain === 'All Chains') {
+								setChartType('Volume')
+							} else {
+								setChartType('Inflows')
+							}
+						}}
+					/>
+				}
+			/>
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-5 xl:col-span-1">
+				<Card
+					border="subtle"
+					padding="sm"
+					className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1"
+				>
 					{isAllChains ? (
 						<>
-							<p className="flex flex-col gap-1 text-base">
+							<p className="flex flex-col gap-1">
 								<span className="inline-flex items-center gap-1 text-(--text-label)">
 									Total Volume ({windowLabel})
 									<Tooltip
@@ -154,7 +163,7 @@ export const BridgeInfo = ({
 						</>
 					) : (
 						<>
-							<p className="flex flex-col gap-1 text-base">
+							<p className="flex flex-col gap-1">
 								<span className="text-(--text-label)">
 									Deposited to {currentChain} ({windowLabel})
 								</span>
@@ -163,7 +172,7 @@ export const BridgeInfo = ({
 								</span>
 							</p>
 
-							<p className="flex flex-col gap-1 text-base">
+							<p className="flex flex-col gap-1">
 								<span className="text-(--text-label)">
 									Withdrawn from {currentChain} ({windowLabel})
 								</span>
@@ -174,24 +183,26 @@ export const BridgeInfo = ({
 						</>
 					)}
 
-					<p className="flex flex-col gap-1 text-base">
+					<p className="flex flex-col gap-1">
 						<span className="text-(--text-label)">Volume Change (prev day)</span>
 						<span className="font-jetbrains text-2xl font-semibold">{volPercentChange + '%'}</span>
 					</p>
 					{config?.url ? (
-						<a
-							className="mt-auto mr-auto flex items-center justify-center gap-1 rounded-md bg-(--link-bg) px-2 py-1 text-xs whitespace-nowrap text-(--link-text) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+						<Button
+							as="a"
+							size="md"
+							className="mt-auto mr-auto"
 							href={config.url}
 							target="_blank"
 							rel="noreferrer noopener"
 						>
-							<span>Website</span> <Icon name="arrow-up-right" height={14} width={14} />
-						</a>
+							<span>Website</span> <Icon name="arrow-up-right" className="size-4" />
+						</Button>
 					) : null}
-				</div>
+				</Card>
 
-				<div className="col-span-2 rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
+				<Panel className="col-span-2">
+					<ChartPanelToolbar className="justify-end">
 						<TagGroup
 							selectedValue={chartType}
 							setValue={(v) => setChartType(v)}
@@ -207,7 +218,7 @@ export const BridgeInfo = ({
 							title={`${chartScopeTitle} ${chartType}`}
 							iconUrl={logo}
 						/>
-					</div>
+					</ChartPanelToolbar>
 					<>
 						{chartType === 'Volume' && isAllChains && groupedAllChainsVolumePairs.length > 0 ? (
 							<React.Suspense fallback={<div className="min-h-[360px]" />}>
@@ -242,19 +253,19 @@ export const BridgeInfo = ({
 							</React.Suspense>
 						) : null}
 					</>
-				</div>
+				</Panel>
 			</div>
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<div className="flex flex-wrap items-end justify-between gap-2 p-3">
+			<Panel>
+				<TableToolbar className="items-end justify-between">
 					<AddressesTableSwitch />
 					<p className="text-sm italic opacity-60">All stats in table use the same rolling window.</p>
-				</div>
+				</TableToolbar>
 				{isBridgesShowingAddresses ? (
 					<BridgeAddressesTable data={addressesTableData} />
 				) : (
 					<BridgeTokensTable data={tokensTableData} />
 				)}
-			</div>
+			</Panel>
 		</>
 	)
 }

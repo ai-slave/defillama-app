@@ -13,9 +13,6 @@ const TONE_STROKE: Record<Tone, string> = {
 	muted: 'var(--text-tertiary)'
 }
 
-// --bg-main is invisible on white cards in light mode, so the track derives from ink.
-const TONE_TRACK = 'color-mix(in srgb, var(--text-secondary) 18%, transparent)'
-
 // 270° arc on a 132×132 box: from 135° (bottom-left) clockwise to 45° (bottom-right).
 const R = 54
 const C = 66
@@ -48,7 +45,14 @@ export function SeverityGauge({ pct, tone, caption }: { pct: number; tone: Tone;
 			className="relative hidden size-33 shrink-0 sm:block"
 		>
 			<svg viewBox="0 0 132 132" className="size-full">
-				<path d={ARC} fill="none" stroke={TONE_TRACK} strokeWidth="9" strokeLinecap="round" />
+				{/* --bg-main is invisible on white cards in light mode, so the track derives from ink. */}
+				<path
+					d={ARC}
+					fill="none"
+					stroke="color-mix(in srgb, var(--text-secondary) 18%, transparent)"
+					strokeWidth="9"
+					strokeLinecap="round"
+				/>
 				{clamped > 0 ? (
 					<path
 						ref={fillRef}

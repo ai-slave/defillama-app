@@ -100,7 +100,7 @@ export default function ReportsPage() {
 
 			{/* Other Reports */}
 			<div className="flex flex-col gap-2">
-				<h2 className="px-1 text-lg font-semibold">Other Reports</h2>
+				<h2 className="px-1 heading-xs">Other Reports</h2>
 				<div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
 					{otherReports.map((report) => (
 						<ReportCard key={report.title} report={report} />

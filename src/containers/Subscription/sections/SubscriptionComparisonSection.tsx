@@ -125,17 +125,6 @@ function ComparisonPlanHead({
 
 const LABEL_W = { mobile: 233, desktop: 400 }
 const PLAN_W = { mobile: 132, desktop: 146 }
-const HORIZONTAL_SCROLL_AREA_CLASSNAME =
-	'no-scrollbar overflow-x-auto overflow-y-hidden overscroll-x-contain [-webkit-overflow-scrolling:touch]'
-const COMPARISON_ROW_CLASSNAME = 'relative flex h-[41px] md:h-[36px]'
-const WRAPPED_COMPARISON_ROW_CLASSNAME = 'relative flex min-h-[41px] md:h-[36px]'
-const COMPARISON_ROW_HEADER_CLASSNAME =
-	'sticky left-0 z-30 box-border flex shrink-0 w-[233px] items-center bg-white px-2 text-[14px] leading-[21px] text-(--sub-mobile-text-muted) md:w-[400px] md:px-4 md:text-xs md:text-(--sub-desktop-text-muted) dark:bg-(--sub-mobile-table-section-bg) dark:md:bg-(--sub-desktop-table-section-bg)'
-const WRAPPED_COMPARISON_ROW_HEADER_CLASSNAME =
-	'sticky left-0 z-30 box-border flex shrink-0 w-[233px] items-start bg-white px-2 py-2 text-[14px] leading-[21px] text-(--sub-mobile-text-muted) md:w-[400px] md:items-center md:px-4 md:py-0 md:text-xs md:text-(--sub-desktop-text-muted) dark:bg-(--sub-mobile-table-section-bg) dark:md:bg-(--sub-desktop-table-section-bg)'
-const COMPARISON_ROW_LABEL_CLASSNAME = 'block w-full overflow-hidden text-ellipsis whitespace-nowrap'
-const WRAPPED_COMPARISON_ROW_LABEL_CLASSNAME =
-	'block w-full whitespace-normal break-words md:overflow-hidden md:text-ellipsis md:whitespace-nowrap'
 
 function computeOverlayMetrics(planOrder: PlanKey[], selectedPlan: PlanKey) {
 	const isMd = window.matchMedia('(min-width: 768px)').matches
@@ -251,7 +240,7 @@ export function SubscriptionComparisonSection({
 				{/* ── Scrollable body ── */}
 				<div
 					ref={bodyScrollRef}
-					className={`relative isolate ${HORIZONTAL_SCROLL_AREA_CLASSNAME}`}
+					className="relative isolate no-scrollbar overflow-x-auto overflow-y-hidden overscroll-x-contain [-webkit-overflow-scrolling:touch]"
 					onScroll={onBodyScroll}
 				>
 					<div className="w-max" role="table" aria-label="Plan comparison">
@@ -285,7 +274,9 @@ export function SubscriptionComparisonSection({
 
 										{section.rows.map((row, rowIndex) => {
 											const isLastRow = isLastSection && rowIndex === section.rows.length - 1
-											const rowClassName = row.wrapLabel ? WRAPPED_COMPARISON_ROW_CLASSNAME : COMPARISON_ROW_CLASSNAME
+											const rowClassName = row.wrapLabel
+												? 'relative flex min-h-[41px] md:h-[36px]'
+												: 'relative flex h-[41px] md:h-[36px]'
 											const rowHeaderDividerClassName = isLastRow
 												? ''
 												: 'border-b border-(--sub-mobile-table-border) md:border-(--sub-desktop-table-border)'
@@ -293,11 +284,11 @@ export function SubscriptionComparisonSection({
 												? ''
 												: 'border-b border-b-(--sub-mobile-table-border) md:border-b-(--sub-desktop-table-border)'
 											const rowHeaderClassName = row.wrapLabel
-												? `${WRAPPED_COMPARISON_ROW_HEADER_CLASSNAME} ${rowHeaderDividerClassName}`
-												: `${COMPARISON_ROW_HEADER_CLASSNAME} ${rowHeaderDividerClassName}`
+												? `sticky left-0 z-30 box-border flex w-[233px] shrink-0 items-start bg-white px-2 py-2 text-[14px] leading-[21px] text-(--sub-mobile-text-muted) md:w-[400px] md:items-center md:px-4 md:py-0 md:text-xs md:text-(--sub-desktop-text-muted) dark:bg-(--sub-mobile-table-section-bg) dark:md:bg-(--sub-desktop-table-section-bg) ${rowHeaderDividerClassName}`
+												: `sticky left-0 z-30 box-border flex w-[233px] shrink-0 items-center bg-white px-2 text-[14px] leading-[21px] text-(--sub-mobile-text-muted) md:w-[400px] md:px-4 md:text-xs md:text-(--sub-desktop-text-muted) dark:bg-(--sub-mobile-table-section-bg) dark:md:bg-(--sub-desktop-table-section-bg) ${rowHeaderDividerClassName}`
 											const rowLabelClassName = row.wrapLabel
-												? WRAPPED_COMPARISON_ROW_LABEL_CLASSNAME
-												: COMPARISON_ROW_LABEL_CLASSNAME
+												? 'block w-full whitespace-normal break-words md:overflow-hidden md:text-ellipsis md:whitespace-nowrap'
+												: 'block w-full overflow-hidden text-ellipsis whitespace-nowrap'
 											return (
 												<div key={`${section.title}-${row.label}`} role="row" className={rowClassName}>
 													<div role="rowheader" className={rowHeaderClassName}>

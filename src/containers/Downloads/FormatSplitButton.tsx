@@ -42,7 +42,7 @@ export function FormatSplitButton({ onDownload, disabled, label = 'Download' }: 
 					gutter={4}
 					unmountOnHide
 					hideOnInteractOutside
-					className="z-50 min-w-32 overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-bg) shadow-lg"
+					className="z-50 min-w-32 overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-lg"
 				>
 					{(['csv', 'json'] as const).map((fmt) => (
 						<Ariakit.MenuItem
@@ -53,7 +53,7 @@ export function FormatSplitButton({ onDownload, disabled, label = 'Download' }: 
 								setFormat(fmt)
 								onDownload(fmt)
 							}}
-							className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-(--text-primary) hover:bg-(--link-hover-bg) data-active-item:bg-(--link-hover-bg)"
+							className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-(--text-primary) hover:bg-hover-row data-active-item:bg-hover-row"
 						>
 							<span>{FORMAT_LABELS[fmt]}</span>
 							{format === fmt ? (

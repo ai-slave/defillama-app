@@ -10,6 +10,14 @@ import { IrTabLabel } from '~/containers/Investors/IrTabLabel'
 import { getMainSiteIrDashboard } from '~/containers/Investors/mainSiteDashboards'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
+import {
+	menuSurfaceStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName,
+	popoverTreeRowStyles
+} from '~/ui/Popover'
+import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { slug } from '~/utils'
 import type { IProtocolPageMetrics } from './types'
 
@@ -66,11 +74,6 @@ type ProtocolDashboardAnnouncement = {
 	includeReferrer?: boolean
 }
 
-const sparkDashboardAnnouncementClassName =
-	'border border-[#ffb27a] bg-[linear-gradient(90deg,rgba(255,244,234,0.98),rgba(255,232,213,0.98)_38%,rgba(255,219,225,0.95)_100%)] text-[#7a3d0c] shadow-[0_8px_20px_rgba(255,142,43,0.14)] dark:border-[#8f4e1e] dark:bg-[linear-gradient(90deg,rgba(66,43,27,0.96),rgba(81,35,33,0.94)_55%,rgba(94,26,40,0.94)_100%)] dark:text-[#ffe8d5]'
-const sparkDashboardBadgeClassName =
-	'border border-white/70 bg-white/70 text-[#8d4c12] shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-[#ffd2aa]'
-
 const odysseyEnterpriseDashboardAnnouncement = {
 	announcementId: 'odyssey-enterprise-dashboard',
 	version: '2026-06-19',
@@ -95,8 +98,10 @@ const protocolDashboardAnnouncements: Record<string, ProtocolDashboardAnnounceme
 		linkLabel: 'investor relations dashboard',
 		prefix: "View Spark's",
 		suffix: 'for deeper analytics and investor reports.',
-		className: sparkDashboardAnnouncementClassName,
-		badgeClassName: sparkDashboardBadgeClassName,
+		className:
+			'border border-[#ffb27a] bg-[linear-gradient(90deg,rgba(255,244,234,0.98),rgba(255,232,213,0.98)_38%,rgba(255,219,225,0.95)_100%)] text-[#7a3d0c] shadow-[0_8px_20px_rgba(255,142,43,0.14)] dark:border-[#8f4e1e] dark:bg-[linear-gradient(90deg,rgba(66,43,27,0.96),rgba(81,35,33,0.94)_55%,rgba(94,26,40,0.94)_100%)] dark:text-[#ffe8d5]',
+		badgeClassName:
+			'border border-white/70 bg-white/70 text-[#8d4c12] shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-[#ffd2aa]',
 		includeReferrer: true
 	},
 	vesper: odysseyEnterpriseDashboardAnnouncement,
@@ -243,23 +248,25 @@ export function ProtocolOverviewLayout({
 			metricFiltersLabel={metricFiltersLabel ?? undefined}
 		>
 			{category === 'Uncollateralized Lending' || category === 'RWA Lending' ? (
-				<p className="relative rounded-md border border-(--bg-color) bg-(--btn-bg) p-2 text-center text-xs text-black dark:text-white">
-					Active loans are not included in TVL by default, to include them toggle Active Loans. For more info on this
-					click{' '}
-					<a
-						href="https://github.com/DefiLlama/DefiLlama-Adapters/discussions/6163"
-						target="_blank"
-						rel="noreferrer noopener"
-						className="underline"
-					>
-						here
-					</a>
-					.
-				</p>
+				<div className="relative rounded-md border border-(--bg-color) bg-(--btn-bg) p-2 text-center text-xs text-black dark:text-white">
+					<p>
+						Active loans are not included in TVL by default, to include them toggle Active Loans. For more info on this
+						click{' '}
+						<a
+							href="https://github.com/DefiLlama/DefiLlama-Adapters/discussions/6163"
+							target="_blank"
+							rel="noreferrer noopener"
+							className="underline"
+						>
+							here
+						</a>
+						.
+					</p>
+				</div>
 			) : null}
 
 			{warningBanners?.map((banner) => (
-				<p
+				<div
 					className={`relative rounded-md border p-2 text-center text-xs text-black dark:text-white ${
 						banner.level === 'rug'
 							? 'border-(--error) bg-(--error)/20'
@@ -269,8 +276,8 @@ export function ProtocolOverviewLayout({
 					}`}
 					key={`${banner.message}-${banner.level}-${name}`}
 				>
-					{banner.message}
-				</p>
+					<p>{banner.message}</p>
+				</div>
 			))}
 
 			{dashboardAnnouncement ? (
@@ -307,25 +314,23 @@ export function ProtocolOverviewLayout({
 			) : null}
 
 			<div className="isolate flex flex-1 flex-col gap-2">
-				<div className="flex w-full overflow-x-auto text-xs font-medium">
+				<div className={tabTrackStyles}>
 					{(otherProtocols?.length ?? 0) > 1 ? (
 						<Ariakit.MenuProvider>
-							<Ariakit.MenuButton className="mr-4 flex shrink-0 cursor-pointer items-center justify-between gap-2 rounded-md border border-(--cards-border) bg-white px-2 py-1 font-normal hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) dark:bg-[#181A1C]">
+							<Ariakit.MenuButton render={<Button className="my-auto mr-4" />}>
 								<TokenLogo name={name} kind="token" size={16} alt={`Logo of ${name}`} />
 								<span className="whitespace-nowrap">{name === otherProtocols?.[0] ? `${name} (Combined)` : name}</span>
-								<Ariakit.MenuButtonArrow />
+								<Icon name="chevron-down" className="size-3.5 shrink-0 text-tertiary" />
 							</Ariakit.MenuButton>
 							<Ariakit.Menu
 								unmountOnHide
 								hideOnInteractOutside
 								gutter={8}
-								wrapperProps={{
-									className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
-								}}
-								className="z-10 flex thin-scrollbar h-[calc(100dvh-80px)] min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:drawer max-sm:rounded-b-none sm:max-h-[60dvh] lg:h-full lg:max-h-(--popover-available-height) dark:border-[hsl(204,3%,32%)]"
+								wrapperProps={{ className: popoverMobileWrapperClassName }}
+								className={`${menuSurfaceStyles} lg:h-full`}
 								portal
 							>
-								<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
+								<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 									<Icon name="x" className="size-5" />
 								</Ariakit.PopoverDismiss>
 
@@ -334,21 +339,19 @@ export function ProtocolOverviewLayout({
 										key={`navigate to /protocol/${slug(value)}`}
 										render={<BasicLink href={`/protocol/${slug(value)}`} />}
 										data-active={name === value}
-										className={`group relative flex items-center gap-2 py-2 ${
-											i === 0 ? 'px-3' : 'ml-5.5 pr-3'
-										} shrink-0 cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap first-of-type:rounded-t-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover) data-[active=true]:bg-(--primary-hover)`}
+										className={`${popoverTreeRowStyles} ${i === 0 ? 'pl-3' : 'pl-8'}`}
 									>
 										{i !== 0 ? (
 											<>
-												<span className="absolute top-0 bottom-0 left-0 block h-full w-0.5 bg-(--form-control-border) group-last:h-[50%]" />
-												<span className="-mr-2 h-0.5 w-3 bg-(--form-control-border)" />
+												<span className="absolute top-0 bottom-0 left-3 block h-full w-0.5 bg-border-medium group-last:h-[50%]" />
+												<span className="-mr-2 h-0.5 w-3 bg-border-medium" />
 											</>
 										) : null}
 										<TokenLogo name={value} kind="token" size={24} alt={`Logo of ${value}`} />
 										{i === 0 ? (
 											<span className="flex flex-col">
 												<span>{`${value} (Combined)`}</span>
-												<span className="text-[10px] text-(--text-form)">Aggregated view</span>
+												<span className="label-xs text-tertiary">Aggregated view</span>
 											</span>
 										) : (
 											<span>{value}</span>
@@ -361,85 +364,62 @@ export function ProtocolOverviewLayout({
 
 					{isCEX ? (
 						<>
-							<ButtonLink
-								href={`/cex/${slug(name)}`}
-								data-active={!tab || tab === 'information'}
-								className="shrink-0 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) data-[active=true]:border-(--primary)"
-							>
+							<TabLink as={ButtonLink} href={`/cex/${slug(name)}`} data-active={!tab || tab === 'information'}>
 								Information
-							</ButtonLink>
+							</TabLink>
 							{metrics.tvl ? (
-								<ButtonLink
-									href={`/cex/assets/${slug(name)}`}
-									data-active={tab === 'assets'}
-									className="shrink-0 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) data-[active=true]:border-(--primary)"
-								>
+								<TabLink as={ButtonLink} href={`/cex/assets/${slug(name)}`} data-active={tab === 'assets'}>
 									Assets
-								</ButtonLink>
+								</TabLink>
 							) : null}
 							{metrics.stablecoins ? (
-								<ButtonLink
-									href={`/cex/stablecoins/${slug(name)}`}
-									data-active={tab === 'stablecoins'}
-									className="shrink-0 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) data-[active=true]:border-(--primary)"
-								>
+								<TabLink as={ButtonLink} href={`/cex/stablecoins/${slug(name)}`} data-active={tab === 'stablecoins'}>
 									Stablecoin Info
-								</ButtonLink>
+								</TabLink>
 							) : null}
 							{cexMarketsExchange && cexMarketsRouteSlug ? (
-								<ButtonLink
-									href={`/cex/markets/${cexMarketsRouteSlug}`}
-									data-active={tab === 'markets'}
-									className="shrink-0 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) data-[active=true]:border-(--primary)"
-								>
+								<TabLink as={ButtonLink} href={`/cex/markets/${cexMarketsRouteSlug}`} data-active={tab === 'markets'}>
 									Markets
-								</ButtonLink>
+								</TabLink>
 							) : null}
 						</>
 					) : (
 						<>
-							<ButtonLink
-								href={`/protocol/${slug(name)}`}
-								data-active={!tab || tab === 'information'}
-								className="shrink-0 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) data-[active=true]:border-(--primary)"
-							>
+							<TabLink as={ButtonLink} href={`/protocol/${slug(name)}`} data-active={!tab || tab === 'information'}>
 								Information
-							</ButtonLink>
+							</TabLink>
 							{metrics.tvl ? (
-								<ButtonLink
-									href={`/protocol/tvl/${slug(name)}`}
-									data-active={tab === 'tvl'}
-									className="shrink-0 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) data-[active=true]:border-(--primary)"
-								>
+								<TabLink as={ButtonLink} href={`/protocol/tvl/${slug(name)}`} data-active={tab === 'tvl'}>
 									TVL
-								</ButtonLink>
+								</TabLink>
 							) : null}
 						</>
 					)}
 					{protocolTabs
 						.filter((pt) => (isCEX ? pt.id !== 'stablecoins' : true))
 						.map((pt) => (
-							<ButtonLink
+							<TabLink
+								as={ButtonLink}
 								key={`${pt.id}-${name}`}
 								href={`${pt.route}/${slug(name)}`}
 								data-active={pt.id === tab}
-								className="shrink-0 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) data-[active=true]:border-(--primary)"
 							>
 								{pt.name}
-							</ButtonLink>
+							</TabLink>
 						))}
 					{showInvestorRelations && irDashboard ? (
-						<ButtonLink
+						<TabLink
+							as={ButtonLink}
 							href={`/protocol/investor-relations/${entitySlug}`}
 							data-active={tab === 'investorRelations'}
-							className="relative flex shrink-0 items-center gap-1.5 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)"
+							className="flex items-center gap-1.5"
 						>
 							<IrTabLabel
 								label={irDashboard.tabLabel}
 								gradient={irDashboard.brandGradient}
 								active={tab === 'investorRelations'}
 							/>
-						</ButtonLink>
+						</TabLink>
 					) : null}
 				</div>
 				{tab !== 'investorRelations' ? (

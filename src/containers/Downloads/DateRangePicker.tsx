@@ -66,7 +66,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 
 	const triggerClass = isActive
 		? 'flex items-center gap-1.5 rounded-md rounded-r-none border border-(--primary)/40 bg-(--primary)/10 px-2.5 py-1.5 text-xs font-medium text-(--primary) transition-colors hover:bg-(--primary)/15 disabled:opacity-40'
-		: 'flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) disabled:opacity-40'
+		: 'flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:opacity-40'
 
 	return (
 		<>
@@ -95,7 +95,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 					gutter={6}
 					portal
 					unmountOnHide
-					className="z-[60] flex w-[320px] max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg border border-(--divider) bg-(--cards-bg) p-4 shadow-xl"
+					className="z-[60] flex w-[320px] max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg border border-medium bg-surface-elevated-1 p-4 shadow-xl"
 				>
 					<section className="flex flex-col gap-2">
 						<h3 className="text-[11px] font-semibold tracking-wide text-(--text-tertiary) uppercase">Quick ranges</h3>
@@ -112,7 +112,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 										className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
 											isSelected
 												? 'border-(--primary) bg-(--primary) text-white'
-												: 'border-(--divider) text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)'
+												: 'border-(--divider) text-(--text-secondary) hover:bg-hover-row hover:text-(--text-primary)'
 										}`}
 									>
 										{label}
@@ -177,7 +177,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 							<button
 								type="button"
 								onClick={handleClear}
-								className="rounded-md border border-(--divider) px-2.5 py-1 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+								className="rounded-md border border-(--divider) px-2.5 py-1 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
 							>
 								Clear
 							</button>

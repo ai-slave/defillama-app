@@ -21,7 +21,7 @@ export function TokenPageTableShell({
 	...props
 }: HTMLAttributes<HTMLDivElement> & { children: ReactNode }) {
 	return (
-		<div className={clsx('overflow-hidden rounded-md border border-(--cards-border)', className)} {...props}>
+		<div className={clsx('overflow-hidden rounded-md border border-subtle', className)} {...props}>
 			{children}
 		</div>
 	)
@@ -68,7 +68,7 @@ export function TokenPageTableHeaderCell({
 	return (
 		<th
 			className={clsx(
-				'px-3 py-2 text-sm font-medium whitespace-nowrap text-(--text-secondary)',
+				'px-3 py-2 text-sm font-medium whitespace-nowrap text-secondary',
 				getTableTextAlignClass(textAlign),
 				className
 			)}
@@ -109,8 +109,8 @@ export function TokenPageTableIncomeHeaderCell({
 	return (
 		<th
 			className={clsx(
-				'overflow-hidden border-r border-b border-black/10 p-2 text-left text-ellipsis whitespace-nowrap dark:border-white/10',
-				surface === 'app' ? 'bg-(--app-bg)' : 'bg-(--cards-bg)',
+				'overflow-hidden border-r border-b border-divider p-2 text-left text-ellipsis whitespace-nowrap',
+				surface === 'app' ? 'bg-page' : 'bg-surface',
 				sticky && 'first:sticky first:left-0 first:z-10',
 				lastColumn && 'border-r-0',
 				className
@@ -135,7 +135,7 @@ export function TokenPageTableIncomeCell({
 	return (
 		<td
 			className={clsx(
-				'overflow-hidden border-r border-b border-black/10 p-2 text-left text-ellipsis whitespace-nowrap dark:border-white/10',
+				'overflow-hidden border-r border-b border-divider p-2 text-left text-ellipsis whitespace-nowrap',
 				lastColumn && 'border-r-0',
 				className
 			)}

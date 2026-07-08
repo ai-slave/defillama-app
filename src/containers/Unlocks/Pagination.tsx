@@ -202,7 +202,7 @@ export const Pagination = ({ items, startIndex = 0 }: PaginationProps) => {
 				<div className="flex flex-1 items-center justify-start overflow-hidden">
 					<div style={contentStyle}>
 						{currentItems.map((item: React.ReactNode, index: number) => (
-							<div key={index} className="relative w-full p-2">
+							<div key={index} className="relative w-full px-2 first:pl-0 last:pr-0">
 								{item}
 							</div>
 						))}

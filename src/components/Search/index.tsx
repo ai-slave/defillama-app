@@ -10,6 +10,8 @@ import { useAuthContext } from '~/containers/Subscription/auth'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useIsClient } from '~/hooks/useIsClient'
+import { buttonStyles } from '~/ui/Button'
+import { inputStyles } from '~/ui/Input'
 import { fetchJson } from '~/utils/async'
 
 const SEARCH_PAGE_SIZE = 20
@@ -67,14 +69,16 @@ export const MobileSearch = () => {
 				<span className="sr-only">{isClient && shouldSkipLanding ? 'Ask LlamaAI' : 'Try LlamaAI'}</span>
 			</BasicLink>
 			<Ariakit.DialogProvider store={dialogStore}>
-				<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-[#445ed0] p-3 text-white shadow lg:hidden">
+				<Ariakit.DialogDisclosure
+					className={`-my-0.5 lg:hidden ${buttonStyles({ variant: 'primary', size: 'md', square: true })}`}
+				>
 					<span className="sr-only">Search</span>
 					<Icon name="search" height={16} width={16} />
 				</Ariakit.DialogDisclosure>
 
 				<Ariakit.Dialog
 					unmountOnHide={false}
-					className="dialog h-[calc(100dvh-80px)] max-h-(--popover-available-height) bg-(--bg-main) p-2 max-sm:drawer"
+					className="dialog h-[calc(100dvh-80px)] max-h-(--popover-available-height) bg-surface-elevated-1 p-2 max-sm:drawer"
 					hideOnInteractOutside
 					portal
 				>
@@ -87,10 +91,7 @@ export const MobileSearch = () => {
 						}}
 					>
 						<span className="relative isolate flex w-full items-center justify-between gap-2">
-							<Ariakit.Combobox
-								placeholder="Search..."
-								className="ml-2 flex-1 rounded-md bg-white px-3 py-1 text-base focus:ring-(--primary) dark:bg-black"
-							/>
+							<Ariakit.Combobox placeholder="Search..." className={`ml-2 flex-1 ${inputStyles}`} />
 							<Ariakit.DialogDismiss className="p-2">
 								<Icon name="x" className="size-5" />
 							</Ariakit.DialogDismiss>
@@ -127,7 +128,7 @@ function MobileSearchResults({ searchValue, onSelect }: { searchValue: string; o
 			return <p className="flex items-center justify-center p-4 text-(--error)">{`Error: ${error.message}`}</p>
 		}
 		if (!data.length) {
-			return <p className="flex items-center justify-center p-4">No results found</p>
+			return <p className="flex items-center justify-center p-4 body-md text-tertiary">No results found</p>
 		}
 		return (
 			<>
@@ -153,7 +154,7 @@ function MobileSearchResults({ searchValue, onSelect }: { searchValue: string; o
 		)
 	}
 	if (!defaultSearchList?.length) {
-		return <p className="flex items-center justify-center p-4">No results found</p>
+		return <p className="flex items-center justify-center p-4 body-md text-tertiary">No results found</p>
 	}
 
 	return (
@@ -221,8 +222,9 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 			>
 				<span className="relative isolate hidden w-full lg:inline-block lg:max-w-[50vw]">
 					<button
+						type="button"
 						onClick={() => setOpen((prev) => !prev)}
-						className="absolute top-0 bottom-0 left-2 my-auto opacity-50"
+						className="absolute top-0 bottom-0 left-3 my-auto text-tertiary hover:text-primary focus-visible:text-primary"
 					>
 						{open ? (
 							<>
@@ -240,9 +242,9 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 						id="desktop-search-input"
 						placeholder="Search..."
 						ref={inputField}
-						className="w-full rounded-md border border-(--cards-border) bg-(--app-bg) px-2.5 py-0.75 pl-7 text-black focus:border-(--primary) focus:ring-1 focus:ring-(--primary) focus:outline-hidden focus-visible:outline-hidden lg:py-1.25 dark:text-white"
+						className={`${inputStyles} w-full pr-14 pl-8`}
 					/>
-					<span className="absolute top-0.75 right-0.75 bottom-0.75 m-auto flex items-center justify-center rounded-md bg-(--link-bg) p-1 text-xs text-(--link-text)">
+					<span className="absolute top-0 right-1.5 bottom-0 my-auto flex h-5 items-center justify-center rounded-md bg-brand-muted px-1.5 label-xs text-link">
 						⌘K
 					</span>
 				</span>
@@ -251,7 +253,7 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 					hideOnInteractOutside
 					gutter={6}
 					sameWidth
-					className="z-10 flex thin-scrollbar max-h-[min(var(--popover-available-height),60vh)] flex-col overflow-auto overscroll-contain rounded-b-md border border-t-0 border-(--cards-border) bg-(--cards-bg) max-sm:h-[calc(100dvh-80px)] max-sm:drawer"
+					className="z-10 flex thin-scrollbar min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(var(--popover-available-height),60vh)]"
 					portal
 				>
 					<Ariakit.ComboboxList alwaysVisible>
@@ -264,7 +266,7 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 							) : error ? (
 								<p className="flex items-center justify-center p-4 text-(--error)">{`Error: ${error.message}`}</p>
 							) : !data.length ? (
-								<p className="flex items-center justify-center p-4">No results found</p>
+								<p className="flex items-center justify-center p-4 body-md text-tertiary">No results found</p>
 							) : (
 								<>
 									{data.map((route: ISearchItem) => (
@@ -283,7 +285,7 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 						) : errorDefaultSearchList ? (
 							<p className="flex items-center justify-center p-4 text-(--error)">{`Error: ${errorDefaultSearchList.message}`}</p>
 						) : !defaultSearchList?.length ? (
-							<p className="flex items-center justify-center p-4">No results found</p>
+							<p className="flex items-center justify-center p-4 body-md text-tertiary">No results found</p>
 						) : (
 							<>
 								{recentSearchList.map((route: ISearchItem) => (
@@ -300,7 +302,7 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 			{!hideLlamaAiCta ? (
 				<BasicLink
 					href={isClient && shouldSkipLanding ? '/ai/chat' : '/ai'}
-					className="llamaai-glow relative mr-auto hidden items-center justify-between gap-[10px] overflow-hidden rounded-md bg-[linear-gradient(93.94deg,#FDE0A9_24.73%,#FBEDCB_57.42%,#FDE0A9_99.73%)] px-4 py-2 text-xs font-semibold text-black shadow-[0px_0px_30px_0px_rgba(253,224,169,0.5),0px_0px_1px_2px_rgba(255,255,255,0.1)] lg:flex"
+					className="llamaai-glow relative mr-auto hidden items-center justify-between gap-2.5 overflow-hidden rounded-md bg-[linear-gradient(93.94deg,#FDE0A9_24.73%,#FBEDCB_57.42%,#FDE0A9_99.73%)] px-4 py-2 text-xs font-semibold text-black shadow-[0px_0px_30px_0px_rgba(253,224,169,0.5),0px_0px_1px_2px_rgba(255,255,255,0.1)] lg:flex"
 					data-umami-event="llamaai-nav-link"
 					data-umami-event-subscribed={isClient && hasActiveSubscription ? 'true' : 'false'}
 				>
@@ -326,7 +328,7 @@ const SearchItem = ({
 	const router = useRouter()
 	return (
 		<Ariakit.ComboboxItem
-			className="flex flex-wrap items-center gap-2 p-2 outline-hidden cv-auto-40 hover:bg-(--link-bg) focus-visible:bg-(--link-bg) data-active-item:bg-(--link-bg) lg:px-4"
+			className="flex flex-wrap items-center gap-2 px-3 py-2 body-md text-primary cv-auto-40 outline-none hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row"
 			render={
 				<BasicLink
 					href={route.route}
@@ -354,15 +356,15 @@ const SearchItem = ({
 			<span>{route.name}</span>
 			{route.subName ? (
 				<>
-					<Icon name="chevron-right" height={16} width={16} className="text-(--text-form)" />
-					<span className="text-(--text-form)">{route.subName}</span>
+					<Icon name="chevron-right" height={16} width={16} className="text-tertiary" />
+					<span className="text-tertiary">{route.subName}</span>
 				</>
 			) : null}
 			{route.deprecated ? <span className="text-xs text-(--error)">(Deprecated)</span> : null}
 			{route.hideType ? null : recent ? (
 				<Icon name="clock" height={12} width={12} className="ml-auto" />
 			) : (
-				<span className="ml-auto text-xs text-(--link-text)">{route.type}</span>
+				<span className="ml-auto label-sm text-link">{route.type}</span>
 			)}
 		</Ariakit.ComboboxItem>
 	)
@@ -374,7 +376,7 @@ const SeeMoreButton = ({ isLoading, onClick }: { isLoading: boolean; onClick: ()
 			type="button"
 			onClick={onClick}
 			disabled={isLoading}
-			className="flex w-full items-center justify-center gap-1 p-2 text-sm text-(--link-text) hover:bg-(--link-bg) disabled:opacity-60 lg:px-4"
+			className="flex w-full items-center justify-center gap-1 px-3 py-2 body-sm text-link hover:bg-hover-row disabled:opacity-60"
 		>
 			{isLoading ? (
 				<>

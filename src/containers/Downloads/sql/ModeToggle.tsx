@@ -13,7 +13,7 @@ export function ModeToggle({ mode, onChange, size = 'md' }: ModeToggleProps) {
 		<div
 			role="tablist"
 			aria-label="Downloads mode"
-			className={`inline-flex items-center gap-1 rounded-lg border border-(--divider) bg-(--cards-bg) ${
+			className={`inline-flex items-center gap-1 rounded-lg border border-(--divider) bg-surface ${
 				size === 'md' ? 'p-1' : 'p-0.5'
 			}`}
 		>
@@ -62,7 +62,7 @@ function ModeButton({
 			className={`flex items-center font-medium transition-colors ${sizing} ${
 				active
 					? 'bg-(--primary) text-white shadow-sm'
-					: 'text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)'
+					: 'text-(--text-secondary) hover:bg-hover-row hover:text-(--text-primary)'
 			}`}
 		>
 			<Icon name={icon} className={iconSize} />

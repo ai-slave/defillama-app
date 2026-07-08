@@ -19,13 +19,13 @@ export function ExamplesPanel({ onApply, busyTaskId, collapsed = false, onToggle
 
 function CollapsedExamplesRail({ onExpand }: { onExpand?: () => void }) {
 	return (
-		<aside className="flex flex-col items-stretch gap-2 rounded-md border border-(--divider) bg-(--cards-bg) p-1.5">
+		<aside className="flex flex-col items-stretch gap-2 rounded-md border border-(--divider) bg-surface p-1.5">
 			<button
 				type="button"
 				onClick={onExpand}
 				title="Expand playbook"
 				aria-label="Expand playbook"
-				className="flex size-7 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+				className="flex size-7 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
 			>
 				<Icon name="panel-left-open" className="size-3.5 rotate-180" />
 			</button>
@@ -101,7 +101,7 @@ function ExpandedExamplesPanel({
 	}, [filteredGroups])
 
 	return (
-		<aside className="flex max-h-[min(38rem,calc(100vh-11rem))] flex-col gap-3 rounded-md border border-(--divider) bg-(--cards-bg) p-3">
+		<aside className="flex max-h-[min(38rem,calc(100vh-11rem))] flex-col gap-3 rounded-md border border-(--divider) bg-surface p-3">
 			<header className="flex items-baseline justify-between gap-2">
 				<div className="flex items-baseline gap-2">
 					<h3 className="text-sm font-semibold tracking-tight text-(--text-primary)">Playbook</h3>
@@ -115,7 +115,7 @@ function ExpandedExamplesPanel({
 							onClick={onCollapse}
 							title="Collapse playbook"
 							aria-label="Collapse playbook"
-							className="flex size-5 items-center justify-center rounded-sm text-(--text-tertiary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+							className="flex size-5 items-center justify-center rounded-sm text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
 						>
 							<Icon name="panel-left-close" className="size-3 rotate-180" />
 						</button>

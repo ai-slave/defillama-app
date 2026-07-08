@@ -1,3 +1,5 @@
+import { forgdSecondaryLinkStyles } from './styles'
+
 const CARDS = [
 	{
 		icon: '/market-makers-docs/pictogram-advisory.svg',
@@ -40,10 +42,10 @@ function ArrowUpRightIcon() {
 
 export function ReadyToStart() {
 	return (
-		<div className="flex flex-col gap-4 border-t border-(--divider) pt-6">
+		<div className="flex flex-col gap-4 border-t border-subtle pt-6">
 			<div className="flex flex-col gap-1">
-				<h2 className="text-xl font-semibold text-(--text-primary)">Ready to start with Forgd?</h2>
-				<p className="text-sm text-(--text-secondary)">
+				<h2 className="heading-sm text-primary">Ready to start with Forgd?</h2>
+				<p className="body-sm text-secondary">
 					Engage with our free tools, and apply the learnings from our research data.
 				</p>
 			</div>
@@ -59,7 +61,7 @@ export function ReadyToStart() {
 							href={card.href}
 							target="_blank"
 							rel="noreferrer noopener"
-							className="mt-auto inline-flex w-fit items-center gap-2 rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+							className={`mt-auto ${forgdSecondaryLinkStyles}`}
 						>
 							{card.cta}
 							<ArrowUpRightIcon />

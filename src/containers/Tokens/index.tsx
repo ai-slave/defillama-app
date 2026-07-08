@@ -7,6 +7,9 @@ import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/components/Tooltip'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import type {
 	TokensDisplayTone,
 	TokensPageProps,
@@ -28,26 +31,26 @@ const RIGHTS_CHIP_TONE_CLASSES: Record<RightsTone, string> = {
 	positive: 'border-green-600/30 bg-green-600/10 text-green-700 dark:text-green-400',
 	negative: 'border-red-600/30 bg-red-600/10 text-red-700 dark:text-red-400',
 	warning: 'border-amber-600/30 bg-amber-600/10 text-amber-700 dark:text-amber-400',
-	neutral: 'border-(--cards-border) bg-(--cards-bg) text-(--text-secondary)'
+	neutral: 'border-medium bg-surface text-secondary'
 }
 
 const RIGHTS_TEXT_TONE_CLASSES: Record<RightsTone, string> = {
 	positive: 'text-green-700 dark:text-green-400',
 	negative: 'text-red-600 dark:text-red-400',
 	warning: 'text-amber-600 dark:text-amber-400',
-	neutral: 'text-(--text-secondary)'
+	neutral: 'text-secondary'
 }
 
 const RIGHTS_DOT_TONE_CLASSES: Record<RightsTone, string> = {
-	positive: 'bg-(--success)',
-	negative: 'bg-(--error)',
+	positive: 'bg-data-up',
+	negative: 'bg-data-down',
 	warning: 'bg-amber-500',
-	neutral: 'bg-(--text-disabled)'
+	neutral: 'bg-disabled'
 }
 
 const VALUE_TONE_CLASSES: Record<TokensDisplayTone, string> = {
-	positive: 'text-(--success)',
-	negative: 'text-(--error)',
+	positive: 'text-data-up',
+	negative: 'text-data-down',
 	neutral: ''
 }
 
@@ -66,7 +69,7 @@ export function getRankColumnWidth(rows: TokensTableRow[]): number {
 }
 
 function Dash() {
-	return <span className="text-(--text-disabled)">-</span>
+	return <span className="text-tertiary">-</span>
 }
 
 function CurrencyValue({ value }: { value: string | null }) {
@@ -88,7 +91,7 @@ function ProgressPercentValue({
 	tone?: 'link' | 'success'
 }) {
 	if (value === null || width === null) return <Dash />
-	const barClassName = tone === 'success' ? 'bg-(--success)' : 'bg-(--link-text)'
+	const barClassName = tone === 'success' ? 'bg-data-up' : 'bg-brand'
 
 	return (
 		<span className="flex min-w-[92px] flex-col items-end gap-1">
@@ -105,7 +108,7 @@ function TokenCell({ row }: { row: { original: TokensTableRow } }) {
 	const label = (
 		<span className="min-w-0">
 			<span className="block overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap">{name}</span>
-			<span className="block text-xs text-(--text-secondary)">{symbol}</span>
+			<span className="block label-sm text-secondary">{symbol}</span>
 		</span>
 	)
 
@@ -114,7 +117,7 @@ function TokenCell({ row }: { row: { original: TokensTableRow } }) {
 			<Bookmark watchlistType="tokens" itemKey={id} readableName={symbol} data-lgonly data-bookmark />
 			<TokenLogo src={logo} size={24} alt={`Logo of ${name}`} />
 			{href ? (
-				<BasicLink href={href} className="min-w-0 text-(--link-text) hover:underline">
+				<BasicLink href={href} className="min-w-0 text-link hover:underline">
 					{label}
 				</BasicLink>
 			) : (
@@ -150,13 +153,13 @@ function equityCaptureTone(value: string): RightsTone {
 }
 
 function RightsToneText({ label, tone }: { label: string; tone: RightsTone }) {
-	return <span className={`text-xs font-semibold whitespace-nowrap ${RIGHTS_TEXT_TONE_CLASSES[tone]}`}>{label}</span>
+	return <span className={`label-sm font-semibold whitespace-nowrap ${RIGHTS_TEXT_TONE_CLASSES[tone]}`}>{label}</span>
 }
 
 function RightsChip({ label, tone }: { label: string; tone: RightsTone }) {
 	return (
 		<span
-			className={`inline-flex w-fit shrink-0 items-center rounded-md border px-1.5 py-0.5 text-xs font-medium whitespace-nowrap ${RIGHTS_CHIP_TONE_CLASSES[tone]}`}
+			className={`inline-flex w-fit shrink-0 items-center rounded-md border px-1.5 py-0.5 label-sm whitespace-nowrap ${RIGHTS_CHIP_TONE_CLASSES[tone]}`}
 		>
 			{label}
 		</span>
@@ -265,7 +268,7 @@ function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
 	]
 
 	return (
-		<div className="w-[min(24rem,var(--popover-available-width))] whitespace-normal text-(--text-primary)">
+		<div className="w-[min(24rem,var(--popover-available-width))] whitespace-normal text-primary">
 			<div className="flex min-w-0 flex-col gap-2.5">
 				<div className="flex flex-wrap items-center gap-1.5">
 					<h3 className="text-base leading-tight font-semibold">{rights.protocolName}</h3>
@@ -276,14 +279,12 @@ function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
 
 				{hasPrimaryValueAccrual ? (
 					<div className="flex flex-col gap-1 rounded-md border border-green-600/30 bg-green-600/10 p-2">
-						<div className="text-xs font-medium tracking-wider text-(--text-label) uppercase">
-							Primary Value Accrual
-						</div>
+						<div className="label-sm font-medium tracking-wider text-tertiary uppercase">Primary Value Accrual</div>
 						{rights.primaryValue !== null ? (
 							<div className="text-sm font-semibold text-green-700 dark:text-green-400">{rights.primaryValue}</div>
 						) : null}
 						{rights.primaryDetails ? (
-							<p className="text-xs leading-snug text-(--text-secondary)">{rights.primaryDetails}</p>
+							<p className="label-sm leading-snug text-secondary">{rights.primaryDetails}</p>
 						) : null}
 					</div>
 				) : null}
@@ -292,9 +293,9 @@ function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
 					{coreFields.map((field) => (
 						<div
 							key={field.label}
-							className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3 border-b border-(--cards-border) pb-1.5 last:border-b-0 last:pb-0"
+							className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3 border-b border-very-subtle pb-1.5 last:border-b-0 last:pb-0"
 						>
-							<span className="flex min-w-0 items-center gap-1.5 text-xs font-medium whitespace-nowrap text-(--text-secondary)">
+							<span className="flex min-w-0 items-center gap-1.5 label-sm whitespace-nowrap text-secondary">
 								<span className={`size-1.5 shrink-0 rounded-full ${RIGHTS_DOT_TONE_CLASSES[field.tone]}`} />
 								{field.label}
 							</span>
@@ -303,26 +304,26 @@ function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
 					))}
 				</div>
 
-				<div className="grid gap-1.5 border-t border-(--cards-border) pt-2">
+				<div className="grid gap-1.5 border-t border-very-subtle pt-2">
 					{extraFields.map((field) => (
 						<div key={field.label} className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3">
-							<span className="text-xs font-medium whitespace-nowrap text-(--text-secondary)">{field.label}</span>
+							<span className="label-sm whitespace-nowrap text-secondary">{field.label}</span>
 							<span className="flex min-w-0 items-center justify-end text-right">{field.value}</span>
 						</div>
 					))}
 				</div>
 
 				{rights.utilityItems.length > 0 || rights.fundraisingLabel || rights.associatedEntities.length > 0 ? (
-					<div className="grid gap-2 border-t border-(--cards-border) pt-2">
+					<div className="grid gap-2 border-t border-very-subtle pt-2">
 						{rights.utilityItems.length > 0 ? (
 							<div className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3">
-								<span className="text-xs font-medium whitespace-nowrap text-(--text-secondary)">Utility</span>
+								<span className="label-sm whitespace-nowrap text-secondary">Utility</span>
 								<RightsChipList items={rights.utilityItems} tone="neutral" wrap align="end" />
 							</div>
 						) : null}
 						{rights.fundraisingLabel ? (
 							<div className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3">
-								<span className="text-xs font-medium whitespace-nowrap text-(--text-secondary)">Fundraising</span>
+								<span className="label-sm whitespace-nowrap text-secondary">Fundraising</span>
 								<span className="flex min-w-0 items-center justify-end text-right">
 									<RightsToneText label={rights.fundraisingLabel} tone="neutral" />
 								</span>
@@ -330,7 +331,7 @@ function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
 						) : null}
 						{rights.associatedEntities.length > 0 ? (
 							<div className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3">
-								<span className="text-xs font-medium whitespace-nowrap text-(--text-secondary)">Entities</span>
+								<span className="label-sm whitespace-nowrap text-secondary">Entities</span>
 								<RightsChipList items={rights.associatedEntities} tone="neutral" wrap align="end" />
 							</div>
 						) : null}
@@ -349,7 +350,7 @@ function RightsPie({ rights }: { rights: TokensRightsSummary | null }) {
 			<span
 				role="img"
 				aria-label="Token rights summary"
-				className="inline-block size-7 rounded-full border border-(--cards-border)"
+				className="inline-block size-7 rounded-full border border-medium"
 				style={{ background: rights.pieGradient }}
 			/>
 		</Tooltip>
@@ -360,11 +361,11 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 	columnHelper.accessor((row) => row.rank ?? undefined, {
 		id: 'rank',
 		header: '#',
-		cell: ({ row }) => <span className="text-xs text-(--text-secondary) tabular-nums">{row.original.rowNumber}</span>,
+		cell: ({ row }) => <span className="label-sm text-secondary tabular-nums">{row.original.rowNumber}</span>,
 		meta: {
 			headerClassName:
-				'sticky left-0 z-20 w-[var(--tokens-rank-column-width)] min-w-[var(--tokens-rank-column-width)] bg-(--cards-bg) !px-1',
-			cellClassName: 'sticky left-0 z-10 bg-(--cards-bg) !px-1',
+				'sticky left-0 z-20 w-[var(--tokens-rank-column-width)] min-w-[var(--tokens-rank-column-width)] bg-surface !px-1',
+			cellClassName: 'sticky left-0 z-10 bg-surface !px-1',
 			align: 'end',
 			headerHelperText: 'Row number in the current sorted and filtered results'
 		}
@@ -374,9 +375,8 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: 'Coin',
 		cell: ({ row }) => <TokenCell row={row} />,
 		meta: {
-			headerClassName:
-				'sticky left-[var(--tokens-rank-column-width)] z-20 w-[184px] min-w-[184px] bg-(--cards-bg) !pl-1',
-			cellClassName: 'sticky left-[var(--tokens-rank-column-width)] z-10 bg-(--cards-bg) !pl-1',
+			headerClassName: 'sticky left-[var(--tokens-rank-column-width)] z-20 w-[184px] min-w-[184px] bg-surface !pl-1',
+			cellClassName: 'sticky left-[var(--tokens-rank-column-width)] z-10 bg-surface !pl-1',
 			headerHelperText: 'Token name, symbol, and token page link when available'
 		}
 	}),
@@ -587,12 +587,7 @@ const expanderColumn: ColumnDef<TokensTableRow> = columnHelper.display({
 	cell: ({ row }) => {
 		const isExpanded = row.getIsExpanded()
 		return (
-			<button
-				type="button"
-				onClick={row.getToggleExpandedHandler()}
-				aria-expanded={isExpanded}
-				className="flex items-center gap-1 rounded-md border border-(--form-control-border) px-2 py-1 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
-			>
+			<Button type="button" onClick={row.getToggleExpandedHandler()} aria-expanded={isExpanded}>
 				Markets
 				<Icon
 					name="chevron-down"
@@ -600,7 +595,7 @@ const expanderColumn: ColumnDef<TokensTableRow> = columnHelper.display({
 					width={12}
 					className={`transition-transform duration-100 ${isExpanded ? 'rotate-180' : ''}`}
 				/>
-			</button>
+			</Button>
 		)
 	},
 	meta: {
@@ -620,7 +615,7 @@ export function buildTokensColumns({ expandable = false }: { expandable?: boolea
 
 function TokensStatsChange({ value, tone }: { value: string | null; tone: TokensDisplayTone }) {
 	if (value === null) return null
-	return <span className={`text-sm font-medium tabular-nums ${VALUE_TONE_CLASSES[tone]}`}>{value}</span>
+	return <span className={`label-md tabular-nums ${VALUE_TONE_CLASSES[tone]}`}>{value}</span>
 }
 
 function TokensStats({ stats }: { stats: TokensPageStatsDisplay }) {
@@ -639,11 +634,11 @@ function TokensStats({ stats }: { stats: TokensPageStatsDisplay }) {
 	] as const
 
 	return (
-		<dl className="flex w-full flex-wrap items-center gap-x-5 gap-y-1.5 rounded-md border border-(--cards-border) bg-(--cards-bg) px-3 py-2">
+		<Card as="dl" border="subtle" padding="sm" className="flex w-full flex-wrap items-center gap-x-5 gap-y-1.5">
 			{items.map((item) => (
 				<div key={item.label} className="flex items-baseline gap-1.5">
-					<dt className="text-sm text-(--text-label)">{item.label}</dt>
-					<dd className="text-sm font-medium tabular-nums">{item.value}</dd>
+					<dt className="body-sm text-tertiary">{item.label}</dt>
+					<dd className="label-md tabular-nums">{item.value}</dd>
 					{'change' in item && item.change != null ? (
 						<dd>
 							<TokensStatsChange value={item.change} tone={item.changeTone} />
@@ -651,7 +646,7 @@ function TokensStats({ stats }: { stats: TokensPageStatsDisplay }) {
 					) : null}
 				</div>
 			))}
-		</dl>
+		</Card>
 	)
 }
 
@@ -685,19 +680,14 @@ function TokensControls({ search, updateSearch }: { search: string; updateSearch
 			<form onSubmit={handleSubmit} className="w-full sm:max-w-sm">
 				<label className="relative block min-w-0">
 					<span className="sr-only">Search tokens</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
 						ref={searchInputRef}
 						name="search"
 						defaultValue={search}
 						onInput={handleSearchInput}
 						placeholder="Search tokens..."
-						className="min-h-8 w-full rounded-md border border-(--form-control-border) bg-(--cards-bg) px-2 py-1 pl-7 text-sm outline-hidden placeholder:text-(--text-tertiary) focus-visible:border-(--link-text)"
+						className={searchFieldInputStyles}
 					/>
 				</label>
 			</form>

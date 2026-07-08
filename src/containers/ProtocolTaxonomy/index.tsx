@@ -16,6 +16,9 @@ import { Tooltip } from '~/components/Tooltip'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { definitions } from '~/public/definitions'
+import { Card } from '~/ui/Card'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formatNum, formattedNum } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { buildProtocolTaxonomyGroupedCharts } from './chartGrouping'
@@ -84,11 +87,11 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 		<>
 			{props.chains.length > 1 ? <RowLinksWithDropdown links={props.chains} activeLink={props.chain} /> : null}
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-5 xl:col-span-1">
+				<Card border="subtle" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					{props.chain === 'All' ? (
-						<h1 className="text-lg font-semibold">{categoryPresentation.headingLabel}</h1>
+						<h1 className="heading-xs">{categoryPresentation.headingLabel}</h1>
 					) : (
-						<h1 className="text-lg font-semibold">{`${categoryPresentation.headingLabel} on ${props.chain}`}</h1>
+						<h1 className="heading-xs">{`${categoryPresentation.headingLabel} on ${props.chain}`}</h1>
 					)}
 					<div className="mb-auto flex flex-1 flex-col gap-2">
 						{props.charts.dataset?.source.length > 0 ? (
@@ -180,9 +183,9 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							</p>
 						) : null}
 					</div>
-				</div>
-				<div className="col-span-2 rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<div className="flex items-center justify-end gap-2 p-2 pb-0">
+				</Card>
+				<Panel className="col-span-2">
+					<ChartPanelToolbar className="justify-end">
 						{hasBarCharts ? (
 							<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 						) : null}
@@ -196,7 +199,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							}
 							iconUrl={props.chain && props.chain !== 'All' ? chainIconUrl(props.chain) : undefined}
 						/>
-					</div>
+					</ChartPanelToolbar>
 					<Suspense fallback={<div className="min-h-[360px]" />}>
 						<MultiSeriesChart2
 							dataset={deferredGroupedCharts.dataset}
@@ -207,7 +210,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							onReady={handleChartReady}
 						/>
 					</Suspense>
-				</div>
+				</Panel>
 			</div>
 			<TableWithSearch
 				data={finalProtocols}
@@ -250,7 +253,7 @@ const perpVolumeCell = (info: any) => {
 				{helpers.map((helper) => (
 					<QuestionHelper key={`${info.row.original.name}-${helper}`} text={helper} />
 				))}
-				<span className={info.row.original.perpVolume?.doublecounted ? 'text-(--text-disabled)' : ''}>
+				<span className={info.row.original.perpVolume?.doublecounted ? 'text-tertiary' : ''}>
 					{formattedNum(info.getValue(), true)}
 				</span>
 			</span>
@@ -294,7 +297,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 						</BasicLink>
 						<Tooltip
 							content={<ProtocolChainsComponent chains={row.original.chains} />}
-							className="text-[0.7rem] text-(--text-disabled)"
+							className="text-[0.7rem] text-secondary"
 						>
 							{`${row.original.chains.length} chain${row.original.chains.length > 1 ? 's' : ''}`}
 						</Tooltip>

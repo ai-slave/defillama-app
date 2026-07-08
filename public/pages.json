@@ -893,7 +893,7 @@
       "name": "Token Rights",
       "route": "/token-rights",
       "category": "Others",
-      "description": "List of protocols with token rights",
+      "description": "Compare governance, economic, and ownership rights across DeFi protocols",
       "tab": "Protocols",
       "oldName": "Token Rights"
     }

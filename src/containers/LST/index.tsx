@@ -239,7 +239,7 @@ export const LSTOverview = ({
 
 	return (
 		<>
-			<h1 className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 text-xl font-semibold">
+			<h1 className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 heading-sm">
 				<span>Total Value Locked ETH LSTs</span>
 				<span className="font-jetbrains">{`${formattedNum(stakedEthSum)} ETH (${formattedNum(
 					stakedEthInUsdSum,
@@ -268,7 +268,7 @@ export const LSTOverview = ({
 				<div className="flex flex-col">
 					{tab === 'breakdown' ? (
 						<div className="grid grid-cols-1 gap-2 pt-2 xl:grid-cols-2">
-							<React.Suspense fallback={<div className="min-h-[398px]" />}>
+							<React.Suspense fallback={<div className="min-h-[406px]" />}>
 								<PieChart
 									chartData={deferredPieChartData}
 									stackColors={lsdColors}

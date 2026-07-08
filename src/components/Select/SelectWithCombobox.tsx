@@ -6,9 +6,28 @@ import * as React from 'react'
 import { Icon } from '~/components/Icon'
 import { NestedMenu, NestedMenuItem } from '~/components/NestedMenu'
 import { Tooltip } from '~/components/Tooltip'
+import { inputStyles } from '~/ui/Input'
+import {
+	excludedSurfaceComboboxActionBarStyles,
+	excludedSurfaceComboboxPopoverSurfaceStyles,
+	legacyPopoverActionButtonStyles,
+	legacyPopoverSeeMoreStyles,
+	legacyPopoverSelectCheckStyles,
+	legacySelectPopoverRowStyles,
+	popoverActionBarStyles,
+	popoverActionButtonStyles,
+	popoverMultiSelectCheckStyles,
+	popoverRowWithBorderStyles,
+	popoverSearchBlockStyles,
+	popoverSeeMoreStyles,
+	popoverSingleSelectCheckStyles,
+	popoverSurfaceStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName
+} from '~/ui/Popover'
 import { updateQueryFromSelected } from './query'
-import type { ExcludeQueryKey, SelectOption, SelectTriggerVariant, SelectValues } from './types'
-import { SELECT_TRIGGER_VARIANTS } from './types'
+import type { ExcludeQueryKey, SelectOption, SelectTriggerSize, SelectTriggerVariant, SelectValues } from './types'
+import { selectTriggerStyles } from './types'
 
 interface ISelectWithComboboxBase {
 	allValues: SelectValues
@@ -18,6 +37,7 @@ interface ISelectWithComboboxBase {
 	nestedMenu?: boolean
 	labelType?: 'regular' | 'smol' | 'none'
 	variant?: SelectTriggerVariant
+	size?: SelectTriggerSize
 	triggerProps?: Ariakit.SelectProps
 	customFooter?: React.ReactNode
 	onEditCustomColumn?: (idx: number) => void
@@ -34,6 +54,7 @@ interface ISelectWithComboboxBase {
 	visibleOptionLimit?: number | null
 	selectAllScope?: 'all' | 'matches'
 	emptyLabel?: React.ReactNode
+	popoverVariant?: 'default' | 'legacy'
 }
 
 interface ISelectWithComboboxUrlParams extends ISelectWithComboboxBase {
@@ -60,6 +81,7 @@ export function SelectWithCombobox({
 	nestedMenu,
 	labelType,
 	variant,
+	size,
 	triggerProps,
 	customFooter,
 	onEditCustomColumn,
@@ -77,11 +99,19 @@ export function SelectWithCombobox({
 	searchPlaceholder = 'Search...',
 	visibleOptionLimit = 20,
 	selectAllScope = 'all',
-	emptyLabel = 'No results found'
+	emptyLabel = 'No results found',
+	popoverVariant = 'default'
 }: ISelectWithCombobox) {
 	const router = useRouter()
 	const valuesAreAnArrayOfStrings = typeof allValues[0] === 'string'
 	const showCheckboxes = Array.isArray(selectedValues) && !singleSelect
+	const useLegacyPopover = popoverVariant === 'legacy' || variant === 'pro'
+	const actionBarStyles = useLegacyPopover ? excludedSurfaceComboboxActionBarStyles : popoverActionBarStyles
+	const actionButtonStyles = useLegacyPopover ? legacyPopoverActionButtonStyles : popoverActionButtonStyles
+	const searchWrapperStyles = useLegacyPopover ? 'relative mb-2 p-3' : popoverSearchBlockStyles
+	const surfaceStyles = useLegacyPopover ? excludedSurfaceComboboxPopoverSurfaceStyles : popoverSurfaceStyles
+	const rowStyles = useLegacyPopover ? legacySelectPopoverRowStyles : popoverRowWithBorderStyles
+	const seeMoreStyles = useLegacyPopover ? legacyPopoverSeeMoreStyles : popoverSeeMoreStyles
 
 	const isStringValue = React.useCallback((value: string | SelectOption): value is string => {
 		return typeof value === 'string'
@@ -212,6 +242,27 @@ export function SelectWithCombobox({
 
 	const comboboxRef = React.useRef<HTMLDivElement>(null)
 
+	const renderCheck = (value: string) => {
+		if (useLegacyPopover) {
+			return showCheckboxes ? (
+				<Ariakit.SelectItemCheck className={legacyPopoverSelectCheckStyles} />
+			) : (
+				<Ariakit.SelectItemCheck className="ml-auto" />
+			)
+		}
+
+		const selected = selectedValues.includes(value)
+		return showCheckboxes ? (
+			<span className={popoverMultiSelectCheckStyles(selected)} aria-hidden>
+				{selected ? <Icon name="check" className="size-3" /> : null}
+			</span>
+		) : (
+			<span className={popoverSingleSelectCheckStyles(selected)} aria-hidden>
+				{selected ? <Icon name="check" className="size-3" /> : null}
+			</span>
+		)
+	}
+
 	const handleSeeMore = (e: React.MouseEvent<HTMLDivElement>) => {
 		e.preventDefault()
 		e.stopPropagation()
@@ -248,17 +299,20 @@ export function SelectWithCombobox({
 						onValuesChange?.(nextValues, label)
 					}}
 				>
-					<NestedMenu label={label} render={<button type="button" />}>
-						<Ariakit.Combobox
-							placeholder={searchPlaceholder}
-							className="m-3 mb-0 rounded-md bg-white px-3 py-2 text-base dark:bg-black"
-						/>
+					<NestedMenu
+						label={label}
+						render={<button type="button" />}
+						popoverVariant={useLegacyPopover ? 'legacy' : popoverVariant}
+					>
+						<span className={searchWrapperStyles}>
+							<Ariakit.Combobox placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />
+						</span>
 						{showCheckboxes ? (
-							<span className="sticky top-0 z-1 flex flex-wrap justify-between gap-1 border-b border-(--form-control-border) bg-(--bg-main) text-xs text-(--link)">
-								<button onClick={clearAll} className="p-3">
+							<span className={actionBarStyles}>
+								<button onClick={clearAll} className={actionButtonStyles}>
 									Deselect All
 								</button>
-								<button onClick={toggleAll} className="p-3">
+								<button onClick={toggleAll} className={actionButtonStyles}>
 									{selectAllLabel}
 								</button>
 							</span>
@@ -269,7 +323,7 @@ export function SelectWithCombobox({
 									key={getOptionKey(option)}
 									render={<Ariakit.SelectItem value={getOptionKey(option)} />}
 									hideOnClick={false}
-									className="flex shrink-0 cursor-pointer items-center justify-start gap-4 border-b border-(--form-control-border) px-3 py-2 cv-auto-37 last-of-type:rounded-b-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)"
+									className={rowStyles}
 								>
 									{isStringValue(option) ? (
 										<span>{option}</span>
@@ -284,11 +338,7 @@ export function SelectWithCombobox({
 											{isStringValue(option) ? null : option.icon}
 										</span>
 									)}
-									{showCheckboxes ? (
-										<Ariakit.SelectItemCheck className="ml-auto flex size-3 shrink-0 items-center justify-center rounded-xs border border-[#28a2b5]" />
-									) : (
-										<Ariakit.SelectItemCheck className="ml-auto" />
-									)}
+									{renderCheck(getOptionKey(option))}
 								</NestedMenuItem>
 							))}
 							{hasOptionLimit && matches.length > viewableMatches ? (
@@ -296,7 +346,7 @@ export function SelectWithCombobox({
 									value="__see_more__"
 									setValueOnClick={false}
 									hideOnClick={false}
-									className="w-full cursor-pointer px-3 py-4 text-(--link) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-active-item:bg-(--link-hover-bg)"
+									className={seeMoreStyles}
 									onClick={(e) => {
 										e.preventDefault()
 										e.stopPropagation()
@@ -331,13 +381,13 @@ export function SelectWithCombobox({
 				}}
 			>
 				<Ariakit.Select
-					className={SELECT_TRIGGER_VARIANTS[variant ?? 'default']}
+					className={selectTriggerStyles(variant, size)}
 					aria-label={`${label} dropdown`}
 					{...triggerProps}
 				>
 					{labelType === 'smol' ? (
 						<span className="flex items-center gap-1">
-							<span className="flex min-w-4 items-center justify-center rounded-full border border-(--form-control-border) px-1 py-0.25 text-[10px] leading-none">
+							<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 text-[10px] leading-none">
 								{selectedValues.length}
 							</span>
 							<span>{label}</span>
@@ -345,7 +395,7 @@ export function SelectWithCombobox({
 					) : labelType === 'regular' && selectedValues.length > 0 ? (
 						<>
 							<span>{label}: </span>
-							<span className="text-(--link)">
+							<span className="text-link">
 								{singleSelect
 									? selectedValues[0]
 									: selectedValues.length > 2
@@ -363,35 +413,26 @@ export function SelectWithCombobox({
 					hideOnInteractOutside
 					gutter={6}
 					wrapperProps={{
-						className: clsx(
-							'max-sm:fixed! max-sm:top-[unset]! max-sm:bottom-0! max-sm:w-full! max-sm:transform-none!',
-							popoverWrapperClassName
-						)
+						className: clsx(popoverMobileWrapperClassName, popoverWrapperClassName)
 					}}
-					className={clsx(
-						'z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,60dvh)] lg:max-h-(--popover-available-height) dark:border-[hsl(204,3%,32%)]',
-						popoverClassName
-					)}
+					className={clsx(surfaceStyles, popoverClassName)}
 					portal={portal || false}
 				>
-					<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
+					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 						<Icon name="x" className="size-5" />
 					</Ariakit.PopoverDismiss>
 
-					<span className="relative mb-2 p-3">
-						<Ariakit.Combobox
-							placeholder={searchPlaceholder}
-							className="w-full rounded-md bg-white px-3 py-1 text-base dark:bg-black"
-						/>
+					<span className={searchWrapperStyles}>
+						<Ariakit.Combobox placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />
 					</span>
 					{matches.length > 0 ? (
 						<>
 							{showCheckboxes ? (
-								<span className="sticky top-0 z-1 flex flex-wrap justify-between gap-1 border-b border-(--form-control-border) bg-(--bg-main) text-xs text-(--link)">
-									<button onClick={clearAll} className="p-3">
+								<span className={actionBarStyles}>
+									<button onClick={clearAll} className={actionButtonStyles}>
 										Deselect All
 									</button>
-									<button onClick={toggleAll} className="p-3">
+									<button onClick={toggleAll} className={actionButtonStyles}>
 										{selectAllLabel}
 									</button>
 								</span>
@@ -404,7 +445,7 @@ export function SelectWithCombobox({
 										<Ariakit.SelectItem
 											key={`${label}-${getOptionKey(option)}`}
 											value={getOptionKey(option)}
-											className="group flex shrink-0 cursor-pointer items-center justify-start gap-2 border-b border-(--form-control-border) px-3 py-2 cv-auto-37 last-of-type:rounded-b-md last-of-type:border-b-0 hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)"
+											className={`${rowStyles} group gap-2`}
 											render={<Ariakit.ComboboxItem />}
 										>
 											{isStringValue(option) ? (
@@ -425,7 +466,7 @@ export function SelectWithCombobox({
 													<button
 														type="button"
 														tabIndex={-1}
-														className="rounded-sm p-1 hover:bg-(--btn-hover-bg)"
+														className="rounded-sm p-1 hover:bg-hover-row"
 														onClick={(e) => {
 															e.stopPropagation()
 															onEditCustomColumn?.(customIndex)
@@ -454,16 +495,12 @@ export function SelectWithCombobox({
 														e.stopPropagation()
 														selectOnlyOne(getOptionKey(option))
 													}}
-													className="invisible text-xs font-medium text-(--link) underline group-hover:visible group-focus-visible:visible"
+													className="invisible text-xs font-medium text-link underline group-hover:visible group-focus-visible:visible"
 												>
 													Only
 												</button>
 											) : null}
-											{showCheckboxes ? (
-												<Ariakit.SelectItemCheck className="ml-auto flex size-3 shrink-0 items-center justify-center rounded-xs border border-[#28a2b5]" />
-											) : (
-												<Ariakit.SelectItemCheck className="ml-auto" />
-											)}
+											{renderCheck(getOptionKey(option))}
 										</Ariakit.SelectItem>
 									)
 								})}
@@ -473,7 +510,7 @@ export function SelectWithCombobox({
 										value="__see_more__"
 										setValueOnClick={false}
 										hideOnClick={false}
-										className="w-full cursor-pointer px-3 py-4 text-(--link) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-active-item:bg-(--link-hover-bg)"
+										className={seeMoreStyles}
 										onClick={handleSeeMore}
 										render={<Ariakit.ComboboxItem />}
 									>
@@ -484,7 +521,7 @@ export function SelectWithCombobox({
 							{customFooter ? <>{customFooter}</> : null}
 						</>
 					) : (
-						<p className="px-3 py-6 text-center text-(--text-primary)">{emptyLabel}</p>
+						<p className="px-3 py-6 text-center body-sm text-primary">{emptyLabel}</p>
 					)}
 				</Ariakit.SelectPopover>
 			</Ariakit.SelectProvider>

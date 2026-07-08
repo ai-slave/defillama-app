@@ -72,7 +72,7 @@ export const KeyMetrics = memo(function KeyMetrics(props: KeyMetricsProps) {
 	return (
 		<div className="flex flex-1 flex-col gap-2">
 			<div className="flex items-center justify-between">
-				<h2 className="text-base font-semibold xl:text-sm">Key Metrics</h2>
+				<h2 className="label-md">Key Metrics</h2>
 				{props.metadata.name !== 'All' ? (
 					<KeyMetricsPngExportButton
 						containerRef={keyMetricsRef}
@@ -176,8 +176,8 @@ function StablecoinsMcap({ stablecoins, isAll }: { stablecoins: IChainOverviewDa
 					value={
 						<Tooltip
 							content={`${formattedNum(stablecoins.change7dUsd, true)}`}
-							className={`ml-auto justify-end overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap underline decoration-dotted ${
-								+stablecoins.change7d >= 0 ? 'text-(--success)' : 'text-(--error)'
+							className={`ml-auto justify-end overflow-hidden mono-md text-ellipsis whitespace-nowrap underline decoration-dotted ${
+								+stablecoins.change7d >= 0 ? 'text-data-up' : 'text-data-down'
 							}`}
 						>
 							{`${+stablecoins.change7d > 0 ? '+' : ''}${stablecoins.change7d}%`}
@@ -244,7 +244,7 @@ function DexsVolume({ dexs }: { dexs: IChainOverviewData['dexs'] }) {
 					label="Weekly Change"
 					tooltip={definitions.dexs.chain['change7dover7d']}
 					value={
-						<span className={dexs.change_7dover7d >= 0 ? 'text-(--success)' : 'text-(--error)'}>
+						<span className={dexs.change_7dover7d >= 0 ? 'text-data-up' : 'text-data-down'}>
 							{`${dexs.change_7dover7d >= 0 ? '+' : ''}${dexs.change_7dover7d}%`}
 						</span>
 					}
@@ -278,7 +278,7 @@ function PerpsVolume({ perps }: { perps: IChainOverviewData['perps'] }) {
 					label="Weekly Change"
 					tooltip={definitions.perps.chain['change7dover7d']}
 					value={
-						<span className={perps.change_7dover7d >= 0 ? 'text-(--success)' : 'text-(--error)'}>
+						<span className={perps.change_7dover7d >= 0 ? 'text-data-up' : 'text-data-down'}>
 							{`${perps.change_7dover7d >= 0 ? '+' : ''}${perps.change_7dover7d}%`}
 						</span>
 					}
@@ -370,14 +370,14 @@ function RaisesSection({ chainRaises }: { chainRaises: IChainOverviewData['chain
 		>
 			{sortedRaises.map((raise) => (
 				<p
-					className="flex flex-col gap-1 border-b border-dashed border-(--cards-border) py-1 group-last:border-none"
+					className="flex flex-col gap-1 border-b border-dashed border-very-subtle py-1 group-last:border-none"
 					key={`${raise.date}-${raise.amount}-${raise.round}`}
 				>
 					<span className="flex flex-wrap justify-between">
-						<span className="text-(--text-label)">{dayjs(raise.date * 1000).format('MMM D, YYYY')}</span>
-						<span className="font-jetbrains">{formattedNum(raise.amount * 1_000_000, true)}</span>
+						<span className="body-md text-tertiary">{dayjs(raise.date * 1000).format('MMM D, YYYY')}</span>
+						<span className="mono-md">{formattedNum(raise.amount * 1_000_000, true)}</span>
 					</span>
-					<span className="flex flex-wrap justify-between gap-1 text-(--text-label)">
+					<span className="flex flex-wrap justify-between gap-1 body-md text-tertiary">
 						<span>Round: {raise.round}</span>
 						{(raise as any).leadInvestors?.length || (raise as any).otherInvestors?.length ? (
 							<span>
@@ -452,7 +452,7 @@ function ChainTokenInfo({ chainTokenInfo }: { chainTokenInfo: IChainOverviewData
 
 	const tokenLabel = (text: string) =>
 		chainTokenInfo.tokenPageRoute ? (
-			<BasicLink href={chainTokenInfo.tokenPageRoute} className="text-(--link-text) hover:underline">
+			<BasicLink href={chainTokenInfo.tokenPageRoute} className="text-link hover:underline">
 				{text}
 			</BasicLink>
 		) : (

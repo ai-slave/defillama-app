@@ -1198,14 +1198,14 @@ export function ChartDatasetModal({
 				}}
 			>
 				<Ariakit.Dialog
-					className="fixed inset-0 z-50 m-auto flex max-h-[90dvh] min-h-[55dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col overflow-hidden rounded-xl border border-(--cards-border) bg-(--cards-bg) shadow-2xl sm:w-[calc(100vw-2rem)]"
+					className="fixed inset-0 z-50 m-auto flex max-h-[90dvh] min-h-[55dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col overflow-hidden rounded-xl border border-subtle bg-surface shadow-2xl sm:w-[calc(100vw-2rem)]"
 					portal
 					unmountOnHide
 				>
 					<div className="flex shrink-0 flex-col border-b border-(--divider)">
 						<div className="flex items-center gap-3 px-4 py-2.5">
 							<div className="mr-auto min-w-0">
-								<h2 className="truncate text-base font-semibold">{dataset.name}</h2>
+								<h2 className="truncate heading-xs">{dataset.name}</h2>
 								<p className="text-xs text-(--text-tertiary)">{headerSubtitle}</p>
 							</div>
 
@@ -1218,7 +1218,7 @@ export function ChartDatasetModal({
 												isPreview ? (setSignupSource('downloads'), subscribeModalStore.show()) : void handleCopy()
 											}
 											disabled={!isPreview && selectedCount === 0}
-											className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) disabled:opacity-40 sm:flex"
+											className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:opacity-40 sm:flex"
 											title="Copy selected columns as TSV"
 										>
 											<Icon name="clipboard" className="size-3.5" />
@@ -1231,7 +1231,7 @@ export function ChartDatasetModal({
 											type="button"
 											onClick={() => setShowSaveDialog(true)}
 											disabled={!hasSelection}
-											className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) disabled:opacity-40 sm:flex"
+											className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:opacity-40 sm:flex"
 											title="Save as preset"
 										>
 											<Icon name="bookmark" className="size-3.5" />
@@ -1244,7 +1244,7 @@ export function ChartDatasetModal({
 											type="button"
 											onClick={() => void handleCopyLink()}
 											disabled={!currentConfig}
-											className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) disabled:opacity-40 sm:flex"
+											className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:opacity-40 sm:flex"
 											title="Copy shareable link"
 										>
 											<Icon name="link" className="size-3.5" />
@@ -1276,7 +1276,7 @@ export function ChartDatasetModal({
 							<button
 								type="button"
 								onClick={onClose}
-								className="rounded-md p-1.5 text-(--text-tertiary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+								className="rounded-md p-1.5 text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
 							>
 								<Icon name="x" className="size-4" />
 							</button>
@@ -1301,7 +1301,7 @@ export function ChartDatasetModal({
 									maxSelections={maxSelections}
 								/>
 							) : (
-								<span className="flex items-center gap-1.5 rounded-md border border-(--divider) bg-(--link-hover-bg) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary)">
+								<span className="flex items-center gap-1.5 rounded-md border border-(--divider) bg-hover-row px-2.5 py-1.5 text-xs font-medium text-(--text-secondary)">
 									<Icon name="layers" className="size-3.5" />
 									{selectedParams.length} protocols
 								</span>
@@ -1320,7 +1320,7 @@ export function ChartDatasetModal({
 									className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
 										sumModeActive
 											? 'border-(--primary) bg-(--primary) text-white'
-											: 'border-(--divider) text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)'
+											: 'border-(--divider) text-(--text-secondary) hover:bg-hover-row hover:text-(--text-primary)'
 									}`}
 								>
 									<Icon name="plus" className="size-3.5" />
@@ -1366,7 +1366,7 @@ export function ChartDatasetModal({
 										type="button"
 										onClick={() => void handleCopy()}
 										disabled={selectedCount === 0}
-										className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) disabled:opacity-40 sm:hidden"
+										className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:opacity-40 sm:hidden"
 										title="Copy selected columns as TSV"
 									>
 										<Icon name="clipboard" className="size-3.5" />
@@ -1427,7 +1427,7 @@ export function ChartDatasetModal({
 											<button
 												type="button"
 												onClick={() => setDateRange(null)}
-												className="mt-1 rounded-md border border-(--divider) px-3 py-1 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+												className="mt-1 rounded-md border border-(--divider) px-3 py-1 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
 											>
 												Clear date range
 											</button>
@@ -1439,13 +1439,13 @@ export function ChartDatasetModal({
 									<div
 										ref={rightShadowRef}
 										className="pointer-events-none absolute inset-y-0 right-0 z-40 w-32 opacity-0 transition-opacity duration-200"
-										style={{ background: 'linear-gradient(to left, var(--cards-bg) 0%, transparent 100%)' }}
+										style={{ background: 'linear-gradient(to left, var(--ld-bg-surface) 0%, transparent 100%)' }}
 									/>
 									<div
 										ref={tableContainerRef}
 										className={`thin-scrollbar h-full ${isPreview ? 'overflow-x-auto overflow-y-hidden' : 'overflow-auto'}`}
 									>
-										<div className="sticky top-0 z-20 bg-(--cards-bg)" style={{ minWidth: `${tableWidth}px` }}>
+										<div className="sticky top-0 z-20 bg-surface" style={{ minWidth: `${tableWidth}px` }}>
 											<div style={{ display: 'grid', gridTemplateColumns: gridTemplate }}>
 												{columnMeta.map((column, position) => {
 													const isSelected = cols.has(column.index)
@@ -1454,12 +1454,12 @@ export function ChartDatasetModal({
 													return (
 														<div
 															key={column.index}
-															className="border-t border-r border-(--divider) bg-(--cards-bg) last:border-r-0"
+															className="border-t border-r border-(--divider) bg-surface last:border-r-0"
 															style={{
 																position: isSticky ? 'sticky' : undefined,
 																left: isSticky ? 0 : undefined,
 																zIndex: isSticky ? 30 : undefined,
-																background: 'var(--cards-bg)',
+																background: 'var(--ld-bg-surface)',
 																boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
 															}}
 														>
@@ -1530,7 +1530,11 @@ export function ChartDatasetModal({
 																		position: isSticky ? 'sticky' : undefined,
 																		left: isSticky ? 0 : undefined,
 																		zIndex: isSticky ? 1 : undefined,
-																		background: isSticky ? 'var(--cards-bg)' : isOdd ? 'var(--bg-primary)' : undefined,
+																		background: isSticky
+																			? 'var(--ld-bg-surface)'
+																			: isOdd
+																				? 'var(--bg-primary)'
+																				: undefined,
 																		boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
 																	}}
 																>
@@ -1564,7 +1568,7 @@ export function ChartDatasetModal({
 													WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)'
 												}}
 											/>
-											<div className="absolute inset-x-0 bottom-0 z-50 border-t border-(--divider) bg-(--cards-bg) px-6 py-5">
+											<div className="absolute inset-x-0 bottom-0 z-50 border-t border-(--divider) bg-surface px-6 py-5">
 												<div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
 													<p className="text-sm font-semibold text-(--text-primary)">
 														This is a preview — subscribe to download full datasets
@@ -1666,7 +1670,7 @@ function PlaceholderRows({
 										position: isSticky ? 'sticky' : undefined,
 										left: isSticky ? 0 : undefined,
 										zIndex: isSticky ? 1 : undefined,
-										background: isSticky ? 'var(--cards-bg)' : isOdd ? 'var(--bg-primary)' : undefined,
+										background: isSticky ? 'var(--ld-bg-surface)' : isOdd ? 'var(--bg-primary)' : undefined,
 										boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
 									}}
 								>
@@ -1700,7 +1704,7 @@ function CategoryPickerPopover({
 
 	return (
 		<Ariakit.PopoverProvider>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)">
+			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary)">
 				<Icon name="tag" className="size-3.5" />
 				<span>{selected ?? 'All categories'}</span>
 				{selected ? (
@@ -1710,7 +1714,7 @@ function CategoryPickerPopover({
 							e.stopPropagation()
 							onSelect(null)
 						}}
-						className="rounded-full p-0.5 hover:bg-(--link-hover-bg)"
+						className="rounded-full p-0.5 hover:bg-hover-row"
 					>
 						<Icon name="x" className="size-2.5" />
 					</button>
@@ -1720,7 +1724,7 @@ function CategoryPickerPopover({
 				gutter={6}
 				portal
 				unmountOnHide
-				className="z-[60] flex max-h-80 w-64 flex-col overflow-hidden rounded-lg border border-(--divider) bg-(--cards-bg) shadow-xl"
+				className="z-[60] flex max-h-80 w-64 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
 			>
 				<div className="border-b border-(--divider) px-3 py-2">
 					<input
@@ -1735,7 +1739,7 @@ function CategoryPickerPopover({
 					<button
 						type="button"
 						onClick={() => onSelect(null)}
-						className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-(--link-hover-bg) ${
+						className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row ${
 							selected === null ? 'font-medium text-(--text-primary)' : 'text-(--text-secondary)'
 						}`}
 					>
@@ -1746,7 +1750,7 @@ function CategoryPickerPopover({
 							key={cat}
 							type="button"
 							onClick={() => onSelect(cat)}
-							className={`flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-(--link-hover-bg) ${
+							className={`flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row ${
 								selected === cat ? 'font-medium text-(--text-primary)' : 'text-(--text-secondary)'
 							}`}
 						>
@@ -1806,7 +1810,7 @@ function MultiOptionPickerPopover({
 
 	return (
 		<Ariakit.PopoverProvider store={popoverStore}>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)">
+			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary)">
 				<Icon name="chevron-down" className="size-3.5" />
 				<span>{triggerText}</span>
 				{selected.length > 0 ? (
@@ -1817,7 +1821,7 @@ function MultiOptionPickerPopover({
 				gutter={6}
 				portal
 				unmountOnHide
-				className="z-[60] flex max-h-96 w-80 flex-col overflow-hidden rounded-lg border border-(--divider) bg-(--cards-bg) shadow-xl"
+				className="z-[60] flex max-h-96 w-80 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
 			>
 				<div className="flex items-center justify-between gap-2 border-b border-(--divider) px-3 py-2">
 					<span className="text-xs font-medium text-(--text-secondary)">
@@ -1865,7 +1869,7 @@ function MultiOptionPickerPopover({
 									disabled={disabled}
 									onClick={() => onToggle(opt)}
 									title={disabled ? `Max ${maxSelections} items` : undefined}
-									className={`flex w-full items-center gap-2.5 py-1.5 pr-3 text-left text-xs transition-colors hover:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-40 ${
+									className={`flex w-full items-center gap-2.5 py-1.5 pr-3 text-left text-xs transition-colors hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40 ${
 										isSelected ? 'text-(--text-primary)' : 'text-(--text-secondary)'
 									} ${opt.isChild ? 'pl-7' : 'pl-3'}`}
 								>
@@ -1909,7 +1913,7 @@ function ColumnPickerPopover({
 
 	return (
 		<Ariakit.PopoverProvider store={popoverStore}>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)">
+			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary)">
 				<Icon name="eye" className="size-3.5" />
 				Columns
 				<span className="text-(--text-tertiary)">
@@ -1920,7 +1924,7 @@ function ColumnPickerPopover({
 				gutter={6}
 				portal
 				unmountOnHide
-				className="z-[60] flex max-h-80 w-64 flex-col overflow-hidden rounded-lg border border-(--divider) bg-(--cards-bg) shadow-xl"
+				className="z-[60] flex max-h-80 w-64 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
 			>
 				<div className="flex items-center justify-between border-b border-(--divider) px-3 py-2">
 					<span className="text-xs font-medium text-(--text-secondary)">Toggle columns</span>
@@ -1936,7 +1940,7 @@ function ColumnPickerPopover({
 								key={column.index}
 								type="button"
 								onClick={() => onToggle(column.index)}
-								className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-(--link-hover-bg)"
+								className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row"
 							>
 								<span
 									className={`flex size-4 shrink-0 items-center justify-center rounded border transition-colors ${
@@ -2027,7 +2031,7 @@ function BulkPreviewSidebar({
 						<div
 							key={param.value}
 							className={`flex items-center gap-1.5 border-b border-(--divider) px-2.5 py-2 text-xs transition-colors ${
-								isActive ? 'bg-(--link-hover-bg)' : 'hover:bg-(--link-hover-bg)'
+								isActive ? 'bg-hover-row' : 'hover:bg-hover-row'
 							}`}
 						>
 							<button

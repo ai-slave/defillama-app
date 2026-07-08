@@ -6,6 +6,8 @@ import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
+import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
+import { PanelStatus } from '~/ui/Status'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
@@ -86,14 +88,12 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 			seoTitle={props.seoTitle}
 			seoDescription={props.seoDescription}
 		>
-			<div className="flex items-center gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-				<TokenLogo name={props.name} kind="token" size={24} alt={`Logo of ${props.name}`} />
-				<h1 className="text-xl font-bold">{props.name} Forks</h1>
-			</div>
+			<EntityTitleStrip
+				media={<TokenLogo name={props.name} kind="token" size={28} alt={`Logo of ${props.name}`} />}
+				title={`${props.name} Forks`}
+			/>
 			{!props.forksData ? (
-				<div className="flex flex-1 flex-col items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<p className="p-2">Failed to fetch</p>
-				</div>
+				<PanelStatus variant="error">Failed to fetch</PanelStatus>
 			) : (
 				<ForksByProtocol {...props.forksData} />
 			)}

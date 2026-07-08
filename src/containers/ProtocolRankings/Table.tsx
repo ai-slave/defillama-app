@@ -30,6 +30,8 @@ import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { useCustomColumns, useLocalStorageSettingsManager, type CustomColumnDef } from '~/contexts/LocalStorage'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
+import { popoverFooterActionStyles } from '~/ui/Popover'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
 import { parseNumberQueryParam } from '~/utils/routerQuery'
 import { formatValue } from '../../utils'
@@ -347,23 +349,23 @@ const ChainProtocolsTableInner = ({
 	const activeChain = Array.isArray(chainQuery) ? chainQuery[0] : chainQuery
 
 	return (
-		<div className={borderless ? 'isolate' : 'isolate rounded-md border border-(--cards-border) bg-(--cards-bg)'}>
-			<div className="flex flex-wrap items-center justify-end gap-2 p-3">
-				{borderless ? null : (
-					<h2 className="mr-auto flex w-full grow text-lg font-semibold md:w-auto">Protocol Rankings</h2>
-				)}
+		<div className={borderless ? 'isolate' : 'isolate rounded-lg border border-subtle bg-surface'}>
+			<TableToolbar className="justify-end">
+				{borderless ? null : <h2 className="mr-auto flex w-full grow label-md md:w-auto">Protocol Rankings</h2>}
 
 				<TagGroup
 					setValue={setFilter('category')}
 					selectedValue={selectedCategory}
 					values={TABLE_CATEGORIES_VALUES}
 					variant="responsive"
+					size="md"
 				/>
 				<TagGroup
 					setValue={setFilter('period')}
 					selectedValue={selectedPeriod}
 					values={TABLE_PERIODS_VALUES}
 					variant="responsive"
+					size="md"
 				/>
 
 				<SelectWithCombobox
@@ -374,12 +376,9 @@ const ChainProtocolsTableInner = ({
 					label={'Columns'}
 					labelType="smol"
 					variant="filter"
+					size="md"
 					customFooter={
-						<button
-							className="flex w-full items-center gap-2 rounded-md border border-(--form-control-border) bg-(--btn-bg) p-3 text-sm font-medium text-(--text-primary) hover:bg-(--btn-hover-bg)"
-							onClick={handleAddCustomColumn}
-							type="button"
-						>
+						<button className={popoverFooterActionStyles} onClick={handleAddCustomColumn} type="button">
 							<Icon name="plus" height={16} width={16} />
 							Add Custom Column
 						</button>
@@ -387,12 +386,13 @@ const ChainProtocolsTableInner = ({
 					onEditCustomColumn={handleEditCustomColumn}
 					onDeleteCustomColumn={handleDeleteCustomColumn}
 				/>
-				<TVLRange triggerClassName="w-full sm:w-auto" />
+				<TVLRange triggerClassName="w-full sm:w-auto" size="md" />
 				<CSVDownloadButton
 					prepareCsv={() => prepareTableCsv({ instance, filename: `defillama-${activeChain ?? 'all'}-protocols` })}
 					smol
+					size="md"
 				/>
-			</div>
+			</TableToolbar>
 			<VirtualTable instance={instance} useStickyHeader={useStickyHeader} />
 			{customColumnDialogOpen ? (
 				<CustomColumnModal
@@ -614,7 +614,7 @@ const columns = [
 
 						<Tooltip
 							content={<ProtocolChainsComponent chains={row.original.chains} />}
-							className="text-[0.7rem] text-(--text-disabled)"
+							className="text-[0.7rem] text-secondary"
 						>
 							{`${row.original.chains.length} chain${row.original.chains.length > 1 ? 's' : ''}`}
 						</Tooltip>
@@ -1176,7 +1176,7 @@ const ProtocolTvlCell = ({ rowValues }) => {
 					text={"There's some internal doublecounting that is excluded from parent TVL, so sum won't match"}
 				/>
 			) : null}
-			<span className={rowValues.strikeTvl ? 'text-(--text-disabled)' : ''}>
+			<span className={rowValues.strikeTvl ? 'text-tertiary' : ''}>
 				{formattedNum(rowValues.tvl.default.tvl, true)}
 			</span>
 		</span>

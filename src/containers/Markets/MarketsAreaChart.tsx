@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { LocalLoader } from '~/components/Loaders'
+import { Panel } from '~/ui/Panel'
 import { type PivotedSeries, toStackedAreaSeries } from './utils'
 
 const AreaChart = React.lazy(() => import('~/components/ECharts/AreaChart'))
@@ -22,7 +23,7 @@ export function MarketsAreaChart({ title, series }: { title: string; series: Piv
 	)
 	const hasData = ordered.chartData.length > 0 && ordered.stacks.length > 0
 	return (
-		<div className="flex min-h-[360px] flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+		<Panel className="min-h-[360px]">
 			{hasData ? (
 				<React.Suspense fallback={FALLBACK}>
 					<AreaChart
@@ -38,10 +39,10 @@ export function MarketsAreaChart({ title, series }: { title: string; series: Piv
 				</React.Suspense>
 			) : (
 				<>
-					<span className="text-base font-semibold">{title}</span>
-					<div className="flex flex-1 items-center justify-center text-xs text-(--text-disabled)">no data</div>
+					<span className="px-2 pt-2 pb-0 heading-xs">{title}</span>
+					<div className="flex flex-1 items-center justify-center label-sm text-tertiary">no data</div>
 				</>
 			)}
-		</div>
+		</Panel>
 	)
 }

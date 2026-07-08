@@ -6,6 +6,7 @@ import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { getStablecoinAssetPageData } from '~/containers/Stablecoins/queries.server'
 import { PeggedAssetInfo } from '~/containers/Stablecoins/StablecoinOverview'
+import { PanelStatus } from '~/ui/Status'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
@@ -96,9 +97,7 @@ export default function Protocols({ clientSide: _clientSide, protocolData: _prot
 			{props.stablecoinData ? (
 				<PeggedAssetInfo {...props.stablecoinData} />
 			) : (
-				<div className="flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-					<p>Failed to fetch</p>
-				</div>
+				<PanelStatus variant="error">Failed to fetch</PanelStatus>
 			)}
 		</ProtocolOverviewLayout>
 	)

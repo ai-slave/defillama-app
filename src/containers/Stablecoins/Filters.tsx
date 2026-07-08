@@ -5,6 +5,8 @@ import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { Select } from '~/components/Select/Select'
 import { useRangeFilter } from '~/hooks/useRangeFilter'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import {
 	resolveSelectedStablecoinFilterKeys,
 	stablecoinAttributeOptions,
@@ -36,6 +38,7 @@ function Attribute({ nestedMenu }: { nestedMenu: boolean; pathname?: string }) {
 			nestedMenu={nestedMenu}
 			labelType="smol"
 			variant="filter-responsive"
+			size="md"
 			includeQueryKey="attribute"
 			excludeQueryKey="excludeAttribute"
 		/>
@@ -75,6 +78,7 @@ function BackingType({
 			nestedMenu={nestedMenu}
 			labelType="smol"
 			variant="filter-responsive"
+			size="md"
 			includeQueryKey="backing"
 			excludeQueryKey="excludeBacking"
 		/>
@@ -114,6 +118,7 @@ function PegType({
 			nestedMenu={nestedMenu}
 			labelType="smol"
 			variant="filter-responsive"
+			size="md"
 			includeQueryKey="pegtype"
 			excludeQueryKey="excludePegtype"
 		/>
@@ -152,11 +157,12 @@ function McapRange({
 			min={min}
 			max={max}
 			placement={placement}
+			size="md"
 		/>
 	)
 }
 
-function ResetAllStablecoinFilters({ pathname }: { pathname: string; nestedMenu: boolean }) {
+function ResetAllStablecoinFilters({ pathname, nestedMenu }: { pathname: string; nestedMenu: boolean }) {
 	const router = useRouter()
 
 	let hasActiveQueryFilters = false
@@ -172,15 +178,17 @@ function ResetAllStablecoinFilters({ pathname }: { pathname: string; nestedMenu:
 	}
 
 	return (
-		<button
+		<Button
+			type="button"
+			size="md"
 			onClick={() => {
 				void router.push({ pathname, query: chartQuery }, undefined, { shallow: true })
 			}}
 			disabled={!hasActiveQueryFilters}
-			className="relative flex cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-40"
+			className={nestedMenu ? 'w-full justify-between' : undefined}
 		>
 			Reset all filters
-		</button>
+		</Button>
 	)
 }
 
@@ -212,10 +220,10 @@ export function PeggedFilters(props: {
 	availablePegTypes?: StablecoinFilterKey[]
 }) {
 	return (
-		<div className="flex flex-col gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-1">
-			<ResponsiveFilterLayout desktopClassName="hidden min-h-[30px] flex-wrap gap-2 sm:flex">
+		<Card border="subtle" padding="sm" className="flex flex-col gap-2">
+			<ResponsiveFilterLayout desktopClassName="hidden min-h-8 flex-wrap gap-1.5 sm:flex">
 				{(nestedMenu) => <PeggedFiltersDropdowns {...props} nestedMenu={nestedMenu} />}
 			</ResponsiveFilterLayout>
-		</div>
+		</Card>
 	)
 }

@@ -51,12 +51,14 @@
 	--ld-border-brand: var(--ld-blue-500); /* Stroke/stroke-brand */
 	--ld-border-divider: #eeeeee; /* Stroke/divider-subtle */
 
-	/* States */
-	--ld-hover-brand: #1f67d21f; /* States/hover — brand tint (Figma name
-	   "hover-neutral-normal" is a known misnomer; rename requested) */
-	/* TODO(design): light value for States/hover-neutral-subtle unobserved;
-	   mirrored from the dark 3% white as 3% black until confirmed. */
-	--ld-hover-neutral: #090b0c08;
+	/* States — both hovers verified from the page frames (columns popover
+	   row 6183:293504, metrics card pair 6183:354581/354721). Deliberately
+	   asymmetric across modes: brand-tinted in light, white-lift in dark.
+	   Per owner decision the same values double as focus styles.
+	   (Figma name "hover-neutral-normal" is a misnomer in light; rename
+	   requested.) */
+	--ld-hover-row: #1f67d21f; /* States/hover-neutral-normal — popover/menu/table rows */
+	--ld-hover-card: #1f67d20f; /* light: Background/bg-brand-transparent-subtle overlay */
 
 	/* Chips */
 	--ld-chip-bg: #dedede; /* Chips/bg-default */
@@ -124,8 +126,8 @@ html.dark {
 	--ld-border-divider: var(--ld-neutral-800);
 
 	/* States */
-	--ld-hover-brand: #1f67d233;
-	--ld-hover-neutral: #ffffff08; /* States/hover-neutral-subtle */
+	--ld-hover-row: #ffffff0f; /* States/hover-neutral-normal (dark) */
+	--ld-hover-card: #ffffff08; /* States/hover-neutral-subtle (dark) */
 
 	/* Chips */
 	--ld-chip-bg: var(--ld-neutral-800);
@@ -180,6 +182,9 @@ html.dark {
 	--color-data-up-alt: var(--ld-text-data-up-alt);
 	--color-data-down-alt: var(--ld-text-data-down-alt);
 	--color-warning: var(--ld-text-warning);
+	/* State overlays — painted over bg-surface; also used for focus-visible */
+	--color-hover-row: var(--ld-hover-row);
+	--color-hover-card: var(--ld-hover-card);
 }
 
 /* Border-color utilities get explicit names ("--color-border-subtle" would
@@ -202,4 +207,16 @@ html.dark {
 }
 @utility border-divider {
 	border-color: var(--ld-border-divider);
+}
+@utility bg-border-medium {
+	background-color: var(--ld-border-medium);
+}
+@utility bg-border-subtle {
+	background-color: var(--ld-border-subtle);
+}
+@utility bg-screen-dim {
+	background-color: var(--ld-bg-screen-dim);
+}
+@utility text-divider {
+	color: var(--ld-border-divider);
 }

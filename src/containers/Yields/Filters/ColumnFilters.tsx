@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo, useRef, useState } from 'react'
 import { LockIcon } from '~/components/LockIcon'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import type { SelectTriggerSize } from '~/components/Select/types'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { setSignupSource } from '~/containers/Subscription/signupSource'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
@@ -15,6 +16,7 @@ const SubscribeProModal = lazy(() =>
 interface IColumnFiltersProps {
 	nestedMenu?: boolean
 	enabledColumns?: string[]
+	size?: SelectTriggerSize
 }
 
 const PREMIUM_KEYS = new Set(['showMedianApy', 'showStdDev'])
@@ -43,7 +45,7 @@ for (const option of POOL_OPTIONAL_COLUMN_OPTIONS) {
 	ALL_COLUMN_KEYS.push(option.queryKey)
 }
 
-export function ColumnFilters({ nestedMenu, enabledColumns }: IColumnFiltersProps) {
+export function ColumnFilters({ nestedMenu, enabledColumns, size }: IColumnFiltersProps) {
 	const router = useRouter()
 	const { hasActiveSubscription } = useAuthContext()
 	const [shouldRenderModal, setShouldRenderModal] = useState(false)
@@ -126,6 +128,8 @@ export function ColumnFilters({ nestedMenu, enabledColumns }: IColumnFiltersProp
 				nestedMenu={nestedMenu}
 				label="Columns"
 				labelType="regular"
+				popoverVariant="legacy"
+				size={size}
 			/>
 			{shouldRenderModal ? (
 				<Suspense fallback={null}>

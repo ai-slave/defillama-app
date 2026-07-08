@@ -21,30 +21,67 @@ export type MultiSelectOption = {
 	isChild?: boolean
 }
 
-export const SELECT_TRIGGER_VARIANTS = {
+const SELECT_TRIGGER_VARIANTS = {
 	default:
-		'flex cursor-pointer flex-nowrap items-center gap-2 rounded-md bg-(--btn-bg) px-3 py-2 text-xs text-(--text-primary) hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)',
+		'label-sm flex cursor-pointer flex-nowrap items-center gap-2 rounded-md bg-surface-elevated-1 px-3 py-2 text-primary hover:bg-surface-elevated-2 focus-visible:bg-surface-elevated-2',
 	filter:
-		'flex items-center justify-between gap-2 px-2 py-1.5 text-xs rounded-md cursor-pointer flex-nowrap relative border border-(--form-control-border) text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) font-medium',
+		'label-sm relative flex min-h-6 cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-medium px-2 py-0.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row',
 	'filter-responsive':
-		'flex items-center justify-between gap-2 px-2 py-1.5 text-xs rounded-md cursor-pointer flex-nowrap relative border border-(--form-control-border) text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) font-medium w-full sm:w-auto',
-	pro: 'hover:not-disabled:pro-btn-blue focus-visible:not-disabled:pro-btn-blue flex items-center gap-1 rounded-md border border-(--form-control-border) px-1.5 py-1 text-xs hover:border-transparent focus-visible:border-transparent disabled:border-(--cards-border) disabled:text-(--text-disabled)'
+		'label-sm relative flex min-h-6 w-full cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-medium px-2 py-0.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row sm:w-auto',
+	pro: 'hover:not-disabled:pro-btn-blue focus-visible:not-disabled:pro-btn-blue flex items-center gap-1 rounded-md border border-medium px-1.5 py-1 text-xs hover:border-transparent focus-visible:border-transparent disabled:border-subtle disabled:text-(--text-disabled)'
 } as const
 
 export type SelectTriggerVariant = keyof typeof SELECT_TRIGGER_VARIANTS
 
+/* Panel headers use 32px (md) controls everywhere (Figma 6183:148797) — the
+   md filter trigger mirrors Button md so selects line up with .csv/.png. */
+const SELECT_TRIGGER_MD_VARIANTS: Partial<Record<SelectTriggerVariant, string>> = {
+	filter:
+		'label-sm relative flex min-h-8 cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-[8px] border border-medium px-3 py-1.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row',
+	'filter-responsive':
+		'label-sm relative flex min-h-8 w-full cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-[8px] border border-medium px-3 py-1.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row sm:w-auto'
+}
+
+export type SelectTriggerSize = 'sm' | 'md'
+
+export function selectTriggerStyles(variant: SelectTriggerVariant = 'default', size: SelectTriggerSize = 'sm'): string {
+	if (size === 'md') {
+		return SELECT_TRIGGER_MD_VARIANTS[variant] ?? SELECT_TRIGGER_VARIANTS[variant]
+	}
+	return SELECT_TRIGGER_VARIANTS[variant]
+}
+
+/* Two selection controls in the design system — do not conflate:
+   - default/responsive = the Figma "Tabs" SEGMENTED control (nodes
+     6476:29323, 6183:313202): padded bg-surface wrapper, TINTED selection
+     (bg-brand-muted + text-link). For chart periods, denominations,
+     view-mode switches.
+   - solid = the compact joined toggle group (node 6183:354509 / 6183:354649):
+     no wrapper padding, 6px outer radius, SOLID bg-brand selection. Use only for explicit
+     scope switches such as the metrics header All|Protocols|Chains exception. */
 export const TAG_GROUP_VARIANTS = {
 	default: {
 		container:
-			'flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-xs font-medium text-(--text-form)',
+			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-[8px] border border-medium bg-surface p-0.5',
 		button:
-			'shrink-0 px-3 py-1.5 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) disabled:hover:bg-transparent data-[active=true]:bg-(--old-blue) data-[active=true]:text-white'
+			'shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-tertiary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row disabled:hover:bg-transparent data-[active=true]:bg-brand-muted data-[active=true]:text-link'
 	},
 	responsive: {
 		container:
-			'flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-xs font-medium text-(--text-form) max-sm:w-full',
+			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-[8px] border border-medium bg-surface p-0.5 max-sm:w-full',
 		button:
-			'inline-flex max-sm:flex-1 items-center justify-center shrink-0 px-3 py-1.5 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) disabled:hover:bg-transparent data-[active=true]:bg-(--old-blue) data-[active=true]:text-white'
+			'inline-flex max-sm:flex-1 items-center justify-center shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-tertiary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row disabled:hover:bg-transparent data-[active=true]:bg-brand-muted data-[active=true]:text-link'
+	},
+	solid: {
+		container: 'body-sm flex w-fit flex-nowrap items-center overflow-hidden rounded-md border border-subtle',
+		button:
+			'shrink-0 self-stretch px-2 whitespace-nowrap text-primary hover:bg-hover-row focus-visible:bg-hover-row disabled:hover:bg-transparent data-[active=true]:bg-brand data-[active=true]:text-on-brand'
+	},
+	'solid-responsive': {
+		container:
+			'body-sm flex w-fit flex-nowrap items-center overflow-hidden rounded-md border border-subtle max-sm:w-full',
+		button:
+			'inline-flex max-sm:flex-1 items-center justify-center shrink-0 self-stretch px-2 whitespace-nowrap text-primary hover:bg-hover-row focus-visible:bg-hover-row disabled:hover:bg-transparent data-[active=true]:bg-brand data-[active=true]:text-on-brand'
 	},
 	pro: {
 		container: 'text-sm flex items-center overflow-x-auto flex-nowrap w-fit border pro-border pro-text1',
@@ -52,5 +89,16 @@ export const TAG_GROUP_VARIANTS = {
 			'shrink-0 px-3 py-1.5 whitespace-nowrap hover:pro-bg2 focus-visible:pro-bg2 data-[active=true]:bg-(--primary) data-[active=true]:text-white'
 	}
 } as const
+
+/* Chart/table toolbar contexts are md (32px); dense gaps come from Toolbar. */
+export const TAG_GROUP_SIZES = {
+	sm: 'min-h-6',
+	md: 'min-h-8'
+} as const
+
+export const chartSegmentedControlGroupStyles = `${TAG_GROUP_VARIANTS.default.container} ${TAG_GROUP_SIZES.md}`
+export const chartSegmentedControlButtonStyles = TAG_GROUP_VARIANTS.default.button
+
+export type TagGroupSize = keyof typeof TAG_GROUP_SIZES
 
 export type TagGroupVariant = keyof typeof TAG_GROUP_VARIANTS

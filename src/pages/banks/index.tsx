@@ -91,7 +91,7 @@ const Banks = () => {
 			canonicalUrl={'/banks'}
 		>
 			<div className="relative col-span-2 rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<React.Suspense fallback={<div className="min-h-[398px]" />}>
+				<React.Suspense fallback={<div className="min-h-[406px]" />}>
 					<MultiSeriesChart2
 						title="Assets of failed banks (inflation adjusted)"
 						dataset={chartDataset}

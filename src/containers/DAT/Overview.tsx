@@ -13,6 +13,8 @@ import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { Tooltip } from '~/components/Tooltip'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IDATOverviewFlowSeries, IDATOverviewPageProps } from './types'
@@ -64,21 +66,20 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 	return (
 		<>
 			<RowLinksWithDropdown links={allAssets} activeLink={'All'} />
-			<div className="col-span-2 flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<div className="flex flex-wrap items-center justify-between gap-2 p-2 pb-0">
-					<h1 className="text-lg font-semibold">DAT Inflows by Asset</h1>
+			<Panel className="col-span-2">
+				<ChartPanelToolbar className="justify-end">
+					<h1 className="mr-auto heading-xs">DAT Inflows by Asset</h1>
 					<ChartGroupingSelector
 						value={groupBy}
 						onValueChange={onChangeGroupBy}
 						options={DWMC_GROUPING_OPTIONS_LOWERCASE}
-						className="ml-auto"
 					/>
 					<ChartExportButtons
 						chartInstance={chartInstance}
 						filename="digital-asset-treasuries-inflows-by-asset"
 						title="DAT Inflows by Asset"
 					/>
-				</div>
+				</ChartPanelToolbar>
 				<Suspense fallback={<div className="min-h-[360px]" />}>
 					<MultiSeriesChart2
 						dataset={deferredChartData.dataset}
@@ -89,7 +90,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 						onReady={handleChartReady}
 					/>
 				</Suspense>
-			</div>
+			</Panel>
 			<TableWithSearch
 				data={institutions}
 				columns={overviewColumns}

@@ -1,4 +1,5 @@
 import { TokenLogo } from '~/components/TokenLogo'
+import { Card } from '~/ui/Card'
 import { abbreviateNumber } from '~/utils'
 import { formatComposite } from '../format'
 import type { AggregatedMetrics } from './data'
@@ -30,9 +31,9 @@ function pct(value: number | null | undefined): string {
 function Stat({ label, value, rank }: { label: string; value: string; rank: number | null }) {
 	return (
 		<div className="flex flex-col gap-0.5">
-			<span className="text-xs text-(--text-secondary)">{label}</span>
+			<span className="label-sm text-secondary">{label}</span>
 			<span className="text-sm font-medium">{value}</span>
-			<span className="text-xs text-(--text-secondary)">Rank: {rank ?? '—'}</span>
+			<span className="label-sm text-secondary">Rank: {rank ?? '—'}</span>
 		</div>
 	)
 }
@@ -51,36 +52,34 @@ function PodiumCard({
 	const volume = aggregated?.dailyFillVolume ?? null
 
 	return (
-		<div className="relative flex flex-col gap-3 rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
+		<Card border="subtle" className="relative flex flex-col gap-3">
 			<RibbonBadge place={place} color={RIBBON_COLORS[place - 1]} />
 			<div className="flex flex-col gap-3 min-[713px]:max-[1119px]:flex-row min-[713px]:max-[1119px]:items-center min-[713px]:max-[1119px]:gap-2 min-[713px]:max-[1119px]:pr-12">
 				<div className="flex items-center gap-2 pr-10 min-[713px]:max-[1119px]:flex-1 min-[713px]:max-[1119px]:pr-0">
 					<TokenLogo src={row.marketMakerImageUrl} size={32} />
 					<div className="flex min-w-0 flex-col">
 						<span className="truncate text-base font-semibold">{row.marketMakerName}</span>
-						<span className="text-xs text-(--text-secondary)">
-							{row.activeEngagementsCount ?? '—'} active engagements
-						</span>
+						<span className="label-sm text-secondary">{row.activeEngagementsCount ?? '—'} active engagements</span>
 					</div>
 				</div>
 				<div className="flex justify-between gap-2 min-[713px]:max-[1119px]:contents">
 					<div className="flex flex-col gap-0.5 min-[713px]:max-[1119px]:flex-1">
-						<span className="text-xs text-(--text-secondary)">Composite Score</span>
+						<span className="label-sm text-secondary">Composite Score</span>
 						<span className="text-lg font-semibold">{formatComposite(row.composite)}</span>
 					</div>
 					<div className="flex flex-col gap-0.5 min-[713px]:max-[1119px]:flex-1">
-						<span className="text-xs text-(--text-secondary)">Median Engagements FDV</span>
+						<span className="label-sm text-secondary">Median Engagements FDV</span>
 						<span className="text-lg font-semibold">{abbrUsd(row.medianEngagementsFdv)}</span>
 					</div>
 				</div>
 			</div>
-			<div className="border-t border-(--divider)" />
+			<div className="border-t border-subtle" />
 			<div className="grid grid-cols-3 gap-8 min-[713px]:max-[1119px]:gap-2 min-[713px]:max-[1119px]:pr-12">
 				<Stat label="Avg 2.00% Depth" value={abbrUsd(depth?.value)} rank={depth?.rank ?? null} />
 				<Stat label="Avg Spread" value={pct(spread?.value)} rank={spread?.rank ?? null} />
 				<Stat label="Avg Volume" value={abbrUsd(volume?.value)} rank={volume?.rank ?? null} />
 			</div>
-		</div>
+		</Card>
 	)
 }
 

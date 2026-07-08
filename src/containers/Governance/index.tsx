@@ -13,6 +13,7 @@ import { BasicLink } from '~/components/Link'
 import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
+import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { slug } from '~/utils'
 import type { GovernanceOverviewItem } from './types'
 
@@ -43,20 +44,15 @@ export default function Governance({ data }: { data: GovernanceOverviewItem[] })
 	return (
 		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
 			<div className="flex flex-wrap items-center justify-end gap-2 p-3">
-				<h1 className="mr-auto text-xl font-semibold">Governance Proposals by Project</h1>
+				<h1 className="mr-auto heading-sm">Governance Proposals by Project</h1>
 				<label className="relative w-full sm:max-w-[280px]">
 					<span className="sr-only">Search projects...</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
 						name="search"
 						onInput={(e) => setProjectName(e.currentTarget.value)}
 						placeholder="Search projects..."
-						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+						className={searchFieldInputStyles}
 					/>
 				</label>
 			</div>

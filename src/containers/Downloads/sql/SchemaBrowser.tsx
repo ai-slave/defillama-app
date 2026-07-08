@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast'
 import { Icon } from '~/components/Icon'
 import { LoadingSpinner } from '~/components/Loaders'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
+import { Input, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import {
 	chartDatasets,
 	chartDatasetCategories,
@@ -206,19 +207,14 @@ function BrowserHeader({
 		<div className="flex flex-col gap-2">
 			<label className="relative">
 				<span className="sr-only">Search schema</span>
-				<Icon
-					name="search"
-					height={14}
-					width={14}
-					className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-				/>
-				<input
+				<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+				<Input
 					type="text"
 					inputMode="search"
 					placeholder="Search tables, columns, descriptions…"
 					value={search}
 					onInput={(e) => onSearchChange(e.currentTarget.value)}
-					className="min-h-8 w-full rounded-md border-(--bg-input) bg-(--bg-input) p-1.5 pl-7 text-sm text-black placeholder:text-[#666] dark:text-white dark:placeholder-[#919296]"
+					className="w-full pr-8 pl-8"
 				/>
 				{search ? (
 					<button
@@ -236,7 +232,7 @@ function BrowserHeader({
 				<div
 					role="tablist"
 					aria-label="Dataset kind"
-					className="inline-flex items-center gap-0.5 rounded-md border border-(--divider) bg-(--cards-bg) p-0.5"
+					className="inline-flex items-center gap-0.5 rounded-md border border-(--divider) bg-surface p-0.5"
 				>
 					{(Object.keys(FILTER_LABELS) as FilterKind[]).map((k) => {
 						const active = filter === k
@@ -250,7 +246,7 @@ function BrowserHeader({
 								className={`rounded-sm px-2.5 py-1 text-xs font-medium transition-colors ${
 									active
 										? 'bg-(--primary) text-white shadow-sm'
-										: 'text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)'
+										: 'text-(--text-secondary) hover:bg-hover-row hover:text-(--text-primary)'
 								}`}
 							>
 								{FILTER_LABELS[k]}
@@ -268,7 +264,7 @@ function BrowserHeader({
 
 function EmptyResults({ search }: { search: string }) {
 	return (
-		<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--divider) bg-(--cards-bg)/40 px-6 py-12 text-center">
+		<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--divider) bg-surface/40 px-6 py-12 text-center">
 			<Icon name="search" className="size-5 text-(--text-tertiary)" />
 			<p className="text-sm text-(--text-secondary)">
 				{search ? (
@@ -512,7 +508,7 @@ function ColumnChips({
 						title={
 							c.type ? `${c.name} · ${c.type}\nClick to insert column name` : `${c.name}\nClick to insert column name`
 						}
-						className="group inline-flex items-center gap-1 rounded-sm border border-(--divider) bg-(--cards-bg) px-1.5 py-0.5 transition-colors hover:border-(--primary)/50 hover:bg-(--primary)/5"
+						className="group inline-flex items-center gap-1 rounded-sm border border-(--divider) bg-surface px-1.5 py-0.5 transition-colors hover:border-(--primary)/50 hover:bg-(--primary)/5"
 					>
 						<TypeBadge kind={inferColumnKind(c.type)} />
 						<span className="font-mono text-[11.5px] text-(--text-primary) group-hover:text-(--primary)">{c.name}</span>
@@ -553,7 +549,7 @@ function RowActions({
 				disabled={!canCopy}
 				aria-label="Copy table name"
 				title="Copy table name"
-				className="flex size-7 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) disabled:cursor-not-allowed disabled:opacity-40"
+				className="flex size-7 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:cursor-not-allowed disabled:opacity-40"
 			>
 				<Icon name="copy" className="size-3.5" />
 			</button>
@@ -562,7 +558,7 @@ function RowActions({
 				onClick={onLoad}
 				disabled={!canLoad || alreadyLoaded}
 				title={alreadyLoaded ? 'Already loaded in this session' : 'Load CSV into session'}
-				className="inline-flex items-center gap-1.5 rounded-md border border-(--divider) bg-(--cards-bg) px-2.5 py-1 text-xs font-medium text-(--text-primary) transition-colors hover:border-(--primary)/40 hover:text-(--primary) disabled:cursor-not-allowed disabled:opacity-40"
+				className="inline-flex items-center gap-1.5 rounded-md border border-(--divider) bg-surface px-2.5 py-1 text-xs font-medium text-(--text-primary) transition-colors hover:border-(--primary)/40 hover:text-(--primary) disabled:cursor-not-allowed disabled:opacity-40"
 			>
 				{isLoading ? <LoadingSpinner size={10} /> : <Icon name="download-cloud" className="size-3" />}
 				{alreadyLoaded ? 'Loaded' : 'Load'}
@@ -627,7 +623,7 @@ function ParamCombobox({
 						className={`inline-flex max-w-[220px] min-w-[160px] items-center justify-between gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors ${
 							value
 								? 'border-(--primary)/50 bg-(--primary)/5 text-(--primary)'
-								: 'border-(--divider) bg-(--cards-bg) text-(--text-secondary) hover:border-(--primary)/40 hover:text-(--text-primary)'
+								: 'border-(--divider) bg-surface text-(--text-secondary) hover:border-(--primary)/40 hover:text-(--text-primary)'
 						}`}
 					>
 						<span className="truncate font-mono">{current?.label ?? `Pick ${paramLabel.toLowerCase()}…`}</span>
@@ -638,19 +634,14 @@ function ParamCombobox({
 						portal
 						sameWidth={false}
 						unmountOnHide
-						className="z-50 flex max-h-80 w-[min(320px,90vw)] flex-col overflow-hidden rounded-md border border-(--divider) bg-(--cards-bg) shadow-lg"
+						className="z-50 flex max-h-80 w-[min(320px,90vw)] flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-lg"
 					>
 						<div className="relative border-b border-(--divider) p-2">
-							<Icon
-								name="search"
-								height={12}
-								width={12}
-								className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-(--text-tertiary)"
-							/>
+							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 							<Ariakit.Combobox
 								autoSelect
 								placeholder={`Filter ${paramLabel.toLowerCase()}s…`}
-								className="w-full rounded-md border border-(--divider) bg-(--app-bg) py-1 pr-2 pl-6 text-xs text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--primary) focus:outline-none"
+								className={searchFieldInputStyles}
 							/>
 						</div>
 						<Ariakit.ComboboxList className="thin-scrollbar overflow-y-auto">
@@ -662,7 +653,7 @@ function ParamCombobox({
 										key={opt.value}
 										value={opt.value}
 										render={<Ariakit.ComboboxItem />}
-										className={`flex cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-xs text-(--text-primary) data-active-item:bg-(--link-hover-bg) ${
+										className={`flex cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-xs text-(--text-primary) data-active-item:bg-hover-row ${
 											opt.isChild ? 'pl-6 text-(--text-secondary)' : ''
 										}`}
 									>
@@ -694,7 +685,7 @@ function ParamCombobox({
 
 function KindTag({ kind }: { kind: 'flat' | 'ts' }) {
 	return (
-		<span className="rounded-sm bg-(--link-hover-bg) px-1.5 py-px text-[9px] font-semibold tracking-wider text-(--text-tertiary) uppercase">
+		<span className="rounded-sm bg-hover-row px-1.5 py-px text-[9px] font-semibold tracking-wider text-(--text-tertiary) uppercase">
 			{kind === 'flat' ? 'Dataset' : 'Time series'}
 		</span>
 	)

@@ -1,5 +1,6 @@
 import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
+import { selectTriggerStyles } from '~/components/Select/types'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { formattedNum } from '~/utils'
 import { type Segment, segmentHasOi } from './segments'
@@ -140,7 +141,7 @@ export function TokensTable({
 		<select
 			value={sortBy}
 			onChange={(e) => setSortBy(e.target.value as 'volume' | 'oi')}
-			className="rounded-md border border-(--form-control-border) bg-(--cards-bg) px-2 py-1 text-xs"
+			className={selectTriggerStyles('filter', 'md')}
 		>
 			{SORT_OPTIONS.map((option) => (
 				<option key={option.id} value={option.id}>

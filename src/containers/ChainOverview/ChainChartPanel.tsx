@@ -15,9 +15,17 @@ import { prepareChartCsv } from '~/components/ECharts/utils'
 import { EmbedChart } from '~/components/EmbedChart'
 import { Icon } from '~/components/Icon'
 import { LoadingDots } from '~/components/Loaders'
+import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { serializeChainChartToMultiChart } from '~/containers/ProDashboard/utils/chartSerializer'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useIsClient } from '~/hooks/useIsClient'
+import { Button, buttonStyles } from '~/ui/Button'
+import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { FailedDataPopover } from '~/ui/FailedDataPopover'
+import { Input, searchFieldIconStyles } from '~/ui/Input'
+import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar, chartPanelToolbarActionsStyles } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -211,61 +219,51 @@ export function ChainChartPanel({
 	const selectedChartLabel = (chart: ChainChartLabels) => getChainMetricLabel(chart, chainTokenInfo?.token_symbol)
 
 	return (
-		<div className="col-span-2 flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex flex-wrap items-center justify-start gap-2 p-2 pb-0">
+		<Panel className="col-span-2">
+			<ChartPanelToolbar>
 				{charts.length > 0 ? (
 					<Ariakit.DialogProvider store={metricsDialogStore}>
-						<Ariakit.DialogDisclosure className="flex shrink-0 cursor-pointer items-center justify-between gap-2 rounded-md border border-(--cards-border) bg-white px-2 py-1 font-normal hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) dark:bg-[#181A1C]">
+						<Ariakit.DialogDisclosure className={buttonStyles({ size: 'md' })}>
 							<span>Add Metrics</span>
-							<Icon name="plus" className="size-3.5" />
+							<Icon name="plus" className="size-3" />
 						</Ariakit.DialogDisclosure>
-						<Ariakit.Dialog
-							className="fixed inset-(--inset) top-0 right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-[85dvh] min-h-[40dvh] w-full max-w-full flex-col overflow-hidden rounded-t-xl border border-[color-mix(in_oklch,black_8%,transparent)] bg-(--cards-bg) pb-[max(0px,env(safe-area-inset-bottom))] shadow-[0_24px_64px_-16px_rgb(0_0_0/0.45),0_0_0_1px_color-mix(in_oklch,black_4%,transparent)] max-sm:drawer sm:mb-auto sm:h-fit sm:max-h-[min(720px,calc(100%-32px))] sm:min-h-[initial] sm:max-w-[min(calc(100%-32px),600px)] sm:rounded-xl sm:pb-0 dark:border-[color-mix(in_oklch,white_9%,transparent)] dark:shadow-[0_24px_64px_-16px_rgb(0_0_0/0.6),0_0_0_1px_color-mix(in_oklch,white_3%,transparent)_inset]"
-							unmountOnHide
-						>
-							<div className="flex items-center justify-between gap-3 border-b border-(--cards-border) px-4 py-3">
+						<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:600px]`} unmountOnHide>
+							<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 								<div className="flex items-baseline gap-2.5">
-									<Ariakit.DialogHeading className="text-[15px] font-semibold tracking-tight text-(--text-primary)">
-										Chart metrics
-									</Ariakit.DialogHeading>
-									<span className="text-xs text-(--text-tertiary) tabular-nums">
+									<DialogHeading>Chart metrics</DialogHeading>
+									<span className="body-sm text-tertiary tabular-nums">
 										{selectedOptions.length}/{allMetricOptions.length}
 									</span>
 								</div>
-								<Ariakit.DialogDismiss className="-mr-1 rounded-md p-1.5 text-(--text-tertiary) hover:bg-(--link-hover-bg) hover:text-(--text-primary) focus-visible:bg-(--link-hover-bg)">
+								<Ariakit.DialogDismiss className="-mr-1 rounded-md p-1.5 text-tertiary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row">
 									<Icon name="x" className="size-4" />
 									<span className="sr-only">Close</span>
 								</Ariakit.DialogDismiss>
 							</div>
 
-							<div className="border-b border-(--cards-border) px-4 py-3">
+							<div className="border-b border-subtle px-4 py-3">
 								<label className="relative block">
 									<span className="sr-only">Search metrics</span>
-									<Icon
-										name="search"
-										height={16}
-										width={16}
-										className="pointer-events-none absolute top-0 bottom-0 left-2.5 my-auto text-(--text-tertiary)"
-									/>
-									<input
+									<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+									<Input
 										type="text"
 										name="search"
 										inputMode="search"
 										placeholder={`Search ${allMetricOptions.length} metrics...`}
 										autoFocus
 										value={metricsSearchValue}
-										className="min-h-9 w-full rounded-md border border-(--cards-border) bg-(--bg-input) py-1.5 pr-24 pl-8 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--old-blue) focus:outline-none"
+										className="w-full pr-24 pl-8"
 										onChange={(e) => setMetricsSearchValue(e.currentTarget.value)}
 									/>
 									{metricsSearchValue ? (
 										<div className="absolute top-0 right-1.5 bottom-0 my-auto flex items-center gap-1">
-											<span className="text-[11px] text-(--text-tertiary) tabular-nums">
+											<span className="text-[11px] text-tertiary tabular-nums">
 												{filteredMetricOptions.length} {filteredMetricOptions.length === 1 ? 'match' : 'matches'}
 											</span>
 											<button
 												type="button"
 												onClick={() => setMetricsSearchValue('')}
-												className="flex size-5 items-center justify-center rounded text-(--text-tertiary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+												className="flex size-5 items-center justify-center rounded text-tertiary hover:bg-hover-row hover:text-primary"
 											>
 												<Icon name="x" className="size-3.5" />
 												<span className="sr-only">Clear search</span>
@@ -279,10 +277,10 @@ export function ChainChartPanel({
 								{groupedFilteredOptions.map((group) => (
 									<section key={`chain-chart-category-${group.label}`} className="flex flex-col gap-2">
 										<div className="flex items-baseline gap-1.5">
-											<span className="text-[10px] font-medium tracking-[0.08em] text-(--text-tertiary) uppercase">
+											<span className="text-[10px] font-medium tracking-[0.08em] text-tertiary uppercase">
 												{group.label}
 											</span>
-											<span className="text-[10px] text-(--text-tertiary)/70 tabular-nums">
+											<span className="text-[10px] text-tertiary/70 tabular-nums">
 												{group.selectedCount}/{group.options.length}
 											</span>
 										</div>
@@ -297,7 +295,7 @@ export function ChainChartPanel({
 														type="button"
 														onClick={() => handleToggleMetric(option)}
 														data-active={option.active}
-														className="group flex items-center gap-1.5 rounded-full border border-(--cards-border) bg-transparent px-2.5 py-1 text-xs text-(--text-primary) transition-[background-color,border-color,color] duration-150 ease-out hover:border-(--old-blue) hover:bg-(--link-hover-bg) focus-visible:border-(--old-blue) focus-visible:bg-(--link-hover-bg) data-[active=true]:border-[color-mix(in_oklch,var(--old-blue)_45%,transparent)] data-[active=true]:bg-[color-mix(in_oklch,var(--old-blue)_14%,transparent)]"
+														className={metricOptionChipStyles}
 													>
 														{option.active ? (
 															<span
@@ -306,10 +304,7 @@ export function ChainChartPanel({
 																style={{ backgroundColor: dotColor! }}
 															/>
 														) : (
-															<Icon
-																name="plus"
-																className="size-3 text-(--text-tertiary) group-hover:text-(--old-blue)"
-															/>
+															<Icon name="plus" className="size-3 text-tertiary group-hover:text-link" />
 														)}
 														<span>{option.label}</span>
 														{option.active ? (
@@ -324,14 +319,13 @@ export function ChainChartPanel({
 
 								{groupedFilteredOptions.length === 0 ? (
 									<div className="flex flex-col items-center gap-1 py-8 text-center">
-										<p className="text-sm text-(--text-secondary)">
-											No metrics match{' '}
-											<span className="font-medium text-(--text-primary)">"{deferredMetricsSearchValue}"</span>
+										<p className="text-sm text-secondary">
+											No metrics match <span className="font-medium text-primary">"{deferredMetricsSearchValue}"</span>
 										</p>
 										<button
 											type="button"
 											onClick={() => setMetricsSearchValue('')}
-											className="text-xs text-(--text-tertiary) underline-offset-2 hover:text-(--text-primary) hover:underline"
+											className="text-xs text-tertiary underline-offset-2 hover:text-primary hover:underline"
 										>
 											Clear search
 										</button>
@@ -339,32 +333,24 @@ export function ChainChartPanel({
 								) : null}
 							</div>
 
-							<div className="flex items-center justify-between gap-2 border-t border-(--cards-border) bg-(--cards-bg) px-4 py-3">
+							<div className="flex items-center justify-between gap-2 border-t border-subtle px-4 py-3">
 								{selectedOptions.length > 0 ? (
-									<button
-										type="button"
-										onClick={handleClearAll}
-										className="text-xs text-(--text-tertiary) underline-offset-2 hover:text-(--text-primary) hover:underline"
-									>
+									<Button type="button" variant="ghost" size="md" onClick={handleClearAll}>
 										Clear all
-									</button>
+									</Button>
 								) : (
-									<span className="text-xs text-(--text-tertiary)">Pick metrics to plot</span>
+									<span className="text-xs text-tertiary">Pick metrics to plot</span>
 								)}
-								<button
-									type="button"
-									onClick={() => metricsDialogStore.hide()}
-									className="rounded-md bg-(--old-blue) px-3 py-1.5 text-sm font-medium text-white hover:brightness-110 focus-visible:brightness-110"
-								>
+								<Button type="button" variant="primary" size="md" onClick={() => metricsDialogStore.hide()}>
 									Done
-								</button>
+								</Button>
 							</div>
 						</Ariakit.Dialog>
 					</Ariakit.DialogProvider>
 				) : null}
 				{toggledCharts.map((tchart) => (
 					<label
-						className="relative flex cursor-pointer flex-nowrap items-center gap-1 text-sm last-of-type:mr-auto"
+						className="relative flex cursor-pointer flex-nowrap items-center gap-1 last-of-type:mr-auto"
 						key={`add-or-remove-metric-${chainCharts[tchart]}`}
 					>
 						<input
@@ -379,24 +365,24 @@ export function ChainChartPanel({
 							className="peer absolute size-[1em] opacity-[0.00001]"
 						/>
 						<span
-							className="flex items-center gap-1 rounded-full border-2 border-(--old-blue) px-2 py-1 text-xs hover:bg-(--bg-input) focus-visible:bg-(--bg-input)"
+							className={metricChipStyles}
 							style={{
 								borderColor: chainOverviewChartColors[tchart]
 							}}
 						>
 							<span>{selectedChartLabel(tchart)}</span>
-							<Icon name="x" className="size-3.5" />
+							<Icon name="x" className="size-4" />
 						</span>
 					</label>
 				))}
 
-				<div className="ml-auto flex flex-wrap justify-end gap-1">
+				<div className={chartPanelToolbarActionsStyles}>
 					{denominations.length > 1 ? (
-						<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-(--text-form)">
+						<div className={chartSegmentedControlGroupStyles}>
 							{denominations.map((denom) => (
 								<button
 									key={`denom-${denom}`}
-									className="shrink-0 px-2 py-1 text-sm whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:font-medium data-[active=true]:text-(--link-text)"
+									className={chartSegmentedControlButtonStyles}
 									data-active={denomination === denom}
 									onClick={() => {
 										void pushShallowQuery(router, { currency: denom })
@@ -419,7 +405,7 @@ export function ChainChartPanel({
 					{canAddToDashboard ? (
 						<AddToDashboardButton chartConfig={multiChart} unsupportedMetrics={unsupportedMetrics} smol />
 					) : null}
-					<CSVDownloadButton prepareCsv={prepareCsv} smol />
+					<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />
 					<ChartPngExportButton
 						chartInstance={chainChartInstance}
 						filename={imageExportFilename}
@@ -427,7 +413,7 @@ export function ChainChartPanel({
 						iconUrl={metadata.name !== 'All' ? chainIconUrl(metadata.name) : undefined}
 					/>
 				</div>
-			</div>
+			</ChartPanelToolbar>
 
 			<div className="relative flex min-h-[360px] flex-col">
 				{isFetchingChartData ? (
@@ -448,30 +434,14 @@ export function ChainChartPanel({
 						/>
 					</Suspense>
 				)}
-				{isClient && !isFetchingChartData && failedMetrics.length > 0 ? (
-					<Ariakit.PopoverProvider>
-						<Ariakit.PopoverDisclosure className="absolute right-2 bottom-2 z-10 flex items-center justify-center rounded-full border border-(--cards-border) bg-(--bg-main) p-1.5 text-(--error) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)">
-							<Icon name="alert-triangle" className="size-3.5" />
-							<span className="sr-only">Show failed metric APIs</span>
-						</Ariakit.PopoverDisclosure>
-						<Ariakit.Popover
-							unmountOnHide
-							hideOnInteractOutside
-							gutter={6}
-							className="z-10 mr-1 flex max-h-[calc(100dvh-80px)] w-[min(calc(100vw-16px),300px)] flex-col gap-1 overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) p-2 text-xs dark:border-[hsl(204,3%,32%)]"
-						>
-							<p className="font-medium text-(--error)">Failed to load data for:</p>
-							<ul className="pl-4">
-								{failedMetrics.map((metric) => (
-									<li key={metric} className="list-disc">
-										{selectedChartLabel(metric)}
-									</li>
-								))}
-							</ul>
-						</Ariakit.Popover>
-					</Ariakit.PopoverProvider>
+				{isClient && !isFetchingChartData ? (
+					<FailedDataPopover
+						items={failedMetrics}
+						ariaLabel="Show failed metric APIs"
+						getLabel={(metric) => selectedChartLabel(metric)}
+					/>
 				) : null}
 			</div>
-		</div>
+		</Panel>
 	)
 }

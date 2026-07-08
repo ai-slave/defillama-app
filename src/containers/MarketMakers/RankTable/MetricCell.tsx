@@ -15,7 +15,7 @@ function roundPct(value: number | null | undefined): string {
 }
 
 export function MetricCell({ metric, market, mode, kind }: IProps) {
-	if (!metric) return <span className="text-(--text-tertiary)">N/A</span>
+	if (!metric) return <span className="text-tertiary">N/A</span>
 	const hasTwin = market != null
 
 	if (mode === 'value') {

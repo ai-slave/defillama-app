@@ -12,6 +12,9 @@ import type { LlamaAIChartConfig } from '~/containers/ProDashboard/types'
 import { addItemToDashboard } from '~/containers/ProDashboard/utils/dashboardItemsUtils'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import type { FormSubmitEvent } from '~/types/forms'
+import { Button } from '~/ui/Button'
+import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { Input } from '~/ui/Input'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import type { DashboardChartConfig, LlamaAIChartInput } from './AddToDashboardButton'
 
@@ -371,134 +374,122 @@ export function AddToDashboardModal({
 	return (
 		<Ariakit.Dialog
 			store={dialogStore}
-			className="dialog w-full max-w-md gap-0 overflow-hidden border pro-dashboard border-(--cards-border) bg-(--cards-bg) p-0 shadow-2xl"
+			className={`${dialogSurfaceStyles} [--dialog-width:448px]`}
 			unmountOnHide
 			portal
 			hideOnInteractOutside
 		>
-			<div className="h-1 w-full bg-linear-to-r from-pro-purple-300/60 via-pro-blue-300/40 to-transparent" />
-
-			<form onSubmit={handleAdd} className="p-5">
-				<div className="mb-5 flex items-center justify-between">
-					<Ariakit.DialogHeading className="text-lg font-semibold tracking-tight pro-text1">
-						Add to Dashboard
-					</Ariakit.DialogHeading>
-					<Ariakit.DialogDismiss className="rounded-md pro-hover-bg p-1.5 pro-text3 transition-colors hover:pro-text1">
+			<form onSubmit={handleAdd} className="flex min-h-0 flex-1 flex-col">
+				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
+					<DialogHeading>Add to Dashboard</DialogHeading>
+					<Ariakit.DialogDismiss
+						aria-label="Close dialog"
+						render={<Button type="button" variant="ghost" size="md" square className="-mr-1" />}
+					>
 						<Icon name="x" height={16} width={16} />
 					</Ariakit.DialogDismiss>
 				</div>
 
-				<div className="relative mb-4">
-					<Icon name="search" className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 pro-text3" />
-					<input
-						type="text"
-						onInput={(e) => setSearch(e.currentTarget.value)}
-						onKeyDown={handleSearchKeyDown}
-						placeholder="Search dashboards..."
-						className="w-full rounded-md border pro-border pro-bg2 py-2 pr-3 pl-9 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-pro-blue-300/40 focus:ring-1 focus:ring-pro-blue-300/30 focus:outline-hidden"
-					/>
-				</div>
+				<div className="flex thin-scrollbar min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-3">
+					<label className="relative block">
+						<span className="sr-only">Search dashboards</span>
+						<Icon
+							name="search"
+							className="pointer-events-none absolute top-0 bottom-0 left-3 my-auto size-4 text-tertiary"
+						/>
+						<Input
+							type="text"
+							onInput={(e) => setSearch(e.currentTarget.value)}
+							onKeyDown={handleSearchKeyDown}
+							placeholder="Search dashboards..."
+							className="w-full pl-8"
+						/>
+					</label>
 
-				<div className="-mx-1 mb-4 thin-scrollbar max-h-56 overflow-y-auto overscroll-contain px-1">
-					{isLoadingDashboards ? (
-						<div className="flex items-center justify-center py-8">
-							<div className="size-5 animate-spin rounded-full border-2 border-pro-blue-300 border-t-transparent" />
-						</div>
-					) : filteredDashboards.length === 0 && !search.trim() ? (
-						<p className="py-6 text-center text-sm pro-text3">No dashboards yet</p>
-					) : filteredDashboards.length === 0 ? (
-						<p className="py-6 text-center text-sm pro-text3">No matches found</p>
-					) : (
-						<div className="space-y-0.5">
-							{filteredDashboards.map((dashboard: (typeof dashboards)[number]) => {
-								const isSelected = selectedDashboardId === dashboard.id
-								return (
-									<button
-										key={dashboard.id}
-										type="button"
-										onClick={() => handleSelectDashboard(dashboard.id)}
-										className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm transition-all duration-150 ${
-											isSelected
-												? 'bg-pro-blue-300/10 text-pro-blue-400 dark:bg-pro-blue-300/15 dark:text-pro-blue-200'
-												: 'pro-hover-bg pro-text2 hover:pro-text1'
-										}`}
-									>
-										<div
-											className={`flex size-4 shrink-0 items-center justify-center rounded transition-all duration-150 ${
-												isSelected ? 'bg-pro-blue-300 shadow-sm shadow-pro-blue-300/30' : 'border pro-border'
+					<div className="thin-scrollbar max-h-56 overflow-y-auto overscroll-contain">
+						{isLoadingDashboards ? (
+							<div className="flex items-center justify-center py-8">
+								<div className="size-5 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+							</div>
+						) : filteredDashboards.length === 0 && !search.trim() ? (
+							<p className="py-6 text-center body-sm text-tertiary">No dashboards yet</p>
+						) : filteredDashboards.length === 0 ? (
+							<p className="py-6 text-center body-sm text-tertiary">No matches found</p>
+						) : (
+							<div className="flex flex-col gap-0.5">
+								{filteredDashboards.map((dashboard: (typeof dashboards)[number]) => {
+									const isSelected = selectedDashboardId === dashboard.id
+									return (
+										<button
+											key={dashboard.id}
+											type="button"
+											onClick={() => handleSelectDashboard(dashboard.id)}
+											className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left body-sm transition-colors ${
+												isSelected ? 'bg-brand-muted text-link' : 'text-secondary hover:bg-hover-row hover:text-primary'
 											}`}
 										>
-											{isSelected ? <Icon name="check" className="size-2.5 text-white" /> : null}
-										</div>
-										<span className="truncate">{dashboard.name}</span>
-									</button>
-								)
-							})}
+											<span
+												className={`grid size-4 shrink-0 place-items-center text-link ${isSelected ? '' : 'invisible'}`}
+											>
+												<Icon name="check" className="size-3" />
+											</span>
+											<span className="truncate">{dashboard.name}</span>
+										</button>
+									)
+								})}
+							</div>
+						)}
+					</div>
+
+					<div>
+						{isCreatingNew ? (
+							<Input
+								type="text"
+								name="newDashboardName"
+								required={isCreatingNew}
+								onChange={(e) => setNewDashboardNameInput(e.target.value)}
+								placeholder="New dashboard name..."
+								className="w-full"
+							/>
+						) : (
+							<Button type="button" size="md" onClick={handleCreateNew} className="w-full">
+								<Icon name="plus" className="size-4" />
+								<span>Create new dashboard</span>
+							</Button>
+						)}
+					</div>
+
+					{chartConfig && (chartConfig.kind === 'multi' || chartConfig.kind === 'builder') ? (
+						<div className="border-t border-subtle pt-4">
+							<label htmlFor={chartNameInputId} className="mb-1.5 block label-sm text-tertiary">
+								Chart name
+							</label>
+							<Input
+								id={chartNameInputId}
+								type="text"
+								name="chartName"
+								defaultValue={configName}
+								placeholder={configName || 'Enter chart name...'}
+								className="w-full"
+							/>
 						</div>
-					)}
+					) : null}
+
+					{unsupportedMetrics.length > 0 ? (
+						<div className="rounded-lg border border-medium bg-surface px-3 py-2">
+							<p className="body-sm text-warning">
+								{unsupportedMetrics.length} metric{unsupportedMetrics.length > 1 ? 's' : ''} not supported:{' '}
+								{unsupportedMetrics.join(', ')}
+							</p>
+						</div>
+					) : null}
 				</div>
 
-				<div className="mb-4">
-					{isCreatingNew ? (
-						<input
-							type="text"
-							name="newDashboardName"
-							required={isCreatingNew}
-							onChange={(e) => setNewDashboardNameInput(e.target.value)}
-							placeholder="New dashboard name..."
-							className="w-full rounded-md border border-pro-blue-300/40 pro-bg2 px-3 py-2 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:ring-1 focus:ring-pro-blue-300/30 focus:outline-hidden"
-						/>
-					) : (
-						<button
-							type="button"
-							onClick={handleCreateNew}
-							className="flex w-full items-center gap-2 rounded-md border border-dashed pro-border px-3 py-2 text-sm pro-text3 transition-colors hover:border-pro-blue-300/40 hover:bg-pro-blue-300/5 hover:pro-text1"
-						>
-							<Icon name="plus" className="size-3.5" />
-							<span>Create new dashboard</span>
-						</button>
-					)}
-				</div>
-
-				{chartConfig && (chartConfig.kind === 'multi' || chartConfig.kind === 'builder') ? (
-					<div className="mb-4 border-t pro-divider pt-4">
-						<label htmlFor={chartNameInputId} className="mb-1.5 block text-xs font-medium pro-text3">
-							Chart name
-						</label>
-						<input
-							id={chartNameInputId}
-							type="text"
-							name="chartName"
-							defaultValue={configName}
-							placeholder={configName || 'Enter chart name...'}
-							className="w-full rounded-md border pro-border pro-bg2 px-3 py-2 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-pro-blue-300/40 focus:ring-1 focus:ring-pro-blue-300/30 focus:outline-hidden"
-						/>
-					</div>
-				) : null}
-
-				{unsupportedMetrics.length > 0 ? (
-					<div className="mb-4 rounded-md border border-pro-gold-300/20 bg-pro-gold-300/5 px-3 py-2">
-						<p className="text-xs text-pro-gold-400 dark:text-pro-gold-200">
-							{unsupportedMetrics.length} metric{unsupportedMetrics.length > 1 ? 's' : ''} not supported:{' '}
-							{unsupportedMetrics.join(', ')}
-						</p>
-					</div>
-				) : null}
-
-				<div className="flex gap-2.5 border-t pro-divider pt-4">
-					<Ariakit.DialogDismiss
-						disabled={isSubmitting}
-						className="flex-1 rounded-md border pro-border pro-hover-bg px-3 py-2 text-sm pro-text3 transition-colors hover:pro-text1 disabled:opacity-50"
-					>
+				<div className="flex gap-2 border-t border-subtle px-4 py-3">
+					<Ariakit.DialogDismiss disabled={isSubmitting} render={<Button type="button" size="md" className="flex-1" />}>
 						Cancel
 					</Ariakit.DialogDismiss>
-					<button
-						type="submit"
-						disabled={isSubmitting || !canSubmit}
-						className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-all duration-150 ${
-							canSubmit ? 'pro-btn-blue' : 'cursor-not-allowed border pro-border pro-text3 opacity-50'
-						}`}
-					>
+					<Button type="submit" variant="primary" size="md" disabled={isSubmitting || !canSubmit} className="flex-1">
 						{isSubmitting ? (
 							<div className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
 						) : (
@@ -507,7 +498,7 @@ export function AddToDashboardModal({
 								Add to Dashboard
 							</>
 						)}
-					</button>
+					</Button>
 				</div>
 			</form>
 		</Ariakit.Dialog>

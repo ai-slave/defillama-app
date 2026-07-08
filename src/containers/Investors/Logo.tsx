@@ -33,8 +33,8 @@ export function Logo({
 			<span
 				className={
 					sm
-						? 'rounded-full border border-(--sl-accent)/40 px-2 py-0.5 text-[7px] font-semibold tracking-[0.12em] text-(--sl-accent)/60 uppercase'
-						: 'rounded-full border border-(--sl-accent)/40 px-3 py-1 text-[9px] font-semibold tracking-[0.15em] text-(--sl-accent)/60 uppercase'
+						? 'rounded-full border border-(--sl-accent)/40 px-2 py-0.5 label-sm tracking-[0.12em] text-(--sl-accent)/60 uppercase'
+						: 'rounded-full border border-(--sl-accent)/40 px-3 py-1 label-sm tracking-[0.15em] text-(--sl-accent)/60 uppercase'
 				}
 			>
 				{sm ? LOGO_SUBTITLE_SM : LOGO_SUBTITLE}

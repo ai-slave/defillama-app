@@ -2,6 +2,16 @@ import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
 import { Icon } from '~/components/Icon'
+import { inputStyles } from '~/ui/Input'
+import {
+	popoverMultiSelectCheckStyles,
+	popoverRowWithBorderStyles,
+	popoverSearchBlockWithBottomPaddingStyles,
+	popoverSeeMoreStyles,
+	popoverSurfaceStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName
+} from '~/ui/Popover'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 import type { MultiSelectOption } from './types'
 
@@ -63,13 +73,13 @@ export const MultiSelectCombobox = ({
 			open={open}
 			setOpen={setOpen}
 		>
-			<span className="relative flex w-full flex-1 flex-wrap items-center gap-1 rounded-md border-2 border-transparent focus-within:border-2 focus-within:border-(--primary)">
+			<span className="relative flex w-full flex-1 flex-wrap items-center gap-1 rounded-[8px] border border-medium bg-page focus-within:border-brand">
 				{selectedValues.length > 0 ? (
 					<div className="flex flex-wrap items-center gap-1 pl-1">
 						{selectedValues.map((value) => (
 							<button
 								key={`mutliselectcombobox-selected-${value}`}
-								className="flex items-center gap-1 rounded-md border-(--old-blue) bg-(--link-button) p-1.5 text-xs font-medium hover:bg-(--link-button-hover)"
+								className="flex items-center gap-1 rounded-md border border-brand bg-brand-muted p-1.5 label-sm text-link hover:bg-hover-row"
 								onClick={() => {
 									setSelectedValues(selectedValues.filter((v) => v !== value))
 								}}
@@ -80,11 +90,14 @@ export const MultiSelectCombobox = ({
 						))}
 					</div>
 				) : null}
-				<Ariakit.Combobox placeholder={placeholder} className="w-full flex-1 px-3 py-2 text-base outline-hidden" />
+				<Ariakit.Combobox
+					placeholder={placeholder}
+					className="min-h-8 w-full flex-1 bg-transparent px-3 py-1.5 pr-8 text-base text-primary outline-none placeholder:text-tertiary sm:body-sm"
+				/>
 				{open ? (
-					<Icon name="x" className="absolute top-0 right-2 bottom-0 my-auto size-4" />
+					<Icon name="x" className="absolute top-0 right-2 bottom-0 my-auto size-4 text-tertiary" />
 				) : (
-					<Icon name="chevron-down" className="absolute top-0 right-2 bottom-0 my-auto size-4" />
+					<Icon name="chevron-down" className="absolute top-0 right-2 bottom-0 my-auto size-4 text-tertiary" />
 				)}
 			</span>
 			<Ariakit.ComboboxPopover
@@ -92,21 +105,19 @@ export const MultiSelectCombobox = ({
 				hideOnInteractOutside
 				preventBodyScroll
 				gutter={6}
-				wrapperProps={{
-					className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
-				}}
-				className="z-10 flex thin-scrollbar h-[calc(100dvh-80px)] min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:drawer max-sm:rounded-b-none sm:max-h-[60dvh] lg:h-full lg:max-h-(--popover-available-height) dark:border-[hsl(204,3%,32%)]"
+				wrapperProps={{ className: popoverMobileWrapperClassName }}
+				className={`${popoverSurfaceStyles} thin-scrollbar`}
 				portal
 				sameWidth
 			>
-				<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
+				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 					<Icon name="x" className="size-5" />
 				</Ariakit.PopoverDismiss>
 
-				<span className="relative mb-2 p-3">
+				<span className={popoverSearchBlockWithBottomPaddingStyles}>
 					<input
 						placeholder="Search..."
-						className="w-full rounded-md bg-white px-3 py-1 text-base dark:bg-black"
+						className={`${inputStyles} w-full`}
 						onInput={(e) => {
 							const nextValue = e.currentTarget.value
 							startTransition(() => setSearchValue(nextValue))
@@ -120,11 +131,13 @@ export const MultiSelectCombobox = ({
 							key={`multi-select-${item.value}`}
 							value={item.value}
 							hideOnClick
-							className="group flex shrink-0 cursor-pointer items-center gap-2 border-b border-(--form-control-border) px-3 py-2 cv-auto-37 last-of-type:rounded-b-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)"
+							className={`${popoverRowWithBorderStyles} group justify-start gap-2`}
 						>
 							{item.logo ? <img src={item.logo} alt={item.label} className="size-5 shrink-0 rounded-full" /> : null}
 							<span>{item.label}</span>
-							<Ariakit.ComboboxItemCheck />
+							<span className={popoverMultiSelectCheckStyles(selectedValues.includes(item.value))} aria-hidden>
+								{selectedValues.includes(item.value) ? <Icon name="check" className="size-3" /> : null}
+							</span>
 						</Ariakit.ComboboxItem>
 					))}
 					{matches.length > viewableMatches ? (
@@ -133,7 +146,7 @@ export const MultiSelectCombobox = ({
 							setValueOnClick={false}
 							selectValueOnClick={false}
 							hideOnClick={false}
-							className="w-full cursor-pointer px-3 py-4 text-(--link) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-active-item:bg-(--link-hover-bg)"
+							className={popoverSeeMoreStyles}
 							onClick={handleSeeMore}
 						>
 							See more...

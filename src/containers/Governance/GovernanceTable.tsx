@@ -10,9 +10,10 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { Icon } from '~/components/Icon'
-import { Switch } from '~/components/Switch'
 import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
+import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Switch } from '~/ui/Switch'
 import { formattedNum, toNiceDayMonthAndYear } from '~/utils'
 import type { GovernanceProposal, GovernanceType } from './types'
 
@@ -57,19 +58,14 @@ export function GovernanceTable({
 	return (
 		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
 			<div className="flex flex-wrap items-center justify-end gap-2 p-3">
-				<label className="relative mr-auto w-full sm:max-w-[280px]">
+				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search proposals...</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
 						name="search"
 						onInput={(e) => setProposalName(e.currentTarget.value)}
 						placeholder="Search proposals..."
-						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+						className={searchFieldInputStyles}
 					/>
 				</label>
 				{filters}

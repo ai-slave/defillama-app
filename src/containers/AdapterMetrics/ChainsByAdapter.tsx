@@ -22,6 +22,9 @@ import { Tooltip } from '~/components/Tooltip'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { addFeeExtrasToRowTotals, hasEnabledFeeExtras, isFeeExtraEligibleAdapterMetric } from '~/metrics/feeExtras'
 import { definitions } from '~/public/definitions'
+import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
 import { ChainsByAdapterChart } from './ChainChart'
 import type { IChainsByAdapterPageData } from './types'
@@ -121,29 +124,25 @@ export function ChainsByAdapter(props: IProps) {
 					chartName={props.type}
 				/>
 			) : null}
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<div className="flex flex-wrap items-center justify-end gap-4 p-2">
-					<label className="relative mr-auto w-full sm:max-w-[280px]">
+			<Panel>
+				<TableToolbar className="justify-end">
+					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search chains</span>
-						<Icon
-							name="search"
-							height={16}
-							width={16}
-							className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-						/>
+						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						<input
 							onInput={(e) => setProjectName(e.currentTarget.value)}
 							placeholder="Search..."
-							className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+							className={searchFieldInputStyles}
 						/>
 					</label>
 					<CSVDownloadButton
 						prepareCsv={() => prepareTableCsv({ instance, filename: `${props.type}-chains-protocols` })}
 						smol
+						size="md"
 					/>
-				</div>
+				</TableToolbar>
 				<VirtualTable instance={instance} rowSize={64} compact />
-			</div>
+			</Panel>
 		</>
 	)
 }
@@ -167,7 +166,7 @@ const NameColumn = (route: string) =>
 
 					<BasicLink
 						href={route ? `/${route}/chain/${slug(value)}` : `/chain/${slug(value)}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 					>
 						{value}
 					</BasicLink>

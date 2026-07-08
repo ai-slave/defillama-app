@@ -26,6 +26,10 @@ import type {
 import { ChangeCell, FundingCell, MetricStat } from '~/containers/Markets/marketMetrics'
 import type { Segment } from '~/containers/Markets/segments'
 import { pctChange } from '~/containers/Markets/utils'
+import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { TabLink } from '~/ui/Tab'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import { fetchTokenMarkets } from './api'
 import { DEFAULT_TABLE_PAGE_SIZE, TABLE_PAGE_SIZE_OPTIONS } from './tableUtils'
@@ -110,11 +114,11 @@ const venueColumn = columnHelper.accessor('exchange', {
 		const label = (
 			<span className="flex items-center gap-2">
 				<TokenLogo name={exchange} kind="token" alt={`Logo of ${exchange}`} size={20} />
-				<span className="text-sm capitalize">{exchange}</span>
+				<span className="body-sm capitalize">{exchange}</span>
 			</span>
 		)
 		return url ? (
-			<a href={url} target="_blank" rel="noopener noreferrer" className="text-(--link-text) hover:underline">
+			<a href={url} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
 				{label}
 			</a>
 		) : (
@@ -130,7 +134,7 @@ const pairColumn = columnHelper.accessor('symbol', {
 	id: 'symbol',
 	header: 'Pair',
 	enableSorting: false,
-	cell: ({ getValue }) => <span className="text-sm uppercase">{getValue()}</span>,
+	cell: ({ getValue }) => <span className="body-sm uppercase">{getValue()}</span>,
 	meta: {
 		headerClassName: 'w-[140px]'
 	}
@@ -365,7 +369,8 @@ function Tabs<T extends string>({
 	return (
 		<div className="flex items-center overflow-x-auto" role="tablist" aria-label={ariaLabel}>
 			{tabs.map((tab, index) => (
-				<button
+				<TabLink
+					as="button"
 					key={tab.id}
 					ref={(node) => {
 						buttonRefs.current[index] = node
@@ -377,10 +382,9 @@ function Tabs<T extends string>({
 					data-active={activeTab === tab.id}
 					onClick={() => onChange(tab.id)}
 					onKeyDown={(event) => handleKeyDown(event, index)}
-					className="shrink-0 border-b-2 border-(--form-control-border) px-4 py-1 whitespace-nowrap hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) data-[active=true]:border-(--primary)"
 				>
 					{tab.label}
-				</button>
+				</TabLink>
 			))}
 		</div>
 	)
@@ -485,11 +489,8 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 	}, [data])
 
 	const sectionHeader = (
-		<div className="flex flex-wrap items-center justify-between gap-2 border-b border-(--cards-border) p-3">
-			<h2
-				className="group relative flex scroll-mt-24 items-center gap-1 text-xl font-bold"
-				id={TOKEN_MARKETS_SECTION_ID}
-			>
+		<PanelHeader className="justify-between">
+			<PanelTitle as="h2" className="group relative flex scroll-mt-24 items-center gap-1" id={TOKEN_MARKETS_SECTION_ID}>
 				Markets
 				<a
 					aria-hidden="true"
@@ -498,13 +499,13 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 					className="absolute top-0 right-0 z-10 flex size-full items-center"
 				/>
 				<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
-			</h2>
+			</PanelTitle>
 			{lastUpdated ? (
-				<span className="text-xs text-(--text-label)" title={lastUpdated.absolute}>
+				<span className="label-sm text-secondary" title={lastUpdated.absolute}>
 					Updated {lastUpdated.relative}
 				</span>
 			) : null}
-		</div>
+		</PanelHeader>
 	)
 
 	if (isLoading) {
@@ -515,10 +516,10 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 		)
 		if (embedded) return loader
 		return (
-			<section className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+			<Panel>
 				{sectionHeader}
 				{loader}
-			</section>
+			</Panel>
 		)
 	}
 
@@ -526,7 +527,7 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 	if (isEmpty) {
 		if (embedded) {
 			return (
-				<div className="flex min-h-[120px] items-center justify-center p-4 text-sm text-(--text-secondary)">
+				<div className="flex min-h-[120px] items-center justify-center p-4 body-sm text-secondary">
 					No market data available for this token.
 				</div>
 			)
@@ -545,7 +546,7 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 
 			<HeaderStrip rows={rows} totals={totals} showOi={isPerpCategory} />
 
-			<div className="flex w-full flex-wrap items-center justify-end gap-3">
+			<TableToolbar>
 				<div className="mr-auto flex items-center overflow-x-auto">
 					<Tabs
 						tabs={visibleCategoryTabs}
@@ -554,19 +555,14 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 						ariaLabel="Market category"
 					/>
 				</div>
-				<label className="relative w-full max-w-full sm:max-w-[280px]">
+				<label className={searchFieldInlineWrapperStyles}>
 					<span className="sr-only">Search exchanges</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
 						value={(table.getColumn('exchange')?.getFilterValue() as string | undefined) ?? ''}
 						onChange={(event) => table.getColumn('exchange')?.setFilterValue(event.currentTarget.value || undefined)}
 						placeholder="Search exchanges..."
-						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+						className={searchFieldInputStyles}
 					/>
 				</label>
 				<CSVDownloadButton
@@ -577,20 +573,21 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 						})
 					}
 					smol
+					size="md"
 				/>
-			</div>
-			<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} />
+			</TableToolbar>
+			<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} shell="none" />
 		</>
 	)
 
 	if (embedded) {
-		return <div className="flex flex-col gap-3 p-3">{content}</div>
+		return <div className="flex flex-col gap-2 p-2">{content}</div>
 	}
 
 	return (
-		<section className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+		<Panel>
 			{sectionHeader}
-			<div className="flex flex-col gap-3 p-3">{content}</div>
-		</section>
+			<div className="flex flex-col gap-2 p-2">{content}</div>
+		</Panel>
 	)
 }

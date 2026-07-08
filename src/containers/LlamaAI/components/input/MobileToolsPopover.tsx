@@ -169,6 +169,7 @@ export function MobileToolsPopover({
 						</span>
 					}
 					className={itemClassName}
+					popoverVariant="legacy"
 				>
 					<BrowserContent onPromptSelect={handlePromptSelect} hideDragHandle />
 				</NestedMenu>

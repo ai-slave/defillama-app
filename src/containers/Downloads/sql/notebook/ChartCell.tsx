@@ -31,7 +31,7 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-(--divider) bg-(--cards-bg)/60 px-2.5 py-1.5 text-xs">
+			<div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-(--divider) bg-surface/60 px-2.5 py-1.5 text-xs">
 				<span className="text-(--text-tertiary)">Source</span>
 				{availableSources.length === 0 ? (
 					<span className="text-(--text-tertiary) italic">
@@ -78,7 +78,7 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 			{result ? (
 				<ResultsChart result={result} chartConfig={cell.chartConfig} onChartConfigChange={onChartConfigChange} />
 			) : (
-				<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--divider) bg-(--cards-bg)/40 px-6 py-10 text-center">
+				<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--divider) bg-surface/40 px-6 py-10 text-center">
 					<Icon name="bar-chart-2" className="size-5 text-(--text-tertiary)" />
 					<p className="text-sm text-(--text-secondary)">
 						{cell.source

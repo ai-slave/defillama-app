@@ -13,6 +13,7 @@ import type { IHBarChartProps, IPieChartProps, ITreemapChartProps } from '~/comp
 import { preparePieChartData } from '~/components/ECharts/utils'
 import { Icon } from '~/components/Icon'
 import { Select } from '~/components/Select/Select'
+import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { Tooltip } from '~/components/Tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import type { StablecoinsChartConfig } from '~/containers/ProDashboard/types'
@@ -35,6 +36,9 @@ import { useCalcCirculating, useGroupChainsPegged } from '~/containers/Stablecoi
 import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/containers/Stablecoins/queries.client'
 import { getStablecoinDominance, type IFormattedStablecoinChainRow } from '~/containers/Stablecoins/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Card } from '~/ui/Card'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import { StablecoinsChainsTable } from './StablecoinsChainsTable'
@@ -241,7 +245,7 @@ export function ChainsWithStablecoins({
 	return (
 		<>
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-5 xl:col-span-1">
+				<Card border="subtle" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					<div className="flex flex-col">
 						<h1 className="text-(--text-label)">Total Stablecoins Market Cap</h1>
 						<p className="font-jetbrains text-2xl font-semibold">{mcapToDisplay}</p>
@@ -297,14 +301,14 @@ export function ChainsWithStablecoins({
 						<span className="text-(--text-label)">{topChain.name} Dominance</span>
 						<span className="font-jetbrains text-2xl font-semibold">{dominance}%</span>
 					</p>
-				</div>
-				<div className="col-span-2 flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-						<div className="mr-auto flex flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-xs font-medium text-(--text-form)">
+				</Card>
+				<Panel className="col-span-2">
+					<ChartPanelToolbar className="justify-end">
+						<div className={`mr-auto ${chartSegmentedControlGroupStyles}`}>
 							{chartTypeOptions.map(({ key, name }) => (
 								<button
 									key={key}
-									className="shrink-0 px-2 py-1 text-sm whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:font-medium data-[active=true]:text-(--link-text)"
+									className={chartSegmentedControlButtonStyles}
 									data-active={chartType === key}
 									onClick={() => onChartTypeChange(key)}
 								>
@@ -319,6 +323,7 @@ export function ChainsWithStablecoins({
 							label={getStablecoinChartViewLabel(chartView)}
 							labelType="none"
 							variant="filter"
+							size="md"
 						/>
 						{stablecoinsChartConfig == null ||
 						chartType === 'volume' ||
@@ -341,7 +346,7 @@ export function ChainsWithStablecoins({
 							filename={exportMeta.filename}
 							title={exportMeta.title}
 						/>
-					</div>
+					</ChartPanelToolbar>
 					{chartType === 'marketCap' && chartView === 'pie' ? (
 						<React.Suspense fallback={<div className="min-h-[360px]" />}>
 							<PieChart chartData={deferredChainsCirculatingValues} onReady={handleChartReady} />
@@ -384,7 +389,7 @@ export function ChainsWithStablecoins({
 							onReady={handleChartReady}
 						/>
 					)}
-				</div>
+				</Panel>
 			</div>
 
 			<StablecoinsChainsTable data={groupedChains} />
@@ -409,19 +414,29 @@ function SelectedChainsChart({
 }) {
 	if (isLoading) {
 		return (
-			<div className="flex min-h-[360px] items-center justify-center text-sm text-(--text-label)">Loading chart...</div>
+			<div
+				role="status"
+				aria-live="polite"
+				className="flex min-h-[360px] items-center justify-center body-sm text-tertiary"
+			>
+				Loading chart...
+			</div>
 		)
 	}
 	if (isError || !data) {
 		return (
-			<div className="flex min-h-[360px] items-center justify-center text-sm text-(--text-label)">
+			<div role="alert" className="flex min-h-[360px] items-center justify-center body-sm text-data-down">
 				Chart unavailable
 			</div>
 		)
 	}
 	if (data.charts.length === 0 || data.dataset.source.length === 0) {
 		return (
-			<div className="flex min-h-[360px] items-center justify-center text-sm text-(--text-label)">
+			<div
+				role="status"
+				aria-live="polite"
+				className="flex min-h-[360px] items-center justify-center body-sm text-tertiary"
+			>
 				Chart unavailable
 			</div>
 		)

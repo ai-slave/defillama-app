@@ -8,9 +8,9 @@ export function NotFoundPage() {
 			description={`DefiLlama is committed to providing accurate data without ads or sponsored content, as well as transparency.`}
 			canonicalUrl={`/404`}
 		>
-			<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-1">
+			<div className="isolate flex flex-1 flex-col items-center justify-center rounded-lg border border-subtle bg-surface p-1">
 				<img src="/assets/404.png" width={350} height={350} alt="Want a ride?" />
-				<p className="text-center text-base text-(--text-label)">
+				<p className="text-center body-md text-tertiary">
 					This page doesn&apos;t exist. Check out{' '}
 					<BasicLink href="/metrics" className="underline">
 						other dashboards

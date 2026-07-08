@@ -33,6 +33,7 @@ export function YieldProjects({
 			label={label}
 			nestedMenu={nestedMenu}
 			labelType={!project || project === 'All' ? 'none' : 'regular'}
+			popoverVariant="legacy"
 			includeQueryKey={includeQueryKey}
 			excludeQueryKey={excludeQueryKey}
 			pushQueryUpdates={(updates) => {

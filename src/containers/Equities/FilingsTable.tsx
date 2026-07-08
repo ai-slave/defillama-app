@@ -10,8 +10,12 @@ import {
 import { useMemo, useState } from 'react'
 import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
 import { Icon } from '~/components/Icon'
+import { selectTriggerStyles } from '~/components/Select/types'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
+import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { TableToolbar } from '~/ui/Toolbar'
 import type { IEquitiesFilingApiItem } from './api.types'
 import { formatEquitiesDate } from './utils'
 
@@ -118,28 +122,23 @@ export function EquitiesFilingsTable({
 	const [_searchValue, setSearchValue] = useTableSearch({ instance: table, columnToSearch: 'documentDescription' })
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex w-full flex-wrap items-center justify-end gap-3 p-3">
-				<label className="relative mr-auto w-full max-w-full sm:max-w-[280px]">
+		<Panel>
+			<TableToolbar className="justify-end">
+				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search filings</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-					/>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
 						onInput={(e) => setSearchValue(e.currentTarget.value)}
 						placeholder="Search filings"
-						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+						className={searchFieldInputStyles}
 					/>
 				</label>
-				<label className="flex items-center gap-2 text-sm">
-					<span className="text-(--text-form)">Form</span>
+				<label className="flex items-center gap-2 label-sm">
+					<span className="text-secondary">Form</span>
 					<select
 						value={selectedForm}
 						onChange={(e) => setSelectedForm(e.currentTarget.value)}
-						className="rounded-md border border-(--form-control-border) bg-white px-2 py-1 text-black dark:bg-black dark:text-white"
+						className={selectTriggerStyles('filter', 'md')}
 					>
 						<option value="All">All</option>
 						{filingForms.map((form) => (
@@ -149,9 +148,13 @@ export function EquitiesFilingsTable({
 						))}
 					</select>
 				</label>
-				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance: table, filename: 'equities-filings' })} smol />
-			</div>
-			<PaginatedTable table={table} pageSizeOptions={PAGE_SIZE_OPTIONS} />
-		</div>
+				<CSVDownloadButton
+					prepareCsv={() => prepareTableCsv({ instance: table, filename: 'equities-filings' })}
+					smol
+					size="md"
+				/>
+			</TableToolbar>
+			<PaginatedTable table={table} pageSizeOptions={PAGE_SIZE_OPTIONS} shell="none" />
+		</Panel>
 	)
 }

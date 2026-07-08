@@ -18,6 +18,9 @@ import { buildPoolsTrackingStats } from '~/containers/Yields/poolsPipeline'
 import { useHolderStats, useVolatility } from '~/containers/Yields/queries.client'
 import { PaginatedYieldsPoolTable } from '~/containers/Yields/Tables/Pools'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
+import { Button } from '~/ui/Button'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { TableToolbar } from '~/ui/Toolbar'
 import { fetchJson } from '~/utils/async'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
@@ -262,14 +265,10 @@ export function TokenYieldsSection({ tokenSymbol, hydration }: TokenYieldsSectio
 	)
 
 	return (
-		<section
-			className={`flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)${
-				hasPlaceholderState ? ' min-h-[80dvh] sm:min-h-[572px]' : ''
-			}`}
-		>
-			<div className="flex flex-wrap items-start justify-between gap-3 border-b border-(--cards-border) p-3">
-				<h2
-					className="group relative flex min-w-0 scroll-mt-24 items-center gap-1 text-xl font-bold"
+		<Panel className={hasPlaceholderState ? 'min-h-[80dvh] sm:min-h-[572px]' : undefined}>
+			<PanelHeader>
+				<PanelTitle
+					className="group relative flex min-w-0 scroll-mt-24 items-center gap-1"
 					id={TOKEN_YIELDS_SECTION_ID}
 				>
 					Yields
@@ -280,72 +279,73 @@ export function TokenYieldsSection({ tokenSymbol, hydration }: TokenYieldsSectio
 						className="absolute top-0 right-0 z-10 flex size-full items-center"
 					/>
 					<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
-				</h2>
+				</PanelTitle>
 				{!showInitialLoader && !error && summaryText ? (
-					<p className="text-sm text-(--text-secondary) sm:text-right">{summaryText}</p>
+					<p className="body-sm text-secondary sm:text-right">{summaryText}</p>
 				) : null}
-			</div>
+			</PanelHeader>
 
-			<div className="flex flex-1 flex-col gap-3 p-3">
+			<div className="flex flex-1 flex-col gap-2 p-2">
 				{showInitialLoader ? (
 					<div className="flex flex-1 items-center justify-center">
 						<LocalLoader />
 					</div>
 				) : error && poolsList.length === 0 ? (
 					<div className="flex flex-1 items-center justify-center px-4 text-center">
-						<p className="text-sm text-(--text-label)">{error.message}</p>
+						<p className="body-sm text-data-down">{error.message}</p>
 					</div>
 				) : poolsList.length === 0 ? (
 					<div className="flex flex-1 items-center justify-center px-4 text-center">
-						<p className="text-sm text-(--text-label)">No yield pools found.</p>
+						<p className="body-sm text-tertiary">No yield pools found.</p>
 					</div>
 				) : (
 					<div className="flex flex-1 flex-col">
-						<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-							<div className="p-1">
-								<ResponsiveFilterLayout>
-									{(nestedMenu) => (
-										<>
-											<FilterByChain chainList={chainList} selectedChains={selectedChains} nestedMenu={nestedMenu} />
-											<FilterByToken
-												tokensList={tokensList}
-												selectedTokens={includeTokens}
-												nestedMenu={nestedMenu}
-												autoApplyAttributes={false}
-												queryKey="yieldToken"
-												excludeQueryKey="yieldExcludeToken"
-											/>
-											<TVLRange variant="secondary" nestedMenu={nestedMenu} />
-											<APYRange nestedMenu={nestedMenu} />
-											<ColumnFilters enabledColumns={ENABLED_COLUMNS} nestedMenu={nestedMenu} />
-											{hasVisibleFilters ? (
-												<button
-													onClick={resetFilters}
-													className="rounded-md bg-(--btn-bg) px-3 py-2 text-xs text-(--text-primary) hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)"
-												>
-													Reset filters
-												</button>
-											) : null}
-										</>
-									)}
-								</ResponsiveFilterLayout>
-							</div>
-						</div>
+						<TableToolbar>
+							<ResponsiveFilterLayout desktopClassName="hidden min-h-8 flex-wrap gap-1.5 sm:flex">
+								{(nestedMenu) => (
+									<>
+										<FilterByChain
+											chainList={chainList}
+											selectedChains={selectedChains}
+											nestedMenu={nestedMenu}
+											size="md"
+										/>
+										<FilterByToken
+											tokensList={tokensList}
+											selectedTokens={includeTokens}
+											nestedMenu={nestedMenu}
+											autoApplyAttributes={false}
+											queryKey="yieldToken"
+											excludeQueryKey="yieldExcludeToken"
+											size="md"
+										/>
+										<TVLRange variant="secondary" nestedMenu={nestedMenu} size="md" />
+										<APYRange nestedMenu={nestedMenu} size="md" />
+										<ColumnFilters enabledColumns={ENABLED_COLUMNS} nestedMenu={nestedMenu} size="md" />
+										{hasVisibleFilters ? (
+											<Button type="button" size="md" onClick={resetFilters}>
+												Reset filters
+											</Button>
+										) : null}
+									</>
+								)}
+							</ResponsiveFilterLayout>
+						</TableToolbar>
 						{error ? (
-							<div className="rounded-md border border-red-500/30 bg-red-500/5 px-3 py-2 text-sm text-(--text-label)">
+							<div className="rounded-[8px] border border-medium bg-surface-elevated-1 px-3 py-2 body-sm text-data-down">
 								{error.message}
 							</div>
 						) : null}
 
 						{isFilteredEmpty ? (
-							<div className="flex flex-1 flex-col items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-								<p className="p-2">No pools match current filters</p>
+							<div className="flex flex-1 items-center justify-center p-2 text-center body-sm text-tertiary">
+								<p>No pools match current filters</p>
 							</div>
 						) : (
 							<div className="relative flex flex-col gap-3">
 								{showBackgroundLoading ? (
-									<div className="absolute inset-0 z-20 flex items-center justify-center rounded-md bg-(--app-bg)/60 backdrop-blur-[1px]">
-										<div className="flex items-center gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) px-3 py-2 text-sm text-(--text-secondary) shadow-xs">
+									<div className="absolute inset-0 z-20 flex items-center justify-center rounded-[8px] bg-page/60 backdrop-blur-[1px]">
+										<div className="flex items-center gap-2 rounded-[8px] border border-medium bg-surface-elevated-1 px-3 py-2 body-sm text-secondary shadow-xs">
 											<LoadingSpinner size={12} />
 											<span>Loading full dataset...</span>
 										</div>
@@ -378,6 +378,6 @@ export function TokenYieldsSection({ tokenSymbol, hydration }: TokenYieldsSectio
 					</div>
 				)}
 			</div>
-		</section>
+		</Panel>
 	)
 }

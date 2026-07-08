@@ -144,7 +144,7 @@ function SectionLandingContent({
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load research'
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-red-500/30 bg-red-500/5 p-6">
-				<h1 className="text-xl font-semibold text-(--text-primary)">Couldn't load this section</h1>
+				<h1 className="heading-sm text-(--text-primary)">Couldn't load this section</h1>
 				<p className="text-sm text-(--text-secondary)">{message}</p>
 			</div>
 		)

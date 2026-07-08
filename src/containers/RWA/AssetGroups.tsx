@@ -1,9 +1,10 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
-import { Switch } from '~/components/Switch'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import type {} from '~/components/Table/utils'
+import { Card } from '~/ui/Card'
+import { Checkbox } from '~/ui/Checkbox'
 import { formattedNum } from '~/utils'
 import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWAAssetGroupsOverviewRow, RWAOverviewPage } from './api.types'
@@ -35,7 +36,7 @@ const columns = [
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<BasicLink
 						href={`/rwa/asset-group/${rwaSlug(assetGroup)}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+						className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
 					>
 						{assetGroup}
 					</BasicLink>
@@ -117,22 +118,19 @@ export function RWAAssetGroups({
 
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="flex flex-wrap items-center justify-end gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-				<Switch
-					label="Stablecoins"
+			<Card padding="sm" border="subtle" className="flex flex-wrap items-center gap-2">
+				<Checkbox
+					variant="filter"
 					value="includeStablecoins"
 					checked={includeStablecoins}
-					help="Include stablecoin-token assets in asset group totals/columns."
 					onChange={onToggleStablecoins}
-				/>
-				<Switch
-					label="Governance Tokens"
-					value="includeGovernance"
-					checked={includeGovernance}
-					help="Include governance-token assets in asset group totals/columns."
-					onChange={onToggleGovernance}
-				/>
-			</div>
+				>
+					<span className="whitespace-nowrap">Stablecoins</span>
+				</Checkbox>
+				<Checkbox variant="filter" value="includeGovernance" checked={includeGovernance} onChange={onToggleGovernance}>
+					<span className="whitespace-nowrap">Governance Tokens</span>
+				</Checkbox>
+			</Card>
 			<RWAOverviewBreakdownChart page={page} initialChartDataset={initialChartDataset} stackLabel="Asset Groups" />
 			<TableWithSearch
 				data={data}

@@ -6,6 +6,7 @@ import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { Panel } from '~/ui/Panel'
 import { formattedNum, slug } from '~/utils'
 import { getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
 import { buildForksOverviewDisplayData, mergeForkOverviewChartData } from './overviewData'
@@ -99,17 +100,17 @@ export const ForksOverview = ({
 		<>
 			<RowLinksWithDropdown links={forkLinks} activeLink="All" />
 			{isLoading ? (
-				<div className="flex flex-1 flex-col items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
-					<p className="flex items-center gap-1">
+				<Panel padding="md" className="flex-1 items-center justify-center">
+					<p role="status" aria-live="polite" className="flex items-center gap-1 body-sm text-tertiary">
 						Loading
 						<LoadingDots />
 					</p>
-				</div>
+				</Panel>
 			) : (
 				<>
 					<div className="flex flex-col gap-2 xl:flex-row">
-						<div className="relative isolate flex flex-1 flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-							<React.Suspense fallback={<div className="min-h-[398px]" />}>
+						<Panel className="isolate flex-1">
+							<React.Suspense fallback={<div className="min-h-[406px]" />}>
 								<PieChart
 									chartData={tokenTvls}
 									stackColors={chartColors}
@@ -117,9 +118,9 @@ export const ForksOverview = ({
 									title="Forks TVL Breakdown"
 								/>
 							</React.Suspense>
-						</div>
-						<div className="flex-1 rounded-md border border-(--cards-border) bg-(--cards-bg)">
-							<React.Suspense fallback={<div className="min-h-[398px]" />}>
+						</Panel>
+						<Panel className="flex-1">
+							<React.Suspense fallback={<div className="min-h-[406px]" />}>
 								<MultiSeriesChart2
 									dataset={dominanceDataset}
 									charts={dominanceCharts}
@@ -136,16 +137,9 @@ export const ForksOverview = ({
 									title="Forks TVL Dominance (%)"
 								/>
 							</React.Suspense>
-						</div>
+						</Panel>
 					</div>
-					<React.Suspense
-						fallback={
-							<div
-								style={{ minHeight: `${tableData.length * 50 + 200}px` }}
-								className="rounded-md border border-(--cards-border) bg-(--cards-bg)"
-							/>
-						}
-					>
+					<React.Suspense fallback={<Panel style={{ minHeight: `${tableData.length * 50 + 200}px` }} />}>
 						<TableWithSearch
 							data={tableData}
 							columns={forksColumn}

@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import { useCallback, useMemo, useRef } from 'react'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import type { SelectTriggerSize } from '~/components/Select/types'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
 
@@ -11,13 +12,15 @@ interface IFiltersByChainProps {
 	selectedChains: string[]
 	evmChains?: string[]
 	nestedMenu?: boolean
+	size?: SelectTriggerSize
 }
 
 export function FilterByChain({
 	chainList = EMPTY_ARRAY,
 	selectedChains,
 	evmChains,
-	nestedMenu
+	nestedMenu,
+	size
 }: IFiltersByChainProps) {
 	const router = useRouter()
 	const { chain } = router.query
@@ -167,6 +170,8 @@ export function FilterByChain({
 			setSelectedValues={handleValuesChange}
 			nestedMenu={nestedMenu}
 			labelType={!chain || chain === 'All' ? 'none' : 'regular'}
+			popoverVariant="legacy"
+			size={size}
 		/>
 	)
 }

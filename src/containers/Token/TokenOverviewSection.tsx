@@ -19,6 +19,13 @@ import type { MarketTotalsBySegment, TokenMarketsResponse } from '~/containers/M
 import type { Segment } from '~/containers/Markets/segments'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
+import { Button, buttonStyles } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam } from '~/utils/routerQuery'
@@ -152,28 +159,28 @@ export function TokenPageHero({
 }) {
 	const percentChange = formatPercent(overview.marketData.percentChange24h)
 	const hasPriceBreakdown = overview.marketData.ath != null || overview.marketData.atl != null
-	const percentChangeColor =
+	const percentChangeClassName =
 		overview.marketData.percentChange24h != null && overview.marketData.percentChange24h >= 0
-			? 'rgba(18, 182, 0, 0.7)'
-			: 'rgba(211, 0, 0, 0.7)'
+			? 'text-data-up'
+			: 'text-data-down'
 
 	return (
 		<div className="flex flex-col gap-6">
-			<div className="flex flex-wrap items-center gap-2 text-xl">
+			<div className="flex flex-wrap items-center gap-2 heading-xs">
 				{logo ? (
 					<TokenLogo src={logo} fallbackSrc={tokenIconUrl(overview.name)} size={24} alt={`Logo of ${overview.name}`} />
 				) : (
 					<TokenLogo name={overview.name} kind="token" size={24} alt={`Logo of ${overview.name}`} />
 				)}
-				<Heading className="flex flex-wrap items-center gap-2 text-xl">
-					<span className="font-bold">{overview.name}</span>
+				<Heading className="flex flex-wrap items-center gap-2 heading-xs">
+					<span>{overview.name}</span>
 					{overview.symbol ? <span className="font-normal">({overview.symbol})</span> : null}
 				</Heading>
 			</div>
 			{issuer ? (
-				<div className="-mt-3 flex flex-wrap items-baseline gap-1 text-sm text-(--text-label)">
+				<div className="-mt-3 flex flex-wrap items-baseline gap-1 body-sm text-secondary">
 					<span>Issued by</span>
-					<BasicLink href={`/protocol/${issuer.slug}`} className="font-medium text-(--blue) hover:underline">
+					<BasicLink href={`/protocol/${issuer.slug}`} className="label-sm text-link hover:underline">
 						{issuer.name}
 					</BasicLink>
 				</div>
@@ -181,8 +188,8 @@ export function TokenPageHero({
 			{hasPriceBreakdown ? (
 				<details className="group/price">
 					<summary className="flex flex-wrap items-center gap-x-3 gap-y-1">
-						<span className="basis-full text-sm text-(--text-label)">Token Price</span>
-						<span className="font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
+						<span className="basis-full text-(--text-label)">Token Price</span>
+						<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
 							{formatCurrency(overview.marketData.currentPrice)}
 						</span>
 						<Icon
@@ -196,7 +203,7 @@ export function TokenPageHero({
 						{percentChange ? (
 							<SubMetricRow
 								label="24h Change"
-								value={<span style={{ color: percentChangeColor }}>{percentChange}</span>}
+								value={<span className={percentChangeClassName}>{percentChange}</span>}
 							/>
 						) : null}
 						{overview.marketData.ath != null ? (
@@ -205,7 +212,7 @@ export function TokenPageHero({
 								className="items-end"
 								extra={
 									formatDateLabel(overview.marketData.athDate) ? (
-										<span className="ml-auto self-end text-xs text-(--text-tertiary)">
+										<span className="ml-auto self-end label-sm text-tertiary">
 											{formatDateLabel(overview.marketData.athDate)}
 										</span>
 									) : null
@@ -220,7 +227,7 @@ export function TokenPageHero({
 								className="items-end"
 								extra={
 									formatDateLabel(overview.marketData.atlDate) ? (
-										<span className="ml-auto self-end text-xs text-(--text-tertiary)">
+										<span className="ml-auto self-end label-sm text-tertiary">
 											{formatDateLabel(overview.marketData.atlDate)}
 										</span>
 									) : null
@@ -233,15 +240,11 @@ export function TokenPageHero({
 				</details>
 			) : (
 				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-					<span className="basis-full text-sm text-(--text-label)">Token Price</span>
-					<span className="font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
+					<span className="basis-full text-(--text-label)">Token Price</span>
+					<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
 						{formatCurrency(overview.marketData.currentPrice)}
 					</span>
-					{percentChange ? (
-						<span className="text-sm font-medium" style={{ color: percentChangeColor }}>
-							{percentChange}
-						</span>
-					) : null}
+					{percentChange ? <span className={`label-sm ${percentChangeClassName}`}>{percentChange}</span> : null}
 				</div>
 			)}
 		</div>
@@ -554,69 +557,69 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 	}
 
 	return (
-		<div className="flex flex-col gap-3">
-			<div className="flex flex-wrap items-center gap-2">
+		<>
+			<ChartPanelToolbar>
 				{availableCharts.length > 0 ? (
 					<Ariakit.DialogProvider store={metricsDialogStore}>
-						<Ariakit.DialogDisclosure className="flex shrink-0 cursor-pointer items-center justify-between gap-2 rounded-md border border-(--cards-border) bg-white px-2 py-1 font-normal hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) dark:bg-[#181A1C]">
+						<Ariakit.DialogDisclosure className={buttonStyles({ size: 'md' })}>
 							<span>Add Metrics</span>
 							<Icon name="plus" className="size-3.5" />
 						</Ariakit.DialogDisclosure>
-						<Ariakit.Dialog className="dialog gap-3 max-sm:drawer sm:w-full" unmountOnHide>
-							<span className="flex items-center justify-between gap-1">
-								<Ariakit.DialogHeading className="text-2xl font-bold">Add metrics to chart</Ariakit.DialogHeading>
-								<Ariakit.DialogDismiss aria-label="Close dialog" className="ml-auto p-2 opacity-50">
-									<Icon name="x" aria-hidden="true" className="size-5" />
+						<Ariakit.Dialog className={dialogSurfaceStyles} unmountOnHide>
+							<div className="flex items-center gap-2 border-b border-subtle p-3">
+								<DialogHeading>Add metrics to chart</DialogHeading>
+								<Ariakit.DialogDismiss
+									render={<Button type="button" variant="ghost" size="md" square className="ml-auto" />}
+									aria-label="Close dialog"
+								>
+									<Icon name="x" aria-hidden="true" className="size-4" />
 								</Ariakit.DialogDismiss>
-							</span>
+							</div>
 
-							<label className="relative">
-								<span className="sr-only">Search metrics</span>
-								<Icon
-									name="search"
-									height={16}
-									width={16}
-									className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-								/>
-								<input
-									type="text"
-									name="search"
-									inputMode="search"
-									placeholder="Search..."
-									value={metricsSearchValue}
-									className="min-h-8 w-full rounded-md border-(--bg-input) bg-(--bg-input) p-1.5 pl-7 text-base text-black placeholder:text-[#666] dark:text-white dark:placeholder-[#919296]"
-									onChange={(e) => setMetricsSearchValue(e.currentTarget.value)}
-								/>
-							</label>
+							<div className="flex flex-col gap-3 p-3">
+								<label className="relative">
+									<span className="sr-only">Search metrics</span>
+									<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+									<Input
+										type="text"
+										name="search"
+										inputMode="search"
+										placeholder="Search..."
+										value={metricsSearchValue}
+										className={searchFieldInputPlacementStyles}
+										onChange={(e) => setMetricsSearchValue(e.currentTarget.value)}
+									/>
+								</label>
 
-							<div className="flex flex-wrap gap-2">
-								{filteredMetricOptions.map((option) => (
-									<button
-										key={`token-chart-option-${option.id}`}
-										type="button"
-										aria-label={`${option.active ? 'Remove' : 'Add'} ${option.label}`}
-										onClick={() => {
-											setActiveCharts(
-												activeCharts.includes(option.id)
-													? activeCharts.filter((value) => value !== option.id)
-													: [...activeCharts, option.id]
-											)
-											metricsDialogStore.toggle()
-										}}
-										data-active={option.active}
-										className="flex items-center gap-1 rounded-full border border-(--old-blue) px-2 py-1 hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[active=true]:bg-(--old-blue) data-[active=true]:text-white"
-									>
-										<span>{option.label}</span>
-										{option.active ? (
-											<Icon name="x" aria-hidden="true" className="size-3.5" />
-										) : (
-											<Icon name="plus" aria-hidden="true" className="size-3.5" />
-										)}
-									</button>
-								))}
-								{filteredMetricOptions.length === 0 ? (
-									<p className="py-2 text-sm text-(--text-tertiary)">No metrics found.</p>
-								) : null}
+								<div className="flex flex-wrap gap-2">
+									{filteredMetricOptions.map((option) => (
+										<button
+											key={`token-chart-option-${option.id}`}
+											type="button"
+											aria-label={`${option.active ? 'Remove' : 'Add'} ${option.label}`}
+											onClick={() => {
+												setActiveCharts(
+													activeCharts.includes(option.id)
+														? activeCharts.filter((value) => value !== option.id)
+														: [...activeCharts, option.id]
+												)
+												metricsDialogStore.toggle()
+											}}
+											data-active={option.active}
+											className={metricOptionChipStyles}
+										>
+											<span>{option.label}</span>
+											{option.active ? (
+												<Icon name="x" aria-hidden="true" className="size-3.5" />
+											) : (
+												<Icon name="plus" aria-hidden="true" className="size-3.5" />
+											)}
+										</button>
+									))}
+									{filteredMetricOptions.length === 0 ? (
+										<p className="py-2 body-sm text-tertiary">No metrics found.</p>
+									) : null}
+								</div>
 							</div>
 						</Ariakit.Dialog>
 					</Ariakit.DialogProvider>
@@ -627,7 +630,7 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 						type="button"
 						aria-label={`Remove ${getChartLabel(chart, overview.symbol)}`}
 						onClick={() => setActiveCharts(activeCharts.filter((value) => value !== chart))}
-						className="flex items-center gap-1 rounded-full border-2 px-2 py-1 text-xs"
+						className={metricChipStyles}
 						style={{ borderColor: TOKEN_OVERVIEW_CHART_COLORS[chart] }}
 					>
 						<span>{getChartLabel(chart, overview.symbol)}</span>
@@ -637,10 +640,14 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 				<div className="ml-auto">
 					<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 				</div>
-			</div>
+			</ChartPanelToolbar>
 			<div className="relative flex min-h-[360px] flex-col">
 				{shouldWaitForClient ? null : showLoadingState ? (
-					<p className="my-auto flex min-h-[360px] items-center justify-center gap-1 text-center text-xs">
+					<p
+						role="status"
+						aria-live="polite"
+						className="my-auto flex min-h-[360px] items-center justify-center gap-1 text-center body-sm text-tertiary"
+					>
 						fetching {loadingLabel}
 						<LoadingDots />
 					</p>
@@ -656,7 +663,7 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 						rangeHallmarks={null}
 					/>
 				) : (
-					<p className="m-auto max-w-sm text-center text-sm text-(--text-label)">
+					<p role="status" aria-live="polite" className="m-auto max-w-sm text-center body-sm text-tertiary">
 						{geckoId
 							? activeCharts.length > 0
 								? 'Chart unavailable for this token right now.'
@@ -665,7 +672,7 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 					</p>
 				)}
 			</div>
-		</div>
+		</>
 	)
 }
 
@@ -684,14 +691,14 @@ export function TokenOverviewSection({
 		<section className="scroll-mt-24" id="token-overview">
 			<h2 className="sr-only">Overview</h2>
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
-				<div className="col-span-1 flex flex-col gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:min-h-[360px]">
+				<Card padding="sm" border="subtle" className="col-span-1 flex flex-col gap-6 xl:min-h-[360px]">
 					<TokenPageHero overview={overview} logo={logo} issuer={issuer} />
 					<TokenMetrics overview={overview} />
-				</div>
+				</Card>
 				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
-					<div className="col-span-full flex flex-col gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+					<Panel className="col-span-full">
 						<TokenChartPanel overview={overview} geckoId={geckoId} />
-					</div>
+					</Panel>
 				</div>
 			</div>
 		</section>

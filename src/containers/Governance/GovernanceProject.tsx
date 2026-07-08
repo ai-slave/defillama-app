@@ -4,6 +4,7 @@ import { TagGroup } from '~/components/TagGroup'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { GovernanceTable } from '~/containers/Governance/GovernanceTable'
+import { Panel } from '~/ui/Panel'
 import { formattedNum } from '~/utils'
 import type { GovernanceDataEntry, GovernanceType } from './types'
 
@@ -94,9 +95,9 @@ export default function GovernanceProject({
 	return (
 		<>
 			<div className="flex flex-col gap-2">
-				<div className="flex flex-wrap items-center gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+				<div className="flex flex-wrap items-center gap-3 rounded-lg border border-subtle bg-surface p-3">
 					<TokenLogo name={name} kind="token" alt={`Logo of ${name}`} />
-					<h1 className="text-xl font-semibold">{name}</h1>
+					<h1 className="heading-sm">{name}</h1>
 					{filters}
 				</div>
 
@@ -107,7 +108,7 @@ export default function GovernanceProject({
 				data?.stats?.successfulProposalsInLast30Days != null ||
 				data?.stats?.highestTotalScore != null ||
 				data?.metadata?.followersCount != null ? (
-					<div className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2 rounded-md border border-(--cards-border) bg-(--cards-bg) px-4 py-3">
+					<div className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-subtle bg-surface px-4 py-3">
 						{data?.stats?.chainName != null ? (
 							<div className="flex items-center gap-1.5">
 								<span className="text-sm text-(--text-label)">Chain</span>
@@ -168,8 +169,8 @@ export default function GovernanceProject({
 				) : null}
 
 				<div className="grid grid-cols-2 gap-2">
-					<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-						<React.Suspense fallback={<div className="min-h-[398px]" />}>
+					<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+						<React.Suspense fallback={<div className="min-h-[406px]" />}>
 							<MultiSeriesChart2
 								title="Activity"
 								dataset={activityDataset?.source?.length > 0 ? activityDataset : EMPTY_ACTIVITY_DATASET}
@@ -183,9 +184,9 @@ export default function GovernanceProject({
 								}}
 							/>
 						</React.Suspense>
-					</div>
-					<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-						<React.Suspense fallback={<div className="min-h-[398px]" />}>
+					</Panel>
+					<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+						<React.Suspense fallback={<div className="min-h-[406px]" />}>
 							<MultiSeriesChart2
 								title="Max Votes"
 								dataset={maxVotesDataset?.source?.length > 0 ? maxVotesDataset : EMPTY_MAXVOTES_DATASET}
@@ -199,7 +200,7 @@ export default function GovernanceProject({
 								}}
 							/>
 						</React.Suspense>
-					</div>
+					</Panel>
 				</div>
 			</div>
 			{data != null ? <GovernanceTable data={data} governanceType={governanceType} /> : null}

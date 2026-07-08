@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import * as React from 'react'
-import { TAG_GROUP_VARIANTS, type TagGroupVariant } from './Select/types'
+import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS, type TagGroupSize, type TagGroupVariant } from './Select/types'
 
 interface IProps<V extends readonly string[] = readonly string[]> extends React.ComponentProps<'div'> {
 	selectedValue: V[number] | null
@@ -8,6 +8,7 @@ interface IProps<V extends readonly string[] = readonly string[]> extends React.
 	values: V
 	style?: Record<string, string>
 	variant?: TagGroupVariant
+	size?: TagGroupSize
 	label?: string
 	disabledValues?: readonly V[number][]
 }
@@ -19,6 +20,7 @@ export function TagGroup<V extends readonly string[]>({
 	style,
 	className,
 	variant = 'default',
+	size = 'md',
 	label,
 	disabledValues,
 	...props
@@ -27,7 +29,7 @@ export function TagGroup<V extends readonly string[]>({
 	const { container, button } = TAG_GROUP_VARIANTS[variant]
 
 	return (
-		<div role="radiogroup" className={clsx(container, className)} style={style} {...props}>
+		<div role="radiogroup" className={clsx(container, TAG_GROUP_SIZES[size], className)} style={style} {...props}>
 			{label ? <p className="pr-1 pl-3">{label}</p> : null}
 			{values.map((value) => (
 				<button

@@ -47,7 +47,7 @@ export function Menu({
 					{mainLinks.map(({ category, pages }) => (
 						<div key={`mobile-nav-${category}`} className="group mb-3 flex flex-col first:mb-auto">
 							{category === 'Premium' ? <PremiumHeader /> : <p className="mb-1 text-xs opacity-65">{category}</p>}
-							<hr className="border-black/20 dark:border-white/20" />
+							<hr className="border-subtle" />
 							{pages.map(({ name, route, icon, attention, isNew, umamiEvent }) => (
 								<LinkToPage
 									route={route}
@@ -69,7 +69,7 @@ export function Menu({
 							<span>Old Menu</span>
 							<Icon name="chevron-down" className="size-4 shrink-0 group-open:rotate-180" />
 						</summary>
-						<div className="border-l border-black/20 pl-2 group-open:border-l dark:border-white/20">
+						<div className="border-l border-subtle pl-2 group-open:border-l">
 							{oldMetricLinks.map(({ name, route, pages }: TOldNavLink) => (
 								<React.Fragment key={`mobile-nav-old-${name}-${route}`}>
 									{pages ? (
@@ -78,7 +78,7 @@ export function Menu({
 												<span>{name}</span>
 												<Icon name="chevron-down" className="size-4 shrink-0 group-open/second:rotate-180" />
 											</summary>
-											<div className="border-l border-black/20 pl-2 dark:border-white/20">
+											<div className="border-l border-subtle pl-2">
 												{pages.map(({ name: pageName, route: pageRoute }) => (
 													<LinkToPage
 														route={pageRoute}
@@ -112,7 +112,7 @@ export function Menu({
 					{userDashboards.length > 0 ? (
 						<div className="group mb-3 flex flex-col first:mb-auto">
 							<p className="mb-1 text-xs opacity-65">Your Dashboards</p>
-							<hr className="border-black/20 dark:border-white/20" />
+							<hr className="border-subtle" />
 							{userDashboards.map(({ name, route, icon }) => (
 								<LinkToPage
 									route={route}
@@ -129,7 +129,7 @@ export function Menu({
 					{footerLinks.map(({ category, pages }) => (
 						<div key={`mobile-nav-${category}`} className="group mb-3 flex flex-col first:mb-auto">
 							<p className="mb-1 text-xs opacity-65">{category}</p>
-							<hr className="border-black/20 dark:border-white/20" />
+							<hr className="border-subtle" />
 							{pages.map(({ name, route, icon }) => (
 								<LinkToPage
 									route={route}
@@ -143,7 +143,7 @@ export function Menu({
 						</div>
 					))}
 
-					<hr className="my-3 border-black/20 dark:border-white/20" />
+					<hr className="my-3 border-subtle" />
 
 					<Account asPath={asPath} />
 				</nav>
@@ -176,17 +176,17 @@ function PinnedPagesSection({
 				{pinnedPages.length > 1 ? (
 					<button
 						type="button"
-						className="rounded-md px-2 py-1 text-[11px] font-semibold tracking-wide text-(--text-tertiary) uppercase hover:bg-black/5 focus-visible:bg-black/5 dark:hover:bg-white/10 dark:focus-visible:bg-white/10"
+						className="rounded-md px-2 py-1 label-sm tracking-wide text-(--text-tertiary) uppercase hover:bg-black/5 focus-visible:bg-black/5 dark:hover:bg-white/10 dark:focus-visible:bg-white/10"
 						onClick={() => setIsReordering((v) => !v)}
 					>
 						{isReordering ? 'Done' : 'Reorder'}
 					</button>
 				) : null}
 			</div>
-			<hr className="border-black/20 dark:border-white/20" />
+			<hr className="border-subtle" />
 			{isReordering ? (
 				<>
-					<p className="mt-1 text-[11px] text-(--text-tertiary)">Drag to reorder, tap remove to unpin</p>
+					<p className="mt-1 body-sm text-(--text-tertiary)">Drag to reorder, tap remove to unpin</p>
 					<Suspense fallback={<div className="mt-1 min-h-[40px]" />}>
 						<ReorderablePinnedPages pinnedPages={pinnedPages} />
 					</Suspense>

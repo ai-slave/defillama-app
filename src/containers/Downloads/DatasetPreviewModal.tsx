@@ -699,14 +699,14 @@ export function DatasetPreviewModal({
 				}}
 			>
 				<Ariakit.Dialog
-					className="fixed inset-0 z-50 m-auto flex max-h-[90dvh] min-h-[55dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col overflow-hidden rounded-xl border border-(--cards-border) bg-(--cards-bg) shadow-2xl sm:w-[calc(100vw-2rem)]"
+					className="fixed inset-0 z-50 m-auto flex max-h-[90dvh] min-h-[55dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col overflow-hidden rounded-xl border border-subtle bg-surface shadow-2xl sm:w-[calc(100vw-2rem)]"
 					portal
 					unmountOnHide
 				>
 					<div className="flex shrink-0 flex-col border-b border-(--divider)">
 						<div className="flex items-center gap-3 px-4 py-2.5">
 							<div className="mr-auto min-w-0">
-								<h2 className="truncate text-base font-semibold">{dataset.name}</h2>
+								<h2 className="truncate heading-xs">{dataset.name}</h2>
 								<p className="text-xs text-(--text-tertiary)">
 									{loading
 										? 'Loading...'
@@ -731,7 +731,7 @@ export function DatasetPreviewModal({
 											isPreview ? (setSignupSource('downloads'), subscribeModalStore.show()) : void handleCopy()
 										}
 										disabled={!isPreview && selectedCount === 0}
-										className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) disabled:opacity-40 sm:flex"
+										className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:opacity-40 sm:flex"
 										title="Copy selected columns as TSV"
 									>
 										<Icon name="clipboard" className="size-3.5" />
@@ -743,7 +743,7 @@ export function DatasetPreviewModal({
 											type="button"
 											onClick={() => setShowSaveDialog(true)}
 											disabled={selectedCount === 0}
-											className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) disabled:opacity-40 sm:flex"
+											className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:opacity-40 sm:flex"
 											title="Save as preset"
 										>
 											<Icon name="bookmark" className="size-3.5" />
@@ -756,7 +756,7 @@ export function DatasetPreviewModal({
 											type="button"
 											onClick={() => void handleCopyLink()}
 											disabled={!currentConfig}
-											className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) disabled:opacity-40 sm:flex"
+											className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:opacity-40 sm:flex"
 											title="Copy shareable link"
 										>
 											<Icon name="link" className="size-3.5" />
@@ -784,7 +784,7 @@ export function DatasetPreviewModal({
 							<button
 								type="button"
 								onClick={onClose}
-								className="rounded-md p-1.5 text-(--text-tertiary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+								className="rounded-md p-1.5 text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
 							>
 								<Icon name="x" className="size-4" />
 							</button>
@@ -844,7 +844,7 @@ export function DatasetPreviewModal({
 											type="button"
 											onClick={() => void handleCopy()}
 											disabled={selectedCount === 0}
-											className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) disabled:opacity-40 sm:hidden"
+											className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:opacity-40 sm:hidden"
 											title="Copy selected columns as TSV"
 										>
 											<Icon name="clipboard" className="size-3.5" />
@@ -892,13 +892,13 @@ export function DatasetPreviewModal({
 							<div
 								ref={rightShadowRef}
 								className="pointer-events-none absolute inset-y-0 right-0 z-40 w-32 opacity-0 transition-opacity duration-200"
-								style={{ background: 'linear-gradient(to left, var(--cards-bg) 0%, transparent 100%)' }}
+								style={{ background: 'linear-gradient(to left, var(--ld-bg-surface) 0%, transparent 100%)' }}
 							/>
 							<div
 								ref={tableContainerRef}
 								className={`thin-scrollbar h-full ${isPreview ? 'overflow-x-auto overflow-y-hidden' : 'overflow-auto'}`}
 							>
-								<div className="sticky top-0 z-20 bg-(--cards-bg)" style={{ minWidth: `${tableWidth}px` }}>
+								<div className="sticky top-0 z-20 bg-surface" style={{ minWidth: `${tableWidth}px` }}>
 									<div style={{ display: 'grid', gridTemplateColumns: gridTemplate }}>
 										{columnMeta.map((column, position) => {
 											const isSelected = cols.has(column.index)
@@ -907,12 +907,12 @@ export function DatasetPreviewModal({
 											return (
 												<div
 													key={column.index}
-													className="border-t border-r border-(--divider) bg-(--cards-bg) last:border-r-0"
+													className="border-t border-r border-(--divider) bg-surface last:border-r-0"
 													style={{
 														position: isSticky ? 'sticky' : undefined,
 														left: isSticky ? 0 : undefined,
 														zIndex: isSticky ? 30 : undefined,
-														background: 'var(--cards-bg)',
+														background: 'var(--ld-bg-surface)',
 														boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
 													}}
 												>
@@ -983,7 +983,7 @@ export function DatasetPreviewModal({
 																position: isSticky ? 'sticky' : undefined,
 																left: isSticky ? 0 : undefined,
 																zIndex: isSticky ? 1 : undefined,
-																background: isSticky ? 'var(--cards-bg)' : isOdd ? 'var(--bg-primary)' : undefined,
+																background: isSticky ? 'var(--ld-bg-surface)' : isOdd ? 'var(--bg-primary)' : undefined,
 																boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
 															}}
 														>
@@ -1017,7 +1017,7 @@ export function DatasetPreviewModal({
 											WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)'
 										}}
 									/>
-									<div className="absolute inset-x-0 bottom-0 z-50 border-t border-(--divider) bg-(--cards-bg) px-6 py-5">
+									<div className="absolute inset-x-0 bottom-0 z-50 border-t border-(--divider) bg-surface px-6 py-5">
 										<div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
 											<p className="text-sm font-semibold text-(--text-primary)">
 												This is a preview — subscribe to download full datasets
@@ -1096,7 +1096,7 @@ function PlaceholderRows({
 										position: isSticky ? 'sticky' : undefined,
 										left: isSticky ? 0 : undefined,
 										zIndex: isSticky ? 1 : undefined,
-										background: isSticky ? 'var(--cards-bg)' : isOdd ? 'var(--bg-primary)' : undefined,
+										background: isSticky ? 'var(--ld-bg-surface)' : isOdd ? 'var(--bg-primary)' : undefined,
 										boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
 									}}
 								>
@@ -1131,7 +1131,7 @@ function ChainPickerPopover({
 
 	return (
 		<Ariakit.PopoverProvider store={popoverStore}>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)">
+			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary)">
 				<Icon name="link" className="size-3.5" />
 				{selected ?? 'All Chains'}
 			</Ariakit.PopoverDisclosure>
@@ -1139,7 +1139,7 @@ function ChainPickerPopover({
 				gutter={6}
 				portal
 				unmountOnHide
-				className="z-[60] flex max-h-80 w-64 flex-col overflow-hidden rounded-lg border border-(--divider) bg-(--cards-bg) shadow-xl"
+				className="z-[60] flex max-h-80 w-64 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
 			>
 				<div className="border-b border-(--divider) px-3 py-2">
 					<input
@@ -1156,7 +1156,7 @@ function ChainPickerPopover({
 							onSelect(null)
 							popoverStore.hide()
 						}}
-						className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-(--link-hover-bg) ${selected === null ? 'font-medium text-(--primary)' : 'text-(--text-secondary)'}`}
+						className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row ${selected === null ? 'font-medium text-(--primary)' : 'text-(--text-secondary)'}`}
 					>
 						All Chains
 					</button>
@@ -1168,7 +1168,7 @@ function ChainPickerPopover({
 								onSelect(chain)
 								popoverStore.hide()
 							}}
-							className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-(--link-hover-bg) ${selected === chain ? 'font-medium text-(--primary)' : 'text-(--text-secondary)'}`}
+							className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row ${selected === chain ? 'font-medium text-(--primary)' : 'text-(--text-secondary)'}`}
 						>
 							{chain}
 						</button>
@@ -1194,7 +1194,7 @@ function ExcludeToggleButton({
 			onClick={() => onToggle(!excluded)}
 			className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
 				excluded
-					? 'border-(--divider) text-(--text-tertiary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)'
+					? 'border-(--divider) text-(--text-tertiary) hover:bg-hover-row hover:text-(--text-primary)'
 					: 'border-(--primary)/30 bg-(--primary)/10 text-(--primary) hover:bg-(--primary)/20'
 			}`}
 		>
@@ -1221,7 +1221,7 @@ function ColumnPickerPopover({
 
 	return (
 		<Ariakit.PopoverProvider store={popoverStore}>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)">
+			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary)">
 				<Icon name="eye" className="size-3.5" />
 				Columns
 				<span className="text-(--text-tertiary)">
@@ -1232,7 +1232,7 @@ function ColumnPickerPopover({
 				gutter={6}
 				portal
 				unmountOnHide
-				className="z-[60] flex max-h-80 w-64 flex-col overflow-hidden rounded-lg border border-(--divider) bg-(--cards-bg) shadow-xl"
+				className="z-[60] flex max-h-80 w-64 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
 			>
 				<div className="flex items-center justify-between border-b border-(--divider) px-3 py-2">
 					<span className="text-xs font-medium text-(--text-secondary)">Toggle columns</span>
@@ -1248,7 +1248,7 @@ function ColumnPickerPopover({
 								key={column.index}
 								type="button"
 								onClick={() => onToggle(column.index)}
-								className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-(--link-hover-bg)"
+								className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row"
 							>
 								<span
 									className={`flex size-4 shrink-0 items-center justify-center rounded border transition-colors ${

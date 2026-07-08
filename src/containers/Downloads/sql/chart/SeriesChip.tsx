@@ -45,7 +45,7 @@ export function SeriesChip({
 	}
 
 	return (
-		<div className="group flex items-center gap-1.5 rounded-md bg-(--link-hover-bg)/60 px-1.5 py-0.5">
+		<div className="group flex items-center gap-1.5 rounded-md bg-hover-row/60 px-1.5 py-0.5">
 			<ColorPicker value={color} fallback={paletteColor} onChange={setColor} />
 			<span className="truncate font-mono text-[10.5px] text-(--text-primary)" style={{ maxWidth: '14ch' }}>
 				{name}
@@ -56,7 +56,7 @@ export function SeriesChip({
 					onClick={toggleKind}
 					aria-label={`Series ${name} type: ${kind}`}
 					title={`Series type: ${kind}`}
-					className="flex h-4 w-5 items-center justify-center rounded-sm border border-(--divider) bg-(--app-bg) font-mono text-[9px] text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+					className="flex h-4 w-5 items-center justify-center rounded-sm border border-(--divider) bg-(--app-bg) font-mono label-sm text-(--text-secondary) hover:bg-hover-row hover:text-(--text-primary)"
 				>
 					{kind === 'line' ? '—' : '▮'}
 				</button>
@@ -67,10 +67,10 @@ export function SeriesChip({
 					onClick={toggleAxis}
 					aria-label={`Axis: ${isRight ? 'right' : 'left'}`}
 					title={`Axis: ${isRight ? 'right' : 'left'}`}
-					className={`flex h-4 w-5 items-center justify-center rounded-sm border font-mono text-[9px] transition-colors ${
+					className={`flex h-4 w-5 items-center justify-center rounded-sm border font-mono label-sm transition-colors ${
 						isRight
 							? 'border-(--primary) bg-(--primary) text-white'
-							: 'border-(--divider) bg-(--app-bg) text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)'
+							: 'border-(--divider) bg-(--app-bg) text-(--text-secondary) hover:bg-hover-row hover:text-(--text-primary)'
 					}`}
 				>
 					{isRight ? 'R' : 'L'}

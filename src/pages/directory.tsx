@@ -8,6 +8,9 @@ import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import { basicProtocolPropertiesToKeepV1List } from '~/containers/ProtocolLists/utils.old'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
+import { inputStyles } from '~/ui/Input'
+import { popoverMenuItemStyles, popoverSearchResultsSurfaceStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
@@ -127,10 +130,12 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 			>
 				{recentProtocols && recentProtocols.length > 0 ? (
 					<div className="mx-auto mt-6 w-full max-w-3xl">
-						<div className="mb-2 text-xs font-medium text-(--text-disabled)">Recently visited</div>
+						<div className="mb-2 text-xs font-medium text-tertiary">Recently visited</div>
 						<div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
 							{recentProtocols.map((protocol) => (
-								<button
+								<Card
+									as="button"
+									type="button"
 									key={protocol.route}
 									onClick={() => {
 										if (typeof document !== 'undefined') {
@@ -138,32 +143,35 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 										}
 										saveRecent(protocol)
 									}}
-									className="flex items-center gap-2 rounded-sm border bg-(--cards-bg) p-2 text-xs hover:bg-(--bg-secondary) dark:border-(--bg-secondary)"
+									padding="sm"
+									border="subtle"
+									interactive
+									className="flex items-center gap-2 text-left"
 								>
 									{protocol.logo ? (
 										<TokenLogo src={protocol.logo} alt={`Logo of ${protocol.name}`} />
 									) : (
 										<div className="size-6 rounded bg-(--bg-secondary)" />
 									)}
-									<span className="truncate">{protocol.name}</span>
-								</button>
+									<span className="truncate label-sm">{protocol.name}</span>
+								</Card>
 							))}
 						</div>
 					</div>
 				) : null}
 
-				<span className="relative mx-auto w-full max-w-3xl">
+				<span className="relative mx-auto my-8 w-full max-w-3xl">
 					<Ariakit.Combobox
 						placeholder="Search..."
 						autoSelect
-						className="my-8 w-full rounded-t-md border border-[#ececec] bg-white p-3 pl-9 text-base text-black dark:border-[#2d2f36] dark:bg-black dark:text-white"
+						className={`${inputStyles} w-full rounded-b-none pl-9`}
 					/>
-					<Icon name="search" height={18} width={18} className="absolute top-3.5 left-3 mt-8" />
+					<Icon name="search" height={18} width={18} className="absolute top-0 bottom-0 left-3 my-auto text-tertiary" />
 				</span>
 				<Ariakit.ComboboxPopover
 					sameWidth
 					open={true}
-					className="top-1 z-10 thin-scrollbar h-full max-h-[320px] overflow-y-auto rounded-b-md border border-[hsl(204,20%,88%)] bg-(--bg-main) shadow-sm dark:border-[hsl(204,3%,32%)]"
+					className={`${popoverSearchResultsSurfaceStyles} top-1 h-full max-h-[320px]`}
 				>
 					{matches.length ? (
 						<Ariakit.ComboboxList ref={comboboxRef}>
@@ -180,7 +188,7 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 									focusOnHover
 									hideOnClick={false}
 									setValueOnClick={false}
-									className="flex cursor-pointer items-center gap-4 p-3 text-(--text-primary) hover:bg-(--bg-secondary) aria-disabled:bg-(--bg-secondary) aria-disabled:opacity-50 aria-selected:bg-(--bg-secondary)"
+									className={`${popoverMenuItemStyles} gap-4 aria-disabled:bg-hover-row aria-disabled:opacity-50 aria-selected:bg-hover-row`}
 								>
 									{option.logo ? <TokenLogo src={option.logo} alt={`Logo of ${option.name}`} /> : null}
 									<span>{option.name}</span>
@@ -191,7 +199,7 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 									value="__see_more__"
 									setValueOnClick={false}
 									hideOnClick={false}
-									className="w-full cursor-pointer px-3 py-4 text-(--link) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-active-item:bg-(--link-hover-bg)"
+									className={popoverSeeMoreStyles}
 									onClick={handleSeeMore}
 								>
 									See more...

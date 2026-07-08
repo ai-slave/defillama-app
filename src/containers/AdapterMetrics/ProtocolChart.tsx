@@ -17,6 +17,7 @@ import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { FEE_EXTRA_CONFIG_BY_SETTING, FEE_EXTRA_CONFIGS, type FeeExtraConfig } from '~/metrics/feeExtras'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { getNDistinctColors, slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { tokenIconUrl } from '~/utils/icons'
@@ -162,7 +163,7 @@ export const DimensionProtocolChartByType = ({
 
 	if (isLoading || fetchingBribeData || fetchingTokenTaxData) {
 		return (
-			<div className="col-span-2 flex min-h-[398px] flex-col items-center justify-center">
+			<div className="col-span-2 flex min-h-[406px] flex-col items-center justify-center">
 				<LocalLoader />
 			</div>
 		)
@@ -170,7 +171,7 @@ export const DimensionProtocolChartByType = ({
 
 	if (failedApiErrors.length > 0) {
 		return (
-			<div className="col-span-2 flex min-h-[398px] flex-col items-center justify-center">
+			<div className="col-span-2 flex min-h-[406px] flex-col items-center justify-center">
 				<div className="flex flex-col gap-2 p-2">
 					<ul className="flex flex-col gap-4 text-xs text-(--error)">
 						{failedApiErrors.map((apiError, index) => (
@@ -398,13 +399,13 @@ const ChartByType = ({
 
 	return (
 		<>
-			<div className="flex flex-wrap items-center justify-end gap-1 p-2 pb-0">
-				{title ? <h2 className="mr-auto text-base font-semibold">{title}</h2> : null}
+			<ChartPanelToolbar className="justify-end">
+				{title ? <h2 className="mr-auto heading-xs">{title}</h2> : null}
 				<ChartGroupingSelector
 					value={chartInterval}
 					setValue={changeChartInterval}
 					options={DWMC_GROUPING_OPTIONS_LOWERCASE}
-					className="ml-auto text-xs font-medium"
+					className="ml-auto"
 				/>
 				<SelectWithCombobox
 					allValues={uniqueBreakdownNames}
@@ -413,6 +414,7 @@ const ChartByType = ({
 					label={chartType === 'version' ? 'Versions' : 'Chains'}
 					labelType="smol"
 					variant="filter"
+					size="md"
 					portal
 				/>
 				<ChartExportButtons
@@ -422,7 +424,7 @@ const ChartByType = ({
 					iconUrl={tokenIconUrl(exportProtocolName)}
 				/>
 				{chartBuilderConfig ? <AddToDashboardButton chartConfig={chartBuilderConfig} smol /> : null}
-			</div>
+			</ChartPanelToolbar>
 			<React.Suspense fallback={<div className="min-h-[360px]" />}>
 				<MultiSeriesChart2
 					dataset={deferredMainChartData.dataset}

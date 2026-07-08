@@ -19,6 +19,10 @@ import { basicProtocolPropertiesToKeepV1List } from '~/containers/ProtocolLists/
 import { protocolCategoryConfig } from '~/containers/ProtocolTaxonomy/constants'
 import { TVL_SETTINGS_KEYS } from '~/contexts/LocalStorage'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
+import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -139,7 +143,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 							<TokenLogo name={chain} kind="chain" alt={`Logo of ${chain}`} />
 							<BasicLink
 								href={`/chain/${slug(chain)}`}
-								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 							>
 								{chain}
 							</BasicLink>
@@ -160,7 +164,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 				cell: (info) => {
 					const protocolName = info.getValue()
 					return protocolName ? (
-						<BasicLink href={`/protocol/${slug(protocolName)}`} className="text-sm font-medium text-(--link-text)">
+						<BasicLink href={`/protocol/${slug(protocolName)}`} className="text-sm font-medium text-link">
 							{protocolName}
 						</BasicLink>
 					) : null
@@ -202,23 +206,18 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 			canonicalUrl={`/top-protocols`}
 			pageName={pageName}
 		>
-			<div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-(--cards-bg) bg-(--cards-bg) p-3">
-				<h1 className="mr-auto text-xl font-semibold">Protocols with highest TVL by chain on each category</h1>
-			</div>
-			<div className="isolate rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<div className="flex flex-wrap items-center justify-end gap-2 p-2">
-					<label className="relative mr-auto w-full sm:max-w-[280px]">
+			<Card border="subtle" padding="sm">
+				<h1 className="heading-sm">Protocols with highest TVL by chain on each category</h1>
+			</Card>
+			<Panel>
+				<TableToolbar className="justify-end">
+					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search chains</span>
-						<Icon
-							name="search"
-							height={16}
-							width={16}
-							className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-						/>
+						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						<input
 							onInput={(e) => setSearchValue(e.currentTarget.value)}
 							placeholder="Search chains..."
-							className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+							className={searchFieldInputStyles}
 						/>
 					</label>
 
@@ -232,6 +231,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 							label={'Chains'}
 							labelType="smol"
 							variant="filter-responsive"
+							size="md"
 						/>
 
 						<SelectWithCombobox
@@ -243,19 +243,21 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 							label={'Columns'}
 							labelType="smol"
 							variant="filter-responsive"
+							size="md"
 						/>
 						<CSVDownloadButton
 							prepareCsv={() => prepareTableCsv({ instance: table, filename: 'top-protocols' })}
 							smol
+							size="md"
 						/>
 					</div>
-				</div>
+				</TableToolbar>
 				{table.getFilteredRowModel().rows.length > 0 ? (
 					<VirtualTable instance={table} />
 				) : (
-					<p className="px-3 py-6 text-center text-(--text-primary)">No results found</p>
+					<p className="px-3 py-6 text-center body-sm text-primary">No results found</p>
 				)}
-			</div>
+			</Panel>
 		</Layout>
 	)
 }

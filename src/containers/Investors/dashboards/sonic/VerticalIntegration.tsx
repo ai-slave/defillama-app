@@ -22,7 +22,7 @@ export default function VerticalIntegration() {
 	return (
 		<div className="flex min-h-[calc(100vh-180px)] flex-col gap-6">
 			<div className="max-w-2xl">
-				<h2 className="text-lg font-semibold text-(--text-primary)">Vertical Integration</h2>
+				<h2 className="heading-xs text-(--text-primary)">Vertical Integration</h2>
 				<p className="mt-3 text-base leading-relaxed text-(--text-secondary)">
 					Vertical integration is Sonic's strategy of building and aligning core applications, infrastructure, and
 					liquidity so that economic activity on the network compounds back into the S token rather than leaking to

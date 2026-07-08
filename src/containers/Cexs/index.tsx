@@ -39,7 +39,7 @@ function CustomRangeCell({
 	}
 
 	return (
-		<span className={value == null ? '' : value < 0 ? 'text-(--error)' : value > 0 ? 'text-(--success)' : ''}>
+		<span className={value == null ? '' : value < 0 ? 'text-data-down' : value > 0 ? 'text-data-up' : ''}>
 			{value != null ? formattedNum(value, true) : ''}
 		</span>
 	)
@@ -82,26 +82,24 @@ export const Cexs = ({ cexs }: { cexs: Array<ICex> }) => {
 	)
 
 	return (
-		<>
-			<TableWithSearch
-				data={enrichedData}
-				columns={columns}
-				columnToSearch={'name'}
-				placeholder={'Search exchange...'}
-				header={'CEX Transparency'}
-				headingAs="h1"
-				customFilters={() => (
-					<DateFilter
-						startDate={startDate}
-						endDate={endDate}
-						isLoading={customRangeLoading}
-						key={`cexs-date-filter-${startDate}-${endDate}`}
-					/>
-				)}
-				csvFileName="cex-transparency"
-				sortingState={DEFAULT_SORTING_STATE}
-			/>
-		</>
+		<TableWithSearch
+			data={enrichedData}
+			columns={columns}
+			columnToSearch={'name'}
+			placeholder={'Search exchange...'}
+			header={'CEX Transparency'}
+			headingAs="h1"
+			customFilters={() => (
+				<DateFilter
+					startDate={startDate}
+					endDate={endDate}
+					isLoading={customRangeLoading}
+					key={`cexs-date-filter-${startDate}-${endDate}`}
+				/>
+			)}
+			csvFileName="cex-transparency"
+			sortingState={DEFAULT_SORTING_STATE}
+		/>
 	)
 }
 
@@ -120,7 +118,7 @@ const columns = [
 					) : (
 						<BasicLink
 							href={`/cex/${slug(row.original.slug)}`}
-							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+							className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
 						>
 							{getValue()}
 						</BasicLink>
@@ -185,7 +183,7 @@ const columns = [
 		cell: (info) => {
 			const value = info.getValue()
 			return (
-				<span className={value == null ? '' : value < 0 ? 'text-(--error)' : value > 0 ? 'text-(--success)' : ''}>
+				<span className={value == null ? '' : value < 0 ? 'text-data-down' : value > 0 ? 'text-data-up' : ''}>
 					{value != null ? formattedNum(value, true) : ''}
 				</span>
 			)
@@ -200,7 +198,7 @@ const columns = [
 		cell: (info) => {
 			const value = info.getValue()
 			return (
-				<span className={value == null ? '' : value < 0 ? 'text-(--error)' : value > 0 ? 'text-(--success)' : ''}>
+				<span className={value == null ? '' : value < 0 ? 'text-data-down' : value > 0 ? 'text-data-up' : ''}>
 					{value != null ? formattedNum(value, true) : ''}
 				</span>
 			)
@@ -215,7 +213,7 @@ const columns = [
 		cell: (info) => {
 			const value = info.getValue()
 			return (
-				<span className={value == null ? '' : value < 0 ? 'text-(--error)' : value > 0 ? 'text-(--success)' : ''}>
+				<span className={value == null ? '' : value < 0 ? 'text-data-down' : value > 0 ? 'text-data-up' : ''}>
 					{value != null ? formattedNum(value, true) : ''}
 				</span>
 			)
@@ -285,56 +283,4 @@ const columns = [
 			align: 'end'
 		}
 	})
-	/*
-	{
-		header: 'Audit link',
-		accessorKey: 'auditLink',
-		size: 80,
-		enableSorting: false,
-		cell: ({ getValue }) => (
-			<>
-				{getValue() == null ? null : (
-					<a
-					href={getValue()}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="shrink-0 rounded-md  bg-(--link-button) hover:bg-(--link-button-hover) p-1.5"
-				>
-					<Icon name="arrow-up-right" height={14} width={14} />
-					<span className="sr-only">open in new tab</span>
-				</a>
-				)}
-			</>
-		),
-		meta: {
-			align: 'end'
-		}
-	},
-	{
-		header: 'Link to Wallets',
-		accessorKey: 'walletsLink',
-		size: 120,
-		enableSorting: false,
-		cell: ({ getValue }) => (
-			<>
-				{getValue() == null ? (
-					<QuestionHelper text="This CEX has no published their wallet addresses" />
-				) : (
-					<a
-					href={getValue()}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="shrink-0 rounded-md  bg-(--link-button) hover:bg-(--link-button-hover) p-1.5"
-				>
-					<Icon name="arrow-up-right" height={14} width={14} />
-					<span className="sr-only">open in new tab</span>
-				</a>
-				)}
-			</>
-		),
-		meta: {
-			align: 'end'
-		}
-	}
-	*/
 ]

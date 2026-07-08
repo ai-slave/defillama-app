@@ -8,6 +8,8 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/components/Tooltip'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
+import { Card } from '~/ui/Card'
+import { Panel } from '~/ui/Panel'
 import { formattedNum, slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import type { ExtraTvlMetric, IExtraTvlByChainPageData, IExtraTvlProtocolRow } from './types'
@@ -40,47 +42,49 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 		<>
 			<RowLinksWithDropdown links={props.chains} activeLink={props.chain} />
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<div className="col-span-3 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-5 text-base xl:col-span-1">
-					{props.chain !== 'All' ? (
-						<h1 className="flex flex-nowrap items-center gap-2">
-							<TokenLogo name={props.chain} kind="chain" size={24} alt={`Logo of ${props.chain}`} />
-							<span className="text-xl font-semibold">{props.chain}</span>
-						</h1>
-					) : null}
-					<div className="flex flex-wrap items-end justify-between gap-4">
-						{props.chain === 'All' ? (
-							<div className="flex flex-col">
-								<h1 className="text-(--text-label)">{metricInfo.header}</h1>
-								<p className="min-h-8 overflow-hidden font-jetbrains text-2xl font-semibold text-ellipsis whitespace-nowrap">
-									{formattedNum(props.totalValue, true)}
-								</p>
-							</div>
-						) : (
-							<p className="flex flex-col">
-								<span className="flex flex-col">
-									<span>{metricInfo.header}</span>
-									<span className="min-h-8 overflow-hidden font-jetbrains text-2xl font-semibold text-ellipsis whitespace-nowrap">
-										{formattedNum(props.totalValue, true)}
-									</span>
-								</span>
-							</p>
-						)}
-						{props.change24h != null ? (
-							<p className="relative bottom-0.5 flex flex-nowrap items-center gap-2 text-sm">
-								<span
-									className={`text-right font-jetbrains text-ellipsis ${
-										props.change24h >= 0 ? 'text-(--success)' : 'text-(--error)'
-									}`}
-								>
-									{`${props.change24h >= 0 ? '+' : ''}${props.change24h}%`}
-								</span>
-								<span className="text-(--text-label)">24h</span>
-							</p>
+				<Card className="col-span-3 w-full overflow-x-auto xl:col-span-1" border="subtle" padding="sm">
+					<div className="flex flex-col gap-6 text-base">
+						{props.chain !== 'All' ? (
+							<h1 className="flex flex-nowrap items-center gap-2">
+								<TokenLogo name={props.chain} kind="chain" size={24} alt={`Logo of ${props.chain}`} />
+								<span className="heading-sm">{props.chain}</span>
+							</h1>
 						) : null}
+						<div className="flex flex-wrap items-end justify-between gap-4">
+							{props.chain === 'All' ? (
+								<div className="flex flex-col">
+									<h1 className="text-(--text-label)">{metricInfo.header}</h1>
+									<p className="min-h-8 overflow-hidden font-jetbrains text-2xl font-semibold text-ellipsis whitespace-nowrap">
+										{formattedNum(props.totalValue, true)}
+									</p>
+								</div>
+							) : (
+								<p className="flex flex-col">
+									<span className="flex flex-col">
+										<span className="text-(--text-label)">{metricInfo.header}</span>
+										<span className="min-h-8 overflow-hidden font-jetbrains text-2xl font-semibold text-ellipsis whitespace-nowrap">
+											{formattedNum(props.totalValue, true)}
+										</span>
+									</span>
+								</p>
+							)}
+							{props.change24h != null ? (
+								<p className="relative bottom-0.5 flex flex-nowrap items-center gap-2 text-sm">
+									<span
+										className={`text-right font-jetbrains text-ellipsis ${
+											props.change24h >= 0 ? 'text-(--success)' : 'text-(--error)'
+										}`}
+									>
+										{`${props.change24h >= 0 ? '+' : ''}${props.change24h}%`}
+									</span>
+									<span className="text-secondary">24h</span>
+								</p>
+							) : null}
+						</div>
 					</div>
-				</div>
-				<div className="col-span-2 flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<Suspense fallback={<div className="min-h-[398px]" />}>
+				</Card>
+				<Panel className="col-span-2">
+					<Suspense fallback={<div className="min-h-[406px]" />}>
 						<MultiSeriesChart2
 							exportButtons={{
 								png: true,
@@ -93,7 +97,7 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 							charts={props.charts}
 						/>
 					</Suspense>
-				</div>
+				</Panel>
 			</div>
 			<TableWithSearch
 				data={props.protocols}
@@ -169,14 +173,14 @@ function buildColumns(metric: ExtraTvlMetric) {
 						<span className="-my-2 flex flex-col">
 							<BasicLink
 								href={`/protocol/${row.original.slug}?${chartParam}`}
-								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 							>
 								{value}
 							</BasicLink>
 
 							<Tooltip
 								content={<ProtocolChainsComponent chains={row.original.chains} />}
-								className="text-[0.7rem] text-(--text-disabled)"
+								className="text-[0.7rem] text-secondary"
 							>
 								{`${row.original.chains.length} chain${row.original.chains.length > 1 ? 's' : ''}`}
 							</Tooltip>
@@ -196,7 +200,7 @@ function buildColumns(metric: ExtraTvlMetric) {
 				const value = getValue()
 				if (!value) return null
 				return (
-					<BasicLink href={getCategoryRoute(slug(value))} className="text-sm font-medium text-(--link-text)">
+					<BasicLink href={getCategoryRoute(slug(value))} className="text-sm font-medium text-link">
 						{value}
 					</BasicLink>
 				)

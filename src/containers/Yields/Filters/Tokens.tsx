@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import type { SelectTriggerSize } from '~/components/Select/types'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
 
@@ -12,6 +13,7 @@ interface IFiltersByTokensProps {
 	autoApplyAttributes?: boolean
 	queryKey?: string
 	excludeQueryKey?: string
+	size?: SelectTriggerSize
 }
 
 function tokenQueryUpdates(
@@ -65,7 +67,8 @@ export function FilterByToken({
 	nestedMenu,
 	autoApplyAttributes = true,
 	queryKey = 'token',
-	excludeQueryKey = 'excludeToken'
+	excludeQueryKey = 'excludeToken',
+	size
 }: IFiltersByTokensProps) {
 	const router = useRouter()
 	const { attribute } = router.query
@@ -145,6 +148,8 @@ export function FilterByToken({
 			nestedMenu={nestedMenu}
 			labelType={(!token || token === 'All') && excludedTokens.length === 0 ? 'none' : 'regular'}
 			setSelectedValues={handleSetSelectedValues}
+			popoverVariant="legacy"
+			size={size}
 		/>
 	)
 }

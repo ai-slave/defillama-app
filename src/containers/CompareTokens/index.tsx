@@ -7,6 +7,9 @@ import { fetchCoinPrices } from '~/api/pricing'
 import { Icon } from '~/components/Icon'
 import { LocalLoader } from '~/components/Loaders'
 import { CoinsPicker } from '~/containers/Correlations'
+import { buttonStyles } from '~/ui/Button'
+import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { menuSurfaceStyles, popoverRowWithBorderStyles, popoverMobileDismissStyles } from '~/ui/Popover'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { CompareTokenProtocol } from './types'
 
@@ -142,9 +145,7 @@ export function CompareTokens({
 
 	return (
 		<>
-			<h1 className="relative mx-auto mt-2 w-full max-w-sm text-center text-xl font-semibold lg:-left-[116px]">
-				Compare Tokens
-			</h1>
+			<h1 className="relative mx-auto mt-2 w-full max-w-sm text-center heading-sm lg:-left-[116px]">Compare Tokens</h1>
 			<div className="relative mx-auto flex w-full max-w-sm flex-col items-center gap-2 lg:-left-[116px]">
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-center">
 					<div className="relative w-full sm:max-w-[280px]">
@@ -160,15 +161,10 @@ export function CompareTokens({
 									img.onerror = null
 									img.src = '/assets/placeholder.png'
 								}}
-								className="absolute top-0 bottom-0 left-2 my-auto inline-block aspect-square shrink-0 rounded-full bg-(--bg-tertiary) object-cover"
+								className="absolute top-0 bottom-0 left-3 my-auto inline-block aspect-square shrink-0 rounded-full bg-(--bg-tertiary) object-cover"
 							/>
 						) : (
-							<Icon
-								name="search"
-								height={16}
-								width={16}
-								className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-							/>
+							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						)}
 						<input
 							value={selectedCoins[0]?.name ?? ''}
@@ -178,7 +174,7 @@ export function CompareTokens({
 							}}
 							readOnly
 							placeholder="Search coins..."
-							className="min-h-8 w-full rounded-md border border-(--form-control-border) bg-white px-2 py-1 pl-7 text-black dark:bg-black dark:text-white"
+							className={searchFieldInputStyles}
 						/>
 					</div>
 					<button
@@ -205,15 +201,10 @@ export function CompareTokens({
 									img.onerror = null
 									img.src = '/assets/placeholder.png'
 								}}
-								className="absolute top-0 bottom-0 left-2 my-auto inline-block aspect-square shrink-0 rounded-full bg-(--bg-tertiary) object-cover"
+								className="absolute top-0 bottom-0 left-3 my-auto inline-block aspect-square shrink-0 rounded-full bg-(--bg-tertiary) object-cover"
 							/>
 						) : (
-							<Icon
-								name="search"
-								height={16}
-								width={16}
-								className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
-							/>
+							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						)}
 						<input
 							value={selectedCoins[1]?.name ?? ''}
@@ -223,22 +214,17 @@ export function CompareTokens({
 							}}
 							readOnly
 							placeholder="Search coins..."
-							className="min-h-8 w-full rounded-md border border-(--form-control-border) bg-white px-2 py-1 pl-7 text-black dark:bg-black dark:text-white"
+							className={searchFieldInputStyles}
 						/>
 					</div>
 				</div>
 				<Ariakit.MenuProvider>
-					<Ariakit.MenuButton className="relative flex w-full cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md bg-(--btn2-bg) px-3 py-2 text-(--text-primary) hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)">
+					<Ariakit.MenuButton className={`${buttonStyles({ size: 'md' })} w-full justify-between`}>
 						<span>{compareType.label}</span>
 						<Ariakit.MenuButtonArrow />
 					</Ariakit.MenuButton>
-					<Ariakit.Menu
-						unmountOnHide
-						hideOnInteractOutside
-						sameWidth
-						className="z-10 flex thin-scrollbar max-h-[60dvh] min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:drawer max-sm:rounded-b-none dark:border-[hsl(204,3%,32%)]"
-					>
-						<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
+					<Ariakit.Menu unmountOnHide hideOnInteractOutside sameWidth className={menuSurfaceStyles}>
+						<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 							<Icon name="x" className="size-5" />
 						</Ariakit.PopoverDismiss>
 
@@ -248,7 +234,7 @@ export function CompareTokens({
 								onClick={() => {
 									void pushShallowQuery(router, { type: item.value })
 								}}
-								className="flex shrink-0 cursor-pointer items-center justify-between gap-4 border-b border-(--form-control-border) px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)"
+								className={popoverRowWithBorderStyles}
 							>
 								{item.label}
 							</Ariakit.MenuItem>

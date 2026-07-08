@@ -15,7 +15,7 @@ export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, rep
 	return (
 		<div className="text-white">
 			<div>
-				<div className="relative isolate flex flex-col items-center pt-[32px] lg:pt-[45px]">
+				<div className="relative isolate flex flex-col items-center pt-8 lg:pt-[45px]">
 					<div
 						aria-hidden
 						className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[calc(100%+clamp(160px,18vw,200px))] overflow-hidden select-none"
@@ -23,18 +23,18 @@ export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, rep
 						<ResearchHeaderWash />
 					</div>
 					<img src="/assets/research_logo_dark.webp" alt="DefiLlama" width={229} height={72} />
-					<h1 className="mt-[35px] mb-[12px] text-center text-[22px] leading-[130%] font-semibold lg:mb-[16px] lg:text-[32px]">
+					<h1 className="mt-[35px] mb-3 text-center text-[22px] leading-[130%] font-semibold lg:mb-4 lg:text-[32px]">
 						{title}
 					</h1>
-					<h2 className="mb-[24px] text-center text-[16px] leading-[130%] font-light lg:mb-[35px] lg:text-[20px]">
+					<h2 className="mb-6 text-center text-[16px] leading-[130%] font-light lg:mb-[35px] lg:text-[20px]">
 						{subtitle}
 					</h2>
 
-					<div className="flex flex-col items-center gap-[36px] lg:flex-row">
-						<div className="flex gap-[12px]">
+					<div className="flex flex-col items-center gap-9 lg:flex-row">
+						<div className="flex gap-3">
 							<a
 								href="mailto:research@defillama.com"
-								className="flex items-center rounded-full bg-white px-[14px] py-[12px] text-[16px] leading-[50%] text-[#237BFF] md:px-[24px] md:py-[14px]"
+								className="flex items-center rounded-full bg-white px-3.5 py-3 text-[16px] leading-[50%] text-[#237BFF] md:px-6 md:py-3.5"
 							>
 								Contact us
 							</a>
@@ -42,7 +42,7 @@ export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, rep
 								href="https://calendly.com/research-defillama/30min"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="flex items-center gap-2 rounded-full border border-white px-[14px] py-[12px] text-[16px] leading-[50%] text-white md:px-[24px] md:py-[14px]"
+								className="flex items-center gap-2 rounded-full border border-white px-3.5 py-3 text-[16px] leading-[50%] text-white md:px-6 md:py-3.5"
 							>
 								<span>Book a call</span>
 
@@ -86,7 +86,7 @@ export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, rep
 				</div>
 
 				{reports.length > 0 ? (
-					<div className="mt-[45px] mb-8 w-full pb-[24px]">
+					<div className="mt-[45px] mb-8 w-full pb-6">
 						<ReportsCarousel reports={reports} showButtons={false} />
 					</div>
 				) : null}

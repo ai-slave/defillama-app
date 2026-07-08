@@ -22,6 +22,10 @@ import { PaginatedTable, usePaginatedTableDisplayRowNumber } from '~/components/
 import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import defs from '~/public/equities-definitions.json'
+import { buttonStyles } from '~/ui/Button'
+import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { abbreviateNumber } from '~/utils'
 import { equityCountryFlagUrl } from '~/utils/icons'
 import { readSingleQueryValue, pushShallowQuery } from '~/utils/routerQuery'
@@ -72,7 +76,7 @@ function EquityTickerCell({ row }: { row: { id: string; original: EquitiesTableC
 
 	return (
 		<span className="flex min-w-0 items-center gap-2">
-			<span className="inline-block min-w-4 shrink-0 text-left text-(--text-secondary) tabular-nums" aria-hidden="true">
+			<span className="inline-block min-w-4 shrink-0 text-left text-secondary tabular-nums" aria-hidden="true">
 				{rowIndex}
 			</span>
 			<TokenLogo
@@ -82,7 +86,7 @@ function EquityTickerCell({ row }: { row: { id: string; original: EquitiesTableC
 				data-lgonly
 				alt={`Logo of ${row.original.ticker}`}
 			/>
-			<BasicLink href={row.original.href} className="font-medium text-(--link-text)">
+			<BasicLink href={row.original.href} className="font-medium text-link">
 				{row.original.ticker}
 			</BasicLink>
 		</span>
@@ -140,7 +144,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 		header: 'Company',
 		enableSorting: false,
 		cell: ({ getValue, row }) => (
-			<BasicLink href={row.original.href} className="text-(--link-text)">
+			<BasicLink href={row.original.href} className="text-link">
 				{getValue()}
 			</BasicLink>
 		),
@@ -868,41 +872,47 @@ function EquitiesRankingsTable({
 	}
 
 	return (
-		<div className="flex flex-col gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-			<div className="flex w-full flex-wrap items-center justify-end gap-3">
-				<h2 className="mr-auto text-lg font-semibold">Company Rankings</h2>
-				<label className="relative w-full max-w-full min-w-[280px] sm:max-w-[280px]">
-					<span className="sr-only">Search companies or tickers</span>
-					<Icon
-						name="search"
-						height={16}
-						width={16}
-						className="absolute top-0 bottom-0 left-2 my-auto text-(--text-tertiary)"
+		<Panel>
+			<TableToolbar className="justify-between">
+				<h2 className="label-md">Company Rankings</h2>
+				<TableToolbarControlGroup className="ml-auto justify-end">
+					<label className={searchFieldInlineWrapperStyles}>
+						<span className="sr-only">Search companies or tickers</span>
+						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<input
+							onInput={(event) => setSearchValue(event.currentTarget.value)}
+							placeholder="Search companies or tickers"
+							className={searchFieldInputStyles}
+						/>
+					</label>
+					<EquitiesFiltersDialog companies={companies} filters={filters} onFiltersChange={applyFilters} />
+					<SelectWithCombobox
+						allValues={columnOptions}
+						selectedValues={selectedColumns}
+						setSelectedValues={setColumnOptions}
+						nestedMenu={false}
+						label="Columns"
+						labelType="smol"
+						variant="filter-responsive"
+						size="md"
 					/>
-					<input
-						onInput={(event) => setSearchValue(event.currentTarget.value)}
-						placeholder="Search companies or tickers"
-						className="w-full rounded-md border border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black dark:text-white"
+					<CSVDownloadButton
+						prepareCsv={() => prepareTableCsv({ instance: table, filename: 'equities-rankings' })}
+						smol
+						size="md"
 					/>
-				</label>
-				<EquitiesFiltersDialog companies={companies} filters={filters} onFiltersChange={applyFilters} />
-				<SelectWithCombobox
-					allValues={columnOptions}
-					selectedValues={selectedColumns}
-					setSelectedValues={setColumnOptions}
-					nestedMenu={false}
-					label="Columns"
-					labelType="smol"
-					variant="filter-responsive"
-				/>
-				<CSVDownloadButton
-					prepareCsv={() => prepareTableCsv({ instance: table, filename: 'equities-rankings' })}
-					smol
-				/>
-			</div>
-			<EquityActiveFilterPills filters={filters} onRemove={(id) => applyFilters(filters.filter((f) => f.id !== id))} />
-			<PaginatedTable table={table} pageSizeOptions={PAGE_SIZE_OPTIONS} tableClassName="min-w-max!" />
-		</div>
+				</TableToolbarControlGroup>
+			</TableToolbar>
+			{filters.length > 0 ? (
+				<div className="px-2 pb-2">
+					<EquityActiveFilterPills
+						filters={filters}
+						onRemove={(id) => applyFilters(filters.filter((f) => f.id !== id))}
+					/>
+				</div>
+			) : null}
+			<PaginatedTable table={table} pageSizeOptions={PAGE_SIZE_OPTIONS} tableClassName="min-w-max!" shell="none" />
+		</Panel>
 	)
 }
 
@@ -936,8 +946,7 @@ export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProp
 	const isMorePresetActive = EQUITIES_MORE_PRESETS.some((preset) => preset === selectedPreset)
 	const showMorePresets = isMorePresetActive || isMorePresetsManuallyOpen
 
-	const presetButtonClassName =
-		'rounded-full border border-(--old-blue) px-3 py-1 text-xs hover:bg-(--link-hover-bg) data-[active=true]:bg-(--old-blue) data-[active=true]:text-white'
+	const presetButtonClassName = buttonStyles({ variant: 'filter', size: 'sm' })
 
 	const renderPreset = (preset: EquitiesPreset) => (
 		<button
@@ -957,25 +966,23 @@ export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProp
 	return (
 		<div className="flex flex-col gap-2">
 			{/* Mobile: collapsible drawer toggled purely by the native <details> element */}
-			<details className="group rounded-xl border border-(--cards-border) bg-(--cards-bg) sm:hidden">
+			<details className="group rounded-xl border border-subtle bg-surface sm:hidden">
 				<summary className="flex items-center gap-2 px-3 py-2.5">
-					<span className="text-sm font-medium text-(--text-secondary)">Rank by</span>
-					<span className="ml-auto text-sm font-medium text-(--text-primary)">{selectedPreset}</span>
+					<span className="text-sm font-medium text-secondary">Rank by</span>
+					<span className="ml-auto text-sm font-medium text-primary">{selectedPreset}</span>
 					<Icon
 						name="chevron-down"
 						height={16}
 						width={16}
-						className="shrink-0 text-(--text-tertiary) transition-transform duration-200 group-open:rotate-180"
+						className="shrink-0 text-tertiary transition-transform duration-200 group-open:rotate-180"
 					/>
 				</summary>
-				<div className="flex flex-wrap gap-2 border-t border-(--cards-border) p-3">
-					{EQUITIES_PRESETS.map(renderPreset)}
-				</div>
+				<div className="flex flex-wrap gap-2 border-t border-subtle p-3">{EQUITIES_PRESETS.map(renderPreset)}</div>
 			</details>
 
 			{/* Desktop: inline chips with a +More toggle */}
 			<div className="hidden flex-wrap items-center justify-center gap-2 sm:flex">
-				<span className="text-sm font-medium text-(--text-secondary)">Rank by</span>
+				<span className="text-sm font-medium text-secondary">Rank by</span>
 				{EQUITIES_PRIMARY_PRESETS.map(renderPreset)}
 				{showMorePresets ? (
 					<>
@@ -985,7 +992,7 @@ export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProp
 								type="button"
 								aria-expanded={true}
 								onClick={() => setIsMorePresetsManuallyOpen(false)}
-								className="flex items-center gap-1 rounded-full border border-(--old-blue) px-3 py-1 text-xs hover:bg-(--link-hover-bg)"
+								className={presetButtonClassName}
 							>
 								<Icon name="minus" height={12} width={12} />
 								Less
@@ -1013,7 +1020,7 @@ export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProp
 				onFiltersChange={setFilters}
 			/>
 
-			<p className="px-1 text-xs text-(--text-disabled)">
+			<p className="px-1 text-xs text-tertiary">
 				Market and statements data provided by{' '}
 				<a href="https://twelvedata.com" target="_blank" rel="noopener noreferrer" className="underline">
 					Twelve Data

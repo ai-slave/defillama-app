@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import type { CexAnalyticsSnapshotRow } from '~/containers/ProDashboard/types'
+import type { CexAnalyticsSnapshotRow } from '~/containers/Cexs/api.types'
 import { formattedNum } from '~/utils'
 
 const formatRatio = (value: number | null, suffix = 'x') =>

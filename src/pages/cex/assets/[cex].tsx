@@ -7,15 +7,18 @@ import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset 
 import { preparePieChartData } from '~/components/ECharts/utils'
 import { LocalLoader } from '~/components/Loaders'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { Switch } from '~/components/Switch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { oldBlue } from '~/constants/colors'
+import { CexChartPanel, cexChartFallback } from '~/containers/Cexs/CexChartPanel'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import type { IProtocolPageMetrics } from '~/containers/ProtocolOverview/types'
 import { useProtocolBreakdownCharts } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { Switch } from '~/ui/Switch'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -120,28 +123,32 @@ function ChainsChartCard({
 	const exportTitle = `${protocolName} Assets by Chain`
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">Chains</h2>
-				{allChains.length > 1 ? (
-					<SelectWithCombobox
-						allValues={allChains}
-						selectedValues={selectedChains}
-						setSelectedValues={setSelectedChains}
-						label="Chain"
-						labelType="smol"
-						variant="filter"
-						portal
+		<CexChartPanel
+			title="Chains"
+			controls={
+				<>
+					{allChains.length > 1 ? (
+						<SelectWithCombobox
+							allValues={allChains}
+							selectedValues={selectedChains}
+							setSelectedValues={setSelectedChains}
+							label="Chain"
+							labelType="smol"
+							variant="filter"
+							size="md"
+							portal
+						/>
+					) : null}
+					<ChartExportButtons
+						chartInstance={chartInstance}
+						filename={exportFilenameBase}
+						title={exportTitle}
+						iconUrl={tokenIconUrl(protocolName)}
 					/>
-				) : null}
-				<ChartExportButtons
-					chartInstance={chartInstance}
-					filename={exportFilenameBase}
-					title={exportTitle}
-					iconUrl={tokenIconUrl(protocolName)}
-				/>
-			</div>
-			<React.Suspense fallback={<div className="min-h-[360px]" />}>
+				</>
+			}
+		>
+			<React.Suspense fallback={cexChartFallback}>
 				<MultiSeriesChart2
 					dataset={dataset}
 					charts={charts}
@@ -151,7 +158,7 @@ function ChainsChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</div>
+		</CexChartPanel>
 	)
 }
 
@@ -176,28 +183,32 @@ function TokenValuesUSDChartCard({
 	const exportTitle = `${protocolName} Asset Values by Token`
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">Token Values (USD)</h2>
-				{allTokens.length > 1 ? (
-					<SelectWithCombobox
-						allValues={allTokens}
-						selectedValues={selectedTokensUSD}
-						setSelectedValues={setSelectedTokensUSD}
-						label="Token"
-						labelType="smol"
-						variant="filter"
-						portal
+		<CexChartPanel
+			title="Token Values (USD)"
+			controls={
+				<>
+					{allTokens.length > 1 ? (
+						<SelectWithCombobox
+							allValues={allTokens}
+							selectedValues={selectedTokensUSD}
+							setSelectedValues={setSelectedTokensUSD}
+							label="Token"
+							labelType="smol"
+							variant="filter"
+							size="md"
+							portal
+						/>
+					) : null}
+					<ChartExportButtons
+						chartInstance={chartInstance}
+						filename={exportFilenameBase}
+						title={exportTitle}
+						iconUrl={tokenIconUrl(protocolName)}
 					/>
-				) : null}
-				<ChartExportButtons
-					chartInstance={chartInstance}
-					filename={exportFilenameBase}
-					title={exportTitle}
-					iconUrl={tokenIconUrl(protocolName)}
-				/>
-			</div>
-			<React.Suspense fallback={<div className="min-h-[360px]" />}>
+				</>
+			}
+		>
+			<React.Suspense fallback={cexChartFallback}>
 				<MultiSeriesChart2
 					dataset={dataset}
 					charts={charts}
@@ -207,7 +218,7 @@ function TokenValuesUSDChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</div>
+		</CexChartPanel>
 	)
 }
 
@@ -240,31 +251,35 @@ function TokensBreakdownPieChartCard({
 	const exportTitle = `${protocolName} Assets by Token`
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">Tokens Breakdown</h2>
-				{allTokens.length > 1 ? (
-					<SelectWithCombobox
-						allValues={allTokens}
-						selectedValues={selectedTokens}
-						setSelectedValues={setSelectedTokens}
-						label="Token"
-						labelType="smol"
-						variant="filter"
-						portal
+		<CexChartPanel
+			title="Tokens Breakdown"
+			controls={
+				<>
+					{allTokens.length > 1 ? (
+						<SelectWithCombobox
+							allValues={allTokens}
+							selectedValues={selectedTokens}
+							setSelectedValues={setSelectedTokens}
+							label="Token"
+							labelType="smol"
+							variant="filter"
+							size="md"
+							portal
+						/>
+					) : null}
+					<ChartExportButtons
+						chartInstance={chartInstance}
+						filename={exportFilenameBase}
+						title={exportTitle}
+						iconUrl={tokenIconUrl(protocolName)}
 					/>
-				) : null}
-				<ChartExportButtons
-					chartInstance={chartInstance}
-					filename={exportFilenameBase}
-					title={exportTitle}
-					iconUrl={tokenIconUrl(protocolName)}
-				/>
-			</div>
-			<React.Suspense fallback={<div className="min-h-[360px]" />}>
+				</>
+			}
+		>
+			<React.Suspense fallback={cexChartFallback}>
 				<PieChart chartData={chartData} onReady={handleChartReady} />
 			</React.Suspense>
-		</div>
+		</CexChartPanel>
 	)
 }
 
@@ -289,28 +304,32 @@ function TokenBalancesRawChartCard({
 	const exportTitle = `${protocolName} Token Balances`
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">Token Balances (Raw Quantities)</h2>
-				{allTokens.length > 1 ? (
-					<SelectWithCombobox
-						allValues={allTokens}
-						selectedValues={selectedTokensRaw}
-						setSelectedValues={setSelectedTokensRaw}
-						label="Token"
-						labelType="smol"
-						variant="filter"
-						portal
+		<CexChartPanel
+			title="Token Balances (Raw Quantities)"
+			controls={
+				<>
+					{allTokens.length > 1 ? (
+						<SelectWithCombobox
+							allValues={allTokens}
+							selectedValues={selectedTokensRaw}
+							setSelectedValues={setSelectedTokensRaw}
+							label="Token"
+							labelType="smol"
+							variant="filter"
+							size="md"
+							portal
+						/>
+					) : null}
+					<ChartExportButtons
+						chartInstance={chartInstance}
+						filename={exportFilenameBase}
+						title={exportTitle}
+						iconUrl={tokenIconUrl(protocolName)}
 					/>
-				) : null}
-				<ChartExportButtons
-					chartInstance={chartInstance}
-					filename={exportFilenameBase}
-					title={exportTitle}
-					iconUrl={tokenIconUrl(protocolName)}
-				/>
-			</div>
-			<React.Suspense fallback={<div className="min-h-[360px]" />}>
+				</>
+			}
+		>
+			<React.Suspense fallback={cexChartFallback}>
 				<MultiSeriesChart2
 					dataset={dataset}
 					charts={charts}
@@ -319,7 +338,7 @@ function TokenBalancesRawChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</div>
+		</CexChartPanel>
 	)
 }
 
@@ -332,17 +351,18 @@ function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; 
 	const exportTitle = protocolName
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">USD Inflows</h2>
+		<CexChartPanel
+			title="USD Inflows"
+			controls={
 				<ChartExportButtons
 					chartInstance={chartInstance}
 					filename={exportFilenameBase}
 					title={exportTitle}
 					iconUrl={tokenIconUrl(protocolName)}
 				/>
-			</div>
-			<React.Suspense fallback={<div className="min-h-[360px]" />}>
+			}
+		>
+			<React.Suspense fallback={cexChartFallback}>
 				<MultiSeriesChart2
 					dataset={dataset}
 					charts={USD_INFLOWS_CHARTS}
@@ -351,7 +371,7 @@ function USDInflowsChartCard({ protocolName, dataset }: { protocolName: string; 
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</div>
+		</CexChartPanel>
 	)
 }
 
@@ -376,28 +396,32 @@ function InflowsByTokenChartCard({
 	const exportTitle = `${protocolName} Inflows`
 
 	return (
-		<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-				<h2 className="mr-auto text-base font-semibold">Inflows by Token</h2>
-				{allTokens.length > 1 ? (
-					<SelectWithCombobox
-						allValues={allTokens}
-						selectedValues={selectedTokenInflows}
-						setSelectedValues={setSelectedTokenInflows}
-						label="Token"
-						labelType="smol"
-						variant="filter"
-						portal
+		<CexChartPanel
+			title="Inflows by Token"
+			controls={
+				<>
+					{allTokens.length > 1 ? (
+						<SelectWithCombobox
+							allValues={allTokens}
+							selectedValues={selectedTokenInflows}
+							setSelectedValues={setSelectedTokenInflows}
+							label="Token"
+							labelType="smol"
+							variant="filter"
+							size="md"
+							portal
+						/>
+					) : null}
+					<ChartExportButtons
+						chartInstance={chartInstance}
+						filename={exportFilenameBase}
+						title={exportTitle}
+						iconUrl={tokenIconUrl(protocolName)}
 					/>
-				) : null}
-				<ChartExportButtons
-					chartInstance={chartInstance}
-					filename={exportFilenameBase}
-					title={exportTitle}
-					iconUrl={tokenIconUrl(protocolName)}
-				/>
-			</div>
-			<React.Suspense fallback={<div className="min-h-[360px]" />}>
+				</>
+			}
+		>
+			<React.Suspense fallback={cexChartFallback}>
 				<MultiSeriesChart2
 					dataset={dataset}
 					charts={charts}
@@ -410,7 +434,7 @@ function InflowsByTokenChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</div>
+		</CexChartPanel>
 	)
 }
 
@@ -470,30 +494,28 @@ export default function Protocols(props: CexAssetsPageProps) {
 			tab="assets"
 			isCEX={true}
 		>
-			<div className="col-span-full flex items-center justify-end rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-				<div className="mr-auto flex items-center gap-2">
-					<TokenLogo name={props.name} kind="token" size={24} alt={`Logo of ${props.name}`} />
-					<h1 className="text-xl font-bold">{props.name}</h1>
-				</div>
-
-				{props.ownToken ? (
-					<Switch
-						value="includeOwnTokens"
-						label={`Include own tokens (${props.ownToken})`}
-						checked={includeOwnTokens}
-						onChange={toggleIncludeOwnTokens}
-						className="gap-2"
-					/>
-				) : null}
-			</div>
+			<EntityTitleStrip
+				className="col-span-full"
+				media={<TokenLogo name={props.name} kind="token" size={28} alt={`Logo of ${props.name}`} />}
+				title={props.name}
+				actions={
+					props.ownToken ? (
+						<Switch
+							value="includeOwnTokens"
+							label={`Include own tokens (${props.ownToken})`}
+							checked={includeOwnTokens}
+							onChange={toggleIncludeOwnTokens}
+							className="gap-2"
+						/>
+					) : null
+				}
+			/>
 			{isLoading ? (
-				<div className="flex min-h-[360px] flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+				<PanelLoadingStatus>
 					<LocalLoader />
-				</div>
+				</PanelLoadingStatus>
 			) : !hasBreakdownMetrics ? (
-				<div className="col-span-full flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-					<p className="text-(--text-label)">Breakdown metrics are not available</p>
-				</div>
+				<PanelStatus className="col-span-full">Breakdown metrics are not available</PanelStatus>
 			) : (
 				<div className="grid grid-cols-2 gap-2">
 					{chainsDataset && chainsUnique?.length > 1 ? (

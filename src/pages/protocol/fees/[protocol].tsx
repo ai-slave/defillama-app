@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { lazy, Suspense, useDeferredValue, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
@@ -34,6 +33,9 @@ import {
 	type FeeExtraConfig,
 	type FeeExtraMetric
 } from '~/metrics/feeExtras'
+import { FailedDataPopover } from '~/ui/FailedDataPopover'
+import { Panel } from '~/ui/Panel'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
 import { buildHallmarksWithGenuineSpikes } from '~/utils/hallmarks'
 import { tokenIconUrl } from '~/utils/icons'
@@ -396,7 +398,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 			seoDescription={props.seoDescription}
 		>
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
-				<div className="col-span-1 flex flex-col gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:min-h-[360px]">
+				<Panel padding="md" className="col-span-1 gap-6 xl:min-h-[360px]">
 					<h1 className="flex flex-wrap items-center gap-2 text-xl">
 						<TokenLogo name={props.name} kind="token" size={24} alt={`Logo of ${props.name}`} />
 						<span className="font-bold">{props.name}</span>
@@ -407,9 +409,9 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 						) : null}
 					</h1>
 					<KeyMetrics {...props} formatPrice={(value) => formattedNum(value, true)} />
-				</div>
-				<div className="relative col-span-1 rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-[2/-1]">
-					<div className="flex items-center justify-end gap-2 p-2 pb-0">
+				</Panel>
+				<Panel className="col-span-1 xl:col-[2/-1]">
+					<ChartPanelToolbar className="justify-end">
 						<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 						{props.defaultCharts.length > 1 ? (
 							<Select
@@ -419,6 +421,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 								label="Charts"
 								variant="filter"
 								labelType="smol"
+								size="md"
 							/>
 						) : null}
 						<ChartExportButtons
@@ -427,7 +430,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							title={props.name}
 							iconUrl={tokenIconUrl(props.name)}
 						/>
-					</div>
+					</ChartPanelToolbar>
 					<Suspense fallback={<div className="min-h-[360px]" />}>
 						<MultiSeriesChart2
 							dataset={deferredFinalCharts.dataset}
@@ -439,11 +442,11 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 						/>
 					</Suspense>
 					<FailedProtocolFeeMetricsPopover failedMetrics={props.failedMetrics ?? []} />
-				</div>
+				</Panel>
 			</div>
 			<div className="grid grid-cols-2 gap-2">
 				{props.protocolChains?.length > 1 ? (
-					<div className="col-span-full rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:only:col-span-full">
+					<Panel className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
 							chartType="chain"
 							protocolName={slug(props.name)}
@@ -457,10 +460,10 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							hallmarks={props.hallmarks ?? undefined}
 							title="Fees by chain"
 						/>
-					</div>
+					</Panel>
 				) : null}
 				{props.protocolFeesVersions?.length > 1 ? (
-					<div className="col-span-full rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:only:col-span-full">
+					<Panel className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
 							chartType="version"
 							protocolName={slug(props.name)}
@@ -474,12 +477,12 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							hallmarks={props.hallmarks ?? undefined}
 							title="Fees by protocol version"
 						/>
-					</div>
+					</Panel>
 				) : null}
 				{props.protocolRevenueVersions?.length > 1 ? (
 					<>
 						{props.protocolChains?.length > 1 ? (
-							<div className="col-span-full rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:only:col-span-full">
+							<Panel className="col-span-full xl:col-span-1 xl:only:col-span-full">
 								<DimensionProtocolChartByType
 									chartType="chain"
 									protocolName={slug(props.name)}
@@ -494,10 +497,10 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 									hallmarks={props.hallmarks ?? undefined}
 									title="Revenue by chain"
 								/>
-							</div>
+							</Panel>
 						) : null}
 
-						<div className="col-span-full rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:only:col-span-full">
+						<Panel className="col-span-full xl:col-span-1 xl:only:col-span-full">
 							<DimensionProtocolChartByType
 								chartType="version"
 								protocolName={slug(props.name)}
@@ -512,7 +515,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 								hallmarks={props.hallmarks ?? undefined}
 								title="Revenue by protocol version"
 							/>
-						</div>
+						</Panel>
 					</>
 				) : null}
 			</div>
@@ -521,31 +524,13 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 }
 
 function FailedProtocolFeeMetricsPopover({ failedMetrics }: { failedMetrics: Array<string> }) {
-	if (failedMetrics.length === 0) {
-		return null
-	}
-
 	return (
-		<Ariakit.PopoverProvider>
-			<Ariakit.PopoverDisclosure className="absolute right-2 bottom-2 z-10 flex items-center justify-center rounded-full border border-(--cards-border) bg-(--bg-main) p-1.5 text-(--error) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)">
-				<Icon name="alert-triangle" className="size-3.5" />
-				<span className="sr-only">Show failed metric APIs</span>
-			</Ariakit.PopoverDisclosure>
-			<Ariakit.Popover
-				unmountOnHide
-				hideOnInteractOutside
-				gutter={6}
-				className="z-10 mr-1 flex max-h-[calc(100dvh-80px)] w-[min(calc(100vw-16px),300px)] flex-col gap-1 overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) p-2 text-xs dark:border-[hsl(204,3%,32%)]"
-			>
-				<p className="font-medium text-(--error)">Failed to load data for:</p>
-				<ul className="pl-4">
-					{failedMetrics.map((metric) => (
-						<li key={metric} className="list-disc">
-							{metric in FEE_EXTRA_METRIC_LABEL ? FEE_EXTRA_METRIC_LABEL[metric as FeeExtraMetric] : metric}
-						</li>
-					))}
-				</ul>
-			</Ariakit.Popover>
-		</Ariakit.PopoverProvider>
+		<FailedDataPopover
+			items={failedMetrics}
+			ariaLabel="Show failed metric APIs"
+			getLabel={(metric) =>
+				metric in FEE_EXTRA_METRIC_LABEL ? FEE_EXTRA_METRIC_LABEL[metric as FeeExtraMetric] : metric
+			}
+		/>
 	)
 }

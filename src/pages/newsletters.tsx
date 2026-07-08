@@ -170,7 +170,7 @@ export default function NewslettersPage() {
 						<section className="flex flex-col gap-4" aria-labelledby="newsletter-options-title">
 							<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
 								<div>
-									<h2 id="newsletter-options-title" className="text-xl font-semibold text-(--text-primary)">
+									<h2 id="newsletter-options-title" className="heading-sm text-(--text-primary)">
 										Pick your publications
 									</h2>
 									<p className="mt-2 max-w-2xl text-sm leading-6 text-(--text-secondary)">
@@ -289,7 +289,7 @@ export default function NewslettersPage() {
 							>
 								<div className="flex flex-col gap-2">
 									<p className="text-xs font-semibold tracking-[0.18em] text-(--link-text) uppercase">Subscribe</p>
-									<h2 className="text-xl leading-tight font-semibold text-(--text-primary)">Send them here</h2>
+									<h2 className="heading-sm text-(--text-primary)">Send them here</h2>
 									<p className="text-sm leading-6 text-(--text-secondary)">
 										Enter the email address where you want to receive the selected newsletters.
 									</p>

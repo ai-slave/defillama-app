@@ -11,6 +11,7 @@ import type {
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { setSignupSource } from '~/containers/Subscription/signupSource'
 import { useIsClient } from '~/hooks/useIsClient'
+import { buttonStyles } from '~/ui/Button'
 import { AddToDashboardModal } from './AddToDashboardModal'
 
 const SubscribeProModal = lazy(() =>
@@ -77,9 +78,7 @@ export function AddToDashboardButton({
 		}
 	}
 
-	const baseClassName = `
-		${className} flex items-center justify-center gap-1 rounded-md border border-(--form-control-border) p-2 text-xs text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) disabled:opacity-60
-	`
+	const baseClassName = `${buttonStyles({ square: smol, size: 'md' })} ${className ?? ''}`.trim()
 	const button = (
 		<button
 			onClick={handleClick}
@@ -88,7 +87,7 @@ export function AddToDashboardButton({
 			data-umami-event="dashboard-add-chart"
 			title="Add to Custom Dashboard"
 		>
-			<Icon name="plus" className="size-3" />
+			<Icon name="plus" className="size-4" />
 			{!smol && variant === 'button' ? <span>Add to Dashboard</span> : null}
 		</button>
 	)

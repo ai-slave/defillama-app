@@ -30,7 +30,7 @@ export function ExchangeName({ exchange }: { exchange: string }) {
 		<BasicLink
 			href={exchangeHref(exchange)}
 			shallow
-			className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) capitalize hover:underline"
+			className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link capitalize hover:underline"
 		>
 			{exchange}
 		</BasicLink>
@@ -44,20 +44,12 @@ const VENUE_BADGE_CLASS: Record<'cex' | 'dex', string> = {
 
 /** Small colour-coded cex/dex venue-type badge. */
 export function VenueBadge({ type }: { type: 'cex' | 'dex' }) {
-	return (
-		<span className={`rounded border px-1.5 py-0.5 text-[10px] tracking-wider uppercase ${VENUE_BADGE_CLASS[type]}`}>
-			{type}
-		</span>
-	)
+	return <span className={`rounded border px-1.5 py-0.5 label-sm uppercase ${VENUE_BADGE_CLASS[type]}`}>{type}</span>
 }
 
 export function CategoryLink({ tag }: { tag: string }) {
 	return (
-		<BasicLink
-			href={categoryHref(tag)}
-			shallow
-			className="text-sm font-medium text-(--link-text) capitalize hover:underline"
-		>
+		<BasicLink href={categoryHref(tag)} shallow className="label-md text-link capitalize hover:underline">
 			{tag}
 		</BasicLink>
 	)
@@ -65,18 +57,16 @@ export function CategoryLink({ tag }: { tag: string }) {
 
 /** Asset symbol linking to the token page. */
 export function TokenName({ base, knownTokenSlugs }: { base: string; knownTokenSlugs?: KnownTokenSlugs }) {
-	const label = (
-		<span className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap uppercase">{base}</span>
-	)
+	const label = <span className="overflow-hidden label-md text-ellipsis whitespace-nowrap uppercase">{base}</span>
 
 	if (!isKnownTokenSlug(base, knownTokenSlugs)) {
-		return <span className="text-(--text-primary)">{label}</span>
+		return <span className="text-primary">{label}</span>
 	}
 
 	return (
 		<BasicLink
 			href={tokenHref(base)}
-			className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) uppercase hover:underline"
+			className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link uppercase hover:underline"
 		>
 			{label}
 		</BasicLink>
@@ -84,7 +74,7 @@ export function TokenName({ base, knownTokenSlugs }: { base: string; knownTokenS
 }
 
 export function TagPills({ tags, max = 3 }: { tags: string[]; max?: number }) {
-	if (tags.length === 0) return <span className="text-(--text-disabled)">–</span>
+	if (tags.length === 0) return <span className="text-tertiary">–</span>
 	return (
 		<span className="flex flex-wrap gap-1">
 			{tags.slice(0, max).map((tag) => (
@@ -92,7 +82,7 @@ export function TagPills({ tags, max = 3 }: { tags: string[]; max?: number }) {
 					key={tag}
 					href={categoryHref(tag)}
 					shallow
-					className="rounded border border-(--cards-border) px-1.5 py-0.5 text-[10px] text-(--text-label) hover:border-(--text-primary) hover:text-(--text-primary)"
+					className="rounded border border-subtle px-1.5 py-0.5 label-sm text-secondary hover:border-strong hover:text-primary"
 				>
 					{tag}
 				</BasicLink>
@@ -120,19 +110,17 @@ export function renderLeverage(min: number | null | undefined, max: number | nul
 }
 
 const SENTIMENT_CLASS: Record<Sentiment, string> = {
-	rising: 'border-(--success) text-(--success)',
-	fading: 'border-(--error) text-(--error)',
-	churn: 'border-(--cards-border) text-(--text-label)',
-	building: 'border-(--cards-border) text-(--text-primary)',
-	flat: 'border-(--cards-border) text-(--text-disabled)'
+	rising: 'border-data-up text-data-up',
+	fading: 'border-data-down text-data-down',
+	churn: 'border-subtle text-secondary',
+	building: 'border-subtle text-primary',
+	flat: 'border-subtle text-tertiary'
 }
 
 export function SentimentBadge({ sentiment }: { sentiment: Sentiment }) {
 	return (
 		<Tooltip content={SENTIMENT_TITLE[sentiment]}>
-			<span
-				className={`inline-block rounded border px-1.5 py-0.5 text-[10px] tracking-wider uppercase ${SENTIMENT_CLASS[sentiment]}`}
-			>
+			<span className={`inline-block rounded border px-1.5 py-0.5 label-sm uppercase ${SENTIMENT_CLASS[sentiment]}`}>
 				{sentiment}
 			</span>
 		</Tooltip>

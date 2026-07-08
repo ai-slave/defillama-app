@@ -23,6 +23,7 @@ import { TopUnlocks } from '~/containers/Unlocks/TopUnlocks'
 import { useWatchlistManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import Layout from '~/layout'
+import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -231,8 +232,8 @@ function UpcomingUnlockVolumeChart({ protocols, initialNowSec }: { protocols: an
 		<>
 			{unlockChartData.dataset.source.length > 0 ? (
 				<>
-					<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
-						<h2 className="mr-auto text-lg font-semibold">Upcoming Unlocks</h2>
+					<ChartPanelToolbar className="justify-end">
+						<h2 className="mr-auto heading-xs">Upcoming Unlocks</h2>
 						<ChartGroupingSelector
 							value={timePeriod}
 							onValueChange={(value) => updateQueryParam('chartGroup', value, 'daily')}
@@ -248,7 +249,7 @@ function UpcomingUnlockVolumeChart({ protocols, initialNowSec }: { protocols: an
 							filename="upcoming-unlocks"
 							title="Upcoming Unlocks"
 						/>
-					</div>
+					</ChartPanelToolbar>
 					<React.Suspense fallback={<div className="min-h-[360px]" />}>
 						<MultiSeriesChart2
 							dataset={deferredChartData.dataset}

@@ -43,7 +43,7 @@ export const ResearchCollections: React.FC<ResearchCollectionsProps> = ({ title,
 
 	return (
 		<div id="collections">
-			<div className="mb-[24px]">
+			<div className="mb-6">
 				<TitleLine title={title} />
 			</div>
 			<div className="overflow-x-auto pb-2 lg:overflow-x-visible lg:pb-0">
@@ -51,7 +51,7 @@ export const ResearchCollections: React.FC<ResearchCollectionsProps> = ({ title,
 					className={`thin-scrollbar min-w-min ${RESEARCH_COLLECTIONS_SCROLLER_HEIGHT_CLASSES}`}
 					style={scrollerStyle}
 				>
-					<div ref={gridRef} className="flex grid min-w-min grid-cols-1 gap-[12px] lg:min-w-0 lg:grid-cols-3">
+					<div ref={gridRef} className="flex grid min-w-min grid-cols-1 gap-3 lg:min-w-0 lg:grid-cols-3">
 						{articles.map((article, i) => (
 							<Link
 								key={article.id}
@@ -74,7 +74,7 @@ export const ResearchCollections: React.FC<ResearchCollectionsProps> = ({ title,
 
 								{i === 0 && <InViewAnalytics eventParams={[article, 'widget_impression', pageWidget]} />}
 
-								<div className="flex min-w-0 grow flex-col pl-[12px]">
+								<div className="flex min-w-0 grow flex-col pl-3">
 									<div className="line-clamp-4 text-[14px] leading-[150%] font-semibold text-[#0d1e3b] group-hover:text-[#0c2956] group-hover:opacity-70 dark:text-white dark:group-hover:text-white/70">
 										{article.title}
 									</div>
