@@ -11,7 +11,6 @@ import { useAuthContext } from '~/containers/Subscription/auth'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useIsClient } from '~/hooks/useIsClient'
-import { buttonStyles } from '~/ui/Button'
 import { inputStyles } from '~/ui/Input'
 import { fetchJson } from '~/utils/async'
 
@@ -70,9 +69,7 @@ export const MobileSearch = () => {
 				<span className="sr-only">{isClient && shouldSkipLanding ? 'Ask LlamaAI' : 'Try LlamaAI'}</span>
 			</BasicLink>
 			<Ariakit.DialogProvider store={dialogStore}>
-				<Ariakit.DialogDisclosure
-					className={`-my-0.5 lg:hidden ${buttonStyles({ variant: 'primary', size: 'md', square: true })}`}
-				>
+				<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-surface/15 p-3 text-on-brand shadow hover:bg-surface/25 focus-visible:bg-surface/25 active:bg-surface/25 lg:hidden">
 					<span className="sr-only">Search</span>
 					<Icon name="search" height={16} width={16} />
 				</Ariakit.DialogDisclosure>

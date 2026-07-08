@@ -38,14 +38,14 @@ export default function UnlocksCalendar({
 				<span>Are we missing any protocol?</span>{' '}
 				<a
 					href="https://airtable.com/shrD1bSGYNcdFQ6kd"
-					className="font-medium text-(--blue) underline"
+					className="font-medium text-link underline"
 					target="_blank"
 					rel="noopener noreferrer"
 				>
 					Add it here!
 				</a>
 			</Announcement>
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+			<div className="rounded-md border border-medium bg-surface p-3">
 				<CalendarView initialUnlocksData={initialUnlocksData} precomputedData={precomputedData} />
 			</div>
 		</Layout>

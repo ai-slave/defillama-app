@@ -4,6 +4,7 @@ import { LoadingDots } from '~/components/Loaders'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
+import { buttonStyles } from '~/ui/Button'
 
 export function Account({ asPath: _asPath }: { asPath: string }) {
 	const { isAuthenticated, user, hasActiveSubscription, loaders } = useAuthContext()
@@ -26,17 +27,18 @@ export function Account({ asPath: _asPath }: { asPath: string }) {
 
 	if (isAuthenticated && user) {
 		return (
-			<BasicLink href="/account" className="flex w-full items-center gap-3 rounded-lg p-1 hover:bg-white/5">
+			<BasicLink
+				href="/account"
+				className="flex w-full items-center gap-3 rounded-md p-1 hover:bg-hover-row focus-visible:bg-hover-row"
+			>
 				<img src="/assets/account_avatar.png" alt="Account avatar" className="size-6 shrink-0 rounded-full" />
 				<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-					<span className="text-xs leading-4 font-medium text-(--text1)">My Account</span>
-					<span
-						className={`truncate text-[10px] leading-[14px] font-medium ${hasActiveSubscription ? 'text-green-500' : 'text-(--text3)'}`}
-					>
+					<span className="label-sm text-primary">My Account</span>
+					<span className={`truncate label-xs ${hasActiveSubscription ? 'text-data-up' : 'text-tertiary'}`}>
 						{hasActiveSubscription ? 'Active Subscription' : 'No Subscription'}
 					</span>
 				</div>
-				<Icon name="chevron-right" className="size-5 shrink-0 text-(--text3)" />
+				<Icon name="chevron-right" className="size-5 shrink-0 text-tertiary" />
 			</BasicLink>
 		)
 	}
@@ -44,7 +46,7 @@ export function Account({ asPath: _asPath }: { asPath: string }) {
 	return (
 		<SignInModal
 			text="Sign In / Subscribe"
-			className="flex items-center justify-center gap-2 rounded-md pro-btn-purple p-1 text-sm font-medium"
+			className={buttonStyles({ variant: 'primary', size: 'sm' }) + ' w-full'}
 			hideWhenAuthenticated={false}
 		/>
 	)

@@ -6,6 +6,7 @@ import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { Icon } from '~/components/Icon'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
+import { buttonStyles } from '~/ui/Button'
 import { formattedNum } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { AdditionalInfo } from './AdditionalInfo'
@@ -154,21 +155,21 @@ function ProtocolHeader({
 					<span className="font-normal">({props.token.symbol})</span>
 				) : null}
 				{props.deprecated ? <DeprecatedProtocolMarker size={18} /> : null}
-				<span className="ml-auto flex items-center justify-end gap-4">
+				<span className="-m-2 ml-auto flex items-center justify-end gap-1">
 					{props.website ? (
 						<a
 							href={props.website}
 							target="_blank"
 							rel="noopener noreferrer"
 							aria-label={`${props.name} website`}
-							className="flex shrink-0 items-center justify-center rounded-full p-0.5 text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary"
+							className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
 						>
-							<Icon name="link" width={16} height={16} className="shrink-0" />
+							<Icon name="globe" width={16} height={16} className="shrink-0" />
 						</a>
 					) : null}
 					<Bookmark
 						readableName={props.name}
-						className="rounded-full p-0.5 hover:bg-hover-row focus-visible:bg-hover-row"
+						className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
 					/>
 				</span>
 			</Tag>

@@ -5,6 +5,21 @@ import { ResearchIcon } from '~/components/ResearchIcon'
 
 type NavIconName = IIcon['name']
 
+export const navLinkStyles =
+	'group/link -ml-1.5 flex flex-1 items-center gap-3 rounded-md p-1.5 cv-auto-30 text-primary hover:bg-hover-row focus-visible:bg-hover-row data-[linkactive=true]:bg-brand data-[linkactive=true]:text-on-brand'
+
+export const navSortableRowStyles =
+	'group/link -ml-1.5 flex flex-1 items-start gap-3 rounded-md p-1.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row'
+
+export const navSummaryStyles =
+	'-ml-1.5 flex items-center justify-between gap-3 rounded-md p-1.5 text-secondary hover:bg-hover-row focus-visible:bg-hover-row'
+
+export const navActionStyles =
+	'rounded-md px-2 py-1 label-sm tracking-wide text-tertiary uppercase hover:bg-hover-row focus-visible:bg-hover-row'
+
+export const freeTrialBadgeStyles =
+	'hover-wash relative inline-flex shrink-0 items-center rounded-full border border-medium bg-surface-elevated-1 px-2 py-0.5 label-xs font-semibold tracking-wide text-warning'
+
 export function SidebarDivider({ className = '' }: { className?: string }) {
 	return <hr className={`w-full max-w-53 border-t border-medium ${className}`} />
 }
@@ -43,7 +58,7 @@ export function LinkToPage({
 			data-umami-event={umamiEvent}
 			target={isExternal ? '_blank' : undefined}
 			rel={isExternal ? 'noopener noreferrer' : undefined}
-			className="group/link -ml-1.5 flex flex-1 items-center gap-3 rounded-md p-1.5 cv-auto-30 hover:bg-black/5 focus-visible:bg-black/5 data-[linkactive=true]:bg-(--link-active-bg) data-[linkactive=true]:text-white dark:hover:bg-white/10 dark:focus-visible:bg-white/10"
+			className={navLinkStyles}
 			onClick={onClick}
 		>
 			<NavItemContent name={name} icon={icon} attention={attention} freeTrial={freeTrial} isNew={isNew} />
@@ -80,16 +95,12 @@ export function NavItemContent({
 				{attention ? (
 					<span
 						aria-hidden
-						className="inline-block size-2 shrink-0 rounded-full bg-(--error) shadow-[0_0_0_2px_var(--bg-main)]"
+						className="inline-block size-2 shrink-0 rounded-full bg-data-down shadow-[0_0_0_2px_var(--ld-bg-page)]"
 					/>
 				) : null}
-				{freeTrial ? (
-					<span className="relative inline-flex shrink-0 items-center rounded-full border border-[#C99A4A]/50 bg-linear-to-r from-[#C99A4A]/15 via-[#C99A4A]/5 to-[#C99A4A]/15 px-2 py-0.5 text-[10px] font-bold tracking-wide text-[#996F1F] shadow-[0_0_8px_rgba(201,154,74,0.3)] dark:border-[#FDE0A9]/50 dark:from-[#FDE0A9]/20 dark:via-[#FDE0A9]/10 dark:to-[#FDE0A9]/20 dark:text-[#FDE0A9] dark:shadow-[0_0_8px_rgba(253,224,169,0.25)]">
-						Try free
-					</span>
-				) : null}
+				{freeTrial ? <span className={freeTrialBadgeStyles}>Try free</span> : null}
 				{isNew ? (
-					<span className="flex shrink-0 items-center gap-1 rounded-md bg-(--old-blue) px-1.5 py-0.5 text-[10px] font-bold text-white group-data-[linkactive=true]/link:bg-white group-data-[linkactive=true]/link:text-(--old-blue)">
+					<span className="flex shrink-0 items-center gap-1 rounded-md bg-brand px-1.5 py-0.5 label-xs font-semibold text-on-brand group-data-[linkactive=true]/link:bg-surface group-data-[linkactive=true]/link:text-brand">
 						<Icon name="sparkles" height={10} width={10} />
 						<span>New</span>
 					</span>

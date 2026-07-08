@@ -67,9 +67,9 @@ export const TopUnlocks: React.FC<TopUnlocksProps> = ({ data, period, title, cla
 	}, [data, period, now])
 
 	return (
-		<div className={`text-(--text-primary) ${className ?? ''}`}>
+		<div className={`text-primary ${className ?? ''}`}>
 			<Tooltip
-				className="text-base font-semibold text-(--text-primary)"
+				className="text-base font-semibold text-primary"
 				content={`List of top unlocks in the last ${period} ${period === 1 ? 'day' : 'days'}`}
 			>
 				{title}
@@ -81,14 +81,12 @@ export const TopUnlocks: React.FC<TopUnlocksProps> = ({ data, period, title, cla
 						<TokenLogo name={unlock.name} kind="token" alt={`Logo of ${unlock.name}`} />
 						<BasicLink
 							href={`/unlocks/${slug(unlock.name)}`}
-							className="overflow-hidden text-ellipsis whitespace-nowrap text-(--text-primary) hover:underline"
+							className="overflow-hidden text-ellipsis whitespace-nowrap text-primary hover:underline"
 						>
 							{unlock.name} ({unlock.symbol})
 						</BasicLink>
 					</div>
-					<span className="text-sm font-semibold text-(--link-text) tabular-nums">
-						{formattedNum(unlock.value, true)}
-					</span>
+					<span className="text-sm font-semibold text-link tabular-nums">{formattedNum(unlock.value, true)}</span>
 				</div>
 			))}
 		</div>

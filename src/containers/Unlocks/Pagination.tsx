@@ -1,5 +1,6 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
 import { Icon } from '~/components/Icon'
+import { buttonStyles } from '~/ui/Button'
 
 interface PaginationProps {
 	items: React.ReactNode[]
@@ -13,6 +14,11 @@ type PaginationState = {
 	touchEnd: number | null
 	isSwiping: boolean
 	swipeOffset: number
+}
+
+type PageTransition = {
+	direction: -1 | 1
+	entering: boolean
 }
 
 type PaginationAction =
@@ -31,6 +37,9 @@ const initialState: PaginationState = {
 	isSwiping: false,
 	swipeOffset: 0
 }
+
+const desktopPageButtonStyles = buttonStyles({ variant: 'ghost', size: 'md', square: true })
+const mobilePageButtonStyles = buttonStyles({ variant: 'ghost', size: 'sm', square: true })
 
 function paginationReducer(state: PaginationState, action: PaginationAction): PaginationState {
 	switch (action.type) {
@@ -62,6 +71,7 @@ export const Pagination = ({ items, startIndex = 0 }: PaginationProps) => {
 		pageOverride: { startIndex, page: null }
 	})
 	const paginationRef = useRef<HTMLDivElement>(null)
+	const [pageTransition, setPageTransition] = useState<PageTransition>({ direction: 1, entering: false })
 
 	// Reset page override when startIndex prop changes (derived state computed during render)
 	const [prevStartIndex, setPrevStartIndex] = useState(startIndex)
@@ -119,7 +129,15 @@ export const Pagination = ({ items, startIndex = 0 }: PaginationProps) => {
 	const targetPage = activeManualPage == null ? startPage : activeManualPage
 	const currentPage = Math.max(0, Math.min(targetPage, maxPage))
 
-	const handlePageChange = (pageIndex: number) => {
+	const startPageTransition = (direction: -1 | 1) => {
+		setPageTransition({ direction, entering: true })
+		requestAnimationFrame(() => {
+			setPageTransition({ direction, entering: false })
+		})
+	}
+
+	const handlePageChange = (pageIndex: number, direction: -1 | 1) => {
+		startPageTransition(direction)
 		dispatch({ type: 'SET_PAGE_OVERRIDE', payload: { startIndex, page: pageIndex } })
 		dispatch({ type: 'RESET_SWIPE' })
 	}
@@ -130,7 +148,7 @@ export const Pagination = ({ items, startIndex = 0 }: PaginationProps) => {
 			return
 		}
 		const newPage = currentPage === 0 ? totalPages - 1 : currentPage - 1
-		handlePageChange(newPage)
+		handlePageChange(newPage, -1)
 	}
 
 	const handleNextPage = () => {
@@ -139,7 +157,7 @@ export const Pagination = ({ items, startIndex = 0 }: PaginationProps) => {
 			return
 		}
 		const newPage = currentPage === totalPages - 1 ? 0 : currentPage + 1
-		handlePageChange(newPage)
+		handlePageChange(newPage, 1)
 	}
 
 	const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
@@ -173,19 +191,26 @@ export const Pagination = ({ items, startIndex = 0 }: PaginationProps) => {
 	const startIndexSlice = currentPage * visibleItems
 	const endIndexSlice = startIndexSlice + visibleItems
 	const currentItems = items.slice(startIndexSlice, endIndexSlice)
+	const transitionOffset = pageTransition.entering ? pageTransition.direction * 20 : 0
 
 	const contentStyle = {
-		transform: isSwiping ? `translateX(${swipeOffset}px)` : `translateX(0)`,
-		transition: isSwiping ? 'none' : 'transform 300ms ease-out',
-		display: 'flex',
-		width: '100%'
+		transform: isSwiping ? `translateX(${swipeOffset}px)` : `translateX(${transitionOffset}px)`,
+		opacity: isSwiping || !pageTransition.entering ? 1 : 0.84,
+		gridTemplateColumns: `repeat(${Math.max(1, currentItems.length)}, minmax(0, 1fr))`
 	}
+	const contentClassName = `grid w-full gap-2 ${
+		isSwiping ? '' : 'transition-all duration-200 ease-out motion-reduce:transition-none'
+	}`.trim()
+	const paginationClassName =
+		totalPages > 1
+			? 'relative grid w-full grid-cols-1 items-center gap-2 md:grid-cols-[auto_minmax(0,1fr)_auto]'
+			: 'relative grid w-full grid-cols-1 items-center'
 
 	return (
 		<>
 			<div
 				ref={paginationRef}
-				className="relative flex w-full items-center justify-center"
+				className={paginationClassName}
 				onTouchStart={onTouchStart}
 				onTouchMove={onTouchMove}
 				onTouchEnd={onTouchEnd}
@@ -193,16 +218,16 @@ export const Pagination = ({ items, startIndex = 0 }: PaginationProps) => {
 				{totalPages > 1 ? (
 					<button
 						onClick={handlePrevPage}
-						className="hidden shrink-0 rounded-md p-1.5 text-(--text-primary) hover:bg-(--bg-secondary) md:block"
+						className={`${desktopPageButtonStyles} max-md:hidden`}
 						aria-label="Previous page"
 					>
 						<Icon name="arrow-left" height={16} width={16} />
 					</button>
 				) : null}
-				<div className="flex flex-1 items-center justify-start overflow-hidden">
-					<div style={contentStyle}>
+				<div className="min-w-0 overflow-hidden">
+					<div className={contentClassName} style={contentStyle}>
 						{currentItems.map((item: React.ReactNode, index: number) => (
-							<div key={index} className="relative w-full px-2 first:pl-0 last:pr-0">
+							<div key={index} className="relative min-w-0">
 								{item}
 							</div>
 						))}
@@ -211,7 +236,7 @@ export const Pagination = ({ items, startIndex = 0 }: PaginationProps) => {
 				{totalPages > 1 ? (
 					<button
 						onClick={handleNextPage}
-						className="hidden shrink-0 rounded-md p-1.5 text-(--text-primary) hover:bg-(--bg-secondary) md:block"
+						className={`${desktopPageButtonStyles} max-md:hidden`}
 						aria-label="Next page"
 					>
 						<Icon name="arrow-right" height={16} width={16} />
@@ -220,24 +245,16 @@ export const Pagination = ({ items, startIndex = 0 }: PaginationProps) => {
 			</div>
 
 			{totalPages > 1 ? (
-				<div className="flex items-center justify-center gap-2">
-					<button
-						onClick={handlePrevPage}
-						className="rounded-md p-1 text-(--text-label) transition-colors hover:text-(--text-primary) md:hidden"
-						aria-label="Previous page"
-					>
+				<div className="mt-2 flex items-center justify-center gap-2">
+					<button onClick={handlePrevPage} className={`${mobilePageButtonStyles} md:hidden`} aria-label="Previous page">
 						<Icon name="arrow-left" height={14} width={14} />
 					</button>
 
-					<span className="text-xs font-medium text-(--text-label)">
+					<span className="label-sm text-secondary tabular-nums">
 						{currentPage + 1} / {totalPages}
 					</span>
 
-					<button
-						onClick={handleNextPage}
-						className="rounded-md p-1 text-(--text-label) transition-colors hover:text-(--text-primary) md:hidden"
-						aria-label="Next page"
-					>
+					<button onClick={handleNextPage} className={`${mobilePageButtonStyles} md:hidden`} aria-label="Next page">
 						<Icon name="arrow-right" height={14} width={14} />
 					</button>
 				</div>

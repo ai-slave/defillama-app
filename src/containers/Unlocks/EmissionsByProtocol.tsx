@@ -430,7 +430,7 @@ function TokenStats({
 		<div className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-subtle bg-surface px-4 py-3">
 			{tokenCircSupply != null ? (
 				<div className="flex items-baseline gap-1.5">
-					<span className="text-sm text-(--text-label)">Circ. Supply</span>
+					<span className="text-sm text-secondary">Circ. Supply</span>
 					<span className="text-sm font-medium">
 						{formattedNum(tokenCircSupply)} {symbol}
 					</span>
@@ -439,7 +439,7 @@ function TokenStats({
 
 			{tokenMaxSupply != null ? (
 				<div className="flex items-baseline gap-1.5">
-					<span className="text-sm text-(--text-label)">Max Supply</span>
+					<span className="text-sm text-secondary">Max Supply</span>
 					<span className="text-sm font-medium">
 						{tokenMaxSupply !== Infinity ? formattedNum(tokenMaxSupply) : '∞'} {symbol}
 					</span>
@@ -448,14 +448,14 @@ function TokenStats({
 
 			{tokenMcap != null ? (
 				<div className="flex items-baseline gap-1.5">
-					<span className="text-sm text-(--text-label)">MCap</span>
+					<span className="text-sm text-secondary">MCap</span>
 					<span className="text-sm font-medium">${formattedNum(tokenMcap)}</span>
 				</div>
 			) : null}
 
 			{tokenVolume != null ? (
 				<div className="flex items-baseline gap-1.5">
-					<span className="text-sm text-(--text-label)">Vol 24h</span>
+					<span className="text-sm text-secondary">Vol 24h</span>
 					<span className="text-sm font-medium">${formattedNum(tokenVolume)}</span>
 				</div>
 			) : null}

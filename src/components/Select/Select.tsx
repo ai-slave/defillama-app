@@ -335,7 +335,7 @@ export function Select(props: ISelect) {
 				) : labelType === 'regular' && selectedCount > 0 ? (
 					<>
 						<span>{label}: </span>
-						<span className={useLegacyPopover ? 'text-(--link)' : 'text-link'}>
+						<span className="text-link">
 							{canSelectOnlyOne
 								? selectedValues
 								: selectedValues.length > 2

@@ -12,7 +12,7 @@ import type * as React from 'react'
 import { Icon } from '~/components/Icon'
 import { Tooltip } from '~/components/Tooltip'
 import { mutatePinnedMetrics } from '../pinnedUtils'
-import { NavItemContent } from '../shared'
+import { NavItemContent, navSortableRowStyles } from '../shared'
 import type { TNavLink } from '../types'
 
 const VERTICAL_SORTING_MODIFIERS = [restrictToVerticalAxis, restrictToParentElement]
@@ -66,13 +66,13 @@ function PinnedPageRow({ page }: { page: TNavLink }) {
 			data-dragging={isDragging}
 		>
 			<div
-				className={`group/link -ml-1.5 flex w-full flex-1 items-start gap-3 rounded-md p-1.5 pr-10 hover:bg-black/5 focus-visible:bg-black/5 dark:hover:bg-white/10 dark:focus-visible:bg-white/10 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} select-none`}
+				className={`${navSortableRowStyles} w-full pr-10 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} select-none`}
 				data-dragging={isDragging}
 			>
 				<div className="flex min-w-0 flex-1 items-center gap-2">
 					<button
 						type="button"
-						className="flex size-7 touch-none items-center justify-center rounded-md text-(--text-tertiary) hover:bg-black/5 focus-visible:bg-black/5 dark:hover:bg-white/10 dark:focus-visible:bg-white/10"
+						className="flex size-7 touch-none items-center justify-center rounded-md text-tertiary hover:bg-hover-row focus-visible:bg-hover-row"
 						aria-label={`Drag ${page.name}`}
 						{...attributes}
 						{...listeners}
@@ -93,7 +93,7 @@ function PinnedPageRow({ page }: { page: TNavLink }) {
 						}}
 					/>
 				}
-				className="absolute top-1/2 right-1 hidden -translate-y-1/2 rounded-md bg-(--error) p-1 text-white group-focus-within:block group-hover:block"
+				className="absolute top-1/2 right-1 hidden -translate-y-1/2 rounded-md p-1 text-data-down group-focus-within:block group-hover:block hover:bg-hover-row focus-visible:bg-hover-row"
 			>
 				<Icon name="x" className="size-4" />
 			</Tooltip>

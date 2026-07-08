@@ -18,7 +18,7 @@ interface CalendarDayCellProps {
 export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({ dayInfo, unlocksData, maxUnlockValue }) => {
 	const [isDarkMode] = useDarkModeManager()
 
-	if (!dayInfo.date) return <div className="h-24 w-full bg-(--cards-bg) opacity-40"></div>
+	if (!dayInfo.date) return <div className="h-24 w-full bg-surface opacity-40"></div>
 
 	const dateStr = dayInfo.date.format('YYYY-MM-DD')
 	const dayData = unlocksData[dateStr]
@@ -48,15 +48,13 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({ dayInfo, unloc
 
 	const cellContent = (
 		<div
-			className={`relative h-24 w-full ${isToday ? 'ring-1 ring-(--link-text) ring-inset' : ''} ${
-				dayInfo.isCurrentMonth ? 'hover:brightness-110' : 'bg-(--cards-bg) opacity-60 hover:opacity-80'
+			className={`relative h-24 w-full ${isToday ? 'ring-1 ring-brand ring-inset' : ''} ${
+				dayInfo.isCurrentMonth ? 'hover:brightness-110' : 'bg-surface opacity-60 hover:opacity-80'
 			}`}
 			style={cellStyle}
 		>
 			<div className="relative z-10 flex h-full w-full flex-col justify-between p-2">
-				<span className={`text-sm font-medium ${isToday ? 'font-bold text-(--link-text)' : ''}`}>
-					{dayInfo.date.date()}
-				</span>
+				<span className={`text-sm font-medium ${isToday ? 'font-bold text-link' : ''}`}>{dayInfo.date.date()}</span>
 				{hasUnlocks && dayInfo.isCurrentMonth ? (
 					<div className="mt-auto hidden truncate text-xs sm:block">
 						Total: {formattedNum(dayData.totalValue, true)}
@@ -77,7 +75,7 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({ dayInfo, unloc
 					<div className="text-sm font-semibold">Total Unlock Value: {formattedNum(dayData.totalValue, true)}</div>
 					{dayData.events.length > 0 ? (
 						<>
-							<div className="-mx-2 border-t border-(--cards-border)"></div>
+							<div className="-mx-2 border-t border-medium"></div>
 							<div className="flex flex-col gap-1.5">
 								{dayData.events.map((event, index) => (
 									<div
@@ -92,7 +90,7 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({ dayInfo, unloc
 											<TokenLogo name={event.protocol} kind="token" size={16} alt={`Logo of ${event.protocol}`} />
 											<span className="truncate">{event.protocol}</span>
 										</BasicLink>
-										<span className="text-sm font-medium whitespace-nowrap text-(--text-secondary)">
+										<span className="text-sm font-medium whitespace-nowrap text-secondary">
 											{formattedNum(event.value, true)}
 										</span>
 									</div>

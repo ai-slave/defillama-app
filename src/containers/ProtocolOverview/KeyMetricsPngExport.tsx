@@ -18,6 +18,8 @@ interface MetricRow {
 	value: string
 }
 
+const METRIC_LABEL_SELECTOR = '[class*="text-secondary"], [class*="text-(--text-label)"]'
+
 function getTrimmedText(el: Element | null | undefined): string {
 	return el?.textContent?.trim().replace(/\s+/g, ' ') ?? ''
 }
@@ -25,9 +27,9 @@ function getTrimmedText(el: Element | null | undefined): string {
 function extractLabel(el: HTMLElement): string {
 	const directChildren = Array.from(el.children) as HTMLElement[]
 	const directLabel =
-		directChildren.find((child) => child.matches?.('[class*="text-(--text-label)"]')) ??
+		directChildren.find((child) => child.matches?.(METRIC_LABEL_SELECTOR)) ??
 		directChildren.find((child) => child.tagName.toUpperCase() === 'SPAN')
-	const fallbackLabel = el.querySelector?.('[class*="text-(--text-label)"]') ?? null
+	const fallbackLabel = el.querySelector?.(METRIC_LABEL_SELECTOR) ?? null
 
 	return getTrimmedText(directLabel ?? fallbackLabel)
 }

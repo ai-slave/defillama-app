@@ -45,13 +45,13 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 							href={explorer.url}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="flex items-center gap-1 font-mono text-(--text-tertiary) hover:underline"
+							className="flex items-center gap-1 font-mono text-tertiary hover:underline"
 						>
 							{shortAddress}
 							<Icon name="external-link" height={10} width={10} />
 						</a>
 					) : (
-						<span className="font-mono text-(--text-tertiary)">{shortAddress}</span>
+						<span className="font-mono text-tertiary">{shortAddress}</span>
 					)}
 				</span>
 			)
@@ -147,10 +147,10 @@ export const InsidersTable = ({
 	})
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+		<div className="rounded-md border border-medium bg-surface">
 			<div className="flex flex-col gap-1 p-3">
 				<h3 className="text-base font-semibold">Insiders</h3>
-				{methodology ? <p className="text-sm text-(--text-secondary)">{methodology}</p> : null}
+				{methodology ? <p className="text-sm text-secondary">{methodology}</p> : null}
 			</div>
 			<div className="thin-scrollbar max-h-100 overflow-y-auto">
 				<VirtualTable instance={instance} stripedBg skipVirtualization />

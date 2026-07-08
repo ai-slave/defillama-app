@@ -4,6 +4,8 @@ import { Icon } from '~/components/Icon'
 import { LoadingSpinner } from '~/components/Loaders'
 import { Tooltip } from '~/components/Tooltip'
 import type { FormSubmitEvent } from '~/types/forms'
+import { buttonStyles } from '~/ui/Button'
+import { inputStyles } from '~/ui/Input'
 import { fetchJson } from '~/utils/async'
 
 export function Flag({
@@ -83,7 +85,9 @@ export function Flag({
 
 			<Ariakit.Dialog className="dialog" unmountOnHide store={dialogStore}>
 				{isLending ? (
-					<p className="text-center text-red-500">For lending protocols TVL doesn't include active loans by default</p>
+					<p className="text-center body-sm text-warning">
+						For lending protocols TVL doesn't include active loans by default
+					</p>
 				) : null}
 				<form
 					onSubmit={(e) => {
@@ -93,27 +97,14 @@ export function Flag({
 				>
 					<label className="flex flex-col gap-1">
 						<span>Protocol</span>
-						<input
-							name="protocol"
-							value={protocol}
-							disabled
-							className="rounded-md border border-(--form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-white"
-						/>
+						<input name="protocol" value={protocol} disabled className={`${inputStyles} disabled:opacity-50`} />
 					</label>
 					<label className="flex flex-col gap-1">
 						<span>Data Type</span>
 						{dataType ? (
-							<input
-								name="dataType"
-								value={dataType}
-								disabled
-								className="rounded-md border border-(--form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-white"
-							/>
+							<input name="dataType" value={dataType} disabled className={`${inputStyles} disabled:opacity-50`} />
 						) : (
-							<select
-								name="dataType"
-								className="rounded-md border border-(--form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-white"
-							>
+							<select name="dataType" className={`${inputStyles} disabled:opacity-50`}>
 								<option value="TVL">TVL</option>
 								<option value="Mcap">Mcap</option>
 								<option value="Token Price">Token Price</option>
@@ -142,31 +133,20 @@ export function Flag({
 					</label>
 					<label className="flex flex-col gap-1">
 						<span>What's wrong about it?</span>
-						<textarea
-							name="message"
-							required
-							className="rounded-md border border-(--form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-white"
-						/>
+						<textarea name="message" required className={`${inputStyles} min-h-24 resize-y disabled:opacity-50`} />
 					</label>
 					<label className="flex flex-col gap-1">
 						<span>Where can we find correct information? (optional)</span>
-						<textarea
-							name="correctSource"
-							className="rounded-md border border-(--form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-white"
-						/>
+						<textarea name="correctSource" className={`${inputStyles} min-h-24 resize-y disabled:opacity-50`} />
 					</label>
 					<label className="flex flex-col gap-1">
 						<span>How can we contact you? (optional)</span>
-						<input
-							name="contact"
-							placeholder="Email address"
-							className="rounded-md border border-(--form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-white"
-						/>
+						<input name="contact" placeholder="Email address" className={`${inputStyles} disabled:opacity-50`} />
 					</label>
 					<button
 						name="submit-btn"
 						disabled={loading}
-						className="mt-3 flex items-center justify-center gap-2 rounded-md bg-(--link-active-bg) p-3 text-white disabled:opacity-50"
+						className={`${buttonStyles({ variant: 'primary', size: 'md' })} mt-3 w-full`}
 					>
 						{loading ? (
 							<>
@@ -178,7 +158,7 @@ export function Flag({
 						)}
 					</button>
 					{error ? (
-						<small className="text-center text-red-500">Something went wrong, couldn't submit report</small>
+						<small className="text-center body-sm text-data-down">Something went wrong, couldn't submit report</small>
 					) : null}
 				</form>
 			</Ariakit.Dialog>

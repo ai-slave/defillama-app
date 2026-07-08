@@ -251,13 +251,13 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+		<div className="rounded-md border border-medium bg-surface">
 			<div className="flex flex-wrap items-center justify-end gap-2 p-3">
 				<h2 className="mr-auto text-lg font-semibold">Token Unlocks</h2>
 
 				<button
 					onClick={() => setQueryParam('watchlist', showOnlyWatchlist ? undefined : 'true')}
-					className="flex items-center justify-center gap-2 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+					className="flex items-center justify-center gap-2 rounded-md border border-medium px-2 py-1.5 text-xs font-medium text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
 				>
 					<Icon
 						name="bookmark"
@@ -402,7 +402,7 @@ const emissionsColumns = [
 						<TokenLogo name={protocolName} kind="token" alt={`Logo of ${protocolName}`} />
 						<BasicLink
 							href={`/unlocks/${slug(protocolName)}`}
-							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 						>
 							{protocolName}
 						</BasicLink>
@@ -457,12 +457,12 @@ const emissionsColumns = [
 
 				return (
 					<div className="flex h-full w-full flex-col items-end justify-center gap-2 px-2">
-						<span className="text-sm leading-none font-semibold text-(--link-text) tabular-nums">
+						<span className="text-sm leading-none font-semibold text-link tabular-nums">
 							{formattedNum(pctUnlocked)}%
 						</span>
-						<div className="h-2 w-full rounded-full bg-(--bg-tertiary)">
+						<div className="h-2 w-full rounded-full bg-surface-elevated-2">
 							<div
-								className="h-2 rounded-full bg-(--link-text)"
+								className="h-2 rounded-full bg-brand"
 								style={{
 									width: `${pctUnlocked}%`
 								}}

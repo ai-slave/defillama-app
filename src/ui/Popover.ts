@@ -61,7 +61,7 @@ export const popoverMobileDismissStyles = 'ml-auto p-2 opacity-50 sm:hidden'
 
 /* Compatibility styles for quarantined surfaces that still consume shared menu/select components. */
 export const legacySelectPopoverSurfaceStyles =
-	'z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,60dvh)] lg:max-h-(--popover-available-height) dark:border-[hsl(204,3%,32%)]'
+	'z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,60dvh)] lg:max-h-(--popover-available-height)'
 
 export const excludedSurfaceComboboxPopoverSurfaceStyles =
 	'z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,60dvh)] lg:max-h-(--popover-available-height)'
@@ -70,36 +70,36 @@ export const excludedSurfaceComboboxActionBarStyles =
 	'sticky top-0 z-1 flex flex-wrap justify-between gap-1 border-b border-subtle bg-surface-elevated-1 text-xs text-link'
 
 export const legacyMenuSurfaceStyles =
-	'z-10 flex thin-scrollbar h-[calc(100dvh-80px)] min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:drawer max-sm:rounded-b-none sm:max-h-[60dvh] sm:max-w-md lg:h-full lg:max-h-(--popover-available-height) dark:border-[hsl(204,3%,32%)]'
+	'z-10 flex thin-scrollbar h-[calc(100dvh-80px)] min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 max-sm:drawer max-sm:rounded-b-none sm:max-h-[60dvh] sm:max-w-md lg:h-full lg:max-h-(--popover-available-height)'
 
 export const legacyNestedMenuSurfaceStyles =
-	'flex thin-scrollbar flex-col gap-1 rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:h-[calc(100dvh-80px)] max-sm:overflow-auto max-sm:overscroll-contain max-sm:rounded-b-none max-sm:p-2 sm:max-h-[60dvh] sm:overflow-x-hidden sm:overflow-y-auto sm:overscroll-contain sm:p-0 dark:border-[hsl(204,3%,32%)]'
+	'flex thin-scrollbar flex-col gap-1 rounded-md border border-medium bg-surface-elevated-1 max-sm:h-[calc(100dvh-80px)] max-sm:overflow-auto max-sm:overscroll-contain max-sm:rounded-b-none max-sm:p-2 sm:max-h-[60dvh] sm:overflow-x-hidden sm:overflow-y-auto sm:overscroll-contain sm:p-0'
 
 export const legacyNestedMenuRootFilterButtonStyles =
 	'relative flex cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-medium px-2 py-1.5 text-xs font-medium text-secondary hover:bg-hover-row focus-visible:bg-hover-row'
 
 export const legacyNestedMenuRootButtonStyles =
-	'flex items-center justify-between gap-3 rounded-md bg-(--btn-bg) px-3 py-2 hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)'
+	'flex items-center justify-between gap-3 rounded-md bg-surface-elevated-1 px-3 py-2 text-primary hover:bg-surface-elevated-2 focus-visible:bg-surface-elevated-2'
 
 export const legacyNestedMenuButtonStyles =
-	'flex cursor-pointer items-center justify-between gap-3 rounded-md px-3 py-2 hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)'
+	'flex cursor-pointer items-center justify-between gap-3 rounded-md px-3 py-2 text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row'
 
 export const legacyPopoverRowStyles =
-	'flex shrink-0 cursor-pointer items-center justify-between gap-4 overflow-hidden border-b border-(--form-control-border) px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)'
+	'flex shrink-0 cursor-pointer items-center justify-between gap-4 overflow-hidden border-b border-medium px-3 py-2 text-primary cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row'
 
 export const legacyPopoverExternalRowStyles =
-	'shrink-0 cursor-pointer overflow-hidden border-b border-(--form-control-border) px-3 py-2 text-ellipsis whitespace-nowrap cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)'
+	'shrink-0 cursor-pointer overflow-hidden border-b border-medium px-3 py-2 text-ellipsis whitespace-nowrap text-primary cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row'
 
 export const legacySelectPopoverRowStyles =
-	'flex shrink-0 cursor-pointer items-center justify-start gap-4 border-b border-medium px-3 py-2 cv-auto-37 last-of-type:rounded-b-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)'
+	'flex shrink-0 cursor-pointer items-center justify-start gap-4 border-b border-medium px-3 py-2 text-primary cv-auto-37 last-of-type:rounded-b-md hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row'
 
 export const legacyPopoverActionBarStyles =
-	'sticky top-0 z-1 flex flex-wrap justify-between gap-1 border-b border-medium bg-(--bg-main) text-xs text-(--link)'
+	'sticky top-0 z-1 flex flex-wrap justify-between gap-1 border-b border-medium bg-surface-elevated-1 text-xs text-link'
 
 export const legacyPopoverActionButtonStyles = 'p-3'
 
 export const legacyPopoverSeeMoreStyles =
-	'w-full cursor-pointer px-3 py-4 text-(--link) hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row'
+	'w-full cursor-pointer px-3 py-4 text-link hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row'
 
 export const legacyPopoverSelectCheckStyles =
-	'ml-auto flex size-3 shrink-0 items-center justify-center rounded-xs border border-[#28a2b5]'
+	'ml-auto flex size-3 shrink-0 items-center justify-center rounded-xs border border-brand text-link'

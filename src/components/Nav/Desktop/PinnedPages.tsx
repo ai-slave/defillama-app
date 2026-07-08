@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Icon } from '~/components/Icon'
 import { Tooltip } from '~/components/Tooltip'
 import { mutatePinnedMetrics } from '../pinnedUtils'
-import { LinkToPage } from '../shared'
+import { LinkToPage, navActionStyles } from '../shared'
 import type { TNavLink } from '../types'
 
 const ReorderablePinnedPages = React.lazy(() => import('./ReorderablePinnedPages'))
@@ -19,14 +19,14 @@ export function PinnedPages({ pinnedPages, asPath }: { pinnedPages: Array<TNavLi
 	return (
 		<div className="group/pinned flex flex-col">
 			<div
-				className="group flex items-center justify-between gap-3 rounded-md pt-1.5 text-xs opacity-65"
+				className="group flex items-center justify-between gap-3 rounded-md pt-1.5 label-sm text-secondary"
 				data-reordering={isReordering}
 			>
 				<span>Pinned Pages</span>
 				{pinnedPages.length > 1 ? (
 					<button
 						type="button"
-						className={`inline-flex rounded-md px-2 py-1 label-sm tracking-wide text-(--text-tertiary) uppercase hover:bg-black/5 focus-visible:bg-black/5 dark:hover:bg-white/10 dark:focus-visible:bg-white/10 ${
+						className={`inline-flex ${navActionStyles} ${
 							isReordering ? '' : 'invisible group-focus-within/pinned:visible group-hover/pinned:visible'
 						}`}
 						onClick={() => setIsReordering((value) => !value)}
@@ -37,7 +37,7 @@ export function PinnedPages({ pinnedPages, asPath }: { pinnedPages: Array<TNavLi
 			</div>
 			{isReordering ? (
 				<>
-					<p className="body-sm text-(--text-tertiary)">Drag to reorder, click X to unpin</p>
+					<p className="body-sm text-tertiary">Drag to reorder, click X to unpin</p>
 					<React.Suspense fallback={<div className="min-h-[40px]" />}>
 						<ReorderablePinnedPages pinnedPages={pinnedPages} />
 					</React.Suspense>
@@ -67,7 +67,7 @@ export function PinnedPages({ pinnedPages, asPath }: { pinnedPages: Array<TNavLi
 										}}
 									/>
 								}
-								className="absolute top-1/2 right-1 hidden -translate-y-1/2 rounded-md bg-(--error) p-1 text-white group-focus-within:block group-hover:block"
+								className="absolute top-1/2 right-1 hidden -translate-y-1/2 rounded-md p-1 text-data-down group-focus-within:block group-hover:block hover:bg-hover-row focus-visible:bg-hover-row"
 							>
 								<Icon name="x" className="size-4" />
 							</Tooltip>

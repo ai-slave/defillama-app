@@ -166,10 +166,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex items-center gap-2">
-					<div className="flex items-center rounded-md border border-(--form-control-border) text-xs font-medium text-(--text-form)">
+					<div className="flex items-center rounded-md border border-medium text-xs font-medium text-secondary">
 						<button
 							onClick={() => navigate(-1)}
-							className="shrink-0 px-2 py-1.5 hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+							className="shrink-0 px-2 py-1.5 hover:bg-hover-row focus-visible:bg-hover-row"
 							aria-label="Previous"
 						>
 							←
@@ -185,7 +185,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 						</span>
 						<button
 							onClick={() => navigate(1)}
-							className="shrink-0 px-2 py-1.5 hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+							className="shrink-0 px-2 py-1.5 hover:bg-hover-row focus-visible:bg-hover-row"
 							aria-label="Next"
 						>
 							→
@@ -195,7 +195,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 						onClick={() => {
 							void router.push({ pathname: router.pathname }, undefined, { shallow: true })
 						}}
-						className="shrink-0 rounded-md border border-(--form-control-border) px-2.5 py-1.5 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+						className="shrink-0 rounded-md border border-medium px-2.5 py-1.5 text-xs font-medium text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
 					>
 						Reset
 					</button>
@@ -210,7 +210,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 				/>
 				<button
 					onClick={() => setQueryParams({ watchlist: showOnlyWatchlist ? undefined : 'true' })}
-					className="flex items-center justify-center gap-2 rounded-md border border-(--form-control-border) bg-white px-3 py-1.5 text-xs text-black dark:bg-black dark:text-white"
+					className="flex items-center justify-center gap-2 rounded-md border border-medium px-3 py-1.5 text-xs text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
 				>
 					<Icon
 						name="bookmark"
@@ -222,7 +222,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 				</button>
 				<button
 					onClick={() => setQueryParams({ insiders: showOnlyInsider ? undefined : 'true' })}
-					className="flex items-center justify-center gap-2 rounded-md border border-(--form-control-border) bg-white px-3 py-1.5 text-xs text-black dark:bg-black dark:text-white"
+					className="flex items-center justify-center gap-2 rounded-md border border-medium px-3 py-1.5 text-xs text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
 				>
 					<Icon name="key" height={16} width={16} style={{ fill: showOnlyInsider ? 'var(--text-primary)' : 'none' }} />
 					{showOnlyInsider ? 'Show All' : 'Show Insiders Only'}
@@ -269,14 +269,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 							/>
 						</Suspense>
 					) : null}
-					<div className="grid grid-cols-7 py-1 text-center text-xs font-medium text-(--text-secondary)">
+					<div className="grid grid-cols-7 py-1 text-center text-xs font-medium text-secondary">
 						{DAYS_OF_WEEK.map((day) => (
 							<span key={day} role="columnheader">
 								{day}
 							</span>
 						))}
 					</div>
-					<div className="grid grid-cols-7 grid-rows-6 gap-px border border-(--cards-border) bg-(--cards-border)">
+					<div className="grid grid-cols-7 grid-rows-6 gap-px border border-medium bg-border-medium">
 						{calendarDays.map((day, i) => (
 							<React.Fragment key={day.date?.format('YYYY-MM-DD') ?? i}>
 								<CalendarDayCell dayInfo={day} unlocksData={unlocksData} maxUnlockValue={maxMonthlyValue} />
@@ -286,7 +286,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 				</>
 			) : viewMode === 'Week' ? (
 				<>
-					<div className="grid grid-cols-1 gap-px border border-(--cards-border) bg-(--cards-border) md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+					<div className="grid grid-cols-1 gap-px border border-medium bg-border-medium md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
 						{calendarDays.map((day) => (
 							<React.Fragment key={day.date!.format('YYYY-MM-DD')}>
 								<WeekDayColumn dayInfo={day as { date: Dayjs; isCurrentMonth: boolean }} unlocksData={unlocksData} />

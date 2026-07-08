@@ -620,7 +620,7 @@ export const IncomeStatement = ({
 													<span className="overflow-hidden text-ellipsis whitespace-nowrap">{header[1]}</span>
 													<Tooltip
 														content={`Current ${groupBy.toLowerCase()} data is incomplete`}
-														className="text-xs text-(--error)"
+														className="text-xs text-data-down"
 													>
 														*
 													</Tooltip>
@@ -818,7 +818,7 @@ const IncomeStatementByLabel = ({
 	return (
 		<>
 			<tr className="group">
-				<TokenPageTableIncomeHeaderCell sticky className="w-[36%] font-semibold group-hover:bg-(--link-hover-bg)">
+				<TokenPageTableIncomeHeaderCell sticky className="w-[36%] font-semibold group-hover:bg-hover-row">
 					<div
 						className="flex items-center gap-1"
 						onClick={(e) => {
@@ -837,7 +837,7 @@ const IncomeStatementByLabel = ({
 									e.stopPropagation()
 									setIsExpanded((expanded) => !expanded)
 								}}
-								className="-ml-1 flex size-5 shrink-0 items-center justify-center rounded-sm text-secondary transition-transform hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+								className="-ml-1 flex size-5 shrink-0 items-center justify-center rounded-sm text-secondary transition-transform hover:bg-hover-row focus-visible:bg-hover-row"
 							>
 								<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} height={14} width={14} />
 							</button>
@@ -847,7 +847,7 @@ const IncomeStatementByLabel = ({
 						{methodology ? (
 							<Tooltip
 								content={methodology}
-								className="flex items-center justify-start gap-1 underline decoration-black/60 decoration-dotted dark:decoration-white/60"
+								className="flex items-center justify-start gap-1 underline decoration-current decoration-dotted"
 							>
 								{label}
 								<Icon name="help-circle" height={14} width={14} className="relative top-0.25 shrink-0" />
@@ -861,7 +861,7 @@ const IncomeStatementByLabel = ({
 					<TokenPageTableIncomeCell
 						key={`${protocolName}-${groupBy}-${dataType}-${header[0]}`}
 						lastColumn={i === tableHeaders.length - 1}
-						className={`font-medium group-hover:bg-(--link-hover-bg) ${isEarnings ? (data[header[0]]?.value >= 0 ? 'text-(--success)' : 'text-(--error)') : ''}`}
+						className={`font-medium group-hover:bg-hover-row ${isEarnings ? (data[header[0]]?.value >= 0 ? 'text-data-up' : 'text-data-down') : ''}`}
 					>
 						{data[header[0]]?.value == null ? null : showComparison && i !== 0 && tableHeaders[i + 1] ? (
 							<Tooltip
@@ -873,7 +873,7 @@ const IncomeStatementByLabel = ({
 										dataType={dataType}
 									/>
 								}
-								className={`justify-start underline decoration-dotted ${isEarnings ? (data[header[0]]?.value >= 0 ? 'decoration-(--success)/60' : 'decoration-(--error)/60') : 'decoration-black/60 dark:decoration-white/60'}`}
+								className={`justify-start underline decoration-dotted ${isEarnings ? (data[header[0]]?.value >= 0 ? 'decoration-data-up/60' : 'decoration-data-down/60') : 'decoration-current'}`}
 							>
 								{formatIncomeValue(data[header[0]].value)}
 							</Tooltip>
@@ -889,12 +889,12 @@ const IncomeStatementByLabel = ({
 						<tr key={`${protocolName}-${groupBy}-${dataType}-${breakdownlabel}`} className="group text-secondary">
 							<TokenPageTableIncomeHeaderCell
 								sticky
-								className="w-[36%] pl-9 font-normal italic group-hover:bg-(--link-hover-bg)"
+								className="w-[36%] pl-9 font-normal italic group-hover:bg-hover-row"
 							>
 								{breakdownMethodology[breakdownlabel] ? (
 									<Tooltip
 										content={breakdownMethodology[breakdownlabel]}
-										className="flex justify-start underline decoration-black/60 decoration-dotted dark:decoration-white/60"
+										className="flex justify-start underline decoration-current decoration-dotted"
 									>
 										{breakdownlabel}
 									</Tooltip>
@@ -906,7 +906,7 @@ const IncomeStatementByLabel = ({
 								<TokenPageTableIncomeCell
 									key={`${protocolName}-${groupBy}-${dataType}-by-label-${breakdownlabel}-${header[0]}`}
 									lastColumn={i === tableHeaders.length - 1}
-									className="font-normal group-hover:bg-(--link-hover-bg)"
+									className="font-normal group-hover:bg-hover-row"
 								>
 									{data[header[0]]?.['by-label']?.[breakdownlabel] == null ? null : i !== 0 &&
 									  showComparison &&
@@ -926,7 +926,7 @@ const IncomeStatementByLabel = ({
 													label={breakdownlabel}
 												/>
 											}
-											className="justify-start underline decoration-black/60 decoration-dotted dark:decoration-white/60"
+											className="justify-start underline decoration-current decoration-dotted"
 										>
 											{formatIncomeValue(data[header[0]]['by-label']?.[breakdownlabel])}
 										</Tooltip>
@@ -966,9 +966,7 @@ const PerformanceTooltipContent = ({
 	const displayLabel = label ? label.toLowerCase() : dataType
 	return (
 		<p className="text-xs">
-			<span className={`${percentageChange > 0 ? 'text-(--success)' : 'text-(--error)'}`}>
-				{`${percentageChangeText}`}
-			</span>{' '}
+			<span className={percentageChange > 0 ? 'text-data-up' : 'text-data-down'}>{`${percentageChangeText}`}</span>{' '}
 			<span>
 				compared to previous {groupBy === 'Yearly' ? 'year' : groupBy === 'Quarterly' ? 'quarter' : 'month'} total{' '}
 				{displayLabel}

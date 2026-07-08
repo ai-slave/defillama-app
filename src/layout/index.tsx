@@ -42,7 +42,7 @@ function Layout({
 			<Nav metricFilters={metricFilters} />
 			<main
 				{...props}
-				className="app-main-shell isolate col-span-full flex min-h-[calc(100dvh-68px)] flex-col gap-2 p-1 text-(--text-primary) lg:col-span-1 lg:min-h-dvh lg:p-4 lg:pl-0"
+				className="app-main-shell isolate col-span-full flex min-h-[calc(100dvh-68px)] flex-col gap-2 p-1 text-primary lg:col-span-1 lg:min-h-dvh lg:p-4 lg:pl-0"
 			>
 				{hideDesktopSearch ? null : (
 					<span className="mb-1 hidden items-center justify-between gap-3 lg:flex lg:min-h-8">

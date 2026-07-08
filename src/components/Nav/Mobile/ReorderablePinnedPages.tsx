@@ -11,7 +11,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type * as React from 'react'
 import { Icon } from '~/components/Icon'
 import { mutatePinnedMetrics } from '../pinnedUtils'
-import { NavItemContent } from '../shared'
+import { NavItemContent, navSortableRowStyles } from '../shared'
 import type { TNavLink } from '../types'
 
 const VERTICAL_SORTING_MODIFIERS = [restrictToVerticalAxis, restrictToParentElement]
@@ -64,13 +64,13 @@ function ReorderableRow({ page }: { page: TNavLink }) {
 	return (
 		<div ref={setNodeRef} style={style} className="group relative" data-dragging={isDragging}>
 			<div
-				className={`group/link -ml-1.5 flex flex-1 items-start gap-3 rounded-md p-1.5 hover:bg-black/5 focus-visible:bg-black/5 data-[linkactive=true]:bg-(--link-active-bg) data-[linkactive=true]:text-white dark:hover:bg-white/10 dark:focus-visible:bg-white/10 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} select-none`}
+				className={`${navSortableRowStyles} ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} select-none`}
 				data-dragging={isDragging}
 			>
 				<div className="flex w-full items-center gap-2">
 					<button
 						type="button"
-						className="flex size-7 touch-none items-center justify-center rounded-md text-(--text-tertiary) hover:bg-black/5 focus-visible:bg-black/5 dark:hover:bg-white/10 dark:focus-visible:bg-white/10"
+						className="flex size-7 touch-none items-center justify-center rounded-md text-tertiary hover:bg-hover-row focus-visible:bg-hover-row"
 						aria-label={`Drag ${page.name}`}
 						{...attributes}
 						{...listeners}
@@ -80,7 +80,7 @@ function ReorderableRow({ page }: { page: TNavLink }) {
 					<NavItemContent name={page.name} icon={page.icon} attention={page.attention} />
 					<button
 						type="button"
-						className="ml-auto flex size-7 items-center justify-center rounded-md text-(--error) hover:bg-(--error)/10 focus-visible:bg-(--error)/10"
+						className="ml-auto flex size-7 items-center justify-center rounded-md text-data-down hover:bg-hover-row focus-visible:bg-hover-row"
 						aria-label={`Unpin ${page.name}`}
 						onClick={() => handleUnpin()}
 					>

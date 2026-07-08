@@ -300,7 +300,7 @@ export default function Protocols({
 				<span>Are we missing any protocol?</span>{' '}
 				<a
 					href="https://airtable.com/shrD1bSGYNcdFQ6kd"
-					className="font-medium text-(--blue) underline"
+					className="font-medium text-link underline"
 					target="_blank"
 					rel="noopener noreferrer"
 				>
@@ -309,29 +309,29 @@ export default function Protocols({
 			</Announcement>
 
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-5 xl:col-span-1">
+				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-medium bg-surface p-5 xl:col-span-1">
 					<h1 className="text-xl font-semibold">Unlock Statistics</h1>
 					<p className="flex flex-col">
-						<span className="text-(--text-label)">Total Protocols Tracked</span>
+						<span className="text-secondary">Total Protocols Tracked</span>
 						<span className="font-jetbrains text-2xl font-semibold">{totalProtocols}</span>
 					</p>
 					<p className="flex flex-col">
-						<span className="text-(--text-label)">Upcoming Unlocks (7d)</span>
+						<span className="text-secondary">Upcoming Unlocks (7d)</span>
 						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(upcomingUnlocks7dValue, true)}</span>
 					</p>
 					<p className="flex flex-col">
-						<span className="text-(--text-label)">Upcoming Unlocks (30d)</span>
+						<span className="text-secondary">Upcoming Unlocks (30d)</span>
 						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(upcomingUnlocks30dValue, true)}</span>
 					</p>
 					<BasicLink
 						href="/unlocks/calendar"
-						className="mt-auto flex items-center justify-center gap-1 rounded-md border border-(--form-control-border) px-2 py-1.5 text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+						className="mt-auto flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
 					>
 						<span>View unlocks calendar</span>
 						<Icon name="arrow-right" className="size-4" />
 					</BasicLink>
 				</div>
-				<div className="col-span-2 flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<div className="col-span-2 flex flex-col rounded-md border border-medium bg-surface">
 					<UpcomingUnlockVolumeChart protocols={chartProtocols} initialNowSec={generatedAtSec} />
 				</div>
 			</div>
@@ -342,7 +342,7 @@ export default function Protocols({
 					period={1}
 					title="24h Top Unlocks"
 					initialNowSec={generatedAtSec}
-					className="col-span-1 flex flex-col gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3"
+					className="col-span-1 flex flex-col gap-3 rounded-md border border-medium bg-surface p-3"
 				/>
 
 				<TopUnlocks
@@ -350,14 +350,14 @@ export default function Protocols({
 					period={30}
 					title="30d Top Unlocks"
 					initialNowSec={generatedAtSec}
-					className="col-span-1 flex flex-col gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3"
+					className="col-span-1 flex flex-col gap-3 rounded-md border border-medium bg-surface p-3"
 				/>
 
 				<PastUnlockPriceImpact
 					data={data}
 					title="Post Unlock Price Impact"
 					initialNowSec={generatedAtSec}
-					className="col-span-1 flex flex-col gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3"
+					className="col-span-1 flex flex-col gap-3 rounded-md border border-medium bg-surface p-3"
 				/>
 			</div>
 

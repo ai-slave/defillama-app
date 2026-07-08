@@ -12,6 +12,7 @@ import { Tooltip } from '~/components/Tooltip'
 import { chainCoingeckoIdsForGasNotMcap } from '~/constants/chainTokens'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { TVL_SETTINGS_KEYS, useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { buttonStyles } from '~/ui/Button'
 import { formattedNum } from '~/utils'
 import { downloadCSV } from '~/utils/download'
 import { ChainChartPanel } from './ChainChartPanel'
@@ -140,18 +141,23 @@ export function Stats(props: IStatsProps) {
 						<TokenLogo name={props.metadata.name} kind="chain" size={24} alt={`Logo of ${props.metadata.name}`} />
 						<span className="heading-xs">{props.metadata.name}</span>
 						{props.metadata.deprecated ? <DeprecatedEntityText /> : null}
-						<span className="ml-auto flex items-center justify-end gap-2">
+						<span className="-m-2 ml-auto flex items-center justify-end gap-1">
 							{props.website ? (
 								<a
 									href={props.website}
 									target="_blank"
 									rel="noopener noreferrer"
 									aria-label={`${props.metadata.name} website`}
+									className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
 								>
-									<Icon name="link" width={16} height={16} className="shrink-0" />
+									<Icon name="globe" width={16} height={16} className="shrink-0" />
 								</a>
 							) : null}
-							<Bookmark readableName={props.metadata.name} isChain />
+							<Bookmark
+								readableName={props.metadata.name}
+								isChain
+								className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
+							/>
 						</span>
 					</h1>
 				) : null}

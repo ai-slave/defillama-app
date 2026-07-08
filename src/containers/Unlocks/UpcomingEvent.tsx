@@ -29,7 +29,7 @@ const ProtocolPageButton = () => {
 const RegularButton = () => {
 	return (
 		<Ariakit.MenuButton
-			className="flex size-10 items-center justify-center rounded-lg bg-(--bg-tertiary) text-(--text-primary) hover:bg-(--bg-border)"
+			className="flex size-10 items-center justify-center rounded-lg bg-surface-elevated-2 text-primary hover:bg-border-medium"
 			aria-label="Add to calendar"
 		>
 			<Icon name="calendar-plus" width={20} height={20} />
@@ -84,10 +84,10 @@ const CalendarButton = ({ event, tokenName, tokenValue, isProtocolPage }: Calend
 const CountdownTile = ({ value, label }: { value: string; label: string }) => {
 	return (
 		<div className="flex flex-col items-center">
-			<div className="flex size-10 items-center justify-center rounded-lg bg-(--bg-tertiary)">
-				<span className="text-base font-semibold tracking-tight text-(--text-primary) tabular-nums">{value}</span>
+			<div className="flex size-10 items-center justify-center rounded-lg bg-surface-elevated-2">
+				<span className="text-base font-semibold tracking-tight text-primary tabular-nums">{value}</span>
 			</div>
-			<span className="mt-1 text-xs leading-none font-medium text-(--text-meta)">{label}</span>
+			<span className="mt-1 text-xs leading-none font-medium text-tertiary">{label}</span>
 		</div>
 	)
 }
@@ -290,8 +290,8 @@ export const UpcomingEvent = ({
 		const iconSize = variant === 'protocol' ? 14 : 16
 		const rowClass = variant === 'protocol' ? 'flex flex-col gap-0.5' : 'flex flex-col gap-1'
 		const lineClass = variant === 'protocol' ? 'body-md text-primary' : 'text-sm'
-		const subLineClass = variant === 'protocol' ? 'body-sm text-secondary' : 'text-xs text-(--text-meta)'
-		const suffixClass = variant === 'protocol' ? 'body-sm text-secondary' : 'text-xs text-(--text-meta)'
+		const subLineClass = variant === 'protocol' ? 'body-sm text-secondary' : 'text-xs text-tertiary'
+		const suffixClass = variant === 'protocol' ? 'body-sm text-secondary' : 'text-xs text-tertiary'
 		const valueClass = variant === 'protocol' ? '' : 'font-medium'
 		const isLinearPerDay = item.unlockType === 'linear' && item.displayUnit === 'per day'
 		const isOngoing = item.endTime != null && nowSec >= item.timestamp && nowSec <= item.endTime
@@ -308,10 +308,10 @@ export const UpcomingEvent = ({
 									name={item.unlockType === 'linear' ? 'linear-unlock' : 'cliff-unlock'}
 									height={iconSize}
 									width={iconSize}
-									className="text-(--text-meta)"
+									className="text-tertiary"
 								/>
 							</Ariakit.TooltipAnchor>
-							<Ariakit.Tooltip className="z-50 rounded-md bg-(--bg-secondary) px-2 py-1 text-xs">
+							<Ariakit.Tooltip className="z-50 rounded-md bg-surface-elevated-1 px-2 py-1 text-xs">
 								{item.unlockType === 'linear' ? 'Linear Unlock' : 'Cliff Unlock'}
 							</Ariakit.Tooltip>
 						</Ariakit.TooltipProvider>
@@ -423,25 +423,25 @@ export const UpcomingEvent = ({
 						<div className="flex items-center gap-3">
 							<div className="flex min-w-[150px] items-center justify-between gap-4">
 								<div className="flex flex-col items-start">
-									<span className="text-sm font-semibold text-(--text-primary) tabular-nums">
+									<span className="text-sm font-semibold text-primary tabular-nums">
 										{hasLinear && dailyValue ? (
 											<>
 												{formattedNum(dailyValue, true)}{' '}
-												<span className="text-xs font-normal text-(--text-meta)">/ day</span>
+												<span className="text-xs font-normal text-tertiary">/ day</span>
 											</>
 										) : (
 											formattedNum(tokenValue, true)
 										)}
 									</span>
-									<span className="text-xs font-medium text-(--text-meta)">
+									<span className="text-xs font-medium text-tertiary">
 										{hasLinear ? 'Linear Unlock' : 'Unlock Value'}
 									</span>
 								</div>
 								<div className="flex flex-col items-end">
-									<span className="text-sm font-semibold text-(--text-primary) tabular-nums">
+									<span className="text-sm font-semibold text-primary tabular-nums">
 										{formattedNum(unlockPercentFloat)}%
 									</span>
-									<span className="text-xs font-medium text-(--text-meta)">of float</span>
+									<span className="text-xs font-medium text-tertiary">of float</span>
 								</div>
 							</div>
 
@@ -453,14 +453,14 @@ export const UpcomingEvent = ({
 							</div>
 						</div>
 					) : (
-						<span className="text-sm text-(--text-meta)" suppressHydrationWarning>
+						<span className="text-sm text-tertiary" suppressHydrationWarning>
 							{formatTimeAgo(timestamp)}
 						</span>
 					)}
 				</Ariakit.HovercardAnchor>
 				<Ariakit.HovercardDisclosure />
 				<Ariakit.Hovercard
-					className="z-10 flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--bg-secondary) p-4 text-sm text-(--text-primary) shadow-sm"
+					className="z-10 flex flex-col gap-2 rounded-md border border-medium bg-surface-elevated-1 p-4 text-sm text-primary shadow-sm"
 					unmountOnHide
 					hideOnInteractOutside
 					portal={true}
@@ -472,18 +472,18 @@ export const UpcomingEvent = ({
 						</span>
 						<span className="flex flex-col items-end">
 							<span className="font-medium">{timestamp ? dayjs(timestamp * 1e3).format('MMM D, YYYY') : null}</span>
-							<span className="text-xs text-(--text-meta)">
+							<span className="text-xs text-tertiary">
 								{timestamp
 									? `${dayjs(timestamp * 1e3).format('HH:mm')} GMT${dayjs(timestamp * 1e3).format('Z')}`
 									: null}
 							</span>
 						</span>
 					</span>
-					<hr className="border-(--bg-border)" />
+					<hr className="border-medium" />
 					<div className="flex flex-col gap-4">
 						{currentUnlockBreakdown.map((item, i) => renderBreakdownRow(item, 'hover', i))}
 					</div>
-					<hr className="border-(--bg-border)" />
+					<hr className="border-medium" />
 
 					<span className="flex flex-col gap-1">
 						<span className="flex items-center justify-between gap-2 font-semibold">
@@ -494,18 +494,18 @@ export const UpcomingEvent = ({
 									: tokenValue
 										? formattedNum(tokenValue, true)
 										: '-'}
-								{hasLinear ? <span className="text-xs font-normal text-(--text-meta)">/ day</span> : null}
+								{hasLinear ? <span className="text-xs font-normal text-tertiary">/ day</span> : null}
 							</span>
 						</span>
 						{hasLinear && linearDurationDays > 0 ? (
-							<span className="flex items-center justify-between gap-2 text-xs text-(--text-meta)">
+							<span className="flex items-center justify-between gap-2 text-xs text-tertiary">
 								<span>Linear over {formatDuration(linearDurationDays)}</span>
 								<span>
 									{formattedNum(dailyTokenAmount)} {tokenSymbol} / day
 								</span>
 							</span>
 						) : null}
-						<span className="flex items-center justify-between gap-2 text-xs text-(--text-meta)">
+						<span className="flex items-center justify-between gap-2 text-xs text-tertiary">
 							<span>
 								{unlockPercent ? `${formattedNum(unlockPercent)}%` : null}
 								{unlockPercentFloat ? ` (${formattedNum(unlockPercentFloat)}% of float)` : null}
@@ -525,7 +525,7 @@ export const UpcomingEvent = ({
 						tokenValue={tokenValue ? formattedNum(tokenValue, true) : null}
 						isProtocolPage={isProtocolPage}
 					/>
-					<span className="invisible mt-1 text-xs leading-none font-medium text-(--text-meta) select-none">Sec</span>
+					<span className="invisible mt-1 text-xs leading-none font-medium text-tertiary select-none">Sec</span>
 				</div>
 			) : null}
 		</div>

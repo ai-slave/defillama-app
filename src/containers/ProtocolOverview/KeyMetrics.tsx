@@ -308,7 +308,7 @@ export const KeyMetrics = (props: IKeyMetricsProps) => {
 							props.tokenCGData?.marketCap?.current != null ? (
 								<span className="flex items-center gap-1">
 									<span className="font-jetbrains">{props.formatPrice(props.currentTvlByChain.staking)}</span>
-									<span className="text-xs text-(--text-label)">
+									<span className="text-xs text-secondary">
 										({formattedNum((props.currentTvlByChain.staking / props.tokenCGData.marketCap.current) * 100)}% of
 										mcap)
 									</span>
@@ -855,18 +855,18 @@ const Expenses = (props: IKeyMetricsProps) => {
 			/>
 			{props.expenses.annualUsdCost.map(([category, amount]) => (
 				<p
-					className="flex flex-col gap-1 border-b border-dashed border-(--cards-border) py-1 group-last:border-none"
+					className="flex flex-col gap-1 border-b border-dashed border-subtle py-1 group-last:border-none"
 					key={`${props.name}-expenses-${category}-${amount}`}
 				>
 					<span className="flex flex-wrap justify-between">
-						<span className="text-(--text-label)">{category}</span>
+						<span className="text-secondary">{category}</span>
 						<span className="font-jetbrains">{props.formatPrice(amount)}</span>
 					</span>
 				</p>
 			))}
 			{props.expenses?.sources?.length ? (
-				<p className="flex flex-wrap justify-between gap-4 border-b border-dashed border-(--cards-border) py-1 text-(--text-label) group-last:border-none">
-					<span className="text-(--text-label)">Sources</span>
+				<p className="flex flex-wrap justify-between gap-4 border-b border-dashed border-subtle py-1 text-secondary group-last:border-none">
+					<span className="text-secondary">Sources</span>
 					{props.expenses.sources?.map((source) => (
 						<a
 							href={source}
@@ -881,14 +881,14 @@ const Expenses = (props: IKeyMetricsProps) => {
 				</p>
 			) : null}
 			{props.expenses?.notes?.length ? (
-				<p className="flex flex-wrap justify-between gap-4 border-b border-dashed border-(--cards-border) py-1 text-(--text-label) group-last:border-none">
-					<span className="text-(--text-label)">Notes</span>
+				<p className="flex flex-wrap justify-between gap-4 border-b border-dashed border-subtle py-1 text-secondary group-last:border-none">
+					<span className="text-secondary">Notes</span>
 					<span>{props.expenses.notes?.join(', ') ?? ''}</span>
 				</p>
 			) : null}
 			{props.expenses?.lastUpdate ? (
-				<p className="flex flex-wrap justify-between gap-4 border-b border-dashed border-(--cards-border) py-1 text-(--text-label) group-last:border-none">
-					<span className="text-(--text-label)">Last Update</span>
+				<p className="flex flex-wrap justify-between gap-4 border-b border-dashed border-subtle py-1 text-secondary group-last:border-none">
+					<span className="text-secondary">Last Update</span>
 					<span>{dayjs.utc(props.expenses.lastUpdate).format('MMM D, YYYY')}</span>
 				</p>
 			) : null}
@@ -907,9 +907,9 @@ const TokenLiquidity = (props: IKeyMetricsProps) => {
 			{props.tokenLiquidity?.pools.map((pool) => (
 				<p
 					key={`${pool[0]}-${pool[1]}-${pool[2]}`}
-					className="flex items-center justify-between gap-1 border-b border-dashed border-(--cards-border) py-1 group-last:border-none"
+					className="flex items-center justify-between gap-1 border-b border-dashed border-subtle py-1 group-last:border-none"
 				>
-					<span className="text-(--text-label)">{pool[0]}</span>
+					<span className="text-secondary">{pool[0]}</span>
 					<span className="font-jetbrains">{props.formatPrice(pool[2])}</span>
 				</p>
 			))}
@@ -921,7 +921,7 @@ const TokenCGData = (props: IKeyMetricsProps) => {
 	if (!props.tokenCGData) return null
 	const priceLabel = `${props.token?.symbol ? `$${props.token.symbol}` : 'Token'} Price`
 	const linkedPriceLabel = props.token?.tokenPageRoute ? (
-		<BasicLink href={props.token.tokenPageRoute} className="text-(--link-text) hover:underline">
+		<BasicLink href={props.token.tokenPageRoute} className="text-link hover:underline">
 			{priceLabel}
 		</BasicLink>
 	) : (
@@ -977,7 +977,7 @@ const TokenCGData = (props: IKeyMetricsProps) => {
 								<span className="font-jetbrains">
 									{props.tokenCGData.volume24h.dex != null ? props.formatPrice(props.tokenCGData.volume24h.dex) : '-'}
 								</span>
-								<span className="text-xs text-(--text-label)">
+								<span className="text-xs text-secondary">
 									(
 									{formattedNum(
 										((props.tokenCGData.volume24h.dex ?? 0) / (props.tokenCGData.volume24h.total ?? 1)) * 100
@@ -1002,16 +1002,16 @@ const Raises = (props: IKeyMetricsProps) => {
 		>
 			{props.raises.map((raise) => (
 				<p
-					className="flex flex-col gap-1 border-b border-dashed border-(--cards-border) py-1 group-last:border-none"
+					className="flex flex-col gap-1 border-b border-dashed border-subtle py-1 group-last:border-none"
 					key={`${raise.date}-${raise.amount}-${props.name}`}
 				>
 					<span className="flex flex-wrap justify-between">
-						<span className="text-(--text-label)">{dayjs.utc(raise.date * 1000).format('MMM D, YYYY')}</span>
+						<span className="text-secondary">{dayjs.utc(raise.date * 1000).format('MMM D, YYYY')}</span>
 						{raise.amount ? (
 							<span className="font-jetbrains">{formattedNum(raise.amount * 1_000_000, true)}</span>
 						) : null}
 					</span>
-					<span className="flex flex-wrap justify-between gap-1 text-(--text-label)">
+					<span className="flex flex-wrap justify-between gap-1 text-secondary">
 						<span>Round: {raise.round}</span>
 						{raise.investors?.length ? <span>Investors: {raise.investors.join(', ')}</span> : null}
 					</span>

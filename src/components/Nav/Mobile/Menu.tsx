@@ -4,7 +4,7 @@ import { lazy, Suspense, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { Account } from '../Account'
 import { PremiumHeader } from '../PremiumHeader'
-import { LinkToPage } from '../shared'
+import { LinkToPage, navActionStyles, navSummaryStyles } from '../shared'
 import type { TNavLink, TNavLinks, TOldNavLink } from '../types'
 
 const ReorderablePinnedPages = lazy(() => import('./ReorderablePinnedPages'))
@@ -29,14 +29,14 @@ export function Menu({
 
 	return (
 		<Ariakit.DialogProvider open={show} setOpen={setShow}>
-			<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-brand p-3 text-on-brand shadow focus-visible:brightness-110 active:brightness-110">
+			<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-surface/15 p-3 text-on-brand shadow hover:bg-surface/25 focus-visible:bg-surface/25 active:bg-surface/25">
 				<span className="sr-only">Open Navigation Menu</span>
 				<Icon name="menu" height={16} width={16} />
 			</Ariakit.DialogDisclosure>
 
 			<Ariakit.Dialog
 				unmountOnHide={false}
-				className="fixed top-0 right-0 bottom-0 z-10 flex w-full max-w-[300px] drawer-to-left flex-col overflow-auto overscroll-contain bg-(--bg-main) p-4 pl-5 text-black dark:text-white"
+				className="fixed top-0 right-0 bottom-0 z-10 flex w-full max-w-[300px] drawer-to-left flex-col overflow-auto overscroll-contain bg-surface p-4 pl-5 text-primary"
 			>
 				<nav className="flex flex-1 flex-col">
 					<Ariakit.DialogDismiss className="ml-auto">
@@ -46,7 +46,7 @@ export function Menu({
 
 					{mainLinks.map(({ category, pages }) => (
 						<div key={`mobile-nav-${category}`} className="group mb-3 flex flex-col first:mb-auto">
-							{category === 'Premium' ? <PremiumHeader /> : <p className="mb-1 text-xs opacity-65">{category}</p>}
+							{category === 'Premium' ? <PremiumHeader /> : <p className="mb-1 label-sm text-secondary">{category}</p>}
 							<hr className="border-subtle" />
 							{pages.map(({ name, route, icon, attention, isNew, umamiEvent }) => (
 								<LinkToPage
@@ -65,7 +65,7 @@ export function Menu({
 					))}
 
 					<details className="group mb-3">
-						<summary className="-ml-1.5 flex items-center justify-between gap-3 rounded-md p-1.5 text-xs opacity-65 hover:bg-black/5 focus-visible:bg-black/5 dark:hover:bg-white/10 dark:focus-visible:bg-white/10">
+						<summary className={`${navSummaryStyles} label-sm`}>
 							<span>Old Menu</span>
 							<Icon name="chevron-down" className="size-4 shrink-0 group-open:rotate-180" />
 						</summary>
@@ -74,7 +74,7 @@ export function Menu({
 								<React.Fragment key={`mobile-nav-old-${name}-${route}`}>
 									{pages ? (
 										<details className="group/second">
-											<summary className="-ml-1.5 flex items-center justify-between gap-3 rounded-md p-1.5 hover:bg-black/5 focus-visible:bg-black/5 dark:hover:bg-white/10 dark:focus-visible:bg-white/10">
+											<summary className={navSummaryStyles}>
 												<span>{name}</span>
 												<Icon name="chevron-down" className="size-4 shrink-0 group-open/second:rotate-180" />
 											</summary>
@@ -111,7 +111,7 @@ export function Menu({
 
 					{userDashboards.length > 0 ? (
 						<div className="group mb-3 flex flex-col first:mb-auto">
-							<p className="mb-1 text-xs opacity-65">Your Dashboards</p>
+							<p className="mb-1 label-sm text-secondary">Your Dashboards</p>
 							<hr className="border-subtle" />
 							{userDashboards.map(({ name, route, icon }) => (
 								<LinkToPage
@@ -128,7 +128,7 @@ export function Menu({
 
 					{footerLinks.map(({ category, pages }) => (
 						<div key={`mobile-nav-${category}`} className="group mb-3 flex flex-col first:mb-auto">
-							<p className="mb-1 text-xs opacity-65">{category}</p>
+							<p className="mb-1 label-sm text-secondary">{category}</p>
 							<hr className="border-subtle" />
 							{pages.map(({ name, route, icon }) => (
 								<LinkToPage
@@ -171,14 +171,10 @@ function PinnedPagesSection({
 
 	return (
 		<div className="group/pinned mb-3 flex flex-col first:mb-auto">
-			<div className="mb-1 flex items-center justify-between gap-2 text-xs opacity-65">
+			<div className="mb-1 flex items-center justify-between gap-2 label-sm text-secondary">
 				<span>Pinned Pages</span>
 				{pinnedPages.length > 1 ? (
-					<button
-						type="button"
-						className="rounded-md px-2 py-1 label-sm tracking-wide text-(--text-tertiary) uppercase hover:bg-black/5 focus-visible:bg-black/5 dark:hover:bg-white/10 dark:focus-visible:bg-white/10"
-						onClick={() => setIsReordering((v) => !v)}
-					>
+					<button type="button" className={navActionStyles} onClick={() => setIsReordering((v) => !v)}>
 						{isReordering ? 'Done' : 'Reorder'}
 					</button>
 				) : null}
@@ -186,7 +182,7 @@ function PinnedPagesSection({
 			<hr className="border-subtle" />
 			{isReordering ? (
 				<>
-					<p className="mt-1 body-sm text-(--text-tertiary)">Drag to reorder, tap remove to unpin</p>
+					<p className="mt-1 body-sm text-tertiary">Drag to reorder, tap remove to unpin</p>
 					<Suspense fallback={<div className="mt-1 min-h-[40px]" />}>
 						<ReorderablePinnedPages pinnedPages={pinnedPages} />
 					</Suspense>

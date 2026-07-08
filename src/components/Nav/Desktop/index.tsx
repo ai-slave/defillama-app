@@ -3,7 +3,7 @@ import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { Account } from '../Account'
 import { PremiumHeader } from '../PremiumHeader'
-import { LinkToPage, SidebarDivider } from '../shared'
+import { LinkToPage, navSummaryStyles, SidebarDivider } from '../shared'
 import { ThemeSwitch } from '../ThemeSwitch'
 import type { TNavLink, TNavLinks, TOldNavLink } from '../types'
 import { PinnedPages } from './PinnedPages'
@@ -26,7 +26,7 @@ export function DesktopNav({
 	const isResearch = asPath.startsWith('/research')
 	return (
 		<span className="desktop-nav-shell col-span-1 max-lg:hidden">
-			<nav className="sticky top-0 bottom-0 left-0 isolate col-span-1 flex thin-scrollbar h-screen flex-col gap-1 overflow-x-hidden overflow-y-auto bg-(--app-bg) py-4 *:pl-4">
+			<nav className="sticky top-0 bottom-0 left-0 isolate col-span-1 flex thin-scrollbar h-screen flex-col gap-1 overflow-x-hidden overflow-y-auto bg-page py-4 *:pl-4">
 				<BasicLink href={isResearch ? '/research' : '/'} className="mb-4 w-fit shrink-0">
 					<span className="sr-only">
 						{isResearch ? 'Navigate to DefiLlama Research' : 'Navigate to DeFi Dashboard'}
@@ -74,7 +74,7 @@ export function DesktopNav({
 					))}
 
 					<details className="group">
-						<summary className="-ml-1.5 flex items-center justify-between gap-3 rounded-md p-1.5 text-xs opacity-65 hover:bg-black/5 focus-visible:bg-black/5 dark:hover:bg-white/10 dark:focus-visible:bg-white/10">
+						<summary className={`${navSummaryStyles} label-sm`}>
 							<span>Old Menu</span>
 							<Icon name="chevron-down" className="size-4 shrink-0 group-open:rotate-180" />
 						</summary>
@@ -83,7 +83,7 @@ export function DesktopNav({
 								<React.Fragment key={`old-nav-desktop-${name}-${route ?? ''}`}>
 									{pages ? (
 										<details className="group/second">
-											<summary className="-ml-1.5 flex items-center justify-between gap-3 rounded-md p-1.5 hover:bg-black/5 focus-visible:bg-black/5 dark:hover:bg-white/10 dark:focus-visible:bg-white/10">
+											<summary className={navSummaryStyles}>
 												<span>{name}</span>
 												<Icon name="chevron-down" className="size-4 shrink-0 group-open/second:rotate-180" />
 											</summary>
@@ -111,7 +111,7 @@ export function DesktopNav({
 
 					{userDashboards.length > 0 ? (
 						<div className="group">
-							<p className="flex items-center justify-between gap-3 rounded-md pt-1.5 text-xs opacity-65">
+							<p className="flex items-center justify-between gap-3 rounded-md pt-1.5 label-sm text-secondary">
 								Your Dashboards
 							</p>
 							<div>
@@ -127,7 +127,7 @@ export function DesktopNav({
 					))}
 				</div>
 
-				<div className="sticky bottom-0 flex w-full flex-col gap-2 bg-(--app-bg)">
+				<div className="sticky bottom-0 flex w-full flex-col gap-2 bg-page">
 					<SidebarDivider className="-ml-1.5 pb-1" />
 					<Account asPath={asPath} />
 					<ThemeSwitch />
@@ -151,7 +151,7 @@ function NavDetailsSection({ category, pages, asPath }: { category: string; page
 				}
 			}}
 		>
-			<summary className="-ml-1.5 flex items-center justify-between gap-3 rounded-md p-1.5 hover:bg-black/5 focus-visible:bg-black/5 dark:hover:bg-white/10 dark:focus-visible:bg-white/10">
+			<summary className={navSummaryStyles}>
 				<span>{category}</span>
 				<Icon name="chevron-up" className="size-4 shrink-0 group-open:rotate-180" />
 			</summary>
