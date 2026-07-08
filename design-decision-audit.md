@@ -77,6 +77,19 @@ This file tracks design-system audit notes before code changes are made.
 - Dense-card secondary actions can remain compact, for example 24px CSV buttons inside stat cards, while chart/table/action toolbars use 32px controls.
 - Refine the current structural `<p>` to `<div>` work rather than reverting: data-card wrappers stay `div`; empty/error/status shells get inner text semantics and `role="status"`/`role="alert"` where appropriate.
 
+### Mobile Dialog Behavior Decision
+
+- Owner decision 2026-07-08: mobile dialogs should use bottom-sheet behavior rather
+  than centered modal behavior.
+- Desktop behavior stays centered modal unless a route-specific dialog already has a
+  different proven pattern.
+- Mobile implementation target: portal to the viewport, anchor to the bottom edge,
+  round only the top sheet corners, animate with a smooth slide up/down, and keep long
+  dialog content scrolling inside the sheet so the underlying page/table is not visible
+  below the dialog.
+- This belongs in a focused DialogShell pass. Do not reuse popover drawer helpers for
+  task dialogs; share dialog chrome through `src/ui/Dialog.tsx`.
+
 ### Panel vs Card vs Entity Title Strip Decision
 
 - Route/page: `/protocol/tvl/:protocol`, `/protocol/:protocol`, `/protocol/unlocks/:protocol`, `/unlocks/:protocol`, CEX asset/stablecoin protocol-like pages, and any page using a titled chart/table shell.

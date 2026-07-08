@@ -342,7 +342,7 @@ const MethodologyByAdapter = ({
 		return (
 			<div className="flex flex-col">
 				<h3 className="font-medium">{title}:</h3>
-				<div className="flex flex-col gap-0.5 text-(--text-label)">
+				<div className="flex flex-col gap-0.5 text-secondary">
 					{adapter.childMethodologies.map((child) =>
 						child[1] ? (
 							child[2] ? (

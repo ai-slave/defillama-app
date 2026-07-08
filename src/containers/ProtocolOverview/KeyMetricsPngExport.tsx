@@ -18,7 +18,7 @@ interface MetricRow {
 	value: string
 }
 
-const METRIC_LABEL_SELECTOR = '[class*="text-secondary"], [class*="text-(--text-label)"]'
+const METRIC_LABEL_SELECTOR = '[class*="text-secondary"]'
 
 function getTrimmedText(el: Element | null | undefined): string {
 	return el?.textContent?.trim().replace(/\s+/g, ' ') ?? ''

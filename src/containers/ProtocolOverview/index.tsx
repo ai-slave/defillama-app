@@ -7,6 +7,8 @@ import { Icon } from '~/components/Icon'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
 import { buttonStyles } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { Panel } from '~/ui/Panel'
 import { formattedNum } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { AdditionalInfo } from './AdditionalInfo'
@@ -67,7 +69,11 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 				isCEX={props.isCEX}
 			/>
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
-				<div className="col-span-1 row-[2/3] hidden flex-col gap-6 rounded-lg border border-subtle bg-surface p-2 xl:row-[1/2] xl:flex xl:min-h-[360px]">
+				<Card
+					border="subtle"
+					padding="sm"
+					className="col-span-1 row-[2/3] hidden flex-col gap-6 xl:row-[1/2] xl:flex xl:min-h-[360px]"
+				>
 					<ProtocolHeader
 						props={props}
 						oracleTvs={oracleTvs}
@@ -84,10 +90,10 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 						tvlByChain={tvlByChain}
 						computedOracleTvs={oracleTvs}
 					/>
-				</div>
+				</Card>
 				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
 					<div className="col-span-full flex flex-col gap-2">
-						<div className="flex flex-col gap-6 rounded-[8px] border border-subtle bg-surface p-2 xl:hidden">
+						<Card border="subtle" padding="sm" className="flex flex-col gap-6 xl:hidden">
 							<ProtocolHeader
 								props={props}
 								oracleTvs={oracleTvs}
@@ -97,13 +103,13 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 								formatPrice={formatPrice}
 								headingAs="div"
 							/>
-						</div>
-						<Suspense fallback={<div className="min-h-[400px] rounded-[8px] border border-subtle bg-surface" />}>
+						</Card>
+						<Suspense fallback={<Panel className="min-h-[400px]" />}>
 							<ProtocolChartPanel {...props} />
 						</Suspense>
 					</div>
 					{props.hasKeyMetrics ? (
-						<div className="col-span-full flex flex-col gap-6 rounded-lg border border-subtle bg-surface p-2 xl:hidden">
+						<Card border="subtle" padding="sm" className="col-span-full flex flex-col gap-6 xl:hidden">
 							<KeyMetrics
 								{...props}
 								formatPrice={formatPrice}
@@ -111,7 +117,7 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 								tvlByChain={tvlByChain}
 								computedOracleTvs={oracleTvs}
 							/>
-						</div>
+						</Card>
 					) : null}
 				</div>
 				<AdditionalInfo {...props} />
@@ -148,9 +154,9 @@ function ProtocolHeader({
 }) {
 	return (
 		<>
-			<Tag className="flex flex-wrap items-center gap-2 text-xl">
+			<Tag className="flex flex-wrap items-center gap-2 heading-sm">
 				<TokenLogo name={props.name} kind="token" size={24} alt={`Logo of ${props.name}`} />
-				<span className="font-bold">{props.name}</span>
+				<span>{props.name}</span>
 				{props.token?.symbol && props.token.symbol !== '-' ? (
 					<span className="font-normal">({props.token.symbol})</span>
 				) : null}
@@ -219,7 +225,7 @@ const PrimaryValue = ({
 		return (
 			<p className="flex flex-col">
 				<span className="flex flex-nowrap items-center gap-2">
-					<span>{title}</span>
+					<span className="text-secondary">{title}</span>
 				</span>
 				<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
 					{formatPrice(value)}
@@ -232,7 +238,7 @@ const PrimaryValue = ({
 		<details className="group">
 			<summary className="flex flex-col">
 				<span className="flex flex-nowrap items-center gap-2">
-					<span className="text-(--text-label)">{title}</span>
+					<span className="text-secondary">{title}</span>
 				</span>
 				<span className="flex flex-nowrap items-center gap-2">
 					<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
@@ -253,7 +259,7 @@ const PrimaryValue = ({
 						key={`${chain}-${tvl}-${name}`}
 						className="flex items-center justify-between gap-1 border-b border-dashed border-subtle py-1 group-last:border-none"
 					>
-						<span className="text-(--text-label)">{chain}</span>
+						<span className="text-secondary">{chain}</span>
 						<span className="font-jetbrains">{formatPrice(tvl)}</span>
 					</p>
 				))}

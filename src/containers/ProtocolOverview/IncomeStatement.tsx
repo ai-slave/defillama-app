@@ -14,6 +14,8 @@ import {
 import { TagGroup } from '~/components/TagGroup'
 import { Tooltip } from '~/components/Tooltip'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { Panel } from '~/ui/Panel'
+import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { abbreviateNumber } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import type { IProtocolOverviewPageData } from './types'
@@ -548,12 +550,8 @@ export const IncomeStatement = ({
 	}
 
 	return (
-		<div
-			className={`col-span-full flex flex-col gap-4 rounded-lg border border-subtle bg-surface p-2 xl:p-4 ${
-				className ?? ''
-			}`}
-		>
-			<div className="flex flex-wrap items-center justify-between gap-1">
+		<Panel padding="sm" className={`col-span-full gap-4 ${className ?? ''}`}>
+			<div className="flex flex-wrap items-center justify-between gap-2">
 				{showTitles ? (
 					<h2 className={`group relative flex items-center gap-1 heading-xs ${titleClassName ?? ''}`} id={headerId}>
 						Income Statement for {name}
@@ -567,7 +565,7 @@ export const IncomeStatement = ({
 					</h2>
 				) : null}
 				{showTable ? (
-					<div className="ml-auto flex items-center gap-2">
+					<TableToolbarControlGroup className="ml-auto justify-end">
 						<TagGroup
 							values={incomeStatementGroupByOptions}
 							selectedValue={groupBy}
@@ -577,7 +575,7 @@ export const IncomeStatement = ({
 							className="min-h-8"
 						/>
 						<CSVDownloadButton prepareCsv={prepareTableCsv} smol size="md" />
-					</div>
+					</TableToolbarControlGroup>
 				) : null}
 			</div>
 			{showTable ? (
@@ -778,13 +776,13 @@ export const IncomeStatement = ({
 							/>
 						</Suspense>
 					) : (
-						<div className="flex h-[200px] items-center justify-center text-secondary">
+						<div className="flex h-[200px] items-center justify-center body-sm text-tertiary">
 							No data available for the selected period
 						</div>
 					)}
 				</div>
 			) : null}
-		</div>
+		</Panel>
 	)
 }
 

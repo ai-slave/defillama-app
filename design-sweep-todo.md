@@ -15,53 +15,34 @@ Process rules (from review feedback):
 - A checked item means the implementation shipped and was verified live. If a primitive
   exists but adoption or verification is incomplete, keep the adoption item unchecked.
 
-## Current merge triage — 2026-07-08
+## Post-merge triage — 2026-07-08
 
 This file is now a living audit/backlog ledger, not a literal merge-blocking checklist.
-At the latest count it had 52 checked items and 64 unchecked items. Many unchecked items
-are historical counts, deferred migrations, or "keep unchecked until live verification"
-markers. Do not require every unchecked line in this file to be cleared before merging
-the branch.
+The broad design sweep and shared popover/mobile-drawer pass have merged to `main`.
+Many unchecked items are historical counts, deferred migrations, or "keep unchecked until
+live verification" markers. Do not require every unchecked line in this file to be cleared
+before opening or merging a focused follow-up branch.
 
-The branch can be treated as a merge candidate only after these current gates have a
-recorded answer:
+Completed merge packet:
 
-- Final unlocks density check: `/unlocks/celestia` allocation/events content after the
-  latest density pass.
-- Final `main` sync and conflict check before merge.
-- Final live route check was completed manually by the owner across `/`,
-  `/chain/ethereum`, `/metrics`, `/tools`, `/protocol/uniswap`,
-  `/protocol/tvl/uniswap`, `/protocol/stablecoins/tether`, `/token/hyperliquid`,
-  `/token-rights`, `/unlocks/celestia`,
-  `/cex/assets/binance`, `/stablecoins`, `/bridges`, `/rwa`, `/liquidations`, `/mcp`,
-  plus one mobile-width pass on `/`.
-  Manual browser verification is enough for this packet; do not block the branch on
-  Playwright/Chromium setup unless the owner explicitly asks for automated screenshots.
-- Current review gates below are checked or documented with an explicit exception:
-  excluded-surface guard, chart visual guard, token/style guard, semantic/status guard,
-  duplicate-shell guard, and live route guard.
-- High-level `git diff main...HEAD` review confirms no accidental excluded-surface,
-  chart-data, route-behavior, data-fetching, or broad unrelated changes.
+- Owner manual visual route pass was accepted for the merged design sweep.
+- The shared popover session landed: `Select`, `SelectWithCombobox`, `MultiSelectCombobox`,
+  `Menu`, `NestedMenu`, and in-scope direct popovers use the paddingless popover surface
+  and mobile fixed-bottom drawer contract.
 - `bun run lint:tokens` baseline is locked in `scripts/design-token-baseline.json`.
-- Final required checks are run again if source files change after the last checked
-  commit: `bun run format`, `bun run lint`, `bun run typecheck`,
-  `bun run test:typecheck`, plus `git diff --check`.
+- Token-rights green/warning visuals were visually accepted as unchanged.
+- Unlocks allocation/events density and the 12px event-card radius exception were accepted
+  for the merged sweep.
 
-Owner decisions needed before merge or explicit deferral:
+Current focused backlog:
 
-- Are the latest unlocks allocation/events density and 12px event-card radius acceptable?
-- Remaining default-sm select sites, dialog migration, status-shell migration, Panel/Card
-  route-family cleanup, IconHitTarget adoption, tooltip chrome, and segmented-control
-  extraction are deferred to post-merge backlog unless a visible regression is found.
-- Token-rights green/warning visuals were visually accepted as unchanged in the owner
-  route pass.
-
-Easy pending items, if the owner wants one more focused cleanup before merge:
-
-- A final focused unlocks density adjustment only if the latest `/unlocks/celestia`
-  review still feels too large.
-- Small popover/export/table-toolbar containment fixes only if a final live check finds
-  a visible regression.
+- Protocol overview cleanup: `KeyMetrics`, `Flag`, `IncomeStatement`, and remaining
+  `/protocol/:protocol` overview card/table/dialog/token chrome.
+- DialogShell pass: mobile dialogs should become bottom sheets, with smooth slide
+  animation, shared close-button chrome, footer sizing, headings, and internal scroll
+  regions.
+- Dense pages cleanup: `DeFiWatchlist` and `TokenPnl` before broad token namespace work.
+- Raises chart-shell/fallback reservation pass before any `ChartPanel` extraction.
 
 Medium pending items:
 
@@ -125,12 +106,11 @@ page sweep unless a live regression proves the rule is wrong.
 - Dense-card secondary actions can stay compact, e.g. 24px stat-card CSV buttons, even
   while chart/table/action toolbars use 32px.
 
-## Next implementation order after merge gate
+## Next implementation order after merge
 
 The foundation primitives now exist. Broad sweeps should start by adopting and
 verifying existing recipes, not by adding more one-off primitives unless a proven
-gap remains. For this branch, finish the current merge triage above before starting
-any broad migration from this list.
+gap remains.
 
 1. Finish shared composite adoption and browser verification: Select/SelectWithCombobox/
    Menu popovers, remaining direct popover/menu copies, TableToolbar/TableWithSearch,
@@ -212,7 +192,7 @@ any broad migration from this list.
 - [ ] MetricChip adoption: Chain/Protocol done; RWA Perps Contract and Token Overview
       option chips use the shared `metricOptionChipStyles` in the working tree. DAT and
       any remaining route-local selected metric chips still need audit/live verification.
-- [ ] PopoverSurface v2 — source recipe shipped in `src/ui/Popover.ts` and shared
+- [x] PopoverSurface v2 — source recipe shipped in `src/ui/Popover.ts` and shared
       consumers (`Select`, `SelectWithCombobox`, `MultiSelectCombobox`, `Menu`,
       `NestedMenu`, plus in-scope direct default popovers) moved to the paddingless
       contract:
@@ -225,8 +205,8 @@ any broad migration from this list.
       drawer surfaces. Shared drawers portal to body by default (`portal={false}` is the
       explicit opt-out) so mobile fixed-bottom placement is viewport-based, not
       page-section based.
-      Keep unchecked until browser verification covers default select, combobox, menu,
-      mobile drawer, and the remaining direct popover copies.
+      Owner browser verification covered the shared default select, combobox, menu,
+      nested menu, mobile drawer, and direct popover cases touched by the popover branch.
       2026-07-07 follow-up: Equities numeric operator select now uses shared popover surface/
       row/check recipes; Equities categorical filter combobox overrides no longer add a
       popover shadow. CEX DateFilter, bridge protocol selectors, mobile nav/settings,
@@ -241,10 +221,10 @@ any broad migration from this list.
       Overview metric dialogs use the shared surface. Remaining direct/legacy
       examples include ProtocolOverview Flag and MCP command dialogs plus mobile/
       route-specific menus; verify before deleting the legacy `dialog` utility.
-      Follow-up: dialog/bottom-sheet animation parity is still undecided. Add to
-      Dashboard uses the dialog recipe, not the popover drawer recipe, so smoothness/
-      breakpoint changes should happen in a focused DialogShell pass rather than this
-      popover session.
+      Owner decision 2026-07-08: mobile dialogs should be bottom sheets, not centered
+      modals. Add to Dashboard uses the dialog recipe, not the popover drawer recipe,
+      so bottom anchoring, smooth slide-up/down animation, close-button chrome, footer
+      sizing, and breakpoint behavior should happen in a focused DialogShell pass.
 - [x] IconHitTarget / TableIconHitTarget helper exists in `src/ui/IconHitTarget.tsx` for
       visual 16px icons with `p-1 -m-1` hit area.
 - [ ] IconHitTarget adoption — first targets: protocol rankings bookmark/accordion/
