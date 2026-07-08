@@ -34,12 +34,12 @@ const DEFAULT_SORTING: SortingState = [{ id: 'volume_24h', desc: true }]
 
 const TOKEN_MARKETS_SECTION_ID = 'token-markets'
 
-type VenueTabId = 'dex' | 'cex' | 'all'
+type VenueTabId = 'all' | 'cex' | 'dex'
 
 const VENUE_TABS: ReadonlyArray<{ id: VenueTabId; label: string }> = [
-	{ id: 'dex', label: 'DEX' },
+	{ id: 'all', label: 'All' },
 	{ id: 'cex', label: 'CEX' },
-	{ id: 'all', label: 'All' }
+	{ id: 'dex', label: 'DEX' }
 ]
 
 const CATEGORY_TABS: ReadonlyArray<{ id: Segment; label: string }> = [
@@ -395,8 +395,7 @@ interface TokenMarketsSectionProps {
 
 export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenMarketsSectionProps) {
 	const embedded = variant === 'embedded'
-	// The watchlist panel shows all venues (CEX + DEX) by default; the token detail page keeps its DEX default.
-	const [venueTab, setVenueTab] = useReducer((_: VenueTabId, next: VenueTabId) => next, embedded ? 'all' : 'dex')
+	const [venueTab, setVenueTab] = useReducer((_: VenueTabId, next: VenueTabId) => next, 'all')
 	const [categoryTab, setCategoryTab] = useReducer((_: Segment, next: Segment) => next, 'spot')
 
 	const { data, error, isLoading } = useQuery({
