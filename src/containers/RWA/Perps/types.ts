@@ -90,6 +90,12 @@ export interface IRWAPerpsContractBreakdownRequest {
 	excludeAssetClass?: string
 }
 
+export interface IRWAPerpsMarketBreakdownRequest {
+	key: RWAPerpsChartMetricKey
+	assetClass?: string
+	excludeAssetClass?: string
+}
+
 export interface IRWAPerpsOverviewPageData {
 	markets: IRWAPerpsMarket[]
 	initialChartDataset: RWAChartDataset

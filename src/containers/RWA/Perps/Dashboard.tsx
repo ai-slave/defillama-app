@@ -1,7 +1,8 @@
+import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { createColumnHelper, type VisibilityState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useDeferredValue, useMemo } from 'react'
+import { lazy, Suspense, useDeferredValue, useMemo, useState, type ReactNode } from 'react'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ButtonStyled/ChartRestoreButton'
 import { Checkbox } from '~/components/Checkbox'
@@ -13,12 +14,15 @@ import type {
 	MultiSeriesChart2SeriesConfig
 } from '~/components/ECharts/types'
 import { preparePieChartData } from '~/components/ECharts/utils'
+import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { LoadingDots } from '~/components/Loaders'
 import { PercentChange } from '~/components/PercentChange'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { getQueryUpdatesFromSelected } from '~/components/Select/query'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import type { ExcludeQueryKey } from '~/components/Select/types'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { Tooltip } from '~/components/Tooltip'
 import { CHART_COLORS } from '~/constants/colors'
@@ -28,9 +32,16 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { formattedNum } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
-import { isTrueQueryParam, parseArrayParam, parseExcludeParam, pushShallowQuery } from '~/utils/routerQuery'
+import {
+	isTrueQueryParam,
+	parseArrayParam,
+	parseExcludeParam,
+	pushShallowQuery,
+	toNonEmptyArrayParam
+} from '~/utils/routerQuery'
 import type { IRWAPerpsMarket } from './api.types'
 import {
+	getRWAPerpsAssetGroupBreakdownLabel,
 	getRWAPerpsBaseAssetBreakdownLabel,
 	getRWAPerpsOverviewBreakdownLabel,
 	getRWAPerpsVenueBreakdownLabel
@@ -73,6 +84,7 @@ import type {
 	IRWAPerpsAssetGroupPageData,
 	RWAPerpsAssetGroupBreakdown,
 	IRWAPerpsContractBreakdownRequest,
+	IRWAPerpsMarketBreakdownRequest,
 	RWAPerpsOverviewBreakdown,
 	IRWAPerpsOverviewBreakdownRequest,
 	IRWAPerpsOverviewPageData,
@@ -100,8 +112,122 @@ const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as 
 const EMPTY_DATASET: RWAChartDataset = { source: [], dimensions: ['timestamp'] }
 const PIE_CHART_RADIUS = ['50%', '70%'] as [string, string]
 const FOREX_ASSET_CLASS = 'Forex Perps'
-const BASE_ASSET_QUERY_KEY = 'baseAssets'
-const EXCLUDE_BASE_ASSET_QUERY_KEY = 'excludeBaseAssets'
+const UNKNOWN_FILTER_VALUE = 'Unknown'
+const FILTER_BUTTON_CLASS =
+	'relative flex cursor-pointer flex-nowrap items-center justify-center gap-2 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs font-medium whitespace-nowrap text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-40'
+const FILTER_EDIT_BUTTON_CLASS =
+	'relative ml-auto flex min-h-7 cursor-pointer flex-nowrap items-center justify-center gap-1.5 rounded-sm px-2 py-1 text-xs font-medium whitespace-nowrap text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)'
+
+type RWAPerpsMarketFilterKey =
+	| 'venue'
+	| 'baseAsset'
+	| 'assetGroup'
+	| 'assetClass'
+	| 'category'
+	| 'oracleProvider'
+	| 'accessModel'
+	| 'issuer'
+	| 'rwaClassification'
+
+type RWAPerpsMarketFilterDefinition = {
+	id: RWAPerpsMarketFilterKey
+	label: string
+	includeQueryKey: string
+	excludeQueryKey: ExcludeQueryKey
+	getValues: (market: IRWAPerpsMarket) => string[]
+	hideWhenHardScoped?: boolean
+}
+
+type RWAPerpsMarketFilterState = RWAPerpsMarketFilterDefinition & {
+	options: string[]
+	selectedValues: string[]
+	selectedValuesSet: ReadonlySet<string>
+	active: boolean
+	enabled: boolean
+}
+
+const PERPS_MARKET_FILTER_DEFINITIONS: RWAPerpsMarketFilterDefinition[] = [
+	{
+		id: 'venue',
+		label: d.venue.label,
+		includeQueryKey: 'venues',
+		excludeQueryKey: 'excludeVenues',
+		getValues: (market) => [market.venue || UNKNOWN_FILTER_VALUE]
+	},
+	{
+		id: 'baseAsset',
+		label: d.baseAsset.label,
+		includeQueryKey: 'baseAssets',
+		excludeQueryKey: 'excludeBaseAssets',
+		getValues: (market) => [getRWAPerpsBaseAssetBreakdownLabel(market)]
+	},
+	{
+		id: 'assetGroup',
+		label: d.assetGroup.label,
+		includeQueryKey: 'assetGroups',
+		excludeQueryKey: 'excludeAssetGroups',
+		getValues: (market) => [getRWAPerpsAssetGroupBreakdownLabel(market)]
+	},
+	{
+		id: 'assetClass',
+		label: d.assetClass.label,
+		includeQueryKey: 'assetClasses',
+		excludeQueryKey: 'excludeAssetClasses',
+		getValues: (market) => (market.assetClass?.length ? market.assetClass : [UNKNOWN_FILTER_VALUE]),
+		hideWhenHardScoped: true
+	},
+	{
+		id: 'category',
+		label: d.category.label,
+		includeQueryKey: 'categories',
+		excludeQueryKey: 'excludeCategories',
+		getValues: (market) => (market.category?.length ? market.category : [UNKNOWN_FILTER_VALUE])
+	},
+	{
+		id: 'oracleProvider',
+		label: d.oracleProvider.label,
+		includeQueryKey: 'oracleProviders',
+		excludeQueryKey: 'excludeOracleProviders',
+		getValues: (market) => [market.oracleProvider || UNKNOWN_FILTER_VALUE]
+	},
+	{
+		id: 'accessModel',
+		label: d.accessModel.label,
+		includeQueryKey: 'accessModels',
+		excludeQueryKey: 'excludeAccessModels',
+		getValues: (market) => [market.accessModel || UNKNOWN_FILTER_VALUE]
+	},
+	{
+		id: 'issuer',
+		label: d.issuer.label,
+		includeQueryKey: 'issuers',
+		excludeQueryKey: 'excludeIssuers',
+		getValues: (market) => [market.issuer || UNKNOWN_FILTER_VALUE]
+	},
+	{
+		id: 'rwaClassification',
+		label: d.rwaClassification.label,
+		includeQueryKey: 'rwaClassifications',
+		excludeQueryKey: 'excludeRwaClassifications',
+		getValues: (market) => [market.rwaClassification || UNKNOWN_FILTER_VALUE]
+	}
+]
+
+const PERPS_MARKET_FILTER_QUERY_KEYS = PERPS_MARKET_FILTER_DEFINITIONS.flatMap((definition) => [
+	definition.includeQueryKey,
+	definition.excludeQueryKey
+])
+
+type RWAPerpsFilterDraft = {
+	activeIds: string[]
+	selectValues: Record<string, string[]>
+}
+
+type RWAPerpsActiveFilterPill = {
+	id: string
+	label: string
+	onRemove: () => void
+}
 
 type RWAPerpsTimeSeriesBreakdownForMode =
 	| RWAPerpsOverviewBreakdown
@@ -799,40 +925,505 @@ function getLegendSeriesNames(seriesNames: string[]) {
 	return ['Total', ...seriesNames.filter((name) => name !== 'Total')]
 }
 
-function getRWAPerpsBaseAssetOptions(markets: IRWAPerpsMarket[]) {
-	const openInterestByBaseAsset = new Map<string, number>()
+function getRWAPerpsFilterOptions(markets: IRWAPerpsMarket[], getValues: (market: IRWAPerpsMarket) => string[]) {
+	const openInterestByValue = new Map<string, number>()
 
 	for (const market of markets) {
-		const label = getRWAPerpsBaseAssetBreakdownLabel(market)
-		openInterestByBaseAsset.set(label, (openInterestByBaseAsset.get(label) ?? 0) + market.openInterest)
+		for (const value of getValues(market)) {
+			openInterestByValue.set(value, (openInterestByValue.get(value) ?? 0) + market.openInterest)
+		}
 	}
 
-	return [...openInterestByBaseAsset.entries()]
+	return [...openInterestByValue.entries()]
 		.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
 		.map(([label]) => label)
 }
 
-function getSelectedBaseAssets({
-	allBaseAssets,
+function getSelectedRWAPerpsFilterValues({
+	allValues,
 	includeQuery,
 	excludeQuery
 }: {
-	allBaseAssets: string[]
+	allValues: string[]
 	includeQuery: string | string[] | undefined
 	excludeQuery: string | string[] | undefined
 }) {
-	const validSet = new Set(allBaseAssets)
+	const validSet = new Set(allValues)
 	const excluded = parseExcludeParam(excludeQuery)
-	const baseSelection = parseArrayParam(includeQuery, allBaseAssets, validSet)
+	const baseSelection = parseArrayParam(includeQuery, allValues, validSet)
 
-	return excluded.size > 0 ? baseSelection.filter((baseAsset) => !excluded.has(baseAsset)) : baseSelection
+	return excluded.size > 0 ? baseSelection.filter((value) => !excluded.has(value)) : baseSelection
 }
 
-function isRWAPerpsBaseAssetFilterActive(selectedBaseAssets: string[], allBaseAssets: string[]) {
-	if (selectedBaseAssets.length !== allBaseAssets.length) return true
+function isRWAPerpsFilterActive(selectedValues: string[], selectedValuesSet: ReadonlySet<string>, allValues: string[]) {
+	if (selectedValues.length !== allValues.length) return true
 
-	const selectedSet = new Set(selectedBaseAssets)
-	return allBaseAssets.some((baseAsset) => !selectedSet.has(baseAsset))
+	return allValues.some((value) => !selectedValuesSet.has(value))
+}
+
+function getRWAPerpsMarketFilterStates({
+	markets,
+	query,
+	hideAssetClass
+}: {
+	markets: IRWAPerpsMarket[]
+	query: Record<string, string | string[] | undefined>
+	hideAssetClass: boolean
+}): RWAPerpsMarketFilterState[] {
+	return PERPS_MARKET_FILTER_DEFINITIONS.map((definition) => {
+		const options = getRWAPerpsFilterOptions(markets, definition.getValues)
+		const selectedValues = getSelectedRWAPerpsFilterValues({
+			allValues: options,
+			includeQuery: query[definition.includeQueryKey],
+			excludeQuery: query[definition.excludeQueryKey]
+		})
+		const selectedValuesSet = new Set(selectedValues)
+		const active = isRWAPerpsFilterActive(selectedValues, selectedValuesSet, options)
+		return {
+			...definition,
+			options,
+			selectedValues,
+			selectedValuesSet,
+			active,
+			enabled: (!hideAssetClass || !definition.hideWhenHardScoped) && (options.length > 1 || active)
+		}
+	})
+}
+
+function matchesRWAPerpsMarketFilter(market: IRWAPerpsMarket, filter: RWAPerpsMarketFilterState) {
+	for (const value of filter.getValues(market)) {
+		if (filter.selectedValuesSet.has(value)) return true
+	}
+	return false
+}
+
+function formatPerpsActiveFilterValues(values: readonly string[]) {
+	if (values.length === 0) return 'None'
+	if (values.length <= 2) return values.join(', ')
+	return `${values[0]}, ${values[1]} + ${values.length - 2}`
+}
+
+function clearRWAPerpsFilterQueryKeys(router: ReturnType<typeof useRouter>, keys: readonly string[]) {
+	const resetUpdates: Record<string, undefined> = {}
+	for (const key of keys) {
+		resetUpdates[key] = undefined
+	}
+	void pushShallowQuery(router, resetUpdates)
+}
+
+function isAllPerpsFilterSelection(filter: RWAPerpsMarketFilterState, values: string[]): boolean {
+	const validSet = new Set(filter.options)
+	const selected = values.filter((value) => validSet.has(value))
+	const selectedSet = new Set(selected)
+	return selected.length === filter.options.length && filter.options.every((value) => selectedSet.has(value))
+}
+
+function createRWAPerpsFilterDraft(filters: RWAPerpsMarketFilterState[]): RWAPerpsFilterDraft {
+	const activeIds: string[] = []
+	const selectValues: Record<string, string[]> = {}
+
+	for (const filter of filters) {
+		selectValues[filter.id] = filter.selectedValues.slice()
+		if (filter.active) activeIds.push(filter.id)
+	}
+
+	return { activeIds, selectValues }
+}
+
+function addRWAPerpsDraftFilter(draft: RWAPerpsFilterDraft, filter: RWAPerpsMarketFilterState): RWAPerpsFilterDraft {
+	if (draft.activeIds.includes(filter.id)) return draft
+
+	return {
+		activeIds: draft.activeIds.concat(filter.id),
+		selectValues: {
+			...draft.selectValues,
+			[filter.id]: draft.selectValues[filter.id] ?? filter.selectedValues.slice()
+		}
+	}
+}
+
+function removeRWAPerpsDraftFilter(draft: RWAPerpsFilterDraft, id: string): RWAPerpsFilterDraft {
+	return { ...draft, activeIds: draft.activeIds.filter((activeId) => activeId !== id) }
+}
+
+function getRWAPerpsSelectDraftQueryUpdates(
+	filter: RWAPerpsMarketFilterState,
+	values: string[]
+): Record<string, string | string[] | undefined> {
+	return getQueryUpdatesFromSelected(
+		filter.includeQueryKey,
+		filter.excludeQueryKey,
+		filter.options,
+		values,
+		filter.options
+	)
+}
+
+function serializeRWAPerpsFilterDraft(
+	filters: RWAPerpsMarketFilterState[],
+	draft: RWAPerpsFilterDraft
+): Record<string, string | string[] | undefined> {
+	const updates: Record<string, string | string[] | undefined> = {}
+	for (const key of PERPS_MARKET_FILTER_QUERY_KEYS) {
+		updates[key] = undefined
+	}
+
+	const activeIds = new Set(draft.activeIds)
+	for (const filter of filters) {
+		if (!activeIds.has(filter.id)) continue
+		Object.assign(updates, getRWAPerpsSelectDraftQueryUpdates(filter, draft.selectValues[filter.id] ?? []))
+	}
+
+	return updates
+}
+
+function getRWAPerpsActiveFilterPill(
+	filter: RWAPerpsMarketFilterState,
+	query: ReturnType<typeof useRouter>['query'],
+	onRemove: () => void
+): RWAPerpsActiveFilterPill | null {
+	const includeQuery = query[filter.includeQueryKey]
+	const excludeQuery = query[filter.excludeQueryKey]
+	if (includeQuery == null && excludeQuery == null) return null
+
+	if (excludeQuery != null) {
+		const validValues = new Set(filter.options)
+		const excludedValues = toNonEmptyArrayParam(excludeQuery).filter((value) => validValues.has(value))
+		if (excludedValues.length === 0 || isAllPerpsFilterSelection(filter, filter.selectedValues)) return null
+		return {
+			id: filter.excludeQueryKey,
+			label: `${filter.label} excludes ${formatPerpsActiveFilterValues(excludedValues)}`,
+			onRemove
+		}
+	}
+
+	if (isAllPerpsFilterSelection(filter, filter.selectedValues)) return null
+
+	return {
+		id: filter.includeQueryKey,
+		label: `${filter.label}: ${formatPerpsActiveFilterValues(filter.selectedValues)}`,
+		onRemove
+	}
+}
+
+function getRWAPerpsActiveFilterPills(filters: RWAPerpsMarketFilterState[], router: ReturnType<typeof useRouter>) {
+	const activeFilters: RWAPerpsActiveFilterPill[] = []
+
+	for (const filter of filters) {
+		const pill = getRWAPerpsActiveFilterPill(filter, router.query, () =>
+			clearRWAPerpsFilterQueryKeys(router, [filter.includeQueryKey, filter.excludeQueryKey])
+		)
+		if (pill) activeFilters.push(pill)
+	}
+
+	return activeFilters
+}
+
+function hasResettableRWAPerpsFilterQueryParam(query: ReturnType<typeof useRouter>['query'], includeForex: boolean) {
+	for (const key of PERPS_MARKET_FILTER_QUERY_KEYS) {
+		if (query[key] != null) return true
+	}
+	return includeForex
+}
+
+function RWAPerpsActiveFilterPills({ pills }: { pills: RWAPerpsActiveFilterPill[] }) {
+	if (pills.length === 0) return null
+
+	return (
+		<div className="flex flex-wrap gap-1">
+			{pills.map((pill) => (
+				<button
+					key={pill.id}
+					type="button"
+					onClick={pill.onRemove}
+					className="group flex items-center gap-1 rounded-full border border-[color-mix(in_oklch,var(--old-blue)_45%,transparent)] bg-[color-mix(in_oklch,var(--old-blue)_14%,transparent)] px-2 py-0.5 text-xs text-(--text-primary) hover:bg-(--link-hover-bg)"
+				>
+					<span>{pill.label}</span>
+					<Icon name="x" className="size-3 opacity-60 group-hover:opacity-100" />
+				</button>
+			))}
+		</div>
+	)
+}
+
+function DialogPanelSection({ title, children }: { title: string; children: ReactNode }) {
+	return (
+		<section className="flex flex-col gap-2">
+			<h3 className="text-[10px] font-medium tracking-[0.08em] text-(--text-tertiary) uppercase">{title}</h3>
+			{children}
+		</section>
+	)
+}
+
+function RWAPerpsMarketFilters({
+	filters,
+	showForexToggle,
+	includeForex,
+	onToggleIncludeForex
+}: {
+	filters: RWAPerpsMarketFilterState[]
+	showForexToggle: boolean
+	includeForex: boolean
+	onToggleIncludeForex: () => void
+}) {
+	const router = useRouter()
+
+	if (filters.length === 0 && !showForexToggle) return null
+
+	const activeFilterPills = getRWAPerpsActiveFilterPills(filters, router)
+	const selectedFilterCount = createRWAPerpsFilterDraft(filters).activeIds.length
+	const hasActiveFilters = hasResettableRWAPerpsFilterQueryParam(router.query, showForexToggle && includeForex)
+
+	return (
+		<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg)">
+			<div className="grid grid-cols-2 gap-2 p-1 sm:flex sm:flex-wrap sm:items-center">
+				{filters.length > 0 ? (
+					<div className="col-span-2 flex flex-wrap items-center gap-1 rounded-md border border-(--form-control-border) bg-(--cards-bg) px-1 sm:col-auto">
+						<RWAPerpsActiveFilterPills pills={activeFilterPills} />
+						<RWAPerpsFiltersDialog
+							filters={filters}
+							selectedFilterCount={selectedFilterCount}
+							hasActiveFilterPills={activeFilterPills.length > 0}
+						/>
+					</div>
+				) : null}
+				{showForexToggle ? (
+					<Checkbox variant="filter" value="includeForex" checked={includeForex} onChange={onToggleIncludeForex}>
+						<span className="whitespace-nowrap">Forex Perps</span>
+					</Checkbox>
+				) : null}
+				<button
+					type="button"
+					onClick={() => clearRWAPerpsFilterQueryKeys(router, [...PERPS_MARKET_FILTER_QUERY_KEYS, 'includeForex'])}
+					disabled={!hasActiveFilters}
+					className={FILTER_BUTTON_CLASS}
+				>
+					Reset filters
+				</button>
+			</div>
+		</div>
+	)
+}
+
+function RWAPerpsFiltersDialog({
+	filters,
+	selectedFilterCount,
+	hasActiveFilterPills
+}: {
+	filters: RWAPerpsMarketFilterState[]
+	selectedFilterCount: number
+	hasActiveFilterPills: boolean
+}) {
+	const router = useRouter()
+	const [open, setOpen] = useState(false)
+	const [draft, setDraft] = useState<RWAPerpsFilterDraft>(() => createRWAPerpsFilterDraft(filters))
+	const draftSelectedCount = draft.activeIds.length
+
+	const handleOpenChange = (nextOpen: boolean) => {
+		if (nextOpen) {
+			setDraft(createRWAPerpsFilterDraft(filters))
+		}
+		setOpen(nextOpen)
+	}
+
+	const saveDraft = () => {
+		void pushShallowQuery(router, serializeRWAPerpsFilterDraft(filters, draft))
+		setOpen(false)
+	}
+
+	return (
+		<Ariakit.DialogProvider open={open} setOpen={handleOpenChange}>
+			<Ariakit.DialogDisclosure className={FILTER_EDIT_BUTTON_CLASS}>
+				<span className="flex min-w-4 items-center justify-center rounded-full border border-(--form-control-border) px-1 py-0.25 text-[10px] leading-none">
+					{selectedFilterCount}
+				</span>
+				<span>{hasActiveFilterPills ? 'Edit' : 'Filters'}</span>
+				<Icon name="pencil" className="size-3 text-(--text-tertiary)" />
+			</Ariakit.DialogDisclosure>
+			<Ariakit.Dialog
+				className="fixed inset-(--inset) top-0 right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-[85dvh] min-h-[40dvh] w-full max-w-full flex-col overflow-hidden rounded-t-xl border border-[color-mix(in_oklch,black_8%,transparent)] bg-(--cards-bg) pb-[max(0px,env(safe-area-inset-bottom))] shadow-[0_24px_64px_-16px_rgb(0_0_0/0.45),0_0_0_1px_color-mix(in_oklch,black_4%,transparent)] max-sm:drawer sm:mb-auto sm:h-fit sm:max-h-[min(760px,calc(100%-32px))] sm:min-h-[initial] sm:max-w-[min(calc(100%-32px),900px)] sm:rounded-xl sm:pb-0 dark:border-[color-mix(in_oklch,white_9%,transparent)] dark:shadow-[0_24px_64px_-16px_rgb(0_0_0/0.6),0_0_0_1px_color-mix(in_oklch,white_3%,transparent)_inset]"
+				unmountOnHide
+			>
+				<div className="flex items-center justify-between gap-3 border-b border-(--cards-border) px-4 py-3">
+					<div className="flex items-baseline gap-2.5">
+						<Ariakit.DialogHeading className="text-[15px] font-semibold tracking-tight text-(--text-primary)">
+							Filters
+						</Ariakit.DialogHeading>
+						<span className="text-xs text-(--text-tertiary) tabular-nums">{draftSelectedCount} selected</span>
+					</div>
+					<Ariakit.DialogDismiss className="-mr-1 rounded-md p-1.5 text-(--text-tertiary) hover:bg-(--link-hover-bg) hover:text-(--text-primary) focus-visible:bg-(--link-hover-bg)">
+						<Icon name="x" className="size-4" />
+						<span className="sr-only">Close</span>
+					</Ariakit.DialogDismiss>
+				</div>
+
+				<div className="flex min-h-0 flex-1 flex-col overflow-y-auto sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] sm:overflow-hidden">
+					<RWAPerpsFilterBrowser filters={filters} draft={draft} onDraftChange={setDraft} />
+					<RWAPerpsActiveDraftFilters filters={filters} draft={draft} onDraftChange={setDraft} />
+				</div>
+
+				<div className="flex items-center justify-end gap-2 border-t border-(--cards-border) bg-(--cards-bg) px-4 py-3">
+					{draft.activeIds.length > 0 ? (
+						<button
+							type="button"
+							onClick={() => setDraft((current) => ({ ...current, activeIds: [] }))}
+							className="mr-auto text-xs text-(--text-tertiary) underline-offset-2 hover:text-(--text-primary) hover:underline"
+						>
+							Clear all
+						</button>
+					) : (
+						<span className="mr-auto text-xs text-(--text-tertiary)">No filters selected</span>
+					)}
+					<Ariakit.DialogDismiss className="rounded-md border border-(--form-control-border) px-3 py-1.5 text-sm font-medium text-(--text-primary) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)">
+						Cancel
+					</Ariakit.DialogDismiss>
+					<button
+						type="button"
+						onClick={saveDraft}
+						className="rounded-md bg-(--old-blue) px-3 py-1.5 text-sm font-medium text-white hover:brightness-110 focus-visible:brightness-110"
+					>
+						Save filters
+					</button>
+				</div>
+			</Ariakit.Dialog>
+		</Ariakit.DialogProvider>
+	)
+}
+
+function RWAPerpsFilterBrowser({
+	filters,
+	draft,
+	onDraftChange
+}: {
+	filters: RWAPerpsMarketFilterState[]
+	draft: RWAPerpsFilterDraft
+	onDraftChange: (draft: RWAPerpsFilterDraft | ((current: RWAPerpsFilterDraft) => RWAPerpsFilterDraft)) => void
+}) {
+	const activeIds = new Set(draft.activeIds)
+	const availableFilters = filters.filter((filter) => !activeIds.has(filter.id))
+
+	return (
+		<section className="order-2 flex min-h-0 flex-col border-t border-(--cards-border) max-sm:shrink-0 sm:order-1 sm:border-t-0 sm:border-r">
+			<div className="border-b border-(--cards-border) px-4 py-2">
+				<h3 className="text-xs font-medium text-(--text-secondary)">Browse filters</h3>
+			</div>
+			<div className="flex thin-scrollbar flex-1 flex-col gap-5 overflow-y-auto p-4 max-sm:overflow-visible">
+				{availableFilters.length > 0 ? (
+					<DialogPanelSection title="Market Fields">
+						<div className="flex flex-wrap gap-1">
+							{availableFilters.map((filter) => (
+								<button
+									key={filter.id}
+									type="button"
+									onClick={() => {
+										onDraftChange((current) => addRWAPerpsDraftFilter(current, filter))
+									}}
+									className="group flex items-center gap-1.5 rounded-full border border-(--cards-border) bg-transparent px-2.5 py-1 text-xs text-(--text-primary) transition-[background-color,border-color,color] duration-150 ease-out hover:border-(--old-blue) hover:bg-(--link-hover-bg) focus-visible:border-(--old-blue) focus-visible:bg-(--link-hover-bg)"
+								>
+									<Icon name="plus" className="size-3 text-(--text-tertiary) group-hover:text-(--old-blue)" />
+									<span>{filter.label}</span>
+								</button>
+							))}
+						</div>
+					</DialogPanelSection>
+				) : (
+					<div className="rounded-md border border-dashed border-(--cards-border) bg-(--cards-bg) p-4 text-sm text-(--text-tertiary)">
+						All filters are active.
+					</div>
+				)}
+			</div>
+		</section>
+	)
+}
+
+function RWAPerpsActiveDraftFilters({
+	filters,
+	draft,
+	onDraftChange
+}: {
+	filters: RWAPerpsMarketFilterState[]
+	draft: RWAPerpsFilterDraft
+	onDraftChange: (draft: RWAPerpsFilterDraft | ((current: RWAPerpsFilterDraft) => RWAPerpsFilterDraft)) => void
+}) {
+	const activeFilters = draft.activeIds
+		.map((id) => filters.find((filter) => filter.id === id))
+		.filter((filter): filter is RWAPerpsMarketFilterState => Boolean(filter))
+
+	return (
+		<section className="order-1 flex min-h-0 flex-col max-sm:shrink-0 sm:order-2">
+			<div className="border-b border-(--cards-border) px-4 py-2">
+				<h3 className="text-xs font-medium text-(--text-secondary)">Active filters</h3>
+			</div>
+			<div className="flex thin-scrollbar flex-1 flex-col gap-2 overflow-y-auto p-4 max-sm:overflow-visible">
+				{activeFilters.length > 0 ? (
+					activeFilters.map((filter) => (
+						<RWAPerpsDraftFilterEditor key={filter.id} filter={filter} draft={draft} onDraftChange={onDraftChange} />
+					))
+				) : (
+					<div className="rounded-md border border-dashed border-(--cards-border) bg-(--cards-bg) p-4 text-sm text-(--text-tertiary)">
+						Add filters from the list to narrow the table.
+					</div>
+				)}
+			</div>
+		</section>
+	)
+}
+
+function RWAPerpsDraftFilterEditor({
+	filter,
+	draft,
+	onDraftChange
+}: {
+	filter: RWAPerpsMarketFilterState
+	draft: RWAPerpsFilterDraft
+	onDraftChange: (draft: RWAPerpsFilterDraft | ((current: RWAPerpsFilterDraft) => RWAPerpsFilterDraft)) => void
+}) {
+	const selectedValues = draft.selectValues[filter.id] ?? []
+
+	return (
+		<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+			<div className="flex items-center justify-between gap-2">
+				<div className="flex min-w-0 items-center gap-1.5">
+					<span className="truncate text-xs font-semibold text-(--text-primary)">{filter.label}</span>
+					<span className="rounded-full bg-(--btn-bg) px-1.5 py-0.5 text-[9px] font-medium text-(--text-tertiary) uppercase">
+						Market Field
+					</span>
+				</div>
+				<button
+					type="button"
+					onClick={() => onDraftChange((current) => removeRWAPerpsDraftFilter(current, filter.id))}
+					className="rounded p-1 text-(--text-tertiary) hover:bg-(--btn-hover-bg) hover:text-(--text-primary)"
+				>
+					<Icon name="x" className="size-3.5" />
+					<span className="sr-only">Remove {filter.label} filter</span>
+				</button>
+			</div>
+			<SelectWithCombobox
+				allValues={filter.options}
+				selectedValues={selectedValues}
+				setSelectedValues={(values) =>
+					onDraftChange((current) => ({
+						...current,
+						selectValues: { ...current.selectValues, [filter.id]: values }
+					}))
+				}
+				label="Values"
+				labelType="smol"
+				portal
+				variant="filter-responsive"
+				visibleOptionLimit={null}
+				selectAllScope="matches"
+				searchPlaceholder={`Search ${filter.label.toLowerCase()}...`}
+				emptyLabel="No matches found"
+				popoverClassName="z-100 shadow-lg max-sm:h-[88dvh]! max-sm:max-h-[88dvh] max-sm:w-full sm:min-w-[260px] sm:max-h-[min(360px,60dvh)]! lg:max-h-[min(360px,60dvh)]!"
+				triggerProps={{
+					'aria-label': `${filter.label} values`,
+					className:
+						'flex h-8 min-w-0 cursor-pointer items-center gap-1.5 rounded-md border border-(--form-control-border) bg-(--bg-input) px-2.5 text-xs text-(--text-primary) outline-hidden hover:bg-(--btn-hover-bg) focus:border-(--old-blue)'
+				}}
+			/>
+		</div>
+	)
 }
 
 function getTimeSeriesBreakdownLabel({
@@ -875,20 +1466,22 @@ export function buildRWAPerpsTimeSeriesDatasetForRows({
 	dataset,
 	rows,
 	mode,
-	breakdown
+	breakdown,
+	seriesKey = 'contract'
 }: {
 	dataset: RWAChartDataset
 	rows: IRWAPerpsMarket[]
 	mode: RWAPerpsChartMode
 	breakdown: RWAPerpsTimeSeriesBreakdownForMode
+	seriesKey?: 'contract' | 'id'
 }): RWAChartDataset {
 	if (dataset.source.length === 0 || rows.length === 0) return EMPTY_DATASET
 
-	const labelByContract = new Map<string, string>()
+	const labelBySeries = new Map<string, string>()
 
 	for (const row of rows) {
-		labelByContract.set(
-			row.contract,
+		labelBySeries.set(
+			seriesKey === 'id' ? row.id : row.contract,
 			getTimeSeriesBreakdownLabel({
 				mode,
 				row,
@@ -897,13 +1490,13 @@ export function buildRWAPerpsTimeSeriesDatasetForRows({
 		)
 	}
 
-	if (labelByContract.size === 0) return EMPTY_DATASET
+	if (labelBySeries.size === 0) return EMPTY_DATASET
 
 	const source = dataset.source.map((row) => {
 		const nextRow: RWAChartRow = { timestamp: row.timestamp }
 
-		for (const [contract, label] of labelByContract) {
-			const value = row[contract]
+		for (const [series, label] of labelBySeries) {
+			const value = row[series]
 			if (value == null) continue
 
 			nextRow[label] = (nextRow[label] ?? 0) + value
@@ -1028,6 +1621,16 @@ function fetchContractTimeSeriesDataset(request: IRWAPerpsContractBreakdownReque
 	return fetchJson<RWAChartDataset>(`/api/public/rwa/perps/contract-breakdown?${searchParams.toString()}`)
 }
 
+function fetchMarketTimeSeriesDataset(request: IRWAPerpsMarketBreakdownRequest): Promise<RWAChartDataset> {
+	const searchParams = new URLSearchParams({
+		key: request.key
+	})
+	if (request.assetClass) searchParams.set('assetClass', request.assetClass)
+	if (request.excludeAssetClass) searchParams.set('excludeAssetClass', request.excludeAssetClass)
+
+	return fetchJson<RWAChartDataset>(`/api/public/rwa/perps/market-breakdown?${searchParams.toString()}`)
+}
+
 export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const router = useRouter()
 	const chartDefaults = { timeSeriesBreakdown: props.defaultTimeSeriesBreakdown }
@@ -1058,7 +1661,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const assetClassFilter = props.assetClassFilter
 	const showForexToggle = isOverviewMode && assetClassFilter == null
 	const includeForex = showForexToggle ? isTrueQueryParam(router.query.includeForex) : true
-	const rowsBeforeBaseAssetFilter = useMemo(() => {
+	const rowsBeforeUserFilters = useMemo(() => {
 		if (assetClassFilter != null) {
 			return props.data.markets.filter((market) => market.assetClass?.[0] === assetClassFilter)
 		}
@@ -1067,33 +1670,92 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 		}
 		return props.data.markets
 	}, [assetClassFilter, includeForex, props.data.markets, showForexToggle])
-	const baseAssetQuery = router.query[BASE_ASSET_QUERY_KEY]
-	const excludeBaseAssetQuery = router.query[EXCLUDE_BASE_ASSET_QUERY_KEY]
-	const baseAssetOptions = useMemo(
-		() => getRWAPerpsBaseAssetOptions(rowsBeforeBaseAssetFilter),
-		[rowsBeforeBaseAssetFilter]
+	const venuesQuery = router.query.venues
+	const excludeVenuesQuery = router.query.excludeVenues
+	const baseAssetsQuery = router.query.baseAssets
+	const excludeBaseAssetsQuery = router.query.excludeBaseAssets
+	const assetGroupsQuery = router.query.assetGroups
+	const excludeAssetGroupsQuery = router.query.excludeAssetGroups
+	const assetClassesQuery = router.query.assetClasses
+	const excludeAssetClassesQuery = router.query.excludeAssetClasses
+	const categoriesQuery = router.query.categories
+	const excludeCategoriesQuery = router.query.excludeCategories
+	const oracleProvidersQuery = router.query.oracleProviders
+	const excludeOracleProvidersQuery = router.query.excludeOracleProviders
+	const accessModelsQuery = router.query.accessModels
+	const excludeAccessModelsQuery = router.query.excludeAccessModels
+	const issuersQuery = router.query.issuers
+	const excludeIssuersQuery = router.query.excludeIssuers
+	const rwaClassificationsQuery = router.query.rwaClassifications
+	const excludeRwaClassificationsQuery = router.query.excludeRwaClassifications
+	const marketFilterQuery = useMemo(
+		() => ({
+			venues: venuesQuery,
+			excludeVenues: excludeVenuesQuery,
+			baseAssets: baseAssetsQuery,
+			excludeBaseAssets: excludeBaseAssetsQuery,
+			assetGroups: assetGroupsQuery,
+			excludeAssetGroups: excludeAssetGroupsQuery,
+			assetClasses: assetClassesQuery,
+			excludeAssetClasses: excludeAssetClassesQuery,
+			categories: categoriesQuery,
+			excludeCategories: excludeCategoriesQuery,
+			oracleProviders: oracleProvidersQuery,
+			excludeOracleProviders: excludeOracleProvidersQuery,
+			accessModels: accessModelsQuery,
+			excludeAccessModels: excludeAccessModelsQuery,
+			issuers: issuersQuery,
+			excludeIssuers: excludeIssuersQuery,
+			rwaClassifications: rwaClassificationsQuery,
+			excludeRwaClassifications: excludeRwaClassificationsQuery
+		}),
+		[
+			venuesQuery,
+			excludeVenuesQuery,
+			baseAssetsQuery,
+			excludeBaseAssetsQuery,
+			assetGroupsQuery,
+			excludeAssetGroupsQuery,
+			assetClassesQuery,
+			excludeAssetClassesQuery,
+			categoriesQuery,
+			excludeCategoriesQuery,
+			oracleProvidersQuery,
+			excludeOracleProvidersQuery,
+			accessModelsQuery,
+			excludeAccessModelsQuery,
+			issuersQuery,
+			excludeIssuersQuery,
+			rwaClassificationsQuery,
+			excludeRwaClassificationsQuery
+		]
 	)
-	const selectedBaseAssets = useMemo(
+	const marketFilters = useMemo(
 		() =>
-			getSelectedBaseAssets({
-				allBaseAssets: baseAssetOptions,
-				includeQuery: baseAssetQuery,
-				excludeQuery: excludeBaseAssetQuery
+			getRWAPerpsMarketFilterStates({
+				markets: rowsBeforeUserFilters,
+				query: marketFilterQuery,
+				hideAssetClass: assetClassFilter != null
 			}),
-		[baseAssetOptions, baseAssetQuery, excludeBaseAssetQuery]
+		[assetClassFilter, rowsBeforeUserFilters, marketFilterQuery]
 	)
-	const isBaseAssetFilterActive = isRWAPerpsBaseAssetFilterActive(selectedBaseAssets, baseAssetOptions)
+	const activeMarketFilters = useMemo(
+		() => marketFilters.filter((filter) => filter.enabled && filter.active),
+		[marketFilters]
+	)
+	const visibleMarketFilters = useMemo(() => marketFilters.filter((filter) => filter.enabled), [marketFilters])
+	const hasActiveMarketFilters = activeMarketFilters.length > 0
 	const currentRows = useMemo(() => {
-		if (!isBaseAssetFilterActive) return rowsBeforeBaseAssetFilter
+		if (!hasActiveMarketFilters) return rowsBeforeUserFilters
 
-		const selectedBaseAssetsSet = new Set(selectedBaseAssets)
-		return rowsBeforeBaseAssetFilter.filter((market) =>
-			selectedBaseAssetsSet.has(getRWAPerpsBaseAssetBreakdownLabel(market))
-		)
-	}, [isBaseAssetFilterActive, rowsBeforeBaseAssetFilter, selectedBaseAssets])
+		return rowsBeforeUserFilters.filter((market) => {
+			for (const filter of activeMarketFilters) {
+				if (!matchesRWAPerpsMarketFilter(market, filter)) return false
+			}
+			return true
+		})
+	}, [activeMarketFilters, hasActiveMarketFilters, rowsBeforeUserFilters])
 	const isRowsFiltered = currentRows !== props.data.markets
-	const showBaseAssetFilter = baseAssetOptions.length > 1 || isBaseAssetFilterActive
-	const showFilters = showForexToggle || showBaseAssetFilter
 	const computedTotals = useMemo(
 		() =>
 			isRowsFiltered
@@ -1111,13 +1773,25 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const displayTotals = computedTotals ?? props.data.totals
 	const timeSeriesAssetClass = assetClassFilter
 	const timeSeriesExcludeAssetClass = showForexToggle && !includeForex ? FOREX_ASSET_CLASS : undefined
-	const timeSeriesBaseAssets = isBaseAssetFilterActive ? selectedBaseAssets : undefined
 	const onToggleIncludeForex = () => {
 		void pushShallowQuery(router, { includeForex: includeForex ? undefined : 'true' })
 	}
 	const initialChartDataset = props.data.initialChartDataset
 	const venueLabel = isVenueMode ? props.data.venue : undefined
 	const targetQueryValue = isVenueMode ? props.data.venue : isAssetGroupMode ? props.data.assetGroup : 'all'
+	const timeSeriesSource = hasActiveMarketFilters
+		? 'market-breakdown'
+		: chartState.breakdown === 'contract'
+			? 'contract-breakdown'
+			: 'overview-breakdown'
+	const timeSeriesClassParams = {
+		...(timeSeriesAssetClass ? { assetClass: timeSeriesAssetClass } : {}),
+		...(timeSeriesExcludeAssetClass ? { excludeAssetClass: timeSeriesExcludeAssetClass } : {})
+	}
+	const timeSeriesTargetParams = {
+		...(isVenueMode ? { venue: props.data.venue } : {}),
+		...(isAssetGroupMode ? { assetGroup: props.data.assetGroup } : {})
+	}
 	const isDefaultTimeSeriesState =
 		chartState.view === 'timeSeries' &&
 		chartState.metric === 'openInterest' &&
@@ -1125,10 +1799,9 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const hasPreloadedTimeSeriesDataset =
 		initialChartDataset.source.length > 0 ||
 		initialChartDataset.dimensions.some((dimension) => dimension !== 'timestamp')
-	const canUseInitialTimeSeriesDataset = !isBaseAssetFilterActive && (!showForexToggle || !includeForex)
+	const canUseInitialTimeSeriesDataset = !hasActiveMarketFilters && (!showForexToggle || !includeForex)
 	const shouldUseInitialTimeSeriesDataset =
 		isDefaultTimeSeriesState && hasPreloadedTimeSeriesDataset && canUseInitialTimeSeriesDataset
-	const shouldUseContractTimeSeriesDataset = isBaseAssetFilterActive || chartState.breakdown === 'contract'
 
 	const timeSeriesQuery = useQuery({
 		queryKey: [
@@ -1139,25 +1812,30 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 			targetQueryValue,
 			timeSeriesAssetClass,
 			timeSeriesExcludeAssetClass,
-			timeSeriesBaseAssets
+			timeSeriesSource
 		],
-		queryFn: () =>
-			shouldUseContractTimeSeriesDataset
-				? fetchContractTimeSeriesDataset({
+		queryFn: () => {
+			switch (timeSeriesSource) {
+				case 'market-breakdown':
+					return fetchMarketTimeSeriesDataset({
 						key: chartState.metric,
-						...(isVenueMode ? { venue: props.data.venue } : {}),
-						...(isAssetGroupMode ? { assetGroup: props.data.assetGroup } : {}),
-						...(timeSeriesAssetClass ? { assetClass: timeSeriesAssetClass } : {}),
-						...(timeSeriesExcludeAssetClass ? { excludeAssetClass: timeSeriesExcludeAssetClass } : {})
+						...timeSeriesClassParams
 					})
-				: fetchOverviewTimeSeriesDataset({
+				case 'contract-breakdown':
+					return fetchContractTimeSeriesDataset({
+						key: chartState.metric,
+						...timeSeriesTargetParams,
+						...timeSeriesClassParams
+					})
+				case 'overview-breakdown':
+					return fetchOverviewTimeSeriesDataset({
 						breakdown: chartState.breakdown as IRWAPerpsOverviewBreakdownRequest['breakdown'],
 						key: chartState.metric,
-						...(isVenueMode ? { venue: props.data.venue } : {}),
-						...(isAssetGroupMode ? { assetGroup: props.data.assetGroup } : {}),
-						...(timeSeriesAssetClass ? { assetClass: timeSeriesAssetClass } : {}),
-						...(timeSeriesExcludeAssetClass ? { excludeAssetClass: timeSeriesExcludeAssetClass } : {})
-					}),
+						...timeSeriesTargetParams,
+						...timeSeriesClassParams
+					})
+			}
+		},
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 1,
@@ -1168,12 +1846,13 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 		chartState.view === 'timeSeries' && shouldUseInitialTimeSeriesDataset
 			? initialChartDataset
 			: (timeSeriesQuery.data ?? EMPTY_DATASET)
-	const rawTimeSeriesDataset = isBaseAssetFilterActive
+	const rawTimeSeriesDataset = hasActiveMarketFilters
 		? buildRWAPerpsTimeSeriesDatasetForRows({
 				dataset: fetchedTimeSeriesDataset,
 				rows: currentRows,
 				mode: props.mode,
-				breakdown: chartState.breakdown as RWAPerpsTimeSeriesBreakdownForMode
+				breakdown: chartState.breakdown as RWAPerpsTimeSeriesBreakdownForMode,
+				seriesKey: 'id'
 			})
 		: fetchedTimeSeriesDataset
 	const shouldShowTotalOverlay = chartState.timeSeriesMode === 'breakdown' && chartState.metric !== 'volume24h'
@@ -1415,28 +2094,12 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 					</p>
 				</>
 			) : null}
-			{showFilters ? (
-				<div className="flex flex-wrap gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 text-sm text-(--text-label)">
-					{showBaseAssetFilter ? (
-						<SelectWithCombobox
-							allValues={baseAssetOptions}
-							selectedValues={selectedBaseAssets}
-							includeQueryKey={BASE_ASSET_QUERY_KEY}
-							excludeQueryKey={EXCLUDE_BASE_ASSET_QUERY_KEY}
-							defaultSelectedValues={baseAssetOptions}
-							label="Base Asset"
-							labelType="smol"
-							variant="filter"
-							portal
-						/>
-					) : null}
-					{showForexToggle ? (
-						<Checkbox variant="filter" value="includeForex" checked={includeForex} onChange={onToggleIncludeForex}>
-							Forex Perps
-						</Checkbox>
-					) : null}
-				</div>
-			) : null}
+			<RWAPerpsMarketFilters
+				filters={visibleMarketFilters}
+				showForexToggle={showForexToggle}
+				includeForex={includeForex}
+				onToggleIncludeForex={onToggleIncludeForex}
+			/>
 			<div className="flex flex-col gap-2 md:flex-row md:items-center">
 				{statCards.map((card) => (
 					<StatCard

@@ -254,7 +254,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			'all',
 			undefined,
 			'Forex Perps',
-			undefined
+			'overview-breakdown'
 		])
 
 		await lastUseQueryOptions.queryFn()
@@ -276,7 +276,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			'all',
 			undefined,
 			undefined,
-			undefined
+			'overview-breakdown'
 		])
 
 		await lastUseQueryOptions.queryFn()
@@ -318,7 +318,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			'all',
 			'Forex Perps',
 			undefined,
-			undefined
+			'overview-breakdown'
 		])
 
 		await lastUseQueryOptions.queryFn()
@@ -347,7 +347,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			'all',
 			'Forex Perps',
 			undefined,
-			undefined
+			'overview-breakdown'
 		])
 
 		await lastUseQueryOptions.queryFn()
@@ -357,14 +357,110 @@ describe('RWAPerpsDashboard treemap controls', () => {
 		)
 	})
 
-	it('shows a multi-select Base Asset filter next to the Forex filter when multiple base assets are available', () => {
-		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={multiBaseAssetOverviewData} />)
+	it('uses market-breakdown scoped to Forex Perps when Forex page filters are active', async () => {
+		routerQuery = { baseAssets: 'EUR/USD' }
+		const forexData = {
+			...overviewData,
+			markets: [
+				{
+					...overviewData.markets[0],
+					id: 'fx:eurusd',
+					contract: 'EURUSD',
+					referenceAsset: 'EUR/USD',
+					assetClass: ['Forex Perps']
+				},
+				{
+					...overviewData.markets[0],
+					id: 'fx:gbpusd',
+					contract: 'GBPUSD',
+					referenceAsset: 'GBP/USD',
+					assetClass: ['Forex Perps']
+				}
+			]
+		}
 
-		expect(html).toContain('Forex Perps')
-		expect(html).toContain('combobox:Base Asset:Meta|NVIDIA|Gold')
+		renderToStaticMarkup(
+			<RWAPerpsDashboard
+				mode="overview"
+				data={forexData}
+				assetClassFilter="Forex Perps"
+				defaultTimeSeriesBreakdown="baseAsset"
+			/>
+		)
+
+		expect(lastTableWithSearchProps.data.map((row: any) => row.contract)).toEqual(['EURUSD'])
+		expect(lastUseQueryOptions.queryKey).toEqual([
+			'rwa-perps-chart',
+			'overview',
+			'openInterest',
+			'baseAsset',
+			'all',
+			'Forex Perps',
+			undefined,
+			'market-breakdown'
+		])
+
+		await lastUseQueryOptions.queryFn()
+
+		expect(fetchJson).toHaveBeenCalledWith(
+			'/api/public/rwa/perps/market-breakdown?key=openInterest&assetClass=Forex+Perps'
+		)
 	})
 
-	it('filters rows and requests contract time-series data when Base Asset include selection is active', async () => {
+	it('ignores hidden Asset Class query params on the Forex page', () => {
+		routerQuery = { assetClasses: 'Stock Perp' }
+		const forexData = {
+			...overviewData,
+			markets: [
+				{
+					...overviewData.markets[0],
+					id: 'fx:eurusd',
+					contract: 'EURUSD',
+					referenceAsset: 'EUR/USD',
+					assetClass: ['Forex Perps']
+				},
+				{
+					...overviewData.markets[0],
+					id: 'fx:gbpusd',
+					contract: 'GBPUSD',
+					referenceAsset: 'GBP/USD',
+					assetClass: ['Forex Perps']
+				}
+			]
+		}
+
+		renderToStaticMarkup(
+			<RWAPerpsDashboard
+				mode="overview"
+				data={forexData}
+				assetClassFilter="Forex Perps"
+				defaultTimeSeriesBreakdown="baseAsset"
+			/>
+		)
+
+		expect(lastTableWithSearchProps.data.map((row: any) => row.contract)).toEqual(['EURUSD', 'GBPUSD'])
+		expect(lastUseQueryOptions.queryKey).toEqual([
+			'rwa-perps-chart',
+			'overview',
+			'openInterest',
+			'baseAsset',
+			'all',
+			'Forex Perps',
+			undefined,
+			'overview-breakdown'
+		])
+	})
+
+	it('shows a filters dialog next to the separate Forex filter when multiple filters are available', () => {
+		const html = renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={multiBaseAssetOverviewData} />)
+
+		expect(html).toContain('Filters')
+		expect(html).toContain('Forex Perps')
+		expect(html).toContain('Reset filters')
+		expect(html).not.toContain('combobox:Base Asset:Meta|NVIDIA|Gold')
+	})
+
+	it('filters rows and requests market time-series data when Base Asset include selection is active', async () => {
 		routerQuery = { baseAssets: 'Meta' }
 		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={multiBaseAssetOverviewData} />)
 
@@ -377,13 +473,13 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			'all',
 			undefined,
 			'Forex Perps',
-			['Meta']
+			'market-breakdown'
 		])
 
 		await lastUseQueryOptions.queryFn()
 
 		expect(fetchJson).toHaveBeenCalledWith(
-			'/api/public/rwa/perps/contract-breakdown?key=openInterest&excludeAssetClass=Forex+Perps'
+			'/api/public/rwa/perps/market-breakdown?key=openInterest&excludeAssetClass=Forex+Perps'
 		)
 	})
 
@@ -414,6 +510,45 @@ describe('RWAPerpsDashboard treemap controls', () => {
 				{ timestamp: 1774569600000, Equities: 34 }
 			],
 			dimensions: ['timestamp', 'Equities']
+		})
+	})
+
+	it('regroups fetched market-id time-series data by selected market ids', () => {
+		const dataset = buildRWAPerpsTimeSeriesDatasetForRows({
+			dataset: {
+				source: [
+					{ timestamp: 1774483200000, 'alpha:aapl': 10, 'beta:aapl': 20, 'fx:eurusd': 5 },
+					{ timestamp: 1774569600000, 'alpha:aapl': 12, 'beta:aapl': 22, 'fx:eurusd': 6 }
+				],
+				dimensions: ['timestamp', 'alpha:aapl', 'beta:aapl', 'fx:eurusd']
+			},
+			rows: [
+				{
+					...overviewData.markets[0],
+					id: 'alpha:aapl',
+					contract: 'AAPL',
+					venue: 'Alpha',
+					referenceAssetGroup: 'Equities'
+				},
+				{
+					...overviewData.markets[0],
+					id: 'beta:aapl',
+					contract: 'AAPL',
+					venue: 'Beta',
+					referenceAssetGroup: 'Equities'
+				}
+			],
+			mode: 'overview',
+			breakdown: 'venue',
+			seriesKey: 'id'
+		})
+
+		expect(dataset).toEqual({
+			source: [
+				{ timestamp: 1774483200000, Alpha: 10, Beta: 20 },
+				{ timestamp: 1774569600000, Alpha: 12, Beta: 22 }
+			],
+			dimensions: ['timestamp', 'Beta', 'Alpha']
 		})
 	})
 

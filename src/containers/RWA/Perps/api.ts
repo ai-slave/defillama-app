@@ -10,6 +10,7 @@ import type {
 	IRWAPerpsMarketChartPoint,
 	IRWAPerpsStatsResponse
 } from './api.types'
+import type { IRWAPerpsMarketBreakdownRequest } from './types'
 
 function encodeRWAPerpsPathSegment(value: string): string {
 	return encodeURIComponent(value)
@@ -145,6 +146,24 @@ export async function fetchRWAPerpsContractBreakdownChartData(
 		`${RWA_PERPS_SERVER_URL}/chart/contract-breakdown?${searchParams.toString()}`
 	).catch((error) => {
 		console.error('Failed to fetch RWA perps contract breakdown chart data:', error)
+		return null
+	})
+}
+
+export async function fetchRWAPerpsMarketBreakdownChartData(
+	params: IRWAPerpsMarketBreakdownRequest
+): Promise<IRWAPerpsBreakdownChartResponse | null> {
+	const searchParams = new URLSearchParams({
+		key: params.key
+	})
+
+	if (params.assetClass) searchParams.set('assetClass', params.assetClass)
+	if (params.excludeAssetClass) searchParams.set('excludeAssetClass', params.excludeAssetClass)
+
+	return fetchJson<IRWAPerpsBreakdownChartResponse>(
+		`${RWA_PERPS_SERVER_URL}/chart/market-breakdown?${searchParams.toString()}`
+	).catch((error) => {
+		console.error('Failed to fetch RWA perps market breakdown chart data:', error)
 		return null
 	})
 }

@@ -17,6 +17,7 @@ import type {
 import { toOverviewBreakdownChartDataset } from '~/containers/RWA/breakdownDataset'
 import {
 	fetchRWAPerpsContractBreakdownChartData,
+	fetchRWAPerpsMarketBreakdownChartData,
 	fetchRWAPerpsOverviewBreakdownChartData
 } from '~/containers/RWA/Perps/api'
 import { toRWAPerpsBreakdownChartDataset } from '~/containers/RWA/Perps/breakdownDataset'
@@ -24,7 +25,11 @@ import {
 	parseChartMetricKey as parsePerpsChartMetricKey,
 	parseOptionalTarget
 } from '~/containers/RWA/Perps/requestParsers'
-import type { IRWAPerpsContractBreakdownRequest, IRWAPerpsOverviewBreakdownRequest } from '~/containers/RWA/Perps/types'
+import type {
+	IRWAPerpsContractBreakdownRequest,
+	IRWAPerpsMarketBreakdownRequest,
+	IRWAPerpsOverviewBreakdownRequest
+} from '~/containers/RWA/Perps/types'
 import {
 	hasExactlyOneTarget,
 	parseBooleanQueryFlag,
@@ -401,6 +406,65 @@ export const rwaPerpsContractBreakdown = defineApiRoute({
 					const rows = await fetchRWAPerpsContractBreakdownChartData(request)
 					if (rows == null) {
 						throw new Error('RWA perps contract breakdown upstream returned no data')
+					}
+					return toRWAPerpsBreakdownChartDataset(rows)
+				}
+			)
+			return okSerializedJson(result)
+		} catch (error) {
+			recordRouteRuntimeError(error, 'apiRoute')
+			return upstreamError('Failed to fetch upstream chart data')
+		}
+	}
+})
+
+export function parsePerpsMarketBreakdownRequest(req: { query: ApiQuery }): IRWAPerpsMarketBreakdownRequest | null {
+	const key = parsePerpsChartMetricKey(req.query.key)
+	if (key == null) return null
+
+	const venue = parseOptionalTarget(req.query.venue)
+	const assetGroup = parseOptionalTarget(req.query.assetGroup)
+	const assetClass = parseOptionalTarget(req.query.assetClass)
+	const excludeAssetClass = parseOptionalTarget(req.query.excludeAssetClass)
+	if (venue === null || assetGroup === null || assetClass === null || excludeAssetClass === null) return null
+	if (venue || assetGroup) return null
+	if (!hasExactlyOneTarget([assetClass, excludeAssetClass])) {
+		if (assetClass || excludeAssetClass) return null
+	}
+
+	return {
+		key,
+		...(assetClass ? { assetClass } : {}),
+		...(excludeAssetClass ? { excludeAssetClass } : {})
+	}
+}
+
+function buildPerpsMarketBreakdownCacheKey(request: IRWAPerpsMarketBreakdownRequest): string {
+	const searchParams = new URLSearchParams({ key: request.key })
+	if (request.assetClass) searchParams.set('assetClass', request.assetClass)
+	if (request.excludeAssetClass) searchParams.set('excludeAssetClass', request.excludeAssetClass)
+	return `/api/public/rwa/perps/market-breakdown?${searchParams.toString()}`
+}
+
+export const rwaPerpsMarketBreakdown = defineApiRoute({
+	route: '/api/public/rwa/perps/market-breakdown',
+	cacheControl: RWA_BREAKDOWN_CACHE_CONTROL,
+	handle: async (req) => {
+		const request = parsePerpsMarketBreakdownRequest(req)
+
+		if (request == null) {
+			return badRequest('Invalid query parameters')
+		}
+
+		try {
+			const result = await cachedJsonResult(
+				'rwa-perps-market-breakdown',
+				buildPerpsMarketBreakdownCacheKey(request),
+				{ ttlMs: RWA_BREAKDOWN_RESULT_TTL_MS, ttlJitter: 0.2, maxEntries: 48 },
+				async () => {
+					const rows = await fetchRWAPerpsMarketBreakdownChartData(request)
+					if (rows == null) {
+						throw new Error('RWA perps market breakdown upstream returned no data')
 					}
 					return toRWAPerpsBreakdownChartDataset(rows)
 				}

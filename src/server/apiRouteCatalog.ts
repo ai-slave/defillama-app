@@ -161,6 +161,7 @@ export const allApiRoutePaths = [
 	'rwa/asset-breakdown',
 	'rwa/overview-breakdown',
 	'rwa/perps/contract-breakdown',
+	'rwa/perps/market-breakdown',
 	'rwa/perps/overview-breakdown',
 	'sonic/burn-stream',
 	'sonic/ecosystem',

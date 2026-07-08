@@ -37,6 +37,10 @@ describe('rwa perps api urls', () => {
 			key: 'markets',
 			assetGroup: 'US Equities'
 		})
+		await api.fetchRWAPerpsMarketBreakdownChartData({
+			key: 'openInterest',
+			excludeAssetClass: 'Forex Perps'
+		})
 
 		expect(fetchJson.mock.calls).toEqual([
 			['https://example.com/rwa-perps/market/xyz%3AMETA%2F2026?zz=17'],
@@ -45,7 +49,8 @@ describe('rwa perps api urls', () => {
 			['https://example.com/rwa-perps/assetGroup/US%20Equities?zz=17'],
 			['https://example.com/rwa-perps/chart/venue/venue%2Fone?zz=17'],
 			['https://example.com/rwa-perps/chart/overview-breakdown?breakdown=assetGroup&key=openInterest&venue=xyz'],
-			['https://example.com/rwa-perps/chart/contract-breakdown?key=markets&assetGroup=US+Equities']
+			['https://example.com/rwa-perps/chart/contract-breakdown?key=markets&assetGroup=US+Equities'],
+			['https://example.com/rwa-perps/chart/market-breakdown?key=openInterest&excludeAssetClass=Forex+Perps']
 		])
 	})
 
