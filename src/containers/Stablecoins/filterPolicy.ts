@@ -227,6 +227,12 @@ export const stablecoinPegTypeOptions: StablecoinFilterOption[] = [
 		key: 'PEGGEDGHS',
 		filterFn: (item) => item.pegType === 'peggedGHS',
 		help: 'Show stablecoins pegged to Ghanaian Cedi'
+	},
+	{
+		name: 'MYR',
+		key: 'PEGGEDMYR',
+		filterFn: (item) => item.pegType === 'peggedMYR',
+		help: 'Show stablecoins pegged to Malaysian Ringgit'
 	}
 ]
 
