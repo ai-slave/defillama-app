@@ -204,7 +204,7 @@ Common usage examples:
 - [Governance](https://defillama.com/governance): Overview of all governance proposals by protocol Category: Others.
 - [Expenses by Protocol](https://defillama.com/expenses): Breakdown of annual operational expenses by protocol Category: Others.
 - [Safe Harbor Agreements](https://defillama.com/safe-harbor-agreements): Overview of protocols with Safe Harbor Agreements Category: Others.
-- [Token Rights](https://defillama.com/token-rights): List of protocols with token rights Category: Others.
+- [Token Rights](https://defillama.com/token-rights): Compare governance, economic, and ownership rights across DeFi protocols Category: Others.
 
 ## Dashboard catalog - Tools
 

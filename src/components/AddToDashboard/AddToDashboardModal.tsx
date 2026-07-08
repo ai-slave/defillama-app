@@ -425,7 +425,9 @@ export function AddToDashboardModal({
 											type="button"
 											onClick={() => handleSelectDashboard(dashboard.id)}
 											className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left body-sm transition-colors ${
-												isSelected ? 'bg-brand-muted text-link' : 'text-secondary hover:bg-hover-row hover:text-primary'
+												isSelected
+													? 'bg-brand-muted text-link'
+													: 'text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary'
 											}`}
 										>
 											<span

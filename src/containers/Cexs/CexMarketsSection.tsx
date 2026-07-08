@@ -6,7 +6,7 @@ import { LocalLoader } from '~/components/Loaders'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { fetchMarketsExchangeSeries } from '~/containers/Markets/api'
 import type { ExchangeMarketsResponse, MarketPair } from '~/containers/Markets/api.types'
-import { ChangeCell, MetricStat } from '~/containers/Markets/marketMetrics'
+import { ChangeCell, MetricStat, MetricStatStrip } from '~/containers/Markets/marketMetrics'
 import { buildCexMarketPairColumns } from '~/containers/Markets/marketPairColumns'
 import { MarketsAreaChart } from '~/containers/Markets/MarketsAreaChart'
 import { MarketsSegmentTabs } from '~/containers/Markets/MarketsSegmentTabs'
@@ -57,7 +57,7 @@ function HeaderStrip({
 	const totals = data.categories[category]
 
 	return (
-		<div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+		<MetricStatStrip>
 			<MetricStat label="Pairs" value={formattedNum(totals?.market_count ?? 0)} />
 			<MetricStat
 				label="24h Volume"
@@ -71,13 +71,13 @@ function HeaderStrip({
 					sub={<ChangeCell fraction={pctChange(totals?.total_oi_usd, totals?.total_oi_prev_usd)} />}
 				/>
 			) : null}
-		</div>
+		</MetricStatStrip>
 	)
 }
 
 function MarketsSummary({ data }: { data: ExchangeMarketsResponse }) {
 	return (
-		<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
+		<MetricStatStrip>
 			<MetricStat
 				label="Volume 24h"
 				value={renderNullableNum(data.total_volume_24h, true)}
@@ -91,7 +91,7 @@ function MarketsSummary({ data }: { data: ExchangeMarketsResponse }) {
 			<MetricStat label="Spot Markets" value={formattedNum(data.categories.spot?.market_count ?? 0)} />
 			<MetricStat label="Linear Perp Markets" value={formattedNum(data.categories.linear_perp?.market_count ?? 0)} />
 			<MetricStat label="Inverse Perp Markets" value={formattedNum(data.categories.inverse_perp?.market_count ?? 0)} />
-		</div>
+		</MetricStatStrip>
 	)
 }
 

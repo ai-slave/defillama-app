@@ -508,7 +508,7 @@ function WeightTable({ rows, showRanking = true }: { rows: WeightRow[]; showRank
 }
 
 function Divider() {
-	return <div role="separator" className="border-t border-very-subtle" />
+	return <div role="separator" className="border-t border-subtle" />
 }
 
 function GlossaryItem({ entry }: { entry: GlossaryEntry }) {
@@ -536,7 +536,7 @@ export function MarketMakersDocumentation() {
 			<div className="flex flex-col gap-2">
 				<MarketMakersTabs active="Documentation" />
 				<Card padding="md" border="subtle">
-					<div className="mb-4 flex items-center justify-between gap-3 border-b border-very-subtle pb-4 min-[1120px]:hidden">
+					<div className="mb-4 flex items-center justify-between gap-3 border-b border-subtle pb-4 min-[1120px]:hidden">
 						<span className="body-sm text-secondary">Last Updated: {LAST_UPDATED}</span>
 						<ShareButton />
 					</div>
@@ -552,7 +552,7 @@ export function MarketMakersDocumentation() {
 									<span className="body-sm text-secondary">Last Updated: {LAST_UPDATED}</span>
 									<ShareButton />
 								</div>
-								<div className="mt-3 hidden border-t border-very-subtle min-[1120px]:block" />
+								<div className="mt-3 hidden border-t border-subtle min-[1120px]:block" />
 								<div className="flex w-full flex-col gap-10 min-[1120px]:pt-6">
 									<h1 className="heading-md text-primary">Market Maker Leaderboard Documentation</h1>
 
@@ -1035,7 +1035,7 @@ export function MarketMakersDocumentation() {
 								<div className="flex h-9 items-center">
 									<span className="label-sm text-tertiary uppercase">Table of Contents</span>
 								</div>
-								<div className="mt-3 border-t border-very-subtle" />
+								<div className="mt-3 border-t border-subtle" />
 								<div className="pt-6">
 									<TocList active={active} />
 								</div>

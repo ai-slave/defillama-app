@@ -97,7 +97,7 @@ function OperatorSelect({
 }) {
 	return (
 		<Ariakit.SelectProvider value={value} setValue={(nextValue) => onChange(nextValue as EquityNumericOperator)}>
-			<Ariakit.Select className="flex min-h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-[8px] border border-medium bg-page px-3 py-1.5 label-sm text-primary outline-hidden hover:bg-hover-row focus:border-brand">
+			<Ariakit.Select className="hover-wash flex min-h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-[8px] border border-medium bg-page px-3 py-1.5 label-sm text-primary outline-hidden focus:border-brand">
 				<Ariakit.SelectValue />
 				<Ariakit.SelectArrow />
 			</Ariakit.Select>
@@ -279,7 +279,7 @@ function NumericFilterEditor({
 				<div className="flex min-w-0 items-center gap-1.5">
 					<span className="truncate label-sm text-primary">{config.label}</span>
 					<FilterDescription config={config} />
-					<span className="rounded-full bg-surface-elevated-2 px-1.5 py-0.5 label-xs text-tertiary uppercase">
+					<span className="rounded-full bg-surface-elevated-2 px-1.5 py-0.5 label-xs text-secondary uppercase">
 						{CATEGORY_LABELS[config.category]}
 					</span>
 				</div>
@@ -343,7 +343,7 @@ function CategoricalFilterEditor({
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex min-w-0 items-center gap-1.5">
 					<span className="truncate label-sm text-primary">{config.label}</span>
-					<span className="rounded-full bg-surface-elevated-2 px-1.5 py-0.5 label-xs text-tertiary uppercase">
+					<span className="rounded-full bg-surface-elevated-2 px-1.5 py-0.5 label-xs text-secondary uppercase">
 						{CATEGORY_LABELS[config.category]}
 					</span>
 				</div>
@@ -369,7 +369,7 @@ function CategoricalFilterEditor({
 					triggerProps={{
 						'aria-label': `${valueLabel} values`,
 						className:
-							'label-sm flex min-h-8 min-w-0 flex-1 cursor-pointer items-center gap-1.5 rounded-[8px] border border-medium bg-page px-3 py-1.5 text-primary outline-hidden hover:bg-hover-row focus:border-brand'
+							'label-sm flex min-h-8 min-w-0 flex-1 cursor-pointer items-center gap-1.5 hover-wash rounded-[8px] border border-medium bg-page px-3 py-1.5 text-primary outline-hidden focus:border-brand'
 					}}
 				/>
 			</div>
@@ -559,7 +559,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 
 							{groupedAvailableFilters.length === 0 ? (
 								<div className="flex flex-col items-center gap-1 py-8 text-center">
-									<p className="text-sm text-secondary">No filters match "{search}".</p>
+									<p className="body-sm text-tertiary">No filters match "{search}".</p>
 									<button
 										type="button"
 										onClick={() => setSearch('')}
@@ -605,7 +605,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 							Clear all
 						</Button>
 					) : (
-						<span className="text-xs text-tertiary">No filters selected</span>
+						<span className="label-sm text-tertiary">No filters selected</span>
 					)}
 					<div className="flex items-center gap-2">
 						<Ariakit.DialogDismiss render={<Button type="button" size="md" />}>Cancel</Ariakit.DialogDismiss>
@@ -635,7 +635,7 @@ export function EquityActiveFilterPills({
 					key={filter.id}
 					type="button"
 					onClick={() => onRemove(filter.id)}
-					className="group flex items-center gap-1 rounded-full border border-brand bg-brand-muted px-2 py-1 text-xs text-primary hover:bg-hover-row"
+					className="hover-wash group flex items-center gap-1 rounded-full border border-brand bg-brand-muted px-2 py-1 text-xs text-primary"
 				>
 					<span>{formatEquityActiveFilter(filter)}</span>
 					<Icon name="x" className="size-3 opacity-60 group-hover:opacity-100" />

@@ -99,7 +99,7 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 
 	return (
 		<>
-			<div className="flex items-center gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg)">
+			<div className="flex items-center gap-3 rounded-[8px] border border-subtle bg-surface">
 				<MultiSelectCombobox
 					data={protocolsList}
 					placeholder="Select Protocols..."
@@ -111,7 +111,7 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 			</div>
 			{selectedProtocols.length > 1 ? (
 				<div className="relative flex flex-col gap-2">
-					<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+					<div className="rounded-[8px] border border-subtle bg-surface">
 						{isLoading || !router.isReady ? (
 							<div className="flex h-full min-h-[406px] w-full items-center justify-center">
 								<LocalLoader />
@@ -141,8 +141,8 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 					) : null}
 				</div>
 			) : (
-				<div className="flex min-h-[362px] items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<p className="text-sm text-(--text-secondary)">Select at least 2 protocols to compare</p>
+				<div className="flex min-h-[362px] items-center justify-center rounded-[8px] border border-subtle bg-surface">
+					<p className="body-sm text-tertiary">Select at least 2 protocols to compare</p>
 				</div>
 			)}
 		</>

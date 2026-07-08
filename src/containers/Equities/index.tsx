@@ -1020,7 +1020,7 @@ export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProp
 				onFiltersChange={setFilters}
 			/>
 
-			<p className="px-1 text-xs text-tertiary">
+			<p className="px-1 body-sm text-tertiary">
 				Market and statements data provided by{' '}
 				<a href="https://twelvedata.com" target="_blank" rel="noopener noreferrer" className="underline">
 					Twelve Data

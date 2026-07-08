@@ -188,7 +188,7 @@ export function TokenPageHero({
 			{hasPriceBreakdown ? (
 				<details className="group/price">
 					<summary className="flex flex-wrap items-center gap-x-3 gap-y-1">
-						<span className="basis-full text-(--text-label)">Token Price</span>
+						<span className="basis-full text-secondary">Token Price</span>
 						<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
 							{formatCurrency(overview.marketData.currentPrice)}
 						</span>
@@ -240,7 +240,7 @@ export function TokenPageHero({
 				</details>
 			) : (
 				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-					<span className="basis-full text-(--text-label)">Token Price</span>
+					<span className="basis-full text-secondary">Token Price</span>
 					<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
 						{formatCurrency(overview.marketData.currentPrice)}
 					</span>

@@ -1144,7 +1144,7 @@ function RWAPerpsActiveFilterPills({ pills }: { pills: RWAPerpsActiveFilterPill[
 					key={pill.id}
 					type="button"
 					onClick={pill.onRemove}
-					className="group flex items-center gap-1 rounded-full border border-brand bg-brand-muted px-2 py-0.5 label-sm text-primary hover:bg-hover-row"
+					className="hover-wash group flex items-center gap-1 rounded-full border border-brand bg-brand-muted px-2 py-0.5 label-sm text-primary"
 				>
 					<span>{pill.label}</span>
 					<Icon name="x" className="size-3 opacity-60 group-hover:opacity-100" />
@@ -1387,7 +1387,7 @@ function RWAPerpsDraftFilterEditor({
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex min-w-0 items-center gap-1.5">
 					<span className="truncate label-sm text-primary">{filter.label}</span>
-					<span className="rounded-full bg-surface-elevated-2 px-1.5 py-0.5 label-sm text-tertiary uppercase">
+					<span className="rounded-full bg-surface-elevated-2 px-1.5 py-0.5 label-sm text-secondary uppercase">
 						Market Field
 					</span>
 				</div>
@@ -1423,7 +1423,7 @@ function RWAPerpsDraftFilterEditor({
 				triggerProps={{
 					'aria-label': `${filter.label} values`,
 					className:
-						'flex min-h-8 min-w-0 cursor-pointer items-center gap-1.5 rounded-[8px] border border-medium bg-page px-3 py-1.5 label-sm text-primary outline-hidden hover:bg-hover-row focus:border-brand'
+						'flex min-h-8 min-w-0 cursor-pointer items-center gap-1.5 hover-wash rounded-[8px] border border-medium bg-page px-3 py-1.5 label-sm text-primary outline-hidden focus:border-brand'
 				}}
 			/>
 		</Card>

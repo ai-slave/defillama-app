@@ -228,7 +228,7 @@ export function RecentProtocols({
 						</button>
 						{eligibleAirdrops ? (
 							eligibleAirdrops.length === 0 ? (
-								<p className="text-center text-red-500">No airdrops detected for this address</p>
+								<p className="text-center body-sm text-data-down">No airdrops detected for this address</p>
 							) : (
 								<div className="relative isolate w-full overflow-auto">
 									{eligibleAirdrops.map((address) => (
@@ -258,7 +258,9 @@ export function RecentProtocols({
 															colSpan={2}
 															className="border border-(--form-control-border) p-2 text-center font-normal whitespace-nowrap"
 														>
-															<p className="text-center text-red-500">No airdrops detected for this address</p>
+															<p className="text-center body-sm text-data-down">
+																No airdrops detected for this address
+															</p>
 														</td>
 													</tr>
 												) : (
@@ -334,7 +336,7 @@ export function RecentProtocols({
 									{fetchingEligibleAirdrops ? 'Checking...' : 'Check'}
 								</button>
 								{errorFetchingEligibleAirdrops ? (
-									<p className="text-center text-red-500">
+									<p className="text-center body-sm text-data-down">
 										{errorFetchingEligibleAirdrops instanceof Error
 											? errorFetchingEligibleAirdrops.message
 											: 'Failed to fetch'}

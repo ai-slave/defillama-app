@@ -245,4 +245,6 @@ export interface IProtocolCoreChartProps {
 	hideDataZoom?: boolean
 	onReady?: (instance: echarts.ECharts | null) => void
 	style?: React.CSSProperties
+	/** Overrides the default fixed h-[360px] — e.g. `min-h-[360px] flex-1` inside a stretched panel. */
+	className?: string
 }

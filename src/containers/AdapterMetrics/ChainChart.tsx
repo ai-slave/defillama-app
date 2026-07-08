@@ -879,7 +879,7 @@ export const AdapterByChainChart = ({
 				</div>
 			</ChartPanelToolbar>
 			{chartViewMode === 'Breakdown' && breakdownChartDataState.kind === 'error' ? (
-				<p className="flex min-h-[360px] items-center justify-center text-xs text-(--error)">
+				<p className="flex min-h-[360px] items-center justify-center body-sm text-data-down" role="alert">
 					{breakdownChartDataState.message}
 				</p>
 			) : chartViewMode === 'Breakdown' && breakdownChartDataState.kind === 'loading' ? (
@@ -913,6 +913,7 @@ export const AdapterByChainChart = ({
 						/>
 					) : (
 						<MultiSeriesChart2
+							containerClassName="min-h-[360px] flex-1"
 							dataset={deferredBreakdownPresentation.dataset}
 							charts={deferredBreakdownPresentation.charts}
 							height={breakdownChartHeight}
@@ -935,6 +936,7 @@ export const AdapterByChainChart = ({
 			) : (
 				<React.Suspense fallback={<div className="min-h-[360px]" />}>
 					<MultiSeriesChart2
+						containerClassName="min-h-[360px] flex-1"
 						dataset={deferredCombinedFinalCharts.dataset}
 						charts={deferredCombinedFinalCharts.charts}
 						hideDefaultLegend={deferredCombinedFinalCharts.charts.length === 1}
@@ -1421,6 +1423,7 @@ export const ChainsByAdapterChart = ({
 					/>
 				) : (
 					<MultiSeriesChart2
+						containerClassName="min-h-[360px] flex-1"
 						dataset={deferredChartPresentation.dataset}
 						charts={deferredChartPresentation.charts}
 						height={chartHeight}

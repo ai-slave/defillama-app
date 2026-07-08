@@ -60,7 +60,7 @@ const LSDColumn = [
 					<span className="flex items-center gap-1 overflow-hidden">
 						<BasicLink
 							href={`/protocol/${nameSlug}`}
-							className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+							className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 						>
 							{getValue()}
 						</BasicLink>
@@ -243,7 +243,7 @@ export const LSTOverview = ({
 
 	return (
 		<>
-			<h1 className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 heading-sm">
+			<h1 className="flex flex-wrap items-center justify-between gap-4 rounded-[8px] border border-subtle bg-surface p-3 heading-sm">
 				<span>Total Value Locked ETH LSTs</span>
 				<span className="font-jetbrains">{`${formattedNum(stakedEthSum)} ETH (${formattedNum(
 					stakedEthInUsdSum,
@@ -251,17 +251,17 @@ export const LSTOverview = ({
 				)})`}</span>
 			</h1>
 
-			<div className="flex w-full flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<div className="flex flex-wrap overflow-x-auto border-b border-(--form-control-border)">
+			<div className="flex w-full flex-col rounded-[8px] border border-subtle bg-surface">
+				<div className="flex flex-wrap overflow-x-auto border-b border-medium">
 					<button
-						className="border-(--form-control-border) px-6 py-2 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[selected=true]:border-b data-[selected=true]:border-b-(--primary)"
+						className="border-medium px-6 py-2 whitespace-nowrap hover:bg-hover-row focus-visible:bg-hover-row data-[selected=true]:border-b data-[selected=true]:border-b-brand"
 						onClick={() => setTab('breakdown')}
 						data-selected={tab === 'breakdown'}
 					>
 						Breakdown
 					</button>
 					<button
-						className="border-l border-(--form-control-border) px-6 py-2 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[selected=true]:border-b data-[selected=true]:border-b-(--primary)"
+						className="border-l border-medium px-6 py-2 whitespace-nowrap hover:bg-hover-row focus-visible:bg-hover-row data-[selected=true]:border-b data-[selected=true]:border-b-brand"
 						onClick={() => setTab('inflows')}
 						data-selected={tab === 'inflows'}
 					>

@@ -130,10 +130,10 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 	return (
 		<>
 			<div className="grid grid-cols-1 gap-1 xl:grid-cols-3">
-				<div className="flex flex-col gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+				<div className="flex flex-col gap-6 rounded-[8px] border border-subtle bg-surface p-3">
 					<div>
 						<h1 className="heading-sm">Daily Stats</h1>
-						<span className="text-xs text-(--text-label)">{lastUpdated}</span>
+						<span className="body-sm text-tertiary">{lastUpdated}</span>
 					</div>
 
 					<div className="flex flex-col gap-4">
@@ -147,15 +147,15 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 										<span className="text-lg font-semibold">{name}</span>
 									</div>
 									<p className="flex flex-wrap justify-start gap-4 pl-8">
-										<span className="text-(--text-label)">Flows</span>
+										<span className="text-secondary">Flows</span>
 										<span
-											className={`ml-auto font-jetbrains text-base font-medium ${assetFlows > 0 ? 'text-(--success)' : assetFlows < 0 ? 'text-(--error)' : ''}`}
+											className={`ml-auto font-jetbrains text-base font-medium ${assetFlows > 0 ? 'text-data-up' : assetFlows < 0 ? 'text-data-down' : ''}`}
 										>
 											{formattedNum(assetFlows, true)}
 										</span>
 									</p>
 									<p className="flex flex-wrap justify-start gap-4 pl-8">
-										<span className="text-(--text-label)">AUM</span>
+										<span className="text-secondary">AUM</span>
 										<span className="ml-auto font-jetbrains text-base font-medium">{formattedNum(aum, true)}</span>
 									</p>
 								</div>
@@ -163,7 +163,7 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 						})}
 					</div>
 				</div>
-				<div className="flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-2">
+				<div className="flex flex-col rounded-[8px] border border-subtle bg-surface xl:col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						<h2 className="mr-auto heading-xs">Flows (Source: Farside)</h2>
 						<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
@@ -214,7 +214,7 @@ const columns = [
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<BasicLink
 						href={row.original.url}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 					>
 						{getValue()}
 					</BasicLink>
@@ -249,9 +249,7 @@ const columns = [
 
 			return (
 				<span
-					className={
-						value != null && value > 0 ? 'text-(--success)' : value != null && value < 0 ? 'text-(--error)' : ''
-					}
+					className={value != null && value > 0 ? 'text-data-up' : value != null && value < 0 ? 'text-data-down' : ''}
 				>
 					{formattedValue}
 				</span>

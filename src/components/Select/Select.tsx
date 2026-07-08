@@ -327,7 +327,7 @@ export function Select(props: ISelect) {
 			>
 				{labelType === 'smol' ? (
 					<span className="flex items-center gap-1">
-						<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 text-[10px] leading-none">
+						<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 label-xs leading-none">
 							{selectedCount}
 						</span>
 						<span>{label}</span>
@@ -408,7 +408,7 @@ export function Select(props: ISelect) {
 											e.stopPropagation()
 											selectOnlyOne(getOptionKey(option))
 										}}
-										className="invisible body-xs text-link underline group-hover:visible group-focus-visible:visible"
+										className="invisible body-sm text-link underline group-hover:visible group-focus-visible:visible"
 									>
 										Only
 									</button>
@@ -429,7 +429,7 @@ export function Select(props: ISelect) {
 						) : null}
 					</>
 				) : (
-					<p className="px-3 py-6 text-center body-sm text-primary">No results found</p>
+					<p className="px-3 py-6 text-center body-sm text-tertiary">No results found</p>
 				)}
 			</Ariakit.SelectPopover>
 		</Ariakit.SelectProvider>

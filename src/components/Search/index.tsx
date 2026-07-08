@@ -129,7 +129,7 @@ function MobileSearchResults({ searchValue, onSelect }: { searchValue: string; o
 			return <p className="flex items-center justify-center p-4 text-(--error)">{`Error: ${error.message}`}</p>
 		}
 		if (!data.length) {
-			return <p className="flex items-center justify-center p-4 body-md text-tertiary">No results found</p>
+			return <p className="flex items-center justify-center p-4 body-sm text-tertiary">No results found</p>
 		}
 		return (
 			<>
@@ -155,7 +155,7 @@ function MobileSearchResults({ searchValue, onSelect }: { searchValue: string; o
 		)
 	}
 	if (!defaultSearchList?.length) {
-		return <p className="flex items-center justify-center p-4 body-md text-tertiary">No results found</p>
+		return <p className="flex items-center justify-center p-4 body-sm text-tertiary">No results found</p>
 	}
 
 	return (
@@ -267,7 +267,7 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 							) : error ? (
 								<p className="flex items-center justify-center p-4 text-(--error)">{`Error: ${error.message}`}</p>
 							) : !data.length ? (
-								<p className="flex items-center justify-center p-4 body-md text-tertiary">No results found</p>
+								<p className="flex items-center justify-center p-4 body-sm text-tertiary">No results found</p>
 							) : (
 								<>
 									{data.map((route: ISearchItem) => (
@@ -286,7 +286,7 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 						) : errorDefaultSearchList ? (
 							<p className="flex items-center justify-center p-4 text-(--error)">{`Error: ${errorDefaultSearchList.message}`}</p>
 						) : !defaultSearchList?.length ? (
-							<p className="flex items-center justify-center p-4 body-md text-tertiary">No results found</p>
+							<p className="flex items-center justify-center p-4 body-sm text-tertiary">No results found</p>
 						) : (
 							<>
 								{recentSearchList.map((route: ISearchItem) => (
@@ -330,7 +330,7 @@ const SearchItem = ({
 	const deprecatedContent = route.type ? `Deprecated ${route.type.toLowerCase()}` : 'Deprecated'
 	return (
 		<Ariakit.ComboboxItem
-			className="flex flex-wrap items-center gap-2 px-3 py-2 body-md text-primary cv-auto-40 outline-none hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row"
+			className="flex flex-wrap items-center gap-2 px-3 py-2 body-sm text-primary cv-auto-40 outline-none hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row"
 			render={
 				<BasicLink
 					href={route.route}
@@ -378,7 +378,7 @@ const SeeMoreButton = ({ isLoading, onClick }: { isLoading: boolean; onClick: ()
 			type="button"
 			onClick={onClick}
 			disabled={isLoading}
-			className="flex w-full items-center justify-center gap-1 px-3 py-2 body-sm text-link hover:bg-hover-row disabled:opacity-60"
+			className="flex w-full items-center justify-center gap-1 px-3 py-2 body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row disabled:opacity-60"
 		>
 			{isLoading ? (
 				<>

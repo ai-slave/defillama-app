@@ -346,15 +346,15 @@ export const HacksContainer = ({
 					className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1"
 				>
 					<div className="flex flex-col">
-						<h1 className="text-(--text-label)">Total Value Hacked (USD)</h1>
+						<h1 className="text-secondary">Total Value Hacked (USD)</h1>
 						<p className="font-jetbrains text-2xl font-semibold">{displayTotalHacked}</p>
 					</div>
 					<p className="flex flex-col">
-						<span className="text-(--text-label)">Total Value Hacked in DeFi (USD)</span>
+						<span className="text-secondary">Total Value Hacked in DeFi (USD)</span>
 						<span className="font-jetbrains text-2xl font-semibold">{displayTotalHackedDefi}</span>
 					</p>
 					<p className="flex flex-col">
-						<span className="text-(--text-label)">Total Value Hacked in Bridges (USD)</span>
+						<span className="text-secondary">Total Value Hacked in Bridges (USD)</span>
 						<span className="font-jetbrains text-2xl font-semibold">{displayTotalRugs}</span>
 					</p>
 				</Card>

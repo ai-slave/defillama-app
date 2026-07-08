@@ -634,8 +634,8 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 			{activeTab === 'markets' ? <EquitiesMarketsTable markets={props.onchain.perps} ticker={props.ticker} /> : null}
 
 			<Card as="footer" border="subtle" padding="sm">
-				<h2 className="text-sm font-semibold">Attribution</h2>
-				<p className="mt-1 text-xs text-tertiary">
+				<h2 className="label-md text-primary">Attribution</h2>
+				<p className="mt-1 body-sm text-tertiary">
 					Market and statements data provided by{' '}
 					<a href="https://twelvedata.com" target="_blank" rel="noopener noreferrer" className="underline">
 						Twelve Data

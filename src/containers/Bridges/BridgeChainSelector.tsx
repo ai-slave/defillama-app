@@ -111,7 +111,7 @@ export function BridgeChainSelector({ options, currentChain, handleClick }: IPro
 							</Ariakit.ComboboxList>
 						</>
 					) : (
-						<p className="px-3 py-6 text-center body-sm text-primary">No results found</p>
+						<p className="px-3 py-6 text-center body-sm text-tertiary">No results found</p>
 					)}
 				</Ariakit.SelectPopover>
 			</Ariakit.SelectProvider>

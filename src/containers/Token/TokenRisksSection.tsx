@@ -89,13 +89,13 @@ function ProtocolExposureSummaryText({
 
 function ChainBreakdownTooltipContent({ chainBreakdowns }: { chainBreakdowns: TokenRiskChainExposureSummary[] }) {
 	return (
-		<div className="w-80 max-w-[calc(100vw-2rem)] space-y-2 text-xs">
+		<div className="w-80 max-w-[calc(100vw-2rem)] space-y-2 body-sm">
 			<p className="font-medium text-primary">Breakdown by chain</p>
 			<div className="space-y-1">
 				{chainBreakdowns.map((chain) => (
 					<div
 						key={`${chain.chain}-${chain.chainDisplayName}`}
-						className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-0.5 border-b border-very-subtle pb-1.5 last:border-b-0 last:pb-0"
+						className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-0.5 border-b border-subtle pb-1.5 last:border-b-0 last:pb-0"
 					>
 						<span className="flex min-w-0 items-center gap-1.5 font-medium text-primary">
 							<TokenLogo
@@ -133,7 +133,7 @@ function ProtocolChainsLabel({ chainBreakdowns }: { chainBreakdowns: TokenRiskCh
 				render={
 					<button
 						type="button"
-						className="cursor-help text-left text-xs text-secondary underline decoration-dotted underline-offset-2 hover:text-primary focus-visible:text-primary"
+						className="cursor-help text-left body-sm text-secondary underline decoration-dotted underline-offset-2 hover:text-primary focus-visible:text-primary"
 						aria-label={`Show ${label} exposure breakdown by chain`}
 					/>
 				}
@@ -168,7 +168,7 @@ function createExposureColumns(methodologies: TokenRiskResponse['exposures']['me
 			cell: ({ row, getValue }) => (
 				<div className="flex flex-col">
 					<span>{getValue()}</span>
-					<span className="font-mono text-xs text-secondary">{row.original.assetAddress}</span>
+					<span className="mono-sm text-secondary">{row.original.assetAddress}</span>
 				</div>
 			),
 			meta: {
@@ -249,7 +249,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 						/>
 						<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
 					</PanelTitle>
-					<p className="mt-1 max-w-4xl text-sm text-secondary">
+					<p className="mt-1 max-w-4xl body-md text-secondary">
 						How much debt can be issued against {tokenSymbol} as collateral across lending protocols.
 					</p>
 				</div>
@@ -257,9 +257,9 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 
 			<div className="flex flex-1 flex-col gap-2 p-2">
 				<Card border="subtle">
-					<p className="text-sm text-secondary">Maximum possible exposure to {tokenSymbol}</p>
-					<p className="mt-1 text-2xl font-semibold text-primary">{formatUsd(totalMaxExposureUsd)}</p>
-					<p className="mt-1 text-sm text-secondary">
+					<p className="body-md text-secondary">Maximum possible exposure to {tokenSymbol}</p>
+					<p className="mt-1 font-jetbrains text-2xl font-semibold text-primary">{formatUsd(totalMaxExposureUsd)}</p>
+					<p className="mt-1 body-md text-secondary">
 						{formatUsd(exposures.summary.totalCurrentMaxBorrowUsd)} (max additional borrows against {tokenSymbol})
 						{exposures.summary.totalMinBadDebtAtPriceZeroUsd == null ? null : (
 							<>
@@ -276,7 +276,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 						{exposures.protocolSummaries.map((summary) => (
 							<div
 								key={summary.protocol}
-								className="flex flex-col gap-2 border-b border-very-subtle pb-3 last:border-b-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+								className="flex flex-col gap-2 border-b border-subtle pb-3 last:border-b-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
 							>
 								<div className="min-w-0">
 									<div className="flex items-center gap-2">
@@ -287,9 +287,9 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 											alt={`Logo of ${summary.protocolDisplayName}`}
 											title={summary.protocol}
 										/>
-										<p className="font-medium text-primary">{summary.protocolDisplayName}</p>
+										<p className="label-md text-primary">{summary.protocolDisplayName}</p>
 									</div>
-									<p className="mt-1 text-sm text-secondary">
+									<p className="mt-1 body-md text-secondary">
 										<ProtocolExposureSummaryText summary={summary} tokenSymbol={tokenSymbol} />
 									</p>
 									<div className="mt-1">
@@ -302,7 +302,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 				</Card>
 
 				<Card as="details" border="subtle" padding="sm" className="group">
-					<summary className="-m-2 flex cursor-pointer list-none items-center justify-between gap-3 p-2 text-sm font-medium">
+					<summary className="-m-2 flex cursor-pointer list-none items-center justify-between gap-3 p-2 label-md">
 						<span>Methodology and limitations</span>
 						<Icon
 							name="chevron-down"
@@ -311,7 +311,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 							className="shrink-0 transition-transform duration-200 group-open:rotate-180"
 						/>
 					</summary>
-					<p className="mt-2 text-sm text-secondary">
+					<p className="mt-2 body-md text-secondary">
 						Showing collateral exposure for {tokenSymbol} on{' '}
 						<span className="font-medium text-primary">{selectedCandidateDisplayName}</span>.{' '}
 						<span className="font-medium text-primary">Max Borrowable</span> uses the backend&apos;s liquidity-bounded
@@ -320,7 +320,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 						minimum known bad debt if the collateral asset price goes to zero; null rows are excluded from this total
 						rather than treated as zero, so totals may remain lower bounds.
 					</p>
-					<ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-secondary">
+					<ul className="mt-3 list-disc space-y-1 pl-5 body-md text-secondary">
 						{riskData.limitations.map((limitation) => (
 							<li key={limitation}>{limitation}</li>
 						))}
@@ -328,7 +328,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 				</Card>
 
 				<Card as="details" border="subtle" padding="sm" className="group">
-					<summary className="-m-2 flex cursor-pointer list-none items-center justify-between gap-3 p-2 text-sm font-medium">
+					<summary className="-m-2 flex cursor-pointer list-none items-center justify-between gap-3 p-2 label-md">
 						<span>Show exposure details</span>
 						<Icon
 							name="chevron-down"
@@ -337,7 +337,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 							className="shrink-0 transition-transform duration-200 group-open:rotate-180"
 						/>
 					</summary>
-					<p className="mt-2 text-sm text-secondary">
+					<p className="mt-2 body-md text-secondary">
 						Each row is one protocol-chain exposure for {tokenSymbol} as collateral. Bad debt at $0 totals remain lower
 						bounds when a row is marked partial.
 					</p>

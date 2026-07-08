@@ -309,7 +309,7 @@ export default function ProtocolChart({
 	return (
 		<div
 			id={id}
-			className="h-[360px]"
+			className={props.className ?? 'h-[360px]'}
 			style={height || props.style ? { height: height ?? '360px', ...(props.style ?? {}) } : undefined}
 		/>
 	)

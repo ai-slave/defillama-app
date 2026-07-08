@@ -19,7 +19,7 @@ export function Settings({ metricFilters = EMPTY_FILTERS }: { metricFilters?: { 
 
 	return (
 		<Ariakit.SelectProvider value={selectedValues} setValue={setSelectedValues}>
-			<Ariakit.Select className="-my-0.5 rounded-md bg-[#445ed0] p-3 text-white shadow">
+			<Ariakit.Select className="-my-0.5 rounded-md bg-brand p-3 text-on-brand shadow focus-visible:brightness-110 active:brightness-110">
 				<span className="sr-only">Open Settings Menu</span>
 				<Icon name="settings" height={16} width={16} />
 			</Ariakit.Select>

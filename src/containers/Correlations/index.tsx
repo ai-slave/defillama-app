@@ -345,7 +345,7 @@ export default function Correlations({ coinsData }: CorrelationsProps) {
 			<div className="flex flex-col items-center gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
 				{!showContent ? (
 					<div className="flex min-h-[300px] items-center justify-center">
-						<p className="text-sm text-(--text-tertiary)">Loading...</p>
+						<p className="body-sm text-tertiary">Loading...</p>
 					</div>
 				) : (
 					<div className="flex flex-col sm:flex-row">

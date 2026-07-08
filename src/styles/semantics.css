@@ -60,6 +60,13 @@
 	--ld-hover-row: #1f67d21f; /* States/hover-neutral-normal — popover/menu/table rows */
 	--ld-hover-card: #1f67d20f; /* light: Background/bg-brand-transparent-subtle overlay */
 
+	/* Link-colored text ON a brand-tinted background (chain pills). Light
+	   Text/links passes AA there (6.2:1); the dark override below is an
+	   interim owner value because dark Text/links #4b86db is only 4.2:1 on
+	   bg-brand-muted over bg-surface — design ask filed to fix the library
+	   token, at which point this collapses back into --ld-text-link. */
+	--ld-text-link-on-tint: var(--ld-text-link);
+
 	/* Chips */
 	--ld-chip-bg: #dedede; /* Chips/bg-default */
 	--ld-chip-text: #484848; /* Chips/text-default */
@@ -128,6 +135,7 @@ html.dark {
 	/* States */
 	--ld-hover-row: #ffffff0f; /* States/hover-neutral-normal (dark) */
 	--ld-hover-card: #ffffff08; /* States/hover-neutral-subtle (dark) */
+	--ld-text-link-on-tint: #6a9be0; /* ~5.4:1 on brand-muted over surface (AA) */
 
 	/* Chips */
 	--ld-chip-bg: var(--ld-neutral-800);
@@ -177,6 +185,7 @@ html.dark {
 	--color-tertiary: var(--ld-text-tertiary);
 	--color-disabled: var(--ld-text-disabled);
 	--color-link: var(--ld-text-link);
+	--color-link-on-tint: var(--ld-text-link-on-tint);
 	--color-data-up: var(--ld-text-data-up);
 	--color-data-down: var(--ld-text-data-down);
 	--color-data-up-alt: var(--ld-text-data-up-alt);
@@ -205,6 +214,9 @@ html.dark {
 @utility border-brand {
 	border-color: var(--ld-border-brand);
 }
+@utility border-b-brand {
+	border-bottom-color: var(--ld-border-brand);
+}
 @utility border-divider {
 	border-color: var(--ld-border-divider);
 }
@@ -219,4 +231,28 @@ html.dark {
 }
 @utility text-divider {
 	color: var(--ld-border-divider);
+}
+
+/* Hover/focus wash that PAINTS OVER the resting background instead of
+   replacing it (background-image stacks on background-color). Use on any
+   interactive element whose resting bg is tinted or opaque (bg-brand-muted
+   pills, elevated triggers) — hover:bg-hover-row REPLACES the background,
+   which in light mode is identical to bg-brand-muted (both #1f67d21f) and
+   in dark mode strips the brand tint. Transparent-resting elements (popover
+   and table rows) may keep hover:bg-hover-row. */
+.hover-wash:not(:disabled):not([aria-disabled='true']):hover,
+.hover-wash:not(:disabled):not([aria-disabled='true']):focus-visible {
+	background-image: linear-gradient(var(--ld-hover-row), var(--ld-hover-row));
+}
+
+/* Card-strength variant (--ld-hover-card) for interactive tiles. */
+.hover-wash-card:not(:disabled):not([aria-disabled='true']):hover,
+.hover-wash-card:not(:disabled):not([aria-disabled='true']):focus-visible {
+	background-image: linear-gradient(var(--ld-hover-card), var(--ld-hover-card));
+}
+
+/* Row-hover companion for cells that must keep an opaque bg (sticky table
+   columns): washes when the ancestor .group is hovered. */
+.group:hover .group-hover-wash {
+	background-image: linear-gradient(var(--ld-hover-row), var(--ld-hover-row));
 }

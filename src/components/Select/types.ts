@@ -64,24 +64,24 @@ export const TAG_GROUP_VARIANTS = {
 		container:
 			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-[8px] border border-medium bg-surface p-0.5',
 		button:
-			'shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-tertiary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row disabled:hover:bg-transparent data-[active=true]:bg-brand-muted data-[active=true]:text-link'
+			'hover-wash shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-tertiary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link'
 	},
 	responsive: {
 		container:
 			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-[8px] border border-medium bg-surface p-0.5 max-sm:w-full',
 		button:
-			'inline-flex max-sm:flex-1 items-center justify-center shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-tertiary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row disabled:hover:bg-transparent data-[active=true]:bg-brand-muted data-[active=true]:text-link'
+			'hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-tertiary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link'
 	},
 	solid: {
 		container: 'body-sm flex w-fit flex-nowrap items-center overflow-hidden rounded-md border border-subtle',
 		button:
-			'shrink-0 self-stretch px-2 whitespace-nowrap text-primary hover:bg-hover-row focus-visible:bg-hover-row disabled:hover:bg-transparent data-[active=true]:bg-brand data-[active=true]:text-on-brand'
+			'hover-wash shrink-0 self-stretch px-2 whitespace-nowrap text-primary data-[active=true]:bg-brand data-[active=true]:text-on-brand'
 	},
 	'solid-responsive': {
 		container:
 			'body-sm flex w-fit flex-nowrap items-center overflow-hidden rounded-md border border-subtle max-sm:w-full',
 		button:
-			'inline-flex max-sm:flex-1 items-center justify-center shrink-0 self-stretch px-2 whitespace-nowrap text-primary hover:bg-hover-row focus-visible:bg-hover-row disabled:hover:bg-transparent data-[active=true]:bg-brand data-[active=true]:text-on-brand'
+			'hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 self-stretch px-2 whitespace-nowrap text-primary data-[active=true]:bg-brand data-[active=true]:text-on-brand'
 	},
 	pro: {
 		container: 'text-sm flex items-center overflow-x-auto flex-nowrap w-fit border pro-border pro-text1',

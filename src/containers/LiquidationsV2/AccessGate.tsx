@@ -60,7 +60,7 @@ export function LiquidationsShellLoader(props: LiquidationsShellChromeProps) {
 	return (
 		<LiquidationsShellCard {...props}>
 			<LocalLoader />
-			<p className="text-sm text-(--text-label)">Loading liquidations data...</p>
+			<p className="body-sm text-tertiary">Loading liquidations data...</p>
 		</LiquidationsShellCard>
 	)
 }
@@ -71,7 +71,9 @@ export function LiquidationsShellError({
 }: LiquidationsShellChromeProps & { errorMessage: string }) {
 	return (
 		<LiquidationsShellCard {...props}>
-			<p className="text-sm text-(--text-label)">{errorMessage}</p>
+			<p role="alert" className="body-sm text-data-down">
+				{errorMessage}
+			</p>
 		</LiquidationsShellCard>
 	)
 }
@@ -89,7 +91,7 @@ export function LiquidationsAccessGate(props: LiquidationsShellChromeProps) {
 		<>
 			<LiquidationsShellCard {...props}>
 				{!isAuthenticated ? (
-					<p className="text-sm text-(--text-label)">
+					<p className="body-md text-secondary">
 						An{' '}
 						<button type="button" onClick={signInDialogStore.show} className="underline">
 							active subscription
@@ -97,7 +99,7 @@ export function LiquidationsAccessGate(props: LiquidationsShellChromeProps) {
 						is required to view liquidations data.
 					</p>
 				) : (
-					<p className="text-sm text-(--text-label)">
+					<p className="body-md text-secondary">
 						An{' '}
 						<BasicLink href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`} className="underline">
 							active subscription

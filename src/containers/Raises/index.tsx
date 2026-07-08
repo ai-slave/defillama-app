@@ -85,11 +85,11 @@ const RaisesContainer = ({ raises, investors, rounds, sectors, chains, investorN
 					className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1"
 				>
 					<p className="flex flex-col gap-1">
-						<span className="text-(--text-label)">Total Funding Rounds</span>
+						<span className="text-secondary">Total Funding Rounds</span>
 						<span className="font-jetbrains text-2xl font-semibold">{filteredRaisesList.length}</span>
 					</p>
 					<p className="flex flex-col gap-1">
-						<span className="text-(--text-label)">Total Funding Amount</span>
+						<span className="text-secondary">Total Funding Amount</span>
 						<span className="font-jetbrains text-2xl font-semibold">${formattedNum(totalAmountRaised)}</span>
 					</p>
 				</Card>

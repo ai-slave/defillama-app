@@ -9,6 +9,7 @@ import { useProtocolsFilterState } from '~/components/Filters/useProtocolFilterS
 import { LocalLoader } from '~/components/Loaders'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
 import { Select } from '~/components/Select/Select'
+import { selectTriggerStyles } from '~/components/Select/types'
 import type { IAdapterChainOverview, IAdapterProtocolOverview } from '~/containers/AdapterMetrics/types'
 import { Stats } from '~/containers/ChainOverview/Stats'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
@@ -200,7 +201,7 @@ const ChartFilters = () => {
 			label={
 				<>
 					<span>Charts: </span>
-					<span className="text-(--link-text)">
+					<span className="text-link">
 						{selectedChartsNames.length > 2
 							? `${selectedChartsNames[0]} + ${selectedChartsNames.length - 1} others`
 							: selectedChartsNames.join(', ')}
@@ -208,8 +209,7 @@ const ChartFilters = () => {
 				</>
 			}
 			triggerProps={{
-				className:
-					'flex cursor-pointer flex-nowrap items-center gap-2 rounded-md bg-(--btn-bg) px-3 py-2 text-xs text-(--text-primary) hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) h-11'
+				className: selectTriggerStyles('default')
 			}}
 			placement="bottom-end"
 		/>
@@ -227,8 +227,7 @@ const FeeExtraFilters = () => {
 			label="Include in Fees"
 			labelType="none"
 			triggerProps={{
-				className:
-					'flex cursor-pointer flex-nowrap items-center gap-2 rounded-md bg-(--btn-bg) px-3 py-2 text-xs text-(--text-primary) hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) h-11'
+				className: selectTriggerStyles('default')
 			}}
 			placement="bottom-end"
 			unmountOnHide={false}
@@ -354,7 +353,7 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 	return (
 		<>
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-				<div className="flex-1 rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<div className="flex-1 rounded-[8px] border border-subtle bg-surface">
 					<MultiSelectCombobox
 						data={chains}
 						placeholder="Select Chains..."
@@ -376,11 +375,11 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 			{selectedChains.length > 1 ? (
 				<div className="relative flex flex-col gap-1">
 					{isLoading || !router.isReady ? (
-						<div className="flex h-full min-h-[400px] w-full items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg)">
+						<div className="flex h-full min-h-[400px] w-full items-center justify-center rounded-[8px] border border-subtle bg-surface">
 							<LocalLoader />
 						</div>
 					) : (
-						<div className="relative rounded-md border border-(--cards-border) bg-(--cards-bg)">
+						<div className="relative rounded-[8px] border border-subtle bg-surface">
 							<React.Suspense fallback={<div className="min-h-[406px]" />}>
 								<MultiSeriesChart2
 									dataset={chartData.dataset}
@@ -412,8 +411,8 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 					</div>
 				</div>
 			) : (
-				<div className="flex min-h-[362px] items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg)">
-					<p className="text-sm text-(--text-secondary)">Select at least 2 chains to compare</p>
+				<div className="flex min-h-[362px] items-center justify-center rounded-[8px] border border-subtle bg-surface">
+					<p className="body-sm text-tertiary">Select at least 2 chains to compare</p>
 				</div>
 			)}
 		</>

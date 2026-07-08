@@ -79,7 +79,7 @@ export const MultiSelectCombobox = ({
 						{selectedValues.map((value) => (
 							<button
 								key={`mutliselectcombobox-selected-${value}`}
-								className="flex items-center gap-1 rounded-md border border-brand bg-brand-muted p-1.5 label-sm text-link hover:bg-hover-row"
+								className="hover-wash flex items-center gap-1 rounded-md border border-brand bg-brand-muted p-1.5 label-sm text-link"
 								onClick={() => {
 									setSelectedValues(selectedValues.filter((v) => v !== value))
 								}}

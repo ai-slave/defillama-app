@@ -53,7 +53,7 @@ export function Card<T extends ElementType = 'div'>({
 	const Tag = (as ?? 'div') as ElementType
 	return (
 		<Tag
-			className={`${RADIUS[radius]} border ${BORDER[border]} bg-surface${PADDING[padding]}${interactive ? ' cursor-pointer hover:bg-hover-card focus-visible:bg-hover-card' : ''}${className ? ` ${className}` : ''}`}
+			className={`${RADIUS[radius]} border ${BORDER[border]} bg-surface${PADDING[padding]}${interactive ? ' hover-wash-card cursor-pointer' : ''}${className ? ` ${className}` : ''}`}
 			{...props}
 		/>
 	)

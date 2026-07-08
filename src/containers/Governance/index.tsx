@@ -42,7 +42,7 @@ export default function Governance({ data }: { data: GovernanceOverviewItem[] })
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+		<div className="rounded-[8px] border border-subtle bg-surface">
 			<div className="flex flex-wrap items-center justify-end gap-2 p-3">
 				<h1 className="mr-auto heading-sm">Governance Proposals by Project</h1>
 				<label className="relative w-full sm:max-w-[280px]">
@@ -75,7 +75,7 @@ const governanceColumns = [
 					<TokenLogo name={value} kind="token" data-lgonly />
 					<BasicLink
 						href={`/governance/${slug(value)}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 					>
 						{value}
 					</BasicLink>

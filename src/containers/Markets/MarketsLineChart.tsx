@@ -6,7 +6,7 @@ import { type PivotedSeries, toLineSeries } from './utils'
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const FALLBACK = (
-	<div className="flex h-[300px] items-center justify-center">
+	<div className="flex min-h-[300px] items-center justify-center">
 		<LocalLoader />
 	</div>
 )
@@ -40,7 +40,7 @@ export function MarketsLineChart({
 					<MultiSeriesChart series={lineSeries} valueSymbol={valueSymbol} chartOptions={CHART_OPTIONS} height="280px" />
 				</React.Suspense>
 			) : (
-				<div className="flex flex-1 items-center justify-center label-sm text-tertiary">no data</div>
+				<div className="flex flex-1 items-center justify-center body-sm text-tertiary">no data</div>
 			)}
 		</Panel>
 	)

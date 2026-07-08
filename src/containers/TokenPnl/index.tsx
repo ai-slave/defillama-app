@@ -154,8 +154,8 @@ const TokenPnlContent = ({
 	if (!pnlData || pnlData.priceSeries.length === 0) {
 		return (
 			<div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-				<p className="text-lg font-semibold">No historical data available for this range.</p>
-				<p className="text-sm text-(--text-secondary)">Try a different date range or another token.</p>
+				<p className="text-lg font-semibold text-primary">No historical data available for this range.</p>
+				<p className="body-sm text-tertiary">Try a different date range or another token.</p>
 			</div>
 		)
 	}

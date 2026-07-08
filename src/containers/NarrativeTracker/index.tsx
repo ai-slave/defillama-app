@@ -237,9 +237,9 @@ export const CategoryPerformanceContainer = ({
 
 	return (
 		<>
-			<div className="flex flex-col gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+			<div className="flex flex-col gap-3 rounded-[8px] border border-subtle bg-surface p-3">
 				{isCoinPage && categoryName ? <h1 className="heading-sm">Category: {categoryName ?? ''}</h1> : null}
-				<p className="text-sm text-(--text-secondary)">
+				<p className="text-sm text-secondary">
 					MCap-Weighted Category Performance: Shows how a category of coins has performed over your chosen time period
 					and in your selected denomination (e.g., $, BTC). Method: 1. calculating the percentage change for each
 					individual coin in the category. 2. weighting these changes based on each coin's market capitalization. 3.
@@ -247,24 +247,24 @@ export const CategoryPerformanceContainer = ({
 				</p>
 			</div>
 
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<div className="flex flex-wrap overflow-x-auto border-b border-(--form-control-border)">
+			<div className="rounded-[8px] border border-subtle bg-surface">
+				<div className="flex flex-wrap overflow-x-auto border-b border-medium">
 					<button
-						className="border-b border-(--form-control-border) px-6 py-2 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[selected=true]:border-b-(--primary)"
+						className="border-b border-medium px-6 py-2 whitespace-nowrap hover:bg-hover-row focus-visible:bg-hover-row data-[selected=true]:border-b-brand"
 						onClick={() => setTab('linechart')}
 						data-selected={tab === 'linechart'}
 					>
 						Linechart
 					</button>
 					<button
-						className="border-b border-l border-(--form-control-border) px-6 py-2 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[selected=true]:border-b-(--primary)"
+						className="border-b border-l border-medium px-6 py-2 whitespace-nowrap hover:bg-hover-row focus-visible:bg-hover-row data-[selected=true]:border-b-brand"
 						onClick={() => setTab('barchart')}
 						data-selected={tab === 'barchart'}
 					>
 						Barchart
 					</button>
 					<button
-						className="border-b border-l border-(--form-control-border) px-6 py-2 whitespace-nowrap hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-[selected=true]:border-b-(--primary)"
+						className="border-b border-l border-medium px-6 py-2 whitespace-nowrap hover:bg-hover-row focus-visible:bg-hover-row data-[selected=true]:border-b-brand"
 						onClick={() => setTab('heatmap')}
 						data-selected={tab === 'heatmap'}
 					>
@@ -366,7 +366,7 @@ const CoinPerformanceColumn = [
 					<BasicLink
 						href={`https://www.coingecko.com/en/coins/${row.original.id}`}
 						target="_blank"
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 					>
 						{getValue()}
 					</BasicLink>
@@ -419,14 +419,14 @@ const CategoryPerformanceColumn = [
 						<BasicLink
 							href={`https://www.coingecko.com/en/coins/${row.original.id}`}
 							target="_blank"
-							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 						>
 							{getValue()}
 						</BasicLink>
 					) : (
 						<BasicLink
 							href={`/narrative-tracker/${row.original.id}`}
-							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 						>
 							{getValue()}
 						</BasicLink>

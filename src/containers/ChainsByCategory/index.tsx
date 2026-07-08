@@ -128,7 +128,7 @@ export function ChainsByCategory({
 
 			{showSharedChartState ? (
 				<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-					<div className="relative isolate flex min-h-[406px] flex-col items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-4 text-center text-sm text-(--text-tertiary)">
+					<div className="relative isolate flex min-h-[406px] flex-col items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-4 text-center body-sm text-tertiary">
 						{chartErrorMessage ? <ChainsChartError message={chartErrorMessage} /> : <LocalLoader />}
 					</div>
 					<div

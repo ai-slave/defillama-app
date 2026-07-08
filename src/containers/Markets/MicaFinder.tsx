@@ -176,7 +176,7 @@ function PromotionGift({
 			<Ariakit.HovercardAnchor
 				render={<button />}
 				type="button"
-				className="inline-flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-subtle bg-surface text-secondary hover:border-strong hover:bg-hover-row hover:text-primary focus-visible:border-strong focus-visible:bg-hover-row focus-visible:text-primary"
+				className="hover-wash inline-flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-subtle bg-surface text-secondary hover:border-strong hover:text-primary focus-visible:border-strong focus-visible:text-primary"
 				aria-label={`${exchangeName} promotion: ${promotion.label}`}
 			>
 				<Icon name="gift" height={15} width={15} />

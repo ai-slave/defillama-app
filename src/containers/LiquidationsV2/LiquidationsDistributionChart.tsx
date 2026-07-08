@@ -110,11 +110,9 @@ function LiquidationsDistributionChartCard({
 							portal
 						/>
 						{chartState.tokenTotalUsd != null ? (
-							<span className="text-xs text-(--text-label)">
+							<span className="body-sm text-secondary">
 								Collateral:{' '}
-								<span className="font-medium text-(--text-primary)">
-									{formattedNum(chartState.tokenTotalUsd, true)}
-								</span>
+								<span className="font-medium text-primary">{formattedNum(chartState.tokenTotalUsd, true)}</span>
 							</span>
 						) : null}
 					</div>
@@ -193,7 +191,7 @@ function LiquidationsDistributionChartCard({
 					valueSymbol={chartState.metric === 'usd' ? '$' : ''}
 				/>
 			</React.Suspense>
-			<div className="flex items-center justify-end gap-1 px-4 pb-3 text-xs text-(--text-label) italic opacity-70">
+			<div className="flex items-center justify-end gap-1 px-4 pb-3 body-sm text-tertiary italic">
 				<span>Snapshot {new Date(timestamp * 1000).toUTCString()}</span>
 			</div>
 		</Panel>
@@ -312,24 +310,24 @@ function getLiquidationsTooltipHtml(params: unknown, metric: Metric, tokenLabel:
 		rows.push(`<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12px;">
 								<span style="display:inline-flex; align-items:center; gap:6px; min-width:0;">
 									${marker}
-									<span style="color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${seriesName}</span>
+									<span style="color:var(--ld-text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${seriesName}</span>
 								</span>
-								<span style="color:var(--text-primary); font-variant-numeric:tabular-nums; text-align:right;">${rowValue}</span>
+								<span style="color:var(--ld-text-primary); font-variant-numeric:tabular-nums; text-align:right;">${rowValue}</span>
 							</div>`)
 	}
 
-	return `<div style="min-width:220px; background:var(--cards-bg); border:1px solid var(--cards-border); box-shadow:0 18px 48px var(--tooltip-shadow, rgba(0, 0, 0, 0.24)); backdrop-filter:blur(10px); color:var(--text-primary); border-radius:10px; padding:12px 14px; font-size:12px; line-height:1.45;">
+	return `<div style="min-width:220px; background:var(--ld-bg-surface); border:1px solid var(--ld-border-medium); box-shadow:0 18px 48px var(--tooltip-shadow, rgba(0, 0, 0, 0.24)); backdrop-filter:blur(10px); color:var(--ld-text-primary); border-radius:10px; padding:12px 14px; font-size:12px; line-height:1.45;">
 						<div style="margin-bottom:8px;">
-							<div style="font-size:11px; color:var(--text-label); text-transform:uppercase; letter-spacing:0.08em;">Liq Price</div>
-							<div style="font-size:15px; font-weight:600; color:var(--text-primary);">${axisLabel}</div>
+							<div style="font-size:11px; color:var(--ld-text-secondary); text-transform:uppercase; letter-spacing:0.08em;">Liq Price</div>
+							<div style="font-size:15px; font-weight:600; color:var(--ld-text-primary);">${axisLabel}</div>
 						</div>
 						<div style="display:flex; flex-direction:column; gap:6px;">
 							${rows.join('')}
 						</div>
 						<div style="margin-top:8px;">
-							<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:8px; border-top:1px solid var(--cards-border); font-size:12px;">
-								<span style="color:var(--text-label);">Total</span>
-								<span style="color:var(--text-primary); font-weight:600; font-variant-numeric:tabular-nums;">${totalLabel}</span>
+							<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:8px; border-top:1px solid var(--ld-border-medium); font-size:12px;">
+								<span style="color:var(--ld-text-secondary);">Total</span>
+								<span style="color:var(--ld-text-primary); font-weight:600; font-variant-numeric:tabular-nums;">${totalLabel}</span>
 							</div>
 						</div>
 					</div>`
@@ -614,7 +612,7 @@ export function LiquidationsDistributionChart({
 				borderWidth: 0,
 				padding: 0,
 				textStyle: {
-					color: 'var(--text-primary)',
+					color: 'var(--ld-text-primary)',
 					fontSize: 12,
 					fontFamily: 'inherit'
 				},

@@ -370,7 +370,7 @@ function RaisesSection({ chainRaises }: { chainRaises: IChainOverviewData['chain
 		>
 			{sortedRaises.map((raise) => (
 				<p
-					className="flex flex-col gap-1 border-b border-dashed border-very-subtle py-1 group-last:border-none"
+					className="flex flex-col gap-1 border-b border-dashed border-subtle py-1 group-last:border-none"
 					key={`${raise.date}-${raise.amount}-${raise.round}`}
 				>
 					<span className="flex flex-wrap justify-between">

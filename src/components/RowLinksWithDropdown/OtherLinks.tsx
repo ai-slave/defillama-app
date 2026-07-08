@@ -55,7 +55,7 @@ export function OtherLinks({ options, name, isActive, className }: IProps) {
 			<Ariakit.MenuProvider>
 				<Ariakit.MenuButton
 					data-active={isActive}
-					className={`my-auto flex items-center gap-0.5 rounded-md bg-surface-elevated-2 py-1 pr-1 pl-2 body-sm whitespace-nowrap text-primary ${
+					className={`hover-wash my-auto flex items-center gap-0.5 rounded-md bg-surface-elevated-2 py-1 pr-1 pl-2 body-sm whitespace-nowrap text-primary ${
 						className ?? ''
 					}`}
 				>
@@ -94,7 +94,7 @@ export function OtherLinks({ options, name, isActive, className }: IProps) {
 							) : null}
 						</Ariakit.ComboboxList>
 					) : (
-						<p className="px-3 py-6 text-center text-tertiary">No results found</p>
+						<p className="px-3 py-6 text-center body-sm text-tertiary">No results found</p>
 					)}
 				</Ariakit.Menu>
 			</Ariakit.MenuProvider>

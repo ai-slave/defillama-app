@@ -30,10 +30,8 @@ export function LiquidationsSummaryStats({
 		<Card padding="sm" border="subtle" className="flex min-h-[42px] w-full flex-wrap items-center gap-x-5 gap-y-2">
 			{items.map((item) => (
 				<div key={item.label} className="flex items-baseline gap-1.5">
-					<span className="text-sm text-(--text-label)">{item.label}</span>
-					<span className="text-sm font-medium">
-						{item.isUsd ? formattedNum(item.value, true) : formattedNum(item.value)}
-					</span>
+					<span className="body-md text-secondary">{item.label}</span>
+					<span className="label-md">{item.isUsd ? formattedNum(item.value, true) : formattedNum(item.value)}</span>
 				</div>
 			))}
 		</Card>

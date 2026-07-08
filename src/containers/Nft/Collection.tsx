@@ -41,7 +41,13 @@ export function NFTCollectionContainer() {
 	if (fetchingData || !collectionData) {
 		return (
 			<div className="flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-				{fetchingData || !router.isReady ? <LocalLoader /> : <p>Failed to load collection data.</p>}
+				{fetchingData || !router.isReady ? (
+					<LocalLoader />
+				) : (
+					<p className="body-sm text-data-down" role="alert">
+						Failed to load collection data.
+					</p>
+				)}
 			</div>
 		)
 	}

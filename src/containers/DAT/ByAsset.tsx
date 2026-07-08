@@ -47,21 +47,21 @@ export function DATByAsset({
 						{metadata.name} Treasury Holdings
 					</Tooltip>
 					<div className="flex flex-col">
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
-							<span className="text-(--text-label)">Total Institution</span>
+						<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
+							<span className="text-secondary">Total Institution</span>
 							<span className="ml-auto font-jetbrains">{metadata.companies}</span>
 						</p>
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
-							<span className="text-(--text-label)">Total Holdings</span>
+						<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
+							<span className="text-secondary">Total Holdings</span>
 							<span className="ml-auto font-jetbrains">{`${formattedNum(metadata.totalAmount, false)} ${metadata.ticker}`}</span>
 						</p>
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
-							<span className="text-(--text-label)">Total USD Value</span>
+						<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
+							<span className="text-secondary">Total USD Value</span>
 							<span className="ml-auto font-jetbrains">{formattedNum(metadata.totalUsdValue, true)}</span>
 						</p>
 						{metadata.circSupplyPerc != null ? (
-							<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
-								<span className="text-(--text-label)">% of {metadata.ticker} Circulating Supply</span>
+							<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
+								<span className="text-secondary">% of {metadata.ticker} Circulating Supply</span>
 								<span className="ml-auto font-jetbrains">
 									{metadata.circSupplyPerc.toLocaleString(undefined, { maximumFractionDigits: 3 })}%
 								</span>
@@ -146,7 +146,7 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 						<BasicLink
 							href={`/digital-asset-treasury/${encodeURIComponent(row.original.ticker)}`}
 							title={name}
-							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text)"
+							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link"
 						>
 							{name}
 						</BasicLink>
@@ -197,7 +197,7 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 							<>
 								24h change:{' '}
 								<span
-									className={priceChange24h > 0 ? 'text-(--success)' : priceChange24h < 0 ? 'text-(--error)' : ''}
+									className={priceChange24h > 0 ? 'text-data-up' : priceChange24h < 0 ? 'text-data-down' : ''}
 								>{`${priceChange24h > 0 ? '+' : ''}${priceChange24h.toFixed(2)}%`}</span>
 							</>
 						}

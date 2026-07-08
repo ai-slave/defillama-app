@@ -157,14 +157,14 @@ export const InvestorContainer = ({
 							/>
 
 							<span className="flex flex-wrap items-center justify-between gap-2">
-								<span className="text-(--text-label)">Total Investments</span>
+								<span className="text-secondary">Total Investments</span>
 								<span className="font-jetbrains">{filteredRaisesList.length}</span>
 							</span>
 						</summary>
 
 						{raisesByCategory.map(({ name, value }) => (
 							<p className="my-1 flex flex-wrap items-center justify-between gap-2" key={'total' + name + value}>
-								<span className="text-(--text-label)">{name}</span>
+								<span className="text-secondary">{name}</span>
 								<span className="font-jetbrains">{value}</span>
 							</p>
 						))}

@@ -23,7 +23,7 @@ import type {
 	MarketVenue,
 	TokenMarketsResponse
 } from '~/containers/Markets/api.types'
-import { ChangeCell, FundingCell, MetricStat } from '~/containers/Markets/marketMetrics'
+import { ChangeCell, FundingCell, MetricStat, MetricStatStrip } from '~/containers/Markets/marketMetrics'
 import type { Segment } from '~/containers/Markets/segments'
 import { pctChange } from '~/containers/Markets/utils'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
@@ -314,7 +314,7 @@ function HeaderStrip({ rows, totals, showOi }: { rows: MarketPair[]; totals: Mar
 	const metrics = sumPairMetrics(rows)
 
 	return (
-		<div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+		<MetricStatStrip>
 			<MetricStat label="Pairs" value={formattedNum(totals.pair_count)} />
 			<MetricStat
 				label="24h Volume"
@@ -328,7 +328,7 @@ function HeaderStrip({ rows, totals, showOi }: { rows: MarketPair[]; totals: Mar
 					sub={<ChangeCell fraction={pctChange(metrics.oi, metrics.oiPrev)} />}
 				/>
 			) : null}
-		</div>
+		</MetricStatStrip>
 	)
 }
 

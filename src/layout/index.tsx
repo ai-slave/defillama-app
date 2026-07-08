@@ -4,6 +4,7 @@ import { MetricsAndTools } from '~/components/Metrics'
 import { Nav } from '~/components/Nav'
 import { DesktopSearch } from '~/components/Search'
 import { Select } from '~/components/Select/Select'
+import { selectTriggerStyles } from '~/components/Select/types'
 import { type ISEOProps, SEO } from '~/components/SEO'
 import { useIsClient } from '~/hooks/useIsClient'
 
@@ -76,8 +77,7 @@ function MetricFilters({ options, label }: { options: { name: string; key: strin
 				setSelectedValues={setSelectedValues}
 				label={label || 'Include in TVL'}
 				triggerProps={{
-					className:
-						'whitespace-nowrap *:shrink-0 flex items-center gap-2 py-2 px-3 text-xs rounded-md cursor-pointer flex-nowrap bg-[#E2E2E2] dark:bg-[#181A1C] ml-auto'
+					className: `${selectTriggerStyles('default')} ml-auto whitespace-nowrap *:shrink-0`
 				}}
 				placement="bottom-end"
 				unmountOnHide={false}

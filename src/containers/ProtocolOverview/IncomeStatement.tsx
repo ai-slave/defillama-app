@@ -734,7 +734,9 @@ export const IncomeStatement = ({
 					{sankeyData.nodes.length > 0 ? (
 						<Suspense
 							fallback={
-								<div className="flex h-[450px] items-center justify-center text-secondary">Loading chart...</div>
+								<div className="flex min-h-[450px] items-center justify-center body-sm text-tertiary">
+									Loading chart...
+								</div>
 							}
 						>
 							<div className="mb-2 flex flex-wrap items-center gap-2 px-2">

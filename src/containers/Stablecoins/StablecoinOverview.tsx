@@ -270,18 +270,18 @@ export const PeggedAssetInfo = ({
 					</p>
 
 					<div className="flex flex-col">
-						<p className="flex flex-wrap justify-between gap-4 border-b border-very-subtle py-1 first:pt-0 last:border-none last:pb-0">
+						<p className="flex flex-wrap justify-between gap-4 border-b border-subtle py-1 first:pt-0 last:border-none last:pb-0">
 							<span className="label-md text-(--text-label)">Price</span>
 							<span className="mono-md">{price === null ? '-' : formattedNum(price, true)}</span>
 						</p>
 						{displayedTotalCirculating != null ? (
-							<p className="flex flex-wrap justify-between gap-4 border-b border-very-subtle py-1 first:pt-0 last:border-none last:pb-0">
+							<p className="flex flex-wrap justify-between gap-4 border-b border-subtle py-1 first:pt-0 last:border-none last:pb-0">
 								<span className="label-md text-(--text-label)">Total Circulating</span>
 								<span className="mono-md">{formattedNum(displayedTotalCirculating)}</span>
 							</p>
 						) : null}
 						{unreleased != null && unreleased > 0 ? (
-							<p className="flex flex-wrap items-center justify-between gap-4 border-b border-very-subtle py-1 first:pt-0 last:border-none last:pb-0">
+							<p className="flex flex-wrap items-center justify-between gap-4 border-b border-subtle py-1 first:pt-0 last:border-none last:pb-0">
 								<Checkbox
 									variant="inline"
 									checked={includeUnreleased}
@@ -370,7 +370,7 @@ export const PeggedAssetInfo = ({
 							{description ? <p className="body-md">{description}</p> : null}
 							{pegMechanism ? (
 								<p className="flex flex-wrap items-center gap-2">
-									<span className="label-md text-tertiary">Category:</span>
+									<span className="label-md text-secondary">Category:</span>
 									<span className="inline-flex items-center gap-1 label-md text-primary">
 										{pegMechanism}
 										<QuestionHelper text={risksHelperTexts[pegMechanism] || 'No additional info available'} />
@@ -379,12 +379,12 @@ export const PeggedAssetInfo = ({
 							) : null}
 							{mintRedeemDescription ? (
 								<>
-									<p className="label-md text-tertiary">Minting and Redemption</p>
+									<p className="label-md text-secondary">Minting and Redemption</p>
 									<p className="body-md text-primary">{mintRedeemDescription}</p>
 								</>
 							) : null}
 							<p className="flex items-center gap-1">
-								<span className="flex flex-nowrap items-center gap-1 label-md text-tertiary">
+								<span className="flex flex-nowrap items-center gap-1 label-md text-secondary">
 									<span>Audits</span>
 									<QuestionHelper text="Audits are not a security guarantee" />
 									<span>:</span>

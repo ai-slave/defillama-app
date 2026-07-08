@@ -337,7 +337,7 @@ export function AdapterByChain(props: IProps) {
 
 						<div className="flex flex-col">
 							{props.openInterest ? (
-								<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
+								<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
 									<Tooltip
 										content={definitions.openInterest.chain}
 										className="body-sm text-secondary underline decoration-dotted"
@@ -348,7 +348,7 @@ export function AdapterByChain(props: IProps) {
 								</p>
 							) : null}
 							{props.activeLiquidity != null ? (
-								<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
+								<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
 									<Tooltip
 										content={definitions.activeLiquidity.chain}
 										className="body-sm text-secondary underline decoration-dotted"
@@ -359,7 +359,7 @@ export function AdapterByChain(props: IProps) {
 								</p>
 							) : null}
 							{props.total30d != null ? (
-								<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
+								<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
 									{(() => {
 										const definition = pageTypeByDefinition[props.type]?.['30d']
 										return definition ? (
@@ -374,7 +374,7 @@ export function AdapterByChain(props: IProps) {
 								</p>
 							) : null}
 							{props.change_7dover7d != null ? (
-								<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
+								<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
 									<Tooltip
 										content="Change of last 7d volume over the previous 7d volume"
 										className="body-sm text-secondary underline decoration-dotted"

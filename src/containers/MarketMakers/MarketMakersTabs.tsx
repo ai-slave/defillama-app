@@ -49,7 +49,7 @@ export function MarketMakersTabs({ active }: { active: string }) {
 									key={tab.to}
 									href={tab.to}
 									data-active={tab.label === active}
-									className="flex items-center gap-2 rounded-md px-2.5 py-2 label-md text-primary hover:bg-hover-row data-[active=true]:bg-brand-muted data-[active=true]:text-link"
+									className="hover-wash flex items-center gap-2 rounded-md px-2.5 py-2 label-md text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link"
 								>
 									<tab.Icon />
 									{tab.label}

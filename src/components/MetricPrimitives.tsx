@@ -22,14 +22,14 @@ export const MetricRow = ({
 	dashed = false
 }: MetricRowProps) => (
 	<p
-		className={`group flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b ${dashed ? 'border-dashed' : ''} border-very-subtle py-1 last:border-none ${className}`.trim()}
+		className={`group flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b ${dashed ? 'border-dashed' : ''} border-subtle py-1 last:border-none ${className}`.trim()}
 	>
 		{tooltip ? (
-			<Tooltip content={tooltip} className="body-md text-tertiary underline decoration-dotted">
+			<Tooltip content={tooltip} className="body-md text-secondary underline decoration-dotted">
 				{label}
 			</Tooltip>
 		) : (
-			<span className="body-md text-tertiary">{label}</span>
+			<span className="body-md text-secondary">{label}</span>
 		)}
 		{extra}
 		<span className={valueClassName}>{value}</span>
@@ -79,13 +79,13 @@ export const MetricSection = ({
 	valueClassName = 'mono-md-bold ml-auto'
 }: MetricSectionProps) => (
 	<details className={`group/metric ${className}`.trim()} open={defaultOpen}>
-		<summary className="flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b border-very-subtle py-1 group-last/metric:border-none group-open/metric:border-none group-open/metric:font-semibold">
+		<summary className="flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b border-subtle py-1 group-last/metric:border-none group-open/metric:border-none group-open/metric:font-semibold">
 			{tooltip ? (
-				<span title={tooltip ?? undefined} className="body-md text-tertiary underline decoration-dotted">
+				<span title={tooltip ?? undefined} className="body-md text-secondary underline decoration-dotted">
 					{label}
 				</span>
 			) : (
-				<span className="body-md text-tertiary">{label}</span>
+				<span className="body-md text-secondary">{label}</span>
 			)}
 			<Icon
 				name="chevron-down"
@@ -112,8 +112,8 @@ export const SubMetricSection = ({
 	defaultOpen?: boolean
 }) => (
 	<details className="group/sub" open={defaultOpen}>
-		<summary className="flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b border-dashed border-very-subtle py-1 group-last/sub:border-none group-open/sub:border-none group-open/sub:font-semibold">
-			<span className="body-md text-tertiary">{label}</span>
+		<summary className="flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b border-dashed border-subtle py-1 group-last/sub:border-none group-open/sub:border-none group-open/sub:font-semibold">
+			<span className="body-md text-secondary">{label}</span>
 			<Icon
 				name="chevron-down"
 				height={16}

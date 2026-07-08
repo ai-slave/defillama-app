@@ -10,12 +10,22 @@ export function ChangeCell({ fraction }: { fraction: number | null | undefined }
 	return <PercentChange percent={pct} />
 }
 
+/** One label/value pair inside a MetricStatStrip (summary-strip recipe — see design.md). */
 export function MetricStat({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
 	return (
-		<Card padding="sm" border="subtle" className="flex min-w-0 flex-1 flex-col gap-1">
-			<span className="label-sm text-secondary">{label}</span>
-			<span className="font-jetbrains text-lg font-semibold">{value}</span>
-			{sub != null ? <span className="label-sm text-secondary">{sub}</span> : null}
+		<div className="flex items-baseline gap-1.5">
+			<span className="body-sm text-secondary">{label}</span>
+			<span className="font-jetbrains label-md tabular-nums">{value}</span>
+			{sub != null ? <span className="body-sm">{sub}</span> : null}
+		</div>
+	)
+}
+
+/** Single-card inline stats strip that MetricStat pairs live in. */
+export function MetricStatStrip({ children }: { children: ReactNode }) {
+	return (
+		<Card padding="sm" border="subtle" className="flex w-full flex-wrap items-center gap-x-5 gap-y-1.5">
+			{children}
 		</Card>
 	)
 }

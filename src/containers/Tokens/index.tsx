@@ -293,7 +293,7 @@ function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
 					{coreFields.map((field) => (
 						<div
 							key={field.label}
-							className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3 border-b border-very-subtle pb-1.5 last:border-b-0 last:pb-0"
+							className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3 border-b border-subtle pb-1.5 last:border-b-0 last:pb-0"
 						>
 							<span className="flex min-w-0 items-center gap-1.5 label-sm whitespace-nowrap text-secondary">
 								<span className={`size-1.5 shrink-0 rounded-full ${RIGHTS_DOT_TONE_CLASSES[field.tone]}`} />
@@ -304,7 +304,7 @@ function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
 					))}
 				</div>
 
-				<div className="grid gap-1.5 border-t border-very-subtle pt-2">
+				<div className="grid gap-1.5 border-t border-subtle pt-2">
 					{extraFields.map((field) => (
 						<div key={field.label} className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3">
 							<span className="label-sm whitespace-nowrap text-secondary">{field.label}</span>
@@ -314,7 +314,7 @@ function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
 				</div>
 
 				{rights.utilityItems.length > 0 || rights.fundraisingLabel || rights.associatedEntities.length > 0 ? (
-					<div className="grid gap-2 border-t border-very-subtle pt-2">
+					<div className="grid gap-2 border-t border-subtle pt-2">
 						{rights.utilityItems.length > 0 ? (
 							<div className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3">
 								<span className="label-sm whitespace-nowrap text-secondary">Utility</span>
@@ -637,7 +637,7 @@ function TokensStats({ stats }: { stats: TokensPageStatsDisplay }) {
 		<Card as="dl" border="subtle" padding="sm" className="flex w-full flex-wrap items-center gap-x-5 gap-y-1.5">
 			{items.map((item) => (
 				<div key={item.label} className="flex items-baseline gap-1.5">
-					<dt className="body-sm text-tertiary">{item.label}</dt>
+					<dt className="body-sm text-secondary">{item.label}</dt>
 					<dd className="label-md tabular-nums">{item.value}</dd>
 					{'change' in item && item.change != null ? (
 						<dd>

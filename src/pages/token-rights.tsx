@@ -745,8 +745,8 @@ const columns = [
 function InlineStat({ value, label }: { value: number; label: string }) {
 	return (
 		<div className="flex items-baseline gap-1.5">
-			<span className="text-sm text-(--text-label)">{label}</span>
-			<span className="text-sm font-medium text-primary">{value}</span>
+			<span className="body-sm text-secondary">{label}</span>
+			<span className="label-md text-primary tabular-nums">{value}</span>
 		</div>
 	)
 }

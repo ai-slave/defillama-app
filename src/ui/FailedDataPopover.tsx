@@ -21,7 +21,7 @@ export function FailedDataPopover<T extends string>({
 
 	return (
 		<Ariakit.PopoverProvider>
-			<Ariakit.PopoverDisclosure className="absolute right-2 bottom-2 z-10 flex items-center justify-center rounded-full border border-subtle bg-surface p-1.5 text-data-down hover:bg-hover-row focus-visible:bg-hover-row">
+			<Ariakit.PopoverDisclosure className="hover-wash absolute right-2 bottom-2 z-10 flex items-center justify-center rounded-full border border-subtle bg-surface p-1.5 text-data-down">
 				<Icon name="alert-triangle" className="size-3.5" />
 				<span className="sr-only">{ariaLabel}</span>
 			</Ariakit.PopoverDisclosure>

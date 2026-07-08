@@ -334,11 +334,11 @@ const Search = () => {
 				className={popoverSurfaceStyles}
 			>
 				{isLoading ? (
-					<p className="px-3 py-6 text-center body-sm text-primary">Loading...</p>
+					<p className="px-3 py-6 text-center body-sm text-tertiary">Loading...</p>
 				) : error ? (
-					<p className="px-3 py-6 text-center body-sm text-primary">{`Error: ${error.message}`}</p>
+					<p className="px-3 py-6 text-center body-sm text-data-down" role="alert">{`Error: ${error.message}`}</p>
 				) : !data?.length ? (
-					<p className="px-3 py-6 text-center body-sm text-primary">No results found</p>
+					<p className="px-3 py-6 text-center body-sm text-tertiary">No results found</p>
 				) : (
 					<Ariakit.ComboboxList ref={comboboxRef}>
 						{data.map((tokenResult) => (

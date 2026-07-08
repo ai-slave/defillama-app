@@ -89,7 +89,7 @@ export function RaisesSearch({ list }: { list?: string[] }) {
 							) : null}
 						</Ariakit.ComboboxList>
 					) : (
-						<p className="px-3 py-6 text-center body-sm text-primary">No results found</p>
+						<p className="px-3 py-6 text-center body-sm text-tertiary">No results found</p>
 					)}
 				</Ariakit.ComboboxPopover>
 			</Ariakit.ComboboxProvider>

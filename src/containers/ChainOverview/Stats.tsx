@@ -166,7 +166,7 @@ export function Stats(props: IStatsProps) {
 											: 'Sum of value of all coins held in smart contracts of all the protocols on the chain'
 									}
 									render={<h1 />}
-									className="inline text-(--text-label) underline decoration-dotted"
+									className="inline text-secondary underline decoration-dotted"
 								>
 									Total Value Locked in DeFi
 								</Tooltip>
@@ -183,7 +183,7 @@ export function Stats(props: IStatsProps) {
 											: 'Sum of value of all coins held in smart contracts of all the protocols on the chain'
 									}
 									render={<h2 />}
-									className="inline text-(--text-label) underline decoration-dotted"
+									className="inline text-secondary underline decoration-dotted"
 								>
 									Total Value Locked in DeFi
 								</Tooltip>

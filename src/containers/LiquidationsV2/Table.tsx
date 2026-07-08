@@ -41,7 +41,7 @@ const protocolColumns = [
 			return (
 				<span className="flex items-center gap-2">
 					<TokenLogo name={protocol} kind="token" data-lgonly alt={`Logo of ${protocol}`} />
-					<BasicLink href={`/liquidations/${row.original.slug}`} className="text-(--link-text) hover:underline">
+					<BasicLink href={`/liquidations/${row.original.slug}`} className="text-link hover:underline">
 						{protocol}
 					</BasicLink>
 				</span>
@@ -151,7 +151,7 @@ const protocolChainColumns = [
 					<TokenLogo name={chain} kind="chain" data-lgonly alt={`Logo of ${chain}`} />
 					<BasicLink
 						href={`/liquidations/${row.original.protocolSlug}/${row.original.slug}`}
-						className="text-(--link-text) hover:underline"
+						className="text-link hover:underline"
 					>
 						{chain}
 					</BasicLink>
@@ -199,7 +199,7 @@ const positionColumns = [
 			return (
 				<span className="flex items-center gap-2">
 					<TokenLogo name={protocol} kind="token" data-lgonly alt={`Logo of ${protocol}`} />
-					<BasicLink href={`/liquidations/${row.original.protocolSlug}`} className="text-(--link-text) hover:underline">
+					<BasicLink href={`/liquidations/${row.original.protocolSlug}`} className="text-link hover:underline">
 						{protocol}
 					</BasicLink>
 				</span>
@@ -220,7 +220,7 @@ const positionColumns = [
 					<TokenLogo name={chain} kind="chain" data-lgonly alt={`Logo of ${chain}`} />
 					<BasicLink
 						href={`/liquidations/${row.original.protocolSlug}/${row.original.chainSlug}`}
-						className="text-(--link-text) hover:underline"
+						className="text-link hover:underline"
 					>
 						{chain}
 					</BasicLink>

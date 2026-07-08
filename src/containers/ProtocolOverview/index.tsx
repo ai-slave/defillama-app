@@ -85,8 +85,8 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 					/>
 				</div>
 				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
-					<div className="col-span-full flex flex-col gap-6 rounded-lg border border-subtle bg-surface p-2">
-						<div className="flex flex-col gap-6 xl:hidden">
+					<div className="col-span-full flex flex-col gap-2">
+						<div className="flex flex-col gap-6 rounded-[8px] border border-subtle bg-surface p-2 xl:hidden">
 							<ProtocolHeader
 								props={props}
 								oracleTvs={oracleTvs}
@@ -97,7 +97,7 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 								headingAs="div"
 							/>
 						</div>
-						<Suspense fallback={<div className="min-h-[400px] rounded-lg border border-subtle bg-surface" />}>
+						<Suspense fallback={<div className="min-h-[400px] rounded-[8px] border border-subtle bg-surface" />}>
 							<ProtocolChartPanel {...props} />
 						</Suspense>
 					</div>
@@ -250,7 +250,7 @@ const PrimaryValue = ({
 				{valueByChain.map(([chain, tvl]) => (
 					<p
 						key={`${chain}-${tvl}-${name}`}
-						className="flex items-center justify-between gap-1 border-b border-dashed border-[#e6e6e6] py-1 group-last:border-none dark:border-[#222224]"
+						className="flex items-center justify-between gap-1 border-b border-dashed border-subtle py-1 group-last:border-none"
 					>
 						<span className="text-(--text-label)">{chain}</span>
 						<span className="font-jetbrains">{formatPrice(tvl)}</span>

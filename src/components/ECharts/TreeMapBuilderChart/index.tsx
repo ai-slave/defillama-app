@@ -191,7 +191,7 @@ export default function TreeMapBuilderChart({ data, height = '450px', onReady }:
 	if (!data || data.length === 0) {
 		return (
 			<div className="flex h-full items-center justify-center">
-				<p className="text-sm pro-text2">No data available for treemap</p>
+				<p className="body-sm text-tertiary">No data available for treemap</p>
 			</div>
 		)
 	}

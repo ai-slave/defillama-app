@@ -323,7 +323,7 @@ export function CustomColumnModal({
 								{AVAILABLE_FIELDS.map((f) => (
 									<li key={f}>
 										<code
-											className="cursor-pointer rounded-sm bg-surface px-1 py-0.5 text-link hover:bg-hover-row"
+											className="hover-wash cursor-pointer rounded-sm bg-surface px-1 py-0.5 text-link"
 											onClick={() => handleSuggestionClick({ name: f, type: 'field' })}
 										>
 											{f}

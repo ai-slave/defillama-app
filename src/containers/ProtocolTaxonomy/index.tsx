@@ -99,7 +99,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							<p className="flex flex-wrap items-center justify-between gap-4 text-base">
 								<Tooltip
 									content="Sum of value of all coins held in smart contracts of all the protocols on the chain"
-									className="font-normal text-(--text-label) underline decoration-dotted"
+									className="font-normal text-secondary underline decoration-dotted"
 								>
 									Total Value Locked
 								</Tooltip>
@@ -113,7 +113,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							<p className="flex flex-wrap items-center justify-between gap-4 text-base">
 								<Tooltip
 									content={definitions.optionsPremium.chain['7d']}
-									className="font-normal text-(--text-label) underline decoration-dotted"
+									className="font-normal text-secondary underline decoration-dotted"
 								>
 									Premium Volume (7d)
 								</Tooltip>
@@ -124,7 +124,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							<p className="flex flex-wrap items-center justify-between gap-4 text-base">
 								<Tooltip
 									content={definitions.optionsNotional.chain['7d']}
-									className="font-normal text-(--text-label) underline decoration-dotted"
+									className="font-normal text-secondary underline decoration-dotted"
 								>
 									Notional Volume (7d)
 								</Tooltip>
@@ -135,7 +135,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							<p className="flex flex-wrap items-center justify-between gap-4 text-base">
 								<Tooltip
 									content={definitions.fees.chain['7d']}
-									className="font-normal text-(--text-label) underline decoration-dotted"
+									className="font-normal text-secondary underline decoration-dotted"
 								>
 									Fees (7d)
 								</Tooltip>
@@ -146,7 +146,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							<p className="flex flex-wrap items-center justify-between gap-4 text-base">
 								<Tooltip
 									content={definitions.revenue.chain['7d']}
-									className="font-normal text-(--text-label) underline decoration-dotted"
+									className="font-normal text-secondary underline decoration-dotted"
 								>
 									Revenue (7d)
 								</Tooltip>
@@ -157,7 +157,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							<p className="flex flex-wrap items-center justify-between gap-4 text-base">
 								<Tooltip
 									content={definitions.perps.protocol['7d']}
-									className="font-normal text-(--text-label) underline decoration-dotted"
+									className="font-normal text-secondary underline decoration-dotted"
 								>
 									Perp Volume (7d)
 								</Tooltip>
@@ -166,7 +166,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 						) : null}
 						{props.dexVolume7d != null ? (
 							<p className="flex flex-wrap items-center justify-between gap-4 text-base">
-								<span className="font-normal text-(--text-label)">
+								<span className="font-normal text-secondary">
 									{getProtocolCategoryDexVolumeLabel(props.effectiveCategory)} (7d)
 								</span>
 								<span className="text-right font-jetbrains">{formattedNum(props.dexVolume7d, true)}</span>
@@ -176,7 +176,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							<p className="flex flex-wrap items-center justify-between gap-4 text-base">
 								<Tooltip
 									content={definitions.openInterest.common}
-									className="font-normal text-(--text-label) underline decoration-dotted"
+									className="font-normal text-secondary underline decoration-dotted"
 								>
 									Open Interest
 								</Tooltip>

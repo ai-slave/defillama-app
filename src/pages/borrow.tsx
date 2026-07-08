@@ -127,14 +127,14 @@ export default function YieldBorrow(data) {
 							role="status"
 							className="flex flex-1 items-center justify-center rounded-[8px] border border-subtle bg-surface p-5 body-sm text-secondary"
 						>
-							<p>Loading borrow routes...</p>
+							<p className="text-tertiary">Loading borrow routes...</p>
 						</div>
 					) : hasSelection && isError ? (
 						<div
 							role="alert"
 							className="flex flex-1 items-center justify-center rounded-[8px] border border-subtle bg-surface p-5 body-sm text-secondary"
 						>
-							<p>Couldn't load borrow routes.</p>
+							<p className="text-data-down">Couldn't load borrow routes.</p>
 						</div>
 					) : hasSelection ? (
 						<PoolsList pools={filteredPools} />
@@ -218,10 +218,10 @@ const TokensSelect = ({
 						{label}
 					</Ariakit.SelectLabel>
 					<Ariakit.Select
-						className={`group flex cursor-pointer flex-nowrap items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-all ${
+						className={`group hover-wash flex cursor-pointer flex-nowrap items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-all ${
 							tokenInSearchData
-								? 'border border-brand bg-brand-muted font-semibold text-primary hover:bg-hover-row'
-								: 'border border-medium bg-page text-tertiary hover:bg-hover-row'
+								? 'border border-brand bg-brand-muted font-semibold text-primary'
+								: 'border border-medium bg-page text-tertiary'
 						} focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand/30`}
 					>
 						{tokenInSearchData ? (

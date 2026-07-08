@@ -138,7 +138,7 @@ function FinancialRow({
 	return (
 		<>
 			<tr className="group">
-				<th className="w-[28%] overflow-hidden border border-subtle bg-surface p-2 text-left font-semibold text-ellipsis whitespace-nowrap group-hover:bg-hover-row">
+				<th className="group-hover-wash w-[28%] overflow-hidden border border-subtle bg-surface p-2 text-left font-semibold text-ellipsis whitespace-nowrap">
 					<div
 						className="flex items-center gap-1"
 						onClick={(event) => {
@@ -169,7 +169,7 @@ function FinancialRow({
 				{headerIndexes.map((index) => (
 					<td
 						key={`${row.id}-${index}`}
-						className="overflow-hidden border border-subtle p-2 text-left font-medium text-ellipsis whitespace-nowrap group-hover:bg-hover-row"
+						className="group-hover-wash overflow-hidden border border-subtle p-2 text-left font-medium text-ellipsis whitespace-nowrap"
 					>
 						{formatEquitiesStatementCellValue(row.label, row.values[index] ?? null)}
 					</td>
@@ -178,13 +178,13 @@ function FinancialRow({
 			{hasSubRows && isExpanded
 				? row.subRows?.map((subRow) => (
 						<tr key={subRow.id} className="group text-secondary">
-							<th className="w-[28%] overflow-hidden border border-subtle bg-surface p-2 pl-9 text-left font-normal text-ellipsis whitespace-nowrap italic group-hover:bg-hover-row">
+							<th className="group-hover-wash w-[28%] overflow-hidden border border-subtle bg-surface p-2 pl-9 text-left font-normal text-ellipsis whitespace-nowrap italic">
 								<span className="overflow-hidden text-ellipsis whitespace-nowrap">{subRow.label}</span>
 							</th>
 							{headerIndexes.map((index) => (
 								<td
 									key={`${subRow.id}-${index}`}
-									className="overflow-hidden border border-subtle p-2 text-left font-normal text-ellipsis whitespace-nowrap group-hover:bg-hover-row"
+									className="group-hover-wash overflow-hidden border border-subtle p-2 text-left font-normal text-ellipsis whitespace-nowrap"
 								>
 									{formatEquitiesStatementCellValue(subRow.label, subRow.values[index] ?? null)}
 								</td>

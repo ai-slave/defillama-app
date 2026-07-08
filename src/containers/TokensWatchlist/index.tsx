@@ -179,7 +179,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 					) : (
 						<div className="flex min-h-[360px] flex-col items-center justify-center p-5 text-center">
 							<Icon name="bookmark" height={32} width={32} className="mb-3 text-(--text-secondary) opacity-50" />
-							<p className="text-sm text-(--text-secondary)">No tokens in your watchlist</p>
+							<p className="body-sm text-tertiary">No tokens in your watchlist</p>
 							<p className="mt-1 text-xs text-(--text-secondary) opacity-75">Use the selector above to add tokens</p>
 						</div>
 					)}

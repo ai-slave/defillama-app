@@ -674,7 +674,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 				<Card border="subtle" padding="sm" className="flex flex-1 flex-col gap-1">
 					<Tooltip
 						content={definitions.totalActiveMcap.description}
-						className="text-(--text-label) underline decoration-dotted"
+						className="text-secondary underline decoration-dotted"
 					>
 						{definitions.totalActiveMcap.label}
 					</Tooltip>
@@ -683,7 +683,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 				<Card border="subtle" padding="sm" className="flex flex-1 flex-col gap-1">
 					<Tooltip
 						content={definitions.totalOnChainMcap.description}
-						className="text-(--text-label) underline decoration-dotted"
+						className="text-secondary underline decoration-dotted"
 					>
 						{definitions.totalOnChainMcap.label}
 					</Tooltip>
@@ -692,7 +692,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 				<Card border="subtle" padding="sm" className="flex flex-1 flex-col gap-1">
 					<Tooltip
 						content={definitions.totalDefiActiveTvl.description}
-						className="text-(--text-label) underline decoration-dotted"
+						className="text-secondary underline decoration-dotted"
 					>
 						{definitions.totalDefiActiveTvl.label}
 					</Tooltip>
@@ -702,7 +702,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 					<Card border="subtle" padding="sm" className="flex flex-1 flex-col gap-1">
 						<Tooltip
 							content={perpsDefinitions.totalOpenInterest.description}
-							className="text-(--text-label) underline decoration-dotted"
+							className="text-secondary underline decoration-dotted"
 						>
 							RWA Perps OI
 						</Tooltip>
@@ -712,7 +712,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 				<Card border="subtle" padding="sm" className="flex flex-1 flex-col gap-1">
 					<Tooltip
 						content={definitions.totalAssetIssuers.description}
-						className="text-(--text-label) underline decoration-dotted"
+						className="text-secondary underline decoration-dotted"
 					>
 						{definitions.totalAssetIssuers.label}
 					</Tooltip>

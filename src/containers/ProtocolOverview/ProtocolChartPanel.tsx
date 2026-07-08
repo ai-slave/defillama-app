@@ -23,6 +23,7 @@ import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
+import { Panel } from '~/ui/Panel'
 import { ChartPanelToolbar, chartPanelToolbarActionsStyles } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
@@ -307,7 +308,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 	}, [router, props.availableCharts, toggledMetrics, defaultEnabledCharts, hasEvents])
 
 	return (
-		<div className="flex flex-col gap-3">
+		<Panel className="flex-1">
 			<ChartPanelToolbar>
 				{props.availableCharts.length > 0 ? (
 					<Ariakit.DialogProvider store={metricsDialogStore}>
@@ -538,7 +539,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 					/>
 				</div>
 			</ChartPanelToolbar>
-			<div className="relative flex min-h-[360px] flex-col">
+			<div className="relative flex min-h-[360px] flex-1 flex-col">
 				<Suspense
 					fallback={
 						<div className="m-auto flex min-h-[360px] items-center justify-center" role="status" aria-live="polite">
@@ -548,6 +549,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 					}
 				>
 					<ProtocolChart
+						className="min-h-[360px] flex-1"
 						chartData={deferredChartRenderModel.chartData}
 						chartColors={props.chartColors}
 						isThemeDark={isThemeDark}
@@ -568,6 +570,6 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 					/>
 				) : null}
 			</div>
-		</div>
+		</Panel>
 	)
 }

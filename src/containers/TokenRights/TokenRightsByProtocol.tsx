@@ -90,7 +90,7 @@ export function TokenRightsByProtocol({
 		>
 			{showHeader ? (
 				headerVariant === 'embedded' ? (
-					<div className="flex flex-wrap items-center gap-2 border-b border-very-subtle p-2">
+					<div className="flex flex-wrap items-center gap-2 border-b border-subtle p-2">
 						<h2 className="group relative flex items-center gap-1 heading-xs">
 							Token Rights and Value Accrual
 							<a

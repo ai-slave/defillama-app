@@ -259,7 +259,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 				{table.getFilteredRowModel().rows.length > 0 ? (
 					<VirtualTable instance={table} />
 				) : (
-					<p className="px-3 py-6 text-center body-sm text-primary">No results found</p>
+					<p className="px-3 py-6 text-center body-sm text-tertiary">No results found</p>
 				)}
 			</Panel>
 		</Layout>

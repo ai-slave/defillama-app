@@ -147,7 +147,7 @@ export function Metrics({
 
 	return (
 		<>
-			<div className="flex flex-col gap-3 rounded-lg border border-subtle bg-surface p-3">
+			<div className="flex flex-col gap-3 rounded-[8px] border border-subtle bg-surface p-3">
 				<div className="flex items-center gap-2">
 					<h2 className="heading-sm">Metrics</h2>
 					<TagGroup
@@ -159,7 +159,7 @@ export function Metrics({
 					/>
 					{canDismiss ? (
 						<Ariakit.DialogDismiss
-							className="-my-2 ml-auto rounded-lg p-2 text-tertiary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary"
+							className="-my-2 ml-auto rounded-md p-2 text-tertiary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary"
 							aria-label="Close modal"
 						>
 							<Icon name="x" height={20} width={20} />
@@ -197,7 +197,7 @@ export function Metrics({
 					))}
 				</div>
 			</div>
-			<div className="flex thin-scrollbar flex-col gap-5.5">
+			<div className="flex thin-scrollbar flex-col gap-6">
 				{pages.map(({ category, metrics }) => (
 					<div key={category} className="relative flex flex-col gap-3">
 						<div className="absolute -top-4" data-category={category} />
@@ -257,7 +257,7 @@ export function LinkToMetricOrToolPage({
 			data-pinned={isPinned}
 		>
 			<BasicLink
-				className="col-span-1 flex flex-1 flex-col items-start gap-1.5 rounded-lg border border-medium bg-surface p-3 hover:bg-hover-card focus-visible:bg-hover-card"
+				className="hover-wash-card col-span-1 flex flex-1 flex-col items-start gap-1.5 rounded-[8px] border border-medium bg-surface p-3"
 				href={page.route}
 				target={isExternalLink ? '_blank' : undefined}
 				rel={isExternalLink ? 'noopener noreferrer' : undefined}
@@ -391,7 +391,7 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 							</Fragment>
 						))}
 						<Ariakit.DialogDisclosure
-							className="z-10 flex items-center gap-1 px-1.5 py-1 body-sm text-tertiary"
+							className="hover-wash z-10 flex items-center gap-1 rounded-md px-1.5 py-1 body-sm text-tertiary hover:text-primary focus-visible:text-primary"
 							onClick={() => trackDialogOpen('browse-search')}
 						>
 							<Icon name="search" height={12} width={12} />

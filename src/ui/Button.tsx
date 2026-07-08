@@ -33,10 +33,8 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 	outline: 'border border-brand text-link hover:bg-hover-row focus-visible:bg-hover-row',
 	ghost:
 		'border border-transparent text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary',
-	filter:
-		'border border-brand text-primary hover:bg-hover-row focus-visible:bg-hover-row data-[active=true]:bg-brand-muted',
-	metricBrowse:
-		'border border-dashed border-brand bg-brand-muted text-primary hover:bg-hover-row focus-visible:bg-hover-row'
+	filter: 'hover-wash border border-brand text-primary data-[active=true]:bg-brand-muted',
+	metricBrowse: 'hover-wash border border-dashed border-brand bg-brand-muted text-primary'
 }
 
 /* min-h pins the control heights the frames use (sm 24, md 32) so rows of

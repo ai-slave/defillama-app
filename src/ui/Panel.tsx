@@ -4,7 +4,7 @@ import type { ComponentPropsWithoutRef, ElementType } from 'react'
    Panel — the design.md chart/table panel recipe (Figma node 6183:148797).
 
    Shell:  bg-surface + border-subtle + 8px radius.
-   Header: px-4 py-3 with a very-subtle bottom divider; heading-xs title on
+   Header: px-4 py-3 with a subtle bottom divider (divider floor); heading-xs title on
            the left, controls on the right. Every control in a panel header
            is the 32px md size (Button md, Select size="md", segmented
            min-h-8); dense control clusters use a 6px gap.
@@ -42,7 +42,7 @@ export function Panel({ className, padding = 'none', ...props }: PanelProps) {
 export function PanelHeader({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
 	return (
 		<div
-			className={`flex flex-wrap items-center gap-x-1.5 gap-y-2 border-b border-very-subtle px-4 py-3 ${className ?? ''}`.trim()}
+			className={`flex flex-wrap items-center gap-x-1.5 gap-y-2 border-b border-subtle px-4 py-3 ${className ?? ''}`.trim()}
 			{...props}
 		/>
 	)

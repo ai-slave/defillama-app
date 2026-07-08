@@ -119,10 +119,10 @@ const KYCItem = ({
 }
 
 const SectionCard = ({ title, children }: { title: React.ReactNode; children: React.ReactNode }) => (
-	<section className="flex flex-col gap-2">
+	<Card as="section" padding="sm" border="subtle" className="flex flex-col gap-3">
 		<h2 className="heading-xs">{title}</h2>
 		{children}
-	</section>
+	</Card>
 )
 
 type DefiActiveTvlBreakdownRow = {
@@ -271,7 +271,7 @@ const ChainBadge = ({
 						))}
 					</>
 				) : null}
-				<dl className="mt-1.5 grid gap-1 border-t border-very-subtle pt-1.5">
+				<dl className="mt-1.5 grid gap-1 border-t border-subtle pt-1.5">
 					<ChainMetricItem label={definitions.onChainMcap.label} value={metrics.onChainMcap} />
 					<ChainMetricItem label={definitions.activeMcap.label} value={metrics.activeMcap} />
 					<ChainMetricItem label={definitions.defiActiveTvl.label} value={metrics.defiActiveTvl} />
@@ -728,7 +728,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 									href={asset.oracleProofLink}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="flex items-center justify-between gap-2 rounded-[8px] border border-subtle bg-surface p-2 hover:bg-hover-row"
+									className="hover-wash flex items-center justify-between gap-2 rounded-[8px] border border-subtle bg-surface p-2"
 								>
 									<span className="flex items-center gap-2">
 										<Icon name="check-circle" className="size-4 text-secondary" />
@@ -774,7 +774,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 									href={link}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="flex items-center justify-between gap-2 rounded-[8px] border border-subtle bg-surface p-2 hover:bg-hover-row"
+									className="hover-wash flex items-center justify-between gap-2 rounded-[8px] border border-subtle bg-surface p-2"
 								>
 									<span className="flex items-center gap-2">
 										<Icon name="check-circle" className="size-4 text-secondary" />
@@ -856,7 +856,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							)}
 
 							{asset.issuer ? (
-								<p className="px-2 pb-2 label-sm text-tertiary">Historical APY from {asset.issuer}</p>
+								<p className="px-2 pb-2 body-sm text-tertiary">Historical APY from {asset.issuer}</p>
 							) : null}
 						</Panel>
 					) : null}

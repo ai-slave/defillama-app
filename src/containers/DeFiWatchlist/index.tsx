@@ -139,7 +139,7 @@ export function DefiWatchlistContainer({
 					) : (
 						<div className="flex min-h-[360px] flex-col items-center justify-center p-5 text-center">
 							<Icon name="bookmark" height={32} width={32} className="mb-3 text-(--text-secondary) opacity-50" />
-							<p className="text-sm text-(--text-secondary)">No protocols in your watchlist</p>
+							<p className="body-sm text-tertiary">No protocols in your watchlist</p>
 							<p className="mt-1 text-xs text-(--text-secondary) opacity-75">Use the selector above to add protocols</p>
 						</div>
 					)}
@@ -168,7 +168,7 @@ export function DefiWatchlistContainer({
 					) : (
 						<div className="flex min-h-[360px] flex-col items-center justify-center p-5 text-center">
 							<Icon name="map" height={32} width={32} className="mb-3 text-(--text-secondary) opacity-50" />
-							<p className="text-sm text-(--text-secondary)">No chains in your watchlist</p>
+							<p className="body-sm text-tertiary">No chains in your watchlist</p>
 							<p className="mt-1 text-xs text-(--text-secondary) opacity-75">Use the selector above to add chains</p>
 						</div>
 					)}
@@ -537,7 +537,7 @@ function PortfolioNotifications({
 									width={24}
 									className="mx-auto mb-2 text-(--text-secondary) opacity-50"
 								/>
-								<p className="text-xs text-(--text-secondary)">No protocols in your watchlist</p>
+								<p className="body-sm text-tertiary">No protocols in your watchlist</p>
 								<p className="mt-1 text-xs text-(--text-secondary) opacity-75">
 									Add protocols to your watchlist to set up notifications
 								</p>
@@ -569,7 +569,7 @@ function PortfolioNotifications({
 						) : (
 							<div className="py-6 text-center">
 								<Icon name="map" height={24} width={24} className="mx-auto mb-2 text-(--text-secondary) opacity-50" />
-								<p className="text-xs text-(--text-secondary)">No chains in your watchlist</p>
+								<p className="body-sm text-tertiary">No chains in your watchlist</p>
 								<p className="mt-1 text-xs text-(--text-secondary) opacity-75">
 									Add chains to your watchlist to set up notifications
 								</p>
@@ -846,7 +846,7 @@ function TopMovers({ protocols }: TopMoversProps) {
 								))}
 							</div>
 						) : (
-							<p className="py-3 text-center text-xs text-tertiary">No movers</p>
+							<p className="py-3 text-center body-sm text-tertiary">No movers</p>
 						)}
 					</div>
 				))}

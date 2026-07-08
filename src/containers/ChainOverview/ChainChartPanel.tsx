@@ -415,7 +415,7 @@ export function ChainChartPanel({
 				</div>
 			</ChartPanelToolbar>
 
-			<div className="relative flex min-h-[360px] flex-col">
+			<div className="relative flex min-h-[360px] flex-1 flex-col">
 				{isFetchingChartData ? (
 					<div className="m-auto flex min-h-[360px] items-center justify-center">
 						<p className="flex items-center gap-1">
@@ -426,6 +426,7 @@ export function ChainChartPanel({
 				) : (
 					<Suspense fallback={<div className="m-auto flex min-h-[360px] items-center justify-center" />}>
 						<ChainCoreChart
+							className="min-h-[360px] flex-1"
 							chartData={deferredChartRenderModel.chartData}
 							valueSymbol={deferredChartRenderModel.valueSymbol}
 							isThemeDark={darkMode}

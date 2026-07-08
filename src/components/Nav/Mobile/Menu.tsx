@@ -29,7 +29,7 @@ export function Menu({
 
 	return (
 		<Ariakit.DialogProvider open={show} setOpen={setShow}>
-			<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-[#445ed0] p-3 text-white shadow">
+			<Ariakit.DialogDisclosure className="-my-0.5 rounded-md bg-brand p-3 text-on-brand shadow focus-visible:brightness-110 active:brightness-110">
 				<span className="sr-only">Open Navigation Menu</span>
 				<Icon name="menu" height={16} width={16} />
 			</Ariakit.DialogDisclosure>

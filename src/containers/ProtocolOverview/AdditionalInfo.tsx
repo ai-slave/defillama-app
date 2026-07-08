@@ -110,7 +110,7 @@ const Articles = (props: IProtocolOverviewPageData) => {
 				<BasicLink
 					key={`research_card_${article.href}`}
 					href={article.href}
-					className="flex flex-col gap-3 rounded-md border border-very-subtle bg-surface p-2 hover:bg-hover-row focus-visible:bg-hover-row"
+					className="hover-wash flex flex-col gap-3 rounded-md border border-subtle bg-surface p-2"
 				>
 					{article.imgSrc ? (
 						<img
@@ -175,7 +175,7 @@ export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
 			{props.description ? <p>{props.description}</p> : null}
 			{props.category && categoryHref ? (
 				<p className="flex flex-wrap items-center gap-2">
-					<span className="label-md text-tertiary">Category:</span>
+					<span className="label-md text-secondary">Category:</span>
 					<BasicLink href={categoryHref} className={INFO_ACTION_STYLES}>
 						{props.category}
 						<Icon name="arrow-up-right" className="size-4" />
@@ -187,7 +187,7 @@ export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
 			{props.audits ? (
 				<>
 					<p className="flex items-center gap-1">
-						<span className="flex flex-nowrap items-center gap-1 label-md text-tertiary">
+						<span className="flex flex-nowrap items-center gap-1 label-md text-secondary">
 							<span>Audits</span>
 							<QuestionHelper text="Audits are not a security guarantee" />
 							<span>:</span>
@@ -428,7 +428,7 @@ const Hacks = (props: IProtocolOverviewPageData) => {
 				{props.hacks.map((hack) => (
 					<div
 						key={`${props.name}-hack-${hack.date}`}
-						className="flex flex-col gap-1 border-b border-very-subtle py-2 first:pt-0 last:border-none last:pb-0"
+						className="flex flex-col gap-1 border-b border-subtle py-2 first:pt-0 last:border-none last:pb-0"
 					>
 						{hack.date ? (
 							<p>

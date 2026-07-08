@@ -56,7 +56,7 @@ export function GovernanceTable({
 	const [_proposalname, setProposalName] = useTableSearch({ instance, columnToSearch: 'title' })
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+		<div className="rounded-[8px] border border-subtle bg-surface">
 			<div className="flex flex-wrap items-center justify-end gap-2 p-3">
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search proposals...</span>
@@ -188,7 +188,7 @@ const proposalsSnapshotColumns = [
 		id: 'state',
 		header: 'State',
 		cell: (info) => (
-			<span data-isactive={info.getValue() !== 0} className="text-(--error) data-[isactive=true]:text-(--success)">
+			<span data-isactive={info.getValue() !== 0} className="text-data-down data-[isactive=true]:text-data-up">
 				{info.getValue() === 0 ? 'Closed' : 'Active'}
 			</span>
 		),

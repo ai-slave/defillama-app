@@ -387,7 +387,7 @@ export function SelectWithCombobox({
 				>
 					{labelType === 'smol' ? (
 						<span className="flex items-center gap-1">
-							<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 text-[10px] leading-none">
+							<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 label-xs leading-none">
 								{selectedValues.length}
 							</span>
 							<span>{label}</span>
@@ -478,7 +478,7 @@ export function SelectWithCombobox({
 													<button
 														type="button"
 														tabIndex={-1}
-														className="rounded-sm p-1 hover:bg-red-100 dark:hover:bg-red-900"
+														className="hover-wash rounded-sm p-1 text-secondary hover:text-data-down"
 														onClick={(e) => {
 															e.stopPropagation()
 															onDeleteCustomColumn?.(customIndex)
@@ -495,7 +495,7 @@ export function SelectWithCombobox({
 														e.stopPropagation()
 														selectOnlyOne(getOptionKey(option))
 													}}
-													className="invisible text-xs font-medium text-link underline group-hover:visible group-focus-visible:visible"
+													className="invisible body-sm text-link underline group-hover:visible group-focus-visible:visible"
 												>
 													Only
 												</button>

@@ -74,19 +74,19 @@ export function DATCompany(props: IDATCompanyPageProps) {
 					<div className="flex flex-col">
 						{props.assetsBreakdown.length > 1 ? (
 							<>
-								<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
-									<span className="text-(--text-label)">Assets in Holdings</span>
+								<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
+									<span className="text-secondary">Assets in Holdings</span>
 									<span className="ml-auto font-jetbrains">{props.assets.join(', ')}</span>
 								</p>
 								{props.totalUsdValue != null ? (
-									<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
-										<span className="text-(--text-label)">Assets Today's Value (USD)</span>
+									<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
+										<span className="text-secondary">Assets Today's Value (USD)</span>
 										<span className="ml-auto font-jetbrains">{formattedNum(props.totalUsdValue, true)}</span>
 									</p>
 								) : null}
 								{props.totalCost != null ? (
-									<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
-										<span className="text-(--text-label)">Assets Cost Basis</span>
+									<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
+										<span className="text-secondary">Assets Cost Basis</span>
 										<span className="ml-auto font-jetbrains">
 											{props.totalCost != null ? formattedNum(props.totalCost, true) : '-'}
 										</span>
@@ -100,8 +100,8 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								key={`${props.ticker}-${asset.name}`}
 								open={props.assetsBreakdown.length === 1 && index === 0}
 							>
-								<summary className="flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 group-last:border-none group-open:border-none group-open:font-semibold">
-									<span className="text-(--text-label)">Total {asset.name}</span>
+								<summary className="flex flex-wrap justify-start gap-4 border-b border-subtle py-1 group-last:border-none group-open:border-none group-open:font-semibold">
+									<span className="text-secondary">Total {asset.name}</span>
 									<Icon
 										name="chevron-down"
 										height={16}
@@ -113,20 +113,20 @@ export function DATCompany(props: IDATCompanyPageProps) {
 									</span>
 								</summary>
 								<div className="mb-3 flex flex-col">
-									<p className="justify-stat flex flex-wrap gap-4 border-b border-dashed border-very-subtle py-1 last:border-none">
-										<span className="text-(--text-label)">Today's Value (USD)</span>
+									<p className="justify-stat flex flex-wrap gap-4 border-b border-dashed border-subtle py-1 last:border-none">
+										<span className="text-secondary">Today's Value (USD)</span>
 										<span className="ml-auto justify-end overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap">
 											{asset.usdValue != null ? formattedNum(asset.usdValue, true) : null}
 										</span>
 									</p>
-									<p className="justify-stat flex flex-wrap gap-4 border-b border-dashed border-very-subtle py-1 last:border-none">
-										<span className="text-(--text-label)">Cost Basis</span>
+									<p className="justify-stat flex flex-wrap gap-4 border-b border-dashed border-subtle py-1 last:border-none">
+										<span className="text-secondary">Cost Basis</span>
 										<span className="ml-auto justify-end overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap">
 											{asset.cost != null ? formattedNum(asset.cost, true) : '-'}
 										</span>
 									</p>
-									<p className="justify-stat flex flex-wrap gap-4 border-b border-dashed border-very-subtle py-1 last:border-none">
-										<span className="text-(--text-label)">Average Purchase Price</span>
+									<p className="justify-stat flex flex-wrap gap-4 border-b border-dashed border-subtle py-1 last:border-none">
+										<span className="text-secondary">Average Purchase Price</span>
 										<span className="ml-auto justify-end overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap">
 											{asset.avgPrice != null ? formattedNum(asset.avgPrice, true) : '-'}
 										</span>
@@ -134,25 +134,25 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								</div>
 							</details>
 						))}
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
-							<span className="text-(--text-label)">First Announcement</span>
+						<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
+							<span className="text-secondary">First Announcement</span>
 							<span className="ml-auto font-jetbrains">
 								{props.firstAnnouncementDate != null ? dayjs(props.firstAnnouncementDate).format('MMM D, YYYY') : null}
 							</span>
 						</p>
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
-							<span className="text-(--text-label)">Latest Announcement</span>
+						<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
+							<span className="text-secondary">Latest Announcement</span>
 							<span className="ml-auto font-jetbrains">
 								{props.lastAnnouncementDate != null ? dayjs(props.lastAnnouncementDate).format('MMM D, YYYY') : null}
 							</span>
 						</p>
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
-							<span className="text-(--text-label)">Total Transactions</span>
+						<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
+							<span className="text-secondary">Total Transactions</span>
 							<span className="ml-auto font-jetbrains">{props.transactions.length}</span>
 						</p>
 						{props.price != null ? (
-							<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
-								<span className="text-(--text-label)">${props.ticker} price</span>
+							<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
+								<span className="text-secondary">${props.ticker} price</span>
 								{props.priceChange24h != null ? (
 									<Tooltip
 										content={
@@ -173,10 +173,10 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							</p>
 						) : null}
 						{props.realized_mNAV != null ? (
-							<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
+							<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
 								<Tooltip
 									content="Market Net Asset Value based only on the current outstanding common shares, with no dilution considered"
-									className="text-(--text-label) underline decoration-dotted"
+									className="text-secondary underline decoration-dotted"
 								>
 									Realized mNAV
 								</Tooltip>
@@ -184,10 +184,10 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							</p>
 						) : null}
 						{props.realistic_mNAV != null ? (
-							<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
+							<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
 								<Tooltip
 									content="Market Net asset value adjusted for expected dilution from in-the-money options and convertibles that are likely to be exercised"
-									className="text-(--text-label) underline decoration-dotted"
+									className="text-secondary underline decoration-dotted"
 								>
 									Realistic mNAV
 								</Tooltip>
@@ -195,10 +195,10 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							</p>
 						) : null}
 						{props.max_mNAV != null ? (
-							<p className="group flex flex-wrap justify-start gap-4 border-b border-very-subtle py-1 last:border-none">
+							<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
 								<Tooltip
 									content={`Market Net Asset Value under the fully diluted scenario, assuming every warrant, option, and convertible is exercised (the most conservative/worst-case view)`}
-									className="text-(--text-label) underline decoration-dotted"
+									className="text-secondary underline decoration-dotted"
 								>
 									Max mNAV
 								</Tooltip>
@@ -288,7 +288,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 						<Suspense fallback={<div className="h-[480px]" />}>
 							<CandlestickChart data={props.ohlcvChartData} />
 						</Suspense>
-						<p className="p-2 text-xs text-tertiary">Source: Yahoo Finance</p>
+						<p className="p-2 body-sm text-tertiary">Source: Yahoo Finance</p>
 					</Panel>
 				) : null}
 				{props.totalAssetValueChart != null ? (

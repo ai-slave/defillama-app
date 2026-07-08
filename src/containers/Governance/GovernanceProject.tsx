@@ -111,7 +111,7 @@ export default function GovernanceProject({
 					<div className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-subtle bg-surface px-4 py-3">
 						{data?.stats?.chainName != null ? (
 							<div className="flex items-center gap-1.5">
-								<span className="text-sm text-(--text-label)">Chain</span>
+								<span className="text-sm text-secondary">Chain</span>
 								<span className="flex items-center gap-1 text-sm font-medium">
 									<TokenLogo
 										name={data.stats.chainName}
@@ -126,42 +126,42 @@ export default function GovernanceProject({
 
 						{data?.stats?.proposalsCount != null ? (
 							<div className="flex items-baseline gap-1.5">
-								<span className="text-sm text-(--text-label)">Total Proposals</span>
+								<span className="text-sm text-secondary">Total Proposals</span>
 								<span className="text-sm font-medium tabular-nums">{data.stats.proposalsCount}</span>
 							</div>
 						) : null}
 
 						{data?.stats?.successfulProposals != null ? (
 							<div className="flex items-baseline gap-1.5">
-								<span className="text-sm text-(--text-label)">Successful</span>
+								<span className="text-sm text-secondary">Successful</span>
 								<span className="text-sm font-medium tabular-nums">{data.stats.successfulProposals}</span>
 							</div>
 						) : null}
 
 						{data?.stats?.proposalsInLast30Days != null ? (
 							<div className="flex items-baseline gap-1.5">
-								<span className="text-sm text-(--text-label)">Proposals (30d)</span>
+								<span className="text-sm text-secondary">Proposals (30d)</span>
 								<span className="text-sm font-medium tabular-nums">{data.stats.proposalsInLast30Days}</span>
 							</div>
 						) : null}
 
 						{data?.stats?.successfulProposalsInLast30Days != null ? (
 							<div className="flex items-baseline gap-1.5">
-								<span className="text-sm text-(--text-label)">Successful (30d)</span>
+								<span className="text-sm text-secondary">Successful (30d)</span>
 								<span className="text-sm font-medium tabular-nums">{data.stats.successfulProposalsInLast30Days}</span>
 							</div>
 						) : null}
 
 						{data?.stats?.highestTotalScore != null ? (
 							<div className="flex items-baseline gap-1.5">
-								<span className="text-sm text-(--text-label)">Max Total Votes</span>
+								<span className="text-sm text-secondary">Max Total Votes</span>
 								<span className="text-sm font-medium tabular-nums">{formattedNum(data.stats.highestTotalScore)}</span>
 							</div>
 						) : null}
 
 						{data?.metadata?.followersCount != null ? (
 							<div className="flex items-baseline gap-1.5">
-								<span className="text-sm text-(--text-label)">Followers</span>
+								<span className="text-sm text-secondary">Followers</span>
 								<span className="text-sm font-medium tabular-nums">{formattedNum(data.metadata.followersCount)}</span>
 							</div>
 						) : null}
