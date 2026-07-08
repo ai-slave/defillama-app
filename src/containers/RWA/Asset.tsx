@@ -737,7 +737,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 											<span className="label-sm text-secondary">View oracle proof details</span>
 										</span>
 									</span>
-									<Icon name="external-link" className="size-3 text-tertiary" />
+									<Icon name="external-link" className="size-3" />
 								</a>
 							) : (
 								<Card padding="sm" border="subtle" className="flex items-center justify-between gap-2">
@@ -783,7 +783,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 											<span className="label-sm text-secondary">Third-party verification reports</span>
 										</span>
 									</span>
-									<Icon name="external-link" className="size-3 text-tertiary" />
+									<Icon name="external-link" className="size-3" />
 								</a>
 							))}
 						</SectionCard>
@@ -856,7 +856,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							)}
 
 							{asset.issuer ? (
-								<p className="px-2 pb-2 body-sm text-tertiary">Historical APY from {asset.issuer}</p>
+								<p className="px-2 pb-2 body-sm text-secondary">Historical APY from {asset.issuer}</p>
 							) : null}
 						</Panel>
 					) : null}

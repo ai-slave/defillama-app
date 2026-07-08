@@ -519,7 +519,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 								value={<span suppressHydrationWarning>{formatEquitiesDateTime(props.summary.updatedAt)}</span>}
 							/>
 						</div>
-						{props.metadata.description ? <p className="body-sm text-secondary">{props.metadata.description}</p> : null}
+						{props.metadata.description ? <p className="body-sm">{props.metadata.description}</p> : null}
 					</Card>
 
 					<Card as="section" border="subtle" padding="sm" className="flex flex-col gap-3">

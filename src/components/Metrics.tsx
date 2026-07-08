@@ -375,8 +375,8 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 							}}
 						/>
 					</div>
-					<div className="relative z-10 grid min-h-6 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1">
-						<div className="col-start-2 flex min-w-0 flex-wrap items-center justify-center gap-1">
+					<div className="relative z-10 flex min-h-6 flex-wrap items-center justify-center gap-1">
+						<div className="flex min-w-0 flex-wrap items-center justify-center gap-1">
 							{currentMetric.map((metric, i) => (
 								<Fragment key={`metric-name-${metric}`}>
 									{i === 1 ? (
@@ -393,7 +393,7 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 							))}
 						</div>
 						<Ariakit.DialogDisclosure
-							className="hover-wash col-start-3 flex min-h-6 w-fit items-center gap-1 justify-self-start rounded-md px-1.5 py-1 body-sm text-tertiary hover:text-primary focus-visible:text-primary"
+							className="hover-wash flex min-h-6 w-fit items-center gap-1 rounded-md px-1.5 py-1 body-sm text-secondary hover:text-primary focus-visible:text-primary"
 							onClick={() => trackDialogOpen('browse-search')}
 						>
 							<Icon name="search" height={12} width={12} />

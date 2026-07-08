@@ -420,7 +420,7 @@ function TocAccordion({ active }: { active: string }) {
 				className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left label-sm text-primary"
 			>
 				<span className="min-w-0 truncate">
-					<span className="text-tertiary">Contents: </span>
+					<span className="text-secondary">Contents: </span>
 					{activeLabel}
 				</span>
 				<Icon
@@ -1033,7 +1033,7 @@ export function MarketMakersDocumentation() {
 						<aside className="hidden min-[1120px]:block min-[1120px]:border-l min-[1120px]:border-subtle min-[1120px]:pl-8">
 							<div className="sticky top-6">
 								<div className="flex h-9 items-center">
-									<span className="label-sm text-tertiary uppercase">Table of Contents</span>
+									<span className="label-sm text-secondary uppercase">Table of Contents</span>
 								</div>
 								<div className="mt-3 border-t border-subtle" />
 								<div className="pt-6">

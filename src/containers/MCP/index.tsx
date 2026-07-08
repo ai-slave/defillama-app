@@ -260,9 +260,7 @@ function ManualSetup() {
 							key={c.name}
 							onClick={() => setActive(i)}
 							className={`shrink-0 px-4 py-2.5 text-[13px] font-medium transition-colors ${
-								active === i
-									? 'border-b-2 border-(--old-blue) text-(--old-blue)'
-									: 'text-(--text-tertiary) hover:text-(--text-primary)'
+								active === i ? 'border-b-2 border-(--old-blue) text-(--old-blue)' : 'text-secondary hover:text-primary'
 							}`}
 						>
 							{c.name}
@@ -295,7 +293,7 @@ function FeatureCard({ icon, title, children }: { icon: ReactNode; title: string
 		<div className="rounded-md border border-(--cards-border) bg-(--bg-card) p-5 transition-colors hover:border-(--old-blue)/30">
 			<div className="mb-3 flex size-9 items-center justify-center rounded-md bg-(--old-blue)/10 text-lg">{icon}</div>
 			<h3 className="mb-1.5 font-semibold text-(--text-primary)">{title}</h3>
-			<p className="text-sm leading-relaxed text-(--text-tertiary)">{children}</p>
+			<p className="text-sm leading-relaxed text-secondary">{children}</p>
 		</div>
 	)
 }
@@ -307,7 +305,7 @@ function StepCard({ step, title, children }: { step: number; title: string; chil
 				{step}
 			</div>
 			<h3 className="mb-1.5 font-semibold text-(--text-primary)">{title}</h3>
-			<p className="text-[13px] leading-relaxed text-(--text-tertiary)">{children}</p>
+			<p className="text-[13px] leading-relaxed text-secondary">{children}</p>
 		</div>
 	)
 }
@@ -317,7 +315,7 @@ function SectionHeader({ overline, title, description }: { overline: string; tit
 		<div className="mb-8">
 			<p className="mb-2 text-xs font-semibold tracking-widest text-(--old-blue) uppercase">{overline}</p>
 			<h2 className="mb-2 text-2xl font-bold tracking-tight sm:text-3xl">{title}</h2>
-			{description && <p className="max-w-2xl text-[15px] text-(--text-tertiary)">{description}</p>}
+			{description && <p className="max-w-2xl text-[15px] text-secondary">{description}</p>}
 		</div>
 	)
 }
@@ -342,7 +340,7 @@ function ToolCategoryGroup({
 				onClick={() => setOpen((v) => !v)}
 				aria-expanded={open}
 				aria-controls={panelId}
-				className="mb-2 flex w-full items-center gap-2 text-left text-xs font-semibold tracking-widest text-(--text-tertiary) uppercase transition-colors hover:text-(--text-primary)"
+				className="mb-2 flex w-full items-center gap-2 text-left text-xs font-semibold tracking-widest text-secondary uppercase transition-colors hover:text-primary"
 			>
 				<svg
 					viewBox="0 0 24 24"
@@ -366,7 +364,7 @@ function ToolCategoryGroup({
 							className="rounded-md border border-(--cards-border) bg-(--bg-card) px-3.5 py-2.5 transition-colors hover:border-(--old-blue)/30"
 						>
 							<code className="font-jetbrains text-[13px] font-medium text-(--old-blue)">{t.name}</code>
-							<p className="mt-0.5 text-xs leading-relaxed text-(--text-tertiary)">{t.desc}</p>
+							<p className="mt-0.5 text-xs leading-relaxed text-secondary">{t.desc}</p>
 						</div>
 					))}
 				</div>
@@ -403,7 +401,7 @@ export default function MCPContainer() {
 								AI Agents
 							</span>
 						</h1>
-						<p className="mb-2 max-w-lg text-[15px] leading-relaxed text-(--text-tertiary)">
+						<p className="mb-2 max-w-lg text-[15px] leading-relaxed text-secondary">
 							Connect your AI agent to DefiLlama data. Ask questions about TVL, yields, token prices, protocol metrics,
 							stablecoins, bridges, ETFs, and more. Your agent gets the answers directly.
 						</p>
@@ -482,7 +480,7 @@ export default function MCPContainer() {
 					</StepCard>
 				</div>
 
-				<div className="mt-4 rounded-md border border-(--cards-border) bg-(--bg-card) px-4 py-3 text-[13px] leading-relaxed text-(--text-tertiary)">
+				<div className="mt-4 rounded-md border border-(--cards-border) bg-(--bg-card) px-4 py-3 text-[13px] leading-relaxed text-secondary">
 					<p>
 						Note: each DefiLlama account can only be connected to one MCP client at a time. Connecting a new client will
 						disconnect the previous one.
@@ -510,7 +508,7 @@ export default function MCPContainer() {
 									Try LlamaAI
 								</span>
 							</h3>
-							<p className="mt-1 max-w-lg text-sm text-(--text-tertiary)">
+							<p className="mt-1 max-w-lg text-sm text-secondary">
 								Charts, onchain analysis, price forecasts, web search, and more. All in one AI chat. Available with the
 								Pro plan at a lower price point.
 							</p>
@@ -562,7 +560,7 @@ export default function MCPContainer() {
 							</span>
 							<div>
 								<code className="font-jetbrains text-[13px] font-medium text-(--text-primary)">{s.name}</code>
-								<p className="mt-0.5 text-xs text-(--text-tertiary)">{s.desc}</p>
+								<p className="mt-0.5 text-xs text-secondary">{s.desc}</p>
 							</div>
 						</div>
 					))}
@@ -570,7 +568,7 @@ export default function MCPContainer() {
 
 				<div className="mt-8">
 					<h3 className="mb-3 text-sm font-semibold text-(--text-secondary)">Install skills manually</h3>
-					<p className="mb-4 text-[13px] leading-relaxed text-(--text-tertiary)">
+					<p className="mb-4 text-[13px] leading-relaxed text-secondary">
 						The quick start prompt installs these automatically. To install manually, run:
 					</p>
 					<div className="mx-auto max-w-2xl">
@@ -582,7 +580,7 @@ export default function MCPContainer() {
 			{/* CTA */}
 			<section className="mx-auto max-w-[1100px] px-4 py-16 text-center sm:px-6 md:px-8">
 				<h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">Ready to get started?</h2>
-				<p className="mb-6 text-(--text-tertiary)">Requires an API plan. Uses the same credits as your API key.</p>
+				<p className="mb-6 text-secondary">Requires an API plan. Uses the same credits as your API key.</p>
 				<button
 					onClick={handleGetStarted}
 					className="rounded-md bg-(--old-blue) px-7 py-3 text-[15px] font-medium text-white shadow-sm transition-all hover:opacity-90"

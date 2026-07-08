@@ -32,7 +32,7 @@ export function ThemeSwitch({ className, variant = 'default', size = 'md' }: The
 				<span
 					className={joinClasses(
 						`flex ${controlSize} items-center justify-center rounded-full transition-colors`,
-						'bg-surface-elevated-2 text-primary dark:bg-transparent dark:text-tertiary'
+						'bg-surface-elevated-2 text-primary dark:bg-transparent dark:text-secondary'
 					)}
 				>
 					<Icon name="sun" height={iconSize} width={iconSize} />
@@ -40,7 +40,7 @@ export function ThemeSwitch({ className, variant = 'default', size = 'md' }: The
 				<span
 					className={joinClasses(
 						`flex ${controlSize} items-center justify-center rounded-full transition-colors`,
-						'text-tertiary dark:bg-surface-elevated-2 dark:text-primary'
+						'text-secondary dark:bg-surface-elevated-2 dark:text-primary'
 					)}
 				>
 					<Icon name="moon" height={iconSize} width={iconSize} />

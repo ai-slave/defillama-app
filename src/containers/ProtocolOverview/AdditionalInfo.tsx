@@ -212,7 +212,7 @@ export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
 						data-umami-event-protocol={props.name}
 						data-umami-event-referral={props.isWebsiteReferral ? 'true' : 'false'}
 					>
-						<Icon name="earth" className="size-4" />
+						<Icon name="globe" className="size-4" />
 						<span>Website</span>
 						<Icon name="arrow-up-right" className="size-4" />
 					</a>
@@ -266,7 +266,7 @@ const Methodology = (props: IProtocolOverviewPageData) => {
 			<SectionHeader id="methodology">Methodology</SectionHeader>
 			{!props.oracleTvs && props.tvlMethodologyUrl ? (
 				<a href={props.tvlMethodologyUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
-					<span className="font-medium">{props.isCEX ? 'Total Assets:' : 'TVL:'}</span>{' '}
+					<span className="font-medium text-secondary">{props.isCEX ? 'Total Assets:' : 'TVL:'}</span>{' '}
 					<span>{props.tvlMethodology ?? ''}</span>
 					<span className="relative top-0.5 left-1 inline-block">
 						<Icon name="external-link" className="size-3.5" />
@@ -275,13 +275,13 @@ const Methodology = (props: IProtocolOverviewPageData) => {
 				</a>
 			) : !props.oracleTvs && props.tvlMethodology ? (
 				<p>
-					<span className="font-medium">{props.isCEX ? 'Total Assets:' : 'TVL:'}</span>{' '}
+					<span className="font-medium text-secondary">{props.isCEX ? 'Total Assets:' : 'TVL:'}</span>{' '}
 					<span>{props.tvlMethodology ?? ''}</span>
 				</p>
 			) : null}
 			{props.oracleTvs && props.tvlMethodologyUrl ? (
 				<a href={props.tvlMethodologyUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
-					<span className="font-medium">TVS:</span>{' '}
+					<span className="font-medium text-secondary">TVS:</span>{' '}
 					<span>Total value secured by an oracle, where oracle failure would lead to a loss equal to TVS</span>
 					<span className="relative top-0.5 left-1 inline-block">
 						<Icon name="external-link" className="size-3.5" />
@@ -290,7 +290,7 @@ const Methodology = (props: IProtocolOverviewPageData) => {
 				</a>
 			) : props.oracleTvs ? (
 				<p>
-					<span className="font-medium">TVS:</span>{' '}
+					<span className="font-medium text-secondary">TVS:</span>{' '}
 					<span>Total value secured by an oracle, where oracle failure would lead to a loss equal to TVS</span>
 				</p>
 			) : null}
@@ -312,11 +312,11 @@ const Methodology = (props: IProtocolOverviewPageData) => {
 			{props.incentives?.methodology ? (
 				<>
 					<p>
-						<span className="font-medium">Incentives:</span> <span>{props.incentives.methodology}</span>
+						<span className="font-medium text-secondary">Incentives:</span> <span>{props.incentives.methodology}</span>
 					</p>
 					{props.revenue ? (
 						<p>
-							<span className="font-medium">Earnings:</span>{' '}
+							<span className="font-medium text-secondary">Earnings:</span>{' '}
 							<span>Revenue of the protocol minus the incentives distributed to users</span>
 						</p>
 					) : null}
@@ -324,7 +324,8 @@ const Methodology = (props: IProtocolOverviewPageData) => {
 			) : null}
 			{props.treasuryMethodologyUrl ? (
 				<a href={props.treasuryMethodologyUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
-					<span className="font-medium">Treasury:</span> <span>Value of tokens owned by the protocol</span>
+					<span className="font-medium text-secondary">Treasury:</span>{' '}
+					<span>Value of tokens owned by the protocol</span>
 				</a>
 			) : null}
 		</Card>
@@ -341,8 +342,8 @@ const MethodologyByAdapter = ({
 	if (adapter?.childMethodologies?.length) {
 		return (
 			<div className="flex flex-col">
-				<h3 className="font-medium">{title}:</h3>
-				<div className="flex flex-col gap-0.5 text-secondary">
+				<h3 className="font-medium text-secondary">{title}:</h3>
+				<div className="flex flex-col gap-0.5">
 					{adapter.childMethodologies.map((child) =>
 						child[1] ? (
 							child[2] ? (
@@ -378,7 +379,7 @@ const MethodologyByAdapter = ({
 			{adapter?.methodology || adapter?.methodologyURL ? (
 				adapter?.methodologyURL ? (
 					<a href={adapter.methodologyURL} target="_blank" rel="noopener noreferrer" className="hover:underline">
-						<span className="font-medium">{title}:</span>{' '}
+						<span className="font-medium text-secondary">{title}:</span>{' '}
 						{adapter.methodology ? <span>{adapter.methodology}</span> : null}
 						{adapter.methodologyURL ? (
 							<span className="relative top-0.5 left-1 inline-block">
@@ -389,7 +390,7 @@ const MethodologyByAdapter = ({
 					</a>
 				) : (
 					<p>
-						<span className="font-medium">{title}:</span> <span>{adapter?.methodology}</span>
+						<span className="font-medium text-secondary">{title}:</span> <span>{adapter?.methodology}</span>
 					</p>
 				)
 			) : null}

@@ -398,7 +398,7 @@ export const PeggedAssetInfo = ({
 							<div className="flex flex-wrap gap-3">
 								{url ? (
 									<a href={url} target="_blank" rel="noopener noreferrer" className={INFO_ACTION_STYLES}>
-										<Icon name="earth" className="size-4" />
+										<Icon name="globe" className="size-4" />
 										<span>Website</span>
 										<Icon name="arrow-up-right" className="size-4" />
 									</a>

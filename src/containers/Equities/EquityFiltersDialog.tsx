@@ -155,7 +155,7 @@ function ModeToggle({
 					onClick={() => onChange(option.value)}
 					data-active={value === option.value}
 					aria-pressed={value === option.value}
-					className="flex cursor-pointer items-center self-stretch rounded-md px-2.5 text-tertiary hover:text-primary data-[active=true]:bg-brand data-[active=true]:text-on-brand"
+					className="flex cursor-pointer items-center self-stretch rounded-md px-2.5 text-secondary hover:text-primary data-[active=true]:bg-brand data-[active=true]:text-on-brand"
 				>
 					{option.label}
 				</button>
@@ -497,7 +497,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 					{activeCount}
 				</span>
 				<span>Filters</span>
-				<Icon name="settings" className="size-3.5 text-tertiary" />
+				<Icon name="settings" className="size-3.5" />
 			</Ariakit.DialogDisclosure>
 			<Ariakit.Dialog
 				className={`${dialogSurfaceStyles} [--dialog-width:860px] sm:max-h-[min(760px,calc(100%-32px))]`}
@@ -577,7 +577,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 									<button
 										type="button"
 										onClick={() => setSearch('')}
-										className="text-xs text-tertiary underline-offset-2 hover:text-primary hover:underline"
+										className="text-xs text-secondary underline-offset-2 hover:text-primary hover:underline"
 									>
 										Clear search
 									</button>
@@ -652,7 +652,7 @@ export function EquityActiveFilterPills({
 					className="hover-wash group flex items-center gap-1 rounded-full border border-brand bg-brand-muted px-2 py-1 text-xs text-primary"
 				>
 					<span>{formatEquityActiveFilter(filter)}</span>
-					<Icon name="x" className="size-3 opacity-60 group-hover:opacity-100" />
+					<Icon name="x" className="size-3 text-secondary group-hover:text-primary" />
 				</button>
 			))}
 		</div>

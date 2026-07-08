@@ -149,12 +149,12 @@ export function TokenRightsByProtocol({
 										</KeyValueRow>
 									) : null}
 								</dl>
-								<p className="body-sm text-secondary">{overview.description}</p>
+								<p className="body-sm">{overview.description}</p>
 							</SectionCard>
 
 							{/* Governance & Decisions */}
 							<SectionCard title="Governance Rights" badge="Control">
-								<p className="body-sm text-secondary">{governance.summary}</p>
+								<p className="body-sm">{governance.summary}</p>
 								<RightsRow
 									label="Governance Decisions"
 									tooltip={TOOLTIPS['Governance Decisions']}
@@ -252,9 +252,7 @@ export function TokenRightsByProtocol({
 									tooltip="The main mechanism by which value accrues to token holders"
 								>
 									{primaryValueLabel !== null ? <span className="label-sm uppercase">{primaryValueLabel}</span> : null}
-									{valueAccrual.details !== null ? (
-										<p className="body-sm text-secondary">{valueAccrual.details}</p>
-									) : null}
+									{valueAccrual.details !== null ? <p className="body-sm">{valueAccrual.details}</p> : null}
 								</GreenCard>
 							) : null}
 
@@ -263,13 +261,13 @@ export function TokenRightsByProtocol({
 									title="Equity Statement"
 									tooltip="Protocol statement on the relationship between equity and token holders, and how value ultimately flows or may flow in the future"
 								>
-									<p className="body-sm text-secondary">{alignment.equityStatement}</p>
+									<p className="body-sm">{alignment.equityStatement}</p>
 								</GreenCard>
 							) : null}
 
 							{/* Economic Rights & Value Accrual */}
 							<SectionCard title="Economic Rights" badge="Value Capture">
-								{economic.summary !== null ? <p className="body-sm text-secondary">{economic.summary}</p> : null}
+								{economic.summary !== null ? <p className="body-sm">{economic.summary}</p> : null}
 								<RightsRow label="Buybacks" tooltip={TOOLTIPS['Buybacks']} details={valueAccrual.buybacks.details}>
 									<DetailsTokenList display={valueAccrual.buybacks} />
 								</RightsRow>
@@ -484,9 +482,7 @@ function TokenRightsOverviewView({
 							{primaryValueLabel !== null ? (
 								<div className="mt-1.5 label-lg text-green-700 dark:text-green-400">{primaryValueLabel}</div>
 							) : null}
-							{valueAccrual.details !== null ? (
-								<p className="mt-1.5 body-md text-secondary">{valueAccrual.details}</p>
-							) : null}
+							{valueAccrual.details !== null ? <p className="mt-1.5 body-md">{valueAccrual.details}</p> : null}
 						</div>
 					) : null}
 
@@ -766,15 +762,15 @@ function RightsRow({
 		<div className="flex flex-col gap-2 rounded-[8px] border border-subtle bg-surface-elevated-1 p-2">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				{tooltip ? (
-					<Tooltip content={tooltip} render={<h3 />} className="label-md underline decoration-dotted">
+					<Tooltip content={tooltip} render={<h3 />} className="label-md text-secondary underline decoration-dotted">
 						{label}
 					</Tooltip>
 				) : (
-					<h3 className="label-md">{label}</h3>
+					<h3 className="label-md text-secondary">{label}</h3>
 				)}
 				{children}
 			</div>
-			{details !== null ? <p className="body-sm text-secondary">{details}</p> : null}
+			{details !== null ? <p className="body-sm">{details}</p> : null}
 		</div>
 	)
 }

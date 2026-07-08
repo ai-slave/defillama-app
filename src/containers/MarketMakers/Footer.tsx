@@ -12,7 +12,7 @@ export function MarketMakersFooter() {
 					Terms & Conditions
 				</a>
 			</p>
-			<p className="text-tertiary min-[713px]:max-w-[560px] min-[713px]:text-right">
+			<p className="text-secondary min-[713px]:max-w-[560px] min-[713px]:text-right">
 				The content on this site is for informational purposes only and should not be construed as financial or legal
 				advice.
 			</p>

@@ -200,7 +200,7 @@ const tabs = ['my-dashboards', 'discover', 'favorites', 'following', 'profile'] 
 type ProTab = (typeof tabs)[number]
 
 const tabClassName =
-	'label-md relative shrink-0 cursor-pointer px-3 py-2 whitespace-nowrap text-tertiary hover:text-secondary focus-visible:text-secondary data-[active=true]:text-primary after:absolute after:bottom-0 after:left-1 after:right-1 after:h-0.5 after:rounded-t-xs after:bg-brand after:opacity-0 data-[active=true]:after:opacity-100'
+	'label-md relative shrink-0 cursor-pointer px-3 py-2 whitespace-nowrap text-secondary hover:text-primary focus-visible:text-primary data-[active=true]:text-primary after:absolute after:bottom-0 after:left-1 after:right-1 after:h-0.5 after:rounded-t-xs after:bg-brand after:opacity-0 data-[active=true]:after:opacity-100'
 
 function getDashboardPagesToShow(selectedPage: number, totalPages: number): number[] {
 	if (totalPages < 1) return []

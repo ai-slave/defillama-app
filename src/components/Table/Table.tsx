@@ -243,7 +243,7 @@ export function VirtualTable<T extends RowData>({
 		if (!skipVirtualization && (e.ctrlKey || e.metaKey) && e.code === 'KeyF') {
 			toast.error("Native browser search isn't well supported, please use search boxes / ctrl-k / cmd-k instead", {
 				id: 'native-search-warn',
-				icon: <Icon name="alert-triangle" color="red" height={16} width={16} style={{ flexShrink: 0 }} />
+				icon: <Icon name="alert-triangle" className="text-data-down" height={16} width={16} style={{ flexShrink: 0 }} />
 			})
 		}
 	})

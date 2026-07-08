@@ -355,7 +355,7 @@ export function Select(props: ISelect) {
 				) : (
 					<>{label}</>
 				)}
-				<Ariakit.SelectArrow />
+				<Ariakit.SelectArrow className="text-tertiary" />
 			</Ariakit.Select>
 			<Ariakit.SelectPopover
 				unmountOnHide={unmountOnHide}

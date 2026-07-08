@@ -174,7 +174,7 @@ const NameColumn = (route: string) =>
 					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 					{row.original.warning ? (
 						<Tooltip content={row.original.warning}>
-							<Icon name="alert-triangle" height={14} width={14} className="shrink-0 text-(--warning)" />
+							<Icon name="alert-triangle" height={14} width={14} className="shrink-0 text-warning" />
 						</Tooltip>
 					) : null}
 				</span>

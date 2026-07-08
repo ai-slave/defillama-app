@@ -106,7 +106,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 										name="chevron-down"
 										height={16}
 										width={16}
-										className="relative top-0.5 -ml-3 transition-transform duration-100 group-open:rotate-180"
+										className="relative top-0.5 -ml-3 text-tertiary transition-transform duration-100 group-open:rotate-180"
 									/>
 									<span className="ml-auto font-jetbrains">
 										{formattedNum(asset.amount, false)} {asset.ticker}
@@ -288,7 +288,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 						<Suspense fallback={<div className="h-[480px]" />}>
 							<CandlestickChart data={props.ohlcvChartData} />
 						</Suspense>
-						<p className="p-2 body-sm text-tertiary">Source: Yahoo Finance</p>
+						<p className="p-2 body-sm text-secondary">Source: Yahoo Finance</p>
 					</Panel>
 				) : null}
 				{props.totalAssetValueChart != null ? (

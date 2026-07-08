@@ -82,7 +82,7 @@ export function ProtocolInformationCard({
 						target="_blank"
 						rel="noopener noreferrer"
 					>
-						<Icon name="earth" className="size-3" />
+						<Icon name="globe" className="size-3" />
 						<span>Website</span>
 					</a>
 				) : null}

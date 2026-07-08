@@ -259,7 +259,7 @@ export function ChainsWithStablecoins({
 								name="chevron-right"
 								height={20}
 								width={20}
-								className="-mb-5 -ml-5 transition-transform duration-100 group-open:rotate-90"
+								className="-mb-5 -ml-5 text-tertiary transition-transform duration-100 group-open:rotate-90"
 							/>
 							<span className="flex w-full flex-col">
 								<span className="text-(--text-label)">Change (7d)</span>

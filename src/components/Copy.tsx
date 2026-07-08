@@ -28,7 +28,7 @@ export function CopyHelper({ toCopy, size = 14, ...props }: CopyHelperProps) {
 	}
 	return (
 		<button
-			className="flex shrink-0 items-center p-0.5 hover:opacity-80 focus-visible:opacity-80"
+			className="flex shrink-0 items-center p-0.5 text-secondary hover:text-primary focus-visible:text-primary"
 			onClick={() => {
 				void copy()
 			}}

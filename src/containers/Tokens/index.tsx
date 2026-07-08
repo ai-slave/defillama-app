@@ -279,7 +279,7 @@ function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
 
 				{hasPrimaryValueAccrual ? (
 					<div className="flex flex-col gap-1 rounded-md border border-green-600/30 bg-green-600/10 p-2">
-						<div className="label-sm font-medium tracking-wider text-tertiary uppercase">Primary Value Accrual</div>
+						<div className="label-sm font-medium tracking-wider text-secondary uppercase">Primary Value Accrual</div>
 						{rights.primaryValue !== null ? (
 							<div className="text-sm font-semibold text-green-700 dark:text-green-400">{rights.primaryValue}</div>
 						) : null}
@@ -593,7 +593,7 @@ const expanderColumn: ColumnDef<TokensTableRow> = columnHelper.display({
 					name="chevron-down"
 					height={12}
 					width={12}
-					className={`transition-transform duration-100 ${isExpanded ? 'rotate-180' : ''}`}
+					className={`text-tertiary transition-transform duration-100 ${isExpanded ? 'rotate-180' : ''}`}
 				/>
 			</Button>
 		)

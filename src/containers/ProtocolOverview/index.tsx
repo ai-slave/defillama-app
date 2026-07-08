@@ -248,7 +248,7 @@ const PrimaryValue = ({
 						name="chevron-down"
 						height={16}
 						width={16}
-						className="relative top-0.5 transition-transform duration-100 group-open:rotate-180"
+						className="relative top-0.5 text-tertiary transition-transform duration-100 group-open:rotate-180"
 					/>
 				</span>
 			</summary>

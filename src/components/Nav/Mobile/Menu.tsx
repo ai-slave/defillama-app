@@ -67,7 +67,7 @@ export function Menu({
 					<details className="group mb-3">
 						<summary className={`${navSummaryStyles} label-sm`}>
 							<span>Old Menu</span>
-							<Icon name="chevron-down" className="size-4 shrink-0 group-open:rotate-180" />
+							<Icon name="chevron-down" className="size-4 shrink-0 text-tertiary group-open:rotate-180" />
 						</summary>
 						<div className="border-l border-subtle pl-2 group-open:border-l">
 							{oldMetricLinks.map(({ name, route, pages }: TOldNavLink) => (
@@ -76,7 +76,10 @@ export function Menu({
 										<details className="group/second">
 											<summary className={navSummaryStyles}>
 												<span>{name}</span>
-												<Icon name="chevron-down" className="size-4 shrink-0 group-open/second:rotate-180" />
+												<Icon
+													name="chevron-down"
+													className="size-4 shrink-0 text-tertiary group-open/second:rotate-180"
+												/>
 											</summary>
 											<div className="border-l border-subtle pl-2">
 												{pages.map(({ name: pageName, route: pageRoute }) => (

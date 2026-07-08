@@ -417,7 +417,7 @@ export function SelectWithCombobox({
 					) : (
 						<span>{label}</span>
 					)}
-					<Ariakit.SelectArrow />
+					<Ariakit.SelectArrow className="text-tertiary" />
 				</Ariakit.Select>
 				<Ariakit.SelectPopover
 					unmountOnHide={unmountOnHide}

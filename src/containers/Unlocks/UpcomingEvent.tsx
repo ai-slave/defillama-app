@@ -302,8 +302,8 @@ export const UpcomingEvent = ({
 		const iconSize = variant === 'protocol' ? 14 : 16
 		const rowClass = variant === 'protocol' ? 'flex flex-col gap-0.5' : 'flex flex-col gap-1'
 		const lineClass = variant === 'protocol' ? 'body-md text-primary' : 'text-sm'
-		const subLineClass = variant === 'protocol' ? 'body-sm text-secondary' : 'text-xs text-tertiary'
-		const suffixClass = variant === 'protocol' ? 'body-sm text-secondary' : 'text-xs text-tertiary'
+		const subLineClass = variant === 'protocol' ? 'body-sm text-secondary' : 'text-xs text-secondary'
+		const suffixClass = variant === 'protocol' ? 'body-sm text-tertiary' : 'text-xs text-tertiary'
 		const valueClass = variant === 'protocol' ? '' : 'font-medium'
 		const isLinearPerDay = item.unlockType === 'linear' && item.displayUnit === 'per day'
 		const isOngoing = item.endTime != null && nowSec >= item.timestamp && nowSec <= item.endTime

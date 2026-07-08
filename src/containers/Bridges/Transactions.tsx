@@ -805,7 +805,7 @@ function TransactionsTable({
 
 function PagerButton({ children, disabled, onClick, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
 	return (
-		<Button type="button" onClick={onClick} disabled={disabled} square {...rest}>
+		<Button type="button" variant="ghost" onClick={onClick} disabled={disabled} square {...rest}>
 			{children}
 		</Button>
 	)

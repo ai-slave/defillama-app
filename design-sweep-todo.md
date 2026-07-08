@@ -38,6 +38,17 @@ Current focused backlog:
 
 - Protocol overview cleanup: `KeyMetrics`, `Flag`, `IncomeStatement`, and remaining
   `/protocol/:protocol` overview card/table/dialog/token chrome.
+- [x] Text-tier + icon consistency sweep (branch `theme/text-tier-icon-consistency`,
+  2026-07-08, from two subagent audits): text-tier decision rule + icon three-role rule
+  codified in design.md; TagGroup/Tab/nav resting text tertiary→secondary (supersedes
+  the segmented-control "reconciled pick"); SmolStats values secondary + bare tertiary
+  qualifier spans (no parens); SelectArrow/QuestionHelper/nestedMenu disclosure pin
+  tertiary centrally; Copy + chip-✕ + pagination icon buttons on ghost ladder (opacity
+  dimming removed); status icons on `text-warning`/`text-data-down`; bulk pass pinned
+  colorless expand/accordion chevrons to tertiary. Out of scope, recorded: Yields
+  (VaultRisk tertiary methodology notes, WatchlistView tabs, pool-page toggles,
+  borrow.tsx tabs/trigger — excluded surfaces), MarketMakers `TabIcons.tsx` bespoke
+  SVG set (bypasses tokens; needs its own pass if ever swept).
 - DialogShell pass: mobile dialogs should become bottom sheets, with smooth slide
   animation, shared close-button chrome, footer sizing, headings, and internal scroll
   regions.

@@ -196,7 +196,7 @@ export function TokenPageHero({
 							name="chevron-down"
 							height={18}
 							width={18}
-							className="transition-transform duration-100 group-open/price:rotate-180"
+							className="text-tertiary transition-transform duration-100 group-open/price:rotate-180"
 						/>
 					</summary>
 					<div className="mt-3 flex flex-col">

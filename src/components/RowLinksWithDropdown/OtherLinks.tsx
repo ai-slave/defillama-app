@@ -60,7 +60,7 @@ export function OtherLinks({ options, name, isActive, className }: IProps) {
 					}`}
 				>
 					<span>{name}</span>
-					<Icon name="chevron-down" className="size-3 shrink-0" />
+					<Icon name="chevron-down" className="size-3 shrink-0 text-tertiary" />
 				</Ariakit.MenuButton>
 
 				<Ariakit.Menu

@@ -241,7 +241,7 @@ export function PaginatedTable<T extends RowData>({
 										aria-label="Go to first page"
 										onClick={() => startTransition(() => table.setPageIndex(0))}
 										disabled={interactionDisabled || !table.getCanPreviousPage()}
-										className="rounded-md border border-subtle p-2 text-sm transition-colors hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:opacity-50"
+										className="rounded-md border border-subtle p-2 text-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary disabled:cursor-not-allowed disabled:opacity-50"
 									>
 										<Icon name="chevrons-left" height={16} width={16} />
 									</button>
@@ -250,7 +250,7 @@ export function PaginatedTable<T extends RowData>({
 										aria-label="Go to previous page"
 										onClick={() => startTransition(() => table.previousPage())}
 										disabled={interactionDisabled || !table.getCanPreviousPage()}
-										className="rounded-md border border-subtle p-2 text-sm transition-colors hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:opacity-50"
+										className="rounded-md border border-subtle p-2 text-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary disabled:cursor-not-allowed disabled:opacity-50"
 									>
 										<Icon name="chevron-left" height={16} width={16} />
 									</button>
@@ -262,7 +262,7 @@ export function PaginatedTable<T extends RowData>({
 										aria-label="Go to next page"
 										onClick={() => startTransition(() => table.nextPage())}
 										disabled={interactionDisabled || !table.getCanNextPage()}
-										className="rounded-md border border-subtle p-2 text-sm transition-colors hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:opacity-50"
+										className="rounded-md border border-subtle p-2 text-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary disabled:cursor-not-allowed disabled:opacity-50"
 									>
 										<Icon name="chevron-right" height={16} width={16} />
 									</button>
@@ -271,7 +271,7 @@ export function PaginatedTable<T extends RowData>({
 										aria-label="Go to last page"
 										onClick={() => startTransition(() => table.setPageIndex(Math.max(0, table.getPageCount() - 1)))}
 										disabled={interactionDisabled || !table.getCanNextPage()}
-										className="rounded-md border border-subtle p-2 text-sm transition-colors hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:opacity-50"
+										className="rounded-md border border-subtle p-2 text-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary disabled:cursor-not-allowed disabled:opacity-50"
 									>
 										<Icon name="chevrons-right" height={16} width={16} />
 									</button>

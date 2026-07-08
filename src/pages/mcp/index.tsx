@@ -51,7 +51,7 @@ export default function MCP() {
 				</main>
 
 				<footer className="border-t border-(--cards-border)">
-					<p className="mx-auto max-w-[1100px] px-4 pt-6 text-center text-[13px] text-(--text-tertiary) sm:px-6 md:px-8">
+					<p className="mx-auto max-w-[1100px] px-4 pt-6 text-center text-[13px] text-secondary sm:px-6 md:px-8">
 						Questions or feedback?{' '}
 						<a
 							href="mailto:support@defillama.com"
@@ -60,7 +60,7 @@ export default function MCP() {
 							support@defillama.com
 						</a>
 					</p>
-					<div className="mx-auto flex max-w-[1100px] flex-wrap items-center justify-center gap-4 px-4 py-6 text-[13px] text-(--text-tertiary) sm:px-6 md:justify-between md:px-8">
+					<div className="mx-auto flex max-w-[1100px] flex-wrap items-center justify-center gap-4 px-4 py-6 text-[13px] text-secondary sm:px-6 md:justify-between md:px-8">
 						<span>&copy; {new Date().getFullYear()} DefiLlama</span>
 						<div className="flex gap-5">
 							<BasicLink href="/privacy-policy" className="transition-colors hover:text-(--text-secondary)">

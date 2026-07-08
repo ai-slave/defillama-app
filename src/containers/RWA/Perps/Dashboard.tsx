@@ -1147,7 +1147,7 @@ function RWAPerpsActiveFilterPills({ pills }: { pills: RWAPerpsActiveFilterPill[
 					className="hover-wash group flex items-center gap-1 rounded-full border border-brand bg-brand-muted px-2 py-0.5 label-sm text-primary"
 				>
 					<span>{pill.label}</span>
-					<Icon name="x" className="size-3 opacity-60 group-hover:opacity-100" />
+					<Icon name="x" className="size-3 text-secondary group-hover:text-primary" />
 				</button>
 			))}
 		</div>

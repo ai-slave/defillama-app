@@ -244,7 +244,7 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 								</tbody>
 							</table>
 						</div>
-						<p className="body-sm text-tertiary">
+						<p className="body-sm text-secondary">
 							All values are aggregated across each market maker’s active engagements tracked by Forgd and are
 							recalculated dynamically based on the selected timeframe.
 						</p>

@@ -15,7 +15,7 @@ export const navSummaryStyles =
 	'-ml-1.5 flex items-center justify-between gap-3 rounded-md p-1.5 text-secondary hover:bg-hover-row focus-visible:bg-hover-row'
 
 export const navActionStyles =
-	'rounded-md px-2 py-1 label-sm tracking-wide text-tertiary uppercase hover:bg-hover-row focus-visible:bg-hover-row'
+	'rounded-md px-2 py-1 label-sm tracking-wide text-secondary uppercase hover:bg-hover-row focus-visible:bg-hover-row'
 
 export const freeTrialBadgeStyles =
 	'hover-wash relative inline-flex shrink-0 items-center rounded-full border border-medium bg-surface-elevated-1 px-2 py-0.5 label-xs font-semibold tracking-wide text-warning'

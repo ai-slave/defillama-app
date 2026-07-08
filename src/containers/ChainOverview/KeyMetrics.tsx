@@ -377,7 +377,7 @@ function RaisesSection({ chainRaises }: { chainRaises: IChainOverviewData['chain
 						<span className="body-md text-tertiary">{dayjs(raise.date * 1000).format('MMM D, YYYY')}</span>
 						<span className="mono-md">{formattedNum(raise.amount * 1_000_000, true)}</span>
 					</span>
-					<span className="flex flex-wrap justify-between gap-1 body-md text-tertiary">
+					<span className="flex flex-wrap justify-between gap-1 body-md text-secondary">
 						<span>Round: {raise.round}</span>
 						{(raise as any).leadInvestors?.length || (raise as any).otherInvestors?.length ? (
 							<span>

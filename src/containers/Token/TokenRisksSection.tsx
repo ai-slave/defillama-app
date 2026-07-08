@@ -308,19 +308,19 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 							name="chevron-down"
 							height={16}
 							width={16}
-							className="shrink-0 transition-transform duration-200 group-open:rotate-180"
+							className="shrink-0 text-tertiary transition-transform duration-200 group-open:rotate-180"
 						/>
 					</summary>
-					<p className="mt-2 body-md text-secondary">
+					<p className="mt-2 body-md">
 						Showing collateral exposure for {tokenSymbol} on{' '}
-						<span className="font-medium text-primary">{selectedCandidateDisplayName}</span>.{' '}
-						<span className="font-medium text-primary">Max Borrowable</span> uses the backend&apos;s liquidity-bounded
+						<span className="font-medium">{selectedCandidateDisplayName}</span>.{' '}
+						<span className="font-medium">Max Borrowable</span> uses the backend&apos;s liquidity-bounded
 						borrow-capacity metric (`collateralMaxBorrowUsdLiquidity`) for the maximum additional USD debt that can be
-						issued against the asset right now. <span className="font-medium text-primary">Bad Debt at $0</span> is the
-						minimum known bad debt if the collateral asset price goes to zero; null rows are excluded from this total
-						rather than treated as zero, so totals may remain lower bounds.
+						issued against the asset right now. <span className="font-medium">Bad Debt at $0</span> is the minimum known
+						bad debt if the collateral asset price goes to zero; null rows are excluded from this total rather than
+						treated as zero, so totals may remain lower bounds.
 					</p>
-					<ul className="mt-3 list-disc space-y-1 pl-5 body-md text-secondary">
+					<ul className="mt-3 list-disc space-y-1 pl-5 body-md">
 						{riskData.limitations.map((limitation) => (
 							<li key={limitation}>{limitation}</li>
 						))}
@@ -334,10 +334,10 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 							name="chevron-down"
 							height={16}
 							width={16}
-							className="shrink-0 transition-transform duration-200 group-open:rotate-180"
+							className="shrink-0 text-tertiary transition-transform duration-200 group-open:rotate-180"
 						/>
 					</summary>
-					<p className="mt-2 body-md text-secondary">
+					<p className="mt-2 body-md">
 						Each row is one protocol-chain exposure for {tokenSymbol} as collateral. Bad debt at $0 totals remain lower
 						bounds when a row is marked partial.
 					</p>

@@ -350,7 +350,7 @@ export default function Correlations({ coinsData }: CorrelationsProps) {
 				) : (
 					<div className="flex flex-col sm:flex-row">
 						<div className="no-scrollbar flex w-40 shrink-0 flex-col overflow-auto sm:mr-6">
-							<h2 className="flex h-12 items-center px-3.25 text-xs font-medium text-(--text-tertiary)">Tokens</h2>
+							<h2 className="flex h-12 items-center px-3.25 text-xs font-medium text-secondary">Tokens</h2>
 							{coins.map((coin) => (
 								<button
 									key={coin.id}

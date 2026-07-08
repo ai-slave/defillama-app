@@ -73,7 +73,7 @@ export const nestedMenuActionButtonStyles =
 
 export const nestedMenuSearchBlockStyles = 'relative px-4 py-3'
 
-export const nestedMenuDisclosureIconStyles = 'size-4 justify-self-end text-secondary'
+export const nestedMenuDisclosureIconStyles = 'size-4 justify-self-end text-tertiary'
 
 export const nestedMenuHeaderIconButtonStyles =
 	'flex size-10 shrink-0 items-center justify-center rounded-md text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary'

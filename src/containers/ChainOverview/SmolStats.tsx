@@ -24,10 +24,9 @@ export const SmolStats = (props: IChainOverviewData) => {
 									Upcoming Unlocks
 								</Tooltip>
 								{props.unlocks.chart?.length > 0 ? (
-									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-tertiary">{`${formattedNum(
-										props.unlocks.total14d,
-										true
-									)} over 14 days`}</p>
+									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-secondary">
+										{formattedNum(props.unlocks.total14d, true)} <span className="text-tertiary">over 14 days</span>
+									</p>
 								) : null}
 							</div>
 							<UpcomingUnlocksChart
@@ -47,10 +46,9 @@ export const SmolStats = (props: IChainOverviewData) => {
 									DEXs Volume
 								</Tooltip>
 								{props.dexs.chart?.length > 0 ? (
-									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-tertiary">{`${formattedNum(
-										props.dexs.total24h,
-										true
-									)} (24h)`}</p>
+									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-secondary">
+										{formattedNum(props.dexs.total24h, true)} <span className="text-tertiary">24h</span>
+									</p>
 								) : null}
 							</div>
 							<SmolBarChart series={props.dexs.chart} className={'my-auto h-[53px] md:h-[132px] xl:h-[53px]'} />
@@ -67,10 +65,10 @@ export const SmolStats = (props: IChainOverviewData) => {
 									ETF Inflows
 								</Tooltip>
 								{props.etfs?.length > 0 ? (
-									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-tertiary">{`${formattedNum(
-										props.etfs[props.etfs.length - 1][1],
-										true
-									)} (24h)`}</p>
+									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-secondary">
+										{formattedNum(props.etfs[props.etfs.length - 1][1], true)}{' '}
+										<span className="text-tertiary">24h</span>
+									</p>
 								) : null}
 							</div>
 							<SmolBarChart series={props.etfs} className={'my-auto h-[53px] md:h-[132px] xl:h-[53px]'} />
@@ -87,10 +85,9 @@ export const SmolStats = (props: IChainOverviewData) => {
 									DAT Inflows
 								</Tooltip>
 								{props.datInflows.chart?.length > 0 ? (
-									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-tertiary">{`${formattedNum(
-										props.datInflows.total30d,
-										true
-									)} (30d)`}</p>
+									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-secondary">
+										{formattedNum(props.datInflows.total30d, true)} <span className="text-tertiary">30d</span>
+									</p>
 								) : null}
 							</div>
 							<SmolBarChart
@@ -113,10 +110,9 @@ export const SmolStats = (props: IChainOverviewData) => {
 						DEXs Volume
 					</Tooltip>
 					{props.dexs.chart?.length > 0 ? (
-						<p className="overflow-hidden text-ellipsis whitespace-nowrap text-tertiary">{`${formattedNum(
-							props.dexs.total24h,
-							true
-						)} (24h)`}</p>
+						<p className="overflow-hidden text-ellipsis whitespace-nowrap text-secondary">
+							{formattedNum(props.dexs.total24h, true)} <span className="text-tertiary">24h</span>
+						</p>
 					) : null}
 					<SmolBarChart series={props.dexs.chart} />
 				</div>
@@ -134,7 +130,9 @@ export const SmolStats = (props: IChainOverviewData) => {
 							Fees Paid
 						</Tooltip>
 						{props.chainFees.feesGenerated24h != null ? (
-							<p className="text-tertiary">{`${formattedNum(props.chainFees.feesGenerated24h ?? 0, true)} (24h)`}</p>
+							<p className="text-secondary">
+								{formattedNum(props.chainFees.feesGenerated24h ?? 0, true)} <span className="text-tertiary">24h</span>
+							</p>
 						) : null}
 					</div>
 					<FeesGeneratedChart series={props.chainFees.topProtocolsChart} />
@@ -154,10 +152,9 @@ export const SmolStats = (props: IChainOverviewData) => {
 					</Tooltip>
 					{props.stablecoins.mcap != null ? (
 						<>
-							<p className="overflow-hidden text-ellipsis whitespace-nowrap text-tertiary">{`${formattedNum(
-								props.stablecoins.mcap,
-								true
-							)}`}</p>
+							<p className="overflow-hidden text-ellipsis whitespace-nowrap text-secondary">
+								{formattedNum(props.stablecoins.mcap, true)}
+							</p>
 							<p className="flex items-center gap-1 text-xs">
 								<span
 									className={`overflow-hidden text-ellipsis whitespace-nowrap ${

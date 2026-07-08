@@ -308,7 +308,7 @@ export function ChainChartPanel({
 														)}
 														<span>{option.label}</span>
 														{option.active ? (
-															<Icon name="x" className="size-3 opacity-50 group-hover:opacity-100" />
+															<Icon name="x" className="size-3 text-secondary group-hover:text-primary" />
 														) : null}
 													</button>
 												)

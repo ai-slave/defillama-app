@@ -21,15 +21,16 @@ export function TokenDeferredPaginationControls({
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-2">
 			<div className="flex items-center gap-2">
-				<Button type="button" square size="md" aria-label="Go to first page" disabled>
+				<Button type="button" variant="ghost" square size="md" aria-label="Go to first page" disabled>
 					<Icon name="chevrons-left" height={16} width={16} />
 				</Button>
-				<Button type="button" square size="md" aria-label="Go to previous page" disabled>
+				<Button type="button" variant="ghost" square size="md" aria-label="Go to previous page" disabled>
 					<Icon name="chevron-left" height={16} width={16} />
 				</Button>
 				<span className="label-sm text-secondary">{`Page 1 of ${pageCount}`}</span>
 				<Button
 					type="button"
+					variant="ghost"
 					square
 					size="md"
 					aria-label="Go to next page"
@@ -40,6 +41,7 @@ export function TokenDeferredPaginationControls({
 				</Button>
 				<Button
 					type="button"
+					variant="ghost"
 					square
 					size="md"
 					aria-label="Go to last page"
