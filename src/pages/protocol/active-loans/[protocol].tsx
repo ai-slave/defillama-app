@@ -78,7 +78,6 @@ function MultiSeriesChartCard({
 						labelType="smol"
 						variant="filter"
 						size="md"
-						portal
 					/>
 				) : null}
 				<ChartExportButtons
@@ -141,7 +140,6 @@ function TokensBreakdownPieChartCard({
 						labelType="smol"
 						variant="filter"
 						size="md"
-						portal
 					/>
 				) : null}
 				<ChartExportButtons

@@ -11,6 +11,7 @@ import type { IYieldsOptimizerTableRow } from '~/containers/Yields/Tables/types'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { nestedMenuActionStyles } from '~/ui/Popover'
 import { TableToolbar } from '~/ui/Toolbar'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
 import { filterBorrowRows } from './TokenBorrowSection.utils'
@@ -218,6 +219,11 @@ export function TokenBorrowSection({
 	)
 
 	const hasActiveFilters = selectedChains.length !== chainList.length || minAvailable !== '' || maxAvailable !== ''
+	const resetFilters = React.useCallback(() => {
+		setSelectedChains(null)
+		setMinAvailable('')
+		setMaxAvailable('')
+	}, [setMaxAvailable, setMinAvailable, setSelectedChains])
 	const hasPartialData = !data && totalCount > rows.length
 	const sortingKey = React.useMemo(() => JSON.stringify(sortingByTab[activeTab]), [activeTab, sortingByTab])
 	const hasNonDefaultSorting = sortingKey !== DEFAULT_BORROW_TABLE_SORTING_KEY
@@ -352,16 +358,12 @@ export function TokenBorrowSection({
 												setMaxAvailable={setMaxAvailable}
 												nestedMenu={nestedMenu}
 											/>
-											{hasActiveFilters ? (
-												<Button
-													type="button"
-													size="md"
-													onClick={() => {
-														setSelectedChains(null)
-														setMinAvailable('')
-														setMaxAvailable('')
-													}}
-												>
+											{hasActiveFilters && nestedMenu ? (
+												<button type="button" onClick={resetFilters} className={nestedMenuActionStyles}>
+													Reset filters
+												</button>
+											) : hasActiveFilters ? (
+												<Button type="button" size="md" onClick={resetFilters}>
 													Reset filters
 												</Button>
 											) : null}

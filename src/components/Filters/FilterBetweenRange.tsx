@@ -49,7 +49,7 @@ export function FilterBetweenRange({
 
 	if (nestedMenu) {
 		return (
-			<NestedMenu label={trigger} render={<button type="button" />} menuPortal>
+			<NestedMenu label={trigger} render={<button type="button" />}>
 				<Form
 					onSubmit={handleSubmit}
 					onClear={onClear}
@@ -92,6 +92,7 @@ export function FilterBetweenRange({
 				overflowPadding={16} // distance from the boundary edges
 				wrapperProps={{ className: popoverMobileWrapperClassName }}
 				className={popoverSurfaceStyles}
+				portal
 			>
 				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 					<Icon name="x" className="size-5" />

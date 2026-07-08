@@ -106,7 +106,7 @@ export const MultiSelectCombobox = ({
 				preventBodyScroll
 				gutter={6}
 				wrapperProps={{ className: popoverMobileWrapperClassName }}
-				className={`${popoverSurfaceStyles} thin-scrollbar`}
+				className={popoverSurfaceStyles}
 				portal
 				sameWidth
 			>

@@ -173,7 +173,7 @@ export function RecentlyListedProtocolsTable({
 								size="md"
 							/>
 						) : null}
-						<TVLRange triggerClassName="w-full sm:w-auto" size="md" />
+						<TVLRange size="md" />
 					</div>
 
 					<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: csvFileName })} smol size="md" />

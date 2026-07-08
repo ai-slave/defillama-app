@@ -1037,7 +1037,6 @@ function RWASelectDraftEditor({
 			}
 			label="Values"
 			labelType="smol"
-			portal
 			variant="filter-responsive"
 			visibleOptionLimit={null}
 			selectAllScope="matches"

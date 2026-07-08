@@ -68,7 +68,8 @@ export function OtherLinks({ options, name, isActive, className }: IProps) {
 					hideOnInteractOutside
 					gutter={6}
 					wrapperProps={{ className: popoverMobileWrapperClassName }}
-					className={`${menuSurfaceStyles} lg:h-full`}
+					className={menuSurfaceStyles}
+					portal
 				>
 					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 						<Icon name="x" className="size-5" />

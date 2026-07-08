@@ -24,6 +24,7 @@ import { useHolderStats, useVolatility } from '~/containers/Yields/queries.clien
 import { clearYieldsQueries, hasActiveYieldsQueries } from '~/containers/Yields/queryState'
 import { YieldsPoolsTable } from '~/containers/Yields/Tables/Pools'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
+import { nestedMenuActionStyles } from '~/ui/Popover'
 import { sluggifyProtocol } from '~/utils/cache-client'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -223,8 +224,13 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 									<ColumnFilters enabledColumns={ALL_POOL_COLUMN_QUERY_KEYS} nestedMenu={nestedMenu} />
 									{hasActiveFilters && (
 										<button
+											type="button"
 											onClick={resetFilters}
-											className="rounded-md bg-(--btn-bg) px-3 py-2 text-xs text-(--text-primary) hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)"
+											className={
+												nestedMenu
+													? nestedMenuActionStyles
+													: 'rounded-md bg-(--btn-bg) px-3 py-2 text-xs text-(--text-primary) hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)'
+											}
 										>
 											Reset filters
 										</button>

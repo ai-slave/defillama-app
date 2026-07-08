@@ -42,6 +42,7 @@ export function Menu({
 	const rowStyles = popoverVariant === 'legacy' ? legacyPopoverRowStyles : popoverRowWithBorderStyles
 	const externalRowStyles =
 		popoverVariant === 'legacy' ? legacyPopoverExternalRowStyles : `${popoverRowWithBorderStyles} block`
+	const shouldPortalMenu = portal ?? true
 
 	return (
 		<Ariakit.MenuProvider>
@@ -58,7 +59,7 @@ export function Menu({
 				gutter={8}
 				wrapperProps={{ className: popoverMobileWrapperClassName }}
 				className={surfaceStyles}
-				portal={portal || false}
+				portal={shouldPortalMenu}
 			>
 				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 					<Icon name="x" className="size-5" />

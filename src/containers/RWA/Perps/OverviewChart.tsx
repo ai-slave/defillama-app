@@ -322,7 +322,6 @@ export function RWAPerpsOverviewChart({
 						labelType="smol"
 						variant="filter"
 						size="md"
-						portal
 					/>
 				) : null}
 				<ChartExportButtons

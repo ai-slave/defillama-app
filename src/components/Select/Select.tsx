@@ -11,6 +11,10 @@ import {
 	legacyPopoverSelectCheckStyles,
 	legacySelectPopoverRowStyles,
 	legacySelectPopoverSurfaceStyles,
+	nestedMenuActionBarStyles,
+	nestedMenuActionButtonStyles,
+	nestedMenuSeeMoreStyles,
+	nestedMenuSelectRowStyles,
 	popoverActionBarStyles,
 	popoverActionButtonStyles,
 	popoverMultiSelectCheckStyles,
@@ -198,10 +202,15 @@ export function Select(props: ISelect) {
 	)
 	const useLegacyPopover = popoverVariant === 'legacy' || variant === 'pro'
 	const actionBarStyles = useLegacyPopover ? legacyPopoverActionBarStyles : popoverActionBarStyles
+	const nestedActionBarStyles = useLegacyPopover ? legacyPopoverActionBarStyles : nestedMenuActionBarStyles
 	const actionButtonStyles = useLegacyPopover ? legacyPopoverActionButtonStyles : popoverActionButtonStyles
+	const nestedActionButtonStyles = useLegacyPopover ? legacyPopoverActionButtonStyles : nestedMenuActionButtonStyles
 	const rowStyles = useLegacyPopover ? legacySelectPopoverRowStyles : popoverRowWithBorderStyles
+	const nestedRowStyles = useLegacyPopover ? legacySelectPopoverRowStyles : nestedMenuSelectRowStyles
 	const seeMoreStyles = useLegacyPopover ? legacyPopoverSeeMoreStyles : popoverSeeMoreStyles
+	const nestedSeeMoreStyles = useLegacyPopover ? legacyPopoverSeeMoreStyles : nestedMenuSeeMoreStyles
 	const surfaceStyles = useLegacyPopover ? legacySelectPopoverSurfaceStyles : popoverSurfaceStyles
+	const shouldPortalPopover = portal ?? true
 
 	const selectRef = React.useRef<HTMLDivElement>(null)
 	const nestedMenuRef = React.useRef<HTMLDivElement>(null)
@@ -251,11 +260,11 @@ export function Select(props: ISelect) {
 				>
 					<div ref={nestedMenuRef}>
 						{showCheckboxes ? (
-							<span className={actionBarStyles}>
-								<button onClick={clearAll} className={actionButtonStyles}>
+							<span className={nestedActionBarStyles}>
+								<button type="button" onClick={clearAll} className={nestedActionButtonStyles}>
 									Deselect All
 								</button>
-								<button onClick={toggleAll} className={actionButtonStyles}>
+								<button type="button" onClick={toggleAll} className={nestedActionButtonStyles}>
 									Select All
 								</button>
 							</span>
@@ -280,7 +289,7 @@ export function Select(props: ISelect) {
 									/>
 								}
 								hideOnClick={false}
-								className={rowStyles}
+								className={nestedRowStyles}
 							>
 								{typeof option === 'string' ? (
 									<span>{option}</span>
@@ -300,7 +309,7 @@ export function Select(props: ISelect) {
 								value="__see_more__"
 								setValueOnClick={false}
 								hideOnClick={false}
-								className={seeMoreStyles}
+								className={nestedSeeMoreStyles}
 								onClick={handleSeeMore}
 							>
 								See more...
@@ -354,7 +363,7 @@ export function Select(props: ISelect) {
 				gutter={6}
 				wrapperProps={{ className: popoverMobileWrapperClassName }}
 				className={surfaceStyles}
-				portal={portal || false}
+				portal={shouldPortalPopover}
 				ref={selectRef}
 			>
 				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
@@ -365,10 +374,10 @@ export function Select(props: ISelect) {
 					<>
 						{showCheckboxes ? (
 							<span className={actionBarStyles}>
-								<button onClick={clearAll} className={actionButtonStyles}>
+								<button type="button" onClick={clearAll} className={actionButtonStyles}>
 									Deselect All
 								</button>
-								<button onClick={toggleAll} className={actionButtonStyles}>
+								<button type="button" onClick={toggleAll} className={actionButtonStyles}>
 									Select All
 								</button>
 							</span>

@@ -159,7 +159,6 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 							labelType="smol"
 							variant="filter"
 							size="md"
-							portal
 						/>
 					</div>
 					{hasSavedTokens && isLoading ? (

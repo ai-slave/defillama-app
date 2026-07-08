@@ -7,6 +7,7 @@ import { Select } from '~/components/Select/Select'
 import { useRangeFilter } from '~/hooks/useRangeFilter'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { nestedMenuActionStyles } from '~/ui/Popover'
 import {
 	resolveSelectedStablecoinFilterKeys,
 	stablecoinAttributeOptions,
@@ -177,16 +178,16 @@ function ResetAllStablecoinFilters({ pathname, nestedMenu }: { pathname: string;
 		if (Array.isArray(value) ? value.length > 0 : value !== '') hasActiveQueryFilters = true
 	}
 
-	return (
-		<Button
-			type="button"
-			size="md"
-			onClick={() => {
-				void router.push({ pathname, query: chartQuery }, undefined, { shallow: true })
-			}}
-			disabled={!hasActiveQueryFilters}
-			className={nestedMenu ? 'w-full justify-between' : undefined}
-		>
+	const resetFilters = () => {
+		void router.push({ pathname, query: chartQuery }, undefined, { shallow: true })
+	}
+
+	return nestedMenu ? (
+		<button type="button" onClick={resetFilters} disabled={!hasActiveQueryFilters} className={nestedMenuActionStyles}>
+			Reset all filters
+		</button>
+	) : (
+		<Button type="button" size="md" onClick={resetFilters} disabled={!hasActiveQueryFilters}>
 			Reset all filters
 		</Button>
 	)

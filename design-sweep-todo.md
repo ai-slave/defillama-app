@@ -212,25 +212,39 @@ any broad migration from this list.
 - [ ] MetricChip adoption: Chain/Protocol done; RWA Perps Contract and Token Overview
       option chips use the shared `metricOptionChipStyles` in the working tree. DAT and
       any remaining route-local selected metric chips still need audit/live verification.
-- [ ] PopoverSurface v2 — source recipe shipped in `src/ui/Popover.ts` and initial shared
-      consumers (`Select`, `SelectWithCombobox`, `MultiSelectCombobox`, `Menu`/direct
-      default popovers, `FailedDataPopover`) moved toward the paddingless contract:
+- [ ] PopoverSurface v2 — source recipe shipped in `src/ui/Popover.ts` and shared
+      consumers (`Select`, `SelectWithCombobox`, `MultiSelectCombobox`, `Menu`,
+      `NestedMenu`, plus in-scope direct default popovers) moved to the paddingless
+      contract:
       surface owns bg/border/radius/overflow only; search blocks, action rows, footers,
       and list rows own vertical spacing; multi-select rows always use compact 14px
       checkboxes, filled blue when selected and empty `border-strong` when unselected;
       single-select rows use check-only with no empty box/circle.
+      Mobile drawers keep fixed-bottom placement on the Ariakit wrapper and keep the
+      slide transform on the drawer surface; do not add `transform-none` to animated
+      drawer surfaces. Shared drawers portal to body by default (`portal={false}` is the
+      explicit opt-out) so mobile fixed-bottom placement is viewport-based, not
+      page-section based.
       Keep unchecked until browser verification covers default select, combobox, menu,
       mobile drawer, and the remaining direct popover copies.
       2026-07-07 follow-up: Equities numeric operator select now uses shared popover surface/
       row/check recipes; Equities categorical filter combobox overrides no longer add a
-      popover shadow. Remaining direct copies include CEX DateFilter, bridge protocol
-      selectors, mobile nav/settings, and assorted route-specific filters.
+      popover shadow. CEX DateFilter, bridge protocol selectors, mobile nav/settings,
+      token usage, raises search, compare menu, and export/embed direct popovers moved
+      to the shared fixed-wrapper/portal rule in the working tree. Remaining direct
+      copies are mainly older bespoke or excluded surfaces such as Yields search/saved
+      filters, app/global search special cases, Downloads/Admin/Editor, ProDashboard,
+      and LlamaAI.
 - [ ] DialogShell adoption — `src/ui/Dialog.tsx` has `dialogSurfaceStyles` +
       `DialogHeading`; AddToDashboardModal, Chain/Protocol chart metric dialogs,
       ProtocolRankings CustomColumnModal, RWA Perps Contract dialogs, and Token
       Overview metric dialogs use the shared surface. Remaining direct/legacy
       examples include ProtocolOverview Flag and MCP command dialogs plus mobile/
       route-specific menus; verify before deleting the legacy `dialog` utility.
+      Follow-up: dialog/bottom-sheet animation parity is still undecided. Add to
+      Dashboard uses the dialog recipe, not the popover drawer recipe, so smoothness/
+      breakpoint changes should happen in a focused DialogShell pass rather than this
+      popover session.
 - [x] IconHitTarget / TableIconHitTarget helper exists in `src/ui/IconHitTarget.tsx` for
       visual 16px icons with `p-1 -m-1` hit area.
 - [ ] IconHitTarget adoption — first targets: protocol rankings bookmark/accordion/
@@ -507,23 +521,29 @@ Duplication (est. 900–1,200 deletable lines):
       removed from in-scope table/search fields; token-rights shell/spacing/typography
       are in scope, while green/warning pill/card output remains guarded.
 - [ ] Select/menu surface stack: Select.tsx, SelectWithCombobox.tsx, Menu.tsx,
-      NestedMenu.tsx, and MultiSelectCombobox see-more row converge on the popover
-      recipe (`rounded-xl` border-medium bg-surface-elevated-1, paddingless surface,
-      rows px-3 py-2 body-sm hover:bg-hover-row). Multi-select rows should use the
-      compact 14px checkbox footprint for both states: filled blue when selected,
-      empty `border-strong` when unselected. Single-select rows should use a
-      check-only state with no empty box/circle. ProDashboard, Yields, and LlamaAI
-      shared-component callers are explicitly pinned to `popoverVariant="legacy"` or
-      `variant="pro"` so excluded surfaces do not change during this sweep. Live
-      verification still pending before promoting the broader PopoverSurface item.
+      NestedMenu.tsx, and MultiSelectCombobox now share the paddingless popover
+      surface recipe (`rounded-xl` border-medium bg-surface-elevated-1, surface owns
+      border/radius/overflow only). Regular popover rows use `px-3 py-2 body-sm`;
+      nested-menu drawer rows use the dedicated `px-4 py-2.5 body-sm` recipe with a
+      fixed right icon/check column. Multi-select rows use the compact 14px checkbox
+      footprint for both states: filled blue when selected, empty `border-strong`
+      when unselected. Single-select rows use a check-only state with no empty
+      box/circle. Select/Deselect is a normal-flow two-column action bar with
+      centered labels; reset/download footer actions are left-aligned rows.
+      ProDashboard, Yields, and LlamaAI shared-component callers are explicitly
+      pinned to `popoverVariant="legacy"` or `variant="pro"` so excluded surfaces do
+      not change during this sweep. Live verification is still the gate before
+      promoting the broader PopoverSurface item.
 - [ ] Range/date popovers: `FilterBetweenRange` and CEX DateFilter now use Input/Button
       plus shared popover surface recipes in the working tree, but still need live
       verification. Clear/Apply footer rows must not horizontally overflow the popover;
       button sizing should be contained by the row across TVL Range, available-range,
       and CEX date filters.
-- [ ] Dialog copies: Correlations token picker, Metrics modal, CustomColumnModal,
-      RWA/Perps Contract, TokenOverviewSection, ProtocolOverview Flag, DeFiWatchlist,
-      MCP dialogs still use `className="dialog"` or duplicated dialog shells.
+- [ ] Dialog copies: Correlations token picker, Metrics modal, ProtocolOverview Flag,
+      DeFiWatchlist, Yields IncludeExcludeTokens, RecentProtocols airdrop checker, and
+      MCP dialogs still use `className="dialog"` or duplicated dialog shells. Account/
+      subscription, ProDashboard, LlamaAI, and editor/download dialogs remain excluded
+      product surfaces unless separately scoped.
 - [ ] Route panel shells: borrow, unlocks, token, stablecoins, bridges, MCP, and any
       remaining CEX market/detail shells still have old `--cards-*` or route-local shells
       that should move to Panel/Card in route-sized chunks. CEX assets/stablecoins

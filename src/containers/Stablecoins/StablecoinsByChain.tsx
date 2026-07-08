@@ -577,7 +577,6 @@ function TokenInflowsChartPanel({
 						labelType="smol"
 						variant="filter"
 						size="md"
-						portal
 					/>
 				) : null}
 			</ChartPanelToolbar>

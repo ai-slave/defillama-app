@@ -9,7 +9,12 @@ import { LocalLoader } from '~/components/Loaders'
 import { CoinsPicker } from '~/containers/Correlations'
 import { buttonStyles } from '~/ui/Button'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
-import { menuSurfaceStyles, popoverRowWithBorderStyles, popoverMobileDismissStyles } from '~/ui/Popover'
+import {
+	menuSurfaceStyles,
+	popoverRowWithBorderStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName
+} from '~/ui/Popover'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { CompareTokenProtocol } from './types'
 
@@ -223,7 +228,14 @@ export function CompareTokens({
 						<span>{compareType.label}</span>
 						<Ariakit.MenuButtonArrow />
 					</Ariakit.MenuButton>
-					<Ariakit.Menu unmountOnHide hideOnInteractOutside sameWidth className={menuSurfaceStyles}>
+					<Ariakit.Menu
+						unmountOnHide
+						hideOnInteractOutside
+						sameWidth
+						wrapperProps={{ className: popoverMobileWrapperClassName }}
+						className={menuSurfaceStyles}
+						portal
+					>
 						<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 							<Icon name="x" className="size-5" />
 						</Ariakit.PopoverDismiss>

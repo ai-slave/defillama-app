@@ -4,6 +4,7 @@ import { AvailableRange } from '~/components/Filters/AvailableRange'
 import { TVLRange } from '~/components/Filters/TVLRange'
 import { YIELDS_SETTINGS } from '~/contexts/LocalStorage'
 import { Checkbox } from '~/ui/Checkbox'
+import { nestedMenuActionStyles } from '~/ui/Popover'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
 import { APYRange } from './APYRange'
@@ -232,7 +233,7 @@ export function YieldFilterDropdowns({
 					replaceClassName
 					className={
 						nestedMenu
-							? 'flex items-center justify-center gap-1 rounded-md bg-(--link-active-bg) px-3 py-2 text-xs whitespace-nowrap text-white max-sm:mx-3 max-sm:my-6 sm:ml-auto'
+							? nestedMenuActionStyles
 							: 'flex cursor-pointer flex-nowrap items-center gap-2 rounded-md bg-(--btn-bg) px-3 py-2 text-xs text-(--text-primary) hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)'
 					}
 					prepareCsv={prepareCsv}

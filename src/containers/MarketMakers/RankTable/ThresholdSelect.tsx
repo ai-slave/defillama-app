@@ -1,7 +1,13 @@
 import * as Ariakit from '@ariakit/react'
 import { Icon } from '~/components/Icon'
 import { selectTriggerStyles } from '~/components/Select/types'
-import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles, popoverSurfaceStyles } from '~/ui/Popover'
+import {
+	popoverRowWithBorderStyles,
+	popoverSingleSelectCheckStyles,
+	popoverSurfaceStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName
+} from '~/ui/Popover'
 import { THRESHOLDS, type Threshold } from '../constants'
 
 export function ThresholdSelect({ value, setValue }: { value: Threshold; setValue: (value: Threshold) => void }) {
@@ -12,7 +18,15 @@ export function ThresholdSelect({ value, setValue }: { value: Threshold; setValu
 				<span className="hidden min-[713px]:inline">Threshold</span>
 				<Ariakit.SelectArrow />
 			</Ariakit.Select>
-			<Ariakit.SelectPopover gutter={4} className={`${popoverSurfaceStyles} z-50 min-w-[10rem]`}>
+			<Ariakit.SelectPopover
+				gutter={4}
+				wrapperProps={{ className: popoverMobileWrapperClassName }}
+				className={`${popoverSurfaceStyles} z-50 min-w-[10rem]`}
+				portal
+			>
+				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
+					<Icon name="x" className="size-5" />
+				</Ariakit.PopoverDismiss>
 				{THRESHOLDS.map((threshold) => (
 					<Ariakit.SelectItem key={threshold} value={threshold} className={popoverRowWithBorderStyles}>
 						<span>{threshold} Threshold</span>

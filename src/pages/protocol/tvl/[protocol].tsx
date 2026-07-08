@@ -160,7 +160,6 @@ function ChainsChartCard({
 						labelType="smol"
 						variant="filter"
 						size="md"
-						portal
 					/>
 				) : null}
 				<ChartExportButtons
@@ -224,7 +223,6 @@ function TokenLineChartCard({
 						labelType="smol"
 						variant="filter"
 						size="md"
-						portal
 					/>
 				) : null}
 				<ChartExportButtons
@@ -293,7 +291,6 @@ function TokensBreakdownPieChartCard({
 						labelType="smol"
 						variant="filter"
 						size="md"
-						portal
 					/>
 				) : null}
 				<ChartExportButtons
@@ -390,7 +387,6 @@ function InflowsByTokenChartCard({
 						labelType="smol"
 						variant="filter"
 						size="md"
-						portal
 					/>
 				) : null}
 				<ChartExportButtons

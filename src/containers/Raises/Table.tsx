@@ -18,6 +18,7 @@ import { VirtualTable } from '~/components/Table/Table'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { Tooltip } from '~/components/Tooltip'
+import { buttonStyles } from '~/ui/Button'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -212,10 +213,10 @@ export function RaisesTable({ raises }: { raises: IRaise[] }) {
 					target="_blank"
 					rel="noreferrer noopener"
 					href="https://github.com/DefiLlama/DefiLlama-Adapters/discussions/7093"
-					className="flex items-center gap-1"
+					className={buttonStyles({ size: 'md' })}
 				>
-					<span className="whitespace-nowrap">Methodology & biases</span>
-					<Icon name="external-link" height={12} width={12} />
+					<span>Methodology & biases</span>
+					<Icon name="arrow-up-right" className="size-4" />
 				</a>
 				<CSVDownloadButton prepareCsv={() => prepareRaisesCsv(instance)} smol size="md" />
 			</TableToolbar>

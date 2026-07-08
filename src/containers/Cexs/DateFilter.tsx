@@ -152,6 +152,7 @@ export const DateFilter = ({
 					overflowPadding={16} // distance from the boundary edges
 					wrapperProps={{ className: popoverMobileWrapperClassName }}
 					className={popoverSurfaceStyles}
+					portal
 				>
 					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 						<Icon name="x" className="size-5" />

@@ -8,7 +8,12 @@ import { Icon } from '~/components/Icon'
 import { LoadingSpinner } from '~/components/Loaders'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { buttonStyles } from '~/ui/Button'
-import { menuSurfaceStyles, popoverMenuItemStyles } from '~/ui/Popover'
+import {
+	menuSurfaceStyles,
+	popoverMenuItemStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName
+} from '~/ui/Popover'
 import { downloadDataURL } from '~/utils/download'
 import { getChartExportIconFetchUrl } from './chartPngExportIcon'
 import {
@@ -1456,7 +1461,16 @@ export function ChartPngExportButton({
 				<span>{smol ? '.png' : 'Image'}</span>
 			</Ariakit.PopoverDisclosure>
 
-			<Ariakit.Popover gutter={8} unmountOnHide className={`${menuSurfaceStyles} z-50`}>
+			<Ariakit.Popover
+				gutter={8}
+				unmountOnHide
+				wrapperProps={{ className: popoverMobileWrapperClassName }}
+				className={`${menuSurfaceStyles} z-50`}
+				portal
+			>
+				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
+					<Icon name="x" className="size-5" />
+				</Ariakit.PopoverDismiss>
 				<button
 					data-umami-event="export-image"
 					data-umami-event-page={router.pathname}

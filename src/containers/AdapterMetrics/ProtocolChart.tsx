@@ -415,7 +415,6 @@ const ChartByType = ({
 					labelType="smol"
 					variant="filter"
 					size="md"
-					portal
 				/>
 				<ChartExportButtons
 					chartInstance={exportChartInstance}

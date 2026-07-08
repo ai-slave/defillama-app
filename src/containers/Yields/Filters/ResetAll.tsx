@@ -1,4 +1,5 @@
 import { useRouter } from 'next/router'
+import { nestedMenuActionStyles } from '~/ui/Popover'
 
 export function ResetAllYieldFilters({
 	pathname,
@@ -25,11 +26,14 @@ export function ResetAllYieldFilters({
 
 	return (
 		<button
+			type="button"
 			onClick={handleClick}
 			disabled={!hasActiveFilters}
-			className={`rounded-md px-3 py-2 md:text-xs ${
-				nestedMenu ? 'text-left' : 'bg-(--btn-bg) hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)'
-			} disabled:cursor-not-allowed disabled:opacity-40`}
+			className={
+				nestedMenu
+					? nestedMenuActionStyles
+					: 'rounded-md bg-(--btn-bg) px-3 py-2 text-xs hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) disabled:cursor-not-allowed disabled:opacity-40'
+			}
 		>
 			Reset all filters
 		</button>

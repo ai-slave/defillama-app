@@ -7,6 +7,7 @@ import { RaisesSearch } from '~/containers/Raises/Search'
 import { useRangeFilter } from '~/hooks/useRangeFilter'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { nestedMenuActionStyles } from '~/ui/Popover'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
 interface IDropdownMenusProps {
@@ -65,6 +66,26 @@ function Filters({
 		!!router.query.minRaised ||
 		!!router.query.maxRaised
 
+	const resetFilters = () => {
+		// Clear only query params while keeping the route.
+		void pushShallowQuery(
+			router,
+			{
+				investor: undefined,
+				excludeInvestor: undefined,
+				chain: undefined,
+				excludeChain: undefined,
+				sector: undefined,
+				excludeSector: undefined,
+				round: undefined,
+				excludeRound: undefined,
+				minRaised: undefined,
+				maxRaised: undefined
+			},
+			pathname || router.pathname || '/raises'
+		)
+	}
+
 	return (
 		<>
 			{investors != null && investors.length > 0 ? (
@@ -121,32 +142,15 @@ function Filters({
 
 			<RaisedRange nestedMenu={nestedMenu} placement="bottom-start" />
 
-			<Button
-				type="button"
-				size="md"
-				onClick={() => {
-					// Clear only query params while keeping the route.
-					void pushShallowQuery(
-						router,
-						{
-							investor: undefined,
-							excludeInvestor: undefined,
-							chain: undefined,
-							excludeChain: undefined,
-							sector: undefined,
-							excludeSector: undefined,
-							round: undefined,
-							excludeRound: undefined,
-							minRaised: undefined,
-							maxRaised: undefined
-						},
-						pathname || router.pathname || '/raises'
-					)
-				}}
-				disabled={!hasActiveFilters}
-			>
-				Reset all filters
-			</Button>
+			{nestedMenu ? (
+				<button type="button" onClick={resetFilters} disabled={!hasActiveFilters} className={nestedMenuActionStyles}>
+					Reset all filters
+				</button>
+			) : (
+				<Button type="button" size="md" onClick={resetFilters} disabled={!hasActiveFilters}>
+					Reset all filters
+				</Button>
+			)}
 		</>
 	)
 }

@@ -75,6 +75,7 @@ export function BridgeChainSelector({ options, currentChain, handleClick }: IPro
 					gutter={6}
 					wrapperProps={{ className: popoverMobileWrapperClassName }}
 					className={popoverSurfaceStyles}
+					portal
 				>
 					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 						<Icon name="x" className="size-5" />

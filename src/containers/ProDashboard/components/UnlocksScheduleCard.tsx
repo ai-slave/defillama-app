@@ -124,7 +124,6 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 						labelType="smol"
 						variant="filter"
 						popoverVariant="legacy"
-						portal
 					/>
 				</div>
 			) : null}

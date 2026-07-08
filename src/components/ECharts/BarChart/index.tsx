@@ -314,7 +314,6 @@ export default function BarChart({
 									labelType="smol"
 									variant="filter"
 									size="md"
-									portal
 								/>
 							) : null
 						}

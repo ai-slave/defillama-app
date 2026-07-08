@@ -292,7 +292,6 @@ export const CategoryPerformanceContainer = ({
 									labelType="smol"
 									variant="filter"
 									size="md"
-									portal
 								/>
 							) : null}
 							<ChartExportButtons

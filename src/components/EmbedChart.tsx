@@ -5,7 +5,7 @@ import { Icon } from '~/components/Icon'
 import { useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { FEE_EXTRA_CONFIGS } from '~/metrics/feeExtras'
 import { buttonStyles } from '~/ui/Button'
-import { popoverSurfaceStyles } from '~/ui/Popover'
+import { popoverMobileDismissStyles, popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
 import { CopyHelper } from './Copy'
 
 export function EmbedChart() {
@@ -60,8 +60,13 @@ export function EmbedChart() {
 				unmountOnHide
 				hideOnInteractOutside
 				gutter={6}
+				wrapperProps={{ className: popoverMobileWrapperClassName }}
 				className={`${popoverSurfaceStyles} mr-1 w-[min(calc(100vw-16px),320px)] lg:mr-4`}
+				portal
 			>
+				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
+					<Icon name="x" className="size-5" />
+				</Ariakit.PopoverDismiss>
 				<span className="flex flex-col items-end gap-2 p-3">
 					<code className="block rounded-lg bg-page p-2 text-xs break-all">{url}</code>
 					<CopyHelper toCopy={url} />

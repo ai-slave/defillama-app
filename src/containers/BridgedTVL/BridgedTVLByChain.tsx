@@ -235,7 +235,6 @@ export function BridgedTVLByChain({
 								labelType="smol"
 								variant="filter"
 								size="md"
-								portal
 							/>
 						) : null}
 						<ChartExportButtons

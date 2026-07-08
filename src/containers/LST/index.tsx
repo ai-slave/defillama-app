@@ -288,7 +288,6 @@ export const LSTOverview = ({
 										label="LST"
 										labelType="smol"
 										variant="filter"
-										portal
 									/>
 									<ChartExportButtons
 										chartInstance={breakdownChartInstance}
@@ -326,7 +325,6 @@ export const LSTOverview = ({
 									label={groupBy === 'cumulative' ? 'LST' : 'Protocol'}
 									labelType="smol"
 									variant="filter"
-									portal
 								/>
 								<ChartExportButtons
 									chartInstance={inflowsChartInstance}

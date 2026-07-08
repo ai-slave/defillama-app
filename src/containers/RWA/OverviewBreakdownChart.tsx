@@ -244,7 +244,6 @@ export function RWAOverviewBreakdownChart({
 						labelType="smol"
 						variant="filter"
 						size="md"
-						portal
 					/>
 				) : null}
 				<ChartExportButtons

@@ -31,7 +31,12 @@ import Layout from '~/layout'
 import { Checkbox } from '~/ui/Checkbox'
 import { searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
-import { popoverRowWithBorderStyles, popoverSurfaceStyles } from '~/ui/Popover'
+import {
+	popoverRowWithBorderStyles,
+	popoverSurfaceStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName
+} from '~/ui/Popover'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { ChartPanelToolbar, chartPanelToolbarActionsStyles } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
@@ -331,8 +336,13 @@ const Search = () => {
 				hideOnInteractOutside
 				gutter={6}
 				sameWidth
+				wrapperProps={{ className: popoverMobileWrapperClassName }}
 				className={popoverSurfaceStyles}
+				portal
 			>
+				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
+					<Icon name="x" className="size-5" />
+				</Ariakit.PopoverDismiss>
 				{isLoading ? (
 					<p className="px-3 py-6 text-center body-sm text-tertiary">Loading...</p>
 				) : error ? (

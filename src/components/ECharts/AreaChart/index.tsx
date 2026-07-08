@@ -336,7 +336,6 @@ export default function AreaChart({
 									labelType="smol"
 									variant="filter"
 									size="md"
-									portal
 								/>
 							) : null
 						}

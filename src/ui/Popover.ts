@@ -1,21 +1,31 @@
 /* ----------------------------------------------------------------------------
    Popover/menu surface recipe from Figma 6183:293478.
 
-   Surface owns the elevated background, medium border, 12px radius, and
-   overflow. Rows/search/action/footer blocks own all spacing.
+   Surface owns the elevated background, medium border, 12px radius, scrollbars,
+   overscroll, drawer behavior, and max height. Rows/search/action/footer blocks
+   own all spacing.
 ---------------------------------------------------------------------------- */
 
-export const popoverSurfaceStyles =
-	'z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,60dvh)] lg:max-h-(--popover-available-height)'
+const selectSurfaceHeightStyles =
+	'max-lg:h-[calc(100dvh-80px)] max-lg:w-full! max-lg:max-w-none! max-lg:drawer max-lg:rounded-b-none lg:max-h-[min(400px,var(--popover-available-height))]'
 
-export const menuSurfaceStyles =
-	'z-10 flex thin-scrollbar min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[60dvh] sm:max-w-md lg:max-h-(--popover-available-height)'
+const menuSurfaceHeightStyles =
+	'max-lg:h-[calc(100dvh-80px)] max-lg:w-full! max-lg:max-w-none! max-lg:drawer max-lg:rounded-b-none lg:max-h-[min(60dvh,var(--popover-available-height))]'
+
+const nestedMenuSurfaceHeightStyles =
+	'max-lg:h-[calc(100dvh-80px)] max-lg:w-full! max-lg:max-w-none! max-lg:rounded-b-none lg:max-h-[min(60dvh,var(--popover-available-height))]'
+
+export const popoverSurfaceStyles = `z-10 flex thin-scrollbar min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 ${selectSurfaceHeightStyles}`
+
+export const menuSurfaceStyles = `z-10 flex thin-scrollbar min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 sm:max-w-md ${menuSurfaceHeightStyles}`
+
+export const nestedMenuSurfaceStyles = `flex thin-scrollbar min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 sm:max-w-md ${nestedMenuSurfaceHeightStyles}`
 
 export const popoverSearchResultsSurfaceStyles =
 	'z-10 thin-scrollbar overflow-y-auto rounded-b-[8px] border border-medium bg-surface-elevated-1 shadow-sm'
 
 export const popoverHovercardSurfaceStyles =
-	'z-50 max-h-[calc(100dvh-80px)] overflow-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 body-sm lg:max-h-(--popover-available-height)'
+	'z-50 thin-scrollbar max-h-[calc(100dvh-80px)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 body-sm lg:max-h-(--popover-available-height)'
 
 export const popoverRowStyles =
 	'body-sm flex shrink-0 cursor-pointer items-center justify-between gap-2 overflow-hidden px-3 py-2 text-primary cv-auto-37 hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row'
@@ -44,6 +54,33 @@ export const popoverFooterActionStyles =
 export const popoverSeeMoreStyles =
 	'body-sm w-full cursor-pointer px-3 py-2 text-left text-link hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row'
 
+export const nestedMenuRootRowStyles =
+	'body-sm grid min-h-10 w-full cursor-pointer grid-cols-[minmax(0,1fr)_1rem] items-center overflow-hidden px-4 py-2.5 text-left text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row'
+
+export const nestedMenuSelectRowStyles =
+	'body-sm grid min-h-10 w-full cursor-pointer grid-cols-[minmax(0,1fr)_1.25rem] items-center overflow-hidden border-b border-subtle px-4 py-2.5 text-left text-primary last-of-type:border-b-0 hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row'
+
+export const nestedMenuSeeMoreStyles =
+	'body-sm min-h-10 w-full cursor-pointer px-4 py-2.5 text-left text-link hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row'
+
+export const nestedMenuActionStyles =
+	'body-sm flex min-h-10 w-full shrink-0 cursor-pointer items-center justify-start gap-2 overflow-hidden border-t border-subtle px-4 py-2.5 text-left text-primary hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40'
+
+export const nestedMenuActionBarStyles = 'grid w-full min-w-0 grid-cols-2 border-b border-subtle body-sm text-link'
+
+export const nestedMenuActionButtonStyles =
+	'flex min-h-10 min-w-0 items-center justify-center px-4 py-2.5 text-center text-link hover:bg-hover-row focus-visible:bg-hover-row'
+
+export const nestedMenuSearchBlockStyles = 'relative px-4 py-3'
+
+export const nestedMenuDisclosureIconStyles = 'size-4 justify-self-end text-secondary'
+
+export const nestedMenuHeaderIconButtonStyles =
+	'flex size-10 shrink-0 items-center justify-center rounded-md text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary'
+
+export const nestedMenuRootFilterButtonStyles =
+	'label-sm flex min-h-8 cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-[8px] border border-medium px-3 py-1.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row'
+
 export function popoverMultiSelectCheckStyles(selected: boolean) {
 	return `ml-auto grid size-3.5 shrink-0 place-items-center rounded-[4px] border ${
 		selected ? 'border-brand bg-brand text-on-brand' : 'border-strong bg-transparent text-transparent'
@@ -55,25 +92,25 @@ export function popoverSingleSelectCheckStyles(selected: boolean) {
 }
 
 export const popoverMobileWrapperClassName =
-	'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
+	'max-lg:fixed! max-lg:right-0! max-lg:bottom-0! max-lg:left-0! max-lg:top-auto! max-lg:transform-none! max-lg:w-full!'
 
-export const popoverMobileDismissStyles = 'ml-auto p-2 opacity-50 sm:hidden'
+export const nestedPopoverMobileWrapperClassName =
+	'max-lg:fixed! max-lg:right-0! max-lg:bottom-0! max-lg:left-0! max-lg:top-auto! max-lg:transform-none! max-lg:w-full!'
+
+export const popoverMobileDismissStyles =
+	'ml-auto flex size-10 shrink-0 items-center justify-center rounded-md text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary lg:hidden'
 
 /* Compatibility styles for quarantined surfaces that still consume shared menu/select components. */
-export const legacySelectPopoverSurfaceStyles =
-	'z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,60dvh)] lg:max-h-(--popover-available-height)'
+export const legacySelectPopoverSurfaceStyles = `z-10 flex thin-scrollbar min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 ${selectSurfaceHeightStyles}`
 
-export const excludedSurfaceComboboxPopoverSurfaceStyles =
-	'z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,60dvh)] lg:max-h-(--popover-available-height)'
+export const excludedSurfaceComboboxPopoverSurfaceStyles = `z-10 flex thin-scrollbar min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 ${selectSurfaceHeightStyles}`
 
 export const excludedSurfaceComboboxActionBarStyles =
 	'sticky top-0 z-1 flex flex-wrap justify-between gap-1 border-b border-subtle bg-surface-elevated-1 text-xs text-link'
 
-export const legacyMenuSurfaceStyles =
-	'z-10 flex thin-scrollbar h-[calc(100dvh-80px)] min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 max-sm:drawer max-sm:rounded-b-none sm:max-h-[60dvh] sm:max-w-md lg:h-full lg:max-h-(--popover-available-height)'
+export const legacyMenuSurfaceStyles = `z-10 flex thin-scrollbar min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 sm:max-w-md ${menuSurfaceHeightStyles}`
 
-export const legacyNestedMenuSurfaceStyles =
-	'flex thin-scrollbar flex-col gap-1 rounded-md border border-medium bg-surface-elevated-1 max-sm:h-[calc(100dvh-80px)] max-sm:overflow-auto max-sm:overscroll-contain max-sm:rounded-b-none max-sm:p-2 sm:max-h-[60dvh] sm:overflow-x-hidden sm:overflow-y-auto sm:overscroll-contain sm:p-0'
+export const legacyNestedMenuSurfaceStyles = `flex thin-scrollbar flex-col gap-1 overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 max-lg:p-2 lg:p-0 ${nestedMenuSurfaceHeightStyles}`
 
 export const legacyNestedMenuRootFilterButtonStyles =
 	'relative flex cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-medium px-2 py-1.5 text-xs font-medium text-secondary hover:bg-hover-row focus-visible:bg-hover-row'

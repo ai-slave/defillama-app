@@ -850,7 +850,6 @@ export const AdapterByChainChart = ({
 							labelType="smol"
 							variant="filter"
 							size="md"
-							portal
 						/>
 					) : null}
 					{chartViewMode === 'Breakdown' ? (
@@ -1375,7 +1374,6 @@ export const ChainsByAdapterChart = ({
 						labelType="smol"
 						variant="filter"
 						size="md"
-						portal
 					/>
 					{chartState.chartKind === 'treemap' ? <ChartRestoreButton chartInstance={exportChartInstance} /> : null}
 					{canExportChart ? (

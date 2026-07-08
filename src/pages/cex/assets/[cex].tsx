@@ -136,7 +136,6 @@ function ChainsChartCard({
 							labelType="smol"
 							variant="filter"
 							size="md"
-							portal
 						/>
 					) : null}
 					<ChartExportButtons
@@ -196,7 +195,6 @@ function TokenValuesUSDChartCard({
 							labelType="smol"
 							variant="filter"
 							size="md"
-							portal
 						/>
 					) : null}
 					<ChartExportButtons
@@ -264,7 +262,6 @@ function TokensBreakdownPieChartCard({
 							labelType="smol"
 							variant="filter"
 							size="md"
-							portal
 						/>
 					) : null}
 					<ChartExportButtons
@@ -317,7 +314,6 @@ function TokenBalancesRawChartCard({
 							labelType="smol"
 							variant="filter"
 							size="md"
-							portal
 						/>
 					) : null}
 					<ChartExportButtons
@@ -409,7 +405,6 @@ function InflowsByTokenChartCard({
 							labelType="smol"
 							variant="filter"
 							size="md"
-							portal
 						/>
 					) : null}
 					<ChartExportButtons

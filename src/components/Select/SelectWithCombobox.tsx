@@ -14,6 +14,11 @@ import {
 	legacyPopoverSeeMoreStyles,
 	legacyPopoverSelectCheckStyles,
 	legacySelectPopoverRowStyles,
+	nestedMenuActionBarStyles,
+	nestedMenuActionButtonStyles,
+	nestedMenuSeeMoreStyles,
+	nestedMenuSearchBlockStyles,
+	nestedMenuSelectRowStyles,
 	popoverActionBarStyles,
 	popoverActionButtonStyles,
 	popoverMultiSelectCheckStyles,
@@ -107,11 +112,17 @@ export function SelectWithCombobox({
 	const showCheckboxes = Array.isArray(selectedValues) && !singleSelect
 	const useLegacyPopover = popoverVariant === 'legacy' || variant === 'pro'
 	const actionBarStyles = useLegacyPopover ? excludedSurfaceComboboxActionBarStyles : popoverActionBarStyles
+	const nestedActionBarStyles = useLegacyPopover ? excludedSurfaceComboboxActionBarStyles : nestedMenuActionBarStyles
 	const actionButtonStyles = useLegacyPopover ? legacyPopoverActionButtonStyles : popoverActionButtonStyles
+	const nestedActionButtonStyles = useLegacyPopover ? legacyPopoverActionButtonStyles : nestedMenuActionButtonStyles
 	const searchWrapperStyles = useLegacyPopover ? 'relative mb-2 p-3' : popoverSearchBlockStyles
+	const nestedSearchWrapperStyles = useLegacyPopover ? 'relative mb-2 p-3' : nestedMenuSearchBlockStyles
 	const surfaceStyles = useLegacyPopover ? excludedSurfaceComboboxPopoverSurfaceStyles : popoverSurfaceStyles
 	const rowStyles = useLegacyPopover ? legacySelectPopoverRowStyles : popoverRowWithBorderStyles
+	const nestedRowStyles = useLegacyPopover ? legacySelectPopoverRowStyles : nestedMenuSelectRowStyles
 	const seeMoreStyles = useLegacyPopover ? legacyPopoverSeeMoreStyles : popoverSeeMoreStyles
+	const nestedSeeMoreStyles = useLegacyPopover ? legacyPopoverSeeMoreStyles : nestedMenuSeeMoreStyles
+	const shouldPortalPopover = portal ?? true
 
 	const isStringValue = React.useCallback((value: string | SelectOption): value is string => {
 		return typeof value === 'string'
@@ -304,15 +315,15 @@ export function SelectWithCombobox({
 						render={<button type="button" />}
 						popoverVariant={useLegacyPopover ? 'legacy' : popoverVariant}
 					>
-						<span className={searchWrapperStyles}>
+						<span className={nestedSearchWrapperStyles}>
 							<Ariakit.Combobox placeholder={searchPlaceholder} className={`w-full ${inputStyles}`} />
 						</span>
 						{showCheckboxes ? (
-							<span className={actionBarStyles}>
-								<button onClick={clearAll} className={actionButtonStyles}>
+							<span className={nestedActionBarStyles}>
+								<button type="button" onClick={clearAll} className={nestedActionButtonStyles}>
 									Deselect All
 								</button>
-								<button onClick={toggleAll} className={actionButtonStyles}>
+								<button type="button" onClick={toggleAll} className={nestedActionButtonStyles}>
 									{selectAllLabel}
 								</button>
 							</span>
@@ -323,7 +334,7 @@ export function SelectWithCombobox({
 									key={getOptionKey(option)}
 									render={<Ariakit.SelectItem value={getOptionKey(option)} />}
 									hideOnClick={false}
-									className={rowStyles}
+									className={nestedRowStyles}
 								>
 									{isStringValue(option) ? (
 										<span>{option}</span>
@@ -346,7 +357,7 @@ export function SelectWithCombobox({
 									value="__see_more__"
 									setValueOnClick={false}
 									hideOnClick={false}
-									className={seeMoreStyles}
+									className={nestedSeeMoreStyles}
 									onClick={(e) => {
 										e.preventDefault()
 										e.stopPropagation()
@@ -416,7 +427,7 @@ export function SelectWithCombobox({
 						className: clsx(popoverMobileWrapperClassName, popoverWrapperClassName)
 					}}
 					className={clsx(surfaceStyles, popoverClassName)}
-					portal={portal || false}
+					portal={shouldPortalPopover}
 				>
 					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 						<Icon name="x" className="size-5" />
@@ -429,10 +440,10 @@ export function SelectWithCombobox({
 						<>
 							{showCheckboxes ? (
 								<span className={actionBarStyles}>
-									<button onClick={clearAll} className={actionButtonStyles}>
+									<button type="button" onClick={clearAll} className={actionButtonStyles}>
 										Deselect All
 									</button>
-									<button onClick={toggleAll} className={actionButtonStyles}>
+									<button type="button" onClick={toggleAll} className={actionButtonStyles}>
 										{selectAllLabel}
 									</button>
 								</span>

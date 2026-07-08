@@ -131,7 +131,6 @@ export function DefiWatchlistContainer({
 							label={selectedProtocolNames.length > 0 ? 'Protocols' : 'Add protocols'}
 							labelType="smol"
 							variant="filter"
-							portal
 						/>
 					</div>
 					{protocolsTableData.length ? (
@@ -160,7 +159,6 @@ export function DefiWatchlistContainer({
 							label={selectedChainNames.length > 0 ? 'Chains' : 'Add chains'}
 							labelType="smol"
 							variant="filter"
-							portal
 						/>
 					</div>
 					{chainsTableData.length ? (
@@ -795,7 +793,6 @@ function TopMovers({ protocols }: TopMoversProps) {
 						}
 						labelType="smol"
 						variant="filter"
-						portal
 					/>
 				) : null}
 			</div>

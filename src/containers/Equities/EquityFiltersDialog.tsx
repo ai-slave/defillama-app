@@ -8,7 +8,13 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
-import { popoverRowWithBorderStyles, popoverSingleSelectCheckStyles, popoverSurfaceStyles } from '~/ui/Popover'
+import {
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName,
+	popoverRowWithBorderStyles,
+	popoverSingleSelectCheckStyles,
+	popoverSurfaceStyles
+} from '~/ui/Popover'
 import {
 	activeEquityFiltersToDraft,
 	countActiveEquityFilters,
@@ -101,7 +107,16 @@ function OperatorSelect({
 				<Ariakit.SelectValue />
 				<Ariakit.SelectArrow />
 			</Ariakit.Select>
-			<Ariakit.SelectPopover portal gutter={4} sameWidth className={`${popoverSurfaceStyles} z-100`}>
+			<Ariakit.SelectPopover
+				portal
+				gutter={4}
+				sameWidth
+				wrapperProps={{ className: popoverMobileWrapperClassName }}
+				className={`${popoverSurfaceStyles} z-100`}
+			>
+				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
+					<Icon name="x" className="size-5" />
+				</Ariakit.PopoverDismiss>
 				{OPERATOR_OPTIONS.map((operator) => (
 					<Ariakit.SelectItem key={operator.value} value={operator.value} className={popoverRowWithBorderStyles}>
 						<span>{operator.label}</span>
@@ -360,7 +375,6 @@ function CategoricalFilterEditor({
 					setSelectedValues={(next) => onUpdate({ ...filter, values: next })}
 					label={valueLabel}
 					labelType="smol"
-					portal
 					visibleOptionLimit={null}
 					selectAllScope="matches"
 					searchPlaceholder={`Search ${valueLabel.toLowerCase()}...`}

@@ -375,23 +375,25 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 							}}
 						/>
 					</div>
-					<div className="flex h-full flex-wrap items-center justify-center gap-1">
-						{currentMetric.map((metric, i) => (
-							<Fragment key={`metric-name-${metric}`}>
-								{i === 1 ? (
-									<span>{metric}</span>
-								) : (
-									<Ariakit.DialogDisclosure
-										className={`${buttonStyles({ variant: 'metricBrowse', size: 'sm' })} z-10`}
-										onClick={() => trackDialogOpen('pill', metric)}
-									>
-										{metric}
-									</Ariakit.DialogDisclosure>
-								)}
-							</Fragment>
-						))}
+					<div className="relative z-10 grid min-h-6 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1">
+						<div className="col-start-2 flex min-w-0 flex-wrap items-center justify-center gap-1">
+							{currentMetric.map((metric, i) => (
+								<Fragment key={`metric-name-${metric}`}>
+									{i === 1 ? (
+										<span>{metric}</span>
+									) : (
+										<Ariakit.DialogDisclosure
+											className={buttonStyles({ variant: 'metricBrowse', size: 'sm' })}
+											onClick={() => trackDialogOpen('pill', metric)}
+										>
+											{metric}
+										</Ariakit.DialogDisclosure>
+									)}
+								</Fragment>
+							))}
+						</div>
 						<Ariakit.DialogDisclosure
-							className="hover-wash z-10 flex items-center gap-1 rounded-md px-1.5 py-1 body-sm text-tertiary hover:text-primary focus-visible:text-primary"
+							className="hover-wash col-start-3 flex min-h-6 w-fit items-center gap-1 justify-self-start rounded-md px-1.5 py-1 body-sm text-tertiary hover:text-primary focus-visible:text-primary"
 							onClick={() => trackDialogOpen('browse-search')}
 						>
 							<Icon name="search" height={12} width={12} />

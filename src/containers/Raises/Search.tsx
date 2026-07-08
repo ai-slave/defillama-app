@@ -66,7 +66,8 @@ export function RaisesSearch({ list }: { list?: string[] }) {
 					wrapperProps={{
 						className: `${popoverMobileWrapperClassName} w-full!`
 					}}
-					className={`${popoverSurfaceStyles} thin-scrollbar max-h-(--popover-available-height)`}
+					className={popoverSurfaceStyles}
+					portal
 				>
 					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 						<Icon name="x" className="size-5" />

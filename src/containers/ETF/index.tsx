@@ -175,7 +175,6 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 							labelType="smol"
 							variant="filter-responsive"
 							size="md"
-							portal
 						/>
 						<ChartExportButtons chartInstance={chartInstance} filename="etf-flows" title="ETF Flows" />
 					</ChartPanelToolbar>

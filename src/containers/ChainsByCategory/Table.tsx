@@ -153,7 +153,7 @@ export function ChainsByCategoryTable({
 						/>
 					</div>
 
-					<TVLRange triggerClassName="w-full sm:w-auto" size="md" />
+					<TVLRange size="md" />
 					<CSVDownloadButton
 						prepareCsv={() => prepareTableCsv({ instance, filename: 'defillama-chains' })}
 						smol

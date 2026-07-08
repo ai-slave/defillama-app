@@ -29,6 +29,7 @@ export function Settings({ metricFilters = EMPTY_FILTERS }: { metricFilters?: { 
 				gutter={6}
 				wrapperProps={{ className: popoverMobileWrapperClassName }}
 				className={popoverSurfaceStyles}
+				portal
 			>
 				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 					<Icon name="x" className="size-5" />

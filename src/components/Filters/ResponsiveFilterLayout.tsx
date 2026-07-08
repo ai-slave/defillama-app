@@ -18,7 +18,7 @@ export function ResponsiveFilterLayout({ children, desktopClassName }: Responsiv
 			<div className="flex min-h-9 flex-wrap gap-2 *:flex-1 sm:hidden">
 				{isSmall && isClient ? (
 					<React.Suspense fallback={<></>}>
-						<NestedMenu label="Filters" className="w-full">
+						<NestedMenu label="Filters" buttonVariant="filter" className="w-full">
 							{children(true)}
 						</NestedMenu>
 					</React.Suspense>

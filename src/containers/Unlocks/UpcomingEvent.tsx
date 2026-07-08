@@ -4,7 +4,12 @@ import { useEffect, useEffectEvent, useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
-import { menuSurfaceStyles, popoverMenuItemStyles, popoverMobileDismissStyles } from '~/ui/Popover'
+import {
+	menuSurfaceStyles,
+	popoverMenuItemStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName
+} from '~/ui/Popover'
 import { formattedNum } from '~/utils'
 import { generateGoogleCalendarUrl } from '~/utils/calendar'
 
@@ -42,7 +47,14 @@ const CalendarButton = ({ event, tokenName, tokenValue, isProtocolPage }: Calend
 		<Ariakit.MenuProvider>
 			{isProtocolPage ? <ProtocolPageButton /> : <RegularButton />}
 
-			<Ariakit.Menu unmountOnHide hideOnInteractOutside gutter={8} className={`${menuSurfaceStyles} shadow-sm`} portal>
+			<Ariakit.Menu
+				unmountOnHide
+				hideOnInteractOutside
+				gutter={8}
+				wrapperProps={{ className: popoverMobileWrapperClassName }}
+				className={`${menuSurfaceStyles} shadow-sm`}
+				portal
+			>
 				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 					<Icon name="x" className="size-5" />
 				</Ariakit.PopoverDismiss>

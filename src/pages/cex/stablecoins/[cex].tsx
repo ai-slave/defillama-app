@@ -175,7 +175,6 @@ function MultiSeriesChartCard({
 							labelType="smol"
 							variant="filter"
 							size="md"
-							portal
 						/>
 					) : null}
 					<ChartExportButtons
@@ -240,7 +239,6 @@ function PieChartCard({
 							labelType="smol"
 							variant="filter"
 							size="md"
-							portal
 						/>
 					) : null}
 					<ChartExportButtons

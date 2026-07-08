@@ -20,6 +20,7 @@ import { PaginatedYieldsPoolTable } from '~/containers/Yields/Tables/Pools'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import { Button } from '~/ui/Button'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { nestedMenuActionStyles } from '~/ui/Popover'
 import { TableToolbar } from '~/ui/Toolbar'
 import { fetchJson } from '~/utils/async'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -322,7 +323,11 @@ export function TokenYieldsSection({ tokenSymbol, hydration }: TokenYieldsSectio
 										<TVLRange variant="secondary" nestedMenu={nestedMenu} size="md" />
 										<APYRange nestedMenu={nestedMenu} size="md" />
 										<ColumnFilters enabledColumns={ENABLED_COLUMNS} nestedMenu={nestedMenu} size="md" />
-										{hasVisibleFilters ? (
+										{hasVisibleFilters && nestedMenu ? (
+											<button type="button" onClick={resetFilters} className={nestedMenuActionStyles}>
+												Reset filters
+											</button>
+										) : hasVisibleFilters ? (
 											<Button type="button" size="md" onClick={resetFilters}>
 												Reset filters
 											</Button>

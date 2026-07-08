@@ -107,7 +107,6 @@ function LiquidationsDistributionChartCard({
 							labelType="none"
 							variant="filter"
 							size="md"
-							portal
 						/>
 						{chartState.tokenTotalUsd != null ? (
 							<span className="body-sm text-secondary">

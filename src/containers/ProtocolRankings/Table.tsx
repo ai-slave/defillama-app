@@ -358,14 +358,12 @@ const ChainProtocolsTableInner = ({
 					setValue={setFilter('category')}
 					selectedValue={selectedCategory}
 					values={TABLE_CATEGORIES_VALUES}
-					variant="responsive"
 					size="md"
 				/>
 				<TagGroup
 					setValue={setFilter('period')}
 					selectedValue={selectedPeriod}
 					values={TABLE_PERIODS_VALUES}
-					variant="responsive"
 					size="md"
 				/>
 
@@ -387,7 +385,7 @@ const ChainProtocolsTableInner = ({
 					onEditCustomColumn={handleEditCustomColumn}
 					onDeleteCustomColumn={handleDeleteCustomColumn}
 				/>
-				<TVLRange triggerClassName="w-full sm:w-auto" size="md" />
+				<TVLRange size="md" />
 				<CSVDownloadButton
 					prepareCsv={() => prepareTableCsv({ instance, filename: `defillama-${activeChain ?? 'all'}-protocols` })}
 					smol

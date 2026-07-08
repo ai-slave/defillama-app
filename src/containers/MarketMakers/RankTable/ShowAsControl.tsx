@@ -5,7 +5,13 @@ import {
 	chartSegmentedControlGroupStyles,
 	selectTriggerStyles
 } from '~/components/Select/types'
-import { popoverSingleSelectCheckStyles, popoverRowWithBorderStyles, popoverSurfaceStyles } from '~/ui/Popover'
+import {
+	popoverSingleSelectCheckStyles,
+	popoverRowWithBorderStyles,
+	popoverSurfaceStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName
+} from '~/ui/Popover'
 import { DISPLAY_MODES, type DisplayMode } from '../constants'
 
 const LABELS: Record<DisplayMode, string> = {
@@ -42,7 +48,15 @@ export function ShowAsControl({ mode, setMode }: { mode: DisplayMode; setMode: (
 						{SHORT[mode]}
 						<Ariakit.SelectArrow />
 					</Ariakit.Select>
-					<Ariakit.SelectPopover gutter={4} className={`${popoverSurfaceStyles} z-50 min-w-[11rem]`}>
+					<Ariakit.SelectPopover
+						gutter={4}
+						wrapperProps={{ className: popoverMobileWrapperClassName }}
+						className={`${popoverSurfaceStyles} z-50 min-w-[11rem]`}
+						portal
+					>
+						<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
+							<Icon name="x" className="size-5" />
+						</Ariakit.PopoverDismiss>
 						{DISPLAY_MODES.map((option) => (
 							<Ariakit.SelectItem key={option} value={option} className={popoverRowWithBorderStyles}>
 								<span>{LABELS[option]}</span>

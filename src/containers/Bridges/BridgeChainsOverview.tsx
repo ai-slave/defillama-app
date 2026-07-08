@@ -31,7 +31,6 @@ export function BridgeChainsOverview({ allChains, tableData, chart }) {
 						labelType="smol"
 						variant="filter"
 						size="md"
-						portal
 					/>
 					<ChartExportButtons
 						chartInstance={exportChartInstance}

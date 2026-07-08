@@ -327,7 +327,7 @@ export function ProtocolOverviewLayout({
 								hideOnInteractOutside
 								gutter={8}
 								wrapperProps={{ className: popoverMobileWrapperClassName }}
-								className={`${menuSurfaceStyles} lg:h-full`}
+								className={menuSurfaceStyles}
 								portal
 							>
 								<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>

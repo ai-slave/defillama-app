@@ -6,6 +6,7 @@ import { TagGroup } from '~/components/TagGroup'
 import { useRangeFilter } from '~/hooks/useRangeFilter'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { nestedMenuActionStyles } from '~/ui/Popover'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
 type FormSubmitHandler = NonNullable<React.ComponentProps<'form'>['onSubmit']>
@@ -214,15 +215,15 @@ const Filters = ({
 			<div className="px-3 py-2 sm:ml-auto sm:flex-row sm:items-center sm:px-0 sm:py-0">
 				<TagGroup setValue={setSelectedTime} selectedValue={selectedTimeLabel} values={timeOptions} />
 			</div>
-			<Button
-				type="button"
-				size="md"
-				onClick={onClearAll}
-				disabled={!hasActiveFilters}
-				className={isMobile ? 'w-full justify-between' : undefined}
-			>
-				Reset filters
-			</Button>
+			{isMobile ? (
+				<button type="button" onClick={onClearAll} disabled={!hasActiveFilters} className={nestedMenuActionStyles}>
+					Reset filters
+				</button>
+			) : (
+				<Button type="button" size="md" onClick={onClearAll} disabled={!hasActiveFilters}>
+					Reset filters
+				</Button>
+			)}
 		</>
 	)
 }

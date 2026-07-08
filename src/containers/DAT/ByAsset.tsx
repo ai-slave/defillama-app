@@ -332,7 +332,6 @@ function MNAVChart({
 					labelType="smol"
 					variant="filter"
 					size="md"
-					portal
 				/>
 				<ChartExportButtons
 					chartInstance={chartInstance}

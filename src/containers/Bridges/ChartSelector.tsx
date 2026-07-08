@@ -33,6 +33,7 @@ export function ChartSelector({ options, selectedChart, onClick }: IProps) {
 				gutter={6}
 				wrapperProps={{ className: popoverMobileWrapperClassName }}
 				className={popoverSurfaceStyles}
+				portal
 			>
 				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 					<Icon name="x" className="size-5" />
