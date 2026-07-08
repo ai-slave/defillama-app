@@ -26,8 +26,7 @@ export default function ChainCoreChart({
 	isThemeDark,
 	groupBy,
 	hideDataZoom = false,
-	onReady,
-	...props
+	onReady
 }) {
 	const id = useId()
 	const isCumulative = groupBy === 'cumulative'
@@ -175,11 +174,5 @@ export default function ChainCoreChart({
 		)
 	}, [defaultChartSettings, series, chartOptions, allYAxis, chartsInSeries, isThemeDark, hideDataZoom])
 
-	return (
-		<div
-			id={id}
-			className={props.className ?? 'h-[360px]'}
-			style={height || props.style ? { height: height ?? '360px', ...(props.style ?? {}) } : undefined}
-		/>
-	)
+	return <div id={id} className="h-[360px]" style={height ? { height } : undefined} />
 }

@@ -539,7 +539,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 					/>
 				</div>
 			</ChartPanelToolbar>
-			<div className="relative flex min-h-[360px] flex-1 flex-col">
+			<div className="relative flex min-h-[360px] flex-col">
 				<Suspense
 					fallback={
 						<div className="m-auto flex min-h-[360px] items-center justify-center" role="status" aria-live="polite">
@@ -549,7 +549,6 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 					}
 				>
 					<ProtocolChart
-						className="min-h-[360px] flex-1"
 						chartData={deferredChartRenderModel.chartData}
 						chartColors={props.chartColors}
 						isThemeDark={isThemeDark}

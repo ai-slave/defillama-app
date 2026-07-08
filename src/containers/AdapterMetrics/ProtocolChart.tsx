@@ -427,7 +427,6 @@ const ChartByType = ({
 			</ChartPanelToolbar>
 			<React.Suspense fallback={<div className="min-h-[360px]" />}>
 				<MultiSeriesChart2
-					containerClassName="min-h-[360px] flex-1"
 					dataset={deferredMainChartData.dataset}
 					charts={deferredMainChartData.charts}
 					groupBy={chartInterval}

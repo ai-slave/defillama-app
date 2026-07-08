@@ -38,8 +38,7 @@ export default function ProtocolChart({
 	isThemeDark,
 	groupBy,
 	hideDataZoom = false,
-	onReady,
-	...props
+	onReady
 }: IProtocolCoreChartProps) {
 	const id = useId()
 	const isCumulative = groupBy === 'cumulative'
@@ -306,11 +305,5 @@ export default function ProtocolChart({
 		valueSymbol
 	])
 
-	return (
-		<div
-			id={id}
-			className={props.className ?? 'h-[360px]'}
-			style={height || props.style ? { height: height ?? '360px', ...(props.style ?? {}) } : undefined}
-		/>
-	)
+	return <div id={id} className="h-[360px]" style={height ? { height } : undefined} />
 }
