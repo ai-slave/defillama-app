@@ -266,7 +266,7 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 					hideOnInteractOutside
 					gutter={6}
 					sameWidth
-					className="z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(var(--popover-available-height),60vh)]"
+					className="z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)] max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(var(--popover-available-height),60vh)]"
 					portal
 				>
 					<Ariakit.ComboboxList alwaysVisible>

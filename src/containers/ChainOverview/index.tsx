@@ -116,7 +116,7 @@ export function ChainOverview(props: IChainOverviewData) {
 										href={app.href}
 										key={`llama-app-${app.href}`}
 										padding="sm"
-										className="relative flex max-h-[64px] w-full max-w-[70vw] min-w-[270px] flex-1 items-center gap-2.5 overflow-hidden"
+										className="hover-wash-card relative flex max-h-[64px] w-full max-w-[70vw] min-w-[270px] flex-1 items-center gap-2.5 overflow-hidden"
 									>
 										{app.background}
 										<>{app.icon}</>

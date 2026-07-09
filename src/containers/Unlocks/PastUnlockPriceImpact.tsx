@@ -157,7 +157,7 @@ export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
 								<Icon name="help-circle" width={16} height={16} className="cursor-help text-tertiary" />
 							</Ariakit.HovercardAnchor>
 							<Ariakit.Hovercard
-								className="z-10 flex flex-col gap-2 rounded-md border border-medium bg-surface-elevated-1 p-4 text-sm text-primary shadow-sm"
+								className="z-10 flex flex-col gap-2 rounded-md border border-medium bg-overlay p-4 text-sm text-primary shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]"
 								unmountOnHide
 								hideOnInteractOutside
 								portal={true}
@@ -201,7 +201,7 @@ export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
 																	className="text-tertiary"
 																/>
 															</Ariakit.TooltipAnchor>
-															<Ariakit.Tooltip className="z-50 rounded-md bg-surface-elevated-1 px-2 py-1 text-xs">
+															<Ariakit.Tooltip className="z-50 rounded-md border border-medium bg-overlay px-2 py-1 text-xs shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]">
 																{item.unlockType === 'linear' ? 'Linear Unlock' : 'Cliff Unlock'}
 															</Ariakit.Tooltip>
 														</Ariakit.TooltipProvider>

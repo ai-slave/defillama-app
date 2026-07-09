@@ -1262,7 +1262,7 @@ function RWAPerpsFiltersDialog({
 					<RWAPerpsActiveDraftFilters filters={filters} draft={draft} onDraftChange={setDraft} />
 				</div>
 
-				<div className="flex items-center justify-end gap-2 border-t border-subtle bg-surface px-4 py-3">
+				<div className="flex items-center justify-end gap-2 border-t border-subtle bg-overlay px-4 py-3">
 					{draft.activeIds.length > 0 ? (
 						<Button
 							type="button"
@@ -1323,7 +1323,7 @@ function RWAPerpsFilterBrowser({
 						</div>
 					</DialogPanelSection>
 				) : (
-					<div className="rounded-md border border-dashed border-subtle bg-surface p-4 body-sm text-tertiary">
+					<div className="rounded-md border border-dashed border-subtle bg-page p-4 body-sm text-tertiary">
 						All filters are active.
 					</div>
 				)}
@@ -1356,7 +1356,7 @@ function RWAPerpsActiveDraftFilters({
 						<RWAPerpsDraftFilterEditor key={filter.id} filter={filter} draft={draft} onDraftChange={onDraftChange} />
 					))
 				) : (
-					<div className="rounded-md border border-dashed border-subtle bg-surface p-4 body-sm text-tertiary">
+					<div className="rounded-md border border-dashed border-subtle bg-page p-4 body-sm text-tertiary">
 						Add filters from the list to narrow the table.
 					</div>
 				)}

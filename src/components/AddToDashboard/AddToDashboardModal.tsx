@@ -478,7 +478,7 @@ export function AddToDashboardModal({
 					) : null}
 
 					{unsupportedMetrics.length > 0 ? (
-						<div className="rounded-lg border border-medium bg-surface px-3 py-2">
+						<div className="rounded-lg border border-medium bg-surface-elevated-1 px-3 py-2">
 							<p className="body-sm text-warning">
 								{unsupportedMetrics.length} metric{unsupportedMetrics.length > 1 ? 's' : ''} not supported:{' '}
 								{unsupportedMetrics.join(', ')}

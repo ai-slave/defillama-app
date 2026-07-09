@@ -116,6 +116,19 @@ Carry-forward dialog/popover guardrails:
 
 Recommended order for the next focused code branches:
 
+0. **Overlay surface split — `mintdart/overlay-surfaces` (in review)**
+   - New `bg-overlay` semantic (white light / dark = elevated-1): shared popover/menu/
+     tooltip/search recipes, content dialogs (`dialogSurfaceStyles`), toasts, DOM chart
+     tooltips, plus white-on-white repairs (sticky footers → `bg-overlay`, emphasis
+     boxes → `elevated-1`, dashed wells → `bg-page`).
+   - This branch explicitly scopes the global-search and metrics-browse dialogs (the
+     carry-forward guardrail below is satisfied): the ⌘K palette moves to `bg-overlay`;
+     Metrics stays a canvas dialog on `dialogCanvasSurfaceStyles` (`elevated-1`).
+   - Also fixes drift found in the same audit: home product-link cards gain
+     `hover-wash-card`; the RowLinksWithDropdown "Others" trigger moves to the
+     documented elevated-1 → elevated-2 trigger pattern.
+   - See the 2026-07-09 entry in `design-decision-audit.md` for the full decision.
+
 1. **Owner visual verification and confirmed exceptions**
    - Verify the shared Search and Metrics dialogs, representative segmented controls,
      and DOM chart-tooltip positioning at desktop/mobile widths in both modes.

@@ -417,7 +417,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 								) : null}
 							</div>
 
-							<div className="flex items-center justify-between gap-2 border-t border-subtle bg-surface px-4 py-3">
+							<div className="flex items-center justify-between gap-2 border-t border-subtle bg-overlay px-4 py-3">
 								{selectedOptions.length > 0 ? (
 									<Button type="button" variant="ghost" size="md" onClick={handleClearAll}>
 										Clear all

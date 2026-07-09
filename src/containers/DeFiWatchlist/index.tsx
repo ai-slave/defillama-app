@@ -583,7 +583,7 @@ function PortfolioNotifications({
 						)}
 					</div>
 
-					<div className="flex flex-wrap items-center justify-between gap-2 border-t border-subtle bg-surface px-4 py-3">
+					<div className="flex flex-wrap items-center justify-between gap-2 border-t border-subtle bg-overlay px-4 py-3">
 						<div className="flex items-center gap-2">
 							{preferences ? (
 								<>

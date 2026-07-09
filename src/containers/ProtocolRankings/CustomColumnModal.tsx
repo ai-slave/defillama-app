@@ -259,7 +259,7 @@ export function CustomColumnModal({
 									autoComplete="off"
 								/>
 								{state.showSuggestions ? (
-									<ul className="absolute right-0 left-0 z-10 mt-1 max-h-40 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1">
+									<ul className="absolute right-0 left-0 z-10 mt-1 max-h-40 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]">
 										{state.suggestions.map((s, i) => (
 											<li
 												key={s.name || s}
@@ -321,7 +321,7 @@ export function CustomColumnModal({
 								{AVAILABLE_FIELDS.map((f) => (
 									<li key={f}>
 										<code
-											className="hover-wash cursor-pointer rounded-sm bg-surface px-1 py-0.5 text-link"
+											className="hover-wash cursor-pointer rounded-sm bg-surface-elevated-1 px-1 py-0.5 text-link"
 											onClick={() => handleSuggestionClick({ name: f, type: 'field' })}
 										>
 											{f}
@@ -347,7 +347,7 @@ export function CustomColumnModal({
 							</a>
 						</div>
 					</div>
-					<div className="flex justify-end gap-2 border-t border-subtle bg-surface px-4 py-3">
+					<div className="flex justify-end gap-2 border-t border-subtle bg-overlay px-4 py-3">
 						<Button type="button" size="md" onClick={dialogStore.toggle}>
 							Cancel
 						</Button>

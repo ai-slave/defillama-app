@@ -50,7 +50,7 @@ export function DialogForm({
 					<Input ref={inputRef} required name="name" />
 				</label>
 			</form>
-			<div className="flex justify-end border-t border-subtle bg-surface px-4 py-3">
+			<div className="flex justify-end border-t border-subtle bg-overlay px-4 py-3">
 				<Button type="submit" form="newPortfolio" variant="primary" size="md">
 					Save
 				</Button>

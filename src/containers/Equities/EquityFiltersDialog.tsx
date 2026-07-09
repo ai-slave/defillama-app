@@ -604,7 +604,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 									/>
 								))
 							) : (
-								<div className="rounded-md border border-dashed border-subtle bg-surface p-4 text-sm text-tertiary">
+								<div className="rounded-md border border-dashed border-subtle bg-page p-4 text-sm text-tertiary">
 									<span className="sm:hidden">Add filters from the list below to narrow the table.</span>
 									<span className="max-sm:hidden">Add filters from the left to narrow the table.</span>
 								</div>
@@ -613,7 +613,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 					</section>
 				</div>
 
-				<div className="flex items-center justify-between gap-2 border-t border-subtle bg-surface px-4 py-3">
+				<div className="flex items-center justify-between gap-2 border-t border-subtle bg-overlay px-4 py-3">
 					{draftFilters.length > 0 ? (
 						<Button type="button" variant="ghost" size="md" onClick={() => setDraftFilters([])}>
 							Clear all

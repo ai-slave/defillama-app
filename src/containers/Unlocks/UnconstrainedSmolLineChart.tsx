@@ -148,7 +148,7 @@ export function UnconstrainedSmolLineChart({
 					? createPortal(
 							<div
 								ref={tooltipRef}
-								className="pointer-events-none fixed z-[1000] rounded-md border border-medium bg-surface px-2.5 py-1 body-sm whitespace-nowrap text-secondary shadow-md dark:bg-surface-elevated-1"
+								className="pointer-events-none fixed z-[1000] rounded-md border border-medium bg-overlay px-2.5 py-1 body-sm whitespace-nowrap text-secondary shadow-md"
 							>
 								<p>{formatTooltipChartDate(series[hoveredIndex][0], 'daily', true)}</p>
 								<p className="flex items-center gap-1">

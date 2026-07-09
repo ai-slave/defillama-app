@@ -23,6 +23,13 @@
 	--ld-bg-surface: #ffffff; /* Background/bg-surface */
 	--ld-bg-surface-elevated-1: #eeeeee; /* Background/bg-surface-elevated1 */
 	--ld-bg-surface-elevated-2: #dedede; /* Background/bg-surface-elevated2 */
+	/* Floating overlays: popovers, menus, tooltips, dialogs, toasts. The
+	   Figma library maps these to bg-surface-elevated1 (#eee), but a
+	   darker-than-surroundings overlay reads recessed in light mode (light
+	   elevation is carried by shadow, dark elevation by surface lift) —
+	   library update requested. Dark value intentionally equals
+	   bg-surface-elevated-1 so dark mode is pixel-identical. */
+	--ld-bg-overlay: #ffffff;
 	--ld-bg-brand: var(--ld-blue-500); /* Background/bg-interactive */
 	--ld-bg-brand-muted: #1f67d21f; /* Background/bg-brand-transparent */
 	--ld-bg-brand-faint: #1f67d20f; /* Background/bg-brand-transparent-subtle */
@@ -111,6 +118,7 @@ html.dark {
 	--ld-bg-surface: #131516;
 	--ld-bg-surface-elevated-1: #181a1b;
 	--ld-bg-surface-elevated-2: var(--ld-neutral-800);
+	--ld-bg-overlay: #181a1b;
 	--ld-bg-brand-muted: #1f67d233;
 	/* TODO(design): dark value for bg-brand-transparent-subtle unobserved;
 	   one alpha step below muted until confirmed. */
@@ -175,6 +183,7 @@ html.dark {
 	--color-surface: var(--ld-bg-surface);
 	--color-surface-elevated-1: var(--ld-bg-surface-elevated-1);
 	--color-surface-elevated-2: var(--ld-bg-surface-elevated-2);
+	--color-overlay: var(--ld-bg-overlay);
 	--color-brand: var(--ld-bg-brand);
 	--color-brand-muted: var(--ld-bg-brand-muted);
 	--color-brand-faint: var(--ld-bg-brand-faint);

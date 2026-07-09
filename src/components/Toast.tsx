@@ -13,7 +13,7 @@ export function Toast() {
 			containerStyle={{ zIndex: 99999 }}
 			toastOptions={{
 				style: {
-					background: 'var(--ld-bg-surface-elevated-1)',
+					background: 'var(--ld-bg-overlay)',
 					color: 'var(--ld-text-primary)',
 					border: '1px solid var(--ld-border-medium)',
 					borderRadius: '8px',
@@ -22,13 +22,13 @@ export function Toast() {
 				success: {
 					iconTheme: {
 						primary: 'var(--success)',
-						secondary: 'var(--ld-bg-surface-elevated-1)'
+						secondary: 'var(--ld-bg-overlay)'
 					}
 				},
 				error: {
 					iconTheme: {
 						primary: 'var(--error)',
-						secondary: 'var(--ld-bg-surface-elevated-1)'
+						secondary: 'var(--ld-bg-overlay)'
 					}
 				}
 			}}

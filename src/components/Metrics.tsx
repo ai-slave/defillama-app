@@ -10,7 +10,7 @@ import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import defillamaPages from '~/public/pages.json'
 import trendingPages from '~/public/trending.json'
 import { Button, buttonStyles } from '~/ui/Button'
-import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogCanvasSurfaceStyles, dialogScrollableBodyStyles } from '~/ui/Dialog'
 import { searchFieldInputStyles } from '~/ui/Input'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { fetchJson } from '~/utils/async'
@@ -439,7 +439,7 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 					</svg>
 				</div>
 				<Ariakit.Dialog
-					className={`${dialogSurfaceStyles} h-[calc(100dvh-80px)] sm:h-[min(720px,calc(100dvh-32px))] sm:[--dialog-width:min(85vw,1280px)]`}
+					className={`${dialogCanvasSurfaceStyles} h-[calc(100dvh-80px)] sm:h-[min(720px,calc(100dvh-32px))] sm:[--dialog-width:min(85vw,1280px)]`}
 					unmountOnHide={false}
 					hideOnInteractOutside
 				>

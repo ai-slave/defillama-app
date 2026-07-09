@@ -15,17 +15,17 @@ const menuSurfaceHeightStyles =
 const nestedMenuSurfaceHeightStyles =
 	'max-sm:h-[calc(100dvh-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:rounded-b-none sm:max-h-[min(60dvh,var(--popover-available-height))]'
 
-export const popoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 ${selectSurfaceHeightStyles}`
+export const popoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)] ${selectSurfaceHeightStyles}`
 
-export const menuSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 sm:max-w-md ${menuSurfaceHeightStyles}`
+export const menuSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)] ${menuSurfaceHeightStyles}`
 
-export const nestedMenuSurfaceStyles = `flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 sm:max-w-md ${nestedMenuSurfaceHeightStyles}`
+export const nestedMenuSurfaceStyles = `flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)] ${nestedMenuSurfaceHeightStyles}`
 
 export const popoverSearchResultsSurfaceStyles =
-	'z-10 overflow-y-auto rounded-b-[8px] border border-medium bg-surface-elevated-1 shadow-sm'
+	'z-10 overflow-y-auto rounded-b-[8px] border border-medium bg-overlay shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]'
 
 export const popoverHovercardSurfaceStyles =
-	'z-50 max-h-[calc(100dvh-80px)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 body-sm lg:max-h-(--popover-available-height)'
+	'z-50 max-h-[calc(100dvh-80px)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay body-sm shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)] lg:max-h-(--popover-available-height)'
 
 export const popoverRowStyles =
 	'body-sm flex shrink-0 cursor-pointer items-center justify-between gap-2 overflow-hidden px-3 py-2 text-primary cv-auto-37 hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row'
@@ -39,7 +39,7 @@ export const popoverTreeRowStyles =
 	'body-sm group relative flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap py-2 pr-3 text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-[active=true]:bg-hover-row'
 
 export const popoverActionBarStyles =
-	'grid w-full min-w-0 grid-cols-2 border-b border-subtle bg-surface-elevated-1 body-sm text-link'
+	'grid w-full min-w-0 grid-cols-2 border-b border-subtle bg-overlay body-sm text-link'
 
 export const popoverActionButtonStyles =
 	'flex min-w-0 items-center justify-center truncate px-3 py-2 text-link hover:bg-hover-row focus-visible:bg-hover-row'

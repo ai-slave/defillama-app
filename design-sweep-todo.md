@@ -900,3 +900,25 @@ dashboard product. Sheets scope remains deferred to a separate branch.
 - Light Text/Warning; dark bg-brand-transparent-subtle; hover-step token for pills;
   rebind chevron icons off SDS leak; publish primitive ramps; Inter Display decision;
   gutter 12 vs 16; future ECharts grid-inset visual decision after screenshots.
+- Overlay surfaces: library maps popovers/tooltips/dialogs to bg-surface-elevated1
+  (#eee) — reads recessed in light mode; code now uses a `bg-overlay` semantic
+  (white light / #181a1b dark). Ask: add the semantic to the library or repoint
+  overlay components (2026-07-09).
+
+## Overlay follow-ups (backlog)
+
+- [ ] ECharts-native tooltips: set backgroundColor/border/text from
+      `--ld-bg-overlay` + stroke/text tokens in the chart-theme branch
+      (they currently use the library-default near-white).
+- [ ] Downloads overlays (excluded surface): migrate its ~20 hardcoded
+      `bg-surface-elevated-1` floating surfaces to `bg-overlay` if/when that
+      product enters scope.
+- [ ] Consider folding the inlined desktop search-palette surface string
+      (`src/components/Search/index.tsx`) back into a shared `Popover.ts` recipe —
+      heights differ (60vh vs 400px/60dvh), so it needs its own owner-verified pass.
+- [ ] Token-hygiene branch (from 2026-07-09 review): focus-visible brand outline
+      split from hover wash; dark overrides for text-data-up-alt/down-alt (~3.4:1
+      on dark surfaces today); deprecate `border-divider` into `border-subtle`
+      (invisible on elevated surfaces in both modes); dark `--ld-bg-screen-dim`
+      override (~60%). Needs owner/design sign-off first: neutral light hover-row
+      (currently identical to bg-brand-muted) and light text-disabled legibility.

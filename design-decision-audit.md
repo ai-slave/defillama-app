@@ -763,3 +763,53 @@ Current classification of the in-flight pass:
 - Exported style-string candidates: `IconHitTarget` is small, `MetricChip` option chips
   are medium, `SegmentedControl` and `SearchField` are broad, and `Popover.ts` style
   exports should stay until there is a dedicated Ariakit abstraction pass.
+
+### 2026-07-09 Overlay Surface Split (popovers/tooltips/dialogs white in light mode)
+
+- Route/page: all floating overlays — shared popovers/menus/selects, tooltips/hovercards,
+  search palettes, content dialogs, toasts, DOM chart tooltips.
+- Component/file: `src/ui/Popover.ts`, `src/ui/Dialog.tsx`, `src/ui/ChartTooltip.ts`,
+  `src/ui/FailedDataPopover.tsx`, `src/styles/semantics.css`, plus direct callsites
+  (Search palette, IconsRow hovercard, Unlocks tooltips/hovercards, CustomColumnModal
+  autocomplete, Toast).
+- Current issue: overlays used `bg-surface-elevated-1` (#eee light). A
+  darker-than-surroundings overlay reads recessed/disabled in light mode (light
+  elevation = shadow; dark elevation = surface lift); #eee vs #f7f7f7 page barely
+  separates; white inputs inside gray overlays inverted the hierarchy; the blue
+  hover-row tint muddied on gray; `border-divider` (#eee) was invisible on it.
+- Decision (owner, 2026-07-09): new semantic `--ld-bg-overlay` / `bg-overlay` —
+  light `#ffffff`, dark `#181a1b` (equals dark elevated-1, so dark mode is
+  pixel-identical by construction). Overlay recipes gain a shared elevation shadow
+  `shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]`.
+- Figma divergence: the library maps overlays to `Background/bg-surface-elevated1`;
+  library update requested (add a `bg-overlay` semantic or repoint overlay components).
+  Annotated in `semantics.css` following the `text-tertiary` precedent.
+- Special cases:
+  - **Canvas** dialogs/drawers hosting white `bg-surface` cards keep
+    `bg-surface-elevated-1` via new `dialogCanvasSurfaceStyles`: Metrics dialog;
+    MarketMakers detail drawer (unchanged). All 17 other `dialogSurfaceStyles`
+    dialogs are content dialogs and moved to `bg-overlay`.
+  - Sticky dialog footers were `bg-surface` (white band on gray) → now `bg-overlay`
+    (opaque, matches surface; `border-t border-subtle` separates).
+  - Emphasis boxes inside content dialogs (`AddToDashboardModal` warning box,
+    `CustomColumnModal` field chips) `bg-surface` → `bg-surface-elevated-1`.
+  - Dashed empty-state wells (RWA/Perps/Equity filter dialogs) `bg-surface` → `bg-page`.
+  - `bg-page` inputs/pills on the now-white dialogs need no change — same
+    input-on-card combination used on white cards across the app.
+  - `UnconstrainedSmolLineChart` tooltip dropped its `dark:bg-surface-elevated-1`
+    mode fork → single `bg-overlay`.
+  - Legacy/excluded compat styles in `Popover.ts` (ProDashboard/Yields/LlamaAI) and
+    all `Downloads/*` overlays intentionally untouched (excluded surfaces).
+  - ECharts-native tooltips already render near-white (library default, no
+    backgroundColor); convergence on `bg-overlay` stays in the chart-theme branch.
+- Drift found during the same audit (fixed in branch):
+  - Home-page product-link cards (`ChainOverview/index.tsx`) were interactive Cards
+    with no hover affordance → `hover-wash-card` per the Card rule.
+  - `RowLinksWithDropdown/OtherLinks` "Others" trigger rested on
+    `bg-surface-elevated-2` + `hover-wash` (heaviest neutral, mixed hover
+    mechanisms) → `bg-surface-elevated-1` resting, `hover/focus-visible:
+bg-surface-elevated-2` opaque step per the documented Select-trigger exception.
+- Verification needed: owner visual check in both modes — chain dropdown,
+  Include-in-TVL popover, `(?)` tooltip, desktop ⌘K palette, mobile search sheet,
+  Add to Dashboard, chart-metrics dialogs, Metrics dialog (must be unchanged),
+  toast, unlocks hovercards. Dark mode should be pixel-identical everywhere.
