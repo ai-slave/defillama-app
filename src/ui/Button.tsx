@@ -29,7 +29,8 @@ type ButtonSize = 'sm' | 'md'
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 	secondary: 'border border-medium text-primary hover:bg-hover-row focus-visible:bg-hover-row',
-	primary: 'border border-transparent bg-brand text-on-brand hover:brightness-110 focus-visible:brightness-110',
+	primary:
+		'border border-transparent bg-brand text-on-brand hover:brightness-110 focus-visible:brightness-110 focus-visible:focus-ring-on-brand',
 	outline: 'border border-brand text-link hover:bg-hover-row focus-visible:bg-hover-row',
 	ghost:
 		'border border-transparent text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary',

@@ -22,7 +22,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button, buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { formattedNum } from '~/utils'
+import { formattedNum, truncateAddress } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import type { IRWAAssetData } from './api.types'
 import { BreakdownTooltipContent } from './BreakdownTooltipContent'
@@ -191,7 +191,7 @@ function DefiActiveTvlBreakdownTable({ breakdown, total }: { breakdown: Array<[s
 }
 
 const ContractItem = ({ address, explorerUrl }: { address: string; explorerUrl?: string }) => {
-	const truncatedAddress = address.length > 10 ? `${address.slice(0, 4)}...${address.slice(-4)}` : address
+	const truncatedAddress = truncateAddress(address)
 	return (
 		<div className="flex items-center">
 			{explorerUrl ? (

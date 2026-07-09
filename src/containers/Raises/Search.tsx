@@ -5,6 +5,7 @@ import { startTransition, useMemo, useRef, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { LoadingSpinner } from '~/components/Loaders'
 import { searchFieldInputStyles } from '~/ui/Input'
+import { NoResults } from '~/ui/NoResults'
 import {
 	popoverMobileDismissStyles,
 	popoverMobileWrapperClassName,
@@ -90,7 +91,7 @@ export function RaisesSearch({ list }: { list?: string[] }) {
 							) : null}
 						</Ariakit.ComboboxList>
 					) : (
-						<p className="px-3 py-6 text-center body-sm text-tertiary">No results found</p>
+						<NoResults />
 					)}
 				</Ariakit.ComboboxPopover>
 			</Ariakit.ComboboxProvider>

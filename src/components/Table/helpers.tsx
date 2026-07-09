@@ -109,7 +109,7 @@ export function TokenPageTableIncomeHeaderCell({
 	return (
 		<th
 			className={clsx(
-				'overflow-hidden border-r border-b border-divider p-2 text-left text-ellipsis whitespace-nowrap',
+				'overflow-hidden border-r border-b border-subtle p-2 text-left text-ellipsis whitespace-nowrap',
 				surface === 'app' ? 'bg-page' : 'bg-surface',
 				sticky && 'first:sticky first:left-0 first:z-10',
 				lastColumn && 'border-r-0',
@@ -135,7 +135,7 @@ export function TokenPageTableIncomeCell({
 	return (
 		<td
 			className={clsx(
-				'overflow-hidden border-r border-b border-divider p-2 text-left text-ellipsis whitespace-nowrap',
+				'overflow-hidden border-r border-b border-subtle p-2 text-left text-ellipsis whitespace-nowrap',
 				lastColumn && 'border-r-0',
 				className
 			)}

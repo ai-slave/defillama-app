@@ -6,6 +6,7 @@ import { BasicLink } from '~/components/Link'
 import { getQueryUpdatesFromSelected } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ExcludeQueryKey, SelectValues } from '~/components/Select/types'
+import { selectTriggerStyles } from '~/components/Select/types'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
@@ -15,6 +16,11 @@ import type { IRWAAssetsOverview } from './api.types'
 import { getDefaultRWAOverviewInclusion, getDefaultSelectedTypes, type RWAOverviewMode } from './constants'
 import { definitions } from './definitions'
 import { hasActiveInclusionOverride, updateAttributeFilterStatesQueryValue } from './filterState'
+
+/* inputStyles as a label shell: the wrapper carries the field chrome and
+   focus-within lights the border while the inner input stays bare. */
+const rangeInputShellStyles =
+	'flex min-h-8 min-w-0 flex-1 items-center gap-1 rounded-[8px] border border-medium bg-page px-3 py-1.5 label-sm text-primary focus-within:border-brand'
 
 const ATTRIBUTE_FILTER_STATES = ['yes', 'no', 'unknown'] as const
 type RWAAttributeFilterState = (typeof ATTRIBUTE_FILTER_STATES)[number]
@@ -1044,8 +1050,7 @@ function RWASelectDraftEditor({
 			popoverClassName="z-100 max-sm:h-[88dvh]! max-sm:max-h-[88dvh] max-sm:w-full sm:min-w-[260px] sm:max-h-[min(360px,60dvh)]! lg:max-h-[min(360px,60dvh)]!"
 			triggerProps={{
 				'aria-label': `${definition.label} values`,
-				className:
-					'flex min-h-8 min-w-0 cursor-pointer items-center gap-1.5 hover-wash rounded-[8px] border border-medium bg-page px-3 py-1.5 label-sm text-primary outline-hidden focus:border-brand'
+				className: selectTriggerStyles('input', 'md')
 			}}
 		/>
 	)
@@ -1074,7 +1079,7 @@ function RWARangeDraftEditor({
 
 	return (
 		<div className="flex items-center gap-2">
-			<label className="flex min-h-8 min-w-0 flex-1 items-center gap-1 rounded-[8px] border border-medium bg-page px-3 py-1.5 label-sm text-primary focus-within:border-brand">
+			<label className={rangeInputShellStyles}>
 				<span className="text-tertiary">Min %</span>
 				<input
 					type="number"
@@ -1085,7 +1090,7 @@ function RWARangeDraftEditor({
 					className="min-w-0 flex-1 bg-transparent text-right outline-hidden placeholder:text-tertiary"
 				/>
 			</label>
-			<label className="flex min-h-8 min-w-0 flex-1 items-center gap-1 rounded-[8px] border border-medium bg-page px-3 py-1.5 label-sm text-primary focus-within:border-brand">
+			<label className={rangeInputShellStyles}>
 				<span className="text-tertiary">Max %</span>
 				<input
 					type="number"

@@ -839,3 +839,42 @@ bg-surface-elevated-2` opaque step per the documented Select-trigger exception.
   dashboard), which still needs a separate info affordance on touch.
 - Found but unchanged: the ProtocolRankings custom-column "Err" badge is dead code
   (early return swallows `error` first) — spun off as a separate task.
+
+### 2026-07-09 Token Hygiene (branch `mintdart/token-hygiene`)
+
+- Decisions (owner, 2026-07-09):
+  - `text-data-up-alt`/`down-alt` gain dark overrides (#4b86db / #a674ec, AA on dark
+    surfaces) — interim owner values, TODO(design) filed; chart fills stay on the 500s.
+  - `--ld-bg-screen-dim` gains a dark override (#090b0c99); light unchanged.
+  - `border-divider`/`text-divider` retired into the alpha stroke ramp
+    (`border-subtle` / new `text-border-subtle`) — the opaque values matched
+    elevated-1/-2 exactly and vanished on elevated surfaces.
+  - Focus: the pre-existing global `:focus-visible` ring in tailwind.css goes inset
+    (-2px, was +1px — it clipped on full-bleed rows in overflow-hidden popovers);
+    new `focus-ring` utility binds to Ariakit `data-focus-visible` for virtual-focus
+    rows (which never receive DOM focus — previously NO keyboard indicator), and
+    `focus-ring-on-brand` (white) covers solid brand fills (Button primary, active
+    nav link) where a brand ring is invisible.
+- Observations logged, not fixed here:
+  - CORRECTION (same day): dialogs DO have a scrim — the global `[data-backdrop]`
+    rule in tailwind.css styles every Ariakit backdrop (`bg-black/40 dark:bg-black/70`).
+    The real issue is two backdrop systems: dialogs at 40%/70% literals vs the
+    `--ld-bg-screen-dim` token (20%/60%) on the MarketMakers drawer. Owner decision
+    needed on one value before pointing `[data-backdrop]` at the token.
+  - ~280 `outline-none`/`outline-hidden` usages suppress the global focus ring;
+    per design.md that is only valid when the element has its own indicator —
+    unaudited callsites (e.g. the sidebar logo link has no indicator when focused)
+    need a focused a11y pass.
+- Still needing design sign-off (unchanged): light `hover-row` = `bg-brand-muted`
+  collision; light `text-disabled` legibility.
+
+### 2026-07-09 Summary-Card Variant Taxonomy (owner decision)
+
+- Three valid summary-card variants, confirmed by owner after the metric-row font
+  normalization: (1) headline + "Key Metrics" heading + MetricRow rows (home/protocol
+  overview); (2) the same without the heading (adapter overviews, token overview);
+  (3) the stablecoins stat stack — vertical `label-md`/`mono-xl` headline pair plus
+  compact `label-md`/`mono-md` rows. Variants 1-2 always use MetricRow (`body-md`
+  labels); variant 3's `label-md` rows are a documented exception. Codified in
+  design.md § Summary metric cards; StablecoinOverview intentionally NOT migrated
+  to MetricRow.

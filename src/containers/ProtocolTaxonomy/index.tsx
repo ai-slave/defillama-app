@@ -9,6 +9,7 @@ import {
 } from '~/components/ECharts/ChartGroupingSelector'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
+import { MetricRow } from '~/components/MetricPrimitives'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { QuestionHelper } from '~/components/QuestionHelper'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
@@ -96,92 +97,59 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 					)}
 					<div className="mb-auto flex flex-1 flex-col gap-2">
 						{props.charts.dataset?.source.length > 0 ? (
-							<p className="flex flex-wrap items-center justify-between gap-4 text-base">
-								<Tooltip
-									content="Sum of value of all coins held in smart contracts of all the protocols on the chain"
-									className="font-normal text-secondary underline decoration-dotted"
-								>
-									Total Value Locked
-								</Tooltip>
-
-								<span className="text-right font-jetbrains">
-									{formattedNum(charts.dataset?.source[charts.dataset?.source.length - 1]?.TVL, true)}
-								</span>
-							</p>
+							<MetricRow
+								label="Total Value Locked"
+								tooltip="Sum of value of all coins held in smart contracts of all the protocols on the chain"
+								value={formattedNum(charts.dataset?.source[charts.dataset?.source.length - 1]?.TVL, true)}
+							/>
 						) : null}
 						{props.optionsPremium7d != null ? (
-							<p className="flex flex-wrap items-center justify-between gap-4 text-base">
-								<Tooltip
-									content={definitions.optionsPremium.chain['7d']}
-									className="font-normal text-secondary underline decoration-dotted"
-								>
-									Premium Volume (7d)
-								</Tooltip>
-								<span className="text-right font-jetbrains">{formattedNum(props.optionsPremium7d, true)}</span>
-							</p>
+							<MetricRow
+								label="Premium Volume (7d)"
+								tooltip={definitions.optionsPremium.chain['7d']}
+								value={formattedNum(props.optionsPremium7d, true)}
+							/>
 						) : null}
 						{props.optionsNotional7d != null ? (
-							<p className="flex flex-wrap items-center justify-between gap-4 text-base">
-								<Tooltip
-									content={definitions.optionsNotional.chain['7d']}
-									className="font-normal text-secondary underline decoration-dotted"
-								>
-									Notional Volume (7d)
-								</Tooltip>
-								<span className="text-right font-jetbrains">{formattedNum(props.optionsNotional7d, true)}</span>
-							</p>
+							<MetricRow
+								label="Notional Volume (7d)"
+								tooltip={definitions.optionsNotional.chain['7d']}
+								value={formattedNum(props.optionsNotional7d, true)}
+							/>
 						) : null}
 						{props.fees7d != null ? (
-							<p className="flex flex-wrap items-center justify-between gap-4 text-base">
-								<Tooltip
-									content={definitions.fees.chain['7d']}
-									className="font-normal text-secondary underline decoration-dotted"
-								>
-									Fees (7d)
-								</Tooltip>
-								<span className="text-right font-jetbrains">{formattedNum(props.fees7d, true)}</span>
-							</p>
+							<MetricRow
+								label="Fees (7d)"
+								tooltip={definitions.fees.chain['7d']}
+								value={formattedNum(props.fees7d, true)}
+							/>
 						) : null}
 						{props.revenue7d != null ? (
-							<p className="flex flex-wrap items-center justify-between gap-4 text-base">
-								<Tooltip
-									content={definitions.revenue.chain['7d']}
-									className="font-normal text-secondary underline decoration-dotted"
-								>
-									Revenue (7d)
-								</Tooltip>
-								<span className="text-right font-jetbrains">{formattedNum(props.revenue7d, true)}</span>
-							</p>
+							<MetricRow
+								label="Revenue (7d)"
+								tooltip={definitions.revenue.chain['7d']}
+								value={formattedNum(props.revenue7d, true)}
+							/>
 						) : null}
 						{props.perpVolume7d != null ? (
-							<p className="flex flex-wrap items-center justify-between gap-4 text-base">
-								<Tooltip
-									content={definitions.perps.protocol['7d']}
-									className="font-normal text-secondary underline decoration-dotted"
-								>
-									Perp Volume (7d)
-								</Tooltip>
-								<span className="text-right font-jetbrains">{formattedNum(props.perpVolume7d, true)}</span>
-							</p>
+							<MetricRow
+								label="Perp Volume (7d)"
+								tooltip={definitions.perps.protocol['7d']}
+								value={formattedNum(props.perpVolume7d, true)}
+							/>
 						) : null}
 						{props.dexVolume7d != null ? (
-							<p className="flex flex-wrap items-center justify-between gap-4 text-base">
-								<span className="font-normal text-secondary">
-									{getProtocolCategoryDexVolumeLabel(props.effectiveCategory)} (7d)
-								</span>
-								<span className="text-right font-jetbrains">{formattedNum(props.dexVolume7d, true)}</span>
-							</p>
+							<MetricRow
+								label="{getProtocolCategoryDexVolumeLabel(props.effectiveCategory)} (7d)"
+								value={formattedNum(props.dexVolume7d, true)}
+							/>
 						) : null}
 						{props.openInterest != null ? (
-							<p className="flex flex-wrap items-center justify-between gap-4 text-base">
-								<Tooltip
-									content={definitions.openInterest.common}
-									className="font-normal text-secondary underline decoration-dotted"
-								>
-									Open Interest
-								</Tooltip>
-								<span className="text-right font-jetbrains">{formattedNum(props.openInterest, true)}</span>
-							</p>
+							<MetricRow
+								label="Open Interest"
+								tooltip={definitions.openInterest.common}
+								value={formattedNum(props.openInterest, true)}
+							/>
 						) : null}
 					</div>
 				</Card>

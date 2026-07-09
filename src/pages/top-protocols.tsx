@@ -21,6 +21,7 @@ import { TVL_SETTINGS_KEYS } from '~/contexts/LocalStorage'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { NoResults } from '~/ui/NoResults'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
@@ -256,11 +257,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 						/>
 					</div>
 				</TableToolbar>
-				{table.getFilteredRowModel().rows.length > 0 ? (
-					<VirtualTable instance={table} />
-				) : (
-					<p className="px-3 py-6 text-center body-sm text-tertiary">No results found</p>
-				)}
+				{table.getFilteredRowModel().rows.length > 0 ? <VirtualTable instance={table} /> : <NoResults />}
 			</Panel>
 		</Layout>
 	)

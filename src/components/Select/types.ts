@@ -26,6 +26,11 @@ const SELECT_TRIGGER_VARIANTS = {
 		'label-sm flex cursor-pointer flex-nowrap items-center gap-2 rounded-md bg-surface-elevated-1 px-3 py-2 text-primary hover:bg-surface-elevated-2 focus-visible:bg-surface-elevated-2',
 	filter:
 		'label-sm relative flex min-h-6 cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-medium px-2 py-0.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row',
+	/* Input-style trigger for form-like filter panels: a bg-page field with a
+	   focus:border-brand indicator (outline-hidden is valid per the focus
+	   rule — the border is the indicator). */
+	input:
+		'label-sm flex min-h-8 min-w-0 cursor-pointer items-center gap-1.5 hover-wash rounded-[8px] border border-medium bg-page px-3 py-1.5 text-primary outline-hidden focus:border-brand',
 	'filter-responsive':
 		'label-sm relative flex min-h-6 w-full cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-medium px-2 py-0.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row sm:w-auto',
 	pro: 'hover:not-disabled:pro-btn-blue focus-visible:not-disabled:pro-btn-blue flex items-center gap-1 rounded-md border border-medium px-1.5 py-1 text-xs hover:border-transparent focus-visible:border-transparent disabled:border-subtle disabled:text-disabled'

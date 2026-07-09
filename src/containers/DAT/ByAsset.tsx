@@ -3,6 +3,7 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/formatters'
 import { BasicLink } from '~/components/Link'
+import { MetricRow } from '~/components/MetricPrimitives'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
@@ -48,25 +49,17 @@ export function DATByAsset({
 						{metadata.name} Treasury Holdings
 					</Tooltip>
 					<div className="flex flex-col">
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-							<span className="text-secondary">Total Institution</span>
-							<span className="ml-auto font-jetbrains">{metadata.companies}</span>
-						</p>
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-							<span className="text-secondary">Total Holdings</span>
-							<span className="ml-auto font-jetbrains">{`${formattedNum(metadata.totalAmount, false)} ${metadata.ticker}`}</span>
-						</p>
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-							<span className="text-secondary">Total USD Value</span>
-							<span className="ml-auto font-jetbrains">{formattedNum(metadata.totalUsdValue, true)}</span>
-						</p>
+						<MetricRow label="Total Institution" value={metadata.companies} />
+						<MetricRow
+							label="Total Holdings"
+							value={`${formattedNum(metadata.totalAmount, false)} ${metadata.ticker}`}
+						/>
+						<MetricRow label="Total USD Value" value={formattedNum(metadata.totalUsdValue, true)} />
 						{metadata.circSupplyPerc != null ? (
-							<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-								<span className="text-secondary">% of {metadata.ticker} Circulating Supply</span>
-								<span className="ml-auto font-jetbrains">
-									{metadata.circSupplyPerc.toLocaleString(undefined, { maximumFractionDigits: 3 })}%
-								</span>
-							</p>
+							<MetricRow
+								label={`% of ${metadata.ticker} Circulating Supply`}
+								value={`${metadata.circSupplyPerc.toLocaleString(undefined, { maximumFractionDigits: 3 })}%`}
+							/>
 						) : null}
 					</div>
 					<Button as={BasicLink} href="/report-error" size="md" className="mt-auto mr-auto">

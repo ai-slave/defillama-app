@@ -17,6 +17,7 @@ import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
+import { MetricRow } from '~/components/MetricPrimitives'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { QuestionHelper } from '~/components/QuestionHelper'
@@ -334,54 +335,33 @@ export function AdapterByChain(props: IProps) {
 
 						<div className="flex flex-col">
 							{props.openInterest ? (
-								<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-									<Tooltip
-										content={definitions.openInterest.chain}
-										className="body-sm text-secondary underline decoration-dotted"
-									>
-										Open Interest
-									</Tooltip>
-									<span className="ml-auto mono-md">{formattedNum(props.openInterest, true)}</span>
-								</p>
+								<MetricRow
+									label="Open Interest"
+									tooltip={definitions.openInterest.chain}
+									value={formattedNum(props.openInterest, true)}
+								/>
 							) : null}
 							{props.activeLiquidity != null ? (
-								<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-									<Tooltip
-										content={definitions.activeLiquidity.chain}
-										className="body-sm text-secondary underline decoration-dotted"
-									>
-										Active Liquidity
-									</Tooltip>
-									<span className="ml-auto mono-md">{formattedNum(props.activeLiquidity, true)}</span>
-								</p>
+								<MetricRow
+									label="Active Liquidity"
+									tooltip={definitions.activeLiquidity.chain}
+									value={formattedNum(props.activeLiquidity, true)}
+								/>
 							) : null}
 							{props.total30d != null ? (
-								<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-									{(() => {
-										const definition = pageTypeByDefinition[props.type]?.['30d']
-										return definition ? (
-											<Tooltip content={definition} className="body-sm text-secondary underline decoration-dotted">
-												{metricName} (30d)
-											</Tooltip>
-										) : (
-											<span className="body-sm text-secondary">{metricName} (30d)</span>
-										)
-									})()}
-									<span className="ml-auto mono-md">{formattedNum(props.total30d, true)}</span>
-								</p>
+								<MetricRow
+									label={`${metricName} (30d)`}
+									tooltip={pageTypeByDefinition[props.type]?.['30d']}
+									value={formattedNum(props.total30d, true)}
+								/>
 							) : null}
 							{props.change_7dover7d != null ? (
-								<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-									<Tooltip
-										content="Change of last 7d volume over the previous 7d volume"
-										className="body-sm text-secondary underline decoration-dotted"
-									>
-										Weekly Change
-									</Tooltip>
-									<span className={`ml-auto mono-md ${props.change_7dover7d >= 0 ? 'text-data-up' : 'text-data-down'}`}>
-										{`${props.change_7dover7d >= 0 ? '+' : ''}${props.change_7dover7d}%`}
-									</span>
-								</p>
+								<MetricRow
+									label="Weekly Change"
+									tooltip="Change of last 7d volume over the previous 7d volume"
+									value={`${props.change_7dover7d >= 0 ? '+' : ''}${props.change_7dover7d}%`}
+									valueClassName={`mono-md-bold ml-auto ${props.change_7dover7d >= 0 ? 'text-data-up' : 'text-data-down'}`}
+								/>
 							) : null}
 						</div>
 					</Card>

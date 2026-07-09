@@ -12,7 +12,7 @@ import { Icon } from '~/components/Icon'
 import { VirtualTable } from '~/components/Table/Table'
 import { Hovercard } from '~/ui/Hovercard'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { formattedNum } from '~/utils'
+import { formattedNum, truncateAddress } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import type { Insider } from './api.types'
 
@@ -33,8 +33,7 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 		cell: ({ getValue, row }) => {
 			const address = getValue()
 			const displayAddress = address.split(':')[1] ?? address
-			const shortAddress =
-				displayAddress.length > 14 ? `${displayAddress.slice(0, 6)}...${displayAddress.slice(-4)}` : displayAddress
+			const shortAddress = truncateAddress(displayAddress)
 			const chainId = address.includes(':') ? address.split(':')[0] : tokenChain
 			const explorer = chainId
 				? getBlockExplorerNew({ apiResponse: blockExplorersData, address: displayAddress, chainId, urlType: 'address' })

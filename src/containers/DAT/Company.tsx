@@ -5,6 +5,7 @@ import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons
 import type { ICandlestickChartProps } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
+import { MetricRow, MetricSection, SubMetricRow } from '~/components/MetricPrimitives'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TagGroup } from '~/components/TagGroup'
 import { Tooltip } from '~/components/Tooltip'
@@ -71,136 +72,93 @@ export function DATCompany(props: IDATCompanyPageProps) {
 					<div className="flex flex-col">
 						{props.assetsBreakdown.length > 1 ? (
 							<>
-								<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-									<span className="text-secondary">Assets in Holdings</span>
-									<span className="ml-auto font-jetbrains">{props.assets.join(', ')}</span>
-								</p>
+								<MetricRow label="Assets in Holdings" value={props.assets.join(', ')} />
 								{props.totalUsdValue != null ? (
-									<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-										<span className="text-secondary">Assets Today's Value (USD)</span>
-										<span className="ml-auto font-jetbrains">{formattedNum(props.totalUsdValue, true)}</span>
-									</p>
+									<MetricRow label="Assets Today's Value (USD)" value={formattedNum(props.totalUsdValue, true)} />
 								) : null}
 								{props.totalCost != null ? (
-									<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-										<span className="text-secondary">Assets Cost Basis</span>
-										<span className="ml-auto font-jetbrains">
-											{props.totalCost != null ? formattedNum(props.totalCost, true) : '-'}
-										</span>
-									</p>
+									<MetricRow
+										label="Assets Cost Basis"
+										value={props.totalCost != null ? formattedNum(props.totalCost, true) : '-'}
+									/>
 								) : null}
 							</>
 						) : null}
 						{props.assetsBreakdown.map((asset, index) => (
-							<details
-								className="group"
+							<MetricSection
 								key={`${props.ticker}-${asset.name}`}
-								open={props.assetsBreakdown.length === 1 && index === 0}
+								label={`Total ${asset.name}`}
+								value={`${formattedNum(asset.amount, false)} ${asset.ticker}`}
+								defaultOpen={props.assetsBreakdown.length === 1 && index === 0}
 							>
-								<summary className="flex flex-wrap justify-start gap-4 border-b border-subtle py-1 group-last:border-none group-open:border-none group-open:font-semibold">
-									<span className="text-secondary">Total {asset.name}</span>
-									<Icon
-										name="chevron-down"
-										height={16}
-										width={16}
-										className="relative top-0.5 -ml-3 text-tertiary transition-transform duration-100 group-open:rotate-180"
-									/>
-									<span className="ml-auto font-jetbrains">
-										{formattedNum(asset.amount, false)} {asset.ticker}
-									</span>
-								</summary>
-								<div className="mb-3 flex flex-col">
-									<p className="justify-stat flex flex-wrap gap-4 border-b border-dashed border-subtle py-1 last:border-none">
-										<span className="text-secondary">Today's Value (USD)</span>
-										<span className="ml-auto justify-end overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap">
-											{asset.usdValue != null ? formattedNum(asset.usdValue, true) : null}
-										</span>
-									</p>
-									<p className="justify-stat flex flex-wrap gap-4 border-b border-dashed border-subtle py-1 last:border-none">
-										<span className="text-secondary">Cost Basis</span>
-										<span className="ml-auto justify-end overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap">
-											{asset.cost != null ? formattedNum(asset.cost, true) : '-'}
-										</span>
-									</p>
-									<p className="justify-stat flex flex-wrap gap-4 border-b border-dashed border-subtle py-1 last:border-none">
-										<span className="text-secondary">Average Purchase Price</span>
-										<span className="ml-auto justify-end overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap">
-											{asset.avgPrice != null ? formattedNum(asset.avgPrice, true) : '-'}
-										</span>
-									</p>
-								</div>
-							</details>
+								<SubMetricRow
+									label="Today's Value (USD)"
+									value={asset.usdValue != null ? formattedNum(asset.usdValue, true) : null}
+								/>
+								<SubMetricRow label="Cost Basis" value={asset.cost != null ? formattedNum(asset.cost, true) : '-'} />
+								<SubMetricRow
+									label="Average Purchase Price"
+									value={asset.avgPrice != null ? formattedNum(asset.avgPrice, true) : '-'}
+								/>
+							</MetricSection>
 						))}
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-							<span className="text-secondary">First Announcement</span>
-							<span className="ml-auto font-jetbrains">
-								{props.firstAnnouncementDate != null ? dayjs(props.firstAnnouncementDate).format('MMM D, YYYY') : null}
-							</span>
-						</p>
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-							<span className="text-secondary">Latest Announcement</span>
-							<span className="ml-auto font-jetbrains">
-								{props.lastAnnouncementDate != null ? dayjs(props.lastAnnouncementDate).format('MMM D, YYYY') : null}
-							</span>
-						</p>
-						<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-							<span className="text-secondary">Total Transactions</span>
-							<span className="ml-auto font-jetbrains">{props.transactions.length}</span>
-						</p>
+						<MetricRow
+							label="First Announcement"
+							value={
+								props.firstAnnouncementDate != null ? dayjs(props.firstAnnouncementDate).format('MMM D, YYYY') : null
+							}
+						/>
+						<MetricRow
+							label="Latest Announcement"
+							value={
+								props.lastAnnouncementDate != null ? dayjs(props.lastAnnouncementDate).format('MMM D, YYYY') : null
+							}
+						/>
+						<MetricRow label="Total Transactions" value={props.transactions.length} />
 						{props.price != null ? (
-							<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-								<span className="text-secondary">${props.ticker} price</span>
-								{props.priceChange24h != null ? (
-									<Tooltip
-										content={
-											<>
-												24h change:{' '}
-												<span className={props.priceChange24h > 0 ? 'text-data-up' : 'text-data-down'}>
-													{`${props.priceChange24h > 0 ? '+' : ''}${props.priceChange24h.toFixed(2)}%`}
-												</span>
-											</>
-										}
-										className="ml-auto font-jetbrains underline decoration-dotted"
-									>
-										${props.price}
-									</Tooltip>
-								) : (
-									<span className="ml-auto font-jetbrains">${props.price}</span>
-								)}
-							</p>
+							<MetricRow
+								label={`$${props.ticker} price`}
+								value={
+									props.priceChange24h != null ? (
+										<Tooltip
+											content={
+												<>
+													24h change:{' '}
+													<span className={props.priceChange24h > 0 ? 'text-data-up' : 'text-data-down'}>
+														{`${props.priceChange24h > 0 ? '+' : ''}${props.priceChange24h.toFixed(2)}%`}
+													</span>
+												</>
+											}
+											className="underline decoration-dotted"
+										>
+											${props.price}
+										</Tooltip>
+									) : (
+										<>${props.price}</>
+									)
+								}
+							/>
 						) : null}
 						{props.realized_mNAV != null ? (
-							<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-								<Tooltip
-									content="Market Net Asset Value based only on the current outstanding common shares, with no dilution considered"
-									className="text-secondary underline decoration-dotted"
-								>
-									Realized mNAV
-								</Tooltip>
-								<span className="ml-auto font-jetbrains">{formattedNum(props.realized_mNAV, false)}</span>
-							</p>
+							<MetricRow
+								label="Realized mNAV"
+								tooltip="Market Net Asset Value based only on the current outstanding common shares, with no dilution considered"
+								value={formattedNum(props.realized_mNAV, false)}
+							/>
 						) : null}
 						{props.realistic_mNAV != null ? (
-							<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-								<Tooltip
-									content="Market Net asset value adjusted for expected dilution from in-the-money options and convertibles that are likely to be exercised"
-									className="text-secondary underline decoration-dotted"
-								>
-									Realistic mNAV
-								</Tooltip>
-								<span className="ml-auto font-jetbrains">{formattedNum(props.realistic_mNAV, false)}</span>
-							</p>
+							<MetricRow
+								label="Realistic mNAV"
+								tooltip="Market Net asset value adjusted for expected dilution from in-the-money options and convertibles that are likely to be exercised"
+								value={formattedNum(props.realistic_mNAV, false)}
+							/>
 						) : null}
 						{props.max_mNAV != null ? (
-							<p className="group flex flex-wrap justify-start gap-4 border-b border-subtle py-1 last:border-none">
-								<Tooltip
-									content={`Market Net Asset Value under the fully diluted scenario, assuming every warrant, option, and convertible is exercised (the most conservative/worst-case view)`}
-									className="text-secondary underline decoration-dotted"
-								>
-									Max mNAV
-								</Tooltip>
-								<span className="ml-auto font-jetbrains">{formattedNum(props.max_mNAV, false)}</span>
-							</p>
+							<MetricRow
+								label="Max mNAV"
+								tooltip={`Market Net Asset Value under the fully diluted scenario, assuming every warrant, option, and convertible is exercised (the most conservative/worst-case view)`}
+								value={formattedNum(props.max_mNAV, false)}
+							/>
 						) : null}
 					</div>
 					<Button as={BasicLink} href="/report-error" size="md" className="mt-auto mr-auto">

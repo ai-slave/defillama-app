@@ -116,7 +116,7 @@ function TableRow<T extends RowData>({
 							key={cell.id}
 							data-lighter={stripedBg && i % 2 === 0}
 							data-chainpage={isChainPage}
-							className={`overflow-hidden border-t border-r border-divider p-3 text-ellipsis whitespace-nowrap ${
+							className={`overflow-hidden border-t border-r border-subtle p-3 text-ellipsis whitespace-nowrap ${
 								compact ? 'border-r-0 px-5' : ''
 							} ${cell.column.columnDef.meta?.cellClassName ?? ''}`}
 							style={{
@@ -127,7 +127,7 @@ function TableRow<T extends RowData>({
 								zIndex: isSticky ? 1 : undefined,
 								background: isSticky ? 'var(--ld-bg-surface)' : undefined,
 								borderRightColor: isSticky ? 'transparent' : undefined,
-								boxShadow: isSticky && !compact ? '-1px 0 0 var(--ld-border-divider) inset' : undefined
+								boxShadow: isSticky && !compact ? '-1px 0 0 var(--ld-border-subtle) inset' : undefined
 							}}
 						>
 							{flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -492,9 +492,9 @@ export function VirtualTable<T extends RowData>({
 									zIndex: isSticky ? 20 : undefined,
 									background: 'var(--ld-bg-surface)',
 									borderRightColor: isSticky ? 'transparent' : undefined,
-									boxShadow: isSticky && !compact ? '-1px 0 0 0 var(--ld-border-divider) inset' : undefined
+									boxShadow: isSticky && !compact ? '-1px 0 0 0 var(--ld-border-subtle) inset' : undefined
 								}}
-								className={`overflow-hidden border-r border-divider p-3 text-ellipsis whitespace-nowrap last:border-r-0 ${
+								className={`overflow-hidden border-r border-subtle p-3 text-ellipsis whitespace-nowrap last:border-r-0 ${
 									rowSpannedHeader || headerGroup.depth === 0 || isGroupedChildHeader ? 'border-t' : ''
 								} ${rowSpannedHeader || isLastHeaderRow ? 'border-b' : ''} ${
 									compact ? 'h-[50px] border-r-0 px-5' : ''

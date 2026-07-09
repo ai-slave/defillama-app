@@ -10,6 +10,7 @@ import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { inputStyles } from '~/ui/Input'
+import { NoResults } from '~/ui/NoResults'
 import { popoverMenuItemStyles, popoverSearchResultsSurfaceStyles, popoverSeeMoreStyles } from '~/ui/Popover'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -205,7 +206,7 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 							) : null}
 						</Ariakit.ComboboxList>
 					) : (
-						<p className="px-3 py-6 text-center body-sm text-tertiary">No results found</p>
+						<NoResults />
 					)}
 				</Ariakit.ComboboxPopover>
 			</Ariakit.ComboboxProvider>

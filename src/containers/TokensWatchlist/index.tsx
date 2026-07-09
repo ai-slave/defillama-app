@@ -214,7 +214,7 @@ function ExpandedTokenMarkets({ symbol }: { symbol: string }) {
 	return (
 		<div
 			ref={ref}
-			className="sticky left-0 z-10 border-t border-divider bg-surface"
+			className="sticky left-0 z-10 border-t border-subtle bg-surface"
 			style={{ width: width ? `${width}px` : undefined }}
 		>
 			<TokenMarketsSection tokenSymbol={symbol} variant="embedded" />

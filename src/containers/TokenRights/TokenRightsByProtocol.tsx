@@ -703,12 +703,12 @@ function KeyValueRow({ label, tooltip, children }: { label: string; tooltip?: st
 				<Tooltip
 					content={tooltip}
 					render={<dt />}
-					className="shrink-0 body-sm text-secondary underline decoration-dotted"
+					className="shrink-0 body-md text-secondary underline decoration-dotted"
 				>
 					{label}
 				</Tooltip>
 			) : (
-				<dt className="shrink-0 body-sm text-secondary">{label}</dt>
+				<dt className="shrink-0 body-md text-secondary">{label}</dt>
 			)}
 			<dd className="flex flex-wrap items-center justify-end gap-1.5">{children}</dd>
 		</div>

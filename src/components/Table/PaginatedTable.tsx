@@ -157,7 +157,7 @@ export function PaginatedTable<T extends RowData>({
 				</colgroup>
 				<thead>
 					{table.getHeaderGroups().map((headerGroup) => (
-						<tr key={headerGroup.id} className="border-b border-divider bg-surface">
+						<tr key={headerGroup.id} className="border-b border-subtle bg-surface">
 							{headerGroup.headers.map((header) => {
 								const align = header.column.columnDef.meta?.align ?? 'start'
 								const headerAlignmentClass =
@@ -192,7 +192,7 @@ export function PaginatedTable<T extends RowData>({
 						const isExpanded = renderSubComponent != null && row.getIsExpanded()
 						return (
 							<Fragment key={row.id}>
-								<tr className={`border-b border-divider ${isExpanded ? '' : 'last:border-b-0'}`}>
+								<tr className={`border-b border-subtle ${isExpanded ? '' : 'last:border-b-0'}`}>
 									{row.getVisibleCells().map((cell) => {
 										const align = cell.column.columnDef.meta?.align ?? 'start'
 
@@ -208,7 +208,7 @@ export function PaginatedTable<T extends RowData>({
 									})}
 								</tr>
 								{isExpanded ? (
-									<tr className="border-b border-divider last:border-b-0">
+									<tr className="border-b border-subtle last:border-b-0">
 										<td colSpan={visibleLeafColumns.length} className="bg-surface p-0">
 											{renderSubComponent!(row)}
 										</td>

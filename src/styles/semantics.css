@@ -56,12 +56,12 @@
 	--ld-border-medium: #090b0c1f; /* Stroke/stroke-medium */
 	--ld-border-strong: #090b0c82; /* Stroke/stroke-strong */
 	--ld-border-brand: var(--ld-blue-500); /* Stroke/stroke-brand */
-	--ld-border-divider: #eeeeee; /* Stroke/divider-subtle */
 
 	/* States — both hovers verified from the page frames (columns popover
 	   row 6183:293504, metrics card pair 6183:354581/354721). Deliberately
 	   asymmetric across modes: brand-tinted in light, white-lift in dark.
-	   Per owner decision the same values double as focus styles.
+	   Focus-visible keeps the wash and adds the focus-ring outline (owner
+	   decision 2026-07-09; the wash alone was the entire indicator before).
 	   (Figma name "hover-neutral-normal" is a misnomer in light; rename
 	   requested.) */
 	--ld-hover-row: #1f67d21f; /* States/hover-neutral-normal — popover/menu/table rows */
@@ -132,6 +132,12 @@ html.dark {
 	--ld-text-link: #4b86db;
 	--ld-text-data-up: var(--ld-green-500);
 	--ld-text-data-down: var(--ld-red-500);
+	/* TODO(design): the library keeps the alt pair at the 500s across modes,
+	   but blue/violet 500 are ~3.4:1 on dark surfaces — under AA for text.
+	   Interim owner lifts (blue matches dark Text/links; violet ~5.5:1),
+	   same pattern as text-link-on-tint. Chart fills stay on the 500s. */
+	--ld-text-data-up-alt: #4b86db;
+	--ld-text-data-down-alt: #a674ec;
 	--ld-text-warning: #ffa455; /* Text/Warning */
 
 	/* Stroke */
@@ -139,9 +145,12 @@ html.dark {
 	--ld-border-subtle: #ffffff0f;
 	--ld-border-medium: #ffffff1f;
 	--ld-border-strong: #ffffff29;
-	--ld-border-divider: var(--ld-neutral-800);
 
 	/* States */
+	/* Backdrop: 20% near-black dims nothing over the #090b0c page, and dark
+	   mode cannot lean on shadows — interim owner value, design ask filed. */
+	--ld-bg-screen-dim: #090b0c99;
+
 	--ld-hover-row: #ffffff0f; /* States/hover-neutral-normal (dark) */
 	--ld-hover-card: #ffffff08; /* States/hover-neutral-subtle (dark) */
 	--ld-text-link-on-tint: #6a9be0; /* ~5.4:1 on brand-muted over surface (AA) */
@@ -227,9 +236,6 @@ html.dark {
 @utility border-b-brand {
 	border-bottom-color: var(--ld-border-brand);
 }
-@utility border-divider {
-	border-color: var(--ld-border-divider);
-}
 @utility bg-border-medium {
 	background-color: var(--ld-border-medium);
 }
@@ -239,8 +245,21 @@ html.dark {
 @utility bg-screen-dim {
 	background-color: var(--ld-bg-screen-dim);
 }
-@utility text-divider {
-	color: var(--ld-border-divider);
+@utility text-border-subtle {
+	color: var(--ld-border-subtle);
+}
+/* Keyboard focus indicator matching the global :focus-visible base rule in
+   tailwind.css. Needed as a utility only for Ariakit virtual focus
+   (data-focus-visible:focus-ring — composite rows never receive DOM focus,
+   so the base rule cannot fire). */
+@utility focus-ring {
+	outline: 2px solid var(--ld-border-brand);
+	outline-offset: -2px;
+}
+/* On solid brand fills, where a brand ring would be invisible. */
+@utility focus-ring-on-brand {
+	outline: 2px solid var(--ld-text-on-brand);
+	outline-offset: -2px;
 }
 
 /* Hover/focus wash that PAINTS OVER the resting background instead of

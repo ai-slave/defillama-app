@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { selectTriggerStyles } from '~/components/Select/types'
 import { Tooltip } from '~/components/Tooltip'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
@@ -103,7 +104,7 @@ function OperatorSelect({
 }) {
 	return (
 		<Ariakit.SelectProvider value={value} setValue={(nextValue) => onChange(nextValue as EquityNumericOperator)}>
-			<Ariakit.Select className="hover-wash flex min-h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-[8px] border border-medium bg-page px-3 py-1.5 label-sm text-primary outline-hidden focus:border-brand">
+			<Ariakit.Select className={`${selectTriggerStyles('input', 'md')} shrink-0`}>
 				<Ariakit.SelectValue />
 				<Ariakit.SelectArrow />
 			</Ariakit.Select>
@@ -384,8 +385,7 @@ function CategoricalFilterEditor({
 					popoverClassName="z-100 max-sm:h-[88dvh]! max-sm:max-h-[88dvh] max-sm:w-full sm:min-w-[260px] sm:max-h-[min(360px,60dvh)]! lg:max-h-[min(360px,60dvh)]!"
 					triggerProps={{
 						'aria-label': `${valueLabel} values`,
-						className:
-							'label-sm flex min-h-8 min-w-0 flex-1 cursor-pointer items-center gap-1.5 hover-wash rounded-[8px] border border-medium bg-page px-3 py-1.5 text-primary outline-hidden focus:border-brand'
+						className: `${selectTriggerStyles('input', 'md')} flex-1`
 					}}
 				/>
 			</div>

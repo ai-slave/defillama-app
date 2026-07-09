@@ -9,7 +9,7 @@ import * as React from 'react'
 import { useBlockExplorers } from '~/api/client'
 import { Icon } from '~/components/Icon'
 import { VirtualTable } from '~/components/Table/Table'
-import { formattedNum } from '~/utils'
+import { formattedNum, truncateAddress } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 
 type BridgeAddressesTableRow = {
@@ -38,7 +38,7 @@ export function BridgeAddressesTable({ data }: { data: BridgeAddressesTableRow[]
 						address: value,
 						urlType: 'address'
 					})
-					const truncatedValue = `${formattedValue.slice(0, 5)}...${formattedValue.slice(-4)}`
+					const truncatedValue = truncateAddress(formattedValue)
 
 					if (!explorer) {
 						return <span className="overflow-hidden text-ellipsis whitespace-nowrap">{truncatedValue}</span>

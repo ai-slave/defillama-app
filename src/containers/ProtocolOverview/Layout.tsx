@@ -344,7 +344,7 @@ export function ProtocolOverviewLayout({
 										{i !== 0 ? (
 											<>
 												<span className="absolute top-0 bottom-0 left-3 block h-full w-0.5 bg-border-medium group-last:h-[50%]" />
-												<span className="-mr-2 h-0.5 w-3 bg-border-medium" />
+												<span className="absolute top-1/2 left-3 h-0.5 w-5 -translate-y-1/2 bg-border-medium" />
 											</>
 										) : null}
 										<TokenLogo name={value} kind="token" size={24} alt={`Logo of ${value}`} />

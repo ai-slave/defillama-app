@@ -6,7 +6,7 @@ import { ResearchIcon } from '~/components/ResearchIcon'
 type NavIconName = IIcon['name']
 
 export const navLinkStyles =
-	'group/link -ml-1.5 flex flex-1 items-center gap-3 rounded-md p-1.5 cv-auto-30 text-primary hover:bg-hover-row focus-visible:bg-hover-row data-[linkactive=true]:bg-brand data-[linkactive=true]:text-on-brand'
+	'group/link -ml-1.5 flex flex-1 items-center gap-3 rounded-md p-1.5 cv-auto-30 text-primary hover:bg-hover-row focus-visible:bg-hover-row data-[linkactive=true]:bg-brand data-[linkactive=true]:text-on-brand data-[linkactive=true]:focus-visible:focus-ring-on-brand'
 
 export const navSortableRowStyles =
 	'group/link -ml-1.5 flex flex-1 items-start gap-3 rounded-md p-1.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row'

@@ -16,6 +16,7 @@ import { TagGroup } from '~/components/TagGroup'
 import Layout from '~/layout'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
+import { truncateAddress } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 
@@ -165,7 +166,7 @@ const columns = (chain: string, blockExplorers: ReturnType<typeof useBlockExplor
 				chainId: chain,
 				urlType: 'address'
 			})
-			const label = name ?? value.slice(0, 6) + '...' + value.slice(-4)
+			const label = name ?? truncateAddress(value)
 			return (
 				<span className="flex items-center gap-1.5">
 					{explorer ? (

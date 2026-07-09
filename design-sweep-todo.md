@@ -907,6 +907,36 @@ dashboard product. Sheets scope remains deferred to a separate branch.
 
 ## Overlay follow-ups (backlog)
 
+- [ ] **SummaryStatsCard extraction branch** (2026-07-09 audit): the summary-card
+      wrapper pair (`grid grid-cols-2 gap-2 xl:grid-cols-3` — 18 files; card
+      `col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1` — 16
+      files) plus the headline `font-jetbrains text-2xl font-semibold` stat item
+      (37 files) are copy-pasted app-wide. Extract SummaryStatsCard/StatItem per
+      the three-variant taxonomy. Highest-payoff remaining consolidation.
+- [ ] PercentChange adoption sweep: ~36 files hand-roll the up/down ternary span
+      instead of components/PercentChange; needs a className/variant prop first.
+- [ ] DeFiWatchlist native accent checkboxes (2): need a semantic-color Checkbox
+      variant before migrating.
+- [ ] Side-drawer primitive if a third appears (MarketMakers Drawer + mobile nav
+      Menu are the two today).
+
+- [ ] Audit `outline-none`/`outline-hidden` (~280 sites): valid only where the
+      element has its own focus indicator; e.g. the sidebar logo link currently
+      focuses with no indicator at all (2026-07-09).
+- [ ] Unify backdrop dims: `[data-backdrop]` (all Ariakit dialogs) uses
+      `bg-black/40 dark:bg-black/70` literals while `--ld-bg-screen-dim` is
+      20%/60% (MarketMakers drawer). Pick one value, point `[data-backdrop]`
+      at the token, drop the mode fork (owner visual decision).
+- [ ] lint:tokens core burndown to 0 (95 hex / 20 dark-forks / 34 font sizes),
+      deferred 2026-07-09: concentrates in branded surfaces needing design
+      decisions — ChainOverview/Announcement (22 hex), MCP landing (13),
+      SubscribeCards/SubscribeAPICard (12), ProtocolOverview/Layout (12),
+      MarketMakers marketing pieces (~15). Candidates for the excluded list
+      vs. re-theming; needs its own branch.
+- [ ] Tailwind v3 border-color compat shim in tailwind.css (--color-gray-200
+      default) — removing it needs explicit border colors at every bare
+      `border` utility; separate sweep.
+
 - [ ] FormattedName silently CSS-truncates without a tooltip when `maxCharacters`
       is not passed — audit call sites or make the tooltip automatic.
 - [ ] Remaining low-priority native `title=` (identifiers/timestamps: IconsRow,

@@ -11,6 +11,7 @@ import { useBorrowRows } from '~/containers/Yields/queries.client'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { inputStyles } from '~/ui/Input'
+import { NoResults } from '~/ui/NoResults'
 import {
 	popoverMobileDismissStyles,
 	popoverMobileWrapperClassName,
@@ -276,7 +277,7 @@ const TokensSelect = ({
 								) : null}
 							</Ariakit.ComboboxList>
 						) : (
-							<p className="px-3 py-6 text-center body-sm text-tertiary">No results found</p>
+							<NoResults />
 						)}
 					</Ariakit.SelectPopover>
 				</Ariakit.SelectProvider>

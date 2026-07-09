@@ -5,6 +5,7 @@ import { Icon } from '~/components/Icon'
 import type { ISearchItem } from '~/components/Search/types'
 import { selectTriggerStyles } from '~/components/Select/types'
 import { inputStyles } from '~/ui/Input'
+import { NoResults } from '~/ui/NoResults'
 import {
 	popoverRowWithBorderStyles,
 	popoverSearchBlockWithBottomPaddingStyles,
@@ -112,7 +113,7 @@ export function BridgeChainSelector({ options, currentChain, handleClick }: IPro
 							</Ariakit.ComboboxList>
 						</>
 					) : (
-						<p className="px-3 py-6 text-center body-sm text-tertiary">No results found</p>
+						<NoResults />
 					)}
 				</Ariakit.SelectPopover>
 			</Ariakit.SelectProvider>

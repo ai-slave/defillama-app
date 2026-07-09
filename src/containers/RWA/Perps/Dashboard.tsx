@@ -24,6 +24,7 @@ import { getQueryUpdatesFromSelected } from '~/components/Select/query'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { type ExcludeQueryKey } from '~/components/Select/types'
+import { selectTriggerStyles } from '~/components/Select/types'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { Tooltip } from '~/components/Tooltip'
 import { CHART_COLORS } from '~/constants/colors'
@@ -1434,8 +1435,7 @@ function RWAPerpsDraftFilterEditor({
 				popoverClassName="z-100 max-sm:h-[88dvh]! max-sm:max-h-[88dvh] max-sm:w-full sm:min-w-[260px] sm:max-h-[min(360px,60dvh)]! lg:max-h-[min(360px,60dvh)]!"
 				triggerProps={{
 					'aria-label': `${filter.label} values`,
-					className:
-						'flex min-h-8 min-w-0 cursor-pointer items-center gap-1.5 hover-wash rounded-[8px] border border-medium bg-page px-3 py-1.5 label-sm text-primary outline-hidden focus:border-brand'
+					className: selectTriggerStyles('input', 'md')
 				}}
 			/>
 		</Card>
@@ -1588,7 +1588,7 @@ const StatCard = ({
 				<span className="text-secondary">{label}</span>
 			)}
 			<span className="flex items-end justify-between gap-2 font-jetbrains">
-				<span className="text-2xl font-medium">{value}</span>
+				<span className="font-jetbrains text-2xl font-semibold">{value}</span>
 				{change != null ? (
 					changeTooltip ? (
 						<Tooltip

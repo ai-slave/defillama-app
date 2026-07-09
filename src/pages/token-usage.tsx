@@ -31,6 +31,7 @@ import Layout from '~/layout'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
 import { searchFieldInputStyles } from '~/ui/Input'
+import { NoResults } from '~/ui/NoResults'
 import { Panel } from '~/ui/Panel'
 import {
 	popoverRowWithBorderStyles,
@@ -352,7 +353,7 @@ const Search = () => {
 				) : error ? (
 					<p className="px-3 py-6 text-center body-sm text-data-down" role="alert">{`Error: ${error.message}`}</p>
 				) : !data?.length ? (
-					<p className="px-3 py-6 text-center body-sm text-tertiary">No results found</p>
+					<NoResults />
 				) : (
 					<Ariakit.ComboboxList ref={comboboxRef}>
 						{data.map((tokenResult) => (
