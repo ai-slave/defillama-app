@@ -105,7 +105,9 @@ function ChainBreakdownTooltipContent({ chainBreakdowns }: { chainBreakdowns: To
 								alt={`Logo of ${chain.chainDisplayName}`}
 								title={chain.chain}
 							/>
-							<span className="truncate">{chain.chainDisplayName}</span>
+							<span className="truncate" title={chain.chainDisplayName}>
+								{chain.chainDisplayName}
+							</span>
 						</span>
 						<span className="text-right text-primary">
 							{formatUsd(chain.totalCurrentMaxBorrowUsd + (chain.totalMinBadDebtAtPriceZeroUsd ?? 0))}

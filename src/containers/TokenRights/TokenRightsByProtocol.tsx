@@ -826,14 +826,15 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: IP
 									</td>
 									<td className="py-2.5">
 										{r.source ? (
-											<a
-												href={r.source}
-												target="_blank"
-												rel="noopener noreferrer"
+											<Tooltip
+												content={r.source}
+												render={
+													<a href={r.source} target="_blank" rel="noopener noreferrer" aria-label="View source" />
+												}
 												className="text-secondary hover:text-primary"
 											>
 												<Icon name="external-link" className="size-3.5" />
-											</a>
+											</Tooltip>
 										) : null}
 									</td>
 								</tr>

@@ -13,6 +13,7 @@ import { PercentChange } from '~/components/PercentChange'
 import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Tooltip } from '~/components/Tooltip'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { tokenIconUrl } from '~/utils/icons'
 
@@ -62,7 +63,9 @@ const columns = [
 				<span className="flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo src={tokenIconUrl(icon)} alt={`Logo of ${name}`} data-lgonly />
-					<span className="overflow-hidden text-ellipsis whitespace-nowrap hover:underline">{name}</span>
+					<Tooltip content={name} className="max-w-full">
+						{name}
+					</Tooltip>
 				</span>
 			)
 		},

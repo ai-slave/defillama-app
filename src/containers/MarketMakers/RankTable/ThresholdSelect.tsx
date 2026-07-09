@@ -19,7 +19,7 @@ export function ThresholdSelect({ value, setValue }: { value: Threshold; setValu
 				<Ariakit.SelectArrow />
 			</Ariakit.Select>
 			<Ariakit.SelectPopover
-				gutter={4}
+				gutter={6}
 				wrapperProps={{ className: popoverMobileWrapperClassName }}
 				className={`${popoverSurfaceStyles} z-50 min-w-[10rem]`}
 				portal

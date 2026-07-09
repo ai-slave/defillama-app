@@ -934,9 +934,17 @@ const TokenCGData = (props: IKeyMetricsProps) => {
 			) : null}
 			{props.tokenCGData?.price?.current != null ? (
 				props.tokenCGData.price.ath != null || props.tokenCGData.price.atl != null ? (
-					<MetricSection label={linkedPriceLabel} value={props.formatPrice(props.tokenCGData.price.current)}>
+					/* A <summary> cannot contain a link, so the accordion label stays
+					   plain text and the token-page link lives in the expanded body. */
+					<MetricSection label={priceLabel} value={props.formatPrice(props.tokenCGData.price.current)}>
 						<SubMetricRow label="All Time High" value={props.formatPrice(props.tokenCGData.price.ath)} />
 						<SubMetricRow label="All Time Low" value={props.formatPrice(props.tokenCGData.price.atl)} />
+						{props.token?.tokenPageRoute ? (
+							<BasicLink
+								href={props.token.tokenPageRoute}
+								className="py-1 label-sm text-link hover:underline"
+							>{`View ${priceLabel.replace(' Price', '')} token page`}</BasicLink>
+						) : null}
 					</MetricSection>
 				) : (
 					<MetricRow label={linkedPriceLabel} value={props.formatPrice(props.tokenCGData.price.current)} />

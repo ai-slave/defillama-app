@@ -229,7 +229,7 @@ const TokensSelect = ({
 						unmountOnHide
 						hideOnInteractOutside
 						sameWidth
-						gutter={4}
+						gutter={6}
 						wrapperProps={{
 							className: popoverMobileWrapperClassName
 						}}

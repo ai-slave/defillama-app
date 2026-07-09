@@ -4,10 +4,10 @@ import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { PercentChange } from '~/components/PercentChange'
+import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Tooltip } from '~/components/Tooltip'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
@@ -113,17 +113,6 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 	)
 }
 
-const ProtocolChainsComponent = ({ chains }: { chains: string[] }) => (
-	<span className="flex flex-col gap-1">
-		{chains.map((chain) => (
-			<span key={`chain${chain}-of-protocol`} className="flex items-center gap-1">
-				<TokenLogo name={chain} kind="chain" size={14} alt={`Logo of ${chain}`} />
-				<span>{chain}</span>
-			</span>
-		))}
-	</span>
-)
-
 const METRIC_CHART_PARAMS: Record<ExtraTvlMetric, string> = {
 	borrowed: 'borrowed_tvl=true',
 	staking: 'staking=true',
@@ -182,12 +171,7 @@ function buildColumns(metric: ExtraTvlMetric) {
 								{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
 							</span>
 
-							<Tooltip
-								content={<ProtocolChainsComponent chains={row.original.chains} />}
-								className="text-[0.7rem] text-secondary"
-							>
-								{`${row.original.chains.length} chain${row.original.chains.length > 1 ? 's' : ''}`}
-							</Tooltip>
+							<ProtocolChainsHovercard chains={row.original.chains} />
 						</span>
 					</span>
 				)

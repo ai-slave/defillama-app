@@ -2,12 +2,12 @@ import * as Ariakit from '@ariakit/react'
 import { lazy, Suspense, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { LoadingSpinner } from '~/components/Loaders'
-import { Tooltip } from '~/components/Tooltip'
 import { useDashboardCreation } from '~/containers/ProDashboard/hooks/useDashboardCreation'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { setSignupSource } from '~/containers/Subscription/signupSource'
 import { useIsClient } from '~/hooks/useIsClient'
 import { buttonStyles } from '~/ui/Button'
+import { Hovercard } from '~/ui/Hovercard'
 
 const SubscribeProModal = lazy(() =>
 	import('~/components/SubscribeCards/SubscribeProCard').then((m) => ({ default: m.SubscribeProModal }))
@@ -49,14 +49,15 @@ export const FullOldViewButton = () => {
 
 	return (
 		<>
-			<Tooltip
+			<Hovercard
 				content={tooltipContent}
 				render={<button onClick={handleClick} disabled={isLoading} />}
 				className={buttonStyles({ size: 'md' })}
+				showOnClick={false}
 			>
 				{isClient && isLoading ? <LoadingSpinner size={16} /> : <Icon name="plus" height={16} width={16} />}
 				<span>Open in Dashboard</span>
-			</Tooltip>
+			</Hovercard>
 			{shouldRenderModal ? (
 				<Suspense fallback={<></>}>
 					<SubscribeProModal dialogStore={subscribeModalStore} />

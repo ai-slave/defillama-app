@@ -5,10 +5,10 @@ import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Tooltip } from '~/components/Tooltip'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Hovercard } from '~/ui/Hovercard'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import type {
 	TokensDisplayTone,
@@ -346,14 +346,14 @@ function RightsPie({ rights }: { rights: TokensRightsSummary | null }) {
 	if (!rights) return <Dash />
 
 	return (
-		<Tooltip content={<RightsPopover rights={rights} />} placement="left" data-fullwidth className="!inline-flex w-fit">
+		<Hovercard content={<RightsPopover rights={rights} />} placement="left" className="!inline-flex w-fit">
 			<span
 				role="img"
 				aria-label="Token rights summary"
 				className="inline-block size-7 rounded-full border border-medium"
 				style={{ background: rights.pieGradient }}
 			/>
-		</Tooltip>
+		</Hovercard>
 	)
 }
 

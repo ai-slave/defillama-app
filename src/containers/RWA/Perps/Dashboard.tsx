@@ -341,6 +341,15 @@ const overviewColumns = [
 		id: 'category',
 		header: d.category.label,
 		enableSorting: false,
+		cell: (info) => {
+			const value = info.getValue()
+			if (!value) return null
+			return (
+				<Tooltip content={value} className="max-w-full">
+					{value}
+				</Tooltip>
+			)
+		},
 		meta: {
 			headerClassName: 'w-[132px]',
 			headerHelperText: d.category.description
@@ -695,6 +704,15 @@ const venueColumns = [
 		id: 'category',
 		header: d.category.label,
 		enableSorting: false,
+		cell: (info) => {
+			const value = info.getValue()
+			if (!value) return null
+			return (
+				<Tooltip content={value} className="max-w-full">
+					{value}
+				</Tooltip>
+			)
+		},
 		meta: {
 			headerClassName: 'w-[132px]',
 			headerHelperText: d.category.description

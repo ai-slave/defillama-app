@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import { useEffect, useEffectEvent, useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { TagGroup } from '~/components/TagGroup'
+import { Tooltip } from '~/components/Tooltip'
 import {
 	getGeckoIdFromSearchId,
 	getTokenSearchFallback,
@@ -357,12 +358,13 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 											</td>
 										))}
 										<td>
-											<button
-												onClick={dialogStore.toggle}
+											<Tooltip
+												content="Add token"
+												render={<button onClick={dialogStore.toggle} aria-label="Add token to compare" />}
 												className="flex size-12 items-center justify-center text-link hover:bg-hover-row focus-visible:bg-hover-row"
 											>
 												<Icon name="plus" height={16} width={16} />
-											</button>
+											</Tooltip>
 										</td>
 									</tr>
 								</thead>
@@ -396,12 +398,13 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 									))}
 									<tr>
 										<td>
-											<button
-												onClick={dialogStore.toggle}
+											<Tooltip
+												content="Add token"
+												render={<button onClick={dialogStore.toggle} aria-label="Add token to compare" />}
 												className="flex size-12 items-center justify-center text-link hover:bg-hover-row focus-visible:bg-hover-row"
 											>
 												<Icon name="plus" height={16} width={16} />
-											</button>
+											</Tooltip>
 										</td>
 									</tr>
 								</tbody>

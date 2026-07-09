@@ -4,11 +4,11 @@ import { useMemo } from 'react'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
+import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Tooltip } from '~/components/Tooltip'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { formattedNum, slug } from '~/utils'
 import { parseExcludeParam } from '~/utils/routerQuery'
@@ -133,17 +133,6 @@ const protocolChartsKeys: Partial<Record<TokenMetricType, string>> = {
 	fdv: 'fdv'
 }
 
-const ProtocolChainsComponent = ({ chains }: { chains: string[] }) => (
-	<span className="flex flex-col gap-1">
-		{chains.map((chain) => (
-			<span key={`chain${chain}-of-protocol`} className="flex items-center gap-1">
-				<TokenLogo name={chain} kind="chain" size={14} alt={`Logo of ${chain}`} />
-				<span>{chain}</span>
-			</span>
-		))}
-	</span>
-)
-
 const columnHelper = createColumnHelper<ITokenMetricProtocolRow>()
 
 function defaultColumns(type: TokenMetricType) {
@@ -198,12 +187,7 @@ function defaultColumns(type: TokenMetricType) {
 									{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
 								</span>
 
-								<Tooltip
-									content={<ProtocolChainsComponent chains={row.original.chains} />}
-									className="text-[0.7rem] text-secondary"
-								>
-									{`${row.original.chains.length} chain${row.original.chains.length > 1 ? 's' : ''}`}
-								</Tooltip>
+								<ProtocolChainsHovercard chains={row.original.chains} />
 							</span>
 						) : (
 							<span className="flex items-center gap-1 overflow-hidden">

@@ -1,6 +1,8 @@
+import * as Ariakit from '@ariakit/react'
 import type { ReactNode } from 'react'
 import { Icon } from '~/components/Icon'
 import { Tooltip } from '~/components/Tooltip'
+import { tooltipSurfaceStyles } from '~/ui/Popover'
 
 interface MetricRowProps {
 	label: ReactNode
@@ -68,6 +70,9 @@ interface MetricSectionProps {
 	valueClassName?: string
 }
 
+const metricSummaryStyles =
+	'flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b border-subtle py-1 group-last/metric:border-none group-open/metric:border-none group-open/metric:font-semibold'
+
 export const MetricSection = ({
 	label,
 	tooltip,
@@ -77,16 +82,10 @@ export const MetricSection = ({
 	defaultOpen = false,
 	className = '',
 	valueClassName = 'mono-md-bold ml-auto'
-}: MetricSectionProps) => (
-	<details className={`group/metric ${className}`.trim()} open={defaultOpen}>
-		<summary className="flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b border-subtle py-1 group-last/metric:border-none group-open/metric:border-none group-open/metric:font-semibold">
-			{tooltip ? (
-				<span title={tooltip ?? undefined} className="body-md text-secondary underline decoration-dotted">
-					{label}
-				</span>
-			) : (
-				<span className="body-md text-secondary">{label}</span>
-			)}
+}: MetricSectionProps) => {
+	const summaryContent = (
+		<>
+			<span className={`body-md text-secondary ${tooltip ? 'underline decoration-dotted' : ''}`.trim()}>{label}</span>
 			<Icon
 				name="chevron-down"
 				height={16}
@@ -95,10 +94,30 @@ export const MetricSection = ({
 			/>
 			{extra}
 			{value != null ? <span className={valueClassName}>{value}</span> : null}
-		</summary>
-		{children ? <div className="mb-3 flex flex-col">{children}</div> : null}
-	</details>
-)
+		</>
+	)
+
+	return (
+		<details className={`group/metric ${className}`.trim()} open={defaultOpen}>
+			{tooltip ? (
+				/* A <summary> must not contain interactive descendants, so the
+				   summary itself is the tooltip anchor — hover or focus on the
+				   row shows the definition; click still toggles the accordion. */
+				<Ariakit.TooltipProvider placement="top-start">
+					<Ariakit.TooltipAnchor render={<summary className={metricSummaryStyles} />}>
+						{summaryContent}
+					</Ariakit.TooltipAnchor>
+					<Ariakit.Tooltip className={`${tooltipSurfaceStyles} max-w-56 whitespace-pre-wrap`} unmountOnHide portal>
+						<div className="p-2">{tooltip}</div>
+					</Ariakit.Tooltip>
+				</Ariakit.TooltipProvider>
+			) : (
+				<summary className={metricSummaryStyles}>{summaryContent}</summary>
+			)}
+			{children ? <div className="mb-3 flex flex-col">{children}</div> : null}
+		</details>
+	)
+}
 
 export const SubMetricSection = ({
 	label,

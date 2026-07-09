@@ -483,6 +483,7 @@ export function SelectWithCombobox({
 															onEditCustomColumn?.(customIndex)
 														}}
 														title="Edit custom column"
+														aria-label="Edit custom column"
 													>
 														<Icon name="settings" height={14} width={14} />
 													</button>
@@ -495,6 +496,7 @@ export function SelectWithCombobox({
 															onDeleteCustomColumn?.(customIndex)
 														}}
 														title="Delete custom column"
+														aria-label="Delete custom column"
 													>
 														<Icon name="trash-2" height={14} width={14} />
 													</button>

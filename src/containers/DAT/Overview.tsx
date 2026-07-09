@@ -14,6 +14,7 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { Tooltip } from '~/components/Tooltip'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { Hovercard } from '~/ui/Hovercard'
 import { formattedNum } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IDATOverviewFlowSeries, IDATOverviewPageProps } from './types'
@@ -141,7 +142,7 @@ const overviewColumns = [
 				const assetBreakdown = info.row.original.holdings
 
 				return (
-					<Tooltip
+					<Hovercard
 						content={<AssetTooltipContent assetBreakdown={assetBreakdown} protocolName={info.row.original.name} />}
 						render={<button />}
 						className="ml-auto flex h-5 w-full! flex-nowrap items-center bg-white"
@@ -153,7 +154,7 @@ const overviewColumns = [
 								className="h-5"
 							/>
 						))}
-					</Tooltip>
+					</Hovercard>
 				)
 			},
 			meta: {

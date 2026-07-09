@@ -174,7 +174,8 @@ const LSDColumn = [
 		},
 		meta: {
 			headerClassName: 'w-[110px]',
-			align: 'end'
+			align: 'end',
+			headerHelperText: 'Market cap / TVL ratio'
 		}
 	}),
 	columnHelper.accessor('apy', {
@@ -182,7 +183,8 @@ const LSDColumn = [
 		cell: (info) => (info.getValue() != null ? `${info.getValue().toFixed(2)}%` : null),
 		meta: {
 			headerClassName: 'w-[100px]',
-			align: 'end'
+			align: 'end',
+			headerHelperText: 'Annualized staking reward rate of the LST'
 		}
 	}),
 	columnHelper.accessor('fee', {
@@ -191,7 +193,7 @@ const LSDColumn = [
 		meta: {
 			headerClassName: 'w-[90px]',
 			align: 'end',
-			headerHelperText: 'Protocol Fee'
+			headerHelperText: 'Share of staking rewards taken by the protocol'
 		}
 	})
 ]

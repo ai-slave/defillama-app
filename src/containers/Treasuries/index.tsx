@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Tooltip } from '~/components/Tooltip'
+import { Hovercard } from '~/ui/Hovercard'
 import { formattedNum, getDominancePercent } from '~/utils'
 import type { ITreasuryRow } from './types'
 
@@ -89,7 +89,7 @@ const columns = [
 			}
 
 			return (
-				<Tooltip
+				<Hovercard
 					content={<BreakdownTooltipContent dominance={dominance} protocolName={info.row.original.name} />}
 					render={<button />}
 					className="ml-auto flex h-5 w-full! flex-nowrap items-center bg-white"
@@ -105,7 +105,7 @@ const columns = [
 							/>
 						)
 					})}
-				</Tooltip>
+				</Hovercard>
 			)
 		},
 		meta: {

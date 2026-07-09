@@ -18,6 +18,7 @@ import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
+import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { QuestionHelper } from '~/components/QuestionHelper'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -536,17 +537,6 @@ const getColumnsOptions = (type: IProps['type'], columnsByType: ReturnType<typeo
 		return { name: headerName, key: c.id ?? ('accessorKey' in c ? (c.accessorKey as string) : '') }
 	})
 
-const ProtocolChainsComponent = ({ chains }: { chains: string[] }) => (
-	<span className="flex flex-col gap-1">
-		{chains.map((chain) => (
-			<span key={`chain${chain}-of-protocol`} className="flex items-center gap-1">
-				<TokenLogo name={chain} kind="chain" size={14} alt={`Logo of ${chain}`} />
-				<span>{chain}</span>
-			</span>
-		))}
-	</span>
-)
-
 type AdapterProtocolRow = IAdapterByChainPageData['protocols'][0]
 
 const columnHelper = createColumnHelper<AdapterProtocolRow>()
@@ -614,14 +604,7 @@ const NameColumn = (type: IProps['type']) =>
 							) : null}
 						</span>
 
-						{row.original.chains ? (
-							<Tooltip
-								content={<ProtocolChainsComponent chains={row.original.chains} />}
-								className="text-[0.7rem] text-secondary"
-							>
-								{`${row.original.chains.length} chain${row.original.chains.length > 1 ? 's' : ''}`}
-							</Tooltip>
-						) : null}
+						{row.original.chains ? <ProtocolChainsHovercard chains={row.original.chains} /> : null}
 					</span>
 				</span>
 			)

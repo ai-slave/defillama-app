@@ -2,7 +2,7 @@
 	"core": {
 		"hex-in-classname": 95,
 		"dark-hex-variant": 20,
-		"arbitrary-font-size": 40,
+		"arbitrary-font-size": 34,
 		"arbitrary-spacing": 0,
 		"explicit-thin-scrollbar": 0
 	},

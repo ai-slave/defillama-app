@@ -9,6 +9,7 @@ import {
 } from '~/components/ECharts/ChartGroupingSelector'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
+import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { QuestionHelper } from '~/components/QuestionHelper'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
@@ -230,17 +231,6 @@ type ProtocolRow = IProtocolTaxonomyPageData['protocols'][0]
 
 const columnHelper = createColumnHelper<ProtocolRow>()
 
-const ProtocolChainsComponent = ({ chains }: { chains: string[] }) => (
-	<span className="flex flex-col gap-1">
-		{chains.map((chain) => (
-			<span key={`chain${chain}-of-protocol`} className="flex items-center gap-1">
-				<TokenLogo name={chain} kind="chain" size={14} alt={`Logo of ${chain}`} />
-				<span>{chain}</span>
-			</span>
-		))}
-	</span>
-)
-
 const perpVolumeCell = (info: any) => {
 	if (info.getValue() == null) return null
 	const helpers: string[] = []
@@ -298,12 +288,7 @@ const COLUMN_REGISTRY: Record<string, ColumnDef<ProtocolRow, any>> = {
 							</BasicLink>
 							{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
 						</span>
-						<Tooltip
-							content={<ProtocolChainsComponent chains={row.original.chains} />}
-							className="text-[0.7rem] text-secondary"
-						>
-							{`${row.original.chains.length} chain${row.original.chains.length > 1 ? 's' : ''}`}
-						</Tooltip>
+						<ProtocolChainsHovercard chains={row.original.chains} />
 					</span>
 				</span>
 			)

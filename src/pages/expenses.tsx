@@ -5,6 +5,7 @@ import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Tooltip } from '~/components/Tooltip'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { ParentProtocolLite, ProtocolLite } from '~/containers/ProtocolLists/api.types'
 import { fetchProtocolExpenses } from '~/containers/ProtocolOverview/api'
@@ -123,14 +124,13 @@ const columns = [
 		enableSorting: false,
 		cell: ({ getValue }) =>
 			getValue() ? (
-				<a
+				<Tooltip
+					content={getValue()[0]}
+					render={<a href={getValue()[0]} target="_blank" rel="noopener noreferrer" aria-label="View source" />}
 					className="hover-wash flex shrink-0 items-center justify-center rounded-md bg-brand-muted px-2.5 py-1 label-sm whitespace-nowrap text-link"
-					href={getValue()[0]}
-					target="_blank"
-					rel="noopener noreferrer"
 				>
 					<Icon name="arrow-up-right" height={14} width={14} className="shrink-0" />
-				</a>
+				</Tooltip>
 			) : null,
 		meta: {
 			headerClassName: 'w-[90px]'

@@ -907,6 +907,17 @@ dashboard product. Sheets scope remains deferred to a separate branch.
 
 ## Overlay follow-ups (backlog)
 
+- [ ] FormattedName silently CSS-truncates without a tooltip when `maxCharacters`
+      is not passed — audit call sites or make the tooltip automatic.
+- [ ] Remaining low-priority native `title=` (identifiers/timestamps: IconsRow,
+      TokenRisksSection logos, TokenMarketsSection absolute timestamp,
+      InsidersTable short address) — convert opportunistically.
+- [ ] Touch affordance for FullOldViewButton's feature list (its click action
+      wins, so `showOnClick={false}`) — needs a design decision; all other
+      hovercards now open on tap.
+- [ ] Design ask: confirm 6px tooltip radius in the Figma library (no tooltip
+      component spec was published as of 2026-07-09).
+
 - [ ] ECharts-native tooltips: set backgroundColor/border/text from
       `--ld-bg-overlay` + stroke/text tokens in the chart-theme branch
       (they currently use the library-default near-white).

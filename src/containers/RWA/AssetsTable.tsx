@@ -20,6 +20,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { Tooltip } from '~/components/Tooltip'
+import { Hovercard } from '~/ui/Hovercard'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
@@ -248,7 +249,10 @@ function createColumns(includeRwaPerps: boolean) {
 								</>
 							) : (
 								<>
-									<span className="overflow-hidden label-md text-ellipsis whitespace-nowrap">
+									<span
+										className="overflow-hidden label-md text-ellipsis whitespace-nowrap"
+										title={info.row.original.assetName}
+									>
 										{info.row.original.assetName}
 									</span>
 								</>
@@ -451,7 +455,11 @@ function createColumns(includeRwaPerps: boolean) {
 							</Tooltip>
 						)
 					}
-					return <span className="inline-block max-w-full overflow-hidden text-ellipsis whitespace-nowrap">{ac}</span>
+					return (
+						<span className="inline-block max-w-full overflow-hidden text-ellipsis whitespace-nowrap" title={ac}>
+							{ac}
+						</span>
+					)
 				}
 				// For multiple asset classes, show combined tooltip
 				const tooltipContent = (
@@ -467,12 +475,12 @@ function createColumns(includeRwaPerps: boolean) {
 					</span>
 				)
 				return (
-					<Tooltip
+					<Hovercard
 						content={tooltipContent}
 						className="inline-block max-w-full justify-end overflow-hidden text-ellipsis whitespace-nowrap"
 					>
 						{assetClasses.join(', ')}
-					</Tooltip>
+					</Hovercard>
 				)
 			},
 			enableSorting: false,
@@ -541,7 +549,11 @@ function createColumns(includeRwaPerps: boolean) {
 						</Tooltip>
 					)
 				}
-				return <span className="inline-block max-w-full overflow-hidden text-ellipsis whitespace-nowrap">{value}</span>
+				return (
+					<span className="inline-block max-w-full overflow-hidden text-ellipsis whitespace-nowrap" title={value}>
+						{value}
+					</span>
+				)
 			},
 			enableSorting: false,
 			meta: {
@@ -570,7 +582,11 @@ function createColumns(includeRwaPerps: boolean) {
 						</Tooltip>
 					)
 				}
-				return <span className="inline-block max-w-full overflow-hidden text-ellipsis whitespace-nowrap">{value}</span>
+				return (
+					<span className="inline-block max-w-full overflow-hidden text-ellipsis whitespace-nowrap" title={value}>
+						{value}
+					</span>
+				)
 			},
 			enableSorting: false,
 			meta: {
@@ -739,11 +755,11 @@ const TVLBreakdownCell = ({
 	}
 
 	return (
-		<Tooltip
+		<Hovercard
 			content={<BreakdownTooltipContent breakdown={breakdown} description={description} />}
 			className="justify-end underline decoration-dotted"
 		>
 			{formattedNum(value, true)}
-		</Tooltip>
+		</Hovercard>
 	)
 }

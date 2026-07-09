@@ -10,6 +10,7 @@ import { useBlockExplorers } from '~/api/client'
 import type { BlockExplorersResponse } from '~/api/types'
 import { Icon } from '~/components/Icon'
 import { VirtualTable } from '~/components/Table/Table'
+import { Hovercard } from '~/ui/Hovercard'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { formattedNum } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
@@ -72,17 +73,25 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 			cell: ({ row }) => {
 				const allocations = row.original.allocations ?? []
 				const sections = Array.from(new Set(allocations.map((a) => a.allocationSection).filter(Boolean)))
+				if (allocations.length === 0) return <span>{sections.join(', ')}</span>
 				return (
-					<span
-						title={allocations
-							.map(
-								(a) =>
-									`${a.allocationSection ?? formatAllocationLabel(a.category)} (${formatAllocationLabel(a.category)}): ${formattedNum(a.received)}`
-							)
-							.join('\n')}
+					<Hovercard
+						className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
+						content={
+							<span className="flex flex-col gap-1">
+								{allocations.map((a, index) => (
+									<span key={`${a.category}-${index}`} className="flex items-center justify-between gap-4">
+										<span>
+											{a.allocationSection ?? formatAllocationLabel(a.category)} ({formatAllocationLabel(a.category)})
+										</span>
+										<span className="font-medium">{formattedNum(a.received)}</span>
+									</span>
+								))}
+							</span>
+						}
 					>
 						{sections.join(', ')}
-					</span>
+					</Hovercard>
 				)
 			},
 			size: 200

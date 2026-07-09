@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import { useEffect, useEffectEvent, useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Tooltip } from '~/components/Tooltip'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import {
@@ -307,19 +308,14 @@ export const UpcomingEvent = ({
 					<span className="flex items-center gap-1.5">
 						{item.name}
 						{isOngoing ? ' (Ongoing)' : null}
-						<Ariakit.TooltipProvider>
-							<Ariakit.TooltipAnchor>
-								<Icon
-									name={item.unlockType === 'linear' ? 'linear-unlock' : 'cliff-unlock'}
-									height={iconSize}
-									width={iconSize}
-									className="text-tertiary"
-								/>
-							</Ariakit.TooltipAnchor>
-							<Ariakit.Tooltip className="z-50 rounded-md border border-medium bg-overlay px-2 py-1 text-xs shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]">
-								{item.unlockType === 'linear' ? 'Linear Unlock' : 'Cliff Unlock'}
-							</Ariakit.Tooltip>
-						</Ariakit.TooltipProvider>
+						<Tooltip content={item.unlockType === 'linear' ? 'Linear Unlock' : 'Cliff Unlock'}>
+							<Icon
+								name={item.unlockType === 'linear' ? 'linear-unlock' : 'cliff-unlock'}
+								height={iconSize}
+								width={iconSize}
+								className="text-tertiary"
+							/>
+						</Tooltip>
 					</span>
 					<span className={`inline-flex items-baseline gap-1 ${valueClass}`.trim()}>
 						{item.usdValue ? formattedNum(item.usdValue, true) : '-'}
@@ -460,7 +456,7 @@ export const UpcomingEvent = ({
 				</Ariakit.HovercardAnchor>
 				<Ariakit.HovercardDisclosure />
 				<Ariakit.Hovercard
-					className="z-10 flex flex-col gap-2 rounded-md border border-medium bg-overlay p-4 text-sm text-primary shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]"
+					className="z-10 flex flex-col gap-2 rounded-xl border border-medium bg-overlay p-4 text-sm text-primary shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]"
 					unmountOnHide
 					hideOnInteractOutside
 					portal={true}

@@ -109,7 +109,7 @@ function OperatorSelect({
 			</Ariakit.Select>
 			<Ariakit.SelectPopover
 				portal
-				gutter={4}
+				gutter={6}
 				sameWidth
 				wrapperProps={{ className: popoverMobileWrapperClassName }}
 				className={`${popoverSurfaceStyles} z-100`}

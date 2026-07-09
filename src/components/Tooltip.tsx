@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
+import { tooltipSurfaceStyles } from '~/ui/Popover'
 
 interface ITooltip extends Ariakit.TooltipOptions {
 	content: string | null | React.ReactNode
@@ -53,7 +53,7 @@ export function Tooltip({
 			</Ariakit.TooltipAnchor>
 			<Ariakit.Tooltip
 				store={store}
-				className={`${popoverHovercardSurfaceStyles} max-w-56 whitespace-pre-wrap data-[fullwidth=true]:max-w-(--popover-available-width)`}
+				className={`${tooltipSurfaceStyles} max-w-56 whitespace-pre-wrap data-[fullwidth=true]:max-w-(--popover-available-width)`}
 				unmountOnHide
 				portal
 				data-fullwidth={props['data-fullwidth']}

@@ -813,3 +813,29 @@ bg-surface-elevated-2` opaque step per the documented Select-trigger exception.
   Include-in-TVL popover, `(?)` tooltip, desktop ⌘K palette, mobile search sheet,
   Add to Dashboard, chart-metrics dialogs, Metrics dialog (must be unchanged),
   toast, unlocks hovercards. Dark mode should be pixel-identical everywhere.
+
+### 2026-07-09 Tooltip/Hovercard Affordance Sweep
+
+- Route/page: app-wide floating hover content; branch `mintdart/tooltip-popover-sweep`.
+- Decisions (owner, 2026-07-09):
+  - Tooltip radius is 6px (`rounded-md`, new `tooltipSurfaceStyles`) — radius follows
+    component size and must not exceed content inset; popovers/menus/dialogs/hovercards
+    stay 12px. No Figma tooltip spec was available; raised as a design ask to confirm.
+  - Structured hover content moves from `<Tooltip>` to the new shared `ui/Hovercard`
+    (hoverable, Escape-dismissable, keyboard-reachable via HovercardDisclosure):
+    Tokens `RightsPopover` panel, FullOldViewButton feature list, DAT/Treasuries
+    breakdown bars, two RWA AssetsTable cells, InsidersTable allocation breakdown,
+    and the 7 copy-pasted `ProtocolChainsComponent` sites (now shared
+    `ProtocolChainsHovercard`; arbitrary-font-size debt 40 → 34).
+  - Missing affordances filled: RWA Perps category columns, NFT marketplace names
+    (also dropped a misleading `hover:underline` on a non-link), RWA fallback
+    branches, Correlations add-token buttons, expenses/token-rights source links,
+    SelectWithCombobox custom-column buttons, `MetricSection` definitions (now
+    matches `MetricRow`), Mcap/TVL & LST column help.
+- Known limitation (updated 2026-07-09, second pass): the shared Hovercard anchor now
+  also opens on tap/click (`showOnClick`, default on) — the DAT/Treasuries bars had no
+  click action of their own, so all span/bar hovercards are touch-reachable. The only
+  remaining touch gap is FullOldViewButton (`showOnClick={false}`: its click creates a
+  dashboard), which still needs a separate info affordance on touch.
+- Found but unchanged: the ProtocolRankings custom-column "Err" badge is dead code
+  (early return swallows `error` first) — spun off as a separate task.

@@ -49,7 +49,7 @@ export function ShowAsControl({ mode, setMode }: { mode: DisplayMode; setMode: (
 						<Ariakit.SelectArrow />
 					</Ariakit.Select>
 					<Ariakit.SelectPopover
-						gutter={4}
+						gutter={6}
 						wrapperProps={{ className: popoverMobileWrapperClassName }}
 						className={`${popoverSurfaceStyles} z-50 min-w-[11rem]`}
 						portal

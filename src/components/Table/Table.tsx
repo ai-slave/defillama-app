@@ -177,7 +177,10 @@ export function VirtualTable<T extends RowData>({
 	const [containerOffset, setContainerOffset] = useState(0)
 	useEffect(() => {
 		if (tableContainerRef.current) {
-			setContainerOffset(tableContainerRef.current.offsetTop)
+			// Not offsetTop: it measures from the nearest positioned ancestor, and
+			// panel wrappers (ui/Panel) are position:relative — the window
+			// virtualizer needs the offset from the top of the document.
+			setContainerOffset(tableContainerRef.current.getBoundingClientRect().top + window.scrollY)
 		}
 	}, [])
 

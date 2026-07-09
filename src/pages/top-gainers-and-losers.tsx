@@ -108,7 +108,8 @@ const topGainersAndLosersColumns = [
 		cell: (info) => info.getValue(),
 		meta: {
 			headerClassName: 'w-[120px]',
-			align: 'end'
+			align: 'end',
+			headerHelperText: 'Market cap / TVL ratio'
 		}
 	})
 ]
