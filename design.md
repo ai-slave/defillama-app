@@ -256,8 +256,8 @@ ECharts renders to canvas and cannot read `var()`: resolve tokens through [`src/
 | Phase                 | Scope                                                                                   | Status         |
 | --------------------- | --------------------------------------------------------------------------------------- | -------------- |
 | Foundation            | Token foundation, legacy quarantine, chart tokens, Card/type ramp, `useChartTheme`      | merged         |
-| Broad design sweep    | Home/chain, shared primitives, popovers, ProtocolOverview, text/icon consistency        | merged         |
-| Post-merge follow-ups | DialogShell, dense pages, raises chart reservation, ChartPanel extraction               | active backlog |
+| Broad design sweep    | Home/chain, shared primitives, popovers, DialogShell, ProtocolOverview, text/icon       | merged         |
+| Post-merge follow-ups | Dense pages, Correlations token cleanup, raises reservation, ChartPanel extraction      | active backlog |
 | Deferred architecture | Token namespace cleanup, radius-scale codemods, broad typography/file-placement cleanup | deferred       |
 
 Legacy namespaces (`--sub-*`, `--pro-*`, `--sl-*`, `--signin-*`, and the pre-refresh `--text-*`/`--bg-*`/`--cards-*` globals) are quarantined in `src/styles/legacy-*.css` / `tailwind.css`. Do not add new consumers; they are deleted as surfaces migrate.

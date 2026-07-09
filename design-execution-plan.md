@@ -1,7 +1,7 @@
 # Design Sweep Post-Merge Plan
 
 This is the post-merge execution plan for follow-up design-system work after the
-large design sweep and shared popover pass landed on `main`.
+large design sweep, shared popover pass, and DialogShell pass landed on `main`.
 
 Canonical references:
 
@@ -13,11 +13,11 @@ Canonical references:
 
 ## Current Status
 
-The broad design sweep, shared popover/mobile-drawer pass, ProtocolOverview cleanup,
-and text-tier/icon consistency sweep have merged to `main`.
-The branch is no longer blocked by the old unlocks, popover, divider, or merge-readiness
-gates. `design-sweep-todo.md` still has many unchecked items because it is now a backlog
-ledger, not a merge-blocking checklist.
+The broad design sweep, shared popover/mobile-drawer pass, DialogShell pass,
+ProtocolOverview cleanup, and text-tier/icon consistency sweep have merged to `main`.
+Main is no longer blocked by the old unlocks, popover, divider, DialogShell, or
+merge-readiness gates. `design-sweep-todo.md` still has many unchecked items because it
+is now a backlog ledger, not a merge-blocking checklist.
 
 Completed foundation:
 
@@ -27,12 +27,16 @@ Completed foundation:
   and in-scope direct popovers use the paddingless popover surface contract.
 - Shared menu/select popovers portal by default; below `sm` they use fixed-bottom
   drawer behavior, and `sm+` stays anchored to the trigger.
+- Shared dialog adopters use `dialogSurfaceStyles`, `DialogHeading`, and
+  `DialogCloseButton`; below `sm` dialogs render as bottom sheets, and `sm+` remains
+  centered.
 - ProtocolOverview `KeyMetrics`, `Flag`, `IncomeStatement`, and overview card/dialog
   cleanup have shipped.
 - Text-tier and utility-icon rules are codified in `design.md` and applied through the
   shared controls touched by that sweep.
 - `lint:tokens` has a locked baseline in `scripts/design-token-baseline.json`.
-- Manual owner visual checks were accepted for the merged sweep and popover branches.
+- Manual owner visual checks were accepted for the merged sweep, popover, and DialogShell
+  branches.
 
 Current owner decisions:
 
@@ -44,56 +48,68 @@ Current owner decisions:
 - `design-sweep-todo.md` and this execution plan stay for now; deleting either is a
   later cleanup task.
 
-## Current Branch Scope
+## Current Focus
 
-This branch combines two related follow-up tasks:
+This file is now a sequencing guide, not a branch checklist. The immediate docs task is
+to keep the backlog aligned with what has already merged, then use focused code branches
+for the remaining work.
 
-1. Clean up stale docs so they describe the current post-merge order.
-2. Start the focused DialogShell pass.
+Next code scope:
 
-DialogShell scope:
+- Start with dense pages token cleanup: `DeFiWatchlist` and `TokenPnl`.
+- Treat Correlations as a small route-level legacy-token cleanup if it is included nearby:
+  remove old surface/text/link-hover classes.
+- Keep Raises chart layout shift as a chart-shell/fallback reservation follow-up.
+- Keep `ChartPanel` extraction blocked until after the Raises/chart-shell pass.
 
-- Keep the shared dialog surface bottom-sheet behavior limited to `max-sm`; `sm+`
-  dialogs remain centered.
-- Keep shared menu/select popover drawer behavior limited to `max-sm`; `sm+` popovers
-  remain anchored to their trigger.
-- Explicitly portal shared-dialog adopters so fixed positioning is viewport-based.
-- Align close-button chrome through `DialogCloseButton`.
-- Migrate small, clear in-scope legacy app dialogs from `className="dialog"` to the
-  shared dialog recipe.
+Carry-forward dialog/popover guardrails:
 
-DialogShell guardrails:
-
+- Dialog bottom sheets stay limited to below `sm`; `sm+` dialogs stay centered unless a
+  route-specific dialog already has a proven different pattern.
+- Shared menu/select popover drawers stay limited to below `sm`; `sm+` popovers remain
+  anchored to their trigger.
 - Do not reuse popover drawer helpers for task dialogs.
-- Do not broaden dialog bottom-sheet behavior to `lg`.
+- Do not broaden dialog or popover drawer behavior to `lg`.
 - Do not touch global search, metrics browse, ProDashboard, LlamaAI, Yields,
-  account/subscription, Articles, or Downloads dialogs in this branch unless explicitly
-  scoped.
-- Do not start dense pages, ChartPanel extraction, token namespace renames, broad
-  typography codemods, or radius-scale codemods in this branch.
+  account/subscription, Articles, or Downloads dialogs unless that branch explicitly
+  scopes them.
+- Do not start token namespace renames, broad typography codemods, radius-scale codemods,
+  or folder-hygiene moves inside dense-page or chart-shell branches.
 
 ## Next Branches
 
-Recommended order after this branch:
+Recommended order for the next focused code branches:
 
 1. **Dense pages token cleanup**
    - Start with `DeFiWatchlist` and `TokenPnl`.
    - Reduce `--cards-*`, legacy `--text-*`, `--link-hover-bg`, old shell classes, and
      default-sm select drift.
+   - Port any in-scope `DeFiWatchlist` dialog chrome to the shared dialog recipe as part
+     of that file-family cleanup.
    - Revisit Unlocks only if `lint:tokens` points to remaining high-value debt there.
 
-2. **Raises/chart-shell layout pass**
+2. **Correlations legacy-token cleanup**
+   - Small route cleanup only: legacy card/surface/text/link-hover tokens and local shell
+     classes in the Correlations page.
+
+3. **Raises/chart-shell layout pass**
    - Fix the `/raises` Suspense/fallback reservation that can cause a chart-panel layout
      shift.
    - Keep actual ECharts plot height at 360px unless the route explicitly supplies
      another chart height.
    - Include one investor raises page because it shares the same chart reservation shape.
 
-3. **ChartPanel extraction**
+4. **ChartPanel extraction**
    - Do this only after the chart-shell pass.
    - Extract shell/toolbar/chrome only.
    - Keep URL query state, exports, Add to Dashboard config, failed-data behavior,
      metric selection, and route-specific chart logic local.
+
+5. **Remaining route-family migrations**
+   - Stablecoins, bridges, RWA, token, LST, liquidations, DAT, adapter/markets, MCP,
+     borrow, and remaining CEX markets/date-filter surfaces.
+   - Keep these route-sized. Each branch should state which family was visually checked
+     and which excluded/quarantined surfaces were intentionally left alone.
 
 ## Deferred Until Later
 

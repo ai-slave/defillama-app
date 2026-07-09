@@ -87,8 +87,9 @@ This file tracks design-system audit notes before code changes are made.
   round only the top sheet corners, animate with a smooth slide up/down, and keep long
   dialog content scrolling inside the sheet so the underlying page/table is not visible
   below the dialog.
-- This belongs in a focused DialogShell pass. Do not reuse popover drawer helpers for
-  task dialogs; share dialog chrome through `src/ui/Dialog.tsx`.
+- Implemented in the focused DialogShell pass for the shared recipe and clear in-scope
+  adopters. Future dialog migrations should preserve the same boundary: do not reuse
+  popover drawer helpers for task dialogs; share dialog chrome through `src/ui/Dialog.tsx`.
 
 ### Panel vs Card vs Entity Title Strip Decision
 
@@ -150,7 +151,8 @@ This file tracks design-system audit notes before code changes are made.
 ### Paragraph Tags Used As Structural Surface Wrappers
 
 - Route/page: In-scope examples already touched include borrow/MiCA empty states, Bridges form alert, Equities empty state, protocol warning banners, RWA stat/property cards, and MCP note. Downloads modal footer and article admin/editor empty/error states were historical examples from earlier sweeps and are now excluded/deferred with their product surfaces.
-- Component/file: Multiple files changed from structural `<p>` wrappers to `<div>` wrappers in the current working tree. This needs review before further changes.
+- Component/file: The structural-status cleanup changed multiple files from structural
+  `<p>` wrappers to `<div>` wrappers. This needs review before further changes.
 - Figma node(s): Not a Figma visual issue by itself; this is semantic HTML and component-contract cleanup.
 - Current issue: A simple `<p>` to `<div>` replacement can be incomplete or pointless if the wrapper exists to style text and no inner semantic text element is restored. The right fix depends on context:
   - Stat/data cards with nested spans, links, tooltips, or multiple blocks should not be `<p>`.
@@ -175,10 +177,10 @@ Current classification of the in-flight pass:
 | `src/containers/RWA/Asset.tsx` `Primary` badge                                       | Inline badge                                   | Use `span`             | No inner `<p>`                                                                               |
 | `src/pages/borrow.tsx` loading/error shells                                          | Status/error shell                             | Yes                    | Add inner `<p>`; loading wrapper can be `role="status"`, error wrapper can be `role="alert"` |
 | `src/pages/mica.tsx` empty shell                                                     | Empty-state shell                              | Yes                    | Add inner `<p>`                                                                              |
-| `src/containers/Articles/*` empty/error shells                                       | Excluded/deferred historical example           | Yes                    | Do not sweep in this branch                                                                  |
+| `src/containers/Articles/*` empty/error shells                                       | Excluded/deferred historical example           | Yes                    | Do not sweep unless separately scoped                                                        |
 | `src/containers/Bridges/Transactions.tsx` form error                                 | Error alert with icon                          | Yes                    | Add `role="alert"` and inner `<p>`                                                           |
 | `src/containers/Equities/OnchainTables.tsx` `EmptyState`                             | Empty-state shell                              | Yes                    | Add inner `<p>` around children                                                              |
-| `src/containers/Downloads/MultiMetricModal.tsx` preview footer note                  | Excluded/deferred historical example           | Yes                    | Do not sweep in this branch                                                                  |
+| `src/containers/Downloads/MultiMetricModal.tsx` preview footer note                  | Excluded/deferred historical example           | Yes                    | Do not sweep unless separately scoped                                                        |
 | `src/containers/MCP/index.tsx` note callout                                          | Note/callout shell                             | Yes                    | Add inner `<p>`                                                                              |
 | `src/containers/ProtocolOverview/Layout.tsx` active-loans notice and warning banners | Warning/info callout shells                    | Yes                    | Add inner `<p>`; leave visual tokens unchanged                                               |
 | `src/containers/RWA/Perps/Dashboard.tsx` forex information callout                   | Informational callout shell                    | Yes                    | Add inner `<p>`                                                                              |
@@ -194,7 +196,7 @@ Current classification of the in-flight pass:
   - TVL and Treasury have chart-grid error states and should use `col-span-full` to avoid `col-span-2` assumptions.
   - Stablecoins is a single-content page inside `ProtocolOverviewLayout`; its failed state should still expand via `flex-1`.
   - Forks has a simple failed state before the nested `ForksByProtocol` content.
-  - CEX assets/stablecoins title, loading, empty, and stablecoin metric-summary shells have been migrated in a focused CEX shell pass; chart bodies still need live verification.
+  - CEX assets/stablecoins title, loading, empty, and stablecoin metric-summary shells have been migrated in a focused CEX shell pass; chart bodies should be verified when that route family is touched again.
 - Special cases: Yields remain excluded. Token-rights shell, typography, spacing, and metadata are in scope, while green/warning pill/card output stays guarded. CEX migration is allowed because user confirmed it should use the new protocol-like shells, but any remaining CEX chart/market-shell work should be done as a focused panel migration with live checks.
 - Surrounding layout impact: `flex-1` belongs on the panel surface, while text styles belong on the inner paragraph. Avoid putting fixed heights on wrapper rows to solve empty/error states.
 - Grid/flex/layout notes: Use `col-span-full` for chart-grid-wide states so the markup survives responsive grid changes. Single-page states can rely on `flex-1`.

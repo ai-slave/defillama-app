@@ -1,7 +1,7 @@
 # Theme sweep — living checklist
 
 Working tracker for the Llama Design System rollout (PR 4+). One line per known
-inconsistency; checked = shipped on this branch and verified in the browser.
+inconsistency; checked = shipped and verified in the browser.
 Recipes live in [design.md](design.md); exact Figma specs in the PR notes.
 Delete this file when the last page sweep lands.
 
@@ -18,7 +18,8 @@ Process rules (from review feedback):
 ## Post-merge triage — 2026-07-08
 
 This file is now a living audit/backlog ledger, not a literal merge-blocking checklist.
-The broad design sweep and shared popover/mobile-drawer pass have merged to `main`.
+The broad design sweep, shared popover/mobile-drawer pass, DialogShell pass,
+ProtocolOverview cleanup, and text-tier/icon consistency sweep have merged to `main`.
 Many unchecked items are historical counts, deferred migrations, or "keep unchecked until
 live verification" markers. Do not require every unchecked line in this file to be cleared
 before opening or merging a focused follow-up branch.
@@ -26,6 +27,7 @@ before opening or merging a focused follow-up branch.
 Completed merge packet:
 
 - Owner manual visual route pass was accepted for the merged design sweep.
+- Owner visual checks were accepted for the merged shared popover and DialogShell passes.
 - The shared popover session landed: `Select`, `SelectWithCombobox`, `MultiSelectCombobox`,
   `Menu`, `NestedMenu`, and in-scope direct popovers use the paddingless popover surface
   and below-`sm` fixed-bottom drawer contract.
@@ -35,26 +37,28 @@ Completed merge packet:
   for the merged sweep.
 - ProtocolOverview cleanup landed: `KeyMetrics`, `Flag`, `IncomeStatement`, and overview
   card/table/dialog/token chrome were moved onto shared recipes.
+- DialogShell cleanup landed for the shared shell and clear in-scope adopters:
+  `dialogSurfaceStyles`, `DialogHeading`, `DialogCloseButton`, portal-based positioning,
+  and below-`sm` bottom-sheet behavior are now the app recipe.
 - Text-tier + icon consistency sweep landed and is codified in `design.md`.
 
 Current focused backlog:
 
-- DialogShell pass: mobile dialogs below `sm` should become bottom sheets, while `sm+`
-  remains centered; shared adopters should portal, use `DialogCloseButton`, align footer
-  sizing/headings, and keep internal scroll regions.
 - Dense pages cleanup: `DeFiWatchlist` and `TokenPnl` before broad token namespace work.
+- Correlations route cleanup: legacy surface/text/link-hover tokens.
 - Raises chart-shell/fallback reservation pass before any `ChartPanel` extraction.
 
 Medium pending items:
 
-- Range/date popover containment verification and targeted fixes.
+- Range/date popover containment spot checks when those controls are touched.
 - Remaining table toolbar/search alignment cases across route families.
 - RWA filter/table rhythm polish.
 - Final global search desktop/mobile polish beyond the already-capped desktop height.
 
 Hard or risky pending items:
 
-- Full DialogShell adoption and deleting the legacy `dialog` utility.
+- Residual DialogShell cleanup and deleting the legacy `dialog` utility after remaining
+  special/excluded surfaces are explicitly resolved.
 - Status-shell adoption across embedded chart bodies, which likely needs a non-`Panel`
   helper first.
 - Broad Panel/Card route-family migration for stablecoins, bridges, token, RWA, DAT,
@@ -62,11 +66,12 @@ Hard or risky pending items:
 - Extracting a new `src/ui/SegmentedControl`.
 - Legacy token namespace changes, radius-scale codemods, broad typography codemods, and
   high-fanout folder moves.
-- Full unlocks visual redesign beyond accepting or rejecting the current branch output.
+- Full unlocks visual redesign beyond the accepted merged output.
 
 Deferred means after the focused post-merge follow-up branches, or after the owner
 explicitly opens a branch for that work. The deferred list is not fallback work for
-DialogShell, dense pages, raises chart reservation, or ChartPanel extraction.
+dense pages, Correlations legacy-token cleanup, raises chart reservation, or
+ChartPanel extraction.
 
 Post-merge-only list:
 
@@ -114,19 +119,24 @@ The foundation primitives now exist. Broad sweeps should start by adopting and
 verifying existing recipes, not by adding more one-off primitives unless a proven
 gap remains.
 
-1. Finish DialogShell: shared dialog portal/close/header/footer/scroll treatment for
-   in-scope app dialogs. Keep bottom sheets limited to `max-sm`; do not delete the
-   legacy `dialog` utility until excluded/quarantined surfaces are separately resolved.
-2. Dense pages cleanup: `DeFiWatchlist` and `TokenPnl` first.
+1. Dense pages cleanup: `DeFiWatchlist` and `TokenPnl` first. Include the
+   `DeFiWatchlist` dialog only as part of that file-family cleanup.
+2. Correlations legacy-token cleanup: surface/text/link-hover classes.
 3. Raises chart-shell/fallback reservation, including one investor raises page.
 4. ChartPanel extraction after the raises/chart-shell pass.
 5. Migrate remaining route families in chunks: stablecoins/bridges/RWA/token/
    liquidations/DAT/adapter/markets/MCP/borrow surfaces.
-6. For each route family, document live verification separately from code migration:
+6. Residual DialogShell cleanup only after the relevant surface is scoped: global search,
+   metrics browse, MCP command dialogs, account/subscription, ProDashboard, LlamaAI,
+   Yields, Articles, Downloads, and other quarantined products should not be swept as a
+   side effect of dense-page work. Delete the legacy `dialog` utility only when all
+   remaining consumers are either migrated or intentionally moved to a separate legacy
+   utility.
+7. For each route family, document live verification separately from code migration:
    desktop/mobile where applicable, light/dark, 32px controls, 6px dense gaps, 8px
    group/page gaps, card/panel padding, popover containment, status states, and no chart
    visual regression.
-7. Run read-only review passes before the final cleanup: excluded-surface regression,
+8. Run read-only review passes before the final cleanup: excluded-surface regression,
    chart visual-change risk, token/hardcoded-style drift, semantic HTML/status states,
    duplicated shell/component churn, and route-family visual checklist coverage.
 
@@ -153,15 +163,14 @@ gap remains.
       6183:293480/6183:354516: min-h-8, bg-page, border-medium, 8px radius,
       body-sm placeholder/text tiers, 16px leading-icon slot. Adopted in Metrics,
       SelectWithCombobox, OtherLinks, Chain/Protocol/Token chart metric search,
-      TableWithSearch, Correlations token picker, Downloads catalog/docs/schema,
+      TableWithSearch, Correlations Add Token dialog, Downloads catalog/docs/schema,
       Tools page, Equities filters, and AddToDashboardModal. Re-grep evidence:
       exact old `bg-(--bg-input) p-1.5 pl-7 ... placeholder:text-[#666]` copies
       remain only in excluded/separate sweep surfaces (Yields, ProDashboard,
       LlamaAI, Articles, Bridges Transactions). Live verification on localhost:3000:
       `/tools`, `/downloads`, and `/banks` rendered page/table inputs at 32px high,
       8px radius, 1px medium border, `bg-page`, 32px leading-icon padding, and
-      12px/16px text; `/correlation` picker input was not live-reachable because
-      the token-picker disclosure did not render in the current page state.
+      12px/16px text.
       Re-verified `/metrics` after the radius pass: metrics search is 32px high,
       8px radius, default 1px border-medium, focus 1px border-brand, 32px
       leading-icon padding, and 12px/16px text.
@@ -193,8 +202,8 @@ gap remains.
       full radius, brand border, brand-muted bg, px-2, 12px/16px label-sm; inactive
       USD Inflows option matched 24px/full radius with medium border.
 - [ ] MetricChip adoption: Chain/Protocol done; RWA Perps Contract and Token Overview
-      option chips use the shared `metricOptionChipStyles` in the working tree. DAT and
-      any remaining route-local selected metric chips still need audit/live verification.
+      option chips use the shared `metricOptionChipStyles`. DAT and any remaining
+      route-local selected metric chips still need audit/live verification.
 - [x] PopoverSurface v2 — source recipe shipped in `src/ui/Popover.ts` and shared
       consumers (`Select`, `SelectWithCombobox`, `MultiSelectCombobox`, `Menu`,
       `NestedMenu`, plus in-scope direct default popovers) moved to the paddingless
@@ -214,21 +223,21 @@ gap remains.
       row/check recipes; Equities categorical filter combobox overrides no longer add a
       popover shadow. CEX DateFilter, bridge protocol selectors, mobile nav/settings,
       token usage, raises search, compare menu, and export/embed direct popovers moved
-      to the shared fixed-wrapper/portal rule in the working tree. Remaining direct
-      copies are mainly older bespoke or excluded surfaces such as Yields search/saved
-      filters, app/global search special cases, Downloads/Admin/Editor, ProDashboard,
-      and LlamaAI.
-- [ ] DialogShell adoption — `src/ui/Dialog.tsx` has `dialogSurfaceStyles` +
-      `DialogHeading` + `DialogCloseButton`; AddToDashboardModal, Chain/Protocol chart
-      metric dialogs, ProtocolRankings CustomColumnModal, RWA/Equities filter dialogs,
-      RWA Perps Contract dialogs, Token Overview metric dialogs, ProtocolOverview Flag,
-      Correlations Add Token, and RecentProtocols airdrop checker use the shared surface
-      or are in the current DialogShell branch. Remaining direct/legacy examples include
-      MCP command dialogs, global search/metrics browse special cases, and quarantined
-      ProDashboard/LlamaAI/Yields/account/subscription/Articles/Downloads surfaces; verify
-      before deleting the legacy `dialog` utility. Owner decision 2026-07-08: dialogs are
-      bottom sheets only below `sm`; `sm+` stays centered. Add to Dashboard uses the dialog
-      recipe, not the popover drawer recipe.
+      to the shared fixed-wrapper/portal rule. Remaining direct copies are mainly older
+      bespoke or excluded surfaces such as Yields search/saved filters, app/global search
+      special cases, Downloads/Admin/Editor, ProDashboard, and LlamaAI.
+- [ ] DialogShell adoption — shared recipe exists in `src/ui/Dialog.tsx`
+      (`dialogSurfaceStyles`, `DialogHeading`, `DialogCloseButton`) and the merged
+      in-scope adopters include AddToDashboardModal, Chain/Protocol chart metric dialogs,
+      ProtocolRankings CustomColumnModal, RWA/Equities filter dialogs, RWA Perps Contract
+      dialogs, Token Overview metric dialogs, ProtocolOverview Flag, Correlations Add
+      Token, and RecentProtocols airdrop checker. Keep unchecked because remaining direct/
+      legacy examples still include Metrics browse, global search, MCP command dialogs,
+      DeFiWatchlist, EntityQuestionsStrip, TopupModal-borderline, and quarantined
+      ProDashboard/LlamaAI/Yields/account/subscription/Articles/Downloads surfaces.
+      Verify each scoped surface before deleting or replacing the legacy `dialog` utility.
+      Owner decision 2026-07-08: dialogs are bottom sheets only below `sm`; `sm+` stays
+      centered. Add to Dashboard uses the dialog recipe, not the popover drawer recipe.
 - [x] IconHitTarget / TableIconHitTarget helper exists in `src/ui/IconHitTarget.tsx` for
       visual 16px icons with `p-1 -m-1` hit area.
 - [ ] IconHitTarget adoption — first targets: protocol rankings bookmark/accordion/
@@ -250,17 +259,16 @@ gap remains.
 - [ ] ChartToolbar / ChartPanelToolbar composite (Add Metrics + chips + denomination +
       grouping + embed/csv/png/dashboard slots). Chain/Protocol, Token Overview,
       RWA overview/perps, LiquidationsV2, bridge chart shells, DAT Company, and Token
-      Usage are using shared toolbar pieces in the working tree; CEX chart shells use
-      `Panel`/`PanelHeader`. Keep unchecked until stablecoins, adapter/markets, LST,
-      remaining token/DAT variants, and live verification are complete.
-- [ ] Popover/menu composite verification — after the v2 source pass, verify `/`,
-      `/top-protocols`, `/calendar`, `/bridges`, `/protocol/uniswap`, `/protocol/tvl/uniswap`,
-      global search, and a mobile drawer. Remaining direct/direct-Ariakit contexts to
-      verify include chart PNG export menus, CEX DateFilter (now on shared surface/Input/
-      Button but still direct), protocol overview switcher tree rows, mobile nav settings,
-      Unlocks upcoming-event calendar menu and directory search panel. Downloads SQL/
-      internal tools are excluded/deferred with the Downloads surface. `FilterBetweenRange`
-      and CEX DateFilter still need live containment verification.
+      Usage use shared toolbar pieces; CEX chart shells use `Panel`/`PanelHeader`. Keep
+      unchecked until stablecoins, adapter/markets, LST, remaining token/DAT variants,
+      and live verification are complete.
+- [ ] Popover/menu composite verification — shared Select/Menu/NestedMenu/MultiSelect
+      recipes landed and owner verification covered the default desktop/mobile drawer
+      cases touched by that branch. Remaining direct/direct-Ariakit contexts to verify
+      when touched include chart PNG export menus, CEX DateFilter, protocol overview
+      switcher tree rows, mobile nav settings, Unlocks upcoming-event calendar menu,
+      and directory search panels. Downloads SQL/internal tools are excluded/deferred
+      with the Downloads surface.
 - [ ] TableToolbar / TableWithSearch reconciliation — `TableWithSearch` now uses the
       `Card border="subtle"` shell plus `TableToolbar`, and its built-in Columns/.csv
       controls use md/32px sizing. `ProtocolRankings` toolbar also moved to
@@ -287,9 +295,8 @@ gap remains.
       borrow, and any remaining CEX markets/date-filter details still have local shells,
       direct popover/table pieces, or `--cards-*` surfaces that should move to `Panel`,
       `Card`, title-strip, or a narrow route-family wrapper. CEX assets/stablecoins
-      title/status/metric-summary and chart panel shells are migrated in the working tree;
-      CEX markets/date-filter still need live visual verification before being considered
-      done.
+      title/status/metric-summary and chart panel shells are migrated; CEX markets/
+      date-filter still need live visual verification before being considered done.
       2026-07-07 follow-up: Bridges overview/protocol summary cards, bridge chart/table
       switches, `/bridges/chains` chart select sizing, Equities ticker/list/filings/onchain/
       financial shells, AdapterMetrics chart/table shells, Hacks chart/table shells,
@@ -325,7 +332,7 @@ gap remains.
       blue pills → neutral md secondary buttons (Figma 6183:312146: no blue, text-primary)
 - [ ] Comparison-dashboard dialog interiors (SubscribeProModal contents) still unported.
       AddToDashboardModal shell/interior was ported to Dialog + Input + Button
-      primitives on this branch; verify live before checking the broader dialog item off
+      primitives; verify live before checking the broader dialog item off
 - [ ] Pre-existing (non-theme) bugs found while sweeping: ProtocolChartPanel metric-chip
       loading spinner hydrates differently than SSR (`loadingChartSet` is client-only state
       → dev-overlay hydration error on /protocol/:name); /unlocks countdown Date.now()
@@ -401,21 +408,16 @@ gap remains.
       gap, 20px title, and right-action slot where needed. Keep unchecked until live
       verification covers each adopted route; unlocks/governance/LST need separate
       slot checks before reuse.
-- [ ] Protocol overview: migrate summary/key-metrics dense card, overview chart-card
-      toolbar, and IncomeStatement table/panel shell to `Card`, chart toolbar recipes,
-      or `Panel` as appropriate. AdditionalInfo detail cards now use `Card padding="sm"`
-      with `border="subtle"`, the Figma `6183:312146/312158/312167` 12px internal stack,
-      `heading-xs`, `body-md` content, tertiary no-colon metadata labels, and neutral
-      md action buttons; they still need live verification. Stablecoin asset information
-      and token/unlocks/RWA notes-prose cards now follow the same detail-card padding/gap/
-      typography rule. Do not force the main
-      chart toolbar into `PanelHeader`.
-- [ ] Shared popover/select/menu controls: finish adoption and live verification of the
-      paddingless wrapper, search-block-owned padding, normal-flow Select/Deselect action
-      row, no bordered Add Custom Column footer, compact multi-select checkbox boxes in
-      both selected and unselected states, and single-select check-only state with no
-      unselected indicator. Verify regular Select, SelectWithCombobox with search,
-      no-search select, menu, mobile drawer, and excluded legacy variant.
+- [ ] Protocol overview: summary/key-metrics dense card, overview chart-card toolbar,
+      AdditionalInfo, Flag, and IncomeStatement shell cleanup landed. Keep this unchecked
+      for remaining smaller review items: IncomeStatement table header/cells, competitor/
+      methodology/report-link treatment, and any live route-specific spacing checks found
+      in review. Do not force the main chart toolbar into `PanelHeader`.
+- [x] Shared popover/select/menu controls: paddingless wrapper, search-block-owned
+      padding, normal-flow Select/Deselect action row, no bordered Add Custom Column
+      footer, compact multi-select checkbox boxes in both selected and unselected states,
+      and single-select check-only state with no unselected indicator landed in the shared
+      recipes. Remaining bespoke/direct popovers are tracked in route-family items.
 - [ ] Structural status/empty/error shells: refine the committed `<p>`→`div` cleanup.
       Data-card wrappers stay `div`; empty/error/status shells get inner text and
       `role="status"`/`role="alert"` where appropriate. Verify no default paragraph
@@ -504,7 +506,7 @@ Duplication (est. 900–1,200 deletable lines):
       `border-(--form-control-border) bg-white p-1 pl-7 text-black dark:bg-black`
       removed from in-scope table/search fields; token-rights shell/spacing/typography
       are in scope, while green/warning pill/card output remains guarded.
-- [ ] Select/menu surface stack: Select.tsx, SelectWithCombobox.tsx, Menu.tsx,
+- [x] Select/menu surface stack: Select.tsx, SelectWithCombobox.tsx, Menu.tsx,
       NestedMenu.tsx, and MultiSelectCombobox now share the paddingless popover
       surface recipe (`rounded-xl` border-medium bg-surface-elevated-1, surface owns
       border/radius/overflow only). Regular popover rows use `px-3 py-2 body-sm`;
@@ -516,26 +518,25 @@ Duplication (est. 900–1,200 deletable lines):
       centered labels; reset/download footer actions are left-aligned rows.
       ProDashboard, Yields, and LlamaAI shared-component callers are explicitly
       pinned to `popoverVariant="legacy"` or `variant="pro"` so excluded surfaces do
-      not change during this sweep. Live verification is still the gate before
-      promoting the broader PopoverSurface item.
+      not change during this sweep. Owner browser verification covered the shared
+      popover branch; direct/bespoke copies still need route-family checks when touched.
 - [ ] Range/date popovers: `FilterBetweenRange` and CEX DateFilter now use Input/Button
-      plus shared popover surface recipes in the working tree, but still need live
-      verification. Clear/Apply footer rows must not horizontally overflow the popover;
-      button sizing should be contained by the row across TVL Range, available-range,
-      and CEX date filters.
-- [ ] Dialog copies: Correlations token picker, Metrics modal, ProtocolOverview Flag,
-      DeFiWatchlist, Yields IncludeExcludeTokens, RecentProtocols airdrop checker, and
-      MCP dialogs still use `className="dialog"` or duplicated dialog shells. Account/
-      subscription, ProDashboard, LlamaAI, and editor/download dialogs remain excluded
-      product surfaces unless separately scoped.
+      plus shared popover surface recipes. Owner spot checks during the popover branch
+      covered the known TVL/range drawer issues; reverify containment when a route touches
+      TVL Range, available-range, CEX date filters, or another range/date footer.
+- [ ] Dialog copies: Correlations Add Token, ProtocolOverview Flag, and RecentProtocols
+      airdrop checker moved to the shared dialog recipe. Remaining scoped examples include
+      Metrics browse, DeFiWatchlist, EntityQuestionsStrip, MCP dialogs, and the global
+      search special case. Yields IncludeExcludeTokens, account/subscription, ProDashboard,
+      LlamaAI, and editor/download dialogs remain excluded product surfaces unless
+      separately scoped.
 - [ ] Route panel shells: borrow, unlocks, token, stablecoins, bridges, MCP, and any
       remaining CEX market/detail shells still have old `--cards-*` or route-local shells
       that should move to Panel/Card in route-sized chunks. CEX assets/stablecoins
-      title/status/metric-summary/chart shells are migrated in the working tree, but still
-      need live visual verification. Token-rights top summary now uses the Layout metric
-      browse row plus a Card `padding="strip"` inline stat strip; CEX stablecoin summaries
-      use the same strip recipe. Continue keeping token-rights green/warning pill/card
-      visuals stable.
+      title/status/metric-summary/chart shells are migrated. Token-rights top summary now
+      uses the Layout metric browse row plus a Card `padding="strip"` inline stat strip;
+      CEX stablecoin summaries use the same strip recipe. Continue keeping token-rights
+      green/warning pill/card visuals stable.
 - [ ] Chart/table tooltip chrome: smol line/bar/unlocks tooltips repeat
       `border-[#ccc] bg-white text-[#666] dark:*`; create a small tooltip recipe or
       reuse the popover surface tokens without touching chart series colors.
@@ -561,9 +562,9 @@ Duplication (est. 900–1,200 deletable lines):
       Exchanges venue control → joined-toggle styles; repeated failed-data chart overlays
       → shared `FailedDataPopover`.
       Static grep still has known touched-file exceptions (`Metrics`, `DeFiWatchlist`,
-      `unlocks`, `ETF`, and quarantined surfaces); treat zero-grep claims as scoped to
-      the file family being migrated, not as a repo-wide completion signal. Live route
-      verification pending.
+      `Correlations`, `unlocks`, `ETF`, and quarantined surfaces); treat zero-grep claims
+      as scoped to the file family being migrated, not as a repo-wide completion signal.
+      Live route verification pending.
 
 ## Audit results — 2026-07-07 evening, four parallel agents
 
@@ -625,9 +626,9 @@ dashboard product. Sheets scope remains deferred to a separate branch.
       focused route-family change proves it is necessary.
 - [ ] Radius decision: no `--radius-*` override exists, so `rounded-lg` already = 8px
       (0.5rem) in Tailwind v4 — design.md's "no live 8px guarantee" claim is only true
-      in the rem-vs-px sense. The current branch should keep exact primitive classes and
-      avoid a global radius codemod. Revisit `--radius-lg: 8px` / `--radius-xl: 12px`
-      in a focused radius branch.
+      in the rem-vs-px sense. Keep exact primitive classes in normal route branches and
+      avoid a global radius codemod. Revisit `--radius-lg: 8px` / `--radius-xl: 12px` in
+      a focused radius branch.
 - [ ] Legacy debt snapshot from the audit, requiring a fresh scope filter before edits:
       `--cards-*` 255 (TokenPnl 18, DeFiWatchlist 15, MCP 13, Nft/Collection 10,
       newsletters 10, support 10, unlocks page 10, ChainsByCategory 8);
@@ -639,14 +640,17 @@ dashboard product. Sheets scope remains deferred to a separate branch.
       LlamaAIFloatingButton 37 — borderline LlamaAI, reports.tsx 28 — likely
       research-excluded, EntityQuestionsStrip 29, ChainOverview/Announcement 22,
       MCP 17); arbitrary font sizes 109 (Sheets 20, MCP 17).
-- [ ] `dialog` @utility consumers in scope: ~9 files (Search, Metrics,
-      EntityQuestionsStrip, MCP, ProtocolOverview/Flag, ProtocolLists/RecentProtocols,
-      DeFiWatchlist, Correlations, TopupModal-borderline). Port to Dialog primitives,
-      then delete the utility.
-- [ ] Ariakit.Dialog sites not on dialogSurfaceStyles (~11 in scope): Search, Metrics,
-      Nav/Mobile/Menu, Correlations, DeFiWatchlist, MCP, MarketMakers/Drawer,
-      ProtocolLists/RecentProtocols, ProtocolOverview/Flag, EntityQuestionsStrip,
-      sheets/auth (Sheets deferred).
+- [ ] `dialog` @utility consumers in scope: current known examples include Search,
+      Metrics, EntityQuestionsStrip, MCP, DeFiWatchlist, and TopupModal-borderline.
+      Correlations, ProtocolOverview/Flag, and ProtocolLists/RecentProtocols have moved
+      to the shared recipe. Run a fresh `rg` before editing, because many remaining
+      matches are excluded/quarantined product surfaces. Delete the utility only after
+      every remaining consumer is migrated or moved to an explicit legacy utility.
+- [ ] Ariakit.Dialog sites not on `dialogSurfaceStyles`: current known in-scope examples
+      include Search, Metrics, DeFiWatchlist, MCP, EntityQuestionsStrip, and any scoped
+      borderline utility modal. Correlations, ProtocolOverview/Flag, and RecentProtocols
+      are no longer examples. Account/subscription, ProDashboard, LlamaAI, Yields,
+      Articles/Downloads, and Sheets/auth remain excluded or separately scoped.
 - [ ] Status-shell adoption: only 13 files use PanelStatus/PanelLoadingStatus; ~57
       in-scope files hand-roll `min-h-[360px]` shells (many are legit lazy-chart
       reservations — separate the status shells from reservations when sweeping;
