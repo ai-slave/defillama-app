@@ -5,8 +5,7 @@ import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { BridgeChainsTable } from '~/containers/Bridges/BridgeChainsTable'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 
 const MultiSeriesChart2 = lazy(
 	() => import('~/components/ECharts/MultiSeriesChart2')
@@ -21,7 +20,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }) {
 
 	return (
 		<>
-			<Panel padding="none">
+			<ChartPanel>
 				<ChartPanelToolbar className="justify-end">
 					<SelectWithCombobox
 						allValues={allChains}
@@ -40,7 +39,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }) {
 				</ChartPanelToolbar>
 
 				{chart?.dataset?.source?.length > 0 ? (
-					<Suspense fallback={<div className="h-[360px]" />}>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart2
 							dataset={chart.dataset}
 							charts={chart.charts}
@@ -54,7 +53,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }) {
 						/>
 					</Suspense>
 				) : null}
-			</Panel>
+			</ChartPanel>
 			<BridgeChainsTable data={tableData} />
 		</>
 	)

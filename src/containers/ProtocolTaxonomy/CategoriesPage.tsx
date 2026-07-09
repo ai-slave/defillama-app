@@ -10,8 +10,8 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
@@ -180,7 +180,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 
 	return (
 		<>
-			<Panel padding="none">
+			<ChartPanel>
 				<ChartPanelToolbar className="justify-end">
 					<h1 className="mr-auto heading-xs">TVL by Category</h1>
 					<SelectWithCombobox
@@ -195,22 +195,15 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 					<ChartExportButtons chartInstance={chartInstance} filename="categories-tvl" title="Protocol TVL" />
 				</ChartPanelToolbar>
 				{shouldFetchChartData && chartDataQuery.isLoading ? (
-					<div
-						role="status"
-						aria-live="polite"
-						className="flex min-h-[360px] items-center justify-center text-tertiary"
-					>
+					<ChartPanelBodyFallback role="status" aria-live="polite" className="text-tertiary">
 						<LocalLoader />
-					</div>
+					</ChartPanelBodyFallback>
 				) : chartErrorMessage ? (
-					<div
-						role="alert"
-						className="flex min-h-[360px] items-center justify-center p-4 text-center body-sm text-data-down"
-					>
+					<ChartPanelBodyFallback role="alert" className="p-4 text-center body-sm text-data-down">
 						Failed to load chart data: {chartErrorMessage}
-					</div>
+					</ChartPanelBodyFallback>
 				) : (
-					<React.Suspense fallback={<div className="min-h-[360px]" />}>
+					<React.Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart2
 							dataset={deferredFinalCharts.dataset}
 							charts={deferredFinalCharts.charts}
@@ -221,7 +214,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 						/>
 					</React.Suspense>
 				)}
-			</Panel>
+			</ChartPanel>
 
 			<React.Suspense fallback={<Panel padding="none" style={{ minHeight: `${categories.length * 50 + 200}px` }} />}>
 				<TableWithSearch

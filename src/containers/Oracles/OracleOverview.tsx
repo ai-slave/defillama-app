@@ -10,6 +10,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { Card } from '~/ui/Card'
+import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { formattedNum, getTokenDominance, slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
@@ -230,18 +231,18 @@ export const OracleOverview = ({
 					</p>
 				</Card>
 
-				<Panel padding="none" className="col-span-2">
+				<ChartPanel className="col-span-2">
 					{isFetchingExtraSeries ? (
-						<div
+						<ChartPanelExportShellFallback
 							role="status"
 							aria-live="polite"
-							className="my-auto flex min-h-[406px] items-center justify-center gap-1 text-center body-sm text-tertiary"
+							className="my-auto flex items-center justify-center gap-1 text-center body-sm text-tertiary"
 						>
 							Loading
 							<LoadingDots />
-						</div>
+						</ChartPanelExportShellFallback>
 					) : (
-						<Suspense fallback={<div className="min-h-[406px]" />}>
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart2
 								dataset={dataset}
 								charts={charts}
@@ -256,7 +257,7 @@ export const OracleOverview = ({
 							/>
 						</Suspense>
 					)}
-				</Panel>
+				</ChartPanel>
 			</div>
 
 			<Suspense fallback={<Panel padding="none" style={{ minHeight: `${tableData.length * 50 + 200}px` }} />}>

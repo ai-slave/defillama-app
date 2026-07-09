@@ -161,6 +161,10 @@ This file tracks design-system audit notes before code changes are made.
   `SelectWithCombobox` callers are pinned explicitly, but the shared prop types stay
   optional until excluded ProDashboard, LlamaAI, Yields, and related surfaces are pinned
   or intentionally migrated.
+- Follow-up status 2026-07-09: `FilterBetweenRange` / `TVLRange` no longer expose unused
+  `triggerClassName` plumbing, `AvailableRange` no longer has a redundant `variant`, and
+  `Card` no longer has `interactive`; clickable card call sites carry
+  `.hover-wash-card cursor-pointer` directly.
 
 ### Panel vs Card vs Entity Title Strip Decision
 
@@ -185,6 +189,40 @@ This file tracks design-system audit notes before code changes are made.
 - Decision: Keep `Panel` as the chart/table shell contract, keep `Card` as the fixed subtle content/detail surface, and keep title strips as separate standalone title surfaces. `Panel` is only for titled chart/table shells with header/body behavior.
 - Proposed direction: Continue targeted migrations through the existing primitives. Do not broaden `Panel` into non-chart title/detail cards, and do not migrate unlocks/governance/LST until their extra metadata/action slots are validated.
 - Verification needed: For each candidate route, capture current live dimensions, Figma node context if available, children/actions, text semantics, and whether a shared primitive would change chart/card surrounding layout.
+
+### Initial Raises Chart Shell And ChartPanel Extraction
+
+- Route/page: `/raises`, `/raises/:investorName`, protocol overview, and chain overview.
+- Component/file: `src/containers/Raises/index.tsx`,
+  `src/containers/Raises/Investor.tsx`,
+  `src/containers/ProtocolOverview/ProtocolChartPanel.tsx`,
+  `src/containers/ChainOverview/ChainChartPanel.tsx`, and `src/ui/ChartPanel.tsx`.
+- Figma node(s): Uses the existing chart/table panel recipe already documented from
+  `6183:148797`.
+- Current issue: Lazy-loaded chart shells need to reserve the toolbar plus 360px chart body
+  height so the panel does not shift when the chart module resolves. Protocol and chain
+  overview repeated the same panel/body shell locally, which made future chart-panel
+  reservations easier to drift.
+- Shared usage/context: `MultiSeriesChart2` and `PieChart` already own their internal
+  export header and 360px plot body. Protocol/chain overview own route-specific toolbar
+  controls, metric dialogs, Add to Dashboard config, failed-data popovers, and chart
+  query state.
+- Special cases: Do not extract chart data fetching, metric toggles, URL state, export
+  metadata, or failed-data handling into the shared shell. Do not change ECharts grid
+  insets or the 360px plot height.
+- Decision: Use a small `src/ui/ChartPanel.tsx` shell/helper layer. `ChartPanel` owns the
+  `Panel padding="none"` wrapper, `ChartPanelBody` owns the 360px chart-body reservation,
+  `ChartPanelBodyFallback` owns inner chart loading reservation, and
+  `ChartPanelExportShellFallback` owns full lazy chart reservation at 400px when the
+  chart component renders its own title/export toolbar.
+- Verification needed: Leave visual verification to the owner unless screenshots are
+  explicitly requested.
+
+Follow-up status:
+
+- Superseded by the 2026-07-09 broad `ChartPanel` shell migration note below. Standard
+  in-scope chart shells moved onto the shared helper layer; remaining chart work is
+  limited to custom/dynamic-height, mixed chart/table, table-only, or excluded surfaces.
 
 ### Title Strip Usage Map
 
@@ -625,11 +663,11 @@ Current classification of the in-flight pass:
 
 #### Chart Panel Audit Buckets
 
-- Closest to desired toolbar/body split: stablecoins overview/by-chain and bridge chart shells usually use `p-2 pb-0 gap-2`; DAT Company and bridged TVL also have similar `p-2 pb-0` chart toolbar rows.
-- Titled `PanelHeader` context, not inline-toolbar context: protocol TVL, treasury, active-loans, CEX chart panels, DAT overview/by-asset, and unlock emission panels. These keep 16px horizontal / 12px vertical header padding while using 6px header-control gaps.
-- Needs route-family migration from local shells: RWA/RWA Perps, Markets, token sections, LST, LiquidationsV2, AdapterMetrics, CEX markets, Bridges tables, and Stablecoins tables. These contain local `rounded-md border border-(--cards-border) bg-(--cards-bg)`, `p-3`, `gap-3`, fixed heights, or mixed control sizes.
-- Specific drift to keep checking when implementing: `ProtocolOverview/ProtocolChartPanel` still needs live spacing verification, RWA chart toolbars and non-time-series chart shells need route checks, and the protocol chart metrics dialog `Done` button should stay primitive-driven. `AdapterMetrics/ProtocolChart`, `BridgeVolumeChart`, and `TableWithSearch` have moved to shared md toolbar recipes in this pass; keep them on the resolved list unless live review finds a new regression.
-- Migration order: first define the chart toolbar/control recipes with the resolved 6px dense cluster gap and 8px group/padding rhythm; then update shared controls (`CSVDownloadButton` chart usage, `ChartRestoreButton`, `FullOldViewButton`, dialog `Done`); then migrate close families (stablecoins/bridges/DAT Company); then larger local shell families (RWA, AdapterMetrics, Markets, token, LST, Liquidations). `PanelHeader` keeps its Figma-derived titled-panel padding but shares the 6px control gap.
+- Standard chart shells: in-scope external-toolbar and full-lazy chart panels should use `ChartPanel`, `ChartPanelToolbar`, `ChartPanelBody`, `ChartPanelBodyFallback`, and `ChartPanelExportShellFallback` instead of local `Panel padding="none"` chart chrome.
+- Titled `PanelHeader` context, not inline-toolbar context: protocol titled subpage panels, token PnL, allocation/events panels, and similar title/header sections keep `PanelHeader` while their chart body fallback can still use the 360px body helper when the header is outside Suspense.
+- Custom/dynamic chart cases stay explicit: treemap/candlestick/HBar branches, market mini charts, table-height placeholders, and surfaces whose height depends on active view or row count.
+- Mixed chart/table panels are broader data surfaces, not automatically `ChartPanel`; only the chart fallback or toolbar helper should migrate unless a route-family branch separates chart and table chrome.
+- Specific drift to keep checking during visual review: chart grid insets, plot body height, dataZoom placement, toolbar wrapping, and custom-height route branches. Do not "fix" those through `ChartPanel` if the chart itself has a route-specific height.
 
 ### 2026-07-07 Follow-Up Implementation Notes
 
@@ -640,3 +678,45 @@ Current classification of the in-flight pass:
 - Top metric cards on Token overview, RWA, Hacks, Raises, Bridges, Chain overview, Equities, AdapterMetrics, and Extra TVL now follow the two-content rule: standalone headline metrics use `text-(--text-label)` labels and `font-jetbrains text-2xl font-semibold` values, while secondary rows stay compact row content (`body-md`/`body-sm` labels with `mono-md`/`mono-md-bold` values). Do not promote secondary rows to the headline style.
 - Token/unlocks and RWA notes-prose cards are the same detail-card family as protocol/stablecoin information and methodology cards: `Card padding="sm"`, 12px internal stack, `heading-xs`, and readable `body-md text-primary` body/list content.
 - Unlocks allocation/events follow the Figma titled-panel split from `6291:39042` and `6291:39214`: section headings stay in `PanelHeader`, content lives in a compact 12px padded slot, and pagination/content is not allowed to add vertical wrapper padding around the cards. The event card itself follows `6298:39347` and is the current documented `Card radius="large"` exception: 12px radius, 16px padding, subtle border, body-md primary lines, body-sm secondary lines, compact countdown pill, and preserved countdown/calendar behavior. Allocation rows keep the app's readable floor (body-md labels, mono-md percentages, 6px progress bars) while preserving existing category colors.
+
+### 2026-07-09 ChartPanel Shell Migration Notes
+
+- `ChartPanel` now covers the broad in-scope standard chart-shell pass: raises, protocol/chain overview, DAT, RWA, stablecoins, bridges/bridged TVL, forks, oracles, protocol taxonomy, protocol metric pages, adapter metrics, token overview, token usage toolbar usage, hacks, unlocks, banks, NFTs, compare routes, LST, governance, CEX chart helper, ETF, liquidations, and equities ticker chart shells.
+- The shared min-height constants were not kept as exported values. Call sites import the helper component that matches their chart shape instead: `ChartPanelBodyFallback` for an already-mounted toolbar plus 360px chart body, and `ChartPanelExportShellFallback` for a lazy chart component that renders its own 40px title/export header plus the 360px chart body.
+- Intentional leftovers are documented exceptions, not missed blanket replacements: mixed chart/table panels, row-count table placeholders, treemap/candlestick/HBar/custom-height branches, market mini charts, and excluded products.
+
+### 2026-07-09 Status Shell Helper Notes
+
+- `PanelStatus` / `PanelLoadingStatus` remain the full standalone panel state helpers.
+- `SurfaceBodyStatus` / `SurfaceBodyLoadingStatus` exist for states inside an existing
+  `Panel` or `Card` body where adding another surface shell would create a double border
+  or different padding recipe. The helper owns reservation/centering/semantics; callers
+  own body padding such as `p-2`.
+- `ChartPanelBodyFallback` remains the chart-body reservation helper. Do not replace chart
+  Suspense reservations with generic status helpers unless the surrounding chart shell is
+  not a `ChartPanelBody`.
+- First high-confidence adopters: NFT royalties, trending contracts, CEX markets,
+  ChainsByCategory shared chart state, token overview chart-body states, investor
+  relations gated state, borrow, compare placeholders, watchlists, and LiquidationsV2
+  access-gate states.
+- Same-branch ARIA-only follow-up: visible chart/status loaders and errors in
+  AdapterMetrics protocol/chain charts, Markets mini charts, and standalone `/chart/*`
+  pages can gain `role="status"` / `role="alert"` without changing shell ownership or
+  chart height. Blank Suspense reservation divs are not status messages.
+- Deferred status-role targets: global Search popover rows, Add to Dashboard dashboard
+  list loader, MarketMakers rank table states, and shared select/combobox empty-row
+  semantics need focused follow-up because they touch shared popover/table/product
+  behavior.
+
+### 2026-07-09 Residual Chart / Componentization Handoff
+
+- Residual chart shell work is custom-case work, not a broad replacement pass:
+  mixed chart/table panels, table-height placeholders, treemap/candlestick/HBar branches,
+  custom 480/533/600px charts, market mini charts, and excluded/quarantined products
+  require route-specific decisions before migrating to `ChartPanel`.
+- Chart visual debt is not shell debt. Axis label color, gridline alpha, tooltip
+  background/border/text, candlestick up/down literals, and hardcoded chart-theme colors
+  should be handled in a chart-theme branch with visual checks.
+- Exported style-string candidates: `IconHitTarget` is small, `MetricChip` option chips
+  are medium, `SegmentedControl` and `SearchField` are broad, and `Popover.ts` style
+  exports should stay until there is a dedicated Ariakit abstraction pass.

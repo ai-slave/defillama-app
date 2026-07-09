@@ -18,8 +18,7 @@ import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { definitions } from '~/public/definitions'
 import { Card } from '~/ui/Card'
-import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { formatNum, formattedNum } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { buildProtocolTaxonomyGroupedCharts } from './chartGrouping'
@@ -185,7 +184,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 						) : null}
 					</div>
 				</Card>
-				<Panel padding="none" className="col-span-2">
+				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						{hasBarCharts ? (
 							<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
@@ -201,7 +200,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							iconUrl={props.chain && props.chain !== 'All' ? chainIconUrl(props.chain) : undefined}
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<div className="min-h-[360px]" />}>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart2
 							dataset={deferredGroupedCharts.dataset}
 							charts={deferredGroupedCharts.charts}
@@ -211,7 +210,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							onReady={handleChartReady}
 						/>
 					</Suspense>
-				</Panel>
+				</ChartPanel>
 			</div>
 			<TableWithSearch
 				data={finalProtocols}

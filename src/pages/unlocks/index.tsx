@@ -24,8 +24,7 @@ import { useWatchlistManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
-import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { formattedNum } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -254,7 +253,7 @@ function UpcomingUnlockVolumeChart({ protocols, initialNowSec }: { protocols: an
 							title="Upcoming Unlocks"
 						/>
 					</ChartPanelToolbar>
-					<React.Suspense fallback={<div className="min-h-[360px]" />}>
+					<React.Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart2
 							dataset={deferredChartData.dataset}
 							charts={deferredChartData.charts}
@@ -335,9 +334,9 @@ export default function Protocols({
 						<Icon name="arrow-right" className="size-4" />
 					</BasicLink>
 				</Card>
-				<Panel padding="none" className="col-span-2">
+				<ChartPanel className="col-span-2">
 					<UpcomingUnlockVolumeChart protocols={chartProtocols} initialNowSec={generatedAtSec} />
-				</Panel>
+				</ChartPanel>
 			</div>
 
 			<div className="isolate grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">

@@ -39,9 +39,8 @@ import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/co
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
-import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { capitalizeFirstLetter, formattedNum, slug } from '~/utils'
 import { peggedAssetIconUrl } from '~/utils/icons'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
@@ -300,7 +299,7 @@ export const PeggedAssetInfo = ({
 				</Card>
 
 				{/* Chart */}
-				<Panel padding="none" className="col-span-2">
+				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						<div className={`mr-auto ${chartSegmentedControlGroupStyles}`}>
 							{chartTypeOptions.map(({ key, name: optionName }) => (
@@ -339,7 +338,7 @@ export const PeggedAssetInfo = ({
 						/>
 					</ChartPanelToolbar>
 					{chartType === 'marketCap' && chartView === 'pie' ? (
-						<React.Suspense fallback={<div className="h-[360px] w-full" />}>
+						<React.Suspense fallback={<ChartPanelBodyFallback className="w-full" />}>
 							<PieChart chartData={chainsCirculatingValues} onReady={handleChartReady} />
 						</React.Suspense>
 					) : chartType === 'volume' ? (
@@ -360,7 +359,7 @@ export const PeggedAssetInfo = ({
 							onReady={handleChartReady}
 						/>
 					)}
-				</Panel>
+				</ChartPanel>
 
 				{/* Additional info cards */}
 				{hasInfo ? (
@@ -467,35 +466,27 @@ function SelectedAssetChart({
 }) {
 	if (isLoading) {
 		return (
-			<div
-				role="status"
-				aria-live="polite"
-				className="flex h-[360px] w-full items-center justify-center body-sm text-tertiary"
-			>
+			<ChartPanelBodyFallback role="status" aria-live="polite" className="w-full body-sm text-tertiary">
 				Loading chart...
-			</div>
+			</ChartPanelBodyFallback>
 		)
 	}
 	if (isError || !data) {
 		return (
-			<div role="alert" className="flex h-[360px] w-full items-center justify-center body-sm text-data-down">
+			<ChartPanelBodyFallback role="alert" className="w-full body-sm text-data-down">
 				Chart unavailable
-			</div>
+			</ChartPanelBodyFallback>
 		)
 	}
 	if (data.charts.length === 0 || data.dataset.source.length === 0) {
 		return (
-			<div
-				role="status"
-				aria-live="polite"
-				className="flex h-[360px] w-full items-center justify-center body-sm text-tertiary"
-			>
+			<ChartPanelBodyFallback role="status" aria-live="polite" className="w-full body-sm text-tertiary">
 				Chart unavailable
-			</div>
+			</ChartPanelBodyFallback>
 		)
 	}
 	return (
-		<React.Suspense fallback={<div className="h-[360px] w-full" />}>
+		<React.Suspense fallback={<ChartPanelBodyFallback className="w-full" />}>
 			<MultiSeriesChart2
 				dataset={data.dataset}
 				charts={data.charts}

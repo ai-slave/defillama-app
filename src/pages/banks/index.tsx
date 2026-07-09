@@ -4,7 +4,7 @@ import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/compon
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { CHART_COLORS } from '~/constants/colors'
 import Layout from '~/layout'
-import { Panel } from '~/ui/Panel'
+import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { formattedNum, toNiceDateYear } from '~/utils'
 import data from './final.json'
 
@@ -91,8 +91,8 @@ const Banks = () => {
 			description="Historical US bank failures database with closing dates, assets at failure, and inflation-adjusted annual totals."
 			canonicalUrl={'/banks'}
 		>
-			<Panel padding="none" className="relative col-span-2">
-				<React.Suspense fallback={<div className="min-h-[406px]" />}>
+			<ChartPanel className="relative col-span-2">
+				<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 					<MultiSeriesChart2
 						title="Assets of failed banks (inflation adjusted)"
 						dataset={chartDataset}
@@ -101,7 +101,7 @@ const Banks = () => {
 						exportButtons="auto"
 					/>
 				</React.Suspense>
-			</Panel>
+			</ChartPanel>
 			<TableWithSearch
 				data={tableData}
 				columns={banksTableColumns}

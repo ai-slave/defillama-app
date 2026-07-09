@@ -6,8 +6,9 @@ import { type PivotedSeries, toStackedAreaSeries } from './utils'
 const AreaChart = React.lazy(() => import('~/components/ECharts/AreaChart'))
 
 const FALLBACK = (
-	<div className="flex min-h-[300px] items-center justify-center">
+	<div role="status" aria-live="polite" className="flex min-h-[300px] items-center justify-center">
 		<LocalLoader />
+		<span className="sr-only">Loading chart data</span>
 	</div>
 )
 
@@ -40,7 +41,13 @@ export function MarketsAreaChart({ title, series }: { title: string; series: Piv
 			) : (
 				<>
 					<span className="px-2 pt-2 pb-0 heading-xs">{title}</span>
-					<div className="flex flex-1 items-center justify-center body-sm text-tertiary">no data</div>
+					<div
+						role="status"
+						aria-live="polite"
+						className="flex flex-1 items-center justify-center body-sm text-tertiary"
+					>
+						no data
+					</div>
 				</>
 			)}
 		</Panel>

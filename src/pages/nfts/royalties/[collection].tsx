@@ -7,7 +7,8 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { getNFTRoyaltyHistory } from '~/containers/Nft/queries'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
-import { Panel } from '~/ui/Panel'
+import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { formattedNum, slug } from '~/utils'
 
 const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
@@ -49,9 +50,9 @@ export default function Collection() {
 				description={collectionDescription}
 				canonicalUrl={collection ? `/nfts/royalties/${collection}` : `/nfts/royalties`}
 			>
-				<div className="m-auto flex min-h-[360px] items-center justify-center">
+				<PanelLoadingStatus>
 					<LocalLoader />
-				</div>
+				</PanelLoadingStatus>
 			</Layout>
 		)
 	}
@@ -63,9 +64,7 @@ export default function Collection() {
 				description={collectionDescription}
 				canonicalUrl={collection ? `/nfts/royalties/${collection}` : `/nfts/royalties`}
 			>
-				<div className="m-auto flex min-h-[360px] items-center justify-center">
-					<p className="text-center">{error?.message ?? 'Failed to fetch'}</p>
-				</div>
+				<PanelStatus variant="error">{error?.message ?? 'Failed to fetch'}</PanelStatus>
 			</Layout>
 		)
 	}
@@ -96,8 +95,8 @@ export default function Collection() {
 					</p>
 				</Card>
 
-				<Panel padding="none" className="col-span-full">
-					<Suspense fallback={<div className="min-h-[406px]" />}>
+				<ChartPanel className="col-span-full">
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart2
 							dataset={chartData.dataset}
 							charts={chartData.charts}
@@ -110,7 +109,7 @@ export default function Collection() {
 							}}
 						/>
 					</Suspense>
-				</Panel>
+				</ChartPanel>
 			</div>
 		</Layout>
 	)

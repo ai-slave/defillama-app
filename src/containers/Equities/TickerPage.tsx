@@ -7,9 +7,9 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import defs from '~/public/equities-definitions.json'
 import { Card } from '~/ui/Card'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
-import { ChartPanelToolbar, chartPanelToolbarActionsStyles } from '~/ui/Toolbar'
 import { abbreviateNumber } from '~/utils'
 import { equityCountryFlagUrl } from '~/utils/icons'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -307,7 +307,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							/>
 							<ChartExportButtons chartInstance={priceChartInstance} filename={exportFilename} title={exportTitle} />
 						</ChartPanelToolbar>
-						<Suspense fallback={<div className="min-h-[360px]" />}>
+						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart2
 								dataset={activePriceHistoryChart.dataset}
 								charts={activePriceHistoryChart.charts}
@@ -326,7 +326,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 					</Card>
 				</div>
 
-				<Panel padding="none" className="col-span-full">
+				<ChartPanel className="col-span-full">
 					<ChartPanelToolbar>
 						<TagGroup
 							variant="default"
@@ -335,7 +335,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							setValue={setActiveFundamentalChart}
 							values={EQUITY_FUNDAMENTAL_CHART_OPTIONS}
 						/>
-						<div className={chartPanelToolbarActionsStyles}>
+						<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
 							<TagGroup
 								variant="default"
 								size="md"
@@ -361,7 +361,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 							onReady={handleFundamentalsChartReady}
 						/>
 					</Suspense>
-				</Panel>
+				</ChartPanel>
 			</div>
 
 			<nav className={tabTrackStyles} role="tablist" aria-label="Ticker sections">

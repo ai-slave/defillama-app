@@ -7,7 +7,9 @@ import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
+import { PanelStatus } from '~/ui/Status'
 import { formattedNum, slug } from '~/utils'
 import { getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
 import { buildForksOverviewDisplayData, mergeForkOverviewChartData } from './overviewData'
@@ -104,17 +106,15 @@ export const ForksOverview = ({
 		<>
 			<RowLinksWithDropdown links={forkLinks} activeLink="All" />
 			{isLoading ? (
-				<Panel padding="md" className="flex-1 items-center justify-center">
-					<p role="status" aria-live="polite" className="flex items-center gap-1 body-sm text-tertiary">
-						Loading
-						<LoadingDots />
-					</p>
-				</Panel>
+				<PanelStatus variant="loading" textClassName="flex items-center gap-1">
+					Loading
+					<LoadingDots />
+				</PanelStatus>
 			) : (
 				<>
 					<div className="flex flex-col gap-2 xl:flex-row">
-						<Panel padding="none" className="isolate flex-1">
-							<React.Suspense fallback={<div className="min-h-[406px]" />}>
+						<ChartPanel className="isolate flex-1">
+							<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 								<PieChart
 									chartData={tokenTvls}
 									stackColors={chartColors}
@@ -122,9 +122,9 @@ export const ForksOverview = ({
 									title="Forks TVL Breakdown"
 								/>
 							</React.Suspense>
-						</Panel>
-						<Panel padding="none" className="flex-1">
-							<React.Suspense fallback={<div className="min-h-[406px]" />}>
+						</ChartPanel>
+						<ChartPanel className="flex-1">
+							<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 								<MultiSeriesChart2
 									dataset={dominanceDataset}
 									charts={dominanceCharts}
@@ -141,7 +141,7 @@ export const ForksOverview = ({
 									title="Forks TVL Dominance (%)"
 								/>
 							</React.Suspense>
-						</Panel>
+						</ChartPanel>
 					</div>
 					<React.Suspense fallback={<Panel padding="none" style={{ minHeight: `${tableData.length * 50 + 200}px` }} />}>
 						<TableWithSearch

@@ -125,9 +125,8 @@ function Support() {
 						padding="md"
 						as="button"
 						type="button"
-						interactive
 						onClick={() => setShowForm((p) => !p)}
-						className="flex flex-col gap-1 text-center"
+						className="hover-wash-card flex cursor-pointer flex-col gap-1 text-center"
 					>
 						<span className="font-semibold">Submit a Form</span>
 						<span className="body-sm text-secondary">Don't want to share your email? Use our anonymous form</span>
@@ -137,10 +136,9 @@ function Support() {
 						padding="md"
 						as="button"
 						type="button"
-						interactive
 						onClick={openLiveChat}
 						disabled={!userHash || chatLoading}
-						className="flex flex-col gap-1 text-center disabled:cursor-not-allowed disabled:opacity-50"
+						className="hover-wash-card flex cursor-pointer flex-col gap-1 text-center disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						<span className="flex items-center justify-center gap-2 font-semibold">
 							{chatLoading ? (

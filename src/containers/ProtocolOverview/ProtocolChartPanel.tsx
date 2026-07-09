@@ -19,12 +19,11 @@ import { useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/L
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button, buttonStyles } from '~/ui/Button'
+import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
-import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar, chartPanelToolbarActionsStyles } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -308,7 +307,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 	}, [router, props.availableCharts, toggledMetrics, defaultEnabledCharts, hasEvents])
 
 	return (
-		<Panel padding="none" className="flex-1">
+		<ChartPanel className="flex-1">
 			<ChartPanelToolbar>
 				{props.availableCharts.length > 0 ? (
 					<Ariakit.DialogProvider store={metricsDialogStore}>
@@ -492,7 +491,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 						</span>
 					</label>
 				) : null}
-				<div className={chartPanelToolbarActionsStyles}>
+				<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
 					{props.chartDenominations?.length ? (
 						<div className={chartSegmentedControlGroupStyles}>
 							{props.chartDenominations.map((denom) => (
@@ -536,13 +535,13 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 					/>
 				</div>
 			</ChartPanelToolbar>
-			<div className="relative flex min-h-[360px] flex-col">
+			<ChartPanelBody>
 				<Suspense
 					fallback={
-						<div className="m-auto flex min-h-[360px] items-center justify-center" role="status" aria-live="polite">
+						<ChartPanelBodyFallback role="status" aria-live="polite">
 							<span className="size-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
 							<span className="sr-only">Loading chart...</span>
-						</div>
+						</ChartPanelBodyFallback>
 					}
 				>
 					<ProtocolChart
@@ -565,7 +564,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 						getLabel={(metric) => metric.replace('Token', props.token?.symbol ? `$${props.token.symbol}` : 'Token')}
 					/>
 				) : null}
-			</div>
-		</Panel>
+			</ChartPanelBody>
+		</ChartPanel>
 	)
 }

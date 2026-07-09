@@ -15,10 +15,10 @@ import { Tooltip } from '~/components/Tooltip'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
 import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar, chartPanelToolbarActionsStyles } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { rwaSlug } from '../rwaSlug'
@@ -331,7 +331,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 					)
 				})}
 
-				<div className={chartPanelToolbarActionsStyles}>
+				<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
 					<ChartGroupingSelector
 						value={groupBy}
 						onValueChange={(nextGroupBy) => {
@@ -349,7 +349,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 			</ChartPanelToolbar>
 
 			{deferredChartSpec.charts.length > 0 && deferredChartSpec.dataset.source.length > 0 ? (
-				<Suspense fallback={<div className="min-h-[360px]" />}>
+				<Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart2
 						dataset={deferredChartSpec.dataset}
 						charts={deferredChartSpec.charts}
@@ -360,21 +360,13 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 					/>
 				</Suspense>
 			) : enabledMetrics.length === 0 ? (
-				<p
-					role="status"
-					aria-live="polite"
-					className="flex min-h-[360px] items-center justify-center body-sm text-tertiary"
-				>
+				<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
 					Select at least one metric.
-				</p>
+				</ChartPanelBodyFallback>
 			) : (
-				<p
-					role="status"
-					aria-live="polite"
-					className="flex min-h-[360px] items-center justify-center body-sm text-tertiary"
-				>
+				<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
 					No chart data available for the selected metrics.
-				</p>
+				</ChartPanelBodyFallback>
 			)}
 		</div>
 	)

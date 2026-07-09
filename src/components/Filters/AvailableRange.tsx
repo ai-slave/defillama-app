@@ -7,12 +7,10 @@ import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 type QueryUpdates = Record<string, string | string[] | undefined>
 
 export function AvailableRange({
-	variant = 'primary',
 	nestedMenu,
 	placement,
 	pushQueryUpdates
 }: {
-	variant?: 'primary' | 'secondary'
 	nestedMenu?: boolean
 	placement?: Ariakit.PopoverStoreProps['placement']
 	pushQueryUpdates?: (updates: QueryUpdates) => void
@@ -52,18 +50,12 @@ export function AvailableRange({
 	return (
 		<FilterBetweenRange
 			trigger={
-				variant === 'secondary' ? (
+				min || max ? (
 					<>
-						{min || max ? (
-							<>
-								<span>Available: </span>
-								<span className="text-(--link)">{`${min?.toLocaleString() ?? 'min'} - ${
-									max?.toLocaleString() ?? 'max'
-								}`}</span>
-							</>
-						) : (
-							'Filter by min/max Available'
-						)}
+						<span>Available: </span>
+						<span className="text-(--link)">{`${min?.toLocaleString() ?? 'min'} - ${
+							max?.toLocaleString() ?? 'max'
+						}`}</span>
 					</>
 				) : (
 					'Filter by min/max Available'

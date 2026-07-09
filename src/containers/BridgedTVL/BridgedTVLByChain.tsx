@@ -20,8 +20,7 @@ import { VirtualTable } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { formattedNum, slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import type { RawChainAsset } from './api.types'
@@ -192,7 +191,7 @@ export function BridgedTVLByChain({
 						</p>
 					) : null}
 				</Card>
-				<Panel padding="none" className="col-span-2">
+				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
 							{chartTypes.map(({ type, name }) =>
@@ -245,11 +244,11 @@ export function BridgedTVLByChain({
 						/>
 					</ChartPanelToolbar>
 					{chartType !== 'inflows' ? (
-						<React.Suspense fallback={<div className="min-h-[360px]" />}>
+						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<PieChart chartData={deferredPieChartData} valueSymbol="" onReady={onChartReady} />
 						</React.Suspense>
 					) : deferredInflowsData ? (
-						<React.Suspense fallback={<div className="min-h-[360px]" />}>
+						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart2
 								dataset={deferredInflowsData.dataset}
 								charts={deferredInflowsData.charts}
@@ -264,7 +263,7 @@ export function BridgedTVLByChain({
 							/>
 						</React.Suspense>
 					) : null}
-				</Panel>
+				</ChartPanel>
 			</div>
 			{chartType !== 'inflows' ? <VirtualTable instance={instance} skipVirtualization /> : null}
 		</>

@@ -16,6 +16,7 @@ import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { RaisesFilters } from '~/containers/Raises/Filters'
 import { Card } from '~/ui/Card'
+import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -170,8 +171,8 @@ export const InvestorContainer = ({
 						))}
 					</details>
 				</Card>
-				<Panel padding="none" className="col-span-2">
-					<React.Suspense fallback={<div className="min-h-[406px]" />}>
+				<ChartPanel className="col-span-2">
+					<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart2
 							dataset={deferredFundingRoundsByMonthChart.dataset}
 							charts={deferredFundingRoundsByMonthChart.charts}
@@ -185,12 +186,12 @@ export const InvestorContainer = ({
 							}}
 						/>
 					</React.Suspense>
-				</Panel>
+				</ChartPanel>
 			</div>
 
 			<div className="grid grid-cols-2 gap-1">
-				<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-					<React.Suspense fallback={<div className="min-h-[406px]" />}>
+				<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+					<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 						<PieChart
 							chartData={deferredInvestmentByRounds}
 							title="Investment by Rounds"
@@ -203,9 +204,9 @@ export const InvestorContainer = ({
 							}}
 						/>
 					</React.Suspense>
-				</Panel>
-				<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-					<React.Suspense fallback={<div className="min-h-[406px]" />}>
+				</ChartPanel>
+				<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+					<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 						<PieChart
 							chartData={deferredRaisesByCategory}
 							title="Investments by Category"
@@ -218,7 +219,7 @@ export const InvestorContainer = ({
 							}}
 						/>
 					</React.Suspense>
-				</Panel>
+				</ChartPanel>
 			</div>
 			<RaisesByInvestorTable raises={filteredRaisesList} />
 		</>

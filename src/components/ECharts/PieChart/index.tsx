@@ -8,7 +8,6 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useMedia } from '~/hooks/useMedia'
-import { chartPanelToolbarStyles } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import { ChartContainer } from '../ChartContainer'
 import { ChartHeader } from '../ChartHeader'
@@ -459,7 +458,6 @@ export default function PieChart({
 					<ChartHeader
 						title={title}
 						headingAs={headingAs}
-						className={`${chartPanelToolbarStyles} justify-end`}
 						exportButtons={
 							<ChartExportButtons
 								chartInstance={chartInstance}

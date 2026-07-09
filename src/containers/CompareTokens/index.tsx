@@ -255,8 +255,9 @@ export function CompareTokens({
 				</Ariakit.MenuProvider>
 				{coins.length === 2 ? (
 					priceData == null ? (
-						<div className="m-auto flex min-h-[360px] items-center justify-center">
+						<div role="status" aria-live="polite" className="m-auto flex min-h-[360px] items-center justify-center">
 							<LocalLoader />
+							<span className="sr-only">Loading token comparison</span>
 						</div>
 					) : (
 						<div className="mt-10 flex flex-col items-center gap-2">

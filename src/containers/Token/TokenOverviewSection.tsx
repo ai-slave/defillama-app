@@ -21,11 +21,10 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
-import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam } from '~/utils/routerQuery'
@@ -636,16 +635,12 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 					<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 				</div>
 			</ChartPanelToolbar>
-			<div className="relative flex min-h-[360px] flex-col">
+			<ChartPanelBody>
 				{shouldWaitForClient ? null : showLoadingState ? (
-					<p
-						role="status"
-						aria-live="polite"
-						className="my-auto flex min-h-[360px] items-center justify-center gap-1 text-center body-sm text-tertiary"
-					>
+					<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 text-center body-sm text-tertiary">
 						fetching {loadingLabel}
 						<LoadingDots />
-					</p>
+					</ChartPanelBodyFallback>
 				) : hasChartData ? (
 					<DeferredProtocolChart
 						key={`${groupBy}:${activeCharts.join('|')}`}
@@ -658,15 +653,19 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 						rangeHallmarks={null}
 					/>
 				) : (
-					<p role="status" aria-live="polite" className="m-auto max-w-sm text-center body-sm text-tertiary">
+					<ChartPanelBodyFallback
+						role="status"
+						aria-live="polite"
+						className="max-w-sm text-center body-sm text-tertiary"
+					>
 						{geckoId
 							? activeCharts.length > 0
 								? 'Chart unavailable for this token right now.'
 								: 'Select metrics to chart.'
 							: 'Chart unavailable without CoinGecko market data.'}
-					</p>
+					</ChartPanelBodyFallback>
 				)}
-			</div>
+			</ChartPanelBody>
 		</>
 	)
 }
@@ -691,9 +690,9 @@ export function TokenOverviewSection({
 					<TokenMetrics overview={overview} />
 				</Card>
 				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
-					<Panel padding="none" className="col-span-full">
+					<ChartPanel className="col-span-full">
 						<TokenChartPanel overview={overview} geckoId={geckoId} />
-					</Panel>
+					</ChartPanel>
 				</div>
 			</div>
 		</section>

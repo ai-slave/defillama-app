@@ -15,10 +15,9 @@ import { useProtocolBreakdownCharts } from '~/containers/ProtocolOverview/usePro
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
-import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -66,7 +65,7 @@ function MultiSeriesChartCard({
 	const exportTitle = `${protocolName} ${title}`
 
 	return (
-		<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allSeries.length > 1 ? (
@@ -87,7 +86,7 @@ function MultiSeriesChartCard({
 					iconUrl={exportIconUrl}
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<div className="min-h-[360px]" />}>
+			<React.Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart2
 					dataset={dataset}
 					charts={charts}
@@ -96,7 +95,7 @@ function MultiSeriesChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</Panel>
+		</ChartPanel>
 	)
 }
 
@@ -128,7 +127,7 @@ function TokensBreakdownPieChartCard({
 	const exportTitle = `${protocolName} Active Loans Tokens Breakdown (USD)`
 
 	return (
-		<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">Active Loans Tokens Breakdown (USD)</h2>
 				{allTokens.length > 1 ? (
@@ -149,10 +148,10 @@ function TokensBreakdownPieChartCard({
 					iconUrl={exportIconUrl}
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<div className="min-h-[360px]" />}>
+			<React.Suspense fallback={<ChartPanelBodyFallback />}>
 				<PieChart chartData={filteredChartData} onReady={handleChartReady} />
 			</React.Suspense>
-		</Panel>
+		</ChartPanel>
 	)
 }
 
@@ -273,6 +272,7 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 				media={<TokenLogo name={props.name} kind="token" size={28} alt={`Logo of ${props.name}`} />}
 				title={`${props.name} Active Loans`}
 			/>
+
 			{isLoading ? (
 				<PanelLoadingStatus label={`Loading ${props.name} active loans`}>
 					<LocalLoader />

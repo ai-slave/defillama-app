@@ -7,6 +7,7 @@ import { LoadingDots } from '~/components/Loaders'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { formattedNum, slug } from '~/utils'
 import { getEnabledExtraTvlApiKeys, getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
@@ -65,27 +66,27 @@ export const OraclesByChain = ({
 			<RowLinksWithDropdown links={chainLinks} activeLink={activeLink} />
 
 			<div className="flex flex-col gap-2 xl:flex-row">
-				<Panel padding="none" className="isolate flex-1">
-					<React.Suspense fallback={<div className="min-h-[406px]" />}>
+				<ChartPanel className="isolate flex-1">
+					<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 						<PieChart
 							chartData={tableAndPieData.pieData}
 							stackColors={oraclesColors}
 							exportButtons={{ png: true, csv: true, filename: 'oracles-tvs-pie', pngTitle: 'Oracles TVS' }}
 						/>
 					</React.Suspense>
-				</Panel>
-				<Panel padding="none" className="flex-1">
+				</ChartPanel>
+				<ChartPanel className="flex-1">
 					{isFetchingExtraBreakdowns ? (
-						<div
+						<ChartPanelExportShellFallback
 							role="status"
 							aria-live="polite"
-							className="my-auto flex min-h-[406px] items-center justify-center gap-1 text-center body-sm text-tertiary"
+							className="my-auto flex items-center justify-center gap-1 text-center body-sm text-tertiary"
 						>
 							Loading
 							<LoadingDots />
-						</div>
+						</ChartPanelExportShellFallback>
 					) : (
-						<React.Suspense fallback={<div className="min-h-[406px]" />}>
+						<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart2
 								dataset={dominanceData.dominanceDataset}
 								charts={dominanceData.dominanceCharts}
@@ -96,7 +97,7 @@ export const OraclesByChain = ({
 							/>
 						</React.Suspense>
 					)}
-				</Panel>
+				</ChartPanel>
 			</div>
 
 			<React.Suspense

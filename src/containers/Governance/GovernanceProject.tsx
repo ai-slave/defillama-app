@@ -4,7 +4,7 @@ import { TagGroup } from '~/components/TagGroup'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { GovernanceTable } from '~/containers/Governance/GovernanceTable'
-import { Panel } from '~/ui/Panel'
+import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { formattedNum } from '~/utils'
 import type { GovernanceDataEntry, GovernanceType } from './types'
 
@@ -171,8 +171,8 @@ export default function GovernanceProject({
 				) : null}
 
 				<div className="grid grid-cols-2 gap-2">
-					<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-						<React.Suspense fallback={<div className="min-h-[406px]" />}>
+					<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+						<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart2
 								title="Activity"
 								dataset={activityDataset?.source?.length > 0 ? activityDataset : EMPTY_ACTIVITY_DATASET}
@@ -186,9 +186,9 @@ export default function GovernanceProject({
 								}}
 							/>
 						</React.Suspense>
-					</Panel>
-					<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-						<React.Suspense fallback={<div className="min-h-[406px]" />}>
+					</ChartPanel>
+					<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+						<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart2
 								title="Max Votes"
 								dataset={maxVotesDataset?.source?.length > 0 ? maxVotesDataset : EMPTY_MAXVOTES_DATASET}
@@ -202,7 +202,7 @@ export default function GovernanceProject({
 								}}
 							/>
 						</React.Suspense>
-					</Panel>
+					</ChartPanel>
 				</div>
 			</div>
 			{data != null ? <GovernanceTable data={data} governanceType={governanceType} /> : null}

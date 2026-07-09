@@ -14,8 +14,10 @@ Canonical references:
 ## Current Status
 
 The broad design sweep, shared popover/mobile-drawer pass, DialogShell pass,
-ProtocolOverview cleanup, text-tier/icon consistency sweep, and dense pages/Card-Panel
-cleanup have merged to `main`.
+ProtocolOverview cleanup, text-tier/icon consistency sweep, dense pages/Card-Panel
+cleanup, and shared-control API tightening have merged to `main`. The current branch has
+completed the broad chart-panel shell migration pass and is now handling the focused
+status-shell/helper and prop-trim follow-up.
 Main is no longer blocked by the old unlocks, popover, divider, DialogShell, or
 merge-readiness gates. `design-sweep-todo.md` still has many unchecked items because it
 is now a backlog ledger, not a merge-blocking checklist.
@@ -30,6 +32,14 @@ Completed foundation:
 - Dense page and panel/card shell cleanup has shipped for `DeFiWatchlist`, `TokenPnl`,
   agreed small/static pages, standalone analytics/list shells, Chains/NFT route-family
   shells, Unlocks outer-shell fixes, and focused Correlations token cleanup.
+- Shared-control API tightening has shipped for `FilterBetweenRange`, `PanelStatus`,
+  `Checkbox`, `EntityTitleStrip`, `IconHitTarget`, `Button`, direct
+  `selectTriggerStyles` calls, and `TagGroup`; in-scope `Select` /
+  `SelectWithCombobox` callers are explicit while excluded products stay deferred.
+- Body-level status helpers now exist for embedded panel/card bodies, so callers should
+  choose between `PanelStatus`/`PanelLoadingStatus`, `SurfaceBodyStatus`/
+  `SurfaceBodyLoadingStatus`, and chart-specific `ChartPanelBodyFallback` based on the
+  shell they are already inside.
 - Shared `Select`, `SelectWithCombobox`, `MultiSelectCombobox`, `Menu`, `NestedMenu`,
   and in-scope direct popovers use the paddingless popover surface contract.
 - Shared menu/select popovers portal by default; below `sm` they use fixed-bottom
@@ -50,8 +60,12 @@ Current owner decisions:
 - Mobile dialogs below `sm` should be bottom sheets, not centered modals.
 - `sm+` dialogs stay centered modal surfaces unless a route-specific dialog already has
   a proven different pattern.
-- Raises chart layout shift is a chart-shell/fallback reservation follow-up, not part
-  of dense token cleanup.
+- `ChartPanel` owns only chart shell, toolbar/body placement, and fallback reservation
+  chrome; route code still owns chart state, export metadata, failed-data behavior, and
+  metric selection.
+- Suspense reservation is explicit at the call site: use the 400px full-shell fallback
+  only when the lazy chart renders its own title/export toolbar; use the 360px body
+  fallback when the toolbar is already mounted outside Suspense.
 - `design-sweep-todo.md` and this execution plan stay for now; deleting either is a
   later cleanup task.
 
@@ -61,15 +75,24 @@ This file is now a sequencing guide, not a branch checklist. The immediate docs 
 to keep the backlog aligned with what has already merged, then use focused code branches
 for the remaining work.
 
-Next code scope:
+Current code scope:
 
-- Work on the shared-control API tightening branch. Keep it behavior-neutral: add explicit
-  props that preserve current visuals, then remove hidden defaults/dead props from the
-  shared contracts.
-- If tightening a shared prop would type-break an excluded/quarantined product, pin that
-  caller explicitly instead of sweeping its styling.
-- Keep Raises chart layout shift as a chart-shell/fallback reservation follow-up.
-- Keep `ChartPanel` extraction blocked until after the Raises/chart-shell pass.
+- Finish the high-confidence status cleanup: NFT royalties, trending contracts, CEX
+  markets, ChainsByCategory shared chart state, token overview chart body, investor
+  relations gated state, borrow, compare placeholders, watchlists, and LiquidationsV2
+  access-gate states.
+- Use the status primitive that matches the surrounding shell: `PanelStatus` for a full
+  standalone panel, `SurfaceBodyStatus` inside an existing `Panel`/`Card`, and
+  `ChartPanelBodyFallback` inside `ChartPanelBody`.
+- Trim only low-risk props/components in this pass: dead range-filter trigger overrides,
+  redundant `AvailableRange` variant plumbing, and `Card interactive` now that clickable
+  cards can carry `.hover-wash-card cursor-pointer` directly.
+- Add ARIA-only status semantics where the current branch already touches visible
+  loading/error/empty states; do not migrate blank Suspense reservations or custom-height
+  chart shells just to add a helper.
+- Keep the broad chart-panel decisions intact: actual ECharts plot height stays at 360px
+  unless a route explicitly supplies another chart height, and residual custom chart
+  cases stay separately scoped.
 
 Carry-forward dialog/popover guardrails:
 
@@ -89,40 +112,20 @@ Carry-forward dialog/popover guardrails:
 
 Recommended order for the next focused code branches:
 
-1. **Shared control API tightening**
-   - Use a focused branch, suggested name: `mintdart/shared-control-api-tightening`.
-   - `FilterBetweenRange`: remove dead `name`, make `variant` and `size` explicit, and
-     consider reusing `selectTriggerStyles` for trigger chrome.
-   - `PanelStatus`: require `variant` so empty/error/loading semantics are explicit.
-   - `Checkbox`: require `variant` and collapse duplicate indicator style maps.
-   - `EntityTitleStrip`: remove unused `titleClassName` unless a scoped title exception is
-     approved.
-   - `IconHitTarget`: remove the unused component or migrate the one style-string caller.
-   - `Button`: make `size` explicit first; defer making `variant` required unless the
-     branch is intentionally broader.
-   - `selectTriggerStyles`: require `variant` and `size` at direct helper calls.
-   - `TagGroup`: require `variant` and `size`; remove the redundant local `style` type.
-   - `Select` / `SelectWithCombobox`: make in-scope callers explicit first, then tighten
-     the shared prop types only after excluded surfaces are pinned.
-
-2. **Raises/chart-shell layout pass**
-   - Fix the `/raises` Suspense/fallback reservation that can cause a chart-panel layout
-     shift.
-   - Keep actual ECharts plot height at 360px unless the route explicitly supplies
-     another chart height.
-   - Include one investor raises page because it shares the same chart reservation shape.
-
-3. **ChartPanel extraction**
-   - Do this only after the chart-shell pass.
-   - Extract shell/toolbar/chrome only.
-   - Keep URL query state, exports, Add to Dashboard config, failed-data behavior,
-     metric selection, and route-specific chart logic local.
-
-4. **Remaining route-family migrations**
+1. **Remaining non-chart route-family migrations**
    - Stablecoins, bridges, RWA, token, LST, liquidations, DAT, adapter/markets, MCP,
      borrow, and remaining CEX markets/date-filter surfaces.
    - Keep these route-sized. Each branch should state which family was visually checked
      and which excluded/quarantined surfaces were intentionally left alone.
+
+2. **Residual chart exceptions only when explicitly scoped**
+   - Mixed chart/table panels, custom-height chart compositions, market mini charts,
+     table-height placeholders, and excluded products should not be swept as a side
+     effect of non-chart route-family work.
+   - If a residual chart shell is migrated later, first decide whether it is truly a
+     `ChartPanel` or a broader data/table surface with chart content inside it.
+   - Chart-theme debt such as axis/grid/tooltip/candlestick colors belongs in a separate
+     visual branch, not in chart-shell or status-shell cleanup.
 
 ## Deferred Until Later
 

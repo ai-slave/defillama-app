@@ -37,8 +37,7 @@ import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/co
 import { getStablecoinDominance, type IFormattedStablecoinChainRow } from '~/containers/Stablecoins/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
-import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { formattedNum } from '~/utils'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import { StablecoinsChainsTable } from './StablecoinsChainsTable'
@@ -304,7 +303,7 @@ export function ChainsWithStablecoins({
 						<span className="font-jetbrains text-2xl font-semibold">{dominance}%</span>
 					</p>
 				</Card>
-				<Panel padding="none" className="col-span-2">
+				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						<div className={`mr-auto ${chartSegmentedControlGroupStyles}`}>
 							{chartTypeOptions.map(({ key, name }) => (
@@ -350,11 +349,11 @@ export function ChainsWithStablecoins({
 						/>
 					</ChartPanelToolbar>
 					{chartType === 'marketCap' && chartView === 'pie' ? (
-						<React.Suspense fallback={<div className="min-h-[360px]" />}>
+						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<PieChart chartData={deferredChainsCirculatingValues} onReady={handleChartReady} />
 						</React.Suspense>
 					) : chartType === 'marketCap' && chartView === 'hbar' ? (
-						<React.Suspense fallback={<div className="min-h-[360px]" />}>
+						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<HBarChart
 								categories={hbarData.categories}
 								values={hbarData.values}
@@ -391,7 +390,7 @@ export function ChainsWithStablecoins({
 							onReady={handleChartReady}
 						/>
 					)}
-				</Panel>
+				</ChartPanel>
 			</div>
 
 			<StablecoinsChainsTable data={groupedChains} deprecatedChains={deprecatedChains} />
@@ -416,35 +415,27 @@ function SelectedChainsChart({
 }) {
 	if (isLoading) {
 		return (
-			<div
-				role="status"
-				aria-live="polite"
-				className="flex min-h-[360px] items-center justify-center body-sm text-tertiary"
-			>
+			<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
 				Loading chart...
-			</div>
+			</ChartPanelBodyFallback>
 		)
 	}
 	if (isError || !data) {
 		return (
-			<div role="alert" className="flex min-h-[360px] items-center justify-center body-sm text-data-down">
+			<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
 				Chart unavailable
-			</div>
+			</ChartPanelBodyFallback>
 		)
 	}
 	if (data.charts.length === 0 || data.dataset.source.length === 0) {
 		return (
-			<div
-				role="status"
-				aria-live="polite"
-				className="flex min-h-[360px] items-center justify-center body-sm text-tertiary"
-			>
+			<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
 				Chart unavailable
-			</div>
+			</ChartPanelBodyFallback>
 		)
 	}
 	return (
-		<React.Suspense fallback={<div className="min-h-[360px]" />}>
+		<React.Suspense fallback={<ChartPanelBodyFallback />}>
 			<MultiSeriesChart2
 				dataset={data.dataset}
 				charts={data.charts}

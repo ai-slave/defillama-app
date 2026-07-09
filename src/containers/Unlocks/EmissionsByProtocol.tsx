@@ -13,9 +13,9 @@ import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Card } from '~/ui/Card'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { Switch } from '~/ui/Switch'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { capitalizeFirstLetter, firstDayOfMonth, formattedNum, lastDayOfWeek, slug } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { EmissionsChartConfig, EmissionsDataset, Insider } from './api.types'
@@ -993,7 +993,7 @@ const ChartContainer = ({
 
 			<div className="flex flex-col gap-2">
 				{categoriesFromData.length > 0 && rawChartData.length > 0 ? (
-					<Panel padding="none">
+					<ChartPanel>
 						<ChartPanelToolbar className="justify-end">
 							<h3 className="mr-auto heading-xs">Schedule</h3>
 							{hasGroupAllocationData ? (
@@ -1070,14 +1070,12 @@ const ChartContainer = ({
 							/>
 						</ChartPanelToolbar>
 						{isPriceOrMcapLoading ? (
-							<div className="flex min-h-[360px] items-center justify-center">
-								<p className="flex items-center gap-1">
-									Loading
-									<LoadingDots />
-								</p>
-							</div>
+							<ChartPanelBodyFallback className="gap-1">
+								Loading
+								<LoadingDots />
+							</ChartPanelBodyFallback>
 						) : (
-							<Suspense fallback={<div className="min-h-[360px]" />}>
+							<Suspense fallback={<ChartPanelBodyFallback />}>
 								<MultiSeriesChart2
 									dataset={deferredScheduleChartData.dataset}
 									charts={deferredScheduleChartData.charts}
@@ -1093,16 +1091,13 @@ const ChartContainer = ({
 								/>
 							</Suspense>
 						)}
-					</Panel>
+					</ChartPanel>
 				) : null}
 
 				<div className="grid grid-cols-2 gap-2">
 					{data.pieChartData?.[dataType] && data.stackColors[dataType] ? (
-						<Panel
-							padding="none"
-							className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full"
-						>
-							<Suspense fallback={<div className="min-h-[406px]" />}>
+						<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+							<Suspense fallback={<ChartPanelExportShellFallback />}>
 								<PieChart
 									showLegend
 									title="Allocation"
@@ -1119,15 +1114,12 @@ const ChartContainer = ({
 									exportButtons={allocationExportButtons}
 								/>
 							</Suspense>
-						</Panel>
+						</ChartPanel>
 					) : null}
 
 					{unlockedPercent > 0 ? (
-						<Panel
-							padding="none"
-							className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full"
-						>
-							<Suspense fallback={<div className="min-h-[406px]" />}>
+						<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+							<Suspense fallback={<ChartPanelExportShellFallback />}>
 								<PieChart
 									showLegend
 									title={`Unlocked ${unlockedPercent.toFixed(2)}%`}
@@ -1140,7 +1132,7 @@ const ChartContainer = ({
 									exportButtons={unlockedExportButtons}
 								/>
 							</Suspense>
-						</Panel>
+						</ChartPanel>
 					) : null}
 				</div>
 			</div>

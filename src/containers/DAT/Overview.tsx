@@ -13,8 +13,7 @@ import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { Tooltip } from '~/components/Tooltip'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { formattedNum } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IDATOverviewFlowSeries, IDATOverviewPageProps } from './types'
@@ -66,7 +65,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 	return (
 		<>
 			<RowLinksWithDropdown links={allAssets} activeLink={'All'} />
-			<Panel padding="none" className="col-span-2">
+			<ChartPanel className="col-span-2">
 				<ChartPanelToolbar className="justify-end">
 					<h1 className="mr-auto heading-xs">DAT Inflows by Asset</h1>
 					<ChartGroupingSelector
@@ -80,7 +79,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 						title="DAT Inflows by Asset"
 					/>
 				</ChartPanelToolbar>
-				<Suspense fallback={<div className="min-h-[360px]" />}>
+				<Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart2
 						dataset={deferredChartData.dataset}
 						charts={deferredChartData.charts}
@@ -90,7 +89,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 						onReady={handleChartReady}
 					/>
 				</Suspense>
-			</Panel>
+			</ChartPanel>
 			<TableWithSearch
 				data={institutions}
 				columns={overviewColumns}

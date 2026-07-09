@@ -9,6 +9,7 @@ import { Icon } from '~/components/Icon'
 import { TagGroup } from '~/components/TagGroup'
 import { useWatchlistManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { formattedNum } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { CalendarDayCell } from './CalendarDayCell'
@@ -239,7 +240,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 			</div>
 
 			{viewMode === 'Week' && weeklyChart ? (
-				<Suspense fallback={<div className="h-[360px]" />}>
+				<Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart2
 						dataset={weeklyChart.dataset}
 						charts={weeklyChart.charts}
@@ -259,7 +260,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 			) : viewMode === 'Month' ? (
 				<>
 					{monthlyChart ? (
-						<Suspense fallback={<div className="h-[360px]" />}>
+						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart2
 								dataset={monthlyChart.dataset}
 								charts={monthlyChart.charts}

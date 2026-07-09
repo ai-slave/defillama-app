@@ -8,8 +8,9 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { Tooltip } from '~/components/Tooltip'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Button } from '~/ui/Button'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import type { IDATOverviewDataByAssetProps } from './types'
 
@@ -68,12 +69,12 @@ export function DATByAsset({
 							</p>
 						) : null}
 					</div>
-					<BasicLink href="/report-error" className="mt-auto mr-auto pt-4 text-left text-tertiary underline">
+					<Button as={BasicLink} href="/report-error" size="md" className="mt-auto mr-auto">
 						Report incorrect data
-					</BasicLink>
+					</Button>
 				</Panel>
-				<Panel padding="none" className="col-span-2">
-					<Suspense fallback={<div className="min-h-[406px]" />}>
+				<ChartPanel className="col-span-2">
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart2
 							dataset={dailyFlowsChart.dataset}
 							charts={dailyFlowsChart.charts}
@@ -93,7 +94,7 @@ export function DATByAsset({
 							}}
 						/>
 					</Suspense>
-				</Panel>
+				</ChartPanel>
 			</div>
 			<div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
 				<MNAVChart
@@ -321,7 +322,7 @@ function MNAVChart({
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	return (
-		<Panel padding="none" className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<ChartPanel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				<SelectWithCombobox
@@ -339,7 +340,7 @@ function MNAVChart({
 					title={`${metadata.name} ${title}`}
 				/>
 			</ChartPanelToolbar>
-			<Suspense fallback={<div className="min-h-[360px]" />}>
+			<Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart2
 					charts={data.charts}
 					selectedCharts={selectedCharts}
@@ -349,6 +350,6 @@ function MNAVChart({
 					onReady={handleChartReady}
 				/>
 			</Suspense>
-		</Panel>
+		</ChartPanel>
 	)
 }

@@ -25,7 +25,7 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { Button, buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
-import { PanelLoadingStatus } from '~/ui/Status'
+import { PanelLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { mapAPIMetricToUI, mapUIMetricToAPI } from '~/utils/notificationMetrics'
 import { parseNumberQueryParam } from '~/utils/routerQuery'
 import type { IChainsByCategoryData } from '../ChainsByCategory/types'
@@ -141,11 +141,11 @@ export function DefiWatchlistContainer({
 					{protocolsTableData.length ? (
 						<ChainProtocolsTable protocols={protocolsTableData} useStickyHeader={false} borderless />
 					) : (
-						<div className="flex min-h-[360px] flex-col items-center justify-center p-5 text-center">
-							<Icon name="bookmark" height={32} width={32} className="mb-3 text-tertiary" />
+						<SurfaceBodyStatus variant="empty" className="p-2" contentClassName="flex flex-col items-center">
+							<Icon name="bookmark" height={32} width={32} className="mb-3" />
 							<p className="body-sm text-tertiary">No protocols in your watchlist</p>
 							<p className="mt-1 body-sm text-tertiary">Use the selector above to add protocols</p>
-						</div>
+						</SurfaceBodyStatus>
 					)}
 				</Card>
 
@@ -170,11 +170,11 @@ export function DefiWatchlistContainer({
 					{chainsTableData.length ? (
 						<ChainsByCategoryTable data={chainsTableData} useStickyHeader={false} borderless showByGroup={false} />
 					) : (
-						<div className="flex min-h-[360px] flex-col items-center justify-center p-5 text-center">
-							<Icon name="map" height={32} width={32} className="mb-3 text-tertiary" />
+						<SurfaceBodyStatus variant="empty" className="p-2" contentClassName="flex flex-col items-center">
+							<Icon name="map" height={32} width={32} className="mb-3" />
 							<p className="body-sm text-tertiary">No chains in your watchlist</p>
 							<p className="mt-1 body-sm text-tertiary">Use the selector above to add chains</p>
-						</div>
+						</SurfaceBodyStatus>
 					)}
 				</Card>
 			</div>

@@ -20,12 +20,11 @@ import { serializeChainChartToMultiChart } from '~/containers/ProDashboard/utils
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button, buttonStyles } from '~/ui/Button'
+import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
-import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar, chartPanelToolbarActionsStyles } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -219,7 +218,7 @@ export function ChainChartPanel({
 	const selectedChartLabel = (chart: ChainChartLabels) => getChainMetricLabel(chart, chainTokenInfo?.token_symbol)
 
 	return (
-		<Panel padding="none" className="col-span-2">
+		<ChartPanel className="col-span-2">
 			<ChartPanelToolbar>
 				{charts.length > 0 ? (
 					<Ariakit.DialogProvider store={metricsDialogStore}>
@@ -373,7 +372,7 @@ export function ChainChartPanel({
 					</label>
 				))}
 
-				<div className={chartPanelToolbarActionsStyles}>
+				<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
 					{denominations.length > 1 ? (
 						<div className={chartSegmentedControlGroupStyles}>
 							{denominations.map((denom) => (
@@ -412,16 +411,16 @@ export function ChainChartPanel({
 				</div>
 			</ChartPanelToolbar>
 
-			<div className="relative flex min-h-[360px] flex-col">
+			<ChartPanelBody>
 				{isFetchingChartData ? (
-					<div className="m-auto flex min-h-[360px] items-center justify-center">
+					<ChartPanelBodyFallback>
 						<p className="flex items-center gap-1">
 							Loading
 							<LoadingDots />
 						</p>
-					</div>
+					</ChartPanelBodyFallback>
 				) : (
-					<Suspense fallback={<div className="m-auto flex min-h-[360px] items-center justify-center" />}>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<ChainCoreChart
 							chartData={deferredChartRenderModel.chartData}
 							valueSymbol={deferredChartRenderModel.valueSymbol}
@@ -438,7 +437,7 @@ export function ChainChartPanel({
 						getLabel={(metric) => selectedChartLabel(metric)}
 					/>
 				) : null}
-			</div>
-		</Panel>
+			</ChartPanelBody>
+		</ChartPanel>
 	)
 }

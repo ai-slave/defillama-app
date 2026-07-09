@@ -144,8 +144,7 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 										saveRecent(protocol)
 									}}
 									padding="sm"
-									interactive
-									className="flex items-center gap-2 text-left"
+									className="hover-wash-card flex cursor-pointer items-center gap-2 text-left"
 								>
 									{protocol.logo ? (
 										<TokenLogo src={protocol.logo} alt={`Logo of ${protocol.name}`} />

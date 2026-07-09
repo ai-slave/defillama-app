@@ -15,6 +15,7 @@ import { VirtualTable } from '~/components/Table/Table'
 import { TagGroup } from '~/components/TagGroup'
 import Layout from '~/layout'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 
@@ -133,15 +134,17 @@ export default function TrendingContracts() {
 					/>
 				</PanelHeader>
 				{isLoading ? (
-					<div className="my-auto flex min-h-[360px] flex-1 items-center justify-center">
+					<SurfaceBodyLoadingStatus className="p-2">
 						<LocalLoader />
-					</div>
+					</SurfaceBodyLoadingStatus>
 				) : error ? (
-					<p className="my-auto p-3 text-center">Sorry, couldn't fetch trending contracts.</p>
+					<SurfaceBodyStatus variant="error" className="p-2">
+						Sorry, couldn't fetch trending contracts.
+					</SurfaceBodyStatus>
 				) : results.length === 0 ? (
-					<p className="my-auto p-3 text-center text-secondary">
+					<SurfaceBodyStatus variant="empty" className="p-2">
 						No trending contracts found for this chain and time range.
-					</p>
+					</SurfaceBodyStatus>
 				) : (
 					<VirtualTable instance={instance} />
 				)}

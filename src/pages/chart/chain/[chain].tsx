@@ -177,8 +177,9 @@ export default function ChainChartPage(props: IChainOverviewData) {
 	return (
 		<div className="col-span-full flex min-h-[360px] flex-col">
 			{isFetchingChartData || !router.isReady || !isClient ? (
-				<div className="flex min-h-[360px] items-center justify-center">
+				<div role="status" aria-live="polite" className="flex min-h-[360px] items-center justify-center">
 					<LocalLoader />
+					<span className="sr-only">Loading chart data</span>
 				</div>
 			) : (
 				<Suspense fallback={<div className="flex min-h-[360px] items-center justify-center" />}>

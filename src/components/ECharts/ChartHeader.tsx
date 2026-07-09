@@ -1,4 +1,4 @@
-import { chartPanelToolbarStyles } from '~/ui/Toolbar'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 
 interface ChartHeaderProps {
 	title?: string
@@ -16,10 +16,10 @@ export function ChartHeader({
 	className
 }: ChartHeaderProps) {
 	return title || customComponents || exportButtons ? (
-		<div className={className ?? `${chartPanelToolbarStyles} justify-end`}>
+		<ChartPanelToolbar className={className ?? 'justify-end'}>
 			{title ? <HeadingTag className="mr-auto heading-xs">{title}</HeadingTag> : null}
 			{customComponents ?? null}
 			{exportButtons ?? null}
-		</div>
+		</ChartPanelToolbar>
 	) : null
 }

@@ -15,8 +15,7 @@ import {
 } from '~/components/Select/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
 import { pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam } from '~/utils/routerQuery'
@@ -279,7 +278,7 @@ export function RWAPerpsOverviewChart({
 	}
 
 	return (
-		<Panel padding="none">
+		<ChartPanel>
 			<ChartPanelToolbar className="justify-end">
 				<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
 					{CHART_TYPE_OPTIONS.map(({ key, label }) => (
@@ -332,28 +331,20 @@ export function RWAPerpsOverviewChart({
 				/>
 			</ChartPanelToolbar>
 			{error ? (
-				<p role="alert" className="flex min-h-[360px] items-center justify-center body-sm text-data-down">
+				<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
 					{getErrorMessage(error)}
-				</p>
+				</ChartPanelBodyFallback>
 			) : showLoadingState ? (
-				<p
-					role="status"
-					aria-live="polite"
-					className="flex min-h-[360px] items-center justify-center body-sm text-tertiary"
-				>
+				<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
 					Loading
 					<LoadingDots />
-				</p>
+				</ChartPanelBodyFallback>
 			) : !hasTimeSeriesHistory ? (
-				<p
-					role="status"
-					aria-live="polite"
-					className="flex min-h-[360px] items-center justify-center body-sm text-tertiary"
-				>
+				<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
 					Only a single snapshot is available; time-series history is not available for this selection yet.
-				</p>
+				</ChartPanelBodyFallback>
 			) : (
-				<Suspense fallback={<div className="h-[360px]" />}>
+				<Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart2
 						dataset={selectedDataset}
 						charts={chartSeries}
@@ -367,6 +358,6 @@ export function RWAPerpsOverviewChart({
 					/>
 				</Suspense>
 			)}
-		</Panel>
+		</ChartPanel>
 	)
 }

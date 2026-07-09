@@ -5,7 +5,7 @@ import {
 	type LowercaseDwmGrouping
 } from '~/components/ECharts/ChartGroupingSelector'
 import { TagGroup } from '~/components/TagGroup'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import {
 	BRIDGE_VOLUME_METRIC_TYPES,
 	BRIDGE_VOLUME_VIEW_TYPES,

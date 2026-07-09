@@ -20,6 +20,7 @@ import {
 	popoverSingleSelectCheckStyles,
 	popoverSurfaceStyles
 } from '~/ui/Popover'
+import { PanelStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -123,27 +124,15 @@ export default function YieldBorrow(data) {
 
 				<div className="min-w-0 flex-1">
 					{hasSelection && isLoading && !rowsData ? (
-						<div
-							role="status"
-							className="flex flex-1 items-center justify-center rounded-[8px] border border-subtle bg-surface p-5 body-sm text-secondary"
-						>
-							<p className="text-tertiary">Loading borrow routes...</p>
-						</div>
+						<PanelStatus variant="loading">Loading borrow routes...</PanelStatus>
 					) : hasSelection && isError ? (
-						<div
-							role="alert"
-							className="flex flex-1 items-center justify-center rounded-[8px] border border-subtle bg-surface p-5 body-sm text-secondary"
-						>
-							<p className="text-data-down">Couldn't load borrow routes.</p>
-						</div>
+						<PanelStatus variant="error">Couldn't load borrow routes.</PanelStatus>
 					) : hasSelection ? (
 						<PoolsList pools={filteredPools} />
 					) : (
-						<div className="flex flex-col items-center justify-center rounded-[8px] border border-subtle bg-surface px-6 py-16 text-center">
-							<p className="body-sm text-secondary">
-								Select a token to borrow and collateral to compare rates across protocols
-							</p>
-						</div>
+						<PanelStatus variant="empty">
+							Select a token to borrow and collateral to compare rates across protocols
+						</PanelStatus>
 					)}
 				</div>
 			</div>

@@ -23,9 +23,10 @@ import { Tooltip } from '~/components/Tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar, TableToolbar } from '~/ui/Toolbar'
+import { TableToolbar } from '~/ui/Toolbar'
 import { firstDayOfMonth, formattedNum, toNiceDayMonthAndYear } from '~/utils'
 import { isParamNone, parseArrayParam, parseExcludeParam, parseNumberQueryParam } from '~/utils/routerQuery'
 import { HacksFilters } from './Filters'
@@ -354,7 +355,7 @@ export const HacksContainer = ({
 						<span className="font-jetbrains text-2xl font-semibold">{displayTotalRugs}</span>
 					</p>
 				</Card>
-				<Panel padding="none" className="col-span-2">
+				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end *:first:mr-auto">
 						<TagGroup
 							variant="default"
@@ -370,7 +371,7 @@ export const HacksContainer = ({
 						/>
 					</ChartPanelToolbar>
 					{chartType === 'Monthly Sum' ? (
-						<React.Suspense fallback={<div className="min-h-[360px]" />}>
+						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart2
 								dataset={deferredMonthlyHacksChartData.dataset}
 								charts={deferredMonthlyHacksChartData.charts}
@@ -379,11 +380,11 @@ export const HacksContainer = ({
 							/>
 						</React.Suspense>
 					) : (
-						<React.Suspense fallback={<div className="min-h-[360px]" />}>
+						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<PieChart chartData={deferredPieChartData} onReady={handleChartReady} />
 						</React.Suspense>
 					)}
-				</Panel>
+				</ChartPanel>
 			</div>
 			<HacksTable data={filteredData} />
 		</>

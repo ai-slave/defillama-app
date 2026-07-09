@@ -22,8 +22,8 @@ import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
 import { buildHallmarksWithGenuineSpikes } from '~/utils/hallmarks'
 import { tokenIconUrl } from '~/utils/icons'
@@ -254,7 +254,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 					</h1>
 					<KeyMetrics {...props} formatPrice={(value) => formattedNum(value, true)} />
 				</Panel>
-				<Panel padding="none" className="col-span-1 xl:col-[2/-1]">
+				<ChartPanel className="col-span-1 xl:col-[2/-1]">
 					<ChartPanelToolbar className="justify-end">
 						<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 						{props.defaultCharts.length > 1 ? (
@@ -275,7 +275,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							iconUrl={tokenIconUrl(props.name)}
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<div className="min-h-[360px]" />}>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart2
 							dataset={deferredFinalCharts.dataset}
 							charts={deferredFinalCharts.charts}
@@ -285,11 +285,11 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							onReady={handleChartReady}
 						/>
 					</Suspense>
-				</Panel>
+				</ChartPanel>
 			</div>
 			<div className="grid grid-cols-2 gap-2">
 				{props.protocolChains?.length > 1 ? (
-					<Panel padding="none" className="col-span-full xl:col-span-1 xl:only:col-span-full">
+					<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
 							chartType="chain"
 							protocolName={slug(props.name)}
@@ -299,10 +299,10 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							hallmarks={props.hallmarks ?? undefined}
 							title="Options Premium Volume by chain"
 						/>
-					</Panel>
+					</ChartPanel>
 				) : null}
 				{props.protocolVersions?.length > 1 ? (
-					<Panel padding="none" className="col-span-full xl:col-span-1 xl:only:col-span-full">
+					<ChartPanel className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
 							chartType="version"
 							protocolName={slug(props.name)}
@@ -312,7 +312,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 							hallmarks={props.hallmarks ?? undefined}
 							title="Options Premium Volume by protocol version"
 						/>
-					</Panel>
+					</ChartPanel>
 				) : null}
 			</div>
 		</ProtocolOverviewLayout>

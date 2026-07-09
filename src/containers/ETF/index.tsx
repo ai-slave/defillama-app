@@ -13,7 +13,7 @@ import { BasicLink } from '~/components/Link'
 import { Select } from '~/components/Select/Select'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { formattedNum } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import type { ETFOverviewProps, IETFSnapshotRow } from './types'
@@ -163,7 +163,7 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 						})}
 					</div>
 				</div>
-				<div className="flex flex-col rounded-[8px] border border-subtle bg-surface xl:col-span-2">
+				<ChartPanel className="xl:col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						<h2 className="mr-auto heading-xs">Flows (Source: Farside)</h2>
 						<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
@@ -178,7 +178,7 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 						/>
 						<ChartExportButtons chartInstance={chartInstance} filename="etf-flows" title="ETF Flows" />
 					</ChartPanelToolbar>
-					<React.Suspense fallback={<div className="min-h-[360px]" />}>
+					<React.Suspense fallback={<ChartPanelBodyFallback />}>
 						<MultiSeriesChart2
 							dataset={finalCharts.dataset}
 							charts={finalCharts.charts}
@@ -186,7 +186,7 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 							onReady={handleChartReady}
 						/>
 					</React.Suspense>
-				</div>
+				</ChartPanel>
 			</div>
 			<TableWithSearch
 				data={snapshot}

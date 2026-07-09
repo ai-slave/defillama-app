@@ -8,8 +8,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { Card } from '~/ui/Card'
-import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { formatNum, formattedNum, slug } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type {
@@ -89,7 +88,7 @@ function LiquidationsDistributionChartCard({
 	chartInstanceRef: React.MutableRefObject<ECharts | null>
 }) {
 	return (
-		<Panel padding="none">
+		<ChartPanel>
 			<ChartPanelToolbar>
 				{displayOptions.hideTokenSelector ? (
 					<div className="mr-auto" />
@@ -178,7 +177,7 @@ function LiquidationsDistributionChartCard({
 					smol
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<div className="min-h-[360px]" />}>
+			<React.Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart2
 					dataset={deferredChartModel.dataset}
 					charts={deferredChartModel.charts}
@@ -193,7 +192,7 @@ function LiquidationsDistributionChartCard({
 			<div className="flex items-center justify-end gap-1 px-4 pb-3 body-sm text-tertiary italic">
 				<span>Snapshot {new Date(timestamp * 1000).toUTCString()}</span>
 			</div>
-		</Panel>
+		</ChartPanel>
 	)
 }
 

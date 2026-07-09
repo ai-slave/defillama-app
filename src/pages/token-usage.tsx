@@ -28,6 +28,7 @@ import { buildTokenUsageTreemapTreeData } from '~/containers/TokenUsage/treemap'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import Layout from '~/layout'
+import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
 import { searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
@@ -38,7 +39,6 @@ import {
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
-import { ChartPanelToolbar, chartPanelToolbarActionsStyles } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
@@ -166,7 +166,7 @@ export default function Tokens() {
 					<ChartPanelToolbar className="items-center justify-between">
 						<h2 className="mr-auto flex w-full grow heading-xs sm:w-auto">{`${tokenSymbol.toUpperCase()} usage in protocols`}</h2>
 
-						<div className={`${chartPanelToolbarActionsStyles} max-sm:w-full`}>
+						<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5 max-sm:w-full">
 							<Checkbox
 								variant="filter"
 								value="includeCentraliseExchanges"

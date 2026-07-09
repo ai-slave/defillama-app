@@ -32,6 +32,7 @@ import { WatchListTabs } from '~/containers/Yields/views/WatchlistView'
 import { DEFAULT_PORTFOLIO_NAME } from '~/contexts/LocalStorage'
 import { useBookmarks } from '~/hooks/useBookmarks'
 import { Card } from '~/ui/Card'
+import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import { mergeMarketsSummary } from './marketsMerge'
 
@@ -129,8 +130,10 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 		return (
 			<>
 				<WatchListTabs />
-				<Card padding="sm" className="flex min-h-[360px] flex-1 items-center justify-center">
-					<LocalLoader />
+				<Card padding="none" className="flex-1">
+					<SurfaceBodyLoadingStatus className="p-2">
+						<LocalLoader />
+					</SurfaceBodyLoadingStatus>
 				</Card>
 			</>
 		)
@@ -162,9 +165,9 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 						/>
 					</div>
 					{hasSavedTokens && isLoading ? (
-						<div className="flex min-h-[360px] items-center justify-center p-2">
+						<SurfaceBodyLoadingStatus className="p-2">
 							<LocalLoader />
-						</div>
+						</SurfaceBodyLoadingStatus>
 					) : hasSavedTokens && rows.length ? (
 						<PaginatedTable
 							table={table}
@@ -176,11 +179,11 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 							renderSubComponent={(row: Row<TokensTableRow>) => <ExpandedTokenMarkets symbol={row.original.symbol} />}
 						/>
 					) : (
-						<div className="flex min-h-[360px] flex-col items-center justify-center p-5 text-center">
-							<Icon name="bookmark" height={32} width={32} className="mb-3 text-tertiary" />
+						<SurfaceBodyStatus variant="empty" className="p-2" contentClassName="flex flex-col items-center">
+							<Icon name="bookmark" height={32} width={32} className="mb-3" />
 							<p className="body-sm text-tertiary">No tokens in your watchlist</p>
 							<p className="mt-1 text-xs text-(--text-secondary) opacity-75">Use the selector above to add tokens</p>
-						</div>
+						</SurfaceBodyStatus>
 					)}
 				</Card>
 			</div>

@@ -13,6 +13,7 @@ import {
 	useLocalStorageSettingsManager,
 	type TvlSettingsKey
 } from '~/contexts/LocalStorage'
+import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { formatNum, getPercentChange } from '~/utils'
 import { fetchJson } from '~/utils/async'
@@ -129,26 +130,39 @@ export function ChainsByCategory({
 
 			{showSharedChartState ? (
 				<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-					<Panel
-						padding="md"
-						className="relative isolate col-span-full min-h-[406px] items-center justify-center text-center body-sm text-tertiary"
-					>
-						{chartErrorMessage ? <ChainsChartError message={chartErrorMessage} /> : <LocalLoader />}
-					</Panel>
+					<ChartPanel className="relative isolate col-span-full">
+						{chartErrorMessage ? (
+							<ChartPanelExportShellFallback
+								role="alert"
+								className="flex items-center justify-center text-center body-sm text-data-down"
+							>
+								Failed to load chart data: {chartErrorMessage}
+							</ChartPanelExportShellFallback>
+						) : (
+							<ChartPanelExportShellFallback
+								role="status"
+								aria-live="polite"
+								className="flex items-center justify-center text-center body-sm text-tertiary"
+							>
+								<LocalLoader />
+								<span className="sr-only">Loading chart data</span>
+							</ChartPanelExportShellFallback>
+						)}
+					</ChartPanel>
 				</div>
 			) : (
 				<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-					<Panel padding="none" className="relative isolate min-h-[406px]">
-						<React.Suspense fallback={<ChainsChartPanelFallback />}>
+					<ChartPanel className="relative isolate">
+						<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 							<PieChart
 								chartData={pieChartData}
 								stackColors={colorsByChain}
 								exportButtons={{ png: true, csv: true, filename: 'chains-tvl-pie', pngTitle: 'Chains TVL' }}
 							/>
 						</React.Suspense>
-					</Panel>
-					<Panel padding="none" className="relative isolate min-h-[406px]">
-						<React.Suspense fallback={<ChainsChartPanelFallback />}>
+					</ChartPanel>
+					<ChartPanel className="relative isolate">
+						<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart2
 								dataset={dominanceCharts.dataset}
 								charts={dominanceCharts.charts}
@@ -158,7 +172,7 @@ export function ChainsByCategory({
 								exportButtons={{ png: true, csv: true, filename: 'chains-dominance', pngTitle: 'Chains Dominance' }}
 							/>
 						</React.Suspense>
-					</Panel>
+					</ChartPanel>
 				</div>
 			)}
 
@@ -171,19 +185,6 @@ export function ChainsByCategory({
 			</React.Suspense>
 		</>
 	)
-}
-
-function ChainsChartPanelFallback() {
-	return (
-		<>
-			<div className="h-10 shrink-0" aria-hidden="true" />
-			<div className="min-h-[360px] flex-1" />
-		</>
-	)
-}
-
-function ChainsChartError({ message }: { message: string }) {
-	return <p role="alert">Failed to load chart data: {message}</p>
 }
 
 const useFormatChartData = ({

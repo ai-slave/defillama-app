@@ -181,7 +181,6 @@ export function YieldFilterDropdowns({
 			{availableRange ? (
 				<AvailableRange
 					nestedMenu={nestedMenu}
-					variant="secondary"
 					placement="bottom-start"
 					pushQueryUpdates={(updates) => {
 						void pushYieldsQuery(router, updates, { pathname: effectivePathname })

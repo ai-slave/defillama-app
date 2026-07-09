@@ -18,8 +18,7 @@ import { Tooltip } from '~/components/Tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { Card } from '~/ui/Card'
-import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { formattedNum, slug } from '~/utils'
 import { pushShallowQuery, toQueryString } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview, RWAAssetChartTarget } from './api.types'
@@ -722,7 +721,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			{showCharts ? (
 				<>
 					{chartView === 'timeSeries' ? (
-						<Panel padding="none">
+						<ChartPanel>
 							<ChartPanelToolbar className="justify-end">
 								{chartTypeSwitch}
 								{chartViewSwitch}
@@ -735,20 +734,16 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 								/>
 							</ChartPanelToolbar>
 							{chartError ? (
-								<p role="alert" className="flex min-h-[360px] items-center justify-center body-sm text-data-down">
+								<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
 									{chartError}
-								</p>
+								</ChartPanelBodyFallback>
 							) : isChartLoading ? (
-								<p
-									role="status"
-									aria-live="polite"
-									className="flex min-h-[360px] items-center justify-center gap-1 body-sm text-tertiary"
-								>
+								<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
 									Loading
 									<LoadingDots />
-								</p>
+								</ChartPanelBodyFallback>
 							) : (
-								<Suspense fallback={<div className="min-h-[360px]" />}>
+								<Suspense fallback={<ChartPanelBodyFallback />}>
 									<MultiSeriesChart2
 										dataset={deferredSelectedTimeSeriesDataset}
 										charts={timeSeriesCharts}
@@ -758,10 +753,10 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 									/>
 								</Suspense>
 							)}
-						</Panel>
+						</ChartPanel>
 					) : null}
 					{chartView === 'pie' || chartView === 'treemap' || chartView === 'hbar' ? (
-						<Panel padding="none" className={chartView === 'treemap' ? 'min-h-[660px]' : 'min-h-[420px]'}>
+						<ChartPanel className={chartView === 'treemap' ? 'min-h-[660px]' : 'min-h-[420px]'}>
 							<ChartPanelToolbar className="justify-end">
 								{chartTypeSwitch}
 								{chartViewSwitch}
@@ -778,7 +773,9 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 									title={exportChartTitle}
 								/>
 							</ChartPanelToolbar>
-							<Suspense fallback={<div className={chartView === 'treemap' ? 'min-h-[600px]' : 'min-h-[360px]'} />}>
+							<Suspense
+								fallback={chartView === 'treemap' ? <div className="min-h-[600px]" /> : <ChartPanelBodyFallback />}
+							>
 								{chartView === 'pie' ? (
 									<PieChart
 										chartData={deferredSelectedPieChartData}
@@ -806,7 +803,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 									/>
 								)}
 							</Suspense>
-						</Panel>
+						</ChartPanel>
 					) : null}
 				</>
 			) : null}

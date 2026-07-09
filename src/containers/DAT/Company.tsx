@@ -9,9 +9,10 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TagGroup } from '~/components/TagGroup'
 import { Tooltip } from '~/components/Tooltip'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import type { IDATCompanyPageProps } from './types'
 
@@ -202,11 +203,11 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							</p>
 						) : null}
 					</div>
-					<BasicLink href="/report-error" className="mt-auto mr-auto pt-4 text-left text-(--text-form) underline">
+					<Button as={BasicLink} href="/report-error" size="md" className="mt-auto mr-auto">
 						Report incorrect data
-					</BasicLink>
+					</Button>
 				</Card>
-				<Panel padding="none" className="col-span-2">
+				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						<h2 className="mr-auto heading-xs">Cumulative Holdings Over Time</h2>
 						{props.assets.length > 1 ? (
@@ -224,7 +225,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 							title={holdingsExportTitle}
 						/>
 					</ChartPanelToolbar>
-					<Suspense fallback={<div className="min-h-[360px]" />}>
+					<Suspense fallback={<ChartPanelBodyFallback />}>
 						{chartData != null ? (
 							<MultiSeriesChart2
 								dataset={chartData.holdingsChart.dataset}
@@ -235,15 +236,15 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								onReady={handleChartReady}
 							/>
 						) : (
-							<div className="h-[360px]" />
+							<ChartPanelBodyFallback />
 						)}
 					</Suspense>
-				</Panel>
+				</ChartPanel>
 			</div>
 			<div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
 				{props.mNAVChart != null ? (
-					<Panel padding="none" className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-						<Suspense fallback={<div className="min-h-[406px]" />}>
+					<ChartPanel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart2
 								dataset={props.mNAVChart.dataset}
 								charts={props.mNAVChart.charts}
@@ -258,11 +259,11 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								}}
 							/>
 						</Suspense>
-					</Panel>
+					</ChartPanel>
 				) : null}
 				{props.fdChart != null ? (
-					<Panel padding="none" className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
-						<Suspense fallback={<div className="min-h-[406px]" />}>
+					<ChartPanel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart2
 								dataset={props.fdChart.dataset}
 								charts={props.fdChart.charts}
@@ -277,7 +278,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								}}
 							/>
 						</Suspense>
-					</Panel>
+					</ChartPanel>
 				) : null}
 				{props.ohlcvChartData != null ? (
 					<Panel padding="none" className="col-span-full min-h-[480px]">
@@ -289,8 +290,8 @@ export function DATCompany(props: IDATCompanyPageProps) {
 					</Panel>
 				) : null}
 				{props.totalAssetValueChart != null ? (
-					<Panel padding="none" className="col-span-full">
-						<Suspense fallback={<div className="min-h-[406px]" />}>
+					<ChartPanel className="col-span-full">
+						<Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart2
 								dataset={props.totalAssetValueChart.dataset}
 								charts={props.totalAssetValueChart.charts}
@@ -304,7 +305,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 								}}
 							/>
 						</Suspense>
-					</Panel>
+					</ChartPanel>
 				) : null}
 			</div>
 			<TableWithSearch

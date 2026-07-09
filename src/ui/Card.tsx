@@ -20,7 +20,6 @@ type CardProps<T extends ElementType> = {
 	as?: T
 	padding: 'none' | 'sm' | 'md' | 'strip'
 	radius?: 'default' | 'large'
-	interactive?: boolean
 } & Omit<ComponentPropsWithoutRef<T>, 'as' | 'padding'>
 
 const PADDING = {
@@ -39,14 +38,13 @@ export function Card<T extends ElementType = 'div'>({
 	as,
 	padding,
 	radius = 'default',
-	interactive = false,
 	className,
 	...props
 }: CardProps<T>) {
 	const Tag = (as ?? 'div') as ElementType
 	return (
 		<Tag
-			className={`${RADIUS[radius]} border border-subtle bg-surface${PADDING[padding]}${interactive ? ' hover-wash-card cursor-pointer' : ''}${className ? ` ${className}` : ''}`}
+			className={`${RADIUS[radius]} border border-subtle bg-surface${PADDING[padding]}${className ? ` ${className}` : ''}`}
 			{...props}
 		/>
 	)

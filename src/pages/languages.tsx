@@ -6,8 +6,8 @@ import type {
 } from '~/components/ECharts/types'
 import { SERVER_URL } from '~/constants'
 import Layout from '~/layout'
+import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { PageTitleStrip } from '~/ui/EntityTitleStrip'
-import { Panel } from '~/ui/Panel'
 import { getDominancePercent, getNDistinctColors } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -116,8 +116,8 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceDataset, dom
 		>
 			<PageTitleStrip title="Breakdown by Smart Contract Languages" />
 
-			<Panel padding="none" className="relative">
-				<React.Suspense fallback={<div className="h-[406px]" />}>
+			<ChartPanel className="relative">
+				<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 					<MultiSeriesChart2
 						dataset={tvlDataset}
 						charts={tvlCharts}
@@ -127,9 +127,9 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceDataset, dom
 						hideDefaultLegend={false}
 					/>
 				</React.Suspense>
-			</Panel>
-			<Panel padding="none" className="relative">
-				<React.Suspense fallback={<div className="h-[406px]" />}>
+			</ChartPanel>
+			<ChartPanel className="relative">
+				<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 					<MultiSeriesChart2
 						dataset={dominanceDataset}
 						charts={dominanceCharts}
@@ -139,10 +139,10 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceDataset, dom
 						hideDefaultLegend={false}
 					/>
 				</React.Suspense>
-			</Panel>
+			</ChartPanel>
 
-			<Panel padding="none" className="relative">
-				<React.Suspense fallback={<div className="h-[406px]" />}>
+			<ChartPanel className="relative">
+				<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 					<MultiSeriesChart2
 						dataset={osDataset}
 						charts={osCharts}
@@ -151,7 +151,7 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceDataset, dom
 						title="Open/Closed Source breakdown of solana protocols"
 					/>
 				</React.Suspense>
-			</Panel>
+			</ChartPanel>
 		</Layout>
 	)
 }

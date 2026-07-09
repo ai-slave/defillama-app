@@ -21,8 +21,7 @@ import { useYieldChartData } from '~/containers/Yields/queries.client'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button, buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { formattedNum } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import type { IRWAAssetData } from './api.types'
@@ -496,8 +495,8 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 			</div>
 
 			{asset.chartDataset && asset.chartDataset.source.length > 0 ? (
-				<Panel padding="none">
-					<Suspense fallback={<div className="min-h-[406px]" />}>
+				<ChartPanel>
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart2
 							charts={timeSeriesCharts}
 							dataset={asset.chartDataset}
@@ -510,7 +509,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							}}
 						/>
 					</Suspense>
-				</Panel>
+				</ChartPanel>
 			) : null}
 
 			<div className="grid gap-2 lg:grid-cols-2">
@@ -814,7 +813,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 					className={`grid gap-2 ${(isLoadingYieldChart || nativeYieldDataset) && displayPools.length > 0 ? 'lg:grid-cols-2' : ''}`}
 				>
 					{asset.nativeYieldPoolId && (isLoadingYieldChart || nativeYieldDataset) ? (
-						<Panel padding="none" className="overflow-hidden">
+						<ChartPanel className="overflow-hidden">
 							<div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-[#cc3e82] to-transparent" />
 							<ChartPanelToolbar className="items-start">
 								<p className="mr-auto flex flex-col">
@@ -833,16 +832,12 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							</ChartPanelToolbar>
 
 							{isLoadingYieldChart ? (
-								<p
-									role="status"
-									aria-live="polite"
-									className="flex min-h-[360px] flex-1 items-center justify-center gap-1 body-sm text-tertiary"
-								>
+								<ChartPanelBodyFallback role="status" aria-live="polite" className="flex-1 gap-1 body-sm text-tertiary">
 									Loading
 									<LoadingDots />
-								</p>
+								</ChartPanelBodyFallback>
 							) : (
-								<Suspense fallback={<div className="min-h-[360px] flex-1" />}>
+								<Suspense fallback={<ChartPanelBodyFallback className="flex-1" />}>
 									<MultiSeriesChart2
 										charts={NATIVE_YIELD_CHARTS}
 										dataset={nativeYieldDataset ?? { source: [], dimensions: [] }}
@@ -858,7 +853,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							{asset.issuer ? (
 								<p className="px-2 pb-2 body-sm text-secondary">Historical APY from {asset.issuer}</p>
 							) : null}
-						</Panel>
+						</ChartPanel>
 					) : null}
 
 					{displayPools.length > 0 ? (

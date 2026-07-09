@@ -21,6 +21,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Input, inputStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { PanelLoadingStatus } from '~/ui/Status'
@@ -245,7 +246,7 @@ const TokenPnlContent = ({
 						title={`${tokenExportName} Price Over Time`}
 					/>
 				</PanelHeader>
-				<Suspense fallback={<div className="min-h-[360px]" />}>
+				<Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart2
 						dataset={chartData.dataset}
 						charts={chartData.charts}

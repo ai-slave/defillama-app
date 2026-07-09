@@ -19,6 +19,7 @@ import {
 } from '~/containers/Markets/utils'
 import { Card } from '~/ui/Card'
 import { Panel } from '~/ui/Panel'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formattedNum } from '~/utils'
 import { fetchExchangeMarkets } from './api'
 
@@ -179,10 +180,9 @@ export function CexMarketsSection({ exchange, name }: CexMarketsSectionProps) {
 			<section className="col-span-full flex flex-col gap-2">
 				{sectionHeader}
 				<Panel padding="none">
-					<div role="status" aria-live="polite" className="flex min-h-[360px] items-center justify-center p-2">
+					<SurfaceBodyLoadingStatus label={`Loading ${name} markets`} className="p-2">
 						<LocalLoader />
-						<span className="sr-only">Loading {name} markets</span>
-					</div>
+					</SurfaceBodyLoadingStatus>
 				</Panel>
 			</section>
 		)

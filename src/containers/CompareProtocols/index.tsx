@@ -8,6 +8,8 @@ import { applyProtocolTvlSettings } from '~/containers/ProtocolLists/utils'
 import { fetchProtocolBySlug } from '~/containers/ProtocolOverview/api'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { PanelStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { parseNumberQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { RawProtocolResponse } from './api.types'
@@ -111,13 +113,13 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 			</div>
 			{selectedProtocols.length > 1 ? (
 				<div className="relative flex flex-col gap-2">
-					<div className="rounded-[8px] border border-subtle bg-surface">
+					<ChartPanel>
 						{isLoading || !router.isReady ? (
-							<div className="flex h-full min-h-[406px] w-full items-center justify-center">
+							<ChartPanelExportShellFallback className="flex h-full w-full items-center justify-center">
 								<LocalLoader />
-							</div>
+							</ChartPanelExportShellFallback>
 						) : (
-							<React.Suspense fallback={<div className="min-h-[406px]" />}>
+							<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 								<MultiSeriesChart2
 									dataset={dataset}
 									charts={charts}
@@ -132,7 +134,7 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 								/>
 							</React.Suspense>
 						)}
-					</div>
+					</ChartPanel>
 
 					{protocolsTableData.length > 0 ? (
 						<div>
@@ -141,9 +143,7 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 					) : null}
 				</div>
 			) : (
-				<div className="flex min-h-[362px] items-center justify-center rounded-[8px] border border-subtle bg-surface">
-					<p className="body-sm text-tertiary">Select at least 2 protocols to compare</p>
-				</div>
+				<PanelStatus variant="empty">Select at least 2 protocols to compare</PanelStatus>
 			)}
 		</>
 	)

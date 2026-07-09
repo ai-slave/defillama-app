@@ -14,7 +14,9 @@ import type { IAdapterChainOverview, IAdapterProtocolOverview } from '~/containe
 import { Stats } from '~/containers/ChainOverview/Stats'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { FailedDataPopover } from '~/ui/FailedDataPopover'
+import { PanelStatus } from '~/ui/Status'
 import { getNDistinctColors } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import {
@@ -379,12 +381,14 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 			{selectedChains.length > 1 ? (
 				<div className="relative flex flex-col gap-1">
 					{isLoading || !router.isReady ? (
-						<div className="flex h-full min-h-[400px] w-full items-center justify-center rounded-[8px] border border-subtle bg-surface">
-							<LocalLoader />
-						</div>
+						<ChartPanel>
+							<ChartPanelExportShellFallback className="flex h-full w-full items-center justify-center">
+								<LocalLoader />
+							</ChartPanelExportShellFallback>
+						</ChartPanel>
 					) : (
-						<div className="relative rounded-[8px] border border-subtle bg-surface">
-							<React.Suspense fallback={<div className="min-h-[406px]" />}>
+						<ChartPanel>
+							<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 								<MultiSeriesChart2
 									dataset={chartData.dataset}
 									charts={chartData.charts}
@@ -398,7 +402,7 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 								/>
 							</React.Suspense>
 							<FailedCompareChainsPopover failedChains={failedMetrics} />
-						</div>
+						</ChartPanel>
 					)}
 
 					<div className="grid grow grid-cols-1 gap-1 xl:grid-cols-2">
@@ -415,9 +419,7 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 					</div>
 				</div>
 			) : (
-				<div className="flex min-h-[362px] items-center justify-center rounded-[8px] border border-subtle bg-surface">
-					<p className="body-sm text-tertiary">Select at least 2 chains to compare</p>
-				</div>
+				<PanelStatus variant="empty">Select at least 2 chains to compare</PanelStatus>
 			)}
 		</>
 	)

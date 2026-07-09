@@ -11,10 +11,11 @@ import { ChartSelector } from '~/containers/Bridges/ChartSelector'
 import { useBuildBridgeChartData } from '~/containers/Bridges/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Card } from '~/ui/Card'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { Switch } from '~/ui/Switch'
-import { ChartPanelToolbar, TableToolbar } from '~/ui/Toolbar'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, getPrevVolumeFromChart, slug, toNiceCsvDate } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { BridgesLargeTxsTable, type BridgesLargeTxsTableHandle } from './BridgesLargeTxsTable'
@@ -295,7 +296,7 @@ export function BridgesOverviewByChain({
 
 					<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" className="mt-auto mr-auto" />
 				</Card>
-				<Panel padding="none" className="col-span-2">
+				<ChartPanel className="col-span-2">
 					{selectedChain === 'All' ? (
 						<>
 							<ChartPanelToolbar className="justify-end">
@@ -368,7 +369,7 @@ export function BridgesOverviewByChain({
 								/>
 							) : chartType === 'Net Flow' ? (
 								chainNetFlowData && chainNetFlowData.length > 0 ? (
-									<React.Suspense fallback={<div className="min-h-[360px]" />}>
+									<React.Suspense fallback={<ChartPanelBodyFallback />}>
 										<MultiSeriesChart2
 											dataset={deferredNetFlowDataset}
 											charts={NET_FLOW_CHARTS}
@@ -380,7 +381,7 @@ export function BridgesOverviewByChain({
 								) : null
 							) : chartType === 'Net Flow (%)' ? (
 								chainPercentageNet && chainPercentageNet.length > 0 ? (
-									<React.Suspense fallback={<div className="min-h-[360px]" />}>
+									<React.Suspense fallback={<ChartPanelBodyFallback />}>
 										<MultiSeriesChart2
 											dataset={deferredNetFlowPctDataset}
 											charts={NET_FLOW_PCT_CHARTS}
@@ -392,7 +393,7 @@ export function BridgesOverviewByChain({
 								) : null
 							) : chartType === 'Inflows' ? (
 								chainVolumeData && chainVolumeData.length > 0 ? (
-									<React.Suspense fallback={<div className="min-h-[360px]" />}>
+									<React.Suspense fallback={<ChartPanelBodyFallback />}>
 										<MultiSeriesChart2
 											dataset={deferredChainInflowsDataset}
 											charts={CHAIN_INFLOW_CHARTS}
@@ -403,17 +404,17 @@ export function BridgesOverviewByChain({
 									</React.Suspense>
 								) : null
 							) : chartType === '24h Tokens Deposited' ? (
-								<React.Suspense fallback={<div className="min-h-[360px]" />}>
+								<React.Suspense fallback={<ChartPanelBodyFallback />}>
 									<PieChart chartData={deferredTokenDeposits} onReady={handleChartReady} />
 								</React.Suspense>
 							) : chartType === '24h Tokens Withdrawn' ? (
-								<React.Suspense fallback={<div className="min-h-[360px]" />}>
+								<React.Suspense fallback={<ChartPanelBodyFallback />}>
 									<PieChart chartData={deferredTokenWithdrawals} onReady={handleChartReady} />
 								</React.Suspense>
 							) : null}
 						</>
 					)}
-				</Panel>
+				</ChartPanel>
 			</div>
 
 			<Panel padding="none">

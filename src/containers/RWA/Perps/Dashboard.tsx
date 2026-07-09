@@ -35,10 +35,9 @@ import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
-import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
@@ -2122,7 +2121,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 				))}
 			</div>
 			{chartState.view === 'timeSeries' ? (
-				<Panel padding="none">
+				<ChartPanel>
 					<ChartPanelToolbar className="justify-end">
 						{timeSeriesMetricSwitch}
 						<Select
@@ -2164,28 +2163,20 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 						/>
 					</ChartPanelToolbar>
 					{timeSeriesQuery.error ? (
-						<p role="alert" className="flex min-h-[360px] items-center justify-center body-sm text-data-down">
+						<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
 							{getErrorMessage(timeSeriesQuery.error)}
-						</p>
+						</ChartPanelBodyFallback>
 					) : timeSeriesQuery.isLoading && !shouldUseInitialTimeSeriesDataset ? (
-						<p
-							role="status"
-							aria-live="polite"
-							className="flex min-h-[360px] items-center justify-center gap-1 body-sm text-tertiary"
-						>
+						<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
 							Loading
 							<LoadingDots />
-						</p>
+						</ChartPanelBodyFallback>
 					) : !hasTimeSeriesHistory ? (
-						<p
-							role="status"
-							aria-live="polite"
-							className="flex min-h-[360px] items-center justify-center body-sm text-tertiary"
-						>
+						<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
 							Only a single snapshot is available; time-series history is not available for this selection yet.
-						</p>
+						</ChartPanelBodyFallback>
 					) : (
-						<Suspense fallback={<div className="min-h-[360px]" />}>
+						<Suspense fallback={<ChartPanelBodyFallback />}>
 							<MultiSeriesChart2
 								dataset={deferredTimeSeriesDataset}
 								charts={timeSeriesCharts}
@@ -2198,9 +2189,9 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							/>
 						</Suspense>
 					)}
-				</Panel>
+				</ChartPanel>
 			) : (
-				<Panel padding="none" className={chartState.view === 'treemap' ? 'min-h-[660px]' : 'min-h-[420px]'}>
+				<ChartPanel className={chartState.view === 'treemap' ? 'min-h-[660px]' : 'min-h-[420px]'}>
 					<ChartPanelToolbar className="justify-end">
 						{timeSeriesMetricSwitch}
 						<Select
@@ -2245,15 +2236,13 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 						/>
 					</ChartPanelToolbar>
 					{snapshotBreakdownRows.length === 0 ? (
-						<p
-							role="status"
-							aria-live="polite"
-							className="flex min-h-[360px] items-center justify-center body-sm text-tertiary"
-						>
+						<ChartPanelBodyFallback role="status" aria-live="polite" className="body-sm text-tertiary">
 							No chart data available.
-						</p>
+						</ChartPanelBodyFallback>
 					) : (
-						<Suspense fallback={<div className={chartState.view === 'treemap' ? 'min-h-[600px]' : 'min-h-[360px]'} />}>
+						<Suspense
+							fallback={chartState.view === 'treemap' ? <div className="min-h-[600px]" /> : <ChartPanelBodyFallback />}
+						>
 							{chartState.view === 'pie' ? (
 								<PieChart
 									chartData={deferredPieChartData}
@@ -2282,7 +2271,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 							)}
 						</Suspense>
 					)}
-				</Panel>
+				</ChartPanel>
 			)}
 			<TableWithSearch
 				data={currentRows}

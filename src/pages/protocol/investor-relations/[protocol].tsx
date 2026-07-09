@@ -9,6 +9,7 @@ import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolPageMetrics } from '~/containers/ProtocolOverview/types'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { useAuthContext } from '~/containers/Subscription/auth'
+import { PanelStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -120,9 +121,7 @@ export default function ProtocolInvestorRelations(props: InvestorRelationsPagePr
 					entityName={props.entityName}
 				/>
 			) : (
-				<div className="flex min-h-[360px] flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-					<p className="text-(--text-secondary)">This dashboard isn’t available on your account.</p>
-				</div>
+				<PanelStatus variant="empty">This dashboard isn’t available on your account.</PanelStatus>
 			)}
 		</ProtocolOverviewLayout>
 	)

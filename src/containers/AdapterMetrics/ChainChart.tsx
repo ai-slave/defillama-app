@@ -26,9 +26,8 @@ import {
 	isFeeExtraEligibleAdapterMetric,
 	type FeeExtraMetric as FeesExtraMetric
 } from '~/metrics/feeExtras'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { FailedDataPopover } from '~/ui/FailedDataPopover'
-import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { getErrorMessage, normalizeError } from '~/utils/error'
 import { chainIconUrl } from '~/utils/icons'
@@ -771,7 +770,7 @@ export const AdapterByChainChart = ({
 	}, [breakdownChartState, chain, chartName])
 
 	return (
-		<Panel padding="none" className="col-span-2">
+		<ChartPanel className="col-span-2">
 			<ChartPanelToolbar>
 				<Select
 					allValues={CHART_VIEW_MODE_OPTIONS}
@@ -878,13 +877,14 @@ export const AdapterByChainChart = ({
 				</div>
 			</ChartPanelToolbar>
 			{chartViewMode === 'Breakdown' && breakdownChartDataState.kind === 'error' ? (
-				<p className="flex min-h-[360px] items-center justify-center body-sm text-data-down" role="alert">
+				<ChartPanelBodyFallback className="body-sm text-data-down" role="alert">
 					{breakdownChartDataState.message}
-				</p>
+				</ChartPanelBodyFallback>
 			) : chartViewMode === 'Breakdown' && breakdownChartDataState.kind === 'loading' ? (
-				<div className="flex min-h-[360px] items-center justify-center">
+				<ChartPanelBodyFallback role="status" aria-live="polite">
 					<LocalLoader />
-				</div>
+					<span className="sr-only">Loading chart data</span>
+				</ChartPanelBodyFallback>
 			) : chartViewMode === 'Breakdown' ? (
 				<React.Suspense
 					fallback={
@@ -932,7 +932,7 @@ export const AdapterByChainChart = ({
 					)}
 				</React.Suspense>
 			) : (
-				<React.Suspense fallback={<div className="min-h-[360px]" />}>
+				<React.Suspense fallback={<ChartPanelBodyFallback />}>
 					<MultiSeriesChart2
 						dataset={deferredCombinedFinalCharts.dataset}
 						charts={deferredCombinedFinalCharts.charts}
@@ -943,7 +943,7 @@ export const AdapterByChainChart = ({
 				</React.Suspense>
 			)}
 			<FailedFeesMetricsPopover failedMetrics={failedMetrics} />
-		</Panel>
+		</ChartPanel>
 	)
 }
 
@@ -1317,7 +1317,7 @@ export const ChainsByAdapterChart = ({
 		deferredChartPresentation.data.length > 0
 
 	return (
-		<Panel padding="none" className="col-span-2">
+		<ChartPanel className="col-span-2">
 			<ChartPanelToolbar>
 				<Select
 					allValues={CHART_KIND_OPTIONS}
@@ -1396,11 +1396,18 @@ export const ChainsByAdapterChart = ({
 				}
 			>
 				{isBaseChartLoading ? (
-					<div className="flex items-center justify-center text-tertiary" style={{ height: chartHeight }}>
+					<div
+						role="status"
+						aria-live="polite"
+						className="flex items-center justify-center text-tertiary"
+						style={{ height: chartHeight }}
+					>
 						<LocalLoader />
+						<span className="sr-only">Loading chart data</span>
 					</div>
 				) : baseChartErrorMessage ? (
 					<div
+						role="alert"
 						className="flex items-center justify-center p-4 text-center body-sm text-tertiary"
 						style={{ height: chartHeight }}
 					>
@@ -1437,7 +1444,7 @@ export const ChainsByAdapterChart = ({
 				)}
 			</React.Suspense>
 			<FailedFeesMetricsPopover failedMetrics={failedMetrics} />
-		</Panel>
+		</ChartPanel>
 	)
 }
 

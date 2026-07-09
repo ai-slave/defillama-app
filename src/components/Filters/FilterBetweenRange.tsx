@@ -17,7 +17,6 @@ interface IFilterBetweenRange {
 	max: number | string | null
 	variant: 'primary' | 'secondary'
 	size: 'sm' | 'md'
-	triggerClassName?: string
 	placement?: Ariakit.PopoverStoreProps['placement']
 	minLabel?: string
 	maxLabel?: string
@@ -34,7 +33,6 @@ export function FilterBetweenRange({
 	max,
 	variant,
 	size,
-	triggerClassName,
 	placement = 'bottom-end',
 	minLabel = 'Min',
 	maxLabel = 'Max',
@@ -75,8 +73,7 @@ export function FilterBetweenRange({
 					{
 						sm: 'min-h-6 rounded-md px-2 py-0.5',
 						md: 'min-h-8 rounded-[8px] px-3 py-1.5'
-					}[size],
-					triggerClassName
+					}[size]
 				)}
 			>
 				{trigger}

@@ -5,6 +5,7 @@ import { TagGroup } from '~/components/TagGroup'
 import { NftsMarketplaceTable } from '~/containers/Nft/NftsMarketplaceTable'
 import { getNFTMarketplacesData } from '~/containers/Nft/queries'
 import Layout from '~/layout'
+import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -209,8 +210,8 @@ function Marketplaces({ data, volume, dominance, trades, dominanceTrade, marketp
 						className="ml-auto"
 					/>
 				</div>
-				<div className="grid grid-cols-1 *:col-span-1 xl:min-h-[406px] xl:grid-cols-2">
-					<React.Suspense fallback={<div className="h-[406px] w-full" />}>
+				<div className="grid grid-cols-1 *:col-span-1 xl:min-h-[400px] xl:grid-cols-2">
+					<React.Suspense fallback={<ChartPanelExportShellFallback className="w-full" />}>
 						<MultiSeriesChart2
 							title="Volume"
 							dataset={viewType === 'Relative' ? relativeVolumeDataset : absoluteVolumeDataset}
@@ -229,7 +230,7 @@ function Marketplaces({ data, volume, dominance, trades, dominanceTrade, marketp
 						/>
 					</React.Suspense>
 
-					<React.Suspense fallback={<div className="h-[406px] w-full" />}>
+					<React.Suspense fallback={<ChartPanelExportShellFallback className="w-full" />}>
 						<MultiSeriesChart2
 							title="Trades"
 							dataset={viewType === 'Relative' ? relativeTradesDataset : absoluteTradesDataset}

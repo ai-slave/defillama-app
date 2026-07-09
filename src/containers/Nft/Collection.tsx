@@ -9,7 +9,9 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { getNFTCollection } from '~/containers/Nft/queries'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { ICollectionScatterChartProps, IOrderBookChartProps } from './types'
@@ -42,16 +44,12 @@ export function NFTCollectionContainer() {
 		retry: 0
 	})
 	if (fetchingData || !collectionData) {
-		return (
-			<Panel padding="sm" className="flex-1 items-center justify-center">
-				{fetchingData || !router.isReady ? (
-					<LocalLoader />
-				) : (
-					<p className="body-sm text-data-down" role="alert">
-						Failed to load collection data.
-					</p>
-				)}
-			</Panel>
+		return fetchingData || !router.isReady ? (
+			<PanelLoadingStatus>
+				<LocalLoader />
+			</PanelLoadingStatus>
+		) : (
+			<PanelStatus variant="error">Failed to load collection data.</PanelStatus>
 		)
 	}
 	const { name, data, stats, sales, salesExOutliers, salesMedian1d, address, floorHistory, orderbook } = collectionData
@@ -134,18 +132,18 @@ export function NFTCollectionContainer() {
 
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 				{floorHistory?.source?.length > 0 ? (
-					<Panel padding="none" className="relative only:col-span-full">
-						<React.Suspense fallback={<div className="h-[406px]" />}>
+					<ChartPanel className="relative only:col-span-full">
+						<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 							<MultiSeriesChart2 dataset={floorHistory} valueSymbol="ETH" title="Floor Price" />
 						</React.Suspense>
-					</Panel>
+					</ChartPanel>
 				) : null}
 				{orderbook?.length > 0 ? (
-					<Panel padding="none" className="relative only:col-span-full">
-						<React.Suspense fallback={<div className="h-[406px]" />}>
+					<ChartPanel className="relative only:col-span-full">
+						<React.Suspense fallback={<ChartPanelBodyFallback />}>
 							<OrderbookChart chartData={orderbook} />
 						</React.Suspense>
-					</Panel>
+					</ChartPanel>
 				) : null}
 			</div>
 		</>

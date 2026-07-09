@@ -17,10 +17,9 @@ import { useProtocolBreakdownCharts } from '~/containers/ProtocolOverview/usePro
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { TVL_SETTINGS_KEYS_SET, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
-import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
-import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -148,7 +147,7 @@ function ChainsChartCard({
 	const deferredCharts = React.useDeferredValue(charts)
 
 	return (
-		<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allValues.length > 1 ? (
@@ -169,7 +168,7 @@ function ChainsChartCard({
 					iconUrl={exportIconUrl}
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<div className="min-h-[360px]" />}>
+			<React.Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart2
 					dataset={deferredDataset}
 					charts={deferredCharts}
@@ -179,7 +178,7 @@ function ChainsChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</Panel>
+		</ChartPanel>
 	)
 }
 
@@ -211,7 +210,7 @@ function TokenLineChartCard({
 	const deferredCharts = React.useDeferredValue(charts)
 
 	return (
-		<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allValues.length > 1 ? (
@@ -232,7 +231,7 @@ function TokenLineChartCard({
 					iconUrl={exportIconUrl}
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<div className="min-h-[360px]" />}>
+			<React.Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart2
 					dataset={deferredDataset}
 					charts={deferredCharts}
@@ -242,7 +241,7 @@ function TokenLineChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</Panel>
+		</ChartPanel>
 	)
 }
 
@@ -279,7 +278,7 @@ function TokensBreakdownPieChartCard({
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	return (
-		<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allTokens.length > 1 ? (
@@ -300,10 +299,10 @@ function TokensBreakdownPieChartCard({
 					iconUrl={exportIconUrl}
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<div className="min-h-[360px]" />}>
+			<React.Suspense fallback={<ChartPanelBodyFallback />}>
 				<PieChart chartData={deferredChartData} onReady={handleChartReady} />
 			</React.Suspense>
-		</Panel>
+		</ChartPanel>
 	)
 }
 
@@ -326,7 +325,7 @@ function USDInflowsChartCard({
 	const deferredDataset = React.useDeferredValue(dataset)
 
 	return (
-		<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				<ChartExportButtons
@@ -336,7 +335,7 @@ function USDInflowsChartCard({
 					iconUrl={exportIconUrl}
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<div className="min-h-[360px]" />}>
+			<React.Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart2
 					dataset={deferredDataset}
 					charts={USD_INFLOWS_CHARTS}
@@ -345,7 +344,7 @@ function USDInflowsChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</Panel>
+		</ChartPanel>
 	)
 }
 
@@ -375,7 +374,7 @@ function InflowsByTokenChartCard({
 	const deferredCharts = React.useDeferredValue(charts)
 
 	return (
-		<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allValues.length > 1 ? (
@@ -396,7 +395,7 @@ function InflowsByTokenChartCard({
 					iconUrl={exportIconUrl}
 				/>
 			</ChartPanelToolbar>
-			<React.Suspense fallback={<div className="min-h-[360px]" />}>
+			<React.Suspense fallback={<ChartPanelBodyFallback />}>
 				<MultiSeriesChart2
 					dataset={deferredDataset}
 					charts={deferredCharts}
@@ -409,7 +408,7 @@ function InflowsByTokenChartCard({
 					onReady={handleChartReady}
 				/>
 			</React.Suspense>
-		</Panel>
+		</ChartPanel>
 	)
 }
 
@@ -468,6 +467,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 				media={<TokenLogo name={props.name} kind="token" size={28} alt={`Logo of ${props.name}`} />}
 				title={`${props.name} TVL Breakdown`}
 			/>
+
 			{isLoading ? (
 				<PanelLoadingStatus label={`Loading ${props.name} TVL breakdown`}>
 					<LocalLoader />

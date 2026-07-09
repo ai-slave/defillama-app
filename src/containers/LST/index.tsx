@@ -17,6 +17,7 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/components/Tooltip'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { formattedNum } from '~/utils'
 import { buildLstBreakdownChartData, buildLstInflowsData, buildLstInflowsSeriesData } from './chartData'
 import type { ILSTTokenRow, LSTOverviewProps } from './types'
@@ -272,7 +273,7 @@ export const LSTOverview = ({
 				<div className="flex flex-col">
 					{tab === 'breakdown' ? (
 						<div className="grid grid-cols-1 gap-2 pt-2 xl:grid-cols-2">
-							<React.Suspense fallback={<div className="min-h-[406px]" />}>
+							<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 								<PieChart
 									chartData={deferredPieChartData}
 									stackColors={lsdColors}
@@ -296,7 +297,7 @@ export const LSTOverview = ({
 										title={breakdownExportTitle}
 									/>
 								</div>
-								<React.Suspense fallback={<div className="min-h-[360px]" />}>
+								<React.Suspense fallback={<ChartPanelBodyFallback />}>
 									<MultiSeriesChart2
 										dataset={deferredBreakdownData.dataset}
 										charts={deferredBreakdownData.charts}
@@ -336,7 +337,7 @@ export const LSTOverview = ({
 							</div>
 
 							{groupBy === 'cumulative' ? (
-								<React.Suspense fallback={<div className="min-h-[360px]" />}>
+								<React.Suspense fallback={<ChartPanelBodyFallback />}>
 									<MultiSeriesChart2
 										dataset={deferredInflowsData.dataset}
 										charts={deferredInflowsData.cumulativeCharts}
@@ -352,7 +353,7 @@ export const LSTOverview = ({
 									/>
 								</React.Suspense>
 							) : (
-								<React.Suspense fallback={<div className="min-h-[360px]" />}>
+								<React.Suspense fallback={<ChartPanelBodyFallback />}>
 									<MultiSeriesChart2
 										dataset={deferredInflowsData.dataset}
 										charts={deferredInflowsData.barCharts}

@@ -4,7 +4,7 @@ import { Announcement } from '~/components/Announcement'
 import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { RaisesFilters } from '~/containers/Raises/Filters'
 import { Card } from '~/ui/Card'
-import { Panel } from '~/ui/Panel'
+import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { formattedNum } from '~/utils'
 import { useRaisesData } from './hooks'
 import { RaisesTable } from './Table'
@@ -90,8 +90,8 @@ const RaisesContainer = ({ raises, investors, rounds, sectors, chains, investorN
 					</p>
 				</Card>
 
-				<Panel padding="none" className="col-span-2">
-					<React.Suspense fallback={<div className="min-h-[406px]" />}>
+				<ChartPanel className="col-span-2">
+					<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart2
 							dataset={deferredMonthlyInvestmentChart.dataset}
 							charts={deferredMonthlyInvestmentChart.charts}
@@ -105,7 +105,7 @@ const RaisesContainer = ({ raises, investors, rounds, sectors, chains, investorN
 							}}
 						/>
 					</React.Suspense>
-				</Panel>
+				</ChartPanel>
 			</div>
 
 			<RaisesTable raises={filteredRaisesList} />

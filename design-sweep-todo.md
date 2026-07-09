@@ -19,8 +19,10 @@ Process rules (from review feedback):
 
 This file is now a living audit/backlog ledger, not a literal merge-blocking checklist.
 The broad design sweep, shared popover/mobile-drawer pass, DialogShell pass,
-ProtocolOverview cleanup, text-tier/icon consistency sweep, and dense pages/Card-Panel
-cleanup have merged to `main`.
+ProtocolOverview cleanup, text-tier/icon consistency sweep, dense pages/Card-Panel
+cleanup, and shared-control API tightening have merged to `main`. The current branch has
+completed the broad chart-panel shell migration pass and is now handling the focused
+status-shell/helper and prop-trim follow-up.
 Many unchecked items are historical counts, deferred migrations, or "keep unchecked until
 live verification" markers. Do not require every unchecked line in this file to be cleared
 before opening or merging a focused follow-up branch.
@@ -45,19 +47,61 @@ Completed merge packet:
 - Dense pages/Card-Panel cleanup landed: `DeFiWatchlist`, `TokenPnl`, agreed small/static
   pages, standalone analytics/list shells, Chains/NFT route-family shells, Unlocks
   outer-shell fixes, focused Correlations cleanup, and explicit `Card`/`Panel` padding.
+- Shared-control API tightening landed: `FilterBetweenRange`, `PanelStatus`, `Checkbox`,
+  `EntityTitleStrip`, `IconHitTarget`, `Button`, direct `selectTriggerStyles` calls, and
+  `TagGroup` are explicit; in-scope `Select` / `SelectWithCombobox` callers are pinned.
+- Embedded body-level status helpers landed for panel/card bodies; callers now choose
+  between full `PanelStatus`, body-only `SurfaceBodyStatus`, and chart-body
+  `ChartPanelBodyFallback` based on the existing shell.
 
 Current focused backlog:
 
-- Shared control API tightening follow-up: remove hidden defaults/dead props from
-  `FilterBetweenRange`, `PanelStatus`, `Checkbox`, `EntityTitleStrip`, `IconHitTarget`,
-  `Button`, `selectTriggerStyles`, `TagGroup`, and eventually `Select` /
-  `SelectWithCombobox`.
-- Raises chart-shell/fallback reservation pass before any `ChartPanel` extraction.
+- Current branch: status-shell helper adoption and prop trimming after the broad
+  in-scope `ChartPanel` migration.
+- Remaining chart work is residual/custom only: mixed chart/table panels, table-height
+  placeholders, treemap/candlestick/HBar/custom-height compositions, market mini charts,
+  and excluded/quarantined products.
+- Remaining non-chart route-family migrations across stablecoins, bridges, RWA, token,
+  liquidations, DAT, adapter/markets, MCP, borrow, LST, and remaining CEX/detail shells.
+
+ChartPanel migration audit from the current scan:
+
+- Standard external-toolbar and full-lazy chart shells have moved to `src/ui/ChartPanel`
+  helpers in the in-scope route families above.
+- Fallback height is explicit per chart shape: `ChartPanelBodyFallback` reserves the
+  mounted-panel chart body at 360px, and `ChartPanelExportShellFallback` reserves 400px
+  only when the lazy chart component renders its own title/export toolbar.
+- Custom/dynamic-height cases stay local: RWA/RWA Perps treemap/HBar branches, DAT
+  candlestick, table-height placeholders, market mini charts, and surfaces whose height
+  depends on the active view or row count.
+- Mixed chart/table panels stay broader data surfaces, not `ChartPanel`, unless a later
+  branch explicitly separates the chart and table chrome.
+- Do not migrate table-only `Panel padding="none"` shells just because they match the
+  same primitive call; those are table route-family work, not ChartPanel work.
+
+Residual/custom chart handoff:
+
+- Case-by-case chart shell candidates from the 2026-07-09 scan include
+  `NarrativeTracker` treemap/custom 533px panels, RWA/RWA Perps 600px treemap/HBar
+  panels, DAT candlestick/custom chart branches, Liquidations distribution chart
+  `containerClassName`, Token usage 480px chart, token private-section dynamic imports,
+  and Markets mini charts (`MarketsLineChart` / `MarketsAreaChart`) with 280/300px plot
+  bodies. Do not bulk-replace these with `ChartPanel`; first decide whether the whole
+  surface is a chart panel, a mixed chart/table card, or a custom visual.
+- Table-height placeholders and blank Suspense reservations may intentionally stay as
+  plain `div min-h-*` without `role="status"` when no user-visible loading message or
+  spinner is rendered. Visible loaders/errors/empty copy should use `role="status"` /
+  `role="alert"` or the relevant status helper.
+- Chart visual debt is separate from shell debt. Axis label color, gridline alpha,
+  tooltip background/border/text, candlestick up/down literals, hardcoded series colors,
+  and chart-theme migration should be handled in a chart-theme branch with screenshot
+  checks, not as part of `ChartPanel` or status-shell cleanup. Fresh scan starters:
+  `src/components/ECharts/*`, `src/containers/ChainOverview/Smol*Chart.tsx`,
+  `src/containers/Nft/*Chart.tsx`, `src/components/ECharts/UnlocksTreemapChart`, and
+  `src/containers/Unlocks/*Chart*`.
 
 Medium pending items:
 
-- Shared-control API explicitness pass. Keep it separate from dense Card/Panel cleanup so
-  review can focus on behavior-neutral API tightening and excluded-surface boundaries.
 - Range/date popover containment spot checks when those controls are touched.
 - Remaining table toolbar/search alignment cases across route families.
 - RWA filter/table rhythm polish.
@@ -67,8 +111,8 @@ Hard or risky pending items:
 
 - Residual DialogShell cleanup and deleting the legacy `dialog` utility after remaining
   special/excluded surfaces are explicitly resolved.
-- Status-shell adoption across embedded chart bodies, which likely needs a non-`Panel`
-  helper first.
+- Remaining status-shell adoption outside the high-confidence pass: table/dropdown empty
+  rows, custom chart/table compositions, and deferred/excluded product surfaces.
 - Broad Panel/Card route-family migration for stablecoins, bridges, token, RWA, DAT,
   MCP, borrow, LST, and remaining CEX/detail shells.
 - Extracting a new `src/ui/SegmentedControl`.
@@ -78,8 +122,7 @@ Hard or risky pending items:
 
 Deferred means after the focused post-merge follow-up branches, or after the owner
 explicitly opens a branch for that work. The deferred list is not fallback work for
-dense pages, Correlations legacy-token cleanup, raises chart reservation, or
-ChartPanel extraction.
+dense pages, Correlations legacy-token cleanup, or route-family migrations.
 
 Post-merge-only list:
 
@@ -127,30 +170,28 @@ The foundation primitives now exist. Broad sweeps should start by adopting and
 verifying existing recipes, not by adding more one-off primitives unless a proven
 gap remains.
 
-1. Shared control API tightening: make intentional control/surface choices explicit
-   without changing visuals; keep excluded surfaces pinned before tightening global shared
-   `Select` / `SelectWithCombobox` props.
-2. Raises chart-shell/fallback reservation, including one investor raises page.
-3. ChartPanel extraction after the raises/chart-shell pass.
-4. Migrate remaining route families in chunks: stablecoins/bridges/RWA/token/
+1. Migrate remaining non-chart route families in chunks: stablecoins/bridges/RWA/token/
    liquidations/DAT/adapter/markets/MCP/borrow surfaces.
-5. Residual DialogShell cleanup only after the relevant surface is scoped: global search,
+2. Revisit residual chart exceptions only when scoped: mixed chart/table panels,
+   custom-height treemap/candlestick/HBar/market mini-chart surfaces, table-height
+   placeholders, and excluded products.
+3. Residual DialogShell cleanup only after the relevant surface is scoped: global search,
    metrics browse, MCP command dialogs, account/subscription, ProDashboard, LlamaAI,
    Yields, Articles, Downloads, and other quarantined products should not be swept as a
    side effect of dense-page work. Delete the legacy `dialog` utility only when all
    remaining consumers are either migrated or intentionally moved to a separate legacy
    utility.
-6. For each route family, document live verification separately from code migration:
+4. For each route family, document live verification separately from code migration:
    desktop/mobile where applicable, light/dark, 32px controls, 6px dense gaps, 8px
    group/page gaps, card/panel padding, popover containment, status states, and no chart
    visual regression.
-7. Run read-only review passes before the final cleanup: excluded-surface regression,
+5. Run read-only review passes before the final cleanup: excluded-surface regression,
    chart visual-change risk, token/hardcoded-style drift, semantic HTML/status states,
    duplicated shell/component churn, and route-family visual checklist coverage.
 
 ## Shared control API tightening backlog
 
-Current focused branch after the dense Card/Panel cleanup:
+Completed branch after the dense Card/Panel cleanup:
 `mintdart/shared-control-api-tightening`.
 
 - [x] `FilterBetweenRange`: remove the dead `name` prop; make `variant` and `size`
@@ -172,6 +213,28 @@ Current focused branch after the dense Card/Panel cleanup:
 - [ ] `Select` / `SelectWithCombobox`: in-scope callers are explicit; tighten the shared
       prop types only after ProDashboard, LlamaAI, Yields, and other excluded surfaces are
       pinned or intentionally migrated.
+
+Current prop-trim follow-up:
+
+- [x] `FilterBetweenRange` / `TVLRange`: remove unused `triggerClassName` plumbing.
+- [x] `AvailableRange`: remove redundant `variant`; the active secondary label behavior
+      is now the single recipe.
+- [x] `Card`: remove `interactive`; clickable cards carry `.hover-wash-card
+  cursor-pointer` directly at the call site.
+
+Exported class-string componentization handoff:
+
+- Small/medium candidates: `IconHitTarget` still only exports styles for one financial
+  table caller; either delete the style export or move that caller to a tiny component.
+  `MetricChip` has a component for selected chips but still exports option-chip styles;
+  add a real option-chip component before removing the style string.
+- Broad candidates: `chartSegmentedControlGroupStyles` /
+  `chartSegmentedControlButtonStyles` should become a real `SegmentedControl`, but this
+  has many chart/table callers and should be a focused branch. `searchField*Styles`
+  could become a `SearchField` component, but it has many table/page/dialog call sites.
+- Keep `Popover.ts` style exports for now. Ariakit menus/selects still need className
+  plumbing for surfaces, wrappers, rows, checks, and mobile dismiss buttons; replacing
+  those strings should happen only in a dedicated popover abstraction pass.
 
 ## src/ui primitives
 
@@ -286,10 +349,24 @@ Current focused branch after the dense Card/Panel cleanup:
       Treasury, Active Loans, Forks, and protocol Stablecoins loading/empty/error panel
       states use `PanelStatus` / `PanelLoadingStatus` with text semantics and
       `role="status"`/`role="alert"` where appropriate. CEX assets/stablecoins loading
-      and empty states also use the shared status primitives.
-- [ ] Status/Empty/Error adoption — chart-body states outside a standalone `Panel`
-      (stablecoins, adapter metrics, RWA, downloads, token private sections) need a
-      separate chart/body status helper or route-specific migration.
+      and empty states also use the shared status primitives. Body-only
+      `SurfaceBodyStatus` / `SurfaceBodyLoadingStatus` now cover embedded panel/card
+      bodies without adding another surface shell.
+- [ ] Status/Empty/Error adoption — remaining route-family/custom states need scoped
+      sweeps, especially table/dropdown empty rows, custom chart/table compositions, and
+      deferred/excluded product surfaces. Do not replace chart Suspense reservations with
+      generic status helpers when `ChartPanelBodyFallback` / `ChartPanelExportShellFallback`
+      is the correct reservation primitive.
+      Current branch also added missing roles to `AdapterMetrics/ProtocolChart`,
+      `AdapterMetrics/ChainChart`, Markets mini charts, and standalone `/chart/*`
+      visible loaders.
+- [ ] Status-role follow-up candidates from the 2026-07-09 scan: global Search
+      popover loading/error rows (`src/components/Search/index.tsx`), Add to Dashboard
+      dashboard-list loader (`src/components/AddToDashboard/AddToDashboardModal.tsx`),
+      MarketMakers rank table loading/empty states, and shared select/combobox empty-row
+      text/semantics (`SelectWithCombobox` still has a primary empty row while
+      `Select` uses tertiary). Keep global Search and popover component changes in a
+      focused branch because they affect shared mobile drawer/popover behavior.
 
 ## Composites
 
@@ -383,11 +460,12 @@ Current focused branch after the dense Card/Panel cleanup:
 - [x] Chain/Protocol chart toolbar control heights unified at 32px (md) —
       chips, Add Metrics, segmented groups, icon buttons, .csv/.png all measure 32 live.
 - [ ] Chart/table toolbar gap verification — current rule is 6px inside dense adjacent
-      control clusters and 8px between larger groups / for toolbar padding. Whole-shell
-      lazy chart reservations that previously used 398px should now use 406px for the
-      32px toolbar; inner chart-only reservations remain 360px. Apply through shared
-      recipes, then verify Chain, Protocol, stablecoins, bridges, DAT, RWA, token, and
-      table toolbars.
+      control clusters and 8px between larger groups / for toolbar padding. Suspense
+      fallback height is case-by-case: chart-only lazy content reserves 360px; lazy chart
+      components that render their own title/export toolbar reserve 400px; external
+      `ChartPanelToolbar` panels keep the toolbar mounted outside Suspense and reserve
+      only the 360px body. Apply through shared recipes, then verify Chain, Protocol,
+      stablecoins, bridges, DAT, RWA, token, and table toolbars.
 - [ ] Chart PANEL headers outside protocol tabs: remaining text-lg/text-base font-semibold
       sites per audit (protocol tab routes + unlocks + governance now done)
 
@@ -688,11 +766,13 @@ dashboard product. Sheets scope remains deferred to a separate branch.
       borderline utility modal. Correlations, ProtocolOverview/Flag, and RecentProtocols
       are no longer examples. Account/subscription, ProDashboard, LlamaAI, Yields,
       Articles/Downloads, and Sheets/auth remain excluded or separately scoped.
-- [ ] Status-shell adoption: only 13 files use PanelStatus/PanelLoadingStatus; ~57
-      in-scope files hand-roll `min-h-[360px]` shells (many are legit lazy-chart
-      reservations — separate the status shells from reservations when sweeping;
-      clusters: pages/protocol/\* (10), RWA (7), DAT (3), Token (3)). A non-Panel
-      chart-body status variant is needed for embedded contexts.
+- [ ] Status-shell adoption: first high-confidence body/full-panel pass covers NFT
+      royalties, trending contracts, CEX markets, ChainsByCategory shared chart state,
+      token overview chart-body states, investor-relations gated state, borrow, compare
+      placeholders, watchlists, and LiquidationsV2 access-gate states. Remaining
+      hand-rolled `min-h-[360px]` matches need a fresh scope filter because many are
+      valid lazy-chart reservations, custom chart/table compositions, or excluded
+      products.
 - [ ] Manual csv/png export compositions → ChartExportButtons (7 files: RWA/index,
       ECharts/BarChart, Token/TokenUsageSection, ChainChartPanel, ProtocolChartPanel,
       IncomeStatement, pages/token-usage). ChartExportButtons already has 46 sites.

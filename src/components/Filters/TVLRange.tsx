@@ -10,7 +10,6 @@ export function TVLRange({
 	variant = 'primary',
 	size = 'sm',
 	nestedMenu,
-	triggerClassName,
 	placement,
 	onValueChange,
 	resetPageOnChange,
@@ -19,7 +18,6 @@ export function TVLRange({
 	variant?: 'primary' | 'secondary'
 	size?: 'sm' | 'md'
 	nestedMenu?: boolean
-	triggerClassName?: string
 	placement?: Ariakit.PopoverStoreProps['placement']
 	onValueChange?: (min: number | null, max: number | null) => void
 	resetPageOnChange?: boolean
@@ -91,7 +89,6 @@ export function TVLRange({
 			nestedMenu={nestedMenu}
 			min={min}
 			max={max}
-			triggerClassName={triggerClassName}
 			placement={placement}
 		/>
 	)

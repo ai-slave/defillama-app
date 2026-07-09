@@ -6,6 +6,7 @@ import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { Panel } from '~/ui/Panel'
+import { SurfaceBodyStatus, type StatusVariant } from '~/ui/Status'
 import type { NavLink } from './api.types'
 
 interface LiquidationsShellChromeProps {
@@ -17,6 +18,8 @@ interface LiquidationsShellChromeProps {
 
 interface LiquidationsShellCardProps extends LiquidationsShellChromeProps {
 	children: React.ReactNode
+	statusVariant?: StatusVariant
+	textClassName?: string
 }
 
 function LiquidationsShellChrome({
@@ -38,7 +41,9 @@ function LiquidationsShellCard({
 	protocolLinks,
 	chainLinks,
 	activeProtocolLink,
-	activeChainLink
+	activeChainLink,
+	statusVariant = 'empty',
+	textClassName = 'body-md text-secondary'
 }: LiquidationsShellCardProps) {
 	return (
 		<>
@@ -49,8 +54,15 @@ function LiquidationsShellCard({
 				activeChainLink={activeChainLink}
 			/>
 
-			<Panel padding="none" className="min-h-[380px] w-full flex-1 items-center justify-center">
-				<div className="flex max-w-xl flex-col items-center gap-3 px-6 py-8 text-center">{children}</div>
+			<Panel padding="none" className="w-full flex-1">
+				<SurfaceBodyStatus
+					variant={statusVariant}
+					className="min-h-[380px]"
+					contentClassName="flex max-w-xl flex-col items-center gap-3 px-6 py-8"
+					textClassName={textClassName}
+				>
+					{children}
+				</SurfaceBodyStatus>
 			</Panel>
 		</>
 	)
@@ -58,7 +70,7 @@ function LiquidationsShellCard({
 
 export function LiquidationsShellLoader(props: LiquidationsShellChromeProps) {
 	return (
-		<LiquidationsShellCard {...props}>
+		<LiquidationsShellCard {...props} statusVariant="loading" textClassName="body-sm text-tertiary">
 			<LocalLoader />
 			<p className="body-sm text-tertiary">Loading liquidations data...</p>
 		</LiquidationsShellCard>
@@ -70,10 +82,8 @@ export function LiquidationsShellError({
 	...props
 }: LiquidationsShellChromeProps & { errorMessage: string }) {
 	return (
-		<LiquidationsShellCard {...props}>
-			<p role="alert" className="body-sm text-data-down">
-				{errorMessage}
-			</p>
+		<LiquidationsShellCard {...props} statusVariant="error" textClassName="body-sm text-data-down">
+			{errorMessage}
 		</LiquidationsShellCard>
 	)
 }

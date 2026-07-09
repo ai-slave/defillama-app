@@ -19,9 +19,10 @@ import { BRIDGES_SHOWING_ADDRESSES, useLocalStorageSettingsManager } from '~/con
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Panel } from '~/ui/Panel'
-import { ChartPanelToolbar, TableToolbar } from '~/ui/Toolbar'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, getPercentChange, slug } from '~/utils'
 import {
 	buildBridgeProtocolAllChainsVolumeData,
@@ -197,7 +198,7 @@ export const BridgeInfo = ({
 					) : null}
 				</Card>
 
-				<Panel padding="none" className="col-span-2">
+				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						<TagGroup
 							variant="default"
@@ -219,7 +220,7 @@ export const BridgeInfo = ({
 					</ChartPanelToolbar>
 					<>
 						{chartType === 'Volume' && isAllChains && groupedAllChainsVolumePairs.length > 0 ? (
-							<React.Suspense fallback={<div className="min-h-[360px]" />}>
+							<React.Suspense fallback={<ChartPanelBodyFallback />}>
 								<MultiSeriesChart2
 									dataset={deferredVolumeDataset}
 									charts={VOLUME_CHARTS}
@@ -230,7 +231,7 @@ export const BridgeInfo = ({
 							</React.Suspense>
 						) : null}
 						{chartType === 'Inflows' && !isAllChains && groupedInflowsData && groupedInflowsData.length > 0 ? (
-							<React.Suspense fallback={<div className="min-h-[360px]" />}>
+							<React.Suspense fallback={<ChartPanelBodyFallback />}>
 								<MultiSeriesChart2
 									dataset={deferredInflowsDataset}
 									charts={INFLOW_CHARTS}
@@ -241,17 +242,17 @@ export const BridgeInfo = ({
 							</React.Suspense>
 						) : null}
 						{chartType === 'Tokens To' && deferredTokenWithdrawals && deferredTokenWithdrawals.length > 0 ? (
-							<React.Suspense fallback={<div className="min-h-[360px]" />}>
+							<React.Suspense fallback={<ChartPanelBodyFallback />}>
 								<PieChart chartData={deferredTokenWithdrawals} onReady={handleChartReady} />
 							</React.Suspense>
 						) : null}
 						{chartType === 'Tokens From' && deferredTokenDeposits && deferredTokenDeposits.length > 0 ? (
-							<React.Suspense fallback={<div className="min-h-[360px]" />}>
+							<React.Suspense fallback={<ChartPanelBodyFallback />}>
 								<PieChart chartData={deferredTokenDeposits} onReady={handleChartReady} />
 							</React.Suspense>
 						) : null}
 					</>
-				</Panel>
+				</ChartPanel>
 			</div>
 			<Panel padding="none">
 				<TableToolbar className="items-end justify-between">

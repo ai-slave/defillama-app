@@ -6,7 +6,9 @@ import { CHART_COLORS } from '~/constants/colors'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { Card } from '~/ui/Card'
+import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
+import { PanelStatus } from '~/ui/Status'
 import { formattedNum, getTokenDominance, slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
@@ -63,12 +65,10 @@ export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData 
 		<>
 			<RowLinksWithDropdown links={forkLinks} activeLink={fork} alternativeOthersText="Others" />
 			{isLoading ? (
-				<Panel padding="md" className="flex-1 items-center justify-center">
-					<p role="status" aria-live="polite" className="flex items-center gap-1 body-sm text-tertiary">
-						Loading
-						<LoadingDots />
-					</p>
-				</Panel>
+				<PanelStatus variant="loading" textClassName="flex items-center gap-1">
+					Loading
+					<LoadingDots />
+				</PanelStatus>
 			) : (
 				<>
 					<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
@@ -89,8 +89,8 @@ export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData 
 							</p>
 						</Card>
 
-						<Panel padding="none" className="col-span-2">
-							<Suspense fallback={<div className="min-h-[406px]" />}>
+						<ChartPanel className="col-span-2">
+							<Suspense fallback={<ChartPanelExportShellFallback />}>
 								<MultiSeriesChart2
 									dataset={dataset}
 									charts={charts}
@@ -104,7 +104,7 @@ export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData 
 									}}
 								/>
 							</Suspense>
-						</Panel>
+						</ChartPanel>
 					</div>
 					<Suspense
 						fallback={<Panel padding="none" style={{ minHeight: `${protocolTableData.length * 50 + 200}px` }} />}

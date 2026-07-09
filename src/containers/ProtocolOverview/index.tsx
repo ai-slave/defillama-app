@@ -8,7 +8,7 @@ import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { Panel } from '~/ui/Panel'
+import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { formattedNum } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { AdditionalInfo } from './AdditionalInfo'
@@ -100,7 +100,13 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 								headingAs="div"
 							/>
 						</Card>
-						<Suspense fallback={<Panel padding="none" className="min-h-[400px]" />}>
+						<Suspense
+							fallback={
+								<ChartPanel>
+									<ChartPanelExportShellFallback />
+								</ChartPanel>
+							}
+						>
 							<ProtocolChartPanel {...props} />
 						</Suspense>
 					</div>

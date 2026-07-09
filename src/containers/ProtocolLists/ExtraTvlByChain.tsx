@@ -10,7 +10,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/components/Tooltip'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { Card } from '~/ui/Card'
-import { Panel } from '~/ui/Panel'
+import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { formattedNum, slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import type { ExtraTvlMetric, IExtraTvlByChainPageData, IExtraTvlProtocolRow } from './types'
@@ -84,8 +84,8 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 						</div>
 					</div>
 				</Card>
-				<Panel padding="none" className="col-span-2">
-					<Suspense fallback={<div className="min-h-[406px]" />}>
+				<ChartPanel className="col-span-2">
+					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart2
 							exportButtons={{
 								png: true,
@@ -98,7 +98,7 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 							charts={props.charts}
 						/>
 					</Suspense>
-				</Panel>
+				</ChartPanel>
 			</div>
 			<TableWithSearch
 				data={props.protocols}
