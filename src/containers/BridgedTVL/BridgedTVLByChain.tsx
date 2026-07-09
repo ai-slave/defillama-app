@@ -12,6 +12,7 @@ import { createInflowsTooltipFormatter } from '~/components/ECharts/formatters'
 import type { IPieChartProps } from '~/components/ECharts/types'
 import { preparePieChartData } from '~/components/ECharts/utils'
 import { FormattedName } from '~/components/FormattedName'
+import { MetricRow } from '~/components/MetricPrimitives'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SegmentedControl } from '~/components/SegmentedControl'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -19,8 +20,8 @@ import { LinkPreviewCard } from '~/components/SEO'
 import { VirtualTable } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formattedNum, slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import type { RawChainAsset } from './api.types'
@@ -151,46 +152,33 @@ export function BridgedTVLByChain({
 		<>
 			<LinkPreviewCard cardName={chainName} token={chain} />
 			<RowLinksWithDropdown links={chains} activeLink={chainName} />
-			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card padding="md" className="col-span-2 flex w-full flex-col gap-3 overflow-x-auto xl:col-span-1">
+			<SummaryCardGrid>
+				<SummaryStatsCard gap="sm">
 					<h1 className="mb-3 flex items-center gap-2 heading-sm">
 						<TokenLogo name={chain} kind="chain" size={24} alt={`Logo of ${chain}`} />
 						<FormattedName text={chainName + ' Bridged TVL'} fontWeight={700} />
 						{deprecated ? <DeprecatedEntityText /> : null}
 					</h1>
 
-					<p className="mb-3 flex flex-col gap-1 text-base">
-						<span className="text-secondary">Total</span>
-						<span className="font-jetbrains text-2xl font-semibold">
-							{formattedNum(
-								+(chainData?.total?.total ?? 0) + (chainData?.ownTokens?.total ? +chainData.ownTokens.total : 0),
-								true
-							)}
-						</span>
-					</p>
+					<StatItem
+						label="Total"
+						className="mb-3"
+						value={formattedNum(
+							+(chainData?.total?.total ?? 0) + (chainData?.ownTokens?.total ? +chainData.ownTokens.total : 0),
+							true
+						)}
+					/>
 
-					<p className="flex items-center justify-between gap-1 text-base">
-						<span className="text-secondary">Canonical</span>
-						<span className="font-jetbrains">{formattedNum(chainData?.canonical?.total, true)}</span>
-					</p>
+					<div className="flex flex-col">
+						<MetricRow label="Canonical" value={formattedNum(chainData?.canonical?.total, true)} />
+						<MetricRow label="Native" value={formattedNum(chainData?.native?.total, true)} />
+						<MetricRow label="Third Party" value={formattedNum(chainData?.thirdParty?.total, true)} />
 
-					<p className="flex items-center justify-between gap-1 text-base">
-						<span className="text-secondary">Native</span>
-						<span className="font-jetbrains">{formattedNum(chainData?.native?.total, true)}</span>
-					</p>
-
-					<p className="flex items-center justify-between gap-1 text-base">
-						<span className="text-secondary">Third Party</span>
-						<span className="font-jetbrains">{formattedNum(chainData?.thirdParty?.total, true)}</span>
-					</p>
-
-					{chainData?.ownTokens?.total ? (
-						<p className="flex items-center justify-between gap-1 text-base">
-							<span className="text-secondary">Own Tokens</span>
-							<span className="font-jetbrains">{formattedNum(chainData?.ownTokens.total, true)}</span>
-						</p>
-					) : null}
-				</Card>
+						{chainData?.ownTokens?.total ? (
+							<MetricRow label="Own Tokens" value={formattedNum(chainData?.ownTokens.total, true)} />
+						) : null}
+					</div>
+				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						<SegmentedControl
@@ -247,8 +235,8 @@ export function BridgedTVLByChain({
 						</React.Suspense>
 					) : null}
 				</ChartPanel>
-			</div>
-			{chartType !== 'inflows' ? <VirtualTable instance={instance} skipVirtualization /> : null}
+			</SummaryCardGrid>
+			{chartType !== 'inflows' ? <VirtualTable instance={instance} /> : null}
 		</>
 	)
 }

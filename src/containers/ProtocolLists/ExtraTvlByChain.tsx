@@ -9,8 +9,8 @@ import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
-import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formattedNum, slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import type { ExtraTvlMetric, IExtraTvlByChainPageData, IExtraTvlProtocolRow } from './types'
@@ -42,48 +42,35 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 	return (
 		<>
 			<RowLinksWithDropdown links={props.chains} activeLink={props.chain} />
-			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card className="col-span-3 w-full overflow-x-auto xl:col-span-1" padding="sm">
-					<div className="flex flex-col gap-6 text-base">
-						{props.chain !== 'All' ? (
-							<h1 className="flex flex-nowrap items-center gap-2">
-								<TokenLogo name={props.chain} kind="chain" size={24} alt={`Logo of ${props.chain}`} />
-								<span className="heading-sm">{props.chain}</span>
-							</h1>
+			<SummaryCardGrid>
+				<SummaryStatsCard padding="sm">
+					{props.chain !== 'All' ? (
+						<h1 className="flex flex-nowrap items-center gap-2">
+							<TokenLogo name={props.chain} kind="chain" size={24} alt={`Logo of ${props.chain}`} />
+							<span className="heading-sm">{props.chain}</span>
+						</h1>
+					) : null}
+					<div className="flex flex-wrap items-end justify-between gap-4">
+						<StatItem
+							label={metricInfo.header}
+							labelAs={props.chain === 'All' ? 'h1' : 'span'}
+							value={formattedNum(props.totalValue, true)}
+							truncate
+						/>
+						{props.change24h != null ? (
+							<p className="relative bottom-0.5 flex flex-nowrap items-center gap-2 text-sm">
+								<span
+									className={`text-right font-jetbrains text-ellipsis ${
+										props.change24h >= 0 ? 'text-data-up' : 'text-data-down'
+									}`}
+								>
+									{`${props.change24h >= 0 ? '+' : ''}${props.change24h}%`}
+								</span>
+								<span className="text-secondary">24h</span>
+							</p>
 						) : null}
-						<div className="flex flex-wrap items-end justify-between gap-4">
-							{props.chain === 'All' ? (
-								<div className="flex flex-col">
-									<h1 className="text-secondary">{metricInfo.header}</h1>
-									<p className="min-h-8 overflow-hidden font-jetbrains text-2xl font-semibold text-ellipsis whitespace-nowrap">
-										{formattedNum(props.totalValue, true)}
-									</p>
-								</div>
-							) : (
-								<p className="flex flex-col">
-									<span className="flex flex-col">
-										<span className="text-secondary">{metricInfo.header}</span>
-										<span className="min-h-8 overflow-hidden font-jetbrains text-2xl font-semibold text-ellipsis whitespace-nowrap">
-											{formattedNum(props.totalValue, true)}
-										</span>
-									</span>
-								</p>
-							)}
-							{props.change24h != null ? (
-								<p className="relative bottom-0.5 flex flex-nowrap items-center gap-2 text-sm">
-									<span
-										className={`text-right font-jetbrains text-ellipsis ${
-											props.change24h >= 0 ? 'text-data-up' : 'text-data-down'
-										}`}
-									>
-										{`${props.change24h >= 0 ? '+' : ''}${props.change24h}%`}
-									</span>
-									<span className="text-secondary">24h</span>
-								</p>
-							) : null}
-						</div>
 					</div>
-				</Card>
+				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart2
@@ -99,7 +86,7 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 						/>
 					</Suspense>
 				</ChartPanel>
-			</div>
+			</SummaryCardGrid>
 			<TableWithSearch
 				data={props.protocols}
 				columns={buildColumns(props.metric)}

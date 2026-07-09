@@ -39,9 +39,9 @@ import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { setStorageItem } from '~/contexts/localStorageStore'
 import { addFeeExtrasToRowTotals, hasEnabledFeeExtras, isFeeExtraEligibleAdapterMetric } from '~/metrics/feeExtras'
 import { definitions } from '~/public/definitions'
-import { Card } from '~/ui/Card'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug, getMarketCapToAnnualizedMetricRatio } from '~/utils'
 import { parseExcludeParam } from '~/utils/routerQuery'
@@ -294,8 +294,8 @@ export function AdapterByChain(props: IProps) {
 				/>
 			) : null}
 			{showChartPanel ? (
-				<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-					<Card padding="sm" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+				<SummaryCardGrid>
+					<SummaryStatsCard padding="sm">
 						{props.chain !== 'All' ? (
 							<h1 className="flex flex-nowrap items-center gap-2">
 								<TokenLogo name={props.chain} kind="chain" size={24} alt={`Logo of ${props.chain}`} />
@@ -303,34 +303,23 @@ export function AdapterByChain(props: IProps) {
 								{props.deprecated ? <DeprecatedEntityText /> : null}
 							</h1>
 						) : props.total24h != null ? (
-							<div className="flex flex-col">
-								<h1 className="text-secondary">{metricName} (24h)</h1>
-								<p className="min-h-8 overflow-hidden font-jetbrains text-2xl font-semibold text-ellipsis whitespace-nowrap">
-									{formattedNum(props.total24h, true)}
-								</p>
-							</div>
+							<StatItem
+								label={`${metricName} (24h)`}
+								labelAs="h1"
+								value={formattedNum(props.total24h, true)}
+								truncate
+							/>
 						) : (
 							<h1 className="text-secondary">{metricName}</h1>
 						)}
 
 						{props.chain !== 'All' && props.total24h != null ? (
-							<p className="flex flex-col">
-								<span className="flex flex-col">
-									{(() => {
-										const definition = pageTypeByDefinition[props.type]?.['24h']
-										return definition ? (
-											<Tooltip content={definition} className="body-sm text-secondary underline decoration-dotted">
-												{metricName} (24h)
-											</Tooltip>
-										) : (
-											<span className="body-sm text-secondary">{metricName} (24h)</span>
-										)
-									})()}
-									<span className="min-h-8 overflow-hidden font-jetbrains text-2xl font-semibold text-ellipsis whitespace-nowrap">
-										{formattedNum(props.total24h, true)}
-									</span>
-								</span>
-							</p>
+							<StatItem
+								label={`${metricName} (24h)`}
+								tooltip={pageTypeByDefinition[props.type]?.['24h']}
+								value={formattedNum(props.total24h, true)}
+								truncate
+							/>
 						) : null}
 
 						<div className="flex flex-col">
@@ -364,7 +353,7 @@ export function AdapterByChain(props: IProps) {
 								/>
 							) : null}
 						</div>
-					</Card>
+					</SummaryStatsCard>
 					<AdapterByChainChart
 						chartData={props.chartData}
 						adapterType={props.adapterType}
@@ -373,7 +362,7 @@ export function AdapterByChain(props: IProps) {
 						dataType={props.dataType}
 						tableProtocols={protocols}
 					/>
-				</div>
+				</SummaryCardGrid>
 			) : null}
 			{props.chain === 'All' ? <NewsletterSignup layout="strip" /> : null}
 			<Panel padding="none">

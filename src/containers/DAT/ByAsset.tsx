@@ -11,7 +11,7 @@ import { Tooltip } from '~/components/Tooltip'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { Panel } from '~/ui/Panel'
+import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formattedNum } from '~/utils'
 import type { IDATOverviewDataByAssetProps } from './types'
 
@@ -39,8 +39,8 @@ export function DATByAsset({
 	return (
 		<>
 			<RowLinksWithDropdown links={allAssets} activeLink={metadata.name} />
-			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Panel padding="md" className="col-span-2 w-full gap-6 overflow-x-auto xl:col-span-1">
+			<SummaryCardGrid>
+				<SummaryStatsCard>
 					<Tooltip
 						render={<h1 />}
 						content={`Institutions that own ${metadata.name} as part of their corporate treasury`}
@@ -65,7 +65,7 @@ export function DATByAsset({
 					<Button as={BasicLink} href="/report-error" size="md" className="mt-auto mr-auto">
 						Report incorrect data
 					</Button>
-				</Panel>
+				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart2
@@ -88,7 +88,7 @@ export function DATByAsset({
 						/>
 					</Suspense>
 				</ChartPanel>
-			</div>
+			</SummaryCardGrid>
 			<div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
 				<MNAVChart
 					key={`realized-${stableInstitutionsKey}`}

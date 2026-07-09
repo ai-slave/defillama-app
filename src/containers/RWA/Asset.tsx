@@ -22,6 +22,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button, buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { StatItem } from '~/ui/SummaryStats'
 import { formattedNum, truncateAddress } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import type { IRWAAssetData } from './api.types'
@@ -477,19 +478,20 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 				</Tooltip>
 
 				{asset.price != null ? (
-					<Card padding="sm" className="flex flex-1 flex-col gap-1">
-						<span className="text-secondary">{asset.ticker ?? 'Token'} Price</span>
-						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(asset.price, true)}</span>
+					<Card padding="sm" className="flex-1">
+						<StatItem
+							className="gap-1"
+							label={`${asset.ticker ?? 'Token'} Price`}
+							value={formattedNum(asset.price, true)}
+						/>
 					</Card>
 				) : null}
-				<Card padding="sm" className="flex flex-1 flex-col gap-1">
-					<span className="text-secondary">Chains</span>
-					<span className="font-jetbrains text-2xl font-semibold">{asset.chain?.length ?? 0}</span>
+				<Card padding="sm" className="flex-1">
+					<StatItem className="gap-1" label="Chains" value={asset.chain?.length ?? 0} />
 				</Card>
 				{asset.nativeYieldCurrent != null ? (
-					<Card padding="sm" className="flex flex-1 flex-col gap-1">
-						<span className="text-secondary">Native Yield</span>
-						<span className="font-jetbrains text-2xl font-semibold">{asset.nativeYieldCurrent.toFixed(2)}%</span>
+					<Card padding="sm" className="flex-1">
+						<StatItem className="gap-1" label="Native Yield" value={`${asset.nativeYieldCurrent.toFixed(2)}%`} />
 					</Card>
 				) : null}
 			</div>

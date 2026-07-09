@@ -3,8 +3,8 @@ import * as React from 'react'
 import { Announcement } from '~/components/Announcement'
 import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { RaisesFilters } from '~/containers/Raises/Filters'
-import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formattedNum } from '~/utils'
 import { useRaisesData } from './hooks'
 import { RaisesTable } from './Table'
@@ -78,17 +78,11 @@ const RaisesContainer = ({ raises, investors, rounds, sectors, chains, investorN
 				pathname={pathname}
 			/>
 
-			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card padding="sm" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
-					<p className="flex flex-col gap-1">
-						<span className="text-secondary">Total Funding Rounds</span>
-						<span className="font-jetbrains text-2xl font-semibold">{filteredRaisesList.length}</span>
-					</p>
-					<p className="flex flex-col gap-1">
-						<span className="text-secondary">Total Funding Amount</span>
-						<span className="font-jetbrains text-2xl font-semibold">${formattedNum(totalAmountRaised)}</span>
-					</p>
-				</Card>
+			<SummaryCardGrid>
+				<SummaryStatsCard padding="sm">
+					<StatItem label="Total Funding Rounds" value={filteredRaisesList.length} />
+					<StatItem label="Total Funding Amount" value={`$${formattedNum(totalAmountRaised)}`} />
+				</SummaryStatsCard>
 
 				<ChartPanel className="col-span-2">
 					<React.Suspense fallback={<ChartPanelExportShellFallback />}>
@@ -106,7 +100,7 @@ const RaisesContainer = ({ raises, investors, rounds, sectors, chains, investorN
 						/>
 					</React.Suspense>
 				</ChartPanel>
-			</div>
+			</SummaryCardGrid>
 
 			<RaisesTable raises={filteredRaisesList} />
 		</>

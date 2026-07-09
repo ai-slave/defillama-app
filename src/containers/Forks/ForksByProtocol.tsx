@@ -5,10 +5,10 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelStatus } from '~/ui/Status'
+import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formattedNum, getTokenDominance, slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
@@ -71,23 +71,18 @@ export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData 
 				</PanelStatus>
 			) : (
 				<>
-					<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-						<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+					<SummaryCardGrid>
+						<SummaryStatsCard>
 							<h1 className="flex items-center gap-2 heading-sm">
 								<TokenLogo name={fork} kind="token" size={24} alt={`Logo of ${fork}`} />
 								{fork}
 							</h1>
-							<p className="flex flex-col">
-								<span className="text-secondary">TVL in Forks (USD)</span>
-								<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalValue, true)}</span>
-							</p>
-							<p className="flex flex-col">
-								<span className="text-secondary">{topProtocol?.name ?? 'Top Protocol'} Dominance</span>
-								<span className="font-jetbrains text-2xl font-semibold">
-									{dominanceText == null ? 'N/A' : `${dominanceText}%`}
-								</span>
-							</p>
-						</Card>
+							<StatItem label="TVL in Forks (USD)" value={formattedNum(totalValue, true)} />
+							<StatItem
+								label={<>{topProtocol?.name ?? 'Top Protocol'} Dominance</>}
+								value={dominanceText == null ? 'N/A' : `${dominanceText}%`}
+							/>
+						</SummaryStatsCard>
 
 						<ChartPanel className="col-span-2">
 							<Suspense fallback={<ChartPanelExportShellFallback />}>
@@ -105,7 +100,7 @@ export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData 
 								/>
 							</Suspense>
 						</ChartPanel>
-					</div>
+					</SummaryCardGrid>
 					<Suspense
 						fallback={<Panel padding="none" style={{ minHeight: `${protocolTableData.length * 50 + 200}px` }} />}
 					>

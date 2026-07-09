@@ -25,6 +25,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formattedNum } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -311,21 +312,12 @@ export default function Protocols({
 				</a>
 			</Announcement>
 
-			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+			<SummaryCardGrid>
+				<SummaryStatsCard>
 					<h1 className="heading-sm">Unlock Statistics</h1>
-					<p className="flex flex-col">
-						<span className="text-secondary">Total Protocols Tracked</span>
-						<span className="font-jetbrains text-2xl font-semibold">{totalProtocols}</span>
-					</p>
-					<p className="flex flex-col">
-						<span className="text-secondary">Upcoming Unlocks (7d)</span>
-						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(upcomingUnlocks7dValue, true)}</span>
-					</p>
-					<p className="flex flex-col">
-						<span className="text-secondary">Upcoming Unlocks (30d)</span>
-						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(upcomingUnlocks30dValue, true)}</span>
-					</p>
+					<StatItem label="Total Protocols Tracked" value={totalProtocols} />
+					<StatItem label="Upcoming Unlocks (7d)" value={formattedNum(upcomingUnlocks7dValue, true)} />
+					<StatItem label="Upcoming Unlocks (30d)" value={formattedNum(upcomingUnlocks30dValue, true)} />
 					<BasicLink
 						href="/unlocks/calendar"
 						className="mt-auto flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
@@ -333,11 +325,11 @@ export default function Protocols({
 						<span>View unlocks calendar</span>
 						<Icon name="arrow-right" className="size-4" />
 					</BasicLink>
-				</Card>
+				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<UpcomingUnlockVolumeChart protocols={chartProtocols} initialNowSec={generatedAtSec} />
 				</ChartPanel>
-			</div>
+			</SummaryCardGrid>
 
 			<div className="isolate grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
 				<Card padding="sm" className="col-span-1 flex flex-col gap-3">

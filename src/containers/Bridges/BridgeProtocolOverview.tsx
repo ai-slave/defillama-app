@@ -10,7 +10,6 @@ import { Icon } from '~/components/Icon'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TagGroup } from '~/components/TagGroup'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Tooltip } from '~/components/Tooltip'
 import { BridgeAddressesTable } from '~/containers/Bridges/BridgeAddressesTable'
 import { BridgeChainSelector } from '~/containers/Bridges/BridgeChainSelector'
 import { BridgeTokensTable } from '~/containers/Bridges/BridgeTokensTable'
@@ -18,10 +17,10 @@ import { AddressesTableSwitch } from '~/containers/Bridges/TableSwitch'
 import { BRIDGES_SHOWING_ADDRESSES, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
-import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Panel } from '~/ui/Panel'
+import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, getPercentChange, slug } from '~/utils'
 import {
@@ -138,52 +137,36 @@ export const BridgeInfo = ({
 					/>
 				}
 			/>
-			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card padding="sm" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+			<SummaryCardGrid>
+				<SummaryStatsCard padding="sm">
 					{isAllChains ? (
-						<>
-							<p className="flex flex-col gap-1">
-								<span className="inline-flex items-center gap-1 text-secondary">
-									Total Volume ({windowLabel})
-									<Tooltip
-										content={
-											'Volume equals (Deposited + Withdrawn)/2 over the same rolling window used by the bridges overview.'
-										}
-									>
-										<Icon name="help-circle" height={14} width={14} />
-									</Tooltip>
-								</span>
-								<span className="font-jetbrains text-2xl font-semibold">
-									{formattedNum(prevDayVolumeValue || '0', true)}
-								</span>
-							</p>
-						</>
+						<StatItem
+							label={<>Total Volume ({windowLabel})</>}
+							tooltip="Volume equals (Deposited + Withdrawn)/2 over the same rolling window used by the bridges overview."
+							value={formattedNum(prevDayVolumeValue || '0', true)}
+						/>
 					) : (
 						<>
-							<p className="flex flex-col gap-1">
-								<span className="text-secondary">
-									Deposited to {currentChain} ({windowLabel})
-								</span>
-								<span className="font-jetbrains text-2xl font-semibold">
-									{formattedNum(currentDepositsUSD || '0', true)}
-								</span>
-							</p>
-
-							<p className="flex flex-col gap-1">
-								<span className="text-secondary">
-									Withdrawn from {currentChain} ({windowLabel})
-								</span>
-								<span className="font-jetbrains text-2xl font-semibold">
-									{formattedNum(currentWithdrawalsUSD || '0', true)}
-								</span>
-							</p>
+							<StatItem
+								label={
+									<>
+										Deposited to {currentChain} ({windowLabel})
+									</>
+								}
+								value={formattedNum(currentDepositsUSD || '0', true)}
+							/>
+							<StatItem
+								label={
+									<>
+										Withdrawn from {currentChain} ({windowLabel})
+									</>
+								}
+								value={formattedNum(currentWithdrawalsUSD || '0', true)}
+							/>
 						</>
 					)}
 
-					<p className="flex flex-col gap-1">
-						<span className="text-secondary">Volume Change (prev day)</span>
-						<span className="font-jetbrains text-2xl font-semibold">{volPercentChange + '%'}</span>
-					</p>
+					<StatItem label="Volume Change (prev day)" value={volPercentChange + '%'} />
 					{config?.url ? (
 						<Button
 							as="a"
@@ -196,7 +179,7 @@ export const BridgeInfo = ({
 							<span>Website</span> <Icon name="arrow-up-right" className="size-4" />
 						</Button>
 					) : null}
-				</Card>
+				</SummaryStatsCard>
 
 				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
@@ -253,7 +236,7 @@ export const BridgeInfo = ({
 						) : null}
 					</>
 				</ChartPanel>
-			</div>
+			</SummaryCardGrid>
 			<Panel padding="none">
 				<TableToolbar className="items-end justify-between">
 					<AddressesTableSwitch />

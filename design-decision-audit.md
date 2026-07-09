@@ -878,3 +878,22 @@ bg-surface-elevated-2` opaque step per the documented Select-trigger exception.
   labels); variant 3's `label-md` rows are a documented exception. Codified in
   design.md § Summary metric cards; StablecoinOverview intentionally NOT migrated
   to MetricRow.
+
+### 2026-07-09 SummaryStats Extraction (branch `mintdart/summary-stats-card`)
+
+- New `ui/SummaryStats.tsx`: `SummaryCardGrid` / `SummaryStatsCard` / `StatItem`
+  replace the summary-card layout copy-pasted across 19 route files, plus the
+  standalone stat stacks (RWA tile grids, home TVL). Deliberately NOT the
+  audited mega-component (title/stats/chart props): titles, change badges,
+  footers, and collapsible bodies stay callsite JSX — recipes own chrome,
+  callsites own layout. StablecoinOverview body untouched (variant 3).
+- Deliberate normalizations for owner eyeball: stat label/value gap unifies on
+  plain flex-col (4 files lose gap-1); NFT/BridgedTVL 16px label inheritance
+  drops to the standard 14px; BridgeProtocolOverview help-icon tooltip becomes
+  the dotted underline; ExtraTvlByChain col-span-3 quirk normalizes;
+  DAT/ByAsset gains real gap-6 (was inert on a block Panel); BridgedTVL 16px
+  rows become MetricRows.
+- Bug found and fixed (shipped in #3117): ProtocolTaxonomy DEX-volume row label
+  rendered as a literal `{getProtocolCategoryDexVolumeLabel(...)}` string.
+- Remaining StatItem shapes backlogged as opportunistic adoptions (card-anchored
+  tooltips, local StatCard helpers, colored TokenPnl values).

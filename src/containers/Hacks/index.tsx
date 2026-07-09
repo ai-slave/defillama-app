@@ -22,10 +22,10 @@ import { TagGroup } from '~/components/TagGroup'
 import { Tooltip } from '~/components/Tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { firstDayOfMonth, formattedNum, toNiceDayMonthAndYear } from '~/utils'
 import { isParamNone, parseArrayParam, parseExcludeParam, parseNumberQueryParam } from '~/utils/routerQuery'
@@ -340,21 +340,12 @@ export const HacksContainer = ({
 				selectedTechniques={selectedTechniques}
 				selectedClassifications={selectedClassifications}
 			/>
-			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card padding="sm" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
-					<div className="flex flex-col">
-						<h1 className="text-secondary">Total Value Hacked (USD)</h1>
-						<p className="font-jetbrains text-2xl font-semibold">{displayTotalHacked}</p>
-					</div>
-					<p className="flex flex-col">
-						<span className="text-secondary">Total Value Hacked in DeFi (USD)</span>
-						<span className="font-jetbrains text-2xl font-semibold">{displayTotalHackedDefi}</span>
-					</p>
-					<p className="flex flex-col">
-						<span className="text-secondary">Total Value Hacked in Bridges (USD)</span>
-						<span className="font-jetbrains text-2xl font-semibold">{displayTotalRugs}</span>
-					</p>
-				</Card>
+			<SummaryCardGrid>
+				<SummaryStatsCard padding="sm">
+					<StatItem label="Total Value Hacked (USD)" labelAs="h1" value={displayTotalHacked} />
+					<StatItem label="Total Value Hacked in DeFi (USD)" value={displayTotalHackedDefi} />
+					<StatItem label="Total Value Hacked in Bridges (USD)" value={displayTotalRugs} />
+				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end *:first:mr-auto">
 						<TagGroup
@@ -385,7 +376,7 @@ export const HacksContainer = ({
 						</React.Suspense>
 					)}
 				</ChartPanel>
-			</div>
+			</SummaryCardGrid>
 			<HacksTable data={filteredData} />
 		</>
 	)

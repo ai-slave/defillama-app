@@ -9,9 +9,9 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
+import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formattedNum, getTokenDominance, slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import {
@@ -216,20 +216,12 @@ export const OracleOverview = ({
 		<>
 			<RowLinksWithDropdown links={chainLinks} activeLink={chain ?? 'All'} />
 
-			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+			<SummaryCardGrid>
+				<SummaryStatsCard>
 					<h1 className="heading-sm">{displayOracle}</h1>
-					<p className="flex flex-col">
-						<span className="text-secondary">Total Value Secured (USD)</span>
-						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalValue, true)}</span>
-					</p>
-					<p className="flex flex-col">
-						<span className="text-secondary">{dominanceLabel}</span>
-						<span className="font-jetbrains text-2xl font-semibold">
-							{dominanceText === null ? 'N/A' : `${dominanceText}%`}
-						</span>
-					</p>
-				</Card>
+					<StatItem label="Total Value Secured (USD)" value={formattedNum(totalValue, true)} />
+					<StatItem label={dominanceLabel} value={dominanceText === null ? 'N/A' : `${dominanceText}%`} />
+				</SummaryStatsCard>
 
 				<ChartPanel className="col-span-2">
 					{isFetchingExtraSeries ? (
@@ -258,7 +250,7 @@ export const OracleOverview = ({
 						</Suspense>
 					)}
 				</ChartPanel>
-			</div>
+			</SummaryCardGrid>
 
 			<Suspense fallback={<Panel padding="none" style={{ minHeight: `${tableData.length * 50 + 200}px` }} />}>
 				<TableWithSearch

@@ -14,11 +14,11 @@ import { LoadingDots } from '~/components/Loaders'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SegmentedControl } from '~/components/SegmentedControl'
 import { Select } from '~/components/Select/Select'
-import { Tooltip } from '~/components/Tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { StatItem } from '~/ui/SummaryStats'
 import { formattedNum, slug } from '~/utils'
 import { pushShallowQuery, toQueryString } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview, RWAAssetChartTarget } from './api.types'
@@ -667,52 +667,47 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 				}}
 			/>
 			<div className="flex flex-col gap-2 md:flex-row md:items-center">
-				<Card padding="sm" className="flex flex-1 flex-col gap-1">
-					<Tooltip
-						content={definitions.totalActiveMcap.description}
-						className="text-secondary underline decoration-dotted"
-					>
-						{definitions.totalActiveMcap.label}
-					</Tooltip>
-					<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalActiveMcap, true)}</span>
+				<Card padding="sm" className="flex-1">
+					<StatItem
+						className="gap-1"
+						label={definitions.totalActiveMcap.label}
+						tooltip={definitions.totalActiveMcap.description}
+						value={formattedNum(totalActiveMcap, true)}
+					/>
 				</Card>
-				<Card padding="sm" className="flex flex-1 flex-col gap-1">
-					<Tooltip
-						content={definitions.totalOnChainMcap.description}
-						className="text-secondary underline decoration-dotted"
-					>
-						{definitions.totalOnChainMcap.label}
-					</Tooltip>
-					<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalOnChainMcap, true)}</span>
+				<Card padding="sm" className="flex-1">
+					<StatItem
+						className="gap-1"
+						label={definitions.totalOnChainMcap.label}
+						tooltip={definitions.totalOnChainMcap.description}
+						value={formattedNum(totalOnChainMcap, true)}
+					/>
 				</Card>
-				<Card padding="sm" className="flex flex-1 flex-col gap-1">
-					<Tooltip
-						content={definitions.totalDefiActiveTvl.description}
-						className="text-secondary underline decoration-dotted"
-					>
-						{definitions.totalDefiActiveTvl.label}
-					</Tooltip>
-					<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalOnChainDeFiActiveTvl, true)}</span>
+				<Card padding="sm" className="flex-1">
+					<StatItem
+						className="gap-1"
+						label={definitions.totalDefiActiveTvl.label}
+						tooltip={definitions.totalDefiActiveTvl.description}
+						value={formattedNum(totalOnChainDeFiActiveTvl, true)}
+					/>
 				</Card>
 				{includeRwaPerps ? (
-					<Card padding="sm" className="flex flex-1 flex-col gap-1">
-						<Tooltip
-							content={perpsDefinitions.totalOpenInterest.description}
-							className="text-secondary underline decoration-dotted"
-						>
-							RWA Perps OI
-						</Tooltip>
-						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalOpenInterest, true)}</span>
+					<Card padding="sm" className="flex-1">
+						<StatItem
+							className="gap-1"
+							label="RWA Perps OI"
+							tooltip={perpsDefinitions.totalOpenInterest.description}
+							value={formattedNum(totalOpenInterest, true)}
+						/>
 					</Card>
 				) : null}
-				<Card padding="sm" className="flex flex-1 flex-col gap-1">
-					<Tooltip
-						content={definitions.totalAssetIssuers.description}
-						className="text-secondary underline decoration-dotted"
-					>
-						{definitions.totalAssetIssuers.label}
-					</Tooltip>
-					<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalIssuersCount, false)}</span>
+				<Card padding="sm" className="flex-1">
+					<StatItem
+						className="gap-1"
+						label={definitions.totalAssetIssuers.label}
+						tooltip={definitions.totalAssetIssuers.description}
+						value={formattedNum(totalIssuersCount, false)}
+					/>
 				</Card>
 			</div>
 			{showCharts ? (

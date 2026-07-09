@@ -11,9 +11,9 @@ import { TagGroup } from '~/components/TagGroup'
 import { Tooltip } from '~/components/Tooltip'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
-import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
+import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formattedNum } from '~/utils'
 import type { IDATCompanyPageProps } from './types'
 
@@ -66,8 +66,8 @@ export function DATCompany(props: IDATCompanyPageProps) {
 
 	return (
 		<>
-			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card padding="sm" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+			<SummaryCardGrid>
+				<SummaryStatsCard padding="sm">
 					<h1 className="heading-sm">{props.name}</h1>
 					<div className="flex flex-col">
 						{props.assetsBreakdown.length > 1 ? (
@@ -164,7 +164,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 					<Button as={BasicLink} href="/report-error" size="md" className="mt-auto mr-auto">
 						Report incorrect data
 					</Button>
-				</Card>
+				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						<h2 className="mr-auto heading-xs">Cumulative Holdings Over Time</h2>
@@ -198,7 +198,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 						)}
 					</Suspense>
 				</ChartPanel>
-			</div>
+			</SummaryCardGrid>
 			<div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
 				{props.mNAVChart != null ? (
 					<ChartPanel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">

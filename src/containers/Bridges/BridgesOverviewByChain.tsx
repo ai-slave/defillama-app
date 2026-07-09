@@ -10,10 +10,10 @@ import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { ChartSelector } from '~/containers/Bridges/ChartSelector'
 import { useBuildBridgeChartData } from '~/containers/Bridges/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formattedNum, getPrevVolumeFromChart, slug, toNiceCsvDate } from '~/utils'
@@ -279,23 +279,14 @@ export function BridgesOverviewByChain({
 		<>
 			<RowLinksWithDropdown links={chainOptions} activeLink={selectedChain} />
 
-			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card padding="sm" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
-					<div className="flex flex-col">
-						<h1 className="text-secondary">Total volume (24h)</h1>
-						<p className="font-jetbrains text-2xl font-semibold">{formattedNum(dayTotalVolume, true)}</p>
-					</div>
-					<p className="hidden flex-col md:flex">
-						<span className="text-secondary">Total volume (7d)</span>
-						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(weekTotalVolume, true)}</span>
-					</p>
-					<p className="hidden flex-col md:flex">
-						<span className="text-secondary">Total volume (1mo)</span>
-						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(monthTotalVolume, true)}</span>
-					</p>
+			<SummaryCardGrid>
+				<SummaryStatsCard padding="sm">
+					<StatItem label="Total volume (24h)" labelAs="h1" value={formattedNum(dayTotalVolume, true)} />
+					<StatItem label="Total volume (7d)" value={formattedNum(weekTotalVolume, true)} className="max-md:hidden" />
+					<StatItem label="Total volume (1mo)" value={formattedNum(monthTotalVolume, true)} className="max-md:hidden" />
 
 					<CSVDownloadButton prepareCsv={prepareCsv} smol size="sm" className="mt-auto mr-auto" />
-				</Card>
+				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					{selectedChain === 'All' ? (
 						<>
@@ -411,7 +402,7 @@ export function BridgesOverviewByChain({
 						</>
 					)}
 				</ChartPanel>
-			</div>
+			</SummaryCardGrid>
 
 			<Panel padding="none">
 				<TableToolbar className="w-full justify-end">

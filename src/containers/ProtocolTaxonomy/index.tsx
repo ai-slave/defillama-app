@@ -15,12 +15,11 @@ import { QuestionHelper } from '~/components/QuestionHelper'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Tooltip } from '~/components/Tooltip'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { definitions } from '~/public/definitions'
-import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formatNum, formattedNum } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { buildProtocolTaxonomyGroupedCharts } from './chartGrouping'
@@ -88,14 +87,14 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 	return (
 		<>
 			{props.chains.length > 1 ? <RowLinksWithDropdown links={props.chains} activeLink={props.chain} /> : null}
-			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+			<SummaryCardGrid>
+				<SummaryStatsCard>
 					{props.chain === 'All' ? (
 						<h1 className="heading-xs">{categoryPresentation.headingLabel}</h1>
 					) : (
 						<h1 className="heading-xs">{`${categoryPresentation.headingLabel} on ${props.chain}`}</h1>
 					)}
-					<div className="mb-auto flex flex-1 flex-col gap-2">
+					<div className="mb-auto flex flex-1 flex-col">
 						{props.charts.dataset?.source.length > 0 ? (
 							<MetricRow
 								label="Total Value Locked"
@@ -140,7 +139,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 						) : null}
 						{props.dexVolume7d != null ? (
 							<MetricRow
-								label="{getProtocolCategoryDexVolumeLabel(props.effectiveCategory)} (7d)"
+								label={`${getProtocolCategoryDexVolumeLabel(props.effectiveCategory)} (7d)`}
 								value={formattedNum(props.dexVolume7d, true)}
 							/>
 						) : null}
@@ -152,7 +151,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 							/>
 						) : null}
 					</div>
-				</Card>
+				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						{hasBarCharts ? (
@@ -180,7 +179,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 						/>
 					</Suspense>
 				</ChartPanel>
-			</div>
+			</SummaryCardGrid>
 			<TableWithSearch
 				data={finalProtocols}
 				columns={categoryColumns}

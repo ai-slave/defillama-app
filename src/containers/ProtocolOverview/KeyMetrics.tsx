@@ -308,7 +308,7 @@ export const KeyMetrics = (props: IKeyMetricsProps) => {
 							props.tokenCGData?.marketCap?.current != null ? (
 								<span className="flex items-center gap-1">
 									<span className="font-jetbrains">{props.formatPrice(props.currentTvlByChain.staking)}</span>
-									<span className="text-xs text-secondary">
+									<span className="text-xs text-tertiary">
 										({formattedNum((props.currentTvlByChain.staking / props.tokenCGData.marketCap.current) * 100)}% of
 										mcap)
 									</span>
@@ -985,7 +985,7 @@ const TokenCGData = (props: IKeyMetricsProps) => {
 								<span className="font-jetbrains">
 									{props.tokenCGData.volume24h.dex != null ? props.formatPrice(props.tokenCGData.volume24h.dex) : '-'}
 								</span>
-								<span className="text-xs text-secondary">
+								<span className="text-xs text-tertiary">
 									(
 									{formattedNum(
 										((props.tokenCGData.volume24h.dex ?? 0) / (props.tokenCGData.volume24h.total ?? 1)) * 100

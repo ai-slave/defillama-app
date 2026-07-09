@@ -36,8 +36,8 @@ import { useCalcCirculating, useGroupChainsPegged } from '~/containers/Stablecoi
 import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/containers/Stablecoins/queries.client'
 import { getStablecoinDominance, type IFormattedStablecoinChainRow } from '~/containers/Stablecoins/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formattedNum } from '~/utils'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import { StablecoinsChainsTable } from './StablecoinsChainsTable'
@@ -245,12 +245,9 @@ export function ChainsWithStablecoins({
 
 	return (
 		<>
-			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
-					<div className="flex flex-col">
-						<h1 className="text-secondary">Total Stablecoins Market Cap</h1>
-						<p className="font-jetbrains text-2xl font-semibold">{mcapToDisplay}</p>
-					</div>
+			<SummaryCardGrid>
+				<SummaryStatsCard>
+					<StatItem label="Total Stablecoins Market Cap" labelAs="h1" value={mcapToDisplay} />
 
 					<details className="group text-base">
 						<summary className="flex items-center">
@@ -298,11 +295,8 @@ export function ChainsWithStablecoins({
 						</p>
 					</details>
 
-					<p className="flex flex-col">
-						<span className="text-secondary">{topChain.name} Dominance</span>
-						<span className="font-jetbrains text-2xl font-semibold">{dominance}%</span>
-					</p>
-				</Card>
+					<StatItem label={<>{topChain.name} Dominance</>} value={<>{dominance}%</>} />
+				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						<SegmentedControl
@@ -388,7 +382,7 @@ export function ChainsWithStablecoins({
 						/>
 					)}
 				</ChartPanel>
-			</div>
+			</SummaryCardGrid>
 
 			<StablecoinsChainsTable data={groupedChains} deprecatedChains={deprecatedChains} />
 		</>

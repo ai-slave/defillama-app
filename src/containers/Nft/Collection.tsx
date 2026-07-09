@@ -8,10 +8,10 @@ import { LocalLoader } from '~/components/Loaders'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getNFTCollection } from '~/containers/Nft/queries'
 import { Button } from '~/ui/Button'
-import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { ICollectionScatterChartProps, IOrderBookChartProps } from './types'
@@ -66,8 +66,8 @@ export function NFTCollectionContainer() {
 
 	return (
 		<>
-			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+			<SummaryCardGrid>
+				<SummaryStatsCard>
 					<h1 className="flex items-center gap-2 text-xl">
 						<TokenLogo
 							src={primaryCollection?.image}
@@ -78,24 +78,11 @@ export function NFTCollectionContainer() {
 						<FormattedName text={name ?? ''} fontWeight={700} />
 					</h1>
 
-					<p className="flex flex-col gap-1 text-base">
-						<span className="text-secondary">Floor Price</span>
-						<span className="font-jetbrains text-2xl font-semibold">
-							{floorPrice != null ? floorPrice.toFixed(2) + ' ETH' : ''}
-						</span>
-					</p>
+					<StatItem label="Floor Price" value={floorPrice != null ? floorPrice.toFixed(2) + ' ETH' : ''} />
 
-					<p className="flex flex-col gap-1 text-base">
-						<span className="text-secondary">24h Volume</span>
-						<span className="font-jetbrains text-2xl font-semibold">
-							{volume24h != null ? volume24h.toFixed(2) + ' ETH' : ''}
-						</span>
-					</p>
+					<StatItem label="24h Volume" value={volume24h != null ? volume24h.toFixed(2) + ' ETH' : ''} />
 
-					<p className="flex flex-col gap-1 text-base">
-						<span className="text-secondary">Total Supply</span>
-						<span className="font-jetbrains text-2xl font-semibold">{primaryCollection?.totalSupply}</span>
-					</p>
+					<StatItem label="Total Supply" value={primaryCollection?.totalSupply} />
 
 					<Button
 						as="a"
@@ -107,7 +94,7 @@ export function NFTCollectionContainer() {
 					>
 						<span>View on Etherscan</span> <Icon name="arrow-up-right" height={14} width={14} />
 					</Button>
-				</Card>
+				</SummaryStatsCard>
 
 				<Panel padding="none" className="col-span-2 min-h-[394px]">
 					<div className="flex w-full items-center justify-end p-3 pb-0">
@@ -128,7 +115,7 @@ export function NFTCollectionContainer() {
 						/>
 					</React.Suspense>
 				</Panel>
-			</div>
+			</SummaryCardGrid>
 
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 				{floorHistory?.source?.length > 0 ? (

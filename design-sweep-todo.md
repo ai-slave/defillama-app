@@ -907,12 +907,14 @@ dashboard product. Sheets scope remains deferred to a separate branch.
 
 ## Overlay follow-ups (backlog)
 
-- [ ] **SummaryStatsCard extraction branch** (2026-07-09 audit): the summary-card
-      wrapper pair (`grid grid-cols-2 gap-2 xl:grid-cols-3` — 18 files; card
-      `col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1` — 16
-      files) plus the headline `font-jetbrains text-2xl font-semibold` stat item
-      (37 files) are copy-pasted app-wide. Extract SummaryStatsCard/StatItem per
-      the three-variant taxonomy. Highest-payoff remaining consolidation.
+- [x] **SummaryStatsCard extraction** — DONE 2026-07-09 (branch
+      mintdart/summary-stats-card): ui/SummaryStats.tsx primitives, 19 card
+      migrations, StatItem adopted in the RWA tile grids and home TVL stat.
+- [ ] Remaining opportunistic StatItem adoptions (shapes that need judgment or
+      tiny API growth): RWA/Asset card-anchored breakdown tooltips (whole Card
+      is the Tooltip anchor), RWA/Perps Dashboard local StatCard helper,
+      TokenPnl StatsCard/ComparisonPanel (colored values), Token overview/risks
+      sections, Equities TickerPage, ProtocolOverview index, Perps/Contract.
 - [ ] PercentChange adoption sweep: ~36 files hand-roll the up/down ternary span
       instead of components/PercentChange; needs a className/variant prop first.
 - [ ] DeFiWatchlist native accent checkboxes (2): need a semantic-color Checkbox

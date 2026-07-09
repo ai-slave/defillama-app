@@ -95,7 +95,7 @@ function ChainBreakdownTooltipContent({ chainBreakdowns }: { chainBreakdowns: To
 				{chainBreakdowns.map((chain) => (
 					<div
 						key={`${chain.chain}-${chain.chainDisplayName}`}
-						className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-0.5 border-b border-subtle pb-1.5 last:border-b-0 last:pb-0"
+						className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-0.5 border-b border-subtle pb-1 last:border-b-0 last:pb-0"
 					>
 						<span className="flex min-w-0 items-center gap-1.5 font-medium text-primary">
 							<TokenLogo

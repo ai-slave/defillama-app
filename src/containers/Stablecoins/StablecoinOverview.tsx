@@ -41,6 +41,7 @@ import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
+import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { capitalizeFirstLetter, formattedNum, slug } from '~/utils'
 import { peggedAssetIconUrl } from '~/utils/icons'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
@@ -253,9 +254,9 @@ export const PeggedAssetInfo = ({
 
 	return (
 		<>
-			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				{/* Stats card */}
-				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+			<SummaryCardGrid>
+				{/* Stats card — variant 3 stat stack; body is intentionally not StatItem */}
+				<SummaryStatsCard>
 					<h1 className="flex flex-wrap items-center gap-2 text-xl">
 						<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} size={24} />
 						<span className="font-bold">{name}</span>
@@ -296,7 +297,7 @@ export const PeggedAssetInfo = ({
 							</p>
 						) : null}
 					</div>
-				</Card>
+				</SummaryStatsCard>
 
 				{/* Chart */}
 				<ChartPanel className="col-span-2">
@@ -439,7 +440,7 @@ export const PeggedAssetInfo = ({
 						</Card>
 					</div>
 				) : null}
-			</div>
+			</SummaryCardGrid>
 
 			<StablecoinByChainUsageTable data={groupedChains} />
 		</>

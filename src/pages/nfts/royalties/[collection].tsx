@@ -6,9 +6,9 @@ import { LocalLoader } from '~/components/Loaders'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getNFTRoyaltyHistory } from '~/containers/Nft/queries'
 import Layout from '~/layout'
-import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formattedNum, slug } from '~/utils'
 
 const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
@@ -77,23 +77,17 @@ export default function Collection() {
 			description={`Track NFT royalties for ${props.name}. Compare 30d and lifetime earnings with historical charts.`}
 			canonicalUrl={collection ? `/nfts/royalties/${collection}` : `/nfts/royalties`}
 		>
-			<div className="relative isolate grid grid-cols-2 gap-2 *:last:col-span-2 xl:grid-cols-3">
-				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+			<SummaryCardGrid className="*:last:col-span-2">
+				<SummaryStatsCard>
 					<h1 className="flex items-center gap-2 text-xl">
 						<TokenLogo src={props.logo} fallbackSrc={props.fallbackLogo} alt={`Logo of ${props.name}`} size={48} />
 						<FormattedName text={props.name} fontWeight={700} />
 					</h1>
 
-					<p className="flex flex-col gap-1 text-base">
-						<span className="text-secondary">30d royalty earnings</span>
-						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(props.total30d, true)}</span>
-					</p>
+					<StatItem label="30d royalty earnings" value={formattedNum(props.total30d, true)} />
 
-					<p className="flex flex-col gap-1 text-base">
-						<span className="text-secondary">Lifetime royalty earnings</span>
-						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(props.totalAllTime, true)}</span>
-					</p>
-				</Card>
+					<StatItem label="Lifetime royalty earnings" value={formattedNum(props.totalAllTime, true)} />
+				</SummaryStatsCard>
 
 				<ChartPanel className="col-span-full">
 					<Suspense fallback={<ChartPanelExportShellFallback />}>
@@ -110,7 +104,7 @@ export default function Collection() {
 						/>
 					</Suspense>
 				</ChartPanel>
-			</div>
+			</SummaryCardGrid>
 		</Layout>
 	)
 }

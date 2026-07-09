@@ -15,10 +15,10 @@ import { Icon } from '~/components/Icon'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { RaisesFilters } from '~/containers/Raises/Filters'
-import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { useRaisesData } from './hooks'
@@ -144,8 +144,8 @@ export const InvestorContainer = ({
 				pathname={`/raises/${slug(investorName)}`}
 			/>
 
-			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+			<SummaryCardGrid>
+				<SummaryStatsCard>
 					<h1 className="heading-sm">{investorName}</h1>
 
 					<details className="group text-base">
@@ -170,7 +170,7 @@ export const InvestorContainer = ({
 							</p>
 						))}
 					</details>
-				</Card>
+				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<React.Suspense fallback={<ChartPanelExportShellFallback />}>
 						<MultiSeriesChart2
@@ -187,7 +187,7 @@ export const InvestorContainer = ({
 						/>
 					</React.Suspense>
 				</ChartPanel>
-			</div>
+			</SummaryCardGrid>
 
 			<div className="grid grid-cols-2 gap-1">
 				<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
