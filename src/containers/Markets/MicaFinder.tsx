@@ -685,7 +685,7 @@ export function filterMicaRows(rows: MicaExchange[], opts: { products: string[] 
  *  full-feature venues, and cheaper spot taker fee. Pure — returns a new array.
  *  Exported for testing. */
 export function rankMicaRows(rows: MicaExchange[]): MicaExchange[] {
-	return [...rows].sort(
+	const sorted = [...rows].sort(
 		(a, b) =>
 			(PRIORITY_EXCHANGE_RANK.get(a.exchange) ?? Infinity) - (PRIORITY_EXCHANGE_RANK.get(b.exchange) ?? Infinity) ||
 			getDepthLiquidity(b) - getDepthLiquidity(a) ||
@@ -693,6 +693,14 @@ export function rankMicaRows(rows: MicaExchange[]): MicaExchange[] {
 			(a.spot_fee.taker ?? Infinity) - (b.spot_fee.taker ?? Infinity) ||
 			a.display_name.localeCompare(b.display_name)
 	)
+	// ponytail: temp — force nexo into the second-to-last slot until it earns a
+	// natural rank; drop this splice when nexo gets real liquidity/priority data.
+	const nexoIdx = sorted.findIndex((row) => row.exchange === 'nexo')
+	if (nexoIdx !== -1 && sorted.length > 1) {
+		const [nexo] = sorted.splice(nexoIdx, 1)
+		sorted.splice(sorted.length - 1, 0, nexo)
+	}
+	return sorted
 }
 
 // ---------------------------------------------------------------------------

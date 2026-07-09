@@ -204,6 +204,17 @@ describe('rankMicaRows', () => {
 			'ExpensiveSpot'
 		])
 	})
+
+	it('pins nexo to the second-to-last slot', () => {
+		const rows = [
+			row({ display_name: 'A', exchange: 'a', secondary: false, products: ['spot'] }),
+			row({ display_name: 'Nexo', exchange: 'nexo', secondary: true, products: ['spot'] }),
+			row({ display_name: 'B', exchange: 'b', secondary: false, products: ['spot'] }),
+			row({ display_name: 'C', exchange: 'c', secondary: false, products: ['spot'] })
+		]
+		const out = rankMicaRows(rows).map((r) => r.exchange)
+		expect(out[out.length - 2]).toBe('nexo')
+	})
 })
 
 describe('getKycRequirementIndicators', () => {
