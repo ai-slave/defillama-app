@@ -81,6 +81,7 @@ export const allApiRoutePaths = [
 	'chain-icon',
 	'chains',
 	'chains/charts',
+	'correlation/tokens',
 	'downloads/[dataset]',
 	'downloads/chart/[dataset]',
 	'downloads/chart-breakdown/[slug]',
