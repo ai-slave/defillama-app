@@ -299,6 +299,8 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 						<ChartPanelToolbar className="justify-end">
 							<h2 className="mr-auto heading-xs">Price History</h2>
 							<TagGroup
+								variant="default"
+								size="md"
 								selectedValue={activeTimeframe}
 								setValue={setActiveTimeframe}
 								values={EQUITIES_PRICE_HISTORY_TIMEFRAMES}
@@ -327,12 +329,16 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 				<Panel padding="none" className="col-span-full">
 					<ChartPanelToolbar>
 						<TagGroup
+							variant="default"
+							size="md"
 							selectedValue={activeFundamentalChart}
 							setValue={setActiveFundamentalChart}
 							values={EQUITY_FUNDAMENTAL_CHART_OPTIONS}
 						/>
 						<div className={chartPanelToolbarActionsStyles}>
 							<TagGroup
+								variant="default"
+								size="md"
 								selectedValue={activeDimensionPeriod}
 								setValue={setActiveDimensionPeriod}
 								values={EQUITY_DIMENSION_PERIOD_OPTIONS}

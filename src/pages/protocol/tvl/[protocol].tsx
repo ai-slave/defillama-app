@@ -473,7 +473,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 					<LocalLoader />
 				</PanelLoadingStatus>
 			) : props.chainsUnique.length <= 1 && !props.metrics.inflows ? (
-				<PanelStatus className="col-span-full">
+				<PanelStatus variant="empty" className="col-span-full">
 					Breakdown charts are not available for this protocol as it operates on a single chain and token composition
 					data is not accurately trackable.
 				</PanelStatus>

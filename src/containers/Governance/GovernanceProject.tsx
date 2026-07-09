@@ -62,6 +62,8 @@ export default function GovernanceProject({
 	const filters =
 		categoryLabels.length > 1 ? (
 			<TagGroup
+				variant="default"
+				size="md"
 				selectedValue={categoryLabels[safeCategoryIndex] ?? categoryLabels[0]}
 				setValue={(value) => {
 					const idx = categoryLabels.indexOf(value as GovernanceTypeLabel)

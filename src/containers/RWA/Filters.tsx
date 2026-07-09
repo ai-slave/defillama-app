@@ -1036,6 +1036,7 @@ function RWASelectDraftEditor({
 			label="Values"
 			labelType="smol"
 			variant="filter-responsive"
+			size="sm"
 			visibleOptionLimit={null}
 			selectAllScope="matches"
 			searchPlaceholder={`Search ${definition.label.toLowerCase()}...`}

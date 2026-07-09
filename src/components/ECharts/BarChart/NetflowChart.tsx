@@ -215,7 +215,7 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 		<div className="relative pr-5">
 			<div id={id} className="my-auto" style={heightStyle ?? { minHeight: '600px' }}></div>
 			<div className="m-4 flex justify-center">
-				<TagGroup values={flowTypes} selectedValue={period} setValue={setPeriod} />
+				<TagGroup variant="default" size="md" values={flowTypes} selectedValue={period} setValue={setPeriod} />
 			</div>
 		</div>
 	)

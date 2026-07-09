@@ -11,12 +11,12 @@ const STATUS_TEXT = {
 
 type PanelStatusProps = {
 	children: ReactNode
-	variant?: StatusVariant
+	variant: StatusVariant
 	className?: string
 	textClassName?: string
 }
 
-export function PanelStatus({ children, variant = 'empty', className, textClassName }: PanelStatusProps) {
+export function PanelStatus({ children, variant, className, textClassName }: PanelStatusProps) {
 	const role = variant === 'error' ? 'alert' : 'status'
 
 	return (

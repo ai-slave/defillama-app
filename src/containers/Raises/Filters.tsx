@@ -96,6 +96,7 @@ function Filters({
 					nestedMenu={nestedMenu}
 					labelType="smol"
 					variant="filter-responsive"
+					size="sm"
 					includeQueryKey="investor"
 					excludeQueryKey="excludeInvestor"
 				/>
@@ -109,6 +110,7 @@ function Filters({
 					nestedMenu={nestedMenu}
 					labelType="smol"
 					variant="filter-responsive"
+					size="sm"
 					includeQueryKey="chain"
 					excludeQueryKey="excludeChain"
 				/>
@@ -122,6 +124,7 @@ function Filters({
 					nestedMenu={nestedMenu}
 					labelType="smol"
 					variant="filter-responsive"
+					size="sm"
 					includeQueryKey="sector"
 					excludeQueryKey="excludeSector"
 				/>
@@ -135,6 +138,7 @@ function Filters({
 					nestedMenu={nestedMenu}
 					labelType="smol"
 					variant="filter-responsive"
+					size="sm"
 					includeQueryKey="round"
 					excludeQueryKey="excludeRound"
 				/>
@@ -166,7 +170,6 @@ function RaisedRange({
 
 	return (
 		<FilterBetweenRange
-			name="Amount Raised"
 			trigger={
 				<>
 					{min || max ? (
@@ -186,6 +189,8 @@ function RaisedRange({
 			nestedMenu={nestedMenu}
 			min={min}
 			max={max}
+			variant="primary"
+			size="sm"
 			placement={placement}
 		/>
 	)

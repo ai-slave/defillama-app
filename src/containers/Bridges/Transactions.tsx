@@ -535,6 +535,8 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 						singleSelect
 						label={selectedBridge[0] ?? 'Select a bridge'}
 						labelType="none"
+						variant="default"
+						size="sm"
 						triggerProps={{
 							className: `${selectTriggerStyles('filter', 'md')} w-full`
 						}}
@@ -806,7 +808,7 @@ function TransactionsTable({
 
 function PagerButton({ children, disabled, onClick, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
 	return (
-		<Button type="button" variant="ghost" onClick={onClick} disabled={disabled} square {...rest}>
+		<Button type="button" variant="ghost" size="sm" onClick={onClick} disabled={disabled} square {...rest}>
 			{children}
 		</Button>
 	)

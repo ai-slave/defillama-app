@@ -44,7 +44,7 @@ const SELECT_TRIGGER_MD_VARIANTS: Partial<Record<SelectTriggerVariant, string>> 
 
 export type SelectTriggerSize = 'sm' | 'md'
 
-export function selectTriggerStyles(variant: SelectTriggerVariant = 'default', size: SelectTriggerSize = 'sm'): string {
+export function selectTriggerStyles(variant: SelectTriggerVariant, size: SelectTriggerSize): string {
 	if (size === 'md') {
 		return SELECT_TRIGGER_MD_VARIANTS[variant] ?? SELECT_TRIGGER_VARIANTS[variant]
 	}

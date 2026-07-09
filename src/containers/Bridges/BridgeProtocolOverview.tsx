@@ -200,6 +200,8 @@ export const BridgeInfo = ({
 				<Panel padding="none" className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						<TagGroup
+							variant="default"
+							size="md"
 							selectedValue={chartType}
 							setValue={(v) => setChartType(v)}
 							values={chartTypes}

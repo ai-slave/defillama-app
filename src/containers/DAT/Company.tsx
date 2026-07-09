@@ -211,6 +211,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 						<h2 className="mr-auto heading-xs">Cumulative Holdings Over Time</h2>
 						{props.assets.length > 1 ? (
 							<TagGroup
+								size="md"
 								selectedValue={selectedAsset}
 								setValue={setSelectedAsset}
 								values={props.assets}

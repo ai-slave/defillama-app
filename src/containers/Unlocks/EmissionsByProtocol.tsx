@@ -980,6 +980,8 @@ const ChartContainer = ({
 
 			{data.chartData?.realtime?.length > 0 ? (
 				<TagGroup
+					variant="default"
+					size="md"
 					selectedValue={dataType}
 					setValue={(period) => {
 						void setQueryParam('dataType', period === 'documented' ? undefined : period)
@@ -1043,6 +1045,8 @@ const ChartContainer = ({
 								</>
 							) : null}
 							<TagGroup
+								variant="default"
+								size="md"
 								selectedValue={timeGrouping}
 								setValue={(v) => {
 									void setQueryParam('groupBy', v === 'D' ? undefined : v)

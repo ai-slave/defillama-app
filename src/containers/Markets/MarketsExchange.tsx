@@ -124,7 +124,7 @@ export function MarketsExchange({
 			) : isError || !data ? (
 				<PanelStatus variant="error">Failed to load exchange.</PanelStatus>
 			) : pairs.length === 0 ? (
-				<PanelStatus>No markets recorded for this venue.</PanelStatus>
+				<PanelStatus variant="empty">No markets recorded for this venue.</PanelStatus>
 			) : (
 				<div className="flex flex-col gap-5">
 					<ExchangeStatStrip totals={segmentData} segment={activeSegment} />

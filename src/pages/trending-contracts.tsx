@@ -123,8 +123,10 @@ export default function TrendingContracts() {
 			<Panel padding="none" className="flex-1">
 				<PanelHeader className="gap-5">
 					<PanelTitle as="h1">Trending Contracts</PanelTitle>
-					<TagGroup selectedValue={value} setValue={setValue} values={TIME_VALUES} />
+					<TagGroup variant="default" size="md" selectedValue={value} setValue={setValue} values={TIME_VALUES} />
 					<TagGroup
+						variant="default"
+						size="md"
 						selectedValue={chain}
 						setValue={(val) => startTransition(() => setChain(val))}
 						values={CHAIN_VALUES}

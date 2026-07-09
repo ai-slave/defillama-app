@@ -76,8 +76,10 @@ function MetricFilters({ options, label }: { options: { name: string; key: strin
 				selectedValues={selectedValues}
 				setSelectedValues={setSelectedValues}
 				label={label || 'Include in TVL'}
+				variant="default"
+				size="sm"
 				triggerProps={{
-					className: `${selectTriggerStyles('default')} ml-auto whitespace-nowrap *:shrink-0`
+					className: `${selectTriggerStyles('default', 'sm')} ml-auto whitespace-nowrap *:shrink-0`
 				}}
 				placement="bottom-end"
 				unmountOnHide={false}

@@ -55,7 +55,13 @@ export function UnifiedTablePagination({ table }: UnifiedTablePaginationProps) {
 	if (!canPreviousPage && !canNextPage) {
 		return (
 			<div className="mt-2 flex w-full items-center justify-end">
-				<TagGroup selectedValue={validPageSize} values={PAGE_SIZES} setValue={handlePageSizeChange} />
+				<TagGroup
+					variant="default"
+					size="md"
+					selectedValue={validPageSize}
+					values={PAGE_SIZES}
+					setValue={handlePageSizeChange}
+				/>
 			</div>
 		)
 	}
@@ -63,6 +69,8 @@ export function UnifiedTablePagination({ table }: UnifiedTablePaginationProps) {
 	return (
 		<div className="mt-2 flex w-full items-center justify-between">
 			<TagGroup
+				variant="default"
+				size="md"
 				selectedValue={null}
 				setValue={handlePaginationChange}
 				values={PAGINATION_VALUES}
@@ -70,7 +78,13 @@ export function UnifiedTablePagination({ table }: UnifiedTablePaginationProps) {
 			/>
 			<div className="flex items-center">
 				<span className="mr-2 text-xs">Per page</span>
-				<TagGroup selectedValue={validPageSize} values={PAGE_SIZES} setValue={handlePageSizeChange} />
+				<TagGroup
+					variant="default"
+					size="md"
+					selectedValue={validPageSize}
+					values={PAGE_SIZES}
+					setValue={handlePageSizeChange}
+				/>
 			</div>
 		</div>
 	)

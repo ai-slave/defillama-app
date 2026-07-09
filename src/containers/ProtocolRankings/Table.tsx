@@ -355,12 +355,14 @@ const ChainProtocolsTableInner = ({
 				{borderless ? null : <h2 className="mr-auto flex w-full grow label-md md:w-auto">Protocol Rankings</h2>}
 
 				<TagGroup
+					variant="default"
 					setValue={setFilter('category')}
 					selectedValue={selectedCategory}
 					values={TABLE_CATEGORIES_VALUES}
 					size="md"
 				/>
 				<TagGroup
+					variant="default"
 					setValue={setFilter('period')}
 					selectedValue={selectedPeriod}
 					values={TABLE_PERIODS_VALUES}

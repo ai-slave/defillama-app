@@ -11,7 +11,7 @@ interface IAPYRange {
 	size?: 'sm' | 'md'
 }
 
-export function APYRange({ nestedMenu, placement, size }: IAPYRange) {
+export function APYRange({ nestedMenu, placement, size = 'sm' }: IAPYRange) {
 	const router = useRouter()
 
 	const handleSubmit = (e) => {
@@ -49,7 +49,6 @@ export function APYRange({ nestedMenu, placement, size }: IAPYRange) {
 
 	return (
 		<FilterBetweenRange
-			name="APY Range"
 			trigger={
 				<>
 					{min || max ? (

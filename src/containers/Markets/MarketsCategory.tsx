@@ -92,7 +92,7 @@ export function MarketsCategory({
 			) : isError || !data ? (
 				<PanelStatus variant="error">Failed to load category.</PanelStatus>
 			) : segmentTokens.length === 0 ? (
-				<PanelStatus>No data for this segment.</PanelStatus>
+				<PanelStatus variant="empty">No data for this segment.</PanelStatus>
 			) : (
 				<div className="flex flex-col gap-5">
 					<MarketsStatStrip rows={segmentTokens} segment={activeSegment} />

@@ -567,6 +567,8 @@ export const IncomeStatement = ({
 				{showTable ? (
 					<TableToolbarControlGroup className="ml-auto justify-end">
 						<TagGroup
+							variant="default"
+							size="md"
 							values={incomeStatementGroupByOptions}
 							selectedValue={groupBy}
 							setValue={(groupOption) => {
@@ -740,6 +742,8 @@ export const IncomeStatement = ({
 							<div className="mb-2 flex flex-wrap items-center gap-2 px-2">
 								{showTitles ? <h3 className="mr-auto heading-xs">Income Flow Visualization</h3> : null}
 								<TagGroup
+									variant="default"
+									size="md"
 									values={incomeStatementGroupByOptions}
 									selectedValue={sankeyGroupBy}
 									setValue={(groupOption) => {

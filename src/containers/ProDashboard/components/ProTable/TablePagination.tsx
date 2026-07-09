@@ -63,6 +63,8 @@ export function TablePagination({ table }: TablePaginationProps) {
 		<div className="mt-2 flex w-full items-center justify-between">
 			{shouldShowPagination ? (
 				<TagGroup
+					variant="default"
+					size="md"
 					selectedValue={null}
 					setValue={handlePaginationAction}
 					values={PAGINATION_VALUES}
@@ -72,7 +74,13 @@ export function TablePagination({ table }: TablePaginationProps) {
 			{shouldShowPageSizes ? (
 				<div className="flex items-center">
 					<span className="mr-2 text-xs">Per page</span>
-					<TagGroup selectedValue={toPageSize(pageSize)} values={PAGE_SIZES} setValue={handlePageSizeChange} />
+					<TagGroup
+						variant="default"
+						size="md"
+						selectedValue={toPageSize(pageSize)}
+						values={PAGE_SIZES}
+						setValue={handlePageSizeChange}
+					/>
 				</div>
 			) : null}
 		</div>

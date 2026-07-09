@@ -46,11 +46,15 @@ export function BridgeVolumeChart({ data, height, onReady, headerStart, headerEn
 					className={headerStart ? undefined : 'mr-auto'}
 				/>
 				<TagGroup
+					variant="default"
+					size="md"
 					selectedValue={viewType}
 					setValue={(newViewType) => startTransition(() => setViewType(newViewType))}
 					values={BRIDGE_VOLUME_VIEW_TYPES}
 				/>
 				<TagGroup
+					variant="default"
+					size="md"
 					selectedValue={metricType}
 					setValue={(newMetricType) => startTransition(() => setMetricType(newMetricType))}
 					values={BRIDGE_VOLUME_METRIC_TYPES}

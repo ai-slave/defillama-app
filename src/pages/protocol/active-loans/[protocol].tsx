@@ -278,7 +278,9 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 					<LocalLoader />
 				</PanelLoadingStatus>
 			) : !hasBreakdownMetrics ? (
-				<PanelStatus className="col-span-full">Breakdown metrics are not available</PanelStatus>
+				<PanelStatus variant="empty" className="col-span-full">
+					Breakdown metrics are not available
+				</PanelStatus>
 			) : (
 				<div className="grid grid-cols-2 gap-2">
 					{borrowedByChainDataset && chainsUnique.length > 1 ? (

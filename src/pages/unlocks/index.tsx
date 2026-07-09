@@ -242,6 +242,8 @@ function UpcomingUnlockVolumeChart({ protocols, initialNowSec }: { protocols: an
 							options={DWM_GROUPING_OPTIONS_LOWERCASE}
 						/>
 						<TagGroup
+							variant="default"
+							size="md"
 							selectedValue={viewMode}
 							setValue={(value) => updateQueryParam('chartView', value, 'Total View')}
 							values={VIEW_MODES}

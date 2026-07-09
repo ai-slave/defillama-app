@@ -539,7 +539,7 @@ export default function CEXStablecoins(props: {
 					<LocalLoader />
 				</PanelLoadingStatus>
 			) : !data ? (
-				<PanelStatus>No stablecoin data available for this exchange</PanelStatus>
+				<PanelStatus variant="empty">No stablecoin data available for this exchange</PanelStatus>
 			) : (
 				<>
 					<Card padding="strip" className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2">

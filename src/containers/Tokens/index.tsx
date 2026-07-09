@@ -587,7 +587,7 @@ const expanderColumn: ColumnDef<TokensTableRow> = columnHelper.display({
 	cell: ({ row }) => {
 		const isExpanded = row.getIsExpanded()
 		return (
-			<Button type="button" onClick={row.getToggleExpandedHandler()} aria-expanded={isExpanded}>
+			<Button type="button" size="sm" onClick={row.getToggleExpandedHandler()} aria-expanded={isExpanded}>
 				Markets
 				<Icon
 					name="chevron-down"

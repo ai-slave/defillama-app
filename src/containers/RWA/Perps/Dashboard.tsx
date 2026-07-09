@@ -1412,6 +1412,7 @@ function RWAPerpsDraftFilterEditor({
 				label="Values"
 				labelType="smol"
 				variant="filter-responsive"
+				size="sm"
 				visibleOptionLimit={null}
 				selectAllScope="matches"
 				searchPlaceholder={`Search ${filter.label.toLowerCase()}...`}

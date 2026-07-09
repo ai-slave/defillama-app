@@ -155,6 +155,12 @@ This file tracks design-system audit notes before code changes are made.
 - Verification needed: Typecheck after each tightening step, then lint and token lint for
   any class-string changes. Review excluded-surface compile impact before making shared
   `Select` / `SelectWithCombobox` props required.
+- Implementation status 2026-07-09: `FilterBetweenRange`, `PanelStatus`, `Checkbox`,
+  `EntityTitleStrip`, `IconHitTarget`, `Button`, `selectTriggerStyles`, and `TagGroup`
+  are tightened on `mintdart/shared-control-api-tightening`. In-scope `Select` /
+  `SelectWithCombobox` callers are pinned explicitly, but the shared prop types stay
+  optional until excluded ProDashboard, LlamaAI, Yields, and related surfaces are pinned
+  or intentionally migrated.
 
 ### Panel vs Card vs Entity Title Strip Decision
 

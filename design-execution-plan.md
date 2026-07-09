@@ -14,7 +14,8 @@ Canonical references:
 ## Current Status
 
 The broad design sweep, shared popover/mobile-drawer pass, DialogShell pass,
-ProtocolOverview cleanup, and text-tier/icon consistency sweep have merged to `main`.
+ProtocolOverview cleanup, text-tier/icon consistency sweep, and dense pages/Card-Panel
+cleanup have merged to `main`.
 Main is no longer blocked by the old unlocks, popover, divider, DialogShell, or
 merge-readiness gates. `design-sweep-todo.md` still has many unchecked items because it
 is now a backlog ledger, not a merge-blocking checklist.
@@ -26,6 +27,9 @@ Completed foundation:
 - `Card` and `Panel` now share fixed `bg-surface border-subtle rounded-[8px]` chrome.
   `Card` no longer has a border-strength variant, and both primitives require callers to
   choose padding explicitly.
+- Dense page and panel/card shell cleanup has shipped for `DeFiWatchlist`, `TokenPnl`,
+  agreed small/static pages, standalone analytics/list shells, Chains/NFT route-family
+  shells, Unlocks outer-shell fixes, and focused Correlations token cleanup.
 - Shared `Select`, `SelectWithCombobox`, `MultiSelectCombobox`, `Menu`, `NestedMenu`,
   and in-scope direct popovers use the paddingless popover surface contract.
 - Shared menu/select popovers portal by default; below `sm` they use fixed-bottom
@@ -59,11 +63,11 @@ for the remaining work.
 
 Next code scope:
 
-- Finish the current dense pages/Card-Panel cleanup branch. Keep it closed around
-  `DeFiWatchlist`, `TokenPnl`, agreed small/static pages, standalone panel/table shells,
-  and the explicit `Card`/`Panel` padding API.
-- Do not add shared-control API tightening to the current branch. It touches a different
-  review surface and some excluded/quarantined products.
+- Work on the shared-control API tightening branch. Keep it behavior-neutral: add explicit
+  props that preserve current visuals, then remove hidden defaults/dead props from the
+  shared contracts.
+- If tightening a shared prop would type-break an excluded/quarantined product, pin that
+  caller explicitly instead of sweeping its styling.
 - Keep Raises chart layout shift as a chart-shell/fallback reservation follow-up.
 - Keep `ChartPanel` extraction blocked until after the Raises/chart-shell pass.
 
@@ -85,20 +89,7 @@ Carry-forward dialog/popover guardrails:
 
 Recommended order for the next focused code branches:
 
-1. **Dense pages token cleanup**
-   - Start with `DeFiWatchlist` and `TokenPnl`.
-   - Reduce `--cards-*`, legacy `--text-*`, `--link-hover-bg`, old shell classes, and
-     default-sm select drift.
-   - Port any in-scope `DeFiWatchlist` dialog chrome to the shared dialog recipe as part
-     of that file-family cleanup.
-   - Include agreed small/static pages, standalone analytics/list shells, Chains/NFT
-     route-family shells, and Unlocks outer-shell border-strength fixes only where already
-     scoped.
-   - If Correlations cleanup remains in the branch, keep it limited to legacy
-     card/surface/text/link-hover tokens and local shell classes.
-   - Stop after verification; do not add shared-control API tightening to this branch.
-
-2. **Shared control API tightening**
+1. **Shared control API tightening**
    - Use a focused branch, suggested name: `mintdart/shared-control-api-tightening`.
    - `FilterBetweenRange`: remove dead `name`, make `variant` and `size` explicit, and
      consider reusing `selectTriggerStyles` for trigger chrome.
@@ -114,20 +105,20 @@ Recommended order for the next focused code branches:
    - `Select` / `SelectWithCombobox`: make in-scope callers explicit first, then tighten
      the shared prop types only after excluded surfaces are pinned.
 
-3. **Raises/chart-shell layout pass**
+2. **Raises/chart-shell layout pass**
    - Fix the `/raises` Suspense/fallback reservation that can cause a chart-panel layout
      shift.
    - Keep actual ECharts plot height at 360px unless the route explicitly supplies
      another chart height.
    - Include one investor raises page because it shares the same chart reservation shape.
 
-4. **ChartPanel extraction**
+3. **ChartPanel extraction**
    - Do this only after the chart-shell pass.
    - Extract shell/toolbar/chrome only.
    - Keep URL query state, exports, Add to Dashboard config, failed-data behavior,
      metric selection, and route-specific chart logic local.
 
-5. **Remaining route-family migrations**
+4. **Remaining route-family migrations**
    - Stablecoins, bridges, RWA, token, LST, liquidations, DAT, adapter/markets, MCP,
      borrow, and remaining CEX markets/date-filter surfaces.
    - Keep these route-sized. Each branch should state which family was visually checked

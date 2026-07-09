@@ -6,7 +6,6 @@ type EntityTitleStripProps<T extends ElementType> = {
 	title: ReactNode
 	actions?: ReactNode
 	className?: string
-	titleClassName?: string
 } & Omit<ComponentPropsWithoutRef<T>, 'as' | 'children' | 'className' | 'title'>
 
 export function EntityTitleStrip<T extends ElementType = 'section'>({
@@ -15,7 +14,6 @@ export function EntityTitleStrip<T extends ElementType = 'section'>({
 	title,
 	actions,
 	className,
-	titleClassName,
 	...props
 }: EntityTitleStripProps<T>) {
 	const Component = (as ?? 'section') as ElementType
@@ -30,7 +28,7 @@ export function EntityTitleStrip<T extends ElementType = 'section'>({
 			{media ? (
 				<div className="grid size-7 shrink-0 place-items-center overflow-hidden rounded-full">{media}</div>
 			) : null}
-			<h1 className={`min-w-0 flex-1 truncate heading-sm ${titleClassName ?? ''}`.trim()}>{title}</h1>
+			<h1 className="min-w-0 flex-1 truncate heading-sm">{title}</h1>
 			{actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
 		</Component>
 	)

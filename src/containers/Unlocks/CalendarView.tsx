@@ -201,6 +201,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 					</button>
 				</div>
 				<TagGroup
+					variant="default"
+					size="md"
 					selectedValue={viewMode}
 					setValue={(value) => {
 						setQueryParams({ view: value === 'Month' ? undefined : value })

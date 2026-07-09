@@ -20,7 +20,7 @@ import type { ComponentPropsWithRef, ElementType } from 'react'
    new variant to agree on in design.md, not a className override.
 
    For Ariakit hosts, prefer composing the component itself:
-   <Ariakit.DialogDisclosure render={<Button />}>…</Ariakit.DialogDisclosure>
+   <Ariakit.DialogDisclosure render={<Button size="md" />}>…</Ariakit.DialogDisclosure>
    `buttonStyles(...)` exists for the rare host that only takes a class.
 ---------------------------------------------------------------------------- */
 
@@ -60,13 +60,13 @@ const RADIUS_CLASSES: Record<ButtonSize, string> = {
 
 export function buttonStyles({
 	variant = 'secondary',
-	size = 'sm',
+	size,
 	square = false
 }: {
 	variant?: ButtonVariant
-	size?: ButtonSize
+	size: ButtonSize
 	square?: boolean
-} = {}): string {
+}): string {
 	return `flex shrink-0 cursor-pointer items-center justify-center whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60 ${
 		square ? SQUARE_SIZE_CLASSES[size] : SIZE_CLASSES[size]
 	} ${variant === 'filter' ? 'rounded-full' : RADIUS_CLASSES[size]} ${VARIANT_CLASSES[variant]}`
@@ -75,7 +75,7 @@ export function buttonStyles({
 type ButtonProps<T extends ElementType> = {
 	as?: T
 	variant?: ButtonVariant
-	size?: ButtonSize
+	size: ButtonSize
 	square?: boolean
 	/** Layout placement only (ml-auto, w-full, …) — never colors or spacing. */
 	className?: string
@@ -84,7 +84,7 @@ type ButtonProps<T extends ElementType> = {
 export function Button<T extends ElementType = 'button'>({
 	as,
 	variant = 'secondary',
-	size = 'sm',
+	size,
 	square = false,
 	className,
 	...props

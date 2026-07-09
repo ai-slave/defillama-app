@@ -447,6 +447,8 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 				) : null}
 
 				<TagGroup
+					variant="default"
+					size="md"
 					selectedValue={timeView}
 					setValue={(period) => startTransition(() => setTimeView(period))}
 					values={TIME_VIEWS}

@@ -51,7 +51,6 @@ export function AvailableRange({
 
 	return (
 		<FilterBetweenRange
-			name="Available"
 			trigger={
 				variant === 'secondary' ? (
 					<>
@@ -76,6 +75,7 @@ export function AvailableRange({
 			min={min}
 			max={max}
 			variant="secondary"
+			size="sm"
 			placement={placement}
 		/>
 	)

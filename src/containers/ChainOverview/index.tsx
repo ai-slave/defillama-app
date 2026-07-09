@@ -101,7 +101,9 @@ export function ChainOverview(props: IChainOverviewData) {
 									title={props.metadata.name}
 									actions={props.metadata.deprecated ? <DeprecatedEntityText /> : null}
 								/>
-								<PanelStatus>We don't track any protocols with TVL, Fees, Revenue or Volume on this chain</PanelStatus>
+								<PanelStatus variant="empty">
+									We don't track any protocols with TVL, Fees, Revenue or Volume on this chain
+								</PanelStatus>
 							</>
 						)}
 						{props.metadata.name === 'All' ? (

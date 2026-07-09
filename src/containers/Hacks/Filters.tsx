@@ -167,7 +167,6 @@ const Filters = ({
 				excludeQueryKey="excludeChain"
 			/>
 			<FilterBetweenRange
-				name="Amount lost"
 				trigger={
 					minLostVal != null || maxLostVal != null ? (
 						<>
@@ -185,6 +184,7 @@ const Filters = ({
 				onSubmit={handleAmountSubmit}
 				onClear={handleAmountClear}
 				placement="bottom-start"
+				variant="primary"
 				size="md"
 				nestedMenu={isMobile}
 			/>
@@ -213,7 +213,13 @@ const Filters = ({
 			/>
 
 			<div className="px-3 py-2 sm:ml-auto sm:flex-row sm:items-center sm:px-0 sm:py-0">
-				<TagGroup setValue={setSelectedTime} selectedValue={selectedTimeLabel} values={timeOptions} />
+				<TagGroup
+					variant="default"
+					size="md"
+					setValue={setSelectedTime}
+					selectedValue={selectedTimeLabel}
+					values={timeOptions}
+				/>
 			</div>
 			{isMobile ? (
 				<button type="button" onClick={onClearAll} disabled={!hasActiveFilters} className={nestedMenuActionStyles}>

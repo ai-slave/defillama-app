@@ -356,7 +356,13 @@ export const HacksContainer = ({
 				</Card>
 				<Panel padding="none" className="col-span-2">
 					<ChartPanelToolbar className="justify-end *:first:mr-auto">
-						<TagGroup setValue={setChartType} selectedValue={chartType} values={chartTypeList} />
+						<TagGroup
+							variant="default"
+							size="md"
+							setValue={setChartType}
+							selectedValue={chartType}
+							values={chartTypeList}
+						/>
 						<ChartExportButtons
 							chartInstance={exportChartInstance}
 							filename="total-value-hacked"

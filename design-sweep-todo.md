@@ -19,7 +19,8 @@ Process rules (from review feedback):
 
 This file is now a living audit/backlog ledger, not a literal merge-blocking checklist.
 The broad design sweep, shared popover/mobile-drawer pass, DialogShell pass,
-ProtocolOverview cleanup, and text-tier/icon consistency sweep have merged to `main`.
+ProtocolOverview cleanup, text-tier/icon consistency sweep, and dense pages/Card-Panel
+cleanup have merged to `main`.
 Many unchecked items are historical counts, deferred migrations, or "keep unchecked until
 live verification" markers. Do not require every unchecked line in this file to be cleared
 before opening or merging a focused follow-up branch.
@@ -41,14 +42,12 @@ Completed merge packet:
   `dialogSurfaceStyles`, `DialogHeading`, `DialogCloseButton`, portal-based positioning,
   and below-`sm` bottom-sheet behavior are now the app recipe.
 - Text-tier + icon consistency sweep landed and is codified in `design.md`.
+- Dense pages/Card-Panel cleanup landed: `DeFiWatchlist`, `TokenPnl`, agreed small/static
+  pages, standalone analytics/list shells, Chains/NFT route-family shells, Unlocks
+  outer-shell fixes, focused Correlations cleanup, and explicit `Card`/`Panel` padding.
 
 Current focused backlog:
 
-- Dense pages/Card-Panel cleanup: `DeFiWatchlist`, `TokenPnl`, agreed small/static
-  pages, standalone panel/table shells, selected route-family shells, and explicit
-  `Card`/`Panel` padding. Do not broaden this branch into shared-control API tightening.
-- Correlations route cleanup: legacy surface/text/link-hover tokens if not already kept
-  inside the dense cleanup branch.
 - Shared control API tightening follow-up: remove hidden defaults/dead props from
   `FilterBetweenRange`, `PanelStatus`, `Checkbox`, `EntityTitleStrip`, `IconHitTarget`,
   `Button`, `selectTriggerStyles`, `TagGroup`, and eventually `Select` /
@@ -128,55 +127,51 @@ The foundation primitives now exist. Broad sweeps should start by adopting and
 verifying existing recipes, not by adding more one-off primitives unless a proven
 gap remains.
 
-1. Dense pages/Card-Panel cleanup: `DeFiWatchlist` and `TokenPnl` first, plus the agreed
-   small/static pages, standalone shells, route-family shells, Unlocks outer-shell fixes,
-   and explicit `Card`/`Panel` padding. Include the `DeFiWatchlist` dialog only as part of
-   that file-family cleanup.
-2. Shared control API tightening: make intentional control/surface choices explicit
+1. Shared control API tightening: make intentional control/surface choices explicit
    without changing visuals; keep excluded surfaces pinned before tightening global shared
    `Select` / `SelectWithCombobox` props.
-3. Raises chart-shell/fallback reservation, including one investor raises page.
-4. ChartPanel extraction after the raises/chart-shell pass.
-5. Migrate remaining route families in chunks: stablecoins/bridges/RWA/token/
+2. Raises chart-shell/fallback reservation, including one investor raises page.
+3. ChartPanel extraction after the raises/chart-shell pass.
+4. Migrate remaining route families in chunks: stablecoins/bridges/RWA/token/
    liquidations/DAT/adapter/markets/MCP/borrow surfaces.
-6. Residual DialogShell cleanup only after the relevant surface is scoped: global search,
+5. Residual DialogShell cleanup only after the relevant surface is scoped: global search,
    metrics browse, MCP command dialogs, account/subscription, ProDashboard, LlamaAI,
    Yields, Articles, Downloads, and other quarantined products should not be swept as a
    side effect of dense-page work. Delete the legacy `dialog` utility only when all
    remaining consumers are either migrated or intentionally moved to a separate legacy
    utility.
-7. For each route family, document live verification separately from code migration:
+6. For each route family, document live verification separately from code migration:
    desktop/mobile where applicable, light/dark, 32px controls, 6px dense gaps, 8px
    group/page gaps, card/panel padding, popover containment, status states, and no chart
    visual regression.
-8. Run read-only review passes before the final cleanup: excluded-surface regression,
+7. Run read-only review passes before the final cleanup: excluded-surface regression,
    chart visual-change risk, token/hardcoded-style drift, semantic HTML/status states,
    duplicated shell/component churn, and route-family visual checklist coverage.
 
 ## Shared control API tightening backlog
 
-Follow-up branch after the dense Card/Panel cleanup. Suggested branch:
+Current focused branch after the dense Card/Panel cleanup:
 `mintdart/shared-control-api-tightening`.
 
-- [ ] `FilterBetweenRange`: remove the dead `name` prop; make `variant` and `size`
+- [x] `FilterBetweenRange`: remove the dead `name` prop; make `variant` and `size`
       explicit; keep `nestedMenu` optional for menu vs popover placement; consider
       reusing `selectTriggerStyles` for trigger chrome.
-- [ ] `PanelStatus`: require `variant` so empty/error semantics and ARIA behavior are
+- [x] `PanelStatus`: require `variant` so empty/error semantics and ARIA behavior are
       always explicit.
-- [ ] `Checkbox`: require `variant`; collapse duplicate indicator style entries into one
+- [x] `Checkbox`: require `variant`; collapse duplicate indicator style entries into one
       shared indicator class.
-- [ ] `EntityTitleStrip`: remove unused `titleClassName` unless a specific scoped title
+- [x] `EntityTitleStrip`: remove unused `titleClassName` unless a specific scoped title
       exception is approved.
-- [ ] `IconHitTarget`: remove the unused component or migrate the single
+- [x] `IconHitTarget`: remove the unused component or migrate the single
       `tableIconHitTargetStyles` caller to it.
-- [ ] `Button`: make `size` explicit first. Defer making `variant` required unless that
+- [x] `Button`: make `size` explicit first. Defer making `variant` required unless that
       branch intentionally accepts broader caller churn.
-- [ ] `selectTriggerStyles`: require `variant` and `size` at direct helper call sites.
-- [ ] `TagGroup`: require `variant` and `size`; remove the redundant local `style` prop
+- [x] `selectTriggerStyles`: require `variant` and `size` at direct helper call sites.
+- [x] `TagGroup`: require `variant` and `size`; remove the redundant local `style` prop
       type because `React.ComponentProps<'div'>` already supplies it.
-- [ ] `Select` / `SelectWithCombobox`: make in-scope callers explicit first; tighten the
-      shared prop types only after ProDashboard, LlamaAI, Yields, and other excluded
-      surfaces are pinned or intentionally migrated.
+- [ ] `Select` / `SelectWithCombobox`: in-scope callers are explicit; tighten the shared
+      prop types only after ProDashboard, LlamaAI, Yields, and other excluded surfaces are
+      pinned or intentionally migrated.
 
 ## src/ui primitives
 

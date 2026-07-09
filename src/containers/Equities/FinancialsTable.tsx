@@ -252,11 +252,15 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 				<h2 className="heading-xs">Financials</h2>
 				<TableToolbarControlGroup className="ml-auto">
 					<TagGroup
+						variant="default"
+						size="md"
 						selectedValue={statementType}
 						setValue={(value) => startTransition(() => setStatementType(value))}
 						values={STATEMENT_OPTIONS}
 					/>
 					<TagGroup
+						variant="default"
+						size="md"
 						selectedValue={periodType}
 						setValue={(value) => startTransition(() => setPeriodType(value))}
 						values={PERIOD_OPTIONS}

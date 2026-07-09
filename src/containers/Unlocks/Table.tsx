@@ -270,22 +270,24 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 				</button>
 
 				<FilterBetweenRange
-					name="Unlock Value"
 					trigger={<span>Unlock Value</span>}
 					onSubmit={handleUnlockValueSubmit}
 					onClear={handleUnlockValueClear}
 					min={min ?? ''}
 					max={max ?? ''}
+					variant="primary"
+					size="sm"
 					placement="bottom-start"
 				/>
 
 				<FilterBetweenRange
-					name="Unlock % of Market Cap"
 					trigger={<span>Unlock Perc.</span>}
 					onSubmit={handleUnlockPercSubmit}
 					onClear={handleUnlockPercClear}
 					min={minPerc ?? ''}
 					max={maxPerc ?? ''}
+					variant="primary"
+					size="sm"
 					placement="bottom-start"
 				/>
 
@@ -300,6 +302,7 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 					label={'Columns'}
 					labelType="smol"
 					variant="filter-responsive"
+					size="sm"
 				/>
 
 				<SelectWithCombobox
@@ -314,6 +317,7 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 					label={'Unlock Types'}
 					labelType="smol"
 					variant="filter-responsive"
+					size="sm"
 				/>
 
 				<label className="relative w-full sm:max-w-[280px]">

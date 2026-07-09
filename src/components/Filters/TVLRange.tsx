@@ -8,7 +8,7 @@ type QueryUpdates = Record<string, string | string[] | undefined>
 
 export function TVLRange({
 	variant = 'primary',
-	size,
+	size = 'sm',
 	nestedMenu,
 	triggerClassName,
 	placement,
@@ -66,7 +66,6 @@ export function TVLRange({
 
 	return (
 		<FilterBetweenRange
-			name="TVL Range"
 			trigger={
 				variant === 'secondary' ? (
 					<>

@@ -317,7 +317,7 @@ export function ProtocolOverviewLayout({
 				<div className={tabTrackStyles}>
 					{(otherProtocols?.length ?? 0) > 1 ? (
 						<Ariakit.MenuProvider>
-							<Ariakit.MenuButton render={<Button className="my-auto mr-4" />}>
+							<Ariakit.MenuButton render={<Button size="sm" className="my-auto mr-4" />}>
 								<TokenLogo name={name} kind="token" size={16} alt={`Logo of ${name}`} />
 								<span className="whitespace-nowrap">{name === otherProtocols?.[0] ? `${name} (Combined)` : name}</span>
 								<Icon name="chevron-down" className="size-3.5 shrink-0 text-tertiary" />

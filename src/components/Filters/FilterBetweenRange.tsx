@@ -9,15 +9,14 @@ import { Input } from '~/ui/Input'
 import { popoverMobileDismissStyles, popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
 
 interface IFilterBetweenRange {
-	name: string
 	trigger: ReactNode
 	onSubmit: FormSubmitHandler
 	onClear: () => void
 	nestedMenu?: boolean
 	min: number | string | null
 	max: number | string | null
-	variant?: 'primary' | 'secondary'
-	size?: 'sm' | 'md'
+	variant: 'primary' | 'secondary'
+	size: 'sm' | 'md'
 	triggerClassName?: string
 	placement?: Ariakit.PopoverStoreProps['placement']
 	minLabel?: string
@@ -27,15 +26,14 @@ interface IFilterBetweenRange {
 }
 
 export function FilterBetweenRange({
-	name: _name,
 	trigger,
 	onSubmit: handleSubmit,
 	onClear,
 	nestedMenu,
 	min,
 	max,
-	variant = 'primary',
-	size = 'sm',
+	variant,
+	size,
 	triggerClassName,
 	placement = 'bottom-end',
 	minLabel = 'Min',

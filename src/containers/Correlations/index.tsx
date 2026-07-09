@@ -300,7 +300,14 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 		<>
 			<Card padding="strip" className="flex flex-wrap items-center justify-between gap-4">
 				<h1 className="heading-sm">Correlations Matrix</h1>
-				<TagGroup selectedValue={period} setValue={setPeriod} values={PERIODS} className="ml-auto" />
+				<TagGroup
+					variant="default"
+					size="md"
+					selectedValue={period}
+					setValue={setPeriod}
+					values={PERIODS}
+					className="ml-auto"
+				/>
 			</Card>
 
 			<Card padding="md" className="flex flex-col items-center gap-6">

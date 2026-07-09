@@ -162,6 +162,7 @@ export function TrendingContractsDataset({
 					<h3 className="mr-auto text-lg font-semibold pro-text1">Trending Contracts</h3>
 					<div className="flex flex-wrap items-center justify-end gap-2">
 						<TagGroup
+							size="md"
 							selectedValue={timeframe}
 							setValue={(val) => {
 								setTimeframe(val)
@@ -171,6 +172,7 @@ export function TrendingContractsDataset({
 							variant="pro"
 						/>
 						<TagGroup
+							size="md"
 							selectedValue={chain}
 							setValue={(val) => {
 								setChain(val)

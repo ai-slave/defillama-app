@@ -137,7 +137,6 @@ function McapRange({
 
 	return (
 		<FilterBetweenRange
-			name="Mcap"
 			trigger={
 				<>
 					{min || max ? (
@@ -158,6 +157,7 @@ function McapRange({
 			min={min}
 			max={max}
 			placement={placement}
+			variant="primary"
 			size="md"
 		/>
 	)

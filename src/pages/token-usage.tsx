@@ -134,9 +134,11 @@ export default function Tokens() {
 					{error.message}
 				</PanelStatus>
 			) : !tokenSymbol ? (
-				<PanelStatus className="min-h-[380px]">No token selected</PanelStatus>
+				<PanelStatus variant="empty" className="min-h-[380px]">
+					No token selected
+				</PanelStatus>
 			) : !isAuthenticated || !hasActiveSubscription ? (
-				<PanelStatus className="min-h-[380px]">
+				<PanelStatus variant="empty" className="min-h-[380px]">
 					{!isAuthenticated ? (
 						<>
 							An{' '}
@@ -156,7 +158,9 @@ export default function Tokens() {
 					)}
 				</PanelStatus>
 			) : !protocols || protocols.length === 0 ? (
-				<PanelStatus className="min-h-[380px]">No protocols found</PanelStatus>
+				<PanelStatus variant="empty" className="min-h-[380px]">
+					No protocols found
+				</PanelStatus>
 			) : (
 				<Panel padding="none" className="w-full flex-1">
 					<ChartPanelToolbar className="items-center justify-between">

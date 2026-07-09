@@ -375,6 +375,8 @@ function CategoricalFilterEditor({
 					setSelectedValues={(next) => onUpdate({ ...filter, values: next })}
 					label={valueLabel}
 					labelType="smol"
+					variant="default"
+					size="sm"
 					visibleOptionLimit={null}
 					selectAllScope="matches"
 					searchPlaceholder={`Search ${valueLabel.toLowerCase()}...`}

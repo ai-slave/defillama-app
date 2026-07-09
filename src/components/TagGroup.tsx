@@ -6,9 +6,8 @@ interface IProps<V extends readonly string[] = readonly string[]> extends React.
 	selectedValue: V[number] | null
 	setValue: (value: V[number]) => void
 	values: V
-	style?: Record<string, string>
-	variant?: TagGroupVariant
-	size?: TagGroupSize
+	variant: TagGroupVariant
+	size: TagGroupSize
 	label?: string
 	disabledValues?: readonly V[number][]
 }
@@ -19,8 +18,8 @@ export function TagGroup<V extends readonly string[]>({
 	values,
 	style,
 	className,
-	variant = 'default',
-	size = 'md',
+	variant,
+	size,
 	label,
 	disabledValues,
 	...props
