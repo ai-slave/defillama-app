@@ -160,7 +160,7 @@ export function BridgedTVLByChain({
 					</h1>
 
 					<p className="mb-3 flex flex-col gap-1 text-base">
-						<span className="text-(--text-label)">Total</span>
+						<span className="text-secondary">Total</span>
 						<span className="font-jetbrains text-2xl font-semibold">
 							{formattedNum(
 								+(chainData?.total?.total ?? 0) + (chainData?.ownTokens?.total ? +chainData.ownTokens.total : 0),
@@ -170,23 +170,23 @@ export function BridgedTVLByChain({
 					</p>
 
 					<p className="flex items-center justify-between gap-1 text-base">
-						<span className="text-(--text-label)">Canonical</span>
+						<span className="text-secondary">Canonical</span>
 						<span className="font-jetbrains">{formattedNum(chainData?.canonical?.total, true)}</span>
 					</p>
 
 					<p className="flex items-center justify-between gap-1 text-base">
-						<span className="text-(--text-label)">Native</span>
+						<span className="text-secondary">Native</span>
 						<span className="font-jetbrains">{formattedNum(chainData?.native?.total, true)}</span>
 					</p>
 
 					<p className="flex items-center justify-between gap-1 text-base">
-						<span className="text-(--text-label)">Third Party</span>
+						<span className="text-secondary">Third Party</span>
 						<span className="font-jetbrains">{formattedNum(chainData?.thirdParty?.total, true)}</span>
 					</p>
 
 					{chainData?.ownTokens?.total ? (
 						<p className="flex items-center justify-between gap-1 text-base">
-							<span className="text-(--text-label)">Own Tokens</span>
+							<span className="text-secondary">Own Tokens</span>
 							<span className="font-jetbrains">{formattedNum(chainData?.ownTokens.total, true)}</span>
 						</p>
 					) : null}

@@ -544,27 +544,27 @@ export default function CEXStablecoins(props: {
 				<>
 					<Card padding="strip" className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2">
 						<div className="flex items-baseline gap-1.5">
-							<span className="text-sm text-(--text-label)">Total Stablecoin in CEX</span>
-							<span className="text-sm font-medium">{currentTotal ? formattedNum(currentTotal, true) : '-'}</span>
+							<span className="label-md text-secondary">Total Stablecoin in CEX</span>
+							<span className="body-md font-medium">{currentTotal ? formattedNum(currentTotal, true) : '-'}</span>
 						</div>
 						{stablecoinBreakdown && stablecoinBreakdown.length > 0 ? (
 							<>
 								<div className="flex items-baseline gap-1.5">
-									<span className="text-sm text-(--text-label)">Dominant Backing Type</span>
-									<span className="text-sm font-medium capitalize">
+									<span className="label-md text-secondary">Dominant Backing Type</span>
+									<span className="body-md font-medium capitalize">
 										{stablecoinBreakdown[0].mechanism.replace('-', ' ')}
 									</span>
-									<span className="text-sm text-(--text-label)">({stablecoinBreakdown[0].percentage.toFixed(1)}%)</span>
+									<span className="body-md text-tertiary">({stablecoinBreakdown[0].percentage.toFixed(1)}%)</span>
 								</div>
 								<div className="flex items-baseline gap-1.5">
-									<span className="text-sm text-(--text-label)">Fiat-Backed %</span>
-									<span className="text-sm font-medium">
+									<span className="label-md text-secondary">Fiat-Backed %</span>
+									<span className="body-md font-medium">
 										{stablecoinBreakdown.find((b) => b.mechanism === 'fiat-backed')?.percentage.toFixed(1) || '0'}%
 									</span>
 								</div>
 								<div className="flex items-baseline gap-1.5">
-									<span className="text-sm text-(--text-label)">Number of Stablecoins</span>
-									<span className="text-sm font-medium">{data.stablecoinTokensUnique?.length || 0}</span>
+									<span className="label-md text-secondary">Number of Stablecoins</span>
+									<span className="body-md font-medium">{data.stablecoinTokensUnique?.length || 0}</span>
 								</div>
 							</>
 						) : null}

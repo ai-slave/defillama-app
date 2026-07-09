@@ -45,8 +45,8 @@ export function BuyOnLlamaswap({
 				href={buildSwapUrl(primaryChain, placement)}
 				className={
 					size === 'small'
-						? `flex items-center gap-1 rounded-md bg-(--primary)/10 px-1.5 py-0.5 label-sm text-(--primary) hover:bg-(--primary)/20`
-						: `flex items-center gap-1 rounded-full border-2 border-(--old-blue) bg-(--old-blue) px-2 py-1 text-xs font-medium text-white hover:bg-(--old-blue)/80`
+						? `hover-wash flex items-center gap-1 rounded-md bg-brand-faint px-1.5 py-0.5 label-sm text-link`
+						: `flex items-center gap-1 rounded-full border-2 border-brand bg-brand px-2 py-1 label-sm text-on-brand hover:brightness-110`
 				}
 			>
 				{size === 'small' ? 'Buy' : 'Buy Now'}
@@ -61,8 +61,8 @@ export function BuyOnLlamaswap({
 				render={<button />}
 				className={
 					size === 'small'
-						? `flex items-center gap-1 rounded-md bg-(--primary)/10 px-1.5 py-0.5 label-sm text-(--primary) hover:bg-(--primary)/20`
-						: `flex items-center gap-1 rounded-full border-2 border-(--old-blue) bg-(--old-blue) px-2 py-1 text-xs font-medium text-white hover:bg-(--old-blue)/80`
+						? `hover-wash flex items-center gap-1 rounded-md bg-brand-faint px-1.5 py-0.5 label-sm text-link`
+						: `flex items-center gap-1 rounded-full border-2 border-brand bg-brand px-2 py-1 label-sm text-on-brand hover:brightness-110`
 				}
 			>
 				{size === 'small' ? 'Buy' : 'Buy Now'}

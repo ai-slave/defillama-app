@@ -214,7 +214,7 @@ export function RecentProtocols({
 							resetEligibilityCheck()
 							airdropCheckerDialog.toggle()
 						}}
-						className="flex items-center gap-1 rounded-md bg-(--link-button) px-2.5 py-1 text-sm font-medium whitespace-nowrap dark:bg-(--link-hover-bg)"
+						className="hover-wash flex items-center gap-1 rounded-md bg-brand-muted px-2.5 py-1 text-sm font-medium whitespace-nowrap text-link"
 					>
 						Check airdrops for address
 					</button>
@@ -237,7 +237,9 @@ export function RecentProtocols({
 						<div className="min-h-0 flex-1 overflow-y-auto p-3">
 							{eligibleAirdrops ? (
 								eligibleAirdrops.length === 0 ? (
-									<p className="text-center body-sm text-data-down">No airdrops detected for this address</p>
+									<p role="status" aria-live="polite" className="text-center body-sm text-tertiary">
+										No airdrops detected for this address
+									</p>
 								) : (
 									<div className="relative isolate w-full overflow-auto">
 										{eligibleAirdrops.map((address) => (
@@ -347,7 +349,7 @@ export function RecentProtocols({
 										{fetchingEligibleAirdrops ? 'Checking...' : 'Check'}
 									</Button>
 									{errorFetchingEligibleAirdrops ? (
-										<p className="text-center body-sm text-data-down">
+										<p role="alert" className="text-center body-sm text-data-down">
 											{errorFetchingEligibleAirdrops instanceof Error
 												? errorFetchingEligibleAirdrops.message
 												: 'Failed to fetch'}

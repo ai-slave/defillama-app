@@ -6,7 +6,7 @@ import { type PivotedSeries, toStackedAreaSeries } from './utils'
 const AreaChart = React.lazy(() => import('~/components/ECharts/AreaChart'))
 
 const FALLBACK = (
-	<div role="status" aria-live="polite" className="flex min-h-[300px] items-center justify-center">
+	<div role="status" aria-live="polite" className="flex min-h-[400px] items-center justify-center">
 		<LocalLoader />
 		<span className="sr-only">Loading chart data</span>
 	</div>
@@ -24,23 +24,24 @@ export function MarketsAreaChart({ title, series }: { title: string; series: Piv
 	)
 	const hasData = ordered.chartData.length > 0 && ordered.stacks.length > 0
 	return (
-		<Panel padding="none" className="min-h-[360px]">
+		<Panel padding="none" className="min-h-[400px]">
 			{hasData ? (
 				<React.Suspense fallback={FALLBACK}>
 					<AreaChart
 						title={title}
+						headingAs="h3"
 						chartData={ordered.chartData}
 						stacks={ordered.stacks}
 						valueSymbol="$"
 						isStackedChart
 						hideDefaultLegend={false}
 						chartOptions={chartOptions}
-						height="300px"
+						height="360px"
 					/>
 				</React.Suspense>
 			) : (
 				<>
-					<span className="px-2 pt-2 pb-0 heading-xs">{title}</span>
+					<h3 className="px-2 pt-2 pb-0 heading-xs">{title}</h3>
 					<div
 						role="status"
 						aria-live="polite"

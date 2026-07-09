@@ -7,41 +7,41 @@ const customStyles: NonNullable<Props['styles']> = {
 		padding: '2px',
 		borderRadius: '6px',
 		border: '1px solid var(--ld-border-medium)',
-		color: 'var(--text-primary)',
+		color: 'var(--ld-text-primary)',
 		boxShadow: 'none',
 		margin: 0,
 		zIndex: 0
 	}),
 	input: (provided) => ({
 		...provided,
-		color: 'var(--text-primary)'
+		color: 'var(--ld-text-primary)'
 	}),
 	menu: (provided) => ({
 		...provided,
-		background: 'var(--ld-bg-surface)',
+		background: 'var(--ld-bg-surface-elevated-1)',
 		zIndex: 10
 	}),
-	option: (provided, state) => ({
+	option: (provided) => ({
 		...provided,
-		color: state.isFocused ? 'black' : 'var(--text-primary)'
+		color: 'var(--ld-text-primary)'
 	}),
 	multiValue: (provided) => ({
 		...provided,
 		fontFamily: 'inherit',
-		background: 'var(--bg2)',
+		background: 'var(--ld-bg-surface-elevated-2)',
 		padding: '2px'
 	}),
 	multiValueLabel: (styles) => ({
 		...styles,
-		color: 'var(--text-primary)'
+		color: 'var(--ld-text-primary)'
 	}),
 	placeholder: (provided) => ({
 		...provided,
-		color: 'var(--text-tertiary)'
+		color: 'var(--ld-text-tertiary)'
 	}),
 	singleValue: (provided, _state) => ({
 		...provided,
-		color: 'var(--text-primary)'
+		color: 'var(--ld-text-primary)'
 	})
 }
 

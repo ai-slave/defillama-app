@@ -403,13 +403,18 @@ export function AddToDashboardModal({
 
 					<div className="thin-scrollbar max-h-56 overflow-y-auto overscroll-contain">
 						{isLoadingDashboards ? (
-							<div className="flex items-center justify-center py-8">
+							<div role="status" aria-live="polite" className="flex items-center justify-center py-8">
 								<div className="size-5 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+								<span className="sr-only">Loading dashboards</span>
 							</div>
 						) : filteredDashboards.length === 0 && !search.trim() ? (
-							<p className="py-6 text-center body-sm text-tertiary">No dashboards yet</p>
+							<p role="status" aria-live="polite" className="py-6 text-center body-sm text-tertiary">
+								No dashboards yet
+							</p>
 						) : filteredDashboards.length === 0 ? (
-							<p className="py-6 text-center body-sm text-tertiary">No matches found</p>
+							<p role="status" aria-live="polite" className="py-6 text-center body-sm text-tertiary">
+								No matches found
+							</p>
 						) : (
 							<div className="flex flex-col gap-0.5">
 								{filteredDashboards.map((dashboard: (typeof dashboards)[number]) => {

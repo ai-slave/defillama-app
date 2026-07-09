@@ -1194,8 +1194,8 @@ export const UnlocksCharts = ({
 	const resolvedData: IEmission | ProtocolEmissionResult | null = initialData ?? data
 	if (!resolvedData) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center">
-				<p className="p-2">{error instanceof Error ? error.message : 'Failed to fetch'}</p>
+			<div role="alert" className="flex flex-1 flex-col items-center justify-center">
+				<p className="p-2 body-sm text-data-down">{error instanceof Error ? error.message : 'Failed to fetch'}</p>
 			</div>
 		)
 	}

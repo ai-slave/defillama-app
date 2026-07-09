@@ -40,6 +40,7 @@ interface ITableWithSearchBaseProps<T extends RowData> {
 	columnToSearch?: string
 	header?: string | null
 	leadingControls?: React.ReactNode | null
+	searchAlign?: 'start' | 'end'
 	headingAs?: 'h1' | 'h2'
 	columnOrders?: ColumnOrdersByBreakpoint | null
 	sortingState?: SortingState
@@ -52,6 +53,7 @@ interface ITableWithSearchBaseProps<T extends RowData> {
 	getSubRows?: (row: T) => T[] | undefined
 	showColumnSelect?: boolean
 	columnSelectLabel?: string
+	csvExportAllColumns?: boolean
 }
 
 type ITableWithSearchProps<T extends RowData = RowData> = ITableWithSearchBaseProps<T> &
@@ -74,6 +76,7 @@ export function TableWithSearch<T extends RowData>({
 	customFilters = null,
 	header = null,
 	leadingControls = null,
+	searchAlign = 'end',
 	headingAs: HeadingTag = 'h2',
 	columnOrders = null,
 	sortingState = EMPTY_SORTING,
@@ -85,6 +88,7 @@ export function TableWithSearch<T extends RowData>({
 	tableLayout = 'fixed',
 	showColumnSelect = false,
 	columnSelectLabel = 'Columns',
+	csvExportAllColumns = false,
 	csvFileName = null,
 	getSubRows: getSubRowsProp
 }: ITableWithSearchProps<T>) {
@@ -181,13 +185,27 @@ export function TableWithSearch<T extends RowData>({
 		/>
 	) : null
 	const csvControl = csvFileName ? (
-		<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: csvFileName })} smol size="md" />
+		<CSVDownloadButton
+			prepareCsv={() => prepareTableCsv({ instance, filename: csvFileName, includeHiddenColumns: csvExportAllColumns })}
+			smol
+			size="md"
+		/>
 	) : null
 
 	const controls =
 		HeadingTag === 'h1' && !embedded ? (
 			<PanelHeader className="w-full justify-end">
-				{leadingControls ? (
+				{searchAlign === 'start' ? (
+					<div className="mr-auto flex min-w-0 flex-1 items-center gap-2 overflow-x-auto">
+						{leadingControls ? <div className="flex items-center overflow-x-auto">{leadingControls}</div> : null}
+						{header ? (
+							<PanelTitle as={HeadingTag} className="mr-0 whitespace-nowrap">
+								{header}
+							</PanelTitle>
+						) : null}
+						{searchControl}
+					</div>
+				) : leadingControls ? (
 					<div className="mr-auto flex items-center gap-2 overflow-x-auto">
 						<div className="flex items-center overflow-x-auto">{leadingControls}</div>
 						{header ? (
@@ -201,20 +219,26 @@ export function TableWithSearch<T extends RowData>({
 						{header}
 					</PanelTitle>
 				) : null}
-				{searchControl}
+				{searchAlign === 'end' ? searchControl : null}
 				{renderedCustomFilters}
 				{columnSelectControl}
 				{csvControl}
 			</PanelHeader>
 		) : (
 			<TableToolbar className="w-full justify-end">
-				{hasLeadingContent ? (
+				{searchAlign === 'start' ? (
+					<div className="mr-auto flex min-w-0 flex-1 items-center gap-2 overflow-x-auto">
+						{leadingControls ? <div className="flex items-center overflow-x-auto">{leadingControls}</div> : null}
+						{header ? <HeadingTag className="label-md whitespace-nowrap">{header}</HeadingTag> : null}
+						{searchControl}
+					</div>
+				) : hasLeadingContent ? (
 					<div className="mr-auto flex items-center gap-2 overflow-x-auto">
 						{leadingControls ? <div className="flex items-center overflow-x-auto">{leadingControls}</div> : null}
 						{header ? <HeadingTag className="label-md whitespace-nowrap">{header}</HeadingTag> : null}
 					</div>
 				) : null}
-				{searchControl}
+				{searchAlign === 'end' ? searchControl : null}
 				{renderedCustomFilters}
 				{columnSelectControl}
 				{csvControl}

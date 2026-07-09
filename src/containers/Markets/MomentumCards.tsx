@@ -42,13 +42,17 @@ function MoverCard<T extends Parameters<typeof moverValue>[0]>({
 	nameOf: (row: T) => React.ReactNode
 }) {
 	const { gainers, losers } = selectMovers(rows, metricKey)
-	const toRows = (list: T[]): MoverRow[] => list.map((r) => ({ name: nameOf(r), value: moverValue(r, metricKey) }))
+	const toRows = (list: T[]): MoverRow[] =>
+		list.map((row) => ({
+			name: nameOf(row),
+			value: moverValue(row, metricKey)
+		}))
 	return (
 		<Card padding="none" className="overflow-hidden">
 			<div className="border-b border-subtle px-3 py-2 label-md">{label}</div>
 			<div className="grid grid-cols-2 border-b border-subtle">
-				<span className="border-r border-subtle px-3 py-1 label-sm text-data-up uppercase">Gainers</span>
-				<span className="px-3 py-1 label-sm text-data-down uppercase">Losers</span>
+				<span className="border-r border-subtle px-3 py-1 label-sm text-data-up">Gainers</span>
+				<span className="px-3 py-1 label-sm text-data-down">Losers</span>
 			</div>
 			<div className="grid grid-cols-2">
 				<div className="border-r border-subtle">
@@ -75,7 +79,7 @@ function MoverRowSet<T extends Parameters<typeof moverValue>[0]>({
 	const gridCols = metricKeys.length >= 3 ? 'md:grid-cols-2 xl:grid-cols-3' : 'md:grid-cols-2'
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="label-sm text-secondary uppercase">{title}</div>
+			<div className="label-md text-secondary">{title}</div>
 			<div className={`grid grid-cols-1 gap-2 ${gridCols}`}>
 				{metricKeys.map((metric) => (
 					<MoverCard key={metric.key} label={metric.label} rows={rows} metricKey={metric.key} nameOf={nameOf} />
@@ -110,13 +114,13 @@ export function MomentumCards({
 	return (
 		<div className="flex flex-col gap-2">
 			<MoverRowSet
-				title="momentum · categories"
+				title="Categories"
 				rows={categoryRows}
 				metricKeys={metricKeys}
 				nameOf={(row) => <CategoryLink tag={row.category} />}
 			/>
 			<MoverRowSet
-				title="momentum · tokens"
+				title="Assets"
 				rows={tokens}
 				metricKeys={metricKeys}
 				nameOf={(row) => <TokenName base={row.symbol} knownTokenSlugs={knownTokenSlugs} />}

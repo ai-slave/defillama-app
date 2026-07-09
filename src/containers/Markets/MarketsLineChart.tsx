@@ -6,7 +6,7 @@ import { type PivotedSeries, toLineSeries } from './utils'
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 const FALLBACK = (
-	<div role="status" aria-live="polite" className="flex min-h-[300px] items-center justify-center">
+	<div role="status" aria-live="polite" className="flex min-h-[360px] items-center justify-center">
 		<LocalLoader />
 		<span className="sr-only">Loading chart data</span>
 	</div>
@@ -31,14 +31,14 @@ export function MarketsLineChart({
 	const lineSeries = React.useMemo(() => toLineSeries(series), [series])
 	const hasData = lineSeries.length > 0 && series.chartData.length > 0
 	return (
-		<Panel padding="none" className="min-h-[360px]">
+		<Panel padding="none" className="min-h-[400px]">
 			<div className="flex flex-col px-2 pt-2 pb-0">
-				<span className="label-sm text-secondary uppercase">30 days · tracking health</span>
-				<span className="label-md">{title}</span>
+				<h3 className="heading-xs">{title}</h3>
+				<p className="body-sm text-tertiary">30-day tracking health</p>
 			</div>
 			{hasData ? (
 				<React.Suspense fallback={FALLBACK}>
-					<MultiSeriesChart series={lineSeries} valueSymbol={valueSymbol} chartOptions={CHART_OPTIONS} height="280px" />
+					<MultiSeriesChart series={lineSeries} valueSymbol={valueSymbol} chartOptions={CHART_OPTIONS} height="360px" />
 				</React.Suspense>
 			) : (
 				<div role="status" aria-live="polite" className="flex flex-1 items-center justify-center body-sm text-tertiary">

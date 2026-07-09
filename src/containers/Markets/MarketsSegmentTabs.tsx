@@ -34,10 +34,10 @@ export function MarketsSegmentTabs({
 						onClick={() => onChange(segment.id)}
 						className="flex flex-col items-start gap-0.5"
 					>
-						<span data-active={isActive} className="label-sm text-secondary uppercase data-[active=true]:text-primary">
+						<span data-active={isActive} className="label-md text-secondary data-[active=true]:text-primary">
 							{segment.label}
 						</span>
-						{subtitle ? <span className="font-jetbrains label-sm text-secondary">{subtitle}</span> : null}
+						{subtitle ? <span className="mono-sm text-tertiary">{subtitle}</span> : null}
 					</TabLink>
 				)
 			})}

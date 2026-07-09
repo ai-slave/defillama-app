@@ -220,11 +220,11 @@ export const OracleOverview = ({
 				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					<h1 className="heading-sm">{displayOracle}</h1>
 					<p className="flex flex-col">
-						<span className="text-(--text-label)">Total Value Secured (USD)</span>
+						<span className="text-secondary">Total Value Secured (USD)</span>
 						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalValue, true)}</span>
 					</p>
 					<p className="flex flex-col">
-						<span className="text-(--text-label)">{dominanceLabel}</span>
+						<span className="text-secondary">{dominanceLabel}</span>
 						<span className="font-jetbrains text-2xl font-semibold">
 							{dominanceText === null ? 'N/A' : `${dominanceText}%`}
 						</span>

@@ -29,7 +29,7 @@ export const inputStyles =
 
 export const searchFieldWrapperStyles = 'relative mr-auto w-full min-w-0 sm:max-w-[280px]'
 
-export const searchFieldInlineWrapperStyles = 'relative w-full min-w-0 sm:w-[280px] sm:flex-none'
+export const searchFieldInlineWrapperStyles = 'relative w-full min-w-0 sm:max-w-[280px]'
 
 export const searchFieldIconStyles = 'pointer-events-none absolute top-0 bottom-0 left-3 my-auto text-tertiary'
 

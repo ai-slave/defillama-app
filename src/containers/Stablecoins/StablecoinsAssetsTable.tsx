@@ -174,7 +174,7 @@ const stablecoinsColumns = [
 				<Tooltip
 					content={info.row.original.change_1d_nol}
 					className={`justify-end overflow-hidden text-ellipsis whitespace-nowrap underline decoration-dotted ${
-						info.row.original.change_1d_nol.startsWith('-') ? 'text-(--error)' : 'text-(--success)'
+						info.row.original.change_1d_nol.startsWith('-') ? 'text-data-down' : 'text-data-up'
 					}`}
 				>
 					<PercentChange percent={info.getValue()} />
@@ -194,7 +194,7 @@ const stablecoinsColumns = [
 				<Tooltip
 					content={info.row.original.change_7d_nol}
 					className={`justify-end overflow-hidden text-ellipsis whitespace-nowrap underline decoration-dotted ${
-						info.row.original.change_7d_nol.startsWith('-') ? 'text-(--error)' : 'text-(--success)'
+						info.row.original.change_7d_nol.startsWith('-') ? 'text-data-down' : 'text-data-up'
 					}`}
 				>
 					<PercentChange percent={info.getValue()} />
@@ -214,7 +214,7 @@ const stablecoinsColumns = [
 				<Tooltip
 					content={info.row.original.change_1m_nol}
 					className={`justify-end overflow-hidden text-ellipsis whitespace-nowrap underline decoration-dotted ${
-						info.row.original.change_1m_nol.startsWith('-') ? 'text-(--error)' : 'text-(--success)'
+						info.row.original.change_1m_nol.startsWith('-') ? 'text-data-down' : 'text-data-up'
 					}`}
 				>
 					<PercentChange percent={info.getValue()} />
@@ -285,9 +285,7 @@ function formattedPeggedPercent(percent: unknown, noSign = false) {
 	}
 
 	return (
-		<span
-			className={`${noSign ? '' : color === 'green' ? 'text-(--success)' : color === 'red' ? 'text-(--error)' : ''}`}
-		>
+		<span className={`${noSign ? '' : color === 'green' ? 'text-data-up' : color === 'red' ? 'text-data-down' : ''}`}>
 			{finalValue}
 		</span>
 	)

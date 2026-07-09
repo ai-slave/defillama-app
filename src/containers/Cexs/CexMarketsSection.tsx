@@ -6,17 +6,12 @@ import { LocalLoader } from '~/components/Loaders'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { fetchMarketsExchangeSeries } from '~/containers/Markets/api'
 import type { ExchangeMarketsResponse, MarketPair } from '~/containers/Markets/api.types'
-import { ChangeCell, MetricStat, MetricStatStrip } from '~/containers/Markets/marketMetrics'
+import { MaterialChangeCell, MetricStat, MetricStatStrip } from '~/containers/Markets/marketMetrics'
 import { buildCexMarketPairColumns } from '~/containers/Markets/marketPairColumns'
 import { MarketsAreaChart } from '~/containers/Markets/MarketsAreaChart'
 import { MarketsSegmentTabs } from '~/containers/Markets/MarketsSegmentTabs'
 import { resolveSegment, type Segment, SEGMENT_IDS, segmentHasOi } from '~/containers/Markets/segments'
-import {
-	EMPTY_PIVOTED_SERIES,
-	filterExchangeSeriesBySegment,
-	pctChange,
-	pivotExchangeSeries
-} from '~/containers/Markets/utils'
+import { EMPTY_PIVOTED_SERIES, filterExchangeSeriesBySegment, pivotExchangeSeries } from '~/containers/Markets/utils'
 import { Card } from '~/ui/Card'
 import { Panel } from '~/ui/Panel'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
@@ -46,48 +41,18 @@ function getAvailableCategories(data: ExchangeMarketsResponse): Segment[] {
 	return categories
 }
 
-function HeaderStrip({
-	data,
-	category,
-	showOi
-}: {
-	data: ExchangeMarketsResponse
-	category: Segment
-	showOi: boolean
-}) {
-	const totals = data.categories[category]
-
+function MarketsSummary({ data, surface = true }: { data: ExchangeMarketsResponse; surface?: boolean }) {
 	return (
-		<MetricStatStrip>
-			<MetricStat label="Pairs" value={formattedNum(totals?.market_count ?? 0)} />
-			<MetricStat
-				label="24h Volume"
-				value={renderNullableNum(totals?.total_volume_24h, true)}
-				sub={<ChangeCell fraction={pctChange(totals?.total_volume_24h, totals?.total_volume_prev_24h)} />}
-			/>
-			{showOi ? (
-				<MetricStat
-					label="Open Interest"
-					value={renderNullableNum(totals?.total_oi_usd, true)}
-					sub={<ChangeCell fraction={pctChange(totals?.total_oi_usd, totals?.total_oi_prev_usd)} />}
-				/>
-			) : null}
-		</MetricStatStrip>
-	)
-}
-
-function MarketsSummary({ data }: { data: ExchangeMarketsResponse }) {
-	return (
-		<MetricStatStrip>
+		<MetricStatStrip surface={surface}>
 			<MetricStat
 				label="Volume 24h"
 				value={renderNullableNum(data.total_volume_24h, true)}
-				sub={<ChangeCell fraction={pctChange(data.total_volume_24h, data.total_volume_prev_24h)} />}
+				sub={<MaterialChangeCell current={data.total_volume_24h} previous={data.total_volume_prev_24h} />}
 			/>
 			<MetricStat
 				label="Open Interest"
 				value={renderNullableNum(data.total_oi_usd, true)}
-				sub={<ChangeCell fraction={pctChange(data.total_oi_usd, data.total_oi_prev_usd)} />}
+				sub={<MaterialChangeCell current={data.total_oi_usd} previous={data.total_oi_prev_usd} />}
 			/>
 			<MetricStat label="Spot Markets" value={formattedNum(data.categories.spot?.market_count ?? 0)} />
 			<MetricStat label="Linear Perp Markets" value={formattedNum(data.categories.linear_perp?.market_count ?? 0)} />
@@ -153,7 +118,7 @@ export function CexMarketsSection({ exchange, name }: CexMarketsSectionProps) {
 	}, [data])
 
 	const sectionHeader = (
-		<Card as="header" padding="md" className="flex flex-wrap items-center gap-x-3 gap-y-2">
+		<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
 			<h2
 				className="group relative mr-auto flex scroll-mt-24 items-center gap-1 heading-xs"
 				id={CEX_MARKETS_SECTION_ID}
@@ -172,14 +137,16 @@ export function CexMarketsSection({ exchange, name }: CexMarketsSectionProps) {
 					Updated {lastUpdated.relative}
 				</span>
 			) : null}
-		</Card>
+		</div>
 	)
 
 	if (isLoading) {
 		return (
-			<section className="col-span-full flex flex-col gap-2">
-				{sectionHeader}
-				<Panel padding="none">
+			<section className="col-span-full flex flex-1 flex-col gap-2">
+				<Card as="header" padding="sm">
+					{sectionHeader}
+				</Card>
+				<Panel padding="none" className="flex-1">
 					<SurfaceBodyLoadingStatus label={`Loading ${name} markets`} className="p-2">
 						<LocalLoader />
 					</SurfaceBodyLoadingStatus>
@@ -194,10 +161,11 @@ export function CexMarketsSection({ exchange, name }: CexMarketsSectionProps) {
 
 	return (
 		<section className="col-span-full flex flex-col gap-2">
-			{sectionHeader}
+			<Card as="header" padding="sm" className="flex flex-col gap-3">
+				{sectionHeader}
+				<MarketsSummary data={data} surface={false} />
+			</Card>
 			<div className="flex flex-col gap-2">
-				<MarketsSummary data={data} />
-
 				<MarketsSegmentTabs
 					activeSegment={selectedCategoryTab}
 					onChange={setCategoryTab}
@@ -205,24 +173,24 @@ export function CexMarketsSection({ exchange, name }: CexMarketsSectionProps) {
 					availableSegments={visibleCategoryTabs}
 				/>
 
-				<div className="flex flex-col gap-2">
-					<HeaderStrip data={data} category={selectedCategoryTab} showOi={hasOi} />
-
+				<div className="flex flex-col gap-6">
 					<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 						<MarketsAreaChart title="Volume (30d)" series={volSeries} />
 						{hasOi ? <MarketsAreaChart title="Open interest (30d)" series={oiSeries} /> : null}
 					</div>
 
-					<TableWithSearch
-						key={`${exchange}-${selectedCategoryTab}`}
-						data={rows}
-						columns={columns}
-						columnToSearch="symbol"
-						placeholder="Search pairs..."
-						csvFileName={`cex-markets-${name}-${selectedCategoryTab}`}
-						embedded
-						sortingState={[{ id: 'volume_24h', desc: true }]}
-					/>
+					<Panel padding="none">
+						<TableWithSearch
+							key={`${exchange}-${selectedCategoryTab}`}
+							data={rows}
+							columns={columns}
+							columnToSearch="symbol"
+							placeholder="Search pairs..."
+							csvFileName={`cex-markets-${name}-${selectedCategoryTab}`}
+							embedded
+							sortingState={[{ id: 'volume_24h', desc: true }]}
+						/>
+					</Panel>
 				</div>
 			</div>
 		</section>

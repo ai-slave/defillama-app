@@ -532,7 +532,13 @@ export function SelectWithCombobox({
 							{customFooter ? <>{customFooter}</> : null}
 						</>
 					) : (
-						<p className="px-3 py-6 text-center body-sm text-primary">{emptyLabel}</p>
+						<p
+							role="status"
+							aria-live="polite"
+							className={`px-3 py-6 text-center body-sm ${useLegacyPopover ? 'text-primary' : 'text-tertiary'}`}
+						>
+							{emptyLabel}
+						</p>
 					)}
 				</Ariakit.SelectPopover>
 			</Ariakit.SelectProvider>

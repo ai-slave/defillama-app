@@ -124,9 +124,15 @@ export function TokenSearchDialog({
 							</span>
 						</button>
 					))}
-					{isLoading ? <p className="p-3 body-sm text-tertiary">Loading...</p> : null}
+					{isLoading ? (
+						<p role="status" aria-live="polite" className="p-3 body-sm text-tertiary">
+							Loading...
+						</p>
+					) : null}
 					{!isLoading && visibleTokens.length === 0 ? (
-						<p className="p-3 body-sm text-tertiary">No tokens found</p>
+						<p role="status" aria-live="polite" className="p-3 body-sm text-tertiary">
+							No tokens found
+						</p>
 					) : null}
 					{hasMoreLocalResults ? (
 						<button

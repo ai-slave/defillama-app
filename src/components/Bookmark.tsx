@@ -68,7 +68,7 @@ export function Bookmark({
 			}
 
 	const buttonStyle: React.CSSProperties & Record<'--fill-icon', string> = {
-		'--fill-icon': isSaved ? 'var(--text-primary)' : 'none'
+		'--fill-icon': isSaved ? 'var(--ld-text-primary)' : 'none'
 	}
 
 	return (

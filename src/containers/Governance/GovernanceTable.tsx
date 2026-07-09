@@ -13,7 +13,9 @@ import { Icon } from '~/components/Icon'
 import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
 import { Switch } from '~/ui/Switch'
+import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formattedNum, toNiceDayMonthAndYear } from '~/utils'
 import type { GovernanceProposal, GovernanceType } from './types'
 
@@ -56,8 +58,8 @@ export function GovernanceTable({
 	const [_proposalname, setProposalName] = useTableSearch({ instance, columnToSearch: 'title' })
 
 	return (
-		<div className="rounded-[8px] border border-subtle bg-surface">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-3">
+		<Panel padding="none">
+			<TableToolbar className="justify-end">
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search proposals...</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
@@ -68,16 +70,18 @@ export function GovernanceTable({
 						className={searchFieldInputStyles}
 					/>
 				</label>
-				{filters}
-				<Switch
-					label="Filter Controversial Proposals"
-					value="controversial proposals"
-					checked={filterControversialProposals}
-					onChange={() => React.startTransition(() => setFilterProposals(!filterControversialProposals))}
-				/>
-			</div>
+				<TableToolbarControlGroup>
+					{filters}
+					<Switch
+						label="Filter Controversial Proposals"
+						value="controversial proposals"
+						checked={filterControversialProposals}
+						onChange={() => React.startTransition(() => setFilterProposals(!filterControversialProposals))}
+					/>
+				</TableToolbarControlGroup>
+			</TableToolbar>
 			<VirtualTable instance={instance} />
-		</div>
+		</Panel>
 	)
 }
 

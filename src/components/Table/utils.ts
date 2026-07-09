@@ -234,13 +234,21 @@ export function useSortColumnOrders({
 	}, [instance, selectedColumnOrder])
 }
 
-export function prepareTableCsv<T>({ instance, filename }: { instance: Table<T>; filename: string }): {
+export function prepareTableCsv<T>({
+	instance,
+	filename,
+	includeHiddenColumns = false
+}: {
+	instance: Table<T>
+	filename: string
+	includeHiddenColumns?: boolean
+}): {
 	filename: string
 	rows: Array<Array<CsvCell>>
 } {
-	const columns = instance
-		.getVisibleLeafColumns()
-		.filter((column) => !column.columnDef.meta?.hidden || column.columnDef.meta?.csvOnly)
+	const columns = (includeHiddenColumns ? instance.getAllLeafColumns() : instance.getVisibleLeafColumns()).filter(
+		(column) => !column.columnDef.meta?.hidden || column.columnDef.meta?.csvOnly
+	)
 	const tableRows = instance.getPrePaginationRowModel().rows
 	if (columns.length === 0) return { filename, rows: [] }
 

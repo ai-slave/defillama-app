@@ -20,6 +20,7 @@ const SENT_VOL_T = 0.1
 const SENT_OI_T = 0.05
 /** Ignore dust rows (under $1M 24h volume) in the movers panels. */
 const MOVER_MIN_VOL = 1_000_000
+export const MATERIAL_CHANGE_BASELINE_USD = 1_000_000
 const MOVER_ROWS = 5
 export const TOP_N = 100
 export const UNTAGGED_CATEGORY = 'untagged'
@@ -30,6 +31,28 @@ const SERIES_TOP = 25
 export function pctChange(now: number | null | undefined, prev: number | null | undefined): number | null {
 	if (now == null || prev == null || !(prev > 0)) return null
 	return now / prev - 1
+}
+
+export type MaterialChange =
+	| { kind: 'change'; fraction: number }
+	| { kind: 'new' }
+	| { kind: 'insufficient-baseline' }
+	| { kind: 'unavailable' }
+
+export function materialChange(
+	now: number | null | undefined,
+	prev: number | null | undefined,
+	minimumBaseline = MATERIAL_CHANGE_BASELINE_USD
+): MaterialChange {
+	if (now == null) return { kind: 'unavailable' }
+	if (prev == null || prev === 0) {
+		return now >= minimumBaseline ? { kind: 'new' } : { kind: 'insufficient-baseline' }
+	}
+	if (prev < 0) return { kind: 'insufficient-baseline' }
+
+	const fraction = now / prev - 1
+	if (prev < minimumBaseline && fraction > 10) return { kind: 'insufficient-baseline' }
+	return { kind: 'change', fraction }
 }
 
 /** Convert a fraction (0.05) to a percent (5) for the <PercentChange> component. */
@@ -89,9 +112,9 @@ export function sentimentCounts(rows: SentimentInput[], segment: Segment): Recor
 export type MoverMetricKey = 'price' | 'volume' | 'oi'
 
 export const MOVER_METRICS: ReadonlyArray<{ key: MoverMetricKey; label: string; perpOnly?: boolean }> = [
-	{ key: 'price', label: 'Price Δ' },
-	{ key: 'volume', label: 'Volume Δ' },
-	{ key: 'oi', label: 'OI Δ', perpOnly: true }
+	{ key: 'price', label: 'Price change' },
+	{ key: 'volume', label: 'Volume change' },
+	{ key: 'oi', label: 'Open interest change', perpOnly: true }
 ]
 
 interface MoverInput {

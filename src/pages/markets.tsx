@@ -13,6 +13,8 @@ type MarketsPageProps = {
 	knownTokenSlugs: string[]
 }
 
+const pageName = ['Markets']
+
 export const getStaticProps = withPerformanceLogging<MarketsPageProps>('markets', async () => {
 	const metadataModule = await import('~/utils/metadata')
 
@@ -47,6 +49,7 @@ export default function MarketsPage({ knownTokenSlugs }: MarketsPageProps) {
 			title="Markets - DefiLlama"
 			description="Spot and perpetual market metrics merged across exchanges: movers, open interest, funding, and sentiment by token and category."
 			canonicalUrl="/markets"
+			pageName={pageName}
 		>
 			{exchange ? (
 				<MarketsExchange key={exchange} exchange={exchange} segment={segment} onSegmentChange={onSegmentChange} />

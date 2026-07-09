@@ -264,18 +264,18 @@ export const PeggedAssetInfo = ({
 					</h1>
 
 					<p className="flex flex-col">
-						<span className="label-md text-(--text-label)">Market Cap</span>
+						<span className="label-md text-secondary">Market Cap</span>
 						<span className="min-h-8 mono-xl">{formattedNum(displayedMarketCap ?? '0', true)}</span>
 					</p>
 
 					<div className="flex flex-col">
 						<p className="flex flex-wrap justify-between gap-4 border-b border-subtle py-1 first:pt-0 last:border-none last:pb-0">
-							<span className="label-md text-(--text-label)">Price</span>
+							<span className="label-md text-secondary">Price</span>
 							<span className="mono-md">{price === null ? '-' : formattedNum(price, true)}</span>
 						</p>
 						{displayedTotalCirculating != null ? (
 							<p className="flex flex-wrap justify-between gap-4 border-b border-subtle py-1 first:pt-0 last:border-none last:pb-0">
-								<span className="label-md text-(--text-label)">Total Circulating</span>
+								<span className="label-md text-secondary">Total Circulating</span>
 								<span className="mono-md">{formattedNum(displayedTotalCirculating)}</span>
 							</p>
 						) : null}

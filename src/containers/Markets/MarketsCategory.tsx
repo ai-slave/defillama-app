@@ -75,7 +75,7 @@ export function MarketsCategory({
 	const subtitleFor = React.useCallback((seg: Segment) => segmentSubtitles?.[seg] ?? null, [segmentSubtitles])
 
 	return (
-		<div className="flex flex-col gap-5">
+		<div className="flex flex-1 flex-col gap-2">
 			<MarketsPageHeader title={data?.category ?? tag} description="Token category metrics merged across venues." />
 
 			<MarketsSegmentTabs
@@ -94,7 +94,7 @@ export function MarketsCategory({
 			) : segmentTokens.length === 0 ? (
 				<PanelStatus variant="empty">No data for this segment.</PanelStatus>
 			) : (
-				<div className="flex flex-col gap-5">
+				<div className="flex flex-col gap-6">
 					<MarketsStatStrip rows={segmentTokens} segment={activeSegment} />
 					<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 						<MarketsAreaChart title="Volume by exchange" series={volByExchange} />

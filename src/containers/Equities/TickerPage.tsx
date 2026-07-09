@@ -90,7 +90,7 @@ function formatMetricValue(value: unknown, symbol?: string): string {
 
 function ChangeMetricValue({ value, symbol }: { value: number | null; symbol?: string }) {
 	return (
-		<span className={value == null || value === 0 ? undefined : value > 0 ? 'text-(--success)' : 'text-(--error)'}>
+		<span className={value == null || value === 0 ? undefined : value > 0 ? 'text-data-up' : 'text-data-down'}>
 			{formatMetricValue(value, symbol)}
 		</span>
 	)
@@ -275,7 +275,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 				<Card padding="sm" className="col-span-1 hidden flex-col gap-6 xl:flex xl:min-h-[360px]">
 					<EquityTitle ticker={props.ticker} country={props.country} name={props.name} />
 					<p className="flex flex-col">
-						<span className="text-(--text-label)">{defs.marketCap.label}</span>
+						<span className="text-secondary">{defs.marketCap.label}</span>
 						<span className="min-h-8 font-jetbrains text-2xl font-semibold">
 							{formatMetricValue(props.summary.marketCap, '$')}
 						</span>
@@ -289,7 +289,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 						<div className="flex flex-col gap-6 p-2 pb-0 xl:hidden">
 							<EquityTitle ticker={props.ticker} country={props.country} name={props.name} />
 							<p className="flex flex-col">
-								<span className="text-(--text-label)">{defs.marketCap.label}</span>
+								<span className="text-secondary">{defs.marketCap.label}</span>
 								<span className="min-h-8 font-jetbrains text-2xl font-semibold">
 									{formatMetricValue(props.summary.marketCap, '$')}
 								</span>

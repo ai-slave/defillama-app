@@ -12,39 +12,39 @@ import { MarketsLineChart } from './MarketsLineChart'
 import { MarketsPageHeader } from './MarketsPageHeader'
 import { MarketsSegmentTabs } from './MarketsSegmentTabs'
 import { resolveSegment, type Segment, SEGMENT_IDS, segmentHasOi } from './segments'
-import { ChangeCell, VenueBadge } from './shared'
-import { EMPTY_PIVOTED_SERIES, filterExchangeSeriesBySegment, pctChange, pivotExchangeSeries } from './utils'
+import { MaterialChangeCell, VenueBadge } from './shared'
+import { EMPTY_PIVOTED_SERIES, filterExchangeSeriesBySegment, pivotExchangeSeries } from './utils'
 
 const STALE_TIME = 60 * 60 * 1000
 
 function Stat({ label, value, sub }: { label: string; value: React.ReactNode; sub?: React.ReactNode }) {
 	return (
-		<Card padding="sm" className="flex flex-1 flex-col gap-1">
-			<span className="label-sm text-secondary">{label}</span>
-			<span className="font-jetbrains text-lg font-semibold">{value}</span>
-			{sub != null ? <span className="label-sm text-secondary">{sub}</span> : null}
-		</Card>
+		<div className="flex min-w-0 flex-col gap-0.5">
+			<span className="body-md text-secondary">{label}</span>
+			<span className="mono-md-bold">{value}</span>
+			{sub != null ? <span className="body-sm text-tertiary">{sub}</span> : null}
+		</div>
 	)
 }
 
 function ExchangeStatStrip({ totals, segment }: { totals: ExchangeMarketCategoryData | undefined; segment: Segment }) {
 	const hasOi = segmentHasOi(segment)
 	return (
-		<div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+		<Card padding="strip" className="grid grid-cols-2 gap-x-6 gap-y-3 lg:grid-cols-4">
 			<Stat
 				label="24h Volume"
 				value={totals?.total_volume_24h == null ? '–' : formattedNum(totals?.total_volume_24h, true)}
-				sub={<ChangeCell fraction={pctChange(totals?.total_volume_24h, totals?.total_volume_prev_24h)} />}
+				sub={<MaterialChangeCell current={totals?.total_volume_24h} previous={totals?.total_volume_prev_24h} />}
 			/>
 			{hasOi ? (
 				<Stat
 					label="Open Interest"
 					value={totals?.total_oi_usd == null ? '–' : formattedNum(totals?.total_oi_usd, true)}
-					sub={<ChangeCell fraction={pctChange(totals?.total_oi_usd, totals?.total_oi_prev_usd)} />}
+					sub={<MaterialChangeCell current={totals?.total_oi_usd} previous={totals?.total_oi_prev_usd} />}
 				/>
 			) : null}
 			<Stat label="Markets" value={formattedNum(totals?.market_count ?? 0)} />
-		</div>
+		</Card>
 	)
 }
 
@@ -103,7 +103,7 @@ export function MarketsExchange({
 	)
 
 	return (
-		<div className="flex flex-col gap-5">
+		<div className="flex flex-1 flex-col gap-2">
 			<MarketsPageHeader
 				title={data?.exchange ?? exchange}
 				meta={data?.exchange_type ? <VenueBadge type={data.exchange_type} /> : null}
@@ -126,7 +126,7 @@ export function MarketsExchange({
 			) : pairs.length === 0 ? (
 				<PanelStatus variant="empty">No markets recorded for this venue.</PanelStatus>
 			) : (
-				<div className="flex flex-col gap-5">
+				<div className="flex flex-col gap-6">
 					<ExchangeStatStrip totals={segmentData} segment={activeSegment} />
 					<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 						<MarketsAreaChart title="Volume (30d)" series={volSeries} />

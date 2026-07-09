@@ -1,14 +1,31 @@
-import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
+import { type ColumnDef, createColumnHelper, type VisibilityState } from '@tanstack/react-table'
 import * as React from 'react'
 import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/components/Select/types'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { formattedNum } from '~/utils'
 import { type Segment, segmentHasOi } from './segments'
-import { ChangeCell, ExchangeName, VenueBadge } from './shared'
+import { ExchangeName, MaterialChangeCell, VenueBadge } from './shared'
 import type { ExchangeListRow } from './types'
+import { type MarketsTablePreset, useMarketsTablePreset } from './useMarketsTablePreset'
 import { pctChange } from './utils'
 
 const columnHelper = createColumnHelper<ExchangeListRow>()
+
+const COLUMN_VISIBILITY: Record<MarketsTablePreset, VisibilityState> = {
+	wide: {},
+	compact: {
+		share: false,
+		oi_change_24h: false,
+		market_count: false
+	},
+	mobile: {
+		exchange_type: false,
+		share: false,
+		total_oi_usd: false,
+		oi_change_24h: false,
+		market_count: false
+	}
+}
 
 function renderShare(value: number, total: number): string {
 	return total > 0 ? `${((value / total) * 100).toFixed(1)}%` : '–'
@@ -41,7 +58,7 @@ function buildColumns(segment: Segment, totalVolume: number): ColumnDef<Exchange
 			id: 'volume_change_24h',
 			header: 'Vol Δ',
 			cell: ({ row }) => (
-				<ChangeCell fraction={pctChange(row.original.total_volume_24h, row.original.total_volume_prev_24h)} />
+				<MaterialChangeCell current={row.original.total_volume_24h} previous={row.original.total_volume_prev_24h} />
 			),
 			meta: { headerClassName: 'w-[100px]', align: 'end' }
 		}),
@@ -69,7 +86,7 @@ function buildColumns(segment: Segment, totalVolume: number): ColumnDef<Exchange
 				id: 'oi_change_24h',
 				header: 'OI Δ',
 				cell: ({ row }) => (
-					<ChangeCell fraction={pctChange(row.original.total_oi_usd, row.original.total_oi_prev_usd)} />
+					<MaterialChangeCell current={row.original.total_oi_usd} previous={row.original.total_oi_prev_usd} />
 				),
 				meta: { headerClassName: 'w-[100px]', align: 'end' }
 			})
@@ -96,7 +113,16 @@ const VENUE_OPTIONS: ReadonlyArray<{ id: VenueFilter; label: string }> = [
 	{ id: 'dex', label: 'DEX' }
 ]
 
-export function ExchangesTable({ exchanges, segment }: { exchanges: ExchangeListRow[]; segment: Segment }) {
+export function ExchangesTable({
+	exchanges,
+	segment,
+	embedded = false
+}: {
+	exchanges: ExchangeListRow[]
+	segment: Segment
+	embedded?: boolean
+}) {
+	const preset = useMarketsTablePreset()
 	const [venue, setVenue] = React.useState<VenueFilter>('all')
 
 	const { rows, totalVolume } = React.useMemo(() => {
@@ -134,13 +160,17 @@ export function ExchangesTable({ exchanges, segment }: { exchanges: ExchangeList
 
 	return (
 		<TableWithSearch
-			key={`${segment}-${venue}`}
+			key={`${segment}-${venue}-${preset}`}
 			data={rows}
 			columns={columns}
 			columnToSearch="exchange"
 			placeholder="Search exchanges..."
-			header="Exchanges"
 			leadingControls={leadingControls}
+			searchAlign="start"
+			columnVisibility={COLUMN_VISIBILITY[preset]}
+			showColumnSelect
+			csvExportAllColumns
+			embedded={embedded}
 			csvFileName={`markets-exchanges-${segment}`}
 			sortingState={[{ id: 'total_volume_24h', desc: true }]}
 		/>

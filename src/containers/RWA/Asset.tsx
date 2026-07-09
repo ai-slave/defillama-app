@@ -433,7 +433,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 					render={<Card padding="sm" className="flex flex-1 flex-col items-start gap-1" />}
 				>
 					<span className="text-secondary underline decoration-dotted">{definitions.onChainMcap.label}</span>
-					<span className="font-jetbrains text-xl font-semibold">
+					<span className="font-jetbrains text-2xl font-semibold">
 						{onChainMcap?.total != null ? formattedNum(onChainMcap.total, true) : '-'}
 					</span>
 				</Tooltip>
@@ -452,7 +452,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 					render={<Card padding="sm" className="flex flex-1 flex-col items-start gap-1" />}
 				>
 					<span className="text-secondary underline decoration-dotted">{definitions.activeMcap.label}</span>
-					<span className="font-jetbrains text-xl font-semibold">
+					<span className="font-jetbrains text-2xl font-semibold">
 						{activeMcap?.total != null ? formattedNum(activeMcap.total, true) : '-'}
 					</span>
 				</Tooltip>
@@ -471,7 +471,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 					render={<Card padding="sm" className="flex flex-1 flex-col items-start gap-1" />}
 				>
 					<span className="text-secondary underline decoration-dotted">{definitions.defiActiveTvl.label}</span>
-					<span className="font-jetbrains text-xl font-semibold">
+					<span className="font-jetbrains text-2xl font-semibold">
 						{defiActiveTv?.total != null ? formattedNum(defiActiveTv.total, true) : '$0'}
 					</span>
 				</Tooltip>
@@ -479,17 +479,17 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 				{asset.price != null ? (
 					<Card padding="sm" className="flex flex-1 flex-col gap-1">
 						<span className="text-secondary">{asset.ticker ?? 'Token'} Price</span>
-						<span className="font-jetbrains text-xl font-semibold">{formattedNum(asset.price, true)}</span>
+						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(asset.price, true)}</span>
 					</Card>
 				) : null}
 				<Card padding="sm" className="flex flex-1 flex-col gap-1">
 					<span className="text-secondary">Chains</span>
-					<span className="font-jetbrains text-xl font-semibold">{asset.chain?.length ?? 0}</span>
+					<span className="font-jetbrains text-2xl font-semibold">{asset.chain?.length ?? 0}</span>
 				</Card>
 				{asset.nativeYieldCurrent != null ? (
 					<Card padding="sm" className="flex flex-1 flex-col gap-1">
 						<span className="text-secondary">Native Yield</span>
-						<span className="font-jetbrains text-xl font-semibold">{asset.nativeYieldCurrent.toFixed(2)}%</span>
+						<span className="font-jetbrains text-2xl font-semibold">{asset.nativeYieldCurrent.toFixed(2)}%</span>
 					</Card>
 				) : null}
 			</div>

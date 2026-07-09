@@ -14,7 +14,7 @@ export interface IChartProps {
 	stacks?: Array<string>
 	valueSymbol?: string
 	title?: string
-	headingAs?: 'h1' | 'h2'
+	headingAs?: 'h1' | 'h2' | 'h3'
 	color?: string
 	hallmarks?: [number, string][]
 	style?: React.CSSProperties
@@ -199,7 +199,7 @@ type MultiSeriesChart2BaseProps = {
 	// Canonical (and only) input shape.
 	dataset: MultiSeriesChart2Dataset
 	title?: string
-	headingAs?: 'h1' | 'h2'
+	headingAs?: 'h1' | 'h2' | 'h3'
 	/**
 	 * For category xAxis only. One entry per category in the dataset's dimension order.
 	 * When present, the xAxis text labels are hidden and a logo row is rendered underneath
@@ -283,7 +283,7 @@ export interface IMultiSeriesChartProps {
 
 export interface IPieChartProps {
 	title?: string
-	headingAs?: 'h1' | 'h2'
+	headingAs?: 'h1' | 'h2' | 'h3'
 	chartData: Array<{ name: string; value: number }>
 	height?: string
 	stackColors?: {
@@ -326,7 +326,7 @@ export interface IScatterChartProps {
 
 export interface ISankeyChartProps {
 	title?: string
-	headingAs?: 'h1' | 'h2'
+	headingAs?: 'h1' | 'h2' | 'h3'
 	height?: string
 	nodes: Array<{
 		name: string

@@ -248,7 +248,7 @@ export function ChainsWithStablecoins({
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
 				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					<div className="flex flex-col">
-						<h1 className="text-(--text-label)">Total Stablecoins Market Cap</h1>
+						<h1 className="text-secondary">Total Stablecoins Market Cap</h1>
 						<p className="font-jetbrains text-2xl font-semibold">{mcapToDisplay}</p>
 					</div>
 
@@ -261,13 +261,13 @@ export function ChainsWithStablecoins({
 								className="-mb-5 -ml-5 text-tertiary transition-transform duration-100 group-open:rotate-90"
 							/>
 							<span className="flex w-full flex-col">
-								<span className="text-(--text-label)">Change (7d)</span>
+								<span className="text-secondary">Change (7d)</span>
 
 								<span className="flex flex-nowrap items-end justify-between gap-1">
 									<span className="font-jetbrains text-2xl font-semibold">{change7d_nol}</span>
 									<span
 										className={`${
-											change7d.startsWith('-') ? 'text-(--error)' : 'text-(--success)'
+											change7d.startsWith('-') ? 'text-data-down' : 'text-data-up'
 										} overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap`}
 									>{`${change7d}%`}</span>
 								</span>
@@ -275,22 +275,22 @@ export function ChainsWithStablecoins({
 						</summary>
 
 						<p className="mt-3 flex flex-wrap items-center justify-between gap-2">
-							<span className="text-(--text-label)">Change (1d)</span>
+							<span className="text-secondary">Change (1d)</span>
 							<Tooltip
 								content={change1d_nol}
 								className={`overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap underline decoration-dotted ${
-									change1d.startsWith('-') ? 'text-(--error)' : 'text-(--success)'
+									change1d.startsWith('-') ? 'text-data-down' : 'text-data-up'
 								}`}
 							>
 								{`${change1d}%`}
 							</Tooltip>
 						</p>
 						<p className="mt-3 flex flex-wrap items-center justify-between gap-2">
-							<span className="text-(--text-label)">Change (30d)</span>
+							<span className="text-secondary">Change (30d)</span>
 							<Tooltip
 								content={change30d_nol}
 								className={`overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap underline decoration-dotted ${
-									change30d.startsWith('-') ? 'text-(--error)' : 'text-(--success)'
+									change30d.startsWith('-') ? 'text-data-down' : 'text-data-up'
 								}`}
 							>
 								{`${change30d}%`}
@@ -299,7 +299,7 @@ export function ChainsWithStablecoins({
 					</details>
 
 					<p className="flex flex-col">
-						<span className="text-(--text-label)">{topChain.name} Dominance</span>
+						<span className="text-secondary">{topChain.name} Dominance</span>
 						<span className="font-jetbrains text-2xl font-semibold">{dominance}%</span>
 					</p>
 				</Card>

@@ -6,6 +6,7 @@ import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
+import { Card } from '~/ui/Card'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
@@ -94,9 +95,9 @@ export default function Protocols({ bridgeData, ...props }) {
 			seoTitle={props.seoTitle}
 			seoDescription={props.seoDescription}
 		>
-			<div className="flex flex-col gap-10 rounded-lg border border-subtle bg-surface p-4">
+			<Card padding="md" className="flex flex-col gap-10">
 				<BridgeInfo {...bridgeData} />
-			</div>
+			</Card>
 		</ProtocolOverviewLayout>
 	)
 }

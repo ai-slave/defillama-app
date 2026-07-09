@@ -2,7 +2,7 @@ import { ChartPanelToolbar } from '~/ui/ChartPanel'
 
 interface ChartHeaderProps {
 	title?: string
-	headingAs?: 'h1' | 'h2'
+	headingAs?: 'h1' | 'h2' | 'h3'
 	customComponents?: React.ReactNode
 	exportButtons?: React.ReactNode
 	className?: string

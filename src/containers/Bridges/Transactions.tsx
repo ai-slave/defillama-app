@@ -23,7 +23,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { inputStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
-import { TableToolbar } from '~/ui/Toolbar'
+import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formattedNum, slug, toNiceDayAndHour } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { fetchBridgeTransactionsClient } from './api'
@@ -395,9 +395,7 @@ function EmptyState({ hasFetched }: { hasFetched: boolean }) {
 			<div className="flex size-12 items-center justify-center rounded-full bg-brand-muted text-link">
 				<Icon name={hasFetched ? 'search' : 'activity'} height={22} width={22} />
 			</div>
-			<h2 className="text-lg font-semibold">
-				{hasFetched ? 'No transactions in this range' : 'Explore bridge transaction data'}
-			</h2>
+			<h2 className="heading-xs">{hasFetched ? 'No transactions in this range' : 'Explore bridge transaction data'}</h2>
 			<p className="max-w-md body-sm text-secondary">
 				{hasFetched
 					? 'Try a wider date range or a different bridge. Transactions may be sparse for smaller bridges or short windows.'
@@ -721,22 +719,24 @@ function TransactionsTable({
 		<Panel padding="none">
 			<TableToolbar className="w-full justify-end">
 				<h2 className="mr-auto label-md">Transactions</h2>
-				<label className="relative w-full max-w-full sm:max-w-[280px]">
-					<span className="sr-only">Search transactions</span>
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<input
-						value={globalFilter}
-						onChange={(e) => setGlobalFilter(e.target.value)}
-						placeholder="Search hash, address, token, chain…"
-						className={searchFieldInputStyles}
-					/>
-				</label>
-				<span className="body-sm whitespace-nowrap text-secondary">
-					{filteredCount === data.length
-						? `${formattedNum(filteredCount)} rows`
-						: `${formattedNum(filteredCount)} of ${formattedNum(data.length)}`}
-				</span>
-				<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />
+				<TableToolbarControlGroup>
+					<label className="relative w-full max-w-full sm:max-w-[280px]">
+						<span className="sr-only">Search transactions</span>
+						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<input
+							value={globalFilter}
+							onChange={(e) => setGlobalFilter(e.target.value)}
+							placeholder="Search hash, address, token, chain…"
+							className={searchFieldInputStyles}
+						/>
+					</label>
+					<span className="body-sm whitespace-nowrap text-secondary">
+						{filteredCount === data.length
+							? `${formattedNum(filteredCount)} rows`
+							: `${formattedNum(filteredCount)} of ${formattedNum(data.length)}`}
+					</span>
+					<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />
+				</TableToolbarControlGroup>
 			</TableToolbar>
 
 			<VirtualTable instance={instance} rowSize={48} />

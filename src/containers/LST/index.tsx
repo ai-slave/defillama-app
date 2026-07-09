@@ -17,6 +17,7 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/components/Tooltip'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Card } from '~/ui/Card'
 import { ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { formattedNum } from '~/utils'
 import { buildLstBreakdownChartData, buildLstInflowsData, buildLstInflowsSeriesData } from './chartData'
@@ -244,25 +245,25 @@ export const LSTOverview = ({
 
 	return (
 		<>
-			<h1 className="flex flex-wrap items-center justify-between gap-4 rounded-[8px] border border-subtle bg-surface p-3 heading-sm">
-				<span>Total Value Locked ETH LSTs</span>
+			<Card as="header" padding="sm" className="flex flex-wrap items-center justify-between gap-4">
+				<h1 className="heading-sm">Total Value Locked ETH LSTs</h1>
 				<span className="font-jetbrains">{`${formattedNum(stakedEthSum)} ETH (${formattedNum(
 					stakedEthInUsdSum,
 					true
 				)})`}</span>
-			</h1>
+			</Card>
 
-			<div className="flex w-full flex-col rounded-[8px] border border-subtle bg-surface">
+			<Card padding="none" className="flex w-full flex-col">
 				<div className="flex flex-wrap overflow-x-auto border-b border-medium">
 					<button
-						className="border-medium px-6 py-2 whitespace-nowrap hover:bg-hover-row focus-visible:bg-hover-row data-[selected=true]:border-b data-[selected=true]:border-b-brand"
+						className="border-medium px-6 py-2 label-md whitespace-nowrap text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary data-[selected=true]:border-b data-[selected=true]:border-b-brand data-[selected=true]:text-primary"
 						onClick={() => setTab('breakdown')}
 						data-selected={tab === 'breakdown'}
 					>
 						Breakdown
 					</button>
 					<button
-						className="border-l border-medium px-6 py-2 whitespace-nowrap hover:bg-hover-row focus-visible:bg-hover-row data-[selected=true]:border-b data-[selected=true]:border-b-brand"
+						className="border-l border-medium px-6 py-2 label-md whitespace-nowrap text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary data-[selected=true]:border-b data-[selected=true]:border-b-brand data-[selected=true]:text-primary"
 						onClick={() => setTab('inflows')}
 						data-selected={tab === 'inflows'}
 					>
@@ -372,7 +373,7 @@ export const LSTOverview = ({
 						</div>
 					)}
 				</div>
-			</div>
+			</Card>
 
 			<TableWithSearch
 				data={tokensList}

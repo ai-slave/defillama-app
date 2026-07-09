@@ -1,8 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { useState, type ReactNode } from 'react'
-import { Icon } from '~/components/Icon'
 import { SubscribeAPICard } from '~/components/SubscribeCards/SubscribeAPICard'
 import { WalletProvider } from '~/layout/WalletProvider'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { DialogCloseButton, dialogSurfaceStyles } from '~/ui/Dialog'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { useAuthContext } from '../Subscription/auth'
 
@@ -85,7 +87,7 @@ function ClientMarquee() {
 						className="flex shrink-0 items-center gap-2.5 opacity-50 transition-opacity hover:opacity-100"
 					>
 						<img src={c.icon} alt={c.name} width={20} height={20} className="dark:invert" />
-						<span className="text-sm font-medium whitespace-nowrap text-(--text-tertiary)">{c.name}</span>
+						<span className="label-md whitespace-nowrap text-tertiary">{c.name}</span>
 					</div>
 				))}
 			</div>
@@ -108,41 +110,43 @@ const skills = [
 
 function TerminalMock() {
 	return (
-		<div className="overflow-hidden rounded-md border border-(--cards-border) bg-(--bg-card) font-jetbrains text-[13px] leading-relaxed shadow-lg">
-			<div className="flex items-center gap-2 border-b border-(--cards-border) px-4 py-2.5">
-				<span className="size-3 rounded-full bg-[#ff5f57]" />
-				<span className="size-3 rounded-full bg-[#febc2e]" />
-				<span className="size-3 rounded-full bg-[#28c840]" />
-				<span className="ml-2 text-[11px] text-(--text-tertiary)">claude</span>
+		<Card padding="none" className="overflow-hidden">
+			<div className="font-jetbrains text-[13px] leading-relaxed">
+				<div className="flex items-center gap-2 border-b border-subtle px-4 py-2.5">
+					<span className="size-3 rounded-full bg-[#ff5f57]" />
+					<span className="size-3 rounded-full bg-[#febc2e]" />
+					<span className="size-3 rounded-full bg-[#28c840]" />
+					<span className="ml-2 text-[11px] text-tertiary">claude</span>
+				</div>
+				<div className="space-y-3 p-4">
+					<div>
+						<span className="text-tertiary">→ </span>
+						<span className="text-secondary">What are the top 5 protocols by TVL?</span>
+					</div>
+					<div className="rounded-md border border-brand/20 bg-brand-faint px-3 py-2">
+						<span className="text-link">⚡ get_protocol_metrics</span>
+						<span className="text-tertiary"> sort_by: &quot;tvl_base desc&quot;, limit: 5</span>
+					</div>
+					<div className="text-data-up">
+						<div>1. Aave · $25.7B</div>
+						<div>2. Lido · $20.0B</div>
+						<div>3. SSV Network · $15.5B</div>
+						<div>4. EigenCloud · $9.2B</div>
+						<div>5. Binance Staked ETH · $8.0B</div>
+					</div>
+				</div>
 			</div>
-			<div className="space-y-3 p-4">
-				<div>
-					<span className="text-(--text-tertiary)">→ </span>
-					<span className="text-(--text-secondary)">What are the top 5 protocols by TVL?</span>
-				</div>
-				<div className="rounded-md border border-(--old-blue)/20 bg-(--old-blue)/5 px-3 py-2">
-					<span className="text-(--old-blue)">⚡ get_protocol_metrics</span>
-					<span className="text-(--text-tertiary)"> sort_by: &quot;tvl_base desc&quot;, limit: 5</span>
-				</div>
-				<div className="text-(--success)">
-					<div>1. Aave · $25.7B</div>
-					<div>2. Lido · $20.0B</div>
-					<div>3. SSV Network · $15.5B</div>
-					<div>4. EigenCloud · $9.2B</div>
-					<div>5. Binance Staked ETH · $8.0B</div>
-				</div>
-			</div>
-		</div>
+		</Card>
 	)
 }
 
 function CopyBox({ text, label }: { text: string; label: string }) {
 	return (
 		<div className="mx-auto max-w-3xl">
-			<div className="overflow-hidden rounded-md border border-(--old-blue)/30 bg-(--bg-card)">
-				<div className="flex items-center justify-between border-b border-(--cards-border) px-4 py-2.5">
-					<span className="text-xs font-medium text-(--old-blue)">{label}</span>
-					<button
+			<Card padding="none" className="overflow-hidden">
+				<div className="flex items-center justify-between border-b border-subtle px-4 py-2.5">
+					<span className="label-sm text-link">{label}</span>
+					<Button
 						onClick={async (e) => {
 							const btn = e.currentTarget
 							try {
@@ -154,40 +158,40 @@ function CopyBox({ text, label }: { text: string; label: string }) {
 								}, 2000)
 							} catch {}
 						}}
-						className="rounded-md px-3 py-1 text-xs font-medium text-(--old-blue) transition-colors hover:bg-(--old-blue)/10"
+						variant="ghost"
+						size="sm"
 					>
 						Copy
-					</button>
+					</Button>
 				</div>
 				<div className="p-4">
-					<p className="font-jetbrains text-sm leading-relaxed text-(--text-primary)">{text}</p>
+					<p className="font-jetbrains text-sm leading-relaxed text-primary">{text}</p>
 				</div>
-			</div>
+			</Card>
 		</div>
 	)
 }
 
 function CodeBlock({ children, label }: { children: string; label: string }) {
 	return (
-		<div className="overflow-hidden rounded-md border border-(--cards-border) bg-(--bg-card)">
-			<div className="flex items-center justify-between border-b border-(--cards-border) px-4 py-2">
-				<span className="text-xs font-medium text-(--text-tertiary)">{label}</span>
-				<button
+		<Card padding="none" className="overflow-hidden">
+			<div className="flex items-center justify-between border-b border-subtle px-4 py-2">
+				<span className="label-sm text-tertiary">{label}</span>
+				<Button
 					onClick={async () => {
 						try {
 							await navigator.clipboard.writeText(children)
 							trackUmamiEvent('mcp-copy', { label })
 						} catch {}
 					}}
-					className="rounded-md px-2 py-0.5 text-[11px] text-(--text-tertiary) transition-colors hover:bg-(--btn-hover-bg) hover:text-(--text-primary)"
+					variant="ghost"
+					size="sm"
 				>
 					Copy
-				</button>
+				</Button>
 			</div>
-			<pre className="overflow-x-auto p-4 font-jetbrains text-[13px] leading-relaxed text-(--text-secondary)">
-				{children}
-			</pre>
-		</div>
+			<pre className="overflow-x-auto p-4 font-jetbrains text-[13px] leading-relaxed text-secondary">{children}</pre>
+		</Card>
 	)
 }
 
@@ -250,17 +254,15 @@ function ManualSetup() {
 	const [active, setActive] = useState(0)
 	return (
 		<div className="mt-10">
-			<h3 className="mb-4 text-center text-[13px] font-medium text-(--text-tertiary)">
-				Or add manually to your client config
-			</h3>
-			<div className="mx-auto max-w-2xl overflow-hidden rounded-md border border-(--cards-border) bg-(--bg-card)">
-				<div className="no-scrollbar flex overflow-x-auto border-b border-(--cards-border)">
+			<h3 className="mb-4 text-center text-[13px] font-medium text-tertiary">Or add manually to your client config</h3>
+			<Card padding="none" className="mx-auto max-w-2xl overflow-hidden">
+				<div className="no-scrollbar flex overflow-x-auto border-b border-subtle">
 					{clientConfigs.map((c, i) => (
 						<button
 							key={c.name}
 							onClick={() => setActive(i)}
 							className={`shrink-0 px-4 py-2.5 text-[13px] font-medium transition-colors ${
-								active === i ? 'border-b-2 border-(--old-blue) text-(--old-blue)' : 'text-secondary hover:text-primary'
+								active === i ? 'border-b-2 border-brand text-link' : 'text-secondary hover:text-primary'
 							}`}
 						>
 							{c.name}
@@ -268,52 +270,54 @@ function ManualSetup() {
 					))}
 				</div>
 				<div className="relative">
-					<button
+					<Button
 						onClick={async () => {
 							try {
 								await navigator.clipboard.writeText(clientConfigs[active].code)
 								trackUmamiEvent('mcp-copy', { label: clientConfigs[active].name })
 							} catch {}
 						}}
-						className="absolute top-2 right-3 rounded-md px-2 py-0.5 text-[11px] text-(--text-tertiary) transition-colors hover:bg-(--btn-hover-bg) hover:text-(--text-primary)"
+						variant="ghost"
+						size="sm"
+						className="absolute top-2 right-3"
 					>
 						Copy
-					</button>
-					<pre className="overflow-x-auto p-4 font-jetbrains text-[13px] leading-relaxed text-(--text-secondary)">
+					</Button>
+					<pre className="overflow-x-auto p-4 font-jetbrains text-[13px] leading-relaxed text-secondary">
 						{clientConfigs[active].code}
 					</pre>
 				</div>
-			</div>
+			</Card>
 		</div>
 	)
 }
 
 function FeatureCard({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--bg-card) p-5 transition-colors hover:border-(--old-blue)/30">
-			<div className="mb-3 flex size-9 items-center justify-center rounded-md bg-(--old-blue)/10 text-lg">{icon}</div>
-			<h3 className="mb-1.5 font-semibold text-(--text-primary)">{title}</h3>
+		<Card padding="md">
+			<div className="mb-3 flex size-9 items-center justify-center rounded-md bg-brand-faint text-lg">{icon}</div>
+			<h3 className="mb-1.5 font-semibold text-primary">{title}</h3>
 			<p className="text-sm leading-relaxed text-secondary">{children}</p>
-		</div>
+		</Card>
 	)
 }
 
 function StepCard({ step, title, children }: { step: number; title: string; children: ReactNode }) {
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--bg-card) p-5">
-			<div className="mb-3 flex size-8 items-center justify-center rounded-md bg-(--old-blue)/10 text-sm font-bold text-(--old-blue)">
+		<Card padding="md">
+			<div className="mb-3 flex size-8 items-center justify-center rounded-md bg-brand-faint text-sm font-bold text-link">
 				{step}
 			</div>
-			<h3 className="mb-1.5 font-semibold text-(--text-primary)">{title}</h3>
+			<h3 className="mb-1.5 font-semibold text-primary">{title}</h3>
 			<p className="text-[13px] leading-relaxed text-secondary">{children}</p>
-		</div>
+		</Card>
 	)
 }
 
 function SectionHeader({ overline, title, description }: { overline: string; title: string; description?: string }) {
 	return (
 		<div className="mb-8">
-			<p className="mb-2 text-xs font-semibold tracking-widest text-(--old-blue) uppercase">{overline}</p>
+			<p className="mb-2 label-sm font-semibold tracking-widest text-link uppercase">{overline}</p>
 			<h2 className="mb-2 text-2xl font-bold tracking-tight sm:text-3xl">{title}</h2>
 			{description && <p className="max-w-2xl text-[15px] text-secondary">{description}</p>}
 		</div>
@@ -359,13 +363,10 @@ function ToolCategoryGroup({
 			{open && (
 				<div id={panelId} className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
 					{tools.map((t) => (
-						<div
-							key={t.name}
-							className="rounded-md border border-(--cards-border) bg-(--bg-card) px-3.5 py-2.5 transition-colors hover:border-(--old-blue)/30"
-						>
-							<code className="font-jetbrains text-[13px] font-medium text-(--old-blue)">{t.name}</code>
+						<Card key={t.name} padding="sm">
+							<code className="font-jetbrains text-[13px] font-medium text-link">{t.name}</code>
 							<p className="mt-0.5 text-xs leading-relaxed text-secondary">{t.desc}</p>
-						</div>
+						</Card>
 					))}
 				</div>
 			)}
@@ -392,14 +393,10 @@ export default function MCPContainer() {
 			<section className="mx-auto max-w-[1100px] px-4 pt-14 pb-10 sm:px-6 md:px-8">
 				<div className="grid items-center gap-10 md:grid-cols-[1fr_1fr] md:gap-12">
 					<div>
-						<p className="mb-3 text-xs font-semibold tracking-widest text-(--old-blue) uppercase">
-							DefiLlama MCP Server
-						</p>
+						<p className="mb-3 label-sm font-semibold tracking-widest text-link uppercase">DefiLlama MCP Server</p>
 						<h1 className="mb-4 text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-[2.75rem]">
 							DeFi Data for{' '}
-							<span className="bg-linear-to-r from-(--old-blue) to-[#8A8AFF] bg-clip-text text-transparent">
-								AI Agents
-							</span>
+							<span className="bg-linear-to-r from-brand to-[#8A8AFF] bg-clip-text text-transparent">AI Agents</span>
 						</h1>
 						<p className="mb-2 max-w-lg text-[15px] leading-relaxed text-secondary">
 							Connect your AI agent to DefiLlama data. Ask questions about TVL, yields, token prices, protocol metrics,
@@ -409,24 +406,23 @@ export default function MCPContainer() {
 							Requires an API plan. Uses the same credits as your DefiLlama API key.
 						</p>
 						<div className="flex flex-wrap gap-3">
-							<button
-								onClick={handleGetStarted}
-								className="rounded-md bg-(--old-blue) px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:opacity-90"
-							>
+							<Button onClick={handleGetStarted} variant="primary" size="md">
 								Get Started
-							</button>
-							<a
+							</Button>
+							<Button
+								as="a"
 								href="https://github.com/DefiLlama/defillama-skills"
 								target="_blank"
 								rel="noreferrer"
 								onClick={() => trackUmamiEvent('mcp-github-click')}
-								className="flex items-center gap-2 rounded-md border border-(--cards-border) bg-(--btn-bg) px-5 py-2.5 text-sm font-medium text-(--text-form) transition-all hover:bg-(--btn-hover-bg)"
+								variant="secondary"
+								size="md"
 							>
 								<svg viewBox="0 0 24 24" className="size-4" fill="currentColor">
 									<path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
 								</svg>
 								Skills Repo
-							</a>
+							</Button>
 						</div>
 					</div>
 					<TerminalMock />
@@ -480,12 +476,12 @@ export default function MCPContainer() {
 					</StepCard>
 				</div>
 
-				<div className="mt-4 rounded-md border border-(--cards-border) bg-(--bg-card) px-4 py-3 text-[13px] leading-relaxed text-secondary">
-					<p>
+				<Card padding="sm" className="mt-4">
+					<p className="text-[13px] leading-relaxed text-secondary">
 						Note: each DefiLlama account can only be connected to one MCP client at a time. Connecting a new client will
 						disconnect the previous one.
 					</p>
-				</div>
+				</Card>
 
 				{/* LlamaAI Upsell */}
 				<a
@@ -502,7 +498,7 @@ export default function MCPContainer() {
 							className="shrink-0"
 						/>
 						<div>
-							<h3 className="font-semibold text-(--text-primary)">
+							<h3 className="font-semibold text-primary">
 								Need more than raw data?{' '}
 								<span className="bg-linear-to-r from-[#FDE0A9] to-[#d4a555] bg-clip-text text-transparent">
 									Try LlamaAI
@@ -541,16 +537,13 @@ export default function MCPContainer() {
 
 				<div className="grid gap-2 sm:grid-cols-2">
 					{skills.map((s) => (
-						<div
-							key={s.name}
-							className="flex items-start gap-3 rounded-md border border-(--cards-border) bg-(--bg-card) px-4 py-3"
-						>
-							<span className="mt-px flex size-5 shrink-0 items-center justify-center rounded-full bg-(--old-blue)/10">
+						<Card key={s.name} padding="sm" className="flex items-start gap-3">
+							<span className="mt-px flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-faint">
 								<svg
 									viewBox="0 0 24 24"
 									className="size-3"
 									fill="none"
-									stroke="var(--old-blue)"
+									stroke="currentColor"
 									strokeWidth="2.5"
 									strokeLinecap="round"
 									strokeLinejoin="round"
@@ -559,15 +552,15 @@ export default function MCPContainer() {
 								</svg>
 							</span>
 							<div>
-								<code className="font-jetbrains text-[13px] font-medium text-(--text-primary)">{s.name}</code>
+								<code className="font-jetbrains text-[13px] font-medium text-primary">{s.name}</code>
 								<p className="mt-0.5 text-xs text-secondary">{s.desc}</p>
 							</div>
-						</div>
+						</Card>
 					))}
 				</div>
 
 				<div className="mt-8">
-					<h3 className="mb-3 text-sm font-semibold text-(--text-secondary)">Install skills manually</h3>
+					<h3 className="mb-3 label-md font-semibold text-secondary">Install skills manually</h3>
 					<p className="mb-4 text-[13px] leading-relaxed text-secondary">
 						The quick start prompt installs these automatically. To install manually, run:
 					</p>
@@ -581,31 +574,21 @@ export default function MCPContainer() {
 			<section className="mx-auto max-w-[1100px] px-4 py-16 text-center sm:px-6 md:px-8">
 				<h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">Ready to get started?</h2>
 				<p className="mb-6 text-secondary">Requires an API plan. Uses the same credits as your API key.</p>
-				<button
-					onClick={handleGetStarted}
-					className="rounded-md bg-(--old-blue) px-7 py-3 text-[15px] font-medium text-white shadow-sm transition-all hover:opacity-90"
-				>
+				<Button onClick={handleGetStarted} variant="primary" size="md" className="mx-auto">
 					Get Started
-				</button>
+				</Button>
 			</section>
 
 			{/* API Subscribe Modal */}
 			<WalletProvider>
 				<Ariakit.DialogProvider store={dialog}>
-					<Ariakit.Dialog
-						className="dialog flex max-h-[85dvh] max-w-md flex-col overflow-hidden rounded-xl border border-[#39393E] bg-[#1a1b1f] p-4 text-white shadow-2xl max-sm:drawer max-sm:rounded-b-none sm:p-6"
-						portal
-						unmountOnHide
-					>
-						<span className="mx-auto flex size-full max-w-[440px] flex-col overflow-hidden">
-							<Ariakit.DialogDismiss className="ml-auto shrink-0 rounded-full p-1.5 text-[#8a8c90] transition-colors hover:bg-[#39393E] hover:text-white">
-								<Icon name="x" height={18} width={18} />
-								<span className="sr-only">Close</span>
-							</Ariakit.DialogDismiss>
+					<Ariakit.Dialog className={`${dialogSurfaceStyles} text-primary [--dialog-width:448px]`} portal unmountOnHide>
+						<div className="mx-auto flex size-full max-w-[440px] flex-col overflow-hidden p-3">
+							<DialogCloseButton className="ml-auto shrink-0" />
 							<div className="min-h-0 flex-1 overflow-y-auto">
 								<SubscribeAPICard />
 							</div>
-						</span>
+						</div>
 					</Ariakit.Dialog>
 				</Ariakit.DialogProvider>
 			</WalletProvider>

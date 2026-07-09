@@ -312,7 +312,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 
 			<Card padding="md" className="flex flex-col items-center gap-6">
 				{!showContent ? (
-					<div className="flex min-h-[300px] items-center justify-center">
+					<div role="status" aria-live="polite" className="flex min-h-[300px] items-center justify-center">
 						<p className="body-sm text-tertiary">Loading...</p>
 					</div>
 				) : (

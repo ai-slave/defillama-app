@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
 import { LocalLoader } from '~/components/Loaders'
+import { Card } from '~/ui/Card'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import {
 	fetchMarketsCategories,
@@ -9,15 +11,13 @@ import {
 	fetchMarketsExchangesList,
 	fetchMarketsTokens
 } from './api'
-import { CategoriesTable } from './CategoriesTable'
-import { ExchangesTable } from './ExchangesTable'
+import { ExploreMarketsTable } from './ExploreMarketsTable'
 import { MarketsCharts } from './MarketsCharts'
 import { MarketsSegmentTabs } from './MarketsSegmentTabs'
 import { MarketsStatStrip } from './MarketsStatStrip'
 import { MomentumCards } from './MomentumCards'
 import { recordBySegment, resolveSegment, type Segment } from './segments'
 import type { KnownTokenSlugs } from './shared'
-import { TokensTable } from './TokensTable'
 import type { CategoryStatsBySegment, ExchangeListRow, SymbolStatsBySegment } from './types'
 import { aggregateCategories, availableSegmentsFromRows, segmentSubtitles as buildSegmentSubtitles } from './utils'
 
@@ -90,11 +90,11 @@ export function MarketsHome({
 	const subtitleFor = React.useCallback((seg: Segment) => segmentSubtitles?.[seg] ?? null, [segmentSubtitles])
 
 	return (
-		<div className="flex flex-col gap-5">
-			<header className="flex flex-col gap-1.5">
-				<h1 className="text-2xl font-semibold">Markets</h1>
+		<div className="flex flex-1 flex-col gap-2">
+			<Card as="header" padding="strip" className="flex flex-col gap-1.5">
+				<h1 className="heading-sm">Markets</h1>
 				<p className="body-sm text-secondary">Per-asset spot and perpetual metrics merged across venues.</p>
-			</header>
+			</Card>
 			<MarketsSegmentTabs
 				activeSegment={activeSegment}
 				onChange={onSegmentChange}
@@ -111,25 +111,33 @@ export function MarketsHome({
 					{tokensQuery.isError ? 'Failed to load market data.' : 'No data for this segment.'}
 				</PanelStatus>
 			) : (
-				<div className="flex flex-col gap-5">
+				<div className="flex flex-col gap-6">
 					<MarketsStatStrip rows={segmentTokens} segment={activeSegment} />
-					<div className="flex flex-col gap-2">
-						<h2 className="heading-xs">Movers · 24h</h2>
-						<MomentumCards
-							categories={segmentCategories}
-							tokens={segmentTokens}
-							segment={activeSegment}
-							knownTokenSlugs={knownTokenSlugs}
-						/>
-					</div>
+					<Panel padding="none">
+						<PanelHeader>
+							<PanelTitle>Movers · 24h</PanelTitle>
+						</PanelHeader>
+						<div className="p-2">
+							<MomentumCards
+								categories={segmentCategories}
+								tokens={segmentTokens}
+								segment={activeSegment}
+								knownTokenSlugs={knownTokenSlugs}
+							/>
+						</div>
+					</Panel>
 					<MarketsCharts
 						exchangeSeries={exchangeSeriesQuery.data ?? []}
 						categorySeries={categorySeriesQuery.data ?? []}
 						segment={activeSegment}
 					/>
-					<CategoriesTable categories={segmentCategories} segment={activeSegment} />
-					<ExchangesTable exchanges={exchangesQuery.data?.[activeSegment] ?? EMPTY_EXCHANGES} segment={activeSegment} />
-					<TokensTable rows={segmentTokens} segment={activeSegment} knownTokenSlugs={knownTokenSlugs} />
+					<ExploreMarketsTable
+						categories={segmentCategories}
+						exchanges={exchangesQuery.data?.[activeSegment] ?? EMPTY_EXCHANGES}
+						assets={segmentTokens}
+						segment={activeSegment}
+						knownTokenSlugs={knownTokenSlugs}
+					/>
 				</div>
 			)}
 		</div>

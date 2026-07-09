@@ -26,9 +26,9 @@ function getTrimmedText(el: Element | null | undefined): string {
 function extractLabel(el: HTMLElement): string {
 	const directChildren = Array.from(el.children) as HTMLElement[]
 	const directLabel =
-		directChildren.find((child) => child.matches?.('[class*="text-(--text-label)"]')) ??
+		directChildren.find((child) => child.matches?.('[class*="text-secondary"]')) ??
 		directChildren.find((child) => child.tagName.toUpperCase() === 'SPAN')
-	const fallbackLabel = el.querySelector?.('[class*="text-(--text-label)"]') ?? null
+	const fallbackLabel = el.querySelector?.('[class*="text-secondary"]') ?? null
 
 	return getTrimmedText(directLabel ?? fallbackLabel)
 }

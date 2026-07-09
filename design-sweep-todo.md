@@ -61,13 +61,60 @@ Completed merge packet:
 
 Current focused backlog:
 
-- Current focus: route-family table/panel cleanup and live verification after the broad
-  in-scope `ChartPanel`, status-shell/helper, prop-trim, and table heading/toolbar passes.
+- Current branch focus is code-complete after the route-family table/panel pass and
+  post-review fixes. Remaining work in this file is accumulated master backlog,
+  explicitly deferred/custom chart work, excluded products, or live verification—not
+  an implicit requirement to expand this branch again without a fresh scope decision.
 - Remaining chart work is residual/custom only: mixed chart/table panels, table-height
   placeholders, treemap/candlestick/HBar/custom-height compositions, market mini charts,
   and excluded/quarantined products.
-- Remaining non-chart route-family migrations across stablecoins, bridges, RWA, token,
-  liquidations, DAT, adapter/markets, MCP, borrow, LST, and remaining CEX/detail shells.
+
+2026-07-09 broad route-sweep branch status:
+
+- [x] In-scope metric labels and movement values in Stablecoins, Bridges, CEX Stablecoins,
+      AdapterMetrics, BridgedTVL, Equities, Forks, Oracles, protocol lists, and token
+      watchlists now use semantic text/data tokens instead of the legacy `--text-*`,
+      `--success`, and `--error` aliases.
+- [x] MCP page chrome, repeated content surfaces, and its subscribe dialog moved off the
+      legacy card/brand variables onto semantic surface tokens and `DialogShell`.
+- [x] The RWA asset yield-opportunities table passes `shell="none"` inside its parent Card,
+      preserving one surface owner around the table and pagination controls.
+- [x] Audited headline metric cards in RWA use the 2xl mono headline recipe; Markets
+      route summaries use the compact single-card strip and mono metric tiers; DAT entity
+      headings and CEX stablecoin summary-strip values use the shared heading/body ramps.
+- [x] LST title/chart shells, protocol bridge content, and Governance tables now use the
+      shared Card/Panel/TableToolbar contracts; audited dense table control groups use
+      `TableToolbarControlGroup`.
+- [x] In-scope dashboard, market-maker, token-search, correlations, unlock, and airdrop
+      status messages now use the appropriate ARIA live/alert semantics. Default combobox
+      empty rows now match Select's tertiary treatment while legacy popovers stay pinned.
+- [x] MCP repeated content surfaces use `Card`/`Button`; shared icon rows, React Select,
+      and bookmark state now read semantic tokens rather than legacy variables.
+- [x] Shared `PercentChange` and audited Chain/DAT/Equities/protocol-list movement values
+      now use `text-data-up` / `text-data-down`; remaining legacy success/error uses are
+      genuine feedback or transaction-state treatments and remain intentionally separate.
+- [x] CEX Markets now combines the exchange title/freshness and exchange-wide metrics in
+      one overview card, removes the duplicate tab-local stats strip, and keeps pair search
+      and CSV controls inside their table Panel. Full token-market loading uses the shared
+      flexing body fallback while embedded watchlist usage remains compact.
+- [x] `/markets` now exposes the shared Metrics banner, uses one compact summary surface,
+      fills the route body during loading/status states, and removes redundant table titles.
+      Its table search/filter cluster stays left while CSV remains in the same table shell;
+      segment metadata and mover cards use the reviewed label/mono hierarchy.
+- [x] `/markets` category, exchange, and asset directories now share one `Explore markets`
+      Panel with local tabs and one embedded table shell. Market tables use mobile/compact/
+      wide default column presets with an explicit Columns control and the default shared
+      search recipe. Material volume/OI changes classify tiny or missing prior values as
+      `New` / `Insufficient baseline` instead of rendering misleading percentages.
+- [x] Markets route composition now uses a page-title Card, 24px separation between major
+      data sections, a titled Movers Panel, and the reviewed summary-strip hierarchy
+      (14px secondary labels, mono values, tertiary qualifiers, semantic deltas). Shared
+      Markets area/health charts—including the CEX Markets tab—mount 360px chart bodies;
+      owned-title lazy shells reserve 400px and tracking-chart titles use heading/body tiers.
+- [x] Post-review fixes keep responsive Markets column presets presentation-only for CSV,
+      give Explore tabs roving focus and arrow/Home/End navigation, render loaded/empty
+      chart titles at the same `h3` level, restore Adapter Metrics search/action alignment,
+      and remove MCP visual overrides from Card/Button layout-only `className` props.
 
 ChartPanel migration audit from the current scan:
 
@@ -288,7 +335,7 @@ Exported class-string componentization handoff:
       extract into ui and collapse those two components into it
 - [x] Panel (src/ui/Panel.tsx: Panel + PanelHeader + PanelTitle per 6183:148797 — shell
       bg-surface/border-subtle/8px radius, header px-4 py-3 heading-xs + 32px controls
-      6px dense header-control gap, very-subtle divider). Keep this for true titled
+      6px dense header-control gap, subtle divider). Keep this for true titled
       chart/table panels only; do not use it for title strips or inline chart toolbars.
       `padding` is explicit: `none` for flush chart/table shells, `sm`/`md` only when the
       panel itself owns status/body inset.
@@ -402,7 +449,8 @@ Exported class-string componentization handoff:
       scope joined-toggle call sites, and live verification are done.
       2026-07-07 follow-up: `PaginatedTable` now has `shell="none"` for embedded uses so
       Equities, Token markets/risks, and RWA asset detail tables can avoid nested bordered
-      shells while standalone paginated tables keep their built-in shell. Equities list,
+      shells; the RWA asset yield-opportunities table now also uses `shell="none"` inside
+      its surrounding Card. Standalone paginated tables keep their built-in shell. Equities list,
       filings, onchain, financials, Hacks, AdapterMetrics, and Stablecoins/Hacks filter
       bands moved toward shared Panel/Card/TableToolbar shells. Still verify nested table
       behavior on token, RWA, and equities detail pages.
@@ -651,13 +699,14 @@ Duplication (est. 900–1,200 deletable lines):
       TVL Range, available-range, CEX date filters, or another range/date footer.
 - [ ] Dialog copies: Correlations Add Token, ProtocolOverview Flag, and RecentProtocols
       airdrop checker moved to the shared dialog recipe. Remaining scoped examples include
-      Metrics browse, DeFiWatchlist, EntityQuestionsStrip, MCP dialogs, and the global
-      search special case. Yields IncludeExcludeTokens, account/subscription, ProDashboard,
-      LlamaAI, and editor/download dialogs remain excluded product surfaces unless
-      separately scoped.
-- [ ] Route panel shells: borrow, unlocks, token, stablecoins, bridges, MCP, and any
-      remaining CEX market/detail shells still have old `--cards-*` or route-local shells
-      that should move to Panel/Card in route-sized chunks. CEX assets/stablecoins
+      Metrics browse, DeFiWatchlist, EntityQuestionsStrip, and the global search special
+      case. MCP uses the shared dialog surface. Yields IncludeExcludeTokens,
+      account/subscription, ProDashboard, LlamaAI, and editor/download dialogs remain
+      excluded product surfaces unless separately scoped.
+- [ ] Route panel shells outside this branch remain master-backlog items requiring a
+      fresh route-by-route scan. MCP and the CEX Markets surfaces covered here use the
+      shared shell recipes; do not infer additional branch scope from historical route
+      names in this checklist. CEX assets/stablecoins
       title/status/metric-summary/chart shells are migrated. Token-rights top summary now
       uses the Layout metric browse row plus a Card `padding="strip"` inline stat strip;
       CEX stablecoin summaries use the same strip recipe. Continue keeping token-rights
@@ -726,16 +775,18 @@ dashboard product. Sheets scope remains deferred to a separate branch.
 - [x] Panel `className` contract violations: added explicit `Panel padding="sm|md"`
       variants and moved the 10 audited `p-2`/`p-4` shell overrides (protocol chart
       pages, Forks ×2, DAT/ByAsset) onto the primitive prop.
-- [x] Card contract violations (3): added `Card interactive` for focus/hover chrome,
-      moved directory tile type to the label text, and moved ExtraTvl/RWA Perps typography
-      onto content wrappers instead of the Card shell.
+- [x] Card contract violations (3): removed the `Card interactive` API; clickable cards
+      now carry `.hover-wash-card cursor-pointer` at the call site, directory tile type
+      moved to the label text, and ExtraTvl/RWA Perps typography moved onto content
+      wrappers instead of the Card shell.
 - [x] Raw `-(--ld-*)` arbitrary values with registered equivalents (6): added small
       semantic utilities for border/background divider fills and screen dim overlays,
       then replaced the audited Metrics, ProtocolOverview, Unlocks, and MarketMakers
       class usages. Inline gradient/chart variable usages remain explicit.
-- [ ] Select default-sm in md contexts: `LST/index.tsx` chart-controls selects (280/318)
-      must be `size="md"`; sweep remaining ~14 default-sm sites (DeFiWatchlist, Raises,
-      CompareChains, Unlocks/Table, layout) and set size explicitly per context.
+- [x] Select default-sm in md contexts: the LST chart-control selects and audited in-scope
+      route-family controls now pass `size="md"` explicitly. Remaining default-size sites
+      belong to separately scoped DeFiWatchlist, Raises, CompareChains, Unlocks/Table, and
+      layout follow-ups.
 - [x] a11y sub-12px interactive (in-scope): listed Nav pinned-page controls/helper text
       and small Buy on LlamaSwap triggers now use 12px `label-sm`/`body-sm` utilities.
       Sheets remains deferred.
@@ -807,7 +858,7 @@ dashboard product. Sheets scope remains deferred to a separate branch.
 
 ## Review gates before final cleanup
 
-- [ ] Excluded-surface guard (owner decision 2026-07-07, reconciled for merge):
+- [x] Excluded-surface guard (owner decision 2026-07-07, reconciled for merge):
       ProDashboard, LlamaAI, yields, account/subscription, Downloads (incl. SQL/notebook
       tooling), Articles/research/authors/newsletters/reports surfaces, and investor-
       relations dashboard surfaces (`containers/Investors` / `pages/investors` dashboard
@@ -817,14 +868,14 @@ dashboard product. Sheets scope remains deferred to a separate branch.
       relations dashboard product. Shared components these surfaces consume still
       migrate; pin them via `popoverVariant="legacy"` / `variant="pro"` style compat
       props, not by forking styles into page files.
-- [ ] Chart visual guard: no `CHART_COLORS`, `getNDistinctColors`, series color arrays,
+- [x] Chart visual guard: no `CHART_COLORS`, `getNDistinctColors`, series color arrays,
       or ECharts option objects changed as a side effect of shell/toolbar cleanup.
-- [ ] Token/style guard: no new page-level color/spacing classes where a primitive or
+- [x] Token/style guard: no new page-level color/spacing classes where a primitive or
       recipe exists; no new `--cards-*`, `--old-blue`, `--link-hover-bg`, hex colors,
       arbitrary font sizes, or arbitrary spacing in in-scope files.
-- [ ] Semantic/status guard: empty/error/status shells have correct wrapper vs text
+- [x] Semantic/status guard: empty/error/status shells have correct wrapper vs text
       semantics and no default paragraph-margin regressions.
-- [ ] Duplicate-shell guard: repeated local `rounded/border/bg/p-*` shells are either
+- [x] Duplicate-shell guard: repeated local `rounded/border/bg/p-*` shells are either
       migrated to a primitive/composite or explicitly documented as route-specific.
 - [ ] Live route guard: verify representative desktop/mobile, light/dark routes:
       `/`, `/chain/ethereum`, `/metrics`, `/tools`, `/protocol/uniswap`,

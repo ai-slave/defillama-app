@@ -124,7 +124,7 @@ const columns = [
 		cell: ({ getValue }) =>
 			getValue() ? (
 				<a
-					className="flex shrink-0 items-center justify-center rounded-md bg-(--link-bg) px-2.5 py-1 text-xs font-medium whitespace-nowrap text-(--link-text) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+					className="hover-wash flex shrink-0 items-center justify-center rounded-md bg-brand-muted px-2.5 py-1 label-sm whitespace-nowrap text-link"
 					href={getValue()[0]}
 					target="_blank"
 					rel="noopener noreferrer"

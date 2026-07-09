@@ -184,7 +184,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 						<SurfaceBodyStatus variant="empty" className="p-2" contentClassName="flex flex-col items-center">
 							<Icon name="bookmark" height={32} width={32} className="mb-3" />
 							<p className="body-sm text-tertiary">No tokens in your watchlist</p>
-							<p className="mt-1 text-xs text-(--text-secondary) opacity-75">Use the selector above to add tokens</p>
+							<p className="mt-1 body-sm text-secondary opacity-75">Use the selector above to add tokens</p>
 						</SurfaceBodyStatus>
 					)}
 				</Card>

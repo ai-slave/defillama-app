@@ -4,7 +4,7 @@ import { formattedNum } from '~/utils'
 import type { MarketPair } from './api.types'
 import { FundingCell } from './marketMetrics'
 import { type Segment, segmentHasOi } from './segments'
-import { ChangeCell, renderFunding8h, renderPrice } from './shared'
+import { ChangeCell, MaterialChangeCell, renderFunding8h, renderPrice } from './shared'
 import { pctChange } from './utils'
 
 const columnHelper = createColumnHelper<MarketPair>()
@@ -119,7 +119,9 @@ function buildMarketPairColumns(segment: Segment, config: MarketPairColumnConfig
 		columnHelper.accessor((row) => pctChange(row.volume_24h, row.volume_prev_24h) ?? undefined, {
 			id: 'volume_change_24h',
 			header: 'Vol Δ',
-			cell: ({ row }) => <ChangeCell fraction={pctChange(row.original.volume_24h, row.original.volume_prev_24h)} />,
+			cell: ({ row }) => (
+				<MaterialChangeCell current={row.original.volume_24h} previous={row.original.volume_prev_24h} />
+			),
 			meta: { headerClassName: 'w-[100px]', align: 'end' }
 		})
 	]
@@ -135,7 +137,7 @@ function buildMarketPairColumns(segment: Segment, config: MarketPairColumnConfig
 			columnHelper.accessor((row) => pctChange(row.oi_usd, row.oi_prev_usd) ?? undefined, {
 				id: 'oi_change_24h',
 				header: 'OI Δ',
-				cell: ({ row }) => <ChangeCell fraction={pctChange(row.original.oi_usd, row.original.oi_prev_usd)} />,
+				cell: ({ row }) => <MaterialChangeCell current={row.original.oi_usd} previous={row.original.oi_prev_usd} />,
 				meta: { headerClassName: 'w-[100px]', align: 'end' }
 			}),
 			columnHelper.accessor((row) => row.funding_rate_8h ?? undefined, {

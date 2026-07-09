@@ -78,11 +78,11 @@ export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData 
 								{fork}
 							</h1>
 							<p className="flex flex-col">
-								<span className="text-(--text-label)">TVL in Forks (USD)</span>
+								<span className="text-secondary">TVL in Forks (USD)</span>
 								<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalValue, true)}</span>
 							</p>
 							<p className="flex flex-col">
-								<span className="text-(--text-label)">{topProtocol?.name ?? 'Top Protocol'} Dominance</span>
+								<span className="text-secondary">{topProtocol?.name ?? 'Top Protocol'} Dominance</span>
 								<span className="font-jetbrains text-2xl font-semibold">
 									{dominanceText == null ? 'N/A' : `${dominanceText}%`}
 								</span>

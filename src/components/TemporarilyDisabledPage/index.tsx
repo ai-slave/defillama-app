@@ -1,4 +1,5 @@
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
 
 interface TemporarilyDisabledPageProps {
 	title: string
@@ -17,10 +18,10 @@ export function TemporarilyDisabledPage({
 }: TemporarilyDisabledPageProps) {
 	return (
 		<Layout title={title} description={description} canonicalUrl={canonicalUrl}>
-			<div className="isolate flex flex-1 flex-col items-center justify-center gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-6 text-center">
+			<Card padding="md" className="isolate flex flex-1 flex-col items-center justify-center gap-4 text-center">
 				<h1 className="heading-sm">{heading}</h1>
-				<div className="flex max-w-xl flex-col gap-3 text-base text-(--text-label)">{children}</div>
-			</div>
+				<div className="flex max-w-xl flex-col gap-3 text-base text-secondary">{children}</div>
+			</Card>
 		</Layout>
 	)
 }

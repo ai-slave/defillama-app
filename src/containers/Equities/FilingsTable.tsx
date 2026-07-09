@@ -15,7 +15,7 @@ import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
-import { TableToolbar } from '~/ui/Toolbar'
+import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import type { IEquitiesFilingApiItem } from './api.types'
 import { formatEquitiesDate } from './utils'
 
@@ -133,26 +133,28 @@ export function EquitiesFilingsTable({
 						className={searchFieldInputStyles}
 					/>
 				</label>
-				<label className="flex items-center gap-2 label-sm">
-					<span className="text-secondary">Form</span>
-					<select
-						value={selectedForm}
-						onChange={(e) => setSelectedForm(e.currentTarget.value)}
-						className={selectTriggerStyles('filter', 'md')}
-					>
-						<option value="All">All</option>
-						{filingForms.map((form) => (
-							<option key={form} value={form}>
-								{form}
-							</option>
-						))}
-					</select>
-				</label>
-				<CSVDownloadButton
-					prepareCsv={() => prepareTableCsv({ instance: table, filename: 'equities-filings' })}
-					smol
-					size="md"
-				/>
+				<TableToolbarControlGroup>
+					<label className="flex items-center gap-2 label-sm">
+						<span className="text-secondary">Form</span>
+						<select
+							value={selectedForm}
+							onChange={(e) => setSelectedForm(e.currentTarget.value)}
+							className={selectTriggerStyles('filter', 'md')}
+						>
+							<option value="All">All</option>
+							{filingForms.map((form) => (
+								<option key={form} value={form}>
+									{form}
+								</option>
+							))}
+						</select>
+					</label>
+					<CSVDownloadButton
+						prepareCsv={() => prepareTableCsv({ instance: table, filename: 'equities-filings' })}
+						smol
+						size="md"
+					/>
+				</TableToolbarControlGroup>
 			</TableToolbar>
 			<PaginatedTable table={table} pageSizeOptions={PAGE_SIZE_OPTIONS} shell="none" />
 		</Panel>

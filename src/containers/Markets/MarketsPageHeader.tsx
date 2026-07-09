@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
+import { Card } from '~/ui/Card'
 
 export function MarketsPageHeader({
 	title,
@@ -17,7 +18,7 @@ export function MarketsPageHeader({
 	showBack?: boolean
 }) {
 	return (
-		<header className="flex flex-col gap-3">
+		<Card as="header" padding="strip" className="flex flex-col gap-3">
 			{showBack ? (
 				<BasicLink href={backHref} shallow className="w-fit label-md text-link hover:underline">
 					← {backLabel}
@@ -25,11 +26,11 @@ export function MarketsPageHeader({
 			) : null}
 			<div className="flex flex-col gap-1.5">
 				<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-					<h1 className="text-2xl font-semibold capitalize">{title}</h1>
+					<h1 className="heading-sm capitalize">{title}</h1>
 					{meta}
 				</div>
 				{description ? <p className="body-sm text-secondary">{description}</p> : null}
 			</div>
-		</header>
+		</Card>
 	)
 }

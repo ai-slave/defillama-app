@@ -5,6 +5,7 @@ import {
 	availableSegmentsFromRows,
 	filterExchangeSeriesBySegment,
 	filterRowsBySegment,
+	materialChange,
 	moverValue,
 	pctChange,
 	pivotSeries,
@@ -50,6 +51,37 @@ describe('pctChange', () => {
 	})
 })
 
+describe('materialChange', () => {
+	it('marks a material current value with no previous value as new', () => {
+		expect(materialChange(5_000_000, null)).toEqual({ kind: 'new' })
+		expect(materialChange(5_000_000, 0)).toEqual({ kind: 'new' })
+	})
+
+	it('reports extreme changes from a tiny nonzero baseline as insufficient', () => {
+		expect(materialChange(5_000_000, 10_000)).toEqual({ kind: 'insufficient-baseline' })
+	})
+
+	it('preserves percentage changes when the previous value is material', () => {
+		expect(materialChange(1_500_000, 1_000_000)).toEqual({ kind: 'change', fraction: 0.5 })
+	})
+
+	it('preserves ordinary changes that cross the material threshold', () => {
+		expect(materialChange(1_010_000, 999_000)).toEqual({
+			kind: 'change',
+			fraction: 1_010_000 / 999_000 - 1
+		})
+	})
+
+	it('reports a missing current value as unavailable', () => {
+		expect(materialChange(null, 1_000_000)).toEqual({ kind: 'unavailable' })
+	})
+
+	it('requires the low-baseline change to exceed 1,000%', () => {
+		expect(materialChange(1_100_000, 100_000)).toEqual({ kind: 'change', fraction: 10 })
+		expect(materialChange(1_100_001, 100_000)).toEqual({ kind: 'insufficient-baseline' })
+	})
+})
+
 describe('sentiment', () => {
 	it('uses volume only on spot', () => {
 		expect(sentiment(symbol({ volume_24h: 130, volume_prev_24h: 100 }), 'spot')).toBe('rising')
@@ -91,6 +123,15 @@ describe('movers', () => {
 		const { gainers, losers } = selectMovers(rows, 'price', 2)
 		expect(gainers.map((r) => r.symbol)).toEqual(['a', 'c'])
 		expect(losers.map((r) => r.symbol)).toEqual(['b', 'c'])
+	})
+
+	it('keeps extreme changes from small baselines in mover rankings', () => {
+		const rows = [
+			symbol({ symbol: 'extreme', volume_24h: 5_000_000, volume_prev_24h: 10_000 }),
+			symbol({ symbol: 'ordinary', volume_24h: 4_000_000, volume_prev_24h: 2_000_000 })
+		]
+		const { gainers } = selectMovers(rows, 'volume', 2)
+		expect(gainers.map((r) => r.symbol)).toEqual(['extreme', 'ordinary'])
 	})
 
 	it('keeps the previous full-sort tie ordering for gainers and losers', () => {

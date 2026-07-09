@@ -15,7 +15,7 @@ import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/Char
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { Switch } from '~/ui/Switch'
-import { TableToolbar } from '~/ui/Toolbar'
+import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formattedNum, getPrevVolumeFromChart, slug, toNiceCsvDate } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { BridgesLargeTxsTable, type BridgesLargeTxsTableHandle } from './BridgesLargeTxsTable'
@@ -282,15 +282,15 @@ export function BridgesOverviewByChain({
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
 				<Card padding="sm" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					<div className="flex flex-col">
-						<h1 className="text-(--text-label)">Total volume (24h)</h1>
+						<h1 className="text-secondary">Total volume (24h)</h1>
 						<p className="font-jetbrains text-2xl font-semibold">{formattedNum(dayTotalVolume, true)}</p>
 					</div>
 					<p className="hidden flex-col md:flex">
-						<span className="text-(--text-label)">Total volume (7d)</span>
+						<span className="text-secondary">Total volume (7d)</span>
 						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(weekTotalVolume, true)}</span>
 					</p>
 					<p className="hidden flex-col md:flex">
-						<span className="text-(--text-label)">Total volume (1mo)</span>
+						<span className="text-secondary">Total volume (1mo)</span>
 						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(monthTotalVolume, true)}</span>
 					</p>
 
@@ -433,27 +433,29 @@ export function BridgesOverviewByChain({
 						))}
 					</div>
 
-					{activeTab === 'bridges' ? (
-						<Switch
-							label="Include Messaging Protocols"
-							value="include-messaging-protocols"
-							checked={includeMessaging}
-							onChange={() => setIncludeMessaging((prev) => !prev)}
-						/>
-					) : null}
-
-					{activeTab === 'largeTxs' ? null : (
-						<label className="relative w-full max-w-full sm:max-w-[280px]">
-							<span className="sr-only">Search bridges</span>
-							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-							<input
-								onInput={(e) => setSearchValue(e.currentTarget.value)}
-								placeholder="Search..."
-								className={searchFieldInputStyles}
+					<TableToolbarControlGroup>
+						{activeTab === 'bridges' ? (
+							<Switch
+								label="Include Messaging Protocols"
+								value="include-messaging-protocols"
+								checked={includeMessaging}
+								onChange={() => setIncludeMessaging((prev) => !prev)}
 							/>
-						</label>
-					)}
-					<CSVDownloadButton prepareCsv={prepareActiveTabCsv} smol size="md" />
+						) : null}
+
+						{activeTab === 'largeTxs' ? null : (
+							<label className="relative w-full max-w-full sm:max-w-[280px]">
+								<span className="sr-only">Search bridges</span>
+								<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+								<input
+									onInput={(e) => setSearchValue(e.currentTarget.value)}
+									placeholder="Search..."
+									className={searchFieldInputStyles}
+								/>
+							</label>
+						)}
+						<CSVDownloadButton prepareCsv={prepareActiveTabCsv} smol size="md" />
+					</TableToolbarControlGroup>
 				</TableToolbar>
 
 				{activeTab === 'largeTxs' ? (

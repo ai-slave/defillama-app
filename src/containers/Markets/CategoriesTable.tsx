@@ -1,13 +1,38 @@
-import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
+import { type ColumnDef, createColumnHelper, type VisibilityState } from '@tanstack/react-table'
 import * as React from 'react'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { formattedNum } from '~/utils'
 import { type Segment, segmentHasOi } from './segments'
-import { CategoryLink, ChangeCell, renderFunding8h, renderLeverage } from './shared'
+import { CategoryLink, ChangeCell, MaterialChangeCell, renderFunding8h, renderLeverage } from './shared'
 import type { CategoryStat } from './types'
+import { type MarketsTablePreset, useMarketsTablePreset } from './useMarketsTablePreset'
 import { pctChange } from './utils'
 
 const columnHelper = createColumnHelper<CategoryStat>()
+
+const COLUMN_VISIBILITY: Record<MarketsTablePreset, VisibilityState> = {
+	wide: {
+		leverage: false,
+		token_count: false,
+		market_count: false
+	},
+	compact: {
+		share: false,
+		funding_rate_8h: false,
+		leverage: false,
+		token_count: false,
+		market_count: false
+	},
+	mobile: {
+		share: false,
+		oi_usd: false,
+		oi_change_24h: false,
+		funding_rate_8h: false,
+		leverage: false,
+		token_count: false,
+		market_count: false
+	}
+}
 
 function renderShare(value: number, total: number): string {
 	return total > 0 ? `${((value / total) * 100).toFixed(1)}%` : '–'
@@ -39,7 +64,9 @@ function buildColumns(segment: Segment, totalVolume: number): ColumnDef<Category
 		columnHelper.accessor((row) => pctChange(row.volume_24h, row.volume_prev_24h) ?? undefined, {
 			id: 'volume_change_24h',
 			header: 'Vol Δ',
-			cell: ({ row }) => <ChangeCell fraction={pctChange(row.original.volume_24h, row.original.volume_prev_24h)} />,
+			cell: ({ row }) => (
+				<MaterialChangeCell current={row.original.volume_24h} previous={row.original.volume_prev_24h} />
+			),
 			meta: { headerClassName: 'w-[100px]', align: 'end' }
 		}),
 		columnHelper.accessor('volume_24h', {
@@ -65,7 +92,7 @@ function buildColumns(segment: Segment, totalVolume: number): ColumnDef<Category
 			columnHelper.accessor((row) => pctChange(row.oi_usd, row.oi_prev_usd) ?? undefined, {
 				id: 'oi_change_24h',
 				header: 'OI Δ',
-				cell: ({ row }) => <ChangeCell fraction={pctChange(row.original.oi_usd, row.original.oi_prev_usd)} />,
+				cell: ({ row }) => <MaterialChangeCell current={row.original.oi_usd} previous={row.original.oi_prev_usd} />,
 				meta: { headerClassName: 'w-[100px]', align: 'end' }
 			}),
 			columnHelper.accessor((row) => row.funding_rate_8h ?? undefined, {
@@ -105,7 +132,16 @@ function buildColumns(segment: Segment, totalVolume: number): ColumnDef<Category
 	return columns
 }
 
-export function CategoriesTable({ categories, segment }: { categories: CategoryStat[]; segment: Segment }) {
+export function CategoriesTable({
+	categories,
+	segment,
+	embedded = false
+}: {
+	categories: CategoryStat[]
+	segment: Segment
+	embedded?: boolean
+}) {
+	const preset = useMarketsTablePreset()
 	const totalVolume = React.useMemo(() => {
 		let total = 0
 		for (const category of categories) total += category.volume_24h
@@ -115,12 +151,16 @@ export function CategoriesTable({ categories, segment }: { categories: CategoryS
 
 	return (
 		<TableWithSearch
-			key={segment}
+			key={`${segment}-${preset}`}
 			data={categories}
 			columns={columns}
 			columnToSearch="category"
 			placeholder="Search categories..."
-			header="Categories"
+			searchAlign="start"
+			columnVisibility={COLUMN_VISIBILITY[preset]}
+			showColumnSelect
+			csvExportAllColumns
+			embedded={embedded}
 			csvFileName={`markets-categories-${segment}`}
 			sortingState={[{ id: 'volume_24h', desc: true }]}
 		/>

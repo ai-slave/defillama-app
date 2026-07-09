@@ -62,7 +62,7 @@ export function PercentChange({ percent, noSign, fontWeight }: PercentChangeProp
 		return null
 	}
 
-	const colorClass = noSign ? '' : display.isPositive ? 'text-(--success)' : display.isNegative ? 'text-(--error)' : ''
+	const colorClass = noSign ? '' : display.isPositive ? 'text-data-up' : display.isNegative ? 'text-data-down' : ''
 	const weight = fontWeight ?? 400
 
 	return weight > 400 ? (

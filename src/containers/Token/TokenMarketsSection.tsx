@@ -23,11 +23,18 @@ import type {
 	MarketVenue,
 	TokenMarketsResponse
 } from '~/containers/Markets/api.types'
-import { ChangeCell, FundingCell, MetricStat, MetricStatStrip } from '~/containers/Markets/marketMetrics'
+import {
+	ChangeCell,
+	FundingCell,
+	MaterialChangeCell,
+	MetricStat,
+	MetricStatStrip
+} from '~/containers/Markets/marketMetrics'
 import type { Segment } from '~/containers/Markets/segments'
 import { pctChange } from '~/containers/Markets/utils'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TabLink } from '~/ui/Tab'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
@@ -173,7 +180,7 @@ const volumeColumn = columnHelper.accessor((row) => row.volume_24h ?? undefined,
 const volumeChangeColumn = columnHelper.accessor((row) => pctChange(row.volume_24h, row.volume_prev_24h) ?? undefined, {
 	id: 'volume_change_24h',
 	header: 'Vol Δ',
-	cell: ({ row }) => <ChangeCell fraction={pctChange(row.original.volume_24h, row.original.volume_prev_24h)} />,
+	cell: ({ row }) => <MaterialChangeCell current={row.original.volume_24h} previous={row.original.volume_prev_24h} />,
 	meta: {
 		headerClassName: 'w-[100px]',
 		align: 'end'
@@ -193,7 +200,7 @@ const oiColumn = columnHelper.accessor((row) => row.oi_usd ?? undefined, {
 const oiChangeColumn = columnHelper.accessor((row) => pctChange(row.oi_usd, row.oi_prev_usd) ?? undefined, {
 	id: 'oi_change_24h',
 	header: 'OI Δ',
-	cell: ({ row }) => <ChangeCell fraction={pctChange(row.original.oi_usd, row.original.oi_prev_usd)} />,
+	cell: ({ row }) => <MaterialChangeCell current={row.original.oi_usd} previous={row.original.oi_prev_usd} />,
 	meta: {
 		headerClassName: 'w-[100px]',
 		align: 'end'
@@ -319,13 +326,13 @@ function HeaderStrip({ rows, totals, showOi }: { rows: MarketPair[]; totals: Mar
 			<MetricStat
 				label="24h Volume"
 				value={totals.total_volume_24h == null ? '–' : formattedNum(totals.total_volume_24h, true)}
-				sub={<ChangeCell fraction={pctChange(metrics.volume, metrics.volumePrev)} />}
+				sub={<MaterialChangeCell current={metrics.volume} previous={metrics.volumePrev} />}
 			/>
 			{showOi ? (
 				<MetricStat
 					label="Open Interest"
 					value={totals.total_oi_usd == null ? '–' : formattedNum(totals.total_oi_usd, true)}
-					sub={<ChangeCell fraction={pctChange(metrics.oi, metrics.oiPrev)} />}
+					sub={<MaterialChangeCell current={metrics.oi} previous={metrics.oiPrev} />}
 				/>
 			) : null}
 		</MetricStatStrip>
@@ -509,16 +516,19 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 	)
 
 	if (isLoading) {
-		const loader = (
-			<div className="flex min-h-[200px] items-center justify-center p-3">
-				<LocalLoader />
-			</div>
-		)
-		if (embedded) return loader
+		if (embedded) {
+			return (
+				<div className="flex min-h-[200px] items-center justify-center p-3">
+					<LocalLoader />
+				</div>
+			)
+		}
 		return (
-			<Panel padding="none">
+			<Panel padding="none" className="flex-1">
 				{sectionHeader}
-				{loader}
+				<SurfaceBodyLoadingStatus label={`Loading ${tokenSymbol} markets`} className="p-2">
+					<LocalLoader />
+				</SurfaceBodyLoadingStatus>
 			</Panel>
 		)
 	}

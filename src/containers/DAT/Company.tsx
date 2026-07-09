@@ -67,7 +67,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 		<>
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
 				<Card padding="sm" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
-					<h1 className="text-xl font-semibold">{props.name}</h1>
+					<h1 className="heading-sm">{props.name}</h1>
 					<div className="flex flex-col">
 						{props.assetsBreakdown.length > 1 ? (
 							<>
@@ -155,7 +155,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 										content={
 											<>
 												24h change:{' '}
-												<span className={props.priceChange24h > 0 ? 'text-(--success)' : 'text-(--error)'}>
+												<span className={props.priceChange24h > 0 ? 'text-data-up' : 'text-data-down'}>
 													{`${props.priceChange24h > 0 ? '+' : ''}${props.priceChange24h.toFixed(2)}%`}
 												</span>
 											</>
@@ -342,7 +342,7 @@ const columns = [
 			cell: ({ getValue, row }) => {
 				const value = getValue()
 				return (
-					<span className={value < 0 ? 'text-(--error)' : 'text-(--success)'}>
+					<span className={value < 0 ? 'text-data-down' : 'text-data-up'}>
 						{`${value < 0 ? '-' : '+'}${formattedNum(Math.abs(value), false)} ${row.original.assetTicker}`}
 					</span>
 				)

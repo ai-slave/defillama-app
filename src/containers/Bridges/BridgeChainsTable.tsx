@@ -65,7 +65,7 @@ const bridgeChainsColumn = [
 			const value = info.getValue()
 			if (value == null) return null
 			if (value === 0) return <>$0</>
-			return <span className={`${value > 0 ? 'text-(--success)' : 'text-(--error)'}`}>{formattedNum(value, true)}</span>
+			return <span className={`${value > 0 ? 'text-data-up' : 'text-data-down'}`}>{formattedNum(value, true)}</span>
 		},
 		meta: {
 			headerClassName: 'w-[120px] min-[480px]:w-[140px]',
@@ -94,7 +94,7 @@ const bridgeChainsColumn = [
 			const value = info.getValue()
 			if (value == null) return null
 			if (value === 0) return <>$0</>
-			return <span className={`${value > 0 ? 'text-(--success)' : 'text-(--error)'}`}>{formattedNum(value, true)}</span>
+			return <span className={`${value > 0 ? 'text-data-up' : 'text-data-down'}`}>{formattedNum(value, true)}</span>
 		},
 		meta: {
 			headerClassName: 'w-[120px] min-[480px]:w-[140px]',

@@ -143,7 +143,7 @@ export const BridgeInfo = ({
 					{isAllChains ? (
 						<>
 							<p className="flex flex-col gap-1">
-								<span className="inline-flex items-center gap-1 text-(--text-label)">
+								<span className="inline-flex items-center gap-1 text-secondary">
 									Total Volume ({windowLabel})
 									<Tooltip
 										content={
@@ -161,7 +161,7 @@ export const BridgeInfo = ({
 					) : (
 						<>
 							<p className="flex flex-col gap-1">
-								<span className="text-(--text-label)">
+								<span className="text-secondary">
 									Deposited to {currentChain} ({windowLabel})
 								</span>
 								<span className="font-jetbrains text-2xl font-semibold">
@@ -170,7 +170,7 @@ export const BridgeInfo = ({
 							</p>
 
 							<p className="flex flex-col gap-1">
-								<span className="text-(--text-label)">
+								<span className="text-secondary">
 									Withdrawn from {currentChain} ({windowLabel})
 								</span>
 								<span className="font-jetbrains text-2xl font-semibold">
@@ -181,7 +181,7 @@ export const BridgeInfo = ({
 					)}
 
 					<p className="flex flex-col gap-1">
-						<span className="text-(--text-label)">Volume Change (prev day)</span>
+						<span className="text-secondary">Volume Change (prev day)</span>
 						<span className="font-jetbrains text-2xl font-semibold">{volPercentChange + '%'}</span>
 					</p>
 					{config?.url ? (

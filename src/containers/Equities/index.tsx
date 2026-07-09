@@ -57,7 +57,7 @@ function formatNumber(value: unknown, symbol?: string): string {
 
 function ChangePercent({ value }: { value: number | null }) {
 	return (
-		<span className={value == null || value === 0 ? undefined : value > 0 ? 'text-(--success)' : 'text-(--error)'}>
+		<span className={value == null || value === 0 ? undefined : value > 0 ? 'text-data-up' : 'text-data-down'}>
 			{formatNumber(value, '%')}
 		</span>
 	)
@@ -65,7 +65,7 @@ function ChangePercent({ value }: { value: number | null }) {
 
 function ChangeValue({ value, symbol }: { value: number | null; symbol?: string }) {
 	return (
-		<span className={value == null || value === 0 ? undefined : value > 0 ? 'text-(--success)' : 'text-(--error)'}>
+		<span className={value == null || value === 0 ? undefined : value > 0 ? 'text-data-up' : 'text-data-down'}>
 			{formatNumber(value, symbol)}
 		</span>
 	)

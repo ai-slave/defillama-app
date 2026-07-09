@@ -158,7 +158,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 							<p className="flex items-center gap-1 text-xs">
 								<span
 									className={`overflow-hidden text-ellipsis whitespace-nowrap ${
-										+props.stablecoins.change7d >= 0 ? 'text-(--success)' : 'text-(--error)'
+										+props.stablecoins.change7d >= 0 ? 'text-data-up' : 'text-data-down'
 									}`}
 								>
 									{`${+props.stablecoins.change7d >= 0 ? '+' : ''}${props.stablecoins.change7d}%`}

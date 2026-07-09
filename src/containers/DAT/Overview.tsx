@@ -191,7 +191,7 @@ const overviewColumns = [
 						<>
 							24h change:{' '}
 							<span
-								className={priceChange24h > 0 ? 'text-(--success)' : priceChange24h < 0 ? 'text-(--error)' : ''}
+								className={priceChange24h > 0 ? 'text-data-up' : priceChange24h < 0 ? 'text-data-down' : ''}
 							>{`${priceChange24h > 0 ? '+' : ''}${priceChange24h.toFixed(2)}%`}</span>
 						</>
 					}

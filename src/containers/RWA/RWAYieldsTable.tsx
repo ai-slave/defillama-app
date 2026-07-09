@@ -230,7 +230,7 @@ export function RWAYieldsTable({ data, compact }: { data: IYieldTableRow[]; comp
 
 	return (
 		<>
-			<PaginatedTable table={table} pageSizeOptions={RWA_YIELDS_PAGE_SIZE_OPTIONS} />
+			<PaginatedTable table={table} pageSizeOptions={RWA_YIELDS_PAGE_SIZE_OPTIONS} shell="none" />
 			{modal}
 		</>
 	)

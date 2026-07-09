@@ -302,13 +302,13 @@ export function AdapterByChain(props: IProps) {
 							</h1>
 						) : props.total24h != null ? (
 							<div className="flex flex-col">
-								<h1 className="text-(--text-label)">{metricName} (24h)</h1>
+								<h1 className="text-secondary">{metricName} (24h)</h1>
 								<p className="min-h-8 overflow-hidden font-jetbrains text-2xl font-semibold text-ellipsis whitespace-nowrap">
 									{formattedNum(props.total24h, true)}
 								</p>
 							</div>
 						) : (
-							<h1 className="text-(--text-label)">{metricName}</h1>
+							<h1 className="text-secondary">{metricName}</h1>
 						)}
 
 						{props.chain !== 'All' && props.total24h != null ? (

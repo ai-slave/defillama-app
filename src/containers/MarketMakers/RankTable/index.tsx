@@ -63,11 +63,16 @@ export function RankTable({
 				</div>
 			</PanelHeader>
 			{isLoading ? (
-				<div className="flex min-h-[240px] items-center justify-center p-8">
+				<div role="status" aria-live="polite" className="flex min-h-[240px] items-center justify-center p-8">
 					<LocalLoader />
+					<span className="sr-only">Loading rankings</span>
 				</div>
 			) : rows.length === 0 ? (
-				<div className="flex min-h-[240px] flex-col items-center justify-center gap-3 p-8 text-center">
+				<div
+					role="status"
+					aria-live="polite"
+					className="flex min-h-[240px] flex-col items-center justify-center gap-3 p-8 text-center"
+				>
 					<p className="body-sm text-secondary">Your filter preferences did not provide any result</p>
 					<Button type="button" onClick={onRefine} size="md">
 						Reset

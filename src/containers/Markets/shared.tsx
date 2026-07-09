@@ -3,7 +3,7 @@ import { Tooltip } from '~/components/Tooltip'
 import { formattedNum, slug } from '~/utils'
 import { type Sentiment, SENTIMENT_TITLE } from './utils'
 
-export { ChangeCell } from './marketMetrics'
+export { ChangeCell, MaterialChangeCell } from './marketMetrics'
 
 export type KnownTokenSlugs = ReadonlySet<string>
 

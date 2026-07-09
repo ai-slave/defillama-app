@@ -438,7 +438,9 @@ export function Select(props: ISelect) {
 						) : null}
 					</>
 				) : (
-					<p className="px-3 py-6 text-center body-sm text-tertiary">No results found</p>
+					<p role="status" aria-live="polite" className="px-3 py-6 text-center body-sm text-tertiary">
+						No results found
+					</p>
 				)}
 			</Ariakit.SelectPopover>
 		</Ariakit.SelectProvider>

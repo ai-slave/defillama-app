@@ -74,12 +74,12 @@ export const IconsRow = ({ items = EMPTY_ITEMS, align = 'end' }: IIconsRowProps)
 				<Ariakit.HovercardProvider>
 					<Ariakit.HovercardAnchor
 						render={<button />}
-						className="flex size-6 shrink-0 items-center justify-center rounded-full bg-(--bg-tertiary) text-[10px] text-(--text-primary)"
+						className="flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-elevated-2 text-[10px] text-primary"
 					>
 						{`+${hiddenItems.length}`}
 					</Ariakit.HovercardAnchor>
 					<Ariakit.Hovercard
-						className="z-10 flex max-w-xl flex-wrap items-center justify-start gap-1 overflow-hidden rounded-md border border-(--bg-tertiary) bg-(--bg-secondary) bg-none p-1 text-(--text-primary) shadow-sm"
+						className="z-10 flex max-w-xl flex-wrap items-center justify-start gap-1 overflow-hidden rounded-xl border border-medium bg-surface-elevated-1 p-1 text-primary shadow-sm"
 						unmountOnHide
 						portal
 					>

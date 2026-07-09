@@ -78,9 +78,7 @@ export const BridgesLargeTxsTable = React.forwardRef<BridgesLargeTxsTableHandle,
 					cell: ({ getValue }) => {
 						const value = getValue()
 						return (
-							<span className={`${value ? 'text-(--error)' : 'text-(--success)'}`}>
-								{value ? 'Withdrawal' : 'Deposit'}
-							</span>
+							<span className={`${value ? 'text-data-down' : 'text-data-up'}`}>{value ? 'Withdrawal' : 'Deposit'}</span>
 						)
 					},
 					meta: {

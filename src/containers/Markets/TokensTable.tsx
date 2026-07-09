@@ -1,4 +1,4 @@
-import { type ColumnDef, createColumnHelper } from '@tanstack/react-table'
+import { type ColumnDef, createColumnHelper, type VisibilityState } from '@tanstack/react-table'
 import * as React from 'react'
 import { selectTriggerStyles } from '~/components/Select/types'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
@@ -6,6 +6,7 @@ import { formattedNum } from '~/utils'
 import { type Segment, segmentHasOi } from './segments'
 import {
 	ChangeCell,
+	MaterialChangeCell,
 	renderFunding8h,
 	renderLeverage,
 	renderPrice,
@@ -15,9 +16,35 @@ import {
 	type KnownTokenSlugs
 } from './shared'
 import type { SymbolStat } from './types'
+import { type MarketsTablePreset, useMarketsTablePreset } from './useMarketsTablePreset'
 import { pctChange, sentiment, topSymbols } from './utils'
 
 const columnHelper = createColumnHelper<SymbolStat>()
+
+const COLUMN_VISIBILITY: Record<MarketsTablePreset, VisibilityState> = {
+	wide: {
+		leverage: false,
+		tags: false
+	},
+	compact: {
+		funding_rate_8h: false,
+		leverage: false,
+		market_count: false,
+		exchange_count: false,
+		tags: false
+	},
+	mobile: {
+		volume_change_24h: false,
+		oi_usd: false,
+		oi_change_24h: false,
+		funding_rate_8h: false,
+		leverage: false,
+		market_count: false,
+		exchange_count: false,
+		sentiment: false,
+		tags: false
+	}
+}
 
 function buildColumns(segment: Segment, knownTokenSlugs: KnownTokenSlugs): ColumnDef<SymbolStat, any>[] {
 	const hasOi = segmentHasOi(segment)
@@ -51,7 +78,9 @@ function buildColumns(segment: Segment, knownTokenSlugs: KnownTokenSlugs): Colum
 		columnHelper.accessor((row) => pctChange(row.volume_24h, row.volume_prev_24h) ?? undefined, {
 			id: 'volume_change_24h',
 			header: 'Vol Δ',
-			cell: ({ row }) => <ChangeCell fraction={pctChange(row.original.volume_24h, row.original.volume_prev_24h)} />,
+			cell: ({ row }) => (
+				<MaterialChangeCell current={row.original.volume_24h} previous={row.original.volume_prev_24h} />
+			),
 			meta: { headerClassName: 'w-[100px]', align: 'end' }
 		})
 	]
@@ -67,7 +96,7 @@ function buildColumns(segment: Segment, knownTokenSlugs: KnownTokenSlugs): Colum
 			columnHelper.accessor((row) => pctChange(row.oi_usd, row.oi_prev_usd) ?? undefined, {
 				id: 'oi_change_24h',
 				header: 'OI Δ',
-				cell: ({ row }) => <ChangeCell fraction={pctChange(row.original.oi_usd, row.original.oi_prev_usd)} />,
+				cell: ({ row }) => <MaterialChangeCell current={row.original.oi_usd} previous={row.original.oi_prev_usd} />,
 				meta: { headerClassName: 'w-[100px]', align: 'end' }
 			}),
 			columnHelper.accessor((row) => row.funding_rate_8h ?? undefined, {
@@ -123,12 +152,15 @@ const SORT_OPTIONS: ReadonlyArray<{ id: 'volume' | 'oi'; label: string }> = [
 export function TokensTable({
 	rows,
 	segment,
-	knownTokenSlugs
+	knownTokenSlugs,
+	embedded = false
 }: {
 	rows: SymbolStat[]
 	segment: Segment
 	knownTokenSlugs: KnownTokenSlugs
+	embedded?: boolean
 }) {
+	const preset = useMarketsTablePreset()
 	const hasOi = segmentHasOi(segment)
 	const [sortBy, setSortBy] = React.useState<'volume' | 'oi'>('volume')
 	const effectiveSort = hasOi ? sortBy : 'volume'
@@ -153,13 +185,17 @@ export function TokensTable({
 
 	return (
 		<TableWithSearch
-			key={`${segment}-${effectiveSort}`}
+			key={`${segment}-${effectiveSort}-${preset}`}
 			data={data}
 			columns={columns}
 			columnToSearch="symbol"
 			placeholder="Search assets..."
-			header="Top 100 assets"
 			leadingControls={leadingControls}
+			searchAlign="start"
+			columnVisibility={COLUMN_VISIBILITY[preset]}
+			showColumnSelect
+			csvExportAllColumns
+			embedded={embedded}
 			csvFileName={`markets-tokens-${segment}`}
 			sortingState={[{ id: sortColumn, desc: true }]}
 		/>
