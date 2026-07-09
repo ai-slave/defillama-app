@@ -23,6 +23,9 @@ Completed foundation:
 
 - Design tokens, typography utilities, `Button`, `Card`, `Panel`, `Status`, `Input`,
   toolbar recipes, and key chart/panel primitives are in place.
+- `Card` and `Panel` now share fixed `bg-surface border-subtle rounded-[8px]` chrome.
+  `Card` no longer has a border-strength variant, and both primitives require callers to
+  choose padding explicitly.
 - Shared `Select`, `SelectWithCombobox`, `MultiSelectCombobox`, `Menu`, `NestedMenu`,
   and in-scope direct popovers use the paddingless popover surface contract.
 - Shared menu/select popovers portal by default; below `sm` they use fixed-bottom
@@ -56,9 +59,11 @@ for the remaining work.
 
 Next code scope:
 
-- Start with dense pages token cleanup: `DeFiWatchlist` and `TokenPnl`.
-- Treat Correlations as a small route-level legacy-token cleanup if it is included nearby:
-  remove old surface/text/link-hover classes.
+- Finish the current dense pages/Card-Panel cleanup branch. Keep it closed around
+  `DeFiWatchlist`, `TokenPnl`, agreed small/static pages, standalone panel/table shells,
+  and the explicit `Card`/`Panel` padding API.
+- Do not add shared-control API tightening to the current branch. It touches a different
+  review surface and some excluded/quarantined products.
 - Keep Raises chart layout shift as a chart-shell/fallback reservation follow-up.
 - Keep `ChartPanel` extraction blocked until after the Raises/chart-shell pass.
 
@@ -86,11 +91,28 @@ Recommended order for the next focused code branches:
      default-sm select drift.
    - Port any in-scope `DeFiWatchlist` dialog chrome to the shared dialog recipe as part
      of that file-family cleanup.
-   - Revisit Unlocks only if `lint:tokens` points to remaining high-value debt there.
+   - Include agreed small/static pages, standalone analytics/list shells, Chains/NFT
+     route-family shells, and Unlocks outer-shell border-strength fixes only where already
+     scoped.
+   - If Correlations cleanup remains in the branch, keep it limited to legacy
+     card/surface/text/link-hover tokens and local shell classes.
+   - Stop after verification; do not add shared-control API tightening to this branch.
 
-2. **Correlations legacy-token cleanup**
-   - Small route cleanup only: legacy card/surface/text/link-hover tokens and local shell
-     classes in the Correlations page.
+2. **Shared control API tightening**
+   - Use a focused branch, suggested name: `mintdart/shared-control-api-tightening`.
+   - `FilterBetweenRange`: remove dead `name`, make `variant` and `size` explicit, and
+     consider reusing `selectTriggerStyles` for trigger chrome.
+   - `PanelStatus`: require `variant` so empty/error/loading semantics are explicit.
+   - `Checkbox`: require `variant` and collapse duplicate indicator style maps.
+   - `EntityTitleStrip`: remove unused `titleClassName` unless a scoped title exception is
+     approved.
+   - `IconHitTarget`: remove the unused component or migrate the one style-string caller.
+   - `Button`: make `size` explicit first; defer making `variant` required unless the
+     branch is intentionally broader.
+   - `selectTriggerStyles`: require `variant` and `size` at direct helper calls.
+   - `TagGroup`: require `variant` and `size`; remove the redundant local `style` type.
+   - `Select` / `SelectWithCombobox`: make in-scope callers explicit first, then tighten
+     the shared prop types only after excluded surfaces are pinned.
 
 3. **Raises/chart-shell layout pass**
    - Fix the `/raises` Suspense/fallback reservation that can cause a chart-panel layout

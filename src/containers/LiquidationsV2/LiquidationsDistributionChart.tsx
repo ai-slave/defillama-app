@@ -89,7 +89,7 @@ function LiquidationsDistributionChartCard({
 	chartInstanceRef: React.MutableRefObject<ECharts | null>
 }) {
 	return (
-		<Panel>
+		<Panel padding="none">
 			<ChartPanelToolbar>
 				{displayOptions.hideTokenSelector ? (
 					<div className="mr-auto" />
@@ -650,7 +650,7 @@ export function LiquidationsDistributionChart({
 
 	if (chart.tokens.length === 0) {
 		return (
-			<Card border="subtle">
+			<Card padding="md">
 				<h2 className="heading-xs">{title ?? 'Liquidation Distribution'}</h2>
 				<p className="mt-3 body-sm text-tertiary">No liquidation chart data available for this view.</p>
 			</Card>

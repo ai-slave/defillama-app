@@ -43,7 +43,7 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 		<>
 			<RowLinksWithDropdown links={props.chains} activeLink={props.chain} />
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card className="col-span-3 w-full overflow-x-auto xl:col-span-1" border="subtle" padding="sm">
+				<Card className="col-span-3 w-full overflow-x-auto xl:col-span-1" padding="sm">
 					<div className="flex flex-col gap-6 text-base">
 						{props.chain !== 'All' ? (
 							<h1 className="flex flex-nowrap items-center gap-2">
@@ -84,7 +84,7 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 						</div>
 					</div>
 				</Card>
-				<Panel className="col-span-2">
+				<Panel padding="none" className="col-span-2">
 					<Suspense fallback={<div className="min-h-[406px]" />}>
 						<MultiSeriesChart2
 							exportButtons={{

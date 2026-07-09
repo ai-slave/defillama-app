@@ -187,7 +187,7 @@ export function BridgeChainsTable({ data }: { data: BridgeChainsTableRow[] }) {
 	})
 
 	return (
-		<Panel>
+		<Panel padding="none">
 			<TableToolbar className="items-center justify-between">
 				<h1 className="mr-auto label-md">Chains</h1>
 				<label className="relative w-full sm:max-w-[280px]">

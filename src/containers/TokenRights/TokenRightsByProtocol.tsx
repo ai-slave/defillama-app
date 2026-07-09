@@ -108,7 +108,7 @@ export function TokenRightsByProtocol({
 						/>
 					</div>
 				) : (
-					<Card as="header" padding="sm" border="subtle" className="flex flex-wrap items-center gap-2">
+					<Card as="header" padding="sm" className="flex flex-wrap items-center gap-2">
 						<TokenLogo name={name} kind="token" size={24} alt={`Logo of ${name}`} />
 						<h1 className="heading-xs">{symbol ? `$${symbol}` : name} Token Rights</h1>
 						{overview.identityTokens.length > 0 ? (
@@ -454,7 +454,7 @@ function TokenRightsOverviewView({
 	]
 
 	return (
-		<Card as="section" padding="sm" border="subtle" className="w-full">
+		<Card as="section" padding="sm" className="w-full">
 			<div className="grid max-w-[1040px] gap-2 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-center">
 				<div className="flex min-w-0 flex-col items-center gap-2">
 					<TokenRightsPieChart segments={pieSegments} />
@@ -671,7 +671,7 @@ function TokenRightsChip({
 
 function SectionCard({ title, badge, children }: { title: string; badge?: string; children: ReactNode }) {
 	return (
-		<Card as="section" padding="sm" border="subtle" className="flex flex-col gap-2">
+		<Card as="section" padding="sm" className="flex flex-col gap-2">
 			<div className="flex items-center justify-between">
 				<h2 className="label-lg">{title}</h2>
 				{badge ? <span className="label-sm text-secondary uppercase">{badge}</span> : null}

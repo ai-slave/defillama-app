@@ -4,6 +4,7 @@ import { Icon } from '~/components/Icon'
 import { LinkToMetricOrToolPage, usePinnedRoutes } from '~/components/Metrics'
 import Layout from '~/layout'
 import defillamaPages from '~/public/pages.json'
+import { Card } from '~/ui/Card'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 
 export default function Tools() {
@@ -27,8 +28,8 @@ export default function Tools() {
 			description="Explore DeFi analytics tools: token comparisons, correlation matrix, borrow optimizer, and more. Free open-source research tools on DefiLlama."
 			canonicalUrl={`/tools`}
 		>
-			<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-				<h1 className="text-2xl font-bold">Tools</h1>
+			<Card padding="sm" className="flex flex-col gap-2">
+				<h1 className="heading-sm">Tools</h1>
 				<div className="relative">
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<Input
@@ -39,7 +40,7 @@ export default function Tools() {
 						onInput={(e) => setSearchValue(e.currentTarget.value)}
 					/>
 				</div>
-			</div>
+			</Card>
 			<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 				{pages.map((tool: any) => (
 					<LinkToMetricOrToolPage

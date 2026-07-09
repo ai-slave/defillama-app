@@ -88,7 +88,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 		<>
 			{props.chains.length > 1 ? <RowLinksWithDropdown links={props.chains} activeLink={props.chain} /> : null}
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card border="subtle" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					{props.chain === 'All' ? (
 						<h1 className="heading-xs">{categoryPresentation.headingLabel}</h1>
 					) : (
@@ -185,7 +185,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 						) : null}
 					</div>
 				</Card>
-				<Panel className="col-span-2">
+				<Panel padding="none" className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						{hasBarCharts ? (
 							<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />

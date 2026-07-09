@@ -233,7 +233,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 	}
 
 	return (
-		<Panel>
+		<Panel padding="none">
 			<PanelHeader>
 				<div className="min-w-0">
 					<PanelTitle
@@ -256,7 +256,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 			</PanelHeader>
 
 			<div className="flex flex-1 flex-col gap-2 p-2">
-				<Card border="subtle">
+				<Card padding="md">
 					<p className="body-md text-secondary">Maximum possible exposure to {tokenSymbol}</p>
 					<p className="mt-1 font-jetbrains text-2xl font-semibold text-primary">{formatUsd(totalMaxExposureUsd)}</p>
 					<p className="mt-1 body-md text-secondary">
@@ -271,7 +271,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 					</p>
 				</Card>
 
-				<Card border="subtle" padding="sm">
+				<Card padding="sm">
 					<div className="space-y-3">
 						{exposures.protocolSummaries.map((summary) => (
 							<div
@@ -301,7 +301,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 					</div>
 				</Card>
 
-				<Card as="details" border="subtle" padding="sm" className="group">
+				<Card as="details" padding="sm" className="group">
 					<summary className="-m-2 flex cursor-pointer list-none items-center justify-between gap-3 p-2 label-md">
 						<span>Methodology and limitations</span>
 						<Icon
@@ -327,7 +327,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 					</ul>
 				</Card>
 
-				<Card as="details" border="subtle" padding="sm" className="group">
+				<Card as="details" padding="sm" className="group">
 					<summary className="-m-2 flex cursor-pointer list-none items-center justify-between gap-3 p-2 label-md">
 						<span>Show exposure details</span>
 						<Icon

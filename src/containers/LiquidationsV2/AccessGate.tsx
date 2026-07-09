@@ -49,7 +49,7 @@ function LiquidationsShellCard({
 				activeChainLink={activeChainLink}
 			/>
 
-			<Panel className="min-h-[380px] w-full flex-1 items-center justify-center">
+			<Panel padding="none" className="min-h-[380px] w-full flex-1 items-center justify-center">
 				<div className="flex max-w-xl flex-col items-center gap-3 px-6 py-8 text-center">{children}</div>
 			</Panel>
 		</>

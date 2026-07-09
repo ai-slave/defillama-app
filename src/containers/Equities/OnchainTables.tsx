@@ -245,7 +245,7 @@ export function EquitiesMarketsTable({ markets, ticker }: { markets: IEquitiesOn
 	})
 
 	return (
-		<Panel className="col-span-full">
+		<Panel padding="none" className="col-span-full">
 			<TableToolbar className="justify-end">
 				<CSVDownloadButton
 					prepareCsv={() => prepareTableCsv({ instance: table, filename: `equities-${ticker.toLowerCase()}-markets` })}
@@ -277,7 +277,7 @@ export function EquitiesTokensTable({ tokens, ticker }: { tokens: IEquitiesOncha
 	})
 
 	return (
-		<Panel className="col-span-full">
+		<Panel padding="none" className="col-span-full">
 			<TableToolbar className="justify-end">
 				<CSVDownloadButton
 					prepareCsv={() => prepareTableCsv({ instance: table, filename: `equities-${ticker.toLowerCase()}-tokens` })}

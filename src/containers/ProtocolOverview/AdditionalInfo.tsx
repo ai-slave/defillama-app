@@ -82,7 +82,7 @@ const Articles = (props: IProtocolOverviewPageData) => {
 	if (!props.articles?.length) return null
 
 	return (
-		<Card as="section" padding="sm" border="subtle" className="col-span-1 flex flex-col gap-3 body-md">
+		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
 			<div className="flex items-center justify-between gap-3">
 				<SectionHeader id="research">Latest from DefiLlama Research</SectionHeader>
 				<BasicLink href="/research" className="shrink-0">
@@ -139,7 +139,7 @@ function Users(props: IProtocolOverviewPageData) {
 	if (!users) return null
 
 	return (
-		<Card as="section" padding="sm" border="subtle" className="col-span-1 flex flex-col gap-3 body-md">
+		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
 			<h2 className="mr-auto heading-xs underline decoration-dotted">
 				<Tooltip
 					content="This only counts users that interact with protocol directly (so not through another contract, such as a DEX aggregator), and only on arbitrum, avax, bsc, ethereum, xdai, optimism, polygon."
@@ -168,7 +168,7 @@ export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
 	const categoryHref = props.category ? getCategoryRoute(slug(props.category)) : null
 
 	return (
-		<Card as="section" padding="sm" border="subtle" className="col-span-1 flex flex-col gap-3 body-md">
+		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
 			<SectionHeader id="protocol-information">
 				{props.isCEX ? 'Exchange Information' : 'Protocol Information'}
 			</SectionHeader>
@@ -262,7 +262,7 @@ export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
 
 const Methodology = (props: IProtocolOverviewPageData) => {
 	return (
-		<Card as="section" padding="sm" border="subtle" className="col-span-1 flex flex-col gap-3 body-md">
+		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
 			<SectionHeader id="methodology">Methodology</SectionHeader>
 			{!props.oracleTvs && props.tvlMethodologyUrl ? (
 				<a href={props.tvlMethodologyUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
@@ -403,7 +403,7 @@ function Yields(props: IProtocolOverviewPageData) {
 	if (!yields) return null
 	const averageApy = yields.averageAPY == null ? '-' : `${formattedNum(yields.averageAPY, false)}%`
 	return (
-		<Card as="section" padding="sm" border="subtle" className="col-span-1 flex flex-col gap-3 body-md">
+		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
 			<SectionHeader id="yields">Yields</SectionHeader>
 			<div>
 				<MetricRow label="Pools Tracked" value={yields.noOfPoolsTracked} />
@@ -423,7 +423,7 @@ function Yields(props: IProtocolOverviewPageData) {
 const Hacks = (props: IProtocolOverviewPageData) => {
 	if (!props.hacks?.length) return null
 	return (
-		<Card as="section" padding="sm" border="subtle" className="col-span-1 flex flex-col gap-3 body-md">
+		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
 			<SectionHeader id="hacks">Hacks</SectionHeader>
 			<div className="flex flex-col">
 				{props.hacks.map((hack) => (
@@ -535,7 +535,7 @@ const Competitors = (props: IProtocolOverviewPageData) => {
 	const canOpenComparison = !loaders.userLoading && isAuthenticated && hasActiveSubscription
 	if (competitors.length === 0) return null
 	return (
-		<Card as="section" padding="sm" border="subtle" className="col-span-1 flex flex-col gap-3 body-md">
+		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
 			<div className="flex items-center justify-between gap-2">
 				<SectionHeader id="competitors">Competitors</SectionHeader>
 				{comparisonHref ? (

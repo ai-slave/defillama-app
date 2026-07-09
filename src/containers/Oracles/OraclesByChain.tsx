@@ -65,7 +65,7 @@ export const OraclesByChain = ({
 			<RowLinksWithDropdown links={chainLinks} activeLink={activeLink} />
 
 			<div className="flex flex-col gap-2 xl:flex-row">
-				<Panel className="isolate flex-1">
+				<Panel padding="none" className="isolate flex-1">
 					<React.Suspense fallback={<div className="min-h-[406px]" />}>
 						<PieChart
 							chartData={tableAndPieData.pieData}
@@ -74,7 +74,7 @@ export const OraclesByChain = ({
 						/>
 					</React.Suspense>
 				</Panel>
-				<Panel className="flex-1">
+				<Panel padding="none" className="flex-1">
 					{isFetchingExtraBreakdowns ? (
 						<div
 							role="status"
@@ -99,7 +99,9 @@ export const OraclesByChain = ({
 				</Panel>
 			</div>
 
-			<React.Suspense fallback={<Panel style={{ minHeight: `${tableAndPieData.tableData.length * 50 + 200}px` }} />}>
+			<React.Suspense
+				fallback={<Panel padding="none" style={{ minHeight: `${tableAndPieData.tableData.length * 50 + 200}px` }} />}
+			>
 				<TableWithSearch
 					data={tableAndPieData.tableData}
 					columns={columns}

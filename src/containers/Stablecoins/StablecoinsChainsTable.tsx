@@ -220,7 +220,7 @@ export function StablecoinsChainsTable({
 	}, [groupTvls])
 
 	return (
-		<Panel>
+		<Panel padding="none">
 			<TableToolbar className="items-center justify-between">
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search</span>

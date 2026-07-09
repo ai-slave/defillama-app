@@ -135,7 +135,7 @@ export function RecentlyListedProtocolsTable({
 	}, [instance, categories, selectedCategories])
 
 	return (
-		<Panel>
+		<Panel padding="none">
 			<TableToolbar className="justify-end">
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search protocols</span>

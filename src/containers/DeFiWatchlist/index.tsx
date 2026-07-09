@@ -22,6 +22,10 @@ import { DEFAULT_PORTFOLIO_NAME, useLocalStorageSettingsManager } from '~/contex
 import { useBookmarks } from '~/hooks/useBookmarks'
 import { useEmailNotifications, type NotificationSettings } from '~/hooks/useEmailNotifications'
 import { useIsClient } from '~/hooks/useIsClient'
+import { Button, buttonStyles } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { mapAPIMetricToUI, mapUIMetricToAPI } from '~/utils/notificationMetrics'
 import { parseNumberQueryParam } from '~/utils/routerQuery'
 import type { IChainsByCategoryData } from '../ChainsByCategory/types'
@@ -98,9 +102,9 @@ export function DefiWatchlistContainer({
 		return (
 			<>
 				<WatchListTabs />
-				<div className="flex min-h-[360px] flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+				<PanelLoadingStatus>
 					<LocalLoader />
-				</div>
+				</PanelLoadingStatus>
 			</>
 		)
 	}
@@ -116,11 +120,11 @@ export function DefiWatchlistContainer({
 					filteredChains={chainsTableData}
 				/>
 				{protocolsTableData.length > 0 ? <TopMovers protocols={protocolsTableData} /> : null}
-				<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<Card padding="none">
 					<div className="flex flex-wrap items-center gap-2 p-2">
 						<div className="mr-auto">
 							<h2 className="heading-xs">Protocols</h2>
-							<p className="text-xs text-secondary">
+							<p className="body-xs text-secondary">
 								Select or deselect protocols for the "{selectedPortfolio}" portfolio
 							</p>
 						</div>
@@ -131,6 +135,7 @@ export function DefiWatchlistContainer({
 							label={selectedProtocolNames.length > 0 ? 'Protocols' : 'Add protocols'}
 							labelType="smol"
 							variant="filter"
+							size="sm"
 						/>
 					</div>
 					{protocolsTableData.length ? (
@@ -139,16 +144,16 @@ export function DefiWatchlistContainer({
 						<div className="flex min-h-[360px] flex-col items-center justify-center p-5 text-center">
 							<Icon name="bookmark" height={32} width={32} className="mb-3 text-tertiary" />
 							<p className="body-sm text-tertiary">No protocols in your watchlist</p>
-							<p className="mt-1 text-xs text-(--text-secondary) opacity-75">Use the selector above to add protocols</p>
+							<p className="mt-1 body-sm text-tertiary">Use the selector above to add protocols</p>
 						</div>
 					)}
-				</div>
+				</Card>
 
-				<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<Card padding="none">
 					<div className="flex flex-wrap items-center gap-2 p-2">
 						<div className="mr-auto">
 							<h2 className="heading-xs">Chains</h2>
-							<p className="text-xs text-secondary">
+							<p className="body-xs text-secondary">
 								Select or deselect chains for the "{selectedPortfolio}" portfolio
 							</p>
 						</div>
@@ -159,6 +164,7 @@ export function DefiWatchlistContainer({
 							label={selectedChainNames.length > 0 ? 'Chains' : 'Add chains'}
 							labelType="smol"
 							variant="filter"
+							size="sm"
 						/>
 					</div>
 					{chainsTableData.length ? (
@@ -167,16 +173,21 @@ export function DefiWatchlistContainer({
 						<div className="flex min-h-[360px] flex-col items-center justify-center p-5 text-center">
 							<Icon name="map" height={32} width={32} className="mb-3 text-tertiary" />
 							<p className="body-sm text-tertiary">No chains in your watchlist</p>
-							<p className="mt-1 text-xs text-(--text-secondary) opacity-75">Use the selector above to add chains</p>
+							<p className="mt-1 body-sm text-tertiary">Use the selector above to add chains</p>
 						</div>
 					)}
-				</div>
+				</Card>
 			</div>
 		</>
 	)
 }
 
 const EMPTY_ARRAY: any[] = []
+const smallActionButtonClassName = buttonStyles({ size: 'sm' })
+const smallToneActionButtonBaseClassName =
+	'flex min-h-6 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-md border px-2 py-0.5 label-sm disabled:cursor-not-allowed disabled:opacity-60'
+const destructiveActionButtonClassName = `${smallToneActionButtonBaseClassName} border-data-down text-data-down hover:bg-hover-row focus-visible:bg-hover-row`
+const positiveActionButtonClassName = `${smallToneActionButtonBaseClassName} border-data-up text-data-up hover:bg-hover-row focus-visible:bg-hover-row`
 
 function PortfolioNotifications({
 	selectedPortfolio,
@@ -362,24 +373,24 @@ function PortfolioNotifications({
 
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+			<Card padding="sm">
 				<div className="mb-2">
 					<h2 className="mb-0.5 heading-xs">Email Notifications</h2>
-					<p className="text-xs text-(--text-secondary)">
+					<p className="body-sm text-secondary">
 						{preferences ? (
 							preferences.active ? (
 								<span className="flex items-center gap-2">
-									<Icon name="check-circle" height={14} width={14} className="text-green-600" />
+									<Icon name="check-circle" height={14} width={14} className="text-data-up" />
 									<span>
-										Weekly email notifications are <strong className="text-green-600">active</strong> for "
+										Weekly email notifications are <strong className="text-data-up">active</strong> for "
 										{selectedPortfolio}" portfolio
 									</span>
 								</span>
 							) : (
 								<span className="flex items-center gap-2">
-									<Icon name="pause" height={14} width={14} className="text-(--text-secondary)" />
+									<Icon name="pause" height={14} width={14} className="text-secondary" />
 									<span>
-										Weekly email notifications are <strong className="text-(--text-secondary)">disabled</strong> for "
+										Weekly email notifications are <strong className="text-secondary">disabled</strong> for "
 										{selectedPortfolio}" portfolio
 									</span>
 								</span>
@@ -391,8 +402,8 @@ function PortfolioNotifications({
 				</div>
 
 				{preferences?.settings ? (
-					<div className="mb-3 rounded-md bg-(--bg-glass) p-3">
-						<div className="space-y-1 text-xs text-(--text-secondary)">
+					<div className="mb-3 rounded-[8px] bg-surface-elevated-1 p-3">
+						<div className="space-y-1 body-xs text-secondary">
 							{protocolsCount > 0 ? (
 								<p>
 									<span className="font-medium">Tracking {protocolsCount} protocol(s)</span>
@@ -407,7 +418,7 @@ function PortfolioNotifications({
 									<span>{chainsFirstMetrics}</span>
 								</p>
 							) : null}
-							<div className="mt-1 text-xs opacity-75">
+							<div className="mt-1 text-tertiary">
 								<Icon name="calendar" height={12} width={12} className="mr-1 inline" />
 								Delivered weekly to your email
 							</div>
@@ -419,7 +430,7 @@ function PortfolioNotifications({
 					<button
 						onClick={handleNotificationsButtonClick}
 						disabled={loaders.userLoading || isLoading}
-						className="flex items-center gap-2 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs text-(--text-primary) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-50"
+						className={smallActionButtonClassName}
 					>
 						<Icon name="mail" height={14} width={14} />
 						<span>{preferences ? 'Update settings' : 'Set up notifications'}</span>
@@ -431,7 +442,7 @@ function PortfolioNotifications({
 								<button
 									onClick={handleDisableNotifications}
 									disabled={loaders.userLoading || isUpdatingStatus}
-									className="flex items-center gap-2 rounded-md border border-gray-300 px-2 py-1.5 text-xs text-(--text-secondary) hover:bg-gray-100 focus-visible:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:focus-visible:bg-gray-800"
+									className={smallActionButtonClassName}
 									title="Temporarily disable notifications"
 								>
 									<Icon name="pause" height={14} width={14} />
@@ -444,7 +455,7 @@ function PortfolioNotifications({
 										void updateStatus({ portfolioName: selectedPortfolio, active: true })
 									}}
 									disabled={loaders.userLoading || isUpdatingStatus}
-									className="flex items-center gap-2 rounded-md border border-green-200 px-2 py-1.5 text-xs text-green-600 hover:bg-green-50 focus-visible:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-900/20 dark:focus-visible:bg-green-900/20"
+									className={positiveActionButtonClassName}
 									title="Re-enable notifications"
 								>
 									<Icon name="check-circle" height={14} width={14} />
@@ -454,7 +465,7 @@ function PortfolioNotifications({
 							<button
 								onClick={handleDeleteNotifications}
 								disabled={loaders.userLoading || isDeleting}
-								className="flex items-center gap-2 rounded-md border border-red-200 px-2 py-1.5 text-xs text-red-600 hover:bg-red-50 focus-visible:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 dark:focus-visible:bg-red-900/20"
+								className={destructiveActionButtonClassName}
 								title="Permanently delete notification preferences"
 							>
 								<Icon name="trash-2" height={14} width={14} />
@@ -463,39 +474,42 @@ function PortfolioNotifications({
 						</>
 					) : null}
 				</div>
-			</div>
+			</Card>
 			{shouldRenderModal ? (
 				<Suspense fallback={<></>}>
 					<SubscribeProModal dialogStore={subscribeModalStore} />
 				</Suspense>
 			) : null}
 
-			<Ariakit.Dialog store={dialogStore} className="dialog max-w-2xl gap-0 overflow-hidden p-0" unmountOnHide>
-				<div className="flex items-center justify-between border-b border-(--cards-border) p-4">
-					<div>
-						<h2 className="text-lg font-medium">
-							Email Notification Settings
+			<Ariakit.Dialog
+				store={dialogStore}
+				className={`${dialogSurfaceStyles} [--dialog-width:672px]`}
+				unmountOnHide
+				portal
+			>
+				<div className="flex items-start gap-3 border-b border-subtle px-4 py-3">
+					<div className="min-w-0">
+						<div className="flex flex-wrap items-center gap-2">
+							<DialogHeading>Email Notification Settings</DialogHeading>
 							{preferences ? (
 								preferences.active ? (
-									<span className="ml-2 inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-normal text-green-700 dark:bg-green-900/30 dark:text-green-400">
+									<span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated-2 px-2 py-0.5 label-xs text-data-up">
 										<Icon name="check" height={12} width={12} />
 										Active
 									</span>
 								) : (
-									<span className="ml-2 inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-normal text-gray-700 dark:bg-gray-900/30 dark:text-gray-400">
+									<span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated-2 px-2 py-0.5 label-xs text-secondary">
 										<Icon name="pause" height={12} width={12} />
 										Disabled
 									</span>
 								)
 							) : null}
-						</h2>
-						<p className="mt-1 text-xs text-(--text-secondary)">
+						</div>
+						<p className="mt-1 body-sm text-secondary">
 							Configure weekly email alerts for "{selectedPortfolio}" portfolio
 						</p>
 					</div>
-					<Ariakit.DialogDismiss className="-my-2 rounded-lg p-2 text-(--text-tertiary) hover:bg-(--divider) hover:text-(--text-primary)">
-						<Icon name="x" height={20} width={20} />
-					</Ariakit.DialogDismiss>
+					<DialogCloseButton className="-mr-1 ml-auto" />
 				</div>
 
 				<Ariakit.Form
@@ -504,13 +518,13 @@ function PortfolioNotifications({
 						e.preventDefault()
 						void handleFormSubmit()
 					}}
-					className="max-h-[calc(70dvh-140px)] overflow-y-auto overscroll-contain"
+					className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
 				>
-					<div className="border-b border-(--cards-border) p-4">
-						<h3 className="mb-2 text-sm font-semibold">Protocol Metrics</h3>
+					<div className="border-b border-subtle px-4 py-3">
+						<h3 className="mb-2 label-md text-primary">Protocol Metrics</h3>
 						{filteredProtocols.length > 0 ? (
 							<>
-								<p className="mb-3 text-xs text-(--text-secondary)">
+								<p className="mb-3 body-sm text-secondary">
 									Select which metrics you want to receive notifications for your {filteredProtocols.length} watchlisted
 									protocol{filteredProtocols.length === 1 ? '' : 's'}.
 								</p>
@@ -520,9 +534,9 @@ function PortfolioNotifications({
 											<Ariakit.FormCheckbox
 												name="protocolMetrics"
 												value={metric.key}
-												className="size-4 rounded border-(--form-control-border)"
+												className="size-3.5 rounded-[4px] border border-strong accent-brand"
 											/>
-											<span className="text-sm text-(--text-primary)">{metric.name}</span>
+											<span className="body-sm text-primary">{metric.name}</span>
 										</label>
 									))}
 								</div>
@@ -531,18 +545,16 @@ function PortfolioNotifications({
 							<div className="py-6 text-center">
 								<Icon name="bookmark" height={24} width={24} className="mx-auto mb-2 text-tertiary" />
 								<p className="body-sm text-tertiary">No protocols in your watchlist</p>
-								<p className="mt-1 text-xs text-(--text-secondary) opacity-75">
-									Add protocols to your watchlist to set up notifications
-								</p>
+								<p className="mt-1 body-sm text-tertiary">Add protocols to your watchlist to set up notifications</p>
 							</div>
 						)}
 					</div>
 
-					<div className="p-4">
-						<h3 className="mb-2 text-sm font-semibold">Chain Metrics</h3>
+					<div className="px-4 py-3">
+						<h3 className="mb-2 label-md text-primary">Chain Metrics</h3>
 						{filteredChains.length > 0 ? (
 							<>
-								<p className="mb-3 text-xs text-(--text-secondary)">
+								<p className="mb-3 body-sm text-secondary">
 									Select which metrics you want to receive notifications for your {filteredChains.length} watchlisted
 									chain{filteredChains.length === 1 ? '' : 's'}.
 								</p>
@@ -552,9 +564,9 @@ function PortfolioNotifications({
 											<Ariakit.FormCheckbox
 												name="chainMetrics"
 												value={metric.key}
-												className="size-4 rounded border-(--form-control-border)"
+												className="size-3.5 rounded-[4px] border border-strong accent-brand"
 											/>
-											<span className="text-sm text-(--text-primary)">{metric.name}</span>
+											<span className="body-sm text-primary">{metric.name}</span>
 										</label>
 									))}
 								</div>
@@ -563,14 +575,12 @@ function PortfolioNotifications({
 							<div className="py-6 text-center">
 								<Icon name="map" height={24} width={24} className="mx-auto mb-2 text-tertiary" />
 								<p className="body-sm text-tertiary">No chains in your watchlist</p>
-								<p className="mt-1 text-xs text-(--text-secondary) opacity-75">
-									Add chains to your watchlist to set up notifications
-								</p>
+								<p className="mt-1 body-sm text-tertiary">Add chains to your watchlist to set up notifications</p>
 							</div>
 						)}
 					</div>
 
-					<div className="flex flex-wrap items-center justify-between gap-2 border-t border-(--cards-border) p-4">
+					<div className="flex flex-wrap items-center justify-between gap-2 border-t border-subtle bg-surface px-4 py-3">
 						<div className="flex items-center gap-2">
 							{preferences ? (
 								<>
@@ -579,7 +589,7 @@ function PortfolioNotifications({
 											type="button"
 											onClick={handleDisableNotifications}
 											disabled={isUpdatingStatus}
-											className="flex items-center gap-1.5 rounded-md border border-(--form-control-border) px-3 py-1.5 text-xs text-(--text-secondary) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-50"
+											className={smallActionButtonClassName}
 										>
 											<Icon name="pause" height={14} width={14} />
 											<span>{isUpdatingStatus ? 'Disabling...' : 'Disable'}</span>
@@ -589,26 +599,19 @@ function PortfolioNotifications({
 										type="button"
 										onClick={handleDeleteNotifications}
 										disabled={isDeleting}
-										className="flex items-center gap-1.5 rounded-md border border-red-200 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 focus-visible:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 dark:focus-visible:bg-red-900/20"
+										className={destructiveActionButtonClassName}
 									>
 										<Icon name="trash-2" height={14} width={14} />
 										<span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
 									</button>
 								</>
 							) : (
-								<div className="text-xs text-(--text-secondary)">
-									Configure notification settings for your portfolio
-								</div>
+								<div className="body-sm text-secondary">Configure notification settings for your portfolio</div>
 							)}
 						</div>
 						<div className="flex gap-2">
-							<Ariakit.DialogDismiss className="rounded-md border border-(--form-control-border) px-3 py-1.5 text-xs text-(--text-secondary) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)">
-								Cancel
-							</Ariakit.DialogDismiss>
-							<Ariakit.FormSubmit
-								disabled={isSaving}
-								className="rounded-md bg-(--link-active-bg) px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-							>
+							<Ariakit.DialogDismiss render={<Button type="button" size="md" />}>Cancel</Ariakit.DialogDismiss>
+							<Ariakit.FormSubmit disabled={isSaving} render={<Button type="submit" variant="primary" size="md" />}>
 								{isSaving ? 'Saving...' : preferences ? 'Update Settings' : 'Enable Notifications'}
 							</Ariakit.FormSubmit>
 						</div>
@@ -646,7 +649,7 @@ function PortfolioSelection() {
 	}
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+		<Card padding="none">
 			<div className="flex flex-wrap items-center gap-2 p-2">
 				<h1 className="mr-auto heading-xs">Portfolio</h1>
 				<Menu
@@ -654,7 +657,7 @@ function PortfolioSelection() {
 					key={`${selectedPortfolio}-${portfolios.length}`}
 					options={portfolios}
 					onItemClick={(value) => handleSelectPortfolio(value)}
-					className="relative flex min-w-[100px] cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+					className={`${smallActionButtonClassName} min-w-[100px] justify-between`}
 				/>
 				<DialogForm
 					title="New Portfolio"
@@ -663,18 +666,14 @@ function PortfolioSelection() {
 					setOpen={setOpen}
 					onSubmit={handleAddPortfolio}
 				/>
-				<button
-					onClick={() => setOpen(true)}
-					className="flex items-center gap-1 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
-					title="Create new portfolio"
-				>
+				<button onClick={() => setOpen(true)} className={smallActionButtonClassName} title="Create new portfolio">
 					<Icon name="folder-plus" height={14} width={14} />
 					<span>New</span>
 				</button>
 				{selectedPortfolio !== DEFAULT_PORTFOLIO_NAME ? (
 					<button
 						onClick={handleRemovePortfolio}
-						className="flex items-center gap-1 rounded-md border border-red-200 px-2 py-1.5 text-xs text-red-600 hover:bg-red-50 focus-visible:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 dark:focus-visible:bg-red-900/20"
+						className={destructiveActionButtonClassName}
 						title="Delete current portfolio"
 					>
 						<Icon name="trash-2" height={14} width={14} />
@@ -682,7 +681,7 @@ function PortfolioSelection() {
 					</button>
 				) : null}
 			</div>
-		</div>
+		</Card>
 	)
 }
 
@@ -753,7 +752,7 @@ function TopMovers({ protocols }: TopMoversProps) {
 	}, [availableChains])
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+		<Card padding="none">
 			<div className="flex flex-wrap items-center gap-2 p-2">
 				<h2 className="mr-auto heading-xs">Top Movers</h2>
 
@@ -762,18 +761,18 @@ function TopMovers({ protocols }: TopMoversProps) {
 						type="checkbox"
 						checked={showPositive}
 						onChange={(e) => startTransition(() => setShowPositive(e.target.checked))}
-						className="size-3.5 rounded border-(--form-control-border) accent-[#22c55e]"
+						className="size-3.5 rounded-[4px] border border-strong accent-data-up"
 					/>
-					<span className="text-xs font-medium text-(--success)">Positive</span>
+					<span className="label-sm text-data-up">Positive</span>
 				</label>
 				<label className="flex cursor-pointer items-center gap-1.5">
 					<input
 						type="checkbox"
 						checked={showNegative}
 						onChange={(e) => startTransition(() => setShowNegative(e.target.checked))}
-						className="size-3.5 rounded border-(--form-control-border) accent-[#ef4444]"
+						className="size-3.5 rounded-[4px] border border-strong accent-data-down"
 					/>
-					<span className="text-xs font-medium text-(--error)">Negative</span>
+					<span className="label-sm text-data-down">Negative</span>
 				</label>
 
 				{availableChains.length > 0 ? (
@@ -788,6 +787,7 @@ function TopMovers({ protocols }: TopMoversProps) {
 						}
 						labelType="smol"
 						variant="filter"
+						size="sm"
 					/>
 				) : null}
 			</div>
@@ -795,7 +795,7 @@ function TopMovers({ protocols }: TopMoversProps) {
 			<div className="grid grid-cols-1 gap-4 p-3 pt-1 sm:grid-cols-3">
 				{(['1d', '7d', '1m'] as const).map((period) => (
 					<div key={period}>
-						<span className="mb-1.5 block text-xs font-medium text-secondary uppercase">
+						<span className="mb-1.5 block label-xs text-secondary uppercase">
 							{period === '1d' ? '24 Hours' : period === '7d' ? '7 Days' : '30 Days'}
 						</span>
 
@@ -804,7 +804,7 @@ function TopMovers({ protocols }: TopMoversProps) {
 								{topMovers[period].map((mover) => (
 									<div
 										key={mover.name}
-										className="flex items-center justify-between gap-3 border-b border-(--divider) py-2 last:border-b-0"
+										className="flex items-center justify-between gap-3 border-b border-subtle py-2 last:border-b-0"
 									>
 										<span className="flex min-w-0 items-center gap-2">
 											{mover.slug ? (
@@ -815,21 +815,17 @@ function TopMovers({ protocols }: TopMoversProps) {
 											{mover.slug ? (
 												<BasicLink
 													href={`/protocol/${mover.slug}`}
-													className="truncate text-sm font-medium text-(--text-primary) hover:underline"
+													className="truncate label-sm text-primary hover:underline"
 												>
 													{mover.name}
 												</BasicLink>
 											) : (
-												<span className="truncate text-sm font-medium text-(--text-primary)">{mover.name}</span>
+												<span className="truncate label-sm text-primary">{mover.name}</span>
 											)}
 										</span>
 										<span
-											className={`shrink-0 text-sm font-medium tabular-nums ${
-												mover.change > 0
-													? 'text-(--success)'
-													: mover.change < 0
-														? 'text-(--error)'
-														: 'text-(--text-secondary)'
+											className={`shrink-0 label-sm tabular-nums ${
+												mover.change > 0 ? 'text-data-up' : mover.change < 0 ? 'text-data-down' : 'text-secondary'
 											}`}
 										>
 											{formatPercentChangeText(mover.change)}
@@ -843,6 +839,6 @@ function TopMovers({ protocols }: TopMoversProps) {
 					</div>
 				))}
 			</div>
-		</div>
+		</Card>
 	)
 }

@@ -516,7 +516,7 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 		)
 		if (embedded) return loader
 		return (
-			<Panel>
+			<Panel padding="none">
 				{sectionHeader}
 				{loader}
 			</Panel>
@@ -585,7 +585,7 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 	}
 
 	return (
-		<Panel>
+		<Panel padding="none">
 			{sectionHeader}
 			<div className="flex flex-col gap-2 p-2">{content}</div>
 		</Panel>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, type FocusEvent } from 'react'
+import { inputStyles } from '~/ui/Input'
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
 // type="date" fires change with padded years (e.g. 0002) while the real year is still being typed. Keep in sync with TokenPnl min (epoch).
@@ -58,8 +59,8 @@ export const DateInput = ({
 	}
 
 	return (
-		<label className="flex flex-col gap-1.5 text-sm">
-			<span className="font-light text-(--text-secondary)">{label}</span>
+		<label className="flex flex-col gap-1.5">
+			<span className="body-sm text-secondary">{label}</span>
 			<input
 				ref={inputRef}
 				type="date"
@@ -68,7 +69,7 @@ export const DateInput = ({
 				onBlur={handleBlur}
 				min={min}
 				max={max}
-				className={`cursor-pointer rounded-md border bg-(--bg-input) px-3 py-2.5 text-base text-black outline-0 transition-colors duration-200 focus:border-white/30 focus:ring-0 dark:text-white dark:scheme-dark ${invalid ? 'border-red-500' : 'border-(--form-control-border)'}`}
+				className={`${inputStyles} cursor-pointer dark:scheme-dark ${invalid ? 'border-data-down' : ''}`}
 			/>
 		</label>
 	)

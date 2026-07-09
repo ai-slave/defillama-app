@@ -1,5 +1,7 @@
+import { Card } from '~/ui/Card'
+
 export const FAQ = () => (
-	<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+	<Card padding="sm">
 		<div className="mx-auto flex max-w-xl flex-col gap-4">
 			<div className="flex flex-col gap-1">
 				<h2 className="heading-xs">Correlation</h2>
@@ -14,10 +16,10 @@ export const FAQ = () => (
 					linear correlation, 0 indicates no linear correlation.
 				</p>
 			</div>
-			<hr className="border-(--form-control-border)" />
-			<div className="flex flex-col gap-3 rounded-md bg-(--bg-secondary) p-3">
-				<h3 className="text-sm font-semibold">Values</h3>
-				<div className="flex flex-col gap-2 text-sm">
+			<hr className="border-subtle" />
+			<div className="flex flex-col gap-3 rounded-[8px] bg-surface-elevated-1 p-3">
+				<h3 className="label-md text-primary">Values</h3>
+				<div className="flex flex-col gap-2 body-sm">
 					<div className="flex items-start gap-2">
 						<span className="mt-0.5 inline-block size-3 shrink-0 rounded-sm bg-[rgba(53,222,59,0.8)]" />
 						<p>
@@ -33,7 +35,7 @@ export const FAQ = () => (
 						</p>
 					</div>
 					<div className="flex items-start gap-2">
-						<span className="mt-0.5 inline-block size-3 shrink-0 rounded-sm bg-(--bg-tertiary)" />
+						<span className="mt-0.5 inline-block size-3 shrink-0 rounded-sm bg-surface-elevated-2" />
 						<p>
 							<span className="font-medium text-secondary">Zero:</span> No correlation between two variables.
 						</p>
@@ -41,5 +43,5 @@ export const FAQ = () => (
 				</div>
 			</div>
 		</div>
-	</div>
+	</Card>
 )

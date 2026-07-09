@@ -30,7 +30,7 @@ export function MarketsLineChart({
 	const lineSeries = React.useMemo(() => toLineSeries(series), [series])
 	const hasData = lineSeries.length > 0 && series.chartData.length > 0
 	return (
-		<Panel className="min-h-[360px]">
+		<Panel padding="none" className="min-h-[360px]">
 			<div className="flex flex-col px-2 pt-2 pb-0">
 				<span className="label-sm text-secondary uppercase">30 days · tracking health</span>
 				<span className="label-md">{title}</span>

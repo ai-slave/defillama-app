@@ -138,11 +138,7 @@ export const BridgeInfo = ({
 				}
 			/>
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card
-					border="subtle"
-					padding="sm"
-					className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1"
-				>
+				<Card padding="sm" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					{isAllChains ? (
 						<>
 							<p className="flex flex-col gap-1">
@@ -201,7 +197,7 @@ export const BridgeInfo = ({
 					) : null}
 				</Card>
 
-				<Panel className="col-span-2">
+				<Panel padding="none" className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						<TagGroup
 							selectedValue={chartType}
@@ -255,7 +251,7 @@ export const BridgeInfo = ({
 					</>
 				</Panel>
 			</div>
-			<Panel>
+			<Panel padding="none">
 				<TableToolbar className="items-end justify-between">
 					<AddressesTableSwitch />
 					<p className="text-sm italic opacity-60">All stats in table use the same rolling window.</p>

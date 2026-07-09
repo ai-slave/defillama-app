@@ -1183,7 +1183,7 @@ function RWAPerpsMarketFilters({
 	const hasActiveFilters = hasResettableRWAPerpsFilterQueryParam(router.query, showForexToggle && includeForex)
 
 	return (
-		<Card border="subtle" padding="sm" className="flex flex-col gap-2">
+		<Card padding="sm" className="flex flex-col gap-2">
 			<div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
 				{filters.length > 0 ? (
 					<>
@@ -1381,7 +1381,7 @@ function RWAPerpsDraftFilterEditor({
 	const selectedValues = draft.selectValues[filter.id] ?? []
 
 	return (
-		<Card border="subtle" padding="sm" className="flex flex-col gap-2">
+		<Card padding="sm" className="flex flex-col gap-2">
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex min-w-0 items-center gap-1.5">
 					<span className="truncate label-sm text-primary">{filter.label}</span>
@@ -1564,7 +1564,7 @@ const StatCard = ({
 		change == null ? '' : change > 0 ? 'text-data-up' : change < 0 ? 'text-data-down' : 'text-secondary'
 
 	return (
-		<Card border="subtle" className="flex flex-1 flex-col gap-1">
+		<Card padding="md" className="flex flex-1 flex-col gap-1">
 			{tooltip ? (
 				<Tooltip content={tooltip} className="text-secondary underline decoration-dotted">
 					{label}
@@ -2093,11 +2093,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 			) : null}
 			{showForexToggle ? (
 				<>
-					<Card
-						padding="sm"
-						border="subtle"
-						className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
-					>
+					<Card padding="sm" className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
 						<p className="body-sm text-tertiary">
 							The RWA Perpetuals Dashboard only covers real world assets such as stocks, RWA tokens, forex, and other
 							significant financial indices on decentralized exchanges. This excludes digital assets such as BTC or ETH
@@ -2125,7 +2121,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 				))}
 			</div>
 			{chartState.view === 'timeSeries' ? (
-				<Panel>
+				<Panel padding="none">
 					<ChartPanelToolbar className="justify-end">
 						{timeSeriesMetricSwitch}
 						<Select
@@ -2203,7 +2199,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 					)}
 				</Panel>
 			) : (
-				<Panel className={chartState.view === 'treemap' ? 'min-h-[660px]' : 'min-h-[420px]'}>
+				<Panel padding="none" className={chartState.view === 'treemap' ? 'min-h-[660px]' : 'min-h-[420px]'}>
 					<ChartPanelToolbar className="justify-end">
 						{timeSeriesMetricSwitch}
 						<Select

@@ -725,7 +725,7 @@ export function RWAOverviewFilters(props: RWAOverviewFiltersProps) {
 	const selectedFilterCount = createRwaFilterDraft(props).activeIds.length
 
 	return (
-		<Card border="subtle" padding="sm" className="flex flex-col gap-2">
+		<Card padding="sm" className="flex flex-col gap-2">
 			<div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
 				<RWAActiveFilterPills pills={activeFilterPills} />
 				<RWAFiltersDialog
@@ -984,7 +984,7 @@ function RWADraftFilterEditor({
 	const remove = () => onDraftChange((current) => removeDraftFilter(current, definition.id))
 
 	return (
-		<Card border="subtle" padding="sm" className="flex flex-col gap-2">
+		<Card padding="sm" className="flex flex-col gap-2">
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex min-w-0 items-center gap-1.5">
 					<span className="truncate label-sm text-primary">{definition.label}</span>

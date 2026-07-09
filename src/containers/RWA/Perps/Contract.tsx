@@ -219,7 +219,7 @@ function RWAPerpsContractInfoCard({ contract }: { contract: IRWAPerpsContractDat
 		)
 
 	return (
-		<Card as="section" padding="sm" border="subtle" className="col-span-full flex flex-col gap-2">
+		<Card as="section" padding="sm" className="col-span-full flex flex-col gap-2">
 			<h2 className="label-lg">Market Information</h2>
 			{contract.contract.description ? <p className="body-sm">{contract.contract.description}</p> : null}
 			<div className="flex flex-col xl:hidden">
@@ -384,13 +384,13 @@ export function RWAPerpsContractPage({ contract }: { contract: IRWAPerpsContract
 	return (
 		<article className="flex flex-col gap-2">
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
-				<Card padding="sm" border="subtle" className="col-span-1 hidden flex-col gap-6 xl:flex xl:min-h-[360px]">
+				<Card padding="sm" className="col-span-1 hidden flex-col gap-6 xl:flex xl:min-h-[360px]">
 					<RWAPerpsContractHeader contract={contract} headingAs="h1" />
 					<RWAPerpsContractSummaryMetrics contract={contract} />
 				</Card>
 
 				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
-					<Panel className="col-span-full">
+					<Panel padding="none" className="col-span-full">
 						<div className="flex flex-col gap-6 p-2 xl:hidden">
 							<RWAPerpsContractHeader contract={contract} headingAs="h1" />
 							<RWAPerpsContractPriceSummary contract={contract} />
@@ -399,7 +399,7 @@ export function RWAPerpsContractPage({ contract }: { contract: IRWAPerpsContract
 						<RWAPerpsContractChartPanel contract={contract} />
 					</Panel>
 
-					<Card padding="sm" border="subtle" className="col-span-full flex flex-col gap-6 xl:hidden">
+					<Card padding="sm" className="col-span-full flex flex-col gap-6 xl:hidden">
 						<RWAPerpsContractMetricsList contract={contract} />
 					</Card>
 				</div>

@@ -247,7 +247,7 @@ export function ChainsWithStablecoins({
 	return (
 		<>
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card border="subtle" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					<div className="flex flex-col">
 						<h1 className="text-(--text-label)">Total Stablecoins Market Cap</h1>
 						<p className="font-jetbrains text-2xl font-semibold">{mcapToDisplay}</p>
@@ -304,7 +304,7 @@ export function ChainsWithStablecoins({
 						<span className="font-jetbrains text-2xl font-semibold">{dominance}%</span>
 					</p>
 				</Card>
-				<Panel className="col-span-2">
+				<Panel padding="none" className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						<div className={`mr-auto ${chartSegmentedControlGroupStyles}`}>
 							{chartTypeOptions.map(({ key, name }) => (

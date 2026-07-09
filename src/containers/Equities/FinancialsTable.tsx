@@ -247,7 +247,7 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 	}
 
 	return (
-		<Panel className="col-span-full">
+		<Panel padding="none" className="col-span-full">
 			<TableToolbar className="justify-between">
 				<h2 className="heading-xs">Financials</h2>
 				<TableToolbarControlGroup className="ml-auto">

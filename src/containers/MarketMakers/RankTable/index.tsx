@@ -53,7 +53,7 @@ export function RankTable({
 	})
 
 	return (
-		<Panel>
+		<Panel padding="none">
 			<PanelHeader>
 				<span className="heading-xs">Rank</span>
 				{threshold && setThreshold ? <ThresholdSelect value={threshold} setValue={setThreshold} /> : null}

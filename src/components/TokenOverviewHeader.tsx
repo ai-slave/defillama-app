@@ -31,7 +31,7 @@ export function TokenOverviewHeader({
 
 	return (
 		<>
-			<Card border="subtle" padding="sm" className="flex w-full items-center gap-3">
+			<Card padding="sm" className="flex w-full items-center gap-3">
 				<TokenLogo name={name} kind="token" alt={`Logo of ${name}`} />
 				<h1 className="heading-sm">{title ?? name}</h1>
 
@@ -50,7 +50,7 @@ export function TokenOverviewHeader({
 			</Card>
 
 			{hasStats ? (
-				<Card border="subtle" padding="sm" className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2">
+				<Card padding="sm" className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2">
 					{circSupply != null ? (
 						<div className="flex items-baseline gap-1.5">
 							<span className="body-sm text-secondary">Circ. Supply</span>

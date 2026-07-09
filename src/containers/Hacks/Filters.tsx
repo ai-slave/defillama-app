@@ -108,7 +108,7 @@ export function HacksFilters({
 	}
 
 	return (
-		<Card border="subtle" padding="sm" className="flex flex-col gap-2">
+		<Card padding="sm" className="flex flex-col gap-2">
 			<ResponsiveFilterLayout desktopClassName="hidden min-h-8 flex-wrap items-center gap-1.5 sm:flex">
 				{(nestedMenu) => (
 					<Filters

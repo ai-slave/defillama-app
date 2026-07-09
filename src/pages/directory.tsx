@@ -144,7 +144,6 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 										saveRecent(protocol)
 									}}
 									padding="sm"
-									border="subtle"
 									interactive
 									className="flex items-center gap-2 text-left"
 								>

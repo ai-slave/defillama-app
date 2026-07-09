@@ -5,6 +5,7 @@ import { TagGroup } from '~/components/TagGroup'
 import { NftsMarketplaceTable } from '~/containers/Nft/NftsMarketplaceTable'
 import { getNFTMarketplacesData } from '~/containers/Nft/queries'
 import Layout from '~/layout'
+import { Panel } from '~/ui/Panel'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
@@ -197,7 +198,7 @@ function Marketplaces({ data, volume, dominance, trades, dominanceTrade, marketp
 			canonicalUrl={`/nfts/marketplaces`}
 			pageName={pageName}
 		>
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+			<Panel padding="none">
 				<div className="flex items-center justify-between gap-2 p-2">
 					<TagGroup selectedValue={viewType} setValue={(v) => setViewType(v)} values={VIEW_TYPES} className="ml-auto" />
 				</div>
@@ -241,7 +242,7 @@ function Marketplaces({ data, volume, dominance, trades, dominanceTrade, marketp
 					</React.Suspense>
 				</div>
 				<NftsMarketplaceTable data={data} />
-			</div>
+			</Panel>
 		</Layout>
 	)
 }

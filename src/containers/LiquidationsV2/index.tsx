@@ -37,7 +37,7 @@ export function LiquidationsOverview(props: LiquidationsOverviewPageProps) {
 				/>
 			</div>
 
-			<Panel className="mt-2">
+			<Panel padding="none" className="mt-2">
 				{activeTab === 'protocols' ? (
 					<LiquidationsProtocolsTable
 						rows={props.protocolRows}

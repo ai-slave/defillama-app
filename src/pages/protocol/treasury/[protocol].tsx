@@ -75,7 +75,7 @@ function TokensBreakdownPieChartCard({
 	const exportTitle = `${protocolName} Treasury by Token`
 
 	return (
-		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">Tokens Breakdown</h2>
 				{allTokens.length > 1 ? (
@@ -122,7 +122,7 @@ function HistoricalTreasuryChartCard({
 	const exportTitle = `${protocolName} Historical Treasury`
 
 	return (
-		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">Historical Treasury</h2>
 				<ChartExportButtons
@@ -176,7 +176,7 @@ function TokensMultiSeriesChartCard({
 	const exportTitle = `${protocolName} Treasury ${title}`
 
 	return (
-		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allTokens.length > 1 ? (

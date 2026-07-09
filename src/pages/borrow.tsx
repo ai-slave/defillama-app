@@ -72,7 +72,7 @@ export default function YieldBorrow(data) {
 				{disclaimer}
 			</Announcement>
 			<div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-start">
-				<Card className="w-full shrink-0 lg:w-[340px]" border="subtle" padding="none">
+				<Card className="w-full shrink-0 lg:w-[340px]" padding="none">
 					<div className="relative flex flex-col p-4">
 						<TokensSelect
 							label="Borrow"
@@ -363,7 +363,7 @@ const PoolsList = ({ pools }: { pools: Array<BorrowPageRow> }) => {
 	const showAvailable = Boolean(borrow)
 
 	return (
-		<Card className="flex w-full flex-col overflow-hidden" border="subtle" padding="none">
+		<Card className="flex w-full flex-col overflow-hidden" padding="none">
 			<div className="flex items-center border-b border-subtle">
 				<button
 					className="px-4 py-2.5 label-sm transition-colors data-[selected=false]:text-tertiary data-[selected=true]:text-primary data-[selected=true]:shadow-[inset_0_-2px_0_var(--color-brand)]"

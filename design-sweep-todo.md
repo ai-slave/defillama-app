@@ -44,12 +44,21 @@ Completed merge packet:
 
 Current focused backlog:
 
-- Dense pages cleanup: `DeFiWatchlist` and `TokenPnl` before broad token namespace work.
-- Correlations route cleanup: legacy surface/text/link-hover tokens.
+- Dense pages/Card-Panel cleanup: `DeFiWatchlist`, `TokenPnl`, agreed small/static
+  pages, standalone panel/table shells, selected route-family shells, and explicit
+  `Card`/`Panel` padding. Do not broaden this branch into shared-control API tightening.
+- Correlations route cleanup: legacy surface/text/link-hover tokens if not already kept
+  inside the dense cleanup branch.
+- Shared control API tightening follow-up: remove hidden defaults/dead props from
+  `FilterBetweenRange`, `PanelStatus`, `Checkbox`, `EntityTitleStrip`, `IconHitTarget`,
+  `Button`, `selectTriggerStyles`, `TagGroup`, and eventually `Select` /
+  `SelectWithCombobox`.
 - Raises chart-shell/fallback reservation pass before any `ChartPanel` extraction.
 
 Medium pending items:
 
+- Shared-control API explicitness pass. Keep it separate from dense Card/Panel cleanup so
+  review can focus on behavior-neutral API tightening and excluded-surface boundaries.
 - Range/date popover containment spot checks when those controls are touched.
 - Remaining table toolbar/search alignment cases across route families.
 - RWA filter/table rhythm polish.
@@ -119,9 +128,13 @@ The foundation primitives now exist. Broad sweeps should start by adopting and
 verifying existing recipes, not by adding more one-off primitives unless a proven
 gap remains.
 
-1. Dense pages cleanup: `DeFiWatchlist` and `TokenPnl` first. Include the
-   `DeFiWatchlist` dialog only as part of that file-family cleanup.
-2. Correlations legacy-token cleanup: surface/text/link-hover classes.
+1. Dense pages/Card-Panel cleanup: `DeFiWatchlist` and `TokenPnl` first, plus the agreed
+   small/static pages, standalone shells, route-family shells, Unlocks outer-shell fixes,
+   and explicit `Card`/`Panel` padding. Include the `DeFiWatchlist` dialog only as part of
+   that file-family cleanup.
+2. Shared control API tightening: make intentional control/surface choices explicit
+   without changing visuals; keep excluded surfaces pinned before tightening global shared
+   `Select` / `SelectWithCombobox` props.
 3. Raises chart-shell/fallback reservation, including one investor raises page.
 4. ChartPanel extraction after the raises/chart-shell pass.
 5. Migrate remaining route families in chunks: stablecoins/bridges/RWA/token/
@@ -140,13 +153,40 @@ gap remains.
    chart visual-change risk, token/hardcoded-style drift, semantic HTML/status states,
    duplicated shell/component churn, and route-family visual checklist coverage.
 
+## Shared control API tightening backlog
+
+Follow-up branch after the dense Card/Panel cleanup. Suggested branch:
+`mintdart/shared-control-api-tightening`.
+
+- [ ] `FilterBetweenRange`: remove the dead `name` prop; make `variant` and `size`
+      explicit; keep `nestedMenu` optional for menu vs popover placement; consider
+      reusing `selectTriggerStyles` for trigger chrome.
+- [ ] `PanelStatus`: require `variant` so empty/error semantics and ARIA behavior are
+      always explicit.
+- [ ] `Checkbox`: require `variant`; collapse duplicate indicator style entries into one
+      shared indicator class.
+- [ ] `EntityTitleStrip`: remove unused `titleClassName` unless a specific scoped title
+      exception is approved.
+- [ ] `IconHitTarget`: remove the unused component or migrate the single
+      `tableIconHitTargetStyles` caller to it.
+- [ ] `Button`: make `size` explicit first. Defer making `variant` required unless that
+      branch intentionally accepts broader caller churn.
+- [ ] `selectTriggerStyles`: require `variant` and `size` at direct helper call sites.
+- [ ] `TagGroup`: require `variant` and `size`; remove the redundant local `style` prop
+      type because `React.ComponentProps<'div'>` already supplies it.
+- [ ] `Select` / `SelectWithCombobox`: make in-scope callers explicit first; tighten the
+      shared prop types only after ProDashboard, LlamaAI, Yields, and other excluded
+      surfaces are pinned or intentionally migrated.
+
 ## src/ui primitives
 
 - [x] Button (secondary/primary/outline/ghost × sm/md, padding-driven, aspect-square icon-only)
 - [x] Card base primitive exists (`src/ui/Card.tsx`)
-- [x] Card border variant: `src/ui/Card.tsx` supports `border="medium" | "subtle"` so
-      directory/repeated tiles can keep `border-medium` while protocol/detail surfaces use
-      `border-subtle` without local shell classes. Route-family adoption still lives below.
+- [x] Card base surface is fixed to `bg-surface border-subtle rounded-[8px]`, matching
+      `Panel` outer chrome. `border-medium` is reserved for controls, inputs, popovers/dialogs,
+      chips/badges, nav dividers, and tooltip/elevated chrome, not normal page cards.
+      `padding` is explicit at every call site; do not add hidden defaults back.
+      Route-family adoption still lives below.
 - [x] Entity/PageTitleStrip primitive: `src/ui/EntityTitleStrip.tsx` exists as a standalone
       title surface, not `PanelHeader`.
       Current adoption covers protocol TVL/Treasury/Active Loans/Forks, CEX
@@ -186,6 +226,8 @@ gap remains.
       bg-surface/border-subtle/8px radius, header px-4 py-3 heading-xs + 32px controls
       6px dense header-control gap, very-subtle divider). Keep this for true titled
       chart/table panels only; do not use it for title strips or inline chart toolbars.
+      `padding` is explicit: `none` for flush chart/table shells, `sm`/`md` only when the
+      panel itself owns status/body inset.
 - [x] ChartPanelToolbar / ChartPanelControlGroup recipes: `src/ui/Toolbar.tsx` exports
       inline chart/table toolbar helpers (`px-2 pt-2 pb-0`, controls 32px, dense adjacent
       controls gap 6px, larger groups gap 8px, no DOM chart-body padding). Adoption remains
@@ -270,7 +312,7 @@ gap remains.
       and directory search panels. Downloads SQL/internal tools are excluded/deferred
       with the Downloads surface.
 - [ ] TableToolbar / TableWithSearch reconciliation — `TableWithSearch` now uses the
-      `Card border="subtle"` shell plus `TableToolbar`, and its built-in Columns/.csv
+      `Card` shell plus `TableToolbar`, and its built-in Columns/.csv
       controls use md/32px sizing. `ProtocolRankings` toolbar also moved to
       `TableToolbar` with md tinted segmented TagGroups, Columns, TVL Range, and .csv
       controls. Keep unchecked until `RecentProtocolsTable`, `ChainsByCategory`,

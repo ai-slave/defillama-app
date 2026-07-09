@@ -1,5 +1,6 @@
 import { Announcement } from '~/components/Announcement'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -13,17 +14,12 @@ export default function Roundup({ messages, date }: { messages: Array<string | A
 		>
 			<Announcement notCancellable>
 				Get the roundup delivered for free by subscribing on{' '}
-				<a
-					href="https://t.me/defillama_tg"
-					target="_blank"
-					rel="noopener noreferrer"
-					className="text-(--blue) underline"
-				>
+				<a href="https://t.me/defillama_tg" target="_blank" rel="noopener noreferrer" className="text-link underline">
 					Telegram
 				</a>
 			</Announcement>
 
-			<div className="flex flex-col gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+			<Card padding="sm" className="flex flex-col gap-3">
 				<h1 className="text-center heading-sm">{`🦙 Llama News Round-Up ${date ?? ''}`}</h1>
 
 				<div className="mx-auto flex max-w-lg flex-col gap-2 text-base">
@@ -39,12 +35,12 @@ export default function Roundup({ messages, date }: { messages: Array<string | A
 						return (
 							<a href={x[1]} target="_blank" rel="noreferrer noopener" key={x[1]}>
 								<span>&gt; </span>
-								<span className="text-(--link) underline">{x[0]}</span>
+								<span className="text-link underline">{x[0]}</span>
 							</a>
 						)
 					})}
 				</div>
-			</div>
+			</Card>
 		</Layout>
 	)
 }

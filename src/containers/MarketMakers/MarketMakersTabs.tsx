@@ -22,7 +22,7 @@ export function MarketMakersTabs({ active }: { active: string }) {
 
 	return (
 		<>
-			<Card padding="none" border="subtle" className="overflow-hidden min-[713px]:hidden">
+			<Card padding="none" className="overflow-hidden min-[713px]:hidden">
 				<button
 					type="button"
 					onClick={() => setOpen((value) => !value)}

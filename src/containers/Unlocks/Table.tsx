@@ -25,6 +25,7 @@ import { UpcomingEvent } from '~/containers/Unlocks/UpcomingEvent'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import type { FormSubmitEvent } from '~/types/forms'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { formattedNum, slug } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
@@ -251,9 +252,9 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 
 	return (
-		<div className="rounded-md border border-medium bg-surface">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-3">
-				<h2 className="mr-auto text-lg font-semibold">Token Unlocks</h2>
+		<Panel padding="none">
+			<PanelHeader className="justify-end gap-2">
+				<PanelTitle>Token Unlocks</PanelTitle>
 
 				<button
 					onClick={() => setQueryParam('watchlist', showOnlyWatchlist ? undefined : 'true')}
@@ -263,7 +264,7 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 						name="bookmark"
 						height={16}
 						width={16}
-						style={{ fill: showOnlyWatchlist ? 'var(--text-primary)' : 'none' }}
+						style={{ fill: showOnlyWatchlist ? 'var(--ld-text-primary)' : 'none' }}
 					/>
 					{showOnlyWatchlist ? 'Show All' : 'Show Watchlist'}
 				</button>
@@ -325,9 +326,9 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 						className={searchFieldInputStyles}
 					/>
 				</label>
-			</div>
+			</PanelHeader>
 			<VirtualTable instance={instance} stripedBg rowSize={70} />
-		</div>
+		</Panel>
 	)
 }
 

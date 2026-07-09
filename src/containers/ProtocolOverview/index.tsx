@@ -69,11 +69,7 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 				isCEX={props.isCEX}
 			/>
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
-				<Card
-					border="subtle"
-					padding="sm"
-					className="col-span-1 row-[2/3] hidden flex-col gap-6 xl:row-[1/2] xl:flex xl:min-h-[360px]"
-				>
+				<Card padding="sm" className="col-span-1 row-[2/3] hidden flex-col gap-6 xl:row-[1/2] xl:flex xl:min-h-[360px]">
 					<ProtocolHeader
 						props={props}
 						oracleTvs={oracleTvs}
@@ -93,7 +89,7 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 				</Card>
 				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
 					<div className="col-span-full flex flex-col gap-2">
-						<Card border="subtle" padding="sm" className="flex flex-col gap-6 xl:hidden">
+						<Card padding="sm" className="flex flex-col gap-6 xl:hidden">
 							<ProtocolHeader
 								props={props}
 								oracleTvs={oracleTvs}
@@ -104,12 +100,12 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 								headingAs="div"
 							/>
 						</Card>
-						<Suspense fallback={<Panel className="min-h-[400px]" />}>
+						<Suspense fallback={<Panel padding="none" className="min-h-[400px]" />}>
 							<ProtocolChartPanel {...props} />
 						</Suspense>
 					</div>
 					{props.hasKeyMetrics ? (
-						<Card border="subtle" padding="sm" className="col-span-full flex flex-col gap-6 xl:hidden">
+						<Card padding="sm" className="col-span-full flex flex-col gap-6 xl:hidden">
 							<KeyMetrics
 								{...props}
 								formatPrice={formatPrice}

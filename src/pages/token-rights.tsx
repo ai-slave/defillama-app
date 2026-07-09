@@ -496,18 +496,14 @@ function TokenRightsPage({ protocols }: { protocols: TokenRightsListItem[] }) {
 			pageName={['Token Rights']}
 		>
 			<div className="flex flex-col gap-2">
-				<Card
-					padding="strip"
-					border="subtle"
-					className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2"
-				>
+				<Card padding="strip" className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2">
 					<InlineStat value={filteredProtocols.length} label="Protocols" />
 					<InlineStat value={stats.feeSwitchOn} label="Fee Switch ON" />
 					<InlineStat value={stats.buybacks} label="Active Buybacks" />
 					<InlineStat value={stats.dividends} label="Dividends" />
 				</Card>
 
-				<Panel>
+				<Panel padding="none">
 					<TableToolbar>
 						<span className="mr-1 label-sm text-tertiary">Filters</span>
 						{TOKEN_RIGHTS_FILTERS.map((filter) => (

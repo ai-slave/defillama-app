@@ -202,7 +202,7 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 						tokenStateMode="local"
 					/>
 
-					<Panel>
+					<Panel padding="none">
 						{activeTab === 'protocols' ? (
 							<DeferredTableWithSearch
 								data={data.protocolRows}

@@ -671,7 +671,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 				}}
 			/>
 			<div className="flex flex-col gap-2 md:flex-row md:items-center">
-				<Card border="subtle" padding="sm" className="flex flex-1 flex-col gap-1">
+				<Card padding="sm" className="flex flex-1 flex-col gap-1">
 					<Tooltip
 						content={definitions.totalActiveMcap.description}
 						className="text-secondary underline decoration-dotted"
@@ -680,7 +680,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 					</Tooltip>
 					<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalActiveMcap, true)}</span>
 				</Card>
-				<Card border="subtle" padding="sm" className="flex flex-1 flex-col gap-1">
+				<Card padding="sm" className="flex flex-1 flex-col gap-1">
 					<Tooltip
 						content={definitions.totalOnChainMcap.description}
 						className="text-secondary underline decoration-dotted"
@@ -689,7 +689,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 					</Tooltip>
 					<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalOnChainMcap, true)}</span>
 				</Card>
-				<Card border="subtle" padding="sm" className="flex flex-1 flex-col gap-1">
+				<Card padding="sm" className="flex flex-1 flex-col gap-1">
 					<Tooltip
 						content={definitions.totalDefiActiveTvl.description}
 						className="text-secondary underline decoration-dotted"
@@ -699,7 +699,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 					<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalOnChainDeFiActiveTvl, true)}</span>
 				</Card>
 				{includeRwaPerps ? (
-					<Card border="subtle" padding="sm" className="flex flex-1 flex-col gap-1">
+					<Card padding="sm" className="flex flex-1 flex-col gap-1">
 						<Tooltip
 							content={perpsDefinitions.totalOpenInterest.description}
 							className="text-secondary underline decoration-dotted"
@@ -709,7 +709,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(totalOpenInterest, true)}</span>
 					</Card>
 				) : null}
-				<Card border="subtle" padding="sm" className="flex flex-1 flex-col gap-1">
+				<Card padding="sm" className="flex flex-1 flex-col gap-1">
 					<Tooltip
 						content={definitions.totalAssetIssuers.description}
 						className="text-secondary underline decoration-dotted"
@@ -722,7 +722,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			{showCharts ? (
 				<>
 					{chartView === 'timeSeries' ? (
-						<Panel>
+						<Panel padding="none">
 							<ChartPanelToolbar className="justify-end">
 								{chartTypeSwitch}
 								{chartViewSwitch}
@@ -761,7 +761,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 						</Panel>
 					) : null}
 					{chartView === 'pie' || chartView === 'treemap' || chartView === 'hbar' ? (
-						<Panel className={chartView === 'treemap' ? 'min-h-[660px]' : 'min-h-[420px]'}>
+						<Panel padding="none" className={chartView === 'treemap' ? 'min-h-[660px]' : 'min-h-[420px]'}>
 							<ChartPanelToolbar className="justify-end">
 								{chartTypeSwitch}
 								{chartViewSwitch}

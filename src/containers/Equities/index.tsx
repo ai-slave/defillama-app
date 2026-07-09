@@ -872,7 +872,7 @@ function EquitiesRankingsTable({
 	}
 
 	return (
-		<Panel>
+		<Panel padding="none">
 			<TableToolbar className="justify-between">
 				<h2 className="label-md">Company Rankings</h2>
 				<TableToolbarControlGroup className="ml-auto justify-end">

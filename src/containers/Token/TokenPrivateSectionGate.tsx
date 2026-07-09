@@ -54,7 +54,7 @@ export function TokenPrivateSectionGate({
 
 	return (
 		<>
-			<Panel className={hasPlaceholderState ? 'min-h-[80dvh] sm:min-h-[572px]' : undefined}>
+			<Panel padding="none" className={hasPlaceholderState ? 'min-h-[80dvh] sm:min-h-[572px]' : undefined}>
 				<PanelHeader>
 					<PanelTitle className="group relative flex scroll-mt-24 items-center gap-1" id={sectionId}>
 						{title}

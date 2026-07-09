@@ -308,7 +308,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 	}, [router, props.availableCharts, toggledMetrics, defaultEnabledCharts, hasEvents])
 
 	return (
-		<Panel className="flex-1">
+		<Panel padding="none" className="flex-1">
 			<ChartPanelToolbar>
 				{props.availableCharts.length > 0 ? (
 					<Ariakit.DialogProvider store={metricsDialogStore}>

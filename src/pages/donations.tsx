@@ -1,6 +1,7 @@
 import { TokenLogo } from '~/components/TokenLogo'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
@@ -64,9 +65,9 @@ function DonationsPage({ protocols }) {
 			description="DefiLlama affiliate links for protocols with referrals."
 			canonicalUrl={`/donations`}
 		>
-			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
+			<Card as="section" padding="sm" className="flex flex-col gap-4">
 				<h1 className="heading-xs">Affiliate links</h1>
-				<hr className="border-black/20 dark:border-white/20" />
+				<hr className="border-subtle" />
 				<div className="flex flex-col gap-3">
 					<p>
 						DefiLlama has referral links for all these protocols, using them with our referral sends us some rewards:
@@ -75,18 +76,18 @@ function DonationsPage({ protocols }) {
 						{protocols.map((p) => (
 							<a
 								key={p.name}
-								className="flex items-center gap-2 rounded-lg bg-black/5 p-2 transition-colors hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10"
+								className="flex items-center gap-2 rounded-[8px] p-2 transition-colors hover:bg-hover-row focus-visible:bg-hover-row"
 								target="_blank"
 								rel="noopener noreferrer"
 								href={p.url}
 							>
 								<TokenLogo src={p.logo} alt={`${p.name} logo`} size={24} />
-								<span className="truncate text-sm text-(--blue)">{p.name}</span>
+								<span className="truncate body-sm text-link">{p.name}</span>
 							</a>
 						))}
 					</div>
 				</div>
-			</div>
+			</Card>
 		</Layout>
 	)
 }

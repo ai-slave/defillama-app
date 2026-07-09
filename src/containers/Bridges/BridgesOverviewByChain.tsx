@@ -279,11 +279,7 @@ export function BridgesOverviewByChain({
 			<RowLinksWithDropdown links={chainOptions} activeLink={selectedChain} />
 
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card
-					border="subtle"
-					padding="sm"
-					className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1"
-				>
+				<Card padding="sm" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					<div className="flex flex-col">
 						<h1 className="text-(--text-label)">Total volume (24h)</h1>
 						<p className="font-jetbrains text-2xl font-semibold">{formattedNum(dayTotalVolume, true)}</p>
@@ -299,7 +295,7 @@ export function BridgesOverviewByChain({
 
 					<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" className="mt-auto mr-auto" />
 				</Card>
-				<Panel className="col-span-2">
+				<Panel padding="none" className="col-span-2">
 					{selectedChain === 'All' ? (
 						<>
 							<ChartPanelToolbar className="justify-end">
@@ -420,7 +416,7 @@ export function BridgesOverviewByChain({
 				</Panel>
 			</div>
 
-			<Panel>
+			<Panel padding="none">
 				<TableToolbar className="w-full justify-end">
 					<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
 						{TABLE_VIEW_OPTIONS.map((option) => (

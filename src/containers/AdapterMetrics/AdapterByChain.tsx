@@ -293,11 +293,7 @@ export function AdapterByChain(props: IProps) {
 			) : null}
 			{showChartPanel ? (
 				<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-					<Card
-						border="subtle"
-						padding="sm"
-						className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1"
-					>
+					<Card padding="sm" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 						{props.chain !== 'All' ? (
 							<h1 className="flex flex-nowrap items-center gap-2">
 								<TokenLogo name={props.chain} kind="chain" size={24} alt={`Logo of ${props.chain}`} />
@@ -399,7 +395,7 @@ export function AdapterByChain(props: IProps) {
 				</div>
 			) : null}
 			{props.chain === 'All' ? <NewsletterSignup layout="strip" /> : null}
-			<Panel>
+			<Panel padding="none">
 				<TableToolbar className="justify-end">
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search protocols</span>

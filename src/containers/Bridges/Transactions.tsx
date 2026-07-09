@@ -381,7 +381,7 @@ interface StatCardProps {
 function StatCard({ label, value, sublabel, accent = 'default' }: StatCardProps) {
 	const accentClass = accent === 'success' ? 'text-(--success)' : accent === 'error' ? 'text-(--error)' : 'text-primary'
 	return (
-		<Card border="subtle" className="flex flex-col gap-1">
+		<Card padding="md" className="flex flex-col gap-1">
 			<span className="label-sm text-secondary uppercase">{label}</span>
 			<span className={`text-2xl font-semibold tabular-nums ${accentClass}`}>{value}</span>
 			{sublabel ? <span className="label-sm text-tertiary">{sublabel}</span> : null}
@@ -391,7 +391,7 @@ function StatCard({ label, value, sublabel, accent = 'default' }: StatCardProps)
 
 function EmptyState({ hasFetched }: { hasFetched: boolean }) {
 	return (
-		<Card border="subtle" className="flex min-h-[240px] flex-col items-center justify-center gap-3 text-center">
+		<Card padding="md" className="flex min-h-[240px] flex-col items-center justify-center gap-3 text-center">
 			<div className="flex size-12 items-center justify-center rounded-full bg-brand-muted text-link">
 				<Icon name={hasFetched ? 'search' : 'activity'} height={22} width={22} />
 			</div>
@@ -521,6 +521,7 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 			</header>
 
 			<Card
+				padding="md"
 				as="form"
 				onSubmit={handleSubmit}
 				className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(240px,1.4fr)_repeat(2,minmax(150px,1fr))_auto] md:items-end"
@@ -590,7 +591,7 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 			</Card>
 
 			{isPending ? (
-				<Card border="subtle" className="flex min-h-[200px] flex-col items-center justify-center gap-3 text-center">
+				<Card padding="md" className="flex min-h-[200px] flex-col items-center justify-center gap-3 text-center">
 					<LoadingDots />
 					<p className="body-sm text-secondary">
 						Fetching transactions. Large ranges may take a moment as we page through results.
@@ -715,7 +716,7 @@ function TransactionsTable({
 	}, [instance, csvFileName])
 
 	return (
-		<Panel>
+		<Panel padding="none">
 			<TableToolbar className="w-full justify-end">
 				<h2 className="mr-auto label-md">Transactions</h2>
 				<label className="relative w-full max-w-full sm:max-w-[280px]">

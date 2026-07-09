@@ -2,6 +2,9 @@ import { useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { LoadingSpinner } from '~/components/Loaders'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { Input, inputStyles } from '~/ui/Input'
 import { fetchJson } from '~/utils/async'
 
 async function reportError(report: any) {
@@ -50,47 +53,25 @@ function ReportError() {
 			canonicalUrl={`/report-error`}
 		>
 			<div className="mx-auto flex w-full max-w-lg flex-col gap-4 lg:mt-4 xl:mt-11 xl:ml-[calc(228px-16px)]">
-				<form
-					onSubmit={onSubmit}
-					className="flex w-full flex-col gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3"
-				>
+				<Card as="form" onSubmit={onSubmit} padding="sm" className="flex w-full flex-col gap-4">
 					<h1 className="mb-3 text-center heading-sm">Report Error</h1>
 					<label className="flex flex-col gap-1">
 						<span>Chain / Protocol / Institution</span>
-						<input
-							name="protocol"
-							required
-							className="rounded-md border border-(--form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-white"
-						/>
+						<Input name="protocol" required className="w-full" />
 					</label>
 					<label className="flex flex-col gap-1">
 						<span>What's wrong about it?</span>
-						<textarea
-							name="message"
-							required
-							className="rounded-md border border-(--form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-white"
-						/>
+						<textarea name="message" required className={`${inputStyles} min-h-24 w-full`} />
 					</label>
 					<label className="flex flex-col gap-1">
 						<span>Where can we find correct information? (optional)</span>
-						<textarea
-							name="correctSource"
-							className="rounded-md border border-(--form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-white"
-						/>
+						<textarea name="correctSource" className={`${inputStyles} min-h-24 w-full`} />
 					</label>
 					<label className="flex flex-col gap-1">
 						<span>How can we contact you? (optional)</span>
-						<input
-							name="contact"
-							placeholder="Email address"
-							className="rounded-md border border-(--form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-white"
-						/>
+						<Input name="contact" placeholder="Email address" className="w-full" />
 					</label>
-					<button
-						name="submit-btn"
-						disabled={isPending}
-						className="mt-3 flex items-center justify-center gap-2 rounded-md bg-(--link-active-bg) p-3 text-white disabled:opacity-50"
-					>
+					<Button name="submit-btn" variant="primary" size="md" disabled={isPending} className="mt-3 w-full">
 						{isPending ? (
 							<>
 								<LoadingSpinner size={16} />
@@ -99,10 +80,10 @@ function ReportError() {
 						) : (
 							'Report'
 						)}
-					</button>
+					</Button>
 					{error ? <small className="text-center text-red-500">{error.message}</small> : null}
-				</form>
-				<div className="flex w-full flex-col gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+				</Card>
+				<Card padding="sm" className="flex w-full flex-col gap-4">
 					<p className="text-center text-base font-medium">
 						Please submit a report if you notice any of the following:
 					</p>
@@ -118,7 +99,7 @@ function ReportError() {
 					<p className="text-center">
 						All submissions are completely anonymous and will be reviewed by a human manually
 					</p>
-				</div>
+				</Card>
 			</div>
 		</Layout>
 	)

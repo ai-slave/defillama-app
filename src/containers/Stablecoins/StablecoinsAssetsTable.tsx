@@ -341,7 +341,7 @@ export function StablecoinsTable({ data }: { data: StablecoinRow[] }) {
 	useSortColumnOrders({ instance, columnOrders: assetsColumnOrders })
 
 	return (
-		<Panel>
+		<Panel padding="none">
 			<TableToolbar className="items-center justify-between">
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search stablecoins</span>

@@ -1,12 +1,10 @@
 import { fetchCoinsChart } from '~/api'
-import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
 import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import type { ComparisonEntry, PricePoint, TimelinePoint } from './types'
 
 const DAY_IN_SECONDS = 86_400
 
 export type TokenPnlResult = {
-	coinInfo?: IResponseCGMarketsAPI
 	priceSeries: PricePoint[]
 	timeline: TimelinePoint[]
 	metrics: {
@@ -31,6 +29,11 @@ export type TokenPnlResult = {
 	}
 	primaryColor: string
 }
+
+export type TokenPnlComparisonResult = Pick<
+	ComparisonEntry,
+	'id' | 'percentChange' | 'absoluteChange' | 'startPrice' | 'endPrice'
+>
 
 export function formatPriceSeriesFromCoinsChart(
 	prices: Array<{ timestamp?: number; price?: number }> | undefined
@@ -148,16 +151,14 @@ export async function computeTokenPnl(params: {
 	id: string
 	start: number | null
 	end: number | null
-	coinInfo?: IResponseCGMarketsAPI | null
 }): Promise<TokenPnlResult | null> {
-	const { id, start, end, coinInfo } = params
+	const { id, start, end } = params
 	if (!id || start == null || end == null || end <= start) return null
 
 	const series = await fetchPriceSeries(id, start, end)
 	if (series.length === 0) {
 		const primaryColor = '#10b981'
 		return {
-			coinInfo: coinInfo ?? undefined,
 			priceSeries: [],
 			timeline: [],
 			metrics: {
@@ -173,7 +174,7 @@ export async function computeTokenPnl(params: {
 				annualizedReturn: 0,
 				isProfit: false
 			},
-			currentPrice: coinInfo?.current_price ?? 0,
+			currentPrice: 0,
 			chartData: {
 				dataset: { source: [], dimensions: ['timestamp', 'Token Price'] },
 				charts: [
@@ -244,7 +245,6 @@ export async function computeTokenPnl(params: {
 	}
 
 	return {
-		coinInfo: coinInfo ?? undefined,
 		priceSeries: series,
 		timeline,
 		metrics: {
@@ -260,7 +260,7 @@ export async function computeTokenPnl(params: {
 			annualizedReturn,
 			isProfit: percentChange >= 0
 		},
-		currentPrice: coinInfo?.current_price ?? endPrice,
+		currentPrice: endPrice,
 		chartData,
 		yAxisConfig: calculateYAxisConfigFromPrices(rangeLow, rangeHigh),
 		primaryColor
@@ -271,9 +271,8 @@ export async function buildComparisonEntry(params: {
 	tokenId: string
 	start: number | null
 	end: number | null
-	coinInfoMap: Map<string, IResponseCGMarketsAPI>
-}): Promise<ComparisonEntry | null> {
-	const { tokenId, start, end, coinInfoMap } = params
+}): Promise<TokenPnlComparisonResult | null> {
+	const { tokenId, start, end } = params
 	const series = await fetchPriceSeries(tokenId, start, end)
 	if (series.length === 0) return null
 
@@ -281,13 +280,9 @@ export async function buildComparisonEntry(params: {
 	const endPrice = series[series.length - 1].price
 	const percentChange = startPrice !== 0 ? ((endPrice - startPrice) / startPrice) * 100 : 0
 	const absoluteChange = endPrice - startPrice
-	const coin = coinInfoMap.get(tokenId)
 
 	return {
 		id: tokenId,
-		name: coin?.name ?? tokenId,
-		symbol: coin?.symbol ?? tokenId,
-		image: coin?.image,
 		percentChange,
 		absoluteChange,
 		startPrice,

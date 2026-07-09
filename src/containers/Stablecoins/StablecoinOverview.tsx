@@ -256,7 +256,7 @@ export const PeggedAssetInfo = ({
 		<>
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
 				{/* Stats card */}
-				<Card border="subtle" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					<h1 className="flex flex-wrap items-center gap-2 text-xl">
 						<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} size={24} />
 						<span className="font-bold">{name}</span>
@@ -300,7 +300,7 @@ export const PeggedAssetInfo = ({
 				</Card>
 
 				{/* Chart */}
-				<Panel className="col-span-2">
+				<Panel padding="none" className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						<div className={`mr-auto ${chartSegmentedControlGroupStyles}`}>
 							{chartTypeOptions.map(({ key, name: optionName }) => (
@@ -365,7 +365,7 @@ export const PeggedAssetInfo = ({
 				{/* Additional info cards */}
 				{hasInfo ? (
 					<div className="col-span-full">
-						<Card as="section" padding="sm" border="subtle" className="flex flex-col gap-3 body-md">
+						<Card as="section" padding="sm" className="flex flex-col gap-3 body-md">
 							<h2 className="heading-xs">Stablecoin Information</h2>
 							{description ? <p className="body-md">{description}</p> : null}
 							{pegMechanism ? (

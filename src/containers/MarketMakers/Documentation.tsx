@@ -412,7 +412,7 @@ function TocAccordion({ active }: { active: string }) {
 	const [open, setOpen] = useState(false)
 	const activeLabel = TOC_ITEMS.find((i) => i.id === active)?.label ?? 'Table of Contents'
 	return (
-		<Card padding="none" border="subtle" className="min-[1120px]:hidden">
+		<Card padding="none" className="min-[1120px]:hidden">
 			<button
 				type="button"
 				onClick={() => setOpen((v) => !v)}
@@ -535,7 +535,7 @@ export function MarketMakersDocumentation() {
 		<>
 			<div className="flex flex-col gap-2">
 				<MarketMakersTabs active="Documentation" />
-				<Card padding="md" border="subtle">
+				<Card padding="md">
 					<div className="mb-4 flex items-center justify-between gap-3 border-b border-subtle pb-4 min-[1120px]:hidden">
 						<span className="body-sm text-secondary">Last Updated: {LAST_UPDATED}</span>
 						<ShareButton />

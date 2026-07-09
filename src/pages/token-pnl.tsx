@@ -1,14 +1,15 @@
-import { fetchCoinGeckoTokensListFromDataset } from '~/api/coingecko'
-import { TokenPnl } from '~/containers/TokenPnl'
+import { DEFAULT_TOKEN_PNL_TOKEN_IDS, TokenPnl } from '~/containers/TokenPnl'
+import { getInitialTokenSearchOptions } from '~/containers/TokenSearch/search'
+import type { TokenSearchResult } from '~/containers/TokenSearch/types'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('token-pnl', async () => {
-	const coinsData = await fetchCoinGeckoTokensListFromDataset()
+	const initialTokenOptions = await getInitialTokenSearchOptions(DEFAULT_TOKEN_PNL_TOKEN_IDS)
 	return {
 		props: {
-			coinsData
+			initialTokenOptions
 		},
 		revalidate: maxAgeForNext([22])
 	}
@@ -16,7 +17,7 @@ export const getStaticProps = withPerformanceLogging('token-pnl', async () => {
 
 const pageName = ['Token PNL']
 
-export default function TokenPnlPage({ coinsData }) {
+export default function TokenPnlPage({ initialTokenOptions }: { initialTokenOptions: TokenSearchResult[] }) {
 	return (
 		<Layout
 			title={`Token Profit & Loss (PnL) Tracker - DefiLlama`}
@@ -24,7 +25,7 @@ export default function TokenPnlPage({ coinsData }) {
 			canonicalUrl={`/token-pnl`}
 			pageName={pageName}
 		>
-			<TokenPnl coinsData={coinsData} />
+			<TokenPnl initialTokenOptions={initialTokenOptions} />
 		</Layout>
 	)
 }

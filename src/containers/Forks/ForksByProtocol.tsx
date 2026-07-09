@@ -72,7 +72,7 @@ export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData 
 			) : (
 				<>
 					<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-						<Card border="subtle" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+						<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 							<h1 className="flex items-center gap-2 heading-sm">
 								<TokenLogo name={fork} kind="token" size={24} alt={`Logo of ${fork}`} />
 								{fork}
@@ -89,7 +89,7 @@ export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData 
 							</p>
 						</Card>
 
-						<Panel className="col-span-2">
+						<Panel padding="none" className="col-span-2">
 							<Suspense fallback={<div className="min-h-[406px]" />}>
 								<MultiSeriesChart2
 									dataset={dataset}
@@ -106,7 +106,9 @@ export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData 
 							</Suspense>
 						</Panel>
 					</div>
-					<Suspense fallback={<Panel style={{ minHeight: `${protocolTableData.length * 50 + 200}px` }} />}>
+					<Suspense
+						fallback={<Panel padding="none" style={{ minHeight: `${protocolTableData.length * 50 + 200}px` }} />}
+					>
 						<ChainProtocolsTable protocols={protocolTableData} useStickyHeader={false} />
 					</Suspense>
 				</>

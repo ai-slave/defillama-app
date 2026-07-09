@@ -79,11 +79,7 @@ const RaisesContainer = ({ raises, investors, rounds, sectors, chains, investorN
 			/>
 
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card
-					border="subtle"
-					padding="sm"
-					className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1"
-				>
+				<Card padding="sm" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					<p className="flex flex-col gap-1">
 						<span className="text-secondary">Total Funding Rounds</span>
 						<span className="font-jetbrains text-2xl font-semibold">{filteredRaisesList.length}</span>
@@ -94,7 +90,7 @@ const RaisesContainer = ({ raises, investors, rounds, sectors, chains, investorN
 					</p>
 				</Card>
 
-				<Panel className="col-span-2">
+				<Panel padding="none" className="col-span-2">
 					<React.Suspense fallback={<div className="min-h-[406px]" />}>
 						<MultiSeriesChart2
 							dataset={deferredMonthlyInvestmentChart.dataset}

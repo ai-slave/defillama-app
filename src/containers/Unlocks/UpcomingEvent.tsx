@@ -359,7 +359,7 @@ export const UpcomingEvent = ({
 
 	if (isProtocolPage) {
 		return (
-			<Card as="article" padding="md" border="subtle" radius="large" className="flex flex-col gap-2.5">
+			<Card as="article" padding="md" radius="large" className="flex flex-col gap-2.5">
 				<div className="flex items-start justify-between gap-3">
 					<div className="flex min-w-0 flex-col">
 						<span className="body-md text-primary">{hasLinear ? 'Daily Unlock Rate' : 'Unlock Value'}</span>

@@ -3,6 +3,7 @@ import type { Dayjs } from 'dayjs'
 import * as React from 'react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Card } from '~/ui/Card'
 import { formattedNum, slug } from '~/utils'
 import type { DailyUnlocks } from './calendarTypes'
 
@@ -25,16 +26,16 @@ export const UnlocksListView: React.FC<UnlocksListViewProps> = ({ events }) => {
 
 	if (events.length === 0) {
 		return (
-			<div className="flex min-h-[200px] items-center justify-center rounded-md border border-medium bg-surface p-8 text-sm text-secondary">
+			<Card padding="md" className="flex min-h-[200px] items-center justify-center text-center body-sm text-secondary">
 				No unlocks found for the next 30 days.
-			</div>
+			</Card>
 		)
 	}
 
 	return (
 		<div className="flex flex-col gap-2">
 			{groupedEventsEntries.map(([dateStr, dailyEvents]) => (
-				<div key={dateStr} className="flex flex-col gap-2 rounded-md border border-medium bg-surface p-3">
+				<Card key={dateStr} padding="sm" className="flex flex-col gap-2">
 					<h3 className="font-semibold">
 						{dayjs(dateStr).format('dddd, MMMM D, YYYY')}
 						{dayjs(dateStr).isSame(dayjs(), 'day') ? (
@@ -58,7 +59,7 @@ export const UnlocksListView: React.FC<UnlocksListViewProps> = ({ events }) => {
 							</BasicLink>
 						))}
 					</div>
-				</div>
+				</Card>
 			))}
 		</div>
 	)

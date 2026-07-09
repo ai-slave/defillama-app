@@ -197,7 +197,7 @@ export function RaisesTable({ raises }: { raises: IRaise[] }) {
 	})
 
 	return (
-		<Panel>
+		<Panel padding="none">
 			<TableToolbar className="items-center justify-end">
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search projects...</span>

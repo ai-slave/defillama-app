@@ -219,7 +219,7 @@ export function ChainChartPanel({
 	const selectedChartLabel = (chart: ChainChartLabels) => getChainMetricLabel(chart, chainTokenInfo?.token_symbol)
 
 	return (
-		<Panel className="col-span-2">
+		<Panel padding="none" className="col-span-2">
 			<ChartPanelToolbar>
 				{charts.length > 0 ? (
 					<Ariakit.DialogProvider store={metricsDialogStore}>

@@ -27,7 +27,7 @@ export function LiquidationsSummaryStats({
 	items: Array<{ label: string; value: number; isUsd?: boolean }>
 }) {
 	return (
-		<Card padding="sm" border="subtle" className="flex min-h-[42px] w-full flex-wrap items-center gap-x-5 gap-y-2">
+		<Card padding="sm" className="flex min-h-[42px] w-full flex-wrap items-center gap-x-5 gap-y-2">
 			{items.map((item) => (
 				<div key={item.label} className="flex items-baseline gap-1.5">
 					<span className="body-md text-secondary">{item.label}</span>

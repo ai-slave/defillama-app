@@ -279,7 +279,7 @@ export function RWAPerpsOverviewChart({
 	}
 
 	return (
-		<Panel>
+		<Panel padding="none">
 			<ChartPanelToolbar className="justify-end">
 				<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
 					{CHART_TYPE_OPTIONS.map(({ key, label }) => (

@@ -1,10 +1,12 @@
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
+import { PageTitleStrip } from '~/ui/EntityTitleStrip'
 
 const Definition = ({ header, id, children }: { header: string; id: string; children: React.ReactNode }) => {
 	return (
-		<section aria-labelledby={`${id}-title`} id={id} className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
+		<Card as="section" aria-labelledby={`${id}-title`} id={id} padding="sm" className="flex flex-col gap-4">
 			<h2 className="group relative flex items-center gap-1 heading-xs" id={`${id}-title`}>
 				{header}
 				<a
@@ -15,9 +17,9 @@ const Definition = ({ header, id, children }: { header: string; id: string; chil
 				/>
 				<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
 			</h2>
-			<hr className="border-black/20 dark:border-white/20" />
+			<hr className="border-subtle" />
 			{children}
-		</section>
+		</Card>
 	)
 }
 
@@ -28,7 +30,7 @@ export default function DataDefinitions() {
 			description="Glossary of DeFi metrics including TVL, Fees, Revenue, FDV, DEX Volume, Holders Revenue, App Fees, and REV."
 			canonicalUrl={`/data-definitions`}
 		>
-			<h1 className="rounded-md bg-(--cards-bg) p-3 heading-sm">Data Definitions</h1>
+			<PageTitleStrip title="Data Definitions" />
 
 			<Definition header="TVL" id="tvl">
 				<p>For protocols: Value of all coins held in smart contracts of the protocol</p>
@@ -43,7 +45,7 @@ export default function DataDefinitions() {
 			<Definition header="Fees" id="fees">
 				<p>Total fees paid by users when using the protocol.</p>
 				<p>
-					<BasicLink className="text-(--blue) hover:underline" href="/fees">
+					<BasicLink className="text-link hover:underline" href="/fees">
 						Fees
 					</BasicLink>{' '}
 					are equivalent to what would traditionally be considered Revenue in most off-chain businesses. They reflect
@@ -58,7 +60,7 @@ export default function DataDefinitions() {
 					distributed among token holders. This doesn't include any fees distributed to Liquidity Providers.
 				</p>
 				<p>
-					<BasicLink className="text-(--blue) hover:underline" href="/revenue">
+					<BasicLink className="text-link hover:underline" href="/revenue">
 						Revenue
 					</BasicLink>{' '}
 					, in the way defined here, is closer to Gross Income in traditional accounting. It's the portion of fees that
@@ -73,7 +75,7 @@ export default function DataDefinitions() {
 					distribution to stakers. Holders Revenue can also be called Tokenholder Revenue.
 				</p>
 				<p>
-					<BasicLink className="text-(--blue) hover:underline" href="/holders-revenue">
+					<BasicLink className="text-link hover:underline" href="/holders-revenue">
 						Holders Revenue
 					</BasicLink>{' '}
 					is similar to Dividends and Buybacks in traditional finance terms. It's the part of protocol revenue that is
@@ -101,7 +103,7 @@ export default function DataDefinitions() {
 
 			<Definition header="Total Staked (Staked)" id="total-staked">
 				<p>
-					<BasicLink className="text-(--blue) hover:underline" href="/total-staked">
+					<BasicLink className="text-link hover:underline" href="/total-staked">
 						Staked
 					</BasicLink>{' '}
 					represents the value of governance coins that are staked in the protocol's staking system.
@@ -110,7 +112,7 @@ export default function DataDefinitions() {
 
 			<Definition header="Expenses" id="expenses">
 				<p>
-					<BasicLink className="text-(--blue) hover:underline" href="/expenses">
+					<BasicLink className="text-link hover:underline" href="/expenses">
 						Expenses
 					</BasicLink>{' '}
 					here represent operational costs for salaries, audits... throughout the year. We collect this data mainly from
@@ -121,7 +123,7 @@ export default function DataDefinitions() {
 
 			<Definition header="Total Raised" id="total-raised">
 				<p>
-					<BasicLink className="text-(--blue) hover:underline" href="/raises">
+					<BasicLink className="text-link hover:underline" href="/raises">
 						Total Raised
 					</BasicLink>{' '}
 					includes the sum of all money raised by the protocol, including VC funding rounds, public sales and ICOs.
@@ -142,7 +144,7 @@ export default function DataDefinitions() {
 
 			<Definition header="Treasury" id="treasury">
 				<p>
-					<BasicLink className="text-(--blue) hover:underline" href="/treasuries">
+					<BasicLink className="text-link hover:underline" href="/treasuries">
 						Treasury
 					</BasicLink>{' '}
 					represents the value of coins held in ownership by the protocol. By default this excludes coins created by the
@@ -167,7 +169,7 @@ export default function DataDefinitions() {
 
 			<Definition header="Fully Diluted Valuation (FDV)" id="fully-diluted-valuation">
 				<p>
-					<BasicLink className="text-(--blue) hover:underline" href="/fdv">
+					<BasicLink className="text-link hover:underline" href="/fdv">
 						Fully Diluted Valuation
 					</BasicLink>{' '}
 					is calculated by taking the expected maximum supply of the token and multiplying it by the price. It's mainly
@@ -178,7 +180,7 @@ export default function DataDefinitions() {
 
 			<Definition header="Outstanding Fully Diluted Valuation (oFDV)" id="outstanding-fdv">
 				<p>
-					<BasicLink className="text-(--blue) hover:underline" href="/outstanding-fdv">
+					<BasicLink className="text-link hover:underline" href="/outstanding-fdv">
 						Outstanding Fully Diluted Valuation
 					</BasicLink>{' '}
 					is calculated by multiplying the outstanding supply by the price. Outstanding supply is the total supply minus
@@ -189,7 +191,7 @@ export default function DataDefinitions() {
 
 			<Definition header="DEX Volume" id="dex-volume">
 				<p>
-					<BasicLink className="text-(--blue) hover:underline" href="/dexs">
+					<BasicLink className="text-link hover:underline" href="/dexs">
 						Volume
 					</BasicLink>{' '}
 					traded on the DEX. This metric is only applicable to protocols that are exchanges, and it's just the sum of
@@ -219,7 +221,7 @@ export default function DataDefinitions() {
 				<span id="total-borrowed" aria-hidden="true" className="block h-0 overflow-hidden" />
 				<Definition header="Active Loans" id="active-loans">
 					<p>
-						<BasicLink className="text-(--blue) hover:underline" href="/active-loans">
+						<BasicLink className="text-link hover:underline" href="/active-loans">
 							Active loans
 						</BasicLink>{' '}
 						from DeFi lending protocols. Active loans can also be thought of as total loans issued by a lending
@@ -232,7 +234,7 @@ export default function DataDefinitions() {
 			<Definition header="Stablecoins Market Cap" id="stablecoins-market-cap">
 				<p>The total market cap of all stablecoins on a chain.</p>
 				<p>
-					<BasicLink className="text-(--blue) hover:underline" href="/stablecoins/chains">
+					<BasicLink className="text-link hover:underline" href="/stablecoins/chains">
 						Stablecoin market cap
 					</BasicLink>{' '}
 					represents the total value of stablecoins on a chain, a proxy measure for liquidity and trust, as well as a
@@ -242,7 +244,7 @@ export default function DataDefinitions() {
 
 			<Definition header="App Fees" id="app-fees">
 				<p>
-					<BasicLink className="text-(--blue) hover:underline" href="/app-fees/chains">
+					<BasicLink className="text-link hover:underline" href="/app-fees/chains">
 						App Fees
 					</BasicLink>{' '}
 					represents the sum of Fees on all protocols on a chain (excluding stablecoins, liquid staking apps and gas
@@ -253,7 +255,7 @@ export default function DataDefinitions() {
 
 			<Definition header="App Revenue" id="app-revenue">
 				<p>
-					<BasicLink className="text-(--blue) hover:underline" href="/app-revenue/chains">
+					<BasicLink className="text-link hover:underline" href="/app-revenue/chains">
 						App Revenue
 					</BasicLink>{' '}
 					represents the sum of Revenue on all protocols on a chain (excluding stablecoins, liquid staking apps and gas
@@ -264,7 +266,7 @@ export default function DataDefinitions() {
 
 			<Definition header="REV" id="rev">
 				<p>
-					<BasicLink className="text-(--blue) hover:underline" href="/rev/chains">
+					<BasicLink className="text-link hover:underline" href="/rev/chains">
 						REV
 					</BasicLink>{' '}
 					(Real Economic Value) is the sum of chain fees and MEV tips.

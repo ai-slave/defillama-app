@@ -59,7 +59,7 @@ function RaisesByInvestorTable({ raises }: { raises: IRaise[] }) {
 	useSortColumnOrders({ instance, columnOrders: raisesColumnOrders })
 
 	return (
-		<Panel>
+		<Panel padding="none">
 			<TableToolbar className="items-center justify-end">
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search projects...</span>
@@ -144,7 +144,7 @@ export const InvestorContainer = ({
 			/>
 
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card border="subtle" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					<h1 className="heading-sm">{investorName}</h1>
 
 					<details className="group text-base">
@@ -170,7 +170,7 @@ export const InvestorContainer = ({
 						))}
 					</details>
 				</Card>
-				<Panel className="col-span-2">
+				<Panel padding="none" className="col-span-2">
 					<React.Suspense fallback={<div className="min-h-[406px]" />}>
 						<MultiSeriesChart2
 							dataset={deferredFundingRoundsByMonthChart.dataset}
@@ -189,7 +189,7 @@ export const InvestorContainer = ({
 			</div>
 
 			<div className="grid grid-cols-2 gap-1">
-				<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+				<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 					<React.Suspense fallback={<div className="min-h-[406px]" />}>
 						<PieChart
 							chartData={deferredInvestmentByRounds}
@@ -204,7 +204,7 @@ export const InvestorContainer = ({
 						/>
 					</React.Suspense>
 				</Panel>
-				<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+				<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 					<React.Suspense fallback={<div className="min-h-[406px]" />}>
 						<PieChart
 							chartData={deferredRaisesByCategory}

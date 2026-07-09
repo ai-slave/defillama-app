@@ -152,7 +152,7 @@ export function CexMarketsSection({ exchange, name }: CexMarketsSectionProps) {
 	}, [data])
 
 	const sectionHeader = (
-		<Card as="header" padding="md" border="subtle" className="flex flex-wrap items-center gap-x-3 gap-y-2">
+		<Card as="header" padding="md" className="flex flex-wrap items-center gap-x-3 gap-y-2">
 			<h2
 				className="group relative mr-auto flex scroll-mt-24 items-center gap-1 heading-xs"
 				id={CEX_MARKETS_SECTION_ID}
@@ -178,7 +178,7 @@ export function CexMarketsSection({ exchange, name }: CexMarketsSectionProps) {
 		return (
 			<section className="col-span-full flex flex-col gap-2">
 				{sectionHeader}
-				<Panel>
+				<Panel padding="none">
 					<div role="status" aria-live="polite" className="flex min-h-[360px] items-center justify-center p-2">
 						<LocalLoader />
 						<span className="sr-only">Loading {name} markets</span>

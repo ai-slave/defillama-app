@@ -1,21 +1,21 @@
-import Correlations from '~/containers/Correlations'
-import { getCorrelationTokenOptions } from '~/containers/Correlations/queries'
-import type { CorrelationTokenOption } from '~/containers/Correlations/types'
+import Correlations, { DEFAULT_CORRELATION_TOKEN_IDS } from '~/containers/Correlations'
+import { getInitialTokenSearchOptions } from '~/containers/TokenSearch/search'
+import type { TokenSearchResult } from '~/containers/TokenSearch/types'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('correlation', async () => {
-	const initialTokenOptions = await getCorrelationTokenOptions()
+	const initialTokenOptions = await getInitialTokenSearchOptions(DEFAULT_CORRELATION_TOKEN_IDS)
 	return {
 		props: {
-			initialTokenOptions: initialTokenOptions.tokens
+			initialTokenOptions
 		},
 		revalidate: maxAgeForNext([22])
 	}
 })
 
-export default function Compare({ initialTokenOptions }: { initialTokenOptions: CorrelationTokenOption[] }) {
+export default function Compare({ initialTokenOptions }: { initialTokenOptions: TokenSearchResult[] }) {
 	return (
 		<Layout
 			title={`Crypto Asset Price Correlations - DefiLlama`}

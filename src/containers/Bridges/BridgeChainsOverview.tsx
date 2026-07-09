@@ -21,7 +21,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }) {
 
 	return (
 		<>
-			<Panel>
+			<Panel padding="none">
 				<ChartPanelToolbar className="justify-end">
 					<SelectWithCombobox
 						allValues={allChains}

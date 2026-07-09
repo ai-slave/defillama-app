@@ -272,7 +272,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 		<article className="flex flex-col gap-2">
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
 				{/* Desktop: left stats panel */}
-				<Card border="subtle" padding="sm" className="col-span-1 hidden flex-col gap-6 xl:flex xl:min-h-[360px]">
+				<Card padding="sm" className="col-span-1 hidden flex-col gap-6 xl:flex xl:min-h-[360px]">
 					<EquityTitle ticker={props.ticker} country={props.country} name={props.name} />
 					<p className="flex flex-col">
 						<span className="text-(--text-label)">{defs.marketCap.label}</span>
@@ -284,7 +284,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 				</Card>
 
 				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">
-					<Panel className="col-span-full">
+					<Panel padding="none" className="col-span-full">
 						{/* Mobile: name + market cap */}
 						<div className="flex flex-col gap-6 p-2 pb-0 xl:hidden">
 							<EquityTitle ticker={props.ticker} country={props.country} name={props.name} />
@@ -319,12 +319,12 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 					</Panel>
 
 					{/* Mobile: key metrics below chart */}
-					<Card border="subtle" padding="sm" className="col-span-full flex flex-col gap-6 xl:hidden">
+					<Card padding="sm" className="col-span-full flex flex-col gap-6 xl:hidden">
 						<EquityKeyMetrics summary={props.summary} />
 					</Card>
 				</div>
 
-				<Panel className="col-span-full">
+				<Panel padding="none" className="col-span-full">
 					<ChartPanelToolbar>
 						<TagGroup
 							selectedValue={activeFundamentalChart}
@@ -376,7 +376,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 
 			{activeTab === 'overview' ? (
 				<div className="grid grid-cols-1 gap-2 xl:grid-cols-2" role="tabpanel" aria-label="Overview">
-					<Card as="section" border="subtle" padding="sm" className="flex flex-col gap-3">
+					<Card as="section" padding="sm" className="flex flex-col gap-3">
 						<h2 className="heading-xs">Market Data</h2>
 						<div className="flex flex-col">
 							<MetricRow
@@ -472,7 +472,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 						</div>
 					</Card>
 
-					<Card as="section" border="subtle" padding="sm" className="flex flex-col gap-3">
+					<Card as="section" padding="sm" className="flex flex-col gap-3">
 						<h2 className="heading-xs">Profile</h2>
 						<div className="flex flex-col">
 							<MetricRow label="Ticker" value={props.ticker} />
@@ -522,7 +522,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 						{props.metadata.description ? <p className="body-sm">{props.metadata.description}</p> : null}
 					</Card>
 
-					<Card as="section" border="subtle" padding="sm" className="flex flex-col gap-3">
+					<Card as="section" padding="sm" className="flex flex-col gap-3">
 						<h2 className="heading-xs">Financials</h2>
 						<div className="flex flex-col">
 							<MetricRow
@@ -593,7 +593,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 						</div>
 					</Card>
 
-					<Card as="section" border="subtle" padding="sm" className="flex flex-col gap-3">
+					<Card as="section" padding="sm" className="flex flex-col gap-3">
 						<h2 className="heading-xs">Balance Sheet</h2>
 						<div className="flex flex-col">
 							<MetricRow
@@ -633,7 +633,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 			{activeTab === 'tokens' ? <EquitiesTokensTable tokens={props.onchain.tokens} ticker={props.ticker} /> : null}
 			{activeTab === 'markets' ? <EquitiesMarketsTable markets={props.onchain.perps} ticker={props.ticker} /> : null}
 
-			<Card as="footer" border="subtle" padding="sm">
+			<Card as="footer" padding="sm">
 				<h2 className="label-md text-primary">Attribution</h2>
 				<p className="mt-1 body-sm text-tertiary">
 					Market and statements data provided by{' '}

@@ -19,7 +19,7 @@ const STALE_TIME = 60 * 60 * 1000
 
 function Stat({ label, value, sub }: { label: string; value: React.ReactNode; sub?: React.ReactNode }) {
 	return (
-		<Card padding="sm" border="subtle" className="flex flex-1 flex-col gap-1">
+		<Card padding="sm" className="flex flex-1 flex-col gap-1">
 			<span className="label-sm text-secondary">{label}</span>
 			<span className="font-jetbrains text-lg font-semibold">{value}</span>
 			{sub != null ? <span className="label-sm text-secondary">{sub}</span> : null}

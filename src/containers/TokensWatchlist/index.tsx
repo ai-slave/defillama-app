@@ -129,7 +129,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 		return (
 			<>
 				<WatchListTabs />
-				<Card padding="sm" border="subtle" className="flex min-h-[360px] flex-1 items-center justify-center">
+				<Card padding="sm" className="flex min-h-[360px] flex-1 items-center justify-center">
 					<LocalLoader />
 				</Card>
 			</>
@@ -143,7 +143,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 			<WatchListTabs />
 			<div className="flex flex-col gap-2">
 				<TokensPortfolioSelection />
-				<Card padding="none" border="subtle">
+				<Card padding="none">
 					<div className="flex flex-wrap items-center gap-2 p-2">
 						<div className="mr-auto">
 							<h2 className="text-base font-semibold">Tokens</h2>
@@ -222,7 +222,7 @@ function TokensPortfolioSelection() {
 	const { portfolios, selectedPortfolio, addPortfolio, removePortfolio, setSelectedPortfolio } = useBookmarks('tokens')
 
 	return (
-		<Card padding="none" border="subtle">
+		<Card padding="none">
 			<div className="flex flex-wrap items-center gap-2 p-2">
 				<h1 className="mr-auto text-base font-semibold">Portfolio</h1>
 				<Menu

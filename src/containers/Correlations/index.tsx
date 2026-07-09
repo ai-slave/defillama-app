@@ -1,164 +1,23 @@
 import * as Ariakit from '@ariakit/react'
-import { matchSorter } from 'match-sorter'
+import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { startTransition, useDeferredValue, useEffect, useEffectEvent, useMemo, useState } from 'react'
-import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
+import { useEffect, useEffectEvent, useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { TagGroup } from '~/components/TagGroup'
+import {
+	getGeckoIdFromSearchId,
+	getTokenSearchFallback,
+	hydrateTokenSearchOptionsByIds
+} from '~/containers/TokenSearch/search'
+import { TokenSearchDialog, toTokenSearchOption } from '~/containers/TokenSearch/TokenSearchDialog'
+import type { TokenSearchResult } from '~/containers/TokenSearch/types'
 import { useIsClient } from '~/hooks/useIsClient'
-import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
-import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { Card } from '~/ui/Card'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { FAQ } from './Faq'
 import type { PricePoint } from './hooks'
-import { useCorrelationTokenPicker, useCorrelationTokensByIds, usePriceCharts } from './hooks'
-import type { CorrelationTokenOption } from './types'
+import { usePriceCharts } from './hooks'
 import { pearsonCorrelationCoefficient, toPairedLogReturns } from './util'
-
-type CoinPickerOption = CorrelationTokenOption | IResponseCGMarketsAPI
-
-interface CoinsPickerProps {
-	initialTokenOptions?: CorrelationTokenOption[]
-	coinsData?: Array<IResponseCGMarketsAPI>
-	selectCoin: (coin: CoinPickerOption) => void
-	dialogStore: Ariakit.DialogStore
-	selectedCoins: Record<string, CoinPickerOption>
-	/** Accepted for API compatibility with callers but not used internally. */
-	queryCoins?: string[]
-}
-
-function getPickerCoinLogo(coin: CoinPickerOption): string {
-	return 'logo' in coin ? coin.logo : (coin.image ?? '/assets/placeholder.png')
-}
-
-function getPickerCoinSymbol(coin: CoinPickerOption): string {
-	return coin.symbol.toUpperCase()
-}
-
-function getPickerCoinRank(coin: CoinPickerOption): number {
-	return 'rank' in coin
-		? coin.rank
-		: (coin.market_cap_rank_with_rehypothecated ?? coin.market_cap_rank ?? Number.MAX_SAFE_INTEGER)
-}
-
-function toCorrelationPickerOption(coin: CoinPickerOption): CorrelationTokenOption {
-	if ('logo' in coin) return coin
-	return {
-		id: coin.id,
-		name: coin.name,
-		symbol: getPickerCoinSymbol(coin),
-		rank: getPickerCoinRank(coin),
-		logo: getPickerCoinLogo(coin)
-	}
-}
-
-export function CoinsPicker({
-	initialTokenOptions = [],
-	coinsData,
-	selectCoin,
-	dialogStore,
-	selectedCoins
-}: CoinsPickerProps) {
-	const [search, setSearch] = useState('')
-	const deferredSearch = useDeferredValue(search)
-	const isOpen = Ariakit.useStoreState(dialogStore, 'open')
-	const tokenPicker = useCorrelationTokenPicker(deferredSearch, isOpen && !coinsData, initialTokenOptions)
-	const filteredRemoteCoins = tokenPicker.tokens.filter((coin) => !selectedCoins[coin.id])
-	const filteredLocalCoins = useMemo(() => {
-		if (!coinsData) return []
-		const filteredCoins =
-			deferredSearch === ''
-				? coinsData
-				: matchSorter(coinsData, deferredSearch, {
-						keys: [(coin) => coin.symbol ?? '', (coin) => coin.name ?? ''],
-						threshold: matchSorter.rankings.CONTAINS
-					})
-
-		return filteredCoins.filter((coin) => !selectedCoins[coin.id])
-	}, [coinsData, deferredSearch, selectedCoins])
-
-	const [resultsLength, setResultsLength] = useState(10)
-	const visibleCoins = coinsData ? filteredLocalCoins.slice(0, resultsLength + 1) : filteredRemoteCoins
-	const isLoading = !coinsData && tokenPicker.isLoading
-	const hasMoreResults = coinsData ? resultsLength < filteredLocalCoins.length : tokenPicker.hasNextPage
-	const isFetchingMore = !coinsData && tokenPicker.isFetchingNextPage
-
-	useEffect(() => {
-		if (!isOpen) setSearch('')
-	}, [isOpen])
-
-	const showMoreResults = () => {
-		startTransition(() => {
-			if (coinsData) {
-				setResultsLength((prev) => prev + 10)
-			} else {
-				void tokenPicker.fetchNextPage()
-			}
-		})
-	}
-
-	return (
-		<Ariakit.DialogProvider store={dialogStore}>
-			<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:400px]`} unmountOnHide portal>
-				<div className="flex items-center gap-2 border-b border-subtle px-4 py-3">
-					<DialogHeading>Add Token</DialogHeading>
-					<DialogCloseButton className="-mr-1 ml-auto" />
-				</div>
-				<div className="border-b border-subtle px-4 py-3">
-					<label className="relative block">
-						<span className="sr-only">Search token</span>
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						<Input
-							onInput={(e) => setSearch(e.currentTarget.value)}
-							placeholder="Search token..."
-							className={searchFieldInputPlacementStyles}
-						/>
-					</label>
-				</div>
-
-				<div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-2">
-					{visibleCoins.map((coin) => (
-						<button
-							key={coin.id}
-							onClick={() => selectCoin(coin)}
-							className="flex w-full items-center gap-2 rounded-md p-2 text-left body-sm text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary"
-						>
-							<img
-								alt={''}
-								src={getPickerCoinLogo(coin)}
-								height={'24px'}
-								width={'24px'}
-								loading="lazy"
-								onError={(e) => {
-									const img = e.currentTarget
-									img.onerror = null
-									img.src = '/assets/placeholder.png'
-								}}
-								className="inline-block aspect-square shrink-0 rounded-full bg-(--bg-tertiary) object-cover"
-							/>
-							<span>
-								{coin.name} ({getPickerCoinSymbol(coin)})
-							</span>
-						</button>
-					))}
-					{isLoading ? <p className="p-3 body-sm text-tertiary">Loading...</p> : null}
-					{!isLoading && visibleCoins.length === 0 ? (
-						<p className="p-3 body-sm text-tertiary">No tokens found</p>
-					) : null}
-					{hasMoreResults ? (
-						<button
-							className="w-full rounded-md p-3 text-left body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row"
-							disabled={isFetchingMore}
-							onClick={showMoreResults}
-						>
-							{isFetchingMore ? 'Loading...' : 'See more...'}
-						</button>
-					) : null}
-				</div>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
-	)
-}
 
 function CoinImage({ src }: { src: string }) {
 	return (
@@ -173,7 +32,7 @@ function CoinImage({ src }: { src: string }) {
 				img.onerror = null
 				img.src = '/assets/placeholder.png'
 			}}
-			className="inline-block aspect-square shrink-0 rounded-full bg-(--bg-tertiary) object-cover"
+			className="inline-block aspect-square shrink-0 rounded-full bg-surface-elevated-2 object-cover"
 		/>
 	)
 }
@@ -210,7 +69,7 @@ function CorrelationCell({
 		<td
 			title={`Aligned prices: ${aligned}\nReturns used: ${returns}\nMinimum required: ${requiredReturnPoints}`}
 			style={{ backgroundColor }}
-			className="relative size-12 hover:after:pointer-events-none hover:after:absolute hover:after:top-[-5000px] hover:after:left-0 hover:after:h-[10000px] hover:after:w-full hover:after:bg-[rgba(59,130,246,0.12)] hover:after:content-['']"
+			className="relative size-12 hover:after:pointer-events-none hover:after:absolute hover:after:top-[-5000px] hover:after:left-0 hover:after:h-[10000px] hover:after:w-full hover:after:bg-hover-row hover:after:content-['']"
 		>
 			{corr == null ? '--' : corr.toFixed(2)}
 		</td>
@@ -230,7 +89,8 @@ const MIN_RETURN_POINTS_BY_PERIOD: Record<Period, number> = {
 	'1y': 30
 }
 const DEFAULT_PERIOD: Period = '1y'
-const DEFAULT_QUERY_COINS = ['bitcoin', 'ethereum', 'tether', 'binancecoin']
+export const DEFAULT_CORRELATION_TOKEN_IDS = ['bitcoin', 'ethereum', 'tether', 'binancecoin'] as const
+const DEFAULT_QUERY_COINS = [...DEFAULT_CORRELATION_TOKEN_IDS]
 const CORRELATION_BUCKET_MS = 20 * 60 * 1000
 
 const isPeriod = (value: string): value is Period => {
@@ -255,11 +115,11 @@ interface CorrelationData {
 }
 
 interface CorrelationsProps {
-	initialTokenOptions: CorrelationTokenOption[]
+	initialTokenOptions: TokenSearchResult[]
 }
 
-function buildTokenOptionMap(tokens: CorrelationTokenOption[]): Record<string, CorrelationTokenOption> {
-	const map: Record<string, CorrelationTokenOption> = {}
+function buildTokenOptionMap(tokens: TokenSearchResult[]): Record<string, TokenSearchResult> {
+	const map: Record<string, TokenSearchResult> = {}
 	for (const token of tokens) {
 		map[token.id] = token
 	}
@@ -270,15 +130,15 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 	const router = useRouter()
 	const { isReady, pathname, replace } = router
 	const getLatestQuery = useEffectEvent(() => router.query)
-	const [tokenOptionsById, setTokenOptionsById] = useState<Record<string, CorrelationTokenOption>>(() =>
+	const [tokenOptionsById, setTokenOptionsById] = useState<Record<string, TokenSearchResult>>(() =>
 		buildTokenOptionMap(initialTokenOptions)
 	)
 	const queryCoins = useMemo<string[]>(() => {
 		const coinQuery = router.query.coin
 		if (!coinQuery) return []
-		return Array.isArray(coinQuery) ? coinQuery.filter(Boolean) : coinQuery.split(',').filter(Boolean)
+		const coins = Array.isArray(coinQuery) ? coinQuery : coinQuery.split(',')
+		return coins.filter(Boolean).map(getGeckoIdFromSearchId)
 	}, [router.query.coin])
-
 	const missingQueryCoinIds = useMemo(() => {
 		if (!isReady || queryCoins.length === 0) return []
 		const missingIds: string[] = []
@@ -287,36 +147,35 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 		}
 		return missingIds
 	}, [isReady, queryCoins, tokenOptionsById])
+	const hydratedTokenOptions = useQuery({
+		queryKey: ['token-search-options-by-ids', missingQueryCoinIds],
+		queryFn: () => hydrateTokenSearchOptionsByIds(missingQueryCoinIds),
+		enabled: missingQueryCoinIds.length > 0,
+		staleTime: 5 * 60 * 1000,
+		refetchOnWindowFocus: false
+	})
+	const resolvedTokenOptionsById = useMemo(() => {
+		const tokens = hydratedTokenOptions.data
+		if (!tokens?.length) return tokenOptionsById
 
-	const hydratedTokens = useCorrelationTokensByIds(missingQueryCoinIds, missingQueryCoinIds.length > 0)
-
-	useEffect(() => {
-		const tokens = hydratedTokens.data?.tokens
-		if (!tokens?.length) return
-
-		setTokenOptionsById((prev) => {
-			let changed = false
-			const next = { ...prev }
-			for (const token of tokens) {
-				if (next[token.id]) continue
-				next[token.id] = token
-				changed = true
-			}
-			return changed ? next : prev
-		})
-	}, [hydratedTokens.data])
-
-	const selectedCoins = useMemo<Record<string, CorrelationTokenOption>>(() => {
-		if (queryCoins.length === 0) return {}
-		const queryCoinsSet = new Set(queryCoins)
-		const rankedTokens = Object.values(tokenOptionsById).sort((a, b) => a.rank - b.rank)
-		const selected: Record<string, CorrelationTokenOption> = {}
-
-		for (const coin of rankedTokens) {
-			if (queryCoinsSet.has(coin.id)) selected[coin.id] = coin
+		const next = { ...tokenOptionsById }
+		for (const token of tokens) {
+			next[token.id] = token
 		}
+		return next
+	}, [hydratedTokenOptions.data, tokenOptionsById])
+
+	const selectedCoins = useMemo<Record<string, TokenSearchResult>>(() => {
+		if (queryCoins.length === 0) return {}
+		const selected: Record<string, TokenSearchResult> = {}
+
+		for (const coinId of queryCoins) {
+			const token = resolvedTokenOptionsById[coinId] ?? getTokenSearchFallback(coinId)
+			selected[token.id] = token
+		}
+
 		return selected
-	}, [queryCoins, tokenOptionsById])
+	}, [queryCoins, resolvedTokenOptionsById])
 
 	const period = useMemo<Period>(() => {
 		const periodQuery = router.query.period
@@ -430,7 +289,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 	const dialogStore = Ariakit.useDialogStore()
 
 	const isClient = useIsClient()
-	const showContent = isClient && coins.length > 0 && !hydratedTokens.isLoading
+	const showContent = isClient && coins.length > 0 && !hydratedTokenOptions.isLoading
 
 	const removeCoin = (coinId: string) => {
 		const updatedCoins = queryCoins.filter((c) => c !== coinId)
@@ -439,12 +298,12 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 
 	return (
 		<>
-			<div className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+			<Card padding="strip" className="flex flex-wrap items-center justify-between gap-4">
 				<h1 className="heading-sm">Correlations Matrix</h1>
 				<TagGroup selectedValue={period} setValue={setPeriod} values={PERIODS} className="ml-auto" />
-			</div>
+			</Card>
 
-			<div className="flex flex-col items-center gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
+			<Card padding="md" className="flex flex-col items-center gap-6">
 				{!showContent ? (
 					<div className="flex min-h-[300px] items-center justify-center">
 						<p className="body-sm text-tertiary">Loading...</p>
@@ -452,40 +311,40 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 				) : (
 					<div className="flex flex-col sm:flex-row">
 						<div className="no-scrollbar flex w-40 shrink-0 flex-col overflow-auto sm:mr-6">
-							<h2 className="flex h-12 items-center px-3.25 text-xs font-medium text-secondary">Tokens</h2>
+							<h2 className="flex h-12 items-center px-3 label-xs text-secondary">Tokens</h2>
 							{coins.map((coin) => (
 								<button
 									key={coin.id}
 									onClick={() => removeCoin(coin.id)}
-									className="group flex h-12 items-center gap-2 rounded-md px-2 hover:bg-[rgba(59,130,246,0.12)]"
+									className="group flex h-12 items-center gap-2 rounded-md px-2 hover:bg-hover-row focus-visible:bg-hover-row"
 								>
 									<CoinImage src={coin.logo} />
-									<span className="text-sm font-medium">{coin.symbol}</span>
+									<span className="label-sm">{coin.symbol}</span>
 									<Icon
 										name="x"
 										height={12}
 										width={12}
-										className="ml-auto text-(--text-tertiary) opacity-0 transition-opacity group-hover:opacity-100 hover:text-(--text-primary)"
+										className="ml-auto text-tertiary opacity-0 transition-opacity group-hover:opacity-100 hover:text-primary"
 									/>
 								</button>
 							))}
 							<button
 								onClick={dialogStore.toggle}
-								className="flex h-12 items-center gap-1 rounded-md px-3.25 py-2 text-sm text-(--link) hover:bg-(--link-hover-bg)"
+								className="flex h-12 items-center gap-1 rounded-md px-3 py-2 body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row"
 							>
 								<Icon name="plus" className="size-3.5" />
 								<span>Add token</span>
 							</button>
 						</div>
 						<div className="relative overflow-hidden">
-							<table className="table-fixed text-center text-sm">
+							<table className="table-fixed text-center body-sm">
 								<thead>
 									<tr>
 										<th />
 										{coins.map((coin) => (
 											<td
 												key={`h-${coin.id}`}
-												className="relative size-12 font-bold hover:after:pointer-events-none hover:after:absolute hover:after:top-[-5000px] hover:after:left-0 hover:after:h-[10000px] hover:after:w-full hover:after:bg-[rgba(59,130,246,0.12)] hover:after:content-['']"
+												className="relative size-12 font-bold hover:after:pointer-events-none hover:after:absolute hover:after:top-[-5000px] hover:after:left-0 hover:after:h-[10000px] hover:after:w-full hover:after:bg-hover-row hover:after:content-['']"
 											>
 												{coin.symbol}
 											</td>
@@ -493,7 +352,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 										<td>
 											<button
 												onClick={dialogStore.toggle}
-												className="flex size-12 items-center justify-center text-(--link) hover:bg-[rgba(59,130,246,0.12)] focus-visible:bg-[rgba(59,130,246,0.12)]"
+												className="flex size-12 items-center justify-center text-link hover:bg-hover-row focus-visible:bg-hover-row"
 											>
 												<Icon name="plus" height={16} width={16} />
 											</button>
@@ -502,15 +361,15 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 								</thead>
 								<tbody>
 									{coins.map((coin) => (
-										<tr key={`r-${coin.id}`} className="hover:bg-[rgba(59,130,246,0.12)]">
-											<td className="relative size-12 font-bold hover:after:pointer-events-none hover:after:absolute hover:after:top-[-5000px] hover:after:left-0 hover:after:h-[10000px] hover:after:w-full hover:after:bg-[rgba(59,130,246,0.12)] hover:after:content-['']">
+										<tr key={`r-${coin.id}`} className="hover:bg-hover-row">
+											<td className="relative size-12 font-bold hover:after:pointer-events-none hover:after:absolute hover:after:top-[-5000px] hover:after:left-0 hover:after:h-[10000px] hover:after:w-full hover:after:bg-hover-row hover:after:content-['']">
 												{coin.symbol}
 											</td>
 											{coins.map((coin1) =>
 												coin1.id === coin.id ? (
 													<td
 														key={`d-${coin.id}`}
-														className="relative size-12 hover:after:pointer-events-none hover:after:absolute hover:after:top-[-5000px] hover:after:left-0 hover:after:h-[10000px] hover:after:w-full hover:after:bg-[rgba(59,130,246,0.12)] hover:after:content-['']"
+														className="relative size-12 hover:after:pointer-events-none hover:after:absolute hover:after:top-[-5000px] hover:after:left-0 hover:after:h-[10000px] hover:after:w-full hover:after:bg-hover-row hover:after:content-['']"
 													>
 														<CoinImage src={coin.logo} />
 													</td>
@@ -532,7 +391,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 										<td>
 											<button
 												onClick={dialogStore.toggle}
-												className="flex size-12 items-center justify-center text-(--link) hover:bg-[rgba(59,130,246,0.12)] focus-visible:bg-[rgba(59,130,246,0.12)]"
+												className="flex size-12 items-center justify-center text-link hover:bg-hover-row focus-visible:bg-hover-row"
 											>
 												<Icon name="plus" height={16} width={16} />
 											</button>
@@ -543,12 +402,12 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 						</div>
 					</div>
 				)}
-				<CoinsPicker
-					initialTokenOptions={initialTokenOptions}
+				<TokenSearchDialog
+					initialTokens={initialTokenOptions}
 					dialogStore={dialogStore}
-					selectedCoins={selectedCoins}
-					selectCoin={(coin) => {
-						const token = toCorrelationPickerOption(coin)
+					selectedTokens={selectedCoins}
+					selectToken={(coin) => {
+						const token = toTokenSearchOption(coin)
 						setTokenOptionsById((prev) => (prev[token.id] ? prev : { ...prev, [token.id]: token }))
 						const updatedCoins = queryCoins.includes(token.id) ? queryCoins : [...queryCoins, token.id]
 						void pushShallowQuery(router, { coin: updatedCoins }).then(() => {
@@ -556,14 +415,14 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 						})
 					}}
 				/>
-				<div className="w-full border-t border-(--form-control-border) pt-4">
-					<p className="mx-auto max-w-xl text-center text-sm text-(--text-secondary)">
+				<div className="w-full border-t border-subtle pt-4">
+					<p className="mx-auto max-w-xl text-center body-sm text-secondary">
 						Correlation is calculated from log returns built on approximately 20-minute interval price points. A pair
 						must have at least {minReturnPoints} aligned return observations for this period; otherwise, the matrix
 						shows --.
 					</p>
 				</div>
-			</div>
+			</Card>
 			<FAQ />
 		</>
 	)

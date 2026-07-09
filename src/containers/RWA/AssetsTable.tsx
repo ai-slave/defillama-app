@@ -111,7 +111,7 @@ export function RWAAssetsTable({
 	}
 
 	return (
-		<Panel>
+		<Panel padding="none">
 			<TableToolbar className="justify-end">
 				<h1 className="mr-auto label-md">Assets Rankings</h1>
 				<TableToolbarControlGroup className="justify-end lg:flex-nowrap">

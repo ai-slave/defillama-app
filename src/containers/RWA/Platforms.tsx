@@ -116,7 +116,7 @@ export function RWAPlatforms({
 
 	return (
 		<div className="flex flex-col gap-2">
-			<Card padding="sm" border="subtle" className="flex flex-wrap items-center gap-2">
+			<Card padding="sm" className="flex flex-wrap items-center gap-2">
 				<Checkbox
 					variant="filter"
 					value="includeStablecoins"

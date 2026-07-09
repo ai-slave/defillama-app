@@ -125,7 +125,7 @@ export function ChainsByAdapter(props: IProps) {
 					chartName={props.type}
 				/>
 			) : null}
-			<Panel>
+			<Panel padding="none">
 				<TableToolbar className="justify-end">
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search chains</span>

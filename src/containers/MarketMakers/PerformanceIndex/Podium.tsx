@@ -52,7 +52,7 @@ function PodiumCard({
 	const volume = aggregated?.dailyFillVolume ?? null
 
 	return (
-		<Card border="subtle" className="relative flex flex-col gap-3">
+		<Card padding="md" className="relative flex flex-col gap-3">
 			<RibbonBadge place={place} color={RIBBON_COLORS[place - 1]} />
 			<div className="flex flex-col gap-3 min-[713px]:max-[1119px]:flex-row min-[713px]:max-[1119px]:items-center min-[713px]:max-[1119px]:gap-2 min-[713px]:max-[1119px]:pr-12">
 				<div className="flex items-center gap-2 pr-10 min-[713px]:max-[1119px]:flex-1 min-[713px]:max-[1119px]:pr-0">

@@ -6,6 +6,8 @@ import { LocalLoader } from '~/components/Loaders'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getNFTRoyaltyHistory } from '~/containers/Nft/queries'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
+import { Panel } from '~/ui/Panel'
 import { formattedNum, slug } from '~/utils'
 
 const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
@@ -77,24 +79,24 @@ export default function Collection() {
 			canonicalUrl={collection ? `/nfts/royalties/${collection}` : `/nfts/royalties`}
 		>
 			<div className="relative isolate grid grid-cols-2 gap-2 *:last:col-span-2 xl:grid-cols-3">
-				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-5 xl:col-span-1">
+				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					<h1 className="flex items-center gap-2 text-xl">
 						<TokenLogo src={props.logo} fallbackSrc={props.fallbackLogo} alt={`Logo of ${props.name}`} size={48} />
 						<FormattedName text={props.name} fontWeight={700} />
 					</h1>
 
 					<p className="flex flex-col gap-1 text-base">
-						<span className="text-(--text-label)">30d royalty earnings</span>
+						<span className="text-secondary">30d royalty earnings</span>
 						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(props.total30d, true)}</span>
 					</p>
 
 					<p className="flex flex-col gap-1 text-base">
-						<span className="text-(--text-label)">Lifetime royalty earnings</span>
+						<span className="text-secondary">Lifetime royalty earnings</span>
 						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(props.totalAllTime, true)}</span>
 					</p>
-				</div>
+				</Card>
 
-				<div className="col-span-full rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<Panel padding="none" className="col-span-full">
 					<Suspense fallback={<div className="min-h-[406px]" />}>
 						<MultiSeriesChart2
 							dataset={chartData.dataset}
@@ -108,7 +110,7 @@ export default function Collection() {
 							}}
 						/>
 					</Suspense>
-				</div>
+				</Panel>
 			</div>
 		</Layout>
 	)

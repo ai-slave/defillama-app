@@ -257,7 +257,7 @@ export function LinkToMetricOrToolPage({
 			data-pinned={isPinned}
 		>
 			<BasicLink
-				className="hover-wash-card col-span-1 flex flex-1 flex-col items-start gap-1.5 rounded-[8px] border border-medium bg-surface p-3"
+				className="hover-wash-card col-span-1 flex flex-1 flex-col items-start gap-1.5 rounded-[8px] border border-subtle bg-surface p-3"
 				href={page.route}
 				target={isExternalLink ? '_blank' : undefined}
 				rel={isExternalLink ? 'noopener noreferrer' : undefined}

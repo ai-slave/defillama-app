@@ -44,7 +44,7 @@ function MoverCard<T extends Parameters<typeof moverValue>[0]>({
 	const { gainers, losers } = selectMovers(rows, metricKey)
 	const toRows = (list: T[]): MoverRow[] => list.map((r) => ({ name: nameOf(r), value: moverValue(r, metricKey) }))
 	return (
-		<Card padding="none" border="subtle" className="overflow-hidden">
+		<Card padding="none" className="overflow-hidden">
 			<div className="border-b border-subtle px-3 py-2 label-md">{label}</div>
 			<div className="grid grid-cols-2 border-b border-subtle">
 				<span className="border-r border-subtle px-3 py-1 label-sm text-data-up uppercase">Gainers</span>

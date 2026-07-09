@@ -15,6 +15,7 @@ import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { slug } from '~/utils'
 
 interface INftCollection {
@@ -62,7 +63,7 @@ const columns = [
 					<TokenLogo src={item.image} alt={`Logo of ${item.name}`} />
 					<BasicLink
 						href={`/nfts/collection/${slug(item.collectionId)}`}
-						className="text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+						className="text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 					>{`${item.name}`}</BasicLink>
 				</span>
 			)
@@ -160,9 +161,9 @@ export function NftsCollectionTable({ data }: { data: Array<INftCollection> }) {
 	const [_collectionName, setCollectionName] = useTableSearch({ instance, columnToSearch: 'name' })
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-3">
-				<h1 className="mr-auto heading-sm">NFT Collection Metrics</h1>
+		<Panel padding="none">
+			<PanelHeader className="justify-end gap-2">
+				<PanelTitle as="h1">NFT Collection Metrics</PanelTitle>
 				<label className="relative w-full sm:max-w-[280px]">
 					<span className="sr-only">Search collections...</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
@@ -173,8 +174,8 @@ export function NftsCollectionTable({ data }: { data: Array<INftCollection> }) {
 						className={searchFieldInputStyles}
 					/>
 				</label>
-			</div>
+			</PanelHeader>
 			<VirtualTable instance={instance} />
-		</div>
+		</Panel>
 	)
 }

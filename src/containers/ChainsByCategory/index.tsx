@@ -13,6 +13,7 @@ import {
 	useLocalStorageSettingsManager,
 	type TvlSettingsKey
 } from '~/contexts/LocalStorage'
+import { Panel } from '~/ui/Panel'
 import { formatNum, getPercentChange } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
@@ -128,17 +129,16 @@ export function ChainsByCategory({
 
 			{showSharedChartState ? (
 				<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-					<div className="relative isolate flex min-h-[406px] flex-col items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-4 text-center body-sm text-tertiary">
+					<Panel
+						padding="md"
+						className="relative isolate col-span-full min-h-[406px] items-center justify-center text-center body-sm text-tertiary"
+					>
 						{chartErrorMessage ? <ChainsChartError message={chartErrorMessage} /> : <LocalLoader />}
-					</div>
-					<div
-						className="relative isolate flex min-h-[406px] flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)"
-						aria-hidden="true"
-					/>
+					</Panel>
 				</div>
 			) : (
 				<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
-					<div className="relative isolate flex min-h-[406px] flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
+					<Panel padding="none" className="relative isolate min-h-[406px]">
 						<React.Suspense fallback={<ChainsChartPanelFallback />}>
 							<PieChart
 								chartData={pieChartData}
@@ -146,8 +146,8 @@ export function ChainsByCategory({
 								exportButtons={{ png: true, csv: true, filename: 'chains-tvl-pie', pngTitle: 'Chains TVL' }}
 							/>
 						</React.Suspense>
-					</div>
-					<div className="relative isolate flex min-h-[406px] flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
+					</Panel>
+					<Panel padding="none" className="relative isolate min-h-[406px]">
 						<React.Suspense fallback={<ChainsChartPanelFallback />}>
 							<MultiSeriesChart2
 								dataset={dominanceCharts.dataset}
@@ -158,19 +158,14 @@ export function ChainsByCategory({
 								exportButtons={{ png: true, csv: true, filename: 'chains-dominance', pngTitle: 'Chains Dominance' }}
 							/>
 						</React.Suspense>
-					</div>
+					</Panel>
 				</div>
 			)}
 
 			<NewsletterSignup layout="strip" />
 
 			<React.Suspense
-				fallback={
-					<div
-						style={{ minHeight: `${chainsTableData.length * 50 + 200}px` }}
-						className="rounded-md border border-(--cards-border) bg-(--cards-bg)"
-					/>
-				}
+				fallback={<Panel padding="none" style={{ minHeight: `${chainsTableData.length * 50 + 200}px` }} />}
 			>
 				<ChainsByCategoryTable data={chainsTableData} showByGroup={showByGroup} />
 			</React.Suspense>

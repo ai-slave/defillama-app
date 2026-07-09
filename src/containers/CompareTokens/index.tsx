@@ -6,7 +6,7 @@ import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
 import { fetchCoinPrices } from '~/api/pricing'
 import { Icon } from '~/components/Icon'
 import { LocalLoader } from '~/components/Loaders'
-import { CoinsPicker } from '~/containers/Correlations'
+import { TokenSearchDialog } from '~/containers/TokenSearch/TokenSearchDialog'
 import { buttonStyles } from '~/ui/Button'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import {
@@ -302,12 +302,11 @@ export function CompareTokens({
 					)
 				) : null}
 
-				<CoinsPicker
+				<TokenSearchDialog
 					coinsData={coinsData}
 					dialogStore={dialogStore}
-					selectedCoins={EMPTY_SELECTED_COINS}
-					queryCoins={coins}
-					selectCoin={(coin) => {
+					selectedTokens={EMPTY_SELECTED_COINS}
+					selectToken={(coin) => {
 						const newCoins = coins.slice()
 						newCoins[isModalOpen - 1] = coin.id
 						void pushShallowQuery(router, { coin: newCoins })

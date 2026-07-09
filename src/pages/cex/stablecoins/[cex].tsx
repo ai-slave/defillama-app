@@ -542,11 +542,7 @@ export default function CEXStablecoins(props: {
 				<PanelStatus>No stablecoin data available for this exchange</PanelStatus>
 			) : (
 				<>
-					<Card
-						border="subtle"
-						padding="strip"
-						className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2"
-					>
+					<Card padding="strip" className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2">
 						<div className="flex items-baseline gap-1.5">
 							<span className="text-sm text-(--text-label)">Total Stablecoin in CEX</span>
 							<span className="text-sm font-medium">{currentTotal ? formattedNum(currentTotal, true) : '-'}</span>

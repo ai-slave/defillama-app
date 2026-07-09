@@ -7,6 +7,9 @@ import { Icon } from '~/components/Icon'
 import { LocalLoader } from '~/components/Loaders'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getNFTCollection } from '~/containers/Nft/queries'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { Panel } from '~/ui/Panel'
 import { Switch } from '~/ui/Switch'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { ICollectionScatterChartProps, IOrderBookChartProps } from './types'
@@ -40,7 +43,7 @@ export function NFTCollectionContainer() {
 	})
 	if (fetchingData || !collectionData) {
 		return (
-			<div className="flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+			<Panel padding="sm" className="flex-1 items-center justify-center">
 				{fetchingData || !router.isReady ? (
 					<LocalLoader />
 				) : (
@@ -48,7 +51,7 @@ export function NFTCollectionContainer() {
 						Failed to load collection data.
 					</p>
 				)}
-			</div>
+			</Panel>
 		)
 	}
 	const { name, data, stats, sales, salesExOutliers, salesMedian1d, address, floorHistory, orderbook } = collectionData
@@ -66,7 +69,7 @@ export function NFTCollectionContainer() {
 	return (
 		<>
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-5 xl:col-span-1">
+				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					<h1 className="flex items-center gap-2 text-xl">
 						<TokenLogo
 							src={primaryCollection?.image}
@@ -78,35 +81,37 @@ export function NFTCollectionContainer() {
 					</h1>
 
 					<p className="flex flex-col gap-1 text-base">
-						<span className="text-(--text-label)">Floor Price</span>
+						<span className="text-secondary">Floor Price</span>
 						<span className="font-jetbrains text-2xl font-semibold">
 							{floorPrice != null ? floorPrice.toFixed(2) + ' ETH' : ''}
 						</span>
 					</p>
 
 					<p className="flex flex-col gap-1 text-base">
-						<span className="text-(--text-label)">24h Volume</span>
+						<span className="text-secondary">24h Volume</span>
 						<span className="font-jetbrains text-2xl font-semibold">
 							{volume24h != null ? volume24h.toFixed(2) + ' ETH' : ''}
 						</span>
 					</p>
 
 					<p className="flex flex-col gap-1 text-base">
-						<span className="text-(--text-label)">Total Supply</span>
+						<span className="text-secondary">Total Supply</span>
 						<span className="font-jetbrains text-2xl font-semibold">{primaryCollection?.totalSupply}</span>
 					</p>
 
-					<a
+					<Button
+						as="a"
 						href={`https://etherscan.io/token/${address.split(':')[0]}`}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="mt-auto mr-auto flex items-center justify-center gap-1 rounded-md bg-(--link-bg) px-2 py-1 text-xs whitespace-nowrap text-(--link-text) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+						size="md"
+						className="mt-auto mr-auto"
 					>
 						<span>View on Etherscan</span> <Icon name="arrow-up-right" height={14} width={14} />
-					</a>
-				</div>
+					</Button>
+				</Card>
 
-				<div className="col-span-2 min-h-[394px] rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<Panel padding="none" className="col-span-2 min-h-[394px]">
 					<div className="flex w-full items-center justify-end p-3 pb-0">
 						<Switch
 							label="Include Outliers"
@@ -124,23 +129,23 @@ export function NFTCollectionContainer() {
 							volume={stats}
 						/>
 					</React.Suspense>
-				</div>
+				</Panel>
 			</div>
 
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 				{floorHistory?.source?.length > 0 ? (
-					<div className="relative rounded-md border border-(--cards-border) bg-(--cards-bg) only:col-span-full">
+					<Panel padding="none" className="relative only:col-span-full">
 						<React.Suspense fallback={<div className="h-[406px]" />}>
 							<MultiSeriesChart2 dataset={floorHistory} valueSymbol="ETH" title="Floor Price" />
 						</React.Suspense>
-					</div>
+					</Panel>
 				) : null}
 				{orderbook?.length > 0 ? (
-					<div className="relative rounded-md border border-(--cards-border) bg-(--cards-bg) only:col-span-full">
+					<Panel padding="none" className="relative only:col-span-full">
 						<React.Suspense fallback={<div className="h-[406px]" />}>
 							<OrderbookChart chartData={orderbook} />
 						</React.Suspense>
-					</div>
+					</Panel>
 				) : null}
 			</div>
 		</>

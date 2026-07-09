@@ -46,7 +46,7 @@ export function LiquidationsChainPage(props: LiquidationsChainPageProps) {
 				/>
 			</div>
 
-			<Panel className="mt-2">
+			<Panel padding="none" className="mt-2">
 				{activeTab === 'chains' ? (
 					<LiquidationsProtocolChainsTable
 						rows={props.chainRows}

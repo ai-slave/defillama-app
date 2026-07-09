@@ -1,11 +1,13 @@
 import { TokenLogo } from '~/components/TokenLogo'
 import { oldBlue } from '~/constants/colors'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
+import { PageTitleStrip } from '~/ui/EntityTitleStrip'
 
 const PressPanel = ({ imageFilename }) => (
-	<div className="rounded-md border border-(--cards-border) p-4 text-center">
+	<Card padding="md" className="grid place-items-center">
 		<TokenLogo src={`/press/${imageFilename}`} alt={imageFilename} size={150} />
-	</div>
+	</Card>
 )
 
 const pressList = [
@@ -46,11 +48,11 @@ function PressPage() {
 			description={`DefiLlama is used across a large number of media organisations, governments, and financial institutions notably by the US Treasury and the ECB.`}
 			canonicalUrl={`/press`}
 		>
-			<h1 className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 heading-sm">Press & Media</h1>
+			<PageTitleStrip title="Press & Media" />
 
-			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
+			<Card as="section" padding="sm" className="flex flex-col gap-4">
 				<h2 className="heading-xs">About DefiLlama</h2>
-				<hr className="border-black/20 dark:border-white/20" />
+				<hr className="border-subtle" />
 				<p>
 					DefiLlama is the largest data aggregator for DeFi (Decentralized Finance). Our data is fully open-source and
 					maintained by a team of passionate individuals and contributors from thousands of protocols.
@@ -63,14 +65,14 @@ function PressPage() {
 					DefiLlama’s vision is to aggregate the most accurate, transparent, and neutral data for all blockchains and
 					cryptocurrency applications.
 				</p>
-			</div>
+			</Card>
 
-			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
+			<Card as="section" padding="sm" className="flex flex-col gap-4">
 				<h2 className="heading-xs">Contact</h2>
-				<hr className="border-black/20 dark:border-white/20" />
+				<hr className="border-subtle" />
 				<p>
 					The best way to contact us and the one in which you'll get a reply the fastest is through our{' '}
-					<a className="text-(--blue) hover:underline" target="_blank" rel="noopener noreferrer" href="/support">
+					<a className="text-link hover:underline" target="_blank" rel="noopener noreferrer" href="/support">
 						our support page
 					</a>
 					.
@@ -78,7 +80,7 @@ function PressPage() {
 				<p>
 					DefiLlama is a part of{' '}
 					<a
-						className="text-(--blue) hover:underline"
+						className="text-link hover:underline"
 						target="_blank"
 						rel="noopener noreferrer"
 						href="https://x.com/llamacorporg"
@@ -91,19 +93,19 @@ function PressPage() {
 					Llama Corp is a collective building out the decentralized future with data analytics, infrastructure,
 					payments, cross-chain and media solutions used by more than 10M monthly users.
 				</p>
-			</div>
+			</Card>
 
-			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
+			<Card as="section" padding="sm" className="flex flex-col gap-4">
 				<h2 className="heading-xs">Press</h2>
-				<hr className="border-black/20 dark:border-white/20" />
+				<hr className="border-subtle" />
 
 				<p>DefiLlama Data is free to use by anyone for press usage. Attribution is always appreciated.</p>
-				<hr className="border-black/20 dark:border-white/20" />
+				<hr className="border-subtle" />
 				<p>DefiLlama is used across a large number of media organisations, governments, and financial institutions.</p>
 				<div className="mt-4 grid w-full grid-cols-[repeat(auto-fit,minmax(100px,200px))] place-content-center gap-2">
 					{pressList.map((imageFilename) => (
 						<a
-							className="text-(--blue) hover:underline"
+							className="text-link hover:underline"
 							target="_blank"
 							rel="noopener noreferrer"
 							href={imageFilename[1]}
@@ -113,11 +115,11 @@ function PressPage() {
 						</a>
 					))}
 				</div>
-			</div>
+			</Card>
 
-			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
+			<Card as="section" padding="sm" className="flex flex-col gap-4">
 				<h2 className="heading-xs">Branding Assets</h2>
-				<hr className="border-black/20 dark:border-white/20" />
+				<hr className="border-subtle" />
 				<p>
 					We have a few guidelines for using our brand resources. These ensure that our brand is always recognizable and
 					consistent.
@@ -128,7 +130,7 @@ function PressPage() {
 						target="_blank"
 						rel="noopener noreferrer"
 						download
-						className="text-(--blue) hover:underline"
+						className="text-link hover:underline"
 					>
 						Download branding assets
 					</a>
@@ -139,7 +141,7 @@ function PressPage() {
 					but in situations where the association with DefiLlama is clear, the icon may be used on its own.
 				</p>
 				<p>The primary color used on DefiLlama is {oldBlue}.</p>
-			</div>
+			</Card>
 		</Layout>
 	)
 }

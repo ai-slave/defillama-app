@@ -66,7 +66,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 	return (
 		<>
 			<RowLinksWithDropdown links={allAssets} activeLink={'All'} />
-			<Panel className="col-span-2">
+			<Panel padding="none" className="col-span-2">
 				<ChartPanelToolbar className="justify-end">
 					<h1 className="mr-auto heading-xs">DAT Inflows by Asset</h1>
 					<ChartGroupingSelector

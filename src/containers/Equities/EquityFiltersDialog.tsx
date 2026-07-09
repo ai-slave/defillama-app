@@ -289,7 +289,7 @@ function NumericFilterEditor({
 	}
 
 	return (
-		<Card border="subtle" padding="sm" className="flex flex-col gap-2">
+		<Card padding="sm" className="flex flex-col gap-2">
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex min-w-0 items-center gap-1.5">
 					<span className="truncate label-sm text-primary">{config.label}</span>
@@ -354,7 +354,7 @@ function CategoricalFilterEditor({
 	const valueLabel = CATEGORICAL_VALUE_LABELS[config.field]
 
 	return (
-		<Card border="subtle" padding="sm" className="flex flex-col gap-2">
+		<Card padding="sm" className="flex flex-col gap-2">
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex min-w-0 items-center gap-1.5">
 					<span className="truncate label-sm text-primary">{config.label}</span>

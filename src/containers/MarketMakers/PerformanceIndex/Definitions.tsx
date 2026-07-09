@@ -35,7 +35,7 @@ const DEFINITIONS: { term: string; description: string }[] = [
 
 export function Definitions() {
 	return (
-		<Card border="subtle" className="flex flex-col gap-3">
+		<Card padding="md" className="flex flex-col gap-3">
 			<h2 className="heading-xs">Definitions</h2>
 			<div className="flex flex-col text-sm">
 				{DEFINITIONS.map((def) => (

@@ -634,7 +634,7 @@ function TokensStats({ stats }: { stats: TokensPageStatsDisplay }) {
 	] as const
 
 	return (
-		<Card as="dl" border="subtle" padding="sm" className="flex w-full flex-wrap items-center gap-x-5 gap-y-1.5">
+		<Card as="dl" padding="sm" className="flex w-full flex-wrap items-center gap-x-5 gap-y-1.5">
 			{items.map((item) => (
 				<div key={item.label} className="flex items-baseline gap-1.5">
 					<dt className="body-sm text-secondary">{item.label}</dt>

@@ -51,7 +51,7 @@ export function SectionHeader({
 	action?: ReactNode
 }) {
 	return (
-		<Card border="subtle">
+		<Card padding="md">
 			<div className="hidden min-[1120px]:flex min-[1120px]:items-end min-[1120px]:justify-between min-[1120px]:gap-4">
 				<div className="flex flex-col gap-1">
 					<div className="flex items-center gap-2">

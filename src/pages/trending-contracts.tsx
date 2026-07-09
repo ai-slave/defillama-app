@@ -14,6 +14,7 @@ import { PercentChange } from '~/components/PercentChange'
 import { VirtualTable } from '~/components/Table/Table'
 import { TagGroup } from '~/components/TagGroup'
 import Layout from '~/layout'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { fetchJson } from '~/utils/async'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 
@@ -119,16 +120,16 @@ export default function TrendingContracts() {
 			description="Discover trending smart contracts across blockchains. See the most active contracts in real-time on DefiLlama."
 			canonicalUrl={`/trending-contracts`}
 		>
-			<div className="flex flex-1 flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<div className="flex flex-wrap items-center gap-5 p-3">
-					<h1 className="mr-auto heading-sm">Trending Contracts</h1>
+			<Panel padding="none" className="flex-1">
+				<PanelHeader className="gap-5">
+					<PanelTitle as="h1">Trending Contracts</PanelTitle>
 					<TagGroup selectedValue={value} setValue={setValue} values={TIME_VALUES} />
 					<TagGroup
 						selectedValue={chain}
 						setValue={(val) => startTransition(() => setChain(val))}
 						values={CHAIN_VALUES}
 					/>
-				</div>
+				</PanelHeader>
 				{isLoading ? (
 					<div className="my-auto flex min-h-[360px] flex-1 items-center justify-center">
 						<LocalLoader />
@@ -136,13 +137,13 @@ export default function TrendingContracts() {
 				) : error ? (
 					<p className="my-auto p-3 text-center">Sorry, couldn't fetch trending contracts.</p>
 				) : results.length === 0 ? (
-					<p className="my-auto p-3 text-center text-(--text-secondary)">
+					<p className="my-auto p-3 text-center text-secondary">
 						No trending contracts found for this chain and time range.
 					</p>
 				) : (
 					<VirtualTable instance={instance} />
 				)}
-			</div>
+			</Panel>
 		</Layout>
 	)
 }

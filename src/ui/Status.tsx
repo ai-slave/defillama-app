@@ -20,7 +20,7 @@ export function PanelStatus({ children, variant = 'empty', className, textClassN
 	const role = variant === 'error' ? 'alert' : 'status'
 
 	return (
-		<Panel className={`min-h-[360px] flex-1 items-center justify-center p-2 ${className ?? ''}`.trim()}>
+		<Panel padding="sm" className={`min-h-[360px] flex-1 items-center justify-center ${className ?? ''}`.trim()}>
 			<p
 				role={role}
 				aria-live={variant === 'error' ? undefined : 'polite'}
@@ -40,7 +40,7 @@ type PanelLoadingStatusProps = {
 
 export function PanelLoadingStatus({ children, label = 'Loading', className }: PanelLoadingStatusProps) {
 	return (
-		<Panel className={`min-h-[360px] flex-1 items-center justify-center p-2 ${className ?? ''}`.trim()}>
+		<Panel padding="sm" className={`min-h-[360px] flex-1 items-center justify-center ${className ?? ''}`.trim()}>
 			<div role="status" aria-live="polite" className="flex items-center justify-center">
 				{children}
 				<span className="sr-only">{label}</span>

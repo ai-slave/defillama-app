@@ -148,7 +148,7 @@ function ChainsChartCard({
 	const deferredCharts = React.useDeferredValue(charts)
 
 	return (
-		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allValues.length > 1 ? (
@@ -211,7 +211,7 @@ function TokenLineChartCard({
 	const deferredCharts = React.useDeferredValue(charts)
 
 	return (
-		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allValues.length > 1 ? (
@@ -279,7 +279,7 @@ function TokensBreakdownPieChartCard({
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	return (
-		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allTokens.length > 1 ? (
@@ -326,7 +326,7 @@ function USDInflowsChartCard({
 	const deferredDataset = React.useDeferredValue(dataset)
 
 	return (
-		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				<ChartExportButtons
@@ -375,7 +375,7 @@ function InflowsByTokenChartCard({
 	const deferredCharts = React.useDeferredValue(charts)
 
 	return (
-		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allValues.length > 1 ? (

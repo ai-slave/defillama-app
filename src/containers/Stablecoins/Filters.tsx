@@ -221,7 +221,7 @@ export function PeggedFilters(props: {
 	availablePegTypes?: StablecoinFilterKey[]
 }) {
 	return (
-		<Card border="subtle" padding="sm" className="flex flex-col gap-2">
+		<Card padding="sm" className="flex flex-col gap-2">
 			<ResponsiveFilterLayout desktopClassName="hidden min-h-8 flex-wrap gap-1.5 sm:flex">
 				{(nestedMenu) => <PeggedFiltersDropdowns {...props} nestedMenu={nestedMenu} />}
 			</ResponsiveFilterLayout>

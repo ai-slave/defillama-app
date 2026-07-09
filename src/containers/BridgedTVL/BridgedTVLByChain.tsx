@@ -153,7 +153,7 @@ export function BridgedTVLByChain({
 			<LinkPreviewCard cardName={chainName} token={chain} />
 			<RowLinksWithDropdown links={chains} activeLink={chainName} />
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card border="subtle" className="col-span-2 flex w-full flex-col gap-3 overflow-x-auto xl:col-span-1">
+				<Card padding="md" className="col-span-2 flex w-full flex-col gap-3 overflow-x-auto xl:col-span-1">
 					<h1 className="mb-3 flex items-center gap-2 heading-sm">
 						<TokenLogo name={chain} kind="chain" size={24} alt={`Logo of ${chain}`} />
 						<FormattedName text={chainName + ' Bridged TVL'} fontWeight={700} />
@@ -192,7 +192,7 @@ export function BridgedTVLByChain({
 						</p>
 					) : null}
 				</Card>
-				<Panel className="col-span-2">
+				<Panel padding="none" className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
 							{chartTypes.map(({ type, name }) =>

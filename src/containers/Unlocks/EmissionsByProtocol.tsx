@@ -471,7 +471,7 @@ function TokenAllocationBars({
 	stackColors: Record<string, string>
 }) {
 	return (
-		<Panel className="overflow-hidden">
+		<Panel padding="none" className="overflow-hidden">
 			<PanelHeader>
 				<PanelTitle as="h3">Token Allocation</PanelTitle>
 			</PanelHeader>
@@ -519,7 +519,7 @@ function SourcesNotesSection({
 	return (
 		<div className="flex flex-wrap gap-2 *:flex-1">
 			{notes && notes.length > 0 ? (
-				<Card as="section" padding="sm" border="subtle" className="flex flex-col gap-3">
+				<Card as="section" padding="sm" className="flex flex-col gap-3">
 					<h3 className="heading-xs">Notes</h3>
 					<ul className="flex list-disc flex-col gap-2 pl-5 body-md text-primary">
 						{notes.map((note) => (
@@ -529,7 +529,7 @@ function SourcesNotesSection({
 				</Card>
 			) : null}
 			{futures?.openInterest != null || futures?.fundingRate != null ? (
-				<Card as="section" padding="sm" border="subtle" className="flex flex-col gap-3">
+				<Card as="section" padding="sm" className="flex flex-col gap-3">
 					<h3 className="heading-xs">Futures</h3>
 					<div className="flex flex-col gap-1 body-md text-primary">
 						{futures.openInterest != null ? <p>{`Open Interest: $${formattedNum(futures.openInterest)}`}</p> : null}
@@ -991,7 +991,7 @@ const ChartContainer = ({
 
 			<div className="flex flex-col gap-2">
 				{categoriesFromData.length > 0 && rawChartData.length > 0 ? (
-					<Panel>
+					<Panel padding="none">
 						<ChartPanelToolbar className="justify-end">
 							<h3 className="mr-auto heading-xs">Schedule</h3>
 							{hasGroupAllocationData ? (
@@ -1094,7 +1094,10 @@ const ChartContainer = ({
 
 				<div className="grid grid-cols-2 gap-2">
 					{data.pieChartData?.[dataType] && data.stackColors[dataType] ? (
-						<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+						<Panel
+							padding="none"
+							className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full"
+						>
 							<Suspense fallback={<div className="min-h-[406px]" />}>
 								<PieChart
 									showLegend
@@ -1116,7 +1119,10 @@ const ChartContainer = ({
 					) : null}
 
 					{unlockedPercent > 0 ? (
-						<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+						<Panel
+							padding="none"
+							className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full"
+						>
 							<Suspense fallback={<div className="min-h-[406px]" />}>
 								<PieChart
 									showLegend
@@ -1146,7 +1152,7 @@ const ChartContainer = ({
 			) : null}
 
 			{data.events?.length > 0 ? (
-				<Panel className="w-full overflow-hidden">
+				<Panel padding="none" className="w-full overflow-hidden">
 					<PanelHeader>
 						<PanelTitle as="h3">Unlock Events</PanelTitle>
 					</PanelHeader>

@@ -4,6 +4,9 @@ import * as React from 'react'
 import toast from 'react-hot-toast'
 import { useUserHash } from '~/containers/Subscription/auth'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { Input, inputStyles } from '~/ui/Input'
 
 async function submitSupportRequest(formData: FormData) {
 	try {
@@ -112,24 +115,32 @@ function Support() {
 				<div className="flex flex-col gap-3">
 					<a
 						href="mailto:support@defillama.com"
-						className="flex flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4 text-center hover:bg-(--link-hover-bg)/10"
+						className="flex flex-col gap-1 rounded-[8px] border border-subtle bg-surface p-4 text-center hover:bg-hover-row focus-visible:bg-hover-row"
 					>
 						<span className="font-semibold">Email Us</span>
-						<span className="text-sm text-gray-500">support@defillama.com</span>
+						<span className="body-sm text-secondary">support@defillama.com</span>
 					</a>
 
-					<button
+					<Card
+						padding="md"
+						as="button"
+						type="button"
+						interactive
 						onClick={() => setShowForm((p) => !p)}
-						className="flex flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4 text-center hover:bg-(--link-hover-bg)/10"
+						className="flex flex-col gap-1 text-center"
 					>
 						<span className="font-semibold">Submit a Form</span>
-						<span className="text-sm text-gray-500">Don't want to share your email? Use our anonymous form</span>
-					</button>
+						<span className="body-sm text-secondary">Don't want to share your email? Use our anonymous form</span>
+					</Card>
 
-					<button
+					<Card
+						padding="md"
+						as="button"
+						type="button"
+						interactive
 						onClick={openLiveChat}
 						disabled={!userHash || chatLoading}
-						className="flex flex-col gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4 text-center hover:bg-(--link-hover-bg)/10 disabled:cursor-not-allowed disabled:opacity-50"
+						className="flex flex-col gap-1 text-center disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						<span className="flex items-center justify-center gap-2 font-semibold">
 							{chatLoading ? (
@@ -148,31 +159,23 @@ function Support() {
 								'Live Chat'
 							)}
 						</span>
-						<span className="text-sm text-gray-500">
+						<span className="body-sm text-secondary">
 							{chatLoading ? 'Please wait' : userHash ? 'Chat with us in real time' : 'Available for paying customers'}
 						</span>
-					</button>
+					</Card>
 				</div>
 
 				{showForm ? (
 					isSubmitted ? (
 						<SuccessScreen setIsSubmitted={setIsSubmitted} />
 					) : (
-						<form
-							onSubmit={onSubmit}
-							className="flex w-full flex-col gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3"
-						>
+						<Card as="form" onSubmit={onSubmit} padding="sm" className="flex w-full flex-col gap-4">
 							<div className="flex flex-col gap-1">
 								<label htmlFor="support-name" className="flex items-center gap-1">
 									<span>Name</span>
 									<span className="mt-0.5 text-xs text-gray-500">(Optional)</span>
 								</label>
-								<input
-									id="support-name"
-									type="text"
-									name="name"
-									className="rounded-md border border-(--form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-white"
-								/>
+								<Input id="support-name" type="text" name="name" className="w-full" />
 							</div>
 
 							<div className="flex flex-col gap-1">
@@ -180,12 +183,7 @@ function Support() {
 									<span>Email</span>
 									<span className="mt-0.5 text-xs text-gray-500">(Optional)</span>
 								</label>
-								<input
-									id="support-email"
-									type="email"
-									name="email"
-									className="rounded-md border border-(--form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-white"
-								/>
+								<Input id="support-email" type="email" name="email" className="w-full" />
 							</div>
 
 							<div className="flex flex-col gap-1">
@@ -194,23 +192,19 @@ function Support() {
 									id="support-description"
 									name="body"
 									required
-									className="rounded-md border border-(--form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-white"
+									className={`${inputStyles} min-h-24 w-full`}
 								></textarea>
 							</div>
 
-							<button
-								name="submit-btn"
-								disabled={isPending}
-								className="mt-3 rounded-md bg-(--link-bg) p-3 text-(--link-text) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) disabled:opacity-50"
-							>
+							<Button name="submit-btn" variant="primary" size="md" disabled={isPending} className="mt-3 w-full">
 								{isPending ? 'Submitting...' : 'Submit'}
-							</button>
+							</Button>
 							{error ? <small className="text-center text-red-500">{error.message}</small> : null}
-						</form>
+						</Card>
 					)
 				) : null}
 
-				<p className="text-center text-sm text-gray-500">
+				<p className="text-center body-sm text-secondary">
 					Contacting us via these channels ensures a much faster response compared to discord
 				</p>
 			</div>
@@ -221,7 +215,7 @@ function Support() {
 export default Support
 
 const SuccessScreen = ({ setIsSubmitted }: { setIsSubmitted: (isSubmitted: boolean) => void }) => (
-	<div className="flex w-full flex-col gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-6 text-center">
+	<Card padding="md" className="flex w-full flex-col gap-4 text-center">
 		<div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
 			<svg
 				className="size-8 text-green-600 dark:text-green-400"
@@ -234,14 +228,11 @@ const SuccessScreen = ({ setIsSubmitted }: { setIsSubmitted: (isSubmitted: boole
 			</svg>
 		</div>
 		<h1 className="text-2xl font-semibold text-green-600 dark:text-green-400">Success!</h1>
-		<p className="text-gray-600 dark:text-gray-300">
+		<p className="text-secondary">
 			Your support request has been submitted successfully. We'll get back to you as soon as possible.
 		</p>
-		<button
-			onClick={() => setIsSubmitted(false)}
-			className="mt-4 rounded-md bg-(--link-active-bg) p-3 text-white hover:opacity-90"
-		>
+		<Button variant="primary" size="md" onClick={() => setIsSubmitted(false)} className="mt-4 w-full">
 			Submit Another Request
-		</button>
-	</div>
+		</Button>
+	</Card>
 )

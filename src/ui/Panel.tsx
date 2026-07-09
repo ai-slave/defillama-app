@@ -10,7 +10,8 @@ import type { ComponentPropsWithoutRef, ElementType } from 'react'
            min-h-8); dense control clusters use a 6px gap.
    Body:   charts sit flush and keep their own grid padding; non-chart
            content either brings its own padding or uses an explicit Panel
-           padding variant for panel-owned content.
+           padding choice for panel-owned content.
+           Callers always choose padding explicitly; there is no default.
 
    `className` is for LAYOUT PLACEMENT ONLY (col-span, min-h, …), same
    contract as Button/Card.
@@ -19,7 +20,7 @@ import type { ComponentPropsWithoutRef, ElementType } from 'react'
 type PanelPadding = 'none' | 'sm' | 'md'
 
 type PanelProps = {
-	padding?: PanelPadding
+	padding: PanelPadding
 } & Omit<ComponentPropsWithoutRef<'div'>, 'className'> & {
 		className?: string
 	}
@@ -30,7 +31,7 @@ const PANEL_PADDING: Record<PanelPadding, string> = {
 	md: ' p-4'
 }
 
-export function Panel({ className, padding = 'none', ...props }: PanelProps) {
+export function Panel({ className, padding, ...props }: PanelProps) {
 	return (
 		<div
 			className={`relative flex flex-col rounded-[8px] border border-subtle bg-surface${PANEL_PADDING[padding]} ${className ?? ''}`.trim()}

@@ -6,6 +6,8 @@ import type {
 } from '~/components/ECharts/types'
 import { SERVER_URL } from '~/constants'
 import Layout from '~/layout'
+import { PageTitleStrip } from '~/ui/EntityTitleStrip'
+import { Panel } from '~/ui/Panel'
 import { getDominancePercent, getNDistinctColors } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -112,11 +114,9 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceDataset, dom
 			canonicalUrl={`/languages`}
 			pageName={pageName}
 		>
-			<h1 className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 heading-sm">
-				Breakdown by Smart Contract Languages
-			</h1>
+			<PageTitleStrip title="Breakdown by Smart Contract Languages" />
 
-			<div className="relative rounded-md border border-(--cards-border) bg-(--cards-bg)">
+			<Panel padding="none" className="relative">
 				<React.Suspense fallback={<div className="h-[406px]" />}>
 					<MultiSeriesChart2
 						dataset={tvlDataset}
@@ -127,8 +127,8 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceDataset, dom
 						hideDefaultLegend={false}
 					/>
 				</React.Suspense>
-			</div>
-			<div className="relative rounded-md border border-(--cards-border) bg-(--cards-bg)">
+			</Panel>
+			<Panel padding="none" className="relative">
 				<React.Suspense fallback={<div className="h-[406px]" />}>
 					<MultiSeriesChart2
 						dataset={dominanceDataset}
@@ -139,9 +139,9 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceDataset, dom
 						hideDefaultLegend={false}
 					/>
 				</React.Suspense>
-			</div>
+			</Panel>
 
-			<div className="relative rounded-md border border-(--cards-border) bg-(--cards-bg)">
+			<Panel padding="none" className="relative">
 				<React.Suspense fallback={<div className="h-[406px]" />}>
 					<MultiSeriesChart2
 						dataset={osDataset}
@@ -151,7 +151,7 @@ export default function Protocols({ tvlDataset, tvlCharts, dominanceDataset, dom
 						title="Open/Closed Source breakdown of solana protocols"
 					/>
 				</React.Suspense>
-			</div>
+			</Panel>
 		</Layout>
 	)
 }

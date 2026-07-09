@@ -216,7 +216,7 @@ export const OracleOverview = ({
 			<RowLinksWithDropdown links={chainLinks} activeLink={chain ?? 'All'} />
 
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card border="subtle" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
+				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					<h1 className="heading-sm">{displayOracle}</h1>
 					<p className="flex flex-col">
 						<span className="text-(--text-label)">Total Value Secured (USD)</span>
@@ -230,7 +230,7 @@ export const OracleOverview = ({
 					</p>
 				</Card>
 
-				<Panel className="col-span-2">
+				<Panel padding="none" className="col-span-2">
 					{isFetchingExtraSeries ? (
 						<div
 							role="status"
@@ -259,7 +259,7 @@ export const OracleOverview = ({
 				</Panel>
 			</div>
 
-			<Suspense fallback={<Panel style={{ minHeight: `${tableData.length * 50 + 200}px` }} />}>
+			<Suspense fallback={<Panel padding="none" style={{ minHeight: `${tableData.length * 50 + 200}px` }} />}>
 				<TableWithSearch
 					data={tableData}
 					columns={protocolColumns}

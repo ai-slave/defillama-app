@@ -28,7 +28,7 @@ interface IDropdownMenusProps {
 export function RaisesFilters(props: IDropdownMenusProps) {
 	const HeadingTag = props.headingAs ?? 'h2'
 	return (
-		<Card border="subtle" padding="sm" className="flex flex-col gap-2">
+		<Card padding="sm" className="flex flex-col gap-2">
 			<HeadingTag className="heading-xs">{props.header}</HeadingTag>
 			<RaisesSearch list={props.investors} />
 			<ResponsiveFilterLayout>{(nestedMenu) => <Filters {...props} nestedMenu={nestedMenu} />}</ResponsiveFilterLayout>

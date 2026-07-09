@@ -68,7 +68,8 @@ This file tracks design-system audit notes before code changes are made.
 ### Resolved Owner Decisions From 2026-07-07
 
 - Keep `Panel` as a separately named contract for true titled chart/table shells: surface, header, divider, body/chart slot, 32px controls, and no chart visual changes. Do not collapse every panel into a generic card.
-- Use the `Card` border variant: `border="medium" | "subtle"`. Use `medium` for repeated/directory tiles and `subtle` for protocol/detail surfaces where Figma uses the lighter stroke.
+- Use fixed `Card` outer chrome: `bg-surface border-subtle rounded-[8px]`. Repeated/directory tiles use the same subtle page-surface stroke as protocol/detail cards; `border-medium` is reserved for control/elevated chrome.
+- Require explicit `Card`/`Panel` padding at every call site. Density is intentional (`none`, `sm`, `md`, or Card `strip`), not hidden behind primitive defaults.
 - Keep the title-strip primitive phased. Current adopters include protocol TVL, Treasury, Active Loans, Forks, CEX assets/stablecoins, chain overview empty/title shell, bridge protocol overview, and LiquidationsV2 summary. Review unlocks/governance/LST separately because they need extra metadata/action slots.
 - Use 32px toolbar controls. Use 6px inside dense chart/table toolbar control clusters; use 8px for toolbar padding, page/panel/card gaps, and between larger control groups.
 - Keep `PanelHeader` as the taller Figma-derived titled-panel header. Add/use a separate compact chart/table toolbar recipe for route-specific inline chart controls.
@@ -91,19 +92,83 @@ This file tracks design-system audit notes before code changes are made.
   adopters. Future dialog migrations should preserve the same boundary: do not reuse
   popover drawer helpers for task dialogs; share dialog chrome through `src/ui/Dialog.tsx`.
 
+### Shared Control API Explicitness Audit
+
+- Route/page: Shared controls used across dense pages, route-family shells, filters, and
+  excluded/quarantined products.
+- Component/file: `src/components/Filters/FilterBetweenRange.tsx`,
+  `src/ui/Status.tsx`, `src/ui/Checkbox.tsx`, `src/ui/EntityTitleStrip.tsx`,
+  `src/ui/IconHitTarget.tsx`, `src/ui/Button.tsx`,
+  `src/components/Select/types.ts`, `src/components/TagGroup.tsx`,
+  `src/components/Select/Select.tsx`, and
+  `src/components/Select/SelectWithCombobox.tsx`.
+- Figma node(s): Not a new visual decision. This is an API-contract cleanup following the
+  Card/Panel decision that surface density and chrome choices should be explicit.
+- Current issue: Several shared controls still hide meaningful styling or semantic
+  choices behind defaults, while a few expose props that are dead or unused. This creates
+  future drift similar to the old Card border/padding default.
+- Shared usage/context:
+  - `FilterBetweenRange` has a dead `name` prop, local trigger style variants, default
+    `variant="primary"`, and default `size="sm"`.
+  - `PanelStatus` defaults to `variant="empty"` even though empty/error status behavior
+    changes text color and ARIA.
+  - All audited `Checkbox` callers already pass `variant`, and the indicator style map
+    duplicates the same class for every variant.
+  - `EntityTitleStrip` exposes `titleClassName`, but migrated strip callers do not use it.
+  - `IconHitTarget` as a component is unused; only `tableIconHitTargetStyles` is imported
+    once.
+  - `Button` has many valid `variant="secondary"` defaults, but `size` is nearly always
+    explicit and can be tightened first.
+  - `selectTriggerStyles` still defaults both `variant` and `size` for direct helper
+    calls.
+  - `TagGroup` defaults `variant` and `size` across most callers and redundantly redeclares
+    a local `style` prop type already provided by `React.ComponentProps<'div'>`.
+  - `Select` / `SelectWithCombobox` have the largest blast radius and include excluded
+    surfaces; tighten in-scope call sites before changing global prop types.
+- Special cases: Do not sweep ProDashboard, LlamaAI, Yields, account/subscription,
+  Articles, Downloads, investor dashboards, or other quarantined products as a side
+  effect. Shared component prop tightening that would type-break those products needs a
+  separate compat/pinning step first.
+- Surrounding layout impact: The intended follow-up should be behavior-neutral. It should
+  add explicit props or remove dead props without changing trigger classes, popover
+  placement, mobile drawer behavior, status panel dimensions, or chart/table layout.
+- Grid/flex/layout notes: This is not a layout redesign. The cleanup should preserve
+  existing class recipes while making density/variant choices visible at call sites.
+- Hardcoded hacks to remove later: Local trigger class maps in `FilterBetweenRange` if they
+  can be replaced by `selectTriggerStyles`; duplicate checkbox indicator maps; unused
+  title/icon-hit-target API.
+- Decision: Keep this out of the dense Card/Panel branch. Use a dedicated
+  `shared-control-api-tightening` branch so review can focus on explicitness and
+  excluded-surface boundaries.
+- Proposed direction:
+  1. `FilterBetweenRange`: remove dead `name`; require `variant` and `size`.
+  2. `PanelStatus`: require `variant`.
+  3. `Checkbox`: require `variant`; collapse duplicate indicator styles.
+  4. `EntityTitleStrip`: remove unused `titleClassName`.
+  5. `IconHitTarget`: delete the unused component or migrate the single style-string
+     caller.
+  6. `Button`: require `size`; defer requiring `variant`.
+  7. `selectTriggerStyles`: require `variant` and `size`.
+  8. `TagGroup`: require `variant` and `size`; remove redundant local `style` prop.
+  9. `Select` / `SelectWithCombobox`: make in-scope callers explicit first, then tighten
+     shared types only after excluded surfaces are pinned.
+- Verification needed: Typecheck after each tightening step, then lint and token lint for
+  any class-string changes. Review excluded-surface compile impact before making shared
+  `Select` / `SelectWithCombobox` props required.
+
 ### Panel vs Card vs Entity Title Strip Decision
 
 - Route/page: `/protocol/tvl/:protocol`, `/protocol/:protocol`, `/protocol/unlocks/:protocol`, `/unlocks/:protocol`, CEX asset/stablecoin protocol-like pages, and any page using a titled chart/table shell.
 - Component/file: Current candidates include `src/ui/Panel.tsx`, `src/ui/Card.tsx`, protocol TVL/Treasury/Active Loans/Forks title strips, unlocks `TokenHeader`, CEX title strips, and protocol/chain header cards.
 - Figma node(s): `6183:148797` for the titled chart panel; `6183:148786` for the entity title strip. User also linked protocol page nodes `6183:148773` and `6183:312589` as reference pages.
-- Current issue: The distinction between Card and Panel was not sufficiently documented when `EntityTitleStrip`, `Card` border variants, and icon hit-target helpers were introduced. This note records the resolved boundary so later migrations do not broaden those primitives beyond their intended contexts.
+- Current issue: The distinction between Card and Panel was not sufficiently documented when `EntityTitleStrip`, the early Card border variant, and icon hit-target helpers were introduced. This note records the resolved boundary so later migrations do not broaden those primitives beyond their intended contexts.
 - Figma evidence checked:
   - `6183:148797` panel: `bg-surface`, `border-subtle`, 8px radius, clipped shell; a real header row with `px-4 py-3`, `border-very-subtle`, 18/22 semibold title, and 32px header controls. Code reconciles the header control cluster to the app-wide 6px dense toolbar gap; chart slot is a separate body area.
   - `6183:148786` entity title strip: `bg-surface`, `border-subtle`, 8px radius, `p-2`; 28px logo, 12px icon/title gap, 20/28 semibold title; no panel header row or chart slot.
-- What is not proven yet: A generic app-wide “Card vs Panel” rule for every surface. The Figma evidence proves a titled chart/table panel and an entity title strip are different. It does not by itself prove that all data cards need a new `Card border` variant or that every local shell should immediately move to `Panel`.
+- What is not proven yet: A generic app-wide “Card vs Panel” rule for every surface. The Figma evidence proves a titled chart/table panel and an entity title strip are different. It does not by itself prove that every local shell should immediately move to `Panel`.
 - Shared usage/context:
   - `Panel` currently encodes chart/table shell behavior.
-  - `Card` currently encodes repeated content/data surfaces with `border-medium`.
+  - `Card` currently encodes repeated content/data surfaces with fixed `border-subtle`.
   - Many current page files still hand-roll `rounded/border/bg/padding` shells, and those need mapping before adding or changing primitives.
   - Unlocks title/header is not just logo + title; it can include token price, percent change, and a separate stats strip.
   - Treasury and CEX asset headers can include an action/toggle on the right.
@@ -111,7 +176,7 @@ This file tracks design-system audit notes before code changes are made.
 - Surrounding layout impact: A title primitive must support optional right-side actions and inline metadata without forcing all title strips into one rigid layout. A panel primitive must not alter chart canvas placement as a side effect.
 - Grid/flex/layout notes: Title strips are candidates for a grid/flex primitive with slots: icon, title, inline metadata, actions. The implementation should be driven by the audited usages, not by a generic assumption that every header is identical.
 - Hardcoded hacks to remove later: Repeated local shells using `rounded-lg`/legacy border variables once their contexts are confirmed. Do not remove them until the replacement primitive covers their actual children/actions.
-- Decision: Keep `Panel` as the chart/table shell contract, keep the `Card` border variant for repeated/detail surfaces, and keep title strips as separate standalone title surfaces. `Panel` is only for titled chart/table shells with header/body behavior.
+- Decision: Keep `Panel` as the chart/table shell contract, keep `Card` as the fixed subtle content/detail surface, and keep title strips as separate standalone title surfaces. `Panel` is only for titled chart/table shells with header/body behavior.
 - Proposed direction: Continue targeted migrations through the existing primitives. Do not broaden `Panel` into non-chart title/detail cards, and do not migrate unlocks/governance/LST until their extra metadata/action slots are validated.
 - Verification needed: For each candidate route, capture current live dimensions, Figma node context if available, children/actions, text semantics, and whether a shared primitive would change chart/card surrounding layout.
 
@@ -202,7 +267,7 @@ Current classification of the in-flight pass:
 - Grid/flex/layout notes: Use `col-span-full` for chart-grid-wide states so the markup survives responsive grid changes. Single-page states can rely on `flex-1`.
 - Hardcoded hacks to remove later: remaining CEX market/date-filter legacy `rounded-md border-(--cards-border) bg-(--cards-bg)` shells once that route-family migration is scoped.
 - Decision: Small fix pass only for broken/inconsistent protocol-family loading/error/no-data states, followed by a focused CEX assets/stablecoins shell pass.
-- Proposed direction: Keep `Panel` for protocol status shells and use `EntityTitleStrip`/`PanelStatus`/`PanelLoadingStatus`/`Card border="subtle"` for the migrated CEX assets/stablecoins shell pieces.
+- Proposed direction: Keep `Panel` for protocol status shells and use `EntityTitleStrip`/`PanelStatus`/`PanelLoadingStatus`/`Card` for the migrated CEX assets/stablecoins shell pieces.
 - Verification needed: Format/type verification now; live checks still required for the broader panel/title-strip migrations and CEX chart/market shell pieces.
 
 ### Home Include In TVL Popover Outer Padding
@@ -479,11 +544,11 @@ Current classification of the in-flight pass:
 - Route/page: Home/chain, protocol overview/subpages, cex assets/stablecoins, stablecoins, bridges, DAT, token, RWA, LST, liquidations, adapter metrics, oracles, markets, MCP, governance, unlocks.
 - Component/file: `src/ui/Panel.tsx`, `src/ui/Card.tsx`, `src/components/Table/TableWithSearch.tsx`, `src/containers/ChainOverview/ChainChartPanel.tsx`, `src/containers/ProtocolOverview/ProtocolChartPanel.tsx`, `src/containers/Cexs/CexChartPanel.tsx`, and route-local chart/stat/table shells.
 - Figma node(s): Home/chain `6183:292119`, protocol `6183:312589/311951`, protocol TVL `6183:153039/148773/148797/148781`, unlocks `6298:54868/6183:355432`, plus route-family frames still queued in `design-sweep-todo.md`.
-- Current issue: The same visual layout language appears across many pages, but code is split between `Panel`, `Card`, and local shells using `rounded-md border border-(--cards-border) bg-(--cards-bg)`, `rounded-lg border-subtle bg-surface`, `p-3/gap-3`, or fixed/min-height hacks. Future changes should propagate through shared recipes instead of re-solving home/protocol in isolation.
+- Current issue: The same visual layout language appears across many pages, but code is split between `Panel`, `Card`, and local shells using `rounded-md border border-(--cards-border) bg-(--cards-bg)`, `rounded-lg border-subtle bg-surface`, `p-3/gap-3`, or fixed/min-height hacks. Future changes should propagate through shared recipes instead of re-solving home/protocol in isolation. Figma-backed decision: `Card` and `Panel` share the same `bg-surface border-subtle rounded-[8px]` outer chrome; `Panel` is for chart/table structure, not a stronger border.
 - Already aligned: Protocol tab chart pages mostly use `Panel` (`protocol/tvl`, `treasury`, `fees`, `dexs`, `options`, `perps`, `active-loans`, `forks`, `stablecoins`, aggregator tabs), governance project and unlock emissions use `Panel`, CEX chart cards use `CexChartPanel` which wraps `Panel`, and DAT overview/by-asset have partial `Panel` adoption.
 - Shared source to update first: `TableWithSearch` now routes through `TableToolbar`, so remaining table-toolbar drift should be fixed by tightening shared toolbar recipes and call-site group wrappers instead of reintroducing local `gap-3 p-3` shells. Desired table toolbar recipe: wrapper padding 8px, dense control gap 6px, group gap 8px, controls 32px from primitives, no fixed wrapper height, title `label-md`/`heading-xs` based on context.
 - Must-migrate route bucket: Stablecoin overview/by-chain pages, Bridges overview/protocol/transactions, Token overview/markets/borrow/yields/liquidations, RWA asset/perps/dashboard/overview charts, LST, LiquidationsV2, AdapterMetrics, Oracles, Markets, MCP, and DAT Company still have local shells or legacy `--cards-*` surfaces. These are similar enough to inherit the same panel/card/table rules and should be updated, not left as acceptable one-off implementations. Do the work in route-sized chunks with live checks because several combine stats, charts, tables, tabs, and mobile-specific layouts.
-- Shared abstraction boundary: Avoid a giant generic "analytics page shell" abstraction. Prefer a small set of concrete primitives/composites: `Panel` for chart/table panels, `Card` for stat/detail cards, a shared chart-toolbar recipe/composite, `TableWithSearch` for table shells/toolbars, and tiny icon hit-target helpers. If a route has a repeated chart+stats shape, migrate it to those primitives or a narrowly named route-family wrapper like `CexChartPanel`, not another local `div` shell.
+- Shared abstraction boundary: Avoid a giant generic "analytics page shell" abstraction. Prefer a small set of concrete primitives/composites: `Panel` for chart/table panels, `Card` for stat/detail cards, a shared chart-toolbar recipe/composite, `TableWithSearch` for table shells/toolbars, and tiny icon hit-target helpers. If a route has a repeated chart+stats shape, migrate it to those primitives or a narrowly named route-family wrapper like `CexChartPanel`, not another local `div` shell. `border-medium` belongs to controls, inputs, popovers/dialogs, chips/badges, nav dividers, and tooltip/elevated chrome; normal page cards/panels stay subtle.
 - Special cases: ProDashboard, investor relations dashboard surfaces, LlamaAI, yields, account/subscription remain untouched. Raises/investor list-like pages are in scope unless separately quarantined. Token-rights shell, typography, spacing, and metadata can modernize when green/warning pills and warnings remain pixel-identical. Dense card secondary actions and popover rows stay compact even when surrounding toolbar controls are 32px.
 - Surrounding layout impact: Changing shared table or chart shell padding will move many first-viewport layouts. The safe model is: page stack `gap-2`; panel/card surfaces `rounded-[8px] border-subtle bg-surface`; dense toolbar/header rows use `p-2`, 6px control gaps, and 8px group gaps; `PanelHeader` remains for true titled chart/table panels; controls are 32px by primitive min-height/padding; stat/data cards use `p-2`; protocol overview info/methodology detail cards use `Card padding="sm"` with `gap-3`; only explicitly roomy route-specific detail cards use `p-4`.
 - Grid/flex/layout notes: Prefer page-level grids with `gap-2` for card/table/chart placement. Use flex inside toolbars only for wrapping and overflow behavior; avoid margin-driven vertical rhythm. Convert obvious two-column shell layouts to grid where it reduces manual `mr-auto`/`ml-auto` placement, but do not rewrite overflow measurement components like `RowLinksWithDropdown`.
@@ -514,14 +579,14 @@ Current classification of the in-flight pass:
 - Figma node(s): TVL title strip `6183:148786`; TVL page frame `6183:148773`; TVL panel instance `6183:148797`; protocol overview page frame `6183:312589`.
 - Current issue: The `/protocol/tvl/:protocol` title strip should remain a standalone title surface, not `PanelHeader`. Figma `6183:148786` is a standalone title card: 8px surface radius, `bg-surface`, `border-subtle`, `p-2`, 28px logo, 12px logo/title gap, and a 20px/28px semibold title. `PanelHeader` is for chart/table panels: it adds a bottom divider and uses `PanelTitle` at 18px/22px.
 - Current TVL panel status: The TVL title strip is migrated to `EntityTitleStrip`, and the TVL breakdown chart cards are migrated to `Panel`, `PanelHeader`, and `PanelTitle`, which matches Figma `6183:148797` for true chart panels. Keep that direction. The remaining TVL questions are live title-strip verification, panel grid gaps, and chart body padding/height verification.
-- Current protocol overview status: The summary/key-metrics card, the chart card wrapper, the mobile header/key-metrics wrappers, and `IncomeStatement` still use local `rounded-lg border border-subtle bg-surface p-*` shells. They are not all the same component. The left summary/key-metrics surface is a dense card; the main chart area is a chart-card shell with an inline toolbar; `AdditionalInfo` sections have been migrated to `Card padding="sm" border="subtle"` with tertiary no-colon metadata labels and neutral md action buttons; `IncomeStatement` is closest to a panel/table section with a header/control row.
+- Current protocol overview status: The summary/key-metrics card, the chart card wrapper, the mobile header/key-metrics wrappers, and `IncomeStatement` still use local `rounded-lg border border-subtle bg-surface p-*` shells. They are not all the same component. The left summary/key-metrics surface is a dense card; the main chart area is a chart-card shell with an inline toolbar; `AdditionalInfo` sections have been migrated to `Card padding="sm"` with tertiary no-colon metadata labels and neutral md action buttons; `IncomeStatement` is closest to a panel/table section with a header/control row.
 - Shared usage/context: The same title-card/header-card pattern appears on multiple protocol subpages, CEX pages, bridge protocol overview, chain overview, and LiquidationsV2 summary. Remaining local `rounded-lg border border-subtle bg-surface` shells on other analytics pages should be mapped to primitives/composites rather than patched per file.
 - Special cases: ProDashboard, investor relations dashboard surfaces, LlamaAI, yields, account/subscription stay untouched. Raises/investor list-like pages are in scope unless separately quarantined. Token-rights remains a special pixel-stability surface. Dense card secondary actions can stay compact; chart/table/protocol action controls stay 32px.
 - Surrounding layout impact: The TVL title strip target is 44px with `p-2`/28px logo and needs live verification. Migrating overview shells to primitives can change internal gaps because current overview cards use large `gap-6` stacks inside `p-2` surfaces.
 - Grid/flex/layout notes: The TVL page frame shows chart panel columns with 16px horizontal gaps and 12px vertical gaps, while the current code uses `gap-2` and the broader owner decision prefers 8px analytics-page rhythm unless a page-specific visual check proves the wider Figma spacing is needed. The protocol overview main grid already uses `gap-2`; internal card stacks should be audited so `gap-6` is intentional content grouping, not a shell-spacing substitute. Figma `6183:312146`, `6183:312158`, and `6183:312167` use an 8px card inset with a 12px internal stack for protocol/detail cards, including 12px gaps before action rows; this is a card-internal rule, not a page-grid rule.
 - Hardcoded hacks to remove: Continue removing hand-rolled title-card classes where `EntityTitleStrip` covers the slot. Replace repeated protocol overview card shells with `Card` or narrowly named composites. Avoid using `Panel` for non-panel title/detail cards just because the border/radius/background match.
 - Decision: Use the standalone `EntityTitleStrip`/`PageTitleStrip` primitive instead of forcing title strips into `Panel`. It encodes 8px radius, `border-subtle`, `bg-surface`, `p-2`, 28px logo support, 12px media/title gap, and a 20px/28px heading.
-- Decision: Use the `Card` `border="subtle" | "medium"` variant so protocol/detail surfaces can migrate without keeping local shell classes.
+- Decision: Use fixed `Card` chrome so protocol/detail surfaces can migrate without keeping local shell classes.
 - Decision: Keep TVL panel grid at the global 8px analytics-page rhythm for now. The Figma `16px` column / `12px` row spacing is documented, but should not be adopted without live comparison.
 - Decision: Protocol overview main chart card should become a chart-card composite or use a `Card` shell plus chart-toolbar recipe. It should not become `PanelHeader`, because the overview chart toolbar is inline above the chart rather than a titled panel header.
 - Decision: Protocol header action icons should use the same explicit icon hit-target helper as table/card icons. Current website/bookmark actions use small `p-0.5` padding; the desired pattern is visually aligned icons with a larger hit area, likely `p-1 -m-1`, applied at the action site.
@@ -567,5 +632,5 @@ Current classification of the in-flight pass:
 - Equities list/ticker/filings/onchain/financial surfaces moved toward `Panel`/`Card`/`TableToolbar`; Equities filter dialog moved to shared dialog/popover/card recipes. Remaining Equities debt is inside the financial table cell styling and any live route-specific spacing checks.
 - MarketMakers drawer chrome moved to shared surface/backdrop/close-button semantics, and the refine timeframe control now uses the segmented-control recipe. Documentation content still has old prose/table tokens and should be a separate content-layout pass.
 - Top metric cards on Token overview, RWA, Hacks, Raises, Bridges, Chain overview, Equities, AdapterMetrics, and Extra TVL now follow the two-content rule: standalone headline metrics use `text-(--text-label)` labels and `font-jetbrains text-2xl font-semibold` values, while secondary rows stay compact row content (`body-md`/`body-sm` labels with `mono-md`/`mono-md-bold` values). Do not promote secondary rows to the headline style.
-- Token/unlocks and RWA notes-prose cards are the same detail-card family as protocol/stablecoin information and methodology cards: `Card padding="sm" border="subtle"`, 12px internal stack, `heading-xs`, and readable `body-md text-primary` body/list content.
+- Token/unlocks and RWA notes-prose cards are the same detail-card family as protocol/stablecoin information and methodology cards: `Card padding="sm"`, 12px internal stack, `heading-xs`, and readable `body-md text-primary` body/list content.
 - Unlocks allocation/events follow the Figma titled-panel split from `6291:39042` and `6291:39214`: section headings stay in `PanelHeader`, content lives in a compact 12px padded slot, and pagination/content is not allowed to add vertical wrapper padding around the cards. The event card itself follows `6298:39347` and is the current documented `Card radius="large"` exception: 12px radius, 16px padding, subtle border, body-md primary lines, body-sm secondary lines, compact countdown pill, and preserved countdown/calendar behavior. Allocation rows keep the app's readable floor (body-md labels, mono-md percentages, 6px progress bars) while preserving existing category colors.

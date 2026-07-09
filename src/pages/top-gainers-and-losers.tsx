@@ -20,6 +20,7 @@ import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 import { TVL_SETTINGS_KEYS_SET, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import Layout from '~/layout'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { formattedNum, getPercentChange, slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -64,7 +65,7 @@ const topGainersAndLosersColumns = [
 					<span className="flex items-center gap-1 overflow-hidden">
 						<BasicLink
 							href={`/protocol/${slug(value)}`}
-							className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+							className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 						>{`${value}`}</BasicLink>
 						{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
 					</span>
@@ -219,15 +220,19 @@ export default function TopGainersLosers({ protocols }: InferGetStaticPropsType<
 			canonicalUrl={`/top-gainers-and-losers`}
 		>
 			<h1 className="heading-sm">Top Gainers and Losers</h1>
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<h2 className="p-3 heading-sm">Top Gainers</h2>
+			<Panel padding="none">
+				<PanelHeader>
+					<PanelTitle>Top Gainers</PanelTitle>
+				</PanelHeader>
 				<TopGainersAndLosersTable key="gainers-change_1d" data={topGainers} sortingState={GAINERS_SORTING_STATE} />
-			</div>
+			</Panel>
 
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<h2 className="p-3 heading-sm">Top Losers</h2>
+			<Panel padding="none">
+				<PanelHeader>
+					<PanelTitle>Top Losers</PanelTitle>
+				</PanelHeader>
 				<TopGainersAndLosersTable key="losers-change_1d" data={topLosers} sortingState={LOSERS_SORTING_STATE} />
-			</div>
+			</Panel>
 		</Layout>
 	)
 }

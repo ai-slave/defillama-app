@@ -66,7 +66,7 @@ function MultiSeriesChartCard({
 	const exportTitle = `${protocolName} ${title}`
 
 	return (
-		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				{allSeries.length > 1 ? (
@@ -128,7 +128,7 @@ function TokensBreakdownPieChartCard({
 	const exportTitle = `${protocolName} Active Loans Tokens Breakdown (USD)`
 
 	return (
-		<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">Active Loans Tokens Breakdown (USD)</h2>
 				{allTokens.length > 1 ? (

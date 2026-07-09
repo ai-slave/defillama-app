@@ -169,7 +169,7 @@ export default function GovernanceProject({
 				) : null}
 
 				<div className="grid grid-cols-2 gap-2">
-					<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+					<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 						<React.Suspense fallback={<div className="min-h-[406px]" />}>
 							<MultiSeriesChart2
 								title="Activity"
@@ -185,7 +185,7 @@ export default function GovernanceProject({
 							/>
 						</React.Suspense>
 					</Panel>
-					<Panel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+					<Panel padding="none" className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 						<React.Suspense fallback={<div className="min-h-[406px]" />}>
 							<MultiSeriesChart2
 								title="Max Votes"

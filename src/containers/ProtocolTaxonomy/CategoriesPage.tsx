@@ -180,7 +180,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 
 	return (
 		<>
-			<Panel>
+			<Panel padding="none">
 				<ChartPanelToolbar className="justify-end">
 					<h1 className="mr-auto heading-xs">TVL by Category</h1>
 					<SelectWithCombobox
@@ -223,7 +223,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 				)}
 			</Panel>
 
-			<React.Suspense fallback={<Panel style={{ minHeight: `${categories.length * 50 + 200}px` }} />}>
+			<React.Suspense fallback={<Panel padding="none" style={{ minHeight: `${categories.length * 50 + 200}px` }} />}>
 				<TableWithSearch
 					data={finalCategoriesList}
 					columns={categoriesColumns}

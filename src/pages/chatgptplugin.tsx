@@ -1,4 +1,6 @@
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
+import { PageTitleStrip } from '~/ui/EntityTitleStrip'
 
 function PluginPage() {
 	return (
@@ -7,22 +9,20 @@ function PluginPage() {
 			description="Access DefiLlama DeFi data through the ChatGPT plugin. Query TVL, protocol stats, chain data, and more using natural language."
 			canonicalUrl={`/chatgptplugin`}
 		>
-			<h1 className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 heading-sm">
-				DefiLlama ChatGPT Plugin
-			</h1>
+			<PageTitleStrip title="DefiLlama ChatGPT Plugin" />
 
-			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
+			<Card as="section" padding="sm" className="flex flex-col gap-4">
 				<h2 className="heading-xs">About</h2>
-				<hr className="border-black/20 dark:border-white/20" />
+				<hr className="border-subtle" />
 				<p>
 					DefiLlama is the most popular DeFi (Decentralized Finance) data aggregator. The DefiLlama ChatGPT plugin
 					retrieves current and historical data on blockchains, DeFi applications and bridges.
 				</p>
-			</div>
+			</Card>
 
-			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
+			<Card as="section" padding="sm" className="flex flex-col gap-4">
 				<h2 className="heading-xs">Best Practices</h2>
-				<hr className="border-black/20 dark:border-white/20" />
+				<hr className="border-subtle" />
 				<p>To achieve the best results from the plugin, follow these steps:</p>
 				<p>1. Ask "What features do you have?" to see the most recent feature list.</p>
 				<p>
@@ -39,7 +39,7 @@ function PluginPage() {
 				<p>
 					If you have any feedback or bug reports, please log them here:{' '}
 					<a
-						className="text-(--blue) hover:underline"
+						className="text-link hover:underline"
 						target="_blank"
 						rel="noopener noreferrer"
 						href="https://form.typeform.com/to/tJkEGYxQ"
@@ -47,11 +47,11 @@ function PluginPage() {
 						Feedback Form
 					</a>
 				</p>
-			</div>
+			</Card>
 
-			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
+			<Card as="section" padding="sm" className="flex flex-col gap-4">
 				<h2 className="heading-xs">Legal</h2>
-				<hr className="border-black/20 dark:border-white/20" />
+				<hr className="border-subtle" />
 				<p>
 					The DefiLlama ChatGPT plugin does not sell user data. The plugin does not collect any identifying user data.
 				</p>
@@ -66,7 +66,7 @@ function PluginPage() {
 					</a>{' '}
 					to learn more about how they handle data.
 				</p>
-			</div>
+			</Card>
 		</Layout>
 	)
 }

@@ -27,6 +27,7 @@ import { CHAINS_CATEGORY_GROUP_SETTINGS, useLocalStorageSettingsManager } from '
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
 import type { IFormattedDataWithExtraTvl } from './types'
@@ -114,8 +115,8 @@ export function ChainsByCategoryTable({
 		return CHAINS_CATEGORY_GROUP_SETTINGS.flatMap((key) => (groupTvls[key.key] ? [key.key] : []))
 	}, [groupTvls])
 
-	return (
-		<div className={`isolate ${borderless ? '' : 'rounded-md border border-(--cards-border) bg-(--cards-bg)'}`}>
+	const tableContent = (
+		<>
 			<TableToolbar className="justify-end">
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search chains</span>
@@ -162,7 +163,15 @@ export function ChainsByCategoryTable({
 				</div>
 			</TableToolbar>
 			<VirtualTable instance={instance} useStickyHeader={useStickyHeader} />
-		</div>
+		</>
+	)
+
+	return borderless ? (
+		<div className="isolate">{tableContent}</div>
+	) : (
+		<Panel padding="none" className="isolate">
+			{tableContent}
+		</Panel>
 	)
 }
 
@@ -269,7 +278,7 @@ const columns = [
 					<TokenLogo name={value} kind="chain" alt={`Logo of ${value}`} />
 					<BasicLink
 						href={`/chain/${slug(value)}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 					>
 						{value}
 					</BasicLink>

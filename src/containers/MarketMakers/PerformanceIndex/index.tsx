@@ -42,7 +42,7 @@ export function PerformanceIndex(props: PerformanceIndexProps) {
 					/>
 					<Podium rows={performanceRows} aggregated={aggregated} />
 					<Superlatives aggregated={aggregated} period={period} />
-					<Panel>
+					<Panel padding="none">
 						<PanelHeader className="justify-between">
 							<h2 className="heading-xs">Ranking</h2>
 							<div className="flex items-center gap-1.5">

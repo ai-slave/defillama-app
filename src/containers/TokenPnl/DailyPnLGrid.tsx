@@ -1,4 +1,5 @@
 import { Tooltip } from '~/components/Tooltip'
+import { Card } from '~/ui/Card'
 import { formatDateLabel, formatPercent } from './format'
 import type { TimelinePoint } from './types'
 
@@ -10,13 +11,10 @@ export const DailyPnLGrid = ({ timeline }: { timeline: TimelinePoint[] }) => {
 	const displayDays = days.slice(-90)
 
 	return (
-		<section
-			className="overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-bg) p-4"
-			aria-label="Daily change grid"
-		>
+		<Card padding="md" as="section" className="overflow-hidden" aria-label="Daily change grid">
 			<div className="mb-3 flex items-center justify-between gap-2">
-				<h3 className="text-base font-semibold">Daily Change Grid</h3>
-				<p className="text-xs text-(--text-secondary)">{displayDays.length} days shown</p>
+				<h3 className="label-lg text-primary">Daily Change Grid</h3>
+				<p className="body-xs text-secondary">{displayDays.length} days shown</p>
 			</div>
 			<ul className="no-scrollbar flex max-w-full flex-wrap gap-1.5 pb-1" aria-label="Daily return heat cells">
 				{displayDays.map((day) => {
@@ -35,7 +33,7 @@ export const DailyPnLGrid = ({ timeline }: { timeline: TimelinePoint[] }) => {
 								content={`${formatPercent(day.percentChange)} • ${formatDateLabel(day.timestamp)}`}
 							>
 								<span
-									className="flex size-8 shrink-0 items-end justify-center rounded-md border border-(--cards-border) transition-transform duration-200 hover:scale-[0.99]"
+									className="flex size-8 shrink-0 items-end justify-center rounded-md border border-medium transition-transform duration-200 hover:scale-[0.99]"
 									style={{ background: backgroundColor }}
 								>
 									<span className="sr-only">{`${formatPercent(day.percentChange)} on ${formatDateLabel(day.timestamp)}`}</span>
@@ -45,6 +43,6 @@ export const DailyPnLGrid = ({ timeline }: { timeline: TimelinePoint[] }) => {
 					)
 				})}
 			</ul>
-		</section>
+		</Card>
 	)
 }

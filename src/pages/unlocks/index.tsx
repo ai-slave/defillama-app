@@ -23,6 +23,8 @@ import { TopUnlocks } from '~/containers/Unlocks/TopUnlocks'
 import { useWatchlistManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
+import { Panel } from '~/ui/Panel'
 import { ChartPanelToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -309,7 +311,7 @@ export default function Protocols({
 			</Announcement>
 
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-medium bg-surface p-5 xl:col-span-1">
+				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					<h1 className="text-xl font-semibold">Unlock Statistics</h1>
 					<p className="flex flex-col">
 						<span className="text-secondary">Total Protocols Tracked</span>
@@ -330,35 +332,24 @@ export default function Protocols({
 						<span>View unlocks calendar</span>
 						<Icon name="arrow-right" className="size-4" />
 					</BasicLink>
-				</div>
-				<div className="col-span-2 flex flex-col rounded-md border border-medium bg-surface">
+				</Card>
+				<Panel padding="none" className="col-span-2">
 					<UpcomingUnlockVolumeChart protocols={chartProtocols} initialNowSec={generatedAtSec} />
-				</div>
+				</Panel>
 			</div>
 
 			<div className="isolate grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
-				<TopUnlocks
-					data={data}
-					period={1}
-					title="24h Top Unlocks"
-					initialNowSec={generatedAtSec}
-					className="col-span-1 flex flex-col gap-3 rounded-md border border-medium bg-surface p-3"
-				/>
+				<Card padding="sm" className="col-span-1 flex flex-col gap-3">
+					<TopUnlocks data={data} period={1} title="24h Top Unlocks" initialNowSec={generatedAtSec} />
+				</Card>
 
-				<TopUnlocks
-					data={data}
-					period={30}
-					title="30d Top Unlocks"
-					initialNowSec={generatedAtSec}
-					className="col-span-1 flex flex-col gap-3 rounded-md border border-medium bg-surface p-3"
-				/>
+				<Card padding="sm" className="col-span-1 flex flex-col gap-3">
+					<TopUnlocks data={data} period={30} title="30d Top Unlocks" initialNowSec={generatedAtSec} />
+				</Card>
 
-				<PastUnlockPriceImpact
-					data={data}
-					title="Post Unlock Price Impact"
-					initialNowSec={generatedAtSec}
-					className="col-span-1 flex flex-col gap-3 rounded-md border border-medium bg-surface p-3"
-				/>
+				<Card padding="sm" className="col-span-1 flex flex-col gap-3">
+					<PastUnlockPriceImpact data={data} title="Post Unlock Price Impact" initialNowSec={generatedAtSec} />
+				</Card>
 			</div>
 
 			<UnlocksTable protocols={data} showOnlyWatchlist={showOnlyWatchlist} savedProtocols={savedProtocols} />

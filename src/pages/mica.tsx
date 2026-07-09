@@ -3,6 +3,7 @@ import type { ExchangeMetadataListEntry } from '~/containers/Markets/api.types'
 import { MicaFinder, type MicaExchange } from '~/containers/Markets/MicaFinder'
 import { fetchExchangeMetadataListFromNetwork } from '~/containers/Markets/server/upstream'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
@@ -118,9 +119,9 @@ export default function MicaPage({ exchanges }: MicaPageProps) {
 			{exchanges.length ? (
 				<MicaFinder exchanges={exchanges} />
 			) : (
-				<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-12 text-center text-sm text-(--text-label)">
+				<Card padding="md" className="text-center body-sm text-secondary">
 					<p>Exchange directory is being updated. Please check back shortly.</p>
-				</div>
+				</Card>
 			)}
 		</Layout>
 	)

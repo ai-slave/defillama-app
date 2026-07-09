@@ -65,11 +65,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 	return (
 		<>
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card
-					padding="sm"
-					border="subtle"
-					className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1"
-				>
+				<Card padding="sm" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					<h1 className="text-xl font-semibold">{props.name}</h1>
 					<div className="flex flex-col">
 						{props.assetsBreakdown.length > 1 ? (
@@ -210,7 +206,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 						Report incorrect data
 					</BasicLink>
 				</Card>
-				<Panel className="col-span-2">
+				<Panel padding="none" className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
 						<h2 className="mr-auto heading-xs">Cumulative Holdings Over Time</h2>
 						{props.assets.length > 1 ? (
@@ -245,7 +241,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 			</div>
 			<div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
 				{props.mNAVChart != null ? (
-					<Panel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+					<Panel padding="none" className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 						<Suspense fallback={<div className="min-h-[406px]" />}>
 							<MultiSeriesChart2
 								dataset={props.mNAVChart.dataset}
@@ -264,7 +260,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 					</Panel>
 				) : null}
 				{props.fdChart != null ? (
-					<Panel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+					<Panel padding="none" className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 						<Suspense fallback={<div className="min-h-[406px]" />}>
 							<MultiSeriesChart2
 								dataset={props.fdChart.dataset}
@@ -283,7 +279,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 					</Panel>
 				) : null}
 				{props.ohlcvChartData != null ? (
-					<Panel className="col-span-full min-h-[480px]">
+					<Panel padding="none" className="col-span-full min-h-[480px]">
 						<h2 className="mr-auto p-2 heading-xs">Share Price</h2>
 						<Suspense fallback={<div className="h-[480px]" />}>
 							<CandlestickChart data={props.ohlcvChartData} />
@@ -292,7 +288,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 					</Panel>
 				) : null}
 				{props.totalAssetValueChart != null ? (
-					<Panel className="col-span-full">
+					<Panel padding="none" className="col-span-full">
 						<Suspense fallback={<div className="min-h-[406px]" />}>
 							<MultiSeriesChart2
 								dataset={props.totalAssetValueChart.dataset}

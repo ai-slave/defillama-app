@@ -23,7 +23,7 @@ export function MarketsAreaChart({ title, series }: { title: string; series: Piv
 	)
 	const hasData = ordered.chartData.length > 0 && ordered.stacks.length > 0
 	return (
-		<Panel className="min-h-[360px]">
+		<Panel padding="none" className="min-h-[360px]">
 			{hasData ? (
 				<React.Suspense fallback={FALLBACK}>
 					<AreaChart

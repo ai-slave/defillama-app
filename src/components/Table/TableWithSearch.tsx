@@ -208,7 +208,7 @@ export function TableWithSearch<T extends RowData>({
 	}
 
 	return (
-		<Card padding="none" border="subtle">
+		<Card padding="none">
 			{controls}
 			<VirtualTable
 				instance={instance}

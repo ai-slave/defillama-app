@@ -1,6 +1,7 @@
 import type { InferGetStaticPropsType } from 'next'
 import { YIELD_POOLS_API } from '~/containers/Yields/constants'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
 import { fetchJson } from '~/utils/async'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -48,13 +49,13 @@ function AboutPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 			description="Learn about DefiLlama, the largest open-source DeFi dashboard and crypto analytics platform. Track 7000+ protocols on 500+ chains with fully transparent methodology. No ads, no sponsored content—just accurate DeFi data."
 			canonicalUrl={`/about`}
 		>
-			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
+			<Card as="section" padding="sm" className="flex flex-col gap-4">
 				<h1 className="heading-xs">About DefiLlama</h1>
-				<hr className="border-black/20 dark:border-white/20" />
+				<hr className="border-subtle" />
 				<p>
 					DefiLlama is the largest TVL aggregator for DeFi (Decentralized Finance). Our data is fully{' '}
 					<a
-						className="text-(--blue) hover:underline"
+						className="text-link hover:underline"
 						target="_blank"
 						rel="noopener noreferrer"
 						href="https://github.com/DefiLlama/DefiLlama-Adapters"
@@ -63,7 +64,7 @@ function AboutPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 					</a>{' '}
 					and maintained by a team of passionate individuals and{' '}
 					<a
-						className="text-(--blue) hover:underline"
+						className="text-link hover:underline"
 						target="_blank"
 						rel="noopener noreferrer"
 						href="https://github.com/DefiLlama/DefiLlama-Adapters/graphs/contributors"
@@ -73,12 +74,12 @@ function AboutPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 					from hundreds of protocols.
 				</p>
 				<p>Our focus is on accurate data and transparent methodology.</p>
-			</div>
+			</Card>
 
 			{props.protocols && props.chains ? (
-				<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
+				<Card as="section" padding="sm" className="flex flex-col gap-4">
 					<h2 className="heading-xs">Stats</h2>
-					<hr className="border-black/20 dark:border-white/20" />
+					<hr className="border-subtle" />
 					<div>
 						<p>We track:</p>
 						<ul className="list-inside list-disc">
@@ -89,15 +90,15 @@ function AboutPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 							<li>Volume for {props.dexs} DEXs</li>
 						</ul>
 					</div>
-				</div>
+				</Card>
 			) : null}
 
-			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
+			<Card as="section" padding="sm" className="flex flex-col gap-4">
 				<h2 className="heading-xs">Contact</h2>
-				<hr className="border-black/20 dark:border-white/20" />
+				<hr className="border-subtle" />
 				<p>
 					The best way to contact us and the one in which you'll get a reply the fastest is through our{' '}
-					<a className="text-(--blue) hover:underline" target="_blank" rel="noopener noreferrer" href="/support">
+					<a className="text-link hover:underline" target="_blank" rel="noopener noreferrer" href="/support">
 						our support page
 					</a>
 					.
@@ -106,7 +107,7 @@ function AboutPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 					For questions around product, methodology, data... You'll get much faster responses by using our priority
 					support, available{' '}
 					<a
-						className="text-(--blue) hover:underline"
+						className="text-link hover:underline"
 						target="_blank"
 						rel="noopener noreferrer"
 						href="https://defillama.com/subscription"
@@ -117,7 +118,7 @@ function AboutPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 				<p>
 					DefiLlama is a part of{' '}
 					<a
-						className="text-(--blue) hover:underline"
+						className="text-link hover:underline"
 						target="_blank"
 						rel="noopener noreferrer"
 						href="https://x.com/llamacorporg"
@@ -130,24 +131,19 @@ function AboutPage(props: InferGetStaticPropsType<typeof getStaticProps>) {
 					Llama Corp is a collective building out the decentralized future with data analytics, infrastructure,
 					payments, cross-chain and media solutions used by more than 10M monthly users.
 				</p>
-			</div>
+			</Card>
 
-			<div className="flex flex-col gap-4 rounded-md bg-(--cards-bg) p-3">
+			<Card as="section" padding="sm" className="flex flex-col gap-4">
 				<h2 className="heading-xs">Acknowledgements</h2>
-				<hr className="border-black/20 dark:border-white/20" />
+				<hr className="border-subtle" />
 				<p>
 					Thanks to{' '}
-					<a
-						className="text-(--blue) hover:underline"
-						target="_blank"
-						rel="noopener noreferrer"
-						href="https://allium.so/"
-					>
+					<a className="text-link hover:underline" target="_blank" rel="noopener noreferrer" href="https://allium.so/">
 						Allium
 					</a>{' '}
 					for their indexer service.
 				</p>
-			</div>
+			</Card>
 		</Layout>
 	)
 }

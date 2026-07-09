@@ -3,16 +3,27 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
 import { formatTooltipChartDate, formatTooltipValue } from '~/components/ECharts/formatters'
 import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
 import { LocalLoader } from '~/components/Loaders'
-import { CoinsPicker } from '~/containers/Correlations'
+import { TokenLogo } from '~/components/TokenLogo'
+import {
+	getGeckoIdFromSearchId,
+	getTokenSearchFallback,
+	hydrateTokenSearchOptionsByIds
+} from '~/containers/TokenSearch/search'
+import { TokenSearchDialog, toTokenSearchOption } from '~/containers/TokenSearch/TokenSearchDialog'
+import type { TokenSearchResult } from '~/containers/TokenSearch/types'
 import { useDateRangeValidation } from '~/hooks/useDateRangeValidation'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { Input, inputStyles } from '~/ui/Input'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { PanelLoadingStatus } from '~/ui/Status'
 import { formattedNum } from '~/utils'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { ComparisonPanel } from './ComparisonPanel'
@@ -24,11 +35,20 @@ import type { TokenPnlResult } from './queries'
 import { StatsCard } from './StatsCard'
 import type { ComparisonEntry } from './types'
 
-const EMPTY_SELECTED_COINS: Record<string, IResponseCGMarketsAPI> = {}
+const EMPTY_SELECTED_COINS: Record<string, TokenSearchResult> = {}
 const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
 
-const DEFAULT_COMPARISON_IDS = ['bitcoin', 'ethereum', 'solana'] as const
+export const DEFAULT_TOKEN_PNL_TOKEN_IDS = ['bitcoin', 'ethereum', 'solana'] as const
+const DEFAULT_COMPARISON_IDS = DEFAULT_TOKEN_PNL_TOKEN_IDS
 const TOKEN_PNL_MAX_DATE_BUFFER_SECONDS = 60
+
+function buildTokenOptionMap(tokens: TokenSearchResult[]): Record<string, TokenSearchResult> {
+	const map: Record<string, TokenSearchResult> = {}
+	for (const token of tokens) {
+		map[token.id] = token
+	}
+	return map
+}
 
 const unixToDateString = (unixTimestamp?: number): string => {
 	if (unixTimestamp == null) return ''
@@ -65,6 +85,7 @@ type TokenPnlContentProps = {
 	handleChartReady: (instance: echarts.ECharts | null) => void
 	comparisonData: ComparisonEntry[]
 	selectedCoinId: string
+	selectedCoinInfo: TokenSearchResult | null
 }
 
 type TooltipItem = {
@@ -122,46 +143,50 @@ const TokenPnlContent = ({
 	exportChartInstance,
 	handleChartReady,
 	comparisonData,
-	selectedCoinId
+	selectedCoinId,
+	selectedCoinInfo
 }: TokenPnlContentProps) => {
 	if (!routerReady || isLoading || isFetching) {
 		return (
-			<div className="flex min-h-[360px] flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg)">
+			<PanelLoadingStatus>
 				<LocalLoader />
-			</div>
+			</PanelLoadingStatus>
 		)
 	}
 
 	if (isError) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-md border border-red-400 bg-red-400/10 p-2 text-center">
-				<span className="text-lg font-semibold text-red-500">Failed to load data</span>
-				<span className="text-sm text-red-400">
+			<Panel padding="sm" className="flex-1 items-center justify-center gap-2 text-center">
+				<p className="heading-xs text-data-down" role="alert">
+					Failed to load data
+				</p>
+				<p className="body-sm text-data-down">
 					{error instanceof Error ? error.message : 'Something went wrong fetching price data.'}
-				</span>
-				<button
+				</p>
+				<Button
+					type="button"
 					onClick={() => {
 						void onRetry()
 					}}
-					className="rounded-md border border-red-500/40 bg-transparent px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-500/10"
+					size="md"
 				>
 					Retry
-				</button>
-			</div>
+				</Button>
+			</Panel>
 		)
 	}
 
 	if (!pnlData || pnlData.priceSeries.length === 0) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-				<p className="text-lg font-semibold text-primary">No historical data available for this range.</p>
+			<Panel padding="sm" className="flex-1 items-center justify-center gap-2 text-center">
+				<p className="heading-xs text-primary">No historical data available for this range.</p>
 				<p className="body-sm text-tertiary">Try a different date range or another token.</p>
-			</div>
+			</Panel>
 		)
 	}
 
-	const { metrics, timeline, coinInfo, currentPrice, chartData } = pnlData
-	const tokenExportName = coinInfo?.name ?? selectedCoinId
+	const { metrics, timeline, currentPrice, chartData } = pnlData
+	const tokenExportName = selectedCoinInfo?.name ?? selectedCoinId
 	const { percentChange, isProfit, holdingPeriodDays, annualizedReturn, absoluteChange } = metrics
 	const quantityValue = quantity !== 0 ? absoluteChange * quantity : absoluteChange
 	const formattedQuantityValue = formattedNum(Math.abs(quantityValue), false)
@@ -174,40 +199,42 @@ const TokenPnlContent = ({
 	return (
 		<div className="flex flex-1 flex-col gap-2">
 			<section className="grid gap-2 sm:grid-cols-3" aria-label="Performance summary">
-				<dl className="flex flex-col gap-1.5 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
-					<dt className="text-xs font-medium tracking-wide text-(--text-label) uppercase">Return</dt>
-					<dd className={`font-jetbrains text-3xl font-semibold ${isProfit ? 'text-(--success)' : 'text-(--error)'}`}>
+				<Card padding="md" as="dl" className="flex flex-col gap-1.5">
+					<dt className="label-xs text-secondary uppercase">Return</dt>
+					<dd className={`font-jetbrains text-3xl font-semibold ${isProfit ? 'text-data-up' : 'text-data-down'}`}>
 						{formatPercent(percentChange)}
 					</dd>
-					<dd className="text-sm text-(--text-secondary)">{quantityLabel}</dd>
-				</dl>
-				<dl className="flex flex-col gap-1.5 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
-					<dt className="text-xs font-medium tracking-wide text-(--text-label) uppercase">Holding Period</dt>
-					<dd className="font-jetbrains text-3xl font-semibold text-(--text-primary)">
-						{holdingPeriodDays} <span className="text-lg font-medium text-(--text-secondary)">days</span>
+					<dd className="body-sm text-secondary">{quantityLabel}</dd>
+				</Card>
+				<Card padding="md" as="dl" className="flex flex-col gap-1.5">
+					<dt className="label-xs text-secondary uppercase">Holding Period</dt>
+					<dd className="font-jetbrains text-3xl font-semibold text-primary">
+						{holdingPeriodDays} <span className="label-lg text-secondary">days</span>
 					</dd>
-					<dd className="text-sm text-(--text-secondary)">
+					<dd className="body-sm text-secondary">
 						<time dateTime={unixToDateString(start)}>{formatDateLabel(start)}</time> →{' '}
 						<time dateTime={unixToDateString(end)}>{formatDateLabel(end)}</time>
 					</dd>
-				</dl>
-				<dl className="flex flex-col gap-1.5 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
-					<dt className="text-xs font-medium tracking-wide text-(--text-label) uppercase">Annualised Return</dt>
+				</Card>
+				<Card padding="md" as="dl" className="flex flex-col gap-1.5">
+					<dt className="label-xs text-secondary uppercase">Annualised Return</dt>
 					<dd
-						className={`font-jetbrains text-3xl font-semibold ${annualizedReturn >= 0 ? 'text-(--success)' : 'text-(--error)'}`}
+						className={`font-jetbrains text-3xl font-semibold ${annualizedReturn >= 0 ? 'text-data-up' : 'text-data-down'}`}
 					>
 						{formatPercent(annualizedReturn)}
 					</dd>
-					<dd className="text-sm text-(--text-secondary)">
+					<dd className="body-sm text-secondary">
 						{annualizedReturn >= 0 ? '↑' : '↓'} Based on {holdingPeriodDays}d period
 					</dd>
-				</dl>
+				</Card>
 			</section>
 
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<div className="flex items-center justify-end gap-2 p-3">
-					<h3 className="text-base font-semibold">Price Over Time</h3>
-					<p className="relative top-px mr-auto flex items-center gap-1 text-xs text-nowrap text-(--text-secondary)">
+			<Panel padding="none">
+				<PanelHeader>
+					<PanelTitle as="h3" className="mr-0">
+						Price Over Time
+					</PanelTitle>
+					<p className="mr-auto flex items-center gap-1 body-sm text-nowrap text-secondary">
 						<span>{formatDateLabel(start)}</span>
 						<Icon name="arrow-right" width={14} height={14} />
 						<span>{formatDateLabel(end)}</span>
@@ -217,7 +244,7 @@ const TokenPnlContent = ({
 						filename="token-pnl-price"
 						title={`${tokenExportName} Price Over Time`}
 					/>
-				</div>
+				</PanelHeader>
 				<Suspense fallback={<div className="min-h-[360px]" />}>
 					<MultiSeriesChart2
 						dataset={chartData.dataset}
@@ -227,33 +254,17 @@ const TokenPnlContent = ({
 						onReady={handleChartReady}
 					/>
 				</Suspense>
-			</div>
+			</Panel>
 
 			<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
 				<StatsCard
 					label="Current Price"
 					value={`$${formattedNum(currentPrice)}`}
-					subtle={coinInfo?.symbol?.toUpperCase()}
+					subtle={selectedCoinInfo?.symbol?.toUpperCase()}
 					variant="highlight"
 				/>
 				<StatsCard label="Start Price" value={`$${formattedNum(metrics.startPrice)}`} />
 				<StatsCard label="End Price" value={`$${formattedNum(metrics.endPrice)}`} />
-				<StatsCard
-					label="24h Change"
-					value={
-						coinInfo?.price_change_percentage_24h != null ? formatPercent(coinInfo.price_change_percentage_24h) : '0%'
-					}
-					subtle={
-						coinInfo?.price_change_24h != null
-							? `${coinInfo.price_change_24h >= 0 ? '+' : ''}$${formattedNum(coinInfo.price_change_24h)}`
-							: undefined
-					}
-				/>
-				<StatsCard
-					label="All-Time High"
-					value={`$${formattedNum(coinInfo?.ath ?? 0)}`}
-					subtle={coinInfo?.ath_date ? new Date(coinInfo.ath_date).toLocaleDateString() : undefined}
-				/>
 				<StatsCard label="Max Drawdown" value={formatPercent(-Math.abs(metrics.maxDrawdown))} />
 				<StatsCard label="Volatility (Ann.)" value={formatPercent(metrics.volatility)} />
 			</div>
@@ -265,13 +276,15 @@ const TokenPnlContent = ({
 	)
 }
 
-export function TokenPnl({ coinsData }: { coinsData: IResponseCGMarketsAPI[] }) {
+export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: TokenSearchResult[] }) {
 	const router = useRouter()
 	const nowSeconds = useNowSeconds()
 	const maxSelectableDateUnix = Math.max(0, nowSeconds - TOKEN_PNL_MAX_DATE_BUFFER_SECONDS)
 	const coinParam = router.query?.coin
 
-	const coinInfoMap = useMemo(() => new Map(coinsData.map((coin) => [coin.id, coin])), [coinsData])
+	const [tokenOptionsById, setTokenOptionsById] = useState<Record<string, TokenSearchResult>>(() =>
+		buildTokenOptionMap(initialTokenOptions)
+	)
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 
 	const { startDate, endDate, handleStartDateChange, handleEndDateChange, validateDateRange } = useDateRangeValidation({
@@ -303,15 +316,48 @@ export function TokenPnl({ coinsData }: { coinsData: IResponseCGMarketsAPI[] }) 
 
 	const [quantityInput, setQuantityInput] = useState('')
 
-	const { selectedCoins, selectedCoinId, selectedCoinInfo } = useMemo(() => {
+	const selectedCoinId = useMemo(() => {
 		const queryCoins = coinParam ?? ['bitcoin']
 		const coins = Array.isArray(queryCoins) ? queryCoins : [queryCoins]
-		return {
-			selectedCoins: coins,
-			selectedCoinId: coins[0],
-			selectedCoinInfo: coins[0] ? (coinInfoMap.get(coins[0]) ?? null) : null
+		return getGeckoIdFromSearchId(coins[0])
+	}, [coinParam])
+	const missingTokenIds = useMemo(() => {
+		const missingIds = new Set<string>()
+		if (selectedCoinId && !tokenOptionsById[selectedCoinId]) missingIds.add(selectedCoinId)
+		for (const tokenId of DEFAULT_COMPARISON_IDS) {
+			if (!tokenOptionsById[tokenId]) missingIds.add(tokenId)
 		}
-	}, [coinParam, coinInfoMap])
+		return Array.from(missingIds)
+	}, [selectedCoinId, tokenOptionsById])
+	const hydratedTokenOptions = useQuery({
+		queryKey: ['token-search-options-by-ids', missingTokenIds],
+		queryFn: () => hydrateTokenSearchOptionsByIds(missingTokenIds),
+		enabled: router.isReady && missingTokenIds.length > 0,
+		staleTime: 5 * 60 * 1000,
+		refetchOnWindowFocus: false
+	})
+	const resolvedTokenOptionsById = useMemo(() => {
+		const tokens = hydratedTokenOptions.data
+		if (!tokens?.length) return tokenOptionsById
+
+		const next = { ...tokenOptionsById }
+		for (const token of tokens) {
+			next[token.id] = token
+		}
+		return next
+	}, [hydratedTokenOptions.data, tokenOptionsById])
+
+	const selectedCoinInfo = selectedCoinId
+		? (resolvedTokenOptionsById[selectedCoinId] ?? getTokenSearchFallback(selectedCoinId))
+		: null
+	const coinInfoMap = useMemo(() => {
+		const map = new Map(Object.entries(resolvedTokenOptionsById))
+		if (selectedCoinId && !map.has(selectedCoinId)) map.set(selectedCoinId, getTokenSearchFallback(selectedCoinId))
+		for (const tokenId of DEFAULT_COMPARISON_IDS) {
+			if (!map.has(tokenId)) map.set(tokenId, getTokenSearchFallback(tokenId))
+		}
+		return map
+	}, [selectedCoinId, resolvedTokenOptionsById])
 
 	const start = dateStringToUnix(startDate)
 	const end = dateStringToUnix(endDate)
@@ -325,7 +371,7 @@ export function TokenPnl({ coinsData }: { coinsData: IResponseCGMarketsAPI[] }) 
 		isFetching
 	} = useQuery({
 		queryKey: ['token-pnl', selectedCoinId, start, end],
-		queryFn: () => computeTokenPnl({ id: selectedCoinId, start, end, coinInfo: selectedCoinInfo }),
+		queryFn: () => computeTokenPnl({ id: selectedCoinId, start, end }),
 		enabled: !!(router.isReady && selectedCoinId && start != null && end != null && end > start),
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
@@ -335,7 +381,7 @@ export function TokenPnl({ coinsData }: { coinsData: IResponseCGMarketsAPI[] }) 
 	const comparisonQueries = useQueries({
 		queries: DEFAULT_COMPARISON_IDS.map((tokenId) => ({
 			queryKey: ['token-pnl-comparison-item', tokenId, start, end],
-			queryFn: () => buildComparisonEntry({ tokenId, start, end, coinInfoMap }),
+			queryFn: () => buildComparisonEntry({ tokenId, start, end }),
 			enabled: !!(router.isReady && start != null && end != null && end > start),
 			staleTime: 60 * 60 * 1000,
 			refetchOnWindowFocus: false,
@@ -347,9 +393,18 @@ export function TokenPnl({ coinsData }: { coinsData: IResponseCGMarketsAPI[] }) 
 		() =>
 			comparisonQueries.flatMap((q): ComparisonEntry[] => {
 				const d = q.data
-				return d != null ? [d] : []
+				if (d == null) return []
+				const coin = coinInfoMap.get(d.id)
+				return [
+					{
+						...d,
+						name: coin?.name ?? d.id,
+						symbol: coin?.symbol ?? d.id,
+						image: coin?.logo
+					}
+				]
 			}),
-		[comparisonQueries]
+		[comparisonQueries, coinInfoMap]
 	)
 
 	const quantity = useMemo(() => {
@@ -407,13 +462,13 @@ export function TokenPnl({ coinsData }: { coinsData: IResponseCGMarketsAPI[] }) 
 						(Array.isArray(point?.value) ? point.value[1] : undefined)
 					const price = typeof seriesValue === 'number' ? seriesValue : Number(seriesValue ?? 0)
 					const changeFromStart = startPrice !== 0 ? ((price - startPrice) / startPrice) * 100 : 0
-					const changeColor = changeFromStart >= 0 ? '#10b981' : '#ef4444'
+					const changeColor = changeFromStart >= 0 ? 'var(--ld-text-data-up)' : 'var(--ld-text-data-down)'
 					const changeSign = changeFromStart >= 0 ? '+' : ''
 
 					const chartdate = timestamp != null ? formatTooltipChartDate(Number(timestamp), 'daily') : ''
 
-					return `<div style="background: var(--cards-bg); border: 1px solid var(--cards-border); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16); color: var(--text-primary); border-radius: 8px; padding: 8px 10px; font-size: 11px; line-height: 1.35; white-space: nowrap;">
-						<div style="color: var(--text-secondary); margin-bottom: 2px;">${chartdate}</div>
+					return `<div style="background: var(--ld-bg-surface); border: 1px solid var(--ld-border-medium); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16); color: var(--ld-text-primary); border-radius: 8px; padding: 8px 10px; font-size: 11px; line-height: 1.35; white-space: nowrap;">
+						<div style="color: var(--ld-text-secondary); margin-bottom: 2px;">${chartdate}</div>
 						<div style="font-weight: 600; font-size: 13px; margin-bottom: 2px;">${formatTooltipValue(price, '$')}</div>
 						<div style="font-size: 11px; color: ${changeColor}; font-weight: 500;">${changeSign}${formatTooltipValue(changeFromStart, '%')} from start</div>
 					</div>`
@@ -448,11 +503,11 @@ export function TokenPnl({ coinsData }: { coinsData: IResponseCGMarketsAPI[] }) 
 
 	return (
 		<>
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-				<h1 className="text-xl font-bold">Token Holder Profit and Loss</h1>
-			</div>
+			<Card padding="strip">
+				<h1 className="heading-sm">Token Holder Profit and Loss</h1>
+			</Card>
 			<div className="grid flex-1 gap-2 xl:grid-cols-[300px_minmax(0,1fr)]">
-				<div className="flex flex-col gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+				<Card padding="sm" className="flex flex-col gap-3">
 					<div className="flex flex-col gap-2">
 						<DateInput
 							label="Start Date"
@@ -469,53 +524,51 @@ export function TokenPnl({ coinsData }: { coinsData: IResponseCGMarketsAPI[] }) 
 							max={unixToDateString(maxSelectableDateUnix)}
 						/>
 					</div>
-					<div className="flex flex-col gap-1.5 text-sm">
-						<span className="font-light text-(--text-secondary)">Token</span>
+					<div className="flex flex-col gap-1.5">
+						<span className="body-sm text-secondary">Token</span>
 						<button
+							type="button"
 							onClick={() => dialogStore.toggle()}
-							className="cursor-pointer rounded-md border border-(--form-control-border) bg-(--bg-input) px-3 py-2.5 text-base text-black outline-0 transition-colors duration-200 focus:border-white/30 focus:ring-0 dark:text-white dark:scheme-dark"
+							className={`${inputStyles} flex w-full cursor-pointer items-center justify-start gap-2 overflow-hidden text-left dark:scheme-dark`}
 						>
 							{selectedCoinInfo != null ? (
-								<div className="flex items-center gap-2">
-									<img
-										src={selectedCoinInfo.image}
-										alt={selectedCoinInfo.name}
-										width={24}
-										height={24}
-										className="rounded-full"
-									/>
-									<span className="text-base font-medium">{selectedCoinInfo.name}</span>
-								</div>
+								<>
+									<TokenLogo src={selectedCoinInfo.logo} alt={selectedCoinInfo.name} size={20} />
+									<span className="min-w-0 truncate">{selectedCoinInfo.name}</span>
+								</>
 							) : (
-								<div className="flex items-center gap-2">
-									<Icon name="search" width={16} height={16} />
-									<span>Select token</span>
-								</div>
+								<>
+									<Icon name="search" width={16} height={16} className="shrink-0 text-tertiary" />
+									<span className="text-tertiary">Select token</span>
+								</>
 							)}
 						</button>
-						<CoinsPicker
+						<TokenSearchDialog
+							initialTokens={initialTokenOptions}
 							dialogStore={dialogStore}
-							coinsData={coinsData}
-							selectedCoins={EMPTY_SELECTED_COINS}
-							queryCoins={selectedCoins}
-							selectCoin={(coin) => updateCoin(coin.id)}
+							selectedTokens={EMPTY_SELECTED_COINS}
+							selectToken={(coin) => {
+								const token = toTokenSearchOption(coin)
+								setTokenOptionsById((prev) => (prev[token.id] ? prev : { ...prev, [token.id]: token }))
+								updateCoin(token.id)
+							}}
 						/>
 					</div>
-					<div className="flex flex-col gap-1.5 text-sm">
+					<div className="flex flex-col gap-1.5">
 						<label className="flex flex-col gap-1">
-							<span className="font-light text-(--text-secondary)">Quantity (optional)</span>
-							<input
+							<span className="body-sm text-secondary">Quantity (optional)</span>
+							<Input
 								type="number"
 								min="0"
 								step="any"
 								placeholder="Tokens held"
 								value={quantityInput}
 								onChange={(event) => setQuantityInput(event.target.value)}
-								className="rounded-md border border-(--form-control-border) bg-(--bg-input) px-3 py-2.5 text-base text-black outline-0 transition-colors duration-200 focus:border-white/30 focus:ring-0 dark:text-white dark:scheme-dark"
+								className="w-full dark:scheme-dark"
 							/>
 						</label>
 					</div>
-				</div>
+				</Card>
 				<TokenPnlContent
 					routerReady={router.isReady}
 					isLoading={isLoading}
@@ -532,6 +585,7 @@ export function TokenPnl({ coinsData }: { coinsData: IResponseCGMarketsAPI[] }) 
 					handleChartReady={handleChartReady}
 					comparisonData={comparisonData}
 					selectedCoinId={selectedCoinId}
+					selectedCoinInfo={selectedCoinInfo}
 				/>
 			</div>
 		</>

@@ -10,6 +10,7 @@ import { useBlockExplorers } from '~/api/client'
 import type { BlockExplorersResponse } from '~/api/types'
 import { Icon } from '~/components/Icon'
 import { VirtualTable } from '~/components/Table/Table'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { formattedNum } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import type { Insider } from './api.types'
@@ -147,14 +148,14 @@ export const InsidersTable = ({
 	})
 
 	return (
-		<div className="rounded-md border border-medium bg-surface">
-			<div className="flex flex-col gap-1 p-3">
-				<h3 className="text-base font-semibold">Insiders</h3>
+		<Panel padding="none">
+			<PanelHeader className="flex-col items-start gap-1">
+				<PanelTitle as="h3">Insiders</PanelTitle>
 				{methodology ? <p className="text-sm text-secondary">{methodology}</p> : null}
-			</div>
+			</PanelHeader>
 			<div className="thin-scrollbar max-h-100 overflow-y-auto">
 				<VirtualTable instance={instance} stripedBg skipVirtualization />
 			</div>
-		</div>
+		</Panel>
 	)
 }

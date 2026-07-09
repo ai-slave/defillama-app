@@ -119,7 +119,7 @@ const KYCItem = ({
 }
 
 const SectionCard = ({ title, children }: { title: React.ReactNode; children: React.ReactNode }) => (
-	<Card as="section" padding="sm" border="subtle" className="flex flex-col gap-3">
+	<Card as="section" padding="sm" className="flex flex-col gap-3">
 		<h2 className="heading-xs">{title}</h2>
 		{children}
 	</Card>
@@ -253,7 +253,7 @@ const ChainBadge = ({
 	metrics: ChainMetricValues
 }) => {
 	return (
-		<Card padding="sm" border="subtle" className="flex items-start gap-1.5">
+		<Card padding="sm" className="flex items-start gap-1.5">
 			<img src={chainIconUrl(chain)} alt={chain} className="mt-0.5 size-5 rounded-full" loading="lazy" />
 			<div className="flex min-w-0 flex-1 flex-col">
 				<div className="flex items-center gap-1.5">
@@ -345,7 +345,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 	return (
 		<div className="flex flex-col gap-2">
 			{/* Header */}
-			<Card padding="sm" border="subtle" className="flex flex-col gap-2">
+			<Card padding="sm" className="flex flex-col gap-2">
 				<div className="flex flex-wrap items-center gap-2">
 					<h1 className="heading-xs">{displayName}</h1>
 					{asset.ticker ? <p className="body-md text-tertiary">({asset.ticker})</p> : null}
@@ -431,7 +431,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							definitions.onChainMcap.description
 						)
 					}
-					render={<Card padding="sm" border="subtle" className="flex flex-1 flex-col items-start gap-1" />}
+					render={<Card padding="sm" className="flex flex-1 flex-col items-start gap-1" />}
 				>
 					<span className="text-secondary underline decoration-dotted">{definitions.onChainMcap.label}</span>
 					<span className="font-jetbrains text-xl font-semibold">
@@ -450,7 +450,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							definitions.activeMcap.description
 						)
 					}
-					render={<Card padding="sm" border="subtle" className="flex flex-1 flex-col items-start gap-1" />}
+					render={<Card padding="sm" className="flex flex-1 flex-col items-start gap-1" />}
 				>
 					<span className="text-secondary underline decoration-dotted">{definitions.activeMcap.label}</span>
 					<span className="font-jetbrains text-xl font-semibold">
@@ -469,7 +469,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							definitions.defiActiveTvl.description
 						)
 					}
-					render={<Card padding="sm" border="subtle" className="flex flex-1 flex-col items-start gap-1" />}
+					render={<Card padding="sm" className="flex flex-1 flex-col items-start gap-1" />}
 				>
 					<span className="text-secondary underline decoration-dotted">{definitions.defiActiveTvl.label}</span>
 					<span className="font-jetbrains text-xl font-semibold">
@@ -478,17 +478,17 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 				</Tooltip>
 
 				{asset.price != null ? (
-					<Card padding="sm" border="subtle" className="flex flex-1 flex-col gap-1">
+					<Card padding="sm" className="flex flex-1 flex-col gap-1">
 						<span className="text-secondary">{asset.ticker ?? 'Token'} Price</span>
 						<span className="font-jetbrains text-xl font-semibold">{formattedNum(asset.price, true)}</span>
 					</Card>
 				) : null}
-				<Card padding="sm" border="subtle" className="flex flex-1 flex-col gap-1">
+				<Card padding="sm" className="flex flex-1 flex-col gap-1">
 					<span className="text-secondary">Chains</span>
 					<span className="font-jetbrains text-xl font-semibold">{asset.chain?.length ?? 0}</span>
 				</Card>
 				{asset.nativeYieldCurrent != null ? (
-					<Card padding="sm" border="subtle" className="flex flex-1 flex-col gap-1">
+					<Card padding="sm" className="flex flex-1 flex-col gap-1">
 						<span className="text-secondary">Native Yield</span>
 						<span className="font-jetbrains text-xl font-semibold">{asset.nativeYieldCurrent.toFixed(2)}%</span>
 					</Card>
@@ -496,7 +496,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 			</div>
 
 			{asset.chartDataset && asset.chartDataset.source.length > 0 ? (
-				<Panel>
+				<Panel padding="none">
 					<Suspense fallback={<div className="min-h-[406px]" />}>
 						<MultiSeriesChart2
 							charts={timeSeriesCharts}
@@ -519,7 +519,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 					{/* Token Properties */}
 					<SectionCard title="Token Properties">
 						<div className="grid grid-cols-2 gap-2">
-							<Card padding="sm" border="subtle" className="flex flex-col gap-1">
+							<Card padding="sm" className="flex flex-col gap-1">
 								<Tooltip
 									content={definitions.category.description}
 									className="text-secondary underline decoration-dotted"
@@ -544,7 +544,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 									<span className="font-medium">-</span>
 								)}
 							</Card>
-							<Card padding="sm" border="subtle" className="flex flex-col gap-1">
+							<Card padding="sm" className="flex flex-col gap-1">
 								<Tooltip
 									content={definitions.assetClass.description}
 									className="text-secondary underline decoration-dotted"
@@ -567,13 +567,13 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 									<span className="font-medium">-</span>
 								)}
 							</Card>
-							<Card padding="sm" border="subtle" className="flex flex-col gap-1">
+							<Card padding="sm" className="flex flex-col gap-1">
 								<Tooltip content={definitions.type.description} className="text-secondary underline decoration-dotted">
 									{definitions.type.label}
 								</Tooltip>
 								<span className="font-medium">{asset.type || '-'}</span>
 							</Card>
-							<Card padding="sm" border="subtle" className="flex flex-col gap-1">
+							<Card padding="sm" className="flex flex-col gap-1">
 								<Tooltip
 									content={definitions.rwaClassification.description}
 									className="text-secondary underline decoration-dotted"
@@ -587,7 +587,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 									) : null}
 								</span>
 							</Card>
-							<Card padding="sm" border="subtle" className="flex flex-col gap-1">
+							<Card padding="sm" className="flex flex-col gap-1">
 								<Tooltip
 									content={definitions.accessModel.description}
 									className="text-secondary underline decoration-dotted"
@@ -600,7 +600,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 								</span>
 							</Card>
 							{hasParentPlatformName ? (
-								<Card padding="sm" border="subtle" className="flex flex-col gap-1">
+								<Card padding="sm" className="flex flex-col gap-1">
 									<span className="text-secondary">Parent Platform</span>
 									<span className="flex flex-wrap items-center gap-x-1 font-medium">
 										{parentPlatforms.map((platform, idx) => (
@@ -740,7 +740,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 									<Icon name="external-link" className="size-3" />
 								</a>
 							) : (
-								<Card padding="sm" border="subtle" className="flex items-center justify-between gap-2">
+								<Card padding="sm" className="flex items-center justify-between gap-2">
 									<span className="label-md">{asset.oracleProvider}</span>
 								</Card>
 							)}
@@ -793,7 +793,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 
 			{/* Description Notes */}
 			{asset.descriptionNotes ? (
-				<Card as="section" padding="sm" border="subtle" className="flex flex-col gap-3">
+				<Card as="section" padding="sm" className="flex flex-col gap-3">
 					<h2 className="heading-xs">Notes</h2>
 					<ul className="flex list-disc flex-col gap-2 pl-5 body-md text-primary">
 						{asset.descriptionNotes.map((note, idx) => (
@@ -814,7 +814,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 					className={`grid gap-2 ${(isLoadingYieldChart || nativeYieldDataset) && displayPools.length > 0 ? 'lg:grid-cols-2' : ''}`}
 				>
 					{asset.nativeYieldPoolId && (isLoadingYieldChart || nativeYieldDataset) ? (
-						<Panel className="overflow-hidden">
+						<Panel padding="none" className="overflow-hidden">
 							<div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-[#cc3e82] to-transparent" />
 							<ChartPanelToolbar className="items-start">
 								<p className="mr-auto flex flex-col">
@@ -862,7 +862,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 					) : null}
 
 					{displayPools.length > 0 ? (
-						<Card padding="sm" border="subtle" className="flex flex-col gap-2">
+						<Card padding="sm" className="flex flex-col gap-2">
 							<div className="flex items-center justify-between">
 								<h2 className="font-semibold">
 									{hasMorePools

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { searchApi } from '~/api'
+import { searchTokens } from '~/containers/TokenSearch/search'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 
 export interface EntityResult {
@@ -33,20 +34,11 @@ async function fetchEntities(query: string): Promise<EntityResult[]> {
  * Fetch coins/tokens matching the query.
  */
 export async function fetchCoins(query: string, limit: number = 10): Promise<EntityResult[]> {
-	const hits = await searchApi<EntityResult>({
-		indexUid: 'pages',
-		limit,
-		offset: 0,
-		q: query,
-		filter: [['type = "Token"']],
-		sort: ['mcapRank:asc']
-	})
+	const tokens = await searchTokens(query, limit)
 
-	// Transform coin results to standard format
-	// Use replaceAll to convert all underscores to colons (matching project's ID normalization pattern)
-	return hits.map((hit) => ({
-		id: hit.id.replaceAll('_', ':'),
-		name: hit.name,
+	return tokens.map((token) => ({
+		id: token.searchId,
+		name: token.name,
 		logo: null,
 		type: 'Coin'
 	}))

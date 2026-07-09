@@ -75,7 +75,7 @@ function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 	}, [router.isReady, router.query.search, setProjectName])
 
 	return (
-		<Panel>
+		<Panel padding="none">
 			<TableToolbar className="justify-end">
 				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search projects...</span>
@@ -340,11 +340,7 @@ export const HacksContainer = ({
 				selectedClassifications={selectedClassifications}
 			/>
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<Card
-					border="subtle"
-					padding="sm"
-					className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1"
-				>
+				<Card padding="sm" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
 					<div className="flex flex-col">
 						<h1 className="text-secondary">Total Value Hacked (USD)</h1>
 						<p className="font-jetbrains text-2xl font-semibold">{displayTotalHacked}</p>
@@ -358,7 +354,7 @@ export const HacksContainer = ({
 						<span className="font-jetbrains text-2xl font-semibold">{displayTotalRugs}</span>
 					</p>
 				</Card>
-				<Panel className="col-span-2">
+				<Panel padding="none" className="col-span-2">
 					<ChartPanelToolbar className="justify-end *:first:mr-auto">
 						<TagGroup setValue={setChartType} selectedValue={chartType} values={chartTypeList} />
 						<ChartExportButtons

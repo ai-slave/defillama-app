@@ -210,10 +210,10 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 			canonicalUrl={`/top-protocols`}
 			pageName={pageName}
 		>
-			<Card border="subtle" padding="sm">
+			<Card padding="sm">
 				<h1 className="heading-sm">Protocols with highest TVL by chain on each category</h1>
 			</Card>
-			<Panel>
+			<Panel padding="none">
 				<TableToolbar className="justify-end">
 					<label className={searchFieldWrapperStyles}>
 						<span className="sr-only">Search chains</span>

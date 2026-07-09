@@ -254,7 +254,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 					</h1>
 					<KeyMetrics {...props} formatPrice={(value) => formattedNum(value, true)} />
 				</Panel>
-				<Panel className="col-span-1 xl:col-[2/-1]">
+				<Panel padding="none" className="col-span-1 xl:col-[2/-1]">
 					<ChartPanelToolbar className="justify-end">
 						<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 						{props.defaultCharts.length > 1 ? (
@@ -289,7 +289,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 			</div>
 			<div className="grid grid-cols-2 gap-2">
 				{props.protocolChains?.length > 1 ? (
-					<Panel className="col-span-full xl:col-span-1 xl:only:col-span-full">
+					<Panel padding="none" className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
 							chartType="chain"
 							protocolName={slug(props.name)}
@@ -302,7 +302,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 					</Panel>
 				) : null}
 				{props.protocolVersions?.length > 1 ? (
-					<Panel className="col-span-full xl:col-span-1 xl:only:col-span-full">
+					<Panel padding="none" className="col-span-full xl:col-span-1 xl:only:col-span-full">
 						<DimensionProtocolChartByType
 							chartType="version"
 							protocolName={slug(props.name)}

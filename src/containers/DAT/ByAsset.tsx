@@ -72,7 +72,7 @@ export function DATByAsset({
 						Report incorrect data
 					</BasicLink>
 				</Panel>
-				<Panel className="col-span-2">
+				<Panel padding="none" className="col-span-2">
 					<Suspense fallback={<div className="min-h-[406px]" />}>
 						<MultiSeriesChart2
 							dataset={dailyFlowsChart.dataset}
@@ -321,7 +321,7 @@ function MNAVChart({
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	return (
-		<Panel className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+		<Panel padding="none" className="col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 			<ChartPanelToolbar className="justify-end">
 				<h2 className="mr-auto heading-xs">{title}</h2>
 				<SelectWithCombobox

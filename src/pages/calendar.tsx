@@ -13,6 +13,7 @@ import * as React from 'react'
 import { Announcement } from '~/components/Announcement'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
+import { selectTriggerStyles } from '~/components/Select/types'
 import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
 import calendarEvents from '~/constants/calendar'
@@ -20,6 +21,7 @@ import { fetchAllProtocolEmissions } from '~/containers/Unlocks/api'
 import type { ProtocolEmission } from '~/containers/Unlocks/api.types'
 import Layout from '~/layout'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import {
 	popoverActionBarStyles,
 	popoverActionButtonStyles,
@@ -165,9 +167,9 @@ export default function Protocols({ emissions }) {
 		>
 			<Announcement notCancellable>Want us to track other events? Tweet at @0xngmi on twitter!</Announcement>
 
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
-				<div className="flex flex-wrap items-center gap-4 p-3 *:last:ml-auto">
-					<h1 className="heading-sm">Crypto Calendar</h1>
+			<Panel padding="none">
+				<PanelHeader className="gap-4 *:last:ml-auto">
+					<PanelTitle as="h1">Crypto Calendar</PanelTitle>
 
 					<Ariakit.SelectProvider
 						value={selectedOptions}
@@ -175,11 +177,11 @@ export default function Protocols({ emissions }) {
 							void pushShallowQuery(router, { type: newOptions })
 						}}
 					>
-						<Ariakit.Select className="flex cursor-pointer flex-nowrap items-center gap-2 rounded-md bg-(--btn-bg) px-3 py-2 text-xs text-(--text-primary) hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)">
+						<Ariakit.Select className={selectTriggerStyles('filter', 'md')}>
 							{selectedOptions.length > 0 ? (
 								<>
 									<span>Type: </span>
-									<span className="text-(--link)">
+									<span className="text-link">
 										{`${selectedOptions[1]}${
 											selectedOptions.length > 1 ? ` + ${selectedOptions.length - 1} others` : ''
 										}`}
@@ -242,9 +244,9 @@ export default function Protocols({ emissions }) {
 							className={searchFieldInputStyles}
 						/>
 					</label>
-				</div>
+				</PanelHeader>
 				<VirtualTable instance={instance} />
-			</div>
+			</Panel>
 		</Layout>
 	)
 }
@@ -260,7 +262,7 @@ export const calendarColumns = [
 					{row.original.type === 'Unlock' ? (
 						<BasicLink
 							href={`/unlocks/${slug(row.original.link)}`}
-							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
 						>
 							{getValue()}
 						</BasicLink>
@@ -309,14 +311,22 @@ const SimpleUpcomingEvent = ({ timestamp, name }) => {
 	return (
 		<span className="flex items-center gap-2">
 			<span>{name}</span>
-			<span className="h-10 w-px bg-(--bg-border)" />
+			<span className="h-10 w-px bg-border-subtle" />
 			<span className="flex items-center gap-1">
-				<span className="flex size-8 items-center justify-center rounded-md bg-(--bg-border) text-sm">{days}D</span>
-				<span className="flex size-8 items-center justify-center rounded-md bg-(--bg-border) text-sm">{hours}H</span>
-				<span className="flex size-8 items-center justify-center rounded-md bg-(--bg-border) text-sm">{minutes}M</span>
-				<span className="flex size-8 items-center justify-center rounded-md bg-(--bg-border) text-sm">{seconds}S</span>
+				<span className="flex size-8 items-center justify-center rounded-md bg-surface-elevated-1 text-sm">
+					{days}D
+				</span>
+				<span className="flex size-8 items-center justify-center rounded-md bg-surface-elevated-1 text-sm">
+					{hours}H
+				</span>
+				<span className="flex size-8 items-center justify-center rounded-md bg-surface-elevated-1 text-sm">
+					{minutes}M
+				</span>
+				<span className="flex size-8 items-center justify-center rounded-md bg-surface-elevated-1 text-sm">
+					{seconds}S
+				</span>
 			</span>
-			<span className="h-10 w-px bg-(--bg-border)" />
+			<span className="h-10 w-px bg-border-subtle" />
 			<span className="flex items-center justify-between gap-2">
 				<span>{toNiceDayMonthYear(timestamp)}</span>
 				<span>{toNiceHour(timestamp)}</span>

@@ -158,7 +158,7 @@ export default function Tokens() {
 			) : !protocols || protocols.length === 0 ? (
 				<PanelStatus className="min-h-[380px]">No protocols found</PanelStatus>
 			) : (
-				<Panel className="w-full flex-1">
+				<Panel padding="none" className="w-full flex-1">
 					<ChartPanelToolbar className="items-center justify-between">
 						<h2 className="mr-auto flex w-full grow heading-xs sm:w-auto">{`${tokenSymbol.toUpperCase()} usage in protocols`}</h2>
 

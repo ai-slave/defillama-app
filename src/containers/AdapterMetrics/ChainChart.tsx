@@ -771,7 +771,7 @@ export const AdapterByChainChart = ({
 	}, [breakdownChartState, chain, chartName])
 
 	return (
-		<Panel className="col-span-2">
+		<Panel padding="none" className="col-span-2">
 			<ChartPanelToolbar>
 				<Select
 					allValues={CHART_VIEW_MODE_OPTIONS}
@@ -1317,7 +1317,7 @@ export const ChainsByAdapterChart = ({
 		deferredChartPresentation.data.length > 0
 
 	return (
-		<Panel className="col-span-2">
+		<Panel padding="none" className="col-span-2">
 			<ChartPanelToolbar>
 				<Select
 					allValues={CHART_KIND_OPTIONS}

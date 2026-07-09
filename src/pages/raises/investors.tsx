@@ -182,7 +182,7 @@ const ActiveInvestors = ({ investors }: IInvestorsPageData) => {
 			canonicalUrl={`/raises/investors`}
 			pageName={pageName}
 		>
-			<Panel>
+			<Panel padding="none">
 				<TableToolbar className="items-center justify-end">
 					<PanelTitle as="h1">Deals by Investors</PanelTitle>
 					<label className="relative w-full sm:max-w-[280px]">
