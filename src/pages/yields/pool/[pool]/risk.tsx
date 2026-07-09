@@ -1,7 +1,11 @@
 import type { GetServerSideProps } from 'next'
 import { useBlockExplorers } from '~/api/client'
+import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
+import { TokenLogo } from '~/components/TokenLogo'
 import { VaultRiskSection, VaultRiskUnmapped } from '~/containers/Yields/VaultRisk'
+import { explorerUrl } from '~/containers/Yields/VaultRisk/components/trustShared'
+import { AddressActions } from '~/containers/Yields/VaultRisk/primitives/AddressActions'
 import type { VaultRiskData } from '~/containers/Yields/VaultRisk/types'
 import Layout from '~/layout'
 import { jitterCacheControlHeader, maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -15,9 +19,6 @@ interface RiskPageProps {
 	vaultRisk: VaultRiskData | null
 }
 
-// Standalone per-pool risk page; the pool page links here when `hasVaultRisk` reports an entry.
-// `getYieldPoolPageData` gives the pool context (name / chain) for the header; a missing pool
-// 404s, a pool with no risk entry renders a stable empty state so the URL stays shareable.
 const getServerSidePropsHandler: GetServerSideProps<RiskPageProps> = async ({ params, res }) => {
 	const poolParam = params?.pool
 	const poolId = typeof poolParam === 'string' ? poolParam : Array.isArray(poolParam) ? poolParam[0] : null
@@ -30,8 +31,7 @@ const getServerSidePropsHandler: GetServerSideProps<RiskPageProps> = async ({ pa
 		import('~/containers/Yields/server/dataset'),
 		import('~/containers/Yields/VaultRisk/loader')
 	])
-	// The risk payload only needs the pool id, so it loads alongside the pool data
-	// (loadVaultRisk never throws — it resolves null on any failure).
+
 	const [result, vaultRisk] = await Promise.all([getYieldPoolPageData(poolId), loadVaultRisk(poolId)])
 
 	if (!result.data) {
@@ -55,26 +55,48 @@ const getServerSidePropsHandler: GetServerSideProps<RiskPageProps> = async ({ pa
 
 function RiskPageView({ poolId, poolName, chain, vaultRisk }: RiskPageProps) {
 	const { data: blockExplorersData } = useBlockExplorers()
+	const vaultName = vaultRisk?.vault.vault_name ?? null
+	const vaultAddress = vaultRisk?.vault.vault_address ?? null
 
 	return (
 		<div className="flex flex-col gap-4">
-			<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+			<div className="flex flex-col gap-1.5 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
 				<BasicLink
 					href={`/yields/pool/${poolId}`}
-					className="w-fit text-sm text-(--text-secondary) hover:text-(--text-primary)"
+					className="flex w-fit items-center gap-1 text-xs text-(--text-secondary) hover:text-(--text-primary)"
 				>
-					← {poolName}
+					<Icon name="arrow-left" className="size-3" aria-hidden />
+					Back to pool details
 				</BasicLink>
-				<h1 className="flex flex-wrap items-baseline gap-2 text-xl font-bold">
-					{poolName}
-					<span className="text-base font-normal text-(--text-secondary)">Risk{chain ? ` · ${chain}` : ''}</span>
-				</h1>
+				<h1 className="text-xl font-bold">{vaultName ?? poolName}</h1>
+				<p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-(--text-secondary)">
+					<span>Risk report</span>
+					{chain ? (
+						<span className="flex items-center gap-1">
+							<TokenLogo name={chain.toLowerCase()} kind="chain" size={14} />
+							{chain}
+						</span>
+					) : null}
+					{vaultAddress ? (
+						<AddressActions
+							address={vaultAddress}
+							url={explorerUrl(vaultAddress, vaultRisk?.vault.chain ?? chain, blockExplorersData)}
+							label="vault contract address"
+						/>
+					) : null}
+				</p>
 			</div>
 
 			{vaultRisk ? (
-				<VaultRiskSection data={vaultRisk} poolName={poolName} chain={chain} explorers={blockExplorersData} />
+				<VaultRiskSection
+					data={vaultRisk}
+					poolName={poolName}
+					chain={chain}
+					explorers={blockExplorersData}
+					standalone
+				/>
 			) : (
-				<VaultRiskUnmapped poolName={poolName} chain={chain} />
+				<VaultRiskUnmapped poolName={poolName} chain={chain} standalone />
 			)}
 		</div>
 	)
@@ -82,7 +104,8 @@ function RiskPageView({ poolId, poolName, chain, vaultRisk }: RiskPageProps) {
 
 export default function YieldPoolRiskPage(props: RiskPageProps) {
 	const { poolId, poolName, chain } = props
-	const label = poolName ? `${poolName}${chain ? ` (${chain})` : ''}` : poolId
+	const displayName = props.vaultRisk?.vault.vault_name ?? poolName
+	const label = displayName ? `${displayName}${chain ? ` (${chain})` : ''}` : poolId
 	const title = label ? `${label} Risk` : 'Risk'
 	const description = label ? `Per-vault risk analysis for ${label} on DefiLlama.` : ''
 

@@ -501,6 +501,8 @@ export function buildVaultRiskVM(data: VaultRiskData, explorers?: BlockExplorers
 		protocolId: vault.protocol_id,
 		chain: vault.chain,
 		poolType: vault.pool_type,
+		vaultName: vault.vault_name ?? null,
+		vaultAddress: vault.vault_address ?? null,
 		supplyUsd,
 		allocatedUsd: vault.allocated_usd ?? null,
 		idleUsd: vault.idle_usd ?? null,

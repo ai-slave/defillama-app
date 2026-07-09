@@ -220,7 +220,7 @@ Current prop-trim follow-up:
 - [x] `AvailableRange`: remove redundant `variant`; the active secondary label behavior
       is now the single recipe.
 - [x] `Card`: remove `interactive`; clickable cards carry `.hover-wash-card
-  cursor-pointer` directly at the call site.
+cursor-pointer` directly at the call site.
 
 Exported class-string componentization handoff:
 

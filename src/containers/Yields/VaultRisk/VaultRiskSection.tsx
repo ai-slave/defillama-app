@@ -10,8 +10,10 @@ import { RiskVerdict } from './components/RiskVerdict'
 import { ScenarioByExit } from './components/ScenarioByExit'
 import { isDisplayedScenario } from './components/scenarioShared'
 import { TrustPanel } from './components/TrustPanel'
+import { explorerUrl } from './components/trustShared'
 import { buildVaultRiskVM, isDustCollateral } from './derive'
 import { prettyProtocolSlug } from './format'
+import { AddressActions } from './primitives/AddressActions'
 import type { VaultRiskData, VaultRiskVM } from './types'
 
 const SECTION_ID = 'vault-risk'
@@ -26,6 +28,7 @@ interface VaultRiskSectionProps {
 	poolName: string
 	chain: string
 	explorers?: BlockExplorersResponse
+	standalone?: boolean // true = under the /risk page header, which already names chain + contract
 }
 
 function Chip({ children }: { children: React.ReactNode }) {
@@ -117,20 +120,23 @@ function ScanningRadar() {
 export function VaultRiskUnmapped({
 	poolName,
 	protocolId,
-	chain
+	chain,
+	standalone = false
 }: {
 	poolName: string
 	protocolId?: string | null
 	chain?: string | null
+	standalone?: boolean // true = under the /risk page header, which already names the chain
 }) {
+	const showChain = !standalone && chain
 	return (
 		<Shell
 			poolName={poolName}
 			chips={
-				protocolId || chain ? (
+				protocolId || showChain ? (
 					<>
 						{protocolId ? <Chip>{protocolId}</Chip> : null}
-						{chain ? <ChainChip chain={chain} /> : null}
+						{showChain ? <ChainChip chain={chain} /> : null}
 					</>
 				) : undefined
 			}
@@ -147,7 +153,7 @@ export function VaultRiskUnmapped({
 	)
 }
 
-export function VaultRiskSection({ data, poolName, chain, explorers }: VaultRiskSectionProps) {
+export function VaultRiskSection({ data, poolName, chain, explorers, standalone = false }: VaultRiskSectionProps) {
 	// A malformed fixture must never crash the pool page — degrade to "no usable data".
 	const vm = useMemo<VaultRiskVM | null>(() => {
 		if (!data) return null
@@ -222,7 +228,14 @@ export function VaultRiskSection({ data, poolName, chain, explorers }: VaultRisk
 	if (!vm || vm.scenarios.length === 0) {
 		const protocolId = vm?.protocolId ?? data.vault?.protocol_id
 		const chainName = vm?.chain ?? data.vault?.chain ?? chain
-		return <VaultRiskUnmapped poolName={poolName} protocolId={protocolId} chain={protocolId ? chainName : null} />
+		return (
+			<VaultRiskUnmapped
+				poolName={poolName}
+				protocolId={protocolId}
+				chain={protocolId ? chainName : null}
+				standalone={standalone}
+			/>
+		)
 	}
 
 	const poolTypeLabel = vm.poolType === 'vault' ? 'Vault (aggregates across markets)' : 'Market'
@@ -234,15 +247,27 @@ export function VaultRiskSection({ data, poolName, chain, explorers }: VaultRisk
 	return (
 		<PositionProvider>
 			<Shell
-				poolName={poolName}
+				poolName={vm.vaultName ?? poolName}
 				chips={
 					<>
 						<Chip>
 							<TokenLogo name={vm.protocolId} kind="token" size={14} />
 							{prettyProtocolSlug(vm.protocolId)}
 						</Chip>
-						<ChainChip chain={vm.chain} />
+						{/* the standalone /risk page header already carries chain + contract — repeat
+						    them only on the embedded pool-page view, where this row is the sole identity */}
+						{standalone ? null : <ChainChip chain={vm.chain} />}
 						<Chip>{poolTypeLabel}</Chip>
+						{/* the same brand can run two vaults with one name+chain — the contract disambiguates */}
+						{!standalone && vm.vaultAddress ? (
+							<Chip>
+								<AddressActions
+									address={vm.vaultAddress}
+									url={explorerUrl(vm.vaultAddress, vm.chain, explorers)}
+									label="vault contract address"
+								/>
+							</Chip>
+						) : null}
 					</>
 				}
 			>

@@ -338,6 +338,8 @@ export interface VaultRiskFixture {
 	protocol_id: string
 	chain: string
 	pool_type: PoolType
+	vault_name?: string | null
+	vault_address?: string | null
 	vault_roles?: VaultRoles | null
 	pool_total_supply_usd: number
 	pool_total_borrow_usd: number // 0 on vaults is CORRECT (vaults don't borrow)
@@ -623,6 +625,8 @@ export interface VaultRiskVM {
 	protocolId: string
 	chain: string
 	poolType: PoolType
+	vaultName: string | null // display title = vaultName ?? the pool's symbol name
+	vaultAddress: string | null
 	supplyUsd: number
 	allocatedUsd: number | null
 	idleUsd: number | null

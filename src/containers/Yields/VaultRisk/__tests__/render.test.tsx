@@ -763,6 +763,25 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('Governance owner') // per-chain 5/9 rows collapsed to one role
 	})
 
+	it('titles the section with vault_name and shows the disambiguating contract address', async () => {
+		const data = morphoData()
+		data.vault.vault_name = 'Steakhouse Prime USDC'
+		data.vault.vault_address = '0x00000000000000000000000000000000000000ab'
+		const html = await render(<VaultRiskSection data={data} poolName="STEAKUSDC" chain="ethereum" />)
+		expect(html).toContain('Depositing into Steakhouse Prime USDC') // brand name over the yields symbol
+		expect(html).toContain('0x0000…00ab') // same name can run V1+V2 vaults — the contract chip disambiguates
+
+		// null vault_name/address (market rows, non-morpho, first post-deploy tick) → symbol, no chip
+		const plain = await render(<VaultRiskSection data={morphoData()} poolName="STEAKUSDC" chain="ethereum" />)
+		expect(plain).toContain('Depositing into STEAKUSDC')
+		expect(plain).not.toContain('0x0000…00ab')
+
+		// standalone /risk page: its header already names chain + contract — the shell must not repeat them
+		const alone = await render(<VaultRiskSection data={data} poolName="STEAKUSDC" chain="ethereum" standalone />)
+		expect(alone).not.toContain('0x0000…00ab')
+		expect(alone).toContain('Morpho Blue') // protocol + pool type chips stay: they're not in the header
+	})
+
 	it('sentinels fill the veto slot: listed like allocators, capability joined by role, no unguarded state', async () => {
 		// newer Morpho vaults appoint sentinels instead of a guardian — same veto role, several holders
 		const roles = makeVaultRoles({

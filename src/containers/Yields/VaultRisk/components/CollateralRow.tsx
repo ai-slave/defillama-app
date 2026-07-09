@@ -1,8 +1,9 @@
 import type { BlockExplorersResponse } from '~/api/types'
 import { Icon } from '~/components/Icon'
+import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/components/Tooltip'
-import { formattedNum } from '~/utils'
+import { formattedNum, slug } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { positionUsd, type AllocationVM } from '../allocation'
 import { collateralDepegLossUsd, collateralMarketBreakLossUsd, marketBreakPresentation } from '../derive'
@@ -335,7 +336,12 @@ export function CollateralRow({
 				<div className="flex items-center justify-between gap-2 sm:contents">
 					<span className="flex min-w-0 items-center gap-2">
 						<TokenLogo src={c.logoUrl} size={18} alt={c.symbol} />
-						<span className="truncate text-sm font-medium text-(--text-primary)">{c.symbol}</span>
+						<BasicLink
+							href={`/token/${slug(c.symbol)}`}
+							className="truncate text-sm font-medium text-(--text-primary) hover:underline"
+						>
+							{c.symbol}
+						</BasicLink>
 						<Tooltip content={c.oracleMechanism ?? badge.story} className="shrink-0">
 							<span
 								className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${tone.chip}`}
