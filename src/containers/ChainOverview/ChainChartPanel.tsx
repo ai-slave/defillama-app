@@ -15,7 +15,7 @@ import { prepareChartCsv } from '~/components/ECharts/utils'
 import { EmbedChart } from '~/components/EmbedChart'
 import { Icon } from '~/components/Icon'
 import { LoadingDots } from '~/components/Loaders'
-import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
+import { SegmentedControl } from '~/components/SegmentedControl'
 import { serializeChainChartToMultiChart } from '~/containers/ProDashboard/utils/chartSerializer'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useIsClient } from '~/hooks/useIsClient'
@@ -269,7 +269,7 @@ export function ChainChartPanel({
 								</label>
 							</div>
 
-							<div className="flex thin-scrollbar flex-1 flex-col gap-5 overflow-y-auto overscroll-contain p-4">
+							<div className="flex flex-1 flex-col gap-5 overflow-y-auto overscroll-contain p-4">
 								{groupedFilteredOptions.map((group) => (
 									<section key={`chain-chart-category-${group.label}`} className="flex flex-col gap-2">
 										<div className="flex items-baseline gap-1.5">
@@ -374,20 +374,14 @@ export function ChainChartPanel({
 
 				<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
 					{denominations.length > 1 ? (
-						<div className={chartSegmentedControlGroupStyles}>
-							{denominations.map((denom) => (
-								<button
-									key={`denom-${denom}`}
-									className={chartSegmentedControlButtonStyles}
-									data-active={denomination === denom}
-									onClick={() => {
-										void pushShallowQuery(router, { currency: denom })
-									}}
-								>
-									{denom}
-								</button>
-							))}
-						</div>
+						<SegmentedControl
+							value={denomination}
+							onValueChange={(denom) => void pushShallowQuery(router, { currency: denom })}
+							options={denominations.map((denom) => ({ value: denom, label: denom }))}
+							label="Currency"
+							variant="default"
+							size="md"
+						/>
 					) : null}
 
 					{hasBarChart ? (

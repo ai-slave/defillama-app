@@ -405,7 +405,7 @@ export function ColumnManagementPanel({
 								Active Columns ({visibleColumnCount})
 							</h5>
 							<p className="mb-3 text-xs pro-text3">Use arrows to reorder • Click × to hide</p>
-							<div className="thin-scrollbar max-h-60 space-y-1 overflow-y-auto">
+							<div className="max-h-60 space-y-1 overflow-y-auto">
 								{visibleColumnOrder.map((columnKey) => {
 									const column = columnsByKey.get(columnKey)
 									if (!column) return null
@@ -435,7 +435,7 @@ export function ColumnManagementPanel({
 								Available Columns
 							</h5>
 							<p className="mb-3 text-xs pro-text3">Click to add to table</p>
-							<div className="thin-scrollbar max-h-60 space-y-3 overflow-y-auto">
+							<div className="max-h-60 space-y-3 overflow-y-auto">
 								{columnGroups.map((group) => (
 									<div key={group.title}>
 										<h6 className="mb-1 text-xs font-medium pro-text2">{group.title}</h6>

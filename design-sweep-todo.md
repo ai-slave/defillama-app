@@ -17,6 +17,19 @@ Process rules (from review feedback):
 
 ## Post-merge triage — 2026-07-08
 
+### Finalization triage — 2026-07-09
+
+- Resolved but historically unchecked: Add-to-Dashboard, MarketMakers, and Select empty
+  states already expose the required status semantics; leave them unchanged.
+- Code-complete pending visual verification: Search and Metrics dialog surfaces, shared
+  segmented-control keyboard interaction, and Home/Chain DOM chart-tooltip placement.
+- Explicitly deferred: custom ECharts visual/theme work, manual export composition review,
+  and any route finding not confirmed against the current shared recipes.
+- Excluded products: ProDashboard, LlamaAI (including EntityQuestionsStrip), Yields,
+  account/subscription, Downloads, Articles/research, investor dashboards, and Sheets.
+- Historical unchecked rows below remain as audit evidence. They are not a request to
+  re-run the merged route-family sweep or alter unrelated shells.
+
 This file is now a living audit/backlog ledger, not a literal merge-blocking checklist.
 The broad design sweep, shared popover/mobile-drawer pass, DialogShell pass,
 ProtocolOverview cleanup, text-tier/icon consistency sweep, dense pages/Card-Panel

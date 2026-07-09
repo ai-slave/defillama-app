@@ -147,10 +147,7 @@ function ExpandedExamplesPanel({
 				) : null}
 			</div>
 
-			<div
-				className="-mr-1 flex thin-scrollbar flex-col gap-4 overflow-y-auto pr-1"
-				onMouseLeave={() => setHoveredGroup(null)}
-			>
+			<div className="-mr-1 flex flex-col gap-4 overflow-y-auto pr-1" onMouseLeave={() => setHoveredGroup(null)}>
 				{filteredGroups.length === 0 ? (
 					<p className="py-8 text-center text-xs text-(--text-tertiary)">
 						No queries match <span className="font-mono text-(--text-secondary)">"{filter}"</span>

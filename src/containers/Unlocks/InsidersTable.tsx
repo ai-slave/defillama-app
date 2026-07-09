@@ -153,7 +153,7 @@ export const InsidersTable = ({
 				<PanelTitle as="h3">Insiders</PanelTitle>
 				{methodology ? <p className="text-sm text-secondary">{methodology}</p> : null}
 			</PanelHeader>
-			<div className="thin-scrollbar max-h-100 overflow-y-auto">
+			<div className="max-h-100 overflow-y-auto">
 				<VirtualTable instance={instance} stripedBg skipVirtualization />
 			</div>
 		</Panel>

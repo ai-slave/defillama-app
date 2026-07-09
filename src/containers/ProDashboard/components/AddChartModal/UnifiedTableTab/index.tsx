@@ -1065,7 +1065,7 @@ function TabContent({
 			) : null}
 
 			<div
-				className="thin-scrollbar flex-1 overflow-y-auto pr-1"
+				className="flex-1 overflow-y-auto pr-1"
 				style={{ height: 'clamp(420px, 65vh, 720px)' }}
 				data-unified-table-scroll="true"
 			>

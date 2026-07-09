@@ -47,10 +47,7 @@ export const ResearchCollections: React.FC<ResearchCollectionsProps> = ({ title,
 				<TitleLine title={title} />
 			</div>
 			<div className="overflow-x-auto pb-2 lg:overflow-x-visible lg:pb-0">
-				<div
-					className={`thin-scrollbar min-w-min ${RESEARCH_COLLECTIONS_SCROLLER_HEIGHT_CLASSES}`}
-					style={scrollerStyle}
-				>
+				<div className={`min-w-min ${RESEARCH_COLLECTIONS_SCROLLER_HEIGHT_CLASSES}`} style={scrollerStyle}>
 					<div ref={gridRef} className="flex grid min-w-min grid-cols-1 gap-3 lg:min-w-0 lg:grid-cols-3">
 						{articles.map((article, i) => (
 							<Link

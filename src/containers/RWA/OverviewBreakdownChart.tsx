@@ -5,12 +5,9 @@ import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
 import type { MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
 import { LoadingDots } from '~/components/Loaders'
+import { SegmentedControl } from '~/components/SegmentedControl'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import {
-	chartSegmentedControlButtonStyles,
-	chartSegmentedControlGroupStyles,
-	type ExcludeQueryKey
-} from '~/components/Select/types'
+import { type ExcludeQueryKey } from '~/components/Select/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -220,18 +217,15 @@ export function RWAOverviewBreakdownChart({
 	return (
 		<ChartPanel>
 			<ChartPanelToolbar className="justify-end">
-				<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
-					{CHART_TYPE_OPTIONS.map(({ key, label }) => (
-						<button
-							key={`rwa-breakdown-chart-type-${key}`}
-							className={chartSegmentedControlButtonStyles}
-							data-active={chartType === key}
-							onClick={() => onSelectChartType(key)}
-						>
-							{label}
-						</button>
-					))}
-				</div>
+				<SegmentedControl
+					value={chartType}
+					onValueChange={onSelectChartType}
+					options={CHART_TYPE_OPTIONS.map(({ key, label }) => ({ value: key, label }))}
+					label="Chart type"
+					variant="default"
+					size="md"
+					className="mr-auto"
+				/>
 				{stackOptions.length > 1 ? (
 					<SelectWithCombobox
 						allValues={stackOptions}

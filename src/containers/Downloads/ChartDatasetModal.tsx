@@ -1443,7 +1443,7 @@ export function ChartDatasetModal({
 									/>
 									<div
 										ref={tableContainerRef}
-										className={`thin-scrollbar h-full ${isPreview ? 'overflow-x-auto overflow-y-hidden' : 'overflow-auto'}`}
+										className={`h-full ${isPreview ? 'overflow-x-auto overflow-y-hidden' : 'overflow-auto'}`}
 									>
 										<div className="sticky top-0 z-20 bg-surface" style={{ minWidth: `${tableWidth}px` }}>
 											<div style={{ display: 'grid', gridTemplateColumns: gridTemplate }}>
@@ -1735,7 +1735,7 @@ function CategoryPickerPopover({
 						autoFocus
 					/>
 				</div>
-				<div className="thin-scrollbar flex-1 overflow-auto py-1">
+				<div className="flex-1 overflow-auto py-1">
 					<button
 						type="button"
 						onClick={() => onSelect(null)}
@@ -1855,7 +1855,7 @@ function MultiOptionPickerPopover({
 						autoFocus
 					/>
 				</div>
-				<div className="thin-scrollbar flex-1 overflow-auto py-1">
+				<div className="flex-1 overflow-auto py-1">
 					{filtered.length === 0 ? (
 						<p className="px-3 py-2 text-xs text-(--text-tertiary)">No results</p>
 					) : (
@@ -1932,7 +1932,7 @@ function ColumnPickerPopover({
 						{allSelected ? 'Deselect all' : 'Select all'}
 					</button>
 				</div>
-				<div className="thin-scrollbar flex-1 overflow-auto py-1">
+				<div className="flex-1 overflow-auto py-1">
 					{columns.map((column) => {
 						const isSelected = selected.has(column.index)
 						return (
@@ -2020,7 +2020,7 @@ function BulkPreviewSidebar({
 					</button>
 				) : null}
 			</div>
-			<div className="thin-scrollbar flex-1 overflow-auto">
+			<div className="flex-1 overflow-auto">
 				{selectedParams.map((param, i) => {
 					const query = csvQueries[i]
 					const isActive = param.value === activePreviewValue

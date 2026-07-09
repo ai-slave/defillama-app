@@ -18,7 +18,7 @@ function PillStrip({
 	onSelect: (id: string) => void
 }) {
 	return (
-		<div className="flex thin-scrollbar items-center gap-1 overflow-x-auto border-b border-(--sl-divider) pb-2">
+		<div className="flex items-center gap-1 overflow-x-auto border-b border-(--sl-divider) pb-2">
 			{tabs.map((tab) => {
 				if (tab.externalHref) {
 					return (

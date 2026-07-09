@@ -3,9 +3,9 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
 import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import { SegmentedControl } from '~/components/SegmentedControl'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -126,38 +126,28 @@ function LiquidationsDistributionChartCard({
 						size="md"
 					/>
 				) : null}
-				<div className={chartSegmentedControlGroupStyles}>
-					<button
-						data-active={chartState.mode === 'cumulative'}
-						onClick={() => setChartMode('cumulative')}
-						className={`${chartSegmentedControlButtonStyles} inline-flex items-center justify-center`}
-					>
-						Cumulative
-					</button>
-					<button
-						data-active={chartState.mode === 'distribution'}
-						onClick={() => setChartMode('distribution')}
-						className={`${chartSegmentedControlButtonStyles} inline-flex items-center justify-center`}
-					>
-						Distribution
-					</button>
-				</div>
-				<div className={chartSegmentedControlGroupStyles}>
-					<button
-						data-active={chartState.metric === 'usd'}
-						onClick={() => setMetric('usd')}
-						className={`${chartSegmentedControlButtonStyles} inline-flex items-center justify-center`}
-					>
-						USD
-					</button>
-					<button
-						data-active={chartState.metric === 'amount'}
-						onClick={() => setMetric('amount')}
-						className={`${chartSegmentedControlButtonStyles} inline-flex items-center justify-center`}
-					>
-						Amount
-					</button>
-				</div>
+				<SegmentedControl
+					value={chartState.mode}
+					onValueChange={setChartMode}
+					options={[
+						{ value: 'cumulative', label: 'Cumulative' },
+						{ value: 'distribution', label: 'Distribution' }
+					]}
+					label="Chart mode"
+					variant="default"
+					size="md"
+				/>
+				<SegmentedControl
+					value={chartState.metric}
+					onValueChange={setMetric}
+					options={[
+						{ value: 'usd', label: 'USD' },
+						{ value: 'amount', label: 'Amount' }
+					]}
+					label="Value type"
+					variant="default"
+					size="md"
+				/>
 				<ChartExportButtons
 					chartInstance={() => chartInstanceRef.current}
 					filename={slug(

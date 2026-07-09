@@ -70,7 +70,7 @@ export function SelectMetricsStep() {
 				</div>
 			</div>
 
-			<div className="thin-scrollbar max-h-[340px] overflow-y-auto rounded-lg">
+			<div className="max-h-[340px] overflow-y-auto rounded-lg">
 				<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
 					{displayedMetrics.map((metric) => (
 						<MetricCard

@@ -490,7 +490,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 							/>
 						</div>
 					</div>
-					<ul className="thin-scrollbar min-h-0 flex-1 overflow-y-auto px-1.5 pb-2">
+					<ul className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2">
 						{catalogLoading ? (
 							<li className="px-3 py-8 text-center text-xs text-(--text-tertiary)">Loading…</li>
 						) : filteredEntities.length === 0 ? (
@@ -538,7 +538,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 					</ul>
 				</aside>
 
-				<section className="flex thin-scrollbar min-h-0 flex-col overflow-y-auto">
+				<section className="flex min-h-0 flex-col overflow-y-auto">
 					{series.length === 0 ? (
 						<div className="flex flex-1 flex-col items-center justify-center gap-2 px-8 py-16 text-center">
 							<div className="text-sm font-medium text-(--text-primary)">Pick up to {MAX_SERIES} series</div>

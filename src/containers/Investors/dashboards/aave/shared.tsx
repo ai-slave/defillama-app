@@ -13,7 +13,7 @@ export function InvestorsTable<T extends RowData>({
 	const rows = overrideRows ?? instance.getRowModel().rows
 
 	return (
-		<div className="thin-scrollbar w-full overflow-auto">
+		<div className="w-full overflow-auto">
 			<div style={{ display: 'grid', gridTemplateColumns, minWidth: `${instance.getTotalSize()}px` }}>
 				{instance.getHeaderGroups().map((headerGroup) =>
 					headerGroup.headers.map((header) => {

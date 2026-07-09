@@ -39,7 +39,7 @@ export function ResearchSpotlightColumn({ title, articles, sharedHeight }: Resea
 				</div>
 				<div className="flex flex-col gap-y-16">
 					<div>
-						<div ref={containerRef} className={`thin-scrollbar overflow-y-auto ${containerHeight}`}>
+						<div ref={containerRef} className={`overflow-y-auto ${containerHeight}`}>
 							<div className="flex flex-col gap-y-6">
 								{articles.map((article, i) => (
 									<Link

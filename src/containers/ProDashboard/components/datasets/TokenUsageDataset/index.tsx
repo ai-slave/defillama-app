@@ -568,10 +568,7 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 				</div>
 			</div>
 
-			<div
-				className="relative thin-scrollbar min-h-0 w-full flex-1 overflow-x-auto overflow-y-auto"
-				style={{ height: '100%' }}
-			>
+			<div className="relative min-h-0 w-full flex-1 overflow-x-auto overflow-y-auto" style={{ height: '100%' }}>
 				<table className="min-w-full border-collapse text-sm text-(--text-primary)">
 					<thead>
 						{table.getHeaderGroups().map((headerGroup) => (

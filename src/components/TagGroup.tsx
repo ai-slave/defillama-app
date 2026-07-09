@@ -1,6 +1,6 @@
-import clsx from 'clsx'
 import * as React from 'react'
-import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS, type TagGroupSize, type TagGroupVariant } from './Select/types'
+import { SegmentedControl } from './SegmentedControl'
+import type { TagGroupSize, TagGroupVariant } from './Select/types'
 
 interface IProps<V extends readonly string[] = readonly string[]> extends React.ComponentProps<'div'> {
 	selectedValue: V[number] | null
@@ -24,26 +24,22 @@ export function TagGroup<V extends readonly string[]>({
 	disabledValues,
 	...props
 }: IProps<V>) {
-	const disabledValuesSet = React.useMemo(() => (disabledValues ? new Set(disabledValues) : null), [disabledValues])
-	const { container, button } = TAG_GROUP_VARIANTS[variant]
-
 	return (
-		<div role="radiogroup" className={clsx(container, TAG_GROUP_SIZES[size], className)} style={style} {...props}>
-			{label ? <p className="pr-1 pl-3">{label}</p> : null}
-			{values.map((value) => (
-				<button
-					type="button"
-					role="radio"
-					aria-checked={value === selectedValue}
-					className={button}
-					disabled={disabledValuesSet?.has(value)}
-					data-active={value === selectedValue}
-					key={value}
-					onClick={() => setValue(value)}
-				>
-					{`${value.slice(0, 1).toUpperCase()}${value.slice(1)}`}
-				</button>
-			))}
-		</div>
+		<SegmentedControl
+			value={selectedValue}
+			onValueChange={setValue}
+			options={values.map((value) => ({
+				value,
+				label: `${value.slice(0, 1).toUpperCase()}${value.slice(1)}`,
+				disabled: disabledValues?.includes(value)
+			}))}
+			label={label ?? 'Options'}
+			leading={label}
+			variant={variant}
+			size={size}
+			className={className}
+			style={style}
+			{...props}
+		/>
 	)
 }

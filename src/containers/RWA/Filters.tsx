@@ -867,7 +867,7 @@ function RWAFilterBrowser({
 			<div className="border-b border-subtle px-4 py-2">
 				<h3 className="label-sm text-secondary">Browse filters</h3>
 			</div>
-			<div className="flex thin-scrollbar flex-1 flex-col gap-5 overflow-y-auto p-4 max-sm:overflow-visible">
+			<div className="flex flex-1 flex-col gap-5 overflow-y-auto p-4 max-sm:overflow-visible">
 				{groups.map((group) => {
 					const availableDefinitions = filterDefinitions.filter(
 						(definition) => definition.group === group && !activeIds.has(definition.id)
@@ -952,7 +952,7 @@ function RWAActiveDraftFilters({
 			<div className="border-b border-subtle px-4 py-2">
 				<h3 className="label-sm text-secondary">Active filters</h3>
 			</div>
-			<div className="flex thin-scrollbar flex-1 flex-col gap-2 overflow-y-auto p-4 max-sm:overflow-visible">
+			<div className="flex flex-1 flex-col gap-2 overflow-y-auto p-4 max-sm:overflow-visible">
 				{activeDefinitions.length > 0 ? (
 					activeDefinitions.map((definition) => (
 						<RWADraftFilterEditor

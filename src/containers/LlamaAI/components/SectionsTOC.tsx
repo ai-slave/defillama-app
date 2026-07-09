@@ -73,7 +73,7 @@ export function SectionsTOC({
 
 	return (
 		<div className="w-0 shrink-0">
-			<nav className="sticky top-0 hidden thin-scrollbar max-h-dvh w-56 -translate-x-full overflow-y-auto py-6 pr-4 min-[1428px]:block">
+			<nav className="sticky top-0 hidden max-h-dvh w-56 -translate-x-full overflow-y-auto py-6 pr-4 min-[1428px]:block">
 				<p className="mb-3 px-2 text-sm font-semibold text-[#333] dark:text-[#ccc]">Sections</p>
 				<ol className="flex flex-col gap-0.5">
 					{sections.map((section, i) => {

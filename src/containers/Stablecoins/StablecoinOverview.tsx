@@ -14,8 +14,8 @@ import { preparePieChartData } from '~/components/ECharts/utils'
 import { Icon } from '~/components/Icon'
 import { Menu } from '~/components/Menu'
 import { QuestionHelper } from '~/components/QuestionHelper'
+import { SegmentedControl } from '~/components/SegmentedControl'
 import { Select } from '~/components/Select/Select'
-import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { StablecoinAssetChartConfig } from '~/containers/ProDashboard/types'
@@ -301,18 +301,15 @@ export const PeggedAssetInfo = ({
 				{/* Chart */}
 				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
-						<div className={`mr-auto ${chartSegmentedControlGroupStyles}`}>
-							{chartTypeOptions.map(({ key, name: optionName }) => (
-								<button
-									key={key}
-									className={chartSegmentedControlButtonStyles}
-									data-active={chartType === key}
-									onClick={() => onChartTypeChange(key)}
-								>
-									{optionName}
-								</button>
-							))}
-						</div>
+						<SegmentedControl
+							value={chartType}
+							onValueChange={onChartTypeChange}
+							options={chartTypeOptions.map(({ key, name: optionName }) => ({ value: key, label: optionName }))}
+							label="Chart type"
+							variant="default"
+							size="md"
+							className="mr-auto"
+						/>
 						<Select
 							allValues={chartViewOptions}
 							selectedValues={chartView}

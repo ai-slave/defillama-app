@@ -814,7 +814,7 @@ export function UnifiedChartTab({
 					</div>
 
 					{composerItems.length > 0 ? (
-						<div className="flex thin-scrollbar shrink-0 items-center gap-2 overflow-x-auto py-1">
+						<div className="flex shrink-0 items-center gap-2 overflow-x-auto py-1">
 							{composerItems.map((item) => (
 								<div
 									key={item.id}

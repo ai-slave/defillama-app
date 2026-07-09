@@ -19,14 +19,11 @@ import { BasicLink } from '~/components/Link'
 import { LoadingDots } from '~/components/Loaders'
 import { PercentChange } from '~/components/PercentChange'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { SegmentedControl } from '~/components/SegmentedControl'
 import { getQueryUpdatesFromSelected } from '~/components/Select/query'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import {
-	chartSegmentedControlButtonStyles,
-	chartSegmentedControlGroupStyles,
-	type ExcludeQueryKey
-} from '~/components/Select/types'
+import { type ExcludeQueryKey } from '~/components/Select/types'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { Tooltip } from '~/components/Tooltip'
 import { CHART_COLORS } from '~/constants/colors'
@@ -1306,7 +1303,7 @@ function RWAPerpsFilterBrowser({
 			<div className="border-b border-subtle px-4 py-2">
 				<h3 className="label-sm text-secondary">Browse filters</h3>
 			</div>
-			<div className="flex thin-scrollbar flex-1 flex-col gap-5 overflow-y-auto p-4 max-sm:overflow-visible">
+			<div className="flex flex-1 flex-col gap-5 overflow-y-auto p-4 max-sm:overflow-visible">
 				{availableFilters.length > 0 ? (
 					<DialogPanelSection title="Market Fields">
 						<div className="flex flex-wrap gap-1">
@@ -1353,7 +1350,7 @@ function RWAPerpsActiveDraftFilters({
 			<div className="border-b border-subtle px-4 py-2">
 				<h3 className="label-sm text-secondary">Active filters</h3>
 			</div>
-			<div className="flex thin-scrollbar flex-1 flex-col gap-2 overflow-y-auto p-4 max-sm:overflow-visible">
+			<div className="flex flex-1 flex-col gap-2 overflow-y-auto p-4 max-sm:overflow-visible">
 				{activeFilters.length > 0 ? (
 					activeFilters.map((filter) => (
 						<RWAPerpsDraftFilterEditor key={filter.id} filter={filter} draft={draft} onDraftChange={onDraftChange} />
@@ -2012,22 +2009,15 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	}
 
 	const timeSeriesMetricSwitch = (
-		<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
-			{chartMetricOptions.map(({ key, name }) => (
-				<button
-					key={`rwa-perps-chart-metric-${key}`}
-					className={chartSegmentedControlButtonStyles}
-					data-active={chartState.metric === key}
-					onClick={() => {
-						void pushShallowQuery(router, {
-							chartType: getRWAPerpsChartMetricQueryValue(key)
-						})
-					}}
-				>
-					{name}
-				</button>
-			))}
-		</div>
+		<SegmentedControl
+			value={chartState.metric}
+			onValueChange={(key) => void pushShallowQuery(router, { chartType: getRWAPerpsChartMetricQueryValue(key) })}
+			options={chartMetricOptions.map(({ key, name }) => ({ value: key, label: name }))}
+			label="Chart metric"
+			variant="default"
+			size="md"
+			className="mr-auto"
+		/>
 	)
 
 	const statCards = isOverviewMode

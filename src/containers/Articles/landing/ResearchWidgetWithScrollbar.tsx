@@ -53,7 +53,7 @@ function ResearchWidgetWithScrollbarScroller({ articles, onHeightChange }: Resea
 
 	return (
 		<div style={style}>
-			<div className={`thin-scrollbar overflow-y-auto ${containerHeight}`}>
+			<div className={`overflow-y-auto ${containerHeight}`}>
 				<div className="flex flex-col gap-y-3 lg:gap-y-6">
 					{articles.map((article) => (
 						<Link

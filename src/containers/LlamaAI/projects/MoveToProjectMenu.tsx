@@ -39,7 +39,7 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 				portal
 				unmountOnHide
 				gutter={4}
-				className="z-50 flex thin-scrollbar max-h-[300px] min-w-[200px] flex-col overflow-auto rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) text-(--text-primary) dark:border-[hsl(204,3%,32%)]"
+				className="z-50 flex max-h-[300px] min-w-[200px] flex-col overflow-auto rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) text-(--text-primary) dark:border-[hsl(204,3%,32%)]"
 			>
 				{projects.isLoading ? (
 					<div className="flex items-center justify-center px-3 py-2">

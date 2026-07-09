@@ -176,7 +176,7 @@ export function BreakdownTable({
 				<h4 className="label-md">{title}, Detailed Breakdown</h4>
 				<TimeframeBadge label={badge} />
 			</div>
-			<div className={`thin-scrollbar overflow-x-auto rounded-[8px] border ${BORDER}`}>
+			<div className={`overflow-x-auto rounded-[8px] border ${BORDER}`}>
 				<table className="w-full border-collapse">
 					<thead>
 						<tr>

@@ -81,7 +81,7 @@ export function QueryTabBar({
 		<div className="relative flex items-end border-b border-(--divider)">
 			<div
 				ref={scrollerRef}
-				className="flex thin-scrollbar min-w-0 flex-1 items-end gap-0.5 overflow-x-auto overflow-y-hidden"
+				className="flex min-w-0 flex-1 items-end gap-0.5 overflow-x-auto overflow-y-hidden"
 				style={{
 					scrollbarWidth: 'thin',
 					maskImage:

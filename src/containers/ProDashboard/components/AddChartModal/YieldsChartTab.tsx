@@ -537,10 +537,7 @@ export function YieldsChartTab({
 											className="w-full rounded-md border border-(--form-control-border) bg-(--bg-input) py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-(--primary) focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
 										/>
 									</div>
-									<div
-										className="thin-scrollbar h-[240px] overflow-y-auto rounded-md bg-(--cards-bg-alt)/30"
-										ref={chainListRef}
-									>
+									<div className="h-[240px] overflow-y-auto rounded-md bg-(--cards-bg-alt)/30" ref={chainListRef}>
 										<div
 											className="p-1"
 											style={{
@@ -645,10 +642,7 @@ export function YieldsChartTab({
 											className="w-full rounded-md border border-(--form-control-border) bg-(--bg-input) py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-(--primary) focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
 										/>
 									</div>
-									<div
-										className="thin-scrollbar h-[240px] overflow-y-auto rounded-md bg-(--cards-bg-alt)/30"
-										ref={projectListRef}
-									>
+									<div className="h-[240px] overflow-y-auto rounded-md bg-(--cards-bg-alt)/30" ref={projectListRef}>
 										<div
 											className="p-1"
 											style={{
@@ -754,10 +748,7 @@ export function YieldsChartTab({
 											className="w-full rounded-md border border-(--form-control-border) bg-(--bg-input) py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-(--primary) focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
 										/>
 									</div>
-									<div
-										className="thin-scrollbar h-[240px] overflow-y-auto rounded-md bg-(--cards-bg-alt)/30"
-										ref={tokenListRef}
-									>
+									<div className="h-[240px] overflow-y-auto rounded-md bg-(--cards-bg-alt)/30" ref={tokenListRef}>
 										<div
 											className="p-1"
 											style={{
@@ -966,7 +957,7 @@ export function YieldsChartTab({
 								<p className="text-right pro-text3">Category</p>
 							</div>
 
-							<div ref={poolListRef} className="thin-scrollbar h-[240px] overflow-y-auto">
+							<div ref={poolListRef} className="h-[240px] overflow-y-auto">
 								{searchedAndSortedPools.length === 0 ? (
 									<div className="flex h-full items-center justify-center text-xs pro-text3">
 										No pools match your search

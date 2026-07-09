@@ -604,7 +604,7 @@ function RecentDownloadsStrip({
 					Clear all
 				</button>
 			</header>
-			<div className="flex thin-scrollbar overflow-x-auto border-y border-(--divider)">
+			<div className="flex overflow-x-auto border-y border-(--divider)">
 				<ul className="flex min-w-full gap-0">
 					{items.map((preset, i) => {
 						const style = kindStyle(preset.kind)

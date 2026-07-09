@@ -896,7 +896,7 @@ export function DatasetPreviewModal({
 							/>
 							<div
 								ref={tableContainerRef}
-								className={`thin-scrollbar h-full ${isPreview ? 'overflow-x-auto overflow-y-hidden' : 'overflow-auto'}`}
+								className={`h-full ${isPreview ? 'overflow-x-auto overflow-y-hidden' : 'overflow-auto'}`}
 							>
 								<div className="sticky top-0 z-20 bg-surface" style={{ minWidth: `${tableWidth}px` }}>
 									<div style={{ display: 'grid', gridTemplateColumns: gridTemplate }}>
@@ -1149,7 +1149,7 @@ function ChainPickerPopover({
 						className="w-full rounded-md border border-(--divider) bg-transparent px-2.5 py-1.5 text-xs outline-none placeholder:text-(--text-tertiary) focus:border-(--primary)"
 					/>
 				</div>
-				<div className="thin-scrollbar flex-1 overflow-auto py-1">
+				<div className="flex-1 overflow-auto py-1">
 					<button
 						type="button"
 						onClick={() => {
@@ -1240,7 +1240,7 @@ function ColumnPickerPopover({
 						{allSelected ? 'Deselect all' : 'Select all'}
 					</button>
 				</div>
-				<div className="thin-scrollbar flex-1 overflow-auto py-1">
+				<div className="flex-1 overflow-auto py-1">
 					{columns.map((column) => {
 						const isSelected = selected.has(column.index)
 						return (

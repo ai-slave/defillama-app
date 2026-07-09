@@ -4,7 +4,7 @@ import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
 import type { IPieChartProps } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
-import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
+import { SegmentedControl } from '~/components/SegmentedControl'
 import { BridgesTable, type BridgesTableHandle } from '~/containers/Bridges/BridgesTable'
 import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { ChartSelector } from '~/containers/Bridges/ChartSelector'
@@ -294,25 +294,21 @@ export function BridgesOverviewByChain({
 						<span className="font-jetbrains text-2xl font-semibold">{formattedNum(monthTotalVolume, true)}</span>
 					</p>
 
-					<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" className="mt-auto mr-auto" />
+					<CSVDownloadButton prepareCsv={prepareCsv} smol size="sm" className="mt-auto mr-auto" />
 				</Card>
 				<ChartPanel className="col-span-2">
 					{selectedChain === 'All' ? (
 						<>
 							<ChartPanelToolbar className="justify-end">
-								<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
-									{CHART_VIEW_OPTIONS.map((option) => (
-										<button
-											key={option.key}
-											type="button"
-											className={chartSegmentedControlButtonStyles}
-											data-active={chartView === option.key}
-											onClick={() => setChartView(option.key)}
-										>
-											{option.label}
-										</button>
-									))}
-								</div>
+								<SegmentedControl
+									value={chartView}
+									onValueChange={(value) => setChartView(value as typeof chartView)}
+									options={CHART_VIEW_OPTIONS.map(({ key, label }) => ({ value: key, label }))}
+									label="Chart view"
+									variant="default"
+									size="md"
+									className="mr-auto"
+								/>
 
 								<ChartExportButtons
 									chartInstance={exportChartInstance}
@@ -419,19 +415,15 @@ export function BridgesOverviewByChain({
 
 			<Panel padding="none">
 				<TableToolbar className="w-full justify-end">
-					<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
-						{TABLE_VIEW_OPTIONS.map((option) => (
-							<button
-								key={option.key}
-								type="button"
-								className={chartSegmentedControlButtonStyles}
-								data-active={activeTab === option.key}
-								onClick={() => setActiveTab(option.key)}
-							>
-								{option.label}
-							</button>
-						))}
-					</div>
+					<SegmentedControl
+						value={activeTab}
+						onValueChange={(value) => setActiveTab(value as typeof activeTab)}
+						options={TABLE_VIEW_OPTIONS.map(({ key, label }) => ({ value: key, label }))}
+						label="Table view"
+						variant="default"
+						size="md"
+						className="mr-auto"
+					/>
 
 					<TableToolbarControlGroup>
 						{activeTab === 'bridges' ? (

@@ -82,7 +82,9 @@ for the remaining work.
 
 Current code scope:
 
-- Continue route-family table/panel cleanup where pages still bypass shared recipes.
+- The merged route-family sweep is complete; do not retain it as upcoming work.
+- Limit follow-up code to confirmed drift, shared primitive adoption, and owner visual
+  verification rather than reopening already migrated route shells.
   Apply the table heading hierarchy without adding new visible titles: promote existing
   page-primary table text to h1, remove duplicate table titles only when the page already
   has a real h1/hero, and keep embedded table titles compact.
@@ -114,11 +116,11 @@ Carry-forward dialog/popover guardrails:
 
 Recommended order for the next focused code branches:
 
-1. **Remaining non-chart route-family migrations**
-   - Stablecoins, bridges, RWA, token, LST, liquidations, DAT, adapter/markets, MCP,
-     borrow, and remaining CEX markets/date-filter surfaces.
-   - Keep these route-sized. Each branch should state which family was visually checked
-     and which excluded/quarantined surfaces were intentionally left alone.
+1. **Owner visual verification and confirmed exceptions**
+   - Verify the shared Search and Metrics dialogs, representative segmented controls,
+     and DOM chart-tooltip positioning at desktop/mobile widths in both modes.
+   - Revisit RWA/table, protocol income-statement, and protocol link findings only when
+     a current implementation demonstrably differs from the documented recipe.
 
 2. **Residual chart exceptions only when explicitly scoped**
    - Mixed chart/table panels, custom-height chart compositions, market mini charts,

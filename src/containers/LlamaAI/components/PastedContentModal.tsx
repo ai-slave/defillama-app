@@ -79,7 +79,7 @@ export function PastedContentModal({ preview, onClose }: PastedContentModalProps
 					</div>
 				</header>
 
-				<div className="thin-scrollbar flex-1 overflow-y-auto p-5">
+				<div className="flex-1 overflow-y-auto p-5">
 					<pre className="m-0 max-h-[calc(85vh-148px)] overflow-auto rounded-xl border border-[#E6E6E6] bg-[#fafafa] p-4 font-mono text-[12.5px] leading-relaxed break-words whitespace-pre-wrap text-[#1a1a1a] dark:border-[#39393E] dark:bg-[#1a1b1c] dark:text-[#dcdde0]">
 						{preview?.content ?? ''}
 					</pre>

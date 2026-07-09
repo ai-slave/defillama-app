@@ -15,17 +15,17 @@ const menuSurfaceHeightStyles =
 const nestedMenuSurfaceHeightStyles =
 	'max-sm:h-[calc(100dvh-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:rounded-b-none sm:max-h-[min(60dvh,var(--popover-available-height))]'
 
-export const popoverSurfaceStyles = `z-10 flex thin-scrollbar min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 ${selectSurfaceHeightStyles}`
+export const popoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 ${selectSurfaceHeightStyles}`
 
-export const menuSurfaceStyles = `z-10 flex thin-scrollbar min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 sm:max-w-md ${menuSurfaceHeightStyles}`
+export const menuSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 sm:max-w-md ${menuSurfaceHeightStyles}`
 
-export const nestedMenuSurfaceStyles = `flex thin-scrollbar min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 sm:max-w-md ${nestedMenuSurfaceHeightStyles}`
+export const nestedMenuSurfaceStyles = `flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 sm:max-w-md ${nestedMenuSurfaceHeightStyles}`
 
 export const popoverSearchResultsSurfaceStyles =
-	'z-10 thin-scrollbar overflow-y-auto rounded-b-[8px] border border-medium bg-surface-elevated-1 shadow-sm'
+	'z-10 overflow-y-auto rounded-b-[8px] border border-medium bg-surface-elevated-1 shadow-sm'
 
 export const popoverHovercardSurfaceStyles =
-	'z-50 thin-scrollbar max-h-[calc(100dvh-80px)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 body-sm lg:max-h-(--popover-available-height)'
+	'z-50 max-h-[calc(100dvh-80px)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 body-sm lg:max-h-(--popover-available-height)'
 
 export const popoverRowStyles =
 	'body-sm flex shrink-0 cursor-pointer items-center justify-between gap-2 overflow-hidden px-3 py-2 text-primary cv-auto-37 hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row'
@@ -101,16 +101,16 @@ export const popoverMobileDismissStyles =
 	'ml-auto flex size-10 shrink-0 items-center justify-center rounded-md text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary sm:hidden'
 
 /* Compatibility styles for quarantined surfaces that still consume shared menu/select components. */
-export const legacySelectPopoverSurfaceStyles = `z-10 flex thin-scrollbar min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 ${selectSurfaceHeightStyles}`
+export const legacySelectPopoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 ${selectSurfaceHeightStyles}`
 
-export const excludedSurfaceComboboxPopoverSurfaceStyles = `z-10 flex thin-scrollbar min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 ${selectSurfaceHeightStyles}`
+export const excludedSurfaceComboboxPopoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 ${selectSurfaceHeightStyles}`
 
 export const excludedSurfaceComboboxActionBarStyles =
 	'sticky top-0 z-1 flex flex-wrap justify-between gap-1 border-b border-subtle bg-surface-elevated-1 text-xs text-link'
 
-export const legacyMenuSurfaceStyles = `z-10 flex thin-scrollbar min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 sm:max-w-md ${menuSurfaceHeightStyles}`
+export const legacyMenuSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 sm:max-w-md ${menuSurfaceHeightStyles}`
 
-export const legacyNestedMenuSurfaceStyles = `flex thin-scrollbar flex-col gap-1 overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 max-sm:p-2 sm:p-0 ${nestedMenuSurfaceHeightStyles}`
+export const legacyNestedMenuSurfaceStyles = `flex flex-col gap-1 overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 max-sm:p-2 sm:p-0 ${nestedMenuSurfaceHeightStyles}`
 
 export const legacyNestedMenuRootFilterButtonStyles =
 	'relative flex cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-medium px-2 py-1.5 text-xs font-medium text-secondary hover:bg-hover-row focus-visible:bg-hover-row'

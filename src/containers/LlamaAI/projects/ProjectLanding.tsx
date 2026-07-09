@@ -245,7 +245,7 @@ export function ProjectLanding({
 	const connectGithubValue = Array.isArray(connectGithubQuery) ? connectGithubQuery[0] : connectGithubQuery
 
 	return (
-		<div className="thin-scrollbar size-full overflow-y-auto overscroll-contain px-6 pt-6 pb-16">
+		<div className="size-full overflow-y-auto overscroll-contain px-6 pt-6 pb-16">
 			<div className="mx-auto flex w-full max-w-[760px] flex-col">
 				<header className="flex items-center justify-between gap-3 pb-6">
 					<button

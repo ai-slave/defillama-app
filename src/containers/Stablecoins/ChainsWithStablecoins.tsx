@@ -12,8 +12,8 @@ import {
 import type { IHBarChartProps, IPieChartProps, ITreemapChartProps } from '~/components/ECharts/types'
 import { preparePieChartData } from '~/components/ECharts/utils'
 import { Icon } from '~/components/Icon'
+import { SegmentedControl } from '~/components/SegmentedControl'
 import { Select } from '~/components/Select/Select'
-import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { Tooltip } from '~/components/Tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import type { StablecoinsChartConfig } from '~/containers/ProDashboard/types'
@@ -305,18 +305,15 @@ export function ChainsWithStablecoins({
 				</Card>
 				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
-						<div className={`mr-auto ${chartSegmentedControlGroupStyles}`}>
-							{chartTypeOptions.map(({ key, name }) => (
-								<button
-									key={key}
-									className={chartSegmentedControlButtonStyles}
-									data-active={chartType === key}
-									onClick={() => onChartTypeChange(key)}
-								>
-									{name}
-								</button>
-							))}
-						</div>
+						<SegmentedControl
+							value={chartType}
+							onValueChange={onChartTypeChange}
+							options={chartTypeOptions.map(({ key, name }) => ({ value: key, label: name }))}
+							label="Chart type"
+							variant="default"
+							size="md"
+							className="mr-auto"
+						/>
 						<Select
 							allValues={chartViewOptions}
 							selectedValues={chartView}

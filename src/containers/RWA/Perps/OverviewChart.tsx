@@ -6,13 +6,10 @@ import { ChartGroupingSelector, DWM_GROUPING_OPTIONS_LOWERCASE } from '~/compone
 import type { MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
 import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/utils'
 import { LoadingDots } from '~/components/Loaders'
+import { SegmentedControl } from '~/components/SegmentedControl'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import {
-	chartSegmentedControlButtonStyles,
-	chartSegmentedControlGroupStyles,
-	type ExcludeQueryKey
-} from '~/components/Select/types'
+import { type ExcludeQueryKey } from '~/components/Select/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -280,18 +277,15 @@ export function RWAPerpsOverviewChart({
 	return (
 		<ChartPanel>
 			<ChartPanelToolbar className="justify-end">
-				<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
-					{CHART_TYPE_OPTIONS.map(({ key, label }) => (
-						<button
-							key={`rwa-perps-breakdown-chart-type-${key}`}
-							className={chartSegmentedControlButtonStyles}
-							data-active={chartType === key}
-							onClick={() => onSelectChartType(key)}
-						>
-							{label}
-						</button>
-					))}
-				</div>
+				<SegmentedControl
+					value={chartType}
+					onValueChange={onSelectChartType}
+					options={CHART_TYPE_OPTIONS.map(({ key, label }) => ({ value: key, label }))}
+					label="Chart type"
+					variant="default"
+					size="md"
+					className="mr-auto"
+				/>
 				<Select
 					allValues={TIME_SERIES_MODE_OPTIONS.map(({ key, label }) => ({ key, name: label }))}
 					selectedValues={timeSeriesMode}

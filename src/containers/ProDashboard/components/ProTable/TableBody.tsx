@@ -21,10 +21,7 @@ const getSortableColumn = (header: Header<IProtocolRow, unknown>) => {
 export function TableBody({ table, isLoading, isEmptyProtocols, moveColumnUp, moveColumnDown }: TableBodyProps) {
 	if (!table) {
 		return (
-			<div
-				className="relative thin-scrollbar min-h-0 w-full flex-1 overflow-x-auto overflow-y-auto"
-				style={{ height: '100%' }}
-			>
+			<div className="relative min-h-0 w-full flex-1 overflow-x-auto overflow-y-auto" style={{ height: '100%' }}>
 				<div className="flex h-32 items-center justify-center">
 					<p className="text-(--text-tertiary)">Loading table...</p>
 				</div>
@@ -35,10 +32,7 @@ export function TableBody({ table, isLoading, isEmptyProtocols, moveColumnUp, mo
 	const rows = table.getRowModel().rows
 
 	return (
-		<div
-			className="relative -mx-2 thin-scrollbar min-h-0 w-full flex-1 overflow-auto px-2 sm:mx-0 sm:px-0"
-			style={{ height: '100%' }}
-		>
+		<div className="relative -mx-2 min-h-0 w-full flex-1 overflow-auto px-2 sm:mx-0 sm:px-0" style={{ height: '100%' }}>
 			<table className="w-full min-w-[600px] border-collapse text-xs text-(--text-primary) sm:text-sm">
 				<thead className="sticky top-0 z-10">
 					{table.getHeaderGroups().map((headerGroup) => {

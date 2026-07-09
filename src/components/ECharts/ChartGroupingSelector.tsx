@@ -1,7 +1,5 @@
-import clsx from 'clsx'
 import * as React from 'react'
-import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
-import { Tooltip } from '~/components/Tooltip'
+import { SegmentedControl } from '~/components/SegmentedControl'
 import type { ChartTimeGrouping, ChartTimeGroupingWithCumulative } from './types'
 
 export type ChartGroupingOption<T extends string> = {
@@ -69,25 +67,20 @@ export function ChartGroupingSelector<T extends string>({
 	)
 
 	return (
-		<div role="radiogroup" className={clsx(chartSegmentedControlGroupStyles, className)}>
-			{options.map((option) => {
-				const shortLabel = option.shortLabel ?? option.label.slice(0, 1).toUpperCase()
-				return (
-					<Tooltip content={option.label} key={option.value}>
-						<button
-							type="button"
-							role="radio"
-							aria-checked={value === option.value}
-							aria-label={option.label}
-							className={clsx(chartSegmentedControlButtonStyles, buttonClassName)}
-							data-active={value === option.value}
-							onClick={() => handleValueChange(option.value)}
-						>
-							{shortLabel}
-						</button>
-					</Tooltip>
-				)
-			})}
-		</div>
+		<SegmentedControl
+			value={value}
+			onValueChange={handleValueChange}
+			options={options.map((option) => ({
+				value: option.value,
+				label: option.shortLabel ?? option.label.slice(0, 1).toUpperCase(),
+				ariaLabel: option.label,
+				tooltip: option.label
+			}))}
+			label="Chart grouping"
+			variant="default"
+			size="md"
+			className={className}
+			buttonClassName={buttonClassName}
+		/>
 	)
 }

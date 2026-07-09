@@ -92,7 +92,7 @@ function ResearchInterviewsContent({ articles, pageWidget }: ResearchInterviewsC
 
 			<div className="flex min-h-0 flex-col">
 				<div
-					className="thin-scrollbar min-h-0 overflow-y-auto lg:flex-1"
+					className="min-h-0 overflow-y-auto lg:flex-1"
 					style={
 						isMobile
 							? { height: `${rightColumnHeightMobile}px` }

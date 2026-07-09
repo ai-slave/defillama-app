@@ -727,7 +727,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 					) : null}
 				</div>
 				{effectiveShowColors && chartSeries.length > 0 ? (
-					<div className="flex thin-scrollbar items-center gap-2 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+					<div className="flex items-center gap-2 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
 						<span className="shrink-0 text-xs font-medium text-(--text-label)">Series Colors</span>
 						{chartSeries.map((series: any) => {
 							const colorValue = seriesColors[series.name] || series.color || DEFAULT_SERIES_COLOR

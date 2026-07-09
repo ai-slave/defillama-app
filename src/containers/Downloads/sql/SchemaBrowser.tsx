@@ -644,7 +644,7 @@ function ParamCombobox({
 								className={searchFieldInputStyles}
 							/>
 						</div>
-						<Ariakit.ComboboxList className="thin-scrollbar overflow-y-auto">
+						<Ariakit.ComboboxList className="overflow-y-auto">
 							{matches.length === 0 ? (
 								<p className="px-3 py-4 text-center text-xs text-(--text-tertiary)">No matches.</p>
 							) : (

@@ -125,9 +125,7 @@ export function ErrorBanner({
 				</div>
 			) : null}
 
-			<pre className="thin-scrollbar overflow-x-auto font-mono text-[11.5px] leading-snug whitespace-pre-wrap">
-				{error}
-			</pre>
+			<pre className="overflow-x-auto font-mono text-[11.5px] leading-snug whitespace-pre-wrap">{error}</pre>
 
 			{hints.length > 0 ? (
 				<div className="flex flex-col gap-1.5 border-t border-red-500/20 pt-2">

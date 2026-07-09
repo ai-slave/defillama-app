@@ -397,7 +397,7 @@ const TOKEN_CLASS: Record<TokenType, string> = {
 function CodeBlock({ sql }: { sql: string }) {
 	const tokens = useMemo(() => tokenize(sql), [sql])
 	return (
-		<pre className="thin-scrollbar overflow-x-auto rounded-md border border-l-2 border-(--divider) border-l-(--primary)/40 bg-(--app-bg)/70 px-3 py-2.5 font-mono text-[12px] leading-relaxed text-(--text-primary)">
+		<pre className="overflow-x-auto rounded-md border border-l-2 border-(--divider) border-l-(--primary)/40 bg-(--app-bg)/70 px-3 py-2.5 font-mono text-[12px] leading-relaxed text-(--text-primary)">
 			<code>
 				{tokens.map((t, i) => {
 					const cls = TOKEN_CLASS[t.type]

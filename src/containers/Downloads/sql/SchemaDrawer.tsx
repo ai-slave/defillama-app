@@ -78,7 +78,7 @@ export function SchemaDrawer({
 
 				<TabBar tab={tab} onChange={setTab} />
 
-				<div className="thin-scrollbar flex-1 overflow-y-auto px-5 py-4">
+				<div className="flex-1 overflow-y-auto px-5 py-4">
 					{tab === 'schema' ? (
 						<SchemaBrowser {...browserProps} onReplaceSql={wrappedReplace} onInsertAtCursor={onInsertAtCursor} />
 					) : tab === 'cookbook' ? (

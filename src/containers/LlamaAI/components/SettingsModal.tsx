@@ -387,7 +387,7 @@ export const SettingsModal = memo(function SettingsModal({
 						})}
 					</nav>
 
-					<div className="thin-scrollbar max-h-[calc(88vh-130px)] flex-1 overflow-y-auto sm:max-h-[calc(88vh-81px)]">
+					<div className="max-h-[calc(88vh-130px)] flex-1 overflow-y-auto sm:max-h-[calc(88vh-81px)]">
 						<div className="p-5 sm:p-6">
 							{activeTab === 'persona' && (
 								<div className="space-y-6">

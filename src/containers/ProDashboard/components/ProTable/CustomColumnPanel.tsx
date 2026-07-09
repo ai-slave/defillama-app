@@ -440,7 +440,7 @@ export function CustomColumnPanel({
 							{/* Autocomplete dropdown */}
 							{showAutocomplete && filteredSuggestions.length > 0 ? (
 								<div
-									className="absolute z-50 mt-1 thin-scrollbar max-h-64 overflow-y-auto overscroll-contain rounded-md border border-(--cards-border) bg-(--cards-bg) shadow-lg"
+									className="absolute z-50 mt-1 max-h-64 overflow-y-auto overscroll-contain rounded-md border border-(--cards-border) bg-(--cards-bg) shadow-lg"
 									style={{
 										width: '320px',
 										minWidth: '280px',
@@ -563,7 +563,7 @@ export function CustomColumnPanel({
 			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
 				<h5 className="mb-2 text-sm font-medium pro-text2">Available Variables</h5>
 				<p className="mb-2 text-xs pro-text3">Click any variable to add it to your expression</p>
-				<div className="grid thin-scrollbar max-h-32 grid-cols-3 gap-1 overflow-y-auto md:grid-cols-4 lg:grid-cols-6">
+				<div className="grid max-h-32 grid-cols-3 gap-1 overflow-y-auto md:grid-cols-4 lg:grid-cols-6">
 					{availableVariables.map((variable) => (
 						<button
 							key={variable.key}

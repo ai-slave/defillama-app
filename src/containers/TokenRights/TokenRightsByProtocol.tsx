@@ -486,7 +486,7 @@ function TokenRightsOverviewView({
 						</div>
 					) : null}
 
-					<div className="thin-scrollbar overflow-x-auto">
+					<div className="overflow-x-auto">
 						<div className="grid min-w-[640px] grid-cols-[repeat(4,minmax(max-content,1fr))] overflow-hidden rounded-[8px] border border-subtle">
 							{rightsFields.map((field) => (
 								<div

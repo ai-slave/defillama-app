@@ -316,7 +316,7 @@ function TabStrip({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: 
 		<div
 			role="tablist"
 			aria-label="SQL Studio sample tabs"
-			className="flex thin-scrollbar items-stretch gap-1 overflow-x-auto border-b border-(--divider) bg-(--app-bg)/40 px-2 pt-2"
+			className="flex items-stretch gap-1 overflow-x-auto border-b border-(--divider) bg-(--app-bg)/40 px-2 pt-2"
 		>
 			{TABS.map((t) => {
 				const isActive = activeTab === t.key
@@ -481,7 +481,7 @@ function SqlNotebookCell() {
 				}
 			/>
 			<div className="px-3 pb-3 pl-9">
-				<pre className="thin-scrollbar overflow-x-auto rounded-md border border-(--divider) bg-(--app-bg)/60 px-3 py-2 font-mono text-[11px] leading-[1.55] text-(--text-primary)">
+				<pre className="overflow-x-auto rounded-md border border-(--divider) bg-(--app-bg)/60 px-3 py-2 font-mono text-[11px] leading-[1.55] text-(--text-primary)">
 					<code>
 						<KW>SELECT</KW> f.name, f.category,
 						{'\n'}
@@ -645,7 +645,7 @@ function QueryBody() {
 			</div>
 
 			<div className="border-b border-(--divider) bg-(--app-bg)/40 px-4 py-3">
-				<pre className="thin-scrollbar overflow-x-auto font-mono text-[11.5px] leading-[1.55] text-(--text-primary)">
+				<pre className="overflow-x-auto font-mono text-[11.5px] leading-[1.55] text-(--text-primary)">
 					<code>
 						<COMMENT>-- Which protocols earn the most fees, and how much do they capture as revenue?</COMMENT>
 						{'\n'}
@@ -707,7 +707,7 @@ function AltQueryBody() {
 			</div>
 
 			<div className="border-b border-(--divider) bg-(--app-bg)/40 px-4 py-3">
-				<pre className="thin-scrollbar overflow-x-auto font-mono text-[11.5px] leading-[1.55] text-(--text-primary)">
+				<pre className="overflow-x-auto font-mono text-[11.5px] leading-[1.55] text-(--text-primary)">
 					<code>
 						<COMMENT>-- Top L1 chains by TVL with rolling 30d change and dominance</COMMENT>
 						{'\n'}
@@ -735,7 +735,7 @@ function GridTable<T>({ rows, cols }: { rows: T[]; cols: TableCol<T>[] }) {
 	const gridTemplate = cols.map((c) => `${c.width}px`).join(' ')
 	const totalWidth = cols.reduce((sum, c) => sum + c.width, 0)
 	return (
-		<div className="thin-scrollbar overflow-x-auto">
+		<div className="overflow-x-auto">
 			<div style={{ width: totalWidth, minWidth: '100%' }}>
 				<div
 					className="grid border-b border-(--divider) bg-surface font-mono text-[11px] text-(--text-secondary)"

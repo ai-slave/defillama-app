@@ -531,7 +531,7 @@ export function VirtualTable<T extends RowData>({
 				{...props}
 				ref={tableContainerRef}
 				className={clsx(
-					'relative isolate thin-scrollbar w-full overflow-x-auto overflow-y-visible overscroll-x-contain rounded-md bg-surface',
+					'relative isolate w-full overflow-x-auto overflow-y-visible overscroll-x-contain rounded-md bg-surface',
 					className
 				)}
 				style={{ maxWidth: '100%', WebkitOverflowScrolling: 'touch', ...style }}
@@ -659,7 +659,6 @@ export function VirtualTable<T extends RowData>({
 				{/* Sticky horizontal scrollbar */}
 				<div
 					ref={stickyScrollbarRef}
-					className="thin-scrollbar"
 					style={{
 						position: 'fixed',
 						bottom: 0,

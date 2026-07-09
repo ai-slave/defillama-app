@@ -107,7 +107,7 @@ export function ChainOverview(props: IChainOverviewData) {
 							</>
 						)}
 						{props.metadata.name === 'All' ? (
-							<div className="relative isolate flex thin-scrollbar shrink-0 flex-nowrap items-center gap-2 overflow-x-auto overflow-y-hidden">
+							<div className="relative isolate flex shrink-0 flex-nowrap items-center gap-2 overflow-x-auto overflow-y-hidden">
 								{linksToOtherLlamaApps.map((app) => (
 									<Card
 										as="a"

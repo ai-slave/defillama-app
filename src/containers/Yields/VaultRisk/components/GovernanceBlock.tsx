@@ -51,7 +51,7 @@ function SignersPopover({
 				unmountOnHide
 				hideOnInteractOutside
 				gutter={6}
-				className="z-10 flex thin-scrollbar max-h-72 flex-col overflow-auto overscroll-contain rounded-md border border-(--cards-border) bg-(--cards-bg) p-2.5 text-xs shadow-md"
+				className="z-10 flex max-h-72 flex-col overflow-auto overscroll-contain rounded-md border border-(--cards-border) bg-(--cards-bg) p-2.5 text-xs shadow-md"
 			>
 				<span className="font-semibold text-(--text-primary)">{`Signers (${signers.length})`}</span>
 				<span className="mt-0.5 text-(--text-secondary)">{`any ${m} of them can execute`}</span>

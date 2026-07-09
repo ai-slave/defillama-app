@@ -806,7 +806,7 @@ function ParamPickerEmpty({
 									autoFocus
 								/>
 							</div>
-							<div className="thin-scrollbar flex-1 overflow-auto py-1">
+							<div className="flex-1 overflow-auto py-1">
 								{filtered.length === 0 ? (
 									<p className="px-3 py-2 text-xs text-(--text-tertiary)">No results</p>
 								) : (
@@ -943,9 +943,7 @@ function PreviewTable({
 	const display = rows.slice(0, PREVIEW_ROWS)
 	const filler = isPreview && display.length > 0 ? [...display, ...display] : []
 	return (
-		<div
-			className={`relative thin-scrollbar min-h-0 flex-1 ${isPreview ? 'overflow-x-auto overflow-y-hidden' : 'overflow-auto'}`}
-		>
+		<div className={`relative min-h-0 flex-1 ${isPreview ? 'overflow-x-auto overflow-y-hidden' : 'overflow-auto'}`}>
 			<table className="w-full text-xs">
 				<thead className="sticky top-0 z-10 bg-surface">
 					<tr>
@@ -1090,7 +1088,7 @@ function MetricsSidebar({
 					</button>
 				) : null}
 			</div>
-			<div className="thin-scrollbar flex-1 overflow-auto">
+			<div className="flex-1 overflow-auto">
 				{selectedMetrics.map((metric, i) => {
 					const query = csvQueries[i]
 					const isActive = metric.slug === activeMetric
@@ -1240,7 +1238,7 @@ function ParamPickerPopover({
 						autoFocus
 					/>
 				</div>
-				<div className="thin-scrollbar flex-1 overflow-auto py-1">
+				<div className="flex-1 overflow-auto py-1">
 					{filtered.length === 0 ? (
 						<p className="px-3 py-2 text-xs text-(--text-tertiary)">No results</p>
 					) : (
@@ -1357,7 +1355,7 @@ function MetricMultiPickerPopover({
 						autoFocus
 					/>
 				</div>
-				<div className="thin-scrollbar flex-1 overflow-auto">
+				<div className="flex-1 overflow-auto">
 					{grouped.length === 0 ? (
 						<p className="p-3 text-xs text-(--text-tertiary)">No matches</p>
 					) : (

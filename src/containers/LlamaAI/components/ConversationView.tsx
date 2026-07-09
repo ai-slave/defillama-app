@@ -632,7 +632,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 
 	return (
 		<>
-			<div ref={scrollContainerRef} className="relative thin-scrollbar flex-1 overflow-y-auto p-2.5 max-lg:px-0">
+			<div ref={scrollContainerRef} className="relative flex-1 overflow-y-auto p-2.5 max-lg:px-0">
 				<div
 					className={`relative mx-auto flex ${isFullscreen ? 'max-w-[80rem] justify-center' : 'llamaai-chat-width w-full flex-col'}`}
 				>

@@ -63,7 +63,7 @@ function ResearchGridWithScrollbarScroller({ articles, pageWidget, onHeightChang
 
 	return (
 		<div ref={containerRef}>
-			<div className="thin-scrollbar h-[calc(160px_*_2_+_32px_*_1)] overflow-y-auto sm:h-[var(--scroller-height,_calc(288px_*_2_+_32px_*_1))]">
+			<div className="h-[calc(160px_*_2_+_32px_*_1)] overflow-y-auto sm:h-[var(--scroller-height,_calc(288px_*_2_+_32px_*_1))]">
 				<div ref={gridRef} className="grid grid-cols-2 gap-8 pr-4">
 					{articles.map((article, i) => (
 						<Link

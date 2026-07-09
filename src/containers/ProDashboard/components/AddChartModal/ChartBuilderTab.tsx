@@ -1052,7 +1052,7 @@ export function ChartBuilderTab({
 									Reset All
 								</button>
 							</div>
-							<div className="flex thin-scrollbar items-center gap-2 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
+							<div className="flex items-center gap-2 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
 								{visibleSeries.map((series) => {
 									const activeColor = resolveSeriesColor(series.name, series.color)
 									const hasOverride = !!seriesColors?.[series.name]

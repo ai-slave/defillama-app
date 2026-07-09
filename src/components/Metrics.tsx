@@ -10,6 +10,7 @@ import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import defillamaPages from '~/public/pages.json'
 import trendingPages from '~/public/trending.json'
 import { Button, buttonStyles } from '~/ui/Button'
+import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
 import { searchFieldInputStyles } from '~/ui/Input'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { fetchJson } from '~/utils/async'
@@ -148,10 +149,16 @@ export function Metrics({
 	const pinnedRoutes = usePinnedRoutes()
 
 	return (
-		<>
-			<div className="flex flex-col gap-3 rounded-[8px] border border-subtle bg-surface p-3">
+		<div className={canDismiss ? 'flex min-h-0 flex-1 flex-col' : 'contents'}>
+			<div
+				className={
+					canDismiss
+						? 'flex flex-col gap-3 p-3'
+						: 'flex flex-col gap-3 rounded-[8px] border border-subtle bg-surface p-3'
+				}
+			>
 				<div className="flex items-center gap-2">
-					<h2 className="heading-sm">Metrics</h2>
+					{canDismiss ? <DialogHeading>Metrics</DialogHeading> : <h2 className="heading-sm">Metrics</h2>}
 					<TagGroup
 						selectedValue={tab}
 						setValue={(value) => startTransition(() => setTab(value))}
@@ -159,14 +166,7 @@ export function Metrics({
 						variant="solid"
 						size="sm"
 					/>
-					{canDismiss ? (
-						<Ariakit.DialogDismiss
-							className="-my-2 ml-auto rounded-md p-2 text-tertiary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary"
-							aria-label="Close modal"
-						>
-							<Icon name="x" height={20} width={20} />
-						</Ariakit.DialogDismiss>
-					) : null}
+					{canDismiss ? <DialogCloseButton className="-my-2 ml-auto" ariaLabel="Close metrics" /> : null}
 				</div>
 				<label className="relative">
 					<span className="sr-only">Search pages</span>
@@ -199,7 +199,7 @@ export function Metrics({
 					))}
 				</div>
 			</div>
-			<div className="flex thin-scrollbar flex-col gap-6">
+			<div className={`flex flex-col gap-6 ${canDismiss ? `${dialogScrollableBodyStyles} px-3 pb-3` : ''}`}>
 				{pages.map(({ category, metrics }) => (
 					<div key={category} className="relative flex flex-col gap-3">
 						<div className="absolute -top-4" data-category={category} />
@@ -222,7 +222,7 @@ export function Metrics({
 					</div>
 				))}
 			</div>
-		</>
+		</div>
 	)
 }
 
@@ -439,7 +439,7 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 					</svg>
 				</div>
 				<Ariakit.Dialog
-					className="dialog thin-scrollbar h-full max-h-[calc(100dvh-80px)] gap-3 max-sm:drawer sm:w-full sm:max-w-[min(85vw,1280px)]"
+					className={`${dialogSurfaceStyles} h-[calc(100dvh-80px)] sm:h-[min(720px,calc(100dvh-32px))] sm:[--dialog-width:min(85vw,1280px)]`}
 					unmountOnHide={false}
 					hideOnInteractOutside
 				>

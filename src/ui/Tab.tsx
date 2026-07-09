@@ -12,7 +12,7 @@ import type { ComponentPropsWithRef, ElementType } from 'react'
    <nav className={tabTrackStyles}> <TabLink … data-active={bool}> </nav>
 ---------------------------------------------------------------------------- */
 
-export const tabTrackStyles = 'flex thin-scrollbar w-full flex-nowrap overflow-x-auto border-b border-subtle'
+export const tabTrackStyles = 'flex w-full flex-nowrap overflow-x-auto border-b border-subtle'
 
 type TabLinkProps<T extends ElementType> = {
 	as?: T

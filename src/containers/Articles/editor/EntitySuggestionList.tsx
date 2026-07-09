@@ -213,7 +213,7 @@ export const EntitySuggestionList = forwardRef<EntitySuggestionListHandle, Props
 							: '—'}
 				</span>
 			</div>
-			<div className="flex thin-scrollbar items-center gap-1 overflow-x-auto border-b border-(--cards-border) px-2 py-1.5">
+			<div className="flex items-center gap-1 overflow-x-auto border-b border-(--cards-border) px-2 py-1.5">
 				{FILTER_ORDER.map((f) => {
 					const enabled = f.key === 'all' || availableTypes.has(f.key)
 					const active = f.key === filter

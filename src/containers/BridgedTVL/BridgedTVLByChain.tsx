@@ -13,8 +13,8 @@ import type { IPieChartProps } from '~/components/ECharts/types'
 import { preparePieChartData } from '~/components/ECharts/utils'
 import { FormattedName } from '~/components/FormattedName'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { SegmentedControl } from '~/components/SegmentedControl'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { LinkPreviewCard } from '~/components/SEO'
 import { VirtualTable } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -193,38 +193,21 @@ export function BridgedTVLByChain({
 				</Card>
 				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">
-						<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
-							{chartTypes.map(({ type, name }) =>
-								Boolean(chainData?.[type]?.total) && chainData?.[type]?.total !== '0' ? (
-									<button
-										className={chartSegmentedControlButtonStyles}
-										data-active={chartType === type}
-										onClick={() => setChartType(type)}
-										key={'bridged-' + name}
-									>
-										{name}
-									</button>
-								) : null
-							)}
-							{inflows ? (
-								<button
-									className={chartSegmentedControlButtonStyles}
-									data-active={chartType === 'inflows'}
-									onClick={() => setChartType('inflows')}
-								>
-									Inflows
-								</button>
-							) : null}
-							{chainData?.ownTokens?.total ? (
-								<button
-									className={chartSegmentedControlButtonStyles}
-									data-active={chartType === 'ownTokens'}
-									onClick={() => setChartType('ownTokens')}
-								>
-									Own Tokens
-								</button>
-							) : null}
-						</div>
+						<SegmentedControl
+							value={chartType}
+							onValueChange={(value) => setChartType(value as typeof chartType)}
+							options={[
+								...chartTypes
+									.filter(({ type }) => Boolean(chainData?.[type]?.total) && chainData?.[type]?.total !== '0')
+									.map(({ type, name }) => ({ value: type, label: name })),
+								...(inflows ? [{ value: 'inflows' as const, label: 'Inflows' }] : []),
+								...(chainData?.ownTokens?.total ? [{ value: 'ownTokens' as const, label: 'Own Tokens' }] : [])
+							]}
+							label="Chart type"
+							variant="default"
+							size="md"
+							className="mr-auto"
+						/>
 						{chartType === 'inflows' && tokenInflowNames?.length > 0 ? (
 							<SelectWithCombobox
 								allValues={tokenInflowNames}

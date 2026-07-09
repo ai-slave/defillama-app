@@ -121,7 +121,7 @@ export function EntityPickerList({
 				) : null}
 			</div>
 
-			<div ref={listRef} className="thin-scrollbar flex-1 overflow-y-auto bg-(--cards-bg-alt)/30">
+			<div ref={listRef} className="flex-1 overflow-y-auto bg-(--cards-bg-alt)/30">
 				{filteredEntities.length === 0 ? (
 					<div className="flex h-full items-center justify-center text-xs text-(--text-tertiary)">
 						No {mode === 'chain' ? 'chains' : 'protocols'} found

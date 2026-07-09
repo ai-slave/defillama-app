@@ -38,7 +38,7 @@ export function SortArrow({ dir }: { dir: false | 'asc' | 'desc' }) {
 export function StickyTable<T>({ headerGroups, rows }: { headerGroups: HeaderGroup<T>[]; rows: Row<T>[] }) {
 	'use no memo'
 	return (
-		<div className="thin-scrollbar w-full overflow-x-auto">
+		<div className="w-full overflow-x-auto">
 			<table className="w-full text-sm" style={{ minWidth: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
 				<thead>
 					{headerGroups.map((headerGroup) => (

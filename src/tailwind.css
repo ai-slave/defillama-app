@@ -236,6 +236,32 @@
 		outline: 2px solid var(--ld-border-brand);
 		outline-offset: 1px;
 	}
+
+	/* Keep the document scrollbar native, but make every nested application
+	   scrollbar compact by default. :where() keeps this at zero specificity so
+	   explicit exceptions such as no-scrollbar remain authoritative. */
+	:where(body *) {
+		scrollbar-width: thin;
+		scrollbar-color: color-mix(in srgb, var(--ld-neutral-500) 55%, transparent) transparent;
+	}
+
+	:where(body *)::-webkit-scrollbar {
+		width: 6px;
+		height: 6px;
+	}
+
+	:where(body *)::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	:where(body *)::-webkit-scrollbar-thumb {
+		background: color-mix(in srgb, var(--ld-neutral-500) 55%, transparent);
+		border-radius: 3px;
+	}
+
+	:where(body *)::-webkit-scrollbar-thumb:hover {
+		background: var(--ld-neutral-500);
+	}
 }
 
 /* ------------------------------ Core Utilities ------------------------------ */
@@ -243,30 +269,6 @@
 	scrollbar-width: none;
 	&::-webkit-scrollbar {
 		display: none;
-	}
-}
-
-@utility thin-scrollbar {
-	/*
-	  Not --bg-border: that now resolves to a 12%-alpha stroke, too faint for
-	  a scrollbar thumb. Semi-transparent neutral stays visible on any
-	  surface in both modes (≈ the pre-refresh thumb grays).
-	*/
-	scrollbar-width: thin;
-	scrollbar-color: color-mix(in srgb, var(--ld-neutral-500) 55%, transparent) transparent;
-	&::-webkit-scrollbar {
-		width: 6px;
-		height: 6px;
-	}
-	&::-webkit-scrollbar-track {
-		background: transparent;
-	}
-	&::-webkit-scrollbar-thumb {
-		background: color-mix(in srgb, var(--ld-neutral-500) 55%, transparent);
-		border-radius: 3px;
-	}
-	&::-webkit-scrollbar-thumb:hover {
-		background: var(--ld-neutral-500);
 	}
 }
 
@@ -315,7 +317,7 @@
 }
 
 @utility dialog {
-	@apply fixed inset-(--inset) top-0 right-0 bottom-0 left-0 z-50 m-auto mb-0 flex thin-scrollbar max-h-[70dvh] min-h-[40dvh] w-full max-w-full flex-col gap-8 overflow-auto overscroll-contain rounded-t-md border-[#39393E] bg-(--app-bg) p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:mb-auto sm:h-fit sm:max-h-[calc(100%-32px)] sm:min-h-[initial] sm:max-w-[min(calc(100%-32px),560px)] sm:rounded-md sm:pb-4 dark:border;
+	@apply fixed inset-(--inset) top-0 right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-[70dvh] min-h-[40dvh] w-full max-w-full flex-col gap-8 overflow-auto overscroll-contain rounded-t-md border-[#39393E] bg-(--app-bg) p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:mb-auto sm:h-fit sm:max-h-[calc(100%-32px)] sm:min-h-[initial] sm:max-w-[min(calc(100%-32px),560px)] sm:rounded-md sm:pb-4 dark:border;
 }
 
 @utility drawer {

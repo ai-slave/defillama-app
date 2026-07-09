@@ -51,7 +51,7 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, Props>(functi
 	let lastGroup: string | undefined
 	return (
 		<div className="w-72 overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-bg) shadow-xl">
-			<div className="thin-scrollbar max-h-80 overflow-y-auto py-1" role="listbox">
+			<div className="max-h-80 overflow-y-auto py-1" role="listbox">
 				{items.map((item, index) => {
 					const showHeader = item.group !== lastGroup
 					lastGroup = item.group

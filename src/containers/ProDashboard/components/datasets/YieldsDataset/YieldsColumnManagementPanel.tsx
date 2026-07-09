@@ -238,7 +238,7 @@ export function YieldsColumnManagementPanel({
 						Active Columns ({visibleColumnCount})
 					</h5>
 					<p className="mb-3 text-xs pro-text3">Use arrows to reorder • Click × to hide</p>
-					<div className="thin-scrollbar max-h-60 space-y-1 overflow-y-auto">
+					<div className="max-h-60 space-y-1 overflow-y-auto">
 						{columnOrder
 							.filter((key) => currentColumns[key] && yieldsColumnMetadata[key])
 							.map((columnKey) => (
@@ -261,7 +261,7 @@ export function YieldsColumnManagementPanel({
 						Available Columns
 					</h5>
 					<p className="mb-3 text-xs pro-text3">Click to add to table</p>
-					<div className="thin-scrollbar max-h-60 space-y-3 overflow-y-auto">
+					<div className="max-h-60 space-y-3 overflow-y-auto">
 						{columnGroups.map((group) => {
 							const availableColumns = group.columns.filter(
 								(col) => !currentColumns[col] && filteredColumns.includes(col)

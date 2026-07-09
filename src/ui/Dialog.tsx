@@ -26,6 +26,9 @@ import { Button } from '~/ui/Button'
 export const dialogSurfaceStyles =
 	'fixed inset-(--inset) top-0 right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-[85dvh] min-h-[40dvh] w-full max-w-full flex-col overflow-hidden rounded-t-xl border border-medium bg-surface-elevated-1 pb-[max(0px,env(safe-area-inset-bottom))] shadow-[0_24px_64px_-16px_rgb(0_0_0/0.45)] max-sm:drawer sm:mb-auto sm:h-fit sm:max-h-[min(720px,calc(100%-32px))] sm:min-h-[initial] sm:max-w-[min(calc(100%-32px),var(--dialog-width,600px))] sm:rounded-xl sm:pb-0 dark:shadow-[0_24px_64px_-16px_rgb(0_0_0/0.6)]'
 
+/** Required on the single scrolling body inside an overflow-hidden dialog surface. */
+export const dialogScrollableBodyStyles = 'min-h-0 flex-1 overflow-y-auto overscroll-contain'
+
 type DialogHeadingProps = {
 	/** Layout placement only — the type/color comes from the recipe. */
 	className?: string

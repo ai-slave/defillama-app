@@ -16,7 +16,7 @@ export function TextCard({ text }: TextCardProps) {
 	const [pendingHref, setPendingHref] = useState<string | null>(null)
 
 	return (
-		<div className="prose prose-sm flex thin-scrollbar max-w-none flex-col gap-2 overflow-y-auto p-4 prose-invert">
+		<div className="prose prose-sm flex max-w-none flex-col gap-2 overflow-y-auto p-4 prose-invert">
 			{text.title ? <h2 className="text-lg font-semibold text-(--text-primary)">{text.title}</h2> : null}
 
 			<ReactMarkdown
@@ -31,15 +31,13 @@ export function TextCard({ text }: TextCardProps) {
 					ol: ({ children }) => <ol className="m-0! flex list-decimal flex-col gap-1 pl-4">{children}</ol>,
 					li: ({ children }) => <li className="m-0! text-(--text-secondary)">{children}</li>,
 					code: ({ children }) => (
-						<code className="m-0! thin-scrollbar overflow-x-auto rounded-sm bg-(--bg-tertiary) px-1 py-0.5 text-xs">
-							{children}
-						</code>
+						<code className="m-0! overflow-x-auto rounded-sm bg-(--bg-tertiary) px-1 py-0.5 text-xs">{children}</code>
 					),
 					pre: ({ children }) => (
-						<pre className="m-0! thin-scrollbar overflow-x-auto rounded-sm bg-(--bg-tertiary) p-2">{children}</pre>
+						<pre className="m-0! overflow-x-auto rounded-sm bg-(--bg-tertiary) p-2">{children}</pre>
 					),
 					blockquote: ({ children }) => (
-						<blockquote className="m-0! thin-scrollbar overflow-x-auto border-l-3 border-(--old-blue) pl-2 text-(--text-label) italic">
+						<blockquote className="m-0! overflow-x-auto border-l-3 border-(--old-blue) pl-2 text-(--text-label) italic">
 							{children}
 						</blockquote>
 					),

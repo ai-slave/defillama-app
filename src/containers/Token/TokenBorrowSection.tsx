@@ -4,8 +4,8 @@ import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { Icon } from '~/components/Icon'
 import { LoadingSpinner, LocalLoader } from '~/components/Loaders'
+import { SegmentedControl } from '~/components/SegmentedControl'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { PaginatedYieldsOptimizerTable } from '~/containers/Yields/Tables/Optimizer'
 import type { IYieldsOptimizerTableRow } from '~/containers/Yields/Tables/types'
 import type { FormSubmitEvent } from '~/types/forms'
@@ -300,24 +300,17 @@ export function TokenBorrowSection({
 			<div className="flex flex-1 flex-col gap-2 p-2">
 				<div className="flex flex-1 flex-col gap-2">
 					<TableToolbar>
-						<div className={chartSegmentedControlGroupStyles}>
-							<button
-								type="button"
-								onClick={() => setActiveTab('use')}
-								data-active={activeTab === 'use'}
-								className={chartSegmentedControlButtonStyles}
-							>
-								{`Use ${tokenSymbol}`}
-							</button>
-							<button
-								type="button"
-								onClick={() => setActiveTab('borrow')}
-								data-active={activeTab === 'borrow'}
-								className={chartSegmentedControlButtonStyles}
-							>
-								{`Borrow ${tokenSymbol}`}
-							</button>
-						</div>
+						<SegmentedControl
+							value={activeTab}
+							onValueChange={(value) => setActiveTab(value as typeof activeTab)}
+							options={[
+								{ value: 'use', label: `Use ${tokenSymbol}` },
+								{ value: 'borrow', label: `Borrow ${tokenSymbol}` }
+							]}
+							label="Borrow view"
+							variant="default"
+							size="md"
+						/>
 					</TableToolbar>
 					{showInitialLoader ? (
 						<div className="flex flex-1 items-center justify-center">

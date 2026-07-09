@@ -12,8 +12,8 @@ import type {
 } from '~/components/ECharts/types'
 import { LoadingDots } from '~/components/Loaders'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import { SegmentedControl } from '~/components/SegmentedControl'
 import { Select } from '~/components/Select/Select'
-import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
 import { Tooltip } from '~/components/Tooltip'
 import { CHART_COLORS } from '~/constants/colors'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
@@ -464,20 +464,17 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	)
 
 	const chartTypeSwitch = (
-		<div className={`${chartSegmentedControlGroupStyles} mr-auto`}>
-			{chartMetricOptions.map(({ key, label }) => (
-				<button
-					key={`pie-chart-type-${key}`}
-					className={chartSegmentedControlButtonStyles}
-					data-active={chartTypeKey === key}
-					onClick={() => {
-						void pushShallowQuery(router, { chartType: getChartMetricQueryValue(key) })
-					}}
-				>
-					{label}
-				</button>
-			))}
-		</div>
+		<SegmentedControl
+			value={chartTypeKey}
+			onValueChange={(key) => {
+				void pushShallowQuery(router, { chartType: getChartMetricQueryValue(key) })
+			}}
+			options={chartMetricOptions.map(({ key, label }) => ({ value: key, label }))}
+			label="Chart type"
+			variant="default"
+			size="md"
+			className="mr-auto"
+		/>
 	)
 
 	const chartViewSwitch = (

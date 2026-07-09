@@ -713,7 +713,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 						</button>
 					) : null}
 				</div>
-				<div className="flex thin-scrollbar max-h-[260px] flex-col gap-1.5 overflow-y-auto pr-1">
+				<div className="flex max-h-[260px] flex-col gap-1.5 overflow-y-auto pr-1">
 					{filteredCategories.map(({ category, label, filters: categoryFilters }) => {
 						const isExpanded = expandedCategories.has(category) || search.length > 0
 						const availableFilters = categoryFilters.filter((f) => !activeFilterIds.has(f.id))
@@ -795,7 +795,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 						</button>
 					) : null}
 				</div>
-				<div className="grid thin-scrollbar max-h-[260px] grid-cols-[repeat(auto-fit,minmax(220px,1fr))] items-start gap-1.5 overflow-y-auto pr-1">
+				<div className="grid max-h-[260px] grid-cols-[repeat(auto-fit,minmax(220px,1fr))] items-start gap-1.5 overflow-y-auto pr-1">
 					{allActiveFilters.length === 0 ? (
 						<div className="flex flex-col items-center justify-center rounded-md border border-dashed border-(--cards-border) py-6 text-center">
 							<Icon name="settings" className="mb-2 size-5 text-(--text-tertiary)" />

@@ -11,6 +11,7 @@ import { useAuthContext } from '~/containers/Subscription/auth'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { useDebouncedValue } from '~/hooks/useDebounce'
 import { useIsClient } from '~/hooks/useIsClient'
+import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
 import { inputStyles } from '~/ui/Input'
 import { fetchJson } from '~/utils/async'
 
@@ -76,7 +77,7 @@ export const MobileSearch = () => {
 
 				<Ariakit.Dialog
 					unmountOnHide={false}
-					className="dialog h-[calc(100dvh-80px)] max-h-(--popover-available-height) bg-surface-elevated-1 p-2 max-sm:drawer"
+					className={`${dialogSurfaceStyles} h-[calc(100dvh-80px)] sm:h-[min(720px,calc(100dvh-32px))] sm:[--dialog-width:640px]`}
 					hideOnInteractOutside
 					portal
 				>
@@ -88,18 +89,19 @@ export const MobileSearch = () => {
 							})
 						}}
 					>
-						<span className="relative isolate flex w-full items-center justify-between gap-2">
-							<Ariakit.Combobox placeholder="Search..." className={`ml-2 flex-1 ${inputStyles}`} />
-							<Ariakit.DialogDismiss className="p-2">
-								<Icon name="x" className="size-5" />
-							</Ariakit.DialogDismiss>
-						</span>
+						<div className="flex min-h-0 flex-1 flex-col p-2">
+							<span className="relative isolate flex w-full items-center justify-between gap-2">
+								<DialogHeading className="sr-only">Search</DialogHeading>
+								<Ariakit.Combobox placeholder="Search..." className={`ml-2 flex-1 ${inputStyles}`} />
+								<DialogCloseButton className="shrink-0" ariaLabel="Close search" />
+							</span>
 
-						<Ariakit.ComboboxList className="flex flex-col gap-1" alwaysVisible>
-							{mounted ? (
-								<MobileSearchResults searchValue={searchValue} onSelect={() => dialogStore.setOpen(false)} />
-							) : null}
-						</Ariakit.ComboboxList>
+							<Ariakit.ComboboxList className={`${dialogScrollableBodyStyles} flex flex-col gap-1`} alwaysVisible>
+								{mounted ? (
+									<MobileSearchResults searchValue={searchValue} onSelect={() => dialogStore.setOpen(false)} />
+								) : null}
+							</Ariakit.ComboboxList>
+						</div>
 					</Ariakit.ComboboxProvider>
 				</Ariakit.Dialog>
 			</Ariakit.DialogProvider>
@@ -116,17 +118,23 @@ function MobileSearchResults({ searchValue, onSelect }: { searchValue: string; o
 	if (debouncedSearchValue) {
 		if (isLoading) {
 			return (
-				<p className="flex items-center justify-center gap-1 p-4">
+				<p role="status" className="flex items-center justify-center gap-1 p-4">
 					Loading
 					<LoadingDots />
 				</p>
 			)
 		}
 		if (error) {
-			return <p className="flex items-center justify-center p-4 text-(--error)">{`Error: ${error.message}`}</p>
+			return (
+				<p role="alert" className="flex items-center justify-center p-4 text-(--error)">{`Error: ${error.message}`}</p>
+			)
 		}
 		if (!data.length) {
-			return <p className="flex items-center justify-center p-4 body-sm text-tertiary">No results found</p>
+			return (
+				<p role="status" className="flex items-center justify-center p-4 body-sm text-tertiary">
+					No results found
+				</p>
+			)
 		}
 		return (
 			<>
@@ -140,7 +148,7 @@ function MobileSearchResults({ searchValue, onSelect }: { searchValue: string; o
 
 	if (isLoadingDefaultSearchList) {
 		return (
-			<p className="flex items-center justify-center gap-1 p-4">
+			<p role="status" className="flex items-center justify-center gap-1 p-4">
 				Loading
 				<LoadingDots />
 			</p>
@@ -148,11 +156,18 @@ function MobileSearchResults({ searchValue, onSelect }: { searchValue: string; o
 	}
 	if (errorDefaultSearchList) {
 		return (
-			<p className="flex items-center justify-center p-4 text-(--error)">{`Error: ${errorDefaultSearchList.message}`}</p>
+			<p
+				role="alert"
+				className="flex items-center justify-center p-4 text-(--error)"
+			>{`Error: ${errorDefaultSearchList.message}`}</p>
 		)
 	}
 	if (!defaultSearchList?.length) {
-		return <p className="flex items-center justify-center p-4 body-sm text-tertiary">No results found</p>
+		return (
+			<p role="status" className="flex items-center justify-center p-4 body-sm text-tertiary">
+				No results found
+			</p>
+		)
 	}
 
 	return (
@@ -251,20 +266,25 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 					hideOnInteractOutside
 					gutter={6}
 					sameWidth
-					className="z-10 flex thin-scrollbar min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(var(--popover-available-height),60vh)]"
+					className="z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 px-0 py-0 max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(var(--popover-available-height),60vh)]"
 					portal
 				>
 					<Ariakit.ComboboxList alwaysVisible>
 						{debouncedSearchValue ? (
 							isLoading ? (
-								<p className="flex items-center justify-center gap-1 p-4">
+								<p role="status" className="flex items-center justify-center gap-1 p-4">
 									Loading
 									<LoadingDots />
 								</p>
 							) : error ? (
-								<p className="flex items-center justify-center p-4 text-(--error)">{`Error: ${error.message}`}</p>
+								<p
+									role="alert"
+									className="flex items-center justify-center p-4 text-(--error)"
+								>{`Error: ${error.message}`}</p>
 							) : !data.length ? (
-								<p className="flex items-center justify-center p-4 body-sm text-tertiary">No results found</p>
+								<p role="status" className="flex items-center justify-center p-4 body-sm text-tertiary">
+									No results found
+								</p>
 							) : (
 								<>
 									{data.map((route: ISearchItem) => (
@@ -276,14 +296,19 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 								</>
 							)
 						) : isLoadingDefaultSearchList ? (
-							<p className="flex items-center justify-center gap-1 p-4">
+							<p role="status" className="flex items-center justify-center gap-1 p-4">
 								Loading
 								<LoadingDots />
 							</p>
 						) : errorDefaultSearchList ? (
-							<p className="flex items-center justify-center p-4 text-(--error)">{`Error: ${errorDefaultSearchList.message}`}</p>
+							<p
+								role="alert"
+								className="flex items-center justify-center p-4 text-(--error)"
+							>{`Error: ${errorDefaultSearchList.message}`}</p>
 						) : !defaultSearchList?.length ? (
-							<p className="flex items-center justify-center p-4 body-sm text-tertiary">No results found</p>
+							<p role="status" className="flex items-center justify-center p-4 body-sm text-tertiary">
+								No results found
+							</p>
 						) : (
 							<>
 								{recentSearchList.map((route: ISearchItem) => (

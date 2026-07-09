@@ -1,6 +1,16 @@
 {
-	"hex-in-classname": 2696,
-	"dark-hex-variant": 870,
-	"arbitrary-font-size": 1251,
-	"arbitrary-spacing": 60
+	"core": {
+		"hex-in-classname": 95,
+		"dark-hex-variant": 20,
+		"arbitrary-font-size": 40,
+		"arbitrary-spacing": 0,
+		"explicit-thin-scrollbar": 0
+	},
+	"excluded": {
+		"hex-in-classname": 2570,
+		"dark-hex-variant": 836,
+		"arbitrary-font-size": 1201,
+		"arbitrary-spacing": 57,
+		"explicit-thin-scrollbar": 0
+	}
 }

@@ -16,7 +16,7 @@ import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
 import type { ITreemapChartProps } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
-import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
+import { SegmentedControl } from '~/components/SegmentedControl'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { fetchProtocolsByTokenClient } from '~/containers/TokenUsage/api'
@@ -196,26 +196,34 @@ export function TokenUsageSection({
 						>
 							Include CEXs
 						</Checkbox>
-						<div className={chartSegmentedControlGroupStyles}>
-							<button
-								type="button"
-								data-active={view === 'list'}
-								onClick={() => setView('list')}
-								className={`${chartSegmentedControlButtonStyles} flex items-center gap-1`}
-							>
-								<Icon name="align-left" height={14} width={14} />
-								<span>List</span>
-							</button>
-							<button
-								type="button"
-								data-active={view === 'treemap'}
-								onClick={() => setView('treemap')}
-								className={`${chartSegmentedControlButtonStyles} flex items-center gap-1`}
-							>
-								<Icon name="layout-grid" height={14} width={14} />
-								<span>Treemap</span>
-							</button>
-						</div>
+						<SegmentedControl
+							value={view}
+							onValueChange={(value) => setView(value as typeof view)}
+							options={[
+								{
+									value: 'list',
+									label: (
+										<>
+											<Icon name="align-left" height={14} width={14} />
+											<span>List</span>
+										</>
+									)
+								},
+								{
+									value: 'treemap',
+									label: (
+										<>
+											<Icon name="layout-grid" height={14} width={14} />
+											<span>Treemap</span>
+										</>
+									)
+								}
+							]}
+							label="View"
+							variant="default"
+							size="md"
+							buttonClassName="flex items-center gap-1"
+						/>
 						{view === 'treemap' ? (
 							<>
 								<ChartRestoreButton chartInstance={treemapChartInstance} />

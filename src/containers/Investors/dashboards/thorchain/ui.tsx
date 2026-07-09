@@ -424,10 +424,7 @@ export function ApiTable({ table, maxHeight }: { table: ApiTableData; maxHeight?
 	const cols = table.columns
 	const grid = cols.map((c) => (c.align === 'right' ? 'minmax(90px,1fr)' : 'minmax(120px,2fr)')).join(' ')
 	return (
-		<div
-			className="thin-scrollbar w-full overflow-auto rounded-lg border border-(--cards-border)"
-			style={{ maxHeight }}
-		>
+		<div className="w-full overflow-auto rounded-lg border border-(--cards-border)" style={{ maxHeight }}>
 			<div style={{ display: 'grid', gridTemplateColumns: grid }}>
 				{cols.map((c) => (
 					<div

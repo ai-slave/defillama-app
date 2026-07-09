@@ -1,6 +1,7 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { formatTooltipChartDate } from '~/components/ECharts/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { domChartCrosshairStyles, domChartTooltipStyles } from '~/ui/ChartTooltip'
 import { formattedNum } from '~/utils'
 
 const COLOR_MAP = {
@@ -106,15 +107,12 @@ export function SmolLineChart({
 				</svg>
 				{hoveredIndex != null ? (
 					<div
-						className="pointer-events-none absolute top-0 h-full border-l border-dashed border-[#ccc] dark:border-[#555]"
+						className={domChartCrosshairStyles}
 						style={{ left: `${series.length === 1 ? 50 : (hoveredIndex / (series.length - 1)) * 100}%` }}
 					/>
 				) : null}
 				{hoveredIndex != null ? (
-					<div
-						ref={tooltipRef}
-						className="pointer-events-none fixed z-10 rounded border border-[#ccc] bg-white px-2.5 py-[5px] text-[14px] leading-normal whitespace-nowrap text-[#666] shadow-md dark:border-[#555] dark:bg-[#1a1a1a] dark:text-[#d1d5db]"
-					>
+					<div ref={tooltipRef} className={domChartTooltipStyles}>
 						<p>{formatTooltipChartDate(series[hoveredIndex][0], 'daily')}</p>
 						<p style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
 							<span

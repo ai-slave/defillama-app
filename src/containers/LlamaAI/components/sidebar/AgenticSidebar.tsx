@@ -473,7 +473,7 @@ export function AgenticSidebar({
 				) : null}
 			</header>
 
-			<div ref={scrollContainerRef} className="thin-scrollbar flex-1 overflow-auto overscroll-contain">
+			<div ref={scrollContainerRef} className="flex-1 overflow-auto overscroll-contain">
 				<div ref={projectsSectionRef} className="border-b border-[#e6e6e6] pb-3 dark:border-[#222324]">
 					<ProjectsSidebarSection
 						sessions={sessions}

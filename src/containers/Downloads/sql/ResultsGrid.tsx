@@ -59,7 +59,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 	return (
 		<div
 			ref={parentRef}
-			className="relative thin-scrollbar max-h-[420px] overflow-auto rounded-[4px] border border-(--divider) bg-surface"
+			className="relative max-h-[420px] overflow-auto rounded-[4px] border border-(--divider) bg-surface"
 		>
 			<div style={{ width: Math.max(totalWidth, 0), minWidth: '100%' }}>
 				<div

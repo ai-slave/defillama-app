@@ -42,7 +42,7 @@ const components: Components = {
 		const isBlock = typeof className === 'string' && className.includes('language-')
 		if (isBlock) {
 			return (
-				<pre className="thin-scrollbar overflow-x-auto rounded-md border border-(--divider) bg-(--app-bg) p-2 font-mono text-[12px]">
+				<pre className="overflow-x-auto rounded-md border border-(--divider) bg-(--app-bg) p-2 font-mono text-[12px]">
 					<code {...props} className={className}>
 						{children}
 					</code>

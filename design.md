@@ -177,6 +177,7 @@ These are owner decisions, not extraction mistakes:
 - Dense stat/data cards use 8px padding on all sides. Some Figma cards show 12px vertical padding; code should prefer the 8px dense-card rhythm unless a route-specific frame requires the extra space.
 - Home/analytics page stacks use 8px major gaps. Some home frame siblings measure as 6px; the implementation should use one page-level `gap-2` rhythm and keep the top controls' 12px horizontal gap as the explicit exception.
 - Chart/table/action toolbars use 32px controls from primitive padding/min-height. Dense adjacent controls use 6px gaps; larger control groups and toolbar padding use 8px.
+- Nested scroll containers inherit the compact scrollbar recipe globally from `:where(body *)`; the native `html`/`body` document scrollbar is intentionally unchanged. Do not add a local `thin-scrollbar` class. Use `no-scrollbar` only for an explicit hidden-scrollbar interaction such as a swipeable chip track.
 - Titled `PanelHeader` remains the taller Figma panel recipe. Inline chart/table toolbars use the compact toolbar recipe instead of forcing every chart control row into `PanelHeader`.
 - Popover/menu surfaces own background, border, radius, and overflow only. Search blocks, action rows, footers, and list rows own vertical spacing.
 - Cartesian ECharts grid insets stay as-is for now. A 12px chart grid inset can optically read closer to 8px DOM spacing because axes, labels, dataZoom, and canvas drawing are involved; changing it is a visual chart change requiring screenshots/pixel checks.

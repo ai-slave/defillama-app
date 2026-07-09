@@ -160,7 +160,7 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 	}
 
 	return (
-		<div className="thin-scrollbar max-h-[350px] overflow-y-auto">
+		<div className="max-h-[350px] overflow-y-auto">
 			<div className="grid gap-3 md:grid-cols-2">
 				<div className="flex flex-col gap-1.5">
 					<AriakitVirtualizedMultiSelect

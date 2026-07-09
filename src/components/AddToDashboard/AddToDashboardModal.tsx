@@ -385,7 +385,7 @@ export function AddToDashboardModal({
 					<DialogCloseButton className="-mr-1" />
 				</div>
 
-				<div className="flex thin-scrollbar min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-3">
+				<div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-3">
 					<label className="relative block">
 						<span className="sr-only">Search dashboards</span>
 						<Icon
@@ -401,7 +401,7 @@ export function AddToDashboardModal({
 						/>
 					</label>
 
-					<div className="thin-scrollbar max-h-56 overflow-y-auto overscroll-contain">
+					<div className="max-h-56 overflow-y-auto overscroll-contain">
 						{isLoadingDashboards ? (
 							<div role="status" aria-live="polite" className="flex items-center justify-center py-8">
 								<div className="size-5 animate-spin rounded-full border-2 border-brand border-t-transparent" />

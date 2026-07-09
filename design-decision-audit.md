@@ -30,6 +30,20 @@ This file tracks design-system audit notes before code changes are made.
 
 ## Notes
 
+### Post-Merge Finalization Note — 2026-07-09
+
+- The route-family sweep is merged. Follow-up work must start with a current-code review;
+  historical checklist entries alone are insufficient evidence for a visual change.
+- Search and Metrics use the shared dialog surface contract. Their remaining work is
+  owner visual verification, not a second shell migration.
+- Segmented controls now have a shared keyboard-complete radio-group primitive. Real
+  page-navigation tablists remain separate because they own tab/panel semantics.
+- DOM mini-chart tooltip/crosshair chrome is centralized without changing chart series,
+  axes, data, dimensions, or ECharts canvas options.
+- The token ratchet separates core application debt from explicitly excluded product
+  debt, so excluded work cannot mask core regressions. No excluded-product visuals were
+  changed during this finalization pass.
+
 ### Token Namespace End-State (post-merge proposal, deferred)
 
 - Current issue: The new tokens carry an `--ld-` prefix only because legacy variables

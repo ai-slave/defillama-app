@@ -102,7 +102,7 @@ export function MetricTab(props: MetricTabProps) {
 
 	return (
 		<div className="flex h-full flex-col gap-3 lg:min-h-[360px] lg:flex-row lg:overflow-hidden">
-			<div className="flex w-full shrink-0 flex-col border pro-border lg:thin-scrollbar lg:w-[380px] lg:shrink lg:overflow-y-auto xl:w-[420px]">
+			<div className="flex w-full shrink-0 flex-col border pro-border lg:w-[380px] lg:shrink lg:overflow-y-auto xl:w-[420px]">
 				<div className="flex flex-col gap-3 p-2.5 sm:p-3">
 					<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-2.5 shadow-sm sm:p-3">
 						<div className="flex items-start justify-between gap-2 sm:gap-3">

@@ -716,7 +716,7 @@ export function ColumnManager({
 					</div>
 				</div>
 
-				<div className="thin-scrollbar max-h-[240px] overflow-y-auto p-2">
+				<div className="max-h-[240px] overflow-y-auto p-2">
 					{filteredColumns.length === 0 ? (
 						<p className="flex h-16 items-center justify-center text-xs text-(--text-tertiary)">No columns match</p>
 					) : (
@@ -859,7 +859,7 @@ export function ColumnManager({
 								</div>
 							) : null}
 							{showAutocomplete && filteredSuggestions.length > 0 ? (
-								<div className="absolute z-50 mt-1 thin-scrollbar max-h-40 w-full overflow-y-auto overscroll-contain rounded-md border border-(--cards-border) bg-(--cards-bg) shadow-lg">
+								<div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto overscroll-contain rounded-md border border-(--cards-border) bg-(--cards-bg) shadow-lg">
 									{filteredSuggestions.map((suggestion, index) => (
 										<button
 											key={`${suggestion.type}-${suggestion.value}`}
@@ -1126,7 +1126,7 @@ function SortingSection({
 						className="z-50 rounded-md border border-(--cards-border) bg-(--cards-bg) shadow-lg"
 						style={{ width: 'var(--popover-anchor-width)' }}
 					>
-						<div className="thin-scrollbar max-h-[280px] overflow-y-auto p-1">
+						<div className="max-h-[280px] overflow-y-auto p-1">
 							<button
 								type="button"
 								onClick={() => {

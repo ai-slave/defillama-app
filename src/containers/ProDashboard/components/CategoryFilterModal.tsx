@@ -17,7 +17,6 @@ interface CategoryFilterModalProps {
 function SimpleMenuList(props: any) {
 	return (
 		<div
-			className="thin-scrollbar"
 			style={{
 				maxHeight: props.maxHeight,
 				overflowY: 'auto'

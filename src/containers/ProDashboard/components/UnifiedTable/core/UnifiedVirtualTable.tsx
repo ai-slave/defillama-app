@@ -57,7 +57,7 @@ export function UnifiedVirtualTable({
 	return (
 		<div
 			ref={containerRef}
-			className="relative isolate thin-scrollbar min-h-0 w-full flex-1 overflow-auto rounded-md bg-(--cards-bg)"
+			className="relative isolate min-h-0 w-full flex-1 overflow-auto rounded-md bg-(--cards-bg)"
 			style={{ maxWidth: '100%', WebkitOverflowScrolling: 'touch' }}
 		>
 			<div

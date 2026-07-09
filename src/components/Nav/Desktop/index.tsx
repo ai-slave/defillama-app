@@ -26,7 +26,7 @@ export function DesktopNav({
 	const isResearch = asPath.startsWith('/research')
 	return (
 		<span className="desktop-nav-shell col-span-1 max-lg:hidden">
-			<nav className="sticky top-0 bottom-0 left-0 isolate col-span-1 flex thin-scrollbar h-screen flex-col gap-1 overflow-x-hidden overflow-y-auto bg-page py-4 *:pl-4">
+			<nav className="sticky top-0 bottom-0 left-0 isolate col-span-1 flex h-screen flex-col gap-1 overflow-x-hidden overflow-y-auto bg-page py-4 *:pl-4">
 				<BasicLink href={isResearch ? '/research' : '/'} className="mb-4 w-fit shrink-0">
 					<span className="sr-only">
 						{isResearch ? 'Navigate to DefiLlama Research' : 'Navigate to DeFi Dashboard'}

@@ -82,7 +82,7 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore }: AlertsModa
 					</Ariakit.DialogDismiss>
 				</div>
 
-				<div className="thin-scrollbar max-h-[calc(85vh-73px)] overflow-y-auto">
+				<div className="max-h-[calc(85vh-73px)] overflow-y-auto">
 					{alertsError ? (
 						<div className="px-5 py-3 text-xs text-red-500">
 							{alertsError instanceof Error ? alertsError.message : 'Failed to fetch alerts'}

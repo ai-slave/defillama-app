@@ -13,7 +13,7 @@ import {
 import { prepareChartCsv } from '~/components/ECharts/utils'
 import { EmbedChart } from '~/components/EmbedChart'
 import { Icon } from '~/components/Icon'
-import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/components/Select/types'
+import { SegmentedControl } from '~/components/SegmentedControl'
 import { serializeProtocolChartToMultiChart } from '~/containers/ProDashboard/utils/chartSerializer'
 import { useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
@@ -358,7 +358,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 								</label>
 							</div>
 
-							<div className="flex thin-scrollbar flex-1 flex-col gap-5 overflow-y-auto overscroll-contain p-4">
+							<div className="flex flex-1 flex-col gap-5 overflow-y-auto overscroll-contain p-4">
 								{groupedFilteredOptions.map((group) => (
 									<section key={`category-${group.label}`} className="flex flex-col gap-2">
 										<div className="flex items-baseline gap-1.5">
@@ -493,25 +493,16 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 				) : null}
 				<div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">
 					{props.chartDenominations?.length ? (
-						<div className={chartSegmentedControlGroupStyles}>
-							{props.chartDenominations.map((denom) => (
-								<button
-									key={`denomination-${denom.symbol}`}
-									className={chartSegmentedControlButtonStyles}
-									data-active={
-										toggledMetrics.denomination === denom.symbol ||
-										(denom.symbol === 'USD' && !toggledMetrics.denomination)
-									}
-									onClick={() => {
-										void pushShallowQuery(router, {
-											denomination: denom.symbol === 'USD' ? undefined : denom.symbol
-										})
-									}}
-								>
-									{denom.symbol}
-								</button>
-							))}
-						</div>
+						<SegmentedControl
+							value={toggledMetrics.denomination ?? 'USD'}
+							onValueChange={(symbol) =>
+								void pushShallowQuery(router, { denomination: symbol === 'USD' ? undefined : symbol })
+							}
+							options={props.chartDenominations.map((denom) => ({ value: denom.symbol, label: denom.symbol }))}
+							label="Denomination"
+							variant="default"
+							size="md"
+						/>
 					) : null}
 					{hasAtleasOneBarChart ? (
 						<ChartGroupingSelector

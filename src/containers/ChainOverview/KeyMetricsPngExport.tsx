@@ -297,7 +297,7 @@ export function KeyMetricsPngExportButton({
 				void handleExport()
 			}}
 			disabled={isLoading}
-			className={buttonStyles({ size: 'md' })}
+			className={buttonStyles({ size: 'sm' })}
 			title="Download Key Metrics as PNG"
 		>
 			{isLoading ? <LoadingSpinner size={12} /> : <Icon name="download-paper" height={12} width={12} />}
