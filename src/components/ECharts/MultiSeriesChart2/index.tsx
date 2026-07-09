@@ -32,7 +32,12 @@ import { formatNum, formattedNum, slug } from '~/utils'
 import { ChartContainer } from '../ChartContainer'
 import { ChartHeader } from '../ChartHeader'
 import { getChartTheme } from '../chartTheme'
-import { isTooltipDataRecord, formatChartEmphasisDate, formatTooltipChartDate } from '../formatters'
+import {
+	formatChartAxisDate,
+	isTooltipDataRecord,
+	formatChartEmphasisDate,
+	formatTooltipChartDate
+} from '../formatters'
 import { buildHallmarksMarkLine } from '../hallmarks'
 import type { IMultiSeriesChart2Props } from '../types'
 import { mergeDeep } from '../utils'
@@ -575,7 +580,7 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 			type: 'time',
 			boundaryGap: false,
 			nameTextStyle: { fontFamily: 'sans-serif', fontSize: 14, fontWeight: 400 },
-			axisLabel: { color: themeColor },
+			axisLabel: { color: themeColor, formatter: formatChartAxisDate, hideOverlap: true },
 			axisLine: { lineStyle: { color: themeColor, opacity: 0.2 } },
 			splitLine: {
 				lineStyle: { color: getChartTheme(isThemeDark).gridline }

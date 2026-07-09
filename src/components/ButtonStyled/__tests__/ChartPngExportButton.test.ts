@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { scaleXAxisForExport, scaleYAxisForExport } from '../ChartPngExportButton'
+import { formatExportTimeAxisLabel, scaleXAxisForExport, scaleYAxisForExport } from '../ChartPngExportButton'
 
 describe('scaleXAxisForExport', () => {
 	it('keeps every rotated category label in the export instead of re-hiding overlaps', () => {
@@ -12,6 +12,18 @@ describe('scaleXAxisForExport', () => {
 	it('hides overlaps for a normal (non-rotated) axis', () => {
 		const [scaled] = scaleXAxisForExport([{ type: 'category', axisLabel: {} }])
 		expect(scaled.axisLabel.hideOverlap).toBe(true)
+	})
+
+	it('uses one date label format for time axes so month boundaries do not overlap', () => {
+		const [scaled] = scaleXAxisForExport([{ type: 'time', axisLabel: {} }])
+		expect(scaled.axisLabel.formatter).toBe(formatExportTimeAxisLabel)
+		expect(scaled.axisLabel.formatter(Date.UTC(2026, 4, 1))).toBe('May 1')
+	})
+
+	it('preserves an explicit time-axis formatter', () => {
+		const formatter = () => 'custom'
+		const [scaled] = scaleXAxisForExport([{ type: 'time', axisLabel: { formatter } }])
+		expect(scaled.axisLabel.formatter).toBe(formatter)
 	})
 })
 import { getChartExportIconFetchUrl } from '../chartPngExportIcon'

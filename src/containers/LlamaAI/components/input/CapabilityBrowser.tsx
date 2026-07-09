@@ -89,7 +89,7 @@ export function BrowserContent({
 			) : null}
 
 			{/* Mobile: horizontal category pills */}
-			<div className="flex scrollbar-none gap-1.5 overflow-x-auto px-3 pb-2.5 sm:hidden">
+			<div className="scrollbar-none flex gap-1.5 overflow-x-auto px-3 pb-2.5 sm:hidden">
 				{CAPABILITIES.map((cap) => {
 					const isActive = activeCategory.key === cap.key
 					return (
