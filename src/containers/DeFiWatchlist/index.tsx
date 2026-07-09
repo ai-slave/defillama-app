@@ -135,7 +135,7 @@ export function DefiWatchlistContainer({
 							label={selectedProtocolNames.length > 0 ? 'Protocols' : 'Add protocols'}
 							labelType="smol"
 							variant="filter"
-							size="sm"
+							size="md"
 						/>
 					</div>
 					{protocolsTableData.length ? (
@@ -164,7 +164,7 @@ export function DefiWatchlistContainer({
 							label={selectedChainNames.length > 0 ? 'Chains' : 'Add chains'}
 							labelType="smol"
 							variant="filter"
-							size="sm"
+							size="md"
 						/>
 					</div>
 					{chainsTableData.length ? (
@@ -183,11 +183,14 @@ export function DefiWatchlistContainer({
 }
 
 const EMPTY_ARRAY: any[] = []
-const smallActionButtonClassName = buttonStyles({ size: 'sm' })
+const smallActionButtonClassName = buttonStyles({ size: 'md' })
+const portfolioActionButtonClassName = buttonStyles({ size: 'md' })
 const smallToneActionButtonBaseClassName =
-	'flex min-h-6 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-md border px-2 py-0.5 label-sm disabled:cursor-not-allowed disabled:opacity-60'
+	'flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-[8px] border px-3 py-1.5 label-sm disabled:cursor-not-allowed disabled:opacity-60'
 const destructiveActionButtonClassName = `${smallToneActionButtonBaseClassName} border-data-down text-data-down hover:bg-hover-row focus-visible:bg-hover-row`
 const positiveActionButtonClassName = `${smallToneActionButtonBaseClassName} border-data-up text-data-up hover:bg-hover-row focus-visible:bg-hover-row`
+const portfolioDestructiveActionButtonClassName =
+	'flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-[8px] border border-data-down px-3 py-1.5 label-sm text-data-down hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60'
 
 function PortfolioNotifications({
 	selectedPortfolio,
@@ -432,7 +435,7 @@ function PortfolioNotifications({
 						disabled={loaders.userLoading || isLoading}
 						className={smallActionButtonClassName}
 					>
-						<Icon name="mail" height={14} width={14} />
+						<Icon name="mail" height={16} width={16} />
 						<span>{preferences ? 'Update settings' : 'Set up notifications'}</span>
 					</button>
 
@@ -445,7 +448,7 @@ function PortfolioNotifications({
 									className={smallActionButtonClassName}
 									title="Temporarily disable notifications"
 								>
-									<Icon name="pause" height={14} width={14} />
+									<Icon name="pause" height={16} width={16} />
 									<span>{isUpdatingStatus ? 'Disabling...' : 'Disable'}</span>
 								</button>
 							) : null}
@@ -458,7 +461,7 @@ function PortfolioNotifications({
 									className={positiveActionButtonClassName}
 									title="Re-enable notifications"
 								>
-									<Icon name="check-circle" height={14} width={14} />
+									<Icon name="check-circle" height={16} width={16} />
 									<span>{isUpdatingStatus ? 'Enabling...' : 'Enable'}</span>
 								</button>
 							) : null}
@@ -468,7 +471,7 @@ function PortfolioNotifications({
 								className={destructiveActionButtonClassName}
 								title="Permanently delete notification preferences"
 							>
-								<Icon name="trash-2" height={14} width={14} />
+								<Icon name="trash-2" height={16} width={16} />
 								<span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
 							</button>
 						</>
@@ -591,7 +594,7 @@ function PortfolioNotifications({
 											disabled={isUpdatingStatus}
 											className={smallActionButtonClassName}
 										>
-											<Icon name="pause" height={14} width={14} />
+											<Icon name="pause" height={16} width={16} />
 											<span>{isUpdatingStatus ? 'Disabling...' : 'Disable'}</span>
 										</button>
 									) : null}
@@ -601,7 +604,7 @@ function PortfolioNotifications({
 										disabled={isDeleting}
 										className={destructiveActionButtonClassName}
 									>
-										<Icon name="trash-2" height={14} width={14} />
+										<Icon name="trash-2" height={16} width={16} />
 										<span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
 									</button>
 								</>
@@ -657,7 +660,7 @@ function PortfolioSelection() {
 					key={`${selectedPortfolio}-${portfolios.length}`}
 					options={portfolios}
 					onItemClick={(value) => handleSelectPortfolio(value)}
-					className={`${smallActionButtonClassName} min-w-[100px] justify-between`}
+					className={`${portfolioActionButtonClassName} min-w-[100px] justify-between`}
 				/>
 				<DialogForm
 					title="New Portfolio"
@@ -666,17 +669,18 @@ function PortfolioSelection() {
 					setOpen={setOpen}
 					onSubmit={handleAddPortfolio}
 				/>
-				<button onClick={() => setOpen(true)} className={smallActionButtonClassName} title="Create new portfolio">
-					<Icon name="folder-plus" height={14} width={14} />
+				<Button type="button" onClick={() => setOpen(true)} size="md" title="Create new portfolio">
+					<Icon name="folder-plus" height={16} width={16} />
 					<span>New</span>
-				</button>
+				</Button>
 				{selectedPortfolio !== DEFAULT_PORTFOLIO_NAME ? (
 					<button
+						type="button"
 						onClick={handleRemovePortfolio}
-						className={destructiveActionButtonClassName}
+						className={portfolioDestructiveActionButtonClassName}
 						title="Delete current portfolio"
 					>
-						<Icon name="trash-2" height={14} width={14} />
+						<Icon name="trash-2" height={16} width={16} />
 						<span>Delete</span>
 					</button>
 				) : null}
@@ -787,7 +791,7 @@ function TopMovers({ protocols }: TopMoversProps) {
 						}
 						labelType="smol"
 						variant="filter"
-						size="sm"
+						size="md"
 					/>
 				) : null}
 			</div>

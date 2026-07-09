@@ -4,6 +4,7 @@ import { DialogForm } from '~/components/DialogForm'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
+import { selectTriggerStyles } from '~/components/Select/types'
 import { ColumnFilters } from '~/containers/Yields/Filters/ColumnFilters'
 import { ALL_POOL_COLUMN_QUERY_KEYS } from '~/containers/Yields/Filters/poolColumns'
 import { mapPoolToYieldTableRow } from '~/containers/Yields/poolsPipeline'
@@ -12,6 +13,7 @@ import { YieldsPoolsTable } from '~/containers/Yields/Tables/Pools'
 import { DEFAULT_PORTFOLIO_NAME } from '~/contexts/LocalStorage'
 import { useBookmarks } from '~/hooks/useBookmarks'
 import { useIsClient } from '~/hooks/useIsClient'
+import { Button } from '~/ui/Button'
 
 export function YieldsWatchlistContainer({ protocolsDict }) {
 	const isClient = useIsClient()
@@ -44,14 +46,14 @@ export function YieldsWatchlistContainer({ protocolsDict }) {
 			<WatchListTabs />
 			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
 				<div className="flex flex-wrap items-center gap-2 p-2">
-					<h1 className="mr-auto text-base font-semibold">Saved Pools</h1>
+					<h1 className="mr-auto heading-xs">Saved Pools</h1>
 					<Menu
 						name={selectedPortfolio}
 						options={portfolios}
 						onItemClick={(value) => {
 							setSelectedPortfolio(value)
 						}}
-						className="relative flex min-w-[100px] cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+						className={`${selectTriggerStyles('filter-responsive', 'md')} min-w-[100px]`}
 						popoverVariant="legacy"
 						data-umami-event="yields-watchlist-portfolio-switch"
 					/>
@@ -62,23 +64,25 @@ export function YieldsWatchlistContainer({ protocolsDict }) {
 						setOpen={setOpen}
 						onSubmit={addPortfolio}
 					/>
-					<button
+					<Button
+						type="button"
 						onClick={() => setOpen(true)}
-						className="flex items-center gap-1 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+						size="md"
 						title="Create new portfolio"
 						data-umami-event="yields-watchlist-portfolio-create"
 					>
-						<Icon name="folder-plus" height={14} width={14} />
+						<Icon name="folder-plus" height={16} width={16} />
 						<span>New</span>
-					</button>
+					</Button>
 					{selectedPortfolio !== DEFAULT_PORTFOLIO_NAME ? (
 						<button
+							type="button"
 							onClick={() => removePortfolio(selectedPortfolio)}
-							className="flex items-center gap-1 rounded-md border border-red-200 px-2 py-1.5 text-xs text-red-600 hover:bg-red-50 focus-visible:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 dark:focus-visible:bg-red-900/20"
+							className="flex min-h-8 items-center gap-1 rounded-[8px] border border-data-down px-3 py-1.5 label-sm text-data-down hover:bg-hover-row focus-visible:bg-hover-row"
 							title="Delete current portfolio"
 							data-umami-event="yields-watchlist-portfolio-delete"
 						>
-							<Icon name="trash-2" height={14} width={14} />
+							<Icon name="trash-2" height={16} width={16} />
 							<span>Delete</span>
 						</button>
 					) : null}

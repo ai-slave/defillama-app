@@ -15,9 +15,9 @@ Canonical references:
 
 The broad design sweep, shared popover/mobile-drawer pass, DialogShell pass,
 ProtocolOverview cleanup, text-tier/icon consistency sweep, dense pages/Card-Panel
-cleanup, and shared-control API tightening have merged to `main`. The current branch has
-completed the broad chart-panel shell migration pass and is now handling the focused
-status-shell/helper and prop-trim follow-up.
+cleanup, and shared-control API tightening have merged to `main`. Recent follow-ups have
+completed the broad chart-panel shell migration pass, the focused status-shell/helper and
+prop-trim follow-up, and the table heading/toolbar consistency pass for the audited routes.
 Main is no longer blocked by the old unlocks, popover, divider, DialogShell, or
 merge-readiness gates. `design-sweep-todo.md` still has many unchecked items because it
 is now a backlog ledger, not a merge-blocking checklist.
@@ -40,6 +40,11 @@ Completed foundation:
   choose between `PanelStatus`/`PanelLoadingStatus`, `SurfaceBodyStatus`/
   `SurfaceBodyLoadingStatus`, and chart-specific `ChartPanelBodyFallback` based on the
   shell they are already inside.
+- Table heading hierarchy is explicit: page-primary tables use `PanelHeader` +
+  `PanelTitle as="h1"` or `TableWithSearch headingAs="h1"`; pages that already have a
+  real h1/hero use compact `TableToolbar` with no duplicate title; secondary/embedded
+  tables use compact `TableToolbar` with an existing `label-md` title or no visible title.
+  All table/chart toolbar controls stay md/32px.
 - Shared `Select`, `SelectWithCombobox`, `MultiSelectCombobox`, `Menu`, `NestedMenu`,
   and in-scope direct popovers use the paddingless popover surface contract.
 - Shared menu/select popovers portal by default; below `sm` they use fixed-bottom
@@ -77,22 +82,19 @@ for the remaining work.
 
 Current code scope:
 
-- Finish the high-confidence status cleanup: NFT royalties, trending contracts, CEX
-  markets, ChainsByCategory shared chart state, token overview chart body, investor
-  relations gated state, borrow, compare placeholders, watchlists, and LiquidationsV2
-  access-gate states.
-- Use the status primitive that matches the surrounding shell: `PanelStatus` for a full
-  standalone panel, `SurfaceBodyStatus` inside an existing `Panel`/`Card`, and
+- Continue route-family table/panel cleanup where pages still bypass shared recipes.
+  Apply the table heading hierarchy without adding new visible titles: promote existing
+  page-primary table text to h1, remove duplicate table titles only when the page already
+  has a real h1/hero, and keep embedded table titles compact.
+- Finish live verification and follow-up adoption for table toolbar/search alignment:
+  md/32px controls, 6px dense control gaps, 8px group gaps, shared search wrappers, and no
+  hand-rolled `sm` toolbar controls.
+- Keep the status-shell and prop-trim decisions intact for future touches:
+  `PanelStatus` for standalone panels, `SurfaceBodyStatus` inside existing surfaces, and
   `ChartPanelBodyFallback` inside `ChartPanelBody`.
-- Trim only low-risk props/components in this pass: dead range-filter trigger overrides,
-  redundant `AvailableRange` variant plumbing, and `Card interactive` now that clickable
-  cards can carry `.hover-wash-card cursor-pointer` directly.
-- Add ARIA-only status semantics where the current branch already touches visible
-  loading/error/empty states; do not migrate blank Suspense reservations or custom-height
-  chart shells just to add a helper.
 - Keep the broad chart-panel decisions intact: actual ECharts plot height stays at 360px
-  unless a route explicitly supplies another chart height, and residual custom chart
-  cases stay separately scoped.
+  unless a route explicitly supplies another chart height, and residual custom chart cases
+  stay separately scoped.
 
 Carry-forward dialog/popover guardrails:
 

@@ -9,6 +9,7 @@ import { Icon } from '~/components/Icon'
 import { TagGroup } from '~/components/TagGroup'
 import { useWatchlistManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Button } from '~/ui/Button'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { formattedNum } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -167,15 +168,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex items-center gap-2">
-					<div className="flex items-center rounded-md border border-medium text-xs font-medium text-secondary">
+					<div className="flex min-h-8 items-center rounded-[8px] border border-medium label-sm text-primary">
 						<button
 							onClick={() => navigate(-1)}
-							className="shrink-0 px-2 py-1.5 hover:bg-hover-row focus-visible:bg-hover-row"
+							className="flex min-h-8 shrink-0 items-center px-3 hover:bg-hover-row focus-visible:bg-hover-row"
 							aria-label="Previous"
 						>
 							←
 						</button>
-						<span className="min-w-28 px-1 text-center text-sm font-semibold">
+						<span className="min-w-28 px-2 text-center label-sm text-primary">
 							{viewMode === 'Month'
 								? currentDate.format('MMM YYYY')
 								: viewMode === 'Week'
@@ -186,20 +187,21 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 						</span>
 						<button
 							onClick={() => navigate(1)}
-							className="shrink-0 px-2 py-1.5 hover:bg-hover-row focus-visible:bg-hover-row"
+							className="flex min-h-8 shrink-0 items-center px-3 hover:bg-hover-row focus-visible:bg-hover-row"
 							aria-label="Next"
 						>
 							→
 						</button>
 					</div>
-					<button
+					<Button
+						type="button"
 						onClick={() => {
 							void router.push({ pathname: router.pathname }, undefined, { shallow: true })
 						}}
-						className="shrink-0 rounded-md border border-medium px-2.5 py-1.5 text-xs font-medium text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
+						size="md"
 					>
 						Reset
-					</button>
+					</Button>
 				</div>
 				<TagGroup
 					variant="default"
@@ -211,25 +213,34 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 					values={[...VIEW_MODES]}
 					className="ml-auto"
 				/>
-				<button
+				<Button
+					type="button"
 					onClick={() => setQueryParams({ watchlist: showOnlyWatchlist ? undefined : 'true' })}
-					className="flex items-center justify-center gap-2 rounded-md border border-medium px-3 py-1.5 text-xs text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
+					size="md"
+					aria-pressed={showOnlyWatchlist}
 				>
 					<Icon
 						name="bookmark"
 						height={16}
 						width={16}
-						style={{ fill: showOnlyWatchlist ? 'var(--text-primary)' : 'none' }}
+						style={{ fill: showOnlyWatchlist ? 'var(--ld-text-primary)' : 'none' }}
 					/>
 					{showOnlyWatchlist ? 'Show All' : 'Show Watchlist'}
-				</button>
-				<button
+				</Button>
+				<Button
+					type="button"
 					onClick={() => setQueryParams({ insiders: showOnlyInsider ? undefined : 'true' })}
-					className="flex items-center justify-center gap-2 rounded-md border border-medium px-3 py-1.5 text-xs text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
+					size="md"
+					aria-pressed={showOnlyInsider}
 				>
-					<Icon name="key" height={16} width={16} style={{ fill: showOnlyInsider ? 'var(--text-primary)' : 'none' }} />
+					<Icon
+						name="key"
+						height={16}
+						width={16}
+						style={{ fill: showOnlyInsider ? 'var(--ld-text-primary)' : 'none' }}
+					/>
 					{showOnlyInsider ? 'Show All' : 'Show Insiders Only'}
-				</button>
+				</Button>
 				{viewMode === 'Week' || viewMode === 'Month' ? (
 					<ChartExportButtons
 						chartInstance={exportChartInstance}

@@ -100,7 +100,7 @@ export function NavItemContent({
 				) : null}
 				{freeTrial ? <span className={freeTrialBadgeStyles}>Try free</span> : null}
 				{isNew ? (
-					<span className="flex shrink-0 items-center gap-1 rounded-md bg-brand px-1.5 py-0.5 label-xs font-semibold text-on-brand group-data-[linkactive=true]/link:bg-surface group-data-[linkactive=true]/link:text-brand">
+					<span className="flex shrink-0 items-center gap-1 rounded-md bg-brand px-1.5 py-0.5 label-xs font-semibold text-on-brand">
 						<Icon name="sparkles" height={10} width={10} />
 						<span>New</span>
 					</span>

@@ -254,7 +254,10 @@ const protocolsColumns = [
 							</BasicLink>
 						)}
 
-						<Tooltip content={<ProtocolChainsComponent chains={row.original.chains} />} className="text-[0.7rem]">
+						<Tooltip
+							content={<ProtocolChainsComponent chains={row.original.chains} />}
+							className="text-[0.7rem] text-secondary"
+						>
 							{`${row.original.chains.length} chain${row.original.chains.length > 1 ? 's' : ''}`}
 						</Tooltip>
 					</span>

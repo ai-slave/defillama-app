@@ -24,8 +24,10 @@ import { UnconstrainedSmolLineChart } from '~/containers/Unlocks/UnconstrainedSm
 import { UpcomingEvent } from '~/containers/Unlocks/UpcomingEvent'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import type { FormSubmitEvent } from '~/types/forms'
-import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
-import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
+import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
@@ -252,13 +254,24 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 
 	return (
-		<Panel padding="none">
-			<PanelHeader className="justify-end gap-2">
-				<PanelTitle>Token Unlocks</PanelTitle>
+		<Card padding="none">
+			<TableToolbar className="justify-end">
+				<label className={searchFieldWrapperStyles}>
+					<span className="sr-only">Search projects...</span>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+					<input
+						name="search"
+						onInput={(e) => setProjectName(e.currentTarget.value)}
+						placeholder="Search projects..."
+						className={searchFieldInputStyles}
+					/>
+				</label>
 
-				<button
+				<Button
+					type="button"
 					onClick={() => setQueryParam('watchlist', showOnlyWatchlist ? undefined : 'true')}
-					className="flex items-center justify-center gap-2 rounded-md border border-medium px-2 py-1.5 text-xs font-medium text-secondary hover:bg-hover-row focus-visible:bg-hover-row"
+					size="md"
+					aria-pressed={showOnlyWatchlist}
 				>
 					<Icon
 						name="bookmark"
@@ -267,7 +280,7 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 						style={{ fill: showOnlyWatchlist ? 'var(--ld-text-primary)' : 'none' }}
 					/>
 					{showOnlyWatchlist ? 'Show All' : 'Show Watchlist'}
-				</button>
+				</Button>
 
 				<FilterBetweenRange
 					trigger={<span>Unlock Value</span>}
@@ -276,7 +289,7 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 					min={min ?? ''}
 					max={max ?? ''}
 					variant="primary"
-					size="sm"
+					size="md"
 					placement="bottom-start"
 				/>
 
@@ -287,7 +300,7 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 					min={minPerc ?? ''}
 					max={maxPerc ?? ''}
 					variant="primary"
-					size="sm"
+					size="md"
 					placement="bottom-start"
 				/>
 
@@ -302,7 +315,7 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 					label={'Columns'}
 					labelType="smol"
 					variant="filter-responsive"
-					size="sm"
+					size="md"
 				/>
 
 				<SelectWithCombobox
@@ -317,22 +330,11 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 					label={'Unlock Types'}
 					labelType="smol"
 					variant="filter-responsive"
-					size="sm"
+					size="md"
 				/>
-
-				<label className="relative w-full sm:max-w-[280px]">
-					<span className="sr-only">Search projects...</span>
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<input
-						name="search"
-						onInput={(e) => setProjectName(e.currentTarget.value)}
-						placeholder="Search projects..."
-						className={searchFieldInputStyles}
-					/>
-				</label>
-			</PanelHeader>
-			<VirtualTable instance={instance} stripedBg rowSize={70} />
-		</Panel>
+			</TableToolbar>
+			<VirtualTable instance={instance} stripedBg rowSize={56} />
+		</Card>
 	)
 }
 
@@ -462,9 +464,7 @@ const emissionsColumns = [
 
 				return (
 					<div className="flex h-full w-full flex-col items-end justify-center gap-2 px-2">
-						<span className="text-sm leading-none font-semibold text-link tabular-nums">
-							{formattedNum(pctUnlocked)}%
-						</span>
+						<span className="mono-sm-bold text-primary">{formattedNum(pctUnlocked)}%</span>
 						<div className="h-2 w-full rounded-full bg-surface-elevated-2">
 							<div
 								className="h-2 rounded-full bg-brand"
@@ -502,7 +502,7 @@ const emissionsColumns = [
 									? 'red'
 									: 'green'
 							}
-							className="h-[44px]"
+							className="h-[36px]"
 							extraData={{
 								lastEvent: row.original.lastEvent
 							}}
@@ -598,7 +598,7 @@ const upcomingEventColumn = (nowSec: number) =>
 				)
 			},
 			meta: {
-				headerClassName: 'w-[min(400px,40vw)]'
+				headerClassName: 'w-[520px]'
 			}
 		}
 	)

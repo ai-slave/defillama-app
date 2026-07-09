@@ -1,8 +1,7 @@
 import * as React from 'react'
-import { BasicLink } from '~/components/Link'
-import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/components/Tooltip'
-import { formattedNum, slug } from '~/utils'
+import { formattedNum } from '~/utils'
+import { TopThreeRow } from './TopThreeRow'
 import type { ProtocolEmissionWithHistory } from './types'
 
 interface TopUnlocksProps {
@@ -67,27 +66,21 @@ export const TopUnlocks: React.FC<TopUnlocksProps> = ({ data, period, title, cla
 	}, [data, period, now])
 
 	return (
-		<div className={`text-primary ${className ?? ''}`}>
+		<div className={`flex flex-col gap-3 text-primary ${className ?? ''}`}>
 			<Tooltip
-				className="text-base font-semibold text-primary"
+				className="heading-xs text-primary"
 				content={`List of top unlocks in the last ${period} ${period === 1 ? 'day' : 'days'}`}
 			>
 				{title}
 			</Tooltip>
 
 			{topUnlocks.map((unlock) => (
-				<div key={unlock.name} className="flex items-center justify-between">
-					<div className="flex items-center gap-2">
-						<TokenLogo name={unlock.name} kind="token" alt={`Logo of ${unlock.name}`} />
-						<BasicLink
-							href={`/unlocks/${slug(unlock.name)}`}
-							className="overflow-hidden text-ellipsis whitespace-nowrap text-primary hover:underline"
-						>
-							{unlock.name} ({unlock.symbol})
-						</BasicLink>
-					</div>
-					<span className="text-sm font-semibold text-link tabular-nums">{formattedNum(unlock.value, true)}</span>
-				</div>
+				<TopThreeRow
+					key={unlock.name}
+					name={unlock.name}
+					symbol={unlock.symbol}
+					value={<span className="mono-md-bold text-primary">{formattedNum(unlock.value, true)}</span>}
+				/>
 			))}
 		</div>
 	)

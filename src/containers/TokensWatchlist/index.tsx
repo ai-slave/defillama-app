@@ -17,6 +17,7 @@ import { BasicLink } from '~/components/Link'
 import { LocalLoader } from '~/components/Loaders'
 import { Menu } from '~/components/Menu'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { selectTriggerStyles } from '~/components/Select/types'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import type { TokenMarketsListResponse } from '~/containers/Markets/api.types'
 import { TokenMarketsSection } from '~/containers/Token/TokenMarketsSection'
@@ -31,6 +32,7 @@ import type { TokensTableRow } from '~/containers/Tokens/types'
 import { WatchListTabs } from '~/containers/Yields/views/WatchlistView'
 import { DEFAULT_PORTFOLIO_NAME } from '~/contexts/LocalStorage'
 import { useBookmarks } from '~/hooks/useBookmarks'
+import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
@@ -149,8 +151,8 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 				<Card padding="none">
 					<div className="flex flex-wrap items-center gap-2 p-2">
 						<div className="mr-auto">
-							<h2 className="text-base font-semibold">Tokens</h2>
-							<p className="text-xs text-secondary">
+							<h2 className="heading-xs">Tokens</h2>
+							<p className="body-xs text-secondary">
 								Select or deselect tokens for the "{selectedPortfolio}" portfolio
 							</p>
 						</div>
@@ -227,13 +229,13 @@ function TokensPortfolioSelection() {
 	return (
 		<Card padding="none">
 			<div className="flex flex-wrap items-center gap-2 p-2">
-				<h1 className="mr-auto text-base font-semibold">Portfolio</h1>
+				<h1 className="mr-auto heading-xs">Portfolio</h1>
 				<Menu
 					name={selectedPortfolio.length > 100 ? selectedPortfolio.substring(0, 100) + '...' : selectedPortfolio}
 					key={`${selectedPortfolio}-${portfolios.length}`}
 					options={portfolios}
 					onItemClick={(value) => setSelectedPortfolio(value)}
-					className="relative flex min-w-[100px] cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs font-medium text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+					className={`${selectTriggerStyles('filter-responsive', 'md')} min-w-[100px]`}
 				/>
 				<DialogForm
 					title="New Portfolio"
@@ -242,21 +244,18 @@ function TokensPortfolioSelection() {
 					setOpen={setOpen}
 					onSubmit={addPortfolio}
 				/>
-				<button
-					onClick={() => setOpen(true)}
-					className="flex items-center gap-1 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
-					title="Create new portfolio"
-				>
-					<Icon name="folder-plus" height={14} width={14} />
+				<Button type="button" onClick={() => setOpen(true)} size="md" title="Create new portfolio">
+					<Icon name="folder-plus" height={16} width={16} />
 					<span>New</span>
-				</button>
+				</Button>
 				{selectedPortfolio !== DEFAULT_PORTFOLIO_NAME ? (
 					<button
+						type="button"
 						onClick={() => removePortfolio(selectedPortfolio)}
-						className="flex items-center gap-1 rounded-md border border-red-200 px-2 py-1.5 text-xs text-red-600 hover:bg-red-50 focus-visible:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20 dark:focus-visible:bg-red-900/20"
+						className="flex min-h-8 items-center gap-1 rounded-[8px] border border-data-down px-3 py-1.5 label-sm text-data-down hover:bg-hover-row focus-visible:bg-hover-row"
 						title="Delete current portfolio"
 					>
-						<Icon name="trash-2" height={14} width={14} />
+						<Icon name="trash-2" height={16} width={16} />
 						<span>Delete</span>
 					</button>
 				) : null}

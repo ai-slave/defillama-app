@@ -67,7 +67,7 @@ export function AvailableRange({
 			min={min}
 			max={max}
 			variant="secondary"
-			size="sm"
+			size="md"
 			placement={placement}
 		/>
 	)

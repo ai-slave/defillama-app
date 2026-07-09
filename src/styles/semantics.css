@@ -31,7 +31,7 @@
 	/* Text */
 	--ld-text-primary: #090b0c; /* Text/primary */
 	--ld-text-secondary: #484848; /* Text/secondary */
-	--ld-text-tertiary: var(--ld-neutral-500); /* Text/tertiary (same in dark) */
+	--ld-text-tertiary: #6f6f6f; /* Text/tertiary [light AA override; library update requested] */
 	--ld-text-disabled: #dedede; /* Text/disabled */
 	--ld-text-link: #1853a8; /* Text/links = Text/branded */
 	--ld-text-on-brand: #ffffff; /* Text/on-brand [fixed] */
@@ -119,6 +119,7 @@ html.dark {
 	/* Text */
 	--ld-text-primary: #ffffff;
 	--ld-text-secondary: #c6c6c6;
+	--ld-text-tertiary: var(--ld-neutral-500); /* Text/tertiary */
 	--ld-text-disabled: #2f3336;
 	--ld-text-link: #4b86db;
 	--ld-text-data-up: var(--ld-green-500);

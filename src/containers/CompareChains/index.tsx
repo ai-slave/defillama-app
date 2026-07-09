@@ -201,7 +201,7 @@ const ChartFilters = () => {
 			setSelectedValues={setSelectedValues}
 			labelType="none"
 			variant="default"
-			size="sm"
+			size="md"
 			label={
 				<>
 					<span>Charts: </span>
@@ -213,7 +213,7 @@ const ChartFilters = () => {
 				</>
 			}
 			triggerProps={{
-				className: selectTriggerStyles('default', 'sm')
+				className: selectTriggerStyles('default', 'md')
 			}}
 			placement="bottom-end"
 		/>
@@ -231,9 +231,9 @@ const FeeExtraFilters = () => {
 			label="Include in Fees"
 			labelType="none"
 			variant="default"
-			size="sm"
+			size="md"
 			triggerProps={{
-				className: selectTriggerStyles('default', 'sm')
+				className: selectTriggerStyles('default', 'md')
 			}}
 			placement="bottom-end"
 			unmountOnHide={false}

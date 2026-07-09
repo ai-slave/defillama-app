@@ -96,7 +96,7 @@ function Filters({
 					nestedMenu={nestedMenu}
 					labelType="smol"
 					variant="filter-responsive"
-					size="sm"
+					size="md"
 					includeQueryKey="investor"
 					excludeQueryKey="excludeInvestor"
 				/>
@@ -110,7 +110,7 @@ function Filters({
 					nestedMenu={nestedMenu}
 					labelType="smol"
 					variant="filter-responsive"
-					size="sm"
+					size="md"
 					includeQueryKey="chain"
 					excludeQueryKey="excludeChain"
 				/>
@@ -124,7 +124,7 @@ function Filters({
 					nestedMenu={nestedMenu}
 					labelType="smol"
 					variant="filter-responsive"
-					size="sm"
+					size="md"
 					includeQueryKey="sector"
 					excludeQueryKey="excludeSector"
 				/>
@@ -138,7 +138,7 @@ function Filters({
 					nestedMenu={nestedMenu}
 					labelType="smol"
 					variant="filter-responsive"
-					size="sm"
+					size="md"
 					includeQueryKey="round"
 					excludeQueryKey="excludeRound"
 				/>
@@ -190,7 +190,7 @@ function RaisedRange({
 			min={min}
 			max={max}
 			variant="primary"
-			size="sm"
+			size="md"
 			placement={placement}
 		/>
 	)

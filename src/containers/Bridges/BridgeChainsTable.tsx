@@ -17,9 +17,8 @@ import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
-import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
-import { Panel } from '~/ui/Panel'
-import { TableToolbar } from '~/ui/Toolbar'
+import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { formattedNum, slug } from '~/utils'
 
 type BridgeChainsTableRow = {
@@ -188,9 +187,9 @@ export function BridgeChainsTable({ data }: { data: BridgeChainsTableRow[] }) {
 
 	return (
 		<Panel padding="none">
-			<TableToolbar className="items-center justify-between">
-				<h1 className="mr-auto label-md">Chains</h1>
-				<label className="relative w-full sm:max-w-[280px]">
+			<PanelHeader className="justify-end">
+				<PanelTitle as="h1">Chains</PanelTitle>
+				<label className={searchFieldInlineWrapperStyles}>
 					<span className="sr-only">Search...</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
@@ -201,7 +200,7 @@ export function BridgeChainsTable({ data }: { data: BridgeChainsTableRow[] }) {
 					/>
 				</label>
 				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: 'bridge-chains' })} smol size="md" />
-			</TableToolbar>
+			</PanelHeader>
 			<VirtualTable instance={instance} />
 		</Panel>
 	)

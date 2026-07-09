@@ -2,11 +2,11 @@ import * as Ariakit from '@ariakit/react'
 import dayjs from 'dayjs'
 import * as React from 'react'
 import { Icon } from '~/components/Icon'
-import { BasicLink } from '~/components/Link'
 import { PercentChange } from '~/components/PercentChange'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/components/Tooltip'
-import { formattedNum, slug } from '~/utils'
+import { formattedNum } from '~/utils'
+import { TopThreeRow } from './TopThreeRow'
 import type { ProtocolEmissionWithHistory } from './types'
 
 /** Protocols that have confirmed tPrice and tSymbol (caller pre-filters nulls). */
@@ -133,31 +133,25 @@ export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
 	}, [data, now])
 
 	return (
-		<div className={`text-primary ${className ?? ''}`}>
+		<div className={`flex flex-col gap-3 text-primary ${className ?? ''}`}>
 			<Tooltip
-				className="text-base font-semibold text-primary"
+				className="heading-xs text-primary"
 				content="Price change 7 days after the most recent major unlock event, not counting non-circulating and farming emissions. Sorted by the value of the unlock event."
 			>
 				{title}
 			</Tooltip>
 
 			{topImpacts.map((impact) => (
-				<div key={impact.name} className="flex items-center justify-between">
-					<div className="flex items-center gap-2">
-						<TokenLogo name={impact.name} kind="token" alt={`Logo of ${impact.name}`} />
-						<div className="flex flex-col">
-							<BasicLink
-								href={`/unlocks/${slug(impact.name)}`}
-								className="overflow-hidden text-ellipsis whitespace-nowrap text-primary hover:underline"
-							>
-								{impact.name} ({impact.symbol})
-							</BasicLink>
-						</div>
-					</div>
-					<div className="flex items-center gap-1">
-						<span className="text-sm font-semibold tabular-nums">
+				<TopThreeRow
+					key={impact.name}
+					name={impact.name}
+					symbol={impact.symbol}
+					value={
+						<span className="mono-md-bold">
 							<PercentChange percent={impact.impact} />
 						</span>
+					}
+					trailingIcon={
 						<Ariakit.HovercardProvider>
 							<Ariakit.HovercardAnchor>
 								<Icon name="help-circle" width={16} height={16} className="cursor-help text-tertiary" />
@@ -259,8 +253,8 @@ export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
 								</span>
 							</Ariakit.Hovercard>
 						</Ariakit.HovercardProvider>
-					</div>
-				</div>
+					}
+				/>
 			))}
 		</div>
 	)

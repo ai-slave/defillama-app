@@ -54,9 +54,9 @@ This file tracks design-system audit notes before code changes are made.
   2. Drop the `--ld-` prefix from primitives/semantics/chart tokens and the ~170
      references (tailwind.css @theme registrations, semantics.css, chartTheme.ts,
      6 component arbitrary values) so the design system owns the clean names.
-  3. Wart to fix in passing: `text-(--text-label)` is part of the CURRENT summary
-     metric-card recipe but is a legacy alias of text-secondary — move the recipe to
-     `text-secondary` and do not carry `--text-label` forward.
+  3. Historical wart: `text-(--text-label)` used to appear in summary metric-card
+     recipes, but it is only a legacy alias of text-secondary. Current recipes use
+     `text-secondary`; do not carry `--text-label` forward.
   4. New ratchet in `lint:tokens`: `--legacy-` consumer count must not increase.
 - Quarantined per-product namespaces (`--pro-*`, `--sub-*`, `--sl-*`, `--signin-*`)
   are already unambiguous and live in deletable legacy-\*.css files; do not rename.
@@ -434,7 +434,7 @@ Current classification of the in-flight pass:
 - Measured Figma details: card surface `bg-surface`, `border-subtle`, 8px radius, `px-8px py-12px`, `justify-between`. Top content gap is 24px between the headline metric block and key metrics block. Title is `body-sm` 12/16 tertiary with dotted underline. Main value is mono bold 24/24. 24h change row uses 4px gap, mono 12/16 green and body 12/16 tertiary. Key Metrics header is label-sm 12/16. Key metric rows are 24px high, row gap 4px, label/icon gap 2px, 16px helper icons, faint 1px `border-very-subtle` row dividers, values are mono bold 12/16. CSV button is 24px high, 6px radius, 12px x padding, 4px icon/text gap, 12px icon, 10px label in Figma.
 - Shared usage/context: Similar dense stat cards appear in chain, protocol, metrics, unlocks, and dashboard surfaces, but ProDashboard, investor relations dashboard surfaces, yields, and account/subscription areas are excluded for now. Raises/investor list-like pages remain in scope unless separately quarantined.
 - Special cases: The user explicitly wants data rows at 14px even where Figma shows 12px. This is consistent with `design.md`'s card data row 14px floor.
-- Typography decision: These cards contain two content types. Standalone headline metrics use the stablecoins reference pattern (`text-(--text-label)` label + `font-jetbrains text-2xl font-semibold` value). Secondary metric rows inside the same card stay row-scale (`MetricRow`, `body-md`/`body-sm` secondary labels, and `mono-md`/`mono-md-bold` or `font-jetbrains` values). Do not flatten all rows to the headline style.
+- Typography decision: These cards contain two content types. Standalone headline metrics use the stablecoins reference pattern (`text-secondary` label + `font-jetbrains text-2xl font-semibold` value). Secondary metric rows inside the same card stay row-scale (`MetricRow`, `body-md`/`body-sm` secondary labels, and `mono-md`/`mono-md-bold` or `font-jetbrains` values). Do not flatten all rows to the headline style.
 - Surrounding layout impact: Reducing vertical padding from 12px to 8px changes card height and could change chart/table first-viewport composition. Ensure adjacent chart panel still lines up visually.
 - Grid/flex/layout notes: These cards should be grid/padding driven. Avoid fixed heights for rows except a min-height/floor if needed for alignment.
 - Hardcoded hacks to remove: The current stat card shell has `px-2 py-3`; if the decision is all-8px, `py-3` is design debt. Do not replace with arbitrary `py-[8px]`; use `p-2` or the Card primitive.
@@ -590,15 +590,22 @@ Current classification of the in-flight pass:
 - Figma node(s): Home/chain `6183:292119`, protocol `6183:312589/311951`, protocol TVL `6183:153039/148773/148797/148781`, unlocks `6298:54868/6183:355432`, plus route-family frames still queued in `design-sweep-todo.md`.
 - Current issue: The same visual layout language appears across many pages, but code is split between `Panel`, `Card`, and local shells using `rounded-md border border-(--cards-border) bg-(--cards-bg)`, `rounded-lg border-subtle bg-surface`, `p-3/gap-3`, or fixed/min-height hacks. Future changes should propagate through shared recipes instead of re-solving home/protocol in isolation. Figma-backed decision: `Card` and `Panel` share the same `bg-surface border-subtle rounded-[8px]` outer chrome; `Panel` is for chart/table structure, not a stronger border.
 - Already aligned: Protocol tab chart pages mostly use `Panel` (`protocol/tvl`, `treasury`, `fees`, `dexs`, `options`, `perps`, `active-loans`, `forks`, `stablecoins`, aggregator tabs), governance project and unlock emissions use `Panel`, CEX chart cards use `CexChartPanel` which wraps `Panel`, and DAT overview/by-asset have partial `Panel` adoption.
-- Shared source to update first: `TableWithSearch` now routes through `TableToolbar`, so remaining table-toolbar drift should be fixed by tightening shared toolbar recipes and call-site group wrappers instead of reintroducing local `gap-3 p-3` shells. Desired table toolbar recipe: wrapper padding 8px, dense control gap 6px, group gap 8px, controls 32px from primitives, no fixed wrapper height, title `label-md`/`heading-xs` based on context.
+- Shared source to update first: `TableWithSearch` now routes through shared table
+  header/toolbar paths, so remaining table-toolbar drift should be fixed by tightening
+  shared toolbar recipes and call-site group wrappers instead of reintroducing local
+  `gap-3 p-3` shells. Desired table recipe: wrapper padding 8px, dense control gap 6px,
+  group gap 8px, controls 32px from primitives, no fixed wrapper height, and heading
+  chosen by page context: page-primary tables use `PanelHeader` + `PanelTitle as="h1"`,
+  pages with an existing h1/hero use compact titleless `TableToolbar`, and secondary/
+  embedded tables use compact `label-md` title text or no visible title.
 - Must-migrate route bucket: Stablecoin overview/by-chain pages, Bridges overview/protocol/transactions, Token overview/markets/borrow/yields/liquidations, RWA asset/perps/dashboard/overview charts, LST, LiquidationsV2, AdapterMetrics, Oracles, Markets, MCP, and DAT Company still have local shells or legacy `--cards-*` surfaces. These are similar enough to inherit the same panel/card/table rules and should be updated, not left as acceptable one-off implementations. Do the work in route-sized chunks with live checks because several combine stats, charts, tables, tabs, and mobile-specific layouts.
 - Shared abstraction boundary: Avoid a giant generic "analytics page shell" abstraction. Prefer a small set of concrete primitives/composites: `Panel` for chart/table panels, `Card` for stat/detail cards, a shared chart-toolbar recipe/composite, `TableWithSearch` for table shells/toolbars, and tiny icon hit-target helpers. If a route has a repeated chart+stats shape, migrate it to those primitives or a narrowly named route-family wrapper like `CexChartPanel`, not another local `div` shell. `border-medium` belongs to controls, inputs, popovers/dialogs, chips/badges, nav dividers, and tooltip/elevated chrome; normal page cards/panels stay subtle.
 - Special cases: ProDashboard, investor relations dashboard surfaces, LlamaAI, yields, account/subscription remain untouched. Raises/investor list-like pages are in scope unless separately quarantined. Token-rights shell, typography, spacing, and metadata can modernize when green/warning pills and warnings remain pixel-identical. Dense card secondary actions and popover rows stay compact even when surrounding toolbar controls are 32px.
-- Surrounding layout impact: Changing shared table or chart shell padding will move many first-viewport layouts. The safe model is: page stack `gap-2`; panel/card surfaces `rounded-[8px] border-subtle bg-surface`; dense toolbar/header rows use `p-2`, 6px control gaps, and 8px group gaps; `PanelHeader` remains for true titled chart/table panels; controls are 32px by primitive min-height/padding; stat/data cards use `p-2`; protocol overview info/methodology detail cards use `Card padding="sm"` with `gap-3`; only explicitly roomy route-specific detail cards use `p-4`.
+- Surrounding layout impact: Changing shared table or chart shell padding will move many first-viewport layouts. The safe model is: page stack `gap-2`; panel/card surfaces `rounded-[8px] border-subtle bg-surface`; dense toolbar/header rows use `p-2`, 6px control gaps, and 8px group gaps; `PanelHeader` remains for true titled chart/table panels and page-primary table h1s; controls are 32px by primitive min-height/padding; stat/data cards use `p-2`; protocol overview info/methodology detail cards use `Card padding="sm"` with `gap-3`; only explicitly roomy route-specific detail cards use `p-4`.
 - Grid/flex/layout notes: Prefer page-level grids with `gap-2` for card/table/chart placement. Use flex inside toolbars only for wrapping and overflow behavior; avoid margin-driven vertical rhythm. Convert obvious two-column shell layouts to grid where it reduces manual `mr-auto`/`ml-auto` placement, but do not rewrite overflow measurement components like `RowLinksWithDropdown`.
 - Hardcoded hacks to remove: Local `rounded-md border border-(--cards-border) bg-(--cards-bg)` panel clones, leftover table-toolbar clones that bypass `TableToolbar`, fixed `h-*` wrappers that are not lazy-load reservations, per-page `min-h-[46px]` filter bars, `mt-2` spacing between sibling panels, and legacy hover colors like `hover:bg-(--link-hover-bg)` on in-scope cards/rows.
 - Decision: The home/protocol layout decisions must propagate to similar in-scope analytics pages through shared primitives and route-family sweeps, not only the exact home/protocol files. New or touched in-scope pages should not add hand-rolled card/panel/table shells when an existing primitive can express the same surface.
-- Proposed direction: Keep `design.md` current before each implementation pass: 8px page/card/table gaps, 8px dense-card padding, table/chart/action toolbar controls at 32px from primitive sizing, table toolbar gap/padding 8px, and no wrapper fixed heights. Then implement in this order: shared primitives/recipes, `TableWithSearch`, shared chart panel/toolbar extraction, then route-sized migrations for stablecoins/bridges/token/RWA/liquidations/adapter/oracles/markets/MCP. Each migration should delete or isolate local shell class strings instead of copying them forward.
+- Proposed direction: Keep `design.md` current before each implementation pass: 8px page/card/table gaps, 8px dense-card padding, table/chart/action toolbar controls at 32px from primitive sizing, table toolbar gap/padding 8px, context-aware heading hierarchy, and no wrapper fixed heights. Then implement through shared primitives/recipes, `TableWithSearch`, chart panel/toolbar helpers, and route-sized migrations for stablecoins/bridges/token/RWA/liquidations/adapter/oracles/markets/MCP. Each migration should delete or isolate local shell class strings instead of copying them forward.
 - Verification needed: For each implementation chunk, run live desktop/mobile checks on one representative route per family: `/`, `/chain/ethereum`, `/protocol/uniswap`, `/protocol/tvl/uniswap`, `/cex/assets/binance`, `/stablecoins/usdt`, `/bridges/wormhole`, `/token/ethereum:0x...` or a live token route, `/rwa`, `/liquidations`, `/oracles`, `/mcp`. Measure outer gaps, toolbar padding/gap/control height, card padding, header type, row hover, and no chart visual regression.
 
 ### Global Spacing Rule Conflicts To Resolve
@@ -675,7 +682,7 @@ Current classification of the in-flight pass:
 - Bridges overview/protocol pages now use segmented toolbar controls for chart/table switches, 32px select/export controls, and shared chart-toolbar spacing for Bridge Volume. The Large Txs tab no longer shows a search box that does not affect the table.
 - Equities list/ticker/filings/onchain/financial surfaces moved toward `Panel`/`Card`/`TableToolbar`; Equities filter dialog moved to shared dialog/popover/card recipes. Remaining Equities debt is inside the financial table cell styling and any live route-specific spacing checks.
 - MarketMakers drawer chrome moved to shared surface/backdrop/close-button semantics, and the refine timeframe control now uses the segmented-control recipe. Documentation content still has old prose/table tokens and should be a separate content-layout pass.
-- Top metric cards on Token overview, RWA, Hacks, Raises, Bridges, Chain overview, Equities, AdapterMetrics, and Extra TVL now follow the two-content rule: standalone headline metrics use `text-(--text-label)` labels and `font-jetbrains text-2xl font-semibold` values, while secondary rows stay compact row content (`body-md`/`body-sm` labels with `mono-md`/`mono-md-bold` values). Do not promote secondary rows to the headline style.
+- Top metric cards on Token overview, RWA, Hacks, Raises, Bridges, Chain overview, Equities, AdapterMetrics, and Extra TVL now follow the two-content rule: standalone headline metrics use `text-secondary` labels and `font-jetbrains text-2xl font-semibold` values, while secondary rows stay compact row content (`body-md`/`body-sm` labels with `mono-md`/`mono-md-bold` values). Do not promote secondary rows to the headline style.
 - Token/unlocks and RWA notes-prose cards are the same detail-card family as protocol/stablecoin information and methodology cards: `Card padding="sm"`, 12px internal stack, `heading-xs`, and readable `body-md text-primary` body/list content.
 - Unlocks allocation/events follow the Figma titled-panel split from `6291:39042` and `6291:39214`: section headings stay in `PanelHeader`, content lives in a compact 12px padded slot, and pagination/content is not allowed to add vertical wrapper padding around the cards. The event card itself follows `6298:39347` and is the current documented `Card radius="large"` exception: 12px radius, 16px padding, subtle border, body-md primary lines, body-sm secondary lines, compact countdown pill, and preserved countdown/calendar behavior. Allocation rows keep the app's readable floor (body-md labels, mono-md percentages, 6px progress bars) while preserving existing category colors.
 
@@ -684,6 +691,28 @@ Current classification of the in-flight pass:
 - `ChartPanel` now covers the broad in-scope standard chart-shell pass: raises, protocol/chain overview, DAT, RWA, stablecoins, bridges/bridged TVL, forks, oracles, protocol taxonomy, protocol metric pages, adapter metrics, token overview, token usage toolbar usage, hacks, unlocks, banks, NFTs, compare routes, LST, governance, CEX chart helper, ETF, liquidations, and equities ticker chart shells.
 - The shared min-height constants were not kept as exported values. Call sites import the helper component that matches their chart shape instead: `ChartPanelBodyFallback` for an already-mounted toolbar plus 360px chart body, and `ChartPanelExportShellFallback` for a lazy chart component that renders its own 40px title/export header plus the 360px chart body.
 - Intentional leftovers are documented exceptions, not missed blanket replacements: mixed chart/table panels, row-count table placeholders, treemap/candlestick/HBar/custom-height branches, market mini charts, and excluded products.
+
+### 2026-07-09 Table Heading And Toolbar Hierarchy Notes
+
+- Primary table pages should promote existing visible table title text to `h1` instead
+  of adding a new heading. Use `PanelHeader` + `PanelTitle as="h1"` directly, or
+  `TableWithSearch headingAs="h1"` when the table uses that helper. Current audited
+  examples include Governance, Bridge Chains, RWA Assets, and `/protocols` Protocol
+  Rankings.
+- Pages that already have a real h1/hero above the table should not add another table
+  title. The table uses compact `TableToolbar` with search/filters/actions only.
+  `/unlocks` is the model here: its page h1 remains the page title, and the table toolbar
+  has no local "Token Unlocks" title.
+- Secondary and embedded tables use compact `TableToolbar` plus an existing `label-md`
+  title only when the surrounding section does not already label the table; otherwise
+  omit the visible title. Equities Financials is a secondary-table example.
+- All chart/table toolbar controls are md/32px in these contexts. This includes table
+  search, column selectors, TVL/range filters, selects, CSV/download actions, countdown
+  chips, and calendar icon actions. Dense-card secondary actions and popover rows remain
+  separate compact recipes.
+- Remaining work is route-family adoption and live verification, not a new rule debate:
+  find hand-rolled `px-2 py-1.5 text-xs`, implicit/default `sm`, local table toolbar
+  shells, and duplicated h1/table-title situations as each route family is touched.
 
 ### 2026-07-09 Status Shell Helper Notes
 

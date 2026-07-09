@@ -20,9 +20,9 @@ Process rules (from review feedback):
 This file is now a living audit/backlog ledger, not a literal merge-blocking checklist.
 The broad design sweep, shared popover/mobile-drawer pass, DialogShell pass,
 ProtocolOverview cleanup, text-tier/icon consistency sweep, dense pages/Card-Panel
-cleanup, and shared-control API tightening have merged to `main`. The current branch has
-completed the broad chart-panel shell migration pass and is now handling the focused
-status-shell/helper and prop-trim follow-up.
+cleanup, and shared-control API tightening have merged to `main`. Recent follow-ups have
+completed the broad chart-panel shell migration pass, the focused status-shell/helper and
+prop-trim follow-up, and the table heading/toolbar consistency pass for the audited routes.
 Many unchecked items are historical counts, deferred migrations, or "keep unchecked until
 live verification" markers. Do not require every unchecked line in this file to be cleared
 before opening or merging a focused follow-up branch.
@@ -53,11 +53,16 @@ Completed merge packet:
 - Embedded body-level status helpers landed for panel/card bodies; callers now choose
   between full `PanelStatus`, body-only `SurfaceBodyStatus`, and chart-body
   `ChartPanelBodyFallback` based on the existing shell.
+- Table heading/toolbar consistency landed for the audited pages: page-primary tables can
+  promote existing title text to `PanelTitle as="h1"` / `TableWithSearch headingAs="h1"`;
+  pages with an existing h1/hero keep compact, titleless table toolbars; embedded tables
+  keep compact `label-md` titles or no title. Toolbar controls in table/chart contexts are
+  md/32px, including `/unlocks` countdown/calendar controls.
 
 Current focused backlog:
 
-- Current branch: status-shell helper adoption and prop trimming after the broad
-  in-scope `ChartPanel` migration.
+- Current focus: route-family table/panel cleanup and live verification after the broad
+  in-scope `ChartPanel`, status-shell/helper, prop-trim, and table heading/toolbar passes.
 - Remaining chart work is residual/custom only: mixed chart/table panels, table-height
   placeholders, treemap/candlestick/HBar/custom-height compositions, market mini charts,
   and excluded/quarantined products.
@@ -103,7 +108,8 @@ Residual/custom chart handoff:
 Medium pending items:
 
 - Range/date popover containment spot checks when those controls are touched.
-- Remaining table toolbar/search alignment cases across route families.
+- Remaining table heading/toolbar/search alignment cases across route families, including
+  live checks for h1/no-title/embedded-title semantics, md controls, and wrapping.
 - RWA filter/table rhythm polish.
 - Final global search desktop/mobile polish beyond the already-capped desktop height.
 
@@ -384,12 +390,16 @@ Exported class-string componentization handoff:
       and directory search panels. Downloads SQL/internal tools are excluded/deferred
       with the Downloads surface.
 - [ ] TableToolbar / TableWithSearch reconciliation — `TableWithSearch` now uses the
-      `Card` shell plus `TableToolbar`, and its built-in Columns/.csv
-      controls use md/32px sizing. `ProtocolRankings` toolbar also moved to
-      `TableToolbar` with md tinted segmented TagGroups, Columns, TVL Range, and .csv
-      controls. Keep unchecked until `RecentProtocolsTable`, `ChainsByCategory`,
-      stablecoin/bridge/RWA/token/liquidation table wrappers, custom filter controls,
-      remaining toolbar-vs-scope joined-toggle call sites, and live verification are done.
+      `Card` shell plus shared table toolbar/header paths: page-primary tables may use
+      `PanelHeader` + `PanelTitle as="h1"` through `headingAs="h1"`, while compact and
+      embedded cases use `TableToolbar`. Built-in Columns/.csv controls use md/32px
+      sizing. `ProtocolRankings` uses `headingAs="h1"` on `/protocols` and stays compact
+      as an embedded table elsewhere; its TagGroups, Columns, TVL Range, and .csv controls
+      are md. `/unlocks` intentionally has no table title because the page already has a
+      real h1/hero, and its table toolbar/filter/countdown/calendar controls are md.
+      Keep unchecked until `RecentProtocolsTable`, `ChainsByCategory`, stablecoin/bridge/
+      RWA/token/liquidation table wrappers, custom filter controls, remaining toolbar-vs-
+      scope joined-toggle call sites, and live verification are done.
       2026-07-07 follow-up: `PaginatedTable` now has `shell="none"` for embedded uses so
       Equities, Token markets/risks, and RWA asset detail tables can avoid nested bordered
       shells while standalone paginated tables keep their built-in shell. Equities list,
@@ -431,9 +441,9 @@ Exported class-string componentization handoff:
 - [x] Pills row: 2px second-row sliver + height layout shift
 - [x] 10px control text too small → 12px floor; card data rows 14px
 - [x] Chart-adjacent summary cards: headline metrics use stablecoins-style
-      `text-(--text-label)` labels and `font-jetbrains text-2xl font-semibold`
-      values; secondary metric rows stay compact row content and should not be
-      promoted to headline sizing.
+      `text-secondary` labels and `font-jetbrains text-2xl font-semibold` values;
+      secondary metric rows stay compact row content and should not be promoted to
+      headline sizing.
 - [x] Done/Save buttons oversized vs neighbors → md Button everywhere
 - [x] Icon-only buttons rendered thin → aspect-square
 - [x] Segmented controls rendered solid-blue (wrong recipe) → tinted per Figma Tabs

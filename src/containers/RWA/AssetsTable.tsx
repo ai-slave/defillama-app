@@ -21,8 +21,8 @@ import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { Tooltip } from '~/components/Tooltip'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
-import { Panel } from '~/ui/Panel'
-import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatNum, formattedNum } from '~/utils'
 import type { IRWAAssetsOverview } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
@@ -112,8 +112,8 @@ export function RWAAssetsTable({
 
 	return (
 		<Panel padding="none">
-			<TableToolbar className="justify-end">
-				<h1 className="mr-auto label-md">Assets Rankings</h1>
+			<PanelHeader className="justify-end">
+				<PanelTitle as="h1">Assets Rankings</PanelTitle>
 				<TableToolbarControlGroup className="justify-end lg:flex-nowrap">
 					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search assets</span>
@@ -145,7 +145,7 @@ export function RWAAssetsTable({
 						size="md"
 					/>
 				</TableToolbarControlGroup>
-			</TableToolbar>
+			</PanelHeader>
 			<VirtualTable instance={instance} />
 		</Panel>
 	)

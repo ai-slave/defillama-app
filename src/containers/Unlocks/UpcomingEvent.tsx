@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import { useEffect, useEffectEvent, useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { TokenLogo } from '~/components/TokenLogo'
+import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import {
 	menuSurfaceStyles,
@@ -34,10 +35,10 @@ const ProtocolPageButton = () => {
 const RegularButton = () => {
 	return (
 		<Ariakit.MenuButton
-			className="flex size-10 items-center justify-center rounded-lg bg-surface-elevated-2 text-primary hover:bg-border-medium"
+			className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
 			aria-label="Add to calendar"
 		>
-			<Icon name="calendar-plus" width={20} height={20} />
+			<Icon name="calendar-plus" width={16} height={16} />
 		</Ariakit.MenuButton>
 	)
 }
@@ -90,17 +91,6 @@ const CalendarButton = ({ event, tokenName, tokenValue, isProtocolPage }: Calend
 				</Ariakit.MenuItem>
 			</Ariakit.Menu>
 		</Ariakit.MenuProvider>
-	)
-}
-
-const CountdownTile = ({ value, label }: { value: string; label: string }) => {
-	return (
-		<div className="flex flex-col items-center">
-			<div className="flex size-10 items-center justify-center rounded-lg bg-surface-elevated-2">
-				<span className="text-base font-semibold tracking-tight text-primary tabular-nums">{value}</span>
-			</div>
-			<span className="mt-1 text-xs leading-none font-medium text-tertiary">{label}</span>
-		</div>
 	)
 }
 
@@ -191,6 +181,9 @@ const formatCountdownBadge = (days: number, hours: number, minutes: number, seco
 
 	return `${years}Y ${months}MO ${daysRemainder}D ${hours}H ${minutes}M ${seconds}S`
 }
+
+const countdownTileStyles =
+	'inline-flex min-h-8 w-16 items-center justify-center rounded-[8px] bg-surface-elevated-2 px-2 py-1.5 label-md text-primary tabular-nums'
 
 export const UpcomingEvent = ({
 	noOfTokens = EMPTY_TOKENS,
@@ -432,40 +425,35 @@ export const UpcomingEvent = ({
 			<Ariakit.HovercardProvider timeout={0}>
 				<Ariakit.HovercardAnchor>
 					{timeLeft > 0 ? (
-						<div className="flex items-center gap-3">
+						<div className="flex min-w-0 items-center gap-3">
 							<div className="flex min-w-[150px] items-center justify-between gap-4">
 								<div className="flex flex-col items-start">
-									<span className="text-sm font-semibold text-primary tabular-nums">
+									<span className="mono-sm-bold text-primary">
 										{hasLinear && dailyValue ? (
 											<>
-												{formattedNum(dailyValue, true)}{' '}
-												<span className="text-xs font-normal text-tertiary">/ day</span>
+												{formattedNum(dailyValue, true)} <span className="label-sm text-tertiary">/ day</span>
 											</>
 										) : (
 											formattedNum(tokenValue, true)
 										)}
 									</span>
-									<span className="text-xs font-medium text-tertiary">
-										{hasLinear ? 'Linear Unlock' : 'Unlock Value'}
-									</span>
+									<span className="label-sm text-tertiary">{hasLinear ? 'Linear Unlock' : 'Unlock Value'}</span>
 								</div>
 								<div className="flex flex-col items-end">
-									<span className="text-sm font-semibold text-primary tabular-nums">
-										{formattedNum(unlockPercentFloat)}%
-									</span>
-									<span className="text-xs font-medium text-tertiary">of float</span>
+									<span className="mono-sm-bold text-primary">{formattedNum(unlockPercentFloat)}%</span>
+									<span className="label-sm text-tertiary">of float</span>
 								</div>
 							</div>
 
-							<div className="flex items-center gap-2" suppressHydrationWarning>
-								<CountdownTile value={String(days).padStart(2, '0')} label="Days" />
-								<CountdownTile value={String(hours).padStart(2, '0')} label="Hrs" />
-								<CountdownTile value={String(minutes).padStart(2, '0')} label="Min" />
-								<CountdownTile value={String(seconds).padStart(2, '0')} label="Sec" />
+							<div className="flex items-center gap-1.5" suppressHydrationWarning>
+								<span className={countdownTileStyles}>{days}D</span>
+								<span className={countdownTileStyles}>{hours}H</span>
+								<span className={countdownTileStyles}>{minutes}M</span>
+								<span className={countdownTileStyles}>{seconds}S</span>
 							</div>
 						</div>
 					) : (
-						<span className="text-sm text-tertiary" suppressHydrationWarning>
+						<span className="label-sm text-tertiary" suppressHydrationWarning>
 							{formatTimeAgo(timestamp)}
 						</span>
 					)}
@@ -530,15 +518,12 @@ export const UpcomingEvent = ({
 				</Ariakit.Hovercard>
 			</Ariakit.HovercardProvider>
 			{timeLeft > 0 ? (
-				<div className="flex flex-col items-center">
-					<CalendarButton
-						event={{ timestamp, noOfTokens, symbol: symbol || '', description: '' }}
-						tokenName={name}
-						tokenValue={tokenValue ? formattedNum(tokenValue, true) : null}
-						isProtocolPage={isProtocolPage}
-					/>
-					<span className="invisible mt-1 text-xs leading-none font-medium text-tertiary select-none">Sec</span>
-				</div>
+				<CalendarButton
+					event={{ timestamp, noOfTokens, symbol: symbol || '', description: '' }}
+					tokenName={name}
+					tokenValue={tokenValue ? formattedNum(tokenValue, true) : null}
+					isProtocolPage={isProtocolPage}
+				/>
 			) : null}
 		</div>
 	)

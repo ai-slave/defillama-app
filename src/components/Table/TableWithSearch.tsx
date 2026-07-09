@@ -24,6 +24,7 @@ import {
 	searchFieldInputStyles,
 	searchFieldWrapperStyles
 } from '~/ui/Input'
+import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from './utils'
 import type { ColumnOrdersByBreakpoint } from './utils'
@@ -154,43 +155,71 @@ export function TableWithSearch<T extends RowData>({
 
 	useSortColumnOrders({ instance, columnOrders })
 
-	const controls = (
-		<TableToolbar className="w-full justify-end">
-			{leadingControls || header ? (
-				<div className="mr-auto flex items-center gap-2 overflow-x-auto">
-					{leadingControls ? <div className="flex items-center overflow-x-auto">{leadingControls}</div> : null}
-					{header ? <HeadingTag className="label-md whitespace-nowrap">{header}</HeadingTag> : null}
-				</div>
-			) : null}
-			{columnToSearch ? (
-				<label className={leadingControls || header ? searchFieldInlineWrapperStyles : searchFieldWrapperStyles}>
-					<span className="sr-only">{placeholder}</span>
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<input
-						onInput={(e) => setProjectName(e.currentTarget.value)}
-						placeholder={placeholder}
-						className={searchFieldInputStyles}
-					/>
-				</label>
-			) : null}
-			{typeof customFilters === 'function' ? customFilters() : customFilters}
-			{showColumnSelect ? (
-				<SelectWithCombobox
-					allValues={columnsOptions}
-					selectedValues={selectedColumns}
-					setSelectedValues={setColumnOptions}
-					nestedMenu={false}
-					label={columnSelectLabel}
-					labelType="smol"
-					variant="filter-responsive"
-					size="md"
-				/>
-			) : null}
-			{csvFileName ? (
-				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: csvFileName })} smol size="md" />
-			) : null}
-		</TableToolbar>
-	)
+	const hasLeadingContent = Boolean(leadingControls || header)
+	const renderedCustomFilters = typeof customFilters === 'function' ? customFilters() : customFilters
+	const searchControl = columnToSearch ? (
+		<label className={hasLeadingContent ? searchFieldInlineWrapperStyles : searchFieldWrapperStyles}>
+			<span className="sr-only">{placeholder}</span>
+			<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+			<input
+				onInput={(e) => setProjectName(e.currentTarget.value)}
+				placeholder={placeholder}
+				className={searchFieldInputStyles}
+			/>
+		</label>
+	) : null
+	const columnSelectControl = showColumnSelect ? (
+		<SelectWithCombobox
+			allValues={columnsOptions}
+			selectedValues={selectedColumns}
+			setSelectedValues={setColumnOptions}
+			nestedMenu={false}
+			label={columnSelectLabel}
+			labelType="smol"
+			variant="filter-responsive"
+			size="md"
+		/>
+	) : null
+	const csvControl = csvFileName ? (
+		<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: csvFileName })} smol size="md" />
+	) : null
+
+	const controls =
+		HeadingTag === 'h1' && !embedded ? (
+			<PanelHeader className="w-full justify-end">
+				{leadingControls ? (
+					<div className="mr-auto flex items-center gap-2 overflow-x-auto">
+						<div className="flex items-center overflow-x-auto">{leadingControls}</div>
+						{header ? (
+							<PanelTitle as={HeadingTag} className="mr-0 whitespace-nowrap">
+								{header}
+							</PanelTitle>
+						) : null}
+					</div>
+				) : header ? (
+					<PanelTitle as={HeadingTag} className="whitespace-nowrap">
+						{header}
+					</PanelTitle>
+				) : null}
+				{searchControl}
+				{renderedCustomFilters}
+				{columnSelectControl}
+				{csvControl}
+			</PanelHeader>
+		) : (
+			<TableToolbar className="w-full justify-end">
+				{hasLeadingContent ? (
+					<div className="mr-auto flex items-center gap-2 overflow-x-auto">
+						{leadingControls ? <div className="flex items-center overflow-x-auto">{leadingControls}</div> : null}
+						{header ? <HeadingTag className="label-md whitespace-nowrap">{header}</HeadingTag> : null}
+					</div>
+				) : null}
+				{searchControl}
+				{renderedCustomFilters}
+				{columnSelectControl}
+				{csvControl}
+			</TableToolbar>
+		)
 
 	if (embedded) {
 		return (

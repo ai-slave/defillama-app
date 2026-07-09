@@ -13,7 +13,8 @@ import { BasicLink } from '~/components/Link'
 import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
-import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { slug } from '~/utils'
 import type { GovernanceOverviewItem } from './types'
 
@@ -42,10 +43,10 @@ export default function Governance({ data }: { data: GovernanceOverviewItem[] })
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 
 	return (
-		<div className="rounded-[8px] border border-subtle bg-surface">
-			<div className="flex flex-wrap items-center justify-end gap-2 p-3">
-				<h1 className="mr-auto heading-sm">Governance Proposals by Project</h1>
-				<label className="relative w-full sm:max-w-[280px]">
+		<Panel padding="none">
+			<PanelHeader className="justify-end">
+				<PanelTitle as="h1">Governance Proposals by Project</PanelTitle>
+				<label className={searchFieldInlineWrapperStyles}>
 					<span className="sr-only">Search projects...</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
@@ -55,9 +56,9 @@ export default function Governance({ data }: { data: GovernanceOverviewItem[] })
 						className={searchFieldInputStyles}
 					/>
 				</label>
-			</div>
+			</PanelHeader>
 			<VirtualTable instance={instance} />
-		</div>
+		</Panel>
 	)
 }
 

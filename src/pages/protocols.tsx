@@ -27,7 +27,7 @@ export default function Protocols({ protocols }) {
 			description="Complete directory of 7000+ DeFi protocols ranked by TVL, fees, and revenue. Track protocol metrics across Ethereum, Solana, Base, Arbitrum and all major chains. Filter by category, chain, and performance."
 			canonicalUrl={`/protocols`}
 		>
-			<ChainProtocolsTable protocols={protocols} />
+			<ChainProtocolsTable protocols={protocols} headingAs="h1" />
 		</Layout>
 	)
 }

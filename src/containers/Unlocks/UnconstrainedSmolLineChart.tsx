@@ -140,7 +140,7 @@ export function UnconstrainedSmolLineChart({
 				</svg>
 				{hoveredIndex != null ? (
 					<div
-						className="pointer-events-none absolute top-0 h-full border-l border-dashed border-[#ccc] dark:border-[#555]"
+						className="pointer-events-none absolute top-0 h-full border-l border-dashed border-medium"
 						style={{ left: `${series.length === 1 ? 50 : (hoveredIndex / (series.length - 1)) * 100}%` }}
 					/>
 				) : null}
@@ -148,7 +148,7 @@ export function UnconstrainedSmolLineChart({
 					? createPortal(
 							<div
 								ref={tooltipRef}
-								className="pointer-events-none fixed z-[1000] rounded border border-[#ccc] bg-white px-2.5 py-[5px] text-[12px] leading-[1.4] whitespace-nowrap text-[#666] shadow-md dark:border-[#555] dark:bg-[#1a1a1a] dark:text-[#d1d5db]"
+								className="pointer-events-none fixed z-[1000] rounded-md border border-medium bg-surface px-2.5 py-1 body-sm whitespace-nowrap text-secondary shadow-md dark:bg-surface-elevated-1"
 							>
 								<p>{formatTooltipChartDate(series[hoveredIndex][0], 'daily', true)}</p>
 								<p className="flex items-center gap-1">
@@ -219,7 +219,7 @@ function UnlockEventTooltip({
 				Unlocked: {formattedNum(totalAmount * unlockValue, true)}
 			</div>
 			{uniqueCategories.length > 0 ? (
-				<div className="text-[11px] text-[#666666]">
+				<div className="body-xs text-tertiary">
 					Categories: {uniqueCategories.map((cat) => cat.charAt(0).toUpperCase() + cat.slice(1)).join(', ')}
 				</div>
 			) : null}

@@ -313,7 +313,7 @@ export default function Protocols({
 
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
 				<Card padding="md" className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto xl:col-span-1">
-					<h1 className="text-xl font-semibold">Unlock Statistics</h1>
+					<h1 className="heading-sm">Unlock Statistics</h1>
 					<p className="flex flex-col">
 						<span className="text-secondary">Total Protocols Tracked</span>
 						<span className="font-jetbrains text-2xl font-semibold">{totalProtocols}</span>

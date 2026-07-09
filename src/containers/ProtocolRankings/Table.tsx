@@ -31,6 +31,7 @@ import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { useCustomColumns, useLocalStorageSettingsManager, type CustomColumnDef } from '~/contexts/LocalStorage'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
+import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { popoverFooterActionStyles } from '~/ui/Popover'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, slug } from '~/utils'
@@ -60,6 +61,7 @@ type ChainProtocolsTableProps = {
 	sampleRow?: any
 	useStickyHeader?: boolean
 	borderless?: boolean
+	headingAs?: 'h1' | 'h2'
 }
 
 type TableCategory = (typeof TABLE_CATEGORIES_VALUES)[number]
@@ -87,6 +89,7 @@ const ChainProtocolsTableInner = ({
 	sampleRow = sampleProtocol,
 	useStickyHeader = true,
 	borderless = false,
+	headingAs = 'h2',
 	filterState
 }: ChainProtocolsTableInnerProps) => {
 	const { customColumns, setCustomColumns } = useCustomColumns()
@@ -348,52 +351,63 @@ const ChainProtocolsTableInner = ({
 		}
 	const chainQuery = router.query.chain
 	const activeChain = Array.isArray(chainQuery) ? chainQuery[0] : chainQuery
+	const toolbarControls = (
+		<>
+			<TagGroup
+				variant="default"
+				setValue={setFilter('category')}
+				selectedValue={selectedCategory}
+				values={TABLE_CATEGORIES_VALUES}
+				size="md"
+			/>
+			<TagGroup
+				variant="default"
+				setValue={setFilter('period')}
+				selectedValue={selectedPeriod}
+				values={TABLE_PERIODS_VALUES}
+				size="md"
+			/>
+
+			<SelectWithCombobox
+				allValues={mergedColumns}
+				selectedValues={selectedColumns}
+				setSelectedValues={setColumnOptions}
+				nestedMenu={false}
+				label={'Columns'}
+				labelType="smol"
+				variant="filter"
+				size="md"
+				customFooter={
+					<button className={popoverFooterActionStyles} onClick={handleAddCustomColumn} type="button">
+						<Icon name="plus" height={16} width={16} />
+						Add Custom Column
+					</button>
+				}
+				onEditCustomColumn={handleEditCustomColumn}
+				onDeleteCustomColumn={handleDeleteCustomColumn}
+			/>
+			<TVLRange size="md" />
+			<CSVDownloadButton
+				prepareCsv={() => prepareTableCsv({ instance, filename: `defillama-${activeChain ?? 'all'}-protocols` })}
+				smol
+				size="md"
+			/>
+		</>
+	)
 
 	return (
 		<div className={borderless ? 'isolate' : 'isolate rounded-lg border border-subtle bg-surface'}>
-			<TableToolbar className="justify-end">
-				{borderless ? null : <h2 className="mr-auto flex w-full grow label-md md:w-auto">Protocol Rankings</h2>}
-
-				<TagGroup
-					variant="default"
-					setValue={setFilter('category')}
-					selectedValue={selectedCategory}
-					values={TABLE_CATEGORIES_VALUES}
-					size="md"
-				/>
-				<TagGroup
-					variant="default"
-					setValue={setFilter('period')}
-					selectedValue={selectedPeriod}
-					values={TABLE_PERIODS_VALUES}
-					size="md"
-				/>
-
-				<SelectWithCombobox
-					allValues={mergedColumns}
-					selectedValues={selectedColumns}
-					setSelectedValues={setColumnOptions}
-					nestedMenu={false}
-					label={'Columns'}
-					labelType="smol"
-					variant="filter"
-					size="md"
-					customFooter={
-						<button className={popoverFooterActionStyles} onClick={handleAddCustomColumn} type="button">
-							<Icon name="plus" height={16} width={16} />
-							Add Custom Column
-						</button>
-					}
-					onEditCustomColumn={handleEditCustomColumn}
-					onDeleteCustomColumn={handleDeleteCustomColumn}
-				/>
-				<TVLRange size="md" />
-				<CSVDownloadButton
-					prepareCsv={() => prepareTableCsv({ instance, filename: `defillama-${activeChain ?? 'all'}-protocols` })}
-					smol
-					size="md"
-				/>
-			</TableToolbar>
+			{!borderless && headingAs === 'h1' ? (
+				<PanelHeader className="justify-end">
+					<PanelTitle as="h1">Protocol Rankings</PanelTitle>
+					{toolbarControls}
+				</PanelHeader>
+			) : (
+				<TableToolbar className="justify-end">
+					{borderless ? null : <h2 className="mr-auto flex w-full grow label-md md:w-auto">Protocol Rankings</h2>}
+					{toolbarControls}
+				</TableToolbar>
+			)}
 			<VirtualTable instance={instance} useStickyHeader={useStickyHeader} />
 			{customColumnDialogOpen ? (
 				<CustomColumnModal

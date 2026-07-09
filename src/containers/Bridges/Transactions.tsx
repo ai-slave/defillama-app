@@ -513,7 +513,7 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 	return (
 		<div className="flex flex-col gap-6">
 			<header className="flex flex-col gap-2">
-				<h1 className="heading-md">Bridge Transactions</h1>
+				<h1 className="heading-sm">Bridge Transactions</h1>
 				<p className="max-w-2xl body-sm text-secondary">
 					Download cross-chain bridge transaction data by protocol and time window. Results include deposits,
 					withdrawals, USD value, and explorer links — exportable as CSV.

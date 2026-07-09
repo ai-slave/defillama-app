@@ -48,6 +48,8 @@ const metricsByCategory = trending.concat(
 const TABS = ['All', 'Protocols', 'Chains'] as const
 type Tab = (typeof TABS)[number]
 
+const newMetricTagStyles = 'flex items-center gap-1 rounded-md bg-brand px-1.5 py-1 label-xs text-on-brand'
+
 export function Metrics({
 	canDismiss = false,
 	hasScrolledToCategoryRef
@@ -275,10 +277,7 @@ export function LinkToMetricOrToolPage({
 								<span>Hot</span>
 							</span>
 						) : (
-							<span
-								className="flex items-center gap-1 rounded-md bg-brand px-1.5 py-1 label-xs text-on-brand"
-								key={`tag-${page.route}-${tag}`}
-							>
+							<span className={newMetricTagStyles} key={`tag-${page.route}-${tag}`}>
 								<Icon name="sparkles" height={10} width={10} />
 								<span>New</span>
 							</span>

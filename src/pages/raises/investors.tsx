@@ -20,9 +20,8 @@ import { Tooltip } from '~/components/Tooltip'
 import { getInvestorsPageData } from '~/containers/Raises/queries'
 import type { IInvestorsPageData, IInvestorTimespan } from '~/containers/Raises/types'
 import Layout from '~/layout'
-import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
-import { Panel, PanelTitle } from '~/ui/Panel'
-import { TableToolbar } from '~/ui/Toolbar'
+import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { formattedNum, slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -183,9 +182,9 @@ const ActiveInvestors = ({ investors }: IInvestorsPageData) => {
 			pageName={pageName}
 		>
 			<Panel padding="none">
-				<TableToolbar className="items-center justify-end">
+				<PanelHeader className="justify-end">
 					<PanelTitle as="h1">Deals by Investors</PanelTitle>
-					<label className="relative w-full sm:max-w-[280px]">
+					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search investors...</span>
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						<input
@@ -209,7 +208,7 @@ const ActiveInvestors = ({ investors }: IInvestorsPageData) => {
 							</button>
 						))}
 					</div>
-				</TableToolbar>
+				</PanelHeader>
 				<VirtualTable instance={instance} />
 			</Panel>
 		</Layout>

@@ -7,6 +7,7 @@ import { useDashboardCreation } from '~/containers/ProDashboard/hooks/useDashboa
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { setSignupSource } from '~/containers/Subscription/signupSource'
 import { useIsClient } from '~/hooks/useIsClient'
+import { buttonStyles } from '~/ui/Button'
 
 const SubscribeProModal = lazy(() =>
 	import('~/components/SubscribeCards/SubscribeProCard').then((m) => ({ default: m.SubscribeProModal }))
@@ -51,9 +52,9 @@ export const FullOldViewButton = () => {
 			<Tooltip
 				content={tooltipContent}
 				render={<button onClick={handleClick} disabled={isLoading} />}
-				className="flex cursor-pointer items-center gap-2 rounded-md border border-medium px-2 py-1.5 text-xs font-medium text-secondary hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:opacity-50"
+				className={buttonStyles({ size: 'md' })}
 			>
-				{isClient && isLoading ? <LoadingSpinner size={14} /> : <Icon name="plus" height={14} width={14} />}
+				{isClient && isLoading ? <LoadingSpinner size={16} /> : <Icon name="plus" height={16} width={16} />}
 				<span>Open in Dashboard</span>
 			</Tooltip>
 			{shouldRenderModal ? (

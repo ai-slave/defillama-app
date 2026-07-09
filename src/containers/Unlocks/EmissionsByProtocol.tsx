@@ -389,12 +389,12 @@ function TokenHeader({
 	return (
 		<div className="flex w-full items-center gap-3 rounded-lg border border-subtle bg-surface p-3">
 			<TokenLogo name={name} kind="token" alt={`Logo of ${name}`} />
-			<h1 className="text-xl font-semibold">{name}</h1>
+			<h1 className="heading-sm">{name}</h1>
 
 			{tokenPrice != null ? (
 				<>
 					<span className="mx-1 h-5 w-px bg-border-medium" />
-					<span className="text-base font-semibold">${formattedNum(tokenPrice)}</span>
+					<span className="mono-md-bold">${formattedNum(tokenPrice)}</span>
 					{percentChange !== null ? (
 						<span
 							className="text-sm font-medium"

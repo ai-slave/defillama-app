@@ -554,7 +554,7 @@ export function MarketMakersDocumentation() {
 								</div>
 								<div className="mt-3 hidden border-t border-subtle min-[1120px]:block" />
 								<div className="flex w-full flex-col gap-10 min-[1120px]:pt-6">
-									<h1 className="heading-md text-primary">Market Maker Leaderboard Documentation</h1>
+									<h1 className="heading-sm text-primary">Market Maker Leaderboard Documentation</h1>
 
 									<div id="introduction" aria-labelledby="introduction-title" className="scroll-mt-24">
 										<span id="introduction-title" className="sr-only">
