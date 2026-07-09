@@ -6,6 +6,7 @@ import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
 import { Icon } from '~/components/Icon'
 import { TagGroup } from '~/components/TagGroup'
 import { useIsClient } from '~/hooks/useIsClient'
+import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { FAQ } from './Faq'
@@ -47,28 +48,29 @@ export function CoinsPicker({ coinsData, selectCoin, dialogStore, selectedCoins 
 
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
-			<Ariakit.Dialog className="dialog gap-3 sm:max-w-[400px]" unmountOnHide>
-				<div className="flex items-center gap-2">
-					<Ariakit.DialogHeading className="heading-xs">Add Token</Ariakit.DialogHeading>
-					<Ariakit.DialogDismiss className="-my-2 ml-auto rounded-lg p-2 text-(--text-tertiary) hover:bg-(--divider) hover:text-(--text-primary)">
-						<Icon name="x" height={20} width={20} />
-					</Ariakit.DialogDismiss>
+			<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:400px]`} unmountOnHide portal>
+				<div className="flex items-center gap-2 border-b border-subtle px-4 py-3">
+					<DialogHeading>Add Token</DialogHeading>
+					<DialogCloseButton className="-mr-1 ml-auto" />
 				</div>
-				<div className="relative">
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<Input
-						onInput={(e) => setSearch(e.currentTarget.value)}
-						placeholder="Search token..."
-						className={searchFieldInputPlacementStyles}
-					/>
+				<div className="border-b border-subtle px-4 py-3">
+					<label className="relative block">
+						<span className="sr-only">Search token</span>
+						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+						<Input
+							onInput={(e) => setSearch(e.currentTarget.value)}
+							placeholder="Search token..."
+							className={searchFieldInputPlacementStyles}
+						/>
+					</label>
 				</div>
 
-				<div className="flex max-h-[400px] w-full flex-col overflow-y-auto">
+				<div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-2">
 					{filteredCoins.slice(0, resultsLength + 1).map((coin) => (
 						<button
 							key={coin.name}
 							onClick={() => selectCoin(coin)}
-							className="flex w-full items-center gap-2 rounded-md p-2 text-sm hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+							className="flex w-full items-center gap-2 rounded-md p-2 text-left body-sm text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary"
 						>
 							<img
 								alt={''}
@@ -90,7 +92,7 @@ export function CoinsPicker({ coinsData, selectCoin, dialogStore, selectedCoins 
 					))}
 					{resultsLength < filteredCoins.length ? (
 						<button
-							className="w-full p-3 text-left text-(--link) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+							className="w-full rounded-md p-3 text-left body-sm text-link hover:bg-hover-row focus-visible:bg-hover-row"
 							onClick={showMoreResults}
 						>
 							See more...

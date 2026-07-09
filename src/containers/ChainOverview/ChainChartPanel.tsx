@@ -20,7 +20,7 @@ import { serializeChainChartToMultiChart } from '~/containers/ProDashboard/utils
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button, buttonStyles } from '~/ui/Button'
-import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
@@ -227,7 +227,7 @@ export function ChainChartPanel({
 							<span>Add Metrics</span>
 							<Icon name="plus" className="size-3" />
 						</Ariakit.DialogDisclosure>
-						<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:600px]`} unmountOnHide>
+						<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:600px]`} unmountOnHide portal>
 							<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 								<div className="flex items-baseline gap-2.5">
 									<DialogHeading>Chart metrics</DialogHeading>
@@ -235,10 +235,7 @@ export function ChainChartPanel({
 										{selectedOptions.length}/{allMetricOptions.length}
 									</span>
 								</div>
-								<Ariakit.DialogDismiss className="-mr-1 rounded-md p-1.5 text-tertiary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row">
-									<Icon name="x" className="size-4" />
-									<span className="sr-only">Close</span>
-								</Ariakit.DialogDismiss>
+								<DialogCloseButton className="-mr-1" />
 							</div>
 
 							<div className="border-b border-subtle px-4 py-3">

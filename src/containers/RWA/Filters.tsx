@@ -9,7 +9,7 @@ import type { ExcludeQueryKey, SelectValues } from '~/components/Select/types'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
-import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { parseNumberInput, pushShallowQuery, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview } from './api.types'
 import { getDefaultRWAOverviewInclusion, getDefaultSelectedTypes, type RWAOverviewMode } from './constants'
@@ -802,16 +802,14 @@ function RWAFiltersDialog({
 			<Ariakit.Dialog
 				className={`${dialogSurfaceStyles} [--dialog-width:900px] sm:max-h-[min(760px,calc(100%-32px))]`}
 				unmountOnHide
+				portal
 			>
 				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 					<div className="flex items-baseline gap-2.5">
 						<DialogHeading>Filters</DialogHeading>
 						<span className="label-sm text-tertiary tabular-nums">{draftSelectedCount} selected</span>
 					</div>
-					<Ariakit.DialogDismiss render={<Button variant="ghost" size="md" square />}>
-						<Icon name="x" className="size-4" />
-						<span className="sr-only">Close</span>
-					</Ariakit.DialogDismiss>
+					<DialogCloseButton />
 				</div>
 
 				<div className="flex min-h-0 flex-1 flex-col overflow-y-auto sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] sm:overflow-hidden">

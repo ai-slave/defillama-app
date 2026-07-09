@@ -28,30 +28,20 @@ Completed merge packet:
 - Owner manual visual route pass was accepted for the merged design sweep.
 - The shared popover session landed: `Select`, `SelectWithCombobox`, `MultiSelectCombobox`,
   `Menu`, `NestedMenu`, and in-scope direct popovers use the paddingless popover surface
-  and mobile fixed-bottom drawer contract.
+  and below-`sm` fixed-bottom drawer contract.
 - `bun run lint:tokens` baseline is locked in `scripts/design-token-baseline.json`.
 - Token-rights green/warning visuals were visually accepted as unchanged.
 - Unlocks allocation/events density and the 12px event-card radius exception were accepted
   for the merged sweep.
+- ProtocolOverview cleanup landed: `KeyMetrics`, `Flag`, `IncomeStatement`, and overview
+  card/table/dialog/token chrome were moved onto shared recipes.
+- Text-tier + icon consistency sweep landed and is codified in `design.md`.
 
 Current focused backlog:
 
-- Protocol overview cleanup: `KeyMetrics`, `Flag`, `IncomeStatement`, and remaining
-  `/protocol/:protocol` overview card/table/dialog/token chrome.
-- [x] Text-tier + icon consistency sweep (branch `theme/text-tier-icon-consistency`,
-  2026-07-08, from two subagent audits): text-tier decision rule + icon three-role rule
-  codified in design.md; TagGroup/Tab/nav resting text tertiary→secondary (supersedes
-  the segmented-control "reconciled pick"); SmolStats values secondary + bare tertiary
-  qualifier spans (no parens); SelectArrow/QuestionHelper/nestedMenu disclosure pin
-  tertiary centrally; Copy + chip-✕ + pagination icon buttons on ghost ladder (opacity
-  dimming removed); status icons on `text-warning`/`text-data-down`; bulk pass pinned
-  colorless expand/accordion chevrons to tertiary. Out of scope, recorded: Yields
-  (VaultRisk tertiary methodology notes, WatchlistView tabs, pool-page toggles,
-  borrow.tsx tabs/trigger — excluded surfaces), MarketMakers `TabIcons.tsx` bespoke
-  SVG set (bypasses tokens; needs its own pass if ever swept).
-- DialogShell pass: mobile dialogs should become bottom sheets, with smooth slide
-  animation, shared close-button chrome, footer sizing, headings, and internal scroll
-  regions.
+- DialogShell pass: mobile dialogs below `sm` should become bottom sheets, while `sm+`
+  remains centered; shared adopters should portal, use `DialogCloseButton`, align footer
+  sizing/headings, and keep internal scroll regions.
 - Dense pages cleanup: `DeFiWatchlist` and `TokenPnl` before broad token namespace work.
 - Raises chart-shell/fallback reservation pass before any `ChartPanel` extraction.
 
@@ -74,10 +64,9 @@ Hard or risky pending items:
   high-fanout folder moves.
 - Full unlocks visual redesign beyond accepting or rejecting the current branch output.
 
-Post-merge only means after all of the merge gates, owner verification, and owner
-decisions above are resolved and this branch has merged to `main`, or after the owner
-explicitly opens a follow-up branch. The deferred list is not fallback work for the
-current branch.
+Deferred means after the focused post-merge follow-up branches, or after the owner
+explicitly opens a branch for that work. The deferred list is not fallback work for
+DialogShell, dense pages, raises chart reservation, or ChartPanel extraction.
 
 Post-merge-only list:
 
@@ -109,6 +98,8 @@ page sweep unless a live regression proves the rule is wrong.
   toolbars use a separate compact toolbar recipe.
 - Popover surfaces own background/border/radius/overflow only; search blocks, rows,
   action bars, and footers own vertical spacing.
+- Shared menu/select drawers are below-`sm` only; `sm+` popovers stay anchored to their
+  trigger.
 - Multi-select popover rows use compact 14px checkboxes: filled blue when selected,
   empty `border-strong` boxes when unselected. Single-select rows show only the selected
   check mark and no empty box/circle.
@@ -117,24 +108,25 @@ page sweep unless a live regression proves the rule is wrong.
 - Dense-card secondary actions can stay compact, e.g. 24px stat-card CSV buttons, even
   while chart/table/action toolbars use 32px.
 
-## Next implementation order after merge
+## Next implementation order
 
 The foundation primitives now exist. Broad sweeps should start by adopting and
 verifying existing recipes, not by adding more one-off primitives unless a proven
 gap remains.
 
-1. Finish shared composite adoption and browser verification: Select/SelectWithCombobox/
-   Menu popovers, remaining direct popover/menu copies, TableToolbar/TableWithSearch,
-   protocol rankings toolbar/icon targets, chart export/control rows, and failed-data
-   popovers.
-2. Migrate route families in chunks: home/chain, metrics/tools, protocol TVL/subpages/CEX,
-   protocol overview, then stablecoins/bridges/RWA/token/liquidations/DAT/adapter/markets/
-   MCP/borrow surfaces.
-3. For each route family, document live verification separately from code migration:
+1. Finish DialogShell: shared dialog portal/close/header/footer/scroll treatment for
+   in-scope app dialogs. Keep bottom sheets limited to `max-sm`; do not delete the
+   legacy `dialog` utility until excluded/quarantined surfaces are separately resolved.
+2. Dense pages cleanup: `DeFiWatchlist` and `TokenPnl` first.
+3. Raises chart-shell/fallback reservation, including one investor raises page.
+4. ChartPanel extraction after the raises/chart-shell pass.
+5. Migrate remaining route families in chunks: stablecoins/bridges/RWA/token/
+   liquidations/DAT/adapter/markets/MCP/borrow surfaces.
+6. For each route family, document live verification separately from code migration:
    desktop/mobile where applicable, light/dark, 32px controls, 6px dense gaps, 8px
    group/page gaps, card/panel padding, popover containment, status states, and no chart
    visual regression.
-4. Run read-only review passes before the final cleanup: excluded-surface regression,
+7. Run read-only review passes before the final cleanup: excluded-surface regression,
    chart visual-change risk, token/hardcoded-style drift, semantic HTML/status states,
    duplicated shell/component churn, and route-family visual checklist coverage.
 
@@ -211,10 +203,10 @@ gap remains.
       and list rows own vertical spacing; multi-select rows always use compact 14px
       checkboxes, filled blue when selected and empty `border-strong` when unselected;
       single-select rows use check-only with no empty box/circle.
-      Mobile drawers keep fixed-bottom placement on the Ariakit wrapper and keep the
+      Below-`sm` drawers keep fixed-bottom placement on the Ariakit wrapper and keep the
       slide transform on the drawer surface; do not add `transform-none` to animated
       drawer surfaces. Shared drawers portal to body by default (`portal={false}` is the
-      explicit opt-out) so mobile fixed-bottom placement is viewport-based, not
+      explicit opt-out) so fixed-bottom placement is viewport-based, not
       page-section based.
       Owner browser verification covered the shared default select, combobox, menu,
       nested menu, mobile drawer, and direct popover cases touched by the popover branch.
@@ -227,15 +219,16 @@ gap remains.
       filters, app/global search special cases, Downloads/Admin/Editor, ProDashboard,
       and LlamaAI.
 - [ ] DialogShell adoption — `src/ui/Dialog.tsx` has `dialogSurfaceStyles` +
-      `DialogHeading`; AddToDashboardModal, Chain/Protocol chart metric dialogs,
-      ProtocolRankings CustomColumnModal, RWA Perps Contract dialogs, and Token
-      Overview metric dialogs use the shared surface. Remaining direct/legacy
-      examples include ProtocolOverview Flag and MCP command dialogs plus mobile/
-      route-specific menus; verify before deleting the legacy `dialog` utility.
-      Owner decision 2026-07-08: mobile dialogs should be bottom sheets, not centered
-      modals. Add to Dashboard uses the dialog recipe, not the popover drawer recipe,
-      so bottom anchoring, smooth slide-up/down animation, close-button chrome, footer
-      sizing, and breakpoint behavior should happen in a focused DialogShell pass.
+      `DialogHeading` + `DialogCloseButton`; AddToDashboardModal, Chain/Protocol chart
+      metric dialogs, ProtocolRankings CustomColumnModal, RWA/Equities filter dialogs,
+      RWA Perps Contract dialogs, Token Overview metric dialogs, ProtocolOverview Flag,
+      Correlations Add Token, and RecentProtocols airdrop checker use the shared surface
+      or are in the current DialogShell branch. Remaining direct/legacy examples include
+      MCP command dialogs, global search/metrics browse special cases, and quarantined
+      ProDashboard/LlamaAI/Yields/account/subscription/Articles/Downloads surfaces; verify
+      before deleting the legacy `dialog` utility. Owner decision 2026-07-08: dialogs are
+      bottom sheets only below `sm`; `sm+` stays centered. Add to Dashboard uses the dialog
+      recipe, not the popover drawer recipe.
 - [x] IconHitTarget / TableIconHitTarget helper exists in `src/ui/IconHitTarget.tsx` for
       visual 16px icons with `p-1 -m-1` hit area.
 - [ ] IconHitTarget adoption — first targets: protocol rankings bookmark/accordion/
@@ -579,7 +572,7 @@ queue, not as a fresh ratchet baseline. Current merge scope excludes ProDashboar
 LlamaAI, yields, account/subscription, Downloads, Articles/research/authors/
 newsletters/reports surfaces, and investor-relations dashboard products. Raises/
 investor-like list pages remain in scope unless they are part of the investor-relations
-dashboard product. Sheets scope is deferred until after this branch merges.
+dashboard product. Sheets scope remains deferred to a separate branch.
 
 - [x] Ratchet regression fixed — `src/components/Metrics.tsx` now uses `gap-5.5`
       (= 22px from the spacing scale) instead of `gap-[22px]`. `lint:tokens` passes
@@ -634,7 +627,7 @@ dashboard product. Sheets scope is deferred until after this branch merges.
       (0.5rem) in Tailwind v4 — design.md's "no live 8px guarantee" claim is only true
       in the rem-vs-px sense. The current branch should keep exact primitive classes and
       avoid a global radius codemod. Revisit `--radius-lg: 8px` / `--radius-xl: 12px`
-      after this branch merges.
+      in a focused radius branch.
 - [ ] Legacy debt snapshot from the audit, requiring a fresh scope filter before edits:
       `--cards-*` 255 (TokenPnl 18, DeFiWatchlist 15, MCP 13, Nft/Collection 10,
       newsletters 10, support 10, unlocks page 10, ChainsByCategory 8);

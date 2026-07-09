@@ -13,7 +13,7 @@ import { addItemToDashboard } from '~/containers/ProDashboard/utils/dashboardIte
 import { useAuthContext } from '~/containers/Subscription/auth'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
-import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Input } from '~/ui/Input'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import type { DashboardChartConfig, LlamaAIChartInput } from './AddToDashboardButton'
@@ -382,12 +382,7 @@ export function AddToDashboardModal({
 			<form onSubmit={handleAdd} className="flex min-h-0 flex-1 flex-col">
 				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 					<DialogHeading>Add to Dashboard</DialogHeading>
-					<Ariakit.DialogDismiss
-						aria-label="Close dialog"
-						render={<Button type="button" variant="ghost" size="md" square className="-mr-1" />}
-					>
-						<Icon name="x" height={16} width={16} />
-					</Ariakit.DialogDismiss>
+					<DialogCloseButton className="-mr-1" />
 				</div>
 
 				<div className="flex thin-scrollbar min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-3">

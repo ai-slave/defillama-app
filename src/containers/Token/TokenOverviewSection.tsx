@@ -19,9 +19,9 @@ import type { MarketTotalsBySegment, TokenMarketsResponse } from '~/containers/M
 import type { Segment } from '~/containers/Markets/segments'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
-import { Button, buttonStyles } from '~/ui/Button'
+import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
 import { Panel } from '~/ui/Panel'
@@ -565,15 +565,10 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 							<span>Add Metrics</span>
 							<Icon name="plus" className="size-3.5" />
 						</Ariakit.DialogDisclosure>
-						<Ariakit.Dialog className={dialogSurfaceStyles} unmountOnHide>
+						<Ariakit.Dialog className={dialogSurfaceStyles} unmountOnHide portal>
 							<div className="flex items-center gap-2 border-b border-subtle p-3">
 								<DialogHeading>Add metrics to chart</DialogHeading>
-								<Ariakit.DialogDismiss
-									render={<Button type="button" variant="ghost" size="md" square className="ml-auto" />}
-									aria-label="Close dialog"
-								>
-									<Icon name="x" aria-hidden="true" className="size-4" />
-								</Ariakit.DialogDismiss>
+								<DialogCloseButton className="ml-auto" />
 							</div>
 
 							<div className="flex flex-col gap-3 p-3">

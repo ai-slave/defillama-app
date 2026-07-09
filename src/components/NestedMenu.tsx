@@ -82,11 +82,11 @@ export function NestedMenu({
 					className: nestedPopoverMobileWrapperClassName
 				}}
 				className={`${surfaceStyles} ${menu.parent ? 'z-20' : 'z-10'} ${
-					menu.parent ? 'max-lg:drawer-to-left' : 'max-lg:drawer'
+					menu.parent ? 'max-sm:drawer-to-left' : 'max-sm:drawer'
 				}`}
 			>
 				{menu.parent ? (
-					<div className="grid min-h-12 grid-cols-[2.5rem_1fr_2.5rem] items-center px-2 py-1 lg:hidden">
+					<div className="grid min-h-12 grid-cols-[2.5rem_1fr_2.5rem] items-center px-2 py-1 sm:hidden">
 						<button
 							type="button"
 							className={nestedMenuHeaderIconButtonStyles}
@@ -106,7 +106,7 @@ export function NestedMenu({
 						</Ariakit.MenuDismiss>
 					</div>
 				) : (
-					<div className="flex min-h-12 items-center justify-end px-2 py-1 lg:hidden">
+					<div className="flex min-h-12 items-center justify-end px-2 py-1 sm:hidden">
 						<Ariakit.MenuDismiss className={popoverMobileDismissStyles}>
 							<Icon name="x" className="size-4" />
 							<span className="sr-only">Close menu</span>

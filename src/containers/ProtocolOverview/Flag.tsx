@@ -4,8 +4,8 @@ import { Icon } from '~/components/Icon'
 import { LoadingSpinner } from '~/components/Loaders'
 import { Tooltip } from '~/components/Tooltip'
 import type { FormSubmitEvent } from '~/types/forms'
-import { Button, buttonStyles } from '~/ui/Button'
-import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { Button } from '~/ui/Button'
+import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { inputStyles } from '~/ui/Input'
 import { fetchJson } from '~/utils/async'
 
@@ -89,7 +89,12 @@ export function Flag({
 				</Button>
 			)}
 
-			<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:520px]`} unmountOnHide store={dialogStore}>
+			<Ariakit.Dialog
+				className={`${dialogSurfaceStyles} [--dialog-width:520px]`}
+				unmountOnHide
+				store={dialogStore}
+				portal
+			>
 				<form
 					onSubmit={(e) => {
 						void onSubmit(e)
@@ -98,13 +103,7 @@ export function Flag({
 				>
 					<div className="flex items-center gap-2 border-b border-subtle p-3">
 						<DialogHeading>Report incorrect data</DialogHeading>
-						<Ariakit.DialogDismiss
-							type="button"
-							aria-label="Close report dialog"
-							className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
-						>
-							<Icon name="x" height={16} width={16} />
-						</Ariakit.DialogDismiss>
+						<DialogCloseButton ariaLabel="Close report dialog" />
 					</div>
 					<div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3">
 						{isLending ? (
@@ -185,6 +184,7 @@ export function Flag({
 				className={`${dialogSurfaceStyles} [--dialog-width:360px]`}
 				unmountOnHide
 				store={successDialogStore}
+				portal
 			>
 				<div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
 					<Icon name="check-circle" height={64} width={64} strokeWidth={0.75} className="text-data-up" />

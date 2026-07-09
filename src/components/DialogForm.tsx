@@ -1,8 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useRef } from 'react'
-import { Icon } from '~/components/Icon'
 import { Button } from '~/ui/Button'
-import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Input } from '~/ui/Input'
 
 export function DialogForm({
@@ -26,13 +25,11 @@ export function DialogForm({
 			modal={true}
 			initialFocus={inputRef}
 			className={`${dialogSurfaceStyles} [--dialog-width:480px]`}
+			portal
 		>
 			<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 				<DialogHeading>{title}</DialogHeading>
-				<Ariakit.DialogDismiss render={<Button variant="ghost" size="md" square />} aria-label="Close">
-					<Icon name="x" className="size-4" />
-					<span className="sr-only">Close dialog</span>
-				</Ariakit.DialogDismiss>
+				<DialogCloseButton />
 			</div>
 			<form
 				id="newPortfolio"

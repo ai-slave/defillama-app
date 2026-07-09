@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { lazy, Suspense, useRef, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { Button } from '~/ui/Button'
-import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Input, inputStyles } from '~/ui/Input'
 import { formatValue } from '../../utils'
 import { useAuthContext } from '../Subscription/auth'
@@ -220,12 +220,10 @@ export function CustomColumnModal({
 	return (
 		<>
 			<Ariakit.DialogProvider store={dialogStore}>
-				<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:560px]`} unmountOnHide>
+				<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:560px]`} unmountOnHide portal>
 					<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 						<DialogHeading>Add Custom Column</DialogHeading>
-						<Ariakit.DialogDismiss render={<Button variant="ghost" size="md" square />} aria-label="Close modal">
-							<Icon name="x" className="size-4" />
-						</Ariakit.DialogDismiss>
+						<DialogCloseButton ariaLabel="Close modal" />
 					</div>
 					<div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-3">
 						<label className="flex flex-col gap-1">

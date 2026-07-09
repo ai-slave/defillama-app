@@ -6,7 +6,7 @@ import { Tooltip } from '~/components/Tooltip'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
 import {
 	popoverMobileDismissStyles,
@@ -502,6 +502,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 			<Ariakit.Dialog
 				className={`${dialogSurfaceStyles} [--dialog-width:860px] sm:max-h-[min(760px,calc(100%-32px))]`}
 				unmountOnHide
+				portal
 			>
 				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 					<div className="flex items-baseline gap-2.5">
@@ -510,10 +511,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 							{draftActiveCount}/{EQUITY_FILTER_CONFIGS.length}
 						</span>
 					</div>
-					<Ariakit.DialogDismiss render={<Button type="button" variant="ghost" size="md" square className="-mr-1" />}>
-						<Icon name="x" className="size-4" />
-						<span className="sr-only">Close</span>
-					</Ariakit.DialogDismiss>
+					<DialogCloseButton className="-mr-1" />
 				</div>
 
 				<div className="border-b border-subtle px-4 py-3">

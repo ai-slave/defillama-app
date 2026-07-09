@@ -79,10 +79,10 @@ This file tracks design-system audit notes before code changes are made.
 
 ### Mobile Dialog Behavior Decision
 
-- Owner decision 2026-07-08: mobile dialogs should use bottom-sheet behavior rather
-  than centered modal behavior.
-- Desktop behavior stays centered modal unless a route-specific dialog already has a
-  different proven pattern.
+- Owner decision 2026-07-08: mobile dialogs below `sm` should use bottom-sheet behavior
+  rather than centered modal behavior.
+- `sm+` behavior stays centered modal unless a route-specific dialog already has a
+  different proven pattern. Do not extend dialog bottom-sheet behavior to `lg`.
 - Mobile implementation target: portal to the viewport, anchor to the bottom edge,
   round only the top sheet corners, animate with a smooth slide up/down, and keep long
   dialog content scrolling inside the sheet so the underlying page/table is not visible
@@ -244,7 +244,7 @@ Current classification of the in-flight pass:
 - Shared usage/context: `SelectWithCombobox` backs table columns, calendar/type filters, token usage filters, bridge selectors, chart metric selectors where not using Dialog, and other select/search popovers. Changing the shared recipe can improve consistency but needs checks across default and legacy/excluded variants.
 - Special cases: Legacy/excluded surfaces should stay visually stable unless explicitly migrated. Downloads/Yields toggle-all controls are not part of this popover action-row change. Some popovers have no search field, no action row, or no footer; the spacing rules need conditional variants so removing `py-3` does not collapse those layouts.
 - Surrounding layout impact: Removing wrapper padding makes first/last rows touch the rounded surface. Row/action/footer hover backgrounds and borders must clip cleanly against the 12px surface radius. The scrollbar gutter should not visually add fake padding.
-- Grid/flex/layout notes: Surface owns background/border/radius/overflow/scroll height; Ariakit wrapper props own mobile fixed-bottom placement; shared drawer popovers portal by default (`portal={false}` is the explicit opt-out) so fixed placement is viewport-based; drawer utilities own the animated transform. Do not put `transform-none` on animated drawer surfaces to fight Floating UI placement. Search block owns its inset padding whenever it renders. Select/Deselect uses a normal-flow two-column grid with no outer horizontal padding; each button owns its padding and centers its label. Range/date footer actions such as Clear/Apply must stay contained by the popover width with `min-w-0`/flex or grid sizing. Regular list rows own `px-3 py-2`; nested-menu drawer rows own `px-4 py-2.5` and fixed right icon/check columns. Footer/reset actions own row padding, not an extra nested bordered button.
+- Grid/flex/layout notes: Surface owns background/border/radius/overflow/scroll height; Ariakit wrapper props own below-`sm` fixed-bottom placement; shared drawer popovers portal by default (`portal={false}` is the explicit opt-out) so fixed placement is viewport-based; `sm+` popovers stay anchored to their trigger. Drawer utilities own the animated transform. Do not put `transform-none` on animated drawer surfaces to fight Floating UI placement. Search block owns its inset padding whenever it renders. Select/Deselect uses a normal-flow two-column grid with no outer horizontal padding; each button owns its padding and centers its label. Range/date footer actions such as Clear/Apply must stay contained by the popover width with `min-w-0`/flex or grid sizing. Regular list rows own `px-3 py-2`; nested-menu drawer rows own `px-4 py-2.5` and fixed right icon/check columns. Footer/reset actions own row padding, not an extra nested bordered button.
 - Hardcoded hacks to remove: Shared popover/menu surfaces and default search/action recipes now use named paddingless/conditional helpers; keep auditing direct popover copies for old wrapper padding and nested bordered footer actions.
 - Decision: For shared `Select` / `SelectWithCombobox` popovers only, Select/Deselect should be normal flow. Do not touch Downloads/Yields toggle-all flows. If a future shared popover truly needs sticky behavior, it should use a separate explicit sticky action-bar recipe.
 - Proposed direction: Keep the recipes split by responsibility: paddingless `popoverSurfaceStyles`; search-block recipes with full search padding; normal-flow two-column action bars for Select/Deselect; row recipes for regular and nested menu rows; and borderless/footer-contained action styles for Clear/Apply/reset/download rows.

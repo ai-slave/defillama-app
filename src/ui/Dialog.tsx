@@ -1,12 +1,14 @@
 import * as Ariakit from '@ariakit/react'
 import type { ComponentPropsWithoutRef } from 'react'
+import { Icon } from '~/components/Icon'
+import { Button } from '~/ui/Button'
 
 /* ----------------------------------------------------------------------------
    Dialog — the design.md popover/dialog surface recipe (Figma popover
    container: bg-surface-elevated-1, stroke-medium, radius 12).
 
-   Surface: mobile = bottom drawer (full width, rounded top, safe-area pad);
-            sm+    = centered card, height fits content up to 720px, width
+   Surface: below sm = bottom drawer (full width, rounded top, safe-area pad);
+            sm+      = centered card, height fits content up to 720px, width
             capped at --dialog-width (default 600px).
    Chrome:  header/footer rows bring their own `border-subtle` divider and
             p-3 (12px) section padding; title is DialogHeading (heading-xs);
@@ -33,5 +35,23 @@ type DialogHeadingProps = {
 export function DialogHeading({ className, ...props }: DialogHeadingProps) {
 	return (
 		<Ariakit.DialogHeading render={<h2 />} className={`heading-xs text-primary ${className ?? ''}`.trim()} {...props} />
+	)
+}
+
+type DialogCloseButtonProps = Omit<ComponentPropsWithoutRef<typeof Ariakit.DialogDismiss>, 'children' | 'render'> & {
+	/** Layout placement only, e.g. `ml-auto` or `-mr-1`. */
+	className?: string
+	ariaLabel?: string
+}
+
+export function DialogCloseButton({ className, ariaLabel = 'Close dialog', ...props }: DialogCloseButtonProps) {
+	return (
+		<Ariakit.DialogDismiss
+			render={<Button type="button" variant="ghost" size="md" square className={className} />}
+			aria-label={ariaLabel}
+			{...props}
+		>
+			<Icon name="x" className="size-4" aria-hidden="true" />
+		</Ariakit.DialogDismiss>
 	)
 }

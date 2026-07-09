@@ -13,9 +13,9 @@ import { MetricRow, MetricSection, SubMetricRow } from '~/components/MetricPrimi
 import { PercentChange } from '~/components/PercentChange'
 import { Tooltip } from '~/components/Tooltip'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { Button, buttonStyles } from '~/ui/Button'
+import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
 import { Panel } from '~/ui/Panel'
 import { ChartPanelToolbar, chartPanelToolbarActionsStyles } from '~/ui/Toolbar'
@@ -274,15 +274,10 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 						<span>Add Metrics</span>
 						<Icon name="plus" className="size-3.5" />
 					</Ariakit.DialogDisclosure>
-					<Ariakit.Dialog className={dialogSurfaceStyles} unmountOnHide>
+					<Ariakit.Dialog className={dialogSurfaceStyles} unmountOnHide portal>
 						<div className="flex items-center gap-2 border-b border-subtle p-2">
 							<DialogHeading>Add metrics to chart</DialogHeading>
-							<Ariakit.DialogDismiss
-								render={<Button type="button" variant="ghost" size="md" square className="ml-auto" />}
-								aria-label="Close dialog"
-							>
-								<Icon name="x" className="size-4" />
-							</Ariakit.DialogDismiss>
+							<DialogCloseButton className="ml-auto" />
 						</div>
 
 						<div className="flex flex-wrap gap-2 p-2">
