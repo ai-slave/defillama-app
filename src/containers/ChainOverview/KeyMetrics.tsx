@@ -1,16 +1,16 @@
 import dayjs from 'dayjs'
 import { Fragment, memo, useRef } from 'react'
 import { BasicLink } from '~/components/Link'
-import {
-	MetricRow as ChainMetricRow,
-	MetricSection as ChainMetricSection,
-	SubMetricRow as ChainSubMetricRow
-} from '~/components/MetricPrimitives'
 import { Tooltip } from '~/components/Tooltip'
 import { definitions as rwaDefinitions } from '~/containers/RWA/definitions'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { addOptionalFeeExtraTotal, getFeeExtraTotal } from '~/metrics/feeExtras'
 import { definitions } from '~/public/definitions'
+import {
+	MetricRow as ChainMetricRow,
+	MetricSection as ChainMetricSection,
+	SubMetricRow as ChainSubMetricRow
+} from '~/ui/MetricPrimitives'
 import { formattedNum, slug } from '~/utils'
 import { formatRaiseAmount } from '../Raises/utils'
 import { KeyMetricsPngExportButton } from './KeyMetricsPngExport'

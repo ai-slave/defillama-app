@@ -212,6 +212,7 @@ const files = execSync(
 )
 	.split('\n')
 	.filter(Boolean)
+	.filter((file) => fs.existsSync(path.join(ROOT, file)))
 
 const buckets = ['core', 'excluded']
 const counts = Object.fromEntries(buckets.map((bucket) => [bucket, Object.fromEntries(RULES.map((r) => [r.id, 0]))]))

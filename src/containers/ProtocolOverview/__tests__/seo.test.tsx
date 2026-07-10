@@ -549,7 +549,7 @@ describe('ProtocolInfo category links', () => {
 		vi.doMock('~/components/Menu', () => ({
 			Menu: () => null
 		}))
-		vi.doMock('~/components/MetricPrimitives', () => ({
+		vi.doMock('~/ui/MetricPrimitives', () => ({
 			MetricRow: () => null
 		}))
 		vi.doMock('~/components/QuestionHelper', () => ({
