@@ -36,6 +36,14 @@ describe('getDefaultRWAOverviewInclusion', () => {
 		})
 	})
 
+	it('enables governance by default for the Pact platform page', () => {
+		expect(getDefaultRWAOverviewInclusion({ mode: 'platform', platformSlug: 'pact' })).toEqual({
+			includeStablecoins: false,
+			includeGovernance: true,
+			includeRwaPerps: false
+		})
+	})
+
 	it('keeps other RWA pages on the existing false defaults', () => {
 		expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug: 'private-credit' })).toEqual({
 			includeStablecoins: false,

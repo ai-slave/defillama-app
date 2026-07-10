@@ -37,7 +37,8 @@ const STABLECOINS_DEFAULT_RWA_PATHS = new Set<RWAOverviewPath>([
 ])
 const GOVERNANCE_DEFAULT_RWA_PATHS = new Set<RWAOverviewPath>([
 	'/rwa/category/other-rwas',
-	'/rwa/category/rwa-yield-wrapper'
+	'/rwa/category/rwa-yield-wrapper',
+	'/rwa/platform/pact'
 ])
 
 export function isCategoryIncludedInStandardRwaOverview(category: string | null | undefined): boolean {
