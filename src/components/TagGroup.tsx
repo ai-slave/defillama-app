@@ -1,6 +1,5 @@
 import * as React from 'react'
-import { SegmentedControl } from './SegmentedControl'
-import type { TagGroupSize, TagGroupVariant } from './Select/types'
+import { SegmentedControl, type TagGroupSize, type TagGroupVariant } from '~/ui/SegmentedControl'
 
 interface IProps<V extends readonly string[] = readonly string[]> extends React.ComponentProps<'div'> {
 	selectedValue: V[number] | null

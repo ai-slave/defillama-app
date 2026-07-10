@@ -1,6 +1,6 @@
 import { Icon } from '~/components/Icon'
-import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/components/Select/types'
 import { BRIDGES_SHOWING_ADDRESSES, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/ui/SegmentedControl'
 
 export const AddressesTableSwitch = () => {
 	const [bridgesSettings, toggleBridgesSettings] = useLocalStorageSettingsManager('bridges')

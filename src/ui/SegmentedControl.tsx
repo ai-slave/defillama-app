@@ -1,7 +1,54 @@
 import clsx from 'clsx'
 import * as React from 'react'
-import { Tooltip } from '~/ui/Tooltip'
-import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS, type TagGroupSize, type TagGroupVariant } from './Select/types'
+import { Tooltip } from './Tooltip'
+
+/* Two selection controls in the design system — do not conflate:
+   - default/responsive = the padded, tinted segmented control for periods,
+     denominations, and view modes.
+   - solid = the compact joined toggle group with a solid brand selection for
+     explicit scope switches such as All | Protocols | Chains. */
+export const TAG_GROUP_VARIANTS = {
+	default: {
+		container:
+			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-lg border border-medium bg-surface p-0.5',
+		button:
+			'hover-wash shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link'
+	},
+	responsive: {
+		container:
+			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-lg border border-medium bg-surface p-0.5 max-sm:w-full',
+		button:
+			'hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link'
+	},
+	solid: {
+		container: 'body-sm flex w-fit flex-nowrap items-center overflow-hidden rounded-md border border-subtle',
+		button:
+			'hover-wash shrink-0 self-stretch px-2 whitespace-nowrap text-primary data-[active=true]:bg-brand data-[active=true]:text-on-brand'
+	},
+	'solid-responsive': {
+		container:
+			'body-sm flex w-fit flex-nowrap items-center overflow-hidden rounded-md border border-subtle max-sm:w-full',
+		button:
+			'hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 self-stretch px-2 whitespace-nowrap text-primary data-[active=true]:bg-brand data-[active=true]:text-on-brand'
+	},
+	pro: {
+		container: 'text-sm flex items-center overflow-x-auto flex-nowrap w-fit border pro-border pro-text1',
+		button:
+			'shrink-0 px-3 py-1.5 whitespace-nowrap hover:pro-bg2 focus-visible:pro-bg2 data-[active=true]:bg-(--legacy-primary) data-[active=true]:text-white'
+	}
+} as const
+
+/* Chart/table toolbar contexts are md (32px); dense gaps come from Toolbar. */
+export const TAG_GROUP_SIZES = {
+	sm: 'min-h-6',
+	md: 'min-h-8'
+} as const
+
+export const chartSegmentedControlGroupStyles = `${TAG_GROUP_VARIANTS.default.container} ${TAG_GROUP_SIZES.md}`
+export const chartSegmentedControlButtonStyles = TAG_GROUP_VARIANTS.default.button
+
+export type TagGroupSize = keyof typeof TAG_GROUP_SIZES
+export type TagGroupVariant = keyof typeof TAG_GROUP_VARIANTS
 
 export type SegmentedControlOption<T extends string> = {
 	value: T

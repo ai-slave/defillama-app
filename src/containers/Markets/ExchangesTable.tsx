@@ -1,7 +1,7 @@
 import { type ColumnDef, createColumnHelper, type VisibilityState } from '@tanstack/react-table'
 import * as React from 'react'
-import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/components/Select/types'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/ui/SegmentedControl'
 import { formattedNum } from '~/utils'
 import { type Segment, segmentHasOi } from './segments'
 import { ExchangeName, MaterialChangeCell, VenueBadge } from './shared'

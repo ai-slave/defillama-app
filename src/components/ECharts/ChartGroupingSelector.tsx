@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { SegmentedControl } from '~/components/SegmentedControl'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import type { ChartTimeGrouping, ChartTimeGroupingWithCumulative } from './types'
 
 export type ChartGroupingOption<T extends string> = {

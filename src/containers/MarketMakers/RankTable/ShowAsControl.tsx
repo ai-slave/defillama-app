@@ -1,10 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { Icon } from '~/components/Icon'
-import {
-	chartSegmentedControlButtonStyles,
-	chartSegmentedControlGroupStyles,
-	selectTriggerStyles
-} from '~/components/Select/types'
+import { selectTriggerStyles } from '~/components/Select/types'
 import {
 	popoverSingleSelectCheckStyles,
 	popoverRowWithBorderStyles,
@@ -12,6 +8,7 @@ import {
 	popoverMobileDismissStyles,
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
+import { chartSegmentedControlButtonStyles, chartSegmentedControlGroupStyles } from '~/ui/SegmentedControl'
 import { DISPLAY_MODES, type DisplayMode } from '../constants'
 
 const LABELS: Record<DisplayMode, string> = {

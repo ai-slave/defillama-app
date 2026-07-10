@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/components/Select/types'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/ui/SegmentedControl'
 import { CategoriesTable } from './CategoriesTable'
 import { ExchangesTable } from './ExchangesTable'
 import type { Segment } from './segments'
