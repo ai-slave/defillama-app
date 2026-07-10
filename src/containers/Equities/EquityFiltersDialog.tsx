@@ -546,7 +546,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 				<div className="flex min-h-0 flex-1 flex-col overflow-y-auto sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] sm:overflow-hidden">
 					<section className="order-2 flex min-h-0 flex-col border-t border-subtle max-sm:shrink-0 sm:order-1 sm:border-t-0 sm:border-r">
 						<div className="border-b border-subtle px-4 py-2">
-							<h3 className="text-xs font-medium text-secondary">Browse filters</h3>
+							<h3 className="label-sm text-secondary">Browse filters</h3>
 						</div>
 						<div className="flex flex-1 flex-col gap-5 overflow-y-auto p-4 max-sm:overflow-visible">
 							{groupedAvailableFilters.map((group) => (
@@ -588,7 +588,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 
 					<section className="order-1 flex min-h-0 flex-col max-sm:shrink-0 sm:order-2">
 						<div className="border-b border-subtle px-4 py-2">
-							<h3 className="text-xs font-medium text-secondary">Active filters</h3>
+							<h3 className="label-sm text-secondary">Active filters</h3>
 						</div>
 						<div className="flex flex-1 flex-col gap-2 overflow-y-auto p-4 max-sm:overflow-visible">
 							{draftFilters.length > 0 ? (

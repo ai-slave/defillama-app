@@ -41,7 +41,7 @@ function Card({ label, winner, value }: { label: string; winner: AggregatedMetri
 				{winner ? (
 					<div className="flex min-w-0 items-center gap-2">
 						<TokenLogo src={winner.marketMakerImageUrl} size={24} />
-						<span className="truncate text-sm font-medium">{winner.marketMakerName}</span>
+						<span className="truncate label-md">{winner.marketMakerName}</span>
 					</div>
 				) : (
 					<span className="body-sm text-tertiary">—</span>

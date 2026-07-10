@@ -430,7 +430,7 @@ export function VirtualTable<T extends RowData>({
 			<div className="flex min-h-[400px] flex-col items-center justify-center gap-4 rounded-md bg-surface p-8 text-center">
 				<Icon name="eye-off" height={48} width={48} className="text-tertiary" />
 				<div className="flex flex-col gap-2">
-					<h3 className="text-lg font-semibold text-primary">No columns selected</h3>
+					<h3 className="heading-xs text-primary">No columns selected</h3>
 					<p className="body-sm text-secondary">
 						Please select at least one column from the Columns menu to view the table data.
 					</p>

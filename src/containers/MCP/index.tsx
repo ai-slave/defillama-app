@@ -504,7 +504,7 @@ export default function MCPContainer() {
 							</p>
 						</div>
 					</div>
-					<span className="shrink-0 self-start rounded-md border border-warning/40 px-4 py-2 text-sm font-medium text-warning transition-colors group-hover:bg-warning/10 sm:self-center">
+					<span className="shrink-0 self-start rounded-md border border-warning/40 px-4 py-2 label-md text-warning transition-colors group-hover:bg-warning/10 sm:self-center">
 						Explore LlamaAI
 					</span>
 				</a>

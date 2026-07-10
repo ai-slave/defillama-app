@@ -278,7 +278,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 							/>
 						</Suspense>
 					) : null}
-					<div className="grid grid-cols-7 py-1 text-center text-xs font-medium text-secondary">
+					<div className="grid grid-cols-7 py-1 text-center label-sm text-secondary">
 						{DAYS_OF_WEEK.map((day) => (
 							<span key={day} role="columnheader">
 								{day}

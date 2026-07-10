@@ -12,8 +12,9 @@
    sibling controls render at mixed fractional heights (34 vs 32.4) and
    glyphs land on half-pixels — visible as "more space below than above"
    on retina. Verified per-style in Figma: Label 10/12, 12/16, 14/17;
-   Heading 18/22; Body 12/16, 14/21. Styles marked TODO are interpolated
-   integers pending a Figma check.
+   Heading 18/22; Body 12/16, 14/21. The other integer line boxes are
+   owner-accepted application values, not claims of Figma verification; a
+   future published library measurement may supersede them explicitly.
 
    Each utility is a small, flat, variant-free declaration set per the
    @utility policy. Family comes from the body font (Inter) except mono-*,
@@ -28,12 +29,12 @@
 
 @utility heading-lg {
 	font-size: 2rem;
-	line-height: calc(40 / 32); /* TODO verify in Figma */
+	line-height: calc(40 / 32); /* accepted app value; not Figma-verified */
 	font-weight: 600;
 }
 @utility heading-sm {
 	font-size: 1.25rem;
-	line-height: calc(24 / 20); /* TODO verify in Figma */
+	line-height: calc(24 / 20); /* accepted app value; not Figma-verified */
 	font-weight: 600;
 }
 @utility heading-xs {
@@ -44,12 +45,12 @@
 
 @utility label-xl {
 	font-size: 1.125rem;
-	line-height: calc(22 / 18); /* TODO verify in Figma */
+	line-height: calc(22 / 18); /* accepted app value; not Figma-verified */
 	font-weight: 500;
 }
 @utility label-lg {
 	font-size: 1rem;
-	line-height: calc(20 / 16); /* TODO verify in Figma */
+	line-height: calc(20 / 16); /* accepted app value; not Figma-verified */
 	font-weight: 500;
 }
 @utility label-md {
@@ -70,12 +71,12 @@
 
 @utility body-xl {
 	font-size: 1.125rem;
-	line-height: calc(27 / 18); /* TODO verify in Figma */
+	line-height: calc(27 / 18); /* accepted app value; not Figma-verified */
 	font-weight: 400;
 }
 @utility body-lg {
 	font-size: 1rem;
-	line-height: calc(24 / 16); /* TODO verify in Figma */
+	line-height: calc(24 / 16); /* accepted app value; not Figma-verified */
 	font-weight: 400;
 }
 @utility body-md {
@@ -90,37 +91,37 @@
 }
 @utility body-xs {
 	font-size: 0.625rem;
-	line-height: calc(14 / 10); /* TODO verify in Figma */
+	line-height: calc(14 / 10); /* accepted app value; not Figma-verified */
 	font-weight: 400;
 }
 
 @utility mono-xl {
 	font-family: var(--font-jetbrains);
 	font-size: 1.5rem;
-	line-height: calc(32 / 24); /* TODO verify in Figma */
+	line-height: calc(32 / 24); /* accepted app value; not Figma-verified */
 	font-weight: 700;
 }
 @utility mono-md {
 	font-family: var(--font-jetbrains);
 	font-size: 0.875rem;
-	line-height: calc(19 / 14); /* TODO verify in Figma */
+	line-height: calc(19 / 14); /* accepted app value; not Figma-verified */
 	font-weight: 400;
 }
 @utility mono-md-bold {
 	font-family: var(--font-jetbrains);
 	font-size: 0.875rem;
-	line-height: calc(19 / 14); /* TODO verify in Figma */
+	line-height: calc(19 / 14); /* accepted app value; not Figma-verified */
 	font-weight: 700;
 }
 @utility mono-sm {
 	font-family: var(--font-jetbrains);
 	font-size: 0.75rem;
-	line-height: calc(16 / 12); /* TODO verify in Figma */
+	line-height: calc(16 / 12); /* accepted app value; not Figma-verified */
 	font-weight: 400;
 }
 @utility mono-sm-bold {
 	font-family: var(--font-jetbrains);
 	font-size: 0.75rem;
-	line-height: calc(16 / 12); /* TODO verify in Figma */
+	line-height: calc(16 / 12); /* accepted app value; not Figma-verified */
 	font-weight: 700;
 }

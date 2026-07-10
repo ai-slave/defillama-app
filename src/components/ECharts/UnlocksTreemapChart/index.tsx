@@ -432,7 +432,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 						>
 							←
 						</button>
-						<span className="w-28 text-center text-sm font-medium">{selectedDate.format('MMMM YYYY')}</span>
+						<span className="w-28 text-center label-md">{selectedDate.format('MMMM YYYY')}</span>
 						<button
 							onClick={goToNextMonth}
 							className="rounded-md p-1.5 text-secondary hover:bg-hover-row focus-visible:bg-hover-row"

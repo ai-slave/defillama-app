@@ -32,7 +32,7 @@ function Stat({ label, value, rank }: { label: string; value: string; rank: numb
 	return (
 		<div className="flex flex-col gap-0.5">
 			<span className="label-sm text-secondary">{label}</span>
-			<span className="text-sm font-medium">{value}</span>
+			<span className="label-md">{value}</span>
 			<span className="label-sm text-secondary">Rank: {rank ?? '—'}</span>
 		</div>
 	)

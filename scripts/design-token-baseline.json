@@ -8,7 +8,8 @@
 		"legacy-token-reference": 190,
 		"prefixed-design-token": 0,
 		"arbitrary-standard-radius": 0,
-		"implicit-border-color": 3
+		"implicit-border-color": 3,
+		"conflicting-named-typography": 35
 	},
 	"excluded": {
 		"hex-in-classname": 2587,
@@ -19,6 +20,7 @@
 		"legacy-token-reference": 7110,
 		"prefixed-design-token": 0,
 		"arbitrary-standard-radius": 0,
-		"implicit-border-color": 3
+		"implicit-border-color": 3,
+		"conflicting-named-typography": 0
 	}
 }

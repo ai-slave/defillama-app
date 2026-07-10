@@ -131,7 +131,7 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 			>
 				{recentProtocols && recentProtocols.length > 0 ? (
 					<div className="mx-auto mt-6 w-full max-w-3xl">
-						<div className="mb-2 text-xs font-medium text-secondary">Recently visited</div>
+						<div className="mb-2 label-sm text-secondary">Recently visited</div>
 						<div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
 							{recentProtocols.map((protocol) => (
 								<Card

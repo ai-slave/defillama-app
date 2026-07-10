@@ -25,6 +25,9 @@ Canonical references:
   token ratchet prevents the retired `--ld-*` prefix from returning.
 - The application radius scale is explicit: `rounded-lg` is `0.5rem` and `rounded-xl` is
   `0.75rem`; standard 8px/12px roles use those named contracts.
+- The application typography ramp owns reviewed heading and label roles. Its remaining
+  integer line boxes are accepted application values (not Figma-verification claims),
+  and the token ratchet rejects conflicting raw type utilities on named contracts.
 - Shared Card/Panel, table/chart toolbar, title-strip, dialog/popover, summary-stat, and
   chart-shell contracts are adopted across the audited in-scope routes.
 - Chart theme and geometry are final for the sweep: canvas chrome uses `chartTheme`, HTML
@@ -40,16 +43,7 @@ Canonical references:
 Each phase should be a focused branch with a mechanically reviewable boundary. Finish and
 verify one phase before starting the next.
 
-### 1. Normalize typography
-
-- Replace reviewed `text-sm font-medium`, heading-size/font-weight pairs, redundant custom
-  line heights, and equivalent mono combinations with the named typography utilities.
-- Confirm the remaining interpolated line-height values as the accepted app values unless
-  a later library specification supplies different measurements.
-- Keep chart canvas fonts in pixels and preserve branded/editor/product typography where
-  it is intentionally outside the application ramp.
-
-### 2. Consolidate shared APIs and file placement
+### 1. Consolidate shared APIs and file placement
 
 - Move high-fanout design-system owners such as `MetricPrimitives`, Tooltip, and loaders
   into `src/ui` only when imports can be migrated mechanically without changing behavior.
@@ -64,7 +58,7 @@ verify one phase before starting the next.
   `FullOldViewButton`, and opportunistic replacement of remaining low-value native
   `title` attributes.
 
-### 3. Decide excluded-product scope
+### 2. Decide excluded-product scope
 
 - Make an explicit Sheets decision first: migrate it to the application design system,
   keep it as a separately themed product, or quarantine its tokens/components behind an
@@ -75,7 +69,7 @@ verify one phase before starting the next.
   regression verification; entering architecture scope does not silently authorize a
   visual redesign.
 
-### 4. Retire temporary sweep documentation
+### 3. Retire temporary sweep documentation
 
 - Fold any architecture decisions that remain normative into `design.md`.
 - Preserve genuinely useful historical rationale in `design-decision-audit.md`.

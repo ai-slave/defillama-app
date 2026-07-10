@@ -104,7 +104,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 			const deposit = getValue()
 			return (
 				<span
-					className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+					className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 label-sm ${
 						deposit ? 'bg-(--success)/10 text-(--success)' : 'bg-(--error)/10 text-(--error)'
 					}`}
 				>

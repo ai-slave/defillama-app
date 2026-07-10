@@ -21,5 +21,5 @@ export function DeprecatedEntityMarker({
 }
 
 export function DeprecatedEntityText({ label = 'Deprecated', className = '' }: { label?: string; className?: string }) {
-	return <span className={`shrink-0 text-sm font-medium text-(--error) ${className}`.trim()}>{label}</span>
+	return <span className={`shrink-0 label-md text-(--error) ${className}`.trim()}>{label}</span>
 }

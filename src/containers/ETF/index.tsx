@@ -144,7 +144,7 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 								<div key={key} className="flex flex-col gap-1">
 									<div className="flex items-center gap-2">
 										<img src={iconUrl} alt={name} width={24} height={24} className="rounded-full" />
-										<span className="text-lg font-semibold">{name}</span>
+										<span className="heading-xs">{name}</span>
 									</div>
 									<p className="flex flex-wrap justify-start gap-4 pl-8">
 										<span className="text-secondary">Flows</span>

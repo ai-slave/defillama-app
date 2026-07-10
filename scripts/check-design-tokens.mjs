@@ -115,6 +115,39 @@ function matchImplicitBorderColor(content) {
 	return found.length ? found : null
 }
 
+const NAMED_TYPOGRAPHY_UTILITY =
+	/^(?:heading-(?:lg|sm|xs)|label-(?:xl|lg|md|sm|xs)|body-(?:xl|lg|md|sm|xs)|mono-(?:xl|md(?:-bold)?|sm(?:-bold)?))$/
+const RAW_TYPOGRAPHY_UTILITY =
+	/^(?:text-(?:xs|sm|base|lg|xl|[2-9]xl|\[[^\]]+\])|font-(?:thin|extralight|light|normal|medium|semibold|bold|extrabold|black|jetbrains|inter|\[[^\]]+\])|leading-.+)$/
+const VARIANT_UTILITY = /^((?:[\w[\]()&>~.*-]+:)*)((?:[^\s:]+))$/
+
+// A named typography utility owns family (where applicable), size, line-height,
+// and weight as one contract. Compare utilities by variant scope so an intentional
+// responsive override such as `label-sm sm:label-md` is not treated as a conflict.
+// Dynamic template literals are skipped because their completed class set is not
+// statically knowable.
+function matchConflictingNamedTypography(content) {
+	const found = []
+	const source = content.replace(/\/\*[\s\S]*?\*\//g, '')
+	for (const [literal] of source.matchAll(STRING_LITERAL)) {
+		if (literal.startsWith('`') && literal.includes('${')) continue
+		const scopes = new Map()
+		for (const token of literal.slice(1, -1).split(/\s+/)) {
+			const parsed = token.match(VARIANT_UTILITY)
+			if (!parsed) continue
+			const [, variants, utility] = parsed
+			const scope = scopes.get(variants) ?? { named: [], raw: [] }
+			if (NAMED_TYPOGRAPHY_UTILITY.test(utility)) scope.named.push(utility)
+			else if (RAW_TYPOGRAPHY_UTILITY.test(utility)) scope.raw.push(utility)
+			scopes.set(variants, scope)
+		}
+		for (const { named, raw } of scopes.values()) {
+			if (named.length > 1 || (named.length && raw.length)) found.push(named[0])
+		}
+	}
+	return found.length ? found : null
+}
+
 const RULES = [
 	{
 		id: 'hex-in-classname',
@@ -164,6 +197,12 @@ const RULES = [
 		description:
 			'width-only border/divide utility with no color source in the same class string (v4 default is currentColor; add border-subtle, border-medium, …)',
 		match: matchImplicitBorderColor
+	},
+	{
+		id: 'conflicting-named-typography',
+		description:
+			'named typography utilities own size, weight, family, and line-height; remove conflicting text-*, font-*, leading-*, or same-scope named type utilities',
+		match: matchConflictingNamedTypography
 	}
 ]
 

@@ -928,6 +928,28 @@ bg-surface-elevated-2` opaque step per the documented Select-trigger exception.
 - Remaining StatItem shapes backlogged as opportunistic adoptions (card-anchored
   tooltips, local StatCard helpers, colored TokenPnl values).
 
+### 2026-07-10 Typography Normalization
+
+- The named typography ramp is now the reviewed application contract for heading and
+  label roles. Exact `text-xs font-medium` combinations moved to `label-sm`. Reviewed
+  single-line 14px labels moved from Tailwind's 20px line box to `label-md`'s 17px app
+  contract, and two semantic 18px headings moved from Tailwind's 28px line box to
+  `heading-xs`'s verified 22px contract. The standard table-header recipe remains
+  deliberately `text-sm font-medium` because its normal 20px table line height is a
+  documented exception, not a label role.
+- Integer line boxes previously marked for Figma verification are owner-accepted
+  application values, not claims about unpublished library measurements. A future
+  published measurement may replace them through an explicit design change.
+- Raw JetBrains Mono combinations were reviewed conservatively. Existing 16px/medium,
+  20px/24px semibold, inherited-size, and custom-leading uses do not exactly match the
+  named mono ramp, so they remain unchanged rather than receiving a silent visual shift.
+  Chart canvas fonts, excluded products, branded/editor typography, and custom measured
+  text remain outside this behavior-neutral pass.
+- The token ratchet now classifies class strings order-independently and prevents new
+  same-variant combinations of a named typography utility with conflicting named,
+  `text-*`, `font-*`, or `leading-*` utilities. Existing reviewed combinations are
+  baselined as debt so this phase does not expand into unrelated visual changes.
+
 ### 2026-07-09 Chart Theme And Geometry Reconciliation (landed on `main`)
 
 - Backdrop ownership is unified. The global Ariakit `[data-backdrop]` rule and the
