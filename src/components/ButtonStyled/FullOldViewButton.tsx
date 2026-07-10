@@ -31,7 +31,7 @@ export const FullOldViewButton = () => {
 		}
 	}
 
-	const tooltipContent = (
+	const featureContent = (
 		<div className="space-y-1 text-xs">
 			<p className="font-semibold">Full View includes:</p>
 			<ul className="list-inside list-disc pl-2">
@@ -49,15 +49,19 @@ export const FullOldViewButton = () => {
 
 	return (
 		<>
-			<Hovercard
-				content={tooltipContent}
-				render={<button onClick={handleClick} disabled={isLoading} />}
-				className={buttonStyles({ size: 'md' })}
-				showOnClick={false}
-			>
-				{isClient && isLoading ? <LoadingSpinner size={16} /> : <Icon name="plus" height={16} width={16} />}
-				<span>Open in Dashboard</span>
-			</Hovercard>
+			<span className="flex items-center gap-1">
+				<button type="button" onClick={handleClick} disabled={isLoading} className={buttonStyles({ size: 'md' })}>
+					{isClient && isLoading ? <LoadingSpinner size={16} /> : <Icon name="plus" height={16} width={16} />}
+					<span>Open in Dashboard</span>
+				</button>
+				<Hovercard
+					content={featureContent}
+					render={<button type="button" aria-label="What Full View includes" />}
+					className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
+				>
+					<Icon name="help-circle" height={16} width={16} />
+				</Hovercard>
+			</span>
 			{shouldRenderModal ? (
 				<Suspense fallback={<></>}>
 					<SubscribeProModal dialogStore={subscribeModalStore} />

@@ -54,9 +54,8 @@ verify one phase before starting the next.
 - Consolidate repeated `StatItem`, `PercentChange`, and chart export composition only
   where the shared API can express the existing semantics and layout.
 - Include focused component correctness uncovered by the sweep: automatic help for
-  visually truncated `FormattedName`, a touch-reachable explanation for
-  `FullOldViewButton`, and opportunistic replacement of remaining low-value native
-  `title` attributes.
+  visually truncated `FormattedName` and opportunistic replacement of remaining
+  low-value native `title` attributes.
 
 ### 2. Decide excluded-product scope
 

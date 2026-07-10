@@ -863,11 +863,11 @@ bg-surface-elevated-2` opaque step per the documented Select-trigger exception.
     branches, Correlations add-token buttons, expenses/token-rights source links,
     SelectWithCombobox custom-column buttons, `MetricSection` definitions (now
     matches `MetricRow`), Mcap/TVL & LST column help.
-- Known limitation (updated 2026-07-09, second pass): the shared Hovercard anchor now
-  also opens on tap/click (`showOnClick`, default on) — the DAT/Treasuries bars had no
-  click action of their own, so all span/bar hovercards are touch-reachable. The only
-  remaining touch gap is FullOldViewButton (`showOnClick={false}`: its click creates a
-  dashboard), which still needs a separate info affordance on touch.
+- Resolution (2026-07-10): the shared Hovercard anchor opens on tap/click (`showOnClick`,
+  default on), so span/bar hovercards remain touch-reachable. `FullOldViewButton` now
+  keeps dashboard creation on its primary button and exposes the feature list through a
+  separate labeled ghost info button, closing the last known touch gap without combining
+  the two actions.
 - Later resolution: the ProtocolRankings accessor returns `null` for sorting on formula
   errors, while the cell renderer evaluates separately and exposes `Err` with the error
   tooltip. The earlier “dead badge” finding no longer applies.
