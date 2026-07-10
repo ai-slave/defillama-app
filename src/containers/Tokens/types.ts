@@ -1,4 +1,4 @@
-export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 7
+export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 8
 
 export const TOKENS_SORT_KEYS = [
 	'rank',
@@ -83,6 +83,7 @@ interface TokensRowCore {
 	symbol: string
 	logo: string | null
 	href: string | null
+	tokenRightsHref: string | null
 	price: number | null
 	priceChange1h: number | null
 	priceChange24h: number | null

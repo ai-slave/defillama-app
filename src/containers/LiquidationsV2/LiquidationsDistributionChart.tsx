@@ -301,7 +301,7 @@ function getLiquidationsTooltipHtml(params: unknown, metric: Metric, tokenLabel:
 									${marker}
 									<span style="color:var(--ld-text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${seriesName}</span>
 								</span>
-								<span style="color:var(--ld-text-primary); font-variant-numeric:tabular-nums; text-align:right;">${rowValue}</span>
+								<span style="color:var(--ld-text-primary); text-align:right;">${rowValue}</span>
 							</div>`)
 	}
 
@@ -316,7 +316,7 @@ function getLiquidationsTooltipHtml(params: unknown, metric: Metric, tokenLabel:
 						<div style="margin-top:8px;">
 							<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:8px; border-top:1px solid var(--ld-border-medium); font-size:12px;">
 								<span style="color:var(--ld-text-secondary);">Total</span>
-								<span style="color:var(--ld-text-primary); font-weight:600; font-variant-numeric:tabular-nums;">${totalLabel}</span>
+								<span style="color:var(--ld-text-primary); font-weight:600;">${totalLabel}</span>
 							</div>
 						</div>
 					</div>`

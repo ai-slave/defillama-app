@@ -80,7 +80,7 @@ function TokenLogoImg({
 			width={size}
 			title={title}
 			data-lgonly={lgonly}
-			className="inline-block aspect-square shrink-0 rounded-full bg-(--bg-tertiary) object-cover text-[0px] text-transparent data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block"
+			className="inline-block aspect-square shrink-0 rounded-full bg-(--bg-tertiary) object-cover text-transparent data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block"
 			loading="lazy"
 			onError={(e) => {
 				setSrc((prev) => {

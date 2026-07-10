@@ -11,7 +11,7 @@ import { ChartSelector } from '~/containers/Bridges/ChartSelector'
 import { useBuildBridgeChartData } from '~/containers/Bridges/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
@@ -427,7 +427,7 @@ export function BridgesOverviewByChain({
 						) : null}
 
 						{activeTab === 'largeTxs' ? null : (
-							<label className="relative w-full max-w-full sm:max-w-[280px]">
+							<label className={searchFieldInlineWrapperStyles}>
 								<span className="sr-only">Search bridges</span>
 								<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 								<input

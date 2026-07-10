@@ -8,6 +8,7 @@ import type { IProtocolRaise } from '~/containers/ProtocolOverview/api.types'
 import { formatRaiseAmount } from '~/containers/Raises/utils'
 import { Card } from '~/ui/Card'
 import { formattedNum } from '~/utils'
+import { TokenRightsPieChart } from './TokenRightsPieChart'
 import type { ITokenRightsData, ITokenRightsParsedLink, ITokenRightsTokenDisplay } from './types'
 import { formatFeeSwitchStatus, getTokenRightsPrimaryValueLabel } from './utils'
 
@@ -522,34 +523,6 @@ function TokenRightsOverviewView({
 	)
 }
 
-function TokenRightsPieChart({ segments }: { segments: Array<{ label: string; active: boolean }> }) {
-	return (
-		<svg viewBox="0 0 220 220" role="img" aria-label="Token rights summary" className="h-[200px] w-[200px]">
-			{segments.map((segment, index) => (
-				<path
-					key={segment.label}
-					d={PIE_SEGMENT_PATHS[index]}
-					fill={segment.active ? 'var(--success)' : 'var(--error)'}
-					stroke="var(--ld-bg-surface)"
-					strokeWidth="4"
-				/>
-			))}
-			{PIE_LABELS.map((label) => (
-				<text
-					key={label.text}
-					x={label.x}
-					y={label.y}
-					textAnchor="middle"
-					transform={label.rotate ? `rotate(${label.rotate} ${label.x} ${label.y})` : undefined}
-					className="fill-secondary text-[13px] font-bold"
-				>
-					{label.text}
-				</text>
-			))}
-		</svg>
-	)
-}
-
 function OverviewTokenValue({
 	display,
 	inactiveLabel,
@@ -577,24 +550,6 @@ function OverviewEquityCaptureValue({ value }: { value: string | null }) {
 	if (value === 'Partial') return <TokenRightsToneText label={value} tone="warning" />
 	return <TokenRightsToneText label={value ?? 'Unknown'} tone="neutral" />
 }
-
-const PIE_LABELS = [
-	{ text: 'Treasury', x: 110, y: 33, rotate: 0 },
-	{ text: 'Revenue', x: 177, y: 72, rotate: 58 },
-	{ text: 'Burns', x: 177, y: 154, rotate: -58 },
-	{ text: 'Dividends', x: 110, y: 198, rotate: 0 },
-	{ text: 'Buybacks', x: 43, y: 154, rotate: 58 },
-	{ text: 'Governance', x: 43, y: 72, rotate: -58 }
-] as const
-
-const PIE_SEGMENT_PATHS = [
-	'M 110 110 L 76 51.11 A 68 68 0 0 1 144 51.11 Z',
-	'M 110 110 L 144 51.11 A 68 68 0 0 1 178 110 Z',
-	'M 110 110 L 178 110 A 68 68 0 0 1 144 168.89 Z',
-	'M 110 110 L 144 168.89 A 68 68 0 0 1 76 168.89 Z',
-	'M 110 110 L 76 168.89 A 68 68 0 0 1 42 110 Z',
-	'M 110 110 L 42 110 A 68 68 0 0 1 76 51.11 Z'
-] as const
 
 // ---------------------------------------------------------------------------
 // Shared primitives
@@ -817,11 +772,11 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: IP
 												})
 											: '—'}
 									</td>
-									<td className="py-2.5 pr-4 text-right font-jetbrains whitespace-nowrap tabular-nums">
+									<td className="py-2.5 pr-4 text-right whitespace-nowrap">
 										{r.amount ? formattedNum(r.amount * 1_000_000, true) : '—'}
 									</td>
 									<td className="py-2.5 pr-4 whitespace-nowrap">{r.round || '—'}</td>
-									<td className="py-2.5 pr-4 text-right font-jetbrains whitespace-nowrap tabular-nums">
+									<td className="py-2.5 pr-4 text-right whitespace-nowrap">
 										{valuation != null ? formattedNum(valuation, true) : '—'}
 									</td>
 									<td className="py-2.5">

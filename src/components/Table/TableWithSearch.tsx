@@ -19,6 +19,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { VirtualTable, type VirtualTableLayout } from '~/components/Table/Table'
 import { Card } from '~/ui/Card'
 import {
+	searchFieldFlexibleWrapperStyles,
 	searchFieldIconStyles,
 	searchFieldInlineWrapperStyles,
 	searchFieldInputStyles,
@@ -161,8 +162,14 @@ export function TableWithSearch<T extends RowData>({
 
 	const hasLeadingContent = Boolean(leadingControls || header)
 	const renderedCustomFilters = typeof customFilters === 'function' ? customFilters() : customFilters
+	const searchWrapperStyles =
+		searchAlign === 'start'
+			? searchFieldFlexibleWrapperStyles
+			: hasLeadingContent
+				? searchFieldInlineWrapperStyles
+				: searchFieldWrapperStyles
 	const searchControl = columnToSearch ? (
-		<label className={hasLeadingContent ? searchFieldInlineWrapperStyles : searchFieldWrapperStyles}>
+		<label className={searchWrapperStyles}>
 			<span className="sr-only">{placeholder}</span>
 			<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 			<input

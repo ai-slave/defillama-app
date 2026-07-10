@@ -7,6 +7,7 @@ function row(overrides: Partial<TokensSourceRow> & Pick<TokensSourceRow, 'id' | 
 		rank: null,
 		logo: null,
 		href: null,
+		tokenRightsHref: null,
 		price: null,
 		priceChange1h: null,
 		priceChange24h: null,
@@ -62,7 +63,7 @@ describe('getTokensPageQuery', () => {
 			})
 		).toEqual({
 			page: 1,
-			pageSize: 20,
+			pageSize: 50,
 			sortBy: 'marketCap',
 			sortDesc: true,
 			search: 'ethena'
@@ -106,6 +107,19 @@ describe('getTokensPageFromRows', () => {
 		expect(result.rows.map((item) => item.id)).toEqual(['uniswap'])
 		expect(result.total).toBe(1)
 		expect(result.hasMore).toBe(false)
+	})
+
+	it('formats prices with meaningful precision and USD values without compact suffixes', () => {
+		const result = getPage(
+			[
+				row({ id: 'near-dollar', name: 'Near Dollar', symbol: 'NEAR', price: 0.9992, marketCap: 61_853.24 }),
+				row({ id: 'small', name: 'Small', symbol: 'SMALL', price: 0.00001234, marketCap: 1000 })
+			],
+			{ sortBy: 'marketCap', pageSize: '50' }
+		)
+
+		expect(result.rows[0].display).toMatchObject({ price: '$0.9992', marketCap: '$61,853.24' })
+		expect(result.rows[1].display).toMatchObject({ price: '$0.00001234', marketCap: '$1,000.00' })
 	})
 
 	it('ignores stale category params', () => {

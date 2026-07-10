@@ -464,7 +464,7 @@ const emissionsColumns = [
 
 				return (
 					<div className="flex h-full w-full flex-col items-end justify-center gap-2 px-2">
-						<span className="mono-sm-bold text-primary">{formattedNum(pctUnlocked)}%</span>
+						<span className="text-sm font-bold text-primary">{formattedNum(pctUnlocked)}%</span>
 						<div className="h-2 w-full rounded-full bg-surface-elevated-2">
 							<div
 								className="h-2 rounded-full bg-brand"

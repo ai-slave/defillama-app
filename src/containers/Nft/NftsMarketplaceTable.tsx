@@ -14,7 +14,8 @@ import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/components/Tooltip'
-import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { TableToolbar } from '~/ui/Toolbar'
 import { tokenIconUrl } from '~/utils/icons'
 
 interface INftMarketplace {
@@ -153,8 +154,8 @@ export function NftsMarketplaceTable({ data }: { data: Array<INftMarketplace> })
 
 	return (
 		<>
-			<div className="flex items-center justify-end gap-2 p-3">
-				<label className="relative ml-auto w-full sm:max-w-[280px]">
+			<TableToolbar>
+				<label className={searchFieldWrapperStyles}>
 					<span className="sr-only">Search marketplaces</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input
@@ -163,7 +164,7 @@ export function NftsMarketplaceTable({ data }: { data: Array<INftMarketplace> })
 						className={searchFieldInputStyles}
 					/>
 				</label>
-			</div>
+			</TableToolbar>
 			<VirtualTable instance={instance} />
 		</>
 	)

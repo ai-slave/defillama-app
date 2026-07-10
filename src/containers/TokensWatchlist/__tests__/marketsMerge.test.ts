@@ -27,6 +27,7 @@ function row(overrides: Partial<TokensTableRow> & Pick<TokensTableRow, 'id' | 's
 		name: overrides.symbol,
 		logo: '',
 		href: null,
+		tokenRightsHref: null,
 		price: null,
 		priceChange1h: null,
 		priceChange24h: null,

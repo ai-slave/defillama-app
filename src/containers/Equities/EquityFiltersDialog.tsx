@@ -495,7 +495,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={handleOpenChange}>
 			<Ariakit.DialogDisclosure render={<Button type="button" size="md" />}>
-				<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 text-[10px] leading-none">
+				<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 label-xs leading-none">
 					{activeCount}
 				</span>
 				<span>Filters</span>
@@ -509,7 +509,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 					<div className="flex items-baseline gap-2.5">
 						<DialogHeading>Filters</DialogHeading>
-						<span className="text-xs text-tertiary tabular-nums">
+						<span className="text-xs text-tertiary">
 							{draftActiveCount}/{EQUITY_FILTER_CONFIGS.length}
 						</span>
 					</div>
@@ -553,7 +553,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 								<section key={group.key} className="flex flex-col gap-2">
 									<div className="flex items-baseline gap-1.5">
 										<span className="label-xs tracking-wide text-tertiary uppercase">{group.label}</span>
-										<span className="text-[10px] text-tertiary/70 tabular-nums">· {group.filters.length}</span>
+										<span className="body-xs text-tertiary/70">· {group.filters.length}</span>
 									</div>
 									<div className="flex flex-wrap gap-1">
 										{group.filters.map((config) => (

@@ -20,7 +20,7 @@ import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -506,18 +506,24 @@ function TokenRightsPage({ protocols }: { protocols: TokenRightsListItem[] }) {
 				<Panel padding="none">
 					<TableToolbar>
 						<span className="mr-1 label-sm text-tertiary">Filters</span>
-						{TOKEN_RIGHTS_FILTERS.map((filter) => (
-							<Button
-								key={filter.key}
-								type="button"
-								onClick={() => toggleFilter(filter.key)}
-								variant={activeFilters.includes(filter.key) ? 'outline' : 'secondary'}
-								size="md"
-							>
-								{filter.label}
-							</Button>
-						))}
-						<label className="relative ml-auto w-full max-w-full sm:max-w-[280px]">
+						{TOKEN_RIGHTS_FILTERS.map((filter) => {
+							const active = activeFilters.includes(filter.key)
+							return (
+								<Button
+									key={filter.key}
+									type="button"
+									onClick={() => toggleFilter(filter.key)}
+									variant="toggle"
+									size="md"
+									data-active={active}
+									aria-pressed={active}
+								>
+									<Icon name={active ? 'x' : 'plus'} className="size-3.5" aria-hidden="true" />
+									{filter.label}
+								</Button>
+							)
+						})}
+						<label className={`${searchFieldInlineWrapperStyles} ml-auto`}>
 							<span className="sr-only">Search protocol</span>
 							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 							<input
@@ -742,7 +748,7 @@ function InlineStat({ value, label }: { value: number; label: string }) {
 	return (
 		<div className="flex items-baseline gap-1.5">
 			<span className="body-sm text-secondary">{label}</span>
-			<span className="label-md text-primary tabular-nums">{value}</span>
+			<span className="label-md text-primary">{value}</span>
 		</div>
 	)
 }
@@ -885,8 +891,8 @@ function StatusPill({
 
 function TokenRightsLegend() {
 	return (
-		<div className="flex flex-wrap items-center gap-x-8 gap-y-2 body-sm text-secondary">
-			<span className="label-sm text-secondary uppercase">Legend</span>
+		<div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-subtle px-3 py-2.5 body-sm text-secondary">
+			<span className="mr-1 label-sm text-tertiary uppercase">Legend</span>
 			<span className="inline-flex items-center gap-2">
 				<span className="size-3 rounded-full bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.55)]" />
 				Active

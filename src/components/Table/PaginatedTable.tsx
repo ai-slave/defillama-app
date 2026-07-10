@@ -7,6 +7,7 @@ import {
 	startTransition,
 	useContext,
 	useMemo,
+	useRef,
 	type CSSProperties,
 	type ReactNode
 } from 'react'
@@ -28,7 +29,9 @@ interface PaginatedTableProps<T extends RowData> {
 	className?: string
 	style?: CSSProperties
 	tableClassName?: string
+	paginationClassName?: string
 	shell?: 'default' | 'none'
+	stickyHeader?: boolean
 	interactionDisabled?: boolean
 	/** Render an expanded panel beneath a row when `row.getIsExpanded()` is true. Spans all columns. */
 	renderSubComponent?: (row: Row<T>) => ReactNode
@@ -98,7 +101,9 @@ export function PaginatedTable<T extends RowData>({
 	className,
 	style,
 	tableClassName,
+	paginationClassName,
 	shell = 'default',
+	stickyHeader = false,
 	interactionDisabled = false,
 	renderSubComponent
 }: PaginatedTableProps<T>) {
@@ -116,12 +121,75 @@ export function PaginatedTable<T extends RowData>({
 	}, [pageSize, pageSizeOptions])
 	const shouldShowPaginationControls = rowCount > 10 && pageCount > 1
 	const shouldShowPageSizeSelector = rowCount > 10 && availablePageSizeOptions.length >= 2
+	const attachedPaginationClassName = shell === 'none' ? 'border-t border-subtle p-2' : ''
+	const stickyHeaderContentRef = useRef<HTMLDivElement>(null)
+	const handleTableScroll = (event: React.UIEvent<HTMLDivElement>) => {
+		if (!stickyHeaderContentRef.current) return
+		const scrollLeft = event.currentTarget.scrollLeft
+		stickyHeaderContentRef.current.style.setProperty('--paginated-header-scroll-left', `${scrollLeft}px`)
+		stickyHeaderContentRef.current.style.transform = `translateX(-${scrollLeft}px)`
+	}
 	const displayRowNumbers = useMemo(
 		() => new Map(rows.map((row, rowIndex) => [row.id, pageIndex * pageSize + rowIndex + 1])),
 		[pageIndex, pageSize, rows]
 	)
+	const renderHeader = ({
+		stickyMirror = false,
+		interactive = true
+	}: { stickyMirror?: boolean; interactive?: boolean } = {}) => (
+		<thead data-sticky-header-mirror={stickyMirror || undefined}>
+			{table.getHeaderGroups().map((headerGroup) => (
+				<tr key={headerGroup.id} className="border-b border-subtle bg-surface">
+					{headerGroup.headers.map((header) => {
+						const align = header.column.columnDef.meta?.align ?? 'start'
+						const headerClassName = header.column.columnDef.meta?.headerClassName
+						const isHorizontallySticky = headerClassName?.split(/\s+/).includes('sticky') ?? false
+						const headerAlignmentClass =
+							align === 'center' ? 'mx-auto w-fit' : align === 'end' ? 'ms-auto w-fit' : 'w-fit'
+
+						return (
+							<TokenPageTableHeaderCell
+								key={header.id}
+								textAlign={align}
+								className={headerClassName}
+								style={
+									stickyMirror && isHorizontallySticky
+										? { transform: 'translateX(var(--paginated-header-scroll-left, 0px))' }
+										: undefined
+								}
+							>
+								{header.isPlaceholder ? null : (
+									<div className={headerAlignmentClass}>
+										{interactive ? (
+											<HeaderWithTooltip
+												content={header.column.columnDef.meta?.headerHelperText}
+												onClick={!header.column.getCanSort() ? null : header.column.getToggleSortingHandler()}
+												disabled={interactionDisabled}
+											>
+												{flexRender(header.column.columnDef.header, header.getContext())}
+												{header.column.getCanSort() ? <SortIcon dir={header.column.getIsSorted()} /> : null}
+											</HeaderWithTooltip>
+										) : (
+											<span
+												className={`inline-flex items-center gap-1 whitespace-nowrap ${
+													header.column.columnDef.meta?.headerHelperText ? 'underline decoration-dotted' : ''
+												}`}
+											>
+												{flexRender(header.column.columnDef.header, header.getContext())}
+												{header.column.getCanSort() ? <SortIcon dir={header.column.getIsSorted()} /> : null}
+											</span>
+										)}
+									</div>
+								)}
+							</TokenPageTableHeaderCell>
+						)
+					})}
+				</tr>
+			))}
+		</thead>
+	)
 	const tableContent = (
-		<TokenPageTableScroller className="bg-surface">
+		<TokenPageTableScroller className="bg-surface" onScroll={stickyHeader ? handleTableScroll : undefined}>
 			{interactionDisabled ? (
 				<div className="absolute inset-0 z-20 flex items-center justify-center bg-surface/60 backdrop-blur-[1px]">
 					<div className="flex items-center gap-2 rounded-md border border-subtle bg-surface px-3 py-2 text-sm text-secondary shadow-xs">
@@ -155,38 +223,7 @@ export function PaginatedTable<T extends RowData>({
 						<col key={column.id} className={column.columnDef.meta?.headerClassName} />
 					))}
 				</colgroup>
-				<thead>
-					{table.getHeaderGroups().map((headerGroup) => (
-						<tr key={headerGroup.id} className="border-b border-subtle bg-surface">
-							{headerGroup.headers.map((header) => {
-								const align = header.column.columnDef.meta?.align ?? 'start'
-								const headerAlignmentClass =
-									align === 'center' ? 'mx-auto w-fit' : align === 'end' ? 'ms-auto w-fit' : 'w-fit'
-
-								return (
-									<TokenPageTableHeaderCell
-										key={header.id}
-										textAlign={align}
-										className={header.column.columnDef.meta?.headerClassName}
-									>
-										{header.isPlaceholder ? null : (
-											<div className={headerAlignmentClass}>
-												<HeaderWithTooltip
-													content={header.column.columnDef.meta?.headerHelperText}
-													onClick={!header.column.getCanSort() ? null : header.column.getToggleSortingHandler()}
-													disabled={interactionDisabled}
-												>
-													{flexRender(header.column.columnDef.header, header.getContext())}
-													{header.column.getCanSort() ? <SortIcon dir={header.column.getIsSorted()} /> : null}
-												</HeaderWithTooltip>
-											</div>
-										)}
-									</TokenPageTableHeaderCell>
-								)
-							})}
-						</tr>
-					))}
-				</thead>
+				{renderHeader({ interactive: !stickyHeader })}
 				<tbody>
 					{rows.map((row) => {
 						const isExpanded = renderSubComponent != null && row.getIsExpanded()
@@ -224,7 +261,31 @@ export function PaginatedTable<T extends RowData>({
 
 	return (
 		<DisplayRowNumbersContext.Provider value={displayRowNumbers}>
-			<div className={`flex flex-col gap-3 ${className ?? ''}`} style={style}>
+			<div className={`flex flex-col ${shell === 'none' ? 'gap-0' : 'gap-3'} ${className ?? ''}`} style={style}>
+				{stickyHeader ? (
+					<div data-sticky-table-header className="sticky top-0 z-30 h-0">
+						<div className="w-full overflow-clip bg-surface shadow-xs">
+							<div
+								ref={stickyHeaderContentRef}
+								className={`w-full ${tableClassName ?? ''}`}
+								style={{ willChange: 'transform' }}
+							>
+								<TokenPageTable
+									role="presentation"
+									className="z-10 bg-surface"
+									style={{ tableLayout: 'fixed', width: '100%' }}
+								>
+									<colgroup>
+										{visibleLeafColumns.map((column) => (
+											<col key={column.id} className={column.columnDef.meta?.headerClassName} />
+										))}
+									</colgroup>
+									{renderHeader({ stickyMirror: true })}
+								</TokenPageTable>
+							</div>
+						</div>
+					</div>
+				) : null}
 				{shell === 'default' ? (
 					<TokenPageTableShell className="bg-surface">{tableContent}</TokenPageTableShell>
 				) : (
@@ -232,7 +293,9 @@ export function PaginatedTable<T extends RowData>({
 				)}
 
 				{shouldShowPaginationControls || shouldShowPageSizeSelector ? (
-					<div className="flex flex-wrap items-center justify-between gap-2">
+					<div
+						className={`flex flex-wrap items-center justify-between gap-2 ${attachedPaginationClassName} ${paginationClassName ?? ''}`.trim()}
+					>
 						<div className="flex items-center gap-2">
 							{shouldShowPaginationControls ? (
 								<>

@@ -8,7 +8,7 @@ export function ProtocolChainsHovercard({ chains, className }: { chains: string[
 
 	return (
 		<Hovercard
-			className={className ?? 'text-[0.7rem] text-secondary'}
+			className={className ?? 'body-sm text-secondary'}
 			content={
 				<span className="flex flex-col gap-1">
 					{chains.map((chain) => (

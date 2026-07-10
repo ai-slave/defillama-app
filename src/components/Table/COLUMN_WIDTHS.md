@@ -47,9 +47,11 @@ Notes:
   carry no sort icon. Every other column does, hence the +14px.
 - **Non-text body** — cells with a logo/flag/link (ticker, country, company) are sized
   by that content, not the header; measure the real cell, don't trim them blindly.
-- Fonts: the table is `text-sm` (14px) and the app font is **Inter** (`--font-inter`,
+- Fonts: the table is `text-sm` (14px) and the app font is **proportional Inter** (`--font-inter`,
   `public/fonts/inter.woff2`). Header is `font-medium`; for Inter the advance widths are
-  effectively constant across weight, so 400 vs 500 doesn't change the result.
+  effectively constant across weight, so 400 vs 500 doesn't change the result. Ordinary
+  numeric cells do not use `mono-*` or `tabular-nums`; those are reserved for the explicit
+  metric/code and changing-value cases documented in `design.md`.
 - **Buffer is optional, default 0.** The 24px of `px-3` padding already keeps text well
   clear of the column edge — adding more just makes columns loose. A column whose content
   - padding ≈ its width is already correct; don't pad it out. The only case for a few px:
@@ -104,7 +106,10 @@ of what's inside — plain numbers, an icon + link, a row of chain logos — so 
 measurement that works for **every** column type, unlike the label-only offline method.
 
 Caveat: only the **current page of rows** is measured, so make sure large values are on
-screen (sort descending, or bump rows-per-page) before trusting the body width.
+screen (sort descending, or bump rows-per-page) before trusting the body width. For a
+descending numeric directory such as `/tokens`, the first row is the practical maximum
+for that sorted metric and should be the sizing reference instead of adding a speculative
+oversized buffer.
 
 ### B. Offline from the font file (no browser)
 

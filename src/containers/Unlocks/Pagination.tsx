@@ -250,7 +250,7 @@ export const Pagination = ({ items, startIndex = 0 }: PaginationProps) => {
 						<Icon name="arrow-left" height={14} width={14} />
 					</button>
 
-					<span className="label-sm text-secondary tabular-nums">
+					<span className="label-sm text-secondary">
 						{currentPage + 1} / {totalPages}
 					</span>
 

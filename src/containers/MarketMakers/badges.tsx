@@ -9,7 +9,7 @@ const STATUS_STYLES: Record<'full' | 'partial' | 'none', string> = {
 export function AccentBadge({ children, className = '' }: { children: ReactNode; className?: string }) {
 	return (
 		<span
-			className={`inline-flex items-center justify-center gap-1.5 rounded-full border border-[#1A54C4]/30 bg-[#1A54C4]/10 px-2.5 label-sm text-[#1A54C4] ${className}`}
+			className={`inline-flex items-center justify-center gap-1.5 rounded-full border border-brand/30 bg-brand-muted px-2.5 label-sm text-link ${className}`}
 		>
 			{children}
 		</span>
@@ -23,7 +23,7 @@ export function TimeframeBadge({ label }: { label: string }) {
 export function SecondaryBadge({ children, className = '' }: { children: ReactNode; className?: string }) {
 	return (
 		<span
-			className={`inline-flex items-center justify-center gap-1.5 rounded-full border border-[#3F4D62]/30 bg-[#3F4D62]/10 px-2.5 py-0.5 label-sm text-secondary ${className}`}
+			className={`inline-flex items-center justify-center gap-1.5 rounded-full border border-medium bg-surface-elevated-1 px-2.5 py-0.5 label-sm text-secondary ${className}`}
 		>
 			{children}
 		</span>

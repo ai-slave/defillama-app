@@ -1271,7 +1271,7 @@ function RWAPerpsFiltersDialog({
 				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 					<div className="flex items-baseline gap-2.5">
 						<DialogHeading>Filters</DialogHeading>
-						<span className="label-sm text-tertiary tabular-nums">{draftSelectedCount} selected</span>
+						<span className="label-sm text-tertiary">{draftSelectedCount} selected</span>
 					</div>
 					<DialogCloseButton className="-mr-1" />
 				</div>

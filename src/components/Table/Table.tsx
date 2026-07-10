@@ -28,6 +28,7 @@ interface ITableProps<T extends RowData = RowData> {
 
 const isGroupingColumn = (columnId?: string) => typeof columnId === 'string' && columnId.startsWith('__group_')
 const DEFAULT_VIRTUAL_ROW_SIZE = 50
+const COMPACT_VIRTUAL_ROW_SIZE = 40
 const INITIAL_VIRTUAL_WINDOW_ROWS = 18
 
 const getInitialVirtualizerHeight = (rowCount: number, rowHeight: number) =>
@@ -117,7 +118,7 @@ function TableRow<T extends RowData>({
 							data-lighter={stripedBg && i % 2 === 0}
 							data-chainpage={isChainPage}
 							className={`overflow-hidden border-t border-r border-subtle p-3 text-ellipsis whitespace-nowrap ${
-								compact ? 'border-r-0 px-5' : ''
+								compact ? 'border-r-0 px-5 py-2' : ''
 							} ${cell.column.columnDef.meta?.cellClassName ?? ''}`}
 							style={{
 								textAlign,
@@ -184,7 +185,7 @@ export function VirtualTable<T extends RowData>({
 		}
 	}, [])
 
-	const estimatedRowSize = rowSize ?? DEFAULT_VIRTUAL_ROW_SIZE
+	const estimatedRowSize = rowSize ?? (compact ? COMPACT_VIRTUAL_ROW_SIZE : DEFAULT_VIRTUAL_ROW_SIZE)
 	const initialVirtualizerRect = React.useMemo(
 		() => ({ width: 0, height: getInitialVirtualizerHeight(rows.length, estimatedRowSize) }),
 		[rows.length, estimatedRowSize]
@@ -497,7 +498,7 @@ export function VirtualTable<T extends RowData>({
 								className={`overflow-hidden border-r border-subtle p-3 text-ellipsis whitespace-nowrap last:border-r-0 ${
 									rowSpannedHeader || headerGroup.depth === 0 || isGroupedChildHeader ? 'border-t' : ''
 								} ${rowSpannedHeader || isLastHeaderRow ? 'border-b' : ''} ${
-									compact ? 'h-[50px] border-r-0 px-5' : ''
+									compact ? 'h-10 border-r-0 px-5 py-2' : ''
 								} ${isRepeatedLeafHeader ? 'p-0' : ''} ${isLeafHeader ? (meta?.headerClassName ?? '') : ''}`}
 							>
 								{isRepeatedLeafHeader ? null : (
@@ -570,7 +571,7 @@ export function VirtualTable<T extends RowData>({
 									key={row.id}
 									row={row}
 									index={i}
-									rowHeight={rowSize}
+									rowHeight={estimatedRowSize}
 									subRowOrdinalById={subRowOrdinalById}
 									rowRankById={rowRankById}
 									firstColumnId={firstColumnId}

@@ -5,11 +5,14 @@ import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { TokenLogo } from '~/components/TokenLogo'
+import { TokenRightsPieChart } from '~/containers/TokenRights/TokenRightsPieChart'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Hovercard } from '~/ui/Hovercard'
-import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import { Panel } from '~/ui/Panel'
+import { TableToolbar } from '~/ui/Toolbar'
 import type {
 	TokensDisplayTone,
 	TokensPageProps,
@@ -19,8 +22,8 @@ import type {
 } from './types'
 import { useTokensServerTable } from './useTokensServerTable'
 
-const PAGE_SIZE_OPTIONS = [20, 50, 100] as const
-export const TOKENS_TABLE_WIDTH_EXCLUDING_RANK = 2244
+const PAGE_SIZE_OPTIONS = [50, 100, 200] as const
+export const TOKENS_TABLE_WIDTH_EXCLUDING_RANK = 2730
 // Width of the optional "Markets" expander column (added only in the expandable/watchlist variant).
 export const TOKENS_MARKETS_EXPANDER_COLUMN_WIDTH = 104
 const columnHelper = createColumnHelper<TokensTableRow>()
@@ -32,20 +35,6 @@ const RIGHTS_CHIP_TONE_CLASSES: Record<RightsTone, string> = {
 	negative: 'border-red-600/30 bg-red-600/10 text-red-700 dark:text-red-400',
 	warning: 'border-amber-600/30 bg-amber-600/10 text-amber-700 dark:text-amber-400',
 	neutral: 'border-medium bg-surface text-secondary'
-}
-
-const RIGHTS_TEXT_TONE_CLASSES: Record<RightsTone, string> = {
-	positive: 'text-green-700 dark:text-green-400',
-	negative: 'text-red-600 dark:text-red-400',
-	warning: 'text-amber-600 dark:text-amber-400',
-	neutral: 'text-secondary'
-}
-
-const RIGHTS_DOT_TONE_CLASSES: Record<RightsTone, string> = {
-	positive: 'bg-data-up',
-	negative: 'bg-data-down',
-	warning: 'bg-amber-500',
-	neutral: 'bg-disabled'
 }
 
 const VALUE_TONE_CLASSES: Record<TokensDisplayTone, string> = {
@@ -65,7 +54,7 @@ export function getRankColumnWidth(rows: TokensTableRow[]): number {
 		const digits = String(row.rowNumber).length
 		if (digits > maxDigits) maxDigits = digits
 	}
-	return Math.max(40, 20 + maxDigits * 7)
+	return Math.max(48, 24 + maxDigits * 7)
 }
 
 function Dash() {
@@ -73,12 +62,12 @@ function Dash() {
 }
 
 function CurrencyValue({ value }: { value: string | null }) {
-	return value === null ? <Dash /> : <span className="tabular-nums">{value}</span>
+	return value === null ? <Dash /> : <span className="whitespace-nowrap">{value}</span>
 }
 
 function PercentValue({ value, tone }: { value: string | null; tone: TokensDisplayTone }) {
 	if (value === null) return <Dash />
-	return <span className={`tabular-nums ${VALUE_TONE_CLASSES[tone]}`}>{value}</span>
+	return <span className={VALUE_TONE_CLASSES[tone]}>{value}</span>
 }
 
 function ProgressPercentValue({
@@ -95,7 +84,7 @@ function ProgressPercentValue({
 
 	return (
 		<span className="flex min-w-[92px] flex-col items-end gap-1">
-			<span className="font-jetbrains text-sm font-semibold tabular-nums">{value}</span>
+			<span className="text-sm font-semibold">{value}</span>
 			<span className="h-1.5 w-20 overflow-hidden rounded-full bg-(--bg-tertiary)">
 				<span className={`block h-full rounded-full ${barClassName}`} style={{ width }} />
 			</span>
@@ -127,35 +116,6 @@ function TokenCell({ row }: { row: { original: TokensTableRow } }) {
 	)
 }
 
-function rightsStatusTone(value: string): RightsTone {
-	switch (value) {
-		case 'On':
-		case 'Active':
-		case 'Yes':
-			return 'positive'
-		case 'Off':
-		case 'None':
-		case 'No':
-			return 'negative'
-		case 'Pending':
-		case 'Partial':
-			return 'warning'
-		default:
-			return 'neutral'
-	}
-}
-
-function equityCaptureTone(value: string): RightsTone {
-	if (value === 'Yes') return 'negative'
-	if (value === 'Partial') return 'warning'
-	if (value === 'No') return 'positive'
-	return 'neutral'
-}
-
-function RightsToneText({ label, tone }: { label: string; tone: RightsTone }) {
-	return <span className={`label-sm font-semibold whitespace-nowrap ${RIGHTS_TEXT_TONE_CLASSES[tone]}`}>{label}</span>
-}
-
 function RightsChip({ label, tone }: { label: string; tone: RightsTone }) {
 	return (
 		<span
@@ -166,21 +126,9 @@ function RightsChip({ label, tone }: { label: string; tone: RightsTone }) {
 	)
 }
 
-function RightsChipList({
-	items,
-	tone,
-	wrap = false,
-	align = 'start'
-}: {
-	items: string[]
-	tone: RightsTone
-	wrap?: boolean
-	align?: 'start' | 'end'
-}) {
+function RightsChipList({ items, tone, wrap = false }: { items: string[]; tone: RightsTone; wrap?: boolean }) {
 	return (
-		<span
-			className={`flex min-w-0 items-center gap-1 ${wrap ? 'flex-wrap' : 'flex-nowrap'} ${align === 'end' ? 'w-full justify-end text-right' : ''}`}
-		>
+		<span className={`flex min-w-0 items-center gap-1 ${wrap ? 'flex-wrap' : 'flex-nowrap'}`}>
 			{items.map((item, index) => (
 				<RightsChip key={`${item}-${index}`} label={item} tone={tone} />
 			))}
@@ -188,85 +136,17 @@ function RightsChipList({
 	)
 }
 
-function RightsTokenValue({
-	items,
-	inactiveLabel,
-	inactiveTone
-}: {
-	items: string[]
-	inactiveLabel: string
-	inactiveTone?: RightsTone
-}) {
-	if (items.length === 0) {
-		return <RightsToneText label={inactiveLabel} tone={inactiveTone ?? rightsStatusTone(inactiveLabel)} />
-	}
-	return <RightsChipList items={items} tone="positive" wrap align="end" />
-}
-
-function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
+function RightsPopover({ rights, fullRightsHref }: { rights: TokensRightsSummary; fullRightsHref: string | null }) {
 	const hasPrimaryValueAccrual = rights.primaryValue !== null || rights.primaryDetails !== null
 	const hasStructuralDistribution = rights.buybacks || rights.dividends
-	const coreFields: Array<{ label: string; tone: RightsTone; value: React.ReactNode }> = [
-		{
-			label: 'Governance',
-			tone: rights.governance ? 'positive' : 'neutral',
-			value: <RightsTokenValue items={rights.governanceTokens} inactiveLabel="N/A" />
-		},
-		{
-			label: 'Treasury',
-			tone: rights.treasury ? 'positive' : 'neutral',
-			value: <RightsTokenValue items={rights.treasuryTokens} inactiveLabel="N/A" />
-		},
-		{
-			label: 'Revenue',
-			tone: rights.revenue ? 'positive' : 'neutral',
-			value: <RightsTokenValue items={rights.revenueTokens} inactiveLabel="N/A" />
-		},
-		{
-			label: 'Buybacks',
-			tone: hasStructuralDistribution ? 'positive' : 'negative',
-			value: (
-				<RightsTokenValue
-					items={rights.buybackTokens}
-					inactiveLabel="None"
-					inactiveTone={hasStructuralDistribution ? 'neutral' : 'negative'}
-				/>
-			)
-		},
-		{
-			label: 'Dividends',
-			tone: hasStructuralDistribution ? 'positive' : 'negative',
-			value: (
-				<RightsTokenValue
-					items={rights.dividendTokens}
-					inactiveLabel="None"
-					inactiveTone={hasStructuralDistribution ? 'neutral' : 'negative'}
-				/>
-			)
-		},
-		{
-			label: 'Burns',
-			tone: rights.burns ? rightsStatusTone(rights.burnsStatus) : 'negative',
-			value: rights.burns ? (
-				<RightsChip label={rights.burnsStatus} tone={rightsStatusTone(rights.burnsStatus)} />
-			) : (
-				<RightsToneText label="None" tone="negative" />
-			)
-		}
+	const pieSegments = [
+		{ label: 'Treasury', active: rights.treasury },
+		{ label: 'Revenue', active: rights.revenue },
+		{ label: 'Burns', active: rights.burns },
+		{ label: 'Dividends', active: hasStructuralDistribution },
+		{ label: 'Buybacks', active: hasStructuralDistribution },
+		{ label: 'Governance', active: rights.governance }
 	]
-	const extraFields = [
-		{
-			label: 'Fee Switch',
-			value: <RightsToneText label={rights.feeSwitchStatus} tone={rightsStatusTone(rights.feeSwitchStatus)} />
-		},
-		{
-			label: 'Equity Rev. Capture',
-			value: (
-				<RightsToneText label={rights.equityRevenueCapture} tone={equityCaptureTone(rights.equityRevenueCapture)} />
-			)
-		}
-	]
-
 	return (
 		<div className="w-[min(24rem,var(--popover-available-width))] whitespace-normal text-primary">
 			<div className="flex min-w-0 flex-col gap-2.5">
@@ -289,52 +169,26 @@ function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
 					</div>
 				) : null}
 
-				<div className="grid min-w-0 gap-1.5">
-					{coreFields.map((field) => (
-						<div
-							key={field.label}
-							className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3 border-b border-subtle pb-1.5 last:border-b-0 last:pb-0"
+				<div className="flex justify-center">
+					<TokenRightsPieChart segments={pieSegments} />
+				</div>
+
+				{rights.utilityItems.length > 0 ? (
+					<div className="flex flex-col items-center gap-1.5">
+						<div className="label-sm font-medium tracking-wider text-secondary uppercase">Utility</div>
+						<RightsChipList items={rights.utilityItems} tone="neutral" wrap />
+					</div>
+				) : null}
+
+				{fullRightsHref ? (
+					<div className="flex justify-end border-t border-subtle pt-2">
+						<BasicLink
+							href={fullRightsHref}
+							className="inline-flex items-center gap-1 label-sm text-link hover:underline"
 						>
-							<span className="flex min-w-0 items-center gap-1.5 label-sm whitespace-nowrap text-secondary">
-								<span className={`size-1.5 shrink-0 rounded-full ${RIGHTS_DOT_TONE_CLASSES[field.tone]}`} />
-								{field.label}
-							</span>
-							<span className="flex min-w-0 items-center justify-end text-right">{field.value}</span>
-						</div>
-					))}
-				</div>
-
-				<div className="grid gap-1.5 border-t border-subtle pt-2">
-					{extraFields.map((field) => (
-						<div key={field.label} className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3">
-							<span className="label-sm whitespace-nowrap text-secondary">{field.label}</span>
-							<span className="flex min-w-0 items-center justify-end text-right">{field.value}</span>
-						</div>
-					))}
-				</div>
-
-				{rights.utilityItems.length > 0 || rights.fundraisingLabel || rights.associatedEntities.length > 0 ? (
-					<div className="grid gap-2 border-t border-subtle pt-2">
-						{rights.utilityItems.length > 0 ? (
-							<div className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3">
-								<span className="label-sm whitespace-nowrap text-secondary">Utility</span>
-								<RightsChipList items={rights.utilityItems} tone="neutral" wrap align="end" />
-							</div>
-						) : null}
-						{rights.fundraisingLabel ? (
-							<div className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3">
-								<span className="label-sm whitespace-nowrap text-secondary">Fundraising</span>
-								<span className="flex min-w-0 items-center justify-end text-right">
-									<RightsToneText label={rights.fundraisingLabel} tone="neutral" />
-								</span>
-							</div>
-						) : null}
-						{rights.associatedEntities.length > 0 ? (
-							<div className="grid min-w-0 grid-cols-[8rem_minmax(0,1fr)] items-center gap-3">
-								<span className="label-sm whitespace-nowrap text-secondary">Entities</span>
-								<RightsChipList items={rights.associatedEntities} tone="neutral" wrap align="end" />
-							</div>
-						) : null}
+							Full token rights
+							<Icon name="external-link" className="size-3.5" />
+						</BasicLink>
 					</div>
 				) : null}
 			</div>
@@ -342,11 +196,15 @@ function RightsPopover({ rights }: { rights: TokensRightsSummary }) {
 	)
 }
 
-function RightsPie({ rights }: { rights: TokensRightsSummary | null }) {
+function RightsPie({ rights, fullRightsHref }: { rights: TokensRightsSummary | null; fullRightsHref: string | null }) {
 	if (!rights) return <Dash />
 
 	return (
-		<Hovercard content={<RightsPopover rights={rights} />} placement="left" className="!inline-flex w-fit">
+		<Hovercard
+			content={<RightsPopover rights={rights} fullRightsHref={fullRightsHref} />}
+			placement="left"
+			className="!inline-flex w-fit"
+		>
 			<span
 				role="img"
 				aria-label="Token rights summary"
@@ -361,12 +219,12 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 	columnHelper.accessor((row) => row.rank ?? undefined, {
 		id: 'rank',
 		header: '#',
-		cell: ({ row }) => <span className="label-sm text-secondary tabular-nums">{row.original.rowNumber}</span>,
+		cell: ({ row }) => <span className="text-secondary">{row.original.rowNumber}</span>,
 		meta: {
 			headerClassName:
 				'sticky left-0 z-20 w-[var(--tokens-rank-column-width)] min-w-[var(--tokens-rank-column-width)] bg-surface !px-1',
 			cellClassName: 'sticky left-0 z-10 bg-surface !px-1',
-			align: 'end',
+			align: 'center',
 			headerHelperText: 'Row number in the current sorted and filtered results'
 		}
 	}),
@@ -385,7 +243,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: 'Price',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.price} />,
 		meta: {
-			headerClassName: 'w-[110px] min-w-[110px]',
+			headerClassName: 'w-[140px] min-w-[140px]',
 			align: 'end',
 			headerHelperText: 'Current token price in USD'
 		}
@@ -397,7 +255,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 			<PercentValue value={row.original.display.priceChange24h} tone={row.original.display.priceChange24hTone} />
 		),
 		meta: {
-			headerClassName: 'w-[90px] min-w-[90px]',
+			headerClassName: 'w-[88px] min-w-[88px]',
 			align: 'end',
 			headerHelperText: 'Token price change over the last 24 hours'
 		}
@@ -409,7 +267,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 			<PercentValue value={row.original.display.priceChange7d} tone={row.original.display.priceChange7dTone} />
 		),
 		meta: {
-			headerClassName: 'w-[90px] min-w-[90px]',
+			headerClassName: 'w-[88px] min-w-[88px]',
 			align: 'end',
 			headerHelperText: 'Token price change over the last 7 days'
 		}
@@ -421,7 +279,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 			<PercentValue value={row.original.display.priceChange30d} tone={row.original.display.priceChange30dTone} />
 		),
 		meta: {
-			headerClassName: 'w-[90px] min-w-[90px]',
+			headerClassName: 'w-[88px] min-w-[88px]',
 			align: 'end',
 			headerHelperText: 'Token price change over the last 30 days'
 		}
@@ -431,7 +289,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: 'MCap',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.marketCap} />,
 		meta: {
-			headerClassName: 'w-[120px] min-w-[120px]',
+			headerClassName: 'w-[190px] min-w-[190px]',
 			align: 'end',
 			headerHelperText: 'Market capitalization from token price and circulating supply'
 		}
@@ -441,7 +299,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: 'FDV',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.fdv} />,
 		meta: {
-			headerClassName: 'w-[120px] min-w-[120px]',
+			headerClassName: 'w-[190px] min-w-[190px]',
 			align: 'end',
 			headerHelperText: 'Fully diluted valuation from token price and max supply'
 		}
@@ -451,7 +309,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: 'OFDV',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.outstandingFdv} />,
 		meta: {
-			headerClassName: 'w-[120px] min-w-[120px]',
+			headerClassName: 'w-[190px] min-w-[190px]',
 			align: 'end',
 			headerHelperText: 'Outstanding FDV using adjusted unlocked/outstanding supply when available'
 		}
@@ -476,7 +334,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: 'Spot Vol',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.spotVolume24h} />,
 		meta: {
-			headerClassName: 'w-[120px] min-w-[120px]',
+			headerClassName: 'w-[164px] min-w-[164px]',
 			align: 'end',
 			headerHelperText: '24h spot trading volume across tracked markets'
 		}
@@ -486,7 +344,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: 'Perps Vol',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.perpsVolume24h} />,
 		meta: {
-			headerClassName: 'w-[120px] min-w-[120px]',
+			headerClassName: 'w-[164px] min-w-[164px]',
 			align: 'end',
 			headerHelperText: '24h perpetual futures trading volume across tracked markets'
 		}
@@ -496,7 +354,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: 'OI',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.openInterest24h} />,
 		meta: {
-			headerClassName: 'w-[110px] min-w-[110px]',
+			headerClassName: 'w-[164px] min-w-[164px]',
 			align: 'end',
 			headerHelperText: 'Open interest across tracked perpetual markets'
 		}
@@ -506,7 +364,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: '24H Fees',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.fees24h} />,
 		meta: {
-			headerClassName: 'w-[110px] min-w-[110px]',
+			headerClassName: 'w-[150px] min-w-[150px]',
 			align: 'end',
 			headerHelperText: 'Protocol fees over the last 24 hours when a protocol match exists'
 		}
@@ -516,7 +374,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: '24H Rev',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.revenue24h} />,
 		meta: {
-			headerClassName: 'w-[110px] min-w-[110px]',
+			headerClassName: 'w-[150px] min-w-[150px]',
 			align: 'end',
 			headerHelperText: 'Protocol revenue over the last 24 hours when a protocol match exists'
 		}
@@ -526,7 +384,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: '24H Holders Rev',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.holdersRevenue24h} />,
 		meta: {
-			headerClassName: 'w-[150px] min-w-[150px]',
+			headerClassName: 'w-[160px] min-w-[160px]',
 			align: 'end',
 			headerHelperText: '24h revenue directed to token holders when tracked'
 		}
@@ -550,7 +408,9 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 	columnHelper.accessor((row) => row.rights ?? undefined, {
 		id: 'rights',
 		header: 'Rights',
-		cell: ({ getValue }) => <RightsPie rights={getValue() ?? null} />,
+		cell: ({ getValue, row }) => (
+			<RightsPie rights={getValue() ?? null} fullRightsHref={row.original.tokenRightsHref} />
+		),
 		enableSorting: false,
 		meta: {
 			headerClassName: 'w-[90px] min-w-[90px]',
@@ -563,9 +423,9 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: '30D Unlocks',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.unlock30dUsd} />,
 		meta: {
-			headerClassName: 'w-[130px] min-w-[130px]',
+			headerClassName: 'w-[140px] min-w-[140px]',
 			align: 'end',
-			headerHelperText: 'Estimated value of unlock events over the next 30 days'
+			headerHelperText: 'Estimated value of unlock events over the previous 30 days'
 		}
 	}),
 	columnHelper.accessor((row) => row.upcomingUnlockUsd ?? undefined, {
@@ -573,7 +433,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: 'Next Unlock',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.upcomingUnlockUsd} />,
 		meta: {
-			headerClassName: 'w-[130px] min-w-[130px]',
+			headerClassName: 'w-[140px] min-w-[140px]',
 			align: 'end',
 			headerHelperText: 'Estimated value of the next known unlock event'
 		}
@@ -615,7 +475,7 @@ export function buildTokensColumns({ expandable = false }: { expandable?: boolea
 
 function TokensStatsChange({ value, tone }: { value: string | null; tone: TokensDisplayTone }) {
 	if (value === null) return null
-	return <span className={`label-md tabular-nums ${VALUE_TONE_CLASSES[tone]}`}>{value}</span>
+	return <span className={`label-md ${VALUE_TONE_CLASSES[tone]}`}>{value}</span>
 }
 
 function TokensStats({ stats }: { stats: TokensPageStatsDisplay }) {
@@ -638,7 +498,7 @@ function TokensStats({ stats }: { stats: TokensPageStatsDisplay }) {
 			{items.map((item) => (
 				<div key={item.label} className="flex items-baseline gap-1.5">
 					<dt className="body-sm text-secondary">{item.label}</dt>
-					<dd className="label-md tabular-nums">{item.value}</dd>
+					<dd className="label-md">{item.value}</dd>
 					{'change' in item && item.change != null ? (
 						<dd>
 							<TokensStatsChange value={item.change} tone={item.changeTone} />
@@ -676,8 +536,8 @@ function TokensControls({ search, updateSearch }: { search: string; updateSearch
 	)
 
 	return (
-		<div className="flex justify-end">
-			<form onSubmit={handleSubmit} className="w-full sm:max-w-sm">
+		<TableToolbar>
+			<form onSubmit={handleSubmit} className={`${searchFieldInlineWrapperStyles} ml-auto`}>
 				<label className="relative block min-w-0">
 					<span className="sr-only">Search tokens</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
@@ -691,7 +551,7 @@ function TokensControls({ search, updateSearch }: { search: string; updateSearch
 					/>
 				</label>
 			</form>
-		</div>
+		</TableToolbar>
 	)
 }
 
@@ -721,14 +581,18 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 	return (
 		<div className="flex flex-col gap-2">
 			<TokensStats stats={serverTable.data.statsDisplay} />
-			<TokensControls search={serverTable.pageQuery.search} updateSearch={serverTable.updateSearch} />
-			<PaginatedTable
-				table={table}
-				pageSizeOptions={PAGE_SIZE_OPTIONS}
-				style={tableStyle}
-				tableClassName="min-w-[var(--tokens-table-min-width)]"
-				interactionDisabled={serverTable.rowsQuery.isFetching}
-			/>
+			<Panel padding="none">
+				<TokensControls search={serverTable.pageQuery.search} updateSearch={serverTable.updateSearch} />
+				<PaginatedTable
+					table={table}
+					pageSizeOptions={PAGE_SIZE_OPTIONS}
+					style={tableStyle}
+					tableClassName="min-w-[var(--tokens-table-min-width)]"
+					stickyHeader
+					interactionDisabled={serverTable.rowsQuery.isFetching}
+					shell="none"
+				/>
+			</Panel>
 		</div>
 	)
 }

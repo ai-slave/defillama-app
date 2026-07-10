@@ -129,42 +129,42 @@ export default function GovernanceProject({
 						{data?.stats?.proposalsCount != null ? (
 							<div className="flex items-baseline gap-1.5">
 								<span className="text-sm text-secondary">Total Proposals</span>
-								<span className="text-sm font-medium tabular-nums">{data.stats.proposalsCount}</span>
+								<span className="text-sm font-medium">{data.stats.proposalsCount}</span>
 							</div>
 						) : null}
 
 						{data?.stats?.successfulProposals != null ? (
 							<div className="flex items-baseline gap-1.5">
 								<span className="text-sm text-secondary">Successful</span>
-								<span className="text-sm font-medium tabular-nums">{data.stats.successfulProposals}</span>
+								<span className="text-sm font-medium">{data.stats.successfulProposals}</span>
 							</div>
 						) : null}
 
 						{data?.stats?.proposalsInLast30Days != null ? (
 							<div className="flex items-baseline gap-1.5">
 								<span className="text-sm text-secondary">Proposals (30d)</span>
-								<span className="text-sm font-medium tabular-nums">{data.stats.proposalsInLast30Days}</span>
+								<span className="text-sm font-medium">{data.stats.proposalsInLast30Days}</span>
 							</div>
 						) : null}
 
 						{data?.stats?.successfulProposalsInLast30Days != null ? (
 							<div className="flex items-baseline gap-1.5">
 								<span className="text-sm text-secondary">Successful (30d)</span>
-								<span className="text-sm font-medium tabular-nums">{data.stats.successfulProposalsInLast30Days}</span>
+								<span className="text-sm font-medium">{data.stats.successfulProposalsInLast30Days}</span>
 							</div>
 						) : null}
 
 						{data?.stats?.highestTotalScore != null ? (
 							<div className="flex items-baseline gap-1.5">
 								<span className="text-sm text-secondary">Max Total Votes</span>
-								<span className="text-sm font-medium tabular-nums">{formattedNum(data.stats.highestTotalScore)}</span>
+								<span className="text-sm font-medium">{formattedNum(data.stats.highestTotalScore)}</span>
 							</div>
 						) : null}
 
 						{data?.metadata?.followersCount != null ? (
 							<div className="flex items-baseline gap-1.5">
 								<span className="text-sm text-secondary">Followers</span>
-								<span className="text-sm font-medium tabular-nums">{formattedNum(data.metadata.followersCount)}</span>
+								<span className="text-sm font-medium">{formattedNum(data.metadata.followersCount)}</span>
 							</div>
 						) : null}
 					</div>

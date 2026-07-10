@@ -239,7 +239,7 @@ const stablecoinsColumns = [
 
 const assetsColumnOrders: ColumnOrdersByBreakpoint = {
 	0: ['name', 'mcap', 'change_1d', 'change_7d', 'change_1m', 'price', 'pegDeviation', 'pegDeviation_1m', 'chains'],
-	1024: ['name', 'chains', 'pegDeviation', 'pegDeviation_1m', 'price', 'change_1d', 'change_7d', 'change_1m', 'mcap']
+	1024: ['name', 'chains', 'mcap', 'pegDeviation', 'pegDeviation_1m', 'price', 'change_1d', 'change_7d', 'change_1m']
 }
 function formattedPeggedPercent(percent: unknown, noSign = false) {
 	if (!percent && percent !== 0) {

@@ -203,7 +203,7 @@ export function RecentProtocols({
 							rel="noreferrer noopener"
 							key={`claim-${protocol.name}`}
 							color="#008000"
-							className="flex items-center gap-1 rounded-md bg-[#e4efe2] px-2.5 py-1 text-sm font-medium whitespace-nowrap text-[#007c00] dark:bg-[#18221d] dark:text-[#00ab00]"
+							className="flex items-center gap-1 rounded-md bg-data-up/10 px-2.5 py-1 text-sm font-medium whitespace-nowrap text-data-up"
 						>
 							<span>{protocol.name}</span>
 							<Icon name="arrow-up-right" height={14} width={14} />
@@ -243,21 +243,24 @@ export function RecentProtocols({
 								) : (
 									<div className="relative isolate w-full overflow-auto">
 										{eligibleAirdrops.map((address) => (
-											<table key={`airdrop of ${address[0]}`} className="mt-4 w-full border-collapse first:mt-0">
+											<table
+												key={`airdrop of ${address[0]}`}
+												className="mt-4 w-full border-collapse text-sm first:mt-0"
+											>
 												<thead>
 													<tr>
 														<th
 															colSpan={2}
-															className="border border-(--form-control-border) p-2 text-center font-semibold whitespace-nowrap"
+															className="border border-subtle p-2 text-center font-medium whitespace-nowrap"
 														>
 															{address[0]}
 														</th>
 													</tr>
 													<tr>
-														<th className="border border-(--form-control-border) p-2 text-center font-semibold whitespace-nowrap">
+														<th className="border border-subtle p-2 text-center font-medium whitespace-nowrap">
 															Protocol Name
 														</th>
-														<th className="border border-(--form-control-border) p-2 text-center font-semibold whitespace-nowrap">
+														<th className="border border-subtle p-2 text-center font-medium whitespace-nowrap">
 															Token Amount
 														</th>
 													</tr>
@@ -267,7 +270,7 @@ export function RecentProtocols({
 														<tr>
 															<td
 																colSpan={2}
-																className="border border-(--form-control-border) p-2 text-center font-normal whitespace-nowrap"
+																className="border border-subtle p-2 text-center font-normal whitespace-nowrap"
 															>
 																<p className="text-center body-sm text-data-down">
 																	No airdrops detected for this address
@@ -277,10 +280,10 @@ export function RecentProtocols({
 													) : (
 														address[1].map((airdrop) => (
 															<tr key={`${airdrop.name}:${airdrop.claimableAmount}`}>
-																<th className="border border-(--form-control-border) p-2 text-center font-normal whitespace-nowrap">
+																<th className="border border-subtle p-2 text-center font-normal whitespace-nowrap">
 																	{airdrop.name}
 																</th>
-																<td className="border border-(--form-control-border) p-2 text-center font-normal whitespace-nowrap">
+																<td className="border border-subtle p-2 text-center font-normal whitespace-nowrap">
 																	{airdrop.isActive ? (
 																		<span className="flex items-center justify-center gap-2">
 																			<span>{`${airdrop.claimableAmount} ${airdrop.tokenSymbol ?? ''}`}</span>

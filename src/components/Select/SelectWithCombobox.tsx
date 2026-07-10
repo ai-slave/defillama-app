@@ -31,6 +31,7 @@ import {
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
 import { updateQueryFromSelected } from './query'
+import { SelectCheckIcon } from './SelectCheckIcon'
 import type { ExcludeQueryKey, SelectOption, SelectTriggerSize, SelectTriggerVariant, SelectValues } from './types'
 import { selectTriggerStyles } from './types'
 
@@ -265,11 +266,11 @@ export function SelectWithCombobox({
 		const selected = selectedValues.includes(value)
 		return showCheckboxes ? (
 			<span className={popoverMultiSelectCheckStyles(selected)} aria-hidden>
-				{selected ? <Icon name="check" className="size-3" /> : null}
+				{selected ? <SelectCheckIcon /> : null}
 			</span>
 		) : (
 			<span className={popoverSingleSelectCheckStyles(selected)} aria-hidden>
-				{selected ? <Icon name="check" className="size-3" /> : null}
+				{selected ? <SelectCheckIcon /> : null}
 			</span>
 		)
 	}

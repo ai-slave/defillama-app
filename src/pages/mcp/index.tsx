@@ -26,19 +26,19 @@ export default function MCP() {
 						<nav className="flex items-center gap-1">
 							<BasicLink
 								href="#tools"
-								className="rounded-md px-3 py-1.5 text-[13px] font-medium text-secondary transition-colors hover:bg-hover-row hover:text-primary"
+								className="rounded-md px-3 py-1.5 label-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary"
 							>
 								Tools
 							</BasicLink>
 							<BasicLink
 								href="#setup"
-								className="rounded-md px-3 py-1.5 text-[13px] font-medium text-secondary transition-colors hover:bg-hover-row hover:text-primary"
+								className="rounded-md px-3 py-1.5 label-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary"
 							>
 								Setup
 							</BasicLink>
 							<BasicLink
 								href="/"
-								className="rounded-md px-3 py-1.5 text-[13px] font-medium text-secondary transition-colors hover:bg-hover-row hover:text-primary"
+								className="rounded-md px-3 py-1.5 label-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary"
 							>
 								Back to Main
 							</BasicLink>
@@ -51,7 +51,7 @@ export default function MCP() {
 				</main>
 
 				<footer className="border-t border-subtle">
-					<p className="mx-auto max-w-[1100px] px-4 pt-6 text-center text-[13px] text-secondary sm:px-6 md:px-8">
+					<p className="mx-auto max-w-[1100px] px-4 pt-6 text-center body-sm text-secondary sm:px-6 md:px-8">
 						Questions or feedback?{' '}
 						<a
 							href="mailto:support@defillama.com"
@@ -60,7 +60,7 @@ export default function MCP() {
 							support@defillama.com
 						</a>
 					</p>
-					<div className="mx-auto flex max-w-[1100px] flex-wrap items-center justify-center gap-4 px-4 py-6 text-[13px] text-secondary sm:px-6 md:justify-between md:px-8">
+					<div className="mx-auto flex max-w-[1100px] flex-wrap items-center justify-center gap-4 px-4 py-6 body-sm text-secondary sm:px-6 md:justify-between md:px-8">
 						<span>&copy; {new Date().getFullYear()} DefiLlama</span>
 						<div className="flex gap-5">
 							<BasicLink href="/privacy-policy" className="transition-colors hover:text-primary">

@@ -22,7 +22,7 @@ import { PaginatedTable, usePaginatedTableDisplayRowNumber } from '~/components/
 import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import defs from '~/public/equities-definitions.json'
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
@@ -76,7 +76,7 @@ function EquityTickerCell({ row }: { row: { id: string; original: EquitiesTableC
 
 	return (
 		<span className="flex min-w-0 items-center gap-2">
-			<span className="inline-block min-w-4 shrink-0 text-left text-secondary tabular-nums" aria-hidden="true">
+			<span className="inline-block min-w-4 shrink-0 text-left text-secondary" aria-hidden="true">
 				{rowIndex}
 			</span>
 			<TokenLogo
@@ -946,21 +946,20 @@ export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProp
 	const isMorePresetActive = EQUITIES_MORE_PRESETS.some((preset) => preset === selectedPreset)
 	const showMorePresets = isMorePresetActive || isMorePresetsManuallyOpen
 
-	const presetButtonClassName = buttonStyles({ variant: 'filter', size: 'sm' })
-
 	const renderPreset = (preset: EquitiesPreset) => (
-		<button
+		<Button
 			key={preset}
 			type="button"
 			aria-current={preset === selectedPreset ? 'page' : undefined}
 			data-active={preset === selectedPreset}
 			data-umami-event="equities-preset-click"
 			data-umami-event-preset={PRESET_QUERY_SLUGS[preset] ?? 'market-cap'}
-			className={presetButtonClassName}
+			variant="toggle"
+			size="sm"
 			onClick={() => selectPreset(preset)}
 		>
 			{preset}
-		</button>
+		</Button>
 	)
 
 	return (
@@ -988,27 +987,29 @@ export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProp
 					<>
 						{EQUITIES_MORE_PRESETS.map(renderPreset)}
 						{isMorePresetsManuallyOpen && !isMorePresetActive ? (
-							<button
+							<Button
 								type="button"
 								aria-expanded={true}
 								onClick={() => setIsMorePresetsManuallyOpen(false)}
-								className={presetButtonClassName}
+								variant="secondary"
+								size="sm"
 							>
 								<Icon name="minus" height={12} width={12} />
 								Less
-							</button>
+							</Button>
 						) : null}
 					</>
 				) : (
-					<button
+					<Button
 						type="button"
 						aria-expanded={false}
 						data-active={isMorePresetActive}
 						onClick={() => setIsMorePresetsManuallyOpen(true)}
-						className={presetButtonClassName}
+						variant="secondary"
+						size="sm"
 					>
 						+ More
-					</button>
+					</Button>
 				)}
 			</div>
 

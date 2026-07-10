@@ -111,12 +111,12 @@ const skills = [
 function TerminalMock() {
 	return (
 		<Card padding="none" className="overflow-hidden">
-			<div className="font-jetbrains text-[13px] leading-relaxed">
+			<div className="mono-md leading-relaxed">
 				<div className="flex items-center gap-2 border-b border-subtle px-4 py-2.5">
 					<span className="size-3 rounded-full bg-[#ff5f57]" />
 					<span className="size-3 rounded-full bg-[#febc2e]" />
 					<span className="size-3 rounded-full bg-[#28c840]" />
-					<span className="ml-2 text-[11px] text-tertiary">claude</span>
+					<span className="ml-2 body-xs text-tertiary">claude</span>
 				</div>
 				<div className="space-y-3 p-4">
 					<div>
@@ -190,7 +190,7 @@ function CodeBlock({ children, label }: { children: string; label: string }) {
 					Copy
 				</Button>
 			</div>
-			<pre className="overflow-x-auto p-4 font-jetbrains text-[13px] leading-relaxed text-secondary">{children}</pre>
+			<pre className="overflow-x-auto p-4 mono-md leading-relaxed text-secondary">{children}</pre>
 		</Card>
 	)
 }
@@ -254,14 +254,14 @@ function ManualSetup() {
 	const [active, setActive] = useState(0)
 	return (
 		<div className="mt-10">
-			<h3 className="mb-4 text-center text-[13px] font-medium text-tertiary">Or add manually to your client config</h3>
+			<h3 className="mb-4 text-center label-sm text-tertiary">Or add manually to your client config</h3>
 			<Card padding="none" className="mx-auto max-w-2xl overflow-hidden">
 				<div className="no-scrollbar flex overflow-x-auto border-b border-subtle">
 					{clientConfigs.map((c, i) => (
 						<button
 							key={c.name}
 							onClick={() => setActive(i)}
-							className={`shrink-0 px-4 py-2.5 text-[13px] font-medium transition-colors ${
+							className={`shrink-0 px-4 py-2.5 label-sm transition-colors ${
 								active === i ? 'border-b-2 border-brand text-link' : 'text-secondary hover:text-primary'
 							}`}
 						>
@@ -283,9 +283,7 @@ function ManualSetup() {
 					>
 						Copy
 					</Button>
-					<pre className="overflow-x-auto p-4 font-jetbrains text-[13px] leading-relaxed text-secondary">
-						{clientConfigs[active].code}
-					</pre>
+					<pre className="overflow-x-auto p-4 mono-md leading-relaxed text-secondary">{clientConfigs[active].code}</pre>
 				</div>
 			</Card>
 		</div>
@@ -309,7 +307,7 @@ function StepCard({ step, title, children }: { step: number; title: string; chil
 				{step}
 			</div>
 			<h3 className="mb-1.5 font-semibold text-primary">{title}</h3>
-			<p className="text-[13px] leading-relaxed text-secondary">{children}</p>
+			<p className="body-sm leading-relaxed text-secondary">{children}</p>
 		</Card>
 	)
 }
@@ -319,7 +317,7 @@ function SectionHeader({ overline, title, description }: { overline: string; tit
 		<div className="mb-8">
 			<p className="mb-2 label-sm font-semibold tracking-widest text-link uppercase">{overline}</p>
 			<h2 className="mb-2 text-2xl font-bold tracking-tight sm:text-3xl">{title}</h2>
-			{description && <p className="max-w-2xl text-[15px] text-secondary">{description}</p>}
+			{description && <p className="max-w-2xl body-md text-secondary">{description}</p>}
 		</div>
 	)
 }
@@ -364,7 +362,7 @@ function ToolCategoryGroup({
 				<div id={panelId} className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
 					{tools.map((t) => (
 						<Card key={t.name} padding="sm">
-							<code className="font-jetbrains text-[13px] font-medium text-link">{t.name}</code>
+							<code className="mono-md font-medium text-link">{t.name}</code>
 							<p className="mt-0.5 text-xs leading-relaxed text-secondary">{t.desc}</p>
 						</Card>
 					))}
@@ -395,14 +393,13 @@ export default function MCPContainer() {
 					<div>
 						<p className="mb-3 label-sm font-semibold tracking-widest text-link uppercase">DefiLlama MCP Server</p>
 						<h1 className="mb-4 text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-[2.75rem]">
-							DeFi Data for{' '}
-							<span className="bg-linear-to-r from-brand to-[#8A8AFF] bg-clip-text text-transparent">AI Agents</span>
+							DeFi Data for <span className="text-link">AI Agents</span>
 						</h1>
-						<p className="mb-2 max-w-lg text-[15px] leading-relaxed text-secondary">
+						<p className="mb-2 max-w-lg body-md leading-relaxed text-secondary">
 							Connect your AI agent to DefiLlama data. Ask questions about TVL, yields, token prices, protocol metrics,
 							stablecoins, bridges, ETFs, and more. Your agent gets the answers directly.
 						</p>
-						<p className="mb-6 text-[13px] text-tertiary">
+						<p className="mb-6 body-sm text-tertiary">
 							Requires an API plan. Uses the same credits as your DefiLlama API key.
 						</p>
 						<div className="flex flex-wrap gap-3">
@@ -477,7 +474,7 @@ export default function MCPContainer() {
 				</div>
 
 				<Card padding="sm" className="mt-4">
-					<p className="text-[13px] leading-relaxed text-secondary">
+					<p className="body-sm leading-relaxed text-secondary">
 						Note: each DefiLlama account can only be connected to one MCP client at a time. Connecting a new client will
 						disconnect the previous one.
 					</p>
@@ -487,7 +484,7 @@ export default function MCPContainer() {
 				<a
 					href="/ai"
 					onClick={() => trackUmamiEvent('mcp-llamaai-upsell-click')}
-					className="group mt-10 flex flex-col gap-4 rounded-md border border-[#FDE0A9]/30 bg-linear-to-r from-[#FDE0A9]/5 to-[#FBEDCB]/5 p-5 transition-colors hover:border-[#FDE0A9]/50 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+					className="group mt-10 flex flex-col gap-4 rounded-md border border-warning/30 bg-warning/5 p-5 transition-colors hover:border-warning/50 sm:flex-row sm:items-center sm:justify-between sm:p-6"
 				>
 					<div className="flex items-start gap-4">
 						<img
@@ -499,10 +496,7 @@ export default function MCPContainer() {
 						/>
 						<div>
 							<h3 className="font-semibold text-primary">
-								Need more than raw data?{' '}
-								<span className="bg-linear-to-r from-[#FDE0A9] to-[#d4a555] bg-clip-text text-transparent">
-									Try LlamaAI
-								</span>
+								Need more than raw data? <span className="text-warning">Try LlamaAI</span>
 							</h3>
 							<p className="mt-1 max-w-lg text-sm text-secondary">
 								Charts, onchain analysis, price forecasts, web search, and more. All in one AI chat. Available with the
@@ -510,7 +504,7 @@ export default function MCPContainer() {
 							</p>
 						</div>
 					</div>
-					<span className="shrink-0 self-start rounded-md border border-[#FDE0A9]/40 px-4 py-2 text-sm font-medium text-[#d4a555] transition-colors group-hover:bg-[#FDE0A9]/10 sm:self-center">
+					<span className="shrink-0 self-start rounded-md border border-warning/40 px-4 py-2 text-sm font-medium text-warning transition-colors group-hover:bg-warning/10 sm:self-center">
 						Explore LlamaAI
 					</span>
 				</a>
@@ -552,7 +546,7 @@ export default function MCPContainer() {
 								</svg>
 							</span>
 							<div>
-								<code className="font-jetbrains text-[13px] font-medium text-primary">{s.name}</code>
+								<code className="mono-md font-medium text-primary">{s.name}</code>
 								<p className="mt-0.5 text-xs text-secondary">{s.desc}</p>
 							</div>
 						</Card>
@@ -561,7 +555,7 @@ export default function MCPContainer() {
 
 				<div className="mt-8">
 					<h3 className="mb-3 label-md font-semibold text-secondary">Install skills manually</h3>
-					<p className="mb-4 text-[13px] leading-relaxed text-secondary">
+					<p className="mb-4 body-sm leading-relaxed text-secondary">
 						The quick start prompt installs these automatically. To install manually, run:
 					</p>
 					<div className="mx-auto max-w-2xl">

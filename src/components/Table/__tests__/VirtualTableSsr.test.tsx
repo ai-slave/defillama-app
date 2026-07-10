@@ -26,7 +26,15 @@ const columns = [
 	})
 ]
 
-function TestVirtualTable({ rowSize, tableLayout }: { rowSize?: number; tableLayout?: 'fixed' | 'auto' }) {
+function TestVirtualTable({
+	rowSize,
+	tableLayout,
+	compact = false
+}: {
+	rowSize?: number
+	tableLayout?: 'fixed' | 'auto'
+	compact?: boolean
+}) {
 	const data: TestRow[] = Array.from({ length: 40 }, (_, index) => ({
 		name: `Asset ${index + 1}`,
 		mcap: index + 1
@@ -37,7 +45,7 @@ function TestVirtualTable({ rowSize, tableLayout }: { rowSize?: number; tableLay
 		getCoreRowModel: getCoreRowModel()
 	})
 
-	return <VirtualTable instance={instance} rowSize={rowSize} tableLayout={tableLayout} />
+	return <VirtualTable instance={instance} rowSize={rowSize} tableLayout={tableLayout} compact={compact} />
 }
 
 describe('VirtualTable SSR', () => {
@@ -54,5 +62,15 @@ describe('VirtualTable SSR', () => {
 
 		expect(html).toContain('table-layout:auto')
 		expect(html).not.toContain('<colgroup')
+	})
+
+	it('uses the normal and compact row sizes unless explicitly overridden', () => {
+		const normalHtml = renderToStaticMarkup(<TestVirtualTable />)
+		const compactHtml = renderToStaticMarkup(<TestVirtualTable compact />)
+		const overriddenHtml = renderToStaticMarkup(<TestVirtualTable compact rowSize={64} />)
+
+		expect(normalHtml).toContain('height:50px')
+		expect(compactHtml).toContain('height:40px')
+		expect(overriddenHtml).toContain('height:64px')
 	})
 })

@@ -6,7 +6,7 @@ import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
-import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { formattedNum } from '~/utils'
 import type { LiquidationPosition, OverviewChainRow, OverviewProtocolRow, ProtocolChainRow } from './api.types'
 import { LiquidationsExplorerProvider, LiquidationsOwnerLink } from './OwnerLink'
@@ -364,7 +364,7 @@ export function LiquidationsPositionsTable({
 				header={embedded ? null : header}
 				leadingControls={leadingControls}
 				customFilters={
-					<label className="relative w-full max-w-full sm:max-w-[280px]">
+					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search positions</span>
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						<input

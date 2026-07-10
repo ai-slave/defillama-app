@@ -17,7 +17,7 @@ import {
 	type TokensTableRow
 } from './types'
 
-export const DEFAULT_TOKENS_TABLE_PAGE_SIZE = 20
+export const DEFAULT_TOKENS_TABLE_PAGE_SIZE = 50
 export const MAX_TOKENS_TABLE_PAGE_SIZE = 500
 
 const DEFAULT_TOKENS_SORT_BY: TokensSortBy = 'marketCap'
@@ -117,8 +117,38 @@ export function buildTokensSortIndexes(rows: TokensSourceRow[]): TokensSortIndex
 	return indexes
 }
 
+const USD_VALUE_FORMATTER = new Intl.NumberFormat('en-US', {
+	style: 'currency',
+	currency: 'USD',
+	currencyDisplay: 'narrowSymbol',
+	minimumFractionDigits: 2,
+	maximumFractionDigits: 2
+})
+const USD_PRICE_FORMATTERS = Array.from(
+	{ length: 21 },
+	(_, maximumFractionDigits) =>
+		new Intl.NumberFormat('en-US', {
+			style: 'currency',
+			currency: 'USD',
+			currencyDisplay: 'narrowSymbol',
+			maximumFractionDigits
+		})
+)
+
 function currencyDisplay(value: number | null): string | null {
-	return value == null ? null : abbreviateNumber(value, null, '$')!
+	return value == null ? null : USD_VALUE_FORMATTER.format(value)
+}
+
+function priceDisplay(value: number | null): string | null {
+	if (value == null) return null
+	const absoluteValue = Math.abs(value)
+	const maximumFractionDigits =
+		absoluteValue >= 1
+			? 2
+			: absoluteValue >= 0.01 || absoluteValue === 0
+				? 4
+				: Math.min(20, Math.floor(-Math.log10(absoluteValue)) + 4)
+	return USD_PRICE_FORMATTERS[maximumFractionDigits].format(value)
 }
 
 function percentDisplay(value: number | null, signed = false): string | null {
@@ -138,7 +168,7 @@ function percentWidth(value: number | null): string | null {
 
 function getRowDisplay(row: TokensSourceRow): TokensTableRowDisplay {
 	return {
-		price: currencyDisplay(row.price),
+		price: priceDisplay(row.price),
 		priceChange24h: percentDisplay(row.priceChange24h, true),
 		priceChange24hTone: percentTone(row.priceChange24h),
 		priceChange7d: percentDisplay(row.priceChange7d, true),

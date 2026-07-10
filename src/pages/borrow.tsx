@@ -402,7 +402,7 @@ const PoolsList = ({ pools }: { pools: Array<BorrowPageRow> }) => {
 											</span>
 										</td>
 										<td className="px-4 py-3">
-											<span className={`label-md tabular-nums ${apy >= 0 ? 'text-data-up' : 'text-data-down'}`}>
+											<span className={`label-md ${apy >= 0 ? 'text-data-up' : 'text-data-down'}`}>
 												{apy.toLocaleString(undefined, { maximumFractionDigits: 2 })}%
 											</span>
 										</td>
@@ -414,7 +414,7 @@ const PoolsList = ({ pools }: { pools: Array<BorrowPageRow> }) => {
 										</td>
 										{showAvailable ? (
 											<td className="px-4 py-3 text-right">
-												<span className="body-md text-secondary tabular-nums">
+												<span className="body-md text-secondary">
 													{pool.borrow.totalAvailableUsd
 														? `$${(pool.borrow.totalAvailableUsd / 1e6).toLocaleString(undefined, {
 																maximumFractionDigits: 1

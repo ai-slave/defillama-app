@@ -51,11 +51,11 @@ export function ReadyToStart() {
 			</div>
 			<div className="grid grid-cols-1 gap-4 min-[713px]:grid-cols-2">
 				{CARDS.map((card) => (
-					<div key={card.title} className="flex h-full flex-col gap-4 rounded-lg bg-[#030021] p-6">
+					<div key={card.title} className="flex h-full flex-col gap-4 rounded-lg bg-brand p-6">
 						<img src={card.icon} alt="" width={60} height={60} className="size-[60px]" />
 						<div className="flex flex-col gap-2">
-							<h3 className="text-base font-semibold text-white">{card.title}</h3>
-							<p className="text-sm leading-relaxed text-white/60">{card.description}</p>
+							<h3 className="text-base font-semibold text-on-brand">{card.title}</h3>
+							<p className="text-sm leading-relaxed text-on-brand/70">{card.description}</p>
 						</div>
 						<a
 							href={card.href}

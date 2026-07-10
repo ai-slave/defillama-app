@@ -20,7 +20,7 @@ import calendarEvents from '~/constants/calendar'
 import { fetchAllProtocolEmissions } from '~/containers/Unlocks/api'
 import type { ProtocolEmission } from '~/containers/Unlocks/api.types'
 import Layout from '~/layout'
-import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import {
 	popoverActionBarStyles,
@@ -234,7 +234,7 @@ export default function Protocols({ emissions }) {
 						</Ariakit.SelectPopover>
 					</Ariakit.SelectProvider>
 
-					<label className="relative w-full sm:max-w-[280px]">
+					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search events...</span>
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						<input

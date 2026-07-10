@@ -828,7 +828,7 @@ function TopMovers({ protocols }: TopMoversProps) {
 											)}
 										</span>
 										<span
-											className={`shrink-0 label-sm tabular-nums ${
+											className={`shrink-0 label-sm ${
 												mover.change > 0 ? 'text-data-up' : mover.change < 0 ? 'text-data-down' : 'text-secondary'
 											}`}
 										>

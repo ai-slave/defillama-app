@@ -484,7 +484,7 @@ function WeightTable({ rows, showRanking = true }: { rows: WeightRow[]; showRank
 			<div className="overflow-x-auto">
 				<table className="w-full border-collapse text-sm">
 					<thead>
-						<tr className="bg-[#0b0f2e] text-white">
+						<tr className="bg-brand text-on-brand">
 							<th className="px-4 py-3 text-center font-medium">Metric</th>
 							<th className="w-40 px-4 py-3 text-center font-medium">Weighting</th>
 							{showRanking ? <th className="w-28 px-4 py-3 text-center font-medium">Ranking</th> : null}
@@ -494,10 +494,8 @@ function WeightTable({ rows, showRanking = true }: { rows: WeightRow[]; showRank
 						{rows.map((row, i) => (
 							<tr key={i} className="border-t border-subtle bg-surface first:border-t-0">
 								<td className="px-4 py-2.5 text-primary">{row.metric}</td>
-								<td className="px-4 py-2.5 text-center text-secondary tabular-nums">{row.weighting}</td>
-								{showRanking ? (
-									<td className="px-4 py-2.5 text-center text-secondary tabular-nums">{row.ranking}</td>
-								) : null}
+								<td className="px-4 py-2.5 text-center text-secondary">{row.weighting}</td>
+								{showRanking ? <td className="px-4 py-2.5 text-center text-secondary">{row.ranking}</td> : null}
 							</tr>
 						))}
 					</tbody>

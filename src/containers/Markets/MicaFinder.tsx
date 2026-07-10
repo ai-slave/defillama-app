@@ -346,7 +346,7 @@ function FeePairCell({ fee, kind }: { fee: MicaExchange['spot_fee'] | MicaExchan
 	const formattedFee = maker && taker ? `${maker} / ${taker}` : (maker ?? taker)
 
 	if (kind === 'perp') {
-		return <span className="whitespace-nowrap tabular-nums">{formattedFee}</span>
+		return <span className="whitespace-nowrap">{formattedFee}</span>
 	}
 
 	const tone = getSpotFeeTone(fee)
@@ -354,7 +354,7 @@ function FeePairCell({ fee, kind }: { fee: MicaExchange['spot_fee'] | MicaExchan
 
 	return (
 		<span
-			className={`inline-flex rounded-md border px-2 py-0.5 label-sm whitespace-nowrap tabular-nums ${tone ? FEE_TONE_CLASS[tone] : 'border-subtle text-primary'}`}
+			className={`inline-flex rounded-md border px-2 py-0.5 label-sm whitespace-nowrap ${tone ? FEE_TONE_CLASS[tone] : 'border-subtle text-primary'}`}
 			aria-label={label ? `${formattedFee}. ${label}; lower fees are better.` : formattedFee}
 		>
 			{formattedFee}
@@ -395,7 +395,7 @@ function LiquidityCell({
 	return (
 		<span className="inline-flex items-center justify-end gap-1.5">
 			<Tooltip content={tooltip} className="justify-end">
-				<span className="whitespace-nowrap tabular-nums">{formatLiquidity(total)}</span>
+				<span className="whitespace-nowrap">{formatLiquidity(total)}</span>
 			</Tooltip>
 			<Tooltip content={helperText}>
 				<Icon name="help-circle" height={13} width={13} className="shrink-0 text-tertiary" />
@@ -464,7 +464,7 @@ function MarketCountCell({ row }: { row: MicaExchange }) {
 
 	return (
 		<span className="inline-flex items-center justify-end gap-1.5">
-			<span className="whitespace-nowrap tabular-nums">{row.market_count.toLocaleString('en-US')}</span>
+			<span className="whitespace-nowrap">{row.market_count.toLocaleString('en-US')}</span>
 			{row.own_eu_orderbook ? (
 				<Tooltip content={`${MARKET_COUNT_HELP}\nOwn EU orderbook.`} className="justify-end">
 					<Icon name="help-circle" height={13} width={13} className="shrink-0 text-tertiary" />

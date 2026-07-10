@@ -230,7 +230,7 @@ export function ChainChartPanel({
 							<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 								<div className="flex items-baseline gap-2.5">
 									<DialogHeading>Chart metrics</DialogHeading>
-									<span className="body-sm text-tertiary tabular-nums">
+									<span className="body-sm text-tertiary">
 										{selectedOptions.length}/{allMetricOptions.length}
 									</span>
 								</div>
@@ -253,7 +253,7 @@ export function ChainChartPanel({
 									/>
 									{metricsSearchValue ? (
 										<div className="absolute top-0 right-1.5 bottom-0 my-auto flex items-center gap-1">
-											<span className="text-[11px] text-tertiary tabular-nums">
+											<span className="body-xs text-tertiary">
 												{filteredMetricOptions.length} {filteredMetricOptions.length === 1 ? 'match' : 'matches'}
 											</span>
 											<button
@@ -273,10 +273,8 @@ export function ChainChartPanel({
 								{groupedFilteredOptions.map((group) => (
 									<section key={`chain-chart-category-${group.label}`} className="flex flex-col gap-2">
 										<div className="flex items-baseline gap-1.5">
-											<span className="text-[10px] font-medium tracking-[0.08em] text-tertiary uppercase">
-												{group.label}
-											</span>
-											<span className="text-[10px] text-tertiary/70 tabular-nums">
+											<span className="label-xs tracking-[0.08em] text-tertiary uppercase">{group.label}</span>
+											<span className="body-xs text-tertiary/70">
 												{group.selectedCount}/{group.options.length}
 											</span>
 										</div>

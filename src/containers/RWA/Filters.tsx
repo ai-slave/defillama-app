@@ -799,7 +799,7 @@ function RWAFiltersDialog({
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={handleOpenChange}>
 			<Ariakit.DialogDisclosure render={<Button type="button" size="md" />}>
-				<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 text-[10px] leading-none">
+				<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 label-xs leading-none">
 					{selectedFilterCount}
 				</span>
 				<span>{hasActiveFilterPills ? 'Edit' : 'Filters'}</span>
@@ -813,7 +813,7 @@ function RWAFiltersDialog({
 				<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 					<div className="flex items-baseline gap-2.5">
 						<DialogHeading>Filters</DialogHeading>
-						<span className="label-sm text-tertiary tabular-nums">{draftSelectedCount} selected</span>
+						<span className="label-sm text-tertiary">{draftSelectedCount} selected</span>
 					</div>
 					<DialogCloseButton />
 				</div>

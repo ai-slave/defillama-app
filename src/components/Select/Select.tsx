@@ -27,6 +27,7 @@ import {
 } from '~/ui/Popover'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 import { updateQueryFromSelected } from './query'
+import { SelectCheckIcon } from './SelectCheckIcon'
 import type { ExcludeQueryKey, SelectValues, SelectTriggerSize, SelectTriggerVariant } from './types'
 import { selectTriggerStyles } from './types'
 
@@ -227,11 +228,11 @@ export function Select(props: ISelect) {
 		const selected = isOptionSelected(value)
 		return showCheckboxes ? (
 			<span className={popoverMultiSelectCheckStyles(selected)} aria-hidden>
-				{selected ? <Icon name="check" className="size-3" /> : null}
+				{selected ? <SelectCheckIcon /> : null}
 			</span>
 		) : (
 			<span className={popoverSingleSelectCheckStyles(selected)} aria-hidden>
-				{selected ? <Icon name="check" className="size-3" /> : null}
+				{selected ? <SelectCheckIcon /> : null}
 			</span>
 		)
 	}

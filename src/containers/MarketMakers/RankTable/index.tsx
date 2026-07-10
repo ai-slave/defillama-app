@@ -55,7 +55,7 @@ export function RankTable({
 	return (
 		<Panel padding="none">
 			<PanelHeader>
-				<span className="heading-xs">Rank</span>
+				<h2 className="heading-xs">Rank</h2>
 				{threshold && setThreshold ? <ThresholdSelect value={threshold} setValue={setThreshold} /> : null}
 				<div className="ml-auto flex flex-wrap items-center gap-1.5">
 					<ShowAsControl mode={mode} setMode={setMode} />

@@ -286,10 +286,10 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 						className="absolute left-1/2 hidden -translate-x-1/2 -translate-y-1/2 opacity-30 dark:block"
 					/>
 				</div>
-				<table className="z-10 w-full border-collapse">
+				<table className="z-10 w-full border-collapse text-sm">
 					<thead>
 						<tr>
-							<th className="min-w-[220px] overflow-hidden border border-subtle bg-page p-2 text-left font-semibold text-ellipsis whitespace-nowrap">
+							<th className="min-w-[220px] overflow-hidden border border-subtle bg-page p-2 text-left font-medium text-ellipsis whitespace-nowrap">
 								Name
 							</th>
 							{headerIndexes.map((index, position) => {
@@ -305,7 +305,7 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 								return (
 									<th
 										key={`${statementType}-${periodType}-${periodData.periodEnding[index]}`}
-										className="min-w-[132px] overflow-hidden border border-subtle bg-page p-2 text-left font-semibold text-ellipsis whitespace-nowrap"
+										className="min-w-[132px] overflow-hidden border border-subtle bg-page p-2 text-left font-medium text-ellipsis whitespace-nowrap"
 									>
 										<Tooltip content={tooltipContent}>
 											<span className="underline decoration-dotted underline-offset-3">

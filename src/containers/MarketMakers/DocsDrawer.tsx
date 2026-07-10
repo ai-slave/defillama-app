@@ -61,7 +61,7 @@ const INTERPRET = [
 	{ term: 'Integration Level', rest: 'reflects the degree of integration with Forgd’s data consumption systems.' }
 ]
 
-const TH = 'bg-[#0b0e26] px-4 py-2.5 text-center label-sm text-white'
+const TH = 'bg-brand px-4 py-2.5 text-center label-sm text-on-brand'
 const TD = 'border-b border-subtle px-4 py-2 body-sm text-secondary'
 
 function DocFileIcon() {
@@ -238,7 +238,7 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 										<tr key={row.ranking} className="last:[&>td]:border-b-0">
 											<td className={TD}>{row.metric}</td>
 											<td className={`${TD} text-center`}>{row.weighting}</td>
-											<td className={`${TD} text-center tabular-nums`}>{row.ranking}</td>
+											<td className={`${TD} text-center`}>{row.ranking}</td>
 										</tr>
 									))}
 								</tbody>

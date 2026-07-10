@@ -127,11 +127,11 @@ function BreakdownRow({ row, data }: { row: BreakdownRowConfig; data: Dict }) {
 	return (
 		<tr className={`border-b ${BORDER} last:border-b-0`}>
 			<td className="px-3 py-2 text-left body-sm whitespace-normal text-secondary sm:whitespace-nowrap">{row.label}</td>
-			<td className="px-3 py-2 text-left body-sm font-medium tabular-nums">{valueText}</td>
-			<td className={`px-3 py-2 text-center body-sm tabular-nums ${percentileHeat}`}>
+			<td className="px-3 py-2 text-left body-sm font-medium">{valueText}</td>
+			<td className={`px-3 py-2 text-center body-sm ${percentileHeat}`}>
 				{percentile == null ? 'N/A' : `${Math.round(percentile)}%`}
 			</td>
-			<td className={`px-3 py-2 text-center body-sm tabular-nums ${rankHeat}`}>{rank == null ? 'N/A' : rank}</td>
+			<td className={`px-3 py-2 text-center body-sm ${rankHeat}`}>{rank == null ? 'N/A' : rank}</td>
 		</tr>
 	)
 }

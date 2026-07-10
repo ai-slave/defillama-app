@@ -142,7 +142,7 @@ function getRightsPieGradient(rights: {
 }): string {
 	const activeColor = 'var(--success)'
 	const inactiveColor = 'var(--error)'
-	return `conic-gradient(${rights.treasury ? activeColor : inactiveColor} 0deg 60deg, ${rights.revenue ? activeColor : inactiveColor} 60deg 120deg, ${rights.burns ? activeColor : inactiveColor} 120deg 180deg, ${rights.dividends ? activeColor : inactiveColor} 180deg 240deg, ${rights.buybacks ? activeColor : inactiveColor} 240deg 300deg, ${rights.governance ? activeColor : inactiveColor} 300deg 360deg)`
+	return `conic-gradient(from -30deg, ${rights.treasury ? activeColor : inactiveColor} 0deg 60deg, ${rights.revenue ? activeColor : inactiveColor} 60deg 120deg, ${rights.burns ? activeColor : inactiveColor} 120deg 180deg, ${rights.dividends ? activeColor : inactiveColor} 180deg 240deg, ${rights.buybacks ? activeColor : inactiveColor} 240deg 300deg, ${rights.governance ? activeColor : inactiveColor} 300deg 360deg)`
 }
 
 function getTokenRightsSummary(parsed: ITokenRightsData): TokensRightsSummary {
@@ -198,7 +198,7 @@ function buildTokenRightsMap(entries: TokensRawTokenRightsEntry[]): Map<string, 
 
 function buildUnlocksMap(rows: TokensRawProtocolEmission[], nowSec: number): Map<string, TokenUnlockMetrics> {
 	const map = new Map<string, TokenUnlockMetrics>()
-	const endSec = nowSec + THIRTY_DAYS_SECONDS
+	const startSec = nowSec - THIRTY_DAYS_SECONDS
 
 	for (const row of rows) {
 		if (!row.gecko_id) continue
@@ -208,7 +208,7 @@ function buildUnlocksMap(rows: TokensRawProtocolEmission[], nowSec: number): Map
 
 		if (price != null) {
 			for (const event of row.events ?? []) {
-				if (event.timestamp < nowSec || event.timestamp > endSec) continue
+				if (event.timestamp < startSec || event.timestamp > nowSec) continue
 				for (const amount of event.noOfTokens) unlock30dUsd += amount * price
 			}
 
@@ -356,7 +356,8 @@ export async function fetchTokensSourceRows(): Promise<TokensSourceData> {
 			.then((data) => data.protocols)
 			.catch(() => []),
 		getAllProtocolEmissions({
-			endDate: nowSec + THIRTY_DAYS_SECONDS,
+			startDate: nowSec - THIRTY_DAYS_SECONDS,
+			endDate: nowSec,
 			getHistoricalPrices: false,
 			tokenlist: metadata.tokenlist
 		}).catch(() => [])
@@ -433,13 +434,26 @@ export function buildTokensSourceRows({
 		const spotVolume24h = marketsEntry?.segments.spot?.volume_24h ?? null
 		const perpsVolume24h = sumSegments(marketsEntry, 'volume_24h')
 		const openInterest24h = sumSegments(marketsEntry, 'oi_usd')
+		const href = record ? getCanonicalTokenRoute(record) : null
+		const rights = resolveTokenRightsSummary(record, protocolId, rightsByDefillamaId)
+		const protocolTokenRightsSlug =
+			protocolId && protocolMetadata?.tokenRights
+				? slug(protocolMetadata.displayName || protocolMetadata.name || protocolId)
+				: null
 		const row: TokensSourceRow = {
 			id: token.id,
 			rank: token.market_cap_rank_with_rehypothecated ?? token.market_cap_rank ?? index + 1,
 			name: token.name,
 			symbol: token.symbol.toUpperCase(),
 			logo: record?.logo ?? geckoTokenIconUrl(token.id),
-			href: record ? getCanonicalTokenRoute(record) : null,
+			href,
+			tokenRightsHref: rights
+				? href
+					? `${href}#token-rights-and-value-accrual`
+					: protocolTokenRightsSlug
+						? `/protocol/token-rights/${protocolTokenRightsSlug}`
+						: null
+				: null,
 			price: token.current_price ?? marketsEntry?.segments.spot?.price ?? null,
 			priceChange1h: token.price_change_percentage_1h_in_currency ?? null,
 			priceChange24h: token.price_change_percentage_24h_in_currency ?? token.price_change_percentage_24h ?? null,
@@ -462,7 +476,7 @@ export function buildTokensSourceRows({
 				revenue24h != null && revenue24h > 0 && holdersRevenue24h != null
 					? (holdersRevenue24h / revenue24h) * 100
 					: null,
-			rights: resolveTokenRightsSummary(record, protocolId, rightsByDefillamaId),
+			rights,
 			unlock30dUsd: unlockMetrics?.unlock30dUsd ?? null,
 			upcomingUnlockUsd: unlockMetrics?.upcomingUnlockUsd ?? null,
 			searchKey: getSearchKey(token, record)

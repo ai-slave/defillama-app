@@ -41,7 +41,7 @@ export function MetricStat({ label, value, sub }: { label: string; value: ReactN
 	return (
 		<div className="flex items-baseline gap-1.5">
 			<span className="body-md text-secondary">{label}</span>
-			<span className="mono-md-bold tabular-nums">{value}</span>
+			<span className="mono-md-bold">{value}</span>
 			{sub != null ? <span className="body-sm">{sub}</span> : null}
 		</div>
 	)

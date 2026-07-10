@@ -1,4 +1,5 @@
 import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table'
+import { cloneElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { PaginatedTable } from '../PaginatedTable'
@@ -8,7 +9,15 @@ vi.mock('~/components/Icon', () => ({
 }))
 
 vi.mock('~/components/Tooltip', () => ({
-	Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>
+	Tooltip: ({
+		children,
+		content,
+		render
+	}: {
+		children: React.ReactNode
+		content: string
+		render?: React.ReactElement<Record<string, unknown>>
+	}) => (render ? cloneElement(render, { 'data-tooltip-content': content }, children) : <>{children}</>)
 }))
 
 const columnHelper = createColumnHelper<{ name: string }>()
@@ -16,11 +25,17 @@ const columnHelper = createColumnHelper<{ name: string }>()
 function TestTable({
 	rowCount,
 	initialPageSize = 10,
-	interactionDisabled = false
+	interactionDisabled = false,
+	paginationClassName,
+	shell,
+	stickyHeader = false
 }: {
 	rowCount: number
 	initialPageSize?: number
 	interactionDisabled?: boolean
+	paginationClassName?: string
+	shell?: 'default' | 'none'
+	stickyHeader?: boolean
 }) {
 	const data = Array.from({ length: rowCount }, (_, index) => ({ name: `row-${index + 1}` }))
 	const table = useReactTable({
@@ -29,7 +44,8 @@ function TestTable({
 			columnHelper.accessor('name', {
 				header: 'Name',
 				meta: {
-					headerClassName: 'w-[180px]'
+					headerClassName: 'sticky left-0 w-[180px]',
+					headerHelperText: 'Name help'
 				}
 			})
 		],
@@ -48,6 +64,9 @@ function TestTable({
 			table={table}
 			pageSizeOptions={[10, 20, 30, 50] as const}
 			interactionDisabled={interactionDisabled}
+			paginationClassName={paginationClassName}
+			shell={shell}
+			stickyHeader={stickyHeader}
 		/>
 	)
 }
@@ -66,6 +85,40 @@ describe('PaginatedTable', () => {
 		expect(html).toContain('Page 1 of 2')
 		expect(html).toContain('Rows per page')
 		expect(html).toContain('<option value="50">50</option>')
+	})
+
+	it('applies optional footer styling only when pagination is rendered', () => {
+		const paginatedHtml = renderToStaticMarkup(<TestTable rowCount={11} paginationClassName="pagination-panel" />)
+		const shortTableHtml = renderToStaticMarkup(<TestTable rowCount={10} paginationClassName="pagination-panel" />)
+
+		expect(paginatedHtml).toContain('pagination-panel')
+		expect(shortTableHtml).not.toContain('pagination-panel')
+	})
+
+	it('attaches pagination to a surrounding table shell when shell is none', () => {
+		const html = renderToStaticMarkup(<TestTable rowCount={11} shell="none" />)
+
+		expect(html).toContain('border-t border-subtle p-2')
+		expect(html).toContain('flex flex-col gap-0')
+	})
+
+	it('renders the sticky header mirror only when explicitly enabled', () => {
+		const defaultHtml = renderToStaticMarkup(<TestTable rowCount={11} />)
+		const stickyHtml = renderToStaticMarkup(<TestTable rowCount={11} stickyHeader />)
+
+		expect(defaultHtml).not.toContain('data-sticky-table-header')
+		expect(stickyHtml).toContain('data-sticky-table-header')
+		expect(stickyHtml).toContain('translateX(var(--paginated-header-scroll-left, 0px))')
+	})
+
+	it('keeps one interactive control set on the presentational sticky mirror', () => {
+		const html = renderToStaticMarkup(<TestTable rowCount={1} stickyHeader />)
+
+		expect(html).toContain('data-sticky-header-mirror="true"')
+		expect(html).toContain('role="presentation"')
+		expect(html.match(/<button/g)).toHaveLength(1)
+		expect(html.match(/data-tooltip-content="Name help"/g)).toHaveLength(1)
+		expect(html).not.toContain('<thead aria-hidden="true"')
 	})
 
 	it('shows rows-per-page when at least two valid options remain', () => {

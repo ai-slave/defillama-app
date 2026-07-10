@@ -111,7 +111,8 @@ describe('buildTokensSourceRows', () => {
 					name: 'Ethena',
 					displayName: 'Ethena',
 					gecko_id: 'ethena',
-					perps: true
+					perps: true,
+					tokenRights: true
 				}
 			},
 			emissionsSupplyMetrics: {
@@ -145,8 +146,16 @@ describe('buildTokensSourceRows', () => {
 					tPrice: 2,
 					events: [
 						{
-							timestamp: nowSec + 10,
+							timestamp: nowSec - 10,
 							noOfTokens: [5, 5]
+						},
+						{
+							timestamp: nowSec + 20,
+							noOfTokens: [100]
+						},
+						{
+							timestamp: nowSec - 30 * 24 * 60 * 60 - 1,
+							noOfTokens: [100]
 						}
 					],
 					upcomingEvent: [
@@ -177,6 +186,7 @@ describe('buildTokensSourceRows', () => {
 			id: 'ethena',
 			logo: '/ena.png',
 			href: '/token/ENA',
+			tokenRightsHref: '/token/ENA#token-rights-and-value-accrual',
 			price: 2,
 			priceChange24h: -2.5,
 			outstandingFdv: 1200,
@@ -203,6 +213,7 @@ describe('buildTokensSourceRows', () => {
 			burns: true,
 			burnsStatus: 'Active'
 		})
+		expect(ethena.rights?.pieGradient).toContain('from -30deg')
 		expect(ethena.rights?.pieGradient).toContain('var(--success) 180deg 240deg')
 		expect(ethena.rights?.pieGradient).toContain('var(--success) 240deg 300deg')
 
@@ -211,6 +222,51 @@ describe('buildTokensSourceRows', () => {
 			logo: 'https://token-icons.llamao.fi/icons/tokens/gecko/unmapped?w=48&h=48',
 			href: null,
 			rights: null
+		})
+	})
+
+	it('links rights to the protocol page when no token-directory route exists', () => {
+		const result = buildTokensSourceRows({
+			tokens: [
+				{
+					id: 'metadata-only',
+					name: 'Metadata Only',
+					symbol: 'meta',
+					current_price: 1,
+					market_cap: 100
+				}
+			],
+			markets: { last_updated: '', tokens: [] },
+			tokenRightsEntries: [
+				tokenRightsEntry({
+					'Protocol Name': 'Metadata Only',
+					Token: ['META'],
+					'DefiLlama ID': 'metadata-only'
+				})
+			],
+			fees: [],
+			revenue: [],
+			holdersRevenue: [],
+			unlocks: [],
+			metadata: {
+				tokenDirectory: {},
+				protocolMetadata: {
+					'metadata-only': {
+						name: 'Metadata Only',
+						displayName: 'Metadata Only',
+						gecko_id: 'metadata-only',
+						tokenRights: true
+					}
+				},
+				emissionsSupplyMetrics: {}
+			} as unknown as MetadataCache,
+			nowSec: 1_800_000_000
+		})
+
+		expect(result.rows[0]).toMatchObject({
+			href: null,
+			tokenRightsHref: '/protocol/token-rights/metadata-only',
+			rights: { protocolName: 'Metadata Only' }
 		})
 	})
 

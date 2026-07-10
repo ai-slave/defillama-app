@@ -1,6 +1,6 @@
 export const ProgressBar = ({ pct }: { pct: number }) => {
 	return (
-		<div className="relative h-2 w-full overflow-hidden rounded-full bg-[#2a2c32] shadow-inner backdrop-blur-xs">
+		<div className="relative h-2 w-full overflow-hidden rounded-full bg-surface-elevated-2 shadow-inner backdrop-blur-xs">
 			<div
 				className="h-full rounded-full transition-all duration-1000 ease-out"
 				style={{

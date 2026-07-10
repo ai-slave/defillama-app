@@ -21,7 +21,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { useDateRangeValidation } from '~/hooks/useDateRangeValidation'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { inputStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { inputStyles, searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formattedNum, slug, toNiceDayAndHour } from '~/utils'
@@ -160,7 +160,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 	columnHelper.accessor('amount', {
 		header: 'Amount',
 		cell: ({ getValue }) => (
-			<span className="block max-w-[120px] truncate text-right tabular-nums" title={getValue()}>
+			<span className="block max-w-[120px] truncate text-right" title={getValue()}>
 				{getValue()}
 			</span>
 		),
@@ -174,7 +174,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 		cell: ({ getValue }) => {
 			const value = getValue()
 			if (value == null) return <span className="text-tertiary">—</span>
-			return <span className="font-medium tabular-nums">{formattedNum(value, true)}</span>
+			return <span className="font-medium">{formattedNum(value, true)}</span>
 		},
 		meta: {
 			headerClassName: 'w-[130px]',
@@ -383,7 +383,7 @@ function StatCard({ label, value, sublabel, accent = 'default' }: StatCardProps)
 	return (
 		<Card padding="md" className="flex flex-col gap-1">
 			<span className="label-sm text-secondary uppercase">{label}</span>
-			<span className={`text-2xl font-semibold tabular-nums ${accentClass}`}>{value}</span>
+			<span className={`text-2xl font-semibold ${accentClass}`}>{value}</span>
 			{sublabel ? <span className="label-sm text-tertiary">{sublabel}</span> : null}
 		</Card>
 	)
@@ -720,7 +720,7 @@ function TransactionsTable({
 			<TableToolbar className="w-full justify-end">
 				<h2 className="mr-auto label-md">Transactions</h2>
 				<TableToolbarControlGroup>
-					<label className="relative w-full max-w-full sm:max-w-[280px]">
+					<label className={searchFieldInlineWrapperStyles}>
 						<span className="sr-only">Search transactions</span>
 						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 						<input
@@ -741,8 +741,8 @@ function TransactionsTable({
 
 			<VirtualTable instance={instance} rowSize={48} />
 
-			<div className="flex flex-wrap items-center justify-between gap-3 border-t border-subtle p-3 label-sm text-secondary">
-				<span className="tabular-nums">
+			<div className="flex flex-wrap items-center justify-between gap-3 border-t border-subtle p-2 label-sm text-secondary">
+				<span>
 					{filteredCount === 0
 						? 'No rows'
 						: `${formattedNum(pageStart)}–${formattedNum(pageEnd)} of ${formattedNum(filteredCount)}`}
@@ -763,7 +763,7 @@ function TransactionsTable({
 					>
 						<Icon name="chevron-left" height={14} width={14} />
 					</PagerButton>
-					<span className="px-2 font-medium text-primary tabular-nums">
+					<span className="px-2 font-medium text-primary">
 						{pageCount === 0 ? '0 / 0' : `${pageIndex + 1} / ${pageCount}`}
 					</span>
 					<PagerButton

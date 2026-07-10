@@ -14,7 +14,7 @@ import { PercentChange } from '~/components/PercentChange'
 import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
-import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { slug } from '~/utils'
 
@@ -164,7 +164,7 @@ export function NftsCollectionTable({ data }: { data: Array<INftCollection> }) {
 		<Panel padding="none">
 			<PanelHeader className="justify-end gap-2">
 				<PanelTitle as="h1">NFT Collection Metrics</PanelTitle>
-				<label className="relative w-full sm:max-w-[280px]">
+				<label className={searchFieldInlineWrapperStyles}>
 					<span className="sr-only">Search collections...</span>
 					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 					<input

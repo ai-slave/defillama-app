@@ -57,7 +57,7 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 				</span>
 			)
 		},
-		size: 200
+		meta: { headerClassName: 'w-[200px] min-w-[200px]' }
 	}),
 	columnHelper.accessor(
 		(row) =>
@@ -93,32 +93,28 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 					</Hovercard>
 				)
 			},
-			size: 200
+			meta: { headerClassName: 'w-[200px] min-w-[200px]' }
 		}
 	),
 	columnHelper.accessor('received', {
 		header: 'Received',
 		cell: ({ getValue }) => formattedNum(getValue()),
-		meta: { align: 'end' },
-		size: 140
+		meta: { headerClassName: 'w-[140px] min-w-[140px]', align: 'end' }
 	}),
 	columnHelper.accessor('balance', {
 		header: 'Balance',
 		cell: ({ getValue }) => formattedNum(getValue()),
-		meta: { align: 'end' },
-		size: 140
+		meta: { headerClassName: 'w-[140px] min-w-[140px]', align: 'end' }
 	}),
 	columnHelper.accessor('staked', {
 		header: 'Staked',
 		cell: ({ getValue }) => formattedNum(getValue()),
-		meta: { align: 'end' },
-		size: 140
+		meta: { headerClassName: 'w-[140px] min-w-[140px]', align: 'end' }
 	}),
 	columnHelper.accessor('transferredOut', {
 		header: 'Transferred Out',
 		cell: ({ getValue }) => formattedNum(getValue()),
-		meta: { align: 'end' },
-		size: 160
+		meta: { headerClassName: 'w-[160px] min-w-[160px]', align: 'end' }
 	})
 ]
 

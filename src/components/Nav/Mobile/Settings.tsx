@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useProtocolsFilterState } from '~/components/Filters/useProtocolFilterState'
 import { Icon } from '~/components/Icon'
+import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { DARK_MODE, useDarkModeManager } from '~/contexts/LocalStorage'
 import {
 	popoverMultiSelectCheckStyles,
@@ -40,14 +41,14 @@ export function Settings({ metricFilters = EMPTY_FILTERS }: { metricFilters?: { 
 					<Ariakit.SelectItem value={option.key} key={option.key} className={popoverRowWithBorderStyles}>
 						{option.name}
 						<span className={popoverMultiSelectCheckStyles(selectedValues.includes(option.key))} aria-hidden>
-							{selectedValues.includes(option.key) ? <Icon name="check" className="size-3" /> : null}
+							{selectedValues.includes(option.key) ? <SelectCheckIcon /> : null}
 						</span>
 					</Ariakit.SelectItem>
 				))}
 				<Ariakit.SelectItem value={DARK_MODE} onClick={() => toggleDarkMode()} className={popoverRowWithBorderStyles}>
 					Dark Mode
 					<span className={popoverMultiSelectCheckStyles(darkMode)} aria-hidden>
-						{darkMode ? <Icon name="check" className="size-3" /> : null}
+						{darkMode ? <SelectCheckIcon /> : null}
 					</span>
 				</Ariakit.SelectItem>
 			</Ariakit.SelectPopover>

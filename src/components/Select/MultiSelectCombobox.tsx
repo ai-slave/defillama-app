@@ -13,6 +13,7 @@ import {
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
+import { SelectCheckIcon } from './SelectCheckIcon'
 import type { MultiSelectOption } from './types'
 
 const DEFAULT_VIEWABLE_MATCHES = 10
@@ -136,7 +137,7 @@ export const MultiSelectCombobox = ({
 							{item.logo ? <img src={item.logo} alt={item.label} className="size-5 shrink-0 rounded-full" /> : null}
 							<span>{item.label}</span>
 							<span className={popoverMultiSelectCheckStyles(selectedValues.includes(item.value))} aria-hidden>
-								{selectedValues.includes(item.value) ? <Icon name="check" className="size-3" /> : null}
+								{selectedValues.includes(item.value) ? <SelectCheckIcon /> : null}
 							</span>
 						</Ariakit.ComboboxItem>
 					))}

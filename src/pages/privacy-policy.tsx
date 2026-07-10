@@ -7,7 +7,7 @@ export default function PrivacyPolicy() {
 			description="DefiLlama privacy policy covering data collection, usage, and your rights."
 			canonicalUrl="/privacy-policy"
 		>
-			<div className="mx-auto mb-16 flex w-full max-w-3xl flex-col gap-8 text-[#d5d5d5]">
+			<div className="mx-auto mb-16 flex w-full max-w-3xl flex-col gap-8 text-secondary">
 				<h1 className="text-center text-3xl font-bold text-white">Privacy Policy</h1>
 				<p>
 					This Privacy Policy explains how information about you is collected, used, and disclosed by DefiLlama. This

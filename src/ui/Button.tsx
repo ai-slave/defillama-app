@@ -8,6 +8,7 @@ import type { ComponentPropsWithRef, ElementType } from 'react'
    - primary:   bg-brand + text-on-brand (one per view: Done, Sign-in, …)
    - outline:   border-brand + text-link ("active = branded" toggles/chips)
    - filter:    rounded-full brand-border filter pill (metrics directory)
+   - toggle:    filled toolbar filter with a brand-tinted active state
    - metricBrowse: dashed 6px-radius selected pill in the home metrics browse bar
 
    Heights are PADDING-DRIVEN, never fixed: every control in a row shares
@@ -24,7 +25,7 @@ import type { ComponentPropsWithRef, ElementType } from 'react'
    `buttonStyles(...)` exists for the rare host that only takes a class.
 ---------------------------------------------------------------------------- */
 
-type ButtonVariant = 'secondary' | 'primary' | 'outline' | 'ghost' | 'filter' | 'metricBrowse'
+type ButtonVariant = 'secondary' | 'primary' | 'outline' | 'ghost' | 'filter' | 'toggle' | 'metricBrowse'
 type ButtonSize = 'sm' | 'md'
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
@@ -35,6 +36,8 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 	ghost:
 		'border border-transparent text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary',
 	filter: 'hover-wash border border-brand text-primary data-[active=true]:bg-brand-muted',
+	toggle:
+		'border border-medium bg-surface-elevated-1 text-primary hover:bg-hover-row focus-visible:bg-hover-row data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link',
 	metricBrowse: 'hover-wash border border-dashed border-brand bg-brand-muted text-primary'
 }
 

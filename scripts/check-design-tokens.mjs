@@ -18,6 +18,7 @@ const EXCLUDED_PRODUCT_PREFIXES = [
 	'src/components/EntityQuestionsStrip/',
 	'src/components/LlamaAIFloatingButton/',
 	'src/components/Newsletter/',
+	'src/components/SubscribeCards/',
 	'src/containers/Account/',
 	'src/containers/Articles/',
 	'src/containers/Authors/',
@@ -35,6 +36,7 @@ const EXCLUDED_PRODUCT_PREFIXES = [
 	'src/pages/protocol/yields/',
 	'src/pages/research/',
 	'src/pages/sheets/',
+	'src/pages/subscription/',
 	'src/pages/yields'
 ]
 
