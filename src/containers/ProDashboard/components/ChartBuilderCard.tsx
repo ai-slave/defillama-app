@@ -624,6 +624,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 					) : null}
 					{!isReadOnly ? (
 						<Select
+							size="sm"
 							allValues={CHART_TYPE_OPTIONS}
 							selectedValues={config.chartType}
 							setSelectedValues={(value) => {
@@ -644,6 +645,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 					) : null}
 					{!isReadOnly && config.chartType === 'treemap' && !isTvlChart ? (
 						<Select
+							size="sm"
 							allValues={TREEMAP_VALUE_OPTIONS}
 							selectedValues={treemapMode}
 							setSelectedValues={(value) => handleTreemapValueChange(value as string)}
@@ -654,6 +656,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 					) : null}
 					{!isReadOnly && config.chartType !== 'treemap' ? (
 						<Select
+							size="sm"
 							allValues={VALUE_TYPE_OPTIONS}
 							selectedValues={config.displayAs === 'percentage' ? '% Percentage' : '$ Absolute'}
 							setSelectedValues={(value) => {
@@ -683,6 +686,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 					{!isReadOnly &&
 					(config.mode !== 'protocol' || !(config.chainCategories && config.chainCategories.length > 0)) ? (
 						<Select
+							size="sm"
 							allValues={hideOthersOptions}
 							selectedValues={config.hideOthers ? `Top ${config.limit}` : 'All'}
 							setSelectedValues={(value) => {

@@ -539,6 +539,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 
 				{!isReadOnly && hasAnyData && !hasMultipleMetrics && allChartsAreBarType ? (
 					<Select
+						size="sm"
 						allValues={CUMULATIVE_DISPLAY_OPTIONS}
 						selectedValues={showCumulative ? 'Cumulative' : 'Individual'}
 						setSelectedValues={(value) => {
@@ -554,6 +555,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 				) : null}
 				{!isReadOnly && hasAnyData && !hasMultipleMetrics && canStack && !showCumulative && !showTreemap ? (
 					<Select
+						size="sm"
 						allValues={STACKING_DISPLAY_OPTIONS}
 						selectedValues={showStacked ? 'Stacked' : 'Separate'}
 						setSelectedValues={(value) => {
@@ -567,6 +569,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 				) : null}
 				{!isReadOnly && hasAnyData && !hasMultipleMetrics && !showTreemap ? (
 					<Select
+						size="sm"
 						allValues={VALUE_TYPE_OPTIONS}
 						selectedValues={showPercentage ? '% Percentage' : '$ Absolute'}
 						setSelectedValues={(value) => {
@@ -580,6 +583,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 				) : null}
 				{!isReadOnly && hasAnyData && !hasMultipleMetrics ? (
 					<Select
+						size="sm"
 						allValues={CHART_LAYOUT_OPTIONS}
 						selectedValues={showTreemap ? 'treemap' : 'chart'}
 						setSelectedValues={(value) => {

@@ -25,6 +25,8 @@ export function FiltersByCategory({
 
 	return (
 		<SelectWithCombobox
+			variant="default"
+			size="sm"
 			label="Category"
 			allValues={categoryList}
 			selectedValues={selectedCategories}

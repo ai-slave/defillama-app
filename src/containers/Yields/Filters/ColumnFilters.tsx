@@ -122,6 +122,7 @@ export function ColumnFilters({ nestedMenu, enabledColumns, size }: IColumnFilte
 	return (
 		<>
 			<SelectWithCombobox
+				variant="default"
 				allValues={options}
 				selectedValues={selectedOptions}
 				setSelectedValues={setSelectedOptions}

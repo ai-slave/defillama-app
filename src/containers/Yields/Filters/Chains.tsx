@@ -164,6 +164,7 @@ export function FilterByChain({
 
 	return (
 		<SelectWithCombobox
+			variant="default"
 			label="Chains"
 			allValues={chainListWithSpecial}
 			selectedValues={displaySelectedChains}

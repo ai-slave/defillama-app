@@ -142,6 +142,7 @@ export function FilterByToken({
 
 	return (
 		<SelectWithCombobox
+			variant="default"
 			label="Tokens"
 			allValues={tokensList}
 			selectedValues={displaySelectedTokens}

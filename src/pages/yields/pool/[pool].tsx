@@ -1037,6 +1037,7 @@ const PageView = ({
 							<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
 								<h2 className="mr-auto text-base font-semibold">Pool Liquidity</h2>
 								<SelectWithCombobox
+									size="sm"
 									allValues={LIQUIDITY_LEGEND_OPTIONS}
 									selectedValues={selectedLiquiditySeries}
 									setSelectedValues={setSelectedLiquiditySeries}

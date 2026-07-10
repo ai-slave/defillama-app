@@ -214,6 +214,8 @@ export function YieldAttributes({ pathname, nestedMenu }: { pathname: string; ne
 
 	return (
 		<SelectWithCombobox
+			variant="default"
+			size="sm"
 			allValues={attributeOptionsFiltered}
 			selectedValues={selectedAttributes}
 			label="Attributes"

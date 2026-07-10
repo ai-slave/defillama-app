@@ -224,6 +224,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 							) : null}
 							{isBarChart ? (
 								<Select
+									size="sm"
 									allValues={CUMULATIVE_DISPLAY_OPTIONS}
 									selectedValues={showCumulative ? 'Cumulative' : 'Individual'}
 									setSelectedValues={(value) => {

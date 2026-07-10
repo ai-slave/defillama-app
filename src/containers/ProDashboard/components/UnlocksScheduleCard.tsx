@@ -117,6 +117,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 			{hasChartData && stacks.length > 1 ? (
 				<div className="mb-2 flex justify-end">
 					<SelectWithCombobox
+						size="sm"
 						allValues={stacks}
 						selectedValues={activeCategories}
 						setSelectedValues={setSelectedCategories}

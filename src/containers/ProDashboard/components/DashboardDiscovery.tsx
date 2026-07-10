@@ -170,6 +170,8 @@ export function DashboardDiscovery({
 					{!isBrowseMode ? (
 						<div className="ml-auto flex flex-wrap items-center gap-4">
 							<Select
+								variant="default"
+								size="sm"
 								allValues={itemsPerPageOptions}
 								selectedValues={itemsPerPage.toString()}
 								setSelectedValues={handleItemsPerPageChange}
@@ -188,6 +190,8 @@ export function DashboardDiscovery({
 								aria-label="Items per page"
 							/>
 							<Select
+								variant="default"
+								size="sm"
 								allValues={sortOptions}
 								selectedValues={selectedSortBy.key}
 								setSelectedValues={(value) => {
@@ -216,6 +220,8 @@ export function DashboardDiscovery({
 							/>
 							{selectedSortBy.key === 'trending' ? (
 								<Select
+									variant="default"
+									size="sm"
 									allValues={timeFrameOptions}
 									selectedValues={selectedTimeFrame.key}
 									setSelectedValues={(value) => {

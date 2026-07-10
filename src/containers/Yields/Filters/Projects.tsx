@@ -28,6 +28,8 @@ export function YieldProjects({
 
 	return (
 		<SelectWithCombobox
+			variant="default"
+			size="sm"
 			allValues={projectList}
 			selectedValues={selectedProjects}
 			label={label}
