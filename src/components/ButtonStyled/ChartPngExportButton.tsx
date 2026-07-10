@@ -4,7 +4,6 @@ import { useRouter } from 'next/router'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { getChartTheme } from '~/components/ECharts/chartTheme'
-import { formatChartAxisDate } from '~/components/ECharts/formatters'
 import { Icon } from '~/components/Icon'
 import { LoadingSpinner } from '~/components/Loaders'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
@@ -753,8 +752,6 @@ async function loadCircularIcon(url: string): Promise<string | null> {
 
 // --- Axis scaling for export ---
 
-export const formatExportTimeAxisLabel = formatChartAxisDate
-
 export function scaleXAxisForExport(xAxis: any[]): any[] {
 	return xAxis.map((axis) => {
 		const sourceLabel = axis.axisLabel ?? {}
@@ -769,12 +766,7 @@ export function scaleXAxisForExport(xAxis: any[]): any[] {
 				...sourceLabel,
 				fontSize: EXPORT_FONT_SIZE,
 				inside: false,
-				hideOverlap: !isRotated,
-				// ECharts' default time formatter uses separate day and month ticks. At
-				// the export font size, ticks around a month boundary can occupy the same
-				// space (for example, "29" and "May"). A single date label avoids that
-				// collision while preserving the month in every visible export label.
-				...(axis.type === 'time' && sourceLabel.formatter == null ? { formatter: formatExportTimeAxisLabel } : {})
+				hideOverlap: !isRotated
 			}
 		}
 		if (axis.name) {

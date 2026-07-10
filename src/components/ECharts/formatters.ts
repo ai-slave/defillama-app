@@ -328,14 +328,6 @@ export const formatTooltipValue = (value: number, symbol: string) => {
 
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-/** Format time-axis ticks as one date label, avoiding separate day/month ticks that can collide. */
-export function formatChartAxisDate(value: string | number | Date): string {
-	const date = new Date(value)
-	if (Number.isNaN(date.getTime())) return String(value)
-
-	return `${monthNames[date.getUTCMonth()]} ${date.getUTCDate()}`
-}
-
 /**
  * Format a timestamp (in ms) as a human-readable date string for chart tooltips.
  * The output format varies by `groupBy`:

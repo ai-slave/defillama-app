@@ -40,12 +40,7 @@ import {
 	chartLegendScrollStyle
 } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
-import {
-	formatChartAxisDate,
-	isTooltipDataRecord,
-	formatChartEmphasisDate,
-	formatTooltipChartDate
-} from '../formatters'
+import { isTooltipDataRecord, formatChartEmphasisDate, formatTooltipChartDate } from '../formatters'
 import { buildHallmarksMarkLine } from '../hallmarks'
 import type { IMultiSeriesChart2Props } from '../types'
 import { mergeDeep } from '../utils'
@@ -590,7 +585,7 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 			type: 'time',
 			boundaryGap: false,
 			nameTextStyle: { fontFamily: 'sans-serif', fontSize: 14, fontWeight: 400 },
-			axisLabel: { color: axisLabelColor, formatter: formatChartAxisDate, hideOverlap: true },
+			axisLabel: { color: axisLabelColor, hideOverlap: true },
 			axisLine: { lineStyle: { color: themeColor, opacity: 0.2 } },
 			splitLine: {
 				lineStyle: { color: getChartTheme(isThemeDark).gridline }
