@@ -233,7 +233,7 @@ export async function fetchChainsByAdapterPageChartData({
 }): Promise<MultiSeriesChart2Dataset> {
 	const searchParams = new URLSearchParams({ adapterType, dataType })
 	return fetchJson<MultiSeriesChart2Dataset>(
-		`/api/public/page-data/dimension-adapters/chains-chart?${searchParams.toString()}&zz=17`
+		`/api/public/page-data/dimension-adapters/chains-chart?${searchParams.toString()}&zz=18`
 	)
 }
 

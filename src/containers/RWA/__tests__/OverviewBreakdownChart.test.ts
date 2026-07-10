@@ -179,6 +179,27 @@ describe('getOverviewBreakdownRequestState', () => {
 		expect(Array.from(lastChartProps?.selectedCharts ?? [])).toEqual(['Treasuries', 'Credit'])
 	})
 
+	it('renders net flows on overview breakdown pages', async () => {
+		routerQuery = { chartType: 'flows' }
+		queryState = {
+			data: [{ timestamp: 1, Ethereum: 10, Solana: -4 }],
+			isLoading: false,
+			error: null
+		}
+
+		await renderAll(
+			createElement(RWAOverviewBreakdownChart, {
+				page: { kind: 'chain' },
+				initialChartDataset: { source: [], dimensions: ['timestamp'] },
+				stackLabel: 'Chains'
+			})
+		)
+
+		expect(lastChartProps?.groupBy).toBe('monthly')
+		expect(lastChartProps?.charts?.map((chart) => chart.name)).toEqual(['Ethereum', 'Solana'])
+		expect(lastChartProps?.charts?.every((chart) => chart.type === 'bar')).toBe(true)
+	})
+
 	it('slices selected stack charts to the first non-null selected value', async () => {
 		routerQuery = { stacks: 'PreStocks' }
 		const dataset = {

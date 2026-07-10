@@ -25,10 +25,12 @@ import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInput
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatNum, formattedNum } from '~/utils'
-import type { IRWAAssetsOverview } from './api.types'
+import type { IRWAAssetsOverview, IRWAFlowSummaryResponse, RWAFlowWindow } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
 import { BreakdownTooltipContent } from './BreakdownTooltipContent'
 import { definitions } from './definitions'
+import { formatSignedRWAFlow, getRWAFlowTextClass } from './flows'
+import { useRWAFlowSummary } from './flows.hooks'
 import { getRwaPlatforms, UNKNOWN_PLATFORM } from './grouping'
 import { rwaSlug } from './rwaSlug'
 
@@ -41,6 +43,7 @@ export function RWAAssetsTable({
 	selectedChain: string
 	includeRwaPerps: boolean
 }) {
+	const { data: flowSummary } = useRWAFlowSummary()
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'activeMcap.total', desc: true }])
 	const [expanded, setExpanded] = useState<ExpandedState>({})
@@ -58,7 +61,7 @@ export function RWAAssetsTable({
 		})
 	}, [assets, deferredSearchValue])
 
-	const columns = useMemo(() => createColumns(includeRwaPerps), [includeRwaPerps])
+	const columns = useMemo(() => createColumns(includeRwaPerps, flowSummary), [flowSummary, includeRwaPerps])
 
 	const instance = useReactTable({
 		data: assetsData,
@@ -206,6 +209,15 @@ export function getDefiMetricValue(asset: AssetRow): number | null {
 	}
 }
 
+function getAssetFlowValue(
+	asset: AssetRow,
+	flowSummary: IRWAFlowSummaryResponse | undefined,
+	window: RWAFlowWindow
+): number | null | undefined {
+	if (asset.kind !== 'spot') return null
+	return flowSummary?.windows[window].asset[asset.canonicalMarketId]?.flow
+}
+
 function MixedMetricCell({
 	asset,
 	value,
@@ -224,7 +236,7 @@ function MixedMetricCell({
 	return value != null ? <span>{formattedNum(value, true)}</span> : null
 }
 
-function createColumns(includeRwaPerps: boolean) {
+function createColumns(includeRwaPerps: boolean, flowSummary: IRWAFlowSummaryResponse | undefined) {
 	const metricHeaders = getMetricColumnHeaders(includeRwaPerps)
 
 	return [
@@ -272,6 +284,30 @@ function createColumns(includeRwaPerps: boolean) {
 			meta: {
 				headerClassName: 'w-[120px]',
 				align: 'end'
+			}
+		}),
+		columnHelper.accessor((asset) => getAssetFlowValue(asset, flowSummary, '7d') ?? undefined, {
+			id: 'netFlow7d',
+			header: 'Net Flow 7d',
+			cell: (info) => (
+				<span className={getRWAFlowTextClass(info.getValue())}>{formatSignedRWAFlow(info.getValue())}</span>
+			),
+			meta: {
+				headerClassName: 'w-[144px]',
+				align: 'end',
+				headerHelperText: 'Net USD flow over the prior 7 days.'
+			}
+		}),
+		columnHelper.accessor((asset) => getAssetFlowValue(asset, flowSummary, '30d') ?? undefined, {
+			id: 'netFlow30d',
+			header: 'Net Flow 30d',
+			cell: (info) => (
+				<span className={getRWAFlowTextClass(info.getValue())}>{formatSignedRWAFlow(info.getValue())}</span>
+			),
+			meta: {
+				headerClassName: 'w-[144px]',
+				align: 'end',
+				headerHelperText: 'Net USD flow over the prior 30 days.'
 			}
 		}),
 		columnHelper.accessor((asset) => normalizeRwaAssetGroup(asset.assetGroup), {

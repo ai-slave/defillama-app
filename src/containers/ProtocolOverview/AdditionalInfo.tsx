@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import dayjs from 'dayjs'
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Icon } from '~/components/Icon'
 import { BasicLink, ButtonLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
@@ -178,7 +179,7 @@ export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
 					<span className="label-md text-secondary">Category:</span>
 					<BasicLink href={categoryHref} className={INFO_ACTION_STYLES}>
 						{props.category}
-						<Icon name="arrow-up-right" className="size-4" />
+						<Icon name="arrow-up-right" className="size-3.5" />
 					</BasicLink>
 				</p>
 			) : null}
@@ -203,57 +204,36 @@ export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
 			) : null}
 			<div className="flex flex-wrap gap-3">
 				{props.website ? (
-					<a
+					<ExternalLinkButton
 						href={props.website}
-						className={INFO_ACTION_STYLES}
-						target="_blank"
-						rel="noopener noreferrer"
+						icon="globe"
 						data-umami-event="protocol-website-click"
 						data-umami-event-protocol={props.name}
 						data-umami-event-referral={props.isWebsiteReferral ? 'true' : 'false'}
 					>
-						<Icon name="globe" className="size-4" />
-						<span>Website</span>
-						<Icon name="arrow-up-right" className="size-4" />
-					</a>
+						Website
+					</ExternalLinkButton>
 				) : null}
 				{props.github?.length
 					? props.github.map((github) => (
-							<a
+							<ExternalLinkButton
 								href={`https://github.com/${github}`}
-								className={INFO_ACTION_STYLES}
-								target="_blank"
-								rel="noopener noreferrer"
+								icon="github"
 								key={`${props.name}-github-${github}`}
 							>
-								<Icon name="github" className="size-4" />
-								<span>{props.github?.length === 1 ? 'GitHub' : github}</span>
-								<Icon name="arrow-up-right" className="size-4" />
-							</a>
+								{props.github?.length === 1 ? 'GitHub' : github}
+							</ExternalLinkButton>
 						))
 					: null}
 				{props.twitter ? (
-					<a
-						href={`https://x.com/${props.twitter}`}
-						className={INFO_ACTION_STYLES}
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<Icon name="twitter" className="size-4" />
-						<span>Twitter</span>
-						<Icon name="arrow-up-right" className="size-4" />
-					</a>
+					<ExternalLinkButton href={`https://x.com/${props.twitter}`} icon="twitter">
+						Twitter
+					</ExternalLinkButton>
 				) : null}
 				{props.safeHarbor ? (
-					<a
-						href={`https://safeharbor.securityalliance.org/database/${slug(props.name)}`}
-						className={INFO_ACTION_STYLES}
-						target="_blank"
-						rel="noopener noreferrer"
-					>
+					<ExternalLinkButton href={`https://safeharbor.securityalliance.org/database/${slug(props.name)}`}>
 						Safe Harbor Agreement
-						<Icon name="arrow-up-right" className="size-4" />
-					</a>
+					</ExternalLinkButton>
 				) : null}
 			</div>
 		</Card>

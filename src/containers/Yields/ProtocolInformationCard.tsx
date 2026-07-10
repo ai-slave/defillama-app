@@ -1,7 +1,8 @@
-import { Icon } from '~/components/Icon'
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { BasicLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
 import { QuestionHelper } from '~/components/QuestionHelper'
+import { buttonStyles } from '~/ui/Button'
 import { slug } from '~/utils'
 
 export function ProtocolInformationCard({
@@ -64,7 +65,7 @@ export function ProtocolInformationCard({
 								name="Yes"
 								options={config.audit_links}
 								isExternal
-								className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
+								className={buttonStyles({ size: 'md' })}
 								popoverVariant="legacy"
 							/>
 						) : (
@@ -76,40 +77,25 @@ export function ProtocolInformationCard({
 			) : null}
 			<div className="flex flex-wrap gap-2">
 				{url ? (
-					<a
-						href={url}
-						className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<Icon name="globe" className="size-3" />
-						<span>Website</span>
-					</a>
+					<ExternalLinkButton href={url} icon="globe">
+						Website
+					</ExternalLinkButton>
 				) : null}
 				{config?.github?.length
 					? config.github.map((github) => (
-							<a
+							<ExternalLinkButton
 								href={`https://github.com/${github}`}
-								className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
-								target="_blank"
-								rel="noopener noreferrer"
+								icon="github"
 								key={`${config.name}-github-${github}`}
 							>
-								<Icon name="github" className="size-3" />
-								<span>{config.github.length === 1 ? 'GitHub' : github}</span>
-							</a>
+								{config.github.length === 1 ? 'GitHub' : github}
+							</ExternalLinkButton>
 						))
 					: null}
 				{config?.twitter ? (
-					<a
-						href={`https://x.com/${config.twitter}`}
-						className="flex items-center gap-1 rounded-full border border-(--primary) px-2 py-1 text-xs font-medium whitespace-nowrap hover:bg-(--btn2-hover-bg) focus-visible:bg-(--btn2-hover-bg)"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<Icon name="twitter" className="size-3" />
-						<span>Twitter</span>
-					</a>
+					<ExternalLinkButton href={`https://x.com/${config.twitter}`} icon="twitter">
+						Twitter
+					</ExternalLinkButton>
 				) : null}
 			</div>
 		</div>

@@ -318,7 +318,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 					</div>
 				) : (
 					<div className="flex flex-col sm:flex-row">
-						<div className="no-scrollbar flex w-40 shrink-0 flex-col overflow-auto sm:mr-6">
+						<div className="flex scrollbar-none w-40 shrink-0 flex-col overflow-auto sm:mr-6">
 							<h2 className="flex h-12 items-center px-3 label-xs text-secondary">Tokens</h2>
 							{coins.map((coin) => (
 								<button

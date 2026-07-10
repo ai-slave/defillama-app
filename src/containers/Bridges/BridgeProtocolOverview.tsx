@@ -6,7 +6,7 @@ import {
 	type LowercaseDwmGrouping
 } from '~/components/ECharts/ChartGroupingSelector'
 import type { IPieChartProps } from '~/components/ECharts/types'
-import { Icon } from '~/components/Icon'
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TagGroup } from '~/components/TagGroup'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -16,7 +16,6 @@ import { BridgeTokensTable } from '~/containers/Bridges/BridgeTokensTable'
 import { AddressesTableSwitch } from '~/containers/Bridges/TableSwitch'
 import { BRIDGES_SHOWING_ADDRESSES, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { Panel } from '~/ui/Panel'
@@ -168,16 +167,9 @@ export const BridgeInfo = ({
 
 					<StatItem label="Volume Change (prev day)" value={volPercentChange + '%'} />
 					{config?.url ? (
-						<Button
-							as="a"
-							size="md"
-							className="mt-auto mr-auto"
-							href={config.url}
-							target="_blank"
-							rel="noreferrer noopener"
-						>
-							<span>Website</span> <Icon name="arrow-up-right" className="size-4" />
-						</Button>
+						<ExternalLinkButton href={config.url} icon="globe" className="mt-auto mr-auto">
+							Website
+						</ExternalLinkButton>
 					) : null}
 				</SummaryStatsCard>
 

@@ -256,7 +256,7 @@ function ManualSetup() {
 		<div className="mt-10">
 			<h3 className="mb-4 text-center label-sm text-tertiary">Or add manually to your client config</h3>
 			<Card padding="none" className="mx-auto max-w-2xl overflow-hidden">
-				<div className="no-scrollbar flex overflow-x-auto border-b border-subtle">
+				<div className="flex scrollbar-none overflow-x-auto border-b border-subtle">
 					{clientConfigs.map((c, i) => (
 						<button
 							key={c.name}

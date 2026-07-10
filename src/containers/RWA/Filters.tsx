@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { useState, type ReactNode } from 'react'
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Icon } from '~/components/Icon'
-import { BasicLink } from '~/components/Link'
 import { getQueryUpdatesFromSelected } from '~/components/Select/query'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ExcludeQueryKey, SelectValues } from '~/components/Select/types'
@@ -748,26 +748,12 @@ export function RWAOverviewFilters(props: RWAOverviewFiltersProps) {
 				>
 					Reset filters
 				</Button>
-				<Button
-					as={BasicLink}
-					href="https://forms.defillama.com/rwa-submission"
-					target="_blank"
-					rel="noopener noreferrer"
-					size="md"
-				>
-					<Icon name="external-link" height={14} width={14} />
-					<span>List Your Assets</span>
-				</Button>
-				<Button
-					as={BasicLink}
-					href="https://docs.llama.fi/real-world-assets/real-world-assets"
-					target="_blank"
-					rel="noopener noreferrer"
-					size="md"
-				>
-					<Icon name="external-link" height={14} width={14} />
-					<span>Docs</span>
-				</Button>
+				<ExternalLinkButton href="https://forms.defillama.com/rwa-submission" icon="plus">
+					List Your Assets
+				</ExternalLinkButton>
+				<ExternalLinkButton href="https://docs.llama.fi/real-world-assets/real-world-assets" icon="file-text">
+					Docs
+				</ExternalLinkButton>
 			</div>
 		</Card>
 	)

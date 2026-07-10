@@ -384,7 +384,7 @@ const ChainProtocolsTableInner = ({
 				size="md"
 				customFooter={
 					<button className={popoverFooterActionStyles} onClick={handleAddCustomColumn} type="button">
-						<Icon name="plus" height={16} width={16} />
+						<Icon name="plus" height={14} width={14} />
 						Add Custom Column
 					</button>
 				}

@@ -78,7 +78,7 @@ const getChainData = async (chain: string): Promise<ChainDataResult> => {
 		dexVolumeChart: IAdapterChainOverview['totalDataChart']
 		chainFeesChart: IAdapterProtocolOverview['totalDataChart']
 		chainRevenueChart: IAdapterProtocolOverview['totalDataChart']
-	}>(`/api/dynamic/cache/chain/${chain}?zz=17`)
+	}>(`/api/dynamic/cache/chain/${chain}?zz=18`)
 
 	return {
 		chainFeesChart: chainData.chainFeesChart ?? null,

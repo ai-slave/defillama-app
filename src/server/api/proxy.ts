@@ -1,7 +1,7 @@
 import { fetchJson } from '~/utils/async'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
-import { badRequest, ok, upstreamError } from './respond'
-import { cachedResult } from './resultCache'
+import { badRequest, ok, okSerializedJson, upstreamError } from './respond'
+import { cachedJsonResult } from './resultCache'
 import type { ApiRequest, ApiResult, ApiRouteDefinition } from './types'
 
 const DEFAULT_UPSTREAM_TIMEOUT_MS = 30_000
@@ -17,8 +17,8 @@ export type ProxyJsonRouteOptions = {
 	upstreamUrl: (req: ApiRequest) => string | null | ApiResult
 	timeoutMs?: number
 	/**
-	 * Memoize upstream responses in-process, keyed by upstream URL, so
-	 * concurrent and repeated identical requests reuse one fetch+parse.
+	 * Memoize serialized upstream responses in-process, keyed by upstream URL,
+	 * so concurrent and repeated identical requests reuse fetch, parse, and serialization.
 	 */
 	resultTtlMs?: number
 	/** Reshape the upstream payload before responding. Runs inside the result cache. */
@@ -53,15 +53,17 @@ export function proxyJsonRoute(options: ProxyJsonRouteOptions): ApiRouteDefiniti
 			}
 
 			try {
-				const body = options.resultTtlMs
-					? await cachedResult(
-							options.route,
-							upstream,
-							{ ttlMs: options.resultTtlMs, ttlJitter: 0.2 },
-							fetchAndTransform
-						)
-					: await fetchAndTransform()
-				return ok(body)
+				if (options.resultTtlMs) {
+					const payload = await cachedJsonResult(
+						options.route,
+						upstream,
+						{ ttlMs: options.resultTtlMs, ttlJitter: 0.2 },
+						fetchAndTransform
+					)
+					return okSerializedJson(payload)
+				}
+
+				return ok(await fetchAndTransform())
 			} catch (error) {
 				const errorResult = options.onError?.(error)
 				if (errorResult) return errorResult

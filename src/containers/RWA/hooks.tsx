@@ -1212,7 +1212,8 @@ export function useRwaChartDataset({
 	includeStablecoins,
 	includeGovernance,
 	includeRwaPerps,
-	useInitialDataset
+	useInitialDataset,
+	enabled = true
 }: {
 	selectedMetric: RWAChartMetricKey
 	initialDataset: RWAChartDataset
@@ -1224,6 +1225,7 @@ export function useRwaChartDataset({
 	includeGovernance: boolean
 	includeRwaPerps: boolean
 	useInitialDataset: boolean
+	enabled?: boolean
 }): {
 	chartDataset: RWAChartDataset
 	isChartLoading: boolean
@@ -1245,7 +1247,7 @@ export function useRwaChartDataset({
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 1,
-		enabled: !useInitialDataset && filteredAssets.some((asset) => asset.kind === 'spot')
+		enabled: enabled && !useInitialDataset && filteredAssets.some((asset) => asset.kind === 'spot')
 	})
 	const {
 		data: openInterestRows,
@@ -1257,12 +1259,14 @@ export function useRwaChartDataset({
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 1,
-		enabled: !useInitialDataset && includeRwaPerps && filteredAssets.some((asset) => asset.kind === 'perps')
+		enabled: enabled && !useInitialDataset && includeRwaPerps && filteredAssets.some((asset) => asset.kind === 'perps')
 	})
 
 	assert(initialDataset.dimensions[0] === 'timestamp', 'Expected timestamp dimension')
 
 	const chartDataset = useMemo(() => {
+		if (!enabled) return emptyChartDataset()
+
 		const spotDataset = (() => {
 			if (useInitialDataset) {
 				const dataset =
@@ -1295,12 +1299,19 @@ export function useRwaChartDataset({
 		filteredAssets,
 		mode,
 		selectedMetric,
-		includeRwaPerps
+		includeRwaPerps,
+		enabled
 	])
 
 	return {
 		chartDataset,
-		isChartLoading: !useInitialDataset && (isLoading || isOpenInterestLoading),
-		chartError: error ? getErrorMessage(error) : openInterestError ? getErrorMessage(openInterestError) : null
+		isChartLoading: enabled && !useInitialDataset && (isLoading || isOpenInterestLoading),
+		chartError: enabled
+			? error
+				? getErrorMessage(error)
+				: openInterestError
+					? getErrorMessage(openInterestError)
+					: null
+			: null
 	}
 }

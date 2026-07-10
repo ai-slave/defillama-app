@@ -262,6 +262,68 @@ export type IRWAAssetChartApiRow = {
 	totalSupply?: number | null
 }
 
+export type IRWAFlowsRequest = {
+	start?: number
+	end?: number
+	withMcap?: boolean
+}
+
+export type IRWAFlowPoint = {
+	timestamp: number
+	netFlowUsd: number | null
+	netFlowByChain: Record<string, number>
+	missingChains?: string[]
+	mcap?: number | null
+}
+
+export type IRWAFlowsResponse = {
+	id: string
+	start: number
+	end: number
+	data: IRWAFlowPoint[]
+	coverage: number
+}
+
+export type IRWAFlowAggregatePoint = {
+	timestamp: number
+	netFlowUsd: number | null
+	coverage: number
+}
+
+export type IRWAFlowAggregateResponse = {
+	series: IRWAFlowAggregatePoint[]
+	coverage: number
+	members?: string[]
+}
+
+export type RWAFlowOverviewSplitBy = 'assetGroup' | 'category' | 'platform' | 'chain'
+
+export type IRWAFlowOverviewRequest = {
+	splitBy: RWAFlowOverviewSplitBy
+	includeStablecoin: boolean
+	includeGovernance: boolean
+}
+
+export type IRWAFlowOverviewSplitPoint = { timestamp: number } & Record<string, number>
+
+export type IRWAFlowAssetBreakdownRow = { timestamp: number } & Record<string, number>
+
+export type RWAFlowWindow = '7d' | '30d'
+
+export type RWAFlowSummaryBy = 'asset' | 'assetGroup' | 'platform' | 'category' | 'chain'
+
+export type IRWAFlowSummary = {
+	flow: number
+	mcap: number
+	intensityPct: number | null
+	coverage: number
+}
+
+export type IRWAFlowSummaryResponse = {
+	generatedAt: number
+	windows: Record<RWAFlowWindow, Record<RWAFlowSummaryBy, Record<string, IRWAFlowSummary>>>
+}
+
 export type RWAOverviewPage = { kind: 'chain' } | { kind: 'category' } | { kind: 'platform' } | { kind: 'assetGroup' }
 export type RWAOverviewBreakdownRequest =
 	| { breakdown: 'chain'; key: RWAChartMetricKey; includeStablecoin: boolean; includeGovernance: boolean }
@@ -295,8 +357,15 @@ export type IRWAAssetGroupsOverview = {
 	initialChartDataset: RWAChartDataset
 }
 
+export type RWADefiTvlProtocolBreakdown = {
+	protocol: string
+	total: number
+	byChain: Array<[string, number]>
+}
+
 export interface IRWAAssetData extends IRWAProject {
 	slug: string
+	defiActiveTvlByProtocolChain: RWADefiTvlProtocolBreakdown[] | null
 	rwaClassificationDescription: string | null
 	accessModelDescription: string | null
 	assetClassDescriptions: Record<string, string>

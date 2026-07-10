@@ -16,7 +16,7 @@ export const DailyPnLGrid = ({ timeline }: { timeline: TimelinePoint[] }) => {
 				<h3 className="label-lg text-primary">Daily Change Grid</h3>
 				<p className="body-xs text-secondary">{displayDays.length} days shown</p>
 			</div>
-			<ul className="no-scrollbar flex max-w-full flex-wrap gap-1.5 pb-1" aria-label="Daily return heat cells">
+			<ul className="flex scrollbar-none max-w-full flex-wrap gap-1.5 pb-1" aria-label="Daily return heat cells">
 				{displayDays.map((day) => {
 					const isPositive = day.percentChange > 0
 					const isZero = day.percentChange === 0

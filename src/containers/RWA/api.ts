@@ -10,6 +10,13 @@ import type {
 	IRWABreakdownChartParams,
 	IRWABreakdownChartResponse,
 	IRWABreakdownChartRow,
+	IRWAFlowAggregateResponse,
+	IRWAFlowAssetBreakdownRow,
+	IRWAFlowOverviewRequest,
+	IRWAFlowOverviewSplitPoint,
+	IRWAFlowSummaryResponse,
+	IRWAFlowsRequest,
+	IRWAFlowsResponse,
 	RWAAssetChartDimension,
 	RWAAssetChartRow,
 	RWAAssetChartTarget
@@ -45,6 +52,69 @@ export async function fetchRWAStats(): Promise<IRWAStatsResponse> {
 export async function fetchRWAAssetDataById(assetId: string): Promise<IFetchedRWAProject> {
 	const encodedAssetId = encodeURIComponent(assetId)
 	return fetchJson<IFetchedRWAProject>(`${RWA_SERVER_URL}/rwa/${encodedAssetId}`)
+}
+
+function buildRWAFlowsUrl(assetId: string, request: IRWAFlowsRequest = {}): string {
+	const encodedAssetId = encodeURIComponent(assetId)
+	const searchParams = new URLSearchParams()
+	if (request.start != null) searchParams.set('start', String(request.start))
+	if (request.end != null) searchParams.set('end', String(request.end))
+	if (request.withMcap) searchParams.set('withMcap', 'true')
+	const qs = searchParams.toString()
+	return `${RWA_SERVER_URL}/flows/${encodedAssetId}${qs ? `?${qs}` : ''}`
+}
+
+/**
+ * Fetch daily net USD flows for a single RWA asset.
+ */
+export async function fetchRWAFlows(assetId: string, request: IRWAFlowsRequest = {}): Promise<IRWAFlowsResponse> {
+	return fetchJson<IRWAFlowsResponse>(buildRWAFlowsUrl(assetId, request))
+}
+
+export function fetchRWAFlowsOverview(): Promise<IRWAFlowAggregateResponse>
+export function fetchRWAFlowsOverview(request: IRWAFlowOverviewRequest): Promise<IRWAFlowOverviewSplitPoint[]>
+export async function fetchRWAFlowsOverview(
+	request?: IRWAFlowOverviewRequest
+): Promise<IRWAFlowAggregateResponse | IRWAFlowOverviewSplitPoint[]> {
+	const searchParams = new URLSearchParams()
+	if (request) {
+		searchParams.set('splitBy', request.splitBy)
+		searchParams.set('includeStablecoin', String(request.includeStablecoin))
+		searchParams.set('includeGovernance', String(request.includeGovernance))
+	}
+	const qs = searchParams.toString()
+	return fetchJson<IRWAFlowAggregateResponse | IRWAFlowOverviewSplitPoint[]>(
+		`${RWA_SERVER_URL}/flows/overview${qs ? `?${qs}` : ''}`
+	)
+}
+
+export async function fetchRWAFlowsSummary(): Promise<IRWAFlowSummaryResponse> {
+	return fetchJson<IRWAFlowSummaryResponse>(`${RWA_SERVER_URL}/flows/summary`)
+}
+
+export async function fetchRWAFlowsAssetGroup(assetGroup: string): Promise<IRWAFlowAggregateResponse> {
+	return fetchJson<IRWAFlowAggregateResponse>(`${RWA_SERVER_URL}/flows/assetGroup/${encodeURIComponent(assetGroup)}`)
+}
+
+export async function fetchRWAFlowsCategory(category: string): Promise<IRWAFlowAggregateResponse> {
+	return fetchJson<IRWAFlowAggregateResponse>(`${RWA_SERVER_URL}/flows/category/${encodeURIComponent(category)}`)
+}
+
+export async function fetchRWAFlowsPlatform(platform: string): Promise<IRWAFlowAggregateResponse> {
+	return fetchJson<IRWAFlowAggregateResponse>(`${RWA_SERVER_URL}/flows/platform/${encodeURIComponent(platform)}`)
+}
+
+export async function fetchRWAFlowsChain(chain: string): Promise<IRWAFlowAggregateResponse> {
+	return fetchJson<IRWAFlowAggregateResponse>(`${RWA_SERVER_URL}/flows/chain/${encodeURIComponent(chain)}`)
+}
+
+export async function fetchRWAFlowAssetBreakdown(target: RWAAssetChartTarget): Promise<IRWAFlowAssetBreakdownRow[]> {
+	if (target.kind === 'all') {
+		return fetchJson<IRWAFlowAssetBreakdownRow[]>(`${RWA_SERVER_URL}/flows/asset-breakdown`)
+	}
+	return fetchJson<IRWAFlowAssetBreakdownRow[]>(
+		`${RWA_SERVER_URL}/flows/asset-breakdown/${target.kind}/${encodeURIComponent(target.slug)}`
+	)
 }
 
 export async function fetchRWAChartDataByAsset({

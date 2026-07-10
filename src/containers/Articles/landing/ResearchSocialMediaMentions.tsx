@@ -270,7 +270,7 @@ const AutoplayCarousel: React.FC<AutoplayCarouselProps> = ({
 
 	return (
 		<div className="flex flex-col">
-			<div ref={containerRef} className={`no-scrollbar flex overflow-x-auto ${containerClassName}`}>
+			<div ref={containerRef} className={`flex scrollbar-none overflow-x-auto ${containerClassName}`}>
 				{slides}
 			</div>
 			{showDots && slides.length > 1 && (

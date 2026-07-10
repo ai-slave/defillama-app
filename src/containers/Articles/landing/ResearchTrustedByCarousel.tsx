@@ -143,7 +143,7 @@ const LogosCarousel: React.FC<LogosCarouselProps> = ({ items, speed = SPEED_PX_P
 			onTouchStart={pause}
 			onTouchEnd={resume}
 			onTouchCancel={resume}
-			className="no-scrollbar flex gap-4 overflow-hidden"
+			className="flex scrollbar-none gap-4 overflow-hidden"
 		>
 			<div ref={firstSetRef} className="flex shrink-0 gap-4">
 				{items}

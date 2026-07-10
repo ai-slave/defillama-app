@@ -80,7 +80,8 @@ const RULES = [
 	},
 	{
 		id: 'explicit-thin-scrollbar',
-		description: 'nested scroll containers are thin globally; use no-scrollbar only when the scrollbar must be hidden',
+		description:
+			'nested scroll containers are thin globally; use scrollbar-none only when the scrollbar must be hidden',
 		pattern: /\bthin-scrollbar\b/g
 	}
 ]

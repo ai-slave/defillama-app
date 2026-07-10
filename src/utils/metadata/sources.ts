@@ -74,38 +74,38 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		fetchNamedMetadataSource(
 			'protocols API',
 			fetchMetadataJson<Record<string, IProtocolMetadata>>(
-				`${coreApiBase}/config/smol/appMetadata-protocols.json?zz=17`
+				`${coreApiBase}/config/smol/appMetadata-protocols.json?zz=18`
 			)
 		),
 		fetchNamedMetadataSource(
 			'chains API',
-			fetchMetadataJson<Record<string, IChainMetadata>>(`${coreApiBase}/config/smol/appMetadata-chains.json?zz=17`)
+			fetchMetadataJson<Record<string, IChainMetadata>>(`${coreApiBase}/config/smol/appMetadata-chains.json?zz=18`)
 		),
 		fetchNamedMetadataSource(
 			'categories and tags API',
-			fetchMetadataJson<ICategoriesAndTags>(`${coreApiBase}/config/smol/appMetadata-categoriesAndTags.json?zz=17`)
+			fetchMetadataJson<ICategoriesAndTags>(`${coreApiBase}/config/smol/appMetadata-categoriesAndTags.json?zz=18`)
 		),
 		fetchNamedMetadataSource(
 			'chain categories API',
 			fetchMetadataJson<{ categories: string[] }>(`${coreApiBase}/chains2`)
 		),
-		fetchNamedMetadataSource('CEX metadata API', fetchMetadataJson<RawCexsResponse>(`${coreApiBase}/cexs?zz=17`)),
+		fetchNamedMetadataSource('CEX metadata API', fetchMetadataJson<RawCexsResponse>(`${coreApiBase}/cexs?zz=18`)),
 		fetchNamedMetadataSource(
 			'RWA metadata API',
-			fetchMetadataJson<IRWAList>(`${getMetadataUpstreamBase('rwa')}/list?zz=17`)
+			fetchMetadataJson<IRWAList>(`${getMetadataUpstreamBase('rwa')}/list?zz=18`)
 		),
 		fetchNamedMetadataSource(
 			'RWA perps metadata API',
-			fetchMetadataJson<IRWAPerpsList>(`${getMetadataUpstreamBase('rwa-perps')}/list?zz=17`)
+			fetchMetadataJson<IRWAPerpsList>(`${getMetadataUpstreamBase('rwa-perps')}/list?zz=18`)
 		),
 		fetchNamedMetadataSource(
 			'token list API',
-			fetchMetadataJson<RawTokenListItem[]>(`${datasetsBase}/tokenlist/rankings.json?zz=17`)
+			fetchMetadataJson<RawTokenListItem[]>(`${datasetsBase}/tokenlist/rankings.json?zz=18`)
 		),
 		fetchNamedMetadataSource('token directory API', fetchMetadataJson<TokenDirectory>(TOKEN_DIRECTORY_API)),
 		fetchNamedMetadataSource(
 			'liquidations metadata API',
-			fetchMetadataJson<RawAllLiquidationsResponse>(`${LIQUIDATIONS_SERVER_URL_V2}/all?zz=17`)
+			fetchMetadataJson<RawAllLiquidationsResponse>(`${LIQUIDATIONS_SERVER_URL_V2}/all?zz=18`)
 		),
 		fetchNamedMetadataSource(
 			'bridges metadata API',

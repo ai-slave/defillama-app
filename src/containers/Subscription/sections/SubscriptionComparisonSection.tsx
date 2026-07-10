@@ -240,7 +240,7 @@ export function SubscriptionComparisonSection({
 				{/* ── Scrollable body ── */}
 				<div
 					ref={bodyScrollRef}
-					className="relative isolate no-scrollbar overflow-x-auto overflow-y-hidden overscroll-x-contain [-webkit-overflow-scrolling:touch]"
+					className="relative isolate scrollbar-none overflow-x-auto overflow-y-hidden overscroll-x-contain [-webkit-overflow-scrolling:touch]"
 					onScroll={onBodyScroll}
 				>
 					<div className="w-max" role="table" aria-label="Plan comparison">

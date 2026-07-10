@@ -155,7 +155,7 @@
 
 	/* Keep the document scrollbar native, but make every nested application
 	   scrollbar compact by default. :where() keeps this at zero specificity so
-	   explicit exceptions such as no-scrollbar remain authoritative. */
+	   explicit exceptions such as scrollbar-none remain authoritative. */
 	:where(body *) {
 		scrollbar-width: thin;
 		scrollbar-color: color-mix(in srgb, var(--ld-neutral-500) 55%, transparent) transparent;
@@ -181,8 +181,7 @@
 }
 
 /* ------------------------------ Core Utilities ------------------------------ */
-@utility no-scrollbar {
-	scrollbar-width: none;
+@utility scrollbar-none {
 	&::-webkit-scrollbar {
 		display: none;
 	}
@@ -618,7 +617,9 @@
 	   option sets backgroundColor 'transparent' + borderWidth 0 and this class
 	   owns the chrome, so tooltips flip with the theme via tokens instead of
 	   per-chart resolved literals. Matches domChartTooltipStyles/tooltipSurfaceStyles. */
-	.defillama-echarts-tooltip {
+	/* ECharts creates the tooltip node at full chart width before it has content.
+	   Avoid turning that zero-height placeholder into a two-pixel bordered bar. */
+	.defillama-echarts-tooltip:not(:empty) {
 		background-color: var(--ld-bg-overlay) !important;
 		border: 1px solid var(--ld-border-medium) !important;
 		border-radius: 6px !important;

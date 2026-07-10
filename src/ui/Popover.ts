@@ -54,7 +54,7 @@ export const popoverSearchBlockStyles = 'relative p-3'
 export const popoverSearchBlockWithBottomPaddingStyles = popoverSearchBlockStyles
 
 export const popoverFooterActionStyles =
-	'flex w-full min-w-0 items-center gap-2 overflow-hidden px-3 py-2 label-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row'
+	'flex w-full min-w-0 shrink-0 items-center gap-2 overflow-hidden border-t border-subtle px-3 py-2 label-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row'
 
 export const popoverSeeMoreStyles =
 	'body-sm w-full cursor-pointer px-3 py-2 text-left text-link hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring'

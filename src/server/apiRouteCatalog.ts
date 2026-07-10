@@ -159,6 +159,7 @@ export const allApiRoutePaths = [
 	'revalidate-instances',
 	'roundupMarkdown',
 	'rwa/asset-breakdown',
+	'rwa/flows/[...path]',
 	'rwa/overview-breakdown',
 	'rwa/perps/contract-breakdown',
 	'rwa/perps/market-breakdown',

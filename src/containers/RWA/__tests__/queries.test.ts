@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getRWAAssetsOverview, getRWACategoriesOverview } from '../queries'
+import { buildRwaDefiTvlProtocolChainBreakdown, getRWAAssetsOverview, getRWACategoriesOverview } from '../queries'
 
 const fetchRWAActiveTVLsMock = vi.fn()
 const fetchRWAChartDataByAssetMock = vi.fn()
@@ -465,5 +465,30 @@ describe('rwa queries', () => {
 		const result = await getRWACategoriesOverview()
 
 		expect(result.rows.map((row) => row.category)).toEqual(['Treasuries'])
+	})
+
+	it('transposes the chain → protocol tvl map into per-protocol chain breakdowns sorted desc', () => {
+		expect(
+			buildRwaDefiTvlProtocolChainBreakdown({
+				Ethereum: { Morpho: 10, Euler: 4 },
+				Solana: { Morpho: 2, Kamino: 7 }
+			})
+		).toEqual([
+			{
+				protocol: 'Morpho',
+				total: 12,
+				byChain: [
+					['Ethereum', 10],
+					['Solana', 2]
+				]
+			},
+			{ protocol: 'Kamino', total: 7, byChain: [['Solana', 7]] },
+			{ protocol: 'Euler', total: 4, byChain: [['Ethereum', 4]] }
+		])
+	})
+
+	it('returns null for an empty or missing tvl map', () => {
+		expect(buildRwaDefiTvlProtocolChainBreakdown(null)).toBeNull()
+		expect(buildRwaDefiTvlProtocolChainBreakdown({})).toBeNull()
 	})
 })

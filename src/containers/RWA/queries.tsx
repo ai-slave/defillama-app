@@ -28,7 +28,8 @@ import type {
 	IRWAAssetGroupsOverview,
 	IRWAAssetGroupsOverviewRow,
 	RWASpotOverviewAsset,
-	RWAAssetChartTarget
+	RWAAssetChartTarget,
+	RWADefiTvlProtocolBreakdown
 } from './api.types'
 import { UNKNOWN_RWA_ASSET_GROUP, appendUnknownRwaAssetGroup, normalizeRwaAssetGroup } from './assetGroup'
 import { toBreakdownChartDataset, toOverviewBreakdownChartDataset } from './breakdownDataset'
@@ -71,6 +72,33 @@ function assert(condition: unknown, message: string): asserts condition {
 	if (!condition) {
 		throw new Error(message)
 	}
+}
+
+/** Transpose the raw chain → protocol → tvl map into per-protocol rows with their chain splits, sorted desc. */
+export function buildRwaDefiTvlProtocolChainBreakdown(
+	breakdown: Record<string, Record<string, number>> | null
+): RWADefiTvlProtocolBreakdown[] | null {
+	if (!breakdown) return null
+	const chainsByProtocol = new Map<string, Map<string, number>>()
+	for (const chain in breakdown) {
+		for (const protocol in breakdown[chain]) {
+			let chains = chainsByProtocol.get(protocol)
+			if (!chains) {
+				chains = new Map()
+				chainsByProtocol.set(protocol, chains)
+			}
+			chains.set(chain, (chains.get(chain) ?? 0) + breakdown[chain][protocol])
+		}
+	}
+	const rows: RWADefiTvlProtocolBreakdown[] = []
+	for (const [protocol, chains] of chainsByProtocol) {
+		let total = 0
+		const byChain = [...chains.entries()].sort((a, b) => b[1] - a[1])
+		for (const [, value] of byChain) total += value
+		rows.push({ protocol, total, byChain })
+	}
+	rows.sort((a, b) => b.total - a.total)
+	return rows.length > 0 ? rows : null
 }
 
 function getSortedBreakdownEntries(breakdown: Record<string, number>, selectedChain?: string): Array<[string, number]> {
@@ -900,6 +928,7 @@ export async function getRWAAssetData({ assetId }: { assetId: string }): Promise
 						breakdown: getSortedBreakdownEntries(aggregatedMetrics.breakdowns.defiActiveTvlByChain)
 					}
 				: null,
+			defiActiveTvlByProtocolChain: buildRwaDefiTvlProtocolChainBreakdown(defiActiveTvlBreakdown),
 			chartDataset,
 			...yieldMatch
 		}

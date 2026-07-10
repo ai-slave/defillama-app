@@ -11,7 +11,7 @@ import {
 } from '~/components/ECharts/ChartGroupingSelector'
 import type { IPieChartProps } from '~/components/ECharts/types'
 import { preparePieChartData } from '~/components/ECharts/utils'
-import { Icon } from '~/components/Icon'
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Menu } from '~/components/Menu'
 import { QuestionHelper } from '~/components/QuestionHelper'
 import { SegmentedControl } from '~/components/SegmentedControl'
@@ -394,47 +394,30 @@ export const PeggedAssetInfo = ({
 							</p>
 							<div className="flex flex-wrap gap-3">
 								{url ? (
-									<a href={url} target="_blank" rel="noopener noreferrer" className={INFO_ACTION_STYLES}>
-										<Icon name="globe" className="size-4" />
-										<span>Website</span>
-										<Icon name="arrow-up-right" className="size-4" />
-									</a>
+									<ExternalLinkButton href={url} icon="globe">
+										Website
+									</ExternalLinkButton>
 								) : null}
 								{twitter ? (
-									<a href={twitter} target="_blank" rel="noopener noreferrer" className={INFO_ACTION_STYLES}>
-										<Icon name="twitter" className="size-4" />
-										<span>Twitter</span>
-										<Icon name="arrow-up-right" className="size-4" />
-									</a>
+									<ExternalLinkButton href={twitter} icon="twitter">
+										Twitter
+									</ExternalLinkButton>
 								) : null}
 								{blockExplorerUrl ? (
-									<a href={blockExplorerUrl} target="_blank" rel="noopener noreferrer" className={INFO_ACTION_STYLES}>
-										<span>{blockExplorerName}</span>
-										<Icon name="arrow-up-right" className="size-4" />
-									</a>
+									<ExternalLinkButton href={blockExplorerUrl}>{blockExplorerName}</ExternalLinkButton>
 								) : null}
 								{onCoinGecko === 'true' && gecko_id ? (
-									<a
-										href={`https://www.coingecko.com/en/coins/${gecko_id}`}
-										target="_blank"
-										rel="noopener noreferrer"
-										className={INFO_ACTION_STYLES}
-									>
-										<span>CoinGecko</span>
-										<Icon name="arrow-up-right" className="size-4" />
-									</a>
+									<ExternalLinkButton href={`https://www.coingecko.com/en/coins/${gecko_id}`}>
+										CoinGecko
+									</ExternalLinkButton>
 								) : null}
 								{gecko_id ? (
-									<a
+									<ExternalLinkButton
 										href={`https://github.com/DefiLlama/peggedassets-server/tree/master/src/adapters/peggedAssets/${gecko_id}`}
-										target="_blank"
-										rel="noopener noreferrer"
-										className={INFO_ACTION_STYLES}
+										icon="github"
 									>
-										<Icon name="github" className="size-4" />
-										<span>Check the code</span>
-										<Icon name="arrow-up-right" className="size-4" />
-									</a>
+										Check the code
+									</ExternalLinkButton>
 								) : null}
 							</div>
 						</Card>

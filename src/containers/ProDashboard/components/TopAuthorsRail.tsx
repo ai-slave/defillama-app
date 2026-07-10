@@ -159,7 +159,7 @@ export function TopAuthorsRail() {
 				<div
 					ref={scrollContainerRef}
 					onScroll={updateScrollState}
-					className="no-scrollbar flex snap-x snap-mandatory items-stretch gap-4 overflow-x-auto pb-2 md:snap-none"
+					className="flex scrollbar-none snap-x snap-mandatory items-stretch gap-4 overflow-x-auto pb-2 md:snap-none"
 				>
 					{authors.map((entry) => (
 						<div key={entry.author.slug} className="w-[260px] shrink-0 snap-start scroll-ml-4 md:snap-align-none">

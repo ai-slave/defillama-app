@@ -2,12 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { FormattedName } from '~/components/FormattedName'
-import { Icon } from '~/components/Icon'
 import { LocalLoader } from '~/components/Loaders'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getNFTCollection } from '~/containers/Nft/queries'
-import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
@@ -84,16 +83,9 @@ export function NFTCollectionContainer() {
 
 					<StatItem label="Total Supply" value={primaryCollection?.totalSupply} />
 
-					<Button
-						as="a"
-						href={`https://etherscan.io/token/${address.split(':')[0]}`}
-						target="_blank"
-						rel="noopener noreferrer"
-						size="md"
-						className="mt-auto mr-auto"
-					>
-						<span>View on Etherscan</span> <Icon name="arrow-up-right" height={14} width={14} />
-					</Button>
+					<ExternalLinkButton href={`https://etherscan.io/token/${address.split(':')[0]}`} className="mt-auto mr-auto">
+						View on Etherscan
+					</ExternalLinkButton>
 				</SummaryStatsCard>
 
 				<Panel padding="none" className="col-span-2 min-h-[394px]">

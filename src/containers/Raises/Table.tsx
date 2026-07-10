@@ -11,6 +11,7 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Icon } from '~/components/Icon'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
@@ -18,7 +19,6 @@ import { VirtualTable } from '~/components/Table/Table'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { Tooltip } from '~/components/Tooltip'
-import { buttonStyles } from '~/ui/Button'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -209,15 +209,9 @@ export function RaisesTable({ raises }: { raises: IRaise[] }) {
 						className={searchFieldInputStyles}
 					/>
 				</label>
-				<a
-					target="_blank"
-					rel="noreferrer noopener"
-					href="https://github.com/DefiLlama/DefiLlama-Adapters/discussions/7093"
-					className={buttonStyles({ size: 'md' })}
-				>
-					<span>Methodology & biases</span>
-					<Icon name="arrow-up-right" className="size-4" />
-				</a>
+				<ExternalLinkButton href="https://github.com/DefiLlama/DefiLlama-Adapters/discussions/7093">
+					Methodology & biases
+				</ExternalLinkButton>
 				<CSVDownloadButton prepareCsv={() => prepareRaisesCsv(instance)} smol size="md" />
 			</TableToolbar>
 

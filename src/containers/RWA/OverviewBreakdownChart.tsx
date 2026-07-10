@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
-import type { MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
 import { LoadingDots } from '~/components/Loaders'
 import { SegmentedControl } from '~/components/SegmentedControl'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -22,20 +22,29 @@ import {
 	sortRwaChartSeriesLabels
 } from './chartAggregation'
 import type { RWAChartDataset } from './chartDataset'
+import { buildRWAFlowRotationChart, type RWAFlowRotationFrequency } from './flows'
+import { useRWAFlowOverviewSplitWithFilters } from './flows.hooks'
 
 const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
 
-const CHART_TYPE_OPTIONS: Array<{ key: RWAChartMetricKey; label: string }> = [
+type RWAOverviewBreakdownChartType = RWAChartMetricKey | 'flows'
+
+const CHART_TYPE_OPTIONS: Array<{ key: RWAOverviewBreakdownChartType; label: string }> = [
 	{ key: 'activeMcap', label: 'Active Mcap' },
 	{ key: 'onChainMcap', label: 'Onchain Mcap' },
-	{ key: 'defiActiveTvl', label: 'DeFi Active TVL' }
+	{ key: 'defiActiveTvl', label: 'DeFi Active TVL' },
+	{ key: 'flows', label: 'Net Flows' }
 ]
 
-const VALID_CHART_TYPES = new Set<RWAChartMetricKey>(CHART_TYPE_OPTIONS.map(({ key }) => key))
+const VALID_CHART_TYPES = new Set<RWAChartMetricKey>(['activeMcap', 'onChainMcap', 'defiActiveTvl'])
 const DEFAULT_CHART_TYPE: RWAChartMetricKey = 'activeMcap'
 const EMPTY_DATASET: RWAChartDataset = { source: [], dimensions: ['timestamp'] }
 const STACKS_QUERY_KEY = 'stacks'
 const EXCLUDE_STACKS_QUERY_KEY: ExcludeQueryKey = 'excludeStacks'
+const FLOW_FREQUENCY_OPTIONS: Array<{ value: RWAFlowRotationFrequency; label: string }> = [
+	{ value: 'weekly', label: 'Weekly' },
+	{ value: 'monthly', label: 'Monthly' }
+]
 
 function assertNever(value: never): never {
 	throw new Error(`Unknown page kind: ${value}`)
@@ -43,6 +52,19 @@ function assertNever(value: never): never {
 
 function isChartMetricKey(value: string): value is RWAChartMetricKey {
 	return VALID_CHART_TYPES.has(value as RWAChartMetricKey)
+}
+
+function getFlowSplitBy(page: RWAOverviewPage) {
+	switch (page.kind) {
+		case 'assetGroup':
+			return 'assetGroup' as const
+		case 'category':
+		case 'platform':
+		case 'chain':
+			return page.kind
+		default:
+			return assertNever(page)
+	}
 }
 
 export function getOverviewBreakdownRequestState(
@@ -135,10 +157,10 @@ export function buildOverviewBreakdownChartSeries(dimensions: string[]): Array<M
 }
 
 export function getOverviewBreakdownChartDatasetForSelectedStacks(
-	dataset: RWAChartDataset,
+	dataset: MultiSeriesChart2Dataset,
 	selectedStacks: string[],
 	stackOptions: string[]
-): RWAChartDataset {
+): MultiSeriesChart2Dataset {
 	if (selectedStacks.length === 0 || selectedStacks.length === stackOptions.length) return dataset
 
 	for (let i = 0; i < dataset.source.length; i++) {
@@ -167,8 +189,16 @@ export function RWAOverviewBreakdownChart({
 }) {
 	const router = useRouter()
 	const chartTypeQuery = readSingleQueryValue(router.query.chartType)
-	const chartType = chartTypeQuery && isChartMetricKey(chartTypeQuery) ? chartTypeQuery : DEFAULT_CHART_TYPE
-	const { request, isDefaultState } = getOverviewBreakdownRequestState(page, chartType, router.query)
+	const chartType: RWAOverviewBreakdownChartType =
+		chartTypeQuery === 'flows'
+			? 'flows'
+			: chartTypeQuery && isChartMetricKey(chartTypeQuery)
+				? chartTypeQuery
+				: DEFAULT_CHART_TYPE
+	const isFlowChart = chartType === 'flows'
+	const flowFrequency = readSingleQueryValue(router.query.flowRotationFrequency) === 'weekly' ? 'weekly' : 'monthly'
+	const metricChartType = isFlowChart ? DEFAULT_CHART_TYPE : chartType
+	const { request, isDefaultState } = getOverviewBreakdownRequestState(page, metricChartType, router.query)
 	const { data, isLoading, error } = useQuery({
 		queryKey: [
 			'rwa-overview-breakdown',
@@ -181,12 +211,23 @@ export function RWAOverviewBreakdownChart({
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 1,
-		enabled: !isDefaultState
+		enabled: !isFlowChart && !isDefaultState
 	})
-	const dataset = isDefaultState ? initialChartDataset : (data ?? EMPTY_DATASET)
-	const showLoadingState = !isDefaultState && isLoading
+	const flowSplitBy = getFlowSplitBy(page)
+	const {
+		data: flowData,
+		isLoading: isFlowLoading,
+		error: flowError
+	} = useRWAFlowOverviewSplitWithFilters(flowSplitBy, request.includeStablecoin, request.includeGovernance, isFlowChart)
+	const flowChart = useMemo(() => buildRWAFlowRotationChart(flowData ?? [], flowFrequency), [flowData, flowFrequency])
+	const dataset = isFlowChart ? flowChart.dataset : isDefaultState ? initialChartDataset : (data ?? EMPTY_DATASET)
+	const showLoadingState = isFlowChart ? isFlowLoading : !isDefaultState && isLoading
+	const chartError = isFlowChart ? flowError : error
 	const stackOptions = useMemo(() => dataset.dimensions.filter((dimension) => dimension !== 'timestamp'), [dataset])
-	const chartSeries = useMemo(() => buildOverviewBreakdownChartSeries(dataset.dimensions), [dataset.dimensions])
+	const chartSeries = useMemo(
+		() => (isFlowChart ? flowChart.charts : buildOverviewBreakdownChartSeries(dataset.dimensions)),
+		[dataset.dimensions, flowChart.charts, isFlowChart]
+	)
 	const selectedStacksQ = router.query[STACKS_QUERY_KEY] as string | string[] | undefined
 	const excludeStacksQ = router.query[EXCLUDE_STACKS_QUERY_KEY] as string | string[] | undefined
 	const selectedStacks = useMemo(() => {
@@ -210,7 +251,7 @@ export function RWAOverviewBreakdownChart({
 	)
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 
-	const onSelectChartType = (nextChartType: RWAChartMetricKey) => {
+	const onSelectChartType = (nextChartType: RWAOverviewBreakdownChartType) => {
 		void pushShallowQuery(router, { chartType: nextChartType === DEFAULT_CHART_TYPE ? undefined : nextChartType })
 	}
 
@@ -226,6 +267,20 @@ export function RWAOverviewBreakdownChart({
 					size="md"
 					className="mr-auto"
 				/>
+				{isFlowChart ? (
+					<SegmentedControl<RWAFlowRotationFrequency>
+						value={flowFrequency}
+						onValueChange={(value) => {
+							void pushShallowQuery(router, {
+								flowRotationFrequency: value === 'monthly' ? undefined : value
+							})
+						}}
+						options={FLOW_FREQUENCY_OPTIONS}
+						label="Flow interval"
+						variant="default"
+						size="md"
+					/>
+				) : null}
 				{stackOptions.length > 1 ? (
 					<SelectWithCombobox
 						allValues={stackOptions}
@@ -246,9 +301,9 @@ export function RWAOverviewBreakdownChart({
 					smol
 				/>
 			</ChartPanelToolbar>
-			{error ? (
+			{chartError ? (
 				<ChartPanelBodyFallback role="alert" className="body-sm text-data-down">
-					{getErrorMessage(error)}
+					{getErrorMessage(chartError)}
 				</ChartPanelBodyFallback>
 			) : showLoadingState ? (
 				<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
@@ -262,6 +317,7 @@ export function RWAOverviewBreakdownChart({
 						charts={chartSeries}
 						hideDefaultLegend={false}
 						showTotalInTooltip={!dataset.dimensions.some(isRwaTotalSeriesLabel)}
+						groupBy={isFlowChart ? flowFrequency : undefined}
 						selectedCharts={selectedStacksSet}
 						onReady={handleChartReady}
 					/>

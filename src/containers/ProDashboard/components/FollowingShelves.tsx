@@ -69,7 +69,7 @@ function ShelfRail({ children, itemCount }: { children: ReactNode; itemCount: nu
 			<div
 				ref={scrollContainerRef}
 				onScroll={updateScrollState}
-				className="no-scrollbar flex snap-x snap-mandatory items-stretch gap-4 overflow-x-auto pb-2 md:snap-none"
+				className="flex scrollbar-none snap-x snap-mandatory items-stretch gap-4 overflow-x-auto pb-2 md:snap-none"
 			>
 				{children}
 			</div>
