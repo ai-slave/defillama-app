@@ -1061,23 +1061,34 @@ function getTokenCGData(
 
 const protocolsWithFalsyBreakdownMetrics = new Set([])
 
-export async function getProtocolIncomeStatement({ metadata }: { metadata: IProtocolMetadata }) {
+type IncomeStatementSource = { kind: 'protocol'; metadata: IProtocolMetadata } | { kind: 'token'; token: string }
+
+export function getProtocolIncomeStatement({ metadata }: { metadata: IProtocolMetadata }) {
+	return getIncomeStatement({ kind: 'protocol', metadata })
+}
+
+export function getTokenIncomeStatement({ token }: { token: string }) {
+	return getIncomeStatement({ kind: 'token', token })
+}
+
+async function getIncomeStatement(source: IncomeStatementSource) {
 	try {
-		if (!metadata.fees || !metadata.revenue) {
+		if (source.kind === 'protocol' && (!source.metadata.fees || !source.metadata.revenue)) {
 			return null
 		}
 
-		if (typeof window !== 'undefined') {
-			const protocol = slug(metadata.displayName)
+		if (source.kind === 'protocol' && typeof window !== 'undefined') {
+			const protocol = slug(source.metadata.displayName)
 			return fetchJson(`/api/public/income-statement?protocol=${encodeURIComponent(protocol)}`).catch(() => null)
 		}
 
+		const entity = source.kind === 'protocol' ? source.metadata.displayName : source.token
 		const incomeStatement = await fetchJson(
-			`${V2_SERVER_URL}/metrics/financial-statement/protocol/${slug(metadata.displayName)}?q=30`
+			`${V2_SERVER_URL}/metrics/financial-statement/${source.kind}/${slug(entity)}?q=30`
 		)
 
 		if (!incomeStatement) {
-			throw new Error(`Missing income statement for protocol=${metadata.displayName}`)
+			throw new Error(`Missing income statement for ${source.kind}=${entity}`)
 		}
 
 		type IncomeStatementData = NonNullable<IProtocolOverviewPageData['incomeStatement']>['data']
@@ -1097,7 +1108,7 @@ export async function getProtocolIncomeStatement({ metadata }: { metadata: IProt
 		// a single cast since the runtime shape is guaranteed to match.
 		const aggregatesMap: AggregatesMap = aggregates as AggregatesMap
 
-		if (protocolsWithFalsyBreakdownMetrics.has(metadata.displayName ?? '')) {
+		if (protocolsWithFalsyBreakdownMetrics.has(source.kind === 'protocol' ? (source.metadata.displayName ?? '') : '')) {
 			for (const groupBy in aggregatesMap) {
 				for (const period in aggregatesMap[groupBy]) {
 					for (const label in aggregatesMap[groupBy][period]) {

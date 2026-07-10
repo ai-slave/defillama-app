@@ -6,6 +6,7 @@ export type TokenDirectoryRecord = {
 	token_nk?: string
 	protocolId?: string
 	chainId?: string
+	incomeStatement?: true
 	route?: string
 	tokenRights?: boolean
 	is_yields?: boolean

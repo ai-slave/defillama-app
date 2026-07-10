@@ -215,6 +215,16 @@ describe('getProtocolOverviewPageData', () => {
 		expect(optionalPageData).toHaveBeenCalledWith('protocol:test-protocol:yields', expect.any(Function), null)
 	})
 
+	it('fetches token income statements from the token endpoint', async () => {
+		fetchJson.mockResolvedValueOnce({ aggregates: { monthly: {}, quarterly: {}, yearly: {} } })
+		const { getTokenIncomeStatement } = await import('../queries')
+
+		const incomeStatement = await getTokenIncomeStatement({ token: 'HYPE' })
+
+		expect(fetchJson).toHaveBeenCalledWith(expect.stringMatching(/\/metrics\/financial-statement\/token\/hype\?q=30$/))
+		expect(incomeStatement?.data).toMatchObject({ monthly: {}, quarterly: {}, yearly: {} })
+	})
+
 	it('calculates outstanding FDV from cached emissions supply metrics', async () => {
 		const { getProtocolOverviewPageData } = await import('../queries')
 

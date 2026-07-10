@@ -4,23 +4,17 @@ import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/ty
 const TOKEN_INCOME_STATEMENT_SECTION_ID = 'token-income-statement'
 
 interface TokenIncomeStatementSectionProps {
-	protocolName: string
+	tokenName: string
 	incomeStatement: IProtocolOverviewPageData['incomeStatement'] | null | undefined
-	hasIncentives?: boolean
 }
 
-export function TokenIncomeStatementSection({
-	protocolName,
-	incomeStatement,
-	hasIncentives = false
-}: TokenIncomeStatementSectionProps) {
+export function TokenIncomeStatementSection({ tokenName, incomeStatement }: TokenIncomeStatementSectionProps) {
 	if (!incomeStatement?.data) return null
 
 	return (
 		<IncomeStatement
-			name={protocolName}
+			name={tokenName}
 			incomeStatement={incomeStatement}
-			hasIncentives={hasIncentives}
 			view="table"
 			anchorId={TOKEN_INCOME_STATEMENT_SECTION_ID}
 			titleClassName="scroll-mt-24 text-xl font-bold"

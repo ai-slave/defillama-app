@@ -1,7 +1,7 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import type { ReactNode } from 'react'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
-import { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
+import { getTokenIncomeStatement } from '~/containers/ProtocolOverview/queries'
 import {
 	buildInitialBorrowRoutesSnapshot,
 	buildInitialYieldsSnapshot,
@@ -205,12 +205,9 @@ export const getStaticProps = withPerformanceLogging<TokenPageProps, TokenRouteP
 				})()
 			: Promise.resolve(null)
 
-		const incomeStatementPromise = protocolMetadata
-			? getProtocolIncomeStatement({ metadata: protocolMetadata }).catch((error) => {
-					console.error(
-						`Failed to load income statement data for ${protocolMetadata.displayName ?? protocolMetadata.name ?? record.name}`,
-						error
-					)
+		const incomeStatementPromise = record.incomeStatement
+			? getTokenIncomeStatement({ token }).catch((error) => {
+					console.error(`Failed to load income statement data for ${record.name}`, error)
 					return null
 				})
 			: Promise.resolve(null)
@@ -260,14 +257,6 @@ export const getStaticProps = withPerformanceLogging<TokenPageProps, TokenRouteP
 			marketsAvailablePromise
 		])
 
-		const incomeStatement =
-			resolvedIncomeStatementData && protocolMetadata?.displayName
-				? {
-						data: resolvedIncomeStatementData,
-						protocolName: protocolMetadata.displayName,
-						hasIncentives: Boolean(protocolMetadata.incentives)
-					}
-				: null
 		const yieldsSnapshot = buildInitialYieldsSnapshot(yieldsRows)
 		const borrowRoutesSnapshot = buildInitialBorrowRoutesSnapshot(tokenBorrowRoutesData)
 		const issuerDisplayName = protocolMetadata?.displayName ?? protocolMetadata?.name ?? null
@@ -277,7 +266,7 @@ export const getStaticProps = withPerformanceLogging<TokenPageProps, TokenRouteP
 			record,
 			geckoId,
 			tokenRightsData,
-			incomeStatement,
+			incomeStatement: resolvedIncomeStatementData,
 			tokenRiskData,
 			hasLiquidations,
 			hasMarkets,
@@ -353,11 +342,7 @@ const TOKEN_SECTION_RENDERERS = {
 	),
 	'token-markets': ({ section }) => <TokenMarketsSection tokenSymbol={section.tokenSymbol} />,
 	'token-income-statement': ({ section }) => (
-		<TokenIncomeStatementSection
-			protocolName={section.protocolName}
-			incomeStatement={section.incomeStatement}
-			hasIncentives={section.hasIncentives}
-		/>
+		<TokenIncomeStatementSection tokenName={section.tokenName} incomeStatement={section.incomeStatement} />
 	),
 	'token-risks': ({ section }) => <TokenRisksSection tokenSymbol={section.tokenSymbol} riskData={section.riskData} />,
 	'token-rights-and-value-accrual': ({ section }) => (

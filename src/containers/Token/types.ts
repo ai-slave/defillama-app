@@ -1,11 +1,11 @@
-import type { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
+import type { getTokenIncomeStatement } from '~/containers/ProtocolOverview/queries'
 import type { ITokenRightsData } from '~/containers/TokenRights/types'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import type { TokenBorrowRoutesResponse } from './tokenBorrowRoutes.types'
 import type { TokenOverviewData } from './tokenOverview'
 import type { TokenRiskResponse } from './tokenRisk.types'
 
-export type TokenIncomeStatementData = NonNullable<Awaited<ReturnType<typeof getProtocolIncomeStatement>>>
+export type TokenIncomeStatementData = NonNullable<Awaited<ReturnType<typeof getTokenIncomeStatement>>>
 
 export type TokenBorrowRoutesCounts = {
 	borrowAsCollateral: number
@@ -54,9 +54,8 @@ export type TokenPageSection =
 	| {
 			id: 'token-income-statement'
 			label: 'Income Statement'
-			protocolName: string
+			tokenName: string
 			incomeStatement: TokenIncomeStatementData
-			hasIncentives: boolean
 	  }
 	| {
 			id: 'token-risks'

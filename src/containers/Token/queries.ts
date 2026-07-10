@@ -116,11 +116,7 @@ export function getTokenPageSections({
 	record: TokenDirectoryRecord
 	geckoId: string | null
 	tokenRightsData: ITokenRightsData | null
-	incomeStatement: {
-		data: TokenIncomeStatementData
-		protocolName: string
-		hasIncentives: boolean
-	} | null
+	incomeStatement: TokenIncomeStatementData | null
 	tokenRiskData: TokenRiskResponse | null
 	hasLiquidations: boolean
 	hasMarkets: boolean
@@ -145,9 +141,8 @@ export function getTokenPageSections({
 		sections.push({
 			id: 'token-income-statement',
 			label: 'Income Statement',
-			protocolName: incomeStatement.protocolName,
-			incomeStatement: incomeStatement.data,
-			hasIncentives: incomeStatement.hasIncentives
+			tokenName: record.name,
+			incomeStatement
 		})
 	}
 	if (tokenRiskData) {

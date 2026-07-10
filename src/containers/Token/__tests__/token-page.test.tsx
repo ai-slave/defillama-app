@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { hasTokenLiquidationsData } from '~/containers/LiquidationsV2/server/dataset'
-import { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
+import { getTokenIncomeStatement } from '~/containers/ProtocolOverview/queries'
 import { getTokenRiskData } from '~/containers/Token/queries'
 import type { TokenOverviewData } from '~/containers/Token/tokenOverview'
 import type { TokenPageProps, TokenPageSection } from '~/containers/Token/types'
@@ -440,7 +440,7 @@ vi.mock('~/utils/metadata', () => ({
 }))
 
 vi.mock('~/containers/ProtocolOverview/queries', () => ({
-	getProtocolIncomeStatement: vi.fn(() => Promise.resolve(state.incomeStatementData))
+	getTokenIncomeStatement: vi.fn(() => Promise.resolve(state.incomeStatementData))
 }))
 
 vi.mock('~/containers/Token/queries', async (importOriginal) => ({
@@ -489,9 +489,8 @@ describe('token page', () => {
 			{
 				id: 'token-income-statement',
 				label: 'Income Statement',
-				protocolName: 'Bitcoin Protocol',
-				incomeStatement: { data: {} } as never,
-				hasIncentives: false
+				tokenName: 'Bitcoin',
+				incomeStatement: { data: {} } as never
 			},
 			{
 				id: 'token-risks',
@@ -1218,7 +1217,7 @@ describe('token page', () => {
 		expect(findTokenPageSection(result.props.sections, 'token-unlocks')?.resolvedUnlocksSlug).toBe('solana')
 	})
 
-	it('getStaticProps includes income statement data when the token protocol has one', async () => {
+	it('getStaticProps includes income statement data when the token is flagged', async () => {
 		const incomeStatementData = {
 			data: {
 				monthly: {},
@@ -1245,7 +1244,8 @@ describe('token page', () => {
 				name: 'Aave',
 				symbol: 'AAVE',
 				token_nk: 'coingecko:aave',
-				protocolId: 'parent#aave'
+				protocolId: 'parent#aave',
+				incomeStatement: true
 			}
 		}
 		state.protocolMetadata = {
@@ -1290,10 +1290,48 @@ describe('token page', () => {
 			'token-usage'
 		])
 		expect(incomeStatementSection).toMatchObject({
-			protocolName: 'Aave',
-			incomeStatement: incomeStatementData,
-			hasIncentives: true
+			tokenName: 'Aave',
+			incomeStatement: incomeStatementData
 		})
+		expect(getTokenIncomeStatement).toHaveBeenCalledWith({ token: 'AAVE' })
+	})
+
+	it('getStaticProps skips income statements when the token is not flagged', async () => {
+		state.tokensJson = {
+			aave: {
+				name: 'Aave',
+				symbol: 'AAVE',
+				token_nk: 'coingecko:aave',
+				protocolId: 'parent#aave'
+			}
+		}
+		state.protocolMetadata = {
+			'parent#aave': {
+				displayName: 'Aave',
+				fees: true,
+				revenue: true
+			} as IProtocolMetadata
+		}
+		state.incomeStatementData = { data: {} }
+		state.tokenlist = {
+			aave: {
+				symbol: 'aave',
+				current_price: 10,
+				price_change_percentage_24h: 10,
+				market_cap: 100,
+				fully_diluted_valuation: 150,
+				total_volume: 50,
+				circulating_supply: 20,
+				max_supply: 1000
+			}
+		}
+
+		const result = await getStaticProps({ params: { token: 'AAVE' } } as never)
+
+		expect('props' in result).toBe(true)
+		if (!('props' in result)) throw new Error('expected props')
+		expect(findTokenPageSection(result.props.sections, 'token-income-statement')).toBeUndefined()
+		expect(getTokenIncomeStatement).not.toHaveBeenCalled()
 	})
 
 	it('getStaticProps falls back to null token risk data when the risk query throws', async () => {
@@ -1407,6 +1445,7 @@ describe('token page', () => {
 				symbol: 'LINK',
 				token_nk: 'coingecko:chainlink',
 				protocolId: 'parent#chainlink',
+				incomeStatement: true,
 				tokenRights: true,
 				is_yields: true
 			}
@@ -1433,7 +1472,7 @@ describe('token page', () => {
 
 		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 		vi.mocked(fetchTokenRightsEntryByDefillamaId).mockRejectedValueOnce(new Error('token rights failed'))
-		vi.mocked(getProtocolIncomeStatement).mockRejectedValueOnce(new Error('income failed'))
+		vi.mocked(getTokenIncomeStatement).mockRejectedValueOnce(new Error('income failed'))
 		vi.mocked(getTokenYieldsRows).mockRejectedValueOnce(new Error('yields failed'))
 		vi.mocked(getTokenBorrowRoutes).mockRejectedValueOnce(new Error('borrow routes failed'))
 		vi.mocked(getTokenRiskData).mockRejectedValueOnce(new Error('risk failed'))
