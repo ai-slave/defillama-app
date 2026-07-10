@@ -42,8 +42,8 @@ interface ISelectWithComboboxBase {
 	singleSelect?: boolean
 	nestedMenu?: boolean
 	labelType?: 'regular' | 'smol' | 'none'
-	variant?: SelectTriggerVariant
-	size?: SelectTriggerSize
+	variant: SelectTriggerVariant
+	size: SelectTriggerSize
 	triggerProps?: Ariakit.SelectProps
 	customFooter?: React.ReactNode
 	onEditCustomColumn?: (idx: number) => void
@@ -86,8 +86,8 @@ export function SelectWithCombobox({
 	singleSelect = false,
 	nestedMenu,
 	labelType,
-	variant = 'default',
-	size = 'sm',
+	variant,
+	size,
 	triggerProps,
 	customFooter,
 	onEditCustomColumn,

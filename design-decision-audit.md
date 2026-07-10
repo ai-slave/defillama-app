@@ -202,6 +202,10 @@ This file tracks design-system audit notes before code changes are made.
   `triggerClassName` plumbing, `AvailableRange` no longer has a redundant `variant`, and
   `Card` no longer has `interactive`; clickable card call sites carry
   `.hover-wash-card cursor-pointer` directly.
+- Architecture completion 2026-07-10: all `Select` and `SelectWithCombobox` consumers now
+  choose `variant` and `size` explicitly. Excluded ProDashboard, LlamaAI, and Yields
+  consumers were pinned to their prior `default`/`sm` values before the shared defaults
+  were removed, so the API tightening is behavior-neutral.
 
 ### Panel vs Card vs Entity Title Strip Decision
 

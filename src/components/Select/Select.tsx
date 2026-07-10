@@ -37,8 +37,8 @@ interface ISelectBase {
 	label: React.ReactNode
 	nestedMenu?: boolean
 	labelType?: 'regular' | 'smol' | 'none'
-	variant?: SelectTriggerVariant
-	size?: SelectTriggerSize
+	variant: SelectTriggerVariant
+	size: SelectTriggerSize
 	triggerProps?: Ariakit.SelectProps
 	portal?: boolean
 	placement?: Ariakit.SelectProviderProps['placement']
@@ -85,8 +85,8 @@ export function Select(props: ISelect) {
 		label,
 		nestedMenu,
 		labelType = 'regular',
-		variant = 'default',
-		size = 'sm',
+		variant,
+		size,
 		triggerProps,
 		portal,
 		placement = 'bottom-start',
