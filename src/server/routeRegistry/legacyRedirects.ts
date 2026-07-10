@@ -663,7 +663,7 @@ export const legacyRedirects = [
 	},
 	{
 		source: '/protocol/afx',
-		destination: '/protocol/afx-bridge',
+		destination: '/protocol/afx-protocol',
 		permanent: true
 	},
 	{

@@ -103,7 +103,7 @@ describe('dataset cache registry', () => {
 		})
 		expect(redirects).toContainEqual({
 			source: '/protocol/afx',
-			destination: '/protocol/afx-bridge',
+			destination: '/protocol/afx-protocol',
 			permanent: true
 		})
 	})
