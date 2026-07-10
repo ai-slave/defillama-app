@@ -186,11 +186,11 @@ const EMPTY_ARRAY: any[] = []
 const smallActionButtonClassName = buttonStyles({ size: 'md' })
 const portfolioActionButtonClassName = buttonStyles({ size: 'md' })
 const smallToneActionButtonBaseClassName =
-	'flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-[8px] border px-3 py-1.5 label-sm disabled:cursor-not-allowed disabled:opacity-60'
+	'flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-lg border px-3 py-1.5 label-sm disabled:cursor-not-allowed disabled:opacity-60'
 const destructiveActionButtonClassName = `${smallToneActionButtonBaseClassName} border-data-down text-data-down hover:bg-hover-row focus-visible:bg-hover-row`
 const positiveActionButtonClassName = `${smallToneActionButtonBaseClassName} border-data-up text-data-up hover:bg-hover-row focus-visible:bg-hover-row`
 const portfolioDestructiveActionButtonClassName =
-	'flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-[8px] border border-data-down px-3 py-1.5 label-sm text-data-down hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60'
+	'flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-lg border border-data-down px-3 py-1.5 label-sm text-data-down hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60'
 
 function PortfolioNotifications({
 	selectedPortfolio,
@@ -405,7 +405,7 @@ function PortfolioNotifications({
 				</div>
 
 				{preferences?.settings ? (
-					<div className="mb-3 rounded-[8px] bg-surface-elevated-1 p-3">
+					<div className="mb-3 rounded-lg bg-surface-elevated-1 p-3">
 						<div className="space-y-1 body-xs text-secondary">
 							{protocolsCount > 0 ? (
 								<p>

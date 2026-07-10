@@ -25,7 +25,7 @@ import type { ComponentPropsWithRef } from 'react'
 ---------------------------------------------------------------------------- */
 
 export const inputStyles =
-	'min-h-8 rounded-[8px] border border-medium bg-page px-3 py-1.5 text-base text-primary placeholder:text-tertiary focus:border-brand focus:outline-none sm:body-sm'
+	'min-h-8 rounded-lg border border-medium bg-page px-3 py-1.5 text-base text-primary placeholder:text-tertiary focus:border-brand focus:outline-none sm:body-sm'
 
 export const searchFieldWrapperStyles = 'relative mr-auto w-full min-w-0 sm:max-w-[280px]'
 

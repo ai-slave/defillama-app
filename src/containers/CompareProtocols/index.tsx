@@ -101,7 +101,7 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 
 	return (
 		<>
-			<div className="flex items-center gap-3 rounded-[8px] border border-subtle bg-surface">
+			<div className="flex items-center gap-3 rounded-lg border border-subtle bg-surface">
 				<MultiSelectCombobox
 					data={protocolsList}
 					placeholder="Select Protocols..."

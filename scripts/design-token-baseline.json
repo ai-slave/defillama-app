@@ -7,6 +7,7 @@
 		"explicit-thin-scrollbar": 0,
 		"legacy-token-reference": 190,
 		"prefixed-design-token": 0,
+		"arbitrary-standard-radius": 0,
 		"implicit-border-color": 3
 	},
 	"excluded": {
@@ -17,6 +18,7 @@
 		"explicit-thin-scrollbar": 0,
 		"legacy-token-reference": 7110,
 		"prefixed-design-token": 0,
+		"arbitrary-standard-radius": 0,
 		"implicit-border-color": 3
 	}
 }

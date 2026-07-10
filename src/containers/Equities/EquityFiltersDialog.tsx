@@ -147,7 +147,7 @@ function ModeToggle({
 		<div
 			role="group"
 			aria-label="Match mode"
-			className="flex min-h-8 shrink-0 items-center gap-0.5 rounded-[8px] border border-medium bg-page p-0.5 label-sm"
+			className="flex min-h-8 shrink-0 items-center gap-0.5 rounded-lg border border-medium bg-page p-0.5 label-sm"
 		>
 			{MODE_OPTIONS.map((option) => (
 				<button
@@ -179,7 +179,7 @@ function NumericInput({
 	suffix?: string
 }) {
 	return (
-		<label className="flex min-h-8 min-w-0 flex-1 items-center gap-1 rounded-[8px] border border-medium bg-page px-3 py-1.5 label-sm text-primary focus-within:border-brand">
+		<label className="flex min-h-8 min-w-0 flex-1 items-center gap-1 rounded-lg border border-medium bg-page px-3 py-1.5 label-sm text-primary focus-within:border-brand">
 			{prefix ? <span className="text-tertiary">{prefix}</span> : null}
 			<input
 				type="text"

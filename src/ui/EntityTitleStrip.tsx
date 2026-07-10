@@ -20,7 +20,7 @@ export function EntityTitleStrip<T extends ElementType = 'section'>({
 
 	return (
 		<Component
-			className={`flex min-w-0 items-center gap-3 rounded-[8px] border border-subtle bg-surface p-2 ${
+			className={`flex min-w-0 items-center gap-3 rounded-lg border border-subtle bg-surface p-2 ${
 				className ?? ''
 			}`.trim()}
 			{...props}

@@ -20,7 +20,7 @@ import { hasActiveInclusionOverride, updateAttributeFilterStatesQueryValue } fro
 /* inputStyles as a label shell: the wrapper carries the field chrome and
    focus-within lights the border while the inner input stays bare. */
 const rangeInputShellStyles =
-	'flex min-h-8 min-w-0 flex-1 items-center gap-1 rounded-[8px] border border-medium bg-page px-3 py-1.5 label-sm text-primary focus-within:border-brand'
+	'flex min-h-8 min-w-0 flex-1 items-center gap-1 rounded-lg border border-medium bg-page px-3 py-1.5 label-sm text-primary focus-within:border-brand'
 
 const ATTRIBUTE_FILTER_STATES = ['yes', 'no', 'unknown'] as const
 type RWAAttributeFilterState = (typeof ATTRIBUTE_FILTER_STATES)[number]

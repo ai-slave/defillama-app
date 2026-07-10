@@ -168,7 +168,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex items-center gap-2">
-					<div className="flex min-h-8 items-center rounded-[8px] border border-medium label-sm text-primary">
+					<div className="flex min-h-8 items-center rounded-lg border border-medium label-sm text-primary">
 						<button
 							onClick={() => navigate(-1)}
 							className="flex min-h-8 shrink-0 items-center px-3 hover:bg-hover-row focus-visible:bg-hover-row"

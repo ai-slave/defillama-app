@@ -176,7 +176,7 @@ export function BreakdownTable({
 				<h4 className="label-md">{title}, Detailed Breakdown</h4>
 				<TimeframeBadge label={badge} />
 			</div>
-			<div className={`overflow-x-auto rounded-[8px] border ${BORDER}`}>
+			<div className={`overflow-x-auto rounded-lg border ${BORDER}`}>
 				<table className="w-full border-collapse">
 					<thead>
 						<tr>
@@ -209,7 +209,7 @@ export function BreakdownTableSkeleton({ title, rowCount }: { title: string; row
 	return (
 		<div className="flex flex-col gap-2">
 			<div className="h-5 w-2/3 animate-pulse rounded bg-surface-elevated-2" />
-			<div className={`flex flex-col gap-1 rounded-[8px] border ${BORDER} bg-surface p-3`}>
+			<div className={`flex flex-col gap-1 rounded-lg border ${BORDER} bg-surface p-3`}>
 				<span className="sr-only">{title} loading</span>
 				{Array.from({ length: rowCount }).map((_, i) => (
 					<div key={i} className="h-6 w-full animate-pulse rounded bg-surface-elevated-2" />

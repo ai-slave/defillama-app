@@ -34,7 +34,7 @@ export function RefineDrawer({
 				<p className="body-md text-secondary">
 					Select the parameters to view the market maker rankings with a more detailed view.
 				</p>
-				<div className="rounded-[8px] bg-brand-muted p-3">
+				<div className="rounded-lg bg-brand-muted p-3">
 					<Switch
 						className="w-full flex-row-reverse justify-between font-semibold"
 						label="Apply preferences to all leaderboards"
@@ -43,7 +43,7 @@ export function RefineDrawer({
 						onChange={(e) => setApplyToAll(e.target.checked)}
 					/>
 				</div>
-				<div className="flex flex-col gap-3 rounded-[8px] border border-subtle p-4">
+				<div className="flex flex-col gap-3 rounded-lg border border-subtle p-4">
 					<span className="label-md text-primary">Timeframe</span>
 					<TagGroup
 						selectedValue={timeframe}

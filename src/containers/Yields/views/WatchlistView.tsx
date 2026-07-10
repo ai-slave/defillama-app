@@ -78,7 +78,7 @@ export function YieldsWatchlistContainer({ protocolsDict }) {
 						<button
 							type="button"
 							onClick={() => removePortfolio(selectedPortfolio)}
-							className="flex min-h-8 items-center gap-1 rounded-[8px] border border-data-down px-3 py-1.5 label-sm text-data-down hover:bg-hover-row focus-visible:bg-hover-row"
+							className="flex min-h-8 items-center gap-1 rounded-lg border border-data-down px-3 py-1.5 label-sm text-data-down hover:bg-hover-row focus-visible:bg-hover-row"
 							title="Delete current portfolio"
 							data-umami-event="yields-watchlist-portfolio-delete"
 						>

@@ -72,7 +72,7 @@ export function FilterBetweenRange({
 					}[variant],
 					{
 						sm: 'min-h-6 rounded-md px-2 py-0.5',
-						md: 'min-h-8 rounded-[8px] px-3 py-1.5'
+						md: 'min-h-8 rounded-lg px-3 py-1.5'
 					}[size]
 				)}
 			>

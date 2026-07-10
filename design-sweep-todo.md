@@ -95,7 +95,7 @@ The remaining real work is now sequenced in `design-execution-plan.md`:
 - remaining documented token-ratchet debt;
 - shared API/component consolidation (`Select`, segmented controls, summary/change/export
   helpers) when it reduces real duplication;
-- radius and typography normalization;
+- typography normalization;
 - focused accessibility/component correctness for automatic truncation help, touch access
   to structured hover content, and remaining low-value native-title replacements;
 - high-fanout file placement and excluded-product scope decisions;

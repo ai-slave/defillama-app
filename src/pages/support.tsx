@@ -115,7 +115,7 @@ function Support() {
 				<div className="flex flex-col gap-3">
 					<a
 						href="mailto:support@defillama.com"
-						className="flex flex-col gap-1 rounded-[8px] border border-subtle bg-surface p-4 text-center hover:bg-hover-row focus-visible:bg-hover-row"
+						className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4 text-center hover:bg-hover-row focus-visible:bg-hover-row"
 					>
 						<span className="font-semibold">Email Us</span>
 						<span className="body-sm text-secondary">support@defillama.com</span>

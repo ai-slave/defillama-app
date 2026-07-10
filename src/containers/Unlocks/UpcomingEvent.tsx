@@ -184,7 +184,7 @@ const formatCountdownBadge = (days: number, hours: number, minutes: number, seco
 }
 
 const countdownTileStyles =
-	'inline-flex min-h-8 w-16 items-center justify-center rounded-[8px] bg-surface-elevated-2 px-2 py-1.5 label-md text-primary tabular-nums'
+	'inline-flex min-h-8 w-16 items-center justify-center rounded-lg bg-surface-elevated-2 px-2 py-1.5 label-md text-primary tabular-nums'
 
 export const UpcomingEvent = ({
 	noOfTokens = EMPTY_TOKENS,

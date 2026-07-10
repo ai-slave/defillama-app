@@ -480,7 +480,7 @@ function Bullets({ items, ordered = false }: { items: ReactNode[]; ordered?: boo
 
 function WeightTable({ rows, showRanking = true }: { rows: WeightRow[]; showRanking?: boolean }) {
 	return (
-		<div className="overflow-hidden rounded-[8px] border border-subtle">
+		<div className="overflow-hidden rounded-lg border border-subtle">
 			<div className="overflow-x-auto">
 				<table className="w-full border-collapse text-sm">
 					<thead>

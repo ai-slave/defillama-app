@@ -152,9 +152,7 @@ export function Metrics({
 		<div className={canDismiss ? 'flex min-h-0 flex-1 flex-col' : 'contents'}>
 			<div
 				className={
-					canDismiss
-						? 'flex flex-col gap-3 p-3'
-						: 'flex flex-col gap-3 rounded-[8px] border border-subtle bg-surface p-3'
+					canDismiss ? 'flex flex-col gap-3 p-3' : 'flex flex-col gap-3 rounded-lg border border-subtle bg-surface p-3'
 				}
 			>
 				<div className="flex items-center gap-2">
@@ -259,7 +257,7 @@ export function LinkToMetricOrToolPage({
 			data-pinned={isPinned}
 		>
 			<BasicLink
-				className="hover-wash-card col-span-1 flex flex-1 flex-col items-start gap-1.5 rounded-[8px] border border-subtle bg-surface p-3"
+				className="hover-wash-card col-span-1 flex flex-1 flex-col items-start gap-1.5 rounded-lg border border-subtle bg-surface p-3"
 				href={page.route}
 				target={isExternalLink ? '_blank' : undefined}
 				rel={isExternalLink ? 'noopener noreferrer' : undefined}

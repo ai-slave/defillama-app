@@ -158,7 +158,7 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 				</nav>
 
 				<div className="flex min-w-0 flex-1 flex-col gap-8 p-4">
-					<div className="flex flex-wrap items-center justify-between gap-2 rounded-[8px] border border-subtle bg-brand-muted p-2">
+					<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-subtle bg-brand-muted p-2">
 						<div className="flex items-center gap-2">
 							<DocFileIcon />
 							<p className="text-sm font-medium">Looking for the full Market Maker Leaderboard documentation?</p>
@@ -198,7 +198,7 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 							infrastructure and capability-based attributes, such as integrations, API support, and trading coverage,
 							are also incorporated into the composite calculation. The global weights of each metric are as follows:
 						</p>
-						<div className="overflow-x-auto rounded-[8px] border border-subtle">
+						<div className="overflow-x-auto rounded-lg border border-subtle">
 							<table className="w-full border-collapse body-sm">
 								<thead>
 									<tr>
@@ -224,7 +224,7 @@ export function DocsDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 							while loan utilization measures how efficiently capital is deployed. Uptime and bid-ask spread reflect
 							consistency and quote competitiveness. The weightings and rankings of all Trading KPIs are below:
 						</p>
-						<div className="overflow-x-auto rounded-[8px] border border-subtle">
+						<div className="overflow-x-auto rounded-lg border border-subtle">
 							<table className="w-full border-collapse body-sm">
 								<thead>
 									<tr>

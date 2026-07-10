@@ -74,7 +74,7 @@ export const MultiSelectCombobox = ({
 			open={open}
 			setOpen={setOpen}
 		>
-			<span className="relative flex w-full flex-1 flex-wrap items-center gap-1 rounded-[8px] border border-medium bg-page focus-within:border-brand">
+			<span className="relative flex w-full flex-1 flex-wrap items-center gap-1 rounded-lg border border-medium bg-page focus-within:border-brand">
 				{selectedValues.length > 0 ? (
 					<div className="flex flex-wrap items-center gap-1 pl-1">
 						{selectedValues.map((value) => (

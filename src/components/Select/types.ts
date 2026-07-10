@@ -30,7 +30,7 @@ const SELECT_TRIGGER_VARIANTS = {
 	   focus:border-brand indicator (outline-hidden is valid per the focus
 	   rule — the border is the indicator). */
 	input:
-		'label-sm flex min-h-8 min-w-0 cursor-pointer items-center gap-1.5 hover-wash rounded-[8px] border border-medium bg-page px-3 py-1.5 text-primary outline-hidden focus:border-brand',
+		'label-sm flex min-h-8 min-w-0 cursor-pointer items-center gap-1.5 hover-wash rounded-lg border border-medium bg-page px-3 py-1.5 text-primary outline-hidden focus:border-brand',
 	'filter-responsive':
 		'label-sm relative flex min-h-6 w-full cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md border border-medium px-2 py-0.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row sm:w-auto',
 	pro: 'hover:not-disabled:pro-btn-blue focus-visible:not-disabled:pro-btn-blue flex items-center gap-1 rounded-md border border-medium px-1.5 py-1 text-xs hover:border-transparent focus-visible:border-transparent disabled:border-subtle disabled:text-disabled'
@@ -42,9 +42,9 @@ export type SelectTriggerVariant = keyof typeof SELECT_TRIGGER_VARIANTS
    md filter trigger mirrors Button md so selects line up with .csv/.png. */
 const SELECT_TRIGGER_MD_VARIANTS: Partial<Record<SelectTriggerVariant, string>> = {
 	filter:
-		'label-sm relative flex min-h-8 cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-[8px] border border-medium px-3 py-1.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row',
+		'label-sm relative flex min-h-8 cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-lg border border-medium px-3 py-1.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row',
 	'filter-responsive':
-		'label-sm relative flex min-h-8 w-full cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-[8px] border border-medium px-3 py-1.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row sm:w-auto'
+		'label-sm relative flex min-h-8 w-full cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-lg border border-medium px-3 py-1.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row sm:w-auto'
 }
 
 export type SelectTriggerSize = 'sm' | 'md'
@@ -67,13 +67,13 @@ export function selectTriggerStyles(variant: SelectTriggerVariant, size: SelectT
 export const TAG_GROUP_VARIANTS = {
 	default: {
 		container:
-			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-[8px] border border-medium bg-surface p-0.5',
+			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-lg border border-medium bg-surface p-0.5',
 		button:
 			'hover-wash shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link'
 	},
 	responsive: {
 		container:
-			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-[8px] border border-medium bg-surface p-0.5 max-sm:w-full',
+			'body-sm flex w-fit flex-nowrap items-center gap-0.5 overflow-x-auto rounded-lg border border-medium bg-surface p-0.5 max-sm:w-full',
 		button:
 			'hover-wash inline-flex max-sm:flex-1 items-center justify-center shrink-0 rounded-md px-2 py-1 whitespace-nowrap text-secondary hover:text-primary data-[active=true]:bg-brand-muted data-[active=true]:text-link'
 	},

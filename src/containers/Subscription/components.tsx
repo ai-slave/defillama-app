@@ -104,9 +104,9 @@ function FeatureBullet({ item }: { item: FeatureItem }) {
 /* ── PricingCardCta ────────────────────────────────────────────────── */
 
 const outlineBtnCls =
-	'h-14 w-full rounded-[12px] border border-(--sub-border-slate-100) bg-(--sub-surface-slate-10) text-[16px] leading-5 font-medium text-(--sub-text-slate-900) dark:border-(--sub-border-strong) dark:bg-transparent dark:text-white sm:h-10 sm:rounded-lg sm:border-(--sub-border-muted) sm:bg-white sm:text-sm sm:text-(--sub-ink-primary) dark:sm:border-(--sub-border-strong) dark:sm:bg-transparent dark:sm:text-white'
+	'h-14 w-full rounded-xl border border-(--sub-border-slate-100) bg-(--sub-surface-slate-10) text-[16px] leading-5 font-medium text-(--sub-text-slate-900) dark:border-(--sub-border-strong) dark:bg-transparent dark:text-white sm:h-10 sm:rounded-lg sm:border-(--sub-border-muted) sm:bg-white sm:text-sm sm:text-(--sub-ink-primary) dark:sm:border-(--sub-border-strong) dark:sm:bg-transparent dark:sm:text-white'
 const filledBtnCls =
-	'h-14 w-full rounded-[12px] bg-(--sub-brand-primary) text-[16px] leading-5 font-medium text-white sm:h-10 sm:rounded-lg sm:text-sm'
+	'h-14 w-full rounded-xl bg-(--sub-brand-primary) text-[16px] leading-5 font-medium text-white sm:h-10 sm:rounded-lg sm:text-sm'
 
 function PricingCardCta({
 	card,
@@ -232,14 +232,14 @@ function PricingCardCta({
 					<div className="flex gap-2">
 						<button
 							type="button"
-							className="h-14 flex-1 rounded-[12px] bg-emerald-600 text-[16px] leading-5 font-medium text-white sm:h-10 sm:rounded-lg sm:text-sm"
+							className="h-14 flex-1 rounded-xl bg-emerald-600 text-[16px] leading-5 font-medium text-white sm:h-10 sm:rounded-lg sm:text-sm"
 							onClick={onStartTrial}
 						>
 							Start Free Trial
 						</button>
 						<button
 							type="button"
-							className="h-14 flex-1 rounded-[12px] bg-(--sub-brand-primary) text-[16px] leading-5 font-medium text-white sm:h-10 sm:rounded-lg sm:text-sm"
+							className="h-14 flex-1 rounded-xl bg-(--sub-brand-primary) text-[16px] leading-5 font-medium text-white sm:h-10 sm:rounded-lg sm:text-sm"
 							onClick={() => onPrimaryCtaClick?.(card.key)}
 							disabled={loading === 'stripe'}
 						>

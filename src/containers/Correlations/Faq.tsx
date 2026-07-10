@@ -17,7 +17,7 @@ export const FAQ = () => (
 				</p>
 			</div>
 			<hr className="border-subtle" />
-			<div className="flex flex-col gap-3 rounded-[8px] bg-surface-elevated-1 p-3">
+			<div className="flex flex-col gap-3 rounded-lg bg-surface-elevated-1 p-3">
 				<h3 className="label-md text-primary">Values</h3>
 				<div className="flex flex-col gap-2 body-sm">
 					<div className="flex items-start gap-2">

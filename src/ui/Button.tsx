@@ -59,7 +59,7 @@ const SQUARE_SIZE_CLASSES: Record<ButtonSize, string> = {
 
 const RADIUS_CLASSES: Record<ButtonSize, string> = {
 	sm: 'rounded-md',
-	md: 'rounded-[8px]'
+	md: 'rounded-lg'
 }
 
 export function buttonStyles({

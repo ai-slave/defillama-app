@@ -73,7 +73,7 @@ function NavButton({ direction, disabled, onClick, onMouseEnter, onMouseLeave, c
 			onMouseEnter={onMouseEnter}
 			onMouseLeave={onMouseLeave}
 			className={clsx(
-				'flex h-[29px] w-[34px] cursor-pointer items-center justify-center rounded-[12px] border border-white bg-transparent transition-all duration-200 hover:bg-white/10',
+				'flex h-[29px] w-[34px] cursor-pointer items-center justify-center rounded-xl border border-white bg-transparent transition-all duration-200 hover:bg-white/10',
 				disabled && 'cursor-not-allowed opacity-50',
 				className
 			)}
@@ -179,14 +179,14 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 		<>
 			{edgeFade === 'left' && (
 				<div
-					className="pointer-events-none absolute inset-y-0 left-0 z-10 w-1/2 rounded-l-[12px] [--edge-fade-color:white] lg:w-full dark:[--edge-fade-color:black]"
+					className="pointer-events-none absolute inset-y-0 left-0 z-10 w-1/2 rounded-l-xl [--edge-fade-color:white] lg:w-full dark:[--edge-fade-color:black]"
 					style={{ background: 'linear-gradient(to right, var(--edge-fade-color), transparent)' }}
 					aria-hidden
 				/>
 			)}
 			{edgeFade === 'right' && (
 				<div
-					className="pointer-events-none absolute inset-y-0 right-0 z-10 w-1/2 rounded-r-[12px] [--edge-fade-color:white] lg:w-full dark:[--edge-fade-color:black]"
+					className="pointer-events-none absolute inset-y-0 right-0 z-10 w-1/2 rounded-r-xl [--edge-fade-color:white] lg:w-full dark:[--edge-fade-color:black]"
 					style={{ background: 'linear-gradient(to left, var(--edge-fade-color), transparent)' }}
 					aria-hidden
 				/>
@@ -204,9 +204,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 	)
 
 	return (
-		<div
-			className={clsx('group relative overflow-hidden bg-white transition-all duration-200 ease-out', 'rounded-[12px]')}
-		>
+		<div className={clsx('group relative overflow-hidden bg-white transition-all duration-200 ease-out', 'rounded-xl')}>
 			{addOverlayLink ? (
 				<div
 					role="button"
@@ -452,7 +450,7 @@ export const ReportsCarousel: React.FC<ReportsCarouselProps> = (props) => {
 
 	const getSlideClasses = () => {
 		return clsx(
-			'absolute cursor-pointer rounded-[12px] border border-[#D9D9D9] text-white/80 shadow-xl transition-all duration-300 ease-out',
+			'absolute cursor-pointer rounded-xl border border-[#D9D9D9] text-white/80 shadow-xl transition-all duration-300 ease-out',
 			isMobile ? 'w-[266px]' : 'w-[294px]',
 			isTransitioning && 'pointer-events-none'
 		)

@@ -176,7 +176,7 @@ function PromotionGift({
 			<Ariakit.HovercardAnchor
 				render={<button />}
 				type="button"
-				className="hover-wash inline-flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-subtle bg-surface text-secondary hover:border-strong hover:text-primary focus-visible:border-strong focus-visible:text-primary"
+				className="hover-wash inline-flex size-7 shrink-0 items-center justify-center rounded-lg border border-subtle bg-surface text-secondary hover:border-strong hover:text-primary focus-visible:border-strong focus-visible:text-primary"
 				aria-label={`${exchangeName} promotion: ${promotion.label}`}
 			>
 				<Icon name="gift" height={15} width={15} />
@@ -189,7 +189,7 @@ function PromotionGift({
 			>
 				<span className="flex flex-col gap-3 p-3">
 					<span className="flex items-start gap-2">
-						<span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-subtle bg-surface text-secondary">
+						<span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-lg border border-subtle bg-surface text-secondary">
 							<Icon name="gift" height={15} width={15} />
 						</span>
 						<span className="flex min-w-0 flex-col gap-1">
@@ -410,7 +410,7 @@ function KycSummaryHovercard({ summary }: { summary: string }) {
 			<Ariakit.HovercardAnchor
 				render={<button />}
 				type="button"
-				className="inline-flex size-7 items-center justify-center rounded-[8px] border border-subtle text-tertiary hover:border-strong hover:bg-hover-row hover:text-primary focus-visible:border-strong focus-visible:bg-hover-row focus-visible:text-primary"
+				className="inline-flex size-7 items-center justify-center rounded-lg border border-subtle text-tertiary hover:border-strong hover:bg-hover-row hover:text-primary focus-visible:border-strong focus-visible:bg-hover-row focus-visible:text-primary"
 				aria-label="Full KYC requirements"
 			>
 				<Icon name="file-text" height={14} width={14} />

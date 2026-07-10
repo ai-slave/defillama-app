@@ -39,7 +39,7 @@ function asStr(value: unknown): string | null {
 
 const FALLBACK = '—'
 const NA = 'N/A'
-const CARD_BORDER = 'rounded-[8px] border border-subtle bg-surface'
+const CARD_BORDER = 'rounded-lg border border-subtle bg-surface'
 const EMPTY_SECTIONS = { depth: {}, volume: {}, spread: {}, kpi: {} }
 
 const INTEGRATION_LABEL: Record<'full' | 'partial' | 'none', string> = {

@@ -34,7 +34,7 @@ const PANEL_PADDING: Record<PanelPadding, string> = {
 export function Panel({ className, padding, ...props }: PanelProps) {
 	return (
 		<div
-			className={`relative flex flex-col rounded-[8px] border border-subtle bg-surface${PANEL_PADDING[padding]} ${className ?? ''}`.trim()}
+			className={`relative flex flex-col rounded-lg border border-subtle bg-surface${PANEL_PADDING[padding]} ${className ?? ''}`.trim()}
 			{...props}
 		/>
 	)

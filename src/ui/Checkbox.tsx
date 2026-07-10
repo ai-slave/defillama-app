@@ -7,7 +7,7 @@ const CHECKBOX_WRAPPER_VARIANTS = {
 		'group flex cursor-pointer flex-nowrap items-center gap-3 rounded-md px-3 py-2 body-sm text-primary hover:bg-hover-row data-focus-visible:bg-hover-row data-focus-visible:focus-ring',
 	inline: 'group flex cursor-pointer flex-nowrap items-center gap-2 label-md text-secondary',
 	filter:
-		'group relative flex min-h-8 cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-[8px] border border-medium px-3 py-1.5 label-sm text-primary hover:bg-hover-row data-focus-visible:bg-hover-row data-focus-visible:focus-ring',
+		'group relative flex min-h-8 cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-lg border border-medium px-3 py-1.5 label-sm text-primary hover:bg-hover-row data-focus-visible:bg-hover-row data-focus-visible:focus-ring',
 	'filter-borderless':
 		'group relative flex cursor-pointer flex-row-reverse flex-nowrap items-center justify-between gap-4 rounded-md px-3 py-2 body-sm text-primary hover:bg-hover-row data-focus-visible:bg-hover-row data-focus-visible:focus-ring'
 } as const

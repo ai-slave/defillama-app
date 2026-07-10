@@ -76,7 +76,7 @@ function DonationsPage({ protocols }) {
 						{protocols.map((p) => (
 							<a
 								key={p.name}
-								className="flex items-center gap-2 rounded-[8px] p-2 transition-colors hover:bg-hover-row focus-visible:bg-hover-row"
+								className="flex items-center gap-2 rounded-lg p-2 transition-colors hover:bg-hover-row focus-visible:bg-hover-row"
 								target="_blank"
 								rel="noopener noreferrer"
 								href={p.url}

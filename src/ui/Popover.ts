@@ -22,7 +22,7 @@ export const menuSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hi
 export const nestedMenuSurfaceStyles = `flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)] ${nestedMenuSurfaceHeightStyles}`
 
 export const popoverSearchResultsSurfaceStyles =
-	'z-10 overflow-y-auto rounded-b-[8px] border border-medium bg-overlay shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]'
+	'z-10 overflow-y-auto rounded-b-lg border border-medium bg-overlay shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]'
 
 export const popoverHovercardSurfaceStyles =
 	'z-50 max-h-[calc(100dvh-80px)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay body-sm shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)] lg:max-h-(--popover-available-height)'
@@ -84,7 +84,7 @@ export const nestedMenuHeaderIconButtonStyles =
 	'flex size-10 shrink-0 items-center justify-center rounded-md text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary'
 
 export const nestedMenuRootFilterButtonStyles =
-	'label-sm flex min-h-8 cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-[8px] border border-medium px-3 py-1.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row'
+	'label-sm flex min-h-8 cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-lg border border-medium px-3 py-1.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row'
 
 export function popoverMultiSelectCheckStyles(selected: boolean) {
 	return `ml-auto grid size-3.5 shrink-0 place-items-center rounded-[4px] border ${

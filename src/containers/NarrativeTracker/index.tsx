@@ -237,7 +237,7 @@ export const CategoryPerformanceContainer = ({
 
 	return (
 		<>
-			<div className="flex flex-col gap-3 rounded-[8px] border border-subtle bg-surface p-3">
+			<div className="flex flex-col gap-3 rounded-lg border border-subtle bg-surface p-3">
 				{isCoinPage && categoryName ? <h1 className="heading-sm">Category: {categoryName ?? ''}</h1> : null}
 				<p className="text-sm text-secondary">
 					MCap-Weighted Category Performance: Shows how a category of coins has performed over your chosen time period
@@ -247,7 +247,7 @@ export const CategoryPerformanceContainer = ({
 				</p>
 			</div>
 
-			<div className="rounded-[8px] border border-subtle bg-surface">
+			<div className="rounded-lg border border-subtle bg-surface">
 				<div className="flex flex-wrap overflow-x-auto border-b border-medium">
 					<button
 						className="border-b border-medium px-6 py-2 whitespace-nowrap hover:bg-hover-row focus-visible:bg-hover-row data-[selected=true]:border-b-brand"

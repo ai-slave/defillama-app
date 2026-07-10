@@ -87,7 +87,7 @@ export function TokenRightsByProtocol({
 	return (
 		<div
 			id={isEmbedded ? EMBEDDED_TOKEN_RIGHTS_SECTION_ID : undefined}
-			className={isEmbedded ? 'scroll-mt-24 rounded-[8px] border border-subtle bg-surface' : 'grid grid-cols-1 gap-2'}
+			className={isEmbedded ? 'scroll-mt-24 rounded-lg border border-subtle bg-surface' : 'grid grid-cols-1 gap-2'}
 		>
 			{showHeader ? (
 				headerVariant === 'embedded' ? (
@@ -478,7 +478,7 @@ function TokenRightsOverviewView({
 					) : null}
 
 					{hasPrimaryValueAccrual ? (
-						<div className="rounded-[8px] border border-green-600/30 bg-green-600/10 p-2">
+						<div className="rounded-lg border border-green-600/30 bg-green-600/10 p-2">
 							<div className="label-sm text-secondary uppercase">Primary Value Accrual</div>
 							{primaryValueLabel !== null ? (
 								<div className="mt-1.5 label-lg text-green-700 dark:text-green-400">{primaryValueLabel}</div>
@@ -488,7 +488,7 @@ function TokenRightsOverviewView({
 					) : null}
 
 					<div className="overflow-x-auto">
-						<div className="grid min-w-[640px] grid-cols-[repeat(4,minmax(max-content,1fr))] overflow-hidden rounded-[8px] border border-subtle">
+						<div className="grid min-w-[640px] grid-cols-[repeat(4,minmax(max-content,1fr))] overflow-hidden rounded-lg border border-subtle">
 							{rightsFields.map((field) => (
 								<div
 									key={field.label}
@@ -638,7 +638,7 @@ function SectionCard({ title, badge, children }: { title: string; badge?: string
 
 function GreenCard({ title, tooltip, children }: { title: string; tooltip: string; children: ReactNode }) {
 	return (
-		<section className="flex flex-col gap-2 rounded-[8px] border border-green-600/30 bg-green-600/10 p-2">
+		<section className="flex flex-col gap-2 rounded-lg border border-green-600/30 bg-green-600/10 p-2">
 			<Tooltip
 				content={tooltip}
 				render={<h2 />}
@@ -714,7 +714,7 @@ function RightsRow({
 	children: ReactNode
 }) {
 	return (
-		<div className="flex flex-col gap-2 rounded-[8px] border border-subtle bg-surface-elevated-1 p-2">
+		<div className="flex flex-col gap-2 rounded-lg border border-subtle bg-surface-elevated-1 p-2">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				{tooltip ? (
 					<Tooltip content={tooltip} render={<h3 />} className="label-md text-secondary underline decoration-dotted">

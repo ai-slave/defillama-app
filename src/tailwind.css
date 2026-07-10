@@ -17,6 +17,10 @@
 	--font-inter: Inter var, 'Inter-fallback', sans-serif;
 	--font-jetbrains: JetBrains Mono, monospace;
 
+	/* Repository-owned application radius contracts. */
+	--radius-lg: 0.5rem; /* 8px at the standard root: cards, panels, inputs, medium controls */
+	--radius-xl: 0.75rem; /* 12px at the standard root: overlays, dialogs, roomy cards */
+
 	--animate-loader: loader 800ms linear infinite;
 	--animate-wiggle: wiggle 300ms ease-out;
 	--animate-slidein: slidein 300ms ease-out;

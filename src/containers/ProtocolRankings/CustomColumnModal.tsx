@@ -317,7 +317,7 @@ export function CustomColumnModal({
 						</label>
 						<div className="flex flex-col gap-1">
 							<p className="label-sm text-secondary">Available fields:</p>
-							<ul className="grid max-h-32 grid-cols-2 gap-x-4 gap-y-1 overflow-y-auto rounded-[8px] border border-medium bg-page p-2">
+							<ul className="grid max-h-32 grid-cols-2 gap-x-4 gap-y-1 overflow-y-auto rounded-lg border border-medium bg-page p-2">
 								{AVAILABLE_FIELDS.map((f) => (
 									<li key={f}>
 										<code

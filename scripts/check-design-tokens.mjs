@@ -155,6 +155,11 @@ const RULES = [
 		pattern: /--ld-[a-zA-Z0-9-]+/g
 	},
 	{
+		id: 'arbitrary-standard-radius',
+		description: 'use rounded-lg for 8px and rounded-xl for 12px, including side and corner variants',
+		pattern: /rounded(?:-[a-z]{1,2})?-\[(?:8|12)px\]/g
+	},
+	{
 		id: 'implicit-border-color',
 		description:
 			'width-only border/divide utility with no color source in the same class string (v4 default is currentColor; add border-subtle, border-medium, …)',
@@ -181,7 +186,12 @@ for (const file of files) {
 	for (const rule of RULES) {
 		if (
 			file.endsWith('.css') &&
-			!['explicit-thin-scrollbar', 'legacy-token-reference', 'prefixed-design-token'].includes(rule.id)
+			![
+				'explicit-thin-scrollbar',
+				'legacy-token-reference',
+				'prefixed-design-token',
+				'arbitrary-standard-radius'
+			].includes(rule.id)
 		)
 			continue
 		const matches = rule.match ? rule.match(content) : content.match(rule.pattern)

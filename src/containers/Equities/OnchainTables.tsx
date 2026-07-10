@@ -221,7 +221,7 @@ const tokensColumns = [
 
 function EmptyState({ children }: { children: React.ReactNode }) {
 	return (
-		<div className="rounded-[8px] border border-dashed border-subtle bg-surface p-3 body-sm text-secondary">
+		<div className="rounded-lg border border-dashed border-subtle bg-surface p-3 body-sm text-secondary">
 			<p>{children}</p>
 		</div>
 	)

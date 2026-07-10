@@ -89,6 +89,19 @@ This file tracks design-system audit notes before code changes are made.
   removing it would require visual review of thousands of implicit-border consumers and
   is not a behavior-neutral token rename.
 
+### Radius Scale Normalization (resolved 2026-07-10)
+
+- The repository now owns `rounded-lg` = `0.5rem` and `rounded-xl` = `0.75rem` in the
+  Tailwind theme. At the standard 16px root these preserve the accepted 8px/12px visual
+  contracts while moving formerly fixed-pixel call sites onto the root-relative scale.
+- All exact arbitrary 8px/12px radius classes, including bottom/left/right variants,
+  moved to the named scale. `Card radius="large"` remains the public unlock-event
+  exception and resolves internally to `rounded-xl`.
+- Near-miss values were deliberately not normalized: 2px, 3px, 4px, 6px, 7px, 7.2px,
+  10px, 16px, 20px, 22px, and 24px usages remain rendering-driven, branded/product
+  shapes, or candidates for later reviewed cleanup. A zero-baseline token rule prevents
+  arbitrary 8px/12px radius classes from returning.
+
 ### Resolved Owner Decisions From 2026-07-07
 
 - Keep `Panel` as a separately named contract for true titled chart/table shells: surface, header, divider, body/chart slot, 32px controls, and no chart visual changes. Do not collapse every panel into a generic card.

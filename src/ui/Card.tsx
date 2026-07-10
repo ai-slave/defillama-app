@@ -30,8 +30,8 @@ const PADDING = {
 } as const
 
 const RADIUS = {
-	default: 'rounded-[8px]',
-	large: 'rounded-[12px]'
+	default: 'rounded-lg',
+	large: 'rounded-xl'
 } as const
 
 export function Card<T extends ElementType = 'div'>({

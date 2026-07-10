@@ -18,7 +18,7 @@ export const ComparisonPanel = ({ entries, activeId }: { entries: ComparisonEntr
 					return (
 						<li
 							key={`${entry.id}-range-comparison`}
-							className={`flex flex-col gap-1 rounded-[8px] border border-subtle p-3 transition-colors duration-200 ${
+							className={`flex flex-col gap-1 rounded-lg border border-subtle p-3 transition-colors duration-200 ${
 								entry.id === activeId ? 'bg-surface-elevated-1' : 'bg-surface'
 							}`}
 						>
