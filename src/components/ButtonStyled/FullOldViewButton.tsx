@@ -1,13 +1,13 @@
 import * as Ariakit from '@ariakit/react'
 import { lazy, Suspense, useState } from 'react'
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
 import { useDashboardCreation } from '~/containers/ProDashboard/hooks/useDashboardCreation'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { setSignupSource } from '~/containers/Subscription/signupSource'
 import { useIsClient } from '~/hooks/useIsClient'
 import { buttonStyles } from '~/ui/Button'
 import { Hovercard } from '~/ui/Hovercard'
+import { LoadingSpinner } from '~/ui/Loaders'
 
 const SubscribeProModal = lazy(() =>
 	import('~/components/SubscribeCards/SubscribeProCard').then((m) => ({ default: m.SubscribeProModal }))

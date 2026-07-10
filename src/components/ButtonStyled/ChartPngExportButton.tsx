@@ -5,9 +5,9 @@ import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { getChartTheme } from '~/components/ECharts/chartTheme'
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { buttonStyles } from '~/ui/Button'
+import { LoadingSpinner } from '~/ui/Loaders'
 import {
 	menuSurfaceStyles,
 	popoverMenuItemStyles,

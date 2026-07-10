@@ -1,5 +1,5 @@
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { useDashboardEngagement } from '../hooks/useDashboardEngagement'
 
 export function CardLikeButton({

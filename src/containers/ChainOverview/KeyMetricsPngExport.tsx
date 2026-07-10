@@ -1,8 +1,8 @@
 import { useState, type RefObject } from 'react'
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { buttonStyles } from '~/ui/Button'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { downloadDataURL } from '~/utils/download'
 interface KeyMetricsPngExportButtonProps {
 	containerRef: RefObject<HTMLDivElement | null>

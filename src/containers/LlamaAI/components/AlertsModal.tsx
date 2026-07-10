@@ -2,7 +2,6 @@ import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { memo, useEffect, useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
 import {
 	deleteAlert,
 	fetchAlertExecutionDetail,
@@ -33,6 +32,7 @@ import { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
 import { useSlackWorkspaces } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
 import { sanitizeAlertSummary, sanitizeUrl } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { useAuthContext } from '~/containers/Subscription/auth'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface AlertsModalProps {

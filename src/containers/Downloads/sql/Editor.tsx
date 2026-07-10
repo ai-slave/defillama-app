@@ -1,6 +1,6 @@
 import MonacoEditor, { loader } from '@monaco-editor/react'
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { LoadingSpinner } from '~/components/Loaders'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { registerSqlCompletions, registerSqlHovers, type CompletionContext } from './completions'
 import type { RegisteredTable } from './useTableRegistry'
 

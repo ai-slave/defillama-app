@@ -1,10 +1,10 @@
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
-import { LoadingDots } from '~/components/Loaders'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
 import { buttonStyles } from '~/ui/Button'
+import { LoadingDots } from '~/ui/Loaders'
 
 export function Account({ asPath: _asPath }: { asPath: string }) {
 	const { isAuthenticated, user, hasActiveSubscription, loaders } = useAuthContext()

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
-import { LocalLoader } from '~/components/Loaders'
+import { LocalLoader } from '~/ui/Loaders'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { fetchMarketsCategoryPage } from './api'
 import { MarketsAreaChart } from './MarketsAreaChart'

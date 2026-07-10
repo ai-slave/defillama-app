@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { useCreateProject, useUpdateProject } from './hooks'
 import type { Project } from './types'
 

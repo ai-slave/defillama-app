@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
-import { LocalLoader } from '~/components/Loaders'
 import { Card } from '~/ui/Card'
+import { LocalLoader } from '~/ui/Loaders'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { formattedNum } from '~/utils'
 import { fetchMarketsExchange, fetchMarketsExchangeSeries } from './api'

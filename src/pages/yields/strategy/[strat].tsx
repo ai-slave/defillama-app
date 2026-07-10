@@ -1,7 +1,6 @@
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
 import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
-import { LoadingDots } from '~/components/Loaders'
 import { CHART_COLORS } from '~/constants/colors'
 import { calculateLoopAPY, type LoopApyInputPool } from '~/containers/Yields/domain/loopApy'
 import {
@@ -11,6 +10,7 @@ import {
 	useYieldConfigData
 } from '~/containers/Yields/queries.client'
 import Layout from '~/layout'
+import { LoadingDots } from '~/ui/Loaders'
 import { formattedNum } from '~/utils'
 
 const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))

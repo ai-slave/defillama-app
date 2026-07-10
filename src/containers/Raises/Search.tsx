@@ -3,8 +3,8 @@ import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
 import { startTransition, useMemo, useRef, useState } from 'react'
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
 import { searchFieldInputStyles } from '~/ui/Input'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { NoResults } from '~/ui/NoResults'
 import {
 	popoverMobileDismissStyles,

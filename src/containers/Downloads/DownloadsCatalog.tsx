@@ -3,11 +3,11 @@ import { matchSorter } from 'match-sorter'
 import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { Icon, type IIcon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
 import { TrialCsvLimitModal } from '~/components/TrialCsvLimitModal'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { LoadingSpinner } from '~/ui/Loaders'
 import {
 	chartDatasets,
 	chartDatasetCategories,

@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { Icon } from '~/components/Icon'
-import { LocalLoader } from '~/components/Loaders'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
 import { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
+import { LocalLoader } from '~/ui/Loaders'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 

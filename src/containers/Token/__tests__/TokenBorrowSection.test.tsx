@@ -33,7 +33,7 @@ vi.mock('~/components/Icon', () => ({
 	Icon: ({ name }: { name: string }) => <span>{name}</span>
 }))
 
-vi.mock('~/components/Loaders', () => ({
+vi.mock('~/ui/Loaders', () => ({
 	LocalLoader: () => <div>loader</div>,
 	LoadingSpinner: () => <div>spinner</div>
 }))

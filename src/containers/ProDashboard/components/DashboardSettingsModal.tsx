@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { useRef, useState } from 'react'
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
 import { useAuthContext } from '~/containers/Subscription/auth'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { ConfirmationModal } from './ConfirmationModal'
 
 interface DashboardSettingsModalProps {

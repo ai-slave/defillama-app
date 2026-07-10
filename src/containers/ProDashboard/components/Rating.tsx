@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
 import type { FormSubmitEvent } from '~/types/forms'
+import { LoadingSpinner } from '~/ui/Loaders'
 
 interface RatingProps {
 	sessionId: string

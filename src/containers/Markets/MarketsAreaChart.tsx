@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { LocalLoader } from '~/components/Loaders'
+import { LocalLoader } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { type PivotedSeries, toStackedAreaSeries } from './utils'
 

@@ -5,10 +5,10 @@ import { useMemo, useState } from 'react'
 import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
 import { fetchCoinPrices } from '~/api/pricing'
 import { Icon } from '~/components/Icon'
-import { LocalLoader } from '~/components/Loaders'
 import { TokenSearchDialog } from '~/containers/TokenSearch/TokenSearchDialog'
 import { buttonStyles } from '~/ui/Button'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { LocalLoader } from '~/ui/Loaders'
 import {
 	menuSurfaceStyles,
 	popoverRowWithBorderStyles,

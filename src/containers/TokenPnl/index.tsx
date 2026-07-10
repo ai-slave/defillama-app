@@ -7,7 +7,6 @@ import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons
 import { formatTooltipChartDate, formatTooltipValue } from '~/components/ECharts/formatters'
 import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
-import { LocalLoader } from '~/components/Loaders'
 import { TokenLogo } from '~/components/TokenLogo'
 import {
 	getGeckoIdFromSearchId,
@@ -23,6 +22,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Input, inputStyles } from '~/ui/Input'
+import { LocalLoader } from '~/ui/Loaders'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { formattedNum } from '~/utils'

@@ -103,7 +103,7 @@ vi.mock('~/containers/Subscription/SignInModal', () => ({
 	SignInModal: () => <div>sign-in-modal</div>
 }))
 
-vi.mock('~/components/Loaders', () => ({
+vi.mock('~/ui/Loaders', () => ({
 	LocalLoader: () => <div>loader</div>
 }))
 

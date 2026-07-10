@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { LoadingSpinner } from '~/components/Loaders'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { useUpdateProject } from './hooks'
 
 interface ProjectInstructionsEditorProps {

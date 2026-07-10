@@ -3,9 +3,9 @@ import { matchSorter } from 'match-sorter'
 import { startTransition, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Input, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { LoadingSpinner } from '~/ui/Loaders'
 import {
 	chartDatasets,
 	chartDatasetCategories,

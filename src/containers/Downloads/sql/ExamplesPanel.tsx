@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { EXAMPLE_QUERIES, SUBCATEGORY_META, type ExampleQuery, type ExampleSubcategory } from './examples'
 
 interface ExamplesPanelProps {

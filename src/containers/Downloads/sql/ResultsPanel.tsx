@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { FormatSplitButton } from '../FormatSplitButton'
 import type { ChartConfig } from './chartConfig'
 import { exportQueryResult, type QueryResult } from './exportResults'

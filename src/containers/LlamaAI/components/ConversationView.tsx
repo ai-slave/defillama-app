@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefCallback, type RefObject } from 'react'
 import { Icon } from '~/components/Icon'
-import { LoadingDots } from '~/components/Loaders'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { ContextWarningBanner } from '~/containers/LlamaAI/components/ContextWarningBanner'
 import { MessageBubble } from '~/containers/LlamaAI/components/messages/MessageBubble'
@@ -24,6 +23,7 @@ import type {
 	TodoItem,
 	ToolCall
 } from '~/containers/LlamaAI/types'
+import { LoadingDots } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 
 export interface ConversationViewModel {

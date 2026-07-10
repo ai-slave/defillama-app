@@ -1,6 +1,6 @@
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
 import { useAuthContext } from '~/containers/Subscription/auth'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { useDashboardEngagement } from '../hooks/useDashboardEngagement'
 import type { Dashboard } from '../services/DashboardAPI'

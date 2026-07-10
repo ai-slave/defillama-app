@@ -4,7 +4,6 @@ import * as React from 'react'
 import type { IPieChartProps } from '~/components/ECharts/types'
 import { ensureChronologicalRows, preparePieChartData } from '~/components/ECharts/utils'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
-import { LocalLoader } from '~/components/Loaders'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import {
@@ -14,6 +13,7 @@ import {
 	type TvlSettingsKey
 } from '~/contexts/LocalStorage'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { LocalLoader } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { formatNum, getPercentChange } from '~/utils'
 import { fetchJson } from '~/utils/async'

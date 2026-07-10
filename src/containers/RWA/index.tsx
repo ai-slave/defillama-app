@@ -10,7 +10,6 @@ import type {
 	ITreemapChartProps,
 	MultiSeriesChart2SeriesConfig
 } from '~/components/ECharts/types'
-import { LoadingDots } from '~/components/Loaders'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SegmentedControl } from '~/components/SegmentedControl'
 import { Select } from '~/components/Select/Select'
@@ -18,6 +17,7 @@ import { CHART_COLORS } from '~/constants/colors'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { LoadingDots } from '~/ui/Loaders'
 import { StatItem } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { formattedNum, slug } from '~/utils'

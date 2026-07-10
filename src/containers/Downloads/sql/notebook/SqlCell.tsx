@@ -1,6 +1,6 @@
 import MonacoEditor, { loader } from '@monaco-editor/react'
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { LoadingSpinner } from '~/components/Loaders'
+import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../chartConfig'
 import { ErrorBanner, replaceIdentifier } from '../ErrorBanner'
 import { ResultsPanel } from '../ResultsPanel'

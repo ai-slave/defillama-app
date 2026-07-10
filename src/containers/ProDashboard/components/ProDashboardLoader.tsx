@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { LoadingDots } from '~/components/Loaders'
+import { LoadingDots } from '~/ui/Loaders'
 
 export function ProDashboardLoader({ heading }: { heading?: string | null }) {
 	return (

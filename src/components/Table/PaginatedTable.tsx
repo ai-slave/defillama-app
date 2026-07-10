@@ -12,7 +12,6 @@ import {
 	type ReactNode
 } from 'react'
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
 import {
 	TokenPageTable,
 	TokenPageTableBodyCell,
@@ -21,6 +20,7 @@ import {
 	TokenPageTableShell
 } from '~/components/Table/helpers'
 import { SortIcon } from '~/components/Table/SortIcon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 
 interface PaginatedTableProps<T extends RowData> {

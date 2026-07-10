@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { forwardRef, useCallback, useRef, useState } from 'react'
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
+import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../chartConfig'
 import { Keycap } from '../primitives'
 import type { NotebookCell as NotebookCellType, NotebookCellType as CellType, ResultsView } from '../useSqlTabs'

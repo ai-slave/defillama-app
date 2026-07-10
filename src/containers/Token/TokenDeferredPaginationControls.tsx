@@ -1,6 +1,6 @@
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
 import { Button } from '~/ui/Button'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
 
 export function TokenDeferredPaginationControls({

@@ -1,7 +1,7 @@
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
 import { useCallback } from 'react'
-import { LocalLoader } from '~/components/Loaders'
+import { LocalLoader } from '~/ui/Loaders'
 import type { ChartOptionsMap } from './chart-datasets'
 import { DownloadsCatalog as SimpleCatalog } from './DownloadsCatalog'
 import { ModeToggle, type DownloadsMode } from './sql/ModeToggle'

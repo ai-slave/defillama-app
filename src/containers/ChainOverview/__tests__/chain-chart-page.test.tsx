@@ -15,7 +15,7 @@ vi.mock('next/router', () => ({
 	useRouter: () => mocks.routerState
 }))
 
-vi.mock('~/components/Loaders', () => ({
+vi.mock('~/ui/Loaders', () => ({
 	LocalLoader: () => null
 }))
 

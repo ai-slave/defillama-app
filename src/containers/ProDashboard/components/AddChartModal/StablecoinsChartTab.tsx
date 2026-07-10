@@ -2,7 +2,6 @@ import { lazy, Suspense, useMemo } from 'react'
 import { CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
 import type { IBarChartProps, IChartProps, IPieChartProps } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
-import { LocalLoader } from '~/components/Loaders'
 import {
 	type StablecoinAssetInfo,
 	useStablecoinAssetChartData,
@@ -18,6 +17,7 @@ import {
 	generateConsistentChartColor,
 	STABLECOIN_TOKEN_COLORS
 } from '~/containers/ProDashboard/utils/colorManager'
+import { LocalLoader } from '~/ui/Loaders'
 import { formattedNum, slug } from '~/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { AriakitSelect } from '../AriakitSelect'

@@ -1,5 +1,4 @@
 import { type ReactElement, type ReactNode } from 'react'
-import { LoadingDots } from '~/components/Loaders'
 import { AgenticChat } from '~/containers/LlamaAI'
 import { LlamaAIAnimationPreloads } from '~/containers/LlamaAI/components/status/LlamaAIAnimationPreloads'
 import { useAuthContext } from '~/containers/Subscription/auth'
@@ -7,6 +6,7 @@ import { LlamaAINavigateProvider } from '~/contexts/LlamaAINavigate'
 import { LlamaAIRouteProvider, useLlamaAIRouteState, type LlamaAIRouteState } from '~/contexts/LlamaAIRouteState'
 import { SessionAliasProvider } from '~/contexts/SessionAliasRegistry'
 import Layout from '~/layout'
+import { LoadingDots } from '~/ui/Loaders'
 
 const CHAT_SEO = {
 	title: 'AI Crypto Analysis - DeFi & TradFi Data - LlamaAI',

@@ -3,9 +3,9 @@ import { useRouter } from 'next/router'
 import type { ReactNode } from 'react'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
-import { LocalLoader } from '~/components/Loaders'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { LocalLoader } from '~/ui/Loaders'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 
 export function useTokenPrivateSectionAccess() {

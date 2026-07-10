@@ -1,7 +1,7 @@
 import { getCoreRowModel, getSortedRowModel, type SortingState, useReactTable } from '@tanstack/react-table'
 import * as React from 'react'
-import { LocalLoader } from '~/components/Loaders'
 import { Button } from '~/ui/Button'
+import { LocalLoader } from '~/ui/Loaders'
 import { Panel, PanelHeader } from '~/ui/Panel'
 import { type ColumnConfig, type DisplayMode, type Threshold } from '../constants'
 import { RefineButton } from '../RefineButton'

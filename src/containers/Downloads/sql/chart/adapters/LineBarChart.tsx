@@ -1,6 +1,6 @@
 import { lazy, Suspense, useMemo } from 'react'
-import { LoadingSpinner } from '~/components/Loaders'
 import { CHART_COLORS } from '~/constants/colors'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { SPLIT_TOP_N, type ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'

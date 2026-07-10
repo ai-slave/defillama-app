@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { buildLlmInstructions } from './llmInstructions'
 import { inferColumnKind, SectionLabel, TypeBadge } from './primitives'
 import { prettyLabelForSource, type RegisteredTable } from './useTableRegistry'

@@ -85,7 +85,7 @@ vi.mock('~/components/ECharts/TreeMapBuilderChart', () => ({
 	default: () => null
 }))
 
-vi.mock('~/components/Loaders', () => ({
+vi.mock('~/ui/Loaders', () => ({
 	LocalLoader: () => null
 }))
 

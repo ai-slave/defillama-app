@@ -7,8 +7,8 @@ import type {
 	MultiSeriesChart2Dataset
 } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
-import { LocalLoader } from '~/components/Loaders'
 import { getAllProtocolEmissions, getProtocolEmissons } from '~/containers/Unlocks/queries'
+import { LocalLoader } from '~/ui/Loaders'
 import { slug, toNiceDayMonthYear } from '~/utils'
 import { AriakitSelect } from '../AriakitSelect'
 import { AriakitVirtualizedSelect, type VirtualizedSelectOption } from '../AriakitVirtualizedSelect'

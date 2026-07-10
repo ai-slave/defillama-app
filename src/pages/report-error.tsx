@@ -1,10 +1,10 @@
 import { useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { LoadingSpinner } from '~/components/Loaders'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Input, inputStyles } from '~/ui/Input'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { fetchJson } from '~/utils/async'
 
 async function reportError(report: any) {

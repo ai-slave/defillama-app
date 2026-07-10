@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
+import { LoadingSpinner } from '~/ui/Loaders'
 import type { QueryTab } from './useSqlTabs'
 
 interface QueryTabBarProps {

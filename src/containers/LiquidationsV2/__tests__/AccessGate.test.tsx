@@ -24,7 +24,7 @@ vi.mock('~/components/Link', () => ({
 	)
 }))
 
-vi.mock('~/components/Loaders', () => ({
+vi.mock('~/ui/Loaders', () => ({
 	LocalLoader: () => <div>loader</div>
 }))
 

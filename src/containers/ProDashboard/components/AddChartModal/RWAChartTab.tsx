@@ -5,7 +5,6 @@ import type {
 	IPieChartProps,
 	ITreemapChartProps
 } from '~/components/ECharts/types'
-import { LocalLoader } from '~/components/Loaders'
 import { CHART_COLORS } from '~/constants/colors'
 import {
 	useRWAAssetChartData,
@@ -18,6 +17,7 @@ import { toFiniteRwaChartValue } from '~/containers/RWA/chartDataset'
 import { getChartMetricOptions, getChartViewOptions, getChartMetricLabel } from '~/containers/RWA/chartState'
 import { buildRwaTreemapTreeData } from '~/containers/RWA/treemap'
 import { useAuthContext } from '~/containers/Subscription/auth'
+import { LocalLoader } from '~/ui/Loaders'
 import { formattedNum } from '~/utils'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric, RWAOverviewChartView } from '../../types'
 import { AriakitSelect } from '../AriakitSelect'

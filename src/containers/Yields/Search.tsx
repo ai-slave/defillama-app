@@ -3,7 +3,7 @@ import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { Icon } from '~/components/Icon'
-import { LoadingSpinner } from '~/components/Loaders'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from './queryUpdates.client'
 
