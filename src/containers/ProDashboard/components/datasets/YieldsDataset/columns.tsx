@@ -55,12 +55,12 @@ export const yieldsDatasetColumns: ColumnDef<IYieldsRow>[] = [
 					/>
 					<BasicLink
 						href={`/yields/pool/${row.original.configID}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text)"
+						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text)"
 					>
 						{pool}
 					</BasicLink>
 					{row.original.poolMeta ? (
-						<span className="text-xs text-(--text-secondary)">{row.original.poolMeta}</span>
+						<span className="text-xs text-(--legacy-text-secondary)">{row.original.poolMeta}</span>
 					) : null}
 				</span>
 			)
@@ -73,7 +73,7 @@ export const yieldsDatasetColumns: ColumnDef<IYieldsRow>[] = [
 		cell: ({ getValue, row }) => {
 			const value = getValue() as string
 			return (
-				<BasicLink href={`/yields?project=${row.original.project}`} className="text-sm text-(--link-text)">
+				<BasicLink href={`/yields?project=${row.original.project}`} className="text-sm text-(--legacy-link-text)">
 					{value}
 				</BasicLink>
 			)
@@ -145,7 +145,7 @@ export const yieldsDatasetColumns: ColumnDef<IYieldsRow>[] = [
 				<span className="flex items-center justify-end gap-1">
 					{value ? <PercentChange percent={value} noSign /> : '-'}
 					{symbols && symbols.length > 0 ? (
-						<span className="text-xs text-(--text-secondary)">({symbols.join(', ')})</span>
+						<span className="text-xs text-(--legacy-text-secondary)">({symbols.join(', ')})</span>
 					) : null}
 				</span>
 			)

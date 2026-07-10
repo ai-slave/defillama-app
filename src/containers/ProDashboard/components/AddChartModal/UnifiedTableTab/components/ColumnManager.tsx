@@ -608,11 +608,11 @@ export function ColumnManager({
 
 	return (
 		<div className="flex flex-col gap-4">
-			<section className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-3">
+			<section className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3">
 				<div className="mb-2 flex items-center justify-between">
 					<div className="flex items-center gap-2">
-						<h4 className="text-xs font-semibold text-(--text-primary) uppercase">Selected</h4>
-						<span className="rounded bg-(--primary)/10 px-1.5 py-0.5 text-[10px] font-medium text-(--primary)">
+						<h4 className="text-xs font-semibold text-(--legacy-text-primary) uppercase">Selected</h4>
+						<span className="rounded bg-(--legacy-primary)/10 px-1.5 py-0.5 text-[10px] font-medium text-(--legacy-primary)">
 							{selectedColumns.length}
 						</span>
 					</div>
@@ -635,7 +635,7 @@ export function ColumnManager({
 				>
 					<div className="max-h-[100px] overflow-y-auto">
 						{selectedColumns.length === 0 ? (
-							<div className="flex h-12 items-center justify-center rounded-md border border-dashed border-(--cards-border) text-xs text-(--text-tertiary)">
+							<div className="flex h-12 items-center justify-center rounded-md border border-dashed border-(--legacy-cards-border) text-xs text-(--legacy-text-tertiary)">
 								No columns selected
 							</div>
 						) : (
@@ -661,14 +661,14 @@ export function ColumnManager({
 					</div>
 					<DragOverlay>
 						{activeColumn ? (
-							<div className="rounded-md border border-(--primary) bg-(--primary)/20 px-2 py-1 text-xs font-medium text-(--primary) shadow-lg">
+							<div className="rounded-md border border-(--legacy-primary) bg-(--legacy-primary)/20 px-2 py-1 text-xs font-medium text-(--legacy-primary) shadow-lg">
 								{activeColumn.header}
 							</div>
 						) : null}
 					</DragOverlay>
 				</DndContext>
 
-				<p className="mt-2 text-[10px] text-(--text-tertiary)">Drag to reorder. First column pinned left.</p>
+				<p className="mt-2 text-[10px] text-(--legacy-text-tertiary)">Drag to reorder. First column pinned left.</p>
 			</section>
 
 			{sorting !== undefined && onSortingChange ? (
@@ -682,8 +682,8 @@ export function ColumnManager({
 				/>
 			) : null}
 
-			<section className="flex flex-col rounded-lg border border-(--cards-border) bg-(--cards-bg)">
-				<div className="flex flex-wrap gap-1 border-b border-(--cards-border) p-2">
+			<section className="flex flex-col rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
+				<div className="flex flex-wrap gap-1 border-b border-(--legacy-cards-border) p-2">
 					{GROUP_FILTERS.map((filter) => (
 						<button
 							key={filter.id}
@@ -691,8 +691,8 @@ export function ColumnManager({
 							onClick={() => setGroupFilter(filter.id)}
 							className={`rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${
 								groupFilter === filter.id
-									? 'bg-(--primary)/15 text-(--primary)'
-									: 'text-(--text-tertiary) hover:bg-(--cards-bg-alt) hover:text-(--text-secondary)'
+									? 'bg-(--legacy-primary)/15 text-(--legacy-primary)'
+									: 'text-(--legacy-text-tertiary) hover:bg-(--cards-bg-alt) hover:text-(--legacy-text-secondary)'
 							}`}
 						>
 							{filter.label}
@@ -700,25 +700,27 @@ export function ColumnManager({
 					))}
 				</div>
 
-				<div className="border-b border-(--cards-border) p-2">
+				<div className="border-b border-(--legacy-cards-border) p-2">
 					<div className="relative">
 						<Icon
 							name="search"
 							width={12}
 							height={12}
-							className="absolute top-1/2 left-2.5 -translate-y-1/2 text-(--text-tertiary)"
+							className="absolute top-1/2 left-2.5 -translate-y-1/2 text-(--legacy-text-tertiary)"
 						/>
 						<input
 							onInput={(e) => setSearch(e.currentTarget.value)}
 							placeholder="Search columns..."
-							className="w-full rounded-md border border-(--cards-border) bg-(--cards-bg-alt)/50 py-1.5 pr-2.5 pl-8 text-xs text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--primary) focus:outline-hidden"
+							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--cards-bg-alt)/50 py-1.5 pr-2.5 pl-8 text-xs text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:outline-hidden"
 						/>
 					</div>
 				</div>
 
 				<div className="max-h-[240px] overflow-y-auto p-2">
 					{filteredColumns.length === 0 ? (
-						<p className="flex h-16 items-center justify-center text-xs text-(--text-tertiary)">No columns match</p>
+						<p className="flex h-16 items-center justify-center text-xs text-(--legacy-text-tertiary)">
+							No columns match
+						</p>
 					) : (
 						<div className="flex flex-col gap-1">
 							{filteredColumns.map((column) => {
@@ -730,25 +732,25 @@ export function ColumnManager({
 										onClick={() => handleToggleColumn(column.id)}
 										className={`group flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 text-left transition-all ${
 											isSelected
-												? 'border-(--primary)/30 bg-(--primary)/5'
-												: 'border-transparent hover:border-(--cards-border) hover:bg-(--cards-bg-alt)/50'
+												? 'border-(--legacy-primary)/30 bg-(--legacy-primary)/5'
+												: 'border-transparent hover:border-(--legacy-cards-border) hover:bg-(--cards-bg-alt)/50'
 										}`}
 									>
 										<div
 											className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border transition-colors ${
 												isSelected
-													? 'border-(--primary) bg-(--primary) text-white'
-													: 'border-(--cards-border) group-hover:border-(--primary)/50'
+													? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
+													: 'border-(--legacy-cards-border) group-hover:border-(--legacy-primary)/50'
 											}`}
 										>
 											{isSelected ? <Icon name="check" width={8} height={8} /> : null}
 										</div>
 										<span
-											className={`flex-1 truncate text-xs ${isSelected ? 'font-medium text-(--text-primary)' : 'text-(--text-secondary)'}`}
+											className={`flex-1 truncate text-xs ${isSelected ? 'font-medium text-(--legacy-text-primary)' : 'text-(--legacy-text-secondary)'}`}
 										>
 											{column.header}
 										</span>
-										<span className="rounded bg-(--cards-bg-alt) px-1 py-0.5 text-[9px] text-(--text-tertiary) uppercase">
+										<span className="rounded bg-(--cards-bg-alt) px-1 py-0.5 text-[9px] text-(--legacy-text-tertiary) uppercase">
 											{GROUP_LABELS[column.group]}
 										</span>
 									</button>
@@ -759,7 +761,7 @@ export function ColumnManager({
 				</div>
 			</section>
 
-			<section className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-3">
+			<section className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3">
 				<button
 					type="button"
 					onClick={() => {
@@ -778,9 +780,9 @@ export function ColumnManager({
 							name={!hasActiveSubscription ? 'file-lock-2' : customColumnExpanded ? 'minus' : 'plus'}
 							width={14}
 							height={14}
-							className="text-(--primary)"
+							className="text-(--legacy-primary)"
 						/>
-						<span className="text-xs font-semibold text-(--text-primary)">
+						<span className="text-xs font-semibold text-(--legacy-text-primary)">
 							{editingId ? 'Edit Custom Column' : 'Custom Column'}
 							{!hasActiveSubscription ? <span className="ml-1 text-[10px] font-normal opacity-60">(Pro)</span> : null}
 						</span>
@@ -794,7 +796,7 @@ export function ColumnManager({
 						name="chevron-down"
 						width={14}
 						height={14}
-						className={`text-(--text-tertiary) transition-transform ${customColumnExpanded ? 'rotate-180' : ''}`}
+						className={`text-(--legacy-text-tertiary) transition-transform ${customColumnExpanded ? 'rotate-180' : ''}`}
 					/>
 				</button>
 
@@ -804,7 +806,7 @@ export function ColumnManager({
 							key={preset.name}
 							type="button"
 							onClick={() => handleApplyPreset(preset)}
-							className="rounded-md border border-(--cards-border) bg-(--cards-bg-alt)/50 px-2 py-1 text-[10px] font-medium text-(--text-secondary) transition-colors hover:border-(--primary) hover:text-(--primary)"
+							className="rounded-md border border-(--legacy-cards-border) bg-(--cards-bg-alt)/50 px-2 py-1 text-[10px] font-medium text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-primary) hover:text-(--legacy-primary)"
 						>
 							{preset.name}
 						</button>
@@ -812,11 +814,15 @@ export function ColumnManager({
 				</div>
 
 				{customColumnExpanded ? (
-					<div className="mt-3 space-y-3 border-t border-(--cards-border) pt-3">
+					<div className="mt-3 space-y-3 border-t border-(--legacy-cards-border) pt-3">
 						{editingId ? (
 							<div className="flex items-center justify-between">
-								<span className="text-xs text-(--text-secondary)">Editing: {customName || 'Custom Column'}</span>
-								<button type="button" onClick={handleCancelEdit} className="text-xs text-(--primary) hover:underline">
+								<span className="text-xs text-(--legacy-text-secondary)">Editing: {customName || 'Custom Column'}</span>
+								<button
+									type="button"
+									onClick={handleCancelEdit}
+									className="text-xs text-(--legacy-primary) hover:underline"
+								>
 									Cancel
 								</button>
 							</div>
@@ -828,7 +834,7 @@ export function ColumnManager({
 								value={customName}
 								onChange={(e) => setCustomName(e.target.value)}
 								placeholder="Column name"
-								className="flex-1 rounded-md border border-(--cards-border) bg-(--cards-bg-alt)/50 px-2 py-1.5 text-xs text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--primary) focus:outline-hidden"
+								className="flex-1 rounded-md border border-(--legacy-cards-border) bg-(--cards-bg-alt)/50 px-2 py-1.5 text-xs text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:outline-hidden"
 							/>
 						</div>
 
@@ -841,12 +847,12 @@ export function ColumnManager({
 								onKeyDown={handleExpressionKeyDown}
 								onFocus={() => customExpression && setShowAutocomplete(true)}
 								placeholder="e.g., tvl / mcap, fees24h * 365"
-								className={`w-full rounded-md border bg-(--cards-bg-alt)/50 px-2 py-1.5 pr-8 font-mono text-xs text-(--text-primary) placeholder:text-(--text-tertiary) focus:outline-hidden ${
+								className={`w-full rounded-md border bg-(--cards-bg-alt)/50 px-2 py-1.5 pr-8 font-mono text-xs text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:outline-hidden ${
 									customExpression && !expressionValidation.isValid
 										? 'border-red-500'
 										: customExpression && expressionValidation.isValid
 											? 'border-green-500'
-											: 'border-(--cards-border) focus:border-(--primary)'
+											: 'border-(--legacy-cards-border) focus:border-(--legacy-primary)'
 								}`}
 							/>
 							{customExpression ? (
@@ -859,7 +865,7 @@ export function ColumnManager({
 								</div>
 							) : null}
 							{showAutocomplete && filteredSuggestions.length > 0 ? (
-								<div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto overscroll-contain rounded-md border border-(--cards-border) bg-(--cards-bg) shadow-lg">
+								<div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto overscroll-contain rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-lg">
 									{filteredSuggestions.map((suggestion, index) => (
 										<button
 											key={`${suggestion.type}-${suggestion.value}`}
@@ -868,8 +874,8 @@ export function ColumnManager({
 											onMouseEnter={() => setAutocompleteIndex(index)}
 											className={`flex cursor-pointer items-center gap-2 px-2 py-1 text-xs ${
 												index === autocompleteIndex
-													? 'bg-(--primary) text-white'
-													: 'text-(--text-primary) hover:bg-(--cards-bg-alt)'
+													? 'bg-(--legacy-primary) text-white'
+													: 'text-(--legacy-text-primary) hover:bg-(--cards-bg-alt)'
 											}`}
 										>
 											<span
@@ -882,17 +888,19 @@ export function ColumnManager({
 												}`}
 											/>
 											<code className="shrink-0">{suggestion.display}</code>
-											<span className="ml-auto truncate text-(--text-tertiary)">{suggestion.description}</span>
+											<span className="ml-auto truncate text-(--legacy-text-tertiary)">{suggestion.description}</span>
 										</button>
 									))}
 								</div>
 							) : null}
 						</div>
-						<p className="text-[9px] text-(--text-tertiary)">Ctrl+Space to show all · ↑↓ navigate · Enter select</p>
+						<p className="text-[9px] text-(--legacy-text-tertiary)">
+							Ctrl+Space to show all · ↑↓ navigate · Enter select
+						</p>
 
 						<div className="flex flex-wrap gap-2">
 							<div className="flex-1">
-								<p className="mb-1 text-[10px] font-medium text-(--text-secondary)">Format</p>
+								<p className="mb-1 text-[10px] font-medium text-(--legacy-text-secondary)">Format</p>
 								<div className="flex gap-1">
 									{FORMAT_OPTIONS.map((opt) => (
 										<Tooltip key={opt.id} content={opt.description} placement="bottom">
@@ -901,8 +909,8 @@ export function ColumnManager({
 												onClick={() => setCustomFormat(opt.id)}
 												className={`flex-1 rounded-md border px-2 py-1 text-[10px] font-medium transition-colors ${
 													customFormat === opt.id
-														? 'border-(--primary) bg-(--primary)/15 text-(--primary)'
-														: 'border-(--cards-border) text-(--text-tertiary) hover:border-(--primary)/50'
+														? 'border-(--legacy-primary) bg-(--legacy-primary)/15 text-(--legacy-primary)'
+														: 'border-(--legacy-cards-border) text-(--legacy-text-tertiary) hover:border-(--legacy-primary)/50'
 												}`}
 											>
 												{opt.label}
@@ -912,7 +920,7 @@ export function ColumnManager({
 								</div>
 							</div>
 							<div className="flex-1">
-								<p className="mb-1 text-[10px] font-medium text-(--text-secondary)">Aggregation</p>
+								<p className="mb-1 text-[10px] font-medium text-(--legacy-text-secondary)">Aggregation</p>
 								<div className="flex gap-1">
 									{AGGREGATION_OPTIONS.map((opt) => (
 										<Tooltip key={opt.id} content={opt.description} placement="bottom">
@@ -924,8 +932,8 @@ export function ColumnManager({
 												}}
 												className={`flex-1 rounded-md border px-1 py-1 text-[10px] font-medium transition-colors ${
 													resolvedCustomAggregation === opt.id
-														? 'border-(--primary) bg-(--primary)/15 text-(--primary)'
-														: 'border-(--cards-border) text-(--text-tertiary) hover:border-(--primary)/50'
+														? 'border-(--legacy-primary) bg-(--legacy-primary)/15 text-(--legacy-primary)'
+														: 'border-(--legacy-cards-border) text-(--legacy-text-tertiary) hover:border-(--legacy-primary)/50'
 												}`}
 											>
 												{opt.label}
@@ -943,7 +951,7 @@ export function ColumnManager({
 								}`}
 							>
 								<div className="flex items-center justify-between">
-									<span className="text-(--text-secondary)">Result:</span>
+									<span className="text-(--legacy-text-secondary)">Result:</span>
 									{preview !== null ? (
 										<span className="font-mono font-semibold text-green-600 dark:text-green-400">{preview}</span>
 									) : (
@@ -953,7 +961,7 @@ export function ColumnManager({
 								{usedVariables.length > 0 ? (
 									<div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 border-t border-green-500/20 pt-1">
 										{usedVariables.map((v) => (
-											<span key={v.key} className="text-[10px] text-(--text-tertiary)">
+											<span key={v.key} className="text-[10px] text-(--legacy-text-tertiary)">
 												<code>{v.key}</code>={v.formatted}
 											</span>
 										))}
@@ -966,7 +974,7 @@ export function ColumnManager({
 							type="button"
 							onClick={handleAddOrUpdateCustomColumn}
 							disabled={!validation.isValid}
-							className="w-full rounded-md bg-(--primary) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-(--primary-hover) disabled:cursor-not-allowed disabled:opacity-50"
+							className="w-full rounded-md bg-(--legacy-primary) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-(--legacy-primary-hover) disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							{editingId ? 'Update Column' : 'Add Custom Column'}
 						</button>
@@ -974,36 +982,36 @@ export function ColumnManager({
 				) : null}
 
 				{(customColumns?.length ?? 0) > 0 ? (
-					<div className="mt-3 space-y-1.5 border-t border-(--cards-border) pt-3">
+					<div className="mt-3 space-y-1.5 border-t border-(--legacy-cards-border) pt-3">
 						{customColumns?.map((col) => (
 							<div
 								key={col.id}
-								className={`flex items-center justify-between rounded-md border p-2 ${editingId === col.id ? 'border-(--primary) bg-(--primary)/5' : 'border-(--cards-border) bg-(--cards-bg-alt)/30'}`}
+								className={`flex items-center justify-between rounded-md border p-2 ${editingId === col.id ? 'border-(--legacy-primary) bg-(--legacy-primary)/5' : 'border-(--legacy-cards-border) bg-(--cards-bg-alt)/30'}`}
 							>
 								<div className="min-w-0 flex-1">
 									<div className="flex items-center gap-1.5">
-										<span className="truncate text-xs font-medium text-(--text-primary)">{col.name}</span>
-										<span className="rounded border border-(--cards-border) bg-(--cards-bg) px-1 py-0.5 text-[9px] uppercase">
+										<span className="truncate text-xs font-medium text-(--legacy-text-primary)">{col.name}</span>
+										<span className="rounded border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-1 py-0.5 text-[9px] uppercase">
 											{col.format}
 										</span>
-										<span className="rounded border border-(--cards-border) bg-(--cards-bg) px-1 py-0.5 text-[9px] text-(--text-tertiary)">
+										<span className="rounded border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-1 py-0.5 text-[9px] text-(--legacy-text-tertiary)">
 											{AGGREGATION_OPTIONS.find((a) => a.id === col.aggregation)?.label}
 										</span>
 									</div>
-									<code className="block truncate text-[10px] text-(--text-tertiary)">{col.expression}</code>
+									<code className="block truncate text-[10px] text-(--legacy-text-tertiary)">{col.expression}</code>
 								</div>
 								<div className="ml-2 flex shrink-0 items-center gap-1">
 									<button
 										type="button"
 										onClick={() => handleEditCustomColumn(col)}
-										className="rounded p-1 text-(--text-tertiary) hover:bg-(--cards-bg-alt) hover:text-(--primary)"
+										className="rounded p-1 text-(--legacy-text-tertiary) hover:bg-(--cards-bg-alt) hover:text-(--legacy-primary)"
 									>
 										<Icon name="pencil" height={12} width={12} />
 									</button>
 									<button
 										type="button"
 										onClick={() => onRemoveCustomColumn?.(col.id)}
-										className="rounded p-1 text-(--text-tertiary) hover:bg-red-500/10 hover:text-red-500"
+										className="rounded p-1 text-(--legacy-text-tertiary) hover:bg-red-500/10 hover:text-red-500"
 									>
 										<Icon name="trash-2" height={12} width={12} />
 									</button>
@@ -1049,30 +1057,30 @@ function SortableChip({
 			style={style}
 			className={`group flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] transition-colors ${
 				isFirst
-					? 'border-(--primary)/50 bg-(--primary)/10'
+					? 'border-(--legacy-primary)/50 bg-(--legacy-primary)/10'
 					: isCustom
 						? 'border-purple-500/30 bg-purple-500/5'
-						: 'border-(--cards-border) bg-(--cards-bg-alt)/50'
+						: 'border-(--legacy-cards-border) bg-(--cards-bg-alt)/50'
 			}`}
 		>
 			<span
 				{...attributes}
 				{...listeners}
-				className="cursor-grab touch-none text-(--text-tertiary) hover:text-(--text-secondary) active:cursor-grabbing"
+				className="cursor-grab touch-none text-(--legacy-text-tertiary) hover:text-(--legacy-text-secondary) active:cursor-grabbing"
 			>
 				<Icon name="menu" width={10} height={10} />
 			</span>
-			<span className="max-w-[80px] truncate font-medium text-(--text-primary)" title={label}>
+			<span className="max-w-[80px] truncate font-medium text-(--legacy-text-primary)" title={label}>
 				{label}
 			</span>
-			{isFirst ? <Icon name="pin" width={8} height={8} className="text-(--primary)" /> : null}
+			{isFirst ? <Icon name="pin" width={8} height={8} className="text-(--legacy-primary)" /> : null}
 			<button
 				type="button"
 				onClick={(e) => {
 					e.stopPropagation()
 					onRemove()
 				}}
-				className="rounded text-(--text-tertiary) transition-colors hover:text-red-500"
+				className="rounded text-(--legacy-text-tertiary) transition-colors hover:text-red-500"
 			>
 				<Icon name="x" width={10} height={10} />
 			</button>
@@ -1104,15 +1112,17 @@ function SortingSection({
 	}, [currentSortColumn, selectableColumns])
 
 	return (
-		<section className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-3">
-			<h4 className="mb-2 text-xs font-semibold text-(--text-primary) uppercase">Sorting</h4>
+		<section className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3">
+			<h4 className="mb-2 text-xs font-semibold text-(--legacy-text-primary) uppercase">Sorting</h4>
 			<div className="flex flex-wrap items-center gap-2">
 				<div className="min-w-[140px] flex-1">
 					<PopoverDisclosure
 						store={popover}
-						className="flex w-full items-center justify-between rounded-md border border-(--cards-border) bg-(--cards-bg-alt)/50 px-2 py-1.5 text-xs transition-colors hover:border-(--primary)/40 focus:border-(--primary) focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
+						className="flex w-full items-center justify-between rounded-md border border-(--legacy-cards-border) bg-(--cards-bg-alt)/50 px-2 py-1.5 text-xs transition-colors hover:border-(--legacy-primary)/40 focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
 					>
-						<span className={`truncate ${currentSortColumn ? 'text-(--text-primary)' : 'text-(--text-tertiary)'}`}>
+						<span
+							className={`truncate ${currentSortColumn ? 'text-(--legacy-text-primary)' : 'text-(--legacy-text-tertiary)'}`}
+						>
 							{selectedLabel}
 						</span>
 						<Icon name="chevron-down" width={12} height={12} className="ml-2 shrink-0 opacity-70" />
@@ -1123,7 +1133,7 @@ function SortingSection({
 						portal={true}
 						flip={false}
 						gutter={4}
-						className="z-50 rounded-md border border-(--cards-border) bg-(--cards-bg) shadow-lg"
+						className="z-50 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-lg"
 						style={{ width: 'var(--popover-anchor-width)' }}
 					>
 						<div className="max-h-[280px] overflow-y-auto p-1">
@@ -1135,13 +1145,13 @@ function SortingSection({
 								}}
 								className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-colors ${
 									!currentSortColumn
-										? 'bg-(--primary)/10 font-semibold text-(--primary)'
-										: 'text-(--text-secondary) hover:bg-(--cards-bg-alt)'
+										? 'bg-(--legacy-primary)/10 font-semibold text-(--legacy-primary)'
+										: 'text-(--legacy-text-secondary) hover:bg-(--cards-bg-alt)'
 								}`}
 							>
 								<span>No sorting</span>
 								{!currentSortColumn ? (
-									<Icon name="check" width={12} height={12} className="ml-2 shrink-0 text-(--primary)" />
+									<Icon name="check" width={12} height={12} className="ml-2 shrink-0 text-(--legacy-primary)" />
 								) : null}
 							</button>
 							{selectableColumns.map((col) => {
@@ -1156,13 +1166,13 @@ function SortingSection({
 										}}
 										className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-colors ${
 											isActive
-												? 'bg-(--primary)/10 font-semibold text-(--primary)'
-												: 'text-(--text-secondary) hover:bg-(--cards-bg-alt)'
+												? 'bg-(--legacy-primary)/10 font-semibold text-(--legacy-primary)'
+												: 'text-(--legacy-text-secondary) hover:bg-(--cards-bg-alt)'
 										}`}
 									>
 										<span className="truncate">{col.header}</span>
 										{isActive ? (
-											<Icon name="check" width={12} height={12} className="ml-2 shrink-0 text-(--primary)" />
+											<Icon name="check" width={12} height={12} className="ml-2 shrink-0 text-(--legacy-primary)" />
 										) : null}
 									</button>
 								)
@@ -1170,17 +1180,17 @@ function SortingSection({
 						</div>
 					</Popover>
 				</div>
-				<div className="flex overflow-hidden rounded-md border border-(--cards-border)">
+				<div className="flex overflow-hidden rounded-md border border-(--legacy-cards-border)">
 					<button
 						type="button"
 						onClick={() => onDirectionChange(false)}
 						disabled={!currentSortColumn}
 						className={`px-2 py-1 text-[10px] font-medium transition ${
 							!currentSortColumn
-								? 'cursor-not-allowed text-(--text-tertiary)'
+								? 'cursor-not-allowed text-(--legacy-text-tertiary)'
 								: !isDescending
-									? 'bg-(--primary) text-white'
-									: 'text-(--text-secondary) hover:bg-(--cards-bg-alt)'
+									? 'bg-(--legacy-primary) text-white'
+									: 'text-(--legacy-text-secondary) hover:bg-(--cards-bg-alt)'
 						}`}
 					>
 						Asc
@@ -1189,19 +1199,19 @@ function SortingSection({
 						type="button"
 						onClick={() => onDirectionChange(true)}
 						disabled={!currentSortColumn}
-						className={`border-l border-(--cards-border) px-2 py-1 text-[10px] font-medium transition ${
+						className={`border-l border-(--legacy-cards-border) px-2 py-1 text-[10px] font-medium transition ${
 							!currentSortColumn
-								? 'cursor-not-allowed text-(--text-tertiary)'
+								? 'cursor-not-allowed text-(--legacy-text-tertiary)'
 								: isDescending
-									? 'bg-(--primary) text-white'
-									: 'text-(--text-secondary) hover:bg-(--cards-bg-alt)'
+									? 'bg-(--legacy-primary) text-white'
+									: 'text-(--legacy-text-secondary) hover:bg-(--cards-bg-alt)'
 						}`}
 					>
 						Desc
 					</button>
 				</div>
 				{onReset ? (
-					<button type="button" onClick={onReset} className="text-[10px] text-(--primary) hover:underline">
+					<button type="button" onClick={onReset} className="text-[10px] text-(--legacy-primary) hover:underline">
 						Reset
 					</button>
 				) : null}

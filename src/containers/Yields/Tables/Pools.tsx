@@ -43,9 +43,9 @@ function PegHealthIndicator({
 	deviation: number | null | undefined
 	price: number | null | undefined
 }) {
-	if (deviation == null) return <span className="block text-end text-(--text-disabled)">{'\u2014'}</span>
+	if (deviation == null) return <span className="block text-end text-(--legacy-text-disabled)">{'\u2014'}</span>
 	const colorClass = deviation > 0 ? 'text-(--success)' : deviation < 0 ? 'text-(--error)' : ''
-	const dotClass = deviation > 0 ? 'bg-(--success)' : deviation < 0 ? 'bg-(--error)' : 'bg-(--text-disabled)'
+	const dotClass = deviation > 0 ? 'bg-(--success)' : deviation < 0 ? 'bg-(--error)' : 'bg-(--legacy-text-disabled)'
 	const sign = deviation > 0 ? '+' : ''
 	const priceStr = price != null ? `$${price.toFixed(4)}` : null
 	const depeg = Math.abs(deviation) >= 2
@@ -211,7 +211,7 @@ function createPoolsColumns({ hasPremiumAccess, isClient, serverMode, onRequestU
 				return (
 					<span
 						data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-						className="data-[strike=true]:text-(--text-disabled)"
+						className="data-[strike=true]:text-(--legacy-text-disabled)"
 					>
 						{formattedNum(info.getValue(), true)}
 					</span>
@@ -411,7 +411,7 @@ function createPoolsColumns({ hasPremiumAccess, isClient, serverMode, onRequestU
 					<BasicLink
 						href={`/yields/pool/${configID}`}
 						target="_blank"
-						className="text-sm font-medium text-(--link-text)"
+						className="text-sm font-medium text-(--legacy-link-text)"
 					>
 						<ImageWithFallback
 							src={`https://yield-charts.llama.fi/yield-chart/${configID}`}
@@ -541,7 +541,7 @@ function createPoolsColumns({ hasPremiumAccess, isClient, serverMode, onRequestU
 				return (
 					<span
 						data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-						className="data-[strike=true]:text-(--text-disabled)"
+						className="data-[strike=true]:text-(--legacy-text-disabled)"
 					>
 						{info.getValue() != null ? formattedNum(Number(info.getValue()) * 100) + '%' : null}
 					</span>
@@ -561,7 +561,7 @@ function createPoolsColumns({ hasPremiumAccess, isClient, serverMode, onRequestU
 				return (
 					<span
 						data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-						className="data-[strike=true]:text-(--text-disabled)"
+						className="data-[strike=true]:text-(--legacy-text-disabled)"
 					>
 						{info.getValue() == null ? '' : formattedNum(info.getValue(), true)}
 					</span>
@@ -580,7 +580,7 @@ function createPoolsColumns({ hasPremiumAccess, isClient, serverMode, onRequestU
 				return (
 					<span
 						data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-						className="data-[strike=true]:text-(--text-disabled)"
+						className="data-[strike=true]:text-(--legacy-text-disabled)"
 					>
 						{info.getValue() == null ? '' : formattedNum(info.getValue(), true)}
 					</span>
@@ -598,7 +598,7 @@ function createPoolsColumns({ hasPremiumAccess, isClient, serverMode, onRequestU
 			enableSorting: true,
 			cell: ({ getValue, row }) => {
 				const count = getValue() as number | null
-				if (count == null) return <span className="block text-end text-(--text-disabled)">{'\u2014'}</span>
+				if (count == null) return <span className="block text-end text-(--legacy-text-disabled)">{'\u2014'}</span>
 				const change7d = row.original.holderChange7d
 				const change30d = row.original.holderChange30d
 				const tooltipParts = [
@@ -623,7 +623,7 @@ function createPoolsColumns({ hasPremiumAccess, isClient, serverMode, onRequestU
 			enableSorting: true,
 			cell: (info) => {
 				const val = info.getValue() as number | null
-				if (val == null) return <span className="block text-end text-(--text-disabled)">{'\u2014'}</span>
+				if (val == null) return <span className="block text-end text-(--legacy-text-disabled)">{'\u2014'}</span>
 
 				const accentClass = val >= 80 ? 'bg-red-500' : val >= 50 ? 'bg-yellow-500' : 'bg-green-500'
 				const riskLabel = val >= 80 ? 'High concentration' : val >= 50 ? 'Medium concentration' : 'Low concentration'
@@ -649,7 +649,7 @@ function createPoolsColumns({ hasPremiumAccess, isClient, serverMode, onRequestU
 			enableSorting: true,
 			cell: (info) => {
 				const val = info.getValue() as number | null
-				if (val == null) return <span className="block text-end text-(--text-disabled)">{'\u2014'}</span>
+				if (val == null) return <span className="block text-end text-(--legacy-text-disabled)">{'\u2014'}</span>
 				return <span className="tabular-nums">{formattedNum(val, true)}</span>
 			},
 			meta: {
@@ -666,7 +666,7 @@ function createPoolsColumns({ hasPremiumAccess, isClient, serverMode, onRequestU
 				return (
 					<span
 						data-strike={info.row.original.strikeTvl ?? 'false'}
-						className="flex justify-end gap-1 data-[strike=true]:text-(--text-disabled)"
+						className="flex justify-end gap-1 data-[strike=true]:text-(--legacy-text-disabled)"
 					>
 						{['Morpho Compound', 'Morpho Aave'].includes(info.row.original.project) ? (
 							<QuestionHelper

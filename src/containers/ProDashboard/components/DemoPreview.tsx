@@ -53,7 +53,7 @@ const DemoChartCard = ({ chart }: { chart: ChartConfig }) => {
 	return (
 		<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]">
 			<div className="mr-auto flex items-center gap-1 p-1 md:p-3">
-				<div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-(--old-blue) text-xs text-white">
+				<div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-(--legacy-old-blue) text-xs text-white">
 					{itemName.charAt(0).toUpperCase()}
 				</div>
 				<h2 className="text-base font-semibold">
@@ -425,11 +425,11 @@ export const DemoPreview = () => {
 
 	return (
 		<div className="relative min-h-screen pro-dashboard">
-			<div className="border-b border-(--divider) bg-(--bg) py-6">
+			<div className="border-b border-(--legacy-divider) bg-(--bg) py-6">
 				<div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6">
 					<div className="text-center">
-						<h1 className="mb-2 text-3xl font-bold text-(--text-primary)">Pro Dashboard Preview</h1>
-						<p className="text-lg text-(--text-secondary)">See what you'll get with Pro access:</p>
+						<h1 className="mb-2 text-3xl font-bold text-(--legacy-text-primary)">Pro Dashboard Preview</h1>
+						<p className="text-lg text-(--legacy-text-secondary)">See what you'll get with Pro access:</p>
 					</div>
 
 					<div className="flex items-center justify-center">
@@ -437,10 +437,15 @@ export const DemoPreview = () => {
 							{features.map((feature) => (
 								<div
 									key={feature.title}
-									className="flex flex-wrap items-center justify-center gap-2 pro-info-card px-8 py-15 text-sm text-(--text-secondary)"
+									className="flex flex-wrap items-center justify-center gap-2 pro-info-card px-8 py-15 text-sm text-(--legacy-text-secondary)"
 								>
 									<div className="align-center flex gap-2">
-										<Icon name={feature.icon as any} height={32} width={32} className="shrink-0 text-(--primary)" />
+										<Icon
+											name={feature.icon as any}
+											height={32}
+											width={32}
+											className="shrink-0 text-(--legacy-primary)"
+										/>
 										<span className="text-lg leading-[170%] font-bold whitespace-nowrap">{feature.title}</span>
 									</div>
 								</div>
@@ -450,10 +455,15 @@ export const DemoPreview = () => {
 
 					<div className="mx-auto max-w-5xl">
 						<div className="grid items-stretch gap-8 md:grid-cols-2">
-							<div className="flex flex-col rounded-sm border border-gray-200 bg-gray-50/50 px-6 py-8 text-center dark:border-(--divider) dark:bg-(--bg-glass)">
-								<h3 className="mb-3 text-2xl font-bold text-gray-700 dark:text-(--text-primary)">Free Account</h3>
-								<div className="mb-6 text-3xl font-bold text-gray-800 dark:text-(--text-primary)">
-									$0<span className="text-base font-normal text-gray-600 dark:text-(--text-secondary)">/month</span>
+							<div className="flex flex-col rounded-sm border border-gray-200 bg-gray-50/50 px-6 py-8 text-center dark:border-(--legacy-divider) dark:bg-(--legacy-bg-glass)">
+								<h3 className="mb-3 text-2xl font-bold text-gray-700 dark:text-(--legacy-text-primary)">
+									Free Account
+								</h3>
+								<div className="mb-6 text-3xl font-bold text-gray-800 dark:text-(--legacy-text-primary)">
+									$0
+									<span className="text-base font-normal text-gray-600 dark:text-(--legacy-text-secondary)">
+										/month
+									</span>
 								</div>
 								<ul className="mb-8 flex-1 space-y-3 text-left text-sm">
 									<li className="flex items-start gap-2">
@@ -463,7 +473,9 @@ export const DemoPreview = () => {
 											width={14}
 											className="mt-0.5 shrink-0 text-green-600 dark:text-green-500"
 										/>
-										<span className="text-gray-700 dark:text-(--text-secondary)">Access to public dashboards</span>
+										<span className="text-gray-700 dark:text-(--legacy-text-secondary)">
+											Access to public dashboards
+										</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<Icon
@@ -472,7 +484,7 @@ export const DemoPreview = () => {
 											width={14}
 											className="mt-0.5 shrink-0 text-green-600 dark:text-green-500"
 										/>
-										<span className="text-gray-700 dark:text-(--text-secondary)">
+										<span className="text-gray-700 dark:text-(--legacy-text-secondary)">
 											View community-created dashboards
 										</span>
 									</li>
@@ -483,26 +495,26 @@ export const DemoPreview = () => {
 											width={14}
 											className="mt-0.5 shrink-0 text-green-600 dark:text-green-500"
 										/>
-										<span className="text-gray-700 dark:text-(--text-secondary)">Basic DeFi data access</span>
+										<span className="text-gray-700 dark:text-(--legacy-text-secondary)">Basic DeFi data access</span>
 									</li>
 								</ul>
 								<Link href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}>
-									<span className="inline-block cursor-pointer rounded-sm border border-(--primary) px-6 py-2.5 text-sm font-medium text-(--primary) transition-colors hover:bg-(--primary) hover:text-white">
+									<span className="inline-block cursor-pointer rounded-sm border border-(--legacy-primary) px-6 py-2.5 text-sm font-medium text-(--legacy-primary) transition-colors hover:bg-(--legacy-primary) hover:text-white">
 										Create Free Account
 									</span>
 								</Link>
 							</div>
 
-							<div className="relative flex transform flex-col rounded-sm border-2 border-(--primary) bg-linear-to-br from-(--primary)/10 to-purple-600/10 px-6 py-8 text-center shadow-(--primary)/10 shadow-xl transition-transform hover:scale-[1.02]">
-								<h3 className="mb-3 bg-linear-to-r from-(--primary) to-purple-600 bg-clip-text text-2xl font-bold text-transparent">
+							<div className="relative flex transform flex-col rounded-sm border-2 border-(--legacy-primary) bg-linear-to-br from-(--legacy-primary)/10 to-purple-600/10 px-6 py-8 text-center shadow-(--legacy-primary)/10 shadow-xl transition-transform hover:scale-[1.02]">
+								<h3 className="mb-3 bg-linear-to-r from-(--legacy-primary) to-purple-600 bg-clip-text text-2xl font-bold text-transparent">
 									Pro
 								</h3>
-								<div className="mb-6 text-4xl font-bold text-(--primary)">
-									$49<span className="text-base font-normal text-(--text-secondary)">/month</span>
+								<div className="mb-6 text-4xl font-bold text-(--legacy-primary)">
+									$49<span className="text-base font-normal text-(--legacy-text-secondary)">/month</span>
 								</div>
 								<ul className="mb-8 flex-1 space-y-3 text-left text-sm">
 									<li className="flex items-start gap-2">
-										<Icon name="star" height={14} width={14} className="mt-0.5 shrink-0 text-(--primary)" />
+										<Icon name="star" height={14} width={14} className="mt-0.5 shrink-0 text-(--legacy-primary)" />
 										<span className="font-semibold pro-text1">Everything in Free, plus:</span>
 									</li>
 									<li className="flex items-start gap-2">
@@ -527,7 +539,7 @@ export const DemoPreview = () => {
 									</li>
 								</ul>
 								<Link href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}>
-									<span className="flex inline-flex cursor-pointer items-center gap-2 rounded-sm bg-linear-to-r from-(--primary) to-purple-600 px-8 py-3 font-semibold text-white shadow-lg transition-opacity hover:opacity-90">
+									<span className="flex inline-flex cursor-pointer items-center gap-2 rounded-sm bg-linear-to-r from-(--legacy-primary) to-purple-600 px-8 py-3 font-semibold text-white shadow-lg transition-opacity hover:opacity-90">
 										<Icon name="sparkles" height={16} width={16} />
 										Upgrade to Pro
 									</span>
@@ -539,12 +551,12 @@ export const DemoPreview = () => {
 			</div>
 
 			<div className="mx-auto grid w-full max-w-7xl grid-flow-dense grid-cols-1 gap-2 lg:grid-cols-2">
-				<p className="col-span-full p-2 text-center text-xs text-(--text-form) italic">
+				<p className="col-span-full p-2 text-center text-xs text-(--legacy-text-form) italic">
 					Demo Preview - All data shown below is simulated for demonstration purposes
 				</p>
 
 				<div
-					className={`${demoTextCard.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--cards-border) bg-(--cards-bg)`}
+					className={`${demoTextCard.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)`}
 				>
 					<TextCard text={demoTextCard} />
 				</div>
@@ -552,14 +564,14 @@ export const DemoPreview = () => {
 				{demoCharts.slice(0, 2).map((chart) => (
 					<div
 						key={chart.id}
-						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--cards-border) bg-(--cards-bg)`}
+						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)`}
 					>
 						<DemoChartCard chart={chart} />
 					</div>
 				))}
 
 				<div
-					className={`${demoMultiCharts[0].colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--cards-border) bg-(--cards-bg)`}
+					className={`${demoMultiCharts[0].colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)`}
 				>
 					<DemoMultiChartCard multi={demoMultiCharts[0]} />
 				</div>
@@ -567,30 +579,30 @@ export const DemoPreview = () => {
 				{demoCharts.slice(2, 4).map((chart) => (
 					<div
 						key={chart.id}
-						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--cards-border) bg-(--cards-bg)`}
+						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)`}
 					>
 						<DemoChartCard chart={chart} />
 					</div>
 				))}
 
-				<div className={`col-span-2 rounded-md border border-(--cards-border) bg-(--cards-bg)`}>
+				<div className={`col-span-2 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)`}>
 					<ProtocolsByChainTable tableId="demo-ethereum-protocols" chains={DEMO_CHAINS} colSpan={2} />
 				</div>
 
 				<div
-					className={`${demoTextCard2.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--cards-border) bg-(--cards-bg)`}
+					className={`${demoTextCard2.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)`}
 				>
 					<TextCard text={demoTextCard2} />
 				</div>
 
 				<div
-					className={`${demoTextCard3.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--cards-border) bg-(--cards-bg)`}
+					className={`${demoTextCard3.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)`}
 				>
 					<TextCard text={demoTextCard3} />
 				</div>
 
 				<div
-					className={`${demoMultiCharts[1].colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--cards-border) bg-(--cards-bg)`}
+					className={`${demoMultiCharts[1].colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)`}
 				>
 					<DemoMultiChartCard multi={demoMultiCharts[1]} />
 				</div>
@@ -598,20 +610,20 @@ export const DemoPreview = () => {
 				{demoCharts.slice(4).map((chart) => (
 					<div
 						key={chart.id}
-						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--cards-border) bg-(--cards-bg)`}
+						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)`}
 					>
 						<DemoChartCard chart={chart} />
 					</div>
 				))}
 
 				<div
-					className={`${demoTextCard4.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--cards-border) bg-(--cards-bg)`}
+					className={`${demoTextCard4.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)`}
 				>
 					<TextCard text={demoTextCard4} />
 				</div>
 
 				<div
-					className={`${demoMultiCharts[2].colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--cards-border) bg-(--cards-bg)`}
+					className={`${demoMultiCharts[2].colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)`}
 				>
 					<DemoMultiChartCard multi={demoMultiCharts[2]} />
 				</div>

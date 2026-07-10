@@ -360,7 +360,7 @@ const columns = [
 			if (!url) return null
 			return (
 				<a
-					className="flex items-center justify-center gap-4 rounded-md bg-(--btn2-bg) p-1.5 hover:bg-(--btn2-hover-bg)"
+					className="flex items-center justify-center gap-4 rounded-md bg-(--legacy-btn2-bg) p-1.5 hover:bg-(--legacy-btn2-hover-bg)"
 					href={url}
 					target="_blank"
 					rel="noopener noreferrer"

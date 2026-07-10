@@ -95,10 +95,10 @@ function AuthorPageState({
 	children?: React.ReactNode
 }) {
 	return (
-		<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) px-6 py-16">
+		<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-6 py-16">
 			<div className="grid max-w-md gap-3 text-center">
-				<h1 className="text-3xl font-bold text-(--text-primary)">{title}</h1>
-				{description ? <p className="text-base text-(--text-label)">{description}</p> : null}
+				<h1 className="text-3xl font-bold text-(--legacy-text-primary)">{title}</h1>
+				{description ? <p className="text-base text-(--legacy-text-label)">{description}</p> : null}
 				{children}
 			</div>
 		</div>
@@ -113,13 +113,13 @@ function OwnerChips({ authorPbUserId }: { authorPbUserId?: string }) {
 		<>
 			<BasicLink
 				href="/research/profile"
-				className="rounded-md border border-(--cards-border) px-2.5 py-1 text-xs text-(--text-secondary) transition-colors hover:border-(--link-text)/40 hover:text-(--link-text)"
+				className="rounded-md border border-(--legacy-cards-border) px-2.5 py-1 text-xs text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-link-text)"
 			>
 				Edit profile
 			</BasicLink>
 			<BasicLink
 				href="/research/mine"
-				className="rounded-md border border-(--cards-border) px-2.5 py-1 text-xs text-(--text-secondary) transition-colors hover:border-(--link-text)/40 hover:text-(--link-text)"
+				className="rounded-md border border-(--legacy-cards-border) px-2.5 py-1 text-xs text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-link-text)"
 			>
 				Your research
 			</BasicLink>
@@ -357,7 +357,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 	if (!data && !error) {
 		return (
 			<AuthorPageState title="Author not found">
-				<BasicLink href="/research" className="text-sm text-(--link-text) hover:underline">
+				<BasicLink href="/research" className="text-sm text-(--legacy-link-text) hover:underline">
 					Browse all research
 				</BasicLink>
 			</AuthorPageState>
@@ -368,7 +368,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load author'
 		return (
 			<AuthorPageState title="Couldn't load author" description={message}>
-				<BasicLink href="/research" className="text-sm text-(--link-text) hover:underline">
+				<BasicLink href="/research" className="text-sm text-(--legacy-link-text) hover:underline">
 					Browse all research
 				</BasicLink>
 			</AuthorPageState>
@@ -397,7 +397,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 				<div className="flex items-center justify-between gap-3">
 					<BasicLink
 						href="/research"
-						className="inline-flex items-center gap-1 text-xs text-(--text-tertiary) transition-colors hover:text-(--text-primary)"
+						className="inline-flex items-center gap-1 text-xs text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-text-primary)"
 					>
 						<Icon name="arrow-left" className="size-3.5" />
 						<span>All research</span>
@@ -407,31 +407,31 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 					</div>
 				</div>
 
-				<header className="grid gap-6 border-b border-(--cards-border) pb-10 md:grid-cols-[auto_minmax(0,1fr)] md:gap-8 md:pb-12">
+				<header className="grid gap-6 border-b border-(--legacy-cards-border) pb-10 md:grid-cols-[auto_minmax(0,1fr)] md:gap-8 md:pb-12">
 					{author.avatarUrl ? (
 						<img
 							src={author.avatarUrl}
 							alt=""
-							className="h-24 w-24 shrink-0 rounded-full border border-(--cards-border) object-cover md:h-32 md:w-32"
+							className="h-24 w-24 shrink-0 rounded-full border border-(--legacy-cards-border) object-cover md:h-32 md:w-32"
 						/>
 					) : (
-						<div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border border-(--cards-border) bg-(--cards-bg) text-2xl font-semibold text-(--text-secondary) md:h-32 md:w-32 md:text-3xl">
+						<div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) text-2xl font-semibold text-(--legacy-text-secondary) md:h-32 md:w-32 md:text-3xl">
 							{author.displayName.slice(0, 2).toUpperCase()}
 						</div>
 					)}
 					<div className="grid min-w-0 gap-4">
 						<div className="grid gap-1.5">
-							<h1 className="text-3xl leading-tight font-semibold tracking-tight text-(--text-primary) md:text-5xl">
+							<h1 className="text-3xl leading-tight font-semibold tracking-tight text-(--legacy-text-primary) md:text-5xl">
 								{author.displayName}
 							</h1>
-							<p className="font-jetbrains text-xs text-(--text-tertiary)">@{author.slug}</p>
+							<p className="font-jetbrains text-xs text-(--legacy-text-tertiary)">@{author.slug}</p>
 						</div>
 						{author.bio ? (
-							<p className="max-w-prose text-base leading-relaxed text-(--text-secondary)">{author.bio}</p>
+							<p className="max-w-prose text-base leading-relaxed text-(--legacy-text-secondary)">{author.bio}</p>
 						) : null}
-						<div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 text-xs text-(--text-tertiary)">
+						<div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 text-xs text-(--legacy-text-tertiary)">
 							<span>
-								<strong className="font-semibold text-(--text-primary)">{articles.length}</strong>{' '}
+								<strong className="font-semibold text-(--legacy-text-primary)">{articles.length}</strong>{' '}
 								{articles.length === 1 ? 'piece' : 'pieces'}
 							</span>
 							{yearsLabel ? (
@@ -444,7 +444,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 								<>
 									<span aria-hidden>/</span>
 									<span>
-										<strong className="font-semibold text-(--text-primary)">{totalMinutes}</strong> min reading
+										<strong className="font-semibold text-(--legacy-text-primary)">{totalMinutes}</strong> min reading
 									</span>
 								</>
 							) : null}
@@ -460,8 +460,8 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 				</header>
 
 				{articles.length === 0 ? (
-					<div className="rounded-md border border-dashed border-(--cards-border) bg-(--cards-bg) p-10 text-center">
-						<p className="text-sm text-(--text-secondary)">No published research yet.</p>
+					<div className="rounded-md border border-dashed border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-10 text-center">
+						<p className="text-sm text-(--legacy-text-secondary)">No published research yet.</p>
 					</div>
 				) : (
 					<>
@@ -469,23 +469,25 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 							<section>
 								<BasicLink
 									href={articleHref(lead)}
-									className="group grid overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-bg) transition-colors hover:border-(--link-text)/40 md:grid-cols-[minmax(0,1fr)_minmax(0,320px)]"
+									className="group grid overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) transition-colors hover:border-(--legacy-link-text)/40 md:grid-cols-[minmax(0,1fr)_minmax(0,320px)]"
 								>
 									<div className="order-2 grid content-start gap-3 p-6 md:order-1 md:p-8">
-										<div className="flex items-center gap-2 text-xs tracking-wide text-(--text-tertiary) uppercase">
+										<div className="flex items-center gap-2 text-xs tracking-wide text-(--legacy-text-tertiary) uppercase">
 											<span className="font-jetbrains">Latest</span>
 											<span aria-hidden>/</span>
 											<span>{formatDate(lead.displayDate ?? lead.publishedAt)}</span>
 											<span aria-hidden>/</span>
 											<span>{readingMinutes(lead)} min read</span>
 										</div>
-										<h2 className="text-2xl leading-[1.15] font-semibold tracking-tight text-(--text-primary) group-hover:text-(--link-text) md:text-3xl">
+										<h2 className="text-2xl leading-[1.15] font-semibold tracking-tight text-(--legacy-text-primary) group-hover:text-(--legacy-link-text) md:text-3xl">
 											{lead.title}
 										</h2>
 										{lead.subtitle ? (
-											<p className="text-base leading-snug text-(--text-secondary)">{lead.subtitle}</p>
+											<p className="text-base leading-snug text-(--legacy-text-secondary)">{lead.subtitle}</p>
 										) : lead.excerpt ? (
-											<p className="line-clamp-3 text-sm leading-relaxed text-(--text-secondary)">{lead.excerpt}</p>
+											<p className="line-clamp-3 text-sm leading-relaxed text-(--legacy-text-secondary)">
+												{lead.excerpt}
+											</p>
 										) : null}
 									</div>
 									{lead.coverImage?.url ? (
@@ -503,9 +505,11 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 
 						{rest.length ? (
 							<section className="grid gap-4">
-								<div className="flex items-baseline justify-between gap-2 border-b border-(--cards-border) pb-3">
-									<h2 className="text-sm font-semibold tracking-[0.16em] text-(--text-tertiary) uppercase">Archive</h2>
-									<p className="font-jetbrains text-xs text-(--text-tertiary)">
+								<div className="flex items-baseline justify-between gap-2 border-b border-(--legacy-cards-border) pb-3">
+									<h2 className="text-sm font-semibold tracking-[0.16em] text-(--legacy-text-tertiary) uppercase">
+										Archive
+									</h2>
+									<p className="font-jetbrains text-xs text-(--legacy-text-tertiary)">
 										{filteredArchive.length} {filteredArchive.length === 1 ? 'note' : 'notes'}
 									</p>
 								</div>
@@ -522,8 +526,8 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 													onClick={() => setArchiveFilter(tab)}
 													className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-jetbrains text-[10px] tracking-[0.16em] uppercase transition-colors ${
 														isActive
-															? 'border-(--link-text)/60 bg-(--link-button) text-(--link-text)'
-															: 'border-(--cards-border) bg-transparent text-(--text-secondary) hover:border-(--link-text)/40 hover:text-(--link-text)'
+															? 'border-(--legacy-link-text)/60 bg-(--legacy-link-button) text-(--legacy-link-text)'
+															: 'border-(--legacy-cards-border) bg-transparent text-(--legacy-text-secondary) hover:border-(--legacy-link-text)/40 hover:text-(--legacy-link-text)'
 													}`}
 												>
 													<span>{label}</span>
@@ -537,9 +541,9 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 									{filteredArchive.map((article) => (
 										<li
 											key={article.id}
-											className="grid grid-cols-[64px_72px_minmax(0,1fr)] items-start gap-4 border-b border-(--cards-border) py-5 last:border-b-0 sm:grid-cols-[88px_96px_minmax(0,1fr)] sm:gap-6"
+											className="grid grid-cols-[64px_72px_minmax(0,1fr)] items-start gap-4 border-b border-(--legacy-cards-border) py-5 last:border-b-0 sm:grid-cols-[88px_96px_minmax(0,1fr)] sm:gap-6"
 										>
-											<div className="pt-1 font-jetbrains text-xs tracking-tight text-(--text-tertiary) tabular-nums">
+											<div className="pt-1 font-jetbrains text-xs tracking-tight text-(--legacy-text-tertiary) tabular-nums">
 												{formatShort(article.publishedAt)}
 											</div>
 											{article.coverImage?.url ? (
@@ -549,25 +553,25 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 														alt=""
 														loading="lazy"
 														decoding="async"
-														className="aspect-4/3 w-full rounded-sm border border-(--cards-border) object-cover"
+														className="aspect-4/3 w-full rounded-sm border border-(--legacy-cards-border) object-cover"
 													/>
 												</BasicLink>
 											) : (
 												<div
-													className="aspect-4/3 w-full rounded-sm border border-(--cards-border) bg-(--app-bg)"
+													className="aspect-4/3 w-full rounded-sm border border-(--legacy-cards-border) bg-(--legacy-app-bg)"
 													aria-hidden
 												/>
 											)}
 											<BasicLink href={articleHref(article)} className="group grid gap-1.5">
-												<h3 className="text-base leading-tight font-semibold text-(--text-primary) transition-colors group-hover:text-(--link-text) md:text-lg">
+												<h3 className="text-base leading-tight font-semibold text-(--legacy-text-primary) transition-colors group-hover:text-(--legacy-link-text) md:text-lg">
 													{article.title}
 												</h3>
 												{article.excerpt ? (
-													<p className="line-clamp-2 text-sm leading-relaxed text-(--text-secondary)">
+													<p className="line-clamp-2 text-sm leading-relaxed text-(--legacy-text-secondary)">
 														{article.excerpt}
 													</p>
 												) : null}
-												<div className="flex items-center gap-2 text-xs text-(--text-tertiary)">
+												<div className="flex items-center gap-2 text-xs text-(--legacy-text-tertiary)">
 													<span>{readingMinutes(article)} min read</span>
 													{article.tags && article.tags.length > 0 ? (
 														<>

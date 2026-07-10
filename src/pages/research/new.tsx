@@ -9,7 +9,9 @@ const ArticleEditorClient = dynamic(
 	{
 		ssr: false,
 		loading: () => (
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">Loading research editor...</div>
+			<div className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+				Loading research editor...
+			</div>
 		)
 	}
 )

@@ -31,9 +31,9 @@ function ChartCard({
 	children: React.ReactNode
 }) {
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
 			<div className="mb-3 flex items-center justify-between gap-2">
-				<h3 className="text-sm font-medium text-(--text-label)">{title}</h3>
+				<h3 className="text-sm font-medium text-(--legacy-text-label)">{title}</h3>
 				{actions}
 			</div>
 			{children}
@@ -52,15 +52,15 @@ function useChartInstance() {
 
 function KpiCard({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<span className="text-xs font-medium tracking-wide text-(--text-label)">{label}</span>
-			<span className="text-2xl font-semibold text-(--text-primary)">{value}</span>
+		<div className="flex flex-col gap-1 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<span className="text-xs font-medium tracking-wide text-(--legacy-text-label)">{label}</span>
+			<span className="text-2xl font-semibold text-(--legacy-text-primary)">{value}</span>
 		</div>
 	)
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-(--text-label) uppercase">{children}</h2>
+	return <h2 className="text-xs font-semibold tracking-wider text-(--legacy-text-label) uppercase">{children}</h2>
 }
 
 type AADimension = 'byProtocol' | 'byNetwork' | 'byAsset'
@@ -80,8 +80,8 @@ function ToggleButton({
 			className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
 				active
 					? 'bg-(--sl-accent-muted) text-(--sl-accent)'
-					: 'bg-(--cards-bg) text-(--text-secondary) hover:bg-(--sl-hover-bg) hover:text-(--text-primary)'
-			} border border-(--cards-border)`}
+					: 'bg-(--legacy-cards-bg) text-(--legacy-text-secondary) hover:bg-(--sl-hover-bg) hover:text-(--legacy-text-primary)'
+			} border border-(--legacy-cards-border)`}
 		>
 			{children}
 		</button>
@@ -129,9 +129,9 @@ function AllocatedAssetsSection({
 	return (
 		<div className="flex flex-col gap-4">
 			<SectionHeader>SLL Allocated Assets</SectionHeader>
-			<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
+			<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
 				<div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-					<h3 className="text-sm font-medium text-(--text-label)">{allocatedAssets.title}</h3>
+					<h3 className="text-sm font-medium text-(--legacy-text-label)">{allocatedAssets.title}</h3>
 					<div className="flex flex-wrap items-center gap-2">
 						<div className="flex gap-1">
 							<ToggleButton active={view === 'breakdown'} onClick={() => setView('breakdown')}>
@@ -141,7 +141,7 @@ function AllocatedAssetsSection({
 								Historical
 							</ToggleButton>
 						</div>
-						<div className="h-5 w-px bg-(--cards-border)" />
+						<div className="h-5 w-px bg-(--legacy-cards-border)" />
 						<div className="flex gap-1">
 							<ToggleButton active={dimension === 'byProtocol'} onClick={() => onDimensionChange('byProtocol')}>
 								By Protocol
@@ -174,23 +174,32 @@ function AllocatedAssetsSection({
 									const isOpen = expandedRows.has(idx)
 									const color = pieColors[entry.name] || '#8b949e'
 									return (
-										<div key={entry.name} className="border-b border-(--cards-border) last:border-b-0">
+										<div key={entry.name} className="border-b border-(--legacy-cards-border) last:border-b-0">
 											<div
 												className={`flex cursor-pointer items-center gap-2 py-2.5 ${hasChildren ? 'hover:opacity-80' : ''}`}
 												onClick={() => hasChildren && toggleRow(idx)}
 											>
-												<span className="w-4 shrink-0 text-[10px] text-(--text-label)">
+												<span className="w-4 shrink-0 text-[10px] text-(--legacy-text-label)">
 													{hasChildren ? (isOpen ? '▼' : '▶') : ''}
 												</span>
 												<span className="inline-block size-2 shrink-0 rounded-full" style={{ background: color }} />
-												<span className="min-w-0 flex-1 truncate text-sm text-(--text-primary)">{entry.name}</span>
-												<span className="shrink-0 text-sm font-semibold text-(--text-primary)">{entry.formatted}</span>
-												<span className="w-12 shrink-0 text-right text-xs text-(--text-label)">{entry.pct}%</span>
+												<span className="min-w-0 flex-1 truncate text-sm text-(--legacy-text-primary)">
+													{entry.name}
+												</span>
+												<span className="shrink-0 text-sm font-semibold text-(--legacy-text-primary)">
+													{entry.formatted}
+												</span>
+												<span className="w-12 shrink-0 text-right text-xs text-(--legacy-text-label)">
+													{entry.pct}%
+												</span>
 											</div>
 											{isOpen && entry.children && (
 												<div className="pb-2 pl-8">
 													{entry.children.map((child) => (
-														<div key={child.name} className="flex items-center py-1.5 text-xs text-(--text-label)">
+														<div
+															key={child.name}
+															className="flex items-center py-1.5 text-xs text-(--legacy-text-label)"
+														>
 															<span className="min-w-0 flex-1 truncate">{child.name}</span>
 															<span className="shrink-0">{child.formatted}</span>
 														</div>
@@ -201,9 +210,9 @@ function AllocatedAssetsSection({
 									)
 								})}
 							</div>
-							<div className="mt-3 flex items-center justify-between border-t border-(--cards-border) pt-3">
-								<span className="text-sm text-(--text-label)">Total AUM</span>
-								<span className="text-sm font-bold text-(--text-primary)">{allocatedAssets.totalFormatted}</span>
+							<div className="mt-3 flex items-center justify-between border-t border-(--legacy-cards-border) pt-3">
+								<span className="text-sm text-(--legacy-text-label)">Total AUM</span>
+								<span className="text-sm font-bold text-(--legacy-text-primary)">{allocatedAssets.totalFormatted}</span>
 							</div>
 						</div>
 					</div>
@@ -510,23 +519,23 @@ function TreasurySection({ data }: { data: FinData }) {
 		<div className="flex flex-col gap-4">
 			<SectionHeader>Treasury &amp; Buybacks</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-				<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-					<h3 className="mb-3 text-sm font-medium text-(--text-label)">Treasury</h3>
+				<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+					<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">Treasury</h3>
 					<div className="flex flex-col gap-2">
-						<div className="flex items-center justify-between border-b border-(--cards-border) py-2">
-							<span className="text-xs text-(--text-label)">Total Treasury Assets</span>
-							<span className="text-sm font-semibold text-(--text-primary)">
+						<div className="flex items-center justify-between border-b border-(--legacy-cards-border) py-2">
+							<span className="text-xs text-(--legacy-text-label)">Total Treasury Assets</span>
+							<span className="text-sm font-semibold text-(--legacy-text-primary)">
 								{data.treasuryKpis.totalAssets.formatted}
 							</span>
 						</div>
-						<div className="flex items-center justify-between border-b border-(--cards-border) py-2">
-							<span className="text-xs text-(--text-label)">Buyback Threshold</span>
-							<span className="text-sm font-semibold text-(--text-primary)">
+						<div className="flex items-center justify-between border-b border-(--legacy-cards-border) py-2">
+							<span className="text-xs text-(--legacy-text-label)">Buyback Threshold</span>
+							<span className="text-sm font-semibold text-(--legacy-text-primary)">
 								{data.treasuryKpis.buybackThreshold.formatted}
 							</span>
 						</div>
 						<div className="flex items-center justify-between py-2">
-							<span className="text-xs text-(--text-label)">Current vs Threshold</span>
+							<span className="text-xs text-(--legacy-text-label)">Current vs Threshold</span>
 							<span
 								className={`text-sm font-semibold ${
 									data.treasuryKpis.vsThreshold.value >= 0 ? 'text-green-500' : 'text-red-500'
@@ -537,24 +546,26 @@ function TreasurySection({ data }: { data: FinData }) {
 						</div>
 					</div>
 				</div>
-				<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-					<h3 className="mb-3 text-sm font-medium text-(--text-label)">SPK Buyback Tracker</h3>
+				<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+					<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">SPK Buyback Tracker</h3>
 					<div className="flex flex-col gap-2">
-						<div className="flex items-center justify-between border-b border-(--cards-border) py-2">
-							<span className="text-xs text-(--text-label)">USDS Spent</span>
-							<span className="text-sm font-semibold text-(--text-primary)">
+						<div className="flex items-center justify-between border-b border-(--legacy-cards-border) py-2">
+							<span className="text-xs text-(--legacy-text-label)">USDS Spent</span>
+							<span className="text-sm font-semibold text-(--legacy-text-primary)">
 								{data.buybackKpis.usdsSpent.formatted}
 							</span>
 						</div>
-						<div className="flex items-center justify-between border-b border-(--cards-border) py-2">
-							<span className="text-xs text-(--text-label)">SPK Bought</span>
-							<span className="text-sm font-semibold text-(--text-primary)">
+						<div className="flex items-center justify-between border-b border-(--legacy-cards-border) py-2">
+							<span className="text-xs text-(--legacy-text-label)">SPK Bought</span>
+							<span className="text-sm font-semibold text-(--legacy-text-primary)">
 								{data.buybackKpis.spkBought.formatted}
 							</span>
 						</div>
 						<div className="flex items-center justify-between py-2">
-							<span className="text-xs text-(--text-label)">Avg Price</span>
-							<span className="text-sm font-semibold text-(--text-primary)">{data.buybackKpis.avgPrice.formatted}</span>
+							<span className="text-xs text-(--legacy-text-label)">Avg Price</span>
+							<span className="text-sm font-semibold text-(--legacy-text-primary)">
+								{data.buybackKpis.avgPrice.formatted}
+							</span>
 						</div>
 					</div>
 				</div>
@@ -630,8 +641,8 @@ export default function Financials() {
 			{/* Section 2: Projected Returns Breakdown */}
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Projected Returns Breakdown</SectionHeader>
-				<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-					<h3 className="mb-3 text-sm font-medium text-(--text-label)">{data.projectedBreakdown.title}</h3>
+				<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+					<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">{data.projectedBreakdown.title}</h3>
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div className="min-h-[300px]">
 							<PieChart
@@ -645,33 +656,39 @@ export default function Financials() {
 						<div>
 							<table className="w-full">
 								<thead>
-									<tr className="border-b border-(--cards-border)">
-										<th className="pb-2 text-left text-xs font-semibold text-(--text-label) uppercase">Product</th>
-										<th className="pb-2 text-right text-xs font-semibold text-(--text-label) uppercase">Revenue</th>
-										<th className="pb-2 text-right text-xs font-semibold text-(--text-label) uppercase">Share</th>
+									<tr className="border-b border-(--legacy-cards-border)">
+										<th className="pb-2 text-left text-xs font-semibold text-(--legacy-text-label) uppercase">
+											Product
+										</th>
+										<th className="pb-2 text-right text-xs font-semibold text-(--legacy-text-label) uppercase">
+											Revenue
+										</th>
+										<th className="pb-2 text-right text-xs font-semibold text-(--legacy-text-label) uppercase">
+											Share
+										</th>
 									</tr>
 								</thead>
 								<tbody>
 									{data.projectedBreakdown.series.map((item) => (
-										<tr key={item.name} className="border-b border-(--cards-border) last:border-b-0">
-											<td className="py-2.5 text-sm text-(--text-primary)">
+										<tr key={item.name} className="border-b border-(--legacy-cards-border) last:border-b-0">
+											<td className="py-2.5 text-sm text-(--legacy-text-primary)">
 												<span
 													className="mr-2 inline-block size-2 rounded-full"
 													style={{ background: data.breakdownColors[item.name] || '#8b949e' }}
 												/>
 												{item.name}
 											</td>
-											<td className="py-2.5 text-right text-sm font-semibold text-(--text-primary)">
+											<td className="py-2.5 text-right text-sm font-semibold text-(--legacy-text-primary)">
 												{item.formatted}
 											</td>
-											<td className="py-2.5 text-right text-sm text-(--text-label)">{item.pct}%</td>
+											<td className="py-2.5 text-right text-sm text-(--legacy-text-label)">{item.pct}%</td>
 										</tr>
 									))}
 								</tbody>
 							</table>
-							<div className="mt-3 flex items-center justify-between border-t border-(--cards-border) pt-3">
-								<span className="text-sm text-(--text-label)">Total</span>
-								<span className="text-sm font-bold text-(--text-primary)">
+							<div className="mt-3 flex items-center justify-between border-t border-(--legacy-cards-border) pt-3">
+								<span className="text-sm text-(--legacy-text-label)">Total</span>
+								<span className="text-sm font-bold text-(--legacy-text-primary)">
 									{data.projectedBreakdown.totalFormatted}
 								</span>
 							</div>
@@ -699,7 +716,7 @@ export default function Financials() {
 			{data.quarterlyReports && data.quarterlyReports.length > 0 && (
 				<div className="flex flex-col gap-4">
 					<SectionHeader>Quarterly Reports</SectionHeader>
-					<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
+					<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
 						<div className="flex flex-col">
 							{data.quarterlyReports.map((report) => (
 								<a
@@ -707,7 +724,7 @@ export default function Financials() {
 									href={report.url}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="border-b border-(--cards-border) py-3 text-sm font-medium text-(--link) last:border-b-0 hover:underline"
+									className="border-b border-(--legacy-cards-border) py-3 text-sm font-medium text-(--legacy-link) last:border-b-0 hover:underline"
 								>
 									{report.label}
 								</a>

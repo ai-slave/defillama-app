@@ -180,10 +180,10 @@ function ShareBadge({ status, change }: { status: HolderChangeStatus; change: nu
 				</span>
 			)
 		case 'steady':
-			return <span className="text-xs text-(--text-disabled)">Steady</span>
+			return <span className="text-xs text-(--legacy-text-disabled)">Steady</span>
 		case 'unknown':
 		default:
-			return <span className="text-xs text-(--text-disabled)">{'\u2014'}</span>
+			return <span className="text-xs text-(--legacy-text-disabled)">{'\u2014'}</span>
 	}
 }
 
@@ -210,10 +210,10 @@ function BalanceBadge({ status, change }: { status: HolderChangeStatus; change: 
 				</span>
 			)
 		case 'steady':
-			return <span className="text-xs text-(--text-disabled)">Steady</span>
+			return <span className="text-xs text-(--legacy-text-disabled)">Steady</span>
 		case 'unknown':
 		default:
-			return <span className="text-xs text-(--text-disabled)">{'\u2014'}</span>
+			return <span className="text-xs text-(--legacy-text-disabled)">{'\u2014'}</span>
 	}
 }
 
@@ -298,10 +298,10 @@ function ConcentrationRiskPanel({
 			{/* Dollar Exposure */}
 			{tvlUsd != null ? (
 				<div className="flex flex-col gap-2">
-					<span className="text-xs text-(--text-disabled)">TVL Exposure</span>
+					<span className="text-xs text-(--legacy-text-disabled)">TVL Exposure</span>
 					{exposureTiers.map((tier) => (
 						<div key={tier.label} className="flex items-center justify-between text-xs">
-							<span className="text-(--text-disabled)">{tier.label}</span>
+							<span className="text-(--legacy-text-disabled)">{tier.label}</span>
 							<span className="font-medium tabular-nums">{formattedNum((tier.pct / 100) * tvlUsd, true)}</span>
 						</div>
 					))}
@@ -310,14 +310,14 @@ function ConcentrationRiskPanel({
 
 			{/* Holder Trend */}
 			{holderCount != null ? (
-				<div className="flex flex-col gap-2 rounded-md bg-(--cards-border)/30 p-2.5">
+				<div className="flex flex-col gap-2 rounded-md bg-(--legacy-cards-border)/30 p-2.5">
 					<div className="flex items-center justify-between">
-						<span className="text-xs text-(--text-disabled)">Total Holders</span>
+						<span className="text-xs text-(--legacy-text-disabled)">Total Holders</span>
 						<span className="text-sm font-semibold tabular-nums">{holderCount.toLocaleString()}</span>
 					</div>
 					{holderChange7d != null ? (
 						<div className="flex items-center justify-between text-xs">
-							<span className="text-(--text-disabled)">7d change</span>
+							<span className="text-(--legacy-text-disabled)">7d change</span>
 							<span
 								className={`font-medium tabular-nums ${holderChange7d > 0 ? 'text-(--success)' : holderChange7d < 0 ? 'text-(--error)' : ''}`}
 							>
@@ -328,7 +328,7 @@ function ConcentrationRiskPanel({
 					) : null}
 					{holderChange30d != null ? (
 						<div className="flex items-center justify-between text-xs">
-							<span className="text-(--text-disabled)">30d change</span>
+							<span className="text-(--legacy-text-disabled)">30d change</span>
 							<span
 								className={`font-medium tabular-nums ${holderChange30d > 0 ? 'text-(--success)' : holderChange30d < 0 ? 'text-(--error)' : ''}`}
 							>
@@ -342,8 +342,8 @@ function ConcentrationRiskPanel({
 
 			{/* Avg Position */}
 			{avgPositionUsd != null ? (
-				<div className="flex flex-col gap-1 rounded-md bg-(--cards-border)/30 p-2.5">
-					<span className="text-[11px] text-(--text-disabled)">Avg Position Size</span>
+				<div className="flex flex-col gap-1 rounded-md bg-(--legacy-cards-border)/30 p-2.5">
+					<span className="text-[11px] text-(--legacy-text-disabled)">Avg Position Size</span>
 					<span className="text-lg font-semibold tabular-nums">{formattedNum(avgPositionUsd, true)}</span>
 				</div>
 			) : null}
@@ -399,17 +399,17 @@ function TopHoldersTable({
 
 	return (
 		<div>
-			<div className="flex items-center justify-between border-b border-(--cards-border) px-2 py-1.5">
-				<div className="flex rounded-md bg-(--cards-border)/40 p-0.5 text-[11px]">
+			<div className="flex items-center justify-between border-b border-(--legacy-cards-border) px-2 py-1.5">
+				<div className="flex rounded-md bg-(--legacy-cards-border)/40 p-0.5 text-[11px]">
 					<button
 						onClick={() => setMode('share')}
-						className={`rounded px-2 py-0.5 font-medium transition-colors ${mode === 'share' ? 'bg-(--cards-bg) text-(--text-primary) shadow-sm' : 'text-(--text-disabled) hover:text-(--text-secondary)'}`}
+						className={`rounded px-2 py-0.5 font-medium transition-colors ${mode === 'share' ? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm' : 'text-(--legacy-text-disabled) hover:text-(--legacy-text-secondary)'}`}
 					>
 						Share
 					</button>
 					<button
 						onClick={() => setMode('balance')}
-						className={`rounded px-2 py-0.5 font-medium transition-colors ${mode === 'balance' ? 'bg-(--cards-bg) text-(--text-primary) shadow-sm' : 'text-(--text-disabled) hover:text-(--text-secondary)'}`}
+						className={`rounded px-2 py-0.5 font-medium transition-colors ${mode === 'balance' ? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm' : 'text-(--legacy-text-disabled) hover:text-(--legacy-text-secondary)'}`}
 					>
 						Balance
 					</button>
@@ -424,7 +424,7 @@ function TopHoldersTable({
 					<col style={{ width: '15%' }} />
 				</colgroup>
 				<thead>
-					<tr className="border-b border-(--cards-border) text-left text-xs text-(--text-disabled)">
+					<tr className="border-b border-(--legacy-cards-border) text-left text-xs text-(--legacy-text-disabled)">
 						<th className="py-2 pl-2 font-medium">Holder</th>
 						<th className="py-2 text-right font-medium">{mode === 'balance' ? 'Balance' : 'Share'}</th>
 						<th className="py-2 text-right font-medium">7d</th>
@@ -446,7 +446,7 @@ function TopHoldersTable({
 						const h30 = changes30dMap.get(h.address.toLowerCase())
 
 						return (
-							<tr key={h.address} className="border-b border-(--cards-border) last:border-b-0">
+							<tr key={h.address} className="border-b border-(--legacy-cards-border) last:border-b-0">
 								<td className="py-1.5 pl-2">
 									<div className="flex items-center gap-2">
 										<span
@@ -456,13 +456,13 @@ function TopHoldersTable({
 												transform: hoveredIndex === i ? 'scale(1.5)' : 'scale(1)'
 											}}
 										/>
-										<span className="w-4 shrink-0 text-(--text-disabled) tabular-nums">{i + 1}</span>
+										<span className="w-4 shrink-0 text-(--legacy-text-disabled) tabular-nums">{i + 1}</span>
 										{explorer?.url ? (
 											<a
 												href={explorer.url}
 												target="_blank"
 												rel="noopener noreferrer"
-												className="font-mono text-xs text-(--link-text) hover:underline"
+												className="font-mono text-xs text-(--legacy-link-text) hover:underline"
 											>
 												{truncateAddress(h.address)}
 											</a>
@@ -476,7 +476,7 @@ function TopHoldersTable({
 									{mode === 'share' ? (
 										<div className="flex items-center justify-end gap-2">
 											<span className="tabular-nums">{h.balancePct.toFixed(2)}%</span>
-											<div className="h-1.5 w-16 overflow-hidden rounded-full bg-(--cards-border)">
+											<div className="h-1.5 w-16 overflow-hidden rounded-full bg-(--legacy-cards-border)">
 												<div
 													className="h-full rounded-full"
 													style={{
@@ -505,7 +505,7 @@ function TopHoldersTable({
 											<ShareBadge status={h30.status} change={h30.balancePctChange} />
 										)
 									) : (
-										<span className="text-xs text-(--text-disabled)">{'\u2014'}</span>
+										<span className="text-xs text-(--legacy-text-disabled)">{'\u2014'}</span>
 									)}
 								</td>
 							</tr>
@@ -822,7 +822,7 @@ const PageView = ({
 	return (
 		<>
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:col-span-1">
+				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-2 xl:col-span-1">
 					<h1 className="flex flex-wrap items-center gap-2 text-xl font-bold">
 						{poolName}
 
@@ -834,11 +834,11 @@ const PageView = ({
 					<div className="flex flex-col gap-2 text-base">
 						<p className="flex items-center justify-between gap-1">
 							<span className="font-semibold">APY</span>
-							<span className="ml-auto font-jetbrains text-(--apy-pink)">{apy}%</span>
+							<span className="ml-auto font-jetbrains text-(--legacy-apy-pink)">{apy}%</span>
 						</p>
 						<p className="flex items-center justify-between gap-1">
 							<span className="font-semibold">30d Avg APY</span>
-							<span className="ml-auto font-jetbrains text-(--apy-pink)">{apyMean30d}%</span>
+							<span className="ml-auto font-jetbrains text-(--legacy-apy-pink)">{apyMean30d}%</span>
 						</p>
 						{poolConfigId ? (
 							<p className="flex items-center justify-between gap-1">
@@ -877,7 +877,9 @@ const PageView = ({
 						) : null}
 						<p className="flex items-center justify-between gap-1">
 							<span className="font-semibold">Total Value Locked</span>
-							<span className="ml-auto font-jetbrains text-(--apy-blue)">{formattedNum(poolData.tvl ?? 0, true)}</span>
+							<span className="ml-auto font-jetbrains text-(--legacy-apy-blue)">
+								{formattedNum(poolData.tvl ?? 0, true)}
+							</span>
 						</p>
 					</div>
 
@@ -894,7 +896,7 @@ const PageView = ({
 						{hasRisk ? (
 							<BasicLink
 								href={`/yields/pool/${poolId}/risk`}
-								className="group flex items-center gap-1.5 rounded-md bg-(--link-button) px-2.5 py-1.5 text-sm font-medium text-(--link-text) transition-colors hover:bg-(--link-button-hover)"
+								className="group flex items-center gap-1.5 rounded-md bg-(--legacy-link-button) px-2.5 py-1.5 text-sm font-medium text-(--legacy-link-text) transition-colors hover:bg-(--legacy-link-button-hover)"
 							>
 								View risk data
 								<span className="transition-transform group-hover:translate-x-0.5">→</span>
@@ -904,7 +906,7 @@ const PageView = ({
 					</div>
 				</div>
 
-				<div className="col-span-2 rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<div className="col-span-2 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 					<div className="flex items-center justify-end gap-1 p-2">
 						<AddToDashboardButton chartConfig={getYieldsChartConfig()} smol />
 						<ChartExportButtons
@@ -928,13 +930,13 @@ const PageView = ({
 
 			<div className="grid grid-cols-2 gap-2">
 				{isLoading ? (
-					<div className="col-span-full flex h-[400px] items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg)">
+					<div className="col-span-full flex h-[400px] items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 						<LocalLoader />
 					</div>
 				) : (
 					<>
 						{supplyApyBarDataset.source.length ? (
-							<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+							<div className="relative col-span-full flex flex-col rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 								<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
 									<h2 className="mr-auto text-base font-semibold">Supply APY</h2>
 									<AddToDashboardButton chartConfig={getYieldsChartConfig('supply-apy')} smol />
@@ -956,7 +958,7 @@ const PageView = ({
 							</div>
 						) : null}
 						{supplyApy7dDataset.source.length ? (
-							<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+							<div className="relative col-span-full flex flex-col rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 								<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
 									<h2 className="mr-auto text-base font-semibold">7 day moving average of Supply APY</h2>
 									<AddToDashboardButton chartConfig={getYieldsChartConfig('supply-apy-7d')} smol />
@@ -981,13 +983,13 @@ const PageView = ({
 			</div>
 
 			{fetchingChartDataBorrow ? (
-				<div className="col-span-full flex h-[400px] items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<div className="col-span-full flex h-[400px] items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 					<LocalLoader />
 				</div>
 			) : hasBorrowCharts ? (
 				<div className="grid grid-cols-2 gap-2 rounded-md">
 					{borrowApyBarDataset.source.length ? (
-						<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+						<div className="relative col-span-full flex flex-col rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 							<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
 								<h2 className="mr-auto text-base font-semibold">Borrow APY</h2>
 								<AddToDashboardButton chartConfig={getYieldsChartConfig('borrow-apy')} smol />
@@ -1009,7 +1011,7 @@ const PageView = ({
 						</div>
 					) : null}
 					{netBorrowApyDataset.source.length ? (
-						<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+						<div className="relative col-span-full flex flex-col rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 							<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
 								<h2 className="mr-auto text-base font-semibold">Net Borrow APY</h2>
 								<AddToDashboardButton chartConfig={getYieldsChartConfig('net-borrow-apy')} smol />
@@ -1031,7 +1033,7 @@ const PageView = ({
 					) : null}
 
 					{poolLiquidityDataset.source.length ? (
-						<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+						<div className="relative col-span-full flex flex-col rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 							<div className="flex flex-wrap items-center justify-end gap-2 p-2 pb-0">
 								<h2 className="mr-auto text-base font-semibold">Pool Liquidity</h2>
 								<SelectWithCombobox
@@ -1065,7 +1067,7 @@ const PageView = ({
 			) : null}
 
 			{deferredHolderDonutData?.length || holderChanges.holders.length ? (
-				<div className="grid grid-cols-1 rounded-md border border-(--cards-border) bg-(--cards-bg) lg:grid-cols-2 xl:grid-cols-[1fr_2fr_1fr]">
+				<div className="grid grid-cols-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) lg:grid-cols-2 xl:grid-cols-[1fr_2fr_1fr]">
 					{deferredHolderDonutData?.length ? (
 						<div className="relative flex flex-col">
 							<Suspense fallback={<div className="min-h-[398px]" />}>
@@ -1094,7 +1096,7 @@ const PageView = ({
 						</div>
 					) : null}
 					{holderChanges.holders.length ? (
-						<div className="border-t border-(--cards-border) p-2 lg:border-t-0 lg:border-l">
+						<div className="border-t border-(--legacy-cards-border) p-2 lg:border-t-0 lg:border-l">
 							<TopHoldersTable
 								holders={holderChanges.holders}
 								holders30d={holderChanges30d.holders}
@@ -1109,7 +1111,7 @@ const PageView = ({
 						</div>
 					) : null}
 					{holderStats?.top10Holders?.length ? (
-						<div className="border-t border-(--cards-border) lg:col-span-full xl:col-span-1 xl:border-t-0 xl:border-l">
+						<div className="border-t border-(--legacy-cards-border) lg:col-span-full xl:col-span-1 xl:border-t-0 xl:border-l">
 							<ConcentrationRiskPanel
 								holders={holderStats.top10Holders}
 								holderCount={holderStats.holderCount}

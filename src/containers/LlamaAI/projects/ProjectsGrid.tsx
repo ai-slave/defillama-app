@@ -88,8 +88,8 @@ export function ProjectsGrid() {
 	if (isLocked) {
 		return (
 			<div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-5 px-4 py-12 text-center">
-				<div className="flex size-16 items-center justify-center rounded-full bg-(--old-blue)/12">
-					<Icon name="folder-plus" height={28} width={28} className="text-(--old-blue)" />
+				<div className="flex size-16 items-center justify-center rounded-full bg-(--legacy-old-blue)/12">
+					<Icon name="folder-plus" height={28} width={28} className="text-(--legacy-old-blue)" />
 				</div>
 				<div className="flex flex-col gap-2">
 					<h1 className="text-2xl font-semibold">Projects are a paid feature</h1>
@@ -100,7 +100,7 @@ export function ProjectsGrid() {
 				<button
 					type="button"
 					onClick={() => void Router.push('/subscription')}
-					className="rounded-md border border-(--old-blue) bg-(--old-blue) px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-(--old-blue)/90"
+					className="rounded-md border border-(--legacy-old-blue) bg-(--legacy-old-blue) px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-(--legacy-old-blue)/90"
 				>
 					Upgrade to enable Projects
 				</button>
@@ -118,7 +118,7 @@ export function ProjectsGrid() {
 			type="button"
 			onClick={createStore.show}
 			disabled={reachedProjectCap}
-			className="flex items-center gap-1.5 rounded-md border border-(--old-blue) bg-(--old-blue) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-(--old-blue)/90 disabled:cursor-not-allowed disabled:opacity-50"
+			className="flex items-center gap-1.5 rounded-md border border-(--legacy-old-blue) bg-(--legacy-old-blue) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-(--legacy-old-blue)/90 disabled:cursor-not-allowed disabled:opacity-50"
 		>
 			<Icon name="plus" height={14} width={14} />
 			New project
@@ -148,7 +148,7 @@ export function ProjectsGrid() {
 							<select
 								value={sortBy}
 								onChange={(e) => startTransition(() => setSortBy(e.target.value as SortBy))}
-								className="rounded-md border border-[#e6e6e6] bg-(--cards-bg) px-2 py-1 text-xs text-inherit focus:border-(--old-blue) focus:outline-none dark:border-[#2a2b2c]"
+								className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-2 py-1 text-xs text-inherit focus:border-(--legacy-old-blue) focus:outline-none dark:border-[#2a2b2c]"
 							>
 								<option value="updated">Recently updated</option>
 								<option value="created">Recently created</option>
@@ -170,7 +170,7 @@ export function ProjectsGrid() {
 						name="search"
 						height={14}
 						width={14}
-						className="pointer-events-none ml-3 shrink-0 text-[#999] group-focus-within/search:text-(--old-blue) dark:text-[#555]"
+						className="pointer-events-none ml-3 shrink-0 text-[#999] group-focus-within/search:text-(--legacy-old-blue) dark:text-[#555]"
 					/>
 					<input
 						value={query}
@@ -224,7 +224,7 @@ export function ProjectsGrid() {
 						<button
 							type="button"
 							onClick={() => setQuery('')}
-							className="rounded-md border border-[#e6e6e6] px-3 py-1.5 text-xs font-medium text-(--text-primary) hover:border-(--old-blue) dark:border-[#2a2b2c]"
+							className="rounded-md border border-[#e6e6e6] px-3 py-1.5 text-xs font-medium text-(--legacy-text-primary) hover:border-(--legacy-old-blue) dark:border-[#2a2b2c]"
 						>
 							Clear search
 						</button>
@@ -239,10 +239,10 @@ export function ProjectsGrid() {
 								tabIndex={0}
 								onClick={() => goToProject(p.id)}
 								onKeyDown={(event) => onProjectCardKeyDown(event, p.id)}
-								className="group flex size-full cursor-pointer flex-col gap-2 rounded-lg border border-[#e6e6e6] bg-(--cards-bg) p-3 text-left transition-colors hover:border-(--old-blue) focus-visible:border-(--old-blue) focus-visible:outline-hidden dark:border-[#222324]"
+								className="group flex size-full cursor-pointer flex-col gap-2 rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) p-3 text-left transition-colors hover:border-(--legacy-old-blue) focus-visible:border-(--legacy-old-blue) focus-visible:outline-hidden dark:border-[#222324]"
 							>
 								<header className="flex items-center gap-2">
-									<div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-(--old-blue)/12 text-(--old-blue) transition-colors group-hover:bg-(--old-blue) group-hover:text-white">
+									<div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-(--legacy-old-blue)/12 text-(--legacy-old-blue) transition-colors group-hover:bg-(--legacy-old-blue) group-hover:text-white">
 										<Icon name="folder-plus" height={13} width={13} />
 									</div>
 									<div className="min-w-0 flex-1">
@@ -266,7 +266,7 @@ export function ProjectsGrid() {
 													}}
 												/>
 											}
-											className="flex size-7 items-center justify-center rounded-md text-[#999] transition-colors hover:bg-(--old-blue) hover:text-white focus-visible:bg-(--old-blue) focus-visible:text-white dark:text-[#666]"
+											className="flex size-7 items-center justify-center rounded-md text-[#999] transition-colors hover:bg-(--legacy-old-blue) hover:text-white focus-visible:bg-(--legacy-old-blue) focus-visible:text-white dark:text-[#666]"
 										>
 											<Icon name="pencil" height={13} width={13} />
 										</Tooltip>

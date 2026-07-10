@@ -44,7 +44,7 @@ export function YieldsWatchlistContainer({ protocolsDict }) {
 	return (
 		<>
 			<WatchListTabs />
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+			<div className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 				<div className="flex flex-wrap items-center gap-2 p-2">
 					<h1 className="mr-auto heading-xs">Saved Pools</h1>
 					<Menu
@@ -92,7 +92,7 @@ export function YieldsWatchlistContainer({ protocolsDict }) {
 				{filteredProtocols.length ? (
 					<YieldsPoolsTable data={filteredProtocols} />
 				) : (
-					<p className="flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-5">
+					<p className="flex flex-1 items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
 						You have not saved any pools.
 					</p>
 				)}

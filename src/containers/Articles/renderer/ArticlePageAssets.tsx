@@ -57,21 +57,21 @@ function AssetRow({
 				<TokenLogo src={logoSrc} size={22} alt={asset.symbol} title={asset.name} />
 			</span>
 			<span
-				className="min-w-0 truncate text-[13px] leading-none font-bold text-(--text-primary) transition-colors group-hover/asset:text-(--link-text)"
+				className="min-w-0 truncate text-[13px] leading-none font-bold text-(--legacy-text-primary) transition-colors group-hover/asset:text-(--legacy-link-text)"
 				title={asset.name}
 			>
 				{symbol}
 			</span>
-			<span className="ml-auto text-[13px] leading-none font-semibold text-(--text-primary) tabular-nums">
+			<span className="ml-auto text-[13px] leading-none font-semibold text-(--legacy-text-primary) tabular-nums">
 				{showSkeleton ? (
-					<span className="inline-block h-3.5 w-14 animate-pulse rounded bg-(--bg-tertiary) align-middle" />
+					<span className="inline-block h-3.5 w-14 animate-pulse rounded bg-(--legacy-bg-tertiary) align-middle" />
 				) : (
 					formatAssetPrice(market?.price ?? null)
 				)}
 			</span>
 			<span className="w-[52px] shrink-0 text-right text-[12px] leading-none tabular-nums">
 				{showSkeleton ? (
-					<span className="inline-block h-3 w-9 animate-pulse rounded bg-(--bg-tertiary) align-middle" />
+					<span className="inline-block h-3 w-9 animate-pulse rounded bg-(--legacy-bg-tertiary) align-middle" />
 				) : change != null ? (
 					<PercentChange percent={change} fontWeight={600} />
 				) : null}
@@ -119,15 +119,15 @@ export function ArticlePageAssets({ pageAssets }: { pageAssets?: Array<ArticlePa
 					open ? 'min-h-0' : 'min-h-[66px]'
 				}`}
 			>
-				<span className="flex items-center gap-2 text-[10px] leading-none font-semibold tracking-[0.18em] text-(--text-tertiary) uppercase">
+				<span className="flex items-center gap-2 text-[10px] leading-none font-semibold tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 					Assets on this page
-					<span className="rounded-full bg-(--bg-tertiary) px-1.5 py-0.5 text-[10px] leading-none font-semibold tracking-normal text-(--text-tertiary)">
+					<span className="rounded-full bg-(--legacy-bg-tertiary) px-1.5 py-0.5 text-[10px] leading-none font-semibold tracking-normal text-(--legacy-text-tertiary)">
 						{assets.length}
 					</span>
 				</span>
 				<Icon
 					name="chevron-down"
-					className={`size-3.5 shrink-0 text-(--text-tertiary) transition-transform duration-200 group-hover:text-(--text-secondary) ${
+					className={`size-3.5 shrink-0 text-(--legacy-text-tertiary) transition-transform duration-200 group-hover:text-(--legacy-text-secondary) ${
 						open ? '' : '-rotate-90'
 					}`}
 				/>
@@ -138,7 +138,7 @@ export function ArticlePageAssets({ pageAssets }: { pageAssets?: Array<ArticlePa
 				}`}
 			>
 				<div className="overflow-hidden">
-					<ul className="mt-3 mb-0 list-none divide-y divide-(--cards-border) overflow-hidden rounded-xl border border-(--cards-border) p-0">
+					<ul className="mt-3 mb-0 list-none divide-y divide-(--legacy-cards-border) overflow-hidden rounded-xl border border-(--legacy-cards-border) p-0">
 						{assets.map((asset) => (
 							<AssetRow key={asset.geckoId} asset={asset} market={byId.get(asset.geckoId)} isLoading={isLoading} />
 						))}

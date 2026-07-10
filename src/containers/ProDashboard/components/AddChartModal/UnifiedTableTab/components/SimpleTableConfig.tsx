@@ -255,7 +255,7 @@ function CexAnalyticsPreview({
 					return (
 						<div
 							key={config.id}
-							className={`${view === 'starter' && isSummary ? 'xl:col-span-2' : ''} overflow-hidden rounded-xl border border-(--cards-border) bg-(--cards-bg-alt)`}
+							className={`${view === 'starter' && isSummary ? 'xl:col-span-2' : ''} overflow-hidden rounded-xl border border-(--legacy-cards-border) bg-(--cards-bg-alt)`}
 						>
 							<div className={`${heightClass} overflow-auto`}>
 								<CexAnalyticsDataset config={config} />
@@ -532,7 +532,7 @@ export function SimpleTableConfig({
 												}}
 											/>
 										) : (
-											<div className="size-4 rounded-full bg-(--bg-tertiary)" />
+											<div className="size-4 rounded-full bg-(--legacy-bg-tertiary)" />
 										)}
 										<span className="text-sm pro-text1">{option?.label ?? token}</span>
 										<button

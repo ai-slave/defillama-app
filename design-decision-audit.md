@@ -44,9 +44,9 @@ This file tracks design-system audit notes before code changes are made.
   debt, so excluded work cannot mask core regressions. No excluded-product visuals were
   changed during this finalization pass.
 
-### Token Namespace End-State (post-merge proposal, deferred)
+### Token Namespace End-State (historical proposal, legacy phase resolved)
 
-- Current issue: The new tokens carry an `--ld-` prefix only because legacy variables
+- Original issue: The new tokens carried an `--ld-` prefix because legacy variables
   squat on the clean names (`--text-primary`, `--bg-surface`, …), and legacy names are
   not visually identifiable as legacy (`text-disabled` utility vs `text-(--text-disabled)`
   legacy var resolve to different things).
@@ -58,7 +58,7 @@ This file tracks design-system audit notes before code changes are made.
   (c) runtime/layout vars that are not tokens and stay as-is (`--direction`, `--gap`,
   `--drawer-*`, `--popover-anchor-width`, `--dialog-width`, `--sticky-shadow`,
   `--vf-header-scroll-left`, `--rl-size`, `--speed`, `--star-*`).
-- Proposed post-merge direction, strictly ordered:
+- Planned post-merge direction, strictly ordered:
   1. Rename subset (a) to `--legacy-*` everywhere (definitions + consumers). Pure
      mechanical codemod (~7–9k occurrences, mostly excluded surfaces); zero visual
      change since aliases are preserved. Hand-check the JS string reads:
@@ -74,9 +74,12 @@ This file tracks design-system audit notes before code changes are made.
   4. New ratchet in `lint:tokens`: `--legacy-` consumer count must not increase.
 - Quarantined per-product namespaces (`--pro-*`, `--sub-*`, `--sl-*`, `--signin-*`)
   are already unambiguous and live in deletable legacy-\*.css files; do not rename.
-- Status: this rename remains deferred. If it is later approved, run it as a focused
-  rename-only branch with both-mode screenshot verification rather than mixing it into
-  visual stabilization.
+- Resolution (2026-07-10): subset (a) now uses the `--legacy-*` namespace across
+  definitions, scoped product overrides, class strings, CSS values, and JavaScript CSS
+  variable reads. The old-name consumer scan reached zero before the temporary aliases
+  were removed. Feedback tokens moved to `semantics.css`, runtime/layout variables and
+  sanctioned product namespaces were left unchanged, and `lint:tokens` now ratchets
+  legacy-token references independently in core and excluded-product buckets.
 
 ### Resolved Owner Decisions From 2026-07-07
 

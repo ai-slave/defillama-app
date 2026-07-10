@@ -60,16 +60,16 @@ function RiskPageView({ poolId, poolName, chain, vaultRisk }: RiskPageProps) {
 
 	return (
 		<div className="flex flex-col gap-4">
-			<div className="flex flex-col gap-1.5 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+			<div className="flex flex-col gap-1.5 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3">
 				<BasicLink
 					href={`/yields/pool/${poolId}`}
-					className="flex w-fit items-center gap-1 text-xs text-(--text-secondary) hover:text-(--text-primary)"
+					className="flex w-fit items-center gap-1 text-xs text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)"
 				>
 					<Icon name="arrow-left" className="size-3" aria-hidden />
 					Back to pool details
 				</BasicLink>
 				<h1 className="text-xl font-bold">{vaultName ?? poolName}</h1>
-				<p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-(--text-secondary)">
+				<p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-(--legacy-text-secondary)">
 					<span>Risk report</span>
 					{chain ? (
 						<span className="flex items-center gap-1">

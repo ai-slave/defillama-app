@@ -96,19 +96,21 @@ export function ChartTypePills({
 				}
 			}}
 		>
-			<Ariakit.Select className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-(--cards-border) bg-(--cards-bg) px-3 py-2 text-xs text-(--text-primary) transition-colors hover:border-(--text-tertiary) focus:ring-1 focus:ring-(--primary) focus:outline-hidden">
-				<span className={selectedType ? 'text-(--text-primary)' : 'text-(--text-tertiary)'}>{selectedLabel}</span>
+			<Ariakit.Select className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-2 text-xs text-(--legacy-text-primary) transition-colors hover:border-(--legacy-text-tertiary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden">
+				<span className={selectedType ? 'text-(--legacy-text-primary)' : 'text-(--legacy-text-tertiary)'}>
+					{selectedLabel}
+				</span>
 				<Ariakit.SelectArrow />
 			</Ariakit.Select>
 			<Ariakit.SelectPopover
 				gutter={4}
 				sameWidth
 				unmountOnHide
-				className="z-50 max-h-[320px] overflow-auto overscroll-contain rounded-lg border border-(--cards-border) bg-(--bg-main) shadow-lg"
+				className="z-50 max-h-[320px] overflow-auto overscroll-contain rounded-lg border border-(--legacy-cards-border) bg-(--legacy-bg-main) shadow-lg"
 			>
 				{groupedOptions.map(({ group, options }) => (
 					<Ariakit.SelectGroup key={group} className="py-1">
-						<Ariakit.SelectGroupLabel className="px-3 py-1.5 text-[10px] font-semibold tracking-wide text-(--text-tertiary) uppercase">
+						<Ariakit.SelectGroupLabel className="px-3 py-1.5 text-[10px] font-semibold tracking-wide text-(--legacy-text-tertiary) uppercase">
 							{group}
 						</Ariakit.SelectGroupLabel>
 						{options.map((option) => {
@@ -122,12 +124,14 @@ export function ChartTypePills({
 									disabled={!isAvailable}
 									className={`flex cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-xs transition-colors ${
 										isAvailable
-											? 'text-(--text-primary) hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)'
-											: 'cursor-not-allowed text-(--text-tertiary) opacity-50'
+											? 'text-(--legacy-text-primary) hover:bg-(--legacy-primary-hover) focus-visible:bg-(--legacy-primary-hover) data-active-item:bg-(--legacy-primary-hover)'
+											: 'cursor-not-allowed text-(--legacy-text-tertiary) opacity-50'
 									}`}
 								>
 									<span>{option.label}</span>
-									{isSelected ? <Icon name="check" height={14} width={14} className="text-(--old-blue)" /> : null}
+									{isSelected ? (
+										<Icon name="check" height={14} width={14} className="text-(--legacy-old-blue)" />
+									) : null}
 								</Ariakit.SelectItem>
 							)
 						})}

@@ -378,7 +378,7 @@ export function AgenticSidebar({
 	return (
 		<aside
 			ref={sidebarRef}
-			className={`llamaai-agentic-sidebar relative flex size-full max-w-[272px] flex-col rounded-lg border border-[#e6e6e6] bg-(--cards-bg) max-lg:absolute max-lg:top-0 max-lg:right-0 max-lg:bottom-0 max-lg:left-0 max-lg:z-10 lg:mr-2 dark:border-[#222324] ${shouldAnimate ? 'animate-[slideInRight_0.08s_ease-out]' : ''}`}
+			className={`llamaai-agentic-sidebar relative flex size-full max-w-[272px] flex-col rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) max-lg:absolute max-lg:top-0 max-lg:right-0 max-lg:bottom-0 max-lg:left-0 max-lg:z-10 lg:mr-2 dark:border-[#222324] ${shouldAnimate ? 'animate-[slideInRight_0.08s_ease-out]' : ''}`}
 		>
 			<header className="flex flex-col gap-2 p-4 pb-2">
 				<div className="flex h-6 items-center">
@@ -388,7 +388,7 @@ export function AgenticSidebar({
 							disabled={isLoading && !hasNonProjectSessions}
 							className={`flex h-6 items-center gap-1 rounded-sm px-1.5 text-[11px] transition-colors disabled:invisible ${
 								selectMode
-									? 'bg-(--old-blue)/12 text-(--old-blue)'
+									? 'bg-(--legacy-old-blue)/12 text-(--legacy-old-blue)'
 									: 'text-[#666] hover:text-[#333] dark:text-[#919296] dark:hover:text-white'
 							}`}
 						>
@@ -407,7 +407,7 @@ export function AgenticSidebar({
 									data-umami-event-source="sidebar_header"
 								/>
 							}
-							className="hidden size-6 items-center justify-center gap-2 rounded-sm bg-(--old-blue)/12 text-(--old-blue) hover:bg-(--old-blue) hover:text-white focus-visible:bg-(--old-blue) focus-visible:text-white lg:flex"
+							className="hidden size-6 items-center justify-center gap-2 rounded-sm bg-(--legacy-old-blue)/12 text-(--legacy-old-blue) hover:bg-(--legacy-old-blue) hover:text-white focus-visible:bg-(--legacy-old-blue) focus-visible:text-white lg:flex"
 						>
 							<Icon name={isFullscreen ? 'shrink' : 'expand'} height={16} width={16} />
 							<span className="sr-only">{isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
@@ -423,7 +423,7 @@ export function AgenticSidebar({
 									data-umami-event-source="sidebar_header"
 								/>
 							}
-							className="flex size-6 items-center justify-center gap-2 rounded-sm bg-(--old-blue)/12 text-(--old-blue) hover:bg-(--old-blue) hover:text-white focus-visible:bg-(--old-blue) focus-visible:text-white"
+							className="flex size-6 items-center justify-center gap-2 rounded-sm bg-(--legacy-old-blue)/12 text-(--legacy-old-blue) hover:bg-(--legacy-old-blue) hover:text-white focus-visible:bg-(--legacy-old-blue) focus-visible:text-white"
 						>
 							<Icon name="panel-left-close" height={16} width={16} />
 							<span className="sr-only">Close Chat History</span>
@@ -436,7 +436,7 @@ export function AgenticSidebar({
 						trackUmamiEvent('llamaai-new-chat')
 						onNewChat()
 					}}
-					className="flex items-center justify-center gap-2 rounded-sm border border-(--old-blue) bg-(--old-blue)/12 px-2 py-0.75 text-xs text-(--old-blue) hover:bg-(--old-blue) hover:text-white focus-visible:bg-(--old-blue) focus-visible:text-white"
+					className="flex items-center justify-center gap-2 rounded-sm border border-(--legacy-old-blue) bg-(--legacy-old-blue)/12 px-2 py-0.75 text-xs text-(--legacy-old-blue) hover:bg-(--legacy-old-blue) hover:text-white focus-visible:bg-(--legacy-old-blue) focus-visible:text-white"
 				>
 					<Icon name="message-square-plus" height={16} width={16} />
 					<span>New Chat</span>
@@ -448,7 +448,7 @@ export function AgenticSidebar({
 							name="search"
 							height={13}
 							width={13}
-							className="pointer-events-none ml-2.5 shrink-0 text-[#999] transition-colors group-focus-within/search:text-(--old-blue) dark:text-[#555]"
+							className="pointer-events-none ml-2.5 shrink-0 text-[#999] transition-colors group-focus-within/search:text-(--legacy-old-blue) dark:text-[#555]"
 						/>
 						<input
 							type="text"
@@ -578,7 +578,7 @@ export function AgenticSidebar({
 							: 'Subscribe to a plan to top up your external data balance.'
 					}
 					render={<button type="button" onClick={() => hasActiveSubscription && setIsTopupModalOpen(true)} />}
-					className="flex min-h-[52px] w-full shrink-0 items-center justify-between overflow-hidden border-t border-[#e6e6e6] bg-(--cards-bg) px-4 py-3 text-ellipsis whitespace-nowrap transition-colors hover:bg-[#f0f0f0] dark:border-[#222324] dark:hover:bg-[#222324]"
+					className="flex min-h-[52px] w-full shrink-0 items-center justify-between overflow-hidden border-t border-[#e6e6e6] bg-(--legacy-cards-bg) px-4 py-3 text-ellipsis whitespace-nowrap transition-colors hover:bg-[#f0f0f0] dark:border-[#222324] dark:hover:bg-[#222324]"
 				>
 					<div className="flex min-w-0 items-center gap-2">
 						<Icon name="package" height={14} width={14} className="shrink-0 text-[#5C5CF9]" />

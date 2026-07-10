@@ -324,7 +324,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 	const hasValue = filter.value !== undefined || filter.minValue !== undefined || filter.maxValue !== undefined
 	const categoryLabel = CATEGORY_LABELS[config.category]
 	const categoryBadge = (
-		<span className="rounded-full bg-black/30 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-(--text-tertiary) uppercase">
+		<span className="rounded-full bg-black/30 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-(--legacy-text-tertiary) uppercase">
 			{categoryLabel}
 		</span>
 	)
@@ -332,7 +332,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 	if (config.type === 'boolean') {
 		return (
 			<div
-				className={`group flex items-start justify-between rounded-md border px-2.5 py-2 ${CATEGORY_COLORS[config.category]} ${isEditing ? 'shadow-sm ring-1 ring-(--primary)/60' : ''}`}
+				className={`group flex items-start justify-between rounded-md border px-2.5 py-2 ${CATEGORY_COLORS[config.category]} ${isEditing ? 'shadow-sm ring-1 ring-(--legacy-primary)/60' : ''}`}
 			>
 				<div className="flex min-w-0 flex-col gap-0.5">
 					<div className="flex items-center gap-1.5">
@@ -361,7 +361,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 	if (!isEditing && hasValue) {
 		return (
 			<div
-				className={`group flex items-start justify-between rounded-md border px-2.5 py-2 ${CATEGORY_COLORS[config.category]} ${isEditing ? 'shadow-sm ring-1 ring-(--primary)/60' : ''}`}
+				className={`group flex items-start justify-between rounded-md border px-2.5 py-2 ${CATEGORY_COLORS[config.category]} ${isEditing ? 'shadow-sm ring-1 ring-(--legacy-primary)/60' : ''}`}
 			>
 				<button type="button" onClick={handleStartEdit} className="flex min-w-0 flex-1 items-start gap-1.5 text-left">
 					<div className="flex min-w-0 flex-col gap-0.5">
@@ -391,7 +391,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 	if (config.type === 'numeric-single') {
 		return (
 			<div
-				className={`flex flex-col gap-1.5 rounded-md border p-2 ${CATEGORY_COLORS[config.category]} ${isEditing ? 'shadow-sm ring-1 ring-(--primary)/60' : ''}`}
+				className={`flex flex-col gap-1.5 rounded-md border p-2 ${CATEGORY_COLORS[config.category]} ${isEditing ? 'shadow-sm ring-1 ring-(--legacy-primary)/60' : ''}`}
 			>
 				<div className="flex items-center justify-between gap-2">
 					<div className="flex min-w-0 items-center gap-1.5">
@@ -433,7 +433,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 
 	return (
 		<div
-			className={`flex flex-col gap-1.5 rounded-md border p-2 ${CATEGORY_COLORS[config.category]} ${isEditing ? 'shadow-sm ring-1 ring-(--primary)/60' : ''}`}
+			className={`flex flex-col gap-1.5 rounded-md border p-2 ${CATEGORY_COLORS[config.category]} ${isEditing ? 'shadow-sm ring-1 ring-(--legacy-primary)/60' : ''}`}
 		>
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex min-w-0 items-center gap-1.5">
@@ -456,13 +456,13 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 					portal
 					gutter={4}
 					sameWidth
-					className="z-100 rounded border border-(--cards-border) bg-(--cards-bg) py-1 shadow-lg"
+					className="z-100 rounded border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 shadow-lg"
 				>
 					{OPERATORS.map((op) => (
 						<Ariakit.SelectItem
 							key={op.value}
 							value={op.value}
-							className="cursor-pointer px-2.5 py-1 text-xs text-(--text-primary) hover:bg-(--cards-bg2) data-active-item:bg-(--cards-bg2)"
+							className="cursor-pointer px-2.5 py-1 text-xs text-(--legacy-text-primary) hover:bg-(--cards-bg2) data-active-item:bg-(--cards-bg2)"
 						>
 							{op.label}
 						</Ariakit.SelectItem>
@@ -663,14 +663,14 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 	}
 
 	return (
-		<div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-3 rounded-lg border border-(--cards-border) bg-(--cards-bg) p-3">
+		<div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-3 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3">
 			<div className="flex min-w-0 flex-col gap-2">
 				<div className="flex items-center justify-between gap-2">
 					<div className="flex items-center gap-2">
-						<span className="text-[11px] font-semibold tracking-wide text-(--text-secondary) uppercase">
+						<span className="text-[11px] font-semibold tracking-wide text-(--legacy-text-secondary) uppercase">
 							Browse filters
 						</span>
-						<span className="rounded-full bg-(--cards-bg2) px-2 py-0.5 text-[10px] text-(--text-tertiary)">
+						<span className="rounded-full bg-(--cards-bg2) px-2 py-0.5 text-[10px] text-(--legacy-text-tertiary)">
 							{search
 								? `${visibleAvailableCount} match${visibleAvailableCount === 1 ? '' : 'es'}`
 								: `${inactiveFiltersCount} available`}
@@ -680,36 +680,39 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 						<button
 							type="button"
 							onClick={expandAllCategories}
-							className="rounded-md border border-(--cards-border) px-2 py-1 text-[10px] text-(--text-tertiary) transition hover:text-(--text-primary)"
+							className="rounded-md border border-(--legacy-cards-border) px-2 py-1 text-[10px] text-(--legacy-text-tertiary) transition hover:text-(--legacy-text-primary)"
 						>
 							Expand all
 						</button>
 						<button
 							type="button"
 							onClick={collapseAllCategories}
-							className="rounded-md border border-(--cards-border) px-2 py-1 text-[10px] text-(--text-tertiary) transition hover:text-(--text-primary)"
+							className="rounded-md border border-(--legacy-cards-border) px-2 py-1 text-[10px] text-(--legacy-text-tertiary) transition hover:text-(--legacy-text-primary)"
 						>
 							Collapse
 						</button>
 					</div>
 				</div>
 				<div className="relative">
-					<Icon name="search" className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-(--text-tertiary)" />
+					<Icon
+						name="search"
+						className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-(--legacy-text-tertiary)"
+					/>
 					<input
 						type="text"
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
 						placeholder="Search filters..."
 						aria-label="Search filters"
-						className="h-8 w-full rounded-md border border-(--cards-border) bg-(--cards-bg2) pr-8 pl-8 text-xs text-(--text-primary) outline-hidden transition-colors focus:border-(--primary)"
+						className="h-8 w-full rounded-md border border-(--legacy-cards-border) bg-(--cards-bg2) pr-8 pl-8 text-xs text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--legacy-primary)"
 					/>
 					{search ? (
 						<button
 							type="button"
 							onClick={() => setSearch('')}
-							className="absolute top-1/2 right-2.5 flex size-5 -translate-y-1/2 items-center justify-center rounded hover:bg-(--cards-bg)"
+							className="absolute top-1/2 right-2.5 flex size-5 -translate-y-1/2 items-center justify-center rounded hover:bg-(--legacy-cards-bg)"
 						>
-							<Icon name="x" className="size-3 text-(--text-tertiary)" />
+							<Icon name="x" className="size-3 text-(--legacy-text-tertiary)" />
 						</button>
 					) : null}
 				</div>
@@ -722,23 +725,23 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 						if (availableFilters.length === 0 && !isExpanded) return null
 
 						return (
-							<div key={category} className="rounded-md border border-(--cards-border) bg-(--cards-bg2)">
+							<div key={category} className="rounded-md border border-(--legacy-cards-border) bg-(--cards-bg2)">
 								<button
 									type="button"
 									onClick={() => toggleCategory(category)}
-									className="flex w-full cursor-pointer items-center justify-between px-2.5 py-1.5 text-left transition-colors hover:bg-(--cards-border)/30"
+									className="flex w-full cursor-pointer items-center justify-between px-2.5 py-1.5 text-left transition-colors hover:bg-(--legacy-cards-border)/30"
 								>
 									<div className="flex items-center gap-2">
 										<span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${badgeColor}`}>{label}</span>
-										<span className="text-[10px] text-(--text-tertiary)">{availableFilters.length}</span>
+										<span className="text-[10px] text-(--legacy-text-tertiary)">{availableFilters.length}</span>
 									</div>
 									<Icon
 										name="chevron-down"
-										className={`size-3.5 text-(--text-tertiary) transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+										className={`size-3.5 text-(--legacy-text-tertiary) transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
 									/>
 								</button>
 								{isExpanded && availableFilters.length > 0 ? (
-									<div className="border-t border-(--cards-border) bg-(--cards-bg) p-1">
+									<div className="border-t border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1">
 										{availableFilters.map((filter) => (
 											<button
 												key={filter.id}
@@ -747,16 +750,16 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 												className="group flex w-full cursor-pointer items-center justify-between rounded px-2 py-1 text-left transition-all hover:bg-(--cards-bg2)"
 											>
 												<div className="flex items-center gap-1.5">
-													<span className="truncate text-xs text-(--text-primary)">{filter.label}</span>
+													<span className="truncate text-xs text-(--legacy-text-primary)">{filter.label}</span>
 													{filter.description ? (
 														<Tooltip content={filter.description} placement="right">
-															<Icon name="circle-help" className="size-3 text-(--text-tertiary) opacity-50" />
+															<Icon name="circle-help" className="size-3 text-(--legacy-text-tertiary) opacity-50" />
 														</Tooltip>
 													) : null}
 												</div>
 												<Icon
 													name="plus"
-													className="size-3 shrink-0 text-(--text-tertiary) opacity-0 transition-opacity group-hover:opacity-100"
+													className="size-3 shrink-0 text-(--legacy-text-tertiary) opacity-0 transition-opacity group-hover:opacity-100"
 												/>
 											</button>
 										))}
@@ -766,12 +769,12 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 						)
 					})}
 					{filteredCategories.length === 0 ? (
-						<div className="flex items-center justify-between rounded-md border border-dashed border-(--cards-border) bg-(--cards-bg2) p-3 text-[11px] text-(--text-tertiary)">
+						<div className="flex items-center justify-between rounded-md border border-dashed border-(--legacy-cards-border) bg-(--cards-bg2) p-3 text-[11px] text-(--legacy-text-tertiary)">
 							<span>No filters match "{search}".</span>
 							<button
 								type="button"
 								onClick={() => setSearch('')}
-								className="rounded-md border border-(--cards-border) px-2 py-1 text-[10px] text-(--text-tertiary) transition hover:text-(--text-primary)"
+								className="rounded-md border border-(--legacy-cards-border) px-2 py-1 text-[10px] text-(--legacy-text-tertiary) transition hover:text-(--legacy-text-primary)"
 							>
 								Clear search
 							</button>
@@ -783,13 +786,15 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 			<div className="flex min-w-0 flex-col gap-2">
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-2">
-						<span className="text-xs font-medium text-(--text-secondary)">Active ({allActiveFilters.length})</span>
+						<span className="text-xs font-medium text-(--legacy-text-secondary)">
+							Active ({allActiveFilters.length})
+						</span>
 					</div>
 					{allActiveFilters.length > 0 ? (
 						<button
 							type="button"
 							onClick={handleClearAll}
-							className="cursor-pointer text-[10px] text-(--text-tertiary) transition-colors hover:text-red-400"
+							className="cursor-pointer text-[10px] text-(--legacy-text-tertiary) transition-colors hover:text-red-400"
 						>
 							Clear all
 						</button>
@@ -797,9 +802,9 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 				</div>
 				<div className="grid max-h-[260px] grid-cols-[repeat(auto-fit,minmax(220px,1fr))] items-start gap-1.5 overflow-y-auto pr-1">
 					{allActiveFilters.length === 0 ? (
-						<div className="flex flex-col items-center justify-center rounded-md border border-dashed border-(--cards-border) py-6 text-center">
-							<Icon name="settings" className="mb-2 size-5 text-(--text-tertiary)" />
-							<p className="text-xs text-(--text-tertiary)">
+						<div className="flex flex-col items-center justify-center rounded-md border border-dashed border-(--legacy-cards-border) py-6 text-center">
+							<Icon name="settings" className="mb-2 size-5 text-(--legacy-text-tertiary)" />
+							<p className="text-xs text-(--legacy-text-tertiary)">
 								No filters applied. Add from the left to start narrowing results.
 							</p>
 						</div>

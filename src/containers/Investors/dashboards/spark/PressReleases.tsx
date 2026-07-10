@@ -76,11 +76,11 @@ function renderPressReleaseCards(posts: ParagraphPost[]) {
 			href={`https://paragraph.com/@spark-11/${post.slug}`}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group flex flex-col overflow-hidden rounded-xl border border-(--cards-border) bg-(--cards-bg) transition-all duration-200 hover:border-(--sl-accent) hover:shadow-xl"
+			className="group flex flex-col overflow-hidden rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) transition-all duration-200 hover:border-(--sl-accent) hover:shadow-xl"
 		>
 			{/* Image */}
 			{post.imageUrl && (
-				<div className="relative aspect-[2/1] w-full overflow-hidden bg-gradient-to-br from-(--sl-accent-muted) to-(--cards-border)">
+				<div className="relative aspect-[2/1] w-full overflow-hidden bg-gradient-to-br from-(--sl-accent-muted) to-(--legacy-cards-border)">
 					<img src={post.imageUrl} alt={post.title} className="size-full object-cover" loading="lazy" />
 					<div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
 				</div>
@@ -90,12 +90,12 @@ function renderPressReleaseCards(posts: ParagraphPost[]) {
 			<div className="flex flex-1 flex-col gap-3 p-5">
 				{/* Meta */}
 				<div className="flex flex-wrap items-center gap-2">
-					<time className="text-xs font-medium text-(--text-label)" title={formatDate(post.publishedAt)}>
+					<time className="text-xs font-medium text-(--legacy-text-label)" title={formatDate(post.publishedAt)}>
 						{formatRelativeTime(post.publishedAt)}
 					</time>
 					{post.categories && post.categories.length > 0 && (
 						<>
-							<span className="text-xs text-(--text-label)">•</span>
+							<span className="text-xs text-(--legacy-text-label)">•</span>
 							<span className="rounded-md bg-(--sl-accent-muted) px-2 py-0.5 text-xs font-semibold tracking-wide text-(--sl-accent) uppercase">
 								{post.categories[0]}
 							</span>
@@ -104,17 +104,17 @@ function renderPressReleaseCards(posts: ParagraphPost[]) {
 				</div>
 
 				{/* Title */}
-				<h3 className="line-clamp-2 text-lg leading-snug font-bold text-(--text-primary) transition-colors group-hover:text-(--sl-accent)">
+				<h3 className="line-clamp-2 text-lg leading-snug font-bold text-(--legacy-text-primary) transition-colors group-hover:text-(--sl-accent)">
 					{post.title}
 				</h3>
 
 				{/* Subtitle */}
 				{post.subtitle && (
-					<p className="line-clamp-3 flex-1 text-sm leading-relaxed text-(--text-secondary)">{post.subtitle}</p>
+					<p className="line-clamp-3 flex-1 text-sm leading-relaxed text-(--legacy-text-secondary)">{post.subtitle}</p>
 				)}
 
 				{/* Read More */}
-				<div className="flex items-center gap-2 pt-2 text-sm font-medium text-(--link) transition-all group-hover:gap-3">
+				<div className="flex items-center gap-2 pt-2 text-sm font-medium text-(--legacy-link) transition-all group-hover:gap-3">
 					<span>Read more</span>
 					<svg
 						className="size-4 transition-transform group-hover:translate-x-1"
@@ -171,8 +171,8 @@ export default function PressReleases() {
 		return (
 			<div className="flex h-96 items-center justify-center">
 				<div className="flex flex-col items-center gap-3">
-					<div className="size-8 animate-spin rounded-full border-2 border-(--text-label) border-t-transparent"></div>
-					<p className="text-sm text-(--text-secondary)">Loading reports and press releases...</p>
+					<div className="size-8 animate-spin rounded-full border-2 border-(--legacy-text-label) border-t-transparent"></div>
+					<p className="text-sm text-(--legacy-text-secondary)">Loading reports and press releases...</p>
 				</div>
 			</div>
 		)
@@ -180,9 +180,9 @@ export default function PressReleases() {
 
 	if (financialReports.length === 0 && pressReleases.length === 0) {
 		return (
-			<div className="flex h-96 items-center justify-center rounded-xl border border-(--cards-border) bg-(--cards-bg)">
+			<div className="flex h-96 items-center justify-center rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 				<div className="flex flex-col items-center gap-2">
-					<svg className="size-12 text-(--text-label)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<svg className="size-12 text-(--legacy-text-label)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path
 							strokeLinecap="round"
 							strokeLinejoin="round"
@@ -190,7 +190,7 @@ export default function PressReleases() {
 							d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
 						/>
 					</svg>
-					<p className="text-sm text-(--text-secondary)">No reports or press releases available</p>
+					<p className="text-sm text-(--legacy-text-secondary)">No reports or press releases available</p>
 				</div>
 			</div>
 		)
@@ -200,8 +200,10 @@ export default function PressReleases() {
 		<div className="space-y-8 py-6">
 			{/* Header */}
 			<div className="flex flex-col gap-2">
-				<h1 className="text-2xl font-bold text-(--text-primary)">Reports & Press Releases</h1>
-				<p className="text-sm text-(--text-secondary)">Latest news, announcements, and updates from Spark Protocol</p>
+				<h1 className="text-2xl font-bold text-(--legacy-text-primary)">Reports & Press Releases</h1>
+				<p className="text-sm text-(--legacy-text-secondary)">
+					Latest news, announcements, and updates from Spark Protocol
+				</p>
 			</div>
 
 			{/* Financial Reports Section */}
@@ -218,7 +220,7 @@ export default function PressReleases() {
 								/>
 							</svg>
 						</div>
-						<h2 className="text-lg font-bold text-(--text-primary)">Financial Reports</h2>
+						<h2 className="text-lg font-bold text-(--legacy-text-primary)">Financial Reports</h2>
 					</div>
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
 						{financialReports.map((post) => (
@@ -239,16 +241,18 @@ export default function PressReleases() {
 
 								{/* Content */}
 								<div className="flex flex-1 flex-col gap-2 p-4">
-									<time className="text-xs font-medium text-(--text-label)" title={formatDate(post.publishedAt)}>
+									<time className="text-xs font-medium text-(--legacy-text-label)" title={formatDate(post.publishedAt)}>
 										{formatRelativeTime(post.publishedAt)}
 									</time>
-									<h3 className="line-clamp-2 text-base leading-snug font-bold text-(--text-primary) transition-colors group-hover:text-(--sl-accent)">
+									<h3 className="line-clamp-2 text-base leading-snug font-bold text-(--legacy-text-primary) transition-colors group-hover:text-(--sl-accent)">
 										{post.title}
 									</h3>
-									{post.subtitle && <p className="line-clamp-2 text-sm text-(--text-secondary)">{post.subtitle}</p>}
+									{post.subtitle && (
+										<p className="line-clamp-2 text-sm text-(--legacy-text-secondary)">{post.subtitle}</p>
+									)}
 
 									{/* Read More */}
-									<div className="flex items-center gap-2 pt-2 text-sm font-medium text-(--link) transition-all group-hover:gap-3">
+									<div className="flex items-center gap-2 pt-2 text-sm font-medium text-(--legacy-link) transition-all group-hover:gap-3">
 										<span>View report</span>
 										<svg
 											className="size-4 transition-transform group-hover:translate-x-1"
@@ -270,8 +274,13 @@ export default function PressReleases() {
 			{pressReleases.length > 0 && (
 				<div className="space-y-4">
 					<div className="flex items-center gap-3">
-						<div className="flex size-8 items-center justify-center rounded-lg bg-(--cards-border)">
-							<svg className="size-5 text-(--text-primary)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<div className="flex size-8 items-center justify-center rounded-lg bg-(--legacy-cards-border)">
+							<svg
+								className="size-5 text-(--legacy-text-primary)"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
 								<path
 									strokeLinecap="round"
 									strokeLinejoin="round"
@@ -280,7 +289,7 @@ export default function PressReleases() {
 								/>
 							</svg>
 						</div>
-						<h2 className="text-lg font-bold text-(--text-primary)">Press Releases</h2>
+						<h2 className="text-lg font-bold text-(--legacy-text-primary)">Press Releases</h2>
 					</div>
 					<div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
 						{renderPressReleaseCards(pressReleases)}
@@ -294,7 +303,7 @@ export default function PressReleases() {
 					href="https://paragraph.com/@spark-11"
 					target="_blank"
 					rel="noopener noreferrer"
-					className="group flex items-center gap-2 rounded-lg border border-(--cards-border) bg-(--cards-bg) px-4 py-2.5 text-sm font-medium text-(--text-primary) transition-all hover:border-(--sl-accent) hover:bg-(--sl-hover-bg)"
+					className="group flex items-center gap-2 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-4 py-2.5 text-sm font-medium text-(--legacy-text-primary) transition-all hover:border-(--sl-accent) hover:bg-(--sl-hover-bg)"
 				>
 					<span>View all on Paragraph</span>
 					<svg

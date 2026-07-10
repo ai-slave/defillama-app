@@ -80,7 +80,7 @@ const FeedbackDialog = memo(function FeedbackDialog({
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={setOpen}>
 			<Ariakit.Dialog
-				className="dialog w-full gap-0 border border-(--cards-border) bg-(--cards-bg) p-4 shadow-2xl max-sm:drawer sm:max-w-md"
+				className="dialog w-full gap-0 border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4 shadow-2xl max-sm:drawer sm:max-w-md"
 				unmountOnHide
 				portal
 				hideOnInteractOutside
@@ -239,7 +239,7 @@ export function ResponseControls({
 							<Icon name="circle-help" height={16} width={16} />
 						</Ariakit.PopoverDisclosure>
 						<Ariakit.Popover
-							className="z-50 rounded-lg border border-[#e6e6e6] bg-(--cards-bg) p-3 shadow-lg dark:border-[#333]"
+							className="z-50 rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) p-3 shadow-lg dark:border-[#333]"
 							portal
 							gutter={8}
 						>

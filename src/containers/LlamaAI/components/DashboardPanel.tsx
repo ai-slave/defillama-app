@@ -126,7 +126,7 @@ function DashboardPanelInner({
 		>
 			{config ? (
 				<div
-					className="flex h-full flex-col rounded-lg border border-[#e6e6e6] bg-(--cards-bg) dark:border-[#222324]"
+					className="flex h-full flex-col rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) dark:border-[#222324]"
 					style={{ width: 'min(50vw, 800px)', minWidth: '400px' }}
 				>
 					<div className="flex items-center justify-between border-b border-[#e6e6e6] px-4 py-3 dark:border-[#222324]">

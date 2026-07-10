@@ -248,7 +248,7 @@ export function ProtocolOverviewLayout({
 			metricFiltersLabel={metricFiltersLabel ?? undefined}
 		>
 			{category === 'Uncollateralized Lending' || category === 'RWA Lending' ? (
-				<div className="relative rounded-md border border-(--bg-color) bg-(--btn-bg) p-2 text-center text-xs text-black dark:text-white">
+				<div className="relative rounded-md border border-(--bg-color) bg-(--legacy-btn-bg) p-2 text-center text-xs text-black dark:text-white">
 					<p>
 						Active loans are not included in TVL by default, to include them toggle Active Loans. For more info on this
 						click{' '}
@@ -272,7 +272,7 @@ export function ProtocolOverviewLayout({
 							? 'border-(--error) bg-(--error)/20'
 							: banner.level === 'alert'
 								? 'border-(--warning) bg-(--warning)/20'
-								: 'border-(--bg-color) bg-(--btn-bg)'
+								: 'border-(--bg-color) bg-(--legacy-btn-bg)'
 					}`}
 					key={`${banner.message}-${banner.level}-${name}`}
 				>

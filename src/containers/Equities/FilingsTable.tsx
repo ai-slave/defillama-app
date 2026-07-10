@@ -72,7 +72,7 @@ const columns = [
 					href={getValue()}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="flex flex-1 items-center justify-center gap-4 rounded-md bg-(--btn2-bg) p-1.5 hover:bg-(--btn2-hover-bg)"
+					className="flex flex-1 items-center justify-center gap-4 rounded-md bg-(--legacy-btn2-bg) p-1.5 hover:bg-(--legacy-btn2-hover-bg)"
 				>
 					<Icon name="arrow-up-right" height={14} width={14} />
 					<span className="sr-only">open in new tab</span>

@@ -85,7 +85,7 @@ export function AriakitVirtualizedSelect({
 				{label}
 			</label>
 			{isLoading ? (
-				<div className="flex h-9 items-center justify-center rounded-md border border-(--form-control-border) bg-(--bg-input)">
+				<div className="flex h-9 items-center justify-center rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input)">
 					<LoadingSpinner size="sm" />
 				</div>
 			) : (
@@ -93,7 +93,7 @@ export function AriakitVirtualizedSelect({
 					<PopoverDisclosure
 						id={disclosureId}
 						store={popover}
-						className="flex w-full items-center justify-between rounded-md border border-(--form-control-border) bg-(--bg-input) px-2.5 py-1.5 text-xs transition-colors hover:border-(--primary)/40 focus:border-(--primary) focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
+						className="flex w-full items-center justify-between rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2.5 py-1.5 text-xs transition-colors hover:border-(--legacy-primary)/40 focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
 					>
 						<span className={`flex min-w-0 items-center gap-2 truncate ${selectedOption ? 'pro-text1' : 'pro-text3'}`}>
 							{selectedOption?.icon ? (
@@ -111,7 +111,7 @@ export function AriakitVirtualizedSelect({
 						portal={true}
 						flip={false}
 						gutter={4}
-						className="z-50 rounded-md border border-(--cards-border) bg-(--cards-bg) shadow-xl"
+						className="z-50 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-xl"
 						style={{ width: 'var(--popover-anchor-width)' }}
 					>
 						<div className="p-2">
@@ -120,18 +120,18 @@ export function AriakitVirtualizedSelect({
 									name="search"
 									width={12}
 									height={12}
-									className="absolute top-1/2 left-2.5 -translate-y-1/2 text-(--text-tertiary)"
+									className="absolute top-1/2 left-2.5 -translate-y-1/2 text-(--legacy-text-tertiary)"
 								/>
 								<input
 									value={search}
 									onChange={(e) => setSearch(e.target.value)}
 									placeholder="Search..."
-									className="w-full rounded-md border border-(--form-control-border) bg-(--bg-input) py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-(--primary) focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
+									className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
 								/>
 							</div>
 							<div
 								ref={listRef}
-								className="max-h-[280px] overflow-y-auto overscroll-contain rounded-md border border-(--cards-border) bg-(--cards-bg-alt)/30"
+								className="max-h-[280px] overflow-y-auto overscroll-contain rounded-md border border-(--legacy-cards-border) bg-(--cards-bg-alt)/30"
 							>
 								{filteredOptions.length === 0 ? (
 									<p className="px-3 py-2 text-center text-xs pro-text3">No results found.</p>
@@ -157,7 +157,7 @@ export function AriakitVirtualizedSelect({
 														option.disabled
 															? 'cursor-not-allowed pro-text3 opacity-50'
 															: isActive
-																? 'bg-(--primary)/10 font-semibold text-(--primary) shadow-sm'
+																? 'bg-(--legacy-primary)/10 font-semibold text-(--legacy-primary) shadow-sm'
 																: 'pro-text2 hover:bg-(--cards-bg-alt) hover:pro-text1'
 													}`}
 													style={{
@@ -180,27 +180,32 @@ export function AriakitVirtualizedSelect({
 																alt={option.label}
 																width={20}
 																height={20}
-																className={`h-5 w-5 rounded-full object-cover ring-1 ring-(--cards-border) ${
+																className={`h-5 w-5 rounded-full object-cover ring-1 ring-(--legacy-cards-border) ${
 																	option.isChild ? 'opacity-70' : ''
 																}`}
 															/>
 														) : null}
 														<div className="flex min-w-0 flex-col">
-															<span className={`truncate ${option.isChild ? 'text-(--text-secondary)' : ''}`}>
+															<span className={`truncate ${option.isChild ? 'text-(--legacy-text-secondary)' : ''}`}>
 																{option.label}
 															</span>
 															{option.isChild ? (
-																<span className="text-[10px] text-(--text-tertiary)">Child protocol</span>
+																<span className="text-[10px] text-(--legacy-text-tertiary)">Child protocol</span>
 															) : null}
 															{option.description ? (
-																<span className="truncate text-[10px] text-(--text-tertiary)">
+																<span className="truncate text-[10px] text-(--legacy-text-tertiary)">
 																	{option.description}
 																</span>
 															) : null}
 														</div>
 													</div>
 													{isActive ? (
-														<Icon name="check" width={14} height={14} className="ml-2 shrink-0 text-(--primary)" />
+														<Icon
+															name="check"
+															width={14}
+															height={14}
+															className="ml-2 shrink-0 text-(--legacy-primary)"
+														/>
 													) : null}
 												</button>
 											)

@@ -606,15 +606,15 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 								: `${config.metric} by Protocol`)}
 					</h2>
 					{!isReadOnly && chartSeries.length > 0 && config.chartType !== 'treemap' ? (
-						<div className="flex overflow-hidden rounded-md border border-(--form-control-border)">
+						<div className="flex overflow-hidden rounded-md border border-(--legacy-form-control-border)">
 							{groupingOptions.map((option, index) => (
 								<button
 									key={option}
 									onClick={() => handleGroupingChange(builder.id, option)}
-									className={`px-2 py-1 text-xs font-medium transition-colors duration-150 ease-in-out sm:px-3 ${index > 0 ? 'border-l border-(--form-control-border)' : ''} ${
+									className={`px-2 py-1 text-xs font-medium transition-colors duration-150 ease-in-out sm:px-3 ${index > 0 ? 'border-l border-(--legacy-form-control-border)' : ''} ${
 										builder.grouping === option || (!builder.grouping && option === 'day')
-											? 'bg-(--primary) text-white focus:ring-2 focus:ring-(--primary)/50 focus:outline-hidden'
-											: 'bg-transparent pro-hover-bg pro-text2 focus:ring-1 focus:ring-(--form-control-border) focus:outline-hidden'
+											? 'bg-(--legacy-primary) text-white focus:ring-2 focus:ring-(--legacy-primary)/50 focus:outline-hidden'
+											: 'bg-transparent pro-hover-bg pro-text2 focus:ring-1 focus:ring-(--legacy-form-control-border) focus:outline-hidden'
 									}`}
 								>
 									{option.slice(0, 1).toUpperCase()}
@@ -673,9 +673,9 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 							aria-pressed={effectiveShowColors}
 							className={`flex items-center gap-1 rounded-md border px-1.5 py-1 text-xs transition-colors disabled:cursor-not-allowed ${
 								effectiveShowColors
-									? 'border-transparent bg-(--primary) text-white'
-									: 'border-(--form-control-border) hover:not-disabled:pro-btn-blue focus-visible:not-disabled:pro-btn-blue'
-							} disabled:border-(--cards-border) disabled:text-(--text-disabled)`}
+									? 'border-transparent bg-(--legacy-primary) text-white'
+									: 'border-(--legacy-form-control-border) hover:not-disabled:pro-btn-blue focus-visible:not-disabled:pro-btn-blue'
+							} disabled:border-(--legacy-cards-border) disabled:text-(--legacy-text-disabled)`}
 						>
 							Colors
 						</button>
@@ -697,7 +697,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 						<button
 							type="button"
 							onClick={() => setShowDuplicateConfirm(true)}
-							className="flex items-center gap-1 rounded-md border border-(--form-control-border) px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-(--cards-border) disabled:text-(--text-disabled)"
+							className="flex items-center gap-1 rounded-md border border-(--legacy-form-control-border) px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-(--legacy-cards-border) disabled:text-(--legacy-text-disabled)"
 						>
 							<Icon name="copy" height={14} width={14} />
 							<span>Duplicate</span>
@@ -715,21 +715,21 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 							<ProTableCSVButton
 								onClick={handleCsvExport}
 								smol
-								className="flex items-center gap-1 rounded-md border border-(--form-control-border) px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-(--cards-border) disabled:text-(--text-disabled)"
+								className="flex items-center gap-1 rounded-md border border-(--legacy-form-control-border) px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-(--legacy-cards-border) disabled:text-(--legacy-text-disabled)"
 							/>
 						</>
 					) : null}
 				</div>
 				{effectiveShowColors && chartSeries.length > 0 ? (
-					<div className="flex items-center gap-2 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-2">
-						<span className="shrink-0 text-xs font-medium text-(--text-label)">Series Colors</span>
+					<div className="flex items-center gap-2 overflow-x-auto rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-2">
+						<span className="shrink-0 text-xs font-medium text-(--legacy-text-label)">Series Colors</span>
 						{chartSeries.map((series: any) => {
 							const colorValue = seriesColors[series.name] || series.color || DEFAULT_SERIES_COLOR
 							const hasOverride = Boolean(seriesColors[series.name])
 							return (
 								<div
 									key={series.name}
-									className="flex shrink-0 items-center gap-1.5 rounded border border-(--cards-border) bg-(--bg-input) px-2 py-1 text-xs"
+									className="flex shrink-0 items-center gap-1.5 rounded border border-(--legacy-cards-border) bg-(--legacy-bg-input) px-2 py-1 text-xs"
 								>
 									<span className="max-w-[140px] truncate" title={series.name}>
 										{series.name}
@@ -739,7 +739,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 										value={colorValue}
 										onChange={(event) => handleSeriesColorChange(series.name, event.target.value)}
 										disabled={isReadOnly}
-										className="size-5 cursor-pointer rounded border border-(--cards-border) bg-transparent p-0 disabled:cursor-not-allowed"
+										className="size-5 cursor-pointer rounded border border-(--legacy-cards-border) bg-transparent p-0 disabled:cursor-not-allowed"
 										aria-label={`Select color for ${series.name}`}
 									/>
 									<button
@@ -748,8 +748,8 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 										disabled={isReadOnly || !hasOverride}
 										className={`text-[10px] font-medium transition-colors disabled:cursor-not-allowed ${
 											isReadOnly || !hasOverride
-												? 'text-(--text-disabled)'
-												: 'text-(--text-tertiary) hover:text-(--text-primary)'
+												? 'text-(--legacy-text-disabled)'
+												: 'text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'
 										}`}
 									>
 										Reset
@@ -763,8 +763,8 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 							disabled={isReadOnly || !hasCustomSeriesColors}
 							className={`flex shrink-0 items-center rounded-md border px-2 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed ${
 								isReadOnly || !hasCustomSeriesColors
-									? 'border-(--cards-border) text-(--text-disabled)'
-									: 'border-(--form-control-border) text-(--text-tertiary) hover:text-(--text-primary)'
+									? 'border-(--legacy-cards-border) text-(--legacy-text-disabled)'
+									: 'border-(--legacy-form-control-border) text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'
 							}`}
 						>
 							Reset All
@@ -812,14 +812,14 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 					} else if (timePeriod && timePeriod !== 'all') {
 						parts.push(timePeriod.toUpperCase())
 					}
-					return <p className="text-xs text-(--text-label)">{parts.join(' • ')}</p>
+					return <p className="text-xs text-(--legacy-text-label)">{parts.join(' • ')}</p>
 				})()}
 			</div>
 
 			{isLoading ? (
 				<div className="flex flex-1 flex-col items-center justify-center">
-					<div className="mx-auto mb-2 size-8 animate-spin rounded-full border-b-2 border-(--primary)"></div>
-					<p className="text-sm text-(--text-form)">Loading chart...</p>
+					<div className="mx-auto mb-2 size-8 animate-spin rounded-full border-b-2 border-(--legacy-primary)"></div>
+					<p className="text-sm text-(--legacy-text-form)">Loading chart...</p>
 				</div>
 			) : chartSeries.length > 0 || treemapData.length > 0 ? (
 				<Suspense fallback={<div className="min-h-[300px]" />}>
@@ -849,7 +849,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 				</Suspense>
 			) : (
 				<div className="flex flex-1 flex-col items-center justify-center">
-					<p className="text-sm text-(--text-label)">No data available</p>
+					<p className="text-sm text-(--legacy-text-label)">No data available</p>
 				</div>
 			)}
 			<ConfirmationModal

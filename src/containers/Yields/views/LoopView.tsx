@@ -39,17 +39,17 @@ const YieldPageLoop = ({ projectList, chainList, categoryList, tokens, evmChains
 			/>
 
 			{rowsQuery.isLoading && !rowsQuery.data ? (
-				<p className="flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-5">
+				<p className="flex flex-1 items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
 					Loading pools...
 				</p>
 			) : rowsQuery.isError ? (
-				<p className="flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-5">
+				<p className="flex flex-1 items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
 					Couldn't load pools.
 				</p>
 			) : poolsData.length > 0 ? (
 				<PaginatedYieldsLoopTable data={poolsData} {...tableProps} />
 			) : (
-				<p className="flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-5">
+				<p className="flex flex-1 items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
 					Couldn't find any pools for these filters
 				</p>
 			)}

@@ -450,7 +450,7 @@ function ChartEditorModal({ title, onClose, children }: { title?: string; onClos
 			<div className="absolute inset-0 bg-black/60" onClick={onClose} />
 			<div className="relative flex h-[85vh] max-h-[560px] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-[#ececec] bg-white shadow-2xl lg:flex-row dark:border-[#232427] dark:bg-[#0d0e11]">
 				<div className="flex items-center justify-between border-b border-[#ececec] px-4 py-2.5 lg:hidden dark:border-[#232427]">
-					<span className="truncate text-sm font-semibold text-(--text-form)">{title ?? 'Edit chart'}</span>
+					<span className="truncate text-sm font-semibold text-(--legacy-text-form)">{title ?? 'Edit chart'}</span>
 					<button
 						onClick={onClose}
 						aria-label="Close editor"
@@ -578,7 +578,7 @@ function ChartRendererImpl({
 	const hasMultipleCharts = charts.length > 1
 
 	return (
-		<div ref={containerRef} className="flex flex-col gap-2 rounded-md border border-(--old-blue) pt-2">
+		<div ref={containerRef} className="flex flex-col gap-2 rounded-md border border-(--legacy-old-blue) pt-2">
 			{hasMultipleCharts ? (
 				<div className="-mt-2 flex border-b border-[#e6e6e6] dark:border-[#222324]">
 					{charts.map((chart, index) => (
@@ -587,7 +587,7 @@ function ChartRendererImpl({
 							onClick={() => setActiveTab(index)}
 							className={`border-b-2 px-2 py-1.5 text-sm transition-colors ${
 								activeTabIndex === index
-									? 'border-(--old-blue) text-(--old-blue)'
+									? 'border-(--legacy-old-blue) text-(--legacy-old-blue)'
 									: 'border-transparent text-[#666] hover:text-black dark:text-[#919296] dark:hover:text-white'
 							}`}
 						>

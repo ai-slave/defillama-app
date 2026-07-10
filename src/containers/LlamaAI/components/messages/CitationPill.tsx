@@ -45,7 +45,12 @@ function openUrl(reference: UnifiedCitationReference): string | null {
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
 	return (
-		<a href={href} target="_blank" rel="noopener noreferrer" className="text-xs text-(--link-text) hover:underline">
+		<a
+			href={href}
+			target="_blank"
+			rel="noopener noreferrer"
+			className="text-xs text-(--legacy-link-text) hover:underline"
+		>
 			{children}
 		</a>
 	)

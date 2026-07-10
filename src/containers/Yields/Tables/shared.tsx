@@ -106,7 +106,7 @@ export const YieldsTableWrapper = <TRow,>({
 	}, [data, enablePagination, instance])
 
 	return (
-		<div className="flex flex-col gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg)">
+		<div className="flex flex-col gap-3 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 			<VirtualTable instance={instance} rowSize={rowSize} skipVirtualization={skipVirtualization} />
 			{enablePagination ? (
 				<div className="flex flex-wrap items-center justify-between gap-2 px-3 pb-3">
@@ -116,7 +116,7 @@ export const YieldsTableWrapper = <TRow,>({
 							aria-label="Go to first page"
 							onClick={() => React.startTransition(() => instance.setPageIndex(0))}
 							disabled={!instance.getCanPreviousPage()}
-							className="rounded-md border border-(--cards-border) p-2 text-sm transition-colors hover:bg-(--cards-bg) disabled:cursor-not-allowed disabled:opacity-50"
+							className="rounded-md border border-(--legacy-cards-border) p-2 text-sm transition-colors hover:bg-(--legacy-cards-bg) disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							<Icon name="chevrons-left" height={16} width={16} />
 						</button>
@@ -125,11 +125,11 @@ export const YieldsTableWrapper = <TRow,>({
 							aria-label="Go to previous page"
 							onClick={() => React.startTransition(() => instance.previousPage())}
 							disabled={!instance.getCanPreviousPage()}
-							className="rounded-md border border-(--cards-border) p-2 text-sm transition-colors hover:bg-(--cards-bg) disabled:cursor-not-allowed disabled:opacity-50"
+							className="rounded-md border border-(--legacy-cards-border) p-2 text-sm transition-colors hover:bg-(--legacy-cards-bg) disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							<Icon name="chevron-left" height={16} width={16} />
 						</button>
-						<span className="text-xs text-(--text-secondary)">
+						<span className="text-xs text-(--legacy-text-secondary)">
 							{`Page ${instance.getState().pagination.pageIndex + 1} of ${instance.getPageCount()}`}
 						</span>
 						<button
@@ -137,7 +137,7 @@ export const YieldsTableWrapper = <TRow,>({
 							aria-label="Go to next page"
 							onClick={() => React.startTransition(() => instance.nextPage())}
 							disabled={!instance.getCanNextPage()}
-							className="rounded-md border border-(--cards-border) p-2 text-sm transition-colors hover:bg-(--cards-bg) disabled:cursor-not-allowed disabled:opacity-50"
+							className="rounded-md border border-(--legacy-cards-border) p-2 text-sm transition-colors hover:bg-(--legacy-cards-bg) disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							<Icon name="chevron-right" height={16} width={16} />
 						</button>
@@ -148,14 +148,14 @@ export const YieldsTableWrapper = <TRow,>({
 								React.startTransition(() => instance.setPageIndex(Math.max(0, instance.getPageCount() - 1)))
 							}
 							disabled={!instance.getCanNextPage()}
-							className="rounded-md border border-(--cards-border) p-2 text-sm transition-colors hover:bg-(--cards-bg) disabled:cursor-not-allowed disabled:opacity-50"
+							className="rounded-md border border-(--legacy-cards-border) p-2 text-sm transition-colors hover:bg-(--legacy-cards-bg) disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							<Icon name="chevrons-right" height={16} width={16} />
 						</button>
 					</div>
 
 					<label className="flex items-center gap-2 text-sm">
-						<span className="text-(--text-secondary)">Rows per page</span>
+						<span className="text-(--legacy-text-secondary)">Rows per page</span>
 						<select
 							value={instance.getState().pagination.pageSize}
 							onChange={(event) =>
@@ -164,7 +164,7 @@ export const YieldsTableWrapper = <TRow,>({
 									instance.setPageIndex(0)
 								})
 							}
-							className="rounded-md border border-(--cards-border) bg-(--cards-bg) px-2 py-1"
+							className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-2 py-1"
 						>
 							{PAGE_SIZE_OPTIONS.map((pageSize) => (
 								<option key={pageSize} value={pageSize}>

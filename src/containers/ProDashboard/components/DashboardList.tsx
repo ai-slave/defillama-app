@@ -13,7 +13,7 @@ interface DashboardListProps {
 export function DashboardList({ dashboards, isLoading, onCreateNew, onDeleteDashboard }: DashboardListProps) {
 	if (isLoading) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) px-1 py-12">
+			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-1 py-12">
 				<LoadingSpinner />
 			</div>
 		)
@@ -22,10 +22,10 @@ export function DashboardList({ dashboards, isLoading, onCreateNew, onDeleteDash
 	return (
 		<>
 			{dashboards.length === 0 ? (
-				<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) px-1 py-12">
-					<Icon name="layers" height={48} width={48} className="text-(--text-label)" />
+				<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-1 py-12">
+					<Icon name="layers" height={48} width={48} className="text-(--legacy-text-label)" />
 					<h1 className="text-center text-2xl font-bold">No dashboards yet</h1>
-					<p className="text-center text-(--text-label)">Create your first dashboard to get started</p>
+					<p className="text-center text-(--legacy-text-label)">Create your first dashboard to get started</p>
 					<button
 						onClick={onCreateNew}
 						className="mt-7 flex items-center gap-1 rounded-md pro-btn-purple px-6 py-3 font-medium"

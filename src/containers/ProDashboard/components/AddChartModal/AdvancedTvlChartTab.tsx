@@ -364,10 +364,10 @@ export function AdvancedTvlChartTab({
 			</div>
 
 			<div className="overflow-hidden rounded-lg border pro-border">
-				<h4 className="border-b border-(--cards-border) px-3 py-2 text-xs font-medium pro-text2">Preview</h4>
+				<h4 className="border-b border-(--legacy-cards-border) px-3 py-2 text-xs font-medium pro-text2">Preview</h4>
 
 				{hasProtocolSelection ? (
-					<div className="bg-(--cards-bg) p-3">
+					<div className="bg-(--legacy-cards-bg) p-3">
 						<div className="mb-3">
 							<h3 className="mb-1 text-sm font-semibold pro-text1">
 								{selectedAdvancedTvlProtocolName} - {chartTypeLabel}

@@ -63,7 +63,7 @@ const categoriesColumns = [
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<BasicLink
 						href={getCategoryRoute(slug(categoryName))}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text) hover:underline"
 					>
 						{categoryName}
 					</BasicLink>

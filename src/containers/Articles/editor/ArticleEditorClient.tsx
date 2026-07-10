@@ -144,7 +144,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		editorProps: {
 			attributes: {
 				class:
-					'article-editor-prose prose prose-neutral dark:prose-invert max-w-none focus:outline-none prose-a:text-(--link-text) prose-headings:tracking-tight prose-headings:font-semibold min-h-[60vh] py-10 break-words [overflow-wrap:anywhere]'
+					'article-editor-prose prose prose-neutral dark:prose-invert max-w-none focus:outline-none prose-a:text-(--legacy-link-text) prose-headings:tracking-tight prose-headings:font-semibold min-h-[60vh] py-10 break-words [overflow-wrap:anywhere]'
 			}
 		},
 		onUpdate: ({ editor: instance }) => {
@@ -800,14 +800,14 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 
 	if (!isAuthenticated) {
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-6">
-				<h1 className="text-xl font-semibold text-(--text-primary)">Sign in to write research</h1>
-				<p className="text-sm text-(--text-secondary)">
+			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-6">
+				<h1 className="text-xl font-semibold text-(--legacy-text-primary)">Sign in to write research</h1>
+				<p className="text-sm text-(--legacy-text-secondary)">
 					Article drafts, revisions, and author profiles are saved to your DefiLlama account.
 				</p>
 				<SignInModal
 					text="Sign in"
-					className="mr-auto rounded-md bg-(--link-text) px-3 py-2 text-sm font-medium text-white"
+					className="mr-auto rounded-md bg-(--legacy-link-text) px-3 py-2 text-sm font-medium text-white"
 				/>
 			</div>
 		)
@@ -902,7 +902,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 	const pillDot = (() => {
 		switch (pillState) {
 			case 'saving':
-				return 'bg-(--text-secondary) animate-pulse'
+				return 'bg-(--legacy-text-secondary) animate-pulse'
 			case 'saved':
 				return 'bg-emerald-500'
 			case 'unsaved':
@@ -910,7 +910,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 			case 'error':
 				return 'bg-red-500'
 			default:
-				return 'bg-(--text-tertiary)/50'
+				return 'bg-(--legacy-text-tertiary)/50'
 		}
 	})()
 	const articleViewHref = article.section

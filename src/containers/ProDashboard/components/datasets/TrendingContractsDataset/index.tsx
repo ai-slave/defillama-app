@@ -219,7 +219,7 @@ export function TrendingContractsDataset({
 							type="text"
 							placeholder="Search contracts..."
 							onInput={(e) => setContractSearch(e.currentTarget.value)}
-							className="rounded-md border pro-border bg-(--bg-glass) px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-(--primary) focus:outline-hidden"
+							className="rounded-md border pro-border bg-(--legacy-bg-glass) px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-(--legacy-primary) focus:outline-hidden"
 						/>
 					</div>
 				</div>

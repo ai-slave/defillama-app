@@ -204,7 +204,7 @@ export const PlotsPage = ({
 				resetFilters={true}
 			/>
 
-			<div className="relative flex flex-col rounded-md bg-(--cards-bg) p-3">
+			<div className="relative flex flex-col rounded-md bg-(--legacy-cards-bg) p-3">
 				<div className="mb-2 flex flex-col items-center justify-center">
 					<h2 className="text-base font-semibold">Median APY Trend</h2>
 					<p className="text-xs opacity-70">Calculated over all tracked pools on a given day</p>
@@ -250,7 +250,7 @@ export const PlotsPage = ({
 				<TreemapChart treeData={treemapTreeData} height="800px" />
 			</React.Suspense>
 			<React.Suspense fallback={<></>}>
-				<div className="relative rounded-md bg-(--cards-bg) p-3">
+				<div className="relative rounded-md bg-(--legacy-cards-bg) p-3">
 					<ScatterChart
 						chartData={nonOutlierPoolsData}
 						title="APY Average vs Volatility"

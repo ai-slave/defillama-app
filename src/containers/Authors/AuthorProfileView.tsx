@@ -187,12 +187,12 @@ function NavLink({
 function Avatar({ author, size = 'large' }: { author: PublicDashboardAuthor; size?: 'small' | 'large' }) {
 	const className =
 		size === 'small'
-			? 'size-8 rounded-full border border-(--cards-border) object-cover'
-			: 'size-24 rounded-full border border-(--cards-border) object-cover md:size-28'
+			? 'size-8 rounded-full border border-(--legacy-cards-border) object-cover'
+			: 'size-24 rounded-full border border-(--legacy-cards-border) object-cover md:size-28'
 	const fallbackClassName =
 		size === 'small'
-			? 'flex size-8 items-center justify-center rounded-full border border-(--cards-border) text-lg'
-			: 'flex size-24 items-center justify-center rounded-full border border-(--cards-border) text-5xl md:size-28'
+			? 'flex size-8 items-center justify-center rounded-full border border-(--legacy-cards-border) text-lg'
+			: 'flex size-24 items-center justify-center rounded-full border border-(--legacy-cards-border) text-5xl md:size-28'
 
 	if (author.avatarUrl && isSafeHttpsUrl(author.avatarUrl)) {
 		return <Image src={author.avatarUrl} alt="" width={112} height={112} unoptimized className={className} />
@@ -207,7 +207,7 @@ function Avatar({ author, size = 'large' }: { author: PublicDashboardAuthor; siz
 function DashboardCardStats({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 	const itemsCount = dashboardItemCount(dashboard)
 	return (
-		<div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-(--text-tertiary)">
+		<div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-(--legacy-text-tertiary)">
 			<span>
 				{COUNT_FORMATTER.format(itemsCount)} {itemsCount === 1 ? 'item' : 'items'}
 			</span>
@@ -223,27 +223,29 @@ function DashboardCardStats({ dashboard }: { dashboard: AuthorDashboardSummary }
 function DashboardCard({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 	const tags = Array.isArray(dashboard.tags) ? dashboard.tags.filter(Boolean).slice(0, 4) : []
 	return (
-		<div className="group relative isolate grid min-h-[240px] overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-bg) transition-colors focus-within:border-(--link-text) hover:border-(--link-text)/50">
-			<div className="absolute inset-x-0 top-0 h-1 bg-(--link-text)/70 opacity-0 transition-opacity group-hover:opacity-100" />
+		<div className="group relative isolate grid min-h-[240px] overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) transition-colors focus-within:border-(--legacy-link-text) hover:border-(--legacy-link-text)/50">
+			<div className="absolute inset-x-0 top-0 h-1 bg-(--legacy-link-text)/70 opacity-0 transition-opacity group-hover:opacity-100" />
 			<div className="grid h-full grid-rows-[auto_1fr_auto] gap-4 p-4">
 				<div className="flex items-start justify-between gap-3">
-					<h2 className="line-clamp-2 text-lg leading-tight font-semibold text-(--text-primary) group-hover:text-(--link-text)">
+					<h2 className="line-clamp-2 text-lg leading-tight font-semibold text-(--legacy-text-primary) group-hover:text-(--legacy-link-text)">
 						{dashboardName(dashboard)}
 					</h2>
-					<span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-(--cards-border) text-(--text-tertiary) transition-colors group-hover:border-(--link-text)/40 group-hover:text-(--link-text)">
+					<span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-(--legacy-cards-border) text-(--legacy-text-tertiary) transition-colors group-hover:border-(--legacy-link-text)/40 group-hover:text-(--legacy-link-text)">
 						<Icon name="arrow-up-right" className="size-4" />
 					</span>
 				</div>
 
 				<div className="grid content-start gap-3">
-					<p className="line-clamp-4 text-sm leading-6 text-(--text-secondary)">{dashboardDescription(dashboard)}</p>
+					<p className="line-clamp-4 text-sm leading-6 text-(--legacy-text-secondary)">
+						{dashboardDescription(dashboard)}
+					</p>
 
 					{tags.length ? (
 						<ul className="flex flex-wrap gap-1.5" aria-label="Dashboard tags">
 							{tags.map((tag) => (
 								<li
 									key={tag}
-									className="rounded-md border border-(--cards-border) bg-(--app-bg) px-2 py-1 text-[11px] text-(--text-label)"
+									className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-2 py-1 text-[11px] text-(--legacy-text-label)"
 								>
 									{tag}
 								</li>
@@ -252,8 +254,8 @@ function DashboardCard({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 					) : null}
 				</div>
 
-				<div className="grid gap-3 border-t border-(--cards-border) pt-3">
-					<p className="text-xs text-(--text-tertiary)">Updated {formatDate(dashboardUpdatedAt(dashboard))}</p>
+				<div className="grid gap-3 border-t border-(--legacy-cards-border) pt-3">
+					<p className="text-xs text-(--legacy-text-tertiary)">Updated {formatDate(dashboardUpdatedAt(dashboard))}</p>
 					<DashboardCardStats dashboard={dashboard} />
 				</div>
 			</div>
@@ -267,15 +269,17 @@ function DashboardCard({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 function FeaturedDashboardCard({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 	const tags = Array.isArray(dashboard.tags) ? dashboard.tags.filter(Boolean).slice(0, 6) : []
 	return (
-		<section className="group relative isolate overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-bg) transition-colors hover:border-(--link-text)/50">
-			<div className="absolute inset-x-0 top-0 h-1 bg-(--link-text)/70" />
+		<section className="group relative isolate overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) transition-colors hover:border-(--legacy-link-text)/50">
+			<div className="absolute inset-x-0 top-0 h-1 bg-(--legacy-link-text)/70" />
 			<div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:p-7">
 				<div className="grid content-start gap-3">
-					<p className="text-[10px] font-semibold tracking-[0.2em] text-(--link-text) uppercase">Featured dashboard</p>
-					<h2 className="max-w-3xl text-2xl leading-tight font-semibold text-(--text-primary) group-hover:text-(--link-text) md:text-3xl">
+					<p className="text-[10px] font-semibold tracking-[0.2em] text-(--legacy-link-text) uppercase">
+						Featured dashboard
+					</p>
+					<h2 className="max-w-3xl text-2xl leading-tight font-semibold text-(--legacy-text-primary) group-hover:text-(--legacy-link-text) md:text-3xl">
 						{dashboardName(dashboard)}
 					</h2>
-					<p className="line-clamp-3 max-w-3xl text-sm leading-6 text-(--text-secondary)">
+					<p className="line-clamp-3 max-w-3xl text-sm leading-6 text-(--legacy-text-secondary)">
 						{dashboardDescription(dashboard)}
 					</p>
 					{tags.length ? (
@@ -283,7 +287,7 @@ function FeaturedDashboardCard({ dashboard }: { dashboard: AuthorDashboardSummar
 							{tags.map((tag) => (
 								<li
 									key={tag}
-									className="rounded-md border border-(--cards-border) bg-(--app-bg) px-2 py-1 text-[11px] text-(--text-label)"
+									className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-2 py-1 text-[11px] text-(--legacy-text-label)"
 								>
 									{tag}
 								</li>
@@ -291,11 +295,11 @@ function FeaturedDashboardCard({ dashboard }: { dashboard: AuthorDashboardSummar
 						</ul>
 					) : null}
 				</div>
-				<div className="grid content-between gap-4 border-t border-(--cards-border) pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
+				<div className="grid content-between gap-4 border-t border-(--legacy-cards-border) pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
 					<DashboardCardStats dashboard={dashboard} />
 					<div className="grid gap-2">
-						<p className="text-xs text-(--text-tertiary)">Updated {formatDate(dashboardUpdatedAt(dashboard))}</p>
-						<span className="inline-flex items-center gap-1.5 text-sm font-medium text-(--link-text)">
+						<p className="text-xs text-(--legacy-text-tertiary)">Updated {formatDate(dashboardUpdatedAt(dashboard))}</p>
+						<span className="inline-flex items-center gap-1.5 text-sm font-medium text-(--legacy-link-text)">
 							Open dashboard
 							<Icon name="arrow-up-right" className="size-4" />
 						</span>
@@ -311,9 +315,11 @@ function FeaturedDashboardCard({ dashboard }: { dashboard: AuthorDashboardSummar
 
 function AuthorStat({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="grid gap-1 border-t border-(--cards-border) pt-3">
-			<span className="text-[10px] font-semibold tracking-[0.18em] text-(--text-tertiary) uppercase">{label}</span>
-			<span className="text-sm font-medium text-(--text-primary)">{value}</span>
+		<div className="grid gap-1 border-t border-(--legacy-cards-border) pt-3">
+			<span className="text-[10px] font-semibold tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
+				{label}
+			</span>
+			<span className="text-sm font-medium text-(--legacy-text-primary)">{value}</span>
 		</div>
 	)
 }
@@ -336,32 +342,32 @@ function AuthorHero({
 	const dashboardNoun = totalDashboards === 1 ? 'dashboard' : 'dashboards'
 
 	return (
-		<header className="relative isolate overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-bg)">
+		<header className="relative isolate overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 			<div
 				aria-hidden="true"
 				className="pointer-events-none absolute inset-0 opacity-[0.18]"
 				style={{
 					backgroundImage:
-						'linear-gradient(var(--cards-border) 1px, transparent 1px), linear-gradient(90deg, var(--cards-border) 1px, transparent 1px)',
+						'linear-gradient(var(--legacy-cards-border) 1px, transparent 1px), linear-gradient(90deg, var(--legacy-cards-border) 1px, transparent 1px)',
 					backgroundSize: '32px 32px'
 				}}
 			/>
 			<div className="relative grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
 				<div className="grid gap-6 p-5 sm:p-6 lg:p-8">
 					<div className="flex flex-wrap items-center gap-3">
-						<span className="rounded-md border border-(--link-text)/25 bg-(--link-button) px-2.5 py-1 text-[10px] font-semibold tracking-[0.2em] text-(--link-text) uppercase">
+						<span className="rounded-md border border-(--legacy-link-text)/25 bg-(--legacy-link-button) px-2.5 py-1 text-[10px] font-semibold tracking-[0.2em] text-(--legacy-link-text) uppercase">
 							Dashboard author
 						</span>
-						<span className="text-sm text-(--text-tertiary)">@{author.slug}</span>
+						<span className="text-sm text-(--legacy-text-tertiary)">@{author.slug}</span>
 					</div>
 
 					<div className="grid gap-5 md:grid-cols-[auto_minmax(0,1fr)] md:items-end">
 						<Avatar author={author} />
 						<div className="min-w-0">
-							<h1 className="max-w-4xl text-[clamp(2rem,1.2rem+3vw,4.75rem)] leading-[0.95] font-semibold text-(--text-primary)">
+							<h1 className="max-w-4xl text-[clamp(2rem,1.2rem+3vw,4.75rem)] leading-[0.95] font-semibold text-(--legacy-text-primary)">
 								{author.displayName}
 							</h1>
-							<p className="mt-4 max-w-2xl text-base leading-7 text-(--text-secondary)">
+							<p className="mt-4 max-w-2xl text-base leading-7 text-(--legacy-text-secondary)">
 								{author.bio || `${author.displayName} publishes public DefiLlama Pro dashboards for the community.`}
 							</p>
 						</div>
@@ -371,7 +377,7 @@ function AuthorHero({
 						{isOwnProfile ? (
 							<BasicLink
 								href="/account?tab=profile"
-								className="inline-flex items-center gap-1.5 rounded-md border border-(--link-text)/30 bg-(--link-button) px-3 py-2 text-xs font-medium text-(--link-text) transition-colors hover:border-(--link-text)/60 hover:bg-(--link-hover-bg)"
+								className="inline-flex items-center gap-1.5 rounded-md border border-(--legacy-link-text)/30 bg-(--legacy-link-button) px-3 py-2 text-xs font-medium text-(--legacy-link-text) transition-colors hover:border-(--legacy-link-text)/60 hover:bg-(--legacy-link-hover-bg)"
 							>
 								<Icon name="settings" className="size-3.5" />
 								Edit profile
@@ -385,7 +391,7 @@ function AuthorHero({
 								href={value}
 								target="_blank"
 								rel="noreferrer noopener"
-								className="inline-flex items-center gap-1.5 rounded-md border border-(--cards-border) bg-(--app-bg) px-3 py-2 text-xs font-medium text-(--text-secondary) transition-colors hover:border-(--link-text)/50 hover:text-(--link-text)"
+								className="inline-flex items-center gap-1.5 rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/50 hover:text-(--legacy-link-text)"
 							>
 								<Icon name={socialIconName(key)} className="size-3.5" />
 								{socialLabel(key)}
@@ -394,16 +400,16 @@ function AuthorHero({
 					</div>
 				</div>
 
-				<aside className="grid content-between gap-6 border-t border-(--cards-border) bg-(--app-bg)/60 p-5 sm:p-6 lg:border-t-0 lg:border-l lg:p-8">
+				<aside className="grid content-between gap-6 border-t border-(--legacy-cards-border) bg-(--legacy-app-bg)/60 p-5 sm:p-6 lg:border-t-0 lg:border-l lg:p-8">
 					<div className="grid gap-2">
-						<p className="text-[10px] font-semibold tracking-[0.22em] text-(--text-tertiary) uppercase">
+						<p className="text-[10px] font-semibold tracking-[0.22em] text-(--legacy-text-tertiary) uppercase">
 							Published dashboards
 						</p>
 						<div className="flex items-end gap-3">
-							<span className="text-5xl leading-none font-semibold text-(--text-primary)">
+							<span className="text-5xl leading-none font-semibold text-(--legacy-text-primary)">
 								{COUNT_FORMATTER.format(totalDashboards)}
 							</span>
-							<span className="pb-1 text-sm leading-5 text-(--text-secondary)">
+							<span className="pb-1 text-sm leading-5 text-(--legacy-text-secondary)">
 								public {dashboardNoun}
 								<br />
 								live on DefiLlama Pro
@@ -426,7 +432,7 @@ function AuthorHero({
 function SortControl({ sort, nav }: { sort: AuthorDashboardSort; nav: AuthorProfileNav }) {
 	return (
 		<nav
-			className="flex items-center gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-0.5"
+			className="flex items-center gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-0.5"
 			aria-label="Sort dashboards"
 		>
 			{SORT_OPTIONS.map((option) => (
@@ -437,8 +443,8 @@ function SortControl({ sort, nav }: { sort: AuthorDashboardSort; nav: AuthorProf
 					ariaCurrent={sort === option.value ? 'page' : undefined}
 					className={`rounded px-2.5 py-1.5 text-xs font-medium transition-colors ${
 						sort === option.value
-							? 'bg-(--link-button) text-(--link-text)'
-							: 'text-(--text-secondary) hover:text-(--text-primary)'
+							? 'bg-(--legacy-link-button) text-(--legacy-link-text)'
+							: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
 					}`}
 				>
 					{option.label}
@@ -451,23 +457,23 @@ function SortControl({ sort, nav }: { sort: AuthorDashboardSort; nav: AuthorProf
 function EmptyDashboards({ isOwnProfile }: { isOwnProfile: boolean }) {
 	if (isOwnProfile) {
 		return (
-			<div className="grid justify-items-start gap-3 rounded-md border border-dashed border-(--cards-border) bg-(--cards-bg) p-8">
-				<p className="text-base font-semibold text-(--text-primary)">
+			<div className="grid justify-items-start gap-3 rounded-md border border-dashed border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-8">
+				<p className="text-base font-semibold text-(--legacy-text-primary)">
 					Your profile is live, but it has no dashboards yet
 				</p>
-				<p className="max-w-lg text-sm leading-6 text-(--text-tertiary)">
+				<p className="max-w-lg text-sm leading-6 text-(--legacy-text-tertiary)">
 					Build a dashboard and make it public to start collecting views, likes, and followers here.
 				</p>
-				<BasicLink href="/pro" className="rounded-md bg-(--link-text) px-4 py-2 text-sm font-medium text-white">
+				<BasicLink href="/pro" className="rounded-md bg-(--legacy-link-text) px-4 py-2 text-sm font-medium text-white">
 					Create your first dashboard
 				</BasicLink>
 			</div>
 		)
 	}
 	return (
-		<div className="grid gap-2 rounded-md border border-dashed border-(--cards-border) bg-(--cards-bg) p-8">
-			<p className="text-base font-semibold text-(--text-primary)">No public dashboards yet</p>
-			<p className="max-w-lg text-sm leading-6 text-(--text-tertiary)">
+		<div className="grid gap-2 rounded-md border border-dashed border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-8">
+			<p className="text-base font-semibold text-(--legacy-text-primary)">No public dashboards yet</p>
+			<p className="max-w-lg text-sm leading-6 text-(--legacy-text-tertiary)">
 				When this author publishes a dashboard, it will appear here with its tags, activity, and latest update.
 			</p>
 		</div>
@@ -490,28 +496,28 @@ function Pagination({
 	const next = Math.min(totalPages, page + 1)
 	return (
 		<nav
-			className="flex items-center justify-between gap-3 border-t border-(--cards-border) pt-5"
+			className="flex items-center justify-between gap-3 border-t border-(--legacy-cards-border) pt-5"
 			aria-label="Dashboard pages"
 		>
 			<NavLink
 				params={{ page: prev, sort }}
 				nav={nav}
 				ariaDisabled={page <= 1}
-				className={`rounded-md border border-(--cards-border) px-3 py-2 text-sm ${
-					page <= 1 ? 'pointer-events-none opacity-40' : 'hover:bg-(--link-hover-bg)'
+				className={`rounded-md border border-(--legacy-cards-border) px-3 py-2 text-sm ${
+					page <= 1 ? 'pointer-events-none opacity-40' : 'hover:bg-(--legacy-link-hover-bg)'
 				}`}
 			>
 				Previous
 			</NavLink>
-			<span className="text-sm text-(--text-tertiary)">
+			<span className="text-sm text-(--legacy-text-tertiary)">
 				Page {page} of {totalPages}
 			</span>
 			<NavLink
 				params={{ page: page >= totalPages ? page : next, sort }}
 				nav={nav}
 				ariaDisabled={page >= totalPages}
-				className={`rounded-md border border-(--cards-border) px-3 py-2 text-sm ${
-					page >= totalPages ? 'pointer-events-none opacity-40' : 'hover:bg-(--link-hover-bg)'
+				className={`rounded-md border border-(--legacy-cards-border) px-3 py-2 text-sm ${
+					page >= totalPages ? 'pointer-events-none opacity-40' : 'hover:bg-(--legacy-link-hover-bg)'
 				}`}
 			>
 				Next
@@ -558,10 +564,10 @@ export function AuthorProfileView({
 			<section className="grid gap-5">
 				<div className="flex flex-wrap items-end justify-between gap-3">
 					<div>
-						<p className="text-[10px] font-semibold tracking-[0.2em] text-(--text-tertiary) uppercase">
+						<p className="text-[10px] font-semibold tracking-[0.2em] text-(--legacy-text-tertiary) uppercase">
 							Published dashboards
 						</p>
-						<h2 className="mt-1 text-2xl leading-tight font-semibold text-(--text-primary)">
+						<h2 className="mt-1 text-2xl leading-tight font-semibold text-(--legacy-text-primary)">
 							Public dashboard library
 						</h2>
 					</div>

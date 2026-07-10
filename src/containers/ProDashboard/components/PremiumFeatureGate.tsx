@@ -23,8 +23,8 @@ export function PremiumFeatureGate({ featureName, paywallReason = 'pro-feature',
 	return (
 		<>
 			<div className="flex min-h-[300px] flex-col items-center justify-center gap-4 p-6 text-center">
-				<div className="flex size-12 items-center justify-center rounded-full bg-(--primary)/10">
-					<Icon name="file-lock-2" height={24} width={24} className="text-(--primary)" />
+				<div className="flex size-12 items-center justify-center rounded-full bg-(--legacy-primary)/10">
+					<Icon name="file-lock-2" height={24} width={24} className="text-(--legacy-primary)" />
 				</div>
 				<div className="space-y-2">
 					<h3 className="text-lg font-semibold pro-text1">{featureName}</h3>

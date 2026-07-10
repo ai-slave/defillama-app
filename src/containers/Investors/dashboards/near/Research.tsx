@@ -83,7 +83,7 @@ function ReportCard({ source, title, url, color }: { source: string; title: stri
 			href={url}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group flex gap-4 rounded-xl border border-(--cards-border) bg-(--cards-bg) p-5 transition-all hover:border-(--sl-accent)/20 hover:shadow-md"
+			className="group flex gap-4 rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5 transition-all hover:border-(--sl-accent)/20 hover:shadow-md"
 		>
 			<div
 				className="flex size-10 shrink-0 items-center justify-center rounded-lg"
@@ -97,7 +97,7 @@ function ReportCard({ source, title, url, color }: { source: string; title: stri
 				<span className="text-xs font-semibold tracking-wider uppercase" style={{ color }}>
 					{source}
 				</span>
-				<span className="text-sm leading-snug font-medium text-(--text-primary) transition-colors group-hover:text-(--sl-accent)">
+				<span className="text-sm leading-snug font-medium text-(--legacy-text-primary) transition-colors group-hover:text-(--sl-accent)">
 					{title}
 				</span>
 			</div>
@@ -106,7 +106,7 @@ function ReportCard({ source, title, url, color }: { source: string; title: stri
 				fill="none"
 				stroke="currentColor"
 				strokeWidth="2"
-				className="mt-1 size-4 shrink-0 text-(--text-tertiary) transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-(--sl-accent)"
+				className="mt-1 size-4 shrink-0 text-(--legacy-text-tertiary) transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-(--sl-accent)"
 			>
 				<path d="M7 17L17 7M17 7H7M17 7v10" />
 			</svg>
@@ -130,23 +130,23 @@ function PaperCard({
 			href={url}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group flex gap-4 rounded-xl border border-(--cards-border) bg-(--cards-bg) p-5 transition-all hover:border-(--sl-accent)/20 hover:shadow-md"
+			className="group flex gap-4 rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5 transition-all hover:border-(--sl-accent)/20 hover:shadow-md"
 		>
 			<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--sl-accent-muted)">
 				<span className="text-sm font-bold text-(--sl-accent)">{icon}</span>
 			</div>
 			<div className="flex flex-1 flex-col gap-1">
-				<span className="text-sm font-semibold text-(--text-primary) transition-colors group-hover:text-(--sl-accent)">
+				<span className="text-sm font-semibold text-(--legacy-text-primary) transition-colors group-hover:text-(--sl-accent)">
 					{title}
 				</span>
-				<span className="text-xs leading-relaxed text-(--text-secondary)">{description}</span>
+				<span className="text-xs leading-relaxed text-(--legacy-text-secondary)">{description}</span>
 			</div>
 			<svg
 				viewBox="0 0 24 24"
 				fill="none"
 				stroke="currentColor"
 				strokeWidth="2"
-				className="mt-1 size-4 shrink-0 text-(--text-tertiary) transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-(--sl-accent)"
+				className="mt-1 size-4 shrink-0 text-(--legacy-text-tertiary) transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-(--sl-accent)"
 			>
 				<path d="M7 17L17 7M17 7H7M17 7v10" />
 			</svg>
@@ -160,9 +160,9 @@ function LinkItem({ title, url }: { title: string; url: string }) {
 			href={url}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group flex items-center justify-between gap-4 rounded-lg border border-(--cards-border) bg-(--cards-bg) px-5 py-3.5 transition-all hover:border-(--sl-accent)/20 hover:shadow-sm"
+			className="group flex items-center justify-between gap-4 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-5 py-3.5 transition-all hover:border-(--sl-accent)/20 hover:shadow-sm"
 		>
-			<span className="text-sm font-medium text-(--text-primary) transition-colors group-hover:text-(--sl-accent)">
+			<span className="text-sm font-medium text-(--legacy-text-primary) transition-colors group-hover:text-(--sl-accent)">
 				{title}
 			</span>
 			<svg
@@ -170,7 +170,7 @@ function LinkItem({ title, url }: { title: string; url: string }) {
 				fill="none"
 				stroke="currentColor"
 				strokeWidth="2"
-				className="size-4 shrink-0 text-(--text-tertiary) transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-(--sl-accent)"
+				className="size-4 shrink-0 text-(--legacy-text-tertiary) transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-(--sl-accent)"
 			>
 				<path d="M7 17L17 7M17 7H7M17 7v10" />
 			</svg>
@@ -181,16 +181,16 @@ function LinkItem({ title, url }: { title: string; url: string }) {
 export default function Research() {
 	return (
 		<div className="flex flex-col gap-8">
-			<div className="flex flex-col gap-2 rounded-xl border border-(--cards-border) bg-(--cards-bg) p-6">
-				<h1 className="heading-sm text-(--text-primary)">Reports & Research</h1>
-				<p className="max-w-2xl text-sm leading-relaxed text-(--text-secondary)">
+			<div className="flex flex-col gap-2 rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-6">
+				<h1 className="heading-sm text-(--legacy-text-primary)">Reports & Research</h1>
+				<p className="max-w-2xl text-sm leading-relaxed text-(--legacy-text-secondary)">
 					Independent analysis, technical papers, and foundational resources covering NEAR&apos;s investment case,
 					architecture, and ecosystem growth.
 				</p>
 			</div>
 
 			<div>
-				<h2 className="mb-4 heading-xs tracking-tight text-(--text-primary)">Reports</h2>
+				<h2 className="mb-4 heading-xs tracking-tight text-(--legacy-text-primary)">Reports</h2>
 				<div className="flex flex-col gap-3">
 					{REPORTS.map((report) => (
 						<ReportCard key={report.title} {...report} />
@@ -199,7 +199,7 @@ export default function Research() {
 			</div>
 
 			<div>
-				<h2 className="mb-4 heading-xs tracking-tight text-(--text-primary)">Papers</h2>
+				<h2 className="mb-4 heading-xs tracking-tight text-(--legacy-text-primary)">Papers</h2>
 				<div className="grid grid-cols-1 gap-3 md:grid-cols-2">
 					{RESEARCH_PAPERS.map((paper) => (
 						<PaperCard key={paper.title} {...paper} />
@@ -208,7 +208,7 @@ export default function Research() {
 			</div>
 
 			<div>
-				<h2 className="mb-4 heading-xs tracking-tight text-(--text-primary)">About NEAR</h2>
+				<h2 className="mb-4 heading-xs tracking-tight text-(--legacy-text-primary)">About NEAR</h2>
 				<div className="flex flex-col gap-2.5">
 					{ABOUT_NEAR.map((resource) => (
 						<LinkItem key={resource.title} {...resource} />

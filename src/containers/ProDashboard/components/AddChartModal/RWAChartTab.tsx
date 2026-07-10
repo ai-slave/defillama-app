@@ -121,14 +121,14 @@ function RWAChartTabInner({
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="space-y-3">
-				<div className="flex rounded-md border border-(--cards-border) bg-(--cards-bg-alt)/40 p-0.5">
+				<div className="flex rounded-md border border-(--legacy-cards-border) bg-(--cards-bg-alt)/40 p-0.5">
 					<button
 						type="button"
 						onClick={() => onRwaModeChange('overview')}
 						className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-all ${
 							rwaMode === 'overview'
-								? 'bg-(--cards-bg) text-(--text-primary) shadow-sm'
-								: 'text-(--text-secondary) hover:text-(--text-primary)'
+								? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm'
+								: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
 						}`}
 					>
 						Chain
@@ -138,8 +138,8 @@ function RWAChartTabInner({
 						onClick={() => onRwaModeChange('asset')}
 						className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-all ${
 							rwaMode === 'asset'
-								? 'bg-(--cards-bg) text-(--text-primary) shadow-sm'
-								: 'text-(--text-secondary) hover:text-(--text-primary)'
+								? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm'
+								: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
 						}`}
 					>
 						By Asset
@@ -187,7 +187,7 @@ function RWAChartTabInner({
 				/>
 			)}
 
-			<div className="min-h-[320px] rounded-md border border-(--cards-border) bg-(--cards-bg)">
+			<div className="min-h-[320px] rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 				{rwaMode === 'overview' ? (
 					<OverviewPreview
 						breakdown={selectedRwaBreakdown}
@@ -264,8 +264,8 @@ function AssetControls({
 							onClick={() => handleMetricToggle(metric)}
 							className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
 								isSelected
-									? 'bg-(--primary) text-white'
-									: 'border border-(--form-control-border) pro-text2 hover:border-(--primary)/40'
+									? 'bg-(--legacy-primary) text-white'
+									: 'border border-(--legacy-form-control-border) pro-text2 hover:border-(--legacy-primary)/40'
 							}`}
 						>
 							{METRIC_LABELS[metric]}

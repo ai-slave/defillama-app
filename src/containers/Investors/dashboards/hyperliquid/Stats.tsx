@@ -176,9 +176,9 @@ function PriceTickerTape({ coins }: { coins: string[] }) {
 		<span
 			key={`${coin}-${i}`}
 			data-coin={coin}
-			className="inline-flex h-full shrink-0 items-center gap-1.5 border-r border-(--cards-border) px-4 text-xs font-medium text-(--text-primary) transition-colors duration-300"
+			className="inline-flex h-full shrink-0 items-center gap-1.5 border-r border-(--legacy-cards-border) px-4 text-xs font-medium text-(--legacy-text-primary) transition-colors duration-300"
 		>
-			<span className="shrink-0 text-(--text-label)">{coin}</span>
+			<span className="shrink-0 text-(--legacy-text-label)">{coin}</span>
 			<span data-price className="shrink-0 overflow-hidden font-jetbrains whitespace-nowrap tabular-nums">
 				--
 			</span>
@@ -186,7 +186,7 @@ function PriceTickerTape({ coins }: { coins: string[] }) {
 	)
 
 	return (
-		<div className="overflow-hidden rounded-lg border border-(--cards-border) bg-(--cards-bg)">
+		<div className="overflow-hidden rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 			<div className="relative h-10 overflow-hidden">
 				<div
 					ref={trackRef}
@@ -202,10 +202,10 @@ function PriceTickerTape({ coins }: { coins: string[] }) {
 
 function MetricCard({ label, value, helper }: { label: string; value: string | number | null; helper?: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<span className="text-xs font-medium tracking-wide text-(--text-label)">{label}</span>
-			<span className="text-2xl font-semibold text-(--text-primary)">{value != null ? value : '—'}</span>
-			{helper ? <span className="text-[11px] text-(--text-label)">{helper}</span> : null}
+		<div className="flex flex-col gap-1 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<span className="text-xs font-medium tracking-wide text-(--legacy-text-label)">{label}</span>
+			<span className="text-2xl font-semibold text-(--legacy-text-primary)">{value != null ? value : '—'}</span>
+			{helper ? <span className="text-[11px] text-(--legacy-text-label)">{helper}</span> : null}
 		</div>
 	)
 }
@@ -272,8 +272,8 @@ function FundingChart({ data }: { data: { name: string; value: number }[] }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--text-label)">Funding Rates (Annualized) — Top 20 by OI</h3>
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">Funding Rates (Annualized) — Top 20 by OI</h3>
 			<div id={id} style={{ width: '100%', height: `${Math.max(300, data.length * 28)}px` }} />
 		</div>
 	)
@@ -287,21 +287,21 @@ function Pagination({ table }: { table: ReturnType<typeof useReactTable<any>> })
 
 	return (
 		<div className="flex items-center justify-between pt-3">
-			<span className="text-xs text-(--text-label)">
+			<span className="text-xs text-(--legacy-text-label)">
 				{from}–{to} of {total}
 			</span>
 			<div className="flex gap-1">
 				<button
 					onClick={() => table.previousPage()}
 					disabled={!table.getCanPreviousPage()}
-					className="rounded px-2.5 py-1 text-xs font-medium text-(--text-label) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30 disabled:hover:bg-transparent"
+					className="rounded px-2.5 py-1 text-xs font-medium text-(--legacy-text-label) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30 disabled:hover:bg-transparent"
 				>
 					Prev
 				</button>
 				<button
 					onClick={() => table.nextPage()}
 					disabled={!table.getCanNextPage()}
-					className="rounded px-2.5 py-1 text-xs font-medium text-(--text-label) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30 disabled:hover:bg-transparent"
+					className="rounded px-2.5 py-1 text-xs font-medium text-(--legacy-text-label) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30 disabled:hover:bg-transparent"
 				>
 					Next
 				</button>
@@ -536,8 +536,8 @@ function OIDistributionChart({ data }: { data: { name: string; value: number }[]
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--text-label)">Open Interest Distribution</h3>
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">Open Interest Distribution</h3>
 			<div id={id} style={{ width: '100%', height: '400px' }} />
 		</div>
 	)
@@ -614,8 +614,8 @@ function VolumeOIScatter({ data }: { data: PerpMarket[] }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--text-label)">
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">
 				Volume vs Open Interest (bubble size = funding magnitude)
 			</h3>
 			<div id={id} style={{ width: '100%', height: '450px' }} />
@@ -641,8 +641,8 @@ function PredictedFundingTable({ data }: { data: PredictedFunding[] }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--text-label)">
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">
 				Predicted Funding Rates (Annualized) — HL vs CEXs
 			</h3>
 			<VirtualTable instance={instance} skipVirtualization />
@@ -667,8 +667,8 @@ function PerpsTable({ data }: { data: PerpMarket[] }) {
 	})
 
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--text-label)">Perpetual Markets</h3>
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">Perpetual Markets</h3>
 			<VirtualTable instance={instance} skipVirtualization />
 			<Pagination table={instance} />
 		</div>
@@ -691,8 +691,8 @@ function SpotTable({ data }: { data: SpotMarket[] }) {
 	})
 
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--text-label)">Spot Markets</h3>
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">Spot Markets</h3>
 			<VirtualTable instance={instance} skipVirtualization />
 			<Pagination table={instance} />
 		</div>

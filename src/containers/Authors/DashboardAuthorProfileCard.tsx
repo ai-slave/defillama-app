@@ -265,7 +265,7 @@ export function DashboardAuthorProfileCard() {
 					<span className="text-base font-medium text-(--sub-ink-primary) dark:text-white">Public Profile</span>
 				</div>
 				{profile?.slug ? (
-					<BasicLink href={publicHref} className="text-sm font-medium text-(--link-text) hover:underline">
+					<BasicLink href={publicHref} className="text-sm font-medium text-(--legacy-link-text) hover:underline">
 						View profile
 					</BasicLink>
 				) : null}

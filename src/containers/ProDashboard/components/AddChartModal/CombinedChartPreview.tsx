@@ -102,10 +102,14 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 	if (series.length === 0 && composerItems.length > 0) {
 		return (
 			<div className="flex size-full items-center justify-center">
-				<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-4 text-center">
+				<div className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4 text-center">
 					{anyLoading ? (
 						<>
-							<svg className="mx-auto mb-2 size-5 animate-spin text-(--text-tertiary)" fill="none" viewBox="0 0 24 24">
+							<svg
+								className="mx-auto mb-2 size-5 animate-spin text-(--legacy-text-tertiary)"
+								fill="none"
+								viewBox="0 0 24 24"
+							>
 								<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
 								<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
 							</svg>
@@ -137,7 +141,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 		<div className="size-full">
 			<Suspense
 				fallback={
-					<div className="h-[450px] w-full animate-pulse rounded-md border border-(--cards-border) bg-(--cards-bg)"></div>
+					<div className="h-[450px] w-full animate-pulse rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)"></div>
 				}
 			>
 				<MultiSeriesChart

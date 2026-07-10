@@ -32,7 +32,7 @@ export function ResetAllYieldFilters({
 			className={
 				nestedMenu
 					? nestedMenuActionStyles
-					: 'rounded-md bg-(--btn-bg) px-3 py-2 text-xs hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg) disabled:cursor-not-allowed disabled:opacity-40'
+					: 'rounded-md bg-(--legacy-btn-bg) px-3 py-2 text-xs hover:bg-(--legacy-btn-hover-bg) focus-visible:bg-(--legacy-btn-hover-bg) disabled:cursor-not-allowed disabled:opacity-40'
 			}
 		>
 			Reset all filters

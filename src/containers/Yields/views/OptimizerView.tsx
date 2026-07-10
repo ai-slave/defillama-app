@@ -170,17 +170,17 @@ export const BorrowAggregatorAdvanced = ({ chainList, lendingProtocols, searchDa
 			/>
 
 			{hasSelection && isLoading ? (
-				<p className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 text-center">
+				<p className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3 text-center">
 					Loading lending routes...
 				</p>
 			) : hasSelection && isError ? (
-				<p className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 text-center">
+				<p className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3 text-center">
 					Couldn't load lending routes.
 				</p>
 			) : poolsData.length > 0 ? (
 				<YieldsOptimizerTable data={poolsDataWithAmounts} />
 			) : (
-				<p className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 text-center">
+				<p className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3 text-center">
 					Given a token to use for collateral and a token to borrow, this calculator will look at all the lending
 					protocols
 					<br />

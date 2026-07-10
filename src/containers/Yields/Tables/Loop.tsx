@@ -132,7 +132,7 @@ const columns = [
 			return (
 				<span
 					data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-					className="data-[strike=true]:text-(--text-disabled)"
+					className="data-[strike=true]:text-(--legacy-text-disabled)"
 				>
 					{value == null ? '' : formattedNum(Number(value) * 100) + '%'}
 				</span>
@@ -152,7 +152,7 @@ const columns = [
 			return (
 				<span
 					data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-					className="data-[strike=true]:text-(--text-disabled)"
+					className="data-[strike=true]:text-(--legacy-text-disabled)"
 				>
 					{info.getValue() == null ? '' : formattedNum(info.getValue(), true)}
 				</span>
@@ -171,7 +171,7 @@ const columns = [
 			return (
 				<span
 					data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-					className="data-[strike=true]:text-(--text-disabled)"
+					className="data-[strike=true]:text-(--legacy-text-disabled)"
 				>
 					{info.getValue() == null ? '' : formattedNum(info.getValue(), true)}
 				</span>
@@ -194,7 +194,7 @@ const columns = [
 			return (
 				<span
 					data-strike={info.row.original.strikeTvl ?? 'false'}
-					className="flex justify-end gap-1 data-[strike=true]:text-(--text-disabled)"
+					className="flex justify-end gap-1 data-[strike=true]:text-(--legacy-text-disabled)"
 				>
 					{['Morpho Compound', 'Morpho Aave'].includes(info.row.original.project) ? (
 						<QuestionHelper

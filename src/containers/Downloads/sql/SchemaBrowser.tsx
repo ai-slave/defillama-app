@@ -221,7 +221,7 @@ function BrowserHeader({
 						type="button"
 						onClick={() => onSearchChange('')}
 						aria-label="Clear search"
-						className="absolute top-1/2 right-1 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-(--text-tertiary) hover:text-(--text-primary)"
+						className="absolute top-1/2 right-1 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)"
 					>
 						<Icon name="x" className="size-3" />
 					</button>
@@ -232,7 +232,7 @@ function BrowserHeader({
 				<div
 					role="tablist"
 					aria-label="Dataset kind"
-					className="inline-flex items-center gap-0.5 rounded-md border border-(--divider) bg-surface p-0.5"
+					className="inline-flex items-center gap-0.5 rounded-md border border-(--legacy-divider) bg-surface p-0.5"
 				>
 					{(Object.keys(FILTER_LABELS) as FilterKind[]).map((k) => {
 						const active = filter === k
@@ -245,8 +245,8 @@ function BrowserHeader({
 								onClick={() => onFilterChange(k)}
 								className={`rounded-sm px-2.5 py-1 text-xs font-medium transition-colors ${
 									active
-										? 'bg-(--primary) text-white shadow-sm'
-										: 'text-(--text-secondary) hover:bg-hover-row hover:text-(--text-primary)'
+										? 'bg-(--legacy-primary) text-white shadow-sm'
+										: 'text-(--legacy-text-secondary) hover:bg-hover-row hover:text-(--legacy-text-primary)'
 								}`}
 							>
 								{FILTER_LABELS[k]}
@@ -254,7 +254,7 @@ function BrowserHeader({
 						)
 					})}
 				</div>
-				<p className="text-[11px] text-(--text-tertiary) tabular-nums">
+				<p className="text-[11px] text-(--legacy-text-tertiary) tabular-nums">
 					{totalVisible === totalAvailable ? `${totalAvailable} tables` : `${totalVisible} of ${totalAvailable}`}
 				</p>
 			</div>
@@ -264,12 +264,12 @@ function BrowserHeader({
 
 function EmptyResults({ search }: { search: string }) {
 	return (
-		<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--divider) bg-surface/40 px-6 py-12 text-center">
-			<Icon name="search" className="size-5 text-(--text-tertiary)" />
-			<p className="text-sm text-(--text-secondary)">
+		<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--legacy-divider) bg-surface/40 px-6 py-12 text-center">
+			<Icon name="search" className="size-5 text-(--legacy-text-tertiary)" />
+			<p className="text-sm text-(--legacy-text-secondary)">
 				{search ? (
 					<>
-						No tables match <span className="font-mono text-(--text-primary)">"{search}"</span>.
+						No tables match <span className="font-mono text-(--legacy-text-primary)">"{search}"</span>.
 					</>
 				) : (
 					'No tables match these filters.'
@@ -308,20 +308,20 @@ function CategorySection({
 				type="button"
 				onClick={onToggle}
 				aria-expanded={!collapsed}
-				className="group flex items-baseline gap-2 border-b border-(--divider) pb-1.5 text-left"
+				className="group flex items-baseline gap-2 border-b border-(--legacy-divider) pb-1.5 text-left"
 			>
 				<Icon
 					name="chevron-right"
-					className={`size-3 shrink-0 text-(--text-tertiary) transition-transform duration-150 group-hover:text-(--text-primary) ${
+					className={`size-3 shrink-0 text-(--legacy-text-tertiary) transition-transform duration-150 group-hover:text-(--legacy-text-primary) ${
 						collapsed ? '' : 'rotate-90'
 					}`}
 				/>
-				<h3 className="text-sm font-semibold tracking-tight text-(--text-primary)">{category}</h3>
-				<span className="text-[11px] text-(--text-tertiary) tabular-nums">{items.length}</span>
+				<h3 className="text-sm font-semibold tracking-tight text-(--legacy-text-primary)">{category}</h3>
+				<span className="text-[11px] text-(--legacy-text-tertiary) tabular-nums">{items.length}</span>
 			</button>
 
 			{!collapsed && (
-				<ul className="flex flex-col divide-y divide-(--divider)/50">
+				<ul className="flex flex-col divide-y divide-(--legacy-divider)/50">
 					{items.map((item) =>
 						item.kind === 'flat' ? (
 							<li key={item.id}>
@@ -385,11 +385,13 @@ function FlatRow({
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="flex min-w-0 flex-1 flex-col gap-1">
 					<div className="flex flex-wrap items-center gap-2">
-						<span className="font-mono text-[13.5px] font-semibold text-(--text-primary)">{entry.tableName}</span>
+						<span className="font-mono text-[13.5px] font-semibold text-(--legacy-text-primary)">
+							{entry.tableName}
+						</span>
 						<KindTag kind="flat" />
 						{loaded ? <LoadedPill rowCount={loaded.rowCount} /> : <AutoLoadHint />}
 					</div>
-					<p className="text-xs text-(--text-secondary)">{entry.description}</p>
+					<p className="text-xs text-(--legacy-text-secondary)">{entry.description}</p>
 				</div>
 				<RowActions
 					onInsert={() => onReplaceSql(snippet)}
@@ -406,7 +408,7 @@ function FlatRow({
 			{columns.length > 0 ? (
 				<ColumnChips columns={columns} onInsertColumn={(name) => onInsertAtCursor(name)} />
 			) : (
-				<p className="text-[11px] text-(--text-tertiary) italic">Columns resolved on load.</p>
+				<p className="text-[11px] text-(--legacy-text-tertiary) italic">Columns resolved on load.</p>
 			)}
 		</div>
 	)
@@ -451,13 +453,13 @@ function TsRow({
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="flex min-w-0 flex-1 flex-col gap-1">
 					<div className="flex flex-wrap items-center gap-2">
-						<span className="font-mono text-[13.5px] font-semibold text-(--text-primary)">
-							{param ? resolvedName : <span className="text-(--text-secondary)">{entry.displayName}</span>}
+						<span className="font-mono text-[13.5px] font-semibold text-(--legacy-text-primary)">
+							{param ? resolvedName : <span className="text-(--legacy-text-secondary)">{entry.displayName}</span>}
 						</span>
 						<KindTag kind="ts" />
 						{loaded ? <LoadedPill rowCount={loaded.rowCount} /> : null}
 					</div>
-					<p className="text-xs text-(--text-secondary)">{entry.description}</p>
+					<p className="text-xs text-(--legacy-text-secondary)">{entry.description}</p>
 				</div>
 				<RowActions
 					onInsert={() => onReplaceSql(snippet)}
@@ -485,7 +487,7 @@ function TsRow({
 			{columns.length > 0 ? (
 				<ColumnChips columns={columns} onInsertColumn={(name) => onInsertAtCursor(name)} />
 			) : shape === 'dynamic' ? (
-				<p className="text-[11px] text-(--text-tertiary) italic">Columns depend on response — load to see.</p>
+				<p className="text-[11px] text-(--legacy-text-tertiary) italic">Columns depend on response — load to see.</p>
 			) : null}
 		</div>
 	)
@@ -508,10 +510,12 @@ function ColumnChips({
 						title={
 							c.type ? `${c.name} · ${c.type}\nClick to insert column name` : `${c.name}\nClick to insert column name`
 						}
-						className="group inline-flex items-center gap-1 rounded-sm border border-(--divider) bg-surface px-1.5 py-0.5 transition-colors hover:border-(--primary)/50 hover:bg-(--primary)/5"
+						className="group inline-flex items-center gap-1 rounded-sm border border-(--legacy-divider) bg-surface px-1.5 py-0.5 transition-colors hover:border-(--legacy-primary)/50 hover:bg-(--legacy-primary)/5"
 					>
 						<TypeBadge kind={inferColumnKind(c.type)} />
-						<span className="font-mono text-[11.5px] text-(--text-primary) group-hover:text-(--primary)">{c.name}</span>
+						<span className="font-mono text-[11.5px] text-(--legacy-text-primary) group-hover:text-(--legacy-primary)">
+							{c.name}
+						</span>
 					</button>
 				</li>
 			))}
@@ -542,14 +546,14 @@ function RowActions({
 }) {
 	return (
 		<div className="flex shrink-0 items-center gap-1.5">
-			{disabledHint ? <span className="mr-1 text-[10px] text-(--text-tertiary)">{disabledHint}</span> : null}
+			{disabledHint ? <span className="mr-1 text-[10px] text-(--legacy-text-tertiary)">{disabledHint}</span> : null}
 			<button
 				type="button"
 				onClick={onCopy}
 				disabled={!canCopy}
 				aria-label="Copy table name"
 				title="Copy table name"
-				className="flex size-7 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:cursor-not-allowed disabled:opacity-40"
+				className="flex size-7 items-center justify-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-40"
 			>
 				<Icon name="copy" className="size-3.5" />
 			</button>
@@ -558,7 +562,7 @@ function RowActions({
 				onClick={onLoad}
 				disabled={!canLoad || alreadyLoaded}
 				title={alreadyLoaded ? 'Already loaded in this session' : 'Load CSV into session'}
-				className="inline-flex items-center gap-1.5 rounded-md border border-(--divider) bg-surface px-2.5 py-1 text-xs font-medium text-(--text-primary) transition-colors hover:border-(--primary)/40 hover:text-(--primary) disabled:cursor-not-allowed disabled:opacity-40"
+				className="inline-flex items-center gap-1.5 rounded-md border border-(--legacy-divider) bg-surface px-2.5 py-1 text-xs font-medium text-(--legacy-text-primary) transition-colors hover:border-(--legacy-primary)/40 hover:text-(--legacy-primary) disabled:cursor-not-allowed disabled:opacity-40"
 			>
 				{isLoading ? <LoadingSpinner size={10} /> : <Icon name="download-cloud" className="size-3" />}
 				{alreadyLoaded ? 'Loaded' : 'Load'}
@@ -568,7 +572,7 @@ function RowActions({
 				onClick={onInsert}
 				disabled={!canInsert}
 				title="Insert SELECT snippet at cursor"
-				className="inline-flex items-center gap-1.5 rounded-md bg-(--primary) px-2.5 py-1 text-xs font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+				className="inline-flex items-center gap-1.5 rounded-md bg-(--legacy-primary) px-2.5 py-1 text-xs font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
 			>
 				<Icon name="arrow-right" className="size-3" />
 				Insert
@@ -601,12 +605,16 @@ function ParamCombobox({
 	const current = options.find((o) => o.value === value)
 
 	if (options.length === 0) {
-		return <p className="text-[11px] text-(--text-tertiary) italic">No {paramLabel.toLowerCase()} options available.</p>
+		return (
+			<p className="text-[11px] text-(--legacy-text-tertiary) italic">
+				No {paramLabel.toLowerCase()} options available.
+			</p>
+		)
 	}
 
 	return (
 		<div className="flex items-center gap-2 text-xs">
-			<span className="shrink-0 text-(--text-tertiary)">{paramLabel}:</span>
+			<span className="shrink-0 text-(--legacy-text-tertiary)">{paramLabel}:</span>
 			<Ariakit.ComboboxProvider
 				resetValueOnHide
 				setValue={(v) => {
@@ -622,8 +630,8 @@ function ParamCombobox({
 					<Ariakit.Select
 						className={`inline-flex max-w-[220px] min-w-[160px] items-center justify-between gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors ${
 							value
-								? 'border-(--primary)/50 bg-(--primary)/5 text-(--primary)'
-								: 'border-(--divider) bg-surface text-(--text-secondary) hover:border-(--primary)/40 hover:text-(--text-primary)'
+								? 'border-(--legacy-primary)/50 bg-(--legacy-primary)/5 text-(--legacy-primary)'
+								: 'border-(--legacy-divider) bg-surface text-(--legacy-text-secondary) hover:border-(--legacy-primary)/40 hover:text-(--legacy-text-primary)'
 						}`}
 					>
 						<span className="truncate font-mono">{current?.label ?? `Pick ${paramLabel.toLowerCase()}…`}</span>
@@ -636,7 +644,7 @@ function ParamCombobox({
 						unmountOnHide
 						className="z-50 flex max-h-80 w-[min(320px,90vw)] flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-lg"
 					>
-						<div className="relative border-b border-(--divider) p-2">
+						<div className="relative border-b border-(--legacy-divider) p-2">
 							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
 							<Ariakit.Combobox
 								autoSelect
@@ -646,19 +654,19 @@ function ParamCombobox({
 						</div>
 						<Ariakit.ComboboxList className="overflow-y-auto">
 							{matches.length === 0 ? (
-								<p className="px-3 py-4 text-center text-xs text-(--text-tertiary)">No matches.</p>
+								<p className="px-3 py-4 text-center text-xs text-(--legacy-text-tertiary)">No matches.</p>
 							) : (
 								matches.map((opt) => (
 									<Ariakit.SelectItem
 										key={opt.value}
 										value={opt.value}
 										render={<Ariakit.ComboboxItem />}
-										className={`flex cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-xs text-(--text-primary) data-active-item:bg-hover-row ${
-											opt.isChild ? 'pl-6 text-(--text-secondary)' : ''
+										className={`flex cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-xs text-(--legacy-text-primary) data-active-item:bg-hover-row ${
+											opt.isChild ? 'pl-6 text-(--legacy-text-secondary)' : ''
 										}`}
 									>
 										<span className="truncate">{opt.label}</span>
-										<Ariakit.SelectItemCheck className="ml-auto text-(--primary)" />
+										<Ariakit.SelectItemCheck className="ml-auto text-(--legacy-primary)" />
 									</Ariakit.SelectItem>
 								))
 							)}
@@ -671,12 +679,12 @@ function ParamCombobox({
 					type="button"
 					onClick={() => onChange('')}
 					aria-label="Clear selection"
-					className="text-[11px] text-(--text-tertiary) underline-offset-2 hover:text-(--text-primary) hover:underline"
+					className="text-[11px] text-(--legacy-text-tertiary) underline-offset-2 hover:text-(--legacy-text-primary) hover:underline"
 				>
 					clear
 				</button>
 			) : null}
-			<span className="ml-auto text-[10px] text-(--text-tertiary) tabular-nums">
+			<span className="ml-auto text-[10px] text-(--legacy-text-tertiary) tabular-nums">
 				{options.length.toLocaleString()} option{options.length === 1 ? '' : 's'}
 			</span>
 		</div>
@@ -685,7 +693,7 @@ function ParamCombobox({
 
 function KindTag({ kind }: { kind: 'flat' | 'ts' }) {
 	return (
-		<span className="rounded-sm bg-hover-row px-1.5 py-px text-[9px] font-semibold tracking-wider text-(--text-tertiary) uppercase">
+		<span className="rounded-sm bg-hover-row px-1.5 py-px text-[9px] font-semibold tracking-wider text-(--legacy-text-tertiary) uppercase">
 			{kind === 'flat' ? 'Dataset' : 'Time series'}
 		</span>
 	)
@@ -695,9 +703,9 @@ function AutoLoadHint() {
 	return (
 		<span
 			title="Referenced tables are auto-loaded when you run a query that references them."
-			className="inline-flex items-center gap-1 text-[10px] text-(--text-tertiary)"
+			className="inline-flex items-center gap-1 text-[10px] text-(--legacy-text-tertiary)"
 		>
-			<span aria-hidden className="inline-block size-1 rounded-full bg-(--text-tertiary)/60" />
+			<span aria-hidden className="inline-block size-1 rounded-full bg-(--legacy-text-tertiary)/60" />
 			auto-loads on run
 		</span>
 	)

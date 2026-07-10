@@ -53,12 +53,12 @@ const fmtPct = (n?: number | null): string | null => {
 
 const changeColor = (n?: number | null) =>
 	typeof n !== 'number'
-		? 'text-(--text-tertiary)'
+		? 'text-(--legacy-text-tertiary)'
 		: n > 0
 			? 'text-[#16a34a]'
 			: n < 0
 				? 'text-[#dc2626]'
-				: 'text-(--text-tertiary)'
+				: 'text-(--legacy-text-tertiary)'
 
 function fetchEntityPreview(
 	type: ArticleEntityType,
@@ -78,7 +78,7 @@ function ChangeChip({ value, label }: { value?: number | null; label: string }) 
 	return (
 		<span className={`inline-flex items-baseline gap-1 ${changeColor(value)}`}>
 			<span className="text-[10px] font-medium tabular-nums">{text}</span>
-			<span className="text-[9px] tracking-wider text-(--text-tertiary) uppercase">{label}</span>
+			<span className="text-[9px] tracking-wider text-(--legacy-text-tertiary) uppercase">{label}</span>
 		</span>
 	)
 }
@@ -86,8 +86,8 @@ function ChangeChip({ value, label }: { value?: number | null; label: string }) 
 function MetricRow({ label, value }: { label: string; value: ReactNode }) {
 	return (
 		<span className="flex items-baseline justify-between gap-3">
-			<span className="text-[10px] tracking-wider text-(--text-tertiary) uppercase">{label}</span>
-			<span className="text-xs text-(--text-primary) tabular-nums">{value}</span>
+			<span className="text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">{label}</span>
+			<span className="text-xs text-(--legacy-text-primary) tabular-nums">{value}</span>
 		</span>
 	)
 }
@@ -104,14 +104,14 @@ function PreviewBody({
 	if (loading && !preview) {
 		return (
 			<span className="block px-3 pb-3">
-				<span className="block h-3 w-2/3 animate-pulse rounded bg-(--cards-border)" />
-				<span className="mt-2 block h-3 w-1/2 animate-pulse rounded bg-(--cards-border)" />
+				<span className="block h-3 w-2/3 animate-pulse rounded bg-(--legacy-cards-border)" />
+				<span className="mt-2 block h-3 w-1/2 animate-pulse rounded bg-(--legacy-cards-border)" />
 			</span>
 		)
 	}
 	if (!preview) {
 		return (
-			<span className="block px-3 pb-3 text-xs leading-relaxed text-(--text-secondary)">
+			<span className="block px-3 pb-3 text-xs leading-relaxed text-(--legacy-text-secondary)">
 				{TYPE_HINT[entity.entityType] ?? 'Open the linked DefiLlama page.'}
 			</span>
 		)
@@ -122,14 +122,16 @@ function PreviewBody({
 			return (
 				<span className="flex flex-col gap-2 px-3 pb-3">
 					{preview.category ? (
-						<span className="self-start rounded-full border border-(--cards-border) px-2 py-0.5 text-[10px] tracking-wider text-(--text-tertiary) uppercase">
+						<span className="self-start rounded-full border border-(--legacy-cards-border) px-2 py-0.5 text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">
 							{preview.category}
 						</span>
 					) : null}
 					{tvl ? (
 						<span className="flex items-baseline gap-2">
-							<span className="text-2xl leading-none font-semibold text-(--text-primary) tabular-nums">{tvl}</span>
-							<span className="text-[10px] tracking-wider text-(--text-tertiary) uppercase">TVL</span>
+							<span className="text-2xl leading-none font-semibold text-(--legacy-text-primary) tabular-nums">
+								{tvl}
+							</span>
+							<span className="text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">TVL</span>
 						</span>
 					) : null}
 					<span className="flex flex-wrap gap-x-3 gap-y-1">
@@ -142,7 +144,7 @@ function PreviewBody({
 							{preview.chains.slice(0, 6).map((c) => (
 								<span
 									key={c}
-									className="rounded border border-(--cards-border) px-1.5 py-px text-[9px] text-(--text-tertiary)"
+									className="rounded border border-(--legacy-cards-border) px-1.5 py-px text-[9px] text-(--legacy-text-tertiary)"
 								>
 									{c}
 								</span>
@@ -158,8 +160,10 @@ function PreviewBody({
 				<span className="flex flex-col gap-2 px-3 pb-3">
 					{tvl ? (
 						<span className="flex items-baseline gap-2">
-							<span className="text-2xl leading-none font-semibold text-(--text-primary) tabular-nums">{tvl}</span>
-							<span className="text-[10px] tracking-wider text-(--text-tertiary) uppercase">TVL</span>
+							<span className="text-2xl leading-none font-semibold text-(--legacy-text-primary) tabular-nums">
+								{tvl}
+							</span>
+							<span className="text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">TVL</span>
 						</span>
 					) : null}
 					<span className="flex flex-wrap gap-x-3 gap-y-1">
@@ -178,26 +182,28 @@ function PreviewBody({
 				<span className="flex flex-col gap-2 px-3 pb-3">
 					<span className="flex flex-wrap gap-1">
 						{preview.pegType ? (
-							<span className="rounded-full border border-(--cards-border) px-2 py-0.5 text-[10px] tracking-wider text-(--text-tertiary) uppercase">
+							<span className="rounded-full border border-(--legacy-cards-border) px-2 py-0.5 text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">
 								{preview.pegType}
 							</span>
 						) : null}
 						{preview.pegMechanism ? (
-							<span className="rounded-full border border-(--cards-border) px-2 py-0.5 text-[10px] tracking-wider text-(--text-tertiary) uppercase">
+							<span className="rounded-full border border-(--legacy-cards-border) px-2 py-0.5 text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">
 								{preview.pegMechanism}
 							</span>
 						) : null}
 					</span>
 					{circ ? (
 						<span className="flex items-baseline gap-2">
-							<span className="text-2xl leading-none font-semibold text-(--text-primary) tabular-nums">{circ}</span>
-							<span className="text-[10px] tracking-wider text-(--text-tertiary) uppercase">Circulating</span>
+							<span className="text-2xl leading-none font-semibold text-(--legacy-text-primary) tabular-nums">
+								{circ}
+							</span>
+							<span className="text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">Circulating</span>
 						</span>
 					) : null}
 					<ChangeChip value={preview.change7d} label="7d" />
 					{preview.topChains && preview.topChains.length > 0 ? (
 						<span className="flex flex-col gap-0.5">
-							<span className="text-[10px] tracking-wider text-(--text-tertiary) uppercase">Top chains</span>
+							<span className="text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">Top chains</span>
 							{preview.topChains.slice(0, 3).map((c) => (
 								<MetricRow key={c.name} label={c.name} value={fmtCompactUsd(c.circulating)} />
 							))}
@@ -210,22 +216,22 @@ function PreviewBody({
 			return (
 				<span className="flex flex-col gap-2 px-3 pb-3">
 					<span className="flex items-baseline gap-2">
-						<span className="text-2xl leading-none font-semibold text-(--text-primary) tabular-nums">
+						<span className="text-2xl leading-none font-semibold text-(--legacy-text-primary) tabular-nums">
 							{fmtCompactUsd(preview.tvl) ?? '—'}
 						</span>
-						<span className="text-[10px] tracking-wider text-(--text-tertiary) uppercase">Total TVL</span>
+						<span className="text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">Total TVL</span>
 					</span>
 					{typeof preview.protocolCount === 'number' ? (
 						<MetricRow label="Protocols" value={preview.protocolCount.toLocaleString()} />
 					) : null}
 					{preview.topProtocols && preview.topProtocols.length > 0 ? (
 						<span className="mt-1 flex flex-col gap-1">
-							<span className="text-[10px] tracking-wider text-(--text-tertiary) uppercase">Top protocols</span>
+							<span className="text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">Top protocols</span>
 							{preview.topProtocols.map((p) => (
 								<span key={p.slug} className="flex items-center gap-2">
 									{p.logo ? <img src={p.logo} alt="" className="size-4 shrink-0 rounded-full" loading="lazy" /> : null}
-									<span className="truncate text-xs text-(--text-secondary)">{p.name}</span>
-									<span className="ml-auto text-[11px] text-(--text-tertiary) tabular-nums">
+									<span className="truncate text-xs text-(--legacy-text-secondary)">{p.name}</span>
+									<span className="ml-auto text-[11px] text-(--legacy-text-tertiary) tabular-nums">
 										{fmtCompactUsd(p.tvl)}
 									</span>
 								</span>
@@ -246,18 +252,23 @@ function PreviewBody({
 				<span className="flex flex-col gap-2 px-3 pb-3">
 					{tvl ? (
 						<span className="flex items-baseline gap-2">
-							<span className="text-2xl leading-none font-semibold text-(--text-primary) tabular-nums">{tvl}</span>
-							<span className="text-[10px] tracking-wider text-(--text-tertiary) uppercase">Reserves</span>
+							<span className="text-2xl leading-none font-semibold text-(--legacy-text-primary) tabular-nums">
+								{tvl}
+							</span>
+							<span className="text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">Reserves</span>
 						</span>
 					) : null}
 					{cleanRatio !== null ? (
 						<span className="flex flex-col gap-1">
-							<span className="flex items-baseline justify-between gap-2 text-[10px] tracking-wider text-(--text-tertiary) uppercase">
+							<span className="flex items-baseline justify-between gap-2 text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">
 								<span>Clean assets {clean}</span>
 								<span className="tabular-nums">{(cleanRatio * 100).toFixed(0)}%</span>
 							</span>
-							<span className="block h-1 overflow-hidden rounded bg-(--cards-border)">
-								<span className="block h-full rounded bg-(--link-text)" style={{ width: `${cleanRatio * 100}%` }} />
+							<span className="block h-1 overflow-hidden rounded bg-(--legacy-cards-border)">
+								<span
+									className="block h-full rounded bg-(--legacy-link-text)"
+									style={{ width: `${cleanRatio * 100}%` }}
+								/>
 							</span>
 						</span>
 					) : null}
@@ -278,10 +289,10 @@ function PreviewBody({
 				<span className="flex flex-col gap-2 px-3 pb-3">
 					{preview.volume24h != null ? (
 						<span className="flex items-baseline gap-2">
-							<span className="text-2xl leading-none font-semibold text-(--text-primary) tabular-nums">
+							<span className="text-2xl leading-none font-semibold text-(--legacy-text-primary) tabular-nums">
 								{fmtCompactUsd(preview.volume24h) ?? '—'}
 							</span>
-							<span className="text-[10px] tracking-wider text-(--text-tertiary) uppercase">24h volume</span>
+							<span className="text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">24h volume</span>
 						</span>
 					) : null}
 					{preview.volume7d != null ? (
@@ -293,7 +304,7 @@ function PreviewBody({
 							{preview.chains.slice(0, 6).map((c) => (
 								<span
 									key={c}
-									className="rounded border border-(--cards-border) px-1.5 py-px text-[9px] text-(--text-tertiary)"
+									className="rounded border border-(--legacy-cards-border) px-1.5 py-px text-[9px] text-(--legacy-text-tertiary)"
 								>
 									{c}
 								</span>
@@ -320,12 +331,12 @@ function PreviewBody({
 				<span className="flex flex-col gap-2 px-3 pb-3">
 					<span className="flex flex-wrap gap-1">
 						{preview.classification ? (
-							<span className="rounded-full border border-(--cards-border) px-2 py-0.5 text-[10px] tracking-wider text-(--text-tertiary) uppercase">
+							<span className="rounded-full border border-(--legacy-cards-border) px-2 py-0.5 text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">
 								{preview.classification}
 							</span>
 						) : null}
 						{preview.bridgeHack ? (
-							<span className="rounded-full border border-(--cards-border) px-2 py-0.5 text-[10px] tracking-wider text-(--text-tertiary) uppercase">
+							<span className="rounded-full border border-(--legacy-cards-border) px-2 py-0.5 text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">
 								Bridge
 							</span>
 						) : null}
@@ -333,7 +344,7 @@ function PreviewBody({
 					{lossLabel ? (
 						<span className="flex items-baseline gap-2">
 							<span className="text-2xl leading-none font-semibold text-[#dc2626] tabular-nums">{lossLabel}</span>
-							<span className="text-[10px] tracking-wider text-(--text-tertiary) uppercase">Lost</span>
+							<span className="text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">Lost</span>
 						</span>
 					) : null}
 					{dateLabel ? <MetricRow label="Date" value={dateLabel} /> : null}
@@ -345,7 +356,7 @@ function PreviewBody({
 							value={
 								<span className="text-[#16a34a]">
 									{returnedLabel}
-									<span className="ml-1 text-(--text-tertiary)">({(recoveredPct * 100).toFixed(0)}%)</span>
+									<span className="ml-1 text-(--legacy-text-tertiary)">({(recoveredPct * 100).toFixed(0)}%)</span>
 								</span>
 							}
 						/>
@@ -355,7 +366,7 @@ function PreviewBody({
 							{preview.chains.slice(0, 6).map((c) => (
 								<span
 									key={c}
-									className="rounded border border-(--cards-border) px-1.5 py-px text-[9px] text-(--text-tertiary)"
+									className="rounded border border-(--legacy-cards-border) px-1.5 py-px text-[9px] text-(--legacy-text-tertiary)"
 								>
 									{c}
 								</span>
@@ -367,7 +378,7 @@ function PreviewBody({
 		}
 		case 'metric': {
 			return (
-				<span className="block px-3 pb-3 text-xs leading-relaxed text-(--text-secondary)">
+				<span className="block px-3 pb-3 text-xs leading-relaxed text-(--legacy-text-secondary)">
 					{preview.description ?? TYPE_HINT[entity.entityType]}
 				</span>
 			)
@@ -411,7 +422,7 @@ export function EntityPreviewLink({
 						href={entity.route}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="article-entity-link inline-flex items-baseline gap-1 align-baseline font-medium text-(--link-text) no-underline decoration-(--link-text)/30 underline-offset-[3px] hover:underline"
+						className="article-entity-link inline-flex items-baseline gap-1 align-baseline font-medium text-(--legacy-link-text) no-underline decoration-(--legacy-link-text)/30 underline-offset-[3px] hover:underline"
 					/>
 				}
 			>
@@ -430,19 +441,21 @@ export function EntityPreviewLink({
 				portal
 				gutter={8}
 				unmountOnHide
-				className="article-entity-popover z-50 w-80 rounded-md border border-(--cards-border) bg-(--cards-bg) shadow-xl outline-none"
+				className="article-entity-popover z-50 w-80 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-xl outline-none"
 			>
 				<div className="flex items-center gap-3 px-3 pt-3 pb-2">
-					<span className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-(--cards-border) bg-(--app-bg)">
+					<span className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-(--legacy-cards-border) bg-(--legacy-app-bg)">
 						{logo ? (
 							<img src={logo} alt="" height={36} width={36} className="size-full object-cover" />
 						) : (
-							<span className="text-[10px] text-(--text-tertiary)">{entity.label.slice(0, 2).toUpperCase()}</span>
+							<span className="text-[10px] text-(--legacy-text-tertiary)">
+								{entity.label.slice(0, 2).toUpperCase()}
+							</span>
 						)}
 					</span>
 					<div className="flex min-w-0 flex-col">
-						<span className="truncate text-sm font-semibold text-(--text-primary)">{entity.label}</span>
-						<span className="truncate text-xs text-(--text-tertiary)">{typeLabel}</span>
+						<span className="truncate text-sm font-semibold text-(--legacy-text-primary)">{entity.label}</span>
+						<span className="truncate text-xs text-(--legacy-text-tertiary)">{typeLabel}</span>
 					</div>
 				</div>
 				<PreviewBody entity={entity} preview={preview} loading={loading} />
@@ -450,10 +463,10 @@ export function EntityPreviewLink({
 					href={entity.route}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="flex items-center justify-between gap-2 border-t border-(--cards-border) px-3 py-2 text-xs no-underline hover:bg-(--app-bg)"
+					className="flex items-center justify-between gap-2 border-t border-(--legacy-cards-border) px-3 py-2 text-xs no-underline hover:bg-(--legacy-app-bg)"
 				>
-					<span className="text-(--text-tertiary)">Open page</span>
-					<span className="truncate text-(--link-text)">{entity.route}</span>
+					<span className="text-(--legacy-text-tertiary)">Open page</span>
+					<span className="truncate text-(--legacy-link-text)">{entity.route}</span>
 				</a>
 			</Ariakit.Hovercard>
 		</Ariakit.HovercardProvider>

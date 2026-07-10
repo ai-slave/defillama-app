@@ -76,12 +76,12 @@ export function ChartControls({
 				</p>
 			) : null}
 			{controls.showGrouping ? (
-				<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-(--text-form)">
+				<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--legacy-form-control-border) text-(--legacy-text-form)">
 					{controls.groupingOptions.map((interval) => (
 						<Tooltip
 							content={capitalizeFirstLetter(interval)}
 							render={<button />}
-							className="inline-flex min-w-8 items-center justify-center px-3 py-1.5 text-xs whitespace-nowrap hover:not-disabled:pro-btn-blue focus-visible:not-disabled:pro-btn-blue data-[active=true]:bg-(--old-blue) data-[active=true]:font-medium data-[active=true]:text-white"
+							className="inline-flex min-w-8 items-center justify-center px-3 py-1.5 text-xs whitespace-nowrap hover:not-disabled:pro-btn-blue focus-visible:not-disabled:pro-btn-blue data-[active=true]:bg-(--legacy-old-blue) data-[active=true]:font-medium data-[active=true]:text-white"
 							data-active={controls.state.grouping === interval}
 							onClick={() => {
 								trackUmamiEvent('llamaai-chart-control', { control: 'grouping', selection: interval })

@@ -182,27 +182,29 @@ export function ArticleChartBlock({
 
 	return (
 		<figure className="article-chart-figure not-prose my-10 grid gap-3">
-			<header className="flex items-end justify-between gap-4 border-t border-(--text-primary)/80 pt-3">
+			<header className="flex items-end justify-between gap-4 border-t border-(--legacy-text-primary)/80 pt-3">
 				<div className="flex min-w-0 items-center gap-3">
 					{uniqueEntities.length > 1 ? (
 						<span className="flex shrink-0 -space-x-2">
 							{uniqueEntities.slice(0, 4).map((e) => (
 								<span
 									key={`${e.entityType}:${e.slug}`}
-									className="relative flex size-7 items-center justify-center overflow-hidden rounded-full border border-(--cards-border) bg-(--cards-bg)"
+									className="relative flex size-7 items-center justify-center overflow-hidden rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg)"
 								>
 									<img src={entityLogo(e)} alt="" className="size-full object-cover" />
 								</span>
 							))}
 						</span>
 					) : primarySeries ? (
-						<span className="relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-(--cards-border) bg-(--cards-bg)">
+						<span className="relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 							<img src={entityLogo(primarySeries)} alt="" className="size-full object-cover" />
 						</span>
 					) : null}
 					<div className="flex min-w-0 flex-col leading-tight">
-						<span className="truncate text-[15px] font-semibold tracking-tight text-(--text-primary)">{titleText}</span>
-						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+						<span className="truncate text-[15px] font-semibold tracking-tight text-(--legacy-text-primary)">
+							{titleText}
+						</span>
+						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 							{chartLabel} · {rangeLabel}
 						</span>
 					</div>
@@ -210,16 +212,16 @@ export function ArticleChartBlock({
 				<div className="flex shrink-0 items-end gap-4 text-right">
 					{latestLabel ? (
 						<div className="flex flex-col leading-tight">
-							<span className="font-jetbrains text-[9px] tracking-[0.2em] text-(--text-tertiary) uppercase">
+							<span className="font-jetbrains text-[9px] tracking-[0.2em] text-(--legacy-text-tertiary) uppercase">
 								Latest
 							</span>
-							<span className="font-jetbrains text-base font-semibold text-(--text-primary) tabular-nums">
+							<span className="font-jetbrains text-base font-semibold text-(--legacy-text-primary) tabular-nums">
 								{latestLabel}
 							</span>
 						</div>
 					) : null}
 					{figureLabel ? (
-						<span className="hidden font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase sm:inline">
+						<span className="hidden font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase sm:inline">
 							{figureLabel}
 						</span>
 					) : null}
@@ -227,7 +229,7 @@ export function ArticleChartBlock({
 			</header>
 
 			{isMulti ? (
-				<div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-(--text-secondary)">
+				<div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] text-(--legacy-text-secondary)">
 					{series.map((s, i) => (
 						<span key={`${s.entityType}:${s.slug}:${s.chartType}`} className="inline-flex items-center gap-1.5">
 							<span
@@ -235,7 +237,7 @@ export function ArticleChartBlock({
 								className="size-2 rounded-full"
 								style={{ background: SERIES_COLORS[i % SERIES_COLORS.length] }}
 							/>
-							<span className="text-(--text-primary)">{seriesDisplayName(s)}</span>
+							<span className="text-(--legacy-text-primary)">{seriesDisplayName(s)}</span>
 						</span>
 					))}
 				</div>
@@ -244,14 +246,18 @@ export function ArticleChartBlock({
 			<div className="article-chart-body relative">
 				<div className="h-[380px] w-full">
 					{isLoading ? (
-						<div className="flex h-full items-center justify-center text-xs text-(--text-tertiary)">Loading chart…</div>
+						<div className="flex h-full items-center justify-center text-xs text-(--legacy-text-tertiary)">
+							Loading chart…
+						</div>
 					) : isError || seriesWithMarkers.length === 0 ? (
-						<div className="flex h-full items-center justify-center text-xs text-(--text-tertiary)">
+						<div className="flex h-full items-center justify-center text-xs text-(--legacy-text-tertiary)">
 							No data available
 						</div>
 					) : (
 						<Suspense
-							fallback={<div className="flex h-full items-center justify-center text-xs text-(--text-tertiary)">…</div>}
+							fallback={
+								<div className="flex h-full items-center justify-center text-xs text-(--legacy-text-tertiary)">…</div>
+							}
 						>
 							<MultiSeriesChart
 								series={seriesWithMarkers}
@@ -266,9 +272,11 @@ export function ArticleChartBlock({
 				</div>
 			</div>
 
-			<figcaption className="flex flex-wrap items-baseline justify-between gap-3 border-t border-(--cards-border) pt-2 text-[13px] leading-snug text-(--text-secondary)">
+			<figcaption className="flex flex-wrap items-baseline justify-between gap-3 border-t border-(--legacy-cards-border) pt-2 text-[13px] leading-snug text-(--legacy-text-secondary)">
 				<div className="min-w-0 flex-1">
-					{figureLabel ? <span className="mr-1.5 font-semibold text-(--text-primary)">{figureLabel}.</span> : null}
+					{figureLabel ? (
+						<span className="mr-1.5 font-semibold text-(--legacy-text-primary)">{figureLabel}.</span>
+					) : null}
 					{captionSlot !== undefined ? (
 						captionSlot
 					) : (
@@ -278,18 +286,18 @@ export function ArticleChartBlock({
 						</span>
 					)}
 					{config.logScale ? (
-						<span className="ml-2 rounded border border-(--cards-border) px-1.5 py-px font-jetbrains text-[10px] tracking-wider text-(--text-tertiary) uppercase">
+						<span className="ml-2 rounded border border-(--legacy-cards-border) px-1.5 py-px font-jetbrains text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">
 							log scale
 						</span>
 					) : null}
 				</div>
-				<div className="shrink-0 font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+				<div className="shrink-0 font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 					Source ·{' '}
 					<a
 						href={route}
 						target="_blank"
 						rel="noreferrer noopener"
-						className="text-(--text-tertiary) hover:text-(--link-text)"
+						className="text-(--legacy-text-tertiary) hover:text-(--legacy-link-text)"
 					>
 						DefiLlama
 					</a>
@@ -297,16 +305,16 @@ export function ArticleChartBlock({
 			</figcaption>
 
 			{config.annotations && config.annotations.length > 0 ? (
-				<ol className="grid gap-1 border-t border-dashed border-(--cards-border) pt-2 text-[12px] text-(--text-secondary)">
+				<ol className="grid gap-1 border-t border-dashed border-(--legacy-cards-border) pt-2 text-[12px] text-(--legacy-text-secondary)">
 					{config.annotations.map((a, i) => (
 						<li key={`${a.date}-${i}`} className="flex gap-2">
-							<span className="font-jetbrains text-[10px] font-semibold text-(--text-tertiary)">
+							<span className="font-jetbrains text-[10px] font-semibold text-(--legacy-text-tertiary)">
 								{String.fromCharCode(65 + i)}
 							</span>
-							<span className="font-jetbrains text-[10px] text-(--text-tertiary)">
+							<span className="font-jetbrains text-[10px] text-(--legacy-text-tertiary)">
 								{new Date(a.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
 							</span>
-							<span className="text-(--text-secondary)">{a.label}</span>
+							<span className="text-(--legacy-text-secondary)">{a.label}</span>
 						</li>
 					))}
 				</ol>

@@ -794,7 +794,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 				<Tooltip
 					content="Scroll to bottom"
 					render={<button onClick={scrollToBottom} />}
-					className={`mx-auto flex size-8 items-center justify-center rounded-full border border-[#e6e6e6] bg-(--app-bg) shadow-md hover:bg-[#f7f7f7] focus-visible:bg-[#f7f7f7] dark:border-[#222324] dark:hover:bg-[#222324] dark:focus-visible:bg-[#222324] ${showScrollToBottom ? 'pointer-events-auto' : 'pointer-events-none'}`}
+					className={`mx-auto flex size-8 items-center justify-center rounded-full border border-[#e6e6e6] bg-(--legacy-app-bg) shadow-md hover:bg-[#f7f7f7] focus-visible:bg-[#f7f7f7] dark:border-[#222324] dark:hover:bg-[#222324] dark:focus-visible:bg-[#222324] ${showScrollToBottom ? 'pointer-events-auto' : 'pointer-events-none'}`}
 				>
 					<Icon name="arrow-down" height={16} width={16} />
 					<span className="sr-only">Scroll to bottom</span>

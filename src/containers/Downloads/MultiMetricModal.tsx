@@ -527,23 +527,23 @@ export function MultiMetricModal({
 					unmountOnHide
 					backdrop={<div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" />}
 				>
-					<div className="flex shrink-0 flex-col border-b border-(--divider)">
+					<div className="flex shrink-0 flex-col border-b border-(--legacy-divider)">
 						<div className="flex items-center gap-3 px-4 py-2.5">
 							<div className="mr-auto min-w-0">
 								<div className="flex items-center gap-2">
 									<h2 className="truncate heading-xs">{param ? param.label : 'Combined report'}</h2>
-									<span className="rounded-full bg-(--primary)/15 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-(--primary) uppercase">
+									<span className="rounded-full bg-(--legacy-primary)/15 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-(--legacy-primary) uppercase">
 										Combined
 									</span>
 								</div>
-								<p className="truncate text-xs text-(--text-tertiary)">{headerSubtitle}</p>
+								<p className="truncate text-xs text-(--legacy-text-tertiary)">{headerSubtitle}</p>
 							</div>
 
 							{param && hasSelection && !isPreview ? (
 								<button
 									type="button"
 									onClick={() => setShowSaveDialog(true)}
-									className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) sm:flex"
+									className="hidden items-center gap-1.5 rounded-md border border-(--legacy-divider) px-2.5 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary) sm:flex"
 									title="Save as preset"
 								>
 									<Icon name="bookmark" className="size-3.5" />
@@ -556,7 +556,7 @@ export function MultiMetricModal({
 									type="button"
 									onClick={() => void handleCopyLink()}
 									disabled={!currentConfig}
-									className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:opacity-40 sm:flex"
+									className="hidden items-center gap-1.5 rounded-md border border-(--legacy-divider) px-2.5 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary) disabled:opacity-40 sm:flex"
 									title="Copy shareable link"
 								>
 									<Icon name="link" className="size-3.5" />
@@ -569,7 +569,7 @@ export function MultiMetricModal({
 										type="button"
 										onClick={() => handleTopBarDownload()}
 										disabled={topBarDownloadDisabled}
-										className="flex items-center gap-1.5 rounded-md bg-(--primary) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:opacity-90 disabled:opacity-40"
+										className="flex items-center gap-1.5 rounded-md bg-(--legacy-primary) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:opacity-90 disabled:opacity-40"
 									>
 										<Icon name="download-cloud" className="size-3.5" />
 										<span className="hidden sm:inline">{downloadLabel}</span>
@@ -586,14 +586,14 @@ export function MultiMetricModal({
 							<button
 								type="button"
 								onClick={onClose}
-								className="rounded-md p-1.5 text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
+								className="rounded-md p-1.5 text-(--legacy-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary)"
 								aria-label="Close"
 							>
 								<Icon name="x" className="size-4" />
 							</button>
 						</div>
 
-						<div className="flex flex-wrap items-center gap-2 border-t border-(--divider) px-4 py-2">
+						<div className="flex flex-wrap items-center gap-2 border-t border-(--legacy-divider) px-4 py-2">
 							<ParamPickerPopover
 								paramType={paramType}
 								value={param}
@@ -623,7 +623,9 @@ export function MultiMetricModal({
 								/>
 							) : null}
 
-							{isPreview ? <p className="ml-auto text-[11px] text-(--text-tertiary)">Preview — last 10 rows</p> : null}
+							{isPreview ? (
+								<p className="ml-auto text-[11px] text-(--legacy-text-tertiary)">Preview — last 10 rows</p>
+							) : null}
 						</div>
 					</div>
 
@@ -654,12 +656,12 @@ export function MultiMetricModal({
 							) : !parsedActiveFiltered || parsedActiveFiltered.rows.length === 0 ? (
 								<div className="flex flex-1 items-center justify-center">
 									<div className="flex flex-col items-center gap-2 text-center">
-										<Icon name="search" className="size-6 text-(--text-tertiary)" />
-										<p className="text-sm text-(--text-secondary)">No rows in selected date range</p>
+										<Icon name="search" className="size-6 text-(--legacy-text-tertiary)" />
+										<p className="text-sm text-(--legacy-text-secondary)">No rows in selected date range</p>
 										<button
 											type="button"
 											onClick={() => setDateRange(null)}
-											className="mt-1 rounded-md border border-(--divider) px-3 py-1 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
+											className="mt-1 rounded-md border border-(--legacy-divider) px-3 py-1 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary)"
 										>
 											Clear date range
 										</button>
@@ -720,7 +722,7 @@ function ParamTypeToggle({
 }) {
 	const pad = size === 'sm' ? 'px-2.5 py-1 text-[11px]' : 'px-3 py-1.5 text-xs'
 	return (
-		<div className="inline-flex items-center gap-0.5 rounded-md border border-(--divider) bg-(--bg-primary) p-0.5">
+		<div className="inline-flex items-center gap-0.5 rounded-md border border-(--legacy-divider) bg-(--bg-primary) p-0.5">
 			{(['protocol', 'chain'] as const).map((t) => (
 				<button
 					key={t}
@@ -728,8 +730,8 @@ function ParamTypeToggle({
 					onClick={() => onChange(t)}
 					className={`rounded-sm font-medium capitalize transition-colors ${pad} ${
 						paramType === t
-							? 'bg-(--primary) text-white shadow-sm'
-							: 'text-(--text-secondary) hover:text-(--text-primary)'
+							? 'bg-(--legacy-primary) text-white shadow-sm'
+							: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
 					}`}
 				>
 					{t}
@@ -766,12 +768,12 @@ function ParamPickerEmpty({
 	return (
 		<div className="flex flex-1 items-center justify-center px-6 py-8">
 			<div className="flex w-full max-w-md flex-col items-center gap-4 text-center">
-				<div className="flex size-11 items-center justify-center rounded-full bg-(--primary)/10">
-					<Icon name="layers" className="size-5 text-(--primary)" />
+				<div className="flex size-11 items-center justify-center rounded-full bg-(--legacy-primary)/10">
+					<Icon name="layers" className="size-5 text-(--legacy-primary)" />
 				</div>
 				<div className="flex flex-col gap-1">
-					<p className="text-base font-medium text-(--text-primary)">Choose a {labels.singular} to begin</p>
-					<p className="text-xs text-(--text-tertiary)">
+					<p className="text-base font-medium text-(--legacy-text-primary)">Choose a {labels.singular} to begin</p>
+					<p className="text-xs text-(--legacy-text-tertiary)">
 						Pick a {labels.singular} — we&rsquo;ll show its available metrics so you can combine them.
 					</p>
 				</div>
@@ -780,14 +782,14 @@ function ParamPickerEmpty({
 
 				<div className="w-full">
 					<Ariakit.PopoverProvider store={popoverStore}>
-						<Ariakit.PopoverDisclosure className="group flex w-full items-center justify-between gap-3 rounded-lg border border-medium bg-(--bg-primary) px-3.5 py-2.5 text-sm transition-colors hover:border-(--primary)/50 focus:border-(--primary) focus:ring-2 focus:ring-(--primary)/20 focus:outline-none">
-							<span className="flex items-center gap-2 text-(--text-tertiary)">
+						<Ariakit.PopoverDisclosure className="group flex w-full items-center justify-between gap-3 rounded-lg border border-medium bg-(--bg-primary) px-3.5 py-2.5 text-sm transition-colors hover:border-(--legacy-primary)/50 focus:border-(--legacy-primary) focus:ring-2 focus:ring-(--legacy-primary)/20 focus:outline-none">
+							<span className="flex items-center gap-2 text-(--legacy-text-tertiary)">
 								<Icon name="search" className="size-4" />
 								Search a {labels.singular}
 							</span>
 							<Icon
 								name="chevron-down"
-								className="size-4 text-(--text-tertiary) transition-transform group-aria-expanded:rotate-180"
+								className="size-4 text-(--legacy-text-tertiary) transition-transform group-aria-expanded:rotate-180"
 							/>
 						</Ariakit.PopoverDisclosure>
 						<Ariakit.Popover
@@ -797,18 +799,18 @@ function ParamPickerEmpty({
 							sameWidth
 							className="z-[70] flex max-h-96 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
 						>
-							<div className="border-b border-(--divider) px-3 py-2">
+							<div className="border-b border-(--legacy-divider) px-3 py-2">
 								<input
 									value={search}
 									onChange={(e) => setSearch(e.currentTarget.value)}
 									placeholder={labels.search}
-									className="w-full rounded-md border border-(--divider) bg-transparent px-2.5 py-1.5 text-xs outline-none placeholder:text-(--text-tertiary) focus:border-(--primary)"
+									className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-xs outline-none placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary)"
 									autoFocus
 								/>
 							</div>
 							<div className="flex-1 overflow-auto py-1">
 								{filtered.length === 0 ? (
-									<p className="px-3 py-2 text-xs text-(--text-tertiary)">No results</p>
+									<p className="px-3 py-2 text-xs text-(--legacy-text-tertiary)">No results</p>
 								) : (
 									filtered.map((opt) => (
 										<button
@@ -819,15 +821,15 @@ function ParamPickerEmpty({
 												setSearch('')
 												popoverStore.hide()
 											}}
-											className={`flex w-full items-center gap-2 py-1.5 pr-3 text-left text-xs text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) ${opt.isChild ? 'pl-7' : 'pl-3'}`}
+											className={`flex w-full items-center gap-2 py-1.5 pr-3 text-left text-xs text-(--legacy-text-secondary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary) ${opt.isChild ? 'pl-7' : 'pl-3'}`}
 										>
-											<span className="size-1.5 shrink-0 rounded-full bg-(--text-tertiary)/30" />
+											<span className="size-1.5 shrink-0 rounded-full bg-(--legacy-text-tertiary)/30" />
 											<span className="truncate">{opt.label}</span>
 										</button>
 									))
 								)}
 								{filtered.length >= 200 ? (
-									<p className="px-3 py-2 text-[11px] text-(--text-tertiary)">
+									<p className="px-3 py-2 text-[11px] text-(--legacy-text-tertiary)">
 										Showing first 200 — refine the search to narrow results
 									</p>
 								) : null}
@@ -838,7 +840,7 @@ function ParamPickerEmpty({
 
 				{suggestions.length > 0 ? (
 					<div className="flex flex-col items-center gap-2">
-						<p className="text-[10px] font-semibold tracking-[0.08em] text-(--text-tertiary) uppercase">
+						<p className="text-[10px] font-semibold tracking-[0.08em] text-(--legacy-text-tertiary) uppercase">
 							Or start with
 						</p>
 						<div className="flex flex-wrap justify-center gap-1.5">
@@ -847,7 +849,7 @@ function ParamPickerEmpty({
 									key={opt.value}
 									type="button"
 									onClick={() => onSelect(opt)}
-									className="inline-flex items-center gap-1 rounded-md border border-(--divider) bg-(--bg-primary) px-2.5 py-1 text-xs font-medium text-(--text-secondary) transition-colors hover:border-(--primary)/50 hover:text-(--text-primary)"
+									className="inline-flex items-center gap-1 rounded-md border border-(--legacy-divider) bg-(--bg-primary) px-2.5 py-1 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-primary)/50 hover:text-(--legacy-text-primary)"
 								>
 									{opt.label}
 								</button>
@@ -872,12 +874,12 @@ function EmptyState({
 	return (
 		<div className="flex flex-1 items-center justify-center px-6">
 			<div className="flex max-w-sm flex-col items-center gap-3 text-center">
-				<div className="flex size-10 items-center justify-center rounded-full bg-(--primary)/10">
-					<Icon name="layers" className="size-5 text-(--primary)" />
+				<div className="flex size-10 items-center justify-center rounded-full bg-(--legacy-primary)/10">
+					<Icon name="layers" className="size-5 text-(--legacy-primary)" />
 				</div>
 				<div className="flex flex-col gap-1">
-					<p className="text-sm font-medium text-(--text-primary)">Select metrics to combine</p>
-					<p className="text-xs text-(--text-tertiary)">
+					<p className="text-sm font-medium text-(--legacy-text-primary)">Select metrics to combine</p>
+					<p className="text-xs text-(--legacy-text-tertiary)">
 						{availableCount > 0
 							? `Pick any of ${availableCount} time-series metrics from the toolbar above. They'll merge into one CSV with date columns aligned.`
 							: `No time-series metrics available for this ${PARAM_LABELS[paramType].singular}.`}
@@ -887,7 +889,7 @@ function EmptyState({
 					<button
 						type="button"
 						onClick={onSelectAll}
-						className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-(--primary)/30 bg-(--primary)/5 px-3 py-1.5 text-xs font-medium text-(--primary) transition-colors hover:bg-(--primary)/10"
+						className="mt-1 inline-flex items-center gap-1.5 rounded-md border border-(--legacy-primary)/30 bg-(--legacy-primary)/5 px-3 py-1.5 text-xs font-medium text-(--legacy-primary) transition-colors hover:bg-(--legacy-primary)/10"
 					>
 						<Icon name="check" className="size-3.5" />
 						Select all {availableCount}
@@ -903,7 +905,7 @@ function CenteredLoader() {
 		<div className="flex flex-1 items-center justify-center">
 			<div className="flex flex-col items-center gap-3">
 				<LoadingSpinner size={28} />
-				<p className="text-sm text-(--text-secondary)">Fetching data...</p>
+				<p className="text-sm text-(--legacy-text-secondary)">Fetching data...</p>
 			</div>
 		</div>
 	)
@@ -925,8 +927,8 @@ function CenteredHint({ icon, text }: { icon: IIcon['name']; text: string }) {
 	return (
 		<div className="flex flex-1 items-center justify-center">
 			<div className="flex flex-col items-center gap-2 text-center">
-				<Icon name={icon} className="size-6 text-(--text-tertiary)" />
-				<p className="text-sm text-(--text-secondary)">{text}</p>
+				<Icon name={icon} className="size-6 text-(--legacy-text-tertiary)" />
+				<p className="text-sm text-(--legacy-text-secondary)">{text}</p>
 			</div>
 		</div>
 	)
@@ -950,7 +952,7 @@ function PreviewTable({
 						{headers.map((h) => (
 							<th
 								key={h}
-								className="border-b border-(--divider) px-3 py-2 text-left font-medium whitespace-nowrap text-(--text-tertiary)"
+								className="border-b border-(--legacy-divider) px-3 py-2 text-left font-medium whitespace-nowrap text-(--legacy-text-tertiary)"
 							>
 								{h}
 							</th>
@@ -961,14 +963,14 @@ function PreviewTable({
 					{display.map((row, rowIdx) => (
 						<tr
 							key={row.id}
-							className={`border-b border-(--divider)/40 last:border-b-0 ${
+							className={`border-b border-(--legacy-divider)/40 last:border-b-0 ${
 								rowIdx % 2 === 1 ? 'bg-(--bg-primary)/40' : ''
 							}`}
 						>
 							{headers.map((_, i) => (
 								<td
 									key={i}
-									className={`px-3 py-1.5 whitespace-nowrap text-(--text-primary) ${i === 0 ? '' : 'tabular-nums'}`}
+									className={`px-3 py-1.5 whitespace-nowrap text-(--legacy-text-primary) ${i === 0 ? '' : 'tabular-nums'}`}
 								>
 									{row.values[i] ?? ''}
 								</td>
@@ -978,14 +980,14 @@ function PreviewTable({
 					{filler.map((row, rowIdx) => (
 						<tr
 							key={`filler-${rowIdx}`}
-							className={`border-b border-(--divider)/40 last:border-b-0 ${
+							className={`border-b border-(--legacy-divider)/40 last:border-b-0 ${
 								(display.length + rowIdx) % 2 === 1 ? 'bg-(--bg-primary)/40' : ''
 							}`}
 						>
 							{headers.map((_, i) => (
 								<td
 									key={i}
-									className={`px-3 py-1.5 whitespace-nowrap text-(--text-primary) ${i === 0 ? '' : 'tabular-nums'}`}
+									className={`px-3 py-1.5 whitespace-nowrap text-(--legacy-text-primary) ${i === 0 ? '' : 'tabular-nums'}`}
 								>
 									{row.values[i] ?? ''}
 								</td>
@@ -995,7 +997,7 @@ function PreviewTable({
 				</tbody>
 			</table>
 			{!isPreview && rows.length > PREVIEW_ROWS ? (
-				<div className="border-t border-(--divider) bg-surface px-3 py-2 text-[11px] text-(--text-tertiary)">
+				<div className="border-t border-(--legacy-divider) bg-surface px-3 py-2 text-[11px] text-(--legacy-text-tertiary)">
 					<p>
 						Showing first {PREVIEW_ROWS.toLocaleString()} of {rows.length.toLocaleString()} rows · download for full
 						data
@@ -1014,17 +1016,17 @@ function PreviewTable({
 							WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)'
 						}}
 					/>
-					<div className="absolute inset-x-0 bottom-0 z-50 border-t border-(--divider) bg-surface px-6 py-5">
+					<div className="absolute inset-x-0 bottom-0 z-50 border-t border-(--legacy-divider) bg-surface px-6 py-5">
 						<div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
-							<p className="text-sm font-semibold text-(--text-primary)">
+							<p className="text-sm font-semibold text-(--legacy-text-primary)">
 								This is a preview — subscribe to download full datasets
 							</p>
-							<p className="text-xs text-(--text-tertiary)">
+							<p className="text-xs text-(--legacy-text-tertiary)">
 								Get access to all rows, all columns, and unlimited CSV downloads
 							</p>
 							<Link
 								href="/subscribe"
-								className="mt-1 inline-flex items-center gap-2 rounded-lg bg-(--primary) px-8 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:opacity-90"
+								className="mt-1 inline-flex items-center gap-2 rounded-lg bg-(--legacy-primary) px-8 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:opacity-90"
 							>
 								<Icon name="arrow-up-right" className="size-4" />
 								Subscribe
@@ -1068,12 +1070,14 @@ function MetricsSidebar({
 }: MetricsSidebarProps) {
 	const combinedDisabled = loadingCount > 0 || readyCount === 0
 	return (
-		<aside className="hidden w-72 shrink-0 flex-col border-l border-(--divider) bg-(--bg-primary) sm:flex">
-			<div className="flex items-center justify-between gap-2 border-b border-(--divider) px-3 py-2">
+		<aside className="hidden w-72 shrink-0 flex-col border-l border-(--legacy-divider) bg-(--bg-primary) sm:flex">
+			<div className="flex items-center justify-between gap-2 border-b border-(--legacy-divider) px-3 py-2">
 				<div className="min-w-0">
-					<p className="text-xs font-semibold text-(--text-primary)">Selected metrics ({selectedMetrics.length})</p>
+					<p className="text-xs font-semibold text-(--legacy-text-primary)">
+						Selected metrics ({selectedMetrics.length})
+					</p>
 					{loadingCount > 0 ? (
-						<p className="text-[10px] text-(--text-tertiary)">
+						<p className="text-[10px] text-(--legacy-text-tertiary)">
 							Ready {readyCount}/{selectedMetrics.length}
 						</p>
 					) : null}
@@ -1082,7 +1086,7 @@ function MetricsSidebar({
 					<button
 						type="button"
 						onClick={onClearAll}
-						className="shrink-0 text-[11px] text-(--text-tertiary) hover:text-(--text-primary) hover:underline"
+						className="shrink-0 text-[11px] text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary) hover:underline"
 					>
 						Clear all
 					</button>
@@ -1098,7 +1102,7 @@ function MetricsSidebar({
 					return (
 						<div
 							key={metric.slug}
-							className={`flex items-center gap-1.5 border-b border-(--divider) px-2.5 py-2 text-xs transition-colors ${
+							className={`flex items-center gap-1.5 border-b border-(--legacy-divider) px-2.5 py-2 text-xs transition-colors ${
 								isActive ? 'bg-hover-row' : 'hover:bg-hover-row'
 							}`}
 						>
@@ -1118,7 +1122,7 @@ function MetricsSidebar({
 									) : null}
 								</span>
 								<span
-									className={`truncate ${isActive ? 'font-medium text-(--text-primary)' : 'text-(--text-secondary)'}`}
+									className={`truncate ${isActive ? 'font-medium text-(--legacy-text-primary)' : 'text-(--legacy-text-secondary)'}`}
 								>
 									{metricDisplayName(metric)}
 								</span>
@@ -1128,7 +1132,7 @@ function MetricsSidebar({
 								onClick={() => onDownloadSingle(metric.slug)}
 								disabled={!isReady || isPreview}
 								title={isPreview ? 'Subscribe to download' : 'Download this CSV'}
-								className="shrink-0 rounded p-1 text-(--text-tertiary) transition-colors hover:bg-(--bg-main) hover:text-(--primary) disabled:cursor-not-allowed disabled:opacity-30"
+								className="shrink-0 rounded p-1 text-(--legacy-text-tertiary) transition-colors hover:bg-(--legacy-bg-main) hover:text-(--legacy-primary) disabled:cursor-not-allowed disabled:opacity-30"
 							>
 								<Icon name="download-cloud" className="size-3.5" />
 							</button>
@@ -1136,7 +1140,7 @@ function MetricsSidebar({
 								type="button"
 								onClick={() => onRemove(metric.slug)}
 								title="Remove"
-								className="shrink-0 rounded p-1 text-(--text-tertiary) transition-colors hover:bg-(--bg-main) hover:text-red-500"
+								className="shrink-0 rounded p-1 text-(--legacy-text-tertiary) transition-colors hover:bg-(--legacy-bg-main) hover:text-red-500"
 							>
 								<Icon name="x" className="size-3.5" />
 							</button>
@@ -1144,12 +1148,12 @@ function MetricsSidebar({
 					)
 				})}
 			</div>
-			<div className="border-t border-(--divider) p-3">
+			<div className="border-t border-(--legacy-divider) p-3">
 				{isPreview ? (
 					<button
 						type="button"
 						onClick={onSubscribeClick}
-						className="flex w-full items-center justify-center gap-1.5 rounded-md bg-(--primary) px-3 py-2 text-xs font-semibold text-white transition-colors hover:opacity-90"
+						className="flex w-full items-center justify-center gap-1.5 rounded-md bg-(--legacy-primary) px-3 py-2 text-xs font-semibold text-white transition-colors hover:opacity-90"
 					>
 						<Icon name="arrow-up-right" className="size-3.5" />
 						Subscribe to download
@@ -1160,12 +1164,12 @@ function MetricsSidebar({
 							type="button"
 							onClick={onDownloadCombined}
 							disabled={combinedDisabled}
-							className="flex w-full items-center justify-center gap-1.5 rounded-md bg-(--primary) px-3 py-2 text-xs font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-40"
+							className="flex w-full items-center justify-center gap-1.5 rounded-md bg-(--legacy-primary) px-3 py-2 text-xs font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-40"
 						>
 							<Icon name="download-cloud" className="size-3.5" />
 							Download combined CSV
 						</button>
-						<p className="mt-1.5 text-center text-[10px] text-(--text-tertiary)">
+						<p className="mt-1.5 text-center text-[10px] text-(--legacy-text-tertiary)">
 							Wide format — each metric becomes a column
 						</p>
 					</>
@@ -1207,14 +1211,16 @@ function ParamPickerPopover({
 	return (
 		<Ariakit.PopoverProvider store={popoverStore}>
 			<Ariakit.PopoverDisclosure
-				className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-hover-row hover:text-(--text-primary) ${
-					value ? 'border-(--divider) text-(--text-secondary)' : 'border-(--primary)/40 text-(--primary)'
+				className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary) ${
+					value
+						? 'border-(--legacy-divider) text-(--legacy-text-secondary)'
+						: 'border-(--legacy-primary)/40 text-(--legacy-primary)'
 				}`}
 			>
 				<Icon name="chevron-down" className="size-3.5" />
 				{value ? (
 					<span className="capitalize">
-						{labels.singular}: <span className="text-(--text-primary) normal-case">{value.label}</span>
+						{labels.singular}: <span className="text-(--legacy-text-primary) normal-case">{value.label}</span>
 					</span>
 				) : (
 					<span>{labels.verb}</span>
@@ -1226,21 +1232,21 @@ function ParamPickerPopover({
 				unmountOnHide
 				className="z-[60] flex max-h-96 w-80 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
 			>
-				<div className="flex items-center justify-center border-b border-(--divider) px-3 py-2">
+				<div className="flex items-center justify-center border-b border-(--legacy-divider) px-3 py-2">
 					<ParamTypeToggle paramType={paramType} onChange={onChangeParamType} size="sm" />
 				</div>
-				<div className="border-b border-(--divider) px-3 py-2">
+				<div className="border-b border-(--legacy-divider) px-3 py-2">
 					<input
 						value={search}
 						onChange={(e) => setSearch(e.currentTarget.value)}
 						placeholder={labels.search}
-						className="w-full rounded-md border border-(--divider) bg-transparent px-2.5 py-1.5 text-xs outline-none placeholder:text-(--text-tertiary) focus:border-(--primary)"
+						className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-xs outline-none placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary)"
 						autoFocus
 					/>
 				</div>
 				<div className="flex-1 overflow-auto py-1">
 					{filtered.length === 0 ? (
-						<p className="px-3 py-2 text-xs text-(--text-tertiary)">No results</p>
+						<p className="px-3 py-2 text-xs text-(--legacy-text-tertiary)">No results</p>
 					) : (
 						filtered.map((opt) => {
 							const isSelected = value?.value === opt.value
@@ -1254,12 +1260,12 @@ function ParamPickerPopover({
 										popoverStore.hide()
 									}}
 									className={`flex w-full items-center gap-2 py-1.5 pr-3 text-left text-xs transition-colors hover:bg-hover-row ${
-										isSelected ? 'text-(--text-primary)' : 'text-(--text-secondary)'
+										isSelected ? 'text-(--legacy-text-primary)' : 'text-(--legacy-text-secondary)'
 									} ${opt.isChild ? 'pl-7' : 'pl-3'}`}
 								>
 									<span
 										className={`size-1.5 shrink-0 rounded-full transition-colors ${
-											isSelected ? 'bg-(--primary)' : 'bg-(--text-tertiary)/30'
+											isSelected ? 'bg-(--legacy-primary)' : 'bg-(--legacy-text-tertiary)/30'
 										}`}
 									/>
 									<span className="truncate">{opt.label}</span>
@@ -1268,7 +1274,7 @@ function ParamPickerPopover({
 						})
 					)}
 					{filtered.length >= 200 ? (
-						<p className="px-3 py-2 text-[11px] text-(--text-tertiary)">
+						<p className="px-3 py-2 text-[11px] text-(--legacy-text-tertiary)">
 							Showing first 200 — refine the search to narrow results
 						</p>
 					) : null}
@@ -1321,11 +1327,13 @@ function MetricMultiPickerPopover({
 
 	return (
 		<Ariakit.PopoverProvider>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary)">
+			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--legacy-divider) px-2.5 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary)">
 				<Icon name="chevron-down" className="size-3.5" />
 				<span>{triggerLabel}</span>
 				{selected.length > 0 ? (
-					<span className="rounded bg-(--primary) px-1 text-[10px] font-semibold text-white">{selected.length}</span>
+					<span className="rounded bg-(--legacy-primary) px-1 text-[10px] font-semibold text-white">
+						{selected.length}
+					</span>
 				) : null}
 			</Ariakit.PopoverDisclosure>
 			<Ariakit.Popover
@@ -1334,34 +1342,34 @@ function MetricMultiPickerPopover({
 				unmountOnHide
 				className="z-[60] flex max-h-[28rem] w-80 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
 			>
-				<div className="flex items-center justify-between gap-2 border-b border-(--divider) px-3 py-2">
-					<span className="text-xs font-medium text-(--text-secondary)">
+				<div className="flex items-center justify-between gap-2 border-b border-(--legacy-divider) px-3 py-2">
+					<span className="text-xs font-medium text-(--legacy-text-secondary)">
 						{selected.length}/{maxSelections} selected
 					</span>
 					<button
 						type="button"
 						onClick={allSelected ? onClearAll : onSelectAll}
-						className="text-xs text-(--primary) hover:underline"
+						className="text-xs text-(--legacy-primary) hover:underline"
 					>
 						{allSelected ? 'Clear all' : 'Select all'}
 					</button>
 				</div>
-				<div className="border-b border-(--divider) px-3 py-2">
+				<div className="border-b border-(--legacy-divider) px-3 py-2">
 					<input
 						value={search}
 						onChange={(e) => setSearch(e.currentTarget.value)}
 						placeholder="Search metrics..."
-						className="w-full rounded-md border border-(--divider) bg-transparent px-2.5 py-1.5 text-xs outline-none placeholder:text-(--text-tertiary) focus:border-(--primary)"
+						className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-xs outline-none placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary)"
 						autoFocus
 					/>
 				</div>
 				<div className="flex-1 overflow-auto">
 					{grouped.length === 0 ? (
-						<p className="p-3 text-xs text-(--text-tertiary)">No matches</p>
+						<p className="p-3 text-xs text-(--legacy-text-tertiary)">No matches</p>
 					) : (
 						grouped.map(([category, items]) => (
 							<div key={category} className="py-1">
-								<p className="px-3 pt-1.5 pb-0.5 text-[10px] font-semibold tracking-[0.06em] text-(--text-tertiary) uppercase">
+								<p className="px-3 pt-1.5 pb-0.5 text-[10px] font-semibold tracking-[0.06em] text-(--legacy-text-tertiary) uppercase">
 									{category}
 								</p>
 								{items.map((metric) => {
@@ -1375,12 +1383,14 @@ function MetricMultiPickerPopover({
 											onClick={() => onToggle(metric.slug)}
 											title={disabled ? `Max ${maxSelections} metrics` : metric.description}
 											className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40 ${
-												isSelected ? 'text-(--text-primary)' : 'text-(--text-secondary)'
+												isSelected ? 'text-(--legacy-text-primary)' : 'text-(--legacy-text-secondary)'
 											}`}
 										>
 											<span
 												className={`flex size-4 shrink-0 items-center justify-center rounded border transition-colors ${
-													isSelected ? 'border-(--primary) bg-(--primary) text-white' : 'border-(--divider)'
+													isSelected
+														? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
+														: 'border-(--legacy-divider)'
 												}`}
 											>
 												{isSelected ? <Icon name="check" className="size-2.5" /> : null}

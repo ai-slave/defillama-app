@@ -12,7 +12,7 @@ export function ChapterHead({
 	return (
 		<div className="min-w-0">
 			<h3 className="sr-only">{title}</h3>
-			<p className="max-w-2xl text-xs text-(--text-secondary)">{hint}</p>
+			<p className="max-w-2xl text-xs text-(--legacy-text-secondary)">{hint}</p>
 			{children}
 		</div>
 	)

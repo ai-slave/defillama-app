@@ -521,12 +521,12 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 					<h2 className="text-base font-semibold">{multi.name || `Multi-Chart (${multi.items.length})`}</h2>
 				</div>
 				{!isReadOnly && allChartsGroupable && hasAnyData ? (
-					<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--form-control-border) text-(--text-form)">
+					<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--legacy-form-control-border) text-(--legacy-text-form)">
 						{groupingOptions.map((dataInterval) => (
 							<Tooltip
 								content={capitalizeFirstLetter(dataInterval)}
 								render={<button />}
-								className="shrink-0 px-2 py-1 text-xs whitespace-nowrap hover:not-disabled:pro-btn-blue focus-visible:not-disabled:pro-btn-blue data-[active=true]:bg-(--old-blue) data-[active=true]:font-medium data-[active=true]:text-white"
+								className="shrink-0 px-2 py-1 text-xs whitespace-nowrap hover:not-disabled:pro-btn-blue focus-visible:not-disabled:pro-btn-blue data-[active=true]:bg-(--legacy-old-blue) data-[active=true]:font-medium data-[active=true]:text-white"
 								data-active={multi.grouping === dataInterval}
 								onClick={() => handleGroupingChange(multi.id, dataInterval)}
 								key={`${multi.id}-options-groupBy-${dataInterval}`}
@@ -594,7 +594,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 					<button
 						type="button"
 						onClick={() => setShowDuplicateConfirm(true)}
-						className="flex items-center gap-1 rounded-md border border-(--form-control-border) px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-(--cards-border) disabled:text-(--text-disabled)"
+						className="flex items-center gap-1 rounded-md border border-(--legacy-form-control-border) px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-(--legacy-cards-border) disabled:text-(--legacy-text-disabled)"
 					>
 						<Icon name="copy" height={14} width={14} />
 						<span>Duplicate</span>
@@ -611,15 +611,15 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 						<ProTableCSVButton
 							onClick={handleCsvExport}
 							smol
-							className="flex items-center gap-1 rounded-md border border-(--form-control-border) px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-(--cards-border) disabled:text-(--text-disabled)"
+							className="flex items-center gap-1 rounded-md border border-(--legacy-form-control-border) px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-(--legacy-cards-border) disabled:text-(--legacy-text-disabled)"
 						/>
 					</>
 				) : null}
 			</div>
 
 			{loadingItems.length > 0 && failedItems.length < multi.items.length ? (
-				<div className="flex items-center gap-1.5 px-1 text-xs text-(--text-form) md:px-3">
-					<div className="size-3 animate-spin rounded-full border-2 border-(--text-form) border-t-transparent" />
+				<div className="flex items-center gap-1.5 px-1 text-xs text-(--legacy-text-form) md:px-3">
+					<div className="size-3 animate-spin rounded-full border-2 border-(--legacy-text-form) border-t-transparent" />
 					<span>
 						{validItems.length}/{multi.items.length - failedItems.length}
 					</span>
@@ -628,14 +628,14 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 
 			{!hasAnyData && isAllLoading ? (
 				<div className="flex flex-1 flex-col items-center justify-center">
-					<div className="mx-auto mb-2 size-8 animate-spin rounded-full border-b-2 border-(--primary)"></div>
-					<p className="text-sm text-(--text-form)">Loading charts...</p>
+					<div className="mx-auto mb-2 size-8 animate-spin rounded-full border-b-2 border-(--legacy-primary)"></div>
+					<p className="text-sm text-(--legacy-text-form)">Loading charts...</p>
 				</div>
 			) : !hasAnyData ? (
 				<div className="flex flex-1 flex-col items-center justify-center">
 					<Icon name="alert-triangle" height={24} width={24} className="mx-auto mb-2 text-red-500" />
-					<p className="text-sm text-(--text-label)">Failed to load chart data</p>
-					<p className="mt-1 text-xs text-(--text-form)">
+					<p className="text-sm text-(--legacy-text-label)">Failed to load chart data</p>
+					<p className="mt-1 text-xs text-(--legacy-text-form)">
 						{failedItems.length} of {multi.items.length} charts failed
 					</p>
 				</div>

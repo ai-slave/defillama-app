@@ -91,8 +91,8 @@ const reserveColumns: ColumnDef<FlatReserve>[] = [
 		header: 'Status',
 		accessorKey: 'isFrozen',
 		cell: ({ row }) => {
-			if (row.original.isPaused) return <span className="text-(--text-tertiary)">Paused</span>
-			if (row.original.isFrozen) return <span className="text-(--text-tertiary)">Frozen</span>
+			if (row.original.isPaused) return <span className="text-(--legacy-text-tertiary)">Paused</span>
+			if (row.original.isFrozen) return <span className="text-(--legacy-text-tertiary)">Frozen</span>
 			return <span className="text-green-500">Active</span>
 		},
 		size: 70
@@ -121,13 +121,13 @@ function ReservesTable({ data }: { data: FlatReserve[] }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-5">
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
 			<SectionHeader title="All Reserves" />
 			<div className="mt-4">
 				<InvestorsTable instance={instance} overrideRows={pagedRows} />
 			</div>
 			{totalPages > 1 && (
-				<div className="mt-3 flex items-center justify-between border-t border-(--divider) pt-3 text-[11px] text-(--text-tertiary)">
+				<div className="mt-3 flex items-center justify-between border-t border-(--legacy-divider) pt-3 text-[11px] text-(--legacy-text-tertiary)">
 					<span className="tabular-nums">
 						{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, allRows.length)} of {allRows.length}
 					</span>

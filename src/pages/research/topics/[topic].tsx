@@ -116,8 +116,8 @@ function TopicLandingContent({ topic, initialArticles }: { topic: string; initia
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load research'
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-red-500/30 bg-red-500/5 p-6">
-				<h1 className="heading-sm text-(--text-primary)">Couldn't load this topic</h1>
-				<p className="text-sm text-(--text-secondary)">{message}</p>
+				<h1 className="heading-sm text-(--legacy-text-primary)">Couldn't load this topic</h1>
+				<p className="text-sm text-(--legacy-text-secondary)">{message}</p>
 			</div>
 		)
 	}
@@ -132,19 +132,19 @@ function TopicLandingContent({ topic, initialArticles }: { topic: string; initia
 	return (
 		<>
 			<div className="mx-auto grid w-full max-w-[1180px] gap-8 px-4 pt-8 pb-10 sm:px-6">
-				<header className="grid gap-3 border-b border-(--cards-border) pb-6">
+				<header className="grid gap-3 border-b border-(--legacy-cards-border) pb-6">
 					<div className="flex items-center justify-between gap-3">
 						<Link
 							href="/research"
-							className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase hover:text-(--link-text)"
+							className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase hover:text-(--legacy-link-text)"
 						>
 							← All research
 						</Link>
-						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase tabular-nums">
+						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase tabular-nums">
 							{total} {total === 1 ? 'story' : 'stories'}
 						</span>
 					</div>
-					<h1 className="text-3xl leading-tight font-bold tracking-tight text-(--text-primary) capitalize sm:text-4xl">
+					<h1 className="text-3xl leading-tight font-bold tracking-tight text-(--legacy-text-primary) capitalize sm:text-4xl">
 						{topicLabel}
 					</h1>
 				</header>

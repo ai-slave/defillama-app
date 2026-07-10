@@ -70,7 +70,7 @@ export function TVLRange({
 						{min || max ? (
 							<>
 								<span>TVL: </span>
-								<span className="text-(--link)">{`${min?.toLocaleString() ?? 'min'} - ${
+								<span className="text-(--legacy-link)">{`${min?.toLocaleString() ?? 'min'} - ${
 									max?.toLocaleString() ?? 'max'
 								}`}</span>
 							</>

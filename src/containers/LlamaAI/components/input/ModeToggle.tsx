@@ -44,7 +44,7 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 						data-active={mode === 'quick'}
 					/>
 				}
-				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-[#878787] data-[active=true]:bg-(--old-blue)/10 data-[active=true]:text-[#1853A8] dark:text-[#878787] dark:data-[active=true]:bg-(--old-blue)/15 dark:data-[active=true]:text-[#4B86DB]"
+				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-[#878787] data-[active=true]:bg-(--legacy-old-blue)/10 data-[active=true]:text-[#1853A8] dark:text-[#878787] dark:data-[active=true]:bg-(--legacy-old-blue)/15 dark:data-[active=true]:text-[#4B86DB]"
 			>
 				<Icon name="sparkles" height={12} width={12} />
 				<span>Quick</span>
@@ -73,7 +73,7 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 						data-active={mode === 'fact_checked'}
 					/>
 				}
-				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-[#878787] data-[active=true]:bg-(--old-blue)/10 data-[active=true]:text-[#1853A8] dark:text-[#878787] dark:data-[active=true]:bg-(--old-blue)/15 dark:data-[active=true]:text-[#4B86DB]"
+				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-[#878787] data-[active=true]:bg-(--legacy-old-blue)/10 data-[active=true]:text-[#1853A8] dark:text-[#878787] dark:data-[active=true]:bg-(--legacy-old-blue)/15 dark:data-[active=true]:text-[#4B86DB]"
 			>
 				<Icon name="check" height={12} width={12} />
 				<span>Fact-checked</span>
@@ -111,7 +111,7 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 						data-active={mode === 'research'}
 					/>
 				}
-				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-[#878787] data-[active=true]:bg-(--old-blue)/10 data-[active=true]:text-[#1853A8] dark:text-[#878787] dark:data-[active=true]:bg-(--old-blue)/15 dark:data-[active=true]:text-[#4B86DB]"
+				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-[#878787] data-[active=true]:bg-(--legacy-old-blue)/10 data-[active=true]:text-[#1853A8] dark:text-[#878787] dark:data-[active=true]:bg-(--legacy-old-blue)/15 dark:data-[active=true]:text-[#4B86DB]"
 			>
 				<Icon name="search" height={12} width={12} />
 				<span>Research</span>

@@ -24,8 +24,8 @@ export function RailButton({
 			disabled={disabled}
 			className={`flex size-9 shrink-0 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
 				active
-					? 'bg-(--link-button) text-(--link-text)'
-					: 'text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)'
+					? 'bg-(--legacy-link-button) text-(--legacy-link-text)'
+					: 'text-(--legacy-text-secondary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)'
 			}`}
 		>
 			{children}
@@ -34,7 +34,7 @@ export function RailButton({
 }
 
 export function RailDivider() {
-	return <span aria-hidden className="mx-1 h-5 w-px bg-(--cards-border)" />
+	return <span aria-hidden className="mx-1 h-5 w-px bg-(--legacy-cards-border)" />
 }
 
 function TableRailButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
@@ -45,7 +45,7 @@ function TableRailButton({ label, onClick, children }: { label: string; onClick:
 			title={label}
 			onClick={onClick}
 			onMouseDown={(e) => e.preventDefault()}
-			className="flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+			className="flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-(--legacy-text-secondary) transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)"
 		>
 			{children}
 		</button>
@@ -141,15 +141,15 @@ export function TableControlsOverlay({ editor }: { editor: Editor }) {
 
 	return (
 		<div ref={overlayRef} style={{ position: 'fixed', top, left, zIndex: 40 }} className="article-table-overlay">
-			<div className="flex items-center gap-0.5 rounded-lg border border-(--cards-border) bg-(--cards-bg)/95 p-1 shadow-[0_18px_36px_-18px_rgba(0,0,0,0.45)] backdrop-blur supports-[backdrop-filter]:bg-(--cards-bg)/90">
-				<span className="px-1.5 font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+			<div className="flex items-center gap-0.5 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg)/95 p-1 shadow-[0_18px_36px_-18px_rgba(0,0,0,0.45)] backdrop-blur supports-[backdrop-filter]:bg-(--legacy-cards-bg)/90">
+				<span className="px-1.5 font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 					Table
 				</span>
-				<span aria-hidden className="mx-0.5 h-4 w-px bg-(--cards-border)" />
+				<span aria-hidden className="mx-0.5 h-4 w-px bg-(--legacy-cards-border)" />
 				<TableRailButton label="Toggle header row" onClick={() => editor.chain().focus().toggleHeaderRow().run()}>
 					<span className="font-jetbrains text-[10px] tracking-wider">HDR</span>
 				</TableRailButton>
-				<span aria-hidden className="mx-0.5 h-4 w-px bg-(--cards-border)" />
+				<span aria-hidden className="mx-0.5 h-4 w-px bg-(--legacy-cards-border)" />
 				<TableRailButton label="Add row above" onClick={() => editor.chain().focus().addRowBefore().run()}>
 					<span className="font-jetbrains text-[10px] tracking-wider">↑R</span>
 				</TableRailButton>
@@ -159,7 +159,7 @@ export function TableControlsOverlay({ editor }: { editor: Editor }) {
 				<TableRailButton label="Delete row" onClick={() => editor.chain().focus().deleteRow().run()}>
 					<span className="font-jetbrains text-[10px] tracking-wider">−R</span>
 				</TableRailButton>
-				<span aria-hidden className="mx-0.5 h-4 w-px bg-(--cards-border)" />
+				<span aria-hidden className="mx-0.5 h-4 w-px bg-(--legacy-cards-border)" />
 				<TableRailButton label="Add column left" onClick={() => editor.chain().focus().addColumnBefore().run()}>
 					<span className="font-jetbrains text-[10px] tracking-wider">←C</span>
 				</TableRailButton>
@@ -169,7 +169,7 @@ export function TableControlsOverlay({ editor }: { editor: Editor }) {
 				<TableRailButton label="Delete column" onClick={() => editor.chain().focus().deleteColumn().run()}>
 					<span className="font-jetbrains text-[10px] tracking-wider">−C</span>
 				</TableRailButton>
-				<span aria-hidden className="mx-0.5 h-4 w-px bg-(--cards-border)" />
+				<span aria-hidden className="mx-0.5 h-4 w-px bg-(--legacy-cards-border)" />
 				<TableRailButton label="Delete table" onClick={() => editor.chain().focus().deleteTable().run()}>
 					<Icon name="x" className="size-3.5" />
 				</TableRailButton>

@@ -53,7 +53,7 @@ export function AvailableRange({
 				min || max ? (
 					<>
 						<span>Available: </span>
-						<span className="text-(--link)">{`${min?.toLocaleString() ?? 'min'} - ${
+						<span className="text-(--legacy-link)">{`${min?.toLocaleString() ?? 'min'} - ${
 							max?.toLocaleString() ?? 'max'
 						}`}</span>
 					</>

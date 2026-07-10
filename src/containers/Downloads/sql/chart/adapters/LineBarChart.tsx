@@ -139,7 +139,7 @@ export function LineBarChart({
 				/>
 			</Suspense>
 			{truncatedCount > 0 ? (
-				<p className="mt-1.5 text-[11px] text-(--text-tertiary)">
+				<p className="mt-1.5 text-[11px] text-(--legacy-text-tertiary)">
 					Showing top {SPLIT_TOP_N} series by magnitude. {truncatedCount} folded into <em>Other</em>.
 				</p>
 			) : null}

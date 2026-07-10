@@ -370,7 +370,7 @@ const chartOptions = {
 				</div>`
 				}
 				if (validParams.length > 1) {
-					tooltipContent += `<div style="border-top: 1px solid var(--divider); margin-top: 4px; padding-top: 4px; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+					tooltipContent += `<div style="border-top: 1px solid var(--legacy-divider); margin-top: 4px; padding-top: 4px; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
 					<span><strong>Total</strong></span>
 					<span style="font-weight: 600;">${formattedNum(totalValue, true)}</span>
 				</div>`

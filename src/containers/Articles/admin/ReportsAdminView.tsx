@@ -112,7 +112,9 @@ function ReportRow({ article }: { article: ArticleDocument }) {
 					<div className="flex flex-wrap items-center gap-2">
 						<span
 							className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] uppercase ${
-								isPublished ? 'bg-emerald-500/10 text-emerald-500' : 'bg-(--text-tertiary)/10 text-(--text-tertiary)'
+								isPublished
+									? 'bg-emerald-500/10 text-emerald-500'
+									: 'bg-(--legacy-text-tertiary)/10 text-(--legacy-text-tertiary)'
 							}`}
 						>
 							<span aria-hidden className="size-1 rounded-full bg-current" />
@@ -126,11 +128,11 @@ function ReportRow({ article }: { article: ArticleDocument }) {
 					</div>
 					<Link
 						href={articleEditHref(article)}
-						className="mt-1 block truncate text-base font-semibold text-(--text-primary) hover:text-(--link-text)"
+						className="mt-1 block truncate text-base font-semibold text-(--legacy-text-primary) hover:text-(--legacy-link-text)"
 					>
 						{article.title}
 					</Link>
-					<p className="font-jetbrains text-[10px] tracking-[0.16em] text-(--text-tertiary) uppercase">
+					<p className="font-jetbrains text-[10px] tracking-[0.16em] text-(--legacy-text-tertiary) uppercase">
 						/research/report/{article.slug}
 					</p>
 				</div>
@@ -139,7 +141,7 @@ function ReportRow({ article }: { article: ArticleDocument }) {
 						type="button"
 						disabled={!dirty || isMutating}
 						onClick={() => saveMutation.mutate()}
-						className="rounded-md border border-(--cards-border) px-3 py-1.5 text-xs text-(--text-secondary) transition-colors hover:border-(--link-text)/40 hover:text-(--text-primary) disabled:cursor-not-allowed disabled:opacity-50"
+						className="rounded-md border border-(--legacy-cards-border) px-3 py-1.5 text-xs text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						{saveMutation.isPending ? 'Saving…' : 'Save'}
 					</button>
@@ -155,7 +157,7 @@ function ReportRow({ article }: { article: ArticleDocument }) {
 					) : null}
 					<Link
 						href={articleEditHref(article)}
-						className="rounded-md px-2.5 py-1.5 text-xs text-(--text-tertiary) transition-colors hover:text-(--link-text)"
+						className="rounded-md px-2.5 py-1.5 text-xs text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-link-text)"
 					>
 						Open editor →
 					</Link>
@@ -164,7 +166,9 @@ function ReportRow({ article }: { article: ArticleDocument }) {
 
 			<div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr]">
 				<div className="grid gap-1.5">
-					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">PDF</span>
+					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
+						PDF
+					</span>
 					<PdfUploadButton
 						articleId={article.id}
 						currentPdf={state.reportPdf}
@@ -183,7 +187,7 @@ function ReportRow({ article }: { article: ArticleDocument }) {
 					/>
 				</div>
 				<div className="grid gap-1.5">
-					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 						Carousel image
 					</span>
 					<ImageUploadButton
@@ -206,7 +210,7 @@ function ReportRow({ article }: { article: ArticleDocument }) {
 					/>
 				</div>
 				<div className="grid gap-1.5">
-					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 						Sponsor logo
 					</span>
 					<ImageUploadButton
@@ -231,9 +235,9 @@ function ReportRow({ article }: { article: ArticleDocument }) {
 			</div>
 
 			<label className="grid gap-1.5">
-				<span className="flex items-baseline justify-between gap-2 font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+				<span className="flex items-baseline justify-between gap-2 font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 					<span>Description</span>
-					<span className="text-(--text-tertiary)">{state.reportDescription.length}/600</span>
+					<span className="text-(--legacy-text-tertiary)">{state.reportDescription.length}/600</span>
 				</span>
 				<textarea
 					value={state.reportDescription}
@@ -241,7 +245,7 @@ function ReportRow({ article }: { article: ArticleDocument }) {
 					placeholder="Shown on hover over the report card on /research."
 					rows={3}
 					maxLength={600}
-					className="resize-none rounded-md border border-(--form-control-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+					className="resize-none rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 				/>
 			</label>
 		</li>
@@ -268,15 +272,15 @@ export function ReportsAdminView() {
 	})
 
 	if (isLoading) {
-		return <div className="mx-auto py-24 text-center text-sm text-(--text-tertiary)">Loading…</div>
+		return <div className="mx-auto py-24 text-center text-sm text-(--legacy-text-tertiary)">Loading…</div>
 	}
 
 	if (error) {
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load reports'
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-red-500/30 bg-red-500/5 p-6">
-				<h1 className="text-xl font-semibold text-(--text-primary)">Couldn't load reports</h1>
-				<p className="text-sm text-(--text-secondary)">{message}</p>
+				<h1 className="text-xl font-semibold text-(--legacy-text-primary)">Couldn't load reports</h1>
+				<p className="text-sm text-(--legacy-text-secondary)">{message}</p>
 			</div>
 		)
 	}
@@ -290,18 +294,18 @@ export function ReportsAdminView() {
 				<div>
 					<Link
 						href="/research/admin"
-						className="inline-flex items-center gap-1 text-xs text-(--text-tertiary) transition-colors hover:text-(--text-primary)"
+						className="inline-flex items-center gap-1 text-xs text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-text-primary)"
 					>
 						<span aria-hidden>←</span> Admin
 					</Link>
-					<h1 className="mt-2 text-3xl font-semibold tracking-tight text-(--text-primary)">Reports</h1>
-					<p className="mt-1 text-sm text-(--text-secondary)">
+					<h1 className="mt-2 text-3xl font-semibold tracking-tight text-(--legacy-text-primary)">Reports</h1>
+					<p className="mt-1 text-sm text-(--legacy-text-secondary)">
 						Attach a PDF, carousel image, sponsor logo, and description to each Report article. Changes to published
 						reports go to a pending revision — use <span className="font-medium">Save &amp; publish</span> to push them
 						live.
 					</p>
 				</div>
-				<div className="inline-flex overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-bg) text-xs">
+				<div className="inline-flex overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) text-xs">
 					{(['all', 'published', 'draft'] as const).map((value) => (
 						<button
 							key={value}
@@ -309,8 +313,8 @@ export function ReportsAdminView() {
 							onClick={() => setFilter(value)}
 							className={`px-3 py-1.5 transition-colors ${
 								filter === value
-									? 'bg-(--link-button) text-(--link-text)'
-									: 'text-(--text-secondary) hover:text-(--text-primary)'
+									? 'bg-(--legacy-link-button) text-(--legacy-link-text)'
+									: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
 							}`}
 						>
 							{value === 'all' ? 'All' : value === 'published' ? 'Published' : 'Drafts'}
@@ -320,13 +324,13 @@ export function ReportsAdminView() {
 			</header>
 
 			{filtered.length === 0 ? (
-				<div className="rounded-md border border-dashed border-(--cards-border) bg-(--cards-bg) p-10 text-center">
-					<p className="text-sm text-(--text-secondary)">
+				<div className="rounded-md border border-dashed border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-10 text-center">
+					<p className="text-sm text-(--legacy-text-secondary)">
 						{all.length === 0 ? 'No Report articles yet.' : 'No reports match this filter.'}
 					</p>
 				</div>
 			) : (
-				<ul className="grid divide-y divide-(--cards-border) overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<ul className="grid divide-y divide-(--legacy-cards-border) overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 					{filtered.map((article) => (
 						<ReportRow key={article.id} article={article} />
 					))}

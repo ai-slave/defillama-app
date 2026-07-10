@@ -85,7 +85,7 @@ function ProgressPercentValue({
 	return (
 		<span className="flex min-w-[92px] flex-col items-end gap-1">
 			<span className="text-sm font-semibold">{value}</span>
-			<span className="h-1.5 w-20 overflow-hidden rounded-full bg-(--bg-tertiary)">
+			<span className="h-1.5 w-20 overflow-hidden rounded-full bg-(--legacy-bg-tertiary)">
 				<span className={`block h-full rounded-full ${barClassName}`} style={{ width }} />
 			</span>
 		</span>

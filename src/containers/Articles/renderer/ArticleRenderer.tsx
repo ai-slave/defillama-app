@@ -200,7 +200,7 @@ function renderCitation(node: TiptapJson, key: string) {
 		...(stringAttr(node.attrs, 'title') ? { title: stringAttr(node.attrs, 'title') } : {})
 	}
 	const className =
-		'mx-0.5 inline-flex items-baseline rounded-[3px] border border-(--cards-border) bg-(--link-button) px-1 text-[11px] leading-4 text-(--link-text) no-underline'
+		'mx-0.5 inline-flex items-baseline rounded-[3px] border border-(--legacy-cards-border) bg-(--legacy-link-button) px-1 text-[11px] leading-4 text-(--legacy-link-text) no-underline'
 	if (citation.url) {
 		return (
 			<a
@@ -228,7 +228,7 @@ function renderCallout(node: TiptapJson, key: string, ctx: RenderContext) {
 		return (
 			<aside
 				key={key}
-				className="article-pullquote my-8 border-y border-(--link-text)/30 px-2 py-6 text-center text-xl leading-snug font-medium text-(--text-primary) [&_p]:my-0"
+				className="article-pullquote my-8 border-y border-(--legacy-link-text)/30 px-2 py-6 text-center text-xl leading-snug font-medium text-(--legacy-text-primary) [&_p]:my-0"
 			>
 				{renderChildren(node, key, ctx)}
 			</aside>
@@ -238,7 +238,7 @@ function renderCallout(node: TiptapJson, key: string, ctx: RenderContext) {
 		return (
 			<aside
 				key={key}
-				className="article-bio my-6 rounded-md rounded-l-none border-l-4 border-(--link-text) bg-(--link-button) px-5 py-4 leading-[1.65] text-(--text-secondary) [&_p]:my-0 [&_p+p]:mt-2"
+				className="article-bio my-6 rounded-md rounded-l-none border-l-4 border-(--legacy-link-text) bg-(--legacy-link-button) px-5 py-4 leading-[1.65] text-(--legacy-text-secondary) [&_p]:my-0 [&_p+p]:mt-2"
 			>
 				{renderChildren(node, key, ctx)}
 			</aside>
@@ -248,14 +248,14 @@ function renderCallout(node: TiptapJson, key: string, ctx: RenderContext) {
 		tone === 'warning'
 			? 'border-[#d89b2a]/60 bg-[#fff8e6] text-[#4d3606] dark:bg-[#30230b] dark:text-[#f4d28e]'
 			: tone === 'data'
-				? 'border-(--link-text)/40 bg-(--link-button)'
-				: 'border-(--cards-border) bg-(--cards-bg)'
+				? 'border-(--legacy-link-text)/40 bg-(--legacy-link-button)'
+				: 'border-(--legacy-cards-border) bg-(--legacy-cards-bg)'
 	const toneText =
 		tone === 'warning'
 			? 'text-[#a17317] dark:text-[#f4d28e]'
 			: tone === 'data'
-				? 'text-(--link-text)'
-				: 'text-(--text-tertiary)'
+				? 'text-(--legacy-link-text)'
+				: 'text-(--legacy-text-tertiary)'
 	return (
 		<aside key={key} className={`my-6 rounded-md border p-4 ${wrap}`}>
 			<div className={`mb-1.5 text-xs font-medium capitalize ${toneText}`}>{tone}</div>
@@ -268,8 +268,15 @@ function renderTaskItem(node: TiptapJson, key: string, ctx: RenderContext) {
 	const checked = !!node.attrs?.checked
 	return (
 		<li key={key} className="article-task-item not-prose flex items-start gap-2 pl-0" data-checked={checked}>
-			<input type="checkbox" checked={checked} readOnly className="mt-1.5 size-3.5 shrink-0 accent-(--link-text)" />
-			<div className={`min-w-0 flex-1 ${checked ? 'text-(--text-tertiary) line-through' : 'text-(--text-primary)'}`}>
+			<input
+				type="checkbox"
+				checked={checked}
+				readOnly
+				className="mt-1.5 size-3.5 shrink-0 accent-(--legacy-link-text)"
+			/>
+			<div
+				className={`min-w-0 flex-1 ${checked ? 'text-(--legacy-text-tertiary) line-through' : 'text-(--legacy-text-primary)'}`}
+			>
 				{renderChildren(node, key, ctx)}
 			</div>
 		</li>
@@ -409,7 +416,7 @@ function renderTable(node: TiptapJson, key: string, ctx: RenderContext) {
 		<div key={key} className="article-table-wrap not-prose my-6 overflow-x-auto">
 			<table className="article-table w-full border-collapse text-sm">
 				{headerRows.length ? (
-					<thead className="bg-(--app-bg)">
+					<thead className="bg-(--legacy-app-bg)">
 						{headerRows.map((row, i) => renderNode(row, `${key}-thead-${i}`, ctx))}
 					</thead>
 				) : null}
@@ -421,7 +428,7 @@ function renderTable(node: TiptapJson, key: string, ctx: RenderContext) {
 
 function renderTableRow(node: TiptapJson, key: string, ctx: RenderContext) {
 	return (
-		<tr key={key} className="border-b border-(--cards-border) last:border-b-0">
+		<tr key={key} className="border-b border-(--legacy-cards-border) last:border-b-0">
 			{renderChildren(node, key, ctx)}
 		</tr>
 	)
@@ -443,7 +450,7 @@ function formatHeaderDate(iso: string | null | undefined) {
 }
 
 const metaChipClassName =
-	'inline-flex items-center rounded-[3px] bg-(--link-text) px-2 py-[3px] text-[10px] leading-none font-semibold tracking-tight whitespace-nowrap text-white transition-opacity hover:opacity-90'
+	'inline-flex items-center rounded-[3px] bg-(--legacy-link-text) px-2 py-[3px] text-[10px] leading-none font-semibold tracking-tight whitespace-nowrap text-white transition-opacity hover:opacity-90'
 
 function MetaChip({ children, href }: { children: ReactNode; href?: string }) {
 	if (href) {
@@ -540,7 +547,7 @@ function ActivePill() {
 	return (
 		<span
 			aria-hidden
-			className="pointer-events-none absolute top-1/2 right-0 h-5 w-1 -translate-y-1/2 rounded-[2px] bg-(--text-tertiary)"
+			className="pointer-events-none absolute top-1/2 right-0 h-5 w-1 -translate-y-1/2 rounded-[2px] bg-(--legacy-text-tertiary)"
 		/>
 	)
 }
@@ -598,30 +605,30 @@ function CompactTocBar({ toc, groups, active }: { toc: TocEntry[]; groups: TocGr
 			type="button"
 			onClick={onJumpToTop}
 			aria-label={`Currently reading: ${currentEntry?.text ?? 'article'}. Return to top of article.`}
-			className="group relative flex w-full flex-col gap-3 border-y border-(--cards-border) py-3.5 text-left transition-colors hover:bg-(--cards-bg)/40 focus-visible:ring-1 focus-visible:ring-(--link-text)/60 focus-visible:outline-none"
+			className="group relative flex w-full flex-col gap-3 border-y border-(--legacy-cards-border) py-3.5 text-left transition-colors hover:bg-(--legacy-cards-bg)/40 focus-visible:ring-1 focus-visible:ring-(--legacy-link-text)/60 focus-visible:outline-none"
 		>
 			<div className="flex items-center justify-between gap-3">
-				<span className="text-[10px] leading-none font-semibold tracking-[0.18em] text-(--text-tertiary) uppercase">
+				<span className="text-[10px] leading-none font-semibold tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 					On this page
 				</span>
-				<span className="flex items-center gap-1 text-[10px] leading-none font-medium tracking-[0.12em] text-(--text-tertiary) uppercase transition-colors group-hover:text-(--link-text)">
+				<span className="flex items-center gap-1 text-[10px] leading-none font-medium tracking-[0.12em] text-(--legacy-text-tertiary) uppercase transition-colors group-hover:text-(--legacy-link-text)">
 					<span>Top</span>
 					<Icon name="arrow-up" className="size-3" />
 				</span>
 			</div>
 			<div className="flex items-baseline gap-3">
-				<span className="font-jetbrains text-[11px] leading-none tracking-tight text-(--text-tertiary) tabular-nums">
+				<span className="font-jetbrains text-[11px] leading-none tracking-tight text-(--legacy-text-tertiary) tabular-nums">
 					{displayNumber}
-					<span className="text-(--text-tertiary)/50">/{displayTotal}</span>
+					<span className="text-(--legacy-text-tertiary)/50">/{displayTotal}</span>
 				</span>
-				<span className="min-w-0 flex-1 truncate text-[15px] leading-6 font-bold text-(--text-primary)">
+				<span className="min-w-0 flex-1 truncate text-[15px] leading-6 font-bold text-(--legacy-text-primary)">
 					{currentEntry?.text ?? '—'}
 				</span>
 			</div>
-			<div className="relative h-px w-full bg-(--cards-border)">
+			<div className="relative h-px w-full bg-(--legacy-cards-border)">
 				<span
 					aria-hidden
-					className="absolute inset-y-0 left-0 bg-(--link-text) transition-[width] duration-300 ease-out"
+					className="absolute inset-y-0 left-0 bg-(--legacy-link-text) transition-[width] duration-300 ease-out"
 					style={{ width: `${pct}%` }}
 				/>
 			</div>
@@ -668,7 +675,7 @@ function ArticleToc({ toc, compactMode = false }: { toc: TocEntry[]; compactMode
 								<button
 									type="button"
 									onClick={() => toggle(group.id)}
-									className="flex w-full items-center justify-between gap-2 px-5 py-1.5 text-left text-[15px] leading-6 font-bold text-(--text-primary) hover:text-(--link-text)"
+									className="flex w-full items-center justify-between gap-2 px-5 py-1.5 text-left text-[15px] leading-6 font-bold text-(--legacy-text-primary) hover:text-(--legacy-link-text)"
 								>
 									<a
 										href={`#${group.id}`}
@@ -682,14 +689,14 @@ function ArticleToc({ toc, compactMode = false }: { toc: TocEntry[]; compactMode
 									</a>
 									<Icon
 										name={isCollapsed ? 'chevron-right' : 'chevron-down'}
-										className="size-3 shrink-0 text-(--text-secondary)"
+										className="size-3 shrink-0 text-(--legacy-text-secondary)"
 									/>
 								</button>
 							) : (
 								<a
 									href={`#${group.id}`}
 									onClick={() => setActive(group.id)}
-									className={`flex items-center px-5 py-1.5 text-[15px] leading-6 font-bold text-(--text-primary) hover:text-(--link-text) ${
+									className={`flex items-center px-5 py-1.5 text-[15px] leading-6 font-bold text-(--legacy-text-primary) hover:text-(--legacy-link-text) ${
 										isParentActive ? 'underline' : ''
 									}`}
 								>
@@ -708,8 +715,8 @@ function ArticleToc({ toc, compactMode = false }: { toc: TocEntry[]; compactMode
 													onClick={() => setActive(child.id)}
 													className={`block truncate py-1.5 pr-3 pl-10 text-[15px] leading-6 transition-colors ${
 														isActive
-															? 'font-semibold text-(--text-primary) underline'
-															: 'text-(--text-secondary) hover:text-(--text-primary)'
+															? 'font-semibold text-(--legacy-text-primary) underline'
+															: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
 													}`}
 												>
 													{child.text}
@@ -742,7 +749,7 @@ function ShareIcons({ url, title, size = 'md' }: { url: string; title: string; s
 	}
 	const dim = size === 'sm' ? 'size-9' : 'size-11'
 	const iconDim = size === 'sm' ? 'size-4' : 'size-5'
-	const buttonClass = `flex ${dim} items-center justify-center rounded-full border border-(--cards-border) bg-(--cards-bg) text-(--text-primary) transition-colors hover:border-(--link-text)/50 hover:text-(--link-text)`
+	const buttonClass = `flex ${dim} items-center justify-center rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) text-(--legacy-text-primary) transition-colors hover:border-(--legacy-link-text)/50 hover:text-(--legacy-link-text)`
 	return (
 		<div className="flex items-center gap-1.5">
 			<a
@@ -773,8 +780,8 @@ function ShareIcons({ url, title, size = 'md' }: { url: string; title: string; s
 function ShareBlock({ url, title, compactMode = false }: { url: string; title: string; compactMode?: boolean }) {
 	if (compactMode) {
 		return (
-			<div className="flex items-center justify-between gap-3 border-y border-(--cards-border) py-3.5">
-				<span className="flex items-center gap-1.5 text-[10px] leading-none font-semibold tracking-[0.18em] text-(--text-tertiary) uppercase">
+			<div className="flex items-center justify-between gap-3 border-y border-(--legacy-cards-border) py-3.5">
+				<span className="flex items-center gap-1.5 text-[10px] leading-none font-semibold tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 					Share
 					<Icon name="share" className="size-3" />
 				</span>
@@ -784,15 +791,17 @@ function ShareBlock({ url, title, compactMode = false }: { url: string; title: s
 	}
 	return (
 		<div className="grid gap-8">
-			<div role="separator" className="h-px bg-(--cards-border)" />
+			<div role="separator" className="h-px bg-(--legacy-cards-border)" />
 			<div className="flex flex-col items-center gap-5">
 				<div className="flex items-center gap-1.5">
-					<span className="text-[18px] leading-none font-semibold tracking-wide text-(--text-primary)">SHARE</span>
-					<Icon name="share" className="size-4 text-(--text-primary)" />
+					<span className="text-[18px] leading-none font-semibold tracking-wide text-(--legacy-text-primary)">
+						SHARE
+					</span>
+					<Icon name="share" className="size-4 text-(--legacy-text-primary)" />
 				</div>
 				<ShareIcons url={url} title={title} />
 			</div>
-			<div role="separator" className="h-px bg-(--cards-border)" />
+			<div role="separator" className="h-px bg-(--legacy-cards-border)" />
 		</div>
 	)
 }
@@ -877,16 +886,19 @@ export function ArticleRenderer({
 	const bylineLabel = isInterview ? 'Interviewer' : 'By'
 	const bylineAuthorEntries = getArticleBylineAuthorEntries(article)
 	const bylineNode = bylineAuthorEntries ? (
-		<span className="flex flex-wrap items-center gap-1 text-xs text-(--text-secondary)">
+		<span className="flex flex-wrap items-center gap-1 text-xs text-(--legacy-text-secondary)">
 			<span className="font-normal">{bylineLabel}</span>
 			{bylineAuthorEntries.map((entry, index) => (
 				<span key={`${entry.name}-${index}`} className="flex items-center gap-1">
 					{entry.href ? (
-						<Link href={entry.href} className="font-semibold text-(--text-primary) hover:text-(--link-text)">
+						<Link
+							href={entry.href}
+							className="font-semibold text-(--legacy-text-primary) hover:text-(--legacy-link-text)"
+						>
 							{entry.name}
 						</Link>
 					) : (
-						<span className="font-semibold text-(--text-primary)">{entry.name}</span>
+						<span className="font-semibold text-(--legacy-text-primary)">{entry.name}</span>
 					)}
 					{index < bylineAuthorEntries.length - 2 ? <span>,</span> : null}
 					{index === bylineAuthorEntries.length - 2 ? <span>and</span> : null}
@@ -898,7 +910,7 @@ export function ArticleRenderer({
 	const intervieweesList = isInterview ? (article.interviewees ?? []).filter((p) => p?.name?.trim()) : []
 	const intervieweeNode =
 		intervieweesList.length > 0 ? (
-			<span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-(--text-secondary)">
+			<span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-(--legacy-text-secondary)">
 				<span className="font-normal">Interviewee{intervieweesList.length > 1 ? 's' : ''}</span>
 				{intervieweesList.map((person, index) => {
 					const labelNode = (
@@ -908,11 +920,11 @@ export function ArticleRenderer({
 								<img
 									src={person.avatarUrl}
 									alt=""
-									className="size-5 shrink-0 rounded-full border border-(--cards-border) object-cover"
+									className="size-5 shrink-0 rounded-full border border-(--legacy-cards-border) object-cover"
 								/>
 							) : null}
-							<span className="font-semibold text-(--text-primary)">{person.name}</span>
-							{person.role ? <span className="text-(--text-tertiary)">· {person.role}</span> : null}
+							<span className="font-semibold text-(--legacy-text-primary)">{person.name}</span>
+							{person.role ? <span className="text-(--legacy-text-tertiary)">· {person.role}</span> : null}
 						</span>
 					)
 					const href = person.authorSlug
@@ -922,11 +934,11 @@ export function ArticleRenderer({
 							: null
 					const linked = href ? (
 						person.authorSlug ? (
-							<Link href={href} className="hover:text-(--link-text)">
+							<Link href={href} className="hover:text-(--legacy-link-text)">
 								{labelNode}
 							</Link>
 						) : (
-							<a href={href} target="_blank" rel="noreferrer noopener" className="hover:text-(--link-text)">
+							<a href={href} target="_blank" rel="noreferrer noopener" className="hover:text-(--legacy-link-text)">
 								{labelNode}
 							</a>
 						)
@@ -948,11 +960,11 @@ export function ArticleRenderer({
 		<div className={articlePageClassName}>
 			<article className="article-published min-w-0">
 				<header className="grid gap-4 pt-6 sm:pt-10 lg:gap-5">
-					<h1 className="text-[26px] leading-[1.2] font-bold tracking-tight text-(--text-primary) sm:text-3xl sm:leading-[1.15] md:text-[36px] md:leading-[1.32]">
+					<h1 className="text-[26px] leading-[1.2] font-bold tracking-tight text-(--legacy-text-primary) sm:text-3xl sm:leading-[1.15] md:text-[36px] md:leading-[1.32]">
 						{article.title}
 					</h1>
 					{article.subtitle ? (
-						<p className="text-base leading-snug text-(--text-secondary) md:text-lg">{article.subtitle}</p>
+						<p className="text-base leading-snug text-(--legacy-text-secondary) md:text-lg">{article.subtitle}</p>
 					) : null}
 					{article.section === 'report' && article.reportPdf ? (
 						<div>
@@ -960,7 +972,7 @@ export function ArticleRenderer({
 								article={article as ArticleDocument}
 								pdfUrl={article.reportPdf.url}
 								widgetLabel="Article page"
-								className="inline-flex items-center gap-2 rounded-md bg-(--link-text) px-3.5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+								className="inline-flex items-center gap-2 rounded-md bg-(--legacy-link-text) px-3.5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
 							>
 								<Icon name="download-cloud" className="size-4" />
 								Download PDF
@@ -975,11 +987,13 @@ export function ArticleRenderer({
 							<img src={cover.url} alt={cover.alt || ''} className="block size-full object-cover" />
 						</div>
 						{hasCoverMeta ? (
-							<figcaption className="grid gap-1 text-xs text-(--text-tertiary)">
-								{coverHeadline ? <span className="font-medium text-(--text-secondary)">{coverHeadline}</span> : null}
+							<figcaption className="grid gap-1 text-xs text-(--legacy-text-tertiary)">
+								{coverHeadline ? (
+									<span className="font-medium text-(--legacy-text-secondary)">{coverHeadline}</span>
+								) : null}
 								{coverCaption ? <span>{coverCaption}</span> : null}
 								{coverMetaParts.length > 0 ? (
-									<span className="text-(--text-tertiary)/80">{coverMetaParts.join(' · ')}</span>
+									<span className="text-(--legacy-text-tertiary)/80">{coverMetaParts.join(' · ')}</span>
 								) : null}
 							</figcaption>
 						) : null}
@@ -1004,7 +1018,7 @@ export function ArticleRenderer({
 						)}
 					</div>
 					{publishedLabel ? (
-						<span className="text-xs whitespace-nowrap text-(--text-secondary)">{publishedLabel}</span>
+						<span className="text-xs whitespace-nowrap text-(--legacy-text-secondary)">{publishedLabel}</span>
 					) : null}
 				</div>
 
@@ -1015,7 +1029,7 @@ export function ArticleRenderer({
 							{intervieweeNode}
 						</div>
 						{publishedLabel ? (
-							<span className="text-xs whitespace-nowrap text-(--text-secondary)">{publishedLabel}</span>
+							<span className="text-xs whitespace-nowrap text-(--legacy-text-secondary)">{publishedLabel}</span>
 						) : null}
 					</div>
 					{(sectionLabel || tagChips.length > 0) && (
@@ -1029,8 +1043,10 @@ export function ArticleRenderer({
 						</div>
 					)}
 					<div className="flex items-center gap-2">
-						<span className="text-[13px] leading-none font-semibold tracking-wide text-(--text-primary)">SHARE</span>
-						<Icon name="share" className="size-3.5 text-(--text-primary)" />
+						<span className="text-[13px] leading-none font-semibold tracking-wide text-(--legacy-text-primary)">
+							SHARE
+						</span>
+						<Icon name="share" className="size-3.5 text-(--legacy-text-primary)" />
 						<div className="ml-1">
 							<ShareIcons url={shareUrl} title={article.title} size="sm" />
 						</div>
@@ -1039,9 +1055,9 @@ export function ArticleRenderer({
 
 				{toc.length > 1 ? (
 					<div className="grid gap-6 pb-2 lg:hidden">
-						<div role="separator" className="h-px bg-(--cards-border)" />
+						<div role="separator" className="h-px bg-(--legacy-cards-border)" />
 						<ArticleToc toc={toc} />
-						<div role="separator" className="h-px bg-(--cards-border)" />
+						<div role="separator" className="h-px bg-(--legacy-cards-border)" />
 					</div>
 				) : null}
 
@@ -1054,7 +1070,7 @@ export function ArticleRenderer({
 				<div ref={sentinelRef} aria-hidden className="h-0 w-full" />
 
 				<div className="article-prose [overflow-wrap:anywhere] break-words">
-					<div className="prose max-w-none prose-neutral dark:prose-invert prose-headings:font-semibold prose-headings:tracking-tight prose-h1:mt-8 prose-h1:mb-3 prose-h2:mt-6 prose-h2:mb-2 prose-h2:text-2xl prose-h3:mt-5 prose-h3:mb-1.5 prose-h3:text-lg prose-h4:mt-4 prose-h4:mb-1.5 prose-h4:text-base prose-h5:mt-3 prose-h5:mb-1 prose-h5:text-sm prose-h6:mt-3 prose-h6:mb-1 prose-h6:text-sm prose-p:my-3 prose-p:leading-[1.65] prose-a:font-medium prose-a:text-(--link-text) prose-a:no-underline hover:prose-a:underline prose-blockquote:my-4 prose-blockquote:border-l-2 prose-blockquote:border-(--link-text) prose-blockquote:bg-transparent prose-blockquote:px-4 prose-blockquote:py-1 prose-blockquote:text-(--text-secondary) prose-blockquote:not-italic prose-figure:my-4 prose-strong:text-(--text-primary) prose-code:rounded prose-code:bg-(--link-button) prose-code:px-1.5 prose-code:py-0.5 prose-code:text-[0.92em] prose-code:text-(--link-text) prose-code:before:hidden prose-code:after:hidden prose-pre:my-4 prose-pre:border prose-pre:border-(--cards-border) prose-pre:bg-(--cards-bg) prose-pre:text-(--text-primary) prose-ol:my-3 prose-ul:my-3 prose-li:my-1 prose-img:my-4 prose-hr:my-6 prose-hr:border-(--cards-border) [&_.article-table_p]:my-0 [&_.article-table_td]:border [&_.article-table_td]:border-(--cards-border) [&_.article-table_td]:px-3 [&_.article-table_td]:py-2 [&_.article-table_td]:align-top [&_.article-table_td]:text-(--text-secondary) [&_.article-table_th]:border [&_.article-table_th]:border-(--cards-border) [&_.article-table_th]:bg-(--app-bg) [&_.article-table_th]:px-3 [&_.article-table_th]:py-2 [&_.article-table_th]:text-left [&_.article-table_th]:font-semibold [&_.article-table_th]:text-(--text-primary) [&_:where(h1,h2,h3,h4,h5,h6):first-child]:mt-0 [&_li>p]:my-0 [&_li>p]:leading-[1.55]">
+					<div className="prose max-w-none prose-neutral dark:prose-invert prose-headings:font-semibold prose-headings:tracking-tight prose-h1:mt-8 prose-h1:mb-3 prose-h2:mt-6 prose-h2:mb-2 prose-h2:text-2xl prose-h3:mt-5 prose-h3:mb-1.5 prose-h3:text-lg prose-h4:mt-4 prose-h4:mb-1.5 prose-h4:text-base prose-h5:mt-3 prose-h5:mb-1 prose-h5:text-sm prose-h6:mt-3 prose-h6:mb-1 prose-h6:text-sm prose-p:my-3 prose-p:leading-[1.65] prose-a:font-medium prose-a:text-(--legacy-link-text) prose-a:no-underline hover:prose-a:underline prose-blockquote:my-4 prose-blockquote:border-l-2 prose-blockquote:border-(--legacy-link-text) prose-blockquote:bg-transparent prose-blockquote:px-4 prose-blockquote:py-1 prose-blockquote:text-(--legacy-text-secondary) prose-blockquote:not-italic prose-figure:my-4 prose-strong:text-(--legacy-text-primary) prose-code:rounded prose-code:bg-(--legacy-link-button) prose-code:px-1.5 prose-code:py-0.5 prose-code:text-[0.92em] prose-code:text-(--legacy-link-text) prose-code:before:hidden prose-code:after:hidden prose-pre:my-4 prose-pre:border prose-pre:border-(--legacy-cards-border) prose-pre:bg-(--legacy-cards-bg) prose-pre:text-(--legacy-text-primary) prose-ol:my-3 prose-ul:my-3 prose-li:my-1 prose-img:my-4 prose-hr:my-6 prose-hr:border-(--legacy-cards-border) [&_.article-table_p]:my-0 [&_.article-table_td]:border [&_.article-table_td]:border-(--legacy-cards-border) [&_.article-table_td]:px-3 [&_.article-table_td]:py-2 [&_.article-table_td]:align-top [&_.article-table_td]:text-(--legacy-text-secondary) [&_.article-table_th]:border [&_.article-table_th]:border-(--legacy-cards-border) [&_.article-table_th]:bg-(--legacy-app-bg) [&_.article-table_th]:px-3 [&_.article-table_th]:py-2 [&_.article-table_th]:text-left [&_.article-table_th]:font-semibold [&_.article-table_th]:text-(--legacy-text-primary) [&_:where(h1,h2,h3,h4,h5,h6):first-child]:mt-0 [&_li>p]:my-0 [&_li>p]:leading-[1.55]">
 						{(() => {
 							const docContent = contentJson.content ?? []
 							const nodes = docContent.map((child, idx) => renderNode(child, `article-root-${idx}`, ctx))
@@ -1075,7 +1091,7 @@ export function ArticleRenderer({
 
 			{hideSidePanel ? null : (
 				<aside className="hidden lg:sticky lg:top-6 lg:block lg:self-start">
-					<div className="flex flex-col gap-8 border-l border-(--cards-border) pt-10 pr-1 pb-6 pl-5">
+					<div className="flex flex-col gap-8 border-l border-(--legacy-cards-border) pt-10 pr-1 pb-6 pl-5">
 						{toc.length > 1 ? (
 							<div className="pr-2">
 								<ArticleToc toc={toc} compactMode={pastHeader} />

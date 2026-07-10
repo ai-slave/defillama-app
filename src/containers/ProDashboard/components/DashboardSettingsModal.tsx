@@ -115,7 +115,7 @@ function DashboardSettingsModalInner({
 				}}
 			>
 				<Ariakit.Dialog
-					className="dialog w-full max-w-lg gap-0 border pro-dashboard border-(--cards-border) bg-(--cards-bg) p-6 shadow-2xl"
+					className="dialog w-full max-w-lg gap-0 border pro-dashboard border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-6 shadow-2xl"
 					unmountOnHide
 					portal
 					hideOnInteractOutside
@@ -140,7 +140,7 @@ function DashboardSettingsModalInner({
 									type="text"
 									defaultValue={dashboardName}
 									placeholder="Enter dashboard name"
-									className="w-full rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
+									className="w-full rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
 								/>
 							</div>
 
@@ -202,7 +202,7 @@ function DashboardSettingsModalInner({
 										type="text"
 										onKeyDown={handleTagInputKeyDown}
 										placeholder="Enter tag name"
-										className="flex-1 rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
+										className="flex-1 rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
 									/>
 									<button
 										type="button"
@@ -252,7 +252,7 @@ function DashboardSettingsModalInner({
 									placeholder="Describe your dashboard..."
 									maxLength={200}
 									rows={3}
-									className="w-full resize-none rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
+									className="w-full resize-none rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
 								/>
 								<p className="mt-1 text-xs pro-text3">
 									<span ref={charCountRef}>{description.length}</span>/200 characters
@@ -260,7 +260,7 @@ function DashboardSettingsModalInner({
 							</div>
 
 							{onDelete && dashboardId ? (
-								<div className="border-t border-(--cards-border) pt-6">
+								<div className="border-t border-(--legacy-cards-border) pt-6">
 									<p className="mb-3 block text-sm font-medium pro-text1 text-red-500">Danger Zone</p>
 									<p className="mb-4 text-sm pro-text3">Once you delete a dashboard, there is no going back.</p>
 									<button

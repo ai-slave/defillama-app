@@ -125,7 +125,7 @@ function FinancialRow({
 	return (
 		<>
 			<tr className="group">
-				<th className="w-[28%] overflow-hidden border border-black/10 bg-(--cards-bg) p-2 text-left font-semibold text-ellipsis whitespace-nowrap group-hover:bg-(--link-hover-bg) dark:border-white/10">
+				<th className="w-[28%] overflow-hidden border border-black/10 bg-(--legacy-cards-bg) p-2 text-left font-semibold text-ellipsis whitespace-nowrap group-hover:bg-(--legacy-link-hover-bg) dark:border-white/10">
 					<div
 						className="flex items-center gap-1"
 						onClick={(event) => {
@@ -143,7 +143,7 @@ function FinancialRow({
 									event.stopPropagation()
 									setIsExpanded((expanded) => !expanded)
 								}}
-								className="-ml-1 flex size-5 shrink-0 items-center justify-center rounded-sm text-(--text-secondary) transition-transform hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+								className="-ml-1 flex size-5 shrink-0 items-center justify-center rounded-sm text-(--legacy-text-secondary) transition-transform hover:bg-(--legacy-link-hover-bg) focus-visible:bg-(--legacy-link-hover-bg)"
 							>
 								<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} height={14} width={14} />
 							</button>
@@ -156,7 +156,7 @@ function FinancialRow({
 				{headerIndexes.map((index) => (
 					<td
 						key={`${row.id}-${index}`}
-						className="overflow-hidden border border-black/10 p-2 text-left font-medium text-ellipsis whitespace-nowrap group-hover:bg-(--link-hover-bg) dark:border-white/10"
+						className="overflow-hidden border border-black/10 p-2 text-left font-medium text-ellipsis whitespace-nowrap group-hover:bg-(--legacy-link-hover-bg) dark:border-white/10"
 					>
 						{formatEquitiesStatementCellValue(row.label, row.values[index] ?? null)}
 					</td>
@@ -164,14 +164,14 @@ function FinancialRow({
 			</tr>
 			{hasSubRows && isExpanded
 				? row.subRows?.map((subRow) => (
-						<tr key={subRow.id} className="group text-(--text-secondary)">
-							<th className="w-[28%] overflow-hidden border border-black/10 bg-(--cards-bg) p-2 pl-9 text-left font-normal text-ellipsis whitespace-nowrap italic group-hover:bg-(--link-hover-bg) dark:border-white/10">
+						<tr key={subRow.id} className="group text-(--legacy-text-secondary)">
+							<th className="w-[28%] overflow-hidden border border-black/10 bg-(--legacy-cards-bg) p-2 pl-9 text-left font-normal text-ellipsis whitespace-nowrap italic group-hover:bg-(--legacy-link-hover-bg) dark:border-white/10">
 								<span className="overflow-hidden text-ellipsis whitespace-nowrap">{subRow.label}</span>
 							</th>
 							{headerIndexes.map((index) => (
 								<td
 									key={`${subRow.id}-${index}`}
-									className="overflow-hidden border border-black/10 p-2 text-left font-normal text-ellipsis whitespace-nowrap group-hover:bg-(--link-hover-bg) dark:border-white/10"
+									className="overflow-hidden border border-black/10 p-2 text-left font-normal text-ellipsis whitespace-nowrap group-hover:bg-(--legacy-link-hover-bg) dark:border-white/10"
 								>
 									{formatEquitiesStatementCellValue(subRow.label, subRow.values[index] ?? null)}
 								</td>
@@ -275,7 +275,9 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 									type="button"
 									onClick={() => setStatementType(option)}
 									className={`rounded px-2 py-1 text-xs font-medium transition ${
-										statementType === option ? 'bg-(--primary)/10 text-(--primary)' : 'pro-text2 hover:pro-text1'
+										statementType === option
+											? 'bg-(--legacy-primary)/10 text-(--legacy-primary)'
+											: 'pro-text2 hover:pro-text1'
 									}`}
 								>
 									{option}
@@ -289,7 +291,9 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 									type="button"
 									onClick={() => setPeriodType(option)}
 									className={`rounded px-2 py-1 text-xs font-medium transition ${
-										periodType === option ? 'bg-(--primary)/10 text-(--primary)' : 'pro-text2 hover:pro-text1'
+										periodType === option
+											? 'bg-(--legacy-primary)/10 text-(--legacy-primary)'
+											: 'pro-text2 hover:pro-text1'
 									}`}
 								>
 									{option}
@@ -327,13 +331,13 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 				<table className="w-full border-collapse text-sm">
 					<thead>
 						<tr>
-							<th className="min-w-[220px] overflow-hidden border border-black/10 bg-(--app-bg) p-2 text-left font-semibold text-ellipsis whitespace-nowrap dark:border-white/10">
+							<th className="min-w-[220px] overflow-hidden border border-black/10 bg-(--legacy-app-bg) p-2 text-left font-semibold text-ellipsis whitespace-nowrap dark:border-white/10">
 								Name
 							</th>
 							{headerIndexes.map((index) => (
 								<th
 									key={`${statementType}-${periodType}-${periodData!.periodEnding[index]}`}
-									className="min-w-[132px] overflow-hidden border border-black/10 bg-(--app-bg) p-2 text-left font-semibold text-ellipsis whitespace-nowrap dark:border-white/10"
+									className="min-w-[132px] overflow-hidden border border-black/10 bg-(--legacy-app-bg) p-2 text-left font-semibold text-ellipsis whitespace-nowrap dark:border-white/10"
 								>
 									{formatStatementPeriodLabel(periodData!.periodEnding[index])}
 								</th>

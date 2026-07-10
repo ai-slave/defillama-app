@@ -233,7 +233,7 @@ export function YieldFilterDropdowns({
 					className={
 						nestedMenu
 							? nestedMenuActionStyles
-							: 'flex cursor-pointer flex-nowrap items-center gap-2 rounded-md bg-(--btn-bg) px-3 py-2 text-xs text-(--text-primary) hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)'
+							: 'flex cursor-pointer flex-nowrap items-center gap-2 rounded-md bg-(--legacy-btn-bg) px-3 py-2 text-xs text-(--legacy-text-primary) hover:bg-(--legacy-btn-hover-bg) focus-visible:bg-(--legacy-btn-hover-bg)'
 					}
 					prepareCsv={prepareCsv}
 				/>

@@ -461,19 +461,19 @@ export function ChainsDataset({
 				<TableBody table={instance} />
 			</div>
 
-			<div className="mt-3 flex w-full flex-wrap items-center justify-between gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) px-3 py-2">
+			<div className="mt-3 flex w-full flex-wrap items-center justify-between gap-2 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-2">
 				<div className="flex items-center gap-2">
 					<button
 						onClick={() => instance.previousPage()}
 						disabled={!instance.getCanPreviousPage()}
-						className="rounded-md border pro-border bg-(--bg-glass) px-3 py-1.5 text-sm pro-text1 transition-colors hover:bg-(--bg-tertiary) disabled:cursor-not-allowed disabled:opacity-50"
+						className="rounded-md border pro-border bg-(--legacy-bg-glass) px-3 py-1.5 text-sm pro-text1 transition-colors hover:bg-(--legacy-bg-tertiary) disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						Previous
 					</button>
 					<button
 						onClick={() => instance.nextPage()}
 						disabled={!instance.getCanNextPage()}
-						className="rounded-md border pro-border bg-(--bg-glass) px-3 py-1.5 text-sm pro-text1 transition-colors hover:bg-(--bg-tertiary) disabled:cursor-not-allowed disabled:opacity-50"
+						className="rounded-md border pro-border bg-(--legacy-bg-glass) px-3 py-1.5 text-sm pro-text1 transition-colors hover:bg-(--legacy-bg-tertiary) disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						Next
 					</button>
@@ -484,7 +484,7 @@ export function ChainsDataset({
 					<select
 						value={pagination.pageSize}
 						onChange={(e) => setPagination((prev) => ({ ...prev, pageSize: Number(e.target.value), pageIndex: 0 }))}
-						className="rounded-md border pro-border bg-(--bg-glass) px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-(--primary) focus:outline-hidden"
+						className="rounded-md border pro-border bg-(--legacy-bg-glass) px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-(--legacy-primary) focus:outline-hidden"
 					>
 						<option value="10">10</option>
 						<option value="30">30</option>

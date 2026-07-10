@@ -265,8 +265,8 @@ export function BannerForm({ banner }: Props) {
 							key={kind}
 							className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
 								state.kind === kind
-									? 'border-(--link-text)/60 bg-(--link-button)'
-									: 'border-(--cards-border) hover:border-(--link-text)/40'
+									? 'border-(--legacy-link-text)/60 bg-(--legacy-link-button)'
+									: 'border-(--legacy-cards-border) hover:border-(--legacy-link-text)/40'
 							}`}
 						>
 							<input
@@ -275,11 +275,11 @@ export function BannerForm({ banner }: Props) {
 								value={kind}
 								checked={state.kind === kind}
 								onChange={() => handleKindChange(kind)}
-								className="mt-0.5 accent-(--link-text)"
+								className="mt-0.5 accent-(--legacy-link-text)"
 							/>
 							<div className="grid gap-0.5">
-								<span className="text-sm font-medium text-(--text-primary)">{BANNER_KIND_LABELS[kind]}</span>
-								<span className="text-xs text-(--text-tertiary)">{BANNER_KIND_DESCRIPTIONS[kind]}</span>
+								<span className="text-sm font-medium text-(--legacy-text-primary)">{BANNER_KIND_LABELS[kind]}</span>
+								<span className="text-xs text-(--legacy-text-tertiary)">{BANNER_KIND_DESCRIPTIONS[kind]}</span>
 							</div>
 						</label>
 					))}
@@ -293,8 +293,8 @@ export function BannerForm({ banner }: Props) {
 							key={scope}
 							className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
 								state.scope === scope
-									? 'border-(--link-text)/60 bg-(--link-button)'
-									: 'border-(--cards-border) hover:border-(--link-text)/40'
+									? 'border-(--legacy-link-text)/60 bg-(--legacy-link-button)'
+									: 'border-(--legacy-cards-border) hover:border-(--legacy-link-text)/40'
 							}`}
 						>
 							<input
@@ -303,11 +303,11 @@ export function BannerForm({ banner }: Props) {
 								value={scope}
 								checked={state.scope === scope}
 								onChange={() => update({ scope })}
-								className="mt-0.5 accent-(--link-text)"
+								className="mt-0.5 accent-(--legacy-link-text)"
 							/>
 							<div className="grid gap-0.5">
-								<span className="text-sm font-medium text-(--text-primary)">{BANNER_SCOPE_LABELS[scope]}</span>
-								<span className="text-xs text-(--text-tertiary)">
+								<span className="text-sm font-medium text-(--legacy-text-primary)">{BANNER_SCOPE_LABELS[scope]}</span>
+								<span className="text-xs text-(--legacy-text-tertiary)">
 									{scope === 'landing'
 										? 'Shows on /research'
 										: scope === 'section'
@@ -323,7 +323,7 @@ export function BannerForm({ banner }: Props) {
 
 				{state.scope === 'section' ? (
 					<div className="grid gap-1.5">
-						<span className="text-sm font-medium text-(--text-primary)">Section</span>
+						<span className="text-sm font-medium text-(--legacy-text-primary)">Section</span>
 						<Ariakit.SelectProvider
 							value={state.section}
 							setValue={(v) => {
@@ -333,34 +333,34 @@ export function BannerForm({ banner }: Props) {
 						>
 							<Ariakit.Select
 								aria-label="Banner section"
-								className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-(--app-bg) px-3 text-sm transition-colors focus-visible:border-(--link-text) focus-visible:outline-none data-[state=open]:border-(--link-text) ${
+								className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-(--legacy-app-bg) px-3 text-sm transition-colors focus-visible:border-(--legacy-link-text) focus-visible:outline-none data-[state=open]:border-(--legacy-link-text) ${
 									errors.section
-										? 'border-red-500/60 text-(--text-primary)'
+										? 'border-red-500/60 text-(--legacy-text-primary)'
 										: state.section
-											? 'border-(--cards-border) text-(--text-primary)'
-											: 'border-(--cards-border) text-(--text-tertiary)'
+											? 'border-(--legacy-cards-border) text-(--legacy-text-primary)'
+											: 'border-(--legacy-cards-border) text-(--legacy-text-tertiary)'
 								}`}
 							>
 								<span className="truncate text-left">
 									{state.section ? ARTICLE_SECTION_LABELS[state.section as ArticleSection] : 'Select a section…'}
 								</span>
-								<Ariakit.SelectArrow className="shrink-0 text-(--text-tertiary)" />
+								<Ariakit.SelectArrow className="shrink-0 text-(--legacy-text-tertiary)" />
 							</Ariakit.Select>
 							<Ariakit.SelectPopover
 								gutter={6}
 								sameWidth
 								portal
 								unmountOnHide
-								className="z-[90] flex flex-col overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-bg) py-1 text-sm shadow-xl outline-none"
+								className="z-[90] flex flex-col overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 text-sm shadow-xl outline-none"
 							>
 								{ARTICLE_SECTIONS.map((section) => (
 									<Ariakit.SelectItem
 										key={section}
 										value={section}
-										className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-(--text-secondary) data-active-item:bg-(--link-button) data-active-item:text-(--link-text)"
+										className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-(--legacy-text-secondary) data-active-item:bg-(--legacy-link-button) data-active-item:text-(--legacy-link-text)"
 									>
 										<span className="truncate">{ARTICLE_SECTION_LABELS[section]}</span>
-										<Ariakit.SelectItemCheck className="shrink-0 text-(--link-text)" />
+										<Ariakit.SelectItemCheck className="shrink-0 text-(--legacy-link-text)" />
 									</Ariakit.SelectItem>
 								))}
 							</Ariakit.SelectPopover>
@@ -371,7 +371,7 @@ export function BannerForm({ banner }: Props) {
 
 				{state.scope === 'article' ? (
 					<div className="grid gap-1.5">
-						<span className="text-sm font-medium text-(--text-primary)">Article</span>
+						<span className="text-sm font-medium text-(--legacy-text-primary)">Article</span>
 						<ArticlePicker
 							value={state.articleId}
 							onChange={(article) => update({ articleId: article?.id ?? null })}
@@ -382,8 +382,8 @@ export function BannerForm({ banner }: Props) {
 
 				{state.scope === 'all_articles' ? (
 					<div className="grid gap-1.5">
-						<span className="text-sm font-medium text-(--text-primary)">
-							Hide on these articles <span className="font-normal text-(--text-tertiary)">(optional)</span>
+						<span className="text-sm font-medium text-(--legacy-text-primary)">
+							Hide on these articles <span className="font-normal text-(--legacy-text-tertiary)">(optional)</span>
 						</span>
 						<ArticleMultiPicker
 							value={state.excludedArticleIds}
@@ -397,7 +397,7 @@ export function BannerForm({ banner }: Props) {
 			{state.kind === 'text' ? (
 				<Section title="Content" description="The text readers see and an optional link.">
 					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--text-primary)">
+						<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--legacy-text-primary)">
 							Banner text
 							<CharCount value={state.text} max={TEXT_MAX} />
 						</span>
@@ -407,14 +407,14 @@ export function BannerForm({ banner }: Props) {
 							maxLength={TEXT_MAX}
 							rows={3}
 							placeholder="KATANA’S VKAT ARMORY REPRESENTS THE NEXT EVOLUTION OF VE-TOKENOMICS."
-							className="w-full resize-y rounded-md border border-(--cards-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) transition-colors outline-none focus:border-(--link-text)/60"
+							className="w-full resize-y rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
 						/>
 						{errors.text ? <p className="text-xs text-red-500">{errors.text}</p> : null}
 					</label>
 
 					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--text-primary)">
-							Link URL <span className="font-normal text-(--text-tertiary)">(optional)</span>
+						<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--legacy-text-primary)">
+							Link URL <span className="font-normal text-(--legacy-text-tertiary)">(optional)</span>
 							<CharCount value={state.linkUrl} max={LINK_URL_MAX} />
 						</span>
 						<input
@@ -423,14 +423,15 @@ export function BannerForm({ banner }: Props) {
 							onChange={(e) => update({ linkUrl: e.target.value })}
 							maxLength={LINK_URL_MAX}
 							placeholder="https://… or /research/…"
-							className="w-full rounded-md border border-(--cards-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) transition-colors outline-none focus:border-(--link-text)/60"
+							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
 						/>
 						{errors.linkUrl ? <p className="text-xs text-red-500">{errors.linkUrl}</p> : null}
 					</label>
 
 					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--text-primary)">
-							Link label <span className="font-normal text-(--text-tertiary)">(optional, default “Read more”)</span>
+						<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--legacy-text-primary)">
+							Link label{' '}
+							<span className="font-normal text-(--legacy-text-tertiary)">(optional, default “Read more”)</span>
 							<CharCount value={state.linkLabel} max={LINK_LABEL_MAX} />
 						</span>
 						<input
@@ -439,14 +440,14 @@ export function BannerForm({ banner }: Props) {
 							onChange={(e) => update({ linkLabel: e.target.value })}
 							maxLength={LINK_LABEL_MAX}
 							placeholder="Read more"
-							className="w-full rounded-md border border-(--cards-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) transition-colors outline-none focus:border-(--link-text)/60"
+							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
 						/>
 					</label>
 				</Section>
 			) : (
 				<Section title="Content" description="The image readers see and an optional click-through link.">
 					<div className="grid gap-1.5">
-						<span className="text-sm font-medium text-(--text-primary)">Image</span>
+						<span className="text-sm font-medium text-(--legacy-text-primary)">Image</span>
 						<ImageUploadButton
 							scope={imageUpload.scope}
 							previewShape="wide"
@@ -460,9 +461,11 @@ export function BannerForm({ banner }: Props) {
 					</div>
 
 					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--text-primary)">
+						<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--legacy-text-primary)">
 							Alt text{' '}
-							<span className="font-normal text-(--text-tertiary)">(optional, recommended for accessibility)</span>
+							<span className="font-normal text-(--legacy-text-tertiary)">
+								(optional, recommended for accessibility)
+							</span>
 							<CharCount value={state.imageAlt} max={IMAGE_ALT_MAX} />
 						</span>
 						<input
@@ -471,13 +474,13 @@ export function BannerForm({ banner }: Props) {
 							onChange={(e) => update({ imageAlt: e.target.value })}
 							maxLength={IMAGE_ALT_MAX}
 							placeholder="e.g. State of DeFi banner — get in touch"
-							className="w-full rounded-md border border-(--cards-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) transition-colors outline-none focus:border-(--link-text)/60"
+							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
 						/>
 					</label>
 
 					<label className="grid gap-1.5">
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--text-primary)">
-							Link URL <span className="font-normal text-(--text-tertiary)">(optional)</span>
+						<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--legacy-text-primary)">
+							Link URL <span className="font-normal text-(--legacy-text-tertiary)">(optional)</span>
 							<CharCount value={state.linkUrl} max={LINK_URL_MAX} />
 						</span>
 						<input
@@ -486,7 +489,7 @@ export function BannerForm({ banner }: Props) {
 							onChange={(e) => update({ linkUrl: e.target.value })}
 							maxLength={LINK_URL_MAX}
 							placeholder="https://… or /research/…"
-							className="w-full rounded-md border border-(--cards-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) transition-colors outline-none focus:border-(--link-text)/60"
+							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
 						/>
 						{errors.linkUrl ? <p className="text-xs text-red-500">{errors.linkUrl}</p> : null}
 					</label>
@@ -499,15 +502,15 @@ export function BannerForm({ banner }: Props) {
 						type="checkbox"
 						checked={state.enabled}
 						onChange={(e) => update({ enabled: e.target.checked })}
-						className="size-4 accent-(--link-text)"
+						className="size-4 accent-(--legacy-link-text)"
 					/>
-					<span className="text-sm text-(--text-primary)">Enabled</span>
+					<span className="text-sm text-(--legacy-text-primary)">Enabled</span>
 				</label>
 			</Section>
 
-			<div className="sticky bottom-0 -mx-1 mt-2 border-t border-(--cards-border) bg-(--app-bg)/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-(--app-bg)/70">
+			<div className="sticky bottom-0 -mx-1 mt-2 border-t border-(--legacy-cards-border) bg-(--legacy-app-bg)/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-(--legacy-app-bg)/70">
 				<div className="flex items-center justify-between gap-3">
-					<span className="inline-flex items-center gap-2 text-xs text-(--text-tertiary)">
+					<span className="inline-flex items-center gap-2 text-xs text-(--legacy-text-tertiary)">
 						<span
 							aria-hidden
 							className={`size-1.5 rounded-full transition-colors ${dirty ? 'bg-amber-500' : 'bg-emerald-500'}`}
@@ -528,7 +531,7 @@ export function BannerForm({ banner }: Props) {
 						<button
 							type="submit"
 							disabled={hasError || saveMutation.isPending || (!dirty && !!banner)}
-							className="rounded-md bg-(--link-text) px-4 py-2 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+							className="rounded-md bg-(--legacy-link-text) px-4 py-2 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
 						>
 							{saveMutation.isPending ? 'Saving…' : banner ? 'Save changes' : 'Create banner'}
 						</button>
@@ -542,9 +545,11 @@ export function BannerForm({ banner }: Props) {
 function BannerPreview({ banner }: { banner: Banner }) {
 	return (
 		<div className="grid gap-2 pt-2 pb-6">
-			<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">Preview</span>
+			<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
+				Preview
+			</span>
 			{banner.type === 'text' ? (
-				<div className="overflow-hidden rounded-md border border-(--cards-border)">
+				<div className="overflow-hidden rounded-md border border-(--legacy-cards-border)">
 					<TextPreviewInner banner={banner} />
 				</div>
 			) : (
@@ -564,13 +569,13 @@ function ImagePreview({ banner }: { banner: Banner }) {
 	return (
 		<div className={widthClass}>
 			{banner.imageUrl ? (
-				<div className="overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<div className="overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 					{/* eslint-disable-next-line @next/next/no-img-element */}
 					<img src={banner.imageUrl} alt={banner.imageAlt ?? ''} className="block h-auto w-full" />
 				</div>
 			) : (
 				<div
-					className={`flex ${placeholderHeight} items-center justify-center rounded-md border border-dashed border-(--cards-border) bg-(--cards-bg) px-4 text-center text-xs text-(--text-tertiary)`}
+					className={`flex ${placeholderHeight} items-center justify-center rounded-md border border-dashed border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-4 text-center text-xs text-(--legacy-text-tertiary)`}
 				>
 					{placeholderCopy}
 				</div>
@@ -599,10 +604,10 @@ function TextPreviewInner({ banner }: { banner: Banner }) {
 
 function Section({ title, description, children }: { title: string; description: ReactNode; children: ReactNode }) {
 	return (
-		<section className="grid gap-6 border-t border-(--cards-border) py-8 md:grid-cols-[220px_minmax(0,1fr)] md:gap-x-12 md:py-10">
+		<section className="grid gap-6 border-t border-(--legacy-cards-border) py-8 md:grid-cols-[220px_minmax(0,1fr)] md:gap-x-12 md:py-10">
 			<div>
-				<h2 className="text-base font-semibold text-(--text-primary)">{title}</h2>
-				<p className="mt-1.5 text-sm leading-relaxed text-(--text-secondary)">{description}</p>
+				<h2 className="text-base font-semibold text-(--legacy-text-primary)">{title}</h2>
+				<p className="mt-1.5 text-sm leading-relaxed text-(--legacy-text-secondary)">{description}</p>
 			</div>
 			<div className="grid min-w-0 gap-5">{children}</div>
 		</section>
@@ -614,7 +619,7 @@ function CharCount({ value, max }: { value: string; max: number }) {
 	const tight = remaining < Math.max(20, Math.round(max * 0.1))
 	return (
 		<span
-			className={`font-jetbrains text-[10px] tracking-[0.16em] uppercase ${tight ? 'text-amber-500' : 'text-(--text-tertiary)'}`}
+			className={`font-jetbrains text-[10px] tracking-[0.16em] uppercase ${tight ? 'text-amber-500' : 'text-(--legacy-text-tertiary)'}`}
 		>
 			{value.length} / {max}
 		</span>

@@ -18,7 +18,7 @@ export function FormatSplitButton({ onDownload, disabled, label = 'Download' }: 
 	const [format, setFormat] = useState<DownloadFormat>('csv')
 
 	return (
-		<div className="inline-flex overflow-hidden rounded-md bg-(--primary) shadow-sm">
+		<div className="inline-flex overflow-hidden rounded-md bg-(--legacy-primary) shadow-sm">
 			<button
 				type="button"
 				onClick={() => onDownload(format)}
@@ -53,11 +53,11 @@ export function FormatSplitButton({ onDownload, disabled, label = 'Download' }: 
 								setFormat(fmt)
 								onDownload(fmt)
 							}}
-							className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-(--text-primary) hover:bg-hover-row data-active-item:bg-hover-row"
+							className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-(--legacy-text-primary) hover:bg-hover-row data-active-item:bg-hover-row"
 						>
 							<span>{FORMAT_LABELS[fmt]}</span>
 							{format === fmt ? (
-								<Icon name="check" className="size-3.5 text-(--primary)" />
+								<Icon name="check" className="size-3.5 text-(--legacy-primary)" />
 							) : (
 								<span className="size-3.5" aria-hidden="true" />
 							)}

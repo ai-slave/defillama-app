@@ -8,7 +8,7 @@ export function LikedDashboards() {
 
 	if (isLoading && dashboards.length === 0) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) px-1 py-12">
+			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-1 py-12">
 				<LoadingSpinner />
 			</div>
 		)
@@ -16,10 +16,10 @@ export function LikedDashboards() {
 
 	if (dashboards.length === 0) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) px-1 py-12">
-				<Icon name="star" height={48} width={48} className="text-(--text-label)" />
+			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-1 py-12">
+				<Icon name="star" height={48} width={48} className="text-(--legacy-text-label)" />
 				<h1 className="text-center text-2xl font-bold">No favorite dashboards yet</h1>
-				<p className="text-center text-(--text-label)">
+				<p className="text-center text-(--legacy-text-label)">
 					Dashboards you mark as favorites will appear here. Start exploring dashboards from the Discover tab!
 				</p>
 			</div>
@@ -39,7 +39,7 @@ export function LikedDashboards() {
 					<button
 						onClick={() => goToPage(Math.max(1, page - 1))}
 						disabled={page === 1}
-						className={`px-3 py-1 ${page === 1 ? 'cursor-not-allowed pro-text3' : 'pro-text1 hover:bg-(--bg-glass)'}`}
+						className={`px-3 py-1 ${page === 1 ? 'cursor-not-allowed pro-text3' : 'pro-text1 hover:bg-(--legacy-bg-glass)'}`}
 					>
 						<Icon name="chevron-left" height={16} width={16} />
 					</button>
@@ -59,7 +59,7 @@ export function LikedDashboards() {
 								key={pageNum}
 								onClick={() => goToPage(pageNum)}
 								className={`px-3 py-1 ${
-									page === pageNum ? 'bg-(--primary) text-white' : 'pro-text1 hover:bg-(--bg-glass)'
+									page === pageNum ? 'bg-(--legacy-primary) text-white' : 'pro-text1 hover:bg-(--legacy-bg-glass)'
 								}`}
 							>
 								{pageNum}
@@ -71,7 +71,7 @@ export function LikedDashboards() {
 						onClick={() => goToPage(Math.min(totalPages, page + 1))}
 						disabled={page === totalPages}
 						className={`px-3 py-1 ${
-							page === totalPages ? 'cursor-not-allowed pro-text3' : 'pro-text1 hover:bg-(--bg-glass)'
+							page === totalPages ? 'cursor-not-allowed pro-text3' : 'pro-text1 hover:bg-(--legacy-bg-glass)'
 						}`}
 					>
 						<Icon name="chevron-right" height={16} width={16} />

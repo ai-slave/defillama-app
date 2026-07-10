@@ -9,7 +9,7 @@ function Logo({ slug, alt }: { slug: string; alt: string }) {
 		<img
 			src={tokenIconUrl(slug, 32)}
 			alt={alt}
-			className="size-4 shrink-0 rounded-full bg-(--cards-bg) object-contain"
+			className="size-4 shrink-0 rounded-full bg-(--legacy-cards-bg) object-contain"
 		/>
 	)
 }
@@ -53,7 +53,7 @@ export function OdysseyIcon({ className = 'size-7' }: { className?: string }) {
 		<img
 			src={tokenIconUrl(ODYSSEY_SLUG, 64)}
 			alt="Odyssey Finance"
-			className={`${className} rounded-full bg-(--cards-bg) object-contain`}
+			className={`${className} rounded-full bg-(--legacy-cards-bg) object-contain`}
 		/>
 	)
 }
@@ -62,7 +62,7 @@ function OdysseyLogo() {
 	return (
 		<div className="flex items-center gap-2.5">
 			<OdysseyIcon className="size-7 shrink-0" />
-			<span className="text-lg font-bold text-(--text-primary)">Odyssey Ecosystem</span>
+			<span className="text-lg font-bold text-(--legacy-text-primary)">Odyssey Ecosystem</span>
 		</div>
 	)
 }
@@ -70,7 +70,7 @@ function OdysseyLogo() {
 export default function OdysseyHeader() {
 	const { data: meta } = useMetadata()
 	return (
-		<header className="flex items-center gap-4 rounded-lg border border-(--cards-border) bg-(--cards-bg) px-4 py-2.5">
+		<header className="flex items-center gap-4 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-4 py-2.5">
 			<OdysseyLogo />
 			<nav className="ml-auto flex items-center gap-0.5">
 				{buildLinks(meta).map(({ label, url, icon }) => (
@@ -79,7 +79,7 @@ export default function OdysseyHeader() {
 						href={url}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] text-(--text-secondary) transition-colors hover:bg-(--sl-hover-bg) hover:text-(--text-primary)"
+						className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] text-(--legacy-text-secondary) transition-colors hover:bg-(--sl-hover-bg) hover:text-(--legacy-text-primary)"
 					>
 						{icon}
 						<span className="hidden lg:inline">{label}</span>

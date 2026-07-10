@@ -194,7 +194,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 		<div className="flex flex-col gap-6">
 			<div className="flex flex-col gap-1">
 				<h1 className="text-2xl font-semibold">Downloads</h1>
-				<p className="text-sm text-(--text-secondary)">
+				<p className="text-sm text-(--legacy-text-secondary)">
 					Download CSV datasets from DefiLlama. Click a dataset to preview and choose columns.
 				</p>
 			</div>
@@ -203,7 +203,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 				<RecentDownloadsStrip recents={recentDownloads} onRun={handleRunPreset} onClear={clearRecents} />
 			) : null}
 
-			<div className="flex items-center gap-1 rounded-lg border border-(--divider) bg-(--bg-primary) p-1">
+			<div className="flex items-center gap-1 rounded-lg border border-(--legacy-divider) bg-(--bg-primary) p-1">
 				{ALL_TABS.map((tab) => (
 					<button
 						key={tab}
@@ -214,8 +214,8 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 						}}
 						className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
 							activeTab === tab
-								? 'bg-(--primary) text-white shadow-sm'
-								: 'text-(--text-secondary) hover:bg-hover-row hover:text-(--text-primary)'
+								? 'bg-(--legacy-primary) text-white shadow-sm'
+								: 'text-(--legacy-text-secondary) hover:bg-hover-row hover:text-(--legacy-text-primary)'
 						}`}
 					>
 						{tab}
@@ -244,13 +244,13 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 						onClick={() => setSelectedCategory(ALL_CATEGORY)}
 						className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
 							selectedCategory === ALL_CATEGORY
-								? 'bg-(--primary) text-white shadow-sm'
-								: 'border border-(--divider) bg-(--bg-primary) text-(--text-secondary) hover:border-(--primary)/40 hover:text-(--text-primary)'
+								? 'bg-(--legacy-primary) text-white shadow-sm'
+								: 'border border-(--legacy-divider) bg-(--bg-primary) text-(--legacy-text-secondary) hover:border-(--legacy-primary)/40 hover:text-(--legacy-text-primary)'
 						}`}
 					>
 						All
 						<span
-							className={`ml-1.5 ${selectedCategory === ALL_CATEGORY ? 'text-white/70' : 'text-(--text-tertiary)'}`}
+							className={`ml-1.5 ${selectedCategory === ALL_CATEGORY ? 'text-white/70' : 'text-(--legacy-text-tertiary)'}`}
 						>
 							{totalCount}
 						</span>
@@ -262,12 +262,14 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 							onClick={() => setSelectedCategory(selectedCategory === category ? ALL_CATEGORY : category)}
 							className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
 								selectedCategory === category
-									? 'bg-(--primary) text-white shadow-sm'
-									: 'border border-(--divider) bg-(--bg-primary) text-(--text-secondary) hover:border-(--primary)/40 hover:text-(--text-primary)'
+									? 'bg-(--legacy-primary) text-white shadow-sm'
+									: 'border border-(--legacy-divider) bg-(--bg-primary) text-(--legacy-text-secondary) hover:border-(--legacy-primary)/40 hover:text-(--legacy-text-primary)'
 							}`}
 						>
 							{category}
-							<span className={`ml-1.5 ${selectedCategory === category ? 'text-white/70' : 'text-(--text-tertiary)'}`}>
+							<span
+								className={`ml-1.5 ${selectedCategory === category ? 'text-white/70' : 'text-(--legacy-text-tertiary)'}`}
+							>
 								{categoryCounts[category] ?? 0}
 							</span>
 						</button>
@@ -276,7 +278,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 			) : null}
 
 			{activeTab !== 'Saved' && (deferredSearch || selectedCategory !== ALL_CATEGORY) && (
-				<p className="text-xs text-(--text-tertiary)">
+				<p className="text-xs text-(--legacy-text-tertiary)">
 					Showing {totalFilteredCount} of {totalCount} datasets
 					{selectedCategory !== ALL_CATEGORY ? ` in ${selectedCategory}` : ''}
 					{deferredSearch ? ` matching "${deferredSearch}"` : ''}
@@ -287,7 +289,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 				<div className="flex flex-col gap-8">
 					{filteredDatasetsByCategory.map(({ category, items }) => (
 						<section key={category} className="flex flex-col gap-3">
-							<h2 className="heading-xs text-(--text-primary)">{category}</h2>
+							<h2 className="heading-xs text-(--legacy-text-primary)">{category}</h2>
 							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 								{items.map((dataset) => {
 									const disabled = !!isUserLoading
@@ -297,25 +299,27 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 											type="button"
 											disabled={disabled}
 											onClick={() => handleCardClick(dataset)}
-											className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium bg-(--bg-primary) p-5 text-left transition-all duration-150 hover:border-(--primary)/40 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+											className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium bg-(--bg-primary) p-5 text-left transition-all duration-150 hover:border-(--legacy-primary)/40 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
 										>
 											<div className="flex items-start justify-between gap-3">
 												<div className="flex items-center gap-3">
-													<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--primary)/10">
+													<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--legacy-primary)/10">
 														{disabled ? (
 															<LoadingSpinner size={18} />
 														) : (
-															<Icon name="file-text" className="size-5 text-(--primary)" />
+															<Icon name="file-text" className="size-5 text-(--legacy-primary)" />
 														)}
 													</div>
-													<span className="font-medium text-(--primary) group-hover:underline">{dataset.name}</span>
+													<span className="font-medium text-(--legacy-primary) group-hover:underline">
+														{dataset.name}
+													</span>
 												</div>
 												<Icon
 													name="arrow-up-right"
-													className="mt-0.5 size-4 shrink-0 text-(--text-secondary) transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-(--primary)"
+													className="mt-0.5 size-4 shrink-0 text-(--legacy-text-secondary) transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-(--legacy-primary)"
 												/>
 											</div>
-											<p className="text-sm text-(--text-secondary)">{dataset.description}</p>
+											<p className="text-sm text-(--legacy-text-secondary)">{dataset.description}</p>
 										</button>
 									)
 								})}
@@ -323,7 +327,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 						</section>
 					))}
 					{filteredDatasetsByCategory.length === 0 && (
-						<p className="py-8 text-center text-sm text-(--text-tertiary)">No datasets match your search.</p>
+						<p className="py-8 text-center text-sm text-(--legacy-text-tertiary)">No datasets match your search.</p>
 					)}
 				</div>
 			) : activeTab === 'Time Series' ? (
@@ -337,20 +341,20 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 							}
 							setCombineModalOpen(true)
 						}}
-						className="group relative flex items-start justify-between gap-4 overflow-hidden rounded-xl border border-(--primary)/30 bg-gradient-to-br from-(--primary)/[0.08] to-(--primary)/[0.02] p-4 text-left transition-all hover:border-(--primary)/60 hover:from-(--primary)/[0.12] hover:to-(--primary)/[0.04]"
+						className="group relative flex items-start justify-between gap-4 overflow-hidden rounded-xl border border-(--legacy-primary)/30 bg-gradient-to-br from-(--legacy-primary)/[0.08] to-(--legacy-primary)/[0.02] p-4 text-left transition-all hover:border-(--legacy-primary)/60 hover:from-(--legacy-primary)/[0.12] hover:to-(--legacy-primary)/[0.04]"
 					>
 						<div className="flex items-start gap-3">
-							<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--primary)/15">
-								<Icon name="layers" className="size-5 text-(--primary)" />
+							<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--legacy-primary)/15">
+								<Icon name="layers" className="size-5 text-(--legacy-primary)" />
 							</div>
 							<div className="flex flex-col gap-0.5">
-								<p className="font-medium text-(--text-primary)">Combine multiple metrics</p>
-								<p className="text-sm text-(--text-secondary)">
+								<p className="font-medium text-(--legacy-text-primary)">Combine multiple metrics</p>
+								<p className="text-sm text-(--legacy-text-secondary)">
 									Pick a protocol or chain, mix any of its metrics — TVL, fees, volume, revenue — into a single CSV.
 								</p>
 							</div>
 						</div>
-						<span className="mt-1 inline-flex shrink-0 items-center gap-1 rounded-md bg-(--primary) px-2.5 py-1 text-xs font-medium text-white shadow-sm transition-transform group-hover:translate-x-0.5">
+						<span className="mt-1 inline-flex shrink-0 items-center gap-1 rounded-md bg-(--legacy-primary) px-2.5 py-1 text-xs font-medium text-white shadow-sm transition-transform group-hover:translate-x-0.5">
 							Open builder
 							<Icon name="arrow-up-right" className="size-3.5" />
 						</span>
@@ -358,7 +362,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 
 					{filteredChartsByCategory.map(({ category, items }) => (
 						<section key={`chart-${category}`} className="flex flex-col gap-3">
-							<h2 className="heading-xs text-(--text-primary)">{category}</h2>
+							<h2 className="heading-xs text-(--legacy-text-primary)">{category}</h2>
 							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 								{items.map((dataset) => {
 									const disabled = !!isUserLoading
@@ -368,26 +372,28 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 											type="button"
 											disabled={disabled}
 											onClick={() => handleChartCardClick(dataset)}
-											className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium bg-(--bg-primary) p-5 text-left transition-all duration-150 hover:border-(--primary)/40 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+											className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium bg-(--bg-primary) p-5 text-left transition-all duration-150 hover:border-(--legacy-primary)/40 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
 										>
 											<div className="flex items-start justify-between gap-3">
 												<div className="flex items-center gap-3">
-													<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--primary)/10">
+													<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--legacy-primary)/10">
 														{disabled ? (
 															<LoadingSpinner size={18} />
 														) : (
-															<Icon name="bar-chart-2" className="size-5 text-(--primary)" />
+															<Icon name="bar-chart-2" className="size-5 text-(--legacy-primary)" />
 														)}
 													</div>
-													<span className="font-medium text-(--primary) group-hover:underline">{dataset.name}</span>
+													<span className="font-medium text-(--legacy-primary) group-hover:underline">
+														{dataset.name}
+													</span>
 												</div>
 												<Icon
 													name="arrow-up-right"
-													className="mt-0.5 size-4 shrink-0 text-(--text-secondary) transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-(--primary)"
+													className="mt-0.5 size-4 shrink-0 text-(--legacy-text-secondary) transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-(--legacy-primary)"
 												/>
 											</div>
-											<p className="text-sm text-(--text-secondary)">{dataset.description}</p>
-											<span className="inline-flex w-fit items-center gap-1 rounded-full bg-hover-row px-2 py-0.5 text-xs text-(--text-tertiary)">
+											<p className="text-sm text-(--legacy-text-secondary)">{dataset.description}</p>
+											<span className="inline-flex w-fit items-center gap-1 rounded-full bg-hover-row px-2 py-0.5 text-xs text-(--legacy-text-tertiary)">
 												Select {dataset.paramLabel}
 											</span>
 										</button>
@@ -395,9 +401,9 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 								})}
 							</div>
 							{category === 'RWA' ? (
-								<p className="text-sm text-(--text-secondary)">
+								<p className="text-sm text-(--legacy-text-secondary)">
 									Download more RWA data{' '}
-									<a href="https://defillama.com/rwa" className="text-(--primary) underline hover:opacity-80">
+									<a href="https://defillama.com/rwa" className="text-(--legacy-primary) underline hover:opacity-80">
 										here
 									</a>
 									.
@@ -406,7 +412,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 						</section>
 					))}
 					{filteredChartsByCategory.length === 0 && (
-						<p className="py-8 text-center text-sm text-(--text-tertiary)">No datasets match your search.</p>
+						<p className="py-8 text-center text-sm text-(--legacy-text-tertiary)">No datasets match your search.</p>
 					)}
 				</div>
 			) : (
@@ -462,14 +468,14 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 
 			{trialLimitOpen ? <TrialCsvLimitModal isOpen={trialLimitOpen} onClose={() => setTrialLimitOpen(false)} /> : null}
 
-			<section className="mt-8 flex flex-col gap-4 border-t border-(--divider) pt-8">
-				<h2 className="heading-xs text-(--text-primary)">FAQ</h2>
-				<div className="divide-y divide-(--divider) border-y border-(--divider)">
+			<section className="mt-8 flex flex-col gap-4 border-t border-(--legacy-divider) pt-8">
+				<h2 className="heading-xs text-(--legacy-text-primary)">FAQ</h2>
+				<div className="divide-y divide-(--legacy-divider) border-y border-(--legacy-divider)">
 					<FaqItem question="How do I subscribe to download data from DefiLlama?">
 						DefiLlama data is available to subscribers of our Pro and API plans. Learn more about these plans{' '}
 						<a
 							href="https://defillama.com/subscription"
-							className="text-(--primary) underline hover:opacity-80"
+							className="text-(--legacy-primary) underline hover:opacity-80"
 							target="_blank"
 							rel="noopener noreferrer"
 						>
@@ -481,7 +487,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 						Yes, DefiLlama data is available through both a free and paid{' '}
 						<a
 							href="https://api-docs.defillama.com/"
-							className="text-(--primary) underline hover:opacity-80"
+							className="text-(--legacy-primary) underline hover:opacity-80"
 							target="_blank"
 							rel="noopener noreferrer"
 						>
@@ -493,7 +499,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 						You can contact us by email, a support form, or live support{' '}
 						<a
 							href="https://defillama.com/support"
-							className="text-(--primary) underline hover:opacity-80"
+							className="text-(--legacy-primary) underline hover:opacity-80"
 							target="_blank"
 							rel="noopener noreferrer"
 						>
@@ -510,15 +516,15 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 const FaqItem = ({ question, children }: { question: string; children: React.ReactNode }) => (
 	<details className="group">
 		<summary className="flex cursor-pointer items-center gap-4 py-4">
-			<span className="flex-1 text-sm font-medium text-(--text-primary)">{question}</span>
+			<span className="flex-1 text-sm font-medium text-(--legacy-text-primary)">{question}</span>
 			<Icon
 				name="chevron-down"
 				height={16}
 				width={16}
-				className="shrink-0 text-(--text-secondary) transition-transform duration-200 group-open:rotate-180"
+				className="shrink-0 text-(--legacy-text-secondary) transition-transform duration-200 group-open:rotate-180"
 			/>
 		</summary>
-		<div className="pb-4 text-sm text-(--text-secondary)">{children}</div>
+		<div className="pb-4 text-sm text-(--legacy-text-secondary)">{children}</div>
 	</details>
 )
 
@@ -590,28 +596,30 @@ function RecentDownloadsStrip({
 		<section aria-label="Recent downloads" className="flex flex-col gap-2">
 			<header className="flex items-baseline justify-between gap-3 px-0.5">
 				<div className="flex items-baseline gap-2">
-					<Icon name="clock" className="size-3 self-center text-(--text-tertiary)" />
-					<h2 className="text-[11px] font-semibold tracking-[0.14em] text-(--text-tertiary) uppercase">Recent</h2>
-					<span className="text-[11px] text-(--text-tertiary)/70 tabular-nums">
+					<Icon name="clock" className="size-3 self-center text-(--legacy-text-tertiary)" />
+					<h2 className="text-[11px] font-semibold tracking-[0.14em] text-(--legacy-text-tertiary) uppercase">
+						Recent
+					</h2>
+					<span className="text-[11px] text-(--legacy-text-tertiary)/70 tabular-nums">
 						{items.length === 1 ? '1 run' : `${items.length} runs`}
 					</span>
 				</div>
 				<button
 					type="button"
 					onClick={onClear}
-					className="text-[11px] font-medium text-(--text-tertiary) transition-colors hover:text-(--text-primary)"
+					className="text-[11px] font-medium text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-text-primary)"
 				>
 					Clear all
 				</button>
 			</header>
-			<div className="flex overflow-x-auto border-y border-(--divider)">
+			<div className="flex overflow-x-auto border-y border-(--legacy-divider)">
 				<ul className="flex min-w-full gap-0">
 					{items.map((preset, i) => {
 						const style = kindStyle(preset.kind)
 						return (
 							<li
 								key={preset.id}
-								className="flex shrink-0 border-l border-(--divider) first:border-l-0"
+								className="flex shrink-0 border-l border-(--legacy-divider) first:border-l-0"
 								style={{ width: 'clamp(200px, 22%, 260px)' }}
 							>
 								<button
@@ -632,17 +640,17 @@ function RecentDownloadsStrip({
 											{style.label}
 										</span>
 										{i === 0 ? (
-											<span className="ml-auto rounded-sm bg-(--primary)/15 px-1 py-px label-sm tracking-wide text-(--primary) uppercase">
+											<span className="ml-auto rounded-sm bg-(--legacy-primary)/15 px-1 py-px label-sm tracking-wide text-(--legacy-primary) uppercase">
 												New
 											</span>
 										) : null}
 									</span>
-									<span className="truncate text-xs font-medium text-(--text-primary)">{preset.name}</span>
-									<span className="flex items-center justify-between gap-2 text-[11px] text-(--text-tertiary) tabular-nums">
+									<span className="truncate text-xs font-medium text-(--legacy-text-primary)">{preset.name}</span>
+									<span className="flex items-center justify-between gap-2 text-[11px] text-(--legacy-text-tertiary) tabular-nums">
 										<span className="truncate">{dayjs(preset.createdAt).fromNow()}</span>
 										<Icon
 											name="arrow-up-right"
-											className="size-3 shrink-0 -translate-x-1 text-(--text-tertiary) opacity-0 transition-all group-hover:translate-x-0 group-hover:text-(--primary) group-hover:opacity-100"
+											className="size-3 shrink-0 -translate-x-1 text-(--legacy-text-tertiary) opacity-0 transition-all group-hover:translate-x-0 group-hover:text-(--legacy-primary) group-hover:opacity-100"
 										/>
 									</span>
 								</button>
@@ -697,10 +705,10 @@ function SavedDownloadsContent({
 	return (
 		<>
 			<div className="flex items-baseline justify-between gap-3 px-0.5">
-				<p className="text-[11px] font-semibold tracking-[0.14em] text-(--text-tertiary) uppercase">
+				<p className="text-[11px] font-semibold tracking-[0.14em] text-(--legacy-text-tertiary) uppercase">
 					{savedDownloads.length} {savedDownloads.length === 1 ? 'preset' : 'presets'}
 				</p>
-				<p className="flex items-center gap-3 text-[11px] text-(--text-tertiary) tabular-nums">
+				<p className="flex items-center gap-3 text-[11px] text-(--legacy-text-tertiary) tabular-nums">
 					{bucketCounts.dataset > 0 ? (
 						<span className="flex items-center gap-1.5">
 							<span className={`size-1.5 rounded-full ${KIND_STYLES.dataset.accent}`} aria-hidden="true" />
@@ -721,7 +729,7 @@ function SavedDownloadsContent({
 					) : null}
 				</p>
 			</div>
-			<ul className="-mx-1 border-y border-(--divider)">
+			<ul className="-mx-1 border-y border-(--legacy-divider)">
 				{savedDownloads.map((preset) => (
 					<SavedDownloadRow
 						key={preset.id}
@@ -765,8 +773,8 @@ function SavedDownloadsContent({
 
 function SavedEmptyState() {
 	return (
-		<div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-(--divider) bg-(--bg-primary)/40 px-6 py-12 text-center">
-			<div className="flex size-14 items-center justify-center rounded-full bg-(--primary)/10 text-(--primary)">
+		<div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-(--legacy-divider) bg-(--bg-primary)/40 px-6 py-12 text-center">
+			<div className="flex size-14 items-center justify-center rounded-full bg-(--legacy-primary)/10 text-(--legacy-primary)">
 				<svg
 					viewBox="0 0 24 24"
 					fill="none"
@@ -781,14 +789,14 @@ function SavedEmptyState() {
 				</svg>
 			</div>
 			<div className="flex flex-col gap-1.5">
-				<h3 className="text-base font-semibold text-(--text-primary)">Pin your first preset</h3>
-				<p className="max-w-sm text-sm text-(--text-secondary)">
+				<h3 className="text-base font-semibold text-(--legacy-text-primary)">Pin your first preset</h3>
+				<p className="max-w-sm text-sm text-(--legacy-text-secondary)">
 					Save any dataset or chart configuration to run it again from here.
 				</p>
 			</div>
-			<p className="text-xs text-(--text-tertiary)">
+			<p className="text-xs text-(--legacy-text-tertiary)">
 				Open a dataset, tweak your columns and filters, then click{' '}
-				<span className="inline-flex items-center gap-1 rounded border border-(--divider) bg-(--bg-primary) px-1.5 py-0.5 text-[11px] font-medium text-(--text-primary)">
+				<span className="inline-flex items-center gap-1 rounded border border-(--legacy-divider) bg-(--bg-primary) px-1.5 py-0.5 text-[11px] font-medium text-(--legacy-text-primary)">
 					<Icon name="bookmark" className="size-3" />
 					Save preset
 				</span>
@@ -834,7 +842,7 @@ function SavedDownloadRow({
 					handleRowActivate(e)
 				}
 			}}
-			className="group relative flex cursor-pointer items-center gap-3 border-t border-(--divider) py-3.5 pr-3 pl-4 transition-colors first:border-t-0 hover:bg-hover-row focus-visible:bg-hover-row focus-visible:outline-none"
+			className="group relative flex cursor-pointer items-center gap-3 border-t border-(--legacy-divider) py-3.5 pr-3 pl-4 transition-colors first:border-t-0 hover:bg-hover-row focus-visible:bg-hover-row focus-visible:outline-none"
 		>
 			<span
 				className={`absolute top-2 bottom-2 left-1 w-0.5 rounded-full ${style.accent} opacity-30 transition-all group-hover:opacity-100 group-focus-visible:opacity-100`}
@@ -849,13 +857,13 @@ function SavedDownloadRow({
 					>
 						{style.label}
 					</span>
-					<span className="truncate text-[15px] font-semibold text-(--text-primary)">{preset.name}</span>
+					<span className="truncate text-[15px] font-semibold text-(--legacy-text-primary)">{preset.name}</span>
 				</div>
-				<div className="flex min-w-0 items-center gap-2 text-[11.5px] text-(--text-tertiary)">
-					<span className="truncate text-(--text-secondary)">{sourceLabel}</span>
+				<div className="flex min-w-0 items-center gap-2 text-[11.5px] text-(--legacy-text-tertiary)">
+					<span className="truncate text-(--legacy-text-secondary)">{sourceLabel}</span>
 					{description ? (
 						<>
-							<span aria-hidden="true" className="text-(--text-tertiary)/50">
+							<span aria-hidden="true" className="text-(--legacy-text-tertiary)/50">
 								·
 							</span>
 							<span className="truncate">{description}</span>
@@ -865,8 +873,8 @@ function SavedDownloadRow({
 			</div>
 
 			<div className="relative flex h-8 shrink-0 items-center justify-end pl-2 sm:min-w-[12rem]">
-				<span className="text-[11px] text-(--text-tertiary) tabular-nums transition-opacity sm:group-focus-within:opacity-0 sm:group-hover:opacity-0">
-					<span className="hidden text-(--text-tertiary)/60 sm:inline">{timestamp.prefix} </span>
+				<span className="text-[11px] text-(--legacy-text-tertiary) tabular-nums transition-opacity sm:group-focus-within:opacity-0 sm:group-hover:opacity-0">
+					<span className="hidden text-(--legacy-text-tertiary)/60 sm:inline">{timestamp.prefix} </span>
 					{timestamp.value}
 				</span>
 
@@ -878,7 +886,7 @@ function SavedDownloadRow({
 							e.stopPropagation()
 							onRenameRequest(preset)
 						}}
-						className="flex size-7 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-(--bg-primary) hover:text-(--text-primary) focus-visible:bg-(--bg-primary) focus-visible:text-(--text-primary) focus-visible:outline-none"
+						className="flex size-7 items-center justify-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-(--bg-primary) hover:text-(--legacy-text-primary) focus-visible:bg-(--bg-primary) focus-visible:text-(--legacy-text-primary) focus-visible:outline-none"
 						aria-label={`Rename ${preset.name}`}
 						title="Rename"
 					>
@@ -891,7 +899,7 @@ function SavedDownloadRow({
 							e.stopPropagation()
 							onDeleteRequest(preset.id)
 						}}
-						className="flex size-7 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-red-500/10 hover:text-red-500 focus-visible:bg-red-500/10 focus-visible:text-red-500 focus-visible:outline-none"
+						className="flex size-7 items-center justify-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-red-500/10 hover:text-red-500 focus-visible:bg-red-500/10 focus-visible:text-red-500 focus-visible:outline-none"
 						aria-label={`Delete ${preset.name}`}
 						title="Delete"
 					>
@@ -899,7 +907,7 @@ function SavedDownloadRow({
 					</button>
 					<span
 						aria-hidden="true"
-						className="ml-1 inline-flex items-center gap-1 rounded-md bg-(--primary) px-2.5 py-1 text-[11px] font-medium text-white shadow-sm"
+						className="ml-1 inline-flex items-center gap-1 rounded-md bg-(--legacy-primary) px-2.5 py-1 text-[11px] font-medium text-white shadow-sm"
 					>
 						<Icon name="download-cloud" className="size-3" />
 						Run
@@ -914,7 +922,7 @@ function SavedDownloadRow({
 							e.stopPropagation()
 							onRenameRequest(preset)
 						}}
-						className="flex size-7 items-center justify-center rounded-md text-(--text-tertiary)"
+						className="flex size-7 items-center justify-center rounded-md text-(--legacy-text-tertiary)"
 						aria-label={`Rename ${preset.name}`}
 					>
 						<Icon name="pencil" className="size-3.5" />
@@ -926,7 +934,7 @@ function SavedDownloadRow({
 							e.stopPropagation()
 							onDeleteRequest(preset.id)
 						}}
-						className="flex size-7 items-center justify-center rounded-md text-(--text-tertiary)"
+						className="flex size-7 items-center justify-center rounded-md text-(--legacy-text-tertiary)"
 						aria-label={`Delete ${preset.name}`}
 					>
 						<Icon name="trash-2" className="size-3.5" />
@@ -964,12 +972,12 @@ function DeletePresetDialog({
 						<Icon name="trash-2" className="size-4 text-red-500" />
 					</div>
 					<div className="flex flex-col gap-1">
-						<h3 id="delete-preset-title" className="text-sm font-semibold text-(--text-primary)">
+						<h3 id="delete-preset-title" className="text-sm font-semibold text-(--legacy-text-primary)">
 							Delete preset?
 						</h3>
-						<p className="text-xs text-(--text-secondary)">
-							<span className="font-medium text-(--text-primary)">"{preset.name}"</span> will be removed. This can't be
-							undone.
+						<p className="text-xs text-(--legacy-text-secondary)">
+							<span className="font-medium text-(--legacy-text-primary)">"{preset.name}"</span> will be removed. This
+							can't be undone.
 						</p>
 					</div>
 				</div>
@@ -977,7 +985,7 @@ function DeletePresetDialog({
 					<button
 						type="button"
 						onClick={onClose}
-						className="rounded-md border border-(--divider) px-3 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
+						className="rounded-md border border-(--legacy-divider) px-3 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary)"
 					>
 						Cancel
 					</button>

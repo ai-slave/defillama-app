@@ -17,27 +17,29 @@ export function SelectMetricsStep() {
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="text-center">
-				<h2 className="text-lg font-semibold text-(--text-primary)">Select Metrics to Compare</h2>
-				<p className="mt-1 text-sm text-(--text-secondary)">
+				<h2 className="text-lg font-semibold text-(--legacy-text-primary)">Select Metrics to Compare</h2>
+				<p className="mt-1 text-sm text-(--legacy-text-secondary)">
 					Choose the metrics you want to compare across your selected {typeLabel}
 				</p>
 			</div>
 
-			<div className="flex items-center justify-between rounded-lg border border-(--cards-border) bg-(--cards-bg-alt)/30 px-4 py-2.5">
+			<div className="flex items-center justify-between rounded-lg border border-(--legacy-cards-border) bg-(--cards-bg-alt)/30 px-4 py-2.5">
 				<div className="flex items-center gap-3">
-					<div className="flex size-9 items-center justify-center rounded-lg bg-(--primary)/10">
-						<Icon name="bar-chart-2" height={18} width={18} className="text-(--primary)" />
+					<div className="flex size-9 items-center justify-center rounded-lg bg-(--legacy-primary)/10">
+						<Icon name="bar-chart-2" height={18} width={18} className="text-(--legacy-primary)" />
 					</div>
 					<div>
-						<p className="text-sm font-medium text-(--text-primary)">{validMetrics.length} metrics available</p>
-						<p className="text-xs text-(--text-tertiary)">Based on data availability for your selected {typeLabel}</p>
+						<p className="text-sm font-medium text-(--legacy-text-primary)">{validMetrics.length} metrics available</p>
+						<p className="text-xs text-(--legacy-text-tertiary)">
+							Based on data availability for your selected {typeLabel}
+						</p>
 					</div>
 				</div>
 				{invalidMetrics.length > 0 ? (
 					<button
 						type="button"
 						onClick={() => setShowInvalid(!showInvalid)}
-						className="text-xs text-(--text-tertiary) hover:text-(--primary)"
+						className="text-xs text-(--legacy-text-tertiary) hover:text-(--legacy-primary)"
 					>
 						{showInvalid ? 'Hide' : 'Show'} unavailable ({invalidMetrics.length})
 					</button>
@@ -45,7 +47,7 @@ export function SelectMetricsStep() {
 			</div>
 
 			<div className="flex items-center justify-between">
-				<span className="text-sm font-medium text-(--text-secondary)">
+				<span className="text-sm font-medium text-(--legacy-text-secondary)">
 					{state.selectedMetrics.length} metric{state.selectedMetrics.length !== 1 ? 's' : ''} selected
 				</span>
 				<div className="flex items-center gap-3">
@@ -53,7 +55,7 @@ export function SelectMetricsStep() {
 						<button
 							type="button"
 							onClick={() => actions.selectAllMetrics(validMetrics.map((m) => m.metric))}
-							className="text-xs text-(--text-tertiary) hover:text-(--primary)"
+							className="text-xs text-(--legacy-text-tertiary) hover:text-(--legacy-primary)"
 						>
 							Select all
 						</button>
@@ -62,7 +64,7 @@ export function SelectMetricsStep() {
 						<button
 							type="button"
 							onClick={() => actions.clearMetrics()}
-							className="text-xs text-(--text-tertiary) hover:text-(--primary)"
+							className="text-xs text-(--legacy-text-tertiary) hover:text-(--legacy-primary)"
 						>
 							Clear
 						</button>
@@ -86,10 +88,10 @@ export function SelectMetricsStep() {
 			</div>
 
 			{displayedMetrics.length === 0 ? (
-				<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg-alt)/30 p-8 text-center">
+				<div className="rounded-lg border border-(--legacy-cards-border) bg-(--cards-bg-alt)/30 p-8 text-center">
 					<Icon name="alert-triangle" height={32} width={32} className="mx-auto mb-3 text-amber-500" />
-					<p className="font-medium text-(--text-primary)">No metrics available</p>
-					<p className="mt-1 text-sm text-(--text-tertiary)">
+					<p className="font-medium text-(--legacy-text-primary)">No metrics available</p>
+					<p className="mt-1 text-sm text-(--legacy-text-tertiary)">
 						The selected {typeLabel} don't have enough common metrics to compare. Try selecting different {typeLabel}.
 					</p>
 				</div>

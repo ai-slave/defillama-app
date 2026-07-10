@@ -35,10 +35,10 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 					<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} data-lgonly />
 					<BasicLink
 						href={`/stablecoins/${row.original.gecko_id || name}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text)"
+						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text)"
 					>
 						{name}
-						{symbol && symbol !== '-' ? <span className="text-(--text-tertiary)"> ({symbol})</span> : null}
+						{symbol && symbol !== '-' ? <span className="text-(--legacy-text-tertiary)"> ({symbol})</span> : null}
 					</BasicLink>
 				</span>
 			)
@@ -143,7 +143,7 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 
 			return (
 				<Tooltip content={chains.join(', ')}>
-					<span className="text-sm text-(--text-secondary)">
+					<span className="text-sm text-(--legacy-text-secondary)">
 						{displayChains.join(', ')}
 						{remainingCount > 0 ? ` +${remainingCount}` : null}
 					</span>

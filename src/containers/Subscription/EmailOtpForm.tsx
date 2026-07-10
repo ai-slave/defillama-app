@@ -78,12 +78,12 @@ export function EmailOtpForm({
 	return (
 		<form className="flex flex-col gap-4" onSubmit={(e) => void handleSubmit(e)}>
 			{email ? (
-				<p className="text-sm leading-5 text-(--text-meta)">
-					We sent a 6-digit code to <span className="text-(--text-primary)">{email}</span>. Enter it below to verify
-					your email.
+				<p className="text-sm leading-5 text-(--legacy-text-meta)">
+					We sent a 6-digit code to <span className="text-(--legacy-text-primary)">{email}</span>. Enter it below to
+					verify your email.
 				</p>
 			) : (
-				<p className="text-sm leading-5 text-(--text-meta)">
+				<p className="text-sm leading-5 text-(--legacy-text-meta)">
 					Enter the 6-digit code we sent to your email to verify your address.
 				</p>
 			)}
@@ -97,7 +97,7 @@ export function EmailOtpForm({
 					maxLength={6}
 					required
 					placeholder="000000"
-					className="h-10 w-full rounded-lg border border-(--form-control-border) bg-(--signin-input-bg) px-3 text-center text-base tracking-[0.4em] text-(--text-primary) placeholder:tracking-normal placeholder:text-(--text-tertiary) focus:border-(--primary) focus:outline-none"
+					className="h-10 w-full rounded-lg border border-(--legacy-form-control-border) bg-(--signin-input-bg) px-3 text-center text-base tracking-[0.4em] text-(--legacy-text-primary) placeholder:tracking-normal placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:outline-none"
 					value={otp}
 					onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
 					autoFocus
@@ -107,7 +107,7 @@ export function EmailOtpForm({
 			<button
 				type="submit"
 				disabled={loaders.verifyOtp || otp.length !== 6}
-				className="h-10 w-full rounded-lg bg-(--primary) text-sm font-medium text-white disabled:bg-(--signin-btn-disabled-bg) disabled:text-(--signin-btn-disabled-text)"
+				className="h-10 w-full rounded-lg bg-(--legacy-primary) text-sm font-medium text-white disabled:bg-(--signin-btn-disabled-bg) disabled:text-(--signin-btn-disabled-text)"
 			>
 				{loaders.verifyOtp ? 'Verifying...' : 'Verify email'}
 			</button>
@@ -116,7 +116,7 @@ export function EmailOtpForm({
 
 			<button
 				type="button"
-				className="text-center text-xs text-(--link) underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:text-(--text-tertiary) disabled:no-underline"
+				className="text-center text-xs text-(--legacy-link) underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:text-(--legacy-text-tertiary) disabled:no-underline"
 				onClick={() => void handleResend()}
 				disabled={cooldownLeft > 0 || loaders.sendOtp}
 			>
@@ -124,7 +124,7 @@ export function EmailOtpForm({
 			</button>
 
 			{onDismiss ? (
-				<button type="button" className="text-center text-sm text-(--link)" onClick={onDismiss}>
+				<button type="button" className="text-center text-sm text-(--legacy-link)" onClick={onDismiss}>
 					{dismissLabel}
 				</button>
 			) : null}

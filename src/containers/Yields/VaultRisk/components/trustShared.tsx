@@ -5,7 +5,7 @@ import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { type Tone, toneClasses } from '../kindMeta'
 import type { RoleCapability } from '../types'
 
-export const MICRO_LABEL = 'text-xs font-semibold text-(--text-primary)'
+export const MICRO_LABEL = 'text-xs font-semibold text-(--legacy-text-primary)'
 
 export function explorerUrl(
 	address: string,
@@ -27,8 +27,8 @@ export function explorerUrl(
 export function LabelValueRow({ label, children }: { label: ReactNode; children: ReactNode }) {
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 py-1.5">
-			<span className="text-sm text-(--text-secondary)">{label}</span>
-			<span className="text-right text-sm text-(--text-primary)">{children}</span>
+			<span className="text-sm text-(--legacy-text-secondary)">{label}</span>
+			<span className="text-right text-sm text-(--legacy-text-primary)">{children}</span>
 		</div>
 	)
 }
@@ -81,7 +81,7 @@ const REACH_LEGEND: ReadonlyArray<{ tone: Tone; label: string }> = [
 // Paired colour+text so the dots never read as colour-only.
 export function ReachLegend() {
 	return (
-		<div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-(--text-secondary)">
+		<div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-(--legacy-text-secondary)">
 			{REACH_LEGEND.map((item) => (
 				<span key={item.label} className="inline-flex items-center gap-1.5">
 					<span className={`size-2 shrink-0 rounded-full ${toneClasses(item.tone).bar}`} aria-hidden />
@@ -118,7 +118,7 @@ export function ExpandableLine({
 							type="button"
 							onClick={() => setOpen((v) => !v)}
 							aria-expanded={open}
-							className="-mr-1 inline-flex size-5 shrink-0 items-center justify-center rounded text-(--text-secondary) hover:bg-(--bg-secondary) hover:text-(--text-primary)"
+							className="-mr-1 inline-flex size-5 shrink-0 items-center justify-center rounded text-(--legacy-text-secondary) hover:bg-(--legacy-bg-secondary) hover:text-(--legacy-text-primary)"
 						>
 							<Icon name="chevron-down" className={`size-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
 							<span className="sr-only">{open ? 'Hide detail' : 'Show what this can do'}</span>
@@ -127,7 +127,7 @@ export function ExpandableLine({
 				</span>
 			</div>
 			{open && detail ? (
-				<p className="mt-1.5 max-w-prose text-xs leading-relaxed text-(--text-secondary)">{detail}</p>
+				<p className="mt-1.5 max-w-prose text-xs leading-relaxed text-(--legacy-text-secondary)">{detail}</p>
 			) : null}
 		</div>
 	)

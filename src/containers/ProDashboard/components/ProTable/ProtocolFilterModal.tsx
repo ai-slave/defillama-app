@@ -223,7 +223,7 @@ function ProtocolFilterDialogContent({
 	return (
 		<Ariakit.DialogProvider open={true} setOpen={(open) => (open ? undefined : onClose())}>
 			<Ariakit.Dialog
-				className="dialog max-h-[80dvh] w-full max-w-xl gap-0 rounded-md border pro-dashboard border-(--cards-border) bg-(--cards-bg) p-0 shadow-lg"
+				className="dialog max-h-[80dvh] w-full max-w-xl gap-0 rounded-md border pro-dashboard border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-0 shadow-lg"
 				unmountOnHide
 				portal
 				portalElement={portalTarget ?? undefined}
@@ -344,7 +344,7 @@ function ProtocolFilterDialogContent({
 						<button
 							type="button"
 							onClick={handleApply}
-							className="rounded-md bg-(--primary) px-4 py-2 text-sm text-white transition-colors hover:bg-(--primary-hover)"
+							className="rounded-md bg-(--legacy-primary) px-4 py-2 text-sm text-white transition-colors hover:bg-(--legacy-primary-hover)"
 						>
 							Apply Filters
 						</button>

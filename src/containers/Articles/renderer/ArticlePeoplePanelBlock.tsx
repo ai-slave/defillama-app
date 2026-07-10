@@ -10,7 +10,7 @@ export function ArticlePeoplePanelBlock({ config, compact = false }: Props) {
 	return (
 		<section data-people-panel className={`article-people-panel not-prose grid gap-6 ${compact ? '' : 'my-8'}`}>
 			{config.label ? (
-				<div className="font-jetbrains text-[11px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+				<div className="font-jetbrains text-[11px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 					{config.label}
 				</div>
 			) : null}
@@ -21,12 +21,12 @@ export function ArticlePeoplePanelBlock({ config, compact = false }: Props) {
 							href={item.href}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="text-(--text-primary) underline-offset-4 hover:text-(--link-text) hover:underline"
+							className="text-(--legacy-text-primary) underline-offset-4 hover:text-(--legacy-link-text) hover:underline"
 						>
 							{item.name || item.href}
 						</a>
 					) : (
-						<span className="text-(--text-primary)">{item.name}</span>
+						<span className="text-(--legacy-text-primary)">{item.name}</span>
 					)
 					return (
 						<article
@@ -39,17 +39,17 @@ export function ArticlePeoplePanelBlock({ config, compact = false }: Props) {
 									alt={item.name || ''}
 									loading="lazy"
 									decoding="async"
-									className="aspect-square w-full rounded-full border border-(--cards-border) bg-(--app-bg) object-cover"
+									className="aspect-square w-full rounded-full border border-(--legacy-cards-border) bg-(--legacy-app-bg) object-cover"
 								/>
 							) : (
 								<div
 									aria-hidden
-									className="aspect-square w-full rounded-full border border-dashed border-(--cards-border) bg-(--app-bg)"
+									className="aspect-square w-full rounded-full border border-dashed border-(--legacy-cards-border) bg-(--legacy-app-bg)"
 								/>
 							)}
 							<div className="grid gap-1.5">
 								{item.name ? <h4 className="text-base leading-tight font-semibold">{nameNode}</h4> : null}
-								{item.bio ? <p className="text-sm leading-relaxed text-(--text-secondary)">{item.bio}</p> : null}
+								{item.bio ? <p className="text-sm leading-relaxed text-(--legacy-text-secondary)">{item.bio}</p> : null}
 							</div>
 						</article>
 					)

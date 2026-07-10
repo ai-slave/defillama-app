@@ -58,7 +58,7 @@ export function ReorderableEditorialTagList({
 		<div className="grid gap-2">
 			<DndContext sensors={sensors} onDragEnd={handleDragEnd} modifiers={VERTICAL_SORTING_MODIFIERS}>
 				<SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-					<ul className="grid divide-y divide-(--cards-border) overflow-hidden rounded-md border border-(--cards-border) bg-(--app-bg)/40">
+					<ul className="grid divide-y divide-(--legacy-cards-border) overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg)/40">
 						{items.map((article, index) => (
 							<SortableEditorialTagRow
 								key={article.id}
@@ -71,7 +71,9 @@ export function ReorderableEditorialTagList({
 					</ul>
 				</SortableContext>
 			</DndContext>
-			<p className="text-xs text-(--text-tertiary)">Drag to reorder. Order is reflected on /research after save.</p>
+			<p className="text-xs text-(--legacy-text-tertiary)">
+				Drag to reorder. Order is reflected on /research after save.
+			</p>
 		</div>
 	)
 }
@@ -110,7 +112,7 @@ function SortableEditorialTagRow({
 				<button
 					type="button"
 					disabled={disabled}
-					className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-(--text-tertiary) hover:bg-black/5 focus-visible:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10 dark:focus-visible:bg-white/10 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+					className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-(--legacy-text-tertiary) hover:bg-black/5 focus-visible:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10 dark:focus-visible:bg-white/10 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
 					aria-label={`Drag ${article.title}`}
 					{...attributes}
 					{...listeners}

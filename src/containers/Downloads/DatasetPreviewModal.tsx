@@ -703,11 +703,11 @@ export function DatasetPreviewModal({
 					portal
 					unmountOnHide
 				>
-					<div className="flex shrink-0 flex-col border-b border-(--divider)">
+					<div className="flex shrink-0 flex-col border-b border-(--legacy-divider)">
 						<div className="flex items-center gap-3 px-4 py-2.5">
 							<div className="mr-auto min-w-0">
 								<h2 className="truncate heading-xs">{dataset.name}</h2>
-								<p className="text-xs text-(--text-tertiary)">
+								<p className="text-xs text-(--legacy-text-tertiary)">
 									{loading
 										? 'Loading...'
 										: error
@@ -731,7 +731,7 @@ export function DatasetPreviewModal({
 											isPreview ? (setSignupSource('downloads'), subscribeModalStore.show()) : void handleCopy()
 										}
 										disabled={!isPreview && selectedCount === 0}
-										className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:opacity-40 sm:flex"
+										className="hidden items-center gap-1.5 rounded-md border border-(--legacy-divider) px-2.5 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary) disabled:opacity-40 sm:flex"
 										title="Copy selected columns as TSV"
 									>
 										<Icon name="clipboard" className="size-3.5" />
@@ -743,7 +743,7 @@ export function DatasetPreviewModal({
 											type="button"
 											onClick={() => setShowSaveDialog(true)}
 											disabled={selectedCount === 0}
-											className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:opacity-40 sm:flex"
+											className="hidden items-center gap-1.5 rounded-md border border-(--legacy-divider) px-2.5 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary) disabled:opacity-40 sm:flex"
 											title="Save as preset"
 										>
 											<Icon name="bookmark" className="size-3.5" />
@@ -756,7 +756,7 @@ export function DatasetPreviewModal({
 											type="button"
 											onClick={() => void handleCopyLink()}
 											disabled={!currentConfig}
-											className="hidden items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:opacity-40 sm:flex"
+											className="hidden items-center gap-1.5 rounded-md border border-(--legacy-divider) px-2.5 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary) disabled:opacity-40 sm:flex"
 											title="Copy shareable link"
 										>
 											<Icon name="link" className="size-3.5" />
@@ -770,7 +770,7 @@ export function DatasetPreviewModal({
 												setSignupSource('downloads')
 												subscribeModalStore.show()
 											}}
-											className="flex items-center gap-1.5 rounded-md bg-(--primary) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:opacity-90"
+											className="flex items-center gap-1.5 rounded-md bg-(--legacy-primary) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:opacity-90"
 										>
 											<Icon name="download-cloud" className="size-3.5" />
 											<span className="hidden sm:inline">Download</span>
@@ -784,14 +784,14 @@ export function DatasetPreviewModal({
 							<button
 								type="button"
 								onClick={onClose}
-								className="rounded-md p-1.5 text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
+								className="rounded-md p-1.5 text-(--legacy-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary)"
 							>
 								<Icon name="x" className="size-4" />
 							</button>
 						</div>
 
 						{hasData ? (
-							<div className="flex flex-wrap items-center gap-2 border-t border-(--divider) px-4 py-2">
+							<div className="flex flex-wrap items-center gap-2 border-t border-(--legacy-divider) px-4 py-2">
 								{!isPreview ? (
 									<>
 										<label className="relative min-w-0 flex-1">
@@ -799,13 +799,13 @@ export function DatasetPreviewModal({
 												name="search"
 												height={14}
 												width={14}
-												className="absolute top-0 bottom-0 left-2.5 my-auto text-(--text-tertiary)"
+												className="absolute top-0 bottom-0 left-2.5 my-auto text-(--legacy-text-tertiary)"
 											/>
 											<input
 												value={search}
 												onChange={(event) => setSearch(event.currentTarget.value)}
 												placeholder="Filter rows..."
-												className="w-full min-w-32 rounded-md border border-(--divider) bg-transparent py-1.5 pr-2.5 pl-8 text-xs transition-colors outline-none placeholder:text-(--text-tertiary) focus:border-(--primary) focus:ring-1 focus:ring-(--primary)/30 sm:w-48"
+												className="w-full min-w-32 rounded-md border border-(--legacy-divider) bg-transparent py-1.5 pr-2.5 pl-8 text-xs transition-colors outline-none placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30 sm:w-48"
 											/>
 										</label>
 
@@ -844,14 +844,16 @@ export function DatasetPreviewModal({
 											type="button"
 											onClick={() => void handleCopy()}
 											disabled={selectedCount === 0}
-											className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary) disabled:opacity-40 sm:hidden"
+											className="flex items-center gap-1.5 rounded-md border border-(--legacy-divider) px-2.5 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary) disabled:opacity-40 sm:hidden"
 											title="Copy selected columns as TSV"
 										>
 											<Icon name="clipboard" className="size-3.5" />
 										</button>
 									</>
 								) : (
-									<p className="text-xs text-(--text-tertiary)">Preview — showing first {sortedRows.length} rows</p>
+									<p className="text-xs text-(--legacy-text-tertiary)">
+										Preview — showing first {sortedRows.length} rows
+									</p>
 								)}
 							</div>
 						) : null}
@@ -861,7 +863,7 @@ export function DatasetPreviewModal({
 						<div className="flex flex-1 items-center justify-center">
 							<div className="flex flex-col items-center gap-3">
 								<LoadingSpinner size={28} />
-								<p className="text-sm text-(--text-secondary)">Fetching dataset...</p>
+								<p className="text-sm text-(--legacy-text-secondary)">Fetching dataset...</p>
 							</div>
 						</div>
 					) : error ? (
@@ -876,15 +878,15 @@ export function DatasetPreviewModal({
 					) : columnMeta.length === 0 ? (
 						<div className="flex flex-1 items-center justify-center">
 							<div className="flex flex-col items-center gap-2 text-center">
-								<Icon name="eye-off" className="size-6 text-(--text-tertiary)" />
-								<p className="text-sm text-(--text-secondary)">No data</p>
+								<Icon name="eye-off" className="size-6 text-(--legacy-text-tertiary)" />
+								<p className="text-sm text-(--legacy-text-secondary)">No data</p>
 							</div>
 						</div>
 					) : sortedRows.length === 0 ? (
 						<div className="flex flex-1 items-center justify-center">
 							<div className="flex flex-col items-center gap-2 text-center">
-								<Icon name="search" className="size-6 text-(--text-tertiary)" />
-								<p className="text-sm text-(--text-secondary)">No matching rows</p>
+								<Icon name="search" className="size-6 text-(--legacy-text-tertiary)" />
+								<p className="text-sm text-(--legacy-text-secondary)">No matching rows</p>
 							</div>
 						</div>
 					) : (
@@ -907,7 +909,7 @@ export function DatasetPreviewModal({
 											return (
 												<div
 													key={column.index}
-													className="border-t border-r border-(--divider) bg-surface last:border-r-0"
+													className="border-t border-r border-(--legacy-divider) bg-surface last:border-r-0"
 													style={{
 														position: isSticky ? 'sticky' : undefined,
 														left: isSticky ? 0 : undefined,
@@ -921,7 +923,7 @@ export function DatasetPreviewModal({
 															type="checkbox"
 															checked={isSelected}
 															onChange={() => toggleColumn(column.index)}
-															className="mr-1 size-3.5 shrink-0 cursor-pointer accent-(--primary)"
+															className="mr-1 size-3.5 shrink-0 cursor-pointer accent-(--legacy-primary)"
 														/>
 														<button
 															type="button"
@@ -929,7 +931,7 @@ export function DatasetPreviewModal({
 															className="flex min-w-0 flex-1 items-center gap-1"
 														>
 															<span
-																className={`truncate text-xs font-medium ${isSelected ? 'text-(--text-secondary)' : 'text-(--text-tertiary)'}`}
+																className={`truncate text-xs font-medium ${isSelected ? 'text-(--legacy-text-secondary)' : 'text-(--legacy-text-tertiary)'}`}
 															>
 																{column.header}
 															</span>
@@ -977,7 +979,7 @@ export function DatasetPreviewModal({
 														<div
 															key={column.index}
 															title={rawValue || undefined}
-															className={`overflow-hidden border-t border-r border-(--divider) p-2 text-sm text-ellipsis whitespace-nowrap last:border-r-0 ${tone} ${!isSelected ? 'text-(--text-tertiary) opacity-40' : ''}`}
+															className={`overflow-hidden border-t border-r border-(--legacy-divider) p-2 text-sm text-ellipsis whitespace-nowrap last:border-r-0 ${tone} ${!isSelected ? 'text-(--legacy-text-tertiary) opacity-40' : ''}`}
 															style={{
 																textAlign: column.align,
 																position: isSticky ? 'sticky' : undefined,
@@ -1017,17 +1019,17 @@ export function DatasetPreviewModal({
 											WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 35%)'
 										}}
 									/>
-									<div className="absolute inset-x-0 bottom-0 z-50 border-t border-(--divider) bg-surface px-6 py-5">
+									<div className="absolute inset-x-0 bottom-0 z-50 border-t border-(--legacy-divider) bg-surface px-6 py-5">
 										<div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-center">
-											<p className="text-sm font-semibold text-(--text-primary)">
+											<p className="text-sm font-semibold text-(--legacy-text-primary)">
 												This is a preview — subscribe to download full datasets
 											</p>
-											<p className="text-xs text-(--text-tertiary)">
+											<p className="text-xs text-(--legacy-text-tertiary)">
 												Get access to all rows, all columns, and unlimited CSV downloads
 											</p>
 											<Link
 												href="/subscribe"
-												className="mt-1 inline-flex items-center gap-2 rounded-lg bg-(--primary) px-8 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:opacity-90"
+												className="mt-1 inline-flex items-center gap-2 rounded-lg bg-(--legacy-primary) px-8 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:opacity-90"
 											>
 												<Icon name="arrow-up-right" className="size-4" />
 												Subscribe
@@ -1090,7 +1092,7 @@ function PlaceholderRows({
 							return (
 								<div
 									key={column.index}
-									className={`overflow-hidden border-t border-r border-(--divider) p-2 text-sm text-ellipsis whitespace-nowrap last:border-r-0 ${tone} ${!isSelected ? 'text-(--text-tertiary) opacity-40' : ''}`}
+									className={`overflow-hidden border-t border-r border-(--legacy-divider) p-2 text-sm text-ellipsis whitespace-nowrap last:border-r-0 ${tone} ${!isSelected ? 'text-(--legacy-text-tertiary) opacity-40' : ''}`}
 									style={{
 										textAlign: column.align,
 										position: isSticky ? 'sticky' : undefined,
@@ -1131,7 +1133,7 @@ function ChainPickerPopover({
 
 	return (
 		<Ariakit.PopoverProvider store={popoverStore}>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary)">
+			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--legacy-divider) px-2.5 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary)">
 				<Icon name="link" className="size-3.5" />
 				{selected ?? 'All Chains'}
 			</Ariakit.PopoverDisclosure>
@@ -1141,12 +1143,12 @@ function ChainPickerPopover({
 				unmountOnHide
 				className="z-[60] flex max-h-80 w-64 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
 			>
-				<div className="border-b border-(--divider) px-3 py-2">
+				<div className="border-b border-(--legacy-divider) px-3 py-2">
 					<input
 						value={chainSearch}
 						onChange={(e) => setChainSearch(e.currentTarget.value)}
 						placeholder="Search chains..."
-						className="w-full rounded-md border border-(--divider) bg-transparent px-2.5 py-1.5 text-xs outline-none placeholder:text-(--text-tertiary) focus:border-(--primary)"
+						className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-xs outline-none placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary)"
 					/>
 				</div>
 				<div className="flex-1 overflow-auto py-1">
@@ -1156,7 +1158,7 @@ function ChainPickerPopover({
 							onSelect(null)
 							popoverStore.hide()
 						}}
-						className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row ${selected === null ? 'font-medium text-(--primary)' : 'text-(--text-secondary)'}`}
+						className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row ${selected === null ? 'font-medium text-(--legacy-primary)' : 'text-(--legacy-text-secondary)'}`}
 					>
 						All Chains
 					</button>
@@ -1168,7 +1170,7 @@ function ChainPickerPopover({
 								onSelect(chain)
 								popoverStore.hide()
 							}}
-							className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row ${selected === chain ? 'font-medium text-(--primary)' : 'text-(--text-secondary)'}`}
+							className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row ${selected === chain ? 'font-medium text-(--legacy-primary)' : 'text-(--legacy-text-secondary)'}`}
 						>
 							{chain}
 						</button>
@@ -1194,8 +1196,8 @@ function ExcludeToggleButton({
 			onClick={() => onToggle(!excluded)}
 			className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
 				excluded
-					? 'border-(--divider) text-(--text-tertiary) hover:bg-hover-row hover:text-(--text-primary)'
-					: 'border-(--primary)/30 bg-(--primary)/10 text-(--primary) hover:bg-(--primary)/20'
+					? 'border-(--legacy-divider) text-(--legacy-text-tertiary) hover:bg-hover-row hover:text-(--legacy-text-primary)'
+					: 'border-(--legacy-primary)/30 bg-(--legacy-primary)/10 text-(--legacy-primary) hover:bg-(--legacy-primary)/20'
 			}`}
 		>
 			<Icon name={excluded ? 'eye-off' : 'eye'} className="size-3.5" />
@@ -1221,10 +1223,10 @@ function ColumnPickerPopover({
 
 	return (
 		<Ariakit.PopoverProvider store={popoverStore}>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--divider) px-2.5 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary)">
+			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-(--legacy-divider) px-2.5 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary)">
 				<Icon name="eye" className="size-3.5" />
 				Columns
-				<span className="text-(--text-tertiary)">
+				<span className="text-(--legacy-text-tertiary)">
 					{selected.size}/{columns.length}
 				</span>
 			</Ariakit.PopoverDisclosure>
@@ -1234,9 +1236,9 @@ function ColumnPickerPopover({
 				unmountOnHide
 				className="z-[60] flex max-h-80 w-64 flex-col overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-xl"
 			>
-				<div className="flex items-center justify-between border-b border-(--divider) px-3 py-2">
-					<span className="text-xs font-medium text-(--text-secondary)">Toggle columns</span>
-					<button type="button" onClick={onToggleAll} className="text-xs text-(--primary) hover:underline">
+				<div className="flex items-center justify-between border-b border-(--legacy-divider) px-3 py-2">
+					<span className="text-xs font-medium text-(--legacy-text-secondary)">Toggle columns</span>
+					<button type="button" onClick={onToggleAll} className="text-xs text-(--legacy-primary) hover:underline">
 						{allSelected ? 'Deselect all' : 'Select all'}
 					</button>
 				</div>
@@ -1252,12 +1254,16 @@ function ColumnPickerPopover({
 							>
 								<span
 									className={`flex size-4 shrink-0 items-center justify-center rounded border transition-colors ${
-										isSelected ? 'border-(--primary) bg-(--primary) text-white' : 'border-(--divider)'
+										isSelected
+											? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
+											: 'border-(--legacy-divider)'
 									}`}
 								>
 									{isSelected ? <Icon name="check" className="size-2.5" /> : null}
 								</span>
-								<span className={isSelected ? 'text-(--text-primary)' : 'text-(--text-tertiary)'}>{column.header}</span>
+								<span className={isSelected ? 'text-(--legacy-text-primary)' : 'text-(--legacy-text-tertiary)'}>
+									{column.header}
+								</span>
 							</button>
 						)
 					})}

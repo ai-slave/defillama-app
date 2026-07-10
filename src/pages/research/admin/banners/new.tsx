@@ -19,11 +19,11 @@ export default function NewBannerPage() {
 						<header className="pt-2 pb-2">
 							<Link
 								href="/research/admin/banners"
-								className="inline-flex items-center gap-1 text-xs text-(--text-tertiary) transition-colors hover:text-(--text-primary)"
+								className="inline-flex items-center gap-1 text-xs text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-text-primary)"
 							>
 								<span aria-hidden>←</span> Banners
 							</Link>
-							<h1 className="mt-2 text-3xl font-semibold tracking-tight text-(--text-primary)">New banner</h1>
+							<h1 className="mt-2 text-3xl font-semibold tracking-tight text-(--legacy-text-primary)">New banner</h1>
 						</header>
 					</div>
 					<BannerForm banner={null} />

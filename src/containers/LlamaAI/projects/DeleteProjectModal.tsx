@@ -29,12 +29,12 @@ export function DeleteProjectModal({ dialogStore, project, onDeleted }: DeletePr
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog
-				className="fixed top-1/2 left-1/2 z-50 w-[min(420px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#e6e6e6] bg-(--cards-bg) p-5 shadow-2xl dark:border-[#222324]"
+				className="fixed top-1/2 left-1/2 z-50 w-[min(420px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#e6e6e6] bg-(--legacy-cards-bg) p-5 shadow-2xl dark:border-[#222324]"
 				backdrop={<div className="backdrop fixed inset-0 bg-black/60 backdrop-blur-md" />}
 			>
 				<header className="flex items-start justify-between">
 					<div>
-						<h2 className="text-base font-semibold text-(--text-primary)">Delete project?</h2>
+						<h2 className="text-base font-semibold text-(--legacy-text-primary)">Delete project?</h2>
 						<p className="mt-0.5 text-xs text-[#666] dark:text-[#919296]">
 							{project?.name ? `“${project.name}” ` : 'This project '}
 							will be soft-deleted and permanently removed in 14 days. Attached sessions remain.

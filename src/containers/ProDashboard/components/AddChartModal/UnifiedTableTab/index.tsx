@@ -610,7 +610,7 @@ function TabContent({
 				<CollapsibleSection title="Grouping" badge="Protocols" className="shadow-sm">
 					<div className="flex flex-col gap-3">
 						<div>
-							<h4 className="mb-2 text-xs font-semibold text-(--text-secondary)">Configure Grouping</h4>
+							<h4 className="mb-2 text-xs font-semibold text-(--legacy-text-secondary)">Configure Grouping</h4>
 							<GroupingOptions rowHeaders={rowHeaders} onToggleRowHeader={handleToggleRowHeader} />
 						</div>
 					</div>
@@ -621,8 +621,8 @@ function TabContent({
 						{recommendedPresets.length > 0 ? (
 							<div className="flex flex-col gap-2">
 								<div className="flex items-center justify-between">
-									<h4 className="text-xs font-semibold text-(--text-secondary)">Recommended Data Views</h4>
-									<p className="text-[10px] text-(--text-tertiary)">Based on your filters</p>
+									<h4 className="text-xs font-semibold text-(--legacy-text-secondary)">Recommended Data Views</h4>
+									<p className="text-[10px] text-(--legacy-text-tertiary)">Based on your filters</p>
 								</div>
 								<PresetPicker
 									activePresetId={activePresetId}
@@ -632,11 +632,11 @@ function TabContent({
 							</div>
 						) : null}
 						<div className="flex flex-col gap-2">
-							<h4 className="text-xs font-semibold text-(--text-secondary)">All Data Views</h4>
+							<h4 className="text-xs font-semibold text-(--legacy-text-secondary)">All Data Views</h4>
 							{otherPresets.length > 0 ? (
 								<PresetPicker activePresetId={activePresetId} onSelect={handlePresetSelect} presets={otherPresets} />
 							) : (
-								<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) px-3 py-2 text-xs text-(--text-tertiary)">
+								<div className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-2 text-xs text-(--legacy-text-tertiary)">
 									All available data views are shown above.
 								</div>
 							)}
@@ -656,8 +656,8 @@ function TabContent({
 								disabled={!isModified}
 								className={`rounded-md border px-2 py-0.5 text-[11px] transition ${
 									isModified
-										? 'border-(--primary) text-(--primary) hover:bg-(--primary)/10'
-										: 'cursor-not-allowed border-(--cards-border) text-(--text-tertiary)'
+										? 'border-(--legacy-primary) text-(--legacy-primary) hover:bg-(--legacy-primary)/10'
+										: 'cursor-not-allowed border-(--legacy-cards-border) text-(--legacy-text-tertiary)'
 								}`}
 							>
 								Reset to preset
@@ -684,8 +684,10 @@ function TabContent({
 				<div className="flex flex-col gap-5">
 					<div className="space-y-2">
 						<div className="flex items-center justify-between">
-							<h5 className="text-xs font-semibold tracking-wide text-(--text-secondary) uppercase">Active filters</h5>
-							<span className="text-[11px] text-(--text-tertiary)">
+							<h5 className="text-xs font-semibold tracking-wide text-(--legacy-text-secondary) uppercase">
+								Active filters
+							</h5>
+							<span className="text-[11px] text-(--legacy-text-tertiary)">
 								{activeFilterCount > 0 ? `${activeFilterCount} applied` : 'None'}
 							</span>
 						</div>
@@ -694,16 +696,16 @@ function TabContent({
 
 					<div className="space-y-2">
 						<div>
-							<h5 className="text-xs font-semibold text-(--text-secondary)">Filter presets</h5>
-							<p className="text-[11px] text-(--text-tertiary)">Start from curated combinations.</p>
+							<h5 className="text-xs font-semibold text-(--legacy-text-secondary)">Filter presets</h5>
+							<p className="text-[11px] text-(--legacy-text-tertiary)">Start from curated combinations.</p>
 						</div>
 						<PresetSelector currentFilters={filters ?? {}} onApplyPreset={handleApplyPreset} />
 					</div>
 
 					<div className="space-y-2">
 						<div>
-							<h5 className="text-xs font-semibold text-(--text-secondary)">Scope</h5>
-							<p className="text-[11px] text-(--text-tertiary)">
+							<h5 className="text-xs font-semibold text-(--legacy-text-secondary)">Scope</h5>
+							<p className="text-[11px] text-(--legacy-text-tertiary)">
 								Choose which chains, categories, protocols, or oracles to focus on.
 							</p>
 						</div>
@@ -718,8 +720,8 @@ function TabContent({
 
 					<div className="space-y-2">
 						<div>
-							<h5 className="text-xs font-semibold text-(--text-secondary)">Metric & flag filters</h5>
-							<p className="text-[11px] text-(--text-tertiary)">
+							<h5 className="text-xs font-semibold text-(--legacy-text-secondary)">Metric & flag filters</h5>
+							<p className="text-[11px] text-(--legacy-text-tertiary)">
 								Add filters for TVL, volume, fees, revenue, and other metrics.
 							</p>
 						</div>
@@ -776,7 +778,7 @@ function TabContent({
 					<span>Back to table type selection</span>
 				</button>
 
-				<div className="flex items-center gap-1.5 rounded-lg border border-(--cards-border) bg-(--cards-bg-alt) p-1">
+				<div className="flex items-center gap-1.5 rounded-lg border border-(--legacy-cards-border) bg-(--cards-bg-alt) p-1">
 					{RWA_TABS.map((tab) => {
 						const isActive = tab.value === activeRwaTab
 						return (
@@ -786,8 +788,8 @@ function TabContent({
 								onClick={() => handleRwaTabChange(tab.value)}
 								className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition ${
 									isActive
-										? 'bg-(--primary)/10 text-(--text-primary) shadow-sm ring-1 ring-(--primary)/60'
-										: 'text-(--text-secondary) hover:bg-(--cards-bg) hover:text-(--text-primary)'
+										? 'bg-(--legacy-primary)/10 text-(--legacy-text-primary) shadow-sm ring-1 ring-(--legacy-primary)/60'
+										: 'text-(--legacy-text-secondary) hover:bg-(--legacy-cards-bg) hover:text-(--legacy-text-primary)'
 								}`}
 							>
 								{tab.label}
@@ -807,7 +809,7 @@ function TabContent({
 					/>
 				) : null}
 
-				<div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-(--cards-border) bg-(--cards-bg-alt)">
+				<div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-(--legacy-cards-border) bg-(--cards-bg-alt)">
 					<div className="h-full overflow-auto">
 						{activeRwaTab === 'rwa-chains' ? (
 							<RWAChainsDataset />
@@ -837,7 +839,7 @@ function TabContent({
 					<span>Back to table type selection</span>
 				</button>
 
-				<div className="flex items-center gap-1.5 rounded-lg border border-(--cards-border) bg-(--cards-bg-alt) p-1">
+				<div className="flex items-center gap-1.5 rounded-lg border border-(--legacy-cards-border) bg-(--cards-bg-alt) p-1">
 					{EQUITIES_TABS.map((tab) => {
 						const isActive = tab.value === activeEquitiesTab
 						return (
@@ -847,8 +849,8 @@ function TabContent({
 								onClick={() => handleEquitiesTabChange(tab.value)}
 								className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition ${
 									isActive
-										? 'bg-(--primary)/10 text-(--text-primary) shadow-sm ring-1 ring-(--primary)/60'
-										: 'text-(--text-secondary) hover:bg-(--cards-bg) hover:text-(--text-primary)'
+										? 'bg-(--legacy-primary)/10 text-(--legacy-text-primary) shadow-sm ring-1 ring-(--legacy-primary)/60'
+										: 'text-(--legacy-text-secondary) hover:bg-(--legacy-cards-bg) hover:text-(--legacy-text-primary)'
 								}`}
 							>
 								{tab.label}
@@ -868,7 +870,7 @@ function TabContent({
 					/>
 				) : null}
 
-				<div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-(--cards-border) bg-(--cards-bg-alt)">
+				<div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-(--legacy-cards-border) bg-(--cards-bg-alt)">
 					<div className="h-full overflow-auto">
 						{activeEquitiesTab === 'equities' ? (
 							<EquitiesCompaniesDataset />
@@ -892,12 +894,12 @@ function TabContent({
 				<button
 					type="button"
 					onClick={() => handleSelectTableType(heroCard.value)}
-					className="group relative flex flex-col rounded-xl border pro-border p-5 text-left transition-all hover:border-(--primary)/50 hover:bg-(--cards-bg-alt)"
+					className="group relative flex flex-col rounded-xl border pro-border p-5 text-left transition-all hover:border-(--legacy-primary)/50 hover:bg-(--cards-bg-alt)"
 				>
 					<div className="mb-3 flex items-center justify-between">
 						<div className="flex items-center gap-3">
-							<div className="flex size-10 items-center justify-center rounded-lg bg-(--primary)/10">
-								<Icon name={heroCard.icon} height={22} width={22} className="text-(--primary)" />
+							<div className="flex size-10 items-center justify-center rounded-lg bg-(--legacy-primary)/10">
+								<Icon name={heroCard.icon} height={22} width={22} className="text-(--legacy-primary)" />
 							</div>
 							<h3 className="text-lg font-semibold pro-text1">{heroCard.label}</h3>
 						</div>
@@ -905,7 +907,7 @@ function TabContent({
 							name="arrow-right"
 							height={18}
 							width={18}
-							className="text-(--text-secondary) transition-transform group-hover:translate-x-1 group-hover:text-(--primary)"
+							className="text-(--legacy-text-secondary) transition-transform group-hover:translate-x-1 group-hover:text-(--legacy-primary)"
 						/>
 					</div>
 					<p className="mb-4 text-sm pro-text2">{heroCard.description}</p>
@@ -913,7 +915,7 @@ function TabContent({
 						{heroCard.tags.map((tag) => (
 							<span
 								key={tag}
-								className="rounded-full bg-(--cards-bg-alt) px-2.5 py-1 text-xs font-medium text-(--text-secondary) transition-colors group-hover:bg-(--primary)/10 group-hover:text-(--primary)"
+								className="rounded-full bg-(--cards-bg-alt) px-2.5 py-1 text-xs font-medium text-(--legacy-text-secondary) transition-colors group-hover:bg-(--legacy-primary)/10 group-hover:text-(--legacy-primary)"
 							>
 								{tag}
 							</span>
@@ -953,14 +955,14 @@ function TabContent({
 											handleSelectTableType(card.value)
 										}
 									}}
-									className="group flex items-start gap-2.5 rounded-lg border pro-border p-3 text-left transition-all hover:border-(--primary)/50 hover:bg-(--cards-bg-alt)"
+									className="group flex items-start gap-2.5 rounded-lg border pro-border p-3 text-left transition-all hover:border-(--legacy-primary)/50 hover:bg-(--cards-bg-alt)"
 								>
-									<div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-(--cards-bg-alt) transition-colors group-hover:bg-(--primary)/10">
+									<div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-(--cards-bg-alt) transition-colors group-hover:bg-(--legacy-primary)/10">
 										<Icon
 											name={isProLocked ? 'file-lock-2' : card.icon}
 											height={16}
 											width={16}
-											className="text-(--text-secondary) group-hover:text-(--primary)"
+											className="text-(--legacy-text-secondary) group-hover:text-(--legacy-primary)"
 										/>
 									</div>
 									<div className="min-w-0 flex-1">
@@ -1031,7 +1033,7 @@ function TabContent({
 			</header>
 
 			{availableTabs.length > 0 ? (
-				<div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-(--cards-border) bg-(--cards-bg-alt) p-1 shadow-sm">
+				<div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-(--legacy-cards-border) bg-(--cards-bg-alt) p-1 shadow-sm">
 					{availableTabs.map((tab) => {
 						const isActive = tab.key === effectiveActiveTab
 						return (
@@ -1041,8 +1043,8 @@ function TabContent({
 								onClick={() => setActiveTab(tab.key)}
 								className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-semibold transition ${
 									isActive
-										? 'bg-(--primary)/10 text-(--text-primary) shadow-sm ring-1 ring-(--primary)/60'
-										: 'text-(--text-secondary) hover:bg-(--cards-bg) hover:text-(--text-primary)'
+										? 'bg-(--legacy-primary)/10 text-(--legacy-text-primary) shadow-sm ring-1 ring-(--legacy-primary)/60'
+										: 'text-(--legacy-text-secondary) hover:bg-(--legacy-cards-bg) hover:text-(--legacy-text-primary)'
 								}`}
 							>
 								<span className="truncate" title={tab.label}>
@@ -1051,7 +1053,9 @@ function TabContent({
 								{tab.badge ? (
 									<span
 										className={`max-w-[160px] truncate rounded-full px-2 py-0.5 text-[11px] font-medium ${
-											isActive ? 'bg-(--primary)/20 text-(--primary)' : 'bg-(--cards-border) text-(--text-tertiary)'
+											isActive
+												? 'bg-(--legacy-primary)/20 text-(--legacy-primary)'
+												: 'bg-(--legacy-cards-border) text-(--legacy-text-tertiary)'
 										}`}
 										title={tab.badge?.toString()}
 									>
@@ -1072,7 +1076,7 @@ function TabContent({
 				<div className="flex h-full flex-col gap-3">{tabContent[effectiveActiveTab]}</div>
 			</div>
 
-			<div className="sticky bottom-0 z-10 flex shrink-0 items-center justify-end gap-3 border-t border-(--cards-border) bg-(--cards-bg) pt-3 pb-2 shadow-[0_-4px_12px_-6px_rgba(0,0,0,0.25)]">
+			<div className="sticky bottom-0 z-10 flex shrink-0 items-center justify-end gap-3 border-t border-(--legacy-cards-border) bg-(--legacy-cards-bg) pt-3 pb-2 shadow-[0_-4px_12px_-6px_rgba(0,0,0,0.25)]">
 				<button
 					type="button"
 					onClick={onClose}

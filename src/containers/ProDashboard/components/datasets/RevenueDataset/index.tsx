@@ -147,8 +147,8 @@ export function RevenueDataset({ chains, tableId, filters }: RevenueDatasetProps
 									event.stopPropagation()
 									setShowFilterModal(true)
 								}}
-								className={`ml-2 rounded-md p-1 transition-colors hover:bg-(--bg-tertiary) ${
-									filterButtonIsActive ? 'text-(--primary)' : 'text-(--text-tertiary)'
+								className={`ml-2 rounded-md p-1 transition-colors hover:bg-(--legacy-bg-tertiary) ${
+									filterButtonIsActive ? 'text-(--legacy-primary)' : 'text-(--legacy-text-tertiary)'
 								}`}
 								title="Filter categories"
 							>
@@ -285,7 +285,7 @@ export function RevenueDataset({ chains, tableId, filters }: RevenueDatasetProps
 							type="text"
 							placeholder="Search protocols..."
 							onInput={(e) => setProtocolName(e.currentTarget.value)}
-							className="border pro-border pro-bg1 px-3 py-1.5 text-sm pro-text1 focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
+							className="border pro-border pro-bg1 px-3 py-1.5 text-sm pro-text1 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
 						/>
 					</div>
 				</div>

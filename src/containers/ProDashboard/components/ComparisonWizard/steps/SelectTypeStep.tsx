@@ -30,8 +30,8 @@ export function SelectTypeStep() {
 	return (
 		<div className="flex flex-col gap-6">
 			<div className="text-center">
-				<h2 className="text-lg font-semibold text-(--text-primary)">What would you like to compare?</h2>
-				<p className="mt-1 text-sm text-(--text-secondary)">
+				<h2 className="text-lg font-semibold text-(--legacy-text-primary)">What would you like to compare?</h2>
+				<p className="mt-1 text-sm text-(--legacy-text-secondary)">
 					Choose whether to compare blockchain networks or DeFi protocols
 				</p>
 			</div>
@@ -46,23 +46,25 @@ export function SelectTypeStep() {
 							onClick={() => actions.setComparisonType(option.type)}
 							className={`flex flex-col items-center gap-4 rounded-xl border-2 p-6 text-center transition-all ${
 								isSelected
-									? 'border-(--primary) bg-(--primary)/5 ring-2 ring-(--primary)/20'
-									: 'border-(--cards-border) bg-(--cards-bg) hover:border-(--primary)/40 hover:bg-(--cards-bg-alt)/50'
+									? 'border-(--legacy-primary) bg-(--legacy-primary)/5 ring-2 ring-(--legacy-primary)/20'
+									: 'border-(--legacy-cards-border) bg-(--legacy-cards-bg) hover:border-(--legacy-primary)/40 hover:bg-(--cards-bg-alt)/50'
 							}`}
 						>
 							<div
 								className={`flex h-16 w-16 items-center justify-center rounded-2xl transition-colors ${
-									isSelected ? 'bg-(--primary)/15 text-(--primary)' : 'bg-(--cards-bg-alt) text-(--text-secondary)'
+									isSelected
+										? 'bg-(--legacy-primary)/15 text-(--legacy-primary)'
+										: 'bg-(--cards-bg-alt) text-(--legacy-text-secondary)'
 								}`}
 							>
 								<Icon name={option.icon} height={32} width={32} />
 							</div>
 							<div>
-								<h3 className="text-base font-semibold text-(--text-primary)">{option.title}</h3>
-								<p className="mt-1 text-sm text-(--text-tertiary)">{option.description}</p>
+								<h3 className="text-base font-semibold text-(--legacy-text-primary)">{option.title}</h3>
+								<p className="mt-1 text-sm text-(--legacy-text-tertiary)">{option.description}</p>
 							</div>
 							{isSelected ? (
-								<div className="flex items-center gap-1.5 text-sm font-medium text-(--primary)">
+								<div className="flex items-center gap-1.5 text-sm font-medium text-(--legacy-primary)">
 									<Icon name="check" height={14} width={14} />
 									Selected
 								</div>

@@ -18,18 +18,20 @@ export function CoverDetailsDialog({ article, publishErrors, store, updateCoverF
 			backdrop={
 				<div className="fixed inset-0 z-40 bg-black/40 opacity-0 backdrop-blur-sm transition-opacity duration-150 data-[enter]:opacity-100 data-[leave]:opacity-0" />
 			}
-			className="fixed top-1/2 left-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-(--cards-border) bg-(--cards-bg) p-5 opacity-0 shadow-2xl transition-opacity duration-150 data-[enter]:opacity-100"
+			className="fixed top-1/2 left-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5 opacity-0 shadow-2xl transition-opacity duration-150 data-[enter]:opacity-100"
 		>
 			<div className="mb-4 flex items-start justify-between gap-3">
 				<div className="grid gap-1">
-					<Ariakit.DialogHeading className="text-base font-semibold tracking-tight text-(--text-primary)">
+					<Ariakit.DialogHeading className="text-base font-semibold tracking-tight text-(--legacy-text-primary)">
 						Cover details
 					</Ariakit.DialogHeading>
-					<p className="text-xs text-(--text-tertiary)">Optional captions and attribution shown below the cover.</p>
+					<p className="text-xs text-(--legacy-text-tertiary)">
+						Optional captions and attribution shown below the cover.
+					</p>
 				</div>
 				<Ariakit.DialogDismiss
 					aria-label="Close"
-					className="rounded-md p-1.5 text-(--text-secondary) hover:bg-(--link-hover-bg)"
+					className="rounded-md p-1.5 text-(--legacy-text-secondary) hover:bg-(--legacy-link-hover-bg)"
 				>
 					<Icon name="x" className="size-4" />
 				</Ariakit.DialogDismiss>
@@ -37,21 +39,23 @@ export function CoverDetailsDialog({ article, publishErrors, store, updateCoverF
 
 			<div className="grid gap-3">
 				<label className="grid gap-1">
-					<span className="text-[11px] font-medium tracking-wide text-(--text-tertiary) uppercase">Headline</span>
+					<span className="text-[11px] font-medium tracking-wide text-(--legacy-text-tertiary) uppercase">
+						Headline
+					</span>
 					<input
 						value={article.coverImage?.headline ?? ''}
 						onChange={(e) => updateCoverField('headline', e.target.value)}
 						placeholder="Image title"
-						className="rounded-md border border-(--form-control-border) bg-(--app-bg) px-2.5 py-1.5 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+						className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-2.5 py-1.5 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 					/>
 				</label>
 				<label className="grid gap-1">
-					<span className="text-[11px] font-medium tracking-wide text-(--text-tertiary) uppercase">Caption</span>
+					<span className="text-[11px] font-medium tracking-wide text-(--legacy-text-tertiary) uppercase">Caption</span>
 					<input
 						value={article.coverImage?.caption ?? ''}
 						onChange={(e) => updateCoverField('caption', e.target.value)}
 						placeholder="Caption shown under the cover"
-						className="rounded-md border border-(--form-control-border) bg-(--app-bg) px-2.5 py-1.5 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+						className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-2.5 py-1.5 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 					/>
 					{publishErrors['coverImage.caption'] ? (
 						<span className="text-[11px] text-red-500">{publishErrors['coverImage.caption']}</span>
@@ -59,24 +63,28 @@ export function CoverDetailsDialog({ article, publishErrors, store, updateCoverF
 				</label>
 				<div className="grid grid-cols-2 gap-2">
 					<label className="grid gap-1">
-						<span className="text-[11px] font-medium tracking-wide text-(--text-tertiary) uppercase">Credit</span>
+						<span className="text-[11px] font-medium tracking-wide text-(--legacy-text-tertiary) uppercase">
+							Credit
+						</span>
 						<input
 							value={article.coverImage?.credit ?? ''}
 							onChange={(e) => updateCoverField('credit', e.target.value)}
 							placeholder="Photographer"
-							className="rounded-md border border-(--form-control-border) bg-(--app-bg) px-2.5 py-1.5 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+							className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-2.5 py-1.5 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 						/>
 						{publishErrors['coverImage.credit'] ? (
 							<span className="text-[11px] text-red-500">{publishErrors['coverImage.credit']}</span>
 						) : null}
 					</label>
 					<label className="grid gap-1">
-						<span className="text-[11px] font-medium tracking-wide text-(--text-tertiary) uppercase">Copyright</span>
+						<span className="text-[11px] font-medium tracking-wide text-(--legacy-text-tertiary) uppercase">
+							Copyright
+						</span>
 						<input
 							value={article.coverImage?.copyright ?? ''}
 							onChange={(e) => updateCoverField('copyright', e.target.value)}
 							placeholder="Rights holder"
-							className="rounded-md border border-(--form-control-border) bg-(--app-bg) px-2.5 py-1.5 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+							className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-2.5 py-1.5 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 						/>
 						{publishErrors['coverImage.copyright'] ? (
 							<span className="text-[11px] text-red-500">{publishErrors['coverImage.copyright']}</span>
@@ -86,7 +94,7 @@ export function CoverDetailsDialog({ article, publishErrors, store, updateCoverF
 			</div>
 
 			<div className="mt-5 flex justify-end">
-				<Ariakit.DialogDismiss className="flex h-9 items-center rounded-md bg-(--link-text) px-3.5 text-xs font-medium text-white transition-opacity hover:opacity-90">
+				<Ariakit.DialogDismiss className="flex h-9 items-center rounded-md bg-(--legacy-link-text) px-3.5 text-xs font-medium text-white transition-opacity hover:opacity-90">
 					Done
 				</Ariakit.DialogDismiss>
 			</div>
@@ -115,7 +123,7 @@ export function DeleteArticleDialog({
 			backdrop={
 				<div className="fixed inset-0 z-40 bg-black/40 opacity-0 backdrop-blur-sm transition-opacity duration-150 data-[enter]:opacity-100 data-[leave]:opacity-0" />
 			}
-			className="fixed top-1/2 left-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-(--cards-border) bg-(--cards-bg) p-5 opacity-0 shadow-2xl transition-opacity duration-150 data-[enter]:opacity-100"
+			className="fixed top-1/2 left-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5 opacity-0 shadow-2xl transition-opacity duration-150 data-[enter]:opacity-100"
 		>
 			<div className="flex items-start gap-3">
 				<div
@@ -125,14 +133,14 @@ export function DeleteArticleDialog({
 					<Icon name="trash" className="size-4" />
 				</div>
 				<div className="grid gap-1">
-					<Ariakit.DialogHeading className="text-base font-semibold tracking-tight text-(--text-primary)">
+					<Ariakit.DialogHeading className="text-base font-semibold tracking-tight text-(--legacy-text-primary)">
 						{isPublished ? 'Delete this article?' : 'Delete this draft?'}
 					</Ariakit.DialogHeading>
-					<Ariakit.DialogDescription className="text-sm text-(--text-secondary)">
+					<Ariakit.DialogDescription className="text-sm text-(--legacy-text-secondary)">
 						{title ? (
 							<>
-								<span className="font-medium text-(--text-primary)">{title}</span> will be permanently removed. This
-								cannot be undone.
+								<span className="font-medium text-(--legacy-text-primary)">{title}</span> will be permanently removed.
+								This cannot be undone.
 							</>
 						) : (
 							<>This will be permanently removed. This cannot be undone.</>
@@ -143,7 +151,7 @@ export function DeleteArticleDialog({
 			<div className="mt-5 flex justify-end gap-2">
 				<Ariakit.DialogDismiss
 					disabled={isPending}
-					className="flex h-9 items-center rounded-md border border-(--cards-border) bg-transparent px-3 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) disabled:cursor-not-allowed disabled:opacity-50"
+					className="flex h-9 items-center rounded-md border border-(--legacy-cards-border) bg-transparent px-3 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					Cancel
 				</Ariakit.DialogDismiss>

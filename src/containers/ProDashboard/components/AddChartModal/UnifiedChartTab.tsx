@@ -711,15 +711,15 @@ export function UnifiedChartTab({
 
 			<div className="grid min-h-0 flex-1 grid-cols-2 gap-4">
 				<div className="flex min-h-0 flex-col gap-3">
-					<div className="shrink-0 rounded-xl border border-(--cards-border) bg-(--cards-bg-alt)/60 p-1 shadow-sm">
+					<div className="shrink-0 rounded-xl border border-(--legacy-cards-border) bg-(--cards-bg-alt)/60 p-1 shadow-sm">
 						<div className="grid grid-cols-2 gap-1">
 							<button
 								type="button"
 								onClick={() => handleChainProtocolTabChange('chain')}
 								className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold transition-all duration-200 ${
 									selectedChartTab === 'chain'
-										? 'bg-(--old-blue) text-white shadow-md ring-1 ring-black/10'
-										: 'text-(--text-secondary) hover:bg-(--cards-bg)/80 hover:text-(--text-primary) hover:shadow-sm'
+										? 'bg-(--legacy-old-blue) text-white shadow-md ring-1 ring-black/10'
+										: 'text-(--legacy-text-secondary) hover:bg-(--legacy-cards-bg)/80 hover:text-(--legacy-text-primary) hover:shadow-sm'
 								}`}
 							>
 								<Icon
@@ -729,7 +729,7 @@ export function UnifiedChartTab({
 									className={
 										selectedChartTab === 'chain'
 											? 'text-white'
-											: 'text-(--text-tertiary) transition-colors group-hover:text-(--text-secondary)'
+											: 'text-(--legacy-text-tertiary) transition-colors group-hover:text-(--legacy-text-secondary)'
 									}
 								/>
 								<span>Chains</span>
@@ -739,8 +739,8 @@ export function UnifiedChartTab({
 								onClick={() => handleChainProtocolTabChange('protocol')}
 								className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold transition-all duration-200 ${
 									selectedChartTab === 'protocol'
-										? 'bg-(--old-blue) text-white shadow-md ring-1 ring-black/10'
-										: 'text-(--text-secondary) hover:bg-(--cards-bg)/80 hover:text-(--text-primary) hover:shadow-sm'
+										? 'bg-(--legacy-old-blue) text-white shadow-md ring-1 ring-black/10'
+										: 'text-(--legacy-text-secondary) hover:bg-(--legacy-cards-bg)/80 hover:text-(--legacy-text-primary) hover:shadow-sm'
 								}`}
 							>
 								<Icon
@@ -750,7 +750,7 @@ export function UnifiedChartTab({
 									className={
 										selectedChartTab === 'protocol'
 											? 'text-white'
-											: 'text-(--text-tertiary) transition-colors group-hover:text-(--text-secondary)'
+											: 'text-(--legacy-text-tertiary) transition-colors group-hover:text-(--legacy-text-secondary)'
 									}
 								/>
 								<span>Protocols</span>
@@ -787,7 +787,7 @@ export function UnifiedChartTab({
 						value={unifiedChartName}
 						onChange={(e) => onUnifiedChartNameChange(e.target.value)}
 						placeholder="Chart name..."
-						className="w-full shrink-0 rounded border border-(--form-control-border) bg-(--bg-input) px-2 py-1.5 text-xs pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
+						className="w-full shrink-0 rounded border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2 py-1.5 text-xs pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
 					/>
 
 					{(selectedChartTab === 'chain' || selectedChartTab === 'protocol') && bulkChartType ? (
@@ -803,11 +803,11 @@ export function UnifiedChartTab({
 						</div>
 					) : null}
 
-					<div className="h-[450px] shrink-0 overflow-hidden rounded-lg border border-(--cards-border) bg-(--cards-bg)">
+					<div className="h-[450px] shrink-0 overflow-hidden rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 						{composerItems.length > 0 ? (
 							<CombinedChartPreview composerItems={composerItems} />
 						) : (
-							<div className="flex h-full items-center justify-center text-xs text-(--text-tertiary)">
+							<div className="flex h-full items-center justify-center text-xs text-(--legacy-text-tertiary)">
 								Select entities to preview chart
 							</div>
 						)}
@@ -818,7 +818,7 @@ export function UnifiedChartTab({
 							{composerItems.map((item) => (
 								<div
 									key={item.id}
-									className="flex shrink-0 items-center gap-1.5 rounded-md border border-(--cards-border) bg-(--cards-bg) px-2 py-1 text-xs"
+									className="flex shrink-0 items-center gap-1.5 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-2 py-1 text-xs"
 								>
 									<input
 										type="color"

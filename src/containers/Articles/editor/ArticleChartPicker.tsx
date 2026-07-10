@@ -60,27 +60,27 @@ function ChartTypeSelect({
 	return (
 		<Ariakit.SelectProvider value={value} setValue={(v) => onChange(typeof v === 'string' ? v : v[0])}>
 			<Ariakit.Select
-				className="flex h-7 w-44 items-center justify-between gap-2 rounded-md border border-(--form-control-border) bg-(--cards-bg) px-2.5 text-xs text-(--text-primary) transition-colors hover:border-(--text-tertiary) focus-visible:border-(--link-text) focus-visible:outline-none data-[state=open]:border-(--link-text)"
+				className="flex h-7 w-44 items-center justify-between gap-2 rounded-md border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-2.5 text-xs text-(--legacy-text-primary) transition-colors hover:border-(--legacy-text-tertiary) focus-visible:border-(--legacy-link-text) focus-visible:outline-none data-[state=open]:border-(--legacy-link-text)"
 				aria-label="Chart type"
 			>
 				<span className="truncate text-left">{labelFor(value)}</span>
-				<Ariakit.SelectArrow className="shrink-0 text-(--text-tertiary)" />
+				<Ariakit.SelectArrow className="shrink-0 text-(--legacy-text-tertiary)" />
 			</Ariakit.Select>
 			<Ariakit.SelectPopover
 				gutter={4}
 				sameWidth
 				portal
 				unmountOnHide
-				className="z-[90] flex max-h-72 flex-col overflow-auto rounded-md border border-(--cards-border) bg-(--cards-bg) py-1 text-xs shadow-lg outline-none"
+				className="z-[90] flex max-h-72 flex-col overflow-auto rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 text-xs shadow-lg outline-none"
 			>
 				{options.map((option) => (
 					<Ariakit.SelectItem
 						key={option}
 						value={option}
-						className="flex shrink-0 cursor-pointer items-center justify-between gap-3 px-2.5 py-1.5 text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary) data-active-item:bg-(--link-hover-bg) data-active-item:text-(--text-primary)"
+						className="flex shrink-0 cursor-pointer items-center justify-between gap-3 px-2.5 py-1.5 text-(--legacy-text-secondary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary) data-active-item:bg-(--legacy-link-hover-bg) data-active-item:text-(--legacy-text-primary)"
 					>
 						<span className="truncate">{labelFor(option)}</span>
-						<Ariakit.SelectItemCheck className="shrink-0 text-(--link-text)" />
+						<Ariakit.SelectItemCheck className="shrink-0 text-(--legacy-link-text)" />
 					</Ariakit.SelectItem>
 				))}
 			</Ariakit.SelectPopover>
@@ -203,14 +203,20 @@ function MultiPreview({
 
 	if (isLoading) {
 		return (
-			<div className="flex items-center justify-center text-xs text-(--text-tertiary)" style={{ height: heightPx }}>
+			<div
+				className="flex items-center justify-center text-xs text-(--legacy-text-tertiary)"
+				style={{ height: heightPx }}
+			>
 				Loading chart…
 			</div>
 		)
 	}
 	if (isError || seriesWithMarkers.length === 0) {
 		return (
-			<div className="flex items-center justify-center text-xs text-(--text-tertiary)" style={{ height: heightPx }}>
+			<div
+				className="flex items-center justify-center text-xs text-(--legacy-text-tertiary)"
+				style={{ height: heightPx }}
+			>
 				No data available
 			</div>
 		)
@@ -218,7 +224,10 @@ function MultiPreview({
 	return (
 		<Suspense
 			fallback={
-				<div className="flex items-center justify-center text-xs text-(--text-tertiary)" style={{ height: heightPx }}>
+				<div
+					className="flex items-center justify-center text-xs text-(--legacy-text-tertiary)"
+					style={{ height: heightPx }}
+				>
 					…
 				</div>
 			}
@@ -415,15 +424,15 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 			store={store}
 			modal
 			backdrop={<div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm" />}
-			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[92vh] w-[min(1180px,96vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-(--cards-border) bg-(--cards-bg) shadow-[0_30px_80px_-20px_rgba(0,0,0,0.5)] outline-none"
+			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[92vh] w-[min(1180px,96vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-[0_30px_80px_-20px_rgba(0,0,0,0.5)] outline-none"
 		>
-			<div className="flex flex-wrap items-center gap-3 border-b border-(--cards-border) px-5 py-3">
-				<Ariakit.DialogHeading className="mr-2 text-sm font-semibold tracking-tight text-(--text-primary)">
+			<div className="flex flex-wrap items-center gap-3 border-b border-(--legacy-cards-border) px-5 py-3">
+				<Ariakit.DialogHeading className="mr-2 text-sm font-semibold tracking-tight text-(--legacy-text-primary)">
 					Embed a DefiLlama chart
 				</Ariakit.DialogHeading>
 				<div
 					role="tablist"
-					className="flex items-center rounded-md border border-(--cards-border) bg-(--app-bg) p-0.5 text-xs"
+					className="flex items-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) p-0.5 text-xs"
 				>
 					{(['protocol', 'chain'] as const).map((value) => {
 						const active = tab === value
@@ -439,8 +448,8 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 								}}
 								className={`rounded px-3 py-1 font-medium transition-colors ${
 									active
-										? 'bg-(--cards-bg) text-(--text-primary) shadow-sm'
-										: 'text-(--text-tertiary) hover:text-(--text-primary)'
+										? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm'
+										: 'text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'
 								}`}
 							>
 								{value === 'protocol' ? 'Protocols' : 'Chains'}
@@ -449,22 +458,22 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 					})}
 				</div>
 				{series.length > 0 ? (
-					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 						{series.length} / {MAX_SERIES} series
 					</span>
 				) : null}
 				<div className="ml-auto">
-					<Ariakit.DialogDismiss className="rounded-md border border-transparent px-2 py-1 text-xs text-(--text-tertiary) hover:border-(--cards-border) hover:text-(--text-primary)">
+					<Ariakit.DialogDismiss className="rounded-md border border-transparent px-2 py-1 text-xs text-(--legacy-text-tertiary) hover:border-(--legacy-cards-border) hover:text-(--legacy-text-primary)">
 						Close
 					</Ariakit.DialogDismiss>
 				</div>
 			</div>
 
 			<div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[300px_1fr]">
-				<aside className="flex min-h-0 flex-col border-(--cards-border) bg-(--app-bg)/40 md:border-r">
+				<aside className="flex min-h-0 flex-col border-(--legacy-cards-border) bg-(--legacy-app-bg)/40 md:border-r">
 					<div className="grid gap-2 px-3 pt-3 pb-2">
 						<div>
-							<span className="mb-1 block text-[10px] font-medium tracking-wide text-(--text-tertiary) uppercase">
+							<span className="mb-1 block text-[10px] font-medium tracking-wide text-(--legacy-text-tertiary) uppercase">
 								Metric to add
 							</span>
 							<ChartTypePills
@@ -479,22 +488,22 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 							<Icon
 								name="search"
 								aria-hidden
-								className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-(--text-tertiary)"
+								className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-(--legacy-text-tertiary)"
 							/>
 							<input
 								autoFocus
 								value={query}
 								onChange={(event) => setQuery(event.target.value)}
 								placeholder={tab === 'protocol' ? 'Search protocols' : 'Search chains'}
-								className="w-full rounded-md border border-(--cards-border) bg-(--cards-bg) py-1.5 pr-2 pl-8 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+								className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1.5 pr-2 pl-8 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 							/>
 						</div>
 					</div>
 					<ul className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2">
 						{catalogLoading ? (
-							<li className="px-3 py-8 text-center text-xs text-(--text-tertiary)">Loading…</li>
+							<li className="px-3 py-8 text-center text-xs text-(--legacy-text-tertiary)">Loading…</li>
 						) : filteredEntities.length === 0 ? (
-							<li className="px-3 py-8 text-center text-xs text-(--text-tertiary)">No results</li>
+							<li className="px-3 py-8 text-center text-xs text-(--legacy-text-tertiary)">No results</li>
 						) : (
 							filteredEntities.map((entity) => {
 								const candidateId = `${entity.entityType}:${entity.slug}:${currentMetric}`
@@ -510,25 +519,25 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 											aria-pressed={checked}
 											className={`group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
 												checked
-													? 'bg-(--link-button) text-(--link-text)'
-													: 'text-(--text-primary) hover:bg-(--link-hover-bg)'
+													? 'bg-(--legacy-link-button) text-(--legacy-link-text)'
+													: 'text-(--legacy-text-primary) hover:bg-(--legacy-link-hover-bg)'
 											}`}
 										>
 											<span
 												className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
 													checked
-														? 'border-(--link-text) bg-(--link-text)'
-														: 'border-(--form-control-border) bg-(--cards-bg) group-hover:border-(--text-tertiary)'
+														? 'border-(--legacy-link-text) bg-(--legacy-link-text)'
+														: 'border-(--legacy-form-control-border) bg-(--legacy-cards-bg) group-hover:border-(--legacy-text-tertiary)'
 												}`}
 											>
 												{checked ? <Icon name="check" className="size-2.5 text-white" /> : null}
 											</span>
-											<span className="relative flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-(--cards-border) bg-(--cards-bg)">
+											<span className="relative flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 												<img src={entityLogo(entity)} alt="" className="size-full object-cover" />
 											</span>
 											<span className="min-w-0 flex-1 truncate text-sm">{entity.name}</span>
 											{tvl ? (
-												<span className="shrink-0 text-[11px] text-(--text-tertiary) tabular-nums">{tvl}</span>
+												<span className="shrink-0 text-[11px] text-(--legacy-text-tertiary) tabular-nums">{tvl}</span>
 											) : null}
 										</button>
 									</li>
@@ -541,8 +550,8 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 				<section className="flex min-h-0 flex-col overflow-y-auto">
 					{series.length === 0 ? (
 						<div className="flex flex-1 flex-col items-center justify-center gap-2 px-8 py-16 text-center">
-							<div className="text-sm font-medium text-(--text-primary)">Pick up to {MAX_SERIES} series</div>
-							<p className="max-w-sm text-xs leading-relaxed text-(--text-tertiary)">
+							<div className="text-sm font-medium text-(--legacy-text-primary)">Pick up to {MAX_SERIES} series</div>
+							<p className="max-w-sm text-xs leading-relaxed text-(--legacy-text-tertiary)">
 								Choose a metric from the left, then tick any protocols or chains to add them as series. Switch metric or
 								tab to mix different metrics and entity types on a single chart.
 							</p>
@@ -550,7 +559,9 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 					) : (
 						<>
 							<div className="grid gap-2 px-5 pt-4 pb-3">
-								<span className="text-[10px] font-medium tracking-wide text-(--text-tertiary) uppercase">Series</span>
+								<span className="text-[10px] font-medium tracking-wide text-(--legacy-text-tertiary) uppercase">
+									Series
+								</span>
 								<ul className="grid gap-1.5">
 									{series.map((s, i) => {
 										const id = seriesId(s)
@@ -558,7 +569,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 										return (
 											<li
 												key={id}
-												className="grid grid-cols-[12px_1fr_auto_24px] items-center gap-2 rounded-md border border-(--cards-border) bg-(--app-bg) px-2.5 py-1.5"
+												className="grid grid-cols-[12px_1fr_auto_24px] items-center gap-2 rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-2.5 py-1.5"
 											>
 												<span
 													aria-hidden
@@ -566,11 +577,13 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 													style={{ background: SERIES_COLORS[i % SERIES_COLORS.length] }}
 												/>
 												<span className="flex min-w-0 items-center gap-2">
-													<span className="relative flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-(--cards-border) bg-(--cards-bg)">
+													<span className="relative flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 														<img src={entityLogo(s)} alt="" className="size-full object-cover" />
 													</span>
-													<span className="truncate text-[12px] font-medium text-(--text-primary)">{s.name}</span>
-													<span className="font-jetbrains text-[9px] tracking-[0.16em] text-(--text-tertiary) uppercase">
+													<span className="truncate text-[12px] font-medium text-(--legacy-text-primary)">
+														{s.name}
+													</span>
+													<span className="font-jetbrains text-[9px] tracking-[0.16em] text-(--legacy-text-tertiary) uppercase">
 														{s.entityType}
 													</span>
 												</span>
@@ -583,7 +596,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 													type="button"
 													onClick={() => removeSeries(id)}
 													aria-label={`Remove ${s.name}`}
-													className="flex size-6 items-center justify-center rounded text-(--text-tertiary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+													className="flex size-6 items-center justify-center rounded text-(--legacy-text-tertiary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)"
 												>
 													×
 												</button>
@@ -592,14 +605,16 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 									})}
 								</ul>
 								{metaLoading ? (
-									<div className="text-[11px] text-(--text-tertiary)">Loading available chart types…</div>
+									<div className="text-[11px] text-(--legacy-text-tertiary)">Loading available chart types…</div>
 								) : null}
 							</div>
 
 							<div className="flex flex-wrap items-center gap-3 px-5 pb-3">
 								<div className="grid gap-1.5">
-									<span className="text-[10px] font-medium tracking-wide text-(--text-tertiary) uppercase">Range</span>
-									<div className="flex items-center rounded-md border border-(--cards-border) bg-(--app-bg) p-0.5 text-xs">
+									<span className="text-[10px] font-medium tracking-wide text-(--legacy-text-tertiary) uppercase">
+										Range
+									</span>
+									<div className="flex items-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) p-0.5 text-xs">
 										{RANGES.map((r) => {
 											const active = range === r.value
 											return (
@@ -609,8 +624,8 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 													onClick={() => setRange(r.value)}
 													className={`rounded px-2.5 py-1 font-medium transition-colors ${
 														active
-															? 'bg-(--cards-bg) text-(--text-primary) shadow-sm'
-															: 'text-(--text-tertiary) hover:text-(--text-primary)'
+															? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm'
+															: 'text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'
 													}`}
 												>
 													{r.label}
@@ -620,11 +635,13 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 									</div>
 								</div>
 								<div className="grid gap-1.5">
-									<span className="text-[10px] font-medium tracking-wide text-(--text-tertiary) uppercase">Y-axis</span>
+									<span className="text-[10px] font-medium tracking-wide text-(--legacy-text-tertiary) uppercase">
+										Y-axis
+									</span>
 									<div
 										role="radiogroup"
 										aria-label="Y-axis scale"
-										className="flex items-center rounded-md border border-(--cards-border) bg-(--app-bg) p-0.5 text-xs"
+										className="flex items-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) p-0.5 text-xs"
 									>
 										{[
 											{ value: false, label: 'Linear' },
@@ -640,8 +657,8 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 													onClick={() => setLogScale(opt.value)}
 													className={`rounded px-2.5 py-1 font-medium transition-colors ${
 														active
-															? 'bg-(--cards-bg) text-(--text-primary) shadow-sm'
-															: 'text-(--text-tertiary) hover:text-(--text-primary)'
+															? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm'
+															: 'text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'
 													}`}
 												>
 													{opt.label}
@@ -652,9 +669,9 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 								</div>
 							</div>
 
-							<div className="relative min-h-0 flex-1 border-t border-(--cards-border) bg-(--app-bg)">
+							<div className="relative min-h-0 flex-1 border-t border-(--legacy-cards-border) bg-(--legacy-app-bg)">
 								<div className="pointer-events-none absolute top-3 left-5 z-10 flex items-center gap-2">
-									<span className="rounded-full border border-(--cards-border) bg-(--cards-bg)/80 px-2 py-0.5 text-[10px] font-medium tracking-wide text-(--text-tertiary) uppercase backdrop-blur">
+									<span className="rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg)/80 px-2 py-0.5 text-[10px] font-medium tracking-wide text-(--legacy-text-tertiary) uppercase backdrop-blur">
 										Preview
 									</span>
 								</div>
@@ -669,22 +686,22 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 								</div>
 							</div>
 
-							<div className="grid gap-2 border-t border-(--cards-border) px-5 py-3">
+							<div className="grid gap-2 border-t border-(--legacy-cards-border) px-5 py-3">
 								<div className="flex items-center justify-between">
-									<span className="text-[10px] font-medium tracking-wide text-(--text-tertiary) uppercase">
+									<span className="text-[10px] font-medium tracking-wide text-(--legacy-text-tertiary) uppercase">
 										Annotations
 									</span>
 									<button
 										type="button"
 										onClick={addAnnotation}
 										disabled={annotations.length >= MAX_ANNOTATIONS}
-										className="rounded border border-(--cards-border) px-2 py-0.5 text-[11px] text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) disabled:cursor-not-allowed disabled:opacity-40"
+										className="rounded border border-(--legacy-cards-border) px-2 py-0.5 text-[11px] text-(--legacy-text-secondary) transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-40"
 									>
 										+ Add
 									</button>
 								</div>
 								{annotations.length === 0 ? (
-									<p className="text-[11px] text-(--text-tertiary)">
+									<p className="text-[11px] text-(--legacy-text-tertiary)">
 										Mark a date on the chart with a short label (e.g. "V3 launch", "depeg event").
 									</p>
 								) : (
@@ -692,28 +709,28 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 										{annotations.map((annotation, i) => (
 											<li
 												key={i}
-												className="grid grid-cols-[16px_120px_1fr_24px] items-center gap-2 rounded-md border border-(--cards-border) bg-(--app-bg) px-2 py-1.5"
+												className="grid grid-cols-[16px_120px_1fr_24px] items-center gap-2 rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-2 py-1.5"
 											>
-												<span className="font-jetbrains text-[10px] font-semibold text-(--text-tertiary)">
+												<span className="font-jetbrains text-[10px] font-semibold text-(--legacy-text-tertiary)">
 													{String.fromCharCode(65 + i)}
 												</span>
 												<input
 													type="date"
 													value={annotation.date.slice(0, 10)}
 													onChange={(e) => updateAnnotation(i, { date: e.target.value })}
-													className="rounded border border-(--form-control-border) bg-(--cards-bg) px-2 py-1 text-xs text-(--text-primary) focus:border-(--link-text) focus:outline-none"
+													className="rounded border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-2 py-1 text-xs text-(--legacy-text-primary) focus:border-(--legacy-link-text) focus:outline-none"
 												/>
 												<input
 													value={annotation.label}
 													onChange={(e) => updateAnnotation(i, { label: e.target.value })}
 													placeholder="Label"
-													className="rounded border border-(--form-control-border) bg-(--cards-bg) px-2 py-1 text-xs text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+													className="rounded border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-2 py-1 text-xs text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 												/>
 												<button
 													type="button"
 													onClick={() => removeAnnotation(i)}
 													aria-label="Remove annotation"
-													className="flex size-6 items-center justify-center rounded text-(--text-tertiary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+													className="flex size-6 items-center justify-center rounded text-(--legacy-text-tertiary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)"
 												>
 													×
 												</button>
@@ -727,9 +744,9 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 				</section>
 			</div>
 
-			<div className="grid items-end gap-3 border-t border-(--cards-border) bg-(--cards-bg) px-5 py-3 md:grid-cols-[1fr_auto]">
+			<div className="grid items-end gap-3 border-t border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-5 py-3 md:grid-cols-[1fr_auto]">
 				<label className="grid gap-1">
-					<span className="text-[10px] font-medium tracking-wide text-(--text-tertiary) uppercase">
+					<span className="text-[10px] font-medium tracking-wide text-(--legacy-text-tertiary) uppercase">
 						Caption (optional)
 					</span>
 					<input
@@ -737,18 +754,18 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 						onChange={(event) => setCaption(event.target.value)}
 						placeholder="Add a one-line caption shown under the chart…"
 						disabled={!canInsert}
-						className="w-full rounded-md border border-(--cards-border) bg-(--app-bg) px-3 py-1.5 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none disabled:opacity-60"
+						className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-1.5 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none disabled:opacity-60"
 					/>
 				</label>
 				<div className="flex items-center justify-end gap-2">
-					<Ariakit.DialogDismiss className="rounded-md border border-(--cards-border) px-3 py-2 text-xs text-(--text-secondary) hover:bg-(--link-hover-bg)">
+					<Ariakit.DialogDismiss className="rounded-md border border-(--legacy-cards-border) px-3 py-2 text-xs text-(--legacy-text-secondary) hover:bg-(--legacy-link-hover-bg)">
 						Cancel
 					</Ariakit.DialogDismiss>
 					<button
 						type="button"
 						disabled={!canInsert}
 						onClick={handleInsert}
-						className="rounded-md bg-(--link-text) px-4 py-2 text-xs font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+						className="rounded-md bg-(--legacy-link-text) px-4 py-2 text-xs font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
 					>
 						{initialConfig ? 'Update chart' : 'Insert chart'}
 					</button>

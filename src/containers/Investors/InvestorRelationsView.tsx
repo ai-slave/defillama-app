@@ -28,7 +28,7 @@ function PillStrip({
 							target="_blank"
 							rel="noopener noreferrer"
 							title={tab.externalTooltip ?? 'Opens in a new tab on a third-party site'}
-							className="flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-medium whitespace-nowrap text-(--text-secondary) transition-colors hover:bg-(--sl-hover-bg) hover:text-(--text-primary)"
+							className="flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-medium whitespace-nowrap text-(--legacy-text-secondary) transition-colors hover:bg-(--sl-hover-bg) hover:text-(--legacy-text-primary)"
 						>
 							{tab.label}
 							<svg
@@ -57,7 +57,7 @@ function PillStrip({
 						className={`shrink-0 rounded-md px-3 py-1.5 text-[12px] font-medium whitespace-nowrap transition-colors ${
 							isActive
 								? 'bg-(--sl-accent-muted) text-(--sl-accent)'
-								: 'text-(--text-secondary) hover:bg-(--sl-hover-bg) hover:text-(--text-primary)'
+								: 'text-(--legacy-text-secondary) hover:bg-(--sl-hover-bg) hover:text-(--legacy-text-primary)'
 						}`}
 					>
 						{tab.label}

@@ -172,13 +172,13 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 						renderIcon={(option) => (option.value === 'All' ? null : getItemIconUrl('chain', null, option.value))}
 					/>
 				</div>
-				<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 md:col-span-2">
+				<div className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3 md:col-span-2">
 					<div className="mb-2 flex flex-wrap items-center justify-between gap-2">
 						<div>
-							<p className="text-xs font-semibold text-(--text-secondary)">Categories</p>
-							<p className="text-[11px] text-(--text-tertiary)">Toggle include or exclude selections.</p>
+							<p className="text-xs font-semibold text-(--legacy-text-secondary)">Categories</p>
+							<p className="text-[11px] text-(--legacy-text-tertiary)">Toggle include or exclude selections.</p>
 						</div>
-						<div className="flex items-center rounded-md border border-(--cards-border)">
+						<div className="flex items-center rounded-md border border-(--legacy-cards-border)">
 							{(['include', 'exclude'] as const).map((mode) => {
 								const isActive = categoryMode === mode
 								const count = mode === 'include' ? includeCategories.length : excludeCategories.length
@@ -189,12 +189,14 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 										onClick={() => setCategoryMode(mode)}
 										className={`px-2 py-1 text-[11px] font-medium transition ${
 											isActive
-												? 'bg-(--primary)/10 text-(--primary)'
-												: 'text-(--text-tertiary) hover:text-(--text-primary)'
+												? 'bg-(--legacy-primary)/10 text-(--legacy-primary)'
+												: 'text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'
 										}`}
 									>
 										{mode === 'include' ? 'Include' : 'Exclude'}
-										{count > 0 ? <span className="ml-1 text-[10px] text-(--text-tertiary)">({count})</span> : null}
+										{count > 0 ? (
+											<span className="ml-1 text-[10px] text-(--legacy-text-tertiary)">({count})</span>
+										) : null}
 									</button>
 								)
 							})}

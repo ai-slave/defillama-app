@@ -33,7 +33,7 @@ interface VaultRiskSectionProps {
 
 function Chip({ children }: { children: React.ReactNode }) {
 	return (
-		<span className="inline-flex items-center gap-1.5 rounded-full border border-(--cards-border) bg-(--bg-main) px-2 py-0.5 text-xs text-(--text-secondary)">
+		<span className="inline-flex items-center gap-1.5 rounded-full border border-(--legacy-cards-border) bg-(--legacy-bg-main) px-2 py-0.5 text-xs text-(--legacy-text-secondary)">
 			{children}
 		</span>
 	)
@@ -59,8 +59,8 @@ function Shell({
 	children: React.ReactNode
 }) {
 	return (
-		<section className="flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg)">
-			<div className="flex flex-col gap-3 border-b border-(--cards-border) p-3 sm:p-4">
+		<section className="flex flex-col rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
+			<div className="flex flex-col gap-3 border-b border-(--legacy-cards-border) p-3 sm:p-4">
 				<div className="flex flex-wrap items-start justify-between gap-3">
 					<div className="min-w-0">
 						<h2
@@ -76,14 +76,14 @@ function Shell({
 							/>
 							<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
 						</h2>
-						<p className="mt-1 max-w-3xl text-sm text-(--text-secondary)">
+						<p className="mt-1 max-w-3xl text-sm text-(--legacy-text-secondary)">
 							{`Depositing into ${poolName || 'this pool'} means underwriting risks you usually can't see: how much you could lose, whether you'd get out in time, and what would cover it.`}
 						</p>
 					</div>
 					{chips ? <div className="flex flex-wrap items-center gap-1.5">{chips}</div> : null}
 				</div>
 			</div>
-			<div className="flex flex-1 flex-col divide-y divide-(--cards-border)">{children}</div>
+			<div className="flex flex-1 flex-col divide-y divide-(--legacy-cards-border)">{children}</div>
 		</section>
 	)
 }
@@ -102,15 +102,16 @@ function ScanningRadar() {
 	return (
 		<div aria-hidden className="relative size-24">
 			{[0, 16, 32].map((inset) => (
-				<div key={inset} className="absolute rounded-full border border-(--cards-border)" style={{ inset }} />
+				<div key={inset} className="absolute rounded-full border border-(--legacy-cards-border)" style={{ inset }} />
 			))}
 			<div
 				className="absolute inset-0 animate-[spin_6s_linear_infinite] rounded-full motion-reduce:animate-none"
 				style={{
-					background: 'conic-gradient(from 0deg, color-mix(in srgb, var(--primary) 22%, transparent), transparent 30%)'
+					background:
+						'conic-gradient(from 0deg, color-mix(in srgb, var(--legacy-primary) 22%, transparent), transparent 30%)'
 				}}
 			/>
-			<span className="absolute top-1/2 left-1/2 size-1.5 -translate-1/2 rounded-full bg-(--primary)" />
+			<span className="absolute top-1/2 left-1/2 size-1.5 -translate-1/2 rounded-full bg-(--legacy-primary)" />
 		</div>
 	)
 }
@@ -143,8 +144,10 @@ export function VaultRiskUnmapped({
 		>
 			<div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
 				<ScanningRadar />
-				<p className="text-sm font-medium text-(--text-primary)">Risk scenarios for this pool aren&apos;t mapped yet</p>
-				<p className="max-w-md text-xs text-(--text-secondary)">
+				<p className="text-sm font-medium text-(--legacy-text-primary)">
+					Risk scenarios for this pool aren&apos;t mapped yet
+				</p>
+				<p className="max-w-md text-xs text-(--legacy-text-secondary)">
 					Coverage is rolling out across protocols. This pool will populate as its scenarios are compiled and verified
 					on-chain.
 				</p>

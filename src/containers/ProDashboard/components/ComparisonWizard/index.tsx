@@ -226,7 +226,7 @@ function ComparisonWizardContent({ onComplete, comparisonPreset }: ComparisonWiz
 	return (
 		<div className="flex min-h-[480px] flex-col">
 			<div className="flex-1 overflow-y-auto p-6">{stepContent}</div>
-			<div className="border-t border-(--cards-border) bg-(--cards-bg) px-6 py-4">
+			<div className="border-t border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-6 py-4">
 				<WizardNavigation
 					currentStep={state.step}
 					canProceed={derived.canProceed}

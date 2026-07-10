@@ -28,7 +28,7 @@ export function ArticleImageBlock({ attrs }: { attrs: ArticleImageBlockAttrs | n
 			alt={alt}
 			loading="lazy"
 			decoding="async"
-			className="block w-full rounded-md border border-(--cards-border)"
+			className="block w-full rounded-md border border-(--legacy-cards-border)"
 			style={aspectStyle}
 		/>
 	)
@@ -45,10 +45,12 @@ export function ArticleImageBlock({ attrs }: { attrs: ArticleImageBlockAttrs | n
 				imgEl
 			)}
 			{hasMeta ? (
-				<figcaption className="mt-2 grid gap-1 text-xs leading-relaxed text-(--text-tertiary)">
-					{headline ? <span className="font-medium text-(--text-secondary)">{headline}</span> : null}
+				<figcaption className="mt-2 grid gap-1 text-xs leading-relaxed text-(--legacy-text-tertiary)">
+					{headline ? <span className="font-medium text-(--legacy-text-secondary)">{headline}</span> : null}
 					{caption ? <span>{caption}</span> : null}
-					{metaParts.length > 0 ? <span className="text-(--text-tertiary)/80">{metaParts.join(' · ')}</span> : null}
+					{metaParts.length > 0 ? (
+						<span className="text-(--legacy-text-tertiary)/80">{metaParts.join(' · ')}</span>
+					) : null}
 				</figcaption>
 			) : null}
 		</figure>

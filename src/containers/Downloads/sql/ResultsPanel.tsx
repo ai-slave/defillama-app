@@ -49,17 +49,17 @@ export function ResultsPanel({
 
 	if (!result && !busy) {
 		return (
-			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--divider) bg-surface/40 px-6 py-10 text-center">
-				<Icon name="bar-chart-2" className="size-5 text-(--text-tertiary)" />
-				<p className="text-sm text-(--text-secondary)">
+			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--legacy-divider) bg-surface/40 px-6 py-10 text-center">
+				<Icon name="bar-chart-2" className="size-5 text-(--legacy-text-tertiary)" />
+				<p className="text-sm text-(--legacy-text-secondary)">
 					Run a query to see results here. Press{' '}
-					<kbd className="inline-flex h-[17px] items-center rounded-[3px] border border-(--divider) bg-(--app-bg) px-1 font-mono text-[10px] text-(--text-secondary)">
+					<kbd className="inline-flex h-[17px] items-center rounded-[3px] border border-(--legacy-divider) bg-(--legacy-app-bg) px-1 font-mono text-[10px] text-(--legacy-text-secondary)">
 						⌘
 					</kbd>{' '}
-					<kbd className="inline-flex h-[17px] items-center rounded-[3px] border border-(--divider) bg-(--app-bg) px-1 font-mono text-[10px] text-(--text-secondary)">
+					<kbd className="inline-flex h-[17px] items-center rounded-[3px] border border-(--legacy-divider) bg-(--legacy-app-bg) px-1 font-mono text-[10px] text-(--legacy-text-secondary)">
 						↵
 					</kbd>{' '}
-					or click <span className="font-medium text-(--text-primary)">Run query</span>.
+					or click <span className="font-medium text-(--legacy-text-primary)">Run query</span>.
 				</p>
 			</div>
 		)
@@ -67,7 +67,7 @@ export function ResultsPanel({
 
 	if (!result && busy) {
 		return (
-			<div className="flex h-24 items-center justify-center gap-2.5 rounded-md border border-(--divider) bg-surface px-4 text-sm text-(--text-secondary)">
+			<div className="flex h-24 items-center justify-center gap-2.5 rounded-md border border-(--legacy-divider) bg-surface px-4 text-sm text-(--legacy-text-secondary)">
 				<LoadingSpinner size={14} />
 				<span>{busyMessage}</span>
 			</div>
@@ -82,8 +82,8 @@ export function ResultsPanel({
 		<div className="flex flex-col gap-2">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex items-baseline gap-2">
-					<h3 className="text-sm font-semibold tracking-tight text-(--text-primary)">Results</h3>
-					<span className="text-xs text-(--text-tertiary) tabular-nums">
+					<h3 className="text-sm font-semibold tracking-tight text-(--legacy-text-primary)">Results</h3>
+					<span className="text-xs text-(--legacy-text-tertiary) tabular-nums">
 						{result.rows.length.toLocaleString()} row{result.rows.length === 1 ? '' : 's'} · {result.columns.length} col
 						{result.columns.length === 1 ? '' : 's'}
 						{durationMs != null ? ` · ${formatDuration(durationMs)}` : ''}
@@ -120,7 +120,7 @@ function ViewToggle({
 		<div
 			role="tablist"
 			aria-label="Results view"
-			className={`inline-flex items-center gap-0.5 rounded-md border border-(--divider) bg-surface p-0.5 ${
+			className={`inline-flex items-center gap-0.5 rounded-md border border-(--legacy-divider) bg-surface p-0.5 ${
 				disabled ? 'pointer-events-none opacity-50' : ''
 			}`}
 		>
@@ -156,8 +156,8 @@ function ToggleButton({
 			onClick={onClick}
 			className={`flex items-center gap-1.5 rounded-sm px-2 py-1 text-[11px] font-medium transition-colors ${
 				active
-					? 'bg-(--primary) text-white shadow-sm'
-					: 'text-(--text-secondary) hover:bg-hover-row hover:text-(--text-primary)'
+					? 'bg-(--legacy-primary) text-white shadow-sm'
+					: 'text-(--legacy-text-secondary) hover:bg-hover-row hover:text-(--legacy-text-primary)'
 			}`}
 		>
 			<Icon name={icon} className="size-3" />

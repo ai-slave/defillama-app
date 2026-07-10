@@ -75,7 +75,7 @@ export const OracleOverview = ({
 							<span className="flex items-center gap-1 overflow-hidden">
 								<BasicLink
 									href={`/protocol/${slug(name)}`}
-									className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text)"
+									className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text)"
 								>
 									{name}
 								</BasicLink>

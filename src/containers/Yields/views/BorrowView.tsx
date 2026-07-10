@@ -100,7 +100,7 @@ const YieldPageBorrow = ({
 			{poolsData.length > 0 ? (
 				<YieldsBorrowTable data={poolsData} />
 			) : (
-				<p className="flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-5">
+				<p className="flex flex-1 items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
 					Couldn't find any pools for these filters
 				</p>
 			)}

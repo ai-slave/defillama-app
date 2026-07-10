@@ -172,7 +172,7 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={setOpen}>
 			<Ariakit.Dialog
-				className="dialog w-full gap-0 border border-(--cards-border) bg-(--cards-bg) p-4 shadow-2xl max-sm:drawer sm:max-w-sm"
+				className="dialog w-full gap-0 border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4 shadow-2xl max-sm:drawer sm:max-w-sm"
 				unmountOnHide
 				portal
 				hideOnInteractOutside
@@ -209,7 +209,7 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 									value={shareLink}
 									readOnly
 									onFocus={(event) => event.currentTarget.select()}
-									className="flex-1 rounded border border-[#e6e6e6] bg-(--app-bg) px-3 py-2 text-sm dark:border-[#222324]"
+									className="flex-1 rounded border border-[#e6e6e6] bg-(--legacy-app-bg) px-3 py-2 text-sm dark:border-[#222324]"
 								/>
 								<button
 									type="button"
@@ -243,7 +243,7 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 								type="button"
 								onClick={handleShareToX}
 								data-umami-event="llamaai-share-to-x"
-								className="rounded bg-(--old-blue) px-3 py-2 text-xs text-white hover:opacity-90"
+								className="rounded bg-(--legacy-old-blue) px-3 py-2 text-xs text-white hover:opacity-90"
 							>
 								Share to X
 							</button>
@@ -265,7 +265,7 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 											createShareLink()
 										}}
 										disabled={isPending}
-										className="flex items-center gap-2 rounded bg-(--old-blue) px-3 py-2 text-xs text-white hover:opacity-90 disabled:opacity-50"
+										className="flex items-center gap-2 rounded bg-(--legacy-old-blue) px-3 py-2 text-xs text-white hover:opacity-90 disabled:opacity-50"
 									>
 										{isPending ? <LoadingSpinner size={14} /> : null}
 										<span>Retry</span>

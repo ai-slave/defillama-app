@@ -22,10 +22,10 @@ function ToolbarButton({
 		tone === 'danger'
 			? active
 				? 'bg-red-500/10 text-red-500'
-				: 'text-(--text-secondary) hover:bg-red-500/10 hover:text-red-500'
+				: 'text-(--legacy-text-secondary) hover:bg-red-500/10 hover:text-red-500'
 			: active
-				? 'bg-(--link-button) text-(--link-text)'
-				: 'text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)'
+				? 'bg-(--legacy-link-button) text-(--legacy-link-text)'
+				: 'text-(--legacy-text-secondary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)'
 	return (
 		<button
 			type="button"
@@ -38,7 +38,7 @@ function ToolbarButton({
 				<span
 					aria-hidden
 					className={`size-1.5 rounded-full transition-colors ${
-						indicator ? 'bg-(--link-text)' : 'bg-(--text-tertiary)/40'
+						indicator ? 'bg-(--legacy-link-text)' : 'bg-(--legacy-text-tertiary)/40'
 					}`}
 				/>
 			) : null}
@@ -164,8 +164,8 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 	return (
 		<NodeViewWrapper data-article-image-wrapper className="article-image-block not-prose relative my-6">
 			<figure
-				className={`relative overflow-hidden rounded-md border bg-(--cards-bg) transition-colors ${
-					selected ? 'border-(--link-text)' : 'border-(--cards-border)'
+				className={`relative overflow-hidden rounded-md border bg-(--legacy-cards-bg) transition-colors ${
+					selected ? 'border-(--legacy-link-text)' : 'border-(--legacy-cards-border)'
 				}`}
 			>
 				{attrs.src ? (
@@ -176,7 +176,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 						style={attrs.width && attrs.height ? { aspectRatio: `${attrs.width} / ${attrs.height}` } : undefined}
 					/>
 				) : (
-					<div className="flex aspect-[4/3] w-full items-center justify-center bg-(--app-bg) text-(--text-tertiary)">
+					<div className="flex aspect-[4/3] w-full items-center justify-center bg-(--legacy-app-bg) text-(--legacy-text-tertiary)">
 						<div className="flex flex-col items-center gap-2">
 							<Icon name="image-plus" className="size-7" />
 							<span className="text-xs font-medium">{isUploading ? 'Uploading…' : 'Image'}</span>
@@ -187,9 +187,9 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 				{isUploading ? (
 					<div
 						aria-hidden
-						className="pointer-events-none absolute inset-0 flex items-center justify-center bg-(--app-bg)/40 text-xs font-medium text-(--text-secondary)"
+						className="pointer-events-none absolute inset-0 flex items-center justify-center bg-(--legacy-app-bg)/40 text-xs font-medium text-(--legacy-text-secondary)"
 					>
-						<span className="rounded-md bg-(--cards-bg)/95 px-3 py-1.5 shadow-sm">Uploading…</span>
+						<span className="rounded-md bg-(--legacy-cards-bg)/95 px-3 py-1.5 shadow-sm">Uploading…</span>
 					</div>
 				) : null}
 
@@ -197,7 +197,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 					<div
 						contentEditable={false}
 						onMouseDown={(e) => e.stopPropagation()}
-						className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-1 shadow-md"
+						className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1 shadow-md"
 					>
 						<ToolbarButton
 							label="Alt"
@@ -239,7 +239,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 							}}
 							title={hasCreditMeta ? 'Edit headline / credit / copyright' : 'Add headline, credit, or copyright'}
 						/>
-						<span aria-hidden className="mx-0.5 h-4 w-px bg-(--cards-border)" />
+						<span aria-hidden className="mx-0.5 h-4 w-px bg-(--legacy-cards-border)" />
 						<ToolbarButton label="Remove" tone="danger" onClick={() => deleteNode()} title="Remove image" />
 					</div>
 				) : null}
@@ -248,10 +248,10 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 					<div
 						contentEditable={false}
 						onMouseDown={(e) => e.stopPropagation()}
-						className="absolute top-13 right-3 z-10 grid w-80 gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 shadow-lg"
+						className="absolute top-13 right-3 z-10 grid w-80 gap-3 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3 shadow-lg"
 					>
 						<label className="grid gap-1.5">
-							<span className="text-xs font-medium text-(--text-secondary)">Image link</span>
+							<span className="text-xs font-medium text-(--legacy-text-secondary)">Image link</span>
 							<input
 								ref={linkInputRef}
 								type="url"
@@ -270,7 +270,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 									}
 								}}
 								placeholder="https://…"
-								className="w-full rounded-md border border-(--form-control-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+								className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 							/>
 						</label>
 						<div className="flex items-center justify-between">
@@ -278,7 +278,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 								<button
 									type="button"
 									onClick={clearLink}
-									className="rounded-md px-2 py-1 text-xs text-(--text-tertiary) transition-colors hover:bg-red-500/10 hover:text-red-500"
+									className="rounded-md px-2 py-1 text-xs text-(--legacy-text-tertiary) transition-colors hover:bg-red-500/10 hover:text-red-500"
 								>
 									Remove link
 								</button>
@@ -289,7 +289,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 										setLinkDraft(attrs.href ?? '')
 										setLinkOpen(false)
 									}}
-									className="rounded-md px-2 py-1 text-xs text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+									className="rounded-md px-2 py-1 text-xs text-(--legacy-text-secondary) transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)"
 								>
 									Cancel
 								</button>
@@ -297,7 +297,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 							<button
 								type="button"
 								onClick={commitLink}
-								className="rounded-md bg-(--link-button) px-3 py-1.5 text-xs font-medium text-(--link-text) transition-colors hover:brightness-110"
+								className="rounded-md bg-(--legacy-link-button) px-3 py-1.5 text-xs font-medium text-(--legacy-link-text) transition-colors hover:brightness-110"
 							>
 								Save
 							</button>
@@ -309,10 +309,10 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 					<div
 						contentEditable={false}
 						onMouseDown={(e) => e.stopPropagation()}
-						className="absolute top-13 right-3 z-10 grid w-80 gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 shadow-lg"
+						className="absolute top-13 right-3 z-10 grid w-80 gap-3 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3 shadow-lg"
 					>
 						<label className="grid gap-1.5">
-							<span className="text-xs font-medium text-(--text-secondary)">Headline</span>
+							<span className="text-xs font-medium text-(--legacy-text-secondary)">Headline</span>
 							<input
 								ref={headlineInputRef}
 								value={headlineDraft}
@@ -324,11 +324,11 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 									}
 								}}
 								placeholder="Image title"
-								className="w-full rounded-md border border-(--form-control-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+								className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 							/>
 						</label>
 						<label className="grid gap-1.5">
-							<span className="text-xs font-medium text-(--text-secondary)">Credit</span>
+							<span className="text-xs font-medium text-(--legacy-text-secondary)">Credit</span>
 							<input
 								value={creditDraft}
 								onChange={(e) => setCreditDraft(e.target.value)}
@@ -339,11 +339,11 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 									}
 								}}
 								placeholder="Photographer or illustrator"
-								className="w-full rounded-md border border-(--form-control-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+								className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 							/>
 						</label>
 						<label className="grid gap-1.5">
-							<span className="text-xs font-medium text-(--text-secondary)">Copyright</span>
+							<span className="text-xs font-medium text-(--legacy-text-secondary)">Copyright</span>
 							<input
 								value={copyrightDraft}
 								onChange={(e) => setCopyrightDraft(e.target.value)}
@@ -358,21 +358,21 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 									}
 								}}
 								placeholder="Rights holder"
-								className="w-full rounded-md border border-(--form-control-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+								className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 							/>
 						</label>
 						<div className="flex items-center justify-between">
 							<button
 								type="button"
 								onClick={cancelCredit}
-								className="rounded-md px-2 py-1 text-xs text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+								className="rounded-md px-2 py-1 text-xs text-(--legacy-text-secondary) transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)"
 							>
 								Cancel
 							</button>
 							<button
 								type="button"
 								onClick={commitCredit}
-								className="rounded-md bg-(--link-button) px-3 py-1.5 text-xs font-medium text-(--link-text) transition-colors hover:brightness-110"
+								className="rounded-md bg-(--legacy-link-button) px-3 py-1.5 text-xs font-medium text-(--legacy-link-text) transition-colors hover:brightness-110"
 							>
 								Save
 							</button>
@@ -384,10 +384,10 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 					<div
 						contentEditable={false}
 						onMouseDown={(e) => e.stopPropagation()}
-						className="absolute top-13 right-3 z-10 grid w-80 gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3 shadow-lg"
+						className="absolute top-13 right-3 z-10 grid w-80 gap-3 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3 shadow-lg"
 					>
 						<label className="grid gap-1.5">
-							<span className="text-xs font-medium text-(--text-secondary)">Alt text</span>
+							<span className="text-xs font-medium text-(--legacy-text-secondary)">Alt text</span>
 							<textarea
 								ref={altInputRef}
 								value={altDraft}
@@ -405,7 +405,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 								}}
 								rows={3}
 								placeholder="Describe the image for screen readers"
-								className="w-full resize-none rounded-md border border-(--form-control-border) bg-(--app-bg) px-3 py-2 text-sm leading-snug text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+								className="w-full resize-none rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm leading-snug text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 							/>
 						</label>
 						<div className="flex items-center justify-between">
@@ -415,14 +415,14 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 									setAltDraft(attrs.alt ?? '')
 									setAltOpen(false)
 								}}
-								className="rounded-md px-2 py-1 text-xs text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+								className="rounded-md px-2 py-1 text-xs text-(--legacy-text-secondary) transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)"
 							>
 								Cancel
 							</button>
 							<button
 								type="button"
 								onClick={commitAlt}
-								className="rounded-md bg-(--link-button) px-3 py-1.5 text-xs font-medium text-(--link-text) transition-colors hover:brightness-110"
+								className="rounded-md bg-(--legacy-link-button) px-3 py-1.5 text-xs font-medium text-(--legacy-link-text) transition-colors hover:brightness-110"
 							>
 								Save
 							</button>
@@ -445,8 +445,8 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 						}}
 						placeholder="Add a caption…"
 						rows={Math.min(3, Math.max(1, captionDraft.split('\n').length))}
-						className={`w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm leading-snug text-(--text-secondary) transition-colors outline-none ${
-							captionFocused ? 'border-(--link-text)' : 'border-(--cards-border)'
+						className={`w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm leading-snug text-(--legacy-text-secondary) transition-colors outline-none ${
+							captionFocused ? 'border-(--legacy-link-text)' : 'border-(--legacy-cards-border)'
 						}`}
 					/>
 				</div>

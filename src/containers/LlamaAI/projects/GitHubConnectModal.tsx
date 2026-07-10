@@ -36,7 +36,7 @@ export function GitHubConnectModal({ dialogStore, projectId }: GitHubConnectModa
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog
-				className="fixed top-1/2 left-1/2 z-50 w-[min(520px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#e6e6e6] bg-(--cards-bg) p-5 shadow-2xl dark:border-[#222324]"
+				className="fixed top-1/2 left-1/2 z-50 w-[min(520px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#e6e6e6] bg-(--legacy-cards-bg) p-5 shadow-2xl dark:border-[#222324]"
 				backdrop={<div className="backdrop fixed inset-0 bg-black/60 backdrop-blur-md" />}
 			>
 				{isOpen ? <GitHubConnectForm key={projectId} dialogStore={dialogStore} projectId={projectId} /> : null}
@@ -145,7 +145,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 				<div className="flex items-center gap-2">
 					<Icon name="github" height={18} width={18} />
 					<div>
-						<h2 className="text-base font-semibold text-(--text-primary)">Connect a GitHub repo</h2>
+						<h2 className="text-base font-semibold text-(--legacy-text-primary)">Connect a GitHub repo</h2>
 						<p className="mt-0.5 text-xs text-[#666] dark:text-[#919296]">
 							Read-only access. Files are fetched on demand, never written back.
 						</p>
@@ -196,7 +196,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 									setSelectedRepo('')
 									setRepoQuery('')
 								}}
-								className="rounded-md border border-[#e6e6e6] bg-(--cards-bg) px-3 py-2 text-sm text-inherit focus:border-(--old-blue) focus:outline-none dark:border-[#2a2b2c]"
+								className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 text-sm text-inherit focus:border-(--legacy-old-blue) focus:outline-none dark:border-[#2a2b2c]"
 							>
 								{installs.data?.map((i) => (
 									<option key={i.installation_id} value={i.installation_id}>
@@ -234,12 +234,12 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 								>
 									<Ariakit.Combobox
 										placeholder={selectedRepo || 'Search repositories…'}
-										className="rounded-md border border-[#e6e6e6] bg-(--cards-bg) px-3 py-2 text-sm text-inherit placeholder:text-[#999] focus:border-(--old-blue) focus:outline-none dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
+										className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 text-sm text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-none dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
 									/>
 									<Ariakit.ComboboxPopover
 										gutter={4}
 										sameWidth
-										className="z-[60] max-h-64 overflow-y-auto rounded-md border border-[#e6e6e6] bg-(--cards-bg) py-1 shadow-lg dark:border-[#2a2b2c]"
+										className="z-[60] max-h-64 overflow-y-auto rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) py-1 shadow-lg dark:border-[#2a2b2c]"
 									>
 										{filteredRepos.length === 0 ? (
 											<div className="px-3 py-2 text-xs text-[#999] dark:text-[#666]">No repositories match.</div>
@@ -301,12 +301,12 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 								>
 									<Ariakit.Combobox
 										placeholder={selectedBranch || 'Search branches…'}
-										className="rounded-md border border-[#e6e6e6] bg-(--cards-bg) px-3 py-2 text-sm text-inherit placeholder:text-[#999] focus:border-(--old-blue) focus:outline-none dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
+										className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 text-sm text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-none dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
 									/>
 									<Ariakit.ComboboxPopover
 										gutter={4}
 										sameWidth
-										className="z-[60] max-h-64 overflow-y-auto rounded-md border border-[#e6e6e6] bg-(--cards-bg) py-1 shadow-lg dark:border-[#2a2b2c]"
+										className="z-[60] max-h-64 overflow-y-auto rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) py-1 shadow-lg dark:border-[#2a2b2c]"
 									>
 										{filteredBranches.length === 0 ? (
 											<div className="px-3 py-2 text-xs text-[#999] dark:text-[#666]">No branches match.</div>
@@ -339,7 +339,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 							type="button"
 							onClick={() => void onStartInstall()}
 							disabled={installing}
-							className="self-start text-xs text-(--old-blue) underline-offset-2 hover:underline disabled:opacity-50"
+							className="self-start text-xs text-(--legacy-old-blue) underline-offset-2 hover:underline disabled:opacity-50"
 						>
 							Manage installations →
 						</button>
@@ -358,7 +358,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 							type="button"
 							onClick={() => void onConnect()}
 							disabled={!repoMeta || !selectedBranch || !effectiveInstallId || connect.isPending}
-							className="flex items-center gap-1.5 rounded-md border border-(--old-blue) bg-(--old-blue) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-(--old-blue)/90 disabled:cursor-not-allowed disabled:opacity-50"
+							className="flex items-center gap-1.5 rounded-md border border-(--legacy-old-blue) bg-(--legacy-old-blue) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-(--legacy-old-blue)/90 disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							{connect.isPending ? <LoadingSpinner size={12} /> : null}
 							Connect

@@ -85,7 +85,7 @@ export default function Protocols({ projects }) {
 				{disclaimer}
 			</Announcement>
 
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+			<div className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 				<div className="flex items-center justify-end p-3">
 					<h1 className="mr-auto text-xl font-semibold">Projects</h1>
 					<CSVDownloadButton prepareCsv={prepareCsv} />

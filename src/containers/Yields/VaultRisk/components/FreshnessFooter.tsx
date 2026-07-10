@@ -29,9 +29,9 @@ function DriftBanner({ entries, protocolId }: { entries: DriftEntry[]; protocolI
 			</summary>
 			<ul className="mt-2 space-y-2">
 				{entries.map((d) => (
-					<li key={d.id} className="text-xs text-(--text-secondary)">
-						<p className="text-(--text-primary)">{d.notes}</p>
-						<p className="mt-0.5 font-mono text-[11px] text-(--text-secondary)">
+					<li key={d.id} className="text-xs text-(--legacy-text-secondary)">
+						<p className="text-(--legacy-text-primary)">{d.notes}</p>
+						<p className="mt-0.5 font-mono text-[11px] text-(--legacy-text-secondary)">
 							expected {d.expected} → actual {d.actual}
 						</p>
 					</li>
@@ -86,12 +86,12 @@ export function FreshnessFooter({
 				</p>
 			) : null}
 			{staleMap.size ? (
-				<p className="flex items-center gap-1.5 text-xs text-(--text-secondary)">
+				<p className="flex items-center gap-1.5 text-xs text-(--legacy-text-secondary)">
 					<Icon name="clock" className="size-3.5" />
 					{staleMap.size} reading{staleMap.size === 1 ? '' : 's'} could not be refreshed this run.
 				</p>
 			) : null}
-			<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-(--text-secondary)">
+			<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-(--legacy-text-secondary)">
 				<span className="flex items-center gap-1.5">
 					<span aria-hidden className="relative flex size-2">
 						{healthy ? (
@@ -107,7 +107,7 @@ export function FreshnessFooter({
 						{sources.map((s) => (
 							<span
 								key={s.endpoint}
-								className="rounded-sm bg-(--bg-main) px-1.5 py-0.5 font-mono text-[10px] text-(--text-secondary)"
+								className="rounded-sm bg-(--legacy-bg-main) px-1.5 py-0.5 font-mono text-[10px] text-(--legacy-text-secondary)"
 							>
 								{s.endpoint}
 							</span>

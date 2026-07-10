@@ -23,9 +23,9 @@ function TodoStatusIcon({ status, animated = true }: { status: TodoItem['status'
 		return (
 			<span
 				aria-hidden="true"
-				className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-(--old-blue)"
+				className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-(--legacy-old-blue)"
 			>
-				<span className={`size-1.5 rounded-full bg-(--old-blue) ${animated ? 'animate-pulse' : ''}`} />
+				<span className={`size-1.5 rounded-full bg-(--legacy-old-blue) ${animated ? 'animate-pulse' : ''}`} />
 			</span>
 		)
 	}
@@ -72,7 +72,7 @@ export function TodoChecklistPanel({
 	const total = orderedTodos.filter((t) => t.status !== 'cancelled').length
 	return (
 		<section
-			className="flex flex-col gap-1.5 rounded-lg border border-[#e6e6e6] bg-(--cards-bg) p-2 sm:p-2.5 dark:border-[#222324]"
+			className="flex flex-col gap-1.5 rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) p-2 sm:p-2.5 dark:border-[#222324]"
 			aria-label="Progress"
 		>
 			<div className="flex items-center gap-2 px-0.5">

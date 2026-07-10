@@ -89,8 +89,8 @@ export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
 		<div className="mb-3 flex flex-col gap-2">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex min-w-0 flex-col gap-1">
-					<h3 className="text-base font-semibold text-(--text-primary)">{title}</h3>
-					<div className="flex flex-wrap gap-2 text-xs text-(--text-secondary)">
+					<h3 className="text-base font-semibold text-(--legacy-text-primary)">{title}</h3>
+					<div className="flex flex-wrap gap-2 text-xs text-(--legacy-text-secondary)">
 						<span>{scopeDescription}</span>
 						{rowHeadersSummary ? (
 							<>
@@ -121,7 +121,7 @@ export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
 								name="chevron-down"
 								height={14}
 								width={14}
-								className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-(--text-tertiary)"
+								className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-(--legacy-text-tertiary)"
 							/>
 						</div>
 					) : null}
@@ -131,12 +131,12 @@ export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
 							onClick={onFiltersClick}
 							className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm transition-colors ${
 								activeFilterCount
-									? 'border-(--primary) bg-(--primary)/10 text-(--primary)'
+									? 'border-(--legacy-primary) bg-(--legacy-primary)/10 text-(--legacy-primary)'
 									: 'pro-border pro-bg1 pro-hover-bg pro-text1'
 							}`}
 						>
 							<span>Filters</span>
-							<span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-(--cards-border) px-1 text-xs font-semibold text-(--text-secondary)">
+							<span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-(--legacy-cards-border) px-1 text-xs font-semibold text-(--legacy-text-secondary)">
 								{activeFilterCount}
 							</span>
 						</button>
@@ -147,7 +147,7 @@ export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
 						disabled={customizeDisabled}
 						className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm transition-colors ${
 							customizeDisabled
-								? 'cursor-not-allowed border-(--cards-border) text-(--text-tertiary)'
+								? 'cursor-not-allowed border-(--legacy-cards-border) text-(--legacy-text-tertiary)'
 								: 'pro-border pro-bg1 pro-hover-bg pro-text1'
 						}`}
 					>
@@ -179,13 +179,13 @@ export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
 						name="search"
 						height={16}
 						width={16}
-						className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-(--text-tertiary)"
+						className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-(--legacy-text-tertiary)"
 					/>
 					<input
 						type="search"
 						onInput={(event) => onSearchChange(event.currentTarget.value)}
 						placeholder="Search protocols, chains, categories..."
-						className="w-full rounded-md border border-(--divider) bg-(--cards-bg) py-2 pr-3 pl-9 text-sm text-(--text-primary) focus:border-(--primary) focus:ring-2 focus:ring-(--primary)/30 focus:outline-hidden"
+						className="w-full rounded-md border border-(--legacy-divider) bg-(--legacy-cards-bg) py-2 pr-3 pl-9 text-sm text-(--legacy-text-primary) focus:border-(--legacy-primary) focus:ring-2 focus:ring-(--legacy-primary)/30 focus:outline-hidden"
 					/>
 				</div>
 				{hasFilters ? (
@@ -193,15 +193,15 @@ export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
 						{filterChips.map((chip) => (
 							<span
 								key={chip.id}
-								className="inline-flex items-center gap-1 rounded-full border border-(--cards-border) bg-(--cards-bg) px-2 py-1 text-xs text-(--text-secondary)"
+								className="inline-flex items-center gap-1 rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-2 py-1 text-xs text-(--legacy-text-secondary)"
 							>
-								<span className="font-medium text-(--text-primary)">{chip.label}</span>
-								{chip.value ? <span className="text-(--text-secondary)">: {chip.value}</span> : null}
+								<span className="font-medium text-(--legacy-text-primary)">{chip.label}</span>
+								{chip.value ? <span className="text-(--legacy-text-secondary)">: {chip.value}</span> : null}
 								{canMutateFilters ? (
 									<button
 										type="button"
 										onClick={() => onFilterRemove?.(chip)}
-										className="ml-1 rounded-full p-0.5 text-(--text-tertiary) transition-colors hover:bg-(--divider) hover:text-(--text-primary)"
+										className="ml-1 rounded-full p-0.5 text-(--legacy-text-tertiary) transition-colors hover:bg-(--legacy-divider) hover:text-(--legacy-text-primary)"
 										aria-label={`Remove filter: ${chip.label}`}
 									>
 										<Icon name="x" height={12} width={12} />
@@ -213,7 +213,7 @@ export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
 							<button
 								type="button"
 								onClick={onClearFilters}
-								className="text-xs font-medium text-(--primary) hover:underline"
+								className="text-xs font-medium text-(--legacy-primary) hover:underline"
 							>
 								Clear all filters
 							</button>

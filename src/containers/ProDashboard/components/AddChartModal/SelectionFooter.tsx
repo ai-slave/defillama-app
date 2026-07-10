@@ -32,7 +32,7 @@ export function SelectionFooter({
 					value={unifiedChartName}
 					onChange={(e) => onUnifiedChartNameChange(e.target.value)}
 					placeholder="Chart name..."
-					className="w-full rounded border border-(--form-control-border) bg-(--bg-input) px-2 py-1.5 text-xs pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
+					className="w-full rounded border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2 py-1.5 text-xs pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
 				/>
 			) : null}
 			<div className="flex flex-wrap items-center gap-2">
@@ -48,7 +48,7 @@ export function SelectionFooter({
 				{composerItems.map((item) => (
 					<div
 						key={item.id}
-						className="flex shrink-0 items-center gap-1.5 rounded-md border border-(--cards-border) bg-(--cards-bg) px-2 py-1 text-xs"
+						className="flex shrink-0 items-center gap-1.5 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-2 py-1 text-xs"
 					>
 						<span className="pro-text1">
 							{item.protocol || item.chain} - {CHART_TYPES[item.type]?.title || item.type}
@@ -57,7 +57,7 @@ export function SelectionFooter({
 							type="color"
 							value={item.color || CHART_TYPES[item.type]?.color || '#3e61cc'}
 							onChange={(e) => onComposerItemColorChange(item.id, e.target.value)}
-							className="size-5 cursor-pointer rounded border border-(--cards-border) bg-transparent p-0"
+							className="size-5 cursor-pointer rounded border border-(--legacy-cards-border) bg-transparent p-0"
 							aria-label="Select chart color"
 						/>
 						<button

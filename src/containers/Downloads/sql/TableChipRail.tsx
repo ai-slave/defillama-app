@@ -46,7 +46,7 @@ export function TableChipRail({
 							<button
 								type="button"
 								onClick={onBrowseSchema}
-								className="inline-flex items-center gap-1.5 rounded-md border border-(--primary)/30 bg-(--primary)/8 px-2.5 py-1 text-xs font-semibold text-(--primary) transition-all hover:border-(--primary)/60 hover:bg-(--primary)/12"
+								className="inline-flex items-center gap-1.5 rounded-md border border-(--legacy-primary)/30 bg-(--legacy-primary)/8 px-2.5 py-1 text-xs font-semibold text-(--legacy-primary) transition-all hover:border-(--legacy-primary)/60 hover:bg-(--legacy-primary)/12"
 								title={`Browse all ${totalSchemaCount} available datasets`}
 							>
 								<Icon name="layers" className="size-3" />
@@ -102,7 +102,9 @@ function TableChip({
 	return (
 		<div
 			className={`group flex items-stretch overflow-hidden rounded-md border transition-colors ${
-				open ? 'border-(--primary)/60 bg-(--primary)/5' : 'border-(--divider) bg-surface hover:border-(--primary)/40'
+				open
+					? 'border-(--legacy-primary)/60 bg-(--legacy-primary)/5'
+					: 'border-(--legacy-divider) bg-surface hover:border-(--legacy-primary)/40'
 			}`}
 		>
 			<button
@@ -110,22 +112,22 @@ function TableChip({
 				onClick={onToggle}
 				aria-expanded={open}
 				title={prettyLabelForSource(table.source)}
-				className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-(--text-primary)"
+				className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-(--legacy-text-primary)"
 			>
 				<Icon
 					name="chevron-right"
-					className={`size-3 shrink-0 text-(--text-tertiary) transition-transform ${
-						open ? 'rotate-90 text-(--primary)' : ''
+					className={`size-3 shrink-0 text-(--legacy-text-tertiary) transition-transform ${
+						open ? 'rotate-90 text-(--legacy-primary)' : ''
 					}`}
 				/>
 				<span className="max-w-[180px] truncate font-mono font-medium">{table.name}</span>
-				<span className="text-(--text-tertiary) tabular-nums">· {formatCount(table.rowCount)}</span>
+				<span className="text-(--legacy-text-tertiary) tabular-nums">· {formatCount(table.rowCount)}</span>
 			</button>
 			<button
 				type="button"
 				onClick={onRemove}
 				aria-label={`Remove ${table.name}`}
-				className="flex w-6 items-center justify-center border-l border-(--divider) text-(--text-tertiary) opacity-0 transition-all group-hover:opacity-100 hover:bg-red-500/10 hover:text-red-500"
+				className="flex w-6 items-center justify-center border-l border-(--legacy-divider) text-(--legacy-text-tertiary) opacity-0 transition-all group-hover:opacity-100 hover:bg-red-500/10 hover:text-red-500"
 			>
 				<Icon name="x" className="size-3" />
 			</button>
@@ -148,8 +150,8 @@ function PendingChip({ table }: { table: PendingTable }) {
 				failed
 					? 'border-red-500/50 bg-red-500/5 text-red-600 dark:text-red-300'
 					: loading
-						? 'border-(--primary)/40 bg-(--primary)/5 text-(--text-primary)'
-						: 'border-(--divider) bg-surface/40 text-(--text-secondary)'
+						? 'border-(--legacy-primary)/40 bg-(--legacy-primary)/5 text-(--legacy-text-primary)'
+						: 'border-(--legacy-divider) bg-surface/40 text-(--legacy-text-secondary)'
 			} ${loading ? 'animate-pulse' : ''}`}
 		>
 			<span className="flex size-3 shrink-0 items-center justify-center">
@@ -158,13 +160,13 @@ function PendingChip({ table }: { table: PendingTable }) {
 				) : loading ? (
 					<LoadingSpinner size={10} />
 				) : (
-					<span className="size-1.5 rounded-full bg-(--text-tertiary)/60" />
+					<span className="size-1.5 rounded-full bg-(--legacy-text-tertiary)/60" />
 				)}
 			</span>
 			<span className="max-w-[180px] truncate font-mono font-medium">{table.name}</span>
 			<span
 				className={`text-[10px] tracking-wide uppercase tabular-nums ${
-					failed ? 'text-red-500/80' : 'text-(--text-tertiary)'
+					failed ? 'text-red-500/80' : 'text-(--legacy-text-tertiary)'
 				}`}
 			>
 				{failed ? 'failed' : loading ? 'loading' : 'queued'}
@@ -175,11 +177,11 @@ function PendingChip({ table }: { table: PendingTable }) {
 
 function ColumnDrawer({ table, onClose }: { table: RegisteredTable; onClose: () => void }) {
 	return (
-		<div className="rounded-md border border-(--divider) bg-surface px-3 py-2.5">
+		<div className="rounded-md border border-(--legacy-divider) bg-surface px-3 py-2.5">
 			<div className="flex items-baseline justify-between gap-3">
 				<div className="flex flex-wrap items-baseline gap-2 text-xs">
-					<span className="font-mono font-semibold text-(--text-primary)">{table.name}</span>
-					<span className="text-(--text-tertiary)">
+					<span className="font-mono font-semibold text-(--legacy-text-primary)">{table.name}</span>
+					<span className="text-(--legacy-text-tertiary)">
 						{table.columns.length} cols · {prettyLabelForSource(table.source)}
 					</span>
 				</div>
@@ -187,7 +189,7 @@ function ColumnDrawer({ table, onClose }: { table: RegisteredTable; onClose: () 
 					type="button"
 					onClick={onClose}
 					aria-label="Close column list"
-					className="flex size-6 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
+					className="flex size-6 items-center justify-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary)"
 				>
 					<Icon name="x" className="size-3" />
 				</button>
@@ -200,7 +202,7 @@ function ColumnDrawer({ table, onClose }: { table: RegisteredTable; onClose: () 
 						title={c.type ? `${c.name} · ${c.type}` : c.name}
 					>
 						<TypeBadge kind={inferColumnKind(c.type)} />
-						<span className="truncate font-mono text-(--text-primary)">{c.name}</span>
+						<span className="truncate font-mono text-(--legacy-text-primary)">{c.name}</span>
 					</li>
 				))}
 			</ul>
@@ -223,8 +225,8 @@ function EmptyTablesPrompt({
 	totalSchemaCount: number
 }) {
 	return (
-		<div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-(--divider) bg-surface/60 px-3 py-2 text-xs text-(--text-secondary)">
-			<span className="text-(--text-primary)">
+		<div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-(--legacy-divider) bg-surface/60 px-3 py-2 text-xs text-(--legacy-text-secondary)">
+			<span className="text-(--legacy-text-primary)">
 				No tables loaded — type a table name in SQL to auto-load on run, or pick from the catalogue.
 			</span>
 			<span className="ml-auto flex items-center gap-1.5">
@@ -232,7 +234,7 @@ function EmptyTablesPrompt({
 				<button
 					type="button"
 					onClick={onBrowseSchema}
-					className="inline-flex items-center gap-1.5 rounded-md bg-(--primary) px-2.5 py-1 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+					className="inline-flex items-center gap-1.5 rounded-md bg-(--legacy-primary) px-2.5 py-1 text-xs font-semibold text-white transition-opacity hover:opacity-90"
 					title={`Browse all ${totalSchemaCount} available datasets`}
 				>
 					<Icon name="layers" className="size-3" />
@@ -271,7 +273,7 @@ function CopyForAIButton() {
 			className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-semibold transition-all disabled:cursor-not-allowed ${
 				copied
 					? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-					: 'border-(--divider) bg-transparent text-(--text-secondary) hover:border-(--primary)/40 hover:text-(--primary)'
+					: 'border-(--legacy-divider) bg-transparent text-(--legacy-text-secondary) hover:border-(--legacy-primary)/40 hover:text-(--legacy-primary)'
 			}`}
 		>
 			{copied ? <Icon name="check" className="size-3" /> : <Icon name="sparkles" className="size-3" />}

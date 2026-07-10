@@ -188,10 +188,10 @@ export function UpsellGate({ isAuthenticated, isTrial }: UpsellGateProps) {
 							API plan
 						</span>
 					</div>
-					<h2 className="text-4xl leading-[1.04] font-semibold tracking-tight text-balance text-(--text-primary) lg:text-5xl">
+					<h2 className="text-4xl leading-[1.04] font-semibold tracking-tight text-balance text-(--legacy-text-primary) lg:text-5xl">
 						{heading}
 					</h2>
-					<p className="max-w-xl text-base leading-relaxed text-(--text-secondary)">{copy}</p>
+					<p className="max-w-xl text-base leading-relaxed text-(--legacy-text-secondary)">{copy}</p>
 				</header>
 
 				<div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] lg:items-start lg:gap-8">
@@ -202,10 +202,10 @@ export function UpsellGate({ isAuthenticated, isTrial }: UpsellGateProps) {
 
 			<section className="flex flex-col gap-6">
 				<div className="flex items-baseline justify-between gap-3">
-					<h3 className="font-mono text-[11px] font-semibold tracking-[0.18em] text-(--text-tertiary) uppercase">
+					<h3 className="font-mono text-[11px] font-semibold tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 						Everything in SQL Studio
 					</h3>
-					<span className="hidden text-xs text-(--text-tertiary) sm:inline">
+					<span className="hidden text-xs text-(--legacy-text-tertiary) sm:inline">
 						SQL compute runs locally — your API quota stays untouched
 					</span>
 				</div>
@@ -231,25 +231,25 @@ function PricingCard({ isAuthenticated, subscriptionHref }: { isAuthenticated: b
 
 			<div className="flex flex-col gap-1.5">
 				<div className="flex items-baseline gap-1.5">
-					<span className="text-[3.25rem] leading-none font-semibold tracking-[-0.04em] text-(--text-primary) tabular-nums">
+					<span className="text-[3.25rem] leading-none font-semibold tracking-[-0.04em] text-(--legacy-text-primary) tabular-nums">
 						$300
 					</span>
-					<span className="text-base font-medium text-(--text-secondary)">/mo</span>
+					<span className="text-base font-medium text-(--legacy-text-secondary)">/mo</span>
 				</div>
-				<span className="text-[12px] text-(--text-tertiary)">
-					or <span className="font-mono text-(--text-secondary) tabular-nums">$3,000</span> billed yearly
+				<span className="text-[12px] text-(--legacy-text-tertiary)">
+					or <span className="font-mono text-(--legacy-text-secondary) tabular-nums">$3,000</span> billed yearly
 				</span>
 			</div>
 
-			<div className="flex flex-col gap-3 border-t border-(--divider) pt-5">
-				<span className="font-mono text-[10px] font-semibold tracking-[0.18em] text-(--text-tertiary) uppercase">
+			<div className="flex flex-col gap-3 border-t border-(--legacy-divider) pt-5">
+				<span className="font-mono text-[10px] font-semibold tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 					What's included
 				</span>
 				<ul className="flex flex-col gap-2.5">
 					{PLAN_INCLUDES.map((item) => (
 						<li key={item} className="flex items-start gap-2.5 text-[13px] leading-relaxed">
 							<Icon name="check" className="mt-0.5 size-3.5 shrink-0 text-(--sub-brand-primary)" />
-							<span className="text-(--text-primary)">{item}</span>
+							<span className="text-(--legacy-text-primary)">{item}</span>
 						</li>
 					))}
 				</ul>
@@ -267,7 +267,7 @@ function PricingCard({ isAuthenticated, subscriptionHref }: { isAuthenticated: b
 						className="size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
 					/>
 				</Link>
-				<span className="text-[11px] text-(--text-tertiary)">Cancel anytime · pay with card or crypto</span>
+				<span className="text-[11px] text-(--legacy-text-tertiary)">Cancel anytime · pay with card or crypto</span>
 			</div>
 		</div>
 	)
@@ -285,16 +285,16 @@ function FeatureTile({
 	body: string
 }) {
 	return (
-		<div className="group flex gap-4 border-t border-(--divider) py-5 transition-colors hover:border-(--sub-brand-primary)/40">
-			<span className="font-mono text-[11px] font-semibold text-(--text-tertiary)/70 tabular-nums">
+		<div className="group flex gap-4 border-t border-(--legacy-divider) py-5 transition-colors hover:border-(--sub-brand-primary)/40">
+			<span className="font-mono text-[11px] font-semibold text-(--legacy-text-tertiary)/70 tabular-nums">
 				{String(index).padStart(2, '0')}
 			</span>
 			<div className="flex flex-col gap-1.5">
 				<div className="flex items-center gap-2">
 					<Icon name={icon} className="size-3.5 text-(--sub-brand-primary)" />
-					<span className="text-sm font-semibold text-(--text-primary)">{title}</span>
+					<span className="text-sm font-semibold text-(--legacy-text-primary)">{title}</span>
 				</div>
-				<p className="text-[13px] leading-relaxed text-(--text-secondary)">{body}</p>
+				<p className="text-[13px] leading-relaxed text-(--legacy-text-secondary)">{body}</p>
 			</div>
 		</div>
 	)
@@ -302,7 +302,7 @@ function FeatureTile({
 
 function ShowcasePane({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: (next: TabKey) => void }) {
 	return (
-		<div className="flex flex-col overflow-hidden rounded-xl border border-(--divider) bg-surface shadow-sm">
+		<div className="flex flex-col overflow-hidden rounded-xl border border-(--legacy-divider) bg-surface shadow-sm">
 			<TabStrip activeTab={activeTab} onTabChange={onTabChange} />
 			{activeTab === 'notebook' ? <NotebookBody /> : null}
 			{activeTab === 'sql' ? <QueryBody /> : null}
@@ -316,7 +316,7 @@ function TabStrip({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: 
 		<div
 			role="tablist"
 			aria-label="SQL Studio sample tabs"
-			className="flex items-stretch gap-1 overflow-x-auto border-b border-(--divider) bg-(--app-bg)/40 px-2 pt-2"
+			className="flex items-stretch gap-1 overflow-x-auto border-b border-(--legacy-divider) bg-(--legacy-app-bg)/40 px-2 pt-2"
 		>
 			{TABS.map((t) => {
 				const isActive = activeTab === t.key
@@ -329,8 +329,8 @@ function TabStrip({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: 
 						onClick={() => onTabChange(t.key)}
 						className={`group -mb-px flex h-8 max-w-[220px] min-w-[148px] shrink-0 items-center gap-2 rounded-t-md border border-b-0 px-2.5 transition-colors ${
 							isActive
-								? 'border-(--divider) bg-surface text-(--text-primary)'
-								: 'border-transparent text-(--text-secondary) hover:bg-hover-row/40 hover:text-(--text-primary)'
+								? 'border-(--legacy-divider) bg-surface text-(--legacy-text-primary)'
+								: 'border-transparent text-(--legacy-text-secondary) hover:bg-hover-row/40 hover:text-(--legacy-text-primary)'
 						}`}
 					>
 						<span className="flex size-3 shrink-0 items-center justify-center" aria-hidden>
@@ -342,8 +342,8 @@ function TabStrip({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: 
 								isActive
 									? t.kind === 'notebook'
 										? 'text-(--sub-brand-primary)'
-										: 'text-(--text-secondary)'
-									: 'text-(--text-tertiary)'
+										: 'text-(--legacy-text-secondary)'
+									: 'text-(--legacy-text-tertiary)'
 							}`}
 						/>
 						<span className="min-w-0 flex-1 truncate text-left font-mono text-[12px]">{t.label}</span>
@@ -362,7 +362,7 @@ function TabStrip({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: 
 				type="button"
 				title="New tab (⌘T)"
 				onClick={(e) => e.preventDefault()}
-				className="-mb-px ml-auto inline-flex size-7 shrink-0 items-center justify-center self-center rounded-md text-(--text-tertiary) transition-colors hover:bg-hover-row/40 hover:text-(--text-secondary)"
+				className="-mb-px ml-auto inline-flex size-7 shrink-0 items-center justify-center self-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-hover-row/40 hover:text-(--legacy-text-secondary)"
 			>
 				<Icon name="plus" className="size-3.5" />
 			</button>
@@ -386,12 +386,12 @@ function NotebookBody() {
 
 function NotebookHeader() {
 	return (
-		<div className="flex items-center justify-between gap-3 border-b border-(--divider) bg-(--app-bg)/30 px-4 py-2.5">
+		<div className="flex items-center justify-between gap-3 border-b border-(--legacy-divider) bg-(--legacy-app-bg)/30 px-4 py-2.5">
 			<div className="flex min-w-0 flex-col gap-0.5">
-				<span className="truncate text-[13px] font-semibold tracking-tight text-(--text-primary)">
+				<span className="truncate text-[13px] font-semibold tracking-tight text-(--legacy-text-primary)">
 					Revenue capture across DeFi
 				</span>
-				<span className="font-mono text-[10.5px] text-(--text-tertiary) tabular-nums">
+				<span className="font-mono text-[10.5px] text-(--legacy-text-tertiary) tabular-nums">
 					3 cells · 2 SQL · 1 chart · last run 412ms
 				</span>
 			</div>
@@ -435,10 +435,10 @@ function MarkdownCell() {
 		<CellShell focused={false}>
 			<CellHeader name="cell_1" badge="md" />
 			<div className="px-3 pb-3 pl-9">
-				<h4 className="text-[15px] leading-snug font-semibold tracking-tight text-(--text-primary)">
+				<h4 className="text-[15px] leading-snug font-semibold tracking-tight text-(--legacy-text-primary)">
 					Revenue capture across DeFi
 				</h4>
-				<p className="mt-1.5 text-[12.5px] leading-relaxed text-(--text-secondary)">
+				<p className="mt-1.5 text-[12.5px] leading-relaxed text-(--legacy-text-secondary)">
 					Which protocols earn the most fees, and how much do they keep as revenue? Joining{' '}
 					<InlineCode>fees</InlineCode> and <InlineCode>revenue</InlineCode> highlights the high-volume, low-capture
 					protocols.
@@ -450,7 +450,7 @@ function MarkdownCell() {
 
 function InlineCode({ children }: { children: ReactNode }) {
 	return (
-		<code className="rounded-sm bg-(--app-bg)/70 px-1 py-px font-mono text-[11.5px] text-(--text-primary)">
+		<code className="rounded-sm bg-(--legacy-app-bg)/70 px-1 py-px font-mono text-[11.5px] text-(--legacy-text-primary)">
 			{children}
 		</code>
 	)
@@ -476,12 +476,12 @@ function SqlNotebookCell() {
 							<Keycap muted>⌘</Keycap>
 							<Keycap muted>↵</Keycap>
 						</span>
-						<Icon name="ellipsis" className="size-3.5 text-(--text-tertiary)" />
+						<Icon name="ellipsis" className="size-3.5 text-(--legacy-text-tertiary)" />
 					</>
 				}
 			/>
 			<div className="px-3 pb-3 pl-9">
-				<pre className="overflow-x-auto rounded-md border border-(--divider) bg-(--app-bg)/60 px-3 py-2 font-mono text-[11px] leading-[1.55] text-(--text-primary)">
+				<pre className="overflow-x-auto rounded-md border border-(--legacy-divider) bg-(--legacy-app-bg)/60 px-3 py-2 font-mono text-[11px] leading-[1.55] text-(--legacy-text-primary)">
 					<code>
 						<KW>SELECT</KW> f.name, f.category,
 						{'\n'}
@@ -503,15 +503,15 @@ function SqlNotebookCell() {
 				</pre>
 
 				<div className="mt-2.5 flex items-center justify-between gap-2 text-[10.5px]">
-					<span className="font-mono text-(--text-tertiary) tabular-nums">7 rows · 5 cols · 412ms</span>
+					<span className="font-mono text-(--legacy-text-tertiary) tabular-nums">7 rows · 5 cols · 412ms</span>
 					<span className="flex items-center gap-1.5 font-mono text-pro-green-300">
 						<span aria-hidden className="inline-block size-1.5 rounded-full bg-pro-green-300" />
 						<span className="tracking-[0.12em] uppercase">cached</span>
 					</span>
 				</div>
-				<div className="mt-1.5 overflow-hidden rounded-md border border-(--divider)">
+				<div className="mt-1.5 overflow-hidden rounded-md border border-(--legacy-divider)">
 					<GridTable rows={SAMPLE_ROWS.slice(0, 3)} cols={SAMPLE_COLS} />
-					<div className="border-t border-(--divider)/60 bg-(--app-bg)/30 px-3 py-1.5 font-mono text-[10px] text-(--text-tertiary)">
+					<div className="border-t border-(--legacy-divider)/60 bg-(--legacy-app-bg)/30 px-3 py-1.5 font-mono text-[10px] text-(--legacy-text-tertiary)">
 						… 4 more rows
 					</div>
 				</div>
@@ -527,24 +527,24 @@ function ChartNotebookCell() {
 				name="cell_3"
 				badge="chart"
 				action={
-					<span className="inline-flex items-center gap-1.5 rounded-md border border-(--divider) bg-surface px-2 py-0.5 font-mono text-[10.5px] text-(--text-secondary)">
-						<span className="text-(--text-tertiary)">source</span>
-						<span className="text-(--text-primary)">cell_2</span>
-						<span aria-hidden className="text-(--text-tertiary)/60">
+					<span className="inline-flex items-center gap-1.5 rounded-md border border-(--legacy-divider) bg-surface px-2 py-0.5 font-mono text-[10.5px] text-(--legacy-text-secondary)">
+						<span className="text-(--legacy-text-tertiary)">source</span>
+						<span className="text-(--legacy-text-primary)">cell_2</span>
+						<span aria-hidden className="text-(--legacy-text-tertiary)/60">
 							·
 						</span>
 						<span className="tabular-nums">7 × 5</span>
-						<Icon name="chevron-down" className="size-3 text-(--text-tertiary)" />
+						<Icon name="chevron-down" className="size-3 text-(--legacy-text-tertiary)" />
 					</span>
 				}
 			/>
 			<div className="px-3 pb-3 pl-9">
-				<div className="rounded-md border border-(--divider) bg-(--app-bg)/30 px-3 pt-3">
+				<div className="rounded-md border border-(--legacy-divider) bg-(--legacy-app-bg)/30 px-3 pt-3">
 					<div className="mb-2 flex items-baseline justify-between">
-						<span className="font-mono text-[10px] font-semibold tracking-[0.18em] text-(--text-tertiary) uppercase">
+						<span className="font-mono text-[10px] font-semibold tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 							30d fees by protocol
 						</span>
-						<span className="font-mono text-[10px] text-(--text-tertiary) tabular-nums">bar · top 7</span>
+						<span className="font-mono text-[10px] text-(--legacy-text-tertiary) tabular-nums">bar · top 7</span>
 					</div>
 					<FeesChart height={108} />
 				</div>
@@ -559,7 +559,7 @@ function CellShell({ focused, children }: { focused: boolean; children: ReactNod
 			className={`relative rounded-md border transition-colors ${
 				focused
 					? 'border-(--sub-brand-primary)/45 bg-surface shadow-[0_0_0_2px_color-mix(in_oklch,var(--sub-brand-primary)_10%,transparent)]'
-					: 'border-(--divider) bg-surface/60 hover:border-(--divider)'
+					: 'border-(--legacy-divider) bg-surface/60 hover:border-(--legacy-divider)'
 			}`}
 		>
 			{children}
@@ -570,8 +570,8 @@ function CellShell({ focused, children }: { focused: boolean; children: ReactNod
 function CellHeader({ name, badge, action }: { name: string; badge: 'sql' | 'md' | 'chart'; action?: ReactNode }) {
 	return (
 		<div className="flex items-center gap-2 px-3 pt-2 pb-1.5">
-			<Icon name="menu" className="size-3 shrink-0 text-(--text-tertiary)/35" />
-			<span className="font-mono text-[11px] text-(--text-tertiary)">{name}</span>
+			<Icon name="menu" className="size-3 shrink-0 text-(--legacy-text-tertiary)/35" />
+			<span className="font-mono text-[11px] text-(--legacy-text-tertiary)">{name}</span>
 			<CellTypeBadge kind={badge} />
 			{action ? <div className="ml-auto flex items-center gap-1.5">{action}</div> : null}
 		</div>
@@ -596,13 +596,13 @@ function CellTypeBadge({ kind }: { kind: 'sql' | 'md' | 'chart' }) {
 function AddCellBar() {
 	return (
 		<div className="group flex items-center gap-2 pt-1">
-			<span aria-hidden className="h-px flex-1 bg-(--divider)" />
-			<span className="inline-flex items-center gap-3 rounded-md text-[11px] text-(--text-tertiary)">
+			<span aria-hidden className="h-px flex-1 bg-(--legacy-divider)" />
+			<span className="inline-flex items-center gap-3 rounded-md text-[11px] text-(--legacy-text-tertiary)">
 				<AddCellChip dot="bg-(--sub-brand-primary)" label="Query" />
 				<AddCellChip dot="bg-pro-gold-300" label="Visualize" />
 				<AddCellChip dot="bg-pro-purple-300" label="Narrate" />
 			</span>
-			<span aria-hidden className="h-px flex-1 bg-(--divider)" />
+			<span aria-hidden className="h-px flex-1 bg-(--legacy-divider)" />
 		</div>
 	)
 }
@@ -612,7 +612,7 @@ function AddCellChip({ dot, label }: { dot: string; label: string }) {
 		<button
 			type="button"
 			onClick={(e) => e.preventDefault()}
-			className="inline-flex items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors hover:bg-hover-row/40 hover:text-(--text-primary)"
+			className="inline-flex items-center gap-1.5 rounded-sm px-1 py-0.5 transition-colors hover:bg-hover-row/40 hover:text-(--legacy-text-primary)"
 		>
 			<span aria-hidden className={`size-1.5 rounded-full ${dot}`} />
 			<span className="font-mono">{label}</span>
@@ -623,19 +623,21 @@ function AddCellChip({ dot, label }: { dot: string; label: string }) {
 function QueryBody() {
 	return (
 		<div className="flex flex-col">
-			<div className="flex items-center justify-between gap-3 border-b border-(--divider) bg-(--app-bg)/30 px-4 py-2">
+			<div className="flex items-center justify-between gap-3 border-b border-(--legacy-divider) bg-(--legacy-app-bg)/30 px-4 py-2">
 				<div className="flex items-center gap-2 truncate">
 					<Icon name="file-text" className="size-3.5 shrink-0 text-(--sub-brand-primary)" />
-					<span className="truncate font-mono text-xs font-medium text-(--text-secondary)">fees-vs-revenue.sql</span>
+					<span className="truncate font-mono text-xs font-medium text-(--legacy-text-secondary)">
+						fees-vs-revenue.sql
+					</span>
 				</div>
 				<span className="flex shrink-0 items-center gap-2 text-[11px]">
 					<span aria-hidden className="inline-block size-1.5 rounded-full bg-pro-green-300" />
 					<span className="font-mono tracking-[0.12em] text-pro-green-300 uppercase">ready</span>
-					<span aria-hidden className="text-(--text-tertiary)/40">
+					<span aria-hidden className="text-(--legacy-text-tertiary)/40">
 						·
 					</span>
-					<span className="font-mono text-(--text-tertiary) tabular-nums">412ms</span>
-					<span aria-hidden className="hidden text-(--text-tertiary)/40 sm:inline">
+					<span className="font-mono text-(--legacy-text-tertiary) tabular-nums">412ms</span>
+					<span aria-hidden className="hidden text-(--legacy-text-tertiary)/40 sm:inline">
 						·
 					</span>
 					<span className="hidden sm:inline-flex">
@@ -644,8 +646,8 @@ function QueryBody() {
 				</span>
 			</div>
 
-			<div className="border-b border-(--divider) bg-(--app-bg)/40 px-4 py-3">
-				<pre className="overflow-x-auto font-mono text-[11.5px] leading-[1.55] text-(--text-primary)">
+			<div className="border-b border-(--legacy-divider) bg-(--legacy-app-bg)/40 px-4 py-3">
+				<pre className="overflow-x-auto font-mono text-[11.5px] leading-[1.55] text-(--legacy-text-primary)">
 					<code>
 						<COMMENT>-- Which protocols earn the most fees, and how much do they capture as revenue?</COMMENT>
 						{'\n'}
@@ -674,16 +676,16 @@ function QueryBody() {
 				</pre>
 			</div>
 
-			<div className="border-b border-(--divider)">
+			<div className="border-b border-(--legacy-divider)">
 				<GridTable rows={SAMPLE_ROWS} cols={SAMPLE_COLS} />
 			</div>
 
 			<div className="flex flex-col gap-3 px-4 py-3.5">
 				<div className="flex items-baseline justify-between">
-					<span className="font-mono text-[10px] font-semibold tracking-[0.18em] text-(--text-tertiary) uppercase">
+					<span className="font-mono text-[10px] font-semibold tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 						30d fees by protocol
 					</span>
-					<span className="font-mono text-[10px] text-(--text-tertiary) tabular-nums">bar · top 7</span>
+					<span className="font-mono text-[10px] text-(--legacy-text-tertiary) tabular-nums">bar · top 7</span>
 				</div>
 				<FeesChart />
 			</div>
@@ -694,20 +696,20 @@ function QueryBody() {
 function AltQueryBody() {
 	return (
 		<div className="flex flex-col">
-			<div className="flex items-center justify-between gap-3 border-b border-(--divider) bg-(--app-bg)/30 px-4 py-2">
+			<div className="flex items-center justify-between gap-3 border-b border-(--legacy-divider) bg-(--legacy-app-bg)/30 px-4 py-2">
 				<div className="flex items-center gap-2 truncate">
-					<Icon name="file-text" className="size-3.5 shrink-0 text-(--text-tertiary)" />
-					<span className="truncate font-mono text-xs font-medium text-(--text-secondary)">chains-tvl.sql</span>
+					<Icon name="file-text" className="size-3.5 shrink-0 text-(--legacy-text-tertiary)" />
+					<span className="truncate font-mono text-xs font-medium text-(--legacy-text-secondary)">chains-tvl.sql</span>
 					<span aria-hidden className="ml-1 inline-block size-1.5 rounded-full bg-pro-gold-300" />
 					<span className="font-mono text-[10px] tracking-[0.12em] text-pro-gold-300 uppercase">unsaved</span>
 				</div>
 				<span className="flex shrink-0 items-center gap-2 text-[11px]">
-					<span className="font-mono text-(--text-tertiary) tabular-nums">86ms</span>
+					<span className="font-mono text-(--legacy-text-tertiary) tabular-nums">86ms</span>
 				</span>
 			</div>
 
-			<div className="border-b border-(--divider) bg-(--app-bg)/40 px-4 py-3">
-				<pre className="overflow-x-auto font-mono text-[11.5px] leading-[1.55] text-(--text-primary)">
+			<div className="border-b border-(--legacy-divider) bg-(--legacy-app-bg)/40 px-4 py-3">
+				<pre className="overflow-x-auto font-mono text-[11.5px] leading-[1.55] text-(--legacy-text-primary)">
 					<code>
 						<COMMENT>-- Top L1 chains by TVL with rolling 30d change and dominance</COMMENT>
 						{'\n'}
@@ -738,7 +740,7 @@ function GridTable<T>({ rows, cols }: { rows: T[]; cols: TableCol<T>[] }) {
 		<div className="overflow-x-auto">
 			<div style={{ width: totalWidth, minWidth: '100%' }}>
 				<div
-					className="grid border-b border-(--divider) bg-surface font-mono text-[11px] text-(--text-secondary)"
+					className="grid border-b border-(--legacy-divider) bg-surface font-mono text-[11px] text-(--legacy-text-secondary)"
 					style={{ gridTemplateColumns: gridTemplate, height: 42 }}
 				>
 					{cols.map((col) => {
@@ -746,15 +748,15 @@ function GridTable<T>({ rows, cols }: { rows: T[]; cols: TableCol<T>[] }) {
 						return (
 							<div
 								key={col.name}
-								className={`flex flex-col justify-center gap-0.5 truncate border-l border-(--divider)/60 px-2.5 first:border-l-0 ${
+								className={`flex flex-col justify-center gap-0.5 truncate border-l border-(--legacy-divider)/60 px-2.5 first:border-l-0 ${
 									isNumeric ? 'items-end text-right' : 'items-start text-left'
 								}`}
 							>
 								<div className="flex items-center gap-1.5">
 									<TypeBadge kind={col.kind} />
-									<span className="truncate font-mono font-semibold text-(--text-primary)">{col.name}</span>
+									<span className="truncate font-mono font-semibold text-(--legacy-text-primary)">{col.name}</span>
 								</div>
-								<span className="truncate font-mono text-[10px] font-normal tracking-tight text-(--text-tertiary)/80">
+								<span className="truncate font-mono text-[10px] font-normal tracking-tight text-(--legacy-text-tertiary)/80">
 									{col.type}
 								</span>
 							</div>
@@ -766,8 +768,8 @@ function GridTable<T>({ rows, cols }: { rows: T[]; cols: TableCol<T>[] }) {
 					return (
 						<div
 							key={i}
-							className={`grid font-mono text-[11.5px] tabular-nums transition-colors hover:bg-(--primary)/5 ${
-								zebra ? 'bg-(--app-bg)/25' : ''
+							className={`grid font-mono text-[11.5px] tabular-nums transition-colors hover:bg-(--legacy-primary)/5 ${
+								zebra ? 'bg-(--legacy-app-bg)/25' : ''
 							}`}
 							style={{ gridTemplateColumns: gridTemplate, height: 28 }}
 						>
@@ -777,9 +779,9 @@ function GridTable<T>({ rows, cols }: { rows: T[]; cols: TableCol<T>[] }) {
 								return (
 									<div
 										key={col.name}
-										className={`flex items-center truncate border-l border-(--divider)/30 px-2.5 first:border-l-0 ${
+										className={`flex items-center truncate border-l border-(--legacy-divider)/30 px-2.5 first:border-l-0 ${
 											isNumeric ? 'justify-end' : ''
-										} text-(--text-primary)`}
+										} text-(--legacy-text-primary)`}
 									>
 										<span className="truncate">{formatCellValue(value)}</span>
 									</div>
@@ -807,7 +809,7 @@ function FeesChart({ height = 132 }: { height?: number }) {
 	return (
 		<div className="flex w-full" style={{ paddingBottom: 22 }}>
 			<div
-				className="flex shrink-0 flex-col-reverse justify-between font-mono text-[9.5px] text-(--text-tertiary) tabular-nums"
+				className="flex shrink-0 flex-col-reverse justify-between font-mono text-[9.5px] text-(--legacy-text-tertiary) tabular-nums"
 				style={{ width: Y_AXIS_WIDTH, height }}
 			>
 				{ticks.map((t) => (
@@ -822,7 +824,7 @@ function FeesChart({ height = 132 }: { height?: number }) {
 					{ticks.map((t, i) => (
 						<div
 							key={t}
-							className={`border-t ${i === 0 ? 'border-(--divider)' : 'border-dashed border-(--divider)/40'}`}
+							className={`border-t ${i === 0 ? 'border-(--legacy-divider)' : 'border-dashed border-(--legacy-divider)/40'}`}
 						/>
 					))}
 				</div>
@@ -832,7 +834,7 @@ function FeesChart({ height = 132 }: { height?: number }) {
 						const h = (b.value / yMax) * height
 						return (
 							<div key={b.label} className="group relative flex flex-1 flex-col items-center justify-end">
-								<span className="mb-1 font-mono text-[10px] text-(--text-secondary) tabular-nums">
+								<span className="mb-1 font-mono text-[10px] text-(--legacy-text-secondary) tabular-nums">
 									{formatCompactUsd(b.value)}
 								</span>
 								<div
@@ -840,7 +842,7 @@ function FeesChart({ height = 132 }: { height?: number }) {
 									style={{ height: Math.max(h, 1.5) }}
 								/>
 								<span
-									className="absolute truncate font-mono text-[10px] font-medium text-(--text-tertiary)"
+									className="absolute truncate font-mono text-[10px] font-medium text-(--legacy-text-tertiary)"
 									style={{ top: '100%', marginTop: 6, maxWidth: '100%' }}
 								>
 									{b.label}
@@ -873,7 +875,7 @@ function NUM({ children }: { children: ReactNode }) {
 }
 
 function COMMENT({ children }: { children: ReactNode }) {
-	return <span className="text-(--text-tertiary) italic">{children}</span>
+	return <span className="text-(--legacy-text-tertiary) italic">{children}</span>
 }
 
 function formatCellValue(value: string | number): string {

@@ -97,7 +97,7 @@ export function RiskTabs({ tabs, defaultId }: { tabs: RiskTab[]; defaultId: stri
 					role="tablist"
 					aria-label="Risk detail"
 					onKeyDown={onKeyDown}
-					className="flex w-full gap-1 overflow-x-auto rounded-lg bg-(--bg-main) p-1 sm:inline-flex sm:w-auto sm:max-w-full"
+					className="flex w-full gap-1 overflow-x-auto rounded-lg bg-(--legacy-bg-main) p-1 sm:inline-flex sm:w-auto sm:max-w-full"
 				>
 					{tabs.map((t) => {
 						const selected = t.id === active
@@ -111,16 +111,18 @@ export function RiskTabs({ tabs, defaultId }: { tabs: RiskTab[]; defaultId: stri
 								aria-controls={t.id}
 								tabIndex={selected ? 0 : -1}
 								onClick={() => activate(t.id)}
-								className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-sm whitespace-nowrap transition-colors duration-150 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--primary) sm:flex-initial ${
+								className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-sm whitespace-nowrap transition-colors duration-150 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--legacy-primary) sm:flex-initial ${
 									selected
-										? 'border-(--cards-border) bg-(--cards-bg) font-medium text-(--text-primary) shadow-sm'
-										: 'border-transparent text-(--text-secondary) hover:text-(--text-primary)'
+										? 'border-(--legacy-cards-border) bg-(--legacy-cards-bg) font-medium text-(--legacy-text-primary) shadow-sm'
+										: 'border-transparent text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
 								}`}
 							>
 								<Icon name={t.icon} className={`size-4${t.iconFlipY ? ' -scale-y-100' : ''}`} aria-hidden />
 								{t.label}
 								{t.count != null ? (
-									<span className={`tabular-nums ${selected ? 'text-(--text-secondary)' : 'text-(--text-tertiary)'}`}>
+									<span
+										className={`tabular-nums ${selected ? 'text-(--legacy-text-secondary)' : 'text-(--legacy-text-tertiary)'}`}
+									>
 										{t.count}
 									</span>
 								) : null}

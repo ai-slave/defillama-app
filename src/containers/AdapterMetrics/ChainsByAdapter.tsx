@@ -108,7 +108,7 @@ export function ChainsByAdapter(props: IProps) {
 					<span>Are we missing any protocol?</span>{' '}
 					<a
 						href="https://airtable.com/shrtBA9lvj6E036Qx"
-						className="font-medium text-(--blue) underline"
+						className="font-medium text-(--legacy-blue) underline"
 						target="_blank"
 						rel="noopener noreferrer"
 					>

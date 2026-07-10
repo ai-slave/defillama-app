@@ -48,15 +48,15 @@ export function BannersListView() {
 	})
 
 	if (isLoading) {
-		return <div className="mx-auto py-24 text-center text-sm text-(--text-tertiary)">Loading…</div>
+		return <div className="mx-auto py-24 text-center text-sm text-(--legacy-text-tertiary)">Loading…</div>
 	}
 
 	if (error) {
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load banners'
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-red-500/30 bg-red-500/5 p-6">
-				<h1 className="text-xl font-semibold text-(--text-primary)">Couldn't load banners</h1>
-				<p className="text-sm text-(--text-secondary)">{message}</p>
+				<h1 className="text-xl font-semibold text-(--legacy-text-primary)">Couldn't load banners</h1>
+				<p className="text-sm text-(--legacy-text-secondary)">{message}</p>
 			</div>
 		)
 	}
@@ -69,53 +69,53 @@ export function BannersListView() {
 				<div>
 					<Link
 						href="/research/admin"
-						className="inline-flex items-center gap-1 text-xs text-(--text-tertiary) transition-colors hover:text-(--text-primary)"
+						className="inline-flex items-center gap-1 text-xs text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-text-primary)"
 					>
 						<span aria-hidden>←</span> Admin
 					</Link>
-					<h1 className="mt-2 text-3xl font-semibold tracking-tight text-(--text-primary)">Banners</h1>
-					<p className="mt-1 text-sm text-(--text-secondary)">
+					<h1 className="mt-2 text-3xl font-semibold tracking-tight text-(--legacy-text-primary)">Banners</h1>
+					<p className="mt-1 text-sm text-(--legacy-text-secondary)">
 						Configure the dismissible top strip, the desktop right-rail image, or the mobile inline image shown on
 						/research, all articles, a section's articles, or a single article.
 					</p>
 				</div>
 				<Link
 					href="/research/admin/banners/new"
-					className="inline-flex min-h-9 items-center bg-(--link-text) px-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
+					className="inline-flex min-h-9 items-center bg-(--legacy-link-text) px-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
 				>
 					+ New banner
 				</Link>
 			</header>
 
 			{items.length === 0 ? (
-				<div className="rounded-md border border-dashed border-(--cards-border) bg-(--cards-bg) p-10 text-center">
-					<p className="text-sm text-(--text-secondary)">No banners yet.</p>
+				<div className="rounded-md border border-dashed border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-10 text-center">
+					<p className="text-sm text-(--legacy-text-secondary)">No banners yet.</p>
 					<Link
 						href="/research/admin/banners/new"
-						className="mt-3 inline-flex min-h-9 items-center bg-(--link-text) px-3 text-sm font-medium text-white"
+						className="mt-3 inline-flex min-h-9 items-center bg-(--legacy-link-text) px-3 text-sm font-medium text-white"
 					>
 						Create your first banner
 					</Link>
 				</div>
 			) : (
-				<ul className="grid divide-y divide-(--cards-border) overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<ul className="grid divide-y divide-(--legacy-cards-border) overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 					{items.map((banner) => (
 						<li key={banner.id} className="grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
 							<div className="grid min-w-0 gap-1">
 								<div className="flex flex-wrap items-center gap-2">
-									<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+									<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 										{BANNER_SCOPE_LABELS[banner.scope]}
 										{banner.scope === 'section' && banner.section ? ` · ${ARTICLE_SECTION_LABELS[banner.section]}` : ''}
 										{banner.scope === 'article' && banner.articleId ? ` · #${banner.articleId.slice(0, 8)}` : ''}
 									</span>
-									<span className="inline-flex items-center rounded-full bg-(--link-button) px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-(--link-text) uppercase">
+									<span className="inline-flex items-center rounded-full bg-(--legacy-link-button) px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-(--legacy-link-text) uppercase">
 										{BANNER_KIND_LABELS[banner.type]}
 									</span>
 									<span
 										className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] uppercase ${
 											banner.enabled
 												? 'bg-emerald-500/10 text-emerald-500'
-												: 'bg-(--text-tertiary)/10 text-(--text-tertiary)'
+												: 'bg-(--legacy-text-tertiary)/10 text-(--legacy-text-tertiary)'
 										}`}
 									>
 										<span aria-hidden className="size-1 rounded-full bg-current" />
@@ -124,9 +124,9 @@ export function BannersListView() {
 								</div>
 								{banner.type === 'text' ? (
 									<>
-										<p className="line-clamp-2 text-sm text-(--text-primary)">{banner.text}</p>
+										<p className="line-clamp-2 text-sm text-(--legacy-text-primary)">{banner.text}</p>
 										{banner.linkUrl ? (
-											<p className="truncate text-xs text-(--text-tertiary)">
+											<p className="truncate text-xs text-(--legacy-text-tertiary)">
 												→ {banner.linkLabel?.trim() || 'Read more'} · {banner.linkUrl}
 											</p>
 										) : null}
@@ -138,13 +138,15 @@ export function BannersListView() {
 											<img
 												src={banner.imageUrl}
 												alt=""
-												className={`shrink-0 rounded border border-(--cards-border) object-cover ${
+												className={`shrink-0 rounded border border-(--legacy-cards-border) object-cover ${
 													banner.type === 'image-horizontal' ? 'h-8 w-20' : 'size-12'
 												}`}
 											/>
 										) : null}
-										<p className="line-clamp-2 text-sm text-(--text-secondary)">
-											{banner.imageAlt?.trim() || <span className="text-(--text-tertiary) italic">no alt text</span>}
+										<p className="line-clamp-2 text-sm text-(--legacy-text-secondary)">
+											{banner.imageAlt?.trim() || (
+												<span className="text-(--legacy-text-tertiary) italic">no alt text</span>
+											)}
 										</p>
 									</div>
 								)}
@@ -154,13 +156,13 @@ export function BannersListView() {
 									type="button"
 									onClick={() => toggleMutation.mutate({ id: banner.id, enabled: !banner.enabled })}
 									disabled={toggleMutation.isPending}
-									className="rounded-md border border-(--cards-border) px-3 py-1.5 text-xs text-(--text-secondary) transition-colors hover:border-(--link-text)/40 hover:text-(--text-primary) disabled:opacity-50"
+									className="rounded-md border border-(--legacy-cards-border) px-3 py-1.5 text-xs text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary) disabled:opacity-50"
 								>
 									{banner.enabled ? 'Disable' : 'Enable'}
 								</button>
 								<Link
 									href={`/research/admin/banners/${banner.id}`}
-									className="rounded-md border border-(--cards-border) px-3 py-1.5 text-xs text-(--text-secondary) transition-colors hover:border-(--link-text)/40 hover:text-(--text-primary)"
+									className="rounded-md border border-(--legacy-cards-border) px-3 py-1.5 text-xs text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary)"
 								>
 									Edit
 								</Link>

@@ -60,7 +60,7 @@ export function DashboardSearch({ defaultValue }: { defaultValue?: string }) {
 					name="search"
 					height={16}
 					width={16}
-					className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-(--text-tertiary)"
+					className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-(--legacy-text-tertiary)"
 				/>
 				<input
 					ref={inputRef}
@@ -68,12 +68,12 @@ export function DashboardSearch({ defaultValue }: { defaultValue?: string }) {
 					value={inputValue}
 					onChange={(e) => handleChange(e.target.value)}
 					placeholder="Search dashboards…"
-					className="w-full rounded-md border border-(--form-control-border) bg-(--cards-bg) py-2.5 pr-9 pl-9 text-sm transition-shadow duration-150 focus:border-(--primary) focus:shadow-[0_0_0_3px_rgba(var(--primary-rgb),0.15)] focus:outline-hidden"
+					className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) py-2.5 pr-9 pl-9 text-sm transition-shadow duration-150 focus:border-(--legacy-primary) focus:shadow-[0_0_0_3px_rgba(var(--primary-rgb),0.15)] focus:outline-hidden"
 				/>
 				{inputValue ? (
 					<button
 						onClick={handleClear}
-						className="absolute top-1/2 right-3 -translate-y-1/2 rounded p-1 text-(--text-tertiary) transition-colors hover:bg-(--bg-hover) hover:text-(--text-primary)"
+						className="absolute top-1/2 right-3 -translate-y-1/2 rounded p-1 text-(--legacy-text-tertiary) transition-colors hover:bg-(--bg-hover) hover:text-(--legacy-text-primary)"
 						type="button"
 					>
 						<Icon name="x" height={14} width={14} />

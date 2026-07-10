@@ -191,20 +191,20 @@ export function MetricCard({ metric }: MetricCardProps) {
 		return sparklineData.filter(([, v]) => Number.isFinite(v))
 	}, [chartType, sparklineData])
 
-	const sparklineColor = deltaPositive ? 'var(--success)' : deltaNegative ? 'var(--error)' : 'var(--primary)'
+	const sparklineColor = deltaPositive ? 'var(--success)' : deltaNegative ? 'var(--error)' : 'var(--legacy-primary)'
 
 	const content = useMemo(() => {
 		if (isLoading) {
 			return (
 				<div className="flex flex-1 items-center justify-center">
-					<div className="size-6 animate-spin rounded-full border-b-2 border-(--primary)" />
+					<div className="size-6 animate-spin rounded-full border-b-2 border-(--legacy-primary)" />
 				</div>
 			)
 		}
 
 		if (isError) {
 			return (
-				<div className="flex flex-1 flex-col items-center justify-center gap-1 text-(--text-form)">
+				<div className="flex flex-1 flex-col items-center justify-center gap-1 text-(--legacy-text-form)">
 					<Icon name="alert-triangle" height={18} width={18} />
 					<span className="text-sm">Error</span>
 				</div>
@@ -228,13 +228,13 @@ export function MetricCard({ metric }: MetricCardProps) {
 				{deltaText && metric.aggregator !== 'growth' ? (
 					<p
 						className={`text-xs font-semibold tracking-wide uppercase ${
-							deltaPositive ? 'text-(--success)' : deltaNegative ? 'text-(--error)' : 'text-(--text-form)'
+							deltaPositive ? 'text-(--success)' : deltaNegative ? 'text-(--error)' : 'text-(--legacy-text-form)'
 						}`}
 					>
 						{deltaText}
 					</p>
 				) : null}
-				<p className="max-w-[420px] text-sm text-(--text-secondary)">{summaryText}</p>
+				<p className="max-w-[420px] text-sm text-(--legacy-text-secondary)">{summaryText}</p>
 			</div>
 		)
 	}, [
@@ -263,12 +263,12 @@ export function MetricCard({ metric }: MetricCardProps) {
 						</div>
 					)}
 					<div className="flex flex-col">
-						<h2 className="text-base leading-tight font-semibold text-(--text-primary)">{displayTitle}</h2>
+						<h2 className="text-base leading-tight font-semibold text-(--legacy-text-primary)">{displayTitle}</h2>
 						{hasCustomLabel ? <p className="text-[11px] leading-tight pro-text3">{baseTitle}</p> : null}
 					</div>
 				</div>
 				{!isReadOnly ? (
-					<div className="text-[11px] tracking-wide text-(--text-form)">
+					<div className="text-[11px] tracking-wide text-(--legacy-text-form)">
 						{windowBadge} · {aggregatorBadge}
 					</div>
 				) : null}

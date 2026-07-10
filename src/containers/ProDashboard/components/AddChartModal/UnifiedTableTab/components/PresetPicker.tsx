@@ -26,13 +26,17 @@ export function PresetPicker({
 						key={preset.id}
 						onClick={() => onSelect(preset.id)}
 						className={`flex flex-col items-start gap-1 rounded-lg border px-3 py-3 text-left transition ${
-							isActive ? 'border-(--primary) bg-(--primary)/10' : 'border-(--cards-border) hover:border-(--primary)'
+							isActive
+								? 'border-(--legacy-primary) bg-(--legacy-primary)/10'
+								: 'border-(--legacy-cards-border) hover:border-(--legacy-primary)'
 						}`}
 					>
-						<span className="text-sm font-semibold text-(--text-primary)">{preset.name}</span>
-						{preset.description ? <span className="text-xs text-(--text-secondary)">{preset.description}</span> : null}
+						<span className="text-sm font-semibold text-(--legacy-text-primary)">{preset.name}</span>
+						{preset.description ? (
+							<span className="text-xs text-(--legacy-text-secondary)">{preset.description}</span>
+						) : null}
 						{isActive ? (
-							<span className="rounded bg-(--primary)/10 px-2 py-0.5 text-[10px] font-medium text-(--primary)">
+							<span className="rounded bg-(--legacy-primary)/10 px-2 py-0.5 text-[10px] font-medium text-(--legacy-primary)">
 								Active
 							</span>
 						) : null}

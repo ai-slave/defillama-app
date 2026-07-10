@@ -408,7 +408,7 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 						{row.original?.deprecated ? (
 							<BasicLink
 								href={`/protocol/${slug(value)}`}
-								className="flex items-center gap-1 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+								className="flex items-center gap-1 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text) hover:underline"
 							>
 								<span className="overflow-hidden text-ellipsis whitespace-nowrap hover:underline">{value}</span>
 								<DeprecatedProtocolMarker />
@@ -416,7 +416,7 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 						) : (
 							<BasicLink
 								href={`/protocol/${slug(value)}`}
-								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text) hover:underline"
 							>{`${value}`}</BasicLink>
 						)}
 
@@ -443,7 +443,7 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 		cell: ({ getValue }) => {
 			const value = getValue<string | null>()
 			return value ? (
-				<BasicLink href={getCategoryRoute(slug(value))} className="text-sm font-medium text-(--link-text)">
+				<BasicLink href={getCategoryRoute(slug(value))} className="text-sm font-medium text-(--legacy-link-text)">
 					{value}
 				</BasicLink>
 			) : (
@@ -478,7 +478,7 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 						<BasicLink
 							key={o}
 							href={`/oracles/${slug(o)}`}
-							className="text-sm font-medium text-(--link-text) hover:underline"
+							className="text-sm font-medium text-(--legacy-link-text) hover:underline"
 						>
 							{o}
 						</BasicLink>
@@ -1324,7 +1324,7 @@ const ProtocolTvlCell = ({ value, rowValues }: { value: unknown; rowValues: Prot
 			) : null}
 			<span
 				style={{
-					color: rowValues.strikeTvl ? 'var(--text-disabled)' : 'inherit'
+					color: rowValues.strikeTvl ? 'var(--legacy-text-disabled)' : 'inherit'
 				}}
 			>
 				{tvlValue != null ? formattedNum(tvlValue, true) : null}
@@ -1501,8 +1501,8 @@ export function useProTableColumns({
 
 		const activeFilters = hasAnyActiveFilters(filters)
 		const filterButtonClassName = activeFilters
-			? 'rounded-md p-1 transition-colors hover:bg-(--bg-tertiary) text-pro-blue-400 dark:text-pro-blue-200'
-			: 'rounded-md p-1 transition-colors hover:bg-(--bg-tertiary) text-(--text-tertiary)'
+			? 'rounded-md p-1 transition-colors hover:bg-(--legacy-bg-tertiary) text-pro-blue-400 dark:text-pro-blue-200'
+			: 'rounded-md p-1 transition-colors hover:bg-(--legacy-bg-tertiary) text-(--legacy-text-tertiary)'
 
 		const originalNameColumn = protocolsByChainColumns.find((column) => column.id === 'name')
 		const originalCategoryColumn = protocolsByChainColumns.find((column) => column.id === 'category')

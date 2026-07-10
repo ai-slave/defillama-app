@@ -37,10 +37,10 @@ function StreamingChartPlaceholder() {
 function StreamingImagePlaceholder() {
 	return (
 		<div
-			className="my-2 flex w-full max-w-[220px] animate-pulse items-center justify-center overflow-hidden rounded-lg border border-(--old-blue)/20 bg-(--old-blue)/5"
+			className="my-2 flex w-full max-w-[220px] animate-pulse items-center justify-center overflow-hidden rounded-lg border border-(--legacy-old-blue)/20 bg-(--legacy-old-blue)/5"
 			style={{ aspectRatio: '1 / 1' }}
 		>
-			<div className="flex flex-col items-center gap-1.5 text-(--old-blue)">
+			<div className="flex flex-col items-center gap-1.5 text-(--legacy-old-blue)">
 				<Icon name="image-plus" height={24} width={24} />
 				<p className="text-xs">Generating image…</p>
 			</div>
@@ -100,13 +100,13 @@ function GeneratedImageBlock({
 			title={prompt}
 			aria-label={prompt || 'Generated image'}
 			disabled={!interactive}
-			className={`group/genimg relative my-2 block w-full max-w-sm overflow-hidden rounded-lg border border-black/10 bg-black/5 transition focus-visible:ring-2 focus-visible:ring-(--old-blue) focus-visible:outline-none dark:border-white/10 dark:bg-white/5 ${interactive ? 'cursor-pointer hover:border-black/20 dark:hover:border-white/20' : 'cursor-default'}`}
+			className={`group/genimg relative my-2 block w-full max-w-sm overflow-hidden rounded-lg border border-black/10 bg-black/5 transition focus-visible:ring-2 focus-visible:ring-(--legacy-old-blue) focus-visible:outline-none dark:border-white/10 dark:bg-white/5 ${interactive ? 'cursor-pointer hover:border-black/20 dark:hover:border-white/20' : 'cursor-default'}`}
 			style={aspect ? { aspectRatio: aspect } : undefined}
 		>
 			{!loaded ? (
 				<div
 					aria-hidden="true"
-					className="absolute inset-0 animate-pulse bg-gradient-to-br from-(--old-blue)/10 via-(--old-blue)/5 to-transparent"
+					className="absolute inset-0 animate-pulse bg-gradient-to-br from-(--legacy-old-blue)/10 via-(--legacy-old-blue)/5 to-transparent"
 				/>
 			) : null}
 			<img
@@ -345,7 +345,7 @@ function InlineContent({
 			))}
 
 			{isStreaming && message.content ? (
-				<span className="inline-block h-4 w-0.5 animate-pulse bg-(--old-blue)" />
+				<span className="inline-block h-4 w-0.5 animate-pulse bg-(--legacy-old-blue)" />
 			) : null}
 
 			{!isStreaming && toolExecutions && toolExecutions.length > 0 ? (

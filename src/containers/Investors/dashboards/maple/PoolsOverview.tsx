@@ -87,8 +87,8 @@ function PoolsTable({ data }: { data: PoolRow[] }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--text-label)">Active Pools</h3>
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">Active Pools</h3>
 			<VirtualTable instance={instance} skipVirtualization />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>

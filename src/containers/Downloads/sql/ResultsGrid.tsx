@@ -59,12 +59,12 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 	return (
 		<div
 			ref={parentRef}
-			className="relative max-h-[420px] overflow-auto rounded-[4px] border border-(--divider) bg-surface"
+			className="relative max-h-[420px] overflow-auto rounded-[4px] border border-(--legacy-divider) bg-surface"
 		>
 			<div style={{ width: Math.max(totalWidth, 0), minWidth: '100%' }}>
 				<div
 					role="row"
-					className="sticky top-0 z-20 grid border-b border-(--divider) font-mono text-[11px] text-(--text-secondary)"
+					className="sticky top-0 z-20 grid border-b border-(--legacy-divider) font-mono text-[11px] text-(--legacy-text-secondary)"
 					style={{
 						gridTemplateColumns: gridTemplate,
 						height: HEADER_HEIGHT,
@@ -77,15 +77,15 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 							<div
 								role="columnheader"
 								key={col.name + i}
-								className={`flex flex-col justify-center gap-0.5 truncate border-l border-(--divider)/60 px-2.5 first:border-l-0 ${
+								className={`flex flex-col justify-center gap-0.5 truncate border-l border-(--legacy-divider)/60 px-2.5 first:border-l-0 ${
 									isNumeric ? 'items-end text-right' : 'items-start text-left'
 								}`}
 							>
 								<div className="flex items-center gap-1.5">
 									<TypeBadge kind={col.kind} />
-									<span className="truncate font-mono font-semibold text-(--text-primary)">{col.name}</span>
+									<span className="truncate font-mono font-semibold text-(--legacy-text-primary)">{col.name}</span>
 								</div>
-								<span className="truncate font-mono text-[10px] font-normal tracking-tight text-(--text-tertiary)/80">
+								<span className="truncate font-mono text-[10px] font-normal tracking-tight text-(--legacy-text-tertiary)/80">
 									{col.type}
 								</span>
 							</div>
@@ -100,8 +100,8 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 							<div
 								role="row"
 								key={v.index}
-								className={`absolute inset-x-0 grid font-mono text-[11.5px] tabular-nums transition-colors hover:bg-(--primary)/5 ${
-									zebra ? 'bg-(--app-bg)/25' : ''
+								className={`absolute inset-x-0 grid font-mono text-[11.5px] tabular-nums transition-colors hover:bg-(--legacy-primary)/5 ${
+									zebra ? 'bg-(--legacy-app-bg)/25' : ''
 								}`}
 								style={{
 									transform: `translateY(${v.start}px)`,
@@ -118,13 +118,13 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 										<div
 											role="cell"
 											key={col.name + i}
-											className={`flex items-center truncate border-l border-(--divider)/30 px-2.5 first:border-l-0 ${
-												isNumeric ? 'justify-end text-(--text-primary)' : 'text-(--text-primary)'
-											} ${isNull ? 'text-(--text-tertiary)/50' : ''}`}
+											className={`flex items-center truncate border-l border-(--legacy-divider)/30 px-2.5 first:border-l-0 ${
+												isNumeric ? 'justify-end text-(--legacy-text-primary)' : 'text-(--legacy-text-primary)'
+											} ${isNull ? 'text-(--legacy-text-tertiary)/50' : ''}`}
 											title={isNull || isList ? '' : cellToTitle(value)}
 										>
 											{isList ? (
-												<Suspense fallback={<span className="text-[10px] text-(--text-tertiary)">…</span>}>
+												<Suspense fallback={<span className="text-[10px] text-(--legacy-text-tertiary)">…</span>}>
 													<SparklineChart
 														data={(value as Array<number | null>).map(
 															(n, idx) => [idx, n ?? null] as [number, number | null]
@@ -144,7 +144,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 						)
 					})}
 					{result.rows.length === 0 ? (
-						<div className="flex items-center justify-center py-8 font-mono text-[11px] text-(--text-tertiary)">
+						<div className="flex items-center justify-center py-8 font-mono text-[11px] text-(--legacy-text-tertiary)">
 							0 rows
 						</div>
 					) : null}

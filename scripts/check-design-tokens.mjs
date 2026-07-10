@@ -83,11 +83,16 @@ const RULES = [
 		description:
 			'nested scroll containers are thin globally; use scrollbar-none only when the scrollbar must be hidden',
 		pattern: /\bthin-scrollbar\b/g
+	},
+	{
+		id: 'legacy-token-reference',
+		description: 'legacy token references are quarantined; use semantic utilities in new code',
+		pattern: /--legacy-[a-zA-Z0-9-]+/g
 	}
 ]
 
 const files = execSync(
-	'git ls-files --cached --others --exclude-standard -- "src/**/*.tsx" "src/**/*.ts" "src/*.css" "src/**/*.css"',
+	'git ls-files --cached --others --exclude-standard -- "src/**/*.tsx" "src/**/*.ts" "src/*.css" "src/**/*.css" "public/**/*.svg"',
 	{ cwd: ROOT, encoding: 'utf8' }
 )
 	.split('\n')
@@ -103,7 +108,7 @@ for (const file of files) {
 	const content = fs.readFileSync(path.join(ROOT, file), 'utf8')
 	const bucket = isExcludedProductFile(file) ? 'excluded' : 'core'
 	for (const rule of RULES) {
-		if (file.endsWith('.css') && rule.id !== 'explicit-thin-scrollbar') continue
+		if (file.endsWith('.css') && !['explicit-thin-scrollbar', 'legacy-token-reference'].includes(rule.id)) continue
 		const matches = content.match(rule.pattern)
 		if (matches) {
 			counts[bucket][rule.id] += matches.length

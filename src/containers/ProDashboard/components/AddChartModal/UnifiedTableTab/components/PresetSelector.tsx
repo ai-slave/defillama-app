@@ -96,8 +96,8 @@ export function PresetSelector({ currentFilters, onApplyPreset }: PresetSelector
 											onClick={() => onApplyPreset(preset)}
 											className={`rounded-md border px-2.5 py-1.5 text-xs transition ${
 												isActive
-													? 'border-(--primary) bg-(--primary)/10 text-(--primary)'
-													: 'border-(--cards-border) bg-(--cards-bg) text-(--text-secondary) hover:border-(--primary)/40 hover:text-(--text-primary)'
+													? 'border-(--legacy-primary) bg-(--legacy-primary)/10 text-(--legacy-primary)'
+													: 'border-(--legacy-cards-border) bg-(--legacy-cards-bg) text-(--legacy-text-secondary) hover:border-(--legacy-primary)/40 hover:text-(--legacy-text-primary)'
 											}`}
 										>
 											{preset.name}

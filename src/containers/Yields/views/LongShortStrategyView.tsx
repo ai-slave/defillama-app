@@ -53,17 +53,17 @@ const YieldsStrategyPageLongShort = ({ tokens, projectList, chainList, categoryL
 			/>
 
 			{rowsQuery.isLoading && !rowsQuery.data ? (
-				<p className="flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-5">
+				<p className="flex flex-1 items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
 					Loading strategies...
 				</p>
 			) : rowsQuery.isError ? (
-				<p className="flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-5">
+				<p className="flex flex-1 items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
 					Couldn't load strategies.
 				</p>
 			) : poolsData.length > 0 ? (
 				<PaginatedYieldsStrategyTableFR data={poolsData} {...tableProps} />
 			) : (
-				<p className="rounded-md bg-(--cards-bg) p-3 text-center">
+				<p className="rounded-md bg-(--legacy-cards-bg) p-3 text-center">
 					Given a token this finder will display delta neutral "long-short" strategies across all our tracked pools and
 					CEX perpetual swap markets.
 					<br />

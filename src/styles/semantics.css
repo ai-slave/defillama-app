@@ -7,10 +7,9 @@
 
    Naming: 1:1 with the Figma variable names, with the fixes agreed with
    design (Text/links+Text/branded → link; Background/bg-interactive → brand;
-   bg-brand-transparent/-subtle → brand-muted/-faint). The --ld- prefix
-   exists only to avoid colliding with the legacy variables of the same name
-   (--text-primary, --bg-surface, …) that still carry pre-refresh values —
-   PR 2 points those legacy variables at these tokens.
+   bg-brand-transparent/-subtle → brand-muted/-faint). The legacy variables
+   that once occupied the clean names now use the --legacy-* namespace. The
+   --ld- prefix remains until the next focused semantic-token rename phase.
 
    Mode handling: light values on :root, dark overrides under html.dark.
    Never create *-light/*-dark suffixed pairs — the mode lives in the
@@ -53,6 +52,12 @@
 	/* TODO(design): light value for Text/Warning not yet published in the
 	   library pages; using the legacy warning orange until confirmed. */
 	--ld-text-warning: #a15d23;
+
+	/* Feedback roles keep their established public names. Unlike the
+	   quarantined application variables, these are semantic state tokens. */
+	--success: var(--ld-text-data-up);
+	--error: var(--ld-text-data-down);
+	--warning: var(--ld-text-warning);
 
 	/* Stroke (alpha-based: layers correctly on any surface) */
 	--ld-border-very-subtle: #090b0c08; /* Stroke/stroke-very-subtle */

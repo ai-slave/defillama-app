@@ -46,7 +46,7 @@ export function ChainsTableHeader({
 								}}
 								className={`flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm capitalize transition-colors ${
 									selectedPreset === preset.key
-										? 'border-(--primary) bg-(--primary) text-white'
+										? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
 										: 'pro-border pro-bg1 pro-hover-bg pro-text1'
 								}`}
 							>

@@ -68,17 +68,17 @@ const YieldsStrategyPage = ({
 			/>
 
 			{rowsQuery.isLoading && !rowsQuery.data ? (
-				<p className="flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-5">
+				<p className="flex flex-1 items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
 					Loading strategies...
 				</p>
 			) : rowsQuery.isError ? (
-				<p className="flex flex-1 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-5">
+				<p className="flex flex-1 items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
 					Couldn't load strategies.
 				</p>
 			) : poolsData.length > 0 ? (
 				<PaginatedYieldsStrategyTable data={poolsData} {...tableProps} />
 			) : (
-				<p className="rounded-md bg-(--cards-bg) p-3 text-center">
+				<p className="rounded-md bg-(--legacy-cards-bg) p-3 text-center">
 					Given a collateral token this finder will display "lend-borrow-farm" strategies across all our tracked pools.
 					<br />
 					It calculates the total Strategy APY taking into account the individual apy components at each step.

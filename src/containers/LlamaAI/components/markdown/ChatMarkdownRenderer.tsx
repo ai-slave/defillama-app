@@ -166,12 +166,12 @@ function TableWrapper({
 					portal
 					unmountOnHide
 					backdrop={<div className="backdrop fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" />}
-					className="dialog fixed inset-0 z-50 m-auto flex max-h-[80dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col gap-3 overflow-hidden rounded-xl border border-[#e6e6e6] bg-(--cards-bg) shadow-2xl sm:w-[calc(100vw-2rem)] dark:border-[#222324]"
+					className="dialog fixed inset-0 z-50 m-auto flex max-h-[80dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col gap-3 overflow-hidden rounded-xl border border-[#e6e6e6] bg-(--legacy-cards-bg) shadow-2xl sm:w-[calc(100vw-2rem)] dark:border-[#222324]"
 				>
 					<div className="flex shrink-0 items-center justify-between gap-2 border-b border-[#e6e6e6] dark:border-[#222324]">
-						{/* <Ariakit.DialogHeading className="text-sm font-medium text-(--text-form)">Table</Ariakit.DialogHeading> */}
+						{/* <Ariakit.DialogHeading className="text-sm font-medium text-(--legacy-text-form)">Table</Ariakit.DialogHeading> */}
 						<Ariakit.DialogDismiss
-							className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-md text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+							className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-md text-(--legacy-text-form) hover:bg-(--legacy-link-hover-bg) focus-visible:bg-(--legacy-link-hover-bg)"
 							aria-label="Close fullscreen table"
 						>
 							<Icon name="x" height={16} width={16} />
@@ -206,7 +206,7 @@ function TableWrapper({
 				{isStreaming ? (
 					<button
 						type="button"
-						className="flex items-center justify-center gap-1 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs text-(--text-form) disabled:opacity-50"
+						className="flex items-center justify-center gap-1 rounded-md border border-(--legacy-form-control-border) px-2 py-1.5 text-xs text-(--legacy-text-form) disabled:opacity-50"
 						disabled
 						aria-label="View table fullscreen"
 					>
@@ -216,7 +216,7 @@ function TableWrapper({
 					<button
 						type="button"
 						onClick={openTableFullscreen}
-						className="flex items-center justify-center gap-1 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+						className="flex items-center justify-center gap-1 rounded-md border border-(--legacy-form-control-border) px-2 py-1.5 text-xs text-(--legacy-text-form) hover:bg-(--legacy-link-hover-bg) focus-visible:bg-(--legacy-link-hover-bg)"
 						aria-label="View table fullscreen"
 					>
 						<Icon name="expand" className="size-3 shrink-0" />
@@ -224,7 +224,7 @@ function TableWrapper({
 				)}
 				{isStreaming ? (
 					<button
-						className="flex items-center justify-center gap-1 rounded-md border border-(--form-control-border) px-2 py-1.5 text-xs text-(--text-form) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg)"
+						className="flex items-center justify-center gap-1 rounded-md border border-(--legacy-form-control-border) px-2 py-1.5 text-xs text-(--legacy-text-form) hover:bg-(--legacy-link-hover-bg) focus-visible:bg-(--legacy-link-hover-bg)"
 						disabled
 					>
 						<Icon name="download-paper" className="size-3 shrink-0" />
@@ -297,7 +297,7 @@ function EntityLinkRenderer({
 		return (
 			<a
 				href={entityUrl}
-				className="text-(--link-text) no-underline hover:underline"
+				className="text-(--legacy-link-text) no-underline hover:underline"
 				target="_blank"
 				rel="noreferrer noopener"
 				onClick={onClick}
@@ -322,7 +322,7 @@ function EntityLinkRenderer({
 			href={href}
 			target="_blank"
 			rel={external ? 'noopener noreferrer nofollow ugc' : 'noreferrer noopener'}
-			className="text-(--link-text) no-underline hover:underline"
+			className="text-(--legacy-link-text) no-underline hover:underline"
 			onClick={(event) => {
 				onClick?.(event)
 				if (event.defaultPrevented) return
@@ -412,7 +412,7 @@ export function SourcesList({ citations, isStreaming = false }: { citations: str
 
 	return (
 		<details className="flex flex-col text-sm">
-			<summary className="mr-auto flex items-center gap-1 rounded bg-[rgba(0,0,0,0.04)] px-2 py-1 text-(--old-blue) dark:bg-[rgba(145,146,150,0.12)]">
+			<summary className="mr-auto flex items-center gap-1 rounded bg-[rgba(0,0,0,0.04)] px-2 py-1 text-(--legacy-old-blue) dark:bg-[rgba(145,146,150,0.12)]">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="14"
@@ -438,9 +438,9 @@ export function SourcesList({ citations, isStreaming = false }: { citations: str
 						href={normalizedUrl}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="group flex items-start gap-2.5 rounded-lg border border-[#e6e6e6] p-2 hover:border-(--old-blue) hover:bg-(--old-blue)/12 focus-visible:border-(--old-blue) focus-visible:bg-(--old-blue)/12 dark:border-[#222324]"
+						className="group flex items-start gap-2.5 rounded-lg border border-[#e6e6e6] p-2 hover:border-(--legacy-old-blue) hover:bg-(--legacy-old-blue)/12 focus-visible:border-(--legacy-old-blue) focus-visible:bg-(--legacy-old-blue)/12 dark:border-[#222324]"
 					>
-						<span className="rounded bg-[rgba(0,0,0,0.04)] px-1.5 text-(--old-blue) dark:bg-[rgba(145,146,150,0.12)]">
+						<span className="rounded bg-[rgba(0,0,0,0.04)] px-1.5 text-(--legacy-old-blue) dark:bg-[rgba(145,146,150,0.12)]">
 							{citationNumber}
 						</span>
 						<span className="overflow-hidden text-ellipsis whitespace-nowrap">{normalizedUrl}</span>
@@ -570,7 +570,7 @@ export function ChatMarkdownRenderer({
 			th: ({ children, node: _node, ...props }: MarkdownCellProps) => (
 				<th
 					{...props}
-					className={`border border-[#e6e6e6] bg-(--app-bg) px-3 py-2 align-top whitespace-nowrap dark:border-[#222324] [.llamaai-table-fullscreen_&]:[overflow-wrap:anywhere] [.llamaai-table-fullscreen_&]:break-words [.llamaai-table-fullscreen_&]:whitespace-normal ${props.className ?? ''}`}
+					className={`border border-[#e6e6e6] bg-(--legacy-app-bg) px-3 py-2 align-top whitespace-nowrap dark:border-[#222324] [.llamaai-table-fullscreen_&]:[overflow-wrap:anywhere] [.llamaai-table-fullscreen_&]:break-words [.llamaai-table-fullscreen_&]:whitespace-normal ${props.className ?? ''}`}
 				>
 					{children}
 				</th>

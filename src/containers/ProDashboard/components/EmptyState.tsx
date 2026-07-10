@@ -10,11 +10,11 @@ export function EmptyState({ onAddChart, onGenerateWithAI, isReadOnly = false }:
 	const showAIGeneration = onGenerateWithAI && !isReadOnly
 
 	return (
-		<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) px-1 py-12">
-			<Icon name="bar-chart-2" height={48} width={48} className="text-(--text-label)" />
+		<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-1 py-12">
+			<Icon name="bar-chart-2" height={48} width={48} className="text-(--legacy-text-label)" />
 			<h1 className="text-3xl font-bold">{isReadOnly ? 'This dashboard is empty' : 'No charts added yet'}</h1>
 			{!isReadOnly ? (
-				<p className="text-center text-base text-(--text-label)">
+				<p className="text-center text-base text-(--legacy-text-label)">
 					Start building your dashboard by adding charts
 					{showAIGeneration ? ' manually or generate with LlamaAI' : ' manually'}
 				</p>

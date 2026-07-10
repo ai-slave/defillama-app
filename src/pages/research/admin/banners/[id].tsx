@@ -23,16 +23,16 @@ function EditBannerInner({ id }: { id: string }) {
 	})
 
 	if (isLoading) {
-		return <div className="mx-auto py-24 text-center text-sm text-(--text-tertiary)">Loading…</div>
+		return <div className="mx-auto py-24 text-center text-sm text-(--legacy-text-tertiary)">Loading…</div>
 	}
 
 	if (error || !banner) {
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load banner'
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-red-500/30 bg-red-500/5 p-6">
-				<h1 className="heading-sm text-(--text-primary)">Couldn't load banner</h1>
-				<p className="text-sm text-(--text-secondary)">{message}</p>
-				<Link href="/research/admin/banners" className="text-sm text-(--link-text) hover:underline">
+				<h1 className="heading-sm text-(--legacy-text-primary)">Couldn't load banner</h1>
+				<p className="text-sm text-(--legacy-text-secondary)">{message}</p>
+				<Link href="/research/admin/banners" className="text-sm text-(--legacy-link-text) hover:underline">
 					Back to banners
 				</Link>
 			</div>
@@ -45,11 +45,11 @@ function EditBannerInner({ id }: { id: string }) {
 				<header className="pt-2 pb-2">
 					<Link
 						href="/research/admin/banners"
-						className="inline-flex items-center gap-1 text-xs text-(--text-tertiary) transition-colors hover:text-(--text-primary)"
+						className="inline-flex items-center gap-1 text-xs text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-text-primary)"
 					>
 						<span aria-hidden>←</span> Banners
 					</Link>
-					<h1 className="mt-2 text-3xl font-semibold tracking-tight text-(--text-primary)">Edit banner</h1>
+					<h1 className="mt-2 text-3xl font-semibold tracking-tight text-(--legacy-text-primary)">Edit banner</h1>
 				</header>
 			</div>
 			<BannerForm banner={banner} />

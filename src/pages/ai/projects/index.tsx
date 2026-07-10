@@ -40,7 +40,7 @@ export default function ProjectsIndexPage() {
 	if (!user) {
 		return (
 			<>
-				<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-1">
+				<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1">
 					<p className="flex items-center gap-1 text-center">
 						Please{' '}
 						<button onClick={signInDialogStore.show} className="underline">

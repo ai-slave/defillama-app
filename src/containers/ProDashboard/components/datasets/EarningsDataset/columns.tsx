@@ -36,7 +36,7 @@ export const earningsDatasetColumns: ColumnDef<IEarningsRow>[] = [
 					<TokenLogo size={20} src={row.original.logo} alt={`Logo of ${name}`} data-lgonly />
 					<BasicLink
 						href={`/earnings/${row.original.slug}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text)"
+						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text)"
 					>
 						{name}
 					</BasicLink>
@@ -50,7 +50,7 @@ export const earningsDatasetColumns: ColumnDef<IEarningsRow>[] = [
 		accessorKey: 'category',
 		cell: ({ getValue }) => {
 			const value = getValue() as string
-			return <span className="text-sm text-(--text-secondary)">{value || '-'}</span>
+			return <span className="text-sm text-(--legacy-text-secondary)">{value || '-'}</span>
 		},
 		size: 120
 	},

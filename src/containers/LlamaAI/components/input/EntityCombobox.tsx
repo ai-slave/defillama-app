@@ -48,7 +48,7 @@ export function EntityComboboxPopover({
 				if (!textarea) return null
 				return getAnchorRect(textarea)
 			}}
-			className="relative z-50 flex max-h-(--popover-available-height) max-w-[280px] min-w-[100px] flex-col overflow-auto overscroll-contain rounded-lg border border-[#e6e6e6] bg-(--app-bg) shadow-lg dark:border-[#222324]"
+			className="relative z-50 flex max-h-(--popover-available-height) max-w-[280px] min-w-[100px] flex-col overflow-auto overscroll-contain rounded-lg border border-[#e6e6e6] bg-(--legacy-app-bg) shadow-lg dark:border-[#222324]"
 		>
 			{hasMatches && matches ? (
 				matches.map(({ id, name, logo, type }) => (

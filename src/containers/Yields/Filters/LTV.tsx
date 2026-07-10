@@ -32,7 +32,7 @@ export function LTV({ placeholder }: { placeholder: string }) {
 				placeholder={placeholder}
 				onChange={onChange}
 				type="number"
-				className="rounded-md border border-(--cards-border) bg-(--app-bg) px-2 py-1 text-base"
+				className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-2 py-1 text-base"
 			/>
 		</div>
 	)

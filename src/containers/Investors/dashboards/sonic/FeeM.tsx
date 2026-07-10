@@ -23,24 +23,24 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 
 function KpiCard({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<span className="text-xs font-medium tracking-wide text-(--text-label)">{label}</span>
-			<span className="text-2xl font-semibold text-(--text-primary)">{value}</span>
+		<div className="flex flex-col gap-1 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<span className="text-xs font-medium tracking-wide text-(--legacy-text-label)">{label}</span>
+			<span className="text-2xl font-semibold text-(--legacy-text-primary)">{value}</span>
 		</div>
 	)
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--text-label)">{title}</h3>
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">{title}</h3>
 			{children}
 		</div>
 	)
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-(--text-label) uppercase">{children}</h2>
+	return <h2 className="text-xs font-semibold tracking-wider text-(--legacy-text-label) uppercase">{children}</h2>
 }
 
 function formatNumber(n: number): string {
@@ -175,7 +175,7 @@ const columns = [
 	columnHelper.display({
 		id: 'rank',
 		header: '#',
-		cell: (info) => <span className="text-(--text-label)">{info.row.index + 1}</span>,
+		cell: (info) => <span className="text-(--legacy-text-label)">{info.row.index + 1}</span>,
 		size: 40
 	}),
 	columnHelper.accessor('name', {
@@ -278,13 +278,15 @@ export default function FeeM() {
 	return (
 		<div className="flex flex-col gap-6">
 			{/* FeeM Introduction */}
-			<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-5">
-				<p className="text-sm leading-relaxed text-(--text-secondary)">
+			<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
+				<p className="text-sm leading-relaxed text-(--legacy-text-secondary)">
 					FeeM lets builders earn directly from the transaction activity they generate on Sonic. It creates a built-in
 					revenue stream at the network layer, allowing apps to capture value from usage without needing a separate
 					chain.
 				</p>
-				<h3 className="mt-4 text-xs font-semibold tracking-wider text-(--text-label) uppercase">Fee Distribution</h3>
+				<h3 className="mt-4 text-xs font-semibold tracking-wider text-(--legacy-text-label) uppercase">
+					Fee Distribution
+				</h3>
 				<div className="mt-3 flex h-10 overflow-hidden rounded-lg">
 					<div className="flex items-center justify-center" style={{ width: '90%', background: '#3b5d88' }}>
 						<span className="text-sm font-bold text-white">90%</span>
@@ -295,12 +297,14 @@ export default function FeeM() {
 				</div>
 				<div className="mt-2.5 flex items-start text-sm">
 					<div className="flex-1">
-						<span className="font-medium text-(--text-primary)">App / Builder</span>
-						<span className="ml-2 text-xs text-(--text-label)">Direct revenue, app incentives, or gas subsidies</span>
+						<span className="font-medium text-(--legacy-text-primary)">App / Builder</span>
+						<span className="ml-2 text-xs text-(--legacy-text-label)">
+							Direct revenue, app incentives, or gas subsidies
+						</span>
 					</div>
 					<div className="text-right" style={{ minWidth: '80px' }}>
-						<span className="font-medium text-(--text-primary)">Validators</span>
-						<span className="ml-2 text-xs text-(--text-label)">50% burned</span>
+						<span className="font-medium text-(--legacy-text-primary)">Validators</span>
+						<span className="ml-2 text-xs text-(--legacy-text-label)">50% burned</span>
 					</div>
 				</div>
 			</div>
@@ -338,15 +342,15 @@ export default function FeeM() {
 			{/* FeeM Leaderboard */}
 			<div className="flex flex-col gap-4">
 				<SectionHeader>FeeM Leaderboard</SectionHeader>
-				<div className="overflow-x-auto rounded-lg border border-(--cards-border) bg-(--cards-bg)">
+				<div className="overflow-x-auto rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 					<table className="w-full">
 						<thead>
 							{table.getHeaderGroups().map((headerGroup) => (
-								<tr key={headerGroup.id} className="border-b border-(--cards-border)">
+								<tr key={headerGroup.id} className="border-b border-(--legacy-cards-border)">
 									{headerGroup.headers.map((header) => (
 										<th
 											key={header.id}
-											className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-(--text-label) uppercase"
+											className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-(--legacy-text-label) uppercase"
 											style={{ width: header.getSize() }}
 											onClick={header.column.getToggleSortingHandler()}
 										>
@@ -365,9 +369,12 @@ export default function FeeM() {
 						</thead>
 						<tbody>
 							{table.getRowModel().rows.map((row) => (
-								<tr key={row.id} className="border-b border-(--cards-border) last:border-b-0 hover:bg-(--sl-hover-bg)">
+								<tr
+									key={row.id}
+									className="border-b border-(--legacy-cards-border) last:border-b-0 hover:bg-(--sl-hover-bg)"
+								>
 									{row.getVisibleCells().map((cell) => (
-										<td key={cell.id} className="px-4 py-2.5 text-sm text-(--text-primary)">
+										<td key={cell.id} className="px-4 py-2.5 text-sm text-(--legacy-text-primary)">
 											{typeof cell.column.columnDef.cell === 'function'
 												? cell.column.columnDef.cell(cell.getContext())
 												: (cell.getValue() as string)}
@@ -380,22 +387,22 @@ export default function FeeM() {
 
 					{/* Pagination */}
 					{table.getPageCount() > 1 && (
-						<div className="flex items-center justify-between border-t border-(--cards-border) px-4 py-3">
-							<span className="text-xs text-(--text-label)">
+						<div className="flex items-center justify-between border-t border-(--legacy-cards-border) px-4 py-3">
+							<span className="text-xs text-(--legacy-text-label)">
 								Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
 							</span>
 							<div className="flex gap-1">
 								<button
 									onClick={() => table.previousPage()}
 									disabled={!table.getCanPreviousPage()}
-									className="rounded-md border border-(--cards-border) px-3 py-1 text-xs text-(--text-secondary) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-40"
+									className="rounded-md border border-(--legacy-cards-border) px-3 py-1 text-xs text-(--legacy-text-secondary) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-40"
 								>
 									Prev
 								</button>
 								<button
 									onClick={() => table.nextPage()}
 									disabled={!table.getCanNextPage()}
-									className="rounded-md border border-(--cards-border) px-3 py-1 text-xs text-(--text-secondary) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-40"
+									className="rounded-md border border-(--legacy-cards-border) px-3 py-1 text-xs text-(--legacy-text-secondary) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-40"
 								>
 									Next
 								</button>

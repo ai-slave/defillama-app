@@ -12,7 +12,7 @@ interface ActiveFilterPillsProps {
 
 export function ActiveFilterPills({ pills }: ActiveFilterPillsProps) {
 	if (pills.length === 0) {
-		return <p className="text-[11px] text-(--text-tertiary)">No filters applied yet.</p>
+		return <p className="text-[11px] text-(--legacy-text-tertiary)">No filters applied yet.</p>
 	}
 
 	return (
@@ -22,11 +22,16 @@ export function ActiveFilterPills({ pills }: ActiveFilterPillsProps) {
 					type="button"
 					key={pill.id}
 					onClick={pill.onRemove}
-					className="group flex items-center gap-1 rounded-full border border-(--cards-border) bg-(--cards-bg-alt)/40 px-3 py-1 text-[11px] font-medium text-(--text-secondary) transition hover:border-(--primary) hover:text-(--primary)"
+					className="group flex items-center gap-1 rounded-full border border-(--legacy-cards-border) bg-(--cards-bg-alt)/40 px-3 py-1 text-[11px] font-medium text-(--legacy-text-secondary) transition hover:border-(--legacy-primary) hover:text-(--legacy-primary)"
 					aria-label={`Remove filter ${pill.label}`}
 				>
 					<span className="max-w-[140px] truncate">{pill.label}</span>
-					<Icon name="x" height={10} width={10} className="text-(--text-tertiary) group-hover:text-(--primary)" />
+					<Icon
+						name="x"
+						height={10}
+						width={10}
+						className="text-(--legacy-text-tertiary) group-hover:text-(--legacy-primary)"
+					/>
 				</button>
 			))}
 		</div>

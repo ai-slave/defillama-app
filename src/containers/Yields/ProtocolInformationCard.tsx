@@ -21,7 +21,7 @@ export function ProtocolInformationCard({
 	assetTokens?: string[]
 }) {
 	return (
-		<div className="flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 xl:p-4">
+		<div className="flex flex-col gap-2 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-2 xl:p-4">
 			<h3 className="text-base font-semibold">Information</h3>
 			{projectName && projectSlug ? (
 				<p className="flex items-center gap-1">

@@ -47,7 +47,7 @@ function SavedFilters({ currentFilters }) {
 		<div className="ml-auto flex items-center gap-2">
 			<button
 				onClick={() => setDialogOpen(true)}
-				className="ml-auto flex items-center justify-center gap-1 rounded-md bg-(--link-bg) p-2 text-xs whitespace-nowrap text-(--link-text) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) disabled:cursor-not-allowed disabled:opacity-50"
+				className="ml-auto flex items-center justify-center gap-1 rounded-md bg-(--legacy-link-bg) p-2 text-xs whitespace-nowrap text-(--legacy-link-text) hover:bg-(--legacy-link-hover-bg) focus-visible:bg-(--legacy-link-hover-bg) disabled:cursor-not-allowed disabled:opacity-50"
 			>
 				Save Current Filters
 			</button>
@@ -70,7 +70,7 @@ function SavedFilters({ currentFilters }) {
 				}}
 			/>
 			<Ariakit.MenuProvider>
-				<Ariakit.MenuButton className="flex cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md bg-(--btn-bg) px-3 py-2 text-xs text-(--text-primary) hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)">
+				<Ariakit.MenuButton className="flex cursor-pointer flex-nowrap items-center justify-between gap-2 rounded-md bg-(--legacy-btn-bg) px-3 py-2 text-xs text-(--legacy-text-primary) hover:bg-(--legacy-btn-hover-bg) focus-visible:bg-(--legacy-btn-hover-bg)">
 					Saved Filters
 					<Ariakit.MenuButtonArrow />
 				</Ariakit.MenuButton>
@@ -81,7 +81,7 @@ function SavedFilters({ currentFilters }) {
 					wrapperProps={{
 						className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
 					}}
-					className="z-10 flex max-h-[60dvh] min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) max-sm:drawer max-sm:rounded-b-none sm:max-w-md dark:border-[hsl(204,3%,32%)]"
+					className="z-10 flex max-h-[60dvh] min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--legacy-bg-main) max-sm:drawer max-sm:rounded-b-none sm:max-w-md dark:border-[hsl(204,3%,32%)]"
 				>
 					<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
 						<Icon name="x" className="size-5" />
@@ -91,7 +91,7 @@ function SavedFilters({ currentFilters }) {
 						<Ariakit.MenuItem
 							key={`custom-filter-${name}`}
 							onClick={() => handleLoad(name)}
-							className="flex shrink-0 cursor-pointer items-center justify-between gap-4 overflow-hidden border-b border-(--form-control-border) px-3 py-2 text-ellipsis whitespace-nowrap cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)"
+							className="flex shrink-0 cursor-pointer items-center justify-between gap-4 overflow-hidden border-b border-(--legacy-form-control-border) px-3 py-2 text-ellipsis whitespace-nowrap cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--legacy-primary-hover) focus-visible:bg-(--legacy-primary-hover) data-active-item:bg-(--legacy-primary-hover)"
 						>
 							{name}
 							<button
@@ -149,7 +149,7 @@ export function YieldFiltersV2({
 	const borrow = typeof query.borrow === 'string' ? query.borrow : null
 
 	return (
-		<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+		<div className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 			<div className="flex flex-wrap items-center gap-2 p-3">
 				<h1 className="font-semibold">{header}</h1>
 				{trackingStats ? <p>{trackingStats}</p> : null}
@@ -159,7 +159,7 @@ export function YieldFiltersV2({
 				{showPresetFilters ? (
 					<>
 						<PresetFilters />
-						<div className="border-t border-(--form-control-border)" />
+						<div className="border-t border-(--legacy-form-control-border)" />
 					</>
 				) : null}
 				{strategyInputsData ? (

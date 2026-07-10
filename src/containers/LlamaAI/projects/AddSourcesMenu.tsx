@@ -39,7 +39,7 @@ export function AddSourcesMenu({
 					gutter={gutter}
 					className={
 						menuClassName ??
-						'z-50 min-w-[240px] rounded-xl border border-[#e6e6e6] bg-(--cards-bg) p-1 text-sm shadow-xl dark:border-[#222324] dark:bg-[#161718]'
+						'z-50 min-w-[240px] rounded-xl border border-[#e6e6e6] bg-(--legacy-cards-bg) p-1 text-sm shadow-xl dark:border-[#222324] dark:bg-[#161718]'
 					}
 				>
 					{onAddPhotosFiles ? (

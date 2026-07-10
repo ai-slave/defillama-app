@@ -71,7 +71,7 @@ export function TextChip({
 				type="button"
 				onClick={onOpen}
 				title={isPasted ? 'Open pasted content' : `Open ${name}`}
-				className="flex h-16 w-52 cursor-pointer flex-col justify-between rounded-lg border border-[#E6E6E6] bg-[#fafafa] px-3 py-2 text-left transition-colors hover:border-(--old-blue)/40 hover:bg-[#f0f0f0] dark:border-[#39393E] dark:bg-[#1a1b1c] dark:hover:border-(--old-blue)/40 dark:hover:bg-[#222324]"
+				className="flex h-16 w-52 cursor-pointer flex-col justify-between rounded-lg border border-[#E6E6E6] bg-[#fafafa] px-3 py-2 text-left transition-colors hover:border-(--legacy-old-blue)/40 hover:bg-[#f0f0f0] dark:border-[#39393E] dark:bg-[#1a1b1c] dark:hover:border-(--legacy-old-blue)/40 dark:hover:bg-[#222324]"
 			>
 				<p
 					className={`truncate text-[11px] leading-tight ${
@@ -83,7 +83,7 @@ export function TextChip({
 					{topLine}
 				</p>
 				<div className="flex items-center gap-1.5">
-					<span className="rounded bg-(--old-blue)/15 px-1.5 py-px font-sans text-[9px] font-bold tracking-[0.12em] text-[#1853A8] uppercase dark:text-[#4B86DB]">
+					<span className="rounded bg-(--legacy-old-blue)/15 px-1.5 py-px font-sans text-[9px] font-bold tracking-[0.12em] text-[#1853A8] uppercase dark:text-[#4B86DB]">
 						{badgeLabel}
 					</span>
 					<span className="font-sans text-[10px] text-[#888] dark:text-[#666]">{size}</span>
@@ -204,7 +204,7 @@ export function ImageUploadButton({ onClick }: ImageUploadButtonProps) {
 					type="button"
 					onClick={onClick}
 					aria-label="Attach file"
-					className="group flex size-7 items-center justify-center rounded-lg border border-[#DEDEDE] hover:bg-(--old-blue)/10 disabled:opacity-25 dark:border-[#2F3336] dark:hover:bg-(--old-blue)/15"
+					className="group flex size-7 items-center justify-center rounded-lg border border-[#DEDEDE] hover:bg-(--legacy-old-blue)/10 disabled:opacity-25 dark:border-[#2F3336] dark:hover:bg-(--legacy-old-blue)/15"
 				/>
 			}
 		>
@@ -222,7 +222,7 @@ export function DragOverlay({ isDragging, externalDragging }: DragOverlayProps) 
 	if (!isDragging && !externalDragging) return null
 
 	return (
-		<div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center rounded-lg border-2 border-dashed border-(--old-blue) bg-(--old-blue)/10 backdrop-blur-[2px]">
+		<div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center rounded-lg border-2 border-dashed border-(--legacy-old-blue) bg-(--legacy-old-blue)/10 backdrop-blur-[2px]">
 			<div className="flex items-center gap-2">
 				<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36" fill="none">
 					<path

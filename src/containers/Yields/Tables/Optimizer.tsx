@@ -108,7 +108,7 @@ const columns = [
 			return (
 				<span
 					data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-					className="data-[strike=true]:text-(--text-disabled)"
+					className="data-[strike=true]:text-(--legacy-text-disabled)"
 				>
 					{value == null ? null : formattedNum(value, true)}
 				</span>
@@ -128,7 +128,7 @@ const columns = [
 				<span>
 					${info.getValue() == null ? '0' : formattedNum(info.getValue())}
 					<br />
-					<span className="text-text-(--text-form)">
+					<span className="text-text-(--legacy-text-form)">
 						{formattedNum(info.row.original.lendAmount)} {info.row.original.symbol}
 					</span>
 				</span>
@@ -148,7 +148,7 @@ const columns = [
 				<span>
 					${info.getValue() == null ? '0' : formattedNum(info.getValue())}
 					<br />
-					<span className="text-text-(--text-form)">
+					<span className="text-text-(--legacy-text-form)">
 						{formattedNum(info.row.original.borrowAmount)} {info.row.original.borrow.symbol}
 					</span>
 				</span>
@@ -281,7 +281,7 @@ const columns = [
 			return (
 				<span
 					data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-					className="data-[strike=true]:text-(--text-disabled)"
+					className="data-[strike=true]:text-(--legacy-text-disabled)"
 				>
 					{value == null ? '' : formattedNum(Number(value) * 100) + '%'}
 				</span>
@@ -301,7 +301,7 @@ const columns = [
 			return (
 				<span
 					data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-					className="data-[strike=true]:text-(--text-disabled)"
+					className="data-[strike=true]:text-(--legacy-text-disabled)"
 				>
 					{info.getValue() == null ? '' : formattedNum(info.getValue(), true)}
 				</span>
@@ -320,7 +320,7 @@ const columns = [
 			return (
 				<span
 					data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-					className="data-[strike=true]:text-(--text-disabled)"
+					className="data-[strike=true]:text-(--legacy-text-disabled)"
 				>
 					{info.getValue() == null ? '' : formattedNum(info.getValue(), true)}
 				</span>

@@ -58,7 +58,7 @@ export function YieldsTableHeader({
 						placeholder="Search pools..."
 						value={poolName}
 						onChange={(e) => setPoolName(e.target.value)}
-						className="w-full rounded-md border pro-border bg-(--bg-glass) px-3 py-1.5 text-sm pro-text1 focus:border-(--primary) focus:outline-hidden"
+						className="w-full rounded-md border pro-border bg-(--legacy-bg-glass) px-3 py-1.5 text-sm pro-text1 focus:border-(--legacy-primary) focus:outline-hidden"
 					/>
 				</div>
 			</div>
@@ -71,7 +71,7 @@ export function YieldsTableHeader({
 							onClick={() => applyPreset(preset)}
 							className={`flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm capitalize transition-colors ${
 								activePreset === preset
-									? 'border-(--primary) bg-(--primary) text-white'
+									? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
 									: 'pro-border pro-bg1 pro-hover-bg pro-text1'
 							}`}
 						>
@@ -90,7 +90,7 @@ export function YieldsTableHeader({
 						<Icon name="align-left" height={14} width={14} />
 						Filters
 						{activeFilterCount > 0 ? (
-							<span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-(--primary) text-xs text-white">
+							<span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-(--legacy-primary) text-xs text-white">
 								{activeFilterCount}
 							</span>
 						) : null}

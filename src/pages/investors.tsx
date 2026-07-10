@@ -111,7 +111,7 @@ function OdysseyIcon() {
 		<img
 			src={tokenIconUrl('odyssey-finance', 64)}
 			alt="Odyssey Finance"
-			className="size-9 shrink-0 rounded-full bg-(--cards-bg) object-contain"
+			className="size-9 shrink-0 rounded-full bg-(--legacy-cards-bg) object-contain"
 		/>
 	)
 }
@@ -121,7 +121,7 @@ function FlareIcon() {
 		<img
 			src={chainIconUrl('flare', 64)}
 			alt="Flare"
-			className="size-9 shrink-0 rounded-full bg-(--cards-bg) object-contain"
+			className="size-9 shrink-0 rounded-full bg-(--legacy-cards-bg) object-contain"
 		/>
 	)
 }
@@ -131,7 +131,7 @@ function ThorchainIcon() {
 		<img
 			src={chainIconUrl('thorchain', 64)}
 			alt="THORChain"
-			className="size-9 shrink-0 rounded-full bg-(--cards-bg) object-contain"
+			className="size-9 shrink-0 rounded-full bg-(--legacy-cards-bg) object-contain"
 		/>
 	)
 }
@@ -275,7 +275,7 @@ function useStampCells(): StampCell[] {
 
 const GRID_PATTERN = {
 	backgroundImage:
-		'linear-gradient(var(--cards-border) 1px, transparent 1px), linear-gradient(90deg, var(--cards-border) 1px, transparent 1px)',
+		'linear-gradient(var(--legacy-cards-border) 1px, transparent 1px), linear-gradient(90deg, var(--legacy-cards-border) 1px, transparent 1px)',
 	backgroundSize: '48px 48px'
 } as const
 
@@ -302,7 +302,7 @@ function Backdrop() {
 				{GRID_CELLS.map((cell) => (
 					<div
 						key={`${cell.left}-${cell.top}`}
-						className={`absolute size-12 ${cell.accent ? 'bg-(--sl-accent)' : 'bg-(--text-primary)'}`}
+						className={`absolute size-12 ${cell.accent ? 'bg-(--sl-accent)' : 'bg-(--legacy-text-primary)'}`}
 						style={{ left: cell.left, top: cell.top, opacity: cell.opacity }}
 					/>
 				))}
@@ -417,7 +417,7 @@ function ProjectCard({ project }: { project: InvestorsProject }) {
 
 	return (
 		<div
-			className={`group relative isolate flex flex-col overflow-hidden rounded-[20px] border border-(--cards-border) bg-(--cards-bg) transition-[border-color,box-shadow] duration-200 ${
+			className={`group relative isolate flex flex-col overflow-hidden rounded-[20px] border border-(--legacy-cards-border) bg-(--legacy-cards-bg) transition-[border-color,box-shadow] duration-200 ${
 				content?.hoverClass ?? 'hover:border-(--sl-accent)'
 			}`}
 		>
@@ -425,9 +425,9 @@ function ProjectCard({ project }: { project: InvestorsProject }) {
 			<div className="flex flex-1 flex-col gap-3 p-4">
 				<div className="flex items-center gap-2.5">
 					{content?.icon ?? <ProjectFallbackIcon name={project.name} />}
-					<span className="text-base font-semibold text-(--text-primary)">{project.name}</span>
+					<span className="text-base font-semibold text-(--legacy-text-primary)">{project.name}</span>
 				</div>
-				<p className="text-xs leading-relaxed text-(--text-secondary)">
+				<p className="text-xs leading-relaxed text-(--legacy-text-secondary)">
 					{content?.description ?? `Verified metrics and reporting for ${project.name}.`}
 				</p>
 				<div className="mt-auto flex flex-wrap gap-1.5">
@@ -485,17 +485,17 @@ export default function InvestorsPage() {
 	return (
 		<>
 			<SEO title="DefiLlama" description="Verified metrics powered by DefiLlama" canonicalUrl={null} />
-			<div className="investors-dashboard relative col-span-full flex min-h-screen flex-col items-center overflow-hidden bg-(--app-bg) px-5 pt-12 pb-24 sm:pt-16">
+			<div className="investors-dashboard relative col-span-full flex min-h-screen flex-col items-center overflow-hidden bg-(--legacy-app-bg) px-5 pt-12 pb-24 sm:pt-16">
 				<Backdrop />
 				<ThemeSwitch variant="pill" size="sm" className="absolute top-4 right-4 z-10" />
 
 				<div className="ir-rise relative">
 					<Logo />
 				</div>
-				<h1 className="ir-rise relative mt-8 max-w-2xl text-center text-[28px] leading-tight text-(--text-primary) [animation-delay:60ms] sm:text-3xl">
+				<h1 className="ir-rise relative mt-8 max-w-2xl text-center text-[28px] leading-tight text-(--legacy-text-primary) [animation-delay:60ms] sm:text-3xl">
 					Investor Relations built on <span className="font-semibold text-(--sl-accent)">verified data</span>
 				</h1>
-				<p className="ir-rise relative mt-3 max-w-[560px] text-center text-[13px] leading-relaxed font-light tracking-[0.12em] text-(--text-primary)/80 [animation-delay:110ms]">
+				<p className="ir-rise relative mt-3 max-w-[560px] text-center text-[13px] leading-relaxed font-light tracking-[0.12em] text-(--legacy-text-primary)/80 [animation-delay:110ms]">
 					A dedicated hub where DeFi protocols publish official, DefiLlama-attested metrics, reports, and calls — one
 					canonical link for everything your investors need.
 				</p>
@@ -521,20 +521,20 @@ export default function InvestorsPage() {
 
 				<section
 					id="how-it-works"
-					className="ir-rise relative mt-14 grid w-full max-w-[968px] scroll-mt-16 grid-cols-2 border-t border-(--cards-border) [animation-delay:220ms] lg:grid-cols-4"
+					className="ir-rise relative mt-14 grid w-full max-w-[968px] scroll-mt-16 grid-cols-2 border-t border-(--legacy-cards-border) [animation-delay:220ms] lg:grid-cols-4"
 				>
 					{VALUE_PROPS.map((prop, i) => (
 						<div
 							key={prop.title}
 							className={`flex flex-col gap-3 p-4 sm:p-6 lg:py-7 lg:pr-6 lg:pl-12 ${
-								i > 0 ? 'lg:border-l lg:border-(--cards-border)' : ''
+								i > 0 ? 'lg:border-l lg:border-(--legacy-cards-border)' : ''
 							}`}
 						>
 							<h2 className="flex items-center gap-2 text-[13px] font-bold tracking-[0.12em] text-(--sl-accent) uppercase">
 								{prop.icon}
 								{prop.title}
 							</h2>
-							<p className="max-w-[160px] text-[11px] leading-[1.35] font-light tracking-[0.12em] text-(--text-primary)/90 capitalize">
+							<p className="max-w-[160px] text-[11px] leading-[1.35] font-light tracking-[0.12em] text-(--legacy-text-primary)/90 capitalize">
 								{prop.description}
 							</p>
 						</div>
@@ -542,7 +542,7 @@ export default function InvestorsPage() {
 				</section>
 
 				<section className="ir-rise relative mt-10 w-full max-w-[968px] [animation-delay:280ms]">
-					<h2 className="text-xs font-medium tracking-[0.06em] text-(--text-secondary) uppercase">
+					<h2 className="text-xs font-medium tracking-[0.06em] text-(--legacy-text-secondary) uppercase">
 						Explore dashboards
 					</h2>
 					<div className="mt-4 grid auto-rows-fr grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
@@ -553,13 +553,13 @@ export default function InvestorsPage() {
 						{INVESTORS_COMING_SOON_PROJECTS.map((project) => (
 							<div
 								key={project.id}
-								className="relative isolate flex flex-col items-center justify-center gap-3 overflow-hidden rounded-[20px] border border-(--cards-border) bg-(--cards-bg) p-5 text-center"
+								className="relative isolate flex flex-col items-center justify-center gap-3 overflow-hidden rounded-[20px] border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5 text-center"
 							>
 								<span className="flex size-14 items-center justify-center opacity-50">
 									{COMING_SOON_ICONS[project.id] ?? <ProjectFallbackIcon name={project.name} />}
 								</span>
-								<span className="text-base font-semibold text-(--text-primary)/60">{project.name}</span>
-								<span className="text-xs font-light tracking-[0.2em] text-(--text-primary)/60 uppercase">
+								<span className="text-base font-semibold text-(--legacy-text-primary)/60">{project.name}</span>
+								<span className="text-xs font-light tracking-[0.2em] text-(--legacy-text-primary)/60 uppercase">
 									Coming Soon
 								</span>
 							</div>
@@ -567,7 +567,7 @@ export default function InvestorsPage() {
 					</div>
 				</section>
 
-				<div className="relative mt-10 h-px w-full max-w-[968px] bg-(--cards-border)" />
+				<div className="relative mt-10 h-px w-full max-w-[968px] bg-(--legacy-cards-border)" />
 
 				<section className="ir-rise relative mt-7 grid w-full max-w-[968px] grid-cols-1 overflow-hidden rounded-[20px] bg-linear-to-r from-[#2172e51f] from-[42%] to-[#716e7512] to-[58%] [animation-delay:340ms] md:grid-cols-2 dark:from-[#1f67d229] dark:to-[#716e7514]">
 					<div className="flex flex-col gap-5 px-7 py-8 md:px-13">
@@ -575,7 +575,7 @@ export default function InvestorsPage() {
 							<Icon name="check-circle" className="size-5.5 shrink-0" />
 							What it is
 						</h2>
-						<ul className="flex flex-col gap-3.5 text-[13px] leading-snug text-(--text-primary)">
+						<ul className="flex flex-col gap-3.5 text-[13px] leading-snug text-(--legacy-text-primary)">
 							{WHAT_IT_IS.map((line) => (
 								<li key={line} className="flex items-start gap-2.5">
 									<Icon name="check" className="mt-0.5 size-4 shrink-0 text-(--sl-accent)" />
@@ -584,13 +584,13 @@ export default function InvestorsPage() {
 							))}
 						</ul>
 					</div>
-					<div className="absolute top-1/2 left-1/2 hidden h-[60%] w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-(--form-control-border) md:block" />
-					<div className="flex flex-col gap-5 border-t border-(--cards-border) px-7 py-8 md:border-t-0 md:px-13">
+					<div className="absolute top-1/2 left-1/2 hidden h-[60%] w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-(--legacy-form-control-border) md:block" />
+					<div className="flex flex-col gap-5 border-t border-(--legacy-cards-border) px-7 py-8 md:border-t-0 md:px-13">
 						<h2 className="flex items-center gap-2.5 text-base tracking-[0.04em] text-[#b8485f] uppercase dark:text-[#ffb8c4]">
 							<Icon name="circle-x" className="size-5.5 shrink-0" />
 							What it isn&apos;t
 						</h2>
-						<ul className="flex flex-col gap-3.5 text-[13px] leading-snug text-(--text-secondary)">
+						<ul className="flex flex-col gap-3.5 text-[13px] leading-snug text-(--legacy-text-secondary)">
 							{WHAT_IT_ISNT.map((line) => (
 								<li key={line} className="flex items-start gap-2.5">
 									<Icon name="x" className="mt-0.5 size-4 shrink-0 text-[#b8485f] dark:text-[#ffb8c4]" />
@@ -604,12 +604,12 @@ export default function InvestorsPage() {
 				<section className="ir-rise relative mt-14 w-full max-w-[968px] overflow-hidden rounded-[20px] border border-(--sl-accent) bg-linear-to-r from-[#2172e52e] to-[#2172e50d] px-7 py-8 [animation-delay:400ms] sm:px-12 dark:from-[#142eaeb8] dark:to-[#1f67d233]">
 					<div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
 						<div className="flex flex-col gap-3">
-							<h2 className="text-[23px] leading-tight font-bold text-(--text-primary)">
+							<h2 className="text-[23px] leading-tight font-bold text-(--legacy-text-primary)">
 								Want an IR dashboard for your protocol?
 							</h2>
-							<p className="max-w-[545px] text-base leading-normal text-(--text-primary)/85 sm:text-lg">
+							<p className="max-w-[545px] text-base leading-normal text-(--legacy-text-primary)/85 sm:text-lg">
 								Verified metrics, investor reports, and calls hosted in one place. Powered by DefiLlama.{' '}
-								<span className="font-semibold text-(--text-primary)">Get in touch now!</span>
+								<span className="font-semibold text-(--legacy-text-primary)">Get in touch now!</span>
 							</p>
 						</div>
 						<div className="flex shrink-0 flex-col gap-2.5 self-start sm:flex-row sm:items-center md:self-center">

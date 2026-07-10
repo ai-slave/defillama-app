@@ -53,9 +53,9 @@
 	--pro-glass-border: rgba(0, 0, 0, 0.3);
 
 	html.dark & {
-		--pro-text1: var(--text-primary);
-		--pro-text2: var(--text-secondary);
-		--pro-text3: var(--text-tertiary);
+		--pro-text1: var(--legacy-text-primary);
+		--pro-text2: var(--legacy-text-secondary);
+		--pro-text3: var(--legacy-text-tertiary);
 
 		--pro-bg1: #070e0f;
 		--pro-bg2: #0a1011;
@@ -127,16 +127,16 @@
 	--pro-border: rgba(0, 0, 0, 0.08);
 	--pro-glass-border: rgba(33, 114, 229, 0.12);
 
-	--app-bg: #f0f2f5;
-	--cards-bg: #ffffff;
-	--cards-border: rgba(0, 0, 0, 0.06);
-	--form-control-border: rgba(0, 0, 0, 0.1);
-	--old-blue: #2172e5;
-	--text-primary: #1a1d23;
-	--text-secondary: #555962;
-	--text-tertiary: #8b8f99;
-	--text-label: #6e727c;
-	--text-form: #555962;
+	--legacy-app-bg: #f0f2f5;
+	--legacy-cards-bg: #ffffff;
+	--legacy-cards-border: rgba(0, 0, 0, 0.06);
+	--legacy-form-control-border: rgba(0, 0, 0, 0.1);
+	--legacy-old-blue: #2172e5;
+	--legacy-text-primary: #1a1d23;
+	--legacy-text-secondary: #555962;
+	--legacy-text-tertiary: #8b8f99;
+	--legacy-text-label: #6e727c;
+	--legacy-text-form: #555962;
 
 	--sl-accent: #2172e5;
 	--sl-accent-hover: #1a5ecc;
@@ -166,15 +166,15 @@
 		--pro-border: rgba(255, 255, 255, 0.06);
 		--pro-glass-border: rgba(33, 114, 229, 0.1);
 
-		--app-bg: #060709;
-		--cards-bg: #0c0e13;
-		--cards-border: rgba(255, 255, 255, 0.04);
-		--form-control-border: rgba(255, 255, 255, 0.07);
-		--text-primary: #cdd0d5;
-		--text-secondary: #6e727c;
-		--text-tertiary: #3e4148;
-		--text-label: #555962;
-		--text-form: #6e727c;
+		--legacy-app-bg: #060709;
+		--legacy-cards-bg: #0c0e13;
+		--legacy-cards-border: rgba(255, 255, 255, 0.04);
+		--legacy-form-control-border: rgba(255, 255, 255, 0.07);
+		--legacy-text-primary: #cdd0d5;
+		--legacy-text-secondary: #6e727c;
+		--legacy-text-tertiary: #3e4148;
+		--legacy-text-label: #555962;
+		--legacy-text-form: #6e727c;
 
 		--sl-accent: #2172e5;
 		--sl-accent-hover: #3b8af0;
@@ -192,16 +192,16 @@
 
 .investors-dashboard.investors-dashboard-embedded,
 html.dark .investors-dashboard.investors-dashboard-embedded {
-	--app-bg: inherit;
-	--cards-bg: inherit;
-	--cards-border: inherit;
-	--form-control-border: inherit;
-	--old-blue: inherit;
-	--text-primary: inherit;
-	--text-secondary: inherit;
-	--text-tertiary: inherit;
-	--text-label: inherit;
-	--text-form: inherit;
+	--legacy-app-bg: inherit;
+	--legacy-cards-bg: inherit;
+	--legacy-cards-border: inherit;
+	--legacy-form-control-border: inherit;
+	--legacy-old-blue: inherit;
+	--legacy-text-primary: inherit;
+	--legacy-text-secondary: inherit;
+	--legacy-text-tertiary: inherit;
+	--legacy-text-label: inherit;
+	--legacy-text-form: inherit;
 }
 
 .investors-dashboard {
@@ -218,10 +218,10 @@ html.dark .investors-dashboard.investors-dashboard-embedded {
 	}
 
 	& .sl-tab-inactive {
-		color: var(--text-secondary);
+		color: var(--legacy-text-secondary);
 		border-left: 2px solid transparent;
 		&:hover {
-			color: var(--text-primary);
+			color: var(--legacy-text-primary);
 			background-color: var(--sl-accent-muted);
 		}
 	}
@@ -431,5 +431,5 @@ html.dark .investors-dashboard.investors-dashboard-embedded {
    In-scope dialogs use dialogSurfaceStyles from src/ui/Dialog.tsx. Do not
    add new consumers. */
 @utility dialog {
-	@apply fixed inset-(--inset) top-0 right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-[70dvh] min-h-[40dvh] w-full max-w-full flex-col gap-8 overflow-auto overscroll-contain rounded-t-md border-[#39393E] bg-(--app-bg) p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:mb-auto sm:h-fit sm:max-h-[calc(100%-32px)] sm:min-h-[initial] sm:max-w-[min(calc(100%-32px),560px)] sm:rounded-md sm:pb-4 dark:border;
+	@apply fixed inset-(--inset) top-0 right-0 bottom-0 left-0 z-50 m-auto mb-0 flex max-h-[70dvh] min-h-[40dvh] w-full max-w-full flex-col gap-8 overflow-auto overscroll-contain rounded-t-md border-[#39393E] bg-(--legacy-app-bg) p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:mb-auto sm:h-fit sm:max-h-[calc(100%-32px)] sm:min-h-[initial] sm:max-w-[min(calc(100%-32px),560px)] sm:rounded-md sm:pb-4 dark:border;
 }

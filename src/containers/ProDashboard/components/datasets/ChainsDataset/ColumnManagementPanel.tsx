@@ -69,7 +69,7 @@ export function ColumnManagementPanel({
 	if (!showColumnPanel) return null
 
 	return (
-		<div className="mb-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
+		<div className="mb-4 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
 			<div className="mb-3 flex items-center justify-between">
 				<h4 className="text-sm font-medium pro-text1">Customize Columns</h4>
 				<div className="flex items-center gap-2">
@@ -112,7 +112,7 @@ export function ColumnManagementPanel({
 					placeholder="Search columns..."
 					defaultValue={searchTerm}
 					onInput={(e) => setSearchTerm(e.currentTarget.value)}
-					className="w-full rounded-md border pro-border bg-(--bg-glass) py-2 pr-3 pl-9 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-(--primary) focus:outline-hidden"
+					className="w-full rounded-md border pro-border bg-(--legacy-bg-glass) py-2 pr-3 pl-9 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-(--legacy-primary) focus:outline-hidden"
 				/>
 			</div>
 
@@ -219,7 +219,7 @@ export function ColumnManagementPanel({
 				</span>
 				<button
 					onClick={() => setShowColumnPanel(false)}
-					className="rounded-md border border-(--primary) bg-(--primary) px-3 py-1 text-white transition-colors hover:bg-(--primary-hover)"
+					className="rounded-md border border-(--legacy-primary) bg-(--legacy-primary) px-3 py-1 text-white transition-colors hover:bg-(--legacy-primary-hover)"
 				>
 					Done
 				</button>

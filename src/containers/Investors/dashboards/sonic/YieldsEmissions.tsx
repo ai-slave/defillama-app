@@ -19,24 +19,24 @@ const SCROLL_LEGEND = {
 
 function KpiCard({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<span className="text-xs font-medium tracking-wide text-(--text-label)">{label}</span>
-			<span className="text-2xl font-semibold text-(--text-primary)">{value}</span>
+		<div className="flex flex-col gap-1 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<span className="text-xs font-medium tracking-wide text-(--legacy-text-label)">{label}</span>
+			<span className="text-2xl font-semibold text-(--legacy-text-primary)">{value}</span>
 		</div>
 	)
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--text-label)">{title}</h3>
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">{title}</h3>
 			{children}
 		</div>
 	)
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-(--text-label) uppercase">{children}</h2>
+	return <h2 className="text-xs font-semibold tracking-wider text-(--legacy-text-label) uppercase">{children}</h2>
 }
 
 function formatPct(n: number | null): string {
@@ -159,15 +159,15 @@ export default function YieldsEmissions() {
 					<KpiCard label="Total TVL" value={data.yields.kpis.totalTvl.formatted} />
 					<KpiCard label="Avg APY" value={data.yields.kpis.avgApy.formatted} />
 				</div>
-				<div className="overflow-x-auto rounded-lg border border-(--cards-border) bg-(--cards-bg)">
+				<div className="overflow-x-auto rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 					<table className="w-full">
 						<thead>
 							{table.getHeaderGroups().map((headerGroup) => (
-								<tr key={headerGroup.id} className="border-b border-(--cards-border)">
+								<tr key={headerGroup.id} className="border-b border-(--legacy-cards-border)">
 									{headerGroup.headers.map((header) => (
 										<th
 											key={header.id}
-											className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-(--text-label) uppercase"
+											className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-(--legacy-text-label) uppercase"
 											style={{ width: header.getSize() }}
 											onClick={header.column.getToggleSortingHandler()}
 										>
@@ -186,9 +186,12 @@ export default function YieldsEmissions() {
 						</thead>
 						<tbody>
 							{table.getRowModel().rows.map((row) => (
-								<tr key={row.id} className="border-b border-(--cards-border) last:border-b-0 hover:bg-(--sl-hover-bg)">
+								<tr
+									key={row.id}
+									className="border-b border-(--legacy-cards-border) last:border-b-0 hover:bg-(--sl-hover-bg)"
+								>
 									{row.getVisibleCells().map((cell) => (
-										<td key={cell.id} className="px-4 py-2.5 text-sm text-(--text-primary)">
+										<td key={cell.id} className="px-4 py-2.5 text-sm text-(--legacy-text-primary)">
 											{typeof cell.column.columnDef.cell === 'function'
 												? cell.column.columnDef.cell(cell.getContext())
 												: (cell.getValue() as string)}
@@ -199,22 +202,22 @@ export default function YieldsEmissions() {
 						</tbody>
 					</table>
 					{table.getPageCount() > 1 && (
-						<div className="flex items-center justify-between border-t border-(--cards-border) px-4 py-3">
-							<span className="text-xs text-(--text-label)">
+						<div className="flex items-center justify-between border-t border-(--legacy-cards-border) px-4 py-3">
+							<span className="text-xs text-(--legacy-text-label)">
 								Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
 							</span>
 							<div className="flex gap-1">
 								<button
 									onClick={() => table.previousPage()}
 									disabled={!table.getCanPreviousPage()}
-									className="rounded-md border border-(--cards-border) px-3 py-1 text-xs text-(--text-secondary) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-40"
+									className="rounded-md border border-(--legacy-cards-border) px-3 py-1 text-xs text-(--legacy-text-secondary) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-40"
 								>
 									Prev
 								</button>
 								<button
 									onClick={() => table.nextPage()}
 									disabled={!table.getCanNextPage()}
-									className="rounded-md border border-(--cards-border) px-3 py-1 text-xs text-(--text-secondary) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-40"
+									className="rounded-md border border-(--legacy-cards-border) px-3 py-1 text-xs text-(--legacy-text-secondary) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-40"
 								>
 									Next
 								</button>

@@ -19,7 +19,8 @@ next architecture sequence lives in [design-execution-plan.md](design-execution-
 ## Landed visual-system baseline
 
 - Semantic surface, text, border, state, chart, and direction tokens are established in
-  `src/styles/semantics.css`; legacy product namespaces remain quarantined.
+  `src/styles/semantics.css`; application legacy tokens use `--legacy-*`, while sanctioned
+  product namespaces remain quarantined under their existing names.
 - `Button`, `Card`, `Panel`, `Input`, `Status`, `EntityTitleStrip`, table/chart toolbar
   helpers, dialog/popover recipes, summary-stat helpers, and chart shell helpers own the
   shared visual contracts.
@@ -91,7 +92,7 @@ next architecture sequence lives in [design-execution-plan.md](design-execution-
 The old checklist mixed visual acceptance with architecture and opportunistic cleanup.
 The remaining real work is now sequenced in `design-execution-plan.md`:
 
-- legacy/new token namespace ownership and token-ratchet debt;
+- semantic-token clean-name promotion and remaining token-ratchet debt;
 - shared API/component consolidation (`Select`, segmented controls, summary/change/export
   helpers) when it reduces real duplication;
 - radius and typography normalization;

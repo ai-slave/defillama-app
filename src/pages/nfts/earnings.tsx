@@ -101,7 +101,7 @@ const earningsColumns = [
 
 					{row.subRows?.length === 0 ? (
 						<a
-							className="overflow-hidden text-ellipsis whitespace-nowrap text-(--blue) hover:underline"
+							className="overflow-hidden text-ellipsis whitespace-nowrap text-(--legacy-blue) hover:underline"
 							target="_blank"
 							rel="noopener noreferrer"
 							href={`royalties/${row.original.defillamaId}`}

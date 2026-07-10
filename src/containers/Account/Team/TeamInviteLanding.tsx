@@ -33,7 +33,7 @@ export function TeamInviteLanding() {
 			</button>
 			<p className="text-sm text-(--sub-text-muted)">
 				Already have an account?{' '}
-				<button type="button" className="text-(--link)" onClick={() => openDialog('signin')}>
+				<button type="button" className="text-(--legacy-link)" onClick={() => openDialog('signin')}>
 					Sign in
 				</button>
 			</p>

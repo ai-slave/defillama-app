@@ -85,35 +85,37 @@ export function EntityPickerList({
 
 	if (isLoading) {
 		return (
-			<div className="flex h-full min-h-[200px] items-center justify-center rounded-lg border border-(--cards-border) bg-(--cards-bg)">
+			<div className="flex h-full min-h-[200px] items-center justify-center rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 				<LocalLoader />
 			</div>
 		)
 	}
 
 	return (
-		<div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-(--cards-border)">
-			<div className="flex items-center justify-between border-b border-(--cards-border) bg-(--cards-bg) px-3 py-2">
+		<div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-(--legacy-cards-border)">
+			<div className="flex items-center justify-between border-b border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-2">
 				<div className="relative flex-1">
 					<Icon
 						name="search"
 						width={14}
 						height={14}
-						className="absolute top-1/2 left-2.5 -translate-y-1/2 text-(--text-tertiary)"
+						className="absolute top-1/2 left-2.5 -translate-y-1/2 text-(--legacy-text-tertiary)"
 					/>
 					<input
 						onInput={(e) => setSearch(e.currentTarget.value)}
 						placeholder={`Search ${mode === 'chain' ? 'chains' : 'protocols'}...`}
-						className="w-full rounded-md border border-(--form-control-border) bg-(--bg-input) py-1.5 pr-2.5 pl-8 text-xs transition-colors focus:border-(--primary) focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
+						className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) py-1.5 pr-2.5 pl-8 text-xs transition-colors focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
 					/>
 				</div>
 				{selectedEntities.length > 0 ? (
 					<div className="ml-3 flex items-center gap-2">
-						<span className="text-xs font-medium text-(--text-secondary)">{selectedEntities.length} selected</span>
+						<span className="text-xs font-medium text-(--legacy-text-secondary)">
+							{selectedEntities.length} selected
+						</span>
 						<button
 							type="button"
 							onClick={onClear}
-							className="text-xs font-medium text-(--text-tertiary) transition-colors hover:text-(--primary)"
+							className="text-xs font-medium text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-primary)"
 						>
 							Clear
 						</button>
@@ -123,7 +125,7 @@ export function EntityPickerList({
 
 			<div ref={listRef} className="flex-1 overflow-y-auto bg-(--cards-bg-alt)/30">
 				{filteredEntities.length === 0 ? (
-					<div className="flex h-full items-center justify-center text-xs text-(--text-tertiary)">
+					<div className="flex h-full items-center justify-center text-xs text-(--legacy-text-tertiary)">
 						No {mode === 'chain' ? 'chains' : 'protocols'} found
 					</div>
 				) : (
@@ -146,7 +148,7 @@ export function EntityPickerList({
 									type="button"
 									onClick={() => onToggle(entity.value)}
 									className={`flex w-full items-center gap-3 py-2 pr-3 text-left text-xs transition-all hover:bg-(--cards-bg-alt) ${
-										isSelected ? 'bg-(--primary)/10' : ''
+										isSelected ? 'bg-(--legacy-primary)/10' : ''
 									} ${isChild ? 'pl-8' : 'pl-3'}`}
 									style={{
 										position: 'absolute',
@@ -159,8 +161,8 @@ export function EntityPickerList({
 									<div
 										className={`flex size-4 shrink-0 items-center justify-center rounded border transition-colors ${
 											isSelected
-												? 'border-(--primary) bg-(--primary)'
-												: 'border-(--form-control-border) bg-(--bg-input)'
+												? 'border-(--legacy-primary) bg-(--legacy-primary)'
+												: 'border-(--legacy-form-control-border) bg-(--legacy-bg-input)'
 										}`}
 									>
 										{isSelected ? <Icon name="check" width={10} height={10} className="text-white" /> : null}
@@ -172,11 +174,13 @@ export function EntityPickerList({
 											alt={entity.label}
 											width={20}
 											height={20}
-											className="size-5 shrink-0 rounded-full object-cover ring-1 ring-(--cards-border)"
+											className="size-5 shrink-0 rounded-full object-cover ring-1 ring-(--legacy-cards-border)"
 										/>
 									) : null}
 
-									<span className={`truncate ${isSelected ? 'font-medium text-(--primary)' : 'text-(--text-primary)'}`}>
+									<span
+										className={`truncate ${isSelected ? 'font-medium text-(--legacy-primary)' : 'text-(--legacy-text-primary)'}`}
+									>
 										{entity.label}
 									</span>
 								</button>

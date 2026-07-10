@@ -146,7 +146,7 @@ function ArticlesLandingInner({ initialData }: { initialData: ArticlesPageProps 
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load articles'
 		return (
 			<div className="mx-auto grid w-full max-w-3xl gap-3 border border-red-500/30 bg-red-500/5 p-6">
-				<h1 className="heading-sm text-(--text-primary)">Couldn&apos;t load research</h1>
+				<h1 className="heading-sm text-(--legacy-text-primary)">Couldn&apos;t load research</h1>
 				<p className="text-sm text-red-500">{message}</p>
 			</div>
 		)

@@ -138,7 +138,7 @@ export function ToolProgressIndicator({
 									) : agent.status === 'error' ? (
 										<span className="text-[10px] text-red-500">✗</span>
 									) : (
-										<span className="size-1.5 shrink-0 animate-pulse rounded-full bg-(--old-blue)" />
+										<span className="size-1.5 shrink-0 animate-pulse rounded-full bg-(--legacy-old-blue)" />
 									)}
 									<span className="text-xs text-[#666] dark:text-[#919296]">
 										{agent.id}
@@ -183,7 +183,7 @@ export const SpawnProgressCard = memo(function SpawnProgressCard({
 
 	return (
 		<section
-			className={`flex flex-col gap-2 rounded-lg border border-[#e6e6e6] bg-(--cards-bg) p-2 sm:p-3 dark:border-[#222324] ${indentForActiveTodo ? 'ml-4 border-l-2' : ''}`}
+			className={`flex flex-col gap-2 rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) p-2 sm:p-3 dark:border-[#222324] ${indentForActiveTodo ? 'ml-4 border-l-2' : ''}`}
 			aria-label={isResearchMode ? 'Parallel research progress' : 'Herd work progress'}
 		>
 			<button
@@ -257,7 +257,7 @@ export const SpawnProgressCard = memo(function SpawnProgressCard({
 									<line x1="6" y1="6" x2="18" y2="18" />
 								</svg>
 							) : (
-								<span className="size-1.5 shrink-0 animate-pulse rounded-full bg-(--old-blue)" />
+								<span className="size-1.5 shrink-0 animate-pulse rounded-full bg-(--legacy-old-blue)" />
 							)}
 							<p className="m-0 text-xs text-[#666] dark:text-[#919296]">
 								{agent.id}

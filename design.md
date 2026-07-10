@@ -18,7 +18,7 @@ The mode lives in the CSS selector, never in the token name: no `*-light`/`*-dar
 
 ## Color tokens
 
-CSS variables carry an `--ld-` prefix until the legacy variables of the same name are retired (see Migration).
+CSS variables carry an `--ld-` prefix until the semantic-token rename phase lands (see Migration). The legacy variables that previously occupied the clean names now use the explicit `--legacy-*` namespace.
 
 ### Backgrounds
 
@@ -52,8 +52,8 @@ CSS variables carry an `--ld-` prefix until the legacy variables of the same nam
 `text-disabled` is only for actual disabled controls. Do not use it for metadata,
 symbols, empty values, helper copy, or struck/excluded data; use `text-secondary`
 for readable support text and `text-tertiary` for de-emphasized/missing values.
-The legacy arbitrary class `text-(--text-disabled)` maps to tertiary for old
-callers only and should not be introduced in new in-scope UI.
+The legacy arbitrary class `text-(--legacy-text-disabled)` maps to tertiary for
+old callers only and should not be introduced in new in-scope UI.
 
 **Text-tier decision rule (owner decision, 2026-07-08):** if removing the text
 would change what the user knows or can do, it is `text-secondary` or better; if
@@ -267,14 +267,19 @@ ECharts renders to canvas and cannot read `var()`: resolve canvas tokens through
 
 ## Migration status
 
-| Phase                 | Scope                                                                                 | Status      |
-| --------------------- | ------------------------------------------------------------------------------------- | ----------- |
-| Foundation            | Token foundation, legacy quarantine, chart tokens, Card/type ramp, `useChartTheme`    | merged      |
-| Broad design sweep    | Home/chain, shared primitives, popovers, DialogShell, ProtocolOverview, text/icon     | merged      |
-| Post-merge follow-ups | ChartPanel, status/table consistency, chart theme, and chart geometry                 | merged      |
-| Architecture          | Token namespaces, radius/type normalization, shared API/file placement, product scope | active next |
+| Phase                 | Scope                                                                                      | Status |
+| --------------------- | ------------------------------------------------------------------------------------------ | ------ |
+| Foundation            | Token foundation, legacy quarantine, chart tokens, Card/type ramp, `useChartTheme`         | merged |
+| Broad design sweep    | Home/chain, shared primitives, popovers, DialogShell, ProtocolOverview, text/icon          | merged |
+| Post-merge follow-ups | ChartPanel, status/table consistency, chart theme, and chart geometry                      | merged |
+| Architecture          | Semantic-token naming, radius/type normalization, shared API/file placement, product scope | active |
 
-Legacy namespaces (`--sub-*`, `--pro-*`, `--sl-*`, `--signin-*`, and the pre-refresh `--text-*`/`--bg-*`/`--cards-*` globals) are quarantined in `src/styles/legacy-*.css` / `tailwind.css`. Do not add new consumers; they are deleted as surfaces migrate.
+Legacy application globals use the `--legacy-*` namespace and are quarantined in
+`src/styles/legacy-*.css` / `tailwind.css`. The separately owned `--sub-*`, `--pro-*`,
+`--sl-*`, and `--signin-*` product namespaces retain their names. Do not add new legacy
+consumers; `lint:tokens` ratchets their references while surfaces migrate to semantics.
+Feedback roles (`--success`, `--error`, and `--warning`) are semantic state tokens rather
+than legacy application globals.
 
 **Excluded surfaces (owner decision, 2026-07-07; reconciled for merge):** ProDashboard, LlamaAI, yields, account/subscription, Downloads (incl. SQL/notebook tooling), Articles/research/authors/newsletters/reports surfaces, and investor-relations dashboard surfaces (`containers/Investors` / `pages/investors` dashboard products) are out of the sweep — separate products or upcoming rewrites. Their legacy-token debt is intentional. Raises/investor-like list pages remain in scope unless they are part of the investor-relations dashboard product. Shared components consumed by excluded surfaces still migrate; those surfaces pin legacy visuals through explicit compat props (`popoverVariant="legacy"`, `variant="pro"`), never by forking styles into page files.
 

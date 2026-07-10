@@ -157,10 +157,10 @@ export const RouteProgressIndicator = () => {
 		>
 			<div
 				ref={barRef}
-				className="relative h-full w-full bg-(--link-active-bg) transition-transform duration-200 ease-out"
+				className="relative h-full w-full bg-(--legacy-link-active-bg) transition-transform duration-200 ease-out"
 				style={{ transform: 'translate3d(-100%, 0, 0)' }}
 			>
-				<span className="absolute top-0 right-0 block h-full w-[100px] [transform:rotate(3deg)_translate(0px,-4px)] shadow-[0_0_10px_var(--link-active-bg),0_0_5px_var(--link-active-bg)]" />
+				<span className="absolute top-0 right-0 block h-full w-[100px] [transform:rotate(3deg)_translate(0px,-4px)] shadow-[0_0_10px_var(--legacy-link-active-bg),0_0_5px_var(--legacy-link-active-bg)]" />
 			</div>
 		</div>
 	)

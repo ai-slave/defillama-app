@@ -51,7 +51,7 @@ export function ToolExecutionPanel({
 	return (
 		<details
 			ref={detailsRef}
-			className="group rounded-lg border border-[#e6e6e6] bg-(--cards-bg) dark:border-[#222324]"
+			className="group rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) dark:border-[#222324]"
 			onToggle={() => {
 				if (!detailsRef.current?.open) return
 				requestAnimationFrame(() => {

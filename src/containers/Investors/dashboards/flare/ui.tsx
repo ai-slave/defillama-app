@@ -12,10 +12,10 @@ export function KpiCard({
 	change?: { value: number; formatted: string }
 }) {
 	return (
-		<div className="flex flex-col gap-1.5 rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<span className="text-[11px] font-medium tracking-wider text-(--text-label) uppercase">{label}</span>
+		<div className="flex flex-col gap-1.5 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<span className="text-[11px] font-medium tracking-wider text-(--legacy-text-label) uppercase">{label}</span>
 			<div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-				<span className="font-mono text-2xl font-semibold tracking-tight text-(--text-primary) tabular-nums">
+				<span className="font-mono text-2xl font-semibold tracking-tight text-(--legacy-text-primary) tabular-nums">
 					{value}
 				</span>
 				{change && (
@@ -29,7 +29,7 @@ export function KpiCard({
 					</span>
 				)}
 			</div>
-			{sub && <span className="font-mono text-[11px] text-(--text-label) tabular-nums">{sub}</span>}
+			{sub && <span className="font-mono text-[11px] text-(--legacy-text-label) tabular-nums">{sub}</span>}
 		</div>
 	)
 }
@@ -48,14 +48,16 @@ export function ChartCard({
 	children: React.ReactNode
 }) {
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
 			<div className="mb-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
 				<div className="min-w-0">
-					<h3 className="text-sm font-semibold text-(--text-primary)">{title}</h3>
-					{subtitle && <p className="mt-0.5 text-xs leading-relaxed text-(--text-label)">{subtitle}</p>}
+					<h3 className="text-sm font-semibold text-(--legacy-text-primary)">{title}</h3>
+					{subtitle && <p className="mt-0.5 text-xs leading-relaxed text-(--legacy-text-label)">{subtitle}</p>}
 				</div>
 				{value && (
-					<p className="font-mono text-2xl font-semibold tracking-tight text-(--text-primary) tabular-nums">{value}</p>
+					<p className="font-mono text-2xl font-semibold tracking-tight text-(--legacy-text-primary) tabular-nums">
+						{value}
+					</p>
 				)}
 			</div>
 			{children}
@@ -64,13 +66,13 @@ export function ChartCard({
 }
 
 export function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-(--text-label) uppercase">{children}</h2>
+	return <h2 className="text-xs font-semibold tracking-wider text-(--legacy-text-label) uppercase">{children}</h2>
 }
 
 export function NarrativeCallout({ children }: { children: React.ReactNode }) {
 	return (
 		<div
-			className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4 pl-5 text-sm leading-relaxed text-(--text-secondary)"
+			className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4 pl-5 text-sm leading-relaxed text-(--legacy-text-secondary)"
 			style={{ borderLeft: '3px solid #FF7A1A' }}
 		>
 			{children}

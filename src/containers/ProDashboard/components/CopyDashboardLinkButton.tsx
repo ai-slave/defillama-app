@@ -52,7 +52,7 @@ export const CopyDashboardLinkButton = ({
 			<Tooltip
 				content="Make dashboard public to share"
 				render={<button aria-disabled={true} />}
-				className="flex cursor-not-allowed items-center gap-1 rounded-md border border-(--cards-border) px-1.5 py-1 text-xs text-(--text-disabled) hover:border-transparent focus-visible:border-transparent"
+				className="flex cursor-not-allowed items-center gap-1 rounded-md border border-(--legacy-cards-border) px-1.5 py-1 text-xs text-(--legacy-text-disabled) hover:border-transparent focus-visible:border-transparent"
 			>
 				{copied ? <Icon name="check-circle" height={14} width={14} /> : <Icon name="link" height={14} width={14} />}
 				<span>Share</span>
@@ -62,25 +62,25 @@ export const CopyDashboardLinkButton = ({
 
 	return (
 		<Ariakit.PopoverProvider store={popover}>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1 rounded-md border border-(--form-control-border) px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-(--cards-border) disabled:text-(--text-disabled)">
+			<Ariakit.PopoverDisclosure className="flex items-center gap-1 rounded-md border border-(--legacy-form-control-border) px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-(--legacy-cards-border) disabled:text-(--legacy-text-disabled)">
 				<Icon name="share" height={14} width={14} />
 				<span>Share</span>
 			</Ariakit.PopoverDisclosure>
 
 			<Ariakit.Popover
 				gutter={8}
-				className="z-50 rounded-lg border border-(--cards-border) bg-(--cards-bg) p-3 shadow-lg"
+				className="z-50 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3 shadow-lg"
 				style={{ minWidth: '280px' }}
 			>
 				<div className="flex flex-col gap-3">
 					<div className="flex flex-col gap-1.5">
-						<p className="text-xs font-medium text-(--text-label)">Share Link</p>
+						<p className="text-xs font-medium text-(--legacy-text-label)">Share Link</p>
 						<div className="flex gap-2">
 							<input
 								type="text"
 								value={shareUrl}
 								readOnly
-								className="flex-1 rounded-md border border-(--form-control-border) bg-(--bg-input) px-2.5 py-1.5 text-xs"
+								className="flex-1 rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2.5 py-1.5 text-xs"
 							/>
 							<button
 								onClick={() => {
@@ -99,7 +99,7 @@ export const CopyDashboardLinkButton = ({
 					</div>
 
 					<div className="flex flex-col gap-1.5">
-						<p className="text-xs font-medium text-(--text-label)">Share on</p>
+						<p className="text-xs font-medium text-(--legacy-text-label)">Share on</p>
 						<div className="flex gap-2">
 							<button
 								onClick={() => handleShareTo('twitter')}

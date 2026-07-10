@@ -246,8 +246,8 @@ export function Icon({ name, className = 'h-4 w-4' }: { name: string; className?
 				<svg {...props}>
 					<line x1="4" y1="7" x2="20" y2="7" />
 					<line x1="4" y1="17" x2="20" y2="17" />
-					<circle cx="9" cy="7" r="2.2" fill="var(--cards-bg)" />
-					<circle cx="15" cy="17" r="2.2" fill="var(--cards-bg)" />
+					<circle cx="9" cy="7" r="2.2" fill="var(--legacy-cards-bg)" />
+					<circle cx="15" cy="17" r="2.2" fill="var(--legacy-cards-bg)" />
 				</svg>
 			)
 		case 'eye':

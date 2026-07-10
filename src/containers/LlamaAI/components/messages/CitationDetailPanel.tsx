@@ -85,10 +85,10 @@ export function CitationDetailPanel({
 	const panel = (mode: 'mobile' | 'desktop') => {
 		const panelClass =
 			mode === 'mobile'
-				? `relative flex max-h-[85vh] w-full flex-col overflow-hidden rounded-t-2xl border border-[#e6e6e6] bg-(--cards-bg) transition-all duration-200 ease-out dark:border-[#222324] ${
+				? `relative flex max-h-[85vh] w-full flex-col overflow-hidden rounded-t-2xl border border-[#e6e6e6] bg-(--legacy-cards-bg) transition-all duration-200 ease-out dark:border-[#222324] ${
 						entered ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
 					}`
-				: `relative flex h-full w-[min(26vw,420px)] min-w-[320px] flex-col overflow-hidden rounded-lg border border-[#e6e6e6] bg-(--cards-bg) transition-all duration-200 ease-out dark:border-[#222324] ${
+				: `relative flex h-full w-[min(26vw,420px)] min-w-[320px] flex-col overflow-hidden rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) transition-all duration-200 ease-out dark:border-[#222324] ${
 						entered ? 'translate-x-0 opacity-100' : 'translate-x-3 opacity-0'
 					}`
 

@@ -53,24 +53,24 @@ declare module '@tiptap/core' {
 
 const calloutToneStyles: Record<ArticleCalloutTone, { wrap: string; tone: string }> = {
 	note: {
-		wrap: 'border-(--cards-border) bg-(--cards-bg)',
-		tone: 'text-(--text-tertiary)'
+		wrap: 'border-(--legacy-cards-border) bg-(--legacy-cards-bg)',
+		tone: 'text-(--legacy-text-tertiary)'
 	},
 	data: {
-		wrap: 'border-(--link-text)/40 bg-(--link-button)',
-		tone: 'text-(--link-text)'
+		wrap: 'border-(--legacy-link-text)/40 bg-(--legacy-link-button)',
+		tone: 'text-(--legacy-link-text)'
 	},
 	warning: {
 		wrap: 'border-[#d89b2a] bg-[#fff8e6] text-[#4d3606] dark:bg-[#30230b] dark:text-[#f4d28e]',
 		tone: 'text-[#a17317] dark:text-[#f4d28e]'
 	},
 	pullquote: {
-		wrap: 'border-y border-x-0 border-(--link-text)/30 bg-transparent rounded-none px-2',
-		tone: 'text-(--link-text)'
+		wrap: 'border-y border-x-0 border-(--legacy-link-text)/30 bg-transparent rounded-none px-2',
+		tone: 'text-(--legacy-link-text)'
 	},
 	bio: {
-		wrap: 'border-y-0 border-r-0 border-l-4 rounded-l-none border-(--link-text) bg-(--link-button)',
-		tone: 'text-(--link-text)'
+		wrap: 'border-y-0 border-r-0 border-l-4 rounded-l-none border-(--legacy-link-text) bg-(--legacy-link-button)',
+		tone: 'text-(--legacy-link-text)'
 	}
 }
 
@@ -136,7 +136,7 @@ function ChartCaptionEditor({
 				}
 			}}
 			onMouseDown={(e) => e.stopPropagation()}
-			className="w-full resize-none border-b border-dashed border-transparent bg-transparent text-[13px] leading-snug text-(--text-secondary) outline-none placeholder:text-(--text-tertiary)/70 hover:border-(--cards-border) focus:border-(--link-text)/60 focus:text-(--text-primary)"
+			className="w-full resize-none border-b border-dashed border-transparent bg-transparent text-[13px] leading-snug text-(--legacy-text-secondary) outline-none placeholder:text-(--legacy-text-tertiary)/70 hover:border-(--legacy-cards-border) focus:border-(--legacy-link-text)/60 focus:text-(--legacy-text-primary)"
 		/>
 	)
 }
@@ -182,8 +182,8 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes }:
 				aria-hidden
 				className={`pointer-events-none absolute top-2 bottom-2 left-0 w-px transition-colors duration-150 ${
 					selected
-						? 'bg-(--link-text)'
-						: 'bg-(--cards-border) group-focus-within:bg-(--text-tertiary) group-hover:bg-(--text-tertiary)'
+						? 'bg-(--legacy-link-text)'
+						: 'bg-(--legacy-cards-border) group-focus-within:bg-(--legacy-text-tertiary) group-hover:bg-(--legacy-text-tertiary)'
 				}`}
 			/>
 
@@ -194,11 +194,11 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes }:
 					selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
 				}`}
 			>
-				<span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-xs border border-(--cards-border) bg-(--cards-bg) px-2 py-1 font-jetbrains text-[10px] tracking-[0.22em] text-(--text-tertiary) uppercase shadow-xs">
-					<Icon name="bar-chart-2" className="size-3 text-(--link-text)" />
+				<span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-xs border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-2 py-1 font-jetbrains text-[10px] tracking-[0.22em] text-(--legacy-text-tertiary) uppercase shadow-xs">
+					<Icon name="bar-chart-2" className="size-3 text-(--legacy-link-text)" />
 					{tagLabel}
 				</span>
-				<span className="pointer-events-auto flex items-stretch divide-x divide-(--cards-border) overflow-hidden rounded-xs border border-(--cards-border) bg-(--cards-bg) shadow-xs">
+				<span className="pointer-events-auto flex items-stretch divide-x divide-(--legacy-cards-border) overflow-hidden rounded-xs border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-xs">
 					<button
 						type="button"
 						title="Edit chart"
@@ -211,7 +211,7 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes }:
 							e.stopPropagation()
 							handleEdit()
 						}}
-						className="flex items-center gap-1.5 px-2.5 py-1 font-jetbrains text-[10px] tracking-[0.2em] text-(--text-secondary) uppercase transition-colors hover:bg-(--link-hover-bg) hover:text-(--link-text)"
+						className="flex items-center gap-1.5 px-2.5 py-1 font-jetbrains text-[10px] tracking-[0.2em] text-(--legacy-text-secondary) uppercase transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-link-text)"
 					>
 						<Icon name="pencil" className="size-3" />
 						Edit
@@ -228,7 +228,7 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes }:
 							e.stopPropagation()
 							deleteNode()
 						}}
-						className="flex items-center gap-1.5 px-2.5 py-1 font-jetbrains text-[10px] tracking-[0.2em] text-(--text-tertiary) uppercase transition-colors hover:bg-(--link-hover-bg) hover:text-[#d8492a]"
+						className="flex items-center gap-1.5 px-2.5 py-1 font-jetbrains text-[10px] tracking-[0.2em] text-(--legacy-text-tertiary) uppercase transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-[#d8492a]"
 					>
 						<Icon name="trash-2" className="size-3" />
 						Remove
@@ -270,7 +270,7 @@ function CalloutNodeView({ node, updateAttributes }: NodeViewProps) {
 		<NodeViewWrapper className={`my-4 rounded-md border p-4 ${styles.wrap}`}>
 			<div className="mb-2 flex items-center justify-between gap-2">
 				<span className={`text-xs font-medium ${styles.tone}`}>{calloutToneLabels[tone]}</span>
-				<div className="flex rounded border border-(--cards-border) p-0.5">
+				<div className="flex rounded border border-(--legacy-cards-border) p-0.5">
 					{(['note', 'data', 'warning', 'pullquote', 'bio'] as ArticleCalloutTone[]).map((value) => {
 						const active = value === tone
 						return (
@@ -280,8 +280,8 @@ function CalloutNodeView({ node, updateAttributes }: NodeViewProps) {
 								onClick={() => updateAttributes({ tone: value })}
 								className={`rounded px-2 py-0.5 text-xs transition-colors ${
 									active
-										? 'bg-(--link-button) text-(--link-text)'
-										: 'text-(--text-tertiary) hover:text-(--text-primary)'
+										? 'bg-(--legacy-link-button) text-(--legacy-link-text)'
+										: 'text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'
 								}`}
 							>
 								{calloutToneLabels[value]}
@@ -318,8 +318,8 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 			as="span"
 			className={`relative mx-0.5 inline-flex items-center gap-1 rounded-[3px] border align-baseline font-jetbrains text-[10px] leading-none ${
 				selected
-					? 'border-(--link-text) bg-(--link-button)'
-					: 'border-(--cards-border) bg-(--link-button)/60 text-(--link-text)'
+					? 'border-(--legacy-link-text) bg-(--legacy-link-button)'
+					: 'border-(--legacy-cards-border) bg-(--legacy-link-button)/60 text-(--legacy-link-text)'
 			}`}
 		>
 			<button type="button" onClick={() => editable && setOpen((o) => !o)} className="px-1 py-0.5 tracking-wider">
@@ -328,7 +328,7 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 			{selected && editable ? (
 				<button
 					type="button"
-					className="border-l border-(--cards-border) px-1 py-0.5 text-(--text-tertiary) hover:text-(--text-primary)"
+					className="border-l border-(--legacy-cards-border) px-1 py-0.5 text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)"
 					onClick={deleteNode}
 					aria-label="Remove citation"
 				>
@@ -339,32 +339,38 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 				<div
 					ref={popRef}
 					contentEditable={false}
-					className="absolute top-full left-0 z-50 mt-1 grid w-72 gap-1.5 rounded-md border border-(--cards-border) bg-(--cards-bg) p-2.5 font-sans shadow-xl"
+					className="absolute top-full left-0 z-50 mt-1 grid w-72 gap-1.5 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-2.5 font-sans shadow-xl"
 				>
 					<div className="flex items-center gap-1.5">
-						<label className="w-12 shrink-0 text-[10px] tracking-wider text-(--text-tertiary) uppercase">Label</label>
+						<label className="w-12 shrink-0 text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">
+							Label
+						</label>
 						<input
 							value={(node.attrs.label as string) || ''}
 							onChange={(e) => updateAttributes({ label: e.target.value, id: e.target.value || node.attrs.id })}
-							className="flex-1 rounded border border-(--form-control-border) bg-(--app-bg) px-1.5 py-1 text-xs text-(--text-primary) focus:border-(--link-text) focus:outline-none"
+							className="flex-1 rounded border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-1.5 py-1 text-xs text-(--legacy-text-primary) focus:border-(--legacy-link-text) focus:outline-none"
 						/>
 					</div>
 					<div className="flex items-center gap-1.5">
-						<label className="w-12 shrink-0 text-[10px] tracking-wider text-(--text-tertiary) uppercase">URL</label>
+						<label className="w-12 shrink-0 text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">
+							URL
+						</label>
 						<input
 							value={url}
 							onChange={(e) => updateAttributes({ url: e.target.value })}
 							placeholder="https://…"
-							className="flex-1 rounded border border-(--form-control-border) bg-(--app-bg) px-1.5 py-1 text-xs text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+							className="flex-1 rounded border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-1.5 py-1 text-xs text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 						/>
 					</div>
 					<div className="flex items-center gap-1.5">
-						<label className="w-12 shrink-0 text-[10px] tracking-wider text-(--text-tertiary) uppercase">Title</label>
+						<label className="w-12 shrink-0 text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">
+							Title
+						</label>
 						<input
 							value={title}
 							onChange={(e) => updateAttributes({ title: e.target.value })}
 							placeholder="Source title"
-							className="flex-1 rounded border border-(--form-control-border) bg-(--app-bg) px-1.5 py-1 text-xs text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+							className="flex-1 rounded border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-1.5 py-1 text-xs text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 						/>
 					</div>
 				</div>

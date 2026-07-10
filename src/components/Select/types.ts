@@ -91,7 +91,7 @@ export const TAG_GROUP_VARIANTS = {
 	pro: {
 		container: 'text-sm flex items-center overflow-x-auto flex-nowrap w-fit border pro-border pro-text1',
 		button:
-			'shrink-0 px-3 py-1.5 whitespace-nowrap hover:pro-bg2 focus-visible:pro-bg2 data-[active=true]:bg-(--primary) data-[active=true]:text-white'
+			'shrink-0 px-3 py-1.5 whitespace-nowrap hover:pro-bg2 focus-visible:pro-bg2 data-[active=true]:bg-(--legacy-primary) data-[active=true]:text-white'
 	}
 } as const
 

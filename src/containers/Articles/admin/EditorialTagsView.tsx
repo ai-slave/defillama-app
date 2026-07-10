@@ -33,12 +33,12 @@ export function EditorialTagsView() {
 			<header className="pt-2 pb-2">
 				<Link
 					href="/research/admin"
-					className="inline-flex items-center gap-1 text-xs text-(--text-tertiary) transition-colors hover:text-(--text-primary)"
+					className="inline-flex items-center gap-1 text-xs text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-text-primary)"
 				>
 					<span aria-hidden>←</span> Admin
 				</Link>
-				<h1 className="mt-2 text-3xl font-semibold tracking-tight text-(--text-primary)">Curation</h1>
-				<p className="mt-1 text-sm text-(--text-secondary)">
+				<h1 className="mt-2 text-3xl font-semibold tracking-tight text-(--legacy-text-primary)">Curation</h1>
+				<p className="mt-1 text-sm text-(--legacy-text-secondary)">
 					Pick which published articles surface in editor-curated widgets on /research.
 				</p>
 			</header>
@@ -124,24 +124,24 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 	const canReorder = isEditorialTagReorderable(definition.slug) && items.length > 1
 
 	return (
-		<section className="grid gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-5">
+		<section className="grid gap-4 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
 			<header className="grid gap-2 sm:flex sm:items-end sm:justify-between">
 				<div>
 					<div className="flex items-center gap-2">
-						<h2 className="text-xl font-semibold text-(--text-primary)">{definition.label}</h2>
-						<span className="inline-flex items-center rounded-full bg-(--link-button) px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-(--link-text) uppercase">
+						<h2 className="text-xl font-semibold text-(--legacy-text-primary)">{definition.label}</h2>
+						<span className="inline-flex items-center rounded-full bg-(--legacy-link-button) px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-(--legacy-link-text) uppercase">
 							{definition.cardinality === 'singleton' ? '1 article' : 'Many articles'}
 						</span>
 					</div>
-					<p className="mt-1 text-sm text-(--text-secondary)">{definition.description}</p>
+					<p className="mt-1 text-sm text-(--legacy-text-secondary)">{definition.description}</p>
 				</div>
-				<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase tabular-nums">
+				<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase tabular-nums">
 					Current · {items.length}
 				</span>
 			</header>
 
 			<div className="grid gap-1.5">
-				<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+				<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 					{definition.cardinality === 'singleton' ? 'Set article' : 'Add article'}
 				</span>
 				<ArticlePicker
@@ -168,9 +168,9 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 					<p>{error instanceof ArticleApiError ? error.message : `Failed to load ${definition.label}`}</p>
 				</div>
 			) : isLoading ? (
-				<p className="text-sm text-(--text-tertiary)">Loading…</p>
+				<p className="text-sm text-(--legacy-text-tertiary)">Loading…</p>
 			) : items.length === 0 ? (
-				<div className="rounded-md border border-dashed border-(--cards-border) bg-(--app-bg)/40 p-3 text-center text-xs text-(--text-tertiary)">
+				<div className="rounded-md border border-dashed border-(--legacy-cards-border) bg-(--legacy-app-bg)/40 p-3 text-center text-xs text-(--legacy-text-tertiary)">
 					<p>No articles tagged as {definition.label.toLowerCase()} yet.</p>
 				</div>
 			) : canReorder ? (
@@ -185,7 +185,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 					reorderPending={reorderMutation.isPending}
 				/>
 			) : (
-				<ul className="grid divide-y divide-(--cards-border) overflow-hidden rounded-md border border-(--cards-border) bg-(--app-bg)/40">
+				<ul className="grid divide-y divide-(--legacy-cards-border) overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg)/40">
 					{items.map((article) => (
 						<EditorialTagRow
 							key={article.id}
@@ -268,10 +268,10 @@ function ReportHighlightControls({
 	})
 
 	return (
-		<div className="grid gap-4 border-t border-(--cards-border) pt-4">
+		<div className="grid gap-4 border-t border-(--legacy-cards-border) pt-4">
 			<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
 				<label className="grid gap-1.5">
-					<span className="flex items-baseline justify-between gap-2 font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+					<span className="flex items-baseline justify-between gap-2 font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 						<span>Highlight text</span>
 						<span>{highlightText.length}/2000</span>
 					</span>
@@ -281,14 +281,14 @@ function ReportHighlightControls({
 						placeholder="Custom text shown on the right side of the Report highlight block."
 						rows={4}
 						maxLength={2000}
-						className="resize-none rounded-md border border-(--form-control-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+						className="resize-none rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 					/>
 					<div className="flex flex-wrap items-center gap-2">
 						<button
 							type="button"
 							disabled={!textDirty || pending || metadataMutation.isPending}
 							onClick={() => metadataMutation.mutate(highlightText)}
-							className="rounded-md border border-(--cards-border) px-3 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:border-(--link-text)/40 hover:text-(--text-primary) disabled:cursor-not-allowed disabled:opacity-50"
+							className="rounded-md border border-(--legacy-cards-border) px-3 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							{metadataMutation.isPending ? 'Saving…' : 'Save highlight text'}
 						</button>
@@ -300,7 +300,7 @@ function ReportHighlightControls({
 									setHighlightText('')
 									metadataMutation.mutate('')
 								}}
-								className="rounded-md px-2.5 py-1.5 text-xs text-(--text-tertiary) transition-colors hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+								className="rounded-md px-2.5 py-1.5 text-xs text-(--legacy-text-tertiary) transition-colors hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
 							>
 								Clear override
 							</button>
@@ -309,7 +309,7 @@ function ReportHighlightControls({
 				</label>
 
 				<div className="grid content-start gap-1.5">
-					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 						Sponsor logo
 					</span>
 					<ImageUploadButton
@@ -333,21 +333,23 @@ function ReportHighlightControls({
 				</div>
 			</div>
 
-			<div className="grid gap-2 bg-(--app-bg)/40 p-3">
-				<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+			<div className="grid gap-2 bg-(--legacy-app-bg)/40 p-3">
+				<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 					Current highlight
 				</span>
 				<div className="grid gap-3 sm:grid-cols-[minmax(0,14rem)_1fr] sm:items-start">
 					<div className="grid gap-2">
 						{sponsorLogo?.url ? (
 							<div className="flex items-center gap-2">
-								<span className="text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">Sponsored by</span>
+								<span className="text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
+									Sponsored by
+								</span>
 								<img src={sponsorLogo.url} alt="" className="h-5 max-w-24 object-contain" />
 							</div>
 						) : null}
-						<span className="text-sm font-semibold text-(--text-primary)">{article.title}</span>
+						<span className="text-sm font-semibold text-(--legacy-text-primary)">{article.title}</span>
 					</div>
-					<p className="line-clamp-4 text-sm leading-relaxed text-(--text-secondary)">
+					<p className="line-clamp-4 text-sm leading-relaxed text-(--legacy-text-secondary)">
 						{previewText || 'No highlight text, report description, excerpt, or subtitle set.'}
 					</p>
 				</div>

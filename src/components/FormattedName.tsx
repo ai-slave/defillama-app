@@ -28,7 +28,7 @@ export const FormattedName = ({ text, maxCharacters, fontSize, fontWeight = 400,
 				<span
 					data-link={link ?? false}
 					style={textStyle}
-					className="cursor-pointer overflow-hidden font-(--weight) text-ellipsis whitespace-nowrap text-(--text-size) data-[link=true]:text-(--blue)"
+					className="cursor-pointer overflow-hidden font-(--weight) text-ellipsis whitespace-nowrap text-(--text-size) data-[link=true]:text-(--legacy-blue)"
 				>
 					{text}
 				</span>
@@ -40,7 +40,7 @@ export const FormattedName = ({ text, maxCharacters, fontSize, fontWeight = 400,
 		<span
 			data-link={link ?? false}
 			style={textStyle}
-			className="overflow-hidden font-(--weight) text-ellipsis whitespace-nowrap text-(--text-size) data-[link=true]:text-(--blue)"
+			className="overflow-hidden font-(--weight) text-ellipsis whitespace-nowrap text-(--text-size) data-[link=true]:text-(--legacy-blue)"
 		>
 			{text}
 		</span>

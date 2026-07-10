@@ -120,10 +120,10 @@ export function CollateralView({
 						: "Each token you're exposed to, and the market it backs. If that market breaks, this is how much the vault loses, in dollars and as a share of the vault. Open a row for the price feed, stress curve, and supply-cap detail. Below, the oracles those prices depend on and what is at stake if one is compromised."
 				}
 			>
-				{note ? <p className="mt-1 max-w-2xl text-xs text-(--text-secondary)">{note}</p> : null}
+				{note ? <p className="mt-1 max-w-2xl text-xs text-(--legacy-text-secondary)">{note}</p> : null}
 			</ChapterHead>
 
-			<div className="overflow-hidden rounded-md border border-(--cards-border)">
+			<div className="overflow-hidden rounded-md border border-(--legacy-cards-border)">
 				<VaultStress
 					collateral={collateral}
 					supplyUsd={supplyUsd}
@@ -138,7 +138,7 @@ export function CollateralView({
 				/>
 
 				<div
-					className={`hidden items-end gap-6 border-b border-(--cards-border) bg-(--bg-main) px-3 py-2 text-xs font-medium text-(--text-secondary) sm:grid ${cols}`}
+					className={`hidden items-end gap-6 border-b border-(--legacy-cards-border) bg-(--legacy-bg-main) px-3 py-2 text-xs font-medium text-(--legacy-text-secondary) sm:grid ${cols}`}
 				>
 					<span>Collateral</span>
 					{alloc ? (
@@ -193,14 +193,14 @@ export function CollateralView({
 				<button
 					type="button"
 					onClick={() => setShowAll((v) => !v)}
-					className="-ml-2 inline-flex min-h-9 items-center self-start rounded-md px-2 text-xs text-(--text-secondary) underline decoration-dotted hover:bg-(--bg-main)/50 hover:text-(--text-primary)"
+					className="-ml-2 inline-flex min-h-9 items-center self-start rounded-md px-2 text-xs text-(--legacy-text-secondary) underline decoration-dotted hover:bg-(--legacy-bg-main)/50 hover:text-(--legacy-text-primary)"
 				>
 					{showAll ? 'Show fewer' : `Show all ${ranked.length} collaterals`}
 				</button>
 			) : null}
 
 			{dustHidden > 0 ? (
-				<p className="text-xs text-(--text-tertiary)">
+				<p className="text-xs text-(--legacy-text-tertiary)">
 					+{dustHidden} {dustHidden === 1 ? 'market' : 'markets'} with no current position
 				</p>
 			) : null}

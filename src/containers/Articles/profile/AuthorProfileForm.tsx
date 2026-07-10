@@ -140,7 +140,7 @@ function CharCount({ value, max }: { value: string; max: number }) {
 	const len = value.length
 	const near = len >= Math.floor(max * 0.9)
 	return (
-		<span className={`text-[11px] tabular-nums ${near ? 'text-amber-500' : 'text-(--text-tertiary)'}`}>
+		<span className={`text-[11px] tabular-nums ${near ? 'text-amber-500' : 'text-(--legacy-text-tertiary)'}`}>
 			{len.toLocaleString()}/{max.toLocaleString()}
 		</span>
 	)
@@ -165,12 +165,12 @@ function LivePreview({ state, createdAt }: { state: FormState; createdAt: string
 		state.customSocials.filter((c) => c.value.trim()).length
 
 	return (
-		<section className="grid gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-5 md:p-6">
+		<section className="grid gap-4 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5 md:p-6">
 			<div className="flex items-center justify-between gap-2">
-				<span className="font-jetbrains text-[10px] tracking-[0.2em] text-(--text-tertiary) uppercase">
+				<span className="font-jetbrains text-[10px] tracking-[0.2em] text-(--legacy-text-tertiary) uppercase">
 					Live preview
 				</span>
-				<span className="text-[11px] text-(--text-tertiary)">How readers see you</span>
+				<span className="text-[11px] text-(--legacy-text-tertiary)">How readers see you</span>
 			</div>
 			<div className="flex items-start gap-4">
 				{state.avatarUrl ? (
@@ -178,27 +178,29 @@ function LivePreview({ state, createdAt }: { state: FormState; createdAt: string
 					<img
 						src={state.avatarUrl}
 						alt=""
-						className="size-20 shrink-0 rounded-full border border-(--cards-border) object-cover"
+						className="size-20 shrink-0 rounded-full border border-(--legacy-cards-border) object-cover"
 					/>
 				) : (
-					<div className="flex size-20 shrink-0 items-center justify-center rounded-full border border-(--cards-border) bg-(--app-bg) text-xl font-semibold text-(--text-secondary)">
+					<div className="flex size-20 shrink-0 items-center justify-center rounded-full border border-(--legacy-cards-border) bg-(--legacy-app-bg) text-xl font-semibold text-(--legacy-text-secondary)">
 						{initials}
 					</div>
 				)}
 				<div className="grid min-w-0 gap-1.5">
-					<h2 className="text-xl font-semibold tracking-tight text-(--text-primary) md:text-2xl">{displayName}</h2>
-					<p className="font-jetbrains text-xs text-(--text-tertiary)">@{slug}</p>
+					<h2 className="text-xl font-semibold tracking-tight text-(--legacy-text-primary) md:text-2xl">
+						{displayName}
+					</h2>
+					<p className="font-jetbrains text-xs text-(--legacy-text-tertiary)">@{slug}</p>
 					{state.bio.trim() ? (
-						<p className="line-clamp-3 max-w-prose text-sm leading-relaxed text-(--text-secondary)">
+						<p className="line-clamp-3 max-w-prose text-sm leading-relaxed text-(--legacy-text-secondary)">
 							{state.bio.trim()}
 						</p>
 					) : (
-						<p className="max-w-prose text-sm text-(--text-tertiary) italic">
+						<p className="max-w-prose text-sm text-(--legacy-text-tertiary) italic">
 							Add a bio so readers know what you cover.
 						</p>
 					)}
 					{joined || socialCount > 0 ? (
-						<div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-(--text-tertiary)">
+						<div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-(--legacy-text-tertiary)">
 							{joined ? <span>Joined {joined}</span> : null}
 							{joined && socialCount > 0 ? <span aria-hidden>·</span> : null}
 							{socialCount > 0 ? (
@@ -216,10 +218,10 @@ function LivePreview({ state, createdAt }: { state: FormState; createdAt: string
 
 function Section({ title, description, children }: { title: string; description: ReactNode; children: ReactNode }) {
 	return (
-		<section className="grid gap-6 border-t border-(--cards-border) py-8 md:grid-cols-[220px_minmax(0,1fr)] md:gap-x-12 md:py-10">
+		<section className="grid gap-6 border-t border-(--legacy-cards-border) py-8 md:grid-cols-[220px_minmax(0,1fr)] md:gap-x-12 md:py-10">
 			<div>
-				<h2 className="text-base font-semibold text-(--text-primary)">{title}</h2>
-				<p className="mt-1.5 text-sm leading-relaxed text-(--text-secondary)">{description}</p>
+				<h2 className="text-base font-semibold text-(--legacy-text-primary)">{title}</h2>
+				<p className="mt-1.5 text-sm leading-relaxed text-(--legacy-text-secondary)">{description}</p>
 			</div>
 			<div className="grid min-w-0 gap-5">{children}</div>
 		</section>
@@ -316,7 +318,7 @@ export function AuthorProfileForm() {
 
 	if (loaders.userLoading || (isAuthenticated && isLoading)) {
 		return (
-			<div className="mx-auto flex max-w-3xl items-center justify-center py-24 text-sm text-(--text-tertiary)">
+			<div className="mx-auto flex max-w-3xl items-center justify-center py-24 text-sm text-(--legacy-text-tertiary)">
 				Loading…
 			</div>
 		)
@@ -324,12 +326,12 @@ export function AuthorProfileForm() {
 
 	if (!isAuthenticated) {
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-6">
-				<h1 className="text-xl font-semibold text-(--text-primary)">Sign in to edit your profile</h1>
-				<p className="text-sm text-(--text-secondary)">Your author profile is tied to your DefiLlama account.</p>
+			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-6">
+				<h1 className="text-xl font-semibold text-(--legacy-text-primary)">Sign in to edit your profile</h1>
+				<p className="text-sm text-(--legacy-text-secondary)">Your author profile is tied to your DefiLlama account.</p>
 				<SignInModal
 					text="Sign in"
-					className="mr-auto rounded-md bg-(--link-text) px-3 py-2 text-sm font-medium text-white"
+					className="mr-auto rounded-md bg-(--legacy-link-text) px-3 py-2 text-sm font-medium text-white"
 				/>
 			</div>
 		)
@@ -339,8 +341,8 @@ export function AuthorProfileForm() {
 		const message = loadError instanceof ArticleApiError ? loadError.message : 'Failed to load profile'
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-red-500/30 bg-red-500/5 p-6">
-				<h1 className="text-xl font-semibold text-(--text-primary)">Couldn't load profile</h1>
-				<p className="text-sm text-(--text-secondary)">{message}</p>
+				<h1 className="text-xl font-semibold text-(--legacy-text-primary)">Couldn't load profile</h1>
+				<p className="text-sm text-(--legacy-text-secondary)">{message}</p>
 			</div>
 		)
 	}
@@ -351,18 +353,20 @@ export function AuthorProfileForm() {
 				<div>
 					<Link
 						href="/research/mine"
-						className="inline-flex items-center gap-1 text-xs text-(--text-tertiary) transition-colors hover:text-(--text-primary)"
+						className="inline-flex items-center gap-1 text-xs text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-text-primary)"
 					>
 						<span aria-hidden>←</span> My articles
 					</Link>
-					<h1 className="mt-2 text-3xl font-semibold tracking-tight text-(--text-primary)">Profile</h1>
-					<p className="mt-1 text-sm text-(--text-secondary)">How readers see you on research and author pages.</p>
+					<h1 className="mt-2 text-3xl font-semibold tracking-tight text-(--legacy-text-primary)">Profile</h1>
+					<p className="mt-1 text-sm text-(--legacy-text-secondary)">
+						How readers see you on research and author pages.
+					</p>
 				</div>
 				<Link
 					href={`/research/authors/${profile.slug}`}
 					target="_blank"
 					rel="noreferrer"
-					className="inline-flex items-center gap-1.5 rounded-md border border-(--cards-border) bg-(--cards-bg) px-3 py-2 text-sm text-(--text-secondary) transition-colors hover:border-(--link-text)/40 hover:text-(--text-primary)"
+					className="inline-flex items-center gap-1.5 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-2 text-sm text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary)"
 				>
 					View public page
 					<span aria-hidden>↗</span>
@@ -387,7 +391,7 @@ export function AuthorProfileForm() {
 					/>
 				</div>
 				<label className="grid gap-1.5">
-					<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--text-primary)">
+					<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--legacy-text-primary)">
 						Display name
 						<CharCount value={state.displayName} max={DISPLAY_NAME_MAX} />
 					</span>
@@ -396,7 +400,7 @@ export function AuthorProfileForm() {
 						maxLength={DISPLAY_NAME_MAX}
 						value={state.displayName}
 						onChange={(e) => update({ displayName: e.target.value })}
-						className="w-full rounded-md border border-(--cards-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) transition-colors outline-none focus:border-(--link-text)/60"
+						className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
 					/>
 					{displayNameError ? <span className="text-xs text-red-500">{displayNameError}</span> : null}
 				</label>
@@ -407,14 +411,14 @@ export function AuthorProfileForm() {
 				description={
 					<>
 						Your public URL on DefiLlama. Lowercase letters, numbers, and dashes.{' '}
-						<span className="text-(--text-tertiary)">Don't change it casually — old links break.</span>
+						<span className="text-(--legacy-text-tertiary)">Don't change it casually — old links break.</span>
 					</>
 				}
 			>
 				<label className="grid gap-1.5">
-					<span className="text-sm font-medium text-(--text-primary)">Public URL</span>
-					<div className="flex items-stretch overflow-hidden rounded-md border border-(--cards-border) bg-(--app-bg) transition-colors focus-within:border-(--link-text)/60">
-						<span className="border-r border-(--cards-border) bg-(--cards-bg) px-3 py-2 font-jetbrains text-xs text-(--text-tertiary)">
+					<span className="text-sm font-medium text-(--legacy-text-primary)">Public URL</span>
+					<div className="flex items-stretch overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) transition-colors focus-within:border-(--legacy-link-text)/60">
+						<span className="border-r border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-2 font-jetbrains text-xs text-(--legacy-text-tertiary)">
 							/research/authors/
 						</span>
 						<input
@@ -422,7 +426,7 @@ export function AuthorProfileForm() {
 							maxLength={SLUG_MAX}
 							value={state.slug}
 							onChange={(e) => update({ slug: e.target.value })}
-							className="w-full bg-transparent px-3 py-2 font-jetbrains text-sm text-(--text-primary) outline-none"
+							className="w-full bg-transparent px-3 py-2 font-jetbrains text-sm text-(--legacy-text-primary) outline-none"
 							spellCheck={false}
 							autoCapitalize="none"
 							autoCorrect="off"
@@ -444,7 +448,7 @@ export function AuthorProfileForm() {
 				description="One or two sentences. Shown at the top of your author page and in research bylines."
 			>
 				<label className="grid gap-1.5">
-					<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--text-primary)">
+					<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--legacy-text-primary)">
 						About you
 						<CharCount value={state.bio} max={BIO_MAX} />
 					</span>
@@ -454,7 +458,7 @@ export function AuthorProfileForm() {
 						value={state.bio}
 						onChange={(e) => update({ bio: e.target.value })}
 						placeholder="Researcher covering DeFi liquidity, MEV, and stablecoins."
-						className="w-full resize-y rounded-md border border-(--cards-border) bg-(--app-bg) px-3 py-2 text-sm leading-relaxed text-(--text-primary) transition-colors outline-none focus:border-(--link-text)/60"
+						className="w-full resize-y rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm leading-relaxed text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
 					/>
 				</label>
 			</Section>
@@ -463,24 +467,24 @@ export function AuthorProfileForm() {
 				<div className="grid gap-3 sm:grid-cols-2">
 					{PRESET_SOCIALS.map((kind) => (
 						<label key={kind.id} className="grid gap-1.5">
-							<span className="text-xs font-medium text-(--text-secondary)">{kind.label}</span>
+							<span className="text-xs font-medium text-(--legacy-text-secondary)">{kind.label}</span>
 							<input
 								type="text"
 								maxLength={SOCIAL_VALUE_MAX}
 								value={state.socials[kind.id] || ''}
 								onChange={(e) => updateSocial(kind.id, e.target.value)}
 								placeholder={kind.placeholder}
-								className="w-full rounded-md border border-(--cards-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) transition-colors outline-none focus:border-(--link-text)/60"
+								className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
 							/>
 						</label>
 					))}
 				</div>
 
 				{showCustom ? (
-					<div className="grid gap-3 border-t border-(--cards-border) pt-4">
+					<div className="grid gap-3 border-t border-(--legacy-cards-border) pt-4">
 						<div className="flex items-center justify-between gap-2">
-							<h3 className="text-sm font-medium text-(--text-primary)">Custom links</h3>
-							<button type="button" onClick={addCustom} className="text-xs text-(--link-text) hover:underline">
+							<h3 className="text-sm font-medium text-(--legacy-text-primary)">Custom links</h3>
+							<button type="button" onClick={addCustom} className="text-xs text-(--legacy-link-text) hover:underline">
 								+ add another
 							</button>
 						</div>
@@ -488,7 +492,7 @@ export function AuthorProfileForm() {
 							<button
 								type="button"
 								onClick={addCustom}
-								className="rounded-md border border-dashed border-(--cards-border) bg-(--app-bg) p-3 text-sm text-(--text-tertiary) transition-colors hover:border-(--link-text)/40 hover:text-(--text-primary)"
+								className="rounded-md border border-dashed border-(--legacy-cards-border) bg-(--legacy-app-bg) p-3 text-sm text-(--legacy-text-tertiary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary)"
 							>
 								Add a custom link
 							</button>
@@ -501,7 +505,7 @@ export function AuthorProfileForm() {
 										onChange={(e) => updateCustom(index, { key: e.target.value })}
 										placeholder="kind"
 										maxLength={40}
-										className="w-full rounded-md border border-(--cards-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) transition-colors outline-none focus:border-(--link-text)/60"
+										className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
 									/>
 									<input
 										type="text"
@@ -509,13 +513,13 @@ export function AuthorProfileForm() {
 										onChange={(e) => updateCustom(index, { value: e.target.value })}
 										placeholder="https://…"
 										maxLength={SOCIAL_VALUE_MAX}
-										className="w-full rounded-md border border-(--cards-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) transition-colors outline-none focus:border-(--link-text)/60"
+										className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
 									/>
 									<button
 										type="button"
 										onClick={() => removeCustom(index)}
 										aria-label="Remove"
-										className="flex size-9 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-red-500/10 hover:text-red-500"
+										className="flex size-9 items-center justify-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-red-500/10 hover:text-red-500"
 									>
 										<Icon name="x" className="size-3.5" />
 									</button>
@@ -530,16 +534,16 @@ export function AuthorProfileForm() {
 							setShowCustom(true)
 							addCustom()
 						}}
-						className="mr-auto text-xs text-(--link-text) hover:underline"
+						className="mr-auto text-xs text-(--legacy-link-text) hover:underline"
 					>
 						+ add custom link
 					</button>
 				)}
 			</Section>
 
-			<div className="sticky bottom-0 -mx-1 mt-2 border-t border-(--cards-border) bg-(--app-bg)/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-(--app-bg)/70">
+			<div className="sticky bottom-0 -mx-1 mt-2 border-t border-(--legacy-cards-border) bg-(--legacy-app-bg)/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-(--legacy-app-bg)/70">
 				<div className="flex items-center justify-between gap-3">
-					<span className="inline-flex items-center gap-2 text-xs text-(--text-tertiary)">
+					<span className="inline-flex items-center gap-2 text-xs text-(--legacy-text-tertiary)">
 						<span
 							aria-hidden
 							className={`size-1.5 rounded-full transition-colors ${dirty ? 'bg-amber-500' : 'bg-emerald-500'}`}
@@ -551,14 +555,14 @@ export function AuthorProfileForm() {
 							type="button"
 							onClick={handleReset}
 							disabled={!dirty || updateProfileMutation.isPending}
-							className="rounded-md px-3 py-2 text-sm text-(--text-secondary) transition-colors hover:text-(--text-primary) disabled:cursor-not-allowed disabled:opacity-40"
+							className="rounded-md px-3 py-2 text-sm text-(--legacy-text-secondary) transition-colors hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-40"
 						>
 							Discard
 						</button>
 						<button
 							type="submit"
 							disabled={!dirty || hasError || updateProfileMutation.isPending}
-							className="rounded-md bg-(--link-text) px-4 py-2 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+							className="rounded-md bg-(--legacy-link-text) px-4 py-2 text-sm font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
 						>
 							{updateProfileMutation.isPending ? 'Saving…' : 'Save changes'}
 						</button>

@@ -195,10 +195,10 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 			)}
 			<Ariakit.DialogProvider open={!!disconnectTarget} setOpen={(open) => !open && setDisconnectTarget(null)}>
 				<Ariakit.Dialog
-					className="fixed top-1/2 left-1/2 z-50 w-[min(420px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#e6e6e6] bg-(--cards-bg) p-5 shadow-2xl dark:border-[#222324]"
+					className="fixed top-1/2 left-1/2 z-50 w-[min(420px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#e6e6e6] bg-(--legacy-cards-bg) p-5 shadow-2xl dark:border-[#222324]"
 					backdrop={<div className="backdrop fixed inset-0 bg-black/60 backdrop-blur-md" />}
 				>
-					<Ariakit.DialogHeading className="text-base font-semibold text-(--text-primary)">
+					<Ariakit.DialogHeading className="text-base font-semibold text-(--legacy-text-primary)">
 						Disconnect Slack workspace?
 					</Ariakit.DialogHeading>
 					<p className="mt-1 text-sm text-[#666] dark:text-[#919296]">

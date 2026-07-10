@@ -73,23 +73,23 @@ export function ArticleEditorHeader({
 	return (
 		<header
 			className={`mb-8 flex flex-wrap items-center justify-between gap-3 border-b py-4 lg:-mx-20 lg:px-2 xl:-mx-[170px] xl:px-4 ${
-				isPublished ? 'border-emerald-500/25' : 'border-(--cards-border)'
+				isPublished ? 'border-emerald-500/25' : 'border-(--legacy-cards-border)'
 			}`}
 		>
 			<nav className="flex min-w-0 items-center gap-2.5 text-sm">
 				<Link
 					href="/research/admin"
-					className="inline-flex items-center gap-1 text-(--text-tertiary) transition-colors hover:text-(--text-primary)"
+					className="inline-flex items-center gap-1 text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-text-primary)"
 				>
 					Admin
 				</Link>
-				<span aria-hidden className="text-(--text-tertiary)/50">
+				<span aria-hidden className="text-(--legacy-text-tertiary)/50">
 					›
 				</span>
-				<Link href="/research/mine" className="text-(--text-tertiary) hover:text-(--text-primary)">
+				<Link href="/research/mine" className="text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)">
 					Articles
 				</Link>
-				<span aria-hidden className="text-(--text-tertiary)/50">
+				<span aria-hidden className="text-(--legacy-text-tertiary)/50">
 					›
 				</span>
 				{slugEditing ? (
@@ -108,7 +108,7 @@ export function ArticleEditorHeader({
 								cancelSlugEdit()
 							}
 						}}
-						className="w-[24ch] rounded border border-(--link-text)/40 bg-(--app-bg) px-1.5 py-0.5 font-jetbrains text-xs text-(--text-primary) focus:border-(--link-text) focus:outline-none"
+						className="w-[24ch] rounded border border-(--legacy-link-text)/40 bg-(--legacy-app-bg) px-1.5 py-0.5 font-jetbrains text-xs text-(--legacy-text-primary) focus:border-(--legacy-link-text) focus:outline-none"
 					/>
 				) : (
 					<button
@@ -117,15 +117,18 @@ export function ArticleEditorHeader({
 						title="Click to edit slug"
 						className={`group flex ${
 							hasPendingEdits ? 'max-w-[18ch] sm:max-w-[24ch] lg:max-w-[32ch]' : 'max-w-[24ch] sm:max-w-[32ch]'
-						} items-center gap-1 truncate rounded px-1 py-0.5 font-jetbrains text-xs tracking-tight text-(--text-secondary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)`}
+						} items-center gap-1 truncate rounded px-1 py-0.5 font-jetbrains text-xs tracking-tight text-(--legacy-text-secondary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)`}
 					>
 						<span className="truncate">{article.slug}</span>
-						<span aria-hidden className="text-(--text-tertiary) opacity-0 transition-opacity group-hover:opacity-100">
+						<span
+							aria-hidden
+							className="text-(--legacy-text-tertiary) opacity-0 transition-opacity group-hover:opacity-100"
+						>
 							✎
 						</span>
 					</button>
 				)}
-				<span aria-hidden className="text-(--text-tertiary)/40">
+				<span aria-hidden className="text-(--legacy-text-tertiary)/40">
 					·
 				</span>
 				<span
@@ -163,7 +166,7 @@ export function ArticleEditorHeader({
 							? 'border-red-500/40 bg-red-500/5 text-red-500 hover:bg-red-500/10'
 							: pillState === 'unsaved'
 								? 'border-amber-500/35 bg-amber-500/5 text-amber-600 hover:bg-amber-500/10 dark:text-amber-400'
-								: 'border-transparent text-(--text-secondary) hover:border-(--cards-border) hover:bg-(--link-hover-bg) disabled:hover:border-transparent disabled:hover:bg-transparent'
+								: 'border-transparent text-(--legacy-text-secondary) hover:border-(--legacy-cards-border) hover:bg-(--legacy-link-hover-bg) disabled:hover:border-transparent disabled:hover:bg-transparent'
 					}`}
 				>
 					<span aria-hidden className={`size-1.5 rounded-full ${pillDot}`} />
@@ -183,7 +186,7 @@ export function ArticleEditorHeader({
 				<div
 					role="group"
 					aria-label="Editor mode"
-					className="flex h-9 items-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-0.5"
+					className="flex h-9 items-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-0.5"
 				>
 					{(
 						[
@@ -201,8 +204,8 @@ export function ArticleEditorHeader({
 								onClick={() => onViewModeChange(item.mode)}
 								className={`flex h-8 items-center gap-1.5 rounded-sm px-2.5 text-xs font-medium transition-colors ${
 									active
-										? 'bg-(--link-button) text-(--link-text)'
-										: 'text-(--text-tertiary) hover:bg-(--link-hover-bg) hover:text-(--text-primary)'
+										? 'bg-(--legacy-link-button) text-(--legacy-link-text)'
+										: 'text-(--legacy-text-tertiary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)'
 								}`}
 							>
 								<Icon name={item.icon} className="size-3.5" />
@@ -217,7 +220,7 @@ export function ArticleEditorHeader({
 						type="button"
 						onClick={onOpenHistory}
 						title="Revision history"
-						className="flex size-9 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) text-(--text-secondary) transition-colors hover:border-(--link-text)/40 hover:text-(--text-primary)"
+						className="flex size-9 items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary)"
 					>
 						<SharedIcon name="clock" className="size-4" />
 					</button>
@@ -231,7 +234,7 @@ export function ArticleEditorHeader({
 									type="button"
 									disabled={isPublishing || isDiscarding}
 									onClick={handleDiscardPending}
-									className="flex h-9 items-center gap-1.5 rounded-md border border-(--cards-border) bg-(--cards-bg) px-3 text-xs font-medium text-(--text-secondary) transition-colors hover:border-red-500/50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+									className="flex h-9 items-center gap-1.5 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:border-red-500/50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
 								>
 									{isDiscarding ? 'Discarding…' : 'Discard'}
 								</button>
@@ -249,19 +252,19 @@ export function ArticleEditorHeader({
 							</>
 						) : null}
 						<Ariakit.MenuProvider>
-							<Ariakit.MenuButton className="flex h-9 items-center gap-1.5 rounded-md border border-(--cards-border) bg-(--cards-bg) px-3 text-xs font-medium text-(--text-primary) transition-colors hover:border-(--link-text)/40">
+							<Ariakit.MenuButton className="flex h-9 items-center gap-1.5 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 text-xs font-medium text-(--legacy-text-primary) transition-colors hover:border-(--legacy-link-text)/40">
 								<span
 									aria-hidden
 									className={`size-1.5 rounded-full ${hasPendingEdits ? 'animate-pulse bg-amber-500' : 'bg-emerald-500'}`}
 								/>
 								<span>{hasPendingEdits ? 'Live · Pending' : 'Live'}</span>
-								<span aria-hidden className="text-(--text-tertiary)">
+								<span aria-hidden className="text-(--legacy-text-tertiary)">
 									▾
 								</span>
 							</Ariakit.MenuButton>
 							<Ariakit.Menu
 								gutter={6}
-								className="z-50 grid min-w-[180px] gap-0.5 rounded-md border border-(--cards-border) bg-(--cards-bg) p-1 shadow-xl"
+								className="z-50 grid min-w-[180px] gap-0.5 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1 shadow-xl"
 							>
 								<Ariakit.MenuItem
 									render={
@@ -269,7 +272,7 @@ export function ArticleEditorHeader({
 											href={articleViewHref}
 											target="_blank"
 											rel="noreferrer"
-											className="flex items-center justify-between rounded px-2.5 py-1.5 text-xs text-(--text-secondary) data-[active-item]:bg-(--link-button) data-[active-item]:text-(--link-text)"
+											className="flex items-center justify-between rounded px-2.5 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 										/>
 									}
 								>
@@ -277,18 +280,18 @@ export function ArticleEditorHeader({
 										<Icon name="eye" className="size-3.5" />
 										View live
 									</span>
-									<Icon name="external" className="size-3 text-(--text-tertiary)" />
+									<Icon name="external" className="size-3 text-(--legacy-text-tertiary)" />
 								</Ariakit.MenuItem>
 								<Ariakit.MenuItem
 									onClick={onOpenMeta}
-									className="flex items-center gap-2 rounded px-2.5 py-1.5 text-xs text-(--text-secondary) data-[active-item]:bg-(--link-button) data-[active-item]:text-(--link-text)"
+									className="flex items-center gap-2 rounded px-2.5 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 								>
 									<Icon name="sliders" className="size-3.5" />
 									Edit listing
 								</Ariakit.MenuItem>
 								<Ariakit.MenuItem
 									onClick={onOpenHistory}
-									className="flex items-center gap-2 rounded px-2.5 py-1.5 text-xs text-(--text-secondary) data-[active-item]:bg-(--link-button) data-[active-item]:text-(--link-text)"
+									className="flex items-center gap-2 rounded px-2.5 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 								>
 									<Icon name="check" className="size-3.5" />
 									Revision history
@@ -296,14 +299,14 @@ export function ArticleEditorHeader({
 								<Ariakit.MenuItem
 									onClick={handleUnpublish}
 									disabled={isPublishing}
-									className="flex items-center gap-2 rounded px-2.5 py-1.5 text-xs text-(--text-secondary) data-[active-item]:bg-(--link-button) data-[active-item]:text-(--link-text)"
+									className="flex items-center gap-2 rounded px-2.5 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 								>
 									<Icon name="undo" className="size-3.5" />
 									Move to drafts
 								</Ariakit.MenuItem>
 								{isOwner ? (
 									<>
-										<span aria-hidden className="my-1 h-px bg-(--cards-border)" />
+										<span aria-hidden className="my-1 h-px bg-(--legacy-cards-border)" />
 										<Ariakit.MenuItem
 											onClick={handleDeleteArticle}
 											className="flex items-center gap-2 rounded px-2.5 py-1.5 text-xs text-red-500 data-[active-item]:bg-red-500/10"
@@ -323,7 +326,7 @@ export function ArticleEditorHeader({
 								type="button"
 								onClick={onOpenMeta}
 								title="Set a section"
-								className="flex h-9 items-center gap-1.5 rounded-md border border-dashed border-(--cards-border) bg-transparent px-3 text-xs font-medium text-(--text-tertiary) transition-colors hover:border-(--link-text)/40 hover:text-(--text-secondary)"
+								className="flex h-9 items-center gap-1.5 rounded-md border border-dashed border-(--legacy-cards-border) bg-transparent px-3 text-xs font-medium text-(--legacy-text-tertiary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-secondary)"
 							>
 								<Icon name="sliders" className="size-3.5" />
 								<span>Set section</span>
@@ -336,7 +339,7 @@ export function ArticleEditorHeader({
 								title="Delete draft"
 								disabled={deletePending}
 								onClick={handleDeleteArticle}
-								className="flex size-9 items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) text-(--text-tertiary) transition-colors hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+								className="flex size-9 items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) text-(--legacy-text-tertiary) transition-colors hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
 							>
 								<Icon name="trash" className="size-3.5" />
 							</button>

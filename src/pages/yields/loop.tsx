@@ -50,7 +50,7 @@ export default function YieldBorrow(data) {
 				{disclaimer}
 			</Announcement>
 
-			<p className="rounded-md bg-(--cards-bg) p-3 text-center whitespace-pre-line">
+			<p className="rounded-md bg-(--legacy-cards-bg) p-3 text-center whitespace-pre-line">
 				This page displays leveraged lending APY values. The way this works:
 				<br />
 				1. deposit collateral amount N into pool X
@@ -60,7 +60,7 @@ export default function YieldBorrow(data) {
 				3. deposit the borrowed amount M into pool X
 				<button
 					onClick={() => startTransition(() => setMethodologyActivated((prev) => !prev))}
-					className="mx-auto block font-medium text-(--blue) hover:underline"
+					className="mx-auto block font-medium text-(--legacy-blue) hover:underline"
 				>
 					Example
 				</button>

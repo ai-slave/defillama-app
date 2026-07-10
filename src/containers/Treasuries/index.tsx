@@ -52,7 +52,7 @@ const columns = [
 					<TokenLogo name={name} kind="token" data-lgonly alt={`Logo of ${name}`} />
 					<BasicLink
 						href={`/protocol/${slug}?treasury=true&tvl=false`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text)"
+						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text)"
 					>
 						{name}
 					</BasicLink>

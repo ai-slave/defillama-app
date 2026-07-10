@@ -9,8 +9,8 @@ export const isProvenVendor = (p: string | null | undefined): p is string =>
 export type StressMode = 'vault' | 'custom'
 
 export const SLIDER_THUMB =
-	'[&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-none [&::-webkit-slider-thumb]:bg-(--primary) ' +
-	'[&::-moz-range-thumb]:size-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:bg-(--primary)'
+	'[&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-none [&::-webkit-slider-thumb]:bg-(--legacy-primary) ' +
+	'[&::-moz-range-thumb]:size-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:bg-(--legacy-primary)'
 
 export function dropLabel(drop: number): string {
 	return drop === 0 ? '0%' : `−${drop}%`
@@ -56,8 +56,8 @@ function ptPricingMeta(pt: string): { label: string; note?: string } {
 export function PtPricingChip({ pricing }: { pricing: string }) {
 	const { label, note } = ptPricingMeta(pricing)
 	const chip = (
-		<span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-(--cards-border) bg-(--bg-main) px-1.5 py-0.5 text-[10px] font-medium text-(--text-secondary)">
-			<span className="text-(--text-tertiary)">PT</span>
+		<span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-(--legacy-cards-border) bg-(--legacy-bg-main) px-1.5 py-0.5 text-[10px] font-medium text-(--legacy-text-secondary)">
+			<span className="text-(--legacy-text-tertiary)">PT</span>
 			{label}
 		</span>
 	)

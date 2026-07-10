@@ -23,7 +23,9 @@ export function AuthorProfileStrip() {
 	return (
 		<div
 			className={`flex flex-wrap items-center gap-3 rounded-md border px-3 py-2.5 ${
-				customized ? 'border-(--cards-border) bg-(--cards-bg)' : 'border-(--link-text)/20 bg-(--link-button)'
+				customized
+					? 'border-(--legacy-cards-border) bg-(--legacy-cards-bg)'
+					: 'border-(--legacy-link-text)/20 bg-(--legacy-link-button)'
 			}`}
 		>
 			{profile.avatarUrl ? (
@@ -38,10 +40,10 @@ export function AuthorProfileStrip() {
 				</span>
 			)}
 			<div className="min-w-0 flex-1">
-				<p className="truncate text-sm font-semibold text-(--text-primary)">
-					{profile.displayName} <span className="font-normal text-(--text-label)">@{profile.slug}</span>
+				<p className="truncate text-sm font-semibold text-(--legacy-text-primary)">
+					{profile.displayName} <span className="font-normal text-(--legacy-text-label)">@{profile.slug}</span>
 				</p>
-				<p className="mt-0.5 truncate text-xs text-(--text-secondary)">
+				<p className="mt-0.5 truncate text-xs text-(--legacy-text-secondary)">
 					{customized
 						? 'This is how you appear on your public dashboards.'
 						: 'Add your name, avatar, and links to stand out on your dashboards and Top Authors.'}
@@ -50,7 +52,7 @@ export function AuthorProfileStrip() {
 			<div className="flex shrink-0 items-center gap-2">
 				<BasicLink
 					href={`/authors/${profile.slug}`}
-					className="rounded-md border border-(--cards-border) px-3 py-1.5 text-xs font-medium text-(--text-secondary) hover:text-(--text-primary)"
+					className="rounded-md border border-(--legacy-cards-border) px-3 py-1.5 text-xs font-medium text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)"
 				>
 					View public profile
 				</BasicLink>
@@ -59,8 +61,8 @@ export function AuthorProfileStrip() {
 					data-umami-event="dashboard-edit-author-profile"
 					className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium ${
 						customized
-							? 'border border-(--cards-border) text-(--text-secondary) hover:text-(--text-primary)'
-							: 'bg-(--link-text) text-white'
+							? 'border border-(--legacy-cards-border) text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
+							: 'bg-(--legacy-link-text) text-white'
 					}`}
 				>
 					<Icon name="pencil" height={12} width={12} />

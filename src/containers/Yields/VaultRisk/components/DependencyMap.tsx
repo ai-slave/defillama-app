@@ -131,7 +131,7 @@ export function DependencyMap({
 		<div className="flex flex-col gap-2">
 			<span className={MICRO_LABEL}>
 				Dependencies that can affect your deposit{' '}
-				<span className="font-normal text-(--text-secondary)">
+				<span className="font-normal text-(--legacy-text-secondary)">
 					{`· ${deps.length} ${deps.length === 1 ? 'thing' : 'things'} this pool relies on but doesn't control — select one for its story`}
 				</span>
 			</span>
@@ -150,10 +150,10 @@ export function DependencyMap({
 								vectorEffect="non-scaling-stroke"
 								className={
 									selected?.d.id === n.d.id
-										? 'stroke-(--primary)'
+										? 'stroke-(--legacy-primary)'
 										: n.count
-											? 'stroke-(--text-tertiary)'
-											: 'stroke-(--cards-border)'
+											? 'stroke-(--legacy-text-tertiary)'
+											: 'stroke-(--legacy-cards-border)'
 								}
 								strokeWidth={selected?.d.id === n.d.id ? 1.5 : 1}
 							/>
@@ -164,7 +164,7 @@ export function DependencyMap({
 						<span
 							key={s.label}
 							aria-hidden
-							className="absolute text-[9px] tracking-wide whitespace-nowrap text-(--text-tertiary) uppercase"
+							className="absolute text-[9px] tracking-wide whitespace-nowrap text-(--legacy-text-tertiary) uppercase"
 							style={{
 								left: `${s.x}%`,
 								top: `${s.y}%`,
@@ -176,7 +176,7 @@ export function DependencyMap({
 					))}
 
 					<span
-						className="absolute flex max-w-40 -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border border-(--cards-border) bg-(--cards-bg) px-2.5 py-1 text-xs font-semibold text-(--text-primary)"
+						className="absolute flex max-w-40 -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-2.5 py-1 text-xs font-semibold text-(--legacy-text-primary)"
 						style={{ left: '50%', top: '50%' }}
 					>
 						<TokenLogo name={protocolId} kind="token" size={16} />
@@ -192,12 +192,12 @@ export function DependencyMap({
 								onClick={() => setSelectedId(n.d.id)}
 								aria-pressed={isSelected}
 								aria-label={`${depName(n.d)}${n.count ? `, appears in ${n.count} loss scenarios` : ''}`}
-								className={`absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-full border bg-(--bg-main) px-2 py-0.5 text-[11px] outline-offset-2 outline-(--primary) transition-colors duration-150 focus-visible:z-10 focus-visible:outline-2 ${
+								className={`absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-full border bg-(--legacy-bg-main) px-2 py-0.5 text-[11px] outline-offset-2 outline-(--legacy-primary) transition-colors duration-150 focus-visible:z-10 focus-visible:outline-2 ${
 									isSelected
-										? 'z-10 border-(--primary) text-(--primary)'
+										? 'z-10 border-(--legacy-primary) text-(--legacy-primary)'
 										: n.count
-											? 'max-w-36 border-(--cards-border) text-(--text-primary) hover:z-10 hover:border-(--text-secondary)/40'
-											: 'max-w-36 border-(--cards-border) text-(--text-secondary) hover:z-10 hover:border-(--text-secondary)/40'
+											? 'max-w-36 border-(--legacy-cards-border) text-(--legacy-text-primary) hover:z-10 hover:border-(--legacy-text-secondary)/40'
+											: 'max-w-36 border-(--legacy-cards-border) text-(--legacy-text-secondary) hover:z-10 hover:border-(--legacy-text-secondary)/40'
 								}`}
 								style={{ left: `${n.x}%`, top: `${n.y}%` }}
 							>
@@ -212,14 +212,14 @@ export function DependencyMap({
 					<div
 						role="region"
 						aria-label={depName(selected.d)}
-						className="flex flex-col gap-2 self-center rounded-md border border-(--cards-border) bg-(--bg-main) p-3"
+						className="flex flex-col gap-2 self-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-bg-main) p-3"
 					>
 						<div className="flex items-start justify-between gap-2">
 							<div className="min-w-0">
-								<span className="text-[10px] tracking-wide text-(--text-secondary) uppercase">
+								<span className="text-[10px] tracking-wide text-(--legacy-text-secondary) uppercase">
 									{DEP_KIND_LABEL[selected.d.kind] ?? selected.d.kind}
 								</span>
-								<h4 className="text-sm font-semibold text-(--text-primary)">{depName(selected.d)}</h4>
+								<h4 className="text-sm font-semibold text-(--legacy-text-primary)">{depName(selected.d)}</h4>
 							</div>
 							{selected.d.source_url ? (
 								<a
@@ -227,32 +227,34 @@ export function DependencyMap({
 									target="_blank"
 									rel="noreferrer"
 									aria-label={`${depName(selected.d)} — open source`}
-									className="flex shrink-0 items-center p-0.5 text-(--text-secondary) hover:text-(--text-primary)"
+									className="flex shrink-0 items-center p-0.5 text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)"
 								>
 									<Icon name="arrow-up-right" className="size-3.5" />
 								</a>
 							) : null}
 						</div>
 						{selected.d.description ? (
-							<p className="text-xs text-(--text-secondary)">{selected.d.description}</p>
+							<p className="text-xs text-(--legacy-text-secondary)">{selected.d.description}</p>
 						) : null}
-						{selected.d.notes ? <p className="text-xs text-(--text-secondary) italic">{selected.d.notes}</p> : null}
+						{selected.d.notes ? (
+							<p className="text-xs text-(--legacy-text-secondary) italic">{selected.d.notes}</p>
+						) : null}
 						{selected.titles.length ? (
 							<div className="flex flex-col gap-1">
-								<span className="text-xs font-semibold text-(--text-primary)">
+								<span className="text-xs font-semibold text-(--legacy-text-primary)">
 									Tied to {selected.titles.length} loss scenario
 									{selected.titles.length === 1 ? '' : 's'}
 								</span>
 								<ul className="flex flex-col gap-0.5">
 									{selected.titles.map((t) => (
-										<li key={t} className="text-xs text-(--text-secondary)">
+										<li key={t} className="text-xs text-(--legacy-text-secondary)">
 											· {t}
 										</li>
 									))}
 								</ul>
 							</div>
 						) : (
-							<p className="text-xs text-(--text-tertiary) italic">
+							<p className="text-xs text-(--legacy-text-tertiary) italic">
 								No quantified loss scenario references this dependency directly.
 							</p>
 						)}

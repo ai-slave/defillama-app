@@ -92,14 +92,14 @@ export function ResearchFeedLanding({ items }: { items: ResearchFeedPreviewItem[
 		<>
 			<style>{REVEAL_STYLES}</style>
 
-			<div className="mx-auto max-w-6xl px-4 py-12 text-(--text-primary) sm:px-6 lg:px-8 lg:py-16">
+			<div className="mx-auto max-w-6xl px-4 py-12 text-(--legacy-text-primary) sm:px-6 lg:px-8 lg:py-16">
 				<div className="relative overflow-hidden">
 					<RssCornerMotif />
 
 					<div className="relative z-10">
 						<div className="dl-feed-reveal flex items-center gap-2.5">
 							<RssMark size={18} />
-							<span className="font-jetbrains text-[11px] tracking-[0.22em] text-(--text-tertiary) uppercase">
+							<span className="font-jetbrains text-[11px] tracking-[0.22em] text-(--legacy-text-tertiary) uppercase">
 								Web feed
 							</span>
 						</div>
@@ -110,7 +110,7 @@ export function ResearchFeedLanding({ items }: { items: ResearchFeedPreviewItem[
 							Every report, the moment it ships.
 						</h1>
 						<p
-							className="dl-feed-reveal mt-5 max-w-2xl text-base leading-relaxed text-(--text-secondary) lg:text-lg"
+							className="dl-feed-reveal mt-5 max-w-2xl text-base leading-relaxed text-(--legacy-text-secondary) lg:text-lg"
 							style={{ animationDelay: '90ms' }}
 						>
 							Data-driven crypto and digital-asset research: market analysis, interviews, and reports, delivered to your
@@ -134,12 +134,12 @@ export function ResearchFeedLanding({ items }: { items: ResearchFeedPreviewItem[
 						<div className="dl-feed-reveal mt-8" style={{ animationDelay: '190ms' }}>
 							<a
 								href={feedSchemeUrl(RESEARCH_FEED_URL)}
-								className="inline-flex items-center gap-2.5 rounded-lg border border-(--cards-border) px-5 py-2.5 text-sm font-semibold text-(--text-primary) transition-[color,background-color,border-color,transform] duration-150 hover:border-(--link-text)/50 hover:bg-(--cards-bg) motion-safe:active:scale-[0.98]"
+								className="inline-flex items-center gap-2.5 rounded-lg border border-(--legacy-cards-border) px-5 py-2.5 text-sm font-semibold text-(--legacy-text-primary) transition-[color,background-color,border-color,transform] duration-150 hover:border-(--legacy-link-text)/50 hover:bg-(--legacy-cards-bg) motion-safe:active:scale-[0.98]"
 							>
 								<RssMark size={16} />
 								Open in your RSS app
 							</a>
-							<p className="mt-4 max-w-xl text-sm leading-relaxed text-(--text-tertiary)">
+							<p className="mt-4 max-w-xl text-sm leading-relaxed text-(--legacy-text-tertiary)">
 								Works with any reader: NetNewsWire, Reeder, Readwise Reader, Feedly, and more. Or paste the URL above
 								into the app you already use.
 							</p>
@@ -152,13 +152,13 @@ export function ResearchFeedLanding({ items }: { items: ResearchFeedPreviewItem[
 						<TitleLine title="Latest" />
 						<ul className="mt-6 grid gap-x-10 sm:grid-cols-2 lg:grid-cols-3">
 							{items.map((item) => (
-								<li key={item.href} className="border-b border-(--cards-border)">
+								<li key={item.href} className="border-b border-(--legacy-cards-border)">
 									<Link href={item.href} className="group block py-4">
 										<span className="font-jetbrains text-[10px] tracking-[0.18em] uppercase">
-											<span className="text-(--link-text)">{item.sectionLabel}</span>{' '}
-											<span className="text-(--text-tertiary)">· {item.date}</span>
+											<span className="text-(--legacy-link-text)">{item.sectionLabel}</span>{' '}
+											<span className="text-(--legacy-text-tertiary)">· {item.date}</span>
 										</span>
-										<span className="mt-1.5 block text-[15px] leading-snug font-semibold text-(--text-primary) transition-colors group-hover:text-(--link-text)">
+										<span className="mt-1.5 block text-[15px] leading-snug font-semibold text-(--legacy-text-primary) transition-colors group-hover:text-(--legacy-link-text)">
 											{item.title}
 										</span>
 									</Link>
@@ -168,12 +168,12 @@ export function ResearchFeedLanding({ items }: { items: ResearchFeedPreviewItem[
 					</div>
 				) : null}
 
-				<div className="mt-14 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-(--cards-border) pt-6 font-jetbrains text-[11px] tracking-[0.14em] text-(--text-tertiary) uppercase">
+				<div className="mt-14 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-(--legacy-cards-border) pt-6 font-jetbrains text-[11px] tracking-[0.14em] text-(--legacy-text-tertiary) uppercase">
 					<a
 						href="/research/feed.xml"
 						target="_blank"
 						rel="noopener noreferrer"
-						className="inline-flex items-center gap-1.5 transition-colors hover:text-(--text-secondary)"
+						className="inline-flex items-center gap-1.5 transition-colors hover:text-(--legacy-text-secondary)"
 					>
 						View raw XML <Icon name="arrow-up-right" height={12} width={12} />
 					</a>

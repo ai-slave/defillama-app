@@ -10,8 +10,8 @@ import { PositionControl, usePositionUsd } from './PositionControl'
 // label, never by the block.
 function QuestionBlock({ label, children }: { label: string; children: React.ReactNode }) {
 	return (
-		<div className="flex flex-col gap-1.5 bg-(--cards-bg) p-3">
-			<span className="text-[10px] font-medium tracking-wide text-(--text-secondary) uppercase">{label}</span>
+		<div className="flex flex-col gap-1.5 bg-(--legacy-cards-bg) p-3">
+			<span className="text-[10px] font-medium tracking-wide text-(--legacy-text-secondary) uppercase">{label}</span>
 			{children}
 		</div>
 	)
@@ -20,8 +20,8 @@ function QuestionBlock({ label, children }: { label: string; children: React.Rea
 function Stat({ value, sub }: { value: React.ReactNode; sub?: React.ReactNode }) {
 	return (
 		<div className="flex flex-col gap-0.5">
-			<span className="text-sm font-semibold text-(--text-primary) tabular-nums">{value}</span>
-			{sub ? <span className="text-xs text-(--text-secondary)">{sub}</span> : null}
+			<span className="text-sm font-semibold text-(--legacy-text-primary) tabular-nums">{value}</span>
+			{sub ? <span className="text-xs text-(--legacy-text-secondary)">{sub}</span> : null}
 		</div>
 	)
 }
@@ -129,7 +129,7 @@ export function RiskVerdict({
 			<div className="flex flex-col gap-3">
 				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
 					{/* neutral phrasing until a deposit is entered — "I/lose" only once scaled */}
-					<span className="text-[10px] font-medium tracking-wide text-(--text-secondary) uppercase">
+					<span className="text-[10px] font-medium tracking-wide text-(--legacy-text-secondary) uppercase">
 						{personal ? 'How much could I lose?' : 'How much could be lost?'}
 					</span>
 					{supplyUsd > 0 && worst > 0 ? <PositionControl position={position} onChange={setPosition} /> : null}
@@ -137,11 +137,11 @@ export function RiskVerdict({
 				{worst > 0 ? (
 					<LossCurve {...lossProps} />
 				) : (
-					<p className="text-sm text-(--text-secondary)">No quantified loss scenarios for this pool yet.</p>
+					<p className="text-sm text-(--legacy-text-secondary)">No quantified loss scenarios for this pool yet.</p>
 				)}
 			</div>
 
-			<div className="grid grid-cols-1 gap-px overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-border) sm:grid-cols-3">
+			<div className="grid grid-cols-1 gap-px overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-border) sm:grid-cols-3">
 				<QuestionBlock label="Can I exit?">
 					<Stat value={exitValue} sub={exitCaveat} />
 				</QuestionBlock>

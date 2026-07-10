@@ -147,7 +147,7 @@ export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 							type="text"
 							placeholder="Search stablecoins..."
 							onInput={(e) => setProjectName(e.currentTarget.value)}
-							className="rounded-md border pro-border bg-(--bg-glass) px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-(--primary) focus:outline-hidden"
+							className="rounded-md border pro-border bg-(--legacy-bg-glass) px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-(--legacy-primary) focus:outline-hidden"
 						/>
 					</div>
 				</div>

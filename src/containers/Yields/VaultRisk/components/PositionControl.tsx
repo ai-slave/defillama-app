@@ -92,14 +92,14 @@ export function PositionControl({
 
 	return (
 		<div className="flex flex-wrap items-center gap-1.5">
-			<label htmlFor="risk-position" className="text-xs text-(--text-secondary)">
-				Your deposit <span className="text-(--text-tertiary)">(optional)</span>
+			<label htmlFor="risk-position" className="text-xs text-(--legacy-text-secondary)">
+				Your deposit <span className="text-(--legacy-text-tertiary)">(optional)</span>
 			</label>
 			<div className="flex items-center gap-1">
 				<div className="relative">
 					<span
 						aria-hidden
-						className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-xs text-(--text-secondary)"
+						className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-xs text-(--legacy-text-secondary)"
 					>
 						$
 					</span>
@@ -116,7 +116,7 @@ export function PositionControl({
 							if (e.key === 'Enter') e.currentTarget.blur()
 							if (e.key === 'Escape') setDraft(position ? position.toLocaleString('en-US') : '')
 						}}
-						className="w-24 rounded-md border border-(--cards-border) bg-(--bg-main) py-1 pr-2 pl-5 text-xs text-(--text-primary) tabular-nums placeholder:text-(--text-secondary) focus-visible:border-(--primary) focus-visible:outline-none"
+						className="w-24 rounded-md border border-(--legacy-cards-border) bg-(--legacy-bg-main) py-1 pr-2 pl-5 text-xs text-(--legacy-text-primary) tabular-nums placeholder:text-(--legacy-text-secondary) focus-visible:border-(--legacy-primary) focus-visible:outline-none"
 					/>
 				</div>
 				{position ? (
@@ -124,7 +124,7 @@ export function PositionControl({
 						type="button"
 						onClick={() => onChange(null)}
 						aria-label="Clear your deposit, show pool-wide figures"
-						className="flex size-6 items-center justify-center rounded-md text-(--text-secondary) hover:bg-(--bg-main) hover:text-(--text-primary)"
+						className="flex size-6 items-center justify-center rounded-md text-(--legacy-text-secondary) hover:bg-(--legacy-bg-main) hover:text-(--legacy-text-primary)"
 					>
 						<Icon name="x" className="size-3" />
 					</button>
@@ -141,8 +141,8 @@ export function PositionControl({
 							onClick={() => onChange(active ? null : p.value)}
 							className={`rounded-full border px-2 py-0.5 text-[10px] transition-colors duration-150 ${
 								active
-									? 'border-(--primary) bg-(--primary)/10 text-(--primary)'
-									: 'border-(--cards-border) bg-(--bg-main) text-(--text-secondary) hover:text-(--text-primary)'
+									? 'border-(--legacy-primary) bg-(--legacy-primary)/10 text-(--legacy-primary)'
+									: 'border-(--legacy-cards-border) bg-(--legacy-bg-main) text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
 							}`}
 						>
 							{p.label}

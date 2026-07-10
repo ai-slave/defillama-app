@@ -437,7 +437,7 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 							key={`${item.id}-${item.colSpan}${
 								item.kind === 'multi' ? `-${item.items?.map((i) => i.id).join('-')}` : ''
 							}`}
-							className={`col-span-1 rounded-md border border-(--cards-border) bg-(--cards-bg) ${COL_SPAN_CLASS_MAP[effectiveColSpan]}`}
+							className={`col-span-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) ${COL_SPAN_CLASS_MAP[effectiveColSpan]}`}
 						>
 							<DashboardItemRenderer item={item} onEditItem={onEditItem} handleEditItem={handleEditItem} />
 						</div>
@@ -470,9 +470,9 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 									id={item.id}
 									isTable={item.kind === 'table'}
 									data-col={item.colSpan}
-									className={`col-span-1 flex flex-col overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-bg) ${COL_SPAN_CLASS_MAP[effectiveColSpan]}`}
+									className={`col-span-1 flex flex-col overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) ${COL_SPAN_CLASS_MAP[effectiveColSpan]}`}
 								>
-									<div className="flex flex-wrap items-center justify-end border-b border-(--cards-border)">
+									<div className="flex flex-wrap items-center justify-end border-b border-(--legacy-cards-border)">
 										{item.kind !== 'table' ? (
 											<>
 												<Tooltip
@@ -529,7 +529,7 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 							)
 						})}
 						{currentRatingSession && !isReadOnly ? (
-							<div className="col-span-full flex animate-ai-glow flex-col items-center justify-center gap-6 rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
+							<div className="col-span-full flex animate-ai-glow flex-col items-center justify-center gap-6 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
 								<Rating
 									sessionId={currentRatingSession.sessionId}
 									mode={currentRatingSession.mode}
@@ -542,7 +542,7 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 						) : null}
 						<button
 							onClick={onAddChartClick}
-							className="relative isolate flex min-h-[340px] flex-col items-center justify-center gap-1 rounded-md border border-dashed border-(--cards-border) bg-(--cards-bg) p-2.5 text-(--link-text) hover:bg-pro-blue-300/5 dark:hover:bg-pro-blue-300/10"
+							className="relative isolate flex min-h-[340px] flex-col items-center justify-center gap-1 rounded-md border border-dashed border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-2.5 text-(--legacy-link-text) hover:bg-pro-blue-300/5 dark:hover:bg-pro-blue-300/10"
 						>
 							<svg
 								width="40"

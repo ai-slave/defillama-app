@@ -145,7 +145,7 @@ export function PresetFilters({ className }: PresetFiltersProps) {
 
 	return (
 		<div className={`flex flex-col gap-2 ${className ?? ''}`}>
-			<h2 className="text-xs text-(--text-secondary)">Curated Presets</h2>
+			<h2 className="text-xs text-(--legacy-text-secondary)">Curated Presets</h2>
 			<div className="flex flex-wrap items-center gap-2">
 				{PRESET_KEYS.map((key) => {
 					const preset = YIELD_PRESETS[key]
@@ -160,8 +160,8 @@ export function PresetFilters({ className }: PresetFiltersProps) {
 							onClick={() => handlePresetClick(key)}
 							className={`flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium ${
 								isActive
-									? 'bg-(--old-blue) text-white'
-									: 'border border-(--form-control-border) bg-(--btn-bg) text-(--text-primary) hover:bg-(--btn-hover-bg)'
+									? 'bg-(--legacy-old-blue) text-white'
+									: 'border border-(--legacy-form-control-border) bg-(--legacy-btn-bg) text-(--legacy-text-primary) hover:bg-(--legacy-btn-hover-bg)'
 							}`}
 						>
 							<Icon name={preset.icon} height={14} width={14} />

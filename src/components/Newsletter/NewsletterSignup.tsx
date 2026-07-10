@@ -99,7 +99,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 		if (persistedDismissed || dismissed) return null
 		return (
 			<div
-				className={`@container relative shrink-0 overflow-hidden rounded-xl border border-(--cards-border) bg-(--cards-bg) py-4 pr-10 pl-6 @5xl:py-5 @5xl:pr-12${
+				className={`@container relative shrink-0 overflow-hidden rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-4 pr-10 pl-6 @5xl:py-5 @5xl:pr-12${
 					className ? ` ${className}` : ''
 				}`}
 			>
@@ -111,7 +111,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 					type="button"
 					onClick={handleDismiss}
 					aria-label="Dismiss newsletter signup"
-					className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-md text-(--text-secondary) hover:bg-(--bg-input)"
+					className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-md text-(--legacy-text-secondary) hover:bg-(--legacy-bg-input)"
 				>
 					<Icon name="x" height={16} width={16} />
 				</button>
@@ -120,11 +120,11 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 				) : (
 					<div className="flex flex-col gap-4 @5xl:flex-row @5xl:items-center @5xl:justify-between @5xl:gap-8">
 						<div className="flex flex-col gap-1">
-							<span className="flex items-center gap-2 text-base font-bold tracking-tight text-(--text-primary) @sm:text-lg">
+							<span className="flex items-center gap-2 text-base font-bold tracking-tight text-(--legacy-text-primary) @sm:text-lg">
 								<Icon name="mail-rounded" height={20} width={20} className="shrink-0 text-(--sub-brand-primary)" />
 								Subscribe to the DefiLlama Newsletter
 							</span>
-							<span className="max-w-md text-sm text-(--text-primary)/55">
+							<span className="max-w-md text-sm text-(--legacy-text-primary)/55">
 								Get DefiLlama's newsletter, Research updates, or both, delivered to your inbox.
 							</span>
 						</div>
@@ -146,7 +146,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 											className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
 												on
 													? 'border-(--sub-brand-primary) bg-(--sub-brand-primary)/10 text-(--sub-brand-primary)'
-													: 'border-(--cards-border) text-(--text-secondary) hover:border-(--sub-brand-primary)/50'
+													: 'border-(--legacy-cards-border) text-(--legacy-text-secondary) hover:border-(--sub-brand-primary)/50'
 											}`}
 										>
 											{on ? <Icon name="check" height={14} width={14} /> : null}
@@ -163,7 +163,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 									value={email}
 									onChange={onEmailChange}
 									placeholder="you@example.com"
-									className="h-10 min-w-0 rounded-lg border border-(--cards-border) bg-(--bg-input) px-3 text-sm text-(--text-primary) outline-none focus-visible:border-(--sub-brand-primary) @sm:w-56"
+									className="h-10 min-w-0 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-bg-input) px-3 text-sm text-(--legacy-text-primary) outline-none focus-visible:border-(--sub-brand-primary) @sm:w-56"
 								/>
 								<button
 									type="submit"
@@ -207,7 +207,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 							value={email}
 							onChange={onEmailChange}
 							placeholder="you@example.com"
-							className="rounded-lg border border-(--sub-border-slate-100) bg-(--bg-input) px-3 py-2 text-sm text-(--sub-ink-primary) outline-none focus-visible:border-(--sub-brand-primary) dark:border-(--sub-border-strong) dark:text-white"
+							className="rounded-lg border border-(--sub-border-slate-100) bg-(--legacy-bg-input) px-3 py-2 text-sm text-(--sub-ink-primary) outline-none focus-visible:border-(--sub-brand-primary) dark:border-(--sub-border-strong) dark:text-white"
 						/>
 					</label>
 
@@ -268,7 +268,7 @@ function NewsletterSuccess({
 }) {
 	if (layout === 'strip') {
 		return (
-			<div role="status" className="flex items-center gap-2 text-sm text-(--text-primary)">
+			<div role="status" className="flex items-center gap-2 text-sm text-(--legacy-text-primary)">
 				<Icon name="check-circle" height={20} width={20} className="shrink-0 text-(--sub-brand-primary)" />
 				<span>Subscribed to selected newsletters.</span>
 			</div>

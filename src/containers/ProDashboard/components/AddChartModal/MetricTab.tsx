@@ -104,15 +104,15 @@ export function MetricTab(props: MetricTabProps) {
 		<div className="flex h-full flex-col gap-3 lg:min-h-[360px] lg:flex-row lg:overflow-hidden">
 			<div className="flex w-full shrink-0 flex-col border pro-border lg:w-[380px] lg:shrink lg:overflow-y-auto xl:w-[420px]">
 				<div className="flex flex-col gap-3 p-2.5 sm:p-3">
-					<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-2.5 shadow-sm sm:p-3">
+					<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-2.5 shadow-sm sm:p-3">
 						<div className="flex items-start justify-between gap-2 sm:gap-3">
 							<div>
-								<div className="text-xs font-semibold text-(--text-primary)">Custom metric title</div>
-								<p className="text-[11px] text-(--text-tertiary)">
+								<div className="text-xs font-semibold text-(--legacy-text-primary)">Custom metric title</div>
+								<p className="text-[11px] text-(--legacy-text-tertiary)">
 									Shown above the metric tile across your dashboards.
 								</p>
 							</div>
-							<div className="hidden size-8 shrink-0 items-center justify-center rounded-full bg-(--primary)/12 text-(--primary) md:flex">
+							<div className="hidden size-8 shrink-0 items-center justify-center rounded-full bg-(--legacy-primary)/12 text-(--legacy-primary) md:flex">
 								<Icon name="pencil" width={14} height={14} />
 							</div>
 						</div>
@@ -122,10 +122,10 @@ export function MetricTab(props: MetricTabProps) {
 								value={metricLabel}
 								onChange={(e) => onLabelChange(e.target.value)}
 								placeholder="e.g Arbitrum Fees (30d, Avg)"
-								className="w-full rounded-md border border-(--form-control-border) bg-(--bg-input) px-2.5 py-1.5 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:ring-2 focus:ring-(--primary)/40 focus:outline-hidden"
+								className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2.5 py-1.5 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:ring-2 focus:ring-(--legacy-primary)/40 focus:outline-hidden"
 								maxLength={64}
 							/>
-							<div className="flex items-center justify-between text-[11px] text-(--text-tertiary)">
+							<div className="flex items-center justify-between text-[11px] text-(--legacy-text-tertiary)">
 								<span>Leave blank to use the automatic title.</span>
 								<span>{metricLabel.length}/64</span>
 							</div>
@@ -155,7 +155,7 @@ export function MetricTab(props: MetricTabProps) {
 			</div>
 
 			<div className="flex min-h-[280px] flex-1 shrink-0 flex-col overflow-hidden border pro-border lg:min-h-0 lg:shrink">
-				<div className="flex-1 overflow-hidden rounded-md bg-(--cards-bg) p-2 sm:p-2.5">
+				<div className="flex-1 overflow-hidden rounded-md bg-(--legacy-cards-bg) p-2 sm:p-2.5">
 					{previewMetric ? (
 						<MetricCard metric={previewMetric} />
 					) : (

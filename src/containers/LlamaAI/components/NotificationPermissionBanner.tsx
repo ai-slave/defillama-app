@@ -51,7 +51,7 @@ export function NotificationPermissionBanner() {
 	if (dismissed) return null
 
 	return (
-		<div className="flex items-center gap-3 rounded-lg border border-[#e6e6e6] bg-(--cards-bg) px-3.5 py-2.5 dark:border-[#222324]">
+		<div className="flex items-center gap-3 rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3.5 py-2.5 dark:border-[#222324]">
 			<p className="m-0 flex-1 truncate text-[13px] text-[#444] dark:text-[#ddd]">
 				Want to be notified when LlamaAI responds?
 			</p>

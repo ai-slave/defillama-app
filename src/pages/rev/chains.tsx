@@ -69,7 +69,7 @@ const columns = [
 					<span className="-my-2 flex flex-col">
 						<BasicLink
 							href={`/chain/${row.original.slug}`}
-							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text) hover:underline"
 						>
 							{value}
 						</BasicLink>

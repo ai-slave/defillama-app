@@ -130,8 +130,8 @@ function TxTable({ data }: { data: TxRow[] }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--text-label)">Recent stSyrup Transactions</h3>
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">Recent stSyrup Transactions</h3>
 			<VirtualTable instance={instance} skipVirtualization />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>
@@ -156,8 +156,8 @@ function DripTable({ data }: { data: DripRow[] }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--text-label)">Recent Drip Reward Claims</h3>
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">Recent Drip Reward Claims</h3>
 			<VirtualTable instance={instance} skipVirtualization />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>
@@ -305,7 +305,9 @@ export default function SyrupActivity() {
 	return (
 		<div className="flex flex-col gap-6">
 			<div>
-				<h3 className="mb-3 text-sm font-semibold tracking-wide text-(--text-label) uppercase">Syrup Protocol</h3>
+				<h3 className="mb-3 text-sm font-semibold tracking-wide text-(--legacy-text-label) uppercase">
+					Syrup Protocol
+				</h3>
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 					{protocolKpis ? (
 						<>
@@ -326,7 +328,9 @@ export default function SyrupActivity() {
 			</div>
 
 			<div>
-				<h3 className="mb-3 text-sm font-semibold tracking-wide text-(--text-label) uppercase">stSyrup Activity</h3>
+				<h3 className="mb-3 text-sm font-semibold tracking-wide text-(--legacy-text-label) uppercase">
+					stSyrup Activity
+				</h3>
 				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
 					{activityKpis ? (
 						<>
@@ -378,7 +382,7 @@ export default function SyrupActivity() {
 			{isLoading ? <CardSkeleton title="Recent stSyrup Transactions" /> : <TxTable data={txRows} />}
 
 			<div>
-				<h3 className="mb-3 text-sm font-semibold tracking-wide text-(--text-label) uppercase">Drip Rewards</h3>
+				<h3 className="mb-3 text-sm font-semibold tracking-wide text-(--legacy-text-label) uppercase">Drip Rewards</h3>
 				<div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
 					{dripKpis ? (
 						<>

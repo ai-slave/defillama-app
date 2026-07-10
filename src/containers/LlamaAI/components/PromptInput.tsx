@@ -412,7 +412,7 @@ export function PromptInput({
 
 	return (
 		<form
-			className="relative flex w-full flex-col gap-4 rounded-lg border border-[#e6e6e6] bg-(--app-bg) p-4 has-[textarea:focus]:border-(--old-blue) dark:border-[#222324]"
+			className="relative flex w-full flex-col gap-4 rounded-lg border border-[#e6e6e6] bg-(--legacy-app-bg) p-4 has-[textarea:focus]:border-(--legacy-old-blue) dark:border-[#222324]"
 			onDragEnter={imageUpload.handleDragEnter}
 			onDragLeave={imageUpload.handleDragLeave}
 			onDragOver={(e) => e.preventDefault()}

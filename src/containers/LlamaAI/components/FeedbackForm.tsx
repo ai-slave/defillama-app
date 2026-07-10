@@ -93,7 +93,7 @@ export function FeedbackForm({
 				<span className="text-sm text-[#666] dark:text-[#919296]">Additional feedback (optional)</span>
 				<textarea
 					placeholder="Share your thoughts..."
-					className="w-full rounded border border-[#e6e6e6] bg-(--app-bg) p-3 dark:border-[#222324]"
+					className="w-full rounded border border-[#e6e6e6] bg-(--legacy-app-bg) p-3 dark:border-[#222324]"
 					rows={3}
 					maxLength={500}
 					value={feedbackText}
@@ -114,7 +114,7 @@ export function FeedbackForm({
 						type="button"
 						onClick={handleSubmitFeedback}
 						disabled={isSubmittingFeedback || !selectedRating}
-						className="rounded bg-(--old-blue) px-3 py-2 text-xs text-white hover:opacity-90 disabled:opacity-50"
+						className="rounded bg-(--legacy-old-blue) px-3 py-2 text-xs text-white hover:opacity-90 disabled:opacity-50"
 					>
 						{isSubmittingFeedback ? 'Submitting...' : 'Submit'}
 					</button>

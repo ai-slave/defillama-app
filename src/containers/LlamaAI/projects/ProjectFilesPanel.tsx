@@ -104,15 +104,15 @@ export function ProjectFilesPanel({
 	return (
 		<section className="flex flex-1 flex-col gap-3">
 			<header className="flex items-center justify-between">
-				<h3 className="text-[13px] font-semibold text-(--text-primary)">Files</h3>
+				<h3 className="text-[13px] font-semibold text-(--legacy-text-primary)">Files</h3>
 				<Ariakit.MenuProvider placement="bottom-end">
-					<Ariakit.MenuButton className="flex items-center gap-1.5 rounded-md border border-(--old-blue) bg-(--old-blue)/12 px-2 py-1 text-xs font-medium text-(--old-blue) hover:bg-(--old-blue) hover:text-white">
+					<Ariakit.MenuButton className="flex items-center gap-1.5 rounded-md border border-(--legacy-old-blue) bg-(--legacy-old-blue)/12 px-2 py-1 text-xs font-medium text-(--legacy-old-blue) hover:bg-(--legacy-old-blue) hover:text-white">
 						<Icon name="plus" height={12} width={12} />
 						Add
 					</Ariakit.MenuButton>
 					<Ariakit.Menu
 						gutter={6}
-						className="z-50 min-w-[220px] rounded-md border border-[#e6e6e6] bg-(--cards-bg) p-1 text-xs shadow-lg dark:border-[#222324]"
+						className="z-50 min-w-[220px] rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) p-1 text-xs shadow-lg dark:border-[#222324]"
 					>
 						<Ariakit.MenuItem
 							onClick={onPick}
@@ -164,7 +164,7 @@ export function ProjectFilesPanel({
 				{projectBytesLimit ? (
 					<div className="h-1 w-full overflow-hidden rounded-full bg-[#f0f0f0] dark:bg-[#222324]">
 						<div
-							className={`h-full transition-all ${projectPercent > 90 ? 'bg-red-500' : 'bg-(--old-blue)'}`}
+							className={`h-full transition-all ${projectPercent > 90 ? 'bg-red-500' : 'bg-(--legacy-old-blue)'}`}
 							style={{ width: `${projectPercent}%` }}
 						/>
 					</div>
@@ -180,7 +180,7 @@ export function ProjectFilesPanel({
 						return (
 							<li
 								key={source.id}
-								className="group flex items-center gap-2 rounded-md border border-[#e6e6e6] bg-(--cards-bg) px-2.5 py-1.5 text-xs dark:border-[#222324]"
+								className="group flex items-center gap-2 rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-2.5 py-1.5 text-xs dark:border-[#222324]"
 							>
 								<Icon name="github" height={12} width={12} className="shrink-0 text-[#666] dark:text-[#919296]" />
 								<span className="min-w-0 flex-1 truncate font-mono">
@@ -215,7 +215,7 @@ export function ProjectFilesPanel({
 				onDragLeave={() => setIsDragging(false)}
 				onDrop={onDropZoneDrop}
 				className={`min-h-[120px] flex-1 overflow-auto rounded-md border border-dashed transition-colors ${
-					isDragging ? 'border-(--old-blue) bg-(--old-blue)/5' : 'border-[#e6e6e6] dark:border-[#2a2b2c]'
+					isDragging ? 'border-(--legacy-old-blue) bg-(--legacy-old-blue)/5' : 'border-[#e6e6e6] dark:border-[#2a2b2c]'
 				}`}
 			>
 				{filesQuery.isLoading ? (

@@ -200,7 +200,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 			seoDescription={props.seoDescription}
 		>
 			{poolsList.length > 0 && (
-				<div className="rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<div className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 					<div className="flex flex-wrap items-center gap-2 p-3">
 						<span>
 							{filteredStats.noOfPoolsTracked > 0
@@ -229,7 +229,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 											className={
 												nestedMenu
 													? nestedMenuActionStyles
-													: 'rounded-md bg-(--btn-bg) px-3 py-2 text-xs text-(--text-primary) hover:bg-(--btn-hover-bg) focus-visible:bg-(--btn-hover-bg)'
+													: 'rounded-md bg-(--legacy-btn-bg) px-3 py-2 text-xs text-(--legacy-text-primary) hover:bg-(--legacy-btn-hover-bg) focus-visible:bg-(--legacy-btn-hover-bg)'
 											}
 										>
 											Reset filters
@@ -242,15 +242,15 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 				</div>
 			)}
 			{props.poolsError ? (
-				<div className="flex flex-1 flex-col items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+				<div className="flex flex-1 flex-col items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3">
 					<p className="p-2">{props.poolsError}</p>
 				</div>
 			) : isFilteredEmpty ? (
-				<div className="flex flex-1 flex-col items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+				<div className="flex flex-1 flex-col items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3">
 					<p className="p-2">No pools match current filters</p>
 				</div>
 			) : poolsList.length === 0 ? (
-				<div className="flex flex-1 flex-col items-center justify-center rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+				<div className="flex flex-1 flex-col items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3">
 					<p className="p-2">No yield pools for this protocol</p>
 				</div>
 			) : (

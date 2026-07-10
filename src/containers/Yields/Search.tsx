@@ -79,7 +79,7 @@ export function YieldsSearch({
 					wrapperProps={{
 						className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
 					}}
-					className="z-10 flex max-h-(--popover-available-height) flex-col overflow-auto overscroll-contain rounded-b-md border border-t-0 border-(--cards-border) bg-(--cards-bg) max-sm:h-[calc(100dvh-80px)] max-sm:drawer"
+					className="z-10 flex max-h-(--popover-available-height) flex-col overflow-auto overscroll-contain rounded-b-md border border-t-0 border-(--legacy-cards-border) bg-(--legacy-cards-bg) max-sm:h-[calc(100dvh-80px)] max-sm:drawer"
 				>
 					<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
 						<Icon name="x" className="size-5" />
@@ -91,7 +91,7 @@ export function YieldsSearch({
 							const nextValue = e.currentTarget.value
 							React.startTransition(() => setSearchValue(nextValue))
 						}}
-						className="mb-4 rounded-md border border-(--form-control-border) bg-white p-4 text-base text-black sm:hidden dark:bg-[#22242a] dark:text-white"
+						className="mb-4 rounded-md border border-(--legacy-form-control-border) bg-white p-4 text-base text-black sm:hidden dark:bg-[#22242a] dark:text-white"
 					/>
 					{matches.length ? (
 						<Ariakit.ComboboxList ref={comboboxRef}>
@@ -103,7 +103,7 @@ export function YieldsSearch({
 									value="__see_more__"
 									setValueOnClick={false}
 									hideOnClick={false}
-									className="w-full cursor-pointer px-3 py-4 text-(--link) hover:bg-(--link-hover-bg) focus-visible:bg-(--link-hover-bg) data-active-item:bg-(--link-hover-bg)"
+									className="w-full cursor-pointer px-3 py-4 text-(--legacy-link) hover:bg-(--legacy-link-hover-bg) focus-visible:bg-(--legacy-link-hover-bg) data-active-item:bg-(--legacy-link-hover-bg)"
 									onClick={handleSeeMore}
 								>
 									See more...
@@ -111,7 +111,7 @@ export function YieldsSearch({
 							) : null}
 						</Ariakit.ComboboxList>
 					) : (
-						<p className="px-3 py-6 text-center text-(--text-primary)">No results found</p>
+						<p className="px-3 py-6 text-center text-(--legacy-text-primary)">No results found</p>
 					)}
 				</Ariakit.ComboboxPopover>
 			</Ariakit.ComboboxProvider>
@@ -151,7 +151,7 @@ function Input({ placeholder, onSearchTermChange, open, setOpen }: IInputProps) 
 				onChange={(e) => {
 					onSearchTermChange?.(e.target.value)
 				}}
-				className="min-h-8 w-full rounded-md border border-(--cards-border) bg-(--app-bg) px-2 py-1 pl-7 text-black dark:text-white"
+				className="min-h-8 w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-2 py-1 pl-7 text-black dark:text-white"
 			/>
 		</>
 	)
@@ -185,7 +185,7 @@ const Row = ({ data, lend, setOpen }) => {
 			}}
 			focusOnHover
 			disabled={loading}
-			className="flex cursor-pointer items-center gap-4 p-3 text-(--text-primary) outline-hidden hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) aria-disabled:opacity-50 data-active-item:bg-(--primary-hover)"
+			className="flex cursor-pointer items-center gap-4 p-3 text-(--legacy-text-primary) outline-hidden hover:bg-(--legacy-primary-hover) focus-visible:bg-(--legacy-primary-hover) aria-disabled:opacity-50 data-active-item:bg-(--legacy-primary-hover)"
 		>
 			<span>{data.symbol === 'USD_Stables' ? 'All USD Stablecoins' : `${data.name}`}</span>
 			{loading ? <LoadingSpinner size={12} /> : null}

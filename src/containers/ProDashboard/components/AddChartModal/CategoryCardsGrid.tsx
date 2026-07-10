@@ -14,12 +14,12 @@ export function CategoryCardsGrid({ onSelectCategory }: CategoryCardsGridProps) 
 		<div className="flex h-full flex-col p-4">
 			<button
 				onClick={() => onSelectCategory(heroCard.id)}
-				className="group relative flex flex-col rounded-xl border pro-border p-5 text-left transition-all hover:border-(--primary)/50 hover:bg-(--cards-bg-alt)"
+				className="group relative flex flex-col rounded-xl border pro-border p-5 text-left transition-all hover:border-(--legacy-primary)/50 hover:bg-(--cards-bg-alt)"
 			>
 				<div className="mb-3 flex items-center justify-between">
 					<div className="flex items-center gap-3">
-						<div className="flex size-10 items-center justify-center rounded-lg bg-(--primary)/10">
-							<Icon name={heroCard.icon} height={22} width={22} className="text-(--primary)" />
+						<div className="flex size-10 items-center justify-center rounded-lg bg-(--legacy-primary)/10">
+							<Icon name={heroCard.icon} height={22} width={22} className="text-(--legacy-primary)" />
 						</div>
 						<h3 className="text-lg font-semibold pro-text1">{heroCard.title}</h3>
 					</div>
@@ -27,7 +27,7 @@ export function CategoryCardsGrid({ onSelectCategory }: CategoryCardsGridProps) 
 						name="arrow-right"
 						height={18}
 						width={18}
-						className="text-(--text-secondary) transition-transform group-hover:translate-x-1 group-hover:text-(--primary)"
+						className="text-(--legacy-text-secondary) transition-transform group-hover:translate-x-1 group-hover:text-(--legacy-primary)"
 					/>
 				</div>
 				<p className="mb-4 line-clamp-1 text-sm pro-text2">{heroCard.description}</p>
@@ -35,7 +35,7 @@ export function CategoryCardsGrid({ onSelectCategory }: CategoryCardsGridProps) 
 					{heroCard.tags.map((tag) => (
 						<span
 							key={tag}
-							className="rounded-full bg-(--cards-bg-alt) px-2.5 py-1 text-xs font-medium text-(--text-secondary) transition-colors group-hover:bg-(--primary)/10 group-hover:text-(--primary)"
+							className="rounded-full bg-(--cards-bg-alt) px-2.5 py-1 text-xs font-medium text-(--legacy-text-secondary) transition-colors group-hover:bg-(--legacy-primary)/10 group-hover:text-(--legacy-primary)"
 						>
 							{tag}
 						</span>
@@ -50,14 +50,14 @@ export function CategoryCardsGrid({ onSelectCategory }: CategoryCardsGridProps) 
 						<button
 							key={card.id}
 							onClick={() => onSelectCategory(card.id)}
-							className="group flex items-start gap-2.5 rounded-lg border pro-border p-3 text-left transition-all hover:border-(--primary)/50 hover:bg-(--cards-bg-alt)"
+							className="group flex items-start gap-2.5 rounded-lg border pro-border p-3 text-left transition-all hover:border-(--legacy-primary)/50 hover:bg-(--cards-bg-alt)"
 						>
-							<div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-(--cards-bg-alt) transition-colors group-hover:bg-(--primary)/10">
+							<div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-(--cards-bg-alt) transition-colors group-hover:bg-(--legacy-primary)/10">
 								<Icon
 									name={card.icon}
 									height={16}
 									width={16}
-									className="text-(--text-secondary) group-hover:text-(--primary)"
+									className="text-(--legacy-text-secondary) group-hover:text-(--legacy-primary)"
 								/>
 							</div>
 							<div className="min-w-0 flex-1">

@@ -53,12 +53,12 @@ export function SavePresetDialog({
 				<div className="flex items-start justify-between gap-3">
 					<div className="flex flex-col gap-1">
 						<h2 className="heading-xs">{title}</h2>
-						{description ? <p className="text-xs text-(--text-tertiary)">{description}</p> : null}
+						{description ? <p className="text-xs text-(--legacy-text-tertiary)">{description}</p> : null}
 					</div>
 					<button
 						type="button"
 						onClick={onClose}
-						className="rounded-md p-1.5 text-(--text-tertiary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
+						className="rounded-md p-1.5 text-(--legacy-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary)"
 					>
 						<Icon name="x" className="size-4" />
 					</button>
@@ -73,13 +73,13 @@ export function SavePresetDialog({
 					className="flex flex-col gap-3"
 				>
 					<label className="flex flex-col gap-1">
-						<span className="text-xs font-medium text-(--text-secondary)">Name</span>
+						<span className="text-xs font-medium text-(--legacy-text-secondary)">Name</span>
 						<input
 							type="text"
 							value={name}
 							onChange={(e) => setName(e.target.value)}
 							autoFocus
-							className="w-full rounded-md border border-(--divider) bg-transparent px-2.5 py-1.5 text-sm outline-none placeholder:text-(--text-tertiary) focus:border-(--primary) focus:ring-1 focus:ring-(--primary)/30"
+							className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-sm outline-none placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30"
 							placeholder={placeholder}
 						/>
 					</label>
@@ -92,14 +92,14 @@ export function SavePresetDialog({
 						<button
 							type="button"
 							onClick={onClose}
-							className="rounded-md border border-(--divider) px-3 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-hover-row hover:text-(--text-primary)"
+							className="rounded-md border border-(--legacy-divider) px-3 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary)"
 						>
 							Cancel
 						</button>
 						<button
 							type="submit"
 							disabled={isEmpty}
-							className="flex items-center gap-1.5 rounded-md bg-(--primary) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:opacity-90 disabled:opacity-40"
+							className="flex items-center gap-1.5 rounded-md bg-(--legacy-primary) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:opacity-90 disabled:opacity-40"
 						>
 							<Icon name="bookmark" className="size-3.5" />
 							{isDuplicate ? replaceLabel : submitLabel}

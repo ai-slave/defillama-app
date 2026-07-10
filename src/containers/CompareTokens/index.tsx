@@ -166,7 +166,7 @@ export function CompareTokens({
 									img.onerror = null
 									img.src = '/assets/placeholder.png'
 								}}
-								className="absolute top-0 bottom-0 left-3 my-auto inline-block aspect-square shrink-0 rounded-full bg-(--bg-tertiary) object-cover"
+								className="absolute top-0 bottom-0 left-3 my-auto inline-block aspect-square shrink-0 rounded-full bg-(--legacy-bg-tertiary) object-cover"
 							/>
 						) : (
 							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
@@ -206,7 +206,7 @@ export function CompareTokens({
 									img.onerror = null
 									img.src = '/assets/placeholder.png'
 								}}
-								className="absolute top-0 bottom-0 left-3 my-auto inline-block aspect-square shrink-0 rounded-full bg-(--bg-tertiary) object-cover"
+								className="absolute top-0 bottom-0 left-3 my-auto inline-block aspect-square shrink-0 rounded-full bg-(--legacy-bg-tertiary) object-cover"
 							/>
 						) : (
 							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
@@ -272,7 +272,7 @@ export function CompareTokens({
 										onError={(e) => {
 											e.currentTarget.src = '/assets/placeholder.png'
 										}}
-										className="inline-block aspect-square shrink-0 rounded-full bg-(--bg-tertiary) object-cover"
+										className="inline-block aspect-square shrink-0 rounded-full bg-(--legacy-bg-tertiary) object-cover"
 									/>
 									<span>{selectedCoins[0]?.symbol?.toUpperCase()}</span>
 								</span>
@@ -287,7 +287,7 @@ export function CompareTokens({
 										onError={(e) => {
 											e.currentTarget.src = '/assets/placeholder.png'
 										}}
-										className="inline-block aspect-square shrink-0 rounded-full bg-(--bg-tertiary) object-cover"
+										className="inline-block aspect-square shrink-0 rounded-full bg-(--legacy-bg-tertiary) object-cover"
 									/>
 									<span>{selectedCoins[1]?.symbol?.toUpperCase()}</span>
 								</span>

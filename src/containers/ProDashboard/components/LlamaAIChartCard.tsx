@@ -85,9 +85,9 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 		return (
 			<div className="flex min-h-[300px] flex-col items-center justify-center gap-2">
 				<Icon name="alert-triangle" height={24} width={24} className="text-[#F2994A]" />
-				<p className="text-(--text-form)">Failed to load chart</p>
+				<p className="text-(--legacy-text-form)">Failed to load chart</p>
 				<button
-					className="text-sm text-(--link-text) hover:underline"
+					className="text-sm text-(--legacy-link-text) hover:underline"
 					onClick={() => {
 						void refetch()
 					}}
@@ -99,7 +99,7 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 	}
 
 	if (!data) {
-		return <p className="flex min-h-[300px] items-center justify-center text-(--text-form)">Chart not found</p>
+		return <p className="flex min-h-[300px] items-center justify-center text-(--legacy-text-form)">Chart not found</p>
 	}
 
 	const isStale = !data.dataFreshness?.isFresh
@@ -113,7 +113,7 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 				{data.dataFreshness && isStale ? (
 					<div className="flex items-center gap-2">
 						{data.dataFreshness?.cachedAt ? (
-							<span className="text-xs text-(--text-form)">
+							<span className="text-xs text-(--legacy-text-form)">
 								Updated {new Date(data.dataFreshness.cachedAt).toLocaleDateString()}
 							</span>
 						) : null}
@@ -124,7 +124,7 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 						) : null}
 						{isOwner && isPremium ? (
 							<button
-								className="text-xs text-(--link-text) hover:underline disabled:opacity-50"
+								className="text-xs text-(--legacy-link-text) hover:underline disabled:opacity-50"
 								onClick={() => refreshMutation.mutate()}
 								disabled={refreshMutation.isPending}
 							>

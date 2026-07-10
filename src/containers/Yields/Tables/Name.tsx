@@ -66,7 +66,7 @@ export function NameYieldPool({
 					href={url}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="hidden shrink-0 items-center justify-center rounded-md bg-(--link-button) p-1.5 hover:bg-(--link-button-hover) lg:flex"
+					className="hidden shrink-0 items-center justify-center rounded-md bg-(--legacy-link-button) p-1.5 hover:bg-(--legacy-link-button-hover) lg:flex"
 					onClick={() => trackUmamiEvent('yields-pool-external-link', { pool: value })}
 				>
 					<Icon name="arrow-up-right" height={14} width={14} />
@@ -81,11 +81,11 @@ export function NameYieldPool({
 				{poolMeta ? (
 					<>
 						<span
-							className={`min-w-0 shrink overflow-hidden font-medium text-ellipsis whitespace-nowrap text-(--link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
+							className={`min-w-0 shrink overflow-hidden font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
 						>
 							{value}
 						</span>
-						<span className="ml-1 shrink overflow-hidden rounded-lg bg-(--bg-tertiary) px-1 py-0.5 text-xs text-ellipsis whitespace-nowrap text-black group-data-[tooltipcontent=true]:whitespace-break-spaces dark:text-white">
+						<span className="ml-1 shrink overflow-hidden rounded-lg bg-(--legacy-bg-tertiary) px-1 py-0.5 text-xs text-ellipsis whitespace-nowrap text-black group-data-[tooltipcontent=true]:whitespace-break-spaces dark:text-white">
 							{poolMeta}
 						</span>
 					</>
@@ -111,7 +111,7 @@ const LinkWrapper = ({ url, children, showTooltip }) => {
 								onClick={() => trackUmamiEvent('yields-pool-click')}
 							/>
 						}
-						className={`flex min-w-0 shrink! items-center overflow-hidden font-medium text-ellipsis whitespace-nowrap text-(--link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
+						className={`flex min-w-0 shrink! items-center overflow-hidden font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
 						content={children}
 						data-fullwidth
 					>
@@ -119,7 +119,7 @@ const LinkWrapper = ({ url, children, showTooltip }) => {
 					</Tooltip>
 				) : (
 					<Tooltip
-						className={`flex min-w-0 shrink! items-center overflow-hidden font-medium text-ellipsis whitespace-nowrap text-(--link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
+						className={`flex min-w-0 shrink! items-center overflow-hidden font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
 						content={children}
 						data-fullwidth
 					>
@@ -137,7 +137,7 @@ const LinkWrapper = ({ url, children, showTooltip }) => {
 					href={url}
 					target="_blank"
 					data-umami-event="yields-pool-click"
-					className={`flex min-w-0 items-center overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
+					className={`flex min-w-0 items-center overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
 				>
 					{children}
 				</BasicLink>
@@ -199,7 +199,7 @@ export function NameYield({
 					href={tokenUrl}
 					data-umami-event="yields-project-filter-click"
 					data-umami-event-project={project}
-					className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text)"
+					className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text)"
 				>
 					{project}
 				</BasicLink>
@@ -218,7 +218,7 @@ export function YieldsProject({ project, projectslug }: INameYield) {
 				href={tokenUrl}
 				data-umami-event="yields-project-filter-click"
 				data-umami-event-project={project}
-				className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text)"
+				className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text)"
 			>
 				{project}
 			</BasicLink>

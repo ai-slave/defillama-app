@@ -10,8 +10,8 @@ interface MoveToProjectMenuItemProps {
 }
 
 const MENU_ITEM_CLASS =
-	'flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden px-3 py-2 text-ellipsis whitespace-nowrap cv-auto-37 hover:bg-(--primary-hover) focus-visible:bg-(--primary-hover) data-active-item:bg-(--primary-hover)'
-const PARENT_ITEM_CLASS = `${MENU_ITEM_CLASS} border-b border-(--form-control-border) first-of-type:rounded-t-md last-of-type:rounded-b-md aria-disabled:cursor-not-allowed aria-disabled:opacity-60`
+	'flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden px-3 py-2 text-ellipsis whitespace-nowrap cv-auto-37 hover:bg-(--legacy-primary-hover) focus-visible:bg-(--legacy-primary-hover) data-active-item:bg-(--legacy-primary-hover)'
+const PARENT_ITEM_CLASS = `${MENU_ITEM_CLASS} border-b border-(--legacy-form-control-border) first-of-type:rounded-t-md last-of-type:rounded-b-md aria-disabled:cursor-not-allowed aria-disabled:opacity-60`
 
 export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: MoveToProjectMenuItemProps) {
 	const projects = useProjectList()
@@ -39,7 +39,7 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 				portal
 				unmountOnHide
 				gutter={4}
-				className="z-50 flex max-h-[300px] min-w-[200px] flex-col overflow-auto rounded-md border border-[hsl(204,20%,88%)] bg-(--bg-main) text-(--text-primary) dark:border-[hsl(204,3%,32%)]"
+				className="z-50 flex max-h-[300px] min-w-[200px] flex-col overflow-auto rounded-md border border-[hsl(204,20%,88%)] bg-(--legacy-bg-main) text-(--legacy-text-primary) dark:border-[hsl(204,3%,32%)]"
 			>
 				{projects.isLoading ? (
 					<div className="flex items-center justify-center px-3 py-2">
@@ -48,7 +48,11 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 				) : projects.isError ? (
 					<div className="flex flex-col gap-1 px-3 py-2 text-xs text-[#666] dark:text-[#919296]">
 						<span>Failed to load projects</span>
-						<button type="button" onClick={() => void projects.refetch()} className="self-start text-(--old-blue)">
+						<button
+							type="button"
+							onClick={() => void projects.refetch()}
+							className="self-start text-(--legacy-old-blue)"
+						>
 							Retry
 						</button>
 					</div>
@@ -79,7 +83,7 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 							<Ariakit.MenuItem
 								onClick={() => void onMove(null)}
 								disabled={move.isPending}
-								className={`${MENU_ITEM_CLASS} border-t border-(--form-control-border) aria-disabled:cursor-not-allowed aria-disabled:opacity-60`}
+								className={`${MENU_ITEM_CLASS} border-t border-(--legacy-form-control-border) aria-disabled:cursor-not-allowed aria-disabled:opacity-60`}
 							>
 								<Icon name="x" height={14} width={14} className="shrink-0 opacity-70" />
 								<span className="min-w-0 flex-1 truncate text-left">Remove from project</span>

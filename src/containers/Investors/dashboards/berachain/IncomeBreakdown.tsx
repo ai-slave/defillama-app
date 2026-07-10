@@ -25,8 +25,8 @@ const TOTAL_REVENUE_COLORS = {
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--text-label)">{title}</h3>
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">{title}</h3>
 			{children}
 		</div>
 	)
@@ -34,10 +34,10 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 function CardSkeleton({ title }: { title: string }) {
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--text-label)">{title}</h3>
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">{title}</h3>
 			<div className="flex h-[400px] items-center justify-center">
-				<div className="size-5 animate-spin rounded-full border-2 border-(--text-disabled) border-t-transparent" />
+				<div className="size-5 animate-spin rounded-full border-2 border-(--legacy-text-disabled) border-t-transparent" />
 			</div>
 		</div>
 	)
@@ -45,7 +45,13 @@ function CardSkeleton({ title }: { title: string }) {
 
 function InfoIcon() {
 	return (
-		<svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="inline-block text-(--text-label) opacity-50">
+		<svg
+			width="14"
+			height="14"
+			viewBox="0 0 16 16"
+			fill="none"
+			className="inline-block text-(--legacy-text-label) opacity-50"
+		>
 			<circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
 			<path d="M8 7v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
 			<circle cx="8" cy="5" r="0.75" fill="currentColor" />
@@ -55,8 +61,8 @@ function InfoIcon() {
 
 function KpiCard({ label, value, tooltip }: { label: string; value: string | number | null; tooltip?: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<span className="flex items-center gap-1 text-xs font-medium tracking-wide text-(--text-label)">
+		<div className="flex flex-col gap-1 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<span className="flex items-center gap-1 text-xs font-medium tracking-wide text-(--legacy-text-label)">
 				{label}
 				{tooltip && (
 					<Tooltip content={tooltip}>
@@ -66,22 +72,22 @@ function KpiCard({ label, value, tooltip }: { label: string; value: string | num
 					</Tooltip>
 				)}
 			</span>
-			<span className="text-2xl font-semibold text-(--text-primary)">{value ?? '—'}</span>
+			<span className="text-2xl font-semibold text-(--legacy-text-primary)">{value ?? '—'}</span>
 		</div>
 	)
 }
 
 function KpiSkeleton({ label }: { label: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<span className="text-xs font-medium tracking-wide text-(--text-label)">{label}</span>
-			<div className="h-8 w-24 animate-pulse rounded bg-(--text-disabled) opacity-20" />
+		<div className="flex flex-col gap-1 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<span className="text-xs font-medium tracking-wide text-(--legacy-text-label)">{label}</span>
+			<div className="h-8 w-24 animate-pulse rounded bg-(--legacy-text-disabled) opacity-20" />
 		</div>
 	)
 }
 
 function SectionHeader({ title }: { title: string }) {
-	return <h2 className="heading-xs tracking-tight text-(--text-primary)">{title}</h2>
+	return <h2 className="heading-xs tracking-tight text-(--legacy-text-primary)">{title}</h2>
 }
 
 function getCumulativeTotal(data: Record<string, number>[], key: string) {

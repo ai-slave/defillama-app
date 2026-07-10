@@ -51,7 +51,7 @@ function BerachainLogo() {
 	return (
 		<div className="flex items-center gap-2.5">
 			<BerachainIcon className="size-9 shrink-0" />
-			<span className="text-lg font-bold text-(--text-primary)">Berachain</span>
+			<span className="text-lg font-bold text-(--legacy-text-primary)">Berachain</span>
 		</div>
 	)
 }
@@ -65,7 +65,7 @@ const LINKS: Record<string, string> = {
 
 export default function BerachainHeader() {
 	return (
-		<header className="flex items-center gap-4 rounded-lg border border-(--cards-border) bg-(--cards-bg) px-4 py-2.5">
+		<header className="flex items-center gap-4 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-4 py-2.5">
 			<BerachainLogo />
 			<nav className="ml-auto flex items-center gap-0.5">
 				{Object.entries(LINKS).map(([key, url]) => (
@@ -74,7 +74,7 @@ export default function BerachainHeader() {
 						href={url}
 						target="_blank"
 						rel="noopener noreferrer"
-						className={`items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] text-(--text-secondary) transition-colors hover:bg-(--sl-hover-bg) hover:text-(--text-primary) ${
+						className={`items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] text-(--legacy-text-secondary) transition-colors hover:bg-(--sl-hover-bg) hover:text-(--legacy-text-primary) ${
 							key === 'website' ? 'flex' : 'hidden sm:flex'
 						}`}
 					>

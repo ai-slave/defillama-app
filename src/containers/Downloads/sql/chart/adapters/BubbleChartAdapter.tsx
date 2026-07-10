@@ -78,7 +78,7 @@ export function BubbleChartAdapter({ config, result, classified, onReady }: Bubb
 
 	if (!xCol || !yCol || !sizeCol)
 		return (
-			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-(--divider) text-sm text-(--text-secondary)">
+			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-(--legacy-divider) text-sm text-(--legacy-text-secondary)">
 				Bubble needs at least three numeric columns (x, y, size).
 			</div>
 		)

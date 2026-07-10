@@ -70,36 +70,36 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 			store={store}
 			modal
 			backdrop={<div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm" />}
-			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[88vh] w-[min(720px,94vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-(--cards-border) bg-(--cards-bg) shadow-[0_30px_80px_-20px_rgba(0,0,0,0.5)] outline-none"
+			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[88vh] w-[min(720px,94vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-[0_30px_80px_-20px_rgba(0,0,0,0.5)] outline-none"
 		>
-			<div className="flex items-center justify-between gap-3 border-b border-(--cards-border) px-5 py-3">
-				<Ariakit.DialogHeading className="text-sm font-semibold tracking-tight text-(--text-primary)">
+			<div className="flex items-center justify-between gap-3 border-b border-(--legacy-cards-border) px-5 py-3">
+				<Ariakit.DialogHeading className="text-sm font-semibold tracking-tight text-(--legacy-text-primary)">
 					{initialConfig ? 'Edit people panel' : 'Insert people panel'}
 				</Ariakit.DialogHeading>
-				<Ariakit.DialogDismiss className="rounded-md border border-transparent px-2 py-1 text-xs text-(--text-tertiary) hover:border-(--cards-border) hover:text-(--text-primary)">
+				<Ariakit.DialogDismiss className="rounded-md border border-transparent px-2 py-1 text-xs text-(--legacy-text-tertiary) hover:border-(--legacy-cards-border) hover:text-(--legacy-text-primary)">
 					Close
 				</Ariakit.DialogDismiss>
 			</div>
 
 			<div className="grid gap-5 overflow-y-auto px-5 py-4">
 				<label className="grid gap-1.5">
-					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+					<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 						Section label (optional)
 					</span>
 					<input
 						value={label}
 						onChange={(e) => setLabel(e.target.value)}
 						placeholder="e.g. Moderated by:"
-						className="rounded-md border border-(--form-control-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+						className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 					/>
 				</label>
 
 				<div className="grid gap-3">
 					<div className="flex items-center justify-between">
-						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 							People
 						</span>
-						<span className="font-jetbrains text-[10px] tracking-tight text-(--text-tertiary) tabular-nums">
+						<span className="font-jetbrains text-[10px] tracking-tight text-(--legacy-text-tertiary) tabular-nums">
 							{items.length} {items.length === 1 ? 'entry' : 'entries'}
 						</span>
 					</div>
@@ -121,7 +121,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 					<button
 						type="button"
 						onClick={addItem}
-						className="rounded-md border border-dashed border-(--cards-border) bg-(--app-bg) px-3 py-2 text-xs font-medium text-(--text-secondary) transition-colors hover:border-(--link-text)/40 hover:text-(--text-primary)"
+						className="rounded-md border border-dashed border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary)"
 					>
 						+ Add person
 					</button>
@@ -134,15 +134,15 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 				) : null}
 			</div>
 
-			<div className="flex items-center justify-end gap-2 border-t border-(--cards-border) bg-(--app-bg)/30 px-5 py-3">
-				<Ariakit.DialogDismiss className="rounded-md border border-(--cards-border) px-3 py-2 text-xs text-(--text-secondary) hover:bg-(--link-hover-bg)">
+			<div className="flex items-center justify-end gap-2 border-t border-(--legacy-cards-border) bg-(--legacy-app-bg)/30 px-5 py-3">
+				<Ariakit.DialogDismiss className="rounded-md border border-(--legacy-cards-border) px-3 py-2 text-xs text-(--legacy-text-secondary) hover:bg-(--legacy-link-hover-bg)">
 					Cancel
 				</Ariakit.DialogDismiss>
 				<button
 					type="button"
 					disabled={!canSubmit}
 					onClick={submit}
-					className="rounded-md bg-(--link-button) px-3 py-2 text-xs font-medium text-(--link-text) shadow-sm transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+					className="rounded-md bg-(--legacy-link-button) px-3 py-2 text-xs font-medium text-(--legacy-link-text) shadow-sm transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					{initialConfig ? 'Update panel' : 'Insert panel'}
 				</button>
@@ -182,8 +182,8 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 
 	return (
 		<div
-			className={`grid grid-cols-[80px_minmax(0,1fr)_auto] gap-4 rounded-md border bg-(--app-bg)/40 p-3 ${
-				missingImage ? 'border-red-500/50' : 'border-(--cards-border)'
+			className={`grid grid-cols-[80px_minmax(0,1fr)_auto] gap-4 rounded-md border bg-(--legacy-app-bg)/40 p-3 ${
+				missingImage ? 'border-red-500/50' : 'border-(--legacy-cards-border)'
 			}`}
 		>
 			<input
@@ -197,7 +197,7 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 				type="button"
 				disabled={isUploading || !articleId}
 				onClick={() => inputRef.current?.click()}
-				className="group relative aspect-square overflow-hidden rounded-full border border-(--cards-border) bg-(--cards-bg) transition-[border-color] outline-none hover:border-(--link-text)/50 disabled:cursor-not-allowed disabled:opacity-60"
+				className="group relative aspect-square overflow-hidden rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) transition-[border-color] outline-none hover:border-(--legacy-link-text)/50 disabled:cursor-not-allowed disabled:opacity-60"
 				aria-label={item.src ? 'Replace image' : 'Upload image'}
 			>
 				{item.src ? (
@@ -208,7 +208,7 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 						</span>
 					</>
 				) : (
-					<span className="flex h-full w-full items-center justify-center text-[10px] font-medium tracking-[0.16em] text-(--text-tertiary) uppercase">
+					<span className="flex h-full w-full items-center justify-center text-[10px] font-medium tracking-[0.16em] text-(--legacy-text-tertiary) uppercase">
 						{isUploading ? '…' : 'Upload'}
 					</span>
 				)}
@@ -219,14 +219,14 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 					value={item.name}
 					onChange={(e) => onChange({ name: e.target.value })}
 					placeholder="Name, role, organization"
-					className="rounded-md border border-(--form-control-border) bg-(--cards-bg) px-3 py-2 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+					className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 				/>
 				<textarea
 					value={item.bio}
 					onChange={(e) => onChange({ bio: e.target.value })}
 					rows={3}
 					placeholder="Short bio paragraph"
-					className="resize-y rounded-md border border-(--form-control-border) bg-(--cards-bg) px-3 py-2 text-sm leading-snug text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+					className="resize-y rounded-md border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-3 py-2 text-sm leading-snug text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 				/>
 				<input
 					type="url"
@@ -234,7 +234,7 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 					value={item.href}
 					onChange={(e) => onChange({ href: e.target.value })}
 					placeholder="Link (optional) — e.g. https://twitter.com/…"
-					className="rounded-md border border-(--form-control-border) bg-(--cards-bg) px-3 py-2 text-xs text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+					className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-3 py-2 text-xs text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 				/>
 				{missingImage ? <span className="text-[11px] text-red-500">An image is required for each person.</span> : null}
 			</div>
@@ -245,7 +245,7 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 					onClick={() => onMove(-1)}
 					disabled={idx === 0}
 					title="Move up"
-					className="border border-(--cards-border) bg-(--cards-bg) px-2 py-1 font-jetbrains text-[10px] text-(--text-tertiary) transition-colors hover:text-(--text-primary) disabled:cursor-not-allowed disabled:opacity-40"
+					className="border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-2 py-1 font-jetbrains text-[10px] text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-40"
 				>
 					↑
 				</button>
@@ -254,7 +254,7 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 					onClick={() => onMove(1)}
 					disabled={idx === total - 1}
 					title="Move down"
-					className="border border-(--cards-border) bg-(--cards-bg) px-2 py-1 font-jetbrains text-[10px] text-(--text-tertiary) transition-colors hover:text-(--text-primary) disabled:cursor-not-allowed disabled:opacity-40"
+					className="border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-2 py-1 font-jetbrains text-[10px] text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-40"
 				>
 					↓
 				</button>
@@ -263,7 +263,7 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 					onClick={onRemove}
 					disabled={total === 1}
 					title="Remove"
-					className="border border-(--cards-border) bg-(--cards-bg) px-2 py-1 font-jetbrains text-[10px] text-(--text-tertiary) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-40"
+					className="border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-2 py-1 font-jetbrains text-[10px] text-(--legacy-text-tertiary) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-40"
 				>
 					×
 				</button>

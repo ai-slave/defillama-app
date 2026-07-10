@@ -22,7 +22,7 @@ function stickyStyle(index: number): CSSProperties | undefined {
 			left: RANK_WIDTH,
 			zIndex: 2,
 			background: STICKY_CELL_BACKGROUND,
-			boxShadow: '-1px 0 0 var(--divider) inset'
+			boxShadow: '-1px 0 0 var(--legacy-divider) inset'
 		}
 	return undefined
 }

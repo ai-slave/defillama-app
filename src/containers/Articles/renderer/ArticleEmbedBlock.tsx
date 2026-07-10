@@ -63,10 +63,10 @@ function EmbedFigure({
 		<figure className="article-embed-figure not-prose my-8 grid gap-2">
 			<div className="article-embed-body relative">{children}</div>
 
-			<figcaption className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-1 border-t border-(--cards-border) pt-2 text-[12.5px] leading-snug text-(--text-secondary)">
+			<figcaption className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-1 border-t border-(--legacy-cards-border) pt-2 text-[12.5px] leading-snug text-(--legacy-text-secondary)">
 				<div className="min-w-0 flex-1">
 					{figureLabel ? (
-						<span className="mr-2 font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+						<span className="mr-2 font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 							{figureLabel}
 						</span>
 					) : null}
@@ -77,7 +77,7 @@ function EmbedFigure({
 						href={config.sourceUrl}
 						target="_blank"
 						rel="noreferrer noopener"
-						className="shrink-0 font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase transition-colors hover:text-(--link-text)"
+						className="shrink-0 font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase transition-colors hover:text-(--legacy-link-text)"
 					>
 						{providerLabel} ↗
 					</a>
@@ -94,7 +94,7 @@ function IframeEmbed({ config }: { config: ArticleEmbedConfig }) {
 	const isYouTube = config.provider === 'youtube'
 	return (
 		<div
-			className={`overflow-hidden rounded-md border border-(--cards-border) bg-(--app-bg) ${cls}`}
+			className={`overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) ${cls}`}
 			style={heightStyle}
 		>
 			<iframe
@@ -122,17 +122,17 @@ function LinkCard({ config, action }: { config: ArticleEmbedConfig; action: stri
 			href={config.sourceUrl}
 			target="_blank"
 			rel="noreferrer noopener"
-			className="group flex flex-col gap-2 rounded-md border border-(--cards-border) bg-(--app-bg) p-5 no-underline transition-colors hover:border-(--link-text)/50"
+			className="group flex flex-col gap-2 rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) p-5 no-underline transition-colors hover:border-(--legacy-link-text)/50"
 		>
 			<div className="flex items-baseline justify-between gap-4">
-				<div className="min-w-0 flex-1 text-base leading-snug font-semibold text-(--text-primary) group-hover:text-(--link-text)">
+				<div className="min-w-0 flex-1 text-base leading-snug font-semibold text-(--legacy-text-primary) group-hover:text-(--legacy-link-text)">
 					{config.title || `Open ${display}`}
 				</div>
-				<span className="shrink-0 font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase transition-colors group-hover:text-(--link-text)">
+				<span className="shrink-0 font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase transition-colors group-hover:text-(--legacy-link-text)">
 					{action} ↗
 				</span>
 			</div>
-			<div className="truncate font-jetbrains text-[11px] text-(--text-tertiary)">{display}</div>
+			<div className="truncate font-jetbrains text-[11px] text-(--legacy-text-tertiary)">{display}</div>
 		</a>
 	)
 }
@@ -233,7 +233,7 @@ export function TweetEmbed({
 					</a>
 				</blockquote>
 			) : (
-				<div className="flex h-32 items-center justify-center font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+				<div className="flex h-32 items-center justify-center font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 					Loading…
 				</div>
 			)}

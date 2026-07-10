@@ -205,9 +205,9 @@ function DashboardPageContent({
 
 	if (dashboardId !== 'new' && !currentDashboard && initialStatus === 404) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-1">
+			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1">
 				<h1 className="text-3xl font-bold">Dashboard Not Found</h1>
-				<p className="text-center text-base text-(--text-label)">This dashboard does not exist.</p>
+				<p className="text-center text-base text-(--legacy-text-label)">This dashboard does not exist.</p>
 				<BasicLink href="/pro" className="mt-7 rounded-md pro-btn-purple px-6 py-3 font-medium">
 					Browse Dashboards
 				</BasicLink>
@@ -217,9 +217,9 @@ function DashboardPageContent({
 
 	if (dashboardId !== 'new' && !currentDashboard && loadError?.status === 401) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-1">
+			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1">
 				<h1 className="text-3xl font-bold">Sign In Required</h1>
-				<p className="text-center text-base text-(--text-label)">Please sign in to view this dashboard</p>
+				<p className="text-center text-base text-(--legacy-text-label)">Please sign in to view this dashboard</p>
 				<BasicLink
 					href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
 					className="mt-7 rounded-md pro-btn-purple px-6 py-3 font-medium"
@@ -232,9 +232,9 @@ function DashboardPageContent({
 
 	if (dashboardId !== 'new' && !currentDashboard && loadError && loadError.status >= 500) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-1">
+			<div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1">
 				<h1 className="text-3xl font-bold">Failed to load dashboard</h1>
-				<p className="text-center text-base text-(--text-label)">
+				<p className="text-center text-base text-(--legacy-text-label)">
 					Something went wrong while loading this dashboard. Please try again.
 				</p>
 				<button
@@ -250,9 +250,9 @@ function DashboardPageContent({
 
 	if (dashboardId !== 'new' && !currentDashboard && isAuthenticated) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-1">
+			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1">
 				<h1 className="text-3xl font-bold">Dashboard Not Found</h1>
-				<p className="text-center text-base text-(--text-label)">
+				<p className="text-center text-base text-(--legacy-text-label)">
 					This dashboard does not exist or you don't have permission to view it
 				</p>
 				<BasicLink href="/pro" className="mt-7 rounded-md pro-btn-purple px-6 py-3 font-medium">
@@ -264,9 +264,9 @@ function DashboardPageContent({
 
 	if (dashboardId === 'new' && !isAuthenticated) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-1">
+			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1">
 				<h1 className="text-3xl font-bold">Sign In Required</h1>
-				<p className="text-center text-base text-(--text-label)">Please sign in to create a new dashboard</p>
+				<p className="text-center text-base text-(--legacy-text-label)">Please sign in to create a new dashboard</p>
 				<BasicLink
 					href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
 					className="mt-7 rounded-md pro-btn-purple px-6 py-3 font-medium"
@@ -281,7 +281,7 @@ function DashboardPageContent({
 		return (
 			<Suspense
 				fallback={
-					<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-1" />
+					<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1" />
 				}
 			>
 				<ProDashboard />
@@ -291,9 +291,9 @@ function DashboardPageContent({
 
 	if (!isAuthenticated && dashboardVisibility === 'private') {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-1">
+			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1">
 				<h1 className="text-3xl font-bold">Sign In Required</h1>
-				<p className="text-center text-base text-(--text-label)">Please sign in to view this dashboard</p>
+				<p className="text-center text-base text-(--legacy-text-label)">Please sign in to view this dashboard</p>
 				<BasicLink
 					href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
 					className="mt-7 rounded-md pro-btn-purple px-6 py-3 font-medium"
@@ -306,27 +306,27 @@ function DashboardPageContent({
 
 	if (!hasActiveSubscription && dashboardVisibility !== 'public') {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-8 rounded-md border border-(--cards-border) bg-(--cards-bg) p-1">
+			<div className="flex flex-1 flex-col items-center justify-center gap-8 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1">
 				<h1 className="text-3xl font-bold">Pro Dashboard Access</h1>
-				<p className="-mt-6 text-center text-base text-(--text-label)">
+				<p className="-mt-6 text-center text-base text-(--legacy-text-label)">
 					Subscribe to Pro to access this dashboard and unlock advanced features
 				</p>
 
 				<div className="mx-auto flex flex-wrap items-center justify-center gap-4">
 					<div className="flex items-center gap-2 text-sm">
-						<Icon name="bar-chart-2" height={16} width={16} className="shrink-0 text-(--old-blue)" />
+						<Icon name="bar-chart-2" height={16} width={16} className="shrink-0 text-(--legacy-old-blue)" />
 						<span>Customizable Charts</span>
 					</div>
 					<div className="flex items-center gap-2 text-sm">
-						<Icon name="activity" height={16} width={16} className="shrink-0 text-(--old-blue)" />
+						<Icon name="activity" height={16} width={16} className="shrink-0 text-(--legacy-old-blue)" />
 						<span>Multiple Dashboards</span>
 					</div>
 					<div className="flex items-center gap-2 text-sm">
-						<Icon name="percent" height={16} width={16} className="shrink-0 text-(--old-blue)" />
+						<Icon name="percent" height={16} width={16} className="shrink-0 text-(--legacy-old-blue)" />
 						<span>Advanced Analytics</span>
 					</div>
 					<div className="flex items-center gap-2 text-sm">
-						<Icon name="layers" height={16} width={16} className="shrink-0 text-(--old-blue)" />
+						<Icon name="layers" height={16} width={16} className="shrink-0 text-(--legacy-old-blue)" />
 						<span>Multi-Charts</span>
 					</div>
 				</div>
@@ -348,7 +348,7 @@ function DashboardPageContent({
 	return (
 		<Suspense
 			fallback={
-				<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-1" />
+				<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1" />
 			}
 		>
 			<ProDashboard />

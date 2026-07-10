@@ -39,13 +39,13 @@ export function CandlestickChartAdapter({ config, result, classified }: Candlest
 
 	if (!mapping)
 		return (
-			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-(--divider) text-sm text-(--text-secondary)">
+			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-(--legacy-divider) text-sm text-(--legacy-text-secondary)">
 				Candlestick needs timestamp + open/close/high/low columns. Map them in Advanced settings.
 			</div>
 		)
 	if (data.length === 0)
 		return (
-			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-(--divider) text-sm text-(--text-secondary)">
+			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-(--legacy-divider) text-sm text-(--legacy-text-secondary)">
 				No candles could be built from the current column mapping.
 			</div>
 		)

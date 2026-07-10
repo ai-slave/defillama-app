@@ -126,7 +126,7 @@ const columns = [
 			return (
 				<span
 					data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-					className="data-[strike=true]:text-(--text-disabled)"
+					className="data-[strike=true]:text-(--legacy-text-disabled)"
 				>
 					{value == null ? null : formattedNum(value, true)}
 				</span>
@@ -147,7 +147,7 @@ const columns = [
 			return (
 				<span
 					data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-					className="data-[strike=true]:text-(--text-disabled)"
+					className="data-[strike=true]:text-(--legacy-text-disabled)"
 				>
 					{value == null ? null : formattedNum(value, true)}
 				</span>
@@ -168,7 +168,7 @@ const columns = [
 			return (
 				<span
 					data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-					className="data-[strike=true]:text-(--text-disabled)"
+					className="data-[strike=true]:text-(--legacy-text-disabled)"
 				>
 					{value == null ? '' : formattedNum(Number(value) * 100) + '%'}
 				</span>

@@ -9,8 +9,8 @@ const TONE_STROKE: Record<Tone, string> = {
 	danger: 'var(--error)',
 	warning: 'var(--warning)',
 	good: 'var(--success)',
-	neutral: 'var(--text-secondary)',
-	muted: 'var(--text-tertiary)'
+	neutral: 'var(--legacy-text-secondary)',
+	muted: 'var(--legacy-text-tertiary)'
 }
 
 // 270° arc on a 132×132 box: from 135° (bottom-left) clockwise to 45° (bottom-right).
@@ -45,11 +45,11 @@ export function SeverityGauge({ pct, tone, caption }: { pct: number; tone: Tone;
 			className="relative hidden size-33 shrink-0 sm:block"
 		>
 			<svg viewBox="0 0 132 132" className="size-full">
-				{/* --bg-main is invisible on white cards in light mode, so the track derives from ink. */}
+				{/* --legacy-bg-main is invisible on white cards in light mode, so the track derives from ink. */}
 				<path
 					d={ARC}
 					fill="none"
-					stroke="color-mix(in srgb, var(--text-secondary) 18%, transparent)"
+					stroke="color-mix(in srgb, var(--legacy-text-secondary) 18%, transparent)"
 					strokeWidth="9"
 					strokeLinecap="round"
 				/>
@@ -67,8 +67,12 @@ export function SeverityGauge({ pct, tone, caption }: { pct: number; tone: Tone;
 				) : null}
 			</svg>
 			<div className="absolute inset-0 flex flex-col items-center justify-center">
-				<span className="text-[1.75rem] font-semibold text-(--text-primary) tabular-nums">{Math.round(clamped)}%</span>
-				<span className="max-w-[5.5rem] text-center text-[9px] leading-tight text-(--text-secondary)">{caption}</span>
+				<span className="text-[1.75rem] font-semibold text-(--legacy-text-primary) tabular-nums">
+					{Math.round(clamped)}%
+				</span>
+				<span className="max-w-[5.5rem] text-center text-[9px] leading-tight text-(--legacy-text-secondary)">
+					{caption}
+				</span>
 			</div>
 		</div>
 	)

@@ -17,27 +17,29 @@ export function TextCard({ text }: TextCardProps) {
 
 	return (
 		<div className="prose prose-sm flex max-w-none flex-col gap-2 overflow-y-auto p-4 prose-invert">
-			{text.title ? <h2 className="text-lg font-semibold text-(--text-primary)">{text.title}</h2> : null}
+			{text.title ? <h2 className="text-lg font-semibold text-(--legacy-text-primary)">{text.title}</h2> : null}
 
 			<ReactMarkdown
 				remarkPlugins={REMARK_PLUGINS}
 				rehypePlugins={SANITIZE_REHYPE_PLUGINS}
 				components={{
-					h1: ({ children }) => <h3 className="m-0! text-xl font-bold text-(--text-primary)">{children}</h3>,
-					h2: ({ children }) => <h4 className="m-0! text-lg font-semibold text-(--text-primary)">{children}</h4>,
-					h3: ({ children }) => <h5 className="m-0! text-base font-medium text-(--text-primary)">{children}</h5>,
-					p: ({ children }) => <p className="m-0! leading-relaxed text-(--text-secondary)">{children}</p>,
+					h1: ({ children }) => <h3 className="m-0! text-xl font-bold text-(--legacy-text-primary)">{children}</h3>,
+					h2: ({ children }) => <h4 className="m-0! text-lg font-semibold text-(--legacy-text-primary)">{children}</h4>,
+					h3: ({ children }) => <h5 className="m-0! text-base font-medium text-(--legacy-text-primary)">{children}</h5>,
+					p: ({ children }) => <p className="m-0! leading-relaxed text-(--legacy-text-secondary)">{children}</p>,
 					ul: ({ children }) => <ul className="m-0! flex list-disc flex-col gap-1 pl-4">{children}</ul>,
 					ol: ({ children }) => <ol className="m-0! flex list-decimal flex-col gap-1 pl-4">{children}</ol>,
-					li: ({ children }) => <li className="m-0! text-(--text-secondary)">{children}</li>,
+					li: ({ children }) => <li className="m-0! text-(--legacy-text-secondary)">{children}</li>,
 					code: ({ children }) => (
-						<code className="m-0! overflow-x-auto rounded-sm bg-(--bg-tertiary) px-1 py-0.5 text-xs">{children}</code>
+						<code className="m-0! overflow-x-auto rounded-sm bg-(--legacy-bg-tertiary) px-1 py-0.5 text-xs">
+							{children}
+						</code>
 					),
 					pre: ({ children }) => (
-						<pre className="m-0! overflow-x-auto rounded-sm bg-(--bg-tertiary) p-2">{children}</pre>
+						<pre className="m-0! overflow-x-auto rounded-sm bg-(--legacy-bg-tertiary) p-2">{children}</pre>
 					),
 					blockquote: ({ children }) => (
-						<blockquote className="m-0! overflow-x-auto border-l-3 border-(--old-blue) pl-2 text-(--text-label) italic">
+						<blockquote className="m-0! overflow-x-auto border-l-3 border-(--legacy-old-blue) pl-2 text-(--legacy-text-label) italic">
 							{children}
 						</blockquote>
 					),
@@ -46,7 +48,7 @@ export function TextCard({ text }: TextCardProps) {
 						return (
 							<a
 								href={href}
-								className="m-0! text-(--link-text) hover:underline"
+								className="m-0! text-(--legacy-link-text) hover:underline"
 								target="_blank"
 								rel={external ? 'noopener noreferrer nofollow ugc' : 'noopener noreferrer'}
 								onClick={
@@ -63,8 +65,10 @@ export function TextCard({ text }: TextCardProps) {
 						)
 					},
 					img: () => null,
-					strong: ({ children }) => <strong className="m-0! font-semibold text-(--text-primary)">{children}</strong>,
-					em: ({ children }) => <em className="m-0! text-(--text-secondary) italic">{children}</em>,
+					strong: ({ children }) => (
+						<strong className="m-0! font-semibold text-(--legacy-text-primary)">{children}</strong>
+					),
+					em: ({ children }) => <em className="m-0! text-(--legacy-text-secondary) italic">{children}</em>,
 					table: ({ children }) => (
 						<div style={{ overflowX: 'auto' }}>
 							<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>{children}</table>
@@ -78,9 +82,9 @@ export function TextCard({ text }: TextCardProps) {
 							style={{
 								textAlign: 'left',
 								padding: '8px 12px',
-								borderBottom: '1px solid var(--cards-border)',
+								borderBottom: '1px solid var(--legacy-cards-border)',
 								fontWeight: 600,
-								color: 'var(--text-primary)',
+								color: 'var(--legacy-text-primary)',
 								whiteSpace: 'nowrap'
 							}}
 						>
@@ -91,8 +95,8 @@ export function TextCard({ text }: TextCardProps) {
 						<td
 							style={{
 								padding: '6px 12px',
-								borderBottom: '1px solid var(--cards-border)',
-								color: 'var(--text-secondary)'
+								borderBottom: '1px solid var(--legacy-cards-border)',
+								color: 'var(--legacy-text-secondary)'
 							}}
 						>
 							{children}

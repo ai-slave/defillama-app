@@ -76,7 +76,7 @@ export function RadarChart({ scores }: { scores: RadarScores }) {
 		}
 		chartRef.current = instance
 
-		const axisColor = getComputedStyle(chartDom).getPropertyValue('--text-tertiary').trim() || undefined
+		const axisColor = getComputedStyle(chartDom).getPropertyValue('--legacy-text-tertiary').trim() || undefined
 		instance.setOption(buildRadarOption(scores, axisColor))
 
 		return () => {

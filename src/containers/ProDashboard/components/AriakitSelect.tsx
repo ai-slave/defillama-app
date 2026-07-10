@@ -46,7 +46,7 @@ export function AriakitSelect({
 				</label>
 			) : null}
 			{isLoading ? (
-				<div className="flex h-9 items-center justify-center rounded-md border border-(--form-control-border) bg-(--bg-input)">
+				<div className="flex h-9 items-center justify-center rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input)">
 					<LoadingSpinner size="sm" />
 				</div>
 			) : (
@@ -54,7 +54,7 @@ export function AriakitSelect({
 					<PopoverDisclosure
 						id={disclosureId}
 						store={popover}
-						className="flex w-full items-center justify-between rounded-md border border-(--form-control-border) bg-(--bg-input) px-2.5 py-1.5 text-xs transition-colors hover:border-(--primary)/40 focus:border-(--primary) focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
+						className="flex w-full items-center justify-between rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2.5 py-1.5 text-xs transition-colors hover:border-(--legacy-primary)/40 focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
 					>
 						<span className={`truncate ${selectedValue ? 'pro-text1' : 'pro-text3'}`}>{selectedLabel}</span>
 						<Icon name="chevron-down" width={12} height={12} className="ml-2 shrink-0 opacity-70" />
@@ -65,7 +65,7 @@ export function AriakitSelect({
 						portal={true}
 						flip={false}
 						gutter={4}
-						className="z-50 rounded-md border border-(--cards-border) bg-(--cards-bg) shadow-lg"
+						className="z-50 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-lg"
 						style={{ minWidth: 'var(--popover-anchor-width)', width: 'max-content' }}
 					>
 						<div className="max-h-[280px] overflow-y-auto overscroll-contain p-1">
@@ -89,7 +89,7 @@ export function AriakitSelect({
 											option.disabled
 												? 'cursor-not-allowed pro-text3 opacity-50'
 												: isActive
-													? 'bg-(--primary)/10 font-semibold text-(--primary)'
+													? 'bg-(--legacy-primary)/10 font-semibold text-(--legacy-primary)'
 													: 'pro-text2 hover:bg-(--cards-bg-alt)'
 										}`}
 									>
@@ -98,7 +98,7 @@ export function AriakitSelect({
 											<span className="truncate">{option.label}</span>
 										</div>
 										{isActive ? (
-											<Icon name="check" width={12} height={12} className="ml-2 shrink-0 text-(--primary)" />
+											<Icon name="check" width={12} height={12} className="ml-2 shrink-0 text-(--legacy-primary)" />
 										) : null}
 									</button>
 								)

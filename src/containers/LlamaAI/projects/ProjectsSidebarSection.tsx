@@ -126,7 +126,7 @@ export function ProjectsSidebarSection({
 				<button
 					type="button"
 					onClick={() => goTo('/ai/projects')}
-					className="text-[11px] text-[#999] hover:text-(--old-blue) dark:text-[#555]"
+					className="text-[11px] text-[#999] hover:text-(--legacy-old-blue) dark:text-[#555]"
 				>
 					View all
 				</button>
@@ -136,7 +136,7 @@ export function ProjectsSidebarSection({
 				<button
 					type="button"
 					onClick={() => goTo('/subscription')}
-					className="flex items-center justify-between gap-2 rounded-md border border-dashed border-[#e6e6e6] px-2 py-1.5 text-left text-[11px] text-[#666] transition-colors hover:border-(--old-blue) hover:text-(--old-blue) dark:border-[#2a2b2c] dark:text-[#919296]"
+					className="flex items-center justify-between gap-2 rounded-md border border-dashed border-[#e6e6e6] px-2 py-1.5 text-left text-[11px] text-[#666] transition-colors hover:border-(--legacy-old-blue) hover:text-(--legacy-old-blue) dark:border-[#2a2b2c] dark:text-[#919296]"
 				>
 					<span className="flex items-center gap-1.5">
 						<Icon name="folder-plus" height={12} width={12} />
@@ -151,7 +151,7 @@ export function ProjectsSidebarSection({
 						onClick={createStore.show}
 						className="-mx-1.5 grid grid-cols-[1rem_minmax(0,1fr)] items-center gap-1 rounded-md px-1.5 py-1 text-left text-xs text-[#666] transition-colors hover:bg-[#f0f0f0] hover:text-[#1a1a1a] dark:text-[#919296] dark:hover:bg-[#222324] dark:hover:text-white"
 					>
-						<span className="inline-flex justify-center font-medium text-(--old-blue)" aria-hidden>
+						<span className="inline-flex justify-center font-medium text-(--legacy-old-blue)" aria-hidden>
 							+
 						</span>
 						<span className="min-w-0 truncate">New project</span>
@@ -186,9 +186,9 @@ export function ProjectsSidebarSection({
 											onClick={() => goToProject(p.id)}
 											className={`-mx-1.5 flex items-center gap-1.5 rounded-md px-1.5 py-[5px] text-left text-xs transition-colors ${
 												isActive
-													? 'bg-(--old-blue)/12 text-(--old-blue)'
+													? 'bg-(--legacy-old-blue)/12 text-(--legacy-old-blue)'
 													: isSessionContext
-														? 'font-medium text-(--old-blue) hover:bg-[#f0f0f0] dark:hover:bg-[#222324]'
+														? 'font-medium text-(--legacy-old-blue) hover:bg-[#f0f0f0] dark:hover:bg-[#222324]'
 														: 'text-[#666] hover:bg-[#f0f0f0] hover:text-[#1a1a1a] dark:text-[#919296] dark:hover:bg-[#222324] dark:hover:text-white'
 											}`}
 										>
@@ -240,7 +240,7 @@ export function ProjectsSidebarSection({
 						<button
 							type="button"
 							onClick={() => goTo('/ai/projects')}
-							className="rounded-md px-2 py-1 text-left text-xs text-(--old-blue) hover:underline"
+							className="rounded-md px-2 py-1 text-left text-xs text-(--legacy-old-blue) hover:underline"
 						>
 							All projects ({projects.length}) →
 						</button>

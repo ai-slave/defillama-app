@@ -26,9 +26,9 @@ function ProductCard({
 	links?: Array<{ url: string; label: string }>
 }) {
 	return (
-		<div className="flex flex-col gap-3 rounded-xl border border-(--cards-border) bg-(--cards-bg) p-6 transition-all hover:border-(--sl-accent)/20 hover:shadow-md">
-			<h3 className="heading-xs text-(--text-primary)">{title}</h3>
-			<div className="flex flex-col gap-3 text-sm leading-relaxed text-(--text-secondary)">{children}</div>
+		<div className="flex flex-col gap-3 rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-6 transition-all hover:border-(--sl-accent)/20 hover:shadow-md">
+			<h3 className="heading-xs text-(--legacy-text-primary)">{title}</h3>
+			<div className="flex flex-col gap-3 text-sm leading-relaxed text-(--legacy-text-secondary)">{children}</div>
 			{links && links.length > 0 && (
 				<div className="mt-auto flex flex-wrap gap-x-4 gap-y-2 pt-1">
 					{links.map((link) => (
@@ -45,12 +45,12 @@ function ProductCard({
 export default function Products() {
 	return (
 		<div className="flex flex-col gap-6">
-			<div className="flex flex-col gap-4 rounded-xl border border-(--cards-border) bg-(--cards-bg) p-6">
+			<div className="flex flex-col gap-4 rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-6">
 				<div className="flex items-center gap-3">
 					<NearIcon />
-					<h1 className="heading-sm text-(--text-primary)">Protocol</h1>
+					<h1 className="heading-sm text-(--legacy-text-primary)">Protocol</h1>
 				</div>
-				<p className="max-w-3xl text-[15px] leading-relaxed text-(--text-secondary)">
+				<p className="max-w-3xl text-[15px] leading-relaxed text-(--legacy-text-secondary)">
 					NEAR is the unified commerce layer for assets and agents. NEAR is where cross-chain execution is unified,
 					where AI runs with confidentiality, and where economic activity flows back into the protocol itself. What
 					began as a sharded blockchain has evolved into a vertically integrated system designed to coordinate value
@@ -127,12 +127,12 @@ export default function Products() {
 				</ProductCard>
 			</div>
 
-			<div className="rounded-xl border border-(--cards-border) bg-(--cards-bg) p-6 transition-all hover:border-(--sl-accent)/20 hover:shadow-md">
+			<div className="rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-6 transition-all hover:border-(--sl-accent)/20 hover:shadow-md">
 				<div className="flex items-center justify-between">
-					<h3 className="heading-xs text-(--text-primary)">Governance: House of Stake</h3>
+					<h3 className="heading-xs text-(--legacy-text-primary)">Governance: House of Stake</h3>
 					<ExternalLink href="https://houseofstake.org/">houseofstake.org</ExternalLink>
 				</div>
-				<p className="mt-3 max-w-3xl text-sm leading-relaxed text-(--text-secondary)">
+				<p className="mt-3 max-w-3xl text-sm leading-relaxed text-(--legacy-text-secondary)">
 					NEAR&apos;s governance body providing a framework for coordinating protocol upgrades, economic parameters, and
 					treasury decisions. House of Stake formalizes how proposals are introduced, debated, and ratified, and is
 					incorporating AI-assisted mechanisms to improve efficiency, analysis, and coordination.

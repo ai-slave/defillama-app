@@ -277,7 +277,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ va
 	}, [])
 
 	return (
-		<div className="overflow-hidden rounded-[4px] border border-(--divider) bg-surface">
+		<div className="overflow-hidden rounded-[4px] border border-(--legacy-divider) bg-surface">
 			<MonacoEditor
 				height="44vh"
 				language="sql"

@@ -17,8 +17,8 @@ export function ArticlePeoplePanelNodeView({ node, selected, deleteNode, getPos,
 	return (
 		<NodeViewWrapper
 			data-people-panel-wrapper
-			className={`not-prose relative my-6 rounded-md border bg-(--cards-bg) p-5 transition-colors ${
-				selected ? 'border-(--link-text)' : 'border-(--cards-border)'
+			className={`not-prose relative my-6 rounded-md border bg-(--legacy-cards-bg) p-5 transition-colors ${
+				selected ? 'border-(--legacy-link-text)' : 'border-(--legacy-cards-border)'
 			}`}
 		>
 			{config ? (
@@ -27,7 +27,7 @@ export function ArticlePeoplePanelNodeView({ node, selected, deleteNode, getPos,
 				<button
 					type="button"
 					onClick={handleEdit}
-					className="w-full rounded-md py-6 text-center text-sm text-(--text-tertiary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+					className="w-full rounded-md py-6 text-center text-sm text-(--legacy-text-tertiary) transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)"
 				>
 					Empty people panel — click to configure
 				</button>
@@ -37,19 +37,19 @@ export function ArticlePeoplePanelNodeView({ node, selected, deleteNode, getPos,
 				<div
 					contentEditable={false}
 					onMouseDown={(e) => e.stopPropagation()}
-					className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) p-1 shadow-md"
+					className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1 shadow-md"
 				>
 					<button
 						type="button"
 						onClick={handleEdit}
-						className="rounded-md px-2 py-1 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary)"
+						className="rounded-md px-2 py-1 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)"
 					>
 						Edit
 					</button>
 					<button
 						type="button"
 						onClick={() => deleteNode()}
-						className="rounded-md px-2 py-1 text-xs font-medium text-(--text-secondary) transition-colors hover:bg-red-500/10 hover:text-red-500"
+						className="rounded-md px-2 py-1 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-red-500/10 hover:text-red-500"
 					>
 						Remove
 					</button>

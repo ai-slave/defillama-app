@@ -337,7 +337,7 @@ const PageView = () => {
 	return (
 		<>
 			<div className="relative isolate grid grid-cols-2 gap-2 xl:grid-cols-3">
-				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--cards-border) bg-(--cards-bg) p-2 text-base xl:col-span-1">
+				<div className="col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-2 text-base xl:col-span-1">
 					<h1 className="text-xl font-bold">APY Breakdown:</h1>
 					<h2 className="flex items-center justify-between gap-1">
 						<span className="font-bold">Strategy APY</span>
@@ -384,7 +384,7 @@ const PageView = () => {
 						</p>
 					</div>
 				</div>
-				<div className="col-span-2 rounded-md border border-(--cards-border) bg-(--cards-bg)">
+				<div className="col-span-2 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
 					<Suspense fallback={<div className="min-h-[398px]" />}>
 						<MultiSeriesChart2
 							title="Strategy APY"
@@ -402,7 +402,7 @@ const PageView = () => {
 				</div>
 			</div>
 
-			<div className="flex flex-col gap-4 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+			<div className="flex flex-col gap-4 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3">
 				<h3 className="font-bold">Steps</h3>
 				<p className="flex items-center gap-2">
 					<span>1.</span>
@@ -454,7 +454,7 @@ const PageView = () => {
 
 			<div className="grid grid-cols-2 gap-2 rounded-md">
 				{fetchingLendData ? (
-					<p className="col-span-full flex h-[400px] items-center justify-center gap-1 rounded-md border border-(--cards-border) bg-(--cards-bg) text-center">
+					<p className="col-span-full flex h-[400px] items-center justify-center gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) text-center">
 						Loading
 						<LoadingDots />
 					</p>
@@ -462,7 +462,7 @@ const PageView = () => {
 					lendHistory?.data?.length && (
 						<>
 							{barDatasetSupply?.source?.length ? (
-								<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+								<div className="relative col-span-full flex flex-col rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 									<Suspense fallback={<div className="min-h-[398px]" />}>
 										<MultiSeriesChart2
 											title="Supply APY"
@@ -482,7 +482,7 @@ const PageView = () => {
 							) : null}
 
 							{barDatasetBorrow?.source?.length ? (
-								<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+								<div className="relative col-span-full flex flex-col rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 									<Suspense fallback={<div className="min-h-[398px]" />}>
 										<MultiSeriesChart2
 											title="Borrow APY"
@@ -502,7 +502,7 @@ const PageView = () => {
 							) : null}
 
 							{barDatasetFarm?.source?.length ? (
-								<div className="relative col-span-full flex flex-col rounded-md border border-(--cards-border) bg-(--cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
+								<div className="relative col-span-full flex flex-col rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">
 									<Suspense fallback={<div className="min-h-[398px]" />}>
 										<MultiSeriesChart2
 											title="Farm APY"

@@ -387,7 +387,7 @@ export function CustomColumnPanel({
 			style={{ userSelect: 'none' }}
 		>
 			{/* Add New Custom Column */}
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
+			<div className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
 				<h5 className="mb-3 text-sm font-medium pro-text1">Create Custom Column</h5>
 
 				<div className="space-y-3">
@@ -401,7 +401,7 @@ export function CustomColumnPanel({
 							value={newColumnName}
 							onChange={(e) => setNewColumnName(e.target.value)}
 							placeholder="e.g., P/E Ratio, Custom Metric"
-							className="w-full rounded-md border pro-border bg-(--bg-glass) px-3 py-2 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-(--primary) focus:outline-hidden"
+							className="w-full rounded-md border pro-border bg-(--legacy-bg-glass) px-3 py-2 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-(--legacy-primary) focus:outline-hidden"
 							onPointerDown={(e) => e.stopPropagation()}
 							onDragStart={(e) => e.preventDefault()}
 							draggable={false}
@@ -425,12 +425,12 @@ export function CustomColumnPanel({
 									setTimeout(() => setShowAutocomplete(false), 150)
 								}}
 								placeholder="e.g., tvl / mcap, (fees_24h + revenue_24h) * 365, tvl * 0.1"
-								className={`w-full rounded-md border bg-(--bg-glass) px-3 py-2 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:outline-hidden ${
+								className={`w-full rounded-md border bg-(--legacy-bg-glass) px-3 py-2 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:outline-hidden ${
 									newColumnExpression && !liveValidation.isValid
 										? 'border-red-500 focus:border-red-500'
 										: newColumnExpression && liveValidation.isValid
 											? 'border-green-500 focus:border-green-500'
-											: 'pro-divider focus:border-(--primary)'
+											: 'pro-divider focus:border-(--legacy-primary)'
 								}`}
 								onPointerDown={(e) => e.stopPropagation()}
 								onDragStart={(e) => e.preventDefault()}
@@ -440,7 +440,7 @@ export function CustomColumnPanel({
 							{/* Autocomplete dropdown */}
 							{showAutocomplete && filteredSuggestions.length > 0 ? (
 								<div
-									className="absolute z-50 mt-1 max-h-64 overflow-y-auto overscroll-contain rounded-md border border-(--cards-border) bg-(--cards-bg) shadow-lg"
+									className="absolute z-50 mt-1 max-h-64 overflow-y-auto overscroll-contain rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-lg"
 									style={{
 										width: '320px',
 										minWidth: '280px',
@@ -457,7 +457,7 @@ export function CustomColumnPanel({
 											onClick={() => insertSuggestion(suggestion)}
 											tabIndex={autocompleteIndex === index ? 0 : -1}
 											className={`flex w-full items-center gap-2 border-0 px-3 py-1.5 text-left text-sm ${
-												index === autocompleteIndex ? 'bg-(--primary) text-white' : 'pro-hover-bg pro-text1'
+												index === autocompleteIndex ? 'bg-(--legacy-primary) text-white' : 'pro-hover-bg pro-text1'
 											}`}
 											onPointerEnter={() => setAutocompleteIndex(index)}
 										>
@@ -467,7 +467,7 @@ export function CustomColumnPanel({
 														? 'bg-pro-blue-400'
 														: suggestion.type === 'function'
 															? 'bg-pro-purple-400'
-															: 'bg-(--text-tertiary)'
+															: 'bg-(--legacy-text-tertiary)'
 												}`}
 											/>
 											<code className="min-w-0 shrink-0 text-sm">{suggestion.display}</code>
@@ -531,7 +531,7 @@ export function CustomColumnPanel({
 									key={operator}
 									type="button"
 									onClick={() => insertOperator(operator)}
-									className="rounded-md border pro-border bg-(--bg-glass) pro-hover-bg px-2 py-1 text-xs pro-text2 transition-colors"
+									className="rounded-md border pro-border bg-(--legacy-bg-glass) pro-hover-bg px-2 py-1 text-xs pro-text2 transition-colors"
 									onPointerDown={(e) => e.stopPropagation()}
 									onDragStart={(e) => e.preventDefault()}
 									draggable={false}
@@ -552,7 +552,7 @@ export function CustomColumnPanel({
 						type="button"
 						onClick={handleAddColumn}
 						disabled={!newColumnName.trim() || !newColumnExpression.trim()}
-						className="rounded-md bg-(--primary) px-3 py-1 text-sm text-white transition-colors hover:bg-(--primary-hover) disabled:cursor-not-allowed disabled:opacity-50"
+						className="rounded-md bg-(--legacy-primary) px-3 py-1 text-sm text-white transition-colors hover:bg-(--legacy-primary-hover) disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						Add Custom Column
 					</button>
@@ -560,7 +560,7 @@ export function CustomColumnPanel({
 			</div>
 
 			{/* Available Variables Reference - Compact */}
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+			<div className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3">
 				<h5 className="mb-2 text-sm font-medium pro-text2">Available Variables</h5>
 				<p className="mb-2 text-xs pro-text3">Click any variable to add it to your expression</p>
 				<div className="grid max-h-32 grid-cols-3 gap-1 overflow-y-auto md:grid-cols-4 lg:grid-cols-6">
@@ -570,12 +570,12 @@ export function CustomColumnPanel({
 							type="button"
 							onClick={() => insertVariable(variable.key)}
 							title={variable.name}
-							className="rounded-md border pro-border bg-(--bg-glass) pro-hover-bg p-1 text-center text-xs transition-colors"
+							className="rounded-md border pro-border bg-(--legacy-bg-glass) pro-hover-bg p-1 text-center text-xs transition-colors"
 							onPointerDown={(e) => e.stopPropagation()}
 							onDragStart={(e) => e.preventDefault()}
 							draggable={false}
 						>
-							<code className="block truncate text-xs text-(--primary)">{variable.key}</code>
+							<code className="block truncate text-xs text-(--legacy-primary)">{variable.key}</code>
 						</button>
 					))}
 				</div>
@@ -593,7 +593,10 @@ export function CustomColumnPanel({
 				<div className="space-y-3">
 					<h5 className="text-sm font-medium pro-text2">Custom Columns ({customColumns.length})</h5>
 					{customColumns.map((column) => (
-						<div key={column.id} className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
+						<div
+							key={column.id}
+							className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3"
+						>
 							<div className="flex items-center justify-between">
 								<div className="flex-1">
 									<div className="mb-1 flex items-center gap-2">
@@ -604,7 +607,7 @@ export function CustomColumnPanel({
 											<Icon name="x" height={12} width={12} className="text-(--error)" />
 										)}
 									</div>
-									<div className="rounded-md border pro-border bg-(--bg-glass) px-2 py-1 text-xs pro-text2">
+									<div className="rounded-md border pro-border bg-(--legacy-bg-glass) px-2 py-1 text-xs pro-text2">
 										{column.expression}
 									</div>
 									{!column.isValid && column.errorMessage ? (
@@ -627,19 +630,19 @@ export function CustomColumnPanel({
 			) : null}
 
 			{/* Examples */}
-			<div className="rounded-md border border-(--cards-border) bg-(--cards-bg) p-4">
+			<div className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
 				<h5 className="mb-3 text-sm font-medium pro-text2">Example Expressions</h5>
 				<div className="space-y-2 text-xs">
 					<div>
-						<code className="text-(--primary)">(fees_24h + revenue_24h) * 365</code>
+						<code className="text-(--legacy-primary)">(fees_24h + revenue_24h) * 365</code>
 						<span className="ml-2 pro-text3">24h run-rate fees + revenue</span>
 					</div>
 					<div>
-						<code className="text-(--primary)">volume_24h / tvl</code>
+						<code className="text-(--legacy-primary)">volume_24h / tvl</code>
 						<span className="ml-2 pro-text3">Volume to TVL ratio</span>
 					</div>
 					<div>
-						<code className="text-(--primary)">(change_1d + change_7d) / 2</code>
+						<code className="text-(--legacy-primary)">(change_1d + change_7d) / 2</code>
 						<span className="ml-2 pro-text3">Average price change</span>
 					</div>
 				</div>

@@ -140,14 +140,14 @@ export function ArticleMetaDialog({
 			backdrop={
 				<div className="fixed inset-0 z-40 bg-black/30 opacity-0 backdrop-blur-sm transition-opacity duration-200 data-[enter]:opacity-100 data-[leave]:opacity-0" />
 			}
-			className="fixed top-0 right-0 bottom-0 z-50 flex w-full max-w-md translate-x-full flex-col overflow-y-auto border-l border-(--cards-border) bg-(--cards-bg) p-6 shadow-2xl transition-transform duration-300 data-[enter]:translate-x-0 data-[leave]:translate-x-full"
+			className="fixed top-0 right-0 bottom-0 z-50 flex w-full max-w-md translate-x-full flex-col overflow-y-auto border-l border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-6 shadow-2xl transition-transform duration-300 data-[enter]:translate-x-0 data-[leave]:translate-x-full"
 		>
 			<div className="mb-1 flex items-start justify-between gap-3">
 				<div className="grid gap-1">
-					<Ariakit.DialogHeading className="text-lg font-semibold tracking-tight text-(--text-primary)">
+					<Ariakit.DialogHeading className="text-lg font-semibold tracking-tight text-(--legacy-text-primary)">
 						{isPublished ? 'Edit listing' : 'Review & publish'}
 					</Ariakit.DialogHeading>
-					<p className="text-xs text-(--text-tertiary)">
+					<p className="text-xs text-(--legacy-text-tertiary)">
 						{isPublished
 							? 'These details appear on the public article page and in shares.'
 							: 'A quick review before this goes live.'}
@@ -155,7 +155,7 @@ export function ArticleMetaDialog({
 				</div>
 				<Ariakit.DialogDismiss
 					aria-label="Close"
-					className="rounded-md p-1.5 text-(--text-secondary) hover:bg-(--link-hover-bg)"
+					className="rounded-md p-1.5 text-(--legacy-text-secondary) hover:bg-(--legacy-link-hover-bg)"
 				>
 					<Icon name="x" className="size-4" />
 				</Ariakit.DialogDismiss>
@@ -173,41 +173,41 @@ export function ArticleMetaDialog({
 						>
 							<Ariakit.Select
 								aria-label="Article section"
-								className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-(--app-bg) px-3 text-sm transition-colors focus-visible:border-(--link-text) focus-visible:outline-none data-[state=open]:border-(--link-text) ${
+								className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-(--legacy-app-bg) px-3 text-sm transition-colors focus-visible:border-(--legacy-link-text) focus-visible:outline-none data-[state=open]:border-(--legacy-link-text) ${
 									publishErrors.section
-										? 'border-red-500/60 text-(--text-primary)'
+										? 'border-red-500/60 text-(--legacy-text-primary)'
 										: article.section
-											? 'border-(--form-control-border) text-(--text-primary) hover:border-(--text-tertiary)'
-											: 'border-(--form-control-border) text-(--text-tertiary) hover:border-(--text-tertiary)'
+											? 'border-(--legacy-form-control-border) text-(--legacy-text-primary) hover:border-(--legacy-text-tertiary)'
+											: 'border-(--legacy-form-control-border) text-(--legacy-text-tertiary) hover:border-(--legacy-text-tertiary)'
 								}`}
 							>
 								<span className="truncate text-left">
 									{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'Select a section…'}
 								</span>
-								<Ariakit.SelectArrow className="shrink-0 text-(--text-tertiary)" />
+								<Ariakit.SelectArrow className="shrink-0 text-(--legacy-text-tertiary)" />
 							</Ariakit.Select>
 							<Ariakit.SelectPopover
 								gutter={6}
 								sameWidth
 								portal
 								unmountOnHide
-								className="z-[90] flex flex-col overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-bg) py-1 text-sm shadow-xl outline-none"
+								className="z-[90] flex flex-col overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 text-sm shadow-xl outline-none"
 							>
 								{ARTICLE_SECTIONS.map((section) => (
 									<Ariakit.SelectItem
 										key={section}
 										value={section}
-										className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-(--text-secondary) data-active-item:bg-(--link-button) data-active-item:text-(--link-text)"
+										className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-(--legacy-text-secondary) data-active-item:bg-(--legacy-link-button) data-active-item:text-(--legacy-link-text)"
 									>
 										<span className="truncate">{ARTICLE_SECTION_LABELS[section]}</span>
-										<Ariakit.SelectItemCheck className="shrink-0 text-(--link-text)" />
+										<Ariakit.SelectItemCheck className="shrink-0 text-(--legacy-link-text)" />
 									</Ariakit.SelectItem>
 								))}
 							</Ariakit.SelectPopover>
 						</Ariakit.SelectProvider>
 						<MetaFieldHint error={publishErrors.section}>
 							Required. Drives the URL path:{' '}
-							<span className="font-jetbrains text-(--text-secondary)">
+							<span className="font-jetbrains text-(--legacy-text-secondary)">
 								/research/{article.section ?? '…'}/{article.slug || '…'}
 							</span>
 						</MetaFieldHint>
@@ -217,7 +217,7 @@ export function ArticleMetaDialog({
 				{article.section === 'report' ? (
 					<MetaSection title="Report">
 						<div className="grid gap-1.5">
-							<span className="text-xs text-(--text-secondary)">Carousel image</span>
+							<span className="text-xs text-(--legacy-text-secondary)">Carousel image</span>
 							<ImageUploadButton
 								scope="report-carousel"
 								articleId={article.id ?? null}
@@ -236,7 +236,7 @@ export function ArticleMetaDialog({
 							/>
 						</div>
 						<div className="grid gap-1.5">
-							<span className="text-xs text-(--text-secondary)">Sponsor logo</span>
+							<span className="text-xs text-(--legacy-text-secondary)">Sponsor logo</span>
 							<ImageUploadButton
 								scope="report-sponsor-logo"
 								articleId={article.id ?? null}
@@ -255,9 +255,9 @@ export function ArticleMetaDialog({
 							/>
 						</div>
 						<label className="grid gap-1.5">
-							<span className="flex items-baseline justify-between gap-2 text-xs text-(--text-secondary)">
+							<span className="flex items-baseline justify-between gap-2 text-xs text-(--legacy-text-secondary)">
 								<span>Report description</span>
-								<span className="font-jetbrains text-[10px] text-(--text-tertiary)">
+								<span className="font-jetbrains text-[10px] text-(--legacy-text-tertiary)">
 									{(article.reportDescription ?? '').length}/600
 								</span>
 							</span>
@@ -267,11 +267,11 @@ export function ArticleMetaDialog({
 								placeholder="Shown on hover over the report card in the /research carousel."
 								rows={4}
 								maxLength={600}
-								className="resize-none rounded-md border border-(--form-control-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+								className="resize-none rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 							/>
 						</label>
 						<div className="grid gap-1.5">
-							<span className="text-xs text-(--text-secondary)">Report PDF</span>
+							<span className="text-xs text-(--legacy-text-secondary)">Report PDF</span>
 							<PdfUploadButton
 								articleId={article.id ?? null}
 								currentPdf={article.reportPdf ?? null}
@@ -292,12 +292,12 @@ export function ArticleMetaDialog({
 
 				<MetaSection title="Publishing">
 					<label className="grid gap-1.5">
-						<span className="flex items-baseline justify-between gap-2 text-xs text-(--text-secondary)">
+						<span className="flex items-baseline justify-between gap-2 text-xs text-(--legacy-text-secondary)">
 							<span>Display date</span>
 							<button
 								type="button"
 								onClick={() => updateArticle('displayDate', new Date().toISOString())}
-								className="font-jetbrains text-[10px] tracking-[0.16em] text-(--text-tertiary) uppercase transition-colors hover:text-(--link-text)"
+								className="font-jetbrains text-[10px] tracking-[0.16em] text-(--legacy-text-tertiary) uppercase transition-colors hover:text-(--legacy-link-text)"
 							>
 								Set to now
 							</button>
@@ -314,10 +314,10 @@ export function ArticleMetaDialog({
 								const input = event.currentTarget as HTMLInputElement & { showPicker?: () => void }
 								input.showPicker?.()
 							}}
-							className={`cursor-pointer rounded-md border bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) transition-colors focus:outline-none ${
+							className={`cursor-pointer rounded-md border bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors focus:outline-none ${
 								publishErrors.displayDate
 									? 'border-red-500/60 focus:border-red-500'
-									: 'border-(--form-control-border) focus:border-(--link-text)'
+									: 'border-(--legacy-form-control-border) focus:border-(--legacy-link-text)'
 							}`}
 						/>
 						<MetaFieldHint error={publishErrors.displayDate}>
@@ -329,7 +329,7 @@ export function ArticleMetaDialog({
 							{articleIsScheduled ? (
 								<div className="flex flex-wrap items-center gap-2 rounded-md border border-sky-500/30 bg-sky-500/5 px-3 py-2">
 									<span className="font-jetbrains text-[10px] tracking-[0.18em] text-sky-500 uppercase">Scheduled</span>
-									<span className="text-xs text-(--text-secondary)">
+									<span className="text-xs text-(--legacy-text-secondary)">
 										Goes live {formatArticleDate(article.goLiveAt)}
 									</span>
 								</div>
@@ -351,7 +351,7 @@ export function ArticleMetaDialog({
 							</div>
 							{scheduleMode ? (
 								<label className="grid gap-1.5">
-									<span className="text-xs text-(--text-secondary)">Go live at</span>
+									<span className="text-xs text-(--legacy-text-secondary)">Go live at</span>
 									<input
 										type="datetime-local"
 										value={scheduleAtLocal}
@@ -364,10 +364,10 @@ export function ArticleMetaDialog({
 											const input = event.currentTarget as HTMLInputElement & { showPicker?: () => void }
 											input.showPicker?.()
 										}}
-										className={`cursor-pointer rounded-md border bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) transition-colors focus:outline-none ${
+										className={`cursor-pointer rounded-md border bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors focus:outline-none ${
 											scheduleError
 												? 'border-red-500/60 focus:border-red-500'
-												: 'border-(--form-control-border) focus:border-(--link-text)'
+												: 'border-(--legacy-form-control-border) focus:border-(--legacy-link-text)'
 										}`}
 									/>
 									<MetaFieldHint error={scheduleError}>Independent from display date.</MetaFieldHint>
@@ -376,23 +376,23 @@ export function ArticleMetaDialog({
 						</>
 					) : null}
 					{article.firstPublishedAt || article.lastPublishedAt ? (
-						<div className="grid gap-1 rounded-md border border-(--cards-border) bg-(--app-bg)/50 px-3 py-2.5">
+						<div className="grid gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg)/50 px-3 py-2.5">
 							{article.firstPublishedAt ? (
 								<div className="flex items-baseline justify-between gap-3">
-									<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+									<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 										First publish
 									</span>
-									<span className="font-jetbrains text-[11px] text-(--text-secondary) tabular-nums">
+									<span className="font-jetbrains text-[11px] text-(--legacy-text-secondary) tabular-nums">
 										{formatArticleDate(article.firstPublishedAt)}
 									</span>
 								</div>
 							) : null}
 							{article.lastPublishedAt ? (
 								<div className="flex items-baseline justify-between gap-3">
-									<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+									<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 										Last publish
 									</span>
-									<span className="font-jetbrains text-[11px] text-(--text-secondary) tabular-nums">
+									<span className="font-jetbrains text-[11px] text-(--legacy-text-secondary) tabular-nums">
 										{formatArticleDate(article.lastPublishedAt)}
 									</span>
 								</div>
@@ -409,20 +409,20 @@ export function ArticleMetaDialog({
 					</div>
 					{article.editorialTags && article.editorialTags.length > 0 ? (
 						<div className="grid gap-1.5">
-							<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+							<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 								Editorial
 							</span>
 							<div className="flex flex-wrap gap-1.5">
 								{article.editorialTags.filter(isEditorialTagSlug).map((slug) => (
 									<span
 										key={slug}
-										className="inline-flex items-center gap-1 rounded-full bg-(--link-button) px-2 py-0.5 font-jetbrains text-[10px] tracking-[0.18em] text-(--link-text) uppercase"
+										className="inline-flex items-center gap-1 rounded-full bg-(--legacy-link-button) px-2 py-0.5 font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-link-text) uppercase"
 									>
 										{EDITORIAL_TAGS[slug].label}
 									</span>
 								))}
 							</div>
-							<p className="text-xs text-(--text-tertiary)">Managed by editors from /research/admin/curation.</p>
+							<p className="text-xs text-(--legacy-text-tertiary)">Managed by editors from /research/admin/curation.</p>
 						</div>
 					) : null}
 				</MetaSection>
@@ -433,7 +433,7 @@ export function ArticleMetaDialog({
 							<input
 								value={article.slug}
 								onChange={(event) => updateArticle('slug', event.target.value)}
-								className="flex-1 rounded-md border border-(--form-control-border) bg-(--app-bg) px-3 py-2 font-jetbrains text-xs text-(--text-primary) focus:border-(--link-text) focus:outline-none"
+								className="flex-1 rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 font-jetbrains text-xs text-(--legacy-text-primary) focus:border-(--legacy-link-text) focus:outline-none"
 							/>
 							{(() => {
 								const candidate = slugFromTitle(article.title)
@@ -450,7 +450,7 @@ export function ArticleMetaDialog({
 													: 'Add a title first'
 												: `Regenerate as ${candidate}`
 										}
-										className="flex shrink-0 items-center gap-1.5 rounded-md border border-(--cards-border) bg-(--cards-bg) px-2.5 font-jetbrains text-[10px] tracking-[0.16em] text-(--text-secondary) uppercase transition-colors hover:border-(--link-text)/40 hover:text-(--text-primary) disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-(--cards-border) disabled:hover:text-(--text-secondary)"
+										className="flex shrink-0 items-center gap-1.5 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-2.5 font-jetbrains text-[10px] tracking-[0.16em] text-(--legacy-text-secondary) uppercase transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-(--legacy-cards-border) disabled:hover:text-(--legacy-text-secondary)"
 									>
 										<span aria-hidden>↻</span>
 										<span>Regenerate</span>
@@ -458,37 +458,37 @@ export function ArticleMetaDialog({
 								)
 							})()}
 						</div>
-						<span className="truncate font-jetbrains text-[10px] text-(--text-tertiary)">
+						<span className="truncate font-jetbrains text-[10px] text-(--legacy-text-tertiary)">
 							defillama.com/research/{article.section ? `${ARTICLE_SECTION_SLUGS[article.section]}/` : ''}
-							<span className="text-(--text-secondary)">{article.slug}</span>
+							<span className="text-(--legacy-text-secondary)">{article.slug}</span>
 						</span>
 					</div>
 				</MetaSection>
 
 				<MetaSection title="Listing">
 					<label className="grid gap-1.5">
-						<span className="text-xs text-(--text-secondary)">Subtitle</span>
+						<span className="text-xs text-(--legacy-text-secondary)">Subtitle</span>
 						<input
 							value={article.subtitle ?? ''}
 							onChange={(event) => updateArticle('subtitle', event.target.value)}
 							placeholder="Optional secondary line shown on cards"
-							className="rounded-md border border-(--form-control-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+							className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 						/>
 					</label>
 					<label className="grid gap-1.5">
-						<span className="text-xs text-(--text-secondary)">Excerpt</span>
+						<span className="text-xs text-(--legacy-text-secondary)">Excerpt</span>
 						<textarea
 							value={article.excerpt ?? ''}
 							onChange={(event) => updateArticle('excerpt', event.target.value)}
 							placeholder="Auto-derived from your first paragraph. Override here if you want."
 							rows={3}
-							className="resize-none rounded-md border border-(--form-control-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+							className="resize-none rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 						/>
 					</label>
 					<div className="grid gap-1.5">
-						<span className="flex items-baseline justify-between gap-2 text-xs text-(--text-secondary)">
+						<span className="flex items-baseline justify-between gap-2 text-xs text-(--legacy-text-secondary)">
 							<span>Topics</span>
-							<span className="font-jetbrains text-[10px] text-(--text-tertiary) tabular-nums">
+							<span className="font-jetbrains text-[10px] text-(--legacy-text-tertiary) tabular-nums">
 								{(article.tags ?? []).length}/12
 							</span>
 						</span>
@@ -504,10 +504,10 @@ export function ArticleMetaDialog({
 								)
 							}
 							placeholder="stablecoins, lending, ethereum"
-							className={`rounded-md border bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) transition-colors placeholder:text-(--text-tertiary) focus:outline-none ${
+							className={`rounded-md border bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors placeholder:text-(--legacy-text-tertiary) focus:outline-none ${
 								publishErrors.tags
 									? 'border-red-500/60 focus:border-red-500'
-									: 'border-(--form-control-border) focus:border-(--link-text)'
+									: 'border-(--legacy-form-control-border) focus:border-(--legacy-link-text)'
 							}`}
 						/>
 						{(() => {
@@ -519,7 +519,7 @@ export function ArticleMetaDialog({
 							if (suggestions.length === 0) return null
 							return (
 								<div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-									<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+									<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 										From content
 									</span>
 									{suggestions.map((label) => (
@@ -530,11 +530,11 @@ export function ArticleMetaDialog({
 												const next = Array.from(new Set([...(article.tags ?? []), label]))
 												updateArticle('tags', next.slice(0, 12))
 											}}
-											className="group inline-flex items-center gap-1 rounded-full border border-(--cards-border) bg-(--app-bg) px-2 py-0.5 text-[11px] text-(--text-secondary) transition-colors hover:border-(--link-text)/50 hover:bg-(--link-button) hover:text-(--link-text)"
+											className="group inline-flex items-center gap-1 rounded-full border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-2 py-0.5 text-[11px] text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/50 hover:bg-(--legacy-link-button) hover:text-(--legacy-link-text)"
 										>
 											<span
 												aria-hidden
-												className="text-(--text-tertiary) transition-colors group-hover:text-(--link-text)"
+												className="text-(--legacy-text-tertiary) transition-colors group-hover:text-(--legacy-link-text)"
 											>
 												+
 											</span>
@@ -550,9 +550,9 @@ export function ArticleMetaDialog({
 
 				<MetaSection title="Search & social">
 					<label className="grid gap-1.5">
-						<span className="flex items-baseline justify-between gap-2 text-xs text-(--text-secondary)">
+						<span className="flex items-baseline justify-between gap-2 text-xs text-(--legacy-text-secondary)">
 							<span>Meta title</span>
-							<span className="font-jetbrains text-[10px] text-(--text-tertiary)">
+							<span className="font-jetbrains text-[10px] text-(--legacy-text-tertiary)">
 								{(article.seoTitle ?? '').length}/70
 							</span>
 						</span>
@@ -561,16 +561,16 @@ export function ArticleMetaDialog({
 							onChange={(event) => updateArticle('seoTitle', event.target.value)}
 							placeholder={article.title || 'Falls back to article title'}
 							maxLength={120}
-							className="rounded-md border border-(--form-control-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+							className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 						/>
-						<span className="text-[11px] text-(--text-tertiary)">
+						<span className="text-[11px] text-(--legacy-text-tertiary)">
 							Used for the &lt;title&gt; tag. When set, also drives the URL slug if you haven't edited it manually.
 						</span>
 					</label>
 					<label className="grid gap-1.5">
-						<span className="flex items-baseline justify-between gap-2 text-xs text-(--text-secondary)">
+						<span className="flex items-baseline justify-between gap-2 text-xs text-(--legacy-text-secondary)">
 							<span>Meta description</span>
-							<span className="font-jetbrains text-[10px] text-(--text-tertiary)">
+							<span className="font-jetbrains text-[10px] text-(--legacy-text-tertiary)">
 								{(article.seoDescription ?? '').length}/160
 							</span>
 						</span>
@@ -580,7 +580,7 @@ export function ArticleMetaDialog({
 							placeholder="Shown in search results and link previews. Falls back to the excerpt."
 							rows={3}
 							maxLength={300}
-							className="resize-none rounded-md border border-(--form-control-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none"
+							className="resize-none rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
 						/>
 					</label>
 				</MetaSection>
@@ -588,26 +588,26 @@ export function ArticleMetaDialog({
 				<MetaSection title="Authors">
 					<div className="grid gap-2">
 						{collaboratorsLoading && collaborators.length === 0 ? (
-							<div className="text-xs text-(--text-tertiary)">Loading…</div>
+							<div className="text-xs text-(--legacy-text-tertiary)">Loading…</div>
 						) : null}
 						{collaboratorsLoadError ? <div className="text-xs text-red-500">{collaboratorsLoadError}</div> : null}
 						{collaborators.map((entry) => (
 							<div
 								key={entry.pbUserId}
-								className="flex items-center justify-between gap-3 rounded-md border border-(--cards-border) bg-(--app-bg) px-3 py-2"
+								className="flex items-center justify-between gap-3 rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2"
 							>
 								<div className="flex min-w-0 items-center gap-2">
 									{entry.profile.avatarUrl ? (
 										// eslint-disable-next-line @next/next/no-img-element
 										<img src={entry.profile.avatarUrl} alt="" className="size-7 shrink-0 rounded-full object-cover" />
 									) : (
-										<span className="grid size-7 shrink-0 place-items-center rounded-full bg-(--link-button) text-[11px] font-medium text-(--link-text)">
+										<span className="grid size-7 shrink-0 place-items-center rounded-full bg-(--legacy-link-button) text-[11px] font-medium text-(--legacy-link-text)">
 											{entry.profile.displayName.slice(0, 2).toUpperCase()}
 										</span>
 									)}
 									<div className="min-w-0">
-										<div className="truncate text-sm text-(--text-primary)">{entry.profile.displayName}</div>
-										<div className="text-[10px] tracking-[0.18em] text-(--text-tertiary) uppercase">
+										<div className="truncate text-sm text-(--legacy-text-primary)">{entry.profile.displayName}</div>
+										<div className="text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
 											{entry.role === 'owner' ? 'Owner' : entry.hidden ? 'Co-author · Hidden' : 'Co-author'}
 										</div>
 									</div>
@@ -617,7 +617,7 @@ export function ArticleMetaDialog({
 										<button
 											type="button"
 											onClick={() => handleToggleHidden(entry.pbUserId, !entry.hidden)}
-											className="text-xs text-(--text-tertiary) transition-colors hover:text-(--link-text)"
+											className="text-xs text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-link-text)"
 											title={entry.hidden ? 'Show in byline' : 'Hide from byline'}
 										>
 											{entry.hidden ? 'Show' : 'Hide'}
@@ -625,7 +625,7 @@ export function ArticleMetaDialog({
 										<button
 											type="button"
 											onClick={() => handleTransferOwnership(entry.pbUserId, entry.profile.displayName)}
-											className="text-xs text-(--text-tertiary) transition-colors hover:text-(--link-text)"
+											className="text-xs text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-link-text)"
 											title="Transfer ownership to this co-author"
 										>
 											Make owner
@@ -633,7 +633,7 @@ export function ArticleMetaDialog({
 										<button
 											type="button"
 											onClick={() => handleRemoveCollaborator(entry.pbUserId)}
-											className="text-xs text-(--text-tertiary) transition-colors hover:text-red-500"
+											className="text-xs text-(--legacy-text-tertiary) transition-colors hover:text-red-500"
 										>
 											Remove
 										</button>
@@ -660,13 +660,13 @@ export function ArticleMetaDialog({
 									}}
 									placeholder="Add co-author by email"
 									disabled={collaboratorAdding}
-									className="flex-1 rounded-md border border-(--form-control-border) bg-(--app-bg) px-3 py-2 text-sm text-(--text-primary) placeholder:text-(--text-tertiary) focus:border-(--link-text) focus:outline-none disabled:opacity-60"
+									className="flex-1 rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none disabled:opacity-60"
 								/>
 								<button
 									type="button"
 									onClick={handleAddCollaborator}
 									disabled={collaboratorAdding || !collaboratorEmail.trim()}
-									className="rounded-md bg-(--link-text) px-3 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+									className="rounded-md bg-(--legacy-link-text) px-3 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
 								>
 									{collaboratorAdding ? 'Adding…' : 'Add'}
 								</button>
@@ -674,18 +674,18 @@ export function ArticleMetaDialog({
 							{collaboratorError ? (
 								<span className="text-xs text-red-500">{collaboratorError}</span>
 							) : (
-								<span className="text-[11px] text-(--text-tertiary)">
+								<span className="text-[11px] text-(--legacy-text-tertiary)">
 									Co-authors can edit, publish, and unpublish. Only you can manage authors or delete.
 								</span>
 							)}
 						</div>
 					) : isCollaborator ? (
-						<span className="text-[11px] text-(--text-tertiary)">Only the owner can manage authors.</span>
+						<span className="text-[11px] text-(--legacy-text-tertiary)">Only the owner can manage authors.</span>
 					) : null}
 				</MetaSection>
 
 				<MetaSection title="Guest co-authors">
-					<p className="-mt-1 text-[11px] leading-snug text-(--text-tertiary)">
+					<p className="-mt-1 text-[11px] leading-snug text-(--legacy-text-tertiary)">
 						Credit external contributors without a DefiLlama account. Added to SEO and structured data only — never
 						shown on the article page.
 					</p>
@@ -694,12 +694,12 @@ export function ArticleMetaDialog({
 							{guestRows.map((guest, index) => (
 								<div
 									key={index}
-									className="group flex items-start gap-2.5 rounded-lg border border-(--cards-border) bg-(--app-bg) px-2.5 py-2 transition-colors focus-within:border-(--link-text)/50 hover:border-(--text-tertiary)/40"
+									className="group flex items-start gap-2.5 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-2.5 py-2 transition-colors focus-within:border-(--legacy-link-text)/50 hover:border-(--legacy-text-tertiary)/40"
 								>
 									<div
 										role="group"
 										aria-label="Co-author type"
-										className="mt-0.5 inline-flex shrink-0 rounded-full border border-(--cards-border) bg-(--cards-bg) p-0.5"
+										className="mt-0.5 inline-flex shrink-0 rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-0.5"
 									>
 										{(['Person', 'Organization'] as const).map((type) => {
 											const active = guest.type === type
@@ -712,8 +712,8 @@ export function ArticleMetaDialog({
 													title={type}
 													className={`grid size-6 place-items-center rounded-full transition-colors ${
 														active
-															? 'bg-(--link-button) text-(--link-text)'
-															: 'text-(--text-tertiary) hover:text-(--text-secondary)'
+															? 'bg-(--legacy-link-button) text-(--legacy-link-text)'
+															: 'text-(--legacy-text-tertiary) hover:text-(--legacy-text-secondary)'
 													}`}
 												>
 													<Icon name={type === 'Organization' ? 'building' : 'user'} className="size-3.5" />
@@ -729,13 +729,13 @@ export function ArticleMetaDialog({
 												onChange={(event) => updateGuestAuthor(index, { name: event.target.value })}
 												placeholder="Full name"
 												aria-label="Co-author name"
-												className="min-w-0 flex-1 bg-transparent text-sm font-medium text-(--text-primary) placeholder:font-normal placeholder:text-(--text-tertiary) focus:outline-none"
+												className="min-w-0 flex-1 bg-transparent text-sm font-medium text-(--legacy-text-primary) placeholder:font-normal placeholder:text-(--legacy-text-tertiary) focus:outline-none"
 											/>
 											<button
 												type="button"
 												onClick={() => removeGuestAuthor(index)}
 												aria-label="Remove co-author"
-												className="grid size-6 shrink-0 place-items-center rounded-md text-(--text-tertiary) opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-(--link-hover-bg) hover:text-red-500 focus-visible:opacity-100"
+												className="grid size-6 shrink-0 place-items-center rounded-md text-(--legacy-text-tertiary) opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-(--legacy-link-hover-bg) hover:text-red-500 focus-visible:opacity-100"
 											>
 												<Icon name="x" className="size-3.5" />
 											</button>
@@ -743,7 +743,7 @@ export function ArticleMetaDialog({
 										<div className="mt-0.5 flex items-center gap-1.5">
 											<Icon
 												name="link"
-												className={`size-3 shrink-0 ${guest.url ? 'text-(--text-secondary)' : 'text-(--text-tertiary)'}`}
+												className={`size-3 shrink-0 ${guest.url ? 'text-(--legacy-text-secondary)' : 'text-(--legacy-text-tertiary)'}`}
 											/>
 											<input
 												type="url"
@@ -751,7 +751,7 @@ export function ArticleMetaDialog({
 												onChange={(event) => updateGuestAuthor(index, { url: event.target.value })}
 												placeholder="Link (optional)"
 												aria-label="Co-author link"
-												className="min-w-0 flex-1 bg-transparent text-xs text-(--text-secondary) placeholder:text-(--text-tertiary) focus:outline-none"
+												className="min-w-0 flex-1 bg-transparent text-xs text-(--legacy-text-secondary) placeholder:text-(--legacy-text-tertiary) focus:outline-none"
 											/>
 										</div>
 									</div>
@@ -762,7 +762,7 @@ export function ArticleMetaDialog({
 					<button
 						type="button"
 						onClick={addGuestAuthor}
-						className="inline-flex w-fit items-center gap-1.5 rounded-md border border-dashed border-(--cards-border) px-3 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:border-(--link-text)/50 hover:bg-(--link-button) hover:text-(--link-text)"
+						className="inline-flex w-fit items-center gap-1.5 rounded-md border border-dashed border-(--legacy-cards-border) px-3 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/50 hover:bg-(--legacy-link-button) hover:text-(--legacy-link-text)"
 					>
 						<Icon name="plus" className="size-3.5" />
 						Add co-author
@@ -774,7 +774,7 @@ export function ArticleMetaDialog({
 				</MetaSection>
 			</div>
 
-			<div className="mt-auto grid gap-2 border-t border-(--cards-border) pt-4">
+			<div className="mt-auto grid gap-2 border-t border-(--legacy-cards-border) pt-4">
 				{isPublished ? (
 					hasPendingEdits ? (
 						<button
@@ -796,7 +796,7 @@ export function ArticleMetaDialog({
 								await saveArticle()
 								store.hide()
 							}}
-							className="flex h-10 items-center justify-center rounded-md bg-(--link-text) px-4 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+							className="flex h-10 items-center justify-center rounded-md bg-(--legacy-link-text) px-4 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							{isSaving ? 'Saving…' : 'Save changes'}
 						</button>
@@ -812,7 +812,7 @@ export function ArticleMetaDialog({
 									const ok = await handlePublish({ goLiveAt: null })
 									if (ok) store.hide()
 								}}
-								className="flex h-10 items-center justify-center gap-2 rounded-md border border-(--cards-border) bg-(--app-bg) px-4 text-sm font-medium text-(--text-primary) transition-colors hover:border-(--link-text)/40 disabled:cursor-not-allowed disabled:opacity-50"
+								className="flex h-10 items-center justify-center gap-2 rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-4 text-sm font-medium text-(--legacy-text-primary) transition-colors hover:border-(--legacy-link-text)/40 disabled:cursor-not-allowed disabled:opacity-50"
 							>
 								{isPublishing ? 'Publishing…' : 'Publish now'}
 							</button>
@@ -855,7 +855,7 @@ export function ArticleMetaDialog({
 				<button
 					type="button"
 					onClick={() => store.hide()}
-					className="text-xs text-(--text-tertiary) transition-colors hover:text-(--text-primary)"
+					className="text-xs text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-text-primary)"
 				>
 					{isPublished ? 'Cancel' : 'Keep editing'}
 				</button>

@@ -80,22 +80,22 @@ const PROTOCOL_STATS = [
 
 function StatCard({ label, value, description }: { label: string; value: string; description: string }) {
 	return (
-		<div className="flex flex-col gap-2 rounded-xl border border-(--cards-border) bg-(--cards-bg) p-5 transition-all hover:border-(--sl-accent)/20 hover:shadow-md">
-			<span className="text-xs font-medium tracking-wide text-(--text-label)">{label}</span>
-			<span className="text-3xl font-bold tracking-tight text-(--text-primary)">{value}</span>
-			<span className="text-xs text-(--text-secondary)">{description}</span>
+		<div className="flex flex-col gap-2 rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5 transition-all hover:border-(--sl-accent)/20 hover:shadow-md">
+			<span className="text-xs font-medium tracking-wide text-(--legacy-text-label)">{label}</span>
+			<span className="text-3xl font-bold tracking-tight text-(--legacy-text-primary)">{value}</span>
+			<span className="text-xs text-(--legacy-text-secondary)">{description}</span>
 		</div>
 	)
 }
 
 function KpiCard({ label, value }: { label: string; value?: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<span className="text-xs font-medium tracking-wide text-(--text-label)">{label}</span>
+		<div className="flex flex-col gap-1 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<span className="text-xs font-medium tracking-wide text-(--legacy-text-label)">{label}</span>
 			{value ? (
-				<span className="text-2xl font-semibold text-(--text-primary)">{value}</span>
+				<span className="text-2xl font-semibold text-(--legacy-text-primary)">{value}</span>
 			) : (
-				<div className="h-8 w-24 animate-pulse rounded bg-(--text-disabled) opacity-20" />
+				<div className="h-8 w-24 animate-pulse rounded bg-(--legacy-text-disabled) opacity-20" />
 			)}
 		</div>
 	)
@@ -103,12 +103,12 @@ function KpiCard({ label, value }: { label: string; value?: string }) {
 
 function HeadlinePill({ label, value }: { label: string; value?: string }) {
 	return (
-		<div className="flex items-center gap-2 rounded-full border border-(--cards-border) bg-(--cards-bg) px-3 py-1">
-			<span className="text-xs font-medium text-(--text-label)">{label}</span>
+		<div className="flex items-center gap-2 rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-1">
+			<span className="text-xs font-medium text-(--legacy-text-label)">{label}</span>
 			{value ? (
-				<span className="text-sm font-semibold text-(--text-primary)">{value}</span>
+				<span className="text-sm font-semibold text-(--legacy-text-primary)">{value}</span>
 			) : (
-				<span className="inline-block h-4 w-12 animate-pulse rounded bg-(--text-disabled) opacity-20" />
+				<span className="inline-block h-4 w-12 animate-pulse rounded bg-(--legacy-text-disabled) opacity-20" />
 			)}
 		</div>
 	)
@@ -116,8 +116,8 @@ function HeadlinePill({ label, value }: { label: string; value?: string }) {
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--text-label)">{title}</h3>
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">{title}</h3>
 			{children}
 		</div>
 	)
@@ -125,17 +125,17 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 function ChartSkeleton({ title }: { title: string }) {
 	return (
-		<div className="rounded-lg border border-(--cards-border) bg-(--cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--text-label)">{title}</h3>
+		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">{title}</h3>
 			<div className="flex h-[350px] items-center justify-center">
-				<div className="size-5 animate-spin rounded-full border-2 border-(--text-disabled) border-t-transparent" />
+				<div className="size-5 animate-spin rounded-full border-2 border-(--legacy-text-disabled) border-t-transparent" />
 			</div>
 		</div>
 	)
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-	return <h2 className="heading-xs tracking-tight text-(--text-primary)">{children}</h2>
+	return <h2 className="heading-xs tracking-tight text-(--legacy-text-primary)">{children}</h2>
 }
 
 export default function Ecosystem() {
@@ -204,12 +204,12 @@ export default function Ecosystem() {
 
 	return (
 		<div className="flex flex-col gap-8">
-			<div className="flex flex-col gap-2 rounded-xl border border-(--cards-border) bg-(--cards-bg) p-6">
+			<div className="flex flex-col gap-2 rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-6">
 				<div className="flex items-center gap-3">
 					<NearIcon />
-					<h1 className="heading-sm text-(--text-primary)">Ecosystem</h1>
+					<h1 className="heading-sm text-(--legacy-text-primary)">Ecosystem</h1>
 				</div>
-				<p className="max-w-2xl text-sm leading-relaxed text-(--text-secondary)">
+				<p className="max-w-2xl text-sm leading-relaxed text-(--legacy-text-secondary)">
 					Live metrics across NEAR Intents, base-chain activity, and token supply.
 				</p>
 			</div>

@@ -47,7 +47,7 @@ export function SeriesChip({
 	return (
 		<div className="group flex items-center gap-1.5 rounded-md bg-hover-row/60 px-1.5 py-0.5">
 			<ColorPicker value={color} fallback={paletteColor} onChange={setColor} />
-			<span className="truncate font-mono text-[10.5px] text-(--text-primary)" style={{ maxWidth: '14ch' }}>
+			<span className="truncate font-mono text-[10.5px] text-(--legacy-text-primary)" style={{ maxWidth: '14ch' }}>
 				{name}
 			</span>
 			{seriesKindEligible ? (
@@ -56,7 +56,7 @@ export function SeriesChip({
 					onClick={toggleKind}
 					aria-label={`Series ${name} type: ${kind}`}
 					title={`Series type: ${kind}`}
-					className="flex h-4 w-5 items-center justify-center rounded-sm border border-(--divider) bg-(--app-bg) font-mono label-sm text-(--text-secondary) hover:bg-hover-row hover:text-(--text-primary)"
+					className="flex h-4 w-5 items-center justify-center rounded-sm border border-(--legacy-divider) bg-(--legacy-app-bg) font-mono label-sm text-(--legacy-text-secondary) hover:bg-hover-row hover:text-(--legacy-text-primary)"
 				>
 					{kind === 'line' ? '—' : '▮'}
 				</button>
@@ -69,8 +69,8 @@ export function SeriesChip({
 					title={`Axis: ${isRight ? 'right' : 'left'}`}
 					className={`flex h-4 w-5 items-center justify-center rounded-sm border font-mono label-sm transition-colors ${
 						isRight
-							? 'border-(--primary) bg-(--primary) text-white'
-							: 'border-(--divider) bg-(--app-bg) text-(--text-secondary) hover:bg-hover-row hover:text-(--text-primary)'
+							? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
+							: 'border-(--legacy-divider) bg-(--legacy-app-bg) text-(--legacy-text-secondary) hover:bg-hover-row hover:text-(--legacy-text-primary)'
 					}`}
 				>
 					{isRight ? 'R' : 'L'}
@@ -80,7 +80,7 @@ export function SeriesChip({
 				type="button"
 				onClick={onRemove}
 				aria-label={`Remove ${name}`}
-				className="flex size-4 items-center justify-center rounded-sm text-(--text-tertiary) opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-500/10 hover:text-red-500 focus:opacity-100"
+				className="flex size-4 items-center justify-center rounded-sm text-(--legacy-text-tertiary) opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-500/10 hover:text-red-500 focus:opacity-100"
 			>
 				<Icon name="x" className="size-2.5" />
 			</button>

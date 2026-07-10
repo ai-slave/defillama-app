@@ -76,7 +76,7 @@ export default function Staking() {
 
 			{chart && chart.data.length > 0 && (
 				<ChartCard title={chart.title}>
-					<div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-(--text-label)">
+					<div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-(--legacy-text-label)">
 						{chart.stacks.map((name) => (
 							<span key={name} className="flex items-center gap-1.5">
 								<span className="size-2.5 rounded-full" style={{ backgroundColor: chart.colors[name] }} />
@@ -95,7 +95,9 @@ export default function Staking() {
 						height="360px"
 						chartOptions={lastNDaysZoom(chart.data.length)}
 					/>
-					{chart.subtitle && <p className="mt-2 text-xs leading-relaxed text-(--text-label)">{chart.subtitle}</p>}
+					{chart.subtitle && (
+						<p className="mt-2 text-xs leading-relaxed text-(--legacy-text-label)">{chart.subtitle}</p>
+					)}
 				</ChartCard>
 			)}
 		</div>

@@ -493,5 +493,5 @@ export default function TreemapChart({
 		return chart
 	}
 
-	return <div className="relative flex flex-col items-end rounded-md bg-(--cards-bg)">{chart}</div>
+	return <div className="relative flex flex-col items-end rounded-md bg-(--legacy-cards-bg)">{chart}</div>
 }

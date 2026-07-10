@@ -35,7 +35,7 @@ const forksColumn = [
 					<span className="flex items-center gap-1 overflow-hidden">
 						<BasicLink
 							href={`/forks/${slug(name)}`}
-							className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--link-text) hover:underline"
+							className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text) hover:underline"
 						>
 							{name}
 						</BasicLink>

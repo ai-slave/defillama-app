@@ -48,18 +48,18 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 			/>
 			{currentPdf ? (
 				<div className="grid gap-2">
-					<div className="flex items-center gap-3 rounded-md border border-(--cards-border) bg-(--cards-bg) p-3">
-						<Icon name="file-text" className="size-6 shrink-0 text-(--link-text)" />
+					<div className="flex items-center gap-3 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3">
+						<Icon name="file-text" className="size-6 shrink-0 text-(--legacy-link-text)" />
 						<div className="flex min-w-0 flex-col">
 							<a
 								href={currentPdf.url}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="truncate text-sm font-medium text-(--text-primary) hover:text-(--link-text)"
+								className="truncate text-sm font-medium text-(--legacy-text-primary) hover:text-(--legacy-link-text)"
 							>
 								{currentPdf.originalName || 'report.pdf'}
 							</a>
-							<span className="text-[11px] text-(--text-tertiary)">
+							<span className="text-[11px] text-(--legacy-text-tertiary)">
 								{formatSize(currentPdf.sizeBytes)}
 								{currentPdf.pageCount ? ` · ${currentPdf.pageCount} pages` : ''}
 							</span>
@@ -70,7 +70,7 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 							type="button"
 							disabled={disabled}
 							onClick={open}
-							className="rounded-md border border-(--cards-border) bg-(--cards-bg) px-3 py-1.5 text-xs font-medium text-(--text-secondary) transition-colors hover:border-(--link-text)/40 hover:text-(--text-primary) disabled:cursor-not-allowed disabled:opacity-50"
+							className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							{isUploading ? 'Uploading…' : 'Replace PDF'}
 						</button>
@@ -79,7 +79,7 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 								type="button"
 								disabled={disabled}
 								onClick={onCleared}
-								className="rounded-md px-2.5 py-1.5 text-xs text-(--text-tertiary) transition-colors hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+								className="rounded-md px-2.5 py-1.5 text-xs text-(--legacy-text-tertiary) transition-colors hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
 							>
 								Remove
 							</button>
@@ -91,15 +91,15 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 					type="button"
 					disabled={disabled}
 					onClick={open}
-					className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-(--cards-border) bg-(--app-bg) text-(--text-tertiary) transition-colors hover:border-(--link-text)/50 hover:text-(--text-primary) disabled:cursor-not-allowed disabled:opacity-50"
+					className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-(--legacy-cards-border) bg-(--legacy-app-bg) text-(--legacy-text-tertiary) transition-colors hover:border-(--legacy-link-text)/50 hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					<Icon name="file-text" className="size-5" />
 					<span className="text-xs font-medium">{isUploading ? 'Uploading…' : 'Upload PDF'}</span>
 				</button>
 			)}
-			{helperText ? <span className="text-[11px] text-(--text-tertiary)">{helperText}</span> : null}
+			{helperText ? <span className="text-[11px] text-(--legacy-text-tertiary)">{helperText}</span> : null}
 			{!articleId ? (
-				<span className="text-[11px] text-(--text-tertiary)">Save the article first to enable PDF upload.</span>
+				<span className="text-[11px] text-(--legacy-text-tertiary)">Save the article first to enable PDF upload.</span>
 			) : null}
 		</div>
 	)

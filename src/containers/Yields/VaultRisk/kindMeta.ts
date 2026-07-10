@@ -88,14 +88,14 @@ const TONE_CLASSES: Record<Tone, ToneClasses> = {
 		bar: 'bg-(--success)'
 	},
 	neutral: {
-		text: 'text-(--text-primary)',
-		chip: 'bg-(--bg-main) text-(--text-primary) border border-(--cards-border)',
-		bar: 'bg-(--text-secondary)'
+		text: 'text-(--legacy-text-primary)',
+		chip: 'bg-(--legacy-bg-main) text-(--legacy-text-primary) border border-(--legacy-cards-border)',
+		bar: 'bg-(--legacy-text-secondary)'
 	},
 	muted: {
-		text: 'text-(--text-secondary)',
-		chip: 'bg-(--bg-main) text-(--text-secondary) border border-(--cards-border)',
-		bar: 'bg-(--text-tertiary)'
+		text: 'text-(--legacy-text-secondary)',
+		chip: 'bg-(--legacy-bg-main) text-(--legacy-text-secondary) border border-(--legacy-cards-border)',
+		bar: 'bg-(--legacy-text-tertiary)'
 	}
 }
 

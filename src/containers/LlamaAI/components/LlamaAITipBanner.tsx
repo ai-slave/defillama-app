@@ -28,7 +28,7 @@ export function LlamaAITipBanner() {
 	}
 
 	return (
-		<div className="flex items-center gap-3 rounded-lg border border-[#e6e6e6] bg-(--cards-bg) px-3.5 py-2.5 dark:border-[#222324]">
+		<div className="flex items-center gap-3 rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3.5 py-2.5 dark:border-[#222324]">
 			<Tooltip content={tip.title} className="min-w-0 flex-1" data-fullwidth>
 				<p className="m-0 truncate text-[13px] text-[#444] dark:text-[#ddd]" title={tip.title}>
 					{tip.title}

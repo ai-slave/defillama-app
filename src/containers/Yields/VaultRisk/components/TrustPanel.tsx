@@ -75,24 +75,24 @@ export function TrustPanel({
 
 			{/* markets correctly have no vault operators — say so, so empty reads as intentional */}
 			{isMarket ? (
-				<div className="flex items-start gap-2 rounded-md border border-(--cards-border) bg-(--bg-main)/30 px-3 py-2.5">
+				<div className="flex items-start gap-2 rounded-md border border-(--legacy-cards-border) bg-(--legacy-bg-main)/30 px-3 py-2.5">
 					<Icon
 						name={immutableMarket ? 'check-circle' : 'help-circle'}
-						className={`mt-0.5 size-4 shrink-0 ${immutableMarket ? toneClasses('good').text : 'text-(--text-secondary)'}`}
+						className={`mt-0.5 size-4 shrink-0 ${immutableMarket ? toneClasses('good').text : 'text-(--legacy-text-secondary)'}`}
 					/>
 					{/* trailing copy is a single string expression so SSR and client normalize leading
 					    whitespace identically — avoids a hydration mismatch */}
-					<p className="text-xs text-(--text-secondary)">
+					<p className="text-xs text-(--legacy-text-secondary)">
 						{immutableMarket ? (
 							<>
-								<span className="font-medium text-(--text-primary)">Immutable market</span>
+								<span className="font-medium text-(--legacy-text-primary)">Immutable market</span>
 								{
 									' — no curator, owner, or guardian can change its parameters. Your live risk is the price oracle that values the collateral (see Collateral & oracles); protocol governance is bounded context below.'
 								}
 							</>
 						) : (
 							<>
-								<span className="font-medium text-(--text-primary)">No vault operators</span>
+								<span className="font-medium text-(--legacy-text-primary)">No vault operators</span>
 								{" — this market's parameters are set by protocol governance, shown below."}
 							</>
 						)}
@@ -111,7 +111,7 @@ export function TrustPanel({
 						explorers={explorers}
 						nowIso={nowIso}
 					/>
-					<div className="grid grid-cols-1 gap-x-8 gap-y-4 border-t border-(--cards-border) pt-3 lg:grid-cols-2">
+					<div className="grid grid-cols-1 gap-x-8 gap-y-4 border-t border-(--legacy-cards-border) pt-3 lg:grid-cols-2">
 						<AuditsBlock audits={audits} />
 						<GovernanceBlock protocol={protocol} chain={chain} explorers={explorers} vaultScoped />
 					</div>

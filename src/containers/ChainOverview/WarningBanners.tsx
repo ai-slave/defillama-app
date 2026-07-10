@@ -16,7 +16,7 @@ export function ChainWarningBanners({
 							? 'border-(--error) bg-(--error)/20'
 							: banner.level === 'alert'
 								? 'border-(--warning) bg-(--warning)/20'
-								: 'border-(--bg-color) bg-(--btn-bg)'
+								: 'border-(--bg-color) bg-(--legacy-btn-bg)'
 					}`}
 					key={`${banner.message}-${banner.level}-${chainName}`}
 				>
