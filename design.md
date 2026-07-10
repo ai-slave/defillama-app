@@ -265,6 +265,7 @@ ECharts renders to canvas and cannot read `var()`: resolve canvas tokens through
 - Don't introduce a new token for a one-off value — either it maps to an existing semantic or it goes to design for a library decision first.
 - Don't use `bg-surface-elevated-*` as page-level fills; they are for nested emphasis.
 - Don't restate brand blue, premium gold, or any palette hex inline; if a needed token is missing, that's a design.md/library gap to raise, not a literal to paste.
+- Do pair every width-only border/divide utility (`border`, `border-t`, `divide-y`, …) with a color source (`border-subtle`, `border-medium`, an inline `style={{ borderColor }}`, …). The Tailwind v3 default-border-color compatibility shim was removed from `tailwind.css` (2026-07-10) after an audit found zero implicit consumers, so a colorless border renders `currentColor` — near-white in dark mode.
 - `bun run lint:tokens` enforces the above as a ratchet: existing debt is baselined in `scripts/design-token-baseline.json`, and the check fails only if hex-in-className, `dark:*-[#hex]`, arbitrary-font-size, or arbitrary-spacing counts increase. After removing debt, run with `--update` to lock in the improvement.
 
 ## Migration status

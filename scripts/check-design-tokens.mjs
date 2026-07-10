@@ -55,6 +55,66 @@ function isExcludedProductFile(file) {
 	return EXCLUDED_PRODUCT_FILES.has(file) || EXCLUDED_PRODUCT_PREFIXES.some((prefix) => file.startsWith(prefix))
 }
 
+// Width-only border/divide utilities (className="border", "border-t", "divide-y")
+// stopped receiving a default gray in Tailwind v4; the compatibility shim that
+// restored the v3 behavior was removed from tailwind.css after a full audit, so
+// such a utility now renders a currentColor border (near-white in dark mode)
+// unless a color source accompanies it. This matcher scans plain string
+// literals only: template literals with ${} interpolation and strings carrying
+// legacy pro-* classes (which set border-color) are assumed to supply a color,
+// zero-width utilities (border-0) render nothing, and class examples inside
+// block comments aren't consumers. The baseline covers audited sites whose
+// color arrives via an inline style={{ borderColor }} at the call site.
+const BORDER_STYLE_KEYWORDS = new Set([
+	'dashed',
+	'dotted',
+	'solid',
+	'none',
+	'double',
+	'hidden',
+	'collapse',
+	'separate',
+	'spacing'
+])
+const BORDER_SIDE = /^[tblrxyse]$/
+const STRING_LITERAL = /'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g
+const BORDER_TOKEN = /(?<![\w.-])((?:[\w[\]()&>~.*-]+:)*)((?:border|divide)(?:-[\w[\]().%/-]+)?)(?![\w-])/g
+
+function classifyBorderUtility(utility) {
+	const m = utility.match(/^(border|divide)(?:-(.+))?$/)
+	if (!m) return 'other'
+	const [, kind, rest] = m
+	if (rest === undefined) return kind === 'border' ? 'width' : 'other'
+	const parts = rest.split('-')
+	if (BORDER_STYLE_KEYWORDS.has(parts[0])) return 'other'
+	if (BORDER_SIDE.test(parts[0])) {
+		if (parts.length === 1) return 'width'
+		if (parts.length === 2 && /^\d+$/.test(parts[1])) return 'width'
+		return 'color'
+	}
+	if (kind === 'border' && parts.length === 1 && /^\d+$/.test(parts[0])) return 'width'
+	return 'color'
+}
+
+function matchImplicitBorderColor(content) {
+	const found = []
+	const source = content.replace(/\/\*[\s\S]*?\*\//g, '')
+	for (const [literal] of source.matchAll(STRING_LITERAL)) {
+		if (!literal.includes('border') && !literal.includes('divide')) continue
+		if (literal.startsWith('`') && literal.includes('${')) continue
+		if (/pro-(?:border|divider|btn-[\w-]+)/.test(literal)) continue
+		const widthUtilities = []
+		let hasColor = false
+		for (const token of literal.matchAll(BORDER_TOKEN)) {
+			const kind = classifyBorderUtility(token[2])
+			if (kind === 'color') hasColor = true
+			else if (kind === 'width' && !/-0$/.test(token[2])) widthUtilities.push(token[1] + token[2])
+		}
+		if (!hasColor) found.push(...widthUtilities)
+	}
+	return found.length ? found : null
+}
+
 const RULES = [
 	{
 		id: 'hex-in-classname',
@@ -93,6 +153,12 @@ const RULES = [
 		id: 'prefixed-design-token',
 		description: 'the semantic design system owns clean custom-property names; do not reintroduce the --ld- prefix',
 		pattern: /--ld-[a-zA-Z0-9-]+/g
+	},
+	{
+		id: 'implicit-border-color',
+		description:
+			'width-only border/divide utility with no color source in the same class string (v4 default is currentColor; add border-subtle, border-medium, …)',
+		match: matchImplicitBorderColor
 	}
 ]
 
@@ -118,7 +184,7 @@ for (const file of files) {
 			!['explicit-thin-scrollbar', 'legacy-token-reference', 'prefixed-design-token'].includes(rule.id)
 		)
 			continue
-		const matches = content.match(rule.pattern)
+		const matches = rule.match ? rule.match(content) : content.match(rule.pattern)
 		if (matches) {
 			counts[bucket][rule.id] += matches.length
 			offenders[bucket][rule.id].set(file, matches.length)
