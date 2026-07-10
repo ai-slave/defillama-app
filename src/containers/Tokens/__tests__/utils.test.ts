@@ -109,7 +109,7 @@ describe('getTokensPageFromRows', () => {
 		expect(result.hasMore).toBe(false)
 	})
 
-	it('formats prices with meaningful precision and USD values without compact suffixes', () => {
+	it('formats prices with meaningful precision and other USD values compactly', () => {
 		const result = getPage(
 			[
 				row({ id: 'near-dollar', name: 'Near Dollar', symbol: 'NEAR', price: 0.9992, marketCap: 61_853.24 }),
@@ -118,8 +118,8 @@ describe('getTokensPageFromRows', () => {
 			{ sortBy: 'marketCap', pageSize: '50' }
 		)
 
-		expect(result.rows[0].display).toMatchObject({ price: '$0.9992', marketCap: '$61,853.24' })
-		expect(result.rows[1].display).toMatchObject({ price: '$0.00001234', marketCap: '$1,000.00' })
+		expect(result.rows[0].display).toMatchObject({ price: '$0.9992', marketCap: '$61.85K' })
+		expect(result.rows[1].display).toMatchObject({ price: '$0.00001234', marketCap: '$1K' })
 	})
 
 	it('ignores stale category params', () => {

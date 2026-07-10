@@ -23,7 +23,7 @@ import type {
 import { useTokensServerTable } from './useTokensServerTable'
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200] as const
-export const TOKENS_TABLE_WIDTH_EXCLUDING_RANK = 2730
+export const TOKENS_TABLE_WIDTH_EXCLUDING_RANK = 2274
 // Width of the optional "Markets" expander column (added only in the expandable/watchlist variant).
 export const TOKENS_MARKETS_EXPANDER_COLUMN_WIDTH = 104
 const columnHelper = createColumnHelper<TokensTableRow>()
@@ -54,7 +54,7 @@ export function getRankColumnWidth(rows: TokensTableRow[]): number {
 		const digits = String(row.rowNumber).length
 		if (digits > maxDigits) maxDigits = digits
 	}
-	return Math.max(48, 24 + maxDigits * 7)
+	return Math.max(40, 20 + maxDigits * 7)
 }
 
 function Dash() {
@@ -254,7 +254,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 			<PercentValue value={row.original.display.priceChange24h} tone={row.original.display.priceChange24hTone} />
 		),
 		meta: {
-			headerClassName: 'w-[88px] min-w-[88px]',
+			headerClassName: 'w-[90px] min-w-[90px]',
 			align: 'end',
 			headerHelperText: 'Token price change over the last 24 hours'
 		}
@@ -266,7 +266,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 			<PercentValue value={row.original.display.priceChange7d} tone={row.original.display.priceChange7dTone} />
 		),
 		meta: {
-			headerClassName: 'w-[88px] min-w-[88px]',
+			headerClassName: 'w-[90px] min-w-[90px]',
 			align: 'end',
 			headerHelperText: 'Token price change over the last 7 days'
 		}
@@ -278,7 +278,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 			<PercentValue value={row.original.display.priceChange30d} tone={row.original.display.priceChange30dTone} />
 		),
 		meta: {
-			headerClassName: 'w-[88px] min-w-[88px]',
+			headerClassName: 'w-[90px] min-w-[90px]',
 			align: 'end',
 			headerHelperText: 'Token price change over the last 30 days'
 		}
@@ -288,7 +288,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: 'MCap',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.marketCap} />,
 		meta: {
-			headerClassName: 'w-[190px] min-w-[190px]',
+			headerClassName: 'w-[120px] min-w-[120px]',
 			align: 'end',
 			headerHelperText: 'Market capitalization from token price and circulating supply'
 		}
@@ -298,7 +298,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: 'FDV',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.fdv} />,
 		meta: {
-			headerClassName: 'w-[190px] min-w-[190px]',
+			headerClassName: 'w-[120px] min-w-[120px]',
 			align: 'end',
 			headerHelperText: 'Fully diluted valuation from token price and max supply'
 		}
@@ -308,7 +308,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: 'OFDV',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.outstandingFdv} />,
 		meta: {
-			headerClassName: 'w-[190px] min-w-[190px]',
+			headerClassName: 'w-[120px] min-w-[120px]',
 			align: 'end',
 			headerHelperText: 'Outstanding FDV using adjusted unlocked/outstanding supply when available'
 		}
@@ -333,7 +333,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: 'Spot Vol',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.spotVolume24h} />,
 		meta: {
-			headerClassName: 'w-[164px] min-w-[164px]',
+			headerClassName: 'w-[120px] min-w-[120px]',
 			align: 'end',
 			headerHelperText: '24h spot trading volume across tracked markets'
 		}
@@ -343,7 +343,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: 'Perps Vol',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.perpsVolume24h} />,
 		meta: {
-			headerClassName: 'w-[164px] min-w-[164px]',
+			headerClassName: 'w-[120px] min-w-[120px]',
 			align: 'end',
 			headerHelperText: '24h perpetual futures trading volume across tracked markets'
 		}
@@ -353,7 +353,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: 'OI',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.openInterest24h} />,
 		meta: {
-			headerClassName: 'w-[164px] min-w-[164px]',
+			headerClassName: 'w-[110px] min-w-[110px]',
 			align: 'end',
 			headerHelperText: 'Open interest across tracked perpetual markets'
 		}
@@ -363,7 +363,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: '24H Fees',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.fees24h} />,
 		meta: {
-			headerClassName: 'w-[150px] min-w-[150px]',
+			headerClassName: 'w-[110px] min-w-[110px]',
 			align: 'end',
 			headerHelperText: 'Protocol fees over the last 24 hours when a protocol match exists'
 		}
@@ -373,7 +373,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: '24H Rev',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.revenue24h} />,
 		meta: {
-			headerClassName: 'w-[150px] min-w-[150px]',
+			headerClassName: 'w-[110px] min-w-[110px]',
 			align: 'end',
 			headerHelperText: 'Protocol revenue over the last 24 hours when a protocol match exists'
 		}
@@ -383,7 +383,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: '24H Holders Rev',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.holdersRevenue24h} />,
 		meta: {
-			headerClassName: 'w-[160px] min-w-[160px]',
+			headerClassName: 'w-[150px] min-w-[150px]',
 			align: 'end',
 			headerHelperText: '24h revenue directed to token holders when tracked'
 		}
@@ -422,7 +422,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: '30D Unlocks',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.unlock30dUsd} />,
 		meta: {
-			headerClassName: 'w-[140px] min-w-[140px]',
+			headerClassName: 'w-[130px] min-w-[130px]',
 			align: 'end',
 			headerHelperText: 'Estimated value of unlock events over the previous 30 days'
 		}
@@ -432,7 +432,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: 'Next Unlock',
 		cell: ({ row }) => <CurrencyValue value={row.original.display.upcomingUnlockUsd} />,
 		meta: {
-			headerClassName: 'w-[140px] min-w-[140px]',
+			headerClassName: 'w-[130px] min-w-[130px]',
 			align: 'end',
 			headerHelperText: 'Estimated value of the next known unlock event'
 		}

@@ -117,13 +117,6 @@ export function buildTokensSortIndexes(rows: TokensSourceRow[]): TokensSortIndex
 	return indexes
 }
 
-const USD_VALUE_FORMATTER = new Intl.NumberFormat('en-US', {
-	style: 'currency',
-	currency: 'USD',
-	currencyDisplay: 'narrowSymbol',
-	minimumFractionDigits: 2,
-	maximumFractionDigits: 2
-})
 const USD_PRICE_FORMATTERS = Array.from(
 	{ length: 21 },
 	(_, maximumFractionDigits) =>
@@ -136,7 +129,7 @@ const USD_PRICE_FORMATTERS = Array.from(
 )
 
 function currencyDisplay(value: number | null): string | null {
-	return value == null ? null : USD_VALUE_FORMATTER.format(value)
+	return value == null ? null : abbreviateNumber(value, null, '$')!
 }
 
 function priceDisplay(value: number | null): string | null {

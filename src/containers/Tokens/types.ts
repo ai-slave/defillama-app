@@ -1,6 +1,6 @@
 import type { TokenRightsPieTone } from '~/containers/TokenRights/utils'
 
-export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 9
+export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 10
 
 export const TOKENS_SORT_KEYS = [
 	'rank',
