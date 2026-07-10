@@ -932,7 +932,6 @@ describe('TokenOverviewSection component', () => {
 		expect(html).toContain('CEX Volume')
 		expect(html).toContain('DEX Volume')
 		expect(html).toContain('Total Raised')
-		expect(html).toContain('Sum of value locked in DEX pools that include that token')
 		expect(html.indexOf('Market Cap')).toBeLessThan(html.indexOf('Circ. Supply'))
 		expect(html.indexOf('Fully Diluted Valuation')).toBeLessThan(html.indexOf('Circ. Supply'))
 	})

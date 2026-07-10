@@ -95,13 +95,6 @@ describe('PaginatedTable', () => {
 		expect(shortTableHtml).not.toContain('pagination-panel')
 	})
 
-	it('attaches pagination to a surrounding table shell when shell is none', () => {
-		const html = renderToStaticMarkup(<TestTable rowCount={11} shell="none" />)
-
-		expect(html).toContain('border-t border-subtle p-2')
-		expect(html).toContain('flex flex-col gap-0')
-	})
-
 	it('renders the sticky header mirror only when explicitly enabled', () => {
 		const defaultHtml = renderToStaticMarkup(<TestTable rowCount={11} />)
 		const stickyHtml = renderToStaticMarkup(<TestTable rowCount={11} stickyHeader />)

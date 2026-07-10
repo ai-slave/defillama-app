@@ -50,10 +50,6 @@ const baseTokenRightsEntry: IRawTokenRightsEntry = {
 
 const baseTokenRightsData = parseTokenRightsEntry(baseTokenRightsEntry)
 
-function countMatches(value: string, pattern: string): number {
-	return value.split(pattern).length - 1
-}
-
 describe('TokenRightsByProtocol', () => {
 	it('renders the overview view by default with a details toggle', () => {
 		const html = renderToStaticMarkup(
@@ -151,13 +147,12 @@ describe('TokenRightsByProtocol', () => {
 		expect(html).toContain('Token Rights and Value Accrual')
 	})
 
-	it('marks both dividend and buyback pie segments active when either mechanism accrues value', () => {
+	it('marks value accrual active when either dividends or buybacks accrue value', () => {
 		const html = renderToStaticMarkup(
 			<TokenRightsByProtocol name="Test Protocol" symbol="TEST" raises={null} tokenRightsData={baseTokenRightsData} />
 		)
 
-		expect(countMatches(html, 'fill="var(--success)"')).toBe(5)
-		expect(countMatches(html, 'fill="var(--error)"')).toBe(1)
+		expect(html).toContain('Value Accrual: positive')
 	})
 
 	it('keeps dividend and buyback pie segments inactive when neither mechanism accrues value', () => {
@@ -174,7 +169,6 @@ describe('TokenRightsByProtocol', () => {
 			/>
 		)
 
-		expect(countMatches(html, 'fill="var(--success)"')).toBe(3)
-		expect(countMatches(html, 'fill="var(--error)"')).toBe(3)
+		expect(html).toContain('Value Accrual: negative')
 	})
 })

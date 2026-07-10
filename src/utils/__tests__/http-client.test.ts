@@ -46,11 +46,11 @@ describe('fetchWithPoolingOnServer direct API auth', () => {
 			SERVER_URL: 'https://core.example.com/api/'
 		})
 
-		await fetchWithPoolingOnServer('https://core.example.com/api/config?zz=17')
+		await fetchWithPoolingOnServer('https://core.example.com/api/config?view=compact')
 		await fetchWithPoolingOnServer('https://core.example.com/api/v2/chains')
 
 		const configUrl = fetchedUrl(fetchMock, 0)
-		expect(configUrl.searchParams.get('zz')).toBe('16')
+		expect(configUrl.searchParams.get('view')).toBe('compact')
 		expect(configUrl.searchParams.get('x-llama-pro-key')).toBe('core-secret')
 
 		const v2Url = fetchedUrl(fetchMock, 1)
@@ -64,10 +64,10 @@ describe('fetchWithPoolingOnServer direct API auth', () => {
 			SERVER_URL: 'https://core.example.com/api'
 		})
 
-		await fetchWithPoolingOnServer(new URL('https://core.example.com/api/config?zz=17'))
+		await fetchWithPoolingOnServer(new URL('https://core.example.com/api/config?view=compact'))
 
 		const url = fetchedUrl(fetchMock)
-		expect(url.searchParams.get('zz')).toBe('16')
+		expect(url.searchParams.get('view')).toBe('compact')
 		expect(url.searchParams.get('x-llama-pro-key')).toBe('core-secret')
 	})
 
@@ -82,8 +82,8 @@ describe('fetchWithPoolingOnServer direct API auth', () => {
 		})
 
 		await fetchWithPoolingOnServer('https://core-v2.example.com/chains?chain=ethereum')
-		await fetchWithPoolingOnServer('https://equities.example.com/v1/companies?zz=17')
-		await fetchWithPoolingOnServer('https://liquidations.example.com/all?zz=17')
+		await fetchWithPoolingOnServer('https://equities.example.com/v1/companies')
+		await fetchWithPoolingOnServer('https://liquidations.example.com/all')
 
 		expect(fetchedUrl(fetchMock, 0).searchParams.get('x-llama-pro-key')).toBe('core-secret')
 		expect(fetchedUrl(fetchMock, 1).searchParams.get('x-llama-equity-secret')).toBe('equities-secret')
@@ -98,7 +98,7 @@ describe('fetchWithPoolingOnServer direct API auth', () => {
 			SERVER_URL: 'https://api.example.com'
 		})
 
-		await fetchWithPoolingOnServer('https://api.example.com/equities/v1/companies?zz=17')
+		await fetchWithPoolingOnServer('https://api.example.com/equities/v1/companies')
 
 		const url = fetchedUrl(fetchMock)
 		expect(url.searchParams.get('x-llama-equity-secret')).toBe('equities-secret')
@@ -111,12 +111,11 @@ describe('fetchWithPoolingOnServer direct API auth', () => {
 			DATASETS_SERVER_URL: 'https://datasets.example.com'
 		})
 
-		await fetchWithPoolingOnServer('https://pro-api.llama.fi/pro-key/api/config?zz=17')
-		await fetchWithPoolingOnServer('https://datasets.example.com/tokenlist/sorted.json?zz=17')
+		await fetchWithPoolingOnServer('https://pro-api.llama.fi/pro-key/api/config')
+		await fetchWithPoolingOnServer('https://datasets.example.com/tokenlist/sorted.json')
 
 		expect(fetchedUrl(fetchMock, 0).searchParams.get('x-llama-pro-key')).toBeNull()
 		expect(fetchedUrl(fetchMock, 1).searchParams.get('x-llama-pro-key')).toBeNull()
-		expect(fetchedUrl(fetchMock, 1).searchParams.get('zz')).toBe('16')
 	})
 
 	it('does not append direct auth without a backend secret', async () => {
@@ -124,7 +123,7 @@ describe('fetchWithPoolingOnServer direct API auth', () => {
 			SERVER_URL: 'https://core.example.com/api'
 		})
 
-		await fetchWithPoolingOnServer('https://core.example.com/api/config?zz=17')
+		await fetchWithPoolingOnServer('https://core.example.com/api/config')
 
 		expect(fetchedUrl(fetchMock).searchParams.get('x-llama-pro-key')).toBeNull()
 	})

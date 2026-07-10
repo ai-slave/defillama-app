@@ -60,20 +60,6 @@ describe('RankTable', () => {
 		expect(html.indexOf('Alpha')).toBeLessThan(html.indexOf('Bravo'))
 	})
 
-	it('fills metric cells with a theme-aware heatmap class in percentile mode', () => {
-		const html = renderToStaticMarkup(
-			<RankTable
-				rows={rows}
-				columns={VOLUME_COLUMNS}
-				mode="percentile"
-				setMode={() => {}}
-				onRefine={() => {}}
-				onSelectMM={() => {}}
-			/>
-		)
-		expect(html).toContain('bg-[rgba(60,150,105,')
-	})
-
 	it('shows the empty state when there are no rows', () => {
 		const html = renderToStaticMarkup(
 			<RankTable

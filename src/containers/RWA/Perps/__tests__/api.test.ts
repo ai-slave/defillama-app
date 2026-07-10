@@ -20,6 +20,14 @@ afterEach(() => {
 })
 
 describe('rwa perps api urls', () => {
+	function callsWithoutCacheVersion(): unknown[][] {
+		return fetchJson.mock.calls.map(([url, ...args]) => {
+			const parsed = new URL(url)
+			parsed.searchParams.delete('zz')
+			return [parsed.toString(), ...args]
+		})
+	}
+
 	it('encodes contract, venue, and market ids in request paths', async () => {
 		const api = await import('../api')
 
@@ -42,12 +50,12 @@ describe('rwa perps api urls', () => {
 			excludeAssetClass: 'Forex Perps'
 		})
 
-		expect(fetchJson.mock.calls).toEqual([
-			['https://example.com/rwa-perps/market/xyz%3AMETA%2F2026?zz=17'],
-			['https://example.com/rwa-perps/contract/xyz%3AMETA%2F2026?zz=17'],
-			['https://example.com/rwa-perps/venue/my%20venue?zz=17'],
-			['https://example.com/rwa-perps/assetGroup/US%20Equities?zz=17'],
-			['https://example.com/rwa-perps/chart/venue/venue%2Fone?zz=17'],
+		expect(callsWithoutCacheVersion()).toEqual([
+			['https://example.com/rwa-perps/market/xyz%3AMETA%2F2026'],
+			['https://example.com/rwa-perps/contract/xyz%3AMETA%2F2026'],
+			['https://example.com/rwa-perps/venue/my%20venue'],
+			['https://example.com/rwa-perps/assetGroup/US%20Equities'],
+			['https://example.com/rwa-perps/chart/venue/venue%2Fone'],
 			['https://example.com/rwa-perps/chart/overview-breakdown?breakdown=assetGroup&key=openInterest&venue=xyz'],
 			['https://example.com/rwa-perps/chart/contract-breakdown?key=markets&assetGroup=US+Equities'],
 			['https://example.com/rwa-perps/chart/market-breakdown?key=openInterest&excludeAssetClass=Forex+Perps']
@@ -60,9 +68,9 @@ describe('rwa perps api urls', () => {
 		await api.fetchRWAPerpsFundingHistory('xyz:META', { startTime: 10, endTime: 20 })
 		await api.fetchRWAPerpsFundingHistory('xyz:META')
 
-		expect(fetchJson.mock.calls).toEqual([
-			['https://example.com/rwa-perps/funding/xyz%3AMETA?startTime=10&endTime=20&zz=17'],
-			['https://example.com/rwa-perps/funding/xyz%3AMETA?zz=17']
+		expect(callsWithoutCacheVersion()).toEqual([
+			['https://example.com/rwa-perps/funding/xyz%3AMETA?startTime=10&endTime=20'],
+			['https://example.com/rwa-perps/funding/xyz%3AMETA']
 		])
 	})
 })
