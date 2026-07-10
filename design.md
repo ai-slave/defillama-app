@@ -10,15 +10,17 @@ Design source of truth: the **Llama Design System** Figma library (Primitives + 
 
 Three tiers, strictly ordered. Components may only reference tier 2 (or tier-3 component tokens where they exist):
 
-1. **Primitives** (`primitives.css`) — raw ramp values (`--ld-blue-500`). Never used in components. Deliberately _not_ registered as Tailwind colors (names would collide with the built-in `neutral`/`blue`/… palettes).
-2. **Semantics** (`semantics.css`) — role tokens (`--ld-bg-surface`, `--ld-text-data-up`), light values on `:root`, dark overrides under `html.dark`. Registered as Tailwind utilities: `bg-surface`, `text-primary`, `text-data-up`, `border-subtle`, …
+1. **Primitives** (`primitives.css`) — raw ramp values (`--blue-500`). Never used in components. Deliberately _not_ registered as Tailwind colors (names would collide with the built-in `neutral`/`blue`/… palettes).
+2. **Semantics** (`semantics.css`) — role tokens (`--bg-surface`, `--text-data-up`), light values on `:root`, dark overrides under `html.dark`. Registered as Tailwind utilities: `bg-surface`, `text-primary`, `text-data-up`, `border-subtle`, …
 3. **Component tokens** — only when a value genuinely diverges from a semantic (currently: chips). If a component token would just alias a semantic, bind the semantic directly instead.
 
 The mode lives in the CSS selector, never in the token name: no `*-light`/`*-dark` suffixed pairs, and no `dark:*-[#hex]` utilities in components.
 
 ## Color tokens
 
-CSS variables carry an `--ld-` prefix until the semantic-token rename phase lands (see Migration). The legacy variables that previously occupied the clean names now use the explicit `--legacy-*` namespace.
+Design-system CSS variables use clean role names such as `--bg-surface`,
+`--text-primary`, and `--chart-gridline`. Quarantined application variables use
+the explicit `--legacy-*` namespace.
 
 ### Backgrounds
 
@@ -83,20 +85,20 @@ struck/double-counted values.
 
 ### States & component tokens (CSS variables only, no utility yet)
 
-| Variable             | Light       | Dark        | Use                                                   |
-| -------------------- | ----------- | ----------- | ----------------------------------------------------- |
-| `bg-hover-row`       | `#1f67d21f` | `#ffffff0f` | Popover/menu/table row hover; focus adds `focus-ring` |
-| `bg-hover-card`      | `#1f67d20f` | `#ffffff08` | Card/tile hover wash; focus adds `focus-ring`         |
-| `--ld-bg-screen-dim` | `#090b0c66` | `#090b0cb3` | Modal and drawer backdrops                            |
-| `--ld-chip-bg`       | `#dedede`   | `#232628`   | Filter chips                                          |
-| `--ld-chip-text`     | `#484848`   | `#c6c6c6`   | Filter chip text                                      |
+| Variable          | Light       | Dark        | Use                                                   |
+| ----------------- | ----------- | ----------- | ----------------------------------------------------- |
+| `bg-hover-row`    | `#1f67d21f` | `#ffffff0f` | Popover/menu/table row hover; focus adds `focus-ring` |
+| `bg-hover-card`   | `#1f67d20f` | `#ffffff08` | Card/tile hover wash; focus adds `focus-ring`         |
+| `--bg-screen-dim` | `#090b0c66` | `#090b0cb3` | Modal and drawer backdrops                            |
+| `--chip-bg`       | `#dedede`   | `#232628`   | Filter chips                                          |
+| `--chip-text`     | `#484848`   | `#c6c6c6`   | Filter chip text                                      |
 
 Hover washes paint _over_ `bg-surface` and are deliberately asymmetric across modes: brand-tinted in light, white-lift in dark (verified from the metrics-card hover pair and the columns-popover row). **Focus is hover-plus (owner decision, 2026-07-09):** the global `:focus-visible` base rule in `tailwind.css` draws a 2px **inset** `border-brand` ring on everything (inset so it survives full-bleed rows in overflow-hidden popovers and dense toolbars); components may keep the wash on focus as well. Two cases the base rule cannot cover use utilities: Ariakit composite rows (selects/comboboxes) bind `data-focus-visible:focus-ring` — DOM focus stays on the input, and never bind to `data-active-item`, which follows mouse hover and would show a false ring; solid brand fills use `focus-visible:focus-ring-on-brand` (white ring — a brand ring is invisible there). `outline-none`/`outline-hidden` suppress the base ring: only do that when the element has its own focus indicator (e.g. `inputStyles` uses `focus:border-brand`). Selection/active is a different concept and uses brand tokens (tint, solid, or brand border depending on the control — see Components).
 
 **Two hover mechanisms — pick by resting background:**
 
 - `hover:bg-hover-row` — only for elements whose resting background is **transparent** (popover/menu/table rows, ghost buttons). It _replaces_ the background, which is fine when there is nothing to replace.
-- `.hover-wash` ([semantics.css](src/styles/semantics.css)) — for any element whose resting background is **tinted or opaque** (`bg-brand-muted` pills, selected segments, `bg-surface` tiles). It applies the wash as a `background-image`, stacking over the resting color. Handles `:hover` + `:focus-visible` and skips `:disabled`/`aria-disabled` automatically. Variants: `.hover-wash-card` (fainter `--ld-hover-card`, used by interactive `Card`) and `.group-hover-wash` (washes when the ancestor `.group` is hovered — for sticky table cells that must keep an opaque bg). Never put `hover:bg-hover-row` on a `bg-brand-muted` element: light-mode `hover-row` is the _same value_ as light `bg-brand-muted` (`#1f67d21f`), so the hover is invisible, and in dark it strips the brand tint.
+- `.hover-wash` ([semantics.css](src/styles/semantics.css)) — for any element whose resting background is **tinted or opaque** (`bg-brand-muted` pills, selected segments, `bg-surface` tiles). It applies the wash as a `background-image`, stacking over the resting color. Handles `:hover` + `:focus-visible` and skips `:disabled`/`aria-disabled` automatically. Variants: `.hover-wash-card` (fainter `--hover-card`, used by interactive `Card`) and `.group-hover-wash` (washes when the ancestor `.group` is hovered — for sticky table cells that must keep an opaque bg). Never put `hover:bg-hover-row` on a `bg-brand-muted` element: light-mode `hover-row` is the _same value_ as light `bg-brand-muted` (`#1f67d21f`), so the hover is invisible, and in dark it strips the brand tint.
 - Exception: an **opaque→opaque elevation step** is also a valid hover for triggers resting on `bg-surface-elevated-1` (e.g. the Select `default` trigger hovers to `bg-surface-elevated-2`) — a full-strength deliberate affordance, stronger than the wash. Don't mix both on one element.
 
 ### Usage rules
@@ -241,19 +243,19 @@ Measured from the redesigned frames (node IDs in the sweep PRs). These are the s
 
 Chart **series** colors come from `CHART_COLORS` + `getNDistinctColors` (golden-angle generator) in code — they are intentionally _not_ design tokens and must not be bulk-changed; the Figma library has no N-series concept.
 
-Chart **canvas chrome** (axis labels, gridlines, legends, dataZoom, PNG-export framing, and candlestick direction colors) uses the `--ld-chart-*` tokens in `semantics.css`. The chart-theme pass established these as the current visual baseline: axis labels use the tertiary tier, gridlines share the low-alpha chart stroke, and candlesticks use the chart direction tokens. ECharts HTML tooltips are DOM surfaces instead: options set transparent native chrome and the shared `.defillama-echarts-tooltip` recipe in `tailwind.css` applies the overlay, border, text, radius, and shadow tokens. Chart tokens remain separate from series palettes so later semantic-token changes cannot silently recolor chart data.
+Chart **canvas chrome** (axis labels, gridlines, legends, dataZoom, PNG-export framing, and candlestick direction colors) uses the `--chart-*` tokens in `semantics.css`. The chart-theme pass established these as the current visual baseline: axis labels use the tertiary tier, gridlines share the low-alpha chart stroke, and candlesticks use the chart direction tokens. ECharts HTML tooltips are DOM surfaces instead: options set transparent native chrome and the shared `.defillama-echarts-tooltip` recipe in `tailwind.css` applies the overlay, border, text, radius, and shadow tokens. Chart tokens remain separate from series palettes so later semantic-token changes cannot silently recolor chart data.
 
 Chart **geometry** uses [`src/components/ECharts/chartSpacing.ts`](src/components/ECharts/chartSpacing.ts). Standard cartesian grids have an 8px visual inset on every side via `outerBoundsMode: 'same'` and `outerBoundsContain: 'axisLabel'`; a default legend starts 8px from the top and reserves 40px before the plot; scroll legends reserve a 16px right gutter and use the same active/inactive color hierarchy as table sort carets. Slider dataZoom uses a fixed height and compensates for ECharts handle overflow so its visible left/right inset is 8px and its visible bottom inset is 12px. Consume the exported recipes/constants instead of copying raw grid, legend, or slider offsets.
 
 Non-cartesian and alignment-sensitive charts keep explicit exceptions. Treemaps use an 8px **canvas-wrapper** inset because ECharts zoom clips to the canvas rather than the series rectangle; do not replace it with series offsets or remove it after checking only the unzoomed state. Legend-based pies stay vertically centered and reserve their measured legend region; external-label pies may pass an explicit `centerY` (the bridged composition uses `44%`) so the complete pie-plus-label composition is centered without changing every pie. Stacked candlestick grids keep one fixed left edge across panels. Scatter labels remain inside their plot; logo HBars reserve a measured left overlay region; Sankey owns node layout rather than cartesian grid geometry. New exceptions require route-level visual verification in both themes.
 
-ECharts renders to canvas and cannot read `var()`: resolve canvas tokens through [`src/components/ECharts/chartTheme.ts`](src/components/ECharts/chartTheme.ts) — `useChartTheme(isThemeDark)` in components, `getChartTheme(isDark)` in plain functions. Never read `--ld-chart-*` by hand and never reintroduce `isDark ? literal : literal` chrome forks. HTML tooltip options should use the shared tooltip class rather than resolved canvas colors. Remaining hardcoded colors should be data/series colors or documented product-specific exceptions, not axis, grid, legend, dataZoom, or tooltip chrome.
+ECharts renders to canvas and cannot read `var()`: resolve canvas tokens through [`src/components/ECharts/chartTheme.ts`](src/components/ECharts/chartTheme.ts) — `useChartTheme(isThemeDark)` in components, `getChartTheme(isDark)` in plain functions. Never read `--chart-*` by hand and never reintroduce `isDark ? literal : literal` chrome forks. HTML tooltip options should use the shared tooltip class rather than resolved canvas colors. Remaining hardcoded colors should be data/series colors or documented product-specific exceptions, not axis, grid, legend, dataZoom, or tooltip chrome.
 
 ## Utility & reuse policy
 
 - **Reuse lives in React components** (Card, Button, …), not in `@apply` composites. A component owns its class string in one place. [`src/ui/Card.tsx`](src/ui/Card.tsx) is the card surface — required constrained `padding` choices, `className` for layout placement only; all new cards use it, existing cards migrate during page sweeps.
 - `@utility` is allowed only for **small, flat, variant-free** declaration sets (a border color, a type style). No `@apply` chains with embedded `hover:`/`dark:` variants — that pattern re-emits its full body per variant and is why the legacy `dialog`/`pro-btn-*` utilities are quarantined, not multiplied.
-- Prefer registered utilities (`bg-surface`) over arbitrary-value syntax (`bg-(--ld-bg-surface)`) in all new code.
+- Prefer registered utilities (`bg-surface`) over arbitrary-value syntax (`bg-(--bg-surface)`) in all new code.
 
 ## Do's and Don'ts
 
@@ -267,12 +269,12 @@ ECharts renders to canvas and cannot read `var()`: resolve canvas tokens through
 
 ## Migration status
 
-| Phase                 | Scope                                                                                      | Status |
-| --------------------- | ------------------------------------------------------------------------------------------ | ------ |
-| Foundation            | Token foundation, legacy quarantine, chart tokens, Card/type ramp, `useChartTheme`         | merged |
-| Broad design sweep    | Home/chain, shared primitives, popovers, DialogShell, ProtocolOverview, text/icon          | merged |
-| Post-merge follow-ups | ChartPanel, status/table consistency, chart theme, and chart geometry                      | merged |
-| Architecture          | Semantic-token naming, radius/type normalization, shared API/file placement, product scope | active |
+| Phase                 | Scope                                                                              | Status |
+| --------------------- | ---------------------------------------------------------------------------------- | ------ |
+| Foundation            | Token foundation, legacy quarantine, chart tokens, Card/type ramp, `useChartTheme` | merged |
+| Broad design sweep    | Home/chain, shared primitives, popovers, DialogShell, ProtocolOverview, text/icon  | merged |
+| Post-merge follow-ups | ChartPanel, status/table consistency, chart theme, and chart geometry              | merged |
+| Architecture          | Radius/type normalization, shared API/file placement, product scope                | active |
 
 Legacy application globals use the `--legacy-*` namespace and are quarantined in
 `src/styles/legacy-*.css` / `tailwind.css`. The separately owned `--sub-*`, `--pro-*`,
@@ -294,11 +296,11 @@ The remaining core hardcoded-color baseline is intentionally limited to non-reus
 - Rename `hover-neutral-normal` in the library because the accepted light value is
   brand-tinted rather than neutral.
 - Hover state for brand-tinted pills/segments: the frames define none, and `hover-neutral-normal` collides with `bg-brand-transparent` in light (same value). Code now stacks the wash via `.hover-wash`; library should publish a real state.
-- Dark `Text/links` `#4b86db` is ~4.2:1 on `bg-brand-transparent` over `bg-surface` — below AA (4.5:1) at 12px. Ask: one step lighter (≈`#6a9be0`). Chain pills carry an interim local override (`--ld-text-link-on-tint`, dark `#6a9be0`); the segmented control's selected tab, active `MetricChip` option chips, and `MultiSelectCombobox` value pills still show the failing pair and inherit the fix when the library token moves (or adopt `text-link-on-tint` if it doesn't).
+- Dark `Text/links` `#4b86db` is ~4.2:1 on `bg-brand-transparent` over `bg-surface` — below AA (4.5:1) at 12px. Ask: one step lighter (≈`#6a9be0`). Chain pills carry an interim local override (`--text-link-on-tint`, dark `#6a9be0`); the segmented control's selected tab, active `MetricChip` option chips, and `MultiSelectCombobox` value pills still show the failing pair and inherit the fix when the library token moves (or adopt `text-link-on-tint` if it doesn't).
 - Sync Figma `Text/tertiary` to the light accessibility override. Code now uses light `#6f6f6f` and keeps dark `#878787`; the library still publishes neutral `#878787`.
 - `stroke-very-subtle` at 1px is invisible as a divider on dark surfaces; code floors dividers at `stroke-subtle` (see Divider floor above).
 - Collapse `Text/branded` + `Text/links`; drop `Text/branded-2`.
 - Fix `Brand/priamry-main` typo; remove stray SDS-library variables from page frames (chevron icons are bound to `--sds-color-border-default-default` — need a real token; using `text-tertiary` meanwhile).
-- Publish full primitive ramps (the old in-file palette diverged from the library; the `--ld-primitive-scale-*` variables visible on the Tab Navigation component suggest they exist).
+- Publish full primitive ramps (the old in-file palette diverged from the library; the `--primitive-scale-*` variables visible on the Tab Navigation component suggest they exist).
 - Inter Display vs Inter var.
 - Library hygiene found during extraction: radii bound to space variables (space-04/space-08) instead of corner-radius; `Mono/XL` font size bound to `space-24`; segmented-control instances disagree on unselected item sizing; promo-card body text set in "Inter Variable" instead of "Inter Display"; unlocks chart bars/chips bound to `Text/disabled`/`Text/tertiary` as fills; content gutter 12 vs 16 and toolbar control heights 24/26/32 vary between frames.

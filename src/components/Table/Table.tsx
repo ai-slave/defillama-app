@@ -126,9 +126,9 @@ function TableRow<T extends RowData>({
 								position: isSticky ? 'sticky' : undefined,
 								left: isSticky ? 0 : undefined,
 								zIndex: isSticky ? 1 : undefined,
-								background: isSticky ? 'var(--ld-bg-surface)' : undefined,
+								background: isSticky ? 'var(--bg-surface)' : undefined,
 								borderRightColor: isSticky ? 'transparent' : undefined,
-								boxShadow: isSticky && !compact ? '-1px 0 0 var(--ld-border-subtle) inset' : undefined
+								boxShadow: isSticky && !compact ? '-1px 0 0 var(--border-subtle) inset' : undefined
 							}}
 						>
 							{flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -362,7 +362,7 @@ export function VirtualTable<T extends RowData>({
 							overflow-x: auto;
 							overflow-y: hidden;
 							z-index: 999;
-							background-color: var(--ld-bg-surface);
+							background-color: var(--bg-surface);
 							display: block;
 							width: ${scrollbarWidth}px;
 							left: ${scrollbarLeft}px;
@@ -376,7 +376,7 @@ export function VirtualTable<T extends RowData>({
 							overflow-x: auto;
 							overflow-y: hidden;
 							z-index: 999;
-							background-color: var(--ld-bg-surface);
+							background-color: var(--bg-surface);
 							display: none;
 						`
 					}
@@ -491,9 +491,9 @@ export function VirtualTable<T extends RowData>({
 											? 'translateX(calc(var(--vf-header-scroll-left, 0px) * -1))'
 											: undefined,
 									zIndex: isSticky ? 20 : undefined,
-									background: 'var(--ld-bg-surface)',
+									background: 'var(--bg-surface)',
 									borderRightColor: isSticky ? 'transparent' : undefined,
-									boxShadow: isSticky && !compact ? '-1px 0 0 0 var(--ld-border-subtle) inset' : undefined
+									boxShadow: isSticky && !compact ? '-1px 0 0 0 var(--border-subtle) inset' : undefined
 								}}
 								className={`overflow-hidden border-r border-subtle p-3 text-ellipsis whitespace-nowrap last:border-r-0 ${
 									rowSpannedHeader || headerGroup.depth === 0 || isGroupedChildHeader ? 'border-t' : ''
@@ -671,7 +671,7 @@ export function VirtualTable<T extends RowData>({
 						overflowY: 'hidden',
 						zIndex: 999,
 						display: 'none',
-						backgroundColor: 'var(--ld-bg-surface)'
+						backgroundColor: 'var(--bg-surface)'
 					}}
 				>
 					<div ref={stickyScrollbarContentRef} style={{ height: '1px' }} />

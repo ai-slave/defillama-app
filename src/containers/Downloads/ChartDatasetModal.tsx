@@ -1441,7 +1441,7 @@ export function ChartDatasetModal({
 									<div
 										ref={rightShadowRef}
 										className="pointer-events-none absolute inset-y-0 right-0 z-40 w-32 opacity-0 transition-opacity duration-200"
-										style={{ background: 'linear-gradient(to left, var(--ld-bg-surface) 0%, transparent 100%)' }}
+										style={{ background: 'linear-gradient(to left, var(--bg-surface) 0%, transparent 100%)' }}
 									/>
 									<div
 										ref={tableContainerRef}
@@ -1461,7 +1461,7 @@ export function ChartDatasetModal({
 																position: isSticky ? 'sticky' : undefined,
 																left: isSticky ? 0 : undefined,
 																zIndex: isSticky ? 30 : undefined,
-																background: 'var(--ld-bg-surface)',
+																background: 'var(--bg-surface)',
 																boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
 															}}
 														>
@@ -1533,7 +1533,7 @@ export function ChartDatasetModal({
 																		left: isSticky ? 0 : undefined,
 																		zIndex: isSticky ? 1 : undefined,
 																		background: isSticky
-																			? 'var(--ld-bg-surface)'
+																			? 'var(--bg-surface)'
 																			: isOdd
 																				? 'var(--bg-primary)'
 																				: undefined,
@@ -1672,7 +1672,7 @@ function PlaceholderRows({
 										position: isSticky ? 'sticky' : undefined,
 										left: isSticky ? 0 : undefined,
 										zIndex: isSticky ? 1 : undefined,
-										background: isSticky ? 'var(--ld-bg-surface)' : isOdd ? 'var(--bg-primary)' : undefined,
+										background: isSticky ? 'var(--bg-surface)' : isOdd ? 'var(--bg-primary)' : undefined,
 										boxShadow: isSticky ? 'var(--sticky-shadow, none)' : undefined
 									}}
 								>

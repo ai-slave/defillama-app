@@ -19,7 +19,7 @@ export function SortableItem({ id, isTable, children, ...rest }: SortableItemPro
 		boxShadow: isDragging ? '0 12px 24px rgba(0, 0, 0, 0.25)' : 'none',
 		scale: isDragging ? '1.02' : '1',
 		opacity: isDragging ? 0.95 : 1,
-		background: isDragging ? 'var(--ld-bg-surface)' : undefined,
+		background: isDragging ? 'var(--bg-surface)' : undefined,
 		borderRadius: isDragging ? '6px' : undefined
 	}
 

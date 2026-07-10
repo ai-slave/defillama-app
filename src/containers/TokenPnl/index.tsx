@@ -463,13 +463,13 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: TokenSe
 						(Array.isArray(point?.value) ? point.value[1] : undefined)
 					const price = typeof seriesValue === 'number' ? seriesValue : Number(seriesValue ?? 0)
 					const changeFromStart = startPrice !== 0 ? ((price - startPrice) / startPrice) * 100 : 0
-					const changeColor = changeFromStart >= 0 ? 'var(--ld-text-data-up)' : 'var(--ld-text-data-down)'
+					const changeColor = changeFromStart >= 0 ? 'var(--text-data-up)' : 'var(--text-data-down)'
 					const changeSign = changeFromStart >= 0 ? '+' : ''
 
 					const chartdate = timestamp != null ? formatTooltipChartDate(Number(timestamp), 'daily') : ''
 
-					return `<div style="background: var(--ld-bg-surface); border: 1px solid var(--ld-border-medium); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16); color: var(--ld-text-primary); border-radius: 8px; padding: 8px 10px; font-size: 11px; line-height: 1.35; white-space: nowrap;">
-						<div style="color: var(--ld-text-secondary); margin-bottom: 2px;">${chartdate}</div>
+					return `<div style="background: var(--bg-surface); border: 1px solid var(--border-medium); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16); color: var(--text-primary); border-radius: 8px; padding: 8px 10px; font-size: 11px; line-height: 1.35; white-space: nowrap;">
+						<div style="color: var(--text-secondary); margin-bottom: 2px;">${chartdate}</div>
 						<div style="font-weight: 600; font-size: 13px; margin-bottom: 2px;">${formatTooltipValue(price, '$')}</div>
 						<div style="font-size: 11px; color: ${changeColor}; font-weight: 500;">${changeSign}${formatTooltipValue(changeFromStart, '%')} from start</div>
 					</div>`

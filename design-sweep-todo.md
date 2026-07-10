@@ -92,7 +92,7 @@ next architecture sequence lives in [design-execution-plan.md](design-execution-
 The old checklist mixed visual acceptance with architecture and opportunistic cleanup.
 The remaining real work is now sequenced in `design-execution-plan.md`:
 
-- semantic-token clean-name promotion and remaining token-ratchet debt;
+- remaining documented token-ratchet debt;
 - shared API/component consolidation (`Select`, segmented controls, summary/change/export
   helpers) when it reduces real duplication;
 - radius and typography normalization;

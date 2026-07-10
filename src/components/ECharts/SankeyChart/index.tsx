@@ -190,7 +190,7 @@ export default function SankeyChart({
 					const valueWithPercent = percentageLabel ? `${valueToShow} (${percentageLabel})` : valueToShow
 					const description = nodeMetadata.descriptions[params.name]
 					if (description) {
-						return `<strong>${params.name}</strong><br/>${valueWithPercent}<br/><span style="color: var(--ld-text-secondary); font-size: 11px;">${description}</span>`
+						return `<strong>${params.name}</strong><br/>${valueWithPercent}<br/><span style="color: var(--text-secondary); font-size: 11px;">${description}</span>`
 					}
 					return `${params.name}<br/>${valueWithPercent}`
 				}

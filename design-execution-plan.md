@@ -21,6 +21,8 @@ Canonical references:
 - Legacy application variables and consumers use the explicit `--legacy-*` namespace;
   feedback roles live in semantic ownership, and sanctioned product/runtime namespaces
   remain distinct.
+- Primitive, semantic, component, and chart tokens own clean custom-property names; the
+  token ratchet prevents the retired `--ld-*` prefix from returning.
 - Shared Card/Panel, table/chart toolbar, title-strip, dialog/popover, summary-stat, and
   chart-shell contracts are adopted across the audited in-scope routes.
 - Chart theme and geometry are final for the sweep: canvas chrome uses `chartTheme`, HTML
@@ -36,19 +38,7 @@ Canonical references:
 Each phase should be a focused branch with a mechanically reviewable boundary. Finish and
 verify one phase before starting the next.
 
-### 1. Promote semantic tokens to clean names
-
-- After legacy names no longer occupy them, drop the `--ld-` prefix from semantic,
-  component, and chart tokens.
-- Update Tailwind registrations, CSS definitions, TypeScript token readers, tests, and
-  documentation in the same branch.
-- Fold the remaining core `lint:tokens` debt and the Tailwind border-color compatibility
-  shim into explicit semantic ownership where doing so is behavior-neutral; keep branded
-  or product-specific values documented rather than inventing false generic semantics.
-- Treat this as a semantic rename first. Any intentional color change needs a separate,
-  reviewable commit.
-
-### 2. Normalize the radius scale
+### 1. Normalize the radius scale
 
 - Define stable named 8px and 12px radius contracts in the Tailwind theme.
 - Replace primitive-level `rounded-[8px]` / `rounded-[12px]` usage with the named scale,
@@ -57,7 +47,7 @@ verify one phase before starting the next.
   surfaces; do not convert every `rounded-*` occurrence mechanically without checking its
   component role.
 
-### 3. Normalize typography
+### 2. Normalize typography
 
 - Replace reviewed `text-sm font-medium`, heading-size/font-weight pairs, redundant custom
   line heights, and equivalent mono combinations with the named typography utilities.
@@ -66,7 +56,7 @@ verify one phase before starting the next.
 - Keep chart canvas fonts in pixels and preserve branded/editor/product typography where
   it is intentionally outside the application ramp.
 
-### 4. Consolidate shared APIs and file placement
+### 3. Consolidate shared APIs and file placement
 
 - Move high-fanout design-system owners such as `MetricPrimitives`, Tooltip, and loaders
   into `src/ui` only when imports can be migrated mechanically without changing behavior.
@@ -81,7 +71,7 @@ verify one phase before starting the next.
   `FullOldViewButton`, and opportunistic replacement of remaining low-value native
   `title` attributes.
 
-### 5. Decide excluded-product scope
+### 4. Decide excluded-product scope
 
 - Make an explicit Sheets decision first: migrate it to the application design system,
   keep it as a separately themed product, or quarantine its tokens/components behind an
@@ -92,7 +82,7 @@ verify one phase before starting the next.
   regression verification; entering architecture scope does not silently authorize a
   visual redesign.
 
-### 6. Retire temporary sweep documentation
+### 5. Retire temporary sweep documentation
 
 - Fold any architecture decisions that remain normative into `design.md`.
 - Preserve genuinely useful historical rationale in `design-decision-audit.md`.

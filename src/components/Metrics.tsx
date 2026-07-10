@@ -367,7 +367,7 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 						<div
 							className="absolute inset-0"
 							style={{
-								backgroundImage: `radial-gradient(circle, color-mix(in srgb, var(--ld-bg-brand) 60%, transparent) 0.8px, transparent 0.8px)`,
+								backgroundImage: `radial-gradient(circle, color-mix(in srgb, var(--bg-brand) 60%, transparent) 0.8px, transparent 0.8px)`,
 								backgroundSize: '3px 3px',
 								maskImage: 'linear-gradient(to right, black 0%, transparent 100%)',
 								WebkitMaskImage: 'linear-gradient(to right, black 0%, transparent 100%)'
@@ -407,7 +407,7 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 						<div
 							className="absolute inset-0"
 							style={{
-								backgroundImage: `radial-gradient(circle, color-mix(in srgb, var(--ld-bg-brand) 60%, transparent) 0.8px, transparent 0.8px)`,
+								backgroundImage: `radial-gradient(circle, color-mix(in srgb, var(--bg-brand) 60%, transparent) 0.8px, transparent 0.8px)`,
 								backgroundSize: '3px 3px',
 								maskImage: 'linear-gradient(to left, black 0%, transparent 100%)',
 								WebkitMaskImage: 'linear-gradient(to left, black 0%, transparent 100%)'
@@ -417,12 +417,12 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 					<svg width="100%" height="100%" className="absolute top-0 right-0 bottom-0 left-0 z-0">
 						<defs>
 							<linearGradient id="border-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-								<stop offset="0%" style={{ stopColor: 'var(--ld-border-brand)' }} />
-								<stop offset="8%" style={{ stopColor: 'var(--ld-border-brand)' }} />
-								<stop offset="18%" style={{ stopColor: 'var(--ld-border-brand)', stopOpacity: 0 }} />
-								<stop offset="82%" style={{ stopColor: 'var(--ld-border-brand)', stopOpacity: 0 }} />
-								<stop offset="92%" style={{ stopColor: 'var(--ld-border-brand)' }} />
-								<stop offset="100%" style={{ stopColor: 'var(--ld-border-brand)' }} />
+								<stop offset="0%" style={{ stopColor: 'var(--border-brand)' }} />
+								<stop offset="8%" style={{ stopColor: 'var(--border-brand)' }} />
+								<stop offset="18%" style={{ stopColor: 'var(--border-brand)', stopOpacity: 0 }} />
+								<stop offset="82%" style={{ stopColor: 'var(--border-brand)', stopOpacity: 0 }} />
+								<stop offset="92%" style={{ stopColor: 'var(--border-brand)' }} />
+								<stop offset="100%" style={{ stopColor: 'var(--border-brand)' }} />
 							</linearGradient>
 						</defs>
 						<rect

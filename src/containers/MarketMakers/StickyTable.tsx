@@ -12,7 +12,7 @@ function colWidth(index: number): CSSProperties | undefined {
 	return { minWidth: DATA_MIN_WIDTH }
 }
 
-const STICKY_CELL_BACKGROUND = 'var(--ld-bg-surface)'
+const STICKY_CELL_BACKGROUND = 'var(--bg-surface)'
 
 function stickyStyle(index: number): CSSProperties | undefined {
 	if (index === 0) return { position: 'sticky', left: 0, zIndex: 2, background: STICKY_CELL_BACKGROUND }

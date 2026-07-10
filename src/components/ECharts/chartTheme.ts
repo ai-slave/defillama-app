@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 
 /**
  * Chart chrome colors (axis labels, gridlines, dataZoom, PNG-export framing),
- * resolved from the --ld-chart-* CSS custom properties in
+ * resolved from the --chart-* CSS custom properties in
  * src/styles/semantics.css. ECharts renders to canvas and cannot read var()
  * directly, so values are resolved via getComputedStyle at call time and
  * re-resolved when the theme flips.
@@ -49,68 +49,68 @@ const TOKENS: Record<
 	Exclude<keyof ChartTheme, 'ink' | 'inkInverted'>,
 	{ cssVar: string; light: string; dark: string }
 > = {
-	text: { cssVar: '--ld-chart-text', light: 'rgba(0, 0, 0, 1)', dark: 'rgba(255, 255, 255, 1)' },
-	axisLabel: { cssVar: '--ld-chart-axis-label', light: '#6f6f6f', dark: '#878787' },
-	legendPageActive: { cssVar: '--ld-chart-legend-page-active', light: '#1f67d2', dark: '#1f67d2' },
+	text: { cssVar: '--chart-text', light: 'rgba(0, 0, 0, 1)', dark: 'rgba(255, 255, 255, 1)' },
+	axisLabel: { cssVar: '--chart-axis-label', light: '#6f6f6f', dark: '#878787' },
+	legendPageActive: { cssVar: '--chart-legend-page-active', light: '#1f67d2', dark: '#1f67d2' },
 	legendPageInactive: {
-		cssVar: '--ld-chart-legend-page-inactive',
+		cssVar: '--chart-legend-page-inactive',
 		light: '#6f6f6f80',
 		dark: '#87878780'
 	},
-	up: { cssVar: '--ld-chart-up', light: '#3eb84f', dark: '#3eb84f' },
-	down: { cssVar: '--ld-chart-down', light: '#e24a42', dark: '#e24a42' },
-	gridline: { cssVar: '--ld-chart-gridline', light: 'rgba(0, 0, 0, 0.03)', dark: 'rgba(255, 255, 255, 0.02)' },
+	up: { cssVar: '--chart-up', light: '#3eb84f', dark: '#3eb84f' },
+	down: { cssVar: '--chart-down', light: '#e24a42', dark: '#e24a42' },
+	gridline: { cssVar: '--chart-gridline', light: 'rgba(0, 0, 0, 0.03)', dark: 'rgba(255, 255, 255, 0.02)' },
 	areaGradientTo: {
-		cssVar: '--ld-chart-area-gradient-to',
+		cssVar: '--chart-area-gradient-to',
 		light: 'rgba(255, 255, 255, 0.2)',
 		dark: 'rgba(0, 0, 0, 0.2)'
 	},
-	zoomBorder: { cssVar: '--ld-chart-zoom-border', light: 'rgba(0, 0, 0, 0.4)', dark: 'rgba(255, 255, 255, 0.4)' },
+	zoomBorder: { cssVar: '--chart-zoom-border', light: 'rgba(0, 0, 0, 0.4)', dark: 'rgba(255, 255, 255, 0.4)' },
 	zoomHandleBorder: {
-		cssVar: '--ld-chart-zoom-handle-border',
+		cssVar: '--chart-zoom-handle-border',
 		light: 'rgba(0, 0, 0, 0.9)',
 		dark: 'rgba(255, 255, 255, 0.9)'
 	},
 	zoomHandleFill: {
-		cssVar: '--ld-chart-zoom-handle-fill',
+		cssVar: '--chart-zoom-handle-fill',
 		light: 'rgba(255, 255, 255, 0.4)',
 		dark: 'rgba(0, 0, 0, 0.4)'
 	},
 	zoomEmphasisBorder: {
-		cssVar: '--ld-chart-zoom-emphasis-border',
+		cssVar: '--chart-zoom-emphasis-border',
 		light: '#000',
 		dark: 'rgba(255, 255, 255, 1)'
 	},
 	zoomEmphasisMoveFill: {
-		cssVar: '--ld-chart-zoom-emphasis-move-fill',
+		cssVar: '--chart-zoom-emphasis-move-fill',
 		light: 'rgba(0, 0, 0, 0.2)',
 		dark: 'rgba(255, 255, 255, 0.2)'
 	},
-	zoomFiller: { cssVar: '--ld-chart-zoom-filler', light: 'rgba(255, 255, 255, 0.1)', dark: 'rgba(0, 0, 0, 0.1)' },
-	exportBg: { cssVar: '--ld-chart-export-bg', light: '#ffffff', dark: '#0b1214' },
-	exportText: { cssVar: '--ld-chart-export-text', light: '#000000', dark: '#ffffff' },
+	zoomFiller: { cssVar: '--chart-zoom-filler', light: 'rgba(255, 255, 255, 0.1)', dark: 'rgba(0, 0, 0, 0.1)' },
+	exportBg: { cssVar: '--chart-export-bg', light: '#ffffff', dark: '#0b1214' },
+	exportText: { cssVar: '--chart-export-text', light: '#000000', dark: '#ffffff' },
 	exportTextMuted: {
-		cssVar: '--ld-chart-export-text-muted',
+		cssVar: '--chart-export-text-muted',
 		light: 'rgba(0, 0, 0, 0.8)',
 		dark: 'rgba(255, 255, 255, 0.8)'
 	},
 	exportLegendText: {
-		cssVar: '--ld-chart-export-legend-text',
+		cssVar: '--chart-export-legend-text',
 		light: 'rgba(0, 0, 0, 0.9)',
 		dark: 'rgba(255, 255, 255, 0.9)'
 	},
 	exportLegendInactive: {
-		cssVar: '--ld-chart-export-legend-inactive',
+		cssVar: '--chart-export-legend-inactive',
 		light: 'rgba(0, 0, 0, 0.5)',
 		dark: 'rgba(255, 255, 255, 0.5)'
 	},
-	logoBg: { cssVar: '--ld-chart-logo-bg', light: '#ffffff', dark: '#1a1a1a' },
+	logoBg: { cssVar: '--chart-logo-bg', light: '#ffffff', dark: '#1a1a1a' },
 	exportLabelStroke: {
-		cssVar: '--ld-chart-export-label-stroke',
+		cssVar: '--chart-export-label-stroke',
 		light: 'rgba(0, 0, 0, 0.45)',
 		dark: 'rgba(0, 0, 0, 0.7)'
 	},
-	treemapLabel: { cssVar: '--ld-chart-treemap-label', light: '#111', dark: '#fff' }
+	treemapLabel: { cssVar: '--chart-treemap-label', light: '#111', dark: '#fff' }
 }
 
 export function getChartTheme(isThemeDark: boolean): ChartTheme {

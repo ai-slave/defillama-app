@@ -299,24 +299,24 @@ function getLiquidationsTooltipHtml(params: unknown, metric: Metric, tokenLabel:
 		rows.push(`<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:12px;">
 								<span style="display:inline-flex; align-items:center; gap:6px; min-width:0;">
 									${marker}
-									<span style="color:var(--ld-text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${seriesName}</span>
+									<span style="color:var(--text-primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${seriesName}</span>
 								</span>
-								<span style="color:var(--ld-text-primary); text-align:right;">${rowValue}</span>
+								<span style="color:var(--text-primary); text-align:right;">${rowValue}</span>
 							</div>`)
 	}
 
-	return `<div style="min-width:220px; background:var(--ld-bg-surface); border:1px solid var(--ld-border-medium); box-shadow:0 18px 48px var(--tooltip-shadow, rgba(0, 0, 0, 0.24)); backdrop-filter:blur(10px); color:var(--ld-text-primary); border-radius:10px; padding:12px 14px; font-size:12px; line-height:1.45;">
+	return `<div style="min-width:220px; background:var(--bg-surface); border:1px solid var(--border-medium); box-shadow:0 18px 48px var(--tooltip-shadow, rgba(0, 0, 0, 0.24)); backdrop-filter:blur(10px); color:var(--text-primary); border-radius:10px; padding:12px 14px; font-size:12px; line-height:1.45;">
 						<div style="margin-bottom:8px;">
-							<div style="font-size:11px; color:var(--ld-text-secondary); text-transform:uppercase; letter-spacing:0.08em;">Liq Price</div>
-							<div style="font-size:15px; font-weight:600; color:var(--ld-text-primary);">${axisLabel}</div>
+							<div style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.08em;">Liq Price</div>
+							<div style="font-size:15px; font-weight:600; color:var(--text-primary);">${axisLabel}</div>
 						</div>
 						<div style="display:flex; flex-direction:column; gap:6px;">
 							${rows.join('')}
 						</div>
 						<div style="margin-top:8px;">
-							<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:8px; border-top:1px solid var(--ld-border-medium); font-size:12px;">
-								<span style="color:var(--ld-text-secondary);">Total</span>
-								<span style="color:var(--ld-text-primary); font-weight:600;">${totalLabel}</span>
+							<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:8px; border-top:1px solid var(--border-medium); font-size:12px;">
+								<span style="color:var(--text-secondary);">Total</span>
+								<span style="color:var(--text-primary); font-weight:600;">${totalLabel}</span>
 							</div>
 						</div>
 					</div>`
@@ -595,7 +595,7 @@ export function LiquidationsDistributionChart({
 				borderWidth: 0,
 				padding: 0,
 				textStyle: {
-					color: 'var(--ld-text-primary)',
+					color: 'var(--text-primary)',
 					fontSize: 12,
 					fontFamily: 'inherit'
 				},

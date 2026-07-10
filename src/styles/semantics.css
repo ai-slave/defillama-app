@@ -7,9 +7,9 @@
 
    Naming: 1:1 with the Figma variable names, with the fixes agreed with
    design (Text/links+Text/branded → link; Background/bg-interactive → brand;
-   bg-brand-transparent/-subtle → brand-muted/-faint). The legacy variables
-   that once occupied the clean names now use the --legacy-* namespace. The
-   --ld- prefix remains until the next focused semantic-token rename phase.
+   bg-brand-transparent/-subtle → brand-muted/-faint). Design-system tokens
+   own the clean role names; quarantined application variables use the
+   --legacy-* namespace.
 
    Mode handling: light values on :root, dark overrides under html.dark.
    Never create *-light/*-dark suffixed pairs — the mode lives in the
@@ -18,53 +18,53 @@
 
 :root {
 	/* Background */
-	--ld-bg-page: #f7f7f7; /* Background/bg-page */
-	--ld-bg-surface: #ffffff; /* Background/bg-surface */
-	--ld-bg-surface-elevated-1: #eeeeee; /* Background/bg-surface-elevated1 */
-	--ld-bg-surface-elevated-2: #dedede; /* Background/bg-surface-elevated2 */
+	--bg-page: #f7f7f7; /* Background/bg-page */
+	--bg-surface: #ffffff; /* Background/bg-surface */
+	--bg-surface-elevated-1: #eeeeee; /* Background/bg-surface-elevated1 */
+	--bg-surface-elevated-2: #dedede; /* Background/bg-surface-elevated2 */
 	/* Floating overlays: popovers, menus, tooltips, dialogs, toasts. The
 	   Figma library maps these to bg-surface-elevated1 (#eee), but a
 	   darker-than-surroundings overlay reads recessed in light mode (light
 	   elevation is carried by shadow, dark elevation by surface lift) —
 	   library update requested. Dark value intentionally equals
 	   bg-surface-elevated-1 so dark mode is pixel-identical. */
-	--ld-bg-overlay: #ffffff;
-	--ld-bg-brand: var(--ld-blue-500); /* Background/bg-interactive */
-	--ld-bg-brand-muted: #1f67d21f; /* Background/bg-brand-transparent */
-	--ld-bg-brand-faint: #1f67d20f; /* Background/bg-brand-transparent-subtle */
+	--bg-overlay: #ffffff;
+	--bg-brand: var(--blue-500); /* Background/bg-interactive */
+	--bg-brand-muted: #1f67d21f; /* Background/bg-brand-transparent */
+	--bg-brand-faint: #1f67d20f; /* Background/bg-brand-transparent-subtle */
 	/* Modal/backdrop scrim. Figma only publishes bg-screen-dim-subtle (#090b0c33),
 	   which was never modal-strength — these are the values every dialog has
 	   shipped with ([data-backdrop] literals, now unified here). Library ask
 	   filed for a modal-strength bg-screen-dim. */
-	--ld-bg-screen-dim: #090b0c66;
+	--bg-screen-dim: #090b0c66;
 
 	/* Text */
-	--ld-text-primary: #090b0c; /* Text/primary */
-	--ld-text-secondary: #484848; /* Text/secondary */
-	--ld-text-tertiary: #6f6f6f; /* Text/tertiary [light AA override; library update requested] */
-	--ld-text-disabled: #dedede; /* Text/disabled */
-	--ld-text-link: #1853a8; /* Text/links = Text/branded */
-	--ld-text-on-brand: #ffffff; /* Text/on-brand [fixed] */
-	--ld-text-data-up: #32933f; /* Text/data-up */
-	--ld-text-data-down: #b53b35; /* Text/data-down */
-	--ld-text-data-up-alt: var(--ld-blue-500); /* Text/data-up-alternative [fixed] */
-	--ld-text-data-down-alt: var(--ld-violet-500); /* Text/data-down-alternative [fixed] */
+	--text-primary: #090b0c; /* Text/primary */
+	--text-secondary: #484848; /* Text/secondary */
+	--text-tertiary: #6f6f6f; /* Text/tertiary [light AA override; library update requested] */
+	--text-disabled: #dedede; /* Text/disabled */
+	--text-link: #1853a8; /* Text/links = Text/branded */
+	--text-on-brand: #ffffff; /* Text/on-brand [fixed] */
+	--text-data-up: #32933f; /* Text/data-up */
+	--text-data-down: #b53b35; /* Text/data-down */
+	--text-data-up-alt: var(--blue-500); /* Text/data-up-alternative [fixed] */
+	--text-data-down-alt: var(--violet-500); /* Text/data-down-alternative [fixed] */
 	/* TODO(design): light value for Text/Warning not yet published in the
 	   library pages; using the legacy warning orange until confirmed. */
-	--ld-text-warning: #a15d23;
+	--text-warning: #a15d23;
 
 	/* Feedback roles keep their established public names. Unlike the
 	   quarantined application variables, these are semantic state tokens. */
-	--success: var(--ld-text-data-up);
-	--error: var(--ld-text-data-down);
-	--warning: var(--ld-text-warning);
+	--success: var(--text-data-up);
+	--error: var(--text-data-down);
+	--warning: var(--text-warning);
 
 	/* Stroke (alpha-based: layers correctly on any surface) */
-	--ld-border-very-subtle: #090b0c08; /* Stroke/stroke-very-subtle */
-	--ld-border-subtle: #090b0c0f; /* Stroke/stroke-subtle */
-	--ld-border-medium: #090b0c1f; /* Stroke/stroke-medium */
-	--ld-border-strong: #090b0c82; /* Stroke/stroke-strong */
-	--ld-border-brand: var(--ld-blue-500); /* Stroke/stroke-brand */
+	--border-very-subtle: #090b0c08; /* Stroke/stroke-very-subtle */
+	--border-subtle: #090b0c0f; /* Stroke/stroke-subtle */
+	--border-medium: #090b0c1f; /* Stroke/stroke-medium */
+	--border-strong: #090b0c82; /* Stroke/stroke-strong */
+	--border-brand: var(--blue-500); /* Stroke/stroke-brand */
 
 	/* States — both hovers verified from the page frames (columns popover
 	   row 6183:293504, metrics card pair 6183:354581/354721). Deliberately
@@ -73,19 +73,19 @@
 	   decision 2026-07-09; the wash alone was the entire indicator before).
 	   (Figma name "hover-neutral-normal" is a misnomer in light; rename
 	   requested.) */
-	--ld-hover-row: #1f67d21f; /* States/hover-neutral-normal — popover/menu/table rows */
-	--ld-hover-card: #1f67d20f; /* light: Background/bg-brand-transparent-subtle overlay */
+	--hover-row: #1f67d21f; /* States/hover-neutral-normal — popover/menu/table rows */
+	--hover-card: #1f67d20f; /* light: Background/bg-brand-transparent-subtle overlay */
 
 	/* Link-colored text ON a brand-tinted background (chain pills). Light
 	   Text/links passes AA there (6.2:1); the dark override below is an
 	   interim owner value because dark Text/links #4b86db is only 4.2:1 on
 	   bg-brand-muted over bg-surface — design ask filed to fix the library
-	   token, at which point this collapses back into --ld-text-link. */
-	--ld-text-link-on-tint: var(--ld-text-link);
+	   token, at which point this collapses back into --text-link. */
+	--text-link-on-tint: var(--text-link);
 
 	/* Chips */
-	--ld-chip-bg: #dedede; /* Chips/bg-default */
-	--ld-chip-text: #484848; /* Chips/text-default */
+	--chip-bg: #dedede; /* Chips/bg-default */
+	--chip-text: #484848; /* Chips/text-default */
 
 	/* ------------------------------------------------------------------
 	   Chart tokens.
@@ -95,104 +95,104 @@
 	   them (PR 3) is pixel-identical by construction. Charts must not
 	   change visually as a side effect of the token refresh.
 	------------------------------------------------------------------ */
-	--ld-chart-text: rgba(0, 0, 0, 1); /* titles, legend & dataZoom text, always-on tooltips */
+	--chart-text: rgba(0, 0, 0, 1); /* titles, legend & dataZoom text, always-on tooltips */
 	/* Axis labels converge on tertiary (chart-theme branch, 2026-07-09): the
 	   frames spec a quieter axis than full ink; previously 5 treatments shipped
 	   (ink 1 / 0.8 / 0.6 / unset-default / hand-rolled literals). */
-	--ld-chart-axis-label: #6f6f6f;
+	--chart-axis-label: #6f6f6f;
 	/* Matches Table/SortIcon: text-brand when active, text-tertiary/50 otherwise. */
-	--ld-chart-legend-page-active: var(--ld-bg-brand);
-	--ld-chart-legend-page-inactive: #6f6f6f80;
-	--ld-chart-gridline: rgba(0, 0, 0, 0.03); /* splitLine color × opacity, pre-multiplied */
-	--ld-chart-area-gradient-to: rgba(255, 255, 255, 0.2); /* bottom stop of series area fades */
-	--ld-chart-zoom-border: rgba(0, 0, 0, 0.4); /* dataZoom frame + move-handle fill */
-	--ld-chart-zoom-handle-border: rgba(0, 0, 0, 0.9); /* also emphasis handle fill */
-	--ld-chart-zoom-handle-fill: rgba(255, 255, 255, 0.4); /* inverted on purpose */
-	--ld-chart-zoom-emphasis-border: #000;
-	--ld-chart-zoom-emphasis-move-fill: rgba(0, 0, 0, 0.2);
-	--ld-chart-zoom-filler: rgba(255, 255, 255, 0.1); /* inverted on purpose */
-	--ld-chart-export-bg: #ffffff;
-	--ld-chart-export-text: #000000;
-	--ld-chart-export-text-muted: rgba(0, 0, 0, 0.8);
-	--ld-chart-export-legend-text: rgba(0, 0, 0, 0.9);
-	--ld-chart-export-legend-inactive: rgba(0, 0, 0, 0.5);
-	--ld-chart-logo-bg: #ffffff; /* logo chip behind category/axis logos, live + export */
-	--ld-chart-export-label-stroke: rgba(0, 0, 0, 0.45); /* treemap label outline (black in both modes) */
-	--ld-chart-treemap-label: #111; /* treemap upper label, live + export */
+	--chart-legend-page-active: var(--bg-brand);
+	--chart-legend-page-inactive: #6f6f6f80;
+	--chart-gridline: rgba(0, 0, 0, 0.03); /* splitLine color × opacity, pre-multiplied */
+	--chart-area-gradient-to: rgba(255, 255, 255, 0.2); /* bottom stop of series area fades */
+	--chart-zoom-border: rgba(0, 0, 0, 0.4); /* dataZoom frame + move-handle fill */
+	--chart-zoom-handle-border: rgba(0, 0, 0, 0.9); /* also emphasis handle fill */
+	--chart-zoom-handle-fill: rgba(255, 255, 255, 0.4); /* inverted on purpose */
+	--chart-zoom-emphasis-border: #000;
+	--chart-zoom-emphasis-move-fill: rgba(0, 0, 0, 0.2);
+	--chart-zoom-filler: rgba(255, 255, 255, 0.1); /* inverted on purpose */
+	--chart-export-bg: #ffffff;
+	--chart-export-text: #000000;
+	--chart-export-text-muted: rgba(0, 0, 0, 0.8);
+	--chart-export-legend-text: rgba(0, 0, 0, 0.9);
+	--chart-export-legend-inactive: rgba(0, 0, 0, 0.5);
+	--chart-logo-bg: #ffffff; /* logo chip behind category/axis logos, live + export */
+	--chart-export-label-stroke: rgba(0, 0, 0, 0.45); /* treemap label outline (black in both modes) */
+	--chart-treemap-label: #111; /* treemap upper label, live + export */
 
 	/* Chart accents (design-driven; consumed only in per-page redesign
 	   sweeps, never as a bulk swap). Fixed across modes per the library. */
-	--ld-chart-up: var(--ld-green-500);
-	--ld-chart-down: var(--ld-red-500);
-	--ld-chart-up-alt: var(--ld-blue-500);
-	--ld-chart-down-alt: var(--ld-violet-500);
+	--chart-up: var(--green-500);
+	--chart-down: var(--red-500);
+	--chart-up-alt: var(--blue-500);
+	--chart-down-alt: var(--violet-500);
 }
 
 html.dark {
 	/* Background */
-	--ld-bg-page: #090b0c;
-	--ld-bg-surface: #131516;
-	--ld-bg-surface-elevated-1: #181a1b;
-	--ld-bg-surface-elevated-2: var(--ld-neutral-800);
-	--ld-bg-overlay: #181a1b;
-	--ld-bg-brand-muted: #1f67d233;
+	--bg-page: #090b0c;
+	--bg-surface: #131516;
+	--bg-surface-elevated-1: #181a1b;
+	--bg-surface-elevated-2: var(--neutral-800);
+	--bg-overlay: #181a1b;
+	--bg-brand-muted: #1f67d233;
 	/* TODO(design): dark value for bg-brand-transparent-subtle unobserved;
 	   one alpha step below muted until confirmed. */
-	--ld-bg-brand-faint: #1f67d21f;
+	--bg-brand-faint: #1f67d21f;
 
 	/* Text */
-	--ld-text-primary: #ffffff;
-	--ld-text-secondary: #c6c6c6;
-	--ld-text-tertiary: var(--ld-neutral-500); /* Text/tertiary */
-	--ld-text-disabled: #2f3336;
-	--ld-text-link: #4b86db;
-	--ld-text-data-up: var(--ld-green-500);
-	--ld-text-data-down: var(--ld-red-500);
+	--text-primary: #ffffff;
+	--text-secondary: #c6c6c6;
+	--text-tertiary: var(--neutral-500); /* Text/tertiary */
+	--text-disabled: #2f3336;
+	--text-link: #4b86db;
+	--text-data-up: var(--green-500);
+	--text-data-down: var(--red-500);
 	/* TODO(design): the library keeps the alt pair at the 500s across modes,
 	   but blue/violet 500 are ~3.4:1 on dark surfaces — under AA for text.
 	   Interim owner lifts (blue matches dark Text/links; violet ~5.5:1),
 	   same pattern as text-link-on-tint. Chart fills stay on the 500s. */
-	--ld-text-data-up-alt: #4b86db;
-	--ld-text-data-down-alt: #a674ec;
-	--ld-text-warning: #ffa455; /* Text/Warning */
+	--text-data-up-alt: #4b86db;
+	--text-data-down-alt: #a674ec;
+	--text-warning: #ffa455; /* Text/Warning */
 
 	/* Stroke */
-	--ld-border-very-subtle: #ffffff08;
-	--ld-border-subtle: #ffffff0f;
-	--ld-border-medium: #ffffff1f;
-	--ld-border-strong: #ffffff29;
+	--border-very-subtle: #ffffff08;
+	--border-subtle: #ffffff0f;
+	--border-medium: #ffffff1f;
+	--border-strong: #ffffff29;
 
 	/* States */
-	--ld-bg-screen-dim: #090b0cb3; /* dialogs' shipped 70%; shadows are invisible in dark */
+	--bg-screen-dim: #090b0cb3; /* dialogs' shipped 70%; shadows are invisible in dark */
 
-	--ld-hover-row: #ffffff0f; /* States/hover-neutral-normal (dark) */
-	--ld-hover-card: #ffffff08; /* States/hover-neutral-subtle (dark) */
-	--ld-text-link-on-tint: #6a9be0; /* ~5.4:1 on brand-muted over surface (AA) */
+	--hover-row: #ffffff0f; /* States/hover-neutral-normal (dark) */
+	--hover-card: #ffffff08; /* States/hover-neutral-subtle (dark) */
+	--text-link-on-tint: #6a9be0; /* ~5.4:1 on brand-muted over surface (AA) */
 
 	/* Chips */
-	--ld-chip-bg: var(--ld-neutral-800);
-	--ld-chip-text: #c6c6c6;
+	--chip-bg: var(--neutral-800);
+	--chip-text: #c6c6c6;
 
 	/* Chart chrome (today's exact dark literals) */
-	--ld-chart-text: rgba(255, 255, 255, 1);
-	--ld-chart-axis-label: #878787;
-	--ld-chart-legend-page-inactive: #87878780;
-	--ld-chart-gridline: rgba(255, 255, 255, 0.02);
-	--ld-chart-area-gradient-to: rgba(0, 0, 0, 0.2);
-	--ld-chart-zoom-border: rgba(255, 255, 255, 0.4);
-	--ld-chart-zoom-handle-border: rgba(255, 255, 255, 0.9);
-	--ld-chart-zoom-handle-fill: rgba(0, 0, 0, 0.4);
-	--ld-chart-zoom-emphasis-border: rgba(255, 255, 255, 1);
-	--ld-chart-zoom-emphasis-move-fill: rgba(255, 255, 255, 0.2);
-	--ld-chart-zoom-filler: rgba(0, 0, 0, 0.1);
-	--ld-chart-export-bg: #0b1214;
-	--ld-chart-export-text: #ffffff;
-	--ld-chart-export-text-muted: rgba(255, 255, 255, 0.8);
-	--ld-chart-export-legend-text: rgba(255, 255, 255, 0.9);
-	--ld-chart-export-legend-inactive: rgba(255, 255, 255, 0.5);
-	--ld-chart-logo-bg: #1a1a1a;
-	--ld-chart-export-label-stroke: rgba(0, 0, 0, 0.7);
-	--ld-chart-treemap-label: #fff;
+	--chart-text: rgba(255, 255, 255, 1);
+	--chart-axis-label: #878787;
+	--chart-legend-page-inactive: #87878780;
+	--chart-gridline: rgba(255, 255, 255, 0.02);
+	--chart-area-gradient-to: rgba(0, 0, 0, 0.2);
+	--chart-zoom-border: rgba(255, 255, 255, 0.4);
+	--chart-zoom-handle-border: rgba(255, 255, 255, 0.9);
+	--chart-zoom-handle-fill: rgba(0, 0, 0, 0.4);
+	--chart-zoom-emphasis-border: rgba(255, 255, 255, 1);
+	--chart-zoom-emphasis-move-fill: rgba(255, 255, 255, 0.2);
+	--chart-zoom-filler: rgba(0, 0, 0, 0.1);
+	--chart-export-bg: #0b1214;
+	--chart-export-text: #ffffff;
+	--chart-export-text-muted: rgba(255, 255, 255, 0.8);
+	--chart-export-legend-text: rgba(255, 255, 255, 0.9);
+	--chart-export-legend-inactive: rgba(255, 255, 255, 0.5);
+	--chart-logo-bg: #1a1a1a;
+	--chart-export-label-stroke: rgba(0, 0, 0, 0.7);
+	--chart-treemap-label: #fff;
 }
 
 /* ----------------------------------------------------------------------------
@@ -204,77 +204,77 @@ html.dark {
    values in all new code).
 ---------------------------------------------------------------------------- */
 @theme inline {
-	--color-page: var(--ld-bg-page);
-	--color-surface: var(--ld-bg-surface);
-	--color-surface-elevated-1: var(--ld-bg-surface-elevated-1);
-	--color-surface-elevated-2: var(--ld-bg-surface-elevated-2);
-	--color-overlay: var(--ld-bg-overlay);
-	--color-brand: var(--ld-bg-brand);
-	--color-brand-muted: var(--ld-bg-brand-muted);
-	--color-brand-faint: var(--ld-bg-brand-faint);
-	--color-on-brand: var(--ld-text-on-brand);
+	--color-page: var(--bg-page);
+	--color-surface: var(--bg-surface);
+	--color-surface-elevated-1: var(--bg-surface-elevated-1);
+	--color-surface-elevated-2: var(--bg-surface-elevated-2);
+	--color-overlay: var(--bg-overlay);
+	--color-brand: var(--bg-brand);
+	--color-brand-muted: var(--bg-brand-muted);
+	--color-brand-faint: var(--bg-brand-faint);
+	--color-on-brand: var(--text-on-brand);
 	/* Text hierarchy — by convention text-* only (bg-primary would be
 	   nonsense; enforced by review, documented in design.md) */
-	--color-primary: var(--ld-text-primary);
-	--color-secondary: var(--ld-text-secondary);
-	--color-tertiary: var(--ld-text-tertiary);
-	--color-disabled: var(--ld-text-disabled);
-	--color-link: var(--ld-text-link);
-	--color-link-on-tint: var(--ld-text-link-on-tint);
-	--color-data-up: var(--ld-text-data-up);
-	--color-data-down: var(--ld-text-data-down);
-	--color-data-up-alt: var(--ld-text-data-up-alt);
-	--color-data-down-alt: var(--ld-text-data-down-alt);
-	--color-warning: var(--ld-text-warning);
+	--color-primary: var(--text-primary);
+	--color-secondary: var(--text-secondary);
+	--color-tertiary: var(--text-tertiary);
+	--color-disabled: var(--text-disabled);
+	--color-link: var(--text-link);
+	--color-link-on-tint: var(--text-link-on-tint);
+	--color-data-up: var(--text-data-up);
+	--color-data-down: var(--text-data-down);
+	--color-data-up-alt: var(--text-data-up-alt);
+	--color-data-down-alt: var(--text-data-down-alt);
+	--color-warning: var(--text-warning);
 	/* State overlays — painted over bg-surface; also used for focus-visible */
-	--color-hover-row: var(--ld-hover-row);
-	--color-hover-card: var(--ld-hover-card);
+	--color-hover-row: var(--hover-row);
+	--color-hover-card: var(--hover-card);
 }
 
 /* Border-color utilities get explicit names ("--color-border-subtle" would
    generate the class `border-border-subtle`). Small, flat, variant-free —
    within the @utility policy in design.md. */
 @utility border-very-subtle {
-	border-color: var(--ld-border-very-subtle);
+	border-color: var(--border-very-subtle);
 }
 @utility border-subtle {
-	border-color: var(--ld-border-subtle);
+	border-color: var(--border-subtle);
 }
 @utility border-medium {
-	border-color: var(--ld-border-medium);
+	border-color: var(--border-medium);
 }
 @utility border-strong {
-	border-color: var(--ld-border-strong);
+	border-color: var(--border-strong);
 }
 @utility border-brand {
-	border-color: var(--ld-border-brand);
+	border-color: var(--border-brand);
 }
 @utility border-b-brand {
-	border-bottom-color: var(--ld-border-brand);
+	border-bottom-color: var(--border-brand);
 }
 @utility bg-border-medium {
-	background-color: var(--ld-border-medium);
+	background-color: var(--border-medium);
 }
 @utility bg-border-subtle {
-	background-color: var(--ld-border-subtle);
+	background-color: var(--border-subtle);
 }
 @utility bg-screen-dim {
-	background-color: var(--ld-bg-screen-dim);
+	background-color: var(--bg-screen-dim);
 }
 @utility text-border-subtle {
-	color: var(--ld-border-subtle);
+	color: var(--border-subtle);
 }
 /* Keyboard focus indicator matching the global :focus-visible base rule in
    tailwind.css. Needed as a utility only for Ariakit virtual focus
    (data-focus-visible:focus-ring — composite rows never receive DOM focus,
    so the base rule cannot fire). */
 @utility focus-ring {
-	outline: 2px solid var(--ld-border-brand);
+	outline: 2px solid var(--border-brand);
 	outline-offset: -2px;
 }
 /* On solid brand fills, where a brand ring would be invisible. */
 @utility focus-ring-on-brand {
-	outline: 2px solid var(--ld-text-on-brand);
+	outline: 2px solid var(--text-on-brand);
 	outline-offset: -2px;
 }
 
@@ -287,17 +287,17 @@ html.dark {
    and table rows) may keep hover:bg-hover-row. */
 .hover-wash:not(:disabled):not([aria-disabled='true']):hover,
 .hover-wash:not(:disabled):not([aria-disabled='true']):focus-visible {
-	background-image: linear-gradient(var(--ld-hover-row), var(--ld-hover-row));
+	background-image: linear-gradient(var(--hover-row), var(--hover-row));
 }
 
-/* Card-strength variant (--ld-hover-card) for interactive tiles. */
+/* Card-strength variant (--hover-card) for interactive tiles. */
 .hover-wash-card:not(:disabled):not([aria-disabled='true']):hover,
 .hover-wash-card:not(:disabled):not([aria-disabled='true']):focus-visible {
-	background-image: linear-gradient(var(--ld-hover-card), var(--ld-hover-card));
+	background-image: linear-gradient(var(--hover-card), var(--hover-card));
 }
 
 /* Row-hover companion for cells that must keep an opaque bg (sticky table
    columns): washes when the ancestor .group is hovered. */
 .group:hover .group-hover-wash {
-	background-image: linear-gradient(var(--ld-hover-row), var(--ld-hover-row));
+	background-image: linear-gradient(var(--hover-row), var(--hover-row));
 }

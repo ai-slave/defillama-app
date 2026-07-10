@@ -95,7 +95,7 @@ export function NavItemContent({
 				{attention ? (
 					<span
 						aria-hidden
-						className="inline-block size-2 shrink-0 rounded-full bg-data-down shadow-[0_0_0_2px_var(--ld-bg-page)]"
+						className="inline-block size-2 shrink-0 rounded-full bg-data-down shadow-[0_0_0_2px_var(--bg-page)]"
 					/>
 				) : null}
 				{freeTrial ? <span className={freeTrialBadgeStyles}>Try free</span> : null}

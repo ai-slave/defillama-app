@@ -223,7 +223,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 						name="bookmark"
 						height={16}
 						width={16}
-						style={{ fill: showOnlyWatchlist ? 'var(--ld-text-primary)' : 'none' }}
+						style={{ fill: showOnlyWatchlist ? 'var(--text-primary)' : 'none' }}
 					/>
 					{showOnlyWatchlist ? 'Show All' : 'Show Watchlist'}
 				</Button>
@@ -233,12 +233,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 					size="md"
 					aria-pressed={showOnlyInsider}
 				>
-					<Icon
-						name="key"
-						height={16}
-						width={16}
-						style={{ fill: showOnlyInsider ? 'var(--ld-text-primary)' : 'none' }}
-					/>
+					<Icon name="key" height={16} width={16} style={{ fill: showOnlyInsider ? 'var(--text-primary)' : 'none' }} />
 					{showOnlyInsider ? 'Show All' : 'Show Insiders Only'}
 				</Button>
 				{viewMode === 'Week' || viewMode === 'Month' ? (

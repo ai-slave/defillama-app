@@ -52,7 +52,7 @@ export function TokenRightsPieChart({
 					key={segment.label}
 					d={PIE_SEGMENT_PATHS[index]}
 					fill={PIE_TONE_COLORS[segment.tone]}
-					stroke="var(--ld-bg-surface)"
+					stroke="var(--bg-surface)"
 					strokeWidth="4"
 				/>
 			))}

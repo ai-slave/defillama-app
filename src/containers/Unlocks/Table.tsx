@@ -277,7 +277,7 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 						name="bookmark"
 						height={16}
 						width={16}
-						style={{ fill: showOnlyWatchlist ? 'var(--ld-text-primary)' : 'none' }}
+						style={{ fill: showOnlyWatchlist ? 'var(--text-primary)' : 'none' }}
 					/>
 					{showOnlyWatchlist ? 'Show All' : 'Show Watchlist'}
 				</Button>

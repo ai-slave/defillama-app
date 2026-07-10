@@ -80,6 +80,14 @@ This file tracks design-system audit notes before code changes are made.
   were removed. Feedback tokens moved to `semantics.css`, runtime/layout variables and
   sanctioned product namespaces were left unchanged, and `lint:tokens` now ratchets
   legacy-token references independently in core and excluded-product buckets.
+- Follow-up resolution (2026-07-10): primitives, semantics, component tokens, and chart
+  tokens now own their clean custom-property names. Tailwind registrations, runtime
+  chart readers, direct CSS consumers, documentation, and tests were renamed together;
+  a zero-baseline `lint:tokens` rule prevents reintroducing the `--ld-*` prefix. The
+  remaining core hardcoded-color baseline is documented branded/data artwork rather than
+  reusable UI chrome. The Tailwind v3 default-border compatibility shim remains because
+  removing it would require visual review of thousands of implicit-border consumers and
+  is not a behavior-neutral token rename.
 
 ### Resolved Owner Decisions From 2026-07-07
 

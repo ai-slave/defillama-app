@@ -88,6 +88,11 @@ const RULES = [
 		id: 'legacy-token-reference',
 		description: 'legacy token references are quarantined; use semantic utilities in new code',
 		pattern: /--legacy-[a-zA-Z0-9-]+/g
+	},
+	{
+		id: 'prefixed-design-token',
+		description: 'the semantic design system owns clean custom-property names; do not reintroduce the --ld- prefix',
+		pattern: /--ld-[a-zA-Z0-9-]+/g
 	}
 ]
 
@@ -108,7 +113,11 @@ for (const file of files) {
 	const content = fs.readFileSync(path.join(ROOT, file), 'utf8')
 	const bucket = isExcludedProductFile(file) ? 'excluded' : 'core'
 	for (const rule of RULES) {
-		if (file.endsWith('.css') && !['explicit-thin-scrollbar', 'legacy-token-reference'].includes(rule.id)) continue
+		if (
+			file.endsWith('.css') &&
+			!['explicit-thin-scrollbar', 'legacy-token-reference', 'prefixed-design-token'].includes(rule.id)
+		)
+			continue
 		const matches = content.match(rule.pattern)
 		if (matches) {
 			counts[bucket][rule.id] += matches.length

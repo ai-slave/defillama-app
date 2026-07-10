@@ -650,7 +650,7 @@ function withBybitRowHighlight(cols: ColumnDef<MicaExchange, any>[]): ColumnDef<
 						aria-hidden="true"
 						className="absolute inset-0 -z-10"
 						style={{
-							background: 'color-mix(in oklch, var(--success) 16%, var(--ld-bg-surface))',
+							background: 'color-mix(in oklch, var(--success) 16%, var(--bg-surface))',
 							boxShadow: index === 0 ? 'inset 3px 0 0 0 color-mix(in oklch, var(--success) 85%, black 15%)' : undefined
 						}}
 					/>

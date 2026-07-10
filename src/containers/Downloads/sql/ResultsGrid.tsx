@@ -68,7 +68,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 					style={{
 						gridTemplateColumns: gridTemplate,
 						height: HEADER_HEIGHT,
-						background: 'var(--ld-bg-surface)'
+						background: 'var(--bg-surface)'
 					}}
 				>
 					{columnMeta.map((col, i) => {

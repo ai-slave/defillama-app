@@ -22,13 +22,13 @@
 
 :root {
 	/* Neutral (achromatic ramp) */
-	--ld-neutral-500: #878787; /* Colors/Neutral/500 */
-	--ld-neutral-800: #232628; /* Colors/Neutral/800 */
+	--neutral-500: #878787; /* Colors/Neutral/500 */
+	--neutral-800: #232628; /* Colors/Neutral/800 */
 
 	/* Accents — "500-default" resolves to the same value in light and dark */
-	--ld-blue-500: #1f67d2; /* Colors/Blue/500 */
-	--ld-green-500: #3eb84f; /* Colors/Green/500 */
-	--ld-red-500: #e24a42; /* Colors/Red/500 */
-	--ld-violet-500: #9333ea; /* Colors/Violet/500 */
-	--ld-orange-500: #ff8e2b; /* Colors/Orange/500 */
+	--blue-500: #1f67d2; /* Colors/Blue/500 */
+	--green-500: #3eb84f; /* Colors/Green/500 */
+	--red-500: #e24a42; /* Colors/Red/500 */
+	--violet-500: #9333ea; /* Colors/Violet/500 */
+	--orange-500: #ff8e2b; /* Colors/Orange/500 */
 }

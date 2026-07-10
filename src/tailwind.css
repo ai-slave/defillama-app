@@ -149,7 +149,7 @@
 	   focus-visible:focus-ring-on-brand (white ring on solid brand fills,
 	   where a brand ring is invisible). */
 	:focus-visible {
-		outline: 2px solid var(--ld-border-brand);
+		outline: 2px solid var(--border-brand);
 		outline-offset: -2px;
 	}
 
@@ -158,7 +158,7 @@
 	   explicit exceptions such as scrollbar-none remain authoritative. */
 	:where(body *) {
 		scrollbar-width: thin;
-		scrollbar-color: color-mix(in srgb, var(--ld-neutral-500) 55%, transparent) transparent;
+		scrollbar-color: color-mix(in srgb, var(--neutral-500) 55%, transparent) transparent;
 	}
 
 	:where(body *)::-webkit-scrollbar {
@@ -171,12 +171,12 @@
 	}
 
 	:where(body *)::-webkit-scrollbar-thumb {
-		background: color-mix(in srgb, var(--ld-neutral-500) 55%, transparent);
+		background: color-mix(in srgb, var(--neutral-500) 55%, transparent);
 		border-radius: 3px;
 	}
 
 	:where(body *)::-webkit-scrollbar-thumb:hover {
-		background: var(--ld-neutral-500);
+		background: var(--neutral-500);
 	}
 }
 
@@ -393,7 +393,7 @@
 
 	/*
 	  Legacy variables, re-pointed at the Llama Design System semantics
-	  (src/styles/semantics.css). The --ld-* tokens flip under html.dark, so
+	  (src/styles/semantics.css). Semantic tokens flip under html.dark, so
 	  aliased variables need no dark override — only the remaining literals
 	  are re-declared in html.dark below. Do not add new consumers of these
 	  names: new code uses the registered utilities (bg-surface, text-primary,
@@ -401,18 +401,18 @@
 	*/
 	:root {
 		/* Text Colors */
-		--legacy-text-primary: var(--ld-text-primary); /* Main text */
-		--legacy-text-secondary: var(--ld-text-secondary); /* Secondary text */
-		--legacy-text-tertiary: var(--ld-text-tertiary); /* Tertiary text */
-		--legacy-text-form: var(--ld-text-secondary); /* Form controls & buttons */
-		--legacy-text-label: var(--ld-text-secondary); /* Labels & descriptions */
-		--legacy-text-meta: var(--ld-text-tertiary); /* Metadata & governance */
+		--legacy-text-primary: var(--text-primary); /* Main text */
+		--legacy-text-secondary: var(--text-secondary); /* Secondary text */
+		--legacy-text-tertiary: var(--text-tertiary); /* Tertiary text */
+		--legacy-text-form: var(--text-secondary); /* Form controls & buttons */
+		--legacy-text-label: var(--text-secondary); /* Labels & descriptions */
+		--legacy-text-meta: var(--text-tertiary); /* Metadata & governance */
 		/*
-		  Deliberately NOT --ld-text-disabled: Figma's Text/disabled is for
+		  Deliberately NOT --text-disabled: Figma's Text/disabled is for
 		  disabled controls. This legacy variable means "dimmed but readable"
 		  while old callsites migrate to text-secondary/text-tertiary.
 		*/
-		--legacy-text-disabled: var(--ld-text-tertiary); /* Legacy dimmed-readable alias */
+		--legacy-text-disabled: var(--text-tertiary); /* Legacy dimmed-readable alias */
 
 		/* Background Colors */
 		/*
@@ -421,56 +421,56 @@
 		  made them visibly gray. In dark they now match card color and rely
 		  on the border for separation — the Figma overlay pattern.
 		*/
-		--legacy-bg-main: var(--ld-bg-surface); /* Main background */
-		--legacy-bg-secondary: var(--ld-bg-surface-elevated-1); /* Secondary background */
-		--legacy-bg-tertiary: var(--ld-bg-surface-elevated-2); /* Tertiary background */
-		--legacy-bg-border: var(--ld-border-medium); /* Border background */
-		--legacy-bg-muted: var(--ld-text-tertiary); /* Muted background */
-		--legacy-bg-card: var(--ld-bg-surface); /* Card background */
+		--legacy-bg-main: var(--bg-surface); /* Main background */
+		--legacy-bg-secondary: var(--bg-surface-elevated-1); /* Secondary background */
+		--legacy-bg-tertiary: var(--bg-surface-elevated-2); /* Tertiary background */
+		--legacy-bg-border: var(--border-medium); /* Border background */
+		--legacy-bg-muted: var(--text-tertiary); /* Muted background */
+		--legacy-bg-card: var(--bg-surface); /* Card background */
 		--legacy-bg-glass: oklch(0.991 0.001 106.4); /* Glass background */
-		--legacy-bg-surface: var(--ld-bg-surface-elevated-1); /* Surface highlight (was dark-only) */
-		--legacy-bg-input: var(--ld-bg-surface-elevated-1); /* Input/form background */
+		--legacy-bg-surface: var(--bg-surface-elevated-1); /* Surface highlight (was dark-only) */
+		--legacy-bg-input: var(--bg-surface-elevated-1); /* Input/form background */
 
 		/* Brand Colors */
-		--legacy-primary: var(--ld-bg-brand);
-		--legacy-primary-hover: var(--ld-bg-brand-muted);
+		--legacy-primary: var(--bg-brand);
+		--legacy-primary-hover: var(--bg-brand-muted);
 
 		/* Utility Colors */
-		--legacy-divider: var(--ld-border-subtle);
-		--legacy-link: var(--ld-text-link);
-		--legacy-blue: var(--ld-bg-brand);
+		--legacy-divider: var(--border-subtle);
+		--legacy-link: var(--text-link);
+		--legacy-blue: var(--bg-brand);
 		--legacy-dlnews: oklch(0.241 0.056 240.6);
 		--legacy-apy-pink: oklch(0.673 0.237 356.7);
 		--legacy-apy-blue: oklch(0.65 0.152 257.5);
 
 		/* Link Colors */
-		--legacy-link-bg: var(--ld-bg-brand-muted); /* Figma bg-brand-transparent: 12% light / 20% dark */
+		--legacy-link-bg: var(--bg-brand-muted); /* Figma bg-brand-transparent: 12% light / 20% dark */
 		/*
 		  Interim literals: hover needs one alpha step above --legacy-link-bg and the
 		  library has no token for it yet (flagged to design). Dark override
 		  below.
 		*/
 		--legacy-link-hover-bg: #1f67d233;
-		--legacy-link-text: var(--ld-text-link);
-		--legacy-link-active-bg: var(--ld-bg-brand);
+		--legacy-link-text: var(--text-link);
+		--legacy-link-active-bg: var(--bg-brand);
 
 		/* Button Colors */
-		--legacy-btn-bg: var(--ld-bg-surface-elevated-1);
-		--legacy-btn-hover-bg: var(--ld-bg-surface-elevated-2);
-		--legacy-btn2-bg: var(--ld-bg-brand-muted);
+		--legacy-btn-bg: var(--bg-surface-elevated-1);
+		--legacy-btn-hover-bg: var(--bg-surface-elevated-2);
+		--legacy-btn2-bg: var(--bg-brand-muted);
 		--legacy-btn2-hover-bg: oklch(0.571 0.191 258.5 / 0.2);
-		--legacy-btn2-text: var(--ld-bg-brand);
+		--legacy-btn2-text: var(--bg-brand);
 		--legacy-switch-bg: oklch(0.533 0.18 259 / 0.25);
 		--legacy-switch-border: oklch(0.533 0.18 259 / 0.5);
 		--legacy-link-button: oklch(0.533 0.18 259 / 0.12);
 		--legacy-link-button-hover: oklch(0.533 0.18 259 / 0.24);
 
 		/* Layout Colors */
-		--legacy-app-bg: var(--ld-bg-page);
-		--legacy-cards-bg: var(--ld-bg-surface);
-		--legacy-cards-border: var(--ld-border-medium);
-		--legacy-form-control-border: var(--ld-border-medium);
-		--legacy-old-blue: var(--ld-bg-brand);
+		--legacy-app-bg: var(--bg-page);
+		--legacy-cards-bg: var(--bg-surface);
+		--legacy-cards-border: var(--border-medium);
+		--legacy-form-control-border: var(--border-medium);
+		--legacy-old-blue: var(--bg-brand);
 	}
 
 	* {
@@ -486,7 +486,7 @@
 
 	html.dark {
 		/*
-		  Everything aliased to --ld-* tokens in :root flips automatically;
+		  Everything aliased to semantic tokens in :root flips automatically;
 		  only variables that still carry a literal dark value live here.
 		*/
 		--legacy-bg-glass: oklch(0.157 0.012 206.6 / 0.7); /* Glass background */
@@ -605,7 +605,7 @@
 /* ------------------------------- Components ------------------------------- */
 @layer components {
 	[data-backdrop] {
-		background-color: var(--ld-bg-screen-dim);
+		background-color: var(--bg-screen-dim);
 	}
 
 	/* ECharts HTML tooltips (renderMode html / default DOM tooltips). The chart
@@ -615,11 +615,11 @@
 	/* ECharts creates the tooltip node at full chart width before it has content.
 	   Avoid turning that zero-height placeholder into a two-pixel bordered bar. */
 	.defillama-echarts-tooltip:not(:empty) {
-		background-color: var(--ld-bg-overlay) !important;
-		border: 1px solid var(--ld-border-medium) !important;
+		background-color: var(--bg-overlay) !important;
+		border: 1px solid var(--border-medium) !important;
 		border-radius: 6px !important;
 		box-shadow: 0 12px 32px -12px rgb(0 0 0 / 0.25) !important;
-		color: var(--ld-text-primary) !important;
+		color: var(--text-primary) !important;
 	}
 
 	#fees-generated-chart > div > div > svg > g > image {
