@@ -145,6 +145,26 @@ function normalizeTokenRightsValue(value: string): string {
 	return value.trim().toLowerCase()
 }
 
+export type TokenRightsPieTone = 'positive' | 'negative' | 'warning'
+
+export function getEquityPieTone(fundraising: string[], equityRevenueCapture: string | null): TokenRightsPieTone {
+	if (
+		fundraising.some((value) => normalizeTokenRightsValue(value).includes('equity')) ||
+		(equityRevenueCapture !== null && normalizeTokenRightsValue(equityRevenueCapture) === 'yes')
+	) {
+		return 'negative'
+	}
+
+	if (
+		fundraising.length === 0 ||
+		(fundraising.length === 1 && normalizeTokenRightsValue(fundraising[0]) === 'unknown')
+	) {
+		return 'warning'
+	}
+
+	return 'positive'
+}
+
 function splitUtilityLabels(value: string | null): string[] {
 	if (!value) return []
 	return value

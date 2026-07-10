@@ -211,11 +211,9 @@ describe('buildTokensSourceRows', () => {
 			buybacks: false,
 			dividends: true,
 			burns: true,
-			burnsStatus: 'Active'
+			burnsStatus: 'Active',
+			equityTone: 'warning'
 		})
-		expect(ethena.rights?.pieGradient).toContain('from -30deg')
-		expect(ethena.rights?.pieGradient).toContain('var(--success) 180deg 240deg')
-		expect(ethena.rights?.pieGradient).toContain('var(--success) 240deg 300deg')
 
 		expect(result.rows[1]).toMatchObject({
 			id: 'unmapped',
@@ -418,6 +416,7 @@ describe('buildTokensSourceRows', () => {
 					'Revenue Decisions': ['None'],
 					Buybacks: ['BUY'],
 					Dividends: ['None'],
+					Fundraising: ['Token Sale'],
 					Burns: 'None',
 					'DefiLlama ID': 'buybacks'
 				}),
@@ -428,6 +427,7 @@ describe('buildTokensSourceRows', () => {
 					'Revenue Decisions': ['None'],
 					Buybacks: ['None'],
 					Dividends: ['None'],
+					Fundraising: ['Unknown'],
 					Burns: 'None',
 					'DefiLlama ID': 'none'
 				})
@@ -443,12 +443,8 @@ describe('buildTokensSourceRows', () => {
 		const buybacksOnly = result.rows.find((row) => row.id === 'buybacks')?.rights
 		const noAccrual = result.rows.find((row) => row.id === 'none')?.rights
 
-		expect(buybacksOnly).toMatchObject({ buybacks: true, dividends: false })
-		expect(buybacksOnly?.pieGradient).toContain('var(--success) 180deg 240deg')
-		expect(buybacksOnly?.pieGradient).toContain('var(--success) 240deg 300deg')
-		expect(noAccrual).toMatchObject({ buybacks: false, dividends: false })
-		expect(noAccrual?.pieGradient).toContain('var(--error) 180deg 240deg')
-		expect(noAccrual?.pieGradient).toContain('var(--error) 240deg 300deg')
+		expect(buybacksOnly).toMatchObject({ buybacks: true, dividends: false, equityTone: 'positive' })
+		expect(noAccrual).toMatchObject({ buybacks: false, dividends: false, equityTone: 'warning' })
 	})
 
 	it('does not join symbol-only market metrics when multiple tokens share the symbol', () => {

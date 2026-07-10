@@ -7,6 +7,7 @@ import { fetchTokenRightsEntries } from '~/containers/TokenRights/server/dataset
 import type { ITokenRightsData } from '~/containers/TokenRights/types'
 import {
 	formatFeeSwitchStatus,
+	getEquityPieTone,
 	getTokenRightsPrimaryValueLabel,
 	parseTokenRightsEntry
 } from '~/containers/TokenRights/utils'
@@ -132,37 +133,16 @@ function buildMarketsMap(
 	return map
 }
 
-function getRightsPieGradient(rights: {
-	treasury: boolean
-	revenue: boolean
-	burns: boolean
-	dividends: boolean
-	buybacks: boolean
-	governance: boolean
-}): string {
-	const activeColor = 'var(--success)'
-	const inactiveColor = 'var(--error)'
-	return `conic-gradient(from -30deg, ${rights.treasury ? activeColor : inactiveColor} 0deg 60deg, ${rights.revenue ? activeColor : inactiveColor} 60deg 120deg, ${rights.burns ? activeColor : inactiveColor} 120deg 180deg, ${rights.dividends ? activeColor : inactiveColor} 180deg 240deg, ${rights.buybacks ? activeColor : inactiveColor} 240deg 300deg, ${rights.governance ? activeColor : inactiveColor} 300deg 360deg)`
-}
-
 function getTokenRightsSummary(parsed: ITokenRightsData): TokensRightsSummary {
 	const treasury = parsed.decisions.treasury.displayTokens.length > 0
 	const revenue = parsed.decisions.revenue.displayTokens.length > 0
 	const burns = parsed.valueAccrual.burns.isActive
 	const dividends = parsed.valueAccrual.dividends.displayTokens.length > 0
 	const buybacks = parsed.valueAccrual.buybacks.displayTokens.length > 0
-	const structuralDistribution = dividends || buybacks
+	const equityTone = getEquityPieTone(parsed.alignment.fundraising, parsed.alignment.equityRevenueCapture)
 	const governance = parsed.governance.decisionTokenDisplay.displayTokens.length > 0
 
 	return {
-		pieGradient: getRightsPieGradient({
-			treasury,
-			revenue,
-			burns,
-			dividends: structuralDistribution,
-			buybacks: structuralDistribution,
-			governance
-		}),
 		protocolName: parsed.overview.protocolName,
 		identityTokens: parsed.overview.identityTokens,
 		utilityItems: parsed.overview.utilityItems,
@@ -182,6 +162,7 @@ function getTokenRightsSummary(parsed: ITokenRightsData): TokensRightsSummary {
 		burns,
 		burnsStatus: parsed.valueAccrual.burns.status || 'None',
 		equityRevenueCapture: parsed.alignment.equityRevenueCapture ?? 'Unknown',
+		equityTone,
 		fundraisingLabel: parsed.alignment.fundraisingLabel,
 		associatedEntities: parsed.alignment.associatedEntities
 	}

@@ -1,4 +1,6 @@
-export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 8
+import type { TokenRightsPieTone } from '~/containers/TokenRights/utils'
+
+export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 9
 
 export const TOKENS_SORT_KEYS = [
 	'rank',
@@ -27,7 +29,6 @@ export type TokensSortBy = (typeof TOKENS_SORT_KEYS)[number]
 export type TokensDisplayTone = 'positive' | 'negative' | 'neutral'
 
 export interface TokensRightsSummary {
-	pieGradient: string
 	protocolName: string
 	identityTokens: string[]
 	utilityItems: string[]
@@ -47,6 +48,7 @@ export interface TokensRightsSummary {
 	burns: boolean
 	burnsStatus: string
 	equityRevenueCapture: string
+	equityTone: TokenRightsPieTone
 	fundraisingLabel: string | null
 	associatedEntities: string[]
 }

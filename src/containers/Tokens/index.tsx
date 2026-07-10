@@ -136,17 +136,21 @@ function RightsChipList({ items, tone, wrap = false }: { items: string[]; tone: 
 	)
 }
 
+function getRightsPieSegments(rights: TokensRightsSummary): Parameters<typeof TokenRightsPieChart>[0]['segments'] {
+	const hasValueAccrual = rights.buybacks || rights.dividends
+	return [
+		{ label: 'Treasury', tone: rights.treasury ? 'positive' : 'negative' },
+		{ label: 'Revenue', tone: rights.revenue ? 'positive' : 'negative' },
+		{ label: 'Burns', tone: rights.burns ? 'positive' : 'negative' },
+		{ label: 'Equity', tone: rights.equityTone },
+		{ label: 'Value Accrual', tone: hasValueAccrual ? 'positive' : 'negative' },
+		{ label: 'Governance', tone: rights.governance ? 'positive' : 'negative' }
+	]
+}
+
 function RightsPopover({ rights, fullRightsHref }: { rights: TokensRightsSummary; fullRightsHref: string | null }) {
 	const hasPrimaryValueAccrual = rights.primaryValue !== null || rights.primaryDetails !== null
-	const hasStructuralDistribution = rights.buybacks || rights.dividends
-	const pieSegments = [
-		{ label: 'Treasury', active: rights.treasury },
-		{ label: 'Revenue', active: rights.revenue },
-		{ label: 'Burns', active: rights.burns },
-		{ label: 'Dividends', active: hasStructuralDistribution },
-		{ label: 'Buybacks', active: hasStructuralDistribution },
-		{ label: 'Governance', active: rights.governance }
-	]
+	const pieSegments = getRightsPieSegments(rights)
 	return (
 		<div className="w-[min(24rem,var(--popover-available-width))] whitespace-normal text-primary">
 			<div className="flex min-w-0 flex-col gap-2.5">
@@ -205,12 +209,7 @@ function RightsPie({ rights, fullRightsHref }: { rights: TokensRightsSummary | n
 			placement="left"
 			className="!inline-flex w-fit"
 		>
-			<span
-				role="img"
-				aria-label="Token rights summary"
-				className="inline-block size-7 rounded-full border border-medium"
-				style={{ background: rights.pieGradient }}
-			/>
+			<TokenRightsPieChart segments={getRightsPieSegments(rights)} showLabels={false} className="size-7 shrink-0" />
 		</Hovercard>
 	)
 }

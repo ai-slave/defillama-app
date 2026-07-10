@@ -10,7 +10,7 @@ import { Card } from '~/ui/Card'
 import { formattedNum } from '~/utils'
 import { TokenRightsPieChart } from './TokenRightsPieChart'
 import type { ITokenRightsData, ITokenRightsParsedLink, ITokenRightsTokenDisplay } from './types'
-import { formatFeeSwitchStatus, getTokenRightsPrimaryValueLabel } from './utils'
+import { formatFeeSwitchStatus, getEquityPieTone, getTokenRightsPrimaryValueLabel } from './utils'
 
 const TOOLTIPS = {
 	'Governance Decisions':
@@ -392,15 +392,15 @@ function TokenRightsOverviewView({
 	const displayName = overview.protocolName || name
 	const primaryValueLabel = getTokenRightsPrimaryValueLabel(valueAccrual.primary)
 	const hasPrimaryValueAccrual = primaryValueLabel !== null || valueAccrual.details !== null
-	const hasStructuralDistribution =
+	const hasValueAccrual =
 		valueAccrual.dividends.displayTokens.length > 0 || valueAccrual.buybacks.displayTokens.length > 0
-	const pieSegments = [
-		{ label: 'Treasury', active: decisions.treasury.displayTokens.length > 0 },
-		{ label: 'Revenue', active: decisions.revenue.displayTokens.length > 0 },
-		{ label: 'Burns', active: valueAccrual.burns.isActive },
-		{ label: 'Dividends', active: hasStructuralDistribution },
-		{ label: 'Buybacks', active: hasStructuralDistribution },
-		{ label: 'Governance', active: governance.decisionTokenDisplay.displayTokens.length > 0 }
+	const pieSegments: Parameters<typeof TokenRightsPieChart>[0]['segments'] = [
+		{ label: 'Treasury', tone: decisions.treasury.displayTokens.length > 0 ? 'positive' : 'negative' },
+		{ label: 'Revenue', tone: decisions.revenue.displayTokens.length > 0 ? 'positive' : 'negative' },
+		{ label: 'Burns', tone: valueAccrual.burns.isActive ? 'positive' : 'negative' },
+		{ label: 'Equity', tone: getEquityPieTone(alignment.fundraising, alignment.equityRevenueCapture) },
+		{ label: 'Value Accrual', tone: hasValueAccrual ? 'positive' : 'negative' },
+		{ label: 'Governance', tone: governance.decisionTokenDisplay.displayTokens.length > 0 ? 'positive' : 'negative' }
 	]
 	const rightsFields = [
 		{
@@ -430,7 +430,7 @@ function TokenRightsOverviewView({
 				<OverviewTokenValue
 					display={valueAccrual.buybacks}
 					inactiveLabel="None"
-					inactiveTone={hasStructuralDistribution ? 'neutral' : 'negative'}
+					inactiveTone={hasValueAccrual ? 'neutral' : 'negative'}
 				/>
 			)
 		},
@@ -440,7 +440,7 @@ function TokenRightsOverviewView({
 				<OverviewTokenValue
 					display={valueAccrual.dividends}
 					inactiveLabel="None"
-					inactiveTone={hasStructuralDistribution ? 'neutral' : 'negative'}
+					inactiveTone={hasValueAccrual ? 'neutral' : 'negative'}
 				/>
 			)
 		},
