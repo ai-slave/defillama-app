@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router'
 import * as React from 'react'
+import { CHART_INSET } from '~/components/ECharts/chartSpacing'
 import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { ensureChronologicalRows } from '~/components/ECharts/utils'
 import { filterYieldPools } from '../domain/poolFilters'
@@ -228,7 +229,7 @@ export const PlotsPage = ({
 						chartOptions={{
 							legend: {
 								left: 'center',
-								top: 0
+								top: CHART_INSET
 							},
 							toolbox: {
 								feature: {

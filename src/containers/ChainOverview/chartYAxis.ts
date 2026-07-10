@@ -1,3 +1,4 @@
+import { getChartTheme } from '~/components/ECharts/chartTheme'
 import { formatTooltipValue } from '~/components/ECharts/formatters'
 import { formattedNum } from '~/utils'
 import type { ChainChartLabels } from './constants'
@@ -62,9 +63,7 @@ const AXIS_CONFIG_BY_TYPE: Partial<Record<ChainChartLabels, AxisConfig>> = {
 				? chartColors['Active Addresses']
 				: chartsInSeries.has('New Addresses')
 					? chartColors['New Addresses']
-					: isThemeDark
-						? '#fff'
-						: '#000'
+					: getChartTheme(isThemeDark).text
 	},
 	Transactions: {
 		formatter: (value) => formattedNum(value),

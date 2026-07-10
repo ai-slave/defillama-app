@@ -87,7 +87,7 @@ struck/double-counted values.
 | -------------------- | ----------- | ----------- | ----------------------------------------------------- |
 | `bg-hover-row`       | `#1f67d21f` | `#ffffff0f` | Popover/menu/table row hover; focus adds `focus-ring` |
 | `bg-hover-card`      | `#1f67d20f` | `#ffffff08` | Card/tile hover wash; focus adds `focus-ring`         |
-| `--ld-bg-screen-dim` | `#090b0c33` | `#090b0c33` | Backdrops                                             |
+| `--ld-bg-screen-dim` | `#090b0c66` | `#090b0cb3` | Modal and drawer backdrops                            |
 | `--ld-chip-bg`       | `#dedede`   | `#232628`   | Filter chips                                          |
 | `--ld-chip-text`     | `#484848`   | `#c6c6c6`   | Filter chip text                                      |
 
@@ -110,7 +110,7 @@ Hover washes paint _over_ `bg-surface` and are deliberately asymmetric across mo
 
 ## Typography
 
-From the Figma library text styles, implemented as utilities in [`src/styles/typography.css`](src/styles/typography.css). The family decision (Inter Display vs current Inter var) is pending with design.
+From the Figma library text styles, implemented as utilities in [`src/styles/typography.css`](src/styles/typography.css). The current Inter variable family is the accepted application baseline; a future library revision may explicitly publish Inter Display if design wants a family change.
 
 | Style          | Size | Weight | Family         |
 | -------------- | ---- | ------ | -------------- |
@@ -182,7 +182,7 @@ These are owner decisions, not extraction mistakes:
 - Titled `PanelHeader` remains the taller Figma panel recipe. Inline chart/table toolbars use the compact toolbar recipe instead of forcing every chart control row into `PanelHeader`.
 - Anchored-surface gutters: menus use `gutter={8}`, anchored selects/popovers/hovercards/failed-data popovers use `gutter={6}`, nested submenu flyouts use `gutter={4}`; text tooltips keep the Ariakit default.
 - Popover/menu surfaces own background, border, radius, and overflow only. Search blocks, action rows, footers, and list rows own vertical spacing.
-- Cartesian ECharts grid insets stay as-is for now. A 12px chart grid inset can optically read closer to 8px DOM spacing because axes, labels, dataZoom, and canvas drawing are involved; changing it is a visual chart change requiring screenshots/pixel checks.
+- Cartesian ECharts geometry uses the shared [`chartSpacing.ts`](src/components/ECharts/chartSpacing.ts) recipes. `chartGrid()` treats 8px as the visual outer bound through ECharts `outerBounds`; legends, scroll paging, and dataZoom use the documented optical compensation in that module. Do not recreate those values at call sites or add DOM body padding around cartesian charts.
 
 | Radius | Tailwind                      | Use                                           |
 | ------ | ----------------------------- | --------------------------------------------- |
@@ -226,7 +226,7 @@ Measured from the redesigned frames (node IDs in the sweep PRs). These are the s
 - **Footer note / attribution** — De-emphasized source/attribution notes at the bottom of a page or panel: optional `Card padding="sm"` shell, heading `label-md text-primary` (e.g. "Attribution"), body `body-sm text-tertiary` with underlined links. Never raw `text-xs`/`text-sm` for these.
 - **Sidebar divider** — Nav-only separator helper: `w-full max-w-53 border-t border-medium` (212px cap from the spacing scale; `border-medium` per dividers node 6476:29270). Keep sidebar scroll containers horizontally clipped so long pinned labels or capped dividers never create a horizontal scrollbar. Do not use black/white opacity border classes in the nav.
 - **Chart panel toolbar** — Route-specific inline toolbar above a chart: `px-2 pt-2 pb-0`, 32px controls from primitive padding/min-height, 6px inside dense control clusters, 8px between larger groups. The chart body stays flush; cartesian plot inset comes from ECharts grid settings, not DOM padding. Panels may stretch to match adjacent content, but the ECharts plot itself stays at the 360px chart-body height unless a route explicitly supplies another `height`; extra panel height remains blank surface. Suspense fallback height is case-by-case: chart-only lazy content reserves `360px`; a lazy chart component that renders its own title/export toolbar through chart props reserves `400px` (40px toolbar + 360px chart); external `ChartPanelToolbar` panels keep the toolbar outside Suspense and reserve only the 360px body.
-- **ChartPanel shell** — [`src/ui/ChartPanel.tsx`](src/ui/ChartPanel.tsx) composes the `Panel padding="none"` chart shell, `ChartPanelToolbar`, `ChartPanelBody`, and shared fallback reservations. Use `ChartPanelExportShellFallback` only for lazy chart components that render their own title/export toolbar (`min-h-[400px]`) and `ChartPanelBodyFallback` inside an already-mounted chart panel body (`min-h-[360px]`). Route code owns metric/query/export/chart logic; the shared shell only owns chrome and reservation. Most standard in-scope chart shells have migrated; residual chart work is custom/dynamic-height, mixed chart/table, table-height placeholder, market mini-chart, or excluded-product work, not a blanket replacement pass.
+- **ChartPanel shell** — [`src/ui/ChartPanel.tsx`](src/ui/ChartPanel.tsx) composes the `Panel padding="none"` chart shell, `ChartPanelToolbar`, `ChartPanelBody`, and shared fallback reservations. Use `ChartPanelExportShellFallback` only for lazy chart components that render their own title/export toolbar (`min-h-[400px]`) and `ChartPanelBodyFallback` inside an already-mounted chart panel body (`min-h-[360px]`). Route code owns metric/query/export/chart logic; the shared shell only owns chrome and reservation. Standard in-scope chart shells have migrated. Audited custom/dynamic-height, mixed chart/table, table-shaped reservation, market mini-chart, and excluded-product surfaces intentionally retain their own composition; they are not pending migrations.
 - **Table** — 40px rows, `border-subtle` row borders, numeric cells right-aligned `mono-sm`/`mono-sm-bold`, header `label-sm` with the active sort caret in `text-brand` and inactive carets at `text-tertiary/50` (the old `text-link`-vs-`text-tertiary` pair was indistinguishable at 10px in light mode); row hover `bg-hover-row`. Toolbar controls are always `md`/32px in table contexts: no local `px-2 py-1.5 text-xs`, no implicit/default `sm`, and no fixed-height wrapper hacks. `TableToolbar`/`TableToolbarControlGroup` provide `p-2` toolbar padding and 6px dense internal gaps; callers that need distinct left/right action groups wrap those groups and use `gap-2` between groups. Table metric/period/view groups use the standard tinted segmented control, not the solid joined-toggle exception. Heading hierarchy:
   - Primary table is the page: use `PanelHeader` + `PanelTitle as="h1"` with md controls. Prefer `TableWithSearch headingAs="h1"` when possible.
   - Page already has a real h1/hero above: do not add another table title. Use compact `TableToolbar` with search/filters only, still md controls.
@@ -242,11 +242,13 @@ Measured from the redesigned frames (node IDs in the sweep PRs). These are the s
 
 Chart **series** colors come from `CHART_COLORS` + `getNDistinctColors` (golden-angle generator) in code — they are intentionally _not_ design tokens and must not be bulk-changed; the Figma library has no N-series concept.
 
-Chart **chrome** (axis labels, gridlines, legend, dataZoom, PNG-export framing) uses the `--ld-chart-*` tokens in `semantics.css`. These are seeded with the exact pre-refresh literals and are deliberately decoupled from the text/border semantics so refactoring can never change chart rendering. The accent tokens (`--ld-chart-up/down/-alt`) are consumed only when a Figma frame explicitly restyles a specific chart, as part of that page's redesign PR.
+Chart **canvas chrome** (axis labels, gridlines, legends, dataZoom, PNG-export framing, and candlestick direction colors) uses the `--ld-chart-*` tokens in `semantics.css`. The chart-theme pass established these as the current visual baseline: axis labels use the tertiary tier, gridlines share the low-alpha chart stroke, and candlesticks use the chart direction tokens. ECharts HTML tooltips are DOM surfaces instead: options set transparent native chrome and the shared `.defillama-echarts-tooltip` recipe in `tailwind.css` applies the overlay, border, text, radius, and shadow tokens. Chart tokens remain separate from series palettes so later semantic-token changes cannot silently recolor chart data.
 
-**Chart consistency debt** (visual changes, scheduled for page sweeps — never as refactoring side effects): axis label color varies per chart (`ink(1)` in shared defaults, `ink(0.8)` in HBar/Scatter/Netflow, `ink(0.6)` on Candlestick's secondary axis) and should converge on one token — per the Figma frames, likely tertiary gray rather than full black/white; gridline alpha varies (0.02/0.03 vs 0.05 in Candlestick); Candlestick's light-mode candles use `#018a13`/`#e60d02` instead of the Figma `data-up/down` values its dark mode already matches; tooltip backgrounds vary (ECharts default, `#1e1e1e`-based in UnlocksTreemap, ink-based in Sankey) and should converge on `bg-overlay` / `--ld-bg-overlay`, which the shared DOM chart tooltip (`domChartTooltipStyles`) already uses. The `--ld-chart-up/down/-alt` accents exist for exactly these fixes.
+Chart **geometry** uses [`src/components/ECharts/chartSpacing.ts`](src/components/ECharts/chartSpacing.ts). Standard cartesian grids have an 8px visual inset on every side via `outerBoundsMode: 'same'` and `outerBoundsContain: 'axisLabel'`; a default legend starts 8px from the top and reserves 40px before the plot; scroll legends reserve a 16px right gutter and use the same active/inactive color hierarchy as table sort carets. Slider dataZoom uses a fixed height and compensates for ECharts handle overflow so its visible left/right inset is 8px and its visible bottom inset is 12px. Consume the exported recipes/constants instead of copying raw grid, legend, or slider offsets.
 
-ECharts renders to canvas and cannot read `var()`: resolve tokens through [`src/components/ECharts/chartTheme.ts`](src/components/ECharts/chartTheme.ts) — `useChartTheme(isThemeDark)` in components, `getChartTheme(isDark)` in plain functions. Never read `--ld-chart-*` by hand and never reintroduce `isDark ? literal : literal` color forks; the per-chart-type configs still carrying them (Treemap, Candlestick, …) migrate to the hook during their page sweeps.
+Non-cartesian and alignment-sensitive charts keep explicit exceptions. Treemaps use an 8px **canvas-wrapper** inset because ECharts zoom clips to the canvas rather than the series rectangle; do not replace it with series offsets or remove it after checking only the unzoomed state. Legend-based pies stay vertically centered and reserve their measured legend region; external-label pies may pass an explicit `centerY` (the bridged composition uses `44%`) so the complete pie-plus-label composition is centered without changing every pie. Stacked candlestick grids keep one fixed left edge across panels. Scatter labels remain inside their plot; logo HBars reserve a measured left overlay region; Sankey owns node layout rather than cartesian grid geometry. New exceptions require route-level visual verification in both themes.
+
+ECharts renders to canvas and cannot read `var()`: resolve canvas tokens through [`src/components/ECharts/chartTheme.ts`](src/components/ECharts/chartTheme.ts) — `useChartTheme(isThemeDark)` in components, `getChartTheme(isDark)` in plain functions. Never read `--ld-chart-*` by hand and never reintroduce `isDark ? literal : literal` chrome forks. HTML tooltip options should use the shared tooltip class rather than resolved canvas colors. Remaining hardcoded colors should be data/series colors or documented product-specific exceptions, not axis, grid, legend, dataZoom, or tooltip chrome.
 
 ## Utility & reuse policy
 
@@ -270,17 +272,19 @@ ECharts renders to canvas and cannot read `var()`: resolve tokens through [`src/
 | --------------------- | --------------------------------------------------------------------------------------- | -------------- |
 | Foundation            | Token foundation, legacy quarantine, chart tokens, Card/type ramp, `useChartTheme`      | merged         |
 | Broad design sweep    | Home/chain, shared primitives, popovers, DialogShell, ProtocolOverview, text/icon       | merged         |
-| Post-merge follow-ups | ChartPanel and remaining route-family chunks                                            | active backlog |
-| Deferred architecture | Token namespace cleanup, radius-scale codemods, broad typography/file-placement cleanup | deferred       |
+| Post-merge follow-ups | ChartPanel, status/table consistency, chart theme, and chart geometry                     | merged         |
+| Architecture          | Token namespaces, radius/type normalization, shared API/file placement, product scope    | active next    |
 
 Legacy namespaces (`--sub-*`, `--pro-*`, `--sl-*`, `--signin-*`, and the pre-refresh `--text-*`/`--bg-*`/`--cards-*` globals) are quarantined in `src/styles/legacy-*.css` / `tailwind.css`. Do not add new consumers; they are deleted as surfaces migrate.
 
 **Excluded surfaces (owner decision, 2026-07-07; reconciled for merge):** ProDashboard, LlamaAI, yields, account/subscription, Downloads (incl. SQL/notebook tooling), Articles/research/authors/newsletters/reports surfaces, and investor-relations dashboard surfaces (`containers/Investors` / `pages/investors` dashboard products) are out of the sweep — separate products or upcoming rewrites. Their legacy-token debt is intentional. Raises/investor-like list pages remain in scope unless they are part of the investor-relations dashboard product. Shared components consumed by excluded surfaces still migrate; those surfaces pin legacy visuals through explicit compat props (`popoverVariant="legacy"`, `variant="pro"`), never by forking styles into page files.
 
-### Open items with design
+### Design-library follow-ups (not implementation blockers)
 
-- Light-mode `Text/Warning` value; dark `bg-brand-transparent-subtle`.
-- Rename `hover-neutral-normal` (it is brand-tinted in light, not neutral).
+- Publish the accepted light-mode `Text/Warning` and dark
+  `bg-brand-transparent-subtle` values in the design library.
+- Rename `hover-neutral-normal` in the library because the accepted light value is
+  brand-tinted rather than neutral.
 - Hover state for brand-tinted pills/segments: the frames define none, and `hover-neutral-normal` collides with `bg-brand-transparent` in light (same value). Code now stacks the wash via `.hover-wash`; library should publish a real state.
 - Dark `Text/links` `#4b86db` is ~4.2:1 on `bg-brand-transparent` over `bg-surface` — below AA (4.5:1) at 12px. Ask: one step lighter (≈`#6a9be0`). Chain pills carry an interim local override (`--ld-text-link-on-tint`, dark `#6a9be0`); the segmented control's selected tab, active `MetricChip` option chips, and `MultiSelectCombobox` value pills still show the failing pair and inherit the fix when the library token moves (or adopt `text-link-on-tint` if it doesn't).
 - Sync Figma `Text/tertiary` to the light accessibility override. Code now uses light `#6f6f6f` and keeps dark `#878787`; the library still publishes neutral `#878787`.

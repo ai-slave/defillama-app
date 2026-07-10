@@ -1,5 +1,7 @@
 import * as echarts from 'echarts/core'
 import { useEffect, useEffectEvent, useId, useMemo, useRef } from 'react'
+import { CHART_INSET, CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
+import { getChartTheme } from '~/components/ECharts/chartTheme'
 import type { ChartTimeGrouping } from '~/components/ECharts/types'
 import { useDefaults } from '~/components/ECharts/useDefaults'
 import { mergeDeep } from '~/components/ECharts/utils'
@@ -98,7 +100,7 @@ export default function ChainCoreChart({
 									},
 									{
 										offset: 1,
-										color: isThemeDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.2)'
+										color: getChartTheme(isThemeDark).areaGradientTo
 									}
 								])
 							}
@@ -157,14 +159,7 @@ export default function ChainCoreChart({
 			{
 				graphic,
 				tooltip,
-				grid: {
-					left: 12,
-					bottom: hideDataZoom ? 12 : 68,
-					top: 12,
-					right: 12,
-					outerBoundsMode: 'same',
-					outerBoundsContain: 'axisLabel'
-				},
+				grid: chartGrid({ bottom: hideDataZoom ? CHART_INSET : CHART_ZOOM_RESERVE }),
 				xAxis,
 				yAxis: finalYAxis,
 				dataZoom,

@@ -10,6 +10,8 @@ import {
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import * as React from 'react'
+import { chartGrid } from '~/components/ECharts/chartSpacing'
+import { getChartTheme } from '~/components/ECharts/chartTheme'
 import { formatTooltipChartDate } from '~/components/ECharts/formatters'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -96,14 +98,7 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 				left: isSmall ? '40%' : '45%',
 				top: '130px'
 			},
-			grid: {
-				top: 12,
-				left: 12,
-				right: 12,
-				bottom: 12,
-				outerBoundsMode: 'same',
-				outerBoundsContain: 'axisLabel'
-			},
+			grid: chartGrid(),
 			tooltip: {
 				showDelay: 0,
 				confine: true,
@@ -159,18 +154,17 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 					fontWeight: 400
 				},
 				axisLabel: {
-					color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+					color: getChartTheme(isDark).text
 				},
 				axisLine: {
 					lineStyle: {
-						color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)',
+						color: getChartTheme(isDark).text,
 						opacity: 0.2
 					}
 				},
 				splitLine: {
 					lineStyle: {
-						color: '#a1a1aa',
-						opacity: 0.1
+						color: getChartTheme(isDark).gridline
 					}
 				}
 			},
@@ -180,11 +174,11 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 					min: 'dataMin',
 					axisLabel: {
 						formatter: (value: number) => Number(value.toFixed(2)) + ' ETH',
-						color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+						color: getChartTheme(isDark).text
 					},
 					axisLine: {
 						lineStyle: {
-							color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)',
+							color: getChartTheme(isDark).text,
 							opacity: 0.1
 						}
 					},
@@ -196,8 +190,7 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 					},
 					splitLine: {
 						lineStyle: {
-							color: '#a1a1aa',
-							opacity: 0.1
+							color: getChartTheme(isDark).gridline
 						}
 					}
 				},

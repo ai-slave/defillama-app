@@ -748,7 +748,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 						</ChartPanel>
 					) : null}
 					{chartView === 'pie' || chartView === 'treemap' || chartView === 'hbar' ? (
-						<ChartPanel className={chartView === 'treemap' ? 'min-h-[660px]' : 'min-h-[420px]'}>
+						<ChartPanel className={chartView === 'treemap' ? undefined : 'min-h-[420px]'}>
 							<ChartPanelToolbar className="justify-end">
 								{chartTypeSwitch}
 								{chartViewSwitch}

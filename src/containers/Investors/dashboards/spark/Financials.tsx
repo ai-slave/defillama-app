@@ -1,6 +1,7 @@
 import type * as echarts from 'echarts/core'
 import { lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
+import { CHART_INSET } from '~/components/ECharts/chartSpacing'
 import type { IBarChartProps, IChartProps, IMultiSeriesChartProps, IPieChartProps } from '~/components/ECharts/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { assignColors } from './api'
@@ -12,7 +13,7 @@ const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
 const SCROLL_LEGEND = {
-	legend: { type: 'scroll' as const, orient: 'horizontal' as const, top: 0 }
+	legend: { type: 'scroll' as const, orient: 'horizontal' as const, top: CHART_INSET }
 }
 
 function sparkExportTitle(title: string) {

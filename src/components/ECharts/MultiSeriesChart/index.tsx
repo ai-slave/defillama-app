@@ -4,6 +4,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartCleanup } from '~/hooks/useChartCleanup'
 import { useChartResize } from '~/hooks/useChartResize'
 import { ChartContainer } from '../ChartContainer'
+import { CHART_INSET, CHART_ZOOM_RESERVE, chartGrid } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
 import { formatTooltipValue } from '../formatters'
 import { METRIC_UNIT_GROUP_SYMBOL, resolveSeriesAxisLayout } from '../metricGroups'
@@ -223,7 +224,7 @@ export default function MultiSeriesChart({
 		}
 
 		const legendRightPadding = needMultipleAxes ? 40 : legend.right
-		const gridLeftPadding = 12
+		const gridLeftPadding = CHART_INSET
 
 		const shouldHideDataZoom = seriesWithHallmarks.every((s: any) => s.data.length < 2) || hideDataZoom
 
@@ -250,12 +251,7 @@ export default function MultiSeriesChart({
 						}
 					: tooltip,
 			grid: {
-				left: gridLeftPadding,
-				bottom: shouldHideDataZoom ? 12 : 68,
-				top: 12,
-				right: 12,
-				outerBoundsMode: 'same',
-				outerBoundsContain: 'axisLabel',
+				...chartGrid({ left: gridLeftPadding, bottom: shouldHideDataZoom ? CHART_INSET : CHART_ZOOM_RESERVE }),
 				...grid
 			},
 			xAxis,

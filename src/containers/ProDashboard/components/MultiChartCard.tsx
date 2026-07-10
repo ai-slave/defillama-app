@@ -1,5 +1,6 @@
 import { lazy, memo, Suspense, useCallback, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
+import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
 import { getMetricUnitGroup } from '~/components/ECharts/metricGroups'
 import { Icon } from '~/components/Icon'
 import { Select } from '~/components/Select/Select'
@@ -422,16 +423,9 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 				tooltip: {
 					valueFormatter: (value: number) => value.toFixed(2) + '%'
 				},
-				grid: {
-					top: 80,
-					bottom: 12,
-					left: 12,
-					right: 12,
-					outerBoundsMode: 'same',
-					outerBoundsContain: 'axisLabel'
-				},
+				grid: chartGrid({ top: 80 }),
 				legend: {
-					top: 10,
+					top: CHART_INSET,
 					type: 'scroll',
 					pageButtonPosition: 'end',
 					height: seriesCount > 5 ? 80 : 40
@@ -451,16 +445,9 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 				tooltip: {
 					valueFormatter: (value: number) => value.toFixed(2) + '%'
 				},
-				grid: {
-					top: seriesCount > 5 ? 80 : 40,
-					bottom: 12,
-					left: 12,
-					right: 12,
-					outerBoundsMode: 'same',
-					outerBoundsContain: 'axisLabel'
-				},
+				grid: chartGrid({ top: seriesCount > 5 ? 80 : CHART_LEGEND_RESERVE }),
 				legend: {
-					top: 0,
+					top: CHART_INSET,
 					type: 'scroll',
 					pageButtonPosition: 'end',
 					height: seriesCount > 5 ? 80 : 40
@@ -487,16 +474,9 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 						}
 					}
 				},
-				grid: {
-					top: seriesCount > 5 ? 80 : 40,
-					bottom: 12,
-					left: 12,
-					right: 12,
-					outerBoundsMode: 'same',
-					outerBoundsContain: 'axisLabel'
-				},
+				grid: chartGrid({ top: seriesCount > 5 ? 80 : CHART_LEGEND_RESERVE }),
 				legend: {
-					top: 0,
+					top: CHART_INSET,
 					type: 'scroll',
 					pageButtonPosition: 'end',
 					height: seriesCount > 5 ? 80 : 40
@@ -522,16 +502,9 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 					}
 				}
 			},
-			grid: {
-				top: seriesCount > 5 ? 80 : 40,
-				bottom: 12,
-				left: 12,
-				right: 12,
-				outerBoundsMode: 'same',
-				outerBoundsContain: 'axisLabel'
-			},
+			grid: chartGrid({ top: seriesCount > 5 ? 80 : CHART_LEGEND_RESERVE }),
 			legend: {
-				top: 0,
+				top: CHART_INSET,
 				type: 'scroll',
 				pageButtonPosition: 'end',
 				height: seriesCount > 5 ? 80 : 40

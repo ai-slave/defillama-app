@@ -12,6 +12,7 @@ import { useCallback, useEffect, useId, useMemo, useRef } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { formattedNum } from '~/utils'
+import { CHART_INSET } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
 import type { ITreemapChartProps } from '../types'
 import {
@@ -35,7 +36,6 @@ const visualMin = -100
 const visualMax = 100
 const visualMinBound = -40
 const visualMaxBound = 40
-const TREEMAP_CHART_INSET_PX = 12
 
 function normalizeTreemapNodes(nodes: any[]): any[] {
 	return (nodes ?? []).map((node) => ({
@@ -166,6 +166,9 @@ export default function TreemapChart({
 				}
 			],
 			tooltip: {
+				className: 'defillama-echarts-tooltip',
+				backgroundColor: 'transparent',
+				borderWidth: 0,
 				formatter: function (info) {
 					const treePathInfo = Array.isArray(info?.treePathInfo) ? info.treePathInfo : []
 					const treePath: string[] = []
@@ -211,21 +214,14 @@ export default function TreemapChart({
 				{
 					name: isRwaVariant ? rwaRootLabel : 'All',
 					type: 'treemap',
-					...(isRwaVariant
+					...(isNarrativeLike
 						? {
 								top: 0,
 								left: 0,
 								right: 0,
 								bottom: 0
 							}
-						: isNarrativeVariant
-							? {
-									top: 0,
-									left: 0,
-									right: 0,
-									bottom: 0
-								}
-							: {}),
+						: {}),
 					...(isRwaVariant
 						? {}
 						: {
@@ -482,13 +478,12 @@ export default function TreemapChart({
 	}, [height])
 
 	const resolvedHeight = height ?? (variant === 'narrative' ? '533px' : '800px')
+	// Treemap zoom can paint outside the series rectangle, but never outside
+	// its canvas. Inset the canvas itself so zoomed nodes preserve the edge gap.
 	const chart = (
 		<div
-			className="my-auto w-full overflow-hidden"
-			style={{
-				height: resolvedHeight,
-				padding: TREEMAP_CHART_INSET_PX
-			}}
+			className="w-full overflow-hidden"
+			style={{ height: resolvedHeight, padding: CHART_INSET, boxSizing: 'border-box' }}
 		>
 			<div id={id} className="h-full w-full" />
 		</div>

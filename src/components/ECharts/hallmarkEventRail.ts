@@ -1,4 +1,5 @@
 import type * as echarts from 'echarts/core'
+import { CHART_INSET, CHART_ZOOM_RESERVE } from './chartSpacing'
 import { formatTooltipChartDate } from './formatters'
 import type { ChartTimeGrouping } from './types'
 
@@ -28,7 +29,7 @@ const EVENT_STAR_Y_OFFSET = EVENT_BODY_CENTER_Y - EVENT_STAR_ICON_SIZE / 2 - 0.5
 const EVENT_STRIP_VERTICAL_PADDING = 2
 const EVENT_STRIP_HEIGHT = EVENT_DOT_SIZE + EVENT_STRIP_VERTICAL_PADDING * 2
 const EVENT_STRIP_TOP_GAP = 2
-const EVENT_STRIP_BOTTOM_WITH_ZOOM = 60
+const EVENT_STRIP_BOTTOM_WITH_ZOOM = CHART_ZOOM_RESERVE + 6
 const EVENT_STRIP_BOTTOM_NO_ZOOM = 6
 const EVENT_HOVER_SCALE = 1.14
 const EVENT_HOVER_ANIMATION_MS = 100
@@ -203,7 +204,7 @@ export function getMainGridBottom({
 	shouldHideDataZoom: boolean
 }) {
 	if (!shouldShowEventRail) {
-		return shouldHideDataZoom ? 12 : 68
+		return shouldHideDataZoom ? CHART_INSET : CHART_ZOOM_RESERVE
 	}
 
 	return shouldHideDataZoom

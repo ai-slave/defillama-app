@@ -106,7 +106,10 @@ export default function BoxplotChart({ chartData }: IChartProps) {
 			},
 			tooltip: {
 				trigger: 'axis',
-				confine: true
+				confine: true,
+				className: 'defillama-echarts-tooltip',
+				backgroundColor: 'transparent',
+				borderWidth: 0
 			},
 			toolbox: {
 				feature: {
@@ -125,12 +128,11 @@ export default function BoxplotChart({ chartData }: IChartProps) {
 					fontWeight: 500
 				},
 				axisLabel: {
-					color: getChartTheme(isDark).text
+					color: getChartTheme(isDark).axisLabel
 				},
 				splitLine: {
 					lineStyle: {
-						color: '#a1a1aa',
-						opacity: 0.1
+						color: getChartTheme(isDark).gridline
 					}
 				}
 			},
@@ -143,12 +145,11 @@ export default function BoxplotChart({ chartData }: IChartProps) {
 					fontWeight: 600
 				},
 				axisLabel: {
-					color: getChartTheme(isDark).text
+					color: getChartTheme(isDark).axisLabel
 				},
 				splitLine: {
 					lineStyle: {
-						color: '#a1a1aa',
-						opacity: 0.1
+						color: getChartTheme(isDark).gridline
 					}
 				}
 			},

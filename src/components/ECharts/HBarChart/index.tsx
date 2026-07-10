@@ -4,6 +4,7 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useId, useRef, useState } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { CHART_INSET, CHART_LEGEND_RESERVE } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
 import { formatTooltipValue } from '../formatters'
 import type { IHBarChartProps } from '../types'
@@ -113,7 +114,7 @@ export default function HBarChart({
 				}))
 			: [{ type: 'bar' as const, data: seriesData, emphasis: { focus: 'series' as const } }]
 
-		const textColor = getChartTheme(isThemeDark).ink(0.8)
+		const textColor = getChartTheme(isThemeDark).axisLabel
 		const yAxisLabelWidth = getYAxisLabelWidth(chartDom.clientWidth || 600)
 		const watermarkHeight = 40
 		const watermarkWidth = Math.round((389 / 133) * watermarkHeight)
@@ -123,7 +124,7 @@ export default function HBarChart({
 					categories.reduce((m, c) => Math.max(m, measureLabelWidth(c)), 0)
 				)
 			: 0
-		const leftGridWidth = hasLogos ? LEFT_PAD + LOGO_SIZE + LOGO_GAP + overlayLabelWidth + 8 : 12
+		const leftGridWidth = hasLogos ? LEFT_PAD + LOGO_SIZE + LOGO_GAP + overlayLabelWidth + 8 : CHART_INSET
 
 		instance.setOption(
 			{
@@ -149,16 +150,16 @@ export default function HBarChart({
 								show: true,
 								top: 8,
 								left: 'center',
-								textStyle: { color: textColor },
+								textStyle: { color: getChartTheme(isThemeDark).text },
 								data: series!.map((s) => s.name)
 							}
 						}
 					: {}),
 				grid: {
 					left: leftGridWidth,
-					right: 12,
-					top: grouped ? 40 : 12,
-					bottom: 12,
+					right: CHART_INSET,
+					top: grouped ? CHART_LEGEND_RESERVE : CHART_INSET,
+					bottom: CHART_INSET,
 					outerBoundsMode: 'same',
 					outerBoundsContain: hasLogos ? undefined : 'axisLabel'
 				},
@@ -173,7 +174,7 @@ export default function HBarChart({
 					},
 					splitLine: {
 						lineStyle: {
-							color: getChartTheme(isThemeDark).ink(0.1)
+							color: getChartTheme(isThemeDark).gridline
 						}
 					}
 				},
@@ -187,6 +188,9 @@ export default function HBarChart({
 				},
 				tooltip: {
 					trigger: 'axis',
+					className: 'defillama-echarts-tooltip',
+					backgroundColor: 'transparent',
+					borderWidth: 0,
 					axisPointer: { type: 'shadow' },
 					formatter: (params: any) => {
 						if (!Array.isArray(params) || !params[0]) return ''

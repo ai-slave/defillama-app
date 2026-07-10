@@ -2199,7 +2199,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 					)}
 				</ChartPanel>
 			) : (
-				<ChartPanel className={chartState.view === 'treemap' ? 'min-h-[660px]' : 'min-h-[420px]'}>
+				<ChartPanel className={chartState.view === 'treemap' ? undefined : 'min-h-[420px]'}>
 					<ChartPanelToolbar className="justify-end">
 						{timeSeriesMetricSwitch}
 						<Select

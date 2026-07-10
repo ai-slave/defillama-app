@@ -7,6 +7,7 @@ import { TagGroup } from '~/components/TagGroup'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { capitalizeFirstLetter, formattedNum } from '~/utils'
+import { chartGrid } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
 
 echarts.use([BarChart, TooltipComponent, GridComponent, CanvasRenderer])
@@ -97,6 +98,9 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 		const option = {
 			tooltip: {
 				trigger: 'axis',
+				className: 'defillama-echarts-tooltip',
+				backgroundColor: 'transparent',
+				borderWidth: 0,
 				axisPointer: {
 					type: 'shadow'
 				},
@@ -109,26 +113,19 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 					</div>`
 				}
 			},
-			grid: {
-				top: 12,
-				bottom: 12,
-				left: 42,
-				right: 12,
-				outerBoundsMode: 'same',
-				outerBoundsContain: 'axisLabel'
-			},
+			grid: chartGrid(),
 			xAxis: {
 				type: 'value',
 				position: 'top',
 				splitLine: {
 					lineStyle: {
-						color: getChartTheme(isThemeDark).ink(0.1),
+						color: getChartTheme(isThemeDark).gridline,
 						type: 'dashed'
 					}
 				},
 				axisLabel: {
 					formatter: (value) => formattedNum(value),
-					color: getChartTheme(isThemeDark).ink(0.8)
+					color: getChartTheme(isThemeDark).axisLabel
 				}
 			},
 			yAxis: {
@@ -138,7 +135,7 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 				splitLine: { show: false },
 				data: chains,
 				axisLabel: {
-					color: getChartTheme(isThemeDark).ink(0.8),
+					color: getChartTheme(isThemeDark).axisLabel,
 					fontSize: 13,
 					padding: [0, 0, 0, 50]
 				},

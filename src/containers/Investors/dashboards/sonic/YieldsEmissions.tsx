@@ -6,6 +6,7 @@ import {
 	getPaginationRowModel
 } from '@tanstack/react-table'
 import { lazy, useEffect } from 'react'
+import { CHART_INSET } from '~/components/ECharts/chartSpacing'
 import type { IChartProps } from '~/components/ECharts/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { useYieldsEmissionsData, type YieldPool } from './yieldsEmissionsApi'
@@ -13,7 +14,7 @@ import { useYieldsEmissionsData, type YieldPool } from './yieldsEmissionsApi'
 const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
 
 const SCROLL_LEGEND = {
-	legend: { type: 'scroll' as const, orient: 'horizontal' as const, top: 0 }
+	legend: { type: 'scroll' as const, orient: 'horizontal' as const, top: CHART_INSET }
 }
 
 function KpiCard({ label, value }: { label: string; value: string }) {

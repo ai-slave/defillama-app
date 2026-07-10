@@ -11,6 +11,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { formattedNum } from '~/utils'
 import { ChartContainer } from '../ChartContainer'
 import { ChartHeader } from '../ChartHeader'
+import { CHART_INSET, CHART_LEGEND_RIGHT_INSET, chartLegendScrollStyle } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
 import { formatTooltipValue } from '../formatters'
 import type { IPieChartProps } from '../types'
@@ -25,6 +26,8 @@ echarts.use([
 	LegendComponent
 ])
 
+const DEFAULT_PIE_CENTER_Y = '50%' as const
+
 export default function PieChart({
 	height,
 	stackColors,
@@ -33,6 +36,7 @@ export default function PieChart({
 	headingAs,
 	valueSymbol = '$',
 	radius = null,
+	centerY = DEFAULT_PIE_CENTER_Y,
 	showLegend = false,
 	legendPosition,
 	legendTextStyle,
@@ -237,7 +241,10 @@ export default function PieChart({
 			if (!isSmall) {
 				// Slightly larger on desktop when a right-side legend exists,
 				// so the pie uses the available canvas and reduces "wasted" left space.
-				series.radius = reservedRight > 0 ? '78%' : '70%'
+				// Without a legend the external labels + leader lines render around
+				// the arc — 70% left them colliding with the card edge (the pie is
+				// centered at 50% with zero grid), so reserve the room in the radius.
+				series.radius = reservedRight > 0 ? '78%' : '62%'
 			}
 		}
 
@@ -257,19 +264,6 @@ export default function PieChart({
 			return true
 		}
 		return inst.isDisposed()
-	}
-
-	const computePieCenterPx = (inst: echarts.ECharts, reserved: number) => {
-		const w = inst.getWidth()
-		const h = inst.getHeight()
-		const availableW = Math.max(1, w - reserved)
-
-		// Center within the drawable pie area (excluding reserved legend width).
-		// This keeps the pie visually centered and avoids big left-side dead space,
-		// especially for small legends (e.g. the unlocked donut).
-		const cx = Math.round(availableW / 2)
-		const cy = Math.round(h / 2)
-		return { cx, cy, w, h }
 	}
 
 	useEffect(() => {
@@ -295,6 +289,9 @@ export default function PieChart({
 		instance.setOption({
 			tooltip: {
 				trigger: 'item',
+				className: 'defillama-echarts-tooltip',
+				backgroundColor: 'transparent',
+				borderWidth: 0,
 				confine: true,
 				formatter: (params: any) => {
 					if (formatTooltip) return formatTooltip(params)
@@ -313,9 +310,15 @@ export default function PieChart({
 				right: 0
 			},
 			legend: {
+				...chartLegendScrollStyle(
+					getChartTheme(isDark).legendPageActive,
+					getChartTheme(isDark).legendPageInactive,
+					getChartTheme(isDark).axisLabel
+				),
 				show: showLegend,
 				type: 'scroll',
-				right: 12,
+				top: CHART_INSET,
+				right: CHART_LEGEND_RIGHT_INSET,
 				orient: 'vertical', // Default
 				data: chartData.map((item) => item.name),
 				icon: 'circle',
@@ -353,11 +356,21 @@ export default function PieChart({
 	useEffect(() => {
 		const instance = chartRef.current
 		if (!instance || isChartDisposed(instance)) return
+		const computePieCenterPx = (reserved: number) => {
+			const w = instance.getWidth()
+			const h = instance.getHeight()
+			const availableW = Math.max(1, w - reserved)
+
+			// Center within the drawable pie area (excluding reserved legend width).
+			const cx = Math.round(availableW / 2)
+			const cy = Math.round((Number.parseFloat(centerY) / 100) * h)
+			return { cx, cy, w, h }
+		}
 
 		const setWatermark = () => {
 			if (!chartRef.current || isChartDisposed(chartRef.current)) return
 
-			const { cx, cy, w, h } = computePieCenterPx(chartRef.current, reservedRight)
+			const { cx, cy, w, h } = computePieCenterPx(reservedRight)
 			// Keep the watermark consistent with MultiSeriesChart2 (40px high on desktop),
 			// and only scale down when the chart is extremely small.
 			const minDim = Math.max(1, Math.min(h, w - reservedRight))
@@ -408,7 +421,7 @@ export default function PieChart({
 				chartRef.current.setOption(
 					{
 						series: {
-							center: ['50%', '50%']
+							center: ['50%', centerY]
 						}
 					},
 					{ lazyUpdate: true }
@@ -416,12 +429,12 @@ export default function PieChart({
 				return
 			}
 
-			const center = computePieCenterPx(chartRef.current, reservedRight)
+			const center = computePieCenterPx(reservedRight)
 			chartRef.current.setOption(
 				{
 					series: {
-						// Keep y centered; x is computed in pixels for consistent gap control.
-						center: [center.cx, '50%']
+						// X accounts for the legend reservation; Y may opt into optical centering.
+						center: [center.cx, centerY]
 					}
 				},
 				{ lazyUpdate: true }
@@ -446,7 +459,7 @@ export default function PieChart({
 			window.removeEventListener('resize', onResize)
 			if (raf) cancelAnimationFrame(raf)
 		}
-	}, [showLegend, isSmall, reservedRight, isDark])
+	}, [showLegend, isSmall, reservedRight, isDark, centerY])
 
 	return (
 		<ChartContainer

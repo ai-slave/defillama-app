@@ -1,4 +1,5 @@
 import { lazy, useMemo } from 'react'
+import { CHART_INSET } from '~/components/ECharts/chartSpacing'
 import type { IBarChartProps } from '~/components/ECharts/types'
 import { formattedNum } from '~/utils'
 import { useEtherfiCashTransactions } from './cashApi'
@@ -6,7 +7,7 @@ import { useEtherfiCashTransactions } from './cashApi'
 const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC<IBarChartProps>
 
 const SCROLL_LEGEND = {
-	legend: { type: 'scroll' as const, orient: 'horizontal' as const, top: 0 }
+	legend: { type: 'scroll' as const, orient: 'horizontal' as const, top: CHART_INSET }
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {

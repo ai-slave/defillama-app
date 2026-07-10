@@ -2,6 +2,8 @@ import { CustomChart } from 'echarts/charts'
 import { MarkAreaComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { useEffect, useEffectEvent, useId, useMemo, useRef } from 'react'
+import { CHART_INSET, chartGrid } from '~/components/ECharts/chartSpacing'
+import { getChartTheme } from '~/components/ECharts/chartTheme'
 import {
 	attachEventHoverHandlers,
 	buildEventRailData,
@@ -117,7 +119,7 @@ export default function ProtocolChart({
 									},
 									{
 										offset: 1,
-										color: isThemeDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.2)'
+										color: getChartTheme(isThemeDark).areaGradientTo
 									}
 								])
 							}
@@ -133,7 +135,7 @@ export default function ProtocolChart({
 								label: {
 									fontFamily: 'sans-serif',
 									fontWeight: 600,
-									color: isThemeDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+									color: getChartTheme(isThemeDark).text
 								},
 								data: (rangeHallmarks ?? []).map(([date, event]: [[number, number], string]) => [
 									{
@@ -227,14 +229,10 @@ export default function ProtocolChart({
 
 		const mainGridBottom = getMainGridBottom({ shouldShowEventRail, shouldHideDataZoom })
 
-		const mainGrid = {
-			left: 12,
+		const mainGrid = chartGrid({
 			bottom: mainGridBottom,
-			top: (rangeHallmarks?.length ?? 0) > 0 ? 18 : 12,
-			right: 12,
-			outerBoundsMode: 'same',
-			outerBoundsContain: 'axisLabel'
-		}
+			top: (rangeHallmarks?.length ?? 0) > 0 ? 18 : CHART_INSET
+		})
 		const finalGrid = mainGrid
 		const finalXAxis = shouldShowEventRail && hasTimeRange ? { ...xAxis, min: timeRangeMin, max: timeRangeMax } : xAxis
 

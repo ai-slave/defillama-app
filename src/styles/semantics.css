@@ -33,7 +33,11 @@
 	--ld-bg-brand: var(--ld-blue-500); /* Background/bg-interactive */
 	--ld-bg-brand-muted: #1f67d21f; /* Background/bg-brand-transparent */
 	--ld-bg-brand-faint: #1f67d20f; /* Background/bg-brand-transparent-subtle */
-	--ld-bg-screen-dim: #090b0c33; /* Background/bg-screen-dim-subtle */
+	/* Modal/backdrop scrim. Figma only publishes bg-screen-dim-subtle (#090b0c33),
+	   which was never modal-strength — these are the values every dialog has
+	   shipped with ([data-backdrop] literals, now unified here). Library ask
+	   filed for a modal-strength bg-screen-dim. */
+	--ld-bg-screen-dim: #090b0c66;
 
 	/* Text */
 	--ld-text-primary: #090b0c; /* Text/primary */
@@ -86,7 +90,14 @@
 	   them (PR 3) is pixel-identical by construction. Charts must not
 	   change visually as a side effect of the token refresh.
 	------------------------------------------------------------------ */
-	--ld-chart-text: rgba(0, 0, 0, 1); /* titles, axis labels, legend & dataZoom text, always-on tooltips */
+	--ld-chart-text: rgba(0, 0, 0, 1); /* titles, legend & dataZoom text, always-on tooltips */
+	/* Axis labels converge on tertiary (chart-theme branch, 2026-07-09): the
+	   frames spec a quieter axis than full ink; previously 5 treatments shipped
+	   (ink 1 / 0.8 / 0.6 / unset-default / hand-rolled literals). */
+	--ld-chart-axis-label: #6f6f6f;
+	/* Matches Table/SortIcon: text-brand when active, text-tertiary/50 otherwise. */
+	--ld-chart-legend-page-active: var(--ld-bg-brand);
+	--ld-chart-legend-page-inactive: #6f6f6f80;
 	--ld-chart-gridline: rgba(0, 0, 0, 0.03); /* splitLine color × opacity, pre-multiplied */
 	--ld-chart-area-gradient-to: rgba(255, 255, 255, 0.2); /* bottom stop of series area fades */
 	--ld-chart-zoom-border: rgba(0, 0, 0, 0.4); /* dataZoom frame + move-handle fill */
@@ -147,9 +158,7 @@ html.dark {
 	--ld-border-strong: #ffffff29;
 
 	/* States */
-	/* Backdrop: 20% near-black dims nothing over the #090b0c page, and dark
-	   mode cannot lean on shadows — interim owner value, design ask filed. */
-	--ld-bg-screen-dim: #090b0c99;
+	--ld-bg-screen-dim: #090b0cb3; /* dialogs' shipped 70%; shadows are invisible in dark */
 
 	--ld-hover-row: #ffffff0f; /* States/hover-neutral-normal (dark) */
 	--ld-hover-card: #ffffff08; /* States/hover-neutral-subtle (dark) */
@@ -161,6 +170,8 @@ html.dark {
 
 	/* Chart chrome (today's exact dark literals) */
 	--ld-chart-text: rgba(255, 255, 255, 1);
+	--ld-chart-axis-label: #878787;
+	--ld-chart-legend-page-inactive: #87878780;
 	--ld-chart-gridline: rgba(255, 255, 255, 0.02);
 	--ld-chart-area-gradient-to: rgba(0, 0, 0, 0.2);
 	--ld-chart-zoom-border: rgba(255, 255, 255, 0.4);

@@ -2,6 +2,7 @@ import * as echarts from 'echarts/core'
 import { useEffect, useEffectEvent, useId, useMemo, useRef } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
+import { CHART_INSET, CHART_ZOOM_RESERVE, chartGrid } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
 import { buildHallmarksMarkLine } from '../hallmarks'
 import type { ISingleSeriesChartProps } from '../types'
@@ -120,14 +121,7 @@ export default function SingleSeriesChart({
 			graphic,
 			tooltip,
 			title: titleDefaults,
-			grid: {
-				left: 12,
-				bottom: shouldHideDataZoom ? 12 : 68,
-				top: 12,
-				right: 12,
-				outerBoundsMode: 'same',
-				outerBoundsContain: 'axisLabel'
-			},
+			grid: chartGrid({ bottom: shouldHideDataZoom ? CHART_INSET : CHART_ZOOM_RESERVE }),
 			xAxis,
 			yAxis: {
 				...yAxis,

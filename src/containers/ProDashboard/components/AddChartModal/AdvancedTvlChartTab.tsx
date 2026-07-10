@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo } from 'react'
+import { CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
 import type { IBarChartProps, IChartProps, IPieChartProps } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
 import { LocalLoader } from '~/components/Loaders'
@@ -42,14 +43,7 @@ const ADVANCED_TVL_CHART_TYPES = [
 ]
 
 const chartOptions = {
-	grid: {
-		left: 12,
-		bottom: 68,
-		top: 12,
-		right: 12,
-		outerBoundsMode: 'same',
-		outerBoundsContain: 'axisLabel'
-	}
+	grid: chartGrid({ bottom: CHART_ZOOM_RESERVE })
 }
 
 const inflowsChartOptions = {

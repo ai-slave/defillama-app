@@ -15,6 +15,7 @@ import { oldBlue } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
+import { CHART_INSET, CHART_LEGEND_RESERVE, CHART_ZOOM_RESERVE, chartDataZoomSliderGeometry } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
 import { formatChartEmphasisDate, formatTooltipChartDate, formatTooltipValue } from '../formatters'
 import type { ICandlestickChartProps } from '../types'
@@ -39,8 +40,7 @@ const INDICATOR_COLORS = ['#ff7f0e', '#2ca02c', '#9467bd', '#e377c2', '#17becf',
 
 const PANEL_HEIGHT = 60
 const VOLUME_HEIGHT = 80
-const DATAZOOM_HEIGHT = 52
-const BASE_BOTTOM = DATAZOOM_HEIGHT
+const BASE_BOTTOM = CHART_ZOOM_RESERVE
 
 export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_INDICATORS }: ICandlestickChartProps) {
 	const id = useId()
@@ -63,18 +63,19 @@ export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_IND
 		const panelCount = panels.length
 		const volumeBottom = BASE_BOTTOM + panelCount * PANEL_HEIGHT
 		const priceBottom = volumeBottom + VOLUME_HEIGHT + 20
+		const showLegend = overlays.length > 0 || panels.length > 0
 
 		const grids: any[] = [
 			{
 				left: 48,
 				bottom: priceBottom,
-				top: 12,
-				right: 12
+				top: showLegend ? CHART_LEGEND_RESERVE : CHART_INSET,
+				right: CHART_INSET
 			},
 			{
 				height: VOLUME_HEIGHT,
 				left: 48,
-				right: 12,
+				right: CHART_INSET,
 				bottom: volumeBottom
 			}
 		]
@@ -90,7 +91,7 @@ export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_IND
 				splitLine: { show: false },
 				min: 'dataMin',
 				max: 'dataMax',
-				axisLabel: { color: getChartTheme(isThemeDark).text }
+				axisLabel: { color: getChartTheme(isThemeDark).axisLabel }
 			},
 			{
 				type: 'time',
@@ -117,7 +118,7 @@ export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_IND
 				},
 				axisLabel: {
 					formatter: (v) => formatTooltipValue(v, '$'),
-					color: getChartTheme(isThemeDark).text
+					color: getChartTheme(isThemeDark).axisLabel
 				},
 				axisLine: { lineStyle: { color: getChartTheme(isThemeDark).text, opacity: 0.1 } },
 				splitLine: { lineStyle: { color: getChartTheme(isThemeDark).gridline } }
@@ -140,8 +141,8 @@ export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_IND
 
 			grids.push({
 				height: PANEL_HEIGHT - 10,
-				left: 54,
-				right: 12,
+				left: 48,
+				right: CHART_INSET,
 				bottom,
 				outerBoundsMode: 'same',
 				outerBoundsContain: 'axisLabel'
@@ -166,10 +167,10 @@ export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_IND
 				min: isOscillator ? 0 : undefined,
 				max: isOscillator ? 100 : undefined,
 				splitNumber: 2,
-				axisLabel: { show: true, fontSize: 10, color: getChartTheme(isThemeDark).ink(0.6) },
+				axisLabel: { show: true, fontSize: 10, color: getChartTheme(isThemeDark).axisLabel },
 				axisLine: { show: false },
 				axisTick: { show: false },
-				splitLine: { lineStyle: { color: getChartTheme(isThemeDark).ink(0.05) } }
+				splitLine: { lineStyle: { color: getChartTheme(isThemeDark).gridline } }
 			})
 		}
 
@@ -188,14 +189,17 @@ export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_IND
 				top: '130px'
 			},
 			legend: {
-				show: overlays.length > 0 || panels.length > 0,
-				top: 0,
-				right: 12,
+				show: showLegend,
+				top: CHART_INSET,
+				right: CHART_INSET,
 				textStyle: { color: getChartTheme(isThemeDark).text, fontSize: 11 }
 			},
 			tooltip: {
 				trigger: 'axis',
 				axisPointer: { type: 'line' },
+				className: 'defillama-echarts-tooltip',
+				backgroundColor: 'transparent',
+				borderWidth: 0,
 				formatter: (params) => {
 					const chartdate = formatTooltipChartDate(params[0].value[0], 'daily')
 					let vals = ''
@@ -223,7 +227,7 @@ export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_IND
 					show: true,
 					xAxisIndex: allAxisIndices,
 					type: 'slider',
-					bottom: 10,
+					...chartDataZoomSliderGeometry,
 					start: 0,
 					end: 100,
 					textStyle: { color: getChartTheme(isThemeDark).text },
@@ -248,10 +252,10 @@ export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_IND
 				symbol: 'none',
 				large: true,
 				itemStyle: {
-					color: isThemeDark ? '#3eb84f' : '#018a13',
-					color0: isThemeDark ? '#e24a42' : '#e60d02',
-					borderColor: isThemeDark ? '#3eb84f' : '#018a13',
-					borderColor0: isThemeDark ? '#e24a42' : '#e60d02'
+					color: getChartTheme(isThemeDark).up,
+					color0: getChartTheme(isThemeDark).down,
+					borderColor: getChartTheme(isThemeDark).up,
+					borderColor0: getChartTheme(isThemeDark).down
 				},
 				encode: { x: 0, y: [1, 2, 3, 4] }
 			},
@@ -318,7 +322,9 @@ export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_IND
 					xAxisIndex: gridIdx,
 					yAxisIndex: gridIdx,
 					data: panel.values.map((v) => [v[0], v[1]?.histogram]),
-					itemStyle: { color: (params) => (params.value[1] >= 0 ? '#3eb84f' : '#e24a42') }
+					itemStyle: {
+						color: (params) => (params.value[1] >= 0 ? getChartTheme(isThemeDark).up : getChartTheme(isThemeDark).down)
+					}
 				})
 				result.push({
 					name: 'Signal',

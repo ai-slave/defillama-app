@@ -2,6 +2,7 @@ import type { ECharts } from 'echarts/core'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { CHART_INSET, CHART_LEGEND_RESERVE, CHART_ZOOM_RESERVE } from '~/components/ECharts/chartSpacing'
 import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { SegmentedControl } from '~/components/SegmentedControl'
 import { Select } from '~/components/Select/Select'
@@ -564,10 +565,10 @@ export function LiquidationsDistributionChart({
 	const chartOptions = React.useMemo(() => {
 		const options = {
 			grid: {
-				top: showBreakdownLegend ? 40 : 24,
-				left: 12,
-				right: 12,
-				bottom: shouldHideDataZoom ? 12 : 64
+				top: showBreakdownLegend ? CHART_LEGEND_RESERVE : 24,
+				left: CHART_INSET,
+				right: CHART_INSET,
+				bottom: shouldHideDataZoom ? CHART_INSET : CHART_ZOOM_RESERVE
 			},
 			xAxis: {
 				type: 'category',
@@ -575,19 +576,13 @@ export function LiquidationsDistributionChart({
 					hideOverlap: true,
 					formatter: (value: number) => formatLiqPrice(Number(value))
 				},
-				axisTick: { alignWithLabel: true },
-				splitLine: {
-					lineStyle: { color: '#a1a1aa', opacity: 0.1 }
-				}
+				axisTick: { alignWithLabel: true }
 			},
 			yAxis: {
 				type: 'value',
 				position: 'right',
 				axisLabel: {
 					formatter: (value: number) => formatMetricValue(value, chartState.metric, chartState.tokenLabel)
-				},
-				splitLine: {
-					lineStyle: { color: '#a1a1aa', opacity: 0.1 }
 				}
 			},
 			dataZoom: {
@@ -607,9 +602,9 @@ export function LiquidationsDistributionChart({
 				axisPointer: {
 					type: 'cross',
 					label: {
-						backgroundColor: '#2f5ed4',
+						backgroundColor: '#1f67d2',
 						color: '#fff',
-						borderColor: '#2f5ed4',
+						borderColor: '#1f67d2',
 						borderWidth: 1,
 						borderRadius: 4,
 						padding: [4, 8],

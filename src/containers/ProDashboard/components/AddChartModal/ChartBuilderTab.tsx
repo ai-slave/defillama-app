@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useCallback, useEffect, useMemo } from 'react'
+import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
 import { Icon } from '~/components/Icon'
 import { fetchChainsCategories } from '~/containers/Chains/api'
 import type { CustomTimePeriod, TimePeriod } from '~/containers/ProDashboard/ProDashboardAPIContext'
@@ -365,17 +366,10 @@ export function ChartBuilderTab({
 
 	const previewChartOptions = useMemo(
 		() => ({
-			grid: {
-				top: 40,
-				bottom: 40,
-				left: 12,
-				right: 12,
-				outerBoundsMode: 'same',
-				outerBoundsContain: 'axisLabel'
-			},
+			grid: chartGrid({ top: CHART_LEGEND_RESERVE }),
 			legend: {
 				show: true,
-				top: 10,
+				top: CHART_INSET,
 				type: 'scroll',
 				selectedMode: 'multiple',
 				pageButtonItemGap: 5,

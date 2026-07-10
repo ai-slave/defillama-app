@@ -12,6 +12,15 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useMemo } from 'react'
 import { useMedia } from '~/hooks/useMedia'
+import {
+	CHART_INSET,
+	CHART_LEGEND_RESERVE,
+	CHART_LEGEND_RIGHT_INSET,
+	CHART_ZOOM_RESERVE,
+	chartDataZoomSliderGeometry,
+	chartGrid,
+	chartLegendScrollStyle
+} from './chartSpacing'
 import { useChartTheme } from './chartTheme'
 import { formatChartEmphasisDate, formatTooltipChartDate, formatTooltipValue } from './formatters'
 
@@ -131,25 +140,24 @@ export function useDefaults({
 			: {}
 
 		const getGridTop = (): number => {
-			if (valueSymbol === '%') return 20
-			if (hideLegend) return 0
-			if (isSmall) return 60
-			return 10
+			if (valueSymbol === '%') return CHART_LEGEND_RESERVE
+			if (hideLegend) return CHART_INSET
+			if (isSmall) return 64
+			return CHART_LEGEND_RESERVE
 		}
 		const gridTop = getGridTop()
 
-		const grid = {
-			left: 20,
-			outerBoundsMode: 'same',
-			outerBoundsContain: 'axisLabel',
-			bottom: 60,
-			top: title ? gridTop + 48 : gridTop + 20,
-			right: 20
-		}
+		const grid = chartGrid({
+			bottom: CHART_ZOOM_RESERVE,
+			top: title ? gridTop + 28 : gridTop
+		})
 
 		const tooltip = {
 			trigger: 'axis',
 			confine: true,
+			className: 'defillama-echarts-tooltip',
+			backgroundColor: 'transparent',
+			borderWidth: 0,
 			formatter: function (params) {
 				let chartdate =
 					typeof params[0].value[0] === 'string'
@@ -240,6 +248,7 @@ export function useDefaults({
 			},
 			...(alwaysShowTooltip
 				? {
+						className: undefined,
 						position: [60, 0],
 						backgroundColor: 'none',
 						borderWidth: '0',
@@ -255,6 +264,9 @@ export function useDefaults({
 		const inflowsTooltip = {
 			trigger: 'axis',
 			confine: true,
+			className: 'defillama-echarts-tooltip',
+			backgroundColor: 'transparent',
+			borderWidth: 0,
 			formatter: function (params) {
 				const chartdate = formatTooltipChartDate(params[0].value[0], 'daily')
 
@@ -300,6 +312,9 @@ export function useDefaults({
 		const aggregateTooltip = {
 			trigger: 'axis',
 			confine: true,
+			className: 'defillama-echarts-tooltip',
+			backgroundColor: 'transparent',
+			borderWidth: 0,
 			formatter: function (params) {
 				if (Array.isArray(params) && params.length > 1) {
 					const chartdate = formatTooltipChartDate(params[0].value[0], groupBy)
@@ -347,6 +362,7 @@ export function useDefaults({
 			},
 			...(alwaysShowTooltip
 				? {
+						className: undefined,
 						position: [60, 0],
 						backgroundColor: 'none',
 						borderWidth: '0',
@@ -368,7 +384,7 @@ export function useDefaults({
 				fontWeight: 400
 			},
 			axisLabel: {
-				color: chartTheme.text
+				color: chartTheme.axisLabel
 			},
 			axisLine: {
 				lineStyle: {
@@ -394,7 +410,7 @@ export function useDefaults({
 			},
 			axisLabel: {
 				formatter: (value) => formatTooltipValue(value, valueSymbol),
-				color: chartTheme.text
+				color: chartTheme.axisLabel
 			},
 			axisLine: {
 				lineStyle: {
@@ -411,14 +427,15 @@ export function useDefaults({
 		}
 
 		const legend = {
+			...chartLegendScrollStyle(chartTheme.legendPageActive, chartTheme.legendPageInactive, chartTheme.axisLabel),
 			textStyle: {
 				fontFamily: 'sans-serif',
 				fontSize: 12,
 				fontWeight: 400,
 				color: chartTheme.text
 			},
-			top: !hideLegend && isSmall && title ? 30 : 0,
-			right: !hideLegend && isSmall && title ? null : 12
+			top: !hideLegend && isSmall && title ? 38 : CHART_INSET,
+			right: !hideLegend && isSmall && title ? null : CHART_LEGEND_RIGHT_INSET
 		}
 
 		const dataZoom = [
@@ -430,8 +447,7 @@ export function useDefaults({
 			{
 				start: 0,
 				end: 100,
-				left: 12,
-				right: 12,
+				...chartDataZoomSliderGeometry,
 				textStyle: {
 					color: chartTheme.text
 				},

@@ -16,6 +16,13 @@ import { useMemo } from 'react'
  */
 export interface ChartTheme {
 	text: string
+	/** Axis tick labels — tertiary gray, quieter than `text` (titles/legend). */
+	axisLabel: string
+	legendPageActive: string
+	legendPageInactive: string
+	/** Chart accents (candles, up/down fills) — fixed across modes per the library. */
+	up: string
+	down: string
 	gridline: string
 	areaGradientTo: string
 	zoomBorder: string
@@ -43,6 +50,15 @@ const TOKENS: Record<
 	{ cssVar: string; light: string; dark: string }
 > = {
 	text: { cssVar: '--ld-chart-text', light: 'rgba(0, 0, 0, 1)', dark: 'rgba(255, 255, 255, 1)' },
+	axisLabel: { cssVar: '--ld-chart-axis-label', light: '#6f6f6f', dark: '#878787' },
+	legendPageActive: { cssVar: '--ld-chart-legend-page-active', light: '#1f67d2', dark: '#1f67d2' },
+	legendPageInactive: {
+		cssVar: '--ld-chart-legend-page-inactive',
+		light: '#6f6f6f80',
+		dark: '#87878780'
+	},
+	up: { cssVar: '--ld-chart-up', light: '#3eb84f', dark: '#3eb84f' },
+	down: { cssVar: '--ld-chart-down', light: '#e24a42', dark: '#e24a42' },
 	gridline: { cssVar: '--ld-chart-gridline', light: 'rgba(0, 0, 0, 0.03)', dark: 'rgba(255, 255, 255, 0.02)' },
 	areaGradientTo: {
 		cssVar: '--ld-chart-area-gradient-to',

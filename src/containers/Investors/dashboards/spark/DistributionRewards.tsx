@@ -1,6 +1,7 @@
 import type * as echarts from 'echarts/core'
 import { lazy, useCallback, useMemo, useRef } from 'react'
 import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
+import { CHART_INSET } from '~/components/ECharts/chartSpacing'
 import type { IBarChartProps, IChartProps } from '~/components/ECharts/types'
 import { formatBarChart } from '~/components/ECharts/utils'
 import { useDistributionData } from './distributionApi'
@@ -9,7 +10,7 @@ const BarChart = lazy(() => import('~/components/ECharts/BarChart')) as React.FC
 const AreaChart = lazy(() => import('~/components/ECharts/AreaChart')) as React.FC<IChartProps>
 
 const SCROLL_LEGEND = {
-	legend: { type: 'scroll' as const, orient: 'horizontal' as const, top: 0 }
+	legend: { type: 'scroll' as const, orient: 'horizontal' as const, top: CHART_INSET }
 }
 
 function sparkExportTitle(title: string) {

@@ -611,7 +611,19 @@
 /* ------------------------------- Components ------------------------------- */
 @layer components {
 	[data-backdrop] {
-		@apply bg-black/40 dark:bg-black/70;
+		background-color: var(--ld-bg-screen-dim);
+	}
+
+	/* ECharts HTML tooltips (renderMode html / default DOM tooltips). The chart
+	   option sets backgroundColor 'transparent' + borderWidth 0 and this class
+	   owns the chrome, so tooltips flip with the theme via tokens instead of
+	   per-chart resolved literals. Matches domChartTooltipStyles/tooltipSurfaceStyles. */
+	.defillama-echarts-tooltip {
+		background-color: var(--ld-bg-overlay) !important;
+		border: 1px solid var(--ld-border-medium) !important;
+		border-radius: 6px !important;
+		box-shadow: 0 12px 32px -12px rgb(0 0 0 / 0.25) !important;
+		color: var(--ld-text-primary) !important;
 	}
 
 	#fees-generated-chart > div > div > svg > g > image {

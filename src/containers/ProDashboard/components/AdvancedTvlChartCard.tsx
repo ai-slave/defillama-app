@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
+import { chartGrid } from '~/components/ECharts/chartSpacing'
 import type { IBarChartProps, IChartProps, IPieChartProps } from '~/components/ECharts/types'
 import { LoadingSpinner } from './LoadingSpinner'
 
@@ -40,26 +41,14 @@ const CHART_TYPE_LABELS: Record<string, string> = {
 }
 
 const chartOptions = {
-	grid: {
-		left: 12,
-		bottom: 12,
-		top: 12,
-		right: 12,
-		outerBoundsMode: 'same',
-		outerBoundsContain: 'axisLabel'
-	}
+	grid: chartGrid()
 }
 
 const inflowsChartOptions = {
 	overrides: {
 		inflow: true
 	},
-	grid: {
-		left: 12,
-		bottom: 12,
-		top: 12,
-		right: 12
-	}
+	grid: chartGrid()
 }
 
 const TVL_STACKS = ['TVL']

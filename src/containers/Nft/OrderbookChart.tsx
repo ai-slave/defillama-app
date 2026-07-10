@@ -10,6 +10,8 @@ import {
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import * as React from 'react'
+import { chartGrid } from '~/components/ECharts/chartSpacing'
+import { getChartTheme } from '~/components/ECharts/chartTheme'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
@@ -67,7 +69,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 						},
 						{
 							offset: 1,
-							color: isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.2)'
+							color: getChartTheme(isDark).areaGradientTo
 						}
 					])
 				},
@@ -98,7 +100,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 						},
 						{
 							offset: 1,
-							color: isDark ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.2)'
+							color: getChartTheme(isDark).areaGradientTo
 						}
 					])
 				},
@@ -116,7 +118,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 				textStyle: {
 					fontFamily: 'sans-serif',
 					fontWeight: 600,
-					color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+					color: getChartTheme(isDark).text
 				},
 				left: 15
 			},
@@ -131,14 +133,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 				left: isSmall ? '40%' : '45%',
 				top: '130px'
 			},
-			grid: {
-				left: '5%',
-				right: '10%',
-				bottom: '7%',
-				top: (isSmall ? 60 : 10) + 48,
-				outerBoundsMode: 'same',
-				outerBoundsContain: 'axisLabel'
-			},
+			grid: chartGrid({ top: (isSmall ? 60 : 10) + 48 }),
 			tooltip: {
 				trigger: 'axis',
 				confine: true,
@@ -163,7 +158,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 					fontFamily: 'sans-serif',
 					fontSize: 12,
 					fontWeight: 400,
-					color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+					color: getChartTheme(isDark).text
 				},
 				top: isSmall ? 30 : 0,
 				right: isSmall ? null : 20,
@@ -174,7 +169,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 				type: 'log',
 				axisLabel: {
 					formatter: (value: number) => Number(value.toFixed(2)) + ' ETH',
-					color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+					color: getChartTheme(isDark).text
 				},
 				boundaryGap: false,
 				nameTextStyle: {
@@ -184,14 +179,13 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 				},
 				axisLine: {
 					lineStyle: {
-						color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)',
+						color: getChartTheme(isDark).text,
 						opacity: 0.2
 					}
 				},
 				splitLine: {
 					lineStyle: {
-						color: '#a1a1aa',
-						opacity: 0.1
+						color: getChartTheme(isDark).gridline
 					}
 				}
 			},
@@ -199,11 +193,11 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 				name: 'Amount',
 				type: 'value',
 				axisLabel: {
-					color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)'
+					color: getChartTheme(isDark).text
 				},
 				axisLine: {
 					lineStyle: {
-						color: isDark ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)',
+						color: getChartTheme(isDark).text,
 						opacity: 0.1
 					}
 				},
@@ -215,8 +209,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 				},
 				splitLine: {
 					lineStyle: {
-						color: '#a1a1aa',
-						opacity: 0.1
+						color: getChartTheme(isDark).gridline
 					}
 				}
 			},

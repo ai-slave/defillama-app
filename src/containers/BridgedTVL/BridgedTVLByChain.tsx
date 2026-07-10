@@ -216,7 +216,7 @@ export function BridgedTVLByChain({
 					</ChartPanelToolbar>
 					{chartType !== 'inflows' ? (
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>
-							<PieChart chartData={deferredPieChartData} valueSymbol="" onReady={onChartReady} />
+							<PieChart chartData={deferredPieChartData} valueSymbol="" centerY="44%" onReady={onChartReady} />
 						</React.Suspense>
 					) : deferredInflowsData ? (
 						<React.Suspense fallback={<ChartPanelBodyFallback />}>

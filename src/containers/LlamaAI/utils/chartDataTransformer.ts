@@ -1,3 +1,4 @@
+import { CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
 import { formatBarChart, formatLineChart } from '~/components/ECharts/utils'
 import type { AdaptedLlamaAICartesianChart, LlamaAICartesianDatasetRow } from '~/containers/LlamaAI/utils/chartAdapter'
 import type { AdaptedChartData } from '~/containers/LlamaAI/utils/chartAdapter'
@@ -236,7 +237,7 @@ export class ChartDataTransformer {
 
 		const percentageChartOptions: Record<string, any> | undefined = isPercentage
 			? {
-					grid: { top: 24, right: 12, bottom: 68, left: 12 },
+					grid: chartGrid({ top: 24, bottom: CHART_ZOOM_RESERVE }),
 					tooltip: { formatter: percentageTooltipFormatter },
 					...(!hasSecondaryAxis
 						? {

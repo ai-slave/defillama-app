@@ -20,7 +20,7 @@ interface TreeMapBuilderChartProps {
 }
 
 // Treemap does not clip to the series box when zoomed; outer padding + overflow:hidden preserves the inset.
-const CHART_INSET_PX = 12
+const CHART_INSET_PX = 8
 
 const formatValue = (rawValue?: number) => {
 	const value = typeof rawValue === 'number' && Number.isFinite(rawValue) ? rawValue : 0
@@ -121,6 +121,9 @@ export default function TreeMapBuilderChart({ data, height = '450px', onReady }:
 				}
 			},
 			tooltip: {
+				className: 'defillama-echarts-tooltip',
+				backgroundColor: 'transparent',
+				borderWidth: 0,
 				formatter: function (info: any) {
 					const rawValue = typeof info?.value === 'number' && Number.isFinite(info.value) ? info.value : 0
 					const pct = total > 0 ? ((rawValue / total) * 100).toFixed(1) : '0'

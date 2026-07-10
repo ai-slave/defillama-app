@@ -1,5 +1,6 @@
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
+import { CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
 import type { IBarChartProps, IChartProps, IPieChartProps } from '~/components/ECharts/types'
 import { useStablecoinsChartData } from '~/containers/ProDashboard/components/datasets/StablecoinsDataset/useStablecoinsChartData'
 import { generateConsistentChartColor, STABLECOIN_TOKEN_COLORS } from '~/containers/ProDashboard/utils/colorManager'
@@ -30,14 +31,7 @@ const CHART_TYPE_LABELS: Record<string, string> = {
 }
 
 const chartOptions = {
-	grid: {
-		left: 12,
-		bottom: 68,
-		top: 12,
-		right: 12,
-		outerBoundsMode: 'same',
-		outerBoundsContain: 'axisLabel'
-	}
+	grid: chartGrid({ bottom: CHART_ZOOM_RESERVE })
 }
 
 const inflowsChartOptions = {

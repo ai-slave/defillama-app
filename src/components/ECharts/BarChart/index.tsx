@@ -10,6 +10,7 @@ import { useChartResize } from '~/hooks/useChartResize'
 import { slug, toNiceCsvDate } from '~/utils'
 import { ChartContainer } from '../ChartContainer'
 import { ChartHeader } from '../ChartHeader'
+import { CHART_INSET, CHART_ZOOM_RESERVE, chartGrid } from '../chartSpacing'
 import type { IBarChartProps } from '../types'
 import { useDefaults } from '../useDefaults'
 import { mergeDeep, stringToColour } from '../utils'
@@ -224,12 +225,7 @@ export default function BarChart({
 				...tooltip
 			},
 			grid: {
-				left: isHorizontal ? 120 : 12,
-				bottom: shouldHideDataZoom ? 12 : 68,
-				top: 12,
-				right: 12,
-				outerBoundsMode: 'same',
-				outerBoundsContain: 'axisLabel',
+				...chartGrid({ bottom: shouldHideDataZoom ? CHART_INSET : CHART_ZOOM_RESERVE }),
 				...grid
 			},
 			xAxis: isHorizontal ? { ...yAxis, type: 'value' } : { ...xAxis },

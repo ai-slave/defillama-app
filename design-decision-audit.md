@@ -34,8 +34,8 @@ This file tracks design-system audit notes before code changes are made.
 
 - The route-family sweep is merged. Follow-up work must start with a current-code review;
   historical checklist entries alone are insufficient evidence for a visual change.
-- Search and Metrics use the shared dialog surface contract. Their remaining work is
-  owner visual verification, not a second shell migration.
+- Search and Metrics use the shared dialog surface contract. No follow-up is scheduled;
+  reopen them only for a reproducible regression, not a second shell migration.
 - Segmented controls now have a shared keyboard-complete radio-group primitive. Real
   page-navigation tablists remain separate because they own tab/panel semantics.
 - DOM mini-chart tooltip/crosshair chrome is centralized without changing chart series,
@@ -74,10 +74,9 @@ This file tracks design-system audit notes before code changes are made.
   4. New ratchet in `lint:tokens`: `--legacy-` consumer count must not increase.
 - Quarantined per-product namespaces (`--pro-*`, `--sub-*`, `--sl-*`, `--signin-*`)
   are already unambiguous and live in deletable legacy-\*.css files; do not rename.
-- Current merge decision: do not execute this on the current design-system branch before
-  it merges. The rename is valuable, but it is too broad to mix with visual
-  stabilization. After merge, confirm the `--legacy-*` prefix + clean-name takeover and
-  run it as a focused rename-only branch with both-mode screenshot verification.
+- Status: this rename remains deferred. If it is later approved, run it as a focused
+  rename-only branch with both-mode screenshot verification rather than mixing it into
+  visual stabilization.
 
 ### Resolved Owner Decisions From 2026-07-07
 
@@ -87,7 +86,7 @@ This file tracks design-system audit notes before code changes are made.
 - Keep the title-strip primitive phased. Current adopters include protocol TVL, Treasury, Active Loans, Forks, CEX assets/stablecoins, chain overview empty/title shell, bridge protocol overview, and LiquidationsV2 summary. Review unlocks/governance/LST separately because they need extra metadata/action slots.
 - Use 32px toolbar controls. Use 6px inside dense chart/table toolbar control clusters; use 8px for toolbar padding, page/panel/card gaps, and between larger control groups.
 - Keep `PanelHeader` as the taller Figma-derived titled-panel header. Add/use a separate compact chart/table toolbar recipe for route-specific inline chart controls.
-- Do not change ECharts grid insets now. Document that the current 12px-ish cartesian inset may optically read tighter than DOM spacing; changing it later is a chart-visual change that needs screenshots/pixel checks.
+- Historical chart decision, now superseded: grid inset changes required screenshots/pixel checks. The landed chart-theme/geometry pass performed that review and established the shared 8px visual-inset contract documented below.
 - Multi-select popover rows use compact 14px checkbox boxes in both states: filled blue when selected, empty `border-strong` when unselected. Single-select rows show only the selected check mark and no empty box/circle.
 - Dense-card secondary actions can remain compact, for example 24px CSV buttons inside stat cards, while chart/table/action toolbars use 32px controls.
 - Refine the current structural `<p>` to `<div>` work rather than reverting: data-card wrappers stay `div`; empty/error/status shells get inner text semantics and `role="status"`/`role="alert"` where appropriate.
@@ -235,8 +234,9 @@ This file tracks design-system audit notes before code changes are made.
 Follow-up status:
 
 - Superseded by the 2026-07-09 broad `ChartPanel` shell migration note below. Standard
-  in-scope chart shells moved onto the shared helper layer; remaining chart work is
-  limited to custom/dynamic-height, mixed chart/table, table-only, or excluded surfaces.
+  in-scope chart shells moved onto the shared helper layer. The later closure review
+  confirmed that custom/dynamic-height, mixed chart/table, table-only, and excluded
+  surfaces are intentional owners rather than remaining chart work.
 
 ### Title Strip Usage Map
 
@@ -252,7 +252,8 @@ Follow-up status:
   - `src/pages/protocol/tvl/[protocol].tsx`, `src/pages/protocol/treasury/[protocol].tsx`, `src/pages/protocol/active-loans/[protocol].tsx`, and `src/pages/protocol/forks/[protocol].tsx`.
   - `src/pages/cex/assets/[cex].tsx` and `src/pages/cex/stablecoins/[cex].tsx`.
   - `src/containers/ChainOverview/index.tsx`, `src/containers/Bridges/BridgeProtocolOverview.tsx`, and `src/containers/LiquidationsV2/Summary.tsx`.
-- Page-level title-strip candidates still pending slot checks:
+- Historical page-level title-strip candidates at this point in the audit (the final
+  sweep review accepted their current richer compositions; no migration remains pending):
   - `src/containers/Unlocks/EmissionsByProtocol.tsx`: page-level token title strip plus inline token price/change metadata; the primitive would need metadata slots rather than only `icon + title`.
   - `src/containers/Governance/GovernanceProject.tsx`: page-level project title strip plus filter/action slot.
   - `src/containers/LST/index.tsx`: title strip with title and right-aligned aggregate value; no logo, so this is likely a generic title strip variant rather than an entity-logo variant.
@@ -480,7 +481,7 @@ Current classification of the in-flight pass:
 - Current issue: User wants chart/table toolbar controls to feel consistent when segmented/tab controls sit beside buttons. Existing design-system rule says panel/chart toolbar controls are 32px (`Button` md, `MetricChip` 32px). Figma home metadata shows 24px button instances in the home chart frame, while Figma `6183:312702` shows a segmented/tab switch that is 32px total because it wraps 28px tab items in 2px outer padding.
 - Measured Figma details: chart card `6183:292218` is 779x262. Header starts at x=8 y=12, height 24. Left control group has two 24px-high buttons, positions x=0 and x=92, so the group gap is 8px. Right export group has 24px, 53px, and 53px buttons at x=0, x=28, and x=85, so export-button gaps are 4px. Chart plot begins at y=50. Segmented/tabs `6183:312702` uses wrapper `bg-surface`, `border-medium`, 8px radius, 2px padding, 2px item gap; normal tab items are 28px tall from 12/16 text with `px-2 py-1.5`, selected `bg-brand-transparent` + branded text; wrapper total height is 32px.
 - Shared usage/context: Chart header/control patterns are shared across chain, protocol, token, DAT, RWA, cex, and many ECharts wrappers. Changing Button md or MetricChip would ripple widely.
-- Special cases: Prior checklist says Chain/Protocol chart toolbars were verified at 32px. Do not downgrade those globally without a design decision; token/DAT/RWA-Perps adoption is still pending.
+- Historical special case: Chain/Protocol chart toolbars were already verified at 32px; the later route-family sweep completed/reviewed the token, DAT, and RWA-Perps surfaces under the same control-height contract.
 - Surrounding layout impact: Moving chart controls from 32px to 28px or 24px changes panel header height, vertical chart position, and alignment with Add Metrics/metric chips/export controls.
 - Grid/flex/layout notes: Chart header action groups are better as grid/flex rows with size recipes, gap tokens, and padding/min-height floors. Toolbar rows themselves should not hardcode `h-8`; their height should emerge from the controls inside plus row padding/alignment.
 - Hardcoded hacks to remove: Do not make button height conditional on adjacent siblings through `:has()` or child inspection. That would hide layout rules in CSS and make toolbar behavior depend on incidental composition. Avoid fixed `h-*` on toolbar wrappers and page files; use primitive sizes like padding plus `min-h` floors where a control needs a stable target.
@@ -677,18 +678,18 @@ Current classification of the in-flight pass:
 - Hardcoded hacks to remove: Route-local `p-3 pb-0`, `gap-3`, `gap-1`, and fixed `h-*` toolbar wrappers should migrate to named chart-toolbar recipes. Do not add body `p-2` around `MultiSeriesChart2` just to force 8px DOM padding; that duplicates the chart grid inset.
 - Decision: Dense chart/table toolbar control clusters standardize on 6px gaps with 32px controls, while page/panel/card spacing and larger group spacing remains 8px.
 - Decision: `PanelHeader` remains the 56px titled-panel recipe, with 6px gaps between dense header controls. A separate `ChartToolbar`/`ChartPanelToolbar` recipe still exists for route-specific inline chart controls that need 8px toolbar padding and no bottom padding. The Figma-derived `PanelHeader` is a different context from inline chart toolbars, but its control spacing should not drift wider.
-- Decision: Do not change cartesian ECharts grid inset now. The current 12px-ish inset may optically read tighter than DOM spacing, but changing it would move axes, dataZoom, legends, and watermark placement and needs screenshots/pixel checks.
+- Historical decision (superseded by the landed chart-theme/geometry reconciliation below): do not change cartesian ECharts grid inset without screenshots/pixel checks. That visual review later occurred and established the shared 8px visual-inset contract.
 - Decision: Generic `CSVDownloadButton` may default to 24px (`size="sm"`), but chart/table toolbar usage should explicitly pass `size="md"` or use chart export wrappers so mixed-height controls do not return. Dense-card secondary actions may remain 24px.
 - Proposed direction: Add documented primitives/recipes: `ChartPanelToolbar` for route-specific chart toolbars (`px-2 pt-2 pb-0`, no bottom padding, 32px controls), `ChartPanelControlGroup` for dense internal 6px control clusters, and leave `PanelHeader` as the titled-panel recipe. Keep chart-only surfaces body-flush and avoid DOM body padding around grid-based charts.
 - Verification needed: Live visual/measured checks on `/`, `/chain/ethereum`, `/protocol/lido`, `/protocol/tvl/lido`, `/cex/assets/binance`, stablecoins, bridges, RWA, liquidations, adapter metrics, and one token chart section. For each, measure toolbar row padding, control gap, control height, chart top spacing, left/right plot inset, bottom dataZoom spacing, and whether removing/adding DOM padding changes chart visuals.
 
-#### Chart Panel Audit Buckets
+#### Chart Panel Audit Buckets (closed)
 
-- Standard chart shells: in-scope external-toolbar and full-lazy chart panels should use `ChartPanel`, `ChartPanelToolbar`, `ChartPanelBody`, `ChartPanelBodyFallback`, and `ChartPanelExportShellFallback` instead of local `Panel padding="none"` chart chrome.
+- Standard in-scope external-toolbar and full-lazy chart panels moved to `ChartPanel`, `ChartPanelToolbar`, `ChartPanelBody`, `ChartPanelBodyFallback`, and `ChartPanelExportShellFallback` instead of local `Panel padding="none"` chart chrome.
 - Titled `PanelHeader` context, not inline-toolbar context: protocol titled subpage panels, token PnL, allocation/events panels, and similar title/header sections keep `PanelHeader` while their chart body fallback can still use the 360px body helper when the header is outside Suspense.
-- Custom/dynamic chart cases stay explicit: treemap/candlestick/HBar branches, market mini charts, table-height placeholders, and surfaces whose height depends on active view or row count.
-- Mixed chart/table panels are broader data surfaces, not automatically `ChartPanel`; only the chart fallback or toolbar helper should migrate unless a route-family branch separates chart and table chrome.
-- Specific drift to keep checking during visual review: chart grid insets, plot body height, dataZoom placement, toolbar wrapping, and custom-height route branches. Do not "fix" those through `ChartPanel` if the chart itself has a route-specific height.
+- Custom/dynamic chart cases remain explicit: treemap/candlestick/HBar branches, market mini charts, table-shaped reservations, and surfaces whose height depends on active view or row count.
+- Mixed chart/table panels are complete broader data surfaces rather than incomplete `ChartPanel` migrations.
+- The closure review found no pending shared-grid, dataZoom, legend, plot-height, or shell migration in these buckets.
 
 ### 2026-07-07 Follow-Up Implementation Notes
 
@@ -751,15 +752,16 @@ Current classification of the in-flight pass:
   semantics need focused follow-up because they touch shared popover/table/product
   behavior.
 
-### 2026-07-09 Residual Chart / Componentization Handoff
+### 2026-07-09 Residual Chart / Componentization Handoff (chart portion closed)
 
-- Residual chart shell work is custom-case work, not a broad replacement pass:
-  mixed chart/table panels, table-height placeholders, treemap/candlestick/HBar branches,
-  custom 480/533/600px charts, market mini charts, and excluded/quarantined products
-  require route-specific decisions before migrating to `ChartPanel`.
-- Chart visual debt is not shell debt. Axis label color, gridline alpha, tooltip
-  background/border/text, candlestick up/down literals, and hardcoded chart-theme colors
-  should be handled in a chart-theme branch with visual checks.
+- The formerly residual chart shells were reviewed after the geometry pass. Mixed
+  chart/table panels, table-shaped reservations, treemap/candlestick/HBar branches,
+  custom 480/533/600px charts, market mini charts, and excluded/quarantined products are
+  intentional owners of their current composition; no `ChartPanel` migration is pending.
+- Chart visual debt is not shell debt. The axis-label, gridline, tooltip,
+  candlestick, legend, dataZoom, and geometry work later landed in the focused
+  chart-theme pass with visual checks. The post-landing code review found no remaining
+  shared chart migration; custom surfaces are intentional owners, not a follow-up queue.
 - Exported style-string candidates: `IconHitTarget` is small, `MetricChip` option chips
   are medium, `SegmentedControl` and `SearchField` are broad, and `Popover.ts` style
   exports should stay until there is a dedicated Ariakit abstraction pass.
@@ -800,8 +802,9 @@ Current classification of the in-flight pass:
     mode fork → single `bg-overlay`.
   - Legacy/excluded compat styles in `Popover.ts` (ProDashboard/Yields/LlamaAI) and
     all `Downloads/*` overlays intentionally untouched (excluded surfaces).
-  - ECharts-native tooltips already render near-white (library default, no
-    backgroundColor); convergence on `bg-overlay` stays in the chart-theme branch.
+  - ECharts-native tooltips rendered near-white through the library default at this
+    point in the audit. The later chart-theme pass moved their background, border, and
+    text onto the overlay/stroke/text chart tokens.
 - Drift found during the same audit (fixed in branch):
   - Home-page product-link cards (`ChainOverview/index.tsx`) were interactive Cards
     with no hover affordance → `hover-wash-card` per the Card rule.
@@ -837,8 +840,9 @@ bg-surface-elevated-2` opaque step per the documented Select-trigger exception.
   click action of their own, so all span/bar hovercards are touch-reachable. The only
   remaining touch gap is FullOldViewButton (`showOnClick={false}`: its click creates a
   dashboard), which still needs a separate info affordance on touch.
-- Found but unchanged: the ProtocolRankings custom-column "Err" badge is dead code
-  (early return swallows `error` first) — spun off as a separate task.
+- Later resolution: the ProtocolRankings accessor returns `null` for sorting on formula
+  errors, while the cell renderer evaluates separately and exposes `Err` with the error
+  tooltip. The earlier “dead badge” finding no longer applies.
 
 ### 2026-07-09 Token Hygiene (branch `mintdart/token-hygiene`)
 
@@ -855,18 +859,20 @@ bg-surface-elevated-2` opaque step per the documented Select-trigger exception.
     rows (which never receive DOM focus — previously NO keyboard indicator), and
     `focus-ring-on-brand` (white) covers solid brand fills (Button primary, active
     nav link) where a brand ring is invisible.
-- Observations logged, not fixed here:
+- Final reconciliation of observations:
   - CORRECTION (same day): dialogs DO have a scrim — the global `[data-backdrop]`
     rule in tailwind.css styles every Ariakit backdrop (`bg-black/40 dark:bg-black/70`).
     The real issue is two backdrop systems: dialogs at 40%/70% literals vs the
-    `--ld-bg-screen-dim` token (20%/60%) on the MarketMakers drawer. Owner decision
-    needed on one value before pointing `[data-backdrop]` at the token.
-  - ~280 `outline-none`/`outline-hidden` usages suppress the global focus ring;
-    per design.md that is only valid when the element has its own indicator —
-    unaudited callsites (e.g. the sidebar logo link has no indicator when focused)
-    need a focused a11y pass.
-- Still needing design sign-off (unchanged): light `hover-row` = `bg-brand-muted`
-  collision; light `text-disabled` legibility.
+    `--ld-bg-screen-dim` token (20%/60%) on the MarketMakers drawer. This was later
+    resolved by pointing both systems at the token and finalizing modal-strength values
+    at light `#090b0c66` / dark `#090b0cb3`.
+  - The later code review found that desktop/mobile logo links do not suppress the global
+    focus ring. Audited in-scope inputs/composites that suppress it provide an explicit
+    border/ring or Ariakit virtual-focus treatment; most remaining matches are excluded
+    product code. The old “sidebar logo has no indicator” example is no longer true.
+- Owner visual acceptance confirms the current light `hover-row`/`bg-brand-muted`
+  relationship and light `text-disabled` output as the shipped baseline. A future design
+  library revision may rename or republish those values, but no sweep blocker remains.
 
 ### 2026-07-09 Summary-Card Variant Taxonomy (owner decision)
 
@@ -897,3 +903,35 @@ bg-surface-elevated-2` opaque step per the documented Select-trigger exception.
   rendered as a literal `{getProtocolCategoryDexVolumeLabel(...)}` string.
 - Remaining StatItem shapes backlogged as opportunistic adoptions (card-anchored
   tooltips, local StatCard helpers, colored TokenPnl values).
+
+### 2026-07-09 Chart Theme And Geometry Reconciliation (landed on `main`)
+
+- Backdrop ownership is unified. The global Ariakit `[data-backdrop]` rule and the
+  MarketMakers drawer consume `--ld-bg-screen-dim`; the finalized modal-strength values
+  are light `#090b0c66` and dark `#090b0cb3`. This supersedes the earlier 20%/60% token
+  split and the interim dark `#090b0c99` value recorded above.
+- ECharts canvas chrome resolves through `chartTheme`: tertiary axis labels and legend
+  page text, active/inactive paging arrows aligned with the table-sort hierarchy, shared
+  low-alpha gridlines, semantic candlestick direction colors, and tokenized dataZoom
+  chrome. HTML tooltip options use transparent native chrome plus the shared
+  `.defillama-echarts-tooltip` overlay recipe. Series palettes remain data colors and are
+  intentionally outside this convergence.
+- `src/components/ECharts/chartSpacing.ts` is the geometry owner. Standard cartesian
+  charts use an 8px visual outer bound via ECharts `outerBounds`; default legends start
+  at 8px and reserve 40px before the plot; scroll legends reserve a 16px right paging
+  gutter. Slider dataZoom has fixed height and raw right/bottom compensation for ECharts
+  handle overflow, producing 8px visible side insets and a 12px visible bottom inset.
+- Geometry exceptions are explicit rather than copied local numbers:
+  - treemaps keep an 8px canvas-wrapper inset because zoomed content is clipped by the
+    canvas, not by the series rectangle; removing the wrapper based on an unzoomed view
+    makes zoomed tiles collide with the panel edge;
+  - legend-based pies stay at `centerY: 50%` and reserve their legend region, while
+    external-label pies can opt into a route-specific center (the bridged composition uses
+    `44%`) so unlock/allocation and other legend-based pies are not shifted globally;
+  - stacked candlestick panels retain one fixed left edge for cross-panel alignment, and
+    scatter keeps labels inside its explicit plot offsets.
+- The previous “do not change the 12px-ish grid without screenshots” decision was
+  honored, not bypassed: owner screenshots exposed legend, dataZoom, treemap zoom, and pie
+  composition behavior, and the 8px shared contract was tuned from those visual checks.
+  This is the final chart baseline for the sweep. Later product changes use `chartTheme`
+  and `chartSpacing.ts` as ordinary design-system contracts.

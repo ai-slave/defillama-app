@@ -291,6 +291,8 @@ export interface IPieChartProps {
 	}
 	valueSymbol?: string
 	radius?: [string, string]
+	/** Optional optical vertical center; defaults to ECharts' geometric 50%. */
+	centerY?: `${number}%`
 	showLegend?: boolean
 	toRight?: number
 	formatTooltip?: (params: EChartsFormatterParams) => string

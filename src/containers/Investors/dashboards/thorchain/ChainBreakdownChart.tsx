@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, useMemo, useState } from 'react'
+import { CHART_INSET, CHART_LEGEND_RESERVE } from '~/components/ECharts/chartSpacing'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/types'
 import ProtocolChartBuilderData from '~/containers/ProDashboard/services/ProtocolChartBuilderData'
 import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
@@ -38,7 +39,10 @@ interface RawSeries {
 }
 
 // Scrolling top legend + cleared grid top, so many-series legends never overlap the y-axis.
-const CHART_OPTIONS = { legend: { type: 'scroll', top: 0 }, grid: { top: 40 } } as any
+const CHART_OPTIONS = {
+	legend: { type: 'scroll', top: CHART_INSET },
+	grid: { top: CHART_LEGEND_RESERVE }
+} as any
 const QUERY_OPTS = { staleTime: 10 * 60 * 1000, refetchOnWindowFocus: false } as const
 
 function aggregate(series: RawSeries[], view: View, stacked: boolean) {

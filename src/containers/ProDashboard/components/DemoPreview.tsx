@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import * as React from 'react'
+import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
 import { Icon } from '~/components/Icon'
 import type { ChartConfig, MultiChartConfig, TextConfig } from '../types'
 import { CHART_TYPES } from '../types'
@@ -134,16 +135,9 @@ const DemoMultiChartCard = ({ multi }: { multi: MultiChartConfig }) => {
 				min: undefined,
 				axisLabel: { formatter: formatDemoValue }
 			},
-			grid: {
-				top: series.length > 5 ? 80 : 40,
-				bottom: 12,
-				left: 12,
-				right: 12,
-				outerBoundsMode: 'same',
-				outerBoundsContain: 'axisLabel'
-			},
+			grid: chartGrid({ top: series.length > 5 ? 80 : CHART_LEGEND_RESERVE }),
 			legend: {
-				top: 0,
+				top: CHART_INSET,
 				type: 'scroll',
 				pageButtonPosition: 'end',
 				height: series.length > 5 ? 80 : 40
@@ -627,12 +621,5 @@ export const DemoPreview = () => {
 }
 
 const chartOptions = {
-	grid: {
-		left: 8,
-		right: 8,
-		bottom: 8,
-		top: 8,
-		outerBoundsMode: 'same',
-		outerBoundsContain: 'axisLabel'
-	}
+	grid: chartGrid()
 }

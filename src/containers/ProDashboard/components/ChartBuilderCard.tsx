@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
+import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
 import { Icon } from '~/components/Icon'
 import { Select } from '~/components/Select/Select'
 import { filterDataByTimePeriod, StreamDoneContext } from '~/containers/ProDashboard/queries'
@@ -455,17 +456,10 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 		}
 
 		return {
-			grid: {
-				top: 40,
-				bottom: 12,
-				left: 12,
-				right: 12,
-				outerBoundsMode: 'same',
-				outerBoundsContain: 'axisLabel'
-			},
+			grid: chartGrid({ top: CHART_LEGEND_RESERVE }),
 			legend: {
 				show: true,
-				top: 0,
+				top: CHART_INSET,
 				type: 'scroll',
 				selectedMode: 'multiple',
 				pageButtonItemGap: 5,

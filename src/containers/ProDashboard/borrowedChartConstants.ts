@@ -1,12 +1,7 @@
+import { CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
+
 export const BORROWED_CHART_OPTIONS = {
-	grid: {
-		left: 12,
-		bottom: 68,
-		top: 12,
-		right: 12,
-		outerBoundsMode: 'same',
-		outerBoundsContain: 'axisLabel'
-	}
+	grid: chartGrid({ bottom: CHART_ZOOM_RESERVE })
 }
 
 export const BORROWED_CHART_TYPES = [

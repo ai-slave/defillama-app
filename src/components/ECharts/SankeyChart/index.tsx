@@ -170,11 +170,9 @@ export default function SankeyChart({
 				trigger: 'item',
 				triggerOn: 'mousemove',
 				confine: true,
-				backgroundColor: getChartTheme(isDark).inkInverted(0.9),
-				borderColor: getChartTheme(isDark).ink(0.2),
-				textStyle: {
-					color: getChartTheme(isDark).text
-				},
+				className: 'defillama-echarts-tooltip',
+				backgroundColor: 'transparent',
+				borderWidth: 0,
 				formatter: (params: any) => {
 					if (params.dataType === 'edge') {
 						return `${params.data.source} → ${params.data.target}<br/>${formatSankeyValue(params.data.value)}`
@@ -192,7 +190,7 @@ export default function SankeyChart({
 					const valueWithPercent = percentageLabel ? `${valueToShow} (${percentageLabel})` : valueToShow
 					const description = nodeMetadata.descriptions[params.name]
 					if (description) {
-						return `<strong>${params.name}</strong><br/>${valueWithPercent}<br/><span style="color: ${getChartTheme(isDark).ink(0.7)}; font-size: 11px;">${description}</span>`
+						return `<strong>${params.name}</strong><br/>${valueWithPercent}<br/><span style="color: var(--ld-text-secondary); font-size: 11px;">${description}</span>`
 					}
 					return `${params.name}<br/>${valueWithPercent}`
 				}

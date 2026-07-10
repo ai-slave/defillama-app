@@ -47,7 +47,7 @@ type YearDataMap = {
 
 const TIME_VIEWS = ['Month', 'Current Year', 'All Years'] as const
 type TimeView = (typeof TIME_VIEWS)[number]
-const TREEMAP_CHART_INSET_PX = 12
+const TREEMAP_CHART_INSET_PX = 8
 
 export default function UnlocksTreemapChart({ unlocksData, height = '600px', filterYear }: UnlocksTreemapProps) {
 	const id = useId()
@@ -286,12 +286,9 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 					content += `</div>`
 					return content
 				},
-				backgroundColor: isDark ? 'rgba(30, 30, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-				borderColor: getChartTheme(isDark).ink(0.15),
-				borderWidth: 1,
-				textStyle: {
-					color: getChartTheme(isDark).ink(1)
-				}
+				className: 'defillama-echarts-tooltip',
+				backgroundColor: 'transparent',
+				borderWidth: 0
 			},
 			toolbox: {
 				feature: {

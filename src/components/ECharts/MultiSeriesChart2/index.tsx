@@ -31,6 +31,14 @@ import { useMedia } from '~/hooks/useMedia'
 import { formatNum, formattedNum, slug } from '~/utils'
 import { ChartContainer } from '../ChartContainer'
 import { ChartHeader } from '../ChartHeader'
+import {
+	CHART_INSET,
+	CHART_LEGEND_RESERVE,
+	CHART_LEGEND_RIGHT_INSET,
+	chartDataZoomSliderGeometry,
+	chartGrid,
+	chartLegendScrollStyle
+} from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
 import {
 	formatChartAxisDate,
@@ -562,7 +570,9 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 	const tooltipGroupBy = groupBySafe === 'cumulative' ? 'daily' : groupBySafe
 
 	const defaultChartSettings = useMemo(() => {
-		const themeColor = getChartTheme(isThemeDark).text
+		const chartTheme = getChartTheme(isThemeDark)
+		const themeColor = chartTheme.text
+		const axisLabelColor = chartTheme.axisLabel
 
 		const graphic = {
 			type: 'image',
@@ -580,7 +590,7 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 			type: 'time',
 			boundaryGap: false,
 			nameTextStyle: { fontFamily: 'sans-serif', fontSize: 14, fontWeight: 400 },
-			axisLabel: { color: themeColor, formatter: formatChartAxisDate, hideOverlap: true },
+			axisLabel: { color: axisLabelColor, formatter: formatChartAxisDate, hideOverlap: true },
 			axisLine: { lineStyle: { color: themeColor, opacity: 0.2 } },
 			splitLine: {
 				lineStyle: { color: getChartTheme(isThemeDark).gridline }
@@ -594,7 +604,7 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 			nameTextStyle: { fontFamily: 'sans-serif', fontSize: 14, fontWeight: 400 },
 			axisLabel: {
 				formatter: (value: number) => formatAxisLabel(value, valueSymbol),
-				color: themeColor
+				color: axisLabelColor
 			},
 			axisLine: { lineStyle: { color: themeColor, opacity: 0.1 } },
 			splitLine: {
@@ -603,7 +613,6 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 		}
 
 		const legend = {
-			padding: 12,
 			textStyle: {
 				fontFamily: 'sans-serif',
 				fontSize: 12,
@@ -617,8 +626,7 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 			{
 				start: 0,
 				end: 100,
-				left: 12,
-				right: 12,
+				...chartDataZoomSliderGeometry,
 				textStyle: { color: themeColor },
 				borderColor: getChartTheme(isThemeDark).zoomBorder,
 				handleStyle: {
@@ -842,27 +850,35 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 		// full width — otherwise omit `left` so items stay right-aligned.
 		const legendItemCount = series.length
 		const constrainLeft = legendItemCount > 5
+		const legendTheme = getChartTheme(isThemeDark)
+		const legendScrollStyle = chartLegendScrollStyle(
+			legendTheme.legendPageActive,
+			legendTheme.legendPageInactive,
+			legendTheme.axisLabel
+		)
 		const finalLegend = hideDefaultLegend
 			? undefined
 			: Array.isArray(legend)
 				? legend.map((l) => ({
+						...legendScrollStyle,
 						...l,
 						type: 'scroll',
 						orient: l?.orient ?? 'horizontal',
 						pageButtonPosition: l?.pageButtonPosition ?? 'end',
-						top: l?.top ?? 0,
-						...(l?.left != null ? { left: l.left } : constrainLeft ? { left: 12 } : {}),
-						right: l?.right ?? 12
+						top: l?.top ?? CHART_INSET,
+						...(l?.left != null ? { left: l.left } : constrainLeft ? { left: CHART_INSET } : {}),
+						right: l?.right ?? CHART_LEGEND_RIGHT_INSET
 					}))
 				: legend
 					? {
+							...legendScrollStyle,
 							...legend,
 							type: 'scroll',
 							orient: legend?.orient ?? 'horizontal',
 							pageButtonPosition: legend?.pageButtonPosition ?? 'end',
-							top: legend?.top ?? 0,
-							...(legend?.left != null ? { left: legend.left } : constrainLeft ? { left: 12 } : {}),
-							right: legend?.right ?? 12
+							top: legend?.top ?? CHART_INSET,
+							...(legend?.left != null ? { left: legend.left } : constrainLeft ? { left: CHART_INSET } : {}),
+							right: legend?.right ?? CHART_LEGEND_RIGHT_INSET
 						}
 					: undefined
 
@@ -962,7 +978,8 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 			...baseTooltip,
 			appendToBody: alwaysShowTooltip ? undefined : true,
 			renderMode: 'html',
-			className: 'defillama-echarts-tooltip',
+			className: alwaysShowTooltip ? undefined : 'defillama-echarts-tooltip',
+			...(alwaysShowTooltip ? {} : { backgroundColor: 'transparent', borderWidth: 0 }),
 			enterable,
 			// Clamp to the browser viewport (not the chart grid).
 			confine: false,
@@ -972,14 +989,10 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 			formatter: customTooltipFormatter ?? tooltipFormatter
 		}
 
-		const baseGrid = {
-			left: 12,
+		const baseGrid = chartGrid({
 			bottom: getMainGridBottom({ shouldShowEventRail, shouldHideDataZoom }),
-			top: hideDefaultLegend ? 12 : 40,
-			right: 12,
-			outerBoundsMode: 'same',
-			outerBoundsContain: 'axisLabel'
-		}
+			top: hideDefaultLegend ? CHART_INSET : CHART_LEGEND_RESERVE
+		})
 		const finalGrid = mergedChartSettings.grid ? mergeDeep(baseGrid, mergedChartSettings.grid) : baseGrid
 		const hasExplicitGridBottom = mergedChartSettings.grid?.bottom != null
 		if (!hasExplicitGridBottom) {

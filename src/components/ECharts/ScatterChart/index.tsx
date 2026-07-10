@@ -17,6 +17,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { formattedNum } from '~/utils'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
+import { CHART_INSET } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
 import type { IScatterChartProps } from '../types'
 import { isIconUrlValid, validateIconUrl } from '../utils'
@@ -230,13 +231,17 @@ export default function ScatterChart({
 					}
 				: undefined,
 			grid: {
-				right: 12,
-				bottom: 12,
-				left: 12,
+				top: CHART_INSET,
+				right: CHART_INSET,
+				bottom: CHART_INSET,
+				left: CHART_INSET,
 				outerBoundsMode: 'same'
 			},
 			tooltip: {
 				showDelay: 0,
+				className: 'defillama-echarts-tooltip',
+				backgroundColor: 'transparent',
+				borderWidth: 0,
 				confine: true,
 				formatter: effectiveTooltipFormatter,
 				axisPointer: {
@@ -267,13 +272,12 @@ export default function ScatterChart({
 					},
 					axisLabel: {
 						formatter: '{value}',
-						color: getChartTheme(isDark).text,
+						color: getChartTheme(isDark).axisLabel,
 						inside: true
 					},
 					splitLine: {
 						lineStyle: {
-							color: '#a1a1aa',
-							opacity: 0.1
+							color: getChartTheme(isDark).gridline
 						}
 					}
 				}
@@ -291,13 +295,12 @@ export default function ScatterChart({
 					},
 					axisLabel: {
 						formatter: '{value}',
-						color: getChartTheme(isDark).text,
+						color: getChartTheme(isDark).axisLabel,
 						inside: true
 					},
 					splitLine: {
 						lineStyle: {
-							color: '#a1a1aa',
-							opacity: 0.1
+							color: getChartTheme(isDark).gridline
 						}
 					}
 				}
