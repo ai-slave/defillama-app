@@ -101,5 +101,10 @@ describe('dataset cache registry', () => {
 			destination: '/protocol/eigencloud',
 			permanent: true
 		})
+		expect(redirects).toContainEqual({
+			source: '/protocol/afx',
+			destination: '/protocol/afx-bridge',
+			permanent: true
+		})
 	})
 })

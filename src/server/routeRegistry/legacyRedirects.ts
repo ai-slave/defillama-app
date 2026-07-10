@@ -662,6 +662,11 @@ export const legacyRedirects = [
 		permanent: true
 	},
 	{
+		source: '/protocol/afx',
+		destination: '/protocol/afx-bridge',
+		permanent: true
+	},
+	{
 		source: '/protocol/mexc',
 		destination: '/cex/mexc',
 		permanent: true
