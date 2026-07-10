@@ -3,7 +3,7 @@
 import { Popover, PopoverDisclosure, useDialogStore, usePopoverStore } from '@ariakit/react'
 import * as React from 'react'
 import { Icon } from '~/components/Icon'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 import type { CustomView } from '../../types'
 import { ProTableCSVButton } from './CsvButton'
 import { CustomViewModal } from './CustomViewModal'

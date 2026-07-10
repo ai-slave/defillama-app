@@ -3,7 +3,7 @@ import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { PercentChange } from '~/components/PercentChange'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
 
 interface IPeggedAssetRow {

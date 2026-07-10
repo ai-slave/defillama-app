@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
 import { Icon } from '~/components/Icon'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 import { ConfirmActionModal } from './ConfirmActionModal'
 import type { TeamSubscription } from './types'
 import { useTeam } from './useTeam'

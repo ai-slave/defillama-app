@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { Icon } from '~/components/Icon'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 import type { CustomView } from '../../types'
 import { CustomColumnPanel } from './CustomColumnPanel'
 import { SHARE_METRIC_DEFINITIONS } from './proTable.constants'

@@ -12,10 +12,10 @@ import trendingPages from '~/public/trending.json'
 import { Button, buttonStyles } from '~/ui/Button'
 import { DialogCloseButton, DialogHeading, dialogCanvasSurfaceStyles, dialogScrollableBodyStyles } from '~/ui/Dialog'
 import { searchFieldInputStyles } from '~/ui/Input'
+import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { fetchJson } from '~/utils/async'
 import { TagGroup } from './TagGroup'
-import { Tooltip } from './Tooltip'
 
 interface IPage {
 	name: string

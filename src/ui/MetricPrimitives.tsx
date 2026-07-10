@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import type { ReactNode } from 'react'
 import { Icon } from '~/components/Icon'
-import { Tooltip } from '~/components/Tooltip'
 import { tooltipSurfaceStyles } from '~/ui/Popover'
+import { Tooltip } from '~/ui/Tooltip'
 
 interface MetricRowProps {
 	label: ReactNode

@@ -1,8 +1,8 @@
 import type { RefObject } from 'react'
 import { Icon } from '~/components/Icon'
-import { Tooltip } from '~/components/Tooltip'
 import { ImagePreviewModal } from '~/containers/LlamaAI/components/ImagePreviewModal'
 import { isReadableTextFile } from '~/containers/LlamaAI/hooks/useImageUpload'
+import { Tooltip } from '~/ui/Tooltip'
 
 interface SelectedImage {
 	id: string

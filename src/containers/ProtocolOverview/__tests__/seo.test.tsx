@@ -126,7 +126,7 @@ describe('ProtocolOverview final page SEO', () => {
 		vi.doMock('~/components/TokenLogo', () => ({
 			TokenLogo: () => null
 		}))
-		vi.doMock('~/components/Tooltip', () => ({
+		vi.doMock('~/ui/Tooltip', () => ({
 			Tooltip: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children)
 		}))
 		vi.doMock('~/containers/Subscription/auth', () => ({
@@ -415,7 +415,7 @@ describe('ProtocolOverview SEO contract', () => {
 		vi.doMock('~/components/TokenLogo', () => ({
 			TokenLogo: () => null
 		}))
-		vi.doMock('~/components/Tooltip', () => ({
+		vi.doMock('~/ui/Tooltip', () => ({
 			Tooltip: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children)
 		}))
 		vi.doMock('../AdditionalInfo', () => ({
@@ -488,7 +488,7 @@ describe('ProtocolOverview SEO contract', () => {
 		vi.doMock('~/components/TokenLogo', () => ({
 			TokenLogo: () => null
 		}))
-		vi.doMock('~/components/Tooltip', () => ({
+		vi.doMock('~/ui/Tooltip', () => ({
 			Tooltip: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children)
 		}))
 		vi.doMock('../AdditionalInfo', () => ({
@@ -555,7 +555,7 @@ describe('ProtocolInfo category links', () => {
 		vi.doMock('~/components/QuestionHelper', () => ({
 			QuestionHelper: () => null
 		}))
-		vi.doMock('~/components/Tooltip', () => ({
+		vi.doMock('~/ui/Tooltip', () => ({
 			Tooltip: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children)
 		}))
 		vi.doMock('~/containers/Subscription/auth', () => ({

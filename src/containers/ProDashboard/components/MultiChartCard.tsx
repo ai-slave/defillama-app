@@ -4,7 +4,7 @@ import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/EChar
 import { getMetricUnitGroup } from '~/components/ECharts/metricGroups'
 import { Icon } from '~/components/Icon'
 import { Select } from '~/components/Select/Select'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 import { capitalizeFirstLetter } from '~/utils'
 import { download } from '~/utils/download'
 import { useChartImageExport } from '../hooks/useChartImageExport'

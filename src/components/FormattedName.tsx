@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 
 interface WrapperProps {
 	fontSize?: string | number

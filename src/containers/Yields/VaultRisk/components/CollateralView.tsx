@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { BlockExplorersResponse } from '~/api/types'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 import { buildAllocation } from '../allocation'
 import { collateralMarketBreakLossUsd, isDustCollateral } from '../derive'
 import { ChapterHead } from '../primitives/ChapterHead'

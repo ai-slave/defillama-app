@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { Tooltip } from '~/components/Tooltip'
 import type { TableFilters } from '~/containers/ProDashboard/types'
+import { Tooltip } from '~/ui/Tooltip'
 import type { FilterPreset, FilterPresetCategory } from '../presets/filterPresets'
 import { CORE_FILTER_PRESETS } from '../presets/filterPresets'
 

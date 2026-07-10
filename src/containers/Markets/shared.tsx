@@ -1,5 +1,5 @@
 import { BasicLink } from '~/components/Link'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum, slug } from '~/utils'
 import { type Sentiment, SENTIMENT_TITLE } from './utils'
 

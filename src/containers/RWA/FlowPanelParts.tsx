@@ -1,4 +1,4 @@
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatNum } from '~/utils'
 import { formatSignedRWAFlow, getRWAFlowTextClass, type RWAFlowVsPriceSummary } from './flows'
 

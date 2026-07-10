@@ -1,12 +1,12 @@
 import * as Ariakit from '@ariakit/react'
 import { memo, useCallback, useEffect, useReducer, useRef } from 'react'
 import { Icon } from '~/components/Icon'
-import { Tooltip } from '~/components/Tooltip'
 import { FeedbackForm } from '~/containers/LlamaAI/components/FeedbackForm'
 import { PDFExportButton } from '~/containers/LlamaAI/components/PDFExportButton'
 import type { MessageMetadata } from '~/containers/LlamaAI/types'
 import { convertLlamaLinksToDefillama } from '~/containers/LlamaAI/utils/entityLinks'
 import { removeReportStartMarkers } from '~/containers/LlamaAI/utils/reportMarkers'
+import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface ResponseControlsProps {

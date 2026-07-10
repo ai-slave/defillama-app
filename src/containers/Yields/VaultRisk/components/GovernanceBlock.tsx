@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import type { BlockExplorersResponse } from '~/api/types'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
 import { formatVerified, guardianText } from '../format'
 import { toneClasses } from '../kindMeta'

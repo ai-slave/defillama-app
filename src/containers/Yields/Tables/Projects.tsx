@@ -8,7 +8,7 @@ import {
 import * as React from 'react'
 import { PercentChange } from '~/components/PercentChange'
 import { VirtualTable } from '~/components/Table/Table'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
 import { YieldsProject } from './Name'
 import type { IYieldsProjectsTableRow } from './types'

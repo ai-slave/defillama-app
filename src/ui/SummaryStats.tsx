@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { Tooltip } from '~/components/Tooltip'
 import { Card } from '~/ui/Card'
+import { Tooltip } from '~/ui/Tooltip'
 
 /* ----------------------------------------------------------------------------
    Summary-card layout (design.md → Summary metric cards, variants 1–2).

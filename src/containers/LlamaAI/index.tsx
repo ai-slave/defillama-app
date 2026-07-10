@@ -19,7 +19,6 @@ import {
 	consumePendingPageContext,
 	consumePendingSuggestedFlag
 } from '~/components/LlamaAIFloatingButton'
-import { Tooltip } from '~/components/Tooltip'
 import { authorizedFetchAsFetch } from '~/containers/LlamaAI/authorizedFetchAdapter'
 import { LlamaAIChromeContext, useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { AlertsModal } from '~/containers/LlamaAI/components/AlertsModal'
@@ -104,6 +103,7 @@ import { useLlamaAINavigate, useProjectHomeSignal } from '~/contexts/LlamaAINavi
 import { useLlamaAIRouteContext } from '~/contexts/LlamaAIRouteState'
 import { useOptionalSessionAliases } from '~/contexts/SessionAliasRegistry'
 import { useMedia } from '~/hooks/useMedia'
+import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import {
 	isSameAgenticRouteTransition,

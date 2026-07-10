@@ -1,5 +1,5 @@
 import { Icon } from '~/components/Icon'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 
 export function QuestionHelper({
 	text,

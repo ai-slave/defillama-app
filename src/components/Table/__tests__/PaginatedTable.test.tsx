@@ -8,7 +8,7 @@ vi.mock('~/components/Icon', () => ({
 	Icon: ({ name }: { name: string }) => <span>{name}</span>
 }))
 
-vi.mock('~/components/Tooltip', () => ({
+vi.mock('~/ui/Tooltip', () => ({
 	Tooltip: ({
 		children,
 		content,

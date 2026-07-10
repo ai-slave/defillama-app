@@ -2,9 +2,9 @@ import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable'
 import { lazy, Suspense, useState } from 'react'
 import { Icon } from '~/components/Icon'
-import { Tooltip } from '~/components/Tooltip'
 import { SortableItem } from '~/containers/ProtocolOverview/ProtocolPro'
 import { useMedia } from '~/hooks/useMedia'
+import { Tooltip } from '~/ui/Tooltip'
 import {
 	useProDashboardChartsData,
 	useProDashboardDashboard,

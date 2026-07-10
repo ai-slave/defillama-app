@@ -10,7 +10,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import type * as React from 'react'
 import { Icon } from '~/components/Icon'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 import { mutatePinnedMetrics } from '../pinnedUtils'
 import { NavItemContent, navSortableRowStyles } from '../shared'
 import type { TNavLink } from '../types'

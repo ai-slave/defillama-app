@@ -1,5 +1,5 @@
-import { Tooltip } from '~/components/Tooltip'
 import { Card } from '~/ui/Card'
+import { Tooltip } from '~/ui/Tooltip'
 import { formatDateLabel, formatPercent } from './format'
 import type { TimelinePoint } from './types'
 

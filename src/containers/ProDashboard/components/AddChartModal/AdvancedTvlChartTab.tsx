@@ -4,7 +4,7 @@ import { CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing
 import type { IBarChartProps, IChartProps, IPieChartProps } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
 import { LocalLoader } from '~/components/Loaders'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 const dashboardBlue = '#326abd'
 import {
 	formatProtocolV1TvlsByChain,

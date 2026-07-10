@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
-import { Tooltip } from '~/components/Tooltip'
 import type { TableFilters } from '~/containers/ProDashboard/types'
+import { Tooltip } from '~/ui/Tooltip'
 import {
 	FILTER_CATEGORIES,
 	FILTER_CONFIGS,

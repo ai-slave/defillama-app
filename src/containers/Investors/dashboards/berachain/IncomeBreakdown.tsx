@@ -1,7 +1,7 @@
 import { lazy, useMemo } from 'react'
 import type { IBarChartProps, IChartProps } from '~/components/ECharts/types'
-import { Tooltip } from '~/components/Tooltip'
 import { useCustomServerData } from '~/containers/Investors/CustomServerDataContext'
+import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
 import { type BerachainIncomeServerData, useBerachainIncomeData, useHoneyRevenueData } from './api'
 

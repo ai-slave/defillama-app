@@ -1,6 +1,5 @@
 import { useMemo, useState, type RefCallback } from 'react'
 import { Icon } from '~/components/Icon'
-import { Tooltip } from '~/components/Tooltip'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { AlertArtifact, AlertArtifactLoading } from '~/containers/LlamaAI/components/AlertArtifact'
 import { ChartRenderer } from '~/containers/LlamaAI/components/charts/ChartRenderer'
@@ -25,6 +24,7 @@ import {
 } from '~/containers/LlamaAI/renderModel'
 import type { DashboardArtifact } from '~/containers/LlamaAI/types'
 import type { Message, ToolExecution } from '~/containers/LlamaAI/types'
+import { Tooltip } from '~/ui/Tooltip'
 
 function StreamingChartPlaceholder() {
 	return (

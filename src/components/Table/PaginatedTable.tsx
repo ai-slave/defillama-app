@@ -21,7 +21,7 @@ import {
 	TokenPageTableShell
 } from '~/components/Table/helpers'
 import { SortIcon } from '~/components/Table/SortIcon'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 
 interface PaginatedTableProps<T extends RowData> {
 	table: ReactTable<T>

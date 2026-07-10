@@ -5,7 +5,6 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { Icon } from '~/components/Icon'
 import { NestedMenu, NestedMenuItem } from '~/components/NestedMenu'
-import { Tooltip } from '~/components/Tooltip'
 import { inputStyles } from '~/ui/Input'
 import {
 	excludedSurfaceComboboxActionBarStyles,
@@ -30,6 +29,7 @@ import {
 	popoverMobileDismissStyles,
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
+import { Tooltip } from '~/ui/Tooltip'
 import { updateQueryFromSelected } from './query'
 import { SelectCheckIcon } from './SelectCheckIcon'
 import type { ExcludeQueryKey, SelectOption, SelectTriggerSize, SelectTriggerVariant, SelectValues } from './types'

@@ -3,8 +3,8 @@ import { EmbeddedCheckout, EmbeddedCheckoutProvider } from '@stripe/react-stripe
 import { loadStripe } from '@stripe/stripe-js'
 import { useEffect, useState } from 'react'
 import { Icon } from '~/components/Icon'
-import { Tooltip } from '~/components/Tooltip'
 import { STRIPE_PUBLISHABLE_KEY } from '~/constants'
+import { Tooltip } from '~/ui/Tooltip'
 import type { PurchaseSeatsResponse, TeamSubscription } from './types'
 import { useTeam } from './useTeam'
 

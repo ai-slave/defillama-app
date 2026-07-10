@@ -1,6 +1,6 @@
 import { Select } from '~/components/Select/Select'
-import { Tooltip } from '~/components/Tooltip'
 import type { ChartControlsModel } from '~/containers/LlamaAI/utils/chartCapabilities'
+import { Tooltip } from '~/ui/Tooltip'
 import { capitalizeFirstLetter } from '~/utils'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 

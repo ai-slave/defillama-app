@@ -4,7 +4,6 @@ import { useRouter } from 'next/router'
 import { useEffect, useEffectEvent, useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { TagGroup } from '~/components/TagGroup'
-import { Tooltip } from '~/components/Tooltip'
 import {
 	getGeckoIdFromSearchId,
 	getTokenSearchFallback,
@@ -14,6 +13,7 @@ import { TokenSearchDialog, toTokenSearchOption } from '~/containers/TokenSearch
 import type { TokenSearchResult } from '~/containers/TokenSearch/types'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Card } from '~/ui/Card'
+import { Tooltip } from '~/ui/Tooltip'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { FAQ } from './Faq'
 import type { PricePoint } from './hooks'

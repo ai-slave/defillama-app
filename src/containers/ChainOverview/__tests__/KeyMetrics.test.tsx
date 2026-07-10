@@ -19,7 +19,7 @@ vi.mock('~/components/Icon', () => ({
 	Icon: () => null
 }))
 
-vi.mock('~/components/Tooltip', () => ({
+vi.mock('~/ui/Tooltip', () => ({
 	Tooltip: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children)
 }))
 

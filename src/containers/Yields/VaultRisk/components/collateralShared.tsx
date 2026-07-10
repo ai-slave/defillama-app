@@ -1,4 +1,4 @@
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 
 // Backend placeholders where no third-party feed is proven ('unverified', 'none', '') —
 // these add no signal and must never render as a vendor name.

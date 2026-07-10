@@ -22,7 +22,7 @@ function setupStatsMocks() {
 	vi.doMock('~/components/TokenLogo', () => ({
 		TokenLogo: () => null
 	}))
-	vi.doMock('~/components/Tooltip', () => ({
+	vi.doMock('~/ui/Tooltip', () => ({
 		Tooltip: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children)
 	}))
 	vi.doMock('~/containers/Subscription/auth', () => ({

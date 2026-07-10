@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import * as React from 'react'
+import { Tooltip } from '~/ui/Tooltip'
 import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS, type TagGroupSize, type TagGroupVariant } from './Select/types'
-import { Tooltip } from './Tooltip'
 
 export type SegmentedControlOption<T extends string> = {
 	value: T

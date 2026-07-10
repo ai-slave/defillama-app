@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
 import { TopThreeRow } from './TopThreeRow'
 import type { ProtocolEmissionWithHistory } from './types'

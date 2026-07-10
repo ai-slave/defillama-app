@@ -12,10 +12,10 @@ import {
 	TokenPageTableShell
 } from '~/components/Table/helpers'
 import { TagGroup } from '~/components/TagGroup'
-import { Tooltip } from '~/components/Tooltip'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { Panel } from '~/ui/Panel'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
+import { Tooltip } from '~/ui/Tooltip'
 import { abbreviateNumber } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import type { IProtocolOverviewPageData } from './types'

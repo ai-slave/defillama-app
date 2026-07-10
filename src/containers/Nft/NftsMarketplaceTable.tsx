@@ -13,9 +13,9 @@ import { PercentChange } from '~/components/PercentChange'
 import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Tooltip } from '~/components/Tooltip'
 import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { TableToolbar } from '~/ui/Toolbar'
+import { Tooltip } from '~/ui/Tooltip'
 import { tokenIconUrl } from '~/utils/icons'
 
 interface INftMarketplace {

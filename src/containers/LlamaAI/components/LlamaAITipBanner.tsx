@@ -1,9 +1,9 @@
 import Router from 'next/router'
 import { Icon } from '~/components/Icon'
-import { Tooltip } from '~/components/Tooltip'
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
 import { useActiveTip } from '~/containers/LlamaAI/hooks/useLlamaAITip'
 import { isSettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
+import { Tooltip } from '~/ui/Tooltip'
 
 export function LlamaAITipBanner() {
 	const { tip, dismissTip, clickTip } = useActiveTip()

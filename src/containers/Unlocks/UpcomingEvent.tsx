@@ -3,7 +3,6 @@ import dayjs from 'dayjs'
 import { useEffect, useEffectEvent, useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Tooltip } from '~/components/Tooltip'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import {
@@ -12,6 +11,7 @@ import {
 	popoverMobileDismissStyles,
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
+import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
 import { generateGoogleCalendarUrl } from '~/utils/calendar'
 

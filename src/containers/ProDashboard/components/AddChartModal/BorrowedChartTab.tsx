@@ -2,11 +2,11 @@ import { lazy, Suspense, useEffect, useMemo, type ReactElement } from 'react'
 import type { IChartProps, IPieChartProps } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
 import { LocalLoader } from '~/components/Loaders'
-import { Tooltip } from '~/components/Tooltip'
 import {
 	formatProtocolV1TvlsByChain,
 	useFetchProtocolV1AddlChartsData
 } from '~/containers/ProtocolOverview/protocolV1AddlChartsData'
+import { Tooltip } from '~/ui/Tooltip'
 import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPES } from '../../borrowedChartConstants'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { AriakitSelect } from '../AriakitSelect'

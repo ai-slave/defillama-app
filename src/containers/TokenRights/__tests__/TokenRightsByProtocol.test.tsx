@@ -16,7 +16,7 @@ vi.mock('~/components/TokenLogo', () => ({
 	TokenLogo: () => null
 }))
 
-vi.mock('~/components/Tooltip', () => ({
+vi.mock('~/ui/Tooltip', () => ({
 	Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>
 }))
 

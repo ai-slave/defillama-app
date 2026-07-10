@@ -3,7 +3,6 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { Icon } from '~/components/Icon'
 import { NestedMenu, NestedMenuItem } from '~/components/NestedMenu'
-import { Tooltip } from '~/components/Tooltip'
 import {
 	legacyPopoverActionButtonStyles,
 	legacyPopoverActionBarStyles,
@@ -25,6 +24,7 @@ import {
 	popoverMobileDismissStyles,
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
+import { Tooltip } from '~/ui/Tooltip'
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 import { updateQueryFromSelected } from './query'
 import { SelectCheckIcon } from './SelectCheckIcon'

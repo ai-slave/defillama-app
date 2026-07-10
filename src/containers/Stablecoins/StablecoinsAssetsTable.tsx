@@ -21,11 +21,11 @@ import { VirtualTable } from '~/components/Table/Table'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
-import { Tooltip } from '~/components/Tooltip'
 import type { useCalcCirculating } from '~/containers/Stablecoins/hooks'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
+import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum, slug } from '~/utils'
 
 type StablecoinDeviationInfo = {

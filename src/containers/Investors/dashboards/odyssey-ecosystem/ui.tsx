@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { formatTooltipChartDate, formatTooltipValue } from '~/components/ECharts/formatters'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 
 // MultiSeriesChart's tooltip formats every series with a single valueSymbol, so a '%' series sharing
 // a chart with '$' series (supply/borrow vs utilization) shows as '$'. Override just the tooltip

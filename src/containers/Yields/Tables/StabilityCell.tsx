@@ -1,5 +1,5 @@
 import { LockIcon } from '~/components/LockIcon'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 
 function formatPct(value: number): string {
 	if (value === 0) return '0%'

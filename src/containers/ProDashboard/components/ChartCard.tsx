@@ -4,7 +4,7 @@ import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportBu
 import type { ISingleSeriesChartProps } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
 import { Select } from '~/components/Select/Select'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 import { capitalizeFirstLetter, toNiceDayMonthYear } from '~/utils'
 import { download } from '~/utils/download'
 import { useChartImageExport } from '../hooks/useChartImageExport'

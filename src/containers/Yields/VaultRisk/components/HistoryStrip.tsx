@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
-import { Tooltip } from '~/components/Tooltip'
+import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
 import { formatVerified } from '../format'
 import { ExternalLink } from '../primitives/ExternalLink'

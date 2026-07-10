@@ -1,7 +1,7 @@
 import { Icon } from '~/components/Icon'
-import { Tooltip } from '~/components/Tooltip'
 import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
 import { useAuthContext } from '~/containers/Subscription/auth'
+import { Tooltip } from '~/ui/Tooltip'
 
 interface ModeToggleProps {
 	mode: AgenticAnswerMode
