@@ -37,6 +37,7 @@ type ProtocolBreakdownBase = {
 const PROTOCOL_BASE_CACHE_MS = 10 * 60 * 1000
 const PROTOCOL_BASE_STALE_MS = 20 * 60 * 1000
 const PROTOCOL_LOOKUP_CACHE_MS = 60 * 60 * 1000
+const PROTOCOL_RANKING_WINDOW_DAYS = 7
 let protocolLookupCache: { data: ProtocolLookup; timestamp: number } | null = null
 
 const encodeChainPathSegment = (chain: string): string => encodeURIComponent(chain)
@@ -297,12 +298,21 @@ export const getAdapterMetricProtocolSeries = async ({
 		return buildEmptyBreakdown(chainsArray, categoriesArray, config.metricName, topN)
 	}
 
-	const lastDayData = data.totalDataChartBreakdown[data.totalDataChartBreakdown.length - 2]
-	if (!lastDayData || !lastDayData[1]) {
+	const startOfTodayUtc = Math.floor(Date.now() / 86_400_000) * 86_400
+	const rankingDays = data.totalDataChartBreakdown
+		.filter(([timestamp]) => timestamp < startOfTodayUtc)
+		.slice(-PROTOCOL_RANKING_WINDOW_DAYS)
+
+	if (rankingDays.length === 0) {
 		return buildEmptyBreakdown(chainsArray, categoriesArray, config.metricName, topN)
 	}
 
-	const lastDayProtocols = lastDayData[1]
+	const latestProtocolValues = new Map<string, number>()
+	for (const [, protocols] of rankingDays) {
+		for (const [name, value] of Object.entries(protocols || {})) {
+			latestProtocolValues.set(name, value as number)
+		}
+	}
 
 	const { parentIdToName, protocolCategories, protocolCategoriesBySlug, protocolToParentId } = await getProtocolLookup()
 
@@ -310,7 +320,7 @@ export const getAdapterMetricProtocolSeries = async ({
 		return protocolCategories.get(name) || protocolCategoriesBySlug.get(toSlug(name)) || ''
 	}
 
-	let protocolEntries = Object.entries(lastDayProtocols).map(([name, value]) => ({ name, value: value as number }))
+	let protocolEntries = Array.from(latestProtocolValues, ([name, value]) => ({ name, value }))
 
 	if (categoriesSet.size > 0 && (protocolCategories.size > 0 || protocolCategoriesBySlug.size > 0)) {
 		if (categoryFilterMode === 'exclude') {
