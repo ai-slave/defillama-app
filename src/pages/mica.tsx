@@ -58,9 +58,13 @@ function getMicaExchange(exchange: ExchangeMetadataListEntry): MicaExchange {
 	return {
 		depth_summary: {
 			isPartialCoverage: depth.isPartialCoverage,
+			spot_ask_depth_05pct_usd: hasSpot ? (depth.spot_ask_depth_05pct_usd ?? 0) : 0,
 			spot_ask_depth_2pct_usd: hasSpot ? depth.spot_ask_depth_2pct_usd : 0,
+			spot_bid_depth_05pct_usd: hasSpot ? (depth.spot_bid_depth_05pct_usd ?? 0) : 0,
 			spot_bid_depth_2pct_usd: hasSpot ? depth.spot_bid_depth_2pct_usd : 0,
+			perp_ask_depth_05pct_usd: hasPerps ? (depth.perp_ask_depth_05pct_usd ?? 0) : 0,
 			perp_ask_depth_2pct_usd: hasPerps ? depth.perp_ask_depth_2pct_usd : 0,
+			perp_bid_depth_05pct_usd: hasPerps ? (depth.perp_bid_depth_05pct_usd ?? 0) : 0,
 			perp_bid_depth_2pct_usd: hasPerps ? depth.perp_bid_depth_2pct_usd : 0
 		},
 		display_name: exchange.exchange === 'cryptocom' ? 'Crypto.com' : exchange.display_name,
@@ -71,11 +75,11 @@ function getMicaExchange(exchange: ExchangeMetadataListEntry): MicaExchange {
 		kyc_summary: exchange.kyc_summary ?? null,
 		market_count: exchange.market_count,
 		mica_licensed: exchange.mica_licensed,
-		mica_regulator: exchange.mica_regulator,
 		own_eu_orderbook: exchange.own_eu_orderbook,
 		perp_fee: hasPerps ? exchange.perp_fee : { maker: null, taker: null },
 		products: getMicaProducts(exchange),
 		promotions: getMicaPromotions(exchange),
+		ramp_cost_1k: exchange.ramp_cost_1k ?? null,
 		ref_link: MICA_REF_LINKS_BY_EXCHANGE[exchange.exchange] ?? exchange.ref_link,
 		secondary: exchange.secondary,
 		spot_fee: hasSpot ? exchange.spot_fee : { maker: null, taker: null },

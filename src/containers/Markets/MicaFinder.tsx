@@ -9,7 +9,7 @@ import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import { abbreviateNumber, formatPercentage } from '~/utils'
 import { pushShallowQuery, toNonEmptyArrayParam } from '~/utils/routerQuery'
-import type { ExchangeMetadataListEntry } from './api.types'
+import type { ExchangeMetadataListEntry, ExchangeMetadataRampCost } from './api.types'
 
 const PERP_PRODUCT = 'perp'
 const PRIORITY_EXCHANGES = ['bybit', 'coinbase', 'cryptocom', 'gate', 'okx', 'kraken', 'bitstamp', 'backpack'] as const
@@ -44,9 +44,9 @@ export type MicaExchange = Pick<
 	| 'market_count'
 	| 'mica_licensed'
 	| 'perp_fee'
-	| 'mica_regulator'
 	| 'own_eu_orderbook'
 	| 'products'
+	| 'ramp_cost_1k'
 	| 'ref_link'
 	| 'secondary'
 	| 'spot_fee'
@@ -124,7 +124,15 @@ const FEE_TONE_LABEL: Record<FeeTone, string> = {
 const SPOT_LIQUIDITY_HELP = 'Aggregated spot orderbook bid and ask depth within 2% of mid price for EU-available spot.'
 const PERP_LIQUIDITY_HELP =
 	'Aggregated perps orderbook bid and ask depth within 2% of mid price for EU-available perps.'
+const SPOT_TIGHT_LIQUIDITY_HELP =
+	'Aggregated spot orderbook bid and ask depth within 0.5% of mid price the tight band, closest to executable liquidity at the touch.'
+const PERP_TIGHT_LIQUIDITY_HELP =
+	'Aggregated perps orderbook bid and ask depth within 0.5% of mid price. the tight band, closest to executable liquidity at the touch.'
 const MARKET_COUNT_HELP = 'Number of trading markets available to EU users in the metadata feed.'
+const ON_RAMP_COST_HELP =
+	'Total cost to turn €1,000 into BTC in your own wallet: SEPA deposit + taker fee + orderbook slippage + BTC withdrawal fee. Hover for the full breakdown.'
+const OFF_RAMP_COST_HELP =
+	'Total cost to turn €1,000 of BTC into EUR in your bank account: BTC network fee + taker fee + orderbook slippage + SEPA withdrawal. Hover for the full breakdown.'
 
 export function selectActivePromotion(
 	row: MicaExchange,
@@ -293,18 +301,23 @@ function formatFee(fee: number | null | undefined) {
 	return fee == null ? null : `${formatPercentage(fee * 100)}%`
 }
 
+type DepthBand = '2pct' | '05pct'
+
+function getDepthPair(row: MicaExchange, kind: FeeKind, band: DepthBand) {
+	const depth = row.depth_summary
+	return {
+		bid: depth[`${kind}_bid_depth_${band}_usd`] ?? 0,
+		ask: depth[`${kind}_ask_depth_${band}_usd`] ?? 0
+	}
+}
+
+function getDepthSum(row: MicaExchange, kind: FeeKind, band: DepthBand) {
+	const { bid, ask } = getDepthPair(row, kind, band)
+	return bid + ask
+}
+
 function getDepthLiquidity(row: MicaExchange) {
-	return getSpotDepthLiquidity(row) + getPerpDepthLiquidity(row)
-}
-
-function getSpotDepthLiquidity(row: MicaExchange) {
-	const depth = row.depth_summary
-	return depth.spot_bid_depth_2pct_usd + depth.spot_ask_depth_2pct_usd
-}
-
-function getPerpDepthLiquidity(row: MicaExchange) {
-	const depth = row.depth_summary
-	return depth.perp_bid_depth_2pct_usd + depth.perp_ask_depth_2pct_usd
+	return getDepthSum(row, 'spot', '2pct') + getDepthSum(row, 'perp', '2pct')
 }
 
 function formatLiquidity(value: number) {
@@ -427,6 +440,120 @@ function KycSummaryHovercard({ summary }: { summary: string }) {
 	)
 }
 
+// ---------------------------------------------------------------------------
+// €1k ramp cost — total badge + hovercard breaking down every component.
+// Upstream figures are USD, rendered with a € sign (EU page; EUR≈USD here).
+// ---------------------------------------------------------------------------
+
+type RampDirection = 'on_ramp' | 'off_ramp'
+
+const RAMP_COST_TIER_LIMITS = { low: 0.005, medium: 0.01 }
+
+const RAMP_DIRECTION_STEPS: Record<RampDirection, string> = {
+	on_ramp: 'Deposit EUR (SEPA) → buy BTC → withdraw to your wallet',
+	off_ramp: 'Deposit BTC → sell → withdraw EUR (SEPA)'
+}
+
+function getRampCostTone(pct: number | null): FeeTone | null {
+	if (pct == null) return null
+	if (pct <= RAMP_COST_TIER_LIMITS.low) return 'low'
+	if (pct <= RAMP_COST_TIER_LIMITS.medium) return 'medium'
+	return 'high'
+}
+
+function getRampCostTotalEur(row: MicaExchange, direction: RampDirection) {
+	return row.ramp_cost_1k?.[direction]?.total_usd ?? undefined
+}
+
+function formatBtcAmount(value: number | null) {
+	return value == null ? null : `${value.toFixed(8).replace(/0+$/, '')} BTC`
+}
+
+function getRampCostBreakdown(cost: ExchangeMetadataRampCost, direction: RampDirection) {
+	const leg = cost[direction]
+	const assumptions = cost.assumptions
+	const eur = (usd: number | null) => (usd == null ? null : `€${usd.toFixed(2)}`)
+	const takerPct = assumptions.taker_fee != null ? `${formatPercentage(assumptions.taker_fee * 100)}%` : null
+	const transferBtc = formatBtcAmount(
+		direction === 'on_ramp' ? assumptions.btc_withdrawal_fee_btc : assumptions.btc_network_fee_btc
+	)
+
+	return [
+		{ label: `SEPA ${direction === 'on_ramp' ? 'deposit' : 'withdrawal'}`, value: eur(leg.fiat_fee_usd) },
+		{ label: takerPct ? `Taker fee (${takerPct})` : 'Taker fee', value: eur(leg.trade_fee_usd) },
+		{ label: 'Slippage vs mid price', value: eur(leg.slippage_usd) },
+		{
+			label:
+				direction === 'on_ramp'
+					? `BTC withdrawal fee${transferBtc ? ` (${transferBtc})` : ''}`
+					: `BTC network fee${transferBtc ? ` (${transferBtc})` : ''}`,
+			value: eur(leg.transfer_fee_usd)
+		}
+	]
+}
+
+function RampCostCell({ row, direction }: { row: MicaExchange; direction: RampDirection }) {
+	const cost = row.ramp_cost_1k
+	const leg = cost?.[direction]
+	if (!cost || !leg) return null
+
+	const breakdown = getRampCostBreakdown(cost, direction)
+	const totalEur = getRampCostTotalEur(row, direction)
+	const tone = getRampCostTone(leg.total_pct)
+	const notionalEur = cost.notional_usd
+
+	return (
+		<Ariakit.HovercardProvider placement="left-start" showTimeout={0} hideTimeout={80}>
+			<Ariakit.HovercardAnchor
+				render={<button />}
+				type="button"
+				className={
+					totalEur != null
+						? `inline-flex rounded-md border px-2 py-0.5 label-sm whitespace-nowrap ${tone ? FEE_TONE_CLASS[tone] : 'border-subtle text-primary'}`
+						: 'inline-flex rounded-md border border-subtle px-2 py-0.5 label-sm whitespace-nowrap text-tertiary'
+				}
+				aria-label={`${row.display_name} €${notionalEur.toLocaleString('en-US')} ${direction === 'on_ramp' ? 'on-ramp' : 'off-ramp'} cost breakdown`}
+			>
+				{totalEur != null ? `€${totalEur.toFixed(2)}` : '?'}
+			</Ariakit.HovercardAnchor>
+			<Ariakit.Hovercard
+				unmountOnHide
+				gutter={6}
+				className={`${popoverHovercardSurfaceStyles} w-80 max-w-[calc(100vw-32px)] p-3 text-primary`}
+				portal
+			>
+				<div className="flex flex-col gap-2">
+					<span className="body-sm text-secondary">{RAMP_DIRECTION_STEPS[direction]}</span>
+					<span className="label-sm text-tertiary">
+						€{notionalEur.toLocaleString('en-US')} notional on {cost.pair ?? '–'}
+					</span>
+					<span className="flex flex-col gap-1 border-t border-subtle pt-2">
+						{breakdown.map((item) => (
+							<span key={item.label} className="flex items-baseline justify-between gap-3 body-sm">
+								<span className="text-secondary">{item.label}</span>
+								<span className={item.value == null ? 'text-tertiary' : 'text-primary'}>{item.value ?? 'unknown'}</span>
+							</span>
+						))}
+					</span>
+					<span className="flex items-baseline justify-between gap-3 border-t border-subtle pt-2 label-md">
+						<span>Total</span>
+						{totalEur != null ? (
+							<span>
+								€{totalEur.toFixed(2)}
+								{leg.total_pct != null ? (
+									<span className="text-tertiary"> ({formatPercentage(leg.total_pct * 100)}%)</span>
+								) : null}
+							</span>
+						) : (
+							<span className="text-tertiary">unavailable — a component is unknown</span>
+						)}
+					</span>
+				</div>
+			</Ariakit.Hovercard>
+		</Ariakit.HovercardProvider>
+	)
+}
+
 function KycCell({ row }: { row: MicaExchange }) {
 	if (row.kyc_required == null) return <span className="text-tertiary">–</span>
 	if (!row.kyc_required) return <span className="text-data-up">No KYC</span>
@@ -482,6 +609,29 @@ function MarketCountCell({ row }: { row: MicaExchange }) {
 // ---------------------------------------------------------------------------
 const columnHelper = createColumnHelper<MicaExchange>()
 
+function liquidityColumn(kind: FeeKind, band: DepthBand, header: string, help: string) {
+	return columnHelper.accessor((row) => getDepthSum(row, kind, band), {
+		id: `${kind}_liquidity${band === '05pct' ? '_05' : ''}`,
+		header,
+		cell: ({ row }) => {
+			const { bid, ask } = getDepthPair(row.original, kind, band)
+			return (
+				<LiquidityCell
+					bid={bid}
+					ask={ask}
+					isPartialCoverage={row.original.depth_summary.isPartialCoverage}
+					helperText={help}
+				/>
+			)
+		},
+		meta: {
+			headerClassName: 'w-[124px] min-w-[110px] whitespace-nowrap',
+			align: 'end' as const,
+			headerHelperText: help
+		}
+	})
+}
+
 const columns: ColumnDef<MicaExchange, any>[] = [
 	columnHelper.accessor('display_name', {
 		id: 'display_name',
@@ -526,40 +676,10 @@ const columns: ColumnDef<MicaExchange, any>[] = [
 			csvHeader: 'Promotion URL'
 		}
 	}),
-	columnHelper.accessor(getSpotDepthLiquidity, {
-		id: 'spot_liquidity',
-		header: 'Spot liquidity',
-		cell: ({ row }) => (
-			<LiquidityCell
-				bid={row.original.depth_summary.spot_bid_depth_2pct_usd}
-				ask={row.original.depth_summary.spot_ask_depth_2pct_usd}
-				isPartialCoverage={row.original.depth_summary.isPartialCoverage}
-				helperText={SPOT_LIQUIDITY_HELP}
-			/>
-		),
-		meta: {
-			headerClassName: 'w-[132px] min-w-[120px] whitespace-nowrap',
-			align: 'end' as const,
-			headerHelperText: SPOT_LIQUIDITY_HELP
-		}
-	}),
-	columnHelper.accessor(getPerpDepthLiquidity, {
-		id: 'perp_liquidity',
-		header: 'Perp liquidity',
-		cell: ({ row }) => (
-			<LiquidityCell
-				bid={row.original.depth_summary.perp_bid_depth_2pct_usd}
-				ask={row.original.depth_summary.perp_ask_depth_2pct_usd}
-				isPartialCoverage={row.original.depth_summary.isPartialCoverage}
-				helperText={PERP_LIQUIDITY_HELP}
-			/>
-		),
-		meta: {
-			headerClassName: 'w-[132px] min-w-[120px] whitespace-nowrap',
-			align: 'end' as const,
-			headerHelperText: PERP_LIQUIDITY_HELP
-		}
-	}),
+	liquidityColumn('spot', '2pct', 'Spot ±2%', SPOT_LIQUIDITY_HELP),
+	liquidityColumn('spot', '05pct', 'Spot ±0.5%', SPOT_TIGHT_LIQUIDITY_HELP),
+	liquidityColumn('perp', '2pct', 'Perp ±2%', PERP_LIQUIDITY_HELP),
+	liquidityColumn('perp', '05pct', 'Perp ±0.5%', PERP_TIGHT_LIQUIDITY_HELP),
 	columnHelper.accessor((row) => row.spot_fee.taker ?? undefined, {
 		id: 'spot_fees',
 		header: 'Spot fees',
@@ -589,6 +709,26 @@ const columns: ColumnDef<MicaExchange, any>[] = [
 			headerHelperText: 'Regular-tier perpetuals maker / taker fees. Sorts by taker fee.'
 		}
 	}),
+	columnHelper.accessor((row) => getRampCostTotalEur(row, 'on_ramp'), {
+		id: 'ramp_cost_on',
+		header: '€1k on-ramp',
+		cell: ({ row }) => <RampCostCell row={row.original} direction="on_ramp" />,
+		meta: {
+			headerClassName: 'w-[124px] min-w-[110px] whitespace-nowrap',
+			align: 'end' as const,
+			headerHelperText: ON_RAMP_COST_HELP
+		}
+	}),
+	columnHelper.accessor((row) => getRampCostTotalEur(row, 'off_ramp'), {
+		id: 'ramp_cost_off',
+		header: '€1k off-ramp',
+		cell: ({ row }) => <RampCostCell row={row.original} direction="off_ramp" />,
+		meta: {
+			headerClassName: 'w-[124px] min-w-[110px] whitespace-nowrap',
+			align: 'end' as const,
+			headerHelperText: OFF_RAMP_COST_HELP
+		}
+	}),
 	columnHelper.accessor(
 		(row) => row.kyc_summary ?? (row.kyc_required == null ? undefined : row.kyc_required ? 'Required' : 'No KYC'),
 		{
@@ -610,21 +750,6 @@ const columns: ColumnDef<MicaExchange, any>[] = [
 			headerClassName: 'w-[96px] min-w-[90px] whitespace-nowrap',
 			align: 'end' as const,
 			headerHelperText: MARKET_COUNT_HELP
-		}
-	}),
-	columnHelper.accessor((row) => row.mica_regulator ?? undefined, {
-		id: 'mica_regulator',
-		header: 'Regulator',
-		enableSorting: false,
-		cell: ({ getValue }) =>
-			getValue() ? (
-				<Tooltip content={getValue()}>
-					<span className="block body-sm whitespace-nowrap">{getValue()}</span>
-				</Tooltip>
-			) : null,
-		meta: {
-			headerClassName: 'w-[420px] min-w-[360px]',
-			headerHelperText: 'National competent authority that authorized or supervises the MiCA license.'
 		}
 	})
 ]

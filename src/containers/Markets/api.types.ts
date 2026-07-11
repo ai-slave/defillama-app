@@ -238,10 +238,58 @@ interface ExchangeMetadataFeeToken {
 
 interface ExchangeMetadataDepthSummary {
 	isPartialCoverage: boolean
+	// ±0.5% ("tight band") fields are absent in feeds built before they existed.
+	perp_ask_depth_05pct_usd?: number
 	perp_ask_depth_2pct_usd: number
+	perp_bid_depth_05pct_usd?: number
 	perp_bid_depth_2pct_usd: number
+	spot_ask_depth_05pct_usd?: number
 	spot_ask_depth_2pct_usd: number
+	spot_bid_depth_05pct_usd?: number
 	spot_bid_depth_2pct_usd: number
+}
+
+// One fiat deposit/withdrawal method row — free-text strings curated upstream.
+export interface ExchangeMetadataFiatFeeRow {
+	currency?: string
+	fee?: string
+	method?: string
+	min?: string
+	note?: string
+	src?: { label?: string; url: string } | null
+	time?: string
+}
+
+export interface ExchangeMetadataFiatFees {
+	off_ramp?: ExchangeMetadataFiatFeeRow[]
+	on_ramp?: ExchangeMetadataFiatFeeRow[]
+}
+
+// End-to-end €1k SEPA↔BTC ramp cost, computed upstream against the venue's BTC
+// spot book. Figures are USD but rendered with a € sign (EU page; EUR≈USD at
+// this granularity). A leg's total is null unless every component is known.
+export interface ExchangeMetadataRampLegCost {
+	fiat_fee_usd: number | null
+	trade_fee_usd: number | null
+	slippage_usd: number | null
+	transfer_fee_usd: number | null
+	total_usd: number | null
+	total_pct: number | null
+}
+
+export interface ExchangeMetadataRampCost {
+	notional_usd: number
+	pair: string | null
+	on_ramp: ExchangeMetadataRampLegCost
+	off_ramp: ExchangeMetadataRampLegCost
+	assumptions: {
+		method: string
+		taker_fee: number | null
+		half_spread_pct: number | null
+		btc_withdrawal_fee_btc: number | null
+		btc_network_fee_btc: number | null
+		btc_price_usd: number | null
+	}
 }
 
 interface ExchangeMetadataPromotion {
@@ -272,6 +320,7 @@ export interface ExchangeMetadataListEntry {
 	eu_status: ExchangeMetadataEuStatus | null
 	exchange: string
 	fee_token: ExchangeMetadataFeeToken | null
+	fiat_fees?: ExchangeMetadataFiatFees | null
 	inflows_24h_usd: number | null
 	kyc_required: boolean | null
 	kyc_short: string | null
@@ -287,6 +336,7 @@ export interface ExchangeMetadataListEntry {
 	own_eu_orderbook: boolean | null
 	own_token_pct: number | null
 	perp_fee: ExchangeMetadataFee
+	ramp_cost_1k?: ExchangeMetadataRampCost | null
 	products: string[]
 	promotions?: ExchangeMetadataPromotion[]
 	ref_link: string | null
