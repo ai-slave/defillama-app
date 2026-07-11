@@ -16,6 +16,7 @@ type QueryOptions = { queryKey: Array<string | null> }
 const mocks = vi.hoisted(() => ({
 	useQuery: vi.fn(),
 	useQueries: vi.fn(),
+	isClient: true,
 	lastResult: null as ReturnType<typeof import('../useFetchProtocolChartData').useFetchProtocolChartData> | null
 }))
 
@@ -26,6 +27,10 @@ vi.mock('@tanstack/react-query', () => ({
 
 vi.mock('next/router', () => ({
 	useRouter: () => ({ isReady: true })
+}))
+
+vi.mock('~/hooks/useIsClient', () => ({
+	useIsClient: () => mocks.isClient
 }))
 
 vi.mock('~/containers/Governance/queries.client', () => ({
@@ -170,6 +175,7 @@ function Probe() {
 describe('ProtocolOverview chart metric semantics', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
+		mocks.isClient = true
 		probeProps = feeProps
 		mocks.useQueries.mockImplementation(({ queries }: { queries: QueryOptions[] }) =>
 			queries.map((options) => mocks.useQuery(options))
@@ -183,6 +189,41 @@ describe('ProtocolOverview chart metric semantics', () => {
 			}
 			return { data: null, isLoading: false }
 		})
+	})
+
+	it('keeps client-only chart queries disabled during SSR hydration', () => {
+		mocks.isClient = false
+		probeProps = {
+			...feeProps,
+			metrics: { ...baseMetrics, perps: true },
+			toggledMetrics: makeToggledMetrics({ [protocolCharts['Perp Volume']]: 'true' }),
+			availableCharts: ['Perp Volume'],
+			feesSettings: {}
+		}
+
+		renderToStaticMarkup(<Probe />)
+
+		const perpVolumeQuery = mocks.useQuery.mock.calls
+			.map(([options]) => options)
+			.find((options) => options.queryKey[2] === 'perp-volume')
+		expect(perpVolumeQuery.enabled).toBe(false)
+	})
+
+	it('keeps prefetched chart data visible during SSR hydration', () => {
+		mocks.isClient = false
+		probeProps = {
+			...feeProps,
+			initialMultiSeriesChartData: { 'Perp Volume': [[timestamp, 42]] },
+			metrics: { ...baseMetrics, perps: true },
+			toggledMetrics: makeToggledMetrics({ [protocolCharts['Perp Volume']]: 'true' }),
+			availableCharts: ['Perp Volume'],
+			feesSettings: {}
+		}
+
+		renderToStaticMarkup(<Probe />)
+
+		expect(mocks.lastResult?.finalCharts['Perp Volume']).toEqual([[timestampMs, 42]])
+		expect(mocks.lastResult?.loadingCharts).toEqual([])
 	})
 
 	it('keeps fee-family charts visible and reports failed enabled fee-extra chart fetches', () => {

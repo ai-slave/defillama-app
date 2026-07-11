@@ -11,6 +11,7 @@ import {
 	useFetchProtocolTVLChart
 } from '~/containers/ProtocolOverview/queries.client'
 import type { EmissionsChartRow } from '~/containers/Unlocks/api.types'
+import { useIsClient } from '~/hooks/useIsClient'
 import { FEE_EXTRA_CONFIG_BY_SETTING, type FeeExtraConfig } from '~/metrics/feeExtras'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
@@ -77,7 +78,7 @@ export const useFetchProtocolChartData = ({
 	feesSettings: Record<string, boolean>
 }) => {
 	const router = useRouter()
-	const isRouterReady = router.isReady
+	const canFetchClientCharts = useIsClient() && router.isReady
 	const protocolSlug = slug(name)
 	const chartDenominationBySymbol = useMemo(
 		() => new Map(chartDenominations.map((d) => [d.symbol, d])),
@@ -111,7 +112,8 @@ export const useFetchProtocolChartData = ({
 		return normalized
 	}, [prefetchedChartsInSeconds])
 
-	const denominationGeckoId = isRouterReady && hasAnyToggledChart ? (selectedDenomination?.geckoId ?? null) : null
+	const denominationGeckoId =
+		canFetchClientCharts && hasAnyToggledChart ? (selectedDenomination?.geckoId ?? null) : null
 	const { data: denominationPriceHistory = null, isLoading: fetchingDenominationPriceHistory } = useQuery<Record<
 		string,
 		number
@@ -146,7 +148,7 @@ export const useFetchProtocolChartData = ({
 			refetchOnWindowFocus: false,
 			retry: 0,
 			enabled: !!(
-				isRouterReady &&
+				canFetchClientCharts &&
 				(toggledMetrics.mcap === 'true' ||
 					toggledMetrics.tokenPrice === 'true' ||
 					toggledMetrics.tokenVolume === 'true' ||
@@ -167,7 +169,7 @@ export const useFetchProtocolChartData = ({
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 0,
-		enabled: !!(geckoId && toggledMetrics.fdv === 'true' && isRouterReady)
+		enabled: !!(geckoId && toggledMetrics.fdv === 'true' && canFetchClientCharts)
 	})
 	const { data: tokenLiquidityData = null, isLoading: fetchingTokenLiquidity } = useQuery<Array<
 		[string | number, number]
@@ -177,7 +179,7 @@ export const useFetchProtocolChartData = ({
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 0,
-		enabled: !!(isRouterReady && metrics.liquidity && toggledMetrics.tokenLiquidity === 'true')
+		enabled: !!(canFetchClientCharts && metrics.liquidity && toggledMetrics.tokenLiquidity === 'true')
 	})
 
 	const isTvlToggled = toggledMetrics.tvl === 'true'
@@ -212,7 +214,7 @@ export const useFetchProtocolChartData = ({
 		vesting: shouldFetchVestingTvl,
 		govtokens: shouldFetchGovTokensTvl
 	} = getProtocolExtraTvlChartFetchState({
-		isRouterReady,
+		isRouterReady: canFetchClientCharts,
 		currentTvlByChain,
 		tvlSettings,
 		needsCompositeTvlChart,
@@ -226,7 +228,7 @@ export const useFetchProtocolChartData = ({
 		return prefetchedChartsInSeconds['TVL'] ?? []
 	}, [prefetchedChartsInSeconds, isCEX])
 	const shouldFetchBaseTvlChart = !!(
-		isRouterReady &&
+		canFetchClientCharts &&
 		metrics.tvl &&
 		needsCompositeTvlChart &&
 		baseTvlChartData.length === 0 &&
@@ -335,7 +337,7 @@ export const useFetchProtocolChartData = ({
 			}
 
 			const queryParamKey = protocolCharts[descriptor.label]
-			const enabled = !!(toggledMetrics[queryParamKey] === 'true' && hasMetric && isRouterReady)
+			const enabled = !!(toggledMetrics[queryParamKey] === 'true' && hasMetric && canFetchClientCharts)
 			const { prefetchedData, queryOptions } = getPrefetchedProtocolChartQueryOptions({
 				label: descriptor.label,
 				queryKey: ['protocol-overview', protocolSlug, descriptor.clientQueryKey],
@@ -360,7 +362,7 @@ export const useFetchProtocolChartData = ({
 		}
 
 		return configs
-	}, [metrics, toggledMetrics, isRouterReady, protocolSlug, name, prefetchedChartsInSeconds])
+	}, [metrics, toggledMetrics, canFetchClientCharts, protocolSlug, name, prefetchedChartsInSeconds])
 
 	const adapterChartQueryResults = useQueries({
 		queries: adapterChartConfigs.map(({ queryOptions }) => queryOptions)
@@ -404,7 +406,7 @@ export const useFetchProtocolChartData = ({
 				isFeeFamilyChartEnabled &&
 				feesSettings?.[extra.setting] &&
 				metrics[extra.protocolMetricField] &&
-				isRouterReady
+				canFetchClientCharts
 			)
 
 			return {
@@ -429,7 +431,7 @@ export const useFetchProtocolChartData = ({
 			bribes: buildConfig(FEE_EXTRA_CONFIG_BY_SETTING.bribes),
 			tokentax: buildConfig(FEE_EXTRA_CONFIG_BY_SETTING.tokentax)
 		}
-	}, [isFeeFamilyChartEnabled, feesSettings, metrics, isRouterReady, protocolSlug, name])
+	}, [isFeeFamilyChartEnabled, feesSettings, metrics, canFetchClientCharts, protocolSlug, name])
 	const isBribesEnabled = feeExtraQueryConfigs.bribes.enabled
 	const {
 		data: bribesDataChart = null,
@@ -456,7 +458,7 @@ export const useFetchProtocolChartData = ({
 	const isUnlocksEnabled = !!(
 		(toggledMetrics.unlocks === 'true' || toggledMetrics.incentives === 'true') &&
 		(metrics.unlocks || metrics.incentives) &&
-		isRouterReady
+		canFetchClientCharts
 	)
 	const { data: unlocksAndIncentivesData = null, isLoading: fetchingUnlocksAndIncentives } = useQuery<{
 		chartData: { documented: Array<EmissionsChartRow>; realtime: Array<EmissionsChartRow> }
@@ -473,7 +475,7 @@ export const useFetchProtocolChartData = ({
 		enabled: isUnlocksEnabled
 	})
 
-	const isTreasuryEnabled = !!(toggledMetrics.treasury === 'true' && metrics.treasury && isRouterReady)
+	const isTreasuryEnabled = !!(toggledMetrics.treasury === 'true' && metrics.treasury && canFetchClientCharts)
 	const { data: treasuryData, isLoading: fetchingTreasury } = usePrefetchedProtocolChartQuery({
 		label: 'Treasury',
 		prefetchedCharts: prefetchedChartsForMsRender,
@@ -485,7 +487,7 @@ export const useFetchProtocolChartData = ({
 			).then((chart) => (chart ? normalizeSeriesToMilliseconds(chart) : null))
 	})
 
-	const isUsdInflowsEnabled = !!(toggledMetrics.usdInflows === 'true' && metrics.tvl && isRouterReady)
+	const isUsdInflowsEnabled = !!(toggledMetrics.usdInflows === 'true' && metrics.tvl && canFetchClientCharts)
 	const usdInflowsData = useMemo(() => {
 		if (!isUsdInflowsEnabled) return null
 
@@ -501,7 +503,7 @@ export const useFetchProtocolChartData = ({
 	}, [isUsdInflowsEnabled, resolvedBaseTvlChartData, extraTvlCharts, tvlSettings, currentTvlByChain])
 	const fetchingUsdInflows = false
 
-	const isBridgeVolumeEnabled = !!(toggledMetrics.bridgeVolume === 'true' && isRouterReady)
+	const isBridgeVolumeEnabled = !!(toggledMetrics.bridgeVolume === 'true' && canFetchClientCharts)
 	const { data: bridgeVolumeData, isLoading: fetchingBridgeVolume } = usePrefetchedProtocolChartQuery({
 		label: 'Bridge Volume',
 		prefetchedCharts: prefetchedChartsForMsRender,
@@ -511,7 +513,7 @@ export const useFetchProtocolChartData = ({
 			fetchJson<Array<[number, number]> | null>(buildProtocolChartApiUrl({ kind: 'bridge-volume', protocol: name }))
 	})
 
-	const isTvsEnabled = !!(toggledMetrics.tvs === 'true' && isRouterReady && availableCharts.includes('TVS'))
+	const isTvsEnabled = !!(toggledMetrics.tvs === 'true' && canFetchClientCharts && availableCharts.includes('TVS'))
 	const { data: tvsData, isLoading: fetchingTvs } = usePrefetchedProtocolChartQuery({
 		label: 'TVS',
 		prefetchedCharts: prefetchedChartsInSeconds,
@@ -526,36 +528,36 @@ export const useFetchProtocolChartData = ({
 	})
 
 	const { data: medianAPYData = null, isLoading: fetchingMedianAPY } = useFetchProtocolMedianAPY(
-		isRouterReady && toggledMetrics.medianApy === 'true' && metrics.yields && !protocolId.startsWith('parent#')
+		canFetchClientCharts && toggledMetrics.medianApy === 'true' && metrics.yields && !protocolId.startsWith('parent#')
 			? slug(name)
 			: null
 	)
 
 	const { data: activeAddressesData = null, isLoading: fetchingActiveAddresses } = useFetchProtocolActivityChart({
 		queryKey: 'active-users',
-		protocol: isRouterReady && toggledMetrics.activeAddresses === 'true' && metrics.activeUsers ? name : null,
+		protocol: canFetchClientCharts && toggledMetrics.activeAddresses === 'true' && metrics.activeUsers ? name : null,
 		adapterType: 'active-users'
 	})
 	const { data: newAddressesData = null, isLoading: fetchingNewAddresses } = useFetchProtocolActivityChart({
 		queryKey: 'new-users',
-		protocol: isRouterReady && toggledMetrics.newAddresses === 'true' && metrics.newUsers ? name : null,
+		protocol: canFetchClientCharts && toggledMetrics.newAddresses === 'true' && metrics.newUsers ? name : null,
 		adapterType: 'new-users'
 	})
 	const { data: transactionsData = null, isLoading: fetchingTransactions } = useFetchProtocolActivityChart({
 		queryKey: 'transactions',
-		protocol: isRouterReady && toggledMetrics.transactions === 'true' && metrics.txCount ? name : null,
+		protocol: canFetchClientCharts && toggledMetrics.transactions === 'true' && metrics.txCount ? name : null,
 		adapterType: 'active-users',
 		dataType: 'dailyTransactionsCount'
 	})
 	const { data: gasUsedData = null, isLoading: fetchingGasUsed } = useFetchProtocolActivityChart({
 		queryKey: 'gas-used',
-		protocol: isRouterReady && toggledMetrics.gasUsed === 'true' && metrics.gasUsed ? name : null,
+		protocol: canFetchClientCharts && toggledMetrics.gasUsed === 'true' && metrics.gasUsed ? name : null,
 		adapterType: 'active-users',
 		dataType: 'dailyGasUsed'
 	})
 
 	const isGovernanceEnabled = !!(
-		isRouterReady &&
+		canFetchClientCharts &&
 		[toggledMetrics.totalProposals, toggledMetrics.successfulProposals, toggledMetrics.maxVotes].some(
 			(v) => v === 'true'
 		) &&
@@ -566,7 +568,7 @@ export const useFetchProtocolChartData = ({
 		isGovernanceEnabled ? governanceApis : null
 	)
 
-	const isNftVolumeEnabled = !!(toggledMetrics.nftVolume === 'true' && metrics.nfts && isRouterReady)
+	const isNftVolumeEnabled = !!(toggledMetrics.nftVolume === 'true' && metrics.nfts && canFetchClientCharts)
 	const { data: nftVolumeData = null, isLoading: fetchingNftVolume } = useQuery<Array<[number, number]> | null>({
 		queryKey: ['protocol-overview', protocolSlug, 'nft-volume'],
 		queryFn: () =>
