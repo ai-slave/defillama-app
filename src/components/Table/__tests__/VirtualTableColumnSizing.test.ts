@@ -1,11 +1,41 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
-import * as ts from 'typescript'
+import { parseSync } from 'oxc-parser'
 import { describe, expect, it } from 'vitest'
 
 const SRC_DIR = path.join(process.cwd(), 'src')
 const TABLE_USAGE_PATTERN =
 	/components\/Table\/(Table|TableWithSearch)['"]|<VirtualTable\b|<TableWithSearch\b|\b\w+TableWrapper\b|<\w+TableWrapper\b/
+
+/** Minimal ESTree node as produced by oxc-parser: typed, with byte offsets. */
+interface AstNode {
+	type: string
+	start: number
+	end: number
+	[key: string]: unknown
+}
+
+function isNode(value: unknown): value is AstNode {
+	return typeof value === 'object' && value !== null && typeof (value as AstNode).type === 'string'
+}
+
+function walk(node: AstNode, visit: (node: AstNode) => void) {
+	visit(node)
+	for (const key of Object.keys(node)) {
+		const value = node[key]
+		if (Array.isArray(value)) {
+			for (const item of value) if (isNode(item)) walk(item, visit)
+		} else if (isNode(value)) {
+			walk(value, visit)
+		}
+	}
+}
+
+function lineOf(source: string, offset: number): number {
+	let line = 1
+	for (let i = 0; i < offset; i++) if (source.charCodeAt(i) === 10) line++
+	return line
+}
 
 function sourceFiles(dir: string): string[] {
 	const files: string[] = []
@@ -24,42 +54,32 @@ function sourceFiles(dir: string): string[] {
 	return files
 }
 
-function propertyName(name: ts.PropertyName): string | undefined {
-	if (ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name)) {
-		return name.text
-	}
+function propertyName(prop: AstNode): string | undefined {
+	if (!isNode(prop.key)) return undefined
+	if (prop.key.type === 'Identifier') return prop.key.name as string
+	if (prop.key.type === 'Literal') return String(prop.key.value)
+	return undefined
 }
 
-function hasObjectProperty(node: ts.ObjectLiteralExpression, property: string) {
-	for (const prop of node.properties) {
-		if (ts.isPropertyAssignment(prop) && propertyName(prop.name) === property) {
-			return true
-		}
-		if (ts.isShorthandPropertyAssignment(prop) && prop.name.text === property) {
-			return true
-		}
+function getObjectProperty(node: AstNode, property: string): AstNode | undefined {
+	for (const prop of node.properties as AstNode[]) {
+		if (prop.type !== 'Property' || (prop.computed as boolean)) continue
+		if (propertyName(prop) === property) return isNode(prop.value) ? prop.value : prop
 	}
-	return false
+	return undefined
 }
 
-function getObjectProperty(node: ts.ObjectLiteralExpression, property: string): ts.Node | undefined {
-	for (const prop of node.properties) {
-		if (ts.isPropertyAssignment(prop) && propertyName(prop.name) === property) {
-			return prop.initializer
-		}
-		if (ts.isShorthandPropertyAssignment(prop) && prop.name.text === property) {
-			return prop
-		}
-	}
+function hasObjectProperty(node: AstNode, property: string): boolean {
+	return getObjectProperty(node, property) !== undefined
 }
 
-function hasMetaProperty(config: ts.ObjectLiteralExpression, property: string) {
+function hasMetaProperty(config: AstNode, property: string): boolean {
 	const meta = getObjectProperty(config, 'meta')
-	return Boolean(meta && ts.isObjectLiteralExpression(meta) && hasObjectProperty(meta, property))
+	return Boolean(meta && meta.type === 'ObjectExpression' && hasObjectProperty(meta, property))
 }
 
-function compactNodeText(sourceFile: ts.SourceFile, node: ts.Node | undefined) {
-	return node?.getText(sourceFile).replace(/\s+/g, ' ').slice(0, 120) ?? ''
+function compactNodeText(source: string, node: AstNode | undefined): string {
+	return node ? source.slice(node.start, node.end).replace(/\s+/g, ' ').slice(0, 120) : ''
 }
 
 describe('VirtualTable column sizing', () => {
@@ -72,37 +92,24 @@ describe('VirtualTable column sizing', () => {
 				continue
 			}
 
-			const sourceFile = ts.createSourceFile(
-				file,
-				source,
-				ts.ScriptTarget.Latest,
-				true,
-				file.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
-			)
+			const parsed = parseSync(file, source)
+			expect(parsed.errors).toEqual([])
+			const relativePath = path.relative(process.cwd(), file)
 
-			function visit(node: ts.Node) {
-				if (!ts.isCallExpression(node) || !ts.isPropertyAccessExpression(node.expression)) {
-					ts.forEachChild(node, visit)
-					return
-				}
+			walk(parsed.program as unknown as AstNode, (node) => {
+				if (node.type !== 'CallExpression' || !isNode(node.callee)) return
+				if (node.callee.type !== 'MemberExpression' || (node.callee.computed as boolean)) return
 
-				const method = node.expression.name.text
-				if (method !== 'accessor' && method !== 'display') {
-					ts.forEachChild(node, visit)
-					return
-				}
+				const method = identifier(node.callee.property)
+				if (method !== 'accessor' && method !== 'display') return
 
-				const config = node.arguments[node.arguments.length - 1]
-				if (!config || !ts.isObjectLiteralExpression(config)) {
-					ts.forEachChild(node, visit)
-					return
-				}
+				const callArguments = node.arguments as AstNode[]
+				const config = callArguments[callArguments.length - 1]
+				if (!config || config.type !== 'ObjectExpression') return
 
-				const relativePath = path.relative(process.cwd(), file)
-				const position = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
-				const id = compactNodeText(sourceFile, getObjectProperty(config, 'id') ?? node.arguments[0])
-				const header = compactNodeText(sourceFile, getObjectProperty(config, 'header'))
-				const label = `${relativePath}:${position.line + 1} ${method} ${id}${header ? ` / ${header}` : ''}`
+				const id = compactNodeText(source, getObjectProperty(config, 'id') ?? callArguments[0])
+				const header = compactNodeText(source, getObjectProperty(config, 'header'))
+				const label = `${relativePath}:${lineOf(source, node.start)} ${method} ${id}${header ? ` / ${header}` : ''}`
 
 				if (hasObjectProperty(config, 'size')) {
 					failures.push(`${label} still uses size`)
@@ -113,15 +120,16 @@ describe('VirtualTable column sizing', () => {
 				if (!hasMetaProperty(config, 'headerClassName')) {
 					failures.push(`${label} missing meta.headerClassName`)
 				}
-				ts.forEachChild(node, visit)
-			}
-
-			visit(sourceFile)
+			})
 		}
 
 		expect(failures).toEqual([])
 	}, 30_000)
 })
+
+function identifier(node: unknown): string | undefined {
+	return isNode(node) && node.type === 'Identifier' ? (node.name as string) : undefined
+}
 
 if (!existsSync(SRC_DIR)) {
 	throw new Error(`Missing source directory: ${SRC_DIR}`)

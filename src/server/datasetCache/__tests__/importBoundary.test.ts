@@ -1,12 +1,44 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import * as ts from 'typescript'
+import { parseSync } from 'oxc-parser'
 import { describe, expect, it } from 'vitest'
 
 const SCAN_ROOTS = ['src/pages', 'src/components', 'src/containers', 'src/layout']
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx'])
 const SERVER_CACHE_IMPORT_PREFIXES = ['~/server/datasetCache']
 const PAGE_DATA_FUNCTIONS = new Set(['getStaticProps', 'getStaticPaths', 'getServerSideProps'])
+
+/** Minimal ESTree node as produced by oxc-parser: typed, with byte offsets. */
+interface AstNode {
+	type: string
+	start: number
+	end: number
+	[key: string]: unknown
+}
+
+function isNode(value: unknown): value is AstNode {
+	return typeof value === 'object' && value !== null && typeof (value as AstNode).type === 'string'
+}
+
+function walk(node: AstNode, ancestors: AstNode[], visit: (node: AstNode, ancestors: readonly AstNode[]) => void) {
+	visit(node, ancestors)
+	ancestors.push(node)
+	for (const key of Object.keys(node)) {
+		const value = node[key]
+		if (Array.isArray(value)) {
+			for (const item of value) if (isNode(item)) walk(item, ancestors, visit)
+		} else if (isNode(value)) {
+			walk(value, ancestors, visit)
+		}
+	}
+	ancestors.pop()
+}
+
+function lineOf(source: string, offset: number): number {
+	let line = 1
+	for (let i = 0; i < offset; i++) if (source.charCodeAt(i) === 10) line++
+	return line
+}
 
 async function collectSourceFiles(rootDir: string): Promise<string[]> {
 	const entries = await fs.readdir(rootDir, { withFileTypes: true })
@@ -47,112 +79,86 @@ function isPageFile(filePath: string): boolean {
 	return relativePath.startsWith('src/pages/') && !relativePath.startsWith('src/pages/api/')
 }
 
-function hasExportModifier(node: ts.Node): boolean {
-	return Boolean(
-		ts.canHaveModifiers(node) && ts.getModifiers(node)?.some((mod) => mod.kind === ts.SyntaxKind.ExportKeyword)
-	)
+const FUNCTION_NODE_TYPES = new Set(['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'])
+
+function isInsideFunction(ancestors: readonly AstNode[]): boolean {
+	return ancestors.some((node) => FUNCTION_NODE_TYPES.has(node.type))
 }
 
-function isInsideFunction(node: ts.Node): boolean {
-	for (let current: ts.Node | undefined = node.parent; current; current = current.parent) {
-		if (
-			ts.isFunctionDeclaration(current) ||
-			ts.isFunctionExpression(current) ||
-			ts.isArrowFunction(current) ||
-			ts.isMethodDeclaration(current)
-		) {
-			return true
-		}
+function identifierName(node: unknown): string | undefined {
+	return isNode(node) && node.type === 'Identifier' ? (node.name as string) : undefined
+}
+
+/** Unwrap `as` / `satisfies` / parenthesized wrappers around an initializer. */
+function unwrapExpression(node: AstNode): AstNode {
+	let current = node
+	while (
+		(current.type === 'TSAsExpression' ||
+			current.type === 'TSSatisfiesExpression' ||
+			current.type === 'ParenthesizedExpression') &&
+		isNode(current.expression)
+	) {
+		current = current.expression
 	}
-	return false
+	return current
 }
 
-function collectPageDataHandlerNames(sourceFile: ts.SourceFile): Set<string> {
+/** Names of handler functions wrapped into exported page-data consts, e.g.
+    `export const getStaticProps = withPerformanceLogging('key', handler)`. */
+function collectPageDataHandlerNames(program: AstNode): Set<string> {
 	const handlerNames = new Set<string>()
 
-	function collectIdentifier(node: ts.Node) {
-		if (ts.isIdentifier(node)) {
-			handlerNames.add(node.text)
-		}
-	}
-
-	function collectInitializerHandlers(node: ts.Expression) {
-		if (ts.isAsExpression(node) || ts.isSatisfiesExpression(node) || ts.isParenthesizedExpression(node)) {
-			collectInitializerHandlers(node.expression)
-			return
-		}
-
-		if (ts.isIdentifier(node)) {
-			collectIdentifier(node)
-			return
-		}
-
-		if (ts.isCallExpression(node)) {
-			for (const argument of node.arguments) collectIdentifier(argument)
-		}
-	}
-
-	function visit(node: ts.Node) {
-		if (ts.isVariableStatement(node) && hasExportModifier(node)) {
-			for (const declaration of node.declarationList.declarations) {
-				if (!ts.isIdentifier(declaration.name) || !PAGE_DATA_FUNCTIONS.has(declaration.name.text)) continue
-				if (declaration.initializer) collectInitializerHandlers(declaration.initializer)
+	walk(program, [], (node) => {
+		if (node.type !== 'ExportNamedDeclaration' || !isNode(node.declaration)) return
+		if (node.declaration.type !== 'VariableDeclaration') return
+		for (const declaration of node.declaration.declarations as AstNode[]) {
+			const name = identifierName(declaration.id)
+			if (!name || !PAGE_DATA_FUNCTIONS.has(name) || !isNode(declaration.init)) continue
+			const initializer = unwrapExpression(declaration.init)
+			const direct = identifierName(initializer)
+			if (direct) {
+				handlerNames.add(direct)
+				continue
+			}
+			if (initializer.type === 'CallExpression') {
+				for (const argument of initializer.arguments as AstNode[]) {
+					const argumentName = identifierName(argument)
+					if (argumentName) handlerNames.add(argumentName)
+				}
 			}
 		}
+	})
 
-		ts.forEachChild(node, visit)
-	}
-
-	visit(sourceFile)
 	return handlerNames
 }
 
-function isInsideExportedPageDataFunction(node: ts.Node, handlerNames: Set<string>): boolean {
-	for (let current: ts.Node | undefined = node.parent; current; current = current.parent) {
-		if (ts.isFunctionDeclaration(current) && current.name && handlerNames.has(current.name.text)) {
-			return true
-		}
-
-		if (
-			ts.isFunctionDeclaration(current) &&
-			current.name &&
-			PAGE_DATA_FUNCTIONS.has(current.name.text) &&
-			hasExportModifier(current)
-		) {
-			return true
-		}
-
-		if (
-			ts.isVariableDeclaration(current) &&
-			ts.isIdentifier(current.name) &&
-			PAGE_DATA_FUNCTIONS.has(current.name.text)
-		) {
-			for (let parent: ts.Node | undefined = current.parent; parent; parent = parent.parent) {
-				if (ts.isVariableStatement(parent)) return hasExportModifier(parent)
-			}
-		}
-
-		if (ts.isVariableDeclaration(current) && ts.isIdentifier(current.name) && handlerNames.has(current.name.text)) {
-			return true
-		}
+function isExportedInStack(ancestors: readonly AstNode[], index: number): boolean {
+	for (let i = index; i >= 0; i--) {
+		if (ancestors[i].type === 'ExportNamedDeclaration') return true
+		if (ancestors[i].type === 'VariableDeclaration') continue
+		if (ancestors[i].type === 'VariableDeclarator') continue
+		break
 	}
 	return false
 }
 
-function getLine(sourceFile: ts.SourceFile, node: ts.Node): number {
-	return sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1
-}
+function isInsideExportedPageDataFunction(ancestors: readonly AstNode[], handlerNames: Set<string>): boolean {
+	for (let i = ancestors.length - 1; i >= 0; i--) {
+		const current = ancestors[i]
 
-function isAllowedTypeImport(node: ts.ImportDeclaration, specifier: string): boolean {
-	return Boolean(node.importClause?.isTypeOnly && specifier.endsWith('.types'))
-}
+		if (current.type === 'FunctionDeclaration') {
+			const name = identifierName(current.id)
+			if (name && handlerNames.has(name)) return true
+			if (name && PAGE_DATA_FUNCTIONS.has(name) && ancestors[i - 1]?.type === 'ExportNamedDeclaration') return true
+		}
 
-function getScriptKind(filePath: string): ts.ScriptKind {
-	const extension = path.extname(filePath)
-	if (extension === '.tsx') return ts.ScriptKind.TSX
-	if (extension === '.jsx') return ts.ScriptKind.JSX
-	if (extension === '.js') return ts.ScriptKind.JS
-	return ts.ScriptKind.TS
+		if (current.type === 'VariableDeclarator') {
+			const name = identifierName(current.id)
+			if (name && handlerNames.has(name)) return true
+			if (name && PAGE_DATA_FUNCTIONS.has(name)) return isExportedInStack(ancestors, i - 1)
+		}
+	}
+	return false
 }
 
 describe('dataset cache import boundary', () => {
@@ -165,37 +171,30 @@ describe('dataset cache import boundary', () => {
 			if (!SERVER_CACHE_IMPORT_PREFIXES.some((prefix) => source.includes(prefix))) continue
 
 			const relativePath = relativeSourcePath(filePath)
-			const sourceFile = ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true, getScriptKind(filePath))
-			const pageDataHandlerNames = collectPageDataHandlerNames(sourceFile)
+			const parsed = parseSync(filePath, source)
+			expect(parsed.errors).toEqual([])
+			const program = parsed.program as unknown as AstNode
+			const pageDataHandlerNames = collectPageDataHandlerNames(program)
 
-			function visit(node: ts.Node) {
-				if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
-					const specifier = node.moduleSpecifier.text
-					if (isServerCacheImport(specifier) && !isAllowedTypeImport(node, specifier)) {
-						errors.push(`${relativePath}:${getLine(sourceFile, node)} static import ${specifier}`)
+			walk(program, [], (node, ancestors) => {
+				if (node.type === 'ImportDeclaration' && isNode(node.source)) {
+					const specifier = node.source.value as string
+					const isAllowedTypeImport = node.importKind === 'type' && specifier.endsWith('.types')
+					if (isServerCacheImport(specifier) && !isAllowedTypeImport) {
+						errors.push(`${relativePath}:${lineOf(source, node.start)} static import ${specifier}`)
 					}
 				}
 
-				if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
-					const [specifierNode] = node.arguments
-					if (!specifierNode || !ts.isStringLiteral(specifierNode)) {
-						ts.forEachChild(node, visit)
-						return
-					}
-
-					const specifier = specifierNode.text
-					if (isServerCacheImport(specifier)) {
+				if (node.type === 'ImportExpression' && isNode(node.source) && node.source.type === 'Literal') {
+					const specifier = node.source.value as string
+					if (typeof specifier === 'string' && isServerCacheImport(specifier)) {
 						const isAllowed =
-							(isPageFile(filePath) && isInsideExportedPageDataFunction(node, pageDataHandlerNames)) ||
-							(isApiRouteFile(filePath) && isInsideFunction(node))
-						if (!isAllowed) errors.push(`${relativePath}:${getLine(sourceFile, node)} dynamic import ${specifier}`)
+							(isPageFile(filePath) && isInsideExportedPageDataFunction(ancestors, pageDataHandlerNames)) ||
+							(isApiRouteFile(filePath) && isInsideFunction(ancestors))
+						if (!isAllowed) errors.push(`${relativePath}:${lineOf(source, node.start)} dynamic import ${specifier}`)
 					}
 				}
-
-				ts.forEachChild(node, visit)
-			}
-
-			visit(sourceFile)
+			})
 		}
 
 		expect(errors).toEqual([])
