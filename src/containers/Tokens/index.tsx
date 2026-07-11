@@ -8,10 +8,10 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { TokenRightsPieChart } from '~/containers/TokenRights/TokenRightsPieChart'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
-import { Card } from '~/ui/Card'
 import { Hovercard } from '~/ui/Hovercard'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
+import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import type {
 	TokensDisplayTone,
@@ -472,41 +472,22 @@ export function buildTokensColumns({ expandable = false }: { expandable?: boolea
 	return cols
 }
 
-function TokensStatsChange({ value, tone }: { value: string | null; tone: TokensDisplayTone }) {
-	if (value === null) return null
-	return <span className={`label-md ${VALUE_TONE_CLASSES[tone]}`}>{value}</span>
-}
-
 function TokensStats({ stats }: { stats: TokensPageStatsDisplay }) {
-	const items = [
+	const items: InlineStatStripItem[] = [
 		{
 			label: 'MCap',
 			value: stats.totalMarketCap,
 			change: stats.marketCapWeightedChange24h,
-			changeTone: stats.marketCapWeightedChange24hTone
+			changeClassName: VALUE_TONE_CLASSES[stats.marketCapWeightedChange24hTone]
 		},
 		{ label: 'Spot Vol', value: stats.spotVolume24h },
 		{ label: 'Perps Vol', value: stats.perpsVolume24h },
 		{ label: 'OI', value: stats.openInterest24h },
 		{ label: '30D Unlocks', value: stats.unlock30dUsd },
 		{ label: 'Next Unlocks', value: stats.upcomingUnlockUsd }
-	] as const
+	]
 
-	return (
-		<Card as="dl" padding="sm" className="flex w-full flex-wrap items-center gap-x-5 gap-y-1.5">
-			{items.map((item) => (
-				<div key={item.label} className="flex items-baseline gap-1.5">
-					<dt className="body-sm text-secondary">{item.label}</dt>
-					<dd className="label-md">{item.value}</dd>
-					{'change' in item && item.change != null ? (
-						<dd>
-							<TokensStatsChange value={item.change} tone={item.changeTone} />
-						</dd>
-					) : null}
-				</div>
-			))}
-		</Card>
-	)
+	return <InlineStatStrip items={items} />
 }
 
 function TokensControls({ search, updateSearch }: { search: string; updateSearch: (search: string) => void }) {

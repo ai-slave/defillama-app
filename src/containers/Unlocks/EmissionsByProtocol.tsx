@@ -15,6 +15,7 @@ import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { LoadingDots, LocalLoader } from '~/ui/Loaders'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { capitalizeFirstLetter, firstDayOfMonth, formattedNum, lastDayOfWeek, slug } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -425,42 +426,25 @@ function TokenStats({
 	tokenVolume: number | undefined
 	symbol: string | null | undefined
 }) {
-	if (tokenCircSupply == null && tokenMaxSupply == null && tokenMcap == null && tokenVolume == null) return null
-	return (
-		<div className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-subtle bg-surface px-4 py-3">
-			{tokenCircSupply != null ? (
-				<div className="flex items-baseline gap-1.5">
-					<span className="text-sm text-secondary">Circ. Supply</span>
-					<span className="text-sm font-medium">
-						{formattedNum(tokenCircSupply)} {symbol}
-					</span>
-				</div>
-			) : null}
-
-			{tokenMaxSupply != null ? (
-				<div className="flex items-baseline gap-1.5">
-					<span className="text-sm text-secondary">Max Supply</span>
-					<span className="text-sm font-medium">
-						{tokenMaxSupply !== Infinity ? formattedNum(tokenMaxSupply) : '∞'} {symbol}
-					</span>
-				</div>
-			) : null}
-
-			{tokenMcap != null ? (
-				<div className="flex items-baseline gap-1.5">
-					<span className="text-sm text-secondary">MCap</span>
-					<span className="text-sm font-medium">${formattedNum(tokenMcap)}</span>
-				</div>
-			) : null}
-
-			{tokenVolume != null ? (
-				<div className="flex items-baseline gap-1.5">
-					<span className="text-sm text-secondary">Vol 24h</span>
-					<span className="text-sm font-medium">${formattedNum(tokenVolume)}</span>
-				</div>
-			) : null}
-		</div>
-	)
+	const withSymbol = (amount: string) => (symbol ? `${amount} ${symbol}` : amount)
+	const items: InlineStatStripItem[] = []
+	if (tokenCircSupply != null) {
+		items.push({ label: 'Circ. Supply', value: withSymbol(formattedNum(tokenCircSupply)) })
+	}
+	if (tokenMaxSupply != null) {
+		items.push({
+			label: 'Max Supply',
+			value: withSymbol(tokenMaxSupply !== Infinity ? formattedNum(tokenMaxSupply) : '∞')
+		})
+	}
+	if (tokenMcap != null) {
+		items.push({ label: 'MCap', value: `$${formattedNum(tokenMcap)}` })
+	}
+	if (tokenVolume != null) {
+		items.push({ label: 'Vol 24h', value: `$${formattedNum(tokenVolume)}` })
+	}
+	if (items.length === 0) return null
+	return <InlineStatStrip items={items} />
 }
 
 function TokenAllocationBars({

@@ -94,3 +94,36 @@ export function StatItem({
 		</Container>
 	)
 }
+
+export interface InlineStatStripItem {
+	label: string
+	value: ReactNode
+	/** Optional delta text rendered after the value. */
+	change?: ReactNode
+	/** Tone/color classes for the change (e.g. text-data-up); type comes from the recipe. */
+	changeClassName?: string
+}
+
+/** Inline stat strip (design.md → Summary metric cards, inline variant): a
+    full-width Card of `label: value` pairs above a table or chart. One rhythm
+    everywhere — strip padding, 14px pairs (body-md secondary labels, label-md
+    values), 24px item gaps. */
+export function InlineStatStrip({ items, className }: { items: InlineStatStripItem[]; className?: string }) {
+	return (
+		<Card
+			as="dl"
+			padding="strip"
+			className={`flex w-full flex-wrap items-center gap-x-6 gap-y-2 ${className ?? ''}`.trim()}
+		>
+			{items.map((item) => (
+				<div key={item.label} className="flex items-baseline gap-1.5">
+					<dt className="body-md text-secondary">{item.label}</dt>
+					<dd className="label-md">{item.value}</dd>
+					{item.change != null ? (
+						<dd className={`label-md ${item.changeClassName ?? ''}`.trim()}>{item.change}</dd>
+					) : null}
+				</div>
+			))}
+		</Card>
+	)
+}

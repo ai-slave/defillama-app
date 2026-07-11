@@ -9,7 +9,7 @@
 		"prefixed-design-token": 0,
 		"arbitrary-standard-radius": 0,
 		"implicit-border-color": 3,
-		"conflicting-named-typography": 35
+		"conflicting-named-typography": 31
 	},
 	"excluded": {
 		"hex-in-classname": 2587,

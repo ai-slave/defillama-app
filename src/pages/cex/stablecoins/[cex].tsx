@@ -19,10 +19,10 @@ import {
 } from '~/containers/ProtocolOverview/utils'
 import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
-import { Card } from '~/ui/Card'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { LocalLoader } from '~/ui/Loaders'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { InlineStatStrip } from '~/ui/SummaryStats'
 import { formattedNum, slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -542,33 +542,32 @@ export default function CEXStablecoins(props: {
 				<PanelStatus variant="empty">No stablecoin data available for this exchange</PanelStatus>
 			) : (
 				<>
-					<Card padding="strip" className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2">
-						<div className="flex items-baseline gap-1.5">
-							<span className="label-md text-secondary">Total Stablecoin in CEX</span>
-							<span className="body-md font-medium">{currentTotal ? formattedNum(currentTotal, true) : '-'}</span>
-						</div>
-						{stablecoinBreakdown && stablecoinBreakdown.length > 0 ? (
-							<>
-								<div className="flex items-baseline gap-1.5">
-									<span className="label-md text-secondary">Dominant Backing Type</span>
-									<span className="body-md font-medium capitalize">
-										{stablecoinBreakdown[0].mechanism.replace('-', ' ')}
-									</span>
-									<span className="body-md text-tertiary">({stablecoinBreakdown[0].percentage.toFixed(1)}%)</span>
-								</div>
-								<div className="flex items-baseline gap-1.5">
-									<span className="label-md text-secondary">Fiat-Backed %</span>
-									<span className="body-md font-medium">
-										{stablecoinBreakdown.find((b) => b.mechanism === 'fiat-backed')?.percentage.toFixed(1) || '0'}%
-									</span>
-								</div>
-								<div className="flex items-baseline gap-1.5">
-									<span className="label-md text-secondary">Number of Stablecoins</span>
-									<span className="body-md font-medium">{data.stablecoinTokensUnique?.length || 0}</span>
-								</div>
-							</>
-						) : null}
-					</Card>
+					<InlineStatStrip
+						items={[
+							{
+								label: 'Total Stablecoin in CEX',
+								value: currentTotal ? formattedNum(currentTotal, true) : '-'
+							},
+							...(stablecoinBreakdown && stablecoinBreakdown.length > 0
+								? [
+										{
+											label: 'Dominant Backing Type',
+											value: <span className="capitalize">{stablecoinBreakdown[0].mechanism.replace('-', ' ')}</span>,
+											change: `(${stablecoinBreakdown[0].percentage.toFixed(1)}%)`,
+											changeClassName: 'text-tertiary'
+										},
+										{
+											label: 'Fiat-Backed %',
+											value: `${stablecoinBreakdown.find((b) => b.mechanism === 'fiat-backed')?.percentage.toFixed(1) || '0'}%`
+										},
+										{
+											label: 'Number of Stablecoins',
+											value: data.stablecoinTokensUnique?.length || 0
+										}
+									]
+								: [])
+						]}
+					/>
 
 					<div className="grid grid-cols-2 gap-2">
 						{totalStablecoinsDataset ? (

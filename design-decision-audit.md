@@ -1047,3 +1047,27 @@ variations instead of forcing a universal abstraction.
   dashboards should look like before any implementation is scheduled. Until
   designs exist the products stay pixel-stable behind explicit compat props and
   their ratchet bucket may not grow. Recorded in design.md § Status.
+
+### 2026-07-10 Inline Stat Strip Consolidation (branch `inline-stat-strip`)
+
+- The horizontal `label: value` summary strip above tables/charts shipped five
+  accidental rhythms (12px vs 14px labels, label/value styles inverted on the
+  CEX stablecoin page, `p-2` vs `px-4 py-3` vs hand-rolled cards, `gap-x-5` vs
+  `gap-x-6`). design.md already specified the recipe — 14px pairs inside
+  `Card padding="strip"` — so consolidation followed the documented decision
+  rather than inventing a new one: `InlineStatStrip` in `ui/SummaryStats.tsx`
+  (`dl` semantics, `body-md text-secondary` labels, `label-md` values, optional
+  colored change slot, `gap-x-6 gap-y-2`).
+- Migrated: /tokens rankings (labels 12→14px, padding p-2→strip), unlocks token
+  stats (was hand-rolled), token-rights counts (labels 12→14px), LiquidationsV2
+  totals (gap-x-5→6), CEX stablecoin summary (inverted label/value styles
+  corrected), governance project stats (raw text-sm utilities → named ramp).
+  Arbitrary `min-h-[46px]`/`min-h-[42px]` reservations dropped — strip padding
+  and line height own the height.
+- Retained as separate documented roles: Markets `MetricStat` (mono values) and
+  vertical `StripStat`, MetricRow summary cards, dialog section headers that
+  merely share the `items-baseline gap-1.5` shape.
+- `TokenOverviewHeader` was an unused duplicate of the unlocks strip (only its
+  test imported it) — deleted rather than migrated.
+- Ratchet: `conflicting-named-typography` improved 35→31 (raw `text-sm`
+  label/value combos replaced by ramp utilities); locked via `--update`.

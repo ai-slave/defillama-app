@@ -5,6 +5,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { GovernanceTable } from '~/containers/Governance/GovernanceTable'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { formattedNum } from '~/utils'
 import type { GovernanceDataEntry, GovernanceType } from './types'
 
@@ -94,6 +95,37 @@ export default function GovernanceProject({
 
 	const name = data?.metadata?.name ?? projectName
 
+	const governanceStatItems: InlineStatStripItem[] = []
+	if (data?.stats?.chainName != null) {
+		governanceStatItems.push({
+			label: 'Chain',
+			value: (
+				<span className="flex items-center gap-1">
+					<TokenLogo name={data.stats.chainName} kind="chain" size={20} alt={`Logo of ${data.stats.chainName}`} />
+					<span>{data.stats.chainName}</span>
+				</span>
+			)
+		})
+	}
+	if (data?.stats?.proposalsCount != null) {
+		governanceStatItems.push({ label: 'Total Proposals', value: data.stats.proposalsCount })
+	}
+	if (data?.stats?.successfulProposals != null) {
+		governanceStatItems.push({ label: 'Successful', value: data.stats.successfulProposals })
+	}
+	if (data?.stats?.proposalsInLast30Days != null) {
+		governanceStatItems.push({ label: 'Proposals (30d)', value: data.stats.proposalsInLast30Days })
+	}
+	if (data?.stats?.successfulProposalsInLast30Days != null) {
+		governanceStatItems.push({ label: 'Successful (30d)', value: data.stats.successfulProposalsInLast30Days })
+	}
+	if (data?.stats?.highestTotalScore != null) {
+		governanceStatItems.push({ label: 'Max Total Votes', value: formattedNum(data.stats.highestTotalScore) })
+	}
+	if (data?.metadata?.followersCount != null) {
+		governanceStatItems.push({ label: 'Followers', value: formattedNum(data.metadata.followersCount) })
+	}
+
 	return (
 		<>
 			<div className="flex flex-col gap-2">
@@ -103,72 +135,7 @@ export default function GovernanceProject({
 					{filters}
 				</div>
 
-				{data?.stats?.chainName != null ||
-				data?.stats?.proposalsCount != null ||
-				data?.stats?.successfulProposals != null ||
-				data?.stats?.proposalsInLast30Days != null ||
-				data?.stats?.successfulProposalsInLast30Days != null ||
-				data?.stats?.highestTotalScore != null ||
-				data?.metadata?.followersCount != null ? (
-					<div className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-subtle bg-surface px-4 py-3">
-						{data?.stats?.chainName != null ? (
-							<div className="flex items-center gap-1.5">
-								<span className="text-sm text-secondary">Chain</span>
-								<span className="flex items-center gap-1 text-sm font-medium">
-									<TokenLogo
-										name={data.stats.chainName}
-										kind="chain"
-										size={20}
-										alt={`Logo of ${data.stats.chainName}`}
-									/>
-									<span>{data.stats.chainName}</span>
-								</span>
-							</div>
-						) : null}
-
-						{data?.stats?.proposalsCount != null ? (
-							<div className="flex items-baseline gap-1.5">
-								<span className="text-sm text-secondary">Total Proposals</span>
-								<span className="text-sm font-medium">{data.stats.proposalsCount}</span>
-							</div>
-						) : null}
-
-						{data?.stats?.successfulProposals != null ? (
-							<div className="flex items-baseline gap-1.5">
-								<span className="text-sm text-secondary">Successful</span>
-								<span className="text-sm font-medium">{data.stats.successfulProposals}</span>
-							</div>
-						) : null}
-
-						{data?.stats?.proposalsInLast30Days != null ? (
-							<div className="flex items-baseline gap-1.5">
-								<span className="text-sm text-secondary">Proposals (30d)</span>
-								<span className="text-sm font-medium">{data.stats.proposalsInLast30Days}</span>
-							</div>
-						) : null}
-
-						{data?.stats?.successfulProposalsInLast30Days != null ? (
-							<div className="flex items-baseline gap-1.5">
-								<span className="text-sm text-secondary">Successful (30d)</span>
-								<span className="text-sm font-medium">{data.stats.successfulProposalsInLast30Days}</span>
-							</div>
-						) : null}
-
-						{data?.stats?.highestTotalScore != null ? (
-							<div className="flex items-baseline gap-1.5">
-								<span className="text-sm text-secondary">Max Total Votes</span>
-								<span className="text-sm font-medium">{formattedNum(data.stats.highestTotalScore)}</span>
-							</div>
-						) : null}
-
-						{data?.metadata?.followersCount != null ? (
-							<div className="flex items-baseline gap-1.5">
-								<span className="text-sm text-secondary">Followers</span>
-								<span className="text-sm font-medium">{formattedNum(data.metadata.followersCount)}</span>
-							</div>
-						) : null}
-					</div>
-				) : null}
+				{governanceStatItems.length > 0 ? <InlineStatStrip items={governanceStatItems} /> : null}
 
 				<div className="grid grid-cols-2 gap-2">
 					<ChartPanel className="col-span-full xl:col-span-1 xl:[&:last-child:nth-child(2n-1)]:col-span-full">

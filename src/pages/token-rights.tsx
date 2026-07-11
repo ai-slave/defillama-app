@@ -18,10 +18,10 @@ import type { ProtocolLite, ParentProtocolLite } from '~/containers/ProtocolList
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
-import { Card } from '~/ui/Card'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
+import { InlineStatStrip } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum, slug } from '~/utils'
@@ -496,12 +496,14 @@ function TokenRightsPage({ protocols }: { protocols: TokenRightsListItem[] }) {
 			pageName={['Token Rights']}
 		>
 			<div className="flex flex-col gap-2">
-				<Card padding="strip" className="flex min-h-[46px] w-full flex-wrap items-center gap-x-6 gap-y-2">
-					<InlineStat value={filteredProtocols.length} label="Protocols" />
-					<InlineStat value={stats.feeSwitchOn} label="Fee Switch ON" />
-					<InlineStat value={stats.buybacks} label="Active Buybacks" />
-					<InlineStat value={stats.dividends} label="Dividends" />
-				</Card>
+				<InlineStatStrip
+					items={[
+						{ label: 'Protocols', value: filteredProtocols.length },
+						{ label: 'Fee Switch ON', value: stats.feeSwitchOn },
+						{ label: 'Active Buybacks', value: stats.buybacks },
+						{ label: 'Dividends', value: stats.dividends }
+					]}
+				/>
 
 				<Panel padding="none">
 					<TableToolbar>
@@ -743,15 +745,6 @@ const columns = [
 		}
 	})
 ]
-
-function InlineStat({ value, label }: { value: number; label: string }) {
-	return (
-		<div className="flex items-baseline gap-1.5">
-			<span className="body-sm text-secondary">{label}</span>
-			<span className="label-md text-primary">{value}</span>
-		</div>
-	)
-}
 
 function TokenPills({ tokens }: { tokens: string[] }) {
 	return (
