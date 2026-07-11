@@ -90,12 +90,12 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, Props>(functi
 			</div>
 			<div className="flex items-center justify-between gap-2 border-t border-(--legacy-cards-border) px-3 py-1.5 text-[10px] text-(--legacy-text-tertiary)">
 				<span>
-					<kbd className="rounded border border-(--legacy-cards-border) px-1">↑</kbd>{' '}
-					<kbd className="rounded border border-(--legacy-cards-border) px-1">↓</kbd> nav
+					<kbd className="rounded-sm border border-(--legacy-cards-border) px-1">↑</kbd>{' '}
+					<kbd className="rounded-sm border border-(--legacy-cards-border) px-1">↓</kbd> nav
 				</span>
 				<span>
-					<kbd className="rounded border border-(--legacy-cards-border) px-1">↵</kbd> insert{' '}
-					<kbd className="ml-1 rounded border border-(--legacy-cards-border) px-1">esc</kbd> dismiss
+					<kbd className="rounded-sm border border-(--legacy-cards-border) px-1">↵</kbd> insert{' '}
+					<kbd className="ml-1 rounded-sm border border-(--legacy-cards-border) px-1">esc</kbd> dismiss
 				</span>
 			</div>
 		</div>

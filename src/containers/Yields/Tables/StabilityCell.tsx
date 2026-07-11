@@ -61,7 +61,7 @@ export function StabilityCell({
 			<div className="flex flex-col gap-1.5 text-xs">
 				<div className="flex items-center justify-between gap-4">
 					<span className="font-semibold">Yield Score · 30d</span>
-					<span className="inline-flex items-center gap-1 rounded bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-500 dark:text-blue-400">
+					<span className="inline-flex items-center gap-1 rounded-sm bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-500 dark:text-blue-400">
 						<LockIcon className="size-2.5" />
 						Pro
 					</span>

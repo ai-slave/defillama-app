@@ -352,7 +352,7 @@ const SearchItem = ({
 	const deprecatedContent = route.type ? `Deprecated ${route.type.toLowerCase()}` : 'Deprecated'
 	return (
 		<Ariakit.ComboboxItem
-			className="flex flex-wrap items-center gap-2 px-3 py-2 body-sm text-primary cv-auto-40 outline-none hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring"
+			className="flex flex-wrap items-center gap-2 px-3 py-2 body-sm text-primary outline-hidden cv-auto-40 hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring"
 			render={
 				<BasicLink
 					href={route.route}

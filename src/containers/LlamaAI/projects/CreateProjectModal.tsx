@@ -102,7 +102,7 @@ function CreateProjectForm({
 					value={name}
 					onChange={(e) => setName(e.target.value)}
 					placeholder="My research project"
-					className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 text-sm text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-none dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
+					className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 text-sm text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-hidden dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
 				/>
 			</label>
 
@@ -114,7 +114,7 @@ function CreateProjectForm({
 					value={description ?? ''}
 					onChange={(e) => setDescription(e.target.value)}
 					placeholder="What's this project about?"
-					className="resize-none rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 text-sm text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-none dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
+					className="resize-none rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 text-sm text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-hidden dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
 				/>
 			</label>
 

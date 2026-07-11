@@ -143,7 +143,7 @@ function TechniqueChips({ techniques }: { techniques: TechniqueName[] }) {
 					<span
 						tabIndex={0}
 						title={TECHNIQUE_DOCS[t]}
-						className="inline-flex cursor-help items-center gap-1 rounded-sm border border-(--legacy-divider) bg-(--legacy-app-bg)/60 px-1.5 py-0.5 font-mono text-[10.5px] tracking-tight text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-primary)/50 hover:text-(--legacy-primary) focus:border-(--legacy-primary)/60 focus:outline-none"
+						className="inline-flex cursor-help items-center gap-1 rounded-sm border border-(--legacy-divider) bg-(--legacy-app-bg)/60 px-1.5 py-0.5 font-mono text-[10.5px] tracking-tight text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-primary)/50 hover:text-(--legacy-primary) focus:border-(--legacy-primary)/60 focus:outline-hidden"
 					>
 						{t}
 					</span>

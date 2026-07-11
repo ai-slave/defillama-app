@@ -148,7 +148,7 @@ export function ProjectsGrid() {
 							<select
 								value={sortBy}
 								onChange={(e) => startTransition(() => setSortBy(e.target.value as SortBy))}
-								className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-2 py-1 text-xs text-inherit focus:border-(--legacy-old-blue) focus:outline-none dark:border-[#2a2b2c]"
+								className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-2 py-1 text-xs text-inherit focus:border-(--legacy-old-blue) focus:outline-hidden dark:border-[#2a2b2c]"
 							>
 								<option value="updated">Recently updated</option>
 								<option value="created">Recently created</option>
@@ -176,7 +176,7 @@ export function ProjectsGrid() {
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 						placeholder="Search projects"
-						className="min-w-0 flex-1 bg-transparent p-2 text-xs text-inherit placeholder:text-[#aaa] focus:outline-none dark:placeholder:text-[#555]"
+						className="min-w-0 flex-1 bg-transparent p-2 text-xs text-inherit placeholder:text-[#aaa] focus:outline-hidden dark:placeholder:text-[#555]"
 					/>
 					{query ? (
 						<button

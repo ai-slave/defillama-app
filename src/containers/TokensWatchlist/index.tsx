@@ -170,7 +170,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 							table={table}
 							pageSizeOptions={PAGE_SIZE_OPTIONS}
 							style={tableStyle}
-							tableClassName="min-w-[var(--tokens-table-min-width)]"
+							tableClassName="min-w-(--tokens-table-min-width)"
 							shell="none"
 							interactionDisabled={isFetching}
 							renderSubComponent={(row: Row<TokensTableRow>) => <ExpandedTokenMarkets symbol={row.original.symbol} />}

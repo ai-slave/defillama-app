@@ -36,7 +36,7 @@ export function PresetPicker({
 							<span className="text-xs text-(--legacy-text-secondary)">{preset.description}</span>
 						) : null}
 						{isActive ? (
-							<span className="rounded bg-(--legacy-primary)/10 px-2 py-0.5 text-[10px] font-medium text-(--legacy-primary)">
+							<span className="rounded-sm bg-(--legacy-primary)/10 px-2 py-0.5 text-[10px] font-medium text-(--legacy-primary)">
 								Active
 							</span>
 						) : null}

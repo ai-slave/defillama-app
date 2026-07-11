@@ -262,7 +262,7 @@ export const calendarColumns = [
 					{row.original.type === 'Unlock' ? (
 						<BasicLink
 							href={`/unlocks/${slug(row.original.link)}`}
-							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
+							className="truncate text-sm font-medium text-link hover:underline"
 						>
 							{getValue()}
 						</BasicLink>

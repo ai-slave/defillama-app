@@ -90,7 +90,7 @@ export function ReferralCard() {
 				<div className="flex items-center justify-between">
 					<span className="text-xs text-(--sub-ink-primary) dark:text-white">Sign-ups</span>
 					{isStatsLoading ? (
-						<div className="h-4 w-8 animate-pulse rounded bg-(--sub-border-light) dark:bg-(--sub-border-strong)" />
+						<div className="h-4 w-8 animate-pulse rounded-sm bg-(--sub-border-light) dark:bg-(--sub-border-strong)" />
 					) : (
 						<span className="text-xs font-medium text-(--sub-ink-primary) dark:text-white">
 							{stats?.referralsCount ?? 0}
@@ -100,7 +100,7 @@ export function ReferralCard() {
 				<div className="flex items-center justify-between">
 					<span className="text-xs text-(--sub-ink-primary) dark:text-white">Paid Subscriptions</span>
 					{isStatsLoading ? (
-						<div className="h-4 w-8 animate-pulse rounded bg-(--sub-border-light) dark:bg-(--sub-border-strong)" />
+						<div className="h-4 w-8 animate-pulse rounded-sm bg-(--sub-border-light) dark:bg-(--sub-border-strong)" />
 					) : (
 						<span className="text-xs font-medium text-(--sub-ink-primary) dark:text-white">
 							{stats?.paidReferralsCount ?? 0}

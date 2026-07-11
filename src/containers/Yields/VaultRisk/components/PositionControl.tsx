@@ -116,7 +116,7 @@ export function PositionControl({
 							if (e.key === 'Enter') e.currentTarget.blur()
 							if (e.key === 'Escape') setDraft(position ? position.toLocaleString('en-US') : '')
 						}}
-						className="w-24 rounded-md border border-(--legacy-cards-border) bg-(--legacy-bg-main) py-1 pr-2 pl-5 text-xs text-(--legacy-text-primary) tabular-nums placeholder:text-(--legacy-text-secondary) focus-visible:border-(--legacy-primary) focus-visible:outline-none"
+						className="w-24 rounded-md border border-(--legacy-cards-border) bg-(--legacy-bg-main) py-1 pr-2 pl-5 text-xs text-(--legacy-text-primary) tabular-nums placeholder:text-(--legacy-text-secondary) focus-visible:border-(--legacy-primary) focus-visible:outline-hidden"
 					/>
 				</div>
 				{position ? (

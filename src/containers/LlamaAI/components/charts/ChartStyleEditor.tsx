@@ -76,7 +76,7 @@ function toPatch(c: ChartConfiguration, view: Record<ViewKey, boolean>): ChartSt
 const section = 'flex flex-col gap-2 border-t border-[#ececec] pt-3 first:border-t-0 first:pt-0 dark:border-[#232427]'
 const label = 'text-[10.5px] font-semibold uppercase tracking-[0.07em] text-[#888] dark:text-[#7c828c]'
 const input =
-	'rounded-md border border-(--legacy-form-control-border) bg-transparent px-2.5 py-1.5 text-sm text-(--legacy-text-form) outline-none transition-colors focus:border-(--legacy-old-blue)'
+	'rounded-md border border-(--legacy-form-control-border) bg-transparent px-2.5 py-1.5 text-sm text-(--legacy-text-form) outline-hidden transition-colors focus:border-(--legacy-old-blue)'
 const swatch =
 	'size-7 shrink-0 cursor-pointer rounded-md border border-(--legacy-form-control-border) bg-transparent p-[3px] transition-transform hover:scale-105'
 const axisTag = 'w-3.5 shrink-0 text-center text-[11px] font-medium text-[#999] dark:text-[#6f757e]'

@@ -270,7 +270,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 									}
 								}}
 								placeholder="https://…"
-								className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+								className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 							/>
 						</label>
 						<div className="flex items-center justify-between">
@@ -324,7 +324,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 									}
 								}}
 								placeholder="Image title"
-								className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+								className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 							/>
 						</label>
 						<label className="grid gap-1.5">
@@ -339,7 +339,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 									}
 								}}
 								placeholder="Photographer or illustrator"
-								className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+								className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 							/>
 						</label>
 						<label className="grid gap-1.5">
@@ -358,7 +358,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 									}
 								}}
 								placeholder="Rights holder"
-								className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+								className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 							/>
 						</label>
 						<div className="flex items-center justify-between">
@@ -405,7 +405,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 								}}
 								rows={3}
 								placeholder="Describe the image for screen readers"
-								className="w-full resize-none rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm leading-snug text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+								className="w-full resize-none rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm leading-snug text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 							/>
 						</label>
 						<div className="flex items-center justify-between">
@@ -445,7 +445,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 						}}
 						placeholder="Add a caption…"
 						rows={Math.min(3, Math.max(1, captionDraft.split('\n').length))}
-						className={`w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm leading-snug text-(--legacy-text-secondary) transition-colors outline-none ${
+						className={`w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm leading-snug text-(--legacy-text-secondary) outline-hidden transition-colors ${
 							captionFocused ? 'border-(--legacy-link-text)' : 'border-(--legacy-cards-border)'
 						}`}
 					/>

@@ -283,7 +283,7 @@ export function ProjectLanding({
 				</header>
 
 				<div className="flex items-center gap-3 pb-5">
-					<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-(--legacy-old-blue)/20 to-(--legacy-old-blue)/5 ring-1 ring-(--legacy-old-blue)/30 ring-inset">
+					<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-(--legacy-old-blue)/20 to-(--legacy-old-blue)/5 ring-1 ring-(--legacy-old-blue)/30 ring-inset">
 						<Icon name="folder-plus" height={15} width={15} className="text-(--legacy-old-blue)" />
 					</div>
 					<div className="min-w-0 flex-1">
@@ -342,7 +342,7 @@ export function ProjectLanding({
 							onPaste={handlePaste}
 							rows={1}
 							placeholder={`New chat in ${project.data.name}`}
-							className="block flex-1 resize-none self-center bg-transparent text-[13px] leading-5 text-inherit placeholder:text-[#999] focus:outline-none dark:placeholder:text-[#555]"
+							className="block flex-1 resize-none self-center bg-transparent text-[13px] leading-5 text-inherit placeholder:text-[#999] focus:outline-hidden dark:placeholder:text-[#555]"
 							style={{ height: 20 }}
 						/>
 						<button
@@ -364,7 +364,7 @@ export function ProjectLanding({
 							role="tab"
 							aria-selected={tab === id}
 							onClick={() => setTab(id)}
-							className={`relative py-2 text-xs font-medium capitalize transition-colors focus:outline-none ${index === 0 ? 'pr-2 pl-0' : 'px-2'} ${
+							className={`relative py-2 text-xs font-medium capitalize transition-colors focus:outline-hidden ${index === 0 ? 'pr-2 pl-0' : 'px-2'} ${
 								tab === id
 									? 'text-(--legacy-old-blue)'
 									: 'text-[#666] hover:text-[#1a1a1a] dark:text-[#919296] dark:hover:text-white'
@@ -417,7 +417,7 @@ export function ProjectLanding({
 																	setRenamingSessionId(null)
 																}
 															}}
-															className="min-w-0 flex-1 bg-transparent p-1 text-[13px] text-inherit focus:outline-none"
+															className="min-w-0 flex-1 bg-transparent p-1 text-[13px] text-inherit focus:outline-hidden"
 														/>
 														<button
 															type="submit"

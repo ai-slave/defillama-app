@@ -286,7 +286,7 @@ export function ArticleChartBlock({
 						</span>
 					)}
 					{config.logScale ? (
-						<span className="ml-2 rounded border border-(--legacy-cards-border) px-1.5 py-px font-jetbrains text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">
+						<span className="ml-2 rounded-sm border border-(--legacy-cards-border) px-1.5 py-px font-jetbrains text-[10px] tracking-wider text-(--legacy-text-tertiary) uppercase">
 							log scale
 						</span>
 					) : null}

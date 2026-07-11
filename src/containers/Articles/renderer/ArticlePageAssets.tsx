@@ -64,14 +64,14 @@ function AssetRow({
 			</span>
 			<span className="ml-auto text-[13px] leading-none font-semibold text-(--legacy-text-primary) tabular-nums">
 				{showSkeleton ? (
-					<span className="inline-block h-3.5 w-14 animate-pulse rounded bg-(--legacy-bg-tertiary) align-middle" />
+					<span className="inline-block h-3.5 w-14 animate-pulse rounded-sm bg-(--legacy-bg-tertiary) align-middle" />
 				) : (
 					formatAssetPrice(market?.price ?? null)
 				)}
 			</span>
 			<span className="w-[52px] shrink-0 text-right text-[12px] leading-none tabular-nums">
 				{showSkeleton ? (
-					<span className="inline-block h-3 w-9 animate-pulse rounded bg-(--legacy-bg-tertiary) align-middle" />
+					<span className="inline-block h-3 w-9 animate-pulse rounded-sm bg-(--legacy-bg-tertiary) align-middle" />
 				) : change != null ? (
 					<PercentChange percent={change} fontWeight={600} />
 				) : null}
@@ -89,7 +89,7 @@ function AssetRow({
 				href={route}
 				target="_blank"
 				rel="noreferrer noopener"
-				className="group/asset flex items-center gap-2.5 px-3 py-2.5 no-underline transition-colors hover:bg-black/5 focus-visible:bg-black/5 focus-visible:outline-none dark:hover:bg-white/10 dark:focus-visible:bg-white/10"
+				className="group/asset flex items-center gap-2.5 px-3 py-2.5 no-underline transition-colors hover:bg-black/5 focus-visible:bg-black/5 focus-visible:outline-hidden dark:hover:bg-white/10 dark:focus-visible:bg-white/10"
 			>
 				{content}
 			</a>

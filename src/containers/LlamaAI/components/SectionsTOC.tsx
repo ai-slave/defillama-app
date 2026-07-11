@@ -91,7 +91,7 @@ export function SectionsTOC({
 									title={section.text}
 								>
 									<span
-										className={`mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded text-[11px] font-medium ${
+										className={`mt-px flex size-5 shrink-0 items-center justify-center rounded-sm text-[11px] font-medium ${
 											isActive
 												? 'bg-[#4f8fba] text-white dark:bg-[#4f8fba]'
 												: 'bg-[#e8e8e8] text-[#666] dark:bg-[#2a2b2d] dark:text-[#919296]'

@@ -32,7 +32,7 @@ function CustomRangeCell({
 	if (!enabled) return null
 	if (isLoading) {
 		return (
-			<span className="relative ml-auto block h-4 w-16 overflow-hidden rounded bg-black/5 dark:bg-white/10">
+			<span className="relative ml-auto block h-4 w-16 overflow-hidden rounded-sm bg-black/5 dark:bg-white/10">
 				<span className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-shimmer bg-[linear-gradient(99.97deg,transparent,rgba(0,0,0,0.08),transparent)] dark:bg-[linear-gradient(99.97deg,transparent,rgba(255,255,255,0.08),transparent)]" />
 			</span>
 		)
@@ -116,10 +116,7 @@ const columns = [
 					{row.original.slug == null ? (
 						getValue()
 					) : (
-						<BasicLink
-							href={`/cex/${slug(row.original.slug)}`}
-							className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
-						>
+						<BasicLink href={`/cex/${slug(row.original.slug)}`} className="truncate label-md text-link hover:underline">
 							{getValue()}
 						</BasicLink>
 					)}

@@ -50,7 +50,7 @@ const columns = [
 
 					<BasicLink
 						href={`/chain/${slug(value)}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text) hover:underline"
+						className="truncate text-sm font-medium text-(--legacy-link-text) hover:underline"
 					>
 						{value}
 					</BasicLink>

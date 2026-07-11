@@ -49,7 +49,7 @@ export function EmbedPicker({ store, onInsert, initialConfig }: Props) {
 			store={store}
 			modal
 			backdrop={<div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm" />}
-			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[88vh] w-[min(640px,94vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-[0_30px_80px_-20px_rgba(0,0,0,0.5)] outline-none"
+			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[88vh] w-[min(640px,94vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-[0_30px_80px_-20px_rgba(0,0,0,0.5)] outline-hidden"
 		>
 			<div className="flex items-center justify-between gap-3 border-b border-(--legacy-cards-border) px-5 py-3">
 				<Ariakit.DialogHeading className="text-sm font-semibold tracking-tight text-(--legacy-text-primary)">
@@ -70,7 +70,7 @@ export function EmbedPicker({ store, onInsert, initialConfig }: Props) {
 						value={rawUrl}
 						onChange={(e) => setRawUrl(e.target.value)}
 						placeholder="x.com · youtube · t.me · flourish · datawrapper · medium · substack · github"
-						className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+						className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 					/>
 					<DetectionLine status={detectionStatus} detection={detection} />
 				</label>
@@ -83,7 +83,7 @@ export function EmbedPicker({ store, onInsert, initialConfig }: Props) {
 						value={title}
 						onChange={(e) => setTitle(e.target.value)}
 						placeholder="Short label shown above the embed"
-						className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+						className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 					/>
 				</label>
 
@@ -96,7 +96,7 @@ export function EmbedPicker({ store, onInsert, initialConfig }: Props) {
 						onChange={(e) => setCaption(e.target.value)}
 						rows={2}
 						placeholder="Source notes or context shown below the embed"
-						className="resize-none rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+						className="resize-none rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 					/>
 				</label>
 
@@ -112,7 +112,7 @@ export function EmbedPicker({ store, onInsert, initialConfig }: Props) {
 									key={opt.value}
 									type="button"
 									onClick={() => setAspectRatio(opt.value)}
-									className={`flex-1 rounded px-2 py-1 font-medium transition-colors ${
+									className={`flex-1 rounded-sm px-2 py-1 font-medium transition-colors ${
 										active
 											? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm'
 											: 'text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'

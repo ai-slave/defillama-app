@@ -68,7 +68,7 @@ export function AddTextContentModal({ dialogStore, projectId }: AddTextContentMo
 							value={name}
 							onChange={(e) => setName(e.target.value)}
 							placeholder="notes.md"
-							className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 font-mono text-sm text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-none dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
+							className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 font-mono text-sm text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-hidden dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
 						/>
 					</label>
 
@@ -80,7 +80,7 @@ export function AddTextContentModal({ dialogStore, projectId }: AddTextContentMo
 							value={content}
 							onChange={(e) => setContent(e.target.value)}
 							placeholder="# my note&#10;Anything goes here…"
-							className="resize-y rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 font-mono text-xs text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-none dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
+							className="resize-y rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 font-mono text-xs text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-hidden dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
 						/>
 					</label>
 

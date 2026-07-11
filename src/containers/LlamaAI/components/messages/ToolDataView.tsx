@@ -8,7 +8,7 @@ const TOOL_DATA_RENDERERS: Record<string, ToolDataRenderer> = {
 		const results = data.results || (data.topMatch ? { _single: data } : null)
 		if (!results) return null
 		return (
-			<div className="mt-1 mb-1 flex flex-col gap-0.5 rounded border border-[#e6e6e6] bg-[#fafafa] p-1.5 dark:border-[#333] dark:bg-[#1a1a1a]">
+			<div className="mt-1 mb-1 flex flex-col gap-0.5 rounded-sm border border-[#e6e6e6] bg-[#fafafa] p-1.5 dark:border-[#333] dark:bg-[#1a1a1a]">
 				{Object.entries(results).map(([term, value]: [string, any]) => (
 					<div key={term} className="flex items-center gap-2 text-[10px]">
 						{term !== '_single' ? <span className="font-medium text-[#666] dark:text-[#999]">{term}:</span> : null}
@@ -31,7 +31,7 @@ const TOOL_DATA_RENDERERS: Record<string, ToolDataRenderer> = {
 	generate_chart: (data) => {
 		if (!data.charts) return null
 		return (
-			<div className="mt-1 mb-1 flex flex-col gap-0.5 rounded border border-[#e6e6e6] bg-[#fafafa] p-1.5 dark:border-[#333] dark:bg-[#1a1a1a]">
+			<div className="mt-1 mb-1 flex flex-col gap-0.5 rounded-sm border border-[#e6e6e6] bg-[#fafafa] p-1.5 dark:border-[#333] dark:bg-[#1a1a1a]">
 				{data.charts.map((chart: any) => (
 					<div key={chart.id} className="text-[10px] text-[#444] dark:text-[#bbb]">
 						<span className="font-medium">{chart.title}</span>{' '}
@@ -45,7 +45,7 @@ const TOOL_DATA_RENDERERS: Record<string, ToolDataRenderer> = {
 	},
 	execute_code: (data) =>
 		data.logs?.length ? (
-			<pre className="mt-1 mb-1 overflow-x-auto rounded border border-[#e6e6e6] bg-[#fafafa] p-1.5 font-mono text-[10px] text-[#444] dark:border-[#333] dark:bg-[#1a1a1a] dark:text-[#bbb]">
+			<pre className="mt-1 mb-1 overflow-x-auto rounded-sm border border-[#e6e6e6] bg-[#fafafa] p-1.5 font-mono text-[10px] text-[#444] dark:border-[#333] dark:bg-[#1a1a1a] dark:text-[#bbb]">
 				{data.logs.join('\n')}
 			</pre>
 		) : null,
@@ -60,7 +60,7 @@ const TOOL_DATA_RENDERERS: Record<string, ToolDataRenderer> = {
 	spawn_agent: (data) => {
 		if (!data.agents) return null
 		return (
-			<div className="mt-1 mb-1 flex flex-col gap-0.5 rounded border border-[#e6e6e6] bg-[#fafafa] p-1.5 dark:border-[#333] dark:bg-[#1a1a1a]">
+			<div className="mt-1 mb-1 flex flex-col gap-0.5 rounded-sm border border-[#e6e6e6] bg-[#fafafa] p-1.5 dark:border-[#333] dark:bg-[#1a1a1a]">
 				{data.agents.map((agent: any) => (
 					<div key={agent.id} className="text-[10px] text-[#444] dark:text-[#bbb]">
 						Agent {agent.id.slice(0, 6)}{' '}
@@ -108,7 +108,7 @@ export function CitationRowsTable({
 	return (
 		<div
 			ref={scrollContainerRef}
-			className="mt-1 mb-1 overflow-x-auto rounded border border-[#e6e6e6] bg-[#fafafa] p-1 dark:border-[#333] dark:bg-[#1a1a1a]"
+			className="mt-1 mb-1 overflow-x-auto rounded-sm border border-[#e6e6e6] bg-[#fafafa] p-1 dark:border-[#333] dark:bg-[#1a1a1a]"
 		>
 			<table className="text-[11px]">
 				<thead>

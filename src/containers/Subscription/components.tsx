@@ -69,7 +69,7 @@ function FeatureBullet({ item }: { item: FeatureItem }) {
 	return (
 		<li className={`flex items-start gap-2${item.isSubItem ? ' ml-7 sm:ml-5' : ''}`}>
 			{item.isSubItem ? (
-				<span className="inline-flex h-6 w-6 shrink-0 items-center justify-center text-[16px] leading-6 text-(--sub-text-secondary) sm:h-5 sm:w-5 sm:text-[13px] sm:leading-5 dark:text-(--sub-text-secondary-dark)">
+				<span className="inline-flex size-6 shrink-0 items-center justify-center text-[16px] leading-6 text-(--sub-text-secondary) sm:h-5 sm:w-5 sm:text-[13px] sm:leading-5 dark:text-(--sub-text-secondary-dark)">
 					–
 				</span>
 			) : (

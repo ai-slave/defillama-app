@@ -50,7 +50,7 @@ export function KpiCard({
 			{value != null ? (
 				<span className="text-2xl font-semibold text-(--legacy-text-primary)">{value}</span>
 			) : (
-				<div className="h-7 w-24 animate-pulse rounded bg-(--legacy-text-disabled) opacity-20" />
+				<div className="h-7 w-24 animate-pulse rounded-sm bg-(--legacy-text-disabled) opacity-20" />
 			)}
 			{sub && <span className="text-[11px] text-(--legacy-text-secondary)">{sub}</span>}
 		</div>
@@ -166,8 +166,8 @@ export function UtilBar({ pct }: { pct: number | null | undefined }) {
 	const color = p >= 90 ? '#f87171' : p >= 70 ? '#fbbf24' : '#6366f1'
 	return (
 		<div className="flex items-center justify-end gap-2">
-			<div className="h-2 w-20 shrink-0 rounded bg-(--legacy-cards-border)">
-				<div style={{ width: `${p}%`, background: color }} className="h-2 rounded" />
+			<div className="h-2 w-20 shrink-0 rounded-sm bg-(--legacy-cards-border)">
+				<div style={{ width: `${p}%`, background: color }} className="h-2 rounded-sm" />
 			</div>
 			<span className="min-w-[44px] text-right">{p.toFixed(1)}%</span>
 		</div>

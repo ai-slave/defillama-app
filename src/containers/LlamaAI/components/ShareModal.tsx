@@ -179,7 +179,7 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 			>
 				<div className="mb-4 flex items-center justify-between">
 					<Ariakit.DialogHeading className="text-lg font-semibold">{heading}</Ariakit.DialogHeading>
-					<Ariakit.DialogDismiss className="-m-2 rounded p-2 hover:bg-[#e6e6e6] dark:hover:bg-[#222324]">
+					<Ariakit.DialogDismiss className="-m-2 rounded-sm p-2 hover:bg-[#e6e6e6] dark:hover:bg-[#222324]">
 						<Icon name="x" height={16} width={16} />
 					</Ariakit.DialogDismiss>
 				</div>
@@ -209,13 +209,13 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 									value={shareLink}
 									readOnly
 									onFocus={(event) => event.currentTarget.select()}
-									className="flex-1 rounded border border-[#e6e6e6] bg-(--legacy-app-bg) px-3 py-2 text-sm dark:border-[#222324]"
+									className="flex-1 rounded-sm border border-[#e6e6e6] bg-(--legacy-app-bg) px-3 py-2 text-sm dark:border-[#222324]"
 								/>
 								<button
 									type="button"
 									onClick={() => void handleCopyLink()}
 									data-umami-event="llamaai-copy-share-link"
-									className="rounded border border-[#e6e6e6] px-3 py-2 text-sm hover:bg-[#f7f7f7] dark:border-[#222324] dark:hover:bg-[#222324]"
+									className="rounded-sm border border-[#e6e6e6] px-3 py-2 text-sm hover:bg-[#f7f7f7] dark:border-[#222324] dark:hover:bg-[#222324]"
 								>
 									{copied ? (
 										<Icon name="check-circle" height={16} width={16} />
@@ -226,7 +226,7 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 							</div>
 						</div>
 						<div className="flex items-center justify-end gap-3">
-							<Ariakit.DialogDismiss className="rounded px-3 py-2 text-xs text-[#666] hover:bg-[#e6e6e6] dark:text-[#919296] dark:hover:bg-[#222324]">
+							<Ariakit.DialogDismiss className="rounded-sm px-3 py-2 text-xs text-[#666] hover:bg-[#e6e6e6] dark:text-[#919296] dark:hover:bg-[#222324]">
 								Close
 							</Ariakit.DialogDismiss>
 							{canNativeShare ? (
@@ -234,7 +234,7 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 									type="button"
 									onClick={() => void handleNativeShare()}
 									data-umami-event="llamaai-native-share"
-									className="rounded border border-[#e6e6e6] px-3 py-2 text-xs hover:bg-[#f7f7f7] dark:border-[#222324] dark:hover:bg-[#222324]"
+									className="rounded-sm border border-[#e6e6e6] px-3 py-2 text-xs hover:bg-[#f7f7f7] dark:border-[#222324] dark:hover:bg-[#222324]"
 								>
 									Share&hellip;
 								</button>
@@ -243,7 +243,7 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 								type="button"
 								onClick={handleShareToX}
 								data-umami-event="llamaai-share-to-x"
-								className="rounded bg-(--legacy-old-blue) px-3 py-2 text-xs text-white hover:opacity-90"
+								className="rounded-sm bg-(--legacy-old-blue) px-3 py-2 text-xs text-white hover:opacity-90"
 							>
 								Share to X
 							</button>
@@ -255,7 +255,7 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 							<div className="flex flex-col gap-4">
 								<p className="m-0 text-sm text-[#666] dark:text-[#919296]">{shareError}</p>
 								<div className="flex items-center justify-end gap-3">
-									<Ariakit.DialogDismiss className="rounded px-3 py-2 text-xs text-[#666] hover:bg-[#e6e6e6] dark:text-[#919296] dark:hover:bg-[#222324]">
+									<Ariakit.DialogDismiss className="rounded-sm px-3 py-2 text-xs text-[#666] hover:bg-[#e6e6e6] dark:text-[#919296] dark:hover:bg-[#222324]">
 										Close
 									</Ariakit.DialogDismiss>
 									<button
@@ -265,7 +265,7 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 											createShareLink()
 										}}
 										disabled={isPending}
-										className="flex items-center gap-2 rounded bg-(--legacy-old-blue) px-3 py-2 text-xs text-white hover:opacity-90 disabled:opacity-50"
+										className="flex items-center gap-2 rounded-sm bg-(--legacy-old-blue) px-3 py-2 text-xs text-white hover:opacity-90 disabled:opacity-50"
 									>
 										{isPending ? <LoadingSpinner size={14} /> : null}
 										<span>Retry</span>

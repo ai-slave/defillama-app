@@ -37,10 +37,7 @@ const columns = [
 				<span className="flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo name={chain} kind="chain" data-lgonly alt={`Logo of ${chain}`} />
-					<BasicLink
-						href={`/rwa/chain/${rwaSlug(chain)}`}
-						className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
-					>
+					<BasicLink href={`/rwa/chain/${rwaSlug(chain)}`} className="truncate label-md text-link hover:underline">
 						{chain}
 					</BasicLink>
 				</span>

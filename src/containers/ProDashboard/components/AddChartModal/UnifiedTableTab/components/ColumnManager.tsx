@@ -612,7 +612,7 @@ export function ColumnManager({
 				<div className="mb-2 flex items-center justify-between">
 					<div className="flex items-center gap-2">
 						<h4 className="text-xs font-semibold text-(--legacy-text-primary) uppercase">Selected</h4>
-						<span className="rounded bg-(--legacy-primary)/10 px-1.5 py-0.5 text-[10px] font-medium text-(--legacy-primary)">
+						<span className="rounded-sm bg-(--legacy-primary)/10 px-1.5 py-0.5 text-[10px] font-medium text-(--legacy-primary)">
 							{selectedColumns.length}
 						</span>
 					</div>
@@ -737,7 +737,7 @@ export function ColumnManager({
 										}`}
 									>
 										<div
-											className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border transition-colors ${
+											className={`flex size-3.5 shrink-0 items-center justify-center rounded-sm border transition-colors ${
 												isSelected
 													? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
 													: 'border-(--legacy-cards-border) group-hover:border-(--legacy-primary)/50'
@@ -750,7 +750,7 @@ export function ColumnManager({
 										>
 											{column.header}
 										</span>
-										<span className="rounded bg-(--cards-bg-alt) px-1 py-0.5 text-[9px] text-(--legacy-text-tertiary) uppercase">
+										<span className="rounded-sm bg-(--cards-bg-alt) px-1 py-0.5 text-[9px] text-(--legacy-text-tertiary) uppercase">
 											{GROUP_LABELS[column.group]}
 										</span>
 									</button>
@@ -787,7 +787,7 @@ export function ColumnManager({
 							{!hasActiveSubscription ? <span className="ml-1 text-[10px] font-normal opacity-60">(Pro)</span> : null}
 						</span>
 						{(customColumns?.length ?? 0) > 0 ? (
-							<span className="rounded bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-500">
+							<span className="rounded-sm bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-500">
 								{customColumns?.length}
 							</span>
 						) : null}
@@ -879,7 +879,7 @@ export function ColumnManager({
 											}`}
 										>
 											<span
-												className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+												className={`size-1.5 shrink-0 rounded-full ${
 													suggestion.type === 'variable'
 														? 'bg-blue-400'
 														: suggestion.type === 'function'
@@ -991,10 +991,10 @@ export function ColumnManager({
 								<div className="min-w-0 flex-1">
 									<div className="flex items-center gap-1.5">
 										<span className="truncate text-xs font-medium text-(--legacy-text-primary)">{col.name}</span>
-										<span className="rounded border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-1 py-0.5 text-[9px] uppercase">
+										<span className="rounded-sm border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-1 py-0.5 text-[9px] uppercase">
 											{col.format}
 										</span>
-										<span className="rounded border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-1 py-0.5 text-[9px] text-(--legacy-text-tertiary)">
+										<span className="rounded-sm border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-1 py-0.5 text-[9px] text-(--legacy-text-tertiary)">
 											{AGGREGATION_OPTIONS.find((a) => a.id === col.aggregation)?.label}
 										</span>
 									</div>
@@ -1004,14 +1004,14 @@ export function ColumnManager({
 									<button
 										type="button"
 										onClick={() => handleEditCustomColumn(col)}
-										className="rounded p-1 text-(--legacy-text-tertiary) hover:bg-(--cards-bg-alt) hover:text-(--legacy-primary)"
+										className="rounded-sm p-1 text-(--legacy-text-tertiary) hover:bg-(--cards-bg-alt) hover:text-(--legacy-primary)"
 									>
 										<Icon name="pencil" height={12} width={12} />
 									</button>
 									<button
 										type="button"
 										onClick={() => onRemoveCustomColumn?.(col.id)}
-										className="rounded p-1 text-(--legacy-text-tertiary) hover:bg-red-500/10 hover:text-red-500"
+										className="rounded-sm p-1 text-(--legacy-text-tertiary) hover:bg-red-500/10 hover:text-red-500"
 									>
 										<Icon name="trash-2" height={12} width={12} />
 									</button>
@@ -1080,7 +1080,7 @@ function SortableChip({
 					e.stopPropagation()
 					onRemove()
 				}}
-				className="rounded text-(--legacy-text-tertiary) transition-colors hover:text-red-500"
+				className="rounded-sm text-(--legacy-text-tertiary) transition-colors hover:text-red-500"
 			>
 				<Icon name="x" width={10} height={10} />
 			</button>

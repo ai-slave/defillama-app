@@ -171,7 +171,7 @@ function DashboardPanelInner({
 								onClick={() => onVersionChange(versionIndex - 1)}
 								disabled={versionIndex === 0}
 								aria-label="Previous version"
-								className="flex size-6 items-center justify-center rounded text-[#636e72] transition-colors hover:bg-[#e6e6e6] disabled:opacity-30 dark:text-[#8a8f98] dark:hover:bg-[#222324]"
+								className="flex size-6 items-center justify-center rounded-sm text-[#636e72] transition-colors hover:bg-[#e6e6e6] disabled:opacity-30 dark:text-[#8a8f98] dark:hover:bg-[#222324]"
 							>
 								<Icon name="chevron-left" className="size-3.5" />
 							</button>
@@ -182,7 +182,7 @@ function DashboardPanelInner({
 								onClick={() => onVersionChange(versionIndex + 1)}
 								disabled={versionIndex === versions.length - 1}
 								aria-label="Next version"
-								className="flex size-6 items-center justify-center rounded text-[#636e72] transition-colors hover:bg-[#e6e6e6] disabled:opacity-30 dark:text-[#8a8f98] dark:hover:bg-[#222324]"
+								className="flex size-6 items-center justify-center rounded-sm text-[#636e72] transition-colors hover:bg-[#e6e6e6] disabled:opacity-30 dark:text-[#8a8f98] dark:hover:bg-[#222324]"
 							>
 								<Icon name="chevron-right" className="size-3.5" />
 							</button>

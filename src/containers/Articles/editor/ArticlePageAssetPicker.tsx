@@ -91,7 +91,7 @@ export function ArticlePageAssetPicker({
 						placeholder={atLimit ? `Limit reached (max ${MAX_PAGE_ASSETS})` : 'Search a token by symbol or name…'}
 						disabled={atLimit}
 						autoSelect
-						className="min-h-10 w-full rounded-md bg-transparent py-2 pr-3 pl-9 text-sm text-(--legacy-text-primary) outline-none placeholder:text-(--legacy-text-tertiary) disabled:cursor-not-allowed"
+						className="min-h-10 w-full rounded-md bg-transparent py-2 pr-3 pl-9 text-sm text-(--legacy-text-primary) outline-hidden placeholder:text-(--legacy-text-tertiary) disabled:cursor-not-allowed"
 					/>
 				</div>
 				<Ariakit.ComboboxPopover
@@ -99,7 +99,7 @@ export function ArticlePageAssetPicker({
 					sameWidth
 					portal
 					unmountOnHide
-					className="z-[90] flex max-h-64 flex-col overflow-auto overscroll-contain rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 text-sm shadow-xl outline-none"
+					className="z-[90] flex max-h-64 flex-col overflow-auto overscroll-contain rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 text-sm shadow-xl outline-hidden"
 				>
 					{isFetching && hits.length === 0 ? (
 						<p className="p-3 text-center text-xs text-(--legacy-text-tertiary)">Searching…</p>

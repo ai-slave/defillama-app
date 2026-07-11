@@ -15,7 +15,7 @@ interface ResearchWidgetWithScrollbarProps {
 }
 
 const DEFAULT_CONTAINER_HEIGHT = 'h-[calc(65px_*_6_+_12px_*_5)]'
-const DESKTOP_CONTAINER_HEIGHT = 'lg:h-[var(--container-height)]'
+const DESKTOP_CONTAINER_HEIGHT = 'lg:h-(--container-height)'
 const CONTAINER_HEIGHT_VALUE = 70 * 5 + 24 * 4
 
 export function ResearchWidgetWithScrollbar({ id, title, articles, onHeightChange }: ResearchWidgetWithScrollbarProps) {

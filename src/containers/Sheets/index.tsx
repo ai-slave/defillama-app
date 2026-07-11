@@ -239,7 +239,7 @@ const HeroMock = () => {
 	return (
 		<div className="overflow-hidden rounded-2xl border border-[#39393E]/40 bg-[#1a1b1f] shadow-[0_4px_20px_rgba(33,114,229,0.15),0_8px_32px_rgba(0,0,0,0.3)]">
 			<div className="flex items-center gap-2.5 border-b border-[#39393E]/40 px-4 py-2 text-xs">
-				<span className="min-w-[36px] rounded border border-[#39393E] bg-[#222429] px-2 py-[3px] text-center font-mono text-[11px] text-[#8a8c90]">
+				<span className="min-w-[36px] rounded-sm border border-[#39393E] bg-[#222429] px-2 py-[3px] text-center font-mono text-[11px] text-[#8a8c90]">
 					B2
 				</span>
 				<span className="max-w-full min-w-0 truncate font-mono text-xs">

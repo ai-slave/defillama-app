@@ -233,7 +233,7 @@ function FooterMediaKit() {
 					value={email}
 					onChange={onEmailChange}
 					placeholder="Email address"
-					className="min-w-0 flex-1 appearance-none border-x-0 border-t-0 border-b border-(--legacy-cards-border) bg-transparent pb-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+					className="min-w-0 flex-1 appearance-none border-x-0 border-t-0 border-b border-(--legacy-cards-border) bg-transparent pb-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 				/>
 				<button
 					type="submit"

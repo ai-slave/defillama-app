@@ -641,7 +641,7 @@ const columns = [
 						<span className="flex items-center gap-1 overflow-hidden">
 							<Link
 								href={`${row.original.href}#token-rights`}
-								className="min-w-0 overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
+								className="min-w-0 truncate label-md text-link hover:underline"
 							>
 								{name}
 							</Link>
@@ -649,9 +649,7 @@ const columns = [
 						</span>
 					) : (
 						<span className="flex items-center gap-1 overflow-hidden">
-							<span className="min-w-0 overflow-hidden label-md text-ellipsis whitespace-nowrap text-primary">
-								{name}
-							</span>
+							<span className="min-w-0 truncate label-md text-primary">{name}</span>
 							{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
 						</span>
 					)}

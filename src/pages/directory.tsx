@@ -150,7 +150,7 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 									{protocol.logo ? (
 										<TokenLogo src={protocol.logo} alt={`Logo of ${protocol.name}`} />
 									) : (
-										<div className="size-6 rounded bg-(--legacy-bg-secondary)" />
+										<div className="size-6 rounded-sm bg-(--legacy-bg-secondary)" />
 									)}
 									<span className="truncate label-sm">{protocol.name}</span>
 								</Card>

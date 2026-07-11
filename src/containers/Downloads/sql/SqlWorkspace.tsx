@@ -1322,7 +1322,7 @@ function InlineRenameInput({
 			onClick={(e) => e.stopPropagation()}
 			onDoubleClick={(e) => e.stopPropagation()}
 			onMouseDown={(e) => e.stopPropagation()}
-			className="min-w-0 rounded-sm bg-(--bg-primary) px-1 py-px text-sm font-semibold text-(--legacy-text-primary) ring-1 ring-(--legacy-primary) outline-none"
+			className="min-w-0 rounded-sm bg-(--bg-primary) px-1 py-px text-sm font-semibold text-(--legacy-text-primary) ring-1 ring-(--legacy-primary) outline-hidden"
 		/>
 	)
 }

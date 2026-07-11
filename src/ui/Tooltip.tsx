@@ -44,7 +44,7 @@ export function Tooltip({
 		<Ariakit.TooltipProvider store={store}>
 			<Ariakit.TooltipAnchor
 				store={store}
-				className={`flex shrink-0 items-center overflow-hidden text-ellipsis whitespace-nowrap ${className ?? ''}`}
+				className={`flex shrink-0 items-center truncate ${className ?? ''}`}
 				render={<span />}
 				{...(props.render ? {} : { onTouchStart: store.toggle, onMouseLeave: store.hide })}
 				{...props}

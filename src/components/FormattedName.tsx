@@ -26,7 +26,7 @@ export const FormattedName = ({ text, maxCharacters, fontSize, fontWeight = 400,
 		<span
 			data-link={link ?? false}
 			style={textStyle}
-			className={`${hasTooltip ? 'cursor-pointer ' : ''}overflow-hidden font-(--weight) text-ellipsis whitespace-nowrap text-(--text-size) data-[link=true]:text-(--legacy-blue)`}
+			className={`${hasTooltip ? 'cursor-pointer ' : ''}truncate font-(--weight) text-(--text-size) data-[link=true]:text-(--legacy-blue)`}
 		>
 			{text}
 		</span>

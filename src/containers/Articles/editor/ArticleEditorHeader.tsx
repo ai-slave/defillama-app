@@ -108,7 +108,7 @@ export function ArticleEditorHeader({
 								cancelSlugEdit()
 							}
 						}}
-						className="w-[24ch] rounded border border-(--legacy-link-text)/40 bg-(--legacy-app-bg) px-1.5 py-0.5 font-jetbrains text-xs text-(--legacy-text-primary) focus:border-(--legacy-link-text) focus:outline-none"
+						className="w-[24ch] rounded-sm border border-(--legacy-link-text)/40 bg-(--legacy-app-bg) px-1.5 py-0.5 font-jetbrains text-xs text-(--legacy-text-primary) focus:border-(--legacy-link-text) focus:outline-hidden"
 					/>
 				) : (
 					<button
@@ -117,7 +117,7 @@ export function ArticleEditorHeader({
 						title="Click to edit slug"
 						className={`group flex ${
 							hasPendingEdits ? 'max-w-[18ch] sm:max-w-[24ch] lg:max-w-[32ch]' : 'max-w-[24ch] sm:max-w-[32ch]'
-						} items-center gap-1 truncate rounded px-1 py-0.5 font-jetbrains text-xs tracking-tight text-(--legacy-text-secondary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)`}
+						} items-center gap-1 truncate rounded-sm px-1 py-0.5 font-jetbrains text-xs tracking-tight text-(--legacy-text-secondary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)`}
 					>
 						<span className="truncate">{article.slug}</span>
 						<span
@@ -176,7 +176,7 @@ export function ArticleEditorHeader({
 					{pillState === 'unsaved' || pillState === 'error' ? (
 						<kbd
 							aria-hidden
-							className="hidden rounded border border-current/25 px-1 py-px font-jetbrains text-[9px] tracking-wider opacity-70 lg:inline"
+							className="hidden rounded-sm border border-current/25 px-1 py-px font-jetbrains text-[9px] tracking-wider opacity-70 lg:inline"
 						>
 							⌘S
 						</kbd>
@@ -272,7 +272,7 @@ export function ArticleEditorHeader({
 											href={articleViewHref}
 											target="_blank"
 											rel="noreferrer"
-											className="flex items-center justify-between rounded px-2.5 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+											className="flex items-center justify-between rounded-sm px-2.5 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 										/>
 									}
 								>
@@ -284,14 +284,14 @@ export function ArticleEditorHeader({
 								</Ariakit.MenuItem>
 								<Ariakit.MenuItem
 									onClick={onOpenMeta}
-									className="flex items-center gap-2 rounded px-2.5 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+									className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 								>
 									<Icon name="sliders" className="size-3.5" />
 									Edit listing
 								</Ariakit.MenuItem>
 								<Ariakit.MenuItem
 									onClick={onOpenHistory}
-									className="flex items-center gap-2 rounded px-2.5 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+									className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 								>
 									<Icon name="check" className="size-3.5" />
 									Revision history
@@ -299,7 +299,7 @@ export function ArticleEditorHeader({
 								<Ariakit.MenuItem
 									onClick={handleUnpublish}
 									disabled={isPublishing}
-									className="flex items-center gap-2 rounded px-2.5 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+									className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 								>
 									<Icon name="undo" className="size-3.5" />
 									Move to drafts
@@ -309,7 +309,7 @@ export function ArticleEditorHeader({
 										<span aria-hidden className="my-1 h-px bg-(--legacy-cards-border)" />
 										<Ariakit.MenuItem
 											onClick={handleDeleteArticle}
-											className="flex items-center gap-2 rounded px-2.5 py-1.5 text-xs text-red-500 data-[active-item]:bg-red-500/10"
+											className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs text-red-500 data-[active-item]:bg-red-500/10"
 										>
 											<Icon name="trash" className="size-3.5" />
 											Delete

@@ -50,7 +50,7 @@ export function ColorPicker({ value, fallback, onChange }: ColorPickerProps) {
 							if (HEX_RE.test(draft.trim())) onChange(draft.trim())
 						}}
 						placeholder="#2f73c6"
-						className="w-20 rounded-sm border border-(--legacy-divider) bg-(--legacy-app-bg) px-1.5 py-0.5 font-mono text-[10.5px] text-(--legacy-text-primary) focus:border-(--legacy-primary) focus:outline-none"
+						className="w-20 rounded-sm border border-(--legacy-divider) bg-(--legacy-app-bg) px-1.5 py-0.5 font-mono text-[10.5px] text-(--legacy-text-primary) focus:border-(--legacy-primary) focus:outline-hidden"
 					/>
 					<button
 						type="button"

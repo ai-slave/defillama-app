@@ -1053,7 +1053,7 @@ export function ChartBuilderTab({
 									return (
 										<div
 											key={series.name}
-											className="flex shrink-0 items-center gap-1.5 rounded border border-(--legacy-cards-border) bg-(--legacy-bg-input) px-2 py-1 text-xs"
+											className="flex shrink-0 items-center gap-1.5 rounded-sm border border-(--legacy-cards-border) bg-(--legacy-bg-input) px-2 py-1 text-xs"
 										>
 											<span className="max-w-[140px] truncate pro-text2" title={series.name}>
 												{series.name}
@@ -1062,7 +1062,7 @@ export function ChartBuilderTab({
 												type="color"
 												value={activeColor}
 												onChange={(event) => handleSeriesColorChange(series.name, event.target.value)}
-												className="size-5 cursor-pointer rounded border border-(--legacy-cards-border) bg-transparent p-0"
+												className="size-5 cursor-pointer rounded-sm border border-(--legacy-cards-border) bg-transparent p-0"
 												aria-label={`Select color for ${series.name}`}
 											/>
 											<button
@@ -1082,7 +1082,7 @@ export function ChartBuilderTab({
 						</div>
 					) : null}
 
-					<div className="mt-2 shrink-0 rounded pro-bg2 p-2">
+					<div className="mt-2 shrink-0 rounded-sm pro-bg2 p-2">
 						<div className="flex items-start gap-1">
 							<span className="text-[10px] pro-text3">ⓘ</span>
 							<p className="text-[10px] leading-relaxed pro-text3">

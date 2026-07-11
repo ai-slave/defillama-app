@@ -163,7 +163,7 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Landing
 						name="freeform"
 						type="text"
 						placeholder="Or ask your own question..."
-						className="flex-1 bg-transparent text-[14px] text-[#333] outline-none placeholder:text-[#999] dark:text-[#e0e0e3] dark:placeholder:text-[#666]"
+						className="flex-1 bg-transparent text-[14px] text-[#333] outline-hidden placeholder:text-[#999] dark:text-[#e0e0e3] dark:placeholder:text-[#666]"
 					/>
 					<button
 						type="submit"
@@ -626,7 +626,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 								<div className="overflow-hidden rounded-lg border border-[#E8E8E8] bg-[#FAFAFA] dark:border-[#2a2a2e] dark:bg-[#16171a]">
 									<div className="border-b border-[#E8E8E8] px-3 py-2 dark:border-[#2a2a2e]">
 										<div className="flex items-center gap-2">
-											<div className="flex size-5 items-center justify-center rounded bg-[#C99A4A]/15 dark:bg-[#FDE0A9]/15">
+											<div className="flex size-5 items-center justify-center rounded-sm bg-[#C99A4A]/15 dark:bg-[#FDE0A9]/15">
 												<svg
 													xmlns="http://www.w3.org/2000/svg"
 													width="11"
@@ -674,7 +674,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 								<div className="overflow-hidden rounded-lg border border-[#E8E8E8] bg-[#FAFAFA] dark:border-[#2a2a2e] dark:bg-[#16171a]">
 									<div className="border-b border-[#E8E8E8] px-3 py-2 dark:border-[#2a2a2e]">
 										<div className="flex items-center gap-2">
-											<div className="flex size-5 items-center justify-center rounded bg-[#3B82F6]/15">
+											<div className="flex size-5 items-center justify-center rounded-sm bg-[#3B82F6]/15">
 												<svg
 													xmlns="http://www.w3.org/2000/svg"
 													width="11"
@@ -724,10 +724,10 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 										<span className="flex-1 text-[11px] font-medium text-[#333] dark:text-[#ccc]">
 											Researching in parallel...
 										</span>
-										<span className="rounded bg-[#E8E8E8] px-1.5 py-0.5 text-[10px] font-medium text-[#555] dark:bg-[#2a2a2e] dark:text-[#999]">
+										<span className="rounded-sm bg-[#E8E8E8] px-1.5 py-0.5 text-[10px] font-medium text-[#555] dark:bg-[#2a2a2e] dark:text-[#999]">
 											1/3 done
 										</span>
-										<span className="rounded bg-[#E8E8E8] px-1.5 py-0.5 font-mono text-[10px] text-[#555] dark:bg-[#2a2a2e] dark:text-[#999]">
+										<span className="rounded-sm bg-[#E8E8E8] px-1.5 py-0.5 font-mono text-[10px] text-[#555] dark:bg-[#2a2a2e] dark:text-[#999]">
 											01:27
 										</span>
 									</div>

@@ -80,7 +80,7 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 					<Ariakit.Combobox
 						placeholder={selectedLabel ? selectedLabel : 'Search articles by title…'}
 						autoSelect
-						className="min-h-10 w-full rounded-md bg-transparent px-3 py-2 pr-9 pl-9 text-sm text-(--legacy-text-primary) outline-none placeholder:text-(--legacy-text-tertiary)"
+						className="min-h-10 w-full rounded-md bg-transparent px-3 py-2 pr-9 pl-9 text-sm text-(--legacy-text-primary) outline-hidden placeholder:text-(--legacy-text-tertiary)"
 					/>
 					{value ? (
 						<button
@@ -102,7 +102,7 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 					sameWidth
 					portal
 					unmountOnHide
-					className="z-[90] flex max-h-72 flex-col overflow-auto overscroll-contain rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 text-sm shadow-xl outline-none"
+					className="z-[90] flex max-h-72 flex-col overflow-auto overscroll-contain rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 text-sm shadow-xl outline-hidden"
 				>
 					{isFetching && !items.length ? (
 						<p className="p-3 text-center text-xs text-(--legacy-text-tertiary)">Searching…</p>

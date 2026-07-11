@@ -137,7 +137,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 										e.stopPropagation()
 										setDeleteConfirmId(chart.id)
 									}}
-									className="rounded p-1 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/10 dark:hover:bg-white/10"
+									className="rounded-sm p-1 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/10 dark:hover:bg-white/10"
 								>
 									<Icon name="x" height={14} width={14} className="pro-text3" />
 								</button>
@@ -181,14 +181,14 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 						<div className="mt-4 flex justify-end gap-2">
 							<button
 								onClick={() => setDeleteConfirmId(null)}
-								className="rounded px-3 py-1.5 text-sm pro-text2 hover:bg-black/5 dark:hover:bg-white/5"
+								className="rounded-sm px-3 py-1.5 text-sm pro-text2 hover:bg-black/5 dark:hover:bg-white/5"
 							>
 								Cancel
 							</button>
 							<button
 								onClick={() => deleteMutation.mutate(deleteConfirmId)}
 								disabled={deleteMutation.isPending}
-								className="rounded bg-red-500 px-3 py-1.5 text-sm text-white hover:bg-red-600 disabled:opacity-50"
+								className="rounded-sm bg-red-500 px-3 py-1.5 text-sm text-white hover:bg-red-600 disabled:opacity-50"
 							>
 								{deleteMutation.isPending ? 'Deleting...' : 'Delete'}
 							</button>

@@ -265,7 +265,7 @@ export function ChainsWithStablecoins({
 									<span
 										className={`${
 											change7d.startsWith('-') ? 'text-data-down' : 'text-data-up'
-										} overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap`}
+										} truncate font-jetbrains`}
 									>{`${change7d}%`}</span>
 								</span>
 							</span>
@@ -275,7 +275,7 @@ export function ChainsWithStablecoins({
 							<span className="text-secondary">Change (1d)</span>
 							<Tooltip
 								content={change1d_nol}
-								className={`overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap underline decoration-dotted ${
+								className={`truncate font-jetbrains underline decoration-dotted ${
 									change1d.startsWith('-') ? 'text-data-down' : 'text-data-up'
 								}`}
 							>
@@ -286,7 +286,7 @@ export function ChainsWithStablecoins({
 							<span className="text-secondary">Change (30d)</span>
 							<Tooltip
 								content={change30d_nol}
-								className={`overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap underline decoration-dotted ${
+								className={`truncate font-jetbrains underline decoration-dotted ${
 									change30d.startsWith('-') ? 'text-data-down' : 'text-data-up'
 								}`}
 							>

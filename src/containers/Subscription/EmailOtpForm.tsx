@@ -97,7 +97,7 @@ export function EmailOtpForm({
 					maxLength={6}
 					required
 					placeholder="000000"
-					className="h-10 w-full rounded-lg border border-(--legacy-form-control-border) bg-(--signin-input-bg) px-3 text-center text-base tracking-[0.4em] text-(--legacy-text-primary) placeholder:tracking-normal placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:outline-none"
+					className="h-10 w-full rounded-lg border border-(--legacy-form-control-border) bg-(--signin-input-bg) px-3 text-center text-base tracking-[0.4em] text-(--legacy-text-primary) placeholder:tracking-normal placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:outline-hidden"
 					value={otp}
 					onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
 					autoFocus

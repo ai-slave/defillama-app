@@ -314,7 +314,7 @@ export default function NewslettersPage() {
 										value={email}
 										onChange={onEmailChange}
 										placeholder="you@example.com"
-										className="h-12 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-bg-main) px-3 text-sm text-(--legacy-text-primary) transition-colors outline-none placeholder:text-(--legacy-text-tertiary) focus-visible:border-(--legacy-link-text)"
+										className="h-12 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-bg-main) px-3 text-sm text-(--legacy-text-primary) outline-hidden transition-colors placeholder:text-(--legacy-text-tertiary) focus-visible:border-(--legacy-link-text)"
 									/>
 								</label>
 

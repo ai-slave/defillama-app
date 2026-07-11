@@ -987,7 +987,7 @@ function RWADraftFilterEditor({
 				<button
 					type="button"
 					onClick={remove}
-					className="rounded p-1 text-tertiary hover:bg-hover-row hover:text-primary"
+					className="rounded-sm p-1 text-tertiary hover:bg-hover-row hover:text-primary"
 				>
 					<Icon name="x" className="size-3.5" />
 					<span className="sr-only">Remove {definition.label} filter</span>

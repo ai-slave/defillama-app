@@ -27,11 +27,7 @@ function exchangeHref(exchange: string): string {
 /** Exchange name linking to the exchange page. */
 export function ExchangeName({ exchange }: { exchange: string }) {
 	return (
-		<BasicLink
-			href={exchangeHref(exchange)}
-			shallow
-			className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link capitalize hover:underline"
-		>
+		<BasicLink href={exchangeHref(exchange)} shallow className="truncate label-md text-link capitalize hover:underline">
 			{exchange}
 		</BasicLink>
 	)
@@ -57,7 +53,7 @@ export function StripStat({ label, value, sub }: { label: string; value: React.R
 
 /** Small colour-coded cex/dex venue-type badge. */
 export function VenueBadge({ type }: { type: 'cex' | 'dex' }) {
-	return <span className={`rounded border px-1.5 py-0.5 label-sm uppercase ${VENUE_BADGE_CLASS[type]}`}>{type}</span>
+	return <span className={`rounded-sm border px-1.5 py-0.5 label-sm uppercase ${VENUE_BADGE_CLASS[type]}`}>{type}</span>
 }
 
 export function CategoryLink({ tag }: { tag: string }) {
@@ -70,17 +66,14 @@ export function CategoryLink({ tag }: { tag: string }) {
 
 /** Asset symbol linking to the token page. */
 export function TokenName({ base, knownTokenSlugs }: { base: string; knownTokenSlugs?: KnownTokenSlugs }) {
-	const label = <span className="overflow-hidden label-md text-ellipsis whitespace-nowrap uppercase">{base}</span>
+	const label = <span className="truncate label-md uppercase">{base}</span>
 
 	if (!isKnownTokenSlug(base, knownTokenSlugs)) {
 		return <span className="text-primary">{label}</span>
 	}
 
 	return (
-		<BasicLink
-			href={tokenHref(base)}
-			className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link uppercase hover:underline"
-		>
+		<BasicLink href={tokenHref(base)} className="truncate label-md text-link uppercase hover:underline">
 			{label}
 		</BasicLink>
 	)
@@ -95,7 +88,7 @@ export function TagPills({ tags, max = 3 }: { tags: string[]; max?: number }) {
 					key={tag}
 					href={categoryHref(tag)}
 					shallow
-					className="rounded border border-subtle px-1.5 py-0.5 label-sm text-secondary hover:border-strong hover:text-primary"
+					className="rounded-sm border border-subtle px-1.5 py-0.5 label-sm text-secondary hover:border-strong hover:text-primary"
 				>
 					{tag}
 				</BasicLink>
@@ -133,7 +126,7 @@ const SENTIMENT_CLASS: Record<Sentiment, string> = {
 export function SentimentBadge({ sentiment }: { sentiment: Sentiment }) {
 	return (
 		<Tooltip content={SENTIMENT_TITLE[sentiment]}>
-			<span className={`inline-block rounded border px-1.5 py-0.5 label-sm uppercase ${SENTIMENT_CLASS[sentiment]}`}>
+			<span className={`inline-block rounded-sm border px-1.5 py-0.5 label-sm uppercase ${SENTIMENT_CLASS[sentiment]}`}>
 				{sentiment}
 			</span>
 		</Tooltip>

@@ -119,7 +119,7 @@ const columns: ColumnDef<EquitiesTableCompanyRow>[] = [
 				<img
 					src={equityCountryFlagUrl(getValue())}
 					alt={`${getValue()} flag`}
-					className="hidden h-6 w-6 rounded-full object-contain lg:block"
+					className="hidden size-6 rounded-full object-contain lg:block"
 					height={24}
 					width={24}
 				/>

@@ -59,7 +59,7 @@ export function ImageUploadButton({
 							onClick={open}
 							disabled={isUploading}
 							aria-label="Replace avatar"
-							className="group relative size-24 shrink-0 overflow-hidden rounded-full border border-(--legacy-cards-border) transition-[border-color] outline-none hover:border-(--legacy-link-text)/50 focus-visible:border-(--legacy-link-text)/70 disabled:cursor-not-allowed disabled:opacity-60"
+							className="group relative size-24 shrink-0 overflow-hidden rounded-full border border-(--legacy-cards-border) outline-hidden transition-[border-color] hover:border-(--legacy-link-text)/50 focus-visible:border-(--legacy-link-text)/70 disabled:cursor-not-allowed disabled:opacity-60"
 						>
 							{/* eslint-disable-next-line @next/next/no-img-element */}
 							<img
@@ -117,7 +117,7 @@ export function ImageUploadButton({
 								onClick={open}
 								disabled={isUploading}
 								aria-label="Replace cover image"
-								className="group relative block h-36 w-full overflow-hidden rounded-md border border-(--legacy-cards-border) transition-[border-color] outline-none hover:border-(--legacy-link-text)/50 focus-visible:border-(--legacy-link-text)/70 disabled:cursor-not-allowed"
+								className="group relative block h-36 w-full overflow-hidden rounded-md border border-(--legacy-cards-border) outline-hidden transition-[border-color] hover:border-(--legacy-link-text)/50 focus-visible:border-(--legacy-link-text)/70 disabled:cursor-not-allowed"
 							>
 								{/* eslint-disable-next-line @next/next/no-img-element */}
 								<img

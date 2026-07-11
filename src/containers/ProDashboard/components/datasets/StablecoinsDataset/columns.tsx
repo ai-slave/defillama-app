@@ -35,7 +35,7 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 					<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} data-lgonly />
 					<BasicLink
 						href={`/stablecoins/${row.original.gecko_id || name}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text)"
+						className="truncate text-sm font-medium text-(--legacy-link-text)"
 					>
 						{name}
 						{symbol && symbol !== '-' ? <span className="text-(--legacy-text-tertiary)"> ({symbol})</span> : null}

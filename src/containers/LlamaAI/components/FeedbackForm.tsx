@@ -65,7 +65,7 @@ export function FeedbackForm({
 						type="button"
 						onClick={() => setSelectedRating('good')}
 						disabled={isSubmittingFeedback}
-						className={`flex flex-1 items-center justify-center gap-2 rounded border p-3 transition-colors ${
+						className={`flex flex-1 items-center justify-center gap-2 rounded-sm border p-3 transition-colors ${
 							selectedRating === 'good'
 								? 'border-(--success) bg-(--success)/12 text-(--success)'
 								: 'border-[#e6e6e6] text-[#666] hover:border-(--success) hover:bg-(--success)/5 dark:border-[#222324] dark:text-[#919296]'
@@ -78,7 +78,7 @@ export function FeedbackForm({
 						type="button"
 						onClick={() => setSelectedRating('bad')}
 						disabled={isSubmittingFeedback}
-						className={`flex flex-1 items-center justify-center gap-2 rounded border p-3 transition-colors ${
+						className={`flex flex-1 items-center justify-center gap-2 rounded-sm border p-3 transition-colors ${
 							selectedRating === 'bad'
 								? 'border-(--error) bg-(--error)/12 text-(--error)'
 								: 'border-[#e6e6e6] text-[#666] hover:border-(--error) hover:bg-(--error)/5 dark:border-[#222324] dark:text-[#919296]'
@@ -93,7 +93,7 @@ export function FeedbackForm({
 				<span className="text-sm text-[#666] dark:text-[#919296]">Additional feedback (optional)</span>
 				<textarea
 					placeholder="Share your thoughts..."
-					className="w-full rounded border border-[#e6e6e6] bg-(--legacy-app-bg) p-3 dark:border-[#222324]"
+					className="w-full rounded-sm border border-[#e6e6e6] bg-(--legacy-app-bg) p-3 dark:border-[#222324]"
 					rows={3}
 					maxLength={500}
 					value={feedbackText}
@@ -106,7 +106,7 @@ export function FeedbackForm({
 				<div className="flex gap-3">
 					<Ariakit.DialogDismiss
 						disabled={isSubmittingFeedback}
-						className="rounded px-3 py-2 text-xs text-[#666] hover:bg-[#e6e6e6] disabled:opacity-50 dark:text-[#919296] dark:hover:bg-[#222324]"
+						className="rounded-sm px-3 py-2 text-xs text-[#666] hover:bg-[#e6e6e6] disabled:opacity-50 dark:text-[#919296] dark:hover:bg-[#222324]"
 					>
 						Cancel
 					</Ariakit.DialogDismiss>
@@ -114,7 +114,7 @@ export function FeedbackForm({
 						type="button"
 						onClick={handleSubmitFeedback}
 						disabled={isSubmittingFeedback || !selectedRating}
-						className="rounded bg-(--legacy-old-blue) px-3 py-2 text-xs text-white hover:opacity-90 disabled:opacity-50"
+						className="rounded-sm bg-(--legacy-old-blue) px-3 py-2 text-xs text-white hover:opacity-90 disabled:opacity-50"
 					>
 						{isSubmittingFeedback ? 'Submitting...' : 'Submit'}
 					</button>

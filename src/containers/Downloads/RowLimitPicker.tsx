@@ -141,7 +141,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 								setError(null)
 							}}
 							placeholder="e.g. 250"
-							className="flex-1 rounded-md border border-(--legacy-divider) bg-transparent px-2 py-1 text-xs outline-none focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30"
+							className="flex-1 rounded-md border border-(--legacy-divider) bg-transparent px-2 py-1 text-xs outline-hidden focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30"
 						/>
 						<button
 							type="submit"

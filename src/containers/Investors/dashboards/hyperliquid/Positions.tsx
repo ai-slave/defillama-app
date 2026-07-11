@@ -53,14 +53,14 @@ function Pagination({ table }: { table: ReturnType<typeof useReactTable<any>> })
 				<button
 					onClick={() => table.previousPage()}
 					disabled={!table.getCanPreviousPage()}
-					className="rounded px-2.5 py-1 text-xs font-medium text-(--legacy-text-label) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30 disabled:hover:bg-transparent"
+					className="rounded-sm px-2.5 py-1 text-xs font-medium text-(--legacy-text-label) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30 disabled:hover:bg-transparent"
 				>
 					Prev
 				</button>
 				<button
 					onClick={() => table.nextPage()}
 					disabled={!table.getCanNextPage()}
-					className="rounded px-2.5 py-1 text-xs font-medium text-(--legacy-text-label) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30 disabled:hover:bg-transparent"
+					className="rounded-sm px-2.5 py-1 text-xs font-medium text-(--legacy-text-label) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30 disabled:hover:bg-transparent"
 				>
 					Next
 				</button>
@@ -408,7 +408,7 @@ export default function Positions() {
 					<button
 						key={value}
 						onClick={() => setVaultFilter(value)}
-						className={`rounded px-3 py-1.5 text-xs ${vaultFilter === value ? 'bg-[#2172e5] text-white' : 'bg-(--sl-btn-inactive-bg) text-(--legacy-text-label)'}`}
+						className={`rounded-sm px-3 py-1.5 text-xs ${vaultFilter === value ? 'bg-[#2172e5] text-white' : 'bg-(--sl-btn-inactive-bg) text-(--legacy-text-label)'}`}
 					>
 						{value}
 					</button>
@@ -434,7 +434,7 @@ export default function Positions() {
 					<button
 						key={value}
 						onClick={() => setPortfolioWindow(value)}
-						className={`rounded px-3 py-1.5 text-xs ${portfolioWindow === value ? 'bg-[#2172e5] text-white' : 'bg-(--sl-btn-inactive-bg) text-(--legacy-text-label)'}`}
+						className={`rounded-sm px-3 py-1.5 text-xs ${portfolioWindow === value ? 'bg-[#2172e5] text-white' : 'bg-(--sl-btn-inactive-bg) text-(--legacy-text-label)'}`}
 					>
 						{value}
 					</button>
@@ -449,7 +449,7 @@ export default function Positions() {
 					<button
 						key={value}
 						onClick={() => setFundingWindow(value)}
-						className={`rounded px-3 py-1.5 text-xs ${fundingWindow === value ? 'bg-[#2172e5] text-white' : 'bg-(--sl-btn-inactive-bg) text-(--legacy-text-label)'}`}
+						className={`rounded-sm px-3 py-1.5 text-xs ${fundingWindow === value ? 'bg-[#2172e5] text-white' : 'bg-(--sl-btn-inactive-bg) text-(--legacy-text-label)'}`}
 					>
 						{value}
 					</button>

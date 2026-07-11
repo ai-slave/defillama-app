@@ -178,7 +178,7 @@ export function DashboardDiscovery({
 								label={
 									<>
 										<span className="text-(--legacy-text-label)">Items per page:</span>
-										<span className="overflow-hidden text-ellipsis whitespace-nowrap">{itemsPerPage}</span>
+										<span className="truncate">{itemsPerPage}</span>
 									</>
 								}
 								labelType="none"
@@ -207,7 +207,7 @@ export function DashboardDiscovery({
 								label={
 									<>
 										<span className="text-(--legacy-text-label)">Sort by:</span>
-										<span className="overflow-hidden text-ellipsis whitespace-nowrap">{selectedSortBy.name}</span>
+										<span className="truncate">{selectedSortBy.name}</span>
 									</>
 								}
 								labelType="none"
@@ -233,7 +233,7 @@ export function DashboardDiscovery({
 									label={
 										<>
 											<span className="text-(--legacy-text-label)">Time:</span>
-											<span className="overflow-hidden text-ellipsis whitespace-nowrap">{selectedTimeFrame.name}</span>
+											<span className="truncate">{selectedTimeFrame.name}</span>
 										</>
 									}
 									labelType="none"

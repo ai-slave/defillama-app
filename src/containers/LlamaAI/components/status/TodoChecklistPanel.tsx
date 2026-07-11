@@ -81,11 +81,11 @@ export function TodoChecklistPanel({
 				</span>
 				<p className="m-0 flex-1 truncate text-xs font-medium text-[#444] sm:text-sm dark:text-[#ccc]">Progress</p>
 				{interrupted ? (
-					<p className="m-0 shrink-0 rounded bg-[rgba(244,63,94,0.1)] px-1.5 py-0.5 text-[10px] text-[#e11d48] sm:text-xs dark:text-[#fb7185]">
+					<p className="m-0 shrink-0 rounded-sm bg-[rgba(244,63,94,0.1)] px-1.5 py-0.5 text-[10px] text-[#e11d48] sm:text-xs dark:text-[#fb7185]">
 						stopped early
 					</p>
 				) : null}
-				<p className="m-0 shrink-0 rounded bg-[rgba(0,0,0,0.04)] px-1.5 py-0.5 text-[10px] text-[#666] sm:text-xs dark:bg-[rgba(145,146,150,0.12)] dark:text-[#919296]">
+				<p className="m-0 shrink-0 rounded-sm bg-[rgba(0,0,0,0.04)] px-1.5 py-0.5 text-[10px] text-[#666] sm:text-xs dark:bg-[rgba(145,146,150,0.12)] dark:text-[#919296]">
 					{completed}/{total} done
 				</p>
 			</div>

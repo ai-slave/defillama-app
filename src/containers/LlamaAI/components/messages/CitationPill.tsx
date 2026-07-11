@@ -59,7 +59,7 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
 function CodePre({ text, className }: { text: string; className?: string }) {
 	return (
 		<pre
-			className={`m-0 max-h-48 overflow-auto rounded border border-[#e6e6e6] bg-[#fafafa] p-1.5 font-mono text-[10px] whitespace-pre-wrap text-[#444] dark:border-[#333] dark:bg-[#1a1a1a] dark:text-[#bbb] ${className ?? ''}`}
+			className={`m-0 max-h-48 overflow-auto rounded-sm border border-[#e6e6e6] bg-[#fafafa] p-1.5 font-mono text-[10px] whitespace-pre-wrap text-[#444] dark:border-[#333] dark:bg-[#1a1a1a] dark:text-[#bbb] ${className ?? ''}`}
 		>
 			{text}
 		</pre>
@@ -90,7 +90,7 @@ function SourceMiniCard({ reference }: { reference: UnifiedCitationReference }) 
 	const safeUrl = openUrl(reference)
 	const hasRows = !!reference.rows && reference.rows.length > 0
 	return (
-		<div className="rounded border border-[#eee] bg-[#fafafa] p-1.5 dark:border-[#222324] dark:bg-[#161618]">
+		<div className="rounded-sm border border-[#eee] bg-[#fafafa] p-1.5 dark:border-[#222324] dark:bg-[#161618]">
 			<div className="flex items-center gap-1.5">
 				<span className="text-[10px] font-medium tracking-wide text-[#1f67d2] uppercase">
 					{badgeFor(reference.sourceType)}
@@ -284,7 +284,7 @@ function ToolView({ reference }: { reference: UnifiedCitationReference }) {
 	return (
 		<>
 			{rows.length > 0 ? (
-				<div className="flex flex-col gap-0.5 rounded border border-[#eee] bg-[#fafafa] p-1.5 dark:border-[#222324] dark:bg-[#161618]">
+				<div className="flex flex-col gap-0.5 rounded-sm border border-[#eee] bg-[#fafafa] p-1.5 dark:border-[#222324] dark:bg-[#161618]">
 					{rows.map((row) => (
 						<div key={row.key} className="flex items-baseline gap-2 text-[11px]">
 							<span className="shrink-0 font-medium text-[#666] dark:text-[#999]">{row.key}</span>
@@ -430,7 +430,7 @@ export function CitationPill({ reference }: CitationPillProps) {
 			<Ariakit.HovercardAnchor
 				render={<button type="button" />}
 				onClick={() => (isLink && url ? window.open(url, '_blank', 'noopener,noreferrer') : open(reference))}
-				className="mx-px inline-flex h-[18px] max-w-[160px] cursor-pointer items-center justify-center gap-0.5 rounded-[4px] border px-1 align-baseline text-[11px] leading-none font-medium no-underline transition hover:brightness-110 focus-visible:outline-none"
+				className="mx-px inline-flex h-[18px] max-w-[160px] cursor-pointer items-center justify-center gap-0.5 rounded-[4px] border px-1 align-baseline text-[11px] leading-none font-medium no-underline transition hover:brightness-110 focus-visible:outline-hidden"
 				style={{ color: accent, borderColor: `${accent}59`, backgroundColor: `${accent}14` }}
 				aria-label={headline ? `Source ${id ?? ''}: ${headline}` : `Source ${id ?? ''}`}
 			>

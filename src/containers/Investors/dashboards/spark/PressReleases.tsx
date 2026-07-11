@@ -80,9 +80,9 @@ function renderPressReleaseCards(posts: ParagraphPost[]) {
 		>
 			{/* Image */}
 			{post.imageUrl && (
-				<div className="relative aspect-[2/1] w-full overflow-hidden bg-gradient-to-br from-(--sl-accent-muted) to-(--legacy-cards-border)">
+				<div className="relative aspect-[2/1] w-full overflow-hidden bg-linear-to-br from-(--sl-accent-muted) to-(--legacy-cards-border)">
 					<img src={post.imageUrl} alt={post.title} className="size-full object-cover" loading="lazy" />
-					<div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+					<div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
 				</div>
 			)}
 
@@ -229,13 +229,13 @@ export default function PressReleases() {
 								href={`https://paragraph.com/@spark-11/${post.slug}`}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="group flex flex-col overflow-hidden rounded-xl border-2 border-(--sl-accent-muted) bg-gradient-to-br from-(--sl-accent-muted)/10 to-transparent transition-all duration-200 hover:border-(--sl-accent)/50 hover:shadow-xl"
+								className="group flex flex-col overflow-hidden rounded-xl border-2 border-(--sl-accent-muted) bg-linear-to-br from-(--sl-accent-muted)/10 to-transparent transition-all duration-200 hover:border-(--sl-accent)/50 hover:shadow-xl"
 							>
 								{/* Image */}
 								{post.imageUrl && (
 									<div className="relative aspect-[2/1] w-full overflow-hidden">
 										<img src={post.imageUrl} alt={post.title} className="size-full object-cover" loading="lazy" />
-										<div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent"></div>
+										<div className="absolute inset-0 bg-linear-to-t from-black/40 via-black/10 to-transparent"></div>
 									</div>
 								)}
 

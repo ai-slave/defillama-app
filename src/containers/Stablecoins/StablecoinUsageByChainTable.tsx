@@ -71,10 +71,7 @@ const stablecoinsByChainColumns = [
 						<>
 							<span className="vf-row-index shrink-0" aria-hidden="true" />
 							<TokenLogo name={row.original.name} kind="chain" data-lgonly alt={`Logo of ${row.original.name}`} />
-							<BasicLink
-								href={`/stablecoins/${row.original.name}`}
-								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link"
-							>
+							<BasicLink href={`/stablecoins/${row.original.name}`} className="truncate text-sm font-medium text-link">
 								{getValue()}
 							</BasicLink>
 						</>

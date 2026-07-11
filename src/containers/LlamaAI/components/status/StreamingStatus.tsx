@@ -197,11 +197,11 @@ export const SpawnProgressCard = memo(function SpawnProgressCard({
 					{isResearchMode ? <>Researching in parallel&hellip;</> : <>Working in herd&hellip;</>}
 				</p>
 
-				<p className="m-0 flex shrink-0 items-center gap-1 rounded bg-[rgba(0,0,0,0.04)] px-1.5 py-0.5 text-[10px] text-[#666] sm:text-xs dark:bg-[rgba(145,146,150,0.12)] dark:text-[#919296]">
+				<p className="m-0 flex shrink-0 items-center gap-1 rounded-sm bg-[rgba(0,0,0,0.04)] px-1.5 py-0.5 text-[10px] text-[#666] sm:text-xs dark:bg-[rgba(145,146,150,0.12)] dark:text-[#919296]">
 					{completed}/{total} done
 				</p>
 
-				<time className="flex shrink-0 items-center gap-1 rounded bg-[rgba(0,0,0,0.04)] px-1.5 py-0.5 font-mono text-[10px] text-[#666] tabular-nums sm:text-xs dark:bg-[rgba(145,146,150,0.12)] dark:text-[#919296]">
+				<time className="flex shrink-0 items-center gap-1 rounded-sm bg-[rgba(0,0,0,0.04)] px-1.5 py-0.5 font-mono text-[10px] text-[#666] tabular-nums sm:text-xs dark:bg-[rgba(145,146,150,0.12)] dark:text-[#919296]">
 					{formatTime(elapsed)}
 				</time>
 

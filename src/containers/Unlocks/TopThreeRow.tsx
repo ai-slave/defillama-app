@@ -21,10 +21,7 @@ export function TopThreeRow({ name, symbol, value, trailingIcon = null }: TopThr
 		>
 			<div className="flex min-w-0 items-center gap-2">
 				<TokenLogo name={name} kind="token" alt={`Logo of ${name}`} />
-				<BasicLink
-					href={`/unlocks/${slug(name)}`}
-					className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-link hover:underline"
-				>
+				<BasicLink href={`/unlocks/${slug(name)}`} className="min-w-0 truncate text-link hover:underline">
 					{name}
 					{symbol ? ` (${symbol})` : null}
 				</BasicLink>

@@ -400,7 +400,7 @@ export function AuthorProfileForm() {
 						maxLength={DISPLAY_NAME_MAX}
 						value={state.displayName}
 						onChange={(e) => update({ displayName: e.target.value })}
-						className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
+						className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--legacy-link-text)/60"
 					/>
 					{displayNameError ? <span className="text-xs text-red-500">{displayNameError}</span> : null}
 				</label>
@@ -426,7 +426,7 @@ export function AuthorProfileForm() {
 							maxLength={SLUG_MAX}
 							value={state.slug}
 							onChange={(e) => update({ slug: e.target.value })}
-							className="w-full bg-transparent px-3 py-2 font-jetbrains text-sm text-(--legacy-text-primary) outline-none"
+							className="w-full bg-transparent px-3 py-2 font-jetbrains text-sm text-(--legacy-text-primary) outline-hidden"
 							spellCheck={false}
 							autoCapitalize="none"
 							autoCorrect="off"
@@ -458,7 +458,7 @@ export function AuthorProfileForm() {
 						value={state.bio}
 						onChange={(e) => update({ bio: e.target.value })}
 						placeholder="Researcher covering DeFi liquidity, MEV, and stablecoins."
-						className="w-full resize-y rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm leading-relaxed text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
+						className="w-full resize-y rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm leading-relaxed text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--legacy-link-text)/60"
 					/>
 				</label>
 			</Section>
@@ -474,7 +474,7 @@ export function AuthorProfileForm() {
 								value={state.socials[kind.id] || ''}
 								onChange={(e) => updateSocial(kind.id, e.target.value)}
 								placeholder={kind.placeholder}
-								className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
+								className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--legacy-link-text)/60"
 							/>
 						</label>
 					))}
@@ -505,7 +505,7 @@ export function AuthorProfileForm() {
 										onChange={(e) => updateCustom(index, { key: e.target.value })}
 										placeholder="kind"
 										maxLength={40}
-										className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
+										className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--legacy-link-text)/60"
 									/>
 									<input
 										type="text"
@@ -513,7 +513,7 @@ export function AuthorProfileForm() {
 										onChange={(e) => updateCustom(index, { value: e.target.value })}
 										placeholder="https://…"
 										maxLength={SOCIAL_VALUE_MAX}
-										className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
+										className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--legacy-link-text)/60"
 									/>
 									<button
 										type="button"

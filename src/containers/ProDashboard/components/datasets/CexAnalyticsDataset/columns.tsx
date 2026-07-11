@@ -28,9 +28,7 @@ export const cexAnalyticsColumns: ColumnDef<CexAnalyticsSnapshotRow>[] = [
 		cell: ({ getValue, row }) => (
 			<span className="relative flex items-center gap-2 pl-6">
 				<span className="shrink-0">{row.index + 1}</span>
-				<span className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap">
-					{getValue() as string}
-				</span>
+				<span className="truncate text-sm font-medium">{getValue() as string}</span>
 			</span>
 		)
 	},

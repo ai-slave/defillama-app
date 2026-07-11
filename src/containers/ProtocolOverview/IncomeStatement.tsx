@@ -617,7 +617,7 @@ export const IncomeStatement = ({
 										>
 											{i === 0 && groupBy !== 'Cumulative' ? (
 												<span className="-mr-2 flex items-center justify-start gap-1">
-													<span className="overflow-hidden text-ellipsis whitespace-nowrap">{header[1]}</span>
+													<span className="truncate">{header[1]}</span>
 													<Tooltip
 														content={`Current ${groupBy.toLowerCase()} data is incomplete`}
 														className="text-xs text-data-down"

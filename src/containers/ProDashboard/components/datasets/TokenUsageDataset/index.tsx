@@ -565,7 +565,7 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 					<input
 						placeholder="Search protocols..."
 						onInput={(e) => setSearch(e.currentTarget.value)}
-						className="w-full max-w-xs rounded border pro-border pro-bg1 px-2 py-1.5 text-sm pro-text1 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden sm:w-auto sm:px-3"
+						className="w-full max-w-xs rounded-sm border pro-border pro-bg1 px-2 py-1.5 text-sm pro-text1 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden sm:w-auto sm:px-3"
 					/>
 				</div>
 			</div>

@@ -341,7 +341,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 							}
 							setCombineModalOpen(true)
 						}}
-						className="group relative flex items-start justify-between gap-4 overflow-hidden rounded-xl border border-(--legacy-primary)/30 bg-gradient-to-br from-(--legacy-primary)/[0.08] to-(--legacy-primary)/[0.02] p-4 text-left transition-all hover:border-(--legacy-primary)/60 hover:from-(--legacy-primary)/[0.12] hover:to-(--legacy-primary)/[0.04]"
+						className="group relative flex items-start justify-between gap-4 overflow-hidden rounded-xl border border-(--legacy-primary)/30 bg-linear-to-br from-(--legacy-primary)/[0.08] to-(--legacy-primary)/[0.02] p-4 text-left transition-all hover:border-(--legacy-primary)/60 hover:from-(--legacy-primary)/[0.12] hover:to-(--legacy-primary)/[0.04]"
 					>
 						<div className="flex items-start gap-3">
 							<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-(--legacy-primary)/15">
@@ -626,7 +626,7 @@ function RecentDownloadsStrip({
 									type="button"
 									onClick={() => onRun(preset)}
 									title={`Run ${preset.name}`}
-									className="group relative flex min-w-0 flex-1 flex-col gap-1 py-2.5 pr-3 pl-4 text-left transition-colors hover:bg-hover-row focus-visible:bg-hover-row focus-visible:outline-none"
+									className="group relative flex min-w-0 flex-1 flex-col gap-1 py-2.5 pr-3 pl-4 text-left transition-colors hover:bg-hover-row focus-visible:bg-hover-row focus-visible:outline-hidden"
 								>
 									<span
 										className={`absolute top-3 bottom-3 left-2 w-0.5 rounded-full ${style.accent} opacity-40 transition-opacity group-hover:opacity-100`}
@@ -796,7 +796,7 @@ function SavedEmptyState() {
 			</div>
 			<p className="text-xs text-(--legacy-text-tertiary)">
 				Open a dataset, tweak your columns and filters, then click{' '}
-				<span className="inline-flex items-center gap-1 rounded border border-(--legacy-divider) bg-(--bg-primary) px-1.5 py-0.5 text-[11px] font-medium text-(--legacy-text-primary)">
+				<span className="inline-flex items-center gap-1 rounded-sm border border-(--legacy-divider) bg-(--bg-primary) px-1.5 py-0.5 text-[11px] font-medium text-(--legacy-text-primary)">
 					<Icon name="bookmark" className="size-3" />
 					Save preset
 				</span>
@@ -842,7 +842,7 @@ function SavedDownloadRow({
 					handleRowActivate(e)
 				}
 			}}
-			className="group relative flex cursor-pointer items-center gap-3 border-t border-(--legacy-divider) py-3.5 pr-3 pl-4 transition-colors first:border-t-0 hover:bg-hover-row focus-visible:bg-hover-row focus-visible:outline-none"
+			className="group relative flex cursor-pointer items-center gap-3 border-t border-(--legacy-divider) py-3.5 pr-3 pl-4 transition-colors first:border-t-0 hover:bg-hover-row focus-visible:bg-hover-row focus-visible:outline-hidden"
 		>
 			<span
 				className={`absolute top-2 bottom-2 left-1 w-0.5 rounded-full ${style.accent} opacity-30 transition-all group-hover:opacity-100 group-focus-visible:opacity-100`}
@@ -886,7 +886,7 @@ function SavedDownloadRow({
 							e.stopPropagation()
 							onRenameRequest(preset)
 						}}
-						className="flex size-7 items-center justify-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-(--bg-primary) hover:text-(--legacy-text-primary) focus-visible:bg-(--bg-primary) focus-visible:text-(--legacy-text-primary) focus-visible:outline-none"
+						className="flex size-7 items-center justify-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-(--bg-primary) hover:text-(--legacy-text-primary) focus-visible:bg-(--bg-primary) focus-visible:text-(--legacy-text-primary) focus-visible:outline-hidden"
 						aria-label={`Rename ${preset.name}`}
 						title="Rename"
 					>
@@ -899,7 +899,7 @@ function SavedDownloadRow({
 							e.stopPropagation()
 							onDeleteRequest(preset.id)
 						}}
-						className="flex size-7 items-center justify-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-red-500/10 hover:text-red-500 focus-visible:bg-red-500/10 focus-visible:text-red-500 focus-visible:outline-none"
+						className="flex size-7 items-center justify-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-red-500/10 hover:text-red-500 focus-visible:bg-red-500/10 focus-visible:text-red-500 focus-visible:outline-hidden"
 						aria-label={`Delete ${preset.name}`}
 						title="Delete"
 					>

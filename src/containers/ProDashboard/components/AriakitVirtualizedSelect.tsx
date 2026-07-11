@@ -180,7 +180,7 @@ export function AriakitVirtualizedSelect({
 																alt={option.label}
 																width={20}
 																height={20}
-																className={`h-5 w-5 rounded-full object-cover ring-1 ring-(--legacy-cards-border) ${
+																className={`size-5 rounded-full object-cover ring-1 ring-(--legacy-cards-border) ${
 																	option.isChild ? 'opacity-70' : ''
 																}`}
 															/>

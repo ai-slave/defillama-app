@@ -288,7 +288,7 @@ export function SubscriptionComparisonSection({
 												: `sticky left-0 z-30 box-border flex w-[233px] shrink-0 items-center bg-white px-2 text-[14px] leading-[21px] text-(--sub-mobile-text-muted) md:w-[400px] md:px-4 md:text-xs md:text-(--sub-desktop-text-muted) dark:bg-(--sub-mobile-table-section-bg) dark:md:bg-(--sub-desktop-table-section-bg) ${rowHeaderDividerClassName}`
 											const rowLabelClassName = row.wrapLabel
 												? 'block w-full whitespace-normal break-words md:overflow-hidden md:text-ellipsis md:whitespace-nowrap'
-												: 'block w-full overflow-hidden text-ellipsis whitespace-nowrap'
+												: 'block w-full truncate'
 											return (
 												<div key={`${section.title}-${row.label}`} role="row" className={rowClassName}>
 													<div role="rowheader" className={rowHeaderClassName}>

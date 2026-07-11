@@ -159,7 +159,7 @@ export function EntityPickerList({
 									}}
 								>
 									<div
-										className={`flex size-4 shrink-0 items-center justify-center rounded border transition-colors ${
+										className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
 											isSelected
 												? 'border-(--legacy-primary) bg-(--legacy-primary)'
 												: 'border-(--legacy-form-control-border) bg-(--legacy-bg-input)'

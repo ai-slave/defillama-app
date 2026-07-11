@@ -116,9 +116,7 @@ export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
 				<LoadingSpinner size={12} />
 			)}
 
-			{children || (
-				<span className="overflow-hidden text-ellipsis whitespace-nowrap">{smol ? '.csv' : 'Download .csv'}</span>
-			)}
+			{children || <span className="truncate">{smol ? '.csv' : 'Download .csv'}</span>}
 		</>
 	)
 

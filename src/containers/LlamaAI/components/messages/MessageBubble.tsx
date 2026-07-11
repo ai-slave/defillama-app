@@ -100,13 +100,13 @@ function GeneratedImageBlock({
 			title={prompt}
 			aria-label={prompt || 'Generated image'}
 			disabled={!interactive}
-			className={`group/genimg relative my-2 block w-full max-w-sm overflow-hidden rounded-lg border border-black/10 bg-black/5 transition focus-visible:ring-2 focus-visible:ring-(--legacy-old-blue) focus-visible:outline-none dark:border-white/10 dark:bg-white/5 ${interactive ? 'cursor-pointer hover:border-black/20 dark:hover:border-white/20' : 'cursor-default'}`}
+			className={`group/genimg relative my-2 block w-full max-w-sm overflow-hidden rounded-lg border border-black/10 bg-black/5 transition focus-visible:ring-2 focus-visible:ring-(--legacy-old-blue) focus-visible:outline-hidden dark:border-white/10 dark:bg-white/5 ${interactive ? 'cursor-pointer hover:border-black/20 dark:hover:border-white/20' : 'cursor-default'}`}
 			style={aspect ? { aspectRatio: aspect } : undefined}
 		>
 			{!loaded ? (
 				<div
 					aria-hidden="true"
-					className="absolute inset-0 animate-pulse bg-gradient-to-br from-(--legacy-old-blue)/10 via-(--legacy-old-blue)/5 to-transparent"
+					className="absolute inset-0 animate-pulse bg-linear-to-br from-(--legacy-old-blue)/10 via-(--legacy-old-blue)/5 to-transparent"
 				/>
 			) : null}
 			<img
@@ -523,7 +523,7 @@ export function MessageBubble({
 									handleCancelEdit()
 								}
 							}}
-							className="block w-full resize-none bg-transparent leading-snug focus:outline-none"
+							className="block w-full resize-none bg-transparent leading-snug focus:outline-hidden"
 							rows={Math.min(10, Math.max(2, draftText.split('\n').length + 1))}
 							autoFocus
 						/>
@@ -539,22 +539,22 @@ export function MessageBubble({
 							<span className="hidden sm:inline">
 								{' · '}
 								{enterToSend ? (
-									<kbd className="rounded border border-black/10 bg-white/70 px-1 py-px font-mono text-[10px] text-[#666] dark:border-white/10 dark:bg-white/5 dark:text-[#888]">
+									<kbd className="rounded-sm border border-black/10 bg-white/70 px-1 py-px font-mono text-[10px] text-[#666] dark:border-white/10 dark:bg-white/5 dark:text-[#888]">
 										Enter
 									</kbd>
 								) : (
 									<>
-										<kbd className="rounded border border-black/10 bg-white/70 px-1 py-px font-mono text-[10px] text-[#666] dark:border-white/10 dark:bg-white/5 dark:text-[#888]">
+										<kbd className="rounded-sm border border-black/10 bg-white/70 px-1 py-px font-mono text-[10px] text-[#666] dark:border-white/10 dark:bg-white/5 dark:text-[#888]">
 											Shift
 										</kbd>
 										<span className="mx-0.5">+</span>
-										<kbd className="rounded border border-black/10 bg-white/70 px-1 py-px font-mono text-[10px] text-[#666] dark:border-white/10 dark:bg-white/5 dark:text-[#888]">
+										<kbd className="rounded-sm border border-black/10 bg-white/70 px-1 py-px font-mono text-[10px] text-[#666] dark:border-white/10 dark:bg-white/5 dark:text-[#888]">
 											Enter
 										</kbd>
 									</>
 								)}
 								<span className="mx-1">save</span>
-								<kbd className="rounded border border-black/10 bg-white/70 px-1 py-px font-mono text-[10px] text-[#666] dark:border-white/10 dark:bg-white/5 dark:text-[#888]">
+								<kbd className="rounded-sm border border-black/10 bg-white/70 px-1 py-px font-mono text-[10px] text-[#666] dark:border-white/10 dark:bg-white/5 dark:text-[#888]">
 									esc
 								</kbd>
 								<span className="ml-1">cancel</span>

@@ -13,7 +13,7 @@ type Step = 'signin' | 'signup' | 'forgot'
 /* ── Shared styles ─────────────────────────────────────────────────── */
 
 const inputCls =
-	'h-10 w-full rounded-lg border border-(--legacy-form-control-border) bg-(--signin-input-bg) px-3 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:outline-none'
+	'h-10 w-full rounded-lg border border-(--legacy-form-control-border) bg-(--signin-input-bg) px-3 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:outline-hidden'
 const primaryBtnCls =
 	'h-10 w-full rounded-lg bg-(--legacy-primary) text-sm font-medium text-white disabled:bg-(--signin-btn-disabled-bg) disabled:text-(--signin-btn-disabled-text)'
 
@@ -341,7 +341,7 @@ export function SignInFlow({
 					<label className="flex items-start gap-2">
 						<input
 							type="checkbox"
-							className="mt-0.5 size-4 shrink-0 rounded accent-(--legacy-primary)"
+							className="mt-0.5 size-4 shrink-0 rounded-sm accent-(--legacy-primary)"
 							checked={acceptedTerms}
 							onChange={(e) => setAcceptedTerms(e.target.checked)}
 						/>
@@ -360,7 +360,7 @@ export function SignInFlow({
 					<label className="flex items-start gap-2">
 						<input
 							type="checkbox"
-							className="mt-0.5 size-4 shrink-0 rounded accent-(--legacy-primary)"
+							className="mt-0.5 size-4 shrink-0 rounded-sm accent-(--legacy-primary)"
 							checked={promotionalEmails !== 'off'}
 							onChange={(e) => setPromotionalEmails(e.target.checked ? 'on' : 'off')}
 						/>

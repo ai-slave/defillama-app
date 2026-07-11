@@ -55,7 +55,7 @@ export const yieldsDatasetColumns: ColumnDef<IYieldsRow>[] = [
 					/>
 					<BasicLink
 						href={`/yields/pool/${row.original.configID}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text)"
+						className="truncate text-sm font-medium text-(--legacy-link-text)"
 					>
 						{pool}
 					</BasicLink>

@@ -181,7 +181,7 @@ export const EntitySuggestionList = forwardRef<EntitySuggestionListHandle, Props
 					</span>
 				</span>
 				<MetricChip item={item} />
-				<span className="ml-1 shrink-0 rounded border border-(--legacy-cards-border) px-1.5 py-px text-[9px] font-medium tracking-wider text-(--legacy-text-tertiary)">
+				<span className="ml-1 shrink-0 rounded-sm border border-(--legacy-cards-border) px-1.5 py-px text-[9px] font-medium tracking-wider text-(--legacy-text-tertiary)">
 					{TYPE_BADGE[item.entityType] ?? item.entityType.toUpperCase()}
 				</span>
 			</button>
@@ -254,13 +254,13 @@ export const EntitySuggestionList = forwardRef<EntitySuggestionListHandle, Props
 			</div>
 			<div className="flex items-center justify-between gap-2 border-t border-(--legacy-cards-border) px-3 py-1.5 text-[10px] text-(--legacy-text-tertiary)">
 				<span>
-					<kbd className="rounded border border-(--legacy-cards-border) px-1">↑</kbd>{' '}
-					<kbd className="rounded border border-(--legacy-cards-border) px-1">↓</kbd> nav{' '}
-					<kbd className="ml-1 rounded border border-(--legacy-cards-border) px-1">tab</kbd> filter
+					<kbd className="rounded-sm border border-(--legacy-cards-border) px-1">↑</kbd>{' '}
+					<kbd className="rounded-sm border border-(--legacy-cards-border) px-1">↓</kbd> nav{' '}
+					<kbd className="ml-1 rounded-sm border border-(--legacy-cards-border) px-1">tab</kbd> filter
 				</span>
 				<span>
-					<kbd className="rounded border border-(--legacy-cards-border) px-1">↵</kbd> insert{' '}
-					<kbd className="ml-1 rounded border border-(--legacy-cards-border) px-1">esc</kbd> dismiss
+					<kbd className="rounded-sm border border-(--legacy-cards-border) px-1">↵</kbd> insert{' '}
+					<kbd className="ml-1 rounded-sm border border-(--legacy-cards-border) px-1">esc</kbd> dismiss
 				</span>
 			</div>
 		</div>

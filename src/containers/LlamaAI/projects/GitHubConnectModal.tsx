@@ -196,7 +196,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 									setSelectedRepo('')
 									setRepoQuery('')
 								}}
-								className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 text-sm text-inherit focus:border-(--legacy-old-blue) focus:outline-none dark:border-[#2a2b2c]"
+								className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 text-sm text-inherit focus:border-(--legacy-old-blue) focus:outline-hidden dark:border-[#2a2b2c]"
 							>
 								{installs.data?.map((i) => (
 									<option key={i.installation_id} value={i.installation_id}>
@@ -234,7 +234,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 								>
 									<Ariakit.Combobox
 										placeholder={selectedRepo || 'Search repositories…'}
-										className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 text-sm text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-none dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
+										className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 text-sm text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-hidden dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
 									/>
 									<Ariakit.ComboboxPopover
 										gutter={4}
@@ -252,7 +252,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 												>
 													<span className="truncate">{r.full_name}</span>
 													{r.private ? (
-														<span className="ml-auto rounded bg-[#e6e6e6] px-1 py-0.5 text-[10px] text-[#666] dark:bg-[#222324] dark:text-[#919296]">
+														<span className="ml-auto rounded-sm bg-[#e6e6e6] px-1 py-0.5 text-[10px] text-[#666] dark:bg-[#222324] dark:text-[#919296]">
 															private
 														</span>
 													) : null}
@@ -301,7 +301,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 								>
 									<Ariakit.Combobox
 										placeholder={selectedBranch || 'Search branches…'}
-										className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 text-sm text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-none dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
+										className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 text-sm text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-hidden dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
 									/>
 									<Ariakit.ComboboxPopover
 										gutter={4}
@@ -319,11 +319,11 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 												>
 													<span className="truncate">{b.name}</span>
 													{b.is_default ? (
-														<span className="ml-auto rounded bg-[#e6e6e6] px-1 py-0.5 text-[10px] text-[#666] dark:bg-[#222324] dark:text-[#919296]">
+														<span className="ml-auto rounded-sm bg-[#e6e6e6] px-1 py-0.5 text-[10px] text-[#666] dark:bg-[#222324] dark:text-[#919296]">
 															default
 														</span>
 													) : b.protected ? (
-														<span className="ml-auto rounded bg-[#e6e6e6] px-1 py-0.5 text-[10px] text-[#666] dark:bg-[#222324] dark:text-[#919296]">
+														<span className="ml-auto rounded-sm bg-[#e6e6e6] px-1 py-0.5 text-[10px] text-[#666] dark:bg-[#222324] dark:text-[#919296]">
 															protected
 														</span>
 													) : null}

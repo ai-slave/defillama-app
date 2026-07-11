@@ -75,15 +75,15 @@ const stablecoinsColumns = [
 					{row.original?.deprecated ? (
 						<BasicLink
 							href={`/stablecoin/${slug(row.original.name)}`}
-							className="flex items-center gap-1 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
+							className="flex items-center gap-1 truncate text-sm font-medium text-link hover:underline"
 						>
-							<span className="overflow-hidden text-ellipsis whitespace-nowrap hover:underline">{getValue()}</span>
+							<span className="truncate hover:underline">{getValue()}</span>
 							<DeprecatedProtocolMarker />
 						</BasicLink>
 					) : (
 						<BasicLink
 							href={`/stablecoin/${slug(row.original.name)}`}
-							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
+							className="truncate text-sm font-medium text-link hover:underline"
 						>
 							{getValue()}
 						</BasicLink>
@@ -173,7 +173,7 @@ const stablecoinsColumns = [
 			info.row.original.change_1d_nol != null ? (
 				<Tooltip
 					content={info.row.original.change_1d_nol}
-					className={`justify-end overflow-hidden text-ellipsis whitespace-nowrap underline decoration-dotted ${
+					className={`justify-end truncate underline decoration-dotted ${
 						info.row.original.change_1d_nol.startsWith('-') ? 'text-data-down' : 'text-data-up'
 					}`}
 				>
@@ -193,7 +193,7 @@ const stablecoinsColumns = [
 			info.row.original.change_7d_nol != null ? (
 				<Tooltip
 					content={info.row.original.change_7d_nol}
-					className={`justify-end overflow-hidden text-ellipsis whitespace-nowrap underline decoration-dotted ${
+					className={`justify-end truncate underline decoration-dotted ${
 						info.row.original.change_7d_nol.startsWith('-') ? 'text-data-down' : 'text-data-up'
 					}`}
 				>
@@ -213,7 +213,7 @@ const stablecoinsColumns = [
 			info.row.original.change_1m_nol != null ? (
 				<Tooltip
 					content={info.row.original.change_1m_nol}
-					className={`justify-end overflow-hidden text-ellipsis whitespace-nowrap underline decoration-dotted ${
+					className={`justify-end truncate underline decoration-dotted ${
 						info.row.original.change_1m_nol.startsWith('-') ? 'text-data-down' : 'text-data-up'
 					}`}
 				>

@@ -218,7 +218,7 @@ export default function Rates() {
 				<select
 					value={activeAsset}
 					onChange={(e) => setSelectedAsset(e.target.value)}
-					className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-1.5 text-sm font-medium text-(--legacy-text-primary) transition-colors outline-none focus:border-(--sl-accent)"
+					className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-1.5 text-sm font-medium text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--sl-accent)"
 				>
 					{assetOptions.map((a) => (
 						<option key={a} value={a}>

@@ -180,7 +180,7 @@ function defaultColumns(type: TokenMetricType) {
 								<span className="flex items-center gap-1 overflow-hidden">
 									<BasicLink
 										href={`/${basePath}/${row.original.slug}${chartQuery}`}
-										className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
+										className="min-w-0 truncate text-sm font-medium text-link hover:underline"
 									>
 										{value}
 									</BasicLink>
@@ -193,7 +193,7 @@ function defaultColumns(type: TokenMetricType) {
 							<span className="flex items-center gap-1 overflow-hidden">
 								<BasicLink
 									href={`/${basePath}/${row.original.slug}${chartQuery}`}
-									className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
+									className="min-w-0 truncate text-sm font-medium text-link hover:underline"
 								>
 									{value}
 								</BasicLink>

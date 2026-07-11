@@ -127,7 +127,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					defaultValue={session.title}
 					autoFocus
 					onFocus={(e) => e.currentTarget.select()}
-					className="flex-1 overflow-hidden p-1.5 text-left text-xs text-ellipsis whitespace-nowrap"
+					className="flex-1 truncate p-1.5 text-left text-xs"
 					disabled={isUpdatingTitle}
 				/>
 				<div className="flex items-center justify-center gap-0.5">
@@ -181,7 +181,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						</svg>
 					) : null}
 				</span>
-				<span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{session.title}</span>
+				<span className="flex-1 truncate">{session.title}</span>
 			</button>
 		)
 	}
@@ -211,7 +211,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						<span className="size-1.5 shrink-0 rounded-full bg-(--legacy-old-blue)" aria-label="Unseen completion" />
 					</Tooltip>
 				) : null}
-				<span className="overflow-hidden text-ellipsis whitespace-nowrap">{session.title}</span>
+				<span className="truncate">{session.title}</span>
 			</button>
 			<div className="flex items-center justify-center opacity-0 group-focus-within:opacity-100 group-hover:opacity-100">
 				<Tooltip
@@ -243,7 +243,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 							onClick={() => {
 								void onPinSession?.(session.sessionId)
 							}}
-							className="flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden border-b border-(--legacy-form-control-border) px-3 py-2 text-ellipsis whitespace-nowrap cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--legacy-primary-hover) focus-visible:bg-(--legacy-primary-hover) data-active-item:bg-(--legacy-primary-hover)"
+							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-(--legacy-form-control-border) px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--legacy-primary-hover) focus-visible:bg-(--legacy-primary-hover) data-active-item:bg-(--legacy-primary-hover)"
 						>
 							<Icon name="pin" height={14} width={14} className="shrink-0" />
 							{session.isPinned ? 'Unpin' : 'Pin to Top'}
@@ -272,7 +272,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 							}}
 							hideOnClick={false}
 							disabled={!session.isPublic || !session.shareToken || isTogglingVisibility}
-							className="flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden border-b border-(--legacy-form-control-border) px-3 py-2 text-ellipsis whitespace-nowrap cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--legacy-primary-hover) focus-visible:bg-(--legacy-primary-hover) aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-(--legacy-primary-hover)"
+							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-(--legacy-form-control-border) px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--legacy-primary-hover) focus-visible:bg-(--legacy-primary-hover) aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-(--legacy-primary-hover)"
 						>
 							{isCopyingLink ? (
 								<Icon name="check-circle" height={14} width={14} className="shrink-0" />
@@ -293,7 +293,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 							}}
 							hideOnClick={false}
 							disabled={isTogglingVisibility || isUpdatingTitle || isDeleting || isRestoring}
-							className="flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden border-b border-(--legacy-form-control-border) px-3 py-2 text-ellipsis whitespace-nowrap cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--legacy-primary-hover) focus-visible:bg-(--legacy-primary-hover) aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-(--legacy-primary-hover)"
+							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-(--legacy-form-control-border) px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--legacy-primary-hover) focus-visible:bg-(--legacy-primary-hover) aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-(--legacy-primary-hover)"
 						>
 							{isTogglingVisibility ? (
 								<LoadingSpinner size={14} />
@@ -309,7 +309,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 							}}
 							disabled={isUpdatingTitle || isDeleting || isRestoring || isTogglingVisibility}
 							data-deleting={isDeleting}
-							className="flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden border-b border-(--legacy-form-control-border) px-3 py-2 text-ellipsis whitespace-nowrap cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-red-500/10 hover:text-(--error) focus-visible:bg-red-500/10 focus-visible:text-(--error) data-active-item:bg-red-500/10 data-active-item:text-(--error) data-[deleting=true]:bg-red-500/10 data-[deleting=true]:text-(--error)"
+							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-(--legacy-form-control-border) px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-red-500/10 hover:text-(--error) focus-visible:bg-red-500/10 focus-visible:text-(--error) data-active-item:bg-red-500/10 data-active-item:text-(--error) data-[deleting=true]:bg-red-500/10 data-[deleting=true]:text-(--error)"
 						>
 							{isDeleting ? (
 								<LoadingSpinner size={14} />

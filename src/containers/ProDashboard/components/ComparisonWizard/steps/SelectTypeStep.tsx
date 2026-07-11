@@ -51,7 +51,7 @@ export function SelectTypeStep() {
 							}`}
 						>
 							<div
-								className={`flex h-16 w-16 items-center justify-center rounded-2xl transition-colors ${
+								className={`flex size-16 items-center justify-center rounded-2xl transition-colors ${
 									isSelected
 										? 'bg-(--legacy-primary)/15 text-(--legacy-primary)'
 										: 'bg-(--cards-bg-alt) text-(--legacy-text-secondary)'

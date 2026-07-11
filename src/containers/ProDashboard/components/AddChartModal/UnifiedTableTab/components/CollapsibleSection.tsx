@@ -26,7 +26,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({ title, b
 					)}
 					<h3 className="text-sm font-semibold text-(--legacy-text-primary)">{title}</h3>
 					{badge !== undefined ? (
-						<span className="rounded bg-(--legacy-primary)/10 px-1.5 py-0.5 text-[10px] font-medium text-(--legacy-primary)">
+						<span className="rounded-sm bg-(--legacy-primary)/10 px-1.5 py-0.5 text-[10px] font-medium text-(--legacy-primary)">
 							{badge}
 						</span>
 					) : null}

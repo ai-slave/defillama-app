@@ -10,7 +10,7 @@ interface MoveToProjectMenuItemProps {
 }
 
 const MENU_ITEM_CLASS =
-	'flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden px-3 py-2 text-ellipsis whitespace-nowrap cv-auto-37 hover:bg-(--legacy-primary-hover) focus-visible:bg-(--legacy-primary-hover) data-active-item:bg-(--legacy-primary-hover)'
+	'flex shrink-0 cursor-pointer items-center gap-2 truncate px-3 py-2 cv-auto-37 hover:bg-(--legacy-primary-hover) focus-visible:bg-(--legacy-primary-hover) data-active-item:bg-(--legacy-primary-hover)'
 const PARENT_ITEM_CLASS = `${MENU_ITEM_CLASS} border-b border-(--legacy-form-control-border) first-of-type:rounded-t-md last-of-type:rounded-b-md aria-disabled:cursor-not-allowed aria-disabled:opacity-60`
 
 export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: MoveToProjectMenuItemProps) {

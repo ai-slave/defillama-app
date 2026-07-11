@@ -163,7 +163,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 									value={email}
 									onChange={onEmailChange}
 									placeholder="you@example.com"
-									className="h-10 min-w-0 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-bg-input) px-3 text-sm text-(--legacy-text-primary) outline-none focus-visible:border-(--sub-brand-primary) @sm:w-56"
+									className="h-10 min-w-0 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-bg-input) px-3 text-sm text-(--legacy-text-primary) outline-hidden focus-visible:border-(--sub-brand-primary) @sm:w-56"
 								/>
 								<button
 									type="submit"
@@ -207,7 +207,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 							value={email}
 							onChange={onEmailChange}
 							placeholder="you@example.com"
-							className="rounded-lg border border-(--sub-border-slate-100) bg-(--legacy-bg-input) px-3 py-2 text-sm text-(--sub-ink-primary) outline-none focus-visible:border-(--sub-brand-primary) dark:border-(--sub-border-strong) dark:text-white"
+							className="rounded-lg border border-(--sub-border-slate-100) bg-(--legacy-bg-input) px-3 py-2 text-sm text-(--sub-ink-primary) outline-hidden focus-visible:border-(--sub-brand-primary) dark:border-(--sub-border-strong) dark:text-white"
 						/>
 					</label>
 

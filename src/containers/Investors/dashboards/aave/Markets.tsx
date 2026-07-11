@@ -135,14 +135,14 @@ function ReservesTable({ data }: { data: FlatReserve[] }) {
 						<button
 							onClick={() => setPage((p) => p - 1)}
 							disabled={page === 0}
-							className="rounded px-2 py-1 transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30"
+							className="rounded-sm px-2 py-1 transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30"
 						>
 							Prev
 						</button>
 						<button
 							onClick={() => setPage((p) => p + 1)}
 							disabled={page >= totalPages - 1}
-							className="rounded px-2 py-1 transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30"
+							className="rounded-sm px-2 py-1 transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30"
 						>
 							Next
 						</button>

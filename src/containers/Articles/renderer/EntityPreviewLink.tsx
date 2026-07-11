@@ -104,8 +104,8 @@ function PreviewBody({
 	if (loading && !preview) {
 		return (
 			<span className="block px-3 pb-3">
-				<span className="block h-3 w-2/3 animate-pulse rounded bg-(--legacy-cards-border)" />
-				<span className="mt-2 block h-3 w-1/2 animate-pulse rounded bg-(--legacy-cards-border)" />
+				<span className="block h-3 w-2/3 animate-pulse rounded-sm bg-(--legacy-cards-border)" />
+				<span className="mt-2 block h-3 w-1/2 animate-pulse rounded-sm bg-(--legacy-cards-border)" />
 			</span>
 		)
 	}
@@ -144,7 +144,7 @@ function PreviewBody({
 							{preview.chains.slice(0, 6).map((c) => (
 								<span
 									key={c}
-									className="rounded border border-(--legacy-cards-border) px-1.5 py-px text-[9px] text-(--legacy-text-tertiary)"
+									className="rounded-sm border border-(--legacy-cards-border) px-1.5 py-px text-[9px] text-(--legacy-text-tertiary)"
 								>
 									{c}
 								</span>
@@ -264,9 +264,9 @@ function PreviewBody({
 								<span>Clean assets {clean}</span>
 								<span className="tabular-nums">{(cleanRatio * 100).toFixed(0)}%</span>
 							</span>
-							<span className="block h-1 overflow-hidden rounded bg-(--legacy-cards-border)">
+							<span className="block h-1 overflow-hidden rounded-sm bg-(--legacy-cards-border)">
 								<span
-									className="block h-full rounded bg-(--legacy-link-text)"
+									className="block h-full rounded-sm bg-(--legacy-link-text)"
 									style={{ width: `${cleanRatio * 100}%` }}
 								/>
 							</span>
@@ -304,7 +304,7 @@ function PreviewBody({
 							{preview.chains.slice(0, 6).map((c) => (
 								<span
 									key={c}
-									className="rounded border border-(--legacy-cards-border) px-1.5 py-px text-[9px] text-(--legacy-text-tertiary)"
+									className="rounded-sm border border-(--legacy-cards-border) px-1.5 py-px text-[9px] text-(--legacy-text-tertiary)"
 								>
 									{c}
 								</span>
@@ -366,7 +366,7 @@ function PreviewBody({
 							{preview.chains.slice(0, 6).map((c) => (
 								<span
 									key={c}
-									className="rounded border border-(--legacy-cards-border) px-1.5 py-px text-[9px] text-(--legacy-text-tertiary)"
+									className="rounded-sm border border-(--legacy-cards-border) px-1.5 py-px text-[9px] text-(--legacy-text-tertiary)"
 								>
 									{c}
 								</span>
@@ -441,7 +441,7 @@ export function EntityPreviewLink({
 				portal
 				gutter={8}
 				unmountOnHide
-				className="article-entity-popover z-50 w-80 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-xl outline-none"
+				className="article-entity-popover z-50 w-80 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-xl outline-hidden"
 			>
 				<div className="flex items-center gap-3 px-3 pt-3 pb-2">
 					<span className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-(--legacy-cards-border) bg-(--legacy-app-bg)">

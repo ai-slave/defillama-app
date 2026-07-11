@@ -735,7 +735,7 @@ export function MetricSentenceBuilder({
 							onClick={() => onChartTypeChange('sparkline')}
 							aria-pressed={chartType === 'sparkline'}
 							title="Line chart"
-							className={`flex flex-1 items-center justify-center gap-1 rounded px-2 py-1 text-[11px] font-medium transition-colors sm:text-xs ${
+							className={`flex flex-1 items-center justify-center gap-1 rounded-sm px-2 py-1 text-[11px] font-medium transition-colors sm:text-xs ${
 								chartType === 'sparkline'
 									? 'bg-(--legacy-primary) text-white'
 									: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
@@ -749,7 +749,7 @@ export function MetricSentenceBuilder({
 							onClick={() => onChartTypeChange('bar')}
 							aria-pressed={chartType === 'bar'}
 							title="Bar chart"
-							className={`flex flex-1 items-center justify-center gap-1 rounded px-2 py-1 text-[11px] font-medium transition-colors sm:text-xs ${
+							className={`flex flex-1 items-center justify-center gap-1 rounded-sm px-2 py-1 text-[11px] font-medium transition-colors sm:text-xs ${
 								chartType === 'bar'
 									? 'bg-(--legacy-primary) text-white'
 									: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
@@ -763,7 +763,7 @@ export function MetricSentenceBuilder({
 							onClick={() => onChartTypeChange('none')}
 							aria-pressed={chartType === 'none'}
 							title="No chart"
-							className={`flex flex-1 items-center justify-center gap-1 rounded px-2 py-1 text-[11px] font-medium transition-colors sm:text-xs ${
+							className={`flex flex-1 items-center justify-center gap-1 rounded-sm px-2 py-1 text-[11px] font-medium transition-colors sm:text-xs ${
 								chartType === 'none'
 									? 'bg-(--legacy-primary) text-white'
 									: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'

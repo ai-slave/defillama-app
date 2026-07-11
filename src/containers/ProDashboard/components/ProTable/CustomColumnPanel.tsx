@@ -462,7 +462,7 @@ export function CustomColumnPanel({
 											onPointerEnter={() => setAutocompleteIndex(index)}
 										>
 											<span
-												className={`h-1 w-1 shrink-0 rounded-full ${
+												className={`size-1 shrink-0 rounded-full ${
 													suggestion.type === 'variable'
 														? 'bg-pro-blue-400'
 														: suggestion.type === 'function'
@@ -499,7 +499,7 @@ export function CustomColumnPanel({
 						{/* Live Preview */}
 						{newColumnExpression ? (
 							<div
-								className={`mt-2 rounded border p-2 text-xs ${
+								className={`mt-2 rounded-sm border p-2 text-xs ${
 									liveValidation.isValid
 										? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
 										: 'border-(--error) bg-[oklch(0.94_0.01_71.72_/0.08)]'

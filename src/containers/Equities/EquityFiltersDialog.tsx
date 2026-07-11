@@ -534,7 +534,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 							<button
 								type="button"
 								onClick={() => setSearch('')}
-								className="absolute top-0 right-2 bottom-0 my-auto flex size-5 items-center justify-center rounded text-tertiary hover:bg-hover-row hover:text-primary"
+								className="absolute top-0 right-2 bottom-0 my-auto flex size-5 items-center justify-center rounded-sm text-tertiary hover:bg-hover-row hover:text-primary"
 							>
 								<Icon name="x" className="size-3.5" />
 								<span className="sr-only">Clear search</span>

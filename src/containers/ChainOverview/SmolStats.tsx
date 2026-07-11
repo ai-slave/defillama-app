@@ -24,7 +24,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 									Upcoming Unlocks
 								</Tooltip>
 								{props.unlocks.chart?.length > 0 ? (
-									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-secondary">
+									<p className="truncate text-secondary">
 										{formattedNum(props.unlocks.total14d, true)} <span className="text-tertiary">over 14 days</span>
 									</p>
 								) : null}
@@ -46,7 +46,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 									DEXs Volume
 								</Tooltip>
 								{props.dexs.chart?.length > 0 ? (
-									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-secondary">
+									<p className="truncate text-secondary">
 										{formattedNum(props.dexs.total24h, true)} <span className="text-tertiary">24h</span>
 									</p>
 								) : null}
@@ -65,7 +65,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 									ETF Inflows
 								</Tooltip>
 								{props.etfs?.length > 0 ? (
-									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-secondary">
+									<p className="truncate text-secondary">
 										{formattedNum(props.etfs[props.etfs.length - 1][1], true)}{' '}
 										<span className="text-tertiary">24h</span>
 									</p>
@@ -85,7 +85,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 									DAT Inflows
 								</Tooltip>
 								{props.datInflows.chart?.length > 0 ? (
-									<p className="overflow-hidden text-ellipsis whitespace-nowrap text-secondary">
+									<p className="truncate text-secondary">
 										{formattedNum(props.datInflows.total30d, true)} <span className="text-tertiary">30d</span>
 									</p>
 								) : null}
@@ -110,7 +110,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 						DEXs Volume
 					</Tooltip>
 					{props.dexs.chart?.length > 0 ? (
-						<p className="overflow-hidden text-ellipsis whitespace-nowrap text-secondary">
+						<p className="truncate text-secondary">
 							{formattedNum(props.dexs.total24h, true)} <span className="text-tertiary">24h</span>
 						</p>
 					) : null}
@@ -152,15 +152,9 @@ export const SmolStats = (props: IChainOverviewData) => {
 					</Tooltip>
 					{props.stablecoins.mcap != null ? (
 						<>
-							<p className="overflow-hidden text-ellipsis whitespace-nowrap text-secondary">
-								{formattedNum(props.stablecoins.mcap, true)}
-							</p>
+							<p className="truncate text-secondary">{formattedNum(props.stablecoins.mcap, true)}</p>
 							<p className="flex items-center gap-1 text-xs">
-								<span
-									className={`overflow-hidden text-ellipsis whitespace-nowrap ${
-										+props.stablecoins.change7d >= 0 ? 'text-data-up' : 'text-data-down'
-									}`}
-								>
+								<span className={`truncate ${+props.stablecoins.change7d >= 0 ? 'text-data-up' : 'text-data-down'}`}>
 									{`${+props.stablecoins.change7d >= 0 ? '+' : ''}${props.stablecoins.change7d}%`}
 								</span>
 								<span className="text-tertiary">7d</span>

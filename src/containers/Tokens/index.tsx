@@ -96,7 +96,7 @@ function TokenCell({ row }: { row: { original: TokensTableRow } }) {
 	const { name, symbol, logo, href, id } = row.original
 	const label = (
 		<span className="min-w-0">
-			<span className="block overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap">{name}</span>
+			<span className="block truncate text-sm font-medium">{name}</span>
 			<span className="block label-sm text-secondary">{symbol}</span>
 		</span>
 	)
@@ -207,7 +207,7 @@ function RightsPie({ rights, fullRightsHref }: { rights: TokensRightsSummary | n
 		<Hovercard
 			content={<RightsPopover rights={rights} fullRightsHref={fullRightsHref} />}
 			placement="left"
-			className="!inline-flex w-fit"
+			className="inline-flex! w-fit"
 		>
 			<TokenRightsPieChart segments={getRightsPieSegments(rights)} showLabels={false} className="size-7 shrink-0" />
 		</Hovercard>
@@ -221,8 +221,8 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		cell: ({ row }) => <span className="text-secondary">{row.original.rowNumber}</span>,
 		meta: {
 			headerClassName:
-				'sticky left-0 z-20 w-[var(--tokens-rank-column-width)] min-w-[var(--tokens-rank-column-width)] bg-surface !px-1',
-			cellClassName: 'sticky left-0 z-10 bg-surface !px-1',
+				'sticky left-0 z-20 w-(--tokens-rank-column-width) min-w-(--tokens-rank-column-width) bg-surface px-1!',
+			cellClassName: 'sticky left-0 z-10 bg-surface px-1!',
 			align: 'center',
 			headerHelperText: 'Row number in the current sorted and filtered results'
 		}
@@ -232,8 +232,8 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		header: 'Coin',
 		cell: ({ row }) => <TokenCell row={row} />,
 		meta: {
-			headerClassName: 'sticky left-[var(--tokens-rank-column-width)] z-20 w-[184px] min-w-[184px] bg-surface !pl-1',
-			cellClassName: 'sticky left-[var(--tokens-rank-column-width)] z-10 bg-surface !pl-1',
+			headerClassName: 'sticky left-(--tokens-rank-column-width) z-20 w-[184px] min-w-[184px] bg-surface pl-1!',
+			cellClassName: 'sticky left-(--tokens-rank-column-width) z-10 bg-surface pl-1!',
 			headerHelperText: 'Token name, symbol, and token page link when available'
 		}
 	}),
@@ -567,7 +567,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 					table={table}
 					pageSizeOptions={PAGE_SIZE_OPTIONS}
 					style={tableStyle}
-					tableClassName="min-w-[var(--tokens-table-min-width)]"
+					tableClassName="min-w-(--tokens-table-min-width)"
 					stickyHeader
 					interactionDisabled={serverTable.rowsQuery.isFetching}
 					shell="none"

@@ -380,7 +380,7 @@ const columns = [
 		cell: ({ getValue }) => {
 			const v = getValue()
 			return (
-				<Tooltip className="inline overflow-hidden text-ellipsis whitespace-nowrap" content={v}>
+				<Tooltip className="inline truncate" content={v}>
 					{v}
 				</Tooltip>
 			)

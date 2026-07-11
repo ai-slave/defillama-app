@@ -82,7 +82,7 @@ export default function VerticalIntegration() {
 								</div>
 							))}
 						</div>
-						<div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-(--legacy-cards-bg) via-transparent to-transparent" />
+						<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--legacy-cards-bg) via-transparent to-transparent" />
 					</div>
 					<div className="absolute inset-0 flex items-center justify-center">
 						<span className="rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-5 py-2.5 text-sm font-semibold tracking-wide text-(--legacy-text-secondary) shadow-lg">

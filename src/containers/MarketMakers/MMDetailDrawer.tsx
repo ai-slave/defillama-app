@@ -221,11 +221,11 @@ function DrawerBody({
 	if (detail.isPending || breakdown.isPending || performance.isPending) {
 		return (
 			<div className="flex flex-col gap-6 p-4">
-				<div className="h-6 w-2/3 animate-pulse rounded bg-surface-elevated-2" />
-				<div className="h-24 w-full animate-pulse rounded bg-surface-elevated-2" />
+				<div className="h-6 w-2/3 animate-pulse rounded-sm bg-surface-elevated-2" />
+				<div className="h-24 w-full animate-pulse rounded-sm bg-surface-elevated-2" />
 				<BreakdownTablesSkeleton />
-				<div className="h-64 w-full animate-pulse rounded bg-surface-elevated-2" />
-				<div className="h-40 w-full animate-pulse rounded bg-surface-elevated-2" />
+				<div className="h-64 w-full animate-pulse rounded-sm bg-surface-elevated-2" />
+				<div className="h-40 w-full animate-pulse rounded-sm bg-surface-elevated-2" />
 			</div>
 		)
 	}

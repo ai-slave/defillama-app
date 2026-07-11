@@ -302,7 +302,7 @@ export function LlamaAIFloatingButton() {
 								</button>
 							</div>
 							<p className="mt-2 text-xs text-[#999] dark:text-[#666]">
-								Press <kbd className="rounded bg-[#eee] px-1 font-mono dark:bg-[#333]">Enter</kbd> to submit
+								Press <kbd className="rounded-sm bg-[#eee] px-1 font-mono dark:bg-[#333]">Enter</kbd> to submit
 							</p>
 						</form>
 					</div>

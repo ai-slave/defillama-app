@@ -254,14 +254,11 @@ const columns = [
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${value}`} />
 					{href ? (
-						<BasicLink
-							href={href}
-							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text) hover:underline"
-						>
+						<BasicLink href={href} className="truncate text-sm font-medium text-(--legacy-link-text) hover:underline">
 							{value}
 						</BasicLink>
 					) : (
-						<span className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap">{value}</span>
+						<span className="truncate text-sm font-medium">{value}</span>
 					)}
 				</span>
 			)

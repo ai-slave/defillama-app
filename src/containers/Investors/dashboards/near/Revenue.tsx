@@ -543,7 +543,7 @@ export default function Revenue() {
 							>
 								<summary className="flex cursor-pointer list-none items-start justify-between gap-4 p-5 text-sm font-medium text-(--legacy-text-primary) transition-colors hover:bg-(--sl-hover-bg)">
 									<span className="flex items-start gap-3">
-										<span className="flex size-6 shrink-0 items-center justify-center rounded bg-(--legacy-text-label) text-xs font-bold text-(--legacy-cards-bg)">
+										<span className="flex size-6 shrink-0 items-center justify-center rounded-sm bg-(--legacy-text-label) text-xs font-bold text-(--legacy-cards-bg)">
 											{idx + 1}
 										</span>
 										<span className="pt-0.5">{item.question}</span>

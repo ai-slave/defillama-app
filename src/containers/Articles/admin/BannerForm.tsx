@@ -333,7 +333,7 @@ export function BannerForm({ banner }: Props) {
 						>
 							<Ariakit.Select
 								aria-label="Banner section"
-								className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-(--legacy-app-bg) px-3 text-sm transition-colors focus-visible:border-(--legacy-link-text) focus-visible:outline-none data-[state=open]:border-(--legacy-link-text) ${
+								className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-(--legacy-app-bg) px-3 text-sm transition-colors focus-visible:border-(--legacy-link-text) focus-visible:outline-hidden data-[state=open]:border-(--legacy-link-text) ${
 									errors.section
 										? 'border-red-500/60 text-(--legacy-text-primary)'
 										: state.section
@@ -351,7 +351,7 @@ export function BannerForm({ banner }: Props) {
 								sameWidth
 								portal
 								unmountOnHide
-								className="z-[90] flex flex-col overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 text-sm shadow-xl outline-none"
+								className="z-[90] flex flex-col overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 text-sm shadow-xl outline-hidden"
 							>
 								{ARTICLE_SECTIONS.map((section) => (
 									<Ariakit.SelectItem
@@ -407,7 +407,7 @@ export function BannerForm({ banner }: Props) {
 							maxLength={TEXT_MAX}
 							rows={3}
 							placeholder="KATANA’S VKAT ARMORY REPRESENTS THE NEXT EVOLUTION OF VE-TOKENOMICS."
-							className="w-full resize-y rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
+							className="w-full resize-y rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--legacy-link-text)/60"
 						/>
 						{errors.text ? <p className="text-xs text-red-500">{errors.text}</p> : null}
 					</label>
@@ -423,7 +423,7 @@ export function BannerForm({ banner }: Props) {
 							onChange={(e) => update({ linkUrl: e.target.value })}
 							maxLength={LINK_URL_MAX}
 							placeholder="https://… or /research/…"
-							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
+							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--legacy-link-text)/60"
 						/>
 						{errors.linkUrl ? <p className="text-xs text-red-500">{errors.linkUrl}</p> : null}
 					</label>
@@ -440,7 +440,7 @@ export function BannerForm({ banner }: Props) {
 							onChange={(e) => update({ linkLabel: e.target.value })}
 							maxLength={LINK_LABEL_MAX}
 							placeholder="Read more"
-							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
+							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--legacy-link-text)/60"
 						/>
 					</label>
 				</Section>
@@ -474,7 +474,7 @@ export function BannerForm({ banner }: Props) {
 							onChange={(e) => update({ imageAlt: e.target.value })}
 							maxLength={IMAGE_ALT_MAX}
 							placeholder="e.g. State of DeFi banner — get in touch"
-							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
+							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--legacy-link-text)/60"
 						/>
 					</label>
 
@@ -489,7 +489,7 @@ export function BannerForm({ banner }: Props) {
 							onChange={(e) => update({ linkUrl: e.target.value })}
 							maxLength={LINK_URL_MAX}
 							placeholder="https://… or /research/…"
-							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) transition-colors outline-none focus:border-(--legacy-link-text)/60"
+							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--legacy-link-text)/60"
 						/>
 						{errors.linkUrl ? <p className="text-xs text-red-500">{errors.linkUrl}</p> : null}
 					</label>

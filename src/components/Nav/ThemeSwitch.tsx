@@ -15,7 +15,7 @@ export function ThemeSwitch({ className, variant = 'default', size = 'md' }: The
 	const [, toggleDarkMode] = useDarkModeManager()
 
 	if (variant === 'pill') {
-		const controlSize = size === 'sm' ? 'h-7 w-7' : 'h-9 w-9'
+		const controlSize = size === 'sm' ? 'size-7' : 'size-9'
 		const iconSize = size === 'sm' ? 16 : 24
 
 		return (

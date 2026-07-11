@@ -318,7 +318,7 @@ export default function Trades() {
 				<select
 					value={coin}
 					onChange={(e) => setCoin(e.target.value)}
-					className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-2 text-sm font-medium text-(--legacy-text-primary) outline-none"
+					className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-2 text-sm font-medium text-(--legacy-text-primary) outline-hidden"
 				>
 					{coinOptions.length > 0
 						? coinOptions.map((value) => (
@@ -336,7 +336,7 @@ export default function Trades() {
 				<select
 					value={nSigFigs}
 					onChange={(e) => setNSigFigs(Number(e.target.value))}
-					className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-2 text-sm font-medium text-(--legacy-text-primary) outline-none"
+					className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-2 text-sm font-medium text-(--legacy-text-primary) outline-hidden"
 				>
 					{[2, 3, 4, 5].map((value) => (
 						<option key={value} value={value}>
@@ -346,7 +346,7 @@ export default function Trades() {
 				</select>
 
 				<div className="ml-auto flex items-center gap-1.5">
-					<div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
+					<div className={`size-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
 					<span className="text-xs text-(--legacy-text-label)">{isConnected ? 'Connected' : 'Reconnecting...'}</span>
 				</div>
 			</div>

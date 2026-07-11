@@ -117,7 +117,7 @@ function TableRow<T extends RowData>({
 							key={cell.id}
 							data-lighter={stripedBg && i % 2 === 0}
 							data-chainpage={isChainPage}
-							className={`overflow-hidden border-t border-r border-subtle p-3 text-ellipsis whitespace-nowrap ${
+							className={`truncate border-t border-r border-subtle p-3 ${
 								compact ? 'border-r-0 px-5 py-2' : ''
 							} ${cell.column.columnDef.meta?.cellClassName ?? ''}`}
 							style={{
@@ -495,7 +495,7 @@ export function VirtualTable<T extends RowData>({
 									borderRightColor: isSticky ? 'transparent' : undefined,
 									boxShadow: isSticky && !compact ? '-1px 0 0 0 var(--border-subtle) inset' : undefined
 								}}
-								className={`overflow-hidden border-r border-subtle p-3 text-ellipsis whitespace-nowrap last:border-r-0 ${
+								className={`truncate border-r border-subtle p-3 last:border-r-0 ${
 									rowSpannedHeader || headerGroup.depth === 0 || isGroupedChildHeader ? 'border-t' : ''
 								} ${rowSpannedHeader || isLastHeaderRow ? 'border-b' : ''} ${
 									compact ? 'h-10 border-r-0 px-5 py-2' : ''

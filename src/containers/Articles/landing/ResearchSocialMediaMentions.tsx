@@ -131,8 +131,8 @@ const TweetWidget: React.FC<{ tweetId: string; mobile?: boolean }> = ({ tweetId,
 		? 'h-[356px] w-full min-w-0 overflow-hidden rounded-[4px] bg-white'
 		: 'h-[215px] w-[215px] min-w-[215px] overflow-hidden rounded-[4px] bg-white'
 	const innerClass = mobile
-		? 'h-full w-full overflow-hidden [&_.twitter-tweet]:!m-0 [&_iframe]:!m-0'
-		: 'h-[320px] w-[320px] origin-top-left overflow-hidden [&_.twitter-tweet]:!m-0 [&_.twitter-tweet-rendered]:!m-0 [&_iframe]:!m-0'
+		? 'h-full w-full overflow-hidden [&_.twitter-tweet]:m-0! [&_iframe]:m-0!'
+		: 'h-[320px] w-[320px] origin-top-left overflow-hidden [&_.twitter-tweet]:m-0! [&_.twitter-tweet-rendered]:m-0! [&_iframe]:m-0!'
 
 	return (
 		<div className={wrapperClass}>

@@ -41,12 +41,12 @@ export function BridgeAddressesTable({ data }: { data: BridgeAddressesTableRow[]
 					const truncatedValue = truncateAddress(formattedValue)
 
 					if (!explorer) {
-						return <span className="overflow-hidden text-ellipsis whitespace-nowrap">{truncatedValue}</span>
+						return <span className="truncate">{truncatedValue}</span>
 					}
 
 					return (
 						<a href={explorer.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-							<span className="overflow-hidden text-ellipsis whitespace-nowrap">{truncatedValue}</span>
+							<span className="truncate">{truncatedValue}</span>
 							<Icon name="external-link" height={10} width={10} />
 						</a>
 					)

@@ -114,7 +114,7 @@ export function AriakitMultiSelect({
 											}`}
 										>
 											<div
-												className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm border transition-colors ${
+												className={`flex size-3.5 shrink-0 items-center justify-center rounded-sm border transition-colors ${
 													isActive ? 'border-(--legacy-primary) bg-(--legacy-primary)' : 'border pro-border'
 												}`}
 											>

@@ -87,7 +87,7 @@ const FeedbackDialog = memo(function FeedbackDialog({
 			>
 				<div className="mb-4 flex items-center justify-between">
 					<Ariakit.DialogHeading className="text-lg font-semibold">Provide Feedback</Ariakit.DialogHeading>
-					<Ariakit.DialogDismiss className="-m-2 rounded p-2 hover:bg-[#e6e6e6] dark:hover:bg-[#222324]">
+					<Ariakit.DialogDismiss className="-m-2 rounded-sm p-2 hover:bg-[#e6e6e6] dark:hover:bg-[#222324]">
 						<Icon name="x" height={16} width={16} />
 					</Ariakit.DialogDismiss>
 				</div>

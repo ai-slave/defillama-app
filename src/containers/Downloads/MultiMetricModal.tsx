@@ -782,7 +782,7 @@ function ParamPickerEmpty({
 
 				<div className="w-full">
 					<Ariakit.PopoverProvider store={popoverStore}>
-						<Ariakit.PopoverDisclosure className="group flex w-full items-center justify-between gap-3 rounded-lg border border-medium bg-(--bg-primary) px-3.5 py-2.5 text-sm transition-colors hover:border-(--legacy-primary)/50 focus:border-(--legacy-primary) focus:ring-2 focus:ring-(--legacy-primary)/20 focus:outline-none">
+						<Ariakit.PopoverDisclosure className="group flex w-full items-center justify-between gap-3 rounded-lg border border-medium bg-(--bg-primary) px-3.5 py-2.5 text-sm transition-colors hover:border-(--legacy-primary)/50 focus:border-(--legacy-primary) focus:ring-2 focus:ring-(--legacy-primary)/20 focus:outline-hidden">
 							<span className="flex items-center gap-2 text-(--legacy-text-tertiary)">
 								<Icon name="search" className="size-4" />
 								Search a {labels.singular}
@@ -804,7 +804,7 @@ function ParamPickerEmpty({
 									value={search}
 									onChange={(e) => setSearch(e.currentTarget.value)}
 									placeholder={labels.search}
-									className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-xs outline-none placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary)"
+									className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-xs outline-hidden placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary)"
 									autoFocus
 								/>
 							</div>
@@ -1132,7 +1132,7 @@ function MetricsSidebar({
 								onClick={() => onDownloadSingle(metric.slug)}
 								disabled={!isReady || isPreview}
 								title={isPreview ? 'Subscribe to download' : 'Download this CSV'}
-								className="shrink-0 rounded p-1 text-(--legacy-text-tertiary) transition-colors hover:bg-(--legacy-bg-main) hover:text-(--legacy-primary) disabled:cursor-not-allowed disabled:opacity-30"
+								className="shrink-0 rounded-sm p-1 text-(--legacy-text-tertiary) transition-colors hover:bg-(--legacy-bg-main) hover:text-(--legacy-primary) disabled:cursor-not-allowed disabled:opacity-30"
 							>
 								<Icon name="download-cloud" className="size-3.5" />
 							</button>
@@ -1140,7 +1140,7 @@ function MetricsSidebar({
 								type="button"
 								onClick={() => onRemove(metric.slug)}
 								title="Remove"
-								className="shrink-0 rounded p-1 text-(--legacy-text-tertiary) transition-colors hover:bg-(--legacy-bg-main) hover:text-red-500"
+								className="shrink-0 rounded-sm p-1 text-(--legacy-text-tertiary) transition-colors hover:bg-(--legacy-bg-main) hover:text-red-500"
 							>
 								<Icon name="x" className="size-3.5" />
 							</button>
@@ -1240,7 +1240,7 @@ function ParamPickerPopover({
 						value={search}
 						onChange={(e) => setSearch(e.currentTarget.value)}
 						placeholder={labels.search}
-						className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-xs outline-none placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary)"
+						className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-xs outline-hidden placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary)"
 						autoFocus
 					/>
 				</div>
@@ -1331,7 +1331,7 @@ function MetricMultiPickerPopover({
 				<Icon name="chevron-down" className="size-3.5" />
 				<span>{triggerLabel}</span>
 				{selected.length > 0 ? (
-					<span className="rounded bg-(--legacy-primary) px-1 text-[10px] font-semibold text-white">
+					<span className="rounded-sm bg-(--legacy-primary) px-1 text-[10px] font-semibold text-white">
 						{selected.length}
 					</span>
 				) : null}
@@ -1359,7 +1359,7 @@ function MetricMultiPickerPopover({
 						value={search}
 						onChange={(e) => setSearch(e.currentTarget.value)}
 						placeholder="Search metrics..."
-						className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-xs outline-none placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary)"
+						className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-xs outline-hidden placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary)"
 						autoFocus
 					/>
 				</div>
@@ -1387,7 +1387,7 @@ function MetricMultiPickerPopover({
 											}`}
 										>
 											<span
-												className={`flex size-4 shrink-0 items-center justify-center rounded border transition-colors ${
+												className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
 													isSelected
 														? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
 														: 'border-(--legacy-divider)'

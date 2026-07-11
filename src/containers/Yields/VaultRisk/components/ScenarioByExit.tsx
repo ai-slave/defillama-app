@@ -120,7 +120,7 @@ function ScenarioRow({
 							}}
 							aria-expanded={selected}
 							aria-controls={detailId}
-							className="flex w-full items-center gap-2 rounded text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--legacy-primary)"
+							className="flex w-full items-center gap-2 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--legacy-primary)"
 						>
 							{mech}
 						</button>
@@ -232,7 +232,7 @@ function SortHeader({
 			<button
 				type="button"
 				onClick={() => onSort(k)}
-				className={`inline-flex items-center gap-1 rounded transition-colors hover:text-(--legacy-text-primary) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--legacy-primary) ${
+				className={`inline-flex items-center gap-1 rounded-sm transition-colors hover:text-(--legacy-text-primary) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--legacy-primary) ${
 					active ? 'text-(--legacy-text-primary)' : ''
 				}`}
 			>

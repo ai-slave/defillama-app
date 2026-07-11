@@ -26,7 +26,7 @@ export function MetricCard({ metric, isSelected, onToggle, disabled, itemLabel =
 			}`}
 		>
 			<div
-				className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded border transition-colors ${
+				className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-sm border transition-colors ${
 					isSelected
 						? 'border-(--legacy-primary) bg-(--legacy-primary)'
 						: 'border-(--legacy-form-control-border) bg-(--legacy-bg-input)'

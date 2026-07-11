@@ -240,7 +240,7 @@ export function SelectItemsStep() {
 						)}
 					</div>
 					{state.selectedItems.length > 2 ? (
-						<div className="pointer-events-none absolute top-0 right-0 h-full w-8 bg-gradient-to-l from-(--legacy-cards-bg) to-transparent" />
+						<div className="pointer-events-none absolute top-0 right-0 h-full w-8 bg-linear-to-l from-(--legacy-cards-bg) to-transparent" />
 					) : null}
 				</div>
 			</div>
@@ -323,7 +323,7 @@ export function SelectItemsStep() {
 										}}
 									>
 										<div
-											className={`flex size-4 shrink-0 items-center justify-center rounded border transition-colors ${
+											className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
 												isSelected
 													? 'border-(--legacy-primary) bg-(--legacy-primary)'
 													: 'border-(--legacy-form-control-border) bg-(--legacy-bg-input)'

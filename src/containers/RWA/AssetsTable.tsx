@@ -253,7 +253,7 @@ function createColumns(includeRwaPerps: boolean, flowSummary: IRWAFlowSummaryRes
 								<>
 									<BasicLink
 										href={info.row.original.detailHref}
-										className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
+										className="truncate label-md text-link hover:underline"
 									>
 										{info.row.original.assetName}
 									</BasicLink>
@@ -261,10 +261,7 @@ function createColumns(includeRwaPerps: boolean, flowSummary: IRWAFlowSummaryRes
 								</>
 							) : (
 								<>
-									<span
-										className="overflow-hidden label-md text-ellipsis whitespace-nowrap"
-										title={info.row.original.assetName}
-									>
+									<span className="truncate label-md" title={info.row.original.assetName}>
 										{info.row.original.assetName}
 									</span>
 								</>
@@ -315,7 +312,7 @@ function createColumns(includeRwaPerps: boolean, flowSummary: IRWAFlowSummaryRes
 			header: 'Asset Group',
 			cell: (info) => {
 				const value = info.getValue()
-				return <span className="overflow-hidden text-ellipsis whitespace-nowrap">{value}</span>
+				return <span className="truncate">{value}</span>
 			},
 			enableSorting: false,
 			meta: {
@@ -401,20 +398,14 @@ function createColumns(includeRwaPerps: boolean, flowSummary: IRWAFlowSummaryRes
 
 				if (platforms.length === 1 && platforms[0] !== UNKNOWN_PLATFORM) {
 					return (
-						<BasicLink
-							href={`/rwa/platform/${rwaSlug(platforms[0])}`}
-							className="overflow-hidden text-ellipsis whitespace-nowrap text-link hover:underline"
-						>
+						<BasicLink href={`/rwa/platform/${rwaSlug(platforms[0])}`} className="truncate text-link hover:underline">
 							{value}
 						</BasicLink>
 					)
 				}
 
 				return (
-					<Tooltip
-						content={value}
-						className="inline-block max-w-full justify-end overflow-hidden text-ellipsis whitespace-nowrap"
-					>
+					<Tooltip content={value} className="inline-block max-w-full justify-end truncate">
 						{value}
 					</Tooltip>
 				)
@@ -452,14 +443,14 @@ function createColumns(includeRwaPerps: boolean, flowSummary: IRWAFlowSummaryRes
 									})}
 								</span>
 							}
-							className="inline-block max-w-full justify-end overflow-hidden text-ellipsis whitespace-nowrap"
+							className="inline-block max-w-full justify-end truncate"
 						>
 							{value.join(', ')}
 						</Tooltip>
 					)
 				}
 				return (
-					<span title={value.join(', ')} className="overflow-hidden text-ellipsis whitespace-nowrap">
+					<span title={value.join(', ')} className="truncate">
 						{value.join(', ')}
 					</span>
 				)
@@ -483,16 +474,13 @@ function createColumns(includeRwaPerps: boolean, flowSummary: IRWAFlowSummaryRes
 					const description = definitions.assetClass.values?.[ac]
 					if (description) {
 						return (
-							<Tooltip
-								content={description}
-								className="inline-block max-w-full justify-end overflow-hidden text-ellipsis whitespace-nowrap"
-							>
+							<Tooltip content={description} className="inline-block max-w-full justify-end truncate">
 								{ac}
 							</Tooltip>
 						)
 					}
 					return (
-						<span className="inline-block max-w-full overflow-hidden text-ellipsis whitespace-nowrap" title={ac}>
+						<span className="inline-block max-w-full truncate" title={ac}>
 							{ac}
 						</span>
 					)
@@ -511,10 +499,7 @@ function createColumns(includeRwaPerps: boolean, flowSummary: IRWAFlowSummaryRes
 					</span>
 				)
 				return (
-					<Hovercard
-						content={tooltipContent}
-						className="inline-block max-w-full justify-end overflow-hidden text-ellipsis whitespace-nowrap"
-					>
+					<Hovercard content={tooltipContent} className="inline-block max-w-full justify-end truncate">
 						{assetClasses.join(', ')}
 					</Hovercard>
 				)
@@ -551,7 +536,7 @@ function createColumns(includeRwaPerps: boolean, flowSummary: IRWAFlowSummaryRes
 				return (
 					<span
 						className={clsx(
-							'inline-block max-w-full overflow-hidden text-ellipsis whitespace-nowrap',
+							'inline-block max-w-full truncate',
 							value === 'Permissioned' && 'text-warning',
 							value === 'Permissionless' && 'text-data-up',
 							value === 'Non-transferable' && 'text-data-down',
@@ -577,16 +562,13 @@ function createColumns(includeRwaPerps: boolean, flowSummary: IRWAFlowSummaryRes
 				const tooltipContent = definitions.type.values?.[value]
 				if (tooltipContent) {
 					return (
-						<Tooltip
-							content={tooltipContent}
-							className="inline-block max-w-full justify-end overflow-hidden text-ellipsis whitespace-nowrap"
-						>
+						<Tooltip content={tooltipContent} className="inline-block max-w-full justify-end truncate">
 							{value}
 						</Tooltip>
 					)
 				}
 				return (
-					<span className="inline-block max-w-full overflow-hidden text-ellipsis whitespace-nowrap" title={value}>
+					<span className="inline-block max-w-full truncate" title={value}>
 						{value}
 					</span>
 				)
@@ -612,14 +594,14 @@ function createColumns(includeRwaPerps: boolean, flowSummary: IRWAFlowSummaryRes
 					return (
 						<Tooltip
 							content={tooltipContent}
-							className={`inline-block max-w-full justify-end overflow-hidden text-ellipsis whitespace-nowrap ${isTrueRWA ? 'text-data-up' : ''}`}
+							className={`inline-block max-w-full justify-end truncate ${isTrueRWA ? 'text-data-up' : ''}`}
 						>
 							{value}
 						</Tooltip>
 					)
 				}
 				return (
-					<span className="inline-block max-w-full overflow-hidden text-ellipsis whitespace-nowrap" title={value}>
+					<span className="inline-block max-w-full truncate" title={value}>
 						{value}
 					</span>
 				)
@@ -637,7 +619,7 @@ function createColumns(includeRwaPerps: boolean, flowSummary: IRWAFlowSummaryRes
 			cell: (info) => {
 				const value = info.getValue()
 				return (
-					<span title={value} className="overflow-hidden text-ellipsis whitespace-nowrap">
+					<span title={value} className="truncate">
 						{value}
 					</span>
 				)

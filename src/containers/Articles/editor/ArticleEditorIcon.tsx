@@ -1,4 +1,4 @@
-export function Icon({ name, className = 'h-4 w-4' }: { name: string; className?: string }) {
+export function Icon({ name, className = 'size-4' }: { name: string; className?: string }) {
 	const props = {
 		className,
 		viewBox: '0 0 24 24',

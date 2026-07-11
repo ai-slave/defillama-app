@@ -41,7 +41,7 @@ export function TeamInfoCard() {
 									if (e.key === 'Enter') void handleSave()
 									if (e.key === 'Escape') setIsEditing(false)
 								}}
-								className="w-40 rounded border border-(--sub-border-slate-100) bg-white px-2 py-1 text-xs text-(--sub-ink-primary) focus:border-(--sub-brand-primary) focus:outline-hidden dark:border-(--sub-border-strong) dark:bg-(--sub-surface-dark) dark:text-white"
+								className="w-40 rounded-sm border border-(--sub-border-slate-100) bg-white px-2 py-1 text-xs text-(--sub-ink-primary) focus:border-(--sub-brand-primary) focus:outline-hidden dark:border-(--sub-border-strong) dark:bg-(--sub-surface-dark) dark:text-white"
 								autoFocus
 							/>
 							<button

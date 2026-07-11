@@ -208,7 +208,7 @@ export function PlaceholderCard({
 			>
 				<span className="text-xs text-(--legacy-text-tertiary)">Awaiting data</span>
 				{note && (
-					<code className="rounded bg-(--legacy-app-bg) px-2 py-0.5 font-jetbrains text-[10px] text-(--legacy-text-disabled)">
+					<code className="rounded-sm bg-(--legacy-app-bg) px-2 py-0.5 font-jetbrains text-[10px] text-(--legacy-text-disabled)">
 						{note}
 					</code>
 				)}
@@ -276,7 +276,7 @@ export function SegToggle<T extends string>({
 					key={o.value}
 					type="button"
 					onClick={() => onChange(o.value)}
-					className={`rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
+					className={`rounded-sm px-2 py-0.5 text-[11px] font-medium transition-colors ${
 						value === o.value
 							? 'bg-(--sl-accent-muted) text-(--sl-accent)'
 							: 'text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'
@@ -439,7 +439,7 @@ export function ApiTable({ table, maxHeight }: { table: ApiTableData; maxHeight?
 					cols.map((c) => (
 						<div
 							key={`${i}-${c.key}`}
-							className={`overflow-hidden border-b border-(--legacy-divider) px-3 py-2.5 text-[13px] text-ellipsis whitespace-nowrap text-(--legacy-text-primary) ${
+							className={`truncate border-b border-(--legacy-divider) px-3 py-2.5 text-[13px] text-(--legacy-text-primary) ${
 								c.format && c.format !== 'text' ? 'font-jetbrains tabular-nums' : ''
 							} ${i % 2 === 1 ? 'bg-(--legacy-cards-bg)' : ''}`}
 							style={{ textAlign: c.align ?? 'left' }}

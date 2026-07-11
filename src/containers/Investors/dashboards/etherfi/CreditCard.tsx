@@ -39,7 +39,7 @@ function KpiSkeleton({ label }: { label: string }) {
 	return (
 		<div className="flex flex-col gap-1 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
 			<span className="text-xs font-medium tracking-wide text-(--legacy-text-label)">{label}</span>
-			<div className="h-8 w-24 animate-pulse rounded bg-(--legacy-text-disabled) opacity-20" />
+			<div className="h-8 w-24 animate-pulse rounded-sm bg-(--legacy-text-disabled) opacity-20" />
 		</div>
 	)
 }

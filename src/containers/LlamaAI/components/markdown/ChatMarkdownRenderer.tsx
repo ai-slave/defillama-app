@@ -380,7 +380,7 @@ function CodeBlock({ children, node: _node, className, ...props }: MarkdownPrePr
 				onClick={handleCopy}
 				aria-label={copied ? 'Copied' : 'Copy code'}
 				data-copied={copied || undefined}
-				className="absolute top-1.5 right-1.5 z-10 flex size-7 items-center justify-center rounded-md text-white/60 opacity-0 transition-[opacity,background-color,color] group-hover:opacity-100 hover:bg-white/10 hover:text-white focus-visible:bg-white/10 focus-visible:text-white focus-visible:opacity-100 focus-visible:outline-none data-copied:opacity-100"
+				className="absolute top-1.5 right-1.5 z-10 flex size-7 items-center justify-center rounded-md text-white/60 opacity-0 transition-[opacity,background-color,color] group-hover:opacity-100 hover:bg-white/10 hover:text-white focus-visible:bg-white/10 focus-visible:text-white focus-visible:opacity-100 focus-visible:outline-hidden data-copied:opacity-100"
 			>
 				<Icon name={copied ? 'check' : 'copy'} height={14} width={14} />
 			</button>
@@ -412,7 +412,7 @@ export function SourcesList({ citations, isStreaming = false }: { citations: str
 
 	return (
 		<details className="flex flex-col text-sm">
-			<summary className="mr-auto flex items-center gap-1 rounded bg-[rgba(0,0,0,0.04)] px-2 py-1 text-(--legacy-old-blue) dark:bg-[rgba(145,146,150,0.12)]">
+			<summary className="mr-auto flex items-center gap-1 rounded-sm bg-[rgba(0,0,0,0.04)] px-2 py-1 text-(--legacy-old-blue) dark:bg-[rgba(145,146,150,0.12)]">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="14"
@@ -440,10 +440,10 @@ export function SourcesList({ citations, isStreaming = false }: { citations: str
 						rel="noopener noreferrer"
 						className="group flex items-start gap-2.5 rounded-lg border border-[#e6e6e6] p-2 hover:border-(--legacy-old-blue) hover:bg-(--legacy-old-blue)/12 focus-visible:border-(--legacy-old-blue) focus-visible:bg-(--legacy-old-blue)/12 dark:border-[#222324]"
 					>
-						<span className="rounded bg-[rgba(0,0,0,0.04)] px-1.5 text-(--legacy-old-blue) dark:bg-[rgba(145,146,150,0.12)]">
+						<span className="rounded-sm bg-[rgba(0,0,0,0.04)] px-1.5 text-(--legacy-old-blue) dark:bg-[rgba(145,146,150,0.12)]">
 							{citationNumber}
 						</span>
-						<span className="overflow-hidden text-ellipsis whitespace-nowrap">{normalizedUrl}</span>
+						<span className="truncate">{normalizedUrl}</span>
 					</a>
 				))}
 			</div>

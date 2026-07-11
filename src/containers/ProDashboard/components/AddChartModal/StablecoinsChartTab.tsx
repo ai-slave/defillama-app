@@ -401,7 +401,7 @@ export function StablecoinsChartTab({
 					<button
 						type="button"
 						onClick={() => onStablecoinModeChange('chain')}
-						className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-all ${
+						className={`flex-1 rounded-sm px-3 py-1.5 text-xs font-medium transition-all ${
 							stablecoinMode === 'chain'
 								? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm'
 								: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
@@ -412,7 +412,7 @@ export function StablecoinsChartTab({
 					<button
 						type="button"
 						onClick={() => onStablecoinModeChange('asset')}
-						className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-all ${
+						className={`flex-1 rounded-sm px-3 py-1.5 text-xs font-medium transition-all ${
 							stablecoinMode === 'asset'
 								? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm'
 								: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'

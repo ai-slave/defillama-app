@@ -73,7 +73,7 @@ export function DashboardSearch({ defaultValue }: { defaultValue?: string }) {
 				{inputValue ? (
 					<button
 						onClick={handleClear}
-						className="absolute top-1/2 right-3 -translate-y-1/2 rounded p-1 text-(--legacy-text-tertiary) transition-colors hover:bg-(--bg-hover) hover:text-(--legacy-text-primary)"
+						className="absolute top-1/2 right-3 -translate-y-1/2 rounded-sm p-1 text-(--legacy-text-tertiary) transition-colors hover:bg-(--bg-hover) hover:text-(--legacy-text-primary)"
 						type="button"
 					>
 						<Icon name="x" height={14} width={14} />

@@ -121,7 +121,7 @@ export function ArticleEditorCanvas({
 											}
 										}}
 										placeholder="Paste or type URL"
-										className="w-64 rounded-md bg-transparent px-2 py-1 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:outline-none"
+										className="w-64 rounded-md bg-transparent px-2 py-1 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:outline-hidden"
 									/>
 									<button
 										type="button"
@@ -288,7 +288,7 @@ export function ArticleEditorCanvas({
 									<Ariakit.MenuItem
 										key={item.label}
 										onClick={item.run}
-										className="flex items-center justify-between rounded px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+										className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 									>
 										<span>{item.label}</span>
 										{item.hint ? (
@@ -299,35 +299,35 @@ export function ArticleEditorCanvas({
 								<span aria-hidden className="my-1 h-px bg-(--legacy-cards-border)" />
 								<Ariakit.MenuItem
 									onClick={onOpenChartPicker}
-									className="flex items-center justify-between rounded px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 								>
 									<span>DefiLlama chart</span>
 									<span className="font-jetbrains text-[10px] text-(--legacy-text-tertiary)">↗</span>
 								</Ariakit.MenuItem>
 								<Ariakit.MenuItem
 									onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-									className="flex items-center justify-between rounded px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 								>
 									<span>Table</span>
 									<span className="font-jetbrains text-[10px] text-(--legacy-text-tertiary)">3×3</span>
 								</Ariakit.MenuItem>
 								<Ariakit.MenuItem
 									onClick={onOpenEmbedPicker}
-									className="flex items-center justify-between rounded px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 								>
 									<span>Embed</span>
 									<span className="font-jetbrains text-[10px] text-(--legacy-text-tertiary)">URL</span>
 								</Ariakit.MenuItem>
 								<Ariakit.MenuItem
 									onClick={() => document.dispatchEvent(new CustomEvent('article:trigger-image-upload'))}
-									className="flex items-center justify-between rounded px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 								>
 									<span>Image</span>
 									<span className="font-jetbrains text-[10px] text-(--legacy-text-tertiary)">Upload</span>
 								</Ariakit.MenuItem>
 								<Ariakit.MenuItem
 									onClick={() => document.dispatchEvent(new CustomEvent('article:open-people-panel-picker'))}
-									className="flex items-center justify-between rounded px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 								>
 									<span>People panel</span>
 									<span className="font-jetbrains text-[10px] text-(--legacy-text-tertiary)">Bios</span>
@@ -335,7 +335,7 @@ export function ArticleEditorCanvas({
 								<Ariakit.MenuProvider>
 									<Ariakit.MenuItem
 										render={
-											<Ariakit.MenuButton className="flex w-full items-center justify-between rounded px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)">
+											<Ariakit.MenuButton className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)">
 												<span>Callout</span>
 												<span aria-hidden className="text-(--legacy-text-tertiary)">
 													›
@@ -351,7 +351,7 @@ export function ArticleEditorCanvas({
 											<Ariakit.MenuItem
 												key={tone}
 												onClick={() => insertCallout(tone)}
-												className="rounded px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+												className="rounded-sm px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 											>
 												{CALLOUT_TONE_LABELS[tone]}
 											</Ariakit.MenuItem>
@@ -360,7 +360,7 @@ export function ArticleEditorCanvas({
 								</Ariakit.MenuProvider>
 								<Ariakit.MenuItem
 									onClick={insertCitation}
-									className="flex items-center justify-between rounded px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 								>
 									<span>Citation</span>
 									<span className="font-jetbrains text-[10px] text-(--legacy-text-tertiary)">[n]</span>
@@ -458,7 +458,7 @@ export function ArticleEditorCanvas({
 								>
 									<Ariakit.MenuItem
 										onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-										className="flex items-center justify-between gap-3 rounded px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 									>
 										<span className="flex items-center gap-2">
 											<Icon name="table" className="size-3.5" />
@@ -468,7 +468,7 @@ export function ArticleEditorCanvas({
 									</Ariakit.MenuItem>
 									<Ariakit.MenuItem
 										onClick={onOpenEmbedPicker}
-										className="flex items-center justify-between gap-3 rounded px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 									>
 										<span className="flex items-center gap-2">
 											<Icon name="embed" className="size-3.5" />
@@ -478,7 +478,7 @@ export function ArticleEditorCanvas({
 									</Ariakit.MenuItem>
 									<Ariakit.MenuItem
 										onClick={() => document.dispatchEvent(new CustomEvent('article:trigger-image-upload'))}
-										className="flex items-center justify-between gap-3 rounded px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 									>
 										<span className="flex items-center gap-2">
 											<Icon name="image" className="size-3.5" />
@@ -488,7 +488,7 @@ export function ArticleEditorCanvas({
 									</Ariakit.MenuItem>
 									<Ariakit.MenuItem
 										onClick={() => document.dispatchEvent(new CustomEvent('article:open-people-panel-picker'))}
-										className="flex items-center justify-between gap-3 rounded px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 									>
 										<span className="flex items-center gap-2">
 											<Icon name="people" className="size-3.5" />
@@ -500,7 +500,7 @@ export function ArticleEditorCanvas({
 									<Ariakit.MenuProvider>
 										<Ariakit.MenuItem
 											render={
-												<Ariakit.MenuButton className="flex w-full items-center justify-between gap-3 rounded px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)">
+												<Ariakit.MenuButton className="flex w-full items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)">
 													<span className="flex items-center gap-2">
 														<Icon name="callout" className="size-3.5" />
 														Callout
@@ -519,7 +519,7 @@ export function ArticleEditorCanvas({
 												<Ariakit.MenuItem
 													key={tone}
 													onClick={() => insertCallout(tone)}
-													className="rounded px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+													className="rounded-sm px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 												>
 													{CALLOUT_TONE_LABELS[tone]}
 												</Ariakit.MenuItem>
@@ -528,7 +528,7 @@ export function ArticleEditorCanvas({
 									</Ariakit.MenuProvider>
 									<Ariakit.MenuItem
 										onClick={insertCitation}
-										className="flex items-center justify-between gap-3 rounded px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
+										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-(--legacy-text-secondary) data-[active-item]:bg-(--legacy-link-button) data-[active-item]:text-(--legacy-link-text)"
 									>
 										<span className="flex items-center gap-2">
 											<Icon name="cite" className="size-3.5" />

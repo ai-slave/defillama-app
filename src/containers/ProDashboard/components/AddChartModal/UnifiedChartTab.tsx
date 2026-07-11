@@ -787,7 +787,7 @@ export function UnifiedChartTab({
 						value={unifiedChartName}
 						onChange={(e) => onUnifiedChartNameChange(e.target.value)}
 						placeholder="Chart name..."
-						className="w-full shrink-0 rounded border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2 py-1.5 text-xs pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+						className="w-full shrink-0 rounded-sm border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2 py-1.5 text-xs pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
 					/>
 
 					{(selectedChartTab === 'chain' || selectedChartTab === 'protocol') && bulkChartType ? (
@@ -824,7 +824,7 @@ export function UnifiedChartTab({
 										type="color"
 										value={item.color || '#3e61cc'}
 										onChange={(e) => onComposerItemColorChange(item.id, e.target.value)}
-										className="size-4 cursor-pointer rounded border-0 bg-transparent p-0"
+										className="size-4 cursor-pointer rounded-sm border-0 bg-transparent p-0"
 									/>
 									<span className="whitespace-nowrap pro-text1">
 										{item.protocol || item.chain} - {CHART_TYPES[item.type]?.title || item.type}

@@ -126,7 +126,7 @@ function applyMark(children: ReactNode, mark: TiptapMark, key: string) {
 	if (mark.type === 'underline') return <u key={key}>{children}</u>
 	if (mark.type === 'highlight')
 		return (
-			<mark key={key} className="rounded bg-[#fff3a3] px-0.5 text-black dark:bg-[#5a4a16] dark:text-[#fde9a0]">
+			<mark key={key} className="rounded-sm bg-[#fff3a3] px-0.5 text-black dark:bg-[#5a4a16] dark:text-[#fde9a0]">
 				{children}
 			</mark>
 		)
@@ -605,7 +605,7 @@ function CompactTocBar({ toc, groups, active }: { toc: TocEntry[]; groups: TocGr
 			type="button"
 			onClick={onJumpToTop}
 			aria-label={`Currently reading: ${currentEntry?.text ?? 'article'}. Return to top of article.`}
-			className="group relative flex w-full flex-col gap-3 border-y border-(--legacy-cards-border) py-3.5 text-left transition-colors hover:bg-(--legacy-cards-bg)/40 focus-visible:ring-1 focus-visible:ring-(--legacy-link-text)/60 focus-visible:outline-none"
+			className="group relative flex w-full flex-col gap-3 border-y border-(--legacy-cards-border) py-3.5 text-left transition-colors hover:bg-(--legacy-cards-bg)/40 focus-visible:ring-1 focus-visible:ring-(--legacy-link-text)/60 focus-visible:outline-hidden"
 		>
 			<div className="flex items-center justify-between gap-3">
 				<span className="text-[10px] leading-none font-semibold tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">

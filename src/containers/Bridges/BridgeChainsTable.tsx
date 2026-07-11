@@ -45,10 +45,7 @@ const bridgeChainsColumn = [
 				<span className="flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo name={value} kind="chain" data-lgonly alt={`Logo of ${value}`} />
-					<BasicLink
-						href={`/bridges/${slug(value)}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link"
-					>
+					<BasicLink href={`/bridges/${slug(value)}`} className="truncate text-sm font-medium text-link">
 						{value}
 					</BasicLink>
 					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}

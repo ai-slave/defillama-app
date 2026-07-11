@@ -129,10 +129,7 @@ const columns = [
 			const name = getValue()
 			return (
 				<span className="relative flex items-center gap-2">
-					<BasicLink
-						href={`/oracles/${slug(name)}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text)"
-					>
+					<BasicLink href={`/oracles/${slug(name)}`} className="truncate text-sm font-medium text-(--legacy-link-text)">
 						{name}
 					</BasicLink>
 				</span>

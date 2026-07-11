@@ -340,10 +340,10 @@ export const SettingsModal = memo(function SettingsModal({
 				unmountOnHide
 			>
 				<header className="relative overflow-hidden border-b border-black/[0.06] dark:border-white/[0.05]">
-					<div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#1853A8]/[0.05] via-transparent to-transparent dark:from-[#4B86DB]/[0.07]" />
+					<div className="pointer-events-none absolute inset-0 bg-linear-to-br from-[#1853A8]/[0.05] via-transparent to-transparent dark:from-[#4B86DB]/[0.07]" />
 					<div className="relative flex items-center justify-between gap-4 px-5 py-4 sm:px-6 sm:py-5">
 						<div className="flex items-center gap-3">
-							<div className="relative flex size-10 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-[#1853A8]/15 to-[#1853A8]/5 ring-1 ring-[#1853A8]/15 ring-inset dark:from-[#4B86DB]/20 dark:to-[#4B86DB]/5 dark:ring-[#4B86DB]/20">
+							<div className="relative flex size-10 items-center justify-center overflow-hidden rounded-xl bg-linear-to-br from-[#1853A8]/15 to-[#1853A8]/5 ring-1 ring-[#1853A8]/15 ring-inset dark:from-[#4B86DB]/20 dark:to-[#4B86DB]/5 dark:ring-[#4B86DB]/20">
 								<Icon name="settings" className="size-[18px] text-[#1853A8] dark:text-[#4B86DB]" />
 							</div>
 							<div className="flex flex-col leading-tight">
@@ -412,7 +412,7 @@ export const SettingsModal = memo(function SettingsModal({
 														}
 													}}
 													placeholder="e.g., Be concise and lead with numbers. Always include % changes."
-													className="w-full resize-none rounded-xl border border-black/[0.08] bg-black/[0.015] p-3.5 text-sm text-[#1a1a1a] placeholder-[#aaa] transition-all outline-none focus:border-[#1853A8]/40 focus:bg-white focus:ring-4 focus:ring-[#1853A8]/[0.08] dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-white dark:placeholder-[#555] dark:focus:border-[#4B86DB]/40 dark:focus:bg-white/[0.04] dark:focus:ring-[#4B86DB]/[0.1]"
+													className="w-full resize-none rounded-xl border border-black/[0.08] bg-black/[0.015] p-3.5 text-sm text-[#1a1a1a] placeholder-[#aaa] outline-hidden transition-all focus:border-[#1853A8]/40 focus:bg-white focus:ring-4 focus:ring-[#1853A8]/[0.08] dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-white dark:placeholder-[#555] dark:focus:border-[#4B86DB]/40 dark:focus:bg-white/[0.04] dark:focus:ring-[#4B86DB]/[0.1]"
 													rows={5}
 												/>
 												{showClear ? (
@@ -532,7 +532,7 @@ export const SettingsModal = memo(function SettingsModal({
 															onChange={handleSpendCapChange}
 															onBlur={handleSpendCapBlur}
 															onKeyDown={handleSpendCapKeyDown}
-															className="w-full bg-transparent font-mono text-sm text-[#1a1a1a] outline-none dark:text-white"
+															className="w-full bg-transparent font-mono text-sm text-[#1a1a1a] outline-hidden dark:text-white"
 														/>
 													</div>
 												</div>
@@ -592,8 +592,8 @@ export const SettingsModal = memo(function SettingsModal({
 										<div className="rounded-xl border border-black/[0.06] bg-black/[0.015] p-4 dark:border-white/[0.06] dark:bg-white/[0.015]">
 											<div className="flex items-center justify-between gap-3">
 												<div className="min-w-0 flex-1">
-													<div className="h-4 w-24 animate-pulse rounded bg-black/[0.08] dark:bg-white/[0.08]" />
-													<div className="mt-2 h-3 w-full max-w-[360px] animate-pulse rounded bg-black/[0.06] dark:bg-white/[0.06]" />
+													<div className="h-4 w-24 animate-pulse rounded-sm bg-black/[0.08] dark:bg-white/[0.08]" />
+													<div className="mt-2 h-3 w-full max-w-[360px] animate-pulse rounded-sm bg-black/[0.06] dark:bg-white/[0.06]" />
 												</div>
 												<div className="h-8 w-20 shrink-0 animate-pulse rounded-lg bg-black/[0.08] dark:bg-white/[0.08]" />
 											</div>
@@ -694,7 +694,7 @@ export const SettingsModal = memo(function SettingsModal({
 																	<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 																		<p className="m-0 flex items-center gap-2 text-[13.5px] font-medium text-[#1a1a1a] dark:text-white">
 																			{skill.name}
-																			<span className="rounded bg-black/[0.05] px-1.5 py-0.5 text-[10px] font-normal text-[#777] dark:bg-white/[0.06] dark:text-[#919296]">
+																			<span className="rounded-sm bg-black/[0.05] px-1.5 py-0.5 text-[10px] font-normal text-[#777] dark:bg-white/[0.06] dark:text-[#919296]">
 																				{skill.createdBy === 'agent' ? 'learned by assistant' : 'added by you'}
 																			</span>
 																		</p>
@@ -939,7 +939,7 @@ function SelectField({
 					id={id}
 					value={value}
 					onChange={onChange}
-					className="w-full appearance-none rounded-lg border border-black/[0.08] bg-white px-3 py-2 pr-9 text-sm text-[#1a1a1a] transition-colors outline-none focus:border-[#1853A8]/40 focus:ring-4 focus:ring-[#1853A8]/[0.08] dark:border-white/[0.08] dark:bg-[#1a1b1c] dark:text-white dark:focus:border-[#4B86DB]/40 dark:focus:ring-[#4B86DB]/[0.1]"
+					className="w-full appearance-none rounded-lg border border-black/[0.08] bg-white px-3 py-2 pr-9 text-sm text-[#1a1a1a] outline-hidden transition-colors focus:border-[#1853A8]/40 focus:ring-4 focus:ring-[#1853A8]/[0.08] dark:border-white/[0.08] dark:bg-[#1a1b1c] dark:text-white dark:focus:border-[#4B86DB]/40 dark:focus:ring-[#4B86DB]/[0.1]"
 				>
 					{children}
 				</select>

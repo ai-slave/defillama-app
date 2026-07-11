@@ -100,7 +100,7 @@ function RWAPerpsContractHeader({
 
 	return (
 		<Tag className="flex min-w-0 items-center justify-between gap-2 heading-xs">
-			<span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{contract.contract.contract}</span>
+			<span className="min-w-0 truncate">{contract.contract.contract}</span>
 			{link ? (
 				<Tooltip content="Open market website" placement="top">
 					<a
@@ -125,14 +125,14 @@ function RWAPerpsContractPriceSummary({ contract }: { contract: IRWAPerpsContrac
 				<Tooltip content={d.price.description} className="text-secondary underline decoration-dotted">
 					{d.price.label}
 				</Tooltip>
-				<p className="min-h-8 overflow-hidden font-jetbrains text-2xl font-semibold text-ellipsis whitespace-nowrap">
+				<p className="min-h-8 truncate font-jetbrains text-2xl font-semibold">
 					{formattedNum(contract.market.price, true)}
 				</p>
 			</div>
 
 			{contract.market.priceChange24h != null ? (
 				<p className="relative bottom-0.5 flex flex-nowrap items-center gap-2">
-					<span className="overflow-hidden font-jetbrains text-ellipsis whitespace-nowrap">
+					<span className="truncate font-jetbrains">
 						<PercentChange percent={contract.market.priceChange24h} fontWeight={600} />
 					</span>
 					<span className="text-secondary">24h</span>

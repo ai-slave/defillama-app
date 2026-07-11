@@ -118,7 +118,7 @@ export function ExpandableLine({
 							type="button"
 							onClick={() => setOpen((v) => !v)}
 							aria-expanded={open}
-							className="-mr-1 inline-flex size-5 shrink-0 items-center justify-center rounded text-(--legacy-text-secondary) hover:bg-(--legacy-bg-secondary) hover:text-(--legacy-text-primary)"
+							className="-mr-1 inline-flex size-5 shrink-0 items-center justify-center rounded-sm text-(--legacy-text-secondary) hover:bg-(--legacy-bg-secondary) hover:text-(--legacy-text-primary)"
 						>
 							<Icon name="chevron-down" className={`size-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
 							<span className="sr-only">{open ? 'Hide detail' : 'Show what this can do'}</span>

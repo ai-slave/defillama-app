@@ -133,7 +133,7 @@ function ExpandedExamplesPanel({
 					value={filter}
 					onChange={(e) => setFilter(e.target.value)}
 					placeholder="Filter queries…"
-					className="w-full border-b border-(--legacy-divider) bg-transparent pr-5 pb-1.5 pl-5 text-xs text-(--legacy-text-primary) transition-colors placeholder:text-(--legacy-text-tertiary)/80 focus:border-(--legacy-primary) focus:outline-none"
+					className="w-full border-b border-(--legacy-divider) bg-transparent pr-5 pb-1.5 pl-5 text-xs text-(--legacy-text-primary) transition-colors placeholder:text-(--legacy-text-tertiary)/80 focus:border-(--legacy-primary) focus:outline-hidden"
 				/>
 				{filter ? (
 					<button

@@ -562,7 +562,7 @@ const NameColumn = (type: IProps['type']) =>
 						<span className="flex min-w-0 items-center gap-1">
 							<BasicLink
 								href={`/${basePath}/${row.original.slug}${chartKey ? `?tvl=false&events=false&${chartKey}=true` : ''}`}
-								className="min-w-0 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
+								className="min-w-0 truncate text-sm font-medium text-link hover:underline"
 							>
 								{value}
 							</BasicLink>

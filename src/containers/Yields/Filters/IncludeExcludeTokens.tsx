@@ -409,7 +409,7 @@ export function IncludeExcludeTokens({
 										{t}
 										<button
 											onClick={() => setNewPairTokens((prev) => prev.filter((_, j) => j !== i))}
-											className="rounded hover:text-[#c2410c] dark:hover:text-[#fdba74]"
+											className="rounded-sm hover:text-[#c2410c] dark:hover:text-[#fdba74]"
 											aria-label={`Remove ${t}`}
 										>
 											<Icon name="x" height={12} width={12} />

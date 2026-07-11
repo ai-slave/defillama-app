@@ -143,7 +143,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 							<TokenLogo name={chain} kind="chain" alt={`Logo of ${chain}`} />
 							<BasicLink
 								href={`/chain/${slug(chain)}`}
-								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
+								className="truncate text-sm font-medium text-link hover:underline"
 							>
 								{chain}
 							</BasicLink>

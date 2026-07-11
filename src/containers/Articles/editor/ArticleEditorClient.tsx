@@ -144,7 +144,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		editorProps: {
 			attributes: {
 				class:
-					'article-editor-prose prose prose-neutral dark:prose-invert max-w-none focus:outline-none prose-a:text-(--legacy-link-text) prose-headings:tracking-tight prose-headings:font-semibold min-h-[60vh] py-10 break-words [overflow-wrap:anywhere]'
+					'article-editor-prose prose prose-neutral dark:prose-invert max-w-none focus:outline-hidden prose-a:text-(--legacy-link-text) prose-headings:tracking-tight prose-headings:font-semibold min-h-[60vh] py-10 break-words [overflow-wrap:anywhere]'
 			}
 		},
 		onUpdate: ({ editor: instance }) => {

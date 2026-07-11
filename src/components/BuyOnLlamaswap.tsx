@@ -50,7 +50,7 @@ export function BuyOnLlamaswap({
 				}
 			>
 				{size === 'small' ? 'Buy' : 'Buy Now'}
-				<Icon name="external-link" className={size === 'small' ? 'h-2.5 w-2.5' : 'h-3.5 w-3.5'} />
+				<Icon name="external-link" className={size === 'small' ? 'size-2.5' : 'size-3.5'} />
 			</a>
 		)
 	}
@@ -66,7 +66,7 @@ export function BuyOnLlamaswap({
 				}
 			>
 				{size === 'small' ? 'Buy' : 'Buy Now'}
-				<Icon name="chevron-down" className={size === 'small' ? 'h-2.5 w-2.5' : 'h-3.5 w-3.5'} />
+				<Icon name="chevron-down" className={size === 'small' ? 'size-2.5' : 'size-3.5'} />
 			</Ariakit.HovercardAnchor>
 			<Ariakit.Hovercard
 				unmountOnHide

@@ -138,7 +138,7 @@ export function BannersListView() {
 											<img
 												src={banner.imageUrl}
 												alt=""
-												className={`shrink-0 rounded border border-(--legacy-cards-border) object-cover ${
+												className={`shrink-0 rounded-sm border border-(--legacy-cards-border) object-cover ${
 													banner.type === 'image-horizontal' ? 'h-8 w-20' : 'size-12'
 												}`}
 											/>

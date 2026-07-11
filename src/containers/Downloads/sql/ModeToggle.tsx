@@ -52,7 +52,7 @@ function ModeButton({
 	size: 'sm' | 'md'
 }) {
 	const sizing = size === 'md' ? 'gap-2 rounded-md px-4 py-2 text-sm' : 'gap-1.5 rounded-sm px-2.5 py-1 text-xs'
-	const iconSize = size === 'md' ? 'h-4 w-4' : 'h-3 w-3'
+	const iconSize = size === 'md' ? 'size-4' : 'size-3'
 	return (
 		<button
 			role="tab"

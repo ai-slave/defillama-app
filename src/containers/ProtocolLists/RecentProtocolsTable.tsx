@@ -230,15 +230,15 @@ const protocolsColumns = [
 						{row.original?.deprecated ? (
 							<BasicLink
 								href={`/protocol/${slug(value)}`}
-								className="flex items-center gap-1 overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
+								className="flex items-center gap-1 truncate text-sm font-medium text-link hover:underline"
 							>
-								<span className="overflow-hidden text-ellipsis whitespace-nowrap hover:underline">{value}</span>
+								<span className="truncate hover:underline">{value}</span>
 								<DeprecatedProtocolMarker />
 							</BasicLink>
 						) : (
 							<BasicLink
 								href={`/protocol/${slug(value)}`}
-								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
+								className="truncate text-sm font-medium text-link hover:underline"
 							>
 								{`${value}`}
 							</BasicLink>

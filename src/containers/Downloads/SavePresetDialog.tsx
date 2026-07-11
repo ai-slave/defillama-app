@@ -79,7 +79,7 @@ export function SavePresetDialog({
 							value={name}
 							onChange={(e) => setName(e.target.value)}
 							autoFocus
-							className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-sm outline-none placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30"
+							className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-sm outline-hidden placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30"
 							placeholder={placeholder}
 						/>
 					</label>

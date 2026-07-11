@@ -246,13 +246,13 @@ function MyArticlesContent() {
 								type="search"
 								onInput={(e) => setSearchInput(e.currentTarget.value)}
 								placeholder="Search title, slug…"
-								className="w-44 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1.5 pr-2 pl-8 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text)/50 focus:outline-none sm:w-56"
+								className="w-44 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1.5 pr-2 pl-8 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text)/50 focus:outline-hidden sm:w-56"
 							/>
 						</label>
 						<select
 							value={sortKey}
 							onChange={(e) => setSortKey(e.target.value as SortKey)}
-							className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1.5 pr-2 pl-2.5 text-sm text-(--legacy-text-primary) focus:border-(--legacy-link-text)/50 focus:outline-none"
+							className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1.5 pr-2 pl-2.5 text-sm text-(--legacy-text-primary) focus:border-(--legacy-link-text)/50 focus:outline-hidden"
 							aria-label="Sort"
 						>
 							{(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
@@ -312,8 +312,8 @@ function MyArticlesContent() {
 					{Array.from({ length: 6 }).map((_, i) => (
 						<li key={i} className="flex items-center gap-3 px-4 py-3.5">
 							<span className="size-1.5 shrink-0 rounded-full bg-(--legacy-cards-border)" />
-							<span className="h-3.5 w-2/3 animate-pulse rounded bg-(--legacy-cards-border)" />
-							<span className="ml-auto h-3 w-20 animate-pulse rounded bg-(--legacy-cards-border)" />
+							<span className="h-3.5 w-2/3 animate-pulse rounded-sm bg-(--legacy-cards-border)" />
+							<span className="ml-auto h-3 w-20 animate-pulse rounded-sm bg-(--legacy-cards-border)" />
 						</li>
 					))}
 				</ul>
@@ -366,14 +366,14 @@ function MyArticlesContent() {
 											</h3>
 											{scheduled ? (
 												<span
-													className="rounded bg-sky-500/10 px-1.5 py-0.5 font-jetbrains text-[10px] tracking-[0.12em] text-sky-500 uppercase"
+													className="rounded-sm bg-sky-500/10 px-1.5 py-0.5 font-jetbrains text-[10px] tracking-[0.12em] text-sky-500 uppercase"
 													title={`Goes live ${formatArticleDate(article.goLiveAt)}`}
 												>
 													Scheduled
 												</span>
 											) : null}
 											{article.viewerRole === 'collaborator' ? (
-												<span className="rounded bg-(--legacy-link-button) px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-(--legacy-link-text) uppercase">
+												<span className="rounded-sm bg-(--legacy-link-button) px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-(--legacy-link-text) uppercase">
 													Co-author
 												</span>
 											) : null}

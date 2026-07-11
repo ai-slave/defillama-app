@@ -104,7 +104,7 @@ export function UnifiedVirtualTable({
 											zIndex: isSticky ? 10 : undefined,
 											background: 'var(--legacy-cards-bg)'
 										}}
-										className={`overflow-hidden border-t border-r border-(--legacy-divider) p-3 text-ellipsis whitespace-nowrap last:border-r-0 ${
+										className={`truncate border-t border-r border-(--legacy-divider) p-3 last:border-r-0 ${
 											compact
 												? 'flex min-h-[50px] items-center border-t-black/10 border-r-transparent px-5 dark:border-t-white/10'
 												: ''
@@ -165,7 +165,7 @@ export function UnifiedVirtualTable({
 										<div
 											key={cell.id}
 											data-lighter={stripedBg && i % 2 === 0}
-											className={`overflow-hidden border-t border-r border-(--legacy-divider) p-3 text-ellipsis whitespace-nowrap ${
+											className={`truncate border-t border-r border-(--legacy-divider) p-3 ${
 												compact
 													? 'flex items-center border-t-black/10 border-r-transparent px-5 dark:border-t-white/10'
 													: ''

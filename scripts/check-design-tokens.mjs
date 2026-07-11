@@ -115,6 +115,40 @@ function matchImplicitBorderColor(content) {
 	return found.length ? found : null
 }
 
+// Tailwind v3-era spellings that v4 only supports as deprecated compatibility.
+// Modern forms: trailing important (px-1!), rounded-sm, outline-hidden,
+// x-(--var), bg-linear-to-*, shrink-*/grow-*. Scans class-list string literals
+// only; a literal counts as a class list when it carries at least one other
+// hyphenated token (prose such as test names does not).
+function matchDeprecatedTailwindSpelling(content) {
+	const found = []
+	const source = content.replace(/\/\*[\s\S]*?\*\//g, '')
+	for (const [literal] of source.matchAll(STRING_LITERAL)) {
+		const body = literal.slice(1, -1)
+		const tokens = body.split(/\s+/)
+		const isClassList = tokens.some((t) => t.includes('-') && /^[\w!:[\]()/.%&>~*-]+$/.test(t))
+		if (!isClassList) continue
+		for (const token of tokens) {
+			if (token === 'rounded') found.push(token)
+			else if (/(^|:)outline-none$/.test(token)) found.push(token)
+			else if (token.includes('[var(--')) found.push(token)
+			else if (
+				// leading important: require a utility shape after the ! so JS negations
+				// (`!isLoading`) inside class template literals don't count
+				(/^(?:[\w[\]()&>~.*-]+:)*![a-z][a-z0-9]*(?:-[\w[\]()/.%,]+)+$/.test(token) ||
+					/^(?:[\w[\]()&>~.*-]+:)*!(?:flex|block|hidden|grid|relative|absolute|static|sticky|fixed|truncate|underline|uppercase|italic|visible|invisible|rounded|border)$/.test(
+						token
+					)) &&
+				tokens.length > 1
+			)
+				found.push(token)
+			else if (/(^|:)bg-gradient-to-/.test(token)) found.push(token)
+			else if (/(^|:)flex-(shrink|grow)(-|$)/.test(token)) found.push(token)
+		}
+	}
+	return found.length ? found : null
+}
+
 const NAMED_TYPOGRAPHY_UTILITY =
 	/^(?:heading-(?:lg|sm|xs)|label-(?:xl|lg|md|sm|xs)|body-(?:xl|lg|md|sm|xs)|mono-(?:xl|md(?:-bold)?|sm(?:-bold)?))$/
 const RAW_TYPOGRAPHY_UTILITY =
@@ -197,6 +231,12 @@ const RULES = [
 		description:
 			'width-only border/divide utility with no color source in the same class string (v4 default is currentColor; add border-subtle, border-medium, …)',
 		match: matchImplicitBorderColor
+	},
+	{
+		id: 'deprecated-tailwind-spelling',
+		description:
+			'Tailwind v3-era spelling (leading !, bare rounded, outline-none, x-[var(--…)], bg-gradient-to-*, flex-shrink/grow-*) — use the v4 form (px-1!, rounded-sm, outline-hidden, x-(--…), bg-linear-to-*, shrink/grow-*)',
+		match: matchDeprecatedTailwindSpelling
 	},
 	{
 		id: 'conflicting-named-typography',

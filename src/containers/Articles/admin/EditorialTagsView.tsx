@@ -281,7 +281,7 @@ function ReportHighlightControls({
 						placeholder="Custom text shown on the right side of the Report highlight block."
 						rows={4}
 						maxLength={2000}
-						className="resize-none rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+						className="resize-none rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 					/>
 					<div className="flex flex-wrap items-center gap-2">
 						<button

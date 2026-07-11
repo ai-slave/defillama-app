@@ -120,7 +120,7 @@ const overviewColumns = [
 					<BasicLink
 						href={`/digital-asset-treasury/${encodeURIComponent(row.original.ticker)}`}
 						title={name}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text)"
+						className="truncate text-sm font-medium text-(--legacy-link-text)"
 					>
 						{name}
 					</BasicLink>

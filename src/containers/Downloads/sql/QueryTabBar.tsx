@@ -335,7 +335,7 @@ function TabPill({
 					className={`flex size-5 shrink-0 items-center justify-center rounded-sm text-(--legacy-text-tertiary) transition-opacity hover:bg-hover-row hover:text-(--legacy-text-primary) ${
 						active
 							? 'opacity-60 hover:opacity-100'
-							: 'opacity-0 group-focus-within:opacity-60 group-hover:opacity-60 hover:!opacity-100'
+							: 'opacity-0 group-focus-within:opacity-60 group-hover:opacity-60 hover:opacity-100!'
 					}`}
 				>
 					<Icon name="x" className="size-3" />
@@ -382,7 +382,7 @@ function RenameInput({
 			onClick={(e) => e.stopPropagation()}
 			onDoubleClick={(e) => e.stopPropagation()}
 			onMouseDown={(e) => e.stopPropagation()}
-			className="min-w-0 flex-1 rounded-sm bg-(--bg-primary) px-1 py-px text-[13px] font-medium text-(--legacy-text-primary) ring-1 ring-(--legacy-primary) outline-none"
+			className="min-w-0 flex-1 rounded-sm bg-(--bg-primary) px-1 py-px text-[13px] font-medium text-(--legacy-text-primary) ring-1 ring-(--legacy-primary) outline-hidden"
 		/>
 	)
 }

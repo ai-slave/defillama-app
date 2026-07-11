@@ -30,7 +30,7 @@ const columns = [
 				<span className="vf-row-index shrink-0" aria-hidden="true" />
 				<BasicLink
 					href={`/rwa/perps/venue/${rwaSlug(info.getValue())}`}
-					className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
+					className="truncate label-md text-link hover:underline"
 				>
 					{info.getValue()}
 				</BasicLink>

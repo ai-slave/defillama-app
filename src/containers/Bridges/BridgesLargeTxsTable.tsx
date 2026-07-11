@@ -61,10 +61,7 @@ export const BridgesLargeTxsTable = React.forwardRef<BridgesLargeTxsTableHandle,
 						const value = getValue()
 						const linkValue = slug(value)
 						return (
-							<BasicLink
-								href={`/bridge/${linkValue}`}
-								className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link"
-							>
+							<BasicLink href={`/bridge/${linkValue}`} className="truncate text-sm font-medium text-link">
 								{value}
 							</BasicLink>
 						)

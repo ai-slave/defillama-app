@@ -391,7 +391,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 				<div className="mb-2 flex items-center justify-between">
 					<span className="text-xs text-[#666] dark:text-[#919296]">{formatExecDate(selectedExec.executed_at)}</span>
 					<span
-						className={`rounded px-1.5 py-0.5 text-[10px] ${selectedExec.status === 'success' || selectedExec.status === 'test' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-500'}`}
+						className={`rounded-sm px-1.5 py-0.5 text-[10px] ${selectedExec.status === 'success' || selectedExec.status === 'test' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-500'}`}
 					>
 						{selectedExec.status}
 					</span>
@@ -459,12 +459,12 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					<div className="flex items-center gap-2">
 						<h3 className="truncate text-sm font-medium text-black dark:text-white">{alert.title}</h3>
 						{alert.last_run_status === 'error' ? (
-							<span className="shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 text-[10px] text-red-500">Error</span>
+							<span className="shrink-0 rounded-sm bg-red-500/10 px-1.5 py-0.5 text-[10px] text-red-500">Error</span>
 						) : null}
 					</div>
 					<p className="mt-0.5 text-xs text-[#666] dark:text-[#919296]">
 						{formatScheduleExpression(alert.schedule_expression)}
-						<span className="ml-1.5 inline-flex items-center gap-1 rounded bg-[#f0f0f0] px-1.5 py-0.5 text-[10px] dark:bg-[#333]">
+						<span className="ml-1.5 inline-flex items-center gap-1 rounded-sm bg-[#f0f0f0] px-1.5 py-0.5 text-[10px] dark:bg-[#333]">
 							{channelLabel}
 						</span>
 					</p>
@@ -547,7 +547,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 										<span className="ml-2 text-[10px] text-[#999]">{formatDuration(exec.duration_ms)}</span>
 									</div>
 									<span
-										className={`rounded px-1.5 py-0.5 text-[10px] ${exec.status === 'success' || exec.status === 'test' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-500'}`}
+										className={`rounded-sm px-1.5 py-0.5 text-[10px] ${exec.status === 'success' || exec.status === 'test' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-500'}`}
 									>
 										{exec.status}
 									</span>

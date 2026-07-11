@@ -41,7 +41,7 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 					<select
 						value={cell.source}
 						onChange={(e) => onSourceChange(e.target.value)}
-						className="rounded-sm border border-(--legacy-divider) bg-(--legacy-app-bg) px-1.5 py-0.5 font-mono text-xs text-(--legacy-text-primary) outline-none focus:border-(--legacy-primary)"
+						className="rounded-sm border border-(--legacy-divider) bg-(--legacy-app-bg) px-1.5 py-0.5 font-mono text-xs text-(--legacy-text-primary) outline-hidden focus:border-(--legacy-primary)"
 					>
 						<option value="">— pick cell —</option>
 						{availableSources.map((s) => (

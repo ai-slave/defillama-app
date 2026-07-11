@@ -69,7 +69,7 @@ function SynthTable({ rows }: { rows: PegRow[] }) {
 							})}
 							<td className="px-3 py-2.5 text-right">
 								<span
-									className={`rounded px-2 py-0.5 text-[11px] font-semibold ${
+									className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold ${
 										r.kyberSupported
 											? 'bg-emerald-500/15 text-emerald-400'
 											: 'bg-(--legacy-cards-border) text-(--legacy-text-secondary)'

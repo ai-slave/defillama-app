@@ -52,7 +52,7 @@ export function ArticleCoverImageEditor({
 							className="block size-full object-cover"
 						/>
 						<div
-							className={`pointer-events-none absolute inset-0 flex items-end justify-end gap-2 bg-gradient-to-t from-black/55 via-black/10 to-transparent p-3 transition-opacity ${
+							className={`pointer-events-none absolute inset-0 flex items-end justify-end gap-2 bg-linear-to-t from-black/55 via-black/10 to-transparent p-3 transition-opacity ${
 								coverHovered || isUploadingCover ? 'opacity-100' : 'opacity-0'
 							}`}
 						>

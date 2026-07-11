@@ -208,11 +208,11 @@ export function BreakdownTable({
 export function BreakdownTableSkeleton({ title, rowCount }: { title: string; rowCount: number }) {
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="h-5 w-2/3 animate-pulse rounded bg-surface-elevated-2" />
+			<div className="h-5 w-2/3 animate-pulse rounded-sm bg-surface-elevated-2" />
 			<div className={`flex flex-col gap-1 rounded-lg border ${BORDER} bg-surface p-3`}>
 				<span className="sr-only">{title} loading</span>
 				{Array.from({ length: rowCount }).map((_, i) => (
-					<div key={i} className="h-6 w-full animate-pulse rounded bg-surface-elevated-2" />
+					<div key={i} className="h-6 w-full animate-pulse rounded-sm bg-surface-elevated-2" />
 				))}
 			</div>
 		</div>

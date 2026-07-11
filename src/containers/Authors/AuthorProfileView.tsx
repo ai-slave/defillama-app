@@ -441,7 +441,7 @@ function SortControl({ sort, nav }: { sort: AuthorDashboardSort; nav: AuthorProf
 					params={{ sort: option.value }}
 					nav={nav}
 					ariaCurrent={sort === option.value ? 'page' : undefined}
-					className={`rounded px-2.5 py-1.5 text-xs font-medium transition-colors ${
+					className={`rounded-sm px-2.5 py-1.5 text-xs font-medium transition-colors ${
 						sort === option.value
 							? 'bg-(--legacy-link-button) text-(--legacy-link-text)'
 							: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'

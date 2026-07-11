@@ -26,7 +26,7 @@ export function ResearchSpotlightColumn({ title, articles, sharedHeight }: Resea
 	}, [sharedHeight])
 
 	const containerHeight = sharedHeight
-		? `${DEFAULT_CONTAINER_HEIGHT} lg:h-[var(--shared-height,_calc(93px_*_5_+_24px_*_4))]`
+		? `${DEFAULT_CONTAINER_HEIGHT} lg:h-(--shared-height,_calc(93px_*_5_+_24px_*_4))`
 		: `${DEFAULT_CONTAINER_HEIGHT} ${DEFAULT_DESKTOP_HEIGHT}`
 
 	if (articles.length === 0) return null

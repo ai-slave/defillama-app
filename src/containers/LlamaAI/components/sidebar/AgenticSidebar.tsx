@@ -456,7 +456,7 @@ export function AgenticSidebar({
 							onChange={(e) => setSearchQuery(e.target.value)}
 							placeholder="Search"
 							disabled={isLoading && !hasNonProjectSessions}
-							className="min-w-0 flex-1 bg-transparent py-1.5 pr-2 pl-2 text-[11px] text-inherit placeholder:text-[#aaa] focus:outline-none disabled:cursor-default dark:placeholder:text-[#555]"
+							className="min-w-0 flex-1 bg-transparent py-1.5 pr-2 pl-2 text-[11px] text-inherit placeholder:text-[#aaa] focus:outline-hidden disabled:cursor-default dark:placeholder:text-[#555]"
 						/>
 						{isSearching ? (
 							<Icon name="search" height={11} width={11} className="mr-1.5 shrink-0 animate-pulse text-[#999]" />
@@ -578,7 +578,7 @@ export function AgenticSidebar({
 							: 'Subscribe to a plan to top up your external data balance.'
 					}
 					render={<button type="button" onClick={() => hasActiveSubscription && setIsTopupModalOpen(true)} />}
-					className="flex min-h-[52px] w-full shrink-0 items-center justify-between overflow-hidden border-t border-[#e6e6e6] bg-(--legacy-cards-bg) px-4 py-3 text-ellipsis whitespace-nowrap transition-colors hover:bg-[#f0f0f0] dark:border-[#222324] dark:hover:bg-[#222324]"
+					className="flex min-h-[52px] w-full shrink-0 items-center justify-between truncate border-t border-[#e6e6e6] bg-(--legacy-cards-bg) px-4 py-3 transition-colors hover:bg-[#f0f0f0] dark:border-[#222324] dark:hover:bg-[#222324]"
 				>
 					<div className="flex min-w-0 items-center gap-2">
 						<Icon name="package" height={14} width={14} className="shrink-0 text-[#5C5CF9]" />

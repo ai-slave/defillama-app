@@ -55,7 +55,7 @@ function PegHealthIndicator({
 	return (
 		<Tooltip content={tooltipText} className="justify-end">
 			<span className="inline-flex items-center gap-1.5">
-				<span className={`inline-block h-1.5 w-1.5 rounded-full ${dotClass}`} />
+				<span className={`inline-block size-1.5 rounded-full ${dotClass}`} />
 				<span className={`tabular-nums ${colorClass}`}>
 					{sign}
 					{deviation.toFixed(2)}%
@@ -631,7 +631,7 @@ function createPoolsColumns({ hasPremiumAccess, isClient, serverMode, onRequestU
 				return (
 					<Tooltip content={riskLabel} className="justify-end">
 						<span className="inline-flex items-center gap-1.5 tabular-nums">
-							<span className={`h-2 w-2 shrink-0 rounded-full ${accentClass}`} />
+							<span className={`size-2 shrink-0 rounded-full ${accentClass}`} />
 							{val.toFixed(1)}%
 						</span>
 					</Tooltip>

@@ -76,7 +76,7 @@ const governanceColumns = [
 					<TokenLogo name={value} kind="token" data-lgonly />
 					<BasicLink
 						href={`/governance/${slug(value)}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
+						className="truncate text-sm font-medium text-link hover:underline"
 					>
 						{value}
 					</BasicLink>

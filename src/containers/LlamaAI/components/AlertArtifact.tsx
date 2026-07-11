@@ -20,8 +20,8 @@ export const AlertArtifactLoading = memo(function AlertArtifactLoading() {
 			<div className="flex items-center gap-3">
 				<div className="size-10 shrink-0 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700" />
 				<div className="flex min-w-0 flex-1 flex-col gap-1.5">
-					<div className="h-4 w-28 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
-					<div className="h-3 w-44 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+					<div className="h-4 w-28 animate-pulse rounded-sm bg-gray-200 dark:bg-gray-700" />
+					<div className="h-3 w-44 animate-pulse rounded-sm bg-gray-200 dark:bg-gray-700" />
 				</div>
 			</div>
 			<div className="h-10 w-full animate-pulse rounded-md bg-gray-200 dark:bg-gray-700" />

@@ -176,7 +176,7 @@ function StablecoinsMcap({ stablecoins, isAll }: { stablecoins: IChainOverviewDa
 					value={
 						<Tooltip
 							content={`${formattedNum(stablecoins.change7dUsd, true)}`}
-							className={`ml-auto justify-end overflow-hidden mono-md text-ellipsis whitespace-nowrap underline decoration-dotted ${
+							className={`ml-auto justify-end truncate mono-md underline decoration-dotted ${
 								+stablecoins.change7d >= 0 ? 'text-data-up' : 'text-data-down'
 							}`}
 						>

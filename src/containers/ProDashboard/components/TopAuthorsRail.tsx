@@ -105,7 +105,7 @@ export function TopAuthorsRail() {
 			<div className="flex flex-col gap-3">
 				<div className="flex flex-col gap-0.5">
 					<h3 className="flex items-center gap-2 text-lg font-semibold">
-						<span className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-500/15">
+						<span className="flex size-7 items-center justify-center rounded-md bg-blue-500/15">
 							<Icon name="users" height={18} width={18} className="text-blue-500" />
 						</span>
 						Top Authors
@@ -134,7 +134,7 @@ export function TopAuthorsRail() {
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-col gap-0.5">
 				<h3 className="flex items-center gap-2 text-lg font-semibold">
-					<span className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-500/15">
+					<span className="flex size-7 items-center justify-center rounded-md bg-blue-500/15">
 						<Icon name="users" height={18} width={18} className="text-blue-500" />
 					</span>
 					Top Authors

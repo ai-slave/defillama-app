@@ -140,7 +140,7 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 						<BasicLink
 							href={`/digital-asset-treasury/${encodeURIComponent(row.original.ticker)}`}
 							title={name}
-							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link"
+							className="truncate text-sm font-medium text-link"
 						>
 							{name}
 						</BasicLink>

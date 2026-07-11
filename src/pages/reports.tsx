@@ -132,7 +132,7 @@ function DLReportCard({ report }: { report: Report }) {
 				{report.image && (
 					<div className="relative h-36 w-full overflow-hidden bg-[#0a1628]">
 						<img src={report.image} alt="" className="size-full object-cover opacity-40" />
-						<div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] via-[#0a1628]/60 to-transparent" />
+						<div className="absolute inset-0 bg-linear-to-t from-[#0a1628] via-[#0a1628]/60 to-transparent" />
 						<div className="absolute bottom-3 left-4 flex items-center gap-2">
 							<h3 className="text-lg font-semibold text-white">{report.title}</h3>
 							<span className="animate-pulse rounded-md bg-[#237BFF] px-2 py-0.5 text-[11px] font-semibold text-white">
@@ -204,7 +204,7 @@ function DLReportCard({ report }: { report: Report }) {
 						alt=""
 						className="size-full object-cover opacity-60 transition-transform duration-300 group-hover:scale-105"
 					/>
-					<div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] via-[#0a1628]/60 to-transparent" />
+					<div className="absolute inset-0 bg-linear-to-t from-[#0a1628] via-[#0a1628]/60 to-transparent" />
 					<h3 className="absolute bottom-3 left-4 text-lg font-semibold text-white">{report.title}</h3>
 				</div>
 			)}
@@ -265,7 +265,7 @@ function ReportCard({ report }: { report: Report }) {
 						alt=""
 						className="size-full object-cover opacity-60 transition-transform duration-300 group-hover:scale-105"
 					/>
-					<div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] to-transparent" />
+					<div className="absolute inset-0 bg-linear-to-t from-[#0a1628] to-transparent" />
 					<h3 className="absolute bottom-3 left-4 text-lg font-semibold text-white">{report.title}</h3>
 				</div>
 			)}

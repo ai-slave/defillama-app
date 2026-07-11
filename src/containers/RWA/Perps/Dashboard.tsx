@@ -273,7 +273,7 @@ const overviewColumns = [
 				<span className="vf-row-index shrink-0" aria-hidden="true" />
 				<BasicLink
 					href={`/rwa/perps/contract/${encodeURIComponent(info.row.original.contract)}`}
-					className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
+					className="truncate label-md text-link hover:underline"
 				>
 					{info.row.original.contract}
 				</BasicLink>
@@ -290,7 +290,7 @@ const overviewColumns = [
 		cell: (info) => (
 			<BasicLink
 				href={`/rwa/perps/venue/${rwaSlug(info.getValue())}`}
-				className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
+				className="truncate label-md text-link hover:underline"
 			>
 				{info.getValue()}
 			</BasicLink>
@@ -317,7 +317,7 @@ const overviewColumns = [
 			info.getValue() ? (
 				<BasicLink
 					href={`/rwa/perps/asset-group/${rwaSlug(info.getValue())}`}
-					className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
+					className="truncate label-md text-link hover:underline"
 				>
 					{info.getValue()}
 				</BasicLink>
@@ -652,7 +652,7 @@ const venueColumns = [
 				<span className="vf-row-index shrink-0" aria-hidden="true" />
 				<BasicLink
 					href={`/rwa/perps/contract/${encodeURIComponent(info.row.original.contract)}`}
-					className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
+					className="truncate label-md text-link hover:underline"
 				>
 					{info.row.original.contract}
 				</BasicLink>
@@ -680,7 +680,7 @@ const venueColumns = [
 			info.getValue() ? (
 				<BasicLink
 					href={`/rwa/perps/asset-group/${rwaSlug(info.getValue())}`}
-					className="overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline"
+					className="truncate label-md text-link hover:underline"
 				>
 					{info.getValue()}
 				</BasicLink>

@@ -412,10 +412,10 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 						<img
 							src={author.avatarUrl}
 							alt=""
-							className="h-24 w-24 shrink-0 rounded-full border border-(--legacy-cards-border) object-cover md:h-32 md:w-32"
+							className="size-24 shrink-0 rounded-full border border-(--legacy-cards-border) object-cover md:h-32 md:w-32"
 						/>
 					) : (
-						<div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) text-2xl font-semibold text-(--legacy-text-secondary) md:h-32 md:w-32 md:text-3xl">
+						<div className="flex size-24 shrink-0 items-center justify-center rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) text-2xl font-semibold text-(--legacy-text-secondary) md:h-32 md:w-32 md:text-3xl">
 							{author.displayName.slice(0, 2).toUpperCase()}
 						</div>
 					)}

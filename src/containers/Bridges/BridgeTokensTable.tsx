@@ -43,12 +43,12 @@ export function BridgeTokensTable({ data }: { data: BridgeTokensTableRow[] }) {
 						: null
 
 					if (!explorer) {
-						return <span className="overflow-hidden text-ellipsis whitespace-nowrap">{symbol}</span>
+						return <span className="truncate">{symbol}</span>
 					}
 
 					return (
 						<a href={explorer.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-							<span className="overflow-hidden text-ellipsis whitespace-nowrap">{symbol}</span>
+							<span className="truncate">{symbol}</span>
 							<Icon name="external-link" height={10} width={10} />
 						</a>
 					)

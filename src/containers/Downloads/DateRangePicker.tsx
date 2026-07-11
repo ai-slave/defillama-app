@@ -158,7 +158,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 									}}
 									min={minDate}
 									max={customTo || maxAllowed}
-									className="rounded-md border border-(--legacy-divider) bg-transparent px-2 py-1 text-xs outline-none focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30"
+									className="rounded-md border border-(--legacy-divider) bg-transparent px-2 py-1 text-xs outline-hidden focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30"
 								/>
 							</label>
 							<label className="flex flex-col gap-1">
@@ -172,7 +172,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 									}}
 									min={customFrom || minDate}
 									max={maxAllowed}
-									className="rounded-md border border-(--legacy-divider) bg-transparent px-2 py-1 text-xs outline-none focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30"
+									className="rounded-md border border-(--legacy-divider) bg-transparent px-2 py-1 text-xs outline-hidden focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30"
 								/>
 							</label>
 						</div>

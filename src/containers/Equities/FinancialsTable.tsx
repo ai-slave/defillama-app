@@ -138,7 +138,7 @@ function FinancialRow({
 	return (
 		<>
 			<tr className="group">
-				<th className="group-hover-wash w-[28%] overflow-hidden border border-subtle bg-surface p-2 text-left font-semibold text-ellipsis whitespace-nowrap">
+				<th className="group-hover-wash w-[28%] truncate border border-subtle bg-surface p-2 text-left font-semibold">
 					<div
 						className="flex items-center gap-1"
 						onClick={(event) => {
@@ -163,13 +163,13 @@ function FinancialRow({
 						) : showExpandPlaceholder ? (
 							<span aria-hidden="true" className="-ml-1 block size-5 shrink-0" />
 						) : null}
-						<span className="overflow-hidden text-ellipsis whitespace-nowrap">{row.label}</span>
+						<span className="truncate">{row.label}</span>
 					</div>
 				</th>
 				{headerIndexes.map((index) => (
 					<td
 						key={`${row.id}-${index}`}
-						className="group-hover-wash overflow-hidden border border-subtle p-2 text-left font-medium text-ellipsis whitespace-nowrap"
+						className="group-hover-wash truncate border border-subtle p-2 text-left font-medium"
 					>
 						{formatEquitiesStatementCellValue(row.label, row.values[index] ?? null)}
 					</td>
@@ -178,13 +178,13 @@ function FinancialRow({
 			{hasSubRows && isExpanded
 				? row.subRows?.map((subRow) => (
 						<tr key={subRow.id} className="group text-secondary">
-							<th className="group-hover-wash w-[28%] overflow-hidden border border-subtle bg-surface p-2 pl-9 text-left font-normal text-ellipsis whitespace-nowrap italic">
-								<span className="overflow-hidden text-ellipsis whitespace-nowrap">{subRow.label}</span>
+							<th className="group-hover-wash w-[28%] truncate border border-subtle bg-surface p-2 pl-9 text-left font-normal italic">
+								<span className="truncate">{subRow.label}</span>
 							</th>
 							{headerIndexes.map((index) => (
 								<td
 									key={`${subRow.id}-${index}`}
-									className="group-hover-wash overflow-hidden border border-subtle p-2 text-left font-normal text-ellipsis whitespace-nowrap"
+									className="group-hover-wash truncate border border-subtle p-2 text-left font-normal"
 								>
 									{formatEquitiesStatementCellValue(subRow.label, subRow.values[index] ?? null)}
 								</td>
@@ -289,9 +289,7 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 				<table className="z-10 w-full border-collapse text-sm">
 					<thead>
 						<tr>
-							<th className="min-w-[220px] overflow-hidden border border-subtle bg-page p-2 text-left font-medium text-ellipsis whitespace-nowrap">
-								Name
-							</th>
+							<th className="min-w-[220px] truncate border border-subtle bg-page p-2 text-left font-medium">Name</th>
 							{headerIndexes.map((index, position) => {
 								let tooltipContent = `Ends at ${periodData.periodEnding[index]}`
 								const previousIndex = headerIndexes[position + 1]
@@ -305,7 +303,7 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 								return (
 									<th
 										key={`${statementType}-${periodType}-${periodData.periodEnding[index]}`}
-										className="min-w-[132px] overflow-hidden border border-subtle bg-page p-2 text-left font-medium text-ellipsis whitespace-nowrap"
+										className="min-w-[132px] truncate border border-subtle bg-page p-2 text-left font-medium"
 									>
 										<Tooltip content={tooltipContent}>
 											<span className="underline decoration-dotted underline-offset-3">

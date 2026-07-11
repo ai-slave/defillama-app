@@ -389,7 +389,7 @@ function SingleChart({ config: baseConfig, data, isActive, title, sessionId, mes
 					<button
 						onClick={() => setEditing((v) => !v)}
 						title="Edit chart style"
-						className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-[#666] hover:text-black dark:text-[#919296] dark:hover:text-white"
+						className="flex items-center gap-1 rounded-sm px-1.5 py-1 text-xs text-[#666] hover:text-black dark:text-[#919296] dark:hover:text-white"
 					>
 						<Icon name="settings" height={14} width={14} />
 					</button>
@@ -454,7 +454,7 @@ function ChartEditorModal({ title, onClose, children }: { title?: string; onClos
 					<button
 						onClick={onClose}
 						aria-label="Close editor"
-						className="rounded p-1 text-[#999] hover:bg-black/5 hover:text-black dark:text-[#6f757e] dark:hover:bg-white/5 dark:hover:text-white"
+						className="rounded-sm p-1 text-[#999] hover:bg-black/5 hover:text-black dark:text-[#6f757e] dark:hover:bg-white/5 dark:hover:text-white"
 					>
 						<svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
 							<path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -464,7 +464,7 @@ function ChartEditorModal({ title, onClose, children }: { title?: string; onClos
 				<button
 					onClick={onClose}
 					aria-label="Close editor"
-					className="absolute top-2.5 right-2.5 z-10 hidden rounded p-1 text-[#999] hover:bg-black/5 hover:text-black lg:block dark:text-[#6f757e] dark:hover:bg-white/5 dark:hover:text-white"
+					className="absolute top-2.5 right-2.5 z-10 hidden rounded-sm p-1 text-[#999] hover:bg-black/5 hover:text-black lg:block dark:text-[#6f757e] dark:hover:bg-white/5 dark:hover:text-white"
 				>
 					<svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
 						<path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />

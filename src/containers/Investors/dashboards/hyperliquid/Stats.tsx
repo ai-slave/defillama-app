@@ -294,14 +294,14 @@ function Pagination({ table }: { table: ReturnType<typeof useReactTable<any>> })
 				<button
 					onClick={() => table.previousPage()}
 					disabled={!table.getCanPreviousPage()}
-					className="rounded px-2.5 py-1 text-xs font-medium text-(--legacy-text-label) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30 disabled:hover:bg-transparent"
+					className="rounded-sm px-2.5 py-1 text-xs font-medium text-(--legacy-text-label) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30 disabled:hover:bg-transparent"
 				>
 					Prev
 				</button>
 				<button
 					onClick={() => table.nextPage()}
 					disabled={!table.getCanNextPage()}
-					className="rounded px-2.5 py-1 text-xs font-medium text-(--legacy-text-label) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30 disabled:hover:bg-transparent"
+					className="rounded-sm px-2.5 py-1 text-xs font-medium text-(--legacy-text-label) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30 disabled:hover:bg-transparent"
 				>
 					Next
 				</button>

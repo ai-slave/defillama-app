@@ -205,7 +205,7 @@ const columns = [
 					)}
 					<span className="truncate font-medium">{displayName}</span>
 					{!row.isActive && (
-						<span className="shrink-0 rounded bg-yellow-500/15 px-1.5 py-0.5 text-[10px] font-medium text-yellow-500">
+						<span className="shrink-0 rounded-sm bg-yellow-500/15 px-1.5 py-0.5 text-[10px] font-medium text-yellow-500">
 							Inactive
 						</span>
 					)}

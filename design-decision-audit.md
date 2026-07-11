@@ -1090,3 +1090,22 @@ variations instead of forcing a universal abstraction.
   callers that show an indicator pass `role="status"` + `LoadingIndicator`.
 - Search popover rows keep their existing text loading rows (popover-level
   indicators were already fine); excluded products untouched.
+
+### 2026-07-10 Tailwind v4 Spelling Modernization
+
+- Verified against the built CSS: Tailwind 4.3.2 still generates every v3-era
+  spelling in use, so nothing was broken — this is deprecation debt. Core
+  bucket modernized: leading `!` → trailing (`px-1!`), bare `rounded` →
+  `rounded-sm` (value-identical), `outline-none` → `outline-hidden` (restores
+  the forced-colors-visible transparent outline), `x-[var(--…)]` → `x-(--…)`,
+  equal `w-N h-N` pairs → `size-N`. `bg-gradient-to-*` → `bg-linear-to-*` and `flex-shrink/grow-*` → `shrink/grow-*`.
+  Owner extended the sweep to excluded products (value-identical CSS, so their
+  pixel-stability guarantee holds); both ratchet buckets are now zero.
+- Ellipsis trio (`overflow-hidden text-ellipsis whitespace-nowrap`) → `truncate`
+  across 131 core class strings (exact three-token matches only; declarations
+  identical). Deliberately skipped: `line-clamp-*` compositions
+  (raises/investors, AdapterByChain) and two-of-three pairs (Menu rows,
+  NftsCollectionTable link) where adding `overflow-hidden` would introduce new
+  clipping.
+- New ratchet rule `deprecated-tailwind-spelling` holds core at zero and
+  baselines excluded-product debt (449).

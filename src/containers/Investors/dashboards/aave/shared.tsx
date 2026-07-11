@@ -21,7 +21,7 @@ export function InvestorsTable<T extends RowData>({
 						return (
 							<div
 								key={header.id}
-								className="overflow-hidden border-b border-(--legacy-divider) px-3 py-2.5 text-ellipsis whitespace-nowrap"
+								className="truncate border-b border-(--legacy-divider) px-3 py-2.5"
 								style={{ textAlign: align }}
 							>
 								<span
@@ -41,7 +41,7 @@ export function InvestorsTable<T extends RowData>({
 						return (
 							<div
 								key={cell.id}
-								className={`overflow-hidden border-b border-(--legacy-divider) px-3 py-2.5 text-[13px] text-ellipsis whitespace-nowrap text-(--legacy-text-primary) transition-colors ${
+								className={`truncate border-b border-(--legacy-divider) px-3 py-2.5 text-[13px] text-(--legacy-text-primary) transition-colors ${
 									rowIdx % 2 === 1 ? 'bg-(--legacy-cards-bg)' : ''
 								}`}
 								style={{ textAlign: align }}
@@ -99,7 +99,7 @@ export function KpiSkeleton({ label }: { label: string }) {
 	return (
 		<div className="flex min-w-0 flex-1 flex-col gap-1 py-1">
 			<span className="text-[11px] font-medium tracking-wide text-(--legacy-text-tertiary)">{label}</span>
-			<div className="h-7 w-20 animate-pulse rounded bg-(--legacy-text-disabled) opacity-20" />
+			<div className="h-7 w-20 animate-pulse rounded-sm bg-(--legacy-text-disabled) opacity-20" />
 		</div>
 	)
 }
@@ -180,14 +180,14 @@ export function Pagination<T>({ table }: { table: Table<T> }) {
 				<button
 					onClick={() => table.previousPage()}
 					disabled={!table.getCanPreviousPage()}
-					className="rounded px-2 py-1 transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30"
+					className="rounded-sm px-2 py-1 transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30"
 				>
 					Prev
 				</button>
 				<button
 					onClick={() => table.nextPage()}
 					disabled={!table.getCanNextPage()}
-					className="rounded px-2 py-1 transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30"
+					className="rounded-sm px-2 py-1 transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30"
 				>
 					Next
 				</button>

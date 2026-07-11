@@ -95,7 +95,7 @@ function KpiCard({ label, value }: { label: string; value?: string }) {
 			{value ? (
 				<span className="text-2xl font-semibold text-(--legacy-text-primary)">{value}</span>
 			) : (
-				<div className="h-8 w-24 animate-pulse rounded bg-(--legacy-text-disabled) opacity-20" />
+				<div className="h-8 w-24 animate-pulse rounded-sm bg-(--legacy-text-disabled) opacity-20" />
 			)}
 		</div>
 	)
@@ -108,7 +108,7 @@ function HeadlinePill({ label, value }: { label: string; value?: string }) {
 			{value ? (
 				<span className="text-sm font-semibold text-(--legacy-text-primary)">{value}</span>
 			) : (
-				<span className="inline-block h-4 w-12 animate-pulse rounded bg-(--legacy-text-disabled) opacity-20" />
+				<span className="inline-block h-4 w-12 animate-pulse rounded-sm bg-(--legacy-text-disabled) opacity-20" />
 			)}
 		</div>
 	)

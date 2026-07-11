@@ -160,7 +160,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 									onChange={(e) => handleAmountInput(e.target.value)}
 									placeholder="0.00"
 									autoFocus
-									className="h-10 w-full rounded-lg border border-(--sub-border-muted) bg-(--sub-surface-panel) pr-3 pl-7 text-sm text-(--sub-ink-primary) outline-none focus:border-(--sub-brand-primary) dark:border-(--sub-border-strong) dark:bg-(--sub-ink-primary) dark:text-white dark:focus:border-(--sub-brand-primary)"
+									className="h-10 w-full rounded-lg border border-(--sub-border-muted) bg-(--sub-surface-panel) pr-3 pl-7 text-sm text-(--sub-ink-primary) outline-hidden focus:border-(--sub-brand-primary) dark:border-(--sub-border-strong) dark:bg-(--sub-ink-primary) dark:text-white dark:focus:border-(--sub-brand-primary)"
 								/>
 							</div>
 							{amount && !isValidAmount && (

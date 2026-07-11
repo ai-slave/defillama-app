@@ -33,14 +33,14 @@ export function ArticleTitleFields({ article, updateArticle }: ArticleTitleField
 				aria-label="Article title"
 				rows={1}
 				style={{ fontFamily: titleSerif }}
-				className="article-title-input block w-full resize-none overflow-hidden bg-transparent text-4xl leading-[1.05] font-semibold tracking-[-0.025em] text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary)/60 focus:outline-none md:text-[3.25rem]"
+				className="article-title-input block w-full resize-none overflow-hidden bg-transparent text-4xl leading-[1.05] font-semibold tracking-[-0.025em] text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary)/60 focus:outline-hidden md:text-[3.25rem]"
 			/>
 			<input
 				value={article.subtitle ?? ''}
 				onChange={(e) => updateArticle('subtitle', e.target.value)}
 				placeholder="Add a subtitle…"
 				style={{ fontFamily: titleSerif }}
-				className="mt-3 w-full bg-transparent text-lg leading-snug text-(--legacy-text-secondary) italic placeholder:text-(--legacy-text-tertiary)/60 focus:outline-none md:text-xl"
+				className="mt-3 w-full bg-transparent text-lg leading-snug text-(--legacy-text-secondary) italic placeholder:text-(--legacy-text-tertiary)/60 focus:outline-hidden md:text-xl"
 			/>
 			{article.brandByline ? (
 				<div className="mt-4 text-xs tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">

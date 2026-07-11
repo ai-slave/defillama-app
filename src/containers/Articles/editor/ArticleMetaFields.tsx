@@ -45,7 +45,7 @@ export function MetaSwitch({
 						type="button"
 						role="switch"
 						aria-checked={checked}
-						className={`relative mt-0.5 inline-flex h-[18px] w-8 shrink-0 items-center rounded-full border transition-colors focus-visible:ring-2 focus-visible:ring-(--legacy-link-text)/40 focus-visible:ring-offset-1 focus-visible:ring-offset-(--legacy-cards-bg) focus-visible:outline-none ${
+						className={`relative mt-0.5 inline-flex h-[18px] w-8 shrink-0 items-center rounded-full border transition-colors focus-visible:ring-2 focus-visible:ring-(--legacy-link-text)/40 focus-visible:ring-offset-1 focus-visible:ring-offset-(--legacy-cards-bg) focus-visible:outline-hidden ${
 							checked
 								? 'border-(--legacy-link-text)/60 bg-(--legacy-link-text)'
 								: 'border-(--legacy-cards-border) bg-(--legacy-app-bg) group-hover:border-(--legacy-text-tertiary)'

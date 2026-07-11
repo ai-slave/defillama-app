@@ -175,7 +175,7 @@ function ShareBadge({ status, change }: { status: HolderChangeStatus; change: nu
 			)
 		case 'new':
 			return (
-				<span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-blue-600 uppercase dark:text-blue-400">
+				<span className="rounded-sm bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-blue-600 uppercase dark:text-blue-400">
 					Entered Top 10
 				</span>
 			)
@@ -205,7 +205,7 @@ function BalanceBadge({ status, change }: { status: HolderChangeStatus; change: 
 			)
 		case 'new':
 			return (
-				<span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-blue-600 uppercase dark:text-blue-400">
+				<span className="rounded-sm bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-blue-600 uppercase dark:text-blue-400">
 					Entered Top 10
 				</span>
 			)
@@ -403,13 +403,13 @@ function TopHoldersTable({
 				<div className="flex rounded-md bg-(--legacy-cards-border)/40 p-0.5 text-[11px]">
 					<button
 						onClick={() => setMode('share')}
-						className={`rounded px-2 py-0.5 font-medium transition-colors ${mode === 'share' ? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm' : 'text-(--legacy-text-disabled) hover:text-(--legacy-text-secondary)'}`}
+						className={`rounded-sm px-2 py-0.5 font-medium transition-colors ${mode === 'share' ? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm' : 'text-(--legacy-text-disabled) hover:text-(--legacy-text-secondary)'}`}
 					>
 						Share
 					</button>
 					<button
 						onClick={() => setMode('balance')}
-						className={`rounded px-2 py-0.5 font-medium transition-colors ${mode === 'balance' ? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm' : 'text-(--legacy-text-disabled) hover:text-(--legacy-text-secondary)'}`}
+						className={`rounded-sm px-2 py-0.5 font-medium transition-colors ${mode === 'balance' ? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm' : 'text-(--legacy-text-disabled) hover:text-(--legacy-text-secondary)'}`}
 					>
 						Balance
 					</button>

@@ -188,7 +188,7 @@ export function CitationDetailPanel({
 							}`}
 						/>
 					}
-					className="fixed inset-x-0 bottom-0 z-50 m-0 bg-transparent p-0 outline-none"
+					className="fixed inset-x-0 bottom-0 z-50 m-0 bg-transparent p-0 outline-hidden"
 				>
 					{panel('mobile')}
 				</Ariakit.Dialog>

@@ -25,7 +25,7 @@ export function AriakitCheckbox({
 			>
 				<Ariakit.Checkbox disabled={disabled} className="sr-only" />
 				<div
-					className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
+					className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
 						checked
 							? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
 							: 'border-(--legacy-form-control-border) bg-(--legacy-bg-input) hover:border-(--legacy-primary)/60'

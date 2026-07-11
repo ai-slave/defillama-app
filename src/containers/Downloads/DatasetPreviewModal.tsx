@@ -805,7 +805,7 @@ export function DatasetPreviewModal({
 												value={search}
 												onChange={(event) => setSearch(event.currentTarget.value)}
 												placeholder="Filter rows..."
-												className="w-full min-w-32 rounded-md border border-(--legacy-divider) bg-transparent py-1.5 pr-2.5 pl-8 text-xs transition-colors outline-none placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30 sm:w-48"
+												className="w-full min-w-32 rounded-md border border-(--legacy-divider) bg-transparent py-1.5 pr-2.5 pl-8 text-xs outline-hidden transition-colors placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30 sm:w-48"
 											/>
 										</label>
 
@@ -979,7 +979,7 @@ export function DatasetPreviewModal({
 														<div
 															key={column.index}
 															title={rawValue || undefined}
-															className={`overflow-hidden border-t border-r border-(--legacy-divider) p-2 text-sm text-ellipsis whitespace-nowrap last:border-r-0 ${tone} ${!isSelected ? 'text-(--legacy-text-tertiary) opacity-40' : ''}`}
+															className={`truncate border-t border-r border-(--legacy-divider) p-2 text-sm last:border-r-0 ${tone} ${!isSelected ? 'text-(--legacy-text-tertiary) opacity-40' : ''}`}
 															style={{
 																textAlign: column.align,
 																position: isSticky ? 'sticky' : undefined,
@@ -1092,7 +1092,7 @@ function PlaceholderRows({
 							return (
 								<div
 									key={column.index}
-									className={`overflow-hidden border-t border-r border-(--legacy-divider) p-2 text-sm text-ellipsis whitespace-nowrap last:border-r-0 ${tone} ${!isSelected ? 'text-(--legacy-text-tertiary) opacity-40' : ''}`}
+									className={`truncate border-t border-r border-(--legacy-divider) p-2 text-sm last:border-r-0 ${tone} ${!isSelected ? 'text-(--legacy-text-tertiary) opacity-40' : ''}`}
 									style={{
 										textAlign: column.align,
 										position: isSticky ? 'sticky' : undefined,
@@ -1148,7 +1148,7 @@ function ChainPickerPopover({
 						value={chainSearch}
 						onChange={(e) => setChainSearch(e.currentTarget.value)}
 						placeholder="Search chains..."
-						className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-xs outline-none placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary)"
+						className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-xs outline-hidden placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary)"
 					/>
 				</div>
 				<div className="flex-1 overflow-auto py-1">
@@ -1253,7 +1253,7 @@ function ColumnPickerPopover({
 								className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row"
 							>
 								<span
-									className={`flex size-4 shrink-0 items-center justify-center rounded border transition-colors ${
+									className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
 										isSelected
 											? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
 											: 'border-(--legacy-divider)'

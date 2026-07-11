@@ -1350,7 +1350,7 @@ export function ChartDatasetModal({
 											value={search}
 											onChange={(e) => setSearch(e.currentTarget.value)}
 											placeholder="Filter rows..."
-											className="w-full min-w-32 rounded-md border border-(--legacy-divider) bg-transparent py-1.5 pr-2.5 pl-8 text-xs transition-colors outline-none placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30 sm:w-48"
+											className="w-full min-w-32 rounded-md border border-(--legacy-divider) bg-transparent py-1.5 pr-2.5 pl-8 text-xs outline-hidden transition-colors placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30 sm:w-48"
 										/>
 									</label>
 
@@ -1526,7 +1526,7 @@ export function ChartDatasetModal({
 																<div
 																	key={column.index}
 																	title={rawValue || undefined}
-																	className={`overflow-hidden border-t border-r border-(--legacy-divider) p-2 text-sm text-ellipsis whitespace-nowrap last:border-r-0 ${tone} ${!isSelected ? 'text-(--legacy-text-tertiary) opacity-40' : ''}`}
+																	className={`truncate border-t border-r border-(--legacy-divider) p-2 text-sm last:border-r-0 ${tone} ${!isSelected ? 'text-(--legacy-text-tertiary) opacity-40' : ''}`}
 																	style={{
 																		textAlign: column.align,
 																		position: isSticky ? 'sticky' : undefined,
@@ -1666,7 +1666,7 @@ function PlaceholderRows({
 							return (
 								<div
 									key={column.index}
-									className={`overflow-hidden border-t border-r border-(--legacy-divider) p-2 text-sm text-ellipsis whitespace-nowrap last:border-r-0 ${tone} ${!isSelected ? 'text-(--legacy-text-tertiary) opacity-40' : ''}`}
+									className={`truncate border-t border-r border-(--legacy-divider) p-2 text-sm last:border-r-0 ${tone} ${!isSelected ? 'text-(--legacy-text-tertiary) opacity-40' : ''}`}
 									style={{
 										textAlign: column.align,
 										position: isSticky ? 'sticky' : undefined,
@@ -1733,7 +1733,7 @@ function CategoryPickerPopover({
 						value={search}
 						onChange={(e) => setSearch(e.currentTarget.value)}
 						placeholder="Search categories..."
-						className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-xs outline-none placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary)"
+						className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-xs outline-hidden placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary)"
 						autoFocus
 					/>
 				</div>
@@ -1816,7 +1816,7 @@ function MultiOptionPickerPopover({
 				<Icon name="chevron-down" className="size-3.5" />
 				<span>{triggerText}</span>
 				{selected.length > 0 ? (
-					<span className="rounded bg-(--legacy-primary) px-1 text-[10px] font-semibold text-white">
+					<span className="rounded-sm bg-(--legacy-primary) px-1 text-[10px] font-semibold text-white">
 						{selected.length}
 					</span>
 				) : null}
@@ -1855,7 +1855,7 @@ function MultiOptionPickerPopover({
 						value={optionSearch}
 						onChange={(e) => setOptionSearch(e.currentTarget.value)}
 						placeholder={`Search ${label.toLowerCase()}...`}
-						className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-xs outline-none placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary)"
+						className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-xs outline-hidden placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary)"
 						autoFocus
 					/>
 				</div>
@@ -1878,7 +1878,7 @@ function MultiOptionPickerPopover({
 									} ${opt.isChild ? 'pl-7' : 'pl-3'}`}
 								>
 									<span
-										className={`flex size-4 shrink-0 items-center justify-center rounded border transition-colors ${
+										className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
 											isSelected
 												? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
 												: 'border-(--legacy-divider)'
@@ -1949,7 +1949,7 @@ function ColumnPickerPopover({
 								className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-xs transition-colors hover:bg-hover-row"
 							>
 								<span
-									className={`flex size-4 shrink-0 items-center justify-center rounded border transition-colors ${
+									className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
 										isSelected
 											? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
 											: 'border-(--legacy-divider)'
@@ -2070,7 +2070,7 @@ function BulkPreviewSidebar({
 								onClick={() => onDownloadSingle(param)}
 								disabled={!isReady || isPreview}
 								title={isPreview ? 'Subscribe to download' : 'Download this CSV'}
-								className="shrink-0 rounded p-1 text-(--legacy-text-tertiary) transition-colors hover:bg-(--legacy-bg-main) hover:text-(--legacy-primary) disabled:cursor-not-allowed disabled:opacity-30"
+								className="shrink-0 rounded-sm p-1 text-(--legacy-text-tertiary) transition-colors hover:bg-(--legacy-bg-main) hover:text-(--legacy-primary) disabled:cursor-not-allowed disabled:opacity-30"
 							>
 								<Icon name="download-cloud" className="size-3.5" />
 							</button>
@@ -2078,7 +2078,7 @@ function BulkPreviewSidebar({
 								type="button"
 								onClick={() => onRemove(param.value)}
 								title="Remove"
-								className="shrink-0 rounded p-1 text-(--legacy-text-tertiary) transition-colors hover:bg-(--legacy-bg-main) hover:text-red-500"
+								className="shrink-0 rounded-sm p-1 text-(--legacy-text-tertiary) transition-colors hover:bg-(--legacy-bg-main) hover:text-red-500"
 							>
 								<Icon name="x" className="size-3.5" />
 							</button>

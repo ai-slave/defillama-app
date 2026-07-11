@@ -354,7 +354,7 @@ function AuditChip({ c, selected, onToggle }: { c: AuditCluster; selected: boole
 					aria-controls={selected ? DETAIL_ID : undefined}
 					aria-label={label}
 					data-hs-pt
-					className={`absolute flex h-5 min-w-5 -translate-x-1/2 items-center justify-center rounded border px-1 text-[10px] font-medium tabular-nums outline-offset-2 outline-(--legacy-primary) transition-colors duration-150 focus-visible:outline-2 ${
+					className={`absolute flex h-5 min-w-5 -translate-x-1/2 items-center justify-center rounded-sm border px-1 text-[10px] font-medium tabular-nums outline-offset-2 outline-(--legacy-primary) transition-colors duration-150 focus-visible:outline-2 ${
 						selected
 							? 'border-(--legacy-primary) bg-(--legacy-primary)/10 text-(--legacy-primary)'
 							: 'border-(--legacy-cards-border) bg-(--legacy-bg-main) text-(--legacy-text-secondary) hover:border-(--legacy-text-secondary)/40 hover:text-(--legacy-text-primary)'

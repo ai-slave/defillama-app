@@ -75,7 +75,7 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 				if (allocations.length === 0) return <span>{sections.join(', ')}</span>
 				return (
 					<Hovercard
-						className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
+						className="max-w-full truncate"
 						content={
 							<span className="flex flex-col gap-1">
 								{allocations.map((a, index) => (

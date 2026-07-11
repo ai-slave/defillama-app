@@ -125,7 +125,7 @@ function FinancialRow({
 	return (
 		<>
 			<tr className="group">
-				<th className="w-[28%] overflow-hidden border border-black/10 bg-(--legacy-cards-bg) p-2 text-left font-semibold text-ellipsis whitespace-nowrap group-hover:bg-(--legacy-link-hover-bg) dark:border-white/10">
+				<th className="w-[28%] truncate border border-black/10 bg-(--legacy-cards-bg) p-2 text-left font-semibold group-hover:bg-(--legacy-link-hover-bg) dark:border-white/10">
 					<div
 						className="flex items-center gap-1"
 						onClick={(event) => {
@@ -150,13 +150,13 @@ function FinancialRow({
 						) : showExpandPlaceholder ? (
 							<span aria-hidden="true" className="-ml-1 block size-5 shrink-0" />
 						) : null}
-						<span className="overflow-hidden text-ellipsis whitespace-nowrap">{row.label}</span>
+						<span className="truncate">{row.label}</span>
 					</div>
 				</th>
 				{headerIndexes.map((index) => (
 					<td
 						key={`${row.id}-${index}`}
-						className="overflow-hidden border border-black/10 p-2 text-left font-medium text-ellipsis whitespace-nowrap group-hover:bg-(--legacy-link-hover-bg) dark:border-white/10"
+						className="truncate border border-black/10 p-2 text-left font-medium group-hover:bg-(--legacy-link-hover-bg) dark:border-white/10"
 					>
 						{formatEquitiesStatementCellValue(row.label, row.values[index] ?? null)}
 					</td>
@@ -165,13 +165,13 @@ function FinancialRow({
 			{hasSubRows && isExpanded
 				? row.subRows?.map((subRow) => (
 						<tr key={subRow.id} className="group text-(--legacy-text-secondary)">
-							<th className="w-[28%] overflow-hidden border border-black/10 bg-(--legacy-cards-bg) p-2 pl-9 text-left font-normal text-ellipsis whitespace-nowrap italic group-hover:bg-(--legacy-link-hover-bg) dark:border-white/10">
-								<span className="overflow-hidden text-ellipsis whitespace-nowrap">{subRow.label}</span>
+							<th className="w-[28%] truncate border border-black/10 bg-(--legacy-cards-bg) p-2 pl-9 text-left font-normal italic group-hover:bg-(--legacy-link-hover-bg) dark:border-white/10">
+								<span className="truncate">{subRow.label}</span>
 							</th>
 							{headerIndexes.map((index) => (
 								<td
 									key={`${subRow.id}-${index}`}
-									className="overflow-hidden border border-black/10 p-2 text-left font-normal text-ellipsis whitespace-nowrap group-hover:bg-(--legacy-link-hover-bg) dark:border-white/10"
+									className="truncate border border-black/10 p-2 text-left font-normal group-hover:bg-(--legacy-link-hover-bg) dark:border-white/10"
 								>
 									{formatEquitiesStatementCellValue(subRow.label, subRow.values[index] ?? null)}
 								</td>
@@ -274,7 +274,7 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 									key={option}
 									type="button"
 									onClick={() => setStatementType(option)}
-									className={`rounded px-2 py-1 text-xs font-medium transition ${
+									className={`rounded-sm px-2 py-1 text-xs font-medium transition ${
 										statementType === option
 											? 'bg-(--legacy-primary)/10 text-(--legacy-primary)'
 											: 'pro-text2 hover:pro-text1'
@@ -290,7 +290,7 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 									key={option}
 									type="button"
 									onClick={() => setPeriodType(option)}
-									className={`rounded px-2 py-1 text-xs font-medium transition ${
+									className={`rounded-sm px-2 py-1 text-xs font-medium transition ${
 										periodType === option
 											? 'bg-(--legacy-primary)/10 text-(--legacy-primary)'
 											: 'pro-text2 hover:pro-text1'
@@ -331,13 +331,13 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 				<table className="w-full border-collapse text-sm">
 					<thead>
 						<tr>
-							<th className="min-w-[220px] overflow-hidden border border-black/10 bg-(--legacy-app-bg) p-2 text-left font-semibold text-ellipsis whitespace-nowrap dark:border-white/10">
+							<th className="min-w-[220px] truncate border border-black/10 bg-(--legacy-app-bg) p-2 text-left font-semibold dark:border-white/10">
 								Name
 							</th>
 							{headerIndexes.map((index) => (
 								<th
 									key={`${statementType}-${periodType}-${periodData!.periodEnding[index]}`}
-									className="min-w-[132px] overflow-hidden border border-black/10 bg-(--legacy-app-bg) p-2 text-left font-semibold text-ellipsis whitespace-nowrap dark:border-white/10"
+									className="min-w-[132px] truncate border border-black/10 bg-(--legacy-app-bg) p-2 text-left font-semibold dark:border-white/10"
 								>
 									{formatStatementPeriodLabel(periodData!.periodEnding[index])}
 								</th>

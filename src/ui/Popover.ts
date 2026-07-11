@@ -41,7 +41,7 @@ export const popoverMenuItemStyles =
 	'body-sm flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden px-3 py-2 text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring'
 
 export const popoverTreeRowStyles =
-	'body-sm group relative flex shrink-0 cursor-pointer items-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap py-2 pr-3 text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring data-[active=true]:bg-hover-row'
+	'body-sm group relative flex shrink-0 cursor-pointer items-center gap-2 truncate py-2 pr-3 text-primary hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring data-[active=true]:bg-hover-row'
 
 export const popoverActionBarStyles =
 	'grid w-full min-w-0 grid-cols-2 border-b border-subtle bg-overlay body-sm text-link'
@@ -130,7 +130,7 @@ export const legacyPopoverRowStyles =
 	'flex shrink-0 cursor-pointer items-center justify-between gap-4 overflow-hidden border-b border-medium px-3 py-2 text-primary cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row'
 
 export const legacyPopoverExternalRowStyles =
-	'shrink-0 cursor-pointer overflow-hidden border-b border-medium px-3 py-2 text-ellipsis whitespace-nowrap text-primary cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row'
+	'shrink-0 cursor-pointer truncate border-b border-medium px-3 py-2 text-primary cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row'
 
 export const legacySelectPopoverRowStyles =
 	'flex shrink-0 cursor-pointer items-center justify-start gap-4 border-b border-medium px-3 py-2 text-primary cv-auto-37 last-of-type:rounded-b-md hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row'

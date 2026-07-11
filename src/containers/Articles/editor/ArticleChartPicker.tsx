@@ -60,7 +60,7 @@ function ChartTypeSelect({
 	return (
 		<Ariakit.SelectProvider value={value} setValue={(v) => onChange(typeof v === 'string' ? v : v[0])}>
 			<Ariakit.Select
-				className="flex h-7 w-44 items-center justify-between gap-2 rounded-md border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-2.5 text-xs text-(--legacy-text-primary) transition-colors hover:border-(--legacy-text-tertiary) focus-visible:border-(--legacy-link-text) focus-visible:outline-none data-[state=open]:border-(--legacy-link-text)"
+				className="flex h-7 w-44 items-center justify-between gap-2 rounded-md border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-2.5 text-xs text-(--legacy-text-primary) transition-colors hover:border-(--legacy-text-tertiary) focus-visible:border-(--legacy-link-text) focus-visible:outline-hidden data-[state=open]:border-(--legacy-link-text)"
 				aria-label="Chart type"
 			>
 				<span className="truncate text-left">{labelFor(value)}</span>
@@ -71,7 +71,7 @@ function ChartTypeSelect({
 				sameWidth
 				portal
 				unmountOnHide
-				className="z-[90] flex max-h-72 flex-col overflow-auto rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 text-xs shadow-lg outline-none"
+				className="z-[90] flex max-h-72 flex-col overflow-auto rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 text-xs shadow-lg outline-hidden"
 			>
 				{options.map((option) => (
 					<Ariakit.SelectItem
@@ -424,7 +424,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 			store={store}
 			modal
 			backdrop={<div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm" />}
-			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[92vh] w-[min(1180px,96vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-[0_30px_80px_-20px_rgba(0,0,0,0.5)] outline-none"
+			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[92vh] w-[min(1180px,96vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-[0_30px_80px_-20px_rgba(0,0,0,0.5)] outline-hidden"
 		>
 			<div className="flex flex-wrap items-center gap-3 border-b border-(--legacy-cards-border) px-5 py-3">
 				<Ariakit.DialogHeading className="mr-2 text-sm font-semibold tracking-tight text-(--legacy-text-primary)">
@@ -446,7 +446,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 									setTab(value)
 									setQuery('')
 								}}
-								className={`rounded px-3 py-1 font-medium transition-colors ${
+								className={`rounded-sm px-3 py-1 font-medium transition-colors ${
 									active
 										? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm'
 										: 'text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'
@@ -495,7 +495,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 								value={query}
 								onChange={(event) => setQuery(event.target.value)}
 								placeholder={tab === 'protocol' ? 'Search protocols' : 'Search chains'}
-								className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1.5 pr-2 pl-8 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+								className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1.5 pr-2 pl-8 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 							/>
 						</div>
 					</div>
@@ -596,7 +596,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 													type="button"
 													onClick={() => removeSeries(id)}
 													aria-label={`Remove ${s.name}`}
-													className="flex size-6 items-center justify-center rounded text-(--legacy-text-tertiary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)"
+													className="flex size-6 items-center justify-center rounded-sm text-(--legacy-text-tertiary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)"
 												>
 													×
 												</button>
@@ -622,7 +622,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 													key={r.value}
 													type="button"
 													onClick={() => setRange(r.value)}
-													className={`rounded px-2.5 py-1 font-medium transition-colors ${
+													className={`rounded-sm px-2.5 py-1 font-medium transition-colors ${
 														active
 															? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm'
 															: 'text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'
@@ -655,7 +655,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 													role="radio"
 													aria-checked={active}
 													onClick={() => setLogScale(opt.value)}
-													className={`rounded px-2.5 py-1 font-medium transition-colors ${
+													className={`rounded-sm px-2.5 py-1 font-medium transition-colors ${
 														active
 															? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm'
 															: 'text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'
@@ -695,7 +695,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 										type="button"
 										onClick={addAnnotation}
 										disabled={annotations.length >= MAX_ANNOTATIONS}
-										className="rounded border border-(--legacy-cards-border) px-2 py-0.5 text-[11px] text-(--legacy-text-secondary) transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-40"
+										className="rounded-sm border border-(--legacy-cards-border) px-2 py-0.5 text-[11px] text-(--legacy-text-secondary) transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-40"
 									>
 										+ Add
 									</button>
@@ -718,19 +718,19 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 													type="date"
 													value={annotation.date.slice(0, 10)}
 													onChange={(e) => updateAnnotation(i, { date: e.target.value })}
-													className="rounded border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-2 py-1 text-xs text-(--legacy-text-primary) focus:border-(--legacy-link-text) focus:outline-none"
+													className="rounded-sm border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-2 py-1 text-xs text-(--legacy-text-primary) focus:border-(--legacy-link-text) focus:outline-hidden"
 												/>
 												<input
 													value={annotation.label}
 													onChange={(e) => updateAnnotation(i, { label: e.target.value })}
 													placeholder="Label"
-													className="rounded border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-2 py-1 text-xs text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+													className="rounded-sm border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-2 py-1 text-xs text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 												/>
 												<button
 													type="button"
 													onClick={() => removeAnnotation(i)}
 													aria-label="Remove annotation"
-													className="flex size-6 items-center justify-center rounded text-(--legacy-text-tertiary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)"
+													className="flex size-6 items-center justify-center rounded-sm text-(--legacy-text-tertiary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)"
 												>
 													×
 												</button>
@@ -754,7 +754,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 						onChange={(event) => setCaption(event.target.value)}
 						placeholder="Add a one-line caption shown under the chart…"
 						disabled={!canInsert}
-						className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-1.5 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none disabled:opacity-60"
+						className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-1.5 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden disabled:opacity-60"
 					/>
 				</label>
 				<div className="flex items-center justify-end gap-2">

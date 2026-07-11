@@ -7,7 +7,7 @@ describe('FormattedName', () => {
 		const html = renderToStaticMarkup(<FormattedName text="Uniswap" />)
 
 		expect(html).toContain('Uniswap')
-		expect(html).toContain('text-ellipsis')
+		expect(html).toContain('truncate')
 		expect(html).toContain('data-link="false"')
 		expect(html).not.toContain('cursor-pointer')
 	})

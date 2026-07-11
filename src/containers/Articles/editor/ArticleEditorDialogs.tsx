@@ -46,7 +46,7 @@ export function CoverDetailsDialog({ article, publishErrors, store, updateCoverF
 						value={article.coverImage?.headline ?? ''}
 						onChange={(e) => updateCoverField('headline', e.target.value)}
 						placeholder="Image title"
-						className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-2.5 py-1.5 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+						className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-2.5 py-1.5 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 					/>
 				</label>
 				<label className="grid gap-1">
@@ -55,7 +55,7 @@ export function CoverDetailsDialog({ article, publishErrors, store, updateCoverF
 						value={article.coverImage?.caption ?? ''}
 						onChange={(e) => updateCoverField('caption', e.target.value)}
 						placeholder="Caption shown under the cover"
-						className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-2.5 py-1.5 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+						className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-2.5 py-1.5 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 					/>
 					{publishErrors['coverImage.caption'] ? (
 						<span className="text-[11px] text-red-500">{publishErrors['coverImage.caption']}</span>
@@ -70,7 +70,7 @@ export function CoverDetailsDialog({ article, publishErrors, store, updateCoverF
 							value={article.coverImage?.credit ?? ''}
 							onChange={(e) => updateCoverField('credit', e.target.value)}
 							placeholder="Photographer"
-							className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-2.5 py-1.5 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+							className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-2.5 py-1.5 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 						/>
 						{publishErrors['coverImage.credit'] ? (
 							<span className="text-[11px] text-red-500">{publishErrors['coverImage.credit']}</span>
@@ -84,7 +84,7 @@ export function CoverDetailsDialog({ article, publishErrors, store, updateCoverF
 							value={article.coverImage?.copyright ?? ''}
 							onChange={(e) => updateCoverField('copyright', e.target.value)}
 							placeholder="Rights holder"
-							className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-2.5 py-1.5 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+							className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-2.5 py-1.5 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 						/>
 						{publishErrors['coverImage.copyright'] ? (
 							<span className="text-[11px] text-red-500">{publishErrors['coverImage.copyright']}</span>

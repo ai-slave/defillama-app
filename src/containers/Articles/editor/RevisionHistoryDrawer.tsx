@@ -536,15 +536,15 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 						<p className="font-jetbrains text-[11px] text-(--legacy-text-tertiary)">
 							<span className="text-(--legacy-text-secondary) tabular-nums">{counts.all}</span> entries
 							<span aria-hidden> · </span>
-							<kbd className="rounded border border-(--legacy-cards-border) px-1 py-px text-[9px] tracking-tight">
+							<kbd className="rounded-sm border border-(--legacy-cards-border) px-1 py-px text-[9px] tracking-tight">
 								J/K
 							</kbd>
 							<span> navigate </span>
-							<kbd className="rounded border border-(--legacy-cards-border) px-1 py-px text-[9px] tracking-tight">
+							<kbd className="rounded-sm border border-(--legacy-cards-border) px-1 py-px text-[9px] tracking-tight">
 								R
 							</kbd>
 							<span> restore </span>
-							<kbd className="rounded border border-(--legacy-cards-border) px-1 py-px text-[9px] tracking-tight">
+							<kbd className="rounded-sm border border-(--legacy-cards-border) px-1 py-px text-[9px] tracking-tight">
 								Esc
 							</kbd>
 							<span> close</span>
@@ -906,7 +906,7 @@ function PreviewSpecimenHeader({
 							>
 								<Icon name="repeat" className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
 								<span>Restore as pending</span>
-								<kbd className="hidden rounded border border-white/30 px-1 py-px font-jetbrains text-[9px] tracking-tight md:inline">
+								<kbd className="hidden rounded-sm border border-white/30 px-1 py-px font-jetbrains text-[9px] tracking-tight md:inline">
 									R
 								</kbd>
 							</button>
@@ -1051,7 +1051,7 @@ function DiffPane({
 		return (
 			<div className="grid h-full place-items-center px-6 py-12">
 				<div className="text-center">
-					<div className="mx-auto mb-3 h-1 w-24 animate-pulse rounded bg-(--legacy-cards-border)" />
+					<div className="mx-auto mb-3 h-1 w-24 animate-pulse rounded-sm bg-(--legacy-cards-border)" />
 					<p className="font-jetbrains text-[10px] tracking-[0.22em] text-(--legacy-text-tertiary) uppercase">
 						computing diff
 					</p>
@@ -1283,8 +1283,12 @@ function TimelineSkeleton() {
 				<div key={idx} className="flex items-start gap-3 py-2">
 					<span aria-hidden className="mt-1 size-2 rounded-full bg-(--legacy-cards-border)" />
 					<div className="grid flex-1 gap-1.5">
-						<span aria-hidden className="h-2 rounded bg-(--legacy-cards-border)" style={{ width: `${scale * 100}%` }} />
-						<span aria-hidden className="h-2 w-24 rounded bg-(--legacy-cards-border)/60" />
+						<span
+							aria-hidden
+							className="h-2 rounded-sm bg-(--legacy-cards-border)"
+							style={{ width: `${scale * 100}%` }}
+						/>
+						<span aria-hidden className="h-2 w-24 rounded-sm bg-(--legacy-cards-border)/60" />
 					</div>
 				</div>
 			))}
@@ -1298,15 +1302,15 @@ function TimelineSkeleton() {
 function PreviewSkeleton() {
 	return (
 		<div className="mx-auto grid w-full max-w-[760px] gap-4 px-6 py-12">
-			<span aria-hidden className="h-3 w-32 rounded bg-(--legacy-cards-border)/70" />
-			<span aria-hidden className="h-10 w-3/4 rounded bg-(--legacy-cards-border)" />
-			<span aria-hidden className="h-5 w-2/3 rounded bg-(--legacy-cards-border)/70" />
+			<span aria-hidden className="h-3 w-32 rounded-sm bg-(--legacy-cards-border)/70" />
+			<span aria-hidden className="h-10 w-3/4 rounded-sm bg-(--legacy-cards-border)" />
+			<span aria-hidden className="h-5 w-2/3 rounded-sm bg-(--legacy-cards-border)/70" />
 			<div className="mt-6 grid gap-2">
 				{[1, 0.95, 0.9, 0.7, 0.85, 0.6].map((scale, idx) => (
 					<span
 						key={idx}
 						aria-hidden
-						className="h-3 rounded bg-(--legacy-cards-border)/50"
+						className="h-3 rounded-sm bg-(--legacy-cards-border)/50"
 						style={{ width: `${scale * 100}%` }}
 					/>
 				))}

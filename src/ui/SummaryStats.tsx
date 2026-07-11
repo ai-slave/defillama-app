@@ -83,9 +83,7 @@ export function StatItem({
 				<Label className="text-secondary">{label}</Label>
 			)}
 			<span
-				className={`font-jetbrains text-2xl font-semibold ${
-					truncate ? 'min-h-8 overflow-hidden text-ellipsis whitespace-nowrap' : ''
-				} ${valueClassName ?? ''}`
+				className={`font-jetbrains text-2xl font-semibold ${truncate ? 'min-h-8 truncate' : ''} ${valueClassName ?? ''}`
 					.replace(/\s+/g, ' ')
 					.trim()}
 			>

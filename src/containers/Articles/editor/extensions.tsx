@@ -136,7 +136,7 @@ function ChartCaptionEditor({
 				}
 			}}
 			onMouseDown={(e) => e.stopPropagation()}
-			className="w-full resize-none border-b border-dashed border-transparent bg-transparent text-[13px] leading-snug text-(--legacy-text-secondary) outline-none placeholder:text-(--legacy-text-tertiary)/70 hover:border-(--legacy-cards-border) focus:border-(--legacy-link-text)/60 focus:text-(--legacy-text-primary)"
+			className="w-full resize-none border-b border-dashed border-transparent bg-transparent text-[13px] leading-snug text-(--legacy-text-secondary) outline-hidden placeholder:text-(--legacy-text-tertiary)/70 hover:border-(--legacy-cards-border) focus:border-(--legacy-link-text)/60 focus:text-(--legacy-text-primary)"
 		/>
 	)
 }
@@ -270,7 +270,7 @@ function CalloutNodeView({ node, updateAttributes }: NodeViewProps) {
 		<NodeViewWrapper className={`my-4 rounded-md border p-4 ${styles.wrap}`}>
 			<div className="mb-2 flex items-center justify-between gap-2">
 				<span className={`text-xs font-medium ${styles.tone}`}>{calloutToneLabels[tone]}</span>
-				<div className="flex rounded border border-(--legacy-cards-border) p-0.5">
+				<div className="flex rounded-sm border border-(--legacy-cards-border) p-0.5">
 					{(['note', 'data', 'warning', 'pullquote', 'bio'] as ArticleCalloutTone[]).map((value) => {
 						const active = value === tone
 						return (
@@ -278,7 +278,7 @@ function CalloutNodeView({ node, updateAttributes }: NodeViewProps) {
 								key={value}
 								type="button"
 								onClick={() => updateAttributes({ tone: value })}
-								className={`rounded px-2 py-0.5 text-xs transition-colors ${
+								className={`rounded-sm px-2 py-0.5 text-xs transition-colors ${
 									active
 										? 'bg-(--legacy-link-button) text-(--legacy-link-text)'
 										: 'text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'
@@ -348,7 +348,7 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 						<input
 							value={(node.attrs.label as string) || ''}
 							onChange={(e) => updateAttributes({ label: e.target.value, id: e.target.value || node.attrs.id })}
-							className="flex-1 rounded border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-1.5 py-1 text-xs text-(--legacy-text-primary) focus:border-(--legacy-link-text) focus:outline-none"
+							className="flex-1 rounded-sm border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-1.5 py-1 text-xs text-(--legacy-text-primary) focus:border-(--legacy-link-text) focus:outline-hidden"
 						/>
 					</div>
 					<div className="flex items-center gap-1.5">
@@ -359,7 +359,7 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 							value={url}
 							onChange={(e) => updateAttributes({ url: e.target.value })}
 							placeholder="https://…"
-							className="flex-1 rounded border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-1.5 py-1 text-xs text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+							className="flex-1 rounded-sm border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-1.5 py-1 text-xs text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 						/>
 					</div>
 					<div className="flex items-center gap-1.5">
@@ -370,7 +370,7 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 							value={title}
 							onChange={(e) => updateAttributes({ title: e.target.value })}
 							placeholder="Source title"
-							className="flex-1 rounded border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-1.5 py-1 text-xs text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+							className="flex-1 rounded-sm border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-1.5 py-1 text-xs text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 						/>
 					</div>
 				</div>

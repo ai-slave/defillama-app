@@ -49,7 +49,7 @@ export function SkeletonTable() {
 					</div>
 				))}
 			</div>
-			<div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-(--legacy-cards-bg) via-transparent to-transparent" />
+			<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--legacy-cards-bg) via-transparent to-transparent" />
 		</div>
 	)
 }

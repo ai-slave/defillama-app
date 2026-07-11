@@ -107,7 +107,7 @@ export function buildRankColumns({ columns, mode, rowCount, onSelectMM }: IBuild
 			meta: {
 				align: 'start',
 				cellClass: isLast ? undefined : heat,
-				cellClassName: isLast ? 'h-px !p-0 !border-b-0' : undefined
+				cellClassName: isLast ? 'h-px p-0! border-b-0!' : undefined
 			}
 		})
 	})

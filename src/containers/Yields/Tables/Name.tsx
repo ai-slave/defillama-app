@@ -81,11 +81,11 @@ export function NameYieldPool({
 				{poolMeta ? (
 					<>
 						<span
-							className={`min-w-0 shrink overflow-hidden font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
+							className={`min-w-0 shrink truncate font-medium text-(--legacy-link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
 						>
 							{value}
 						</span>
-						<span className="ml-1 shrink overflow-hidden rounded-lg bg-(--legacy-bg-tertiary) px-1 py-0.5 text-xs text-ellipsis whitespace-nowrap text-black group-data-[tooltipcontent=true]:whitespace-break-spaces dark:text-white">
+						<span className="ml-1 shrink truncate rounded-lg bg-(--legacy-bg-tertiary) px-1 py-0.5 text-xs text-black group-data-[tooltipcontent=true]:whitespace-break-spaces dark:text-white">
 							{poolMeta}
 						</span>
 					</>
@@ -111,7 +111,7 @@ const LinkWrapper = ({ url, children, showTooltip }) => {
 								onClick={() => trackUmamiEvent('yields-pool-click')}
 							/>
 						}
-						className={`flex min-w-0 shrink! items-center overflow-hidden font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
+						className={`flex min-w-0 shrink! items-center truncate font-medium text-(--legacy-link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
 						content={children}
 						data-fullwidth
 					>
@@ -119,7 +119,7 @@ const LinkWrapper = ({ url, children, showTooltip }) => {
 					</Tooltip>
 				) : (
 					<Tooltip
-						className={`flex min-w-0 shrink! items-center overflow-hidden font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
+						className={`flex min-w-0 shrink! items-center truncate font-medium text-(--legacy-link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
 						content={children}
 						data-fullwidth
 					>
@@ -137,16 +137,12 @@ const LinkWrapper = ({ url, children, showTooltip }) => {
 					href={url}
 					target="_blank"
 					data-umami-event="yields-pool-click"
-					className={`flex min-w-0 items-center overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
+					className={`flex min-w-0 items-center truncate text-sm font-medium text-(--legacy-link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
 				>
 					{children}
 				</BasicLink>
 			) : (
-				<span
-					className={`flex min-w-0 items-center overflow-hidden text-ellipsis whitespace-nowrap ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
-				>
-					{children}
-				</span>
+				<span className={`flex min-w-0 items-center truncate ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}>{children}</span>
 			)}
 		</>
 	)
@@ -199,7 +195,7 @@ export function NameYield({
 					href={tokenUrl}
 					data-umami-event="yields-project-filter-click"
 					data-umami-event-project={project}
-					className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text)"
+					className="truncate text-sm font-medium text-(--legacy-link-text)"
 				>
 					{project}
 				</BasicLink>
@@ -218,7 +214,7 @@ export function YieldsProject({ project, projectslug }: INameYield) {
 				href={tokenUrl}
 				data-umami-event="yields-project-filter-click"
 				data-umami-event-project={project}
-				className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text)"
+				className="truncate text-sm font-medium text-(--legacy-link-text)"
 			>
 				{project}
 			</BasicLink>
@@ -241,13 +237,13 @@ export function PoolStrategyRoute({
 			<span>{'|'}</span>
 			<span className="flex items-center gap-1">
 				<TokenLogo name={project1} kind="token" alt={`Logo of ${project1}`} />
-				<span className="overflow-hidden text-ellipsis whitespace-nowrap">{project1}</span>
+				<span className="truncate">{project1}</span>
 				{airdropProject1 ? <AirdropIndicator raiseValuation={raiseValuationProject1} className="" /> : null}
 			</span>
 			<span className="shrink-0">{'->'}</span>
 			<span className="flex items-center gap-1">
 				<TokenLogo name={project2} kind="token" alt={`Logo of ${project2}`} />
-				<span className="overflow-hidden text-ellipsis whitespace-nowrap">{project2}</span>
+				<span className="truncate">{project2}</span>
 				{airdropProject2 ? <AirdropIndicator raiseValuation={raiseValuationProject2} className="" /> : null}
 			</span>
 		</span>
@@ -268,13 +264,13 @@ export function FRStrategyRoute({
 			<span>{'|'}</span>
 			<span className="flex items-center gap-1">
 				<TokenLogo name={project1} kind="token" alt={`Logo of ${project1}`} />
-				<span className="overflow-hidden text-ellipsis whitespace-nowrap">{project1}</span>
+				<span className="truncate">{project1}</span>
 				{airdropProject1 ? <AirdropIndicator raiseValuation={raiseValuationProject1} className="" /> : null}
 			</span>
 			<span>{'|'}</span>
 			<span className="flex items-center gap-1">
 				<TokenLogo name={project2} kind="token" alt={`Logo of ${project2}`} />
-				<span className="overflow-hidden text-ellipsis whitespace-nowrap">{project2}</span>
+				<span className="truncate">{project2}</span>
 			</span>
 		</span>
 	)

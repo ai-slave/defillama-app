@@ -61,7 +61,7 @@ export const ResearchReportHighlight: React.FC<ResearchReportHighlightProps> = (
 
 				<div className="flex flex-col">
 					<div
-						className="max-h-[270px] flex-1 overflow-y-auto lg:min-h-[var(--min-height)]"
+						className="max-h-[270px] flex-1 overflow-y-auto lg:min-h-(--min-height)"
 						style={sharedHeight ? ({ '--min-height': `${sharedHeight}px` } as CSSProperties) : undefined}
 					>
 						<div className="flex flex-col justify-between gap-6">

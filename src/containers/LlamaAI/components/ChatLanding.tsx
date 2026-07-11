@@ -243,7 +243,7 @@ const Capability = ({
 				<Icon name={cap.icon} height={14} width={14} />
 				{cap.name}
 				{cap.badge ? (
-					<span className="rounded bg-[#2563eb]/15 px-1 py-px text-[9px] font-semibold tracking-wide text-[#2563eb] uppercase dark:bg-[#60a5fa]/15 dark:text-[#60a5fa]">
+					<span className="rounded-sm bg-[#2563eb]/15 px-1 py-px text-[9px] font-semibold tracking-wide text-[#2563eb] uppercase dark:bg-[#60a5fa]/15 dark:text-[#60a5fa]">
 						{cap.badge}
 					</span>
 				) : null}

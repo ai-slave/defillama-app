@@ -125,7 +125,7 @@ function RWAChartTabInner({
 					<button
 						type="button"
 						onClick={() => onRwaModeChange('overview')}
-						className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-all ${
+						className={`flex-1 rounded-sm px-3 py-1.5 text-xs font-medium transition-all ${
 							rwaMode === 'overview'
 								? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm'
 								: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
@@ -136,7 +136,7 @@ function RWAChartTabInner({
 					<button
 						type="button"
 						onClick={() => onRwaModeChange('asset')}
-						className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-all ${
+						className={`flex-1 rounded-sm px-3 py-1.5 text-xs font-medium transition-all ${
 							rwaMode === 'asset'
 								? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm'
 								: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'

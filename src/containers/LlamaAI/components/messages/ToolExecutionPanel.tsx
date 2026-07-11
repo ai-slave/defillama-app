@@ -126,7 +126,7 @@ function ToolExecutionRow({ execution, showDetails = false }: { execution: ToolE
 				) : null}
 				<span
 					aria-label={execution.success ? 'succeeded' : 'failed'}
-					className={`h-1.5 w-1.5 shrink-0 rounded-full ${execution.success ? 'bg-green-500 dark:bg-green-400' : 'bg-red-500'}`}
+					className={`size-1.5 shrink-0 rounded-full ${execution.success ? 'bg-green-500 dark:bg-green-400' : 'bg-red-500'}`}
 				/>
 				<span className="font-mono text-[10px] text-[#999] tabular-nums dark:text-[#666]">
 					{formatStepDuration(execution.executionTimeMs)}
@@ -136,12 +136,12 @@ function ToolExecutionRow({ execution, showDetails = false }: { execution: ToolE
 				) : null}
 			</button>
 			{showPreview && execution.sqlQuery ? (
-				<pre className="mt-1 mb-1 overflow-x-auto rounded border border-[#e6e6e6] bg-[#fafafa] p-1.5 font-mono text-[10px] text-[#444] dark:border-[#333] dark:bg-[#1a1a1a] dark:text-[#bbb]">
+				<pre className="mt-1 mb-1 overflow-x-auto rounded-sm border border-[#e6e6e6] bg-[#fafafa] p-1.5 font-mono text-[10px] text-[#444] dark:border-[#333] dark:bg-[#1a1a1a] dark:text-[#bbb]">
 					{execution.sqlQuery}
 				</pre>
 			) : null}
 			{showPreview && execution.resultPreview && execution.resultPreview.length > 0 ? (
-				<div className="mt-1 mb-1 overflow-x-auto rounded border border-[#e6e6e6] bg-[#fafafa] p-1 dark:border-[#333] dark:bg-[#1a1a1a]">
+				<div className="mt-1 mb-1 overflow-x-auto rounded-sm border border-[#e6e6e6] bg-[#fafafa] p-1 dark:border-[#333] dark:bg-[#1a1a1a]">
 					<table className="text-[10px]">
 						<thead>
 							<tr>

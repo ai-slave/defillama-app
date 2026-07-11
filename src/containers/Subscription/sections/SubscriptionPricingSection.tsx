@@ -33,7 +33,7 @@ export function SubscriptionPricingSection({
 			<div className="flex w-full flex-col items-center gap-9 text-center md:w-[600px]">
 				<div className="flex items-center gap-2">
 					<img src="/assets/defillama-dark.webp" alt="DefiLlama" className="h-14 w-auto md:h-10 dark:hidden" />
-					<img src="/assets/logo_white.webp" alt="" className="hidden h-14 w-14 md:h-10 md:w-10 dark:block" />
+					<img src="/assets/logo_white.webp" alt="" className="hidden size-14 md:h-10 md:w-10 dark:block" />
 					<span className="hidden text-2xl font-bold text-white md:text-xl dark:inline">DefiLlama</span>
 				</div>
 				<div className="flex w-full flex-col items-center gap-7">

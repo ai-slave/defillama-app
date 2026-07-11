@@ -70,7 +70,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 			store={store}
 			modal
 			backdrop={<div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm" />}
-			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[88vh] w-[min(720px,94vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-[0_30px_80px_-20px_rgba(0,0,0,0.5)] outline-none"
+			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[88vh] w-[min(720px,94vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-[0_30px_80px_-20px_rgba(0,0,0,0.5)] outline-hidden"
 		>
 			<div className="flex items-center justify-between gap-3 border-b border-(--legacy-cards-border) px-5 py-3">
 				<Ariakit.DialogHeading className="text-sm font-semibold tracking-tight text-(--legacy-text-primary)">
@@ -90,7 +90,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 						value={label}
 						onChange={(e) => setLabel(e.target.value)}
 						placeholder="e.g. Moderated by:"
-						className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+						className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 					/>
 				</label>
 
@@ -197,7 +197,7 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 				type="button"
 				disabled={isUploading || !articleId}
 				onClick={() => inputRef.current?.click()}
-				className="group relative aspect-square overflow-hidden rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) transition-[border-color] outline-none hover:border-(--legacy-link-text)/50 disabled:cursor-not-allowed disabled:opacity-60"
+				className="group relative aspect-square overflow-hidden rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) outline-hidden transition-[border-color] hover:border-(--legacy-link-text)/50 disabled:cursor-not-allowed disabled:opacity-60"
 				aria-label={item.src ? 'Replace image' : 'Upload image'}
 			>
 				{item.src ? (
@@ -219,14 +219,14 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 					value={item.name}
 					onChange={(e) => onChange({ name: e.target.value })}
 					placeholder="Name, role, organization"
-					className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+					className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-3 py-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 				/>
 				<textarea
 					value={item.bio}
 					onChange={(e) => onChange({ bio: e.target.value })}
 					rows={3}
 					placeholder="Short bio paragraph"
-					className="resize-y rounded-md border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-3 py-2 text-sm leading-snug text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+					className="resize-y rounded-md border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-3 py-2 text-sm leading-snug text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 				/>
 				<input
 					type="url"
@@ -234,7 +234,7 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 					value={item.href}
 					onChange={(e) => onChange({ href: e.target.value })}
 					placeholder="Link (optional) — e.g. https://twitter.com/…"
-					className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-3 py-2 text-xs text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-none"
+					className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-cards-bg) px-3 py-2 text-xs text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
 				/>
 				{missingImage ? <span className="text-[11px] text-red-500">An image is required for each person.</span> : null}
 			</div>

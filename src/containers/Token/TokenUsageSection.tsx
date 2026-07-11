@@ -64,16 +64,12 @@ const columns = [
 					{href ? (
 						<BasicLink
 							href={href}
-							className={`min-w-0 overflow-hidden label-md text-ellipsis whitespace-nowrap text-link hover:underline ${TOKEN_USAGE_NAME_MAX_WIDTH}`}
+							className={`min-w-0 truncate label-md text-link hover:underline ${TOKEN_USAGE_NAME_MAX_WIDTH}`}
 						>
 							{value}
 						</BasicLink>
 					) : (
-						<span
-							className={`min-w-0 overflow-hidden label-md text-ellipsis whitespace-nowrap ${TOKEN_USAGE_NAME_MAX_WIDTH}`}
-						>
-							{value}
-						</span>
+						<span className={`min-w-0 truncate label-md ${TOKEN_USAGE_NAME_MAX_WIDTH}`}>{value}</span>
 					)}
 				</span>
 			)

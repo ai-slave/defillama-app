@@ -36,7 +36,7 @@ export const earningsDatasetColumns: ColumnDef<IEarningsRow>[] = [
 					<TokenLogo size={20} src={row.original.logo} alt={`Logo of ${name}`} data-lgonly />
 					<BasicLink
 						href={`/earnings/${row.original.slug}`}
-						className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-(--legacy-link-text)"
+						className="truncate text-sm font-medium text-(--legacy-link-text)"
 					>
 						{name}
 					</BasicLink>

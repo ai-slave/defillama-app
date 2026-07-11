@@ -733,7 +733,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 							return (
 								<div
 									key={series.name}
-									className="flex shrink-0 items-center gap-1.5 rounded border border-(--legacy-cards-border) bg-(--legacy-bg-input) px-2 py-1 text-xs"
+									className="flex shrink-0 items-center gap-1.5 rounded-sm border border-(--legacy-cards-border) bg-(--legacy-bg-input) px-2 py-1 text-xs"
 								>
 									<span className="max-w-[140px] truncate" title={series.name}>
 										{series.name}
@@ -743,7 +743,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 										value={colorValue}
 										onChange={(event) => handleSeriesColorChange(series.name, event.target.value)}
 										disabled={isReadOnly}
-										className="size-5 cursor-pointer rounded border border-(--legacy-cards-border) bg-transparent p-0 disabled:cursor-not-allowed"
+										className="size-5 cursor-pointer rounded-sm border border-(--legacy-cards-border) bg-transparent p-0 disabled:cursor-not-allowed"
 										aria-label={`Select color for ${series.name}`}
 									/>
 									<button

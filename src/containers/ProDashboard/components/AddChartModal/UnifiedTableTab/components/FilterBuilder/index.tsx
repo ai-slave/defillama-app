@@ -350,7 +350,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 				<button
 					type="button"
 					onClick={onRemove}
-					className="rounded p-0.5 opacity-0 transition-opacity group-hover:opacity-60 hover:opacity-100!"
+					className="rounded-sm p-0.5 opacity-0 transition-opacity group-hover:opacity-60 hover:opacity-100!"
 				>
 					<Icon name="x" className="size-3" />
 				</button>
@@ -380,7 +380,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 				<button
 					type="button"
 					onClick={onRemove}
-					className="rounded p-0.5 opacity-0 transition-opacity group-hover:opacity-60 hover:opacity-100!"
+					className="rounded-sm p-0.5 opacity-0 transition-opacity group-hover:opacity-60 hover:opacity-100!"
 				>
 					<Icon name="x" className="size-3" />
 				</button>
@@ -403,7 +403,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						) : null}
 						{categoryBadge}
 					</div>
-					<button type="button" onClick={onRemove} className="rounded p-0.5 opacity-60 hover:opacity-100">
+					<button type="button" onClick={onRemove} className="rounded-sm p-0.5 opacity-60 hover:opacity-100">
 						<Icon name="x" className="size-3" />
 					</button>
 				</div>
@@ -416,14 +416,14 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						onChange={(e) => handleValueChange(e.target.value)}
 						onKeyDown={handleKeyDown}
 						placeholder="e.g. 10, 1k, 1m"
-						className="h-6 flex-1 rounded border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden placeholder:opacity-50 focus:border-current/50"
+						className="h-6 flex-1 rounded-sm border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden placeholder:opacity-50 focus:border-current/50"
 					/>
 					{suffix ? <span className="text-[10px] opacity-70">{suffix}</span> : null}
 				</div>
 				<button
 					type="button"
 					onClick={onEndEdit}
-					className="h-6 rounded border border-current/20 bg-black/30 px-2 text-[10px] opacity-70 transition-opacity hover:opacity-100"
+					className="h-6 rounded-sm border border-current/20 bg-black/30 px-2 text-[10px] opacity-70 transition-opacity hover:opacity-100"
 				>
 					Done
 				</button>
@@ -440,7 +440,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 					<span className="truncate text-xs font-semibold">{config.label}</span>
 					{categoryBadge}
 				</div>
-				<button type="button" onClick={onRemove} className="rounded p-0.5 opacity-60 hover:opacity-100">
+				<button type="button" onClick={onRemove} className="rounded-sm p-0.5 opacity-60 hover:opacity-100">
 					<Icon name="x" className="size-3" />
 				</button>
 			</div>
@@ -448,7 +448,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 				value={filter.operator || '>='}
 				setValue={(val) => handleOperatorChange(val as NumericOperator)}
 			>
-				<Ariakit.Select className="flex h-6 w-full cursor-pointer items-center justify-between rounded border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden focus:border-current/50">
+				<Ariakit.Select className="flex h-6 w-full cursor-pointer items-center justify-between rounded-sm border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden focus:border-current/50">
 					<Ariakit.SelectValue />
 					<Ariakit.SelectArrow />
 				</Ariakit.Select>
@@ -456,7 +456,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 					portal
 					gutter={4}
 					sameWidth
-					className="z-100 rounded border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 shadow-lg"
+					className="z-100 rounded-sm border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 shadow-lg"
 				>
 					{OPERATORS.map((op) => (
 						<Ariakit.SelectItem
@@ -479,7 +479,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						onChange={(e) => handleMinValueChange(e.target.value)}
 						onKeyDown={handleKeyDown}
 						placeholder="Min"
-						className="h-6 flex-1 rounded border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden placeholder:opacity-50 focus:border-current/50"
+						className="h-6 flex-1 rounded-sm border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden placeholder:opacity-50 focus:border-current/50"
 					/>
 					<span className="text-[10px] opacity-70">-</span>
 					<input
@@ -489,7 +489,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						onChange={(e) => handleMaxValueChange(e.target.value)}
 						onKeyDown={handleKeyDown}
 						placeholder="Max"
-						className="h-6 flex-1 rounded border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden placeholder:opacity-50 focus:border-current/50"
+						className="h-6 flex-1 rounded-sm border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden placeholder:opacity-50 focus:border-current/50"
 					/>
 					{suffix ? <span className="text-[10px] opacity-70">{suffix}</span> : null}
 				</div>
@@ -503,7 +503,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 						onChange={(e) => handleValueChange(e.target.value)}
 						onKeyDown={handleKeyDown}
 						placeholder="e.g. 10, 1k, 1m"
-						className="h-6 flex-1 rounded border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden placeholder:opacity-50 focus:border-current/50"
+						className="h-6 flex-1 rounded-sm border border-current/20 bg-black/30 px-2 text-[11px] outline-hidden placeholder:opacity-50 focus:border-current/50"
 					/>
 					{suffix ? <span className="text-[10px] opacity-70">{suffix}</span> : null}
 				</div>
@@ -511,7 +511,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 			<button
 				type="button"
 				onClick={onEndEdit}
-				className="h-6 rounded border border-current/20 bg-black/30 px-2 text-[10px] opacity-70 transition-opacity hover:opacity-100"
+				className="h-6 rounded-sm border border-current/20 bg-black/30 px-2 text-[10px] opacity-70 transition-opacity hover:opacity-100"
 			>
 				Done
 			</button>
@@ -710,7 +710,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 						<button
 							type="button"
 							onClick={() => setSearch('')}
-							className="absolute top-1/2 right-2.5 flex size-5 -translate-y-1/2 items-center justify-center rounded hover:bg-(--legacy-cards-bg)"
+							className="absolute top-1/2 right-2.5 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm hover:bg-(--legacy-cards-bg)"
 						>
 							<Icon name="x" className="size-3 text-(--legacy-text-tertiary)" />
 						</button>
@@ -732,7 +732,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 									className="flex w-full cursor-pointer items-center justify-between px-2.5 py-1.5 text-left transition-colors hover:bg-(--legacy-cards-border)/30"
 								>
 									<div className="flex items-center gap-2">
-										<span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${badgeColor}`}>{label}</span>
+										<span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold ${badgeColor}`}>{label}</span>
 										<span className="text-[10px] text-(--legacy-text-tertiary)">{availableFilters.length}</span>
 									</div>
 									<Icon
@@ -747,7 +747,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 												key={filter.id}
 												type="button"
 												onClick={() => handleAddFilter(filter)}
-												className="group flex w-full cursor-pointer items-center justify-between rounded px-2 py-1 text-left transition-all hover:bg-(--cards-bg2)"
+												className="group flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 text-left transition-all hover:bg-(--cards-bg2)"
 											>
 												<div className="flex items-center gap-1.5">
 													<span className="truncate text-xs text-(--legacy-text-primary)">{filter.label}</span>

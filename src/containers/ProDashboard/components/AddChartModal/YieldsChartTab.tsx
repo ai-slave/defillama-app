@@ -1053,7 +1053,7 @@ export function YieldsChartTab({
 
 													<div className="text-right">
 														{pool.category ? (
-															<span className="inline-block truncate rounded bg-(--cards-bg-alt) px-1.5 py-0.5 text-[10px] text-(--legacy-text-tertiary)">
+															<span className="inline-block truncate rounded-sm bg-(--cards-bg-alt) px-1.5 py-0.5 text-[10px] text-(--legacy-text-tertiary)">
 																{pool.category}
 															</span>
 														) : null}

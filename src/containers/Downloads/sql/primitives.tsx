@@ -14,7 +14,7 @@ export function StatusDot({ tone, blink = false }: { tone: StatusTone; blink?: b
 	return (
 		<span
 			aria-hidden="true"
-			className={`relative inline-flex h-1.5 w-1.5 shrink-0 rounded-full ${TONE_CLASS[tone]} ${
+			className={`relative inline-flex size-1.5 shrink-0 rounded-full ${TONE_CLASS[tone]} ${
 				blink ? 'animate-pulse' : ''
 			}`}
 		/>

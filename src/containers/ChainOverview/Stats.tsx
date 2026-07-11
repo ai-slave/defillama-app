@@ -182,7 +182,7 @@ export function Stats(props: IStatsProps) {
 								className="relative bottom-0.5 flex flex-nowrap items-center gap-1"
 							>
 								<span
-									className={`overflow-hidden mono-md text-ellipsis whitespace-nowrap underline decoration-dotted ${
+									className={`truncate mono-md underline decoration-dotted ${
 										change24h >= 0 ? 'text-data-up' : 'text-data-down'
 									}`}
 								>

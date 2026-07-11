@@ -126,7 +126,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 	const overlay = (
 		<div
 			className={clsx(
-				'absolute inset-0 flex flex-col justify-end bg-gradient-to-b from-transparent to-[#0D1E3BF2] p-[15px] text-white transition-transform duration-500 ease-in-out',
+				'absolute inset-0 flex flex-col justify-end bg-linear-to-b from-transparent to-[#0D1E3BF2] p-[15px] text-white transition-transform duration-500 ease-in-out',
 				'translate-y-full',
 				!isMobile && 'md:group-hover:translate-y-0'
 			)}
@@ -136,7 +136,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 			</p>
 			{addOverlayLink ? (
 				<div className="grid gap-2">
-					<span className="inline-block w-full rounded border border-white px-3 py-2 text-center text-[12px] leading-[120%] font-medium">
+					<span className="inline-block w-full rounded-sm border border-white px-3 py-2 text-center text-[12px] leading-[120%] font-medium">
 						Read more
 					</span>
 					{pdfUrl ? (
@@ -145,7 +145,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 							pdfUrl={pdfUrl}
 							widgetLabel="Reports carousel"
 							stopPropagation
-							className="w-full rounded bg-white px-3 py-2 text-center text-[12px] leading-[120%] font-medium text-[#0D1E3B] transition-opacity hover:opacity-90"
+							className="w-full rounded-sm bg-white px-3 py-2 text-center text-[12px] leading-[120%] font-medium text-[#0D1E3B] transition-opacity hover:opacity-90"
 						/>
 					) : null}
 				</div>
@@ -158,7 +158,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 				>
 					<Link
 						href={href}
-						className="w-full rounded border border-white px-3 py-2 text-center text-[12px] leading-[120%] font-medium text-white transition-colors hover:bg-white/10"
+						className="w-full rounded-sm border border-white px-3 py-2 text-center text-[12px] leading-[120%] font-medium text-white transition-colors hover:bg-white/10"
 					>
 						Read more
 					</Link>
@@ -167,7 +167,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 							article={article}
 							pdfUrl={pdfUrl}
 							widgetLabel="Reports carousel"
-							className="w-full rounded bg-white px-3 py-2 text-center text-[12px] leading-[120%] font-medium text-[#0D1E3B] transition-opacity hover:opacity-90"
+							className="w-full rounded-sm bg-white px-3 py-2 text-center text-[12px] leading-[120%] font-medium text-[#0D1E3B] transition-opacity hover:opacity-90"
 						/>
 					) : null}
 				</div>
@@ -475,7 +475,7 @@ export const ReportsCarousel: React.FC<ReportsCarouselProps> = (props) => {
 						onClick={handlePrevious}
 						onMouseEnter={() => setIsHovered(true)}
 						onMouseLeave={() => setIsHovered(false)}
-						className="flex-shrink-0"
+						className="shrink-0"
 					/>
 				)}
 
@@ -546,7 +546,7 @@ export const ReportsCarousel: React.FC<ReportsCarouselProps> = (props) => {
 						onClick={handleNext}
 						onMouseEnter={() => setIsHovered(true)}
 						onMouseLeave={() => setIsHovered(false)}
-						className="flex-shrink-0"
+						className="shrink-0"
 					/>
 				)}
 

@@ -409,7 +409,7 @@ const emissionsColumns = [
 						<TokenLogo name={protocolName} kind="token" alt={`Logo of ${protocolName}`} />
 						<BasicLink
 							href={`/unlocks/${slug(protocolName)}`}
-							className="overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-link hover:underline"
+							className="truncate text-sm font-medium text-link hover:underline"
 						>
 							{protocolName}
 						</BasicLink>

@@ -35,7 +35,7 @@ function TabBtns({
 				<button
 					key={o.id}
 					onClick={() => onChange(o.id)}
-					className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
+					className={`rounded-sm px-3 py-1 text-xs font-medium transition-colors ${
 						active === o.id
 							? 'bg-(--sl-accent) text-white'
 							: 'border border-(--legacy-cards-border) bg-(--legacy-cards-bg) text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
