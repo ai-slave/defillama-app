@@ -8,7 +8,7 @@ import {
 	useReactTable
 } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { Icon } from '~/components/Icon'
 import { selectTriggerStyles } from '~/components/Select/types'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'

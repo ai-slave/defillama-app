@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo } from 'react'
-import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
+import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { formatTvlApyTooltip } from '~/components/ECharts/formatters'
 import type { IBarChartProps, IChartProps, IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { CHART_COLORS } from '~/constants/colors'

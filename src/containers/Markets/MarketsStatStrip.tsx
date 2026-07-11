@@ -1,19 +1,9 @@
 import { Card } from '~/ui/Card'
 import { formattedNum } from '~/utils'
 import { type Segment, segmentHasOi } from './segments'
-import { MaterialChangeCell } from './shared'
+import { MaterialChangeCell, StripStat } from './shared'
 import type { SymbolStat } from './types'
 import { segmentTotals, sentimentCounts, TOP_N, topSymbols } from './utils'
-
-function Stat({ label, value, sub }: { label: string; value: React.ReactNode; sub?: React.ReactNode }) {
-	return (
-		<div className="flex min-w-0 flex-col gap-0.5">
-			<span className="body-md text-secondary">{label}</span>
-			<span className="mono-md-bold">{value}</span>
-			{sub != null ? <span className="body-sm text-tertiary">{sub}</span> : null}
-		</div>
-	)
-}
 
 export function MarketsStatStrip({ rows, segment }: { rows: SymbolStat[]; segment: Segment }) {
 	const totals = segmentTotals(rows)
@@ -22,24 +12,24 @@ export function MarketsStatStrip({ rows, segment }: { rows: SymbolStat[]; segmen
 
 	return (
 		<Card padding="strip" className="grid grid-cols-2 gap-x-6 gap-y-3 lg:grid-cols-4">
-			<Stat
+			<StripStat
 				label="24h Volume"
 				value={totals.volume_24h == null ? '–' : formattedNum(totals.volume_24h, true)}
 				sub={<MaterialChangeCell current={totals.volume_24h} previous={totals.volume_prev_24h} />}
 			/>
 			{hasOi ? (
-				<Stat
+				<StripStat
 					label="Open Interest"
 					value={totals.oi_usd == null ? '–' : formattedNum(totals.oi_usd, true)}
 					sub={<MaterialChangeCell current={totals.oi_usd} previous={totals.oi_prev_usd} />}
 				/>
 			) : null}
-			<Stat
+			<StripStat
 				label="Assets"
 				value={formattedNum(totals.asset_count)}
 				sub={`${formattedNum(totals.market_count)} markets`}
 			/>
-			<Stat
+			<StripStat
 				label="Sentiment (top 100)"
 				value={
 					<>

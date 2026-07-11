@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,

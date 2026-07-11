@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import {
 	ChartGroupingSelector,
 	DWM_GROUPING_OPTIONS_LOWERCASE,

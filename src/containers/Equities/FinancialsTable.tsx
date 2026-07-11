@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
 import { startTransition, useMemo, useState } from 'react'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { Icon } from '~/components/Icon'
 import { TagGroup } from '~/components/TagGroup'
 import { tableIconHitTargetStyles } from '~/ui/IconHitTarget'

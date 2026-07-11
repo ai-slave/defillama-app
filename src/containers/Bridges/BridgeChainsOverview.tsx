@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { lazy, Suspense } from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { BridgeChainsTable } from '~/containers/Bridges/BridgeChainsTable'

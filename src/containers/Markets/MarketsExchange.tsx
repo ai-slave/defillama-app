@@ -12,38 +12,28 @@ import { MarketsLineChart } from './MarketsLineChart'
 import { MarketsPageHeader } from './MarketsPageHeader'
 import { MarketsSegmentTabs } from './MarketsSegmentTabs'
 import { resolveSegment, type Segment, SEGMENT_IDS, segmentHasOi } from './segments'
-import { MaterialChangeCell, VenueBadge } from './shared'
+import { MaterialChangeCell, StripStat, VenueBadge } from './shared'
 import { EMPTY_PIVOTED_SERIES, filterExchangeSeriesBySegment, pivotExchangeSeries } from './utils'
 
 const STALE_TIME = 60 * 60 * 1000
-
-function Stat({ label, value, sub }: { label: string; value: React.ReactNode; sub?: React.ReactNode }) {
-	return (
-		<div className="flex min-w-0 flex-col gap-0.5">
-			<span className="body-md text-secondary">{label}</span>
-			<span className="mono-md-bold">{value}</span>
-			{sub != null ? <span className="body-sm text-tertiary">{sub}</span> : null}
-		</div>
-	)
-}
 
 function ExchangeStatStrip({ totals, segment }: { totals: ExchangeMarketCategoryData | undefined; segment: Segment }) {
 	const hasOi = segmentHasOi(segment)
 	return (
 		<Card padding="strip" className="grid grid-cols-2 gap-x-6 gap-y-3 lg:grid-cols-4">
-			<Stat
+			<StripStat
 				label="24h Volume"
 				value={totals?.total_volume_24h == null ? '–' : formattedNum(totals?.total_volume_24h, true)}
 				sub={<MaterialChangeCell current={totals?.total_volume_24h} previous={totals?.total_volume_prev_24h} />}
 			/>
 			{hasOi ? (
-				<Stat
+				<StripStat
 					label="Open Interest"
 					value={totals?.total_oi_usd == null ? '–' : formattedNum(totals?.total_oi_usd, true)}
 					sub={<MaterialChangeCell current={totals?.total_oi_usd} previous={totals?.total_oi_prev_usd} />}
 				/>
 			) : null}
-			<Stat label="Markets" value={formattedNum(totals?.market_count ?? 0)} />
+			<StripStat label="Markets" value={formattedNum(totals?.market_count ?? 0)} />
 		</Card>
 	)
 }

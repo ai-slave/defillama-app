@@ -1,6 +1,6 @@
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useMemo, useState } from 'react'
-import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
+import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { ISingleSeriesChartProps } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
 import { Select } from '~/components/Select/Select'

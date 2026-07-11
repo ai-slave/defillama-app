@@ -1,6 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo, useState } from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/formatters'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'

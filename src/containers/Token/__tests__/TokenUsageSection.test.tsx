@@ -84,7 +84,7 @@ vi.mock('@tanstack/react-query', () => ({
 	useQuery: () => queryState
 }))
 
-vi.mock('~/components/ButtonStyled/CsvButton', () => ({
+vi.mock('~/components/CsvDownloadButton', () => ({
 	CSVDownloadButton: () => <button type="button">download csv</button>
 }))
 

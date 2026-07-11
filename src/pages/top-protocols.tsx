@@ -7,7 +7,7 @@ import {
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'

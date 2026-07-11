@@ -2,8 +2,8 @@ import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
-import { ChartRestoreButton } from '~/components/ButtonStyled/ChartRestoreButton'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,

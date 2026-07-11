@@ -1,8 +1,8 @@
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue, useMemo } from 'react'
-import { ChartCsvExportButton } from '~/components/ButtonStyled/ChartCsvExportButton'
-import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
-import { ChartRestoreButton } from '~/components/ButtonStyled/ChartRestoreButton'
+import { ChartCsvExportButton } from '~/components/ChartExport/ChartCsvExportButton'
+import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
+import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import type {
 	IHBarChartProps,
 	IMultiSeriesChart2Props,

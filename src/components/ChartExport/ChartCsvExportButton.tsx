@@ -1,9 +1,9 @@
 import type * as echarts from 'echarts/core'
 import { useCallback } from 'react'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { buttonStyles } from '~/ui/Button'
 import { toNiceCsvDate } from '~/utils'
 import type { CsvCell } from '~/utils/csvCell'
-import { CSVDownloadButton } from './CsvButton'
 
 function isRecord(x: unknown): x is Record<string, unknown> {
 	return !!x && typeof x === 'object' && !Array.isArray(x)

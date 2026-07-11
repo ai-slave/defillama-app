@@ -1,6 +1,6 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { lazy, Suspense, useDeferredValue, useMemo, useState } from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import {
 	ChartGroupingSelector,

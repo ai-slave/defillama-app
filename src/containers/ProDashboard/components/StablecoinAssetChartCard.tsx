@@ -1,5 +1,5 @@
 import { lazy, Suspense, useMemo, type ReactElement } from 'react'
-import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
+import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { CHART_ZOOM_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
 import type { IChartProps, IPieChartProps } from '~/components/ECharts/types'
 import { useStablecoinAssetChartData } from '~/containers/ProDashboard/components/datasets/StablecoinAssetDataset/useStablecoinAssetChartData'

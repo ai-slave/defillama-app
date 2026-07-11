@@ -16,6 +16,16 @@ Three tiers, strictly ordered. Components may only reference tier 2 (or tier-3 c
 
 The mode lives in the CSS selector, never in the token name: no `*-light`/`*-dark` suffixed pairs, and no `dark:*-[#hex]` utilities in components.
 
+## File placement
+
+Component code has three homes, chosen by ownership — not by how the file happens to be styled:
+
+- **`src/ui/`** — design-system primitives: token-bound, no data fetching, no product knowledge, documented as a recipe in this file.
+- **`src/components/`** — shared application components: composed, may know about data shapes, used by two or more products. Folders are named for their domain (`ChartExport/`, `Search/`), never for their implementation era or technique — no `ButtonStyled`-style names.
+- **`src/containers/<Product>/`** — product-owned. A component consumed by exactly one product lives with that product, even if it looks generic; local shared pieces go in the product's `shared.tsx`.
+
+When a shared component's last second consumer disappears, move it to the remaining product. No re-export shims at old paths — imports break at typecheck and get fixed in the same commit as the move.
+
 ## Color tokens
 
 Design-system CSS variables use clean role names such as `--bg-surface`,
@@ -268,14 +278,20 @@ ECharts renders to canvas and cannot read `var()`: resolve canvas tokens through
 - Do pair every width-only border/divide utility (`border`, `border-t`, `divide-y`, …) with a color source (`border-subtle`, `border-medium`, an inline `style={{ borderColor }}`, …). The Tailwind v3 default-border-color compatibility shim was removed from `tailwind.css` (2026-07-10) after an audit found zero implicit consumers, so a colorless border renders `currentColor` — near-white in dark mode.
 - `bun run lint:tokens` enforces the above as a ratchet: existing debt is baselined in `scripts/design-token-baseline.json`, and the check fails when any tracked token, radius, border-color, or named-typography conflict count increases. After removing debt, run with `--update` to lock in the improvement.
 
-## Migration status
+## Status
 
-| Phase                 | Scope                                                                              | Status |
-| --------------------- | ---------------------------------------------------------------------------------- | ------ |
-| Foundation            | Token foundation, legacy quarantine, chart tokens, Card/type ramp, `useChartTheme` | merged |
-| Broad design sweep    | Home/chain, shared primitives, popovers, DialogShell, ProtocolOverview, text/icon  | merged |
-| Post-merge follow-ups | ChartPanel, status/table consistency, chart theme, and chart geometry              | merged |
-| Architecture          | Shared API/file placement and excluded-product scope                               | active |
+The design sweep and the architecture program (tokens, borders, radius, typography,
+shared APIs, file placement) are **complete** as of 2026-07-10. This file is the standing
+rulebook, `lint:tokens` is the enforcement, and
+[design-decision-audit.md](design-decision-audit.md) is the history. There is no active
+migration backlog.
+
+**Excluded products are a design question, not a code phase.** No Figma designs exist for
+account/subscription, ProDashboard, LlamaAI, Yields, Downloads, Articles/research,
+investor dashboards, or Sheets. Bringing any of them into scope starts with a design
+conversation (owner + design colleague) that decides what those dashboards should look
+like; only after designs exist does implementation work get scheduled. Until then they
+stay pixel-stable behind explicit compat props, and their ratchet bucket may not grow.
 
 Legacy application globals use the `--legacy-*` namespace and are quarantined in
 `src/styles/legacy-*.css` / `tailwind.css`. The separately owned `--sub-*`, `--pro-*`,

@@ -10,7 +10,7 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { useBlockExplorers } from '~/api/client'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'

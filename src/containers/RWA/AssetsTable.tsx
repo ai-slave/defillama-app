@@ -13,7 +13,7 @@ import {
 import clsx from 'clsx'
 import { matchSorter } from 'match-sorter'
 import { startTransition, useDeferredValue, useMemo, useState } from 'react'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'

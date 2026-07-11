@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import { lazy, startTransition, Suspense, useMemo, useState } from 'react'
-import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { Icon } from '~/components/Icon'
 import { Select } from '~/components/Select/Select'
 import {

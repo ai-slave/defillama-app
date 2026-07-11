@@ -1,7 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import dayjs from 'dayjs'
 import { lazy, Suspense, useMemo, useState } from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { ICandlestickChartProps } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo } from 'react'
-import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
+import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { chartGrid } from '~/components/ECharts/chartSpacing'
 import type { IBarChartProps, IChartProps, IPieChartProps } from '~/components/ECharts/types'
 import { LoadingSpinner } from './LoadingSpinner'

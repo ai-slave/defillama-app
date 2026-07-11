@@ -1,7 +1,7 @@
 import type { GetStaticPropsContext } from 'next'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { createAggregateTooltipFormatter, createInflowsTooltipFormatter } from '~/components/ECharts/formatters'
 import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { preparePieChartData } from '~/components/ECharts/utils'

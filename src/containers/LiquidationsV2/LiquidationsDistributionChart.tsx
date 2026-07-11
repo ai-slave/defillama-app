@@ -1,7 +1,7 @@
 import type { ECharts } from 'echarts/core'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { CHART_INSET, CHART_LEGEND_RESERVE, CHART_ZOOM_RESERVE } from '~/components/ECharts/chartSpacing'
 import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { Select } from '~/components/Select/Select'

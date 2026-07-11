@@ -42,6 +42,19 @@ const VENUE_BADGE_CLASS: Record<'cex' | 'dex', string> = {
 	dex: 'border-[#c084fc] text-[#c084fc]'
 }
 
+/** Compact label/value/sub stat for strip Cards. Intentionally separate from
+    the headline ui/SummaryStats StatItem: different visual role (body-md label,
+    mono-md-bold value) — do not merge the two recipes. */
+export function StripStat({ label, value, sub }: { label: string; value: React.ReactNode; sub?: React.ReactNode }) {
+	return (
+		<div className="flex min-w-0 flex-col gap-0.5">
+			<span className="body-md text-secondary">{label}</span>
+			<span className="mono-md-bold">{value}</span>
+			{sub != null ? <span className="body-sm text-tertiary">{sub}</span> : null}
+		</div>
+	)
+}
+
 /** Small colour-coded cex/dex venue-type badge. */
 export function VenueBadge({ type }: { type: 'cex' | 'dex' }) {
 	return <span className={`rounded border px-1.5 py-0.5 label-sm uppercase ${VENUE_BADGE_CLASS[type]}`}>{type}</span>

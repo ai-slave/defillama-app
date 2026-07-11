@@ -11,7 +11,7 @@ import {
 } from '@tanstack/react-table'
 import dayjs from 'dayjs'
 import { type KeyboardEvent, useEffect, useMemo, useReducer, useRef } from 'react'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { Icon } from '~/components/Icon'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv } from '~/components/Table/utils'

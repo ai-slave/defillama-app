@@ -12,7 +12,7 @@ import {
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useId, useMemo, useRef } from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import {
 	attachEventHoverHandlers,
 	buildEventRailData,

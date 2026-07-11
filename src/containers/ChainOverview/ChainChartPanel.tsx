@@ -3,8 +3,7 @@ import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard'
-import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
@@ -393,9 +392,9 @@ export function ChainChartPanel({
 					{canAddToDashboard ? (
 						<AddToDashboardButton chartConfig={multiChart} unsupportedMetrics={unsupportedMetrics} smol />
 					) : null}
-					<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />
-					<ChartPngExportButton
+					<ChartExportButtons
 						chartInstance={chainChartInstance}
+						prepareCsvDirect={prepareCsv}
 						filename={imageExportFilename}
 						title={imageExportTitle}
 						iconUrl={metadata.name !== 'All' ? chainIconUrl(metadata.name) : undefined}

@@ -1,6 +1,6 @@
 import * as echarts from 'echarts/core'
 import { useEffect, useEffectEvent, useId, useMemo, useRef, useState } from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartCleanup } from '~/hooks/useChartCleanup'

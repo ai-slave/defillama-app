@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useCallback, useContext, useMemo, useState } from 'react'
-import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
+import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { getProtocolEmissionsScheduleData } from '~/containers/Unlocks/queries'

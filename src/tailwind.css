@@ -8,7 +8,7 @@
 
 /* Documentation mentions utility names; it must not drive codegen. */
 @source not '../design.md';
-@source not '../design-sweep-todo.md';
+@source not '../design-decision-audit.md';
 
 @custom-variant dark (&:where(.dark, .dark *));
 

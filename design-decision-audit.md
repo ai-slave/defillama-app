@@ -985,3 +985,65 @@ bg-surface-elevated-2` opaque step per the documented Select-trigger exception.
   composition behavior, and the 8px shared contract was tuned from those visual checks.
   This is the final chart baseline for the sweep. Later product changes use `chartTheme`
   and `chartSpacing.ts` as ordinary design-system contracts.
+
+### 2026-07-10 Optional Consolidation Review (branch `architecture-closeout`)
+
+Audit of remaining local StatItem, PercentChange, and chart-export compositions.
+High bar applied: consolidate exact semantic matches only; document intentional
+variations instead of forcing a universal abstraction.
+
+- **Markets stat strip** — the byte-identical local `Stat` in `MarketsStatStrip`
+  and `MarketsExchange` became `StripStat` in `containers/Markets/shared.tsx`.
+  Deliberately Markets-owned and separate from the headline `ui/SummaryStats`
+  `StatItem` (different visual role: `body-md` label + `mono-md-bold` value vs
+  the mono-xl headline recipe). Do not merge the two, and do not grow `StatItem`
+  with `compact`/`accent`/`rank`-style props.
+- **Stat-card variants reviewed and retained as separate roles**: Market Makers
+  podium stack, Bridge Transactions status card, RWA Perps card with paired
+  change tooltip, Yields risk verdict, Investor dashboard cards (excluded
+  product).
+- **Overview chart exports** — Chain and Protocol overview toolbars migrated
+  from raw `CSVDownloadButton` + `ChartPngExportButton` pairs to the existing
+  `ChartExportButtons` composition. Safe because `prepareCsvDirect` passes the
+  sync `prepareChartCsv` payload through unchanged (CSV filenames byte-identical)
+  and `Button`/`buttonStyles` share the same default variant, so the rendered
+  classes match. Retained as intentionally separate: Key Metrics DOM-capture PNG
+  export, Downloads SQL chart-profile mapping, ProDashboard export wrappers,
+  table-only CSV buttons, PNG-only compositions.
+- **PercentChange — no consolidation justified.** Every local wrapper has a
+  genuinely different contract: Equities `ChangePercent` abbreviates via its
+  local `formatNumber` and leaves zero uncolored; Token overview's
+  `formatPercent` builds a plain signed string; Tokens' `PercentValue`/
+  `ProgressPercentValue` belong to a tone + progress-bar display system;
+  Markets' `toPercent` is the documented fraction→points conversion at the data
+  boundary (the correct pattern — unit normalization never moves inside
+  `PercentChange`). The near-duplicate numeric helpers (`getPercentChange` in
+  `AdapterMetrics/metricPeriods.ts` and `metrics/feeExtras.ts` vs `~/utils`)
+  differ in NaN propagation (locals return NaN, utils returns null), failing the
+  exact-semantics bar; left in place.
+- **File placement policy** — codified in design.md § File placement after the
+  `ButtonStyled` dissolution: `ui/` for token-bound primitives, `components/`
+  for cross-product composition in domain-named folders, `containers/<Product>/`
+  for single-product code. Chart export machinery now lives in
+  `components/ChartExport/`, `CSVDownloadButton` in
+  `components/CsvDownloadButton.tsx`, and `FullOldViewButton` with its only
+  consumer in `containers/AdapterMetrics/`.
+- **FormattedName** — tooltip eligibility switched from the `maxCharacters`
+  character count to measured overflow (ResizeObserver); `maxCharacters` stays
+  accepted as a deprecated no-op so call sites did not churn.
+
+### 2026-07-10 Documentation Closure (branch `architecture-closeout`)
+
+- The architecture program is complete; `design-sweep-todo.md` (sweep closure
+  record) and `design-execution-plan.md` (phase sequencing) are deleted. Their
+  normative content survives where it belongs: rules in design.md (§ Status,
+  § File placement, dialog/popover/series-color recipes), process in AGENTS.md,
+  enforcement in `lint:tokens`, and history in this audit. References to the
+  deleted files inside earlier dated entries are historical record and stay.
+- **Excluded-product scope is reframed from an execution phase to a design
+  decision.** No Figma designs exist for account/subscription, ProDashboard,
+  LlamaAI, Yields, Downloads, Articles/research, investor dashboards, or
+  Sheets; the owner will discuss with the design colleague what those
+  dashboards should look like before any implementation is scheduled. Until
+  designs exist the products stay pixel-stable behind explicit compat props and
+  their ratchet bucket may not grow. Recorded in design.md § Status.

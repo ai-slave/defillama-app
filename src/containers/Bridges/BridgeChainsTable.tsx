@@ -9,7 +9,7 @@ import {
 	useReactTable
 } from '@tanstack/react-table'
 import * as React from 'react'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'

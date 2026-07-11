@@ -60,11 +60,11 @@ vi.mock('~/contexts/LocalStorage', () => ({
 	useLocalStorageSettingsManager: () => [mocks.feesSettings]
 }))
 
-vi.mock('~/components/ButtonStyled/ChartExportButtons', () => ({
+vi.mock('~/components/ChartExport/ChartExportButtons', () => ({
 	ChartExportButtons: () => null
 }))
 
-vi.mock('~/components/ButtonStyled/ChartRestoreButton', () => ({
+vi.mock('~/components/ChartExport/ChartRestoreButton', () => ({
 	ChartRestoreButton: () => null
 }))
 

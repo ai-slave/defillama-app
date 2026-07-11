@@ -12,7 +12,7 @@ import {
 import { useRouter } from 'next/router'
 import { startTransition, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { Bookmark } from '~/components/Bookmark'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { TVLRange } from '~/components/Filters/TVLRange'
 import { Icon } from '~/components/Icon'

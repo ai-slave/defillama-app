@@ -3,8 +3,7 @@ import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
 import { type ComponentType, lazy, Suspense, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard'
-import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import {
 	ChartGroupingSelector,
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
@@ -517,9 +516,9 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 					) : null}
 					<EmbedChart />
 					<AddToDashboardButton chartConfig={multiChart} unsupportedMetrics={unsupportedMetrics} smol />
-					<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />
-					<ChartPngExportButton
+					<ChartExportButtons
 						chartInstance={overviewChartInstance}
+						prepareCsvDirect={prepareCsv}
 						filename={overviewImageFilename}
 						title={overviewImageTitle}
 						iconUrl={tokenIconUrl(props.name)}

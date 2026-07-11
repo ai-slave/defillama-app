@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo, useState } from 'react'
-import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
+import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/chartSpacing'
 import { Icon } from '~/components/Icon'
 import { Select } from '~/components/Select/Select'

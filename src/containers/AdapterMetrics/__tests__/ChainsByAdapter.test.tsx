@@ -16,7 +16,7 @@ vi.mock('~/contexts/LocalStorage', () => ({
 	useLocalStorageSettingsManager: () => [mocks.feesSettings]
 }))
 
-vi.mock('~/components/ButtonStyled/CsvButton', () => ({
+vi.mock('~/components/CsvDownloadButton', () => ({
 	CSVDownloadButton: () => null
 }))
 

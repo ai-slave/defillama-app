@@ -1,6 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import {
 	ChartGroupingSelector,

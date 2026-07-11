@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { PercentChange } from '~/components/PercentChange'

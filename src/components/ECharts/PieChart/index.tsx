@@ -3,7 +3,7 @@ import { GraphicComponent, GridComponent, LegendComponent, TitleComponent, Toolt
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useId, useMemo, useRef } from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'

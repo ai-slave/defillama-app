@@ -1,4 +1,4 @@
-import { ChartPngExportButton, type PngExportProfile } from '~/components/ButtonStyled/ChartPngExportButton'
+import { ChartPngExportButton, type PngExportProfile } from '~/components/ChartExport/ChartPngExportButton'
 import type { ChartType } from '../chartConfig'
 
 function profileFor(chartType: ChartType): PngExportProfile {

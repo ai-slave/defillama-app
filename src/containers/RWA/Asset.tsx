@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { CopyHelper } from '~/components/Copy'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Icon } from '~/components/Icon'

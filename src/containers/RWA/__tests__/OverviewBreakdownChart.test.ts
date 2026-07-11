@@ -26,7 +26,7 @@ vi.mock('@tanstack/react-query', () => ({
 	useQuery: () => queryState
 }))
 
-vi.mock('~/components/ButtonStyled/ChartExportButtons', () => ({
+vi.mock('~/components/ChartExport/ChartExportButtons', () => ({
 	ChartExportButtons: () => null
 }))
 

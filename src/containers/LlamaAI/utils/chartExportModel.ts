@@ -1,4 +1,4 @@
-import type { PngExportProfile } from '~/components/ButtonStyled/ChartPngExportButton'
+import type { PngExportProfile } from '~/components/ChartExport/ChartPngExportButton'
 import type { ChartConfiguration } from '~/containers/LlamaAI/types'
 import type { AdaptedChartData, LlamaAICartesianDatasetRow } from '~/containers/LlamaAI/utils/chartAdapter'
 import { toNiceCsvDate } from '~/utils'

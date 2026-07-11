@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue, useMemo, useState } from 'react'
 import { useGeckoId, usePriceChart } from '~/api/client'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { ensureChronologicalRows } from '~/components/ECharts/utils'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'

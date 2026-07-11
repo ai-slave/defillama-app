@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { createColumnHelper, type VisibilityState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue, useMemo, useState, type ReactNode } from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
-import { ChartRestoreButton } from '~/components/ButtonStyled/ChartRestoreButton'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { ChartGroupingSelector, DWM_GROUPING_OPTIONS_LOWERCASE } from '~/components/ECharts/ChartGroupingSelector'
 import type {
 	IHBarChartProps,

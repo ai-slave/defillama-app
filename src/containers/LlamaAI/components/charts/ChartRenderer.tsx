@@ -11,7 +11,7 @@ import {
 	useState
 } from 'react'
 import { createPortal } from 'react-dom'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { Icon } from '~/components/Icon'
 import { updateChartStyle } from '~/containers/LlamaAI/api/updateChartStyle'
 import { ChartControls } from '~/containers/LlamaAI/components/charts/ChartControls'

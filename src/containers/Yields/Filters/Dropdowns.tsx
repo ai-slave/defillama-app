@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { AvailableRange } from '~/components/Filters/AvailableRange'
 import { TVLRange } from '~/components/Filters/TVLRange'
 import { YIELDS_SETTINGS } from '~/contexts/LocalStorage'

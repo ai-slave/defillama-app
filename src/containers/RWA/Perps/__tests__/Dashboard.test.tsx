@@ -45,7 +45,7 @@ vi.mock('~/components/Select/SelectWithCombobox', () => ({
 	)
 }))
 
-vi.mock('~/components/ButtonStyled/ChartExportButtons', () => ({
+vi.mock('~/components/ChartExport/ChartExportButtons', () => ({
 	ChartExportButtons: () => <div>exports</div>
 }))
 

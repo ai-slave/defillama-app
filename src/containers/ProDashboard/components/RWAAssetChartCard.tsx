@@ -1,5 +1,5 @@
 import { lazy, Suspense, useMemo } from 'react'
-import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
+import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'

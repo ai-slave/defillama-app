@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { lazy, useMemo } from 'react'
 import { Announcement } from '~/components/Announcement'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import {
 	ChartGroupingSelector,
 	DWM_GROUPING_OPTIONS_LOWERCASE,

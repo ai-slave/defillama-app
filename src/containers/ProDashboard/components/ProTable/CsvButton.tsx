@@ -1,7 +1,7 @@
 'use no memo'
 
 import * as React from 'react'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 
 export const ProTableCSVButton = React.memo(function ProTableCSVButton({
 	onClick,

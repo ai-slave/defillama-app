@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartGroupingSelector, DWM_GROUPING_OPTIONS_LOWERCASE } from '~/components/ECharts/ChartGroupingSelector'
 import type { MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
 import { groupMultiSeriesBarChartDataset } from '~/components/ECharts/utils'

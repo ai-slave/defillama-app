@@ -13,7 +13,7 @@ function setupStatsMocks() {
 	vi.doMock('~/components/Bookmark', () => ({
 		Bookmark: () => React.createElement('span', null, 'BOOKMARK')
 	}))
-	vi.doMock('~/components/ButtonStyled/CsvButton', () => ({
+	vi.doMock('~/components/CsvDownloadButton', () => ({
 		CSVDownloadButton: () => null
 	}))
 	vi.doMock('~/components/Icon', () => ({

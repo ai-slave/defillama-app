@@ -2,7 +2,7 @@ import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { AddToDashboardButton } from '~/components/AddToDashboard/AddToDashboardButton'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import {
 	ChartGroupingSelector,

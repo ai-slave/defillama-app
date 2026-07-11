@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { IPieChartProps } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'

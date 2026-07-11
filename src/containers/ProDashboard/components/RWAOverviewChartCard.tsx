@@ -1,5 +1,5 @@
 import { lazy, Suspense, useMemo } from 'react'
-import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
+import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type {
 	IHBarChartProps,
 	IMultiSeriesChart2Props,

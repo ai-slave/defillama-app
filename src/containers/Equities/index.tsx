@@ -14,7 +14,7 @@ import {
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'

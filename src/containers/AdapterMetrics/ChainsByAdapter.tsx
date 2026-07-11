@@ -11,7 +11,7 @@ import {
 } from '@tanstack/react-table'
 import { startTransition, useMemo, useState } from 'react'
 import { Announcement } from '~/components/Announcement'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'

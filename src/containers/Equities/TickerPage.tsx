@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { TagGroup } from '~/components/TagGroup'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'

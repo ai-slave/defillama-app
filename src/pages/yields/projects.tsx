@@ -1,5 +1,5 @@
 import { Announcement } from '~/components/Announcement'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { disclaimer } from '~/containers/Yields/constants'
 import { getYieldPageData } from '~/containers/Yields/queries.server'
 import { YieldsProjectsTable } from '~/containers/Yields/Tables/Projects'

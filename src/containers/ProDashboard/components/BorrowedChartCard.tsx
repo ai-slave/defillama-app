@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo, type ReactElement } from 'react'
-import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
+import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { IChartProps, IPieChartProps } from '~/components/ECharts/types'
 import {
 	formatProtocolV1TvlsByChain,

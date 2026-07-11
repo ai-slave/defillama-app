@@ -6,7 +6,7 @@ import {
 	useReactTable
 } from '@tanstack/react-table'
 import * as React from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
 import { createInflowsTooltipFormatter } from '~/components/ECharts/formatters'
 import type { IPieChartProps } from '~/components/ECharts/types'

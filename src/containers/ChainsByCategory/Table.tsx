@@ -11,7 +11,7 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { Bookmark } from '~/components/Bookmark'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { TVLRange } from '~/components/Filters/TVLRange'
 import { Icon } from '~/components/Icon'

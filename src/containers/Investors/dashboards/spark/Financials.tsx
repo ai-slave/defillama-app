@@ -1,6 +1,6 @@
 import type * as echarts from 'echarts/core'
 import { lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChartPngExportButton } from '~/components/ButtonStyled/ChartPngExportButton'
+import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { CHART_INSET } from '~/components/ECharts/chartSpacing'
 import type { IBarChartProps, IChartProps, IMultiSeriesChartProps, IPieChartProps } from '~/components/ECharts/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'

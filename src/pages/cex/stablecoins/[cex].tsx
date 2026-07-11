@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { GetStaticPropsContext } from 'next'
 import * as React from 'react'
-import { ChartExportButtons } from '~/components/ButtonStyled/ChartExportButtons'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChart2Props, IPieChartProps, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { preparePieChartData } from '~/components/ECharts/utils'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'

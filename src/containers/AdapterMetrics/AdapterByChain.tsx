@@ -11,8 +11,7 @@ import {
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { startTransition, useMemo, useState, type ReactNode } from 'react'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
-import { FullOldViewButton } from '~/components/ButtonStyled/FullOldViewButton'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { Icon } from '~/components/Icon'
@@ -30,6 +29,7 @@ import {
 	useTableSearch
 } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
+import { FullOldViewButton } from '~/containers/AdapterMetrics/FullOldViewButton'
 import { chainCharts } from '~/containers/ChainOverview/constants'
 import { protocolCharts } from '~/containers/ProtocolOverview/constants'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'

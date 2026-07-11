@@ -9,7 +9,7 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { Announcement } from '~/components/Announcement'
-import { CSVDownloadButton } from '~/components/ButtonStyled/CsvButton'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { IMultiSeriesChart2Props, IPieChartProps } from '~/components/ECharts/types'
 import { Icon } from '~/components/Icon'
 import { VirtualTable } from '~/components/Table/Table'
