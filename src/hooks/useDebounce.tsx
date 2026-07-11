@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useStableCallback } from '~/hooks/useStableCallback'
 
 type DebouncedFunction<T extends (...args: any[]) => void> = ((...args: Parameters<T>) => void) & {
 	cancel: () => void
@@ -15,7 +16,7 @@ export function useDebouncedCallback<T extends (...args: any[]) => void>(
 	const pendingArgsRef = useRef<Parameters<T> | null>(null)
 	const normalizedDelay = normalizeDelay(delay)
 
-	const onInvoke = useEffectEvent((args: Parameters<T>) => {
+	const onInvoke = useStableCallback((args: Parameters<T>) => {
 		callback(...args)
 	})
 
@@ -31,7 +32,7 @@ export function useDebouncedCallback<T extends (...args: any[]) => void>(
 		const pendingArgs = pendingArgsRef.current
 		cancel()
 		if (pendingArgs != null) onInvoke(pendingArgs)
-	}, [cancel])
+	}, [cancel, onInvoke])
 
 	useEffect(() => {
 		return cancel
@@ -52,7 +53,7 @@ export function useDebouncedCallback<T extends (...args: any[]) => void>(
 				}) as DebouncedFunction<T>,
 				{ cancel, flush }
 			),
-		[cancel, flush, normalizedDelay]
+		[cancel, flush, normalizedDelay, onInvoke]
 	)
 }
 

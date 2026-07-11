@@ -1,11 +1,12 @@
 import * as echarts from 'echarts/core'
-import { useEffect, useEffectEvent, useId, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartCleanup } from '~/hooks/useChartCleanup'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import { slug } from '~/utils'
 import { ChartContainer } from '../ChartContainer'
 import { ChartHeader } from '../ChartHeader'
@@ -208,7 +209,7 @@ export default function AreaChart({
 
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const hasNotifiedReadyRef = useRef(false)
-	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
+	const emitReady = useStableCallback((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
 	})
 
@@ -297,7 +298,8 @@ export default function AreaChart({
 		id,
 		chartsStack,
 		shouldSyncChartInstance,
-		handleChartReady
+		handleChartReady,
+		emitReady
 	])
 
 	useChartCleanup(id, () => {

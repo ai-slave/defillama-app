@@ -1,5 +1,5 @@
 import * as echarts from 'echarts/core'
-import { useEffect, useEffectEvent, useId, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -7,6 +7,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartCleanup } from '~/hooks/useChartCleanup'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useChartResize } from '~/hooks/useChartResize'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import { slug, toNiceCsvDate } from '~/utils'
 import { ChartContainer } from '../ChartContainer'
 import { ChartHeader } from '../ChartHeader'
@@ -161,7 +162,7 @@ export default function BarChart({
 
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const hasNotifiedReadyRef = useRef(false)
-	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
+	const emitReady = useStableCallback((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
 	})
 
@@ -249,7 +250,8 @@ export default function BarChart({
 		id,
 		orientation,
 		shouldEnableExport,
-		handleChartReady
+		handleChartReady,
+		emitReady
 	])
 
 	useChartCleanup(id, () => {

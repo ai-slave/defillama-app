@@ -1081,7 +1081,7 @@ variations instead of forcing a universal abstraction.
   card** — `LocalLoader` is reserved for route-level full-page loads (the
   `/chart/*` embed pages are the only current core consumers); everything
   in-panel uses the new `LoadingIndicator` (`Loading` + dots, `body-sm
-  text-tertiary`), which `PanelLoadingStatus`/`SurfaceBodyLoadingStatus` now
+text-tertiary`), which `PanelLoadingStatus`/`SurfaceBodyLoadingStatus` now
   render by default when no children are passed (the sr-only label is skipped
   for the default child since its text is visible). Buttons/inline controls use
   `LoadingSpinner`; the border-circle spinners are gone.

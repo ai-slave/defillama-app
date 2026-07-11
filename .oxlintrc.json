@@ -23,6 +23,7 @@
 		"typescript/prefer-string-starts-ends-with": "warn",
 		"typescript/require-await": "warn",
 		"react/jsx-no-target-blank": "warn",
+		"react/no-unstable-nested-components": ["error", { "allowAsProps": true }],
 		"react/react-in-jsx-scope": "off",
 		"react/rules-of-hooks": "error",
 		"nextjs/no-duplicate-head": "off",

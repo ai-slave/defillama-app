@@ -103,6 +103,7 @@ import { useLlamaAINavigate, useProjectHomeSignal } from '~/contexts/LlamaAINavi
 import { useLlamaAIRouteContext } from '~/contexts/LlamaAIRouteState'
 import { useOptionalSessionAliases } from '~/contexts/SessionAliasRegistry'
 import { useMedia } from '~/hooks/useMedia'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import {
@@ -641,11 +642,11 @@ export function AgenticChat({
 	}, [sessionId, paginationState, loadNewerMessagesMutation, isStreaming])
 
 	// Expose the load-more callback through a stable event wrapper for the scroll listener.
-	const handleLoadMoreMessagesEvent = useEffectEvent(() => {
+	const handleLoadMoreMessagesEvent = useStableCallback(() => {
 		void handleLoadMoreMessages()
 	})
 
-	const handleLoadNewerMessagesEvent = useEffectEvent(() => {
+	const handleLoadNewerMessagesEvent = useStableCallback(() => {
 		void handleLoadNewerMessages()
 	})
 
@@ -1061,7 +1062,7 @@ export function AgenticChat({
 		}, delay)
 	}, [])
 
-	const attemptRecoveryForController = useEffectEvent((recoveryId: number) => {
+	const attemptRecoveryForController = useStableCallback((recoveryId: number) => {
 		const controller = recoveryControllerRef.current
 		if (!controller || controller.id !== recoveryId || controller.attemptInFlight) return
 
@@ -1146,7 +1147,7 @@ export function AgenticChat({
 
 	useEffect(() => {
 		attemptRecoveryForControllerRef.current = attemptRecoveryForController
-	}, [])
+	}, [attemptRecoveryForController])
 
 	const startRecoveryCycle = useCallback(
 		({
@@ -2049,7 +2050,7 @@ export function AgenticChat({
 
 	// Immediately attempt to reconnect to a running or completed server-side execution.
 	// Works during active recovery (doesn't require lastFailedRequest).
-	const handleReconnectNow = useEffectEvent(() => {
+	const handleReconnectNow = useStableCallback(() => {
 		const controller = recoveryControllerRef.current
 		if (controller) {
 			attemptRecoveryForController(controller.id)
@@ -2082,7 +2083,7 @@ export function AgenticChat({
 	}, [abortActiveRequest, handleSubmit, lastFailedRequest, restoreSessionSnapshot, resumeRunningExecution, sessionId])
 
 	// Consume pending prompts injected by the floating button once the base chat page mounts.
-	const submitPendingPromptEvent = useEffectEvent(
+	const submitPendingPromptEvent = useStableCallback(
 		(
 			prompt: string,
 			pageContext?: { entitySlug?: string; entityType?: 'protocol' | 'chain' | 'page'; route: string },
@@ -2130,7 +2131,15 @@ export function AgenticChat({
 
 		deepLinkConsumedKeyRef.current = null
 		setDeepLinkConfirmationPrompt(null)
-	}, [route.kind, deepLinkPrompt, deepLinkUtmSource, deepLinkUtmCampaign, sharedSession, navigate])
+	}, [
+		route.kind,
+		deepLinkPrompt,
+		deepLinkUtmSource,
+		deepLinkUtmCampaign,
+		sharedSession,
+		navigate,
+		submitPendingPromptEvent
+	])
 
 	const handleConfirmDeepLinkPrompt = useCallback(() => {
 		const prompt = deepLinkConfirmationPrompt?.trim()
@@ -2144,7 +2153,7 @@ export function AgenticChat({
 		})
 		void navigate.refineCurrent('/ai/chat')
 		submitPendingPromptEvent(prompt)
-	}, [deepLinkConfirmationPrompt, deepLinkUtmSource, deepLinkUtmCampaign, navigate])
+	}, [deepLinkConfirmationPrompt, deepLinkUtmSource, deepLinkUtmCampaign, navigate, submitPendingPromptEvent])
 
 	const handleCloseDeepLinkPrompt = useCallback(() => {
 		if (deepLinkConfirmationPrompt) {

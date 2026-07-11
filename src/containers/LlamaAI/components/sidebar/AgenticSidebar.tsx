@@ -20,6 +20,7 @@ import { ProjectsSidebarSection } from '~/containers/LlamaAI/projects/ProjectsSi
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -312,7 +313,7 @@ export function AgenticSidebar({
 		trimmedSearchQuery
 	])
 
-	const handleVirtualizerChange = useEffectEvent((instance: Virtualizer<HTMLDivElement, Element>) => {
+	const handleVirtualizerChange = useStableCallback((instance: Virtualizer<HTMLDivElement, Element>) => {
 		if (
 			loadMoreSessionsError ||
 			!hasMoreSessions ||
