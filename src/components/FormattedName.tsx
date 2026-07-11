@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useState } from 'react'
+import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react'
 import { Tooltip } from '~/ui/Tooltip'
 
 interface WrapperProps {
@@ -16,20 +16,32 @@ interface IFormattedNameProps extends WrapperProps {
 export const FormattedName = ({ text, fontSize, fontWeight = 400, link }: IFormattedNameProps) => {
 	// Tooltip eligibility comes from real overflow, not a character count: the
 	// span is ellipsized by CSS, so scrollWidth > clientWidth is the truth.
-	// SSR and first paint render the bare span (no tooltip) so hydration is
-	// deterministic; the effect measures after mount and on container resizes.
-	const [node, setNode] = useState<HTMLSpanElement | null>(null)
+	// Keep the tooltip anchor mounted before and after measurement. Changing the
+	// wrapper changes the available width and can make truncation oscillate.
+	const nodeRef = useRef<HTMLSpanElement | null>(null)
 	const [isTruncated, setIsTruncated] = useState(false)
+	const measure = useCallback((node: HTMLSpanElement) => {
+		setIsTruncated(node.scrollWidth > node.clientWidth)
+	}, [])
+	const setNode = useCallback(
+		(node: HTMLSpanElement | null) => {
+			if (!node) return
+			nodeRef.current = node
+			measure(node)
+			if (typeof ResizeObserver === 'undefined') return
+			const observer = new ResizeObserver(() => measure(node))
+			observer.observe(node)
+			return () => {
+				observer.disconnect()
+				if (nodeRef.current === node) nodeRef.current = null
+			}
+		},
+		[measure]
+	)
 
 	useEffect(() => {
-		if (!node) return
-		const measure = () => setIsTruncated(node.scrollWidth > node.clientWidth)
-		measure()
-		if (typeof ResizeObserver === 'undefined') return
-		const observer = new ResizeObserver(measure)
-		observer.observe(node)
-		return () => observer.disconnect()
-	}, [node, text])
+		if (nodeRef.current) measure(nodeRef.current)
+	}, [measure, text])
 
 	if (!text) {
 		return null
@@ -51,5 +63,9 @@ export const FormattedName = ({ text, fontSize, fontWeight = 400, link }: IForma
 		</span>
 	)
 
-	return isTruncated ? <Tooltip content={text}>{content}</Tooltip> : content
+	return (
+		<Tooltip content={text} disabled={!isTruncated}>
+			{content}
+		</Tooltip>
+	)
 }

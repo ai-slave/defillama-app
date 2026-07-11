@@ -3,6 +3,7 @@ import { tooltipSurfaceStyles } from '~/ui/Popover'
 
 interface ITooltip extends Ariakit.TooltipOptions {
 	content: string | null | React.ReactNode
+	disabled?: boolean
 	'data-fullwidth'?: boolean
 	href?: string
 	shallow?: boolean
