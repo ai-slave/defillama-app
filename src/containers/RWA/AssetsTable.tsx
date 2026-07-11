@@ -274,39 +274,6 @@ function createColumns(includeRwaPerps: boolean, flowSummary: IRWAFlowSummaryRes
 				headerClassName: 'w-[180px] sm:w-[240px]'
 			}
 		}),
-		columnHelper.accessor((asset) => asset.price ?? undefined, {
-			id: 'price',
-			header: 'Token Price',
-			cell: (info) => (info.getValue() != null ? <span>{formattedNum(info.getValue(), true)}</span> : null),
-			meta: {
-				headerClassName: 'w-[120px]',
-				align: 'end'
-			}
-		}),
-		columnHelper.accessor((asset) => getAssetFlowValue(asset, flowSummary, '7d') ?? undefined, {
-			id: 'netFlow7d',
-			header: 'Net Flow 7d',
-			cell: (info) => (
-				<span className={getRWAFlowTextClass(info.getValue())}>{formatSignedRWAFlow(info.getValue())}</span>
-			),
-			meta: {
-				headerClassName: 'w-[144px]',
-				align: 'end',
-				headerHelperText: 'Net USD flow over the prior 7 days.'
-			}
-		}),
-		columnHelper.accessor((asset) => getAssetFlowValue(asset, flowSummary, '30d') ?? undefined, {
-			id: 'netFlow30d',
-			header: 'Net Flow 30d',
-			cell: (info) => (
-				<span className={getRWAFlowTextClass(info.getValue())}>{formatSignedRWAFlow(info.getValue())}</span>
-			),
-			meta: {
-				headerClassName: 'w-[144px]',
-				align: 'end',
-				headerHelperText: 'Net USD flow over the prior 30 days.'
-			}
-		}),
 		columnHelper.accessor((asset) => normalizeRwaAssetGroup(asset.assetGroup), {
 			id: 'assetGroup',
 			header: 'Asset Group',
@@ -317,6 +284,15 @@ function createColumns(includeRwaPerps: boolean, flowSummary: IRWAFlowSummaryRes
 			enableSorting: false,
 			meta: {
 				headerClassName: 'w-[168px]',
+				align: 'end'
+			}
+		}),
+		columnHelper.accessor((asset) => asset.price ?? undefined, {
+			id: 'price',
+			header: 'Token Price',
+			cell: (info) => (info.getValue() != null ? <span>{formattedNum(info.getValue(), true)}</span> : null),
+			meta: {
+				headerClassName: 'w-[120px]',
 				align: 'end'
 			}
 		}),
@@ -389,6 +365,30 @@ function createColumns(includeRwaPerps: boolean, flowSummary: IRWAFlowSummaryRes
 				}
 			}
 		),
+		columnHelper.accessor((asset) => getAssetFlowValue(asset, flowSummary, '7d') ?? undefined, {
+			id: 'netFlow7d',
+			header: 'Net Flow 7d',
+			cell: (info) => (
+				<span className={getRWAFlowTextClass(info.getValue())}>{formatSignedRWAFlow(info.getValue())}</span>
+			),
+			meta: {
+				headerClassName: 'w-[144px]',
+				align: 'end',
+				headerHelperText: 'Net USD flow over the prior 7 days.'
+			}
+		}),
+		columnHelper.accessor((asset) => getAssetFlowValue(asset, flowSummary, '30d') ?? undefined, {
+			id: 'netFlow30d',
+			header: 'Net Flow 30d',
+			cell: (info) => (
+				<span className={getRWAFlowTextClass(info.getValue())}>{formatSignedRWAFlow(info.getValue())}</span>
+			),
+			meta: {
+				headerClassName: 'w-[144px]',
+				align: 'end',
+				headerHelperText: 'Net USD flow over the prior 30 days.'
+			}
+		}),
 		columnHelper.accessor((asset) => formatAssetPlatforms(asset), {
 			id: 'platform',
 			header: 'Platform',
@@ -499,7 +499,11 @@ function createColumns(includeRwaPerps: boolean, flowSummary: IRWAFlowSummaryRes
 					</span>
 				)
 				return (
-					<Hovercard content={tooltipContent} className="inline-block max-w-full justify-end truncate">
+					<Hovercard
+						content={tooltipContent}
+						contentClassName="w-80 max-w-(--popover-available-width) p-3 whitespace-normal"
+						className="inline-block max-w-full justify-end truncate"
+					>
 						{assetClasses.join(', ')}
 					</Hovercard>
 				)
@@ -775,6 +779,7 @@ const TVLBreakdownCell = ({
 	return (
 		<Hovercard
 			content={<BreakdownTooltipContent breakdown={breakdown} description={description} />}
+			contentClassName="w-80 max-w-(--popover-available-width) p-3 whitespace-normal"
 			className="justify-end underline decoration-dotted"
 		>
 			{formattedNum(value, true)}

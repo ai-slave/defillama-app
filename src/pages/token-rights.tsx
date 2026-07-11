@@ -796,7 +796,9 @@ function RightsDots({ rights, labels }: { rights: [boolean, boolean, boolean]; l
 			<Ariakit.Hovercard
 				unmountOnHide
 				gutter={6}
-				className={`${popoverHovercardSurfaceStyles} w-max max-w-[calc(100vw-32px)] p-2`}
+				overflowPadding={16}
+				className={`${popoverHovercardSurfaceStyles} w-max p-2`}
+				portal
 			>
 				{content}
 			</Ariakit.Hovercard>

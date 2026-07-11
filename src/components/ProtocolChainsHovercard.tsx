@@ -9,12 +9,13 @@ export function ProtocolChainsHovercard({ chains, className }: { chains: string[
 	return (
 		<Hovercard
 			className={className ?? 'body-sm text-secondary'}
+			contentClassName="w-max max-w-[min(20rem,var(--popover-available-width))] p-3"
 			content={
 				<span className="flex flex-col gap-1">
 					{chains.map((chain) => (
 						<span key={`chain${chain}-of-protocol`} className="flex items-center gap-1">
 							<TokenLogo name={chain} kind="chain" size={14} alt={`Logo of ${chain}`} />
-							<span>{chain}</span>
+							<span className="min-w-0 break-words">{chain}</span>
 						</span>
 					))}
 				</span>

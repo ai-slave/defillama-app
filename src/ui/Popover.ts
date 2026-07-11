@@ -24,7 +24,7 @@ export const nestedMenuSurfaceStyles = `flex min-w-[180px] flex-col overflow-x-h
 
 export const popoverSearchResultsSurfaceStyles = tw`z-10 overflow-y-auto rounded-b-lg border border-medium bg-overlay shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]`
 
-export const popoverHovercardSurfaceStyles = tw`z-50 max-h-[calc(100dvh-80px)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay body-sm shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)] lg:max-h-(--popover-available-height)`
+export const popoverHovercardSurfaceStyles = tw`z-50 max-h-[min(calc(100dvh-80px),var(--popover-available-height))] max-w-(--popover-available-width) overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay body-sm shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]`
 
 /* Text-only tooltips: same chrome as hovercards, but radius follows the
    component's size — 6px on a one-line bubble, not the popover 12px. */

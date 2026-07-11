@@ -440,8 +440,9 @@ export function EntityPreviewLink({
 			<Ariakit.Hovercard
 				portal
 				gutter={8}
+				overflowPadding={16}
 				unmountOnHide
-				className="article-entity-popover z-50 w-80 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-xl outline-hidden"
+				className="article-entity-popover z-50 max-h-(--popover-available-height) w-80 max-w-(--popover-available-width) overflow-y-auto rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-xl outline-hidden"
 			>
 				<div className="flex items-center gap-3 px-3 pt-3 pb-2">
 					<span className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-(--legacy-cards-border) bg-(--legacy-app-bg)">

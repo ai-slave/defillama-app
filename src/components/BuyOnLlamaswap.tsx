@@ -71,7 +71,8 @@ export function BuyOnLlamaswap({
 			<Ariakit.Hovercard
 				unmountOnHide
 				gutter={6}
-				className={`${popoverHovercardSurfaceStyles} flex min-w-[180px] flex-col`}
+				overflowPadding={16}
+				className={`${popoverHovercardSurfaceStyles} flex min-w-[min(180px,var(--popover-available-width))] flex-col`}
 				portal
 			>
 				<span className="px-3 pt-2 pb-1 label-sm text-secondary">Select chain</span>
@@ -84,7 +85,7 @@ export function BuyOnLlamaswap({
 						className={`${popoverMenuItemStyles} rounded-md`}
 					>
 						<TokenLogo name={chain.displayName} kind="chain" size={18} />
-						<span className="capitalize">{chain.displayName}</span>
+						<span className="min-w-0 truncate capitalize">{chain.displayName}</span>
 						{chain.best ? (
 							<span className="ml-auto rounded-full bg-brand-muted px-1.5 py-0.5 label-sm text-link">Best</span>
 						) : null}

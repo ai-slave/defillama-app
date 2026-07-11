@@ -144,6 +144,7 @@ const overviewColumns = [
 				return (
 					<Hovercard
 						content={<AssetTooltipContent assetBreakdown={assetBreakdown} protocolName={info.row.original.name} />}
+						contentClassName="w-72 max-w-(--popover-available-width) p-3"
 						render={<button />}
 						className="ml-auto flex h-5 w-full! flex-nowrap items-center bg-white"
 					>
@@ -257,7 +258,7 @@ function Breakdown({ data }: { data: BreakdownData }) {
 
 	return (
 		<span className="flex flex-col gap-1 border-l-3 pl-1 text-xs" style={{ borderColor: data.color }}>
-			<span>{name}</span>
+			<span className="break-words">{name}</span>
 			{data.amount != null ? <span>{`Amount: ${formattedNum(data.amount, false)} ${data.ticker}`}</span> : null}
 			{data.usdValue != null ? <span>{`Today's Value: ${formattedNum(data.usdValue, true)}`}</span> : null}
 			{data.cost != null ? <span>{`Cost Basis: ${formattedNum(data.cost, true)}`}</span> : null}

@@ -192,7 +192,8 @@ function PromotionGift({
 			<Ariakit.Hovercard
 				unmountOnHide
 				gutter={6}
-				className={`${popoverHovercardSurfaceStyles} w-72 max-w-[calc(100vw-32px)] overflow-hidden p-0`}
+				overflowPadding={16}
+				className={`${popoverHovercardSurfaceStyles} w-72 overflow-hidden p-0`}
 				portal
 			>
 				<span className="flex flex-col gap-3 p-3">
@@ -431,7 +432,8 @@ function KycSummaryHovercard({ summary }: { summary: string }) {
 			<Ariakit.Hovercard
 				unmountOnHide
 				gutter={6}
-				className={`${popoverHovercardSurfaceStyles} w-96 max-w-[calc(100vw-32px)] p-3 leading-snug text-primary`}
+				overflowPadding={16}
+				className={`${popoverHovercardSurfaceStyles} w-96 p-3 leading-snug text-primary`}
 				portal
 			>
 				<span className="block break-words whitespace-pre-wrap">{summary}</span>
@@ -519,7 +521,8 @@ function RampCostCell({ row, direction }: { row: MicaExchange; direction: RampDi
 			<Ariakit.Hovercard
 				unmountOnHide
 				gutter={6}
-				className={`${popoverHovercardSurfaceStyles} w-80 max-w-[calc(100vw-32px)] p-3 text-primary`}
+				overflowPadding={16}
+				className={`${popoverHovercardSurfaceStyles} w-80 p-3 text-primary`}
 				portal
 			>
 				<div className="flex flex-col gap-2">

@@ -76,14 +76,15 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 				return (
 					<Hovercard
 						className="max-w-full truncate"
+						contentClassName="w-80 max-w-(--popover-available-width) p-3"
 						content={
 							<span className="flex flex-col gap-1">
 								{allocations.map((a, index) => (
 									<span key={`${a.category}-${index}`} className="flex items-center justify-between gap-4">
-										<span>
+										<span className="min-w-0 break-words">
 											{a.allocationSection ?? formatAllocationLabel(a.category)} ({formatAllocationLabel(a.category)})
 										</span>
-										<span className="font-medium">{formattedNum(a.received)}</span>
+										<span className="shrink-0 font-medium">{formattedNum(a.received)}</span>
 									</span>
 								))}
 							</span>

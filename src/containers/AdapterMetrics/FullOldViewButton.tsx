@@ -56,6 +56,7 @@ export const FullOldViewButton = () => {
 				</button>
 				<Hovercard
 					content={featureContent}
+					contentClassName="w-max max-w-(--popover-available-width) p-3"
 					render={<button type="button" aria-label="What Full View includes" />}
 					className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
 				>

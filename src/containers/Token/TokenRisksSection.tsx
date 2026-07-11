@@ -89,7 +89,7 @@ function ProtocolExposureSummaryText({
 
 function ChainBreakdownTooltipContent({ chainBreakdowns }: { chainBreakdowns: TokenRiskChainExposureSummary[] }) {
 	return (
-		<div className="w-80 max-w-[calc(100vw-2rem)] space-y-2 body-sm">
+		<div className="w-80 max-w-(--popover-available-width) space-y-2 body-sm">
 			<p className="font-medium text-primary">Breakdown by chain</p>
 			<div className="space-y-1">
 				{chainBreakdowns.map((chain) => (
@@ -142,7 +142,13 @@ function ProtocolChainsLabel({ chainBreakdowns }: { chainBreakdowns: TokenRiskCh
 			>
 				{label}
 			</Ariakit.HovercardAnchor>
-			<Ariakit.Hovercard className={`${popoverHovercardSurfaceStyles} p-3`} gutter={6} portal unmountOnHide>
+			<Ariakit.Hovercard
+				className={`${popoverHovercardSurfaceStyles} p-3`}
+				gutter={6}
+				overflowPadding={16}
+				portal
+				unmountOnHide
+			>
 				<ChainBreakdownTooltipContent chainBreakdowns={chainBreakdowns} />
 			</Ariakit.Hovercard>
 		</Ariakit.HovercardProvider>

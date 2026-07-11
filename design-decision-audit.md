@@ -1,15 +1,17 @@
 # Design Decision Audit
 
-This file tracks design-system audit notes before code changes are made.
+This file records the rationale behind design-system decisions, reviewed exceptions, and
+historical findings. Current normative rules live in [`design.md`](design.md), and current
+behavior must be verified from source before proposing a visual change.
 
 ## How To Use
 
 - Add one entry per pointed-out component, state, or page area.
-- Document what is visually off, what Figma/source context was checked, and what decision is needed.
+- Document what is visually off, what evidence was checked, and what decision is needed.
 - Before proposing a fix, map every shared component usage and note special cases.
 - Call out surrounding components that may need to move with the change.
 - Prefer layout decisions based on grid, padding, gaps, and min-size floors; flag hardcoded heights, margins, and one-off hacks.
-- Keep implementation status separate. This file is for observations, context, risks, and decisions.
+- Record the final outcome without branch names, merge state, or temporary delivery status.
 
 ## Entry Template
 
@@ -17,7 +19,7 @@ This file tracks design-system audit notes before code changes are made.
 
 - Route/page:
 - Component/file:
-- Figma node(s):
+- Evidence/source:
 - Current issue:
 - Shared usage/context:
 - Special cases:
@@ -25,15 +27,15 @@ This file tracks design-system audit notes before code changes are made.
 - Grid/flex/layout notes:
 - Hardcoded hacks to remove:
 - Decision needed:
-- Proposed direction:
+- Decision/outcome:
 - Verification needed:
 
 ## Notes
 
-### Post-Merge Finalization Note — 2026-07-09
+### Audit Interpretation
 
-- The route-family sweep is merged. Follow-up work must start with a current-code review;
-  historical checklist entries alone are insufficient evidence for a visual change.
+- Follow-up work must start with a current-code review; historical checklist entries alone
+  are insufficient evidence for a visual change.
 - Search and Metrics use the shared dialog surface contract. No follow-up is scheduled;
   reopen them only for a reproducible regression, not a second shell migration.
 - Segmented controls now have a shared keyboard-complete radio-group primitive. Real
@@ -44,7 +46,7 @@ This file tracks design-system audit notes before code changes are made.
   debt, so excluded work cannot mask core regressions. No excluded-product visuals were
   changed during this finalization pass.
 
-### Token Namespace End-State (historical proposal, legacy phase resolved)
+### Token Namespace Decision
 
 - Original issue: The new tokens carried an `--ld-` prefix because legacy variables
   squat on the clean names (`--text-primary`, `--bg-surface`, …), and legacy names are
@@ -58,7 +60,7 @@ This file tracks design-system audit notes before code changes are made.
   (c) runtime/layout vars that are not tokens and stay as-is (`--direction`, `--gap`,
   `--drawer-*`, `--popover-anchor-width`, `--dialog-width`, `--sticky-shadow`,
   `--vf-header-scroll-left`, `--rl-size`, `--speed`, `--star-*`).
-- Planned post-merge direction, strictly ordered:
+- Migration sequence used:
   1. Rename subset (a) to `--legacy-*` everywhere (definitions + consumers). Pure
      mechanical codemod (~7–9k occurrences, mostly excluded surfaces); zero visual
      change since aliases are preserved. Hand-check the JS string reads:
@@ -110,7 +112,7 @@ This file tracks design-system audit notes before code changes are made.
 - Keep the title-strip primitive phased. Current adopters include protocol TVL, Treasury, Active Loans, Forks, CEX assets/stablecoins, chain overview empty/title shell, bridge protocol overview, and LiquidationsV2 summary. Review unlocks/governance/LST separately because they need extra metadata/action slots.
 - Use 32px toolbar controls. Use 6px inside dense chart/table toolbar control clusters; use 8px for toolbar padding, page/panel/card gaps, and between larger control groups.
 - Keep `PanelHeader` as the taller Figma-derived titled-panel header. Add/use a separate compact chart/table toolbar recipe for route-specific inline chart controls.
-- Historical chart decision, now superseded: grid inset changes required screenshots/pixel checks. The landed chart-theme/geometry pass performed that review and established the shared 8px visual-inset contract documented below.
+- Historical chart decision, now superseded: grid inset changes required screenshots/pixel checks. That review established the shared 8px visual-inset contract documented below.
 - Multi-select popover rows use compact 14px checkbox boxes in both states: filled blue when selected, empty `border-strong` when unselected. Single-select rows show only the selected check mark and no empty box/circle.
 - Dense-card secondary actions can remain compact, for example 24px CSV buttons inside stat cards, while chart/table/action toolbars use 32px controls.
 - Refine the current structural `<p>` to `<div>` work rather than reverting: data-card wrappers stay `div`; empty/error/status shells get inner text semantics and `role="status"`/`role="alert"` where appropriate.
@@ -174,9 +176,8 @@ This file tracks design-system audit notes before code changes are made.
 - Hardcoded hacks to remove later: Local trigger class maps in `FilterBetweenRange` if they
   can be replaced by `selectTriggerStyles`; duplicate checkbox indicator maps; unused
   title/icon-hit-target API.
-- Decision: Keep this out of the dense Card/Panel branch. Use a dedicated
-  `shared-control-api-tightening` branch so review can focus on explicitness and
-  excluded-surface boundaries.
+- Decision: Keep this separate from dense Card/Panel work so review can focus on
+  explicitness and excluded-surface boundaries.
 - Proposed direction:
   1. `FilterBetweenRange`: remove dead `name`; require `variant` and `size`.
   2. `PanelStatus`: require `variant`.
@@ -192,17 +193,15 @@ This file tracks design-system audit notes before code changes are made.
 - Verification needed: Typecheck after each tightening step, then lint and token lint for
   any class-string changes. Review excluded-surface compile impact before making shared
   `Select` / `SelectWithCombobox` props required.
-- Implementation status 2026-07-09: `FilterBetweenRange`, `PanelStatus`, `Checkbox`,
-  `EntityTitleStrip`, `IconHitTarget`, `Button`, `selectTriggerStyles`, and `TagGroup`
-  are tightened on `mintdart/shared-control-api-tightening`. In-scope `Select` /
-  `SelectWithCombobox` callers are pinned explicitly, but the shared prop types stay
-  optional until excluded ProDashboard, LlamaAI, Yields, and related surfaces are pinned
-  or intentionally migrated.
-- Follow-up status 2026-07-09: `FilterBetweenRange` / `TVLRange` no longer expose unused
+- Outcome: `FilterBetweenRange`, `PanelStatus`, `Checkbox`, `EntityTitleStrip`,
+  `IconHitTarget`, `Button`, `selectTriggerStyles`, and `TagGroup` use explicit contracts.
+  In-scope `Select` / `SelectWithCombobox` callers are pinned explicitly, while excluded
+  ProDashboard, LlamaAI, Yields, and related surfaces retain intentional compatibility.
+- Follow-up outcome: `FilterBetweenRange` / `TVLRange` no longer expose unused
   `triggerClassName` plumbing, `AvailableRange` no longer has a redundant `variant`, and
   `Card` no longer has `interactive`; clickable card call sites carry
   `.hover-wash-card cursor-pointer` directly.
-- Architecture completion 2026-07-10: all `Select` and `SelectWithCombobox` consumers now
+- Final outcome: all `Select` and `SelectWithCombobox` consumers now
   choose `variant` and `size` explicitly. Excluded ProDashboard, LlamaAI, and Yields
   consumers were pinned to their prior `default`/`sm` values before the shared defaults
   were removed, so the API tightening is behavior-neutral.
@@ -259,7 +258,7 @@ This file tracks design-system audit notes before code changes are made.
 - Verification needed: Leave visual verification to the owner unless screenshots are
   explicitly requested.
 
-Follow-up status:
+Outcome:
 
 - Superseded by the 2026-07-09 broad `ChartPanel` shell migration note below. Standard
   in-scope chart shells moved onto the shared helper layer. The later closure review
@@ -319,7 +318,7 @@ Follow-up status:
 - Proposed direction: Audit each changed instance and classify it as data-card, empty-state, error-alert, warning-banner, or footer note. Then add the appropriate inner text/ARIA semantics in one focused pass.
 - Verification needed: Diff review plus DOM inspection for every changed instance; confirm no default paragraph margins, no layout shifts, and correct semantics for alerts/status text.
 
-Current classification of the in-flight pass:
+Reviewed classification:
 
 | File/context                                                                         | Classification                                 | Keep wrapper as `div`? | Inner text/ARIA fix                                                                          |
 | ------------------------------------------------------------------------------------ | ---------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------- |
@@ -342,7 +341,7 @@ Current classification of the in-flight pass:
 - Route/page: `/protocol/tvl/:protocol`, `/protocol/treasury/:protocol`, `/protocol/stablecoins/:protocol`, `/protocol/active-loans/:protocol`, `/protocol/forks/:protocol`, plus CEX assets/stablecoins as the adjacent legacy family.
 - Component/file: `Panel` usages in protocol subpages; CEX assets/stablecoins title/status shells now use shared primitives.
 - Figma node(s): Protocol TVL reference page `6183:148773`; panel reference `6183:148797`.
-- Current issue: Some previous scripted edits left invalid `className="-1"` fragments and mixed error/no-data text styles. The TVL loading/error panel should expand with `flex-1` like main branch behavior, and text should use semantic typography/color utilities rather than old local label/error tokens.
+- Current issue: Some previous scripted edits left invalid `className="-1"` fragments and mixed error/no-data text styles. The TVL loading/error panel should expand with `flex-1` like the expected current behavior, and text should use semantic typography/color utilities rather than old local label/error tokens.
 - Search evidence: In-scope `className="-1"` search now returns no matches. Protocol-family status panels now use `flex-1` placement where applicable. TVL/Treasury/Forks/Stablecoins error text uses `body-sm text-data-down`; active-loans no-data text uses `body-sm text-secondary`.
 - Shared usage/context:
   - TVL and Treasury have chart-grid error states and should use `col-span-full` to avoid `col-span-2` assumptions.
@@ -706,7 +705,7 @@ Current classification of the in-flight pass:
 - Hardcoded hacks to remove: Route-local `p-3 pb-0`, `gap-3`, `gap-1`, and fixed `h-*` toolbar wrappers should migrate to named chart-toolbar recipes. Do not add body `p-2` around `MultiSeriesChart2` just to force 8px DOM padding; that duplicates the chart grid inset.
 - Decision: Dense chart/table toolbar control clusters standardize on 6px gaps with 32px controls, while page/panel/card spacing and larger group spacing remains 8px.
 - Decision: `PanelHeader` remains the 56px titled-panel recipe, with 6px gaps between dense header controls. A separate `ChartToolbar`/`ChartPanelToolbar` recipe still exists for route-specific inline chart controls that need 8px toolbar padding and no bottom padding. The Figma-derived `PanelHeader` is a different context from inline chart toolbars, but its control spacing should not drift wider.
-- Historical decision (superseded by the landed chart-theme/geometry reconciliation below): do not change cartesian ECharts grid inset without screenshots/pixel checks. That visual review later occurred and established the shared 8px visual-inset contract.
+- Historical decision (superseded by the chart-theme/geometry reconciliation below): do not change cartesian ECharts grid inset without screenshots/pixel checks. That visual review established the shared 8px visual-inset contract.
 - Decision: Generic `CSVDownloadButton` may default to 24px (`size="sm"`), but chart/table toolbar usage should explicitly pass `size="md"` or use chart export wrappers so mixed-height controls do not return. Dense-card secondary actions may remain 24px.
 - Proposed direction: Add documented primitives/recipes: `ChartPanelToolbar` for route-specific chart toolbars (`px-2 pt-2 pb-0`, no bottom padding, 32px controls), `ChartPanelControlGroup` for dense internal 6px control clusters, and leave `PanelHeader` as the titled-panel recipe. Keep chart-only surfaces body-flush and avoid DOM body padding around grid-based charts.
 - Verification needed: Live visual/measured checks on `/`, `/chain/ethereum`, `/protocol/lido`, `/protocol/tvl/lido`, `/cex/assets/binance`, stablecoins, bridges, RWA, liquidations, adapter metrics, and one token chart section. For each, measure toolbar row padding, control gap, control height, chart top spacing, left/right plot inset, bottom dataZoom spacing, and whether removing/adding DOM padding changes chart visuals.
@@ -771,7 +770,7 @@ Current classification of the in-flight pass:
   ChainsByCategory shared chart state, token overview chart-body states, investor
   relations gated state, borrow, compare placeholders, watchlists, and LiquidationsV2
   access-gate states.
-- Same-branch ARIA-only follow-up: visible chart/status loaders and errors in
+- ARIA-only follow-up: visible chart/status loaders and errors in
   AdapterMetrics protocol/chain charts, Markets mini charts, and standalone `/chart/*`
   pages can gain `role="status"` / `role="alert"` without changing shell ownership or
   chart height. Blank Suspense reservation divs are not status messages.
@@ -787,8 +786,8 @@ Current classification of the in-flight pass:
   custom 480/533/600px charts, market mini charts, and excluded/quarantined products are
   intentional owners of their current composition; no `ChartPanel` migration is pending.
 - Chart visual debt is not shell debt. The axis-label, gridline, tooltip,
-  candlestick, legend, dataZoom, and geometry work later landed in the focused
-  chart-theme pass with visual checks. The post-landing code review found no remaining
+  candlestick, legend, dataZoom, and geometry work is handled by the focused
+  chart-theme contract established with visual checks. The final code review found no remaining
   shared chart migration; custom surfaces are intentional owners, not a follow-up queue.
 - Exported style-string candidates: `IconHitTarget` is small, `MetricChip` option chips
   are medium, `SegmentedControl` and `SearchField` are broad, and `Popover.ts` style
@@ -833,7 +832,7 @@ Current classification of the in-flight pass:
   - ECharts-native tooltips rendered near-white through the library default at this
     point in the audit. The later chart-theme pass moved their background, border, and
     text onto the overlay/stroke/text chart tokens.
-- Drift found during the same audit (fixed in branch):
+- Drift resolved during the same audit:
   - Home-page product-link cards (`ChainOverview/index.tsx`) were interactive Cards
     with no hover affordance → `hover-wash-card` per the Card rule.
   - `RowLinksWithDropdown/OtherLinks` "Others" trigger rested on
@@ -847,7 +846,7 @@ bg-surface-elevated-2` opaque step per the documented Select-trigger exception.
 
 ### 2026-07-09 Tooltip/Hovercard Affordance Sweep
 
-- Route/page: app-wide floating hover content; branch `mintdart/tooltip-popover-sweep`.
+- Route/page: app-wide floating hover content.
 - Decisions (owner, 2026-07-09):
   - Tooltip radius is 6px (`rounded-md`, new `tooltipSurfaceStyles`) — radius follows
     component size and must not exceed content inset; popovers/menus/dialogs/hovercards
@@ -868,11 +867,20 @@ bg-surface-elevated-2` opaque step per the documented Select-trigger exception.
   keeps dashboard creation on its primary button and exposes the feature list through a
   separate labeled ghost info button, closing the last known touch gap without combining
   the two actions.
+- Sizing outcome: Ariakit's `--popover-available-width` and
+  `--popover-available-height` define the physical viewport boundary, while each
+  hovercard keeps a content-specific preferred width. Compact status/name lists remain
+  intrinsic, prose-heavy RWA definitions use a 20rem reading measure, dense financial
+  breakdowns may use 24rem, and wider wrapping collections keep an explicit local cap.
+  The shared hovercard keeps 16px from viewport edges through `overflowPadding`; anchored
+  hovercards do not reproduce that boundary with `calc(100vw - …)`. This preserves the
+  narrow vertical Token Rights status card while preventing long RWA descriptions from
+  expanding across the viewport.
 - Later resolution: the ProtocolRankings accessor returns `null` for sorting on formula
   errors, while the cell renderer evaluates separately and exposes `Err` with the error
   tooltip. The earlier “dead badge” finding no longer applies.
 
-### 2026-07-09 Token Hygiene (branch `mintdart/token-hygiene`)
+### 2026-07-09 Token Hygiene
 
 - Decisions (owner, 2026-07-09):
   - `text-data-up-alt`/`down-alt` gain dark overrides (#4b86db / #a674ec, AA on dark
@@ -913,7 +921,7 @@ bg-surface-elevated-2` opaque step per the documented Select-trigger exception.
   design.md § Summary metric cards; StablecoinOverview intentionally NOT migrated
   to MetricRow.
 
-### 2026-07-09 SummaryStats Extraction (branch `mintdart/summary-stats-card`)
+### 2026-07-09 SummaryStats Extraction
 
 - New `ui/SummaryStats.tsx`: `SummaryCardGrid` / `SummaryStatsCard` / `StatItem`
   replace the summary-card layout copy-pasted across 19 route files, plus the
@@ -954,7 +962,7 @@ bg-surface-elevated-2` opaque step per the documented Select-trigger exception.
   `text-*`, `font-*`, or `leading-*` utilities. Existing reviewed combinations are
   baselined as debt so this phase does not expand into unrelated visual changes.
 
-### 2026-07-09 Chart Theme And Geometry Reconciliation (landed on `main`)
+### 2026-07-09 Chart Theme And Geometry Reconciliation
 
 - Backdrop ownership is unified. The global Ariakit `[data-backdrop]` rule and the
   MarketMakers drawer consume `--ld-bg-screen-dim`; the finalized modal-strength values
@@ -986,7 +994,7 @@ bg-surface-elevated-2` opaque step per the documented Select-trigger exception.
   This is the final chart baseline for the sweep. Later product changes use `chartTheme`
   and `chartSpacing.ts` as ordinary design-system contracts.
 
-### 2026-07-10 Optional Consolidation Review (branch `architecture-closeout`)
+### 2026-07-10 Optional Consolidation Review
 
 Audit of remaining local StatItem, PercentChange, and chart-export compositions.
 High bar applied: consolidate exact semantic matches only; document intentional
@@ -1032,7 +1040,7 @@ variations instead of forcing a universal abstraction.
   character count to measured overflow (ResizeObserver); `maxCharacters` stays
   accepted as a deprecated no-op so call sites did not churn.
 
-### 2026-07-10 Documentation Closure (branch `architecture-closeout`)
+### 2026-07-10 Documentation Closure
 
 - The architecture program is complete; `design-sweep-todo.md` (sweep closure
   record) and `design-execution-plan.md` (phase sequencing) are deleted. Their
@@ -1048,7 +1056,7 @@ variations instead of forcing a universal abstraction.
   designs exist the products stay pixel-stable behind explicit compat props and
   their ratchet bucket may not grow. Recorded in design.md § Status.
 
-### 2026-07-10 Inline Stat Strip Consolidation (branch `inline-stat-strip`)
+### 2026-07-10 Inline Stat Strip Consolidation
 
 - The horizontal `label: value` summary strip above tables/charts shipped five
   accidental rhythms (12px vs 14px labels, label/value styles inverted on the
@@ -1072,7 +1080,7 @@ variations instead of forcing a universal abstraction.
 - Ratchet: `conflicting-named-typography` improved 35→31 (raw `text-sm`
   label/value combos replaced by ramp utilities); locked via `--update`.
 
-### 2026-07-10 Loading Indicator Consolidation (`main`)
+### 2026-07-10 Loading Indicator Consolidation
 
 - In-panel loading shipped four indicators for one role: the pulsing-logo
   `LocalLoader` (45 core files), ad-hoc `Loading` + `LoadingDots` combos,
@@ -1110,7 +1118,7 @@ text-tertiary`), which `PanelLoadingStatus`/`SurfaceBodyLoadingStatus` now
 - New ratchet rule `deprecated-tailwind-spelling` holds core at zero and
   baselines excluded-product debt (449).
 
-### 2026-07-10 Class Composition Idiom (`main`)
+### 2026-07-10 Class Composition Idiom
 
 - Evaluated cva, tailwind-merge, and cnfast against the existing architecture;
   all three declined. The hand-rolled variant maps are the house cva (typed,

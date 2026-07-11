@@ -440,7 +440,8 @@ export function CitationPill({ reference }: CitationPillProps) {
 			<Ariakit.Hovercard
 				portal
 				gutter={6}
-				className="z-50 flex max-h-[70vh] max-w-[24rem] min-w-[18rem] flex-col gap-2 overflow-y-auto overscroll-contain rounded-lg border border-[#e6e6e6] bg-white p-3 text-sm shadow-xl dark:border-[#222324] dark:bg-[#18181b]"
+				overflowPadding={16}
+				className="z-50 flex max-h-[min(70vh,var(--popover-available-height))] w-96 max-w-(--popover-available-width) min-w-[min(18rem,var(--popover-available-width))] flex-col gap-2 overflow-y-auto overscroll-contain rounded-lg border border-[#e6e6e6] bg-white p-3 text-sm shadow-xl dark:border-[#222324] dark:bg-[#18181b]"
 			>
 				<div className="flex items-center gap-2 border-b border-[#ececec] pb-2 dark:border-[#26262a]">
 					<span
