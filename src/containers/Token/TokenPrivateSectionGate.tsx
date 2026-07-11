@@ -5,8 +5,8 @@ import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
-import { LocalLoader } from '~/ui/Loaders'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { LoadingIndicator } from '~/ui/Status'
 
 export function useTokenPrivateSectionAccess() {
 	const signInDialogStore = Ariakit.useDialogStore()
@@ -73,7 +73,7 @@ export function TokenPrivateSectionGate({
 				<div className={sectionBodyClassName}>
 					{isGateLoading ? (
 						<div className="flex flex-1 items-center justify-center">
-							<LocalLoader />
+							<LoadingIndicator />
 						</div>
 					) : !isAuthenticated || !hasActiveSubscription ? (
 						<div className="flex flex-1 items-center justify-center px-4 text-center">

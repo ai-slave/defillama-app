@@ -21,9 +21,9 @@ import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar }
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
-import { LoadingDots } from '~/ui/Loaders'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -404,11 +404,8 @@ export function ChainChartPanel({
 
 			<ChartPanelBody>
 				{isFetchingChartData ? (
-					<ChartPanelBodyFallback>
-						<p className="flex items-center gap-1">
-							Loading
-							<LoadingDots />
-						</p>
+					<ChartPanelBodyFallback role="status" aria-live="polite">
+						<LoadingIndicator />
 					</ChartPanelBodyFallback>
 				) : (
 					<Suspense fallback={<ChartPanelBodyFallback />}>

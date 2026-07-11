@@ -6,7 +6,6 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { getNFTRoyaltyHistory } from '~/containers/Nft/queries'
 import Layout from '~/layout'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { LocalLoader } from '~/ui/Loaders'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formattedNum, slug } from '~/utils'
@@ -50,9 +49,7 @@ export default function Collection() {
 				description={collectionDescription}
 				canonicalUrl={collection ? `/nfts/royalties/${collection}` : `/nfts/royalties`}
 			>
-				<PanelLoadingStatus>
-					<LocalLoader />
-				</PanelLoadingStatus>
+				<PanelLoadingStatus />
 			</Layout>
 		)
 	}

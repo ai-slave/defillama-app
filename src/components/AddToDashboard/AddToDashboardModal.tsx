@@ -15,6 +15,7 @@ import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Input } from '~/ui/Input'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import type { DashboardChartConfig, LlamaAIChartInput } from './AddToDashboardButton'
 
@@ -493,7 +494,7 @@ export function AddToDashboardModal({
 					</Ariakit.DialogDismiss>
 					<Button type="submit" variant="primary" size="md" disabled={isSubmitting || !canSubmit} className="flex-1">
 						{isSubmitting ? (
-							<div className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+							<LoadingSpinner size={16} />
 						) : (
 							<>
 								<Icon name="plus" className="size-3.5" />

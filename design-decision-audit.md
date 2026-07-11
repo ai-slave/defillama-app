@@ -1071,3 +1071,22 @@ variations instead of forcing a universal abstraction.
   test imported it) — deleted rather than migrated.
 - Ratchet: `conflicting-named-typography` improved 35→31 (raw `text-sm`
   label/value combos replaced by ramp utilities); locked via `--update`.
+
+### 2026-07-10 Loading Indicator Consolidation (`main`)
+
+- In-panel loading shipped four indicators for one role: the pulsing-logo
+  `LocalLoader` (45 core files), ad-hoc `Loading` + `LoadingDots` combos,
+  hand-rolled `animate-spin` border circles (ProtocolChartPanel, AddToDashboard
+  modal), and bare text. Rule adopted: **one logo beat per viewport, never per
+  card** — `LocalLoader` is reserved for route-level full-page loads (the
+  `/chart/*` embed pages are the only current core consumers); everything
+  in-panel uses the new `LoadingIndicator` (`Loading` + dots, `body-sm
+  text-tertiary`), which `PanelLoadingStatus`/`SurfaceBodyLoadingStatus` now
+  render by default when no children are passed (the sr-only label is skipped
+  for the default child since its text is visible). Buttons/inline controls use
+  `LoadingSpinner`; the border-circle spinners are gone.
+- Blank `ChartPanelExportShellFallback` reservations keep no indicator or live
+  region on purpose (unchanged prior decision); `ChartPanelBodyFallback`
+  callers that show an indicator pass `role="status"` + `LoadingIndicator`.
+- Search popover rows keep their existing text loading rows (popover-level
+  indicators were already fine); excluded products untouched.

@@ -21,8 +21,10 @@ import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar }
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -455,11 +457,9 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 						>
 							<span>{tchart.replace('Token', props.token?.symbol ? `$${props.token.symbol}` : 'Token')}</span>
 							{loadingChartSet.has(tchart) ? (
-								<span
-									aria-label={`${tchart} is loading`}
-									role="status"
-									className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-								/>
+								<span aria-label={`${tchart} is loading`} role="status">
+									<LoadingSpinner size={16} />
+								</span>
 							) : (
 								<Icon name="x" className="size-4" />
 							)}
@@ -529,8 +529,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 				<Suspense
 					fallback={
 						<ChartPanelBodyFallback role="status" aria-live="polite">
-							<span className="size-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-							<span className="sr-only">Loading chart...</span>
+							<LoadingIndicator />
 						</ChartPanelBodyFallback>
 					}
 				>

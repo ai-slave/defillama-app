@@ -12,7 +12,6 @@ import { MarketsSegmentTabs } from '~/containers/Markets/MarketsSegmentTabs'
 import { resolveSegment, type Segment, SEGMENT_IDS, segmentHasOi } from '~/containers/Markets/segments'
 import { EMPTY_PIVOTED_SERIES, filterExchangeSeriesBySegment, pivotExchangeSeries } from '~/containers/Markets/utils'
 import { Card } from '~/ui/Card'
-import { LocalLoader } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { formattedNum } from '~/utils'
@@ -147,9 +146,7 @@ export function CexMarketsSection({ exchange, name }: CexMarketsSectionProps) {
 					{sectionHeader}
 				</Card>
 				<Panel padding="none" className="flex-1">
-					<SurfaceBodyLoadingStatus label={`Loading ${name} markets`} className="p-2">
-						<LocalLoader />
-					</SurfaceBodyLoadingStatus>
+					<SurfaceBodyLoadingStatus label={`Loading ${name} markets`} className="p-2" />
 				</Panel>
 			</section>
 		)

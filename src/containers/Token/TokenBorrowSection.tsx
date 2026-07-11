@@ -8,10 +8,11 @@ import { PaginatedYieldsOptimizerTable } from '~/containers/Yields/Tables/Optimi
 import type { IYieldsOptimizerTableRow } from '~/containers/Yields/Tables/types'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
-import { LoadingSpinner, LocalLoader } from '~/ui/Loaders'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { nestedMenuActionStyles } from '~/ui/Popover'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { LoadingIndicator } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
 import { filterBorrowRows } from './TokenBorrowSection.utils'
@@ -314,7 +315,7 @@ export function TokenBorrowSection({
 					</TableToolbar>
 					{showInitialLoader ? (
 						<div className="flex flex-1 items-center justify-center">
-							<LocalLoader />
+							<LoadingIndicator />
 						</div>
 					) : error && rows.length === 0 ? (
 						<div className="flex flex-1 items-center justify-center px-4 text-center">

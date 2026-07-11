@@ -18,7 +18,6 @@ import { TVL_SETTINGS_KEYS_SET, useLocalStorageSettingsManager } from '~/context
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
-import { LocalLoader } from '~/ui/Loaders'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
@@ -469,9 +468,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 			/>
 
 			{isLoading ? (
-				<PanelLoadingStatus label={`Loading ${props.name} TVL breakdown`}>
-					<LocalLoader />
-				</PanelLoadingStatus>
+				<PanelLoadingStatus label={`Loading ${props.name} TVL breakdown`} />
 			) : props.chainsUnique.length <= 1 && !props.metrics.inflows ? (
 				<PanelStatus variant="empty" className="col-span-full">
 					Breakdown charts are not available for this protocol as it operates on a single chain and token composition

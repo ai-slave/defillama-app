@@ -16,7 +16,6 @@ import { TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
-import { LocalLoader } from '~/ui/Loaders'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
@@ -274,9 +273,7 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 			/>
 
 			{isLoading ? (
-				<PanelLoadingStatus label={`Loading ${props.name} active loans`}>
-					<LocalLoader />
-				</PanelLoadingStatus>
+				<PanelLoadingStatus label={`Loading ${props.name} active loans`} />
 			) : !hasBreakdownMetrics ? (
 				<PanelStatus variant="empty" className="col-span-full">
 					Breakdown metrics are not available

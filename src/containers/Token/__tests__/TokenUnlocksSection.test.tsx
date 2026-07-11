@@ -65,7 +65,8 @@ vi.mock('~/components/Link', () => ({
 }))
 
 vi.mock('~/ui/Loaders', () => ({
-	LocalLoader: () => <div>loader</div>
+	LocalLoader: () => <div>loader</div>,
+	LoadingDots: () => <span>...</span>
 }))
 
 vi.mock('~/containers/Subscription/SignInModal', () => ({
@@ -108,7 +109,7 @@ describe('TokenUnlocksSection', () => {
 
 		const html = renderToStaticMarkup(<TokenUnlocksSection resolvedUnlocksSlug="solana" />)
 
-		expect(html).toContain('loader')
+		expect(html).toContain('Loading')
 		expect(html).toContain('Unlocks')
 	})
 

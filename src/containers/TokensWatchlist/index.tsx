@@ -33,7 +33,6 @@ import { DEFAULT_PORTFOLIO_NAME } from '~/contexts/LocalStorage'
 import { useBookmarks } from '~/hooks/useBookmarks'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
-import { LocalLoader } from '~/ui/Loaders'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import { mergeMarketsSummary } from './marketsMerge'
@@ -133,9 +132,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 			<>
 				<WatchListTabs />
 				<Card padding="none" className="flex-1">
-					<SurfaceBodyLoadingStatus className="p-2">
-						<LocalLoader />
-					</SurfaceBodyLoadingStatus>
+					<SurfaceBodyLoadingStatus className="p-2" />
 				</Card>
 			</>
 		)
@@ -167,9 +164,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 						/>
 					</div>
 					{hasSavedTokens && isLoading ? (
-						<SurfaceBodyLoadingStatus className="p-2">
-							<LocalLoader />
-						</SurfaceBodyLoadingStatus>
+						<SurfaceBodyLoadingStatus className="p-2" />
 					) : hasSavedTokens && rows.length ? (
 						<PaginatedTable
 							table={table}

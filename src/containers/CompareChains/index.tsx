@@ -15,8 +15,7 @@ import type { IChainOverviewData } from '~/containers/ChainOverview/types'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { FailedDataPopover } from '~/ui/FailedDataPopover'
-import { LocalLoader } from '~/ui/Loaders'
-import { PanelStatus } from '~/ui/Status'
+import { LoadingIndicator, PanelStatus } from '~/ui/Status'
 import { getNDistinctColors } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import {
@@ -383,7 +382,7 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 					{isLoading || !router.isReady ? (
 						<ChartPanel>
 							<ChartPanelExportShellFallback className="flex h-full w-full items-center justify-center">
-								<LocalLoader />
+								<LoadingIndicator />
 							</ChartPanelExportShellFallback>
 						</ChartPanel>
 					) : (

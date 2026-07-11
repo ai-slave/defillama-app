@@ -13,7 +13,6 @@ import { PercentChange } from '~/components/PercentChange'
 import { VirtualTable } from '~/components/Table/Table'
 import { TagGroup } from '~/components/TagGroup'
 import Layout from '~/layout'
-import { LocalLoader } from '~/ui/Loaders'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { truncateAddress } from '~/utils'
@@ -135,9 +134,7 @@ export default function TrendingContracts() {
 					/>
 				</PanelHeader>
 				{isLoading ? (
-					<SurfaceBodyLoadingStatus className="p-2">
-						<LocalLoader />
-					</SurfaceBodyLoadingStatus>
+					<SurfaceBodyLoadingStatus className="p-2" />
 				) : error ? (
 					<SurfaceBodyStatus variant="error" className="p-2">
 						Sorry, couldn't fetch trending contracts.

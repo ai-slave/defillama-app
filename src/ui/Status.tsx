@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { LoadingDots } from './Loaders'
 import { Panel } from './Panel'
 
 export type StatusVariant = 'loading' | 'empty' | 'error'
@@ -32,8 +33,21 @@ export function PanelStatus({ children, variant, className, textClassName }: Pan
 	)
 }
 
+/** Default in-panel loading indicator (design.md → Status states): quiet
+    tertiary text matching the empty/error copy. The pulsing-logo LocalLoader
+    is reserved for route-level full-page loads — one per viewport, never per
+    card/panel. */
+export function LoadingIndicator() {
+	return (
+		<span className="flex items-center gap-1 body-sm text-tertiary">
+			Loading
+			<LoadingDots />
+		</span>
+	)
+}
+
 type PanelLoadingStatusProps = {
-	children: ReactNode
+	children?: ReactNode
 	label?: string
 	className?: string
 }
@@ -42,8 +56,8 @@ export function PanelLoadingStatus({ children, label = 'Loading', className }: P
 	return (
 		<Panel padding="sm" className={`min-h-[360px] flex-1 items-center justify-center ${className ?? ''}`.trim()}>
 			<div role="status" aria-live="polite" className="flex items-center justify-center">
-				{children}
-				<span className="sr-only">{label}</span>
+				{children ?? <LoadingIndicator />}
+				{children != null ? <span className="sr-only">{label}</span> : null}
 			</div>
 		</Panel>
 	)
@@ -81,7 +95,7 @@ export function SurfaceBodyStatus({
 }
 
 type SurfaceBodyLoadingStatusProps = {
-	children: ReactNode
+	children?: ReactNode
 	label?: string
 	className?: string
 	contentClassName?: string
@@ -100,8 +114,8 @@ export function SurfaceBodyLoadingStatus({
 				aria-live="polite"
 				className={`flex items-center justify-center ${contentClassName ?? ''}`.trim()}
 			>
-				{children}
-				<span className="sr-only">{label}</span>
+				{children ?? <LoadingIndicator />}
+				{children != null ? <span className="sr-only">{label}</span> : null}
 			</div>
 		</div>
 	)

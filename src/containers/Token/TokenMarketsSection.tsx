@@ -32,9 +32,8 @@ import {
 import type { Segment } from '~/containers/Markets/segments'
 import { pctChange } from '~/containers/Markets/utils'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
-import { LocalLoader } from '~/ui/Loaders'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
-import { SurfaceBodyLoadingStatus } from '~/ui/Status'
+import { LoadingIndicator, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TabLink } from '~/ui/Tab'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
@@ -519,16 +518,14 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 		if (embedded) {
 			return (
 				<div className="flex min-h-[200px] items-center justify-center p-3">
-					<LocalLoader />
+					<LoadingIndicator />
 				</div>
 			)
 		}
 		return (
 			<Panel padding="none" className="flex-1">
 				{sectionHeader}
-				<SurfaceBodyLoadingStatus label={`Loading ${tokenSymbol} markets`} className="p-2">
-					<LocalLoader />
-				</SurfaceBodyLoadingStatus>
+				<SurfaceBodyLoadingStatus label={`Loading ${tokenSymbol} markets`} className="p-2" />
 			</Panel>
 		)
 	}

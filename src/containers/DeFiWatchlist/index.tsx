@@ -24,7 +24,6 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { Button, buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
-import { LocalLoader } from '~/ui/Loaders'
 import { PanelLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { mapAPIMetricToUI, mapUIMetricToAPI } from '~/utils/notificationMetrics'
 import { parseNumberQueryParam } from '~/utils/routerQuery'
@@ -102,9 +101,7 @@ export function DefiWatchlistContainer({
 		return (
 			<>
 				<WatchListTabs />
-				<PanelLoadingStatus>
-					<LocalLoader />
-				</PanelLoadingStatus>
+				<PanelLoadingStatus />
 			</>
 		)
 	}

@@ -13,8 +13,9 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useNowSeconds } from '~/hooks/useNowSeconds'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { LoadingDots, LocalLoader } from '~/ui/Loaders'
+import { LoadingDots } from '~/ui/Loaders'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { LoadingIndicator } from '~/ui/Status'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { capitalizeFirstLetter, firstDayOfMonth, formattedNum, lastDayOfWeek, slug } from '~/utils'
@@ -1170,7 +1171,7 @@ export const UnlocksCharts = ({
 	if (shouldFetch && isLoading) {
 		return (
 			<div className="flex flex-1 flex-col items-center justify-center">
-				<LocalLoader />
+				<LoadingIndicator />
 			</div>
 		)
 	}

@@ -13,8 +13,8 @@ import {
 	type TvlSettingsKey
 } from '~/contexts/LocalStorage'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { LocalLoader } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
+import { LoadingIndicator } from '~/ui/Status'
 import { formatNum, getPercentChange } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
@@ -144,7 +144,7 @@ export function ChainsByCategory({
 								aria-live="polite"
 								className="flex items-center justify-center text-center body-sm text-tertiary"
 							>
-								<LocalLoader />
+								<LoadingIndicator />
 								<span className="sr-only">Loading chart data</span>
 							</ChartPanelExportShellFallback>
 						)}

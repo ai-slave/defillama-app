@@ -17,7 +17,7 @@ import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { FEE_EXTRA_CONFIG_BY_SETTING, FEE_EXTRA_CONFIGS, type FeeExtraConfig } from '~/metrics/feeExtras'
 import { ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { LocalLoader } from '~/ui/Loaders'
+import { LoadingIndicator } from '~/ui/Status'
 import { getNDistinctColors, slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { tokenIconUrl } from '~/utils/icons'
@@ -168,7 +168,7 @@ export const DimensionProtocolChartByType = ({
 				aria-live="polite"
 				className="col-span-2 flex flex-col items-center justify-center"
 			>
-				<LocalLoader />
+				<LoadingIndicator />
 				<span className="sr-only">Loading chart data</span>
 			</ChartPanelExportShellFallback>
 		)

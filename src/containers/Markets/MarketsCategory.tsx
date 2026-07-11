@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
-import { LocalLoader } from '~/ui/Loaders'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { fetchMarketsCategoryPage } from './api'
 import { MarketsAreaChart } from './MarketsAreaChart'
@@ -86,9 +85,7 @@ export function MarketsCategory({
 			/>
 
 			{isLoading ? (
-				<PanelLoadingStatus>
-					<LocalLoader />
-				</PanelLoadingStatus>
+				<PanelLoadingStatus />
 			) : isError || !data ? (
 				<PanelStatus variant="error">Failed to load category.</PanelStatus>
 			) : segmentTokens.length === 0 ? (

@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
 import { Card } from '~/ui/Card'
-import { LocalLoader } from '~/ui/Loaders'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import {
@@ -103,9 +102,7 @@ export function MarketsHome({
 			/>
 
 			{tokensQuery.isLoading ? (
-				<PanelLoadingStatus>
-					<LocalLoader />
-				</PanelLoadingStatus>
+				<PanelLoadingStatus />
 			) : tokensQuery.isError || segmentTokens.length === 0 ? (
 				<PanelStatus variant={tokensQuery.isError ? 'error' : 'empty'}>
 					{tokensQuery.isError ? 'Failed to load market data.' : 'No data for this segment.'}

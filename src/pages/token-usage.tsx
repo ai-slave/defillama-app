@@ -30,7 +30,6 @@ import Layout from '~/layout'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Checkbox } from '~/ui/Checkbox'
 import { searchFieldInputStyles } from '~/ui/Input'
-import { LocalLoader } from '~/ui/Loaders'
 import { NoResults } from '~/ui/NoResults'
 import { Panel } from '~/ui/Panel'
 import {
@@ -127,9 +126,7 @@ export default function Tokens() {
 			<Search />
 
 			{isLoading || !router.isReady ? (
-				<PanelLoadingStatus className="min-h-[380px]">
-					<LocalLoader />
-				</PanelLoadingStatus>
+				<PanelLoadingStatus className="min-h-[380px]" />
 			) : error ? (
 				<PanelStatus variant="error" className="min-h-[380px]">
 					{error.message}

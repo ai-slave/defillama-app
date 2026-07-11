@@ -18,9 +18,10 @@ import { useHolderStats, useVolatility } from '~/containers/Yields/queries.clien
 import { PaginatedYieldsPoolTable } from '~/containers/Yields/Tables/Pools'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import { Button } from '~/ui/Button'
-import { LoadingSpinner, LocalLoader } from '~/ui/Loaders'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { nestedMenuActionStyles } from '~/ui/Popover'
+import { LoadingIndicator } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { fetchJson } from '~/utils/async'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -289,7 +290,7 @@ export function TokenYieldsSection({ tokenSymbol, hydration }: TokenYieldsSectio
 			<div className="flex flex-1 flex-col gap-2 p-2">
 				{showInitialLoader ? (
 					<div className="flex flex-1 items-center justify-center">
-						<LocalLoader />
+						<LoadingIndicator />
 					</div>
 				) : error && poolsList.length === 0 ? (
 					<div className="flex flex-1 items-center justify-center px-4 text-center">

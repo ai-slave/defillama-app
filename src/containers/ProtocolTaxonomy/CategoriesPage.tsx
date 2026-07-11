@@ -10,8 +10,8 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
-import { LocalLoader } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
+import { LoadingIndicator } from '~/ui/Status'
 import { formattedNum, slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
@@ -196,7 +196,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 				</ChartPanelToolbar>
 				{shouldFetchChartData && chartDataQuery.isLoading ? (
 					<ChartPanelBodyFallback role="status" aria-live="polite" className="text-tertiary">
-						<LocalLoader />
+						<LoadingIndicator />
 					</ChartPanelBodyFallback>
 				) : chartErrorMessage ? (
 					<ChartPanelBodyFallback role="alert" className="p-4 text-center body-sm text-data-down">

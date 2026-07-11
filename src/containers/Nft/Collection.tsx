@@ -7,7 +7,6 @@ import { FormattedName } from '~/components/FormattedName'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getNFTCollection } from '~/containers/Nft/queries'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { LocalLoader } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
@@ -44,9 +43,7 @@ export function NFTCollectionContainer() {
 	})
 	if (fetchingData || !collectionData) {
 		return fetchingData || !router.isReady ? (
-			<PanelLoadingStatus>
-				<LocalLoader />
-			</PanelLoadingStatus>
+			<PanelLoadingStatus />
 		) : (
 			<PanelStatus variant="error">Failed to load collection data.</PanelStatus>
 		)

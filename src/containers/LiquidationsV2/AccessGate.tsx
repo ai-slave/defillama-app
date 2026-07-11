@@ -4,9 +4,8 @@ import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
-import { LocalLoader } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
-import { SurfaceBodyStatus, type StatusVariant } from '~/ui/Status'
+import { LoadingIndicator, SurfaceBodyStatus, type StatusVariant } from '~/ui/Status'
 import type { NavLink } from './api.types'
 
 interface LiquidationsShellChromeProps {
@@ -71,7 +70,7 @@ function LiquidationsShellCard({
 export function LiquidationsShellLoader(props: LiquidationsShellChromeProps) {
 	return (
 		<LiquidationsShellCard {...props} statusVariant="loading" textClassName="body-sm text-tertiary">
-			<LocalLoader />
+			<LoadingIndicator />
 			<p className="body-sm text-tertiary">Loading liquidations data...</p>
 		</LiquidationsShellCard>
 	)

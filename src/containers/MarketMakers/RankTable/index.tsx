@@ -1,8 +1,8 @@
 import { getCoreRowModel, getSortedRowModel, type SortingState, useReactTable } from '@tanstack/react-table'
 import * as React from 'react'
 import { Button } from '~/ui/Button'
-import { LocalLoader } from '~/ui/Loaders'
 import { Panel, PanelHeader } from '~/ui/Panel'
+import { LoadingIndicator } from '~/ui/Status'
 import { type ColumnConfig, type DisplayMode, type Threshold } from '../constants'
 import { RefineButton } from '../RefineButton'
 import { StickyTable } from '../StickyTable'
@@ -64,7 +64,7 @@ export function RankTable({
 			</PanelHeader>
 			{isLoading ? (
 				<div role="status" aria-live="polite" className="flex min-h-[240px] items-center justify-center p-8">
-					<LocalLoader />
+					<LoadingIndicator />
 					<span className="sr-only">Loading rankings</span>
 				</div>
 			) : rows.length === 0 ? (

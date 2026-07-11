@@ -17,7 +17,6 @@ import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
-import { LocalLoader } from '~/ui/Loaders'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { slug } from '~/utils'
@@ -356,9 +355,7 @@ export default function Protocols(props: TreasuryPageProps) {
 			/>
 
 			{isLoading ? (
-				<PanelLoadingStatus label={`Loading ${props.name} treasury`}>
-					<LocalLoader />
-				</PanelLoadingStatus>
+				<PanelLoadingStatus label={`Loading ${props.name} treasury`} />
 			) : (
 				<div className="grid grid-cols-2 gap-2">
 					{tokenBreakdownPieChart?.length ? (

@@ -27,7 +27,7 @@ import {
 } from '~/metrics/feeExtras'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { FailedDataPopover } from '~/ui/FailedDataPopover'
-import { LocalLoader } from '~/ui/Loaders'
+import { LoadingIndicator } from '~/ui/Status'
 import { slug } from '~/utils'
 import { getErrorMessage, normalizeError } from '~/utils/error'
 import { chainIconUrl } from '~/utils/icons'
@@ -882,7 +882,7 @@ export const AdapterByChainChart = ({
 				</ChartPanelBodyFallback>
 			) : chartViewMode === 'Breakdown' && breakdownChartDataState.kind === 'loading' ? (
 				<ChartPanelBodyFallback role="status" aria-live="polite">
-					<LocalLoader />
+					<LoadingIndicator />
 					<span className="sr-only">Loading chart data</span>
 				</ChartPanelBodyFallback>
 			) : chartViewMode === 'Breakdown' ? (
@@ -1402,7 +1402,7 @@ export const ChainsByAdapterChart = ({
 						className="flex items-center justify-center text-tertiary"
 						style={{ height: chartHeight }}
 					>
-						<LocalLoader />
+						<LoadingIndicator />
 						<span className="sr-only">Loading chart data</span>
 					</div>
 				) : baseChartErrorMessage ? (

@@ -22,7 +22,6 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { Input, inputStyles } from '~/ui/Input'
-import { LocalLoader } from '~/ui/Loaders'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { PanelLoadingStatus } from '~/ui/Status'
 import { formattedNum } from '~/utils'
@@ -148,11 +147,7 @@ const TokenPnlContent = ({
 	selectedCoinInfo
 }: TokenPnlContentProps) => {
 	if (!routerReady || isLoading || isFetching) {
-		return (
-			<PanelLoadingStatus>
-				<LocalLoader />
-			</PanelLoadingStatus>
-		)
+		return <PanelLoadingStatus />
 	}
 
 	if (isError) {

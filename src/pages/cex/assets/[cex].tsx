@@ -16,7 +16,6 @@ import type { IProtocolPageMetrics } from '~/containers/ProtocolOverview/types'
 import { useProtocolBreakdownCharts } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
-import { LocalLoader } from '~/ui/Loaders'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { Switch } from '~/ui/Switch'
 import { slug } from '~/utils'
@@ -506,9 +505,7 @@ export default function Protocols(props: CexAssetsPageProps) {
 				}
 			/>
 			{isLoading ? (
-				<PanelLoadingStatus>
-					<LocalLoader />
-				</PanelLoadingStatus>
+				<PanelLoadingStatus />
 			) : !hasBreakdownMetrics ? (
 				<PanelStatus variant="empty" className="col-span-full">
 					Breakdown metrics are not available

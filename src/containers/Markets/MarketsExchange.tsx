@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
 import { Card } from '~/ui/Card'
-import { LocalLoader } from '~/ui/Loaders'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { formattedNum } from '~/utils'
 import { fetchMarketsExchange, fetchMarketsExchangeSeries } from './api'
@@ -108,9 +107,7 @@ export function MarketsExchange({
 			/>
 
 			{isLoading ? (
-				<PanelLoadingStatus>
-					<LocalLoader />
-				</PanelLoadingStatus>
+				<PanelLoadingStatus />
 			) : isError || !data ? (
 				<PanelStatus variant="error">Failed to load exchange.</PanelStatus>
 			) : pairs.length === 0 ? (

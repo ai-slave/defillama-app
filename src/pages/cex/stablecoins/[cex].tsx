@@ -20,7 +20,6 @@ import {
 import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
-import { LocalLoader } from '~/ui/Loaders'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { InlineStatStrip } from '~/ui/SummaryStats'
 import { formattedNum, slug } from '~/utils'
@@ -535,9 +534,7 @@ export default function CEXStablecoins(props: {
 				title={props.name}
 			/>
 			{isLoading ? (
-				<PanelLoadingStatus>
-					<LocalLoader />
-				</PanelLoadingStatus>
+				<PanelLoadingStatus />
 			) : !data ? (
 				<PanelStatus variant="empty">No stablecoin data available for this exchange</PanelStatus>
 			) : (

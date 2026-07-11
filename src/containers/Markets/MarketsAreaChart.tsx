@@ -1,13 +1,13 @@
 import * as React from 'react'
-import { LocalLoader } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
+import { LoadingIndicator } from '~/ui/Status'
 import { type PivotedSeries, toStackedAreaSeries } from './utils'
 
 const AreaChart = React.lazy(() => import('~/components/ECharts/AreaChart'))
 
 const FALLBACK = (
 	<div role="status" aria-live="polite" className="flex min-h-[400px] items-center justify-center">
-		<LocalLoader />
+		<LoadingIndicator />
 		<span className="sr-only">Loading chart data</span>
 	</div>
 )

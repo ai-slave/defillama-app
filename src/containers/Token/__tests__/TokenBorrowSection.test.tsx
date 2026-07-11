@@ -35,7 +35,8 @@ vi.mock('~/components/Icon', () => ({
 
 vi.mock('~/ui/Loaders', () => ({
 	LocalLoader: () => <div>loader</div>,
-	LoadingSpinner: () => <div>spinner</div>
+	LoadingSpinner: () => <div>spinner</div>,
+	LoadingDots: () => <span>...</span>
 }))
 
 vi.mock('~/components/Select/SelectWithCombobox', () => ({
@@ -149,7 +150,7 @@ describe('TokenBorrowSection', () => {
 
 		const html = renderToStaticMarkup(<TokenBorrowSection tokenSymbol="ETH" />)
 
-		expect(html).toContain('loader')
+		expect(html).toContain('Loading')
 		expect(html).toContain('Use ETH')
 		expect(html).toContain('Borrow ETH')
 	})

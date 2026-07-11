@@ -8,8 +8,7 @@ import { fetchProtocolBySlug } from '~/containers/ProtocolOverview/api'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { LocalLoader } from '~/ui/Loaders'
-import { PanelStatus } from '~/ui/Status'
+import { LoadingIndicator, PanelStatus } from '~/ui/Status'
 import { slug } from '~/utils'
 import { parseNumberQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { RawProtocolResponse } from './api.types'
@@ -116,7 +115,7 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 					<ChartPanel>
 						{isLoading || !router.isReady ? (
 							<ChartPanelExportShellFallback className="flex h-full w-full items-center justify-center">
-								<LocalLoader />
+								<LoadingIndicator />
 							</ChartPanelExportShellFallback>
 						) : (
 							<React.Suspense fallback={<ChartPanelExportShellFallback />}>

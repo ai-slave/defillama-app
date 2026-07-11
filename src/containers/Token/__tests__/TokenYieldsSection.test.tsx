@@ -63,7 +63,8 @@ vi.mock('~/components/Icon', () => ({
 
 vi.mock('~/ui/Loaders', () => ({
 	LocalLoader: () => <div>loader</div>,
-	LoadingSpinner: () => <div>spinner</div>
+	LoadingSpinner: () => <div>spinner</div>,
+	LoadingDots: () => <span>...</span>
 }))
 
 vi.mock('~/containers/Yields/Filters/APYRange', () => ({
@@ -295,7 +296,7 @@ describe('TokenYieldsSection', () => {
 
 		const html = renderToStaticMarkup(<TokenYieldsSection tokenSymbol="ETH" />)
 
-		expect(html).toContain('loader')
+		expect(html).toContain('Loading')
 	})
 
 	it('shows an error state when the fetch fails', () => {

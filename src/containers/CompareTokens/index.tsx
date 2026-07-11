@@ -8,13 +8,13 @@ import { Icon } from '~/components/Icon'
 import { TokenSearchDialog } from '~/containers/TokenSearch/TokenSearchDialog'
 import { buttonStyles } from '~/ui/Button'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
-import { LocalLoader } from '~/ui/Loaders'
 import {
 	menuSurfaceStyles,
 	popoverRowWithBorderStyles,
 	popoverMobileDismissStyles,
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
+import { LoadingIndicator } from '~/ui/Status'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { CompareTokenProtocol } from './types'
 
@@ -256,7 +256,7 @@ export function CompareTokens({
 				{coins.length === 2 ? (
 					priceData == null ? (
 						<div role="status" aria-live="polite" className="m-auto flex min-h-[360px] items-center justify-center">
-							<LocalLoader />
+							<LoadingIndicator />
 							<span className="sr-only">Loading token comparison</span>
 						</div>
 					) : (
