@@ -1,7 +1,7 @@
 import { YIELDS_SERVER_URL } from '~/constants'
 import { queryString } from '~/server/api/params'
 import { badRequest, ok, okSerializedJson, upstreamError } from '~/server/api/respond'
-import { cachedJsonResult, cachedResult } from '~/server/api/resultCache'
+import { cachedJsonResult } from '~/server/api/resultCache'
 import { defineApiRoute } from '~/server/api/types'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
@@ -183,13 +183,13 @@ export const chartLendBorrowDataset = defineApiRoute({
 		}
 
 		try {
-			const data = await cachedResult(
+			const data = await cachedJsonResult(
 				'datasets-chart-lend-borrow',
 				configID,
 				{ ttlMs: YIELDS_SERVER_RESULT_TTL_MS, ttlJitter: 0.2 },
 				() => fetchYieldsServerJson(`/chartLendBorrow/${configID}`)
 			)
-			return ok(data)
+			return okSerializedJson(data)
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Upstream error')
@@ -226,13 +226,13 @@ export const holdersByConfigDataset = defineApiRoute({
 		}
 
 		try {
-			const data = await cachedResult(
+			const data = await cachedJsonResult(
 				'datasets-holders-config',
 				configID,
 				{ ttlMs: YIELDS_SERVER_RESULT_TTL_MS, ttlJitter: 0.2 },
 				() => fetchYieldsServerJson(`/holders/${configID}`)
 			)
-			return ok(data)
+			return okSerializedJson(data)
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Upstream error')

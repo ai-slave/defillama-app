@@ -1,7 +1,7 @@
 import { normalizeCacheList } from '~/server/api/cacheKey'
 import { queryBoolean, queryFilterMode, queryIntClamped, queryList, queryString } from '~/server/api/params'
-import { ok } from '~/server/api/respond'
-import { cachedResult } from '~/server/api/resultCache'
+import { okSerializedJson } from '~/server/api/respond'
+import { cachedJsonResult } from '~/server/api/resultCache'
 import { defineApiRoute } from '~/server/api/types'
 import { toDisplayName } from '~/utils/chainNormalizer'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
@@ -34,13 +34,13 @@ export const protocolTvlBreakdown = defineApiRoute({
 
 		try {
 			const cacheKey = JSON.stringify([chains, categories, topN, groupByParent, chainMode, categoryMode])
-			const result = await cachedResult(
+			const result = await cachedJsonResult(
 				'protocols-breakdown-tvl',
 				cacheKey,
 				{ ttlMs: BREAKDOWN_RESULT_TTL_MS, ttlJitter: 0.2 },
 				() => getTvlBreakdownData(chains, categories, topN, groupByParent, chainMode, categoryMode)
 			)
-			return ok(result)
+			return okSerializedJson(result)
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return {
@@ -72,7 +72,7 @@ export const protocolTvlByChainBreakdown = defineApiRoute({
 				chainCategoryMode,
 				chainCategories
 			])
-			const result = await cachedResult(
+			const result = await cachedJsonResult(
 				'protocols-breakdown-chain-tvl',
 				cacheKey,
 				{ ttlMs: BREAKDOWN_RESULT_TTL_MS, ttlJitter: 0.2 },
@@ -87,7 +87,7 @@ export const protocolTvlByChainBreakdown = defineApiRoute({
 						chainCategories
 					})
 			)
-			return ok(result)
+			return okSerializedJson(result)
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return {

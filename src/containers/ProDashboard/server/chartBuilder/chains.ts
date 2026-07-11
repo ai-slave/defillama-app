@@ -3,8 +3,8 @@ import { resolveAllowedChainNamesFromCategories } from '~/containers/ProDashboar
 import { CHAIN_NATIVE_BREAKDOWN_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
 import { normalizeCacheList } from '~/server/api/cacheKey'
 import { queryFilterMode, queryIntClamped, queryList, queryString } from '~/server/api/params'
-import { badRequest, ok } from '~/server/api/respond'
-import { cachedResult } from '~/server/api/resultCache'
+import { badRequest, okSerializedJson } from '~/server/api/respond'
+import { cachedJsonResult } from '~/server/api/resultCache'
 import { defineApiRoute } from '~/server/api/types'
 import { fetchJson } from '~/utils/async'
 import {
@@ -211,7 +211,7 @@ export const chainNativeByChainBreakdown = defineApiRoute({
 
 		try {
 			const cacheKey = JSON.stringify([metric, chains, topN, chainMode, chainCategoryMode, chainCategories])
-			const result = await cachedResult(
+			const result = await cachedJsonResult(
 				'chains-breakdown-chain-native',
 				cacheKey,
 				{ ttlMs: BREAKDOWN_RESULT_TTL_MS, ttlJitter: 0.2 },
@@ -225,7 +225,7 @@ export const chainNativeByChainBreakdown = defineApiRoute({
 						chainCategories
 					})
 			)
-			return ok(result)
+			return okSerializedJson(result)
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return {

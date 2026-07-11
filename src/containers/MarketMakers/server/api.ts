@@ -1,6 +1,6 @@
 import { queryString } from '~/server/api/params'
-import { badRequest, ok, upstreamError } from '~/server/api/respond'
-import { cachedResult } from '~/server/api/resultCache'
+import { badRequest, okSerializedJson, upstreamError } from '~/server/api/respond'
+import { cachedJsonResult } from '~/server/api/resultCache'
 import { defineApiRoute } from '~/server/api/types'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
 import { forgdFetch } from './client'
@@ -20,10 +20,13 @@ function leaderboardRoute(route: string, forgdPath: string) {
 		handle: async (req) => {
 			const params = dateParams(req.query)
 			try {
-				const body = await cachedResult(route, req.url, { ttlMs: MM_RESULT_TTL_MS, ttlJitter: 0.2 }, () =>
-					forgdFetch(forgdPath, params)
+				const body = await cachedJsonResult(
+					route,
+					JSON.stringify([params.start_date ?? null, params.end_date ?? null]),
+					{ ttlMs: MM_RESULT_TTL_MS, ttlJitter: 0.2 },
+					() => forgdFetch(forgdPath, params)
 				)
-				return ok(body)
+				return okSerializedJson(body)
 			} catch (error) {
 				recordRouteRuntimeError(error, 'apiRoute')
 				return upstreamError('Failed to load market maker leaderboard')
@@ -54,18 +57,18 @@ export const leaderboardKpi = leaderboardRoute('/api/public/market-makers/kpi', 
 export const marketMakerDetails = defineApiRoute({
 	route: '/api/public/market-makers/details',
 	cacheControl: MM_CACHE_CONTROL,
-	handle: async (req) => {
+	handle: async () => {
 		try {
-			const body = await cachedResult(
+			const body = await cachedJsonResult(
 				'/api/public/market-makers/details',
-				req.url,
+				'/api/public/market-makers/details',
 				{
 					ttlMs: MM_RESULT_TTL_MS,
 					ttlJitter: 0.2
 				},
 				() => forgdFetch('/market-maker/details')
 			)
-			return ok(body)
+			return okSerializedJson(body)
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to load market maker details')
@@ -73,7 +76,7 @@ export const marketMakerDetails = defineApiRoute({
 	}
 })
 
-function marketMakerByIdRoute(route: string, buildUpstream: (id: string) => string, withDates: boolean) {
+function marketMakerByIdRoute(route: string, buildUpstream: (id: string) => string, includeDateParams: boolean) {
 	return defineApiRoute({
 		route,
 		cacheControl: MM_CACHE_CONTROL,
@@ -82,12 +85,15 @@ function marketMakerByIdRoute(route: string, buildUpstream: (id: string) => stri
 			if (!id || !MM_ID_PATTERN.test(id)) {
 				return badRequest('Invalid market maker id')
 			}
-			const params = withDates ? dateParams(req.query) : undefined
+			const params = includeDateParams ? dateParams(req.query) : undefined
 			try {
-				const body = await cachedResult(route, req.url, { ttlMs: MM_RESULT_TTL_MS, ttlJitter: 0.2 }, () =>
-					forgdFetch(buildUpstream(id), params)
+				const body = await cachedJsonResult(
+					route,
+					JSON.stringify([id, params?.start_date ?? null, params?.end_date ?? null]),
+					{ ttlMs: MM_RESULT_TTL_MS, ttlJitter: 0.2 },
+					() => forgdFetch(buildUpstream(id), params)
 				)
-				return ok(body)
+				return okSerializedJson(body)
 			} catch (error) {
 				recordRouteRuntimeError(error, 'apiRoute')
 				return upstreamError('Failed to load market maker details')

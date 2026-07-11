@@ -1,7 +1,7 @@
 import { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
 import { queryString } from '~/server/api/params'
-import { badRequest, notFound, ok, upstreamError } from '~/server/api/respond'
-import { cachedResult } from '~/server/api/resultCache'
+import { badRequest, notFound, okSerializedJson, upstreamError } from '~/server/api/respond'
+import { cachedJsonResult } from '~/server/api/resultCache'
 import { defineApiRoute } from '~/server/api/types'
 import { slug } from '~/utils'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
@@ -39,13 +39,13 @@ export const incomeStatement = defineApiRoute({
 			}
 
 			const protocolRecord = metadata
-			const data = await cachedResult(
+			const data = await cachedJsonResult(
 				'income-statement',
 				normalized,
 				{ ttlMs: INCOME_STATEMENT_TTL_MS, ttlJitter: 0.2 },
 				() => getProtocolIncomeStatement({ metadata: protocolRecord })
 			)
-			return ok(data)
+			return okSerializedJson(data)
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch income statement')

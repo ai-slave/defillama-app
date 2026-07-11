@@ -122,7 +122,6 @@ export const allApiRoutePaths = [
 	'markets/categories',
 	'markets/categories/[category]',
 	'markets/categories/series',
-	'markets/exchange/[exchange]',
 	'markets/exchanges',
 	'markets/exchanges/[exchange]',
 	'markets/exchanges/series',

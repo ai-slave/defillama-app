@@ -47,7 +47,7 @@ export async function fetchMarketsExchangesList(): Promise<Record<Segment, Excha
 /** One venue's per-segment totals + pairs (exchange page). */
 export async function fetchMarketsExchange(exchange: string): Promise<ExchangeMarketsResponse> {
 	return fetchJson<ExchangeMarketsResponse>(
-		`/api/public/markets/exchange/${encodeURIComponent(exchange.toLowerCase())}`
+		`/api/public/markets/exchanges/${encodeURIComponent(exchange.toLowerCase())}`
 	)
 }
 

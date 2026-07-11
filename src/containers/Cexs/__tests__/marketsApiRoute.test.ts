@@ -38,19 +38,24 @@ beforeEach(() => {
 })
 
 describe('/api/public/markets/exchanges/[exchange]', () => {
-	it('validates against the markets dataset and preserves the markets exchange id', async () => {
+	it('validates, caches, and serializes the canonical markets exchange payload', async () => {
 		const req = {
 			method: 'GET',
 			query: { exchange: 'Binance' },
 			url: '/api/public/markets/exchanges/Binance'
 		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
+		const firstRes = createMockNextApiResponse()
+		const secondRes = createMockNextApiResponse()
 
-		await handler(req, res)
+		await handler(req, firstRes)
+		await handler(req, secondRes)
 
 		expect(resolveMarketsExchangeByParamMock).toHaveBeenCalledWith('Binance')
 		expect(fetchExchangeMarketsFromNetworkMock).toHaveBeenCalledWith('binance')
-		expect(res.status).toHaveBeenCalledWith(200)
+		expect(fetchExchangeMarketsFromNetworkMock).toHaveBeenCalledTimes(1)
+		expect(firstRes.status).toHaveBeenCalledWith(200)
+		expect(firstRes.send).toHaveBeenCalledWith(expect.stringContaining('"exchange":"binance"'))
+		expect(secondRes.send).toHaveBeenCalledWith(expect.stringContaining('"exchange":"binance"'))
 	})
 
 	it('does not fetch exchange markets for unknown exchanges', async () => {

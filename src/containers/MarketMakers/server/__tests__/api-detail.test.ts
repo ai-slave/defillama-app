@@ -2,28 +2,30 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const forgdFetch = vi.fn()
 vi.mock('../client', () => ({ forgdFetch: (...a: unknown[]) => forgdFetch(...a) }))
-vi.mock('~/server/api/resultCache', () => ({
-	cachedResult: (_r: string, _k: string, _o: unknown, fn: () => unknown) => fn()
-}))
 
 import { marketMakerBreakdown } from '../api'
 
 afterEach(() => forgdFetch.mockReset())
 
 describe('marketMakerBreakdown route', () => {
-	it('forwards the id and date params to forgd and returns 200 with the payload', async () => {
+	it('forwards the id and dates and reuses the serialized detail payload', async () => {
 		forgdFetch.mockResolvedValue({ marketMakerId: 'lhava' })
-		const res = await marketMakerBreakdown.handle({
+		const request = {
 			method: 'GET',
 			url: '/api/public/market-makers/breakdown/lhava?start_date=2026-05-30&end_date=2026-06-29',
 			query: { id: 'lhava', start_date: '2026-05-30', end_date: '2026-06-29' },
 			headers: {}
-		})
-		expect(res.status).toBe(200)
+		}
+		const first = await marketMakerBreakdown.handle(request)
+		const second = await marketMakerBreakdown.handle({ ...request, url: `${request.url}&ignored=1` })
+
+		expect(first).toMatchObject({ status: 200, serializedJson: JSON.stringify({ marketMakerId: 'lhava' }) })
+		expect(second).toEqual(first)
 		expect(forgdFetch).toHaveBeenCalledWith('/market-maker/leaderboard/breakdown/lhava', {
 			start_date: '2026-05-30',
 			end_date: '2026-06-29'
 		})
+		expect(forgdFetch).toHaveBeenCalledTimes(1)
 	})
 
 	it('rejects an invalid market maker id with 400 and never calls forgd', async () => {

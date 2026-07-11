@@ -36,14 +36,20 @@ describe('yield holders api route', () => {
 			url: '/api/public/yields/holders',
 			query: {}
 		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
+		const firstRes = createMockNextApiResponse()
+		const secondRes = createMockNextApiResponse()
 
-		await handler(req, res)
+		await handler(req, firstRes)
+		await handler(req, secondRes)
 
 		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith('https://yields.llama.fi/holders')
-		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=600')
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.send).toHaveBeenCalledWith(
+		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledTimes(1)
+		expect(firstRes.setHeader).toHaveBeenCalledWith(
+			'Cache-Control',
+			'public, s-maxage=3600, stale-while-revalidate=600'
+		)
+		expect(firstRes.status).toHaveBeenCalledWith(200)
+		expect(firstRes.send).toHaveBeenCalledWith(
 			JSON.stringify({
 				holders: [{ address: '0x1', amount: 100 }]
 			})

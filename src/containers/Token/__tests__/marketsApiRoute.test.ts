@@ -23,10 +23,14 @@ vi.mock('~/utils/async', async (importOriginal) => {
 	}
 })
 
-vi.mock('~/utils/telemetry', () => ({
-	recordRouteRuntimeError: recordRouteRuntimeErrorMock,
-	withApiRouteTelemetry: (_route: string, handler: unknown) => handler
-}))
+vi.mock('~/utils/telemetry', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('~/utils/telemetry')>()
+	return {
+		...actual,
+		recordRouteRuntimeError: recordRouteRuntimeErrorMock,
+		withApiRouteTelemetry: (_route: string, handler: unknown) => handler
+	}
+})
 
 import handler from '~/pages/api/public/markets/[token]'
 
@@ -35,20 +39,24 @@ describe('/api/public/markets/[token]', () => {
 		vi.clearAllMocks()
 	})
 
-	it('proxies token markets through the shared JSON route builder', async () => {
+	it('caches and serves serialized token markets through the shared JSON route builder', async () => {
 		fetchJsonMock.mockResolvedValueOnce({ token: 'btc', markets: [] })
 		const req = {
 			method: 'GET',
 			query: { token: 'BTC' },
 			url: '/api/public/markets/BTC'
 		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
+		const firstRes = createMockNextApiResponse()
+		const secondRes = createMockNextApiResponse()
 
-		await handler(req, res)
+		await handler(req, firstRes)
+		await handler(req, secondRes)
 
 		expect(fetchJsonMock).toHaveBeenCalledWith('https://markets.example.com/tokens/btc.json', { timeout: 30_000 })
-		expect(res.status).toHaveBeenCalledWith(200)
-		expect(res.json).toHaveBeenCalledWith({ token: 'btc', markets: [] })
+		expect(fetchJsonMock).toHaveBeenCalledTimes(1)
+		expect(firstRes.status).toHaveBeenCalledWith(200)
+		expect(firstRes.send).toHaveBeenCalledWith(JSON.stringify({ token: 'btc', markets: [] }))
+		expect(secondRes.send).toHaveBeenCalledWith(JSON.stringify({ token: 'btc', markets: [] }))
 	})
 
 	it('keeps upstream 404s as token not found responses', async () => {
@@ -65,5 +73,24 @@ describe('/api/public/markets/[token]', () => {
 		expect(recordRouteRuntimeErrorMock).not.toHaveBeenCalled()
 		expect(res.status).toHaveBeenCalledWith(404)
 		expect(res.json).toHaveBeenCalledWith({ error: 'Token not found' })
+	})
+
+	it('does not cache token market failures', async () => {
+		fetchJsonMock
+			.mockRejectedValueOnce(new Error('temporary upstream failure'))
+			.mockResolvedValueOnce({ token: 'retry-cache-test', markets: [] })
+		const req = {
+			method: 'GET',
+			query: { token: 'retry-cache-test' },
+			url: '/api/public/markets/retry-cache-test'
+		} as unknown as NextApiRequest
+
+		await handler(req, createMockNextApiResponse())
+		const retryRes = createMockNextApiResponse()
+		await handler(req, retryRes)
+
+		expect(fetchJsonMock).toHaveBeenCalledTimes(2)
+		expect(retryRes.status).toHaveBeenCalledWith(200)
+		expect(retryRes.send).toHaveBeenCalledWith(JSON.stringify({ token: 'retry-cache-test', markets: [] }))
 	})
 })
