@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import type { ComponentPropsWithoutRef } from 'react'
 import { Icon } from '~/components/Icon'
 import { Button } from '~/ui/Button'
+import { tw } from './tw'
 
 /* ----------------------------------------------------------------------------
    Dialog — the design.md popover/dialog surface recipe (stroke-medium,
@@ -37,7 +38,7 @@ export const dialogSurfaceStyles = `${dialogSurfaceBaseStyles} bg-overlay`
 export const dialogCanvasSurfaceStyles = `${dialogSurfaceBaseStyles} bg-surface-elevated-1`
 
 /** Required on the single scrolling body inside an overflow-hidden dialog surface. */
-export const dialogScrollableBodyStyles = 'min-h-0 flex-1 overflow-y-auto overscroll-contain'
+export const dialogScrollableBodyStyles = tw`min-h-0 flex-1 overflow-y-auto overscroll-contain`
 
 type DialogHeadingProps = {
 	/** Layout placement only — the type/color comes from the recipe. */

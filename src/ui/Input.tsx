@@ -1,4 +1,5 @@
 import type { ComponentPropsWithRef } from 'react'
+import { tw } from './tw'
 
 /* ----------------------------------------------------------------------------
    Input — the design.md text-input recipe.
@@ -24,18 +25,17 @@ import type { ComponentPropsWithRef } from 'react'
    `className={inputStyles}` (plus layout classes) instead of the component.
 ---------------------------------------------------------------------------- */
 
-export const inputStyles =
-	'min-h-8 rounded-lg border border-medium bg-page px-3 py-1.5 text-base text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden sm:body-sm'
+export const inputStyles = tw`min-h-8 rounded-lg border border-medium bg-page px-3 py-1.5 text-base text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden sm:body-sm`
 
-export const searchFieldWrapperStyles = 'relative mr-auto w-full min-w-0 sm:max-w-[280px]'
+export const searchFieldWrapperStyles = tw`relative mr-auto w-full min-w-0 sm:max-w-[280px]`
 
-export const searchFieldInlineWrapperStyles = 'relative w-full min-w-0 sm:w-[280px] sm:flex-none'
+export const searchFieldInlineWrapperStyles = tw`relative w-full min-w-0 sm:w-[280px] sm:flex-none`
 
-export const searchFieldFlexibleWrapperStyles = 'relative w-full min-w-0 sm:max-w-[280px]'
+export const searchFieldFlexibleWrapperStyles = tw`relative w-full min-w-0 sm:max-w-[280px]`
 
-export const searchFieldIconStyles = 'pointer-events-none absolute top-0 bottom-0 left-3 my-auto text-tertiary'
+export const searchFieldIconStyles = tw`pointer-events-none absolute top-0 bottom-0 left-3 my-auto text-tertiary`
 
-export const searchFieldInputPlacementStyles = 'w-full pl-8'
+export const searchFieldInputPlacementStyles = tw`w-full pl-8`
 
 export const searchFieldInputStyles = `${inputStyles} ${searchFieldInputPlacementStyles}`
 

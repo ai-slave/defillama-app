@@ -1109,3 +1109,16 @@ variations instead of forcing a universal abstraction.
   clipping.
 - New ratchet rule `deprecated-tailwind-spelling` holds core at zero and
   baselines excluded-product debt (449).
+
+### 2026-07-10 Class Composition Idiom (`main`)
+
+- Evaluated cva, tailwind-merge, and cnfast against the existing architecture;
+  all three declined. The hand-rolled variant maps are the house cva (typed,
+  zero-dep); merge libraries are rejected on principle, not just need — recipe
+  `className` is layout-only, so a merge utility would make override
+  violations silently win. Codified in design.md § Class composition.
+- Added `ui/tw.ts`, a zero-cost identity tag, and tagged the 47 exported
+  class-string recipes in `src/ui` so oxfmt's stylesheet-aware sorter
+  normalizes their internal order like any `className` attribute (13 were
+  out of order; class sets verified identical). Interpolation inside `tw`
+  is a deliberate type error — recipes stay static and fully sortable.

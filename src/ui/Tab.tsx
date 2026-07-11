@@ -1,4 +1,5 @@
 import type { ComponentPropsWithRef, ElementType } from 'react'
+import { tw } from './tw'
 
 /* ----------------------------------------------------------------------------
    Tab navigation — page-level underline tabs ([LD 1.0] Tab Navigation,
@@ -12,7 +13,7 @@ import type { ComponentPropsWithRef, ElementType } from 'react'
    <nav className={tabTrackStyles}> <TabLink … data-active={bool}> </nav>
 ---------------------------------------------------------------------------- */
 
-export const tabTrackStyles = 'flex w-full flex-nowrap overflow-x-auto border-b border-subtle'
+export const tabTrackStyles = tw`flex w-full flex-nowrap overflow-x-auto border-b border-subtle`
 
 type TabLinkProps<T extends ElementType> = {
 	as?: T

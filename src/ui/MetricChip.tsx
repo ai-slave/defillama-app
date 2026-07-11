@@ -1,3 +1,4 @@
+import { tw } from './tw'
 /* ----------------------------------------------------------------------------
    MetricChip — selected-chart-metric chip (Figma node 6183:312062).
 
@@ -14,8 +15,6 @@
    <label>s at the call sites.
 ---------------------------------------------------------------------------- */
 
-export const metricChipStyles =
-	'label-sm flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-0.5 whitespace-nowrap rounded-full border px-2 py-1.5 text-primary hover:bg-hover-row focus-visible:bg-hover-row'
+export const metricChipStyles = tw`flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-0.5 rounded-full border px-2 py-1.5 label-sm whitespace-nowrap text-primary hover:bg-hover-row focus-visible:bg-hover-row`
 
-export const metricOptionChipStyles =
-	'hover-wash label-sm group flex min-h-6 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-full border border-medium px-2 py-0.5 text-primary transition-[background-color,border-color,color] duration-150 ease-out hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link'
+export const metricOptionChipStyles = tw`hover-wash group flex min-h-6 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full border border-medium px-2 py-0.5 label-sm whitespace-nowrap text-primary transition-[background-color,border-color,color] duration-150 ease-out hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link`
