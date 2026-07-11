@@ -3,6 +3,7 @@ import { Icon } from '~/components/Icon'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { buttonStyles } from '~/ui/Button'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { METRIC_LABEL_SELECTOR, METRIC_VALUE_SELECTOR } from '~/ui/MetricPrimitives'
 import { downloadDataURL } from '~/utils/download'
 interface KeyMetricsPngExportButtonProps {
 	containerRef: RefObject<HTMLDivElement | null>
@@ -26,15 +27,15 @@ function getTrimmedText(el: Element | null | undefined): string {
 function extractLabel(el: HTMLElement): string {
 	const directChildren = Array.from(el.children) as HTMLElement[]
 	const directLabel =
-		directChildren.find((child) => child.matches?.('[class*="text-secondary"]')) ??
+		directChildren.find((child) => child.matches?.(METRIC_LABEL_SELECTOR)) ??
 		directChildren.find((child) => child.tagName.toUpperCase() === 'SPAN')
-	const fallbackLabel = el.querySelector?.('[class*="text-secondary"]') ?? null
+	const fallbackLabel = el.querySelector?.(METRIC_LABEL_SELECTOR) ?? null
 
 	return getTrimmedText(directLabel ?? fallbackLabel)
 }
 
 function extractValue(el: HTMLElement): string {
-	const valueEl = el.querySelector?.('.font-jetbrains') ?? null
+	const valueEl = el.querySelector?.(METRIC_VALUE_SELECTOR) ?? null
 	return getTrimmedText(valueEl)
 }
 

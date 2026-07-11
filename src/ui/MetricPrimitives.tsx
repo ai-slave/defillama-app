@@ -4,6 +4,9 @@ import { Icon } from '~/components/Icon'
 import { tooltipSurfaceStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 
+export const METRIC_LABEL_SELECTOR = '[data-metric-label]'
+export const METRIC_VALUE_SELECTOR = '[data-metric-value]'
+
 interface MetricRowProps {
 	label: ReactNode
 	tooltip?: ReactNode
@@ -28,13 +31,17 @@ export const MetricRow = ({
 	>
 		{tooltip ? (
 			<Tooltip content={tooltip} className="body-md text-secondary underline decoration-dotted">
-				{label}
+				<span data-metric-label>{label}</span>
 			</Tooltip>
 		) : (
-			<span className="body-md text-secondary">{label}</span>
+			<span className="body-md text-secondary" data-metric-label>
+				{label}
+			</span>
 		)}
 		{extra}
-		<span className={valueClassName}>{value}</span>
+		<span className={valueClassName} data-metric-value>
+			{value}
+		</span>
 	</p>
 )
 
@@ -85,7 +92,12 @@ export const MetricSection = ({
 }: MetricSectionProps) => {
 	const summaryContent = (
 		<>
-			<span className={`body-md text-secondary ${tooltip ? 'underline decoration-dotted' : ''}`.trim()}>{label}</span>
+			<span
+				className={`body-md text-secondary ${tooltip ? 'underline decoration-dotted' : ''}`.trim()}
+				data-metric-label
+			>
+				{label}
+			</span>
 			<Icon
 				name="chevron-down"
 				height={16}
@@ -93,7 +105,11 @@ export const MetricSection = ({
 				className="relative top-1 text-tertiary transition-transform duration-100 group-open/metric:rotate-180"
 			/>
 			{extra}
-			{value != null ? <span className={valueClassName}>{value}</span> : null}
+			{value != null ? (
+				<span className={valueClassName} data-metric-value>
+					{value}
+				</span>
+			) : null}
 		</>
 	)
 
@@ -132,14 +148,20 @@ export const SubMetricSection = ({
 }) => (
 	<details className="group/sub" open={defaultOpen}>
 		<summary className="flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b border-dashed border-subtle py-1 group-last/sub:border-none group-open/sub:border-none group-open/sub:font-semibold">
-			<span className="body-md text-secondary">{label}</span>
+			<span className="body-md text-secondary" data-metric-label>
+				{label}
+			</span>
 			<Icon
 				name="chevron-down"
 				height={16}
 				width={16}
 				className="relative top-1 text-tertiary transition-transform duration-100 group-open/sub:rotate-180"
 			/>
-			{value != null ? <span className="ml-auto mono-md">{value}</span> : null}
+			{value != null ? (
+				<span className="ml-auto mono-md" data-metric-value>
+					{value}
+				</span>
+			) : null}
 		</summary>
 		{children ? <div className="mb-3 flex flex-col">{children}</div> : null}
 	</details>
