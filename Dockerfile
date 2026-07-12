@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.6
+# syntax=docker/dockerfile:1.10
 
 FROM node:24-bookworm-slim AS node-base
 
