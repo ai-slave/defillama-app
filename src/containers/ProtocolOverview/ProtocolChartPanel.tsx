@@ -458,10 +458,10 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 							<span>{tchart.replace('Token', props.token?.symbol ? `$${props.token.symbol}` : 'Token')}</span>
 							{loadingChartSet.has(tchart) ? (
 								<span aria-label={`${tchart} is loading`} role="status">
-									<LoadingSpinner size={16} />
+									<LoadingSpinner size={14} />
 								</span>
 							) : (
-								<Icon name="x" className="size-4" />
+								<Icon name="x" className="size-3.5" />
 							)}
 						</span>
 					</label>
@@ -486,7 +486,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 							}}
 						>
 							<span>Events</span>
-							<Icon name="x" className="size-4" />
+							<Icon name="x" className="size-3.5" />
 						</span>
 					</label>
 				) : null}

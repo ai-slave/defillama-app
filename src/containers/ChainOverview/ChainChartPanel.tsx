@@ -223,7 +223,7 @@ export function ChainChartPanel({
 					<Ariakit.DialogProvider store={metricsDialogStore}>
 						<Ariakit.DialogDisclosure className={buttonStyles({ size: 'md' })}>
 							<span>Add Metrics</span>
-							<Icon name="plus" className="size-3" />
+							<Icon name="plus" className="size-3.5" />
 						</Ariakit.DialogDisclosure>
 						<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:600px]`} unmountOnHide portal>
 							<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
@@ -364,7 +364,7 @@ export function ChainChartPanel({
 							}}
 						>
 							<span>{selectedChartLabel(tchart)}</span>
-							<Icon name="x" className="size-4" />
+							<Icon name="x" className="size-3.5" />
 						</span>
 					</label>
 				))}

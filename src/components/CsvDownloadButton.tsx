@@ -111,9 +111,9 @@ export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
 	const buttonContent = (
 		<>
 			{!isLoading || !isClient ? (
-				<Icon name="download-paper" className="size-3 shrink-0" />
+				<Icon name="download-paper" className="size-3.5 shrink-0" />
 			) : (
-				<LoadingSpinner size={12} />
+				<LoadingSpinner size={14} />
 			)}
 
 			{children || <span className="truncate">{smol ? '.csv' : 'Download .csv'}</span>}

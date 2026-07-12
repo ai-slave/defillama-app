@@ -1457,7 +1457,7 @@ export function ChartPngExportButton({
 				disabled={isLoading}
 				title="Export chart as image"
 			>
-				{isLoading ? <LoadingSpinner size={12} /> : <Icon name="download-paper" height={12} width={12} />}
+				{isLoading ? <LoadingSpinner size={14} /> : <Icon name="download-paper" height={14} width={14} />}
 				<span>{smol ? '.png' : 'Image'}</span>
 			</Ariakit.PopoverDisclosure>
 

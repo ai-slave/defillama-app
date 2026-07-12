@@ -143,22 +143,22 @@ request. A keyed remount must not discard an in-progress draft unexpectedly.
 
 Use this as the regression surface for planning tests and manual checks.
 
-| Area | Primary ownership | Important external integrations |
-| --- | --- | --- |
-| Landing and entry points | `src/pages/ai/index.tsx`, `ChatLanding`, nav/search, floating button, entity-question strips | Auth return paths, pending prompt/page context, suggested-prompt flag |
-| Chat routes and chrome | `/ai/chat`, session and shared routes, `LlamaAIShell`, route/navigation contexts, cookies | Next router/history, full-screen/sidebar cookies, responsive shell |
-| Prompt and modes | `PromptInput`, input components, `AgenticChat` | Quick/fact-checked/research mode, project scope, deep-link confirmation |
-| Images and pasted files | `useImageUpload`, `PastedContentModal`, `ImagePreviewModal` | Upload endpoints, browser files/clipboard, object URLs, size/count limits |
-| Request and streaming | `runAgenticRequest`, `fetchAgenticResponse`, `streamCallbacks`, `streamState` | SSE, abort, detach, heartbeat, recovery, resume, replay |
-| Messages and citations | `messageMappers`, `renderModel`, `ConversationView`, `MessageBubble`, markdown components | Restored/shared/live shapes, fact-check citations, selection/edit branches |
-| Charts and exports | chart payload/adapters/renderer, CSV/Markdown/PDF artifacts | ECharts, download/browser APIs, saved charts, style persistence |
-| Dashboards | `DashboardPanel`, Add-to-Dashboard and Pro Dashboard consumers | Chart promotion, generated/edited dashboards, saved LlamaAI chart IDs |
-| Alerts | `AlertArtifact`, `CreateAlertModal`, `AlertsModal`, alert API/schedule/form helpers | Streamed/restored alerts, token-page entry, push/Telegram/Slack delivery |
-| Telegram and Slack | integration hooks, API modules, settings rows | Polling, deep links, OAuth return, workspaces, channels, unlinking |
-| Projects | project pages/components/API/hooks, session mutations | Files, pasted text, instructions, GitHub installation/repositories, tier limits |
-| Settings and onboarding | `SettingsModal`, settings hooks, walkthrough/tips/banners | Persisted user settings, local storage, route intents, subscription state |
-| Auth, limits, and credits | auth context consumers, limit modals, trial card, top-up UI | Sign-in, trials/subscriptions, free/research/fact-check usage, external-data balance |
-| Sharing and feedback | sidebar session actions, `ShareModal`, `FeedbackForm` | Public/private links, shared-session fork, clipboard, ratings |
+| Area                      | Primary ownership                                                                            | Important external integrations                                                      |
+| ------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Landing and entry points  | `src/pages/ai/index.tsx`, `ChatLanding`, nav/search, floating button, entity-question strips | Auth return paths, pending prompt/page context, suggested-prompt flag                |
+| Chat routes and chrome    | `/ai/chat`, session and shared routes, `LlamaAIShell`, route/navigation contexts, cookies    | Next router/history, full-screen/sidebar cookies, responsive shell                   |
+| Prompt and modes          | `PromptInput`, input components, `AgenticChat`                                               | Quick/fact-checked/research mode, project scope, deep-link confirmation              |
+| Images and pasted files   | `useImageUpload`, `PastedContentModal`, `ImagePreviewModal`                                  | Upload endpoints, browser files/clipboard, object URLs, size/count limits            |
+| Request and streaming     | `runAgenticRequest`, `fetchAgenticResponse`, `streamCallbacks`, `streamState`                | SSE, abort, detach, heartbeat, recovery, resume, replay                              |
+| Messages and citations    | `messageMappers`, `renderModel`, `ConversationView`, `MessageBubble`, markdown components    | Restored/shared/live shapes, fact-check citations, selection/edit branches           |
+| Charts and exports        | chart payload/adapters/renderer, CSV/Markdown/PDF artifacts                                  | ECharts, download/browser APIs, saved charts, style persistence                      |
+| Dashboards                | `DashboardPanel`, Add-to-Dashboard and Pro Dashboard consumers                               | Chart promotion, generated/edited dashboards, saved LlamaAI chart IDs                |
+| Alerts                    | `AlertArtifact`, `CreateAlertModal`, `AlertsModal`, alert API/schedule/form helpers          | Streamed/restored alerts, token-page entry, push/Telegram/Slack delivery             |
+| Telegram and Slack        | integration hooks, API modules, settings rows                                                | Polling, deep links, OAuth return, workspaces, channels, unlinking                   |
+| Projects                  | project pages/components/API/hooks, session mutations                                        | Files, pasted text, instructions, GitHub installation/repositories, tier limits      |
+| Settings and onboarding   | `SettingsModal`, settings hooks, walkthrough/tips/banners                                    | Persisted user settings, local storage, route intents, subscription state            |
+| Auth, limits, and credits | auth context consumers, limit modals, trial card, top-up UI                                  | Sign-in, trials/subscriptions, free/research/fact-check usage, external-data balance |
+| Sharing and feedback      | sidebar session actions, `ShareModal`, `FeedbackForm`                                        | Public/private links, shared-session fork, clipboard, ratings                        |
 
 ## Phase 1 — Baseline behavior and performance evidence
 
@@ -453,21 +453,25 @@ Copy this into the phase PR notes and fill it with evidence:
 
 ```md
 ### State model
+
 - Intentional behavior:
 - State/effects being removed or re-owned:
 - External synchronization that remains:
 - Opposite-edge regression:
 
 ### Behavior coverage
+
 - Tests added or changed:
 - Manual scenarios exercised:
 - Performance evidence, if applicable:
 
 ### Automated review
+
 - Findings fixed:
 - Findings refuted, with evidence:
 
 ### Adversarial review
+
 - Auth/tier cases:
 - Concurrency/failure cases:
 - Route/restore/shared cases:
@@ -475,6 +479,7 @@ Copy this into the phase PR notes and fill it with evidence:
 - Findings fixed or refuted:
 
 ### Verification
+
 - `bun run format`:
 - `bun run lint`:
 - `bun run typecheck`:
@@ -482,6 +487,7 @@ Copy this into the phase PR notes and fill it with evidence:
 - Focused `bun run test` commands:
 
 ### Remaining risk
+
 - Known untested external dependency or manual-only behavior:
 ```
 

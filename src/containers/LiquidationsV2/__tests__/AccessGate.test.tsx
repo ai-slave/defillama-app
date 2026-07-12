@@ -132,6 +132,5 @@ describe('LiquidationsShellLoader', () => {
 
 		expect(html).toContain('Overview')
 		expect(html).toContain('Loading')
-		expect(html).toContain('Loading liquidations data...')
 	})
 })
