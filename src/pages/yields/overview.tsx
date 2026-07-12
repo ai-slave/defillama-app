@@ -1,15 +1,19 @@
 import { Announcement } from '~/components/Announcement'
 import { disclaimer } from '~/containers/Yields/constants'
-import { getYieldMedianData, getYieldPageData } from '~/containers/Yields/queries.server'
 import { PlotsPage } from '~/containers/Yields/views/OverviewChartsView'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('yields/overview', async () => {
+	const [{ acquireYieldsSnapshot, readYieldPageData }, { getYieldMedianData }] = await Promise.all([
+		import('~/containers/Yields/server/snapshot.reader.server'),
+		import('~/containers/Yields/queries.server')
+	])
+	const snapshot = await acquireYieldsSnapshot('blocking')
 	const {
 		props: { ...data }
-	} = await getYieldPageData()
+	} = await readYieldPageData(snapshot)
 	data.pools = data.pools.filter((p) => p.apy > 0)
 	const median = await getYieldMedianData()
 

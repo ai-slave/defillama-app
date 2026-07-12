@@ -3,7 +3,7 @@ import type { MarketSegmentSummary } from '~/containers/Markets/api.types'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 import type { TokensRawAdapterChainMetrics, TokensRawCoinGeckoRanking, TokensRawMarketsList } from '../api.types'
-import { buildTokensSourceRows } from '../queries'
+import { buildTokensSourceRows } from '../queries.server'
 
 function marketSegment(overrides: Partial<MarketSegmentSummary>): MarketSegmentSummary {
 	return {

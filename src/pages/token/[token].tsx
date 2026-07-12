@@ -114,7 +114,7 @@ export const getStaticProps = withPerformanceLogging<TokenPageProps, TokenRouteP
 		const chainDefiLlamaId = record.chainId ? `chain#${record.chainId.toLowerCase()}` : null
 		const protocolDefiLlamaId = record.protocolId ?? protocolMetadata?.name ?? null
 		const [
-			{ isDatasetCacheIntegrityError },
+			{ isDatasetSnapshotIntegrityError },
 			{ hasTokenLiquidationsData },
 			{ fetchLiquidityEntryByProtocolId },
 			{ hasTokenMarkets },
@@ -122,20 +122,21 @@ export const getStaticProps = withPerformanceLogging<TokenPageProps, TokenRouteP
 			{ getIndexedTokenRiskBorrowCapacity },
 			{ fetchTokenRightsEntryByDefillamaId, fetchTokenRightsEntryByName },
 			{ fetchTreasuryById },
-			{ getTokenBorrowRoutes, getTokenYieldsRows, getYieldConfig }
+			{ acquireYieldsSnapshot, getTokenBorrowRoutes, getTokenYieldsRows, getYieldConfig }
 		] = await Promise.all([
-			import('~/server/datasetCache/core'),
-			import('~/containers/LiquidationsV2/server/dataset'),
-			import('~/containers/Token/server/dataset.liquidity'),
-			import('~/containers/Markets/server/dataset'),
-			import('~/containers/Raises/server/dataset'),
-			import('~/containers/Token/server/dataset.risk'),
-			import('~/containers/TokenRights/server/dataset'),
-			import('~/containers/Treasuries/server/dataset'),
-			import('~/containers/Yields/server/dataset')
+			import('~/server/datasetSnapshots/errors'),
+			import('~/containers/LiquidationsV2/server/dataset.server'),
+			import('~/containers/Token/server/dataset.liquidity.server'),
+			import('~/containers/Markets/server/dataset.server'),
+			import('~/containers/Raises/server/dataset.server'),
+			import('~/containers/Token/server/dataset.risk.server'),
+			import('~/containers/TokenRights/server/dataset.server'),
+			import('~/containers/Treasuries/server/dataset.server'),
+			import('~/containers/Yields/server/snapshot.reader.server')
 		])
+		const yieldsDatasetSnapshot = await acquireYieldsSnapshot('blocking')
 		const downgradeTokenPageError = <T,>(error: unknown, message: string, fallback: T): T =>
-			downgradeTokenPageDataError(error, message, fallback, isDatasetCacheIntegrityError)
+			downgradeTokenPageDataError(error, message, fallback, isDatasetSnapshotIntegrityError)
 		const marketsAvailablePromise = hasTokenMarkets(record.symbol).catch((error) =>
 			downgradeTokenPageError(error, `Failed to load token markets list for ${record.symbol}`, false)
 		)
@@ -154,7 +155,7 @@ export const getStaticProps = withPerformanceLogging<TokenPageProps, TokenRouteP
 				shouldFetchRaises ? fetchRaisesByDefillamaId(chainDefiLlamaId ?? protocolDefiLlamaId!) : Promise.resolve(null),
 				// Treasury shards are keyed by the upstream `${defillamaId}-treasury` convention.
 				shouldFetchTreasury ? fetchTreasuryById(`${protocolDefiLlamaId}-treasury`) : Promise.resolve(null),
-				shouldFetchLiquidity ? getYieldConfig() : Promise.resolve(null),
+				shouldFetchLiquidity ? getYieldConfig(yieldsDatasetSnapshot) : Promise.resolve(null),
 				shouldFetchLiquidity ? fetchLiquidityEntryByProtocolId(protocolDefiLlamaId!) : Promise.resolve(null)
 			])
 
@@ -230,7 +231,7 @@ export const getStaticProps = withPerformanceLogging<TokenPageProps, TokenRouteP
 			: Promise.resolve(null)
 
 		const yieldsRowsPromise = record.is_yields
-			? getTokenYieldsRows(record.symbol).catch((error) =>
+			? getTokenYieldsRows(yieldsDatasetSnapshot, record.symbol).catch((error) =>
 					downgradeTokenPageError(error, `Failed to load token yields data for ${record.symbol}`, [])
 				)
 			: Promise.resolve([])
@@ -249,7 +250,7 @@ export const getStaticProps = withPerformanceLogging<TokenPageProps, TokenRouteP
 			tokenRightsPromise,
 			incomeStatementPromise,
 			yieldsRowsPromise,
-			getTokenBorrowRoutes(record.symbol).catch((error) =>
+			getTokenBorrowRoutes(yieldsDatasetSnapshot, record.symbol).catch((error) =>
 				downgradeTokenPageError(error, `Failed to load token borrow routes data for ${record.symbol}`, null)
 			),
 			liquidationsPromise,

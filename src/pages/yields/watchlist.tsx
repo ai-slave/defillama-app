@@ -1,13 +1,14 @@
 import { Announcement } from '~/components/Announcement'
 import { disclaimer } from '~/containers/Yields/constants'
-import { getYieldPageData } from '~/containers/Yields/queries.server'
 import { YieldsWatchlistContainer } from '~/containers/Yields/views/WatchlistView'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('yields/watchlist', async () => {
-	const data = await getYieldPageData()
+	const { acquireYieldsSnapshot, readYieldPageData } = await import('~/containers/Yields/server/snapshot.reader.server')
+	const snapshot = await acquireYieldsSnapshot('blocking')
+	const data = await readYieldPageData(snapshot)
 
 	return {
 		props: { pools: data.props.pools },

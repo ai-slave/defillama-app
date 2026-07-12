@@ -11,7 +11,7 @@ vi.mock('~/containers/Markets/server/upstream', () => ({
 	fetchExchangeMarketsFromNetwork: fetchExchangeMarketsFromNetworkMock
 }))
 
-vi.mock('~/containers/Markets/server/dataset', () => ({
+vi.mock('~/containers/Markets/server/dataset.server', () => ({
 	resolveMarketsExchangeByParam: resolveMarketsExchangeByParamMock
 }))
 

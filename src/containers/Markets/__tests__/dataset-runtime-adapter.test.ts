@@ -1,35 +1,18 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const mocks = vi.hoisted(() => ({
-	fetchExchangeMarketsListFromCache: vi.fn(),
-	fetchExchangeMarketsListFromNetwork: vi.fn()
-}))
+const mocks = vi.hoisted(() => ({ readJson: vi.fn() }))
 
-vi.mock('~/containers/Markets/server/upstream', () => ({
-	fetchExchangeMarketsListFromNetwork: mocks.fetchExchangeMarketsListFromNetwork
-}))
-
-vi.mock('~/containers/Markets/server/dataset.cache', () => ({
-	fetchCexMarketsSlugIndexFromCache: vi.fn(),
-	fetchExchangeMarketsListFromCache: mocks.fetchExchangeMarketsListFromCache,
-	fetchTokenMarketsSymbolIndexFromCache: vi.fn()
+vi.mock('~/server/datasetSnapshots/reader.server', () => ({
+	datasetSnapshotReader: { readJson: mocks.readJson }
 }))
 
 beforeEach(() => {
-	vi.stubEnv('NODE_ENV', 'production')
 	vi.clearAllMocks()
 })
 
-afterEach(() => {
-	vi.resetModules()
-	vi.unstubAllEnvs()
-})
-
-describe('markets runtime adapter', () => {
-	it('falls back to the network exchange list when the markets cache domain failed', async () => {
-		const { DatasetDomainUnavailableError } = await import('~/server/datasetCache/core')
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-		const networkMarkets = {
+describe('markets dataset snapshot', () => {
+	it('resolves an exchange from the markets snapshot', async () => {
+		mocks.readJson.mockResolvedValue({
 			cex: {
 				spot: [{ exchange: 'binance', defillama_slug: 'Binance-CEX', market_count: 1, total_volume_24h: 100 }],
 				linear_perp: [],
@@ -41,16 +24,11 @@ describe('markets runtime adapter', () => {
 				inverse_perp: []
 			},
 			totals: {}
-		}
-		mocks.fetchExchangeMarketsListFromCache.mockRejectedValue(
-			new DatasetDomainUnavailableError('markets', 'build failed')
-		)
-		mocks.fetchExchangeMarketsListFromNetwork.mockResolvedValue(networkMarkets)
+		})
 
-		const { resolveMarketsExchangeByParam } = await import('~/containers/Markets/server/dataset')
+		const { resolveMarketsExchangeByParam } = await import('~/containers/Markets/server/dataset.server')
 
 		await expect(resolveMarketsExchangeByParam('Binance')).resolves.toBe('binance')
-		expect(mocks.fetchExchangeMarketsListFromNetwork).toHaveBeenCalledTimes(1)
-		warnSpy.mockRestore()
+		expect(mocks.readJson).toHaveBeenCalledWith('markets', 'exchanges-list.json')
 	})
 })

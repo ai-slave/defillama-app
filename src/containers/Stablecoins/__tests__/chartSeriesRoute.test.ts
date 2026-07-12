@@ -13,6 +13,13 @@ vi.mock('~/containers/Stablecoins/queries.server', () => ({
 	getStablecoinChainsChartSeries: getChainsMock,
 	getStablecoinOverviewChartSeries: getOverviewMock
 }))
+vi.mock('~/utils/metadata', () => ({ default: {} }))
+vi.mock('~/containers/ChainOverview/server/routes', () => ({
+	resolveChainParamFromMetadata: (chain: string) => ({ canonicalName: chain })
+}))
+vi.mock('~/containers/Stablecoins/server/routes', () => ({
+	resolveStablecoinAssetParamFromMetadata: (stablecoin: string) => stablecoin
+}))
 
 import handler from '~/pages/api/public/stablecoins/chart-series'
 

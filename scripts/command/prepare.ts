@@ -1,4 +1,4 @@
-import { publishDatasetCache } from '../../src/server/datasetCache/publish'
+import { publishDatasetSnapshots } from '../../src/server/datasetSnapshots/publish.server'
 import { runPullMetadataCommand } from '../metadata/pullCommand'
 import { runSiteNavigationCommand } from '../metadata/siteNavigationCommand'
 import { generateLlmsArtifacts } from './llms'
@@ -70,9 +70,9 @@ export function createPreparationSteps({
 			}
 		},
 		{
-			name: 'Dataset cache',
+			name: 'Dataset snapshot',
 			async run() {
-				await publishDatasetCache({ logger: asDatasetLogger(stepLogger) })
+				await publishDatasetSnapshots({ logger: asDatasetLogger(stepLogger), projectDir: repoRoot })
 			}
 		},
 		{

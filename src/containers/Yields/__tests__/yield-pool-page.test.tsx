@@ -3,17 +3,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getServerSideProps, getYieldPoolAssetTokens } from '~/pages/yields/pool/[pool]'
 import { ProtocolInformationCard } from '../ProtocolInformationCard'
 
-const { getYieldPoolPageDataMock } = vi.hoisted(() => ({
-	getYieldPoolPageDataMock: vi.fn()
+const { acquireYieldsSnapshotMock, getYieldPoolPageDataMock, snapshot } = vi.hoisted(() => ({
+	acquireYieldsSnapshotMock: vi.fn(),
+	getYieldPoolPageDataMock: vi.fn(),
+	snapshot: { handle: {} }
 }))
 
-vi.mock('~/containers/Yields/server/dataset', () => ({
+vi.mock('~/containers/Yields/server/snapshot.reader.server', () => ({
+	acquireYieldsSnapshot: acquireYieldsSnapshotMock,
 	getYieldPoolPageData: getYieldPoolPageDataMock
 }))
 
 describe('YieldPoolPage', () => {
 	beforeEach(() => {
 		getYieldPoolPageDataMock.mockReset()
+		acquireYieldsSnapshotMock.mockResolvedValue(snapshot)
 	})
 
 	it('renders an internal protocol link in the protocol information card', () => {
@@ -63,7 +67,7 @@ describe('YieldPoolPage', () => {
 	it('returns not found for valid missing pool ids after checking data', async () => {
 		const poolId = '79e042b5-e55d-4a4e-b0b0-6661a570470b'
 		const res = { setHeader: vi.fn() }
-		getYieldPoolPageDataMock.mockResolvedValue({ source: 'cache', data: null })
+		getYieldPoolPageDataMock.mockResolvedValue({ source: 'snapshot', data: null })
 
 		const result = await getServerSideProps({
 			req: { method: 'GET' },
@@ -73,7 +77,8 @@ describe('YieldPoolPage', () => {
 		} as any)
 
 		expect(result).toEqual({ notFound: true })
-		expect(getYieldPoolPageDataMock).toHaveBeenCalledWith(poolId)
+		expect(acquireYieldsSnapshotMock).toHaveBeenCalledWith('blocking')
+		expect(getYieldPoolPageDataMock).toHaveBeenCalledWith(snapshot, poolId)
 		expect(res.setHeader).not.toHaveBeenCalled()
 	})
 })

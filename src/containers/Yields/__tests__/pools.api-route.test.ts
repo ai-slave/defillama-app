@@ -2,11 +2,14 @@ import type { NextApiRequest } from 'next'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
-const { getYieldPoolsPageMock } = vi.hoisted(() => ({
-	getYieldPoolsPageMock: vi.fn()
+const { acquireYieldsSnapshotMock, getYieldPoolsPageMock, snapshot } = vi.hoisted(() => ({
+	acquireYieldsSnapshotMock: vi.fn(),
+	getYieldPoolsPageMock: vi.fn(),
+	snapshot: { handle: {} }
 }))
 
-vi.mock('~/containers/Yields/server/dataset', () => ({
+vi.mock('~/containers/Yields/server/snapshot.reader.server', () => ({
+	acquireYieldsSnapshot: acquireYieldsSnapshotMock,
 	getYieldPoolsPage: getYieldPoolsPageMock
 }))
 
@@ -15,6 +18,7 @@ import handler from '~/pages/api/public/yields/pools'
 beforeEach(() => {
 	vi.clearAllMocks()
 	vi.stubEnv('NEXT_STATIC_REVALIDATE_JITTER_SECONDS', '0')
+	acquireYieldsSnapshotMock.mockResolvedValue(snapshot)
 	getYieldPoolsPageMock.mockResolvedValue({
 		rows: [{ pool: 'ETH-USDC' }],
 		total: 1,
@@ -39,7 +43,8 @@ describe('yield pools api route', () => {
 
 		await handler(req, res)
 
-		expect(getYieldPoolsPageMock).toHaveBeenCalledWith({ view: 'main', page: '1', pageSize: '50' })
+		expect(acquireYieldsSnapshotMock).toHaveBeenCalledWith('background')
+		expect(getYieldPoolsPageMock).toHaveBeenCalledWith(snapshot, { view: 'main', page: '1', pageSize: '50' })
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600')
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith({

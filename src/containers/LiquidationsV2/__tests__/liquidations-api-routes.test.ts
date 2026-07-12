@@ -18,7 +18,7 @@ const {
 	getLiquidationsProtocolChainIdsMock: vi.fn()
 }))
 
-vi.mock('~/containers/LiquidationsV2/server/dataset', () => ({
+vi.mock('~/containers/LiquidationsV2/server/dataset.server', () => ({
 	getLiquidationsOverviewPageData: getLiquidationsOverviewPageDataMock,
 	getLiquidationsProtocolPageData: getLiquidationsProtocolPageDataMock,
 	getLiquidationsChainPageData: getLiquidationsChainPageDataMock,

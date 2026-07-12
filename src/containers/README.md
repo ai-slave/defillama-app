@@ -14,7 +14,7 @@ Prefer domain-local modules over shared catch-all folders:
 - `api.types.ts`: raw upstream response types for the domain.
 - `queries.tsx`: page-data/read-model builders that may be used by page components.
 - `queries.server.tsx`: page-data builders that are only intended for server data functions.
-- `server/`: server-oriented helpers; dataset cache readers/builders in this folder are
+- `server/`: server-oriented helpers; dataset snapshot readers/builders in this folder are
   server-only.
 - `server/routes.ts`: sitemap/static route helpers, not API route handlers. API route
   definitions should use names like `server/api.ts`, `server/*Routes.ts`, or a
@@ -26,33 +26,30 @@ Use these names consistently for new server modules:
 
 - `server/api.ts`: framework-neutral HTTP route definitions consumed by thin files under `src/pages/api/**`.
 - `server/routes.ts`: sitemap/static route param assembly only.
-- `server/routeData.ts`: cache-only data helpers used by `routes.ts`.
+- `server/routeData.ts`: snapshot-backed data helpers used by `routes.ts`.
 - `server/upstream.ts`: direct upstream server fetchers for the domain.
-- `server/dataset.builder.ts`: build-time writer for a dataset cache domain.
-- `server/dataset.cache.ts`: raw artifact readers only.
-- `server/dataset.index.ts`: pure index-building helpers for dataset artifacts.
-- `server/dataset.ts`: runtime read-through adapter used by pages and API handlers.
+- `server/dataset.builder.server.ts`: network acquisition that writes an unpublished snapshot candidate.
+- `server/dataset.index.ts`: pure index-building helpers for snapshot artifacts.
+- `server/dataset.server.ts` or `server/snapshot.reader.server.ts`: typed immutable snapshot access used by pages and API handlers.
 - `server/charts.ts` or `server/breakdowns.ts`: domain-specific chart or breakdown assembly when it is not just an HTTP handler.
 
-Dataset/cache modules under `server/` must only be imported from server-only call sites:
+Dataset snapshot modules under `server/` must only be imported from server-only call sites:
 `getStaticProps`, `getServerSideProps`, `getStaticPaths`, `pages/api` handlers,
-route-cache code, dataset cache build commands, or tests for those paths. Use dynamic
+route-data code, dataset snapshot build commands, or tests for those paths. Use dynamic
 imports inside those data functions when a page component also ships client code. Do not
-import `containers/*/server/dataset*` or `containers/*/server/*.cache` from React
+import `containers/*/server/dataset.server*` or `snapshot.reader.server*` from React
 components, hooks, browser query modules, or shared utilities that can enter a client
 bundle.
 
-Dataset cache domains should live with their product owner when there is one. The usual
+Dataset snapshot domains should live with their product owner when there is one. The usual
 shape is:
 
-- `server/dataset.cache.ts`: reads the generated `.cache/datasets/<domain>` files.
-- `server/dataset.builder.ts`: builds that domain's cache artifacts from network APIs.
-- `server/dataset.ts`: server-only runtime access for pages/API routes, including cache
-  selection and network fallback when the manifest marks the domain as failed.
+- `server/dataset.builder.server.ts`: builds that domain's unpublished snapshot artifacts from network APIs.
+- `server/dataset.server.ts` or `snapshot.reader.server.ts`: server-only typed access through one snapshot handle.
+- `server/dataset.transform.ts` or `server/dataset.index.ts`: pure data transforms.
 
-`src/server/datasetCache` owns the shared manifest, artifact layout, JSON cache helpers,
-and build orchestration. It should not accumulate domain-specific builders when a clear
-container owner exists.
+`src/server/datasetSnapshots` owns the shared manifest, artifact layout, immutable reader,
+and build orchestration. Domain-specific builders remain with their product owner.
 
 ## Route Family Map
 

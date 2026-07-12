@@ -42,8 +42,7 @@ function mergeMainPoolBorrowData(pools: YieldPool[], lendBorrowPools: LendBorrow
 	return mergedPools
 }
 
-// The merged array depends only on the source datasets, not the request, so memoize it by their refs.
-// jsonCache mints a new ref on refresh, so a data update invalidates this automatically — no staleness.
+// The published snapshot is immutable for the process lifetime, so source refs are stable.
 let mergedMainPoolsCache: {
 	pools: YieldPool[]
 	lendBorrowPools: LendBorrowPool[]

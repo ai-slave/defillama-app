@@ -1,9 +1,13 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { performance } from 'node:perf_hooks'
-import { getDatasetCacheRootDir } from '~/server/datasetCache/config'
-import { getDatasetIndexFileName } from '~/server/datasetCache/indexKeys'
-import { DATASET_DOMAIN_ARTIFACTS } from '~/server/datasetCache/registry'
+import { DATASET_SNAPSHOT_CONTRACT, parseDatasetSnapshotPointer } from '~/server/datasetSnapshots/contract'
+import {
+	getDatasetSnapshotCurrentPath,
+	getDatasetSnapshotRoot,
+	getDatasetSnapshotVersionDir
+} from '~/server/datasetSnapshots/filePaths.server'
+import { getDatasetIndexFileName } from '~/server/datasetSnapshots/indexKeys.server'
 
 type YieldRow = {
 	configID?: string
@@ -133,9 +137,10 @@ async function readIndexAsRowIds(filePath: string): Promise<string[]> {
 }
 
 async function main() {
-	const datasetRoot = getDatasetCacheRootDir()
-	const yieldsArtifacts = DATASET_DOMAIN_ARTIFACTS.yields
-	const yieldsDir = path.join(datasetRoot, 'yields')
+	const datasetRoot = getDatasetSnapshotRoot()
+	const yieldsArtifacts = DATASET_SNAPSHOT_CONTRACT.yields
+	const current = parseDatasetSnapshotPointer(await readJsonFile(getDatasetSnapshotCurrentPath(datasetRoot, 'yields')))
+	const yieldsDir = getDatasetSnapshotVersionDir(datasetRoot, 'yields', current.snapshotId)
 	const byTokenDir = path.join(yieldsDir, yieldsArtifacts.optionalShardDirs.byToken)
 	const rowsPath = path.join(yieldsDir, yieldsArtifacts.files.rows)
 
@@ -265,9 +270,9 @@ async function main() {
 				},
 				nextStep:
 					detectedIndexFormat === 'reference'
-						? 'current .cache/datasets already uses reference yields/by-token indexes'
+						? 'the current Yields snapshot already uses reference by-token indexes'
 						: switchToReferenceIndexes
-							? 'regenerate .cache/datasets so yields/by-token files contain row ids instead of full rows'
+							? 'publish a new Yields snapshot whose by-token files contain row ids instead of full rows'
 							: 'keep the current full-row yields/by-token artifact'
 			},
 			null,

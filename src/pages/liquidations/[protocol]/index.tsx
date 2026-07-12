@@ -42,7 +42,7 @@ export const getStaticProps = withPerformanceLogging(
 		}
 
 		const [{ getLiquidationsProtocolsList }, metadataModule] = await Promise.all([
-			import('~/containers/LiquidationsV2/server/dataset'),
+			import('~/containers/LiquidationsV2/server/dataset.server'),
 			import('~/utils/metadata')
 		])
 		const [protocolsResponse, protocolMetadataLookup] = [

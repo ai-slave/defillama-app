@@ -6,7 +6,7 @@ const { getTokensPageDataMock } = vi.hoisted(() => ({
 	getTokensPageDataMock: vi.fn()
 }))
 
-vi.mock('~/containers/Tokens/queries', () => ({
+vi.mock('~/containers/Tokens/queries.server', () => ({
 	getTokensPageData: getTokensPageDataMock
 }))
 

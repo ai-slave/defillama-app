@@ -28,7 +28,7 @@ function setupPageModule({
 	vi.doMock('next/link', () => ({
 		default: () => null
 	}))
-	vi.doMock('~/containers/TokenRights/server/dataset', () => ({
+	vi.doMock('~/containers/TokenRights/server/dataset.server', () => ({
 		fetchTokenRightsEntries: vi.fn().mockResolvedValue(tokenRightsEntries)
 	}))
 	vi.doMock('~/containers/AdapterMetrics/api', () => ({

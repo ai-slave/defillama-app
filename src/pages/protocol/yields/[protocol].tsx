@@ -86,8 +86,10 @@ export const getStaticProps = withPerformanceLogging(
 				}
 			}
 
-			const { getProtocolYieldRows } = await import('~/containers/Yields/server/dataset')
-			poolsList = await getProtocolYieldRows(protocolSlugs)
+			const { acquireYieldsSnapshot, getProtocolYieldRows } =
+				await import('~/containers/Yields/server/snapshot.reader.server')
+			const snapshot = await acquireYieldsSnapshot('blocking')
+			poolsList = await getProtocolYieldRows(snapshot, protocolSlugs)
 		} catch (err) {
 			console.log('[HTTP]:[ERROR]:[PROTOCOL_YIELD]:', protocol, err instanceof Error ? err.message : '')
 			poolsError = 'Failed to fetch'

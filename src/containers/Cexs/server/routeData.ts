@@ -1,8 +1,8 @@
-import { fetchExchangeMarketsListFromCache } from '~/containers/Markets/server/dataset.cache'
+import { fetchExchangeMarketsList } from '~/containers/Markets/server/dataset.server'
 import { slug } from '~/utils'
 
-export async function getCexMarketSlugsFromCache(): Promise<string[]> {
-	const marketsList = await fetchExchangeMarketsListFromCache()
+export async function getCexMarketSlugsFromSnapshot(): Promise<string[]> {
+	const marketsList = await fetchExchangeMarketsList()
 	const marketCexSlugs = new Set<string>()
 
 	for (const marketType in marketsList.cex) {

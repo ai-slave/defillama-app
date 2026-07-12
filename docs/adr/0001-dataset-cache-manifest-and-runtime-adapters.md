@@ -1,5 +1,7 @@
 # ADR 0001: Dataset Cache Manifest Availability And Container Readers
 
+> Superseded by the immutable dataset snapshot architecture in `docs/dataset-snapshot-boundaries.md`. The text below records the former design only.
+
 ## Status
 
 Accepted

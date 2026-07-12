@@ -1,16 +1,16 @@
-import { getLiquidationsProtocolChainIdsFromCache, getLiquidationsProtocolsResponseFromCache } from './dataset.cache'
+import { getLiquidationsProtocolChainIds, getLiquidationsProtocolsList } from './dataset.server'
 
 export type LiquidationsSitemapProtocolChains = Array<{
 	protocolId: string
 	chainIds: string[]
 }>
 
-export async function getLiquidationsSitemapProtocolChainsFromCache(): Promise<LiquidationsSitemapProtocolChains> {
-	const protocolsResponse = await getLiquidationsProtocolsResponseFromCache()
+export async function getLiquidationsSitemapProtocolChainsFromSnapshot(): Promise<LiquidationsSitemapProtocolChains> {
+	const { protocols } = await getLiquidationsProtocolsList()
 	return Promise.all(
-		protocolsResponse.protocols.map(async (protocolId) => ({
+		protocols.map(async (protocolId) => ({
 			protocolId,
-			chainIds: await getLiquidationsProtocolChainIdsFromCache(protocolId)
+			chainIds: await getLiquidationsProtocolChainIds(protocolId)
 		}))
 	)
 }

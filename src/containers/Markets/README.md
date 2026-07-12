@@ -50,13 +50,13 @@ Keep backend DTO field names in component rows. The frontend should only reshape
 - group category list rows into `Record<Segment, CategoryStat[]>`;
 - merge CEX and DEX exchange list rows while adding `exchange_type`;
 - complete category page `segments` and `tokens` records so every segment key exists;
-- derive local dataset-cache indexes for route membership lookups.
+- derive local snapshot indexes for route membership lookups.
 
 Avoid rename-only normalizers such as `volume_24h` to `volume_24h_usd`, `funding_rate_8h` to `funding_avg_8h`, or `symbol` to `base`.
 
-## Dataset Cache Indexes
+## Dataset Snapshot Indexes
 
-The app derives small Markets indexes during dataset-cache builds:
+The app derives small Markets indexes during snapshot builds:
 
 - `token-symbols.json`: `Record<lowercaseSymbol, true>` for token page `hasMarkets`.
 - `cex-by-defillama-slug.json`: `Record<slug(defillama_slug), { exchange, defillama_slug }>` for CEX route lookup.
@@ -75,10 +75,9 @@ These indexes are derived from already-fetched `tokens-list.json` and `exchanges
 ## Server Files
 
 - `server/upstream.ts`: `MARKETS_SERVER_URL` (pro-api `/markets`) fetchers.
-- `server/dataset.builder.ts`: writes the unified `markets` dataset-cache artifacts.
-- `server/dataset.cache.ts`: reads raw Markets artifacts from `.cache/datasets/markets`.
+- `server/dataset.builder.server.ts`: writes an unpublished Markets snapshot candidate through the store adapter.
 - `server/dataset.index.ts`: builds pure token-symbol and CEX slug lookup indexes.
-- `server/dataset.ts`: runtime read-through adapter with network fallback for failed manifest domains.
+- `server/dataset.server.ts`: typed versioned Markets snapshot access.
 - `server/api.ts`: framework-neutral public Markets API route definitions.
 
 For source changes, follow the repo root verification instructions.

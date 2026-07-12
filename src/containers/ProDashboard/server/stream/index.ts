@@ -752,8 +752,13 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 			seenYieldsTableKeys.add(cacheKey)
 			phase2Promises.push(
 				(async () => {
-					const { getTokenYieldsRows } = await import('~/containers/Yields/server/dataset')
-					const data = await withTimeout(getTokenYieldsRows('', itemChains.length ? itemChains : undefined), 15_000)
+					const { acquireYieldsSnapshot, getTokenYieldsRows } =
+						await import('~/containers/Yields/server/snapshot.reader.server')
+					const snapshot = await acquireYieldsSnapshot('background')
+					const data = await withTimeout(
+						getTokenYieldsRows(snapshot, '', itemChains.length ? itemChains : undefined),
+						15_000
+					)
 					if (data) writeLine({ type: 'yieldsDatasetData', key: cacheKey, data })
 				})().catch(() => {})
 			)

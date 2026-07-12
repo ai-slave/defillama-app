@@ -108,7 +108,7 @@ const DEFAULT_TOKEN_RIGHTS_SORTING: SortingState = [{ id: 'holdersRevenue24h', d
 
 export const getStaticProps = withPerformanceLogging('token-rights', async () => {
 	const [entries, metadataModule, holdersRevenue, { protocols: liteProtocols, parentProtocols }] = await Promise.all([
-		import('~/containers/TokenRights/server/dataset').then((mod) => mod.fetchTokenRightsEntries()),
+		import('~/containers/TokenRights/server/dataset.server').then((mod) => mod.fetchTokenRightsEntries()),
 		import('~/utils/metadata'),
 		import('~/containers/AdapterMetrics/api').then((m) =>
 			m.fetchAdapterChainMetrics({

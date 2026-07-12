@@ -64,13 +64,14 @@ const getServerSidePropsHandler: GetServerSideProps<YieldPoolPageProps> = async 
 		return { notFound: true }
 	}
 
-	const [{ getYieldPoolPageData }, { hasVaultRisk }] = await Promise.all([
-		import('~/containers/Yields/server/dataset'),
+	const [{ acquireYieldsSnapshot, getYieldPoolPageData }, { hasVaultRisk }] = await Promise.all([
+		import('~/containers/Yields/server/snapshot.reader.server'),
 		import('~/containers/Yields/VaultRisk/loader')
 	])
+	const snapshot = await acquireYieldsSnapshot('blocking')
 	// The risk-entry check only needs the pool id, so it runs alongside the pool data
 	// (hasVaultRisk never throws — it resolves false on any failure).
-	const [result, hasRisk] = await Promise.all([getYieldPoolPageData(poolId), hasVaultRisk(poolId)])
+	const [result, hasRisk] = await Promise.all([getYieldPoolPageData(snapshot, poolId), hasVaultRisk(poolId)])
 
 	if (!result.data) {
 		return { notFound: true }

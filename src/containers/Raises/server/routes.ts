@@ -1,7 +1,7 @@
-import { getRaisesInvestorSlugsFromCache } from './routeData'
+import { getRaisesInvestorSlugsFromSnapshot } from './routeData'
 
 export async function getRaisesInvestorRoutes(): Promise<string[]> {
-	const investorSlugs = await getRaisesInvestorSlugsFromCache()
+	const investorSlugs = await getRaisesInvestorSlugsFromSnapshot()
 	const routes: string[] = []
 	for (const investorSlug of investorSlugs) {
 		routes.push(`raises/${investorSlug}`)

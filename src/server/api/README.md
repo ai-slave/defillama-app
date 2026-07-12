@@ -47,8 +47,8 @@ Porting to another host (standalone service, TanStack Start) means rewriting
   JS aggregation must go through `cachedResult` so concurrent identical requests share
   one computation and the event loop is protected from repeat work. Key by the full
   param set, never by a subset. Do not use `cachedResult` for dataset-backed routes
-  that only read artifacts and do light filtering; those reads already go through
-  `jsonCache` via `src/server/datasetCache`.
+  that only read artifacts and do light filtering; those reads already use the immutable
+  reader in `src/server/datasetSnapshots`.
 - **Telemetry**: `route` strings keep their historical values (`/api/...`) so dashboards
   stay continuous.
 - **Streams stay native**: SSE and binary routes (`pro-dashboard/[dashboardId]/stream`,

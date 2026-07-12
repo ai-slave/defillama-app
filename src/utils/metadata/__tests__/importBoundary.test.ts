@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 const SCAN_ROOTS = ['src', 'scripts']
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx'])
 const METADATA_ARTIFACT_IMPORT = '.cache/app-metadata'
-const SERVER_DATA_IMPORT_PREFIXES = ['~/server/datasetCache', '~/server/routeRegistry']
+const SERVER_DATA_IMPORT_PREFIXES = ['~/server/datasetSnapshots', '~/server/routeRegistry']
 const CLIENT_ENTRY_ROOTS = ['src/pages', 'src/components', 'src/containers']
 
 async function collectSourceFiles(rootDir: string): Promise<string[]> {
@@ -187,7 +187,7 @@ describe('metadata artifact import boundary', () => {
 				if (
 					relativeResolved === 'src/utils/metadata/index.ts' ||
 					relativeResolved === 'src/utils/metadata/index.tsx' ||
-					relativeResolved.startsWith('src/server/datasetCache/') ||
+					relativeResolved.startsWith('src/server/datasetSnapshots/') ||
 					relativeResolved.startsWith('src/server/routeRegistry/') ||
 					/^src\/containers\/[^/]+\/server\/.*\.cache\.(ts|tsx|js|jsx)$/.test(relativeResolved)
 				) {

@@ -2,11 +2,14 @@ import type { NextApiRequest } from 'next'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
-const { getBorrowAdvancedPageRowsMock } = vi.hoisted(() => ({
-	getBorrowAdvancedPageRowsMock: vi.fn()
+const { acquireYieldsSnapshotMock, getBorrowAdvancedPageRowsMock, snapshot } = vi.hoisted(() => ({
+	acquireYieldsSnapshotMock: vi.fn(),
+	getBorrowAdvancedPageRowsMock: vi.fn(),
+	snapshot: { handle: {} }
 }))
 
-vi.mock('~/containers/Yields/server/dataset', () => ({
+vi.mock('~/containers/Yields/server/snapshot.reader.server', () => ({
+	acquireYieldsSnapshot: acquireYieldsSnapshotMock,
 	getBorrowAdvancedPageRows: getBorrowAdvancedPageRowsMock
 }))
 
@@ -15,6 +18,7 @@ import handler from '~/pages/api/public/yields/borrow-advanced'
 beforeEach(() => {
 	vi.clearAllMocks()
 	vi.stubEnv('NEXT_STATIC_REVALIDATE_JITTER_SECONDS', '0')
+	acquireYieldsSnapshotMock.mockResolvedValue(snapshot)
 	getBorrowAdvancedPageRowsMock.mockResolvedValue([{ pool: 'eth-collateral' }])
 })
 
@@ -33,7 +37,8 @@ describe('borrow advanced api route', () => {
 
 		await handler(req, res)
 
-		expect(getBorrowAdvancedPageRowsMock).toHaveBeenCalledWith({ lend: 'ETH', borrow: 'USDC' })
+		expect(acquireYieldsSnapshotMock).toHaveBeenCalledWith('background')
+		expect(getBorrowAdvancedPageRowsMock).toHaveBeenCalledWith(snapshot, { lend: 'ETH', borrow: 'USDC' })
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600')
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith([{ pool: 'eth-collateral' }])

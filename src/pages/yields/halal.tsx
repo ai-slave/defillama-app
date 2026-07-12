@@ -35,8 +35,10 @@ This leaves us with:
 `
 
 export const getStaticProps = withPerformanceLogging('yields/halal', async () => {
-	const { getYieldHalalPageMetadata } = await import('~/containers/Yields/server/dataset')
-	const metadata = await getYieldHalalPageMetadata()
+	const { acquireYieldsSnapshot, getYieldHalalPageMetadata } =
+		await import('~/containers/Yields/server/snapshot.reader.server')
+	const snapshot = await acquireYieldsSnapshot('blocking')
+	const metadata = await getYieldHalalPageMetadata(snapshot)
 
 	return {
 		props: { ...metadata, serverPagination: true, serverApi: YIELD_HALAL_DATASET_API },

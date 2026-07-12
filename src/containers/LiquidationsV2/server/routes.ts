@@ -3,8 +3,8 @@ import { resolveChainId, resolveProtocolId } from '~/containers/LiquidationsV2/q
 import { getMetadataCache, type StaticParamPath } from '~/server/routeRegistry/common'
 import { slug } from '~/utils'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
-import { getLiquidationsProtocolChainIds, getLiquidationsProtocolsList } from './dataset'
-import { getLiquidationsSitemapProtocolChainsFromCache } from './routeData'
+import { getLiquidationsProtocolChainIds, getLiquidationsProtocolsList } from './dataset.server'
+import { getLiquidationsSitemapProtocolChainsFromSnapshot } from './routeData'
 
 export async function getLiquidationsProtocolStaticPaths(): Promise<Array<StaticParamPath<'protocol'>>> {
 	const protocolsResponse = await getLiquidationsProtocolsList()
@@ -44,7 +44,7 @@ export async function resolveLiquidationsChainParams(
 
 export async function getLiquidationsSitemapRoutes(metadataCache: MetadataCache): Promise<string[]> {
 	const routes: string[] = []
-	const protocolChainIds = await getLiquidationsSitemapProtocolChainsFromCache()
+	const protocolChainIds = await getLiquidationsSitemapProtocolChainsFromSnapshot()
 
 	for (const { protocolId, chainIds } of protocolChainIds) {
 		routes.push(`liquidations/${protocolId}`)

@@ -1,33 +1,82 @@
 # Server Cache Layers
 
-The app uses three server-side cache layers with different lifetimes and responsibilities.
+The app has four independent server-side cache layers. Their names describe
+what they retain; none is a generic `cache` fallback.
 
-## Dataset Cache
+| Layer                      | Owner                                                | Lifetime                                          | Freshness                                                                       | Failure behavior                                                                         |
+| -------------------------- | ---------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Dataset snapshots          | `src/server/datasetSnapshots`                        | Durable across requests and restarts              | Hourly policy in the domain registry; build, ISR, or server traffic may refresh | A failed candidate never changes `current.json`; the last good version remains available |
+| Parsed snapshot artifacts  | One immutable snapshot handle                        | Current Node.js process and snapshot ID           | A new snapshot ID creates a new handle and new parsed references                | A malformed current artifact is an integrity error                                       |
+| Derived domain memoization | Domain transform modules, such as Yields row indexes | Current Node.js process and input object identity | New artifact references invalidate naturally                                    | Always recomputable from snapshot artifacts                                              |
+| Serialized result cache    | `src/server/api/resultCache.ts`                      | Bounded current Node.js process                   | Route-specific TTL                                                              | Failed computations are not cached; this is never authoritative storage                  |
+| HTTP/CDN cache             | Route `Cache-Control` headers                        | CDN-defined                                       | `s-maxage` and `stale-while-revalidate`                                         | Independent of durable snapshot freshness                                                |
 
-`src/server/datasetCache` owns durable, prebuilt domain artifacts. Builders write JSON files and a manifest under `.cache/datasets`; runtime adapters read those files through `readThroughDatasetCache`.
+## Dataset snapshots
 
-Use this when a domain can prepare shared data ahead of requests or reuse a durable artifact across many pages and APIs. Domain-owned readers live in `src/containers/<Domain>/server/*.cache.ts`; runtime consumers should call `dataset.ts`, `datasetApi.ts`, or domain API handlers instead of opening artifacts directly.
+The local store uses this layout:
 
-## JSON Cache
+```text
+.cache/dataset-snapshots/
+  <domain>/
+    current.json
+    versions/
+      <snapshot-id>/
+        manifest.json
+        <opaque domain artifacts>
+```
 
-`src/server/datasetCache/jsonCache.ts` is the in-process memoization layer for reading dataset artifact files. It avoids parsing the same JSON file repeatedly while still allowing background refresh when the file changes.
+Versions are immutable. The store builds and validates a candidate, renames it
+under `versions/`, then atomically replaces only `current.json`. A builder or
+validation failure leaves the pointer untouched. Previous versions are retained
+so active readers and operational rollback are safe; garbage collection is a
+separate maintenance concern.
 
-Most dataset-backed routes do not need `resultCache` on top of this. If the request only reads an artifact and does light filtering, the JSON cache is already the right hot-path optimization.
+`DatasetSnapshotStore`, `DatasetSnapshotWriter`, and `DatasetSnapshotHandle`
+are the adapter boundary. Domain builders write opaque JSON artifacts through a
+writer and have no filesystem dependency. A future shared store can implement
+the same contract with Redis, R2, Durable Objects, or another object store.
 
-## Result Cache
+## Runtime refresh
 
-`src/server/api/resultCache.ts` memoizes final server-side computations by namespace and key. It is in-process, TTL-based, and coalesces concurrent identical requests onto one promise. Failed computations are not cached.
+The refresh coordinator checks the current manifest timestamp and coalesces
+concurrent stale requests by domain.
 
-Use this for anonymous, param-bounded work where recomputation blocks the event loop or repeats an expensive upstream fetch and parse. Good examples are breakdown aggregations, page-data chart computations, or direct proxy routes for large upstream payloads.
+- ISR and other blocking server-data paths wait for a refresh. Success returns
+  the new generation; failure returns the exact previous generation.
+- Public APIs normally return stale data immediately and refresh in the
+  background.
+- If no snapshot exists, refresh failure throws. There is no empty or network
+  fallback pretending to be a valid snapshot.
+- A short process-local retry backoff prevents a broken upstream from being
+  hammered on every request.
 
-Do not use it for authenticated or user-specific data, routes that must be instantly fresh, unbounded key spaces, or dataset-backed routes that only read cached artifacts cheaply.
+`bun run snapshots:refresh` exposes the same atomic publisher for a scheduler or
+protected operational job. It is optional for correctness: an ISR request with
+blocking acquisition refreshes stale data before publishing the new page, while
+the previous page and previous snapshot remain available on failure.
+Preparation and scheduled publication reuse domain snapshots that are still
+within their registry max age instead of refetching them.
 
-## How They Stack
+All artifacts used for one logical response must come from one snapshot handle.
+Never reacquire between related reads.
 
-The layers can stack, but only intentionally:
+## Yields indexes and derived data
 
-`datasetCache` prepares durable domain artifacts.
-`jsonCache` memoizes reads of those artifact files in each process.
-`resultCache` memoizes expensive final route results or direct upstream proxy responses.
+Yields `rows.json` is authoritative. `by-token/*.json` files contain row IDs,
+not duplicated rows or cached filtered responses. The runtime resolves those IDs
+through a per-generation row map and falls back to scanning `rows.json` only when
+an optional token shard is absent.
 
-Add `resultCache` after dataset reads only when there is still meaningful per-query aggregation, fan-out, or response shaping after the artifact is loaded.
+Derived joins and indexes may memoize by artifact object identity. Stable
+references within a snapshot avoid repeated work; a new snapshot ID produces new
+references and forces recomputation.
+
+## Result and HTTP caches
+
+Use `cachedJsonResult` only for expensive final computations or large direct
+upstream proxies. If a result is derived from a snapshot, its key must include
+the snapshot ID. Light filtering over parsed snapshot data does not need another
+origin cache unless profiling proves otherwise.
+
+CDN caching is the final-response layer. It does not refresh durable snapshots
+and does not guarantee that a restarted server has source data.

@@ -2,20 +2,23 @@ import type { NextApiRequest } from 'next'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
-const { getTokenYieldsRowsMock } = vi.hoisted(() => ({
-	getTokenYieldsRowsMock: vi.fn()
+const { acquireYieldsSnapshotMock, getTokenYieldsRowsMock, snapshot } = vi.hoisted(() => ({
+	acquireYieldsSnapshotMock: vi.fn(),
+	getTokenYieldsRowsMock: vi.fn(),
+	snapshot: { handle: {} }
 }))
 
-vi.mock('~/containers/Token/tokenYields.server', () => ({
-	getTokenYieldsRowsFromNetwork: getTokenYieldsRowsMock
+vi.mock('~/containers/Yields/server/snapshot.reader.server', () => ({
+	acquireYieldsSnapshot: acquireYieldsSnapshotMock,
+	getTokenYieldsRows: getTokenYieldsRowsMock
 }))
 
 import handler from '~/pages/api/public/yields'
 
 beforeEach(() => {
 	vi.clearAllMocks()
-	vi.stubEnv('DATASET_CACHE_DISABLE', '1')
 	vi.stubEnv('NEXT_STATIC_REVALIDATE_JITTER_SECONDS', '0')
+	acquireYieldsSnapshotMock.mockResolvedValue(snapshot)
 	getTokenYieldsRowsMock.mockResolvedValue([{ pool: 'ETH-USDC' }])
 })
 
@@ -33,7 +36,8 @@ describe('yields api route', () => {
 
 		await handler(req, res)
 
-		expect(getTokenYieldsRowsMock).toHaveBeenCalledWith('ETH', 'Ethereum')
+		expect(acquireYieldsSnapshotMock).toHaveBeenCalledWith('background')
+		expect(getTokenYieldsRowsMock).toHaveBeenCalledWith(snapshot, 'ETH', 'Ethereum')
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600')
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith([{ pool: 'ETH-USDC' }])

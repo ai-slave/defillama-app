@@ -1,10 +1,8 @@
-import { fetchBlockExplorers } from '~/api'
 import type { BlockExplorersResponse } from '~/api/types'
 import { slug } from '~/utils'
 import { findBlockExplorerChain } from '~/utils/blockExplorers'
 import { normalizeLiquidationsTokenSymbol } from '~/utils/metadata/liquidations'
 import type { IChainMetadata, IProtocolMetadata } from '~/utils/metadata/types'
-import { fetchAllLiquidations, fetchProtocolLiquidations, fetchProtocolsList } from './api'
 import type {
 	LiquidationsDistributionChartData,
 	LiquidationsDistributionChartSeries,
@@ -43,50 +41,6 @@ interface ChainAggregate {
 }
 
 const LIQUIDATIONS_V2_TOTAL_BINS = 60
-const TOKEN_LIQUIDATIONS_CACHE_TTL_MS = 5 * 60 * 1000
-
-type TokenLiquidationsSnapshot = {
-	protocolsResponse: Awaited<ReturnType<typeof fetchProtocolsList>>
-	allResponse: Awaited<ReturnType<typeof fetchAllLiquidations>>
-}
-
-let tokenLiquidationsSnapshotCache: {
-	expiresAt: number
-	value: TokenLiquidationsSnapshot
-} | null = null
-let tokenLiquidationsSnapshotInFlight: Promise<TokenLiquidationsSnapshot> | null = null
-
-async function getTokenLiquidationsSnapshot(): Promise<TokenLiquidationsSnapshot> {
-	const now = Date.now()
-	if (tokenLiquidationsSnapshotCache && now < tokenLiquidationsSnapshotCache.expiresAt) {
-		return tokenLiquidationsSnapshotCache.value
-	}
-
-	if (tokenLiquidationsSnapshotInFlight) {
-		return tokenLiquidationsSnapshotInFlight
-	}
-
-	tokenLiquidationsSnapshotInFlight = Promise.all([fetchProtocolsList(), fetchAllLiquidations()])
-		.then(([protocolsResponse, allResponse]) => {
-			const value = { protocolsResponse, allResponse }
-			tokenLiquidationsSnapshotCache = {
-				expiresAt: Date.now() + TOKEN_LIQUIDATIONS_CACHE_TTL_MS,
-				value
-			}
-			return value
-		})
-		.finally(() => {
-			tokenLiquidationsSnapshotInFlight = null
-		})
-
-	return tokenLiquidationsSnapshotInFlight
-}
-
-export function resetTokenLiquidationsSnapshotCache() {
-	tokenLiquidationsSnapshotCache = null
-	tokenLiquidationsSnapshotInFlight = null
-}
-
 function getProtocolRef(
 	protocolId: string,
 	protocolMetadataLookup: Map<string, LiquidationsProtocolMetadata>
@@ -699,115 +653,4 @@ export function buildLiquidationsChainPageData(
 		ownerBlockExplorers,
 		positions
 	}
-}
-
-export async function getLiquidationsOverviewPageDataFromNetwork(
-	metadataCache: LiquidationsMetadataCache
-): Promise<LiquidationsOverviewPageProps> {
-	const [protocolsResponse, allResponse] = await Promise.all([fetchProtocolsList(), fetchAllLiquidations()])
-	return buildLiquidationsOverviewPageData(protocolsResponse, allResponse, metadataCache)
-}
-
-export async function getTokenLiquidationsSectionDataFromNetwork(
-	tokenSymbol: string,
-	metadataCache: LiquidationsMetadataCache
-): Promise<TokenLiquidationsSectionData | null> {
-	const { protocolsResponse, allResponse } = await getTokenLiquidationsSnapshot()
-	return buildTokenLiquidationsSectionData(tokenSymbol, protocolsResponse, allResponse, metadataCache)
-}
-
-export async function hasTokenLiquidationsDataFromNetwork(tokenSymbol: string): Promise<boolean> {
-	const { protocolsResponse, allResponse } = await getTokenLiquidationsSnapshot()
-	return hasTokenLiquidationsData(tokenSymbol, protocolsResponse, allResponse)
-}
-
-export async function getLiquidationsProtocolPageDataFromNetwork(
-	protocolParam: string,
-	metadataCache: LiquidationsMetadataCache
-): Promise<LiquidationsProtocolPageProps | null> {
-	const blockExplorersPromise = fetchBlockExplorers().catch((): BlockExplorersResponse => [])
-	const protocolsResponse = await fetchProtocolsList()
-	const protocolMetadataLookup = createProtocolMetadataLookup(metadataCache.protocolMetadata)
-	const protocolId = resolveProtocolId(protocolParam, protocolsResponse.protocols, protocolMetadataLookup)
-
-	if (!protocolId) {
-		return null
-	}
-
-	const [protocolResponse, blockExplorers] = await Promise.all([
-		fetchProtocolLiquidations(protocolId),
-		blockExplorersPromise
-	])
-
-	return buildLiquidationsProtocolPageData(
-		protocolId,
-		protocolsResponse.protocols,
-		protocolResponse.data,
-		protocolResponse.timestamp,
-		blockExplorers,
-		metadataCache
-	)
-}
-
-export async function getLiquidationsChainPageDataFromNetwork(
-	protocolParam: string,
-	chainParam: string,
-	metadataCache: LiquidationsMetadataCache
-): Promise<LiquidationsChainPageProps | null> {
-	const blockExplorersPromise = fetchBlockExplorers().catch((): BlockExplorersResponse => [])
-	const protocolsResponse = await fetchProtocolsList()
-	const protocolMetadataLookup = createProtocolMetadataLookup(metadataCache.protocolMetadata)
-	const protocolId = resolveProtocolId(protocolParam, protocolsResponse.protocols, protocolMetadataLookup)
-
-	if (!protocolId) {
-		return null
-	}
-
-	const protocolResponse = await fetchProtocolLiquidations(protocolId)
-	const chainIds = Object.keys(protocolResponse.data)
-	const chainId = resolveChainId(chainParam, chainIds, metadataCache.chainMetadata)
-
-	if (!chainId) {
-		return null
-	}
-
-	const blockExplorers = await blockExplorersPromise
-
-	return buildLiquidationsChainPageData(
-		protocolId,
-		chainId,
-		protocolsResponse.protocols,
-		protocolResponse.data,
-		protocolResponse.timestamp,
-		blockExplorers,
-		metadataCache
-	)
-}
-
-export async function getLiquidationsOverviewPageData(
-	metadataCache: LiquidationsMetadataCache
-): Promise<LiquidationsOverviewPageProps> {
-	return getLiquidationsOverviewPageDataFromNetwork(metadataCache)
-}
-
-export async function getTokenLiquidationsSectionData(
-	tokenSymbol: string,
-	metadataCache: LiquidationsMetadataCache
-): Promise<TokenLiquidationsSectionData | null> {
-	return getTokenLiquidationsSectionDataFromNetwork(tokenSymbol, metadataCache)
-}
-
-export async function getLiquidationsProtocolPageData(
-	protocolParam: string,
-	metadataCache: LiquidationsMetadataCache
-): Promise<LiquidationsProtocolPageProps | null> {
-	return getLiquidationsProtocolPageDataFromNetwork(protocolParam, metadataCache)
-}
-
-export async function getLiquidationsChainPageData(
-	protocolParam: string,
-	chainParam: string,
-	metadataCache: LiquidationsMetadataCache
-): Promise<LiquidationsChainPageProps | null> {
-	return getLiquidationsChainPageDataFromNetwork(protocolParam, chainParam, metadataCache)
 }

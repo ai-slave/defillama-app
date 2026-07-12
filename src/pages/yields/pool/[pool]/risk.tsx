@@ -27,12 +27,13 @@ const getServerSidePropsHandler: GetServerSideProps<RiskPageProps> = async ({ pa
 		return { notFound: true }
 	}
 
-	const [{ getYieldPoolPageData }, { loadVaultRisk }] = await Promise.all([
-		import('~/containers/Yields/server/dataset'),
+	const [{ acquireYieldsSnapshot, getYieldPoolPageData }, { loadVaultRisk }] = await Promise.all([
+		import('~/containers/Yields/server/snapshot.reader.server'),
 		import('~/containers/Yields/VaultRisk/loader')
 	])
+	const snapshot = await acquireYieldsSnapshot('blocking')
 
-	const [result, vaultRisk] = await Promise.all([getYieldPoolPageData(poolId), loadVaultRisk(poolId)])
+	const [result, vaultRisk] = await Promise.all([getYieldPoolPageData(snapshot, poolId), loadVaultRisk(poolId)])
 
 	if (!result.data) {
 		return { notFound: true }

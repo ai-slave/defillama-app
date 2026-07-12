@@ -1,8 +1,8 @@
+import { fetchRaises } from '~/containers/Raises/server/dataset.server'
 import { slug } from '~/utils'
-import { fetchRaisesFromCache } from './dataset.cache'
 
-export async function getRaisesInvestorSlugsFromCache(): Promise<string[]> {
-	const raises = await fetchRaisesFromCache()
+export async function getRaisesInvestorSlugsFromSnapshot(): Promise<string[]> {
+	const { raises } = await fetchRaises()
 	const investorSlugs = new Set<string>()
 
 	for (const raise of raises) {

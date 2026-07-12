@@ -1,13 +1,14 @@
 import { Announcement } from '~/components/Announcement'
 import { disclaimer } from '~/containers/Yields/constants'
-import { getYieldPageData } from '~/containers/Yields/queries.server'
 import YieldPage from '~/containers/Yields/views/PoolsView'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('yields/stablecoins', async () => {
-	const data = await getYieldPageData()
+	const { acquireYieldsSnapshot, readYieldPageData } = await import('~/containers/Yields/server/snapshot.reader.server')
+	const snapshot = await acquireYieldsSnapshot('blocking')
+	const data = await readYieldPageData(snapshot)
 	const {
 		pools: _pools,
 		stablecoinInfoBySymbol: _stablecoinInfoBySymbol,

@@ -27,3 +27,20 @@ export function buildTokenRightsIndexes(entries: IRawTokenRightsEntry[]): TokenR
 
 	return { byDefillamaId, byProtocolName }
 }
+
+export function findTokenRightsByDefillamaId(
+	index: TokenRightsIndexes['byDefillamaId'],
+	defillamaId: string
+): IRawTokenRightsEntry | null {
+	if (!defillamaId) return null
+	return index[defillamaId] ?? null
+}
+
+export function findTokenRightsByProtocolName(
+	index: TokenRightsIndexes['byProtocolName'],
+	protocolName: string
+): IRawTokenRightsEntry | null {
+	const normalizedName = normalizeTokenRightsProtocolName(protocolName)
+	if (!normalizedName) return null
+	return index[normalizedName] ?? null
+}

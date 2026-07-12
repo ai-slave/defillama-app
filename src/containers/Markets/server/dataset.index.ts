@@ -40,3 +40,15 @@ export function resolveMarketsExchangeFromList(
 
 	return null
 }
+
+export function resolveCexMarketsBySlug(
+	index: CexMarketsSlugIndex,
+	defillamaSlug: string
+): CexMarketsSlugIndexEntry | null {
+	const key = slug(defillamaSlug)
+	return Object.hasOwn(index, key) ? index[key] : null
+}
+
+export function hasTokenMarketsSymbol(index: TokenMarketsSymbolIndex, symbol: string): boolean {
+	return Object.hasOwn(index, symbol.toLowerCase())
+}

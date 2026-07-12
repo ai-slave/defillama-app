@@ -1,15 +1,16 @@
 import { Announcement } from '~/components/Announcement'
 import { fetchEntityQuestions } from '~/containers/LlamaAI/api'
 import { disclaimer } from '~/containers/Yields/constants'
-import { getYieldPageData } from '~/containers/Yields/queries.server'
 import YieldPage from '~/containers/Yields/views/PoolsView'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('yields', async () => {
+	const { acquireYieldsSnapshot, readYieldPageData } = await import('~/containers/Yields/server/snapshot.reader.server')
+	const snapshot = await acquireYieldsSnapshot('blocking')
 	const [data, { questions: entityQuestions }] = await Promise.all([
-		getYieldPageData(),
+		readYieldPageData(snapshot),
 		fetchEntityQuestions('yields', 'page').catch(() => ({
 			questions: [] as string[]
 		}))

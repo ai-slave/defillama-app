@@ -14,9 +14,9 @@ That made the command a shallow Module: callers and maintainers had to understan
 
 Use `.cache/app-metadata/manifest.json` as the freshness and artifact-status contract for metadata artifacts. The manifest records the artifact version, pull timestamp, status (`ready` or `stub`), and artifact filenames.
 
-Keep the generated `.cache/app-metadata/*.json` filenames unchanged and separate from `.cache/datasets/*`. Metadata artifacts are loaded through a typed registry and included in standalone traces through `outputFileTracingIncludes`. Dataset cache remains runtime-loaded through its own manifest and runtime domain Modules.
+Keep the generated `.cache/app-metadata/*.json` filenames unchanged and separate from `.cache/dataset-snapshots/*`. Metadata artifacts are loaded through a typed registry and included in standalone traces through `outputFileTracingIncludes`. Dataset snapshots are runtime-loaded through version manifests and typed domain modules.
 
-Update 2026-05-20: metadata artifacts moved from the `.cache` root into `.cache/app-metadata/` so the generated artifact root contains separate app metadata and dataset cache trees.
+Update 2026-05-20: metadata artifacts moved from the `.cache` root into `.cache/app-metadata/` so the generated artifact root contains separate app metadata and dataset snapshot trees.
 
 Convert the pull command to TypeScript and split its implementation into Modules for artifact writing, freshness, stub policy, Tasty metrics, page ordering, and trending route generation.
 

@@ -15,7 +15,7 @@ vi.mock('~/containers/LiquidationsV2/RouteContent', () => ({
 	LiquidationsChainRouteContent: () => null
 }))
 
-vi.mock('~/containers/LiquidationsV2/server/dataset', () => ({
+vi.mock('~/containers/LiquidationsV2/server/dataset.server', () => ({
 	getLiquidationsProtocolsList: vi.fn(),
 	getLiquidationsProtocolChainIds: vi.fn()
 }))
@@ -36,7 +36,7 @@ vi.mock('~/utils/metadata', () => ({
 import {
 	getLiquidationsProtocolChainIds,
 	getLiquidationsProtocolsList
-} from '~/containers/LiquidationsV2/server/dataset'
+} from '~/containers/LiquidationsV2/server/dataset.server'
 import * as chainPage from '~/pages/liquidations/[protocol]/[chain]'
 import * as protocolPage from '~/pages/liquidations/[protocol]/index'
 import * as overviewPage from '~/pages/liquidations/index'

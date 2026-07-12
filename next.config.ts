@@ -1,9 +1,8 @@
 import type { NextConfig } from 'next'
+import { getStaticGenerationConfig } from './scripts/command/buildConfig'
 import { resolveBuildCommitSha } from './scripts/command/buildIdentity'
-import { getDatasetCacheTraceIncludes, type DatasetDomain } from './src/server/datasetCache/registry'
+import { getDatasetSnapshotTraceIncludes } from './src/server/datasetSnapshots/traceIncludes'
 import { legacyRedirects } from './src/server/routeRegistry/legacyRedirects'
-
-const datasetCacheIncludes = (...domains: DatasetDomain[]) => getDatasetCacheTraceIncludes(...domains)
 
 function resolveBuildId(): string | null {
 	return resolveBuildCommitSha({ env: process.env, projectDir: process.cwd() }) || null
@@ -14,34 +13,9 @@ const nextConfig: NextConfig = {
 	generateBuildId: resolveBuildId,
 	outputFileTracingIncludes: {
 		'/*': ['./.cache/app-metadata/**/*'],
-		'/cex/*': datasetCacheIncludes('markets'),
-		'/cex/markets/*': datasetCacheIncludes('markets'),
-		'/token/*': datasetCacheIncludes(
-			'markets',
-			'liquidations',
-			'raises',
-			'treasuries',
-			'yields',
-			'liquidity',
-			'token-rights',
-			'risk'
-		),
-		'/tokens': datasetCacheIncludes('markets', 'token-rights'),
-		'/token-rights': datasetCacheIncludes('token-rights'),
-		'/protocol/token-rights/*': datasetCacheIncludes('token-rights'),
-		'/protocol/yields/*': datasetCacheIncludes('yields'),
-		'/yields/pool/*': datasetCacheIncludes('yields'),
-		'/api/public/yields/borrow': datasetCacheIncludes('yields'),
-		'/api/public/yields/borrow-advanced': datasetCacheIncludes('yields'),
-		'/api/public/yields': datasetCacheIncludes('yields'),
-		'/api/public/yields/pools': datasetCacheIncludes('yields'),
-		'/api/public/yields/token-borrow-routes': datasetCacheIncludes('yields'),
-		'/api/public/tokens': datasetCacheIncludes('markets', 'token-rights'),
-		'/api/private/token-liquidations/*': datasetCacheIncludes('liquidations'),
-		'/api/private/liquidations': datasetCacheIncludes('liquidations'),
-		'/api/private/liquidations/*': datasetCacheIncludes('liquidations'),
-		'/api/private/liquidations/*/*': datasetCacheIncludes('liquidations')
+		...getDatasetSnapshotTraceIncludes()
 	},
+	experimental: getStaticGenerationConfig(process.env.VERCEL),
 	reactStrictMode: true,
 	reactCompiler: true,
 	// Increase timeout for static page generation (default is 60 seconds)

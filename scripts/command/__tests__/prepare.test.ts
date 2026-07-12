@@ -1,8 +1,20 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
 import { createPreparationSteps, runPreparationCommand, type PreparationStep } from '../prepare'
 import { CommandExitError } from '../timedStep'
 
 describe('preparation command', () => {
+	it('scopes the production heap override to the Next child process', () => {
+		const packageJson = JSON.parse(readFileSync('package.json', 'utf8')) as { scripts: { build: string } }
+		const wrapper = readFileSync('scripts/command/runPreparedNext.mjs', 'utf8')
+
+		expect(packageJson.scripts.build).toBe('node ./scripts/command/runPreparedNext.mjs production build --webpack')
+		expect(wrapper).not.toContain('BUILD_OLD_SPACE_OPTION')
+		expect(wrapper).not.toContain('--max-old-space-size=4096')
+		expect(wrapper).toContain("const buildNodeOptions = '--max-heap-size=6144'")
+		expect(wrapper).toContain('NODE_OPTIONS: buildNodeOptions')
+	})
+
 	it('creates default preparation steps in order', () => {
 		const steps = createPreparationSteps({
 			env: { NODE_ENV: 'test' },
@@ -13,7 +25,7 @@ describe('preparation command', () => {
 		expect(steps.map((step) => step.name)).toEqual([
 			'Metadata cache',
 			'Site navigation',
-			'Dataset cache',
+			'Dataset snapshot',
 			'llms.txt',
 			'robots.txt'
 		])

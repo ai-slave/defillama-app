@@ -4,6 +4,7 @@ import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const { runtimeMocks } = vi.hoisted(() => ({
 	runtimeMocks: {
+		acquireYieldsSnapshot: vi.fn(),
 		getYieldLoopPage: vi.fn(),
 		getYieldStrategyPage: vi.fn(),
 		getYieldLongShortPage: vi.fn(),
@@ -11,7 +12,9 @@ const { runtimeMocks } = vi.hoisted(() => ({
 	}
 }))
 
-vi.mock('~/containers/Yields/server/dataset', () => runtimeMocks)
+vi.mock('~/containers/Yields/server/snapshot.reader.server', () => runtimeMocks)
+
+const snapshot = { handle: {} }
 
 import halalHandler from '~/pages/api/public/yields/halal'
 import loopHandler from '~/pages/api/public/yields/loop'
@@ -29,8 +32,9 @@ const response = {
 beforeEach(() => {
 	vi.clearAllMocks()
 	vi.stubEnv('NEXT_STATIC_REVALIDATE_JITTER_SECONDS', '0')
+	runtimeMocks.acquireYieldsSnapshot.mockResolvedValue(snapshot)
 	for (const mock of Object.values(runtimeMocks)) {
-		mock.mockResolvedValue(response)
+		if (mock !== runtimeMocks.acquireYieldsSnapshot) mock.mockResolvedValue(response)
 	}
 })
 
@@ -80,7 +84,8 @@ describe('route-specific yield table api routes', () => {
 
 		await handler(req, res)
 
-		expect(runtime).toHaveBeenCalledWith({
+		expect(runtimeMocks.acquireYieldsSnapshot).toHaveBeenCalledWith('background')
+		expect(runtime).toHaveBeenCalledWith(snapshot, {
 			page: '2',
 			pageSize: '10',
 			sortBy: 'apy',

@@ -7,7 +7,7 @@
 	"sideEffects": false,
 	"scripts": {
 		"analyze": "next experimental-analyze",
-		"build": "node --max-old-space-size=6144 ./scripts/command/runPreparedNext.mjs production build --webpack",
+		"build": "node ./scripts/command/runPreparedNext.mjs production build --webpack",
 		"build:deploy": "bun ./scripts/command/deployBuildCli.ts",
 		"build:metadata": "bun ./scripts/command/prepareCli.ts",
 		"build:next": "next build",
@@ -20,9 +20,11 @@
 		"prepare": "git config core.hooksPath .githooks || true",
 		"start": "next start",
 		"start:docker": "sh ./scripts/docker-entrypoint.sh .next/standalone/server.js",
+		"snapshots:refresh": "bun scripts/refreshDatasetSnapshots.ts",
 		"test": "vitest run",
 		"test:typecheck": "tsgo -p tsconfig.vitest.json --noEmit",
-		"typecheck": "tsgo --noEmit"
+		"typecheck": "tsgo --noEmit",
+		"verify:dataset-snapshot-build": "bun scripts/verifyDatasetSnapshotBuild.ts"
 	},
 	"dependencies": {
 		"@ariakit/react": "0.4.32",

@@ -1,5 +1,5 @@
 import TokensPage from '~/containers/Tokens'
-import { getTokensPageData } from '~/containers/Tokens/queries'
+import { getTokensPageData } from '~/containers/Tokens/queries.server'
 import type { TokensPageProps } from '~/containers/Tokens/types'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'

@@ -89,28 +89,18 @@ vi.mock('~/utils/metadata', () => ({
 	default: metadataCache
 }))
 
-vi.mock('~/containers/LiquidationsV2/server/dataset.cache', () => ({
-	getLiquidationsProtocolsResponseFromCache: vi.fn().mockResolvedValue({ protocols: ['aave'] }),
-	getLiquidationsProtocolChainIdsFromCache: vi.fn().mockResolvedValue(['ethereum'])
+vi.mock('~/containers/LiquidationsV2/server/routeData', () => ({
+	getLiquidationsSitemapProtocolChainsFromSnapshot: vi
+		.fn()
+		.mockResolvedValue([{ protocolId: 'aave', chainIds: ['ethereum'] }])
 }))
 
-vi.mock('~/containers/Markets/server/dataset.cache', () => ({
-	fetchExchangeMarketsListFromCache: vi.fn().mockResolvedValue({
-		cex: {
-			spot: [{ defillama_slug: 'Binance', exchange: 'binance', market_count: 1, total_volume_24h: 1 }],
-			linear_perp: [],
-			inverse_perp: []
-		}
-	})
+vi.mock('~/containers/Cexs/server/routeData', () => ({
+	getCexMarketSlugsFromSnapshot: vi.fn().mockResolvedValue(['binance'])
 }))
 
-vi.mock('~/containers/Raises/server/dataset.cache', () => ({
-	fetchRaisesFromCache: vi.fn().mockResolvedValue([
-		{
-			leadInvestors: ['Paradigm'],
-			otherInvestors: ['a16z']
-		}
-	])
+vi.mock('~/containers/Raises/server/routeData', () => ({
+	getRaisesInvestorSlugsFromSnapshot: vi.fn().mockResolvedValue(['paradigm', 'a16z'])
 }))
 
 import { buildAppSitemapSections, getSitemapSection, getSitemapSectionPath } from '~/server/routeRegistry/sitemap'
@@ -152,7 +142,7 @@ afterEach(() => {
 })
 
 describe('cache-backed sitemap sections', () => {
-	it('builds grouped public routes from metadata and dataset cache only', async () => {
+	it('builds grouped public routes from metadata and dataset snapshots only', async () => {
 		const sections = await buildAppSitemapSections()
 		const entriesBySection = new Map(
 			sections.map((section) => [section.id, section.entries.map((entry) => entry.path)])
@@ -220,12 +210,12 @@ describe('cache-backed sitemap sections', () => {
 	})
 
 	it('serves the previous sitemap snapshot while an expired cache refresh fails', async () => {
-		const { fetchExchangeMarketsListFromCache } = await import('~/containers/Markets/server/dataset.cache')
+		const { getCexMarketSlugsFromSnapshot } = await import('~/containers/Cexs/server/routeData')
 		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
 		await buildAppSitemapSections()
 		vi.useFakeTimers({ now: Date.now() + 60 * 60 * 1000 + 1 })
-		vi.mocked(fetchExchangeMarketsListFromCache).mockRejectedValueOnce(new Error('refresh failed'))
+		vi.mocked(getCexMarketSlugsFromSnapshot).mockRejectedValueOnce(new Error('refresh failed'))
 
 		const section = await getSitemapSection('cexs.xml')
 
@@ -238,9 +228,9 @@ describe('cache-backed sitemap sections', () => {
 	})
 
 	it('keeps building other sitemap sections when one cold section fails', async () => {
-		const { fetchExchangeMarketsListFromCache } = await import('~/containers/Markets/server/dataset.cache')
+		const { getCexMarketSlugsFromSnapshot } = await import('~/containers/Cexs/server/routeData')
 		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-		vi.mocked(fetchExchangeMarketsListFromCache).mockRejectedValueOnce(new Error('cache unavailable'))
+		vi.mocked(getCexMarketSlugsFromSnapshot).mockRejectedValueOnce(new Error('snapshot unavailable'))
 		vi.resetModules()
 		const sitemapModule = await import('~/server/routeRegistry/sitemap')
 

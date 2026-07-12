@@ -6,7 +6,7 @@ import { badRequest, notFound, okSerializedJson, upstreamError } from '~/server/
 import { cachedJsonResult } from '~/server/api/resultCache'
 import { defineApiRoute } from '~/server/api/types'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
-import { resolveMarketsExchangeByParam } from './dataset'
+import { resolveMarketsExchangeByParam } from './dataset.server'
 import { fetchExchangeMarketsFromNetwork } from './upstream'
 
 const MARKETS_RESPONSE_CACHE_TTL_MS = 5 * 60 * 1000

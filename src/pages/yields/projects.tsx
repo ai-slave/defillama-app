@@ -1,7 +1,6 @@
 import { Announcement } from '~/components/Announcement'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { disclaimer } from '~/containers/Yields/constants'
-import { getYieldPageData } from '~/containers/Yields/queries.server'
 import { YieldsProjectsTable } from '~/containers/Yields/Tables/Projects'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -21,7 +20,9 @@ function median(numbers) {
 }
 
 export const getStaticProps = withPerformanceLogging('yields/projects', async () => {
-	let data = await getYieldPageData()
+	const { acquireYieldsSnapshot, readYieldPageData } = await import('~/containers/Yields/server/snapshot.reader.server')
+	const snapshot = await acquireYieldsSnapshot('blocking')
+	let data = await readYieldPageData(snapshot)
 	data.props.pools = data.props.pools.filter((p) => p.apy > 0)
 
 	const projects = {}

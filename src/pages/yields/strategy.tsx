@@ -6,8 +6,10 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('yields/strategy', async () => {
-	const { getYieldStrategyPageMetadata } = await import('~/containers/Yields/server/dataset')
-	const metadata = await getYieldStrategyPageMetadata()
+	const { acquireYieldsSnapshot, getYieldStrategyPageMetadata } =
+		await import('~/containers/Yields/server/snapshot.reader.server')
+	const snapshot = await acquireYieldsSnapshot('blocking')
+	const metadata = await getYieldStrategyPageMetadata(snapshot)
 
 	return {
 		props: metadata,

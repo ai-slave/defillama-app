@@ -6,11 +6,9 @@ import { defineApiRoute } from '~/server/api/types'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
 
-// All of these read through the dataset cache runtime
-// (containers/Yields/server/dataset.ts), which already memoizes the heavy
-// artifact reads in process with background refresh (jsonCache.ts). The
-// per-request work is light query shaping, so no cachedResult here.
-const YIELDS_DATASET_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=3600'
+// The current immutable snapshot handle memoizes parsed artifacts by snapshot ID.
+// Per-request work is light query shaping, so no result cache is needed here.
+const YIELDS_RESPONSE_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=3600'
 
 // chartLendBorrow/holders proxy the yields server directly; holders payloads
 // are multi-MB and these routes average multiple seconds, so upstream
@@ -30,13 +28,15 @@ async function fetchYieldsServerJson(path: string): Promise<unknown> {
 
 export const yieldsDataset = defineApiRoute({
 	route: '/api/public/yields',
-	cacheControl: YIELDS_DATASET_CACHE_CONTROL,
+	cacheControl: YIELDS_RESPONSE_CACHE_CONTROL,
 	handle: async (req) => {
 		try {
 			const { chains, token } = req.query
 			const tokenFilter = typeof token === 'string' ? token.trim() : Array.isArray(token) ? token[0]?.trim() : ''
-			const { getTokenYieldsRows } = await import('~/containers/Yields/server/dataset')
-			return ok(await getTokenYieldsRows(tokenFilter, chains))
+			const { acquireYieldsSnapshot, getTokenYieldsRows } =
+				await import('~/containers/Yields/server/snapshot.reader.server')
+			const snapshot = await acquireYieldsSnapshot('background')
+			return ok(await getTokenYieldsRows(snapshot, tokenFilter, chains))
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch yields data')
@@ -46,7 +46,7 @@ export const yieldsDataset = defineApiRoute({
 
 export const yieldsTokenBorrowRoutes = defineApiRoute({
 	route: '/api/public/yields/token-borrow-routes',
-	cacheControl: YIELDS_DATASET_CACHE_CONTROL,
+	cacheControl: YIELDS_RESPONSE_CACHE_CONTROL,
 	handle: async (req) => {
 		const tokenQuery = req.query.token
 		const token =
@@ -61,8 +61,10 @@ export const yieldsTokenBorrowRoutes = defineApiRoute({
 		}
 
 		try {
-			const { getTokenBorrowRoutes } = await import('~/containers/Yields/server/dataset')
-			return ok(await getTokenBorrowRoutes(token))
+			const { acquireYieldsSnapshot, getTokenBorrowRoutes } =
+				await import('~/containers/Yields/server/snapshot.reader.server')
+			const snapshot = await acquireYieldsSnapshot('background')
+			return ok(await getTokenBorrowRoutes(snapshot, token))
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			// Historical contract: token pages key off this exact header to skip
@@ -77,11 +79,13 @@ export const yieldsTokenBorrowRoutes = defineApiRoute({
 
 export const yieldsHalalDataset = defineApiRoute({
 	route: '/api/public/yields/halal',
-	cacheControl: YIELDS_DATASET_CACHE_CONTROL,
+	cacheControl: YIELDS_RESPONSE_CACHE_CONTROL,
 	handle: async (req) => {
 		try {
-			const { getYieldHalalPage } = await import('~/containers/Yields/server/dataset')
-			return ok(await getYieldHalalPage(req.query))
+			const { acquireYieldsSnapshot, getYieldHalalPage } =
+				await import('~/containers/Yields/server/snapshot.reader.server')
+			const snapshot = await acquireYieldsSnapshot('background')
+			return ok(await getYieldHalalPage(snapshot, req.query))
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch halal yield data')
@@ -91,11 +95,13 @@ export const yieldsHalalDataset = defineApiRoute({
 
 export const yieldsLoopDataset = defineApiRoute({
 	route: '/api/public/yields/loop',
-	cacheControl: YIELDS_DATASET_CACHE_CONTROL,
+	cacheControl: YIELDS_RESPONSE_CACHE_CONTROL,
 	handle: async (req) => {
 		try {
-			const { getYieldLoopPage } = await import('~/containers/Yields/server/dataset')
-			return ok(await getYieldLoopPage(req.query))
+			const { acquireYieldsSnapshot, getYieldLoopPage } =
+				await import('~/containers/Yields/server/snapshot.reader.server')
+			const snapshot = await acquireYieldsSnapshot('background')
+			return ok(await getYieldLoopPage(snapshot, req.query))
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch yield loop data')
@@ -105,11 +111,13 @@ export const yieldsLoopDataset = defineApiRoute({
 
 export const yieldsPoolsDataset = defineApiRoute({
 	route: '/api/public/yields/pools',
-	cacheControl: YIELDS_DATASET_CACHE_CONTROL,
+	cacheControl: YIELDS_RESPONSE_CACHE_CONTROL,
 	handle: async (req) => {
 		try {
-			const { getYieldPoolsPage } = await import('~/containers/Yields/server/dataset')
-			return ok(await getYieldPoolsPage(req.query))
+			const { acquireYieldsSnapshot, getYieldPoolsPage } =
+				await import('~/containers/Yields/server/snapshot.reader.server')
+			const snapshot = await acquireYieldsSnapshot('background')
+			return ok(await getYieldPoolsPage(snapshot, req.query))
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch yield pools data')
@@ -119,11 +127,13 @@ export const yieldsPoolsDataset = defineApiRoute({
 
 export const yieldsStrategyLongShortDataset = defineApiRoute({
 	route: '/api/public/yields/strategy-long-short',
-	cacheControl: YIELDS_DATASET_CACHE_CONTROL,
+	cacheControl: YIELDS_RESPONSE_CACHE_CONTROL,
 	handle: async (req) => {
 		try {
-			const { getYieldLongShortPage } = await import('~/containers/Yields/server/dataset')
-			return ok(await getYieldLongShortPage(req.query))
+			const { acquireYieldsSnapshot, getYieldLongShortPage } =
+				await import('~/containers/Yields/server/snapshot.reader.server')
+			const snapshot = await acquireYieldsSnapshot('background')
+			return ok(await getYieldLongShortPage(snapshot, req.query))
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch yield long short strategy data')
@@ -133,11 +143,13 @@ export const yieldsStrategyLongShortDataset = defineApiRoute({
 
 export const yieldsStrategyDataset = defineApiRoute({
 	route: '/api/public/yields/strategy',
-	cacheControl: YIELDS_DATASET_CACHE_CONTROL,
+	cacheControl: YIELDS_RESPONSE_CACHE_CONTROL,
 	handle: async (req) => {
 		try {
-			const { getYieldStrategyPage } = await import('~/containers/Yields/server/dataset')
-			return ok(await getYieldStrategyPage(req.query))
+			const { acquireYieldsSnapshot, getYieldStrategyPage } =
+				await import('~/containers/Yields/server/snapshot.reader.server')
+			const snapshot = await acquireYieldsSnapshot('background')
+			return ok(await getYieldStrategyPage(snapshot, req.query))
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch yield strategy data')
@@ -147,11 +159,13 @@ export const yieldsStrategyDataset = defineApiRoute({
 
 export const borrowDataset = defineApiRoute({
 	route: '/api/public/yields/borrow',
-	cacheControl: YIELDS_DATASET_CACHE_CONTROL,
+	cacheControl: YIELDS_RESPONSE_CACHE_CONTROL,
 	handle: async (req) => {
 		try {
-			const { getBorrowPageRows } = await import('~/containers/Yields/server/dataset')
-			return ok(await getBorrowPageRows(req.query))
+			const { acquireYieldsSnapshot, getBorrowPageRows } =
+				await import('~/containers/Yields/server/snapshot.reader.server')
+			const snapshot = await acquireYieldsSnapshot('background')
+			return ok(await getBorrowPageRows(snapshot, req.query))
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch borrow data')
@@ -161,11 +175,13 @@ export const borrowDataset = defineApiRoute({
 
 export const borrowAdvancedDataset = defineApiRoute({
 	route: '/api/public/yields/borrow-advanced',
-	cacheControl: YIELDS_DATASET_CACHE_CONTROL,
+	cacheControl: YIELDS_RESPONSE_CACHE_CONTROL,
 	handle: async (req) => {
 		try {
-			const { getBorrowAdvancedPageRows } = await import('~/containers/Yields/server/dataset')
-			return ok(await getBorrowAdvancedPageRows(req.query))
+			const { acquireYieldsSnapshot, getBorrowAdvancedPageRows } =
+				await import('~/containers/Yields/server/snapshot.reader.server')
+			const snapshot = await acquireYieldsSnapshot('background')
+			return ok(await getBorrowAdvancedPageRows(snapshot, req.query))
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch borrow advanced data')

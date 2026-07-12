@@ -57,7 +57,7 @@ export const getStaticProps = withPerformanceLogging(
 		const canonicalProtocol = protocolRoute.route.canonicalSlug
 
 		const defillamaId = protocolRoute.route.id
-		const { fetchTokenRightsEntryByDefillamaId } = await import('~/containers/TokenRights/server/dataset')
+		const { fetchTokenRightsEntryByDefillamaId } = await import('~/containers/TokenRights/server/dataset.server')
 		const [rawEntry, protocolData] = await Promise.all([
 			fetchTokenRightsEntryByDefillamaId(defillamaId),
 			fetchProtocolOverviewMetrics(canonicalProtocol)

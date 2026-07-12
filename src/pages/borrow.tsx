@@ -28,8 +28,10 @@ import { withPerformanceLogging } from '~/utils/perf'
 import { getQueryValue, pushShallowQuery } from '~/utils/routerQuery'
 
 export const getStaticProps = withPerformanceLogging('borrow', async () => {
-	const { getBorrowPageMetadata } = await import('~/containers/Yields/server/dataset')
-	const metadata = await getBorrowPageMetadata()
+	const { acquireYieldsSnapshot, getBorrowPageMetadata } =
+		await import('~/containers/Yields/server/snapshot.reader.server')
+	const snapshot = await acquireYieldsSnapshot('blocking')
+	const metadata = await getBorrowPageMetadata(snapshot)
 
 	return {
 		props: metadata,

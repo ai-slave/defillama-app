@@ -7,6 +7,6 @@ export type YieldPoolPageData = {
 }
 
 export type YieldPoolPageDataResult = {
-	source: 'cache' | 'network'
+	source: 'snapshot'
 	data: YieldPoolPageData | null
 }

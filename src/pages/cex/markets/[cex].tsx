@@ -76,7 +76,7 @@ export const getStaticProps = withPerformanceLogging(
 			return canonicalRouteRedirect(`/cex/markets/${cexRoute.canonicalSlug}`, true)
 		}
 
-		const { resolveCexMarketsByDefillamaSlug } = await import('~/containers/Markets/server/dataset')
+		const { resolveCexMarketsByDefillamaSlug } = await import('~/containers/Markets/server/dataset.server')
 		const cexMarkets = await resolveCexMarketsByDefillamaSlug(cexRoute.canonicalSlug).catch((error) => {
 			console.warn(`[cex/markets/[cex]] Failed to resolve markets exchange for ${exchangeName}`, error)
 			return null

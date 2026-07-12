@@ -9,7 +9,7 @@ const { resolveCexMarketsByDefillamaSlugMock } = vi.hoisted(() => ({
 	resolveCexMarketsByDefillamaSlugMock: vi.fn()
 }))
 
-vi.mock('~/containers/Markets/server/dataset', () => ({
+vi.mock('~/containers/Markets/server/dataset.server', () => ({
 	resolveCexMarketsByDefillamaSlug: resolveCexMarketsByDefillamaSlugMock
 }))
 

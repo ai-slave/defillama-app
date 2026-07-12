@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { hasTokenLiquidationsData } from '~/containers/LiquidationsV2/server/dataset'
+import { hasTokenLiquidationsData } from '~/containers/LiquidationsV2/server/dataset.server'
 import { getTokenIncomeStatement } from '~/containers/ProtocolOverview/queries'
 import { getTokenRiskData } from '~/containers/Token/queries'
 import type { TokenOverviewData } from '~/containers/Token/tokenOverview'
@@ -11,13 +11,13 @@ import {
 	fetchTokenRightsEntries,
 	fetchTokenRightsEntryByDefillamaId,
 	fetchTokenRightsEntryByName
-} from '~/containers/TokenRights/server/dataset'
+} from '~/containers/TokenRights/server/dataset.server'
 import { parseTokenRightsEntry } from '~/containers/TokenRights/utils'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
-import { getTokenBorrowRoutes, getTokenYieldsRows } from '~/containers/Yields/server/dataset'
+import { getTokenBorrowRoutes, getTokenYieldsRows } from '~/containers/Yields/server/snapshot.reader.server'
 import type { IYieldTableRow, IYieldsOptimizerTableRow } from '~/containers/Yields/Tables/types'
 import TokenPage, { getStaticPaths, getStaticProps } from '~/pages/token/[token]'
-import { DatasetCacheIntegrityError } from '~/server/datasetCache/core'
+import { DatasetSnapshotIntegrityError } from '~/server/datasetSnapshots/errors'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
 import type { TokenDirectory } from '~/utils/tokenDirectory'
 import type { TokenRiskResponse } from '../tokenRisk.types'
@@ -303,7 +303,7 @@ vi.mock('~/containers/Token/TokenMarketsSection', () => ({
 	}
 }))
 
-vi.mock('~/containers/Markets/server/dataset', () => ({
+vi.mock('~/containers/Markets/server/dataset.server', () => ({
 	hasTokenMarkets: vi.fn((symbol: string) => Promise.resolve(symbol.toLowerCase() === 'btc'))
 }))
 
@@ -370,7 +370,7 @@ vi.mock('~/utils/perf', () => ({
 	withPerformanceLogging: (_label: string, fn: any) => fn
 }))
 
-vi.mock('~/containers/TokenRights/server/dataset', () => ({
+vi.mock('~/containers/TokenRights/server/dataset.server', () => ({
 	fetchTokenRightsEntries: vi.fn(() => Promise.resolve(state.tokenRightsEntries)),
 	fetchTokenRightsEntryByDefillamaId: vi.fn((defillamaId: string) =>
 		Promise.resolve(
@@ -448,30 +448,31 @@ vi.mock('~/containers/Token/queries', async (importOriginal) => ({
 	getTokenRiskData: vi.fn(() => Promise.resolve(state.tokenRiskData))
 }))
 
-vi.mock('~/containers/Yields/server/dataset', () => ({
+vi.mock('~/containers/Yields/server/snapshot.reader.server', () => ({
+	acquireYieldsSnapshot: vi.fn().mockResolvedValue({ handle: {} }),
 	getTokenYieldsRows: vi.fn(() => Promise.resolve(state.initialYieldsRows)),
 	getTokenBorrowRoutes: vi.fn(() => Promise.resolve(state.initialTokenBorrowRoutesData)),
 	getYieldConfig: vi.fn(() => Promise.resolve(null))
 }))
 
-vi.mock('~/containers/LiquidationsV2/server/dataset', () => ({
+vi.mock('~/containers/LiquidationsV2/server/dataset.server', () => ({
 	hasTokenLiquidationsData: vi.fn(() => Promise.resolve(state.hasTokenLiquidationsData)),
 	getTokenLiquidationsSectionData: vi.fn()
 }))
 
-vi.mock('~/containers/Raises/server/dataset', () => ({
+vi.mock('~/containers/Raises/server/dataset.server', () => ({
 	fetchRaisesByDefillamaId: vi.fn().mockResolvedValue([])
 }))
 
-vi.mock('~/containers/Treasuries/server/dataset', () => ({
+vi.mock('~/containers/Treasuries/server/dataset.server', () => ({
 	fetchTreasuryById: vi.fn().mockResolvedValue(null)
 }))
 
-vi.mock('~/containers/Token/server/dataset.liquidity', () => ({
+vi.mock('~/containers/Token/server/dataset.liquidity.server', () => ({
 	fetchLiquidityEntryByProtocolId: vi.fn().mockResolvedValue(null)
 }))
 
-vi.mock('~/containers/Token/server/dataset.risk', () => ({
+vi.mock('~/containers/Token/server/dataset.risk.server', () => ({
 	getIndexedTokenRiskBorrowCapacity: vi.fn().mockResolvedValue({})
 }))
 
@@ -1502,9 +1503,9 @@ describe('token page', () => {
 		consoleErrorSpy.mockRestore()
 	})
 
-	it('rethrows dataset cache integrity errors from optional dataset sections', async () => {
+	it('rethrows dataset snapshot integrity errors from optional dataset sections', async () => {
 		state.liquidationsTokenSymbolsSet = new Set(['BTC'])
-		const integrityError = new DatasetCacheIntegrityError(
+		const integrityError = new DatasetSnapshotIntegrityError(
 			'liquidations',
 			'raw/all.json',
 			new Error('corrupt liquidations index')
