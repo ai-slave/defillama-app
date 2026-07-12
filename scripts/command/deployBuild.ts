@@ -27,6 +27,16 @@ type DeployBuildOptions = {
 	syncArtifacts?: (result: BuildResult) => Promise<unknown>
 }
 
+const REQUIRED_DEPLOY_BUILD_ENV = ['API_KEY'] as const
+
+function getMissingDeployBuildEnv(env: NodeJS.ProcessEnv): string[] {
+	const missing: string[] = []
+	for (const key of REQUIRED_DEPLOY_BUILD_ENV) {
+		if (!env[key]?.trim()) missing.push(key)
+	}
+	return missing
+}
+
 function createDefaultNextBuildRunner({
 	activeChildren,
 	env,
@@ -116,18 +126,27 @@ export async function runDeployBuild({
 	buildLogger.log('=======================')
 	buildLogger.log('')
 
-	const runPrepareStep =
-		runPrepare ??
-		(async () => {
-			const result = await runPreparationCommand({
-				env: buildEnv,
-				logger: buildLogger,
-				prefix: '[build:prepare]',
-				repoRoot: projectDir
+	const missingBuildEnv = getMissingDeployBuildEnv(buildEnv)
+	let exitCode = 1
+	if (missingBuildEnv.length > 0) {
+		buildLogger.log(
+			`[build:preflight] Missing required build environment: ${missingBuildEnv.join(', ')}. Configure it as a Coolify build secret.`
+		)
+		buildLogger.log('Skipping preparation due to failed build environment preflight')
+	} else {
+		const runPrepareStep =
+			runPrepare ??
+			(async () => {
+				const result = await runPreparationCommand({
+					env: buildEnv,
+					logger: buildLogger,
+					prefix: '[build:prepare]',
+					repoRoot: projectDir
+				})
+				return result.exitCode
 			})
-			return result.exitCode
-		})
-	let exitCode = await runPrepareStep()
+		exitCode = await runPrepareStep()
+	}
 
 	if (exitCode === 0) {
 		buildLogger.log('Next.js build started')

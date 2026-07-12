@@ -27,10 +27,11 @@ function createNow() {
 }
 
 function runDeployBuildTest(options: Parameters<typeof runDeployBuild>[0] = {}) {
+	const { env, ...rest } = options
 	return runDeployBuild({
-		env: testEnv(),
+		env: testEnv({ API_KEY: 'test-api-key', ...env }),
 		readGitCommitSha: () => 'test-git-sha',
-		...options
+		...rest
 	})
 }
 
@@ -42,6 +43,30 @@ afterEach(async () => {
 })
 
 describe('deploy build pipeline', () => {
+	it('stops before preparation when required build secrets are missing', async () => {
+		const logger = createMemoryLogger()
+		const runPrepare = vi.fn()
+		const runNextBuild = vi.fn()
+
+		const result = await runDeployBuildTest({
+			env: testEnv({ API_KEY: '' }),
+			findBuildId: vi.fn().mockResolvedValue(''),
+			logger,
+			now: createNow(),
+			notify: vi.fn(),
+			runNextBuild,
+			runPrepare,
+			syncArtifacts: vi.fn()
+		})
+
+		expect(result.exitCode).toBe(1)
+		expect(runPrepare).not.toHaveBeenCalled()
+		expect(runNextBuild).not.toHaveBeenCalled()
+		expect(logger.output.join('')).toContain(
+			'[build:preflight] Missing required build environment: API_KEY. Configure it as a Coolify build secret.'
+		)
+	})
+
 	it('stops before Next when preparation fails', async () => {
 		const runNextBuild = vi.fn()
 		const syncArtifacts = vi.fn()

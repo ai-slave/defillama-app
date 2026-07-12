@@ -172,7 +172,7 @@ describe('secret redaction', () => {
 		expect(() => logger.close()).not.toThrow()
 	})
 
-	it('keeps secret transport and dotenv loading out of the Dockerfile', async () => {
+	it('delegates ephemeral build secret injection to the deployment platform', async () => {
 		const dockerfile = await fs.readFile(path.join(process.cwd(), 'Dockerfile'), 'utf8')
 		const secretInstruction =
 			/^\s*(?:ARG|ENV)\s+\w*(?:API_KEY|TOKEN|SECRET|PASSWORD|AUTH|WEBHOOK|PRIVATE_KEY|ACCESS_KEY|CREDENTIAL|COOKIE|DATABASE_URL|DB_URL|POSTGRES_URL|REDIS_URL|CONNECTION_STRING)\w*/im
@@ -180,9 +180,8 @@ describe('secret redaction', () => {
 		expect(dockerfile).not.toMatch(secretInstruction)
 		expect(dockerfile).not.toContain('dotenvx')
 		expect(dockerfile).not.toContain('node_modules/@next/env')
-		expect(dockerfile).toContain('--mount=type=secret,id=BUILD_STATUS_WEBHOOK')
-		expect(dockerfile).toContain('--mount=type=secret,id=LOGGER_API_URL')
-		expect(dockerfile).toContain('--mount=type=secret,id=LOGGER_API_KEY')
+		expect(dockerfile).toContain('# syntax=docker/dockerfile:1.10')
+		expect(dockerfile).toContain('RUN bash ./scripts/build.sh')
 	})
 
 	it('adds context to build log open failures', async () => {

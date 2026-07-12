@@ -47,13 +47,10 @@ ARG BUILD_NOTIFY_USERS
 # metadata allowed through .dockerignore.
 ENV SOURCE_COMMIT=${SOURCE_COMMIT}
 
-RUN --mount=type=secret,id=BUILD_STATUS_WEBHOOK \
-  --mount=type=secret,id=LOGGER_API_URL \
-  --mount=type=secret,id=LOGGER_API_KEY \
-  if [ -f /run/secrets/BUILD_STATUS_WEBHOOK ]; then export BUILD_STATUS_WEBHOOK="$(cat /run/secrets/BUILD_STATUS_WEBHOOK)"; fi; \
-  if [ -f /run/secrets/LOGGER_API_URL ]; then export LOGGER_API_URL="$(cat /run/secrets/LOGGER_API_URL)"; fi; \
-  if [ -f /run/secrets/LOGGER_API_KEY ]; then export LOGGER_API_KEY="$(cat /run/secrets/LOGGER_API_KEY)"; fi; \
-  bash ./scripts/build.sh
+# Keep this mount-free: Coolify adds every configured build secret as an
+# ephemeral environment-backed secret mount. An explicit mount here prevents
+# Coolify from adding the rest of the build environment.
+RUN bash ./scripts/build.sh
 
 FROM bun-base AS runner
 
