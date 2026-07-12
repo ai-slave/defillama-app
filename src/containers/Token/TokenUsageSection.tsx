@@ -258,6 +258,7 @@ export function TokenUsageSection({
 					table={table}
 					pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
 					tableClassName="mx-auto w-auto min-w-[720px] max-w-full"
+					shell="none"
 				/>
 			)}
 		</TokenPrivateSectionGate>

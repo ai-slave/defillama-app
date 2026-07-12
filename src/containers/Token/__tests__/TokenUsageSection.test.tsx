@@ -11,9 +11,10 @@ const { DynamicPaginatedTable, paginatedTableCalls } = vi.hoisted(() => {
 		pageSize: number
 		renderedNames: string[]
 		rowCount: number
+		shell: 'default' | 'none' | undefined
 	}> = []
 
-	const DynamicPaginatedTable = ({ table, pageSizeOptions }: any) => {
+	const DynamicPaginatedTable = ({ table, pageSizeOptions, shell }: any) => {
 		const rows = table.getRowModel().rows
 		const rowCount = table.getRowCount()
 		const { pageIndex, pageSize } = table.getState().pagination
@@ -26,7 +27,8 @@ const { DynamicPaginatedTable, paginatedTableCalls } = vi.hoisted(() => {
 			pageIndex,
 			pageSize,
 			renderedNames: rows.map((row: any) => row.original.name),
-			rowCount
+			rowCount,
+			shell
 		})
 
 		return (
@@ -254,6 +256,7 @@ describe('TokenUsageSection', () => {
 		expect(defaultHtml).toContain('Rows per page')
 		expect(defaultTableCall?.availablePageSizeOptions).toEqual([10, 20])
 		expect(defaultTableCall?.pageSize).toBe(10)
+		expect(defaultTableCall?.shell).toBe('none')
 		expect(defaultHtml).toContain('Page 1 of 3')
 		expect(expandedTableCall?.renderedNames).toContain('Protocol 2')
 		expect(expandedTableCall?.renderedNames).toContain('Protocol 11')

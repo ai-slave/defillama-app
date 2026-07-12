@@ -1,4 +1,5 @@
 import { BasicLink } from '~/components/Link'
+import { Card } from '~/ui/Card'
 import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum, slug } from '~/utils'
 import { FeesGeneratedChart } from './FeesGeneratedChart'
@@ -14,7 +15,10 @@ export const SmolStats = (props: IChainOverviewData) => {
 			{props.chain === 'All' ? (
 				<>
 					{props.unlocks?.chart?.length > 0 ? (
-						<div className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 rounded-lg border border-subtle bg-surface p-2 xl:min-h-[71px] xl:flex-row xl:flex-nowrap xl:gap-2 xl:*:last:flex-1">
+						<Card
+							padding="sm"
+							className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 xl:min-h-[71px] xl:flex-row xl:flex-nowrap xl:gap-2 xl:*:last:flex-1"
+						>
 							<div className="flex flex-col gap-1">
 								<Tooltip
 									render={<BasicLink href="/unlocks" />}
@@ -33,10 +37,13 @@ export const SmolStats = (props: IChainOverviewData) => {
 								data={props.unlocks.chart}
 								className={'my-auto h-[53px] md:h-[132px] xl:h-[53px]'}
 							/>
-						</div>
+						</Card>
 					) : null}
 					{props.dexs?.chart?.length > 0 ? (
-						<div className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 rounded-lg border border-subtle bg-surface p-2 xl:min-h-[71px] xl:flex-row xl:flex-nowrap xl:gap-2 xl:*:last:flex-1">
+						<Card
+							padding="sm"
+							className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 xl:min-h-[71px] xl:flex-row xl:flex-nowrap xl:gap-2 xl:*:last:flex-1"
+						>
 							<div className="flex flex-col gap-1">
 								<Tooltip
 									render={<BasicLink href={props.metadata.name === 'All' ? '/dexs' : `/dexs/chain/${chainSlug}`} />}
@@ -52,10 +59,13 @@ export const SmolStats = (props: IChainOverviewData) => {
 								) : null}
 							</div>
 							<SmolBarChart series={props.dexs.chart} className={'my-auto h-[53px] md:h-[132px] xl:h-[53px]'} />
-						</div>
+						</Card>
 					) : null}
 					{props.etfs?.length > 0 ? (
-						<div className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 rounded-lg border border-subtle bg-surface p-2 xl:min-h-[71px] xl:flex-row xl:flex-nowrap xl:gap-2 xl:*:last:flex-1">
+						<Card
+							padding="sm"
+							className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 xl:min-h-[71px] xl:flex-row xl:flex-nowrap xl:gap-2 xl:*:last:flex-1"
+						>
 							<div className="flex flex-col gap-1">
 								<Tooltip
 									render={<BasicLink href="/etfs" />}
@@ -72,10 +82,10 @@ export const SmolStats = (props: IChainOverviewData) => {
 								) : null}
 							</div>
 							<SmolBarChart series={props.etfs} className={'my-auto h-[53px] md:h-[132px] xl:h-[53px]'} />
-						</div>
+						</Card>
 					) : null}
 					{props.datInflows?.chart?.length > 0 ? (
-						<div className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1 rounded-lg border border-subtle bg-surface p-2">
+						<Card padding="sm" className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1">
 							<div className="flex flex-col gap-1 xl:flex-row xl:items-start xl:justify-between">
 								<Tooltip
 									render={<BasicLink href="/digital-asset-treasuries" />}
@@ -95,11 +105,11 @@ export const SmolStats = (props: IChainOverviewData) => {
 								className={'my-auto h-[53px] md:h-[132px] xl:h-[156px]'}
 								groupBy="weekly"
 							/>
-						</div>
+						</Card>
 					) : null}
 				</>
 			) : props.dexs?.chart?.length > 0 ? (
-				<div className="col-span-1 flex h-[196px] flex-col gap-1 rounded-lg border border-subtle bg-surface p-2">
+				<Card padding="sm" className="col-span-1 flex h-[196px] flex-col gap-1">
 					<Tooltip
 						render={<BasicLink href={props.metadata.name === 'All' ? '/dexs' : `/dexs/chain/${chainSlug}`} />}
 						className="text-sm font-semibold"
@@ -115,10 +125,10 @@ export const SmolStats = (props: IChainOverviewData) => {
 						</p>
 					) : null}
 					<SmolBarChart series={props.dexs.chart} />
-				</div>
+				</Card>
 			) : null}
 			{props.chainFees?.topProtocolsChart?.length > 0 ? (
-				<div className="col-span-1 flex h-[196px] flex-col gap-1 rounded-lg border border-subtle bg-surface p-2">
+				<Card padding="sm" className="col-span-1 flex h-[196px] flex-col gap-1">
 					<div className="flex items-start justify-between gap-4">
 						<Tooltip
 							render={<BasicLink href={props.metadata.name === 'All' ? '/fees' : `/fees/chain/${chainSlug}`} />}
@@ -136,10 +146,10 @@ export const SmolStats = (props: IChainOverviewData) => {
 						) : null}
 					</div>
 					<FeesGeneratedChart series={props.chainFees.topProtocolsChart} />
-				</div>
+				</Card>
 			) : null}
 			{props.stablecoins?.mcapChartData?.length > 0 ? (
-				<div className="col-span-1 flex h-[196px] flex-col gap-1 rounded-lg border border-subtle bg-surface p-2">
+				<Card padding="sm" className="col-span-1 flex h-[196px] flex-col gap-1">
 					<Tooltip
 						placement="top-start"
 						render={<BasicLink href={props.metadata.name === 'All' ? '/stablecoins' : `/stablecoins/${chainSlug}`} />}
@@ -165,7 +175,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 						series={props.stablecoins.mcapChartData}
 						color={+props.stablecoins.change7d >= 0 ? 'green' : 'red'}
 					/>
-				</div>
+				</Card>
 			) : null}
 		</div>
 	)

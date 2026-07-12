@@ -113,13 +113,15 @@ function Support() {
 				<h1 className="text-center heading-sm">Support</h1>
 
 				<div className="flex flex-col gap-3">
-					<a
+					<Card
+						as="a"
+						padding="md"
 						href="mailto:support@defillama.com"
-						className="flex flex-col gap-1 rounded-lg border border-subtle bg-surface p-4 text-center hover:bg-hover-row focus-visible:bg-hover-row"
+						className="hover-wash-card flex flex-col gap-1 text-center"
 					>
 						<span className="font-semibold">Email Us</span>
 						<span className="body-sm text-secondary">support@defillama.com</span>
-					</a>
+					</Card>
 
 					<Card
 						padding="md"

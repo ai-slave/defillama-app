@@ -100,16 +100,14 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 
 	return (
 		<>
-			<div className="flex items-center gap-3 rounded-lg border border-subtle bg-surface">
-				<MultiSelectCombobox
-					data={protocolsList}
-					placeholder="Select Protocols..."
-					selectedValues={selectedProtocolsNames}
-					setSelectedValues={(values) => {
-						void pushShallowQuery(router, { protocol: values.length > 0 ? values : undefined })
-					}}
-				/>
-			</div>
+			<MultiSelectCombobox
+				data={protocolsList}
+				placeholder="Select Protocols..."
+				selectedValues={selectedProtocolsNames}
+				setSelectedValues={(values) => {
+					void pushShallowQuery(router, { protocol: values.length > 0 ? values : undefined })
+				}}
+			/>
 			{selectedProtocols.length > 1 ? (
 				<div className="relative flex flex-col gap-2">
 					<ChartPanel>

@@ -12,7 +12,7 @@ import { chainCoingeckoIdsForGasNotMcap } from '~/constants/chainTokens'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { TVL_SETTINGS_KEYS, useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { buttonStyles } from '~/ui/Button'
-import { StatItem } from '~/ui/SummaryStats'
+import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
 import { downloadCSV } from '~/utils/download'
@@ -131,12 +131,8 @@ export function Stats(props: IStatsProps) {
 	const handleDownloadChartCsv = () => downloadAndPrepareChartCsv()
 
 	return (
-		<div className="relative isolate grid h-full grid-cols-2 gap-2 xl:grid-cols-3">
-			<div
-				className={`col-span-2 flex w-full flex-col gap-6 overflow-x-auto rounded-lg border border-subtle bg-surface px-2 py-3 ${
-					props.hideChart ? 'xl:col-span-full' : 'xl:col-span-1'
-				}`}
-			>
+		<SummaryCardGrid className="h-full">
+			<SummaryStatsCard padding="sm" className={props.hideChart ? 'xl:col-span-full' : undefined}>
 				{props.metadata.name !== 'All' ? (
 					<h1 className="flex flex-nowrap items-center gap-2 *:last:ml-auto">
 						<TokenLogo name={props.metadata.name} kind="chain" size={24} alt={`Logo of ${props.metadata.name}`} />
@@ -223,7 +219,7 @@ export function Stats(props: IStatsProps) {
 					smol
 					className="ml-auto"
 				/>
-			</div>
+			</SummaryStatsCard>
 			{!props.hideChart ? (
 				<ChainChartPanel
 					charts={props.charts}
@@ -243,6 +239,6 @@ export function Stats(props: IStatsProps) {
 					darkMode={darkMode}
 				/>
 			) : null}
-		</div>
+		</SummaryCardGrid>
 	)
 }

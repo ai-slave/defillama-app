@@ -358,7 +358,7 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 	return (
 		<>
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-				<div className="flex-1 rounded-lg border border-subtle bg-surface">
+				<div className="flex-1">
 					<MultiSelectCombobox
 						data={chains}
 						placeholder="Select Chains..."
