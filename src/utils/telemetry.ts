@@ -274,12 +274,12 @@ function errorFields(error: unknown): { error_name?: string; error_message: stri
 	if (error instanceof Error) {
 		return {
 			error_name: error.name,
-			error_message: error.message,
-			...(error.stack ? { error_stack: error.stack } : null)
+			error_message: redactSecrets(error.message),
+			...(error.stack ? { error_stack: redactSecrets(error.stack) } : null)
 		}
 	}
 
-	return { error_message: String(error) }
+	return { error_message: redactSecrets(String(error)) }
 }
 
 export function getPayloadBytes(value: unknown): number | undefined {
@@ -401,7 +401,7 @@ export function recordTelemetry(event: TelemetryEvent): void {
 			queue.shift()
 		}
 
-		queue.push(withTelemetryTargetAttribute(event))
+		queue.push(withTelemetryTargetAttribute(redactTelemetryStrings(event) as TelemetryEvent))
 
 		if (queue.length >= batchSize() && !isCircuitOpen()) {
 			void flushTelemetry({ timeoutMs: getEnvNumber('OPS_TELEMETRY_BACKGROUND_FLUSH_MS', 1000) })
@@ -851,7 +851,12 @@ function isSensitiveKey(key: string): boolean {
 		lower.includes('token') ||
 		lower.includes('secret') ||
 		lower.includes('password') ||
-		lower.includes('authorization')
+		lower.includes('authorization') ||
+		lower.includes('database_url') ||
+		lower.includes('db_url') ||
+		lower.includes('postgres_url') ||
+		lower.includes('redis_url') ||
+		lower.includes('connection_string')
 	)
 }
 
@@ -865,6 +870,11 @@ function redactSecrets(value: string): string {
 
 		redacted = redacted.split(secret).join('[REDACTED]')
 		redacted = redacted.split(encodeURIComponent(secret)).join('[REDACTED]')
+		for (const line of secret.split(/\r?\n/)) {
+			if (line.length < 4) continue
+			redacted = redacted.split(line).join('[REDACTED]')
+			redacted = redacted.split(encodeURIComponent(line)).join('[REDACTED]')
+		}
 	}
 
 	return redacted
@@ -1068,6 +1078,18 @@ function redactJsonValue(value: unknown): unknown {
 
 	if (typeof value === 'string') return redactSecrets(value)
 	return value
+}
+
+function redactTelemetryStrings(value: unknown): unknown {
+	if (Array.isArray(value)) return value.map(redactTelemetryStrings)
+	if (value && typeof value === 'object') {
+		const redacted: TelemetryAttributes = {}
+		for (const key in value as TelemetryAttributes) {
+			redacted[key] = redactTelemetryStrings((value as TelemetryAttributes)[key])
+		}
+		return redacted
+	}
+	return typeof value === 'string' ? redactSecrets(value) : value
 }
 
 function sanitizedRequestBodyAttribute(

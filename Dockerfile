@@ -8,10 +8,6 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends bash curl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-# Install dotenvx (for loading env at runtime inside Docker)
-RUN curl -fsS https://dotenvx.sh | sh
-RUN dotenvx ext prebuild
-
 FROM node-base AS bun-base
 
 ENV BUN_INSTALL=/usr/local/bun
@@ -43,9 +39,6 @@ ARG COOLIFY_CONTAINER_NAME
 ARG COOLIFY_RESOURCE_UUID
 ARG COOLIFY_FQDN
 ARG COOLIFY_URL
-ARG LOGGER_API_KEY
-ARG LOGGER_API_URL
-ARG BUILD_STATUS_WEBHOOK
 ARG BUILD_NOTIFY_USERS
 
 # Promote the commit SHA into the build environment so next.config's
@@ -54,7 +47,13 @@ ARG BUILD_NOTIFY_USERS
 # metadata allowed through .dockerignore.
 ENV SOURCE_COMMIT=${SOURCE_COMMIT}
 
-RUN bash ./scripts/build.sh
+RUN --mount=type=secret,id=BUILD_STATUS_WEBHOOK \
+  --mount=type=secret,id=LOGGER_API_URL \
+  --mount=type=secret,id=LOGGER_API_KEY \
+  if [ -f /run/secrets/BUILD_STATUS_WEBHOOK ]; then export BUILD_STATUS_WEBHOOK="$(cat /run/secrets/BUILD_STATUS_WEBHOOK)"; fi; \
+  if [ -f /run/secrets/LOGGER_API_URL ]; then export LOGGER_API_URL="$(cat /run/secrets/LOGGER_API_URL)"; fi; \
+  if [ -f /run/secrets/LOGGER_API_KEY ]; then export LOGGER_API_KEY="$(cat /run/secrets/LOGGER_API_KEY)"; fi; \
+  bash ./scripts/build.sh
 
 FROM bun-base AS runner
 
@@ -74,10 +73,9 @@ COPY --from=builder --chown=nextjs:nodejs /usr/src/app/.next/BUILD_ID ./.next/BU
 COPY --from=builder --chown=nextjs:nodejs /usr/src/app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /usr/src/app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /usr/src/app/scripts ./scripts
-COPY --from=builder --chown=nextjs:nodejs /usr/src/app/node_modules/@next/env ./node_modules/@next/env
 
 USER nextjs
 
 EXPOSE 3000
 
-CMD ["dotenvx", "run", "--", "sh", "./scripts/docker-entrypoint.sh", "server.js"]
+CMD ["sh", "./scripts/docker-entrypoint.sh", "server.js"]

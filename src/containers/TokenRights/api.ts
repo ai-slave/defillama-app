@@ -4,8 +4,8 @@ import type { IRawTokenRightsEntry } from './api.types'
 import { findProtocolEntry } from './utils'
 
 export async function fetchTokenRightsDataFromNetwork(): Promise<IRawTokenRightsEntry[]> {
-	return fetchJson<IRawTokenRightsEntry[]>(`${SERVER_URL}/token-rights`).catch((error) => {
-		console.error(`[fetchTokenRightsDataFromNetwork] Failed to fetch ${SERVER_URL}/token-rights`, error)
+	return fetchJson<IRawTokenRightsEntry[]>(`${SERVER_URL}/token-rights`).catch(() => {
+		console.error('[token-rights] upstream request failed')
 		return []
 	})
 }

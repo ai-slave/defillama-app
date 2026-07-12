@@ -428,6 +428,54 @@ describe('telemetry client', () => {
 		expect(JSON.stringify(route)).not.toContain('abcdefghijklmnopqrstuvwxyz123456')
 	})
 
+	it('redacts connection strings from error messages and stacks', async () => {
+		const redisUrl = 'redis://cache-user:cache-password@cache.internal:6379'
+		vi.stubEnv('REDIS_URL', redisUrl)
+		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }))
+		vi.stubGlobal('fetch', fetchMock)
+		const error = new Error(`redis unavailable: ${redisUrl}`)
+		error.stack = `Error: redis unavailable: ${encodeURIComponent(redisUrl)}\n    at connect (${redisUrl})`
+		const failure = withServerSidePropsTelemetry('/ssr/redis-error', async () => {
+			throw error
+		})
+
+		await expect(failure(ssrContext('/ssr/redis-error', 500))).rejects.toBe(error)
+		await flushTelemetry({ timeoutMs: 1000 })
+
+		const events = sentEvents(fetchMock).filter((event) => 'route' in event && event.route === '/ssr/redis-error')
+		expect(events).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					error_message: 'redis unavailable: [REDACTED]',
+					error_stack: 'Error: redis unavailable: [REDACTED]\n    at connect ([REDACTED])'
+				})
+			])
+		)
+		expect(JSON.stringify(events)).not.toContain('cache-password')
+	})
+
+	it('redacts secrets from domain event attributes at the queue boundary', async () => {
+		const redisUrl = 'redis://cache-user:cache-password@cache.internal:6379'
+		vi.stubEnv('REDIS_URL', redisUrl)
+		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }))
+		vi.stubGlobal('fetch', fetchMock)
+
+		recordDomainEvent('metadata.refresh', 'warn', 'runtime_loop', 'Metadata refresh failed', {
+			error_message: `connect ${redisUrl}`
+		})
+		await flushTelemetry({ timeoutMs: 1000 })
+
+		const events = sentEvents(fetchMock).filter(
+			(event) => 'event_name' in event && event.event_name === 'metadata.refresh'
+		)
+		expect(events).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ attributes: expect.objectContaining({ error_message: 'connect [REDACTED]' }) })
+			])
+		)
+		expect(JSON.stringify(events)).not.toContain('cache-password')
+	})
+
 	it('records API route JSON, send, write/end byte counts, status, and errors', async () => {
 		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }))
 		vi.stubGlobal('fetch', fetchMock)

@@ -18,22 +18,18 @@ if (typeof window === 'undefined' && USE_REDIS) {
 	if (redisUrl) {
 		import('ioredis')
 			.then((Redis) => {
-				console.log('[cache] [connecting to redis]', redisUrl)
+				console.log('[cache] [connecting to redis]')
 
 				try {
 					redis = new Redis.default(redisUrl)
 					redis.on('connect', () => console.log('[cache] [redis] connected'))
-					redis.on('error', (error) => {
-						console.log('[cache] [redis error]', redisUrl)
-						console.log(error)
-					})
-				} catch (e) {
-					console.log('[cache] [redis connection error]', e)
+					redis.on('error', () => console.log('[cache] [redis error]'))
+				} catch {
+					console.log('[cache] [redis connection error]')
 				}
 			})
-			.catch((error) => {
-				console.log('[cache] [redis import error]', redisUrl)
-				console.log(error)
+			.catch(() => {
+				console.log('[cache] [redis import error]')
 			})
 	}
 }

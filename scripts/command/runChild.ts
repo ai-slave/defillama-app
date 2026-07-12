@@ -18,7 +18,7 @@ type RunChildOptions = {
 	activeChildren?: ActiveChildren
 	cwd?: string
 	env?: NodeJS.ProcessEnv
-	logger?: Pick<CommandLogger, 'stderr' | 'stdout'>
+	logger?: Pick<CommandLogger, 'stderr' | 'stdout'> & Partial<Pick<CommandLogger, 'flushOutput'>>
 	tailLimit?: number
 }
 
@@ -32,7 +32,7 @@ export function runChild(
 	args: string[],
 	{ activeChildren, cwd, env = process.env, logger, tailLimit = 8192 }: RunChildOptions = {}
 ): Promise<RunChildResult> {
-	return new Promise((resolve) => {
+	return new Promise((resolve, reject) => {
 		const child = spawn(command, args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] })
 		let settled = false
 		let stdoutTail = ''
@@ -43,6 +43,12 @@ export function runChild(
 			if (settled) return
 			settled = true
 			activeChildren?.delete(child)
+			try {
+				logger?.flushOutput?.()
+			} catch (error) {
+				reject(error)
+				return
+			}
 			resolve(result)
 		}
 

@@ -9,6 +9,7 @@ export type LogLike = {
 export type CommandLogger = LogLike & {
 	close: () => void
 	flush: () => void
+	flushOutput: () => void
 	stderr: (chunk: Buffer | string) => void
 	stdout: (chunk: Buffer | string) => void
 }
@@ -19,6 +20,14 @@ type TeeLoggerOptions = {
 	stderr?: NodeJS.WriteStream
 	stdout?: NodeJS.WriteStream
 }
+
+type BufferedOutput = {
+	flush: () => void
+	write: (stream: NodeJS.WriteStream, chunk: Buffer | string) => void
+}
+
+const MAX_UNTERMINATED_OUTPUT_LENGTH = 64 * 1024
+const TRUNCATED_OUTPUT_MESSAGE = '[output truncated: unterminated line exceeded 64 KiB]\n'
 
 function createFileOperationError(operation: string, target: string, error: unknown): Error {
 	return new Error(`Failed to ${operation} for ${target}: ${error instanceof Error ? error.message : String(error)}`, {
@@ -50,22 +59,80 @@ export function createTeeLogger({
 			}
 		}
 	}
-	const redactChunk = (chunk: Buffer | string) => redactor(typeof chunk === 'string' ? chunk : chunk.toString('utf8'))
+	const createBufferedOutput = (): BufferedOutput => {
+		let discardingLongLine = false
+		let pending = ''
+		let pendingStream: NodeJS.WriteStream | null = null
+
+		const emit = (text: string) => {
+			const redactedChunk = redactor(text)
+			const stream = pendingStream ?? stdout
+			stream.write(redactedChunk)
+			writeFile(redactedChunk)
+		}
+
+		return {
+			flush() {
+				if (!pending) return
+				emit(pending)
+				pending = ''
+				pendingStream = null
+			},
+			write(stream, chunk) {
+				let text = typeof chunk === 'string' ? chunk : chunk.toString('utf8')
+				if (discardingLongLine) {
+					const lineEnd = text.search(/[\r\n]/)
+					if (lineEnd === -1) return
+					discardingLongLine = false
+					text = text.slice(lineEnd + 1)
+				}
+				if (!text) return
+
+				pendingStream ??= stream
+				pending += text
+				const lineEnd = Math.max(pending.lastIndexOf('\n'), pending.lastIndexOf('\r'))
+				if (lineEnd !== -1) {
+					emit(pending.slice(0, lineEnd + 1))
+					pending = pending.slice(lineEnd + 1)
+					pendingStream = pending ? stream : null
+				}
+
+				if (pending.length > MAX_UNTERMINATED_OUTPUT_LENGTH) {
+					pending = ''
+					discardingLongLine = true
+					emit(TRUNCATED_OUTPUT_MESSAGE)
+					pendingStream = null
+				}
+			}
+		}
+	}
+	const bufferedOutput = createBufferedOutput()
+	const flushBufferedOutput = () => bufferedOutput.flush()
 
 	return {
 		close() {
 			if (!closed) {
+				let closeError: Error | undefined
+				try {
+					flushBufferedOutput()
+				} catch (error) {
+					closeError = error instanceof Error ? error : new Error(String(error), { cause: error })
+				}
 				try {
 					fs.closeSync(fd)
 				} catch (error) {
-					throw createFileOperationError('close build log', `fd ${fd} (${logPath})`, error)
+					closeError ??= createFileOperationError('close build log', `fd ${fd} (${logPath})`, error)
 				} finally {
 					closed = true
+				}
+				if (closeError) {
+					throw new Error(closeError.message, { cause: closeError })
 				}
 			}
 		},
 		flush() {
 			if (!closed) {
+				flushBufferedOutput()
 				try {
 					fs.fsyncSync(fd)
 				} catch (error) {
@@ -73,20 +140,15 @@ export function createTeeLogger({
 				}
 			}
 		},
+		flushOutput: flushBufferedOutput,
 		log(...args) {
-			const line = redactor(formatLogLine(args))
-			stdout.write(line)
-			writeFile(line)
+			bufferedOutput.write(stdout, formatLogLine(args))
 		},
 		stderr(chunk) {
-			const redactedChunk = redactChunk(chunk)
-			stderr.write(redactedChunk)
-			writeFile(redactedChunk)
+			bufferedOutput.write(stderr, chunk)
 		},
 		stdout(chunk) {
-			const redactedChunk = redactChunk(chunk)
-			stdout.write(redactedChunk)
-			writeFile(redactedChunk)
+			bufferedOutput.write(stdout, chunk)
 		}
 	}
 }
@@ -117,6 +179,7 @@ export function createMemoryLogger(): CommandLogger & { output: string[] } {
 	return {
 		close() {},
 		flush() {},
+		flushOutput() {},
 		log(...args) {
 			write(formatLogLine(args))
 		},

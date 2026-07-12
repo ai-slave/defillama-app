@@ -1,8 +1,6 @@
-import { loadAppEnv } from './env'
 import { createRedactedConsoleLogger } from './logger'
 import { runPostStartHook } from './postStartHook'
 
-loadAppEnv({ projectDir: process.cwd() })
 const logger = createRedactedConsoleLogger()
 
 runPostStartHook({ logger }).catch((error) => {

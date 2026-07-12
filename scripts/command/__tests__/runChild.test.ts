@@ -35,4 +35,15 @@ describe('runChild', () => {
 		expect(result.exitCode).toBe(4)
 		expect(result.signal).toBeNull()
 	})
+
+	it('rejects when final output flushing fails', async () => {
+		const logger = createMemoryLogger()
+		logger.flushOutput = () => {
+			throw new Error('output flush failed')
+		}
+
+		await expect(runChild(process.execPath, ['-e', 'process.exit(0)'], { logger })).rejects.toThrow(
+			'output flush failed'
+		)
+	})
 })
