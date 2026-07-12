@@ -4,7 +4,6 @@ import type {
 	Alert,
 	AlertExecution,
 	AlertExecutionDetail,
-	PriceTrigger,
 	UpdateAlertInput
 } from '~/containers/LlamaAI/components/alerts/types'
 
@@ -89,25 +88,6 @@ export async function setAlertEnabled(
 	return enabled
 }
 
-export async function updateAlertTrigger(
-	authorizedFetch: AuthorizedFetch,
-	alertId: string,
-	trigger: PriceTrigger
-): Promise<PriceTrigger> {
-	const encodedAlertId = encodeURIComponent(alertId)
-	const res = await authorizedFetch(`${AI_SERVER}/alerts/${encodedAlertId}`, {
-		method: 'PATCH',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ trigger })
-	})
-	if (!res) throw new Error('Not authenticated')
-	if (!res.ok) {
-		const errBody = await res.json().catch(() => ({ error: res.statusText }))
-		throw new Error(errBody.error || 'Failed to update alert')
-	}
-	return trigger
-}
-
 export async function deleteAlert(authorizedFetch: AuthorizedFetch, alertId: string): Promise<string> {
 	const encodedAlertId = encodeURIComponent(alertId)
 	const res = await authorizedFetch(`${AI_SERVER}/alerts/${encodedAlertId}`, { method: 'DELETE' })
@@ -125,6 +105,7 @@ export async function updateAlert(
 		title: nextTitle,
 		alertConfig,
 		delivery_channel,
+		trigger,
 		slack_team_id,
 		slack_channel_id,
 		slack_channel_name
@@ -138,6 +119,7 @@ export async function updateAlert(
 		body: JSON.stringify({
 			title: nextTitle,
 			alertConfig,
+			trigger,
 			delivery_channel,
 			...(delivery_channel === 'slack'
 				? {
@@ -154,5 +136,4 @@ export async function updateAlert(
 		const errBody = await res.json().catch(() => ({ error: res.statusText }))
 		throw new Error(errBody.error || 'Failed to update alert')
 	}
-	return alertConfig
 }

@@ -1,7 +1,48 @@
-import type { Alert, AlertsUsage, PriceTrigger } from '~/containers/LlamaAI/components/alerts/types'
+import { DAYS_OF_WEEK } from '~/containers/LlamaAI/components/alerts/schedule'
+import type { Alert, AlertsUsage, PriceTrigger, UpdateAlertInput } from '~/containers/LlamaAI/components/alerts/types'
 
 export function isAlertsUpsellActive(usage: AlertsUsage | null | undefined): boolean {
 	return usage?.allowed === false
+}
+
+export function getAlertsAccessState(
+	isAuthenticated: boolean,
+	isUserLoading: boolean
+): 'loading' | 'sign-in' | 'ready' {
+	if (isUserLoading) return 'loading'
+	return isAuthenticated ? 'ready' : 'sign-in'
+}
+
+export function applyAlertUpdateToList(
+	alerts: Alert[],
+	input: UpdateAlertInput,
+	conditionUpdate: { shouldInclude: boolean; value: string | null }
+): Alert[] {
+	const newExpression = input.alertConfig
+		? input.alertConfig.frequency === 'weekly'
+			? `Weekly on ${DAYS_OF_WEEK[input.alertConfig.dayOfWeek]} at ${input.alertConfig.hour}:00 ${input.alertConfig.timezone}`
+			: `Daily at ${input.alertConfig.hour}:00 ${input.alertConfig.timezone}`
+		: null
+
+	return alerts.map((alert) =>
+		alert.id === input.alertId
+			? {
+					...alert,
+					title: input.title,
+					...(newExpression ? { schedule_expression: newExpression } : {}),
+					...(input.trigger ? { trigger: input.trigger } : {}),
+					delivery_channel: input.delivery_channel,
+					...(input.delivery_channel === 'slack'
+						? {
+								slack_team_id: input.slack_team_id,
+								slack_channel_id: input.slack_channel_id,
+								slack_channel_name: input.slack_channel_name
+							}
+						: {}),
+					...(conditionUpdate.shouldInclude ? { condition: conditionUpdate.value } : {})
+				}
+			: alert
+	)
 }
 
 export type PriceAlertState = 'armed' | 'waiting to re-arm' | 'fired' | 'paused'

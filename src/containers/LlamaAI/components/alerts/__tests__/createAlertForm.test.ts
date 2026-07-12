@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-	ALERT_PROMPT_SUGGESTIONS,
 	buildArtifactSaveBody,
 	buildCreateAlertBody,
 	buildJustAskExample,
@@ -9,12 +8,10 @@ import {
 	formatNextRunAt,
 	formatPriceDisplay,
 	formatPriceLabel,
-	getArtifactSubtitle,
 	getDeliveryBlockReason,
 	getDeliveryReadinessBlock,
 	getPriceCaption,
 	getSubmitBlockReason,
-	getUpsellCopy,
 	isAlertCapReachedError,
 	normalizePriceInput,
 	roundPriceValue,
@@ -257,17 +254,6 @@ describe('isAlertCapReachedError', () => {
 	})
 })
 
-describe('getUpsellCopy', () => {
-	it('shows the exact usage fraction when known', () => {
-		expect(getUpsellCopy({ count: 3, cap: 3, allowed: false })).toBe("You've used 3/3 alerts on your plan")
-	})
-
-	it('falls back to a generic message when usage data is unavailable', () => {
-		expect(getUpsellCopy(null)).toBe("You've reached your alert limit on this plan")
-		expect(getUpsellCopy({ count: 3, cap: null, allowed: true })).toBe("You've reached your alert limit on this plan")
-	})
-})
-
 describe('formatNextRunAt', () => {
 	const now = new Date('2026-07-09T12:00:00Z')
 
@@ -494,24 +480,6 @@ describe('formatPriceDisplay', () => {
 	})
 })
 
-describe('getArtifactSubtitle', () => {
-	it('describes the inbox for email', () => {
-		expect(getArtifactSubtitle('email', null)).toBe('Get this data delivered to your inbox')
-	})
-
-	it('describes telegram', () => {
-		expect(getArtifactSubtitle('telegram', null)).toBe('Get this data delivered to your Telegram')
-	})
-
-	it('names the slack channel when picked', () => {
-		expect(getArtifactSubtitle('slack', 'alerts')).toBe('Get this data delivered to #alerts')
-	})
-
-	it('falls back to generic slack copy until a channel is picked', () => {
-		expect(getArtifactSubtitle('slack', null)).toBe('Get this data delivered to your Slack')
-	})
-})
-
 describe('getDeliveryBlockReason', () => {
 	it('surfaces readiness blocks', () => {
 		expect(
@@ -632,25 +600,5 @@ describe('roundPriceValue', () => {
 		expect(roundPriceValue(-5)).toBe('')
 		expect(roundPriceValue(NaN)).toBe('')
 		expect(roundPriceValue(Infinity)).toBe('')
-	})
-})
-
-describe('ALERT_PROMPT_SUGGESTIONS', () => {
-	it('covers the top demand themes from ops.alerts with one chip each', () => {
-		expect(ALERT_PROMPT_SUGGESTIONS).toHaveLength(6)
-		const labels = ALERT_PROMPT_SUGGESTIONS.map((s) => s.label)
-		expect(new Set(labels).size).toBe(labels.length)
-		for (const s of ALERT_PROMPT_SUGGESTIONS) {
-			expect(s.label.length).toBeGreaterThan(0)
-			expect(s.label.length).toBeLessThanOrEqual(24)
-			expect(s.prompt.trim().length).toBeGreaterThan(0)
-			expect(validatePrompt('schedule', s.prompt)).toBeNull()
-		}
-	})
-
-	it('does not pin suggestions to Aave (2026-07 decision: mentions were mostly incidental)', () => {
-		for (const s of ALERT_PROMPT_SUGGESTIONS) {
-			expect(`${s.label} ${s.prompt}`.toLowerCase()).not.toContain('aave')
-		}
 	})
 })

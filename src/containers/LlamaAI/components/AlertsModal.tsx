@@ -4,9 +4,11 @@ import { memo, useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import {
+	applyAlertUpdateToList,
 	execChipLabel,
 	execChipTone,
 	formatPriceAlertSummary,
+	getAlertsAccessState,
 	isAlertsUpsellActive,
 	isFiredOneTimePriceAlert
 } from '~/containers/LlamaAI/components/alerts/alertsListHelpers'
@@ -16,8 +18,7 @@ import {
 	fetchAlertExecutions,
 	fetchAlerts,
 	setAlertEnabled,
-	updateAlert,
-	updateAlertTrigger
+	updateAlert
 } from '~/containers/LlamaAI/components/alerts/api'
 import { getUpsellCopy, type TriggerType } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import { EmptyAlertsState } from '~/containers/LlamaAI/components/alerts/EmptyAlertsState'
@@ -33,12 +34,10 @@ import {
 } from '~/containers/LlamaAI/components/alerts/schedule'
 import type {
 	Alert,
-	AlertConfig,
 	AlertExecution,
 	AlertExecutionDetail,
 	AlertsUsage,
 	DeliveryChannel,
-	PriceTrigger,
 	UpdateAlertInput
 } from '~/containers/LlamaAI/components/alerts/types'
 import {
@@ -63,6 +62,7 @@ import { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
 import { useSlackWorkspaces } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
 import { prepareAlertSummaryMarkdown, sanitizeUrl } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { useAuthContext } from '~/containers/Subscription/auth'
+import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -83,13 +83,15 @@ function getAlertsSubtitle(alertsUsage: AlertsUsage | null | undefined, alertCou
 }
 
 export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage, onPrefillPrompt }: AlertsModalProps) {
-	const { authorizedFetch, isAuthenticated, user } = useAuthContext()
+	const { authorizedFetch, isAuthenticated, loaders, user } = useAuthContext()
 	const isOpen = Ariakit.useStoreState(dialogStore, 'open')
 	const alertsQueryKey = [ALERTS_QUERY_KEY, user?.id ?? null]
 	const createModalStore = Ariakit.useDialogStore()
+	const signInModalStore = Ariakit.useDialogStore()
 	const [createTab, setCreateTab] = useState<TriggerType>('schedule')
 	const [hasOpenedCreate, setHasOpenedCreate] = useState(false)
 	const upsellActive = isAlertsUpsellActive(alertsUsage)
+	const accessState = getAlertsAccessState(isAuthenticated, loaders.userLoading)
 
 	const openCreateModal = (tab: TriggerType) => {
 		setCreateTab(tab)
@@ -134,7 +136,7 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 						title="Alerts"
 						subtitle={getAlertsSubtitle(alertsUsage, alerts?.length)}
 						right={
-							!upsellActive && alerts && alerts.length > 0 ? (
+							accessState === 'ready' && !upsellActive && alerts && alerts.length > 0 ? (
 								<button
 									type="button"
 									onClick={() => openCreateModal('schedule')}
@@ -148,7 +150,26 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 					/>
 
 					<div className="thin-scrollbar min-h-0 flex-1 overflow-y-auto">
-						{alertsError ? (
+						{accessState === 'loading' ? (
+							<div className="flex items-center justify-center py-16">
+								<LoadingSpinner size={24} />
+							</div>
+						) : accessState === 'sign-in' ? (
+							<div className="flex flex-col items-center gap-3 px-5 py-16 text-center">
+								<div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-500/5 ring-1 ring-amber-500/20 ring-inset">
+									<Icon name="calendar-plus" className="size-6 text-amber-500" />
+								</div>
+								<div>
+									<p className="m-0 text-sm font-semibold text-(--text-primary)">Sign in to use alerts</p>
+									<p className="m-0 mt-1 text-xs text-[#777] dark:text-[#919296]">
+										Create alerts and manage their delivery from one place.
+									</p>
+								</div>
+								<button type="button" onClick={signInModalStore.show} className={alertPrimaryButtonClass}>
+									Sign in
+								</button>
+							</div>
+						) : alertsError ? (
 							<div className="px-5 py-3 text-xs text-red-500">
 								{alertsError instanceof Error ? alertsError.message : 'Failed to fetch alerts'}
 							</div>
@@ -194,6 +215,7 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 					</div>
 				</Ariakit.Dialog>
 			</Ariakit.DialogProvider>
+			<SignInModal store={signInModalStore} prompt="Sign in to create alerts and manage their delivery" />
 			{hasOpenedCreate ? (
 				<CreateAlertModal dialogStore={createModalStore} initialTab={createTab} onJustAsk={handleJustAsk} />
 			) : null}
@@ -369,53 +391,18 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 		}
 	})
 
-	const updateAlertMutation = useMutation<AlertConfig | undefined, Error, UpdateAlertInput>({
+	const updateAlertMutation = useMutation<void, Error, UpdateAlertInput>({
 		mutationFn: async (input) => {
 			if (!authorizedFetch) {
 				throw new Error('Not authenticated')
 			}
 			return updateAlert(authorizedFetch, input, getConditionUpdate(input.condition))
 		},
-		onSuccess: (_data, { alertId, title: nextTitle, alertConfig, delivery_channel, condition: nextCondition }) => {
-			const conditionUpdate = getConditionUpdate(nextCondition)
-			const newExpression = alertConfig
-				? alertConfig.frequency === 'weekly'
-					? `Weekly on ${DAYS_OF_WEEK[alertConfig.dayOfWeek]} at ${alertConfig.hour}:00 ${alertConfig.timezone}`
-					: `Daily at ${alertConfig.hour}:00 ${alertConfig.timezone}`
-				: null
+		onSuccess: (_data, input) => {
+			const conditionUpdate = getConditionUpdate(input.condition)
 			queryClient.setQueryData(alertsQueryKey, (old: Alert[] | undefined) => {
 				if (!old) return []
-				return old.map((item) =>
-					item.id === alertId
-						? {
-								...item,
-								title: nextTitle,
-								...(newExpression ? { schedule_expression: newExpression } : {}),
-								delivery_channel,
-								...(conditionUpdate.shouldInclude ? { condition: conditionUpdate.value } : {})
-							}
-						: item
-				)
-			})
-			if (!isPriceAlert) switchMode('view')
-		},
-		onSettled: () => {
-			void queryClient.invalidateQueries({ queryKey: [ALERTS_QUERY_KEY] })
-			void queryClient.invalidateQueries({ queryKey: [SESSIONS_QUERY_KEY] })
-		}
-	})
-
-	const updateTriggerMutation = useMutation<PriceTrigger, Error, PriceTrigger>({
-		mutationFn: async (trigger) => {
-			if (!authorizedFetch) {
-				throw new Error('Not authenticated')
-			}
-			return updateAlertTrigger(authorizedFetch, alert.id, trigger)
-		},
-		onSuccess: (trigger) => {
-			queryClient.setQueryData(alertsQueryKey, (old: Alert[] | undefined) => {
-				if (!old) return []
-				return old.map((item) => (item.id === alert.id ? { ...item, trigger } : item))
+				return applyAlertUpdateToList(old, input, conditionUpdate)
 			})
 			switchMode('view')
 		},
@@ -428,7 +415,6 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 	const switchMode = (next: 'view' | 'editing' | 'deleting') => {
 		toggleAlertMutation.reset()
 		updateAlertMutation.reset()
-		updateTriggerMutation.reset()
 		deleteAlertMutation.reset()
 		if (next === 'editing') {
 			resetEditingState()
@@ -798,9 +784,9 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					{deliveryFields}
 					<PriceAlertEditor
 						trigger={alert.trigger}
-						isSaving={updateTriggerMutation.isPending || updateAlertMutation.isPending}
+						isSaving={updateAlertMutation.isPending}
 						canSave={deliveryReady}
-						errorMessage={updateTriggerMutation.error?.message || updateAlertMutation.error?.message}
+						errorMessage={updateAlertMutation.error?.message}
 						onCancel={() => switchMode('view')}
 						onSave={(trigger) => {
 							const titleValue = priceEditTitle.trim()
@@ -815,11 +801,11 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 								title: titleValue,
 								delivery_channel: deliveryChannel,
 								condition: alert.condition || '',
+								trigger,
 								slack_team_id: deliveryChannel === 'slack' ? slackTeamId : null,
 								slack_channel_id: deliveryChannel === 'slack' ? slackChannelId : null,
 								slack_channel_name: channelName
 							})
-							updateTriggerMutation.mutate(trigger)
 						}}
 					/>
 				</div>

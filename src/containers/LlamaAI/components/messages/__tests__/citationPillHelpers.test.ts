@@ -1,12 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { UnifiedCitationReference } from '~/containers/LlamaAI/types'
 import {
-	badgeFor,
 	computedSummaryLabel,
 	describeFigure,
 	domainFromUrl,
 	friendlyToolName,
-	iconFor,
 	isPrivacySentinel,
 	metricLabel,
 	sanitizeExcerpt,
@@ -226,17 +224,5 @@ describe('verification flags', () => {
 		expect(shouldFlagUnverified({ claimType: 'quantitative', valueMatch: 'match' } as any)).toBe(false)
 		expect(shouldFlagUnverified({ claimType: 'qualitative', valueMatch: 'unverified' } as any)).toBe(false)
 		expect(shouldFlagUnverified(undefined)).toBe(false)
-	})
-})
-
-describe('badgeFor / iconFor', () => {
-	it('maps known source types', () => {
-		expect(badgeFor('data')).toBe('DefiLlama')
-		expect(badgeFor('x')).toBe('X')
-		expect(badgeFor('unknown-future')).toBe('Source')
-		expect(iconFor('x')).toBe('twitter')
-		expect(iconFor('computed')).toBe('code')
-		expect(iconFor('web')).toBe('earth')
-		expect(iconFor('mystery')).toBe('sparkles')
 	})
 })

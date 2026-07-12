@@ -2,15 +2,29 @@ import { describe, expect, it } from 'vitest'
 import {
 	execChipLabel,
 	execChipTone,
-	ALERT_EMPTY_STATE_CHIPS,
-	ALERT_ESCAPE_HATCH_PREFILL,
+	applyAlertUpdateToList,
 	formatPriceAlertSummary,
 	formatTokenLabel,
 	getPriceAlertState,
+	getAlertsAccessState,
 	isAlertsUpsellActive,
 	isFiredOneTimePriceAlert
 } from '~/containers/LlamaAI/components/alerts/alertsListHelpers'
 import type { Alert, PriceTrigger } from '~/containers/LlamaAI/components/alerts/types'
+
+describe('getAlertsAccessState', () => {
+	it('waits for authentication before choosing a view', () => {
+		expect(getAlertsAccessState(false, true)).toBe('loading')
+	})
+
+	it('gates anonymous users', () => {
+		expect(getAlertsAccessState(false, false)).toBe('sign-in')
+	})
+
+	it('keeps authenticated users in the alerts flow', () => {
+		expect(getAlertsAccessState(true, false)).toBe('ready')
+	})
+})
 
 describe('isAlertsUpsellActive', () => {
 	it('is inactive when usage is undefined or null (cap unknown)', () => {
@@ -149,21 +163,6 @@ describe('isFiredOneTimePriceAlert', () => {
 	})
 })
 
-describe('ALERT_EMPTY_STATE_CHIPS', () => {
-	it('has exactly the two DB-verified static chips from the brief', () => {
-		expect(ALERT_EMPTY_STATE_CHIPS).toEqual([
-			{ text: 'Daily brief on Hyperliquid, Solana and stablecoins, every morning', variant: 'static' },
-			{ text: 'Ping me if ETH drops below $3,000', variant: 'static' }
-		])
-	})
-})
-
-describe('ALERT_ESCAPE_HATCH_PREFILL', () => {
-	it('is the exact prefill copy with a trailing space for the cursor', () => {
-		expect(ALERT_ESCAPE_HATCH_PREFILL).toBe('Set up an alert: ')
-	})
-})
-
 describe('formatTokenLabel', () => {
 	it('strips the source prefix and uppercases the symbol', () => {
 		expect(formatTokenLabel('coingecko:bitcoin')).toBe('BITCOIN')
@@ -175,6 +174,78 @@ describe('formatTokenLabel', () => {
 
 	it('falls back to the raw value when there is no prefix', () => {
 		expect(formatTokenLabel('eth')).toBe('ETH')
+	})
+})
+
+describe('applyAlertUpdateToList', () => {
+	const alert: Alert = {
+		id: 'alert-1',
+		title: 'Old title',
+		original_query: '',
+		schedule_expression: 'Daily at 9:00 UTC',
+		next_run_at: '',
+		last_run_at: null,
+		last_run_status: null,
+		enabled: true,
+		run_count: 0,
+		created_at: '',
+		delivery_channel: 'email'
+	}
+
+	it('applies a price trigger and Slack destination in one cache transition', () => {
+		const trigger: PriceTrigger = {
+			type: 'price',
+			token_nk: 'coingecko:ethereum',
+			op: 'below',
+			value: 3000,
+			recurring: false
+		}
+		const [updated] = applyAlertUpdateToList(
+			[alert],
+			{
+				alertId: alert.id,
+				title: 'ETH below $3,000',
+				delivery_channel: 'slack',
+				condition: '',
+				trigger,
+				slack_team_id: 'team-1',
+				slack_channel_id: 'channel-1',
+				slack_channel_name: 'alerts'
+			},
+			{ shouldInclude: false, value: null }
+		)
+
+		expect(updated).toMatchObject({
+			title: 'ETH below $3,000',
+			trigger,
+			delivery_channel: 'slack',
+			slack_team_id: 'team-1',
+			slack_channel_id: 'channel-1',
+			slack_channel_name: 'alerts'
+		})
+		expect(updated.schedule_expression).toBe(alert.schedule_expression)
+	})
+
+	it('updates schedule and condition without adding a price trigger', () => {
+		const [updated] = applyAlertUpdateToList(
+			[alert],
+			{
+				alertId: alert.id,
+				title: 'Weekly report',
+				alertConfig: { frequency: 'weekly', hour: 14, dayOfWeek: 3, timezone: 'UTC' },
+				delivery_channel: 'email',
+				condition: 'TVL below $1B'
+			},
+			{ shouldInclude: true, value: 'TVL below $1B' }
+		)
+
+		expect(updated).toMatchObject({
+			title: 'Weekly report',
+			schedule_expression: 'Weekly on Wednesday at 14:00 UTC',
+			delivery_channel: 'email',
+			condition: 'TVL below $1B'
+		})
+		expect(updated.trigger).toBeUndefined()
 	})
 })
 
