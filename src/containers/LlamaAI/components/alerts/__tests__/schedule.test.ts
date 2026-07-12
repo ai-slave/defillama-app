@@ -1,9 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import {
-	getBlockedLocalHours,
-	getUserTimezone,
-	parseScheduleExpression
-} from '~/containers/LlamaAI/components/alerts/schedule'
+import { getUserTimezone, parseScheduleExpression } from '~/containers/LlamaAI/components/alerts/schedule'
 
 describe('alert schedule helpers', () => {
 	afterEach(() => {
@@ -58,10 +54,5 @@ describe('alert schedule helpers', () => {
 			hour: 9,
 			timezone: 'UTC+05:30'
 		})
-		expect(getBlockedLocalHours('UTC+05:30')).toEqual(expect.arrayContaining([6, 7, 8]))
-	})
-
-	it('converts IANA fractional-offset zones when computing blocked local hours', () => {
-		expect(getBlockedLocalHours('Asia/Kolkata')).toEqual(expect.arrayContaining([6, 7, 8]))
 	})
 })

@@ -4,8 +4,37 @@ import type {
 	Alert,
 	AlertExecution,
 	AlertExecutionDetail,
+	PriceTrigger,
 	UpdateAlertInput
 } from '~/containers/LlamaAI/components/alerts/types'
+
+export async function createManualAlert(
+	authorizedFetch: AuthorizedFetch,
+	body: {
+		title: string
+		prompt?: string
+		trigger:
+			| { type: 'schedule' }
+			| { type: 'price'; token_nk: string; op: 'above' | 'below'; value: number; recurring: boolean }
+		alertConfig?: { frequency: 'daily' | 'weekly'; hour: number; dayOfWeek?: number; timezone: string }
+		delivery_channel: 'email' | 'telegram' | 'slack'
+		slack_team_id?: string
+		slack_channel_id?: string
+		slack_channel_name?: string | null
+	}
+): Promise<{ id: string; alertExpression: string; nextRunAt: string }> {
+	const res = await authorizedFetch(`${AI_SERVER}/alerts`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(body)
+	})
+	if (!res) throw new Error('Not authenticated')
+	if (!res.ok) {
+		const errBody = await res.json().catch(() => ({}))
+		throw new Error(errBody?.error || 'Failed to create alert')
+	}
+	return res.json()
+}
 
 export async function fetchAlerts(authorizedFetch: AuthorizedFetch): Promise<Alert[]> {
 	const res = await authorizedFetch(`${AI_SERVER}/alerts`)
@@ -58,6 +87,25 @@ export async function setAlertEnabled(
 		throw new Error('Failed to update alert')
 	}
 	return enabled
+}
+
+export async function updateAlertTrigger(
+	authorizedFetch: AuthorizedFetch,
+	alertId: string,
+	trigger: PriceTrigger
+): Promise<PriceTrigger> {
+	const encodedAlertId = encodeURIComponent(alertId)
+	const res = await authorizedFetch(`${AI_SERVER}/alerts/${encodedAlertId}`, {
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ trigger })
+	})
+	if (!res) throw new Error('Not authenticated')
+	if (!res.ok) {
+		const errBody = await res.json().catch(() => ({ error: res.statusText }))
+		throw new Error(errBody.error || 'Failed to update alert')
+	}
+	return trigger
 }
 
 export async function deleteAlert(authorizedFetch: AuthorizedFetch, alertId: string): Promise<string> {

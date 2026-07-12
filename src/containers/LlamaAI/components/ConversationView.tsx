@@ -58,6 +58,8 @@ export interface ConversationViewModel {
 	scrollContainerRef: RefObject<HTMLDivElement | null>
 	messagesEndRef: RefObject<HTMLDivElement | null>
 	promptInputRef: RefObject<HTMLTextAreaElement | null>
+	restoreRequest?: { key: number; text: string; entities?: Array<{ term: string; slug: string; type?: string }> } | null
+	onRestoreConsumed?: () => void
 	isScrollAttached: boolean
 	showScrollToBottom: boolean
 	scrollToBottom: () => void
@@ -376,6 +378,8 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		scrollContainerRef,
 		messagesEndRef,
 		promptInputRef,
+		restoreRequest = null,
+		onRestoreConsumed,
 		isScrollAttached,
 		showScrollToBottom,
 		scrollToBottom,
@@ -822,7 +826,8 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 						isPending={isStreaming}
 						handleStopRequest={handleStopRequest}
 						isStreaming={isStreaming}
-						restoreRequest={null}
+						restoreRequest={restoreRequest}
+						onRestoreConsumed={onRestoreConsumed}
 						placeholder="Reply to LlamaAI&hellip; Type @ to add a protocol, chain or stablecoin, or $ to add a coin"
 						mode={mode}
 						setMode={setMode}

@@ -1,5 +1,4 @@
 export const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-const BLOCKED_HOURS_UTC = [0, 1, 2]
 const shortOffsetFormatters = new Map<string, Intl.DateTimeFormat>()
 export const GMT_OFFSETS = [
 	{ label: 'UTC-12', value: 'Etc/GMT+12' },
@@ -138,61 +137,6 @@ export const getUserTimezone = (): string => {
 	} catch {
 		return 'UTC'
 	}
-}
-
-const convertHourToUTC = (localHour: number, timezone: string): number => {
-	if (timezone === 'UTC') return localHour
-	const match = timezone.match(/Etc\/GMT([+-])(\d+)/)
-	if (match) {
-		const sign = match[1] === '+' ? -1 : 1
-		const offset = parseInt(match[2], 10)
-		let utcHour = localHour - sign * offset
-		if (utcHour < 0) utcHour += 24
-		if (utcHour >= 24) utcHour -= 24
-		return utcHour
-	}
-	const fixedOffsetMinutes = parseOffsetMinutes(timezone)
-	if (fixedOffsetMinutes !== null) {
-		let utcMinutes = localHour * 60 - fixedOffsetMinutes
-		while (utcMinutes < 0) utcMinutes += 24 * 60
-		while (utcMinutes >= 24 * 60) utcMinutes -= 24 * 60
-		return Math.floor(utcMinutes / 60)
-	}
-	const offsetMinutes = getOffsetMinutesFromTimezone(timezone)
-	if (offsetMinutes !== null) {
-		let utcMinutes = localHour * 60 - offsetMinutes
-		while (utcMinutes < 0) utcMinutes += 24 * 60
-		while (utcMinutes >= 24 * 60) utcMinutes -= 24 * 60
-		return Math.floor(utcMinutes / 60)
-	}
-	return localHour
-}
-
-export const getBlockedLocalHours = (timezone: string): number[] => {
-	// The backend blocks UTC maintenance hours; convert each selectable local
-	// hour into UTC so the modal can disable only the affected local options.
-	const blocked: number[] = []
-	for (let h = 0; h < 24; h++) {
-		const utcHour = convertHourToUTC(h, timezone)
-		if (BLOCKED_HOURS_UTC.includes(utcHour)) {
-			blocked.push(h)
-		}
-	}
-	return blocked
-}
-
-const getFirstAvailableHour = (blockedHours: number[]): number | undefined => {
-	for (let h = 0; h < 24; h++) {
-		if (!blockedHours.includes(h)) return h
-	}
-	return undefined
-}
-
-export const getValidHourForTimezone = (hour: number, timezone: string): number => {
-	const blockedHours = getBlockedLocalHours(timezone)
-	if (!blockedHours.includes(hour)) return hour
-	const firstAvailable = getFirstAvailableHour(blockedHours)
-	return firstAvailable ?? hour
 }
 
 export const getTimezoneLabel = (timezone: string): string => {

@@ -136,6 +136,39 @@ describe('findCitedCell', () => {
 			column: 'tvl_base'
 		})
 	})
+
+	it('prefers the cell the claim rounds to exactly over an earlier 0.1%-tolerance collision', () => {
+		const series = [
+			{ date: '2024-11-14', spot_volume: 86690921247, derivative_volume: 343167275331 },
+			{ date: '2026-07-05', spot_volume: 8806528030, derivative_volume: 86609169904 }
+		]
+		expect(findCitedCell(series, ['date', 'spot_volume', 'derivative_volume'], { value: '$86.61B' })).toEqual({
+			rowIndex: 1,
+			column: 'derivative_volume'
+		})
+	})
+
+	it('anchors an exact value duplicated on two dates to the most recent one', () => {
+		const series = [
+			{ date: '2025-04-03', volume: 10650286797 },
+			{ date: '2026-07-05', volume: 10650286797 }
+		]
+		expect(findCitedCell(series, ['date', 'volume'], { value: '$10.65B' })).toEqual({
+			rowIndex: 1,
+			column: 'volume'
+		})
+	})
+
+	it('without a date column the closest value wins, not the first within tolerance', () => {
+		const flat = [
+			{ protocol: 'aaa', tvl: 3853900000 },
+			{ protocol: 'bbb', tvl: 3850900000 }
+		]
+		expect(findCitedCell(flat, ['protocol', 'tvl'], { value: '$3.85B' })).toEqual({
+			rowIndex: 1,
+			column: 'tvl'
+		})
+	})
 })
 
 describe('formatDateValue', () => {

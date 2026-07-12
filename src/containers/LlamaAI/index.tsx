@@ -259,6 +259,7 @@ export function AgenticChat({
 		sessions,
 		researchUsage,
 		factCheckedUsage,
+		alertsUsage,
 		isLoading: isLoadingSessions,
 		error: sessionListError,
 		hasNextPage: hasMoreSessions,
@@ -302,6 +303,7 @@ export function AgenticChat({
 	const [streamState, dispatchStream] = useReducer(streamReducer, undefined, createInitialStreamState)
 	const [mode, setMode] = useState<AgenticAnswerMode>('quick')
 	const [quotedText, setQuotedText] = useState<string | null>(null)
+	const [alertPrefillRequest, setAlertPrefillRequest] = useState<{ key: number; text: string } | null>(null)
 	const [
 		{
 			isOpen: dashboardPanelIsOpen,
@@ -2263,17 +2265,27 @@ export function AgenticChat({
 		}
 	}, [restoringSessionId, sessionId, sharedSession, resolveSessionAlias, handleSubmit])
 
+	const handleAlertPrefillPrompt = useCallback(
+		(text: string) => {
+			setAlertPrefillRequest((prev) => ({ key: (prev?.key ?? 0) + 1, text }))
+			requestAnimationFrame(() => promptInputRef.current?.focus())
+		},
+		[promptInputRef]
+	)
+
 	const tipActionHandlers = useMemo(
 		() => ({
 			openSettingsModal: (tab?: SettingsTabId) => {
 				if (tab) setInitialIntegrationsState({ tab, tgloginToken: null })
 				settingsModalStore.show()
 			},
-			openAlertsModal: alertsModalStore.show,
+			openAlertsModal: () => {
+				alertsModalStore.show()
+			},
 			toggleResearchMode: () => setMode((current) => (current === 'research' ? 'quick' : 'research')),
 			submitPrompt: (prompt: string) => handleSubmit(prompt)
 		}),
-		[settingsModalStore, alertsModalStore.show, setMode, handleSubmit]
+		[settingsModalStore, alertsModalStore, setMode, handleSubmit]
 	)
 
 	const landingProps = {
@@ -2284,6 +2296,8 @@ export function AgenticChat({
 		promptInputRef,
 		handleStopRequest,
 		isStreaming,
+		restoreRequest: alertPrefillRequest,
+		onRestoreConsumed: () => setAlertPrefillRequest(null),
 		mode,
 		setMode,
 		researchUsage,
@@ -2322,6 +2336,8 @@ export function AgenticChat({
 		scrollContainerRef,
 		messagesEndRef,
 		promptInputRef,
+		restoreRequest: alertPrefillRequest,
+		onRestoreConsumed: () => setAlertPrefillRequest(null),
 		isScrollAttached,
 		showScrollToBottom,
 		scrollToBottom,
@@ -2431,6 +2447,8 @@ export function AgenticChat({
 									onLoadMoreSessions={loadMoreSessions}
 									currentProjectId={routeProjectId}
 									currentSessionProjectId={effectiveSessionProjectId}
+									alertsCount={alertsUsage?.count ?? null}
+									onOpenAlerts={alertsModalStore.show}
 								/>
 								<div className="flex min-h-11 lg:hidden" />
 							</>
@@ -2542,7 +2560,13 @@ export function AgenticChat({
 								onConfirm={handleConfirmDeepLinkPrompt}
 							/>
 						) : null}
-						{!readOnly ? <AlertsModal dialogStore={alertsModalStore} /> : null}
+						{!readOnly ? (
+							<AlertsModal
+								dialogStore={alertsModalStore}
+								alertsUsage={alertsUsage}
+								onPrefillPrompt={handleAlertPrefillPrompt}
+							/>
+						) : null}
 						{shouldRenderSubscribeModal ? (
 							<Suspense fallback={<></>}>
 								<SubscribeProModal dialogStore={subscribeModalStore} />

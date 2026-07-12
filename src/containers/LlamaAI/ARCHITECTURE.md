@@ -240,8 +240,8 @@ flowchart TD
 Alert module split:
 
 - `components/alerts/api.ts` owns alert endpoint calls.
-- `components/alerts/schedule.ts` owns schedule parsing, timezone labels, and
-  blocked-hour helpers.
+- `components/alerts/schedule.ts` owns schedule parsing and timezone labels.
+  All 24 hours are schedulable; there are no blocked hours.
 - `components/AlertsModal.tsx` owns modal composition and user interactions.
 
 ## Projects

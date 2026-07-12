@@ -97,6 +97,19 @@ vi.mock('~/containers/ProtocolOverview/Chart', () => ({
 	}
 }))
 
+vi.mock('~/containers/Subscription/SignInModal', () => ({
+	SignInModal: () => <div>sign-in-modal</div>
+}))
+
+vi.mock('~/containers/Subscription/auth', () => ({
+	useAuthContext: () => ({
+		authorizedFetch: vi.fn(),
+		hasActiveSubscription: true,
+		isAuthenticated: true,
+		loaders: { userLoading: false }
+	})
+}))
+
 const tokenEntryFixture: ITokenListEntry = {
 	symbol: 'btc',
 	current_price: 100,

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { UnifiedCitationReference } from '~/containers/LlamaAI/types'
-import { normalizeSourceUrl, processUnifiedCitations, wrapLegacyUrlCitations } from '../markdownHelpers'
+import {
+	normalizeSourceUrl,
+	prepareAlertSummaryMarkdown,
+	processUnifiedCitations,
+	wrapLegacyUrlCitations
+} from '../markdownHelpers'
 
 const refs = (ids: number[]): UnifiedCitationReference[] =>
 	ids.map((id) => ({ id, sourceType: 'data', label: 'DefiLlama warehouse' }))
@@ -113,5 +118,42 @@ describe('normalizeSourceUrl', () => {
 
 	it('drops URLs with embedded credentials', () => {
 		expect(normalizeSourceUrl('https://user:pass@evil.com')).toBeNull()
+	})
+})
+
+describe('prepareAlertSummaryMarkdown', () => {
+	const charts = [{ id: 'c1', url: 'https://charts.llama.fi/c1.png', title: 'BTC [60D] (daily)' }]
+
+	it('replaces chart placeholders with markdown images on their own block', () => {
+		expect(prepareAlertSummaryMarkdown('before [CHART:c1] after', charts)).toBe(
+			'before \n\n![BTC 60D daily](https://charts.llama.fi/c1.png)\n\n after'
+		)
+	})
+
+	it('drops placeholders for unknown or unsafe chart urls', () => {
+		expect(prepareAlertSummaryMarkdown('[CHART:missing]', charts)).toBe('')
+		expect(prepareAlertSummaryMarkdown('[CHART:bad]', [{ id: 'bad', url: 'javascript:alert(1)', title: 'x' }])).toBe('')
+	})
+
+	it('converts slack-style single-asterisk emphasis to markdown bold', () => {
+		expect(prepareAlertSummaryMarkdown('*Price & Range* is up (↑ *14.16%* from start)', [])).toBe(
+			'**Price & Range** is up (↑ **14.16%** from start)'
+		)
+	})
+
+	it('leaves existing double-asterisk bold and multiplication untouched', () => {
+		expect(prepareAlertSummaryMarkdown('**bold** stays, 5 * 3 stays, 5*3 stays', [])).toBe(
+			'**bold** stays, 5 * 3 stays, 5*3 stays'
+		)
+	})
+
+	it('turns inline bullet separators into list items', () => {
+		expect(prepareAlertSummaryMarkdown('*Current:* $75,710 • *High:* $82,752 • *Low:* $65,033', [])).toBe(
+			'**Current:** $75,710\n- **High:** $82,752\n- **Low:** $65,033'
+		)
+	})
+
+	it('normalizes leading bullet characters to markdown list markers', () => {
+		expect(prepareAlertSummaryMarkdown('• first\n• second', [])).toBe('- first\n- second')
 	})
 })

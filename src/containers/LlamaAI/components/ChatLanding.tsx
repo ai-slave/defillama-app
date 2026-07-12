@@ -34,6 +34,8 @@ export interface ChatLandingProps {
 	promptInputRef: RefObject<HTMLTextAreaElement | null>
 	handleStopRequest: () => void
 	isStreaming: boolean
+	restoreRequest?: { key: number; text: string; entities?: Array<{ term: string; slug: string; type?: string }> } | null
+	onRestoreConsumed?: () => void
 	mode: AgenticAnswerMode
 	setMode: (mode: AgenticAnswerMode) => void
 	researchUsage?: ResearchUsage | null
@@ -53,6 +55,8 @@ export function ChatLanding({
 	promptInputRef,
 	handleStopRequest,
 	isStreaming,
+	restoreRequest = null,
+	onRestoreConsumed,
 	mode,
 	setMode,
 	researchUsage,
@@ -91,6 +95,7 @@ export function ChatLanding({
 				break
 			}
 			case 'open-alerts':
+				trackUmamiEvent('llamaai-alerts-open', { source: 'tip' })
 				tipActions.openAlertsModal?.()
 				break
 			case 'open-research-mode':
@@ -155,7 +160,8 @@ export function ChatLanding({
 							isPending={isStreaming}
 							handleStopRequest={handleStopRequest}
 							isStreaming={isStreaming}
-							restoreRequest={null}
+							restoreRequest={restoreRequest}
+							onRestoreConsumed={onRestoreConsumed}
 							placeholder="Ask LlamaAI... Type @ to add a protocol, chain or stablecoin, or $ to add a coin"
 							mode={mode}
 							setMode={setMode}
@@ -170,7 +176,7 @@ export function ChatLanding({
 						/>
 					</div>
 
-					<CapabilityRow promptInputRef={promptInputRef} />
+					<CapabilityRow promptInputRef={promptInputRef} onOpenAlerts={onOpenAlerts} />
 				</>
 			) : null}
 
@@ -187,7 +193,13 @@ export function ChatLanding({
 	)
 }
 
-function CapabilityRow({ promptInputRef }: { promptInputRef: RefObject<HTMLTextAreaElement | null> }) {
+function CapabilityRow({
+	promptInputRef,
+	onOpenAlerts
+}: {
+	promptInputRef: RefObject<HTMLTextAreaElement | null>
+	onOpenAlerts: () => void
+}) {
 	const rowRef = useRef<HTMLDivElement>(null)
 	const getAnchorRect = useCallback(() => {
 		const el = rowRef.current
@@ -201,7 +213,24 @@ function CapabilityRow({ promptInputRef }: { promptInputRef: RefObject<HTMLTextA
 			{FEATURED_CAPABILITIES.map((cap) => (
 				<Capability key={cap.key} cap={cap} promptInputRef={promptInputRef} getAnchorRect={getAnchorRect} />
 			))}
+			<SetAlertChip onOpenAlerts={onOpenAlerts} />
 		</div>
+	)
+}
+
+const SetAlertChip = ({ onOpenAlerts }: { onOpenAlerts: () => void }) => {
+	return (
+		<button
+			type="button"
+			onClick={() => {
+				trackUmamiEvent('llamaai-alerts-open', { source: 'landing' })
+				onOpenAlerts()
+			}}
+			className="flex items-center gap-1.5 rounded-lg border border-[#d7deea] bg-white px-3 py-1.5 text-[13px] font-[450] text-[#7b8597] duration-150 hover:border-[#c5cbd6] hover:bg-[#f4f5f7] hover:text-[#4b5563] dark:border-white/7 dark:bg-white/3 dark:text-[#a1a1aa] dark:hover:border-white/12 dark:hover:bg-white/6 dark:hover:text-[#e4e4e7]"
+		>
+			<Icon name="calendar-plus" height={14} width={14} className="text-amber-500" />
+			Set an alert
+		</button>
 	)
 }
 

@@ -2,7 +2,6 @@
  * Utility functions for markdown processing in LlamaAI.
  */
 
-import DOMPurify from 'dompurify'
 import type { UnifiedCitationReference } from '~/containers/LlamaAI/types'
 import { stripBeforeReportStart } from '~/containers/LlamaAI/utils/reportMarkers'
 
@@ -264,42 +263,6 @@ export function extractLlamaLinks(content: string): Map<string, string> {
 	return linkMap
 }
 
-const SANITIZE_ALLOWED_TAGS = [
-	'p',
-	'br',
-	'b',
-	'i',
-	'em',
-	'strong',
-	'a',
-	'ul',
-	'ol',
-	'li',
-	'h1',
-	'h2',
-	'h3',
-	'h4',
-	'h5',
-	'h6',
-	'img',
-	'span',
-	'div',
-	'table',
-	'thead',
-	'tbody',
-	'tr',
-	'th',
-	'td',
-	'blockquote',
-	'code',
-	'pre',
-	'hr',
-	'sup',
-	'sub'
-]
-
-const SANITIZE_ALLOWED_ATTR = ['href', 'target', 'rel', 'src', 'alt', 'width', 'height', 'class']
-
 const CHART_PLACEHOLDER_REGEX = /\[CHART:([^\]]+)\]/g
 
 interface ChartRef {
@@ -308,17 +271,20 @@ interface ChartRef {
 	title: string
 }
 
-export function sanitizeAlertSummary(html: string, charts: ChartRef[]): string {
-	const expanded = html.replace(CHART_PLACEHOLDER_REGEX, (_, chartId: string) => {
+const SLACK_BOLD_REGEX = /(^|[\s(•·>])\*(?!\s|\*)([^*\n]+?)\*(?=$|[\s).,:;!?•·<])/gm
+
+export function prepareAlertSummaryMarkdown(summary: string, charts: ChartRef[]): string {
+	const withCharts = summary.replace(CHART_PLACEHOLDER_REGEX, (_, chartId: string) => {
 		const chart = charts.find((c) => c.id === chartId)
 		if (!chart?.url) return ''
 		const safeUrl = sanitizeUrl(chart.url)
 		if (!safeUrl) return ''
-		const alt = (chart.title || 'Chart').replace(/"/g, '&quot;')
-		return `<img src="${safeUrl}" alt="${alt}" />`
+		const alt = (chart.title || 'Chart').replace(/[[\]()]/g, '')
+		return `\n\n![${alt}](${safeUrl})\n\n`
 	})
-	return DOMPurify.sanitize(expanded, {
-		ALLOWED_TAGS: SANITIZE_ALLOWED_TAGS,
-		ALLOWED_ATTR: SANITIZE_ALLOWED_ATTR
-	})
+	const withBold = withCharts.replace(
+		SLACK_BOLD_REGEX,
+		(_match, pre: string, text: string) => `${pre}**${text.trim()}**`
+	)
+	return withBold.replace(/^•\s+/gm, '- ').replace(/\s+•\s+/g, '\n- ')
 }

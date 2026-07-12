@@ -35,6 +35,7 @@ function page(sessions: ChatSession[], nextOffset?: number): SessionListPage {
 		sessions,
 		usage,
 		factCheckedUsage: null,
+		alertsUsage: null,
 		hasMore: nextOffset !== undefined,
 		nextOffset
 	}
@@ -63,6 +64,7 @@ describe('sessionListCache', () => {
 			sessions: [first],
 			usage,
 			factCheckedUsage: null,
+			alertsUsage: null,
 			hasMore: true,
 			nextOffset: 200
 		})

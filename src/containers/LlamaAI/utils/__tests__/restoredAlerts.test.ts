@@ -3,6 +3,14 @@ import { parseMessageToRenderModel } from '~/containers/LlamaAI/renderModel'
 import type { AlertProposedData, Message } from '~/containers/LlamaAI/types'
 import { buildRestoredAlerts, normalizeAlertProposedData } from '../restoredAlerts'
 
+const priceTrigger = {
+	type: 'price' as const,
+	token_nk: 'coingecko:bitcoin',
+	op: 'below' as const,
+	value: 50000,
+	recurring: false
+}
+
 const alertIntent = {
 	frequency: 'daily' as const,
 	hour: 9,
@@ -109,6 +117,56 @@ describe('normalizeAlertProposedData', () => {
 		})
 
 		expect(alerts?.[0]?.alertIntent).toMatchObject({ hour: 0, dayOfWeek: undefined })
+	})
+
+	it('carries a live price trigger through to alertIntent', () => {
+		const result = normalizeAlertProposedData({
+			alertId: 'alert-1',
+			title: 'BTC below 50000',
+			alertIntent: { trigger: priceTrigger }
+		})
+
+		expect(result.alertIntent.trigger).toEqual(priceTrigger)
+	})
+
+	it('drops a malformed live trigger instead of surfacing a broken price card', () => {
+		const result = normalizeAlertProposedData({
+			alertId: 'alert-1',
+			title: 'Bad trigger',
+			alertIntent: { trigger: { type: 'price', op: 'sideways', value: 'not-a-number' } }
+		})
+
+		expect(result.alertIntent.trigger).toBeUndefined()
+	})
+
+	it('omits trigger entirely for schedule proposals, matching today’s payload shape', () => {
+		const result = normalizeAlertProposedData({
+			alertId: 'alert-1',
+			title: 'Daily brief',
+			alertIntent: {}
+		})
+
+		expect('trigger' in result.alertIntent).toBe(false)
+	})
+
+	it('carries a restored price trigger through buildRestoredAlerts', () => {
+		const alerts = buildRestoredAlerts({
+			content: '[ALERT:price_1]',
+			messageId: 'message-1',
+			metadata: { alertIntent: { trigger: priceTrigger } }
+		})
+
+		expect(alerts?.[0]?.alertIntent.trigger).toEqual(priceTrigger)
+	})
+
+	it('renders schedule artifacts identically for old restored payloads without a trigger', () => {
+		const alerts = buildRestoredAlerts({
+			content: '[ALERT:schedule_1]',
+			messageId: 'message-1',
+			metadata: { alertIntent }
+		})
+
+		expect('trigger' in alerts![0].alertIntent).toBe(false)
 	})
 })
 

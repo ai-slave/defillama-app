@@ -1,24 +1,50 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { memo, useEffect, useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
+import { BasicLink } from '~/components/Link'
 import { AI_SERVER } from '~/constants'
+import { formatPriceAlertSummary, formatTokenLabel } from '~/containers/LlamaAI/components/alerts/alertsListHelpers'
+import {
+	buildArtifactSaveBody,
+	buildScheduleExpressionRaw,
+	formatNextRunAt,
+	getArtifactSubtitle,
+	getDeliveryBlockReason,
+	getDeliveryReadinessBlock,
+	getUpsellCopy,
+	isAlertCapReachedError,
+	roundPriceValue,
+	validatePriceTrigger,
+	type ArtifactSaveBody
+} from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import {
 	DAYS_OF_WEEK,
-	getBlockedLocalHours,
+	formatScheduleExpression,
 	getTimezoneLabel,
-	getValidHourForTimezone
+	GMT_OFFSETS
 } from '~/containers/LlamaAI/components/alerts/schedule'
+import type { DeliveryChannel, PriceTrigger } from '~/containers/LlamaAI/components/alerts/types'
+import {
+	alertFieldLabelClass,
+	alertInputClass,
+	alertSelectClass,
+	PriceInput,
+	SegmentedToggle,
+	SettingsIntegrationsLink
+} from '~/containers/LlamaAI/components/alerts/ui'
+import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
+import { useIntegrationLink } from '~/containers/LlamaAI/hooks/useIntegrationLink'
 import { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
 import { useSlackWorkspaces } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
 import type { AlertIntent } from '~/containers/LlamaAI/types'
-import { assertResponse } from '~/containers/LlamaAI/utils/assertResponse'
 import { useAuthContext } from '~/containers/Subscription/auth'
+import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 export const AlertArtifactLoading = memo(function AlertArtifactLoading() {
 	return (
-		<div className="my-2 flex flex-col gap-3 rounded-lg border border-[#e6e6e6] bg-white p-3 dark:border-[#222324] dark:bg-[#181A1C]">
+		<div className="my-2 flex flex-col gap-3 rounded-xl border border-black/[0.06] bg-white p-3.5 dark:border-white/[0.06] dark:bg-[#181A1C]">
 			<div className="flex items-center gap-3">
-				<div className="size-10 shrink-0 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700" />
+				<div className="size-10 shrink-0 animate-pulse rounded-xl bg-gray-200 dark:bg-gray-700" />
 				<div className="flex min-w-0 flex-1 flex-col gap-1.5">
 					<div className="h-4 w-28 animate-pulse rounded-sm bg-gray-200 dark:bg-gray-700" />
 					<div className="h-3 w-44 animate-pulse rounded-sm bg-gray-200 dark:bg-gray-700" />
@@ -40,35 +66,42 @@ interface AlertArtifactProps {
 	messageId?: string
 	savedAlertIds?: string[]
 	defaultTitle?: string
+	prompt?: string
 }
 
 type TestSentState = 'sent' | 'already' | null
-
-export function getInitialAlertArtifactHour(hour: number, timezone: string) {
-	return getValidHourForTimezone(hour, timezone)
-}
 
 export const AlertArtifact = memo(function AlertArtifact({
 	alertId,
 	alertIntent,
 	messageId,
 	savedAlertIds,
-	defaultTitle
+	defaultTitle,
+	prompt
 }: AlertArtifactProps) {
 	const { authorizedFetch, isAuthenticated } = useAuthContext()
+	const { openAlertsModal } = useTipActions()
 	const [title, setTitle] = useState(defaultTitle || 'Untitled alert')
-	const [frequency, setFrequency] = useState<'daily' | 'weekly'>(alertIntent.frequency)
-	const [hour, setHour] = useState(() => getInitialAlertArtifactHour(alertIntent.hour, alertIntent.timezone))
+	const trigger = alertIntent.trigger ?? null
+	const isPriceAlert = !!trigger
+	const [frequency, setFrequency] = useState<'daily' | 'weekly'>(alertIntent.frequency ?? 'daily')
+	const [hour, setHour] = useState(alertIntent.hour ?? 9)
 	const [dayOfWeek, setDayOfWeek] = useState(alertIntent.dayOfWeek ?? 1)
-	const [timezone] = useState(alertIntent.timezone)
+	const [timezone, setTimezone] = useState(alertIntent.timezone ?? 'UTC')
+	const [priceOp, setPriceOp] = useState<'above' | 'below'>(trigger?.op ?? 'above')
+	const [priceValue, setPriceValue] = useState(trigger ? roundPriceValue(trigger.value) : '')
 	const [savedDbId, setSavedDbId] = useState<string | null>(savedAlertIds?.includes(alertId) ? alertId : null)
+	const [savedNextRunAt, setSavedNextRunAt] = useState<string | null>(null)
 	const [hasRetriedTest, setHasRetriedTest] = useState(false)
 	const [testSent, setTestSent] = useState<TestSentState>(null)
+	const [promptExpanded, setPromptExpanded] = useState(false)
 
-	const deliveryChannel = alertIntent.deliveryChannel || 'email'
+	const [deliveryChannel, setDeliveryChannel] = useState<DeliveryChannel>(alertIntent.deliveryChannel || 'email')
 	const isSlack = deliveryChannel === 'slack'
 	const [slackTeamId, setSlackTeamId] = useState<string>(alertIntent.slackTeamId ?? '')
 	const [slackChannelId, setSlackChannelId] = useState<string>(alertIntent.slackChannelId ?? '')
+	const telegramLink = useIntegrationLink()
+	const telegramLinked = telegramLink.state.status === 'linked'
 	const slackWorkspacesQuery = useSlackWorkspaces()
 	const slackChannelsQuery = useSlackChannels(isSlack && slackTeamId ? slackTeamId : null)
 	const activeWorkspaces = useMemo(() => {
@@ -81,13 +114,15 @@ export const AlertArtifact = memo(function AlertArtifact({
 		channels.sort((a, b) => Number(a.is_private) - Number(b.is_private) || a.name.localeCompare(b.name))
 		return channels
 	}, [slackChannels])
-	const selectedWorkspace = activeWorkspaces.find((w) => w.team_id === slackTeamId) ?? null
+	const timezoneOptions = useMemo(() => {
+		if (GMT_OFFSETS.some((option) => option.value === timezone)) return GMT_OFFSETS
+		return [...GMT_OFFSETS, { value: timezone, label: getTimezoneLabel(timezone) }]
+	}, [timezone])
 	const selectedChannel = (slackChannels ?? []).find((c) => c.id === slackChannelId) ?? null
-	const slackTeamName = selectedWorkspace?.team_name ?? alertIntent.slackTeamName ?? null
 	const slackChannelName = selectedChannel?.name ?? alertIntent.slackChannelName ?? null
 	const isSaved = savedDbId !== null
-	const blockedHours = useMemo(() => getBlockedLocalHours(timezone), [timezone])
-	const proposedHourWasBlocked = blockedHours.includes(alertIntent.hour)
+	const priceValidationError = trigger ? validatePriceTrigger({ tokenNk: trigger.token_nk, value: priceValue }) : null
+	const editedTrigger: PriceTrigger | null = trigger ? { ...trigger, op: priceOp, value: Number(priceValue) } : null
 
 	useEffect(() => {
 		if (!isSlack || slackTeamId || activeWorkspaces.length !== 1) return
@@ -117,26 +152,24 @@ export const AlertArtifact = memo(function AlertArtifact({
 		isPending: isSaving,
 		error: saveError
 	} = useMutation({
-		mutationFn: async (payload: {
-			messageId: string
-			alertId: string
-			title: string
-			alertConfig: { frequency: 'daily' | 'weekly'; hour: number; dayOfWeek: number; timezone: string }
-			delivery_channel: 'email' | 'telegram' | 'slack'
-			slack_team_id?: string | null
-			slack_channel_id?: string | null
-			slack_channel_name?: string | null
-		}) => {
-			const response = await authorizedFetch(`${AI_SERVER}/alerts`, {
+		mutationFn: async (payload: ArtifactSaveBody) => {
+			const res = await authorizedFetch(`${AI_SERVER}/alerts`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(payload)
 			})
-			assertResponse(response, 'Failed to save alert')
-			return response!.json()
+			if (!res) throw new Error('Not authenticated')
+			if (!res.ok) {
+				const errBody = await res.json().catch(() => ({}))
+				throw new Error(errBody?.error || 'Failed to save alert')
+			}
+			return res.json()
 		},
 		onSuccess: (data: any) => {
+			trackUmamiEvent('llamaai-alert-created', { type: isPriceAlert ? 'price' : 'schedule', source: 'artifact' })
 			setSavedDbId(data.id)
+			const nextRunAt = data.nextRunAt ?? data.next_run_at
+			if (typeof nextRunAt === 'string' && nextRunAt) setSavedNextRunAt(nextRunAt)
 		}
 	})
 
@@ -155,23 +188,40 @@ export const AlertArtifact = memo(function AlertArtifact({
 		}
 	})
 
+	const readinessBlock = getDeliveryReadinessBlock({
+		channel: deliveryChannel,
+		telegramLinked,
+		slackTeamId,
+		slackWorkspaceCount: activeWorkspaces.length
+	})
+	const saveBlockReason = !title.trim()
+		? 'Name your alert'
+		: isPriceAlert && priceValidationError
+			? priceValidationError
+			: getDeliveryBlockReason({
+					channel: deliveryChannel,
+					telegramLinked,
+					slackTeamId,
+					slackChannelId,
+					slackWorkspaceCount: activeWorkspaces.length
+				})
+
 	const handleSave = () => {
-		if (!messageId) return
-		if (isSlack && (!slackTeamId || !slackChannelId)) return
-		saveAlert({
-			messageId,
-			alertId,
-			title: title.trim(),
-			alertConfig: { frequency, hour, dayOfWeek, timezone },
-			delivery_channel: deliveryChannel,
-			...(isSlack
-				? {
-						slack_team_id: slackTeamId,
-						slack_channel_id: slackChannelId,
-						slack_channel_name: slackChannelName
-					}
-				: {})
-		})
+		if (!messageId || saveBlockReason || isSaving) return
+		saveAlert(
+			buildArtifactSaveBody({
+				messageId,
+				alertId,
+				title,
+				...(isPriceAlert && editedTrigger
+					? { trigger: editedTrigger }
+					: { alertConfig: { frequency, hour, dayOfWeek, timezone } }),
+				channel: deliveryChannel,
+				slackTeamId,
+				slackChannelId,
+				slackChannelName
+			})
+		)
 	}
 
 	const handleTest = () => {
@@ -180,11 +230,16 @@ export const AlertArtifact = memo(function AlertArtifact({
 		testMutation.mutate(savedDbId)
 	}
 
+	const handleManageAlerts = () => {
+		trackUmamiEvent('llamaai-alerts-open', { source: 'artifact' })
+		openAlertsModal?.()
+	}
+
 	if (!isAuthenticated) {
 		return (
-			<div className="my-2 flex items-center gap-3 rounded-lg border border-[#e6e6e6] bg-white p-3 dark:border-[#222324] dark:bg-[#181A1C]">
-				<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-					<Icon name="calendar-plus" className="size-5 text-amber-500" />
+			<div className="my-2 flex items-center gap-3 rounded-xl border border-black/[0.06] bg-white p-3.5 dark:border-white/[0.06] dark:bg-[#181A1C]">
+				<div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-500/5 ring-1 ring-amber-500/20 ring-inset">
+					<Icon name="calendar-plus" className="size-[18px] text-amber-500" />
 				</div>
 				<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 					<h3 className="m-0 text-sm font-medium text-(--text1)">Sign in to save alerts</h3>
@@ -194,12 +249,21 @@ export const AlertArtifact = memo(function AlertArtifact({
 		)
 	}
 
+	const scheduleSummary = formatScheduleExpression(buildScheduleExpressionRaw({ frequency, hour, dayOfWeek, timezone }))
+	const destinationLabel =
+		deliveryChannel === 'telegram'
+			? 'Telegram'
+			: deliveryChannel === 'slack'
+				? `Slack · #${slackChannelName ?? 'channel'}`
+				: 'Email'
+	const isCapHit = isAlertCapReachedError(saveError)
+
 	return (
 		<div
-			className={`my-2 flex flex-col gap-3 rounded-lg border p-3 ${
+			className={`my-2 flex flex-col gap-3 rounded-xl border p-3.5 ${
 				isSaved
-					? 'border-[#e6e6e6] bg-white dark:border-[#222324] dark:bg-[#181A1C]'
-					: 'animate-[alertPulse_2s_ease-in-out_infinite] border-amber-500/50 bg-white dark:bg-[#181A1C]'
+					? 'border-black/[0.06] bg-white dark:border-white/[0.06] dark:bg-[#181A1C]'
+					: 'animate-[alertPulse_2s_ease-in-out_infinite] border-amber-500/40 bg-white dark:bg-[#181A1C]'
 			}`}
 			style={
 				!isSaved
@@ -217,225 +281,319 @@ export const AlertArtifact = memo(function AlertArtifact({
 				}
 			`}</style>
 			<div className="flex items-center gap-3">
-				<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10">
-					<Icon name="calendar-plus" className="size-5 text-amber-500" />
+				<div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-500/5 ring-1 ring-amber-500/20 ring-inset">
+					<Icon name="calendar-plus" className="size-[18px] text-amber-500" />
 				</div>
 				<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-					<h3 className="m-0 text-sm font-medium text-(--text1)">Schedule Alert</h3>
-					<p className="m-0 text-xs text-(--text3)">
-						{deliveryChannel === 'slack'
-							? slackChannelName && slackTeamName
-								? `Deliver to Slack — #${slackChannelName} · ${slackTeamName}`
-								: slackChannelName
-									? `Deliver to Slack — #${slackChannelName}`
-									: 'Deliver to Slack'
-							: deliveryChannel === 'telegram'
-								? 'Get this data delivered to Telegram'
-								: 'Get this data delivered to your inbox'}
+					<h3 className="m-0 truncate text-sm font-semibold tracking-tight text-(--text1)">
+						{isSaved
+							? title.trim() || (isPriceAlert ? 'Price alert' : 'Schedule alert')
+							: isPriceAlert
+								? 'Price alert'
+								: 'Schedule alert'}
+					</h3>
+					<p className="m-0 truncate text-xs text-(--text3)">
+						{getArtifactSubtitle(deliveryChannel, slackChannelName)}
 					</p>
 				</div>
 			</div>
 
-			<input
-				value={title}
-				onChange={(e) => setTitle(e.target.value)}
-				placeholder="Alert title"
-				disabled={isSaved}
-				className="w-full rounded-md border border-[#e6e6e6] bg-transparent px-3 py-2 text-sm text-(--text1) placeholder:text-(--text3) focus:border-[#2172E5] focus:outline-hidden disabled:opacity-50 dark:border-[#222324]"
-			/>
+			{isSaved ? (
+				<>
+					<p className="m-0 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+						<Icon name="check" className="size-3.5 shrink-0" />
+						{isPriceAlert
+							? 'Watching continuously — fires within seconds of crossing'
+							: savedNextRunAt
+								? `Alert created — next run ${formatNextRunAt(savedNextRunAt)}`
+								: 'Alert saved'}
+					</p>
 
-			<div className="flex flex-wrap items-center gap-2">
-				<select
-					value={frequency}
-					onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly')}
-					disabled={isSaved}
-					className="rounded-md border border-[#e6e6e6] bg-white px-3 py-2 text-sm text-(--text1) focus:border-[#2172E5] focus:outline-hidden disabled:opacity-50 dark:border-[#222324] dark:bg-[#222]"
-				>
-					<option value="daily">Daily</option>
-					<option value="weekly">Weekly</option>
-				</select>
+					<div className="flex flex-col gap-1.5 rounded-lg bg-black/[0.02] px-3 py-2.5 dark:bg-white/[0.03]">
+						<p className="m-0 flex items-center gap-2 text-xs text-[#666] dark:text-[#919296]">
+							<Icon
+								name={isPriceAlert ? 'trending-up' : 'calendar'}
+								className="size-3.5 shrink-0 text-[#999] dark:text-[#777]"
+							/>
+							<span className="truncate font-mono">
+								{isPriceAlert && editedTrigger
+									? formatPriceAlertSummary(editedTrigger, true, undefined, 0)
+									: scheduleSummary}
+							</span>
+						</p>
+						<p className="m-0 flex items-center gap-2 text-xs text-[#666] dark:text-[#919296]">
+							<Icon name="mail" className="size-3.5 shrink-0 text-[#999] dark:text-[#777]" />
+							<span className="truncate">{destinationLabel}</span>
+						</p>
+					</div>
 
-				{frequency === 'weekly' ? (
-					<select
-						value={dayOfWeek}
-						onChange={(e) => setDayOfWeek(Number(e.target.value))}
-						disabled={isSaved}
-						className="rounded-md border border-[#e6e6e6] bg-white px-3 py-2 text-sm text-(--text1) focus:border-[#2172E5] focus:outline-hidden disabled:opacity-50 dark:border-[#222324] dark:bg-[#222]"
-					>
-						{DAYS_OF_WEEK.map((day, idx) => (
-							<option key={day} value={idx}>
-								{day}
-							</option>
-						))}
-					</select>
-				) : null}
-
-				<span className="text-sm text-(--text3)">at</span>
-
-				<select
-					value={hour}
-					onChange={(e) => setHour(Number(e.target.value))}
-					disabled={isSaved}
-					className="rounded-md border border-[#e6e6e6] bg-white px-3 py-2 text-sm text-(--text1) focus:border-[#2172E5] focus:outline-hidden disabled:opacity-50 dark:border-[#222324] dark:bg-[#222]"
-				>
-					{Array.from({ length: 24 }, (_, h) => (
-						<option key={`llamai-alert-h${h}`} value={h} disabled={blockedHours.includes(h)}>
-							{h.toString().padStart(2, '0')}:00{blockedHours.includes(h) ? ' (blocked)' : ''}
-						</option>
-					))}
-				</select>
-
-				<span className="text-xs text-(--text3)">({getTimezoneLabel(timezone)})</span>
-			</div>
-
-			{proposedHourWasBlocked && !isSaved ? (
-				<p className="m-0 flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
-					<Icon name="alert-triangle" className="size-3.5 shrink-0" />
-					The proposed {alertIntent.hour.toString().padStart(2, '0')}:00 time is blocked for maintenance, so this alert
-					was moved to {hour.toString().padStart(2, '0')}:00.
-				</p>
-			) : null}
-
-			{isSlack ? (
-				<div className="flex flex-wrap items-center gap-2">
-					<span className="text-sm text-(--text3)">Send to</span>
-					{slackWorkspacesQuery.isLoading ? (
-						<span className="text-xs text-(--text3)">Loading workspaces…</span>
-					) : activeWorkspaces.length === 0 ? (
-						<span className="text-xs text-amber-600 dark:text-amber-400">No Slack workspaces connected.</span>
-					) : (
-						<select
-							value={slackTeamId}
-							disabled={isSaved}
-							onChange={(e) => {
-								const nextTeamId = e.target.value
-								setSlackTeamId(nextTeamId)
-								const nextWorkspace = activeWorkspaces.find((w) => w.team_id === nextTeamId)
-								setSlackChannelId(nextWorkspace?.default_channel_id ?? '')
-							}}
-							className="rounded-md border border-[#e6e6e6] bg-white px-3 py-2 text-sm text-(--text1) focus:border-[#2172E5] focus:outline-hidden disabled:opacity-50 dark:border-[#222324] dark:bg-[#222]"
+					{testMutation.isIdle && !testSent ? (
+						<button
+							onClick={handleTest}
+							disabled={alertDetailQuery.isLoading}
+							className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-black/[0.08] px-4 py-2 text-sm font-medium text-(--text1) transition-colors hover:bg-black/[0.03] disabled:opacity-50 dark:border-white/[0.08] dark:hover:bg-white/[0.04]"
 						>
-							<option value="" disabled>
-								Pick workspace
-							</option>
-							{activeWorkspaces.map((w) => (
-								<option key={w.team_id} value={w.team_id}>
-									{w.team_name}
-								</option>
-							))}
-						</select>
-					)}
+							<Icon name="mail" className="size-4" />
+							<span>Send test alert</span>
+						</button>
+					) : null}
 
-					{slackTeamId ? (
-						slackChannelsQuery.isLoading ? (
-							<span className="text-xs text-(--text3)">Loading channels…</span>
-						) : slackChannelsQuery.isError ? (
-							<span className="text-xs text-red-500">Failed to load channels</span>
-						) : (
-							<select
-								value={slackChannelId}
-								disabled={isSaved}
-								onChange={(e) => setSlackChannelId(e.target.value)}
-								className="rounded-md border border-[#e6e6e6] bg-white px-3 py-2 text-sm text-(--text1) focus:border-[#2172E5] focus:outline-hidden disabled:opacity-50 dark:border-[#222324] dark:bg-[#222]"
+					{testSent === 'already' && !testMutation.isPending ? (
+						<p className="flex items-center justify-center gap-1.5 text-xs text-(--text3)">
+							<Icon name="check" className="size-3.5" />
+							Test already sent for this alert
+						</p>
+					) : null}
+
+					{testSent === 'sent' && !testMutation.isPending ? (
+						<p className="flex items-center justify-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+							<Icon name="check" className="size-3.5" />
+							{deliveryChannel === 'slack'
+								? slackChannelName
+									? `Test sent! Check #${slackChannelName} in Slack`
+									: 'Test sent! Check your Slack channel'
+								: deliveryChannel === 'telegram'
+									? 'Test sent! Check your Telegram'
+									: 'Test sent! Check your inbox'}
+						</p>
+					) : null}
+
+					{testMutation.isPending ? (
+						<p className="flex items-center justify-center gap-1.5 text-xs text-(--text3)">
+							<span className="inline-block size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+							Sending test alert...
+						</p>
+					) : null}
+
+					{testMutation.isError && !hasRetriedTest ? (
+						<div className="flex flex-col items-center gap-1.5">
+							<p className="text-xs text-(--error)">{testMutation.error.message}</p>
+							<button onClick={handleTest} className="text-xs font-medium text-(--link-text) hover:underline">
+								Retry
+							</button>
+						</div>
+					) : null}
+
+					{testMutation.isError && hasRetriedTest ? (
+						<p className="text-center text-xs text-(--error)">{testMutation.error.message}</p>
+					) : null}
+
+					{openAlertsModal ? (
+						<button
+							type="button"
+							onClick={handleManageAlerts}
+							className="self-start text-xs text-[#777] transition-colors hover:text-(--link-text) dark:text-[#919296]"
+						>
+							Manage alerts →
+						</button>
+					) : null}
+				</>
+			) : (
+				<>
+					<input
+						value={title}
+						onChange={(e) => setTitle(e.target.value)}
+						placeholder="Alert title"
+						className={alertInputClass}
+					/>
+
+					{prompt ? (
+						<div className="flex flex-col gap-1">
+							<span className={alertFieldLabelClass}>What it will tell you</span>
+							<p
+								className={`m-0 text-sm leading-relaxed text-[#484848] dark:text-[#b4b7bc] ${
+									promptExpanded ? '' : 'line-clamp-2'
+								}`}
 							>
-								<option value="" disabled>
-									Pick channel
-								</option>
-								{selectableSlackChannels.map((c) => (
-									<option key={c.id} value={c.id} disabled={c.is_private && !c.is_member}>
-										{c.is_private ? '🔒 ' : '# '}
-										{c.name}
-										{c.is_private && !c.is_member ? ' (invite bot first)' : ''}
+								{prompt}
+							</p>
+							{prompt.length > 140 ? (
+								<button
+									type="button"
+									onClick={() => setPromptExpanded((v) => !v)}
+									className="self-start text-xs font-medium text-(--link-text) hover:underline"
+								>
+									{promptExpanded ? 'Show less' : 'Show more'}
+								</button>
+							) : null}
+						</div>
+					) : null}
+
+					{trigger ? (
+						<div className="flex flex-col gap-1.5">
+							<div className="flex flex-wrap items-center gap-2">
+								<span className="font-mono text-sm text-(--text-primary)">{formatTokenLabel(trigger.token_nk)}</span>
+								<SegmentedToggle<'above' | 'below'>
+									value={priceOp}
+									onChange={setPriceOp}
+									options={[
+										{ value: 'above', label: 'Above' },
+										{ value: 'below', label: 'Below' }
+									]}
+								/>
+								<PriceInput value={priceValue} onValueChange={setPriceValue} />
+							</div>
+							<p className="m-0 text-xs text-[#999] dark:text-[#777]">
+								Fires once, then pauses — re-arm it anytime from your alerts.
+							</p>
+						</div>
+					) : (
+						<div className="flex flex-wrap items-center gap-2">
+							<select
+								value={frequency}
+								onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly')}
+								className={alertSelectClass}
+							>
+								<option value="daily">Daily</option>
+								<option value="weekly">Weekly</option>
+							</select>
+
+							{frequency === 'weekly' ? (
+								<select
+									value={dayOfWeek}
+									onChange={(e) => setDayOfWeek(Number(e.target.value))}
+									className={alertSelectClass}
+								>
+									{DAYS_OF_WEEK.map((day, idx) => (
+										<option key={day} value={idx}>
+											{day}
+										</option>
+									))}
+								</select>
+							) : null}
+
+							<span className="text-xs text-[#999] dark:text-[#777]">at</span>
+
+							<select value={hour} onChange={(e) => setHour(Number(e.target.value))} className={alertSelectClass}>
+								{Array.from({ length: 24 }, (_, h) => (
+									<option key={`llamai-alert-h${h}`} value={h}>
+										{h.toString().padStart(2, '0')}:00
 									</option>
 								))}
 							</select>
+
+							<select value={timezone} onChange={(e) => setTimezone(e.target.value)} className={alertSelectClass}>
+								{timezoneOptions.map((tz) => (
+									<option key={tz.value} value={tz.value}>
+										{tz.label}
+									</option>
+								))}
+							</select>
+						</div>
+					)}
+
+					<div className="flex flex-col gap-1.5">
+						<span className={alertFieldLabelClass}>Where should it go?</span>
+						<div className="flex flex-wrap items-center gap-2">
+							<SegmentedToggle<DeliveryChannel>
+								value={deliveryChannel}
+								onChange={setDeliveryChannel}
+								options={[
+									{ value: 'email', label: 'Email' },
+									{ value: 'telegram', label: 'Telegram' },
+									{ value: 'slack', label: 'Slack' }
+								]}
+							/>
+							{isSlack ? (
+								<>
+									{slackWorkspacesQuery.isLoading ? (
+										<span className="text-xs text-(--text3)">Loading workspaces…</span>
+									) : activeWorkspaces.length > 0 ? (
+										<select
+											value={slackTeamId}
+											onChange={(e) => {
+												const nextTeamId = e.target.value
+												setSlackTeamId(nextTeamId)
+												const nextWorkspace = activeWorkspaces.find((w) => w.team_id === nextTeamId)
+												setSlackChannelId(nextWorkspace?.default_channel_id ?? '')
+											}}
+											className={alertSelectClass}
+										>
+											<option value="" disabled>
+												Pick workspace
+											</option>
+											{activeWorkspaces.map((w) => (
+												<option key={w.team_id} value={w.team_id}>
+													{w.team_name}
+												</option>
+											))}
+										</select>
+									) : null}
+									{slackTeamId ? (
+										slackChannelsQuery.isLoading ? (
+											<span className="text-xs text-(--text3)">Loading channels…</span>
+										) : slackChannelsQuery.isError ? (
+											<span className="text-xs text-red-500">Failed to load channels</span>
+										) : (
+											<select
+												value={slackChannelId}
+												onChange={(e) => setSlackChannelId(e.target.value)}
+												className={alertSelectClass}
+											>
+												<option value="" disabled>
+													Pick channel
+												</option>
+												{selectableSlackChannels.map((c) => (
+													<option key={c.id} value={c.id} disabled={c.is_private && !c.is_member}>
+														{c.is_private ? '🔒 ' : '# '}
+														{c.name}
+														{c.is_private && !c.is_member ? ' (invite bot first)' : ''}
+													</option>
+												))}
+											</select>
+										)
+									) : null}
+								</>
+							) : null}
+						</div>
+						{readinessBlock ? (
+							<p className="m-0 text-xs text-amber-600 dark:text-amber-400">
+								{readinessBlock.label} →{' '}
+								<span className="text-[#666] dark:text-[#919296]">
+									<SettingsIntegrationsLink />
+								</span>
+							</p>
+						) : null}
+					</div>
+
+					<p className="m-0 flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+						<Icon name="alert-triangle" className="size-3.5 shrink-0" />
+						Action required — confirm your alert settings and save
+					</p>
+
+					{saveBlockReason && !readinessBlock ? (
+						<p className="m-0 text-center text-xs text-[#999] dark:text-[#777]">{saveBlockReason}</p>
+					) : null}
+
+					<button
+						onClick={handleSave}
+						disabled={!messageId || isSaving || !!saveBlockReason}
+						className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-(--old-blue) px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#1a58b4] disabled:cursor-not-allowed disabled:opacity-50"
+					>
+						{isSaving ? (
+							<span>Saving...</span>
+						) : (
+							<>
+								<Icon name="calendar-plus" className="size-4" />
+								<span>Save Alert</span>
+							</>
+						)}
+					</button>
+
+					{saveError ? (
+						isCapHit ? (
+							<div className="flex flex-col items-center gap-1.5">
+								<p className="m-0 text-xs text-[#666] dark:text-[#919296]">{getUpsellCopy(null)}</p>
+								<BasicLink href="/subscription" className="text-xs font-medium text-(--link-text) hover:underline">
+									Upgrade to Pro
+								</BasicLink>
+							</div>
+						) : (
+							<p className="text-center text-xs text-(--error)">{saveError.message}</p>
 						)
 					) : null}
-				</div>
-			) : null}
-
-			{!isSaved ? (
-				<p className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
-					<Icon name="alert-triangle" className="size-3.5 shrink-0" />
-					Action required — confirm your alert settings and save
-				</p>
-			) : null}
-
-			<button
-				onClick={handleSave}
-				disabled={!messageId || isSaving || isSaved || !title.trim() || (isSlack && (!slackTeamId || !slackChannelId))}
-				className={`flex w-full items-center justify-center gap-1.5 rounded-md px-4 py-2.5 text-sm font-medium transition-colors ${
-					isSaved
-						? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-						: 'bg-[#2172E5] text-white hover:bg-[#1a5cc7] disabled:cursor-not-allowed disabled:opacity-50'
-				}`}
-			>
-				{isSaved ? (
-					<>
-						<Icon name="check" className="size-4" />
-						<span>Saved</span>
-					</>
-				) : isSaving ? (
-					<span>Saving...</span>
-				) : (
-					<>
-						<Icon name="calendar-plus" className="size-4" />
-						<span>Save Alert</span>
-					</>
-				)}
-			</button>
-			{saveError ? <p className="text-center text-xs text-(--error)">{saveError.message}</p> : null}
-
-			{isSaved && testMutation.isIdle && !testSent ? (
-				<button
-					onClick={handleTest}
-					disabled={alertDetailQuery.isLoading}
-					className="flex w-full items-center justify-center gap-1.5 rounded-md border border-[#e6e6e6] px-4 py-2 text-sm font-medium text-(--text1) transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-[#222324] dark:hover:bg-[#222324]"
-				>
-					<Icon name="mail" className="size-4" />
-					<span>Send test alert</span>
-				</button>
-			) : null}
-
-			{isSaved && testSent === 'already' && !testMutation.isPending ? (
-				<p className="flex items-center justify-center gap-1.5 text-xs text-(--text3)">
-					<Icon name="check" className="size-3.5" />
-					Test already sent for this alert
-				</p>
-			) : null}
-
-			{isSaved && testSent === 'sent' && !testMutation.isPending ? (
-				<p className="flex items-center justify-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
-					<Icon name="check" className="size-3.5" />
-					{deliveryChannel === 'slack'
-						? slackChannelName
-							? `Test sent! Check #${slackChannelName} in Slack`
-							: 'Test sent! Check your Slack channel'
-						: deliveryChannel === 'telegram'
-							? 'Test sent! Check your Telegram'
-							: 'Test sent! Check your inbox'}
-				</p>
-			) : null}
-
-			{testMutation.isPending ? (
-				<p className="flex items-center justify-center gap-1.5 text-xs text-(--text3)">
-					<span className="inline-block size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-					Sending test alert...
-				</p>
-			) : null}
-
-			{testMutation.isError && !hasRetriedTest ? (
-				<div className="flex flex-col items-center gap-1.5">
-					<p className="text-xs text-(--error)">{testMutation.error.message}</p>
-					<button onClick={handleTest} className="text-xs font-medium text-[#2172E5] hover:underline">
-						Retry
-					</button>
-				</div>
-			) : null}
-
-			{testMutation.isError && hasRetriedTest ? (
-				<p className="text-center text-xs text-(--error)">{testMutation.error.message}</p>
-			) : null}
+				</>
+			)}
 		</div>
 	)
 })

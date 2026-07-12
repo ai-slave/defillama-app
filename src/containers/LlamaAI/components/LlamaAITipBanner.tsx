@@ -4,6 +4,7 @@ import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
 import { useActiveTip } from '~/containers/LlamaAI/hooks/useLlamaAITip'
 import { isSettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
 import { Tooltip } from '~/ui/Tooltip'
+import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 export function LlamaAITipBanner() {
 	const { tip, dismissTip, clickTip } = useActiveTip()
@@ -68,6 +69,7 @@ function runAction(
 			break
 		}
 		case 'open-alerts':
+			trackUmamiEvent('llamaai-alerts-open', { source: 'tip' })
 			actions.openAlertsModal?.()
 			break
 		case 'open-research-mode':

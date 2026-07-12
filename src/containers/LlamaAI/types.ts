@@ -1,3 +1,4 @@
+import type { PriceTrigger } from '~/containers/LlamaAI/components/alerts/types'
 import type { DashboardItemConfig } from '~/containers/ProDashboard/types'
 
 export interface ChartConfiguration {
@@ -134,16 +135,18 @@ export interface ResearchUsage {
 export interface AlertProposedData {
 	alertId: string
 	title: string
+	prompt?: string
 	alertIntent: {
-		frequency: 'daily' | 'weekly'
-		hour: number
-		timezone: string
+		frequency?: 'daily' | 'weekly'
+		hour?: number
+		timezone?: string
 		dayOfWeek?: number
 		deliveryChannel?: 'email' | 'telegram' | 'slack'
 		slackTeamId?: string | null
 		slackTeamName?: string | null
 		slackChannelId?: string | null
 		slackChannelName?: string | null
+		trigger?: PriceTrigger
 	}
 	schedule_expression: string
 	next_run_at: string
@@ -189,15 +192,16 @@ export interface ToolExecution {
 
 export interface AlertIntent {
 	detected: boolean
-	frequency: 'daily' | 'weekly'
-	hour: number
-	timezone: string
+	frequency?: 'daily' | 'weekly'
+	hour?: number
+	timezone?: string
 	dayOfWeek?: number
 	deliveryChannel?: 'email' | 'telegram' | 'slack'
 	slackTeamId?: string | null
 	slackTeamName?: string | null
 	slackChannelId?: string | null
 	slackChannelName?: string | null
+	trigger?: PriceTrigger
 	toolExecutions: Array<{
 		toolName: string
 		arguments: JsonObject

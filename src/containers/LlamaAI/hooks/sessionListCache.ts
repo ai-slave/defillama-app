@@ -1,4 +1,5 @@
 import type { InfiniteData } from '@tanstack/react-query'
+import type { AlertsUsage } from '~/containers/LlamaAI/components/alerts/types'
 import type { ChatSession, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
 
 export const SESSIONS_QUERY_KEY = 'llamaai-sessions'
@@ -7,12 +8,14 @@ export interface SessionListData {
 	sessions: ChatSession[]
 	usage: ResearchUsage | null
 	factCheckedUsage: FactCheckedUsage | null
+	alertsUsage: AlertsUsage | null
 }
 
 export interface SessionListPage {
 	sessions: ChatSession[]
 	usage: ResearchUsage | null
 	factCheckedUsage: FactCheckedUsage | null
+	alertsUsage: AlertsUsage | null
 	hasMore: boolean
 	nextOffset?: number
 }
@@ -24,6 +27,7 @@ export interface SessionListResponse {
 	usage?: {
 		research_report?: ResearchUsage | null
 		fact_checked?: FactCheckedUsage | null
+		alerts?: AlertsUsage | null
 	}
 }
 
@@ -34,13 +38,14 @@ export function mapSessionListPage(responseData: SessionListResponse): SessionLi
 		sessions: responseData.sessions,
 		usage: responseData.usage?.research_report ?? null,
 		factCheckedUsage: responseData.usage?.fact_checked ?? null,
+		alertsUsage: responseData.usage?.alerts ?? null,
 		hasMore: responseData.hasMore ?? false,
 		nextOffset: responseData.nextOffset
 	}
 }
 
 export function flattenSessionListData(data: SessionListInfiniteData | undefined): SessionListData {
-	if (!data) return { sessions: [], usage: null, factCheckedUsage: null }
+	if (!data) return { sessions: [], usage: null, factCheckedUsage: null, alertsUsage: null }
 
 	// Infinite pages can overlap after optimistic inserts, moves, or refetches.
 	// Keep the first copy because page order already encodes recency.
@@ -58,7 +63,8 @@ export function flattenSessionListData(data: SessionListInfiniteData | undefined
 	return {
 		sessions,
 		usage: data.pages[0]?.usage ?? null,
-		factCheckedUsage: data.pages[0]?.factCheckedUsage ?? null
+		factCheckedUsage: data.pages[0]?.factCheckedUsage ?? null,
+		alertsUsage: data.pages[0]?.alertsUsage ?? null
 	}
 }
 
@@ -106,6 +112,7 @@ export function prependSessionToInfiniteData(
 		sessions: [session],
 		usage: null,
 		factCheckedUsage: null,
+		alertsUsage: null,
 		hasMore: false
 	}
 	if (!data) return createSessionListInfiniteData(page)
@@ -260,7 +267,7 @@ export function moveSessionToTopInInfiniteData(
 
 	if (!movedSession) return data
 
-	const firstPage = pages[0] ?? { sessions: [], usage: null, factCheckedUsage: null, hasMore: false }
+	const firstPage = pages[0] ?? { sessions: [], usage: null, factCheckedUsage: null, alertsUsage: null, hasMore: false }
 	pages[0] = {
 		...firstPage,
 		sessions: [movedSession, ...firstPage.sessions]

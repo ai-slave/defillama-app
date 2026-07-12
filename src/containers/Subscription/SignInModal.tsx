@@ -6,12 +6,14 @@ export function SignInModal({
 	text,
 	className,
 	hideWhenAuthenticated = true,
-	store
+	store,
+	prompt
 }: {
 	text?: string
 	className?: string
 	hideWhenAuthenticated?: boolean
 	store?: Ariakit.DialogStore
+	prompt?: string
 }) {
 	const localDialogStore = Ariakit.useDialogStore()
 	const dialogStore = store ?? localDialogStore
@@ -29,7 +31,7 @@ export function SignInModal({
 					{text ?? 'Sign In'}
 				</button>
 			) : null}
-			{isOpen ? <SignInDialog store={dialogStore} /> : null}
+			{isOpen ? <SignInDialog store={dialogStore} prompt={prompt} /> : null}
 		</>
 	)
 }

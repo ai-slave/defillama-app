@@ -45,6 +45,7 @@ interface PromptInputProps {
 		text: string
 		entities?: Array<{ term: string; slug: string; type?: string }>
 	} | null
+	onRestoreConsumed?: () => void
 	mode: AgenticAnswerMode
 	setMode: (mode: AgenticAnswerMode) => void
 	researchUsage?: ResearchUsage | null
@@ -78,6 +79,7 @@ export function PromptInput({
 	isStreaming,
 	placeholder,
 	restoreRequest,
+	onRestoreConsumed,
 	mode,
 	setMode,
 	researchUsage,
@@ -99,6 +101,7 @@ export function PromptInput({
 	const valueRef = useRef(value)
 	const isSuggestedRef = useRef(false)
 	const shiftHeldRef = useRef(false)
+	const lastRestoreKeyRef = useRef<number | null>(null)
 
 	useEffect(() => {
 		const onDown = (e: KeyboardEvent) => {
@@ -199,10 +202,18 @@ export function PromptInput({
 		valueRef.current = value
 	}, [value])
 
-	// Handle restore request (e.g., failed submission retry)
+	// Handle restore request (e.g., failed submission retry). Each restoreRequest key is
+	// attempted exactly once: applied if the composer is empty, discarded otherwise.
 	useEffect(() => {
 		if (!restoreRequest) return
-		if (value.trim().length > 0) return
+		if (lastRestoreKeyRef.current === restoreRequest.key) return
+
+		lastRestoreKeyRef.current = restoreRequest.key
+
+		if (value.trim().length > 0) {
+			onRestoreConsumed?.()
+			return
+		}
 
 		const { text, entities } = restoreRequest
 		let cancelled = false
@@ -217,12 +228,13 @@ export function PromptInput({
 				selectionStart: text.length,
 				selectionEnd: text.length
 			})
+			onRestoreConsumed?.()
 		})
 
 		return () => {
 			cancelled = true
 		}
-	}, [restoreRequest, value, restoreEntities, clearSearch, applyPromptEdit])
+	}, [restoreRequest, value, restoreEntities, clearSearch, applyPromptEdit, onRestoreConsumed])
 
 	// Focus input after external drop
 	useEffect(() => {
@@ -523,12 +535,21 @@ export function PromptInput({
 					/>
 					{onOpenAlerts ? (
 						<Tooltip
-							content="Manage Alerts"
-							render={<button type="button" onClick={onOpenAlerts} data-walkthrough="alerts-button" />}
-							className="flex size-7 items-center justify-center rounded-md bg-amber-500/12 text-amber-500 hover:bg-amber-500 hover:text-white"
+							content="Create & manage alerts"
+							render={
+								<button
+									type="button"
+									onClick={() => {
+										trackUmamiEvent('llamaai-alerts-open', { source: 'toolbar' })
+										onOpenAlerts()
+									}}
+									data-walkthrough="alerts-button"
+								/>
+							}
+							className="flex h-7 items-center gap-1.5 rounded-md bg-amber-500/12 px-2 text-amber-500 hover:bg-amber-500 hover:text-white"
 						>
 							<Icon name="calendar-plus" height={14} width={14} />
-							<span className="sr-only">Manage Alerts</span>
+							<span className="text-xs font-medium">Alerts</span>
 						</Tooltip>
 					) : null}
 				</div>

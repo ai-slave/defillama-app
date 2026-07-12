@@ -1,3 +1,4 @@
+import type { PriceTrigger } from '~/containers/LlamaAI/components/alerts/types'
 import type { AlertProposedData } from '~/containers/LlamaAI/types'
 
 export type PersistedAlertIntent = {
@@ -6,12 +7,14 @@ export type PersistedAlertIntent = {
 	timezone?: string
 	dayOfWeek?: number
 	dataQuery?: string
+	prompt?: string
 	title?: string
 	deliveryChannel?: 'email' | 'telegram' | 'slack'
 	slackTeamId?: string | null
 	slackTeamName?: string | null
 	slackChannelId?: string | null
 	slackChannelName?: string | null
+	trigger?: PriceTrigger
 }
 
 export type RestoredAlertMetadata = {
@@ -52,6 +55,21 @@ function normalizeDayOfWeek(value: unknown) {
 		: undefined
 }
 
+function normalizePriceTrigger(value: unknown): PriceTrigger | undefined {
+	if (!isRecord(value)) return undefined
+	if (value.type !== 'price') return undefined
+	if (typeof value.token_nk !== 'string' || !value.token_nk) return undefined
+	if (value.op !== 'above' && value.op !== 'below') return undefined
+	if (typeof value.value !== 'number' || !Number.isFinite(value.value) || value.value <= 0) return undefined
+	return {
+		type: 'price',
+		token_nk: value.token_nk,
+		op: value.op,
+		value: value.value,
+		...(typeof value.recurring === 'boolean' ? { recurring: value.recurring } : {})
+	}
+}
+
 export function normalizeAlertProposedData(value: unknown): AlertProposedData {
 	const outerEvent = isRecord(value) ? value : {}
 	const event = isRecord(outerEvent.content) ? outerEvent.content : outerEvent
@@ -61,18 +79,27 @@ export function normalizeAlertProposedData(value: unknown): AlertProposedData {
 		normalizeDeliveryChannel(event.deliveryChannel) ||
 		normalizeDeliveryChannel(event.delivery_channel)
 
+	const prompt =
+		(typeof event.prompt === 'string' && event.prompt) ||
+		(typeof rawIntent.prompt === 'string' && rawIntent.prompt) ||
+		''
+
+	const trigger = normalizePriceTrigger(rawIntent.trigger)
+
 	return {
 		alertId: typeof event.alertId === 'string' && event.alertId ? event.alertId : 'alert_proposed_fallback',
 		title:
 			(typeof event.title === 'string' && event.title) ||
 			(typeof rawIntent.title === 'string' && rawIntent.title) ||
 			(typeof rawIntent.dataQuery === 'string' ? rawIntent.dataQuery : ''),
+		...(prompt ? { prompt } : {}),
 		alertIntent: {
 			frequency: rawIntent.frequency === 'weekly' ? 'weekly' : 'daily',
 			hour: normalizeHour(rawIntent.hour),
 			timezone: typeof rawIntent.timezone === 'string' && rawIntent.timezone ? rawIntent.timezone : 'UTC',
 			dayOfWeek: normalizeDayOfWeek(rawIntent.dayOfWeek),
 			deliveryChannel: restoredDeliveryChannel,
+			...(trigger ? { trigger } : {}),
 			...(restoredDeliveryChannel === 'slack'
 				? {
 						slackTeamId: getStringValue(
@@ -130,16 +157,19 @@ export function buildRestoredAlerts({
 
 	// PR #38 added deliveryChannel after Telegram support; older saved alert metadata may omit it.
 	const restoredDeliveryChannel = metadata.alertIntent.deliveryChannel || metadata.deliveryChannel
+	const trigger = normalizePriceTrigger(metadata.alertIntent.trigger)
 	return [
 		{
 			alertId: persistedAlertId,
 			title: metadata.alertIntent.title || metadata.alertIntent.dataQuery || '',
+			...(metadata.alertIntent.prompt ? { prompt: metadata.alertIntent.prompt } : {}),
 			alertIntent: {
 				frequency: metadata.alertIntent.frequency || 'daily',
 				hour: normalizeHour(metadata.alertIntent.hour),
 				timezone: metadata.alertIntent.timezone || 'UTC',
 				dayOfWeek: normalizeDayOfWeek(metadata.alertIntent.dayOfWeek),
 				deliveryChannel: restoredDeliveryChannel,
+				...(trigger ? { trigger } : {}),
 				...(restoredDeliveryChannel === 'slack'
 					? {
 							slackTeamId: metadata.alertIntent.slackTeamId ?? null,

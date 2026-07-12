@@ -81,5 +81,5 @@ or generated snippets are edited.
   helpers at the boundary.
 - Integration polling should stop when the derived state is linked or idle and
   continue while a pending token is active.
-- Alert schedules intentionally block local hours that map to blocked UTC hours.
+- Alert schedules allow all 24 hours; there are no blocked hours.
 - Project chat requests must include `projectId` when scoped to a project.

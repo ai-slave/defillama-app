@@ -5,6 +5,8 @@ interface TokenOption {
 	value: string
 	label: string
 	logo?: string
+	id: string
+	price?: number | null
 }
 
 export function useTokenSearch(searchQuery: string) {

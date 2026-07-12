@@ -34,11 +34,13 @@ const WalletSignInButton = dynamic<WalletSignInButtonProps>(
 export function SignInDialog({
 	store,
 	initialStep,
-	suppressVerifyEmailPrompt
+	suppressVerifyEmailPrompt,
+	prompt
 }: {
 	store: Ariakit.DialogStore
 	initialStep?: 'signin' | 'signup'
 	suppressVerifyEmailPrompt?: boolean
+	prompt?: string
 }) {
 	return (
 		<Ariakit.Dialog
@@ -51,6 +53,7 @@ export function SignInDialog({
 					dialogStore={store}
 					initialStep={initialStep}
 					suppressVerifyEmailPrompt={suppressVerifyEmailPrompt}
+					prompt={prompt}
 				/>
 			</div>
 		</Ariakit.Dialog>
@@ -62,11 +65,13 @@ export function SignInDialog({
 export function SignInFlow({
 	dialogStore,
 	initialStep = 'signin',
-	suppressVerifyEmailPrompt
+	suppressVerifyEmailPrompt,
+	prompt
 }: {
 	dialogStore: Ariakit.DialogStore
 	initialStep?: 'signin' | 'signup'
 	suppressVerifyEmailPrompt?: boolean
+	prompt?: string
 }) {
 	const [step, setStep] = useState<Step>(initialStep)
 	const [email, setEmail] = useState('')
@@ -151,15 +156,18 @@ export function SignInFlow({
 
 	/* ── Header ── */
 	const header = (
-		<div className="mb-5 flex items-center justify-between">
-			<div className="flex items-center gap-2">
-				<img src="/assets/logo_white.webp" alt="" className="size-7" />
-				<span className="text-sm font-semibold text-(--legacy-text-primary)">DefiLlama</span>
+		<div className="mb-5">
+			<div className="flex items-center justify-between">
+				<div className="flex items-center gap-2">
+					<img src="/assets/logo_white.webp" alt="" className="size-7" />
+					<span className="text-sm font-semibold text-(--text-primary)">DefiLlama</span>
+				</div>
+				<Ariakit.DialogDismiss className="rounded-full p-1 text-(--text-tertiary) transition-colors hover:text-(--text-primary)">
+					<Icon name="x" height={20} width={20} />
+					<span className="sr-only">Close</span>
+				</Ariakit.DialogDismiss>
 			</div>
-			<Ariakit.DialogDismiss className="rounded-full p-1 text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-text-primary)">
-				<Icon name="x" height={20} width={20} />
-				<span className="sr-only">Close</span>
-			</Ariakit.DialogDismiss>
+			{prompt ? <p className="mt-2.5 text-sm text-(--text-secondary)">{prompt}</p> : null}
 		</div>
 	)
 

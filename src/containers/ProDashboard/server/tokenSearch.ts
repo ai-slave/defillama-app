@@ -23,7 +23,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 			filteredTokens = allTokens.slice(0, 20)
 		}
 
-		const options: { value: string; label: string; logo: string | null }[] = []
+		const options: { value: string; label: string; logo: string | null; id: string; price: number | null }[] = []
 		for (const token of filteredTokens) {
 			if (options.length >= 100) break
 			if (!token.symbol) continue
@@ -32,7 +32,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 			options.push({
 				value: token.symbol,
 				label: `${name} (${token.symbol.toUpperCase()})`,
-				logo: geckoTokenIconUrl(token.id)
+				logo: geckoTokenIconUrl(token.id),
+				id: token.id,
+				price: typeof token.current_price === 'number' ? token.current_price : null
 			})
 		}
 

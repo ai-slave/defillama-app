@@ -3,6 +3,7 @@ import { Icon } from '~/components/Icon'
 import { NestedMenu } from '~/components/NestedMenu'
 import { BrowserContent } from '~/containers/LlamaAI/components/input/CapabilityBrowser'
 import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
+import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface MobileToolsPopoverProps {
 	mode: AgenticAnswerMode
@@ -44,6 +45,7 @@ export function MobileToolsPopover({
 
 	const handleOpenAlerts = () => {
 		menu.hideAll()
+		trackUmamiEvent('llamaai-alerts-open', { source: 'mobile' })
 		onOpenAlerts?.()
 	}
 
@@ -182,7 +184,7 @@ export function MobileToolsPopover({
 						onClick={handleOpenAlerts}
 					>
 						<Icon name="calendar-plus" height={16} width={16} className="shrink-0 text-amber-500 dark:text-amber-400" />
-						<span>Manage Alerts</span>
+						<span>Alerts</span>
 					</Ariakit.MenuItem>
 				) : null}
 			</Ariakit.Menu>

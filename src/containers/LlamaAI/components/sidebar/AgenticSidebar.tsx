@@ -51,6 +51,8 @@ interface AgenticSidebarProps {
 	onLoadMoreSessions?: () => void
 	currentProjectId?: string | null
 	currentSessionProjectId?: string | null
+	alertsCount?: number | null
+	onOpenAlerts?: () => void
 }
 
 function getGroupName(lastActivity: string, now: number) {
@@ -176,7 +178,9 @@ export function AgenticSidebar({
 	loadMoreSessionsError = null,
 	onLoadMoreSessions,
 	currentProjectId = null,
-	currentSessionProjectId = null
+	currentSessionProjectId = null,
+	alertsCount = null,
+	onOpenAlerts
 }: AgenticSidebarProps) {
 	const { hideSidebar, isFullscreen, toggleFullscreen, toggleSidebar } = useLlamaAIChrome()
 	const sidebarRef = useRef<HTMLDivElement>(null)
@@ -489,6 +493,24 @@ export function AgenticSidebar({
 						onUpdateTitle={handleUpdateTitle}
 						onPinSession={onPinSession}
 					/>
+					{onOpenAlerts ? (
+						<div className="px-4 pt-1">
+							<button
+								type="button"
+								onClick={() => {
+									trackUmamiEvent('llamaai-alerts-open', { source: 'sidebar' })
+									onOpenAlerts()
+								}}
+								className="-mx-1.5 flex w-[calc(100%+0.75rem)] items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-xs text-[#666] transition-colors hover:bg-[#f0f0f0] hover:text-[#1a1a1a] dark:text-[#919296] dark:hover:bg-[#222324] dark:hover:text-white"
+							>
+								<Icon name="calendar-plus" height={12} width={12} className="shrink-0 text-amber-500" />
+								<span className="min-w-0 flex-1 truncate">Alerts</span>
+								{typeof alertsCount === 'number' ? (
+									<span className="shrink-0 text-[11px] text-[#999] dark:text-[#666]">· {alertsCount}</span>
+								) : null}
+							</button>
+						</div>
+					) : null}
 				</div>
 
 				<nav className="p-4 pt-3 pr-1" aria-label="Chat history">

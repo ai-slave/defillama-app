@@ -13,8 +13,11 @@ import {
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import { CreateAlertModal } from '~/containers/LlamaAI/components/CreateAlertModal'
 import type { MarketTotalsBySegment, TokenMarketsResponse } from '~/containers/Markets/api.types'
 import type { Segment } from '~/containers/Markets/segments'
+import { useAuthContext } from '~/containers/Subscription/auth'
+import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
 import { buttonStyles } from '~/ui/Button'
@@ -25,7 +28,9 @@ import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~
 import { LoadingDots } from '~/ui/Loaders'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
+import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
+import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { tokenIconUrl } from '~/utils/icons'
 import { pushShallowQuery, readSingleQueryValue, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import { fetchTokenMarkets } from './api'
@@ -35,6 +40,7 @@ import {
 	type TokenOverviewChartLabel,
 	type TokenOverviewData
 } from './tokenOverview'
+import { roundToSignificantFigures } from './TokenOverviewSection.utils'
 import { useFetchTokenOverviewChartData } from './useFetchTokenOverviewChartData'
 
 const TOKEN_OVERVIEW_CHART_COLORS: Record<TokenOverviewChartLabel, string> = {
@@ -145,15 +151,83 @@ export type TokenIssuer = {
 	slug: string
 }
 
+function TokenPriceAlertButton({
+	overview,
+	geckoId,
+	currentPrice
+}: {
+	overview: TokenOverviewData
+	geckoId?: string | null
+	currentPrice?: number | null
+}) {
+	const dialogStore = Ariakit.useDialogStore()
+	const signInDialogStore = Ariakit.useDialogStore()
+	const [hasOpened, setHasOpened] = useState(false)
+	const { isAuthenticated } = useAuthContext()
+
+	if (geckoId == null || currentPrice == null || currentPrice <= 0) return null
+
+	const trendingUp = (overview.marketData.percentChange24h ?? 0) > 0
+
+	return (
+		<>
+			<Tooltip
+				content="Get pinged when the price moves"
+				render={
+					<button
+						type="button"
+						aria-label="Set a price alert"
+						onClick={(e) => {
+							e.preventDefault()
+							e.stopPropagation()
+							trackUmamiEvent('llamaai-alerts-open', { source: 'token-page' })
+							if (!isAuthenticated) {
+								signInDialogStore.show()
+								return
+							}
+							setHasOpened(true)
+							dialogStore.show()
+						}}
+					/>
+				}
+				className="flex shrink-0 items-center gap-1.5 rounded-md bg-amber-500/12 px-2 py-1 text-xs font-medium text-amber-500 hover:bg-amber-500 hover:text-white"
+			>
+				<Icon name="calendar-plus" height={14} width={14} />
+				<span>Set alert</span>
+			</Tooltip>
+			{hasOpened ? (
+				<CreateAlertModal
+					dialogStore={dialogStore}
+					initialTab="price"
+					prefill={{
+						token_nk: `coingecko:${geckoId}`,
+						symbol: overview.symbol,
+						value: roundToSignificantFigures(currentPrice * (trendingUp ? 1.05 : 0.95)),
+						op: trendingUp ? 'above' : 'below',
+						currentPrice
+					}}
+				/>
+			) : null}
+			<SignInModal
+				store={signInDialogStore}
+				hideWhenAuthenticated={false}
+				prompt={`Sign in to set price alerts for ${overview.symbol.toUpperCase()}`}
+			/>
+		</>
+	)
+}
+
 export function TokenPageHero({
 	overview,
 	logo,
 	issuer,
+	geckoId,
 	headingAs: Heading = 'h1'
 }: {
 	overview: TokenOverviewData
 	logo?: string | null
 	issuer?: TokenIssuer | null
+	geckoId?: string | null
 	headingAs?: 'h1' | 'div'
 }) {
 	const percentChange = formatPercent(overview.marketData.percentChange24h)
@@ -191,6 +265,11 @@ export function TokenPageHero({
 						<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
 							{formatCurrency(overview.marketData.currentPrice)}
 						</span>
+						<TokenPriceAlertButton
+							overview={overview}
+							geckoId={geckoId}
+							currentPrice={overview.marketData.currentPrice}
+						/>
 						<Icon
 							name="chevron-down"
 							height={18}
@@ -243,6 +322,11 @@ export function TokenPageHero({
 					<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
 						{formatCurrency(overview.marketData.currentPrice)}
 					</span>
+					<TokenPriceAlertButton
+						overview={overview}
+						geckoId={geckoId}
+						currentPrice={overview.marketData.currentPrice}
+					/>
 					{percentChange ? <span className={`label-sm ${percentChangeClassName}`}>{percentChange}</span> : null}
 				</div>
 			)}
@@ -686,7 +770,7 @@ export function TokenOverviewSection({
 			<h2 className="sr-only">Overview</h2>
 			<div className="grid grid-cols-1 gap-2 xl:grid-cols-3">
 				<Card padding="sm" className="col-span-1 flex flex-col gap-6 xl:min-h-[360px]">
-					<TokenPageHero overview={overview} logo={logo} issuer={issuer} />
+					<TokenPageHero overview={overview} logo={logo} issuer={issuer} geckoId={geckoId} />
 					<TokenMetrics overview={overview} />
 				</Card>
 				<div className="col-span-1 grid grid-cols-2 gap-2 xl:col-[2/-1]">

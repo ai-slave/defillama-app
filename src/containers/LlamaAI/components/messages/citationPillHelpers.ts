@@ -100,8 +100,8 @@ export function formatCellValue(v: unknown): string {
 
 const UNIT: Record<string, number> = { t: 1e12, b: 1e9, m: 1e6, k: 1e3, bn: 1e9, '': 1 }
 
-export function parseRefNumber(str: unknown): number | null {
-	if (typeof str === 'number') return Number.isFinite(str) ? str : null
+export function parseRefParts(str: unknown): { num: number; halfStep: number } | null {
+	if (typeof str === 'number') return Number.isFinite(str) ? { num: str, halfStep: 0 } : null
 	if (typeof str !== 'string') return null
 	const m = str.replace(/,/g, '').match(/^\s*(-?)\s*\$?\s*(-?\d*\.?\d+)(?:e([+-]?\d+))?\s*([a-zA-Z%]*)\s*$/i)
 	if (!m) return null
@@ -112,7 +112,14 @@ export function parseRefNumber(str: unknown): number | null {
 	const parsed = parseFloat(m[2])
 	const signed = m[1] === '-' && parsed > 0 ? -parsed : parsed
 	const num = signed * Math.pow(10, exp) * mult
-	return Number.isFinite(num) ? num : null
+	if (!Number.isFinite(num)) return null
+	const decimals = (m[2].split('.')[1] || '').length
+	const halfStep = (Math.pow(10, -decimals) * Math.pow(10, exp) * mult) / 2
+	return { num, halfStep }
+}
+
+export function parseRefNumber(str: unknown): number | null {
+	return parseRefParts(str)?.num ?? null
 }
 
 export interface CitedCellRef {
@@ -164,29 +171,63 @@ export function findCitedCell(
 	) {
 		return { rowIndex: ref.rowIndex, column: ref.field }
 	}
-	const target = parseRefNumber(ref.value)
-	if (target == null) return null
-	const tolerance = Math.max(Math.abs(target) * 1e-3, 1e-9)
+	const parsed = parseRefParts(ref.value)
+	if (parsed == null) return null
+	const { num: target, halfStep } = parsed
+	const exactBand = Math.max(halfStep, 1e-9)
+	const relBand = Math.max(Math.abs(target) * 1e-3, 1e-9)
 	const validField = ref.field && cols.includes(ref.field) ? ref.field : null
 	const validRowIndex =
 		typeof ref.rowIndex === 'number' && ref.rowIndex >= 0 && ref.rowIndex < rows.length ? ref.rowIndex : null
 	const colsToScan = validField ? [validField] : cols
 
-	const scanRow = (ri: number): CitedCell | null => {
+	type Scored = CitedCell & { tier: number; diff: number }
+	const scanRow = (ri: number): Scored | null => {
+		let best: Scored | null = null
 		for (const col of colsToScan) {
 			const cell = getCachedParsedCell(rows, rows[ri], col)
 			if (cell == null) continue
-			if (Math.abs(cell - target) <= tolerance) return { rowIndex: ri, column: col }
+			const diff = Math.abs(cell - target)
+			const tier = diff <= exactBand ? 0 : diff <= relBand ? 1 : -1
+			if (tier < 0) continue
+			if (!best || tier < best.tier || (tier === best.tier && diff < best.diff)) {
+				best = { rowIndex: ri, column: col, tier, diff }
+			}
 		}
-		return null
+		return best
 	}
 
-	if (validRowIndex !== null) return scanRow(validRowIndex)
-	for (let ri = 0; ri < rows.length; ri++) {
-		const cell = scanRow(ri)
-		if (cell) return cell
+	if (validRowIndex !== null) {
+		const hit = scanRow(validRowIndex)
+		return hit ? { rowIndex: hit.rowIndex, column: hit.column } : null
 	}
-	return null
+	let best: (Scored & { ms: number }) | null = null
+	for (let ri = 0; ri < rows.length; ri++) {
+		const hit = scanRow(ri)
+		if (!hit) continue
+		const ms = rowDateMs(rows[ri])
+		if (
+			!best ||
+			hit.tier < best.tier ||
+			(hit.tier === best.tier && (ms > best.ms || (ms === best.ms && hit.diff < best.diff)))
+		) {
+			best = { ...hit, ms }
+		}
+	}
+	return best ? { rowIndex: best.rowIndex, column: best.column } : null
+}
+
+function rowDateMs(row: Record<string, unknown>): number {
+	for (const c of DATE_COLS) {
+		if (!(c in row)) continue
+		const v = row[c]
+		if (typeof v === 'number' && Number.isFinite(v)) return v < 1e12 ? v * 1000 : v
+		if (typeof v === 'string') {
+			const ms = Date.parse(v)
+			if (!Number.isNaN(ms)) return ms
+		}
+	}
+	return -Infinity
 }
 
 const DATE_COLS = ['date', 'day', 'period', 'ts', 'ts_close', 'snapshot_date', 'dt', 'as_of', 'asof']

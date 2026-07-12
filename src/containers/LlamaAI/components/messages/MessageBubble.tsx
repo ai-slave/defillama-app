@@ -223,6 +223,7 @@ function ArtifactBlockRenderer({
 			alertIntent={{ ...artifact.alert.alertIntent, detected: true, toolExecutions: [] }}
 			messageId={artifact.messageId}
 			savedAlertIds={artifact.savedAlertIds}
+			prompt={artifact.alert.prompt}
 		/>
 	)
 }
