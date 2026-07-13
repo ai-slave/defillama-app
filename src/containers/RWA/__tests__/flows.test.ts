@@ -5,6 +5,9 @@ import {
 	buildRWAFilteredFlowBreakdown,
 	buildRWAFlowChart,
 	buildRWAFlowRotationChart,
+	formatSignedRWAFlow,
+	getRWAFlowChartOptions,
+	getRWAFlowDefaultStartTimestamp,
 	getRWAFlowVsPriceSummary,
 	parseRWAFlowMode
 } from '../flows'
@@ -17,6 +20,11 @@ const aggregatePoint = (timestamp: number, netFlowUsd: number | null, coverage =
 })
 
 describe('RWA flow chart data', () => {
+	it('keeps unknown flow distinct from a measured zero', () => {
+		expect(formatSignedRWAFlow(null)).toBe('-')
+		expect(formatSignedRWAFlow(0)).toBe('$0')
+	})
+
 	it('parses only flow modes supported by the current chart', () => {
 		expect(parseRWAFlowMode('cumulative', false)).toBe('cumulative')
 		expect(parseRWAFlowMode('flowVsPrice', true)).toBe('flowVsPrice')
@@ -42,6 +50,20 @@ describe('RWA flow chart data', () => {
 			{ timestamp: jan1, Inflows: 6, Outflows: null, 'Onchain Mcap': 100 },
 			{ timestamp: jan2, Inflows: null, Outflows: -4, 'Onchain Mcap': 90 }
 		])
+	})
+
+	it('uses independent flow and marketcap axes', () => {
+		const chartOptions = getRWAFlowChartOptions({ showMcapOverlay: true })
+		if (!Array.isArray(chartOptions.yAxis)) throw new Error('Expected separate flow and marketcap axes')
+		expect(chartOptions.yAxis).toHaveLength(2)
+		expect(chartOptions.yAxis[1]).toMatchObject({ min: 0 })
+	})
+
+	it('defaults an overview flow chart to the trailing requested number of days', () => {
+		const latest = day(2026, 6, 1)
+		const points = [aggregatePoint(day(2025, 0, 1), 1), aggregatePoint(latest, 2)]
+		expect(getRWAFlowDefaultStartTimestamp(points, 365)).toBe(latest - 365 * 86_400_000)
+		expect(getRWAFlowDefaultStartTimestamp(points, undefined)).toBeUndefined()
 	})
 
 	it('carries the cumulative total across days with missing flow coverage', () => {

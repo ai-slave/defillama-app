@@ -22,6 +22,7 @@ import {
 	sortRwaChartSeriesLabels
 } from './chartAggregation'
 import type { RWAChartDataset } from './chartDataset'
+import { definitions } from './definitions'
 import { buildRWAFlowRotationChart, type RWAFlowRotationFrequency } from './flows'
 import { useRWAFlowOverviewSplitWithFilters } from './flows.hooks'
 
@@ -33,7 +34,7 @@ const CHART_TYPE_OPTIONS: Array<{ key: RWAOverviewBreakdownChartType; label: str
 	{ key: 'activeMcap', label: 'Active Mcap' },
 	{ key: 'onChainMcap', label: 'Onchain Mcap' },
 	{ key: 'defiActiveTvl', label: 'DeFi Active TVL' },
-	{ key: 'flows', label: 'Net Flows' }
+	{ key: 'flows', label: definitions.flows.overviewNetFlows.label }
 ]
 
 const VALID_CHART_TYPES = new Set<RWAChartMetricKey>(['activeMcap', 'onChainMcap', 'defiActiveTvl'])
@@ -41,9 +42,9 @@ const DEFAULT_CHART_TYPE: RWAChartMetricKey = 'activeMcap'
 const EMPTY_DATASET: RWAChartDataset = { source: [], dimensions: ['timestamp'] }
 const STACKS_QUERY_KEY = 'stacks'
 const EXCLUDE_STACKS_QUERY_KEY: ExcludeQueryKey = 'excludeStacks'
-const FLOW_FREQUENCY_OPTIONS: Array<{ value: RWAFlowRotationFrequency; label: string }> = [
-	{ value: 'weekly', label: 'Weekly' },
-	{ value: 'monthly', label: 'Monthly' }
+const FLOW_FREQUENCY_OPTIONS: Array<{ value: RWAFlowRotationFrequency; label: string; tooltip: string }> = [
+	{ value: 'weekly', label: 'Weekly', tooltip: definitions.flows.rotationFrequency.description },
+	{ value: 'monthly', label: 'Monthly', tooltip: definitions.flows.rotationFrequency.description }
 ]
 
 function assertNever(value: never): never {
@@ -261,7 +262,11 @@ export function RWAOverviewBreakdownChart({
 				<SegmentedControl
 					value={chartType}
 					onValueChange={onSelectChartType}
-					options={CHART_TYPE_OPTIONS.map(({ key, label }) => ({ value: key, label }))}
+					options={CHART_TYPE_OPTIONS.map(({ key, label }) => ({
+						value: key,
+						label,
+						tooltip: key === 'flows' ? definitions.flows.overviewNetFlows.description : undefined
+					}))}
 					label="Chart type"
 					variant="default"
 					size="md"

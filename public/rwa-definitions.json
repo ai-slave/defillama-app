@@ -223,5 +223,107 @@
 	"totalStablecoinsMcap": {
 		"label": "Total Stablecoins Marketcap",
 		"description": "Total USD value of all stablecoins in the dataset that exist on chain across tracked chains in the current selection"
+	},
+	"flows": {
+		"overviewNetFlows": {
+			"label": "Net Flows",
+			"description": "Flows are money actually entering or leaving these assets. New tokens created, or tokens redeemed and destroyed, by the issuer. Trading volume and wallet transfers do not change supply and are not flows."
+		},
+		"assetNetFlows": {
+			"label": "Net Flows",
+			"description": "Flows are money actually entering or leaving this asset. New tokens created, or tokens redeemed and destroyed, by the issuer. Buying on an exchange or moving tokens between wallets is not a flow because supply does not change."
+		},
+		"daily": {
+			"label": "Daily",
+			"description": "One bar per day. Days we could not measure are left blank, because unknown is not the same as zero."
+		},
+		"cumulative": {
+			"label": "Cumulative",
+			"description": "Adds each day's flow to a running total, so you can see how much capital has entered or left overall. Days we could not measure do not move the line."
+		},
+		"marketcapOverlay": {
+			"label": "Marketcap overlay",
+			"description": "Draws the total marketcap as a line on top of the flow bars, so you can see how flows move the total."
+		},
+		"inflows": {
+			"label": "Inflows",
+			"description": "Days when more money came in than left."
+		},
+		"outflows": {
+			"label": "Outflows",
+			"description": "Days when more money left than came in."
+		},
+		"onchainMcap": {
+			"label": "Onchain Mcap",
+			"description": "Total onchain marketcap, drawn as a line so you can compare flows against it."
+		},
+		"cumulativeLegend": {
+			"label": "Cumulative Net Flows",
+			"description": "The running total after adding each day's measured flow. Days we could not measure do not move the line."
+		},
+		"capitalRotation": {
+			"label": "Capital Rotation",
+			"description": "Where money is moving between types of RWAs over time. Bars above the line are money coming in, bars below are money leaving."
+		},
+		"rotationGrouping": {
+			"label": "Asset Groups / Categories",
+			"description": "Groups the rotation bars by asset group or category."
+		},
+		"rotationChains": {
+			"label": "Chains",
+			"description": "The same picture grouped by blockchain."
+		},
+		"rotationFrequency": {
+			"label": "Weekly / Monthly",
+			"description": "Weekly shows short-lived rotations that monthly smooths over. Monthly is better for the long trend."
+		},
+		"netFlow7d": {
+			"label": "Net Flow 7d",
+			"description": "New tokens created minus tokens redeemed over the last 7 days, in dollar value, counting only the chains where we have price data. Click the header to sort. A dash means we could not measure those days. That is not the same as zero."
+		},
+		"netFlow30d": {
+			"label": "Net Flow 30d",
+			"description": "New tokens created minus tokens redeemed over the last 30 days, in dollar value, counting only the chains where we have price data. Click the header to sort. A dash means we could not measure those days. That is not the same as zero."
+		},
+		"assetNetFlow7d": {
+			"label": "Net Flows 7d",
+			"description": "New tokens created minus tokens redeemed over the last 7 days, in dollar value, counting only the chains where we have price data."
+		},
+		"assetNetFlow30d": {
+			"label": "Net Flows 30d",
+			"description": "New tokens created minus tokens redeemed over the last 30 days, in dollar value, counting only the chains where we have price data."
+		},
+		"flowVsPrice": {
+			"label": "Flow vs price",
+			"description": "Shows how much of each month's marketcap change came from measured net flows versus price movement and unmeasured days."
+		},
+		"deltaMcap": {
+			"label": "Δ Onchain Mcap",
+			"description": "How much total onchain marketcap changed over the charted period, from all causes combined."
+		},
+		"netFlowsStat": {
+			"label": "Net flows",
+			"description": "The part of the change that came from actual money entering or leaving, through tokens being created or redeemed."
+		},
+		"priceUnattributed": {
+			"label": "Price & unattributed",
+			"description": "Everything else. Mostly the price of existing tokens going up or down, plus any change on days we could not measure."
+		},
+		"netCapitalInflows": {
+			"label": "Net Capital Inflows",
+			"description": "Months when more money came in than left."
+		},
+		"netCapitalOutflows": {
+			"label": "Net Capital Outflows",
+			"description": "Months when more money left than came in."
+		},
+		"priceLegend": {
+			"label": "Price & Unattributed",
+			"description": "The part of the change that is not new money. Mostly price movement, plus days we could not measure."
+		},
+		"deltaMcapLegend": {
+			"label": "Delta Onchain Mcap",
+			"description": "The month's total marketcap change. It always equals the bars added together: money in, money out, and price movement."
+		}
 	}
 }

@@ -273,6 +273,7 @@ export type IRWAFlowPoint = {
 	netFlowUsd: number | null
 	netFlowByChain: Record<string, number>
 	missingChains?: string[]
+	unpricedChains?: string[]
 	mcap?: number | null
 }
 
@@ -310,18 +311,33 @@ export type IRWAFlowAssetBreakdownRow = { timestamp: number } & Record<string, n
 
 export type RWAFlowWindow = '7d' | '30d'
 
-export type RWAFlowSummaryBy = 'asset' | 'assetGroup' | 'platform' | 'category' | 'chain'
-
 export type IRWAFlowSummary = {
-	flow: number
+	flow: number | null
 	mcap: number
 	intensityPct: number | null
 	coverage: number
 }
 
+export type RWAChainFlowSummary =
+	| { status: 'measured'; flow: number; coverage: number }
+	| { status: 'notPriced' }
+	| { status: 'unknown' }
+
+export type IRWAAssetFlowSummary = IRWAFlowSummary & {
+	byChain: Record<string, RWAChainFlowSummary>
+}
+
+export type IRWAFlowSummaryWindow = {
+	asset: Record<string, IRWAAssetFlowSummary>
+	assetGroup: Record<string, IRWAFlowSummary>
+	platform: Record<string, IRWAFlowSummary>
+	category: Record<string, IRWAFlowSummary>
+	chain: Record<string, IRWAFlowSummary>
+}
+
 export type IRWAFlowSummaryResponse = {
 	generatedAt: number
-	windows: Record<RWAFlowWindow, Record<RWAFlowSummaryBy, Record<string, IRWAFlowSummary>>>
+	windows: Record<RWAFlowWindow, IRWAFlowSummaryWindow>
 }
 
 export type RWAOverviewPage = { kind: 'chain' } | { kind: 'category' } | { kind: 'platform' } | { kind: 'assetGroup' }

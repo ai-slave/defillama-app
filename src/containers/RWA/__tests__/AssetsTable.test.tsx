@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import type { IRWAAssetsOverview } from '../api.types'
-import { getActiveMetricValue, getDefiMetricValue, getMetricColumnHeaders, getOnChainMetricValue } from '../AssetsTable'
+import type { IRWAAssetsOverview, IRWAFlowSummaryResponse } from '../api.types'
+import {
+	createAssetTableRows,
+	getActiveMetricValue,
+	getDefiMetricValue,
+	getMetricColumnHeaders,
+	getOnChainMetricValue
+} from '../AssetsTable'
 
 function createSpotAsset(
 	overrides: Partial<Extract<IRWAAssetsOverview['assets'][number], { kind: 'spot' }>> = {}
@@ -84,6 +90,40 @@ function createPerpsAsset(
 	}
 }
 
+function createFlowSummary(): IRWAFlowSummaryResponse {
+	const emptyGroups = { assetGroup: {}, platform: {}, category: {}, chain: {} }
+
+	return {
+		generatedAt: 1,
+		windows: {
+			'7d': {
+				...emptyGroups,
+				asset: {
+					'ondo/usdy': {
+						flow: 0,
+						mcap: 100,
+						intensityPct: 0,
+						coverage: 1,
+						byChain: { Ethereum: { status: 'measured', flow: 0, coverage: 1 } }
+					}
+				}
+			},
+			'30d': {
+				...emptyGroups,
+				asset: {
+					'ondo/usdy': {
+						flow: -50,
+						mcap: 100,
+						intensityPct: -50,
+						coverage: 1,
+						byChain: { Ethereum: { status: 'measured', flow: -50, coverage: 1 } }
+					}
+				}
+			}
+		}
+	}
+}
+
 describe('RWAAssetsTable', () => {
 	it('keeps the original metric headers when the perps toggle is off', () => {
 		expect(getMetricColumnHeaders(false)).toEqual({
@@ -106,5 +146,15 @@ describe('RWAAssetsTable', () => {
 		expect(getActiveMetricValue(createPerpsAsset())).toBe(333)
 		expect(getOnChainMetricValue(createPerpsAsset())).toBeNull()
 		expect(getDefiMetricValue(createPerpsAsset())).toBeNull()
+	})
+
+	it('materializes loaded flow summaries without dropping measured zero', () => {
+		const assets = [createSpotAsset()]
+		const initialRows = createAssetTableRows(assets, undefined)
+		const loadedRows = createAssetTableRows(assets, createFlowSummary())
+
+		expect(initialRows[0].flowSummaries['7d']).toBeUndefined()
+		expect(loadedRows[0].flowSummaries['7d']?.flow).toBe(0)
+		expect(loadedRows[0].flowSummaries['30d']?.flow).toBe(-50)
 	})
 })

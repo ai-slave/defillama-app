@@ -20,6 +20,7 @@ import { LoadingDots } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
+import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum, slug } from '~/utils'
 import { pushShallowQuery, readSingleQueryValue, toQueryString } from '~/utils/routerQuery'
 import type { IRWAAssetsOverview, RWAAssetChartTarget, RWAFlowOverviewSplitBy } from './api.types'
@@ -101,15 +102,27 @@ type RWAOverviewChartMetric = RWAChartState['metric'] | 'flows'
 
 const RWA_NON_PLATFORM_FLOW_MODE_OPTIONS = RWA_FLOW_MODE_OPTIONS.slice(0, 2)
 
-const RWA_FLOW_ROTATION_SPLIT_OPTIONS: Array<{ value: RWAFlowOverviewSplitBy; label: string }> = [
-	{ value: 'assetGroup', label: 'Asset Groups' },
-	{ value: 'category', label: 'Categories' },
-	{ value: 'chain', label: 'Chains' }
+const RWA_FLOW_ROTATION_SPLIT_OPTIONS: Array<{
+	value: RWAFlowOverviewSplitBy
+	label: string
+	tooltip: string
+}> = [
+	{ value: 'assetGroup', label: 'Asset Groups', tooltip: definitions.flows.rotationGrouping.description },
+	{ value: 'category', label: 'Categories', tooltip: definitions.flows.rotationGrouping.description },
+	{
+		value: 'chain',
+		label: definitions.flows.rotationChains.label,
+		tooltip: definitions.flows.rotationChains.description
+	}
 ]
 
-const RWA_FLOW_ROTATION_FREQUENCY_OPTIONS: Array<{ value: RWAFlowRotationFrequency; label: string }> = [
-	{ value: 'weekly', label: 'Weekly' },
-	{ value: 'monthly', label: 'Monthly' }
+const RWA_FLOW_ROTATION_FREQUENCY_OPTIONS: Array<{
+	value: RWAFlowRotationFrequency
+	label: string
+	tooltip: string
+}> = [
+	{ value: 'weekly', label: 'Weekly', tooltip: definitions.flows.rotationFrequency.description },
+	{ value: 'monthly', label: 'Monthly', tooltip: definitions.flows.rotationFrequency.description }
 ]
 
 function getRwaFlowRotationSplitBy(value: string | undefined): RWAFlowOverviewSplitBy {
@@ -502,7 +515,10 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		[flowRotationData]
 	)
 	const chartMetricLabel = isFlowMetric ? 'Net Flows' : getChartMetricLabel(chartTypeKey)
-	const chartMetricOptions = [...getChartMetricOptions(), { key: 'flows' as const, label: 'Net Flows' }]
+	const chartMetricOptions = [
+		...getChartMetricOptions(),
+		{ key: 'flows' as const, label: definitions.flows.overviewNetFlows.label }
+	]
 	const selectedChartMetric: RWAOverviewChartMetric = isFlowMetric ? 'flows' : chartTypeKey
 	const flowModeOptions = isPlatformMode && hasFlowMcap ? RWA_FLOW_MODE_OPTIONS : RWA_NON_PLATFORM_FLOW_MODE_OPTIONS
 	const chartViewOptions = getChartViewOptions()
@@ -583,7 +599,11 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 					flowOverlay: undefined
 				})
 			}}
-			options={chartMetricOptions.map(({ key, label }) => ({ value: key, label }))}
+			options={chartMetricOptions.map(({ key, label }) => ({
+				value: key,
+				label,
+				tooltip: key === 'flows' ? definitions.flows.overviewNetFlows.description : undefined
+			}))}
 			label="Chart type"
 			variant="default"
 			size="md"
@@ -852,6 +872,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 								{isFlowMetric && flowMode !== 'flowVsPrice' && hasFlowMcap ? (
 									<Switch
 										label="Marketcap overlay"
+										help={definitions.flows.marketcapOverlay.description}
 										value="marketcap"
 										checked={showMcapOverlay}
 										onChange={(event) => {
@@ -888,6 +909,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 											mode={flowMode}
 											showMcapOverlay={shouldShowMcapOverlay}
 											mcapByTimestamp={flowMcapByTimestamp}
+											defaultRangeDays={flowMode === 'daily' ? 365 : undefined}
 											onReady={handleMultiSeriesChart2Ready}
 										/>
 									</Suspense>
@@ -973,7 +995,13 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			{showFlowRotation ? (
 				<ChartPanel>
 					<ChartPanelToolbar className="justify-end">
-						<h2 className="mr-auto heading-xs">Capital Rotation</h2>
+						<Tooltip
+							content={definitions.flows.capitalRotation.description}
+							render={<h2 />}
+							className="mr-auto heading-xs underline decoration-dotted"
+						>
+							{definitions.flows.capitalRotation.label}
+						</Tooltip>
 						<SegmentedControl<RWAFlowOverviewSplitBy>
 							value={flowRotationSplitBy}
 							onValueChange={(nextSplitBy) => {

@@ -15,15 +15,24 @@ import type {
 	IRWAFlowPoint
 } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
+import { definitions } from './definitions'
 import { getPrimaryRwaCategory, getRwaPlatforms, UNKNOWN_PLATFORM } from './grouping'
 
 export type RWAFlowChartMode = 'daily' | 'cumulative' | 'flowVsPrice'
 export type RWAFlowRotationFrequency = Extract<ChartTimeGrouping, 'weekly' | 'monthly'>
 
 export const RWA_FLOW_MODE_OPTIONS = [
-	{ value: 'daily' as const, label: 'Daily' },
-	{ value: 'cumulative' as const, label: 'Cumulative' },
-	{ value: 'flowVsPrice' as const, label: 'Flow vs price' }
+	{ value: 'daily' as const, label: definitions.flows.daily.label, tooltip: definitions.flows.daily.description },
+	{
+		value: 'cumulative' as const,
+		label: definitions.flows.cumulative.label,
+		tooltip: definitions.flows.cumulative.description
+	},
+	{
+		value: 'flowVsPrice' as const,
+		label: definitions.flows.flowVsPrice.label,
+		tooltip: definitions.flows.flowVsPrice.description
+	}
 ]
 
 export function parseRWAFlowMode(value: string | undefined, allowFlowVsPrice: boolean): RWAFlowChartMode {
@@ -125,16 +134,27 @@ export function buildRWAFilteredFlowBreakdown(
 	})
 }
 
-const INFLOWS = 'Inflows'
-const OUTFLOWS = 'Outflows'
-const CUMULATIVE_FLOWS = 'Cumulative Net Flows'
-const ONCHAIN_MCAP = 'Onchain Mcap'
-const NET_CAPITAL_INFLOWS = 'Net Capital Inflows'
-const NET_CAPITAL_OUTFLOWS = 'Net Capital Outflows'
+const INFLOWS = definitions.flows.inflows.label
+const OUTFLOWS = definitions.flows.outflows.label
+const CUMULATIVE_FLOWS = definitions.flows.cumulativeLegend.label
+const ONCHAIN_MCAP = definitions.flows.onchainMcap.label
+const NET_CAPITAL_INFLOWS = definitions.flows.netCapitalInflows.label
+const NET_CAPITAL_OUTFLOWS = definitions.flows.netCapitalOutflows.label
 // mcapChange − measured net flows: price movement PLUS flows on uncovered days — not the token price.
-const PRICE = 'Price & Unattributed'
-const MCAP_CHANGE = 'Delta Onchain Mcap'
+const PRICE = definitions.flows.priceLegend.label
+const MCAP_CHANGE = definitions.flows.deltaMcapLegend.label
 const DAY_MS = 24 * 60 * 60 * 1000
+
+const RWA_FLOW_LEGEND_TOOLTIPS: Record<string, string> = {
+	[INFLOWS]: definitions.flows.inflows.description,
+	[OUTFLOWS]: definitions.flows.outflows.description,
+	[ONCHAIN_MCAP]: definitions.flows.onchainMcap.description,
+	[CUMULATIVE_FLOWS]: definitions.flows.cumulativeLegend.description,
+	[NET_CAPITAL_INFLOWS]: definitions.flows.netCapitalInflows.description,
+	[NET_CAPITAL_OUTFLOWS]: definitions.flows.netCapitalOutflows.description,
+	[PRICE]: definitions.flows.priceLegend.description,
+	[MCAP_CHANGE]: definitions.flows.deltaMcapLegend.description
+}
 
 type FlowMonth = {
 	timestamp: number
@@ -153,13 +173,49 @@ function getSortedFlowPoints(points: readonly RWAFlowSeriesPoint[]): RWAFlowSeri
 	return [...points].sort((a, b) => a.timestamp - b.timestamp)
 }
 
-export function getRWAFlowChartOptions() {
-	return {
-		yAxis: {
-			min: (value: any) => Math.min(value.min, 0),
-			max: (value: any) => Math.max(value.max, 0)
-		}
+export function getRWAFlowChartOptions({
+	showMcapOverlay = false,
+	defaultStartTimestamp,
+	legendTooltips = false
+}: {
+	showMcapOverlay?: boolean
+	defaultStartTimestamp?: number
+	legendTooltips?: boolean
+} = {}) {
+	const flowAxis = {
+		min: (value: { min: number }) => Math.min(value.min, 0),
+		max: (value: { max: number }) => Math.max(value.max, 0)
 	}
+
+	return {
+		yAxis: showMcapOverlay ? [flowAxis, { min: 0 }] : flowAxis,
+		...(legendTooltips
+			? {
+					legend: {
+						tooltip: {
+							show: true,
+							renderMode: 'html',
+							className: 'defillama-echarts-tooltip',
+							backgroundColor: 'transparent',
+							borderWidth: 0,
+							extraCssText: 'max-width: 224px; white-space: normal; padding: 8px;',
+							formatter: ({ name }: { name: string }) => RWA_FLOW_LEGEND_TOOLTIPS[name] ?? ''
+						}
+					}
+				}
+			: {}),
+		...(defaultStartTimestamp != null ? { dataZoom: { startValue: defaultStartTimestamp } } : {})
+	}
+}
+
+export function getRWAFlowDefaultStartTimestamp(
+	points: readonly RWAFlowSeriesPoint[],
+	defaultRangeDays: number | undefined
+): number | undefined {
+	if (defaultRangeDays == null) return undefined
+	let latestTimestamp = 0
+	for (const point of points) latestTimestamp = Math.max(latestTimestamp, toUnixMsTimestamp(point.timestamp))
+	return latestTimestamp > 0 ? latestTimestamp - defaultRangeDays * DAY_MS : undefined
 }
 
 function buildDailyFlowChart(

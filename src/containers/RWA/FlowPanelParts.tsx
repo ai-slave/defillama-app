@@ -1,5 +1,7 @@
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNum } from '~/utils'
+import type { IRWAAssetFlowSummary, RWAChainFlowSummary } from './api.types'
+import { definitions } from './definitions'
 import { formatSignedRWAFlow, getRWAFlowTextClass, type RWAFlowVsPriceSummary } from './flows'
 
 /** Coverage below this share of days is flagged amber — flows meaningfully understate reality. */
@@ -25,10 +27,62 @@ export function RWAFlowCoverageTag({ coverage }: { coverage: number }) {
 	)
 }
 
-function FlowVsPriceStat({ label, value }: { label: string; value: number | null | undefined }) {
+export function formatRWAChainFlowSummary(summary: RWAChainFlowSummary): string {
+	switch (summary.status) {
+		case 'measured': {
+			const flow = formatSignedRWAFlow(summary.flow)
+			return summary.coverage < 1 ? `${flow} (${formatNum(summary.coverage * 100, 0)}% coverage)` : flow
+		}
+		case 'notPriced':
+			return 'not priced'
+		case 'unknown':
+			return 'unknown, not zero'
+	}
+}
+
+export function RWAFlowSummaryTooltip({
+	description,
+	summary
+}: {
+	description: string
+	summary: IRWAAssetFlowSummary | undefined
+}) {
+	const chains = summary ? Object.entries(summary.byChain) : []
+
+	return (
+		<span className="flex flex-col gap-2">
+			<span>{description}</span>
+			{summary && summary.coverage < 1 ? (
+				<span className="text-secondary">Measured on {formatNum(summary.coverage * 100, 0)}% of days.</span>
+			) : null}
+			{chains.length > 0 ? (
+				<span className="flex flex-col gap-1 border-t border-subtle pt-2">
+					{chains.map(([chain, chainSummary]) => (
+						<span key={chain} className="flex justify-between gap-4">
+							<span>{chain}</span>
+							<span className="font-jetbrains">{formatRWAChainFlowSummary(chainSummary)}</span>
+						</span>
+					))}
+				</span>
+			) : null}
+		</span>
+	)
+}
+
+function FlowVsPriceStat({
+	label,
+	value,
+	tooltip
+}: {
+	label: string
+	value: number | null | undefined
+	tooltip: string
+}) {
 	return (
 		<span className="inline-flex items-baseline gap-1 whitespace-nowrap">
-			<span className="text-secondary">{label}</span>
+			<Tooltip content={tooltip} className="text-secondary underline decoration-dotted">
+				{label}
+			</Tooltip>
 			<span className={getRWAFlowTextClass(value)}>{formatSignedRWAFlow(value)}</span>
 		</span>
 	)
@@ -53,9 +107,9 @@ export function RWAFlowVsPriceStrip({
 			{summary.flowDrivenPct != null ? (
 				<>
 					<Tooltip
-						content={`Change in onchain mcap = measured net flows + a residual that includes price movement and flows on days without data coverage.${
+						content={`Measured net flows were ${formatNum(summary.flowDrivenPct, 0)} percent of the marketcap change over this period. The marketcap change always splits into measured flows and price plus unmeasured days.${
 							isLowCoverage
-								? ` Only ${formatNum((coverage ?? 0) * 100, 0)}% of days have flow data, so the flow-driven share is likely understated.`
+								? ` Only ${formatNum(coverage * 100, 0)}% of days have flow data, so this share is based on incomplete data.`
 								: ''
 						}`}
 						className="font-medium underline decoration-dotted"
@@ -67,15 +121,27 @@ export function RWAFlowVsPriceStrip({
 					</span>
 				</>
 			) : null}
-			<FlowVsPriceStat label="Δ Onchain Mcap" value={summary.mcapChange} />
+			<FlowVsPriceStat
+				label={definitions.flows.deltaMcap.label}
+				value={summary.mcapChange}
+				tooltip={definitions.flows.deltaMcap.description}
+			/>
 			<span aria-hidden className="text-tertiary">
 				·
 			</span>
-			<FlowVsPriceStat label="Net flows" value={summary.netCapital} />
+			<FlowVsPriceStat
+				label={definitions.flows.netFlowsStat.label}
+				value={summary.netCapital}
+				tooltip={definitions.flows.netFlowsStat.description}
+			/>
 			<span aria-hidden className="text-tertiary">
 				·
 			</span>
-			<FlowVsPriceStat label="Price & unattributed" value={summary.price} />
+			<FlowVsPriceStat
+				label={definitions.flows.priceUnattributed.label}
+				value={summary.price}
+				tooltip={definitions.flows.priceUnattributed.description}
+			/>
 		</p>
 	)
 }

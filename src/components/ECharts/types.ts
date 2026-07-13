@@ -172,14 +172,22 @@ type MultiSeriesChart2ExportButtons =
 			pngIconUrl?: string
 	  }
 
+type MultiSeriesChartOption = Record<string, unknown>
+type MultiSeriesChartOptions = Record<string, MultiSeriesChartOption | MultiSeriesChartOption[] | undefined> & {
+	xAxis?: MultiSeriesChartOption
+	yAxis?: MultiSeriesChartOption | MultiSeriesChartOption[]
+	tooltip?: MultiSeriesChartOption
+	grid?: MultiSeriesChartOption
+	dataZoom?: MultiSeriesChartOption
+	legend?: MultiSeriesChartOption
+	toolbox?: MultiSeriesChartOption
+	overrides?: MultiSeriesChartOption
+}
+
 type MultiSeriesChart2BaseProps = {
 	charts?: MultiSeriesChart2SeriesConfig[]
 	selectedCharts?: Set<string>
-	chartOptions?: {
-		[key: string]: {
-			[key: string]: Value | Array<Value> | ((params: EChartsFormatterParams) => string | number)
-		}
-	}
+	chartOptions?: MultiSeriesChartOptions
 	height?: string
 	groupBy?: ChartTimeGroupingWithCumulative
 	hallmarks?: [number, string][]

@@ -24,9 +24,9 @@ import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum, truncateAddress } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
-import type { IRWAAssetData, IRWAFlowSummary } from './api.types'
+import type { IRWAAssetData, IRWAAssetFlowSummary } from './api.types'
 import { definitions } from './definitions'
-import { RWAFlowCoverageTag, RWAFlowVsPriceStrip } from './FlowPanelParts'
+import { RWAFlowCoverageTag, RWAFlowSummaryTooltip, RWAFlowVsPriceStrip } from './FlowPanelParts'
 import {
 	formatSignedRWAFlow,
 	getRWAFlowTextClass,
@@ -48,7 +48,11 @@ type AssetChartMetric = 'marketData' | 'flows'
 
 const ASSET_CHART_METRIC_OPTIONS = [
 	{ value: 'marketData' as const, label: 'Market data' },
-	{ value: 'flows' as const, label: 'Net Flows' }
+	{
+		value: 'flows' as const,
+		label: definitions.flows.assetNetFlows.label,
+		tooltip: definitions.flows.assetNetFlows.description
+	}
 ]
 
 interface ClassificationItemProps {
@@ -268,8 +272,8 @@ const AssetKeyMetrics = ({
 	flow30d
 }: {
 	asset: IRWAAssetData
-	flow7d: IRWAFlowSummary | undefined
-	flow30d: IRWAFlowSummary | undefined
+	flow7d: IRWAAssetFlowSummary | undefined
+	flow30d: IRWAAssetFlowSummary | undefined
 }) => {
 	const activeMcap = asset.activeMcap ?? null
 	const defiActiveTvl = asset.defiActiveTvl ?? null
@@ -316,12 +320,16 @@ const AssetKeyMetrics = ({
 				/>
 			)}
 			<MetricRow
-				label="Net Flows 7d"
+				label={definitions.flows.assetNetFlow7d.label}
+				tooltip={<RWAFlowSummaryTooltip description={definitions.flows.assetNetFlow7d.description} summary={flow7d} />}
 				value={formatSignedRWAFlow(flow7d?.flow)}
 				valueClassName={`mono-md-bold ml-auto ${getRWAFlowTextClass(flow7d?.flow)}`}
 			/>
 			<MetricRow
-				label="Net Flows 30d"
+				label={definitions.flows.assetNetFlow30d.label}
+				tooltip={
+					<RWAFlowSummaryTooltip description={definitions.flows.assetNetFlow30d.description} summary={flow30d} />
+				}
 				value={formatSignedRWAFlow(flow30d?.flow)}
 				valueClassName={`mono-md-bold ml-auto ${getRWAFlowTextClass(flow30d?.flow)}`}
 			/>
@@ -519,7 +527,8 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							) : null}
 							{chartMetric === 'flows' && flowMode !== 'flowVsPrice' ? (
 								<Switch
-									label="Marketcap overlay"
+									label={definitions.flows.marketcapOverlay.label}
+									help={definitions.flows.marketcapOverlay.description}
 									value="marketcap"
 									checked={showMcapOverlay}
 									onChange={(event) => {
