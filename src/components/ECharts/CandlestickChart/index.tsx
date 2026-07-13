@@ -42,7 +42,11 @@ const PANEL_HEIGHT = 60
 const VOLUME_HEIGHT = 80
 const BASE_BOTTOM = CHART_ZOOM_RESERVE
 
-export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_INDICATORS }: ICandlestickChartProps) {
+export default function CandleStickAndVolumeChart({
+	data,
+	height,
+	indicators = EMPTY_INDICATORS
+}: ICandlestickChartProps) {
 	const id = useId()
 	const [isThemeDark] = useDarkModeManager()
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
@@ -403,5 +407,5 @@ export default function CandleStickAndVolumeChart({ data, indicators = EMPTY_IND
 		}
 	}, [id, series, data, defaultChartSettings])
 
-	return <div id={id} style={{ height: `${chartHeight}px` }}></div>
+	return <div id={id} style={{ height: height ?? `${chartHeight}px` }}></div>
 }

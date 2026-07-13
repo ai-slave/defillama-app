@@ -126,14 +126,17 @@ interface EditorProps {
 	onChange: (next: string) => void
 	onRun: () => void
 	tables: RegisteredTable[]
-	height?: string
+	height?: string | number
+	readOnly?: boolean
+	fitContentHeight?: boolean
 }
 
 export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
-	{ value, onChange, onRun, tables, height = '44vh' },
+	{ value, onChange, onRun, tables, height = '44vh', readOnly = false, fitContentHeight = false },
 	ref
 ) {
 	const [theme, setTheme] = useState<string>(() => computeTheme())
+	const [contentHeight, setContentHeight] = useState<number | null>(null)
 	const editorInstanceRef = useRef<any>(null)
 
 	const contextRef = useRef<CompletionContext>({ tables })
@@ -217,73 +220,92 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 		monaco.editor.defineTheme(DARK_THEME_ID, llamaSqlDark)
 	}, [])
 
-	const handleMount = useCallback((editor: any, monaco: any) => {
-		editorInstanceRef.current = editor
-		editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => onRunRef.current())
+	const handleMount = useCallback(
+		(editor: any, monaco: any) => {
+			editorInstanceRef.current = editor
+			const updateContentHeight = () => {
+				if (!fitContentHeight) return
+				const nextHeight = Math.max(180, Math.ceil(editor.getContentHeight()))
+				setContentHeight((currentHeight) => (currentHeight === nextHeight ? currentHeight : nextHeight))
+			}
+			const contentSizeSub = fitContentHeight ? editor.onDidContentSizeChange(updateContentHeight) : null
+			updateContentHeight()
 
-		const completions = registerSqlCompletions(monaco, contextRef)
-		const hovers = registerSqlHovers(monaco, contextRef)
+			if (readOnly) {
+				editor.onDidDispose(() => {
+					contentSizeSub?.dispose()
+					if (editorInstanceRef.current === editor) editorInstanceRef.current = null
+				})
+				return
+			}
+			editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => onRunRef.current())
 
-		ensureActiveStmtStyles()
-		let decorationIds: string[] = []
-		const updateActiveStmt = () => {
-			const model = editor.getModel?.()
-			const position = editor.getPosition?.()
-			const selection = editor.getSelection?.()
-			if (!model || !position) {
-				decorationIds = editor.deltaDecorations(decorationIds, [])
-				return
-			}
-			if (selection && !selection.isEmpty?.()) {
-				decorationIds = editor.deltaDecorations(decorationIds, [])
-				return
-			}
-			const sql = model.getValue() ?? ''
-			if (!sql) {
-				decorationIds = editor.deltaDecorations(decorationIds, [])
-				return
-			}
-			const offset = model.getOffsetAt(position)
-			let { start, end } = findStatementBoundsAtOffset(sql, offset)
-			while (start < end && /\s/.test(sql[start])) start++
-			while (end > start && /\s/.test(sql[end - 1])) end--
-			if (start >= end) {
-				decorationIds = editor.deltaDecorations(decorationIds, [])
-				return
-			}
-			const startPos = model.getPositionAt(start)
-			const endPos = model.getPositionAt(end)
-			const range = new monaco.Range(startPos.lineNumber, startPos.column, endPos.lineNumber, endPos.column)
-			decorationIds = editor.deltaDecorations(decorationIds, [
-				{
-					range,
-					options: {
-						className: ACTIVE_STMT_CLASS,
-						linesDecorationsClassName: ACTIVE_STMT_GUTTER_CLASS,
-						stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges
-					}
+			const completions = registerSqlCompletions(monaco, contextRef)
+			const hovers = registerSqlHovers(monaco, contextRef)
+
+			ensureActiveStmtStyles()
+			let decorationIds: string[] = []
+			const updateActiveStmt = () => {
+				const model = editor.getModel?.()
+				const position = editor.getPosition?.()
+				const selection = editor.getSelection?.()
+				if (!model || !position) {
+					decorationIds = editor.deltaDecorations(decorationIds, [])
+					return
 				}
-			])
-		}
-		const cursorSub = editor.onDidChangeCursorPosition(updateActiveStmt)
-		const selectionSub = editor.onDidChangeCursorSelection(updateActiveStmt)
-		const contentSub = editor.onDidChangeModelContent(updateActiveStmt)
-		updateActiveStmt()
+				if (selection && !selection.isEmpty?.()) {
+					decorationIds = editor.deltaDecorations(decorationIds, [])
+					return
+				}
+				const sql = model.getValue() ?? ''
+				if (!sql) {
+					decorationIds = editor.deltaDecorations(decorationIds, [])
+					return
+				}
+				const offset = model.getOffsetAt(position)
+				let { start, end } = findStatementBoundsAtOffset(sql, offset)
+				while (start < end && /\s/.test(sql[start])) start++
+				while (end > start && /\s/.test(sql[end - 1])) end--
+				if (start >= end) {
+					decorationIds = editor.deltaDecorations(decorationIds, [])
+					return
+				}
+				const startPos = model.getPositionAt(start)
+				const endPos = model.getPositionAt(end)
+				const range = new monaco.Range(startPos.lineNumber, startPos.column, endPos.lineNumber, endPos.column)
+				decorationIds = editor.deltaDecorations(decorationIds, [
+					{
+						range,
+						options: {
+							className: ACTIVE_STMT_CLASS,
+							linesDecorationsClassName: ACTIVE_STMT_GUTTER_CLASS,
+							stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges
+						}
+					}
+				])
+			}
+			const cursorSub = editor.onDidChangeCursorPosition(updateActiveStmt)
+			const selectionSub = editor.onDidChangeCursorSelection(updateActiveStmt)
+			const contentSub = editor.onDidChangeModelContent(updateActiveStmt)
+			updateActiveStmt()
 
-		editor.onDidDispose(() => {
-			cursorSub.dispose()
-			selectionSub.dispose()
-			contentSub.dispose()
-			completions.dispose()
-			hovers.dispose()
-			if (editorInstanceRef.current === editor) editorInstanceRef.current = null
-		})
-	}, [])
+			editor.onDidDispose(() => {
+				contentSizeSub?.dispose()
+				cursorSub.dispose()
+				selectionSub.dispose()
+				contentSub.dispose()
+				completions.dispose()
+				hovers.dispose()
+				if (editorInstanceRef.current === editor) editorInstanceRef.current = null
+			})
+		},
+		[fitContentHeight, readOnly]
+	)
 
 	return (
 		<div className="overflow-hidden rounded-[4px] border border-(--legacy-divider) bg-surface">
 			<MonacoEditor
-				height={height}
+				height={fitContentHeight ? (contentHeight ?? height) : height}
 				language="sql"
 				theme={theme}
 				value={value}
@@ -297,23 +319,25 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 				}
 				options={{
 					minimap: { enabled: false },
+					readOnly,
+					domReadOnly: readOnly,
 					fontSize: 13,
 					tabSize: 2,
 					wordWrap: 'on',
 					scrollBeyondLastLine: false,
 					automaticLayout: true,
-					renderLineHighlight: 'line',
+					renderLineHighlight: readOnly ? 'none' : 'line',
 					padding: { top: 10, bottom: 10 },
 					lineNumbers: 'on',
 					lineDecorationsWidth: 8,
 					lineNumbersMinChars: 3,
 					fontLigatures: true,
 					fontFamily: "'JetBrains Mono', 'SF Mono', Menlo, Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace",
-					quickSuggestions: { other: true, comments: false, strings: false },
-					suggestOnTriggerCharacters: true,
-					wordBasedSuggestions: 'currentDocument',
+					quickSuggestions: readOnly ? false : { other: true, comments: false, strings: false },
+					suggestOnTriggerCharacters: !readOnly,
+					wordBasedSuggestions: readOnly ? 'off' : 'currentDocument',
 					acceptSuggestionOnEnter: 'on',
-					tabCompletion: 'on',
+					tabCompletion: readOnly ? 'off' : 'on',
 					smoothScrolling: true,
 					fixedOverflowWidgets: true,
 					cursorBlinking: 'phase',

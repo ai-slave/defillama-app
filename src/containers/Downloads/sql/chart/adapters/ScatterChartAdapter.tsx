@@ -3,7 +3,9 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
+import { SQL_CHART_HEIGHT } from '../chartLayout'
 import { formatterFromConfig } from '../valueFormatters'
+import { buildScatterPresentation, type ScatterPresentationInput } from './scatterPresentation'
 
 interface IScatterChartShim {
 	chartData: Array<Record<string, any>>
@@ -12,6 +14,7 @@ interface IScatterChartShim {
 	yAxisLabel?: string
 	valueSymbol?: string
 	height?: string
+	showLabels?: boolean
 	tooltipFormatter?: (params: any) => string
 	onReady?: (instance: any) => void
 }
@@ -35,26 +38,38 @@ export function ScatterChartAdapter({ config, result, classified, onReady }: Sca
 		isNumeric(config.yCols[0]) && config.yCols[0] !== xCol
 			? config.yCols[0]
 			: (numericCols.find((n) => n !== xCol) ?? null)
-	const labelCol = classified.find((c) => c.coarse === 'category')?.name ?? null
+	const categoryCols = classified.filter((c) => c.coarse === 'category').map((c) => c.name)
+	const labelCol = categoryCols.find((name) => /^(name|protocol|project|token)$/i.test(name)) ?? categoryCols[0] ?? null
+	const groupCol =
+		(config.splitByCol && categoryCols.includes(config.splitByCol) ? config.splitByCol : null) ??
+		categoryCols.find((name) => name !== labelCol && /^category$/i.test(name)) ??
+		categoryCols.find((name) => name !== labelCol) ??
+		null
+	const rankCol = numericCols.find((name) => /(^|_)rank$/i.test(name)) ?? null
 
 	const chartData = useMemo(() => {
 		if (!xCol || !yCol) return []
-		const rows: Array<{ value: [number, number, string?] }> = []
-		for (const row of result.rows) {
+		const points: ScatterPresentationInput[] = []
+		for (let index = 0; index < result.rows.length; index++) {
+			const row = result.rows[index]
 			const x = toNumber(row[xCol])
 			const y = toNumber(row[yCol])
 			if (x == null || y == null) continue
 			const label = labelCol ? (row[labelCol] == null ? undefined : String(row[labelCol])) : undefined
-			rows.push({ value: label ? [x, y, label] : [x, y] })
+			const group = groupCol ? (row[groupCol] == null ? 'Other' : String(row[groupCol])) : undefined
+			const rank = rankCol ? toNumber(row[rankCol]) : null
+			points.push({ x, y, label, group, importance: rank == null ? -index : -rank })
 		}
-		return rows
-	}, [result, xCol, yCol, labelCol])
+		return buildScatterPresentation(points, config.seriesColors)
+	}, [result, xCol, yCol, labelCol, groupCol, rankCol, config.seriesColors])
 
 	const tooltipFormatter = (params: any) => {
 		if (!params?.value || params.value.length < 2) return ''
 		const [x, y, label] = params.value
 		const lines: string[] = []
 		if (label) lines.push(`<strong>${escape(String(label))}</strong>`)
+		const group = params?.data?.groupName
+		if (group) lines.push(`Category: ${escape(String(group))}`)
 		lines.push(`${escape(xCol ?? 'x')}: ${formatter.tooltip(x)}`)
 		lines.push(`${escape(yCol ?? 'y')}: ${formatter.tooltip(y)}`)
 		return lines.join('<br/>')
@@ -65,7 +80,7 @@ export function ScatterChartAdapter({ config, result, classified, onReady }: Sca
 	return (
 		<Suspense
 			fallback={
-				<div className="flex h-[420px] items-center justify-center">
+				<div className="flex items-center justify-center" style={{ height: SQL_CHART_HEIGHT }}>
 					<LoadingSpinner size={18} />
 				</div>
 			}
@@ -75,7 +90,8 @@ export function ScatterChartAdapter({ config, result, classified, onReady }: Sca
 				xAxisLabel={xCol}
 				yAxisLabel={yCol}
 				valueSymbol={formatter.valueSymbol}
-				height="420px"
+				height={SQL_CHART_HEIGHT}
+				showLabels
 				tooltipFormatter={tooltipFormatter}
 				onReady={onReady}
 			/>

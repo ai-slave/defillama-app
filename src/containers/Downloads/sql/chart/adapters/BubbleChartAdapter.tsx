@@ -3,7 +3,9 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
+import { SQL_CHART_HEIGHT } from '../chartLayout'
 import { formatterFromConfig } from '../valueFormatters'
+import { buildScatterPresentation, type ScatterPresentationInput } from './scatterPresentation'
 
 interface IScatterChartShim {
 	chartData: Array<Record<string, any>>
@@ -11,6 +13,7 @@ interface IScatterChartShim {
 	yAxisLabel?: string
 	valueSymbol?: string
 	height?: string
+	showLabels?: boolean
 	tooltipFormatter?: (params: any) => string
 	onReady?: (instance: any) => void
 	title?: string
@@ -18,7 +21,7 @@ interface IScatterChartShim {
 
 const ScatterChart = lazy(() => import('~/components/ECharts/ScatterChart')) as unknown as React.FC<IScatterChartShim>
 
-const MIN_SYMBOL = 6
+const MIN_SYMBOL = 9
 const MAX_SYMBOL = 40
 
 interface BubbleChartAdapterProps {
@@ -42,34 +45,51 @@ export function BubbleChartAdapter({ config, result, classified, onReady }: Bubb
 		isNumeric(config.bubble?.sizeCol ?? null) && config.bubble?.sizeCol !== xCol && config.bubble?.sizeCol !== yCol
 			? config.bubble!.sizeCol!
 			: fallbackSize
-	const labelCol = classified.find((c) => c.coarse === 'category')?.name ?? null
+	const categoryCols = classified.filter((c) => c.coarse === 'category').map((c) => c.name)
+	const labelCol = categoryCols.find((name) => /^(name|protocol|project|token)$/i.test(name)) ?? categoryCols[0] ?? null
+	const groupCol =
+		(config.splitByCol && categoryCols.includes(config.splitByCol) ? config.splitByCol : null) ??
+		categoryCols.find((name) => name !== labelCol && /^category$/i.test(name)) ??
+		categoryCols.find((name) => name !== labelCol) ??
+		null
 
-	const { chartData, sizeRange } = useMemo(() => {
-		if (!xCol || !yCol || !sizeCol) return { chartData: [], sizeRange: [0, 0] as [number, number] }
-		const raw: Array<{ x: number; y: number; size: number; label?: string }> = []
+	const chartData = useMemo(() => {
+		if (!xCol || !yCol || !sizeCol) return []
+		const raw: Array<{ x: number; y: number; size: number; label?: string; group?: string }> = []
 		for (const row of result.rows) {
 			const x = toNumber(row[xCol])
 			const y = toNumber(row[yCol])
 			const s = toNumber(row[sizeCol])
 			if (x == null || y == null || s == null) continue
 			const label = labelCol ? (row[labelCol] == null ? undefined : String(row[labelCol])) : undefined
-			raw.push({ x, y, size: s, label })
+			const group = groupCol ? (row[groupCol] == null ? 'Other' : String(row[groupCol])) : undefined
+			raw.push({ x, y, size: s, label, group })
 		}
-		if (raw.length === 0) return { chartData: [], sizeRange: [0, 0] as [number, number] }
+		if (raw.length === 0) return []
 		const sMin = Math.min(...raw.map((r) => r.size))
 		const sMax = Math.max(...raw.map((r) => r.size))
 		const span = sMax - sMin || 1
-		const data = raw.map((r) => ({
-			value: r.label ? [r.x, r.y, r.label, r.size] : [r.x, r.y, '', r.size],
-			symbolSize: MIN_SYMBOL + ((r.size - sMin) / span) * (MAX_SYMBOL - MIN_SYMBOL)
-		}))
-		return { chartData: data, sizeRange: [sMin, sMax] as [number, number] }
-	}, [result, xCol, yCol, sizeCol, labelCol])
+		const points: ScatterPresentationInput[] = raw.map((point) => {
+			const symbolSize = MIN_SYMBOL + ((point.size - sMin) / span) * (MAX_SYMBOL - MIN_SYMBOL)
+			return {
+				x: point.x,
+				y: point.y,
+				label: point.label,
+				group: point.group,
+				importance: symbolSize,
+				symbolSize,
+				valueExtra: point.size
+			}
+		})
+		return buildScatterPresentation(points, config.seriesColors)
+	}, [result, xCol, yCol, sizeCol, labelCol, groupCol, config.seriesColors])
 
 	const tooltipFormatter = (params: any) => {
 		const [x, y, label, size] = params?.value ?? []
 		const lines: string[] = []
 		if (label) lines.push(`<strong>${escape(String(label))}</strong>`)
+		const group = params?.data?.groupName
+		if (group) lines.push(`Category: ${escape(String(group))}`)
 		lines.push(`${escape(xCol ?? 'x')}: ${formatter.tooltip(x)}`)
 		lines.push(`${escape(yCol ?? 'y')}: ${formatter.tooltip(y)}`)
 		if (sizeCol) lines.push(`${escape(sizeCol)}: ${formatter.tooltip(size)}`)
@@ -82,12 +102,10 @@ export function BubbleChartAdapter({ config, result, classified, onReady }: Bubb
 				Bubble needs at least three numeric columns (x, y, size).
 			</div>
 		)
-	void sizeRange
-
 	return (
 		<Suspense
 			fallback={
-				<div className="flex h-[420px] items-center justify-center">
+				<div className="flex items-center justify-center" style={{ height: SQL_CHART_HEIGHT }}>
 					<LoadingSpinner size={18} />
 				</div>
 			}
@@ -97,7 +115,8 @@ export function BubbleChartAdapter({ config, result, classified, onReady }: Bubb
 				xAxisLabel={xCol}
 				yAxisLabel={yCol}
 				valueSymbol={formatter.valueSymbol}
-				height="420px"
+				height={SQL_CHART_HEIGHT}
+				showLabels
 				tooltipFormatter={tooltipFormatter}
 				onReady={onReady}
 			/>

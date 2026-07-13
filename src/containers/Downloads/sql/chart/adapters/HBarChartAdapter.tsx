@@ -4,6 +4,7 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
+import { SQL_CHART_HEIGHT } from '../chartLayout'
 import { formatterFromConfig } from '../valueFormatters'
 
 interface IHBarChartShim {
@@ -58,7 +59,7 @@ export function HBarChartAdapter({ config, result, classified, onReady }: HBarCh
 	return (
 		<Suspense
 			fallback={
-				<div className="flex h-[380px] items-center justify-center">
+				<div className="flex items-center justify-center" style={{ height: SQL_CHART_HEIGHT }}>
 					<LoadingSpinner size={18} />
 				</div>
 			}
@@ -66,7 +67,7 @@ export function HBarChartAdapter({ config, result, classified, onReady }: HBarCh
 			<HBarChart
 				categories={categories}
 				values={values}
-				height="380px"
+				height={SQL_CHART_HEIGHT}
 				valueSymbol={formatter.valueSymbol}
 				colors={colors}
 				onReady={onReady}

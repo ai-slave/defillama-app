@@ -19,7 +19,7 @@ export function inferFineKindFromArrowType(typeString: string | undefined): Fine
 	if (/Float|Decimal|Double/i.test(typeString)) return 'float'
 	if (/Int|Long|Short/i.test(typeString)) return 'int'
 	if (/Bool/i.test(typeString)) return 'bool'
-	if (/Utf8|String/i.test(typeString)) return 'text'
+	if (/Utf8|String|VarChar|Char|Text|Enum|Uuid/i.test(typeString)) return 'text'
 	return 'other'
 }
 

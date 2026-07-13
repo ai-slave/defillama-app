@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { defaultChartConfig } from '../chartConfig'
 import {
 	classifyColumn,
 	classifyColumns,
@@ -18,6 +19,7 @@ describe('inferFineKindFromArrowType', () => {
 		expect(inferFineKindFromArrowType('Decimal(18,6)')).toBe('float')
 		expect(inferFineKindFromArrowType('Utf8')).toBe('text')
 		expect(inferFineKindFromArrowType('LargeUtf8')).toBe('text')
+		expect(inferFineKindFromArrowType('VARCHAR')).toBe('text')
 		expect(inferFineKindFromArrowType('Boolean')).toBe('bool')
 		expect(inferFineKindFromArrowType('Date32<DAY>')).toBe('date')
 		expect(inferFineKindFromArrowType('Timestamp<MILLISECOND, null>')).toBe('date')
@@ -116,5 +118,19 @@ describe('classifyColumns', () => {
 		expect(classified[0].fine).toBe('date')
 		expect(classified[1].fine).toBe('float')
 		expect(classified[2].fine).toBe('text')
+	})
+
+	it('preserves categorical chart defaults for server DuckDB results', () => {
+		const result: QueryResult = {
+			columns: [
+				{ name: 'name', type: 'VARCHAR' },
+				{ name: 'tvl', type: 'DOUBLE' },
+				{ name: 'change_7d', type: 'DOUBLE' }
+			],
+			rows: [{ name: 'Aave', tvl: 19.46, change_7d: 1.2 }]
+		}
+		const classified = classifyColumns(result)
+		expect(classified.map((column) => column.coarse)).toEqual(['category', 'number', 'number'])
+		expect(defaultChartConfig(classified)).toMatchObject({ chartType: 'bar', xCol: 'name' })
 	})
 })

@@ -4,6 +4,7 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
+import { SQL_CHART_HEIGHT } from '../chartLayout'
 import { formatterFromConfig } from '../valueFormatters'
 
 interface IPieChartShim {
@@ -78,7 +79,7 @@ export function PieChartAdapter({ config, result, classified, onReady }: PieChar
 		<div className="flex flex-col gap-1.5">
 			<Suspense
 				fallback={
-					<div className="flex h-[420px] items-center justify-center">
+					<div className="flex items-center justify-center" style={{ height: SQL_CHART_HEIGHT }}>
 						<LoadingSpinner size={18} />
 					</div>
 				}
@@ -89,7 +90,7 @@ export function PieChartAdapter({ config, result, classified, onReady }: PieChar
 					valueSymbol={formatter.valueSymbol}
 					radius={isDonut ? ['42%', '70%'] : undefined}
 					showLegend
-					height="420px"
+					height={SQL_CHART_HEIGHT}
 					formatTooltip={formatTooltip}
 					onReady={onReady}
 				/>

@@ -6,15 +6,19 @@ import { migrateChartConfig } from '~/containers/Downloads/sql/chartConfig'
 import { classifyColumns } from '~/containers/Downloads/sql/columnKind'
 import { exportQueryResult } from '~/containers/Downloads/sql/exportResults'
 import { ResultsGrid } from '~/containers/Downloads/sql/ResultsGrid'
+import { buttonStyles } from '~/ui/Button'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import type { SqlChartConfig } from '../../types'
 import { ProTableCSVButton } from '../ProTable/CsvButton'
 import { snapshotToResult } from './snapshot'
+import { SqlQueryView } from './SqlQueryView'
 import { reportSqlRefreshEnd, reportSqlRefreshStart, subscribeSqlRefreshAll } from './sqlRefreshBus'
 import { useServerSqlRun } from './useServerSqlRun'
 
 const REFRESH_HINT = 'Refresh re-runs the query on the server and updates the result for everyone.'
+const EXPORT_BUTTON_CLASSNAME = buttonStyles({ size: 'sm' })
 
 interface SqlChartCardProps {
 	config: SqlChartConfig
@@ -50,6 +54,7 @@ function timeAgo(iso: string): string {
 
 export function SqlChartCard({ config }: SqlChartCardProps) {
 	const { snapshot, isRefreshing, error, canRefresh, refresh } = useServerSqlRun(config.id, config.snapshot)
+	const [cardView, setCardView] = useState<'output' | 'query'>('output')
 
 	const refreshRef = useRef(refresh)
 	refreshRef.current = refresh
@@ -69,26 +74,6 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 	const chartInstanceRef = useRef<any>(null)
 	const getChartInstance = useCallback(() => chartInstanceRef.current, [])
 
-	const [copiedSql, setCopiedSql] = useState(false)
-	const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-	useEffect(
-		() => () => {
-			if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
-		},
-		[]
-	)
-	const copySql = useCallback(() => {
-		if (typeof navigator === 'undefined' || !navigator.clipboard) return
-		navigator.clipboard.writeText(config.query.sql).then(
-			() => {
-				setCopiedSql(true)
-				if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current)
-				copiedTimerRef.current = setTimeout(() => setCopiedSql(false), 1500)
-			},
-			() => undefined
-		)
-	}, [config.query.sql])
-
 	const result = useMemo(() => (snapshot ? snapshotToResult(snapshot) : null), [snapshot])
 	const classified = useMemo(() => (result ? classifyColumns(result) : []), [result])
 	const resolvedConfig = useMemo(
@@ -103,10 +88,21 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 	return (
 		<div className="flex h-full flex-col gap-2 p-1 md:p-3">
 			<div className="flex flex-wrap items-center justify-between gap-2">
-				<div className="mr-auto flex min-w-0 items-center gap-2">
+				<div className="mr-auto min-w-0">
 					<h2 className="truncate text-base font-semibold">{config.name || 'SQL chart'}</h2>
 				</div>
 				<div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+					<SegmentedControl<'output' | 'query'>
+						value={cardView}
+						onValueChange={setCardView}
+						options={[
+							{ value: 'output', label: displayMode === 'table' ? 'Table' : 'Chart' },
+							{ value: 'query', label: 'SQL' }
+						]}
+						label="SQL card view"
+						variant="default"
+						size="sm"
+					/>
 					{snapshot ? (
 						<span className="flex items-center gap-1.5 text-xs pro-text3" title={freshness(snapshot.computedAt).label}>
 							<span
@@ -122,7 +118,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 								type="button"
 								onClick={refresh}
 								disabled={isRefreshing}
-								className="flex items-center gap-1 text-xs text-(--link-text) hover:underline disabled:opacity-50"
+								className="flex items-center gap-1 text-xs text-link hover:underline disabled:opacity-50"
 								title="Re-run the query"
 							>
 								{isRefreshing ? <LoadingSpinner size={12} /> : null}
@@ -133,36 +129,30 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 							</Tooltip>
 						</>
 					) : null}
-					<button
-						type="button"
-						onClick={copySql}
-						className="flex items-center pro-text3 transition-colors hover:pro-text1"
-						title={copiedSql ? 'Copied' : 'Copy SQL query'}
-					>
-						<Icon name={copiedSql ? 'check' : 'copy'} height={13} width={13} />
-						<span className="sr-only">Copy SQL query</span>
-					</button>
-					{canExportPng ? (
+					{cardView === 'output' && canExportPng ? (
 						<ChartPngExportButton
 							chartInstance={getChartInstance}
 							filename={config.name || 'sql-chart'}
 							title={config.name || 'SQL chart'}
+							className={EXPORT_BUTTON_CLASSNAME}
 							smol
 						/>
 					) : null}
-					{canExportCsv ? (
+					{cardView === 'output' && canExportCsv ? (
 						<ProTableCSVButton
 							onClick={() => exportQueryResult(result, 'csv', config.name || 'sql-chart')}
 							smol
-							className="flex items-center gap-1 rounded-md border border-(--form-control-border) px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-(--cards-border) disabled:text-(--text-disabled)"
+							className={EXPORT_BUTTON_CLASSNAME}
 						/>
 					) : null}
 				</div>
 			</div>
 
-			{error ? <span className="text-[10px] text-red-500">Refresh failed: {error}</span> : null}
+			{error ? <span className="body-xs text-data-down">Refresh failed: {error}</span> : null}
 
-			{!snapshot || !result ? (
+			{cardView === 'query' ? (
+				<SqlQueryView config={config} snapshot={snapshot} />
+			) : !snapshot || !result ? (
 				<div className="flex flex-1 items-center justify-center text-sm pro-text3">
 					{isRefreshing ? <LoadingSpinner size={20} /> : 'No data yet.'}
 				</div>
@@ -185,8 +175,8 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 				/>
 			)}
 
-			{snapshot?.truncated ? (
-				<span className="text-[10px] pro-text3">
+			{cardView === 'output' && snapshot?.truncated ? (
+				<span className="body-xs pro-text3">
 					Showing first {snapshot.rows.length.toLocaleString()} of {snapshot.rowCount.toLocaleString()} rows.
 				</span>
 			) : null}

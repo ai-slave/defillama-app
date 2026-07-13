@@ -41,6 +41,11 @@ const getEntityIcon = (type: string, slug: string) => {
 	return tokenIconUrl(slug)
 }
 
+function getPointValue(point: any): any[] {
+	if (Array.isArray(point)) return point
+	return Array.isArray(point?.value) ? point.value : []
+}
+
 export default function ScatterChart({
 	chartData,
 	title,
@@ -70,7 +75,8 @@ export default function ScatterChart({
 		if (!showLabels) return
 		const slugs = new Set<string>()
 		for (const point of chartData as any[]) {
-			const slug = point?.[3]
+			if (point?.showLabel === false) continue
+			const slug = point?.entitySlug ?? getPointValue(point)[3]
 			if (slug && typeof slug === 'string' && slug.toLowerCase() !== 'unknown') slugs.add(slug)
 		}
 		const pending: Promise<boolean>[] = []
@@ -97,15 +103,15 @@ export default function ScatterChart({
 		let series = []
 		const isYieldData = chartData.length > 0 && chartData[0].projectName !== undefined
 
-		const labelConfig = showLabels
-			? {
-					show: true,
-					position: 'right' as const,
-					formatter: (params: any) => params.value?.[2] || '',
-					fontSize: 10,
-					color: getChartTheme(isDark).ink(0.8)
-				}
-			: undefined
+		const labelConfig = {
+			show: showLabels,
+			position: 'right' as const,
+			distance: 5,
+			formatter: (params: any) => params.value?.[2] || '',
+			fontSize: 10,
+			fontWeight: 500,
+			color: getChartTheme(isDark).ink(0.86)
+		}
 
 		if (isYieldData) {
 			const projectNames = [...new Set(chartData.map((p) => p.projectName))]
@@ -127,35 +133,54 @@ export default function ScatterChart({
 		} else {
 			const dataWithSymbols = showLabels
 				? chartData.map((point: any) => {
-						const slug = point[3] || ''
-						if (!slug || slug.toLowerCase() === 'unknown') {
-							return { value: point }
-						}
+						const normalizedPoint = Array.isArray(point) ? { value: point } : point
+						if (point?.showLabel === false) return normalizedPoint
+						const slug = point?.entitySlug ?? getPointValue(point)[3] ?? ''
+						if (!slug || typeof slug !== 'string' || slug.toLowerCase() === 'unknown') return normalizedPoint
 						const url = getEntityIcon(entityType, slug)
-						if (!isIconUrlValid(url)) {
-							return { value: point }
-						}
+						if (!isIconUrlValid(url)) return normalizedPoint
 						return {
-							value: point,
+							...normalizedPoint,
 							symbol: `image://${url}`,
-							symbolSize: 20
+							symbolSize: Math.max(Number(normalizedPoint?.symbolSize) || 20, 18)
 						}
 					})
 				: chartData
 
-			series = [
-				{
-					name: title || 'Data',
+			const groupedData = new Map<string, any[]>()
+			for (const point of dataWithSymbols as any[]) {
+				const seriesName = typeof point?.seriesName === 'string' ? point.seriesName : title || 'Data'
+				if (!groupedData.has(seriesName)) groupedData.set(seriesName, [])
+				groupedData.get(seriesName)!.push(point)
+			}
+
+			series = [...groupedData.entries()].map(([seriesName, data]) => {
+				const groupColor = data.find((point) => typeof point?.groupColor === 'string')?.groupColor
+				return {
+					name: seriesName,
 					type: 'scatter',
 					symbolSize: showLabels ? 20 : 8,
+					itemStyle: {
+						...(groupColor ? { color: groupColor } : {}),
+						opacity: 0.84
+					},
 					emphasis: {
-						focus: 'series'
+						focus: 'series',
+						scale: true,
+						label: { show: true },
+						itemStyle: {
+							opacity: 1,
+							borderColor: getChartTheme(isDark).ink(0.9),
+							borderWidth: 2
+						}
 					},
 					label: labelConfig,
-					data: dataWithSymbols
+					data
 				}
-			]
+			})
 		}
+
+		const showCategoricalLegend = !isYieldData && series.length > 1
 
 		const yieldTooltipFormatter = (params) => {
 			if (params.value.length > 1) {
@@ -230,8 +255,23 @@ export default function ScatterChart({
 						}
 					}
 				: undefined,
+			legend: showCategoricalLegend
+				? {
+						type: 'scroll',
+						top: 0,
+						left: CHART_INSET,
+						right: 108,
+						itemWidth: 10,
+						itemHeight: 10,
+						textStyle: {
+							fontFamily: 'sans-serif',
+							fontSize: 11,
+							color: getChartTheme(isDark).text
+						}
+					}
+				: undefined,
 			grid: {
-				top: CHART_INSET,
+				top: showCategoricalLegend ? 40 : CHART_INSET,
 				right: CHART_INSET,
 				bottom: CHART_INSET,
 				left: CHART_INSET,
@@ -265,6 +305,7 @@ export default function ScatterChart({
 					scale: true,
 					name: xAxisLabel || '',
 					nameLocation: 'middle',
+					nameGap: 28,
 					nameTextStyle: {
 						fontFamily: 'sans-serif',
 						fontSize: 14,
@@ -273,7 +314,8 @@ export default function ScatterChart({
 					axisLabel: {
 						formatter: '{value}',
 						color: getChartTheme(isDark).axisLabel,
-						inside: true
+						inside: false,
+						margin: 8
 					},
 					splitLine: {
 						lineStyle: {
@@ -288,6 +330,7 @@ export default function ScatterChart({
 					scale: true,
 					name: yAxisLabel || '',
 					nameLocation: 'middle',
+					nameGap: 36,
 					nameTextStyle: {
 						fontFamily: 'sans-serif',
 						fontSize: 14,
@@ -296,7 +339,8 @@ export default function ScatterChart({
 					axisLabel: {
 						formatter: '{value}',
 						color: getChartTheme(isDark).axisLabel,
-						inside: true
+						inside: false,
+						margin: 8
 					},
 					splitLine: {
 						lineStyle: {
@@ -317,7 +361,7 @@ export default function ScatterChart({
 			series: series
 		}
 
-		instance.setOption(option)
+		instance.setOption(option, { notMerge: true })
 
 		return () => {
 			chartRef.current = null

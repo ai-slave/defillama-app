@@ -236,7 +236,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 				unmountOnHide
 				portal
 				hideOnInteractOutside={false}
-				className="fixed inset-0 z-50 flex flex-col gap-3 overflow-hidden pro-dashboard bg-(--cards-bg) p-3 md:inset-4 md:rounded-md md:border md:border-(--cards-border) md:p-4 md:shadow-xl"
+				className="fixed inset-0 z-50 flex flex-col gap-3 overflow-hidden pro-dashboard bg-surface p-3 md:inset-4 md:rounded-md md:border md:border-medium md:p-4 md:shadow-xl"
 			>
 				<div className="flex shrink-0 items-center justify-between">
 					<h2 className="text-xl font-semibold pro-text1">{editItem ? 'Edit SQL chart' : 'New SQL chart'}</h2>
@@ -247,13 +247,13 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 				</div>
 
 				<div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_540px]">
-					<div className="thin-scrollbar flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
+					<div className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
 						<input
 							type="text"
 							value={name}
 							onChange={(e) => setName(e.target.value)}
 							placeholder="Widget name (optional)"
-							className="shrink-0 rounded-md border pro-border bg-(--app-bg) px-3 py-2 text-sm pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
+							className="shrink-0 rounded-md border pro-border bg-page px-3 py-2 text-sm pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden"
 						/>
 
 						<div className="shrink-0">
@@ -272,7 +272,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 								type="button"
 								onClick={() => void run()}
 								disabled={running || savePending || engineLoading || !sql.trim()}
-								className="inline-flex items-center gap-2 rounded-md bg-(--primary) px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+								className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-on-brand shadow-sm transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
 							>
 								<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
 									<path d="M8 5v14l11-7z" />
@@ -343,7 +343,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 					/>
 				</div>
 
-				<div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-(--cards-border) pt-3">
+				<div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-medium pt-3">
 					<div className="flex flex-wrap items-center gap-4">
 						<span className="text-xs pro-text3">
 							{displayMode === 'table' ? 'Widget shows the result as a table.' : 'Widget shows the result as a chart.'}
@@ -362,7 +362,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 								}}
 								onBlur={() => setRowCap((prev) => clampRowCap(prev))}
 								title={`How many result rows are stored with the widget (${SQL_SNAPSHOT_ROW_CAP_MIN}–${SQL_SNAPSHOT_ROW_CAP_MAX}). Larger snapshots make the dashboard heavier.`}
-								className="w-20 rounded-md border pro-border bg-(--app-bg) px-2 py-1 text-xs pro-text1 focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
+								className="w-20 rounded-md border pro-border bg-page px-2 py-1 text-xs pro-text1 focus:ring-1 focus:ring-brand focus:outline-hidden"
 							/>
 						</label>
 					</div>
@@ -378,7 +378,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 							type="button"
 							onClick={() => void handleSave()}
 							disabled={!canSave}
-							className="rounded-md bg-(--primary) px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+							className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-on-brand transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							{savePending ? 'Running…' : editItem ? 'Save changes' : 'Add to dashboard'}
 						</button>

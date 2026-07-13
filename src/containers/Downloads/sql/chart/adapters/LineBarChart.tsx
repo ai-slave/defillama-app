@@ -4,6 +4,7 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import { SPLIT_TOP_N, type ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
+import { SQL_CHART_HEIGHT } from '../chartLayout'
 import { pivotRowsForSplit } from '../pivot'
 import { formatterFromConfig } from '../valueFormatters'
 
@@ -122,7 +123,7 @@ export function LineBarChart({
 		<div className="relative">
 			<Suspense
 				fallback={
-					<div className="flex h-[360px] items-center justify-center">
+					<div className="flex items-center justify-center" style={{ height: SQL_CHART_HEIGHT }}>
 						<LoadingSpinner size={18} />
 					</div>
 				}
@@ -130,7 +131,7 @@ export function LineBarChart({
 				<MultiSeriesChart
 					series={series}
 					xAxisType={xAxisType}
-					height="380px"
+					height={SQL_CHART_HEIGHT}
 					valueSymbol={formatter.valueSymbol}
 					yAxisSymbols={yAxisSymbols}
 					hideDataZoom={series.every((s) => s.data.length < 2)}

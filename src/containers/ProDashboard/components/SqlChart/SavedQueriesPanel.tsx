@@ -17,10 +17,10 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 
 	if (queries.length === 0) {
 		return (
-			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--divider) px-4 py-8 text-center">
-				<Icon name="bookmark" className="size-4 text-(--text-tertiary)" />
-				<p className="text-xs text-(--text-secondary)">No saved queries yet.</p>
-				<p className="text-[11px] text-(--text-tertiary)">
+			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle px-4 py-8 text-center">
+				<Icon name="bookmark" className="size-4 text-tertiary" />
+				<p className="text-xs text-secondary">No saved queries yet.</p>
+				<p className="body-sm text-tertiary">
 					Saving a SQL widget stores its query here — reusable on any dashboard and in SQL Studio.
 				</p>
 			</div>
@@ -28,7 +28,7 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 	}
 
 	return (
-		<ul className="flex flex-col border-t border-(--divider)/60">
+		<ul className="flex flex-col border-t border-(--border-subtle)/60">
 			{queries.map((query) => {
 				const taskId = `saved:${query.id}`
 				const isBusy = busyTaskId === taskId
@@ -38,7 +38,7 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 				return (
 					<li
 						key={query.id}
-						className={`group flex items-center gap-1 border-b border-(--divider)/40 last:border-b-0 ${
+						className={`group flex items-center gap-1 border-b border-(--border-subtle)/40 last:border-b-0 ${
 							isDisabled ? 'opacity-40' : ''
 						}`}
 					>
@@ -53,11 +53,11 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 									}}
 									onCancel={() => setRenamingId(null)}
 								/>
-								<span className="truncate font-mono text-[11px] text-(--text-tertiary)">{firstLine}</span>
+								<span className="truncate mono-sm text-tertiary">{firstLine}</span>
 							</span>
 						) : (
 							<Tooltip
-								content={<span className="font-mono text-[11px] whitespace-pre-wrap">{query.sql}</span>}
+								content={<span className="mono-sm whitespace-pre-wrap">{query.sql}</span>}
 								data-fullwidth
 								render={
 									<button
@@ -73,14 +73,14 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 									<span className="flex items-center gap-2">
 										{isBusy ? <LoadingSpinner size={10} /> : null}
 										<span
-											className={`truncate text-[12.5px] leading-snug transition-colors ${
-												isBusy ? 'text-(--primary)' : 'text-(--text-primary) group-hover/apply:text-(--primary)'
+											className={`truncate body-sm transition-colors ${
+												isBusy ? 'text-brand' : 'text-primary group-hover/apply:text-brand'
 											}`}
 										>
 											{query.name}
 										</span>
 									</span>
-									<span className="truncate font-mono text-[11px] text-(--text-tertiary)">{firstLine}</span>
+									<span className="truncate mono-sm text-tertiary">{firstLine}</span>
 								</span>
 							</Tooltip>
 						)}
@@ -90,7 +90,7 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 								onClick={() => setRenamingId(query.id)}
 								aria-label={`Rename ${query.name}`}
 								disabled={!!busyTaskId || isRenaming}
-								className="flex size-6 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-(--link-hover-bg) hover:text-(--text-primary) disabled:cursor-not-allowed disabled:opacity-40"
+								className="flex size-6 items-center justify-center rounded-md text-tertiary transition-colors hover:bg-hover-row hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
 							>
 								<Icon name="pencil" className="size-3" />
 							</button>
@@ -145,7 +145,7 @@ function InlineRenameInput({
 			}}
 			onBlur={() => onCommit(value)}
 			onClick={(e) => e.stopPropagation()}
-			className="min-w-0 rounded-sm bg-(--app-bg) px-1 py-px text-[12.5px] font-semibold text-(--text-primary) ring-1 ring-(--primary) outline-none"
+			className="min-w-0 rounded-sm bg-page px-1 py-px label-sm text-primary ring-1 ring-brand outline-hidden"
 		/>
 	)
 }

@@ -9,6 +9,7 @@ import {
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useCallback, useEffect, useId, useMemo, useRef } from 'react'
+import { CHART_COLORS } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { formattedNum } from '~/utils'
@@ -86,6 +87,7 @@ function addColorGradientField(chartDataTree) {
 export default function TreemapChart({
 	treeData,
 	variant = 'yields',
+	colorMode = 'value',
 	height,
 	onReady,
 	valueLabel = 'Market Cap',
@@ -95,6 +97,7 @@ export default function TreemapChart({
 	const isNarrativeVariant = variant === 'narrative'
 	const isRwaVariant = variant === 'rwa'
 	const isNarrativeLike = isNarrativeVariant || isRwaVariant
+	const isCategoricalColor = colorMode === 'categorical'
 
 	const [isDark] = useDarkModeManager()
 	const chartRef = useRef<echarts.ECharts | null>(null)
@@ -108,10 +111,10 @@ export default function TreemapChart({
 
 	const chartDataTree = useMemo(() => {
 		const cloned = normalizeTreemapNodes(treeData ?? [])
-		// RWA treemap uses explicit item colors from caller, no red/green gradient mapping.
-		if (!isRwaVariant) addColorGradientField(cloned)
+		// RWA treemaps use caller colors; categorical treemaps use the chart palette.
+		if (!isRwaVariant && !isCategoricalColor) addColorGradientField(cloned)
 		return cloned
-	}, [isRwaVariant, treeData])
+	}, [isCategoricalColor, isRwaVariant, treeData])
 	const formatTreemapMetricValue = useCallback(
 		(value: number) => formattedNum(value, valueSymbol && valueSymbol.length > 0 ? valueSymbol : false),
 		[valueSymbol]
@@ -222,7 +225,7 @@ export default function TreemapChart({
 								bottom: 0
 							}
 						: {}),
-					...(isRwaVariant
+					...(isRwaVariant || isCategoricalColor
 						? {}
 						: {
 								visualMin: visualMin,
@@ -359,10 +362,15 @@ export default function TreemapChart({
 						{
 							...(isRwaVariant
 								? {}
-								: {
-										color: ['#942e38', '#aaa', '#269f3c'],
-										colorMappingBy: 'value'
-									}),
+								: isCategoricalColor
+									? {
+											color: CHART_COLORS,
+											colorMappingBy: 'index'
+										}
+									: {
+											color: ['#942e38', '#aaa', '#269f3c'],
+											colorMappingBy: 'value'
+										}),
 							itemStyle: isRwaVariant
 								? {
 										borderColor: isDark ? '#2d3139' : '#d1d5db',
@@ -399,7 +407,7 @@ export default function TreemapChart({
 							}
 						},
 						{
-							...(isRwaVariant ? {} : { colorSaturation: [0, 1] }),
+							...(isRwaVariant ? {} : { colorSaturation: isCategoricalColor ? [0.55, 0.9] : [0, 1] }),
 							itemStyle: isRwaVariant
 								? {
 										borderWidth: 1,
@@ -455,6 +463,7 @@ export default function TreemapChart({
 		chartDataTree,
 		formatTreemapMetricValue,
 		id,
+		isCategoricalColor,
 		isDark,
 		isNarrativeLike,
 		isNarrativeVariant,

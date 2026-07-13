@@ -3,11 +3,13 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
+import { SQL_CHART_HEIGHT } from '../chartLayout'
 import { formatterFromConfig } from '../valueFormatters'
 
 interface ITreemapChartShim {
 	treeData: any[]
 	variant?: 'yields' | 'narrative' | 'rwa'
+	colorMode?: 'value' | 'categorical'
 	height?: string
 	valueLabel?: string
 	valueSymbol?: string
@@ -69,7 +71,7 @@ export function TreemapChartAdapter({ config, result, classified, onReady }: Tre
 	return (
 		<Suspense
 			fallback={
-				<div className="flex h-[420px] items-center justify-center">
+				<div className="flex items-center justify-center" style={{ height: SQL_CHART_HEIGHT }}>
 					<LoadingSpinner size={18} />
 				</div>
 			}
@@ -77,7 +79,8 @@ export function TreemapChartAdapter({ config, result, classified, onReady }: Tre
 			<TreemapChart
 				treeData={treeData}
 				variant="narrative"
-				height="460px"
+				colorMode="categorical"
+				height={SQL_CHART_HEIGHT}
 				valueLabel={valueCol}
 				valueSymbol={formatter.valueSymbol}
 				onReady={onReady}

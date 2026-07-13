@@ -48,11 +48,11 @@ export function SqlChartModalSidebar({
 	const [tab, setTab] = useState<TabId>('examples')
 
 	return (
-		<aside className="flex min-h-0 flex-col overflow-hidden rounded-md border border-(--cards-border) bg-(--cards-bg)">
+		<aside className="flex min-h-0 flex-col overflow-hidden rounded-md border border-medium bg-surface">
 			<nav
 				role="tablist"
 				aria-label="SQL reference section"
-				className="flex shrink-0 items-stretch border-b border-(--divider) text-sm"
+				className="flex shrink-0 items-stretch border-b border-subtle text-sm"
 			>
 				{TABS.map((t) => {
 					const active = tab === t.id
@@ -64,22 +64,22 @@ export function SqlChartModalSidebar({
 							aria-selected={active}
 							onClick={() => setTab(t.id)}
 							className={`relative flex flex-1 items-center justify-center gap-1.5 pt-2.5 pb-2 text-xs font-medium transition-colors ${
-								active ? 'text-(--primary)' : 'text-(--text-secondary) hover:text-(--text-primary)'
+								active ? 'text-brand' : 'text-secondary hover:text-primary'
 							}`}
 						>
 							{t.label}
 							{t.id === 'saved' && savedQueries.length > 0 ? (
-								<span className="text-[10px] text-(--text-tertiary) tabular-nums">{savedQueries.length}</span>
+								<span className="label-xs text-tertiary tabular-nums">{savedQueries.length}</span>
 							) : null}
 							{active ? (
-								<span aria-hidden className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-(--primary)" />
+								<span aria-hidden className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-brand" />
 							) : null}
 						</button>
 					)
 				})}
 			</nav>
 
-			<div className="thin-scrollbar min-h-0 flex-1 overflow-y-auto p-3">
+			<div className="min-h-0 flex-1 overflow-y-auto p-3">
 				{tab === 'examples' ? (
 					<ExamplesPanel onApply={onApplyExample} busyTaskId={busyTaskId} />
 				) : tab === 'schema' ? (
@@ -100,13 +100,8 @@ export function SqlChartModalSidebar({
 				)}
 			</div>
 
-			<footer className="shrink-0 border-t border-(--divider) px-3 py-2">
-				<a
-					href={DUCKDB_DOCS_URL}
-					target="_blank"
-					rel="noreferrer"
-					className="text-[11px] text-(--link-text) hover:underline"
-				>
+			<footer className="shrink-0 border-t border-subtle px-3 py-2">
+				<a href={DUCKDB_DOCS_URL} target="_blank" rel="noreferrer" className="label-sm text-link hover:underline">
 					LlamaSQL dialect docs ↗
 				</a>
 			</footer>

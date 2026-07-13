@@ -4,6 +4,7 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../../chartConfig'
 import type { ClassifiedColumn } from '../../columnKind'
 import type { QueryResult } from '../../exportResults'
+import { SQL_CHART_HEIGHT } from '../chartLayout'
 import { formatterFromConfig } from '../valueFormatters'
 
 interface IMultiSeriesChartShim {
@@ -99,7 +100,7 @@ export function HistogramChartAdapter({ config, result, classified, onReady }: H
 	return (
 		<Suspense
 			fallback={
-				<div className="flex h-[380px] items-center justify-center">
+				<div className="flex items-center justify-center" style={{ height: SQL_CHART_HEIGHT }}>
 					<LoadingSpinner size={18} />
 				</div>
 			}
@@ -107,7 +108,7 @@ export function HistogramChartAdapter({ config, result, classified, onReady }: H
 			<MultiSeriesChart
 				series={series}
 				xAxisType="category"
-				height="380px"
+				height={SQL_CHART_HEIGHT}
 				hideDataZoom
 				chartOptions={chartOptions}
 				onReady={onReady}

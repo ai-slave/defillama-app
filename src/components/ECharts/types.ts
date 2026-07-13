@@ -106,6 +106,7 @@ export type TreemapVariant = 'yields' | 'narrative' | 'rwa'
 export interface ITreemapChartProps {
 	treeData: any[]
 	variant?: TreemapVariant
+	colorMode?: 'value' | 'categorical'
 	height?: string
 	onReady?: (instance: echarts.ECharts | null) => void
 	valueLabel?: string
@@ -241,6 +242,7 @@ export type IMultiSeriesChart2Props = MultiSeriesChart2BaseProps & {
 
 export interface ICandlestickChartProps {
 	data: Array<[number, number, number, number, number, number]>
+	height?: string
 	indicators?: Array<{
 		name: string
 		category: 'overlay' | 'panel'
