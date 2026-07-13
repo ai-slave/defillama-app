@@ -34,9 +34,9 @@ import { ChartHeader } from '../ChartHeader'
 import {
 	CHART_INSET,
 	CHART_LEGEND_RESERVE,
-	CHART_LEGEND_RIGHT_INSET,
 	chartDataZoomSliderGeometry,
 	chartGrid,
+	chartHorizontalScrollLegendGeometry,
 	chartLegendScrollStyle
 } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
@@ -840,41 +840,31 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 		const shouldShowEventRail = eventRailData.length > 0
 		const hoverState: EventHoverState = { hoveredEventDate: null }
 
-		// Always use a scroll legend when the default legend is enabled.
-		// Only constrain the left boundary when there are enough series to span the
-		// full width — otherwise omit `left` so items stay right-aligned.
-		const legendItemCount = series.length
-		const constrainLeft = legendItemCount > 5
+		// Always use a scroll legend when the default legend is enabled. ECharts
+		// decides whether paging is needed; asymmetric padding supplies the left
+		// clip inset without forcing short legends away from right alignment.
 		const legendTheme = getChartTheme(isThemeDark)
 		const legendScrollStyle = chartLegendScrollStyle(
 			legendTheme.legendPageActive,
 			legendTheme.legendPageInactive,
 			legendTheme.axisLabel
 		)
+		const getScrollLegend = (legendOption: any) => ({
+			...legendScrollStyle,
+			...legendOption,
+			type: 'scroll',
+			orient: legendOption?.orient ?? 'horizontal',
+			pageButtonPosition: legendOption?.pageButtonPosition ?? 'end',
+			top: legendOption?.top ?? CHART_INSET,
+			padding: legendOption?.padding ?? chartHorizontalScrollLegendGeometry.padding,
+			right: legendOption?.right ?? chartHorizontalScrollLegendGeometry.right
+		})
 		const finalLegend = hideDefaultLegend
 			? undefined
 			: Array.isArray(legend)
-				? legend.map((l) => ({
-						...legendScrollStyle,
-						...l,
-						type: 'scroll',
-						orient: l?.orient ?? 'horizontal',
-						pageButtonPosition: l?.pageButtonPosition ?? 'end',
-						top: l?.top ?? CHART_INSET,
-						...(l?.left != null ? { left: l.left } : constrainLeft ? { left: CHART_INSET } : {}),
-						right: l?.right ?? CHART_LEGEND_RIGHT_INSET
-					}))
+				? legend.map(getScrollLegend)
 				: legend
-					? {
-							...legendScrollStyle,
-							...legend,
-							type: 'scroll',
-							orient: legend?.orient ?? 'horizontal',
-							pageButtonPosition: legend?.pageButtonPosition ?? 'end',
-							top: legend?.top ?? CHART_INSET,
-							...(legend?.left != null ? { left: legend.left } : constrainLeft ? { left: CHART_INSET } : {}),
-							right: legend?.right ?? CHART_LEGEND_RIGHT_INSET
-						}
+					? getScrollLegend(legend)
 					: undefined
 
 		const datasetForOption = {

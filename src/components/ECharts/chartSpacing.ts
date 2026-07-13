@@ -27,6 +27,16 @@ export const CHART_ZOOM_RESERVE =
 export const CHART_LEGEND_RESERVE = 40
 export const CHART_LEGEND_RIGHT_INSET = 16
 
+/**
+ * Keep horizontal scroll-legend ink 8px from both edges without forcing `left`.
+ * ECharts right-aligns short legends and uses the left padding as the clip edge
+ * only when the legend overflows and paging controls appear.
+ */
+export const chartHorizontalScrollLegendGeometry = {
+	right: CHART_INSET,
+	padding: [5, 0, 5, CHART_INSET]
+}
+
 /** Standard cartesian grid; spread and override top/bottom for legend/zoom reserves. */
 export const chartGrid = (overrides?: Record<string, unknown>) => ({
 	left: CHART_INSET,
