@@ -537,11 +537,6 @@ export const legacyRedirects = [
 		permanent: true
 	},
 	{
-		source: '/docs',
-		destination: '/docs/api',
-		permanent: true
-	},
-	{
 		source: '/donate',
 		destination: '/donations',
 		permanent: true
