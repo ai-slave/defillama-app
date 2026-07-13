@@ -11,7 +11,7 @@ import {
 	useProDashboardEditorActions,
 	useProDashboardPermissions
 } from '../ProDashboardAPIContext'
-import type { DashboardItemConfig, StoredColSpan, UnifiedTableConfig } from '../types'
+import type { DashboardItemConfig, SqlChartConfig, StoredColSpan, UnifiedTableConfig } from '../types'
 import { ConfirmationModal } from './ConfirmationModal'
 import {
 	AggregatorsDataset,
@@ -43,6 +43,7 @@ import type { UnifiedTableFocusSection } from './UnifiedTable/types'
 
 const YieldsChartCard = lazy(() => import('./YieldsChartCard').then((mod) => ({ default: mod.YieldsChartCard })))
 const ChartCard = lazy(() => import('./ChartCard').then((mod) => ({ default: mod.ChartCard })))
+const SqlChartCard = lazy(() => import('./SqlChart/SqlChartCard').then((mod) => ({ default: mod.SqlChartCard })))
 const MultiChartCard = lazy(() => import('./MultiChartCard'))
 const ChartBuilderCard = lazy(() => import('./ChartBuilderCard').then((mod) => ({ default: mod.ChartBuilderCard })))
 const MetricCard = lazy(() => import('./MetricCard').then((mod) => ({ default: mod.MetricCard })))
@@ -135,6 +136,14 @@ function UnifiedTableCard({ item, onEditItem }: UnifiedTableCardProps) {
 				onEdit={onEditItem ? handleEdit : undefined}
 				onOpenColumnModal={onEditItem ? handleOpenColumnModal : undefined}
 			/>
+		</Suspense>
+	)
+}
+
+function SqlChartItem({ item }: { item: SqlChartConfig }) {
+	return (
+		<Suspense fallback={<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]" />}>
+			<SqlChartCard config={item} />
 		</Suspense>
 	)
 }
@@ -272,6 +281,10 @@ function DashboardItemRenderer({ item, onEditItem, handleEditItem }: DashboardIt
 				<RWAAssetChartCard config={item} />
 			</Suspense>
 		)
+	}
+
+	if (item.kind === 'sql') {
+		return <SqlChartItem item={item} />
 	}
 
 	if (item.kind === 'text') {

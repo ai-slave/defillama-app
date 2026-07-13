@@ -29,6 +29,7 @@ import type {
 	DashboardItemConfig,
 	MultiChartConfig,
 	MetricConfig,
+	SqlChartConfig,
 	Protocol,
 	StoredColSpan,
 	TableFilters,
@@ -256,6 +257,7 @@ interface ProDashboardEditorActionsContextType {
 	handleAddMultiChart: (chartItems: ChartConfig[], name?: string) => void
 	handleAddText: (title: string | undefined, content: string) => void
 	handleAddMetric: (config: MetricConfig) => void
+	handleAddSqlChart: (config: SqlChartConfig) => void
 	handleAddUnifiedTable: (config?: Partial<UnifiedTableConfig>) => void
 	handleAddChartBuilder: (name: string | undefined, config: ChartBuilderConfig['config']) => void
 	handleAddLlamaAIChart: (savedChartId: string, title?: string) => void
@@ -515,6 +517,7 @@ function ProDashboardAPIProviderInner({
 		handleEditItem,
 		handleRemoveItem,
 		handleAddMetric,
+		handleAddSqlChart,
 		setTimePeriod,
 		setCustomTimePeriod,
 		handleChartsReordered,
@@ -1125,6 +1128,7 @@ function ProDashboardAPIProviderInner({
 		handleAddMultiChart: typeof handleAddMultiChart
 		handleAddText: typeof handleAddText
 		handleAddMetric: typeof handleAddMetric
+		handleAddSqlChart: typeof handleAddSqlChart
 		handleAddUnifiedTable: typeof handleAddUnifiedTable
 		handleAddChartBuilder: typeof handleAddChartBuilder
 		handleAddLlamaAIChart: typeof handleAddLlamaAIChart
@@ -1162,6 +1166,7 @@ function ProDashboardAPIProviderInner({
 			handleAddMultiChart,
 			handleAddText,
 			handleAddMetric,
+			handleAddSqlChart,
 			handleAddUnifiedTable,
 			handleAddChartBuilder,
 			handleAddLlamaAIChart,
@@ -1330,6 +1335,8 @@ function ProDashboardAPIProviderInner({
 				handlersRef.current.handleAddMultiChart(...args),
 			handleAddText: (...args: Parameters<typeof handleAddText>) => handlersRef.current.handleAddText(...args),
 			handleAddMetric: (...args: Parameters<typeof handleAddMetric>) => handlersRef.current.handleAddMetric(...args),
+			handleAddSqlChart: (...args: Parameters<typeof handleAddSqlChart>) =>
+				handlersRef.current.handleAddSqlChart(...args),
 			handleAddUnifiedTable: (...args: Parameters<typeof handleAddUnifiedTable>) =>
 				handlersRef.current.handleAddUnifiedTable(...args),
 			handleAddChartBuilder: (...args: Parameters<typeof handleAddChartBuilder>) =>

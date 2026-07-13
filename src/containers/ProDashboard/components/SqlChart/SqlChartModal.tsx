@@ -1,0 +1,390 @@
+import * as Ariakit from '@ariakit/react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Icon } from '~/components/Icon'
+import { type ChartOptionsMap } from '~/containers/Downloads/chart-datasets'
+import {
+	defaultPresetName,
+	extractQueryConfig,
+	generatePresetId,
+	type QuerySavedConfig
+} from '~/containers/Downloads/savedDownloads'
+import { defaultChartConfig, migrateChartConfig, type ChartConfig } from '~/containers/Downloads/sql/chartConfig'
+import { classifyColumns } from '~/containers/Downloads/sql/columnKind'
+import { Editor, type EditorHandle } from '~/containers/Downloads/sql/Editor'
+import type { ExampleQuery } from '~/containers/Downloads/sql/examples'
+import { runSql } from '~/containers/Downloads/sql/executor'
+import type { QueryResult } from '~/containers/Downloads/sql/exportResults'
+import { Keycap } from '~/containers/Downloads/sql/primitives'
+import { ResultsPanel } from '~/containers/Downloads/sql/ResultsPanel'
+import { useDuckDB } from '~/containers/Downloads/sql/useDuckDB'
+import { tableNameFor, useTableRegistry, type TableSource } from '~/containers/Downloads/sql/useTableRegistry'
+import { useAuthContext } from '~/containers/Subscription/auth'
+import { useSavedDownloads } from '~/contexts/LocalStorage'
+import { useProDashboardEditorActions } from '../../ProDashboardAPIContext'
+import type { SqlChartConfig } from '../../types'
+import { buildSqlChartConfig } from './buildSqlChartConfig'
+import { loadChartOptions } from './chartOptions'
+import { clampRowCap, snapshotToResult, SQL_SNAPSHOT_ROW_CAP_MAX, SQL_SNAPSHOT_ROW_CAP_MIN } from './snapshot'
+import { SqlChartModalSidebar } from './SqlChartModalSidebar'
+
+interface SqlChartModalProps {
+	editItem?: SqlChartConfig | null
+	onClose: () => void
+}
+
+type RunOutcome = { result: QueryResult; chartConfig: ChartConfig }
+
+export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
+	const { authorizedFetch } = useAuthContext()
+	const { handleAddSqlChart, handleEditItem } = useProDashboardEditorActions()
+	const duckdb = useDuckDB()
+	const registry = useTableRegistry({ conn: duckdb.conn ?? null, authorizedFetch })
+	const { savedDownloads, saveDownload } = useSavedDownloads()
+	const savedQueries = useMemo(
+		() => savedDownloads.filter((d): d is QuerySavedConfig => d.kind === 'query'),
+		[savedDownloads]
+	)
+
+	const [chartOptionsMap, setChartOptionsMap] = useState<ChartOptionsMap>({})
+	const [sql, setSql] = useState(editItem?.query.sql ?? '')
+	const [name, setName] = useState(editItem?.name ?? '')
+	const [result, setResult] = useState<QueryResult | null>(
+		editItem?.snapshot ? snapshotToResult(editItem.snapshot) : null
+	)
+	const [resultSql, setResultSql] = useState(editItem?.query.sql ?? '')
+	const [ranFresh, setRanFresh] = useState(false)
+	const [chartConfig, setChartConfig] = useState<ChartConfig | undefined>(editItem?.chart)
+	const [displayMode, setDisplayMode] = useState<'chart' | 'table'>(editItem?.displayMode ?? 'chart')
+	const [rowCap, setRowCap] = useState(clampRowCap(editItem?.rowCap))
+	const [running, setRunning] = useState(false)
+	const [savePending, setSavePending] = useState(false)
+	const [busyTaskId, setBusyTaskId] = useState<string | null>(null)
+	const [loadingStage, setLoadingStage] = useState<string | null>(null)
+	const [error, setError] = useState<string | null>(null)
+	const [durationMs, setDurationMs] = useState<number | null>(null)
+
+	const editorRef = useRef<EditorHandle | null>(null)
+	const runControllerRef = useRef<AbortController | null>(null)
+	const chartConfigRef = useRef(chartConfig)
+	chartConfigRef.current = chartConfig
+
+	useEffect(() => {
+		let active = true
+		loadChartOptions().then((m) => {
+			if (active) setChartOptionsMap(m)
+		})
+		return () => {
+			active = false
+		}
+	}, [])
+
+	useEffect(() => () => runControllerRef.current?.abort(), [])
+
+	const run = useCallback(
+		async (override?: string): Promise<RunOutcome | null> => {
+			if (!duckdb.conn) return null
+			const trimmed = (override ?? sql).trim()
+			if (!trimmed) return null
+			runControllerRef.current?.abort()
+			const controller = new AbortController()
+			runControllerRef.current = controller
+			setRunning(true)
+			setError(null)
+			setLoadingStage(null)
+			const res = await runSql(
+				{ conn: duckdb.conn, loadedTables: registry.tables, loadSource: registry.load, chartOptionsMap },
+				trimmed,
+				{
+					onLoadingStage: (stage) => {
+						if (runControllerRef.current === controller) setLoadingStage(stage)
+					}
+				},
+				undefined,
+				controller.signal
+			)
+			if (runControllerRef.current !== controller) return null
+			runControllerRef.current = null
+			setRunning(false)
+			setLoadingStage(null)
+			if (res.ok) {
+				const okRes = res as Extract<typeof res, { ok: true }>
+				const classified = classifyColumns(okRes.result)
+				const nextChartConfig = chartConfigRef.current
+					? migrateChartConfig(chartConfigRef.current, classified)
+					: defaultChartConfig(classified)
+				setResult(okRes.result)
+				setResultSql(trimmed)
+				setRanFresh(true)
+				setDurationMs(okRes.durationMs)
+				setChartConfig(nextChartConfig)
+				return { result: okRes.result, chartConfig: nextChartConfig }
+			}
+			const errRes = res as Extract<typeof res, { ok: false }>
+			if (!errRes.cancelled) setError(errRes.error)
+			return null
+		},
+		[duckdb.conn, registry.tables, registry.load, chartOptionsMap, sql]
+	)
+
+	const loadTable = registry.load
+	const registryTables = registry.tables
+
+	const applyQuery = useCallback(
+		async (taskId: string, title: string, nextSql: string, tables?: TableSource[], overwriteName?: boolean) => {
+			if (running || savePending || busyTaskId) return
+			setSql(nextSql)
+			setName((prev) => (overwriteName ? title : prev.trim() ? prev : title))
+			if (!duckdb.conn) return
+			setBusyTaskId(taskId)
+			try {
+				const loadedNames = new Set(registryTables.map((t) => t.name))
+				for (const source of tables ?? []) {
+					if (source.kind === 'chart' && !loadedNames.has(tableNameFor(source))) {
+						await loadTable(source)
+					}
+				}
+				await run(nextSql)
+			} finally {
+				setBusyTaskId(null)
+			}
+		},
+		[running, savePending, busyTaskId, duckdb.conn, registryTables, loadTable, run]
+	)
+
+	const editorLineCount = sql.split('\n').length
+	const editorHeight = `${(Math.min(Math.max(editorLineCount + 1, 6), 22) * 19 + 16).toString()}px`
+
+	const isDirty = sql.trim() !== resultSql
+	const oversized = !!result && result.rows.length > rowCap
+	const needsRun = isDirty || !result || !chartConfig
+	const engineLoading = duckdb.status === 'loading'
+	const engineError = duckdb.status === 'error'
+	const canSave = !!sql.trim() && !running && !savePending && !(needsRun && (engineLoading || engineError))
+
+	const handleSave = useCallback(async () => {
+		if (!canSave) return
+		let outcome: RunOutcome | null = !needsRun && result && chartConfig ? { result, chartConfig } : null
+		let ranForSave = false
+		if (!outcome) {
+			setSavePending(true)
+			try {
+				outcome = await run()
+			} finally {
+				setSavePending(false)
+			}
+			if (!outcome) return
+			ranForSave = true
+		}
+		const config = buildSqlChartConfig({
+			editItem: editItem ?? null,
+			name,
+			sql,
+			result: outcome.result,
+			ranFresh: ranForSave || ranFresh,
+			chartConfig: outcome.chartConfig,
+			displayMode,
+			rowCap,
+			registryTables: registry.tables
+		})
+		if (editItem) {
+			handleEditItem(config.id, config)
+		} else {
+			handleAddSqlChart(config)
+		}
+		const queryInput = extractQueryConfig({
+			sql: config.query.sql,
+			tables: config.query.tableSources,
+			chartConfig: outcome.chartConfig
+		})
+		saveDownload(
+			{
+				id: generatePresetId(),
+				name: config.name ?? defaultPresetName(queryInput),
+				createdAt: Date.now(),
+				...queryInput
+			},
+			{ replaceByName: true }
+		)
+		onClose()
+	}, [
+		canSave,
+		needsRun,
+		result,
+		chartConfig,
+		run,
+		editItem,
+		name,
+		sql,
+		ranFresh,
+		displayMode,
+		rowCap,
+		registry.tables,
+		handleEditItem,
+		handleAddSqlChart,
+		saveDownload,
+		onClose
+	])
+
+	return (
+		<Ariakit.DialogProvider
+			open
+			setOpen={(open) => {
+				if (!open) onClose()
+			}}
+		>
+			<Ariakit.Dialog
+				unmountOnHide
+				portal
+				hideOnInteractOutside={false}
+				className="fixed inset-0 z-50 flex flex-col gap-3 overflow-hidden pro-dashboard bg-(--cards-bg) p-3 md:inset-4 md:rounded-md md:border md:border-(--cards-border) md:p-4 md:shadow-xl"
+			>
+				<div className="flex shrink-0 items-center justify-between">
+					<h2 className="text-xl font-semibold pro-text1">{editItem ? 'Edit SQL chart' : 'New SQL chart'}</h2>
+					<Ariakit.DialogDismiss className="rounded-md pro-hover-bg p-1 pro-text3 transition-colors hover:pro-text1">
+						<Icon name="x" height={20} width={20} />
+						<span className="sr-only">Close dialog</span>
+					</Ariakit.DialogDismiss>
+				</div>
+
+				<div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_540px]">
+					<div className="thin-scrollbar flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
+						<input
+							type="text"
+							value={name}
+							onChange={(e) => setName(e.target.value)}
+							placeholder="Widget name (optional)"
+							className="shrink-0 rounded-md border pro-border bg-(--app-bg) px-3 py-2 text-sm pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
+						/>
+
+						<div className="shrink-0">
+							<Editor
+								ref={editorRef}
+								value={sql}
+								onChange={setSql}
+								onRun={() => void run()}
+								tables={registry.tables}
+								height={editorHeight}
+							/>
+						</div>
+
+						<div className="flex shrink-0 flex-wrap items-center gap-3">
+							<button
+								type="button"
+								onClick={() => void run()}
+								disabled={running || savePending || engineLoading || !sql.trim()}
+								className="inline-flex items-center gap-2 rounded-md bg-(--primary) px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+									<path d="M8 5v14l11-7z" />
+								</svg>
+								{running ? 'Running…' : 'Run query'}
+								<span aria-hidden className="flex items-center gap-0.5">
+									<Keycap muted>⌘</Keycap>
+									<Keycap muted>↵</Keycap>
+								</span>
+							</button>
+							{loadingStage ? <span className="text-xs pro-text3">{loadingStage}</span> : null}
+							{engineLoading ? <span className="text-xs pro-text3">Starting SQL engine…</span> : null}
+							{engineError ? (
+								<span className="text-xs text-red-500">
+									SQL engine failed to load{duckdb.error ? `: ${duckdb.error}` : ''}.
+								</span>
+							) : null}
+							{isDirty && result ? (
+								<span className="text-xs pro-text3">Query changed — Save will run it again.</span>
+							) : null}
+						</div>
+
+						{error ? (
+							<div className="shrink-0 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-400">
+								{error}
+							</div>
+						) : null}
+
+						{oversized ? (
+							<div className="shrink-0 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs pro-text2">
+								Result has {result!.rows.length.toLocaleString()} rows. Only the first {rowCap.toLocaleString()} will be
+								saved with this widget.
+							</div>
+						) : null}
+
+						<ResultsPanel
+							result={result}
+							running={running}
+							busyLabel={loadingStage}
+							chartConfig={chartConfig}
+							onChartConfigChange={(next) => setChartConfig(next ?? undefined)}
+							durationMs={durationMs}
+							view={displayMode}
+							onViewChange={setDisplayMode}
+							viewToggleLabel="Display as"
+						/>
+					</div>
+
+					<SqlChartModalSidebar
+						chartOptionsMap={chartOptionsMap}
+						loadedTables={registry.tables}
+						onLoadTable={registry.load}
+						schemaLoading={registry.loading}
+						busyTaskId={busyTaskId}
+						savedQueries={savedQueries}
+						onApplyExample={(example: ExampleQuery) =>
+							void applyQuery(`example:${example.title}`, example.title, example.sql, example.tables)
+						}
+						onApplySaved={(query: QuerySavedConfig) =>
+							void applyQuery(`saved:${query.id}`, query.name, query.sql, query.tables, true)
+						}
+						onReplaceSql={setSql}
+						onInsertAtCursor={(text) => editorRef.current?.insertSnippet(text)}
+						onApplyAndRun={(snippet) => {
+							setSql(snippet)
+							void run(snippet)
+						}}
+					/>
+				</div>
+
+				<div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-(--cards-border) pt-3">
+					<div className="flex flex-wrap items-center gap-4">
+						<span className="text-xs pro-text3">
+							{displayMode === 'table' ? 'Widget shows the result as a table.' : 'Widget shows the result as a chart.'}
+						</span>
+						<label className="flex items-center gap-2 text-xs pro-text3">
+							Rows to store
+							<input
+								type="number"
+								min={SQL_SNAPSHOT_ROW_CAP_MIN}
+								max={SQL_SNAPSHOT_ROW_CAP_MAX}
+								step={100}
+								value={rowCap}
+								onChange={(e) => {
+									const next = Number(e.target.value)
+									if (Number.isFinite(next)) setRowCap(next)
+								}}
+								onBlur={() => setRowCap((prev) => clampRowCap(prev))}
+								title={`How many result rows are stored with the widget (${SQL_SNAPSHOT_ROW_CAP_MIN}–${SQL_SNAPSHOT_ROW_CAP_MAX}). Larger snapshots make the dashboard heavier.`}
+								className="w-20 rounded-md border pro-border bg-(--app-bg) px-2 py-1 text-xs pro-text1 focus:ring-1 focus:ring-(--primary) focus:outline-hidden"
+							/>
+						</label>
+					</div>
+					<div className="flex items-center gap-2">
+						<button
+							type="button"
+							onClick={onClose}
+							className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm pro-text2 transition-colors hover:pro-text1"
+						>
+							Cancel
+						</button>
+						<button
+							type="button"
+							onClick={() => void handleSave()}
+							disabled={!canSave}
+							className="rounded-md bg-(--primary) px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+						>
+							{savePending ? 'Running…' : editItem ? 'Save changes' : 'Add to dashboard'}
+						</button>
+					</div>
+				</div>
+			</Ariakit.Dialog>
+		</Ariakit.DialogProvider>
+	)
+}

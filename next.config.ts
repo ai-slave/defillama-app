@@ -13,7 +13,12 @@ const nextConfig: NextConfig = {
 	generateBuildId: resolveBuildId,
 	outputFileTracingIncludes: {
 		'/*': ['./.cache/app-metadata/**/*'],
-		...getDatasetSnapshotTraceIncludes()
+		...getDatasetSnapshotTraceIncludes(),
+		'/api/private/pro-dashboard/sql-run': [
+			'./node_modules/@duckdb/node-api/**',
+			'./node_modules/@duckdb/node-bindings/**',
+			'./node_modules/@duckdb/node-bindings-*/**'
+		]
 	},
 	experimental: getStaticGenerationConfig(process.env.VERCEL),
 	reactStrictMode: true,

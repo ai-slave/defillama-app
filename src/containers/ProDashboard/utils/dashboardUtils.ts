@@ -152,6 +152,9 @@ export function cleanItemsForSaving(items: DashboardItemConfig[]): DashboardItem
 			return { ...rest, items: cleanNestedItems }
 		} else if (item.kind === 'metric') {
 			return item
+		} else if (item.kind === 'sql') {
+			const { snapshot: _snapshot, ...sqlConfigToSave } = item
+			return sqlConfigToSave
 		}
 		return item
 	})

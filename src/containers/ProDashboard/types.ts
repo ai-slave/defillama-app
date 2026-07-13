@@ -272,6 +272,32 @@ export interface RWAAssetChartConfig {
 	colSpan?: StoredColSpan
 }
 
+export interface SqlSnapshot {
+	columns: { name: string; type: string }[]
+	rows: Record<string, unknown>[]
+	computedAt: string
+	rowCount: number
+	truncated?: boolean
+	engine: 'browser' | 'server'
+}
+
+export interface SqlQueryRecipe {
+	sql: string
+	tableSources: import('~/containers/Downloads/sql/useTableRegistry').TableSource[]
+}
+
+export interface SqlChartConfig {
+	id: string
+	kind: 'sql'
+	name?: string
+	query: SqlQueryRecipe
+	chart: import('~/containers/Downloads/sql/chartConfig').ChartConfig
+	displayMode?: 'chart' | 'table'
+	rowCap?: number
+	snapshot?: SqlSnapshot | null
+	colSpan?: StoredColSpan
+}
+
 export type DashboardItemConfig =
 	| ChartConfig
 	| ProtocolsTableConfig
@@ -291,6 +317,7 @@ export type DashboardItemConfig =
 	| LlamaAIChartConfig
 	| RWAOverviewChartConfig
 	| RWAAssetChartConfig
+	| SqlChartConfig
 
 export interface ChartConfig {
 	id: string

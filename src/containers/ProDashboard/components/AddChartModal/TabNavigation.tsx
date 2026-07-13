@@ -9,9 +9,10 @@ interface TabNavigationProps {
 	selectedMainTab: MainTabType
 	editItem?: DashboardItemConfig | null
 	onTabChange: (tab: MainTabType) => void
+	isSqlAllowed?: boolean
 }
 
-export function TabNavigation({ selectedMainTab, editItem, onTabChange }: TabNavigationProps) {
+export function TabNavigation({ selectedMainTab, editItem, onTabChange, isSqlAllowed }: TabNavigationProps) {
 	const { hasActiveSubscription } = useAuthContext()
 
 	const allTabs = [
@@ -19,14 +20,15 @@ export function TabNavigation({ selectedMainTab, editItem, onTabChange }: TabNav
 		{ id: 'metric' as const, label: 'Metric', mobileLabel: 'Metric' },
 		{ id: 'table' as const, label: 'Table', mobileLabel: 'Table' },
 		{ id: 'text' as const, label: 'Text', subtitle: '(Markdown)', mobileLabel: 'Text' },
-		{ id: 'llamaai' as const, label: 'LlamaAI', subtitle: '', mobileLabel: 'LlamaAI' }
+		{ id: 'llamaai' as const, label: 'LlamaAI', subtitle: '', mobileLabel: 'LlamaAI' },
+		{ id: 'sql' as const, label: 'SQL', subtitle: '', mobileLabel: 'SQL' }
 	]
 
 	return (
 		<div className="rounded-xl border border-(--legacy-cards-border) bg-(--cards-bg-alt)/60 p-1 shadow-sm">
-			<div className="grid grid-cols-5 gap-1">
+			<div className="grid grid-cols-6 gap-1">
 				{allTabs.map((tab) => {
-					const isProLocked = PRO_ONLY_TABS.has(tab.id) && !hasActiveSubscription
+					const locked = (PRO_ONLY_TABS.has(tab.id) && !hasActiveSubscription) || (tab.id === 'sql' && !isSqlAllowed)
 					return (
 						<button
 							key={tab.id}
@@ -40,14 +42,12 @@ export function TabNavigation({ selectedMainTab, editItem, onTabChange }: TabNav
 						>
 							<span className="lg:hidden">
 								{tab.mobileLabel}
-								{isProLocked ? <Icon name="file-lock-2" height={10} width={10} className="ml-1 inline" /> : null}
+								{locked ? <Icon name="file-lock-2" height={10} width={10} className="ml-1 inline" /> : null}
 							</span>
 							<span className="hidden lg:inline">
 								{tab.label}
 								{tab.subtitle ? <span className="ml-1 text-xs opacity-70">{tab.subtitle}</span> : null}
-								{isProLocked ? (
-									<Icon name="file-lock-2" height={10} width={10} className="ml-1 inline opacity-70" />
-								) : null}
+								{locked ? <Icon name="file-lock-2" height={10} width={10} className="ml-1 inline opacity-70" /> : null}
 							</span>
 						</button>
 					)

@@ -21,6 +21,7 @@ import {
 	type LlamaAIChartConfig,
 	type MetricConfig,
 	type MultiChartConfig,
+	type SqlChartConfig,
 	type ProtocolsTableConfig,
 	type StablecoinAssetChartConfig,
 	type StablecoinAssetChartType,
@@ -583,6 +584,15 @@ export function useDashboardActions(
 		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
 	)
 
+	const handleAddSqlChart = useCallback(
+		(config: SqlChartConfig) => {
+			if (isReadOnlyUntilDashboardLoaded) return
+
+			dispatchItemsAndSave((prev) => [...prev, config])
+		},
+		[dispatchItemsAndSave, isReadOnlyUntilDashboardLoaded]
+	)
+
 	const setTimePeriod = useCallback(
 		(period: TimePeriod) => {
 			dispatch({ type: 'SET_TIME_PERIOD', payload: period })
@@ -898,6 +908,7 @@ export function useDashboardActions(
 		handleEditItem,
 		handleRemoveItem,
 		handleAddMetric,
+		handleAddSqlChart,
 		setTimePeriod,
 		setCustomTimePeriod,
 		handleChartsReordered,

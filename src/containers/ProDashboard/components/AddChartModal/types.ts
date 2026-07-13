@@ -15,9 +15,10 @@ export interface AddChartModalProps {
 	onClose: () => void
 	editItem?: DashboardItemConfig | null
 	initialUnifiedFocusSection?: UnifiedTableFocusSection
+	onOpenSqlModal?: () => void
 }
 
-export type MainTabType = 'charts' | 'metric' | 'table' | 'text' | 'builder' | 'llamaai'
+export type MainTabType = 'charts' | 'metric' | 'table' | 'text' | 'builder' | 'llamaai' | 'sql'
 export type ChartModeType = 'manual' | 'builder'
 export type ChartTabType =
 	| 'chain'

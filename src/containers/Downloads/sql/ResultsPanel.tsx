@@ -18,6 +18,9 @@ interface ResultsPanelProps {
 	preferredView?: ResultsView
 	onConsumePreferredView?: () => void
 	durationMs?: number | null
+	view?: ResultsView
+	onViewChange?: (next: ResultsView) => void
+	viewToggleLabel?: string
 }
 
 export function ResultsPanel({
@@ -28,19 +31,27 @@ export function ResultsPanel({
 	onChartConfigChange,
 	preferredView,
 	onConsumePreferredView,
-	durationMs
+	durationMs,
+	view: controlledView,
+	onViewChange,
+	viewToggleLabel
 }: ResultsPanelProps) {
-	const [view, setView] = useState<ResultsView>(preferredView ?? 'table')
+	const [internalView, setInternalView] = useState<ResultsView>(preferredView ?? 'table')
+	const isControlled = controlledView !== undefined
+	const view = isControlled ? controlledView : internalView
+	const setView = isControlled ? (onViewChange ?? (() => {})) : setInternalView
 
 	const resultId = result ? `${result.columns.map((c) => c.name).join('|')}:${result.rows.length}` : ''
 	const [prevResultId, setPrevResultId] = useState(resultId)
 	if (prevResultId !== resultId) {
 		setPrevResultId(resultId)
-		if (preferredView) {
-			setView(preferredView)
-			onConsumePreferredView?.()
-		} else {
-			setView('table')
+		if (!isControlled) {
+			if (preferredView) {
+				setInternalView(preferredView)
+				onConsumePreferredView?.()
+			} else {
+				setInternalView('table')
+			}
 		}
 	}
 
@@ -90,6 +101,9 @@ export function ResultsPanel({
 					</span>
 				</div>
 				<div className="flex items-center gap-2">
+					{viewToggleLabel ? (
+						<span className="text-xs font-medium text-(--text-secondary)">{viewToggleLabel}</span>
+					) : null}
 					<ViewToggle view={view} onChange={setView} disabled={isEmpty} />
 					<FormatSplitButton
 						disabled={isEmpty}

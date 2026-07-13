@@ -1,6 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo } from 'react'
+import { useIsSqlAllowed } from '../../hooks'
 import type { VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
+import { SqlChartUpsell } from '../SqlChart/SqlChartUpsell'
 import { ChartTab } from './ChartTab'
 import { LlamaAITab } from './LlamaAITab'
 import { MetricTab } from './MetricTab'
@@ -32,8 +34,22 @@ const PRIMARY_TABLE_TYPES: CombinedTableType[] = [
 ]
 const PRIMARY_TABLE_TYPES_SET = new Set(PRIMARY_TABLE_TYPES)
 
-export function AddChartModal({ isOpen, onClose, editItem, initialUnifiedFocusSection }: AddChartModalProps) {
+export function AddChartModal({
+	isOpen,
+	onClose,
+	editItem,
+	initialUnifiedFocusSection,
+	onOpenSqlModal
+}: AddChartModalProps) {
 	const { state, actions, computed } = useModalActions(editItem, onClose)
+	const { isAllowed: isSqlAllowed } = useIsSqlAllowed()
+	const handleTabChange: typeof actions.handleMainTabChange = (tab) => {
+		if (tab === 'sql' && isSqlAllowed && onOpenSqlModal) {
+			onOpenSqlModal()
+			return
+		}
+		actions.handleMainTabChange(tab)
+	}
 
 	const _getCurrentItemType = () => {
 		if (state.selectedMainTab === 'charts') {
@@ -66,14 +82,14 @@ export function AddChartModal({ isOpen, onClose, editItem, initialUnifiedFocusSe
 				className="add-chart-dialog fixed top-0 right-0 bottom-0 z-50 flex h-full w-full max-w-6xl animate-slidein flex-col gap-3 overflow-hidden border-l pro-dashboard border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3 shadow-xl md:p-4"
 				unmountOnHide
 				portal
-				hideOnInteractOutside
 			>
 				<ModalHeader editItem={editItem} />
 
 				<TabNavigation
 					selectedMainTab={state.selectedMainTab}
 					editItem={editItem}
-					onTabChange={actions.handleMainTabChange}
+					onTabChange={handleTabChange}
+					isSqlAllowed={isSqlAllowed}
 				/>
 
 				<div className="-mx-4 flex flex-1 flex-col overflow-y-auto px-4 md:mx-0 md:px-0">
@@ -247,9 +263,12 @@ export function AddChartModal({ isOpen, onClose, editItem, initialUnifiedFocusSe
 					{state.selectedMainTab === 'llamaai' ? (
 						<LlamaAITab selectedChart={state.selectedLlamaAIChart} onChartSelect={actions.setSelectedLlamaAIChart} />
 					) : null}
+
+					{state.selectedMainTab === 'sql' ? <SqlChartUpsell /> : null}
 				</div>
 
-				{state.selectedMainTab !== 'table' || state.selectedTableType !== 'protocols' ? (
+				{(state.selectedMainTab !== 'table' || state.selectedTableType !== 'protocols') &&
+				state.selectedMainTab !== 'sql' ? (
 					<div className="shrink-0">
 						<SubmitButton
 							editItem={editItem}

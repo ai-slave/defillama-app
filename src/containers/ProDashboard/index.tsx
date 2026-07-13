@@ -1,7 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import toast from 'react-hot-toast'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { getMyDashboardAuthorProfile } from '~/containers/Authors/api'
@@ -10,6 +11,7 @@ import { hasCustomizedAuthorProfile } from '~/containers/Authors/profileDefaults
 import type { PublicDashboardAuthor } from '~/containers/Authors/types'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { setSignupSource } from '~/containers/Subscription/signupSource'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { AppMetadataProvider } from './AppMetadataContext'
 import { ChartGrid } from './components/ChartGrid'
@@ -17,6 +19,12 @@ import { CopyDashboardLinkButton } from './components/CopyDashboardLinkButton'
 import { CustomTimePeriodPicker } from './components/CustomTimePeriodPicker'
 import { EmptyState } from './components/EmptyState'
 import { LikeDashboardButton } from './components/LikeDashboardButton'
+import {
+	getInitialSqlRefreshProgress,
+	getSqlRefreshProgress,
+	refreshAllSqlCharts,
+	subscribeSqlRefreshProgress
+} from './components/SqlChart/sqlRefreshBus'
 import type { UnifiedTableFocusSection } from './components/UnifiedTable/types'
 import { useFreeTierStatus } from './hooks'
 import {
@@ -31,12 +39,15 @@ import {
 	useProDashboardTime,
 	useProDashboardUI
 } from './ProDashboardAPIContext'
-import type { DashboardItemConfig } from './types'
+import type { DashboardItemConfig, SqlChartConfig } from './types'
 
 const DemoPreview = lazy(() => import('./components/DemoPreview').then((m) => ({ default: m.DemoPreview })))
 
 import { DashboardPaywallModal, type PaywallReason } from './components/DashboardPaywallModal'
 const AddChartModal = lazy(() => import('./components/AddChartModal').then((m) => ({ default: m.AddChartModal })))
+const SqlChartModal = lazy(() =>
+	import('./components/SqlChart/SqlChartModal').then((m) => ({ default: m.SqlChartModal }))
+)
 const CreateDashboardPicker = lazy(() =>
 	import('./components/CreateDashboardPicker').then((m) => ({ default: m.CreateDashboardPicker }))
 )
@@ -123,6 +134,10 @@ function ProDashboardContent() {
 		item: DashboardItemConfig | null
 		focusSection?: UnifiedTableFocusSection
 	}>({ item: null, focusSection: undefined })
+	const [sqlModalState, setSqlModalState] = useState<{ open: boolean; item: SqlChartConfig | null }>({
+		open: false,
+		item: null
+	})
 	const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false)
 	const { authorizedFetch, isAuthenticated, hasActiveSubscription, user } = useAuthContext()
 	const { canCreateDashboard } = useFreeTierStatus()
@@ -144,6 +159,43 @@ function ProDashboardContent() {
 	const { protocolsLoading } = useProDashboardCatalog()
 	const { timePeriod, customTimePeriod, setTimePeriod, setCustomTimePeriod } = useProDashboardTime()
 	const { isReadOnly } = useProDashboardPermissions()
+	const sqlRefreshProgress = useSyncExternalStore(
+		subscribeSqlRefreshProgress,
+		getSqlRefreshProgress,
+		getInitialSqlRefreshProgress
+	)
+	const sqlRefreshActive = sqlRefreshProgress.active > 0
+	const prevSqlRefreshActiveRef = useRef(0)
+	useEffect(() => {
+		const prevActive = prevSqlRefreshActiveRef.current
+		prevSqlRefreshActiveRef.current = sqlRefreshProgress.active
+		if (prevActive > 0 && sqlRefreshProgress.active === 0 && sqlRefreshProgress.bulk) {
+			if (sqlRefreshProgress.failed > 0) {
+				toast.error(`${sqlRefreshProgress.failed} of ${sqlRefreshProgress.total} SQL widgets failed to refresh`)
+			} else {
+				toast.success('All SQL widgets refreshed')
+			}
+		}
+	}, [sqlRefreshProgress])
+	const guardNavigationWhileRefreshing = sqlRefreshActive && !isReadOnly
+	useEffect(() => {
+		if (!guardNavigationWhileRefreshing) return
+		const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+			event.preventDefault()
+			event.returnValue = ''
+		}
+		const handleRouteChangeStart = () => {
+			if (window.confirm('SQL widgets are still refreshing. Leave anyway?')) return
+			router.events.emit('routeChangeError')
+			throw new Error('Route change aborted: SQL refresh in progress')
+		}
+		window.addEventListener('beforeunload', handleBeforeUnload)
+		router.events.on('routeChangeStart', handleRouteChangeStart)
+		return () => {
+			window.removeEventListener('beforeunload', handleBeforeUnload)
+			router.events.off('routeChangeStart', handleRouteChangeStart)
+		}
+	}, [guardNavigationWhileRefreshing, router])
 	const {
 		dashboardName,
 		setDashboardName,
@@ -218,8 +270,18 @@ function ProDashboardContent() {
 	}
 
 	const handleEditItemModal = (item: DashboardItemConfig, focusSection?: UnifiedTableFocusSection) => {
+		if (item.kind === 'sql') {
+			setSqlModalState({ open: true, item })
+			return
+		}
 		setEditModalState({ item, focusSection })
 		setShowAddModal(true)
+	}
+
+	const openSqlModal = () => {
+		setShowAddModal(false)
+		setEditModalState({ item: null, focusSection: undefined })
+		setSqlModalState({ open: true, item: null })
 	}
 
 	if (!isAuthenticated && !hasActiveSubscription && dashboardVisibility !== 'public') {
@@ -309,9 +371,11 @@ function ProDashboardContent() {
 											onClick={() => {
 												void router.push(`/pro/${currentDashboard?.slug ?? dashboardId}`)
 											}}
-											className="flex items-center gap-1 rounded-md pro-btn-purple px-3 py-1.5 text-sm"
+											disabled={sqlRefreshActive}
+											title={sqlRefreshActive ? 'Wait for SQL widgets to finish refreshing' : undefined}
+											className="flex items-center gap-1 rounded-md pro-btn-purple px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
 										>
-											<Icon name="check" height={16} width={16} />
+											{sqlRefreshActive ? <LoadingSpinner size={16} /> : <Icon name="check" height={16} width={16} />}
 											<span>Done</span>
 										</button>
 									) : null}
@@ -423,6 +487,20 @@ function ProDashboardContent() {
 						</div>
 					</Tooltip>
 					<div className="order-3 flex items-center gap-2">
+						{dashboardId && items.some((item) => item.kind === 'sql') ? (
+							<button
+								type="button"
+								className="flex items-center gap-2 rounded-md border pro-border pro-hover-bg px-3 py-2 text-sm whitespace-nowrap pro-text2 transition-colors hover:pro-text1 disabled:cursor-not-allowed disabled:opacity-60 md:px-4 md:text-base"
+								onClick={() => refreshAllSqlCharts()}
+								disabled={sqlRefreshActive}
+								title="Re-run every SQL chart and table on this dashboard and update the results for everyone."
+							>
+								{sqlRefreshActive ? <LoadingSpinner size={16} /> : <Icon name="repeat" height={16} width={16} />}
+								{sqlRefreshActive
+									? `Refreshing ${sqlRefreshProgress.total - sqlRefreshProgress.active}/${sqlRefreshProgress.total}…`
+									: 'Refresh all SQL'}
+							</button>
+						) : null}
 						{!isReadOnly && dashboardId ? (
 							<button
 								type="button"
@@ -492,6 +570,17 @@ function ProDashboardContent() {
 						}}
 						editItem={editModalState.item}
 						initialUnifiedFocusSection={editModalState.focusSection}
+						onOpenSqlModal={openSqlModal}
+					/>
+				) : null}
+			</Suspense>
+
+			<Suspense fallback={<></>}>
+				{sqlModalState.open ? (
+					<SqlChartModal
+						key={sqlModalState.item?.id ?? 'new-sql-item'}
+						editItem={sqlModalState.item}
+						onClose={() => setSqlModalState({ open: false, item: null })}
 					/>
 				) : null}
 			</Suspense>

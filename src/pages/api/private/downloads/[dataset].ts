@@ -1,56 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { datasetsBySlug, type DatasetDefinition } from '~/containers/Downloads/datasets'
 import { withDownloadRoute, type DownloadAccess } from '~/server/api/withDownloadRoute'
+import { flattenItemsToCsv } from '~/server/sql/csv'
 import { slug as toSlug } from '~/utils'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
-
-function sanitize(s: string): string {
-	return s.replace(/[\r\n]+/g, ' ').trim()
-}
-
-function safeVal(v: unknown): string {
-	if (v === null || v === undefined) return ''
-	if (typeof v === 'object') {
-		if (Array.isArray(v)) return sanitize(v.join(', '))
-		return sanitize(JSON.stringify(v))
-	}
-	return sanitize(String(v))
-}
-
-function escapeCsvField(value: string): string {
-	if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
-		return `"${value.replace(/"/g, '""')}"`
-	}
-	return value
-}
-
-function flattenItemsToCsv(items: any[], fields?: string[]): string {
-	if (items.length === 0) return ''
-
-	let headers: string[]
-
-	if (fields && fields.length > 0) {
-		headers = fields
-	} else {
-		const keySet = new Set<string>()
-		for (const item of items) {
-			if (item && typeof item === 'object' && !Array.isArray(item)) {
-				for (const key of Object.keys(item)) {
-					keySet.add(key)
-				}
-			}
-		}
-		const priorityKeys = ['name', 'displayName']
-		headers = [...priorityKeys.filter((k) => keySet.has(k)), ...[...keySet].filter((k) => !priorityKeys.includes(k))]
-	}
-
-	const lines = [headers.map(escapeCsvField).join(',')]
-	for (const item of items) {
-		const row = headers.map((key) => escapeCsvField(safeVal(item?.[key])))
-		lines.push(row.join(','))
-	}
-	return lines.join('\r\n')
-}
 
 function insertChainIntoOverviewUrl(baseUrl: string, chain: string): string {
 	const url = new URL(baseUrl)

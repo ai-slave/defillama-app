@@ -384,8 +384,8 @@ function FlatRow({
 		<div className="flex flex-col gap-2 py-3.5">
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="flex min-w-0 flex-1 flex-col gap-1">
-					<div className="flex flex-wrap items-center gap-2">
-						<span className="font-mono text-[13.5px] font-semibold text-(--legacy-text-primary)">
+					<div className="flex min-w-0 flex-wrap items-center gap-2">
+						<span className="font-mono text-[13.5px] font-semibold break-all text-(--legacy-text-primary)">
 							{entry.tableName}
 						</span>
 						<KindTag kind="flat" />
@@ -452,8 +452,8 @@ function TsRow({
 		<div className="flex flex-col gap-2 py-3.5">
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="flex min-w-0 flex-1 flex-col gap-1">
-					<div className="flex flex-wrap items-center gap-2">
-						<span className="font-mono text-[13.5px] font-semibold text-(--legacy-text-primary)">
+					<div className="flex min-w-0 flex-wrap items-center gap-2">
+						<span className="font-mono text-[13.5px] font-semibold break-all text-(--legacy-text-primary)">
 							{param ? resolvedName : <span className="text-(--legacy-text-secondary)">{entry.displayName}</span>}
 						</span>
 						<KindTag kind="ts" />

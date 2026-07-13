@@ -126,9 +126,13 @@ interface EditorProps {
 	onChange: (next: string) => void
 	onRun: () => void
 	tables: RegisteredTable[]
+	height?: string
 }
 
-export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ value, onChange, onRun, tables }, ref) {
+export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
+	{ value, onChange, onRun, tables, height = '44vh' },
+	ref
+) {
 	const [theme, setTheme] = useState<string>(() => computeTheme())
 	const editorInstanceRef = useRef<any>(null)
 
@@ -279,7 +283,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor({ va
 	return (
 		<div className="overflow-hidden rounded-[4px] border border-(--legacy-divider) bg-surface">
 			<MonacoEditor
-				height="44vh"
+				height={height}
 				language="sql"
 				theme={theme}
 				value={value}
