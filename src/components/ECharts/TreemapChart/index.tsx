@@ -16,12 +16,14 @@ import { formattedNum } from '~/utils'
 import { CHART_INSET } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
 import type { ITreemapChartProps } from '../types'
+import { buildWatermarkGraphic } from '../utils'
 import {
 	formatRwaTreemapBoxLabel,
 	formatRwaTreemapTooltip,
 	formatRwaUpperLabel,
 	normalizeTreemapValue
 } from './rwaFormatting'
+import { addColorGradientField, normalizeTreemapNodes, visualMax, visualMin } from './utils'
 
 echarts.use([
 	TitleComponent,
@@ -32,57 +34,6 @@ echarts.use([
 	CanvasRenderer,
 	GraphicComponent
 ])
-
-const visualMin = -100
-const visualMax = 100
-const visualMinBound = -40
-const visualMaxBound = 40
-
-function normalizeTreemapNodes(nodes: any[]): any[] {
-	return (nodes ?? []).map((node) => ({
-		...node,
-		value: normalizeTreemapValue(node?.value),
-		children: node?.children ? normalizeTreemapNodes(node.children) : node?.children
-	}))
-}
-
-function addColorGradientField(chartDataTree) {
-	let min = Infinity
-	let max = -Infinity
-	for (let i = 0; i < chartDataTree.length; i++) {
-		let node = chartDataTree[i]
-		if (node) {
-			let value = node.value
-			if (value[2] != null && value[2] < min) {
-				min = value[2]
-			}
-			if (value[2] != null && value[2] > max) {
-				max = value[2]
-			}
-		}
-	}
-	for (let i = 0; i < chartDataTree.length; i++) {
-		let node = chartDataTree[i]
-		if (node) {
-			let value = node.value
-			// Scale value for visual effect
-			if (value[2] != null && value[2] > 0) {
-				value[3] = echarts.number.linearMap(value[2], [0, max], [visualMaxBound, visualMax], true)
-			} else if (value[2] != null && value[2] < 0) {
-				value[3] = echarts.number.linearMap(value[2], [min, 0], [visualMin, visualMinBound], true)
-			} else {
-				value[3] = 0
-			}
-
-			if (!isFinite(value[3])) {
-				value[3] = 0
-			}
-			if (node.children) {
-				addColorGradientField(node.children)
-			}
-		}
-	}
-}
 
 export default function TreemapChart({
 	treeData,
@@ -136,8 +87,6 @@ export default function TreemapChart({
 		const instance = echarts.getInstanceByDom(el) || echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
 		onReadyRef.current?.(instance)
-		const watermarkHeight = 40
-		const watermarkWidth = Math.round((389 / 133) * watermarkHeight)
 
 		const option = {
 			...(isNarrativeLike
@@ -152,22 +101,7 @@ export default function TreemapChart({
 							}
 						}
 					}),
-			graphic: [
-				{
-					type: 'image',
-					zlevel: 10,
-					z: 999,
-					silent: true,
-					left: 'center',
-					top: 'middle',
-					style: {
-						image: isDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
-						width: watermarkWidth,
-						height: watermarkHeight,
-						opacity: 0.3
-					}
-				}
-			],
+			graphic: [buildWatermarkGraphic(isDark)],
 			tooltip: {
 				className: 'defillama-echarts-tooltip',
 				backgroundColor: 'transparent',

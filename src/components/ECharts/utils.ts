@@ -10,6 +10,24 @@ export function stringToColour() {
 	return '#' + ((Math.random() * 0xffffff) << 0).toString(16).padStart(6, '0')
 }
 
+/** DefiLlama logo watermark for the `graphic` option of canvas charts. */
+export function buildWatermarkGraphic(isDark: boolean, height: number = 40) {
+	return {
+		type: 'image',
+		zlevel: 10,
+		z: 999,
+		silent: true,
+		left: 'center',
+		top: 'middle',
+		style: {
+			image: isDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
+			width: Math.round((389 / 133) * height),
+			height,
+			opacity: 0.3
+		}
+	}
+}
+
 const iconValidityCache = new Map<string, boolean | Promise<boolean>>()
 
 /** Returns true if `url` is known to load successfully. Use after `validateIconUrl` resolves. */

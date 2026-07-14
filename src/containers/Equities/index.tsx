@@ -42,6 +42,7 @@ import {
 	getEquityFilterDefaultSorting,
 	shouldUpdateEquityFilterDefaultSorting
 } from './tableVisibility'
+import { EquitiesTreemapSection } from './TreemapSection'
 import type { IEquitiesListCompanyRow, IEquitiesListPageProps } from './types'
 import { formatEquitiesDateTime } from './utils'
 
@@ -964,6 +965,8 @@ export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProp
 
 	return (
 		<div className="flex flex-col gap-2">
+			<EquitiesTreemapSection companies={companies} filters={filters} />
+
 			{/* Mobile: collapsible drawer toggled purely by the native <details> element */}
 			<details className="group rounded-xl border border-subtle bg-surface sm:hidden">
 				<summary className="flex items-center gap-2 px-3 py-2.5">
