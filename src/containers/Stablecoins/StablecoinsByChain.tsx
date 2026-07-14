@@ -19,7 +19,6 @@ import type {
 } from '~/components/ECharts/types'
 import { preparePieChartData } from '~/components/ECharts/utils'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
-import { Icon } from '~/components/Icon'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { Select } from '~/components/Select/Select'
@@ -49,13 +48,14 @@ import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/co
 import { type FormattedStablecoinAsset } from '~/containers/Stablecoins/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { DataFreshness } from '~/ui/DataFreshness'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
-import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum, slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { StablecoinVolumeChainChartKind, StablecoinVolumeGlobalChartKind } from './api.types'
+import { StablecoinChangeStats, type StablecoinChangeStat } from './StablecoinChangeStats'
 import { StablecoinsTable } from './StablecoinsAssetsTable'
 import { groupStablecoinVolumeChartPayload } from './volumeChart'
 
@@ -282,19 +282,24 @@ export function StablecoinsByChain({
 		(isMarketCapTableChart && hasActiveStablecoinUrlFilters
 			? summaryChartQuery.data?.summary
 			: selectedChartData?.summary) ?? defaultChartData.summary
-	const oneDay = chartSummary?.change1d ?? '0'
-	const sevenDay = chartSummary?.change7d ?? '0'
-	const thirtyDay = chartSummary?.change30d ?? '0'
-	const oneDayUsd = formattedNum(String(chartSummary?.change1dUsd ?? 0), true)
-	const sevenDayUsd = formattedNum(String(chartSummary?.change7dUsd ?? 0), true)
-	const thirtyDayUsd = formattedNum(String(chartSummary?.change30dUsd ?? 0), true)
-	const change1d = oneDay.startsWith('-') ? oneDay : `+${oneDay}`
-	const change7d = sevenDay.startsWith('-') ? sevenDay : `+${sevenDay}`
-	const change30d = thirtyDay.startsWith('-') ? thirtyDay : `+${thirtyDay}`
+	const toChangeStat = (
+		days: StablecoinChangeStat['days'],
+		percent: string | null | undefined,
+		absolute: number | null | undefined
+	): StablecoinChangeStat => {
+		const absoluteLabel = absolute == null ? null : formattedNum(String(absolute), true)
+		return {
+			days,
+			percent: percent == null ? null : percent.startsWith('-') ? percent : `+${percent}`,
+			absolute: absoluteLabel == null ? null : absoluteLabel.startsWith('-') ? absoluteLabel : `+${absoluteLabel}`
+		}
+	}
+	const changeStats = [
+		toChangeStat(7, chartSummary?.change7d, chartSummary?.change7dUsd),
+		toChangeStat(1, chartSummary?.change1d, chartSummary?.change1dUsd),
+		toChangeStat(30, chartSummary?.change30d, chartSummary?.change30dUsd)
+	]
 	const totalMcapCurrent = chartSummary?.totalMcapCurrent ?? null
-	const change1d_nol = oneDayUsd.startsWith('-') ? oneDayUsd : `+${oneDayUsd}`
-	const change7d_nol = sevenDayUsd.startsWith('-') ? sevenDayUsd : `+${sevenDayUsd}`
-	const change30d_nol = thirtyDayUsd.startsWith('-') ? thirtyDayUsd : `+${thirtyDayUsd}`
 	const mcapToDisplay = formattedNum(totalMcapCurrent, true)
 	const dominance = chartSummary?.dominance ?? null
 	const topTokenSymbol = chartSummary?.topToken.symbol ?? 'USDT'
@@ -403,52 +408,15 @@ export function StablecoinsByChain({
 						labelAs="h1"
 						value={mcapToDisplay}
 					/>
-					<details className="group text-base">
-						<summary className="flex items-center">
-							<Icon
-								name="chevron-right"
-								height={20}
-								width={20}
-								className="-mb-5 -ml-5 text-tertiary transition-transform duration-100 group-open:rotate-90"
-							/>
-							<span className="flex w-full flex-col">
-								<span className="text-secondary">Change (7d)</span>
-
-								<span className="flex flex-nowrap items-end justify-between gap-1">
-									<span className="font-jetbrains text-2xl font-semibold">{change7d_nol}</span>
-									<span
-										className={`${
-											change7d.startsWith('-') ? 'text-data-down' : 'text-data-up'
-										} truncate font-jetbrains`}
-									>{`${change7d}%`}</span>
-								</span>
-							</span>
-						</summary>
-
-						<p className="mt-3 flex flex-wrap items-center justify-between gap-2">
-							<span className="text-secondary">Change (1d)</span>
-							<Tooltip
-								content={change1d_nol}
-								className={`truncate font-jetbrains underline decoration-dotted ${
-									change1d.startsWith('-') ? 'text-data-down' : 'text-data-up'
-								}`}
-							>
-								{`${change1d}%`}
-							</Tooltip>
-						</p>
-						<p className="mt-3 flex flex-wrap items-center justify-between gap-2">
-							<span className="text-secondary">Change (30d)</span>
-							<Tooltip
-								content={change30d_nol}
-								className={`truncate font-jetbrains underline decoration-dotted ${
-									change30d.startsWith('-') ? 'text-data-down' : 'text-data-up'
-								}`}
-							>
-								{`${change30d}%`}
-							</Tooltip>
-						</p>
-					</details>
+					<StablecoinChangeStats stats={changeStats} />
 					<StatItem label={<>{topTokenSymbol} Dominance</>} value={<>{dominance}%</>} />
+					{chartSummary?.isDataStale && chartSummary.dataTimestamp != null ? (
+						<DataFreshness
+							timestamp={chartSummary.dataTimestamp}
+							label="Market cap data last updated"
+							className="mt-auto"
+						/>
+					) : null}
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">

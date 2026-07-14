@@ -1,3 +1,4 @@
+import { DAY_MS, findTimeSeriesPointNear, getFreshTimeSeriesCurrentPoint, toUnixMsTimestamp } from '~/utils/timeSeries'
 import { fetchCategoryCoinPrices, fetchCategoryInfo, fetchCategoryPerformance, fetchCoinInfo } from './api'
 import type { ICategoryInfoApiItem, PriceEntry, TimeSeriesEntry } from './api.types'
 import type { CategoryPerformanceProps, IPctChangeRow, PerformanceTimeSeries } from './types'
@@ -6,15 +7,41 @@ export async function getCategoryInfo(): Promise<ICategoryInfoApiItem[]> {
 	return fetchCategoryInfo()
 }
 
-function getCumulativeChangeOfPeriod(
+type NarrativePeriod = '7' | '30' | 'ytd' | '365'
+
+function getNarrativePeriodStartTimestamp(currentTimestampMs: number, period: NarrativePeriod): number {
+	if (period !== 'ytd') return currentTimestampMs - Number(period) * DAY_MS
+	const currentDate = new Date(currentTimestampMs)
+	return Date.UTC(currentDate.getUTCFullYear(), 0, 1)
+}
+
+export function getCumulativeChangeOfPeriod(
 	performanceTimeSeries: PerformanceTimeSeries,
-	period: string,
-	name: string
+	period: NarrativePeriod,
+	name: string,
+	currentTimeMs: number = Date.now()
 ): number | null {
 	const series = performanceTimeSeries[period]
 	if (!Array.isArray(series) || series.length === 0) return null
-	const lastEntry = series[series.length - 1]
-	return lastEntry?.[name] ?? null
+
+	const current = getFreshTimeSeriesCurrentPoint(series, (point) => point.date, { currentTimeMs })
+	if (!current) return null
+	const currentTimestamp = toUnixMsTimestamp(current.date)
+	const comparison = findTimeSeriesPointNear(
+		series,
+		getNarrativePeriodStartTimestamp(currentTimestamp, period),
+		(point) => point.date
+	)
+	if (!comparison) return null
+
+	const value = current[name]
+	const comparisonValue = comparison[name]
+	return typeof value === 'number' &&
+		Number.isFinite(value) &&
+		typeof comparisonValue === 'number' &&
+		Number.isFinite(comparisonValue)
+		? value
+		: null
 }
 
 export async function getCategoryPerformance(): Promise<CategoryPerformanceProps> {
@@ -47,32 +74,20 @@ export async function getCategoryPerformance(): Promise<CategoryPerformanceProps
 	}
 }
 
-function calculateCumulativePercentageChange(
+export function calculateCumulativePercentageChange(
 	data: PriceEntry[],
 	mapping: Record<string, string>,
-	timeframe: number | 'ytd' | null
+	timeframe: number | 'ytd',
+	currentTimeMs: number = Date.now()
 ): TimeSeriesEntry[] {
-	const filterData = (entries: PriceEntry[], tf: number | 'ytd' | null): PriceEntry[] => {
-		const now = new Date()
-		if (tf === 'ytd') {
-			const startOfYear = new Date(Date.UTC(now.getUTCFullYear(), 0, 1))
-			return entries.filter((item) => new Date(item[1]) >= startOfYear)
-		} else if (typeof tf === 'number') {
-			now.setUTCDate(now.getUTCDate() - tf)
-			return entries.filter((item) => new Date(item[1]) >= now)
-		}
-		return entries
-	}
-
 	const sortedData = data.toSorted((a, b) => new Date(a[1]).getTime() - new Date(b[1]).getTime())
-	const filteredData = filterData(sortedData, timeframe)
 
 	// group by id
 	const groupedData: Record<string, Array<{ timestamp: number; price: number }>> = {}
-	for (const [id, timestamp, price] of filteredData) {
+	for (const [id, timestamp, price] of sortedData) {
 		if (!groupedData[id]) groupedData[id] = []
 		groupedData[id].push({
-			timestamp: Math.floor(new Date(timestamp).getTime() / 1000),
+			timestamp: new Date(timestamp).getTime(),
 			price
 		})
 	}
@@ -80,11 +95,23 @@ function calculateCumulativePercentageChange(
 	// calculate cumulative percentage change for each id
 	const results: Record<number, Record<string, number>> = {}
 	for (const [id, prices] of Object.entries(groupedData)) {
-		const initialPrice = prices[0].price
+		const current = getFreshTimeSeriesCurrentPoint(prices, (point) => point.timestamp, { currentTimeMs })
+		if (!current) continue
+		const period = timeframe === 'ytd' ? 'ytd' : String(timeframe)
+		if (period !== '7' && period !== '30' && period !== '365' && period !== 'ytd') continue
+		const initial = findTimeSeriesPointNear(
+			prices,
+			getNarrativePeriodStartTimestamp(current.timestamp, period),
+			(point) => point.timestamp
+		)
+		if (!initial) continue
+
+		const initialPrice = initial.price
 		if (initialPrice === 0) continue
 		const coinName = mapping[id]
 		if (!coinName) continue
 		for (const { timestamp, price } of prices) {
+			if (timestamp < initial.timestamp || timestamp > current.timestamp) continue
 			if (!results[timestamp]) results[timestamp] = {}
 			results[timestamp][coinName] = ((price - initialPrice) / initialPrice) * 100
 		}
@@ -94,11 +121,11 @@ function calculateCumulativePercentageChange(
 	const chartData: TimeSeriesEntry[] = []
 	for (const [timestamp, values] of Object.entries(results)) {
 		chartData.push({
-			date: parseInt(timestamp, 10),
+			date: Math.floor(parseInt(timestamp, 10) / 1e3),
 			...values
 		})
 	}
-	return chartData
+	return chartData.sort((a, b) => a.date - b.date)
 }
 
 export async function getCoinPerformance(categoryId: string): Promise<CategoryPerformanceProps> {
@@ -112,7 +139,7 @@ export async function getCoinPerformance(categoryId: string): Promise<CategoryPe
 
 	const ts7 = calculateCumulativePercentageChange(prices, coinsUniqueIncludingDenomCoins, 7)
 	const ts30 = calculateCumulativePercentageChange(prices, coinsUniqueIncludingDenomCoins, 30)
-	const ts365 = calculateCumulativePercentageChange(prices, coinsUniqueIncludingDenomCoins, null)
+	const ts365 = calculateCumulativePercentageChange(prices, coinsUniqueIncludingDenomCoins, 365)
 	const tsYtd = calculateCumulativePercentageChange(prices, coinsUniqueIncludingDenomCoins, 'ytd')
 
 	const performanceTimeSeries: PerformanceTimeSeries = {

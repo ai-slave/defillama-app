@@ -22,10 +22,12 @@ import { Panel } from '~/ui/Panel'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum, getPercentChange, slug } from '~/utils'
+import { getFreshTimeSeriesCurrentPoint } from '~/utils/timeSeries'
 import {
 	buildBridgeProtocolAllChainsVolumeData,
 	buildBridgeProtocolAllChainsVolumePairs,
 	buildBridgeProtocolInflowsData,
+	getBridgeProtocolCompletedDayVolumes,
 	getBridgeProtocolPrevDayVolumeValue
 } from './bridgeProtocolChartData'
 import type { BridgePageData } from './types'
@@ -52,23 +54,33 @@ export const BridgeInfo = ({
 	const [bridgesSettings] = useLocalStorageSettingsManager('bridges')
 	const isBridgesShowingAddresses = bridgesSettings[BRIDGES_SHOWING_ADDRESSES]
 
-	const { tokensTableData, addressesTableData, tokenDeposits, tokenWithdrawals, totalDepositedUSD, totalWithdrawnUSD } =
-		tableDataByChain[currentChain]
+	const {
+		tokensTableData,
+		addressesTableData,
+		tokenDeposits,
+		tokenWithdrawals,
+		totalDepositedUSD,
+		totalWithdrawnUSD,
+		dataTimestamp
+	} = tableDataByChain[currentChain]
 
 	const volumeChartDataByChain = volumeDataByChain[currentChain]
-	const prevDayChart = volumeChartDataByChain[volumeChartDataByChain.length - 2]
-	const currentDepositsUSD = totalDepositedUSD ?? prevDayChart?.Deposited ?? 0
-	const currentWithdrawalsUSD = totalWithdrawnUSD ?? -(prevDayChart?.Withdrawn ?? 0)
+	const completedDayVolumes = getBridgeProtocolCompletedDayVolumes(volumeChartDataByChain)
+	const prevDayChart = completedDayVolumes?.current
+	const hasFreshRollingStats =
+		dataTimestamp != null && getFreshTimeSeriesCurrentPoint([{ date: dataTimestamp }], (point) => point.date) != null
+	const currentDepositsUSD = (hasFreshRollingStats ? totalDepositedUSD : null) ?? prevDayChart?.Deposited ?? 0
+	const currentWithdrawalsUSD = (hasFreshRollingStats ? totalWithdrawnUSD : null) ?? -(prevDayChart?.Withdrawn ?? 0)
 	const currentDailyVolume = (prevDayChart?.Deposited ?? 0) + -(prevDayChart?.Withdrawn ?? 0)
 
 	const isAllChains = currentChain === 'All Chains'
 	const rollingHours = config.name === 'wormhole' ? 28 : 24
 	const windowLabel = rollingHours === 24 ? '24h' : `${rollingHours}h`
 
-	let volPercentChange = '0 '
+	let volPercentChange: string | null = null
 
-	if (volumeChartDataByChain.length > 3) {
-		const prev2DayChart = volumeChartDataByChain[volumeChartDataByChain.length - 3]
+	if (completedDayVolumes) {
+		const prev2DayChart = completedDayVolumes.previous
 		const prevDepositsUSD = prev2DayChart.Deposited ?? 0
 		const prevWithdrawalsUSD = -(prev2DayChart.Withdrawn ?? 0)
 		const prevVolume = prevDepositsUSD + prevWithdrawalsUSD
@@ -96,9 +108,10 @@ export const BridgeInfo = ({
 			isAllChains,
 			allChainsVolumePairs,
 			totalDepositedUSD,
-			totalWithdrawnUSD
+			totalWithdrawnUSD,
+			dataTimestamp
 		})
-	}, [isAllChains, allChainsVolumePairs, totalDepositedUSD, totalWithdrawnUSD])
+	}, [isAllChains, allChainsVolumePairs, totalDepositedUSD, totalWithdrawnUSD, dataTimestamp])
 
 	const chartTypes = (
 		isAllChains ? (['Volume', 'Tokens To', 'Tokens From'] as const) : (['Inflows', 'Tokens To', 'Tokens From'] as const)
@@ -142,7 +155,7 @@ export const BridgeInfo = ({
 						<StatItem
 							label={<>Total Volume ({windowLabel})</>}
 							tooltip="Volume equals (Deposited + Withdrawn)/2 over the same rolling window used by the bridges overview."
-							value={formattedNum(prevDayVolumeValue || '0', true)}
+							value={formattedNum(prevDayVolumeValue, true)}
 						/>
 					) : (
 						<>
@@ -165,7 +178,9 @@ export const BridgeInfo = ({
 						</>
 					)}
 
-					<StatItem label="Volume Change (prev day)" value={volPercentChange + '%'} />
+					{volPercentChange != null ? (
+						<StatItem label="Volume Change (prev day)" value={`${volPercentChange}%`} />
+					) : null}
 					{config?.url ? (
 						<ExternalLinkButton href={config.url} icon="globe" className="mt-auto mr-auto">
 							Website

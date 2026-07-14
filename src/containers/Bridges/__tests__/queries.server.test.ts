@@ -24,7 +24,9 @@ describe('getBridgeChainNetInflows', () => {
 			{ date: '2026-04-28', depositUSD: 42, withdrawUSD: 5, depositTxs: 2, withdrawTxs: 1 }
 		])
 
-		await expect(getBridgeChainNetInflows('XDC')).resolves.toEqual({ netInflows: 42 })
+		await expect(getBridgeChainNetInflows('XDC', Date.parse('2026-04-28T12:00:00Z'))).resolves.toEqual({
+			netInflows: 42
+		})
 		expect(fetchBridgeVolumeByChain).toHaveBeenCalledOnce()
 		expect(fetchBridgeVolumeByChain).toHaveBeenCalledWith('XDC')
 	})
@@ -35,6 +37,6 @@ describe('getBridgeChainNetInflows', () => {
 			{ date: '2026-04-28', depositUSD: 0, withdrawUSD: 5, depositTxs: 2, withdrawTxs: 1 }
 		])
 
-		await expect(getBridgeChainNetInflows('XDC')).resolves.toBeNull()
+		await expect(getBridgeChainNetInflows('XDC', Date.parse('2026-04-28T12:00:00Z'))).resolves.toBeNull()
 	})
 })

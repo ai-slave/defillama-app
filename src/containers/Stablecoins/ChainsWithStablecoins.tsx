@@ -11,7 +11,6 @@ import {
 } from '~/components/ECharts/ChartGroupingSelector'
 import type { IHBarChartProps, IPieChartProps, ITreemapChartProps } from '~/components/ECharts/types'
 import { preparePieChartData } from '~/components/ECharts/utils'
-import { Icon } from '~/components/Icon'
 import { Select } from '~/components/Select/Select'
 import { CHART_COLORS } from '~/constants/colors'
 import type { StablecoinsChartConfig } from '~/containers/ProDashboard/types'
@@ -35,11 +34,12 @@ import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/co
 import { getStablecoinDominance, type IFormattedStablecoinChainRow } from '~/containers/Stablecoins/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { DataFreshness } from '~/ui/DataFreshness'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
-import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
 import { isTruthyQueryParam, pushShallowQuery } from '~/utils/routerQuery'
+import { StablecoinChangeStats } from './StablecoinChangeStats'
 import { StablecoinsChainsTable } from './StablecoinsChainsTable'
 import { groupStablecoinVolumeChartPayload } from './volumeChart'
 
@@ -57,13 +57,15 @@ interface ChainsWithStablecoinsProps {
 	chainList: string[]
 	chainsGroupbyParent: Record<string, Record<string, string[]>>
 	deprecatedChains: Record<string, true>
-	change1d: string
-	change7d: string
-	change30d: string
+	change1d: string | null
+	change7d: string | null
+	change30d: string | null
 	totalMcapCurrent: number | null
-	change1d_nol: string
-	change7d_nol: string
-	change30d_nol: string
+	change1d_nol: string | null
+	change7d_nol: string | null
+	change30d_nol: string | null
+	dataTimestamp: number | null
+	isDataStale: boolean
 }
 
 const CHAINS_CHART_MODE = { page: 'chains' } as const
@@ -79,7 +81,9 @@ export function ChainsWithStablecoins({
 	totalMcapCurrent,
 	change1d_nol,
 	change7d_nol,
-	change30d_nol
+	change30d_nol,
+	dataTimestamp,
+	isDataStale
 }: ChainsWithStablecoinsProps) {
 	const router = useRouter()
 	const chartState = parseStablecoinChartState(router.query, CHAINS_CHART_MODE)
@@ -249,53 +253,18 @@ export function ChainsWithStablecoins({
 				<SummaryStatsCard>
 					<StatItem label="Total Stablecoins Market Cap" labelAs="h1" value={mcapToDisplay} />
 
-					<details className="group text-base">
-						<summary className="flex items-center">
-							<Icon
-								name="chevron-right"
-								height={20}
-								width={20}
-								className="-mb-5 -ml-5 text-tertiary transition-transform duration-100 group-open:rotate-90"
-							/>
-							<span className="flex w-full flex-col">
-								<span className="text-secondary">Change (7d)</span>
-
-								<span className="flex flex-nowrap items-end justify-between gap-1">
-									<span className="font-jetbrains text-2xl font-semibold">{change7d_nol}</span>
-									<span
-										className={`${
-											change7d.startsWith('-') ? 'text-data-down' : 'text-data-up'
-										} truncate font-jetbrains`}
-									>{`${change7d}%`}</span>
-								</span>
-							</span>
-						</summary>
-
-						<p className="mt-3 flex flex-wrap items-center justify-between gap-2">
-							<span className="text-secondary">Change (1d)</span>
-							<Tooltip
-								content={change1d_nol}
-								className={`truncate font-jetbrains underline decoration-dotted ${
-									change1d.startsWith('-') ? 'text-data-down' : 'text-data-up'
-								}`}
-							>
-								{`${change1d}%`}
-							</Tooltip>
-						</p>
-						<p className="mt-3 flex flex-wrap items-center justify-between gap-2">
-							<span className="text-secondary">Change (30d)</span>
-							<Tooltip
-								content={change30d_nol}
-								className={`truncate font-jetbrains underline decoration-dotted ${
-									change30d.startsWith('-') ? 'text-data-down' : 'text-data-up'
-								}`}
-							>
-								{`${change30d}%`}
-							</Tooltip>
-						</p>
-					</details>
+					<StablecoinChangeStats
+						stats={[
+							{ days: 7, percent: change7d, absolute: change7d_nol },
+							{ days: 1, percent: change1d, absolute: change1d_nol },
+							{ days: 30, percent: change30d, absolute: change30d_nol }
+						]}
+					/>
 
 					<StatItem label={<>{topChain.name} Dominance</>} value={<>{dominance}%</>} />
+					{isDataStale && dataTimestamp != null ? (
+						<DataFreshness timestamp={dataTimestamp} label="Market cap data last updated" className="mt-auto" />
+					) : null}
 				</SummaryStatsCard>
 				<ChartPanel className="col-span-2">
 					<ChartPanelToolbar className="justify-end">

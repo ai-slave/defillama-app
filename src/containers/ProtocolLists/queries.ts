@@ -7,7 +7,7 @@ import type { ChainChartResponse } from '~/containers/Chains/api.types'
 import { fetchRaises } from '~/containers/Raises/api'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
 import { TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
-import { getPercentChange, slug } from '~/utils'
+import { getPercentChange, getPrevTvlFromChart, slug } from '~/utils'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
 import { recordRuntimeError } from '~/utils/telemetry'
 import { AIRDROP_EXCLUDE } from './airdrop-exclude'
@@ -332,8 +332,9 @@ export async function getExtraTvlByChain({
 		})
 	}
 
-	const change24hPct =
-		chart.length > 1 ? getPercentChange(chart[chart.length - 1][1], chart[chart.length - 2][1]) : null
+	const totalValue = getPrevTvlFromChart(chart, 0) ?? chart[chart.length - 1][1]
+	const previousDayValue = getPrevTvlFromChart(chart, 1)
+	const change24hPct = getPercentChange(totalValue, previousDayValue)
 	const change24h = change24hPct == null || !Number.isFinite(change24hPct) ? null : +change24hPct.toFixed(2)
 
 	return {
@@ -356,7 +357,7 @@ export async function getExtraTvlByChain({
 				stack: config.label
 			}
 		],
-		totalValue: chart[chart.length - 1][1],
+		totalValue,
 		change24h,
 		metric
 	}

@@ -6,10 +6,12 @@ import {
 } from '~/components/ECharts/ChartGroupingSelector'
 import { TagGroup } from '~/components/TagGroup'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
+import { DataFreshness } from '~/ui/DataFreshness'
 import {
 	BRIDGE_VOLUME_METRIC_TYPES,
 	BRIDGE_VOLUME_VIEW_TYPES,
 	buildBridgeVolumeChartData,
+	getStaleBridgeVolumeTimestamp,
 	type BridgeVolumeInputPoint,
 	type BridgeVolumeMetricType,
 	type BridgeVolumeViewType
@@ -34,6 +36,7 @@ export function BridgeVolumeChart({ data, height, onReady, headerStart, headerEn
 		return buildBridgeVolumeChartData({ data, timePeriod, metricType, viewType })
 	}, [data, metricType, timePeriod, viewType])
 	const deferredChartData = useDeferredValue(volumeChartData)
+	const staleDataTimestamp = useMemo(() => getStaleBridgeVolumeTimestamp(data), [data])
 
 	return (
 		<>
@@ -61,9 +64,13 @@ export function BridgeVolumeChart({ data, height, onReady, headerStart, headerEn
 				/>
 				{headerEnd}
 			</ChartPanelToolbar>
+			{staleDataTimestamp != null ? (
+				<div className="px-4 pt-2">
+					<DataFreshness timestamp={staleDataTimestamp} label="Bridge volume data last updated" />
+				</div>
+			) : null}
 
 			<Suspense fallback={<div style={{ height: height ?? '360px' }} />}>
-				{/* TODO: Add a subtle stale-state indicator if we revisit deferred transitions UX. */}
 				<MultiSeriesChart2
 					dataset={deferredChartData.dataset}
 					charts={deferredChartData.charts}

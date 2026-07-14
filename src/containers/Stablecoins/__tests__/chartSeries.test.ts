@@ -212,6 +212,7 @@ describe('stablecoin chart series builders', () => {
 describe('stablecoin table data formatters', () => {
 	it('keeps chain rows sorted with exact null and dominance values', () => {
 		const result = formatPeggedChainsData({
+			currentTimeMs: Date.parse('2021-01-02T12:00:00Z'),
 			chainList: ['Small', 'Big', 'Empty'],
 			peggedChartDataByChain: [
 				[

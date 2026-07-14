@@ -7,7 +7,7 @@ import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { BridgesTable, type BridgesTableHandle } from '~/containers/Bridges/BridgesTable'
 import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { ChartSelector } from '~/containers/Bridges/ChartSelector'
-import { useBuildBridgeChartData } from '~/containers/Bridges/utils'
+import { getCompletedBridgeVolumeTotal, useBuildBridgeChartData } from '~/containers/Bridges/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
@@ -16,7 +16,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Switch } from '~/ui/Switch'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
-import { formattedNum, getPrevVolumeFromChart, slug, toNiceCsvDate } from '~/utils'
+import { formattedNum, slug, toNiceCsvDate } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { BridgesLargeTxsTable, type BridgesLargeTxsTableHandle } from './BridgesLargeTxsTable'
 
@@ -186,6 +186,7 @@ export function BridgesOverviewByChain({
 
 	const chartFilename = getBridgeChartFilename(selectedChain, chartType)
 	const selectedChainIconUrl = selectedChain !== 'All' ? chainIconUrl(selectedChain) : undefined
+	const completedDayVolumes = selectedChain !== 'All'
 
 	const prepareCsv = () => {
 		const resolvedFilteredBridges = filteredBridges ?? EMPTY_PROTOCOLS
@@ -236,29 +237,29 @@ export function BridgesOverviewByChain({
 	}, [activeTab, includeMessaging, filteredBridges, messagingProtocols])
 
 	const { dayTotalVolume, weekTotalVolume, monthTotalVolume } = React.useMemo(() => {
-		let dayTotalVolume, weekTotalVolume, monthTotalVolume
-		dayTotalVolume = weekTotalVolume = monthTotalVolume = 0
-
 		const bridgesToCalculate = activeTab === 'bridges' ? bridgesTableData : messagingProtocols
-
-		if (bridgesToCalculate) {
-			for (const bridge of bridgesToCalculate ?? []) {
-				dayTotalVolume += Number(bridge?.lastDailyVolume) || 0
-				weekTotalVolume += Number(bridge?.weeklyVolume) || 0
-				monthTotalVolume += Number(bridge?.monthlyVolume) || 0
+		const sumBridgeField = (field: 'lastDailyVolume' | 'weeklyVolume' | 'monthlyVolume'): number | null => {
+			if (!bridgesToCalculate?.length) return null
+			let total = 0
+			for (const bridge of bridgesToCalculate) {
+				const value = bridge?.[field]
+				if (value == null) return null
+				total += value
 			}
-		} else {
-			for (let i = 1; i < 31; i++) {
-				const dailyVolume = getPrevVolumeFromChart(chainVolumeData, i, false, selectedChain !== 'All')
-				if (i < 2) {
-					dayTotalVolume += dailyVolume
-				}
-				if (i < 8) {
-					weekTotalVolume += dailyVolume
-				}
-				monthTotalVolume += dailyVolume
-			}
+			return total
 		}
+
+		const useDepositAndWithdrawalVolume = selectedChain !== 'All'
+		const hasBridgeRows = Boolean(bridgesToCalculate?.length)
+		const dayTotalVolume = hasBridgeRows
+			? sumBridgeField('lastDailyVolume')
+			: getCompletedBridgeVolumeTotal(chainVolumeData, 1, useDepositAndWithdrawalVolume)
+		const weekTotalVolume = hasBridgeRows
+			? sumBridgeField('weeklyVolume')
+			: getCompletedBridgeVolumeTotal(chainVolumeData, 7, useDepositAndWithdrawalVolume)
+		const monthTotalVolume = hasBridgeRows
+			? sumBridgeField('monthlyVolume')
+			: getCompletedBridgeVolumeTotal(chainVolumeData, 30, useDepositAndWithdrawalVolume)
 		return { dayTotalVolume, weekTotalVolume, monthTotalVolume }
 	}, [chainVolumeData, selectedChain, bridgesTableData, messagingProtocols, activeTab])
 
@@ -281,9 +282,29 @@ export function BridgesOverviewByChain({
 
 			<SummaryCardGrid>
 				<SummaryStatsCard padding="sm">
-					<StatItem label="Total volume (24h)" labelAs="h1" value={formattedNum(dayTotalVolume, true)} />
-					<StatItem label="Total volume (7d)" value={formattedNum(weekTotalVolume, true)} className="max-md:hidden" />
-					<StatItem label="Total volume (1mo)" value={formattedNum(monthTotalVolume, true)} className="max-md:hidden" />
+					{dayTotalVolume != null ? (
+						<StatItem
+							label={completedDayVolumes ? 'Total volume (last completed day)' : 'Total volume (24h)'}
+							labelAs="h1"
+							value={formattedNum(dayTotalVolume, true)}
+						/>
+					) : null}
+					{weekTotalVolume != null ? (
+						<StatItem
+							label={completedDayVolumes ? 'Total volume (7 completed days)' : 'Total volume (7d)'}
+							labelAs={dayTotalVolume == null ? 'h1' : undefined}
+							value={formattedNum(weekTotalVolume, true)}
+							className="max-md:hidden"
+						/>
+					) : null}
+					{monthTotalVolume != null ? (
+						<StatItem
+							label={completedDayVolumes ? 'Total volume (30 completed days)' : 'Total volume (1mo)'}
+							labelAs={dayTotalVolume == null && weekTotalVolume == null ? 'h1' : undefined}
+							value={formattedNum(monthTotalVolume, true)}
+							className="max-md:hidden"
+						/>
+					) : null}
 
 					<CSVDownloadButton prepareCsv={prepareCsv} smol size="sm" className="mt-auto mr-auto" />
 				</SummaryStatsCard>
@@ -455,6 +476,7 @@ export function BridgesOverviewByChain({
 						ref={bridgesTableRef}
 						data={bridgesTableData}
 						searchValue={deferredSearchValue}
+						completedDayVolumes={completedDayVolumes}
 						csvFileName={
 							activeTab === 'messaging'
 								? 'messaging-protocols'

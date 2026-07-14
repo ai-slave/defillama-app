@@ -23,10 +23,10 @@ type BridgesTableRow = {
 	displayName: string
 	icon?: string
 	chains: Array<string>
-	change_1d?: number
-	lastDailyVolume?: number
-	weeklyVolume?: number
-	monthlyVolume?: number
+	change_1d?: number | null
+	lastDailyVolume?: number | null
+	weeklyVolume?: number | null
+	monthlyVolume?: number | null
 	txsPrevDay?: number
 }
 
@@ -38,11 +38,12 @@ type BridgesTableProps = {
 	data: BridgesTableRow[]
 	searchValue?: string
 	csvFileName?: string
+	completedDayVolumes?: boolean
 }
 
 const columnHelper = createColumnHelper<BridgesTableRow>()
 
-const bridgesColumn = [
+const getBridgesColumns = (completedDayVolumes: boolean) => [
 	columnHelper.accessor('displayName', {
 		header: 'Name',
 		enableSorting: false,
@@ -95,27 +96,30 @@ const bridgesColumn = [
 		}
 	}),
 	columnHelper.accessor('lastDailyVolume', {
-		header: '24h Volume',
+		header: completedDayVolumes ? 'Completed day' : '24h Volume',
 		cell: (info) => formattedNum(info.getValue(), true),
 		meta: {
 			headerClassName: 'w-[120px]',
-			align: 'end'
+			align: 'end',
+			headerHelperText: completedDayVolumes ? 'Volume during the last completed UTC day' : undefined
 		}
 	}),
 	columnHelper.accessor('weeklyVolume', {
-		header: '7d Volume',
+		header: completedDayVolumes ? '7 completed days' : '7d Volume',
 		cell: (info) => formattedNum(info.getValue(), true),
 		meta: {
 			headerClassName: 'w-[120px]',
-			align: 'end'
+			align: 'end',
+			headerHelperText: completedDayVolumes ? 'Volume during the last 7 completed UTC days' : undefined
 		}
 	}),
 	columnHelper.accessor('monthlyVolume', {
-		header: '1m Volume',
+		header: completedDayVolumes ? '30 completed days' : '1m Volume',
 		cell: (info) => formattedNum(info.getValue(), true),
 		meta: {
 			headerClassName: 'w-[120px]',
-			align: 'end'
+			align: 'end',
+			headerHelperText: completedDayVolumes ? 'Volume during the last 30 completed UTC days' : undefined
 		}
 	}),
 	columnHelper.accessor('txsPrevDay', {
@@ -134,15 +138,16 @@ const bridgesColumnOrders: ColumnOrdersByBreakpoint = {
 	1024: ['displayName', 'chains', 'change_1d', 'lastDailyVolume', 'weeklyVolume', 'monthlyVolume', 'txsPrevDay']
 }
 export const BridgesTable = React.forwardRef<BridgesTableHandle, BridgesTableProps>(function BridgesTable(
-	{ data, searchValue = '', csvFileName = 'bridges' },
+	{ data, searchValue = '', csvFileName = 'bridges', completedDayVolumes = false },
 	ref
 ) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'lastDailyVolume', desc: true }])
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
+	const columns = React.useMemo(() => getBridgesColumns(completedDayVolumes), [completedDayVolumes])
 	const instance = useReactTable({
 		data,
-		columns: bridgesColumn,
+		columns,
 		state: {
 			sorting,
 			columnFilters,

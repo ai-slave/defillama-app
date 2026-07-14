@@ -1,4 +1,11 @@
 import { formatNum, formattedNum, getPercentChange, keepNeededProperties, slug } from '~/utils'
+import {
+	findTimeSeriesPointNear,
+	getCompleteTimeSeriesDailyWindow,
+	getFreshTimeSeriesCurrentPoint,
+	getTimeSeriesPeriodPair,
+	toUnixMsTimestamp
+} from '~/utils/timeSeries'
 import type { StablecoinChartPoint, StablecoinListAsset, StablecoinPricesResponse } from './api.types'
 
 interface IStablecoinToken {
@@ -9,7 +16,8 @@ interface IStablecoinToken {
 interface IStablecoinMcapPoint {
 	date: string
 	Mcap: number
-	[key: string]: number | string
+	isSynthetic?: boolean
+	[key: string]: number | string | boolean | undefined
 }
 
 interface IStablecoinMcapStats {
@@ -24,6 +32,8 @@ interface IStablecoinMcapStats {
 	change7dUsd: number | null
 	change30dUsd: number | null
 	mcapChartData14d: Array<[number, number]> | null
+	dataTimestamp: number | null
+	isDataStale: boolean
 }
 
 interface IStablecoinAreaChartPoint {
@@ -44,6 +54,7 @@ interface IStablecoinTokenInflowPoint {
 }
 
 interface IRateChartPoint {
+	date?: string | number
 	rates?: Record<string, string | number>
 }
 
@@ -143,7 +154,7 @@ export type FormattedStablecoinAsset = Omit<
  * via runtime string keys with `typeof` checks (using allowed `as Record<string, unknown>`
  * cast after `typeof === 'object'` validation).
  */
-export type StablecoinChartDataPoint = { date: string | number }
+export type StablecoinChartDataPoint = { date: string | number; isSynthetic?: boolean }
 
 interface IFormatPeggedAssetsDataParams {
 	chain?: string
@@ -152,6 +163,7 @@ interface IFormatPeggedAssetsDataParams {
 	priceData?: StablecoinPricesResponse
 	rateData?: IRateChartPoint[]
 	peggedNameToChartDataIndex?: Record<string, number>
+	currentTimeMs?: number
 }
 
 interface IFormatPeggedChainsDataParams {
@@ -159,7 +171,10 @@ interface IFormatPeggedChainsDataParams {
 	peggedChartDataByChain?: Array<StablecoinChartPoint[] | null>
 	chainDominances?: Record<string, { symbol: string; mcap: number }>
 	chainsTVLData?: number[]
+	currentTimeMs?: number
 }
+
+type StablecoinChartLookupOptions = { currentTimeMs?: number }
 
 const toFiniteNumber = (value: unknown): number | null => {
 	const numeric = typeof value === 'number' ? value : Number(value)
@@ -189,22 +204,33 @@ export function getPrevStablecoinTotalFromChart(
 	chart: Array<StablecoinChartDataPoint> | null | undefined,
 	daysBefore: number,
 	issuanceType: string,
-	pegType: 'bridges'
+	pegType: 'bridges',
+	options?: StablecoinChartLookupOptions
 ): unknown
 export function getPrevStablecoinTotalFromChart(
 	chart: Array<StablecoinChartDataPoint> | null | undefined,
 	daysBefore: number,
 	issuanceType: string,
-	pegType?: string
+	pegType?: string,
+	options?: StablecoinChartLookupOptions
 ): number | null
 export function getPrevStablecoinTotalFromChart(
 	chart: Array<StablecoinChartDataPoint> | null | undefined,
 	daysBefore: number,
 	issuanceType: string,
-	pegType = ''
+	pegType = '',
+	options: StablecoinChartLookupOptions = {}
 ) {
-	if (!chart) return null
-	const prevChart = chart[chart.length - 1 - daysBefore]
+	if (!chart?.length) return null
+	const prevChart =
+		daysBefore === 0
+			? chart[chart.length - 1]
+			: getTimeSeriesPeriodPair(
+					chart.filter((point) => point.isSynthetic !== true),
+					daysBefore,
+					(point) => point.date,
+					options
+				)?.previous
 	return getStablecoinValueFromPoint(prevChart, issuanceType, pegType)
 }
 
@@ -292,12 +318,18 @@ export const getStablecoinTopTokenFromChartData = (
 }
 
 export const getStablecoinMcapStatsFromTotals = (
-	peggedAreaTotalData: ReadonlyArray<IStablecoinMcapPoint> | null | undefined
+	peggedAreaTotalData: ReadonlyArray<IStablecoinMcapPoint> | null | undefined,
+	currentTimeMs: number = Date.now()
 ): IStablecoinMcapStats => {
 	const totalMcapCurrent = peggedAreaTotalData?.[peggedAreaTotalData.length - 1]?.Mcap ?? null
-	const totalMcapPrevDay = peggedAreaTotalData?.[peggedAreaTotalData.length - 2]?.Mcap ?? null
-	const totalMcapPrevWeek = peggedAreaTotalData?.[peggedAreaTotalData.length - 8]?.Mcap ?? null
-	const totalMcapPrevMonth = peggedAreaTotalData?.[peggedAreaTotalData.length - 31]?.Mcap ?? null
+	const realTotals = peggedAreaTotalData?.filter((point) => point.isSynthetic !== true)
+	const latestRealTotal = realTotals?.[realTotals.length - 1]
+	const freshCurrentTotal = getFreshTimeSeriesCurrentPoint(realTotals, (point) => point.date, { currentTimeMs })
+	const getPreviousMcap = (daysBefore: number) =>
+		getTimeSeriesPeriodPair(realTotals, daysBefore, (point) => point.date, { currentTimeMs })?.previous.Mcap ?? null
+	const totalMcapPrevDay = getPreviousMcap(1)
+	const totalMcapPrevWeek = getPreviousMcap(7)
+	const totalMcapPrevMonth = getPreviousMcap(30)
 
 	return {
 		totalMcapCurrent,
@@ -313,7 +345,9 @@ export const getStablecoinMcapStatsFromTotals = (
 		mcapChartData14d:
 			peggedAreaTotalData && peggedAreaTotalData.length >= 14
 				? peggedAreaTotalData.slice(-14).map((p) => [+p.date * 1000, p.Mcap ?? 0] as [number, number])
-				: null
+				: null,
+		dataTimestamp: latestRealTotal ? toUnixMsTimestamp(latestRealTotal.date) / 1e3 : null,
+		isDataStale: latestRealTotal != null && freshCurrentTotal == null
 	}
 }
 
@@ -379,6 +413,7 @@ const buildStablecoinChartDataInternal = (
 
 	const unformattedAreaData: Record<string, Record<string, number>> = {}
 	const unformattedTotalData: Record<string, number> = {}
+	const unformattedTotalHasRealData: Record<string, boolean> = {}
 	const stackedDatasetObject: Record<string, Record<string, IStablecoinStackedValue>> = {}
 	const unformattedTokenInflowData: Record<string, Record<string, number>> = {}
 	const assetAddedToInflows: Record<string, boolean> = {}
@@ -416,6 +451,7 @@ const buildStablecoinChartDataInternal = (
 
 						if (flags.total) {
 							unformattedTotalData[date] = (unformattedTotalData[date] ?? 0) + mcap
+							if (chart.isSynthetic !== true) unformattedTotalHasRealData[date] = true
 						}
 
 						if (flags.stacked) {
@@ -474,7 +510,8 @@ const buildStablecoinChartDataInternal = (
 			peggedAreaTotalData.push({
 				date,
 				Mcap: normalizedMcap,
-				[totalChartTooltipLabel]: normalizedMcap
+				[totalChartTooltipLabel]: normalizedMcap,
+				...(!unformattedTotalHasRealData[date] ? { isSynthetic: true } : {})
 			})
 		}
 	}
@@ -584,12 +621,20 @@ export const buildStablecoinChartData = (params: IBuildStablecoinChartDataParams
 	return buildStablecoinChartDataInternal(params, { area: true, total: true, stacked: true, inflows: true })
 }
 
-const getTargetPrice = (pegType: string, ratesChart: IRateChartPoint[], daysBefore: number): number | null => {
+const getTargetPrice = (
+	pegType: string,
+	ratesChart: IRateChartPoint[],
+	targetTimestampMs: number | null,
+	currentTimeMs: number
+): number | null => {
 	const currencyTicker = pegType.slice(-3)
 	if (currencyTicker === 'USD') {
 		return 1
 	}
-	const rates = ratesChart?.[ratesChart.length - 1 - daysBefore] ?? null
+	const rates =
+		targetTimestampMs == null
+			? getFreshTimeSeriesCurrentPoint(ratesChart, (point) => point.date ?? Number.NaN, { currentTimeMs })
+			: findTimeSeriesPointNear(ratesChart, targetTimestampMs, (point) => point.date ?? Number.NaN)
 	const rate = rates?.rates?.[currencyTicker]
 	const numericRate = typeof rate === 'number' ? rate : Number(rate)
 	if (!Number.isFinite(numericRate) || numericRate === 0) return null
@@ -602,9 +647,13 @@ export const formatPeggedAssetsData = ({
 	chartDataByPeggedAsset = [],
 	priceData = [],
 	rateData = [],
-	peggedNameToChartDataIndex = {}
+	peggedNameToChartDataIndex = {},
+	currentTimeMs = Date.now()
 }: IFormatPeggedAssetsDataParams): FormattedStablecoinAsset[] => {
 	let inputAssets = [...peggedAssets]
+	const completePriceHistory = getCompleteTimeSeriesDailyWindow(priceData, 31, (point) => point.date, {
+		currentTimeMs
+	})
 
 	if (chain) {
 		const sluggedChain = slug(chain)
@@ -651,9 +700,9 @@ export const formatPeggedAssetsData = ({
 		const chart = chartDataByPeggedAsset[chartIndex] ?? null
 
 		formattedPegged.mcap = getPrevStablecoinTotalFromChart(chart, 0, 'mcap') ?? null
-		const mcapPrevDay = getPrevStablecoinTotalFromChart(chart, 1, 'mcap') ?? null
-		const mcapPrevWeek = getPrevStablecoinTotalFromChart(chart, 7, 'mcap') ?? null
-		const mcapPrevMonth = getPrevStablecoinTotalFromChart(chart, 30, 'mcap') ?? null
+		const mcapPrevDay = getPrevStablecoinTotalFromChart(chart, 1, 'mcap', '', { currentTimeMs }) ?? null
+		const mcapPrevWeek = getPrevStablecoinTotalFromChart(chart, 7, 'mcap', '', { currentTimeMs }) ?? null
+		const mcapPrevMonth = getPrevStablecoinTotalFromChart(chart, 30, 'mcap', '', { currentTimeMs }) ?? null
 		formattedPegged.change_1d = getPercentChange(formattedPegged.mcap, mcapPrevDay)
 		formattedPegged.change_7d = getPercentChange(formattedPegged.mcap, mcapPrevWeek)
 		formattedPegged.change_1m = getPercentChange(formattedPegged.mcap, mcapPrevMonth)
@@ -688,40 +737,54 @@ export const formatPeggedAssetsData = ({
 				: `+${change_1m_nol}`
 
 		if (pegType !== 'peggedVAR' && price) {
-			const targetPrice = getTargetPrice(pegType, rateData, 0)
+			const targetPrice = getTargetPrice(pegType, rateData, null, currentTimeMs)
 			formattedPegged.pegDeviation = getPercentChange(price, targetPrice)
 			let greatestDeviation = 0
-			for (let i = 0; i < 30; i++) {
-				const historicalPrices = priceData[priceData.length - i - 1]
-				const historicalTargetPrice = getTargetPrice(pegType, rateData, i)
+			let greatestDeviationInfo: StablecoinFormattedAsset['pegDeviationInfo']
+			let hasCompleteAssetPriceHistory = completePriceHistory != null && peggedGeckoID != null
+			for (const historicalPrices of completePriceHistory ?? []) {
+				const historicalTargetPrice = getTargetPrice(
+					pegType,
+					rateData,
+					toUnixMsTimestamp(historicalPrices.date),
+					currentTimeMs
+				)
 				const historicalPrice = peggedGeckoID != null ? toFiniteNumber(historicalPrices?.prices?.[peggedGeckoID]) : null
-				if (historicalPrice && historicalTargetPrice) {
-					const timestamp = historicalPrices?.date
-					const deviation = historicalPrice - historicalTargetPrice
-					if (Math.abs(greatestDeviation) < Math.abs(deviation)) {
-						greatestDeviation = deviation
-						if (0.02 < Math.abs(greatestDeviation)) {
-							formattedPegged.pegDeviationInfo = {
-								timestamp: timestamp,
-								price: historicalPrice,
-								priceSource: priceSource
-							}
+				if (historicalPrice == null || historicalTargetPrice == null) {
+					hasCompleteAssetPriceHistory = false
+					break
+				}
+				const deviation = historicalPrice - historicalTargetPrice
+				if (Math.abs(greatestDeviation) < Math.abs(deviation)) {
+					greatestDeviation = deviation
+					if (0.02 < Math.abs(greatestDeviation)) {
+						greatestDeviationInfo = {
+							timestamp: historicalPrices.date,
+							price: historicalPrice,
+							priceSource
 						}
 					}
 				}
 			}
-			if (targetPrice != null && Math.abs(greatestDeviation) < Math.abs(price - targetPrice)) {
+			if (
+				hasCompleteAssetPriceHistory &&
+				targetPrice != null &&
+				Math.abs(greatestDeviation) < Math.abs(price - targetPrice)
+			) {
 				greatestDeviation = price - targetPrice
 				if (0.02 < Math.abs(greatestDeviation)) {
-					formattedPegged.pegDeviationInfo = {
-						timestamp: Date.now() / 1000,
+					greatestDeviationInfo = {
+						timestamp: currentTimeMs / 1000,
 						price: price,
 						priceSource: priceSource
 					}
 				}
 			}
 			formattedPegged.pegDeviation_1m =
-				targetPrice != null ? getPercentChange(targetPrice + greatestDeviation, targetPrice) : null
+				hasCompleteAssetPriceHistory && targetPrice != null
+					? getPercentChange(targetPrice + greatestDeviation, targetPrice)
+					: null
+			formattedPegged.pegDeviationInfo = hasCompleteAssetPriceHistory ? greatestDeviationInfo : undefined
 		} else {
 			// Avoid leaking stale peg data into filters/table (e.g. when price is missing or peg is variable).
 			formattedPegged.pegDeviation = undefined
@@ -749,7 +812,8 @@ export const formatPeggedChainsData = ({
 	chainList = [],
 	peggedChartDataByChain = [],
 	chainDominances = {},
-	chainsTVLData = []
+	chainsTVLData = [],
+	currentTimeMs = Date.now()
 }: IFormatPeggedChainsDataParams): IFormattedStablecoinChainRow[] => {
 	const formattedStablecoinChains: IFormattedStablecoinChainRow[] = []
 	for (let i = 0; i < peggedChartDataByChain.length; i++) {
@@ -760,9 +824,9 @@ export const formatPeggedChainsData = ({
 		const latestChainTVL = chainsTVLData?.[i] ?? null
 
 		const mcap = getPrevStablecoinTotalFromChart(chart, 0, 'totalCirculatingUSD')
-		const mcapPrevDay = getPrevStablecoinTotalFromChart(chart, 1, 'totalCirculatingUSD')
-		const mcapPrevWeek = getPrevStablecoinTotalFromChart(chart, 7, 'totalCirculatingUSD')
-		const mcapPrevMonth = getPrevStablecoinTotalFromChart(chart, 30, 'totalCirculatingUSD')
+		const mcapPrevDay = getPrevStablecoinTotalFromChart(chart, 1, 'totalCirculatingUSD', '', { currentTimeMs })
+		const mcapPrevWeek = getPrevStablecoinTotalFromChart(chart, 7, 'totalCirculatingUSD', '', { currentTimeMs })
+		const mcapPrevMonth = getPrevStablecoinTotalFromChart(chart, 30, 'totalCirculatingUSD', '', { currentTimeMs })
 		const circulating = getPrevStablecoinTotalFromChart(chart, 0, 'totalCirculating')
 		const unreleased = getPrevStablecoinTotalFromChart(chart, 0, 'totalUnreleased')
 		const bridgedTo = getPrevStablecoinTotalFromChart(chart, 0, 'totalBridgedToUSD')

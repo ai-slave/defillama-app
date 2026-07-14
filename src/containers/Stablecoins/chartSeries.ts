@@ -38,6 +38,8 @@ export type StablecoinChartSummary = {
 	change30dUsd: number | null
 	topToken: { symbol: string; mcap: number }
 	dominance: string | number | null
+	dataTimestamp: number | null
+	isDataStale: boolean
 }
 
 export interface StablecoinChartSeriesPayload {
@@ -142,7 +144,9 @@ export const buildStablecoinChartSummary = (
 		change7dUsd: stats.change7dUsd,
 		change30dUsd: stats.change30dUsd,
 		topToken,
-		dominance: getStablecoinDominance(topToken, stats.totalMcapCurrent)
+		dominance: getStablecoinDominance(topToken, stats.totalMcapCurrent),
+		dataTimestamp: stats.dataTimestamp,
+		isDataStale: stats.isDataStale
 	}
 }
 

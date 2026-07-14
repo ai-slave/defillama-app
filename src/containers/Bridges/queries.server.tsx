@@ -7,6 +7,7 @@ import { getNDistinctColors, slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 import { isDeprecatedChain } from '~/utils/metadata/deprecatedChains'
+import { getFreshTimeSeriesCurrentPoint } from '~/utils/timeSeries'
 import {
 	fetchBridgeDayStats,
 	fetchBridges,
@@ -375,7 +376,8 @@ function buildTableDataByChain({
 			totalDepositedUSD: prevDayData?.totalDepositedUSD,
 			totalWithdrawnUSD: prevDayData?.totalWithdrawnUSD,
 			totalDepositTxs: prevDayData?.totalDepositTxs,
-			totalWithdrawalTxs: prevDayData?.totalWithdrawalTxs
+			totalWithdrawalTxs: prevDayData?.totalWithdrawalTxs,
+			dataTimestamp: prevDayData?.date
 		}
 	}
 
@@ -416,7 +418,10 @@ const getChainVolumeData = async (chain: string, chainCoingeckoIds: LlamaConfigR
 	}
 }
 
-export const getBridgeChainNetInflows = async (chain: string): Promise<{ netInflows: number | null } | null> => {
+export const getBridgeChainNetInflows = async (
+	chain: string,
+	currentTimeMs: number = Date.now()
+): Promise<{ netInflows: number | null } | null> => {
 	const { chainCoingeckoIds } = await fetchJson<LlamaConfigResponse>(CONFIG_API)
 	if (!chainCoingeckoIds[chain]) return null
 
@@ -425,7 +430,8 @@ export const getBridgeChainNetInflows = async (chain: string): Promise<{ netInfl
 		throwOnFailure: true,
 		onFailureError: () => new Error(`bridge volume for chain ${chain} is broken`)
 	})
-	const netInflows = chart.length ? (chart[chart.length - 1].depositUSD ?? null) : null
+	const currentPoint = getFreshTimeSeriesCurrentPoint(chart, (point) => point.date, { currentTimeMs })
+	const netInflows = currentPoint?.depositUSD ?? null
 
 	if (netInflows === 0) {
 		return null

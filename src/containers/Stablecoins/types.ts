@@ -38,13 +38,15 @@ export interface PeggedChainsPageData {
 	chainList: string[]
 	chainsGroupbyParent: Record<string, Record<string, string[]>>
 	deprecatedChains: Record<string, true>
-	change1d: string
-	change7d: string
-	change30d: string
+	change1d: string | null
+	change7d: string | null
+	change30d: string | null
 	totalMcapCurrent: number | null
-	change1d_nol: string
-	change7d_nol: string
-	change30d_nol: string
+	change1d_nol: string | null
+	change7d_nol: string | null
+	change30d_nol: string | null
+	dataTimestamp: number | null
+	isDataStale: boolean
 }
 
 export type StablecoinBridges = Record<string, Record<string, { amount: number }>> | null

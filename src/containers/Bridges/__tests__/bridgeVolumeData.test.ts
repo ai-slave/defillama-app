@@ -3,7 +3,8 @@ import { getBucketTimestampSec } from '~/components/ECharts/utils'
 import {
 	BRIDGE_VOLUME_COMBINED_CHARTS,
 	BRIDGE_VOLUME_SPLIT_CHARTS,
-	buildBridgeVolumeChartData
+	buildBridgeVolumeChartData,
+	getStaleBridgeVolumeTimestamp
 } from '../bridgeVolumeData'
 
 describe('buildBridgeVolumeChartData', () => {
@@ -107,5 +108,21 @@ describe('buildBridgeVolumeChartData', () => {
 			dimensions: ['timestamp', 'Total'],
 			source: []
 		})
+	})
+
+	it('reports the last chart date only when bridge volume data is stale', () => {
+		const currentTimeMs = Date.parse('2026-07-14T12:00:00Z')
+		const point = (date: string) => ({
+			date: String(Date.parse(`${date}T00:00:00Z`) / 1e3),
+			depositUSD: 1,
+			withdrawUSD: 1,
+			depositTxs: 1,
+			withdrawTxs: 1
+		})
+
+		expect(getStaleBridgeVolumeTimestamp([point('2026-07-13')], currentTimeMs)).toBeNull()
+		expect(getStaleBridgeVolumeTimestamp([point('2026-05-15')], currentTimeMs)).toBe(
+			Date.parse('2026-05-15T00:00:00Z') / 1e3
+		)
 	})
 })

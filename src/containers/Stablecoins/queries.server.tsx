@@ -14,6 +14,7 @@ import { formattedNum, getPercentChange, slug } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { getObjectCache, setObjectCache } from '~/utils/cache-client'
 import { getDeprecatedChainsByName } from '~/utils/metadata/deprecatedChains'
+import { getFreshTimeSeriesCurrentPoint, toUnixMsTimestamp } from '~/utils/timeSeries'
 import {
 	fetchStablecoinAssetApi,
 	fetchStablecoinAssetsApi,
@@ -127,7 +128,7 @@ function fetchGlobalData({ peggedAssets, chains }: PeggedAssetsInput): Stablecoi
 	}
 }
 
-type StablecoinSeriesPoint = { date: number; mcap: Record<string, number> }
+type StablecoinSeriesPoint = { date: number; mcap: Record<string, number>; isSynthetic?: boolean }
 
 const toStablecoinSeriesPoint = (chart: StablecoinChartPoint): StablecoinSeriesPoint | null => {
 	const mcap = chart.totalCirculatingUSD
@@ -159,7 +160,7 @@ const padSeriesToTimestamp = (series: StablecoinSeriesPoint[], targetTimestamp: 
 	let lastDate = Number(last.date)
 	while (lastDate < targetTimestamp) {
 		lastDate += ONE_DAY_SECONDS
-		series.push({ ...last, date: lastDate })
+		series.push({ ...last, date: lastDate, isSynthetic: true })
 	}
 }
 
@@ -454,7 +455,8 @@ type StablecoinChainsSource = {
 	chainsGroupbyParent: Record<string, Record<string, string[]>>
 }
 
-const toSignedChangeLabel = (value: string): string => {
+const toSignedChangeLabel = (value: string | null): string | null => {
+	if (value == null) return null
 	const numericValue = Number.parseFloat(value.replace(/[^0-9.+-]/g, ''))
 	if (!Number.isNaN(numericValue) && numericValue === 0) return value
 	const trimmedValue = value.trimStart()
@@ -567,14 +569,20 @@ export async function getStablecoinChainsPageData(): Promise<PeggedChainsPageDat
 	const totalMcapPrevWeek = getPrevStablecoinTotalFromChart(source.chartData, 7, 'totalCirculatingUSD')
 	const totalMcapPrevMonth = getPrevStablecoinTotalFromChart(source.chartData, 30, 'totalCirculatingUSD')
 
-	const change1d = getPercentChange(totalMcapCurrent, totalMcapPrevDay)?.toFixed(2) ?? '0'
-	const change7d = getPercentChange(totalMcapCurrent, totalMcapPrevWeek)?.toFixed(2) ?? '0'
-	const change30d = getPercentChange(totalMcapCurrent, totalMcapPrevMonth)?.toFixed(2) ?? '0'
+	const change1d = getPercentChange(totalMcapCurrent, totalMcapPrevDay)?.toFixed(2) ?? null
+	const change7d = getPercentChange(totalMcapCurrent, totalMcapPrevWeek)?.toFixed(2) ?? null
+	const change30d = getPercentChange(totalMcapCurrent, totalMcapPrevMonth)?.toFixed(2) ?? null
 
-	const change1d_nol = formattedNum(String((totalMcapCurrent ?? 0) - (totalMcapPrevDay ?? 0)), true)
-	const change7d_nol = formattedNum(String((totalMcapCurrent ?? 0) - (totalMcapPrevWeek ?? 0)), true)
-	const change30d_nol = formattedNum(String((totalMcapCurrent ?? 0) - (totalMcapPrevMonth ?? 0)), true)
+	const formatAbsoluteChange = (previous: number | null): string | null =>
+		totalMcapCurrent != null && previous != null ? formattedNum(String(totalMcapCurrent - previous), true) : null
+	const change1d_nol = formatAbsoluteChange(totalMcapPrevDay)
+	const change7d_nol = formatAbsoluteChange(totalMcapPrevWeek)
+	const change30d_nol = formatAbsoluteChange(totalMcapPrevMonth)
 	const deprecatedChains = getDeprecatedChainsByName(metadataCache.chainMetadata, source.chainList)
+	const latestPoint = source.chartData[source.chartData.length - 1]
+	const dataTimestamp = latestPoint ? toUnixMsTimestamp(latestPoint.date) / 1e3 : null
+	const isDataStale =
+		latestPoint != null && getFreshTimeSeriesCurrentPoint(source.chartData, (point) => point.date) == null
 
 	return {
 		chainCirculatings: source.chainCirculatings,
@@ -587,7 +595,9 @@ export async function getStablecoinChainsPageData(): Promise<PeggedChainsPageDat
 		totalMcapCurrent,
 		change1d_nol: toSignedChangeLabel(change1d_nol),
 		change7d_nol: toSignedChangeLabel(change7d_nol),
-		change30d_nol: toSignedChangeLabel(change30d_nol)
+		change30d_nol: toSignedChangeLabel(change30d_nol),
+		dataTimestamp,
+		isDataStale
 	}
 }
 

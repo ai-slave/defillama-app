@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { preparePieChartData } from '~/components/ECharts/utils'
 import { getPercentChange, getPrevVolumeFromChart, keepNeededProperties, slug } from '~/utils'
+import { getCompleteTimeSeriesDailyWindow, getTimeSeriesPeriodPair } from '~/utils/timeSeries'
 import { BRIDGE_PROPERTIES_TO_KEEP } from './constants'
 
 interface ITokenData {
@@ -33,12 +34,63 @@ interface IDailyBridgeStats {
 	name?: string
 }
 
+type BridgeDailyVolumePoint = {
+	date: string | number
+	volume?: number
+	Deposits?: number
+	Withdrawals?: number
+}
+
+function getBridgeDailyVolume(point: BridgeDailyVolumePoint, useDepositAndWithdrawalVolume: boolean): number | null {
+	const value = useDepositAndWithdrawalVolume
+		? Number(point.Deposits) - Number(point.Withdrawals)
+		: Number(point.volume)
+	return Number.isFinite(value) ? value : null
+}
+
+export function getCompletedBridgeVolumeTotal(
+	chart: BridgeDailyVolumePoint[] | null | undefined,
+	days: number,
+	useDepositAndWithdrawalVolume = false,
+	currentTimeMs: number = Date.now()
+): number | null {
+	const points = getCompleteTimeSeriesDailyWindow(chart, days, (point) => point.date, {
+		currentTimeMs,
+		currentDayOffset: 1
+	})
+	if (!points) return null
+
+	let total = 0
+	for (const point of points) {
+		const value = getBridgeDailyVolume(point, useDepositAndWithdrawalVolume)
+		if (value == null) return null
+		total += value
+	}
+	return total
+}
+
+export function getCompletedBridgeVolumePair(
+	chart: BridgeDailyVolumePoint[] | null | undefined,
+	currentTimeMs: number = Date.now()
+): { current: number; previous: number } | null {
+	const pair = getTimeSeriesPeriodPair(chart, 1, (point) => point.date, {
+		currentTimeMs,
+		currentDayOffset: 1
+	})
+	if (!pair) return null
+
+	const current = getBridgeDailyVolume(pair.current, false)
+	const previous = getBridgeDailyVolume(pair.previous, false)
+	return current == null || previous == null ? null : { current, previous }
+}
+
 export const formatBridgesData = ({
 	chain = '',
 	bridges = [],
 	chartDataByBridge = [],
 	bridgeNameToChartDataIndex = {},
-	bridgeProps = [...BRIDGE_PROPERTIES_TO_KEEP]
+	bridgeProps = [...BRIDGE_PROPERTIES_TO_KEEP],
+	currentTimeMs = Date.now()
 }) => {
 	let filteredBridges = [...bridges]
 
@@ -51,28 +103,17 @@ export const formatBridgesData = ({
 		const chartIndex = bridgeNameToChartDataIndex[bridge.displayName]
 		const chart = chartDataByBridge[chartIndex] ?? null
 
+		const completedVolumePair = getCompletedBridgeVolumePair(chart, currentTimeMs)
 		if (chain) {
-			let dayTotalVolume, weekTotalVolume, monthTotalVolume
-			dayTotalVolume = weekTotalVolume = monthTotalVolume = 0
-			// start from i = 1 to exclude current day
-			for (let i = 1; i < 31; i++) {
-				const dailyVolume = getPrevVolumeFromChart(chart, i)
-				if (i < 2) {
-					dayTotalVolume += dailyVolume
-				}
-				if (i < 8) {
-					weekTotalVolume += dailyVolume
-				}
-				monthTotalVolume += dailyVolume
-			}
-			bridge.lastDailyVolume = dayTotalVolume ?? null
-			bridge.dayBeforeLastVolume = getPrevVolumeFromChart(chart, 2) ?? null
-			bridge.weeklyVolume = weekTotalVolume ?? null
-			bridge.monthlyVolume = monthTotalVolume ?? null
-			bridge.last24hVolume = dayTotalVolume ?? null
+			bridge.lastDailyVolume = completedVolumePair?.current ?? null
+			bridge.dayBeforeLastVolume = completedVolumePair?.previous ?? null
+			bridge.weeklyVolume = getCompletedBridgeVolumeTotal(chart, 7, false, currentTimeMs)
+			bridge.monthlyVolume = getCompletedBridgeVolumeTotal(chart, 30, false, currentTimeMs)
+			bridge.last24hVolume = bridge.lastDailyVolume
 		}
 
-		bridge.change_1d = getPercentChange(bridge.lastDailyVolume, bridge.dayBeforeLastVolume)
+		// Global volume fields are rolling backend metrics; only the daily change comes from exact chart endpoints.
+		bridge.change_1d = getPercentChange(completedVolumePair?.current, completedVolumePair?.previous)
 		if (bridge.txsPrevDay == null) {
 			bridge.txsPrevDay = getPrevVolumeFromChart(chart, 0, true) ?? null
 			if (bridge.name === 'layerzero' && bridge.txsPrevDay < 1000) {
@@ -89,8 +130,10 @@ export const formatBridgesData = ({
 		messagingProtocols.includes(bridge.name?.toLowerCase())
 	)
 
-	const sortedRegularBridges = regularBridges.sort((a, b) => b.lastDailyVolume - a.lastDailyVolume)
-	const sortedMessagingProtocols = messagingProtocolsBridges.sort((a, b) => b.lastDailyVolume - a.lastDailyVolume)
+	const sortedRegularBridges = regularBridges.sort((a, b) => (b.lastDailyVolume ?? 0) - (a.lastDailyVolume ?? 0))
+	const sortedMessagingProtocols = messagingProtocolsBridges.sort(
+		(a, b) => (b.lastDailyVolume ?? 0) - (a.lastDailyVolume ?? 0)
+	)
 
 	return {
 		bridges: sortedRegularBridges,

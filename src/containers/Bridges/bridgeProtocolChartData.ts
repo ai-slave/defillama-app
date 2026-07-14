@@ -1,6 +1,17 @@
 import type { ChartTimeGrouping } from '~/components/ECharts/types'
 import { getBucketTimestampSec } from '~/components/ECharts/utils'
+import { getFreshTimeSeriesCurrentPoint, getTimeSeriesPeriodPair } from '~/utils/timeSeries'
 import type { BridgeVolumeChartPoint } from './types'
+
+export function getBridgeProtocolCompletedDayVolumes(
+	volumeChartDataByChain: BridgeVolumeChartPoint[] | null | undefined,
+	currentTimeMs: number = Date.now()
+): { current: BridgeVolumeChartPoint; previous: BridgeVolumeChartPoint } | null {
+	return getTimeSeriesPeriodPair(volumeChartDataByChain, 1, (point) => point.date, {
+		currentTimeMs,
+		currentDayOffset: 1
+	})
+}
 
 export function buildBridgeProtocolAllChainsVolumePairs({
 	isAllChains,
@@ -64,21 +75,30 @@ export function getBridgeProtocolPrevDayVolumeValue({
 	isAllChains,
 	allChainsVolumePairs,
 	totalDepositedUSD,
-	totalWithdrawnUSD
+	totalWithdrawnUSD,
+	dataTimestamp,
+	currentTimeMs = Date.now()
 }: {
 	isAllChains: boolean
 	allChainsVolumePairs: Array<[number, number]>
 	totalDepositedUSD: number | undefined
 	totalWithdrawnUSD: number | undefined
+	dataTimestamp?: number
+	currentTimeMs?: number
 }) {
-	if (!isAllChains) return 0
+	if (!isAllChains) return null
 	// Current-day bridge stats expose these totals independently; preserve the historical zero-side fallback.
-	if (totalDepositedUSD != null || totalWithdrawnUSD != null) {
+	const hasFreshRollingStats =
+		dataTimestamp != null &&
+		getFreshTimeSeriesCurrentPoint([{ date: dataTimestamp }], (point) => point.date, { currentTimeMs }) != null
+	if (hasFreshRollingStats && (totalDepositedUSD != null || totalWithdrawnUSD != null)) {
 		return ((totalDepositedUSD ?? 0) + (totalWithdrawnUSD ?? 0)) / 2
 	}
-	if (allChainsVolumePairs.length > 1) return allChainsVolumePairs[allChainsVolumePairs.length - 2][1]
-	if (allChainsVolumePairs.length === 1) return allChainsVolumePairs[0][1]
-	return 0
+	const completedDay = getFreshTimeSeriesCurrentPoint(allChainsVolumePairs, (point) => point[0], {
+		currentTimeMs,
+		currentDayOffset: 1
+	})
+	return completedDay?.[1] ?? null
 }
 
 export function buildBridgeProtocolInflowsData({

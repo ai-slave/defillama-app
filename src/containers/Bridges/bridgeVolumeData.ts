@@ -1,5 +1,6 @@
 import type { ChartTimeGrouping } from '~/components/ECharts/types'
 import { getBucketTimestampSec } from '~/components/ECharts/utils'
+import { getFreshTimeSeriesCurrentPoint, toUnixMsTimestamp } from '~/utils/timeSeries'
 import type { RawBridgeVolumePoint } from './api.types'
 
 export const BRIDGE_VOLUME_VIEW_TYPES = ['Split', 'Combined'] as const
@@ -9,6 +10,23 @@ export const BRIDGE_VOLUME_METRIC_TYPES = ['Volume', 'Transactions'] as const
 export type BridgeVolumeMetricType = (typeof BRIDGE_VOLUME_METRIC_TYPES)[number]
 
 export type BridgeVolumeInputPoint = RawBridgeVolumePoint
+
+export function getStaleBridgeVolumeTimestamp(
+	data: BridgeVolumeInputPoint[] | null | undefined,
+	currentTimeMs: number = Date.now()
+): number | null {
+	const hasCurrentOrCompletedDay =
+		getFreshTimeSeriesCurrentPoint(data, (point) => point.date, { currentTimeMs }) != null ||
+		getFreshTimeSeriesCurrentPoint(data, (point) => point.date, { currentTimeMs, currentDayOffset: 1 }) != null
+	if (hasCurrentOrCompletedDay || !data?.length) return null
+
+	let latestTimestampMs = -Infinity
+	for (const point of data) {
+		const timestampMs = toUnixMsTimestamp(point.date)
+		if (timestampMs > latestTimestampMs) latestTimestampMs = timestampMs
+	}
+	return latestTimestampMs / 1e3
+}
 
 export const BRIDGE_VOLUME_SPLIT_CHARTS = [
 	{

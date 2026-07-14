@@ -4,8 +4,12 @@ import {
 	buildBridgeProtocolAllChainsVolumeData,
 	buildBridgeProtocolAllChainsVolumePairs,
 	buildBridgeProtocolInflowsData,
+	getBridgeProtocolCompletedDayVolumes,
 	getBridgeProtocolPrevDayVolumeValue
 } from '../bridgeProtocolChartData'
+
+const NOW = Date.parse('2026-07-14T12:00:00Z')
+const toSeconds = (date: string) => Date.parse(`${date}T00:00:00Z`) / 1e3
 
 describe('bridge protocol chart data helpers', () => {
 	it('builds grouped all-chain average volume datasets', () => {
@@ -40,12 +44,11 @@ describe('bridge protocol chart data helpers', () => {
 		expect(
 			getBridgeProtocolPrevDayVolumeValue({
 				isAllChains: true,
-				allChainsVolumePairs: [
-					[1, 10],
-					[2, 20]
-				],
+				allChainsVolumePairs: [],
 				totalDepositedUSD: 50,
-				totalWithdrawnUSD: 10
+				totalWithdrawnUSD: 10,
+				dataTimestamp: toSeconds('2026-07-14'),
+				currentTimeMs: NOW
 			})
 		).toBe(30)
 
@@ -53,13 +56,34 @@ describe('bridge protocol chart data helpers', () => {
 			getBridgeProtocolPrevDayVolumeValue({
 				isAllChains: true,
 				allChainsVolumePairs: [
-					[1, 10],
-					[2, 20]
+					[toSeconds('2026-07-12'), 10],
+					[toSeconds('2026-07-13'), 20],
+					[toSeconds('2026-07-14'), 30]
 				],
 				totalDepositedUSD: undefined,
-				totalWithdrawnUSD: undefined
+				totalWithdrawnUSD: undefined,
+				currentTimeMs: NOW
 			})
-		).toBe(10)
+		).toBe(20)
+	})
+
+	it('requires exact completed-day endpoints for the previous-day change', () => {
+		const complete = [
+			{ date: toSeconds('2026-07-12'), Deposited: 5, Withdrawn: -2 },
+			{ date: toSeconds('2026-07-13'), Deposited: 10, Withdrawn: -3 },
+			{ date: toSeconds('2026-07-14'), Deposited: 12, Withdrawn: -4 }
+		]
+		expect(getBridgeProtocolCompletedDayVolumes(complete, NOW)).toEqual({
+			current: complete[1],
+			previous: complete[0]
+		})
+
+		expect(
+			getBridgeProtocolCompletedDayVolumes(
+				[{ date: toSeconds('2026-07-11'), Deposited: 5, Withdrawn: -2 }, complete[1]],
+				NOW
+			)
+		).toBeNull()
 	})
 
 	it('builds non-all-chain inflow datasets without leaking all-chain volume data', () => {

@@ -35,6 +35,7 @@ export interface BridgeTableData {
 	totalWithdrawnUSD?: number
 	totalDepositTxs?: number
 	totalWithdrawalTxs?: number
+	dataTimestamp?: number
 }
 
 export interface BridgePageData {
