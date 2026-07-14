@@ -246,11 +246,7 @@ describe('investors landing links', () => {
 	it('keeps coming-soon projects on the investors landing page but not routable as dashboards', async () => {
 		const { proxy, investorsConfig } = await loadProxyWithInvestorsConfig('investors')
 
-		expect(investorsConfig.INVESTORS_COMING_SOON_PROJECTS.map((project) => project.id)).toEqual([
-			'flare',
-			'thorchain',
-			'berachain'
-		])
+		expect(investorsConfig.INVESTORS_COMING_SOON_PROJECTS.map((project) => project.id)).toEqual(['flare', 'thorchain'])
 		expect(investorsConfig.INVESTORS_LANDING_PROJECTS.map((project) => project.id)).toEqual(['spark', 'sonic', 'near'])
 
 		for (const project of investorsConfig.INVESTORS_COMING_SOON_PROJECTS) {
@@ -265,11 +261,7 @@ describe('investors landing links', () => {
 
 		expect(config.INVESTORS_PROTOCOL_IDS).toEqual(['spark', 'sonic', 'near', 'flare', 'thorchain'])
 		expect(config.INVESTORS_LANDING_PROJECTS.map((project) => project.id)).toEqual(['spark', 'sonic', 'near'])
-		expect(config.INVESTORS_COMING_SOON_PROJECTS.map((project) => project.id)).toEqual([
-			'flare',
-			'thorchain',
-			'berachain'
-		])
+		expect(config.INVESTORS_COMING_SOON_PROJECTS.map((project) => project.id)).toEqual(['flare', 'thorchain'])
 
 		for (const projectId of ['flare', 'thorchain'] as const) {
 			expect(config.getInvestorsLandingProjectHref(projectId)).toBe(`/${projectId}`)

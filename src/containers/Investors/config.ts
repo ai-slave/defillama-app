@@ -16,7 +16,6 @@ export type InvestorsProjectId = InvestorsProject['id']
 
 const INVESTORS_LIVE_PROJECT_IDS = ['spark', 'sonic', 'near'] as const satisfies readonly InvestorsProjectId[]
 const INVESTORS_PREVIEW_PROJECT_IDS = ['flare', 'thorchain'] as const satisfies readonly InvestorsProjectId[]
-const INVESTORS_COMING_SOON_PROJECT_IDS = ['berachain'] as const satisfies readonly InvestorsProjectId[]
 const INVESTORS_PREVIEW_ENABLED = process.env.NEXT_PUBLIC_INVESTORS_PREVIEW === 'true'
 const INVESTORS_DOMAIN_PROJECT_IDS = [
 	...INVESTORS_LIVE_PROJECT_IDS,
@@ -39,7 +38,7 @@ export const INVESTORS_SITES = {
 		projectIds: INVESTORS_DOMAIN_PROJECT_IDS,
 		landingProjectIds: INVESTORS_LIVE_PROJECT_IDS,
 		defaultProjectId: 'spark',
-		comingSoonProjectIds: [...INVESTORS_PREVIEW_PROJECT_IDS, ...INVESTORS_COMING_SOON_PROJECT_IDS],
+		comingSoonProjectIds: INVESTORS_PREVIEW_PROJECT_IDS,
 		umamiWebsiteId: '11de15eb-61d0-41c5-9e73-0bf496cc653c'
 	},
 	enterprise: {

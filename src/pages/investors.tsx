@@ -50,20 +50,6 @@ function SonicIcon() {
 	)
 }
 
-function BerachainIcon() {
-	return (
-		<svg
-			version="1.1"
-			xmlns="http://www.w3.org/2000/svg"
-			viewBox="0 0 1441.2 1608"
-			fill="currentColor"
-			className="size-14 shrink-0 text-[#F6A623]"
-		>
-			<path d="M1286.9,687.3c-2.2-7-3.8-14.1-5-21.3c-0.6-3.3-1.2-6.7-1.9-10c-1.6-7.2-3.3-14.3-5.2-21.4v0 c31.5-47.6,181.9-296.1,10.7-455.6c-190-177-412,55-412,55l0.7,1c-99.8-30.3-208-33.9-313.2-1c0,0,0,0,0,0 c-1.3-1.4-222.5-231.5-412-55c-189.5,176.5,15.1,462.1,16.2,463.6c0,0,0,0,0,0c-2.2,6.7-3.9,13.6-5.1,20.5 C139.6,785.4,0,823.1,0,1036s146,388,444,388h122.3c0,0,0,0,0,0c0.5,0.8,50.9,72.1,154.3,72.1c96-0.1,159.3-71.4,159.9-72.1 c0,0,0,0,0,0h116.7c298,0,444-171,444-388C1441.2,837.8,1320.1,791.4,1286.9,687.3L1286.9,687.3z" />
-		</svg>
-	)
-}
-
 function NearIcon({ className = 'size-14 shrink-0' }: { className?: string }) {
 	return (
 		<svg
@@ -396,7 +382,6 @@ const PROJECT_CARD_CONTENT = {
 } satisfies Partial<Record<InvestorsProjectId, LandingCardContent>>
 
 const COMING_SOON_ICONS: Partial<Record<InvestorsProjectId, ReactNode>> = {
-	berachain: <BerachainIcon />,
 	flare: <FlareIcon />,
 	thorchain: <ThorchainIcon />
 }
