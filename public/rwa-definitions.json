@@ -257,12 +257,20 @@
 			"label": "Onchain Mcap",
 			"description": "Total onchain marketcap, drawn as a line so you can compare flows against it."
 		},
+		"activeMcap": {
+			"label": "Active Mcap",
+			"description": "Total active marketcap, drawn as a line so you can compare flows against it."
+		},
+		"defiActiveTvl": {
+			"label": "DeFi Active TVL",
+			"description": "Total DeFi Active TVL, drawn as a line so you can compare flows against it."
+		},
 		"cumulativeLegend": {
 			"label": "Cumulative Net Flows",
 			"description": "The running total after adding each day's measured flow. Days we could not measure do not move the line."
 		},
 		"capitalRotation": {
-			"label": "Capital Rotation",
+			"label": "Net Flow",
 			"description": "Where money is moving between types of RWAs over time. Bars above the line are money coming in, bars below are money leaving."
 		},
 		"rotationGrouping": {
@@ -295,7 +303,7 @@
 		},
 		"flowVsPrice": {
 			"label": "Flow vs price",
-			"description": "Shows how much of each month's marketcap change came from measured net flows versus price movement and unmeasured days."
+			"description": "Shows how much of each selected period's marketcap change came from measured net flows versus price movement and unmeasured days."
 		},
 		"deltaMcap": {
 			"label": "Δ Onchain Mcap",
@@ -311,11 +319,11 @@
 		},
 		"netCapitalInflows": {
 			"label": "Net Capital Inflows",
-			"description": "Months when more money came in than left."
+			"description": "Periods when more money came in than left."
 		},
 		"netCapitalOutflows": {
 			"label": "Net Capital Outflows",
-			"description": "Months when more money left than came in."
+			"description": "Periods when more money left than came in."
 		},
 		"priceLegend": {
 			"label": "Price & Unattributed",
@@ -323,7 +331,7 @@
 		},
 		"deltaMcapLegend": {
 			"label": "Delta Onchain Mcap",
-			"description": "The month's total marketcap change. It always equals the bars added together: money in, money out, and price movement."
+			"description": "The period's total marketcap change. It always equals the bars added together: money in, money out, and price movement."
 		}
 	}
 }

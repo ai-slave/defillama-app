@@ -6,10 +6,12 @@ import {
 	buildRWAFlowChart,
 	buildRWAFlowRotationChart,
 	formatSignedRWAFlow,
-	getRWAFlowChartOptions,
 	getRWAFlowDefaultStartTimestamp,
+	getRWAFlowOverlayQueryValue,
 	getRWAFlowVsPriceSummary,
-	parseRWAFlowMode
+	parseRWAFlowGrouping,
+	parseRWAFlowMode,
+	parseRWAFlowOverlayMetrics
 } from '../flows'
 
 const day = (year: number, month: number, date: number) => Date.UTC(year, month, date)
@@ -26,37 +28,120 @@ describe('RWA flow chart data', () => {
 	})
 
 	it('parses only flow modes supported by the current chart', () => {
+		expect(parseRWAFlowMode('weekly', false)).toBe('weekly')
+		expect(parseRWAFlowMode('monthly', false)).toBe('monthly')
+		expect(parseRWAFlowMode('quarterly', false)).toBe('quarterly')
+		expect(parseRWAFlowMode('yearly', false)).toBe('yearly')
 		expect(parseRWAFlowMode('cumulative', false)).toBe('cumulative')
 		expect(parseRWAFlowMode('flowVsPrice', true)).toBe('flowVsPrice')
 		expect(parseRWAFlowMode('flowVsPrice', false)).toBe('daily')
 		expect(parseRWAFlowMode('unknown', true)).toBe('daily')
 	})
 
-	it('sorts daily flows, normalizes timestamps, and keeps inflows separate from outflows', () => {
+	it('parses every asset flow grouping and defaults unknown values to daily', () => {
+		expect(parseRWAFlowGrouping('weekly')).toBe('weekly')
+		expect(parseRWAFlowGrouping('monthly')).toBe('monthly')
+		expect(parseRWAFlowGrouping('quarterly')).toBe('quarterly')
+		expect(parseRWAFlowGrouping('yearly')).toBe('yearly')
+		expect(parseRWAFlowGrouping('cumulative')).toBe('cumulative')
+		expect(parseRWAFlowGrouping('flowVsPrice')).toBe('daily')
+	})
+
+	it('parses and serializes the flow overlay query without legacy state', () => {
+		expect(parseRWAFlowOverlayMetrics([])).toEqual(['onChainMcap'])
+		expect(parseRWAFlowOverlayMetrics(['none'])).toEqual([])
+		expect(parseRWAFlowOverlayMetrics(['activeMcap', 'defiActiveTvl'])).toEqual(['activeMcap', 'defiActiveTvl'])
+		expect(getRWAFlowOverlayQueryValue([])).toBe('none')
+		expect(getRWAFlowOverlayQueryValue(['onChainMcap'])).toBeUndefined()
+		expect(getRWAFlowOverlayQueryValue(['activeMcap', 'defiActiveTvl'])).toEqual(['activeMcap', 'defiActiveTvl'])
+	})
+
+	it('sorts daily flows and renders every selected level overlay on the secondary axis', () => {
 		const jan1 = day(2026, 0, 1)
 		const jan2 = day(2026, 0, 2)
-		const mcapByTimestamp = new Map([
+		const onChainMcap = new Map([
 			[jan1, 100],
 			[jan2, 90]
+		])
+		const activeMcap = new Map([
+			[jan1, 80],
+			[jan2, 70]
+		])
+		const defiActiveTvl = new Map([
+			[jan1, 20],
+			[jan2, 25]
 		])
 
 		const chart = buildRWAFlowChart({
 			points: [aggregatePoint(jan2 / 1e3, -4), aggregatePoint(jan1 / 1e3, 6)],
-			mode: 'daily',
-			mcapByTimestamp
+			selection: {
+				view: 'netFlows',
+				groupBy: 'daily',
+				overlays: [
+					{ metric: 'onChainMcap', values: onChainMcap },
+					{ metric: 'activeMcap', values: activeMcap },
+					{ metric: 'defiActiveTvl', values: defiActiveTvl }
+				]
+			}
 		})
 
 		expect(chart.dataset.source).toEqual([
-			{ timestamp: jan1, Inflows: 6, Outflows: null, 'Onchain Mcap': 100 },
-			{ timestamp: jan2, Inflows: null, Outflows: -4, 'Onchain Mcap': 90 }
+			{
+				timestamp: jan1,
+				Inflows: 6,
+				Outflows: null,
+				'Onchain Mcap': 100,
+				'Active Mcap': 80,
+				'DeFi Active TVL': 20
+			},
+			{
+				timestamp: jan2,
+				Inflows: null,
+				Outflows: -4,
+				'Onchain Mcap': 90,
+				'Active Mcap': 70,
+				'DeFi Active TVL': 25
+			}
 		])
+		expect(chart.charts).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ name: 'Onchain Mcap', yAxisIndex: 1 }),
+				expect.objectContaining({ name: 'Active Mcap', yAxisIndex: 1 }),
+				expect.objectContaining({ name: 'DeFi Active TVL', yAxisIndex: 1 })
+			])
+		)
 	})
 
-	it('uses independent flow and marketcap axes', () => {
-		const chartOptions = getRWAFlowChartOptions({ showMcapOverlay: true })
-		if (!Array.isArray(chartOptions.yAxis)) throw new Error('Expected separate flow and marketcap axes')
-		expect(chartOptions.yAxis).toHaveLength(2)
-		expect(chartOptions.yAxis[1]).toMatchObject({ min: 0 })
+	it('groups measured flows by calendar period while keeping an unknown period blank', () => {
+		const jan1 = day(2026, 0, 1)
+		const jan2 = day(2026, 0, 2)
+		const jan31 = day(2026, 0, 31)
+		const feb1 = day(2026, 1, 1)
+		const mcapByTimestamp = new Map([
+			[jan1, 100],
+			[jan2, 105],
+			[jan31, 110],
+			[feb1, 120]
+		])
+
+		const chart = buildRWAFlowChart({
+			points: [
+				aggregatePoint(jan1, 5),
+				aggregatePoint(jan2, null, 0),
+				aggregatePoint(jan31, -2),
+				aggregatePoint(feb1, null, 0)
+			],
+			selection: {
+				view: 'netFlows',
+				groupBy: 'monthly',
+				overlays: [{ metric: 'onChainMcap', values: mcapByTimestamp }]
+			}
+		})
+
+		expect(chart.dataset.source).toEqual([
+			{ timestamp: jan1, Inflows: 3, Outflows: null, 'Onchain Mcap': 110 },
+			{ timestamp: feb1, Inflows: null, Outflows: null, 'Onchain Mcap': 120 }
+		])
 	})
 
 	it('defaults an overview flow chart to the trailing requested number of days', () => {
@@ -72,8 +157,7 @@ describe('RWA flow chart data', () => {
 		const jan3 = day(2026, 0, 3)
 		const chart = buildRWAFlowChart({
 			points: [aggregatePoint(jan3, -3), aggregatePoint(jan1, 10), aggregatePoint(jan2, null)],
-			mode: 'cumulative',
-			showMcapOverlay: false
+			selection: { view: 'netFlows', groupBy: 'cumulative', overlays: [] }
 		})
 
 		expect(chart.dataset.source).toEqual([
@@ -95,12 +179,40 @@ describe('RWA flow chart data', () => {
 			[day(2026, 1, 28), 160]
 		])
 
-		expect(getRWAFlowVsPriceSummary(points, mcapByTimestamp)).toEqual({
+		expect(getRWAFlowVsPriceSummary(points, 'monthly', mcapByTimestamp)).toEqual({
 			mcapChange: 50,
 			netCapital: 20,
 			price: 30,
 			flowDrivenPct: 40
 		})
+	})
+
+	it('decomposes flow versus price at the selected calendar grouping', () => {
+		const jan1 = day(2026, 0, 1)
+		const jan2 = day(2026, 0, 2)
+		const points = [aggregatePoint(jan1, 10), aggregatePoint(jan2, 20)]
+		const mcapByTimestamp = new Map([
+			[jan1, 100],
+			[jan2, 130]
+		])
+
+		const daily = buildRWAFlowChart({
+			points,
+			selection: { view: 'flowVsPrice', groupBy: 'daily', mcapByTimestamp }
+		})
+		const monthly = buildRWAFlowChart({
+			points,
+			selection: { view: 'flowVsPrice', groupBy: 'monthly', mcapByTimestamp }
+		})
+
+		expect(daily.dataset.source[1]).toEqual({
+			timestamp: jan2,
+			'Net Capital Inflows': 20,
+			'Net Capital Outflows': null,
+			'Price & Unattributed': 10,
+			'Delta Onchain Mcap': 30
+		})
+		expect(monthly.dataset.source).toHaveLength(1)
 	})
 
 	it('sums rotation series by month without treating an absent series as zero', () => {
@@ -117,6 +229,46 @@ describe('RWA flow chart data', () => {
 			source: [
 				{ timestamp: day(2026, 0, 1), Bonds: 7, Credit: -3 },
 				{ timestamp: day(2026, 1, 1), Bonds: 4, Credit: null }
+			]
+		})
+	})
+
+	it('supports daily and yearly net-flow breakdowns', () => {
+		const jan5 = day(2026, 0, 5)
+		const dec5 = day(2026, 11, 5)
+		const points: IRWAFlowOverviewSplitPoint[] = [
+			{ timestamp: jan5 / 1e3, Bonds: 10 },
+			{ timestamp: dec5 / 1e3, Bonds: -3 }
+		]
+
+		expect(buildRWAFlowRotationChart(points, 'daily').dataset.source).toEqual([
+			{ timestamp: jan5, Bonds: 10 },
+			{ timestamp: dec5, Bonds: -3 }
+		])
+		expect(buildRWAFlowRotationChart(points, 'yearly').dataset.source).toEqual([
+			{ timestamp: day(2026, 0, 1), Bonds: 7 }
+		])
+	})
+
+	it('carries each cumulative net-flow breakdown across missing observations', () => {
+		const jan1 = day(2026, 0, 1)
+		const jan2 = day(2026, 0, 2)
+		const jan3 = day(2026, 0, 3)
+		const chart = buildRWAFlowRotationChart(
+			[
+				{ timestamp: jan1 / 1e3, Bonds: 10, Credit: 5 },
+				{ timestamp: jan2 / 1e3, Credit: -2 },
+				{ timestamp: jan3 / 1e3, Bonds: -4 }
+			],
+			'cumulative'
+		)
+
+		expect(chart.dataset).toEqual({
+			dimensions: ['timestamp', 'Bonds', 'Credit'],
+			source: [
+				{ timestamp: jan1, Bonds: 10, Credit: 5 },
+				{ timestamp: jan2, Bonds: 10, Credit: 3 },
+				{ timestamp: jan3, Bonds: 6, Credit: 3 }
 			]
 		})
 	})

@@ -1,5 +1,6 @@
 import type {
 	ChartTimeGrouping,
+	ChartTimeGroupingWithCumulative,
 	MultiSeriesChart2Dataset,
 	MultiSeriesChart2SeriesConfig
 } from '~/components/ECharts/types'
@@ -12,20 +13,79 @@ import type {
 	IRWAFlowAggregatePoint,
 	IRWAFlowAssetBreakdownRow,
 	IRWAFlowOverviewSplitPoint,
-	IRWAFlowPoint
+	IRWAFlowPoint,
+	RWAChartMetricKey
 } from './api.types'
 import { normalizeRwaAssetGroup } from './assetGroup'
 import { definitions } from './definitions'
 import { getPrimaryRwaCategory, getRwaPlatforms, UNKNOWN_PLATFORM } from './grouping'
 
-export type RWAFlowChartMode = 'daily' | 'cumulative' | 'flowVsPrice'
+export type RWAFlowGrouping = ChartTimeGroupingWithCumulative
+export type RWAFlowChartMode = RWAFlowGrouping | 'flowVsPrice'
+export type RWAFlowOverlayMetric = RWAChartMetricKey
+type RWAFlowOverlayValues = ReadonlyMap<number, number | null>
+export type RWAFlowOverlay =
+	| { metric: RWAFlowOverlayMetric; values: RWAFlowOverlayValues }
+	| { metric: 'onChainMcap'; values: null }
+export type RWAFlowChartSelection =
+	| { view: 'netFlows'; groupBy: RWAFlowGrouping; overlays: readonly RWAFlowOverlay[] }
+	| { view: 'flowVsPrice'; groupBy: ChartTimeGrouping; mcapByTimestamp: RWAFlowOverlayValues | null }
 export type RWAFlowRotationFrequency = Extract<ChartTimeGrouping, 'weekly' | 'monthly'>
 
+export const RWA_FLOW_OVERLAY_OPTIONS = [
+	{
+		key: 'onChainMcap' as const,
+		name: definitions.flows.onchainMcap.label,
+		help: definitions.flows.onchainMcap.description,
+		color: CHART_COLORS[0]
+	},
+	{
+		key: 'activeMcap' as const,
+		name: definitions.flows.activeMcap.label,
+		help: definitions.flows.activeMcap.description,
+		color: CHART_COLORS[4]
+	},
+	{
+		key: 'defiActiveTvl' as const,
+		name: definitions.flows.defiActiveTvl.label,
+		help: definitions.flows.defiActiveTvl.description,
+		color: CHART_COLORS[3]
+	}
+]
+
+export function parseRWAFlowOverlayMetrics(values: readonly string[]): RWAFlowOverlayMetric[] {
+	if (values.length === 0) return ['onChainMcap']
+	if (values.includes('none')) return []
+
+	const selected: RWAFlowOverlayMetric[] = []
+	for (const option of RWA_FLOW_OVERLAY_OPTIONS) {
+		if (values.includes(option.key)) selected.push(option.key)
+	}
+	return selected
+}
+
+export function getRWAFlowOverlayQueryValue(values: readonly string[]): string | string[] | undefined {
+	if (values.length === 0) return 'none'
+	const metrics = parseRWAFlowOverlayMetrics(values)
+	if (metrics.length === 1 && metrics[0] === 'onChainMcap') return undefined
+	return metrics.length > 0 ? metrics : 'none'
+}
+
 export const RWA_FLOW_MODE_OPTIONS = [
-	{ value: 'daily' as const, label: definitions.flows.daily.label, tooltip: definitions.flows.daily.description },
+	{
+		value: 'daily' as const,
+		label: 'D',
+		ariaLabel: definitions.flows.daily.label,
+		tooltip: definitions.flows.daily.description
+	},
+	{ value: 'weekly' as const, label: 'W', ariaLabel: 'Weekly', tooltip: 'Weekly' },
+	{ value: 'monthly' as const, label: 'M', ariaLabel: 'Monthly', tooltip: 'Monthly' },
+	{ value: 'quarterly' as const, label: 'Q', ariaLabel: 'Quarterly', tooltip: 'Quarterly' },
+	{ value: 'yearly' as const, label: 'Y', ariaLabel: 'Yearly', tooltip: 'Yearly' },
 	{
 		value: 'cumulative' as const,
-		label: definitions.flows.cumulative.label,
+		label: 'C',
+		ariaLabel: definitions.flows.cumulative.label,
 		tooltip: definitions.flows.cumulative.description
 	},
 	{
@@ -36,8 +96,20 @@ export const RWA_FLOW_MODE_OPTIONS = [
 ]
 
 export function parseRWAFlowMode(value: string | undefined, allowFlowVsPrice: boolean): RWAFlowChartMode {
-	if (value === 'cumulative') return value
 	if (allowFlowVsPrice && value === 'flowVsPrice') return value
+	return parseRWAFlowGrouping(value)
+}
+
+export function parseRWAFlowGrouping(value: string | undefined): RWAFlowGrouping {
+	if (
+		value === 'weekly' ||
+		value === 'monthly' ||
+		value === 'quarterly' ||
+		value === 'yearly' ||
+		value === 'cumulative'
+	) {
+		return value
+	}
 	return 'daily'
 }
 
@@ -46,7 +118,7 @@ export type RWAFlowSeriesPoint = IRWAFlowPoint | IRWAFlowAggregatePoint
 export type RWAFlowChart = {
 	dataset: MultiSeriesChart2Dataset
 	charts: MultiSeriesChart2SeriesConfig[]
-	groupBy: 'daily' | 'monthly'
+	groupBy: ChartTimeGrouping
 }
 
 export type RWAFlowVsPriceSummary = {
@@ -59,7 +131,7 @@ export type RWAFlowVsPriceSummary = {
 export type RWAFlowRotationChart = {
 	dataset: MultiSeriesChart2Dataset
 	charts: MultiSeriesChart2SeriesConfig[]
-	groupBy: RWAFlowRotationFrequency
+	groupBy: RWAFlowGrouping
 }
 
 export const RWA_FLOW_COLORS = {
@@ -137,7 +209,6 @@ export function buildRWAFilteredFlowBreakdown(
 const INFLOWS = definitions.flows.inflows.label
 const OUTFLOWS = definitions.flows.outflows.label
 const CUMULATIVE_FLOWS = definitions.flows.cumulativeLegend.label
-const ONCHAIN_MCAP = definitions.flows.onchainMcap.label
 const NET_CAPITAL_INFLOWS = definitions.flows.netCapitalInflows.label
 const NET_CAPITAL_OUTFLOWS = definitions.flows.netCapitalOutflows.label
 // mcapChange − measured net flows: price movement PLUS flows on uncovered days — not the token price.
@@ -148,7 +219,9 @@ const DAY_MS = 24 * 60 * 60 * 1000
 const RWA_FLOW_LEGEND_TOOLTIPS: Record<string, string> = {
 	[INFLOWS]: definitions.flows.inflows.description,
 	[OUTFLOWS]: definitions.flows.outflows.description,
-	[ONCHAIN_MCAP]: definitions.flows.onchainMcap.description,
+	[RWA_FLOW_OVERLAY_OPTIONS[0].name]: RWA_FLOW_OVERLAY_OPTIONS[0].help,
+	[RWA_FLOW_OVERLAY_OPTIONS[1].name]: RWA_FLOW_OVERLAY_OPTIONS[1].help,
+	[RWA_FLOW_OVERLAY_OPTIONS[2].name]: RWA_FLOW_OVERLAY_OPTIONS[2].help,
 	[CUMULATIVE_FLOWS]: definitions.flows.cumulativeLegend.description,
 	[NET_CAPITAL_INFLOWS]: definitions.flows.netCapitalInflows.description,
 	[NET_CAPITAL_OUTFLOWS]: definitions.flows.netCapitalOutflows.description,
@@ -156,7 +229,7 @@ const RWA_FLOW_LEGEND_TOOLTIPS: Record<string, string> = {
 	[MCAP_CHANGE]: definitions.flows.deltaMcapLegend.description
 }
 
-type FlowMonth = {
+type FlowPeriod = {
 	timestamp: number
 	flow: number
 	hasFlow: boolean
@@ -173,12 +246,87 @@ function getSortedFlowPoints(points: readonly RWAFlowSeriesPoint[]): RWAFlowSeri
 	return [...points].sort((a, b) => a.timestamp - b.timestamp)
 }
 
+function getRWAFlowOverlayOption(metric: RWAFlowOverlayMetric) {
+	switch (metric) {
+		case 'onChainMcap':
+			return RWA_FLOW_OVERLAY_OPTIONS[0]
+		case 'activeMcap':
+			return RWA_FLOW_OVERLAY_OPTIONS[1]
+		case 'defiActiveTvl':
+			return RWA_FLOW_OVERLAY_OPTIONS[2]
+	}
+}
+
+function getRWAFlowOverlayValue(point: RWAFlowSeriesPoint, overlay: RWAFlowOverlay): number | null {
+	if (overlay.values === null) return getFlowMcap(point)
+	return overlay.values.get(point.timestamp) ?? overlay.values.get(toUnixMsTimestamp(point.timestamp)) ?? null
+}
+
+function getRWAFlowOverlayDimensions(overlays: readonly RWAFlowOverlay[]): string[] {
+	return overlays.map((overlay) => getRWAFlowOverlayOption(overlay.metric).name)
+}
+
+function buildRWAFlowOverlayCharts(overlays: readonly RWAFlowOverlay[]): MultiSeriesChart2SeriesConfig[] {
+	return overlays.map((overlay) => {
+		const option = getRWAFlowOverlayOption(overlay.metric)
+		return {
+			type: 'line',
+			name: option.name,
+			encode: { x: 'timestamp', y: option.name },
+			color: option.color,
+			yAxisIndex: 1,
+			hideAreaStyle: true
+		}
+	})
+}
+
+function groupRWAFlowOverlays(
+	points: readonly RWAFlowSeriesPoint[],
+	groupBy: Exclude<ChartTimeGrouping, 'daily'>,
+	overlays: readonly RWAFlowOverlay[]
+): RWAFlowOverlay[] {
+	const groupedValues = overlays.map(() => new Map<number, number | null>())
+	for (const point of getSortedFlowPoints(points)) {
+		const timestamp = getBucketTimestampMs(toUnixMsTimestamp(point.timestamp), groupBy)
+		for (let index = 0; index < overlays.length; index++) {
+			const value = getRWAFlowOverlayValue(point, overlays[index])
+			if (value != null) groupedValues[index].set(timestamp, value)
+		}
+	}
+	return overlays.map((overlay, index) => ({ metric: overlay.metric, values: groupedValues[index] }))
+}
+
+function buildFlowPeriods(
+	points: readonly RWAFlowSeriesPoint[],
+	groupBy: ChartTimeGrouping,
+	mcapByTimestamp?: ReadonlyMap<number, number | null>
+): FlowPeriod[] {
+	const periods = new Map<number, FlowPeriod>()
+
+	for (const point of getSortedFlowPoints(points)) {
+		const timestamp = getBucketTimestampMs(toUnixMsTimestamp(point.timestamp), groupBy)
+		let period = periods.get(timestamp)
+		if (!period) {
+			period = { timestamp, flow: 0, hasFlow: false, mcap: null }
+			periods.set(timestamp, period)
+		}
+		if (point.netFlowUsd != null) {
+			period.flow += point.netFlowUsd
+			period.hasFlow = true
+		}
+		const mcap = getFlowMcap(point, mcapByTimestamp)
+		if (mcap != null) period.mcap = mcap
+	}
+
+	return Array.from(periods.values())
+}
+
 export function getRWAFlowChartOptions({
-	showMcapOverlay = false,
+	hasOverlayAxis = false,
 	defaultStartTimestamp,
 	legendTooltips = false
 }: {
-	showMcapOverlay?: boolean
+	hasOverlayAxis?: boolean
 	defaultStartTimestamp?: number
 	legendTooltips?: boolean
 } = {}) {
@@ -188,7 +336,7 @@ export function getRWAFlowChartOptions({
 	}
 
 	return {
-		yAxis: showMcapOverlay ? [flowAxis, { min: 0 }] : flowAxis,
+		yAxis: hasOverlayAxis ? [flowAxis, { min: 0, alignTicks: false }] : flowAxis,
 		...(legendTooltips
 			? {
 					legend: {
@@ -218,27 +366,27 @@ export function getRWAFlowDefaultStartTimestamp(
 	return latestTimestamp > 0 ? latestTimestamp - defaultRangeDays * DAY_MS : undefined
 }
 
-function buildDailyFlowChart(
-	points: readonly RWAFlowSeriesPoint[],
-	showMcapOverlay: boolean,
-	mcapByTimestamp?: ReadonlyMap<number, number | null>
-): RWAFlowChart {
+function buildDailyFlowChart(points: readonly RWAFlowSeriesPoint[], overlays: readonly RWAFlowOverlay[]): RWAFlowChart {
 	const source: MultiSeriesChart2Dataset['source'] = []
+	const overlayDimensions = getRWAFlowOverlayDimensions(overlays)
 
 	for (const point of getSortedFlowPoints(points)) {
 		const flow = point.netFlowUsd
-		source.push({
+		const row: MultiSeriesChart2Dataset['source'][number] = {
 			timestamp: toUnixMsTimestamp(point.timestamp),
 			[INFLOWS]: flow != null && flow >= 0 ? flow : null,
-			[OUTFLOWS]: flow != null && flow < 0 ? flow : null,
-			...(showMcapOverlay ? { [ONCHAIN_MCAP]: getFlowMcap(point, mcapByTimestamp) } : {})
-		})
+			[OUTFLOWS]: flow != null && flow < 0 ? flow : null
+		}
+		for (let index = 0; index < overlays.length; index++) {
+			row[overlayDimensions[index]] = getRWAFlowOverlayValue(point, overlays[index])
+		}
+		source.push(row)
 	}
 
 	return {
 		dataset: {
 			source,
-			dimensions: ['timestamp', INFLOWS, OUTFLOWS, ...(showMcapOverlay ? [ONCHAIN_MCAP] : [])]
+			dimensions: ['timestamp', INFLOWS, OUTFLOWS, ...overlayDimensions]
 		},
 		charts: [
 			{
@@ -257,18 +405,7 @@ function buildDailyFlowChart(
 				color: RWA_FLOW_COLORS.outflow,
 				barMaxWidth: 16
 			},
-			...(showMcapOverlay
-				? [
-						{
-							type: 'line' as const,
-							name: ONCHAIN_MCAP,
-							encode: { x: 'timestamp', y: ONCHAIN_MCAP },
-							color: RWA_FLOW_COLORS.level,
-							yAxisIndex: 1,
-							hideAreaStyle: true
-						}
-					]
-				: [])
+			...buildRWAFlowOverlayCharts(overlays)
 		],
 		groupBy: 'daily'
 	}
@@ -276,25 +413,28 @@ function buildDailyFlowChart(
 
 function buildCumulativeFlowChart(
 	points: readonly RWAFlowSeriesPoint[],
-	showMcapOverlay: boolean,
-	mcapByTimestamp?: ReadonlyMap<number, number | null>
+	overlays: readonly RWAFlowOverlay[]
 ): RWAFlowChart {
 	const source: MultiSeriesChart2Dataset['source'] = []
+	const overlayDimensions = getRWAFlowOverlayDimensions(overlays)
 	let cumulativeFlow: number | null = null
 
 	for (const point of getSortedFlowPoints(points)) {
 		if (point.netFlowUsd != null) cumulativeFlow = (cumulativeFlow ?? 0) + point.netFlowUsd
-		source.push({
+		const row: MultiSeriesChart2Dataset['source'][number] = {
 			timestamp: toUnixMsTimestamp(point.timestamp),
-			[CUMULATIVE_FLOWS]: cumulativeFlow,
-			...(showMcapOverlay ? { [ONCHAIN_MCAP]: getFlowMcap(point, mcapByTimestamp) } : {})
-		})
+			[CUMULATIVE_FLOWS]: cumulativeFlow
+		}
+		for (let index = 0; index < overlays.length; index++) {
+			row[overlayDimensions[index]] = getRWAFlowOverlayValue(point, overlays[index])
+		}
+		source.push(row)
 	}
 
 	return {
 		dataset: {
 			source,
-			dimensions: ['timestamp', CUMULATIVE_FLOWS, ...(showMcapOverlay ? [ONCHAIN_MCAP] : [])]
+			dimensions: ['timestamp', CUMULATIVE_FLOWS, ...overlayDimensions]
 		},
 		charts: [
 			{
@@ -304,58 +444,52 @@ function buildCumulativeFlowChart(
 				color: RWA_FLOW_COLORS.cumulative,
 				hideAreaStyle: true
 			},
-			...(showMcapOverlay
-				? [
-						{
-							type: 'line' as const,
-							name: ONCHAIN_MCAP,
-							encode: { x: 'timestamp', y: ONCHAIN_MCAP },
-							color: RWA_FLOW_COLORS.level,
-							yAxisIndex: 1,
-							hideAreaStyle: true
-						}
-					]
-				: [])
+			...buildRWAFlowOverlayCharts(overlays)
 		],
 		groupBy: 'daily'
 	}
 }
 
-function buildFlowVsPriceChart(
+function buildGroupedFlowChart(
 	points: readonly RWAFlowSeriesPoint[],
-	mcapByTimestamp?: ReadonlyMap<number, number | null>
+	groupBy: Exclude<ChartTimeGrouping, 'daily'>,
+	overlays: readonly RWAFlowOverlay[]
 ): RWAFlowChart {
-	const months = new Map<number, FlowMonth>()
+	const groupedPoints: IRWAFlowAggregatePoint[] = []
 
-	for (const point of getSortedFlowPoints(points)) {
-		const timestamp = getBucketTimestampMs(toUnixMsTimestamp(point.timestamp), 'monthly')
-		let month = months.get(timestamp)
-		if (!month) {
-			month = { timestamp, flow: 0, hasFlow: false, mcap: null }
-			months.set(timestamp, month)
-		}
-		if (point.netFlowUsd != null) {
-			month.flow += point.netFlowUsd
-			month.hasFlow = true
-		}
-		const mcap = getFlowMcap(point, mcapByTimestamp)
-		if (mcap != null) month.mcap = mcap
+	for (const period of buildFlowPeriods(points, groupBy)) {
+		groupedPoints.push({
+			timestamp: period.timestamp,
+			netFlowUsd: period.hasFlow ? period.flow : null,
+			coverage: period.hasFlow ? 1 : 0
+		})
 	}
 
+	return {
+		...buildDailyFlowChart(groupedPoints, groupRWAFlowOverlays(points, groupBy, overlays)),
+		groupBy
+	}
+}
+
+function buildFlowVsPriceChart(
+	points: readonly RWAFlowSeriesPoint[],
+	groupBy: ChartTimeGrouping,
+	mcapByTimestamp?: ReadonlyMap<number, number | null>
+): RWAFlowChart {
 	const source: MultiSeriesChart2Dataset['source'] = []
 	let previousMcap: number | null = null
-	for (const month of months.values()) {
-		const mcapChange = previousMcap != null && month.mcap != null ? month.mcap - previousMcap : null
-		const netCapital = mcapChange != null && month.hasFlow ? month.flow : null
+	for (const period of buildFlowPeriods(points, groupBy, mcapByTimestamp)) {
+		const mcapChange = previousMcap != null && period.mcap != null ? period.mcap - previousMcap : null
+		const netCapital = mcapChange != null && period.hasFlow ? period.flow : null
 		const price = netCapital != null && mcapChange != null ? mcapChange - netCapital : null
 		source.push({
-			timestamp: month.timestamp,
+			timestamp: period.timestamp,
 			[NET_CAPITAL_INFLOWS]: netCapital != null && netCapital >= 0 ? netCapital : null,
 			[NET_CAPITAL_OUTFLOWS]: netCapital != null && netCapital < 0 ? netCapital : null,
 			[PRICE]: price,
 			[MCAP_CHANGE]: mcapChange
 		})
-		if (month.mcap != null) previousMcap = month.mcap
+		if (period.mcap != null) previousMcap = period.mcap
 	}
 
 	return {
@@ -393,31 +527,33 @@ function buildFlowVsPriceChart(
 				hideAreaStyle: true
 			}
 		],
-		groupBy: 'monthly'
+		groupBy
 	}
 }
 
 export function buildRWAFlowChart({
 	points,
-	mode,
-	showMcapOverlay = true,
-	mcapByTimestamp
+	selection
 }: {
 	points: readonly RWAFlowSeriesPoint[]
-	mode: RWAFlowChartMode
-	showMcapOverlay?: boolean
-	mcapByTimestamp?: ReadonlyMap<number, number | null>
+	selection: RWAFlowChartSelection
 }): RWAFlowChart {
-	if (mode === 'cumulative') return buildCumulativeFlowChart(points, showMcapOverlay, mcapByTimestamp)
-	if (mode === 'flowVsPrice') return buildFlowVsPriceChart(points, mcapByTimestamp)
-	return buildDailyFlowChart(points, showMcapOverlay, mcapByTimestamp)
+	if (selection.view === 'flowVsPrice') {
+		return buildFlowVsPriceChart(points, selection.groupBy, selection.mcapByTimestamp ?? undefined)
+	}
+	if (selection.groupBy === 'cumulative') {
+		return buildCumulativeFlowChart(points, selection.overlays)
+	}
+	if (selection.groupBy === 'daily') return buildDailyFlowChart(points, selection.overlays)
+	return buildGroupedFlowChart(points, selection.groupBy, selection.overlays)
 }
 
 export function getRWAFlowVsPriceSummary(
 	points: readonly RWAFlowSeriesPoint[],
+	groupBy: ChartTimeGrouping,
 	mcapByTimestamp?: ReadonlyMap<number, number | null>
 ): RWAFlowVsPriceSummary | null {
-	const chart = buildFlowVsPriceChart(points, mcapByTimestamp)
+	const chart = buildFlowVsPriceChart(points, groupBy, mcapByTimestamp)
 	let mcapChange = 0
 	let netCapital = 0
 	let price = 0
@@ -447,7 +583,7 @@ export function getRWAFlowVsPriceSummary(
 
 export function buildRWAFlowRotationChart(
 	points: readonly IRWAFlowOverviewSplitPoint[],
-	groupBy: RWAFlowRotationFrequency
+	groupBy: RWAFlowGrouping
 ): RWAFlowRotationChart {
 	const seriesNames = new Set<string>()
 	let latestTimestamp = 0
@@ -465,7 +601,7 @@ export function buildRWAFlowRotationChart(
 	const buckets = new Map<number, Record<string, number>>()
 	for (const point of [...points].sort((a, b) => toUnixMsTimestamp(a.timestamp) - toUnixMsTimestamp(b.timestamp))) {
 		const pointTimestamp = toUnixMsTimestamp(point.timestamp)
-		const bucketTimestamp = getBucketTimestampMs(pointTimestamp, groupBy)
+		const bucketTimestamp = getBucketTimestampMs(pointTimestamp, groupBy === 'cumulative' ? 'daily' : groupBy)
 		let bucket = buckets.get(bucketTimestamp)
 		if (!bucket) {
 			bucket = {}
@@ -488,21 +624,28 @@ export function buildRWAFlowRotationChart(
 	})
 
 	const source: MultiSeriesChart2Dataset['source'] = []
+	const cumulativeFlow = new Map<string, number>()
 	for (const [timestamp, bucket] of buckets) {
 		const row: MultiSeriesChart2Dataset['source'][number] = { timestamp }
-		for (const seriesName of orderedSeriesNames) row[seriesName] = bucket[seriesName] ?? null
+		for (const seriesName of orderedSeriesNames) {
+			const value = bucket[seriesName]
+			if (groupBy === 'cumulative' && value != null) {
+				cumulativeFlow.set(seriesName, (cumulativeFlow.get(seriesName) ?? 0) + value)
+			}
+			row[seriesName] = groupBy === 'cumulative' ? (cumulativeFlow.get(seriesName) ?? null) : (value ?? null)
+		}
 		source.push(row)
 	}
 
 	return {
 		dataset: { source, dimensions: ['timestamp', ...orderedSeriesNames] },
 		charts: orderedSeriesNames.map((name, index) => ({
-			type: 'bar',
+			type: groupBy === 'cumulative' ? 'line' : 'bar',
 			name,
-			stack: 'capital-rotation',
+			...(groupBy === 'cumulative' ? { hideAreaStyle: true } : { stack: 'capital-rotation' }),
 			encode: { x: 'timestamp', y: name },
 			color: CHART_COLORS[index % CHART_COLORS.length],
-			barMaxWidth: 24
+			...(groupBy === 'cumulative' ? {} : { barMaxWidth: 24 })
 		})),
 		groupBy
 	}

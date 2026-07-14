@@ -3,6 +3,12 @@ import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { CopyHelper } from '~/components/Copy'
+import {
+	ChartGroupingSelector,
+	DWMC_GROUPING_OPTIONS_LOWERCASE,
+	DWM_GROUPING_OPTIONS_LOWERCASE
+} from '~/components/ECharts/ChartGroupingSelector'
+import type { ChartTimeGrouping } from '~/components/ECharts/types'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
@@ -27,14 +33,7 @@ import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IRWAAssetData, IRWAAssetFlowSummary } from './api.types'
 import { definitions } from './definitions'
 import { RWAFlowCoverageTag, RWAFlowSummaryTooltip, RWAFlowVsPriceStrip } from './FlowPanelParts'
-import {
-	formatSignedRWAFlow,
-	getRWAFlowTextClass,
-	getRWAFlowVsPriceSummary,
-	parseRWAFlowMode,
-	RWA_FLOW_MODE_OPTIONS,
-	type RWAFlowChartMode
-} from './flows'
+import { formatSignedRWAFlow, getRWAFlowTextClass, getRWAFlowVsPriceSummary, parseRWAFlowGrouping } from './flows'
 import { useRWAAssetFlows, useRWAFlowSummary } from './flows.hooks'
 import { getRwaPlatforms } from './grouping'
 import { rwaSlug } from './rwaSlug'
@@ -44,7 +43,7 @@ const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesCha
 const RWAFlowsChart = lazy(() => import('./FlowsChart').then((module) => ({ default: module.RWAFlowsChart })))
 const assetHeaderLinkButtonStyles = buttonStyles({ variant: 'secondary', size: 'md' })
 
-type AssetChartMetric = 'marketData' | 'flows'
+type AssetChartMetric = 'marketData' | 'flows' | 'flowVsPrice'
 
 const ASSET_CHART_METRIC_OPTIONS = [
 	{ value: 'marketData' as const, label: 'Market data' },
@@ -52,6 +51,11 @@ const ASSET_CHART_METRIC_OPTIONS = [
 		value: 'flows' as const,
 		label: definitions.flows.assetNetFlows.label,
 		tooltip: definitions.flows.assetNetFlows.description
+	},
+	{
+		value: 'flowVsPrice' as const,
+		label: definitions.flows.flowVsPrice.label,
+		tooltip: definitions.flows.flowVsPrice.description
 	}
 ]
 
@@ -409,9 +413,18 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 	const router = useRouter()
 	const displayName = asset.assetName ?? asset.ticker ?? 'Unknown asset'
 	const keyBase = asset.ticker ?? asset.assetName ?? 'asset'
+	const chartTypeQuery = readSingleQueryValue(router.query.chartType)
+	const flowModeQuery = readSingleQueryValue(router.query.flowMode)
+	const isLegacyFlowVsPrice = chartTypeQuery === 'flows' && flowModeQuery === 'flowVsPrice'
 	const chartMetric: AssetChartMetric =
-		readSingleQueryValue(router.query.chartType) === 'flows' ? 'flows' : 'marketData'
-	const flowMode = parseRWAFlowMode(readSingleQueryValue(router.query.flowMode), true)
+		chartTypeQuery === 'flowVsPrice' || isLegacyFlowVsPrice
+			? 'flowVsPrice'
+			: chartTypeQuery === 'flows'
+				? 'flows'
+				: 'marketData'
+	const flowGroupBy = isLegacyFlowVsPrice ? 'monthly' : parseRWAFlowGrouping(flowModeQuery)
+	const flowVsPriceGroupBy: ChartTimeGrouping = flowGroupBy === 'cumulative' ? 'daily' : flowGroupBy
+	const isFlowChart = chartMetric !== 'marketData'
 	const showMcapOverlay = readSingleQueryValue(router.query.flowOverlay) !== 'false'
 	const attestationFrequency = Array.isArray(asset.attestationFrequency)
 		? asset.attestationFrequency.length > 0
@@ -435,16 +448,14 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 	const { chartInstance: nativeYieldChartInstance, handleChartReady: onNativeYieldChartReady } = useGetChartInstance()
 	const { chartInstance: assetChartInstance, handleChartReady: onAssetChartReady } = useGetChartInstance()
 	const { data: flowSummary } = useRWAFlowSummary()
-	const {
-		data: assetFlows,
-		isLoading: isLoadingFlows,
-		error: flowError
-	} = useRWAAssetFlows(asset.id, chartMetric === 'flows')
+	const { data: assetFlows, isLoading: isLoadingFlows, error: flowError } = useRWAAssetFlows(asset.id, isFlowChart)
 
 	const nativeYieldExportFilename = `${asset.ticker ?? asset.assetName ?? 'asset'}-native-yield`
 	const nativeYieldExportTitle = `${asset.ticker ?? asset.assetName ?? 'Asset'} Native Yield`
-	const assetChartExportFilename = `${asset.ticker ?? asset.assetName ?? 'asset'}-${chartMetric === 'flows' ? 'flows' : 'market-data'}`
-	const assetChartExportTitle = `${asset.ticker ?? asset.assetName ?? 'Asset'} ${chartMetric === 'flows' ? 'Net Flows' : 'Market Data'}`
+	const assetChartLabel =
+		chartMetric === 'flows' ? 'Net Flows' : chartMetric === 'flowVsPrice' ? 'Flow vs Price' : 'Market Data'
+	const assetChartExportFilename = `${asset.ticker ?? asset.assetName ?? 'asset'}-${chartMetric === 'flows' ? 'flows' : chartMetric === 'flowVsPrice' ? 'flow-vs-price' : 'market-data'}`
+	const assetChartExportTitle = `${asset.ticker ?? asset.assetName ?? 'Asset'} ${assetChartLabel}`
 	const flowSummaryKey = asset.canonicalMarketId ?? asset.slug
 	const flow7d = flowSummary?.windows['7d'].asset[flowSummaryKey]
 	const flow30d = flowSummary?.windows['30d'].asset[flowSummaryKey]
@@ -479,8 +490,8 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 			? BASE_TIME_SERIES_CHARTS.filter((chart) => chartDimensions.includes(String(chart.encode.y)))
 			: BASE_TIME_SERIES_CHARTS
 	const flowVsPriceSummary = useMemo(
-		() => (assetFlows ? getRWAFlowVsPriceSummary(assetFlows.data) : null),
-		[assetFlows]
+		() => (assetFlows ? getRWAFlowVsPriceSummary(assetFlows.data, flowVsPriceGroupBy) : null),
+		[assetFlows, flowVsPriceGroupBy]
 	)
 
 	const attestationLinks = asset.attestationLinks ?? []
@@ -501,9 +512,11 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							<SegmentedControl<AssetChartMetric>
 								value={chartMetric}
 								onValueChange={(nextMetric) => {
+									const nextGroupBy =
+										nextMetric === 'flowVsPrice' && flowGroupBy === 'cumulative' ? 'daily' : flowGroupBy
 									void pushShallowQuery(router, {
-										chartType: nextMetric === 'flows' ? 'flows' : undefined,
-										flowMode: nextMetric === 'flows' && flowMode !== 'daily' ? flowMode : undefined,
+										chartType: nextMetric === 'marketData' ? undefined : nextMetric,
+										flowMode: nextMetric !== 'marketData' && nextGroupBy !== 'daily' ? nextGroupBy : undefined,
 										flowOverlay: nextMetric === 'flows' && !showMcapOverlay ? 'false' : undefined
 									})
 								}}
@@ -514,18 +527,29 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 								className="mr-auto"
 							/>
 							{chartMetric === 'flows' ? (
-								<SegmentedControl<RWAFlowChartMode>
-									value={flowMode}
-									onValueChange={(nextFlowMode) => {
-										void pushShallowQuery(router, { flowMode: nextFlowMode === 'daily' ? undefined : nextFlowMode })
+								<ChartGroupingSelector
+									value={flowGroupBy}
+									onValueChange={(nextGroupBy) => {
+										void pushShallowQuery(router, {
+											flowMode: nextGroupBy === 'daily' ? undefined : nextGroupBy
+										})
 									}}
-									options={RWA_FLOW_MODE_OPTIONS}
-									label="Flow view"
-									variant="default"
-									size="md"
+									options={DWMC_GROUPING_OPTIONS_LOWERCASE}
+								/>
+							) : chartMetric === 'flowVsPrice' ? (
+								<ChartGroupingSelector
+									value={flowVsPriceGroupBy}
+									onValueChange={(nextGroupBy) => {
+										void pushShallowQuery(router, {
+											chartType: 'flowVsPrice',
+											flowMode: nextGroupBy === 'daily' ? undefined : nextGroupBy,
+											flowOverlay: undefined
+										})
+									}}
+									options={DWM_GROUPING_OPTIONS_LOWERCASE}
 								/>
 							) : null}
-							{chartMetric === 'flows' && flowMode !== 'flowVsPrice' ? (
+							{chartMetric === 'flows' ? (
 								<Switch
 									label={definitions.flows.marketcapOverlay.label}
 									help={definitions.flows.marketcapOverlay.description}
@@ -536,17 +560,17 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 									}}
 								/>
 							) : null}
-							{chartMetric === 'flows' && flowCoverage != null ? <RWAFlowCoverageTag coverage={flowCoverage} /> : null}
+							{isFlowChart && flowCoverage != null ? <RWAFlowCoverageTag coverage={flowCoverage} /> : null}
 							<ChartExportButtons
 								chartInstance={assetChartInstance}
 								filename={assetChartExportFilename}
 								title={assetChartExportTitle}
 							/>
 						</ChartPanelToolbar>
-						{chartMetric === 'flows' && flowMode === 'flowVsPrice' && flowVsPriceSummary ? (
+						{chartMetric === 'flowVsPrice' && flowVsPriceSummary ? (
 							<RWAFlowVsPriceStrip summary={flowVsPriceSummary} coverage={flowCoverage} />
 						) : null}
-						{chartMetric === 'flows' ? (
+						{isFlowChart ? (
 							isLoadingFlows ? (
 								<ChartPanelBodyFallback role="status" aria-live="polite" className="gap-1 body-sm text-tertiary">
 									Loading
@@ -560,8 +584,15 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 								<Suspense fallback={<ChartPanelBodyFallback />}>
 									<RWAFlowsChart
 										points={assetFlows.data}
-										mode={flowMode}
-										showMcapOverlay={showMcapOverlay}
+										selection={
+											chartMetric === 'flowVsPrice'
+												? { view: 'flowVsPrice', groupBy: flowVsPriceGroupBy, mcapByTimestamp: null }
+												: {
+														view: 'netFlows',
+														groupBy: flowGroupBy,
+														overlays: showMcapOverlay ? [{ metric: 'onChainMcap', values: null }] : []
+													}
+										}
 										onReady={onAssetChartReady}
 									/>
 								</Suspense>

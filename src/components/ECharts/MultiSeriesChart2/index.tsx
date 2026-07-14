@@ -329,7 +329,7 @@ function buildMultiYAxis({
 		out.push({
 			...baseAxis,
 			position: isPrimary ? 'left' : 'right',
-			alignTicks: true,
+			alignTicks: baseAxis.alignTicks ?? true,
 			offset,
 			axisLine: {
 				...baseAxisLine,

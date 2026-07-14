@@ -2,7 +2,7 @@ import type * as echarts from 'echarts/core'
 import { useMemo } from 'react'
 import MultiSeriesChart2 from '~/components/ECharts/MultiSeriesChart2'
 import type { IRWAFlowOverviewSplitPoint } from './api.types'
-import { buildRWAFlowRotationChart, getRWAFlowChartOptions, type RWAFlowRotationFrequency } from './flows'
+import { buildRWAFlowRotationChart, getRWAFlowChartOptions, type RWAFlowGrouping } from './flows'
 
 export function RWAFlowRotationChart({
 	points,
@@ -10,7 +10,7 @@ export function RWAFlowRotationChart({
 	onReady
 }: {
 	points: IRWAFlowOverviewSplitPoint[]
-	groupBy: RWAFlowRotationFrequency
+	groupBy: RWAFlowGrouping
 	onReady?: (instance: echarts.ECharts | null) => void
 }) {
 	const chart = useMemo(() => buildRWAFlowRotationChart(points, groupBy), [points, groupBy])

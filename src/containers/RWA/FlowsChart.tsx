@@ -6,31 +6,24 @@ import {
 	buildRWAFlowChart,
 	getRWAFlowChartOptions,
 	getRWAFlowDefaultStartTimestamp,
-	type RWAFlowChartMode
+	type RWAFlowChartSelection
 } from './flows'
 
 export function RWAFlowsChart({
 	points,
-	mode,
-	showMcapOverlay,
-	mcapByTimestamp,
+	selection,
 	defaultRangeDays,
 	onReady
 }: {
 	points: Array<IRWAFlowPoint | IRWAFlowAggregatePoint>
-	mode: RWAFlowChartMode
-	showMcapOverlay: boolean
-	mcapByTimestamp?: ReadonlyMap<number, number | null>
+	selection: RWAFlowChartSelection
 	defaultRangeDays?: number
 	onReady?: (instance: echarts.ECharts | null) => void
 }) {
-	const chart = useMemo(
-		() => buildRWAFlowChart({ points, mode, showMcapOverlay, mcapByTimestamp }),
-		[points, mode, showMcapOverlay, mcapByTimestamp]
-	)
+	const chart = useMemo(() => buildRWAFlowChart({ points, selection }), [points, selection])
 	const hasSecondaryAxis = chart.charts.some((series) => series.yAxisIndex === 1)
 	const chartOptions = getRWAFlowChartOptions({
-		showMcapOverlay: hasSecondaryAxis,
+		hasOverlayAxis: hasSecondaryAxis,
 		defaultStartTimestamp: getRWAFlowDefaultStartTimestamp(points, defaultRangeDays),
 		legendTooltips: true
 	})
