@@ -28,12 +28,14 @@ describe('getDefaultRWAOverviewInclusion', () => {
 		})
 	})
 
-	it('enables stablecoins by default for APYX platform pages', () => {
-		expect(getDefaultRWAOverviewInclusion({ mode: 'platform', platformSlug: 'apyx' })).toEqual({
-			includeStablecoins: true,
-			includeGovernance: false,
-			includeRwaPerps: false
-		})
+	it('enables stablecoins by default for configured platform pages', () => {
+		for (const platformSlug of ['apyx', 'openeden']) {
+			expect(getDefaultRWAOverviewInclusion({ mode: 'platform', platformSlug })).toEqual({
+				includeStablecoins: true,
+				includeGovernance: false,
+				includeRwaPerps: false
+			})
+		}
 	})
 
 	it('enables governance by default for the Pact platform page', () => {

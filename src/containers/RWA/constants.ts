@@ -33,7 +33,8 @@ const STABLECOINS_DEFAULT_RWA_PATHS = new Set<RWAOverviewPath>([
 	'/rwa/category/other-rwas',
 	'/rwa/category/rwa-stablecoins',
 	'/rwa/category/rwa-yield-wrapper',
-	'/rwa/platform/apyx'
+	'/rwa/platform/apyx',
+	'/rwa/platform/openeden'
 ])
 const GOVERNANCE_DEFAULT_RWA_PATHS = new Set<RWAOverviewPath>([
 	'/rwa/category/other-rwas',
