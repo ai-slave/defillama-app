@@ -30,7 +30,6 @@ export type RWAFlowOverlay =
 export type RWAFlowChartSelection =
 	| { view: 'netFlows'; groupBy: RWAFlowGrouping; overlays: readonly RWAFlowOverlay[] }
 	| { view: 'flowVsPrice'; groupBy: ChartTimeGrouping; mcapByTimestamp: RWAFlowOverlayValues | null }
-export type RWAFlowRotationFrequency = Extract<ChartTimeGrouping, 'weekly' | 'monthly'>
 
 export const RWA_FLOW_OVERLAY_OPTIONS = [
 	{

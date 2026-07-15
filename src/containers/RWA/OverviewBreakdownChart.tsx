@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { ChartGroupingSelector, DWMC_GROUPING_OPTIONS_LOWERCASE } from '~/components/ECharts/ChartGroupingSelector'
 import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { type ExcludeQueryKey } from '~/components/Select/types'
@@ -23,7 +24,7 @@ import {
 } from './chartAggregation'
 import type { RWAChartDataset } from './chartDataset'
 import { definitions } from './definitions'
-import { buildRWAFlowRotationChart, type RWAFlowRotationFrequency } from './flows'
+import { buildRWAFlowRotationChart, parseRWAFlowGrouping, type RWAFlowGrouping } from './flows'
 import { useRWAFlowOverviewSplitWithFilters } from './flows.hooks'
 
 const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
@@ -42,13 +43,14 @@ const DEFAULT_CHART_TYPE: RWAChartMetricKey = 'activeMcap'
 const EMPTY_DATASET: RWAChartDataset = { source: [], dimensions: ['timestamp'] }
 const STACKS_QUERY_KEY = 'stacks'
 const EXCLUDE_STACKS_QUERY_KEY: ExcludeQueryKey = 'excludeStacks'
-const FLOW_FREQUENCY_OPTIONS: Array<{ value: RWAFlowRotationFrequency; label: string; tooltip: string }> = [
-	{ value: 'weekly', label: 'Weekly', tooltip: definitions.flows.rotationFrequency.description },
-	{ value: 'monthly', label: 'Monthly', tooltip: definitions.flows.rotationFrequency.description }
-]
-
 function assertNever(value: never): never {
 	throw new Error(`Unknown page kind: ${value}`)
+}
+
+function getOverviewBreakdownFlowGrouping(value: string | undefined): RWAFlowGrouping {
+	if (value == null) return 'monthly'
+	const grouping = parseRWAFlowGrouping(value)
+	return grouping === value ? grouping : 'monthly'
 }
 
 function isChartMetricKey(value: string): value is RWAChartMetricKey {
@@ -197,7 +199,7 @@ export function RWAOverviewBreakdownChart({
 				? chartTypeQuery
 				: DEFAULT_CHART_TYPE
 	const isFlowChart = chartType === 'flows'
-	const flowFrequency = readSingleQueryValue(router.query.flowRotationFrequency) === 'weekly' ? 'weekly' : 'monthly'
+	const flowFrequency = getOverviewBreakdownFlowGrouping(readSingleQueryValue(router.query.flowRotationFrequency))
 	const metricChartType = isFlowChart ? DEFAULT_CHART_TYPE : chartType
 	const { request, isDefaultState } = getOverviewBreakdownRequestState(page, metricChartType, router.query)
 	const { data, isLoading, error } = useQuery({
@@ -273,17 +275,14 @@ export function RWAOverviewBreakdownChart({
 					className="mr-auto"
 				/>
 				{isFlowChart ? (
-					<SegmentedControl<RWAFlowRotationFrequency>
+					<ChartGroupingSelector
 						value={flowFrequency}
-						onValueChange={(value) => {
+						onValueChange={(nextFrequency) => {
 							void pushShallowQuery(router, {
-								flowRotationFrequency: value === 'monthly' ? undefined : value
+								flowRotationFrequency: nextFrequency === 'monthly' ? undefined : nextFrequency
 							})
 						}}
-						options={FLOW_FREQUENCY_OPTIONS}
-						label="Flow interval"
-						variant="default"
-						size="md"
+						options={DWMC_GROUPING_OPTIONS_LOWERCASE}
 					/>
 				) : null}
 				{stackOptions.length > 1 ? (
