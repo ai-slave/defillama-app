@@ -1,22 +1,24 @@
+import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import TokensPage from '~/containers/Tokens'
-import { getTokensPageData } from '~/containers/Tokens/queries.server'
+import { getTokensCacheControl } from '~/containers/Tokens/cache.server'
+import { getTokensPageSnapshot } from '~/containers/Tokens/queries.server'
 import type { TokensPageProps } from '~/containers/Tokens/types'
 import Layout from '~/layout'
-import { maxAgeForNext } from '~/utils/maxAgeForNext'
-import { withPerformanceLogging } from '~/utils/perf'
+import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
-export const getStaticProps = withPerformanceLogging('tokens', async () => {
+const getServerSidePropsHandler: GetServerSideProps<TokensPageProps> = async ({ res }) => {
+	const snapshot = await getTokensPageSnapshot()
+	res.setHeader('Cache-Control', getTokensCacheControl(snapshot.revision))
 	return {
-		props: {
-			initialData: await getTokensPageData()
-		},
-		revalidate: maxAgeForNext([23])
+		props: { initialData: snapshot.data }
 	}
-})
+}
+
+export const getServerSideProps = withServerSidePropsTelemetry('/tokens', getServerSidePropsHandler)
 
 const pageName = ['Tokens']
 
-export default function Tokens(data: TokensPageProps) {
+export default function Tokens(data: InferGetServerSidePropsType<typeof getServerSideProps>) {
 	return (
 		<Layout
 			title="Crypto Token Rankings: Prices, MCap & Unlocks - DefiLlama"

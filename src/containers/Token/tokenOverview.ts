@@ -59,6 +59,18 @@ export interface TokenOverviewMarketData {
 	}
 }
 
+export interface TokenOverviewCurrentMetrics {
+	currentPrice: number | null
+	percentChange24h: number | null
+	circulatingSupply: number | null
+	totalSupply: number | null
+	maxSupply: number | null
+	mcap: number | null
+	fdv: number | null
+	volume24h: number | null
+	outstandingFDV: number | null
+}
+
 export type TokenOverviewRawChartData = Partial<Record<TokenOverviewChartLabel, Array<[number, number]>>>
 
 export interface TokenOverviewData {
@@ -276,10 +288,11 @@ function buildTokenMarketData(
 	tokenEntry: ITokenListEntry | null,
 	tickers: CgChartResponse['data']['coinData']['tickers'] | undefined,
 	cgExchangeIdentifiers: string[],
+	currentMetrics: TokenOverviewCurrentMetrics | null,
 	marketDataFallback: TokenOverviewMarketData = emptyMarketData,
 	currentPriceTimestamp: number | null = null
 ): TokenOverviewMarketData {
-	if (!tokenEntry) {
+	if (!tokenEntry && !currentMetrics) {
 		return marketDataFallback
 	}
 
@@ -305,26 +318,34 @@ function buildTokenMarketData(
 		dexVolume = dex
 	}
 
-	const currentPrice = marketDataFallback.currentPrice ?? tokenEntry.current_price
-	const circulatingSupply = tokenEntry.circulating_supply ?? marketDataFallback.circulatingSupply
-	const totalSupply = tokenEntry.total_supply ?? marketDataFallback.totalSupply
-	const maxSupply = tokenEntry.max_supply ?? marketDataFallback.maxSupply
+	const currentPrice = currentMetrics
+		? currentMetrics.currentPrice
+		: (marketDataFallback.currentPrice ?? tokenEntry?.current_price ?? null)
+	const circulatingSupply = currentMetrics
+		? currentMetrics.circulatingSupply
+		: (tokenEntry?.circulating_supply ?? marketDataFallback.circulatingSupply)
+	const totalSupply = currentMetrics
+		? currentMetrics.totalSupply
+		: (tokenEntry?.total_supply ?? marketDataFallback.totalSupply)
+	const maxSupply = currentMetrics ? currentMetrics.maxSupply : (tokenEntry?.max_supply ?? marketDataFallback.maxSupply)
 	const ath = resolveCurrentAth({
 		currentPrice,
 		currentPriceTimestamp,
-		ath: tokenEntry.ath ?? marketDataFallback.ath,
-		athDate: tokenEntry.ath_date ?? marketDataFallback.athDate
+		ath: tokenEntry?.ath ?? marketDataFallback.ath,
+		athDate: tokenEntry?.ath_date ?? marketDataFallback.athDate
 	})
 	const atl = resolveCurrentAtl({
 		currentPrice,
 		currentPriceTimestamp,
-		atl: tokenEntry.atl ?? marketDataFallback.atl,
-		atlDate: tokenEntry.atl_date ?? marketDataFallback.atlDate
+		atl: tokenEntry?.atl ?? marketDataFallback.atl,
+		atlDate: tokenEntry?.atl_date ?? marketDataFallback.atlDate
 	})
 
 	return {
 		currentPrice,
-		percentChange24h: tokenEntry.price_change_percentage_24h ?? marketDataFallback.percentChange24h,
+		percentChange24h: currentMetrics
+			? currentMetrics.percentChange24h
+			: (tokenEntry?.price_change_percentage_24h ?? marketDataFallback.percentChange24h),
 		ath: ath.value,
 		athDate: ath.date,
 		atl: atl.value,
@@ -332,13 +353,18 @@ function buildTokenMarketData(
 		circulatingSupply,
 		totalSupply,
 		maxSupply,
-		mcap: calculateMarketValue(currentPrice, circulatingSupply) ?? tokenEntry.market_cap ?? marketDataFallback.mcap,
-		fdv:
-			calculateMarketValue(currentPrice, maxSupply ?? totalSupply) ??
-			tokenEntry.fully_diluted_valuation ??
-			marketDataFallback.fdv,
+		mcap: currentMetrics
+			? currentMetrics.mcap
+			: (calculateMarketValue(currentPrice, circulatingSupply) ?? tokenEntry?.market_cap ?? marketDataFallback.mcap),
+		fdv: currentMetrics
+			? currentMetrics.fdv
+			: (calculateMarketValue(currentPrice, maxSupply ?? totalSupply) ??
+				tokenEntry?.fully_diluted_valuation ??
+				marketDataFallback.fdv),
 		volume24h: {
-			total: tokenEntry.total_volume ?? marketDataFallback.volume24h.total,
+			total: currentMetrics
+				? currentMetrics.volume24h
+				: (tokenEntry?.total_volume ?? marketDataFallback.volume24h.total),
 			cex: cexVolume,
 			dex: dexVolume
 		}
@@ -481,6 +507,7 @@ export async function getTokenOverviewData({
 	cgExchangeIdentifiers,
 	llamaswapChains,
 	emissionsSupplyMetrics,
+	currentMetrics = null,
 	source,
 	prefetchedCharts = TOKEN_OVERVIEW_ALL_CHARTS
 }: {
@@ -492,6 +519,7 @@ export async function getTokenOverviewData({
 	cgExchangeIdentifiers: string[]
 	llamaswapChains: IProtocolLlamaswapChain[] | null
 	emissionsSupplyMetrics: ProtocolEmissionSupplyMetricsMap
+	currentMetrics?: TokenOverviewCurrentMetrics | null
 	source: TokenOverviewDataSource
 	prefetchedCharts?: TokenOverviewChartLabel[]
 }): Promise<TokenOverviewData> {
@@ -512,13 +540,17 @@ export async function getTokenOverviewData({
 	const shouldFetchTreasury = Boolean(!record.chainId && protocolDefiLlamaId)
 	const shouldFetchRaises = Boolean(chainDefiLlamaId || protocolDefiLlamaId)
 	const shouldFetchLiquidity = Boolean(shouldFetchProtocolData && protocolMetadata?.liquidity)
-	const shouldFetchCoinDetail = Boolean(geckoId && needsCoinDetailFallback(tokenEntry))
-	const totalSupply = tokenEntry?.max_supply ?? tokenEntry?.total_supply ?? null
+	const shouldFetchCoinDetail = Boolean(geckoId && currentMetrics == null && needsCoinDetailFallback(tokenEntry))
+	const totalSupply = currentMetrics
+		? (currentMetrics.maxSupply ?? currentMetrics.totalSupply)
+		: (tokenEntry?.max_supply ?? tokenEntry?.total_supply ?? null)
 
 	const [cgChart, coinDetail, currentPriceViaLlama, protocolData, raisesData, treasuries] = await Promise.all([
 		geckoId ? fetchCoinGeckoChartByIdWithCacheFallback(geckoId).catch(() => null) : Promise.resolve(null),
 		shouldFetchCoinDetail ? fetchTokenOverviewCoinDetail(geckoId) : Promise.resolve(null),
-		geckoId ? fetchCoinPriceByCoinGeckoIdViaLlamaPrices(geckoId).catch(() => null) : Promise.resolve(null),
+		geckoId && currentMetrics == null
+			? fetchCoinPriceByCoinGeckoIdViaLlamaPrices(geckoId).catch(() => null)
+			: Promise.resolve(null),
 		shouldFetchProtocolData ? fetchProtocolOverviewMetrics(protocolSlug!).catch(() => null) : Promise.resolve(null),
 		source.kind === 'prefetched'
 			? Promise.resolve(source.raises)
@@ -547,6 +579,7 @@ export async function getTokenOverviewData({
 		tokenEntry,
 		cgChart?.data?.coinData?.tickers,
 		cgExchangeIdentifiers,
+		currentMetrics,
 		marketDataFallback,
 		currentPriceViaLlama?.timestamp ?? null
 	)
@@ -569,8 +602,11 @@ export async function getTokenOverviewData({
 		treasury,
 		raises: buildRaisesSummary(matchedRaises),
 		tokenLiquidity,
-		outstandingFDV:
-			adjustedSupply != null && marketData.currentPrice != null ? adjustedSupply * marketData.currentPrice : null,
+		outstandingFDV: currentMetrics
+			? currentMetrics.outstandingFDV
+			: adjustedSupply != null && marketData.currentPrice != null
+				? adjustedSupply * marketData.currentPrice
+				: null,
 		rawChartData: buildTokenOverviewRawChartData({
 			chart: cgChart,
 			totalSupply: totalSupply ?? marketDataFallback.maxSupply ?? marketDataFallback.totalSupply,

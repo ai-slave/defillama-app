@@ -1,16 +1,15 @@
 import { ok, upstreamError } from '~/server/api/respond'
 import { defineApiRoute } from '~/server/api/types'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
-import { getTokensPageData } from '../queries.server'
-
-const TOKENS_RESPONSE_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=3600'
+import { getTokensCacheControl } from '../cache.server'
+import { getTokensPageSnapshot } from '../queries.server'
 
 export const tokensDataset = defineApiRoute({
 	route: '/api/public/tokens',
-	cacheControl: TOKENS_RESPONSE_CACHE_CONTROL,
 	handle: async (req) => {
 		try {
-			return ok(await getTokensPageData(req.query))
+			const snapshot = await getTokensPageSnapshot(req.query)
+			return ok(snapshot.data, { 'Cache-Control': getTokensCacheControl(snapshot.revision) })
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch tokens data')

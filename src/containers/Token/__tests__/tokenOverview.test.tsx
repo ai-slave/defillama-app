@@ -728,6 +728,48 @@ describe('tokenOverview helpers', () => {
 		expect(mocks.fetchCoinPriceByCoinGeckoIdViaLlamaPrices).toHaveBeenCalledWith('bitcoin')
 	})
 
+	it('uses the rankings metrics verbatim without calling a second current-price source', async () => {
+		const result = await getTokenOverviewData({
+			record: {
+				name: 'Bitcoin',
+				symbol: 'BTC'
+			} satisfies TokenDirectoryRecord,
+			displayName: 'BTC',
+			geckoId: 'bitcoin',
+			tokenEntry: null,
+			protocolMetadata: null,
+			cgExchangeIdentifiers: ['binance'],
+			llamaswapChains: null,
+			emissionsSupplyMetrics: emissionsSupplyMetricsFixture,
+			currentMetrics: {
+				currentPrice: 2,
+				percentChange24h: -3,
+				circulatingSupply: 500,
+				totalSupply: 900,
+				maxSupply: 1000,
+				mcap: 1000,
+				fdv: 2000,
+				volume24h: 777,
+				outstandingFDV: 1200
+			},
+			source: { kind: 'network' }
+		})
+
+		expect(result.marketData).toMatchObject({
+			currentPrice: 2,
+			percentChange24h: -3,
+			circulatingSupply: 500,
+			totalSupply: 900,
+			maxSupply: 1000,
+			mcap: 1000,
+			fdv: 2000,
+			volume24h: { total: 777 }
+		})
+		expect(result.outstandingFDV).toBe(1200)
+		expect(mocks.fetchCoinGeckoCoinById).not.toHaveBeenCalled()
+		expect(mocks.fetchCoinPriceByCoinGeckoIdViaLlamaPrices).not.toHaveBeenCalled()
+	})
+
 	it('does not fetch CoinGecko coin detail when only max supply is missing from tokenlist data', async () => {
 		const result = await getTokenOverviewData({
 			record: {

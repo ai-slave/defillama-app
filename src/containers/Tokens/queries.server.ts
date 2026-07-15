@@ -3,6 +3,7 @@ import { fetchCoinGeckoTokensListFromDataset } from '~/api/coingecko'
 import { fetchAdapterChainMetrics } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { fetchTokenMarketsList } from '~/containers/Markets/server/dataset.server'
+import type { TokenOverviewCurrentMetrics } from '~/containers/Token/tokenOverview'
 import { fetchTokenRightsEntries } from '~/containers/TokenRights/server/dataset.server'
 import type { ITokenRightsData } from '~/containers/TokenRights/types'
 import {
@@ -24,6 +25,12 @@ import type {
 	TokensRawProtocolEmission,
 	TokensRawTokenRightsEntry
 } from './api.types'
+import {
+	getOrCreateSharedTokensSnapshot,
+	getTokensCacheRevision,
+	TOKENS_MARKET_SNAPSHOT_CACHE_TTL_MS,
+	TOKENS_SOURCE_CACHE_TTL_MS
+} from './cache.server'
 import type {
 	TokensPageResponse,
 	TokensPageStats,
@@ -33,16 +40,36 @@ import type {
 } from './types'
 import { buildTokensSortIndexes, getTokensPageFromRows } from './utils'
 
-const TOKENS_SOURCE_TTL_MS = 5 * 60 * 1000
 const THIRTY_DAYS_SECONDS = 30 * 24 * 60 * 60
 
 type AdapterProtocolMetric = TokensRawAdapterChainMetrics['protocols'][number]
 
-interface TokensSourceData {
+interface TokensSourceRows {
 	rows: TokensSourceRow[]
 	sortIndexes: TokensSortIndexes
 	stats: TokensPageStats
 	updatedAt: string | null
+}
+
+interface TokensSourceData extends TokensSourceRows {
+	revision: number
+}
+
+interface TokensMarketSnapshot {
+	revision: number
+	tokens: TokensRawCoinGeckoRanking[]
+	markets: TokensRawMarketsList
+	currentMetricsById: Record<string, TokenOverviewCurrentMetrics>
+}
+
+export interface TokenOverviewCurrentSnapshot {
+	revision: number
+	metrics: TokenOverviewCurrentMetrics | null
+}
+
+export interface TokensPageSnapshot {
+	revision: number
+	data: TokensPageResponse
 }
 
 interface TokenDirectoryIndexes {
@@ -309,15 +336,83 @@ function firstUpdatedAt(tokens: TokensRawCoinGeckoRanking[], markets: TokensRawM
 	return null
 }
 
-export async function fetchTokensSourceRows(): Promise<TokensSourceData> {
+export function buildTokenOverviewCurrentMetricsById({
+	tokens,
+	markets,
+	metadata
+}: {
+	tokens: TokensRawCoinGeckoRanking[]
+	markets: TokensRawMarketsList
+	metadata: MetadataCache
+}): Record<string, TokenOverviewCurrentMetrics> {
+	const currentMetricsById: Record<string, TokenOverviewCurrentMetrics> = Object.create(null)
+	const indexes = buildTokenDirectoryIndexes(metadata)
+	const marketsBySymbol = buildMarketsMap(markets, buildUniqueTokenSymbols(tokens))
+
+	for (const token of tokens) {
+		const geckoId = token.id.toLowerCase()
+		const record = indexes.byGeckoId.get(geckoId)
+		const protocolId = resolveProtocolId(geckoId, record, indexes)
+		const protocolMetadata = protocolId ? metadata.protocolMetadata[protocolId] : undefined
+		const emissionsProtocolSlug = resolveEmissionsProtocolSlug(record, protocolId, protocolMetadata, metadata)
+		const adjustedSupply = emissionsProtocolSlug
+			? (metadata.emissionsSupplyMetrics[emissionsProtocolSlug]?.supplyMetrics.adjustedSupply ?? null)
+			: null
+		const currentPrice =
+			token.current_price ?? marketsBySymbol.get(token.symbol.toUpperCase())?.segments.spot?.price ?? null
+
+		currentMetricsById[geckoId] = {
+			currentPrice,
+			percentChange24h: token.price_change_percentage_24h_in_currency ?? token.price_change_percentage_24h ?? null,
+			circulatingSupply: token.circulating_supply ?? null,
+			totalSupply: token.total_supply ?? null,
+			maxSupply: token.max_supply ?? null,
+			mcap: token.market_cap ?? null,
+			fdv: token.fully_diluted_valuation ?? null,
+			volume24h: token.total_volume ?? null,
+			outstandingFDV:
+				adjustedSupply != null && token.current_price != null ? adjustedSupply * token.current_price : null
+		}
+	}
+
+	return currentMetricsById
+}
+
+async function getTokensMarketSnapshot(revision: number): Promise<TokensMarketSnapshot> {
+	return cachedResult(
+		'tokens-market-snapshot',
+		`v1:${revision}`,
+		{ ttlMs: TOKENS_MARKET_SNAPSHOT_CACHE_TTL_MS, maxEntries: 2 },
+		() =>
+			getOrCreateSharedTokensSnapshot(revision, async () => {
+				const [tokens, markets, metadataModule] = await Promise.all([
+					fetchCoinGeckoTokensListFromDataset(),
+					fetchTokenMarketsList().catch(() => EMPTY_MARKETS_LIST),
+					import('~/utils/metadata')
+				])
+				metadataModule.refreshMetadataInBackgroundIfStale('tokens')
+				return {
+					revision,
+					tokens,
+					markets,
+					currentMetricsById: buildTokenOverviewCurrentMetricsById({
+						tokens,
+						markets,
+						metadata: metadataModule.default
+					})
+				}
+			})
+	)
+}
+
+export async function fetchTokensSourceRows(revision: number): Promise<TokensSourceData> {
 	const nowSec = Math.floor(Date.now() / 1000)
 	const metadataModule = await import('~/utils/metadata')
 	metadataModule.refreshMetadataInBackgroundIfStale('tokens')
 	const metadata = metadataModule.default
 
-	const [tokens, markets, tokenRightsEntries, fees, revenue, holdersRevenue, unlocks] = await Promise.all([
-		fetchCoinGeckoTokensListFromDataset(),
-		fetchTokenMarketsList().catch(() => EMPTY_MARKETS_LIST),
+	const [marketSnapshot, tokenRightsEntries, fees, revenue, holdersRevenue, unlocks] = await Promise.all([
+		getTokensMarketSnapshot(revision),
 		fetchTokenRightsEntries().catch(() => []),
 		fetchAdapterChainMetrics({ adapterType: ADAPTER_TYPES.FEES, chain: 'All' })
 			.then((data) => data.protocols)
@@ -344,22 +439,27 @@ export async function fetchTokensSourceRows(): Promise<TokensSourceData> {
 		}).catch(() => [])
 	])
 
-	return buildTokensSourceRows({
-		tokens,
-		markets,
-		tokenRightsEntries,
-		fees,
-		revenue,
-		holdersRevenue,
-		unlocks: unlocks as TokensRawProtocolEmission[],
-		metadata,
-		nowSec
-	})
+	return {
+		...buildTokensSourceRows({
+			tokens: marketSnapshot.tokens,
+			markets: marketSnapshot.markets,
+			currentMetricsById: marketSnapshot.currentMetricsById,
+			tokenRightsEntries,
+			fees,
+			revenue,
+			holdersRevenue,
+			unlocks: unlocks as TokensRawProtocolEmission[],
+			metadata,
+			nowSec
+		}),
+		revision: marketSnapshot.revision
+	}
 }
 
 export function buildTokensSourceRows({
 	tokens,
 	markets,
+	currentMetricsById,
 	tokenRightsEntries,
 	fees,
 	revenue,
@@ -370,6 +470,7 @@ export function buildTokensSourceRows({
 }: {
 	tokens: TokensRawCoinGeckoRanking[]
 	markets: TokensRawMarketsList
+	currentMetricsById?: Record<string, TokenOverviewCurrentMetrics>
 	tokenRightsEntries: TokensRawTokenRightsEntry[]
 	fees: AdapterProtocolMetric[]
 	revenue: AdapterProtocolMetric[]
@@ -377,7 +478,7 @@ export function buildTokensSourceRows({
 	unlocks: TokensRawProtocolEmission[]
 	metadata: MetadataCache
 	nowSec: number
-}): TokensSourceData {
+}): TokensSourceRows {
 	const indexes = buildTokenDirectoryIndexes(metadata)
 	const marketsBySymbol = buildMarketsMap(markets, buildUniqueTokenSymbols(tokens))
 	const rightsByDefillamaId = buildTokenRightsMap(tokenRightsEntries)
@@ -401,6 +502,7 @@ export function buildTokensSourceRows({
 	for (let index = 0; index < tokens.length; index++) {
 		const token = tokens[index]
 		const geckoId = token.id.toLowerCase()
+		const currentMetrics = currentMetricsById?.[geckoId]
 		const record = indexes.byGeckoId.get(geckoId)
 		const protocolId = resolveProtocolId(geckoId, record, indexes)
 		const protocolMetadata = protocolId ? metadata.protocolMetadata[protocolId] : undefined
@@ -435,15 +537,22 @@ export function buildTokensSourceRows({
 						? `/protocol/token-rights/${protocolTokenRightsSlug}`
 						: null
 				: null,
-			price: token.current_price ?? marketsEntry?.segments.spot?.price ?? null,
+			price: currentMetrics
+				? currentMetrics.currentPrice
+				: (token.current_price ?? marketsEntry?.segments.spot?.price ?? null),
 			priceChange1h: token.price_change_percentage_1h_in_currency ?? null,
-			priceChange24h: token.price_change_percentage_24h_in_currency ?? token.price_change_percentage_24h ?? null,
+			priceChange24h: currentMetrics
+				? currentMetrics.percentChange24h
+				: (token.price_change_percentage_24h_in_currency ?? token.price_change_percentage_24h ?? null),
 			priceChange7d: token.price_change_percentage_7d_in_currency ?? null,
 			priceChange30d: token.price_change_percentage_30d_in_currency ?? null,
-			marketCap: token.market_cap ?? null,
-			fdv: token.fully_diluted_valuation ?? null,
-			outstandingFdv:
-				adjustedSupply != null && token.current_price != null ? adjustedSupply * token.current_price : null,
+			marketCap: currentMetrics ? currentMetrics.mcap : (token.market_cap ?? null),
+			fdv: currentMetrics ? currentMetrics.fdv : (token.fully_diluted_valuation ?? null),
+			outstandingFdv: currentMetrics
+				? currentMetrics.outstandingFDV
+				: adjustedSupply != null && token.current_price != null
+					? adjustedSupply * token.current_price
+					: null,
 			unlockedPercent:
 				unlockMetrics?.unlockedPercent ??
 				getUnlockedPercentFromSupplyMetrics(metadata, emissionsProtocolSlug, adjustedSupply),
@@ -481,22 +590,42 @@ export function buildTokensSourceRows({
 }
 
 export async function getTokensSourceData(): Promise<TokensSourceData> {
-	return cachedResult(
-		'tokens-source-rows',
-		'v8',
-		{
-			ttlMs: TOKENS_SOURCE_TTL_MS,
-			ttlJitter: 0.2,
-			staleWhileRevalidateMs: 30 * 60 * 1000
-		},
-		fetchTokensSourceRows
-	)
+	while (true) {
+		const revision = getTokensCacheRevision()
+		const data = await cachedResult(
+			'tokens-source-rows',
+			`v9:${revision}`,
+			{ ttlMs: TOKENS_SOURCE_CACHE_TTL_MS, maxEntries: 1 },
+			() => fetchTokensSourceRows(revision)
+		)
+		if (data.revision === getTokensCacheRevision()) return data
+	}
+}
+
+export async function getTokenOverviewCurrentSnapshot(geckoId: string): Promise<TokenOverviewCurrentSnapshot> {
+	while (true) {
+		const revision = getTokensCacheRevision()
+		const marketSnapshot = await getTokensMarketSnapshot(revision)
+		if (marketSnapshot.revision === getTokensCacheRevision()) {
+			return {
+				revision: marketSnapshot.revision,
+				metrics: marketSnapshot.currentMetricsById[geckoId.toLowerCase()] ?? null
+			}
+		}
+	}
+}
+
+export async function getTokensPageSnapshot(query: ParsedUrlQuery = {}): Promise<TokensPageSnapshot> {
+	const data = await getTokensSourceData()
+	return {
+		revision: data.revision,
+		data: getTokensPageFromRows(data.rows, data.sortIndexes, query, {
+			stats: data.stats,
+			updatedAt: data.updatedAt
+		})
+	}
 }
 
 export async function getTokensPageData(query: ParsedUrlQuery = {}): Promise<TokensPageResponse> {
-	const data = await getTokensSourceData()
-	return getTokensPageFromRows(data.rows, data.sortIndexes, query, {
-		stats: data.stats,
-		updatedAt: data.updatedAt
-	})
+	return (await getTokensPageSnapshot(query)).data
 }

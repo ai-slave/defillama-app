@@ -3,7 +3,7 @@ import type { MarketSegmentSummary } from '~/containers/Markets/api.types'
 import type { IRawTokenRightsEntry } from '~/containers/TokenRights/api.types'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 import type { TokensRawAdapterChainMetrics, TokensRawCoinGeckoRanking, TokensRawMarketsList } from '../api.types'
-import { buildTokensSourceRows } from '../queries.server'
+import { buildTokenOverviewCurrentMetricsById, buildTokensSourceRows } from '../queries.server'
 
 function marketSegment(overrides: Partial<MarketSegmentSummary>): MarketSegmentSummary {
 	return {
@@ -67,6 +67,10 @@ describe('buildTokensSourceRows', () => {
 				price_change_percentage_24h_in_currency: -2.5,
 				price_change_percentage_7d_in_currency: 7,
 				price_change_percentage_30d_in_currency: 30,
+				circulating_supply: 500,
+				total_supply: 900,
+				max_supply: 1000,
+				total_volume: 777,
 				last_updated: '2026-06-29T00:00:00Z'
 			},
 			{
@@ -214,12 +218,64 @@ describe('buildTokensSourceRows', () => {
 			burnsStatus: 'Active',
 			equityTone: 'warning'
 		})
+		const currentMetricsById = buildTokenOverviewCurrentMetricsById({ tokens, markets, metadata })
+		expect(currentMetricsById.ethena).toEqual({
+			currentPrice: 2,
+			percentChange24h: -2.5,
+			circulatingSupply: 500,
+			totalSupply: 900,
+			maxSupply: 1000,
+			mcap: 1000,
+			fdv: 2000,
+			volume24h: 777,
+			outstandingFDV: 1200
+		})
+		expect(currentMetricsById.missing).toBeUndefined()
 
 		expect(result.rows[1]).toMatchObject({
 			id: 'unmapped',
 			logo: 'https://token-icons.llamao.fi/icons/tokens/gecko/unmapped?w=48&h=48',
 			href: null,
 			rights: null
+		})
+	})
+
+	it('uses the shared snapshot metrics even when local metadata would derive another value', () => {
+		const result = buildTokensSourceRows({
+			tokens: [{ id: 'shared', name: 'Shared', symbol: 'shr', current_price: 1, market_cap: 100 }],
+			markets: { last_updated: '', tokens: [] },
+			currentMetricsById: {
+				shared: {
+					currentPrice: 2,
+					percentChange24h: 3,
+					circulatingSupply: 500,
+					totalSupply: 900,
+					maxSupply: 1000,
+					mcap: 1000,
+					fdv: 2000,
+					volume24h: 777,
+					outstandingFDV: 1200
+				}
+			},
+			tokenRightsEntries: [],
+			fees: [],
+			revenue: [],
+			holdersRevenue: [],
+			unlocks: [],
+			metadata: {
+				tokenDirectory: {},
+				protocolMetadata: {},
+				emissionsSupplyMetrics: {}
+			} as unknown as MetadataCache,
+			nowSec: 1_800_000_000
+		})
+
+		expect(result.rows[0]).toMatchObject({
+			price: 2,
+			priceChange24h: 3,
+			marketCap: 1000,
+			fdv: 2000,
+			outstandingFdv: 1200
 		})
 	})
 
