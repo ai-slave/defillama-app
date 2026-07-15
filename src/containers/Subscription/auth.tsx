@@ -175,6 +175,7 @@ interface AuthContextType {
 		unknown
 	>
 	signInWithGithubMutation: UseMutationResult<RecordAuthResponse, Error, void>
+	signInWithGoogleMutation: UseMutationResult<RecordAuthResponse, Error, void>
 	addWallet: (address: string, signMessageFunction: any, onSuccess?: () => void) => Promise<void>
 	resetPasswordMutation: UseMutationResult<void, Error, string>
 	changeEmail: (email: string) => void
@@ -485,36 +486,43 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 		}
 	})
 
-	const signInWithGithubMutation = useMutation({
-		mutationFn: async () => {
-			try {
-				const authData = await pb.collection('users').authWithOAuth2({
-					provider: 'github',
-					redirectTo: `${window.location.origin}/subscription`
-				})
+	const signInWithOAuth2 = async (provider: 'github' | 'google') => {
+		try {
+			const authData = await pb.collection('users').authWithOAuth2({
+				provider,
+				redirectTo: `${window.location.origin}/subscription`
+			})
 
-				if (authData.meta?.isNew) {
-					try {
-						await fetch(`${AUTH_SERVER}/user/attribution`, {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json',
-								Authorization: `Bearer ${pb.authStore.token}`
-							},
-							body: JSON.stringify({
-								source: getSignupSource(),
-								referrer: getReferrer()
-							})
+			if (authData.meta?.isNew) {
+				try {
+					await fetch(`${AUTH_SERVER}/user/attribution`, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							Authorization: `Bearer ${pb.authStore.token}`
+						},
+						body: JSON.stringify({
+							source: getSignupSource(),
+							referrer: getReferrer(),
+							provider
 						})
-					} catch {}
-				}
-
-				return authData
-			} catch (error) {
-				console.log('GitHub sign-in error:', error)
-				throw new Error('Failed to sign in with GitHub')
+					})
+				} catch {}
 			}
+
+			return authData
+		} catch (error) {
+			console.log(`${provider} sign-in error:`, error)
+			throw new Error(`Failed to sign in with ${provider}`)
 		}
+	}
+
+	const signInWithGithubMutation = useMutation({
+		mutationFn: () => signInWithOAuth2('github')
+	})
+
+	const signInWithGoogleMutation = useMutation({
+		mutationFn: () => signInWithOAuth2('google')
 	})
 
 	const addWalletMutation = useMutation({
@@ -751,6 +759,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 		authorizedFetch,
 		signInWithEthereumMutation,
 		signInWithGithubMutation,
+		signInWithGoogleMutation,
 		addWallet,
 		resetPasswordMutation,
 		changeEmail: changeEmail.mutate,

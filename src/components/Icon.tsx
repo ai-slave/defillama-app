@@ -13,6 +13,7 @@ const ICON_NAMES = [
 	'folder-plus',
 	'trash-2',
 	'github',
+	'google',
 	'copy',
 	'search',
 	'arrow-left',
@@ -137,7 +138,7 @@ export interface IIcon extends SVGProps<SVGSVGElement> {
 export function Icon({ name, ...props }: IIcon) {
 	return (
 		<svg {...props}>
-			<use href={`/icons/v41.svg#${name}`} />
+			<use href={`/icons/v42.svg#${name}`} />
 		</svg>
 	)
 }

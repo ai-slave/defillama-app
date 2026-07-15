@@ -55,8 +55,15 @@ export const SignInForm = ({
 	const [emailError, setEmailError] = useState('')
 	const [promotionalEmails, setPromotionalEmails] = useState<PromotionalEmailsValue>('on')
 
-	const { login, signup, signInWithEthereumMutation, signInWithGithubMutation, resetPasswordMutation, loaders } =
-		useAuthContext()
+	const {
+		login,
+		signup,
+		signInWithEthereumMutation,
+		signInWithGithubMutation,
+		signInWithGoogleMutation,
+		resetPasswordMutation,
+		loaders
+	} = useAuthContext()
 	const { signMessageAsync } = useSignMessage()
 
 	const handleEmailSignIn = async (e: FormSubmitEvent) => {
@@ -306,6 +313,23 @@ export const SignInForm = ({
 							{signInWithEthereumMutation.error ? (
 								<div className="text-center text-xs text-red-500">
 									{signInWithEthereumMutation.error.message || 'Failed to sign in with Ethereum'}
+								</div>
+							) : null}
+
+							<button
+								className="relative flex w-full items-center justify-center gap-2 rounded-lg border border-[#39393E] bg-[#222429] py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-[#2a2b30] disabled:cursor-not-allowed disabled:opacity-50 sm:py-3"
+								onClick={() => {
+									void signInWithGoogleMutation.mutateAsync().then(() => dialogStore.hide())
+								}}
+								disabled={signInWithGoogleMutation.isPending}
+							>
+								<Icon name="google" height={16} width={16} />
+								{signInWithGoogleMutation.isPending ? 'Connecting...' : 'Sign in with Google'}
+							</button>
+
+							{signInWithGoogleMutation.error ? (
+								<div className="text-center text-xs text-red-500">
+									{signInWithGoogleMutation.error.message?.slice(0, 100)}
 								</div>
 							) : null}
 

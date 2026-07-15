@@ -84,7 +84,8 @@ export function SignInFlow({
 	const [acceptedTerms, setAcceptedTerms] = useState(false)
 	const [walletSignInRequested, setWalletSignInRequested] = useState(false)
 
-	const { login, signup, signInWithGithubMutation, resetPasswordMutation, loaders } = useAuthContext()
+	const { login, signup, signInWithGithubMutation, signInWithGoogleMutation, resetPasswordMutation, loaders } =
+		useAuthContext()
 
 	const goTo = (next: Step) => {
 		setError('')
@@ -152,6 +153,10 @@ export function SignInFlow({
 
 	const handleGithubSignIn = () => {
 		void signInWithGithubMutation.mutateAsync().then(() => dialogStore.hide())
+	}
+
+	const handleGoogleSignIn = () => {
+		void signInWithGoogleMutation.mutateAsync().then(() => dialogStore.hide())
 	}
 
 	/* ── Header ── */
@@ -252,15 +257,26 @@ export function SignInFlow({
 					<div className="h-px flex-1 bg-(--signin-divider)" />
 				</div>
 
-				<button
-					type="button"
-					className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-(--legacy-form-control-border) text-sm font-medium text-(--legacy-text-primary) transition-colors hover:bg-(--signin-outline-hover-bg)"
-					onClick={handleGithubSignIn}
-					disabled={signInWithGithubMutation.isPending}
-				>
-					<Icon name="github" height={20} width={20} />
-					{signInWithGithubMutation.isPending ? 'Connecting...' : 'Continue with GitHub'}
-				</button>
+				<div className="flex flex-col gap-2">
+					<button
+						type="button"
+						className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-(--legacy-form-control-border) text-sm font-medium text-(--legacy-text-primary) transition-colors hover:bg-(--signin-outline-hover-bg)"
+						onClick={handleGoogleSignIn}
+						disabled={signInWithGoogleMutation.isPending}
+					>
+						<Icon name="google" height={20} width={20} />
+						{signInWithGoogleMutation.isPending ? 'Connecting...' : 'Continue with Google'}
+					</button>
+					<button
+						type="button"
+						className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-(--legacy-form-control-border) text-sm font-medium text-(--legacy-text-primary) transition-colors hover:bg-(--signin-outline-hover-bg)"
+						onClick={handleGithubSignIn}
+						disabled={signInWithGithubMutation.isPending}
+					>
+						<Icon name="github" height={20} width={20} />
+						{signInWithGithubMutation.isPending ? 'Connecting...' : 'Continue with GitHub'}
+					</button>
+				</div>
 
 				<p className="mt-6 text-center text-xs text-(--legacy-text-primary)">
 					Registered with a wallet before?{' '}
