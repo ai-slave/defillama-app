@@ -108,7 +108,7 @@ type AddressMapValue = {
 	usdValue: number
 }
 
-function buildVolumeDataByChain({
+export function buildVolumeDataByChain({
 	volume,
 	chains,
 	destinationChain
@@ -155,9 +155,10 @@ function buildVolumeDataByChain({
 		volumeDataByChain[chains[index]] = normalizeDailyBridgePoints(chartData)
 	}
 
+	const destinationChainVolume = volumeDataByChain[destinationChain] ?? []
 	volumeDataByChain['All Chains'] =
-		destinationChain !== 'false'
-			? normalizeDailyBridgePoints(volumeDataByChain?.[destinationChain] ?? [])
+		destinationChain !== 'false' && destinationChainVolume.length > 0
+			? normalizeDailyBridgePoints(destinationChainVolume)
 			: normalizeDailyBridgePoints(Object.values(volumeOnAllChains))
 
 	return volumeDataByChain

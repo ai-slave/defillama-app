@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchJson } from '~/utils/async'
 import { fetchBridgeVolumeByChain } from '../api'
-import { getBridgeChainNetInflows } from '../queries.server'
+import { buildVolumeDataByChain, getBridgeChainNetInflows } from '../queries.server'
 
 vi.mock('~/utils/async', () => ({
 	fetchJson: vi.fn()
@@ -38,5 +38,17 @@ describe('getBridgeChainNetInflows', () => {
 		])
 
 		await expect(getBridgeChainNetInflows('XDC', Date.parse('2026-04-28T12:00:00Z'))).resolves.toBeNull()
+	})
+})
+
+describe('buildVolumeDataByChain', () => {
+	it('falls back to tracked chain volume when the destination-chain series is empty', () => {
+		const result = buildVolumeDataByChain({
+			volume: [[{ date: '1783382400', depositUSD: 100, withdrawUSD: 20, depositTxs: 2, withdrawTxs: 1 }], []],
+			chains: ['Ethereum', 'Robinhood Chain'],
+			destinationChain: 'Robinhood Chain'
+		})
+
+		expect(result['All Chains']).toEqual([{ date: 1783382400, Deposited: 100, Withdrawn: -20 }])
 	})
 })
