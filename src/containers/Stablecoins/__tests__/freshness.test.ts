@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { StablecoinListAsset } from '../api.types'
-import { formatPeggedAssetsData, getPrevStablecoinTotalFromChart, getStablecoinMcapStatsFromTotals } from '../utils'
+import {
+	formatPeggedAssetsData,
+	formatPeggedChainsData,
+	getPrevStablecoinTotalFromChart,
+	getStablecoinMcapStatsFromTotals
+} from '../utils'
 
 const NOW = Date.parse('2026-07-14T12:00:00Z')
+const ROLLOVER_NOW = Date.parse('2026-07-15T04:25:00Z')
 const point = (date: string, mcap: number) => ({
 	date: Math.floor(Date.parse(`${date}T00:00:00Z`) / 1e3),
 	mcap: { peggedUSD: mcap }
@@ -27,10 +33,15 @@ describe('stablecoin change freshness', () => {
 	it('keeps the current total but nulls all changes when the latest point is stale', () => {
 		const totals = [
 			{ date: String(Math.floor(Date.parse('2026-06-13T00:00:00Z') / 1e3)), Mcap: 80 },
-			{ date: String(Math.floor(Date.parse('2026-07-13T00:00:00Z') / 1e3)), Mcap: 100 }
+			{ date: String(Math.floor(Date.parse('2026-07-13T00:00:00Z') / 1e3)), Mcap: 100 },
+			{
+				date: String(Math.floor(Date.parse('2026-07-15T00:00:00Z') / 1e3)),
+				Mcap: 100,
+				isSynthetic: true
+			}
 		]
 
-		expect(getStablecoinMcapStatsFromTotals(totals, NOW)).toMatchObject({
+		expect(getStablecoinMcapStatsFromTotals(totals, ROLLOVER_NOW)).toMatchObject({
 			totalMcapCurrent: 100,
 			change1d: null,
 			change7d: null,
@@ -43,19 +54,59 @@ describe('stablecoin change freshness', () => {
 		})
 	})
 
-	it('does not treat forward-filled chart points as fresh observations', () => {
-		const chart = [point('2026-07-12', 80), point('2026-07-13', 90), { ...point('2026-07-14', 90), isSynthetic: true }]
+	it('accepts the previous UTC day during publication rollover without treating the synthetic point as current', () => {
+		const chart = [
+			point('2026-06-14', 70),
+			point('2026-07-07', 80),
+			point('2026-07-13', 85),
+			point('2026-07-14', 90),
+			{ ...point('2026-07-15', 90), isSynthetic: true }
+		]
 
-		expect(getPrevStablecoinTotalFromChart(chart, 1, 'mcap', '', { currentTimeMs: NOW })).toBeNull()
+		expect(getPrevStablecoinTotalFromChart(chart, 1, 'mcap', '', { currentTimeMs: ROLLOVER_NOW })).toBe(85)
+		expect(getPrevStablecoinTotalFromChart(chart, 7, 'mcap', '', { currentTimeMs: ROLLOVER_NOW })).toBe(80)
+		expect(getPrevStablecoinTotalFromChart(chart, 30, 'mcap', '', { currentTimeMs: ROLLOVER_NOW })).toBe(70)
 		expect(
 			getStablecoinMcapStatsFromTotals(
 				[
-					{ date: String(point('2026-07-13', 90).date), Mcap: 90 },
-					{ date: String(point('2026-07-14', 90).date), Mcap: 90, isSynthetic: true }
+					{ date: String(point('2026-07-07', 80).date), Mcap: 80 },
+					{ date: String(point('2026-07-14', 90).date), Mcap: 90 },
+					{ date: String(point('2026-07-15', 90).date), Mcap: 90, isSynthetic: true }
 				],
-				NOW
-			).change1d
-		).toBeNull()
+				ROLLOVER_NOW
+			)
+		).toMatchObject({
+			totalMcapCurrent: 90,
+			totalMcapPrevWeek: 80,
+			change7d: '12.50',
+			dataTimestamp: Date.parse('2026-07-14T00:00:00Z') / 1e3,
+			isDataStale: false
+		})
+	})
+
+	it('does not fall back to yesterday when today exists but its comparison endpoint is missing', () => {
+		const chart = [point('2026-07-07', 80), point('2026-07-14', 90), point('2026-07-15', 100)]
+
+		expect(getPrevStablecoinTotalFromChart(chart, 7, 'mcap', '', { currentTimeMs: ROLLOVER_NOW })).toBeNull()
+	})
+
+	it('keeps chain changes available from the previous UTC day', () => {
+		const chainPoint = (date: string, mcap: number) => ({
+			date: String(point(date, mcap).date),
+			totalCirculatingUSD: { peggedUSD: mcap }
+		})
+		const [ethereum] = formatPeggedChainsData({
+			currentTimeMs: ROLLOVER_NOW,
+			chainList: ['Ethereum'],
+			peggedChartDataByChain: [[chainPoint('2026-07-07', 80), chainPoint('2026-07-14', 100)]]
+		})
+
+		expect(ethereum).toMatchObject({
+			name: 'Ethereum',
+			mcap: 100,
+			mcapPrevWeek: 80,
+			change_7d: 25
+		})
 	})
 
 	it('hides the monthly peg deviation when a daily price snapshot is missing', () => {

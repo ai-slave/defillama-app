@@ -5,6 +5,7 @@ import {
 	getPrevStablecoinTotalFromChart,
 	buildStablecoinAreaChartData,
 	buildStablecoinTotalChartData,
+	getFreshStablecoinCurrentPoint,
 	getStablecoinDominance,
 	getStablecoinMcapStatsFromTotals,
 	getStablecoinTopTokenFromChartData,
@@ -14,7 +15,7 @@ import { formattedNum, getPercentChange, slug } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { getObjectCache, setObjectCache } from '~/utils/cache-client'
 import { getDeprecatedChainsByName } from '~/utils/metadata/deprecatedChains'
-import { getFreshTimeSeriesCurrentPoint, toUnixMsTimestamp } from '~/utils/timeSeries'
+import { toUnixMsTimestamp } from '~/utils/timeSeries'
 import {
 	fetchStablecoinAssetApi,
 	fetchStablecoinAssetsApi,
@@ -582,7 +583,7 @@ export async function getStablecoinChainsPageData(): Promise<PeggedChainsPageDat
 	const latestPoint = source.chartData[source.chartData.length - 1]
 	const dataTimestamp = latestPoint ? toUnixMsTimestamp(latestPoint.date) / 1e3 : null
 	const isDataStale =
-		latestPoint != null && getFreshTimeSeriesCurrentPoint(source.chartData, (point) => point.date) == null
+		latestPoint != null && getFreshStablecoinCurrentPoint(source.chartData, (point) => point.date) == null
 
 	return {
 		chainCirculatings: source.chainCirculatings,

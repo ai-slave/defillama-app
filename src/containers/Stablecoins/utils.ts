@@ -1,9 +1,9 @@
 import { formatNum, formattedNum, getPercentChange, keepNeededProperties, slug } from '~/utils'
 import {
+	DAY_MS,
 	findTimeSeriesPointNear,
 	getCompleteTimeSeriesDailyWindow,
 	getFreshTimeSeriesCurrentPoint,
-	getTimeSeriesPeriodPair,
 	toUnixMsTimestamp
 } from '~/utils/timeSeries'
 import type { StablecoinChartPoint, StablecoinListAsset, StablecoinPricesResponse } from './api.types'
@@ -181,6 +181,32 @@ const toFiniteNumber = (value: unknown): number | null => {
 	return Number.isFinite(numeric) ? numeric : null
 }
 
+export function getFreshStablecoinCurrentPoint<T>(
+	series: readonly T[] | null | undefined,
+	getTimestamp: (point: T) => string | number,
+	currentTimeMs: number = Date.now()
+): T | null {
+	// Daily stablecoin snapshots can finish after UTC midnight, so the completed prior day remains fresh until today arrives.
+	return (
+		getFreshTimeSeriesCurrentPoint(series, getTimestamp, { currentTimeMs }) ??
+		getFreshTimeSeriesCurrentPoint(series, getTimestamp, { currentTimeMs, currentDayOffset: 1 })
+	)
+}
+
+function findStablecoinPeriodPreviousPoint<T>(
+	series: readonly T[] | null | undefined,
+	daysBefore: number,
+	getTimestamp: (point: T) => string | number,
+	currentTimeMs?: number
+): T | null {
+	if (!Number.isFinite(daysBefore) || daysBefore <= 0) return null
+
+	const current = getFreshStablecoinCurrentPoint(series, getTimestamp, currentTimeMs)
+	if (!current) return null
+
+	return findTimeSeriesPointNear(series, toUnixMsTimestamp(getTimestamp(current)) - daysBefore * DAY_MS, getTimestamp)
+}
+
 export interface IBuildStablecoinChartDataParams {
 	chartDataByAssetOrChain: Array<Array<StablecoinChartDataPoint> | null | undefined>
 	assetsOrChainsList: string[]
@@ -225,12 +251,12 @@ export function getPrevStablecoinTotalFromChart(
 	const prevChart =
 		daysBefore === 0
 			? chart[chart.length - 1]
-			: getTimeSeriesPeriodPair(
+			: findStablecoinPeriodPreviousPoint(
 					chart.filter((point) => point.isSynthetic !== true),
 					daysBefore,
 					(point) => point.date,
-					options
-				)?.previous
+					options.currentTimeMs
+				)
 	return getStablecoinValueFromPoint(prevChart, issuanceType, pegType)
 }
 
@@ -324,9 +350,14 @@ export const getStablecoinMcapStatsFromTotals = (
 	const totalMcapCurrent = peggedAreaTotalData?.[peggedAreaTotalData.length - 1]?.Mcap ?? null
 	const realTotals = peggedAreaTotalData?.filter((point) => point.isSynthetic !== true)
 	const latestRealTotal = realTotals?.[realTotals.length - 1]
-	const freshCurrentTotal = getFreshTimeSeriesCurrentPoint(realTotals, (point) => point.date, { currentTimeMs })
-	const getPreviousMcap = (daysBefore: number) =>
-		getTimeSeriesPeriodPair(realTotals, daysBefore, (point) => point.date, { currentTimeMs })?.previous.Mcap ?? null
+	const freshCurrentTotal = getFreshStablecoinCurrentPoint(realTotals, (point) => point.date, currentTimeMs)
+	const currentTimestamp = freshCurrentTotal ? toUnixMsTimestamp(freshCurrentTotal.date) : null
+	const getPreviousMcap = (daysBefore: number) => {
+		if (currentTimestamp == null) return null
+		return (
+			findTimeSeriesPointNear(realTotals, currentTimestamp - daysBefore * DAY_MS, (point) => point.date)?.Mcap ?? null
+		)
+	}
 	const totalMcapPrevDay = getPreviousMcap(1)
 	const totalMcapPrevWeek = getPreviousMcap(7)
 	const totalMcapPrevMonth = getPreviousMcap(30)
