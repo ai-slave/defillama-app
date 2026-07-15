@@ -164,7 +164,8 @@ function topicArticleList(count: number) {
 const emptyBanner: BannerLookupResult = {
 	text: null,
 	image: null,
-	imageHorizontal: null
+	imageHorizontal: null,
+	promo: null
 }
 
 describe('research ISR data loading', () => {

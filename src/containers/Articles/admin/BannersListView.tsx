@@ -104,7 +104,7 @@ export function BannersListView() {
 							<div className="grid min-w-0 gap-1">
 								<div className="flex flex-wrap items-center gap-2">
 									<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
-										{BANNER_SCOPE_LABELS[banner.scope]}
+										{banner.type === 'promo' ? 'Global' : BANNER_SCOPE_LABELS[banner.scope]}
 										{banner.scope === 'section' && banner.section ? ` · ${ARTICLE_SECTION_LABELS[banner.section]}` : ''}
 										{banner.scope === 'article' && banner.articleId ? ` · #${banner.articleId.slice(0, 8)}` : ''}
 									</span>
@@ -133,13 +133,18 @@ export function BannersListView() {
 									</>
 								) : (
 									<div className="mt-1 flex items-center gap-3">
-										{banner.imageUrl ? (
+										{(banner.imageUrl ?? banner.imageWideUrl ?? banner.imageCardUrl ?? banner.imageMobileUrl) ? (
 											// eslint-disable-next-line @next/next/no-img-element
 											<img
-												src={banner.imageUrl}
+												src={
+													(banner.imageUrl ??
+														banner.imageWideUrl ??
+														banner.imageCardUrl ??
+														banner.imageMobileUrl) as string
+												}
 												alt=""
 												className={`shrink-0 rounded-sm border border-(--legacy-cards-border) object-cover ${
-													banner.type === 'image-horizontal' ? 'h-8 w-20' : 'size-12'
+													banner.type === 'image-horizontal' || banner.type === 'promo' ? 'h-8 w-20' : 'size-12'
 												}`}
 											/>
 										) : null}

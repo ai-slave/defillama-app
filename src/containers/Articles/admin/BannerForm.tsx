@@ -25,6 +25,7 @@ const TEXT_MAX = 500
 const LINK_URL_MAX = 2000
 const LINK_LABEL_MAX = 64
 const IMAGE_ALT_MAX = 200
+const DISCLOSURE_TEXT_MAX = 64
 
 type FormState = {
 	kind: BannerKind
@@ -37,6 +38,12 @@ type FormState = {
 	linkLabel: string
 	imageUrl: string
 	imageAlt: string
+	imageWideUrl: string
+	imageCardUrl: string
+	imageMobileUrl: string
+	disclosureText: string
+	disclosureUrl: string
+	showOnLanding: boolean
 	enabled: boolean
 }
 
@@ -53,6 +60,12 @@ function bannerToForm(banner: Banner | null): FormState {
 			linkLabel: '',
 			imageUrl: '',
 			imageAlt: '',
+			imageWideUrl: '',
+			imageCardUrl: '',
+			imageMobileUrl: '',
+			disclosureText: '',
+			disclosureUrl: '',
+			showOnLanding: true,
 			enabled: true
 		}
 	}
@@ -67,12 +80,39 @@ function bannerToForm(banner: Banner | null): FormState {
 		linkLabel: banner.linkLabel ?? '',
 		imageUrl: banner.imageUrl ?? '',
 		imageAlt: banner.imageAlt ?? '',
+		imageWideUrl: banner.imageWideUrl ?? '',
+		imageCardUrl: banner.imageCardUrl ?? '',
+		imageMobileUrl: banner.imageMobileUrl ?? '',
+		disclosureText: banner.disclosureText ?? '',
+		disclosureUrl: banner.disclosureUrl ?? '',
+		showOnLanding: banner.showOnLanding !== false,
 		enabled: banner.enabled
 	}
 }
 
 function buildPayload(state: FormState): BannerPayload {
 	const linkUrl = state.linkUrl.trim() || null
+	if (state.kind === 'promo') {
+		return {
+			type: 'promo',
+			scope: 'landing',
+			section: null,
+			articleId: null,
+			excludedArticleIds: state.excludedArticleIds,
+			linkUrl,
+			enabled: state.enabled,
+			text: null,
+			linkLabel: null,
+			imageUrl: null,
+			imageAlt: state.imageAlt.trim() || null,
+			imageWideUrl: state.imageWideUrl.trim() || null,
+			imageCardUrl: state.imageCardUrl.trim() || null,
+			imageMobileUrl: state.imageMobileUrl.trim() || null,
+			disclosureText: state.disclosureText.trim() || null,
+			disclosureUrl: state.disclosureUrl.trim() || null,
+			showOnLanding: state.showOnLanding
+		}
+	}
 	const base: BannerPayload = {
 		type: state.kind,
 		scope: state.scope,
@@ -106,6 +146,7 @@ type FormErrors = {
 	articleId?: string
 	linkUrl?: string
 	imageUrl?: string
+	disclosureUrl?: string
 }
 
 function validate(state: FormState): FormErrors {
@@ -113,11 +154,22 @@ function validate(state: FormState): FormErrors {
 	if (state.kind === 'text') {
 		if (!state.text.trim()) errors.text = 'Banner text is required'
 		else if (state.text.length > TEXT_MAX) errors.text = `Max ${TEXT_MAX} characters`
+	} else if (state.kind === 'promo') {
+		if (!state.imageWideUrl.trim() && !state.imageCardUrl.trim() && !state.imageMobileUrl.trim()) {
+			errors.imageUrl = 'Upload at least one image'
+		}
+		if (!state.linkUrl.trim()) errors.linkUrl = 'Link URL is required'
+		const disclosure = state.disclosureUrl.trim()
+		if (disclosure && !/^(https?:\/\/|\/)/.test(disclosure)) {
+			errors.disclosureUrl = 'Must start with http://, https://, or /'
+		}
 	} else {
 		if (!state.imageUrl.trim()) errors.imageUrl = 'Image is required'
 	}
-	if (state.scope === 'section' && !state.section) errors.section = 'Pick a section'
-	if (state.scope === 'article' && !state.articleId) errors.articleId = 'Pick an article'
+	if (state.kind !== 'promo') {
+		if (state.scope === 'section' && !state.section) errors.section = 'Pick a section'
+		if (state.scope === 'article' && !state.articleId) errors.articleId = 'Pick an article'
+	}
 	const link = state.linkUrl.trim()
 	if (link && !/^(https?:\/\/|\/)/.test(link)) {
 		errors.linkUrl = 'Must start with http://, https://, or /'
@@ -179,6 +231,12 @@ export function BannerForm({ banner }: Props) {
 		state.linkLabel !== initial.linkLabel ||
 		state.imageUrl !== initial.imageUrl ||
 		state.imageAlt !== initial.imageAlt ||
+		state.imageWideUrl !== initial.imageWideUrl ||
+		state.imageCardUrl !== initial.imageCardUrl ||
+		state.imageMobileUrl !== initial.imageMobileUrl ||
+		state.disclosureText !== initial.disclosureText ||
+		state.disclosureUrl !== initial.disclosureUrl ||
+		state.showOnLanding !== initial.showOnLanding ||
 		state.enabled !== initial.enabled
 
 	const saveMutation = useMutation({
@@ -236,15 +294,21 @@ export function BannerForm({ banner }: Props) {
 	const previewBanner: Banner = {
 		id: banner?.id ?? 'preview',
 		type: state.kind,
-		scope: state.scope,
+		scope: state.kind === 'promo' ? 'landing' : state.scope,
 		section: state.scope === 'section' ? (state.section as ArticleSection) : null,
 		articleId: state.scope === 'article' ? state.articleId : null,
 		excludedArticleIds: state.excludedArticleIds,
 		text: state.kind === 'text' ? state.text || 'Banner preview text — write your message above' : null,
 		linkUrl: state.linkUrl.trim() || null,
 		linkLabel: state.kind === 'text' ? state.linkLabel.trim() || null : null,
-		imageUrl: state.kind !== 'text' ? state.imageUrl.trim() || null : null,
+		imageUrl: state.kind !== 'text' && state.kind !== 'promo' ? state.imageUrl.trim() || null : null,
 		imageAlt: state.kind !== 'text' ? state.imageAlt.trim() || null : null,
+		imageWideUrl: state.kind === 'promo' ? state.imageWideUrl.trim() || null : null,
+		imageCardUrl: state.kind === 'promo' ? state.imageCardUrl.trim() || null : null,
+		imageMobileUrl: state.kind === 'promo' ? state.imageMobileUrl.trim() || null : null,
+		disclosureText: state.kind === 'promo' ? state.disclosureText.trim() || null : null,
+		disclosureUrl: state.kind === 'promo' ? state.disclosureUrl.trim() || null : null,
+		showOnLanding: state.kind === 'promo' ? state.showOnLanding : true,
 		enabled: true,
 		createdByPbUserId: banner?.createdByPbUserId ?? '',
 		createdAt: banner?.createdAt ?? new Date().toISOString(),
@@ -257,9 +321,9 @@ export function BannerForm({ banner }: Props) {
 
 			<Section
 				title="Kind"
-				description="Text shows as a dismissible strip at the top of the page. Desktop images are used by landing placements or the article right rail. Wide/mobile images are used by landing placements or the mobile article body."
+				description="Text shows as a dismissible strip at the top of the page. Desktop images are used by landing placements or the article right rail. Wide/mobile images are used by landing placements or the mobile article body. Promo is a single global placement below Latest on the landing page and on every article."
 			>
-				<div className="grid gap-2 sm:grid-cols-3">
+				<div className="grid gap-2 sm:grid-cols-2">
 					{BANNER_KINDS.map((kind) => (
 						<label
 							key={kind}
@@ -286,101 +350,21 @@ export function BannerForm({ banner }: Props) {
 				</div>
 			</Section>
 
-			<Section title="Scope" description="Where should this banner appear?">
-				<div className="grid gap-2">
-					{visibleScopes.map((scope) => (
-						<label
-							key={scope}
-							className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
-								state.scope === scope
-									? 'border-(--legacy-link-text)/60 bg-(--legacy-link-button)'
-									: 'border-(--legacy-cards-border) hover:border-(--legacy-link-text)/40'
-							}`}
-						>
-							<input
-								type="radio"
-								name="scope"
-								value={scope}
-								checked={state.scope === scope}
-								onChange={() => update({ scope })}
-								className="mt-0.5 accent-(--legacy-link-text)"
-							/>
-							<div className="grid gap-0.5">
-								<span className="text-sm font-medium text-(--legacy-text-primary)">{BANNER_SCOPE_LABELS[scope]}</span>
-								<span className="text-xs text-(--legacy-text-tertiary)">
-									{scope === 'landing'
-										? 'Shows on /research'
-										: scope === 'section'
-											? 'Shows on every article in the chosen section'
-											: scope === 'all_articles'
-												? 'Shows on every article'
-												: 'Shows only on the chosen article'}
-								</span>
-							</div>
-						</label>
-					))}
-				</div>
-
-				{state.scope === 'section' ? (
-					<div className="grid gap-1.5">
-						<span className="text-sm font-medium text-(--legacy-text-primary)">Section</span>
-						<Ariakit.SelectProvider
-							value={state.section}
-							setValue={(v) => {
-								const next = typeof v === 'string' ? v : Array.isArray(v) ? v[0] : ''
-								update({ section: next as ArticleSection })
-							}}
-						>
-							<Ariakit.Select
-								aria-label="Banner section"
-								className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-(--legacy-app-bg) px-3 text-sm transition-colors focus-visible:border-(--legacy-link-text) focus-visible:outline-hidden data-[state=open]:border-(--legacy-link-text) ${
-									errors.section
-										? 'border-red-500/60 text-(--legacy-text-primary)'
-										: state.section
-											? 'border-(--legacy-cards-border) text-(--legacy-text-primary)'
-											: 'border-(--legacy-cards-border) text-(--legacy-text-tertiary)'
-								}`}
-							>
-								<span className="truncate text-left">
-									{state.section ? ARTICLE_SECTION_LABELS[state.section as ArticleSection] : 'Select a section…'}
-								</span>
-								<Ariakit.SelectArrow className="shrink-0 text-(--legacy-text-tertiary)" />
-							</Ariakit.Select>
-							<Ariakit.SelectPopover
-								gutter={6}
-								sameWidth
-								portal
-								unmountOnHide
-								className="z-[90] flex flex-col overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 text-sm shadow-xl outline-hidden"
-							>
-								{ARTICLE_SECTIONS.map((section) => (
-									<Ariakit.SelectItem
-										key={section}
-										value={section}
-										className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-(--legacy-text-secondary) data-active-item:bg-(--legacy-link-button) data-active-item:text-(--legacy-link-text)"
-									>
-										<span className="truncate">{ARTICLE_SECTION_LABELS[section]}</span>
-										<Ariakit.SelectItemCheck className="shrink-0 text-(--legacy-link-text)" />
-									</Ariakit.SelectItem>
-								))}
-							</Ariakit.SelectPopover>
-						</Ariakit.SelectProvider>
-						{errors.section ? <p className="text-xs text-red-500">{errors.section}</p> : null}
-					</div>
-				) : null}
-
-				{state.scope === 'article' ? (
-					<div className="grid gap-1.5">
-						<span className="text-sm font-medium text-(--legacy-text-primary)">Article</span>
-						<ArticlePicker
-							value={state.articleId}
-							onChange={(article) => update({ articleId: article?.id ?? null })}
-							error={errors.articleId}
+			{state.kind === 'promo' ? (
+				<Section
+					title="Placement"
+					description="The promo shows below Latest on the landing page and on every article. Narrow it down here."
+				>
+					<label className="flex items-center gap-3">
+						<input
+							type="checkbox"
+							checked={state.showOnLanding}
+							onChange={(e) => update({ showOnLanding: e.target.checked })}
+							className="size-4 accent-(--legacy-link-text)"
 						/>
-					</div>
-				) : null}
+						<span className="text-sm text-(--legacy-text-primary)">Show on the landing page</span>
+					</label>
 
-				{state.scope === 'all_articles' ? (
 					<div className="grid gap-1.5">
 						<span className="text-sm font-medium text-(--legacy-text-primary)">
 							Hide on these articles <span className="font-normal text-(--legacy-text-tertiary)">(optional)</span>
@@ -388,11 +372,119 @@ export function BannerForm({ banner }: Props) {
 						<ArticleMultiPicker
 							value={state.excludedArticleIds}
 							onChange={(ids) => update({ excludedArticleIds: ids })}
-							hint="The banner shows on every article except the ones listed here."
+							hint="The promo shows on every article except the ones listed here."
 						/>
 					</div>
-				) : null}
-			</Section>
+				</Section>
+			) : (
+				<Section title="Scope" description="Where should this banner appear?">
+					<div className="grid gap-2">
+						{visibleScopes.map((scope) => (
+							<label
+								key={scope}
+								className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
+									state.scope === scope
+										? 'border-(--legacy-link-text)/60 bg-(--legacy-link-button)'
+										: 'border-(--legacy-cards-border) hover:border-(--legacy-link-text)/40'
+								}`}
+							>
+								<input
+									type="radio"
+									name="scope"
+									value={scope}
+									checked={state.scope === scope}
+									onChange={() => update({ scope })}
+									className="mt-0.5 accent-(--legacy-link-text)"
+								/>
+								<div className="grid gap-0.5">
+									<span className="text-sm font-medium text-(--legacy-text-primary)">{BANNER_SCOPE_LABELS[scope]}</span>
+									<span className="text-xs text-(--legacy-text-tertiary)">
+										{scope === 'landing'
+											? 'Shows on /research'
+											: scope === 'section'
+												? 'Shows on every article in the chosen section'
+												: scope === 'all_articles'
+													? 'Shows on every article'
+													: 'Shows only on the chosen article'}
+									</span>
+								</div>
+							</label>
+						))}
+					</div>
+
+					{state.scope === 'section' ? (
+						<div className="grid gap-1.5">
+							<span className="text-sm font-medium text-(--legacy-text-primary)">Section</span>
+							<Ariakit.SelectProvider
+								value={state.section}
+								setValue={(v) => {
+									const next = typeof v === 'string' ? v : Array.isArray(v) ? v[0] : ''
+									update({ section: next as ArticleSection })
+								}}
+							>
+								<Ariakit.Select
+									aria-label="Banner section"
+									className={`flex h-10 items-center justify-between gap-2 rounded-md border bg-(--legacy-app-bg) px-3 text-sm transition-colors focus-visible:border-(--legacy-link-text) focus-visible:outline-hidden data-[state=open]:border-(--legacy-link-text) ${
+										errors.section
+											? 'border-red-500/60 text-(--legacy-text-primary)'
+											: state.section
+												? 'border-(--legacy-cards-border) text-(--legacy-text-primary)'
+												: 'border-(--legacy-cards-border) text-(--legacy-text-tertiary)'
+									}`}
+								>
+									<span className="truncate text-left">
+										{state.section ? ARTICLE_SECTION_LABELS[state.section as ArticleSection] : 'Select a section…'}
+									</span>
+									<Ariakit.SelectArrow className="shrink-0 text-(--legacy-text-tertiary)" />
+								</Ariakit.Select>
+								<Ariakit.SelectPopover
+									gutter={6}
+									sameWidth
+									portal
+									unmountOnHide
+									className="z-[90] flex flex-col overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 text-sm shadow-xl outline-hidden"
+								>
+									{ARTICLE_SECTIONS.map((section) => (
+										<Ariakit.SelectItem
+											key={section}
+											value={section}
+											className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-(--legacy-text-secondary) data-active-item:bg-(--legacy-link-button) data-active-item:text-(--legacy-link-text)"
+										>
+											<span className="truncate">{ARTICLE_SECTION_LABELS[section]}</span>
+											<Ariakit.SelectItemCheck className="shrink-0 text-(--legacy-link-text)" />
+										</Ariakit.SelectItem>
+									))}
+								</Ariakit.SelectPopover>
+							</Ariakit.SelectProvider>
+							{errors.section ? <p className="text-xs text-red-500">{errors.section}</p> : null}
+						</div>
+					) : null}
+
+					{state.scope === 'article' ? (
+						<div className="grid gap-1.5">
+							<span className="text-sm font-medium text-(--legacy-text-primary)">Article</span>
+							<ArticlePicker
+								value={state.articleId}
+								onChange={(article) => update({ articleId: article?.id ?? null })}
+								error={errors.articleId}
+							/>
+						</div>
+					) : null}
+
+					{state.scope === 'all_articles' ? (
+						<div className="grid gap-1.5">
+							<span className="text-sm font-medium text-(--legacy-text-primary)">
+								Hide on these articles <span className="font-normal text-(--legacy-text-tertiary)">(optional)</span>
+							</span>
+							<ArticleMultiPicker
+								value={state.excludedArticleIds}
+								onChange={(ids) => update({ excludedArticleIds: ids })}
+								hint="The banner shows on every article except the ones listed here."
+							/>
+						</div>
+					) : null}
+				</Section>
+			)}
 
 			{state.kind === 'text' ? (
 				<Section title="Content" description="The text readers see and an optional link.">
@@ -440,6 +532,123 @@ export function BannerForm({ banner }: Props) {
 							onChange={(e) => update({ linkLabel: e.target.value })}
 							maxLength={LINK_LABEL_MAX}
 							placeholder="Read more"
+							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--legacy-link-text)/60"
+						/>
+					</label>
+				</Section>
+			) : state.kind === 'promo' ? (
+				<Section
+					title="Content"
+					description="Three renditions of the promo image, the click-through link, and an optional disclosure link. Placements without an uploaded image are hidden."
+				>
+					<div className="grid gap-1.5">
+						<span className="text-sm font-medium text-(--legacy-text-primary)">
+							Landing image <span className="font-normal text-(--legacy-text-tertiary)">(desktop, below Latest)</span>
+						</span>
+						<ImageUploadButton
+							scope="banner-landing-desktop"
+							previewShape="wide"
+							currentUrl={state.imageWideUrl || null}
+							onUploaded={(result) => update({ imageWideUrl: result.url })}
+							onCleared={() => update({ imageWideUrl: '' })}
+							label="landing promo image"
+							helperText="Up to 8 MB. PNG, JPEG, WebP, or GIF. Resized to fit 2745 × 380, transcoded to WebP."
+						/>
+					</div>
+
+					<div className="grid gap-1.5">
+						<span className="text-sm font-medium text-(--legacy-text-primary)">
+							Article card image <span className="font-normal text-(--legacy-text-tertiary)">(desktop right rail)</span>
+						</span>
+						<ImageUploadButton
+							scope="promo-card"
+							previewShape="wide"
+							currentUrl={state.imageCardUrl || null}
+							onUploaded={(result) => update({ imageCardUrl: result.url })}
+							onCleared={() => update({ imageCardUrl: '' })}
+							label="article promo card"
+							helperText="Up to 8 MB. PNG, JPEG, WebP, or GIF. Resized to fit 1600 × 900, transcoded to WebP."
+						/>
+					</div>
+
+					<div className="grid gap-1.5">
+						<span className="text-sm font-medium text-(--legacy-text-primary)">
+							Mobile image <span className="font-normal text-(--legacy-text-tertiary)">(landing and article body)</span>
+						</span>
+						<ImageUploadButton
+							scope="banner-landing-mobile"
+							previewShape="wide"
+							currentUrl={state.imageMobileUrl || null}
+							onUploaded={(result) => update({ imageMobileUrl: result.url })}
+							onCleared={() => update({ imageMobileUrl: '' })}
+							label="mobile promo image"
+							helperText="Up to 8 MB. PNG, JPEG, WebP, or GIF. Resized to fit 1200 × 600, transcoded to WebP. Falls back to the article card image when empty."
+						/>
+					</div>
+					{errors.imageUrl ? <p className="text-xs text-red-500">{errors.imageUrl}</p> : null}
+
+					<label className="grid gap-1.5">
+						<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--legacy-text-primary)">
+							Alt text{' '}
+							<span className="font-normal text-(--legacy-text-tertiary)">
+								(optional, recommended for accessibility)
+							</span>
+							<CharCount value={state.imageAlt} max={IMAGE_ALT_MAX} />
+						</span>
+						<input
+							type="text"
+							value={state.imageAlt}
+							onChange={(e) => update({ imageAlt: e.target.value })}
+							maxLength={IMAGE_ALT_MAX}
+							placeholder="e.g. Revolut X — built for serious crypto traders"
+							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--legacy-link-text)/60"
+						/>
+					</label>
+
+					<label className="grid gap-1.5">
+						<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--legacy-text-primary)">
+							Link URL
+							<CharCount value={state.linkUrl} max={LINK_URL_MAX} />
+						</span>
+						<input
+							type="text"
+							value={state.linkUrl}
+							onChange={(e) => update({ linkUrl: e.target.value })}
+							maxLength={LINK_URL_MAX}
+							placeholder="https://…"
+							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--legacy-link-text)/60"
+						/>
+						{errors.linkUrl ? <p className="text-xs text-red-500">{errors.linkUrl}</p> : null}
+					</label>
+
+					<label className="grid gap-1.5">
+						<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--legacy-text-primary)">
+							Disclosure URL <span className="font-normal text-(--legacy-text-tertiary)">(optional)</span>
+							<CharCount value={state.disclosureUrl} max={LINK_URL_MAX} />
+						</span>
+						<input
+							type="text"
+							value={state.disclosureUrl}
+							onChange={(e) => update({ disclosureUrl: e.target.value })}
+							maxLength={LINK_URL_MAX}
+							placeholder="https://…"
+							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--legacy-link-text)/60"
+						/>
+						{errors.disclosureUrl ? <p className="text-xs text-red-500">{errors.disclosureUrl}</p> : null}
+					</label>
+
+					<label className="grid gap-1.5">
+						<span className="flex items-center justify-between gap-2 text-sm font-medium text-(--legacy-text-primary)">
+							Disclosure label{' '}
+							<span className="font-normal text-(--legacy-text-tertiary)">(optional, default “Disclosure”)</span>
+							<CharCount value={state.disclosureText} max={DISCLOSURE_TEXT_MAX} />
+						</span>
+						<input
+							type="text"
+							value={state.disclosureText}
+							onChange={(e) => update({ disclosureText: e.target.value })}
+							maxLength={DISCLOSURE_TEXT_MAX}
+							placeholder="Disclosure"
 							className="w-full rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-3 py-2 text-sm text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--legacy-link-text)/60"
 						/>
 					</label>
@@ -552,9 +761,61 @@ function BannerPreview({ banner }: { banner: Banner }) {
 				<div className="overflow-hidden rounded-md border border-(--legacy-cards-border)">
 					<TextPreviewInner banner={banner} />
 				</div>
+			) : banner.type === 'promo' ? (
+				<PromoPreview banner={banner} />
 			) : (
 				<ImagePreview banner={banner} />
 			)}
+		</div>
+	)
+}
+
+function PromoPreview({ banner }: { banner: Banner }) {
+	const disclosure = banner.disclosureUrl ? (
+		<span className="text-xs text-(--legacy-text-secondary) underline">{banner.disclosureText || 'Disclosure'}</span>
+	) : null
+	const slots: { label: string; imageUrl: string | null; widthClass: string; placeholder: string }[] = [
+		{
+			label: 'Landing (desktop)',
+			imageUrl: banner.showOnLanding ? banner.imageWideUrl : null,
+			widthClass: 'max-w-[640px]',
+			placeholder: banner.showOnLanding
+				? 'Upload a landing image to show the banner below Latest on /research'
+				: 'Hidden on the landing page'
+		},
+		{
+			label: 'Article card (desktop right rail)',
+			imageUrl: banner.imageCardUrl,
+			widthClass: 'max-w-[280px]',
+			placeholder: 'Upload a card image to show the banner on article pages'
+		},
+		{
+			label: 'Mobile',
+			imageUrl: banner.imageMobileUrl ?? banner.imageCardUrl,
+			widthClass: 'max-w-[360px]',
+			placeholder: 'Upload a mobile image (or a card image as fallback)'
+		}
+	]
+	return (
+		<div className="grid gap-4">
+			{slots.map((slot) => (
+				<div key={slot.label} className={`grid gap-1 ${slot.widthClass}`}>
+					<span className="text-[10px] tracking-[0.14em] text-(--legacy-text-tertiary) uppercase">{slot.label}</span>
+					{slot.imageUrl ? (
+						<>
+							<div className="overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
+								{/* eslint-disable-next-line @next/next/no-img-element */}
+								<img src={slot.imageUrl} alt={banner.imageAlt ?? ''} className="block h-auto w-full" />
+							</div>
+							{disclosure}
+						</>
+					) : (
+						<div className="flex h-24 items-center justify-center rounded-md border border-dashed border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-4 text-center text-xs text-(--legacy-text-tertiary)">
+							{slot.placeholder}
+						</div>
+					)}
+				</div>
+			))}
 		</div>
 	)
 }

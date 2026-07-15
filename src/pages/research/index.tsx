@@ -10,6 +10,7 @@ import { ResearchGridWithScrollbar } from '~/containers/Articles/landing/Researc
 import { ResearchHero } from '~/containers/Articles/landing/ResearchHero'
 import { ResearchInterviews } from '~/containers/Articles/landing/ResearchInterviews'
 import { ResearchLatest } from '~/containers/Articles/landing/ResearchLatest'
+import { ResearchPromoBanner } from '~/containers/Articles/landing/ResearchPromoBanner'
 import { ResearchReportHighlightWithHeight } from '~/containers/Articles/landing/ResearchReportHighlight'
 import ResearchSearch from '~/containers/Articles/landing/ResearchSearch'
 import { ResearchSectionWithSharedHeightProvider } from '~/containers/Articles/landing/ResearchSectionWithSharedHeight'
@@ -199,6 +200,8 @@ function ArticlesLandingInner({ initialData }: { initialData: ArticlesPageProps 
 
 				<div className="relative z-1 mx-auto w-full max-w-7xl space-y-[30px] px-4 sm:px-6 lg:space-y-[70px] lg:px-8">
 					<ResearchLatest articles={landingData?.latest ?? []} />
+
+					<ResearchPromoBanner initialData={landingQuery.data?.landingBanner} />
 
 					<ResearchSpotlight title="In the spotlight" articles={landingData?.spotlight ?? []} />
 

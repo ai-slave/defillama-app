@@ -63,9 +63,9 @@ export function ArticleImageBanner({ articleId, section }: Props) {
 		</div>
 	)
 
-	if (!linkUrl) return frame
-
-	return isExternalUrl(linkUrl) ? (
+	const content = !linkUrl ? (
+		frame
+	) : isExternalUrl(linkUrl) ? (
 		<a href={linkUrl} target="_blank" rel="noopener noreferrer" className="block">
 			{frame}
 		</a>
@@ -74,4 +74,6 @@ export function ArticleImageBanner({ articleId, section }: Props) {
 			{frame}
 		</Link>
 	)
+
+	return <div className="pr-2">{content}</div>
 }

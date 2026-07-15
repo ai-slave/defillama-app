@@ -646,7 +646,7 @@ export async function deleteBanner(id: string, authorizedFetch: AuthorizedFetch)
 	)
 }
 
-const EMPTY_BANNER_LOOKUP: BannerLookupResult = { text: null, image: null, imageHorizontal: null }
+const EMPTY_BANNER_LOOKUP: BannerLookupResult = { text: null, image: null, imageHorizontal: null, promo: null }
 
 export async function getLandingBanner(fetchFn: FetchLike = fetch): Promise<BannerLookupResult> {
 	const data = await parseResponse<BannerLookupResult | null>(

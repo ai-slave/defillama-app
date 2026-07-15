@@ -29,6 +29,13 @@ import { ArticleImageBannerHorizontal } from './ArticleImageBannerHorizontal'
 import { ArticleImageBlock } from './ArticleImageBlock'
 import { ArticlePageAssets } from './ArticlePageAssets'
 import { ArticlePeoplePanelBlock } from './ArticlePeoplePanelBlock'
+import {
+	ArticlePromoBannerMobile,
+	ArticlePromoCard,
+	cardPromoImageUrl,
+	mobilePromoImageUrl,
+	usePromoBanner
+} from './ArticlePromoBanner'
 import { ArticleQAAnswer, ArticleQABlock, ArticleQAQuestion } from './ArticleQABlock'
 import { EntityPreviewLink } from './EntityPreviewLink'
 
@@ -73,14 +80,23 @@ function headingSlug(text: string) {
 	)
 }
 
-function horizontalBannerSlot(articleId: string, blockCount: number): number {
-	if (blockCount < 2) return blockCount
+function bannerSlotHash(articleId: string): number {
 	let hash = 0
 	for (let i = 0; i < articleId.length; i++) {
 		hash = ((hash << 5) - hash + articleId.charCodeAt(i)) | 0
 	}
+	return Math.abs(hash)
+}
+
+function horizontalBannerSlot(articleId: string, blockCount: number): number {
+	if (blockCount < 2) return blockCount
 	const maxSlot = Math.min(3, blockCount)
-	return (Math.abs(hash) % maxSlot) + 1
+	return (bannerSlotHash(articleId) % maxSlot) + 1
+}
+
+function horizontalBannerSecondSlot(articleId: string, blockCount: number, firstSlot: number): number {
+	const offset = 4 + (bannerSlotHash(articleId + '#') % 3)
+	return Math.min(firstSlot + offset, blockCount)
 }
 
 type HastNode =
@@ -825,6 +841,8 @@ export function ArticleRenderer({
 			: 'Draft'
 	const ctx: RenderContext = { figureCount: { value: 0 } }
 	const contentJson = useMemo(() => normalizeArticleContentJson(article.contentJson), [article.contentJson])
+	const promoBanner = usePromoBanner(article.id)
+	const mobilePromoVisible = !!mobilePromoImageUrl(promoBanner)
 
 	const toc: TocEntry[] = []
 	collectToc(contentJson, toc)
@@ -1076,6 +1094,7 @@ export function ArticleRenderer({
 							const nodes = docContent.map((child, idx) => renderNode(child, `article-root-${idx}`, ctx))
 							if (docContent.length === 0) return nodes
 							const slot = horizontalBannerSlot(article.id ?? '', docContent.length)
+							const promo = <ArticlePromoBannerMobile key="article-mobile-promo-banner" articleId={article.id} />
 							const banner = (
 								<ArticleImageBannerHorizontal
 									key="article-mobile-banner"
@@ -1083,7 +1102,15 @@ export function ArticleRenderer({
 									section={article.section ?? null}
 								/>
 							)
-							return [...nodes.slice(0, slot), banner, ...nodes.slice(slot)]
+							const out = [...nodes]
+							if (mobilePromoVisible) {
+								const secondSlot = horizontalBannerSecondSlot(article.id ?? '', docContent.length, slot)
+								out.splice(slot, 0, promo)
+								out.splice(secondSlot + 1, 0, banner)
+							} else {
+								out.splice(slot, 0, banner)
+							}
+							return out
 						})()}
 					</div>
 				</div>
@@ -1105,9 +1132,12 @@ export function ArticleRenderer({
 						<div className="pr-2">
 							<ShareBlock url={shareUrl} title={article.title} compactMode={pastHeader} />
 						</div>
-						<div className="pr-2">
-							<ArticleImageBanner articleId={article.id} section={article.section ?? null} />
-						</div>
+						{cardPromoImageUrl(promoBanner) ? (
+							<div className="pr-2">
+								<ArticlePromoCard articleId={article.id} />
+							</div>
+						) : null}
+						<ArticleImageBanner articleId={article.id} section={article.section ?? null} />
 					</div>
 				</aside>
 			)}

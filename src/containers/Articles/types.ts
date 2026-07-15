@@ -310,20 +310,22 @@ export const BANNER_SCOPE_LABELS: Record<BannerScope, string> = {
 	all_articles: 'All articles'
 }
 
-export type BannerKind = 'text' | 'image' | 'image-horizontal'
+export type BannerKind = 'text' | 'image' | 'image-horizontal' | 'promo'
 
-export const BANNER_KINDS: BannerKind[] = ['text', 'image', 'image-horizontal']
+export const BANNER_KINDS: BannerKind[] = ['text', 'image', 'image-horizontal', 'promo']
 
 export const BANNER_KIND_LABELS: Record<BannerKind, string> = {
 	text: 'Text strip',
 	image: 'Desktop image',
-	'image-horizontal': 'Wide/mobile image'
+	'image-horizontal': 'Wide/mobile image',
+	promo: 'Promo'
 }
 
 export const BANNER_KIND_DESCRIPTIONS: Record<BannerKind, string> = {
 	text: 'Full-width dismissible strip at the top of the page',
 	image: 'Desktop image used by landing placements or the article right rail',
-	'image-horizontal': 'Wide image used by landing placements or the mobile article body'
+	'image-horizontal': 'Wide image used by landing placements or the mobile article body',
+	promo: 'Global promo shown below Latest on the landing page and on every article'
 }
 
 export type Banner = {
@@ -337,6 +339,12 @@ export type Banner = {
 	linkLabel: string | null
 	imageUrl: string | null
 	imageAlt: string | null
+	imageWideUrl: string | null
+	imageCardUrl: string | null
+	imageMobileUrl: string | null
+	disclosureText: string | null
+	disclosureUrl: string | null
+	showOnLanding: boolean
 	excludedArticleIds: string[]
 	enabled: boolean
 	createdByPbUserId: string
@@ -354,6 +362,12 @@ export type BannerPayload = {
 	linkLabel?: string | null
 	imageUrl?: string | null
 	imageAlt?: string | null
+	imageWideUrl?: string | null
+	imageCardUrl?: string | null
+	imageMobileUrl?: string | null
+	disclosureText?: string | null
+	disclosureUrl?: string | null
+	showOnLanding?: boolean
 	excludedArticleIds?: string[] | null
 	enabled?: boolean
 }
@@ -362,4 +376,5 @@ export type BannerLookupResult = {
 	text: Banner | null
 	image: Banner | null
 	imageHorizontal: Banner | null
+	promo: Banner | null
 }
