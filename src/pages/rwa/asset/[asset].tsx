@@ -79,7 +79,11 @@ export const getStaticProps = withPerformanceLogging(
 			return canonicalRouteRedirect(`/rwa/asset/${encodeURIComponent(assetRoute.canonicalMarketId)}`)
 		}
 
-		const asset = await getRWAAssetData({ assetId: assetRoute.assetId })
+		const { acquireOptionalYieldsSnapshot } = await import('~/containers/Yields/server/dataset.server')
+		const asset = await getRWAAssetData({
+			assetId: assetRoute.assetId,
+			yieldsSnapshot: await acquireOptionalYieldsSnapshot()
+		})
 
 		if (!asset) {
 			return { notFound: true }

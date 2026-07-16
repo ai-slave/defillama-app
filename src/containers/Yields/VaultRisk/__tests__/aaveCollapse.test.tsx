@@ -195,7 +195,6 @@ describe('Aave collapsed scenario payload', () => {
 		const html = await render(
 			<ScenarioByExit scenarios={after.scenarios} protocol={after.protocol} supplyUsd={after.supplyUsd} />
 		)
-		expect(html).toContain('How you could lose money')
 		expect(html).toContain('Oracle staleness')
 		expect(html).toContain('Risk Steward abuse')
 		expect(html).toContain('Asset listing misconfiguration')

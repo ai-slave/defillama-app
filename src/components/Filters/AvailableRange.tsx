@@ -58,7 +58,7 @@ export function AvailableRange({
 						}`}</span>
 					</>
 				) : (
-					'Filter by min/max Available'
+					'Available'
 				)
 			}
 			onSubmit={handleSubmit}

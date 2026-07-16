@@ -341,37 +341,36 @@ LIMIT 20`
 		description: 'Stablecoin-only pools, APY > 10%, TVL > $1M.',
 		subcategory: 'Yield hunting',
 		tables: [{ kind: 'dataset', slug: 'yields' }],
-		sql: `SELECT project, symbol, chain, apy, tvlUsd, apyMean30d
+		sql: `SELECT protocol, pool, chain, supplyApy, tvlUsd, supplyApy30d
 FROM yields
-WHERE stablecoin = 'true'
-  AND apy > 10
+WHERE stablecoinOnly = true
+  AND supplyApy > 10
   AND tvlUsd > 1000000
-ORDER BY apy DESC
+ORDER BY supplyApy DESC
 LIMIT 50`
 	},
 	{
-		title: 'APY trap detector',
-		description: 'Pools where APY fell >30% this week — emissions likely ending.',
+		title: 'APY above recent average',
+		description: 'Pools where current supply APY is at least 5 points above its 7d average.',
 		subcategory: 'Yield hunting',
 		tables: [{ kind: 'dataset', slug: 'yields' }],
-		sql: `SELECT project, symbol, chain, apy, apyPct7D, apyPct30D, tvlUsd
+		sql: `SELECT protocol, pool, chain, supplyApy, supplyApy7d, supplyApy30d, tvlUsd
 FROM yields
 WHERE tvlUsd > 5000000
-  AND apyPct7D < -30
-  AND apy > 5
-ORDER BY apyPct7D ASC
+  AND supplyApy - supplyApy7d >= 5
+ORDER BY supplyApy - supplyApy7d DESC
 LIMIT 30`
 	},
 	{
 		title: 'Calm + chunky pools',
-		description: 'TVL > $10M, APY between 3-20%, 30d change within ±5%.',
+		description: 'TVL > $10M, supply APY between 3-20%, within 5 points of its 30d average.',
 		subcategory: 'Yield hunting',
 		tables: [{ kind: 'dataset', slug: 'yields' }],
-		sql: `SELECT project, symbol, chain, apy, apyMean30d, apyPct30D, tvlUsd
+		sql: `SELECT protocol, pool, chain, supplyApy, supplyApy30d, stability30d, tvlUsd
 FROM yields
 WHERE tvlUsd > 10000000
-  AND apyPct30D BETWEEN -5 AND 5
-  AND apy BETWEEN 3 AND 20
+  AND ABS(supplyApy - supplyApy30d) <= 5
+  AND supplyApy BETWEEN 3 AND 20
 ORDER BY tvlUsd DESC
 LIMIT 30`
 	},
@@ -380,13 +379,13 @@ LIMIT 30`
 		description: 'Lowest APYs on borrow markets with meaningful liquidity.',
 		subcategory: 'Yield hunting',
 		tables: [{ kind: 'dataset', slug: 'yields-borrow' }],
-		sql: `SELECT project, symbol, apyBaseBorrow, apyRewardBorrow,
-       apy AS net_borrow_apy, totalBorrowUsd, ltv
+		sql: `SELECT protocol, market, collateralToken, borrowToken,
+       borrowCostApyBase, borrowCostApyReward, borrowCostApy,
+       totalBorrowUsd, availableBorrowUsd, ltv
 FROM yields_borrow
 WHERE chain = 'Ethereum'
   AND totalBorrowUsd > 5000000
-  AND borrowable = 'true'
-ORDER BY apyBaseBorrow ASC NULLS LAST
+ORDER BY borrowCostApy ASC NULLS LAST
 LIMIT 30`
 	},
 
@@ -500,10 +499,10 @@ LIMIT 20`
 		description: 'APY > 50% on pools under $500k — classic rug shape.',
 		subcategory: 'Outliers',
 		tables: [{ kind: 'dataset', slug: 'yields' }],
-		sql: `SELECT project, symbol, chain, apy, tvlUsd, stablecoin, ilRisk
+		sql: `SELECT protocol, pool, chain, supplyApy, tvlUsd, stablecoinOnly, impermanentLossRisk
 FROM yields
-WHERE apy > 50 AND tvlUsd BETWEEN 1000 AND 500000
-ORDER BY apy DESC
+WHERE supplyApy > 50 AND tvlUsd BETWEEN 1000 AND 500000
+ORDER BY supplyApy DESC
 LIMIT 30`
 	},
 	{

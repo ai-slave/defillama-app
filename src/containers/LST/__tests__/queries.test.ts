@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProtocolLite, ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 import type { ILsdRateApiItem, IProtocolDetailApiItem, IYieldPoolApiItem } from '../api.types'
-import { getLSDPageData } from '../queries'
+import { getLSTPageData } from '../queries'
 
 const mocks = vi.hoisted(() => ({
 	fetchProtocols: vi.fn<() => Promise<ProtocolsResponse>>(),
@@ -75,9 +75,10 @@ function protocolDetail({
 	}
 }
 
-describe('getLSDPageData', () => {
+describe('getLSTPageData', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
+		mocks.fetchLsdRates.mockResolvedValue([])
 	})
 
 	it('preserves LST token ordering, table exclusions, and Lido-required history rows', async () => {
@@ -104,36 +105,18 @@ describe('getLSDPageData', () => {
 				{ project: 'diva', chain: 'Ethereum', symbol: 'DIVAETH', apy: 1 }
 			]
 		})
+		mocks.fetchEthPrice.mockResolvedValue(2_000)
 		mocks.fetchLsdRates.mockResolvedValue([
 			{
 				name: 'Lido',
 				symbol: 'stETH',
 				type: 'rebase',
-				ethPeg: 0,
-				marketRate: 1,
+				ethPeg: -0.1,
+				marketRate: 0.999,
 				expectedRate: 1,
 				fee: 0.1
-			},
-			{
-				name: 'Rocket Pool',
-				symbol: 'rETH',
-				type: 'accruing',
-				ethPeg: 0,
-				marketRate: 1,
-				expectedRate: 1,
-				fee: 0.15
-			},
-			{
-				name: 'diva',
-				symbol: 'divaETH',
-				type: null,
-				ethPeg: null,
-				marketRate: null,
-				expectedRate: null,
-				fee: null
 			}
 		])
-		mocks.fetchEthPrice.mockResolvedValue(2_000)
 
 		const protocolDetails: Record<string, IProtocolDetailApiItem> = {
 			lido: protocolDetail({
@@ -169,7 +152,7 @@ describe('getLSDPageData', () => {
 			return detail
 		})
 
-		const result = await getLSDPageData()
+		const result = await getLSTPageData({ readJson: vi.fn() })
 
 		expect(result.tokens).toEqual(['Lido', 'Rocket Pool', 'diva'])
 		expect(result.tokensList.map((row) => row.name)).toEqual(['Lido', 'Rocket Pool'])
@@ -179,5 +162,23 @@ describe('getLSDPageData', () => {
 		expect(result.areaChartData[0].Lido).toBeCloseTo((100 / 150) * 100)
 		expect(result.areaChartData[0]['Rocket Pool']).toBeCloseTo((50 / 150) * 100)
 		expect(result.tokensList[0].marketShare).toBeCloseTo((110 / 195) * 100)
+		expect(result.tokensList[0].apy).toBe(3)
+		expect(result.tokensList[0]).toMatchObject({
+			lsdSymbol: 'stETH',
+			ethPeg: -0.1,
+			marketRate: 0.999,
+			expectedRate: 1,
+			fee: 10
+		})
+
+		mocks.fetchLsdRates.mockRejectedValueOnce(new Error('legacy rates unavailable'))
+		const resultWithoutLegacyRates = await getLSTPageData({ readJson: vi.fn() })
+
+		expect(resultWithoutLegacyRates.tokensList[0]).toMatchObject({
+			apy: 3,
+			lsdSymbol: null,
+			ethPeg: null,
+			fee: null
+		})
 	})
 })

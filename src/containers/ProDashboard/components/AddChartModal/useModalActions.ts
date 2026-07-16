@@ -12,7 +12,9 @@ import {
 	type ProtocolsTableConfig,
 	type StoredColSpan,
 	type TextConfig,
-	type UnlocksScheduleConfig
+	type UnlocksScheduleConfig,
+	type YieldsChartConfig,
+	normalizeYieldChartType
 } from '../../types'
 import { EXTENDED_COLOR_PALETTE } from '../../utils/colorManager'
 import type { ChartTabType, MainTabType } from './types'
@@ -334,15 +336,16 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 		if (editItem) {
 			let newItem: DashboardItemConfig | null = null
 			if (state.selectedMainTab === 'charts' && state.selectedChartTab === 'yields' && state.selectedYieldPool) {
-				newItem = {
+				const yieldsItem: YieldsChartConfig = {
 					...editItem,
 					kind: 'yields',
 					poolConfigId: state.selectedYieldPool.configID,
 					poolName: state.selectedYieldPool.name,
 					project: state.selectedYieldPool.project,
 					chain: state.selectedYieldPool.chain,
-					chartType: state.selectedYieldChartType
-				} as any
+					chartType: normalizeYieldChartType(state.selectedYieldChartType)
+				}
+				newItem = yieldsItem
 			} else if (state.selectedMainTab === 'charts' && state.selectedChartTab === 'stablecoins') {
 				if (state.stablecoinMode === 'asset' && state.selectedStablecoinAsset && state.selectedStablecoinAssetId) {
 					newItem = {

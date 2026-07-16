@@ -18,6 +18,7 @@ import {
 } from '~/containers/ProDashboard/server/stablecoinFetchers'
 import { fetchTableServerData } from '~/containers/ProDashboard/server/tableQueries'
 import { fetchProtocolsTable } from '~/containers/ProDashboard/server/unifiedTable/protocols'
+import { fetchProYieldsDataset } from '~/containers/ProDashboard/server/yieldsDataset'
 import ProtocolChartBuilderData from '~/containers/ProDashboard/services/ProtocolChartBuilderData'
 import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
 import type {
@@ -26,11 +27,13 @@ import type {
 	ChartConfig,
 	IncomeStatementConfig,
 	MetricConfig,
+	ProtocolsTableConfig,
 	StablecoinsChartConfig,
 	UnifiedTableConfig,
 	UnlocksPieConfig,
 	UnlocksScheduleConfig
 } from '~/containers/ProDashboard/types'
+import { normalizeYieldChartType } from '~/containers/ProDashboard/types'
 import { STREAM_PROTOCOL_SERIES_SKIP_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
 import { fetchProtocolBySlug } from '~/containers/ProtocolOverview/api'
 import { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
@@ -42,9 +45,8 @@ import {
 } from '~/containers/Stablecoins/api'
 import { formatPeggedAssetsData } from '~/containers/Stablecoins/utils'
 import { getProtocolEmissionsPieData, getProtocolEmissionsScheduleData } from '~/containers/Unlocks/queries'
-import { YIELD_CHART_API, YIELD_CHART_LEND_BORROW_API } from '~/containers/Yields/constants'
+import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
 import { slug } from '~/utils'
-import { fetchWithPoolingOnServer } from '~/utils/http-client'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
 import { recordRouteRuntimeError, withApiRouteTelemetry } from '~/utils/telemetry'
 
@@ -178,26 +180,29 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
 		// Yields — stream per pool
 		const yieldsItems = extractYieldsItems(items)
-		const uniquePoolIds = new Set<string>()
-		for (const item of yieldsItems) uniquePoolIds.add(item.poolConfigId)
-		for (const poolConfigId of uniquePoolIds) {
+		const needsByPool = new Map<string, { supply: boolean; borrow: boolean }>()
+		for (const item of yieldsItems) {
+			const needs = needsByPool.get(item.poolConfigId) ?? { supply: false, borrow: false }
+			const chartType = normalizeYieldChartType(item.chartType)
+			if (chartType === 'borrow-apy' || chartType === 'net-borrow-apy') needs.borrow = true
+			else needs.supply = true
+			needsByPool.set(item.poolConfigId, needs)
+		}
+		for (const [poolConfigId, needs] of needsByPool) {
 			phase2Promises.push(
 				(async () => {
-					const encodedPoolConfigId = encodeURIComponent(poolConfigId)
-					const [chartResult, lendBorrowResult] = await Promise.allSettled([
-						fetchWithPoolingOnServer(`${YIELD_CHART_API}/${encodedPoolConfigId}`, { timeout: 10_000 }).then((r) =>
-							r.ok ? r.json() : null
-						),
-						fetchWithPoolingOnServer(`${YIELD_CHART_LEND_BORROW_API}/${encodedPoolConfigId}`, {
-							timeout: 10_000
-						}).then((r) => (r.ok ? r.json() : null))
+					const [supplyResult, borrowResult] = await Promise.allSettled([
+						needs.supply ? withTimeout(fetchPoolDetailHistory(poolConfigId, 'max'), 10_000) : Promise.resolve(null),
+						needs.borrow
+							? withTimeout(fetchBorrowMarketDetailHistory(poolConfigId, 'max'), 10_000)
+							: Promise.resolve(null)
 					])
 					writeLine({
 						type: 'yieldsChartData',
 						id: poolConfigId,
 						data: {
-							chart: chartResult.status === 'fulfilled' ? chartResult.value : null,
-							lendBorrow: lendBorrowResult.status === 'fulfilled' ? lendBorrowResult.value : null
+							...(needs.supply && supplyResult.status === 'fulfilled' ? { supply: supplyResult.value } : null),
+							...(needs.borrow && borrowResult.status === 'fulfilled' ? { borrow: borrowResult.value } : null)
 						}
 					})
 				})().catch(() => {})
@@ -744,24 +749,27 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
 		// Yields dataset tables
 		const seenYieldsTableKeys = new Set<string>()
-		for (const item of items.filter((i: any) => i.kind === 'table' && i.datasetType === 'yields')) {
-			const itemChains: string[] = Array.isArray((item as any).chains) ? (item as any).chains : []
-			const sortedChainsKey = itemChains.length ? [...itemChains].sort().join(',') : ''
-			const cacheKey = JSON.stringify(['pro-dashboard', 'yields-overview', sortedChainsKey])
-			if (seenYieldsTableKeys.has(cacheKey)) continue
-			seenYieldsTableKeys.add(cacheKey)
-			phase2Promises.push(
-				(async () => {
-					const { acquireYieldsSnapshot, getTokenYieldsRows } =
-						await import('~/containers/Yields/server/snapshot.reader.server')
-					const snapshot = await acquireYieldsSnapshot('background')
-					const data = await withTimeout(
-						getTokenYieldsRows(snapshot, '', itemChains.length ? itemChains : undefined),
-						15_000
-					)
-					if (data) writeLine({ type: 'yieldsDatasetData', key: cacheKey, data })
-				})().catch(() => {})
+		const yieldsTables = items.filter(
+			(item): item is ProtocolsTableConfig => item.kind === 'table' && item.datasetType === 'yields'
+		)
+		if (yieldsTables.length > 0) {
+			const yieldsSnapshot = await import('~/containers/Yields/server/dataset.server').then(
+				({ acquireYieldsSnapshot }) => acquireYieldsSnapshot('background')
 			)
+			for (const item of yieldsTables) {
+				const itemChains = item.chains
+				const sortedChainsKey = itemChains.length ? [...itemChains].sort().join(',') : ''
+				const cacheKey = JSON.stringify(['pro-dashboard', 'yields-v2', sortedChainsKey])
+				if (seenYieldsTableKeys.has(cacheKey)) continue
+				seenYieldsTableKeys.add(cacheKey)
+				phase2Promises.push(
+					withTimeout(fetchProYieldsDataset(yieldsSnapshot, itemChains), 15_000)
+						.then((data) => {
+							if (data) writeLine({ type: 'yieldsDatasetData', key: cacheKey, data })
+						})
+						.catch(() => {})
+				)
+			}
 		}
 
 		// Stablecoins dataset tables

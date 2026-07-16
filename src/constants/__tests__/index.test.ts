@@ -40,6 +40,8 @@ describe('PRO_API_BASE_URL', () => {
 
 		expect(constants.SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/api')
 		expect(constants.DATASETS_SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/datasets')
+		expect(constants.YIELDS_SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/yields')
+		expect(constants.YIELDS_V2_SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/yields')
 	})
 })
 
@@ -59,10 +61,11 @@ describe('server URL constants', () => {
 		expect(constants.RWA_PERPS_SERVER_URL).toBe('https://api.llama.fi/rwa-perps')
 		expect(constants.STABLECOINS_SERVER_URL).toBe('https://stablecoins.llama.fi')
 		expect(constants.TRADFI_API).toBe('https://api.llama.fi/dat')
-		expect(constants.YIELDS_SERVER_URL).toBe('https://yields.llama.fi')
 		expect(constants.LIQUIDATIONS_SERVER_URL_V2).toBe('https://api.llama.fi/liquidations')
 		expect(constants.RISK_SERVER_URL).toBe('https://risks.llama.fi')
 		expect(constants.MARKETS_SERVER_URL).toBe('https://markets.llama.fi')
+		expect(constants.YIELDS_SERVER_URL).toBe('https://yields.llama.fi')
+		expect(constants.YIELDS_V2_SERVER_URL).toBe('https://yields-v2.llama.fi')
 	})
 
 	it('uses direct URL overrides before pro API fallbacks', async () => {
@@ -81,7 +84,8 @@ describe('server URL constants', () => {
 			SERVER_URL: 'https://core.example.com/api/',
 			STABLECOINS_SERVER_URL: 'https://stablecoins.example.com/',
 			TRADFI_API: 'https://tradfi.example.com/',
-			YIELDS_SERVER_URL: 'https://yields.example.com/'
+			YIELDS_SERVER_URL: 'https://legacy-yields.example.com/',
+			YIELDS_V2_SERVER_URL: 'https://yields.example.com/'
 		})
 
 		expect(constants.SERVER_URL).toBe('https://core.example.com/api')
@@ -96,9 +100,10 @@ describe('server URL constants', () => {
 		expect(constants.RWA_PERPS_SERVER_URL).toBe('https://rwa-perps.example.com')
 		expect(constants.STABLECOINS_SERVER_URL).toBe('https://stablecoins.example.com')
 		expect(constants.TRADFI_API).toBe('https://tradfi.example.com')
-		expect(constants.YIELDS_SERVER_URL).toBe('https://yields.example.com')
 		expect(constants.LIQUIDATIONS_SERVER_URL_V2).toBe('https://liquidations.example.com')
 		expect(constants.RISK_SERVER_URL).toBe('https://risks.example.com')
+		expect(constants.YIELDS_SERVER_URL).toBe('https://legacy-yields.example.com')
+		expect(constants.YIELDS_V2_SERVER_URL).toBe('https://yields.example.com')
 	})
 
 	it('uses an explicit V2 server URL override when provided', async () => {

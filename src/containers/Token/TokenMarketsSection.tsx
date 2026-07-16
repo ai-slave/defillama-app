@@ -476,8 +476,8 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 		getPaginationRowModel: getPaginationRowModel()
 	})
 
-	// Reset sort + search whenever the user switches venue or category, matching the prior
-	// remount-on-key behavior. Pagination auto-resets when the `data` reference changes via
+	// Reset sort + search whenever the user switches venue or category.
+	// Pagination auto-resets when the `data` reference changes via
 	// TanStack's default autoResetPageIndex.
 	// CEX and All start with no active sort — rows already come pre-ranked (bybit's top pair
 	// first, then volume) from rankRowsBybitFirst — so no header shows a sort indicator until

@@ -1,17 +1,30 @@
 import { useQuery } from '@tanstack/react-query'
 import { useContext } from 'react'
 import { StreamDoneContext } from '~/containers/ProDashboard/queries'
+import type { EarnPageRow, MarketTableRow } from '~/containers/Yields/data/types'
+import type { YieldsPaginatedTableResponse } from '~/containers/Yields/yieldsTableQuery'
 import { fetchJson } from '~/utils/async'
+import { joinEarnAndBorrowMarkets, type ProYieldRow } from './data'
+
+export async function fetchProYieldsData(chains: string[] = []): Promise<ProYieldRow[]> {
+	const params = new URLSearchParams({ pageSize: 'all', includeMemeTokens: 'true' })
+	for (const chain of chains) if (chain !== 'All') params.append('chain', chain)
+
+	const query = params.toString()
+	const [earn, markets] = await Promise.all([
+		fetchJson<YieldsPaginatedTableResponse<EarnPageRow>>(`/api/public/yields/earn?${query}`),
+		fetchJson<YieldsPaginatedTableResponse<MarketTableRow>>(`/api/public/yields/borrow-markets?${query}`)
+	])
+	return joinEarnAndBorrowMarkets(earn.rows, markets.rows)
+}
 
 export function useYieldsData(chains?: string[]) {
 	const streamDone = useContext(StreamDoneContext)
-	const queryParams =
-		chains && chains.length > 0 ? `?${chains.map((chain) => `chains=${encodeURIComponent(chain)}`).join('&')}` : ''
 	const sortedChains = chains?.length ? chains.toSorted() : []
 
 	return useQuery({
-		queryKey: ['pro-dashboard', 'yields-overview', sortedChains.join(',')],
-		queryFn: () => fetchJson(`/api/public/yields${queryParams}`),
+		queryKey: ['pro-dashboard', 'yields-v2', sortedChains.join(',')],
+		queryFn: () => fetchProYieldsData(sortedChains),
 		enabled: streamDone,
 		staleTime: Infinity,
 		retry: 1

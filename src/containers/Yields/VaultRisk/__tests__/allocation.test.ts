@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { allocationSlices, buildAllocation, positionUsd } from '../allocation'
+import { buildAllocation, positionUsd } from '../allocation'
 import { buildVaultRiskVM } from '../derive'
 import type { CollateralVM } from '../types'
 import { makeCollateral, makeVaultRiskData } from './factories'
@@ -117,36 +117,5 @@ describe('buildAllocation', () => {
 	it('returns null when nothing is deployed', () => {
 		expect(buildAllocation([], 100, null, null)).toBeNull()
 		expect(buildAllocation([coll({ allocationUsd: 0, exposureUsd: 0 })], 100, 0, 0)).toBeNull()
-	})
-})
-
-describe('allocationSlices', () => {
-	it('builds donut slices: named markets, folded tail, unallocated remainder', () => {
-		const cols = Array.from({ length: 7 }, (_, i) =>
-			coll({ symbol: `T${i}`, address: `0x${i}`, allocationUsd: 70 - i * 10 })
-		) // 70+60+50+40+30+20+10 = 280
-		const alloc = buildAllocation(cols, 400, 280, 30)!
-		const slices = allocationSlices(cols, alloc)
-		expect(slices.data).toHaveLength(7) // 5 named + others + unallocated
-		expect(slices.data[5].name).toBe('2 smaller markets')
-		expect(slices.data[5].value).toBe(30)
-		expect(slices.data[6]).toEqual({ name: 'Unallocated', value: 120 })
-		// every slice has a color, and the slice values cover the whole vault
-		for (const d of slices.data) expect(slices.colors[d.name]).toBeTruthy()
-		expect(slices.data.reduce((a, d) => a + d.value, 0)).toBe(400)
-	})
-
-	it('merges two markets of the same collateral into one slice', () => {
-		const cols = [
-			coll({ symbol: 'cbBTC', address: '0x1', allocationUsd: 60 }),
-			coll({ symbol: 'cbBTC', address: '0x2', allocationUsd: 30 }),
-			coll({ symbol: 'WETH', address: '0x3', allocationUsd: 10 })
-		]
-		const alloc = buildAllocation(cols, 100, 100, 0)!
-		const slices = allocationSlices(cols, alloc)
-		expect(slices.data).toEqual([
-			{ name: 'cbBTC', value: 90 },
-			{ name: 'WETH', value: 10 }
-		])
 	})
 })

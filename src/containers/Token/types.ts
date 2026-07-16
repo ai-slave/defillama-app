@@ -1,35 +1,46 @@
 import type { getTokenIncomeStatement } from '~/containers/ProtocolOverview/queries'
 import type { ITokenRightsData } from '~/containers/TokenRights/types'
+import type { RouteTableRow } from '~/containers/Yields/data/types'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
-import type { TokenBorrowRoutesResponse } from './tokenBorrowRoutes.types'
 import type { TokenOverviewData } from './tokenOverview'
 import type { TokenRiskResponse } from './tokenRisk.types'
 
 export type TokenIncomeStatementData = NonNullable<Awaited<ReturnType<typeof getTokenIncomeStatement>>>
 
+// Borrow routes for the token page's two tabs: rows where the page token is the
+// collateral leg ('Use X') vs the borrow leg ('Borrow X'). Flat RouteTableRow shape
+// shared with /yields/borrow routes mode (Tables/Borrow).
+export type TokenBorrowRoutesData = {
+	useAsCollateral: RouteTableRow[]
+	borrowThis: RouteTableRow[]
+}
+
 export type TokenBorrowRoutesCounts = {
-	borrowAsCollateral: number
-	borrowAsDebt: number
+	useAsCollateral: number
+	borrowThis: number
 }
 
 export type TokenBorrowRoutesChainLists = {
-	borrowAsCollateral: string[]
-	borrowAsDebt: string[]
+	useAsCollateral: string[]
+	borrowThis: string[]
 }
 
 export type TokenYieldsHydration = {
 	rows: IYieldTableRow[]
 	rowCount: number
 	chainList: string[]
-	tokensList: string[]
 	pageSize: number
+	// Resolved token option keys the client re-fetches full data with.
+	tokenKeys: string[]
 }
 
 export type TokenBorrowRoutesHydration = {
-	data: TokenBorrowRoutesResponse
+	data: TokenBorrowRoutesData
 	counts: TokenBorrowRoutesCounts
 	chainLists: TokenBorrowRoutesChainLists
 	pageSize: number
+	// Resolved token option keys the client re-fetches full data with.
+	tokenKeys: string[]
 }
 
 export type TokenIssuer = {

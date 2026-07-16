@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
+import { tooltipSurfaceStyles } from '~/ui/Popover'
 import { formattedNum } from '~/utils'
 import { EASE_OUT_EXPO, useCountUp, useInViewOnce } from '../primitives/motion'
 import type { CollateralVM, ScenarioVM, Stress, StressAnchor } from '../types'
@@ -128,17 +129,17 @@ function LossReadout({
 	return (
 		<div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
 			<span className="flex flex-col">
-				<span className="text-2xl font-semibold text-(--legacy-text-primary) tabular-nums">
+				<span className="mono-xl text-primary tabular-nums">
 					<span ref={leadRef}>{fmt(leadUsd * ratio)}</span>
 				</span>
-				<span className="text-xs text-(--legacy-text-secondary)">{leadSub}</span>
+				<span className="body-sm text-secondary">{leadSub}</span>
 			</span>
 			<span className="flex flex-col text-right">
-				<span className="text-sm font-semibold text-(--legacy-text-secondary) tabular-nums">
+				<span className="label-md text-secondary tabular-nums">
 					{'up to '}
 					<span ref={catRef}>{fmt(catUsd * ratio)}</span>
 				</span>
-				<span className="text-xs text-(--legacy-text-tertiary)">{catSub}</span>
+				<span className="body-sm text-tertiary">{catSub}</span>
 			</span>
 		</div>
 	)
@@ -253,11 +254,11 @@ export function LossCurve({
 		const realistic = marks[marks.length - 1]
 		if (!realistic)
 			return (
-				<p className="text-sm text-(--legacy-text-secondary)">
+				<p className="body-md text-secondary">
 					{'Every modeled failure here risks '}
-					<span className="text-(--legacy-text-primary)">{whole}</span>
+					<span className="text-primary">{whole}</span>
 					{' — there’s no smaller-loss path. Worst case: '}
-					<span className="text-(--legacy-text-primary)">
+					<span className="text-primary">
 						{catLabel}
 						{noEscape ? ' (no warning to exit)' : ''}
 					</span>
@@ -340,7 +341,7 @@ export function LossCurve({
 	const popBelow = hot ? hot.y < 45 : false
 
 	return (
-		<div className="flex flex-col gap-2.5">
+		<div className="flex flex-col gap-2">
 			<LossReadout
 				leadUsd={realisticAnchor.bad_debt_usd}
 				leadSub={`realistic worst · −${realisticAnchor.drop_pct}% collateral crash`}
@@ -358,7 +359,7 @@ export function LossCurve({
 				aria-valuemax={curvePts.length - 1}
 				aria-valuenow={active ?? 0}
 				aria-valuetext={valueText}
-				className="relative h-24 w-full cursor-crosshair rounded-md outline-offset-2 outline-(--legacy-primary) focus-visible:outline-2 sm:h-28"
+				className="relative h-24 w-full cursor-crosshair rounded-md outline-offset-2 outline-brand focus-visible:outline-2 sm:h-28"
 				onKeyDown={onKeyDown}
 				onBlur={() => setActive(null)}
 				onPointerMove={(e) => scrub(e.clientX, e.currentTarget)}
@@ -371,8 +372,8 @@ export function LossCurve({
 					<svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 size-full" aria-hidden>
 						<defs>
 							<linearGradient id="vault-loss-grad" x1="0" y1="0" x2="0" y2="1">
-								<stop offset="0%" stopColor="var(--legacy-primary)" stopOpacity="0.3" />
-								<stop offset="100%" stopColor="var(--legacy-primary)" stopOpacity="0" />
+								<stop offset="0%" stopColor="var(--bg-brand)" stopOpacity="0.3" />
+								<stop offset="100%" stopColor="var(--bg-brand)" stopOpacity="0" />
 							</linearGradient>
 							<clipPath id="vault-area-clip" clipPathUnits="objectBoundingBox">
 								<path d={areaClip} />
@@ -382,12 +383,12 @@ export function LossCurve({
 						<path
 							d={line}
 							fill="none"
-							stroke="var(--legacy-primary)"
+							stroke="var(--bg-brand)"
 							strokeWidth="2"
 							strokeLinecap="round"
 							strokeLinejoin="round"
 							vectorEffect="non-scaling-stroke"
-							style={{ filter: 'drop-shadow(0 1px 5px color-mix(in oklch, var(--legacy-primary) 30%, transparent))' }}
+							style={{ filter: 'drop-shadow(0 1px 5px color-mix(in oklch, var(--bg-brand) 30%, transparent))' }}
 						/>
 					</svg>
 					{/* dot texture: a wash revealed through a dot-grid mask, clipped to the curve */}
@@ -395,7 +396,7 @@ export function LossCurve({
 						aria-hidden
 						className="absolute inset-0"
 						style={{
-							background: 'var(--legacy-primary)',
+							background: 'var(--bg-brand)',
 							opacity: 0.4,
 							WebkitMaskImage: DOT_MASK,
 							maskImage: DOT_MASK,
@@ -412,12 +413,12 @@ export function LossCurve({
 						<span
 							data-annot
 							aria-hidden
-							className="pointer-events-none absolute inset-x-0 border-t border-dashed border-(--legacy-text-secondary)/40"
+							className="pointer-events-none absolute inset-x-0 border-t border-dashed border-(--text-secondary)/40"
 							style={{ top: `${covY}%` }}
 						/>
 						<span
 							data-annot
-							className="pointer-events-none absolute right-0 -translate-y-1/2 bg-(--legacy-cards-bg) pl-1 text-[10px] text-(--success)"
+							className="pointer-events-none absolute right-0 -translate-y-1/2 bg-surface pl-1 body-xs text-(--yield-positive-text)"
 							style={{ top: `${covY}%` }}
 						>
 							{`covered to ${fmt(coverageUsd)}`}
@@ -428,7 +429,7 @@ export function LossCurve({
 				{hot ? (
 					<span
 						aria-hidden
-						className="pointer-events-none absolute inset-y-0 w-px bg-(--legacy-text-secondary)/30"
+						className="pointer-events-none absolute inset-y-0 w-px bg-(--text-secondary)/30"
 						style={{ left: `${hot.x}%` }}
 					/>
 				) : null}
@@ -438,8 +439,8 @@ export function LossCurve({
 						key={p.drop}
 						data-annot
 						aria-hidden
-						className={`pointer-events-none absolute size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-(--legacy-cards-bg) transition-transform duration-150 ${
-							i === active ? 'scale-[1.8] bg-(--legacy-text-primary)' : 'bg-(--legacy-primary)'
+						className={`pointer-events-none absolute size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-surface transition-transform duration-150 ${
+							i === active ? 'scale-[1.8] bg-(--text-primary)' : 'bg-brand'
 						}`}
 						style={{ left: `${p.x}%`, top: `${p.y}%` }}
 					/>
@@ -447,44 +448,44 @@ export function LossCurve({
 
 				{hot ? (
 					<div
-						className="pointer-events-none absolute z-10 w-max max-w-56 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-2 shadow-lg"
+						className={`${tooltipSurfaceStyles} pointer-events-none absolute z-10 w-max max-w-56 p-2`}
 						style={{
 							left: `${hot.x}%`,
 							top: `${hot.y}%`,
 							transform: `translate(${popTransformX}, ${popBelow ? '14px' : 'calc(-100% - 14px)'})`
 						}}
 					>
-						<div className="text-xs font-medium text-(--legacy-text-primary)">
+						<div className="label-sm text-primary">
 							{hot.drop >= 100 ? 'Extreme event' : `−${hot.drop}% collateral crash`}
 						</div>
-						<div className="text-[11px] text-(--legacy-text-secondary) tabular-nums">
+						<div className="body-sm text-secondary tabular-nums">
 							{`${fmt(hot.loss)} · ${share(hot.loss)}% of deposit`}
 						</div>
 						{hot.drop >= 100 ? (
-							<p className="mt-1.5 border-t border-(--legacy-cards-border) pt-1.5 text-[11px] text-(--legacy-text-secondary)">
+							<p className="mt-1.5 border-t border-subtle pt-1.5 body-sm text-secondary">
 								{`${catLabel} — a whole-vault failure, not tied to specific collateral.`}
 							</p>
 						) : hotBreakdown.length ? (
-							<div className="mt-1.5 flex flex-col gap-1 border-t border-(--legacy-cards-border) pt-1.5">
+							<div className="mt-1.5 flex flex-col gap-1 border-t border-subtle pt-1.5">
 								{hotBreakdown.map((e) => (
-									<span key={e.symbol} className="flex items-center gap-1.5 text-[11px]">
+									<span key={e.symbol} className="flex items-center gap-1.5 body-sm">
 										{e.symbol === 'Other' ? (
-											<span className="size-3.5 shrink-0 rounded-full bg-(--legacy-text-tertiary)/40" aria-hidden />
+											<span className="size-3.5 shrink-0 rounded-full bg-(--text-tertiary)/40" aria-hidden />
 										) : (
 											<TokenLogo src={e.logoUrl} size={14} alt={e.symbol} />
 										)}
-										<span className="truncate text-(--legacy-text-secondary)">{e.symbol}</span>
-										<span className="ml-auto shrink-0 text-(--legacy-text-primary) tabular-nums">{fmt(e.usd)}</span>
+										<span className="truncate text-secondary">{e.symbol}</span>
+										<span className="ml-auto shrink-0 text-primary tabular-nums">{fmt(e.usd)}</span>
 									</span>
 								))}
 							</div>
 						) : null}
 						{/* the link opts back into pointer events (the popover is click-through) and jumps
 						    to the Scenarios tab via its public anchor — RiskTabs activates it on hashchange */}
-						<div className="mt-1.5 border-t border-(--legacy-cards-border) pt-1.5">
+						<div className="mt-1.5 border-t border-subtle pt-1.5">
 							<a
 								href="#vault-risk-scenarios"
-								className="pointer-events-auto block w-fit text-[10px] text-(--legacy-primary) hover:underline"
+								className="pointer-events-auto block w-fit label-sm text-link hover:underline"
 							>
 								See all scenarios →
 							</a>
@@ -494,7 +495,7 @@ export function LossCurve({
 			</div>
 
 			{/* drop-severity ticks — the axis, kept to whispers */}
-			<div className="relative h-3 text-[10px] text-(--legacy-text-tertiary)">
+			<div className="relative h-3 body-xs text-tertiary">
 				{curvePts.map((p) => (
 					<span
 						key={p.drop}
@@ -506,7 +507,7 @@ export function LossCurve({
 				))}
 			</div>
 
-			<p className="text-xs text-(--legacy-text-tertiary)">
+			<p className="body-sm text-tertiary">
 				{`Left to right, a deeper collateral crash. Hover any point for the scenarios that drive the loss — only a ${catLabel.toLowerCase()} reaches a total loss.`}
 			</p>
 		</div>

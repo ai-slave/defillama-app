@@ -45,13 +45,20 @@ export const getStaticProps = withPerformanceLogging(
 			return canonicalRouteRedirect(`/chart/protocol/${protocolRoute.canonicalSlug}`)
 		}
 
+		const yieldsSnapshot =
+			protocolRoute.metadata.yields || protocolRoute.metadata.liquidity
+				? await import('~/containers/Yields/server/dataset.server').then(({ acquireOptionalYieldsSnapshot }) =>
+						acquireOptionalYieldsSnapshot()
+					)
+				: null
 		const data = await getProtocolOverviewPageData({
 			protocolId: protocolRoute.id,
 			currentProtocolMetadata: protocolRoute.metadata,
 			chainMetadata: metadataCache.chainMetadata,
 			tokenlist: metadataCache.tokenlist,
 			cgExchangeIdentifiers: metadataCache.cgExchangeIdentifiers,
-			emissionsSupplyMetrics: metadataCache.emissionsSupplyMetrics
+			emissionsSupplyMetrics: metadataCache.emissionsSupplyMetrics,
+			yieldsSnapshot
 		})
 
 		if (!data) {

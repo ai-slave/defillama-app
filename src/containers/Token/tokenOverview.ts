@@ -12,7 +12,7 @@ import type { RawRaise } from '~/containers/Raises/api.types'
 import { fetchTreasuryById } from '~/containers/Treasuries/api'
 import type { RawTreasuriesResponse } from '~/containers/Treasuries/api.types'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
-import { fetchYieldConfig, type YieldConfigResponse } from '~/containers/Yields/queries.server'
+import type { YieldsMeta } from '~/containers/Yields/data/types'
 import { slug } from '~/utils'
 import type { IProtocolLlamaswapChain, IProtocolMetadata, ITokenListEntry } from '~/utils/metadata/types'
 import type { TokenDirectoryRecord } from '~/utils/tokenDirectory'
@@ -94,7 +94,7 @@ type TokenOverviewDataSource =
 			kind: 'prefetched'
 			raises: RawRaise[] | null
 			treasury: RawTreasuriesResponse[number] | null
-			yieldConfig: YieldConfigResponse | null
+			yieldsMeta: YieldsMeta | null
 			liquidityInfo: ProtocolLiquidityTokensResponse[number] | null
 	  }
 
@@ -405,14 +405,14 @@ function buildRaisesSummary(raises: RawRaise[] | null): TokenOverviewRaise[] | n
 
 function buildTokenLiquiditySummary({
 	protocolDataId,
-	yieldsConfig,
+	yieldsMeta,
 	liquidityInfo
 }: {
 	protocolDataId: string | null
-	yieldsConfig: YieldConfigResponse
+	yieldsMeta: YieldsMeta | null
 	liquidityInfo: ProtocolLiquidityTokensResponse[number] | null
 }): TokenOverviewTokenLiquidity | null {
-	if (!protocolDataId || !yieldsConfig?.protocols || !liquidityInfo) return null
+	if (!protocolDataId || !liquidityInfo) return null
 
 	const tokenPools = liquidityInfo.id === protocolDataId ? (liquidityInfo.tokenPools ?? []) : []
 
@@ -429,9 +429,10 @@ function buildTokenLiquiditySummary({
 	}
 
 	const rows: Array<[string, string, number]> = []
+	const protocolNameBySlug = new Map((yieldsMeta?.protocols ?? []).map((protocol) => [protocol.slug, protocol.name]))
 	let total = 0
 	for (const protocolSlug in liquidityAggregated) {
-		const protocolName = yieldsConfig.protocols?.[protocolSlug]?.name ?? protocolSlug
+		const protocolName = protocolNameBySlug.get(protocolSlug) ?? protocolSlug
 
 		const chainValues = liquidityAggregated[protocolSlug]
 		for (const chainName in chainValues) {
@@ -564,14 +565,11 @@ export async function getTokenOverviewData({
 				: Promise.resolve(null)
 	])
 
-	const [yieldsConfig, liquidityInfo] =
+	const [yieldsMeta, liquidityInfo] =
 		source.kind === 'prefetched'
-			? [source.yieldConfig, source.liquidityInfo]
+			? [source.yieldsMeta, source.liquidityInfo]
 			: shouldFetchLiquidity && protocolData?.id
-				? await Promise.all([
-						fetchYieldConfig().catch(() => null),
-						fetchLiquidityDatasetEntryByProtocolId(protocolData.id).catch(() => null)
-					])
+				? [null, await fetchLiquidityDatasetEntryByProtocolId(protocolData.id).catch(() => null)]
 				: [null, null]
 
 	const marketDataFallback = buildTokenMarketDataFallback(coinDetail, currentPriceViaLlama)
@@ -589,7 +587,7 @@ export async function getTokenOverviewData({
 
 	const tokenLiquidity = buildTokenLiquiditySummary({
 		protocolDataId: protocolData?.id ?? null,
-		yieldsConfig,
+		yieldsMeta,
 		liquidityInfo
 	})
 

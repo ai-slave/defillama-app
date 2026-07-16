@@ -5,316 +5,181 @@ import { BasicLink } from '~/components/Link'
 import { PercentChange } from '~/components/PercentChange'
 import { TokenLogo } from '~/components/TokenLogo'
 import { formattedNum } from '~/utils'
+import type { ProYieldRow } from './data'
 
-interface IYieldsRow {
-	pool: string
-	configID: string
-	projectslug: string
-	project: string
-	airdrop: boolean
-	chains: string[]
-	tvl: number
-	apy: number
-	apyBase: number
-	apyReward: number
-	rewardTokensSymbols: string[]
-	change1d: number
-	change7d: number
-	il7d: number
-	apyBase7d: number
-	apyNet7d: number
-	apyMean30d: number
-	volumeUsd1d: number
-	volumeUsd7d: number
-	apyBaseBorrow: number | null
-	apyRewardBorrow: number | null
-	apyBorrow: number | null
-	totalSupplyUsd: number | null
-	totalBorrowUsd: number | null
-	totalAvailableUsd: number | null
-	ltv: number | null
-	poolMeta: string | null
+export const YIELDS_COLUMN_IDS = [
+	'pool',
+	'project',
+	'chains',
+	'tvl',
+	'apy',
+	'apyBase',
+	'apyReward',
+	'apyMean30d',
+	'stabilityRating',
+	'volumeUsd1d',
+	'ilRisk',
+	'apyBorrow',
+	'totalSupplyUsd',
+	'totalBorrowUsd',
+	'totalAvailableUsd',
+	'ltv'
+] as const
+export const YIELDS_COLUMN_ID_SET = new Set<string>(YIELDS_COLUMN_IDS)
+
+export type YieldColumnId = (typeof YIELDS_COLUMN_IDS)[number]
+
+function PercentCell({ value, bold = false }: { value: number | null | undefined; bold?: boolean }) {
+	return value == null ? <>-</> : <PercentChange percent={value} noSign fontWeight={bold ? 700 : undefined} />
 }
 
-export const yieldsDatasetColumns: ColumnDef<IYieldsRow>[] = [
+function DollarCell({ value }: { value: number | null | undefined }) {
+	return value == null ? <>-</> : <>{formattedNum(value, true)}</>
+}
+
+export const yieldsDatasetColumns: ColumnDef<ProYieldRow>[] = [
 	{
 		header: 'Pool',
 		id: 'pool',
 		accessorFn: (row) => row.pool,
 		enableSorting: false,
-		cell: ({ getValue, row }) => {
-			const pool = getValue() as string
-			return (
-				<span className="relative flex items-center gap-2 pl-6">
-					<TokenLogo
-						size={20}
-						name={row.original.project}
-						kind="token"
-						alt={`Logo of ${row.original.project}`}
-						data-lgonly
-					/>
-					<BasicLink
-						href={`/yields/pool/${row.original.configID}`}
-						className="truncate text-sm font-medium text-(--legacy-link-text)"
-					>
-						{pool}
-					</BasicLink>
-					{row.original.poolMeta ? (
-						<span className="text-xs text-(--legacy-text-secondary)">{row.original.poolMeta}</span>
-					) : null}
-				</span>
-			)
-		},
-		size: 120
+		cell: ({ getValue, row }) => (
+			<span className="relative flex items-center gap-2 pl-6">
+				<TokenLogo
+					size={20}
+					name={row.original.projectslug}
+					kind="token"
+					alt={`Logo of ${row.original.project}`}
+					data-lgonly
+				/>
+				<BasicLink href={`/yields/pool/${row.original.configID}`} className="truncate text-sm font-medium text-link">
+					{getValue() as string}
+				</BasicLink>
+				{row.original.poolMeta ? <span className="text-xs text-secondary">{row.original.poolMeta}</span> : null}
+			</span>
+		),
+		size: 240
 	},
 	{
-		header: 'Project',
+		header: 'Protocol',
 		accessorKey: 'project',
-		cell: ({ getValue, row }) => {
-			const value = getValue() as string
-			return (
-				<BasicLink href={`/yields?project=${row.original.project}`} className="text-sm text-(--legacy-link-text)">
-					{value}
-				</BasicLink>
-			)
-		},
+		cell: ({ getValue, row }) => (
+			<BasicLink href={`/yields?protocol=${encodeURIComponent(row.original.project)}`} className="text-sm text-link">
+				{getValue() as string}
+			</BasicLink>
+		),
 		size: 140,
-		meta: {
-			align: 'end'
-		}
+		meta: { align: 'end' }
 	},
 	{
 		header: 'Chain',
 		accessorKey: 'chains',
 		enableSorting: false,
 		cell: (info) => (
-			<IconsRow items={toChainIconItems(info.getValue() as Array<string>, (chain) => yieldsChainHref(chain))} />
+			<IconsRow items={toChainIconItems(info.getValue() as string[], (chain) => yieldsChainHref(chain))} />
 		),
 		size: 60,
-		meta: {
-			align: 'end'
-		}
+		meta: { align: 'end' }
 	},
 	{
 		header: 'TVL',
 		accessorKey: 'tvl',
-		cell: ({ getValue }) => {
-			const value = getValue() as number
-			return <>{formattedNum(value, true)}</>
-		},
+		cell: ({ getValue }) => <DollarCell value={getValue() as number | null} />,
 		size: 120,
-		meta: {
-			align: 'end'
-		}
+		meta: { align: 'end' }
 	},
 	{
-		header: 'APY',
+		header: 'Supply APY',
 		accessorKey: 'apy',
-		cell: ({ getValue }) => {
-			const value = getValue() as number
-			return (
-				<>
-					<PercentChange percent={value} noSign fontWeight={700} />
-				</>
-			)
-		},
-		size: 100,
-		meta: {
-			align: 'end'
-		}
+		cell: ({ getValue }) => <PercentCell value={getValue() as number | null} bold />,
+		size: 110,
+		meta: { align: 'end' }
 	},
 	{
 		header: 'Base APY',
 		accessorKey: 'apyBase',
-		cell: ({ getValue }) => {
-			const value = getValue() as number
-			return <>{value ? <PercentChange percent={value} noSign /> : '-'}</>
-		},
+		cell: ({ getValue }) => <PercentCell value={getValue() as number | null} />,
 		size: 100,
-		meta: {
-			align: 'end'
-		}
+		meta: { align: 'end' }
 	},
 	{
 		header: 'Reward APY',
 		accessorKey: 'apyReward',
-		cell: ({ getValue, row }) => {
-			const value = getValue() as number
-			const symbols = row.original.rewardTokensSymbols
-			return (
-				<span className="flex items-center justify-end gap-1">
-					{value ? <PercentChange percent={value} noSign /> : '-'}
-					{symbols && symbols.length > 0 ? (
-						<span className="text-xs text-(--legacy-text-secondary)">({symbols.join(', ')})</span>
-					) : null}
-				</span>
-			)
-		},
+		cell: ({ getValue, row }) => (
+			<span className="flex items-center justify-end gap-1">
+				<PercentCell value={getValue() as number | null} />
+				{row.original.rewardTokensSymbols.length ? (
+					<span className="text-xs text-secondary">({row.original.rewardTokensSymbols.join(', ')})</span>
+				) : null}
+			</span>
+		),
 		size: 150,
-		meta: {
-			align: 'end'
-		}
+		meta: { align: 'end' }
 	},
 	{
-		header: '24h Change',
-		accessorKey: 'change1d',
-		cell: ({ getValue }) => {
-			const value = getValue() as number
-			return <>{value ? <PercentChange percent={value} /> : '-'}</>
-		},
-		size: 100,
-		meta: {
-			align: 'end'
-		}
-	},
-	{
-		header: '7d Change',
-		accessorKey: 'change7d',
-		cell: ({ getValue }) => {
-			const value = getValue() as number
-			return <>{value ? <PercentChange percent={value} /> : '-'}</>
-		},
-		size: 100,
-		meta: {
-			align: 'end'
-		}
-	},
-	{
-		header: '7d IL',
-		accessorKey: 'il7d',
-		cell: ({ getValue }) => {
-			const value = getValue() as number
-			return <>{value ? <PercentChange percent={value} noSign /> : '-'}</>
-		},
-		size: 100,
-		meta: {
-			align: 'end'
-		}
-	},
-	{
-		header: 'Base APY (7d)',
-		accessorKey: 'apyBase7d',
-		cell: ({ getValue }) => {
-			const value = getValue() as number
-			return <>{value ? <PercentChange percent={value} noSign /> : '-'}</>
-		},
-		size: 120,
-		meta: {
-			align: 'end'
-		}
-	},
-	{
-		header: 'Net APY (7d)',
-		accessorKey: 'apyNet7d',
-		cell: ({ getValue }) => {
-			const value = getValue() as number
-			return <>{value ? <PercentChange percent={value} noSign /> : '-'}</>
-		},
-		size: 120,
-		meta: {
-			align: 'end'
-		}
-	},
-	{
-		header: 'Mean APY (30d)',
+		header: '30d Avg APY',
 		accessorKey: 'apyMean30d',
-		cell: ({ getValue }) => {
-			const value = getValue() as number
-			return <>{value ? <PercentChange percent={value} noSign /> : '-'}</>
-		},
-		size: 130,
-		meta: {
-			align: 'end'
-		}
+		cell: ({ getValue }) => <PercentCell value={getValue() as number | null} />,
+		size: 120,
+		meta: { align: 'end' }
 	},
 	{
-		header: 'Volume (24h)',
+		header: '30d Stability',
+		accessorKey: 'stabilityRating',
+		cell: ({ getValue }) => <span className="capitalize">{(getValue() as string | null) ?? '-'}</span>,
+		size: 120,
+		meta: { align: 'end' }
+	},
+	{
+		header: '24h Volume',
 		accessorKey: 'volumeUsd1d',
-		cell: ({ getValue }) => {
-			const value = getValue() as number
-			return <>{value ? formattedNum(value, true) : '-'}</>
-		},
+		cell: ({ getValue }) => <DollarCell value={getValue() as number | null} />,
 		size: 120,
-		meta: {
-			align: 'end'
-		}
+		meta: { align: 'end' }
 	},
 	{
-		header: 'Volume (7d)',
-		accessorKey: 'volumeUsd7d',
-		cell: ({ getValue }) => {
-			const value = getValue() as number
-			return <>{value ? formattedNum(value, true) : '-'}</>
-		},
-		size: 120,
-		meta: {
-			align: 'end'
-		}
+		header: 'IL Risk',
+		accessorKey: 'ilRisk',
+		cell: ({ getValue }) => ((getValue() as boolean) ? 'Yes' : 'No'),
+		size: 80,
+		meta: { align: 'end' }
 	},
 	{
-		header: 'Borrow APY',
+		header: 'Borrow Cost APY',
 		accessorKey: 'apyBorrow',
-		sortDescFirst: true,
-		cell: ({ getValue }) => {
-			const value = getValue() as number | null
-			return <>{value !== null ? <PercentChange percent={value} noSign /> : '-'}</>
-		},
-		size: 100,
-		meta: {
-			align: 'end'
-		}
+		cell: ({ getValue }) => <PercentCell value={getValue() as number | null} />,
+		size: 130,
+		meta: { align: 'end' }
 	},
 	{
 		header: 'Total Supplied',
 		accessorKey: 'totalSupplyUsd',
-		sortDescFirst: true,
-		cell: ({ getValue }) => {
-			const value = getValue() as number | null
-			return <>{value !== null ? formattedNum(value, true) : '-'}</>
-		},
+		cell: ({ getValue }) => <DollarCell value={getValue() as number | null} />,
 		size: 130,
-		meta: {
-			align: 'end'
-		}
+		meta: { align: 'end' }
 	},
 	{
 		header: 'Total Borrowed',
 		accessorKey: 'totalBorrowUsd',
-		sortDescFirst: true,
-		invertSorting: true,
-		cell: ({ getValue }) => {
-			const value = getValue() as number | null
-			return <>{value !== null ? formattedNum(value, true) : '-'}</>
-		},
+		cell: ({ getValue }) => <DollarCell value={getValue() as number | null} />,
 		size: 130,
-		meta: {
-			align: 'end'
-		}
+		meta: { align: 'end' }
 	},
 	{
 		header: 'Available',
 		accessorKey: 'totalAvailableUsd',
-		sortDescFirst: true,
-		cell: ({ getValue }) => {
-			const value = getValue() as number | null
-			return <>{value !== null ? formattedNum(value, true) : '-'}</>
-		},
+		cell: ({ getValue }) => <DollarCell value={getValue() as number | null} />,
 		size: 120,
-		meta: {
-			align: 'end'
-		}
+		meta: { align: 'end' }
 	},
 	{
 		header: 'LTV',
 		accessorKey: 'ltv',
-		sortDescFirst: true,
 		cell: ({ getValue }) => {
 			const value = getValue() as number | null
-			return <>{value !== null ? <PercentChange percent={value * 100} noSign /> : '-'}</>
+			return <PercentCell value={value == null ? null : value * 100} />
 		},
 		size: 80,
-		meta: {
-			align: 'end'
-		}
+		meta: { align: 'end' }
 	}
 ]

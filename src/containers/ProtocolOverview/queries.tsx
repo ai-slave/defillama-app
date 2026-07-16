@@ -17,11 +17,12 @@ import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 import { fetchTreasuries } from '~/containers/Treasuries/api'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
-import { YIELD_CONFIG_API, YIELD_POOLS_API } from '~/containers/Yields/constants'
+import { readYieldsMeta, type YieldsSnapshot } from '~/containers/Yields/data/snapshot'
+import type { EnrichedEarnRow, YieldsMeta } from '~/containers/Yields/data/types'
 import { TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
 import { FEE_EXTRA_CONFIG_BY_SETTING, type FeeExtraConfig } from '~/metrics/feeExtras'
 import { capitalizeFirstLetter, slug } from '~/utils'
-import { fetchJson, getFastJsonTimeoutMs, getSlowJsonTimeoutMs } from '~/utils/async'
+import { fetchJson, getFastJsonTimeoutMs } from '~/utils/async'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { buildProtocolOverviewHallmarks } from '~/utils/hallmarks'
 import type { IChainMetadata, IProtocolMetadata, ProtocolLlamaswapMetadata } from '~/utils/metadata/types'
@@ -111,8 +112,6 @@ export const getProtocolMetricFlags = ({
 	}
 }
 
-type IYieldsDataResult = { data?: Array<{ project: string; apy: number }> } | null
-type IYieldsConfigResult = { protocols?: Record<string, { name?: string }> } | null
 type IBridgeVolumeResult = Array<{ date: string; depositUSD: number; withdrawUSD: number }> | null
 type IProtocolTvlChartSeedResult = { data: IProtocolValueChart; failed: boolean }
 
@@ -125,7 +124,8 @@ export const getProtocolOverviewPageData = async ({
 	cgExchangeIdentifiers,
 	emissionsSupplyMetrics,
 	protocolLlamaswapDataset,
-	tokenDirectory = null
+	tokenDirectory = null,
+	yieldsSnapshot
 }: {
 	protocolId: string
 	currentProtocolMetadata: IProtocolMetadata
@@ -136,6 +136,7 @@ export const getProtocolOverviewPageData = async ({
 	emissionsSupplyMetrics: ProtocolEmissionSupplyMetricsMap
 	protocolLlamaswapDataset?: ProtocolLlamaswapMetadata
 	tokenDirectory?: TokenDirectory | null
+	yieldsSnapshot: YieldsSnapshot | null
 }): Promise<IProtocolOverviewPageData> => {
 	const displayName = currentProtocolMetadata.displayName ?? ''
 	const currentProtocolSlug = slug(displayName)
@@ -229,7 +230,7 @@ export const getProtocolOverviewPageData = async ({
 		Awaited<ReturnType<typeof formatAdapterData>>,
 		Awaited<ReturnType<typeof formatAdapterData>>,
 		IProtocolOverviewPageData['treasury'],
-		IYieldsDataResult,
+		EnrichedEarnRow[] | null,
 		IProtocolOverviewPageData['incentives'],
 		number | null,
 		number | null,
@@ -237,7 +238,7 @@ export const getProtocolOverviewPageData = async ({
 		number | null,
 		number | null,
 		IProtocolExpenses | null,
-		IYieldsConfigResult,
+		YieldsMeta | null,
 		ProtocolLiquidityTokensResponse,
 		ProtocolsResponse,
 		IBridgeVolumeResult,
@@ -398,10 +399,11 @@ export const getProtocolOverviewPageData = async ({
 					null
 				)
 			: Promise.resolve(null),
-		currentProtocolMetadata.yields
+		currentProtocolMetadata.yields && yieldsSnapshot
 			? optionalProtocolData(
 					'yields',
-					() => fetchJson<IYieldsDataResult>(YIELD_POOLS_API, { timeout: getSlowJsonTimeoutMs() }),
+					() =>
+						import('~/containers/Yields/data/enrich.server').then(({ getEntityEarn }) => getEntityEarn(yieldsSnapshot)),
 					null
 				)
 			: Promise.resolve(null),
@@ -472,12 +474,8 @@ export const getProtocolOverviewPageData = async ({
 					null
 				)
 			: Promise.resolve(null),
-		currentProtocolMetadata.liquidity
-			? optionalProtocolData(
-					'liquidity_yields_config',
-					() => fetchJson<IYieldsConfigResult>(YIELD_CONFIG_API, { timeout: getSlowJsonTimeoutMs() }),
-					null
-				)
+		currentProtocolMetadata.liquidity && yieldsSnapshot
+			? optionalProtocolData('liquidity_yields_config', () => readYieldsMeta(yieldsSnapshot), null)
 			: Promise.resolve(null),
 		currentProtocolMetadata?.liquidity
 			? optionalProtocolData('liquidity_tokens', () => fetchLiquidityTokensDataset(), [])
@@ -545,26 +543,34 @@ export const getProtocolOverviewPageData = async ({
 		liteProtocols: liteProtocolsData?.protocols ?? []
 	})
 
-	const otherProtocols = protocolData.otherProtocols?.map((p) => slug(p)) ?? []
-	const projectYields = yieldsData?.data?.filter(
-		({ project }: { project: string }) =>
-			[slug(currentProtocolMetadata.displayName), currentProtocolMetadata.displayName].includes(project) ||
-			(protocolData?.parentProtocol ? false : otherProtocols.includes(project))
-	)
-	const yields =
-		yieldsData && yieldsData.data && projectYields && projectYields.length > 0
-			? {
-					noOfPoolsTracked: projectYields.length,
-					averageAPY:
-						projectYields.reduce((acc: number, { apy }: { apy: number }) => acc + apy, 0) / projectYields.length
-				}
-			: null
+	const otherProtocolSlugs = new Set(protocolData.otherProtocols?.map((protocol) => slug(protocol)) ?? [])
+	let trackedPoolCount = 0
+	let trackedApyCount = 0
+	let trackedApyTotal = 0
+	for (const pool of yieldsData ?? []) {
+		const matchesProtocol =
+			pool.protocol === currentProtocolMetadata.displayName ||
+			pool.protocolSlug === currentProtocolSlug ||
+			(!protocolData.parentProtocol && pool.protocolSlug != null && otherProtocolSlugs.has(pool.protocolSlug))
+		if (!matchesProtocol) continue
 
-	const tokenPools =
-		yieldsData?.data && yieldsConfig
-			? (liquidityInfo?.find((p: ProtocolLiquidityTokensResponse[number]) => p.id === protocolData.id)?.tokenPools ??
-				[])
-			: []
+		trackedPoolCount += 1
+		const apy = pool.apy.current.total
+		if (apy != null) {
+			trackedApyCount += 1
+			trackedApyTotal += apy
+		}
+	}
+	const yields = trackedPoolCount
+		? {
+				noOfPoolsTracked: trackedPoolCount,
+				averageAPY: trackedApyCount ? trackedApyTotal / trackedApyCount : null
+			}
+		: null
+
+	const tokenPools = yieldsConfig
+		? (liquidityInfo?.find((p: ProtocolLiquidityTokensResponse[number]) => p.id === protocolData.id)?.tokenPools ?? [])
+		: []
 
 	const liquidityAggregated = tokenPools.reduce(
 		(agg: Record<string, Record<string, number>>, pool: { project: string; chain: string; tvlUsd: number }) => {
@@ -575,12 +581,12 @@ export const getProtocolOverviewPageData = async ({
 		{} as Record<string, Record<string, number>>
 	)
 
-	const tokenLiquidity = yieldsConfig?.protocols
+	const protocolNameBySlug = new Map((yieldsConfig?.protocols ?? []).map((protocol) => [protocol.slug, protocol.name]))
+	const tokenLiquidity = yieldsConfig
 		? (() => {
 				const rows: Array<[string, string, number]> = []
 				for (const protocolSlug in liquidityAggregated) {
-					const protocolName = yieldsConfig.protocols?.[protocolSlug]?.name
-					if (!protocolName) continue
+					const protocolName = protocolNameBySlug.get(protocolSlug) ?? protocolSlug
 					const chainValues = liquidityAggregated[protocolSlug]
 					for (const chainName in chainValues) {
 						rows.push([protocolName, chainName, Number(chainValues[chainName])])

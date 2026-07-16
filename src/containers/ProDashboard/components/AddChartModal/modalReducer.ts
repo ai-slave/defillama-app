@@ -1,4 +1,10 @@
-import type { ChartConfig, DashboardItemConfig, MetricAggregator, MetricChartType } from '../../types'
+import {
+	type ChartConfig,
+	type DashboardItemConfig,
+	type MetricAggregator,
+	type MetricChartType,
+	normalizeYieldChartType
+} from '../../types'
 import type {
 	ChartBuilderConfig,
 	ChartModeType,
@@ -369,7 +375,7 @@ export function initializeFromEditItem(editItem: DashboardItemConfig | null | un
 				project: editItem.project,
 				chain: editItem.chain
 			},
-			selectedYieldChartType: editItem.chartType || 'tvl-apy'
+			selectedYieldChartType: normalizeYieldChartType(editItem.chartType)
 		}
 	}
 

@@ -13,6 +13,8 @@ describe('preparation command', () => {
 		expect(wrapper).not.toContain('--max-old-space-size=4096')
 		expect(wrapper).toContain("const buildNodeOptions = '--max-heap-size=6144'")
 		expect(wrapper).toContain('NODE_OPTIONS: buildNodeOptions')
+		expect(wrapper).toContain("path.join(repoRoot, 'scripts', 'verifyDatasetSnapshotBuild.ts')")
+		expect(wrapper).toContain('isProductionBuild && nextExitCode === 0')
 	})
 
 	it('creates default preparation steps in order', () => {

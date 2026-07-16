@@ -42,7 +42,7 @@ describe('dataset snapshot Pages Router compatibility', () => {
 	it('loads the Yields builder with ordinary React resolution', () => {
 		const result = spawnSync(
 			'bun',
-			['-e', "await import('./src/containers/Yields/server/snapshot.builder.server.ts')"],
+			['-e', "await import('./src/containers/Yields/server/dataset.builder.server.ts')"],
 			{ cwd: process.cwd(), encoding: 'utf8' }
 		)
 		expect(result.stderr).toBe('')

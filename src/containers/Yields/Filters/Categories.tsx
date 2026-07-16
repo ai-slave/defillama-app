@@ -11,13 +11,15 @@ interface IFiltersByCategoryProps {
 	selectedCategories: Array<string>
 	nestedMenu?: boolean
 	labelType?: 'smol' | 'none'
+	label?: string
 }
 
 export function FiltersByCategory({
 	categoryList = EMPTY_ARRAY,
 	selectedCategories,
 	nestedMenu,
-	labelType
+	labelType,
+	label = 'Category'
 }: IFiltersByCategoryProps) {
 	const router = useRouter()
 	const { category } = router.query
@@ -27,12 +29,11 @@ export function FiltersByCategory({
 		<SelectWithCombobox
 			variant="default"
 			size="sm"
-			label="Category"
+			label={label}
 			allValues={categoryList}
 			selectedValues={selectedCategories}
 			nestedMenu={nestedMenu}
 			labelType={labelType ? labelType : !category || category === 'All' ? 'none' : 'regular'}
-			popoverVariant="legacy"
 			includeQueryKey="category"
 			excludeQueryKey="excludeCategory"
 			pushQueryUpdates={(updates) => {

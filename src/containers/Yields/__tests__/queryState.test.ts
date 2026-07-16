@@ -1,8 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { decodePoolsColumnVisibilityQuery, decodeYieldsQuery, resetYieldsPoolPageOnFilterChange } from '../queryState'
+import { decodeYieldsQuery, resetYieldsPoolPageOnFilterChange, selectedSubsetQuery } from '../queryState'
+
+describe('selectedSubsetQuery', () => {
+	it('encodes all, none, and partial selections for include filters', () => {
+		expect(selectedSubsetQuery(['Ethereum', 'Base'], ['Ethereum', 'Base'])).toBeUndefined()
+		expect(selectedSubsetQuery([], ['Ethereum', 'Base'])).toEqual(['__none__'])
+		expect(selectedSubsetQuery(['Base'], ['Ethereum', 'Base'])).toEqual(['Base'])
+	})
+
+	it('does not turn unavailable metadata into a deselect-all filter', () => {
+		expect(selectedSubsetQuery([], [])).toBeUndefined()
+		expect(selectedSubsetQuery(['Ethereum'], [])).toEqual(['Ethereum'])
+	})
+})
 
 describe('decodeYieldsQuery', () => {
-	it('applies include, exclude, range, and ALL_EVM semantics consistently', () => {
+	it('applies selection, exclusion, range, and ALL_EVM semantics consistently', () => {
 		const decoded = decodeYieldsQuery(
 			{
 				project: ['Aave', 'Compound'],
@@ -10,10 +23,6 @@ describe('decodeYieldsQuery', () => {
 				chain: 'ALL_EVM',
 				excludeChain: 'Arbitrum',
 				attribute: ['single_exposure', 'no_il'],
-				token: ['ETH', 'WBTC'],
-				excludeToken: 'WBTC',
-				exactToken: 'ETH',
-				token_pair: 'ETH-USDC',
 				minTvl: '1000',
 				maxApy: '12'
 			},
@@ -27,37 +36,8 @@ describe('decodeYieldsQuery', () => {
 		expect(decoded.selectedProjects).toEqual(['Aave'])
 		expect(decoded.selectedChains).toEqual(['Ethereum'])
 		expect(decoded.selectedAttributes).toEqual(['single_exposure', 'no_il'])
-		expect(decoded.includeTokens).toEqual(['ETH', 'WBTC'])
-		expect(decoded.excludeTokens).toEqual(['WBTC'])
-		expect(decoded.exactTokens).toEqual(['ETH'])
-		expect(decoded.pairTokens).toEqual(['ETH-USDC'])
 		expect(decoded.minTvl).toBe(1000)
 		expect(decoded.maxApy).toBe(12)
-	})
-})
-
-describe('decodePoolsColumnVisibilityQuery', () => {
-	it('keeps base columns stable and blocks premium-only fields without access', () => {
-		const visibility = decodePoolsColumnVisibilityQuery(
-			{
-				show7dBaseApy: 'true',
-				showMedianApy: 'true',
-				showStdDev: 'true'
-			},
-			{
-				hasPremiumAccess: false,
-				includeLsdApy: false,
-				isStablecoinPage: false
-			}
-		)
-
-		expect(visibility.apy).toBe(true)
-		expect(visibility.apyBase).toBe(true)
-		expect(visibility.apyBase7d).toBe(true)
-		expect(visibility.apyMedian30d).toBe(false)
-		expect(visibility.apyStd30d).toBe(false)
-		expect(visibility.cv30d).toBe(true)
-		expect(visibility.pegDeviation).toBe(false)
 	})
 })
 
@@ -67,24 +47,8 @@ describe('resetYieldsPoolPageOnFilterChange', () => {
 			chain: 'Ethereum',
 			page: undefined
 		})
-		expect(resetYieldsPoolPageOnFilterChange('/yields/stablecoins', { token: 'USDC' })).toEqual({
-			token: 'USDC',
-			page: undefined
-		})
 		expect(resetYieldsPoolPageOnFilterChange('/yields/loop', { token: 'ETH' })).toEqual({
 			token: 'ETH',
-			page: undefined
-		})
-		expect(resetYieldsPoolPageOnFilterChange('/yields/strategy', { lend: 'ETH' })).toEqual({
-			lend: 'ETH',
-			page: undefined
-		})
-		expect(resetYieldsPoolPageOnFilterChange('/yields/strategy-long-short', { token: 'BTC' })).toEqual({
-			token: 'BTC',
-			page: undefined
-		})
-		expect(resetYieldsPoolPageOnFilterChange('/yields/halal', { chain: 'Ethereum' })).toEqual({
-			chain: 'Ethereum',
 			page: undefined
 		})
 		expect(resetYieldsPoolPageOnFilterChange('/borrow', { chain: 'Ethereum' })).toEqual({

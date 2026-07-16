@@ -4,24 +4,25 @@ import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { Icon } from '~/components/Icon'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { PaginatedYieldsOptimizerTable } from '~/containers/Yields/Tables/Optimizer'
-import type { IYieldsOptimizerTableRow } from '~/containers/Yields/Tables/types'
+import type { RouteTableRow } from '~/containers/Yields/data/types'
+import { PaginatedBorrowRoutesTable } from '~/containers/Yields/Tables/Borrow'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { nestedMenuActionStyles } from '~/ui/Popover'
 import { SegmentedControl } from '~/ui/SegmentedControl'
-import { LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, LoadingIndicator, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
-import { filterBorrowRows } from './TokenBorrowSection.utils'
+import { filterBorrowRoutes } from './TokenBorrowSection.utils'
 import { TokenDeferredPaginationControls } from './TokenDeferredPaginationControls'
 import type { TokenBorrowRoutesHydration } from './types'
 import { useTokenBorrowRoutes } from './useTokenBorrowRoutes'
 
 const TOKEN_BORROW_SECTION_ID = 'token-borrow'
-const DEFAULT_BORROW_TABLE_SORTING: SortingState = [{ id: 'borrowAvailableUsd', desc: true }]
+// Token borrow routes default to net-APY DESC (the strongest carry).
+// `net_apy` is the routes table column id.
+const DEFAULT_BORROW_TABLE_SORTING: SortingState = [{ id: 'net_apy', desc: true }]
 const DEFAULT_BORROW_TABLE_SORTING_KEY = JSON.stringify(DEFAULT_BORROW_TABLE_SORTING)
 
 type BorrowTabKey = 'use' | 'borrow'
@@ -31,7 +32,7 @@ type BorrowTabFilters = {
 	maxAvailable: string
 }
 
-function getBorrowChainList(rows: IYieldsOptimizerTableRow[]) {
+function getBorrowChainList(rows: RouteTableRow[]) {
 	return [...new Set(rows.map((row) => row.chains[0]).filter((chain): chain is string => Boolean(chain)))].sort()
 }
 
@@ -131,20 +132,17 @@ export function TokenBorrowSection({
 			maxAvailable: ''
 		}
 	})
-	const { data, error } = useTokenBorrowRoutes(tokenSymbol, { enabled: shouldFetchFullData })
-	const useRows = React.useMemo(
-		() => data?.borrowAsCollateral ?? hydration?.data.borrowAsCollateral ?? [],
-		[data, hydration]
-	)
-	const borrowRows = React.useMemo(() => data?.borrowAsDebt ?? hydration?.data.borrowAsDebt ?? [], [data, hydration])
+	const tokenKeys = hydration?.tokenKeys ?? []
+	const { data, error } = useTokenBorrowRoutes(tokenKeys, { enabled: shouldFetchFullData })
+	const useRows = React.useMemo(() => data?.useAsCollateral ?? hydration?.data.useAsCollateral ?? [], [data, hydration])
+	const borrowRows = React.useMemo(() => data?.borrowThis ?? hydration?.data.borrowThis ?? [], [data, hydration])
 	const useChainList = React.useMemo(
-		() =>
-			data ? getBorrowChainList(useRows) : (hydration?.chainLists.borrowAsCollateral ?? getBorrowChainList(useRows)),
+		() => (data ? getBorrowChainList(useRows) : (hydration?.chainLists.useAsCollateral ?? getBorrowChainList(useRows))),
 		[data, hydration, useRows]
 	)
 	const borrowChainList = React.useMemo(
 		() =>
-			data ? getBorrowChainList(borrowRows) : (hydration?.chainLists.borrowAsDebt ?? getBorrowChainList(borrowRows)),
+			data ? getBorrowChainList(borrowRows) : (hydration?.chainLists.borrowThis ?? getBorrowChainList(borrowRows)),
 		[data, hydration, borrowRows]
 	)
 	const hydrationPageSize = hydration?.pageSize ?? DEFAULT_TABLE_PAGE_SIZE
@@ -158,8 +156,8 @@ export function TokenBorrowSection({
 		}
 
 		return activeTab === 'use'
-			? (hydration?.counts.borrowAsCollateral ?? useRows.length)
-			: (hydration?.counts.borrowAsDebt ?? borrowRows.length)
+			? (hydration?.counts.useAsCollateral ?? useRows.length)
+			: (hydration?.counts.borrowThis ?? borrowRows.length)
 	}, [activeTab, borrowRows.length, data, hydration, useRows.length])
 	const selectedChains = React.useMemo(
 		() => getSelectedChains(activeFilters.selectedChains, chainList),
@@ -209,7 +207,7 @@ export function TokenBorrowSection({
 
 	const filteredRows = React.useMemo(
 		() =>
-			filterBorrowRows({
+			filterBorrowRoutes({
 				rows,
 				selectedChains,
 				minAvailable,
@@ -365,37 +363,25 @@ export function TokenBorrowSection({
 									)}
 								</ResponsiveFilterLayout>
 							</TableToolbar>
-							{error ? (
-								<div className="rounded-lg border border-medium bg-surface-elevated-1 px-3 py-2 body-sm text-data-down">
-									{error.message}
-								</div>
-							) : null}
+							{error ? <InlineStatus variant="error">{error.message}</InlineStatus> : null}
 
 							{filteredRows.length === 0 && !isFetchingFullData ? (
-								<div className="flex flex-1 items-center justify-center p-2 text-center body-sm text-tertiary">
-									<p>{`No ${tabLabel.toLowerCase()} routes match current filters.`}</p>
-								</div>
+								<SurfaceBodyStatus variant="empty">{`No ${tabLabel.toLowerCase()} routes match current filters.`}</SurfaceBodyStatus>
 							) : (
 								<div className="relative flex flex-col gap-3">
-									{showBackgroundLoading ? (
-										<div className="absolute inset-0 z-20 flex items-center justify-center rounded-lg bg-page/60 backdrop-blur-[1px]">
-											<div className="flex items-center gap-2 rounded-lg border border-medium bg-surface-elevated-1 px-3 py-2 body-sm text-secondary shadow-xs">
-												<LoadingSpinner size={12} />
-												<span>Loading full dataset...</span>
-											</div>
-										</div>
-									) : null}
-									<div className={showBackgroundLoading ? 'opacity-60' : ''}>
-										<PaginatedYieldsOptimizerTable
-											key={`${activeTab}-${data ? 'full' : 'initial'}-${requestedPageIndexByTab[activeTab]}-${sortingKey}`}
-											data={filteredRows}
-											initialPageSize={hydrationPageSize}
-											initialPageIndex={data ? requestedPageIndexByTab[activeTab] : 0}
-											sortingState={sortingByTab[activeTab]}
-											onSortingChange={handleSortingChange}
-											interactionDisabled={showBackgroundLoading}
-										/>
-									</div>
+									<PaginatedBorrowRoutesTable
+										key={`${activeTab}-${data ? 'full' : 'initial'}-${requestedPageIndexByTab[activeTab]}-${sortingKey}`}
+										data={filteredRows}
+										manualPagination={false}
+										manualSorting={false}
+										initialPageSize={hydrationPageSize}
+										initialPageIndex={data ? requestedPageIndexByTab[activeTab] : 0}
+										sortingState={sortingByTab[activeTab]}
+										onSortingChange={handleSortingChange}
+										interactionDisabled={showBackgroundLoading}
+										loadingLabel="Loading full dataset..."
+										appearance="embedded"
+									/>
 									{hasPartialData && !hasActiveFilters ? (
 										<div className={showBackgroundLoading ? 'opacity-60' : ''}>
 											<TokenDeferredPaginationControls

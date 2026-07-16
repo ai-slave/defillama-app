@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
+import { Button } from '~/ui/Button'
+import { Input } from '~/ui/Input'
 
 // "Your deposit" — pro-rata scaling happens in the consumers; this only owns the amount.
 // Persisted globally (not per pool): your position size is a property of you.
@@ -92,18 +94,18 @@ export function PositionControl({
 
 	return (
 		<div className="flex flex-wrap items-center gap-1.5">
-			<label htmlFor="risk-position" className="text-xs text-(--legacy-text-secondary)">
-				Your deposit <span className="text-(--legacy-text-tertiary)">(optional)</span>
+			<label htmlFor="risk-position" className="label-sm text-secondary">
+				Your deposit <span className="text-tertiary">(optional)</span>
 			</label>
 			<div className="flex items-center gap-1">
 				<div className="relative">
 					<span
 						aria-hidden
-						className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-xs text-(--legacy-text-secondary)"
+						className="pointer-events-none absolute inset-y-0 left-2 flex items-center body-sm text-secondary"
 					>
 						$
 					</span>
-					<input
+					<Input
 						id="risk-position"
 						type="text"
 						inputMode="decimal"
@@ -116,37 +118,37 @@ export function PositionControl({
 							if (e.key === 'Enter') e.currentTarget.blur()
 							if (e.key === 'Escape') setDraft(position ? position.toLocaleString('en-US') : '')
 						}}
-						className="w-24 rounded-md border border-(--legacy-cards-border) bg-(--legacy-bg-main) py-1 pr-2 pl-5 text-xs text-(--legacy-text-primary) tabular-nums placeholder:text-(--legacy-text-secondary) focus-visible:border-(--legacy-primary) focus-visible:outline-hidden"
+						className="w-24 pr-2 pl-5 tabular-nums"
 					/>
 				</div>
 				{position ? (
-					<button
+					<Button
 						type="button"
+						variant="ghost"
+						size="md"
+						square
 						onClick={() => onChange(null)}
 						aria-label="Clear your deposit, show pool-wide figures"
-						className="flex size-6 items-center justify-center rounded-md text-(--legacy-text-secondary) hover:bg-(--legacy-bg-main) hover:text-(--legacy-text-primary)"
 					>
 						<Icon name="x" className="size-3" />
-					</button>
+					</Button>
 				) : null}
 			</div>
 			<div className="flex items-center gap-1" role="group" aria-label="Deposit presets">
 				{PRESETS.map((p) => {
 					const active = position === p.value
 					return (
-						<button
+						<Button
 							key={p.value}
 							type="button"
+							variant="toggle"
+							size="md"
 							aria-pressed={active}
+							data-active={active}
 							onClick={() => onChange(active ? null : p.value)}
-							className={`rounded-full border px-2 py-0.5 text-[10px] transition-colors duration-150 ${
-								active
-									? 'border-(--legacy-primary) bg-(--legacy-primary)/10 text-(--legacy-primary)'
-									: 'border-(--legacy-cards-border) bg-(--legacy-bg-main) text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
-							}`}
 						>
 							{p.label}
-						</button>
+						</Button>
 					)
 				})}
 			</div>

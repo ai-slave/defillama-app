@@ -36,9 +36,9 @@ export const CATEGORY_CARDS: CategoryCardData[] = [
 	{
 		id: 'yields',
 		title: 'Yields & Lending',
-		description: 'Supply/Borrow APY, TVL, and pool liquidity for 17000+ yield pools',
+		description: 'Supply APY, borrow cost, TVL, and available liquidity from Yields V2',
 		icon: 'trending-up',
-		tags: ['Supply APY', 'Borrow APY', 'TVL', 'Liquidity']
+		tags: ['Supply APY', 'Borrow Cost', 'TVL', 'Available']
 	},
 	{
 		id: 'advanced-tvl',

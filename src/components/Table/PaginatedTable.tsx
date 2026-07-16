@@ -20,7 +20,7 @@ import {
 	TokenPageTableShell
 } from '~/components/Table/helpers'
 import { SortIcon } from '~/components/Table/SortIcon'
-import { LoadingSpinner } from '~/ui/Loaders'
+import { SurfaceLoadingOverlay } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 
 interface PaginatedTableProps<T extends RowData> {
@@ -33,6 +33,7 @@ interface PaginatedTableProps<T extends RowData> {
 	shell?: 'default' | 'none'
 	stickyHeader?: boolean
 	interactionDisabled?: boolean
+	loadingLabel?: string
 	/** Render an expanded panel beneath a row when `row.getIsExpanded()` is true. Spans all columns. */
 	renderSubComponent?: (row: Row<T>) => ReactNode
 }
@@ -105,6 +106,7 @@ export function PaginatedTable<T extends RowData>({
 	shell = 'default',
 	stickyHeader = false,
 	interactionDisabled = false,
+	loadingLabel = 'Loading data...',
 	renderSubComponent
 }: PaginatedTableProps<T>) {
 	const rows = table.getRowModel().rows
@@ -190,14 +192,7 @@ export function PaginatedTable<T extends RowData>({
 	)
 	const tableContent = (
 		<TokenPageTableScroller className="bg-surface" onScroll={stickyHeader ? handleTableScroll : undefined}>
-			{interactionDisabled ? (
-				<div className="absolute inset-0 z-20 flex items-center justify-center bg-surface/60 backdrop-blur-[1px]">
-					<div className="flex items-center gap-2 rounded-md border border-subtle bg-surface px-3 py-2 text-sm text-secondary shadow-xs">
-						<LoadingSpinner size={14} />
-						<span>Loading data...</span>
-					</div>
-				</div>
-			) : null}
+			{interactionDisabled ? <SurfaceLoadingOverlay label={loadingLabel} /> : null}
 			<div className="pointer-events-none sticky left-0 z-0 h-0 w-full max-sm:hidden" style={{ top: '50%' }}>
 				<img
 					src="/assets/defillama-dark-neutral.webp"

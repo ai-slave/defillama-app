@@ -115,7 +115,8 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 		{ getIndexedTokenRiskBorrowCapacity },
 		{ fetchTokenRightsEntryByDefillamaId, fetchTokenRightsEntryByName },
 		{ fetchTreasuryById },
-		{ acquireYieldsSnapshot, getTokenBorrowRoutes, getTokenYieldsRows, getYieldConfig }
+		{ acquireOptionalYieldsSnapshot, readYieldsMeta },
+		{ getTokenBorrowRoutes, getTokenEarnRows }
 	] = await Promise.all([
 		import('~/server/datasetSnapshots/errors'),
 		import('~/containers/LiquidationsV2/server/dataset.server'),
@@ -125,9 +126,10 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 		import('~/containers/Token/server/dataset.risk.server'),
 		import('~/containers/TokenRights/server/dataset.server'),
 		import('~/containers/Treasuries/server/dataset.server'),
-		import('~/containers/Yields/server/snapshot.reader.server')
+		import('~/containers/Yields/server/dataset.server'),
+		import('~/containers/Yields/data/server/tokenPage')
 	])
-	const yieldsDatasetSnapshot = await acquireYieldsSnapshot('blocking')
+	const yieldsDatasetSnapshot = await acquireOptionalYieldsSnapshot()
 	const downgradeTokenPageError = <T,>(error: unknown, message: string, fallback: T): T =>
 		downgradeTokenPageDataError(error, message, fallback, isDatasetSnapshotIntegrityError)
 	const marketsAvailablePromise = hasTokenMarkets(record.symbol).catch((error) =>
@@ -144,11 +146,11 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 		const shouldFetchRaises = Boolean(chainDefiLlamaId || protocolDefiLlamaId)
 		const shouldFetchTreasury = Boolean(!record.chainId && protocolDefiLlamaId)
 		const shouldFetchLiquidity = Boolean(protocolMetadata?.liquidity && protocolDefiLlamaId)
-		const [raises, treasury, yieldConfig, liquidityInfo, currentSnapshot] = await Promise.all([
+		const [raises, treasury, yieldsMeta, liquidityInfo, currentSnapshot] = await Promise.all([
 			shouldFetchRaises ? fetchRaisesByDefillamaId(chainDefiLlamaId ?? protocolDefiLlamaId!) : Promise.resolve(null),
 			// Treasury shards are keyed by the upstream `${defillamaId}-treasury` convention.
 			shouldFetchTreasury ? fetchTreasuryById(`${protocolDefiLlamaId}-treasury`) : Promise.resolve(null),
-			shouldFetchLiquidity ? getYieldConfig(yieldsDatasetSnapshot) : Promise.resolve(null),
+			shouldFetchLiquidity && yieldsDatasetSnapshot ? readYieldsMeta(yieldsDatasetSnapshot) : Promise.resolve(null),
 			shouldFetchLiquidity ? fetchLiquidityEntryByProtocolId(protocolDefiLlamaId!) : Promise.resolve(null),
 			currentSnapshotPromise
 		])
@@ -167,7 +169,7 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 				kind: 'prefetched',
 				raises,
 				treasury,
-				yieldConfig,
+				yieldsMeta,
 				liquidityInfo
 			},
 			prefetchedCharts: TOKEN_OVERVIEW_DEFAULT_CHARTS
@@ -224,17 +226,27 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 			})
 		: Promise.resolve(null)
 
-	const yieldsRowsPromise = record.is_yields
-		? getTokenYieldsRows(yieldsDatasetSnapshot, record.symbol).catch((error) =>
-				downgradeTokenPageError(error, `Failed to load token yields data for ${record.symbol}`, [])
+	const yieldsRowsPromise =
+		record.is_yields && yieldsDatasetSnapshot
+			? getTokenEarnRows(yieldsDatasetSnapshot, record.symbol).catch((error) =>
+					downgradeTokenPageError(error, `Failed to load token yields data for ${record.symbol}`, {
+						rows: [],
+						tokenKeys: []
+					})
+				)
+			: Promise.resolve({ rows: [], tokenKeys: [] })
+
+	const borrowRoutesPromise = yieldsDatasetSnapshot
+		? getTokenBorrowRoutes(yieldsDatasetSnapshot, record.symbol).catch((error) =>
+				downgradeTokenPageError(error, `Failed to load token borrow routes data for ${record.symbol}`, null)
 			)
-		: Promise.resolve([])
+		: Promise.resolve(null)
 
 	const [
 		overview,
 		tokenRightsData,
 		resolvedIncomeStatementData,
-		yieldsRows,
+		yieldsData,
 		tokenBorrowRoutesData,
 		hasLiquidations,
 		tokenRiskData,
@@ -245,17 +257,18 @@ const getServerSidePropsHandler: GetServerSideProps<TokenPageProps> = async ({ p
 		tokenRightsPromise,
 		incomeStatementPromise,
 		yieldsRowsPromise,
-		getTokenBorrowRoutes(yieldsDatasetSnapshot, record.symbol).catch((error) =>
-			downgradeTokenPageError(error, `Failed to load token borrow routes data for ${record.symbol}`, null)
-		),
+		borrowRoutesPromise,
 		liquidationsPromise,
 		tokenRiskPromise,
 		marketsAvailablePromise,
 		currentSnapshotPromise
 	])
 
-	const yieldsSnapshot = buildInitialYieldsSnapshot(yieldsRows)
-	const borrowRoutesSnapshot = buildInitialBorrowRoutesSnapshot(tokenBorrowRoutesData)
+	const yieldsSnapshot = buildInitialYieldsSnapshot(yieldsData.rows, yieldsData.tokenKeys)
+	const borrowRoutesSnapshot = buildInitialBorrowRoutesSnapshot(
+		tokenBorrowRoutesData,
+		tokenBorrowRoutesData?.tokenKeys ?? []
+	)
 	const issuerDisplayName = protocolMetadata?.displayName ?? protocolMetadata?.name ?? null
 	const issuer =
 		record.protocolId && issuerDisplayName ? { name: issuerDisplayName, slug: slug(issuerDisplayName) } : null
@@ -321,9 +334,7 @@ const TOKEN_SECTION_RENDERERS = {
 	'token-usage': ({ section }) => <TokenUsageSection tokenSymbol={section.tokenSymbol} />,
 	'token-liquidations': ({ section }) => <TokenLiquidationsSection tokenSymbol={section.tokenSymbol} />,
 	'token-unlocks': ({ section }) => <TokenUnlocksSection resolvedUnlocksSlug={section.resolvedUnlocksSlug} />,
-	'token-yields': ({ section }) => (
-		<TokenYieldsSection tokenSymbol={section.tokenSymbol} hydration={section.hydration} />
-	),
+	'token-yields': ({ section }) => <TokenYieldsSection hydration={section.hydration} />,
 	'token-borrow': ({ section }) => (
 		<TokenBorrowSection tokenSymbol={section.tokenSymbol} hydration={section.hydration} />
 	)

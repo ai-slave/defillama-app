@@ -101,7 +101,7 @@ function resolvedUrlString(url: RequestInfo | URL): string | null {
 	const resolved = typeof window === 'undefined' ? serverFetchUrl(url) : url
 	if (typeof resolved === 'string') return resolved
 	if (resolved instanceof URL) return resolved.toString()
-	if (typeof (resolved as any)?.url === 'string') return (resolved as any).url
+	if (isRequestInput(resolved)) return resolved.url
 	return null
 }
 
@@ -159,8 +159,7 @@ function sanitizeUrlForLogs(input: RequestInfo | URL): string {
 
 	if (typeof input === 'string') raw = input
 	else if (input instanceof URL) raw = input.toString()
-	// Request (browser/undici) has `.url`
-	else if (typeof (input as any)?.url === 'string') raw = (input as any).url
+	else if (isRequestInput(input)) raw = input.url
 	else raw = String(input)
 
 	// Minimal behavior:

@@ -1,5 +1,6 @@
 import type { BlockExplorersResponse } from '~/api/types'
 import { Icon } from '~/components/Icon'
+import { Card } from '~/ui/Card'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { AddressActions } from '../primitives/AddressActions'
 import type { MarketOracle } from '../types'
@@ -28,28 +29,24 @@ export function MarketOracleTable({
 		(a, b) => (b.allocation_usd ?? 0) - (a.allocation_usd ?? 0) || (b.lltv ?? 0) - (a.lltv ?? 0)
 	)
 	return (
-		<details className="group smooth-disclosure overflow-hidden rounded-md border border-(--legacy-cards-border)">
-			<summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-xs hover:bg-(--legacy-bg-main)/50">
-				<span className="font-medium text-(--legacy-text-primary)">
-					Markets not mapped above{' '}
-					<span className="font-normal text-(--legacy-text-secondary)">· {markets.length}</span>
+		<Card as="details" padding="none" className="group smooth-disclosure overflow-hidden">
+			<summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 label-md hover:bg-hover-row">
+				<span className="label-md text-primary">
+					Markets not mapped above <span className="font-normal text-secondary">· {markets.length}</span>
 				</span>
-				<Icon
-					name="chevron-down"
-					className="size-3.5 text-(--legacy-text-secondary) transition-transform group-open:rotate-180"
-				/>
+				<Icon name="chevron-down" className="size-3.5 text-secondary transition-transform group-open:rotate-180" />
 			</summary>
-			<div className="overflow-x-auto border-t border-(--legacy-cards-border)">
-				<table className="w-full text-xs">
+			<div className="overflow-x-auto border-t border-subtle">
+				<table className="w-full">
 					<thead>
-						<tr className="text-left text-[10px] tracking-wide text-(--legacy-text-secondary) uppercase">
-							<th className="px-3 py-2 font-medium">Collateral → Loan</th>
-							<th className="px-3 py-2 text-right font-medium">LLTV</th>
-							<th className="px-3 py-2 font-medium">Oracle</th>
-							<th className="px-3 py-2 font-medium">Vendor</th>
+						<tr className="text-left text-sm font-medium text-secondary uppercase">
+							<th className="px-3 py-2">Collateral → Loan</th>
+							<th className="px-3 py-2 text-right">LLTV</th>
+							<th className="px-3 py-2">Oracle</th>
+							<th className="px-3 py-2">Vendor</th>
 						</tr>
 					</thead>
-					<tbody className="divide-y divide-(--legacy-cards-border)">
+					<tbody className="divide-y divide-(--border-subtle)">
 						{rows.map((m) => {
 							const coChain = m.collateral_asset?.chain ?? m.loan_asset?.chain
 							const oracleUrl =
@@ -64,38 +61,32 @@ export function MarketOracleTable({
 							const vendor = m.oracle_providers.filter(isProvenVendor).join(' / ')
 							const attribution = ATTRIBUTION_LABEL[m.attribution] ?? null
 							return (
-								<tr key={m.market_id} className="align-top text-(--legacy-text-secondary)">
-									<td className="px-3 py-2 text-(--legacy-text-primary)">
+								<tr key={m.market_id} className="align-top text-secondary">
+									<td className="px-3 py-2 text-primary">
 										<span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
 											<span>
-												{m.collateral_asset?.symbol ?? '—'} <span className="text-(--legacy-text-tertiary)">→</span>{' '}
+												{m.collateral_asset?.symbol ?? '—'} <span className="text-tertiary">→</span>{' '}
 												{m.loan_asset?.symbol ?? '—'}
 											</span>
 											{m.pt_pricing ? <PtPricingChip pricing={m.pt_pricing} /> : null}
 										</span>
 									</td>
-									<td className="px-3 py-2 text-right tabular-nums">
-										{m.lltv != null ? `${Math.round(m.lltv * 100)}%` : '—'}
-									</td>
+									<td className="px-3 py-2 text-right">{m.lltv != null ? `${Math.round(m.lltv * 100)}%` : '—'}</td>
 									<td className="px-3 py-2">
 										{m.oracle_address ? (
 											<AddressActions address={m.oracle_address} url={oracleUrl} label="market oracle address" />
 										) : (
-											<span className="text-(--legacy-text-tertiary)">none</span>
+											<span className="text-tertiary">none</span>
 										)}
-										{attribution ? (
-											<span className="mt-0.5 block text-[10px] text-(--legacy-text-tertiary)">{attribution}</span>
-										) : null}
+										{attribution ? <span className="mt-0.5 block body-xs text-tertiary">{attribution}</span> : null}
 									</td>
-									<td className="px-3 py-2">
-										{vendor || <span className="text-(--legacy-text-tertiary)">unidentified</span>}
-									</td>
+									<td className="px-3 py-2">{vendor || <span className="text-tertiary">unidentified</span>}</td>
 								</tr>
 							)
 						})}
 					</tbody>
 				</table>
 			</div>
-		</details>
+		</Card>
 	)
 }

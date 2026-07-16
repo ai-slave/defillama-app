@@ -1,595 +1,271 @@
-import {
-	createColumnHelper,
-	getCoreRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	type PaginationState,
-	type SortingState,
-	useReactTable
-} from '@tanstack/react-table'
+import { type ColumnDef, createColumnHelper, type SortingState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { startTransition, useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { IconsRow } from '~/components/IconsRow'
-import { toChainIconItems, toTokenIconItems, yieldsChainHref, yieldsProjectHref } from '~/components/IconsRow/utils'
-import { ImageWithFallback } from '~/components/ImageWithFallback'
+import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
-import { PercentChange } from '~/components/PercentChange'
-import { QuestionHelper } from '~/components/QuestionHelper'
-import { PaginatedTable, usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
-import { useAuthContext } from '~/containers/Subscription/auth'
-import { earlyExit, isDepeggedPool, isExploitedPool, lockupsRewards } from '~/containers/Yields/constants'
-import { useIsClient } from '~/hooks/useIsClient'
 import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
-import { decodePoolsColumnVisibilityQuery } from '../queryState'
-import { preparePaginatedYieldsColumns, resolveVirtualYieldsTableConfig, type YieldsTableConfig } from './config'
-import { NameYield, NameYieldPool } from './Name'
-import { YieldsTableWrapper } from './shared'
-import { StabilityCell, StabilityHeader } from './StabilityCell'
-import type { IYieldsTableProps, IYieldTableRow } from './types'
-import { useYieldsUpgradePrompt } from './useYieldsUpgradePrompt'
+import { parseSelectedEarnColumns } from '../Filters/columnOptions'
+import { fmtPct } from '../poolDetail/format'
+import { NameYield, PoolNameLockup } from './Name'
+import { PaginatedYieldsTable } from './PaginatedYieldsTable'
+import { Sparkline } from './Sparkline'
+import { hasSparkline } from './sparklineModel'
+import type { IYieldsTableProps, IYieldTableRow, YieldsTableAppearance } from './types'
+import { EarnApyCell, EmptyCell, RewardApyCell } from './YieldsCells'
 
-const uniswapV3 = 'For Uniswap V3 we assume a price range of +/- 30% (+/- 0.1% for stable pools) around current price.'
+const STABILITY_RATING_STYLES: Record<string, string> = {
+	stable: 'bg-(--apy-mid)/10 text-(--yield-positive-text)',
+	mixed: 'bg-surface-elevated-1 text-secondary',
+	volatile: 'bg-(--apy-very)/10 text-(--yield-negative-text)'
+}
 
-// The APY-column warning is pinned to specific pools with a known de-pegged underlying (see isDepeggedPool).
-// When live peg data is available, a drift of >=10% from $1 escalates the icon from amber to red.
-const DEPEG_RED_PCT = 10
-
-function PegHealthIndicator({
-	deviation,
-	price
+function ApyStabilityIndicator({
+	score,
+	rating,
+	avg30d
 }: {
-	deviation: number | null | undefined
-	price: number | null | undefined
+	score?: number | null
+	rating?: string | null
+	avg30d?: number | null
 }) {
-	if (deviation == null) return <span className="block text-end text-(--legacy-text-disabled)">{'\u2014'}</span>
-	const colorClass = deviation > 0 ? 'text-(--success)' : deviation < 0 ? 'text-(--error)' : ''
-	const dotClass = deviation > 0 ? 'bg-(--success)' : deviation < 0 ? 'bg-(--error)' : 'bg-(--legacy-text-disabled)'
-	const sign = deviation > 0 ? '+' : ''
-	const priceStr = price != null ? `$${price.toFixed(4)}` : null
-	const depeg = Math.abs(deviation) >= 2
-	const deviationStr = `${sign}${deviation.toFixed(4)}%`
-	const depegWarning = depeg ? 'De-pegged by 2%+\n' : ''
-	const tooltipText = priceStr ? `${depegWarning}${priceStr} (${deviationStr})` : `${depegWarning}${deviationStr}`
-	return (
-		<Tooltip content={tooltipText} className="justify-end">
-			<span className="inline-flex items-center gap-1.5">
-				<span className={`inline-block size-1.5 rounded-full ${dotClass}`} />
-				<span className={`tabular-nums ${colorClass}`}>
-					{sign}
-					{deviation.toFixed(2)}%
+	if (rating == null) return <EmptyCell />
+	const className = STABILITY_RATING_STYLES[rating] ?? 'bg-surface-elevated-1 text-secondary'
+	const label = rating.charAt(0).toUpperCase() + rating.slice(1)
+	// Math.round matches stabilityRatingFromScore's bucketing input.
+	const scoreStr = score != null ? String(Math.round(score * 100)) : null
+	// The td centers via text-align, so the bare pill must stay inline-flex; inside
+	// the block-level Tooltip anchor, justify-center re-centers it.
+	const pill = (
+		<span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 label-sm ${className}`}>
+			{label}
+			{scoreStr != null ? <span className="text-secondary">{scoreStr}</span> : null}
+		</span>
+	)
+	if (score == null) return pill
+
+	// σ derived from score and avg (score = 1 / (1 + σ/|avg|)), keeping the displayed
+	// numbers mutually consistent.
+	const sigma = score > 0 && avg30d != null ? (1 / score - 1) * Math.abs(avg30d) : null
+	const content = (
+		<span className="flex flex-col gap-1">
+			{avg30d != null ? (
+				<span className="flex justify-between gap-4">
+					<span className="text-secondary">30d Avg APY</span>
+					<span>{fmtPct(avg30d)}%</span>
 				</span>
-			</span>
+			) : null}
+			{sigma != null ? (
+				<span className="flex justify-between gap-4">
+					<span className="text-secondary">Volatility (σ)</span>
+					<span>{fmtPct(sigma)}%</span>
+				</span>
+			) : null}
+			<span className="text-[10px] opacity-50">Score = 100 / (1 + σ/avg)</span>
+		</span>
+	)
+	return (
+		<Tooltip content={content} className="justify-center">
+			{pill}
 		</Tooltip>
+	)
+}
+
+function ProjectNameCell({ row }: { row: { original: IYieldTableRow } }) {
+	return (
+		<NameYield
+			project={row.original.project}
+			projectslug={row.original.projectslug}
+			airdrop={row.original.airdrop}
+			raiseValuation={row.original.raiseValuation}
+		/>
 	)
 }
 
 const columnHelper = createColumnHelper<IYieldTableRow>()
-const DEFAULT_PAGE_SIZE_OPTIONS = [10, 20, 30, 50] as const
-const POOLS_COLUMN_IDS = [
-	'pool',
-	'project',
-	'chains',
-	'tvl',
-	'apy',
+const OPTIONAL_COLUMN_IDS = new Set([
+	'category',
 	'apyBase',
 	'apyReward',
-	'apyBase7d',
-	'il7d',
 	'apyMean30d',
-	'cv30d',
-	'pegDeviation',
-	'apyMedian30d',
-	'apyStd30d',
-	'apyChart30d',
 	'volumeUsd1d',
-	'volumeUsd7d',
-	'apyBaseInception',
-	'apyIncludingLsdApy',
-	'apyBaseIncludingLsdApy',
-	'apyBorrow',
-	'apyBaseBorrow',
-	'apyRewardBorrow',
-	'ltv',
-	'totalSupplyUsd',
-	'totalBorrowUsd',
-	'holderCount',
-	'top10Pct',
-	'avgPositionUsd',
-	'totalAvailableUsd'
-] as const
-type PoolsColumnId = (typeof POOLS_COLUMN_IDS)[number]
-
-interface PoolsTableConfigContext {
-	query: Record<string, unknown>
-	hasPremiumAccess: boolean
-	isClient: boolean
-	serverMode?: boolean
-	onRequestUpgrade: (source: 'header' | 'cell') => void
-}
-
-function DepegWarningIcon({
-	project,
-	symbol,
-	deviation,
-	price
-}: {
-	project: string
-	symbol: string
-	deviation: number | null | undefined
-	price: number | null | undefined
-}) {
-	if (!isDepeggedPool(project, symbol)) return null
-	const severe = deviation != null && Math.abs(deviation) >= DEPEG_RED_PCT
-	const colorClass = severe ? 'text-red-500 dark:text-red-400' : 'text-amber-500 dark:text-amber-400'
-	const sign = deviation != null && deviation > 0 ? '+' : ''
-	const priceStr = price != null ? `, currently $${price.toFixed(4)}` : ''
-	const deviationStr = deviation != null ? ` (${sign}${deviation.toFixed(2)}% from its $1 peg)` : ''
-	const message = `This pool's underlying stablecoin is de-pegged${priceStr}${deviationStr}. The advertised APY may not reflect realizable returns. Proceed with caution.`
-	return (
-		<Tooltip content={message}>
-			<Icon name="alert-triangle" height={14} width={14} className={`shrink-0 ${colorClass}`} />
-		</Tooltip>
-	)
-}
-
-function PoolNameCell({ value, row }: { value: string; row: { id: string; original: IYieldTableRow } }) {
-	const exploited = isExploitedPool(row.original.projectslug, value)
-	const rowIndex = usePaginatedTableDisplayRowNumber(row.id)
-
-	return (
-		<span className="flex items-center gap-1">
-			<NameYieldPool
-				value={value}
-				configID={row.original.configID}
-				url={row.original.url}
-				rowIndex={rowIndex}
-				poolMeta={row.original.poolMeta}
-			/>
-			{exploited ? (
-				<Tooltip content="This pool involves a protocol or token affected by an exploit. Proceed with extreme caution.">
-					<Icon name="alert-triangle" height={14} width={14} className="shrink-0 text-red-500 dark:text-red-400" />
-				</Tooltip>
-			) : null}
-		</span>
-	)
-}
-
-const CLIENT_ENRICHED_SORT_COLUMN_IDS = new Set<PoolsColumnId>([
-	'cv30d',
-	'apyMedian30d',
-	'apyStd30d',
-	'holderCount',
+	'pricePerShare',
 	'top10Pct',
 	'avgPositionUsd'
 ])
+const EMPTY_SORTING_STATE: SortingState = []
 
-function createPoolsColumns({ hasPremiumAccess, isClient, serverMode, onRequestUpgrade }: PoolsTableConfigContext) {
-	return [
+function apyHeader(query: Record<string, unknown>, label: string) {
+	const suffix = query.apyWindow === 'avg_7d' ? ' (7d)' : query.apyWindow === 'avg_30d' ? ' (30d)' : ''
+	return `${label}${suffix}`
+}
+
+function createEarnColumns(query: Record<string, unknown>): Array<ColumnDef<IYieldTableRow, unknown>> {
+	const selected = new Set(parseSelectedEarnColumns(query.column as string | string[] | undefined))
+	const columns: Array<ColumnDef<IYieldTableRow, unknown>> = [
 		columnHelper.accessor('pool', {
 			id: 'pool',
 			header: 'Pool',
 			enableSorting: false,
-			cell: ({ getValue, row }) => <PoolNameCell value={getValue()} row={row} />,
+			cell: ({ getValue, row }) => (
+				<PoolNameLockup
+					rowId={row.id}
+					value={getValue()}
+					configID={row.original.configID}
+					url={row.original.url}
+					poolMeta={row.original.poolMeta}
+					exploited={row.original.exploited}
+					hasRiskData={row.original.hasRiskData}
+				/>
+			),
+			meta: { headerClassName: 'w-[190px] min-w-[190px]' }
+		}),
+		columnHelper.accessor((row) => row.referenceAsset ?? undefined, {
+			id: 'referenceAsset',
+			header: 'Reference',
+			enableSorting: false,
+			cell: (info) => {
+				const value = info.getValue()
+				return value ? (
+					<Tooltip content={value} className="block">
+						<BasicLink
+							href={`/token/${encodeURIComponent(value.toUpperCase())}`}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="truncate hover:underline"
+						>
+							{value}
+						</BasicLink>
+					</Tooltip>
+				) : (
+					<EmptyCell />
+				)
+			},
 			meta: {
-				headerClassName:
-					'w-[120px] min-[812px]:w-[200px] xl:w-[240px] 2xl:w-[280px] min-[1600px]:w-[320px] min-[1640px]:w-[360px] min-[1720px]:w-[420px]'
+				headerClassName: 'w-[110px] min-w-[110px]',
+				headerHelperText: 'The asset you provide to enter the pool'
 			}
 		}),
 		columnHelper.accessor('project', {
 			id: 'project',
-			header: 'Project',
+			header: 'Protocol',
 			enableSorting: false,
-			cell: ({ row }) => (
-				<NameYield
-					project={row.original.project}
-					projectslug={row.original.project}
-					airdrop={row.original.airdrop}
-					raiseValuation={row.original.raiseValuation}
-				/>
-			),
-			meta: {
-				headerClassName: 'pl-9 w-[200px]'
-			}
+			cell: ({ row }) => <ProjectNameCell row={row} />,
+			meta: { headerClassName: 'w-[130px] min-w-[130px]' }
+		}),
+		columnHelper.accessor((row) => row.category ?? undefined, {
+			id: 'category',
+			header: 'Category',
+			enableSorting: false,
+			cell: (info) => {
+				const value = info.getValue()
+				return value ? (
+					<Tooltip content={value} className="block">
+						<span className="truncate">{value}</span>
+					</Tooltip>
+				) : (
+					<EmptyCell />
+				)
+			},
+			meta: { headerClassName: 'w-[110px] min-w-[110px]' }
 		}),
 		columnHelper.accessor('chains', {
 			id: 'chains',
 			header: 'Chain',
 			enableSorting: false,
-			cell: (info) => <IconsRow items={toChainIconItems(info.getValue(), (chain) => yieldsChainHref(chain))} />,
-			meta: {
-				headerClassName: 'w-[60px]',
-				align: 'end'
-			}
+			cell: (info) => <IconsRow items={toChainIconItems(info.getValue(), (chain) => chainHref('/chain', chain))} />,
+			meta: { headerClassName: 'w-[60px] min-w-[60px]', align: 'end' }
 		}),
 		columnHelper.accessor((row) => row.tvl ?? undefined, {
 			id: 'tvl',
 			header: 'TVL',
 			enableSorting: true,
-			cell: (info) => {
-				return (
-					<span
-						data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-						className="data-[strike=true]:text-(--legacy-text-disabled)"
-					>
-						{formattedNum(info.getValue(), true)}
-					</span>
-				)
-			},
-			meta: {
-				headerClassName: 'w-[100px]',
-				align: 'end',
-				headerHelperText: 'Note for lending pools: TVL = Available Liquidity = (Supplied - Borrowed)'
-			}
+			cell: (info) => (info.getValue() == null ? <EmptyCell /> : <span>{formattedNum(info.getValue(), true)}</span>),
+			meta: { headerClassName: 'w-[100px] min-w-[100px]', align: 'end' }
 		}),
 		columnHelper.accessor((row) => row.apy ?? undefined, {
 			id: 'apy',
-			header: 'APY',
+			header: apyHeader(query, 'APY'),
 			enableSorting: true,
-			cell: (info) => {
-				return (
-					<span className="flex items-center justify-end gap-1">
-						{info.row.original.project === 'cBridge' ? (
-							<QuestionHelper text={'Your deposit can be moved to another chain with a different APY!'} />
-						) : info.row.original.project === 'Uniswap V3' ? (
-							<QuestionHelper
-								text={
-									'Calculated as: 24h fees * 365 / TVL. Enable "7d Base APY" for a more detailed APY calculation which uses 7 day trading fees and a price range of +/- 30% (+/- 0.1% for stable pools) around current price.'
-								}
-							/>
-						) : info.row.original.project === 'Vesper' && info.row.original.pool === 'ETH (Aggressive)' ? (
-							<QuestionHelper
-								text={
-									'To earn yield you are required to wait for the autocompounding action to be triggered by Vesper which might happen only 1-2x per month. If you withdraw prior to that you will receive 0 APY!'
-								}
-							/>
-						) : null}
-						<DepegWarningIcon
-							project={info.row.original.project}
-							symbol={info.row.original.pool}
-							deviation={info.row.original.pegDeviation}
-							price={info.row.original.pegPrice}
-						/>
-						<PercentChange percent={info.getValue()} noSign fontWeight={700} />
-					</span>
-				)
-			},
+			cell: ({ row }) => <EarnApyCell row={row.original} />,
 			meta: {
-				headerClassName: 'w-[100px]',
+				headerClassName: 'w-[120px] min-w-[120px]',
 				align: 'end',
 				headerHelperText:
-					'APY = Base APY + Reward APY. For non-autocompounding pools we do not account for reinvesting, in which case APY = APR.'
+					'Follows the APY controls above: the composition you toggled (+Reward / +Intrinsic) over the selected window (Now / 7d / 30d)'
 			}
 		}),
 		columnHelper.accessor((row) => row.apyBase ?? undefined, {
 			id: 'apyBase',
-			header: 'Base APY',
+			header: apyHeader(query, 'APY Base'),
 			enableSorting: true,
-			cell: (info) => {
-				return (
-					<span className="flex items-center justify-end gap-1">
-						{info.row.original.project === 'Sommelier' ? (
-							<QuestionHelper text={'Calculated over a 24h period! Enable 7d Base APY column for a larger period'} />
-						) : null}
-						<PercentChange percent={info.getValue()} noSign />
-					</span>
-				)
-			},
-			meta: {
-				headerClassName: 'w-[140px]',
-				align: 'end',
-				headerHelperText:
-					'Annualised percentage yield from trading fees/supplying. For dexs we use the 24h fees and scale those to a year.'
-			}
+			cell: (info) => (info.getValue() == null ? <EmptyCell /> : <span>{fmtPct(info.getValue())}%</span>),
+			meta: { headerClassName: 'w-[150px] min-w-[150px]', align: 'end' }
 		}),
-		columnHelper.accessor((row) => row.apyReward ?? undefined, {
+		columnHelper.accessor((row) => row.apyRewardRaw ?? undefined, {
 			id: 'apyReward',
-			header: 'Reward APY',
+			header: apyHeader(query, 'APY Reward'),
 			enableSorting: true,
-			cell: ({ getValue, row }) => {
-				const rewards = row.original.rewards ?? []
-				return (
-					<span className="inline-flex items-center gap-1">
-						{lockupsRewards.includes(row.original.project) ? (
-							<QuestionHelper text={earlyExit} />
-						) : row.original.rewardMeta ? (
-							<QuestionHelper text={row.original.rewardMeta} />
-						) : null}
-						<IconsRow
-							items={toTokenIconItems(rewards, {
-								titles: row.original.rewardTokensSymbols,
-								getHref: (reward) => yieldsProjectHref(reward)
-							})}
-						/>
-						<PercentChange percent={getValue()} noSign />
-					</span>
-				)
-			},
-			meta: {
-				headerClassName: 'w-[127px]',
-				align: 'end',
-				headerHelperText: 'Annualised percentage yield from incentives.'
-			}
-		}),
-		columnHelper.accessor((row) => row.apyBase7d ?? undefined, {
-			id: 'apyBase7d',
-			header: '7d Base APY',
-			enableSorting: true,
-			cell: (info) => <PercentChange percent={info.getValue()} noSign />,
-			meta: {
-				headerClassName: 'w-[130px] min-[812px]:w-[140px]',
-				align: 'end',
-				headerHelperText: `Annualised percentage yield based on the trading fees from the last 7 days. ${uniswapV3}`
-			}
-		}),
-		columnHelper.accessor((row) => row.il7d ?? undefined, {
-			id: 'il7d',
-			header: '7d IL',
-			enableSorting: true,
-			cell: (info) => <PercentChange percent={info.getValue()} noSign />,
-			meta: {
-				headerClassName: 'w-[90px]',
-				align: 'end',
-				headerHelperText: `7d Impermanent Loss: the percentage loss between LPing for the last 7days vs holding the underlying assets instead. ${uniswapV3}`
-			}
+			cell: (info) => (
+				<RewardApyCell
+					value={info.getValue()}
+					chain={info.row.original.chains[0]}
+					tokens={info.row.original.rewardTokens}
+				/>
+			),
+			meta: { headerClassName: 'w-[150px] min-w-[150px]', align: 'end' }
 		}),
 		columnHelper.accessor((row) => row.apyMean30d ?? undefined, {
 			id: 'apyMean30d',
 			header: '30d Avg APY',
 			enableSorting: true,
-			cell: (info) => <PercentChange percent={info.getValue()} noSign />,
+			cell: (info) => (info.getValue() == null ? <EmptyCell /> : <span>{fmtPct(info.getValue())}%</span>),
 			meta: {
-				headerClassName: 'w-[125px]',
-				align: 'end'
-			}
-		}),
-		columnHelper.accessor((row) => row.cv30d ?? undefined, {
-			id: 'cv30d',
-			header: () => (
-				<StabilityHeader hasPremiumAccess={isClient && hasPremiumAccess} onRequestUpgrade={onRequestUpgrade} />
-			),
-			enableSorting: true,
-			cell: ({ getValue, row }) => {
-				return (
-					<StabilityCell
-						cv30d={getValue() as number | null}
-						apyMedian30d={row.original.apyMedian30d}
-						apyStd30d={row.original.apyStd30d}
-						hasPremiumAccess={isClient && hasPremiumAccess}
-						onRequestUpgrade={onRequestUpgrade}
-					/>
-				)
-			},
-			meta: {
-				headerClassName: 'w-[110px]',
+				headerClassName: 'w-[135px] min-w-[135px]',
 				align: 'end',
-				headerHelperText: 'Measures yield consistency over the last 30 days.'
+				headerHelperText: 'Rolling 30-day average of APY Base + APY Reward'
 			}
 		}),
-		columnHelper.accessor((row) => row.pegDeviation ?? undefined, {
-			id: 'pegDeviation',
-			header: 'Peg',
-			enableSorting: true,
-			cell: ({ row }) => <PegHealthIndicator deviation={row.original.pegDeviation} price={row.original.pegPrice} />,
-			meta: {
-				headerClassName: 'w-[100px]',
-				align: 'end',
-				headerHelperText: 'Live peg deviation from $1.00 target price.'
-			}
-		}),
-		columnHelper.accessor((row) => row.apyMedian30d ?? undefined, {
-			id: 'apyMedian30d',
-			header: '30d Median APY',
-			enableSorting: true,
-			cell: (info) => <PercentChange percent={info.getValue()} noSign />,
-			meta: {
-				headerClassName: 'w-[140px]',
-				align: 'end',
-				headerHelperText: '30-day median APY — more robust than average, resistant to outlier spikes.'
-			}
-		}),
-		columnHelper.accessor((row) => row.apyStd30d ?? undefined, {
-			id: 'apyStd30d',
-			header: '30d Std Dev',
-			enableSorting: true,
-			cell: (info) => <PercentChange percent={info.getValue()} noSign />,
-			meta: {
-				headerClassName: 'w-[120px]',
-				align: 'end',
-				headerHelperText: 'Standard deviation of daily APY over the last 30 days. Measures yield volatility.'
-			}
-		}),
-		columnHelper.accessor((row) => row.apyChart30d ?? undefined, {
-			id: 'apyChart30d',
-			header: '30d APY Chart',
+		columnHelper.accessor((row) => row.sparkline ?? undefined, {
+			id: 'apyTrend30d',
+			header: '30d Trend',
 			enableSorting: false,
-			cell: ({ row }) => {
-				const configID = row.original.configID
-				if (!configID) return null
-				return (
+			cell: ({ row }) =>
+				hasSparkline(row.original.sparkline) ? (
 					<BasicLink
-						href={`/yields/pool/${configID}`}
+						href={`/yields/pool/${row.original.configID}`}
 						target="_blank"
-						className="text-sm font-medium text-(--legacy-link-text)"
+						rel="noopener noreferrer"
+						className="flex justify-center pl-6"
+						aria-label="Open pool page"
 					>
-						<ImageWithFallback
-							src={`https://yield-charts.llama.fi/yield-chart/${configID}`}
-							alt=""
-							width={90}
-							height={30}
-							className="ml-auto"
-						/>
+						<Sparkline points={row.original.sparkline} />
 					</BasicLink>
-				)
-			},
+				) : (
+					<EmptyCell />
+				),
 			meta: {
-				headerClassName: 'w-[125px]',
-				align: 'end'
+				headerClassName: 'w-[124px] min-w-[124px] whitespace-nowrap',
+				align: 'center',
+				headerHelperText: 'Follows the APY composition toggled above (+Reward / +Intrinsic)'
 			}
 		}),
-		columnHelper.accessor((row) => row.volumeUsd1d ?? undefined, {
-			id: 'volumeUsd1d',
-			header: '1d Volume',
+		columnHelper.accessor((row) => row.stabilityScore ?? undefined, {
+			id: 'stabilityScore',
+			header: '30d Stability',
 			enableSorting: true,
-			cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
+			cell: ({ row }) => (
+				<ApyStabilityIndicator
+					score={row.original.stabilityScore}
+					rating={row.original.stabilityRating}
+					avg30d={row.original.stabilityAvg30d}
+				/>
+			),
 			meta: {
-				headerClassName: 'w-[140px]',
-				align: 'end',
-				headerHelperText: '$ Volume in the last 24 hours.'
-			}
-		}),
-		columnHelper.accessor((row) => row.volumeUsd7d ?? undefined, {
-			id: 'volumeUsd7d',
-			header: '7d Volume',
-			enableSorting: true,
-			cell: (info) => (info.getValue() != null ? formattedNum(info.getValue(), true) : null),
-			meta: {
-				headerClassName: 'w-[140px]',
-				align: 'end',
-				headerHelperText: '$ Volume in the last 7 days'
-			}
-		}),
-		columnHelper.accessor((row) => row.apyBaseInception ?? undefined, {
-			id: 'apyBaseInception',
-			header: 'Inception APY',
-			enableSorting: true,
-			cell: (info) => <PercentChange percent={info.getValue()} noSign />,
-			meta: {
-				headerClassName: 'w-[150px]',
-				align: 'end',
-				headerHelperText: 'Annualised percentage yield since inception'
-			}
-		}),
-		columnHelper.accessor((row) => row.apyIncludingLsdApy ?? undefined, {
-			id: 'apyIncludingLsdApy',
-			header: 'APY',
-			enableSorting: true,
-			cell: (info) => {
-				return (
-					<span className="flex items-center justify-end gap-1">
-						{info.row.original.project === 'cBridge' ? (
-							<QuestionHelper text={'Your deposit can be moved to another chain with a different APY!'} />
-						) : info.row.original.project === 'Uniswap V3' ? (
-							<QuestionHelper
-								text={
-									'Calculated as: 24h fees * 365 / TVL. Enable "7d Base APY" for a more detailed APY calculation which uses 7 day trading fees and a price range of +/- 30% (+/- 0.1% for stable pools) around current price.'
-								}
-							/>
-						) : null}
-						<PercentChange percent={info.getValue()} noSign fontWeight={700} />
-					</span>
-				)
-			},
-			meta: {
-				headerClassName: 'w-[100px]',
-				align: 'end',
+				headerClassName: 'w-[120px] min-w-[120px]',
+				align: 'center',
 				headerHelperText:
-					'APY = Base APY + Reward APY. For non-autocompounding pools we do not account for reinvesting, in which case APY = APR.'
-			}
-		}),
-		columnHelper.accessor((row) => row.apyBaseIncludingLsdApy ?? undefined, {
-			id: 'apyBaseIncludingLsdApy',
-			header: 'Base APY',
-			enableSorting: true,
-			cell: (info) => <PercentChange percent={info.getValue()} noSign />,
-			meta: {
-				headerClassName: 'w-[140px]',
-				align: 'end',
-				headerHelperText:
-					'Annualised percentage yield from trading fees/supplying inclusive of LSD APY (if applicable). For dexs we use the 24h fees and scale those to a year.'
-			}
-		}),
-		columnHelper.accessor((row) => row.apyBorrow ?? undefined, {
-			id: 'apyBorrow',
-			header: 'Net Borrow APY',
-			enableSorting: true,
-			cell: (info) => <PercentChange percent={info.getValue()} noSign fontWeight={700} />,
-			meta: {
-				headerClassName: 'w-[160px]',
-				align: 'end',
-				headerHelperText: 'Total net APY for borrowing (Borrow Base APY + Borrow Reward APY).'
-			}
-		}),
-		columnHelper.accessor((row) => row.apyBaseBorrow ?? undefined, {
-			id: 'apyBaseBorrow',
-			header: 'Borrow Base APY',
-			enableSorting: true,
-			cell: (info) => <PercentChange percent={info.getValue()} noSign />,
-			meta: {
-				headerClassName: 'w-[170px]',
-				align: 'end',
-				headerHelperText: 'Interest borrowers pay to lenders.'
-			}
-		}),
-		columnHelper.accessor((row) => row.apyRewardBorrow ?? undefined, {
-			id: 'apyRewardBorrow',
-			header: 'Borrow Reward APY',
-			enableSorting: true,
-			cell: (info) => <PercentChange percent={info.getValue()} noSign />,
-			meta: {
-				headerClassName: 'w-[180px]',
-				align: 'end',
-				headerHelperText: 'Incentive reward APY for borrowing.'
-			}
-		}),
-		columnHelper.accessor((row) => row.ltv ?? undefined, {
-			id: 'ltv',
-			header: 'Max LTV',
-			enableSorting: true,
-			cell: (info) => {
-				return (
-					<span
-						data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-						className="data-[strike=true]:text-(--legacy-text-disabled)"
-					>
-						{info.getValue() != null ? formattedNum(Number(info.getValue()) * 100) + '%' : null}
-					</span>
-				)
-			},
-			meta: {
-				headerClassName: 'w-[110px]',
-				align: 'end',
-				headerHelperText: 'Max loan to value (collateral factor)'
-			}
-		}),
-		columnHelper.accessor((row) => row.totalSupplyUsd ?? undefined, {
-			id: 'totalSupplyUsd',
-			header: 'Supplied',
-			enableSorting: true,
-			cell: (info) => {
-				return (
-					<span
-						data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-						className="data-[strike=true]:text-(--legacy-text-disabled)"
-					>
-						{info.getValue() == null ? '' : formattedNum(info.getValue(), true)}
-					</span>
-				)
-			},
-			meta: {
-				headerClassName: 'w-[120px]',
-				align: 'end'
-			}
-		}),
-		columnHelper.accessor((row) => row.totalBorrowUsd ?? undefined, {
-			id: 'totalBorrowUsd',
-			header: 'Borrowed',
-			enableSorting: true,
-			cell: (info) => {
-				return (
-					<span
-						data-strike={info.row.original.strikeTvl ? 'true' : 'false'}
-						className="data-[strike=true]:text-(--legacy-text-disabled)"
-					>
-						{info.getValue() == null ? '' : formattedNum(info.getValue(), true)}
-					</span>
-				)
-			},
-			meta: {
-				headerClassName: 'w-[120px]',
-				align: 'end',
-				headerHelperText: 'Amount of borrowed collateral'
+					'30-day APY stability score, 0–100 — higher is steadier (≥67 Stable · 33–66 Mixed · <33 Volatile). Follows the APY composition toggled above'
 			}
 		}),
 		columnHelper.accessor((row) => row.holderCount ?? undefined, {
@@ -597,360 +273,122 @@ function createPoolsColumns({ hasPremiumAccess, isClient, serverMode, onRequestU
 			header: 'Holders',
 			enableSorting: true,
 			cell: ({ getValue, row }) => {
-				const count = getValue() as number | null
-				if (count == null) return <span className="block text-end text-(--legacy-text-disabled)">{'\u2014'}</span>
-				const change7d = row.original.holderChange7d
-				const change30d = row.original.holderChange30d
-				const tooltipParts = [
-					change7d != null ? `7d: ${change7d >= 0 ? '+' : ''}${change7d.toLocaleString()}` : null,
-					change30d != null ? `30d: ${change30d >= 0 ? '+' : ''}${change30d.toLocaleString()}` : null
-				].filter(Boolean)
+				const count = getValue()
+				if (count == null) return <EmptyCell />
+				const { top10Pct, avgPositionUsd } = row.original
+				const content =
+					top10Pct == null && avgPositionUsd == null ? null : (
+						<span className="flex flex-col gap-0.5">
+							{top10Pct != null ? <span>Top 10: {top10Pct.toFixed(1)}%</span> : null}
+							{avgPositionUsd != null ? <span>Avg: {formattedNum(avgPositionUsd, true)}</span> : null}
+						</span>
+					)
 				return (
-					<Tooltip content={tooltipParts.length ? tooltipParts.join(', ') : null} className="justify-end">
-						<span className="tabular-nums">{formattedNum(count)}</span>
+					<Tooltip content={content} className="justify-end">
+						<span>{formattedNum(count)}</span>
 					</Tooltip>
 				)
 			},
 			meta: {
-				headerClassName: 'w-[130px]',
+				headerClassName: 'w-[90px] min-w-[90px]',
 				align: 'end',
-				headerHelperText: 'Number of unique token holders. Hover for 7d/30d change.'
+				headerHelperText: 'Unique token holders. Hover for top 10 share and avg position.'
 			}
+		}),
+		columnHelper.accessor((row) => row.volumeUsd1d ?? undefined, {
+			id: 'volumeUsd1d',
+			header: '1d Volume',
+			enableSorting: true,
+			cell: (info) => (info.getValue() == null ? <EmptyCell /> : formattedNum(info.getValue(), true)),
+			meta: {
+				headerClassName: 'w-[110px] min-w-[110px]',
+				align: 'end',
+				headerHelperText: '$ Volume in the last 24 hours.'
+			}
+		}),
+		columnHelper.accessor((row) => row.pricePerShare ?? undefined, {
+			id: 'pricePerShare',
+			header: 'Price per Share',
+			enableSorting: true,
+			cell: (info) => (info.getValue() == null ? <EmptyCell /> : <span>{info.getValue().toFixed(4)}</span>),
+			meta: { headerClassName: 'w-[130px] min-w-[130px]', align: 'end' }
 		}),
 		columnHelper.accessor((row) => row.top10Pct ?? undefined, {
 			id: 'top10Pct',
 			header: 'Top 10 %',
 			enableSorting: true,
 			cell: (info) => {
-				const val = info.getValue() as number | null
-				if (val == null) return <span className="block text-end text-(--legacy-text-disabled)">{'\u2014'}</span>
-
-				const accentClass = val >= 80 ? 'bg-red-500' : val >= 50 ? 'bg-yellow-500' : 'bg-green-500'
-				const riskLabel = val >= 80 ? 'High concentration' : val >= 50 ? 'Medium concentration' : 'Low concentration'
-
+				const value = info.getValue()
+				if (value == null) return <EmptyCell />
+				const accentClass = value >= 80 ? 'bg-data-down' : value >= 50 ? 'bg-warning' : 'bg-data-up'
+				const riskLabel =
+					value >= 80 ? 'High concentration' : value >= 50 ? 'Medium concentration' : 'Low concentration'
 				return (
 					<Tooltip content={riskLabel} className="justify-end">
-						<span className="inline-flex items-center gap-1.5 tabular-nums">
+						<span className="inline-flex items-center gap-1.5">
 							<span className={`size-2 shrink-0 rounded-full ${accentClass}`} />
-							{val.toFixed(1)}%
+							{value.toFixed(1)}%
 						</span>
 					</Tooltip>
 				)
 			},
 			meta: {
-				headerClassName: 'w-[110px]',
+				headerClassName: 'w-[110px] min-w-[110px]',
 				align: 'end',
 				headerHelperText: 'Percentage of TVL held by the top 10 holders. Higher = more concentrated.'
 			}
 		}),
 		columnHelper.accessor((row) => row.avgPositionUsd ?? undefined, {
 			id: 'avgPositionUsd',
-			header: 'Holders Avg Position',
+			header: 'Avg Position',
 			enableSorting: true,
-			cell: (info) => {
-				const val = info.getValue() as number | null
-				if (val == null) return <span className="block text-end text-(--legacy-text-disabled)">{'\u2014'}</span>
-				return <span className="tabular-nums">{formattedNum(val, true)}</span>
-			},
+			cell: (info) => (info.getValue() == null ? <EmptyCell /> : <span>{formattedNum(info.getValue(), true)}</span>),
 			meta: {
-				headerClassName: 'w-[160px]',
+				headerClassName: 'w-[110px] min-w-[110px]',
 				align: 'end',
 				headerHelperText: 'Average position size in USD (TVL / holder count).'
 			}
-		}),
-		columnHelper.accessor((row) => row.totalAvailableUsd ?? undefined, {
-			id: 'totalAvailableUsd',
-			header: 'Available',
-			enableSorting: true,
-			cell: (info) => {
-				return (
-					<span
-						data-strike={info.row.original.strikeTvl ?? 'false'}
-						className="flex justify-end gap-1 data-[strike=true]:text-(--legacy-text-disabled)"
-					>
-						{['Morpho Compound', 'Morpho Aave'].includes(info.row.original.project) ? (
-							<QuestionHelper
-								text={`Morpho liquidity comes from the underlying lending protocol pool itself. Available P2P Liquidity: ${
-									info.row.original.totalSupplyUsd - info.row.original.totalBorrowUsd > 0
-										? formattedNum(info.row.original.totalSupplyUsd - info.row.original.totalBorrowUsd, true)
-										: '$0'
-								}`}
-							/>
-						) : null}
-						{info.getValue() == null ? null : formattedNum(info.getValue(), true)}
-					</span>
-				)
-			},
-			meta: {
-				headerClassName: 'w-[120px]',
-				align: 'end'
-			}
 		})
-	].map((column) => {
-		const columnId = column.id ?? ('accessorKey' in column ? column.accessorKey : undefined)
-		if (serverMode && CLIENT_ENRICHED_SORT_COLUMN_IDS.has(columnId as PoolsColumnId)) {
-			return { ...column, enableSorting: false }
-		}
-		if (!hasPremiumAccess && columnId === 'cv30d') {
-			return { ...column, enableSorting: false }
-		}
-		return column
-	})
-}
-
-const columnOrders: Record<number, readonly PoolsColumnId[]> = {
-	0: [
-		'pool',
-		'apy',
-		'apyIncludingLsdApy',
-		'tvl',
-		'project',
-		'chains',
-		'apyBase',
-		'apyBaseIncludingLsdApy',
-		'apyReward',
-		'apyBase7d',
-		'il7d',
-		'apyMean30d',
-		'pegDeviation',
-		'apyMedian30d',
-		'apyStd30d',
-		'volumeUsd1d',
-		'volumeUsd7d',
-		'apyBaseInception',
-		'apyBorrow',
-		'apyBaseBorrow',
-		'apyRewardBorrow',
-		'ltv',
-		'totalSupplyUsd',
-		'totalBorrowUsd',
-		'totalAvailableUsd',
-		'top10Pct',
-		'holderCount',
-		'avgPositionUsd',
-		'cv30d',
-		'apyChart30d'
-	],
-	400: [
-		'pool',
-		'project',
-		'apy',
-		'apyIncludingLsdApy',
-		'tvl',
-		'chains',
-		'apyBase',
-		'apyBaseIncludingLsdApy',
-		'apyReward',
-		'apyBase7d',
-		'il7d',
-		'apyMean30d',
-		'pegDeviation',
-		'apyMedian30d',
-		'apyStd30d',
-		'volumeUsd1d',
-		'volumeUsd7d',
-		'apyBaseInception',
-		'apyBorrow',
-		'apyBaseBorrow',
-		'apyRewardBorrow',
-		'ltv',
-		'totalSupplyUsd',
-		'totalBorrowUsd',
-		'totalAvailableUsd',
-		'top10Pct',
-		'holderCount',
-		'avgPositionUsd',
-		'cv30d',
-		'apyChart30d'
-	],
-	640: [
-		'pool',
-		'project',
-		'tvl',
-		'apy',
-		'apyIncludingLsdApy',
-		'chains',
-		'apyBase',
-		'apyBaseIncludingLsdApy',
-		'apyReward',
-		'apyBase7d',
-		'il7d',
-		'apyMean30d',
-		'pegDeviation',
-		'apyMedian30d',
-		'apyStd30d',
-		'volumeUsd1d',
-		'volumeUsd7d',
-		'apyBaseInception',
-		'apyBorrow',
-		'apyBaseBorrow',
-		'apyRewardBorrow',
-		'ltv',
-		'totalSupplyUsd',
-		'totalBorrowUsd',
-		'totalAvailableUsd',
-		'top10Pct',
-		'holderCount',
-		'avgPositionUsd',
-		'cv30d',
-		'apyChart30d'
-	],
-	1280: [
-		'pool',
-		'project',
-		'chains',
-		'tvl',
-		'apy',
-		'apyIncludingLsdApy',
-		'apyBase',
-		'apyBaseIncludingLsdApy',
-		'apyReward',
-		'apyBase7d',
-		'il7d',
-		'apyMean30d',
-		'pegDeviation',
-		'apyMedian30d',
-		'apyStd30d',
-		'volumeUsd1d',
-		'volumeUsd7d',
-		'apyBaseInception',
-		'apyBorrow',
-		'apyBaseBorrow',
-		'apyRewardBorrow',
-		'ltv',
-		'totalSupplyUsd',
-		'totalBorrowUsd',
-		'totalAvailableUsd',
-		'top10Pct',
-		'holderCount',
-		'avgPositionUsd',
-		'cv30d',
-		'apyChart30d'
 	]
-}
-export const POOLS_TABLE_CONFIG: YieldsTableConfig<IYieldTableRow, PoolsColumnId, PoolsTableConfigContext> = {
-	kind: 'pools',
-	columnIds: POOLS_COLUMN_IDS,
-	columns: createPoolsColumns,
-	columnOrders,
-	columnVisibility: ({ query, hasPremiumAccess }) =>
-		decodePoolsColumnVisibilityQuery(query as Record<string, string | string[] | undefined>, {
-			hasPremiumAccess,
-			includeLsdApy: query.includeLsdApy === 'true',
-			isStablecoinPage: query.pathname === '/yields/stablecoins'
-		})
-}
 
-function usePoolsTableContext({ serverMode = false }: { serverMode?: boolean } = {}) {
-	const router = useRouter()
-	const { hasActiveSubscription } = useAuthContext()
-	const isClient = useIsClient()
-	const { onRequestUpgrade, modal } = useYieldsUpgradePrompt()
-
-	return {
-		context: useMemo(
-			() => ({
-				query: {
-					...router.query,
-					pathname: router.pathname
-				},
-				hasPremiumAccess: isClient && hasActiveSubscription,
-				isClient,
-				serverMode,
-				onRequestUpgrade
-			}),
-			[hasActiveSubscription, isClient, onRequestUpgrade, router.pathname, router.query, serverMode]
-		),
-		modal
-	}
-}
-
-export function YieldsPoolsTable(props: IYieldsTableProps) {
-	const { context, modal } = usePoolsTableContext({ serverMode: props.serverMode })
-	const resolvedConfig = useMemo(() => resolveVirtualYieldsTableConfig(POOLS_TABLE_CONFIG, context), [context])
-
-	return (
-		<>
-			<YieldsTableWrapper
-				{...props}
-				columns={resolvedConfig.columns}
-				columnOrders={resolvedConfig.columnOrders}
-				columnVisibility={resolvedConfig.columnVisibility}
-			/>
-			{modal}
-		</>
-	)
+	return columns.filter((column) => !OPTIONAL_COLUMN_IDS.has(column.id ?? '') || selected.has(column.id ?? ''))
 }
 
 export function PaginatedYieldsPoolTable({
 	data,
-	initialPageSize = DEFAULT_PAGE_SIZE_OPTIONS[0],
+	initialPageSize = 10,
 	initialPageIndex = 0,
 	rowCount,
 	manualPagination = false,
 	manualSorting = false,
-	serverMode = false,
 	paginationState,
-	sortingState = [],
+	sortingState = EMPTY_SORTING_STATE,
 	onPaginationChange,
 	onSortingChange,
-	interactionDisabled = false
-}: IYieldsTableProps) {
-	const { context, modal } = usePoolsTableContext({ serverMode })
-	const [localSorting, setLocalSorting] = useState<SortingState>(() => [...sortingState])
-	const [localPagination, setLocalPagination] = useState<PaginationState>({
-		pageIndex: initialPageIndex,
-		pageSize: initialPageSize
-	})
-	const sorting = onSortingChange ? sortingState : localSorting
-	const pagination = paginationState ?? localPagination
-
-	const paginatedColumns = useMemo(() => preparePaginatedYieldsColumns(POOLS_TABLE_CONFIG, context), [context])
-
-	const table = useReactTable({
-		data,
-		columns: paginatedColumns,
-		state: {
-			sorting,
-			pagination
-		},
-		defaultColumn: {
-			sortUndefined: 'last'
-		},
-		rowCount: manualPagination ? rowCount : undefined,
-		manualPagination,
-		manualSorting,
-		enableSortingRemoval: false,
-		onSortingChange: (updater) =>
-			startTransition(() => {
-				const nextSorting = typeof updater === 'function' ? updater(sorting) : updater
-				if (!onSortingChange) {
-					setLocalSorting(nextSorting)
-				}
-				onSortingChange?.(nextSorting)
-			}),
-		onPaginationChange: (updater) =>
-			startTransition(() => {
-				const nextPagination = typeof updater === 'function' ? updater(pagination) : updater
-				if (!paginationState) {
-					setLocalPagination(nextPagination)
-				}
-				onPaginationChange?.(nextPagination)
-			}),
-		getCoreRowModel: getCoreRowModel(),
-		...(manualSorting ? {} : { getSortedRowModel: getSortedRowModel() }),
-		...(manualPagination ? {} : { getPaginationRowModel: getPaginationRowModel() }),
-		autoResetPageIndex: false
-	})
+	interactionDisabled = false,
+	loadingLabel,
+	appearance = 'standalone'
+}: IYieldsTableProps & { appearance?: YieldsTableAppearance }) {
+	const { query } = useRouter()
+	const columns = createEarnColumns(query)
 
 	return (
-		<>
-			<PaginatedTable
-				table={table}
-				pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
-				interactionDisabled={interactionDisabled}
-			/>
-			{modal}
-		</>
+		<PaginatedYieldsTable
+			data={data}
+			columns={columns}
+			tableClassName="min-w-[1180px] [&_td]:py-1.5"
+			initialPageSize={initialPageSize}
+			initialPageIndex={initialPageIndex}
+			rowCount={rowCount}
+			manualPagination={manualPagination}
+			manualSorting={manualSorting}
+			paginationState={paginationState}
+			sortingState={sortingState}
+			onPaginationChange={onPaginationChange}
+			onSortingChange={onSortingChange}
+			interactionDisabled={interactionDisabled}
+			loadingLabel={loadingLabel}
+			shell={appearance === 'embedded' ? 'none' : 'default'}
+		/>
 	)
 }

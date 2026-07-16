@@ -28,7 +28,6 @@ import {
 	StablecoinsDataset,
 	TokenUsageDataset,
 	TrendingContractsDataset,
-	YieldsDataset,
 	RWAAssetsDataset,
 	RWAChainsDataset,
 	RWAChainAssetsDataset,
@@ -36,6 +35,7 @@ import {
 	EquitiesFinancialsDataset,
 	EquitiesFilingsDataset
 } from './datasets'
+import { YieldsDataset } from './datasets/YieldsDataset'
 import { ProtocolsByChainTable } from './ProTable'
 import { Rating } from './Rating'
 import { TextCard } from './TextCard'

@@ -12,7 +12,7 @@ const HOURLY_SNAPSHOT_MAX_AGE_MS = 60 * 60 * 1000
 export const DATASET_SNAPSHOT_REGISTRY: Record<DatasetSnapshotDomain, DatasetSnapshotRegistration> = {
 	yields: {
 		builder: async (writer) =>
-			(await import('~/containers/Yields/server/snapshot.builder.server')).buildYieldsSnapshotCandidate(writer),
+			(await import('~/containers/Yields/server/dataset.builder.server')).buildYieldsSnapshotCandidate(writer),
 		maxAgeMs: HOURLY_SNAPSHOT_MAX_AGE_MS
 	},
 	'token-rights': {

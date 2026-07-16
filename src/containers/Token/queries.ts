@@ -1,12 +1,11 @@
 import type { ITokenRightsData } from '~/containers/TokenRights/types'
-import { extractYieldPoolTokens } from '~/containers/Yields/domain/poolFilters'
+import type { RouteTableRow } from '~/containers/Yields/data/types'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import type { ProtocolLlamaswapMetadata } from '~/utils/metadata/types'
 import type { TokenDirectoryRecord } from '~/utils/tokenDirectory'
 import { getTokenRiskBorrowCapacity } from './api'
 import type { TokenRiskBorrowCapacityResponse } from './api.types'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
-import type { TokenBorrowRoutesResponse } from './tokenBorrowRoutes.types'
 import type { TokenOverviewData } from './tokenOverview'
 import type { TokenRiskResponse } from './tokenRisk.types'
 import {
@@ -23,6 +22,7 @@ import {
 	TOKEN_RISK_LIMITATION_MIN_BAD_DEBT_NULLS
 } from './tokenRisk.utils'
 import type {
+	TokenBorrowRoutesData,
 	TokenBorrowRoutesHydration,
 	TokenIncomeStatementData,
 	TokenIssuer,
@@ -48,7 +48,7 @@ export function downgradeTokenPageDataError<T>(
 	return fallback
 }
 
-function getBorrowRouteChainList(rows: TokenBorrowRoutesResponse['borrowAsCollateral']): string[] {
+function getBorrowRouteChainList(rows: RouteTableRow[]): string[] {
 	const chains = new Set<string>()
 	for (const row of rows) {
 		const chain = row.chains[0]
@@ -57,45 +57,43 @@ function getBorrowRouteChainList(rows: TokenBorrowRoutesResponse['borrowAsCollat
 	return Array.from(chains).toSorted()
 }
 
-export function buildInitialYieldsSnapshot(yieldsRows: IYieldTableRow[]): TokenYieldsHydration {
+export function buildInitialYieldsSnapshot(yieldsRows: IYieldTableRow[], tokenKeys: string[]): TokenYieldsHydration {
 	const chainList = new Set<string>()
-	const tokensList = new Set<string>()
 	for (const row of yieldsRows) {
 		const chain = row.chains[0]
 		if (chain) chainList.add(chain)
-		for (const poolToken of extractYieldPoolTokens(row.pool)) {
-			tokensList.add(poolToken.toUpperCase())
-		}
 	}
 
 	return {
 		rows: yieldsRows.slice(0, DEFAULT_TABLE_PAGE_SIZE),
 		rowCount: yieldsRows.length,
 		chainList: Array.from(chainList).toSorted(),
-		tokensList: Array.from(tokensList).toSorted(),
-		pageSize: DEFAULT_TABLE_PAGE_SIZE
+		pageSize: DEFAULT_TABLE_PAGE_SIZE,
+		tokenKeys
 	}
 }
 
 export function buildInitialBorrowRoutesSnapshot(
-	tokenBorrowRoutesData: TokenBorrowRoutesResponse | null
+	routes: TokenBorrowRoutesData | null,
+	tokenKeys: string[]
 ): TokenBorrowRoutesHydration | null {
-	if (!tokenBorrowRoutesData) return null
+	if (!routes) return null
 
 	return {
 		data: {
-			borrowAsCollateral: tokenBorrowRoutesData.borrowAsCollateral.slice(0, DEFAULT_TABLE_PAGE_SIZE),
-			borrowAsDebt: tokenBorrowRoutesData.borrowAsDebt.slice(0, DEFAULT_TABLE_PAGE_SIZE)
+			useAsCollateral: routes.useAsCollateral.slice(0, DEFAULT_TABLE_PAGE_SIZE),
+			borrowThis: routes.borrowThis.slice(0, DEFAULT_TABLE_PAGE_SIZE)
 		},
 		counts: {
-			borrowAsCollateral: tokenBorrowRoutesData.borrowAsCollateral.length,
-			borrowAsDebt: tokenBorrowRoutesData.borrowAsDebt.length
+			useAsCollateral: routes.useAsCollateral.length,
+			borrowThis: routes.borrowThis.length
 		},
 		chainLists: {
-			borrowAsCollateral: getBorrowRouteChainList(tokenBorrowRoutesData.borrowAsCollateral),
-			borrowAsDebt: getBorrowRouteChainList(tokenBorrowRoutesData.borrowAsDebt)
+			useAsCollateral: getBorrowRouteChainList(routes.useAsCollateral),
+			borrowThis: getBorrowRouteChainList(routes.borrowThis)
 		},
-		pageSize: DEFAULT_TABLE_PAGE_SIZE
+		pageSize: DEFAULT_TABLE_PAGE_SIZE,
+		tokenKeys
 	}
 }
 
@@ -200,7 +198,7 @@ export function getTokenPageSections({
 	}
 	if (
 		borrowRoutesSnapshot &&
-		(borrowRoutesSnapshot.counts.borrowAsCollateral > 0 || borrowRoutesSnapshot.counts.borrowAsDebt > 0)
+		(borrowRoutesSnapshot.counts.useAsCollateral > 0 || borrowRoutesSnapshot.counts.borrowThis > 0)
 	) {
 		sections.push({
 			id: 'token-borrow',

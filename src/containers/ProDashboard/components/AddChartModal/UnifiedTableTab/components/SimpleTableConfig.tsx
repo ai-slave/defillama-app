@@ -51,7 +51,7 @@ const tableTypeOptions: Array<{
 	{
 		value: 'yields',
 		label: 'Yields',
-		description: 'DeFi yield opportunities with APY, TVL, and IL data',
+		description: 'V2 earn pools with supply APY, TVL, stability, and borrow-market facts',
 		icon: '🌾'
 	},
 	{

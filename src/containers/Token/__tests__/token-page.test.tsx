@@ -19,8 +19,10 @@ import {
 import { parseTokenRightsEntry } from '~/containers/TokenRights/utils'
 import { getTokenOverviewCurrentSnapshot } from '~/containers/Tokens/queries.server'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
-import { getTokenBorrowRoutes, getTokenYieldsRows } from '~/containers/Yields/server/snapshot.reader.server'
-import type { IYieldTableRow, IYieldsOptimizerTableRow } from '~/containers/Yields/Tables/types'
+import { getTokenBorrowRoutes, getTokenEarnRows } from '~/containers/Yields/data/server/tokenPage'
+import type { RouteTableRow } from '~/containers/Yields/data/types'
+import { acquireOptionalYieldsSnapshot } from '~/containers/Yields/server/dataset.server'
+import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import TokenPage, { getServerSideProps } from '~/pages/token/[token]'
 import { DatasetSnapshotIntegrityError } from '~/server/datasetSnapshots/errors'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
@@ -193,42 +195,80 @@ function resetState() {
 
 function makeYieldRow(overrides: Partial<IYieldTableRow> = {}): IYieldTableRow {
 	return {
+		id: 'pool-1',
 		pool: 'stETH-ETH',
+		poolMeta: null,
 		project: 'Aave',
 		projectslug: 'aave',
+		airdrop: false,
+		raiseValuation: null,
 		configID: 'pool-1',
 		chains: ['Ethereum'],
 		tvl: 1_000_000,
 		apy: 5.1,
 		apyBase: null,
 		apyReward: null,
+		apyMean30d: null,
+		apyRewardRaw: null,
+		rewardTokens: [],
 		rewardTokensSymbols: [],
-		rewards: [],
-		change1d: null,
-		change7d: null,
-		confidence: null,
+		intrinsicSourceSymbol: null,
+		volumeUsd1d: null,
+		pricePerShare: null,
+		holderCount: null,
+		avgPositionUsd: null,
+		top10Pct: null,
+		stabilityScore: null,
+		stabilityRating: null,
+		sparkline: null,
+		resolvedApy: { base: null, reward: null, intrinsic: null, total: 5.1 },
+		stablecoin: false,
+		tokenSymbols: ['stETH', 'ETH'],
+		singleAssetExposure: false,
+		ilRisk: false,
 		url: 'https://example.com/pool-1',
 		category: 'Lending',
+		referenceAsset: 'ETH',
 		...overrides
 	}
 }
 
-function makeBorrowRouteRow(overrides: Partial<IYieldsOptimizerTableRow> = {}): IYieldsOptimizerTableRow {
-	const row: IYieldsOptimizerTableRow = {
-		...makeYieldRow(),
-		projectName: 'Aave',
-		symbol: 'ETH',
-		borrow: undefined as unknown as IYieldsOptimizerTableRow,
-		rewardTokensNames: [],
-		totalAvailableUsd: 500_000,
-		lendUSDAmount: 0,
-		borrowUSDAmount: 0,
-		lendAmount: 0,
-		borrowAmount: 0,
+function makeRouteRow(overrides: Partial<RouteTableRow> = {}): RouteTableRow {
+	return {
+		id: 'coll:borrow',
+		collateralId: 'coll',
+		borrowId: 'borrow',
+		configID: 'borrow',
+		pool: 'ETH / USDC',
+		poolMeta: null,
+		url: 'https://example.com/pool',
+		project: 'Aave',
+		projectslug: 'aave-v3',
+		airdrop: false,
+		raiseValuation: null,
+		chain: 'Ethereum',
+		chains: ['Ethereum'],
+		collateralSymbol: 'ETH',
+		borrowSymbol: 'USDC',
+		supplyApy: 3,
+		supplyApyBase: 3,
+		supplyApyReward: null,
+		supplyApyIntrinsic: null,
+		supplyIntrinsicSourceSymbol: null,
+		borrowApy: 2,
+		borrowApyBase: 2,
+		borrowApyReward: null,
+		borrowApyIntrinsic: null,
+		borrowIntrinsicSourceSymbol: null,
+		supplyRewardTokensSymbols: [],
+		borrowRewardTokensSymbols: [],
+		netApy: 5,
+		availableBorrowUsd: 500_000,
+		totalBorrowUsd: 1_000_000,
+		borrowCapacityFilled: 0.5,
+		ltv: 0.8,
 		...overrides
 	}
-	row.borrow = row
-	return row
 }
 
 function makeTokenPageProps(sections: TokenPageSection[]): TokenPageProps {
@@ -468,11 +508,20 @@ vi.mock('~/containers/Token/queries', async (importOriginal) => ({
 	getTokenRiskData: vi.fn(() => Promise.resolve(state.tokenRiskData))
 }))
 
-vi.mock('~/containers/Yields/server/snapshot.reader.server', () => ({
-	acquireYieldsSnapshot: vi.fn().mockResolvedValue({ handle: {} }),
-	getTokenYieldsRows: vi.fn(() => Promise.resolve(state.initialYieldsRows)),
-	getTokenBorrowRoutes: vi.fn(() => Promise.resolve(state.initialTokenBorrowRoutesData)),
-	getYieldConfig: vi.fn(() => Promise.resolve(null))
+vi.mock('~/containers/Yields/server/dataset.server', () => ({
+	acquireOptionalYieldsSnapshot: vi.fn(() => Promise.resolve({ readJson: vi.fn() })),
+	readYieldsMeta: vi.fn(() => Promise.resolve(null))
+}))
+
+vi.mock('~/containers/Yields/data/server/tokenPage', () => ({
+	getTokenEarnRows: vi.fn(() => Promise.resolve({ rows: state.initialYieldsRows, tokenKeys: ['family:test'] })),
+	getTokenBorrowRoutes: vi.fn(() =>
+		Promise.resolve(
+			state.initialTokenBorrowRoutesData
+				? { ...(state.initialTokenBorrowRoutesData as object), tokenKeys: ['family:test'] }
+				: null
+		)
+	)
 }))
 
 vi.mock('~/containers/LiquidationsV2/server/dataset.server', () => ({
@@ -545,8 +594,8 @@ describe('token page', () => {
 					rows: [makeYieldRow({ pool: 'pool-1' })],
 					rowCount: 1,
 					chainList: [],
-					tokensList: [],
-					pageSize: 10
+					pageSize: 10,
+					tokenKeys: ['family:test']
 				}
 			},
 			{
@@ -555,18 +604,19 @@ describe('token page', () => {
 				tokenSymbol: 'BTC',
 				hydration: {
 					data: {
-						borrowAsCollateral: [makeBorrowRouteRow({ pool: 'borrow-1' })],
-						borrowAsDebt: []
+						useAsCollateral: [makeRouteRow({ pool: 'borrow-1' })],
+						borrowThis: []
 					},
 					counts: {
-						borrowAsCollateral: 1,
-						borrowAsDebt: 0
+						useAsCollateral: 1,
+						borrowThis: 0
 					},
 					chainLists: {
-						borrowAsCollateral: [],
-						borrowAsDebt: []
+						useAsCollateral: [],
+						borrowThis: []
 					},
-					pageSize: 10
+					pageSize: 10,
+					tokenKeys: ['family:test']
 				}
 			}
 		]
@@ -634,18 +684,19 @@ describe('token page', () => {
 						tokenSymbol: 'BTC',
 						hydration: {
 							data: {
-								borrowAsCollateral: [makeBorrowRouteRow({ pool: 'borrow-1' })],
-								borrowAsDebt: []
+								useAsCollateral: [makeRouteRow({ pool: 'borrow-1' })],
+								borrowThis: []
 							},
 							counts: {
-								borrowAsCollateral: 1,
-								borrowAsDebt: 0
+								useAsCollateral: 1,
+								borrowThis: 0
 							},
 							chainLists: {
-								borrowAsCollateral: [],
-								borrowAsDebt: []
+								useAsCollateral: [],
+								borrowThis: []
 							},
-							pageSize: 10
+							pageSize: 10,
+							tokenKeys: ['family:test']
 						}
 					}
 				])}
@@ -1370,8 +1421,8 @@ describe('token page', () => {
 		}
 		state.initialYieldsRows = [makeYieldRow({ pool: 'pool-1' })]
 		state.initialTokenBorrowRoutesData = {
-			borrowAsCollateral: [],
-			borrowAsDebt: []
+			useAsCollateral: [],
+			borrowThis: []
 		}
 
 		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -1422,11 +1473,11 @@ describe('token page', () => {
 			chains: ['Ethereum']
 		}))
 		state.initialTokenBorrowRoutesData = {
-			borrowAsCollateral: Array.from({ length: 13 }, (_, index) => ({
+			useAsCollateral: Array.from({ length: 13 }, (_, index) => ({
 				pool: `collateral-${index}`,
 				chains: ['Ethereum']
 			})),
-			borrowAsDebt: Array.from({ length: 11 }, (_, index) => ({
+			borrowThis: Array.from({ length: 11 }, (_, index) => ({
 				pool: `debt-${index}`,
 				chains: ['Arbitrum']
 			}))
@@ -1442,12 +1493,12 @@ describe('token page', () => {
 		expect(yieldsSection?.hydration.rows).toHaveLength(10)
 		expect(yieldsSection?.hydration.rowCount).toBe(12)
 		expect(yieldsSection?.hydration.pageSize).toBe(10)
-		expect(borrowSection?.hydration.data.borrowAsCollateral).toHaveLength(10)
-		expect(borrowSection?.hydration.data.borrowAsDebt).toHaveLength(10)
+		expect(borrowSection?.hydration.data.useAsCollateral).toHaveLength(10)
+		expect(borrowSection?.hydration.data.borrowThis).toHaveLength(10)
 		expect(borrowSection?.hydration.pageSize).toBe(10)
 		expect(borrowSection?.hydration.counts).toEqual({
-			borrowAsCollateral: 13,
-			borrowAsDebt: 11
+			useAsCollateral: 13,
+			borrowThis: 11
 		})
 	})
 
@@ -1486,7 +1537,7 @@ describe('token page', () => {
 		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 		vi.mocked(fetchTokenRightsEntryByDefillamaId).mockRejectedValueOnce(new Error('token rights failed'))
 		vi.mocked(getTokenIncomeStatement).mockRejectedValueOnce(new Error('income failed'))
-		vi.mocked(getTokenYieldsRows).mockRejectedValueOnce(new Error('yields failed'))
+		vi.mocked(getTokenEarnRows).mockRejectedValueOnce(new Error('yields failed'))
 		vi.mocked(getTokenBorrowRoutes).mockRejectedValueOnce(new Error('borrow routes failed'))
 		vi.mocked(getTokenRiskData).mockRejectedValueOnce(new Error('risk failed'))
 
@@ -1513,6 +1564,27 @@ describe('token page', () => {
 		expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to load token risk data for chainlink', expect.any(Error))
 
 		consoleErrorSpy.mockRestore()
+	})
+
+	it('runTokenPageRequest keeps the page renderable when the optional Yields snapshot is unavailable', async () => {
+		state.tokensJson = {
+			link: {
+				name: 'Chainlink',
+				symbol: 'LINK',
+				token_nk: 'coingecko:chainlink',
+				is_yields: true
+			}
+		}
+		vi.mocked(acquireOptionalYieldsSnapshot).mockResolvedValueOnce(null)
+
+		const result = await runTokenPageRequest({ params: { token: 'LINK' } } as never)
+
+		expect('props' in result).toBe(true)
+		if (!('props' in result)) throw new Error('expected props')
+		expect(findTokenPageSection(result.props.sections, 'token-yields')).toBeUndefined()
+		expect(findTokenPageSection(result.props.sections, 'token-borrow')).toBeUndefined()
+		expect(getTokenEarnRows).not.toHaveBeenCalled()
+		expect(getTokenBorrowRoutes).not.toHaveBeenCalled()
 	})
 
 	it('rethrows dataset snapshot integrity errors from optional dataset sections', async () => {

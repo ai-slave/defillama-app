@@ -144,6 +144,22 @@ export type YieldChartType =
 	| 'net-borrow-apy'
 	| 'pool-liquidity'
 
+export type ActiveYieldChartType = Exclude<YieldChartType, 'pool-liquidity'>
+
+export function normalizeYieldChartType(chartType: string | undefined): ActiveYieldChartType {
+	// V2 borrow history has Borrowed and Available, but not the historical supplied/debt-ceiling
+	// facts required by the legacy Pool Liquidity chart. Old saved cards open on Borrow Cost APY.
+	if (chartType === 'pool-liquidity') return 'borrow-apy'
+	if (
+		chartType === 'supply-apy' ||
+		chartType === 'supply-apy-7d' ||
+		chartType === 'borrow-apy' ||
+		chartType === 'net-borrow-apy'
+	)
+		return chartType
+	return 'tvl-apy'
+}
+
 export interface YieldsChartConfig {
 	id: string
 	kind: 'yields'

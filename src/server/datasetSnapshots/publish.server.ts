@@ -39,12 +39,17 @@ export async function publishDatasetSnapshotDomain(
 	domain: DatasetSnapshotDomain,
 	store: DatasetSnapshotStore,
 	now = Date.now
-): Promise<'published' | 'reused'> {
+): Promise<{ status: 'published' } | { status: 'reused' } | { status: 'stale_if_error'; error: unknown }> {
 	const registration = DATASET_SNAPSHOT_REGISTRY[domain]
 	const current = await store.getCurrent(domain)
-	if (current && now() - current.ref.createdAt <= registration.maxAgeMs) return 'reused'
-	await store.publish(domain, registration.builder)
-	return 'published'
+	if (current && now() - current.ref.createdAt <= registration.maxAgeMs) return { status: 'reused' }
+	try {
+		await store.publish(domain, registration.builder)
+		return { status: 'published' }
+	} catch (error) {
+		if (current) return { status: 'stale_if_error', error }
+		throw error
+	}
 }
 
 export async function publishDatasetSnapshots({
@@ -61,20 +66,27 @@ export async function publishDatasetSnapshots({
 	)
 	const failures: string[] = []
 	let published = 0
+	let reused = 0
+	let stale = 0
 	for (let index = 0; index < results.length; index += 1) {
 		const result = results[index]
+		const domain = DATASET_SNAPSHOT_DOMAINS[index]
 		if (result.status === 'rejected') {
 			const message = result.reason instanceof Error ? result.reason.message : String(result.reason)
-			failures.push(`${DATASET_SNAPSHOT_DOMAINS[index]}: ${message}`)
-		} else if (result.value === 'published') {
-			published++
+			failures.push(`${domain}: ${message}`)
+		} else if (result.value.status === 'published') {
+			published += 1
+		} else if (result.value.status === 'reused') {
+			reused += 1
+		} else {
+			stale += 1
+			const message = result.value.error instanceof Error ? result.value.error.message : String(result.value.error)
+			logger.log(`[dev:prepare] Dataset snapshot ${domain}: refresh failed; keeping previous snapshot (${message})`)
 		}
 		if (result.status === 'fulfilled') {
-			await maintainPublishedDomain(DATASET_SNAPSHOT_DOMAINS[index], store, logger)
+			await maintainPublishedDomain(domain, store, logger)
 		}
 	}
 	if (failures.length > 0) throw new Error(`Dataset snapshot publication failed:\n${failures.join('\n')}`)
-	logger.log(
-		`[dev:prepare] Dataset snapshots: published ${published}, reused ${DATASET_SNAPSHOT_DOMAINS.length - published}`
-	)
+	logger.log(`[dev:prepare] Dataset snapshots: published ${published}, reused ${reused}, retained stale ${stale}`)
 }

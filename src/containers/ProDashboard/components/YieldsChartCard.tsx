@@ -4,15 +4,15 @@ import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportBut
 import { formatTvlApyTooltip } from '~/components/ECharts/formatters'
 import type { IBarChartProps, IChartProps, IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { CHART_COLORS } from '~/constants/colors'
-import { YIELD_CHART_API, YIELD_CHART_LEND_BORROW_PROXY_API } from '~/containers/Yields/constants'
+import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
+import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
 import { formattedNum } from '~/utils'
-import { fetchJson } from '~/utils/async'
 import { download } from '~/utils/download'
 import { useChartImageExport } from '../hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import { ProxyAuthTokenContext, StreamDoneContext } from '../queries'
 import { fetchYieldsLendBorrowViaProxy, fetchYieldsViaProxy } from '../services/fetchViaProxy'
-import type { YieldsChartConfig } from '../types'
+import { normalizeYieldChartType, type ActiveYieldChartType, type YieldsChartConfig } from '../types'
 import { LoadingSpinner } from './LoadingSpinner'
 import { ProTableCSVButton } from './ProTable/CsvButton'
 import { useYieldChartTransformations } from './useYieldChartTransformations'
@@ -47,45 +47,47 @@ const tvlApyCharts = [
 ]
 const tvlApyChartOptions = { tooltip: { formatter: formatTvlApyTooltip } }
 
-const barChartStacks = { Base: 'a', Reward: 'a' }
-const barChartColors = { Base: CHART_COLORS[0], Reward: CHART_COLORS[1] }
-const liquidityChartColors = { Supplied: CHART_COLORS[0], Borrowed: CHART_COLORS[1], Available: CHART_COLORS[2] }
-const liquidityLegendOptions = ['Supplied', 'Borrowed', 'Available']
+const supplyChartStacks = { Base: 'a', Reward: 'a', Intrinsic: 'a' }
+const supplyChartColors = { Base: CHART_COLORS[0], Reward: CHART_COLORS[1], Intrinsic: CHART_COLORS[2] }
+const borrowChartStacks = { 'Base cost': 'a', 'Reward offset': 'a', Intrinsic: 'a' }
+const borrowChartColors = { 'Base cost': CHART_COLORS[0], 'Reward offset': CHART_COLORS[1], Intrinsic: CHART_COLORS[2] }
 
 export function YieldsChartCard({ config }: YieldsChartCardProps) {
-	const { poolConfigId, poolName, project, chain, chartType = 'tvl-apy' } = config
+	const { poolConfigId, poolName, project, chain } = config
+	const chartType = normalizeYieldChartType(config.chartType)
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { chartInstance, handleChartReady } = useChartImageExport()
 
 	const streamDone = useContext(StreamDoneContext)
 	const authToken = useContext(ProxyAuthTokenContext)
-	const gatedPoolId = streamDone ? poolConfigId : null
+	const needsBorrowData = chartType === 'borrow-apy' || chartType === 'net-borrow-apy'
+	const needsSupplyData = !needsBorrowData
+	const gatedPoolId = streamDone && needsSupplyData ? poolConfigId : null
 	const {
 		data: chart,
 		isLoading: fetchingChartData,
 		isError: chartError
 	} = useQuery({
-		queryKey: ['yield-pool-chart-data', gatedPoolId],
-		queryFn: () =>
-			authToken ? fetchYieldsViaProxy(gatedPoolId!, authToken) : fetchJson(`${YIELD_CHART_API}/${gatedPoolId}`),
+		queryKey: ['yield-supply-history', gatedPoolId],
+		queryFn: (): Promise<PoolHistory> =>
+			authToken ? fetchYieldsViaProxy(gatedPoolId!, authToken) : fetchPoolDetailHistory(gatedPoolId!, 'max'),
 		staleTime: Infinity,
 		refetchOnWindowFocus: false,
 		retry: 1,
 		enabled: !!gatedPoolId
 	})
 
-	const needsBorrowData = ['borrow-apy', 'net-borrow-apy', 'pool-liquidity'].includes(chartType)
 	const borrowPoolId = streamDone && needsBorrowData ? poolConfigId : null
 	const {
 		data: borrowChart,
 		isLoading: fetchingBorrowData,
 		isError: borrowError
 	} = useQuery({
-		queryKey: ['yield-lend-borrow-chart', borrowPoolId],
-		queryFn: () =>
+		queryKey: ['yield-borrow-history', borrowPoolId],
+		queryFn: (): Promise<BorrowMarketHistory> =>
 			authToken
 				? fetchYieldsLendBorrowViaProxy(borrowPoolId!, authToken)
-				: fetchJson(`${YIELD_CHART_LEND_BORROW_PROXY_API}/${borrowPoolId}`),
+				: fetchBorrowMarketDetailHistory(borrowPoolId!, 'max'),
 		staleTime: Infinity,
 		refetchOnWindowFocus: false,
 		retry: 1,
@@ -99,7 +101,6 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 		supplyApy7dData,
 		borrowApyBarData,
 		netBorrowApyData,
-		poolLiquidityData,
 		latestData
 	} = useYieldChartTransformations({
 		chartData: chart,
@@ -120,58 +121,51 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 				return borrowApyBarData
 			case 'net-borrow-apy':
 				return netBorrowApyData
-			case 'pool-liquidity':
-				return poolLiquidityData
 			default:
 				return tvlApyData
 		}
-	}, [chartType, tvlApyData, supplyApyBarData, supplyApy7dData, borrowApyBarData, netBorrowApyData, poolLiquidityData])
+	}, [chartType, tvlApyData, supplyApyBarData, supplyApy7dData, borrowApyBarData, netBorrowApyData])
 
 	const handleCsvExport = () => {
 		if (!currentChartData || currentChartData.length === 0) return
 
 		let headers: string[]
-		let rows: any[][]
+		let rows: Array<Array<string | number>>
 
 		switch (chartType) {
 			case 'tvl-apy':
-				headers = ['Date', 'APY', 'TVL']
-				rows = currentChartData.map((el: any) => [
-					new Date(el.date * 1000).toISOString().slice(0, 10),
-					el.APY ?? '',
-					el.TVL ?? ''
+				headers = ['Date', 'Supply APY', 'TVL']
+				rows = tvlApyData.map((point) => [
+					new Date(point.date * 1000).toISOString().slice(0, 10),
+					point.APY ?? '',
+					point.TVL ?? ''
 				])
 				break
 			case 'supply-apy':
+				headers = ['Date', 'Base', 'Reward', 'Intrinsic']
+				rows = supplyApyBarData.map((point) => [
+					new Date(point.date * 1000).toISOString().slice(0, 10),
+					point.Base ?? '',
+					point.Reward ?? '',
+					point.Intrinsic ?? ''
+				])
+				break
 			case 'borrow-apy':
-				headers = ['Date', 'Base', 'Reward']
-				rows = currentChartData.map((el: any) => [
-					new Date(el.date * 1000).toISOString().slice(0, 10),
-					el.Base ?? '',
-					el.Reward ?? ''
+				headers = ['Date', 'Base cost', 'Reward offset', 'Intrinsic']
+				rows = borrowApyBarData.map((point) => [
+					new Date(point.date * 1000).toISOString().slice(0, 10),
+					point['Base cost'] ?? '',
+					point['Reward offset'] ?? '',
+					point.Intrinsic ?? ''
 				])
 				break
 			case 'supply-apy-7d':
+				headers = ['Date', '7d Supply APY']
+				rows = supplyApy7dData.map(([date, value]) => [new Date(date * 1000).toISOString().slice(0, 10), value])
+				break
 			case 'net-borrow-apy':
-				headers = ['Date', 'APY']
-				rows = currentChartData.map((el: any) => [new Date(el[0] * 1000).toISOString().slice(0, 10), el[1] ?? ''])
-				break
-			case 'pool-liquidity':
-				headers = ['Date', 'Supplied', 'Borrowed', 'Available']
-				rows = currentChartData.map((el: any) => [
-					new Date(el.date * 1000).toISOString().slice(0, 10),
-					el.Supplied ?? '',
-					el.Borrowed ?? '',
-					el.Available ?? ''
-				])
-				break
-			default:
-				headers = ['Date', 'APY', 'TVL']
-				rows = currentChartData.map((el: any) => [
-					new Date(el.date * 1000).toISOString().slice(0, 10),
-					el.APY ?? '',
-					el.TVL ?? ''
-				])
+				headers = ['Date', 'Net borrow cost']
+				rows = netBorrowApyData.map(([date, value]) => [new Date(date * 1000).toISOString().slice(0, 10), value])
 		}
 
 		const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n')
@@ -183,7 +177,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 	const imageFilename = `${poolName.replace(/\s+/g, '_')}`
 	const imageTitle = `${poolName} - ${project} (${chain})`
 
-	const isLoading = (needsBorrowData ? fetchingChartData || fetchingBorrowData : fetchingChartData) || !streamDone
+	const isLoading = (needsBorrowData ? fetchingBorrowData : fetchingChartData) || !streamDone
 
 	const hasError = needsBorrowData ? chartError || borrowError : chartError
 
@@ -199,8 +193,6 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 				return borrowApyBarData.length > 0
 			case 'net-borrow-apy':
 				return netBorrowApyData.length > 0
-			case 'pool-liquidity':
-				return poolLiquidityData.length > 0
 			default:
 				return tvlApyData.length > 0
 		}
@@ -230,15 +222,14 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 		)
 	}
 
-	const chartTitles: Record<string, string> = {
-		'tvl-apy': 'TVL & APY',
+	const chartTitles: Record<ActiveYieldChartType, string> = {
+		'tvl-apy': 'TVL & Supply APY',
 		'supply-apy': 'Supply APY',
-		'supply-apy-7d': '7 Day Avg Supply APY',
-		'borrow-apy': 'Borrow APY',
-		'net-borrow-apy': 'Net Borrow APY',
-		'pool-liquidity': 'Pool Liquidity'
+		'supply-apy-7d': '7d Avg Supply APY',
+		'borrow-apy': 'Borrow Cost APY',
+		'net-borrow-apy': 'Net Borrow Cost'
 	}
-	const chartTitle = chartTitles[chartType] || 'TVL & APY'
+	const chartTitle = chartTitles[chartType]
 
 	return (
 		<div className="flex h-full flex-col p-2">
@@ -264,7 +255,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 			{chartType === 'tvl-apy' && latestData.apy !== null && latestData.tvl !== null ? (
 				<div className="mb-2 flex gap-4">
 					<div className="flex flex-col">
-						<span className="text-[10px] pro-text3 uppercase">Latest APY</span>
+						<span className="text-[10px] pro-text3 uppercase">Latest Supply APY</span>
 						<span className="font-jetbrains text-sm font-semibold" style={{ color: '#cc3e82' }}>
 							{latestData.apy}%
 						</span>
@@ -302,8 +293,8 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 						<BarChart
 							height="320px"
 							chartData={supplyApyBarData}
-							stacks={barChartStacks}
-							stackColors={barChartColors}
+							stacks={supplyChartStacks}
+							stackColors={supplyChartColors}
 							title=""
 							valueSymbol="%"
 							onReady={handleChartReady}
@@ -323,8 +314,8 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 						<BarChart
 							height="320px"
 							chartData={borrowApyBarData}
-							stacks={barChartStacks}
-							stackColors={barChartColors}
+							stacks={borrowChartStacks}
+							stackColors={borrowChartColors}
 							title=""
 							valueSymbol="%"
 							onReady={handleChartReady}
@@ -337,18 +328,6 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 							title=""
 							valueSymbol="%"
 							color={CHART_COLORS[0]}
-							onReady={handleChartReady}
-						/>
-					) : null}
-					{chartType === 'pool-liquidity' ? (
-						<AreaChart
-							height="320px"
-							chartData={poolLiquidityData}
-							title=""
-							customLegendName="Filter"
-							customLegendOptions={liquidityLegendOptions}
-							valueSymbol="$"
-							stackColors={liquidityChartColors}
 							onReady={handleChartReady}
 						/>
 					) : null}

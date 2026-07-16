@@ -1,277 +1,190 @@
 import { Bookmark } from '~/components/Bookmark'
-import { FormattedName } from '~/components/FormattedName'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
+import { usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { formatRaiseAmount } from '~/containers/Raises/utils'
-import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
 import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
-
-const MOBILE_PRIMARY_COLUMN_MAX_WIDTH = 'max-sm:max-w-[clamp(160px,40vw,260px)]'
-
-interface INameYieldPoolProps {
-	value: string
-	configID: string
-	url: string
-	rowIndex?: number
-	borrow?: boolean
-	withoutLink?: boolean
-	maxCharacters?: number
-	bookmark?: boolean
-	strategy?: boolean
-	poolMeta?: string | null
-}
+import { DepegWarningIcon } from './YieldsCells'
 
 interface INameYield {
 	project: string
-	projectslug: string
+	projectslug?: string
 	airdrop?: boolean
 	raiseValuation?: number | null
-	borrow?: boolean
-	withoutLink?: boolean
 }
 
-export function NameYieldPool({
+// Quiet external-link glyph (text-tertiary → link on hover) in the leading rail,
+// so it sits at a constant x on every row.
+function PoolExternalLink({ url, name }: { url: string; name: string }) {
+	return (
+		<a
+			href={url}
+			target="_blank"
+			rel="noopener noreferrer"
+			aria-label="Open external pool"
+			onClick={() => trackUmamiEvent('yields-pool-external-link', { pool: name })}
+			className="shrink-0 text-tertiary transition-colors hover:text-link"
+		>
+			<Icon name="external-link" height={14} width={14} />
+		</a>
+	)
+}
+
+/**
+ * Stacked pool/market/route/token name cell: a lockup — symbol (link color) over a
+ * small secondary detail line (poolMeta) — with an optional leading bookmark, a
+ * quiet inline external-link glyph, and a pagination-aware rank number at the lead.
+ *
+ */
+export function PoolNameLockup({
 	value,
 	configID,
 	url,
-	rowIndex,
-	borrow: _borrow,
-	strategy,
-	withoutLink,
-	maxCharacters,
+	poolMeta,
 	bookmark = true,
-	poolMeta
-}: INameYieldPoolProps) {
-	const tokenUrl = strategy ? `/yields/strategy/${configID}` : `/yields/pool/${configID}`
-	const width = useBreakpointWidth()
-	const mc = maxCharacters ?? (width >= 1536 ? 20 : width >= 1280 ? 12 : 10)
-
+	exploited = false,
+	rowId,
+	pegDeviation,
+	pegTokenSymbol,
+	pegConsequence,
+	hasRiskData = false
+}: {
+	value: string
+	configID: string
+	url?: string | null
+	poolMeta?: string | null
+	hasRiskData?: boolean
+	bookmark?: boolean
+	exploited?: boolean
+	rowId?: string
+	pegDeviation?: number | null
+	pegTokenSymbol?: string | null
+	pegConsequence?: string
+}) {
+	// Inline rank: number inside the name cell (no dedicated column, so table-layout:fixed
+	// can't balloon the gap), min-w-4 slot; longer ranks simply grow and nudge the content.
+	const rowNumber = usePaginatedTableDisplayRowNumber(rowId ?? '')
+	const poolUrl = `/yields/pool/${configID}`
+	// Fixed two-deck height (36px = h-9, from the 14px primary + 12px secondary lines). The lockup is
+	// vertically centered so a name WITHOUT a detail line reserves exactly the same height as one
+	// WITH it — every row is identical regardless of poolMeta presence, and this name cell is the
+	// tallest cell so it fixes the whole row height across all yields tables.
+	//
+	// Layout: a single `items-center` flex row — bookmark, the truncating (min-w-0) two-line
+	// symbol/detail link and an optional exploit icon hugging the name. The external-link
+	// glyph sits centered right after the row number (main's anatomy): constant x on every
+	// row, vertically centered by the row's items-center.
 	return (
-		<span className="flex min-w-0 items-center gap-2">
-			{bookmark ? <Bookmark readableName={value} configID={configID} data-lgonly /> : null}
-
-			{strategy ? null : rowIndex != null ? (
-				<span className="inline-block shrink-0 text-left tabular-nums" aria-hidden="true">
-					{rowIndex}
-				</span>
-			) : (
-				<span className="vf-row-index shrink-0" aria-hidden="true" />
-			)}
-
-			{url ? (
-				<a
-					href={url}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="hidden shrink-0 items-center justify-center rounded-md bg-(--legacy-link-button) p-1.5 hover:bg-(--legacy-link-button-hover) lg:flex"
-					onClick={() => trackUmamiEvent('yields-pool-external-link', { pool: value })}
-				>
-					<Icon name="arrow-up-right" height={14} width={14} />
-					<span className="sr-only">open in new tab</span>
-				</a>
+		<span className="flex h-9 min-w-0 items-center gap-2">
+			{bookmark ? <Bookmark readableName={value} configID={configID} data-lgonly className="-ml-1" /> : null}
+			{rowId != null && rowNumber != null ? (
+				<span className="inline-block min-w-4 shrink-0 text-left text-secondary">{rowNumber}</span>
 			) : null}
-
-			<LinkWrapper
-				url={withoutLink ? null : tokenUrl}
-				showTooltip={value.length + (poolMeta ? poolMeta.length : 0) >= mc}
+			{url ? <PoolExternalLink url={url} name={value} /> : null}
+			<BasicLink
+				href={poolUrl}
+				target="_blank"
+				rel="noopener noreferrer"
+				data-umami-event="yields-pool-click"
+				className="flex min-w-0 flex-col items-start leading-tight"
+				aria-label={`View ${value} pool`}
 			>
+				<Tooltip content={value} className="max-w-full">
+					<span className="truncate font-medium text-link hover:underline">{value}</span>
+				</Tooltip>
 				{poolMeta ? (
-					<>
-						<span
-							className={`min-w-0 shrink truncate font-medium text-(--legacy-link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
-						>
-							{value}
-						</span>
-						<span className="ml-1 shrink truncate rounded-lg bg-(--legacy-bg-tertiary) px-1 py-0.5 text-xs text-black group-data-[tooltipcontent=true]:whitespace-break-spaces dark:text-white">
-							{poolMeta}
-						</span>
-					</>
-				) : (
-					<>{value}</>
-				)}
-			</LinkWrapper>
+					<Tooltip content={poolMeta} className="max-w-full body-sm text-secondary">
+						<span className="truncate">{poolMeta}</span>
+					</Tooltip>
+				) : null}
+			</BasicLink>
+			{hasRiskData ? <RiskDataHint configID={configID} className={poolMeta ? 'self-end pb-0.5' : undefined} /> : null}
+			<DepegWarningIcon deviation={pegDeviation} symbol={pegTokenSymbol} consequence={pegConsequence} />
+			{exploited ? (
+				<Tooltip content="This pool involves a protocol or token affected by an exploit. Proceed with extreme caution.">
+					<Icon name="alert-triangle" height={14} width={14} className="shrink-0 text-data-down" />
+				</Tooltip>
+			) : null}
 		</span>
 	)
 }
 
-const LinkWrapper = ({ url, children, showTooltip }) => {
-	if (showTooltip) {
-		return (
-			<>
-				{url ? (
-					<Tooltip
-						render={
-							<a
-								href={url}
-								target="_blank"
-								rel="noopener noreferrer"
-								onClick={() => trackUmamiEvent('yields-pool-click')}
-							/>
-						}
-						className={`flex min-w-0 shrink! items-center truncate font-medium text-(--legacy-link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
-						content={children}
-						data-fullwidth
-					>
-						{children}
-					</Tooltip>
-				) : (
-					<Tooltip
-						className={`flex min-w-0 shrink! items-center truncate font-medium text-(--legacy-link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
-						content={children}
-						data-fullwidth
-					>
-						{children}
-					</Tooltip>
-				)}
-			</>
-		)
-	}
-
-	return (
-		<>
-			{url ? (
-				<BasicLink
-					href={url}
-					target="_blank"
-					data-umami-event="yields-pool-click"
-					className={`flex min-w-0 items-center truncate text-sm font-medium text-(--legacy-link-text) ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}
-				>
-					{children}
-				</BasicLink>
-			) : (
-				<span className={`flex min-w-0 items-center truncate ${MOBILE_PRIMARY_COLUMN_MAX_WIDTH}`}>{children}</span>
-			)}
-		</>
-	)
-}
-
-function AirdropIndicator({
-	raiseValuation,
-	className = 'm-[0_16px_0_-32px]'
-}: {
-	raiseValuation?: number | null
-	className?: string
-}) {
+// Quiet inline airdrop hint for the earn/borrow/loops/routes surfaces: a small
+// glyph sitting inline after the protocol name.
+// The tooltip carries the meaning. When the protocol has a known fundraise, the glyph
+// becomes 💸 and the tooltip adds its last valuation.
+function AirdropHint({ raiseValuation }: { raiseValuation?: number | null }) {
 	const raiseValuationFormatted = formatRaiseAmount(raiseValuation)
-	const tooltipContent =
-		raiseValuationFormatted != null ? (
-			<span className="flex flex-col gap-1">
-				<span>Potential Airdrop</span>
-				<span className="border-t border-current/20 pt-1">Last Valuation: {formattedNum(raiseValuationFormatted)}</span>
-			</span>
-		) : (
-			'Potential Airdrop'
-		)
-
 	return (
-		<Tooltip content={tooltipContent} className={className}>
-			{raiseValuation != null ? '💸' : '🪂'}
+		<Tooltip
+			content={
+				raiseValuationFormatted != null ? (
+					<span className="flex flex-col gap-1">
+						<span className="font-medium">Potential Airdrop</span>
+						<span className="border-t border-current/20 pt-1">
+							Last Valuation: {formattedNum(raiseValuationFormatted)}
+						</span>
+					</span>
+				) : (
+					<span className="flex flex-col gap-1">
+						<span className="font-medium">Potential Airdrop</span>
+						<span>Protocols with no token yet that might airdrop one to depositors in the future</span>
+					</span>
+				)
+			}
+			className="shrink-0 body-sm"
+		>
+			{raiseValuation != null ? '\u{1F4B8}' : '\u{1FA82}'}
 		</Tooltip>
 	)
 }
 
-export function NameYield({
-	project,
-	projectslug,
-	airdrop,
-	raiseValuation,
-	borrow: _borrow,
-	withoutLink,
-	...props
-}: INameYield) {
-	const tokenUrl = `/yields?project=${projectslug}`
-
+// Quiet risk-page entry on the meta line: only for pools with confirmed vault-risk
+// coverage (per-pool ids from the risk server — never a dead link).
+export function RiskDataHint({ configID, className }: { configID: string; className?: string }) {
 	return (
-		<span className="relative flex items-center gap-2 pl-6" {...props}>
-			{airdrop && project !== 'Fraxlend' ? <AirdropIndicator raiseValuation={raiseValuation} /> : null}
-			<TokenLogo name={project} kind="token" alt={`Logo of ${project}`} size={22} />
-			{withoutLink ? (
-				<FormattedName text={project} maxCharacters={20} link fontWeight={500} />
-			) : (
-				<BasicLink
-					href={tokenUrl}
-					data-umami-event="yields-project-filter-click"
-					data-umami-event-project={project}
-					className="truncate text-sm font-medium text-(--legacy-link-text)"
-				>
-					{project}
-				</BasicLink>
-			)}
-		</span>
-	)
-}
-
-export function YieldsProject({ project, projectslug }: INameYield) {
-	const tokenUrl = `/yields?project=${projectslug}`
-
-	return (
-		<span className="flex items-center gap-2">
-			<TokenLogo name={project} kind="token" alt={`Logo of ${project}`} size={22} />
+		<Tooltip content="View risk data" className={`shrink-0 ${className ?? ''}`}>
 			<BasicLink
-				href={tokenUrl}
-				data-umami-event="yields-project-filter-click"
-				data-umami-event-project={project}
-				className="truncate text-sm font-medium text-(--legacy-link-text)"
+				href={`/yields/pool/${configID}/risk`}
+				target="_blank"
+				rel="noopener noreferrer"
+				aria-label="View risk data"
+				className="flex items-center text-warning transition-colors hover:text-primary"
 			>
-				{project}
+				<Icon name="shield-check" height={21} width={21} />
 			</BasicLink>
-		</span>
+		</Tooltip>
 	)
 }
 
-export function PoolStrategyRoute({
-	project1,
-	airdropProject1,
-	raiseValuationProject1,
-	project2,
-	airdropProject2,
-	raiseValuationProject2,
-	chain
-}) {
-	return (
-		<span className="flex items-center gap-1">
-			<TokenLogo name={chain} kind="chain" alt={`Logo of ${chain}`} />
-			<span>{'|'}</span>
-			<span className="flex items-center gap-1">
-				<TokenLogo name={project1} kind="token" alt={`Logo of ${project1}`} />
-				<span className="truncate">{project1}</span>
-				{airdropProject1 ? <AirdropIndicator raiseValuation={raiseValuationProject1} className="" /> : null}
-			</span>
-			<span className="shrink-0">{'->'}</span>
-			<span className="flex items-center gap-1">
-				<TokenLogo name={project2} kind="token" alt={`Logo of ${project2}`} />
-				<span className="truncate">{project2}</span>
-				{airdropProject2 ? <AirdropIndicator raiseValuation={raiseValuationProject2} className="" /> : null}
-			</span>
-		</span>
-	)
-}
+export function NameYield({ project, projectslug, airdrop, raiseValuation }: INameYield) {
+	const showAirdrop = Boolean(airdrop) && project !== 'Fraxlend'
 
-export function FRStrategyRoute({
-	project1,
-	airdropProject1,
-	raiseValuationProject1,
-	project2,
-	airdropProject2: _airdropProject2,
-	chain
-}) {
+	const lockup = (
+		<>
+			<TokenLogo name={project} kind="token" alt={`Logo of ${project}`} size={22} />
+			<span className="min-w-0 shrink truncate">{project}</span>
+		</>
+	)
+
 	return (
-		<span className="flex items-center gap-1">
-			<TokenLogo name={chain} kind="chain" alt={`Logo of ${chain}`} />
-			<span>{'|'}</span>
-			<span className="flex items-center gap-1">
-				<TokenLogo name={project1} kind="token" alt={`Logo of ${project1}`} />
-				<span className="truncate">{project1}</span>
-				{airdropProject1 ? <AirdropIndicator raiseValuation={raiseValuationProject1} className="" /> : null}
-			</span>
-			<span>{'|'}</span>
-			<span className="flex items-center gap-1">
-				<TokenLogo name={project2} kind="token" alt={`Logo of ${project2}`} />
-				<span className="truncate">{project2}</span>
-			</span>
+		<span className="relative flex items-center gap-2">
+			{projectslug ? (
+				<BasicLink
+					href={`/protocol/${projectslug}`}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="flex min-w-0 shrink items-center gap-2 hover:underline"
+				>
+					{lockup}
+				</BasicLink>
+			) : (
+				lockup
+			)}
+			{showAirdrop ? <AirdropHint raiseValuation={raiseValuation} /> : null}
 		</span>
 	)
 }

@@ -21,7 +21,7 @@ import {
 } from './collateralShared'
 import { usePositionUsd } from './PositionControl'
 
-const DETAIL_LABEL = 'text-[10px] font-medium tracking-wide text-(--legacy-text-secondary) uppercase'
+const DETAIL_LABEL = 'label-md text-primary'
 
 // Proven feed vendor(s), or the honest gap ("no live feed") on a hardcoded oracle.
 function oracleVendorLabel(c: CollateralVM): string | null {
@@ -41,11 +41,9 @@ function OraclePricePath({ base, quote }: { base: string | null; quote: string |
 	return (
 		<div className="flex flex-col gap-0.5">
 			{legs.map(({ k, v }) => (
-				<span key={k} className="flex gap-2">
-					<span className="w-10 shrink-0 text-[10px] leading-4 tracking-wide text-(--legacy-text-tertiary) uppercase">
-						{k}
-					</span>
-					<span className="text-(--legacy-text-secondary)">{v}</span>
+				<span key={k} className="flex items-center gap-2">
+					<span className="w-10 shrink-0 label-sm text-secondary">{k}</span>
+					<span className="text-secondary">{v}</span>
 				</span>
 			))}
 		</div>
@@ -79,16 +77,14 @@ function OracleLegs({ legs }: { legs: OracleLeg[] }) {
 				const side = legSide(leg.slot)
 				const showSide = i === 0 || legSide(legs[i - 1].slot) !== side
 				return (
-					<span key={`${leg.slot}-${i}`} className="flex gap-2">
-						<span className="w-10 shrink-0 text-[10px] leading-4 tracking-wide text-(--legacy-text-tertiary) uppercase">
-							{showSide ? side : ''}
-						</span>
+					<span key={`${leg.slot}-${i}`} className="flex items-start gap-2">
+						<span className="w-10 shrink-0 pt-0.5 label-sm text-secondary">{showSide ? side : ''}</span>
 						<span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-							<span className="text-(--legacy-text-secondary)">{leg.description}</span>
-							<span className="inline-flex shrink-0 items-center rounded-full border border-(--legacy-cards-border) bg-(--legacy-bg-main) px-1.5 py-0.5 text-[10px] font-medium text-(--legacy-text-secondary)">
+							<span className="text-secondary">{leg.description}</span>
+							<span className="inline-flex shrink-0 items-center rounded-full border border-medium bg-surface px-1.5 py-0.5 label-xs text-secondary">
 								{legKindLabel(leg.kind)}
 							</span>
-							{leg.vendor ? <span className="text-[10px] text-(--legacy-text-tertiary)">{leg.vendor}</span> : null}
+							{leg.vendor ? <span className="body-sm text-tertiary">{leg.vendor}</span> : null}
 						</span>
 					</span>
 				)
@@ -116,19 +112,15 @@ function MarketBreakCell({
 	if (p.kind === 'unmodeled')
 		return (
 			<>
-				<span className="text-sm font-medium text-(--legacy-text-secondary)">Not modeled</span>
-				<span className="text-[10px] text-(--legacy-text-tertiary) tabular-nums">
-					{`up to ${formattedNum(p.ceilingUsd, true)} exposed`}
-				</span>
+				<span className="label-md text-secondary">Not modeled</span>
+				<span className="body-sm text-tertiary">{`up to ${formattedNum(p.ceilingUsd, true)} exposed`}</span>
 			</>
 		)
 	if (p.kind === 'confident-zero')
 		return (
 			<>
-				<span className={`text-sm font-medium ${toneClasses('good').text}`}>no bad debt</span>
-				{variant === 'mobile' ? (
-					<span className="text-[10px] text-(--legacy-text-tertiary)">no modeled path</span>
-				) : null}
+				<span className={`label-md ${toneClasses('good').text}`}>no bad debt</span>
+				{variant === 'mobile' ? <span className="body-sm text-tertiary">no modeled path</span> : null}
 			</>
 		)
 	const sub = showShare
@@ -140,17 +132,16 @@ function MarketBreakCell({
 			: null
 	return (
 		<>
-			<span className="text-sm font-semibold text-(--legacy-text-primary) tabular-nums">
+			<span className="label-md text-primary tabular-nums">
 				{`${p.approximate ? '≈ ' : ''}${formattedNum(p.usd, true)}`}
 			</span>
-			{sub ? <span className="text-[10px] text-(--legacy-text-secondary) tabular-nums">{sub}</span> : null}
+			{sub ? <span className="body-sm text-secondary tabular-nums">{sub}</span> : null}
 		</>
 	)
 }
 
 function OracleExposureValue({ c, className }: { c: CollateralVM; className: string }) {
-	if (c.drainableUsd == null || c.drainableUsd <= 0)
-		return <span className={`${className} text-(--legacy-text-tertiary)`}>—</span>
+	if (c.drainableUsd == null || c.drainableUsd <= 0) return <span className={`${className} text-tertiary`}>—</span>
 	return <span className={className}>{formattedNum(c.drainableUsd, true)}</span>
 }
 
@@ -171,40 +162,32 @@ function DepegWhatIf({
 	const [position] = usePositionUsd()
 	const p = marketBreakPresentation(c)
 	if (c.exposureUsd <= 0)
-		return (
-			<span className="text-(--legacy-text-secondary)">
-				No current position in this market — a depeg here costs you nothing.
-			</span>
-		)
+		return <span className="text-secondary">No current position in this market — a depeg here costs you nothing.</span>
 	if (p.kind === 'unmodeled')
 		return (
-			<span className="text-(--legacy-text-secondary)">
+			<span className="text-secondary">
 				{'Bad debt isn’t modeled for this reserve. Up to '}
-				<span className="text-(--legacy-text-primary) tabular-nums">{formattedNum(p.ceilingUsd, true)}</span>
+				<span className="text-primary">{formattedNum(p.ceilingUsd, true)}</span>
 				{' is exposed if its market breaks — a ceiling capped at market size, not a modeled loss.'}
 			</span>
 		)
 	if (p.kind === 'confident-zero')
 		return (
-			<span className="text-(--legacy-text-secondary)">
-				No borrowing is drawn against this collateral — no modeled bad-debt path.
-			</span>
+			<span className="text-secondary">No borrowing is drawn against this collateral — no modeled bad-debt path.</span>
 		)
 	if (p.approximate) {
 		// market-wide basis has no per-position LLTV curve — show the flat all-break estimate,
 		// not a slider that does nothing.
 		const yourShareApprox = position != null && supplyUsd > 0 ? p.usd * Math.min(1, position / supplyUsd) : null
 		return (
-			<span className="flex flex-col gap-1 text-(--legacy-text-secondary)">
+			<span className="flex flex-col gap-1 text-secondary">
 				<span className="flex flex-wrap items-baseline gap-x-1.5">
 					{'≈ '}
-					<span className="font-medium text-(--legacy-text-primary) tabular-nums">{formattedNum(p.usd, true)}</span>
+					<span className="label-md text-primary">{formattedNum(p.usd, true)}</span>
 					{' estimated bad debt if this market breaks'}
 					{yourShareApprox != null ? ` · ≈ ${formattedNum(yourShareApprox, true)} of your deposit` : null}
 				</span>
-				<span className="text-[10px] text-(--legacy-text-tertiary)">
-					Market-wide estimate — not a position-level figure.
-				</span>
+				<span className="body-sm text-tertiary">Market-wide estimate — not a position-level figure.</span>
 			</span>
 		)
 	}
@@ -218,14 +201,14 @@ function DepegWhatIf({
 			? `Uses borrowed debt ${formattedNum(c.borrowedDebtUsd, true)} and liquidation threshold ${Math.round(c.liquidationThreshold * 100)}%`
 			: 'Uses modeled all-to-zero bad-debt ceiling'
 	return (
-		<span className="flex flex-col gap-1 text-(--legacy-text-secondary)">
+		<span className="flex flex-col gap-1 text-secondary">
 			<span className="flex flex-wrap items-center gap-x-3 gap-y-1">
 				{mode === 'custom' && onDropChange ? (
 					<span className="relative flex h-3 w-full max-w-52 items-center">
 						<span
 							aria-hidden
 							className="absolute inset-x-0 h-1 rounded-full"
-							style={{ background: 'color-mix(in srgb, var(--legacy-primary) 28%, transparent)' }}
+							style={{ background: 'color-mix(in srgb, var(--bg-brand) 28%, transparent)' }}
 						/>
 						<input
 							type="range"
@@ -236,26 +219,24 @@ function DepegWhatIf({
 							onChange={(e) => onDropChange(Number(e.target.value))}
 							aria-label={`Custom ${c.symbol} collateral price drop`}
 							aria-valuetext={`${drop}% drop`}
-							className={`absolute inset-0 w-full cursor-pointer appearance-none rounded-full bg-transparent outline-offset-4 outline-(--legacy-primary) focus-visible:outline-2 ${SLIDER_THUMB}`}
+							className={`absolute inset-0 w-full cursor-pointer appearance-none rounded-full bg-transparent outline-offset-4 outline-brand focus-visible:outline-2 ${SLIDER_THUMB}`}
 						/>
 					</span>
 				) : null}
-				<span className="text-(--legacy-text-primary) tabular-nums">{`At ${dropLabel(drop)}:`}</span>
+				<span className="text-primary tabular-nums">{`At ${dropLabel(drop)}:`}</span>
 				<span aria-live="polite" className="min-w-0">
 					{buffered ? (
 						<span className={toneClasses('good').text}>no modeled bad debt</span>
 					) : (
 						<>
 							{'est. bad debt up to '}
-							<span className="font-medium text-(--legacy-text-primary) tabular-nums">
-								{formattedNum(poolLoss, true)}
-							</span>
+							<span className="label-md text-primary tabular-nums">{formattedNum(poolLoss, true)}</span>
 							{yourShare != null ? ` · ≈ ${formattedNum(yourShare, true)} of your deposit` : null}
 						</>
 					)}
 				</span>
 			</span>
-			<span className="text-[10px] text-(--legacy-text-tertiary)">
+			<span className="body-sm text-tertiary">
 				{`${method} · capped at allocation ${formattedNum(capUsd, true)} · ${
 					mode === 'custom' ? 'custom by asset' : 'inherits vault-wide stress'
 				}`}
@@ -335,36 +316,24 @@ export function CollateralRow({
 	}
 
 	return (
-		<details className="group smooth-disclosure border-t border-(--legacy-cards-border) first:border-t-0">
+		<details className="group smooth-disclosure border-t border-subtle first:border-t-0">
 			<summary
-				className={`flex cursor-pointer list-none flex-col gap-2 px-3 py-2.5 hover:bg-(--legacy-bg-main)/50 sm:grid sm:items-center sm:gap-6 ${cols}`}
+				className={`flex cursor-pointer list-none flex-col gap-2 px-3 py-2.5 hover:bg-hover-row sm:grid sm:items-center sm:gap-6 ${cols}`}
 			>
 				<div className="flex items-center justify-between gap-2 sm:contents">
 					<span className="flex min-w-0 items-center gap-2">
 						<TokenLogo src={c.logoUrl} size={18} alt={c.symbol} />
-						<BasicLink
-							href={`/token/${slug(c.symbol)}`}
-							className="truncate text-sm font-medium text-(--legacy-text-primary) hover:underline"
-						>
+						<BasicLink href={`/token/${slug(c.symbol)}`} className="truncate label-md text-primary hover:underline">
 							{c.symbol}
 						</BasicLink>
 						<Tooltip content={c.oracleMechanism ?? badge.story} className="shrink-0">
-							<span
-								className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${tone.chip}`}
-							>
+							<span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 label-xs ${tone.chip}`}>
 								<span className={`size-1.5 rounded-full ${tone.bar}`} aria-hidden />
 								{badge.label}
 							</span>
 						</Tooltip>
 						{c.ptPricing ? <PtPricingChip pricing={c.ptPricing} /> : null}
-						{vendor ? (
-							<span
-								className="hidden shrink-0 text-[10px] text-(--legacy-text-tertiary) sm:inline"
-								title={`Priced by ${vendor}`}
-							>
-								{vendor}
-							</span>
-						) : null}
+						{vendor ? <span className="hidden shrink-0 body-sm text-tertiary sm:inline">{vendor}</span> : null}
 					</span>
 					<span className="flex shrink-0 items-center gap-2 sm:hidden">
 						<span className="flex flex-col items-end">
@@ -376,22 +345,17 @@ export function CollateralRow({
 								variant="mobile"
 							/>
 							{oracleExposure ? (
-								<span className="text-[10px] text-(--legacy-text-tertiary)">{`Oracle exposure ${oracleExposure}`}</span>
+								<span className="body-sm text-tertiary">{`Oracle exposure ${oracleExposure}`}</span>
 							) : null}
 						</span>
-						<Icon
-							name="chevron-down"
-							className="size-3.5 text-(--legacy-text-secondary) transition-transform group-open:rotate-180"
-						/>
+						<Icon name="chevron-down" className="size-3.5 text-secondary transition-transform group-open:rotate-180" />
 					</span>
 				</div>
 
 				{alloc ? (
-					<span className="hidden text-right text-sm text-(--legacy-text-secondary) tabular-nums sm:block">
+					<span className="hidden text-right body-md text-secondary sm:block">
 						{c.allocationUsd != null ? formattedNum(c.allocationUsd, true) : '—'}
-						{allocText ? (
-							<span className="block text-[10px] text-(--legacy-text-tertiary)">{allocText} of vault</span>
-						) : null}
+						{allocText ? <span className="block body-sm text-tertiary">{allocText} of vault</span> : null}
 					</span>
 				) : null}
 
@@ -406,33 +370,29 @@ export function CollateralRow({
 				</span>
 
 				<span className="hidden flex-col items-end sm:flex">
-					<OracleExposureValue c={c} className="text-right text-sm text-(--legacy-text-secondary) tabular-nums" />
-					{showBreakShare && oracleExposure ? (
-						<span className="text-[10px] text-(--legacy-text-tertiary)">separate path</span>
-					) : null}
+					<OracleExposureValue c={c} className="text-right body-md text-secondary" />
+					{showBreakShare && oracleExposure ? <span className="body-sm text-tertiary">separate path</span> : null}
 				</span>
 
 				<Icon
 					name="chevron-down"
-					className="hidden size-3.5 text-(--legacy-text-secondary) transition-transform group-open:rotate-180 sm:block"
+					className="hidden size-3.5 text-secondary transition-transform group-open:rotate-180 sm:block"
 				/>
 			</summary>
 
-			<div className="grid gap-x-6 gap-y-4 border-t border-(--legacy-cards-border) bg-(--legacy-bg-main)/30 px-3 py-3 text-xs sm:grid-cols-2">
-				<div className="flex flex-col gap-3">
-					<span className={DETAIL_LABEL}>{"What it's made of"}</span>
+			<div className="grid gap-x-8 gap-y-6 border-t border-subtle p-3 body-md sm:grid-cols-2 sm:p-4">
+				<div className="flex min-w-0 flex-col gap-4">
+					<h4 className={DETAIL_LABEL}>{"What it's made of"}</h4>
 
-					<div className="flex flex-col gap-2 text-(--legacy-text-secondary)">
+					<div className="flex flex-col gap-2.5 text-secondary">
 						<span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-							<span className="text-(--legacy-text-primary)">{badge.label}</span>
-							{vendor ? <span className="text-(--legacy-text-primary)">· {vendor}</span> : null}
-							{c.feedKinds.length ? (
-								<span className="text-(--legacy-text-tertiary)">({c.feedKinds.join(', ')})</span>
-							) : null}
+							<span className="text-primary">{badge.label}</span>
+							{vendor ? <span className="text-primary">· {vendor}</span> : null}
+							{c.feedKinds.length ? <span className="text-tertiary">({c.feedKinds.join(', ')})</span> : null}
 							{c.ptPricing ? <PtPricingChip pricing={c.ptPricing} /> : null}
 						</span>
 
-						<p className="text-pretty text-(--legacy-text-primary)">{c.oracleMechanism ?? badge.story}</p>
+						<p className="text-pretty text-primary">{c.oracleMechanism ?? badge.story}</p>
 
 						{/* prefer the resolved on-chain legs (richest, launch-set only); else base/quote */}
 						{c.oracleLegs?.length ? (
@@ -442,7 +402,7 @@ export function CollateralRow({
 						)}
 
 						{oc?.heartbeat_sec || oc?.deviation_threshold ? (
-							<span className="text-[10px] text-(--legacy-text-tertiary)">
+							<span className="body-sm text-tertiary">
 								{[
 									oc?.heartbeat_sec ? `Heartbeat ${Math.round(oc.heartbeat_sec / 3600)}h` : null,
 									oc?.deviation_threshold ? `Deviation ${oc.deviation_threshold}bps` : null
@@ -453,7 +413,7 @@ export function CollateralRow({
 						) : null}
 
 						{!rowMarkets.length && oracleAddrs.length ? (
-							<span className="flex flex-col gap-1">
+							<span className="flex flex-col gap-1.5">
 								{oracleAddrs.map((addr) => (
 									<AddressActions
 										key={addr}
@@ -467,17 +427,15 @@ export function CollateralRow({
 					</div>
 
 					{rowMarkets.length ? (
-						<div className="flex flex-col gap-1">
-							<span className="text-[10px] text-(--legacy-text-tertiary)">{`Markets this collateral backs · ${rowMarkets.length}`}</span>
-							<ul className="flex flex-col gap-1 text-(--legacy-text-secondary)">
+						<div className="flex flex-col gap-2 border-t border-subtle pt-3">
+							<span className="label-sm text-secondary">{`Markets this collateral backs · ${rowMarkets.length}`}</span>
+							<ul className="flex flex-col gap-1.5 text-secondary">
 								{rowMarkets.map((m) => {
 									const mv = m.oracle_providers.filter(isProvenVendor).join(' / ')
 									return (
 										<li key={m.market_id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-											<span className="text-(--legacy-text-primary)">→ {m.loan_asset?.symbol ?? 'loan'}</span>
-											{m.lltv != null ? (
-												<span className="tabular-nums">{`${Math.round(m.lltv * 100)}% LLTV`}</span>
-											) : null}
+											<span className="text-primary">→ {m.loan_asset?.symbol ?? 'loan'}</span>
+											{m.lltv != null ? <span>{`${Math.round(m.lltv * 100)}% LLTV`}</span> : null}
 											{m.oracle_address ? (
 												<AddressActions
 													address={m.oracle_address}
@@ -485,9 +443,9 @@ export function CollateralRow({
 													label="market oracle address"
 												/>
 											) : (
-												<span className="text-(--legacy-text-tertiary)">no oracle</span>
+												<span className="text-tertiary">no oracle</span>
 											)}
-											{mv ? <span className="text-[10px] text-(--legacy-text-tertiary)">{mv}</span> : null}
+											{mv ? <span className="body-sm text-tertiary">{mv}</span> : null}
 										</li>
 									)
 								})}
@@ -495,58 +453,55 @@ export function CollateralRow({
 						</div>
 					) : null}
 
-					<div className="flex flex-col gap-1.5 text-(--legacy-text-secondary)">
+					<div className="flex flex-col gap-2 border-t border-subtle pt-3 text-secondary">
 						{c.supplyCapUsd != null && capPct != null ? (
 							<span>
-								<span className="text-(--legacy-text-primary)">Room to grow:</span>{' '}
+								<span className="text-primary">Room to grow:</span>{' '}
 								{`${formattedNum(c.exposureUsd, true)} of ${formattedNum(c.supplyCapUsd, true)} cap (${capPct < 1 ? '<1' : Math.round(capPct)}% used)`}
 							</span>
 						) : null}
 						<span className="flex flex-wrap items-baseline gap-x-1.5">
-							<Tooltip
-								content={trustScopeTooltip(trustScope)}
-								className="text-(--legacy-text-primary) underline decoration-dotted"
-							>
+							<Tooltip content={trustScopeTooltip(trustScope)} className="text-primary underline decoration-dotted">
 								Aggregate Collateral Trust (ACT):
 							</Tooltip>
-							<span className="tabular-nums">{aggregateTrust ?? '—'}</span>
-							{c.vaultCount > 0 ? (
-								<span className="text-[10px] text-(--legacy-text-tertiary)">{`${c.vaultCount} vaults`}</span>
-							) : null}
+							<span>{aggregateTrust ?? '—'}</span>
+							{c.vaultCount > 0 ? <span className="body-sm text-tertiary">{`${c.vaultCount} vaults`}</span> : null}
 						</span>
 						<span className="flex flex-wrap items-center gap-x-1.5">
-							<span className="text-(--legacy-text-primary)">Token:</span>
+							<span className="text-primary">Token:</span>
 							<AddressActions address={c.address} url={explorer?.url} label={`${c.symbol} token address`} />
 						</span>
 						{alloc && c.allocationUsd != null ? (
 							<span className="sm:hidden">
-								<span className="text-(--legacy-text-primary)">Allocation:</span>{' '}
+								<span className="text-primary">Allocation:</span>{' '}
 								{`${formattedNum(c.allocationUsd, true)}${allocText ? ` · ${allocText} of the vault` : ''}`}
 							</span>
 						) : null}
 					</div>
 				</div>
 
-				<div className="flex flex-col gap-2">
-					<div className="flex items-baseline justify-between gap-2">
-						<span className={DETAIL_LABEL}>If it breaks</span>
-						<span className="text-[10px] text-(--legacy-text-tertiary) tabular-nums">
+				<div className="flex min-w-0 flex-col gap-4">
+					<div className="flex items-center justify-between gap-2">
+						<h4 className={DETAIL_LABEL}>If it breaks</h4>
+						<span className="body-sm text-tertiary tabular-nums">
 							{`${stressMode === 'custom' ? 'custom' : 'vault'} ${dropLabel(stressDrop)}`}
 						</span>
 					</div>
-					<DepegWhatIf
-						c={c}
-						supplyUsd={supplyUsd}
-						drop={stressDrop}
-						mode={stressMode}
-						onDropChange={onStressDropChange}
-					/>
+					<div className="flex min-w-0 flex-col gap-2">
+						<DepegWhatIf
+							c={c}
+							supplyUsd={supplyUsd}
+							drop={stressDrop}
+							mode={stressMode}
+							onDropChange={onStressDropChange}
+						/>
+					</div>
 					{c.drainableUsd != null && c.drainableUsd > 0 ? (
-						<span className="text-(--legacy-text-secondary)">
-							<span className="text-(--legacy-text-primary)">Oracle exposure:</span> {'up to '}
-							<span className="text-(--legacy-text-primary) tabular-nums">{formattedNum(c.drainableUsd, true)}</span>
+						<span className="border-t border-subtle pt-3 text-secondary">
+							<span className="text-primary">Oracle exposure:</span> {'up to '}
+							<span className="text-primary">{formattedNum(c.drainableUsd, true)}</span>
 							{' drainable if the feed is compromised'}
-							<span className="mt-0.5 block text-[10px] text-(--legacy-text-tertiary)">
+							<span className="mt-1 block body-sm text-tertiary">
 								separate path: an attacker borrows against a fake price
 							</span>
 						</span>
@@ -564,25 +519,25 @@ export function UnallocatedRow({ alloc, cols }: { alloc: AllocationVM; cols: str
 	}`
 	return (
 		<div
-			className={`flex flex-col gap-1 border-t border-(--legacy-cards-border) px-3 py-2.5 text-(--legacy-text-secondary) sm:grid sm:items-center sm:gap-6 ${cols}`}
+			className={`flex flex-col gap-1 border-t border-subtle px-3 py-2.5 text-secondary sm:grid sm:items-center sm:gap-6 ${cols}`}
 		>
 			<div className="flex items-center justify-between gap-2 sm:contents">
 				<span className="flex min-w-0 flex-col">
-					<span className="truncate text-sm">{label}</span>
-					<span className="hidden text-[10px] text-(--legacy-text-tertiary) sm:block">
+					<span className="truncate body-md">{label}</span>
+					<span className="hidden body-sm text-tertiary sm:block">
 						not lent into any market — no collateral exposure
 					</span>
 				</span>
-				<span className="text-sm tabular-nums sm:hidden">
+				<span className="body-md sm:hidden">
 					{formattedNum(alloc.unallocatedUsd, true)} · {vaultSharePct(alloc.unallocatedPct / 100)}
 				</span>
 			</div>
-			<span className="hidden text-right text-sm tabular-nums sm:block">
+			<span className="hidden text-right body-md sm:block">
 				{formattedNum(alloc.unallocatedUsd, true)}
-				<span className="block text-[10px]">{vaultSharePct(alloc.unallocatedPct / 100)} of vault</span>
+				<span className="block body-sm">{vaultSharePct(alloc.unallocatedPct / 100)} of vault</span>
 			</span>
-			<span className="hidden text-right text-sm sm:flex sm:justify-end">—</span>
-			<span className="hidden text-right text-sm sm:flex sm:justify-end">—</span>
+			<span className="hidden text-right body-md sm:flex sm:justify-end">—</span>
+			<span className="hidden text-right body-md sm:flex sm:justify-end">—</span>
 			<span className="hidden sm:block" />
 		</div>
 	)

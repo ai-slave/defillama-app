@@ -1,6 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import type { BlockExplorersResponse } from '~/api/types'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Button } from '~/ui/Button'
+import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
 import { formatVerified, guardianText } from '../format'
@@ -10,7 +12,7 @@ import { ExternalLink } from '../primitives/ExternalLink'
 import { MofNPips } from '../primitives/MofNPips'
 import { tokenIconByAddress } from '../tokenIcon'
 import type { Audit, Multisig, ProtocolRiskFixture } from '../types'
-import { ExpandableLine, explorerUrl, governanceMarker, LabelValueRow, MICRO_LABEL, ReachLegend } from './trustShared'
+import { ExpandableLine, explorerUrl, governanceMarker, LabelValueRow, ReachLegend } from './trustShared'
 
 // Some protocols publish quorum in raw 1e18 token units (Compound) — normalize so the row
 // reads in whole tokens, matching voting_power_top10_tokens.
@@ -42,7 +44,7 @@ function SignersPopover({
 	return (
 		<Ariakit.PopoverProvider>
 			<Ariakit.PopoverDisclosure
-				className="-m-1 flex cursor-pointer items-center rounded-md p-1 outline-offset-2 outline-(--legacy-primary) hover:bg-(--legacy-bg-main) focus-visible:outline-2"
+				render={<Button type="button" variant="ghost" size="sm" />}
 				aria-label={`Show the ${signers.length} signers of this ${m}-of-${n} multisig`}
 			>
 				<MofNPips m={m} n={n} />
@@ -51,11 +53,11 @@ function SignersPopover({
 				unmountOnHide
 				hideOnInteractOutside
 				gutter={6}
-				className="z-10 flex max-h-72 flex-col overflow-auto overscroll-contain rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-2.5 text-xs shadow-md"
+				className={`${popoverHovercardSurfaceStyles} flex max-h-72 flex-col p-3 body-sm`}
 			>
-				<span className="font-semibold text-(--legacy-text-primary)">{`Signers (${signers.length})`}</span>
-				<span className="mt-0.5 text-(--legacy-text-secondary)">{`any ${m} of them can execute`}</span>
-				<ul className="mt-1.5 flex flex-col divide-y divide-(--legacy-cards-border)">
+				<span className="label-sm text-primary">{`Signers (${signers.length})`}</span>
+				<span className="mt-0.5 text-secondary">{`any ${m} of them can execute`}</span>
+				<ul className="mt-1.5 flex flex-col divide-y divide-(--border-subtle)">
 					{signers.map((s) => (
 						<li key={s.address} className="flex items-center py-1.5">
 							<AddressActions
@@ -112,7 +114,7 @@ function ChainsBadge({ chains }: { chains: string[] }) {
 	return (
 		<Tooltip
 			content={`Same role replicated across ${chains.length} chains: ${chains.join(', ')}`}
-			className="rounded-full border border-(--legacy-cards-border) bg-(--legacy-bg-main) px-1.5 py-0.5 text-[11px] text-(--legacy-text-secondary)"
+			className="rounded-full border border-medium bg-surface px-1.5 py-0.5 body-xs text-secondary"
 		>
 			{chains.length} chains
 		</Tooltip>
@@ -139,9 +141,9 @@ function MultisigGroupRow({ group, explorers }: { group: GovGroup; explorers?: B
 				/>
 			}
 		>
-			<span className="text-sm font-medium text-(--legacy-text-primary)">{roleLabel}</span>
+			<span className="label-md text-primary">{roleLabel}</span>
 			{realMultisig ? (
-				<span className="inline-flex items-center gap-1.5 text-xs text-(--legacy-text-secondary)">
+				<span className="inline-flex items-center gap-1.5 body-sm text-secondary">
 					<SignersPopover
 						m={rep.threshold.m}
 						n={rep.threshold.n}
@@ -149,7 +151,7 @@ function MultisigGroupRow({ group, explorers }: { group: GovGroup; explorers?: B
 						chain={rep.chain}
 						explorers={explorers}
 					/>
-					<span className="tabular-nums">
+					<span>
 						{rep.threshold.m}-of-{rep.threshold.n}
 					</span>
 				</span>
@@ -166,17 +168,17 @@ export function AuditsBlock({ audits }: { audits: Audit[] }) {
 	const recent = [...audits].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '')).slice(0, 4)
 	return (
 		<div className="flex flex-col">
-			<span className={MICRO_LABEL}>Audits</span>
+			<h4 className="label-lg text-primary">Audits</h4>
 			<div className="mt-1 flex items-baseline gap-2">
-				<span className="text-xl font-semibold text-(--legacy-text-primary) tabular-nums">{audits.length}</span>
+				<span className="mono-xl text-primary">{audits.length}</span>
 				<Tooltip
 					content={`Totals logged across all ${audits.length} audits. Audits surface issues so they get fixed — ${resolved} findings recorded resolved. Open each report for current status.`}
-					className="text-xs text-(--legacy-text-secondary) underline decoration-dotted"
+					className="body-sm text-secondary underline decoration-dotted"
 				>
 					{critical} critical, {high} high findings logged
 				</Tooltip>
 			</div>
-			<ul className="mt-2 flex flex-col divide-y divide-(--legacy-cards-border)">
+			<ul className="mt-2 flex flex-col divide-y divide-(--border-subtle)">
 				{recent.map((a, i) => {
 					const meta = [
 						a.scope,
@@ -187,18 +189,18 @@ export function AuditsBlock({ audits }: { audits: Audit[] }) {
 						.join(' · ')
 					const formal = a.findings_status === 'not_applicable_formal_verification'
 					return (
-						<li key={i} className="flex items-center justify-between gap-2 py-1.5 text-xs">
-							<span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-(--legacy-text-secondary)">
+						<li key={i} className="flex items-center justify-between gap-2 py-1.5 body-sm">
+							<span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-secondary">
 								{meta ? (
 									<Tooltip content={meta} className="underline decoration-dotted">
-										<span className="text-(--legacy-text-primary)">{a.firm}</span>
+										<span className="text-primary">{a.firm}</span>
 									</Tooltip>
 								) : (
-									<span className="text-(--legacy-text-primary)">{a.firm}</span>
+									<span className="text-primary">{a.firm}</span>
 								)}
 								<span>· {formatVerified(a.date)}</span>
 								{formal ? (
-									<span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-px text-[10px] text-(--success)">
+									<span className="rounded-full border border-data-up/30 bg-data-up/10 px-1.5 py-px label-xs text-primary">
 										formal verification
 									</span>
 								) : null}
@@ -209,9 +211,7 @@ export function AuditsBlock({ audits }: { audits: Audit[] }) {
 				})}
 			</ul>
 			{audits.length > recent.length ? (
-				<span className="mt-1 text-xs text-(--legacy-text-secondary)">
-					+{audits.length - recent.length} more audits
-				</span>
+				<span className="mt-1 body-sm text-secondary">+{audits.length - recent.length} more audits</span>
 			) : null}
 		</div>
 	)
@@ -245,11 +245,11 @@ export function GovernanceBlock({
 	const concentration = g?.voting_power_concentration_top10_pct
 	const concentrationHigh = concentration != null && concentration >= 0.5
 	return (
-		<div className="flex flex-col gap-2">
+		<div className="flex flex-col gap-4">
 			<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
 				<div className="flex flex-col gap-1">
-					<span className={MICRO_LABEL}>Governance &amp; control</span>
-					<p className="text-xs text-(--legacy-text-secondary)">
+					<h4 className="label-lg text-primary">Governance &amp; control</h4>
+					<p className="body-md text-secondary">
 						{vaultScoped
 							? 'Protocol-wide governance: bounded context, not the path to your deposit.'
 							: 'The people and processes that can change this protocol under you.'}
@@ -259,14 +259,14 @@ export function GovernanceBlock({
 			</div>
 
 			{govGroups.length ? (
-				<div className="flex flex-col divide-y divide-(--legacy-cards-border)">
+				<div className="flex flex-col divide-y divide-(--border-subtle)">
 					{govGroups.map((group) => (
 						<MultisigGroupRow key={group.role} group={group} explorers={explorers} />
 					))}
 				</div>
 			) : null}
 
-			<div className="flex flex-col divide-y divide-(--legacy-cards-border) border-t border-(--legacy-cards-border) pt-1">
+			<div className="flex flex-col divide-y divide-(--border-subtle) border-t border-subtle pt-1">
 				{g?.contract ? (
 					<LabelValueRow label="Governance contract">
 						<AddressActions
@@ -279,7 +279,7 @@ export function GovernanceBlock({
 				{concentration != null ? (
 					<LabelValueRow label="Top-10 voter concentration">
 						<span className="inline-flex items-center gap-2">
-							<span className="h-1.5 w-16 overflow-hidden rounded-full bg-(--legacy-bg-main)" aria-hidden>
+							<span className="h-1.5 w-16 overflow-hidden rounded-full bg-surface" aria-hidden>
 								<span
 									className={`block h-full rounded-full ${concentrationHigh ? toneClasses('danger').bar : toneClasses('warning').bar}`}
 									style={{
@@ -309,7 +309,7 @@ export function GovernanceBlock({
 								content="Voting power a proposal needs before it can execute — the bar a captured or concentrated voter base would have to clear."
 								className="justify-end underline decoration-dotted"
 							>
-								<span className="tabular-nums">
+								<span>
 									{g.quorum_max != null && g.quorum_max !== g.quorum_min
 										? `${formattedNum(wholeTokens(g.quorum_min), false)}–${formattedNum(wholeTokens(g.quorum_max), false)}`
 										: formattedNum(wholeTokens(g.quorum_min), false)}
@@ -323,7 +323,7 @@ export function GovernanceBlock({
 											? 'More voting power than quorum sits with the top 10 holders — they could pass a proposal with nobody else voting.'
 											: "Quorum sits above the top 10 holders' combined voting power — passing a proposal needs broader support."
 									}
-									className={`tabular-nums ${g.top10_clears_quorum ? toneClasses('danger').text : 'text-(--legacy-text-secondary)'}`}
+									className={g.top10_clears_quorum ? toneClasses('danger').text : 'text-secondary'}
 								>
 									{`· top 10 hold ${formattedNum(g.voting_power_top10_tokens, false)}`}
 								</Tooltip>

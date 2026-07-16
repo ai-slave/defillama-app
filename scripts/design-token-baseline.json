@@ -13,12 +13,12 @@
 		"conflicting-named-typography": 31
 	},
 	"excluded": {
-		"hex-in-classname": 2587,
-		"dark-hex-variant": 836,
-		"arbitrary-font-size": 1201,
-		"arbitrary-spacing": 57,
+		"hex-in-classname": 2535,
+		"dark-hex-variant": 814,
+		"arbitrary-font-size": 1114,
+		"arbitrary-spacing": 56,
 		"explicit-thin-scrollbar": 0,
-		"legacy-token-reference": 7110,
+		"legacy-token-reference": 6310,
 		"prefixed-design-token": 0,
 		"arbitrary-standard-radius": 0,
 		"implicit-border-color": 3,

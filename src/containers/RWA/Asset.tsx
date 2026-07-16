@@ -16,7 +16,7 @@ import { Menu } from '~/components/Menu'
 import { QuestionHelper } from '~/components/QuestionHelper'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
-import { useYieldChartData } from '~/containers/Yields/queries.client'
+import { PaginatedYieldsPoolTable } from '~/containers/Yields/Tables/Pools'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
@@ -37,7 +37,7 @@ import { formatSignedRWAFlow, getRWAFlowTextClass, getRWAFlowVsPriceSummary, par
 import { useRWAAssetFlows, useRWAFlowSummary } from './flows.hooks'
 import { getRwaPlatforms } from './grouping'
 import { rwaSlug } from './rwaSlug'
-import { RWAYieldsTable } from './RWAYieldsTable'
+import { useNativeYieldHistory } from './useNativeYieldChart'
 
 const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
 const RWAFlowsChart = lazy(() => import('./FlowsChart').then((module) => ({ default: module.RWAFlowsChart })))
@@ -444,7 +444,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 		}
 	}
 
-	const { data: yieldChartRaw, isLoading: isLoadingYieldChart } = useYieldChartData(asset.nativeYieldPoolId)
+	const { data: yieldHistory, isLoading: isLoadingYieldChart } = useNativeYieldHistory(asset.nativeYieldPoolId)
 	const { chartInstance: nativeYieldChartInstance, handleChartReady: onNativeYieldChartReady } = useGetChartInstance()
 	const { chartInstance: assetChartInstance, handleChartReady: onAssetChartReady } = useGetChartInstance()
 	const { data: flowSummary } = useRWAFlowSummary()
@@ -462,27 +462,21 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 	const flowCoverage = assetFlows?.coverage ?? flow30d?.coverage ?? null
 
 	const nativeYieldDataset = useMemo(() => {
-		if (!yieldChartRaw?.data) return null
+		const series = yieldHistory
+		if (!series) return null
 		const source: Array<{ timestamp: number; 'Native Yield': number }> = []
-		for (const item of yieldChartRaw.data) {
-			if (item.apyBase == null || !item.timestamp) continue
-			const ts =
-				typeof item.timestamp === 'number' ? item.timestamp : new Date(String(item.timestamp).split('T')[0]).getTime()
-			// Yield chart timestamps can be ISO strings from a separate API; skip invalid date parses before charting.
+		for (const point of series) {
+			const base = point.apy?.avg_1d?.base
+			if (base == null || !point.date) continue
+			const ts = new Date(point.date).getTime()
+			// v2 history dates are ISO date strings; skip invalid parses before charting.
 			if (!Number.isFinite(ts)) continue
-			source.push({ timestamp: Math.floor(ts), 'Native Yield': Math.round(item.apyBase * 100) / 100 })
+			source.push({ timestamp: Math.floor(ts), 'Native Yield': Math.round(base * 100) / 100 })
 		}
 		return source.length > 0 ? { source, dimensions: ['timestamp', 'Native Yield'] } : null
-	}, [yieldChartRaw])
+	}, [yieldHistory])
 
-	const isCompactYields = !!asset.nativeYieldPoolId
-	const displayPools = useMemo(() => {
-		if (!asset.yieldPools || asset.yieldPools.length === 0) return []
-		const maxRows = isCompactYields ? 8 : asset.yieldPools.length
-		return asset.yieldPools.slice(0, maxRows)
-	}, [asset.yieldPools, isCompactYields])
-	const yieldPoolsTotal = asset.yieldPoolsTotal ?? asset.yieldPools?.length ?? 0
-	const hasMorePools = yieldPoolsTotal > displayPools.length
+	const displayPools = asset.yieldPools ?? []
 
 	const chartDimensions = (asset.chartDataset?.dimensions ?? []) as string[]
 	const timeSeriesCharts =
@@ -933,14 +927,13 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 
 			{/* Description Notes */}
 			{asset.descriptionNotes ? (
-				<Card as="section" padding="sm" className="flex flex-col gap-3">
-					<h2 className="heading-xs">Notes</h2>
+				<SectionCard title="Notes">
 					<ul className="flex list-disc flex-col gap-2 pl-5 body-md text-primary">
 						{asset.descriptionNotes.map((note, idx) => (
 							<li key={`${keyBase}-note-${idx}-${note.slice(0, 50)}`}>{note}</li>
 						))}
 					</ul>
-				</Card>
+				</SectionCard>
 			) : null}
 
 			{(asset.nativeYieldPoolId && (isLoadingYieldChart || nativeYieldDataset)) || displayPools.length > 0 ? (
@@ -990,28 +983,13 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 							) : null}
 						</ChartPanel>
 					) : null}
-
-					{displayPools.length > 0 ? (
-						<Card padding="sm" className="flex flex-col gap-2">
-							<div className="flex items-center justify-between">
-								<h2 className="font-semibold">
-									{hasMorePools
-										? `DeFi Yield Opportunities (${displayPools.length} of ${yieldPoolsTotal})`
-										: `DeFi Yield Opportunities (${displayPools.length})`}
-								</h2>
-								{hasMorePools && asset.ticker ? (
-									<a
-										href={`/yields?token=${encodeURIComponent(asset.ticker)}&attribute=no_il&attribute=single_exposure`}
-										className="label-sm text-link hover:underline"
-									>
-										View all {yieldPoolsTotal} →
-									</a>
-								) : null}
-							</div>
-							<RWAYieldsTable data={displayPools} compact={isCompactYields} />
-						</Card>
-					) : null}
 				</div>
+			) : null}
+
+			{displayPools.length > 0 ? (
+				<SectionCard title={`DeFi Yield Opportunities (${displayPools.length})`}>
+					<PaginatedYieldsPoolTable data={displayPools} initialPageSize={10} appearance="embedded" />
+				</SectionCard>
 			) : null}
 
 			{/* Chain Availability (moved to last) */}

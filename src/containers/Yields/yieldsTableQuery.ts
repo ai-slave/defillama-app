@@ -1,12 +1,6 @@
 import type { ParsedUrlQuery } from 'querystring'
 import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { parseNumberQueryParam, readSingleQueryValue, toQueryString } from '~/utils/routerQuery'
-import type {
-	IYieldTableRow,
-	YieldLongShortStrategyTableRow,
-	YieldLoopTableRow,
-	YieldStrategyTableRow
-} from './Tables/types'
 
 export const DEFAULT_YIELDS_TABLE_PAGE_SIZE = 50
 // Regular table pages are capped; CSV exports bypass this with pageSize=all.
@@ -18,12 +12,9 @@ export type YieldsPaginatedTableResponse<TRow> = {
 	page: number
 	pageSize: number
 	hasMore: boolean
+	// Median APY of the full filtered set, all pages (earn route only).
+	medianApy?: number | null
 }
-
-export type YieldLoopPageResponse = YieldsPaginatedTableResponse<YieldLoopTableRow>
-export type YieldStrategyPageResponse = YieldsPaginatedTableResponse<YieldStrategyTableRow>
-export type YieldLongShortStrategyPageResponse = YieldsPaginatedTableResponse<YieldLongShortStrategyTableRow>
-export type YieldHalalPageResponse = YieldsPaginatedTableResponse<IYieldTableRow>
 
 function parsePositiveIntegerQueryParam(value: ParsedUrlQuery[string], fallback: number): number {
 	const parsed = parseNumberQueryParam(value)

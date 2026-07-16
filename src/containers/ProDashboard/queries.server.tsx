@@ -2,6 +2,7 @@ import { CONFIG_API, FEATURES_SERVER } from '~/constants'
 import { fetchChainsList } from '~/containers/Chains/api'
 import type { ChainMetrics } from '~/containers/ProDashboard/server/unifiedTable/protocols'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
+import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
 import { sluggifyProtocol } from '~/utils/cache-client'
 import { toDisplayName } from '~/utils/chainNormalizer'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
@@ -26,7 +27,7 @@ export interface ProDashboardServerProps {
 		pfPs: { pf: string[]; ps: string[] }
 	} | null
 	tableData: TableServerData | null
-	yieldsChartData: Record<string, { chart: any; lendBorrow: any }>
+	yieldsChartData: Record<string, { supply: PoolHistory | null; borrow: BorrowMarketHistory | null }>
 	protocolFullData: Record<string, any>
 	metricData: Record<string, [number, number][]>
 	advancedTvlBasicData: Record<string, [number, number][]>

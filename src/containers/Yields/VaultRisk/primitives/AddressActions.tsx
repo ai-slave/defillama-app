@@ -14,12 +14,12 @@ export function AddressActions({
 	const short = address.length > 12 ? `${address.slice(0, 6)}…${address.slice(-4)}` : address
 	return (
 		<span className="inline-flex items-center gap-0.5">
-			<span className="font-mono text-xs text-(--legacy-text-secondary)">{short}</span>
+			<span className="mono-sm text-secondary">{short}</span>
 			<CopyHelper
 				toCopy={address}
 				size={12}
 				aria-label={`Copy ${label}`}
-				className="flex shrink-0 items-center p-0.5 text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)"
+				className="flex shrink-0 items-center p-0.5 text-secondary hover:text-primary"
 			/>
 			{url ? (
 				<a
@@ -27,7 +27,7 @@ export function AddressActions({
 					target="_blank"
 					rel="noreferrer"
 					aria-label={`Open ${label} in block explorer`}
-					className="flex shrink-0 items-center p-0.5 text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)"
+					className="flex shrink-0 items-center p-0.5 text-secondary hover:text-primary"
 				>
 					<Icon name="arrow-up-right" className="size-3" />
 				</a>

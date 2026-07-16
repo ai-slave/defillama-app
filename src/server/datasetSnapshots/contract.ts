@@ -1,3 +1,5 @@
+import { YIELDS_SNAPSHOT_FILES } from '~/containers/Yields/data/snapshot.contract'
+
 /**
  * Pure snapshot metadata contract shared by builders and server readers.
  *
@@ -5,6 +7,13 @@
  * incompatible. Domain schema versions change independently.
  */
 export const DATASET_SNAPSHOT_FORMAT_VERSION = 2
+
+export class DatasetSnapshotCompatibilityError extends Error {
+	constructor(message: string) {
+		super(message)
+		this.name = 'DatasetSnapshotCompatibilityError'
+	}
+}
 
 export type DatasetSnapshotDomainContract = {
 	schemaVersion: number
@@ -14,16 +23,8 @@ export type DatasetSnapshotDomainContract = {
 
 export const DATASET_SNAPSHOT_CONTRACT = {
 	yields: {
-		schemaVersion: 1,
-		files: {
-			rows: 'rows.json',
-			pageData: 'page-data.json',
-			config: 'config.json',
-			lendBorrow: 'lend-borrow.json'
-		},
-		optionalShardDirs: {
-			byToken: 'by-token'
-		}
+		schemaVersion: 3,
+		files: YIELDS_SNAPSHOT_FILES
 	},
 	'token-rights': {
 		schemaVersion: 1,
@@ -140,11 +141,15 @@ function parseSnapshotId(value: unknown): string {
 }
 
 function assertFormatVersion(value: unknown): void {
-	if (value !== DATASET_SNAPSHOT_FORMAT_VERSION) {
-		throw new Error(
+	if (value === DATASET_SNAPSHOT_FORMAT_VERSION) return
+	if (typeof value === 'number' && value < DATASET_SNAPSHOT_FORMAT_VERSION) {
+		throw new DatasetSnapshotCompatibilityError(
 			`Dataset snapshot format mismatch: expected ${DATASET_SNAPSHOT_FORMAT_VERSION}, got ${String(value)}`
 		)
 	}
+	throw new Error(
+		`Dataset snapshot format is unsupported by this process: expected ${DATASET_SNAPSHOT_FORMAT_VERSION}, got ${String(value)}`
+	)
 }
 
 export function parseDatasetSnapshotManifest(value: unknown): DatasetSnapshotManifest {
@@ -154,9 +159,11 @@ export function parseDatasetSnapshotManifest(value: unknown): DatasetSnapshotMan
 	const snapshotId = parseSnapshotId(raw.snapshotId)
 	const expectedSchemaVersion = DATASET_SNAPSHOT_CONTRACT[domain].schemaVersion
 	if (raw.schemaVersion !== expectedSchemaVersion) {
-		throw new Error(
-			`Dataset snapshot schema mismatch for ${domain}: expected ${expectedSchemaVersion}, got ${String(raw.schemaVersion)}`
-		)
+		const message = `Dataset snapshot schema mismatch for ${domain}: expected ${expectedSchemaVersion}, got ${String(raw.schemaVersion)}`
+		if (typeof raw.schemaVersion === 'number' && raw.schemaVersion < expectedSchemaVersion) {
+			throw new DatasetSnapshotCompatibilityError(message)
+		}
+		throw new Error(`${message}; this process cannot replace a newer or invalid schema`)
 	}
 	if (typeof raw.createdAt !== 'number' || !Number.isFinite(raw.createdAt) || raw.createdAt <= 0) {
 		throw new Error('Dataset snapshot manifest has invalid createdAt')

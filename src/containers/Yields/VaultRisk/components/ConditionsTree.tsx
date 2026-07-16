@@ -5,15 +5,14 @@ import type { ConditionNode, ProtocolRiskFixture } from '../types'
 // resolveRef into a link (external dependency) or an in-page anchor (oracle config).
 function RefBadge({ refValue, protocol }: { refValue: string; protocol: ProtocolRiskFixture | null }) {
 	const r = resolveRef(refValue, protocol)
-	const base =
-		'ml-1 inline-flex items-center rounded-sm bg-(--legacy-bg-main) px-1 py-0.5 font-mono text-[11px] text-(--legacy-text-secondary)'
+	const base = 'ml-1 inline-flex items-center rounded-sm bg-surface px-1 py-0.5 mono-sm text-secondary'
 	if (r.url) {
 		return (
 			<a
 				href={r.url}
 				target="_blank"
 				rel="noreferrer"
-				className={`${base} underline decoration-dotted hover:text-(--legacy-text-primary)`}
+				className={`${base} underline decoration-dotted hover:text-primary`}
 			>
 				{r.label}
 			</a>
@@ -21,10 +20,7 @@ function RefBadge({ refValue, protocol }: { refValue: string; protocol: Protocol
 	}
 	if (r.anchor) {
 		return (
-			<a
-				href="#vault-risk-collateral"
-				className={`${base} underline decoration-dotted hover:text-(--legacy-text-primary)`}
-			>
+			<a href="#vault-risk-collateral" className={`${base} underline decoration-dotted hover:text-primary`}>
 				{r.label}
 			</a>
 		)
@@ -35,18 +31,18 @@ function RefBadge({ refValue, protocol }: { refValue: string; protocol: Protocol
 function Node({ node, protocol }: { node: ConditionNode; protocol: ProtocolRiskFixture | null }) {
 	if (node.op === 'leaf') {
 		return (
-			<li className="text-(--legacy-text-secondary)">
+			<li className="text-secondary">
 				{node.description}
 				{node.ref ? <RefBadge refValue={node.ref} protocol={protocol} /> : null}
-				{node.notes ? <span className="ml-1 text-(--legacy-text-secondary) italic">— {node.notes}</span> : null}
+				{node.notes ? <span className="ml-1 text-secondary italic">— {node.notes}</span> : null}
 			</li>
 		)
 	}
 	const connector = node.op === 'and' ? 'All of' : 'Any of'
 	return (
-		<li className="text-(--legacy-text-secondary)">
-			<span className="text-xs font-semibold text-(--legacy-text-primary)">{connector}:</span>
-			<ul className="mt-1 ml-4 list-disc space-y-1 marker:text-(--legacy-text-secondary)">
+		<li className="text-secondary">
+			<span className="label-sm text-primary">{connector}:</span>
+			<ul className="mt-1 ml-4 list-disc space-y-1 marker:text-secondary">
 				{(node.children ?? []).map((child, i) => (
 					<Node key={i} node={child} protocol={protocol} />
 				))}
@@ -63,7 +59,7 @@ export function ConditionsTree({
 	protocol: ProtocolRiskFixture | null
 }) {
 	return (
-		<ul className="list-disc space-y-1 pl-5 text-sm marker:text-(--legacy-text-secondary)">
+		<ul className="list-disc space-y-1 pl-5 body-md marker:text-secondary">
 			<Node node={conditions} protocol={protocol} />
 		</ul>
 	)

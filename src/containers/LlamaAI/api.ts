@@ -8,7 +8,7 @@ import { fetchJson } from '~/utils/async'
 export async function fetchEntityQuestions(
 	entitySlug: string,
 	entityType: 'protocol' | 'chain' | 'page',
-	context?: Record<string, any>,
+	context?: Record<string, unknown>,
 	options?: { throwOnError?: boolean }
 ): Promise<EntityQuestionsResponse> {
 	try {

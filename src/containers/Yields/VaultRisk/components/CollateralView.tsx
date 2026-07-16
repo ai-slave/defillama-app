@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { BlockExplorersResponse } from '~/api/types'
+import { TokenPageTableShell } from '~/components/Table/helpers'
+import { Button } from '~/ui/Button'
 import { Tooltip } from '~/ui/Tooltip'
 import { buildAllocation } from '../allocation'
 import { collateralMarketBreakLossUsd, isDustCollateral } from '../derive'
@@ -111,19 +113,19 @@ export function CollateralView({
 	}
 
 	return (
-		<div className="flex flex-col gap-2">
+		<div className="flex flex-col gap-5">
 			<ChapterHead
-				title="Collateral & oracles"
+				title="Collateral and oracle exposure"
 				hint={
 					isMarket
 						? 'Each token this market is exposed to, and what backs it. If a collateral breaks, this is how much you lose, in dollars. Open a row for the price feed and stress curve. Below, the oracles those prices depend on and what is at stake if one is compromised.'
 						: "Each token you're exposed to, and the market it backs. If that market breaks, this is how much the vault loses, in dollars and as a share of the vault. Open a row for the price feed, stress curve, and supply-cap detail. Below, the oracles those prices depend on and what is at stake if one is compromised."
 				}
 			>
-				{note ? <p className="mt-1 max-w-2xl text-xs text-(--legacy-text-secondary)">{note}</p> : null}
+				{note ? <p className="max-w-3xl body-md text-secondary">{note}</p> : null}
 			</ChapterHead>
 
-			<div className="overflow-hidden rounded-md border border-(--legacy-cards-border)">
+			<TokenPageTableShell>
 				<VaultStress
 					collateral={collateral}
 					supplyUsd={supplyUsd}
@@ -138,7 +140,7 @@ export function CollateralView({
 				/>
 
 				<div
-					className={`hidden items-end gap-6 border-b border-(--legacy-cards-border) bg-(--legacy-bg-main) px-3 py-2 text-xs font-medium text-(--legacy-text-secondary) sm:grid ${cols}`}
+					className={`hidden items-end gap-6 border-b border-subtle bg-surface px-3 py-2 text-sm font-medium text-secondary sm:grid ${cols}`}
 				>
 					<span>Collateral</span>
 					{alloc ? (
@@ -187,20 +189,24 @@ export function CollateralView({
 					))}
 					{alloc && alloc.unallocatedPct > 0 ? <UnallocatedRow alloc={alloc} cols={cols} /> : null}
 				</div>
-			</div>
+			</TokenPageTableShell>
 
 			{hidden > 0 || showAll ? (
-				<button
+				<Button
 					type="button"
+					variant="ghost"
+					size="md"
 					onClick={() => setShowAll((v) => !v)}
-					className="-ml-2 inline-flex min-h-9 items-center self-start rounded-md px-2 text-xs text-(--legacy-text-secondary) underline decoration-dotted hover:bg-(--legacy-bg-main)/50 hover:text-(--legacy-text-primary)"
+					className="-ml-3 self-start"
 				>
-					{showAll ? 'Show fewer' : `Show all ${ranked.length} collaterals`}
-				</button>
+					<span className="underline decoration-dotted">
+						{showAll ? 'Show fewer' : `Show all ${ranked.length} collaterals`}
+					</span>
+				</Button>
 			) : null}
 
 			{dustHidden > 0 ? (
-				<p className="text-xs text-(--legacy-text-tertiary)">
+				<p className="body-sm text-tertiary">
 					+{dustHidden} {dustHidden === 1 ? 'market' : 'markets'} with no current position
 				</p>
 			) : null}

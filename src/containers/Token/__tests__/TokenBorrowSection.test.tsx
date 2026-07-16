@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { IYieldsOptimizerTableRow } from '~/containers/Yields/Tables/types'
+import type { RouteTableRow } from '~/containers/Yields/data/types'
 
 const strategiesState: {
 	data?: any
@@ -8,15 +8,20 @@ const strategiesState: {
 	isLoading: boolean
 } = {
 	data: {
-		borrowAsCollateral: [],
-		borrowAsDebt: []
+		useAsCollateral: [],
+		borrowThis: []
 	},
 	error: null,
 	isLoading: false
 }
 
-const { optimizerTableCalls } = vi.hoisted(() => ({
-	optimizerTableCalls: [] as Array<{ dataLength: number; initialPageIndex?: number; initialPageSize?: number }>
+const { routesTableCalls } = vi.hoisted(() => ({
+	routesTableCalls: [] as Array<{
+		appearance?: string
+		dataLength: number
+		initialPageIndex?: number
+		initialPageSize?: number
+	}>
 }))
 
 vi.mock('~/components/Filters/ResponsiveFilterLayout', () => ({
@@ -43,107 +48,85 @@ vi.mock('~/components/Select/SelectWithCombobox', () => ({
 	SelectWithCombobox: ({ label }: { label: string }) => <div>{label}</div>
 }))
 
-vi.mock('~/containers/Yields/Tables/Optimizer', () => ({
-	PaginatedYieldsOptimizerTable: ({
+vi.mock('~/containers/Yields/Tables/Borrow', () => ({
+	PaginatedBorrowRoutesTable: ({
 		data,
+		appearance,
 		initialPageSize,
 		initialPageIndex
 	}: {
-		data: Array<{ symbol: string; borrow: { symbol: string } }>
+		data: RouteTableRow[]
+		appearance?: string
 		initialPageSize?: number
 		initialPageIndex?: number
 	}) => {
-		optimizerTableCalls.push({ dataLength: data.length, initialPageIndex, initialPageSize })
-		return <div>Optimizer table</div>
+		routesTableCalls.push({ appearance, dataLength: data.length, initialPageIndex, initialPageSize })
+		return <div>Routes table</div>
 	}
 }))
 
 vi.mock('../useTokenBorrowRoutes', () => ({
-	useTokenBorrowRoutes: (_tokenSymbol: string, options?: { enabled?: boolean }) =>
+	useTokenBorrowRoutes: (_tokenKeys: string[], options?: { enabled?: boolean }) =>
 		options?.enabled === false ? { data: undefined, error: null, isLoading: false } : strategiesState
 }))
 
 afterEach(() => {
 	strategiesState.data = {
-		borrowAsCollateral: [],
-		borrowAsDebt: []
+		useAsCollateral: [],
+		borrowThis: []
 	}
 	strategiesState.error = null
 	strategiesState.isLoading = false
-	optimizerTableCalls.length = 0
+	routesTableCalls.length = 0
 	vi.clearAllMocks()
 	vi.restoreAllMocks()
 })
 
 import { TokenBorrowSection } from '../TokenBorrowSection'
-import { filterBorrowRows } from '../TokenBorrowSection.utils'
+import { filterBorrowRoutes } from '../TokenBorrowSection.utils'
 
-function makeBorrowRow(
-	overrides: Partial<IYieldsOptimizerTableRow> = {},
-	borrowOverrides: Partial<IYieldsOptimizerTableRow> = {}
-): IYieldsOptimizerTableRow {
-	const borrowRow: IYieldsOptimizerTableRow = {
-		pool: 'ETH-USDC',
-		projectslug: 'aave-v3',
-		project: 'Aave',
-		projectName: 'Aave',
-		chains: ['Ethereum'],
-		tvl: 1_000_000,
-		apy: 5,
-		apyBase: 4,
-		apyReward: 1,
-		rewardTokensSymbols: [],
-		rewards: [],
-		change1d: null,
-		change7d: null,
-		confidence: null,
-		url: 'https://example.com/pool',
-		category: 'Lending',
-		configID: 'pool-1',
-		symbol: 'USDC',
-		borrow: undefined as unknown as IYieldsOptimizerTableRow,
-		rewardTokensNames: [],
-		totalAvailableUsd: 500_000,
-		lendUSDAmount: 0,
-		borrowUSDAmount: 0,
-		lendAmount: 0,
-		borrowAmount: 0,
-		...borrowOverrides
-	}
-	borrowRow.borrow = borrowRow
-
+function makeRouteRow(overrides: Partial<RouteTableRow> = {}): RouteTableRow {
 	return {
-		pool: 'ETH-USDC',
-		projectslug: 'aave-v3',
-		project: 'Aave',
-		projectName: 'Aave',
-		chains: ['Ethereum'],
-		tvl: 1_000_000,
-		apy: 5,
-		apyBase: 4,
-		apyReward: 1,
-		rewardTokensSymbols: [],
-		rewards: [],
-		change1d: null,
-		change7d: null,
-		confidence: null,
+		id: 'coll:borrow',
+		collateralId: 'coll',
+		borrowId: 'borrow',
+		configID: 'borrow',
+		pool: 'ETH / USDC',
+		poolMeta: null,
 		url: 'https://example.com/pool',
-		category: 'Lending',
-		configID: 'pool-1',
-		symbol: 'ETH',
-		borrow: borrowRow,
-		rewardTokensNames: [],
-		totalAvailableUsd: 500_000,
-		lendUSDAmount: 0,
-		borrowUSDAmount: 0,
-		lendAmount: 0,
-		borrowAmount: 0,
+		project: 'Aave',
+		projectslug: 'aave-v3',
+		airdrop: false,
+		raiseValuation: null,
+		chain: 'Ethereum',
+		chains: ['Ethereum'],
+		collateralSymbol: 'ETH',
+		borrowSymbol: 'USDC',
+		supplyApy: 3,
+		supplyApyBase: 3,
+		supplyApyReward: null,
+		supplyApyIntrinsic: null,
+		supplyIntrinsicSourceSymbol: null,
+		borrowApy: 2,
+		borrowApyBase: 2,
+		borrowApyReward: null,
+		borrowApyIntrinsic: null,
+		borrowIntrinsicSourceSymbol: null,
+		supplyRewardTokensSymbols: [],
+		borrowRewardTokensSymbols: [],
+		netApy: 5,
+		availableBorrowUsd: 500_000,
+		totalBorrowUsd: 1_000_000,
+		borrowCapacityFilled: 0.5,
+		ltv: 0.8,
 		...overrides
 	}
 }
 
+const hydrationBase = { tokenKeys: ['family:eth'] }
+
 describe('TokenBorrowSection', () => {
-	it('shows a loader while shared token strategies are loading', () => {
+	it('shows a loader while shared token routes are loading', () => {
 		strategiesState.data = undefined
 		strategiesState.error = null
 		strategiesState.isLoading = true
@@ -157,8 +140,8 @@ describe('TokenBorrowSection', () => {
 
 	it('shows the default use-token table with pagination', () => {
 		strategiesState.data = {
-			borrowAsCollateral: [makeBorrowRow()],
-			borrowAsDebt: [makeBorrowRow({ symbol: 'WBTC' }, { symbol: 'ETH', totalAvailableUsd: 250000 })]
+			useAsCollateral: [makeRouteRow()],
+			borrowThis: [makeRouteRow({ collateralSymbol: 'WBTC', borrowSymbol: 'ETH', availableBorrowUsd: 250_000 })]
 		}
 		strategiesState.error = null
 		strategiesState.isLoading = false
@@ -167,10 +150,15 @@ describe('TokenBorrowSection', () => {
 
 		expect(html).toContain('Tracking 1 route')
 		expect(html).toContain('Available')
-		expect(optimizerTableCalls[0]).toMatchObject({ dataLength: 1, initialPageIndex: 0, initialPageSize: 10 })
+		expect(routesTableCalls[0]).toMatchObject({
+			appearance: 'embedded',
+			dataLength: 1,
+			initialPageIndex: 0,
+			initialPageSize: 10
+		})
 	})
 
-	it('renders prefetched strategies without waiting for a client fetch', () => {
+	it('renders prefetched routes without waiting for a client fetch', () => {
 		strategiesState.data = undefined
 		strategiesState.error = null
 		strategiesState.isLoading = true
@@ -179,17 +167,18 @@ describe('TokenBorrowSection', () => {
 			<TokenBorrowSection
 				tokenSymbol="ETH"
 				hydration={{
+					...hydrationBase,
 					data: {
-						borrowAsCollateral: [makeBorrowRow()],
-						borrowAsDebt: []
+						useAsCollateral: [makeRouteRow()],
+						borrowThis: []
 					},
 					counts: {
-						borrowAsCollateral: 1,
-						borrowAsDebt: 0
+						useAsCollateral: 1,
+						borrowThis: 0
 					},
 					chainLists: {
-						borrowAsCollateral: ['Ethereum'],
-						borrowAsDebt: []
+						useAsCollateral: ['Ethereum'],
+						borrowThis: []
 					},
 					pageSize: 10
 				}}
@@ -197,7 +186,7 @@ describe('TokenBorrowSection', () => {
 		)
 
 		expect(html).toContain('Tracking 1 route')
-		expect(optimizerTableCalls[0]).toMatchObject({ dataLength: 1, initialPageIndex: 0, initialPageSize: 10 })
+		expect(routesTableCalls[0]).toMatchObject({ dataLength: 1, initialPageIndex: 0, initialPageSize: 10 })
 	})
 
 	it('shows deferred pagination controls when only the first page is prefetched', () => {
@@ -209,17 +198,18 @@ describe('TokenBorrowSection', () => {
 			<TokenBorrowSection
 				tokenSymbol="ETH"
 				hydration={{
+					...hydrationBase,
 					data: {
-						borrowAsCollateral: [makeBorrowRow()],
-						borrowAsDebt: []
+						useAsCollateral: [makeRouteRow()],
+						borrowThis: []
 					},
 					counts: {
-						borrowAsCollateral: 25,
-						borrowAsDebt: 0
+						useAsCollateral: 25,
+						borrowThis: 0
 					},
 					chainLists: {
-						borrowAsCollateral: ['Ethereum'],
-						borrowAsDebt: []
+						useAsCollateral: ['Ethereum'],
+						borrowThis: []
 					},
 					pageSize: 10
 				}}
@@ -230,13 +220,6 @@ describe('TokenBorrowSection', () => {
 		expect(html).toContain('Page 1 of 3')
 	})
 
-	it('renders both borrow tab labels', () => {
-		const html = renderToStaticMarkup(<TokenBorrowSection tokenSymbol="ETH" />)
-
-		expect(html).toContain('Use ETH')
-		expect(html).toContain('Borrow ETH')
-	})
-
 	it('shows an empty state when no routes exist for the selected tab', () => {
 		const html = renderToStaticMarkup(<TokenBorrowSection tokenSymbol="ETH" />)
 
@@ -244,18 +227,10 @@ describe('TokenBorrowSection', () => {
 	})
 
 	it('filters routes by exact chain and available liquidity bounds', () => {
-		const filtered = filterBorrowRows({
+		const filtered = filterBorrowRoutes({
 			rows: [
-				{
-					symbol: 'ETH',
-					borrow: { symbol: 'USDC', totalAvailableUsd: 500000 },
-					chains: ['Ethereum']
-				},
-				{
-					symbol: 'ETH',
-					borrow: { symbol: 'DAI', totalAvailableUsd: 5000 },
-					chains: ['Arbitrum']
-				}
+				{ borrowSymbol: 'USDC', availableBorrowUsd: 500_000, chains: ['Ethereum'] },
+				{ borrowSymbol: 'DAI', availableBorrowUsd: 5_000, chains: ['Arbitrum'] }
 			] as any,
 			selectedChains: ['Ethereum'],
 			minAvailable: '10000',
@@ -263,22 +238,14 @@ describe('TokenBorrowSection', () => {
 		})
 
 		expect(filtered).toHaveLength(1)
-		expect(filtered[0].borrow.symbol).toBe('USDC')
+		expect(filtered[0].borrowSymbol).toBe('USDC')
 	})
 
 	it('ignores non-numeric available liquidity bounds', () => {
-		const filtered = filterBorrowRows({
+		const filtered = filterBorrowRoutes({
 			rows: [
-				{
-					symbol: 'ETH',
-					borrow: { symbol: 'USDC', totalAvailableUsd: null },
-					chains: ['Ethereum']
-				},
-				{
-					symbol: 'ETH',
-					borrow: { symbol: 'DAI', totalAvailableUsd: 5000 },
-					chains: ['Ethereum']
-				}
+				{ borrowSymbol: 'USDC', availableBorrowUsd: null, chains: ['Ethereum'] },
+				{ borrowSymbol: 'DAI', availableBorrowUsd: 5_000, chains: ['Ethereum'] }
 			] as any,
 			selectedChains: ['Ethereum'],
 			minAvailable: 'not-a-number',
@@ -289,14 +256,8 @@ describe('TokenBorrowSection', () => {
 	})
 
 	it('returns no rows when no chains are selected explicitly', () => {
-		const filtered = filterBorrowRows({
-			rows: [
-				{
-					symbol: 'ETH',
-					borrow: { symbol: 'USDC', totalAvailableUsd: 500000 },
-					chains: ['Ethereum']
-				}
-			] as any,
+		const filtered = filterBorrowRoutes({
+			rows: [{ borrowSymbol: 'USDC', availableBorrowUsd: 500_000, chains: ['Ethereum'] }] as any,
 			selectedChains: [],
 			minAvailable: '',
 			maxAvailable: ''

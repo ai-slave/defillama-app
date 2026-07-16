@@ -17,4 +17,10 @@ import { tw } from './tw'
 
 export const metricChipStyles = tw`flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-0.5 rounded-full border px-2 py-1.5 label-sm whitespace-nowrap text-primary hover:bg-hover-row focus-visible:bg-hover-row`
 
-export const metricOptionChipStyles = tw`hover-wash group flex min-h-6 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full border border-medium px-2 py-0.5 label-sm whitespace-nowrap text-primary transition-[background-color,border-color,color] duration-150 ease-out hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link`
+export const metricOptionChipStyles = tw`hover-wash group flex min-h-6 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full border border-medium px-2 py-0.5 label-sm whitespace-nowrap text-primary transition-[background-color,border-color,color] duration-150 ease-out hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint`
+
+export const metricOptionChipMdStyles = tw`hover-wash group flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full border border-medium px-3 py-1.5 label-sm whitespace-nowrap text-primary transition-[background-color,border-color,color] duration-150 ease-out hover:border-brand focus-visible:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint`
+
+/** On/off chart-series control. Unlike a removable MetricChip it has no × icon;
+    unlike a compact option chip it keeps the 32px chart-toolbar height. */
+export const metricSeriesToggleStyles = tw`flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-1 rounded-full border border-medium px-2 py-1.5 label-sm whitespace-nowrap text-secondary transition-[background-color,border-color,color] duration-150 ease-out hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary data-[active=true]:border-(--text-secondary) data-[active=true]:text-primary`

@@ -1,72 +1,18 @@
-import { SERVER_URL, YIELDS_SERVER_URL } from '~/constants'
+import { YIELDS_V2_SERVER_URL } from '~/constants'
+
+const YIELDS_BROWSER_HISTORY_PROXY_URL = '/api/public/yields/proxy'
+
+// History fetchers run in both environments: browsers use the allowlisted proxy,
+// while SSR and server jobs avoid an extra HTTP hop and call the upstream directly.
+export function getYieldsHistoryUrl(path: string): string {
+	return typeof window === 'undefined' ? `${YIELDS_V2_SERVER_URL}${path}` : `${YIELDS_BROWSER_HISTORY_PROXY_URL}${path}`
+}
 
 // Yields APIs
-export const YIELD_CHAIN_API = `${SERVER_URL}/chains`
-export const YIELD_CHART_API = `${YIELDS_SERVER_URL}/chart`
-export const YIELD_CHART_LEND_BORROW_API = `${YIELDS_SERVER_URL}/chartLendBorrow`
-export const YIELD_CHART_LEND_BORROW_PROXY_API = '/api/public/yields/lend-borrow/charts'
-export const YIELD_BORROW_API = '/api/public/yields/borrow'
-export const YIELD_BORROW_ADVANCED_API = '/api/public/yields/borrow-advanced'
-export const YIELD_POOLS_DATASET_API = '/api/public/yields/pools'
-export const YIELD_LOOP_DATASET_API = '/api/public/yields/loop'
-export const YIELD_STRATEGY_DATASET_API = '/api/public/yields/strategy'
-export const YIELD_LONG_SHORT_STRATEGY_DATASET_API = '/api/public/yields/strategy-long-short'
-export const YIELD_HALAL_DATASET_API = '/api/public/yields/halal'
-export const YIELD_CONFIG_API = `${SERVER_URL}/config/yields`
-export const YIELD_CONFIG_POOL_API = `${YIELDS_SERVER_URL}/configPool`
-export const YIELD_LEND_BORROW_API = `${YIELDS_SERVER_URL}/lendBorrow`
-export const YIELD_MEDIAN_API = `${YIELDS_SERVER_URL}/median`
-export const YIELD_PERPS_API = `${YIELDS_SERVER_URL}/perps`
-export const YIELD_POOLS_API = `${YIELDS_SERVER_URL}/pools`
-export const YIELD_POOLS_LAMBDA_API = `${YIELDS_SERVER_URL}/poolsEnriched`
-export const YIELD_PROJECT_MEDIAN_API = `${YIELDS_SERVER_URL}/medianProject`
-export const YIELD_TOKEN_CATEGORIES_API = 'https://ask.llama.fi/token-categories/yields'
-export const YIELD_URL_API = `${YIELDS_SERVER_URL}/url`
-export const YIELD_VOLATILITY_API = '/api/private/yields/volatility'
-export const YIELD_HOLDERS_API = '/api/public/yields/holders'
-
-export const UNBOUNDED_DEBT_CEILING_PROJECTS = ['liquity-v1', 'liquity-v2'] as const
-
-export const lockupsRewards = ['Geist Finance', 'Radiant', 'Valas Finance', 'UwU Lend']
-
-export const lockupsCollateral = [
-	'Ribbon',
-	'TrueFi',
-	'Maple',
-	'Clearpool',
-	'Centrifuge',
-	'UniCrypt',
-	'Osmosis',
-	'HedgeFarm',
-	'BarnBridge',
-	'WOOFi',
-	'Kokoa Finance',
-	'Lyra',
-	'Arbor Finance',
-	'Sommelier'
-]
-
-export const badDebt = ['moonwell-apollo', 'inverse-finance', 'venus', 'iron-bank']
-
-export const exploitedProjects = ['resolv-protocol']
-export const exploitedTokens = ['USR']
-
-export function isExploitedPool(project: string, symbol: string): boolean {
-	return exploitedProjects.includes(project) || exploitedTokens.some((t) => symbol?.toUpperCase().includes(t))
-}
-
-// Pools with a known de-pegged underlying stablecoin, surfaced with a warning on the APY column.
-// Matched on project display name + pool symbol (same approach as the specific-pool checks in Pools.tsx).
-export const depeggedPools: Array<{ project: string; symbol: string }> = [
-	{ project: 'Apyx Protocol', symbol: 'APXUSD' }
-]
-
-export function isDepeggedPool(project: string, symbol: string): boolean {
-	return depeggedPools.some((p) => p.project === project && symbol?.toUpperCase().includes(p.symbol.toUpperCase()))
-}
+export const YIELD_EARN_DATASET_API = '/api/public/yields/earn'
+export const YIELD_BORROW_MARKETS_DATASET_API = '/api/public/yields/borrow-markets'
+export const YIELD_BORROW_ROUTES_DATASET_API = '/api/public/yields/borrow-routes'
+export const YIELD_LOOPS_DATASET_API = '/api/public/yields/loops'
 
 export const disclaimer =
 	"DefiLlama doesn't audit nor endorse any of the protocols listed, we just focus on providing accurate data. Ape at your own risk."
-
-export const earlyExit =
-	'Rewards are calculated assuming an early exit penalty applies. So this is the minimum APY you can expect when claiming your rewards early.'

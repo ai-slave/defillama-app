@@ -13,11 +13,10 @@ export interface YieldsFilters {
 	tokens?: string[]
 	hasRewards?: boolean
 	stablesOnly?: boolean
-	activeLending?: boolean
-	poolTypes?: string[]
+	categories?: string[]
 }
 
-const EMPTY_POOL_TYPES: string[] = []
+const EMPTY_CATEGORIES: string[] = []
 const EMPTY_PROTOCOLS: string[] = []
 const EMPTY_TOKENS: string[] = []
 
@@ -27,42 +26,33 @@ const formatNumberWithCommas = (num: number | undefined): string => {
 }
 
 interface YieldsFiltersPanelProps {
-	showFiltersPanel: boolean
 	setShowFiltersPanel: (show: boolean) => void
 	filters: YieldsFilters
 	setFilters: (filters: YieldsFilters) => void
-	availableChains: string[]
 	availableProtocols: Array<{ value: string; label: string; logo?: string }>
 	availableTokens: string[]
+	availableCategories: string[]
 	onApplyFilters: (filters?: YieldsFilters) => void
 	onResetFilters: () => void
 	activeFilterCount: number
 }
 
 export function YieldsFiltersPanel({
-	showFiltersPanel,
 	setShowFiltersPanel,
 	filters,
 	setFilters,
-	availableChains: _availableChains,
 	availableProtocols,
 	availableTokens,
+	availableCategories,
 	onApplyFilters,
 	onResetFilters,
 	activeFilterCount
 }: YieldsFiltersPanelProps) {
 	const [localFilters, setLocalFilters] = React.useState<YieldsFilters>(filters)
+	const tokenOptions = availableTokens.map((token) => ({ value: token, label: token }))
+	const selectedCategories = new Set(localFilters.categories ?? EMPTY_CATEGORIES)
 
-	const tokenOptions = React.useMemo(
-		() => availableTokens.map((token) => ({ value: token, label: token })),
-		[availableTokens]
-	)
-
-	React.useEffect(() => {
-		setLocalFilters(filters)
-	}, [filters])
-
-	const updateFilter = (key: keyof YieldsFilters, value: any) => {
+	const updateFilter = <K extends keyof YieldsFilters>(key: K, value: YieldsFilters[K]) => {
 		setLocalFilters((prev) => ({
 			...prev,
 			[key]: value
@@ -75,7 +65,8 @@ export function YieldsFiltersPanel({
 		return cleaned && !Number.isNaN(parsed) ? parsed : undefined
 	}
 
-	const handleApply = () => {
+	const handleApply = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
 		setFilters(localFilters)
 		onApplyFilters(localFilters)
 		setShowFiltersPanel(false)
@@ -88,10 +79,9 @@ export function YieldsFiltersPanel({
 		onResetFilters()
 	}
 
-	if (!showFiltersPanel) return null
-
 	return (
-		<div
+		<form
+			onSubmit={handleApply}
 			className="relative mb-4 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4"
 			style={{ zIndex: 50, pointerEvents: 'auto' }}
 		>
@@ -100,6 +90,7 @@ export function YieldsFiltersPanel({
 				<div className="flex items-center gap-2">
 					{activeFilterCount > 0 ? (
 						<button
+							type="button"
 							onClick={handleReset}
 							className="rounded-md border pro-divider pro-bg2 pro-hover-bg px-2 py-1 text-xs pro-text2 transition-colors"
 						>
@@ -119,6 +110,7 @@ export function YieldsFiltersPanel({
 							<div className="flex items-center gap-2">
 								<input
 									type="number"
+									aria-label="Minimum total APY"
 									placeholder="Min %"
 									value={localFilters.apyMin || ''}
 									onChange={(e) => updateFilter('apyMin', e.target.value ? Number(e.target.value) : undefined)}
@@ -127,6 +119,7 @@ export function YieldsFiltersPanel({
 								<span className="pro-text3">-</span>
 								<input
 									type="number"
+									aria-label="Maximum total APY"
 									placeholder="Max %"
 									value={localFilters.apyMax || ''}
 									onChange={(e) => updateFilter('apyMax', e.target.value ? Number(e.target.value) : undefined)}
@@ -140,6 +133,7 @@ export function YieldsFiltersPanel({
 							<div className="flex items-center gap-2">
 								<input
 									type="number"
+									aria-label="Minimum base APY"
 									placeholder="Min %"
 									value={localFilters.baseApyMin || ''}
 									onChange={(e) => updateFilter('baseApyMin', e.target.value ? Number(e.target.value) : undefined)}
@@ -148,6 +142,7 @@ export function YieldsFiltersPanel({
 								<span className="pro-text3">-</span>
 								<input
 									type="number"
+									aria-label="Maximum base APY"
 									placeholder="Max %"
 									value={localFilters.baseApyMax || ''}
 									onChange={(e) => updateFilter('baseApyMax', e.target.value ? Number(e.target.value) : undefined)}
@@ -196,6 +191,7 @@ export function YieldsFiltersPanel({
 							<div className="flex items-center gap-2">
 								<input
 									type="text"
+									aria-label="Minimum TVL"
 									placeholder="Min"
 									value={formatNumberWithCommas(localFilters.tvlMin)}
 									onChange={(e) => updateFilter('tvlMin', parseFormattedNumber(e.target.value))}
@@ -204,6 +200,7 @@ export function YieldsFiltersPanel({
 								<span className="pro-text3">-</span>
 								<input
 									type="text"
+									aria-label="Maximum TVL"
 									placeholder="Max"
 									value={formatNumberWithCommas(localFilters.tvlMax)}
 									onChange={(e) => updateFilter('tvlMax', parseFormattedNumber(e.target.value))}
@@ -250,31 +247,31 @@ export function YieldsFiltersPanel({
 						<div className="mt-4">
 							<p className="mb-3 block text-xs font-medium pro-text2">Pool Categories</p>
 							<div className="space-y-2">
-								{['DEX', 'Lending', 'Staking', 'CDP', 'Bridge', 'Yield Aggregator'].map((type) => (
-									<label key={type} className="group flex cursor-pointer items-center gap-2">
+								{availableCategories.map((category) => (
+									<label key={category} className="group flex cursor-pointer items-center gap-2">
 										<div className="relative size-4">
 											<input
 												type="checkbox"
-												checked={localFilters.poolTypes?.includes(type) || false}
+												checked={selectedCategories.has(category)}
 												onChange={(e) => {
-													const currentTypes = localFilters.poolTypes ?? EMPTY_POOL_TYPES
+													const currentCategories = localFilters.categories ?? EMPTY_CATEGORIES
 													if (e.target.checked) {
-														updateFilter('poolTypes', [...currentTypes, type])
+														updateFilter('categories', [...currentCategories, category])
 													} else {
-														const filtered = currentTypes.filter((t) => t !== type)
-														updateFilter('poolTypes', filtered.length > 0 ? filtered : undefined)
+														const filtered = currentCategories.filter((value) => value !== category)
+														updateFilter('categories', filtered.length > 0 ? filtered : undefined)
 													}
 												}}
 												className="sr-only"
 											/>
 											<div
 												className={`size-4 rounded-sm border-2 transition-all duration-150 ${
-													localFilters.poolTypes?.includes(type)
+													selectedCategories.has(category)
 														? 'border-(--legacy-primary) bg-(--legacy-primary)'
 														: 'border-(--legacy-text-tertiary) bg-transparent group-hover:border-(--legacy-text-secondary)'
 												}`}
 											>
-												{localFilters.poolTypes?.includes(type) ? (
+												{selectedCategories.has(category) ? (
 													<svg className="size-3 text-white" fill="currentColor" viewBox="0 0 20 20">
 														<path
 															fillRule="evenodd"
@@ -285,7 +282,7 @@ export function YieldsFiltersPanel({
 												) : null}
 											</div>
 										</div>
-										<span className="text-sm pro-text1">{type}</span>
+										<span className="text-sm pro-text1">{category}</span>
 									</label>
 								))}
 							</div>
@@ -318,16 +315,16 @@ export function YieldsFiltersPanel({
 			</div>
 
 			<div className="mt-4 flex items-center justify-between border-t pro-divider pt-3">
-				<button onClick={() => setShowFiltersPanel(false)} className="px-3 py-1 text-xs pro-text2">
+				<button type="button" onClick={() => setShowFiltersPanel(false)} className="px-3 py-1 text-xs pro-text2">
 					Cancel
 				</button>
 				<button
-					onClick={handleApply}
+					type="submit"
 					className="rounded-md border border-(--legacy-primary) bg-(--legacy-primary) px-3 py-1 text-xs text-white transition-colors hover:bg-(--legacy-primary-hover)"
 				>
 					Apply Filters
 				</button>
 			</div>
-		</div>
+		</form>
 	)
 }

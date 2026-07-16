@@ -3,13 +3,14 @@ import { useBlockExplorers } from '~/api/client'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
-import { VaultRiskSection, VaultRiskUnmapped } from '~/containers/Yields/VaultRisk'
+import { fetchBorrowMarketDetail, fetchPoolDetail, isNotFoundError } from '~/containers/Yields/poolDetail/fetch'
 import { explorerUrl } from '~/containers/Yields/VaultRisk/components/trustShared'
 import { AddressActions } from '~/containers/Yields/VaultRisk/primitives/AddressActions'
 import type { VaultRiskData } from '~/containers/Yields/VaultRisk/types'
+import { VaultRiskSection, VaultRiskUnmapped } from '~/containers/Yields/VaultRisk/VaultRiskSection'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
 import { jitterCacheControlHeader, maxAgeForNext } from '~/utils/maxAgeForNext'
-import { YIELD_POOL_CONFIG_ID_REGEX } from '~/utils/regex-constants'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 interface RiskPageProps {
@@ -23,33 +24,38 @@ const getServerSidePropsHandler: GetServerSideProps<RiskPageProps> = async ({ pa
 	const poolParam = params?.pool
 	const poolId = typeof poolParam === 'string' ? poolParam : Array.isArray(poolParam) ? poolParam[0] : null
 
-	if (!poolId || !YIELD_POOL_CONFIG_ID_REGEX.test(poolId)) {
+	if (!poolId) {
 		return { notFound: true }
 	}
 
-	const [{ acquireYieldsSnapshot, getYieldPoolPageData }, { loadVaultRisk }] = await Promise.all([
-		import('~/containers/Yields/server/snapshot.reader.server'),
-		import('~/containers/Yields/VaultRisk/loader')
-	])
-	const snapshot = await acquireYieldsSnapshot('blocking')
-
-	const [result, vaultRisk] = await Promise.all([getYieldPoolPageData(snapshot, poolId), loadVaultRisk(poolId)])
-
-	if (!result.data) {
-		return { notFound: true }
-	}
+	const { loadVaultRisk } = await import('~/containers/Yields/VaultRisk/loader')
+	const detailPromise = fetchPoolDetail(poolId)
+		.then((pool) => ({ kind: 'earn' as const, pool }))
+		.catch((error: unknown) => {
+			if (!isNotFoundError(error)) throw error
+			return fetchBorrowMarketDetail(poolId)
+				.then((market) => ({ kind: 'borrow' as const, market }))
+				.catch((borrowError: unknown) => {
+					if (isNotFoundError(borrowError)) return null
+					throw borrowError
+				})
+		})
+	const [detail, vaultRisk] = await Promise.all([detailPromise, loadVaultRisk(poolId)])
+	if (!detail) return { notFound: true }
 
 	res.setHeader(
 		'Cache-Control',
 		jitterCacheControlHeader(
 			`public, s-maxage=${maxAgeForNext([22])}, stale-while-revalidate=3600`,
-			`yields/pool/${poolId}/risk:${result.source}`
+			`yields/pool/${poolId}/risk:v2`
 		)
 	)
 
-	const { pool } = result.data
-	const poolName = pool.poolMeta ? `${pool.pool} (${pool.poolMeta})` : (pool.pool ?? '')
-	const chain = pool.chains?.[0] ?? ''
+	const entity = detail.kind === 'earn' ? detail.pool : detail.market
+	const label = entity.display?.label ?? ''
+	const meta = entity.display?.detail
+	const poolName = meta ? `${label} (${meta})` : label
+	const chain = entity.chain
 
 	return { props: { poolId, poolName, chain, vaultRisk } }
 }
@@ -60,17 +66,17 @@ function RiskPageView({ poolId, poolName, chain, vaultRisk }: RiskPageProps) {
 	const vaultAddress = vaultRisk?.vault.vault_address ?? null
 
 	return (
-		<div className="flex flex-col gap-4">
-			<div className="flex flex-col gap-1.5 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3">
-				<BasicLink
-					href={`/yields/pool/${poolId}`}
-					className="flex w-fit items-center gap-1 text-xs text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)"
-				>
-					<Icon name="arrow-left" className="size-3" aria-hidden />
-					Back to pool details
-				</BasicLink>
-				<h1 className="text-xl font-bold">{vaultName ?? poolName}</h1>
-				<p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-(--legacy-text-secondary)">
+		<div className="flex flex-col gap-2">
+			<BasicLink
+				href={`/yields/pool/${poolId}`}
+				className="flex w-fit items-center gap-1 body-sm text-secondary hover:text-primary"
+			>
+				<Icon name="arrow-left" className="size-3.5" aria-hidden />
+				Back to pool details
+			</BasicLink>
+			<Card padding="sm" className="flex flex-col gap-2">
+				<h1 className="heading-sm">{vaultName ?? poolName}</h1>
+				<p className="flex flex-wrap items-center gap-x-3 gap-y-1 body-sm text-secondary">
 					<span>Risk report</span>
 					{chain ? (
 						<span className="flex items-center gap-1">
@@ -86,7 +92,7 @@ function RiskPageView({ poolId, poolName, chain, vaultRisk }: RiskPageProps) {
 						/>
 					) : null}
 				</p>
-			</div>
+			</Card>
 
 			{vaultRisk ? (
 				<VaultRiskSection

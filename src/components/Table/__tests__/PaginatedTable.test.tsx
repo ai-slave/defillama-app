@@ -134,5 +134,7 @@ describe('PaginatedTable', () => {
 
 		expect(enabledHtml).toContain('aria-disabled="false"')
 		expect(disabledHtml).toContain('aria-disabled="true"')
+		expect(disabledHtml).toContain('role="status"')
+		expect(disabledHtml).toContain('Loading data...')
 	})
 })

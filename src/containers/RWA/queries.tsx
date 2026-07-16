@@ -1,5 +1,6 @@
 import { fetchBlockExplorers } from '~/api'
 import { ensureChronologicalRows } from '~/components/ECharts/utils'
+import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import type { IRWAList } from '~/utils/metadata/types'
 import {
@@ -56,7 +57,7 @@ import {
 	getRealRwaPlatforms
 } from './perpsOverlay'
 import { rwaSlug } from './rwaSlug'
-import { emptyRwaYieldMatchResult, fetchRwaYieldPoolData, matchRwaYieldPools } from './yieldMatching'
+import { emptyRWAYieldResult, getRWAYieldPools } from './yieldPools.server'
 
 type RWAAssetsOverviewParams = {
 	chain?: string
@@ -822,13 +823,18 @@ export async function getRWAAssetGroupsOverview(): Promise<IRWAAssetGroupsOvervi
 	}
 }
 
-export async function getRWAAssetData({ assetId }: { assetId: string }): Promise<IRWAAssetData | null> {
+export async function getRWAAssetData({
+	assetId,
+	yieldsSnapshot
+}: {
+	assetId: string
+	yieldsSnapshot: YieldsSnapshot | null
+}): Promise<IRWAAssetData | null> {
 	try {
-		const [data, chartDataset, blockExplorersData, yieldPoolData] = await Promise.all([
+		const [data, chartDataset, blockExplorersData] = await Promise.all([
 			fetchRWAAssetDataById(assetId),
 			fetchRWAAssetChartData(assetId),
-			fetchBlockExplorers().catch(() => []),
-			fetchRwaYieldPoolData().catch(() => null)
+			fetchBlockExplorers().catch(() => [])
 		])
 
 		if (!data) {
@@ -888,11 +894,13 @@ export async function getRWAAssetData({ assetId }: { assetId: string }): Promise
 			chartDataset.dimensions = chartDataset.dimensions.filter((dimension) => dimension !== 'Active Mcap')
 		}
 
-		let yieldMatch = emptyRwaYieldMatchResult()
-		try {
-			yieldMatch = await matchRwaYieldPools(data, yieldPoolData)
-		} catch (err) {
-			console.log('[HTTP]:[ERROR]:[RWA_YIELD]:', assetId, err instanceof Error ? err.message : '')
+		let yieldMatch = emptyRWAYieldResult()
+		if (yieldsSnapshot) {
+			try {
+				yieldMatch = await getRWAYieldPools(yieldsSnapshot, data)
+			} catch (err) {
+				console.log('[HTTP]:[ERROR]:[RWA_YIELD]:', assetId, err instanceof Error ? err.message : '')
+			}
 		}
 
 		return {

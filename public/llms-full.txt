@@ -131,14 +131,10 @@ Common usage examples:
 - [Pool2 TVL by Protocol](https://defillama.com/pool2): Total value locked in pool2 of a protocol Category: Total Value Locked.
 - [Active Loans by Protocol](https://defillama.com/active-loans): Sum of value currently borrowed across all active loans on a lending protocol Category: Total Value Locked.
 - [TVL Breakdown by Smart Contract Languages](https://defillama.com/languages): TVL breakdown by languages that the smart contracts are written in Category: Total Value Locked.
-- [Yields: All Pools](https://defillama.com/yields): Pools by APY, TVL, and other metrics on all chains Category: Yields.
-- [Stablecoin Yields](https://defillama.com/yields/stablecoins): Stablecoin liquidity pools by APY Category: Yields.
-- [Yields: Leveraged Lending](https://defillama.com/yields/loop): Pools by leveraged lending APY values Category: Yields.
-- [Yields: Halal](https://defillama.com/yields/halal): Shariah-compliant yield pools Category: Yields.
-- [Yields: Delta Neutral Strategies](https://defillama.com/yields/strategy): Find 'lend-borrow-farm' strategies across all our tracked pools Category: Yields.
-- [Yields: All Projects](https://defillama.com/yields/projects): List of all projects that we track in our yields section Category: Yields.
-- [Yields: Long/Short Strategies](https://defillama.com/yields/strategy-long-short): Find 'long-short' strategies across all our tracked pools Category: Yields.
-- [Yields: APY Overview](https://defillama.com/yields/overview): Find APY trends, volatility, and other metrics across all our tracked pools Category: Yields.
+- [Yields: Earn](https://defillama.com/yields): Pools by APY, TVL, and other metrics across all chains Category: Yields.
+- [Yields: Borrow](https://defillama.com/yields/borrow): Borrow markets and routes across lending protocols Category: Yields.
+- [Yields: Loop](https://defillama.com/yields/loop): Pools by looping (leveraged lending) strategy APY Category: Yields.
+- [Yields: Reference Rates](https://defillama.com/yields/rates): Benchmark stablecoin supply and borrow rates across lending protocols Category: Yields.
 - [Revenue by Protocol](https://defillama.com/revenue): Subset of fees that the protocol collects for itself, usually going to the protocol treasury, the team, or distributed among token holders. This doesn't include any fees distributed to liquidity providers Category: Fees & Revenue.
 - [Fees by Protocol](https://defillama.com/fees): Total fees paid by users when using the protocol Category: Fees & Revenue.
 - [Holders Revenue by Protocol](https://defillama.com/holders-revenue): Subset of revenue that is distributed to token holders by means of buyback and burn, burning fees or direct distribution to stakers Category: Fees & Revenue.
@@ -212,10 +208,8 @@ Common usage examples:
 - [Correlations Matrix by Coin](https://defillama.com/correlation): View correlation relationships between different cryptocurrencies to identify market trends and diversification opportunities
 - [Sheets](https://defillama.com/sheets): Access DeFi data right in your spreadsheets
 - [DeFi Watchlist](https://defillama.com/watchlist): Watchlist of all protocols on DefiLlama
-- [Borrow Aggregator: Simple](https://defillama.com/borrow): Simple view of optimal lending routes by collateral to borrow assets Category: Borrow Aggregator.
 - [Token Liquidity](https://defillama.com/liquidity): Check how deep the liquidity is for a given token
 - [Protocols Website Directory](https://defillama.com/directory): Directory of all protocols websites on DefiLlama
-- [Borrow Aggregator: Advanced](https://defillama.com/borrow/advanced): Advanced view of optimal lending routes by collateral to borrow assets Category: Borrow Aggregator.
 - [Yields: Watchlist](https://defillama.com/yields/watchlist): Watchlist of all pools that we track in our yields section
 - [Transactions by Bridge](https://defillama.com/bridge-transactions): Download transaction data across different time periods by bridge
 - [Liquidations](https://defillama.com/liquidations): Collateral at risk of liquidation if asset prices reach certain levels Category: Liquidations.

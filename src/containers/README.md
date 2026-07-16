@@ -30,14 +30,14 @@ Use these names consistently for new server modules:
 - `server/upstream.ts`: direct upstream server fetchers for the domain.
 - `server/dataset.builder.server.ts`: network acquisition that writes an unpublished snapshot candidate.
 - `server/dataset.index.ts`: pure index-building helpers for snapshot artifacts.
-- `server/dataset.server.ts` or `server/snapshot.reader.server.ts`: typed immutable snapshot access used by pages and API handlers.
+- `server/dataset.server.ts`: typed immutable snapshot access used by pages and API handlers.
 - `server/charts.ts` or `server/breakdowns.ts`: domain-specific chart or breakdown assembly when it is not just an HTTP handler.
 
 Dataset snapshot modules under `server/` must only be imported from server-only call sites:
 `getStaticProps`, `getServerSideProps`, `getStaticPaths`, `pages/api` handlers,
 route-data code, dataset snapshot build commands, or tests for those paths. Use dynamic
 imports inside those data functions when a page component also ships client code. Do not
-import `containers/*/server/dataset.server*` or `snapshot.reader.server*` from React
+import `containers/*/server/dataset.server*` from React
 components, hooks, browser query modules, or shared utilities that can enter a client
 bundle.
 
@@ -45,7 +45,7 @@ Dataset snapshot domains should live with their product owner when there is one.
 shape is:
 
 - `server/dataset.builder.server.ts`: builds that domain's unpublished snapshot artifacts from network APIs.
-- `server/dataset.server.ts` or `snapshot.reader.server.ts`: server-only typed access through one snapshot handle.
+- `server/dataset.server.ts`: server-only typed access through one snapshot handle.
 - `server/dataset.transform.ts` or `server/dataset.index.ts`: pure data transforms.
 
 `src/server/datasetSnapshots` owns the shared manifest, artifact layout, immutable reader,

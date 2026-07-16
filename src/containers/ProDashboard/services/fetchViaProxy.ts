@@ -1,7 +1,8 @@
+import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
 const PROXY_URL = '/api/private/pro-dashboard/fetch'
 
-async function proxyFetch<T>(type: string, params: Record<string, any>, authToken: string): Promise<T> {
+async function proxyFetch<T>(type: string, params: Record<string, unknown>, authToken: string): Promise<T> {
 	const url = `${PROXY_URL}?type=${encodeURIComponent(type)}&params=${encodeURIComponent(JSON.stringify(params))}`
 	const res = await fetchWithPoolingOnServer(url, {
 		headers: {
@@ -40,12 +41,15 @@ export async function fetchProtocolFullViaProxy(protocol: string, authToken: str
 	return proxyFetch<any>('protocolFull', { protocol }, authToken)
 }
 
-export async function fetchYieldsViaProxy(poolConfigId: string, authToken: string): Promise<any> {
-	return proxyFetch<any>('yields', { poolConfigId }, authToken)
+export async function fetchYieldsViaProxy(poolConfigId: string, authToken: string): Promise<PoolHistory> {
+	return proxyFetch<PoolHistory>('yields', { poolConfigId }, authToken)
 }
 
-export async function fetchYieldsLendBorrowViaProxy(poolConfigId: string, authToken: string): Promise<any> {
-	return proxyFetch<any>('yieldsLendBorrow', { poolConfigId }, authToken)
+export async function fetchYieldsLendBorrowViaProxy(
+	poolConfigId: string,
+	authToken: string
+): Promise<BorrowMarketHistory> {
+	return proxyFetch<BorrowMarketHistory>('yieldsLendBorrow', { poolConfigId }, authToken)
 }
 
 export async function fetchTokenUsageViaProxy(symbol: string, authToken: string): Promise<any> {

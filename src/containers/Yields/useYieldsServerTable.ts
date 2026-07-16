@@ -30,11 +30,16 @@ export function useYieldsServerTable<TRow>({
 	const sorting = React.useMemo(() => getYieldsTableSortingFromQuery(query, defaultSorting), [defaultSorting, query])
 	const queryString = React.useMemo(() => {
 		if (!enabled) return null
+		// On a hard load of this statically-optimized page, router.query is empty on the
+		// first render and hydrates a moment later — fetching before that would issue a
+		// paramless request whose rows flash in the wrong order, then get replaced.
+		if (!router.isReady) return null
 		return buildYieldsTableQueryString({ query, pagination: requestedPagination, sorting, extraQuery })
-	}, [enabled, extraQuery, query, requestedPagination, sorting])
+	}, [enabled, extraQuery, query, requestedPagination, sorting, router.isReady])
 	const rowsQuery = useYieldsPaginatedTable<TRow>(endpoint, queryString)
 	const rows = rowsQuery.data?.rows ?? []
 	const total = rowsQuery.data?.total ?? 0
+	const medianApy = rowsQuery.data?.medianApy ?? null
 	const pagination = React.useMemo<PaginationState>(() => {
 		if (!rowsQuery.data) return requestedPagination
 		return {
@@ -96,6 +101,7 @@ export function useYieldsServerTable<TRow>({
 		query,
 		rows,
 		total,
+		medianApy,
 		rowsQuery,
 		tableProps,
 		buildAllRowsQueryString

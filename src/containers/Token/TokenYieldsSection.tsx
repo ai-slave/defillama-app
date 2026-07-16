@@ -5,87 +5,61 @@ import * as React from 'react'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { TVLRange } from '~/components/Filters/TVLRange'
 import { Icon } from '~/components/Icon'
-import { extractYieldPoolTokens } from '~/containers/Yields/domain/poolFilters'
-import { getYieldPoolTokenVariantSet, getYieldTokenVariantSet } from '~/containers/Yields/domain/tokenFilter'
+import { YIELD_EARN_DATASET_API } from '~/containers/Yields/constants'
 import { APYRange } from '~/containers/Yields/Filters/APYRange'
 import { FilterByChain } from '~/containers/Yields/Filters/Chains'
-import { ColumnFilters } from '~/containers/Yields/Filters/ColumnFilters'
-import { ALL_POOL_COLUMN_QUERY_KEYS } from '~/containers/Yields/Filters/poolColumns'
-import { FilterByToken } from '~/containers/Yields/Filters/Tokens'
 import { useFormatYieldQueryParams } from '~/containers/Yields/hooks'
-import { buildPoolsTrackingStats } from '~/containers/Yields/poolsPipeline'
-import { useHolderStats, useVolatility } from '~/containers/Yields/queries.client'
 import { PaginatedYieldsPoolTable } from '~/containers/Yields/Tables/Pools'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import { Button } from '~/ui/Button'
-import { LoadingSpinner } from '~/ui/Loaders'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { nestedMenuActionStyles } from '~/ui/Popover'
-import { LoadingIndicator } from '~/ui/Status'
+import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
 import { fetchJson } from '~/utils/async'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
 import { TokenDeferredPaginationControls } from './TokenDeferredPaginationControls'
 import type { TokenYieldsHydration } from './types'
+import { getTokenYieldStats } from './yieldStats'
 
-const ENABLED_COLUMNS = [...ALL_POOL_COLUMN_QUERY_KEYS]
-
-const FILTER_QUERY_PARAMS = [
-	'chain',
-	'excludeChain',
-	'yieldToken',
-	'yieldExcludeToken',
-	'minTvl',
-	'maxTvl',
-	'minApy',
-	'maxApy',
-	...ENABLED_COLUMNS
-]
-const ENABLED_COLUMNS_SET = new Set<string>(ENABLED_COLUMNS)
-const FILTER_ONLY_PARAMS = FILTER_QUERY_PARAMS.filter((queryParam) => !ENABLED_COLUMNS_SET.has(queryParam))
+// Client-side chain/TVL/APY filters over the earn rows (the rows are already
+// scoped to the page token server-side via the resolved token option keys).
+const FILTER_QUERY_PARAMS = ['chain', 'excludeChain', 'minTvl', 'maxTvl', 'minApy', 'maxApy']
 
 const TOKEN_YIELDS_SECTION_ID = 'token-yields'
 const DEFAULT_TABLE_SORTING: SortingState = [{ id: 'tvl', desc: true }]
 const DEFAULT_TABLE_SORTING_KEY = JSON.stringify(DEFAULT_TABLE_SORTING)
 
-async function fetchTokenYieldRows(tokenSymbol: string): Promise<IYieldTableRow[]> {
-	return fetchJson<IYieldTableRow[]>(`/api/public/yields?token=${encodeURIComponent(tokenSymbol)}`)
+type EarnRowsResponse = { rows: IYieldTableRow[] }
+
+async function fetchTokenYieldRows(tokenKeys: string[]): Promise<IYieldTableRow[]> {
+	const params = new URLSearchParams()
+	for (const key of tokenKeys) params.append('token', key)
+	params.set('pageSize', 'all')
+	const data = await fetchJson<EarnRowsResponse>(`${YIELD_EARN_DATASET_API}?${params.toString()}`)
+	return data.rows
 }
 
 interface TokenYieldsSectionProps {
-	tokenSymbol: string
 	hydration?: TokenYieldsHydration
 }
 
-function poolMatchesSelectedToken(poolTokenVariants: Set<string>, tokenVariants: Set<string>) {
-	for (const tokenVariant of tokenVariants) {
-		if (poolTokenVariants.has(tokenVariant)) return true
-	}
-
-	return false
-}
-
-export function TokenYieldsSection({ tokenSymbol, hydration }: TokenYieldsSectionProps) {
+export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 	const router = useRouter()
 	const [shouldFetchFullData, setShouldFetchFullData] = React.useState(hydration == null)
 	const [requestedPageIndex, setRequestedPageIndex] = React.useState(0)
 	const [tableSorting, setTableSorting] = React.useState<SortingState>([...DEFAULT_TABLE_SORTING])
+	const tokenKeys = hydration?.tokenKeys ?? []
 	const { data: fetchedRows, error } = useQuery({
-		queryKey: ['token-yields', tokenSymbol],
-		queryFn: () => fetchTokenYieldRows(tokenSymbol),
+		queryKey: ['token-yields', 'token-page', ...tokenKeys],
+		queryFn: () => fetchTokenYieldRows(tokenKeys),
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: false,
-		enabled: Boolean(tokenSymbol) && shouldFetchFullData
+		enabled: tokenKeys.length > 0 && shouldFetchFullData
 	})
 	const poolsList = React.useMemo(() => fetchedRows ?? hydration?.rows ?? [], [fetchedRows, hydration])
-	const { data: volatility } = useVolatility({ enabled: shouldFetchFullData })
-	const holderStatsConfigIds = React.useMemo(
-		() => poolsList.map((pool) => pool.configID).filter((configID): configID is string => Boolean(configID)),
-		[poolsList]
-	)
-	const { data: holderStats } = useHolderStats(holderStatsConfigIds, { enabled: shouldFetchFullData })
 	const hydrationPageSize = hydration?.pageSize ?? DEFAULT_TABLE_PAGE_SIZE
 	const totalRowCount = fetchedRows?.length ?? hydration?.rowCount ?? poolsList.length
 
@@ -102,66 +76,14 @@ export function TokenYieldsSection({ tokenSymbol, hydration }: TokenYieldsSectio
 		[fetchedRows, hydration, poolsList]
 	)
 
-	const tokensList = React.useMemo(
-		() =>
-			fetchedRows
-				? [...new Set(poolsList.flatMap((pool) => extractYieldPoolTokens(pool.pool)))]
-						.sort()
-						.map((token) => token.toUpperCase())
-				: (hydration?.tokensList ??
-					[...new Set(poolsList.flatMap((pool) => extractYieldPoolTokens(pool.pool)))]
-						.sort()
-						.map((token) => token.toUpperCase())),
-		[fetchedRows, hydration, poolsList]
-	)
-
-	const { selectedChains, includeTokens, excludeTokens, minTvl, maxTvl, minApy, maxApy } = useFormatYieldQueryParams({
-		chainList,
-		tokenQueryKey: 'yieldToken',
-		excludeTokenQueryKey: 'yieldExcludeToken'
-	})
-
-	const includeTokenVariantSets = React.useMemo(() => includeTokens.map(getYieldTokenVariantSet), [includeTokens])
-	const excludeTokenVariantSets = React.useMemo(() => excludeTokens.map(getYieldTokenVariantSet), [excludeTokens])
-
-	const poolsWithVolatility = React.useMemo(() => {
-		return poolsList.map((pool) => ({
-			...pool,
-			yieldTokenVariants: getYieldPoolTokenVariantSet(pool.pool),
-			apyMedian30d: volatility?.[pool.configID]?.[1] ?? pool.apyMedian30d,
-			apyStd30d: volatility?.[pool.configID]?.[2] ?? pool.apyStd30d,
-			cv30d: volatility?.[pool.configID]?.[3] ?? pool.cv30d,
-			holderCount: holderStats?.[pool.configID]?.holderCount ?? pool.holderCount,
-			avgPositionUsd: holderStats?.[pool.configID]?.avgPositionUsd ?? pool.avgPositionUsd,
-			top10Pct: holderStats?.[pool.configID]?.top10Pct ?? pool.top10Pct,
-			holderChange7d: holderStats?.[pool.configID]?.holderChange7d ?? pool.holderChange7d,
-			holderChange30d: holderStats?.[pool.configID]?.holderChange30d ?? pool.holderChange30d
-		}))
-	}, [holderStats, poolsList, volatility])
+	const { selectedChains, minTvl, maxTvl, minApy, maxApy } = useFormatYieldQueryParams({ chainList })
 
 	const filteredPools = React.useMemo(() => {
-		let pools = poolsWithVolatility
+		let pools = poolsList
 
 		if (selectedChains.length > 0 && selectedChains.length < chainList.length) {
 			const chainSet = new Set(selectedChains)
 			pools = pools.filter((pool) => chainSet.has(pool.chains[0]))
-		}
-
-		if (includeTokens.length > 0) {
-			pools = pools.filter((pool) =>
-				includeTokenVariantSets.some((tokenVariants) =>
-					poolMatchesSelectedToken(pool.yieldTokenVariants, tokenVariants)
-				)
-			)
-		}
-
-		if (excludeTokens.length > 0) {
-			pools = pools.filter(
-				(pool) =>
-					!excludeTokenVariantSets.some((tokenVariants) =>
-						poolMatchesSelectedToken(pool.yieldTokenVariants, tokenVariants)
-					)
-			)
 		}
 
 		if (minTvl != null) {
@@ -179,33 +101,13 @@ export function TokenYieldsSection({ tokenSymbol, hydration }: TokenYieldsSectio
 		}
 
 		return pools
-	}, [
-		chainList.length,
-		excludeTokenVariantSets,
-		includeTokenVariantSets,
-		excludeTokens.length,
-		includeTokens.length,
-		maxApy,
-		maxTvl,
-		minApy,
-		minTvl,
-		poolsWithVolatility,
-		selectedChains
-	])
+	}, [chainList.length, maxApy, maxTvl, minApy, minTvl, poolsList, selectedChains])
 
 	const filteredStats = React.useMemo(() => {
-		return buildPoolsTrackingStats(filteredPools)
+		return getTokenYieldStats(filteredPools)
 	}, [filteredPools])
 
-	const hasVisibleFilters = React.useMemo(
-		() =>
-			FILTER_ONLY_PARAMS.some((key) => {
-				const value = router.query[key]
-				return Array.isArray(value) ? value.length > 0 : value != null && value !== ''
-			}),
-		[router.query]
-	)
-	const hasFetchTriggeringFilters = React.useMemo(
+	const hasActiveFilters = React.useMemo(
 		() =>
 			FILTER_QUERY_PARAMS.some((key) => {
 				const value = router.query[key]
@@ -219,20 +121,19 @@ export function TokenYieldsSection({ tokenSymbol, hydration }: TokenYieldsSectio
 	const isFetchingFullData =
 		!fetchedRows &&
 		!error &&
-		(shouldFetchFullData ||
-			(hasPartialData && (hasFetchTriggeringFilters || hasNonDefaultSorting || requestedPageIndex > 0)))
+		(shouldFetchFullData || (hasPartialData && (hasActiveFilters || hasNonDefaultSorting || requestedPageIndex > 0)))
 	const showInitialLoader = isFetchingFullData && poolsList.length === 0
 	const showBackgroundLoading = isFetchingFullData && poolsList.length > 0
 
 	React.useEffect(() => {
-		if ((hasFetchTriggeringFilters || hasNonDefaultSorting) && !shouldFetchFullData) {
+		if ((hasActiveFilters || hasNonDefaultSorting) && !shouldFetchFullData) {
 			setShouldFetchFullData(true)
 		}
-	}, [hasFetchTriggeringFilters, hasNonDefaultSorting, shouldFetchFullData])
+	}, [hasActiveFilters, hasNonDefaultSorting, shouldFetchFullData])
 
 	const resetFilters = () => {
 		const updates: Record<string, undefined> = {}
-		for (const key of FILTER_ONLY_PARAMS) {
+		for (const key of FILTER_QUERY_PARAMS) {
 			updates[key] = undefined
 		}
 		pushShallowQuery(router, updates)
@@ -243,7 +144,7 @@ export function TokenYieldsSection({ tokenSymbol, hydration }: TokenYieldsSectio
 		showInitialLoader || (error != null && poolsList.length === 0) || (totalRowCount === 0 && !isFetchingFullData)
 	const summaryText =
 		filteredStats.noOfPoolsTracked > 0
-			? hasPartialData && !hasFetchTriggeringFilters
+			? hasPartialData && !hasActiveFilters
 				? `Showing ${filteredStats.noOfPoolsTracked} of ${totalRowCount} ${totalRowCount > 1 ? 'pools' : 'pool'}`
 				: `Tracking ${filteredStats.noOfPoolsTracked} ${filteredStats.noOfPoolsTracked > 1 ? 'pools' : 'pool'}${
 						filteredStats.averageAPY != null ? `, average APY ${filteredStats.averageAPY.toFixed(2)}%` : ''
@@ -289,17 +190,11 @@ export function TokenYieldsSection({ tokenSymbol, hydration }: TokenYieldsSectio
 
 			<div className="flex flex-1 flex-col gap-2 p-2">
 				{showInitialLoader ? (
-					<div className="flex flex-1 items-center justify-center">
-						<LoadingIndicator />
-					</div>
+					<SurfaceBodyLoadingStatus />
 				) : error && poolsList.length === 0 ? (
-					<div className="flex flex-1 items-center justify-center px-4 text-center">
-						<p className="body-sm text-data-down">{error.message}</p>
-					</div>
+					<SurfaceBodyStatus variant="error">{error.message}</SurfaceBodyStatus>
 				) : poolsList.length === 0 ? (
-					<div className="flex flex-1 items-center justify-center px-4 text-center">
-						<p className="body-sm text-tertiary">No yield pools found.</p>
-					</div>
+					<SurfaceBodyStatus variant="empty">No yield pools found.</SurfaceBodyStatus>
 				) : (
 					<div className="flex flex-1 flex-col">
 						<TableToolbar>
@@ -312,64 +207,41 @@ export function TokenYieldsSection({ tokenSymbol, hydration }: TokenYieldsSectio
 											nestedMenu={nestedMenu}
 											size="md"
 										/>
-										<FilterByToken
-											tokensList={tokensList}
-											selectedTokens={includeTokens}
-											nestedMenu={nestedMenu}
-											autoApplyAttributes={false}
-											queryKey="yieldToken"
-											excludeQueryKey="yieldExcludeToken"
-											size="md"
-										/>
-										<TVLRange variant="secondary" nestedMenu={nestedMenu} size="md" />
+										<TVLRange label="TVL" variant="secondary" nestedMenu={nestedMenu} size="md" />
 										<APYRange nestedMenu={nestedMenu} size="md" />
-										<ColumnFilters enabledColumns={ENABLED_COLUMNS} nestedMenu={nestedMenu} size="md" />
-										{hasVisibleFilters && nestedMenu ? (
-											<button type="button" onClick={resetFilters} className={nestedMenuActionStyles}>
-												Reset filters
-											</button>
-										) : hasVisibleFilters ? (
-											<Button type="button" size="md" onClick={resetFilters}>
-												Reset filters
-											</Button>
+										{hasActiveFilters ? (
+											nestedMenu ? (
+												<button type="button" onClick={resetFilters} className={nestedMenuActionStyles}>
+													Reset filters
+												</button>
+											) : (
+												<Button type="button" size="md" onClick={resetFilters}>
+													Reset filters
+												</Button>
+											)
 										) : null}
 									</>
 								)}
 							</ResponsiveFilterLayout>
 						</TableToolbar>
-						{error ? (
-							<div className="rounded-lg border border-medium bg-surface-elevated-1 px-3 py-2 body-sm text-data-down">
-								{error.message}
-							</div>
-						) : null}
+						{error ? <InlineStatus variant="error">{error.message}</InlineStatus> : null}
 
 						{isFilteredEmpty ? (
-							<div className="flex flex-1 items-center justify-center p-2 text-center body-sm text-tertiary">
-								<p>No pools match current filters</p>
-							</div>
+							<SurfaceBodyStatus variant="empty">No pools match current filters</SurfaceBodyStatus>
 						) : (
 							<div className="relative flex flex-col gap-3">
-								{showBackgroundLoading ? (
-									<div className="absolute inset-0 z-20 flex items-center justify-center rounded-lg bg-page/60 backdrop-blur-[1px]">
-										<div className="flex items-center gap-2 rounded-lg border border-medium bg-surface-elevated-1 px-3 py-2 body-sm text-secondary shadow-xs">
-											<LoadingSpinner size={12} />
-											<span>Loading full dataset...</span>
-										</div>
-									</div>
-								) : null}
-								<div className={showBackgroundLoading ? 'opacity-60' : ''}>
-									<PaginatedYieldsPoolTable
-										key={`${fetchedRows ? 'full' : 'initial'}-${requestedPageIndex}-${tableSortingKey}`}
-										data={filteredPools}
-										enablePagination
-										initialPageSize={hydrationPageSize}
-										initialPageIndex={fetchedRows ? requestedPageIndex : 0}
-										sortingState={tableSorting}
-										onSortingChange={handleSortingChange}
-										interactionDisabled={showBackgroundLoading}
-									/>
-								</div>
-								{hasPartialData && !hasFetchTriggeringFilters ? (
+								<PaginatedYieldsPoolTable
+									key={`${fetchedRows ? 'full' : 'initial'}-${requestedPageIndex}-${tableSortingKey}`}
+									data={filteredPools}
+									initialPageSize={hydrationPageSize}
+									initialPageIndex={fetchedRows ? requestedPageIndex : 0}
+									sortingState={tableSorting}
+									onSortingChange={handleSortingChange}
+									interactionDisabled={showBackgroundLoading}
+									loadingLabel="Loading full dataset..."
+									appearance="embedded"
+								/>
+								{hasPartialData && !hasActiveFilters ? (
 									<div className={showBackgroundLoading ? 'opacity-60' : ''}>
 										<TokenDeferredPaginationControls
 											totalCount={totalRowCount}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from '~/components/Icon'
+import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { EASE_OUT_EXPO } from '../primitives/motion'
 
 // Every panel stays in the DOM (inactive ones get `hidden`) so SSR HTML carries all of it
@@ -40,7 +41,7 @@ function TabPanel({ tab, active }: { tab: RiskTab; active: boolean }) {
 			role="tabpanel"
 			aria-labelledby={`risk-tab-${tab.id}`}
 			hidden={!active}
-			className="scroll-mt-24 p-4 sm:p-5"
+			className="scroll-mt-24 p-4"
 		>
 			{tab.content}
 		</div>
@@ -91,18 +92,19 @@ export function RiskTabs({ tabs, defaultId }: { tabs: RiskTab[]; defaultId: stri
 		<div className="flex flex-col">
 			{/* transparent borders on every segment keep sizing stable so the active edge doesn't
 			    shift layout */}
-			<div className="px-4 pt-4 sm:px-5 sm:pt-5">
+			<div className="px-4 pt-4">
 				<div
 					ref={tablistRef}
 					role="tablist"
 					aria-label="Risk detail"
 					onKeyDown={onKeyDown}
-					className="flex w-full gap-1 overflow-x-auto rounded-lg bg-(--legacy-bg-main) p-1 sm:inline-flex sm:w-auto sm:max-w-full"
+					className={`${tabTrackStyles} sm:w-auto sm:max-w-full`}
 				>
 					{tabs.map((t) => {
 						const selected = t.id === active
 						return (
-							<button
+							<TabLink
+								as="button"
 								key={t.id}
 								id={`risk-tab-${t.id}`}
 								type="button"
@@ -110,23 +112,16 @@ export function RiskTabs({ tabs, defaultId }: { tabs: RiskTab[]; defaultId: stri
 								aria-selected={selected}
 								aria-controls={t.id}
 								tabIndex={selected ? 0 : -1}
+								data-active={selected}
 								onClick={() => activate(t.id)}
-								className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-sm whitespace-nowrap transition-colors duration-150 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--legacy-primary) sm:flex-initial ${
-									selected
-										? 'border-(--legacy-cards-border) bg-(--legacy-cards-bg) font-medium text-(--legacy-text-primary) shadow-sm'
-										: 'border-transparent text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
-								}`}
+								className="inline-flex flex-1 items-center justify-center gap-1.5 sm:flex-initial"
 							>
 								<Icon name={t.icon} className={`size-4${t.iconFlipY ? ' -scale-y-100' : ''}`} aria-hidden />
 								{t.label}
 								{t.count != null ? (
-									<span
-										className={`tabular-nums ${selected ? 'text-(--legacy-text-secondary)' : 'text-(--legacy-text-tertiary)'}`}
-									>
-										{t.count}
-									</span>
+									<span className={selected ? 'text-secondary' : 'text-tertiary'}>{t.count}</span>
 								) : null}
-							</button>
+							</TabLink>
 						)
 					})}
 				</div>

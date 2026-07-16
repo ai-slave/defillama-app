@@ -1,38 +1,26 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from 'next'
 import { useRouter } from 'next/router'
-import * as React from 'react'
-import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
-import { TVLRange } from '~/components/Filters/TVLRange'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
-import { APYRange } from '~/containers/Yields/Filters/APYRange'
-import { FilterByChain } from '~/containers/Yields/Filters/Chains'
-import { ColumnFilters } from '~/containers/Yields/Filters/ColumnFilters'
-import { ALL_POOL_COLUMN_QUERY_KEYS } from '~/containers/Yields/Filters/poolColumns'
-import { FilterByToken } from '~/containers/Yields/Filters/Tokens'
+import { YIELD_EARN_DATASET_API } from '~/containers/Yields/constants'
+import { YieldFilters } from '~/containers/Yields/Filters'
 import { useFormatYieldQueryParams } from '~/containers/Yields/hooks'
-import {
-	buildPoolsTrackingStats,
-	filterPoolTableRows,
-	getPoolRowChains,
-	getPoolRowTokens
-} from '~/containers/Yields/poolsPipeline'
-import { useHolderStats, useVolatility } from '~/containers/Yields/queries.client'
-import { clearYieldsQueries, hasActiveYieldsQueries } from '~/containers/Yields/queryState'
-import { YieldsPoolsTable } from '~/containers/Yields/Tables/Pools'
+import { selectedSubsetQuery } from '~/containers/Yields/queryState'
+import { PaginatedYieldsPoolTable } from '~/containers/Yields/Tables/Pools'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
-import { nestedMenuActionStyles } from '~/ui/Popover'
+import { useYieldsServerTable } from '~/containers/Yields/useYieldsServerTable'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { sluggifyProtocol } from '~/utils/cache-client'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
-import { pushShallowQuery } from '~/utils/routerQuery'
 
 const EMPTY_TOGGLE_OPTIONS = []
-
+const EMPTY_POOL_ROWS: IYieldTableRow[] = []
+const EMPTY_CHAINS: string[] = []
 export const getStaticProps = withPerformanceLogging(
 	'protocol/yields/[protocol]',
 	async ({ params }: GetStaticPropsContext<{ protocol: string }>) => {
@@ -68,31 +56,56 @@ export const getStaticProps = withPerformanceLogging(
 		const metrics = getProtocolMetricFlags({ protocolData, metadata })
 		const seoTitle = `${protocolData.name} Yield Pools & APY Rankings - DefiLlama`
 		const seoDescription = `Explore ${protocolData.name} yield pools, APY rankings, and liquidity farming opportunities across chains on DefiLlama.`
+
+		// Aggregate this protocol's own pools plus its children's when it is a parent (no
+		// parentProtocol of its own) — a parent tab shows every child's pools.
 		const protocolSlug = sluggifyProtocol(protocolData.name)
-		const otherProtocolsSet = new Set<string>()
-		for (const otherProtocol of protocolData.otherProtocols ?? []) {
-			otherProtocolsSet.add(sluggifyProtocol(otherProtocol))
+		const protocolSlugs = new Set<string>([protocolSlug])
+		if (!protocolData.parentProtocol) {
+			for (const otherProtocol of protocolData.otherProtocols ?? []) {
+				protocolSlugs.add(sluggifyProtocol(otherProtocol))
+			}
 		}
 
-		let poolsError: string | null = null
-		let poolsList: IYieldTableRow[] = []
-		try {
-			const protocolSlugs = [protocolSlug]
-			if (!protocolData.parentProtocol) {
-				for (const otherProtocolSlug of otherProtocolsSet) {
-					if (otherProtocolSlug !== protocolSlug) {
-						protocolSlugs.push(otherProtocolSlug)
-					}
-				}
-			}
+		// The earn dataset's `protocol=` filter is protocol-NAME based, so resolve the slug
+		// set to v2 protocol names via the yields meta. Slugs with no v2 yield pools are
+		// absent from the meta and drop out (a tiny name list ships to the client, which
+		// fetches the rows itself).
+		let protocolNames: string[] = []
+		// Chains present for THIS protocol's pools (drives the tab's Chains dropdown options),
+		// ordered by pool count; evmChains is the EVM subset (the shared dropdown's "All EVM").
+		let chainList: string[] = []
+		let evmChains: string[] = []
+		const [{ acquireYieldsSnapshot, readYieldsMeta }, { getEntityEarn }] = await Promise.all([
+			import('~/containers/Yields/server/dataset.server'),
+			import('~/containers/Yields/data/enrich.server')
+		])
+		const snapshot = await acquireYieldsSnapshot('blocking')
+		const meta = await readYieldsMeta(snapshot)
+		const slugToName = new Map(meta.protocols.map((entry) => [entry.slug, entry.name]))
+		const names = new Set<string>()
+		for (const slug of protocolSlugs) {
+			const name = slugToName.get(slug)
+			if (name) names.add(name)
+		}
+		protocolNames = [...names]
 
-			const { acquireYieldsSnapshot, getProtocolYieldRows } =
-				await import('~/containers/Yields/server/snapshot.reader.server')
-			const snapshot = await acquireYieldsSnapshot('blocking')
-			poolsList = await getProtocolYieldRows(snapshot, protocolSlugs)
-		} catch (err) {
-			console.log('[HTTP]:[ERROR]:[PROTOCOL_YIELD]:', protocol, err instanceof Error ? err.message : '')
-			poolsError = 'Failed to fetch'
+		if (protocolNames.length > 0) {
+			const rows = await getEntityEarn(snapshot)
+			// Meme pools are excluded from the tab's default server view, so leave them out of
+			// the chain vocabulary too (an all-meme chain would otherwise offer zero rows).
+			const memePoolIds = new Set(meta.meme_pool_ids)
+			const chainCounts = new Map<string, number>()
+			const chainIsEvm = new Map<string, boolean>()
+			for (const row of rows) {
+				if (!names.has(row.protocol) || memePoolIds.has(row.id) || !row.chain) continue
+				chainCounts.set(row.chain, (chainCounts.get(row.chain) ?? 0) + 1)
+				if (row.isEvm) chainIsEvm.set(row.chain, true)
+			}
+			chainList = [...chainCounts.keys()].sort(
+				(a, b) => (chainCounts.get(b) ?? 0) - (chainCounts.get(a) ?? 0) || a.localeCompare(b)
+			)
+			evmChains = chainList.filter((chain) => chainIsEvm.get(chain))
 		}
 
 		return {
@@ -102,8 +115,9 @@ export const getStaticProps = withPerformanceLogging(
 				otherProtocols: protocolData.otherProtocols ?? [],
 				category: protocolData.category ?? null,
 				metrics,
-				poolsList,
-				poolsError,
+				protocolNames,
+				chainList,
+				evmChains,
 				warningBanners: getProtocolWarningBanners(protocolData),
 				seoTitle,
 				seoDescription
@@ -127,68 +141,88 @@ export const getStaticPaths = () => {
 	return { paths: [], fallback: 'blocking' }
 }
 
-const FILTER_QUERY_PARAMS = [
-	'chain',
-	'excludeChain',
-	'token',
-	'excludeToken',
-	'minTvl',
-	'maxTvl',
-	'minApy',
-	'maxApy',
-	...ALL_POOL_COLUMN_QUERY_KEYS
-]
+// Embedded earn surface, scoped to this protocol's name(s) via a fixed `protocol=` filter
+// (not user-editable). The tab exposes exactly FOUR user controls — Chains, TVL range, APY
+// range, Columns — reusing the earn page's shared components; they compose with the fixed
+// protocol filter through the same server query. No other filters/dials/views.
+function ProtocolYieldsTab({
+	protocolNames,
+	chainList,
+	evmChains
+}: {
+	protocolNames: string[]
+	chainList: string[]
+	evmChains: string[]
+}) {
+	const hasProtocols = protocolNames.length > 0
 
-export default function Protocols(props: InferGetStaticPropsType<typeof getStaticProps>) {
+	// Chains dropdown state: decode the URL `chain=` selection (expands ALL_EVM / All / None)
+	// against this protocol's chain list, exactly as the earn page does.
 	const router = useRouter()
-	const { data: volatility } = useVolatility()
-	const poolsList = React.useMemo(() => props.poolsList ?? [], [props.poolsList])
-	const { data: holderStats } = useHolderStats(poolsList.map((pool) => pool.configID))
-	const rowsWithStats = React.useMemo(
-		() =>
-			poolsList.map((pool) => ({
-				...pool,
-				apyMedian30d: volatility?.[pool.configID]?.[1] ?? pool.apyMedian30d ?? null,
-				apyStd30d: volatility?.[pool.configID]?.[2] ?? pool.apyStd30d ?? null,
-				cv30d: volatility?.[pool.configID]?.[3] ?? pool.cv30d ?? null,
-				holderCount: holderStats?.[pool.configID]?.holderCount ?? pool.holderCount ?? null,
-				avgPositionUsd: holderStats?.[pool.configID]?.avgPositionUsd ?? pool.avgPositionUsd ?? null,
-				top10Pct: holderStats?.[pool.configID]?.top10Pct ?? pool.top10Pct ?? null,
-				holderChange7d: holderStats?.[pool.configID]?.holderChange7d ?? pool.holderChange7d ?? null,
-				holderChange30d: holderStats?.[pool.configID]?.holderChange30d ?? pool.holderChange30d ?? null
-			})),
-		[poolsList, volatility, holderStats]
-	)
-	const chainList = React.useMemo(() => getPoolRowChains(rowsWithStats), [rowsWithStats])
-	const tokensList = React.useMemo(() => getPoolRowTokens(rowsWithStats), [rowsWithStats])
+	const resolvedPathname = router.asPath.split('?')[0]
 
-	const { selectedChains, includeTokens, excludeTokens, minTvl, maxTvl, minApy, maxApy } = useFormatYieldQueryParams({
-		chainList
+	const { selectedChains } = useFormatYieldQueryParams({
+		chainList,
+		evmChains,
+		projectQueryKey: 'protocol',
+		excludeProjectQueryKey: 'excludeProtocol'
 	})
 
-	const filteredPools = React.useMemo(() => {
-		return filterPoolTableRows(rowsWithStats, {
-			selectedChains,
-			chainList,
-			includeTokens,
-			excludeTokens,
-			minTvl,
-			maxTvl,
-			minApy,
-			maxApy
-		})
-	}, [rowsWithStats, selectedChains, chainList, includeTokens, excludeTokens, minTvl, maxTvl, minApy, maxApy])
+	// Fixed protocol filter + the resolved chain selection ride the earn table's server query.
+	// TVL/APY ranges (minTvl/maxTvl/minApy/maxApy) and the `column=` param flow through the URL
+	// query untouched: the earn route honors the ranges and the table reads `column=` from the
+	// router, so no extra wiring is needed for those three.
+	const extraQuery = {
+		protocol: protocolNames,
+		chain: chainList.length > 0 ? selectedSubsetQuery(selectedChains, chainList) : undefined
+	}
+	const { rows, total, rowsQuery, tableProps } = useYieldsServerTable<IYieldTableRow>({
+		endpoint: YIELD_EARN_DATASET_API,
+		enabled: hasProtocols,
+		extraQuery
+	})
+	const poolsData = rows.length > 0 ? rows : EMPTY_POOL_ROWS
 
-	const filteredStats = React.useMemo(() => buildPoolsTrackingStats(filteredPools), [filteredPools])
-
-	const hasActiveFilters = hasActiveYieldsQueries(router.query, FILTER_QUERY_PARAMS)
-
-	const resetFilters = () => {
-		pushShallowQuery(router, clearYieldsQueries(FILTER_QUERY_PARAMS))
+	if (!hasProtocols) {
+		return <PanelStatus variant="empty">No yield pools for this protocol</PanelStatus>
 	}
 
-	const isFilteredEmpty = filteredPools.length === 0 && poolsList.length > 0
+	return (
+		<>
+			<div className="mt-1 mb-2 flex flex-wrap items-baseline gap-x-3 px-1">
+				<p className={`text-sm text-(--text-secondary) ${total ? '' : 'invisible'}`}>
+					Tracking <strong className="text-(--text-primary)">{total.toLocaleString()}</strong>{' '}
+					{total === 1 ? 'pool' : 'pools'}
+				</p>
+			</div>
+			<div className="mb-3">
+				<YieldFilters
+					chainList={chainList}
+					selectedChains={selectedChains}
+					evmChains={evmChains}
+					tvlRange={true}
+					tvlRangeLabel="TVL"
+					apyRange={true}
+					showColumns
+					saveView={false}
+					resetFilters={true}
+					pathname={resolvedPathname}
+				/>
+			</div>
+			{!rowsQuery.data && !rowsQuery.isError ? (
+				<PanelLoadingStatus label="Loading pools" />
+			) : rowsQuery.isError && !rowsQuery.data ? (
+				<PanelStatus variant="error">Couldn't load pools.</PanelStatus>
+			) : poolsData.length > 0 ? (
+				<PaginatedYieldsPoolTable data={poolsData} {...tableProps} />
+			) : (
+				<PanelStatus variant="empty">No yield pools for this protocol</PanelStatus>
+			)}
+		</>
+	)
+}
 
+export default function Protocols(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<ProtocolOverviewLayout
 			name={props.name}
@@ -201,63 +235,13 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 			seoTitle={props.seoTitle}
 			seoDescription={props.seoDescription}
 		>
-			{poolsList.length > 0 && (
-				<div className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
-					<div className="flex flex-wrap items-center gap-2 p-3">
-						<span>
-							{filteredStats.noOfPoolsTracked > 0
-								? `Tracking ${filteredStats.noOfPoolsTracked} ${filteredStats.noOfPoolsTracked > 1 ? 'pools' : 'pool'}${filteredStats.averageAPY != null ? `, average APY ${filteredStats.averageAPY.toFixed(2)}%` : ''}`
-								: 'No pools matching filters'}
-						</span>
-					</div>
-					<div className="p-3">
-						<ResponsiveFilterLayout>
-							{(nestedMenu) => (
-								<>
-									<FilterByChain chainList={chainList} selectedChains={selectedChains} nestedMenu={nestedMenu} />
-									<FilterByToken
-										tokensList={tokensList}
-										selectedTokens={includeTokens}
-										nestedMenu={nestedMenu}
-										autoApplyAttributes={false}
-									/>
-									<TVLRange variant="secondary" nestedMenu={nestedMenu} />
-									<APYRange nestedMenu={nestedMenu} />
-									<ColumnFilters enabledColumns={ALL_POOL_COLUMN_QUERY_KEYS} nestedMenu={nestedMenu} />
-									{hasActiveFilters && (
-										<button
-											type="button"
-											onClick={resetFilters}
-											className={
-												nestedMenu
-													? nestedMenuActionStyles
-													: 'rounded-md bg-(--legacy-btn-bg) px-3 py-2 text-xs text-(--legacy-text-primary) hover:bg-(--legacy-btn-hover-bg) focus-visible:bg-(--legacy-btn-hover-bg)'
-											}
-										>
-											Reset filters
-										</button>
-									)}
-								</>
-							)}
-						</ResponsiveFilterLayout>
-					</div>
-				</div>
-			)}
-			{props.poolsError ? (
-				<div className="flex flex-1 flex-col items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3">
-					<p className="p-2">{props.poolsError}</p>
-				</div>
-			) : isFilteredEmpty ? (
-				<div className="flex flex-1 flex-col items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3">
-					<p className="p-2">No pools match current filters</p>
-				</div>
-			) : poolsList.length === 0 ? (
-				<div className="flex flex-1 flex-col items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-3">
-					<p className="p-2">No yield pools for this protocol</p>
-				</div>
-			) : (
-				<YieldsPoolsTable data={filteredPools} />
-			)}
+			<ProtocolYieldsTab
+				protocolNames={props.protocolNames ?? EMPTY_POOL_NAMES}
+				chainList={props.chainList ?? EMPTY_CHAINS}
+				evmChains={props.evmChains ?? EMPTY_CHAINS}
+			/>
 		</ProtocolOverviewLayout>
 	)
 }
+
+const EMPTY_POOL_NAMES: string[] = []

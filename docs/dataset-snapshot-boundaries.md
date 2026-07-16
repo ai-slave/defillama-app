@@ -19,7 +19,7 @@ network builder -> unpublished writer -> validated immutable version
 - `publish.server.ts` is the preparation/scheduled-refresh entry point.
 - Domain `*.builder.server.ts` modules own network acquisition and write through
   `DatasetSnapshotWriter`. They do not choose storage paths or publish.
-- Domain `*.reader.server.ts` or `dataset*.server.ts` modules turn one snapshot
+- Domain `dataset*.server.ts` modules turn one snapshot
   handle into typed data and compose pure transforms.
 - Pages acquire data only inside `getStaticProps` or `getServerSideProps`. API,
   proxy, and other server entry points acquire inside their handlers.

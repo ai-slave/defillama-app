@@ -31,8 +31,7 @@ export const privateApiRoutePaths = [
 	'revalidate-instances',
 	'token-liquidations/[symbol]',
 	'token-unlocks/[protocol]',
-	'token-usage/[symbol]',
-	'yields/volatility'
+	'token-usage/[symbol]'
 ] as const
 
 export const dynamicApiRoutePaths = [
@@ -187,19 +186,11 @@ export const allApiRoutePaths = [
 	'tokens/charts/coingecko/[geckoId]',
 	'token-unlocks/[protocol]',
 	'token-usage/[symbol]',
-	'yields',
-	'yields/borrow',
-	'yields/borrow-advanced',
-	'yields/halal',
-	'yields/holders',
-	'yields/holders/[configID]',
-	'yields/lend-borrow/charts/[configID]',
-	'yields/loop',
-	'yields/pools',
-	'yields/strategy',
-	'yields/strategy-long-short',
-	'yields/token-borrow-routes',
-	'yields/volatility'
+	'yields/borrow-markets',
+	'yields/borrow-routes',
+	'yields/earn',
+	'yields/loops',
+	'yields/proxy/[...path]'
 ] as const
 
 const privateApiRoutePathSet = new Set<string>(privateApiRoutePaths)

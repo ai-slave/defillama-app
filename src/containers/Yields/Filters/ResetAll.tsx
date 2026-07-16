@@ -1,14 +1,17 @@
 import { useRouter } from 'next/router'
+import { Button } from '~/ui/Button'
 import { nestedMenuActionStyles } from '~/ui/Popover'
 
 export function ResetAllYieldFilters({
 	pathname,
 	resetContext,
-	nestedMenu
+	nestedMenu,
+	label = 'Reset all filters'
 }: {
 	pathname: string
 	resetContext?: () => void
 	nestedMenu: boolean
+	label?: string
 }) {
 	const router = useRouter()
 
@@ -17,25 +20,26 @@ export function ResetAllYieldFilters({
 		resetContext?.()
 	}
 
-	// Check if any filters are active
+	// Dynamic-route params ([protocol]) live in router.query but are not filters.
+	const routeParams = new Set(Array.from(router.pathname.matchAll(/\[(?:\.\.\.)?(\w+)\]/g), (m) => m[1]))
 	let hasActiveFilters = false
-	for (const _key in router.query) {
+	for (const key in router.query) {
+		if (routeParams.has(key)) continue
 		hasActiveFilters = true
 		break
 	}
 
+	if (nestedMenu) {
+		return (
+			<button type="button" onClick={handleClick} disabled={!hasActiveFilters} className={nestedMenuActionStyles}>
+				{label}
+			</button>
+		)
+	}
+
 	return (
-		<button
-			type="button"
-			onClick={handleClick}
-			disabled={!hasActiveFilters}
-			className={
-				nestedMenu
-					? nestedMenuActionStyles
-					: 'rounded-md bg-(--legacy-btn-bg) px-3 py-2 text-xs hover:bg-(--legacy-btn-hover-bg) focus-visible:bg-(--legacy-btn-hover-bg) disabled:cursor-not-allowed disabled:opacity-40'
-			}
-		>
-			Reset all filters
-		</button>
+		<Button type="button" variant="secondary" size="md" onClick={handleClick} disabled={!hasActiveFilters}>
+			{label}
+		</Button>
 	)
 }

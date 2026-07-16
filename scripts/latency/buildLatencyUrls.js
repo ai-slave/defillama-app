@@ -137,13 +137,10 @@ const STANDALONE = [
 	'/unlocks',
 	'/unlocks/calendar',
 	'/yields',
-	'/yields/halal',
+	'/yields/borrow',
 	'/yields/loop',
-	'/yields/overview',
-	'/yields/projects',
-	'/yields/stablecoins',
-	'/yields/strategy',
-	'/yields/strategy-long-short'
+	'/yields/rates',
+	'/yields/watchlist'
 ]
 
 // ---------- Dynamic templates ---------------------------------------------
@@ -212,10 +209,10 @@ const SOURCES = {
 			.filter(Boolean)
 	},
 	yieldPools: async () => {
-		const r = await fetchJson('https://yields.llama.fi/pools')
+		const r = await fetchJson('https://yields-v2.llama.fi/v2/earn')
 		return (r.data || [])
-			.sort((a, b) => (a.tvlUsd || 0) - (b.tvlUsd || 0))
-			.map((p) => p.pool)
+			.sort((a, b) => (a.tvl_usd || 0) - (b.tvl_usd || 0))
+			.map((p) => p.id)
 			.filter(Boolean)
 	},
 	tokens: async () => {

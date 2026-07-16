@@ -85,7 +85,7 @@ const poolColumns: ColumnDef<PoolRow>[] = [
 		size: 140
 	},
 	{
-		header: 'APY',
+		header: 'Supply APY',
 		accessorKey: 'apy',
 		cell: ({ getValue }) => formatPct(getValue<number | null>()),
 		meta: { align: 'end' as const },

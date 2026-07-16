@@ -7,7 +7,9 @@ import {
 	fetchAdapterProtocolMetrics
 } from '~/containers/AdapterMetrics/api'
 import { fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
-import { YIELD_POOLS_API } from '~/containers/Yields/constants'
+import { YIELD_EARN_DATASET_API } from '~/containers/Yields/constants'
+import type { EarnPageRow } from '~/containers/Yields/data/types'
+import type { YieldsPaginatedTableResponse } from '~/containers/Yields/yieldsTableQuery'
 import { fetchJson } from '~/utils/async'
 
 const PROTOCOL_SLUG = 'sparklend'
@@ -178,19 +180,21 @@ export function useSparklendYieldPools() {
 	const query = useQuery({
 		queryKey: ['sparklend-yield-pools'],
 		queryFn: async () => {
-			const data = await fetchJson<{ data: Array<Record<string, unknown>> }>(YIELD_POOLS_API)
-			return (data?.data ?? [])
-				.filter((p) => p.project === 'sparklend')
+			const data = await fetchJson<YieldsPaginatedTableResponse<EarnPageRow>>(
+				`${YIELD_EARN_DATASET_API}?pageSize=all&includeMemeTokens=true&protocol=SparkLend`
+			)
+			return data.rows
+				.filter((pool) => pool.projectslug === PROTOCOL_SLUG)
 				.map(
-					(p): YieldPool => ({
-						pool: String(p.pool ?? ''),
-						chain: String(p.chain ?? ''),
-						symbol: String(p.symbol ?? ''),
-						tvlUsd: Number(p.tvlUsd ?? 0),
-						apy: typeof p.apy === 'number' ? p.apy : null,
-						apyBase: typeof p.apyBase === 'number' ? p.apyBase : null,
-						apyReward: typeof p.apyReward === 'number' ? p.apyReward : null,
-						poolMeta: typeof p.poolMeta === 'string' ? p.poolMeta : null
+					(pool): YieldPool => ({
+						pool: pool.configID,
+						chain: pool.chains[0],
+						symbol: pool.pool,
+						tvlUsd: pool.tvl ?? 0,
+						apy: pool.apy,
+						apyBase: pool.apyBase,
+						apyReward: pool.apyReward,
+						poolMeta: pool.poolMeta ?? null
 					})
 				)
 				.sort((a, b) => b.tvlUsd - a.tvlUsd)

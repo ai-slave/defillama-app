@@ -1,8 +1,11 @@
 import { Icon } from '~/components/Icon'
+import { TokenPageTableShell } from '~/components/Table/helpers'
+import { Card } from '~/ui/Card'
 import { formattedNum } from '~/utils'
 import { scenarioTone } from '../derive'
 import { guardianText } from '../format'
 import { oracleBadge, toneClasses } from '../kindMeta'
+import { RiskCallout } from '../primitives/RiskCallout'
 import type { CoverageVM, ProtocolRiskFixture, ScenarioVM } from '../types'
 import { ConditionsTree } from './ConditionsTree'
 import { usePositionUsd } from './PositionControl'
@@ -25,16 +28,10 @@ function StatRow({
 }) {
 	return (
 		<div
-			className={`-mx-1.5 flex items-center justify-between gap-3 rounded-md px-1.5 py-1 ${active ? 'bg-black/6 dark:bg-white/6' : ''}`}
+			className={`-mx-1.5 flex items-center justify-between gap-3 rounded-md px-1.5 py-1 ${active ? 'bg-brand-muted' : ''}`}
 		>
-			<span
-				className={`text-xs ${active ? 'font-medium text-(--legacy-text-primary)' : 'text-(--legacy-text-secondary)'}`}
-			>
-				{label}
-			</span>
-			<span
-				className={`text-xs tabular-nums ${active ? 'font-semibold text-(--legacy-text-primary)' : muted ? 'text-(--legacy-text-secondary)' : 'font-medium text-(--legacy-text-primary)'}`}
-			>
+			<span className={`body-sm ${active ? 'text-primary' : 'text-secondary'}`}>{label}</span>
+			<span className={`label-sm tabular-nums ${active ? 'text-primary' : muted ? 'text-secondary' : 'text-primary'}`}>
 				{value}
 			</span>
 		</div>
@@ -49,14 +46,7 @@ function LossRing({ pct, className = '', strokeWidth = 2 }: { pct: number; class
 	const dash = (Math.max(0, Math.min(100, pct)) / 100) * circ
 	return (
 		<svg viewBox="0 0 18 18" className={`-rotate-90 ${className}`} aria-hidden>
-			<circle
-				cx="9"
-				cy="9"
-				r={r}
-				fill="none"
-				strokeWidth={strokeWidth}
-				className="stroke-black/10 dark:stroke-white/10"
-			/>
+			<circle cx="9" cy="9" r={r} fill="none" strokeWidth={strokeWidth} className="stroke-(--border-subtle)" />
 			<circle
 				cx="9"
 				cy="9"
@@ -93,13 +83,9 @@ function LossHero({
 				<LossRing pct={pct} className="size-11" />
 			</span>
 			<span className="flex min-w-0 flex-col">
-				<span className="text-xs text-(--legacy-text-secondary)">{title}</span>
-				<span
-					className={`text-2xl font-semibold tabular-nums ${muted ? 'text-(--legacy-text-secondary)' : 'text-(--legacy-text-primary)'}`}
-				>
-					{amount}
-				</span>
-				{note ? <span className="mt-0.5 text-xs text-(--legacy-text-secondary)">{note}</span> : null}
+				<span className="body-sm text-secondary">{title}</span>
+				<span className={`mono-xl tabular-nums ${muted ? 'text-secondary' : 'text-primary'}`}>{amount}</span>
+				{note ? <span className="mt-0.5 body-sm text-secondary">{note}</span> : null}
 			</span>
 		</div>
 	)
@@ -113,21 +99,17 @@ function LossBox({ scenario, supplyUsd, stress }: { scenario: ScenarioVM; supply
 	const asYours = (poolUsd: number) => formattedNum(scaleToPosition(poolUsd, supplyUsd, position), true)
 	const positionNote =
 		position != null ? (
-			<p className="mt-2 text-xs text-(--legacy-text-secondary)">
-				Shown for your {formattedNum(position, true)} deposit.
-			</p>
+			<p className="mt-2 body-sm text-secondary">Shown for your {formattedNum(position, true)} deposit.</p>
 		) : null
-	const box = 'flex flex-col self-start rounded-lg bg-(--legacy-bg-main) p-4'
-
 	if (scenario.status !== 'computed') {
 		return (
-			<div className={box}>
-				<p className="text-xs text-(--legacy-text-secondary)">Modeled loss</p>
-				<p className="mt-1 text-xl font-semibold text-(--legacy-text-secondary)">Not quantified</p>
-				<div className="mt-3 border-t border-(--legacy-cards-border) pt-3">
+			<Card padding="md" className="flex flex-col self-start">
+				<p className="body-sm text-secondary">Modeled loss</p>
+				<p className="mt-1 heading-sm text-secondary">Not quantified</p>
+				<div className="mt-3 border-t border-subtle pt-3">
 					<StatRow label="Exit window" value={exit} />
 				</div>
-			</div>
+			</Card>
 		)
 	}
 
@@ -140,15 +122,13 @@ function LossBox({ scenario, supplyUsd, stress }: { scenario: ScenarioVM; supply
 	const ringPct = ringDenom > 0 ? Math.min(100, (cell.sortUsd / ringDenom) * 100) : 0
 	const cappedNote =
 		scenario.cappedAtSupply && scenario.rawLossMaxUsd ? (
-			<p className="mt-2 text-xs text-(--legacy-text-secondary)">
-				Capped at pool size: you can&apos;t lose more than is deposited.
-			</p>
+			<p className="mt-2 body-sm text-secondary">Capped at pool size: you can&apos;t lose more than is deposited.</p>
 		) : null
 
 	if (scenario.lossByAnchor?.length) {
 		const headlineMuted = cell.amount === '$0' || cell.amount === '—'
 		return (
-			<div className={box}>
+			<Card padding="md" className="flex flex-col self-start">
 				<LossHero
 					title={stressLossTitle(scenario, stress)}
 					amount={heroAmount}
@@ -157,8 +137,8 @@ function LossBox({ scenario, supplyUsd, stress }: { scenario: ScenarioVM; supply
 					toneText={tone.text}
 					muted={headlineMuted}
 				/>
-				<div className="mt-3 flex flex-col gap-0.5 border-t border-(--legacy-cards-border) pt-3">
-					<p className="mb-0.5 text-[11px] text-(--legacy-text-secondary)">As collateral falls</p>
+				<div className="mt-3 flex flex-col gap-0.5 border-t border-subtle pt-3">
+					<p className="mb-0.5 body-sm text-secondary">As collateral falls</p>
 					{scenario.lossByAnchor.map((a) => (
 						<StatRow
 							key={a.dropPct}
@@ -170,19 +150,19 @@ function LossBox({ scenario, supplyUsd, stress }: { scenario: ScenarioVM; supply
 					))}
 					<StatRow label="Worst case" value={worstValue} active={stress === 'worst'} />
 				</div>
-				<div className="mt-3 border-t border-(--legacy-cards-border) pt-3">
+				<div className="mt-3 border-t border-subtle pt-3">
 					<StatRow label="Exit window" value={exit} />
 				</div>
 				{cappedNote}
 				{positionNote}
-			</div>
+			</Card>
 		)
 	}
 
 	// No per-drop curve: a worst-case-only scenario leads with the ceiling, not a bare "—".
 	const worstOnly = cell.amount === '—'
 	return (
-		<div className={box}>
+		<Card padding="md" className="flex flex-col self-start">
 			<LossHero
 				title={worstOnly ? 'Worst case' : stressLossTitle(scenario, stress)}
 				amount={worstOnly ? worstValue : heroAmount}
@@ -191,72 +171,71 @@ function LossBox({ scenario, supplyUsd, stress }: { scenario: ScenarioVM; supply
 				muted={!worstOnly && cell.amount === '$0'}
 			/>
 			{!worstOnly ? (
-				<div className="mt-3 border-t border-(--legacy-cards-border) pt-3">
+				<div className="mt-3 border-t border-subtle pt-3">
 					<StatRow label="Worst case" value={worstValue} />
 				</div>
 			) : null}
-			<div className="mt-3 border-t border-(--legacy-cards-border) pt-3">
+			<div className="mt-3 border-t border-subtle pt-3">
 				<StatRow label="Exit window" value={exit} />
 			</div>
 			{cappedNote}
 			{positionNote}
-		</div>
+		</Card>
 	)
 }
 
 function PerAssetTable({ scenario }: { scenario: ScenarioVM }) {
 	if (!scenario.perAsset?.length) return null
 	return (
-		<div className="overflow-hidden rounded-md border border-(--legacy-cards-border)">
-			<table className="w-full text-sm">
-				<thead className="bg-(--legacy-bg-main) text-(--legacy-text-secondary)">
+		<TokenPageTableShell>
+			<table className="w-full">
+				<thead className="bg-surface text-sm font-medium text-secondary">
 					<tr>
-						<th className="px-3 py-2 text-left font-medium">Asset</th>
-						<th className="px-3 py-2 text-left font-medium">Oracle</th>
-						<th className="px-3 py-2 text-right font-medium">Max loss</th>
+						<th className="px-3 py-2 text-left">Asset</th>
+						<th className="px-3 py-2 text-left">Oracle</th>
+						<th className="px-3 py-2 text-right">Max loss</th>
 					</tr>
 				</thead>
 				<tbody>
 					{scenario.perAsset.slice(0, 12).map((a) => (
-						<tr key={a.address} className="border-t border-(--legacy-cards-border)">
-							<td className="px-3 py-2 font-medium text-(--legacy-text-primary)">{a.symbol}</td>
-							<td className="px-3 py-2 text-(--legacy-text-secondary)">
-								{a.oracleType ? oracleBadge(a.oracleType).label : '—'}
-							</td>
-							<td className="px-3 py-2 text-right font-medium text-(--legacy-text-primary) tabular-nums">
-								{formattedNum(a.lossMaxUsd, true)}
-							</td>
+						<tr key={a.address} className="border-t border-subtle">
+							<td className="px-3 py-2 label-md text-primary">{a.symbol}</td>
+							<td className="px-3 py-2 text-secondary">{a.oracleType ? oracleBadge(a.oracleType).label : '—'}</td>
+							<td className="px-3 py-2 text-right label-md text-primary">{formattedNum(a.lossMaxUsd, true)}</td>
 						</tr>
 					))}
 				</tbody>
 			</table>
 			{scenario.perAsset.length > 12 ? (
-				<p className="px-3 py-2 text-sm text-(--legacy-text-secondary)">+{scenario.perAsset.length - 12} more assets</p>
+				<p className="px-3 py-2 body-md text-secondary">+{scenario.perAsset.length - 12} more assets</p>
 			) : null}
-		</div>
+		</TokenPageTableShell>
 	)
 }
 
 function RealizedStrip({ scenario }: { scenario: ScenarioVM }) {
 	if (!scenario.realized?.incidents?.length) return null
 	return (
-		<div className="rounded-md border border-amber-500/25 bg-amber-500/6 p-3">
-			<p className="flex items-center gap-1.5 text-sm font-semibold text-(--warning)">
+		<RiskCallout>
+			<p className="flex items-center gap-1.5 label-md text-(--yield-warning-text)">
 				<Icon name="flame" className="size-4" />
 				This has actually happened
 			</p>
 			<ul className="mt-2 space-y-1.5">
-				{scenario.realized.incidents.map((inc, i) => {
+				{scenario.realized.incidents.map((inc) => {
 					const madeWhole = inc.usd_recovered >= inc.usd_lost && inc.usd_lost > 0
 					return (
-						<li key={i} className="flex flex-wrap items-center gap-x-2 text-sm text-(--legacy-text-secondary)">
-							<span className="tabular-nums">{inc.date}</span>
-							<span className="tabular-nums">
+						<li
+							key={`${inc.date}:${inc.usd_lost}:${inc.usd_recovered}:${inc.post_mortem_url ?? ''}`}
+							className="flex flex-wrap items-center gap-x-2 body-md text-secondary"
+						>
+							<span>{inc.date}</span>
+							<span>
 								{formattedNum(inc.usd_lost, true)} lost
 								{inc.usd_recovered > 0 ? (
 									<>
 										{' · '}
-										<span className={madeWhole ? 'text-(--success)' : undefined}>
+										<span className={madeWhole ? 'text-(--yield-positive-text)' : undefined}>
 											{formattedNum(inc.usd_recovered, true)} recovered{madeWhole ? ' (made whole)' : ''}
 										</span>
 									</>
@@ -267,7 +246,7 @@ function RealizedStrip({ scenario }: { scenario: ScenarioVM }) {
 									href={inc.post_mortem_url}
 									target="_blank"
 									rel="noreferrer"
-									className="inline-flex items-center gap-0.5 underline decoration-dotted hover:text-(--legacy-text-primary)"
+									className="inline-flex items-center gap-0.5 underline decoration-dotted hover:text-primary"
 								>
 									post-mortem <Icon name="external-link" className="size-3" />
 								</a>
@@ -276,7 +255,7 @@ function RealizedStrip({ scenario }: { scenario: ScenarioVM }) {
 					)
 				})}
 			</ul>
-		</div>
+		</RiskCallout>
 	)
 }
 
@@ -285,13 +264,14 @@ function CoverageNote({ scenario }: { scenario: ScenarioVM }) {
 	const noEscape = scenario.actingWindow.kind === 'no-escape'
 	return (
 		<div className="flex flex-col gap-1.5">
-			<p className="text-xs font-semibold text-(--legacy-text-primary)">What could cover it</p>
+			<p className="label-sm text-primary">What could cover it</p>
 			<ul className="space-y-1.5">
-				{scenario.coverage.map((c: CoverageVM, i) => (
-					<li key={i} className="flex flex-wrap items-center gap-x-2 text-sm text-(--legacy-text-secondary)">
-						<span className="font-medium text-(--legacy-text-primary) tabular-nums">
-							{formattedNum(c.capUsd, true)}
-						</span>
+				{scenario.coverage.map((c: CoverageVM) => (
+					<li
+						key={`${c.kind}:${c.access}:${c.rawCapUsd}:${c.excludesOwnTokens}`}
+						className="flex flex-wrap items-center gap-x-2 body-md text-secondary"
+					>
+						<span className="label-md text-primary">{formattedNum(c.capUsd, true)}</span>
 						<span>{c.kind}</span>
 						{noEscape && c.access !== 'instant' ? (
 							<span className={toneClasses('warning').text}>— reimbursement after the fact</span>
@@ -324,8 +304,8 @@ function WhoCanDoThis({ scenario, protocol }: { scenario: ScenarioVM; protocol: 
 	if (!parts.length) return null
 	return (
 		<div className="flex flex-col gap-1.5">
-			<p className="text-xs font-semibold text-(--legacy-text-primary)">Who can pull the trigger</p>
-			<p className="text-sm text-(--legacy-text-secondary)">{parts.join(' · ')}</p>
+			<p className="label-sm text-primary">Who can pull the trigger</p>
+			<p className="body-md text-secondary">{parts.join(' · ')}</p>
 		</div>
 	)
 }
@@ -335,14 +315,14 @@ function WhoCanDoThis({ scenario, protocol }: { scenario: ScenarioVM; protocol: 
 function ReasonNote({ scenario }: { scenario: ScenarioVM }) {
 	if (scenario.status === 'computed') return null
 	return (
-		<div className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-bg-main) p-3">
-			<p className="text-xs font-semibold text-(--legacy-text-primary)">Why this isn&apos;t quantified</p>
-			<p className="mt-1 text-sm text-(--legacy-text-secondary)">
+		<Card padding="md">
+			<p className="label-sm text-primary">Why this isn&apos;t quantified</p>
+			<p className="mt-1 body-md text-secondary">
 				Current on-chain inputs identify the scenario, but don&apos;t contain enough exposure data to size depositor
 				impact.
 			</p>
-			{scenario.notes ? <p className="mt-1.5 text-sm text-(--legacy-text-secondary)">{scenario.notes}</p> : null}
-		</div>
+			{scenario.notes ? <p className="mt-1.5 body-md text-secondary">{scenario.notes}</p> : null}
+		</Card>
 	)
 }
 
@@ -351,8 +331,8 @@ function NarrativeBody({ scenario, protocol }: { scenario: ScenarioVM; protocol:
 		<div className="flex flex-col gap-4">
 			{scenario.oneLiner ? (
 				<div className="flex flex-col gap-1.5">
-					<p className="text-xs font-semibold text-(--legacy-text-primary)">What happens</p>
-					<p className="max-w-[68ch] text-sm text-(--legacy-text-secondary)">{scenario.oneLiner}</p>
+					<p className="label-sm text-primary">What happens</p>
+					<p className="max-w-[68ch] body-md text-secondary">{scenario.oneLiner}</p>
 				</div>
 			) : null}
 			<ReasonNote scenario={scenario} />
@@ -361,7 +341,7 @@ function NarrativeBody({ scenario, protocol }: { scenario: ScenarioVM; protocol:
 
 			{scenario.conditions ? (
 				<div className="flex flex-col gap-1.5">
-					<p className="text-xs font-semibold text-(--legacy-text-primary)">Why it happens</p>
+					<p className="label-sm text-primary">Why it happens</p>
 					<ConditionsTree conditions={scenario.conditions} protocol={protocol} />
 				</div>
 			) : null}
@@ -370,11 +350,11 @@ function NarrativeBody({ scenario, protocol }: { scenario: ScenarioVM; protocol:
 
 			{scenario.mitigations.length ? (
 				<div className="flex flex-col gap-1.5">
-					<p className="text-xs font-semibold text-(--legacy-text-primary)">What softens it</p>
-					<ul className="list-disc space-y-1 pl-5 text-sm marker:text-(--success)">
-						{scenario.mitigations.map((m, i) => (
-							<li key={i} className="text-(--legacy-text-secondary)">
-								{m}
+					<p className="label-sm text-primary">What softens it</p>
+					<ul className="list-disc space-y-1 pl-5 body-md marker:text-data-up">
+						{scenario.mitigations.map((mitigation) => (
+							<li key={mitigation} className="text-secondary">
+								{mitigation}
 							</li>
 						))}
 					</ul>
@@ -385,15 +365,15 @@ function NarrativeBody({ scenario, protocol }: { scenario: ScenarioVM; protocol:
 
 			{scenario.evidence.length ? (
 				<div className="flex flex-col gap-1.5">
-					<p className="text-xs font-semibold text-(--legacy-text-primary)">Evidence</p>
+					<p className="label-sm text-primary">Evidence</p>
 					<ul className="space-y-1">
-						{scenario.evidence.map((e, i) => (
-							<li key={i}>
+						{scenario.evidence.map((e) => (
+							<li key={`${e.url}:${e.kind}:${e.title ?? ''}:${e.date ?? ''}:${e.note ?? ''}`}>
 								<a
 									href={e.url}
 									target="_blank"
 									rel="noreferrer"
-									className="inline-flex items-center gap-1 text-sm text-(--legacy-text-secondary) underline decoration-dotted hover:text-(--legacy-text-primary)"
+									className="inline-flex items-center gap-1 body-md text-secondary underline decoration-dotted hover:text-primary"
 								>
 									{e.title ?? e.note ?? e.url}
 									<Icon name="external-link" className="size-3.5" />
@@ -405,27 +385,25 @@ function NarrativeBody({ scenario, protocol }: { scenario: ScenarioVM; protocol:
 			) : null}
 
 			{Object.keys(scenario.inputs).length || (scenario.status === 'computed' && scenario.notes) ? (
-				<details className="rounded-md border border-(--legacy-cards-border) p-2.5">
-					<summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm text-(--legacy-text-secondary)">
+				<Card as="details" padding="sm">
+					<summary className="flex cursor-pointer list-none items-center justify-between gap-2 body-md text-secondary">
 						<span>The math{scenario.formula ? ` · ${scenario.formula}` : ''}</span>
 						<Icon name="chevron-down" className="size-3.5 transition-transform in-[[open]]:rotate-180" />
 					</summary>
 					{scenario.status === 'computed' && scenario.notes ? (
-						<p className="mt-2 text-xs text-(--legacy-text-secondary) italic">{scenario.notes}</p>
+						<p className="mt-2 body-sm text-secondary italic">{scenario.notes}</p>
 					) : null}
 					{Object.keys(scenario.inputs).length ? (
 						<dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2">
 							{Object.entries(scenario.inputs).map(([k, v]) => (
-								<div key={k} className="flex justify-between gap-2 text-sm">
-									<dt className="text-(--legacy-text-secondary)">{k}</dt>
-									<dd className="text-(--legacy-text-secondary) tabular-nums">
-										{typeof v === 'number' ? formattedNum(v, false) : String(v)}
-									</dd>
+								<div key={k} className="flex justify-between gap-2 body-md">
+									<dt className="text-secondary">{k}</dt>
+									<dd className="text-secondary">{typeof v === 'number' ? formattedNum(v, false) : String(v)}</dd>
 								</div>
 							))}
 						</dl>
 					) : null}
-				</details>
+				</Card>
 			) : null}
 		</div>
 	)
@@ -446,7 +424,7 @@ export function ScenarioDetailContent({
 }) {
 	if (layout === 'two-column') {
 		return (
-			<div className="grid gap-5 lg:grid-cols-[1fr_3fr]">
+			<div className="grid gap-4 lg:grid-cols-[1fr_3fr]">
 				<LossBox scenario={scenario} supplyUsd={supplyUsd} stress={stress} />
 				<NarrativeBody scenario={scenario} protocol={protocol} />
 			</div>

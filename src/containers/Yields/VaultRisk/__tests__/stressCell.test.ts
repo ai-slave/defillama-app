@@ -19,14 +19,14 @@ function scn(partial: Partial<ScenarioVM>): ScenarioVM {
 		lossMinUsd: 0,
 		lossMaxUsd: 0,
 		magnitudePct: 0,
-		actingWindow: { kind: 'no-escape', label: '', minSec: 0 },
-		conditions: undefined,
+		actingWindow: { kind: 'no-escape', label: '', minSec: 0, maxSec: 0 },
+		conditions: { op: 'leaf', description: '' },
 		mitigations: [],
 		evidence: [],
 		inputs: {},
 		coverage: [],
 		...partial
-	} as unknown as ScenarioVM
+	}
 }
 
 const CURVE = [

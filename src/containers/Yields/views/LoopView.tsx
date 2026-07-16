@@ -1,60 +1,125 @@
-import { YIELD_LOOP_DATASET_API } from '../constants'
-import { YieldFiltersV2 } from '../Filters'
+import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
+import { fetchJson } from '~/utils/async'
+import { YIELD_LOOPS_DATASET_API } from '../constants'
+import type { LoopTableRow, TokenOption } from '../data/types'
+import { prepareLoopsCsv } from '../domain/loopCsv'
+import { YieldFilters } from '../Filters'
+import { ApyViewControls } from '../Filters/ApyViewControls'
+import { BORROW_ATTRIBUTE_IDS, type AttributeId } from '../Filters/attributeOptions'
+import { IncludeTokens } from '../Filters/IncludeTokens'
+import { LoopCountSelect } from '../Filters/LoopCountSelect'
 import { useFormatYieldQueryParams } from '../hooks'
-import { PaginatedYieldsLoopTable } from '../Tables/Loop'
-import type { YieldLoopTableRow } from '../Tables/types'
+import { selectedSubsetQuery } from '../queryState'
+import { PaginatedLoopsTable } from '../Tables/Loops'
+import { useLegacyYieldsUrlNormalizer } from '../useLegacyYieldsUrlNormalizer'
 import { useYieldsServerTable } from '../useYieldsServerTable'
+import { YieldsTabs } from '../YieldsTabs'
 
-const EMPTY_ROWS: YieldLoopTableRow[] = []
+const EMPTY_CATEGORIES: string[] = []
+const EMPTY_STRINGS: string[] = []
+const EMPTY_TOKENS: TokenOption[] = []
+const LOOPS_DEFAULT_SORT = [{ id: 'loop_apy', desc: true }]
 
-const YieldPageLoop = ({ projectList, chainList, categoryList, tokens, evmChains }) => {
-	const { rows, total, rowsQuery, tableProps } = useYieldsServerTable<YieldLoopTableRow>({
-		endpoint: YIELD_LOOP_DATASET_API
-	})
-	const poolsData = rows.length > 0 ? rows : EMPTY_ROWS
-	const poolsNumber = total
+type LoopRowsResponse = { rows: LoopTableRow[] }
 
-	const { selectedProjects, selectedChains } = useFormatYieldQueryParams({
+const LoopView = ({
+	chainList = EMPTY_STRINGS,
+	projectList = EMPTY_STRINGS,
+	evmChains = EMPTY_STRINGS,
+	tokens = EMPTY_TOKENS,
+	attributeIds = BORROW_ATTRIBUTE_IDS
+}: {
+	chainList?: string[]
+	projectList?: string[]
+	evmChains?: string[]
+	tokens?: TokenOption[]
+	attributeIds?: AttributeId[]
+}) => {
+	// Rewrite legacy bookmark params to canonical before the first fetch (gates `enabled`).
+	const normalized = useLegacyYieldsUrlNormalizer({ page: 'loop', tokens })
+
+	const { selectedChains, selectedProjects, selectedAttributes } = useFormatYieldQueryParams({
 		projectList,
 		chainList,
-		categoryList,
-		evmChains
+		categoryList: EMPTY_CATEGORIES,
+		evmChains,
+		projectQueryKey: 'protocol',
+		excludeProjectQueryKey: 'excludeProtocol'
 	})
+
+	const attributeSet = new Set(selectedAttributes)
+	const extraQuery = {
+		chain: selectedSubsetQuery(selectedChains, chainList),
+		protocol: selectedSubsetQuery(selectedProjects, projectList),
+		hasAudit: attributeSet.has('audited') ? 'true' : undefined,
+		protocolHasToken: attributeSet.has('no_protocol_token') ? 'false' : undefined,
+		includeMemeTokens: attributeSet.has('include_meme_tokens') ? 'true' : undefined
+	}
+
+	const { rows, total, rowsQuery, tableProps, buildAllRowsQueryString, query } = useYieldsServerTable<LoopTableRow>({
+		endpoint: YIELD_LOOPS_DATASET_API,
+		enabled: normalized,
+		extraQuery,
+		defaultSorting: LOOPS_DEFAULT_SORT
+	})
+
+	async function prepareCsv() {
+		const url = `${YIELD_LOOPS_DATASET_API}${buildAllRowsQueryString()}`
+		const data = await fetchJson<LoopRowsResponse>(url)
+		return prepareLoopsCsv(data.rows, query)
+	}
 
 	return (
 		<>
-			<YieldFiltersV2
-				header="Leveraged Lending"
-				poolsNumber={poolsNumber}
-				projectsNumber={selectedProjects.length}
-				chainsNumber={selectedChains.length}
-				tokens={tokens}
+			<YieldsTabs
+				active="looping"
+				rightSlot={
+					<p
+						className={`hidden body-md text-secondary sm:block ${
+							total && selectedProjects.length && selectedChains.length ? '' : 'invisible'
+						}`}
+					>
+						Tracking <strong className="text-primary">{total.toLocaleString()}</strong> looping strategies across{' '}
+						<strong className="text-primary">{selectedProjects.length.toLocaleString()}</strong> protocols on{' '}
+						<strong className="text-primary">{selectedChains.length.toLocaleString()}</strong> chains
+					</p>
+				}
+			/>
+
+			<YieldFilters
+				showSearchOnMobile
+				tokenSearch={<IncludeTokens tokens={tokens} placeholder="Search tokens" data-alwaysdisplay={true} />}
 				chainList={chainList}
 				selectedChains={selectedChains}
 				evmChains={evmChains}
 				projectList={projectList}
 				selectedProjects={selectedProjects}
-				attributes={true}
+				projectsLabel="Protocols"
+				attributeIds={attributeIds}
+				availableRange={true}
+				apyControls={
+					<>
+						<ApyViewControls />
+						<span className="mx-1 hidden h-5 w-px bg-border-medium sm:block" aria-hidden />
+						<LoopCountSelect />
+					</>
+				}
 				resetFilters={true}
+				resetFiltersLabel="Reset Filters"
+				prepareCsv={prepareCsv}
 			/>
 
-			{rowsQuery.isLoading && !rowsQuery.data ? (
-				<p className="flex flex-1 items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
-					Loading pools...
-				</p>
-			) : rowsQuery.isError ? (
-				<p className="flex flex-1 items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
-					Couldn't load pools.
-				</p>
-			) : poolsData.length > 0 ? (
-				<PaginatedYieldsLoopTable data={poolsData} {...tableProps} />
+			{!rowsQuery.data && !rowsQuery.isError ? (
+				<PanelLoadingStatus label="Loading looping strategies" />
+			) : rowsQuery.isError && !rowsQuery.data ? (
+				<PanelStatus variant="error">Couldn't load looping strategies.</PanelStatus>
+			) : rows.length > 0 ? (
+				<PaginatedLoopsTable data={rows} {...tableProps} />
 			) : (
-				<p className="flex flex-1 items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
-					Couldn't find any pools for these filters
-				</p>
+				<PanelStatus variant="empty">No looping strategies match the current selection.</PanelStatus>
 			)}
 		</>
 	)
 }
 
-export default YieldPageLoop
+export default LoopView

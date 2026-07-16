@@ -16,11 +16,13 @@ const TEST_ASSET = {
 function setupPageModule({
 	canonicalMarketIds,
 	idMap = { USDE: 'asset-1' },
-	assetData = TEST_ASSET
+	assetData = TEST_ASSET,
+	yieldsSnapshot = { readJson: vi.fn() }
 }: {
 	canonicalMarketIds?: string[]
 	idMap?: Record<string, string>
 	assetData?: unknown
+	yieldsSnapshot?: unknown
 } = {}) {
 	vi.doMock('~/constants', () => ({
 		SKIP_BUILD_STATIC_GENERATION: false
@@ -43,6 +45,9 @@ function setupPageModule({
 	vi.doMock('~/containers/RWA/queries', () => ({
 		getRWAAssetData: vi.fn().mockResolvedValue(assetData)
 	}))
+	vi.doMock('~/containers/Yields/server/dataset.server', () => ({
+		acquireOptionalYieldsSnapshot: vi.fn().mockResolvedValue(yieldsSnapshot)
+	}))
 	vi.doMock('~/layout', () => ({
 		default: () => null
 	}))
@@ -64,6 +69,16 @@ describe('rwa asset page', () => {
 			props: { asset: TEST_ASSET, canonicalMarketId: 'USDE' },
 			revalidate: 123
 		})
+	})
+
+	it('keeps the asset page when the optional Yields snapshot is unavailable', async () => {
+		const page = await setupPageModule({ yieldsSnapshot: null })
+		const { getRWAAssetData } = await import('~/containers/RWA/queries')
+
+		await expect(page.getStaticProps({ params: { asset: 'USDE' } } as never)).resolves.toMatchObject({
+			props: { asset: TEST_ASSET }
+		})
+		expect(getRWAAssetData).toHaveBeenCalledWith({ assetId: 'asset-1', yieldsSnapshot: null })
 	})
 
 	it('getStaticProps redirects lowercase asset params to the canonical asset', async () => {

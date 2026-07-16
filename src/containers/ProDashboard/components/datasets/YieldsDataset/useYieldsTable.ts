@@ -1,5 +1,4 @@
 import {
-	type ColumnDef,
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	type ColumnSizingState,
@@ -14,47 +13,58 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { useTableSearch } from '~/components/Table/utils'
-import { toInternalSlug } from '~/utils/chainNormalizer'
 import { downloadCSV as downloadCSVFile } from '~/utils/download'
-import { yieldsDatasetColumns } from './columns'
+import { YIELDS_COLUMN_IDS, yieldsDatasetColumns } from './columns'
+import type { ProYieldRow } from './data'
 import type { YieldsFilters } from './YieldsFiltersPanel'
 
 const YIELDS_COLUMN_PRESETS: Record<string, string[]> = {
 	essential: ['pool', 'project', 'chains', 'tvl', 'apy', 'apyBase', 'apyReward'],
-	lending: ['pool', 'project', 'chains', 'tvl', 'apy', 'apyBorrow', 'totalSupplyUsd', 'totalBorrowUsd', 'ltv'],
-	volume: ['pool', 'project', 'chains', 'tvl', 'apy', 'volumeUsd1d', 'volumeUsd7d', 'il7d'],
-	advanced: ['pool', 'project', 'chains', 'tvl', 'apy', 'apyBase', 'apyReward', 'change1d', 'change7d', 'apyMean30d']
+	supply: ['pool', 'project', 'chains', 'tvl', 'apy', 'apyBase', 'apyReward', 'apyMean30d'],
+	borrow: ['pool', 'project', 'chains', 'apyBorrow', 'totalSupplyUsd', 'totalBorrowUsd', 'totalAvailableUsd', 'ltv'],
+	risk: ['pool', 'project', 'chains', 'tvl', 'apy', 'stabilityRating', 'ilRisk'],
+	activity: ['pool', 'project', 'chains', 'tvl', 'apy', 'volumeUsd1d']
 }
-const EMPTY_CHAINS: string[] = []
-const EMPTY_PROTOCOLS: string[] = []
-const EMPTY_TABLE_DATA: any[] = []
+const EMPTY_TABLE_DATA: ProYieldRow[] = []
+const DEFAULT_COLUMN_SIZING: ColumnSizingState = {
+	pool: 320,
+	project: 140,
+	chains: 60,
+	tvl: 120,
+	apy: 100,
+	apyBase: 100,
+	apyReward: 150,
+	apyMean30d: 130,
+	stabilityRating: 120,
+	volumeUsd1d: 120,
+	ilRisk: 80,
+	apyBorrow: 100,
+	totalSupplyUsd: 130,
+	totalBorrowUsd: 130,
+	totalAvailableUsd: 120,
+	ltv: 80
+}
 const YIELDS_CSV_HEADER_MAP: Record<string, string> = {
 	pool: 'Pool',
 	project: 'Project',
 	chains: 'Chain',
 	tvl: 'TVL',
-	apy: 'APY',
+	apy: 'Supply APY',
 	apyBase: 'Base APY',
 	apyReward: 'Reward APY',
 	rewardTokensSymbols: 'Reward Tokens',
-	change1d: '24h Change',
-	change7d: '7d Change',
-	il7d: '7d IL',
-	apyBase7d: 'Base APY (7d)',
-	apyNet7d: 'Net APY (7d)',
-	apyMean30d: 'Mean APY (30d)',
-	volumeUsd1d: 'Volume (24h)',
-	volumeUsd7d: 'Volume (7d)',
-	apyBorrow: 'Borrow APY',
+	apyMean30d: '30d Avg APY',
+	stabilityRating: '30d Stability',
+	volumeUsd1d: '24h Volume',
+	ilRisk: 'IL Risk',
+	apyBorrow: 'Borrow Cost APY',
 	totalSupplyUsd: 'Total Supplied',
 	totalBorrowUsd: 'Total Borrowed',
 	totalAvailableUsd: 'Available',
 	ltv: 'LTV'
 }
 interface UseYieldsTableOptions {
-	data: any[]
-	isLoading: boolean
-	chains?: string[]
+	data: ProYieldRow[]
 	initialColumnOrder?: string[]
 	initialColumnVisibility?: Record<string, boolean>
 	initialFilters?: YieldsFilters
@@ -64,8 +74,6 @@ interface UseYieldsTableOptions {
 
 export function useYieldsTable({
 	data,
-	isLoading,
-	chains = EMPTY_CHAINS,
 	initialColumnOrder,
 	initialColumnVisibility,
 	initialFilters,
@@ -73,104 +81,80 @@ export function useYieldsTable({
 	onFiltersChange
 }: UseYieldsTableOptions) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'tvl', desc: true }])
-	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>(initialColumnOrder || [])
-	const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({})
+	let hasInitialVisibility = false
+	for (const id of YIELDS_COLUMN_IDS) {
+		if (initialColumnVisibility?.[id] != null) {
+			hasInitialVisibility = true
+			break
+		}
+	}
+	const initialPreset = hasInitialVisibility ? null : 'essential'
+	const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(() => {
+		const visibility: VisibilityState = {}
+		for (const id of YIELDS_COLUMN_IDS) {
+			visibility[id] = hasInitialVisibility
+				? initialColumnVisibility?.[id] !== false
+				: YIELDS_COLUMN_PRESETS.essential.includes(id)
+		}
+		return visibility
+	})
+	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>(() => {
+		const savedOrder = (initialColumnOrder ?? []).filter((id) =>
+			YIELDS_COLUMN_IDS.includes(id as (typeof YIELDS_COLUMN_IDS)[number])
+		)
+		if (savedOrder.length > 0 && hasInitialVisibility) return savedOrder
+		return hasInitialVisibility
+			? YIELDS_COLUMN_IDS.filter((id) => columnVisibility[id] !== false)
+			: [...YIELDS_COLUMN_PRESETS.essential]
+	})
+	const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>(DEFAULT_COLUMN_SIZING)
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [pagination, setPagination] = React.useState<PaginationState>({
 		pageIndex: 0,
 		pageSize: 10
 	})
-	const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(initialColumnVisibility || {})
 	const [showColumnPanel, setShowColumnPanel] = React.useState(false)
 	const [searchTerm, setSearchTerm] = React.useState('')
-	const [selectedPreset, setSelectedPreset] = React.useState<string | null>(null)
+	const [selectedPreset, setSelectedPreset] = React.useState<string | null>(initialPreset)
 	const [showFiltersPanel, setShowFiltersPanel] = React.useState(false)
 	const [filters, setFilters] = React.useState<YieldsFilters>(initialFilters || {})
 
 	const filteredData = React.useMemo(() => {
-		if (!data) return []
-
-		const selectedProtocols = filters.protocols?.map((protocol) => protocol.toLowerCase()) ?? EMPTY_PROTOCOLS
-
-		// TODO(chain-normalizer): Yields rows and saved ProDashboard filters can use
-		// different chain naming. Remove after this dataset stores v2 display names.
-		const selectedChainsSet =
-			filters.chains && filters.chains.length > 0 ? new Set(filters.chains.map(toInternalSlug)) : null
+		const selectedProtocols = filters.protocols?.length
+			? new Set(filters.protocols.map((protocol) => protocol.toLowerCase()))
+			: null
+		const selectedChains =
+			filters.chains && filters.chains.length > 0 ? new Set(filters.chains.map((chain) => chain.toLowerCase())) : null
+		const selectedCategories = filters.categories?.length ? new Set(filters.categories) : null
+		const selectedTokens = filters.tokens?.length ? new Set(filters.tokens.map((token) => token.toUpperCase())) : null
 
 		return data.filter((row) => {
-			if (filters.apyMin !== undefined && row.apy < filters.apyMin) return false
-			if (filters.apyMax !== undefined && row.apy > filters.apyMax) return false
+			if (filters.apyMin !== undefined && (row.apy == null || row.apy < filters.apyMin)) return false
+			if (filters.apyMax !== undefined && (row.apy == null || row.apy > filters.apyMax)) return false
 
-			if (filters.baseApyMin !== undefined && row.apyBase < filters.baseApyMin) return false
-			if (filters.baseApyMax !== undefined && row.apyBase > filters.baseApyMax) return false
+			if (filters.baseApyMin !== undefined && (row.apyBase == null || row.apyBase < filters.baseApyMin)) return false
+			if (filters.baseApyMax !== undefined && (row.apyBase == null || row.apyBase > filters.baseApyMax)) return false
 
-			if (filters.tvlMin !== undefined && row.tvl < filters.tvlMin) return false
-			if (filters.tvlMax !== undefined && row.tvl > filters.tvlMax) return false
-			if (selectedChainsSet) {
-				const hasMatchingChain = row.chains?.some((chain: string) => selectedChainsSet.has(toInternalSlug(chain)))
+			if (filters.tvlMin !== undefined && (row.tvl == null || row.tvl < filters.tvlMin)) return false
+			if (filters.tvlMax !== undefined && (row.tvl == null || row.tvl > filters.tvlMax)) return false
+			if (selectedChains) {
+				const hasMatchingChain = row.chains.some((chain) => selectedChains.has(chain.toLowerCase()))
 				if (!hasMatchingChain) return false
 			}
 
-			if (selectedProtocols.length > 0) {
-				const projectSlug = (row.projectslug || row.project || '').toLowerCase()
-				const projectName = (row.project || '').toLowerCase()
-
-				const hasMatchingProtocol = selectedProtocols.some((protocol) => {
-					if (projectSlug && projectSlug === protocol) return true
-					if (projectName && projectName === protocol) return true
+			if (selectedProtocols) {
+				if (!selectedProtocols.has(row.projectslug.toLowerCase()) && !selectedProtocols.has(row.project.toLowerCase()))
 					return false
-				})
-
-				if (!hasMatchingProtocol) return false
 			}
 
 			if (filters.hasRewards && (!row.apyReward || row.apyReward <= 0)) return false
 
-			if (filters.stablesOnly) {
-				const isStable =
-					row.pool?.toLowerCase().includes('stable') ||
-					row.pool?.toLowerCase().includes('usdc') ||
-					row.pool?.toLowerCase().includes('usdt') ||
-					row.pool?.toLowerCase().includes('dai') ||
-					row.pool?.toLowerCase().includes('busd')
-				if (!isStable) return false
-			}
+			if (filters.stablesOnly && !row.stablecoin) return false
 
-			if (filters.poolTypes && filters.poolTypes.length > 0) {
-				const projectLower = row.project?.toLowerCase() || ''
-				const poolLower = row.pool?.toLowerCase() || ''
+			if (selectedCategories && (!row.category || !selectedCategories.has(row.category))) return false
 
-				const hasMatchingType = filters.poolTypes.some((type) => {
-					switch (type.toLowerCase()) {
-						case 'dex':
-							return (
-								poolLower.includes('lp') ||
-								poolLower.includes('liquidity') ||
-								projectLower.includes('swap') ||
-								projectLower.includes('dex')
-							)
-						case 'lending':
-							return row.apyBorrow !== null && row.apyBorrow !== undefined
-						case 'staking':
-							return poolLower.includes('stak') || projectLower.includes('stak')
-						case 'cdp':
-							return poolLower.includes('cdp') || projectLower.includes('vault')
-						case 'bridge':
-							return projectLower.includes('bridge')
-						case 'yield aggregator':
-							return projectLower.includes('yield') || projectLower.includes('aggregator')
-						default:
-							return false
-					}
-				})
-
-				if (!hasMatchingType) return false
-			}
-
-			if (filters.tokens && filters.tokens.length > 0) {
-				if (!row.pool) return false
-				const poolUpper = row.pool.toUpperCase()
-				const hasMatchingToken = filters.tokens.some((token) => poolUpper.includes(token))
+			if (selectedTokens) {
+				const hasMatchingToken = row.tokenSymbols.some((token) => selectedTokens.has(token.toUpperCase()))
 				if (!hasMatchingToken) return false
 			}
 
@@ -180,7 +164,7 @@ export function useYieldsTable({
 
 	const table = useReactTable({
 		data: filteredData.length > 0 ? filteredData : EMPTY_TABLE_DATA,
-		columns: yieldsDatasetColumns as ColumnDef<any>[],
+		columns: yieldsDatasetColumns,
 		state: {
 			sorting,
 			columnOrder,
@@ -205,99 +189,29 @@ export function useYieldsTable({
 	})
 
 	React.useEffect(() => {
-		const defaultSizing = {
-			pool: 320,
-			project: 140,
-			chains: 60,
-			tvl: 120,
-			apy: 100,
-			apyBase: 100,
-			apyReward: 150,
-			change1d: 100,
-			change7d: 100,
-			il7d: 100,
-			apyBase7d: 120,
-			apyNet7d: 120,
-			apyMean30d: 130,
-			volumeUsd1d: 120,
-			volumeUsd7d: 120,
-			apyBorrow: 100,
-			totalSupplyUsd: 130,
-			totalBorrowUsd: 130,
-			totalAvailableUsd: 120,
-			ltv: 80
-		}
-
-		table.setColumnSizing(defaultSizing)
-	}, [table])
-
-	React.useEffect(() => {
-		if (table && columnOrder.length === 0 && !initialColumnOrder) {
-			const allColumnIds = yieldsDatasetColumns
-				.map((col) => {
-					if (typeof col.id === 'string') return col.id
-					if ('accessorKey' in col && typeof col.accessorKey === 'string') return col.accessorKey
-					return ''
-				})
-				.filter(Boolean)
-			const visibleColumns = allColumnIds.filter((id) => columnVisibility[id] !== false)
-			setColumnOrder(visibleColumns)
-		}
-	}, [table, columnOrder.length, columnVisibility, initialColumnOrder])
-
-	React.useEffect(() => {
-		if (table && columnOrder.length > 0) {
-			table.setColumnOrder(columnOrder)
-		}
-	}, [table, columnOrder])
-
-	React.useEffect(() => {
 		if (onColumnsChange && columnOrder.length > 0) {
 			onColumnsChange(columnOrder, columnVisibility)
 		}
 	}, [columnOrder, columnVisibility, onColumnsChange])
 
-	const applyPreset = React.useCallback(
-		(presetName: string) => {
-			const preset = YIELDS_COLUMN_PRESETS[presetName as keyof typeof YIELDS_COLUMN_PRESETS]
-			if (preset && table) {
-				const newVisibility = {}
-				const allColumnIds = yieldsDatasetColumns
-					.map((col) => {
-						if (typeof col.id === 'string') return col.id
-						if ('accessorKey' in col && typeof col.accessorKey === 'string') return col.accessorKey
-						return ''
-					})
-					.filter(Boolean)
+	const applyPreset = React.useCallback((presetName: string) => {
+		const preset = YIELDS_COLUMN_PRESETS[presetName as keyof typeof YIELDS_COLUMN_PRESETS]
+		if (preset) {
+			const newVisibility = {}
+			const allColumnIds = [...YIELDS_COLUMN_IDS]
 
-				for (const colId of allColumnIds) {
-					newVisibility[colId] = preset.includes(colId)
-				}
-
-				setColumnVisibility(newVisibility)
-				setColumnOrder(preset)
-				setShowColumnPanel(false)
-				setSelectedPreset(presetName)
+			for (const colId of allColumnIds) {
+				newVisibility[colId] = preset.includes(colId)
 			}
-		},
-		[table]
-	)
 
-	React.useEffect(() => {
-		let hasInitialVisibility = false
-		if (initialColumnVisibility) {
-			for (const _ in initialColumnVisibility) {
-				hasInitialVisibility = true
-				break
-			}
+			setColumnVisibility(newVisibility)
+			setColumnOrder(preset)
+			setShowColumnPanel(false)
+			setSelectedPreset(presetName)
 		}
-		if ((!initialColumnVisibility || !hasInitialVisibility) && table) {
-			applyPreset('essential')
-		}
-	}, [initialColumnVisibility, table, applyPreset])
+	}, [])
 
 	const currentColumns = React.useMemo(() => {
-		if (!table) return {}
 		const allColumns = table.getAllLeafColumns()
 		const visibility = {}
 		for (const col of allColumns) {
@@ -349,8 +263,6 @@ export function useYieldsTable({
 	}
 
 	const downloadCSV = React.useCallback(() => {
-		if (!table) return
-
 		const visibleColumnIds = columnOrder.filter((id) => columnVisibility[id] !== false)
 		const headers = visibleColumnIds.map((id) => YIELDS_CSV_HEADER_MAP[id] || id)
 		const csvRows = table.getFilteredRowModel().rows.map((row) =>
@@ -366,33 +278,11 @@ export function useYieldsTable({
 
 	const [poolName, setPoolName] = useTableSearch({ instance: table, columnToSearch: 'pool' })
 
-	const availableChains = React.useMemo(() => {
-		if (!data) return []
-		const chainsSet = new Set<string>()
-		for (const row of data) {
-			for (const chain of row.chains ?? []) {
-				chainsSet.add(chain)
-			}
-		}
-		return Array.from(chainsSet).sort()
-	}, [data])
-
 	const availableTokens = React.useMemo(() => {
-		if (!data) return []
 		const tokenTvlMap = new Map<string, number>()
 
 		for (const row of data) {
-			if (row.pool && row.tvl) {
-				const separators = /[-\s/,+]/
-				const tokens = row.pool.split(separators)
-				for (const token of tokens) {
-					const cleaned = token.trim().toUpperCase()
-					if (cleaned && cleaned.length >= 2 && !['LP', 'V2', 'V3', 'POOL', 'VAULT', 'FARM'].includes(cleaned)) {
-						const currentTvl = tokenTvlMap.get(cleaned) || 0
-						tokenTvlMap.set(cleaned, currentTvl + row.tvl)
-					}
-				}
-			}
+			for (const token of row.tokenSymbols) tokenTvlMap.set(token, (tokenTvlMap.get(token) ?? 0) + (row.tvl ?? 0))
 		}
 
 		return Array.from(tokenTvlMap.entries())
@@ -413,14 +303,11 @@ export function useYieldsTable({
 		if (filters.tokens && filters.tokens.length > 0) count++
 		if (filters.hasRewards) count++
 		if (filters.stablesOnly) count++
-		if (filters.activeLending) count++
-		if (filters.poolTypes && filters.poolTypes.length > 0) count++
+		if (filters.categories && filters.categories.length > 0) count++
 		return count
 	}, [filters])
 
 	const availableProtocols = React.useMemo(() => {
-		if (!data) return []
-
 		const protocolMap = new Map<string, { value: string; label: string; tvl: number }>()
 
 		for (const row of data) {
@@ -459,6 +346,12 @@ export function useYieldsTable({
 			.map(({ value, label }) => ({ value, label }))
 	}, [data])
 
+	const availableCategories = React.useMemo(() => {
+		const categories = new Set<string>()
+		for (const row of data) if (row.category) categories.add(row.category)
+		return [...categories].sort()
+	}, [data])
+
 	const applyFilters = React.useCallback(
 		(newFilters?: YieldsFilters) => {
 			const filtersToApply = newFilters !== undefined ? newFilters : filters
@@ -495,15 +388,13 @@ export function useYieldsTable({
 		downloadCSV,
 		poolName,
 		setPoolName,
-		isLoading,
-		chains,
 		showFiltersPanel,
 		setShowFiltersPanel,
 		filters,
 		setFilters,
-		availableChains,
 		availableTokens,
 		availableProtocols,
+		availableCategories,
 		activeFilterCount,
 		applyFilters,
 		resetFilters,

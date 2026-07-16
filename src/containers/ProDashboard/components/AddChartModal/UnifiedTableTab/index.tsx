@@ -181,9 +181,9 @@ const TABLE_TYPE_CARDS: Array<{
 	{
 		value: 'yields',
 		label: 'Yields',
-		description: 'DeFi yield opportunities with APY, TVL, and IL data',
+		description: 'V2 earn pools with supply APY, TVL, stability, and borrow-market facts',
 		icon: 'trending-up',
-		tags: ['APY', 'TVL', 'IL Risk']
+		tags: ['Supply APY', 'TVL', 'Borrow Cost']
 	},
 	{
 		value: 'cex-analytics',

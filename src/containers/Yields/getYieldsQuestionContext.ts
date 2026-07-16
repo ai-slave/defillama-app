@@ -1,7 +1,19 @@
 import type { ParsedUrlQuery } from 'querystring'
 
-export function getYieldsQuestionContext(query: ParsedUrlQuery): { filters: Record<string, any> } | null {
-	const filters: Record<string, any> = {}
+interface YieldsQuestionFilters {
+	chains?: string[]
+	projects?: string[]
+	tokens?: string[]
+	categories?: string[]
+	attributes?: string[]
+	minTvl?: number
+	maxTvl?: number
+	minApy?: number
+	maxApy?: number
+}
+
+export function getYieldsQuestionContext(query: ParsedUrlQuery): { filters: YieldsQuestionFilters } | null {
+	const filters: YieldsQuestionFilters = {}
 	let hasFilters = false
 
 	if (query.chain) {

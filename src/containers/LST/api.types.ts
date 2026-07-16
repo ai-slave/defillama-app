@@ -12,7 +12,7 @@ export interface IProtocolDetailApiItem {
 	>
 }
 
-/** Yield pool from YIELD_POOLS_API */
+/** V2 earn pool fields consumed by the LST page. */
 export interface IYieldPoolApiItem {
 	project: string
 	chain: string
@@ -20,7 +20,7 @@ export interface IYieldPoolApiItem {
 	apy: number | null
 }
 
-/** LSD rate entry from LSD_RATES_API */
+/** Legacy LST metadata from the yields lsdRates endpoint. */
 export interface ILsdRateApiItem {
 	name: string
 	symbol: string | null

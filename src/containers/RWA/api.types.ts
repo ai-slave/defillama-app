@@ -1,4 +1,4 @@
-import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
+import type { EarnPageRow } from '~/containers/Yields/data/types'
 import type { RWAChartDataset } from './chartDataset'
 import type { RWAParentPlatform } from './grouping'
 
@@ -390,7 +390,7 @@ export interface IRWAAssetData extends IRWAProject {
 		source: RWAAssetChartRow[]
 		dimensions: RWAAssetChartDimension[]
 	} | null
-	yieldPools: IYieldTableRow[] | null
+	yieldPools: EarnPageRow[] | null
 	yieldPoolsTotal: number | null
 	nativeYieldPoolId: string | null
 	nativeYieldCurrent: number | null

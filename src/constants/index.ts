@@ -46,6 +46,9 @@ export const TRADFI_API =
 export const YIELDS_SERVER_URL =
 	getDirectUrlEnv('YIELDS_SERVER_URL') ??
 	(API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/yields` : 'https://yields.llama.fi')
+export const YIELDS_V2_SERVER_URL =
+	getDirectUrlEnv('YIELDS_V2_SERVER_URL') ??
+	(API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/yields` : 'https://yields-v2.llama.fi')
 export const LIQUIDATIONS_SERVER_URL_V2 =
 	getDirectUrlEnv('LIQUIDATIONS_SERVER_URL_V2') ??
 	(API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/liquidations` : 'https://api.llama.fi/liquidations')

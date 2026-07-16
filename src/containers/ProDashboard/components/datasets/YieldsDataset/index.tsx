@@ -3,11 +3,14 @@ import { useProDashboardEditorActions } from '../../../ProDashboardAPIContext'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { TableBody } from '../../ProTable/TableBody'
 import { TablePagination } from '../../ProTable/TablePagination'
+import type { ProYieldRow } from './data'
 import { useYieldsData } from './useYieldsData'
 import { useYieldsTable } from './useYieldsTable'
 import { YieldsColumnManagementPanel } from './YieldsColumnManagementPanel'
 import { type YieldsFilters, YieldsFiltersPanel } from './YieldsFiltersPanel'
 import { YieldsTableHeader } from './YieldsTableHeader'
+
+const EMPTY_YIELDS_ROWS: ProYieldRow[] = []
 
 interface YieldsDatasetProps {
 	chains?: string[]
@@ -32,8 +35,6 @@ export function YieldsDataset({
 
 	const {
 		table,
-		pagination: _pagination,
-		setPagination: _setPagination,
 		showColumnPanel,
 		setShowColumnPanel,
 		searchTerm,
@@ -53,16 +54,14 @@ export function YieldsDataset({
 		setShowFiltersPanel,
 		filters,
 		setFilters,
-		availableChains,
 		availableProtocols,
 		availableTokens,
+		availableCategories,
 		activeFilterCount,
 		applyFilters,
 		resetFilters
 	} = useYieldsTable({
-		data,
-		isLoading,
-		chains,
+		data: data ?? EMPTY_YIELDS_ROWS,
 		initialColumnOrder,
 		initialColumnVisibility,
 		initialFilters: savedFilters,
@@ -80,53 +79,6 @@ export function YieldsDataset({
 		}, [handleTableFiltersChange, uniqueTableId])
 	})
 
-	if (isLoading) {
-		return (
-			<div className="isolate flex h-full w-full flex-col p-4">
-				<YieldsTableHeader
-					chains={chains}
-					columnPresets={columnPresets}
-					applyPreset={applyPreset}
-					activePreset={activePreset}
-					showColumnPanel={false}
-					setShowColumnPanel={() => {}}
-					poolName=""
-					setPoolName={() => {}}
-					showFiltersPanel={false}
-					setShowFiltersPanel={() => {}}
-					activeFilterCount={0}
-				/>
-				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
-					<LoadingSpinner />
-					<p className="text-sm pro-text2">Loading yields data...</p>
-				</div>
-			</div>
-		)
-	}
-
-	if (error) {
-		return (
-			<div className="flex h-full w-full flex-col p-4">
-				<YieldsTableHeader
-					chains={chains}
-					columnPresets={columnPresets}
-					applyPreset={applyPreset}
-					activePreset={activePreset}
-					showColumnPanel={false}
-					setShowColumnPanel={() => {}}
-					poolName=""
-					setPoolName={() => {}}
-					showFiltersPanel={false}
-					setShowFiltersPanel={() => {}}
-					activeFilterCount={0}
-				/>
-				<div className="flex min-h-[500px] flex-1 items-center justify-center">
-					<div className="text-center pro-text2">Failed to load yields data</div>
-				</div>
-			</div>
-		)
-	}
-
 	return (
 		<div className="isolate flex h-full w-full flex-col p-4">
 			<YieldsTableHeader
@@ -134,44 +86,60 @@ export function YieldsDataset({
 				columnPresets={columnPresets}
 				applyPreset={applyPreset}
 				activePreset={activePreset}
-				showColumnPanel={showColumnPanel}
-				setShowColumnPanel={setShowColumnPanel}
-				downloadCSV={downloadCSV}
-				poolName={poolName}
-				setPoolName={setPoolName}
-				showFiltersPanel={showFiltersPanel}
-				setShowFiltersPanel={setShowFiltersPanel}
-				activeFilterCount={activeFilterCount}
+				showColumnPanel={!isLoading && !error && showColumnPanel}
+				setShowColumnPanel={isLoading || error ? NOOP : setShowColumnPanel}
+				downloadCSV={isLoading || error ? undefined : downloadCSV}
+				poolName={isLoading || error ? '' : poolName}
+				setPoolName={isLoading || error ? NOOP : setPoolName}
+				showFiltersPanel={!isLoading && !error && showFiltersPanel}
+				setShowFiltersPanel={isLoading || error ? NOOP : setShowFiltersPanel}
+				activeFilterCount={isLoading || error ? 0 : activeFilterCount}
 			/>
 
-			<YieldsColumnManagementPanel
-				showColumnPanel={showColumnPanel}
-				setShowColumnPanel={setShowColumnPanel}
-				searchTerm={searchTerm}
-				setSearchTerm={setSearchTerm}
-				currentColumns={currentColumns}
-				columnOrder={columnOrder}
-				toggleColumnVisibility={toggleColumnVisibility}
-				moveColumnUp={moveColumnUp}
-				moveColumnDown={moveColumnDown}
-			/>
+			{isLoading ? (
+				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
+					<LoadingSpinner />
+					<p className="text-sm pro-text2">Loading yields data...</p>
+				</div>
+			) : error ? (
+				<div className="flex min-h-[500px] flex-1 items-center justify-center">
+					<div className="text-center pro-text2">Failed to load yields data</div>
+				</div>
+			) : (
+				<>
+					<YieldsColumnManagementPanel
+						showColumnPanel={showColumnPanel}
+						setShowColumnPanel={setShowColumnPanel}
+						searchTerm={searchTerm}
+						setSearchTerm={setSearchTerm}
+						currentColumns={currentColumns}
+						columnOrder={columnOrder}
+						toggleColumnVisibility={toggleColumnVisibility}
+						moveColumnUp={moveColumnUp}
+						moveColumnDown={moveColumnDown}
+					/>
 
-			<YieldsFiltersPanel
-				showFiltersPanel={showFiltersPanel}
-				setShowFiltersPanel={setShowFiltersPanel}
-				filters={filters}
-				setFilters={setFilters}
-				availableChains={availableChains}
-				availableProtocols={availableProtocols}
-				availableTokens={availableTokens}
-				onApplyFilters={applyFilters}
-				onResetFilters={resetFilters}
-				activeFilterCount={activeFilterCount}
-			/>
+					{showFiltersPanel ? (
+						<YieldsFiltersPanel
+							setShowFiltersPanel={setShowFiltersPanel}
+							filters={filters}
+							setFilters={setFilters}
+							availableProtocols={availableProtocols}
+							availableTokens={availableTokens}
+							availableCategories={availableCategories}
+							onApplyFilters={applyFilters}
+							onResetFilters={resetFilters}
+							activeFilterCount={activeFilterCount}
+						/>
+					) : null}
 
-			<TableBody table={table} />
+					<TableBody table={table} />
 
-			<TablePagination table={table} />
+					<TablePagination table={table} />
+				</>
+			)}
 		</div>
 	)
 }
+
+const NOOP = () => {}

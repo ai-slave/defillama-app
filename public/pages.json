@@ -119,85 +119,55 @@
       "description": "TVL breakdown by languages that the smart contracts are written in"
     },
     {
-      "name": "Yields: All Pools",
+      "name": "Yields: Earn",
       "route": "/yields",
       "category": "Yields",
-      "description": "Pools by APY, TVL, and other metrics on all chains",
+      "description": "Pools by APY, TVL, and other metrics across all chains",
       "totalTrackedKey": "yields.pools",
       "oldCategory": "Yields",
       "oldName": "Overview",
       "searchKeywords": [
         "yield",
         "yields",
-        "apy"
+        "apy",
+        "earn"
       ]
     },
     {
-      "name": "Stablecoin Yields",
-      "route": "/yields/stablecoins",
+      "name": "Yields: Borrow",
+      "route": "/yields/borrow",
       "category": "Yields",
-      "description": "Stablecoin liquidity pools by APY",
-      "keys": [
-        "pegged"
-      ],
-      "oldCategory": "Yields",
-      "oldName": "Stablecoin Yields",
+      "description": "Borrow markets and routes across lending protocols",
       "searchKeywords": [
-        "stablecoin yields",
-        "stable yields",
-        "stablecoin apy",
-        "stablecoin",
-        "stable"
+        "borrow",
+        "borrowing",
+        "borrow markets",
+        "lending"
       ]
     },
     {
-      "name": "Yields: Leveraged Lending",
+      "name": "Yields: Loop",
       "route": "/yields/loop",
       "category": "Yields",
-      "description": "Pools by leveraged lending APY values",
+      "description": "Pools by looping (leveraged lending) strategy APY",
       "oldCategory": "Yields",
-      "oldName": "Leveraged Lending"
+      "oldName": "Leveraged Lending",
+      "searchKeywords": [
+        "loop",
+        "looping",
+        "leveraged lending"
+      ]
     },
     {
-      "name": "Yields: Halal",
-      "route": "/yields/halal",
+      "name": "Yields: Reference Rates",
+      "route": "/yields/rates",
       "category": "Yields",
-      "description": "Shariah-compliant yield pools",
-      "oldCategory": "Yields",
-      "oldName": "Halal"
-    },
-    {
-      "name": "Yields: Delta Neutral Strategies",
-      "route": "/yields/strategy",
-      "category": "Yields",
-      "description": "Find 'lend-borrow-farm' strategies across all our tracked pools",
-      "oldCategory": "Yields",
-      "oldName": "Delta Neutral Strategies"
-    },
-    {
-      "name": "Yields: All Projects",
-      "route": "/yields/projects",
-      "category": "Yields",
-      "description": "List of all projects that we track in our yields section",
-      "totalTrackedKey": "yields.protocols",
-      "oldCategory": "Yields",
-      "oldName": "All Projects"
-    },
-    {
-      "name": "Yields: Long/Short Strategies",
-      "route": "/yields/strategy-long-short",
-      "category": "Yields",
-      "description": "Find 'long-short' strategies across all our tracked pools",
-      "oldCategory": "Yields",
-      "oldName": "Long/Short Strategies"
-    },
-    {
-      "name": "Yields: APY Overview",
-      "route": "/yields/overview",
-      "category": "Yields",
-      "description": "Find APY trends, volatility, and other metrics across all our tracked pools",
-      "oldCategory": "Yields",
-      "oldName": "Trends"
+      "description": "Benchmark stablecoin supply and borrow rates across lending protocols",
+      "searchKeywords": [
+        "rates",
+        "reference rates",
+        "benchmark rates"
+      ]
     },
     {
       "name": "Revenue by Protocol",
@@ -926,14 +896,6 @@
       "oldName": "Watchlist"
     },
     {
-      "name": "Borrow Aggregator: Simple",
-      "route": "/borrow",
-      "category": "Borrow Aggregator",
-      "description": "Simple view of optimal lending routes by collateral to borrow assets",
-      "oldCategory": "Borrow Aggregator",
-      "oldName": "Simple"
-    },
-    {
       "name": "Token Liquidity",
       "route": "/liquidity",
       "category": "Tools",
@@ -947,14 +909,6 @@
       "description": "Directory of all protocols websites on DefiLlama",
       "tab": "Protocols",
       "oldName": "Directory"
-    },
-    {
-      "name": "Borrow Aggregator: Advanced",
-      "route": "/borrow/advanced",
-      "category": "Borrow Aggregator",
-      "description": "Advanced view of optimal lending routes by collateral to borrow assets",
-      "oldCategory": "Borrow Aggregator",
-      "oldName": "Advanced"
     },
     {
       "name": "Yields: Watchlist",

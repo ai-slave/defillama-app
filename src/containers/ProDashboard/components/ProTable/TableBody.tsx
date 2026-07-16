@@ -1,24 +1,29 @@
 'use no memo'
 
 import { flexRender, type Header, type Table } from '@tanstack/react-table'
-import type { IProtocolRow } from './proTable.types'
 import { ReorderableHeader } from './ReorderableHeader'
 
-interface TableBodyProps {
-	table: Table<IProtocolRow> | null
+interface TableBodyProps<TData> {
+	table: Table<TData> | null
 	isLoading?: boolean
 	isEmptyProtocols?: boolean
 	moveColumnUp?: (columnId: string) => void
 	moveColumnDown?: (columnId: string) => void
 }
 
-const getSortableColumn = (header: Header<IProtocolRow, unknown>) => {
+const getSortableColumn = <TData,>(header: Header<TData, unknown>) => {
 	if (header.column.getCanSort()) return header.column
 	const firstSortableLeaf = header.column.getLeafColumns().find((leafColumn) => leafColumn.getCanSort())
 	return firstSortableLeaf ?? null
 }
 
-export function TableBody({ table, isLoading, isEmptyProtocols, moveColumnUp, moveColumnDown }: TableBodyProps) {
+export function TableBody<TData>({
+	table,
+	isLoading,
+	isEmptyProtocols,
+	moveColumnUp,
+	moveColumnDown
+}: TableBodyProps<TData>) {
 	if (!table) {
 		return (
 			<div className="relative min-h-0 w-full flex-1 overflow-x-auto overflow-y-auto" style={{ height: '100%' }}>

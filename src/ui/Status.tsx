@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { LoadingDots } from './Loaders'
+import { LoadingDots, LoadingSpinner } from './Loaders'
 import { Panel } from './Panel'
 
 export type StatusVariant = 'loading' | 'empty' | 'error'
@@ -37,12 +37,44 @@ export function PanelStatus({ children, variant, className, textClassName }: Pan
     tertiary text matching the empty/error copy. The pulsing-logo LocalLoader
     is reserved for route-level full-page loads — one per viewport, never per
     card/panel. */
-export function LoadingIndicator() {
+export function LoadingIndicator({ label = 'Loading' }: { label?: string }) {
 	return (
 		<span className="flex items-center gap-1 body-sm text-tertiary">
-			Loading
+			{label}
 			<LoadingDots />
 		</span>
+	)
+}
+
+export function InlineStatus({
+	children,
+	variant
+}: {
+	children: ReactNode
+	variant: Exclude<StatusVariant, 'loading'>
+}) {
+	return (
+		<div
+			role={variant === 'error' ? 'alert' : 'status'}
+			className={`rounded-lg border border-medium bg-surface-elevated-1 px-3 py-2 body-sm ${STATUS_TEXT[variant]}`}
+		>
+			{children}
+		</div>
+	)
+}
+
+export function SurfaceLoadingOverlay({ label }: { label: string }) {
+	return (
+		<div
+			role="status"
+			aria-live="polite"
+			className="absolute inset-0 z-20 flex items-center justify-center rounded-lg bg-page/60 backdrop-blur-[1px]"
+		>
+			<div className="flex items-center gap-2 rounded-lg border border-medium bg-surface-elevated-1 px-3 py-2 body-sm text-secondary shadow-xs">
+				<LoadingSpinner size={12} />
+				<span>{label}</span>
+			</div>
+		</div>
 	)
 }
 
@@ -55,9 +87,13 @@ type PanelLoadingStatusProps = {
 export function PanelLoadingStatus({ children, label = 'Loading', className }: PanelLoadingStatusProps) {
 	return (
 		<Panel padding="sm" className={`min-h-[360px] flex-1 items-center justify-center ${className ?? ''}`.trim()}>
-			<div role="status" aria-live="polite" className="flex items-center justify-center">
-				{children ?? <LoadingIndicator />}
-				{children != null ? <span className="sr-only">{label}</span> : null}
+			<div
+				role="status"
+				aria-live="polite"
+				aria-label={children != null ? label : undefined}
+				className="flex items-center justify-center"
+			>
+				{children ?? <LoadingIndicator label={label} />}
 			</div>
 		</Panel>
 	)
@@ -112,10 +148,10 @@ export function SurfaceBodyLoadingStatus({
 			<div
 				role="status"
 				aria-live="polite"
+				aria-label={children != null ? label : undefined}
 				className={`flex items-center justify-center ${contentClassName ?? ''}`.trim()}
 			>
-				{children ?? <LoadingIndicator />}
-				{children != null ? <span className="sr-only">{label}</span> : null}
+				{children ?? <LoadingIndicator label={label} />}
 			</div>
 		</div>
 	)

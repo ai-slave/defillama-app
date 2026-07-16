@@ -10,7 +10,7 @@ import {
 	type DatasetSnapshotDomain,
 	type DatasetSnapshotRef
 } from './contract'
-import { DatasetSnapshotIntegrityError } from './errors'
+import { DatasetSnapshotIntegrityError, isDatasetSnapshotCompatibilityError } from './errors'
 import { readJsonFileOnce, writeJsonFileAtomically } from './fileIo.server'
 import {
 	getDatasetSnapshotCurrentPath,
@@ -170,6 +170,8 @@ export class FileDatasetSnapshotStore implements DatasetSnapshotStore {
 			if (pointer.domain !== domain) throw new Error(`Current pointer names ${pointer.domain}`)
 			return await this.openCurrent(domain, pointer.snapshotId)
 		} catch (error) {
+			// A deliberate contract bump replaces the old generation. Malformed data remains a hard failure.
+			if (isDatasetSnapshotCompatibilityError(error)) return null
 			if (error instanceof DatasetSnapshotIntegrityError) throw error
 			throw new DatasetSnapshotIntegrityError(domain, 'current.json', error)
 		}
@@ -190,11 +192,13 @@ export class FileDatasetSnapshotStore implements DatasetSnapshotStore {
 		if (!current) return
 
 		const publishedVersions: DatasetSnapshotRef[] = []
+		const incompatibleVersions: string[] = []
 		for (const entry of entries) {
 			if (!entry.isDirectory() || entry.name.startsWith('.candidate-')) continue
 			try {
 				publishedVersions.push(await readVersionManifest(path.join(versionsDir, entry.name), domain, entry.name))
-			} catch {
+			} catch (error) {
+				if (isDatasetSnapshotCompatibilityError(error)) incompatibleVersions.push(entry.name)
 				// Unknown directories are preserved; cleanup must never guess that data is disposable.
 			}
 		}
@@ -209,6 +213,10 @@ export class FileDatasetSnapshotStore implements DatasetSnapshotStore {
 
 		await Promise.all([
 			...candidates.map((entry) => fs.rm(path.join(versionsDir, entry.name), { recursive: true, force: true })),
+			...incompatibleVersions.map(async (snapshotId) => {
+				await fs.rm(path.join(versionsDir, snapshotId), { recursive: true, force: true })
+				this.handles.delete(`${domain}:${snapshotId}`)
+			}),
 			...publishedVersions
 				.filter((version) => !retained.has(version.snapshotId))
 				.map(async (version) => {

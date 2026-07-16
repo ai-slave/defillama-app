@@ -38,7 +38,8 @@ import {
 	type RWAOverviewChartMetric,
 	type RWAOverviewChartView,
 	type RWAOverviewChartBreakdown,
-	type RWAAssetChartConfig
+	type RWAAssetChartConfig,
+	normalizeYieldChartType
 } from './types'
 import { generateItemId } from './utils/dashboardUtils'
 
@@ -175,7 +176,7 @@ export function useDashboardActions(
 				poolName,
 				project,
 				chain,
-				chartType: (chartType as YieldsChartConfig['chartType']) || 'tvl-apy',
+				chartType: normalizeYieldChartType(chartType),
 				colSpan: 1
 			}
 

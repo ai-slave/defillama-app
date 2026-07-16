@@ -31,6 +31,11 @@ validation failure leaves the pointer untouched. Previous versions are retained
 so active readers and operational rollback are safe; garbage collection is a
 separate maintenance concern.
 
+A deliberate format or domain-schema bump makes the old generation ineligible
+for reads and triggers publication of a replacement. After the replacement is
+current, cleanup removes incompatible versions so output tracing does not ship
+obsolete artifacts. Malformed data is still a hard integrity error.
+
 `DatasetSnapshotStore`, `DatasetSnapshotWriter`, and `DatasetSnapshotHandle`
 are the adapter boundary. Domain builders write opaque JSON artifacts through a
 writer and have no filesystem dependency. A future shared store can implement
@@ -60,12 +65,13 @@ within their registry max age instead of refetching them.
 All artifacts used for one logical response must come from one snapshot handle.
 Never reacquire between related reads.
 
-## Yields indexes and derived data
+## Yields artifacts and derived data
 
-Yields `rows.json` is authoritative. `by-token/*.json` files contain row IDs,
-not duplicated rows or cached filtered responses. The runtime resolves those IDs
-through a per-generation row map and falls back to scanning `rows.json` only when
-an optional token shard is absent.
+The Yields generation contains the eight upstream v2 datasets: earn, trends,
+borrow markets, borrow routes, loops, token keys, metadata, and depegs. They are
+published together; a response never combines an updated artifact with an older
+one. Filtering and joins run from the parsed artifacts rather than being stored
+as route-specific cache files.
 
 Derived joins and indexes may memoize by artifact object identity. Stable
 references within a snapshot avoid repeated work; a new snapshot ID produces new

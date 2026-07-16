@@ -59,5 +59,10 @@ if (prepareExitCode !== 0) {
 				NODE_OPTIONS: buildNodeOptions
 			})
 		: await run(packageBin('next'), [nextCommand, ...nextArgs])
-	process.exitCode = nextExitCode
+	if (isProductionBuild && nextExitCode === 0) {
+		console.log('[build] Verifying dataset snapshot output boundaries')
+		process.exitCode = await run('bun', [path.join(repoRoot, 'scripts', 'verifyDatasetSnapshotBuild.ts')])
+	} else {
+		process.exitCode = nextExitCode
+	}
 }

@@ -10,7 +10,7 @@ import type { DatasetSnapshotDomain } from '../contract'
 import { DATASET_SNAPSHOT_ROUTE_DOMAINS, getDatasetSnapshotTraceIncludes } from '../traceIncludes'
 
 const SNAPSHOT_ENTRY_IMPORTS: Array<{ importPath: string; domains: DatasetSnapshotDomain[] }> = [
-	{ importPath: '~/containers/Yields/server/snapshot.reader.server', domains: ['yields'] },
+	{ importPath: '~/containers/Yields/server/dataset.server', domains: ['yields'] },
 	{ importPath: '~/containers/Yields/server/api', domains: ['yields'] },
 	{ importPath: '~/containers/LiquidationsV2/server/dataset.server', domains: ['liquidations'] },
 	{ importPath: '~/containers/LiquidationsV2/server/routes', domains: ['liquidations'] },
@@ -102,6 +102,14 @@ describe('dataset snapshot output tracing', () => {
 		}
 		expect(nextConfig.outputFileTracingIncludes?.['/*']).toEqual(['./.cache/app-metadata/**/*'])
 		expect(nextConfig.outputFileTracingIncludes?.['/yields']).toEqual(includes['/yields'])
+	})
+
+	it('does not trace Yields snapshots into routes that never read them', () => {
+		const includes = getDatasetSnapshotTraceIncludes()
+
+		expect(includes['/yields/watchlist']).toBeUndefined()
+		expect(includes['/yields/rates']).toBeUndefined()
+		expect(includes['/yields/borrow/*']).toBeUndefined()
 	})
 
 	it('covers every page and API that imports a snapshot entry module', async () => {

@@ -65,7 +65,7 @@ async function collectSourceFiles(rootDir: string): Promise<string[]> {
 function isServerSnapshotImport(specifier: string): boolean {
 	return (
 		SERVER_SNAPSHOT_IMPORT_PREFIXES.some((prefix) => specifier === prefix || specifier.startsWith(`${prefix}/`)) ||
-		/(?:^|\/)server\/(?:dataset(?:\.(?:liquidity|risk))?|snapshot\.reader)\.server$/.test(specifier)
+		/(?:^|\/)server\/dataset(?:\.(?:liquidity|risk))?\.server$/.test(specifier)
 	)
 }
 
@@ -171,12 +171,7 @@ describe('dataset snapshot import boundary', () => {
 
 		for (const filePath of files) {
 			const source = await fs.readFile(filePath, 'utf8')
-			if (
-				!source.includes('datasetSnapshots') &&
-				!source.includes('/server/dataset.server') &&
-				!source.includes('/server/snapshot.reader.server')
-			)
-				continue
+			if (!source.includes('datasetSnapshots') && !source.includes('/server/dataset.server')) continue
 
 			const relativePath = relativeSourcePath(filePath)
 			const parsed = parseSync(filePath, source)

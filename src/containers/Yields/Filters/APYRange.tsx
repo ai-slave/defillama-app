@@ -54,7 +54,7 @@ export function APYRange({ nestedMenu, placement, size = 'sm' }: IAPYRange) {
 					{min || max ? (
 						<>
 							<span>APY: </span>
-							<span className="text-(--legacy-link)">{`${min?.toLocaleString() ?? 'min'} - ${
+							<span className="text-link">{`${min?.toLocaleString() ?? 'min'} - ${
 								max?.toLocaleString() ?? 'max'
 							}`}</span>
 						</>

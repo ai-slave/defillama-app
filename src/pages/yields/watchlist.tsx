@@ -1,22 +1,20 @@
 import { Announcement } from '~/components/Announcement'
 import { disclaimer } from '~/containers/Yields/constants'
-import { YieldsWatchlistContainer } from '~/containers/Yields/views/WatchlistView'
+import { YieldsWatchlistContainer } from '~/containers/Yields/views/YieldsWatchlistView'
 import Layout from '~/layout'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
+// Bookmarks are client-only (localStorage) and the saved earn pools are fetched by id
+// from the v2 earn route on the client, so the page ships as a static shell.
 export const getStaticProps = withPerformanceLogging('yields/watchlist', async () => {
-	const { acquireYieldsSnapshot, readYieldPageData } = await import('~/containers/Yields/server/snapshot.reader.server')
-	const snapshot = await acquireYieldsSnapshot('blocking')
-	const data = await readYieldPageData(snapshot)
-
 	return {
-		props: { pools: data.props.pools },
+		props: {},
 		revalidate: maxAgeForNext([23])
 	}
 })
 
-export default function Portfolio({ pools }) {
+export default function Portfolio() {
 	return (
 		<Layout
 			title={`Your Saved DeFi Yield Pools - DefiLlama`}
@@ -26,7 +24,7 @@ export default function Portfolio({ pools }) {
 			<Announcement announcementId="yields-disclaimer" version="2026-03">
 				{disclaimer}
 			</Announcement>
-			<YieldsWatchlistContainer protocolsDict={pools} />
+			<YieldsWatchlistContainer />
 		</Layout>
 	)
 }

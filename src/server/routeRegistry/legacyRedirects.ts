@@ -97,7 +97,7 @@ export const legacyRedirects = [
 	},
 	{
 		source: '/yields/project/:path*',
-		destination: '/yields?project=:path*',
+		destination: '/yields?protocol=:path*',
 		permanent: true
 	},
 	{
@@ -117,7 +117,17 @@ export const legacyRedirects = [
 	},
 	{
 		source: '/yields/optimizer',
-		destination: '/borrow',
+		destination: '/yields/borrow',
+		permanent: true
+	},
+	{
+		source: '/borrow/advanced',
+		destination: '/yields/borrow',
+		permanent: true
+	},
+	{
+		source: '/borrow',
+		destination: '/yields/borrow',
 		permanent: true
 	},
 	{
@@ -128,11 +138,6 @@ export const legacyRedirects = [
 	{
 		source: '/protocols/cex',
 		destination: '/cexs',
-		permanent: true
-	},
-	{
-		source: '/yields/borrow',
-		destination: '/yields',
 		permanent: true
 	},
 	{
@@ -637,13 +642,43 @@ export const legacyRedirects = [
 		permanent: true
 	},
 	{
+		source: '/yields/strategy',
+		destination: '/yields',
+		permanent: true
+	},
+	{
+		source: '/yields/strategy-long-short',
+		destination: '/yields',
+		permanent: true
+	},
+	{
 		source: '/yields/strategyLongShort',
-		destination: '/yields/strategy-long-short',
+		destination: '/yields',
+		permanent: true
+	},
+	{
+		source: '/yields/projects',
+		destination: '/yields',
+		permanent: true
+	},
+	{
+		source: '/yields/halal',
+		destination: '/yields?attribute=halal',
+		permanent: true
+	},
+	{
+		source: '/yields/stablecoins',
+		destination: '/yields?attribute=stablecoins&attribute=no_il',
+		permanent: true
+	},
+	{
+		source: '/yields/overview',
+		destination: '/yields',
 		permanent: true
 	},
 	{
 		source: '/yields/strategylongshort',
-		destination: '/yields/strategy-long-short',
+		destination: '/yields',
 		permanent: true
 	},
 	{

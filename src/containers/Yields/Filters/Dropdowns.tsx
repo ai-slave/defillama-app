@@ -2,104 +2,49 @@ import { useRouter } from 'next/router'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { AvailableRange } from '~/components/Filters/AvailableRange'
 import { TVLRange } from '~/components/Filters/TVLRange'
-import { YIELDS_SETTINGS } from '~/contexts/LocalStorage'
-import { Checkbox } from '~/ui/Checkbox'
 import { nestedMenuActionStyles } from '~/ui/Popover'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
 import { APYRange } from './APYRange'
-import { YieldAttributes } from './Attributes'
+import { YieldAttributesSelect } from './AttributesSelect'
 import { FiltersByCategory } from './Categories'
 import { FilterByChain } from './Chains'
-import { ColumnFilters } from './ColumnFilters'
+import { ColumnsSelect } from './ColumnsSelect'
 import { YieldProjects } from './Projects'
 import { ResetAllYieldFilters } from './ResetAll'
-import { FilterByToken } from './Tokens'
 import type { IDropdownMenusProps } from './types'
 
-const BAD_DEBT_KEY = YIELDS_SETTINGS.NO_BAD_DEBT.toLowerCase()
-const EMPTY_TOKENS: string[] = []
 const EMPTY_CHAINS: string[] = []
 const EMPTY_PROJECTS: string[] = []
 const EMPTY_CATEGORIES: string[] = []
 
 export function YieldFilterDropdowns({
 	pathname,
-	tokensList,
-	selectedTokens,
 	chainList,
 	selectedChains,
 	evmChains,
 	projectList,
 	selectedProjects,
-	lendingProtocols,
-	selectedLendingProtocols,
-	farmProtocols,
-	selectedFarmProtocols,
+	projectsLabel,
+	categoriesLabel,
 	categoryList,
 	selectedCategories,
-	attributes,
+	attributeIds,
 	tvlRange,
+	tvlRangeLabel,
 	apyRange,
-	enabledColumns,
 	resetFilters,
 	availableRange,
-	excludeBadDebt,
-	selectedAttributes,
-	excludeRewardApy,
 	nestedMenu,
-	includeLsdApy,
-	// oxlint-disable-next-line no-unused-vars
-	showMedianApy,
-	// oxlint-disable-next-line no-unused-vars
-	showStdDev,
-	prepareCsv
+	prepareCsv,
+	resetFiltersLabel,
+	showColumns
 }: IDropdownMenusProps) {
 	const router = useRouter()
 
-	const isBadDebtToggled = selectedAttributes ? selectedAttributes.includes(BAD_DEBT_KEY) : false
-
-	const shouldExlcudeRewardApy = router.query.excludeRewardApy === 'true'
-
-	const shouldIncludeLsdApy = router.query.includeLsdApy === 'true'
-
-	const safeSelectedAttributes = selectedAttributes ?? []
 	const effectivePathname = pathname || router.pathname
-	const toggleBadDebtFilter = () => {
-		const nextAttributes = isBadDebtToggled
-			? safeSelectedAttributes.filter((attribute) => attribute !== BAD_DEBT_KEY)
-			: [...safeSelectedAttributes, BAD_DEBT_KEY]
-		void pushYieldsQuery(router, { attribute: nextAttributes }, { pathname: effectivePathname })
-	}
-	const toggleExcludeRewardApyFilter = () => {
-		void pushYieldsQuery(
-			router,
-			{
-				excludeRewardApy: !shouldExlcudeRewardApy ? 'true' : undefined
-			},
-			{ pathname: effectivePathname }
-		)
-	}
-	const toggleIncludeLsdApyFilter = () => {
-		void pushYieldsQuery(
-			router,
-			{
-				includeLsdApy: !shouldIncludeLsdApy ? 'true' : undefined
-			},
-			{ pathname: effectivePathname }
-		)
-	}
-
 	return (
 		<>
-			{tokensList && tokensList.length > 0 ? (
-				<FilterByToken
-					tokensList={tokensList}
-					selectedTokens={selectedTokens ?? EMPTY_TOKENS}
-					nestedMenu={nestedMenu}
-				/>
-			) : null}
-
 			{chainList && chainList.length > 0 ? (
 				<FilterByChain
 					chainList={chainList}
@@ -113,32 +58,10 @@ export function YieldFilterDropdowns({
 				<YieldProjects
 					projectList={projectList}
 					selectedProjects={selectedProjects ?? EMPTY_PROJECTS}
-					label="Projects"
+					label={projectsLabel ?? 'Projects'}
 					nestedMenu={nestedMenu}
-					includeQueryKey="project"
-					excludeQueryKey="excludeProject"
-				/>
-			) : null}
-
-			{lendingProtocols && lendingProtocols.length > 0 ? (
-				<YieldProjects
-					projectList={lendingProtocols}
-					selectedProjects={selectedLendingProtocols ?? EMPTY_PROJECTS}
-					label="Lending Protocols"
-					nestedMenu={nestedMenu}
-					includeQueryKey="lendingProtocol"
-					excludeQueryKey="excludeLendingProtocol"
-				/>
-			) : null}
-
-			{farmProtocols && farmProtocols.length > 0 ? (
-				<YieldProjects
-					projectList={farmProtocols}
-					selectedProjects={selectedFarmProtocols ?? EMPTY_PROJECTS}
-					label="Farm Protocol"
-					nestedMenu={nestedMenu}
-					includeQueryKey="farmProtocol"
-					excludeQueryKey="excludeFarmProtocol"
+					includeQueryKey="protocol"
+					excludeQueryKey="excludeProtocol"
 				/>
 			) : null}
 
@@ -147,18 +70,22 @@ export function YieldFilterDropdowns({
 					categoryList={categoryList}
 					selectedCategories={selectedCategories ?? EMPTY_CATEGORIES}
 					nestedMenu={nestedMenu}
+					label={categoriesLabel}
 				/>
 			) : null}
 
-			{attributes ? <YieldAttributes pathname={pathname || router.pathname} nestedMenu={nestedMenu} /> : null}
+			{attributeIds ? <YieldAttributesSelect nestedMenu={nestedMenu} attributeIds={attributeIds} /> : null}
 
 			{tvlRange ? (
 				<TVLRange
+					label={tvlRangeLabel}
 					nestedMenu={nestedMenu}
 					variant="secondary"
 					placement="bottom-start"
 					pushQueryUpdates={(updates) => {
-						void pushYieldsQuery(router, updates, { pathname: effectivePathname })
+						void pushYieldsQuery(router, updates, {
+							pathname: effectivePathname
+						})
 					}}
 					onValueChange={(min, max) => {
 						const eventData: Record<string, number> = {}
@@ -178,65 +105,32 @@ export function YieldFilterDropdowns({
 
 			{apyRange ? <APYRange nestedMenu={nestedMenu} placement="bottom-start" /> : null}
 
+			{showColumns ? <ColumnsSelect nestedMenu={nestedMenu} /> : null}
+
 			{availableRange ? (
 				<AvailableRange
 					nestedMenu={nestedMenu}
 					placement="bottom-start"
 					pushQueryUpdates={(updates) => {
-						void pushYieldsQuery(router, updates, { pathname: effectivePathname })
+						void pushYieldsQuery(router, updates, {
+							pathname: effectivePathname
+						})
 					}}
 				/>
 			) : null}
 
-			{enabledColumns && enabledColumns.length > 0 ? (
-				<ColumnFilters enabledColumns={enabledColumns} nestedMenu={nestedMenu} />
-			) : null}
-
-			{excludeBadDebt && selectedAttributes ? (
-				<Checkbox
-					variant={nestedMenu ? 'filter-borderless' : 'default'}
-					value="excludeBadDebt"
-					checked={isBadDebtToggled}
-					onChange={toggleBadDebtFilter}
-				>
-					Exclude bad debt
-				</Checkbox>
-			) : null}
-
-			{excludeRewardApy ? (
-				<Checkbox
-					variant={nestedMenu ? 'filter-borderless' : 'default'}
-					value="excludeRewardApy"
-					checked={shouldExlcudeRewardApy}
-					onChange={toggleExcludeRewardApyFilter}
-				>
-					Exclude reward APY
-				</Checkbox>
-			) : null}
-
-			{includeLsdApy ? (
-				<Checkbox
-					variant={nestedMenu ? 'filter-borderless' : 'default'}
-					value="includeLsdApy"
-					checked={shouldIncludeLsdApy}
-					onChange={toggleIncludeLsdApyFilter}
-				>
-					Include LSD APY
-				</Checkbox>
-			) : null}
-
-			{resetFilters ? <ResetAllYieldFilters pathname={pathname || router.pathname} nestedMenu={nestedMenu} /> : null}
-
-			{prepareCsv ? (
-				<CSVDownloadButton
-					replaceClassName
-					className={
-						nestedMenu
-							? nestedMenuActionStyles
-							: 'flex cursor-pointer flex-nowrap items-center gap-2 rounded-md bg-(--legacy-btn-bg) px-3 py-2 text-xs text-(--legacy-text-primary) hover:bg-(--legacy-btn-hover-bg) focus-visible:bg-(--legacy-btn-hover-bg)'
-					}
-					prepareCsv={prepareCsv}
+			{resetFilters ? (
+				<ResetAllYieldFilters
+					pathname={pathname || router.pathname}
+					nestedMenu={nestedMenu}
+					label={resetFiltersLabel}
 				/>
+			) : null}
+
+			{prepareCsv && nestedMenu ? (
+				<CSVDownloadButton replaceClassName className={nestedMenuActionStyles} prepareCsv={prepareCsv} />
+			) : prepareCsv ? (
+				<CSVDownloadButton size="md" prepareCsv={prepareCsv} />
 			) : null}
 		</>
 	)

@@ -162,7 +162,7 @@ export function buildScenarios(vault: VaultRiskFixture, deps: BuildScenariosDeps
 			actingWindow: parseActingWindow(head.loss),
 			perAsset,
 			conditions: head.conditions,
-			mitigations: head.mitigations ?? [],
+			mitigations: [...new Set(head.mitigations ?? [])],
 			evidence: head.evidence ?? [],
 			inputs: head.loss.inputs ?? {},
 			formula: head.loss.formula,
@@ -257,12 +257,6 @@ export function buildCollateral(vault: VaultRiskFixture, explorers?: BlockExplor
 
 function normalisedDrop(drop: number): number {
 	return Math.min(1, Math.max(0, drop))
-}
-
-// Backend-equivalent no-liquidation bad debt: debt × max(0, 1 − (1−drop)/threshold), capped
-// at the all-to-zero ceiling. A non-positive threshold has no usable curve → the cap applies.
-export function depegLossUsd(drop: number, liquidationThreshold: number, badDebtAtZeroUsd: number): number {
-	return badDebtAtDrop(badDebtAtZeroUsd, liquidationThreshold, drop, badDebtAtZeroUsd)
 }
 
 type BadDebtMarketInputs = { lltv: number | null; badDebtAtZeroUsd: number }

@@ -1,7 +1,6 @@
 import {
 	SERVER_URL,
 	V2_SERVER_URL,
-	YIELDS_SERVER_URL,
 	BRIDGES_SERVER_URL,
 	ETF_SERVER_URL,
 	STABLECOINS_SERVER_URL,
@@ -23,14 +22,42 @@ export interface DatasetDefinition {
 	url: string
 	fields?: string[]
 	defaultSortField?: string
-	extractItems: (json: any) => any[]
+	extractItems: (json: unknown) => DatasetItem[]
 	chainFilterType?: 'overview' | 'protocols'
 	excludeToggles?: DatasetExcludeToggle[]
 }
 
-const extractArray = (json: any): any[] => (Array.isArray(json) ? json : [])
-const extractDataField = (json: any): any[] => json?.data ?? extractArray(json)
-const extractProtocols = (json: any): any[] => json?.protocols ?? []
+export type DatasetItem = Record<string, unknown>
+
+function isRecord(value: unknown): value is DatasetItem {
+	return typeof value === 'object' && value != null && !Array.isArray(value)
+}
+
+function extractRecordArray(value: unknown): DatasetItem[] {
+	return Array.isArray(value) ? value.filter(isRecord) : []
+}
+
+function recordField(value: unknown, field: string): unknown {
+	return isRecord(value) ? value[field] : undefined
+}
+
+function recordFieldArray(value: unknown, field: string): DatasetItem[] {
+	return extractRecordArray(recordField(value, field))
+}
+
+function recordFieldArrayOrRoot(value: unknown, field: string): DatasetItem[] {
+	const fieldValue = recordField(value, field)
+	return fieldValue === undefined ? extractRecordArray(value) : extractRecordArray(fieldValue)
+}
+
+function numericField(record: DatasetItem, field: string): number | null {
+	const value = record[field]
+	return typeof value === 'number' ? value : null
+}
+
+const extractArray = (json: unknown): DatasetItem[] => extractRecordArray(json)
+const extractDataField = (json: unknown): DatasetItem[] => recordFieldArrayOrRoot(json, 'data')
+const extractProtocols = (json: unknown): DatasetItem[] => recordFieldArray(json, 'protocols')
 
 function pctChange(current: number | null | undefined, prev: number | null | undefined): number | null {
 	if (current == null || prev == null || prev === 0) return null
@@ -56,24 +83,24 @@ function deepSumRecord(rec: unknown): number {
 	return total
 }
 
-const extractLiteProtocols = (json: any): any[] => {
-	const protocols: any[] = json?.protocols ?? []
-	return protocols.map((p: any) => ({
-		name: p.name,
-		symbol: p.symbol,
-		category: p.category,
-		chain: p.chains?.[0] ?? null,
-		chains: p.chains,
-		tvl: p.tvl,
-		tvlPrevDay: p.tvlPrevDay,
-		tvlPrevWeek: p.tvlPrevWeek,
-		tvlPrevMonth: p.tvlPrevMonth,
-		change_1d: pctChange(p.tvl, p.tvlPrevDay),
-		change_7d: pctChange(p.tvl, p.tvlPrevWeek),
-		change_1m: pctChange(p.tvl, p.tvlPrevMonth),
-		mcap: p.mcap,
-		url: p.url,
-		chainTvls: p.chainTvls
+const extractLiteProtocols = (json: unknown): DatasetItem[] => {
+	const protocols = recordFieldArray(json, 'protocols')
+	return protocols.map((protocol) => ({
+		name: protocol.name,
+		symbol: protocol.symbol,
+		category: protocol.category,
+		chain: Array.isArray(protocol.chains) ? (protocol.chains[0] ?? null) : null,
+		chains: protocol.chains,
+		tvl: protocol.tvl,
+		tvlPrevDay: protocol.tvlPrevDay,
+		tvlPrevWeek: protocol.tvlPrevWeek,
+		tvlPrevMonth: protocol.tvlPrevMonth,
+		change_1d: pctChange(numericField(protocol, 'tvl'), numericField(protocol, 'tvlPrevDay')),
+		change_7d: pctChange(numericField(protocol, 'tvl'), numericField(protocol, 'tvlPrevWeek')),
+		change_1m: pctChange(numericField(protocol, 'tvl'), numericField(protocol, 'tvlPrevMonth')),
+		mcap: protocol.mcap,
+		url: protocol.url,
+		chainTvls: protocol.chainTvls
 	}))
 }
 
@@ -120,7 +147,7 @@ export const datasets: DatasetDefinition[] = [
 			'chains',
 			'price'
 		],
-		extractItems: (json) => json?.peggedAssets ?? extractArray(json)
+		extractItems: (json) => recordFieldArrayOrRoot(json, 'peggedAssets')
 	},
 	{
 		slug: 'stablecoins-chains',
@@ -131,10 +158,10 @@ export const datasets: DatasetDefinition[] = [
 		defaultSortField: 'totalCirculatingUSD',
 		fields: ['name', 'tokenSymbol', 'totalCirculatingUSD'],
 		extractItems: (json) => {
-			const chains: any[] = json?.chains ?? []
-			return chains.map((c: any) => ({
-				...c,
-				totalCirculatingUSD: sumRecord(c.totalCirculatingUSD)
+			const chains = recordFieldArray(json, 'chains')
+			return chains.map((chain) => ({
+				...chain,
+				totalCirculatingUSD: sumRecord(chain.totalCirculatingUSD)
 			}))
 		}
 	},
@@ -163,7 +190,7 @@ export const datasets: DatasetDefinition[] = [
 		excludeToggles: [{ field: 'stablecoin', label: 'Stablecoins', defaultExclude: true }],
 		extractItems: (json) => {
 			if (!Array.isArray(json)) return []
-			return json.map((item: any) => ({
+			return extractRecordArray(json).map((item) => ({
 				...item,
 				category: Array.isArray(item.category) ? item.category.join(', ') : item.category,
 				chain: Array.isArray(item.chain) ? item.chain.join(', ') : item.chain,
@@ -182,8 +209,11 @@ export const datasets: DatasetDefinition[] = [
 		defaultSortField: 'onChainMcap',
 		fields: ['category', 'onChainMcap', 'activeMcap', 'defiActiveTvl', 'assetCount', 'assetIssuers'],
 		extractItems: (json) => {
-			const byCategory: Record<string, any> = json?.byCategory ?? {}
+			const byCategory = recordField(json, 'byCategory')
+			if (!isRecord(byCategory)) return []
 			return Object.entries(byCategory).map(([category, stats]) => {
+				if (!isRecord(stats))
+					return { category, onChainMcap: 0, activeMcap: 0, defiActiveTvl: 0, assetCount: 0, assetIssuers: 0 }
 				const buckets = [stats.base, stats.stablecoinsOnly, stats.governanceOnly, stats.stablecoinsAndGovernance]
 				let onChainMcap = 0
 				let activeMcap = 0
@@ -191,12 +221,14 @@ export const datasets: DatasetDefinition[] = [
 				let assetCount = 0
 				const issuerSet = new Set<string>()
 				for (const b of buckets) {
-					if (!b) continue
-					onChainMcap += b.onChainMcap ?? 0
-					activeMcap += b.activeMcap ?? 0
-					defiActiveTvl += b.defiActiveTvl ?? 0
-					assetCount += b.assetCount ?? 0
-					for (const issuer of b.assetIssuers ?? []) issuerSet.add(issuer)
+					if (!isRecord(b)) continue
+					onChainMcap += numericField(b, 'onChainMcap') ?? 0
+					activeMcap += numericField(b, 'activeMcap') ?? 0
+					defiActiveTvl += numericField(b, 'defiActiveTvl') ?? 0
+					assetCount += numericField(b, 'assetCount') ?? 0
+					if (Array.isArray(b.assetIssuers)) {
+						for (const issuer of b.assetIssuers) if (typeof issuer === 'string') issuerSet.add(issuer)
+					}
 				}
 				return {
 					category,
@@ -218,14 +250,18 @@ export const datasets: DatasetDefinition[] = [
 		defaultSortField: 'onChainMcap',
 		fields: ['chain', 'onChainMcap', 'activeMcap', 'defiActiveTvl', 'assetCount'],
 		extractItems: (json) => {
-			const byChain: Record<string, any> = json?.byChain ?? {}
-			return Object.entries(byChain).map(([chain, stats]: [string, any]) => ({
-				chain,
-				onChainMcap: stats.base?.onChainMcap ?? 0,
-				activeMcap: stats.base?.activeMcap ?? 0,
-				defiActiveTvl: stats.base?.defiActiveTvl ?? 0,
-				assetCount: stats.base?.assetCount ?? 0
-			}))
+			const byChain = recordField(json, 'byChain')
+			if (!isRecord(byChain)) return []
+			return Object.entries(byChain).map(([chain, value]) => {
+				const stats = isRecord(value) && isRecord(value.base) ? value.base : {}
+				return {
+					chain,
+					onChainMcap: numericField(stats, 'onChainMcap') ?? 0,
+					activeMcap: numericField(stats, 'activeMcap') ?? 0,
+					defiActiveTvl: numericField(stats, 'defiActiveTvl') ?? 0,
+					assetCount: numericField(stats, 'assetCount') ?? 0
+				}
+			})
 		}
 	},
 	{
@@ -264,80 +300,87 @@ export const datasets: DatasetDefinition[] = [
 	{
 		slug: 'yields',
 		name: 'Yield Pools',
-		description: 'All yield pools with current APY, TVL, reward tokens, and pool metadata',
+		description: 'V2 earn pools with supply APY windows, TVL, stability, holders, and pool attributes',
 		category: 'Yields',
-		url: `${YIELDS_SERVER_URL}/pools`,
+		url: '',
 		defaultSortField: 'tvlUsd',
 		fields: [
 			'chain',
-			'project',
-			'symbol',
-			'tvlUsd',
-			'apy',
-			'apyBase',
-			'apyReward',
-			'rewardTokens',
+			'protocol',
+			'protocolSlug',
+			'category',
 			'pool',
-			'apyPct1D',
-			'apyPct7D',
-			'apyPct30D',
-			'stablecoin',
-			'ilRisk',
-			'exposure',
 			'poolMeta',
+			'poolId',
+			'tvlUsd',
+			'supplyApy',
+			'supplyApyBase',
+			'supplyApyReward',
+			'supplyApyIntrinsic',
+			'supplyApy7d',
+			'supplyApyBase7d',
+			'supplyApyReward7d',
+			'supplyApyIntrinsic7d',
+			'supplyApy30d',
+			'supplyApyBase30d',
+			'supplyApyReward30d',
+			'supplyApyIntrinsic30d',
+			'stability30d',
+			'stablecoinOnly',
+			'singleAssetExposure',
+			'impermanentLossRisk',
+			'referenceAsset',
 			'underlyingTokens',
-			'apyBase7d',
-			'apyMean30d',
+			'rewardTokens',
 			'volumeUsd1d',
-			'volumeUsd7d',
-			'apyBaseInception'
+			'holderCount',
+			'top10HolderPct',
+			'avgPositionUsd',
+			'url'
 		],
 		extractItems: extractDataField
 	},
 	{
 		slug: 'yields-borrow',
-		name: 'Borrow Rates',
-		description: 'Borrowing rates across lending protocols with LTV and supply/borrow data',
+		name: 'Borrow Markets',
+		description: 'V2 borrow markets with supply APY, borrow cost, market sizing, available liquidity, and LTV',
 		category: 'Yields',
-		url: `${YIELDS_SERVER_URL}/poolsBorrow`,
+		url: '',
 		defaultSortField: 'totalBorrowUsd',
 		fields: [
 			'chain',
-			'project',
-			'symbol',
-			'tvlUsd',
-			'apy',
-			'apyBase',
-			'apyReward',
-			'rewardTokens',
-			'pool',
-			'apyPct1D',
-			'apyPct7D',
-			'apyPct30D',
-			'stablecoin',
-			'exposure',
-			'poolMeta',
-			'underlyingTokens',
-			'apyBase7d',
-			'apyMean30d',
-			'apyBaseBorrow',
-			'apyRewardBorrow',
+			'protocol',
+			'protocolSlug',
+			'category',
+			'market',
+			'marketMeta',
+			'marketId',
+			'collateralToken',
+			'borrowToken',
+			'supplyApy',
+			'supplyApyBase',
+			'supplyApyReward',
+			'supplyApyIntrinsic',
+			'borrowCostApy',
+			'borrowCostApyBase',
+			'borrowCostApyReward',
+			'borrowCostApyIntrinsic',
 			'totalSupplyUsd',
 			'totalBorrowUsd',
-			'debtCeilingUsd',
+			'availableBorrowUsd',
 			'ltv',
-			'borrowable',
-			'mintedCoin',
-			'borrowFactor'
+			'rewardTokens',
+			'url'
 		],
 		extractItems: extractDataField
 	},
+	// The API route resolves these paid legacy upstreams so credentials stay out of the browser catalog bundle.
 	{
 		slug: 'perp-funding',
 		name: 'Perp Funding Rates',
 		description: 'Perpetual futures funding rates, open interest, and index prices',
 		category: 'Yields',
-		url: `${YIELDS_SERVER_URL}/perps`,
+		url: '',
 		defaultSortField: 'openInterest',
 		fields: [
 			'marketplace',
@@ -359,7 +402,7 @@ export const datasets: DatasetDefinition[] = [
 		name: 'LSD Rates',
 		description: 'Liquid staking derivative APY rates and market share data',
 		category: 'Yields',
-		url: `${YIELDS_SERVER_URL}/lsdRates`,
+		url: '',
 		extractItems: extractDataField
 	},
 	{
@@ -581,7 +624,7 @@ export const datasets: DatasetDefinition[] = [
 			'otherInvestors',
 			'valuation'
 		],
-		extractItems: (json) => json?.raises ?? extractArray(json)
+		extractItems: (json) => recordFieldArrayOrRoot(json, 'raises')
 	},
 	{
 		slug: 'emissions',
@@ -652,7 +695,7 @@ export const datasets: DatasetDefinition[] = [
 			'monthlyVolume',
 			'url'
 		],
-		extractItems: (json) => json?.bridges ?? extractArray(json)
+		extractItems: (json) => recordFieldArrayOrRoot(json, 'bridges')
 	},
 	{
 		slug: 'cex-transparency',
@@ -677,7 +720,7 @@ export const datasets: DatasetDefinition[] = [
 			'lastAuditDate',
 			'auditor'
 		],
-		extractItems: (json) => json?.cexs ?? extractArray(json)
+		extractItems: (json) => recordFieldArrayOrRoot(json, 'cexs')
 	},
 	{
 		slug: 'dat-institutions',
@@ -700,8 +743,8 @@ export const datasets: DatasetDefinition[] = [
 			'holdings'
 		],
 		extractItems: (json) => {
-			const metadata = json?.institutionMetadata ?? {}
-			return Object.values(metadata)
+			const metadata = recordField(json, 'institutionMetadata')
+			return isRecord(metadata) ? Object.values(metadata).filter(isRecord) : []
 		}
 	}
 ]

@@ -14,6 +14,7 @@ const optionalPageData = vi.hoisted(() =>
 		}
 	})
 )
+const yieldsSnapshot = { readJson: vi.fn().mockRejectedValue(new Error('yields unavailable')) }
 
 vi.mock('~/api', () => ({
 	fetchBlockExplorers: vi.fn().mockResolvedValue([]),
@@ -107,7 +108,8 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {}
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot
 		})
 
 		expect(data.availableCharts).toContain('Fees')
@@ -133,7 +135,8 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {}
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot
 		})
 
 		expect(data.defaultToggledCharts).toEqual(['TVL'])
@@ -161,7 +164,8 @@ describe('getProtocolOverviewPageData', () => {
 				tokenlist: {},
 				cgExchangeIdentifiers: [],
 				emissionsSupplyMetrics: {},
-				protocolLlamaswapDataset: {}
+				protocolLlamaswapDataset: {},
+				yieldsSnapshot
 			})
 
 			expect(fetchProtocolTvlChart).toHaveBeenCalledWith({ protocol: 'test-protocol', timeout: getFastJsonTimeoutMs() })
@@ -187,7 +191,8 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {}
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot
 		})
 
 		expect(data.treasury).toBeNull()
@@ -195,7 +200,6 @@ describe('getProtocolOverviewPageData', () => {
 	})
 
 	it('builds protocol page data when optional yields data fails', async () => {
-		fetchJson.mockRejectedValueOnce(new Error('yields timeout'))
 		const { getProtocolOverviewPageData } = await import('../queries')
 
 		const data = await getProtocolOverviewPageData({
@@ -208,11 +212,40 @@ describe('getProtocolOverviewPageData', () => {
 			tokenlist: {},
 			cgExchangeIdentifiers: [],
 			emissionsSupplyMetrics: {},
-			protocolLlamaswapDataset: {}
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot
 		})
 
 		expect(data.yields).toBeNull()
 		expect(optionalPageData).toHaveBeenCalledWith('protocol:test-protocol:yields', expect.any(Function), null)
+	})
+
+	it('builds protocol page data without optional Yields enrichment when no snapshot is available', async () => {
+		const { getProtocolOverviewPageData } = await import('../queries')
+
+		const data = await getProtocolOverviewPageData({
+			protocolId: 'test-protocol',
+			currentProtocolMetadata: {
+				displayName: 'Test Protocol',
+				yields: true,
+				liquidity: true
+			} as never,
+			chainMetadata: {},
+			tokenlist: {},
+			cgExchangeIdentifiers: [],
+			emissionsSupplyMetrics: {},
+			protocolLlamaswapDataset: {},
+			yieldsSnapshot: null
+		})
+
+		expect(data.yields).toBeNull()
+		expect(data.tokenLiquidity).toBeNull()
+		expect(optionalPageData).not.toHaveBeenCalledWith('protocol:test-protocol:yields', expect.any(Function), null)
+		expect(optionalPageData).not.toHaveBeenCalledWith(
+			'protocol:test-protocol:liquidity_yields_config',
+			expect.any(Function),
+			null
+		)
 	})
 
 	it('fetches token income statements from the token endpoint', async () => {
@@ -254,6 +287,7 @@ describe('getProtocolOverviewPageData', () => {
 				}
 			},
 			cgExchangeIdentifiers: [],
+			yieldsSnapshot,
 			emissionsSupplyMetrics: {
 				'test-protocol': {
 					name: 'Test Protocol',

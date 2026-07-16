@@ -31,24 +31,15 @@ const DEFAULT_SORTING_STATE = [{ id: 'stakedEth', desc: true }]
 const ETHPegTooltipContent = ({ marketRate, expectedRate }: { marketRate: number; expectedRate: number }) => {
 	return (
 		<span className="flex flex-col gap-1">
-			<span>{`Market Rate: ${marketRate?.toFixed(4)}`}</span>
-			<span>{`Expected Rate: ${expectedRate?.toFixed(4)}`}</span>
-		</span>
-	)
-}
-
-const McapTooltipContent = ({ mcap, tvl }: { mcap: number; tvl: number }) => {
-	return (
-		<span className="flex flex-col gap-1">
-			<span>{`Market Cap: ${mcap?.toFixed(4)}`}</span>
-			<span>{`TVL: ${tvl?.toFixed(4)}`}</span>
+			<span>{`Market Rate: ${marketRate.toFixed(4)}`}</span>
+			<span>{`Expected Rate: ${expectedRate.toFixed(4)}`}</span>
 		</span>
 	)
 }
 
 const columnHelper = createColumnHelper<ILSTTokenRow>()
 
-const LSDColumn = [
+const LST_COLUMNS = [
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -121,13 +112,12 @@ const LSDColumn = [
 	columnHelper.accessor('lsdSymbol', {
 		header: 'LST',
 		cell: ({ getValue, row }) => {
-			const value = getValue()
-			const stringValue = typeof value === 'string' ? value : ''
-			if (!row.original.pegInfo) return stringValue
+			const symbol = getValue() ?? ''
+			if (!row.original.pegInfo) return symbol
 			return (
 				<span className="flex items-center justify-end gap-1">
-					{row.original.pegInfo ? <QuestionHelper text={row.original.pegInfo} /> : null}
-					{stringValue}
+					<QuestionHelper text={row.original.pegInfo} />
+					{symbol}
 				</span>
 			)
 		},
@@ -139,17 +129,19 @@ const LSDColumn = [
 	columnHelper.accessor('ethPeg', {
 		header: 'ETH Peg',
 		cell: ({ getValue, row }) => {
+			const value = getValue()
+			if (value == null) return null
 			return (
 				<Tooltip
 					content={
 						<ETHPegTooltipContent
-							marketRate={row.original?.marketRate ?? 0}
-							expectedRate={row.original?.expectedRate ?? 0}
+							marketRate={row.original.marketRate ?? 0}
+							expectedRate={row.original.expectedRate ?? 0}
 						/>
 					}
 					className="justify-end"
 				>
-					{getValue() != null ? <PercentChange percent={getValue()} /> : null}
+					<PercentChange percent={value} />
 				</Tooltip>
 			)
 		},
@@ -162,16 +154,7 @@ const LSDColumn = [
 	}),
 	columnHelper.accessor('mcapOverTvl', {
 		header: 'Mcap/TVL',
-		cell: ({ getValue, row }) => {
-			return (
-				<Tooltip
-					content={<McapTooltipContent mcap={row.original.mcap ?? 0} tvl={row.original.stakedEthInUsd} />}
-					className="justify-end"
-				>
-					{getValue() ?? null}
-				</Tooltip>
-			)
-		},
+		cell: ({ getValue }) => getValue(),
 		meta: {
 			headerClassName: 'w-[110px]',
 			align: 'end',
@@ -179,10 +162,10 @@ const LSDColumn = [
 		}
 	}),
 	columnHelper.accessor('apy', {
-		header: 'LST APR',
+		header: 'Supply APY',
 		cell: (info) => (info.getValue() != null ? `${info.getValue().toFixed(2)}%` : null),
 		meta: {
-			headerClassName: 'w-[100px]',
+			headerClassName: 'w-[130px]',
 			align: 'end',
 			headerHelperText: 'Annualized staking reward rate of the LST'
 		}
@@ -379,7 +362,7 @@ export const LSTOverview = ({
 
 			<TableWithSearch
 				data={tokensList}
-				columns={LSDColumn}
+				columns={LST_COLUMNS}
 				columnToSearch={'name'}
 				placeholder={'Search protocols...'}
 				header="Liquid Staking Protocols"

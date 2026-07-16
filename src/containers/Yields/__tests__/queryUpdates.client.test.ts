@@ -11,54 +11,6 @@ function router(pathname: string, query: NextRouter['query']): NextRouter {
 }
 
 describe('pushYieldsQuery', () => {
-	it('clears stale table page state when strategy search params change', async () => {
-		const testRouter = router('/yields/strategy', {
-			page: '3',
-			pageSize: '50',
-			lend: 'USDC',
-			sortBy: 'totalApy'
-		})
-
-		await pushYieldsQuery(testRouter, { lend: 'ETH' })
-
-		expect(testRouter.push).toHaveBeenCalledWith(
-			{
-				pathname: '/yields/strategy',
-				query: {
-					pageSize: '50',
-					lend: 'ETH',
-					sortBy: 'totalApy'
-				}
-			},
-			undefined,
-			{ shallow: true }
-		)
-	})
-
-	it('clears stale table page state when custom LTV changes', async () => {
-		const testRouter = router('/yields/strategy', {
-			page: '2',
-			lend: 'ETH',
-			borrow: 'USDC',
-			customLTV: '50'
-		})
-
-		await pushYieldsQuery(testRouter, { customLTV: '75' })
-
-		expect(testRouter.push).toHaveBeenCalledWith(
-			{
-				pathname: '/yields/strategy',
-				query: {
-					lend: 'ETH',
-					borrow: 'USDC',
-					customLTV: '75'
-				}
-			},
-			undefined,
-			{ shallow: true }
-		)
-	})
-
 	it('preserves table page state for pagination updates', async () => {
 		const testRouter = router('/yields/loop', {
 			page: '3',

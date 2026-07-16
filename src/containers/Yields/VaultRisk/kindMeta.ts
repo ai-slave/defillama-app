@@ -73,29 +73,29 @@ export interface ToneClasses {
 
 const TONE_CLASSES: Record<Tone, ToneClasses> = {
 	danger: {
-		text: 'text-(--error)',
-		chip: 'bg-red-500/10 text-(--error) border border-red-500/30',
-		bar: 'bg-(--error)'
+		text: 'text-(--yield-negative-text)',
+		chip: 'border border-data-down/30 bg-data-down/10 text-primary',
+		bar: 'bg-data-down'
 	},
 	warning: {
-		text: 'text-(--warning)',
-		chip: 'bg-amber-500/10 text-(--warning) border border-amber-500/30',
-		bar: 'bg-(--warning)'
+		text: 'text-(--yield-warning-text)',
+		chip: 'border border-warning/30 bg-warning/10 text-primary',
+		bar: 'bg-warning'
 	},
 	good: {
-		text: 'text-(--success)',
-		chip: 'bg-emerald-500/10 text-(--success) border border-emerald-500/30',
-		bar: 'bg-(--success)'
+		text: 'text-(--yield-positive-text)',
+		chip: 'border border-data-up/30 bg-data-up/10 text-primary',
+		bar: 'bg-data-up'
 	},
 	neutral: {
-		text: 'text-(--legacy-text-primary)',
-		chip: 'bg-(--legacy-bg-main) text-(--legacy-text-primary) border border-(--legacy-cards-border)',
-		bar: 'bg-(--legacy-text-secondary)'
+		text: 'text-primary',
+		chip: 'bg-surface text-primary border border-medium',
+		bar: 'bg-(--text-secondary)'
 	},
 	muted: {
-		text: 'text-(--legacy-text-secondary)',
-		chip: 'bg-(--legacy-bg-main) text-(--legacy-text-secondary) border border-(--legacy-cards-border)',
-		bar: 'bg-(--legacy-text-tertiary)'
+		text: 'text-secondary',
+		chip: 'bg-surface text-secondary border border-medium',
+		bar: 'bg-(--text-tertiary)'
 	}
 }
 

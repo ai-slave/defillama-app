@@ -15,8 +15,21 @@ describe('dataset snapshot publisher', () => {
 			publish: vi.fn()
 		}
 
-		await expect(publishDatasetSnapshotDomain('yields', store, () => 1000)).resolves.toBe('reused')
+		await expect(publishDatasetSnapshotDomain('yields', store, () => 1000)).resolves.toEqual({ status: 'reused' })
 		expect(store.publish).not.toHaveBeenCalled()
+	})
+
+	it('keeps a compatible stale snapshot when publication fails', async () => {
+		const error = new Error('upstream failed')
+		const store: DatasetSnapshotStore = {
+			getCurrent: vi.fn().mockResolvedValue(current),
+			publish: vi.fn().mockRejectedValue(error)
+		}
+
+		await expect(publishDatasetSnapshotDomain('yields', store, () => 1_000_000_000)).resolves.toEqual({
+			status: 'stale_if_error',
+			error
+		})
 	})
 
 	it('attempts every domain while preserving independently successful publications', async () => {
@@ -62,5 +75,17 @@ describe('dataset snapshot publisher', () => {
 		await expect(publishDatasetSnapshots({ store, logger })).resolves.toBeUndefined()
 		expect(logger.log).toHaveBeenCalledWith(expect.stringContaining('version cleanup failed'))
 		expect(logger.log).toHaveBeenCalledWith(expect.stringContaining('size diagnostics unavailable'))
+	})
+
+	it('reports stale retention without failing the aggregate preparation step', async () => {
+		const logger = { log: vi.fn() }
+		const store: DatasetSnapshotStore = {
+			getCurrent: vi.fn().mockResolvedValue(current),
+			publish: vi.fn().mockRejectedValue(new Error('upstream failed'))
+		}
+
+		await expect(publishDatasetSnapshots({ store, logger })).resolves.toBeUndefined()
+		expect(logger.log).toHaveBeenCalledWith(expect.stringContaining('refresh failed; keeping previous snapshot'))
+		expect(logger.log).toHaveBeenCalledWith(expect.stringContaining('retained stale'))
 	})
 })

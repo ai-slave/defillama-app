@@ -1,4 +1,4 @@
-import type { DatasetSnapshotDomain } from './contract'
+import { DatasetSnapshotCompatibilityError, type DatasetSnapshotDomain } from './contract'
 
 /** Integrity errors distinguish corrupt durable data from ordinary upstream failures. */
 
@@ -22,4 +22,11 @@ export function isMissingDatasetSnapshotArtifact(error: unknown): boolean {
 	if (!error || typeof error !== 'object') return false
 	if ('code' in error && error.code === 'ENOENT') return true
 	return 'cause' in error && isMissingDatasetSnapshotArtifact(error.cause)
+}
+
+export function isDatasetSnapshotCompatibilityError(error: unknown): boolean {
+	if (error instanceof DatasetSnapshotCompatibilityError) return true
+	return Boolean(
+		error && typeof error === 'object' && 'cause' in error && isDatasetSnapshotCompatibilityError(error.cause)
+	)
 }

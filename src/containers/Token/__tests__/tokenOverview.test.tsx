@@ -511,11 +511,16 @@ describe('tokenOverview helpers', () => {
 					},
 					mcap: null
 				},
-				yieldConfig: {
-					protocols: {
-						'pool-one': { name: 'Pool One' },
-						'pool-two': { name: 'Pool Two' }
-					}
+				yieldsMeta: {
+					protocols: [
+						{ slug: 'pool-one', name: 'Pool One', category: null, has_audit: false, has_token: false },
+						{ slug: 'pool-two', name: 'Pool Two', category: null, has_audit: false, has_token: false }
+					],
+					chains: [],
+					categories: [],
+					tokens: { families: [], assets: [] },
+					halal: [],
+					meme_pool_ids: []
 				},
 				liquidityInfo: {
 					id: 'proto-data',

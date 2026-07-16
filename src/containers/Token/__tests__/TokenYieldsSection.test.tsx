@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 
 var queryState: {
-	data?: any
+	data?: IYieldTableRow[]
 	error?: Error | null
 	isLoading: boolean
 } = {
@@ -15,8 +15,6 @@ var queryState: {
 
 var yieldsQueryState = {
 	selectedChains: [] as string[],
-	includeTokens: [] as string[],
-	excludeTokens: [] as string[],
 	minTvl: null as number | null,
 	maxTvl: null as number | null,
 	minApy: null as number | null,
@@ -31,16 +29,20 @@ var routerState = {
 
 const { yieldsTableCalls } = vi.hoisted(() => ({
 	yieldsTableCalls: [] as Array<{
+		appearance?: string
 		dataLength: number
-		enablePagination?: boolean
 		initialPageIndex?: number
 		initialPageSize?: number
+		interactionDisabled?: boolean
+		loadingLabel?: string
 	}>
 }))
 
+// The v2 earn fetch is enabled off the resolved token keys; the section renders
+// hydration.rows until the client fetch resolves. The mock ignores `enabled` and
+// always returns queryState so tests drive the fetched vs hydrated paths directly.
 vi.mock('@tanstack/react-query', () => ({
-	useQuery: (options: { enabled?: boolean }) =>
-		options.enabled === false ? { data: undefined, error: null, isLoading: false } : queryState
+	useQuery: () => queryState
 }))
 
 vi.mock('next/router', () => ({
@@ -75,36 +77,34 @@ vi.mock('~/containers/Yields/Filters/Chains', () => ({
 	FilterByChain: () => <div>Chains</div>
 }))
 
-vi.mock('~/containers/Yields/Filters/ColumnFilters', () => ({
-	ColumnFilters: () => <div>Columns</div>
-}))
-
-vi.mock('~/containers/Yields/Filters/Tokens', () => ({
-	FilterByToken: () => <div>Tokens</div>
-}))
-
 vi.mock('~/containers/Yields/hooks', () => ({
 	useFormatYieldQueryParams: () => yieldsQueryState
-}))
-
-vi.mock('~/containers/Yields/queries.client', () => ({
-	useVolatility: () => ({ data: {} }),
-	useHolderStats: () => ({ data: {} })
 }))
 
 vi.mock('~/containers/Yields/Tables/Pools', () => ({
 	PaginatedYieldsPoolTable: ({
 		data,
-		enablePagination,
+		appearance,
 		initialPageSize,
-		initialPageIndex
+		initialPageIndex,
+		interactionDisabled,
+		loadingLabel
 	}: {
 		data: Array<{ pool: string }>
-		enablePagination?: boolean
+		appearance?: string
 		initialPageSize?: number
 		initialPageIndex?: number
+		interactionDisabled?: boolean
+		loadingLabel?: string
 	}) => {
-		yieldsTableCalls.push({ dataLength: data.length, enablePagination, initialPageIndex, initialPageSize })
+		yieldsTableCalls.push({
+			appearance,
+			dataLength: data.length,
+			initialPageIndex,
+			initialPageSize,
+			interactionDisabled,
+			loadingLabel
+		})
 		return <div>Yield pools table</div>
 	}
 }))
@@ -117,8 +117,6 @@ afterEach(() => {
 	}
 	yieldsQueryState = {
 		selectedChains: [],
-		includeTokens: [],
-		excludeTokens: [],
 		minTvl: null,
 		maxTvl: null,
 		minApy: null,
@@ -137,45 +135,74 @@ import { TokenYieldsSection } from '../TokenYieldsSection'
 
 function makeYieldRow(overrides: Partial<IYieldTableRow> = {}): IYieldTableRow {
 	return {
+		id: 'pool-1',
 		pool: 'stETH-ETH',
+		poolMeta: null,
 		project: 'Aave',
 		projectslug: 'aave',
+		airdrop: false,
+		raiseValuation: null,
 		configID: 'pool-1',
 		chains: ['Ethereum'],
 		tvl: 1_000_000,
 		apy: 5.1,
 		apyBase: null,
 		apyReward: null,
+		apyMean30d: null,
+		apyRewardRaw: null,
+		rewardTokens: [],
 		rewardTokensSymbols: [],
-		rewards: [],
-		change1d: null,
-		change7d: null,
-		confidence: null,
+		intrinsicSourceSymbol: null,
+		volumeUsd1d: null,
+		pricePerShare: null,
+		holderCount: null,
+		avgPositionUsd: null,
+		top10Pct: null,
+		stabilityScore: null,
+		stabilityRating: null,
+		sparkline: null,
+		resolvedApy: { base: null, reward: null, intrinsic: null, total: 5.1 },
+		stablecoin: false,
+		tokenSymbols: ['stETH', 'ETH'],
+		singleAssetExposure: false,
+		ilRisk: false,
 		url: 'https://example.com/pool-1',
 		category: 'Lending',
+		referenceAsset: 'ETH',
+		...overrides
+	}
+}
+
+function makeHydration(overrides: Partial<import('../types').TokenYieldsHydration> = {}) {
+	return {
+		rows: [makeYieldRow()],
+		rowCount: 1,
+		chainList: ['Ethereum'],
+		pageSize: 10,
+		tokenKeys: ['family:eth'],
 		...overrides
 	}
 }
 
 describe('TokenYieldsSection', () => {
-	it('renders the protocol-yields filter controls and paginated table', () => {
+	it('renders the yields filter controls and paginated table (no token/column filters)', () => {
 		queryState = {
 			data: [makeYieldRow()],
 			error: null,
 			isLoading: false
 		}
 
-		const html = renderToStaticMarkup(<TokenYieldsSection tokenSymbol="ETH" />)
+		const html = renderToStaticMarkup(<TokenYieldsSection />)
 
 		expect(html).toContain('Tracking 1 pool, average APY 5.10%')
 		expect(html).toContain('Chains')
-		expect(html).toContain('Tokens')
 		expect(html).toContain('TVL Range')
 		expect(html).toContain('APY')
-		expect(html).toContain('Columns')
+		expect(html).not.toContain('Tokens')
+		expect(html).not.toContain('Columns')
 		expect(yieldsTableCalls[0]).toMatchObject({
+			appearance: 'embedded',
 			dataLength: 1,
-			enablePagination: true,
 			initialPageIndex: 0,
 			initialPageSize: 10
 		})
@@ -188,23 +215,11 @@ describe('TokenYieldsSection', () => {
 			isLoading: true
 		}
 
-		const html = renderToStaticMarkup(
-			<TokenYieldsSection
-				tokenSymbol="ETH"
-				hydration={{
-					rows: [makeYieldRow()],
-					rowCount: 1,
-					chainList: ['Ethereum'],
-					tokensList: ['ETH', 'STETH'],
-					pageSize: 10
-				}}
-			/>
-		)
+		const html = renderToStaticMarkup(<TokenYieldsSection hydration={makeHydration()} />)
 
 		expect(html).toContain('Tracking 1 pool, average APY 5.10%')
 		expect(yieldsTableCalls[0]).toMatchObject({
 			dataLength: 1,
-			enablePagination: true,
 			initialPageIndex: 0,
 			initialPageSize: 10
 		})
@@ -217,24 +232,13 @@ describe('TokenYieldsSection', () => {
 			isLoading: false
 		}
 
-		const html = renderToStaticMarkup(
-			<TokenYieldsSection
-				tokenSymbol="ETH"
-				hydration={{
-					rows: [makeYieldRow()],
-					rowCount: 25,
-					chainList: ['Ethereum'],
-					tokensList: ['ETH', 'STETH'],
-					pageSize: 10
-				}}
-			/>
-		)
+		const html = renderToStaticMarkup(<TokenYieldsSection hydration={makeHydration({ rowCount: 25 })} />)
 
 		expect(html).toContain('Showing 1 of 25 pools')
 		expect(html).toContain('Page 1 of 3')
 	})
 
-	it('shows a background loading indicator while filters trigger a full fetch over prefetched rows', () => {
+	it('delegates the background loading status to the table while filters trigger a full fetch', () => {
 		queryState = {
 			data: undefined,
 			error: null,
@@ -242,26 +246,14 @@ describe('TokenYieldsSection', () => {
 		}
 		routerState.query = { chain: 'Ethereum' }
 
-		const html = renderToStaticMarkup(
-			<TokenYieldsSection
-				tokenSymbol="ETH"
-				hydration={{
-					rows: [makeYieldRow()],
-					rowCount: 25,
-					chainList: ['Ethereum'],
-					tokensList: ['ETH', 'STETH'],
-					pageSize: 10
-				}}
-			/>
-		)
+		renderToStaticMarkup(<TokenYieldsSection hydration={makeHydration({ rowCount: 25 })} />)
 
-		expect(html).toContain('spinner')
-		expect(html).toContain('Loading full dataset...')
 		expect(yieldsTableCalls[0]).toMatchObject({
 			dataLength: 1,
-			enablePagination: true,
 			initialPageIndex: 0,
-			initialPageSize: 10
+			initialPageSize: 10,
+			interactionDisabled: true,
+			loadingLabel: 'Loading full dataset...'
 		})
 	})
 
@@ -282,7 +274,7 @@ describe('TokenYieldsSection', () => {
 			isLoading: false
 		}
 
-		const html = renderToStaticMarkup(<TokenYieldsSection tokenSymbol="ETH" />)
+		const html = renderToStaticMarkup(<TokenYieldsSection />)
 
 		expect(html).toContain('Tracking 2 pools, average APY 5.10%')
 	})
@@ -294,7 +286,7 @@ describe('TokenYieldsSection', () => {
 			isLoading: true
 		}
 
-		const html = renderToStaticMarkup(<TokenYieldsSection tokenSymbol="ETH" />)
+		const html = renderToStaticMarkup(<TokenYieldsSection />)
 
 		expect(html).toContain('Loading')
 	})
@@ -306,13 +298,13 @@ describe('TokenYieldsSection', () => {
 			isLoading: false
 		}
 
-		const html = renderToStaticMarkup(<TokenYieldsSection tokenSymbol="ETH" />)
+		const html = renderToStaticMarkup(<TokenYieldsSection />)
 
 		expect(html).toContain('Failed to fetch yields data')
 	})
 
 	it('shows an empty state when no pools match the token', () => {
-		const html = renderToStaticMarkup(<TokenYieldsSection tokenSymbol="ETH" />)
+		const html = renderToStaticMarkup(<TokenYieldsSection />)
 
 		expect(html).toContain('No yield pools found.')
 	})
@@ -328,61 +320,7 @@ describe('TokenYieldsSection', () => {
 			minTvl: 2000000
 		}
 
-		const html = renderToStaticMarkup(<TokenYieldsSection tokenSymbol="ETH" />)
-
-		expect(html).toContain('No pools match current filters')
-		expect(yieldsTableCalls).toHaveLength(0)
-	})
-
-	it('uses canonical token matching for include filters without substring false positives', () => {
-		queryState = {
-			data: [
-				{
-					pool: 'USDC-LINK',
-					project: 'Aave',
-					projectslug: 'aave',
-					configID: 'pool-1',
-					chains: ['Ethereum'],
-					tvl: 1000000,
-					apy: 5.1
-				}
-			],
-			error: null,
-			isLoading: false
-		}
-		yieldsQueryState = {
-			...yieldsQueryState,
-			includeTokens: ['IN']
-		}
-
-		const html = renderToStaticMarkup(<TokenYieldsSection tokenSymbol="LINK" />)
-
-		expect(html).toContain('No pools match current filters')
-		expect(yieldsTableCalls).toHaveLength(0)
-	})
-
-	it('uses cached canonical token variants for exclude filters', () => {
-		queryState = {
-			data: [
-				{
-					pool: 'WBTC-ETH',
-					project: 'Aave',
-					projectslug: 'aave',
-					configID: 'pool-1',
-					chains: ['Ethereum'],
-					tvl: 1000000,
-					apy: 5.1
-				}
-			],
-			error: null,
-			isLoading: false
-		}
-		yieldsQueryState = {
-			...yieldsQueryState,
-			excludeTokens: ['BTC']
-		}
-
-		const html = renderToStaticMarkup(<TokenYieldsSection tokenSymbol="BTC" />)
+		const html = renderToStaticMarkup(<TokenYieldsSection />)
 
 		expect(html).toContain('No pools match current filters')
 		expect(yieldsTableCalls).toHaveLength(0)
@@ -390,17 +328,7 @@ describe('TokenYieldsSection', () => {
 
 	it('does not show reset filters when only column visibility query params are active', () => {
 		queryState = {
-			data: [
-				{
-					pool: 'stETH-ETH',
-					project: 'Aave',
-					projectslug: 'aave',
-					configID: 'pool-1',
-					chains: ['Ethereum'],
-					tvl: 1000000,
-					apy: 5.1
-				}
-			],
+			data: [makeYieldRow()],
 			error: null,
 			isLoading: false
 		}
@@ -411,24 +339,14 @@ describe('TokenYieldsSection', () => {
 			}
 		}
 
-		const html = renderToStaticMarkup(<TokenYieldsSection tokenSymbol="ETH" />)
+		const html = renderToStaticMarkup(<TokenYieldsSection />)
 
 		expect(html).not.toContain('Reset filters')
 	})
 
 	it('shows reset filters when a real filter query param is active', () => {
 		queryState = {
-			data: [
-				{
-					pool: 'stETH-ETH',
-					project: 'Aave',
-					projectslug: 'aave',
-					configID: 'pool-1',
-					chains: ['Ethereum'],
-					tvl: 1000000,
-					apy: 5.1
-				}
-			],
+			data: [makeYieldRow()],
 			error: null,
 			isLoading: false
 		}
@@ -439,7 +357,7 @@ describe('TokenYieldsSection', () => {
 			}
 		}
 
-		const html = renderToStaticMarkup(<TokenYieldsSection tokenSymbol="ETH" />)
+		const html = renderToStaticMarkup(<TokenYieldsSection />)
 
 		expect(html).toContain('Reset filters')
 	})

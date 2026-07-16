@@ -66,7 +66,7 @@ export const coingeckoChart = defineApiRoute({
 			return ok(chart)
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
-			// Legacy recorded 500; the status and body are pinned by
+			// The 500 status and body are pinned by
 			// src/api/__tests__/charts-coingecko.test.ts.
 			return { status: 500, body: { error: 'Failed to load coingecko chart data' } }
 		}

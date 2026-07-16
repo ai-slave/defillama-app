@@ -10,7 +10,7 @@ import {
 } from '~/containers/ProtocolOverview/api'
 import { fetchProtocolEmission } from '~/containers/Unlocks/api'
 import { getProtocolEmissionsCharts } from '~/containers/Unlocks/queries'
-import { YIELD_PROJECT_MEDIAN_API } from '~/containers/Yields/constants'
+import { getYieldsHistoryUrl } from '~/containers/Yields/constants'
 import { slug } from '~/utils'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
 import { recordRuntimeError } from '~/utils/telemetry'
@@ -251,11 +251,13 @@ export default class ProtocolCharts {
 	}
 
 	static async medianApy(protocol: string): Promise<[number, number][]> {
-		const response = await fetchWithPoolingOnServer(`${YIELD_PROJECT_MEDIAN_API}/${protocol}`)
+		const response = await fetchWithPoolingOnServer(
+			getYieldsHistoryUrl(`/v2/protocol-median/${encodeURIComponent(protocol)}/history`)
+		)
 		const { data } = await response.json()
 		const res: [number, number][] = []
 		for (const item of data) {
-			res.push([dayjs(item.timestamp).unix(), item.medianAPY])
+			res.push([dayjs(item.date).unix(), item.median_apy])
 		}
 		return res
 	}

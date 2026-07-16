@@ -336,7 +336,9 @@ function buildUpdatedQuery(
 export function pushShallowQuery(
 	router: NextRouter,
 	updates: Record<string, QueryUpdateValue>,
-	pathname: string = router.pathname
+	// Dynamic routes default to the resolved path: the raw template fails href
+	// interpolation when the route param is missing from `query`.
+	pathname: string = router.pathname.includes('[') ? router.asPath.split('?')[0] : router.pathname
 ) {
 	const nextQuery = buildUpdatedQuery(router.query as Record<string, unknown>, updates)
 	return router.push({ pathname, query: nextQuery }, undefined, { shallow: true })

@@ -1130,3 +1130,19 @@ text-tertiary`), which `PanelLoadingStatus`/`SurfaceBodyLoadingStatus` now
   normalizes their internal order like any `className` attribute (13 were
   out of order; class sets verified identical). Interpolation inside `tw`
   is a deliberate type error — recipes stay static and fully sortable.
+
+### 2026-07-12 Yields V2 Design-System Scope
+
+- Yields V2 is now an in-scope design-system product. This supersedes the historical
+  Yields exclusions recorded above; those entries remain as migration history rather
+  than current guidance.
+- Yields filter selects use the shared default desktop popover and mobile drawer
+  presentation. Structured APY breakdowns, definitions, and curated-view previews use
+  the shared Hovercard; short single-sentence hints remain tooltips.
+- Yields typography follows the shared semantic ramp. Vault Risk keeps compact
+  `body-xs`/`label-xs` only for non-interactive visualization annotations and metadata;
+  its controls use 12px or larger and card data rows use 14px. Static table figures use
+  proportional Inter, while stress-driven values may keep tabular figures to prevent
+  visible jitter as the selected scenario changes.
+- The design-token ratchet now classifies all Yields source and routes as core rather
+  than excluded-product debt.

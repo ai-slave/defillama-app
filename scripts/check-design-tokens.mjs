@@ -28,16 +28,13 @@ const EXCLUDED_PRODUCT_PREFIXES = [
 	'src/containers/ProDashboard/',
 	'src/containers/Sheets/',
 	'src/containers/Subscription/',
-	'src/containers/Yields/',
 	'src/pages/ai/',
 	'src/pages/authors/',
 	'src/pages/investors',
 	'src/pages/pro/',
-	'src/pages/protocol/yields/',
 	'src/pages/research/',
 	'src/pages/sheets/',
-	'src/pages/subscription/',
-	'src/pages/yields'
+	'src/pages/subscription/'
 ]
 
 const EXCLUDED_PRODUCT_FILES = new Set([
@@ -52,7 +49,8 @@ const EXCLUDED_PRODUCT_FILES = new Set([
 ])
 
 function isExcludedProductFile(file) {
-	return EXCLUDED_PRODUCT_FILES.has(file) || EXCLUDED_PRODUCT_PREFIXES.some((prefix) => file.startsWith(prefix))
+	if (EXCLUDED_PRODUCT_FILES.has(file)) return true
+	return EXCLUDED_PRODUCT_PREFIXES.some((prefix) => file.startsWith(prefix))
 }
 
 // Width-only border/divide utilities (className="border", "border-t", "divide-y")

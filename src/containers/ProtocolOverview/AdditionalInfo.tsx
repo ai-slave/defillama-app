@@ -387,7 +387,7 @@ function Yields(props: IProtocolOverviewPageData) {
 			<SectionHeader id="yields">Yields</SectionHeader>
 			<div>
 				<MetricRow label="Pools Tracked" value={yields.noOfPoolsTracked} />
-				<MetricRow label="Average APY" value={averageApy} />
+				<MetricRow label="Average Supply APY" value={averageApy} />
 			</div>
 			<ButtonLink
 				href={`/yields?project=${props.otherProtocols ? props.otherProtocols.slice(1).join('&project=') : props.name}`}

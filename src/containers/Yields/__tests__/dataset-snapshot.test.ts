@@ -1,94 +1,40 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
+import { describe, expect, it, vi } from 'vitest'
+import type { YieldsSnapshot } from '../data/snapshot'
+import {
+	readBorrowMarkets,
+	readBorrowRoutes,
+	readEarn,
+	readLoops,
+	readTokenKeys,
+	readTrends,
+	readYieldsDepegs,
+	readYieldsExploits,
+	readYieldsMeta
+} from '../data/snapshot'
+import { YIELDS_SNAPSHOT_FILES } from '../data/snapshot.contract'
 
-const mocks = vi.hoisted(() => ({ readJson: vi.fn() }))
-
-vi.mock('~/server/datasetSnapshots/errors', async (importOriginal) => ({
-	...(await importOriginal<typeof import('~/server/datasetSnapshots/errors')>()),
-	isMissingDatasetSnapshotArtifact: (error: unknown) =>
-		typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT'
-}))
-
-const snapshot = {
-	handle: {
-		ref: { domain: 'yields', snapshotId: 'test', formatVersion: 2, schemaVersion: 1, createdAt: 1 },
-		readJson: mocks.readJson
-	}
-} as any
-
-const btcRow: IYieldTableRow = {
-	pool: 'WBTC-ETH',
-	projectslug: 'maker',
-	project: 'Maker',
-	chains: ['Ethereum'],
-	tvl: 100,
-	apy: 1,
-	apyBase: 1,
-	apyReward: 0,
-	rewardTokensSymbols: [],
-	rewards: [],
-	change1d: null,
-	change7d: null,
-	confidence: null,
-	url: 'https://example.com',
-	category: 'Lending',
-	configID: 'pool-1'
-}
-
-const ethRow: IYieldTableRow = {
-	...btcRow,
-	pool: 'USDC-ETH',
-	tvl: 200,
-	apy: 2,
-	configID: 'pool-2'
-}
-
-beforeEach(() => {
-	vi.clearAllMocks()
-	vi.resetModules()
-})
-
-describe('Yields dataset snapshot adapter', () => {
-	it('uses immutable token indexes when the optional shard exists', async () => {
-		mocks.readJson.mockImplementation((relativePath: string) => {
-			if (relativePath === 'rows.json') return Promise.resolve([ethRow, btcRow])
-			if (relativePath.startsWith('by-token/')) return Promise.resolve([btcRow.configID])
-			throw new Error(`Unexpected artifact ${relativePath}`)
-		})
-
-		const { getTokenYieldsRows } = await import('~/containers/Yields/server/snapshot.reader.server')
-
-		await expect(getTokenYieldsRows(snapshot, 'BTC')).resolves.toEqual([btcRow])
-	})
-
-	it('falls back to filtering required rows only when optional token shards are absent', async () => {
-		mocks.readJson.mockImplementation((relativePath: string) => {
-			if (relativePath === 'rows.json') return Promise.resolve([ethRow, btcRow])
-			if (relativePath.startsWith('by-token/')) return Promise.reject({ code: 'ENOENT' })
-			throw new Error(`Unexpected artifact ${relativePath}`)
-		})
-
-		const { getTokenYieldsRows } = await import('~/containers/Yields/server/snapshot.reader.server')
-
-		await expect(getTokenYieldsRows(snapshot, 'BTC')).resolves.toEqual([btcRow])
-	})
-
-	it('returns pool page data from rows and configuration snapshots', async () => {
-		mocks.readJson.mockImplementation((relativePath: string) => {
-			if (relativePath === 'rows.json') return Promise.resolve([btcRow])
-			if (relativePath === 'config.json') return Promise.resolve({ protocols: { maker: { name: 'Maker' } } })
-			throw new Error(`Unexpected artifact ${relativePath}`)
-		})
-
-		const { getYieldPoolPageData } = await import('~/containers/Yields/server/snapshot.reader.server')
-
-		await expect(getYieldPoolPageData(snapshot, 'pool-1')).resolves.toEqual({
-			source: 'snapshot',
-			data: {
-				pool: btcRow,
-				config: { name: 'Maker' },
-				poolId: 'pool-1'
+describe('Yields v2 snapshot reader', () => {
+	it('reads every artifact through the same pinned handle', async () => {
+		const readJson = vi.fn()
+		const snapshot: YieldsSnapshot = {
+			async readJson<T>(path: string): Promise<T> {
+				readJson(path)
+				return path as T
 			}
-		})
+		}
+
+		await Promise.all([
+			readEarn(snapshot),
+			readTrends(snapshot),
+			readBorrowMarkets(snapshot),
+			readBorrowRoutes(snapshot),
+			readLoops(snapshot),
+			readTokenKeys(snapshot),
+			readYieldsMeta(snapshot),
+			readYieldsDepegs(snapshot),
+			readYieldsExploits(snapshot)
+		])
+
+		expect(readJson.mock.calls.map(([path]) => path)).toEqual(Object.values(YIELDS_SNAPSHOT_FILES))
 	})
 })

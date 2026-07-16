@@ -6,12 +6,14 @@ const {
 	extractItemsMock,
 	extractRowsMock,
 	fetchWithPoolingOnServerMock,
+	getYieldsExportRowsMock,
 	recordRouteRuntimeErrorMock,
 	validateSubscriptionMock
 } = vi.hoisted(() => ({
 	extractItemsMock: vi.fn(),
 	extractRowsMock: vi.fn(),
 	fetchWithPoolingOnServerMock: vi.fn(),
+	getYieldsExportRowsMock: vi.fn(),
 	recordRouteRuntimeErrorMock: vi.fn(),
 	validateSubscriptionMock: vi.fn()
 }))
@@ -30,8 +32,56 @@ vi.mock('~/containers/Downloads/datasets', () => ({
 				chainFilterType: 'protocols',
 				extractItems: extractItemsMock
 			}
+		],
+		[
+			'yields',
+			{
+				slug: 'yields',
+				name: 'Yield Pools',
+				description: 'Yields dataset',
+				category: 'Yields',
+				url: '',
+				fields: ['name', 'tvl'],
+				extractItems: extractItemsMock
+			}
+		],
+		[
+			'perp-funding',
+			{
+				slug: 'perp-funding',
+				name: 'Perp Funding Rates',
+				description: 'Perp funding dataset',
+				category: 'Yields',
+				url: '',
+				fields: ['marketplace', 'openInterest'],
+				extractItems: extractItemsMock
+			}
+		],
+		[
+			'lsd-rates',
+			{
+				slug: 'lsd-rates',
+				name: 'LSD Rates',
+				description: 'LSD rates dataset',
+				category: 'Yields',
+				url: '',
+				extractItems: extractItemsMock
+			}
 		]
 	])
+}))
+
+vi.mock('~/constants', async (importOriginal) => ({
+	...(await importOriginal<typeof import('~/constants')>()),
+	YIELDS_SERVER_URL: 'https://legacy-yields.example'
+}))
+
+vi.mock('~/containers/Downloads/yields.server', () => ({
+	getYieldsExportRows: getYieldsExportRowsMock
+}))
+
+vi.mock('~/containers/Yields/server/dataset.server', () => ({
+	acquireYieldsSnapshot: vi.fn().mockResolvedValue({ readJson: vi.fn() })
 }))
 
 vi.mock('~/containers/Downloads/chart-datasets', () => ({
@@ -122,6 +172,7 @@ beforeEach(() => {
 	extractItemsMock.mockImplementation((json) => json.items)
 	extractRowsMock.mockImplementation((json) => json.rows)
 	mockSuccessfulFetch()
+	getYieldsExportRowsMock.mockResolvedValue(datasetRows)
 })
 
 describe('/api/private/downloads/[dataset]', () => {
@@ -183,6 +234,37 @@ describe('/api/private/downloads/[dataset]', () => {
 		expect(res.setHeader).not.toHaveBeenCalledWith('X-Preview', 'true')
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.send).toHaveBeenCalledWith(expect.stringContaining('item-11'))
+	})
+
+	it('loads Yields rows only through the server export builder', async () => {
+		validateSubscriptionMock.mockResolvedValue({
+			valid: false,
+			status: 401,
+			error: 'Authentication required'
+		})
+		const res = createMockNextApiResponse()
+
+		await datasetHandler(request({ query: { dataset: 'yields' } }), res)
+
+		expect(getYieldsExportRowsMock).toHaveBeenCalledOnce()
+		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
+		expect(extractItemsMock).not.toHaveBeenCalled()
+		expect(res.status).toHaveBeenCalledWith(200)
+		expect(res.send).toHaveBeenCalledWith(expect.stringContaining('item-10'))
+		expect(res.send).toHaveBeenCalledWith(expect.not.stringContaining('item-11'))
+	})
+
+	it.each([
+		['perp-funding', 'perps'],
+		['lsd-rates', 'lsdRates']
+	])('loads the %s legacy feed only inside the API route', async (dataset, upstreamPath) => {
+		const res = createMockNextApiResponse()
+
+		await datasetHandler(request({ query: { dataset }, auth: 'Bearer paid' }), res)
+
+		expect(fetchWithPoolingOnServerMock).toHaveBeenCalledWith(`https://legacy-yields.example/${upstreamPath}`)
+		expect(extractItemsMock).toHaveBeenCalledOnce()
+		expect(res.status).toHaveBeenCalledWith(200)
 	})
 
 	it('rejects trial full CSV downloads before fetching data', async () => {

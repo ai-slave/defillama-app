@@ -1,11 +1,12 @@
 import { type ReactNode, useState } from 'react'
 import type { BlockExplorersResponse } from '~/api/types'
 import { Icon } from '~/components/Icon'
+import { Button } from '~/ui/Button'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { type Tone, toneClasses } from '../kindMeta'
 import type { RoleCapability } from '../types'
 
-export const MICRO_LABEL = 'text-xs font-semibold text-(--legacy-text-primary)'
+export const MICRO_LABEL = 'label-sm text-primary'
 
 export function explorerUrl(
 	address: string,
@@ -27,8 +28,8 @@ export function explorerUrl(
 export function LabelValueRow({ label, children }: { label: ReactNode; children: ReactNode }) {
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 py-1.5">
-			<span className="text-sm text-(--legacy-text-secondary)">{label}</span>
-			<span className="text-right text-sm text-(--legacy-text-primary)">{children}</span>
+			<span className="body-md text-secondary">{label}</span>
+			<span className="text-right body-md text-primary">{children}</span>
 		</div>
 	)
 }
@@ -66,7 +67,6 @@ export function ReachDot({ marker }: { marker: ReachMarker | null }) {
 		<span
 			role="img"
 			aria-label={marker.label}
-			title={marker.label}
 			className={`size-2 shrink-0 rounded-full ${toneClasses(marker.tone).bar}`}
 		/>
 	)
@@ -81,7 +81,7 @@ const REACH_LEGEND: ReadonlyArray<{ tone: Tone; label: string }> = [
 // Paired colour+text so the dots never read as colour-only.
 export function ReachLegend() {
 	return (
-		<div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-(--legacy-text-secondary)">
+		<div className="flex flex-wrap items-center gap-x-3 gap-y-1 body-sm text-secondary">
 			{REACH_LEGEND.map((item) => (
 				<span key={item.label} className="inline-flex items-center gap-1.5">
 					<span className={`size-2 shrink-0 rounded-full ${toneClasses(item.tone).bar}`} aria-hidden />
@@ -110,25 +110,26 @@ export function ExpandableLine({
 		<div className="py-2">
 			<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
 				{children}
-				<span className="ml-auto flex items-center gap-2.5">
+				<span className="ml-auto flex items-center gap-2">
 					<ReachDot marker={marker} />
 					{trailing}
 					{detail ? (
-						<button
+						<Button
 							type="button"
+							variant="ghost"
+							size="sm"
+							square
 							onClick={() => setOpen((v) => !v)}
 							aria-expanded={open}
-							className="-mr-1 inline-flex size-5 shrink-0 items-center justify-center rounded-sm text-(--legacy-text-secondary) hover:bg-(--legacy-bg-secondary) hover:text-(--legacy-text-primary)"
+							className="-mr-1"
 						>
 							<Icon name="chevron-down" className={`size-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
 							<span className="sr-only">{open ? 'Hide detail' : 'Show what this can do'}</span>
-						</button>
+						</Button>
 					) : null}
 				</span>
 			</div>
-			{open && detail ? (
-				<p className="mt-1.5 max-w-prose text-xs leading-relaxed text-(--legacy-text-secondary)">{detail}</p>
-			) : null}
+			{open && detail ? <p className="mt-1.5 max-w-prose body-sm text-secondary">{detail}</p> : null}
 		</div>
 	)
 }

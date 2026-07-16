@@ -33,11 +33,18 @@ export const getStaticProps = withPerformanceLogging(
 		}
 
 		const { resolveCexMarketsByDefillamaSlug } = await import('~/containers/Markets/server/dataset.server')
+		const cexMarketsPromise = resolveCexMarketsByDefillamaSlug(cexRoute.canonicalSlug).catch((error) => {
+			console.warn(`[cex/[cex]] Failed to resolve markets exchange for ${exchangeName}`, error)
+			return null
+		})
+		const yieldsSnapshot =
+			protocolMetadata.yields || protocolMetadata.liquidity
+				? await import('~/containers/Yields/server/dataset.server').then(({ acquireOptionalYieldsSnapshot }) =>
+						acquireOptionalYieldsSnapshot()
+					)
+				: null
 		const [cexMarkets, data] = await Promise.all([
-			resolveCexMarketsByDefillamaSlug(cexRoute.canonicalSlug).catch((error) => {
-				console.warn(`[cex/[cex]] Failed to resolve markets exchange for ${exchangeName}`, error)
-				return null
-			}),
+			cexMarketsPromise,
 			getProtocolOverviewPageData({
 				protocolId: cexRoute.id,
 				currentProtocolMetadata: protocolMetadata,
@@ -45,7 +52,8 @@ export const getStaticProps = withPerformanceLogging(
 				chainMetadata: metadataCache.chainMetadata,
 				tokenlist: metadataCache.tokenlist,
 				cgExchangeIdentifiers: metadataCache.cgExchangeIdentifiers,
-				emissionsSupplyMetrics: metadataCache.emissionsSupplyMetrics
+				emissionsSupplyMetrics: metadataCache.emissionsSupplyMetrics,
+				yieldsSnapshot
 			})
 		])
 		const cexMarketsExchange = cexMarkets?.exchange ?? null

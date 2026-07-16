@@ -49,30 +49,30 @@ export function YieldsTableHeader({
 	const presetKeys = React.useMemo(() => Object.keys(columnPresets), [columnPresets])
 
 	return (
-		<div className="mb-3">
+		<div className="mb-3 text-primary">
 			<div className="mb-3 flex items-center justify-between gap-4">
-				<h3 className="text-lg font-semibold pro-text1">{displayTitle}</h3>
+				<h3 className="text-lg font-semibold">{displayTitle}</h3>
 				<div className="flex items-center gap-2">
 					<input
 						type="text"
 						placeholder="Search pools..."
 						value={poolName}
 						onChange={(e) => setPoolName(e.target.value)}
-						className="w-full rounded-md border pro-border bg-(--legacy-bg-glass) px-3 py-1.5 text-sm pro-text1 focus:border-(--legacy-primary) focus:outline-hidden"
+						className="w-full rounded-md border border-subtle bg-surface px-3 py-1.5 text-sm focus:border-primary focus:outline-hidden"
 					/>
 				</div>
 			</div>
 
-			<div className="flex flex-wrap items-center justify-between gap-2">
-				<div className="flex items-center gap-2">
+			<div className="flex items-center justify-between gap-2">
+				<div className="no-scrollbar flex min-w-0 items-center gap-2 overflow-x-auto">
 					{presetKeys.map((preset) => (
 						<button
 							key={preset}
 							onClick={() => applyPreset(preset)}
 							className={`flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm capitalize transition-colors ${
 								activePreset === preset
-									? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
-									: 'pro-border pro-bg1 pro-hover-bg pro-text1'
+									? 'border-primary bg-primary text-white'
+									: 'hover:bg-surface-secondary border-subtle bg-surface'
 							}`}
 						>
 							{preset}
@@ -85,12 +85,12 @@ export function YieldsTableHeader({
 
 					<button
 						onClick={() => setShowFiltersPanel(!showFiltersPanel)}
-						className="relative flex items-center gap-2 rounded-md border pro-border pro-bg1 pro-hover-bg px-3 py-1.5 text-sm pro-text1 transition-colors"
+						className="hover:bg-surface-secondary relative flex items-center gap-2 rounded-md border border-subtle bg-surface px-3 py-1.5 text-sm transition-colors"
 					>
 						<Icon name="align-left" height={14} width={14} />
 						Filters
 						{activeFilterCount > 0 ? (
-							<span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-(--legacy-primary) text-xs text-white">
+							<span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary text-xs text-white">
 								{activeFilterCount}
 							</span>
 						) : null}
@@ -98,7 +98,7 @@ export function YieldsTableHeader({
 					</button>
 					<button
 						onClick={() => setShowColumnPanel(!showColumnPanel)}
-						className="flex items-center gap-2 rounded-md border pro-border pro-bg1 pro-hover-bg px-3 py-1.5 text-sm pro-text1 transition-colors"
+						className="hover:bg-surface-secondary flex items-center gap-2 rounded-md border border-subtle bg-surface px-3 py-1.5 text-sm transition-colors"
 					>
 						<Icon name="settings" height={14} width={14} />
 						Customize Table

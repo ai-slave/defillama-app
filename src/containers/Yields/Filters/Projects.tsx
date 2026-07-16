@@ -23,7 +23,8 @@ export function YieldProjects({
 	excludeQueryKey
 }: IYieldProjectsProps) {
 	const router = useRouter()
-	const { project } = router.query
+	// Read the badge state off whichever key this dropdown emits (v2 `protocol`, others `project`).
+	const selectedQueryValue = router.query[includeQueryKey]
 	const prevSelectionRef = useRef<Set<string>>(new Set(selectedProjects))
 
 	return (
@@ -34,8 +35,7 @@ export function YieldProjects({
 			selectedValues={selectedProjects}
 			label={label}
 			nestedMenu={nestedMenu}
-			labelType={!project || project === 'All' ? 'none' : 'regular'}
-			popoverVariant="legacy"
+			labelType={!selectedQueryValue || selectedQueryValue === 'All' ? 'none' : 'regular'}
 			includeQueryKey={includeQueryKey}
 			excludeQueryKey={excludeQueryKey}
 			pushQueryUpdates={(updates) => {

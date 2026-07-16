@@ -8,7 +8,7 @@ export function ExternalLink({ href, children }: { href: string; children: React
 			href={href}
 			target="_blank"
 			rel="noreferrer"
-			className="inline-flex shrink-0 items-center gap-0.5 text-xs text-(--legacy-text-secondary) underline decoration-dotted hover:text-(--legacy-text-primary)"
+			className="inline-flex shrink-0 items-center gap-0.5 label-sm text-secondary underline decoration-dotted hover:text-primary"
 		>
 			{children} <Icon name="external-link" className="size-3" />
 		</a>

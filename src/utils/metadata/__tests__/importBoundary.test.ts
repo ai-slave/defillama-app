@@ -77,6 +77,10 @@ function isApiFile(filePath: string): boolean {
 	return path.relative(process.cwd(), filePath).split(path.sep).join('/').startsWith('src/pages/api/')
 }
 
+function isContainerServerModule(relativePath: string): boolean {
+	return /^src\/containers\/[^/]+\/(?:.*\/)?server\//.test(relativePath)
+}
+
 function resolveInternalSpecifier(fromFile: string, specifier: string): string | null {
 	let basePath: string
 	if (specifier.startsWith('~/')) {
@@ -140,9 +144,9 @@ describe('metadata artifact import boundary', () => {
 		const allSourceFiles = await collectSourceFiles('src')
 		const files = allSourceFiles.filter((filePath) => {
 			const relativePath = path.relative(process.cwd(), filePath).split(path.sep).join('/')
-			// Domain server modules (containers/*/server) are server-only code and may
+			// Domain server modules (including nested data/server folders) are server-only and may
 			// statically import dataset readers; the boundary guards page/client code.
-			if (/^src\/containers\/[^/]+\/server\//.test(relativePath)) return false
+			if (isContainerServerModule(relativePath)) return false
 			return (
 				(relativePath.startsWith('src/pages/') && !relativePath.startsWith('src/pages/api/')) ||
 				relativePath.startsWith('src/components/') ||

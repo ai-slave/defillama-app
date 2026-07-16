@@ -8,8 +8,8 @@ type QueryUpdateValue = QueryUpdatePrimitive | QueryUpdatePrimitive[] | undefine
 export function pushYieldsQuery<T extends Record<string, QueryUpdateValue>>(
 	router: NextRouter,
 	updates: T,
-	{ resetPage = true, pathname = router.pathname }: { resetPage?: boolean; pathname?: string } = {}
+	{ resetPage = true, pathname }: { resetPage?: boolean; pathname?: string } = {}
 ) {
-	const nextUpdates = resetPage ? resetYieldsPoolPageOnFilterChange(pathname, updates) : updates
+	const nextUpdates = resetPage ? resetYieldsPoolPageOnFilterChange(pathname ?? router.pathname, updates) : updates
 	return pushShallowQuery(router, nextUpdates, pathname)
 }

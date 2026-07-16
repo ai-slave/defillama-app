@@ -112,12 +112,16 @@ export function useDashboardStream(
 
 					case 'yieldsChartData':
 						if (chunk.data) {
-							queryClient.setQueryData(['yield-pool-chart-data', chunk.id], chunk.data.chart ?? null, {
-								updatedAt: now
-							})
-							queryClient.setQueryData(['yield-lend-borrow-chart', chunk.id], chunk.data.lendBorrow ?? null, {
-								updatedAt: now
-							})
+							if ('supply' in chunk.data) {
+								queryClient.setQueryData(['yield-supply-history', chunk.id], chunk.data.supply ?? null, {
+									updatedAt: now
+								})
+							}
+							if ('borrow' in chunk.data) {
+								queryClient.setQueryData(['yield-borrow-history', chunk.id], chunk.data.borrow ?? null, {
+									updatedAt: now
+								})
+							}
 						}
 						break
 

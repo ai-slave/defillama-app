@@ -7,7 +7,6 @@ import {
 	collateralDepegLossUsd,
 	collateralMarketBreakLossUsd,
 	coverageForScenario,
-	depegLossUsd,
 	marketBreakPresentation,
 	mergeCoverage,
 	parseActingWindow,
@@ -15,7 +14,7 @@ import {
 	vaultDepegLossUsd,
 	vaultDepegLossUsdAtDrops
 } from '../derive'
-import type { VaultRiskFixture } from '../types'
+import type { CollateralRisk, MarketOracle, OracleConfigEntry, OracleType, VaultRiskFixture } from '../types'
 import {
 	makeCollateral,
 	makeCoverage,
@@ -438,30 +437,6 @@ describe('resolveRef', () => {
 	})
 })
 
-describe('depegLossUsd (what-if curve)', () => {
-	it('returns 0 while the drop stays inside the liquidation buffer', () => {
-		expect(depegLossUsd(0.1, 0.83, 1_000_000)).toBe(0)
-		expect(depegLossUsd(0.17, 0.83, 1_000_000)).toBe(0) // exactly at the buffer edge
-	})
-	it('reaches the full bad-debt ceiling at −100%', () => {
-		expect(depegLossUsd(1, 0.83, 1_000_000)).toBeCloseTo(1_000_000)
-	})
-	it('interpolates linearly past the buffer', () => {
-		// LT 0.5 → buffer 0.5; a 75% drop is halfway through the at-risk band
-		expect(depegLossUsd(0.75, 0.5, 1_000_000)).toBeCloseTo(500_000)
-	})
-	it('LT of 1 means no buffer: loss scales with the whole drop', () => {
-		expect(depegLossUsd(0.25, 1, 1_000_000)).toBeCloseTo(250_000)
-	})
-	it('LT of 0 (or below) uses the full bad-debt cap', () => {
-		expect(depegLossUsd(1, 0, 1_000_000)).toBe(1_000_000)
-	})
-	it('clamps drops outside 0–1', () => {
-		expect(depegLossUsd(1.5, 0.83, 1_000_000)).toBeCloseTo(1_000_000)
-		expect(depegLossUsd(-0.2, 0.83, 1_000_000)).toBe(0)
-	})
-})
-
 describe('fixture fields reach the VM (passthrough)', () => {
 	// One rich vault carrying every optional lane the section renders, so the passthrough
 	// assertions all read from a single, legible construction.
@@ -542,7 +517,7 @@ describe('fixture fields reach the VM (passthrough)', () => {
 		expect(['lower', 'moderate', 'higher']).toContain(vm.riskTier!.tier)
 		expect(Array.isArray(vm.riskTier!.facts)).toBe(true)
 		for (const f of vm.riskTier!.facts) expect(['good', 'caution']).toContain(f.polarity)
-		expect((vm.riskTier as any).score).toBeUndefined()
+		expect(vm.riskTier).not.toHaveProperty('score')
 	})
 
 	it('binds collateral exposurePct to a 0–1 share and surfaces oracle vendors/addresses', () => {
@@ -824,18 +799,41 @@ describe('marketBreakPresentation (bad_debt_basis rendering)', () => {
 })
 
 describe('buildCollateral — oracle explanation fields', () => {
-	const coll = (symbol: string, address: string, oracle_type = 'hybrid') => ({
-		token: { chain: 'ethereum', symbol, address },
-		oracle_type,
-		market_loss_ceiling_usd: 0,
-		exposure_usd: 0,
-		aggregate_trust_usd: 0,
-		vault_count: 0
-	})
-	// buildCollateral only reads oracle_config / market_oracles / supply / collateral_risks — cast a
-	// minimal fixture rather than hand-build every unrelated required field.
-	const build = (fixture: any) =>
-		buildCollateral({ pool_total_supply_usd: 0, collateral_risks: [], ...fixture } as unknown as VaultRiskFixture)
+	const coll = (symbol: string, address: string, oracle_type: OracleType = 'hybrid') =>
+		makeCollateral({ token: { chain: 'ethereum', symbol, address }, oracle_type })
+	type FixtureOverrides = Omit<Partial<VaultRiskFixture>, 'oracle_config' | 'market_oracles'> & {
+		oracle_config?: Array<
+			Partial<OracleConfigEntry> & Pick<OracleConfigEntry, 'type' | 'asset_address' | 'oracle_address'>
+		>
+		market_oracles?: Array<Partial<MarketOracle> & Pick<MarketOracle, 'market_id' | 'collateral_asset'>>
+	}
+	const build = ({ oracle_config = [], market_oracles = [], ...fixture }: FixtureOverrides) =>
+		buildCollateral(
+			makeVaultRiskFixture({
+				pool_total_supply_usd: 0,
+				collateral_risks: [],
+				...fixture,
+				oracle_config: oracle_config.map((entry) => ({
+					chain: 'ethereum',
+					instance: 'test',
+					asset_symbol: 'TOK',
+					...entry
+				})),
+				market_oracles: market_oracles.map((market) => ({
+					loan_asset: null,
+					allocation_usd: null,
+					supply_cap_usd: null,
+					lltv: null,
+					oracle_address: null,
+					oracle_type: 'unknown',
+					oracle_providers: [],
+					feed_kind: null,
+					attribution: 'unclassified',
+					oracle_instance: null,
+					...market
+				}))
+			})
+		)
 
 	it('surfaces mechanism_summary, base_leg, quote_leg and pt_pricing from oracle_config', () => {
 		const [c] = build({
@@ -941,29 +939,53 @@ describe('buildCollateral — oracle explanation fields', () => {
 })
 
 describe('buildCollateral — oracle badge (server-authoritative)', () => {
-	const collRow = (o: any) => ({
-		token: { chain: 'ethereum', symbol: o.symbol ?? 'TOK', address: o.address },
-		oracle_type: o.oracle_type ?? 'hybrid',
-		feed_kinds: o.feed_kinds ?? [],
-		oracle_providers: o.oracle_providers ?? [],
-		market_loss_ceiling_usd: 0,
-		exposure_usd: 0,
-		aggregate_trust_usd: 0,
-		vault_count: 0
-	})
-	const cfg = (o: any) => ({
-		type: o.type ?? 'hybrid',
-		asset_address: o.address,
+	const collRow = ({
+		symbol = 'TOK',
+		address,
+		oracle_type = 'hybrid',
+		feed_kinds = [],
+		oracle_providers = []
+	}: {
+		symbol?: string
+		address: string
+		oracle_type?: OracleType
+		feed_kinds?: string[]
+		oracle_providers?: string[]
+	}): CollateralRisk =>
+		makeCollateral({
+			token: { chain: 'ethereum', symbol, address },
+			oracle_type,
+			feed_kinds,
+			oracle_providers
+		})
+	const cfg = ({
+		address,
+		type = 'hybrid',
+		feed_kind,
+		provider
+	}: {
+		address: string
+		type?: OracleType
+		feed_kind?: string
+		provider?: string[]
+	}): OracleConfigEntry => ({
+		type,
+		chain: 'ethereum',
+		instance: 'test',
+		asset_symbol: 'TOK',
+		asset_address: address,
 		oracle_address: '0xfeed',
-		feed_kind: o.feed_kind,
-		provider: o.provider
+		feed_kind,
+		provider
 	})
-	const typeOf = (coll: any, config?: any): string | undefined =>
-		buildCollateral({
-			pool_total_supply_usd: 0,
-			collateral_risks: [coll],
-			oracle_config: config ? [config] : []
-		} as unknown as VaultRiskFixture)[0].oracleType
+	const typeOf = (collateral: CollateralRisk, config?: OracleConfigEntry): string | undefined =>
+		buildCollateral(
+			makeVaultRiskFixture({
+				pool_total_supply_usd: 0,
+				collateral_risks: [collateral],
+				oracle_config: config ? [config] : []
+			})
+		)[0].oracleType
 
 	it('takes the collateral oracle_type verbatim — no FE re-derivation from feed signals', () => {
 		expect(

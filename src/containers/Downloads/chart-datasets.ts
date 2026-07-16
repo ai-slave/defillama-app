@@ -1,12 +1,15 @@
 import {
 	SERVER_URL,
 	V2_SERVER_URL,
-	YIELDS_SERVER_URL,
+	YIELDS_V2_SERVER_URL,
 	BRIDGES_SERVER_URL,
 	RWA_SERVER_URL,
 	STABLECOINS_SERVER_URL
 } from '~/constants'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
+import type { EarnRow } from '~/containers/Yields/data/types'
+import { fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
+import type { PoolHistory } from '~/containers/Yields/poolDetail/types'
 import { slug as toSlug } from '~/utils'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
 
@@ -20,9 +23,9 @@ export interface ChartDatasetDefinition {
 	paramType: 'protocol' | 'chain'
 	paramLabel: string
 	optionsUrl: string
-	extractOptions: (json: any) => Array<{ label: string; value: string }>
+	extractOptions: (json: unknown) => Array<{ label: string; value: string }>
 	buildUrl: (param: string) => string
-	extractRows: (json: any) => Array<Record<string, unknown>>
+	extractRows: (json: unknown) => Array<Record<string, unknown>>
 	customFetch?: (param: string) => Promise<Array<Record<string, unknown>>>
 	categoryBreakdown?: CategoryBreakdownKind
 	sumMode?: { columnLabel: string }
@@ -31,6 +34,24 @@ export interface ChartDatasetDefinition {
 const OVERVIEW_QS = 'excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true'
 
 type ProtocolOption = { label: string; value: string; category?: string; isChild?: boolean }
+type JsonRecord = Record<string, unknown>
+
+function isRecord(value: unknown): value is JsonRecord {
+	return typeof value === 'object' && value != null && !Array.isArray(value)
+}
+
+function recordArray(value: unknown, field: string): JsonRecord[] {
+	if (!isRecord(value) || !Array.isArray(value[field])) return []
+	return value[field].filter(isRecord)
+}
+
+function recordValue(value: unknown, field: string): unknown {
+	return isRecord(value) ? value[field] : undefined
+}
+
+function stringValue(value: unknown): string | null {
+	return typeof value === 'string' && value ? value : null
+}
 
 /**
  * Group protocols by parent, following the same pattern as ProDashboard.
@@ -40,62 +61,84 @@ type ProtocolOption = { label: string; value: string; category?: string; isChild
  * We create synthetic parent entries with aggregated sort values,
  * merge them with solo protocols, and nest children underneath.
  */
-function groupProtocolOptions(json: any, sortValue: (p: any) => number, labelFn: (p: any) => string): ProtocolOption[] {
-	const protocols: any[] = json?.protocols ?? []
-	const parentProtocols: any[] = Array.isArray(json?.parentProtocols) ? json.parentProtocols : []
+function groupProtocolOptions(
+	json: unknown,
+	sortValue: (protocol: JsonRecord) => number,
+	labelFn: (protocol: JsonRecord) => string
+): ProtocolOption[] {
+	const protocols = recordArray(json, 'protocols')
+	const parentProtocols = recordArray(json, 'parentProtocols')
 
-	const filtered = protocols.filter((p: any) => p?.name)
+	const filtered = protocols.filter((protocol) => stringValue(protocol.name))
 
 	// Aggregate child sort values per parent
 	const parentTotals = new Map<string, number>()
-	const childrenByParentId = new Map<string, any[]>()
+	const childrenByParentId = new Map<string, JsonRecord[]>()
 
-	for (const p of filtered) {
-		if (p.parentProtocol) {
-			parentTotals.set(p.parentProtocol, (parentTotals.get(p.parentProtocol) || 0) + sortValue(p))
-			const arr = childrenByParentId.get(p.parentProtocol) || []
-			arr.push(p)
-			childrenByParentId.set(p.parentProtocol, arr)
+	for (const protocol of filtered) {
+		const parentId = stringValue(protocol.parentProtocol)
+		if (parentId) {
+			parentTotals.set(parentId, (parentTotals.get(parentId) || 0) + sortValue(protocol))
+			const children = childrenByParentId.get(parentId) || []
+			children.push(protocol)
+			childrenByParentId.set(parentId, children)
 		}
 	}
 
 	// Build synthetic parent entries from the parentProtocols array
 	const matchedParentIds = new Set<string>()
 	const syntheticParents = parentProtocols
-		.filter((pp: any) => childrenByParentId.has(pp.id))
-		.map((pp: any) => {
-			matchedParentIds.add(pp.id)
+		.filter((parent) => stringValue(parent.id) != null && childrenByParentId.has(String(parent.id)))
+		.map((parent): JsonRecord => {
+			const parentId = String(parent.id)
+			matchedParentIds.add(parentId)
 			return {
-				name: pp.name,
-				id: pp.id,
-				category: childrenByParentId.get(pp.id)?.[0]?.category ?? undefined,
-				_syntheticTvl: parentTotals.get(pp.id) || 0,
+				name: parent.name,
+				id: parentId,
+				category: childrenByParentId.get(parentId)?.[0]?.category ?? undefined,
+				_syntheticTvl: parentTotals.get(parentId) || 0,
 				parentProtocol: null
 			}
 		})
 
 	// Children whose parent isn't in parentProtocols (e.g. overview APIs) — treat as top-level
-	const orphanedChildren = filtered.filter((p: any) => p.parentProtocol && !matchedParentIds.has(p.parentProtocol))
+	const orphanedChildren = filtered.filter((protocol) => {
+		const parentId = stringValue(protocol.parentProtocol)
+		return parentId != null && !matchedParentIds.has(parentId)
+	})
 
 	// Merge: solo protocols + synthetic parents + orphaned children, then sort
-	const parentsOrSolo = [...filtered.filter((p: any) => !p.parentProtocol), ...syntheticParents, ...orphanedChildren]
-	parentsOrSolo.sort((a, b) => (b._syntheticTvl ?? sortValue(b)) - (a._syntheticTvl ?? sortValue(a)))
+	const parentsOrSolo = [
+		...filtered.filter((protocol) => !stringValue(protocol.parentProtocol)),
+		...syntheticParents,
+		...orphanedChildren
+	]
+	parentsOrSolo.sort(
+		(a, b) =>
+			(typeof b._syntheticTvl === 'number' ? b._syntheticTvl : sortValue(b)) -
+			(typeof a._syntheticTvl === 'number' ? a._syntheticTvl : sortValue(a))
+	)
 
 	const options: ProtocolOption[] = []
 	for (const parent of parentsOrSolo) {
+		const name = stringValue(parent.name)
+		if (!name) continue
 		options.push({
 			label: labelFn(parent),
-			value: toSlug(parent.name),
-			category: parent.category ?? undefined
+			value: toSlug(name),
+			category: stringValue(parent.category) ?? undefined
 		})
-		const children = childrenByParentId.get(parent.id) || []
+		const parentId = stringValue(parent.id)
+		const children = parentId ? childrenByParentId.get(parentId) || [] : []
 		if (children.length > 0) {
-			children.sort((a: any, b: any) => sortValue(b) - sortValue(a))
+			children.sort((a, b) => sortValue(b) - sortValue(a))
 			for (const child of children) {
+				const childName = stringValue(child.name)
+				if (!childName) continue
 				options.push({
 					label: labelFn(child),
-					value: toSlug(child.name),
-					category: child.category ?? undefined,
+					value: toSlug(childName),
+					category: stringValue(child.category) ?? undefined,
 					isChild: true
 				})
 			}
@@ -105,74 +148,76 @@ function groupProtocolOptions(json: any, sortValue: (p: any) => number, labelFn:
 	return options
 }
 
-const extractOverviewProtocolOptions = (json: any): ProtocolOption[] =>
+const extractOverviewProtocolOptions = (json: unknown): ProtocolOption[] =>
 	groupProtocolOptions(
 		json,
-		(p) => Number(p?.total24h) || 0,
-		(p) => p.displayName || p.name
+		(p) => Number(p.total24h) || 0,
+		(p) => stringValue(p.displayName) ?? stringValue(p.name) ?? ''
 	)
 
-const extractLiteProtocolOptions = (json: any): ProtocolOption[] =>
+const extractLiteProtocolOptions = (json: unknown): ProtocolOption[] =>
 	groupProtocolOptions(
 		json,
-		(p) => Number(p?.tvlUsd ?? p?.tvl) || 0,
-		(p) => p.name
+		(p) => Number(p.tvlUsd ?? p.tvl) || 0,
+		(p) => stringValue(p.name) ?? ''
 	)
 
 function sumBorrowedTvl(chainTvls: unknown): number {
 	if (!chainTvls || typeof chainTvls !== 'object' || Array.isArray(chainTvls)) return 0
 	let total = 0
-	for (const [key, entry] of Object.entries(chainTvls as Record<string, any>)) {
+	for (const [key, entry] of Object.entries(chainTvls)) {
 		if (!key.endsWith('-borrowed')) continue
-		const tvl = entry && typeof entry === 'object' ? Number(entry.tvl) : Number(entry)
+		const tvl = isRecord(entry) ? Number(entry.tvl) : Number(entry)
 		if (Number.isFinite(tvl) && tvl > 0) total += tvl
 	}
 	return total
 }
 
-const extractActiveLoansProtocolOptions = (json: any): ProtocolOption[] => {
-	const protocols: any[] = json?.protocols ?? []
-	const withBorrowed = protocols.filter((p) => sumBorrowedTvl(p?.chainTvls) > 0)
+const extractActiveLoansProtocolOptions = (json: unknown): ProtocolOption[] => {
+	const protocols = recordArray(json, 'protocols')
+	const withBorrowed = protocols.filter((protocol) => sumBorrowedTvl(protocol.chainTvls) > 0)
 	const parentIdsWithBorrowed = new Set<string>()
-	for (const p of withBorrowed) {
-		if (p?.parentProtocol) parentIdsWithBorrowed.add(p.parentProtocol)
+	for (const protocol of withBorrowed) {
+		const parentId = stringValue(protocol.parentProtocol)
+		if (parentId) parentIdsWithBorrowed.add(parentId)
 	}
-	const parentProtocols: any[] = Array.isArray(json?.parentProtocols)
-		? json.parentProtocols.filter((pp: any) => parentIdsWithBorrowed.has(pp?.id))
-		: []
+	const parentProtocols = recordArray(json, 'parentProtocols').filter((parent) => {
+		const parentId = stringValue(parent.id)
+		return parentId != null && parentIdsWithBorrowed.has(parentId)
+	})
 	return groupProtocolOptions(
 		{ protocols: withBorrowed, parentProtocols },
-		(p) => sumBorrowedTvl(p?.chainTvls),
-		(p) => p.name
+		(p) => sumBorrowedTvl(p.chainTvls),
+		(p) => stringValue(p.name) ?? ''
 	)
 }
 
-const extractOverviewChainOptions = (json: any): Array<{ label: string; value: string }> => {
-	const chains: string[] = json?.allChains ?? []
+const extractOverviewChainOptions = (json: unknown): Array<{ label: string; value: string }> => {
+	const chains = recordValue(json, 'allChains')
 	return [
 		{ label: 'All Chains', value: 'all' },
-		...chains
-			.filter(Boolean)
+		...(Array.isArray(chains) ? chains : [])
+			.filter((chain): chain is string => typeof chain === 'string' && Boolean(chain))
 			.map((c) => ({ label: c, value: toSlug(c) }))
 			.sort((a, b) => a.label.localeCompare(b.label))
 	]
 }
 
-const extractTimestampValuePairs = (json: any): Array<Record<string, unknown>> => {
+const extractTimestampValuePairs = (json: unknown): Array<Record<string, unknown>> => {
 	if (!Array.isArray(json)) return []
 	return json
-		.filter((item: any) => Array.isArray(item) && item.length >= 2)
-		.map(([timestamp, value]: [number, number]) => ({
-			date: timestamp,
-			value
+		.filter((item): item is unknown[] => Array.isArray(item) && item.length >= 2)
+		.map((item) => ({
+			date: item[0],
+			value: item[1]
 		}))
 }
 
-const extractLiteChartRows = (json: any): Array<Record<string, unknown>> => {
+const extractLiteChartRows = (json: unknown): Array<Record<string, unknown>> => {
 	if (Array.isArray(json)) {
 		return json
-			.filter((item: any) => item && typeof item === 'object' && item.date != null)
-			.map((item: any) => {
+			.filter((item): item is JsonRecord => isRecord(item) && item.date != null)
+			.map((item) => {
 				const row: Record<string, unknown> = { date: item.date }
 				for (const [key, val] of Object.entries(item)) {
 					if (key === 'date') continue
@@ -181,7 +226,7 @@ const extractLiteChartRows = (json: any): Array<Record<string, unknown>> => {
 				return row
 			})
 	}
-	if (json && typeof json === 'object') {
+	if (isRecord(json)) {
 		const metrics = Object.keys(json).filter((k) => json[k] && typeof json[k] === 'object')
 		if (metrics.length === 0) return []
 
@@ -211,14 +256,16 @@ const extractLiteChartRows = (json: any): Array<Record<string, unknown>> => {
 
 		const timestampSet = new Set<string>()
 		for (const metric of metrics) {
-			for (const ts of Object.keys(json[metric])) timestampSet.add(ts)
+			const series = json[metric]
+			if (isRecord(series)) for (const ts of Object.keys(series)) timestampSet.add(ts)
 		}
 		return [...timestampSet]
 			.sort((a, b) => Number(a) - Number(b))
 			.map((ts) => {
 				const row: Record<string, unknown> = { date: Number(ts) }
 				for (const metric of metrics) {
-					row[metric] = json[metric][ts] ?? null
+					const series = json[metric]
+					row[metric] = isRecord(series) ? (series[ts] ?? null) : null
 				}
 				return row
 			})
@@ -226,11 +273,11 @@ const extractLiteChartRows = (json: any): Array<Record<string, unknown>> => {
 	return []
 }
 
-const extractBridgeVolumeRows = (json: any): Array<Record<string, unknown>> => {
+const extractBridgeVolumeRows = (json: unknown): Array<Record<string, unknown>> => {
 	if (!Array.isArray(json)) return []
 	return json
-		.filter((item: any) => item && item.date != null)
-		.map((item: any) => ({
+		.filter((item): item is JsonRecord => isRecord(item) && item.date != null)
+		.map((item) => ({
 			date: item.date,
 			depositUSD: item.depositUSD ?? null,
 			withdrawUSD: item.withdrawUSD ?? null,
@@ -239,24 +286,31 @@ const extractBridgeVolumeRows = (json: any): Array<Record<string, unknown>> => {
 		}))
 }
 
-const extractYieldChartRows = (json: any): Array<Record<string, unknown>> => {
-	const data: any[] = json?.data ?? (Array.isArray(json) ? json : [])
-	return data
-		.filter((item: any) => item && item.timestamp != null)
-		.map((item: any) => ({
-			date: Math.floor(new Date(item.timestamp).getTime() / 1000),
-			tvlUsd: item.tvlUsd ?? null,
-			apy: item.apy ?? null,
-			apyBase: item.apyBase ?? null,
-			apyReward: item.apyReward ?? null
-		}))
+export function extractYieldsV2HistoryRows(history: PoolHistory): Array<Record<string, unknown>> {
+	return history.map((point) => ({
+		date: point.date,
+		tvlUsd: point.tvl_usd,
+		supplyApy: point.apy.avg_1d.total,
+		supplyApyBase: point.apy.avg_1d.base,
+		supplyApyReward: point.apy.avg_1d.reward,
+		supplyApyIntrinsic: point.intrinsic?.apy.avg_1d.base ?? null,
+		supplyApy7d: point.apy.avg_7d.total,
+		supplyApyBase7d: point.apy.avg_7d.base,
+		supplyApyReward7d: point.apy.avg_7d.reward,
+		supplyApyIntrinsic7d: point.intrinsic?.apy.avg_7d.base ?? null,
+		supplyApy30d: point.apy.avg_30d.total,
+		supplyApyBase30d: point.apy.avg_30d.base,
+		supplyApyReward30d: point.apy.avg_30d.reward,
+		supplyApyIntrinsic30d: point.intrinsic?.apy.avg_30d.base ?? null,
+		pricePerShare: point.price_per_share
+	}))
 }
 
-const extractRWACategoryRows = (json: any): Array<Record<string, unknown>> => {
+const extractRWACategoryRows = (json: unknown): Array<Record<string, unknown>> => {
 	if (!Array.isArray(json)) return []
 	return json
-		.filter((item: any) => item && item.timestamp != null)
-		.map((item: any) => {
+		.filter((item): item is JsonRecord => isRecord(item) && item.timestamp != null)
+		.map((item) => {
 			const row: Record<string, unknown> = { date: item.timestamp }
 			for (const [key, val] of Object.entries(item)) {
 				if (key === 'timestamp') continue
@@ -265,22 +319,6 @@ const extractRWACategoryRows = (json: any): Array<Record<string, unknown>> => {
 			return row
 		})
 }
-
-// const extractRWAAssetBreakdownRows = (json: any): Array<Record<string, unknown>> => {
-// 	if (!json || typeof json !== 'object' || Array.isArray(json)) return []
-// 	const onChainMcap: any[] = json.onChainMcap ?? []
-// 	if (!Array.isArray(onChainMcap) || onChainMcap.length === 0) return []
-// 	return onChainMcap
-// 		.filter((item: any) => item && item.timestamp != null)
-// 		.map((item: any) => {
-// 			const row: Record<string, unknown> = { date: item.timestamp }
-// 			for (const [key, val] of Object.entries(item)) {
-// 				if (key === 'timestamp') continue
-// 				row[key] = val
-// 			}
-// 			return row
-// 		})
-// }
 
 function sumRecord(rec: unknown): number {
 	if (!rec || typeof rec !== 'object' || Array.isArray(rec)) return 0
@@ -344,13 +382,13 @@ function makeDimensionChainChart(opts: {
 	}
 }
 
-const extractOverviewCategoryOptions = (json: any): Array<{ label: string; value: string }> => {
-	const protocols: any[] = json?.protocols ?? []
+const extractOverviewCategoryOptions = (json: unknown): Array<{ label: string; value: string }> => {
+	const protocols = recordArray(json, 'protocols')
 	const catTotals = new Map<string, number>()
 	for (const p of protocols) {
-		const c = p?.category
+		const c = p.category
 		if (typeof c === 'string' && c) {
-			catTotals.set(c, (catTotals.get(c) || 0) + (Number(p?.total24h) || 0))
+			catTotals.set(c, (catTotals.get(c) || 0) + (Number(p.total24h) || 0))
 		}
 	}
 	return [...catTotals.entries()].sort(([, a], [, b]) => b - a).map(([c]) => ({ label: c, value: toSlug(c) }))
@@ -396,13 +434,14 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 			if (!Array.isArray(json)) return [allOption]
 			const chainMcap = new Map<string, number>()
 			for (const item of json) {
-				const chains = item?.chain
-				const mcapData = item?.activeMcap
+				if (!isRecord(item)) continue
+				const chains = item.chain
+				const mcapData = item.activeMcap
 				if (!Array.isArray(chains)) continue
 				for (const c of chains) {
 					if (typeof c !== 'string') continue
 					let mcap = 0
-					if (mcapData && typeof mcapData === 'object' && !Array.isArray(mcapData)) {
+					if (isRecord(mcapData)) {
 						mcap = Number(mcapData[c]) || 0
 					}
 					chainMcap.set(c, (chainMcap.get(c) ?? 0) + mcap)
@@ -426,23 +465,24 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 				fetchWithPoolingOnServer(`${RWA_SERVER_URL}/current?z=0`)
 			])
 			if (!assetResp.ok || !assetsResp.ok) return []
-			const assetData = await assetResp.json()
-			const assets: any[] = await assetsResp.json()
+			const assetData: unknown = await assetResp.json()
+			const assets: unknown = await assetsResp.json()
 			const assetToCategory = new Map<string, string>()
 			if (Array.isArray(assets)) {
-				for (const a of assets) {
-					const canonicalMarketId = a?.canonicalMarketId
-					const cats = a?.category
-					if (typeof canonicalMarketId === 'string' && Array.isArray(cats) && cats.length > 0) {
+				for (const asset of assets) {
+					if (!isRecord(asset)) continue
+					const canonicalMarketId = asset.canonicalMarketId
+					const cats = asset.category
+					if (typeof canonicalMarketId === 'string' && Array.isArray(cats) && typeof cats[0] === 'string') {
 						assetToCategory.set(canonicalMarketId, cats[0])
 					}
 				}
 			}
-			const onChainMcap: any[] = assetData?.onChainMcap ?? []
-			if (!Array.isArray(onChainMcap) || onChainMcap.length === 0) return []
+			const onChainMcap = recordArray(assetData, 'onChainMcap')
+			if (onChainMcap.length === 0) return []
 			return onChainMcap
-				.filter((item: any) => item && item.timestamp != null)
-				.map((item: any) => {
+				.filter((item) => item.timestamp != null)
+				.map((item) => {
 					const row: Record<string, unknown> = { date: item.timestamp }
 					const catTotals = new Map<string, number>()
 					for (const [key, val] of Object.entries(item)) {
@@ -469,13 +509,14 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 			if (!Array.isArray(json)) return []
 			const chainMcap = new Map<string, number>()
 			for (const item of json) {
-				const chains = item?.chain
-				const mcapData = item?.activeMcap
+				if (!isRecord(item)) continue
+				const chains = item.chain
+				const mcapData = item.activeMcap
 				if (!Array.isArray(chains)) continue
 				for (const c of chains) {
 					if (typeof c !== 'string') continue
 					let mcap = 0
-					if (mcapData && typeof mcapData === 'object' && !Array.isArray(mcapData)) {
+					if (isRecord(mcapData)) {
 						mcap = Number(mcapData[c]) || 0
 					}
 					chainMcap.set(c, (chainMcap.get(c) ?? 0) + mcap)
@@ -485,12 +526,11 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 		},
 		buildUrl: (param: string) => `${RWA_SERVER_URL}/chart/chain/${encodeURIComponent(param)}/asset-breakdown`,
 		extractRows: (json) => {
-			if (!json || typeof json !== 'object' || Array.isArray(json)) return []
-			const onChainMcap: any[] = json.onChainMcap ?? []
-			if (!Array.isArray(onChainMcap) || onChainMcap.length === 0) return []
+			const onChainMcap = recordArray(json, 'onChainMcap')
+			if (onChainMcap.length === 0) return []
 			return onChainMcap
-				.filter((item: any) => item && item.timestamp != null)
-				.map((item: any) => {
+				.filter((item) => item.timestamp != null)
+				.map((item) => {
 					let total = 0
 					for (const [key, val] of Object.entries(item)) {
 						if (key === 'timestamp') continue
@@ -513,9 +553,10 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 			if (!Array.isArray(json)) return []
 			const catMcap = new Map<string, number>()
 			for (const item of json) {
-				const cats = item?.category
+				if (!isRecord(item)) continue
+				const cats = item.category
 				if (!Array.isArray(cats)) continue
-				const total = sumRecord(item?.onChainMcap)
+				const total = sumRecord(item.onChainMcap)
 				for (const c of cats) {
 					if (typeof c !== 'string' || !c) continue
 					if (c === 'rwa-perps') continue
@@ -532,23 +573,24 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 				fetchWithPoolingOnServer(`${RWA_SERVER_URL}/current?z=0`)
 			])
 			if (!chartResp.ok || !assetsResp.ok) return []
-			const chart = await chartResp.json()
-			const assets: any[] = await assetsResp.json()
+			const chart: unknown = await chartResp.json()
+			const assets: unknown = await assetsResp.json()
 			const idToName = new Map<string, string>()
 			if (Array.isArray(assets)) {
-				for (const a of assets) {
-					const id = a?.canonicalMarketId
-					const name = a?.assetName ?? a?.ticker
+				for (const asset of assets) {
+					if (!isRecord(asset)) continue
+					const id = asset.canonicalMarketId
+					const name = asset.assetName ?? asset.ticker
 					if (typeof id === 'string' && typeof name === 'string') {
 						idToName.set(id, name)
 					}
 				}
 			}
-			const onChainMcap: any[] = chart?.onChainMcap ?? []
-			if (!Array.isArray(onChainMcap) || onChainMcap.length === 0) return []
+			const onChainMcap = recordArray(chart, 'onChainMcap')
+			if (onChainMcap.length === 0) return []
 			return onChainMcap
-				.filter((item: any) => item && item.timestamp != null)
-				.map((item: any) => {
+				.filter((item) => item.timestamp != null)
+				.map((item) => {
 					const row: Record<string, unknown> = { date: item.timestamp }
 					const seen = new Map<string, number>()
 					for (const [key, val] of Object.entries(item)) {
@@ -571,20 +613,20 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 		paramLabel: 'Stablecoin',
 		optionsUrl: `${STABLECOINS_SERVER_URL}/stablecoins`,
 		extractOptions: (json) => {
-			const assets: any[] = json?.peggedAssets ?? []
+			const assets = recordArray(json, 'peggedAssets')
 			return assets
-				.filter((a: any) => a?.name && !a.deprecated && !a.delisted)
-				.sort((a: any, b: any) => sumRecord(b.circulating) - sumRecord(a.circulating))
-				.map((a: any) => ({ label: `${a.name} (${a.symbol})`, value: a.id }))
+				.filter((asset) => stringValue(asset.name) && !asset.deprecated && !asset.delisted)
+				.sort((a, b) => sumRecord(b.circulating) - sumRecord(a.circulating))
+				.map((asset) => ({ label: `${String(asset.name)} (${String(asset.symbol)})`, value: String(asset.id) }))
 		},
 		buildUrl: (param: string) => `${STABLECOINS_SERVER_URL}/stablecoin/${encodeURIComponent(param)}`,
 		extractRows: (json) => {
-			const tokens: any[] = json?.tokens ?? []
+			const tokens = recordArray(json, 'tokens')
 			return tokens
-				.filter((t: any) => t?.date != null)
-				.map((t: any) => ({
-					date: t.date,
-					circulating: sumRecord(t.circulating)
+				.filter((token) => token.date != null)
+				.map((token) => ({
+					date: token.date,
+					circulating: sumRecord(token.circulating)
 				}))
 		}
 	},
@@ -597,23 +639,23 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 		paramLabel: 'Chain',
 		optionsUrl: `${STABLECOINS_SERVER_URL}/stablecoins`,
 		extractOptions: (json) => {
-			const chains: any[] = json?.chains ?? []
+			const chains = recordArray(json, 'chains')
 			return [
 				{ label: 'All Chains', value: 'all' },
 				...chains
-					.filter((c: any) => c?.name)
-					.sort((a: any, b: any) => sumRecord(b.totalCirculatingUSD) - sumRecord(a.totalCirculatingUSD))
-					.map((c: any) => ({ label: c.name, value: c.name }))
+					.filter((chain) => stringValue(chain.name))
+					.sort((a, b) => sumRecord(b.totalCirculatingUSD) - sumRecord(a.totalCirculatingUSD))
+					.map((chain) => ({ label: String(chain.name), value: String(chain.name) }))
 			]
 		},
 		buildUrl: (param: string) => `${STABLECOINS_SERVER_URL}/stablecoincharts2/${encodeURIComponent(param)}`,
 		extractRows: (json) => {
-			const points: any[] = json?.aggregated ?? []
+			const points = recordArray(json, 'aggregated')
 			return points
-				.filter((p: any) => p?.date != null)
-				.map((p: any) => ({
-					date: Number(p.date),
-					totalCirculatingUSD: sumRecord(p.totalCirculatingUSD)
+				.filter((point) => point.date != null)
+				.map((point) => ({
+					date: Number(point.date),
+					totalCirculatingUSD: sumRecord(point.totalCirculatingUSD)
 				}))
 		}
 	},
@@ -627,11 +669,11 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 		paramLabel: 'Exchange',
 		optionsUrl: `${SERVER_URL}/cexs`,
 		extractOptions: (json) => {
-			const cexs: any[] = json?.cexs ?? []
+			const cexs = recordArray(json, 'cexs')
 			return cexs
-				.filter((c: any) => c?.slug)
-				.sort((a: any, b: any) => (Number(b?.currentTvl) || 0) - (Number(a?.currentTvl) || 0))
-				.map((c: any) => ({ label: c.name, value: toSlug(c.slug) }))
+				.filter((cex) => stringValue(cex.slug))
+				.sort((a, b) => (Number(b.currentTvl) || 0) - (Number(a.currentTvl) || 0))
+				.map((cex) => ({ label: String(cex.name), value: toSlug(String(cex.slug)) }))
 		},
 		buildUrl: (param: string) => `${V2_SERVER_URL}/chart/tvl/protocol/${encodeURIComponent(param)}`,
 		extractRows: (json) => {
@@ -686,12 +728,13 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 		optionsUrl: `${V2_SERVER_URL}/chains`,
 		extractOptions: (json) => {
 			if (!Array.isArray(json)) return [{ label: 'All Chains', value: 'all' }]
+			const chains = json.filter(isRecord)
 			return [
 				{ label: 'All Chains', value: 'all' },
-				...json
-					.filter((c: any) => c?.name)
-					.sort((a: any, b: any) => (Number(b?.tvl) || 0) - (Number(a?.tvl) || 0))
-					.map((c: any) => ({ label: c.name, value: c.name }))
+				...chains
+					.filter((chain) => stringValue(chain.name))
+					.sort((a, b) => (Number(b.tvl) || 0) - (Number(a.tvl) || 0))
+					.map((chain) => ({ label: String(chain.name), value: String(chain.name) }))
 			]
 		},
 		buildUrl: (param: string) =>
@@ -707,10 +750,10 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 		paramLabel: 'Category',
 		optionsUrl: `${SERVER_URL}/categories`,
 		extractOptions: (json) => {
-			const categories = json?.categories
+			const categories = recordValue(json, 'categories')
 			if (!categories || typeof categories !== 'object') return []
 			const keys = Array.isArray(categories)
-				? categories.filter((c: any) => typeof c === 'string')
+				? categories.filter((category): category is string => typeof category === 'string')
 				: Object.keys(categories)
 			return keys
 				.sort((a: string, b: string) => a.localeCompare(b))
@@ -1004,11 +1047,11 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 		paramLabel: 'Chain',
 		optionsUrl: `${BRIDGES_SERVER_URL}/bridges?includeChains=true`,
 		extractOptions: (json) => {
-			const chains: any[] = json?.chains ?? []
+			const chains = recordArray(json, 'chains')
 			return chains
-				.filter((c: any) => c?.name)
-				.sort((a: any, b: any) => (Number(b?.lastDailyVolume) || 0) - (Number(a?.lastDailyVolume) || 0))
-				.map((c: any) => ({ label: c.name, value: c.name }))
+				.filter((chain) => stringValue(chain.name))
+				.sort((a, b) => (Number(b.lastDailyVolume) || 0) - (Number(a.lastDailyVolume) || 0))
+				.map((chain) => ({ label: String(chain.name), value: String(chain.name) }))
 		},
 		buildUrl: (param: string) => `${BRIDGES_SERVER_URL}/bridgevolume/${encodeURIComponent(param)}`,
 		extractRows: extractBridgeVolumeRows
@@ -1017,23 +1060,24 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 	{
 		slug: 'yield-pool-chart',
 		name: 'Yield Pool History',
-		description: 'Historical APY and TVL for a specific yield pool',
+		description: 'V2 supply APY components and TVL history for a specific earn pool',
 		category: 'Yields',
 		paramType: 'protocol',
 		paramLabel: 'Pool',
-		optionsUrl: `${YIELDS_SERVER_URL}/pools`,
+		optionsUrl: `${YIELDS_V2_SERVER_URL}/v2/earn`,
 		extractOptions: (json) => {
-			const pools: any[] = json?.data ?? []
+			const pools = (json as { data?: EarnRow[] }).data ?? []
 			return pools
-				.filter((p: any) => p?.pool)
-				.sort((a: any, b: any) => (Number(b?.tvlUsd) || 0) - (Number(a?.tvlUsd) || 0))
-				.map((p: any) => ({
-					label: `${p.project ?? ''} - ${p.symbol ?? ''} (${p.chain ?? ''})`.trim(),
-					value: p.pool
+				.filter((pool) => pool.display.label)
+				.sort((a, b) => (b.tvl_usd ?? 0) - (a.tvl_usd ?? 0))
+				.map((pool) => ({
+					label: `${pool.protocol} - ${pool.display.label} (${pool.chain})`,
+					value: pool.id
 				}))
 		},
-		buildUrl: (param: string) => `${YIELDS_SERVER_URL}/chart/${encodeURIComponent(param)}`,
-		extractRows: extractYieldChartRows
+		buildUrl: (param: string) => `${YIELDS_V2_SERVER_URL}/v2/earn/${encodeURIComponent(param)}/history?range=max`,
+		extractRows: () => [],
+		customFetch: (param: string) => fetchPoolDetailHistory(param, 'max').then(extractYieldsV2HistoryRows)
 	},
 
 	{
@@ -1045,7 +1089,8 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 		paramLabel: 'Oracle',
 		optionsUrl: `${V2_SERVER_URL}/metrics/oracle`,
 		extractOptions: (json) => {
-			const tvs: Record<string, any> = json?.oraclesTVS ?? {}
+			const value = recordValue(json, 'oraclesTVS')
+			const tvs = isRecord(value) ? value : {}
 			return Object.entries(tvs)
 				.sort(([, a], [, b]) => (Number(b) || 0) - (Number(a) || 0))
 				.map(([name]) => ({ label: name, value: toSlug(name) }))

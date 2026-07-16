@@ -3,10 +3,9 @@
 import type { Table } from '@tanstack/react-table'
 import * as React from 'react'
 import { TagGroup } from '~/components/TagGroup'
-import type { IProtocolRow } from './proTable.types'
 
-interface TablePaginationProps {
-	table: Table<IProtocolRow> | null
+interface TablePaginationProps<TData> {
+	table: Table<TData> | null
 }
 
 const PAGINATION_VALUES = ['Previous', 'Next'] as const
@@ -20,7 +19,7 @@ const toPageSize = (n: number): PageSize => {
 	return (PAGE_SIZES as readonly string[]).includes(s) ? (s as PageSize) : PAGE_SIZES[0]
 }
 
-export function TablePagination({ table }: TablePaginationProps) {
+export function TablePagination<TData>({ table }: TablePaginationProps<TData>) {
 	const rowCount = table?.getRowCount() ?? 0
 	const canNextPage = table?.getCanNextPage() ?? false
 	const canPreviousPage = table?.getCanPreviousPage() ?? false

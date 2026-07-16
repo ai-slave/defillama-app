@@ -1,4 +1,4 @@
-import type { IYieldsOptimizerTableRow } from '~/containers/Yields/Tables/types'
+import type { RouteTableRow } from '~/containers/Yields/data/types'
 
 function parseAvailableBound(value: string) {
 	if (value === '') return null
@@ -6,13 +6,13 @@ function parseAvailableBound(value: string) {
 	return Number.isFinite(numericValue) ? numericValue : null
 }
 
-export function filterBorrowRows({
+export function filterBorrowRoutes({
 	rows,
 	selectedChains,
 	minAvailable,
 	maxAvailable
 }: {
-	rows: IYieldsOptimizerTableRow[]
+	rows: RouteTableRow[]
 	selectedChains: string[]
 	minAvailable: string
 	maxAvailable: string
@@ -23,7 +23,7 @@ export function filterBorrowRows({
 
 	return rows.filter((row) => {
 		const rowChain = row.chains[0]
-		const available = row.borrow?.totalAvailableUsd ?? null
+		const available = row.availableBorrowUsd ?? null
 
 		if (selectedChains.length === 0) return false
 		if (rowChain && !chainSet.has(rowChain)) return false

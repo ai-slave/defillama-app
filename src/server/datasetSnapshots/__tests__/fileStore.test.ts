@@ -3,7 +3,11 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { DATASET_SNAPSHOT_CONTRACT } from '../contract'
-import { getDatasetSnapshotCurrentPath, getDatasetSnapshotVersionsDir } from '../filePaths.server'
+import {
+	getDatasetSnapshotCurrentPath,
+	getDatasetSnapshotVersionDir,
+	getDatasetSnapshotVersionsDir
+} from '../filePaths.server'
 import { FileDatasetSnapshotStore } from '../fileStore.server'
 import type { DatasetSnapshotWriter } from '../store'
 
@@ -112,5 +116,52 @@ describe('filesystem dataset snapshot store', () => {
 
 		await writeFile(getDatasetSnapshotCurrentPath(rootDir, 'markets'), '{')
 		await expect(store.getCurrent('markets')).rejects.toThrow('markets/current.json')
+	})
+
+	it('treats a known domain schema bump as requiring a replacement generation', async () => {
+		rootDir = await mkdtemp(path.join(os.tmpdir(), 'dataset-snapshot-store-'))
+		const store = new FileDatasetSnapshotStore(rootDir)
+		const handle = await store.publish('yields', async (writer) => {
+			for (const relativePath of Object.values(DATASET_SNAPSHOT_CONTRACT.yields.files)) {
+				await writer.writeJson(relativePath, [])
+			}
+		})
+		const manifestPath = path.join(
+			getDatasetSnapshotVersionDir(rootDir, 'yields', handle.ref.snapshotId),
+			'manifest.json'
+		)
+		const manifest = JSON.parse(await readFile(manifestPath, 'utf8'))
+		await writeFile(manifestPath, JSON.stringify({ ...manifest, schemaVersion: 1 }))
+
+		await expect(new FileDatasetSnapshotStore(rootDir).getCurrent('yields')).resolves.toBeNull()
+
+		const replacement = await store.publish('yields', async (writer) => {
+			for (const relativePath of Object.values(DATASET_SNAPSHOT_CONTRACT.yields.files)) {
+				await writer.writeJson(relativePath, [])
+			}
+		})
+		await new FileDatasetSnapshotStore(rootDir).pruneVersions('yields', 2)
+		const versions = await readdir(getDatasetSnapshotVersionsDir(rootDir, 'yields'))
+		expect(versions).toEqual([replacement.ref.snapshotId])
+	})
+
+	it('refuses to replace a snapshot written by a newer schema', async () => {
+		rootDir = await mkdtemp(path.join(os.tmpdir(), 'dataset-snapshot-store-'))
+		const store = new FileDatasetSnapshotStore(rootDir)
+		const handle = await store.publish('yields', async (writer) => {
+			for (const relativePath of Object.values(DATASET_SNAPSHOT_CONTRACT.yields.files)) {
+				await writer.writeJson(relativePath, [])
+			}
+		})
+		const manifestPath = path.join(
+			getDatasetSnapshotVersionDir(rootDir, 'yields', handle.ref.snapshotId),
+			'manifest.json'
+		)
+		const manifest = JSON.parse(await readFile(manifestPath, 'utf8'))
+		await writeFile(manifestPath, JSON.stringify({ ...manifest, schemaVersion: 4 }))
+
+		await expect(new FileDatasetSnapshotStore(rootDir).getCurrent('yields')).rejects.toThrow(
+			'cannot replace a newer or invalid schema'
+		)
 	})
 })

@@ -1,4 +1,5 @@
 import type { BlockExplorersResponse } from '~/api/types'
+import { Card } from '~/ui/Card'
 import { formattedNum } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { toneClasses } from '../kindMeta'
@@ -109,11 +110,11 @@ export function OracleDependencies({
 	const controlCount = admins.length
 
 	return (
-		<div className="overflow-hidden rounded-md border border-(--legacy-cards-border)">
-			<div className="flex flex-col gap-2 border-b border-(--legacy-cards-border) bg-(--legacy-bg-main)/30 px-3 py-3">
+		<Card padding="none">
+			<div className="flex flex-col gap-2 border-b border-subtle bg-surface-elevated-1 px-3 py-3">
 				<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-					<h4 className="text-sm font-semibold text-(--legacy-text-primary)">Oracle dependencies</h4>
-					<span className="text-[10px] text-(--legacy-text-secondary) tabular-nums">
+					<h4 className="label-md text-primary">Oracle dependencies</h4>
+					<span className="body-sm text-secondary">
 						{feedCount > 0 ? `${feedCount} feed${feedCount === 1 ? '' : 's'}` : null}
 						{feedCount > 0 && controlCount > 0 ? ' · ' : null}
 						{controlCount > 0 ? `${controlCount} control point${controlCount === 1 ? '' : 's'}` : null}
@@ -121,22 +122,20 @@ export function OracleDependencies({
 				</div>
 				{totalDrainableUsd > 0 ? (
 					<p className="flex flex-wrap items-baseline gap-x-1.5">
-						<span className="text-xs text-(--legacy-text-secondary)">Up to</span>
-						<span className="text-base font-semibold text-(--legacy-text-primary) tabular-nums">
-							{formattedNum(totalDrainableUsd, true)}
-						</span>
-						<span className="text-xs text-(--legacy-text-secondary)">
+						<span className="body-sm text-secondary">Up to</span>
+						<span className="mono-md-bold text-primary">{formattedNum(totalDrainableUsd, true)}</span>
+						<span className="body-sm text-secondary">
 							drainable if these feeds are mispriced{totalPct ? ` · ${totalPct} ${shareWord}` : ''}
 						</span>
 					</p>
 				) : null}
-				<p className="max-w-2xl text-[10px] text-(--legacy-text-tertiary)">
+				<p className="max-w-2xl body-sm text-secondary">
 					Each price traces to a feed and the on-chain admin that can move it. Compromise either to misprice the
 					collateral and borrow against it. Per-row amounts overlap and are not summed.
 				</p>
 			</div>
 
-			<ul className="divide-y divide-(--legacy-cards-border)">
+			<ul className="divide-y divide-(--border-subtle)">
 				{admins.map((o) => {
 					const eoa = o.admin_kind === 'eoa'
 					const mn = parseMofN(o.multisig)
@@ -144,23 +143,19 @@ export function OracleDependencies({
 					return (
 						<li
 							key={o.admin_address}
-							className="flex flex-col gap-1.5 px-3 py-2.5 text-xs sm:flex-row sm:items-start sm:justify-between sm:gap-3"
+							className="flex flex-col gap-1.5 px-3 py-2.5 body-md sm:flex-row sm:items-start sm:justify-between sm:gap-3"
 						>
 							<span className="flex min-w-0 flex-col gap-1">
 								<span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-									<span className="font-medium text-(--legacy-text-primary)">
-										{o.vendors.join(' / ') || 'Oracle feed'}
-									</span>
-									<span className="text-(--legacy-text-tertiary)">·</span>
-									<span className={eoa ? `font-medium ${toneClasses('danger').text}` : 'text-(--legacy-text-primary)'}>
+									<span className="label-md text-primary">{o.vendors.join(' / ') || 'Oracle feed'}</span>
+									<span className="text-tertiary">·</span>
+									<span className={eoa ? `label-md ${toneClasses('danger').text}` : 'label-md text-primary'}>
 										{oracleAdminLabel(o)}
 									</span>
 									{mn ? <MofNPips m={mn.m} n={mn.n} /> : null}
 								</span>
 								{o.collateral_symbols.length ? (
-									<span className="text-[10px] text-(--legacy-text-tertiary)">
-										prices {o.collateral_symbols.join(', ')}
-									</span>
+									<span className="body-sm text-tertiary">prices {o.collateral_symbols.join(', ')}</span>
 								) : null}
 								<AddressActions
 									address={o.admin_address}
@@ -169,11 +164,9 @@ export function OracleDependencies({
 								/>
 							</span>
 							<span className="shrink-0 text-left sm:text-right">
-								<span className="text-(--legacy-text-primary) tabular-nums">{formattedNum(o.exposure_usd, true)}</span>
-								{p ? (
-									<span className="text-(--legacy-text-secondary) tabular-nums">{` · ${p} ${shareWord}`}</span>
-								) : null}
-								<span className="block text-[10px] text-(--legacy-text-tertiary)">
+								<span className="text-primary">{formattedNum(o.exposure_usd, true)}</span>
+								{p ? <span className="text-secondary">{` · ${p} ${shareWord}`}</span> : null}
+								<span className="block body-sm text-tertiary">
 									{eoa ? 'drainable if that key leaks' : 'drainable if it is compromised'}
 								</span>
 							</span>
@@ -186,25 +179,21 @@ export function OracleDependencies({
 					return (
 						<li
 							key={v.provider}
-							className="flex flex-col gap-1.5 px-3 py-2.5 text-xs sm:flex-row sm:items-start sm:justify-between sm:gap-3"
+							className="flex flex-col gap-1.5 px-3 py-2.5 body-md sm:flex-row sm:items-start sm:justify-between sm:gap-3"
 						>
 							<span className="flex min-w-0 flex-col gap-1">
 								<span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-									<span className="font-medium text-(--legacy-text-primary)">{v.provider}</span>
-									<span className="text-(--legacy-text-tertiary)">· on-chain control not resolved</span>
+									<span className="label-md text-primary">{v.provider}</span>
+									<span className="text-tertiary">· on-chain control not resolved</span>
 								</span>
 								{v.collateral_symbols.length ? (
-									<span className="text-[10px] text-(--legacy-text-tertiary)">
-										prices {v.collateral_symbols.join(', ')}
-									</span>
+									<span className="body-sm text-tertiary">prices {v.collateral_symbols.join(', ')}</span>
 								) : null}
 							</span>
 							<span className="shrink-0 text-left sm:text-right">
-								<span className="text-(--legacy-text-primary) tabular-nums">{formattedNum(v.exposure_usd, true)}</span>
-								{p ? (
-									<span className="text-(--legacy-text-secondary) tabular-nums">{` · ${p} ${shareWord}`}</span>
-								) : null}
-								<span className="block text-[10px] text-(--legacy-text-tertiary)">mispriceable if this feed lies</span>
+								<span className="text-primary">{formattedNum(v.exposure_usd, true)}</span>
+								{p ? <span className="text-secondary">{` · ${p} ${shareWord}`}</span> : null}
+								<span className="block body-sm text-tertiary">mispriceable if this feed lies</span>
 							</span>
 						</li>
 					)
@@ -216,25 +205,23 @@ export function OracleDependencies({
 					return (
 						<li
 							key={`vendorless-${g.kind}`}
-							className="flex flex-col gap-1.5 px-3 py-2.5 text-xs sm:flex-row sm:items-start sm:justify-between sm:gap-3"
+							className="flex flex-col gap-1.5 px-3 py-2.5 body-md sm:flex-row sm:items-start sm:justify-between sm:gap-3"
 						>
 							<span className="flex min-w-0 flex-col gap-1">
 								<span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-									<span className="font-medium text-(--legacy-text-primary)">
+									<span className="label-md text-primary">
 										{immutable ? 'On-chain exchange rate' : 'Unidentified feeds'}
 									</span>
-									<span className="text-(--legacy-text-tertiary)">
+									<span className="text-tertiary">
 										{immutable ? '· no external feed or admin' : '· vendor and on-chain control not resolved'}
 									</span>
 								</span>
-								<span className="text-[10px] text-(--legacy-text-tertiary)">prices {g.symbols.join(', ')}</span>
+								<span className="body-sm text-tertiary">prices {g.symbols.join(', ')}</span>
 							</span>
 							<span className="shrink-0 text-left sm:text-right">
-								<span className="text-(--legacy-text-primary) tabular-nums">{formattedNum(g.exposureUsd, true)}</span>
-								{p ? (
-									<span className="text-(--legacy-text-secondary) tabular-nums">{` · ${p} ${shareWord}`}</span>
-								) : null}
-								<span className="block text-[10px] text-(--legacy-text-tertiary)">
+								<span className="text-primary">{formattedNum(g.exposureUsd, true)}</span>
+								{p ? <span className="text-secondary">{` · ${p} ${shareWord}`}</span> : null}
+								<span className="block body-sm text-tertiary">
 									{immutable ? 'mispriceable only via the issuing contract' : 'mispriceable if these feeds lie'}
 								</span>
 							</span>
@@ -242,6 +229,6 @@ export function OracleDependencies({
 					)
 				})}
 			</ul>
-		</div>
+		</Card>
 	)
 }

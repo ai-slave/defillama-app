@@ -1,6 +1,7 @@
 import { preparePieChartData } from '~/components/ECharts/utils'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import { fetchProtocolBySlug } from '~/containers/ProtocolOverview/api'
+import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import { formatNum, formattedNum, getNDistinctColors, slug } from '~/utils'
 import { fetchEthPrice, fetchLsdRates, fetchYieldPools } from './api'
 import type { ILsdRateApiItem, IProtocolDetailApiItem, IYieldPoolApiItem } from './api.types'
@@ -44,10 +45,10 @@ interface PoolWithName extends IYieldPoolApiItem {
 	name: string
 }
 
-export async function getLSDPageData(): Promise<LSTOverviewProps> {
+export async function getLSTPageData(snapshot: YieldsSnapshot): Promise<LSTOverviewProps> {
 	const [{ protocols }, { data: pools }, lsdRates, ethPrice] = await Promise.all([
 		fetchProtocols(),
-		fetchYieldPools(),
+		fetchYieldPools(snapshot),
 		fetchLsdRates().catch((): ILsdRateApiItem[] => []),
 		fetchEthPrice().catch(() => null)
 	])
@@ -279,11 +280,12 @@ export async function getLSDPageData(): Promise<LSTOverviewProps> {
 		stakedEthInUsdSum += tokenTvl.stakedEthInUsd
 	}
 
-	// --- Index lsdRates and lsdApy by name for O(1) lookups ---
 	const ratesByName = new Map<string, ILsdRateApiItem>()
 	for (const rate of lsdRates) {
 		ratesByName.set(rate.name, rate)
 	}
+
+	// Index V2 earn APY by protocol name for O(1) lookups.
 	const apyByName = new Map<string, PoolWithName>()
 	for (const pool of lsdApy) {
 		apyByName.set(pool.name, pool)
@@ -293,8 +295,7 @@ export async function getLSDPageData(): Promise<LSTOverviewProps> {
 	const tokens: string[] = []
 	for (const p of tokenTvls) {
 		const lsd = ratesByName.get(p.name)
-		const type = lsd?.type
-		const pegInfo = type === 'rebase' ? rebase : type === 'accruing' ? valueAccruing : null
+		const pegInfo = lsd?.type === 'rebase' ? rebase : lsd?.type === 'accruing' ? valueAccruing : null
 		const mcap = p.mcap
 		const mcaptvlRaw =
 			mcap != null && p.stakedEthInUsd !== 0 ? formatNum(+mcap.toFixed(2) / +p.stakedEthInUsd.toFixed(2)) : null

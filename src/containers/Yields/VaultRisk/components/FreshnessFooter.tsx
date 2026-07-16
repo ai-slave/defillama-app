@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { formatVerified, relativeTimeFromTs } from '../format'
+import { RiskCallout } from '../primitives/RiskCallout'
 import type { DriftEntry, Freshness } from '../types'
 
 // Relative time depends on the wall clock, so SSR renders the absolute date and swaps to
@@ -19,8 +20,8 @@ function olderRun(a?: string, b?: string): string | undefined {
 function DriftBanner({ entries, protocolId }: { entries: DriftEntry[]; protocolId: string }) {
 	if (!entries.length) return null
 	return (
-		<details className="group rounded-md border border-amber-500/30 bg-amber-500/10 p-3">
-			<summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-medium text-(--warning)">
+		<RiskCallout as="details" className="group">
+			<summary className="flex cursor-pointer list-none items-center justify-between gap-2 label-md text-(--yield-warning-text)">
 				<span className="flex items-center gap-1.5">
 					<Icon name="alert-triangle" className="size-4" />
 					{`${entries.length} on-chain ${entries.length === 1 ? 'change' : 'changes'} detected — affects all ${protocolId} vaults`}
@@ -29,15 +30,15 @@ function DriftBanner({ entries, protocolId }: { entries: DriftEntry[]; protocolI
 			</summary>
 			<ul className="mt-2 space-y-2">
 				{entries.map((d) => (
-					<li key={d.id} className="text-xs text-(--legacy-text-secondary)">
-						<p className="text-(--legacy-text-primary)">{d.notes}</p>
-						<p className="mt-0.5 font-mono text-[11px] text-(--legacy-text-secondary)">
+					<li key={d.id} className="body-sm text-secondary">
+						<p className="text-primary">{d.notes}</p>
+						<p className="mt-0.5 mono-sm text-secondary">
 							expected {d.expected} → actual {d.actual}
 						</p>
 					</li>
 				))}
 			</ul>
-		</details>
+		</RiskCallout>
 	)
 }
 
@@ -74,10 +75,10 @@ export function FreshnessFooter({
 			: `Last verified ${formatVerified(lastRun)}`
 
 	return (
-		<div className="flex flex-col gap-2">
+		<div className="flex flex-col gap-2 body-sm text-secondary">
 			<DriftBanner entries={[...driftMap.values()]} protocolId={protocolId} />
 			{stale ? (
-				<p className="flex items-center gap-1.5 text-xs text-(--warning)">
+				<p className="flex items-center gap-1.5 body-sm text-(--yield-warning-text)">
 					<Icon name="alert-triangle" className="size-3.5 shrink-0" />
 					<span>
 						This pool wasn&apos;t refreshed in the latest run — showing the last-known-good snapshot
@@ -86,18 +87,18 @@ export function FreshnessFooter({
 				</p>
 			) : null}
 			{staleMap.size ? (
-				<p className="flex items-center gap-1.5 text-xs text-(--legacy-text-secondary)">
+				<p className="flex items-center gap-1.5 body-sm text-secondary">
 					<Icon name="clock" className="size-3.5" />
 					{staleMap.size} reading{staleMap.size === 1 ? '' : 's'} could not be refreshed this run.
 				</p>
 			) : null}
-			<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-(--legacy-text-secondary)">
+			<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
 				<span className="flex items-center gap-1.5">
 					<span aria-hidden className="relative flex size-2">
 						{healthy ? (
-							<span className="absolute inset-0 animate-ping rounded-full bg-(--success) opacity-40 motion-reduce:hidden" />
+							<span className="absolute inset-0 animate-ping rounded-full bg-data-up opacity-40 motion-reduce:hidden" />
 						) : null}
-						<span className={`relative size-2 rounded-full ${healthy ? 'bg-(--success)' : 'bg-(--warning)'}`} />
+						<span className={`relative size-2 rounded-full ${healthy ? 'bg-data-up' : 'bg-warning'}`} />
 					</span>
 					{updatedLabel}
 				</span>
@@ -105,10 +106,7 @@ export function FreshnessFooter({
 					<span className="flex flex-wrap items-center gap-1.5">
 						<span>Sources:</span>
 						{sources.map((s) => (
-							<span
-								key={s.endpoint}
-								className="rounded-sm bg-(--legacy-bg-main) px-1.5 py-0.5 font-mono text-[10px] text-(--legacy-text-secondary)"
-							>
+							<span key={s.endpoint} className="mono-sm text-tertiary">
 								{s.endpoint}
 							</span>
 						))}

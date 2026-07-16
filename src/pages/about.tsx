@@ -1,16 +1,15 @@
 import type { InferGetStaticPropsType } from 'next'
-import { YIELD_POOLS_API } from '~/containers/Yields/constants'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
-import { fetchJson } from '~/utils/async'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('about', async () => {
-	const [metadataCache, yields] = await Promise.all([
+	const [metadataCache, { acquireYieldsSnapshot, readEarn }] = await Promise.all([
 		import('~/utils/metadata').then((m) => m.default),
-		fetchJson(YIELD_POOLS_API).catch(() => ({ data: [] }))
+		import('~/containers/Yields/server/dataset.server')
 	])
+	const yields = await readEarn(await acquireYieldsSnapshot('blocking'))
 	const { protocolMetadata, chainMetadata } = metadataCache
 
 	let allProtocols = 0
@@ -34,7 +33,7 @@ export const getStaticProps = withPerformanceLogging('about', async () => {
 		props: {
 			protocols: allProtocols,
 			chains,
-			pools: yields.data.length,
+			pools: yields.length,
 			revenue: revenueProtocols,
 			dexs: dexsProtocols
 		},

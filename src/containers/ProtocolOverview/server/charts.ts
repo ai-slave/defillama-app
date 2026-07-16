@@ -1,4 +1,5 @@
 import { fetchProtocolTokenLiquidityChart } from '~/api'
+import { YIELDS_V2_SERVER_URL } from '~/constants'
 import {
 	fetchAdapterProtocolChartData,
 	fetchAdapterProtocolChartDataByBreakdownType
@@ -11,7 +12,6 @@ import { fetchOracleProtocolChart } from '~/containers/Oracles/api'
 import { fetchProtocolTreasuryChart, fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
 import { normalizeBridgeVolumeToChartMs } from '~/containers/ProtocolOverview/chartSeries.utils'
 import { getProtocolEmissionsCharts } from '~/containers/Unlocks/queries'
-import { YIELD_PROJECT_MEDIAN_API } from '~/containers/Yields/constants'
 import { queryString } from '~/server/api/params'
 import { badRequest, notFound, ok } from '~/server/api/respond'
 import { defineApiRoute } from '~/server/api/types'
@@ -231,14 +231,14 @@ export const protocolCharts = defineApiRoute({
 					return badRequest('protocol parameter is required')
 				}
 
-				const data = await fetchJson<{ data: Array<{ timestamp: string; medianAPY: number; [key: string]: unknown }> }>(
-					`${YIELD_PROJECT_MEDIAN_API}/${protocol}`
+				const data = await fetchJson<{ data: Array<{ date: string; median_apy: number; pools: number }> }>(
+					`${YIELDS_V2_SERVER_URL}/v2/protocol-median/${encodeURIComponent(protocol)}/history`
 				)
 					.then((values) =>
 						values && values.data.length > 0
 							? values.data.map((item) => ({
-									...item,
-									date: Math.floor(new Date(item.timestamp).getTime() / 1000)
+									date: Math.floor(new Date(item.date).getTime() / 1000),
+									medianAPY: item.median_apy
 								}))
 							: null
 					)

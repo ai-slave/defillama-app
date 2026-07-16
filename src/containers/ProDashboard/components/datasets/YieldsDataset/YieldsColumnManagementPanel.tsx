@@ -1,52 +1,31 @@
 import * as React from 'react'
 import { Icon } from '~/components/Icon'
+import { YIELDS_COLUMN_IDS, YIELDS_COLUMN_ID_SET, type YieldColumnId } from './columns'
 
-const yieldsColumnMetadata = {
-	pool: { name: 'Pool', description: 'The name of the yield pool or strategy' },
-	project: { name: 'Project', description: 'The protocol offering this yield opportunity' },
-	chains: { name: 'Chain', description: 'The blockchain network where the pool operates' },
-	tvl: { name: 'TVL', description: 'Total Value Locked - The total USD value of assets in the pool' },
-	apy: { name: 'APY', description: 'Annual Percentage Yield - Total expected yearly return' },
-	apyBase: { name: 'Base APY', description: 'Base yield from the protocol (e.g., trading fees, lending interest)' },
-	apyReward: { name: 'Reward APY', description: 'Additional yield from reward token incentives' },
-	change1d: { name: '24h Change', description: '24-hour percentage change in APY' },
-	change7d: { name: '7d Change', description: '7-day percentage change in APY' },
-	il7d: { name: '7d IL', description: '7-day Impermanent Loss for liquidity pools' },
-	apyBase7d: { name: 'Base APY (7d)', description: 'Average base APY over the last 7 days' },
-	apyNet7d: { name: 'Net APY (7d)', description: 'Net APY after accounting for impermanent loss (7d)' },
-	apyMean30d: { name: 'Mean APY (30d)', description: 'Average APY over the last 30 days' },
-	volumeUsd1d: { name: 'Volume (24h)', description: '24-hour trading volume in USD' },
-	volumeUsd7d: { name: 'Volume (7d)', description: '7-day trading volume in USD' },
-	apyBorrow: { name: 'Borrow APY', description: 'Interest rate for borrowing assets' },
-	totalSupplyUsd: { name: 'Total Supplied', description: 'Total USD value of supplied assets' },
-	totalBorrowUsd: { name: 'Total Borrowed', description: 'Total USD value of borrowed assets' },
-	totalAvailableUsd: { name: 'Available', description: 'Available liquidity for borrowing' },
-	ltv: { name: 'LTV', description: 'Loan-to-Value ratio - Maximum borrowing capacity' }
+const yieldsColumnMetadata: Record<YieldColumnId, { name: string; description: string }> = {
+	pool: { name: 'Pool', description: 'The pool or strategy name' },
+	project: { name: 'Protocol', description: 'The protocol offering the opportunity' },
+	chains: { name: 'Chain', description: 'The network where the pool operates' },
+	tvl: { name: 'TVL', description: 'The current USD value tracked for the earn pool' },
+	apy: { name: 'Supply APY', description: 'Current base and reward supply APY' },
+	apyBase: { name: 'Base APY', description: 'Current base supply APY' },
+	apyReward: { name: 'Reward APY', description: 'Current reward-token APY' },
+	apyMean30d: { name: '30d Avg APY', description: 'Average total supply APY over 30 days' },
+	stabilityRating: { name: '30d Stability', description: 'V2 supply APY stability classification' },
+	volumeUsd1d: { name: '24h Volume', description: 'Tracked pool volume over 24 hours' },
+	ilRisk: { name: 'IL Risk', description: 'Whether the pool has impermanent-loss exposure' },
+	apyBorrow: { name: 'Borrow Cost APY', description: 'Current net cost to borrow' },
+	totalSupplyUsd: { name: 'Total Supplied', description: 'Current supplied value for a matching borrow market' },
+	totalBorrowUsd: { name: 'Total Borrowed', description: 'Current borrowed value' },
+	totalAvailableUsd: { name: 'Available', description: 'Current liquidity available to borrow' },
+	ltv: { name: 'LTV', description: 'Maximum loan-to-value ratio' }
 }
 
-const yieldsColumnKeys = Object.keys(yieldsColumnMetadata)
-
-const columnGroups = [
-	{
-		title: 'Core Metrics',
-		columns: ['pool', 'project', 'chains', 'tvl']
-	},
-	{
-		title: 'Yield Metrics',
-		columns: ['apy', 'apyBase', 'apyReward', 'change1d', 'change7d']
-	},
-	{
-		title: 'Historical Metrics',
-		columns: ['il7d', 'apyBase7d', 'apyNet7d', 'apyMean30d']
-	},
-	{
-		title: 'Volume Metrics',
-		columns: ['volumeUsd1d', 'volumeUsd7d']
-	},
-	{
-		title: 'Lending Metrics',
-		columns: ['apyBorrow', 'totalSupplyUsd', 'totalBorrowUsd', 'totalAvailableUsd', 'ltv']
-	}
+const columnGroups: Array<{ title: string; columns: YieldColumnId[] }> = [
+	{ title: 'Pool', columns: ['pool', 'project', 'chains', 'tvl'] },
+	{ title: 'Supply APY', columns: ['apy', 'apyBase', 'apyReward', 'apyMean30d', 'stabilityRating'] },
+	{ title: 'Pool Facts', columns: ['volumeUsd1d', 'ilRisk'] },
+	{ title: 'Borrow Market', columns: ['apyBorrow', 'totalSupplyUsd', 'totalBorrowUsd', 'totalAvailableUsd', 'ltv'] }
 ]
 
 interface YieldsColumnManagementPanelProps {
@@ -61,7 +40,7 @@ interface YieldsColumnManagementPanelProps {
 	moveColumnDown?: (columnKey: string) => void
 }
 
-const ColumnButton = ({
+function ColumnButton({
 	columnKey,
 	currentColumns,
 	columnOrder,
@@ -69,79 +48,63 @@ const ColumnButton = ({
 	moveColumnDown,
 	toggleColumnVisibility
 }: {
-	columnKey: string
+	columnKey: YieldColumnId
 	currentColumns: Record<string, boolean>
 	columnOrder: string[]
-	moveColumnUp: (columnKey: string) => void
-	moveColumnDown: (columnKey: string) => void
+	moveColumnUp?: (columnKey: string) => void
+	moveColumnDown?: (columnKey: string) => void
 	toggleColumnVisibility: (columnKey: string, isVisible: boolean) => void
-}) => {
+}) {
 	const metadata = yieldsColumnMetadata[columnKey]
 	const isActive = currentColumns[columnKey]
+	const visibleColumns = columnOrder.filter((key) => currentColumns[key])
+	const index = visibleColumns.indexOf(columnKey)
 
-	if (isActive) {
-		const visibleColumnsInOrder = columnOrder.filter((key) => currentColumns[key])
-		const actualIndex = visibleColumnsInOrder.indexOf(columnKey)
-		const isFirst = actualIndex === 0
-		const isLast = actualIndex === visibleColumnsInOrder.length - 1
-
-		return (
-			<div
-				className="flex w-full items-center justify-between rounded-md border pro-divider pro-bg2 pro-hover-bg p-2 transition-colors"
-				title={metadata.description}
-			>
-				<div className="flex items-center gap-2">
-					<Icon name="check" height={12} width={12} className="text-(--success)" />
-					<span className="text-xs pro-text1">{metadata.name}</span>
-				</div>
-				<div className="flex items-center gap-1">
-					{moveColumnUp && !isFirst ? (
-						<button
-							onClick={(e) => {
-								e.stopPropagation()
-								moveColumnUp(columnKey)
-							}}
-							className="rounded-md p-1 pro-text3 transition-colors hover:pro-text1"
-							title="Move up"
-						>
-							<Icon name="chevron-up" height={10} width={10} />
-						</button>
-					) : null}
-					{moveColumnDown && !isLast ? (
-						<button
-							onClick={(e) => {
-								e.stopPropagation()
-								moveColumnDown(columnKey)
-							}}
-							className="rounded-md p-1 pro-text3 transition-colors hover:pro-text1"
-							title="Move down"
-						>
-							<Icon name="chevron-down" height={10} width={10} />
-						</button>
-					) : null}
-					<button
-						onClick={(e) => {
-							e.stopPropagation()
-							toggleColumnVisibility(columnKey, false)
-						}}
-						className="p-1 pro-text3 transition-colors hover:pro-text1"
-						title="Remove column"
-					>
-						<Icon name="x" height={12} width={12} />
-					</button>
-				</div>
-			</div>
-		)
-	}
-
-	return (
-		<button
-			onClick={() => toggleColumnVisibility(columnKey, true)}
-			className="flex w-full items-center gap-2 rounded-md border pro-divider pro-bg2 pro-hover-bg p-2 text-left transition-colors"
+	return isActive ? (
+		<div
+			className="flex w-full items-center justify-between rounded-md border border-subtle bg-surface p-2"
 			title={metadata.description}
 		>
-			<Icon name="plus" height={10} width={10} className="pro-text3" />
-			<span className="text-xs pro-text1">{metadata.name}</span>
+			<div className="flex items-center gap-2">
+				<Icon name="check" className="text-success size-3" />
+				<span className="text-xs text-primary">{metadata.name}</span>
+			</div>
+			<div className="flex items-center gap-1">
+				{moveColumnUp && index > 0 ? (
+					<button
+						onClick={() => moveColumnUp(columnKey)}
+						className="p-1 text-tertiary hover:text-primary"
+						title="Move up"
+					>
+						<Icon name="chevron-up" className="size-2.5" />
+					</button>
+				) : null}
+				{moveColumnDown && index >= 0 && index < visibleColumns.length - 1 ? (
+					<button
+						onClick={() => moveColumnDown(columnKey)}
+						className="p-1 text-tertiary hover:text-primary"
+						title="Move down"
+					>
+						<Icon name="chevron-down" className="size-2.5" />
+					</button>
+				) : null}
+				<button
+					onClick={() => toggleColumnVisibility(columnKey, false)}
+					className="p-1 text-tertiary hover:text-primary"
+					title="Remove column"
+				>
+					<Icon name="x" className="size-3" />
+				</button>
+			</div>
+		</div>
+	) : (
+		<button
+			onClick={() => toggleColumnVisibility(columnKey, true)}
+			className="hover:bg-surface-secondary flex w-full items-center gap-2 rounded-md border border-subtle bg-surface p-2 text-left"
+			title={metadata.description}
+		>
+			<Icon name="plus" className="size-2.5 text-tertiary" />
+			<span className="text-xs text-primary">{metadata.name}</span>
 		</button>
 	)
 }
@@ -158,89 +121,52 @@ export function YieldsColumnManagementPanel({
 	moveColumnDown
 }: YieldsColumnManagementPanelProps) {
 	const filteredColumns = React.useMemo(() => {
-		if (!searchTerm) return yieldsColumnKeys
-
 		const lowerSearch = searchTerm.toLowerCase()
-		const result: string[] = []
-		for (const key of yieldsColumnKeys) {
+		return YIELDS_COLUMN_IDS.filter((key) => {
 			const metadata = yieldsColumnMetadata[key]
-			if (
+			return (
+				!lowerSearch ||
 				metadata.name.toLowerCase().includes(lowerSearch) ||
 				metadata.description.toLowerCase().includes(lowerSearch)
-			) {
-				result.push(key)
-			}
-		}
-		return result
+			)
+		})
 	}, [searchTerm])
-
-	const visibleColumnCount = React.useMemo(() => {
-		let count = 0
-		for (const k in currentColumns) {
-			if (currentColumns[k]) count++
-		}
-		return count
-	}, [currentColumns])
+	const filteredColumnSet = new Set(filteredColumns)
 
 	if (!showColumnPanel) return null
 
-	return (
-		<div
-			className="relative mb-4 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4"
-			style={{ zIndex: 50, pointerEvents: 'auto' }}
-		>
-			<div className="mb-3 flex items-center justify-between">
-				<h4 className="text-sm font-medium pro-text1">Customize Columns</h4>
-				<div className="flex items-center gap-2">
-					<button
-						onClick={() => {
-							for (const key in yieldsColumnMetadata) {
-								toggleColumnVisibility(key, true)
-							}
-						}}
-						className="rounded-md border pro-divider pro-bg2 pro-hover-bg px-2 py-1 text-xs pro-text2 transition-colors"
-					>
-						Show All
-					</button>
-					<button
-						onClick={() => {
-							for (const key in yieldsColumnMetadata) {
-								toggleColumnVisibility(key, ['pool', 'project', 'chains', 'tvl'].includes(key))
-							}
-						}}
-						className="rounded-md border pro-divider pro-bg2 pro-hover-bg px-2 py-1 text-xs pro-text2 transition-colors"
-					>
-						Hide All
-					</button>
-				</div>
-			</div>
+	const visibleCount = YIELDS_COLUMN_IDS.filter((key) => currentColumns[key]).length
 
+	return (
+		<div className="relative mb-4 rounded-md border border-subtle bg-surface p-4">
+			<div className="mb-3 flex items-center justify-between">
+				<h4 className="text-sm font-medium text-primary">Customize columns</h4>
+				<button
+					type="button"
+					onClick={() => setShowColumnPanel(false)}
+					className="p-1 text-tertiary hover:text-primary"
+					aria-label="Close column customization"
+					title="Close"
+				>
+					<Icon name="x" className="size-4" />
+				</button>
+			</div>
 			<div className="relative mb-3">
-				<Icon
-					name="search"
-					height={14}
-					width={14}
-					className="absolute top-1/2 left-3 -translate-y-1/2 transform pro-text3"
-				/>
+				<Icon name="search" className="absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-tertiary" />
 				<input
 					type="text"
 					placeholder="Search columns..."
-					defaultValue={searchTerm}
-					onInput={(e) => setSearchTerm(e.currentTarget.value)}
-					className="w-full rounded-md border pro-border bg-(--legacy-bg-glass) py-2 pr-3 pl-9 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-(--legacy-primary) focus:outline-hidden"
+					value={searchTerm}
+					onChange={(event) => setSearchTerm(event.currentTarget.value)}
+					className="bg-surface-secondary w-full rounded-md border border-subtle py-2 pr-3 pl-9 text-sm text-primary"
 				/>
 			</div>
-
-			<div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<div>
-					<h5 className="mb-2 flex items-center gap-2 text-xs font-medium tracking-wide pro-text2 uppercase">
-						<Icon name="eye" height={12} width={12} />
-						Active Columns ({visibleColumnCount})
-					</h5>
-					<p className="mb-3 text-xs pro-text3">Use arrows to reorder • Click × to hide</p>
-					<div className="max-h-60 space-y-1 overflow-y-auto">
+					<p className="mb-2 text-xs font-medium text-secondary">Active columns ({visibleCount})</p>
+					<div className="max-h-64 space-y-1 overflow-y-auto">
 						{columnOrder
-							.filter((key) => currentColumns[key] && yieldsColumnMetadata[key])
+							.filter((key): key is YieldColumnId => YIELDS_COLUMN_ID_SET.has(key) && Boolean(currentColumns[key]))
 							.map((columnKey) => (
 								<ColumnButton
 									key={columnKey}
@@ -254,33 +180,22 @@ export function YieldsColumnManagementPanel({
 							))}
 					</div>
 				</div>
-
 				<div>
-					<h5 className="mb-2 flex items-center gap-2 text-xs font-medium tracking-wide pro-text2 uppercase">
-						<Icon name="plus" height={12} width={12} />
-						Available Columns
-					</h5>
-					<p className="mb-3 text-xs pro-text3">Click to add to table</p>
-					<div className="max-h-60 space-y-3 overflow-y-auto">
+					<p className="mb-2 text-xs font-medium text-secondary">Available columns</p>
+					<div className="max-h-64 space-y-3 overflow-y-auto">
 						{columnGroups.map((group) => {
-							const availableColumns = group.columns.filter(
-								(col) => !currentColumns[col] && filteredColumns.includes(col)
-							)
-
-							if (availableColumns.length === 0) return null
-
+							const columns = group.columns.filter((key) => filteredColumnSet.has(key))
+							if (!columns.length) return null
 							return (
 								<div key={group.title}>
-									<h6 className="mb-1 text-xs font-medium pro-text2">{group.title}</h6>
+									<p className="mb-1 text-[11px] text-tertiary">{group.title}</p>
 									<div className="space-y-1">
-										{availableColumns.map((columnKey) => (
+										{columns.map((columnKey) => (
 											<ColumnButton
 												key={columnKey}
 												columnKey={columnKey}
 												currentColumns={currentColumns}
 												columnOrder={columnOrder}
-												moveColumnUp={moveColumnUp}
-												moveColumnDown={moveColumnDown}
 												toggleColumnVisibility={toggleColumnVisibility}
 											/>
 										))}
@@ -290,18 +205,6 @@ export function YieldsColumnManagementPanel({
 						})}
 					</div>
 				</div>
-			</div>
-
-			<div className="mt-4 flex items-center justify-between border-t pro-divider pt-3 text-xs">
-				<span className="pro-text3">
-					{visibleColumnCount} of {yieldsColumnKeys.length} columns visible
-				</span>
-				<button
-					onClick={() => setShowColumnPanel(false)}
-					className="rounded-md border border-(--legacy-primary) bg-(--legacy-primary) px-3 py-1 text-white transition-colors hover:bg-(--legacy-primary-hover)"
-				>
-					Done
-				</button>
 			</div>
 		</div>
 	)

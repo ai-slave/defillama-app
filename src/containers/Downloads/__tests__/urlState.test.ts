@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import type { SavedDownloadInput } from '../savedDownloads'
 import type { ChartConfig } from '../sql/chartConfig'
 import { buildShareUrl, decodeDownloadConfig, encodeDownloadConfig } from '../urlState'
 
-function roundtrip<T extends Parameters<typeof encodeDownloadConfig>[0]>(input: T): any {
+function roundtrip<T extends Parameters<typeof encodeDownloadConfig>[0]>(input: T): SavedDownloadInput | null {
 	const encoded = encodeDownloadConfig(input)
 	const asQuery = Object.fromEntries(Object.entries(encoded).map(([k, v]) => [k, v as string | string[] | undefined]))
 	return decodeDownloadConfig(asQuery)
@@ -19,7 +20,7 @@ describe('chart-config URL round-trip', () => {
 		seriesKinds: {},
 		seriesColors: {},
 		numberFormat: 'auto'
-	} as any
+	}
 
 	it('round-trips a minimal line chart', () => {
 		const decoded = roundtrip({ kind: 'query', sql: 'SELECT 1', tables: [], chartConfig: baseCfg })
@@ -88,7 +89,7 @@ describe('chart-config URL round-trip', () => {
 	})
 
 	it('leaves URL params empty for defaults', () => {
-		const encoded = encodeDownloadConfig({ kind: 'query', sql: 'SELECT 1', tables: [], chartConfig: baseCfg } as any)
+		const encoded = encodeDownloadConfig({ kind: 'query', sql: 'SELECT 1', tables: [], chartConfig: baseCfg })
 		expect(encoded.cs).toBeUndefined()
 		expect(encoded.csb).toBeUndefined()
 		expect(encoded.cn).toBeUndefined()
@@ -101,7 +102,7 @@ describe('chart-config URL round-trip', () => {
 			sql: 'SELECT 1',
 			tables: [],
 			chartConfig: { ...baseCfg, chartType: 'scatter' }
-		} as any)
+		})
 		expect(url).toContain('cv=sc')
 	})
 })

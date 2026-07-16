@@ -2,7 +2,23 @@ export type ColumnShape = readonly string[] | 'dynamic'
 
 export const CHART_COLUMN_SHAPES: Record<string, ColumnShape> = {
 	'bridge-volume-chart': ['date', 'depositUSD', 'withdrawUSD', 'depositTxs', 'withdrawTxs'],
-	'yield-pool-chart': ['date', 'tvlUsd', 'apy', 'apyBase', 'apyReward'],
+	'yield-pool-chart': [
+		'date',
+		'tvlUsd',
+		'supplyApy',
+		'supplyApyBase',
+		'supplyApyReward',
+		'supplyApyIntrinsic',
+		'supplyApy7d',
+		'supplyApyBase7d',
+		'supplyApyReward7d',
+		'supplyApyIntrinsic7d',
+		'supplyApy30d',
+		'supplyApyBase30d',
+		'supplyApyReward30d',
+		'supplyApyIntrinsic30d',
+		'pricePerShare'
+	],
 	'stablecoin-mcap-chart': ['date', 'circulating'],
 	'stablecoin-chain-mcap-chart': ['date', 'totalCirculatingUSD'],
 	'cex-inflows-chart': ['date', 'inflow'],

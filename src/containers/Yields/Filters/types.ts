@@ -1,47 +1,47 @@
-type YieldCsvPayload = { filename: string; rows: Array<Array<string | number | boolean | null | undefined>> }
+import type { ReactNode } from 'react'
+import type { AttributeId } from './attributeOptions'
+
+type YieldCsvPayload = {
+	filename: string
+	rows: Array<Array<string | number | boolean | null | undefined>>
+}
 type PrepareYieldCsv = () => YieldCsvPayload | Promise<YieldCsvPayload>
 
 export interface IDropdownMenusProps {
 	pathname?: string
-	tokensList?: Array<string>
-	selectedTokens?: Array<string>
 	chainList?: Array<string>
 	selectedChains?: Array<string>
 	evmChains?: Array<string>
 	projectList?: Array<string>
 	selectedProjects?: Array<string>
-	lendingProtocols?: Array<string>
-	selectedLendingProtocols?: Array<string>
-	farmProtocols?: Array<string>
-	selectedFarmProtocols?: Array<string>
+	// Opt-in label override for the Projects dropdown (/yields uses "Protocols").
+	// Defaults to "Projects" — every other page keeps the shared label.
+	projectsLabel?: string
+	// Opt-in label override for the Categories dropdown (/yields uses "Categories").
+	// Defaults to "Category" — every other page keeps the shared label.
+	categoriesLabel?: string
 	categoryList?: Array<string>
 	selectedCategories?: Array<string>
-	attributes?: boolean
+	attributeIds?: AttributeId[]
 	tvlRange?: boolean
+	// Opt-in (/yields): trigger label override for the TVL range (defaults to 'TVL Range').
+	tvlRangeLabel?: string
+	// Opt-in (/yields pages): label override for the reset button (defaults to 'Reset all filters').
+	resetFiltersLabel?: string
 	apyRange?: boolean
 	availableRange?: boolean
-	enabledColumns?: string[]
 	resetFilters?: boolean
-	excludeBadDebt?: boolean
-	selectedAttributes?: Array<string>
-	excludeRewardApy?: boolean
-	includeLsdApy?: boolean
 	nestedMenu?: boolean
-	ltvPlaceholder?: string
-	showMedianApy?: boolean
-	showStdDev?: boolean
 	prepareCsv?: PrepareYieldCsv
+	showColumns?: boolean
 }
 
 export interface IYieldFiltersProps extends IDropdownMenusProps {
-	header: string
-	poolsNumber?: number
-	projectsNumber?: number
-	chainsNumber?: number
-	tokens?: Array<{ name: string; symbol: string; logo?: string | null; fallbackLogo?: string | null }>
-	strategyInputsData?: Array<{ name: string; symbol: string; image?: string | null; image2?: string | null }>
-	noOfStrategies?: number
+	saveView?: boolean
 	showSearchOnMobile?: boolean
 	prepareCsv?: PrepareYieldCsv
-	showPresetFilters?: boolean
+	tokenSearch?: ReactNode
+	apyControls?: ReactNode
+	curatedViews?: ReactNode
+	watchlist?: boolean
 }

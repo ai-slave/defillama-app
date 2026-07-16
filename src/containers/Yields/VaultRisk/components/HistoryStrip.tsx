@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
+import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
 import { formatVerified } from '../format'
@@ -238,15 +240,15 @@ export function buildHistoryStrip(
 }
 
 const INCIDENT_TONE: Record<IncidentPoint['tone'], string> = {
-	loss: 'border-red-500/70 bg-red-500/20',
-	'made-whole': 'border-(--success) bg-emerald-500/15',
-	averted: 'border-(--success) border-dashed bg-emerald-500/15'
+	loss: 'border-data-down/70 bg-data-down/20',
+	'made-whole': 'border-data-up bg-data-up/15',
+	averted: 'border-data-up border-dashed bg-data-up/15'
 }
 
 const INCIDENT_TONE_TEXT: Record<IncidentPoint['tone'], { label: string; className: string }> = {
-	loss: { label: 'not recovered', className: 'text-(--error)' },
-	'made-whole': { label: 'made whole', className: 'text-(--success)' },
-	averted: { label: 'averted', className: 'text-(--success)' }
+	loss: { label: 'not recovered', className: 'text-(--yield-negative-text)' },
+	'made-whole': { label: 'made whole', className: 'text-(--yield-positive-text)' },
+	averted: { label: 'averted', className: 'text-(--yield-positive-text)' }
 }
 
 function IncidentDot({ p, selected, onToggle }: { p: IncidentPoint; selected: boolean; onToggle: () => void }) {
@@ -255,7 +257,7 @@ function IncidentDot({ p, selected, onToggle }: { p: IncidentPoint; selected: bo
 			{/* stem ties the dot to its date on the axis */}
 			<span
 				aria-hidden
-				className="absolute w-px -translate-x-1/2 bg-(--legacy-cards-border)"
+				className="absolute w-px -translate-x-1/2 bg-border-subtle"
 				style={{
 					left: `${p.x}%`,
 					top: `calc(${POOL_CY}% + ${p.r}px)`,
@@ -272,8 +274,8 @@ function IncidentDot({ p, selected, onToggle }: { p: IncidentPoint; selected: bo
 						aria-controls={selected ? DETAIL_ID : undefined}
 						aria-label={p.label}
 						data-hs-pt
-						className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border outline-offset-2 outline-(--legacy-primary) transition-colors duration-150 focus-visible:outline-2 ${INCIDENT_TONE[p.tone]} ${
-							selected ? 'ring-2 ring-(--legacy-primary)' : ''
+						className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border outline-offset-2 outline-brand transition-colors duration-150 focus-visible:outline-2 ${INCIDENT_TONE[p.tone]} ${
+							selected ? 'ring-2 ring-brand' : ''
 						}`}
 						style={{
 							left: `${p.x}%`,
@@ -305,7 +307,7 @@ function ProtocolIncidentDot({
 		<>
 			<span
 				aria-hidden
-				className="absolute w-px -translate-x-1/2 border-l border-dashed border-(--legacy-cards-border)"
+				className="absolute w-px -translate-x-1/2 border-l border-dashed border-subtle"
 				style={{
 					left: `${p.x}%`,
 					top: `calc(${PROTO_CY}% + ${p.r}px)`,
@@ -322,9 +324,9 @@ function ProtocolIncidentDot({
 						aria-controls={selected ? DETAIL_ID : undefined}
 						aria-label={p.label}
 						data-hs-pt
-						className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed bg-(--legacy-bg-main) outline-offset-2 outline-(--legacy-primary) transition-colors duration-150 focus-visible:outline-2 ${
-							p.recovered ? 'border-(--success)/60' : 'border-(--legacy-text-secondary)'
-						} ${selected ? 'ring-2 ring-(--legacy-primary)' : ''}`}
+						className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed bg-surface outline-offset-2 outline-brand transition-colors duration-150 focus-visible:outline-2 ${
+							p.recovered ? 'border-data-up/60' : 'border-(--text-secondary)'
+						} ${selected ? 'ring-2 ring-brand' : ''}`}
 						style={{
 							left: `${p.x}%`,
 							top: `${PROTO_CY}%`,
@@ -354,10 +356,10 @@ function AuditChip({ c, selected, onToggle }: { c: AuditCluster; selected: boole
 					aria-controls={selected ? DETAIL_ID : undefined}
 					aria-label={label}
 					data-hs-pt
-					className={`absolute flex h-5 min-w-5 -translate-x-1/2 items-center justify-center rounded-sm border px-1 text-[10px] font-medium tabular-nums outline-offset-2 outline-(--legacy-primary) transition-colors duration-150 focus-visible:outline-2 ${
+					className={`absolute flex min-h-6 min-w-6 -translate-x-1/2 items-center justify-center rounded-sm border px-1 label-sm outline-offset-2 outline-brand transition-colors duration-150 focus-visible:outline-2 ${
 						selected
-							? 'border-(--legacy-primary) bg-(--legacy-primary)/10 text-(--legacy-primary)'
-							: 'border-(--legacy-cards-border) bg-(--legacy-bg-main) text-(--legacy-text-secondary) hover:border-(--legacy-text-secondary)/40 hover:text-(--legacy-text-primary)'
+							? 'border-brand bg-brand/10 text-link'
+							: 'border-medium bg-surface text-secondary hover:border-strong hover:text-primary'
 					}`}
 					style={{ left: `${c.x}%`, top: `calc(${AXIS_Y}% + 5px)` }}
 				/>
@@ -383,60 +385,56 @@ function DetailPanel({ selection, onClose }: { selection: Selection; onClose: ()
 					? `${selection.c.items[0].firm} audit · ${formatVerified(selection.c.from)}`
 					: `${selection.c.count} audits · ${formatVerified(selection.c.from)} – ${formatVerified(selection.c.to)}`
 	return (
-		<div
-			id={DETAIL_ID}
-			role="region"
-			aria-label={title}
-			className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg)"
-		>
-			<div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 border-b border-(--legacy-cards-border) px-3 py-2">
-				<span className="text-xs font-medium text-(--legacy-text-primary)">{title}</span>
+		<Card padding="none" id={DETAIL_ID} role="region" aria-label={title}>
+			<div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 border-b border-subtle px-3 py-2">
+				<span className="label-sm text-primary">{title}</span>
 				{selection.kind === 'incident' ? (
-					<span className={`text-xs ${INCIDENT_TONE_TEXT[selection.p.tone].className}`}>
+					<span className={`body-sm ${INCIDENT_TONE_TEXT[selection.p.tone].className}`}>
 						{INCIDENT_TONE_TEXT[selection.p.tone].label}
 					</span>
 				) : null}
 				{selection.kind === 'protocol' ? (
-					<span className="rounded-full border border-(--legacy-cards-border) px-1.5 py-0.5 text-[10px] tracking-wide text-(--legacy-text-secondary) uppercase">
+					<span className="rounded-full border border-medium px-1.5 py-0.5 label-xs text-secondary uppercase">
 						{selection.p.classification}
 					</span>
 				) : null}
-				<button
+				<Button
 					type="button"
+					variant="ghost"
+					size="sm"
+					square
 					onClick={onClose}
 					aria-label="Close detail"
-					className="-mr-1 ml-auto flex size-6 items-center justify-center rounded-md text-(--legacy-text-secondary) hover:bg-(--legacy-bg-main) hover:text-(--legacy-text-primary)"
+					className="-mr-1 ml-auto"
 				>
 					<Icon name="x" className="size-3" />
-				</button>
+				</Button>
 			</div>
 			{selection.kind === 'incident' ? (
-				<div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-xs text-(--legacy-text-secondary)">
+				<div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 body-sm text-secondary">
 					<span>{selection.p.money}</span>
 					{selection.p.url ? <ExternalLink href={selection.p.url}>post-mortem</ExternalLink> : null}
 				</div>
 			) : selection.kind === 'protocol' ? (
-				<div className="flex flex-col gap-1 px-3 py-2 text-xs text-(--legacy-text-secondary)">
-					<span className="font-medium text-(--legacy-text-primary)">{selection.p.contextLabel}</span>
+				<div className="flex flex-col gap-1 px-3 py-2 body-sm text-secondary">
+					<span className="label-sm text-primary">{selection.p.contextLabel}</span>
 					<span>{selection.p.money}</span>
-					{selection.p.technique ? (
-						<span className="text-(--legacy-text-secondary)">{selection.p.technique}</span>
-					) : null}
+					{selection.p.technique ? <span className="text-secondary">{selection.p.technique}</span> : null}
 					{selection.p.url ? <ExternalLink href={selection.p.url}>post-mortem</ExternalLink> : null}
 				</div>
 			) : (
-				<ul className="flex flex-col divide-y divide-(--legacy-cards-border) px-3 py-1">
+				<ul className="flex flex-col divide-y divide-(--border-subtle) px-3 py-1">
 					{selection.c.items.map((a, i) => (
-						<li key={i} className="flex items-center justify-between gap-3 py-1.5 text-xs">
-							<span className="min-w-0 truncate text-(--legacy-text-secondary)">
-								<span className="text-(--legacy-text-primary)">{a.firm}</span> · {formatVerified(a.date)}
+						<li key={i} className="flex items-center justify-between gap-3 py-1.5 body-sm">
+							<span className="min-w-0 truncate text-secondary">
+								<span className="text-primary">{a.firm}</span> · {formatVerified(a.date)}
 							</span>
 							{a.url ? <ExternalLink href={a.url}>report</ExternalLink> : null}
 						</li>
 					))}
 				</ul>
 			)}
-		</div>
+		</Card>
 	)
 }
 
@@ -503,12 +501,12 @@ export function HistoryStrip({
 
 	return (
 		<div className="flex flex-col gap-1.5">
-			<span className="text-xs font-semibold text-(--legacy-text-primary)">
-				Track record <span className="font-normal text-(--legacy-text-secondary)">· {summary}</span>
+			<span className="label-sm text-primary">
+				Track record <span className="font-normal text-secondary">· {summary}</span>
 			</span>
 
 			<div className="flex">
-				<div className="relative w-14 shrink-0 text-[9px] text-(--legacy-text-secondary)" aria-hidden>
+				<div className="relative w-14 shrink-0 body-xs text-secondary" aria-hidden>
 					<span className="absolute right-2 -translate-y-1/2" style={{ top: `${POOL_CY}%` }}>
 						pool
 					</span>
@@ -526,21 +524,14 @@ export function HistoryStrip({
 					aria-label={`Track record timeline: ${summary}. Pool and protocol-wide incidents are separate lanes. Select a marker for detail.`}
 					className="relative h-24 flex-1"
 				>
-					<div
-						className="absolute inset-x-0 border-t border-(--legacy-cards-border)"
-						style={{ top: `${AXIS_Y}%` }}
-						aria-hidden
-					/>
+					<div className="absolute inset-x-0 border-t border-subtle" style={{ top: `${AXIS_Y}%` }} aria-hidden />
 					{vm.years.map((y) => (
 						<span key={y.label} aria-hidden className="contents">
 							<span
-								className="absolute h-1 w-px -translate-x-1/2 bg-(--legacy-text-secondary)/40"
+								className="absolute h-1 w-px -translate-x-1/2 bg-(--text-secondary)/40"
 								style={{ left: `${y.x}%`, top: `calc(${AXIS_Y}% - 4px)` }}
 							/>
-							<span
-								className="absolute bottom-0 -translate-x-1/2 text-[9px] text-(--legacy-text-secondary) tabular-nums"
-								style={{ left: `${y.x}%` }}
-							>
+							<span className="absolute bottom-0 -translate-x-1/2 body-xs text-secondary" style={{ left: `${y.x}%` }}>
 								{y.label}
 							</span>
 						</span>

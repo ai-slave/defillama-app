@@ -10,9 +10,8 @@ import {
 } from '~/containers/Stablecoins/api'
 import { formatPeggedAssetsData } from '~/containers/Stablecoins/utils'
 import { fetchProtocolsByToken } from '~/containers/TokenUsage/api'
-import { YIELD_CHART_API, YIELD_CHART_LEND_BORROW_API } from '~/containers/Yields/constants'
+import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
 import { requireSubscription } from '~/server/api/requireSubscription'
-import { fetchJson } from '~/utils/async'
 import { addRouteTelemetryAttributes, recordRouteRuntimeError, withApiRouteTelemetry } from '~/utils/telemetry'
 
 export const config = { api: { responseLimit: false } }
@@ -120,13 +119,13 @@ async function dispatchFetch(type: string, params: any): Promise<any> {
 		case 'yields': {
 			const { poolConfigId } = params
 			if (!poolConfigId) throw new Error('Missing poolConfigId param')
-			return withTimeout(fetchJson(`${YIELD_CHART_API}/${encodeURIComponent(poolConfigId)}`), FETCH_TIMEOUT)
+			return withTimeout(fetchPoolDetailHistory(poolConfigId, 'max'), FETCH_TIMEOUT)
 		}
 
 		case 'yieldsLendBorrow': {
 			const { poolConfigId } = params
 			if (!poolConfigId) throw new Error('Missing poolConfigId param')
-			return withTimeout(fetchJson(`${YIELD_CHART_LEND_BORROW_API}/${encodeURIComponent(poolConfigId)}`), FETCH_TIMEOUT)
+			return withTimeout(fetchBorrowMarketDetailHistory(poolConfigId, 'max'), FETCH_TIMEOUT)
 		}
 
 		case 'tokenUsage': {

@@ -1,12 +1,14 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import ProtocolChartPage from '~/pages/chart/protocol/[protocol]'
+import ProtocolChartPage, { getStaticProps } from '~/pages/chart/protocol/[protocol]'
 
 const mocks = vi.hoisted(() => ({
 	routerState: {
 		query: {} as Record<string, string | string[]>
 	},
-	useFetchProtocolChartData: vi.fn()
+	useFetchProtocolChartData: vi.fn(),
+	getProtocolOverviewPageData: vi.fn(),
+	acquireOptionalYieldsSnapshot: vi.fn()
 }))
 
 vi.mock('next/router', () => ({
@@ -22,7 +24,28 @@ vi.mock('~/containers/ProtocolOverview/Chart', () => ({
 }))
 
 vi.mock('~/containers/ProtocolOverview/queries', () => ({
-	getProtocolOverviewPageData: vi.fn()
+	getProtocolOverviewPageData: mocks.getProtocolOverviewPageData
+}))
+
+vi.mock('~/containers/ProtocolOverview/server/routes', () => ({
+	resolveProtocolParamFromMetadata: vi.fn(() => ({
+		id: 'test-protocol',
+		canonicalSlug: 'test-protocol',
+		metadata: { displayName: 'Test Protocol', yields: true }
+	}))
+}))
+
+vi.mock('~/containers/Yields/server/dataset.server', () => ({
+	acquireOptionalYieldsSnapshot: mocks.acquireOptionalYieldsSnapshot
+}))
+
+vi.mock('~/utils/metadata', () => ({
+	default: {
+		chainMetadata: {},
+		tokenlist: {},
+		cgExchangeIdentifiers: [],
+		emissionsSupplyMetrics: {}
+	}
 }))
 
 vi.mock('~/containers/ProtocolOverview/useFetchProtocolChartData', () => ({
@@ -56,6 +79,20 @@ describe('chart/protocol/[protocol]', () => {
 			valueSymbol: '$',
 			loadingCharts: ''
 		})
+		mocks.getProtocolOverviewPageData.mockReset()
+		mocks.acquireOptionalYieldsSnapshot.mockReset()
+	})
+
+	it('keeps the protocol chart page when the optional Yields snapshot is unavailable', async () => {
+		const pageData = createProps()
+		mocks.acquireOptionalYieldsSnapshot.mockResolvedValueOnce(null)
+		mocks.getProtocolOverviewPageData.mockResolvedValueOnce(pageData)
+
+		await expect(getStaticProps({ params: { protocol: 'test-protocol' } } as never)).resolves.toEqual({
+			props: pageData,
+			revalidate: 22
+		})
+		expect(mocks.getProtocolOverviewPageData).toHaveBeenCalledWith(expect.objectContaining({ yieldsSnapshot: null }))
 	})
 
 	it('parses fee include query params as booleans', () => {

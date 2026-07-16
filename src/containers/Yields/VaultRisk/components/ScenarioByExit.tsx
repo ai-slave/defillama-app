@@ -1,5 +1,7 @@
 import { Fragment, useMemo, useState } from 'react'
 import { Icon } from '~/components/Icon'
+import { TokenPageTableShell } from '~/components/Table/helpers'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formattedNum } from '~/utils'
 import { scenarioTone } from '../derive'
 import { toneClasses } from '../kindMeta'
@@ -41,6 +43,15 @@ const STRESS_OPTS: Array<{ v: StressSel; label: string }> = [
 	{ v: 50, label: '−50%' },
 	{ v: 'worst', label: 'Worst' }
 ]
+
+const STRESS_CONTROL_OPTIONS = STRESS_OPTS.map((option) => ({ value: String(option.v), label: option.label }))
+
+function stressFromControl(value: string): StressSel {
+	if (value === '10') return 10
+	if (value === '30') return 30
+	if (value === '50') return 50
+	return 'worst'
+}
 
 function exitLabel(s: ScenarioVM): string {
 	return s.actingWindow.kind === 'no-escape' ? 'Instant' : s.actingWindow.label.replace(' withdraw window', '')
@@ -94,11 +105,7 @@ function ScenarioRow({
 			<span className={`flex size-6 shrink-0 items-center justify-center rounded-md ${tone.chip}`} aria-hidden>
 				<KindIcon kind={s.kind} className="size-3" />
 			</span>
-			<span
-				className={`min-w-0 truncate font-medium ${unquantified ? 'text-(--legacy-text-secondary)' : 'text-(--legacy-text-primary)'}`}
-			>
-				{s.title}
-			</span>
+			<span className={`min-w-0 truncate label-md ${unquantified ? 'text-secondary' : 'text-primary'}`}>{s.title}</span>
 		</>
 	)
 	return (
@@ -106,8 +113,8 @@ function ScenarioRow({
 			<tr
 				id={scenarioRowId(s.scenarioId)}
 				onClick={() => clickable && onToggle()}
-				className={`border-t border-(--legacy-cards-border) ${clickable ? 'cursor-pointer hover:bg-(--legacy-bg-main)/50' : ''} ${
-					selected ? 'bg-(--legacy-bg-main)' : ''
+				className={`border-t border-subtle ${
+					clickable ? (selected ? 'hover-wash cursor-pointer bg-brand-muted' : 'cursor-pointer hover:bg-hover-row') : ''
 				}`}
 			>
 				<td className="px-3 py-3 align-middle">
@@ -120,7 +127,7 @@ function ScenarioRow({
 							}}
 							aria-expanded={selected}
 							aria-controls={detailId}
-							className="flex w-full items-center gap-2 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--legacy-primary)"
+							className="flex w-full items-center gap-2 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
 						>
 							{mech}
 						</button>
@@ -128,33 +135,31 @@ function ScenarioRow({
 						<span className="flex w-full items-center gap-2">{mech}</span>
 					)}
 				</td>
-				<td className="px-5 py-3 text-right align-middle whitespace-nowrap">
+				<td className="px-3 py-3 text-right align-middle whitespace-nowrap">
 					{unquantified ? (
-						<span className="block text-(--legacy-text-secondary) italic">Not quantified</span>
+						<span className="block text-secondary italic">Not quantified</span>
 					) : cell?.amount === '—' ? (
-						<span className="text-(--legacy-text-secondary)">—</span>
+						<span className="text-secondary">—</span>
 					) : (
-						<span
-							className={`font-semibold tabular-nums ${cell?.amount === '$0' ? 'text-(--legacy-text-secondary)' : 'text-(--legacy-text-primary)'}`}
-						>
+						<span className={`label-md tabular-nums ${cell?.amount === '$0' ? 'text-secondary' : 'text-primary'}`}>
 							{shareAtStress != null ? formatDepositPct(shareAtStress) : formattedNum(possibleUsd, true)}
 						</span>
 					)}
 				</td>
 				{/* only present when the backend serves a price curve */}
 				{hasAnchors ? (
-					<td className="px-5 py-3 text-right align-middle whitespace-nowrap">
+					<td className="px-3 py-3 text-right align-middle whitespace-nowrap">
 						{unquantified ? (
-							<span className="text-xs text-(--legacy-text-secondary)">—</span>
+							<span className="text-secondary">—</span>
 						) : (
 							<span className="flex flex-col items-end gap-1">
 								<span
-									className={`font-semibold tabular-nums ${cell && cell.amount !== '—' && cell.amount !== '$0' ? 'text-(--legacy-text-primary)' : 'text-(--legacy-text-secondary)'}`}
+									className={`label-md tabular-nums ${cell && cell.amount !== '—' && cell.amount !== '$0' ? 'text-primary' : 'text-secondary'}`}
 								>
 									{stressAmount}
 								</span>
 								{barPct > 0 ? (
-									<span className="h-1 w-full max-w-28 overflow-hidden rounded-full bg-(--legacy-bg-main)" aria-hidden>
+									<span className="h-1 w-full max-w-28 overflow-hidden rounded-full bg-surface" aria-hidden>
 										<span
 											className={`block h-full rounded-full ${tone.bar} opacity-80`}
 											style={{ width: `${barPct}%` }}
@@ -166,26 +171,23 @@ function ScenarioRow({
 					</td>
 				) : null}
 				{/* the drop-independent ceiling stays in view while the toggle moves other columns */}
-				<td className="px-5 py-3 text-right align-middle text-xs whitespace-nowrap text-(--legacy-text-secondary) tabular-nums">
+				<td className="px-3 py-3 text-right align-middle whitespace-nowrap text-secondary">
 					{unquantified ? '—' : worstCaseLabel(s, supplyUsd, position)}
 				</td>
-				<td className="px-5 py-3 text-right align-middle">
-					<span className="inline-flex items-center gap-1 rounded-full bg-(--legacy-bg-main) px-2 py-0.5 text-xs whitespace-nowrap text-(--legacy-text-secondary)">
+				<td className="px-3 py-3 text-right align-middle">
+					<span className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 body-sm whitespace-nowrap text-secondary">
 						{noEscape ? null : <Icon name="clock" className="size-3" aria-hidden />}
 						{exitLabel(s)}
 					</span>
 				</td>
 				<td className="px-2 py-3 align-middle">
 					{clickable ? (
-						<Icon
-							name="chevron-down"
-							className={`size-3.5 text-(--legacy-text-secondary) ${selected ? 'rotate-180' : ''}`}
-						/>
+						<Icon name="chevron-down" className={`size-3.5 text-secondary ${selected ? 'rotate-180' : ''}`} />
 					) : null}
 				</td>
 			</tr>
 			{selected && clickable ? (
-				<tr id={detailId} className="border-t border-(--legacy-cards-border) bg-(--legacy-bg-main)/30">
+				<tr id={detailId} className="border-t border-subtle">
 					<td colSpan={hasAnchors ? 6 : 5} className="px-4 py-4">
 						<ScenarioDetailContent
 							scenario={s}
@@ -226,14 +228,14 @@ function SortHeader({
 	)
 	return (
 		<th
-			className={`border-b border-black/10 px-5 py-2.5 font-medium whitespace-nowrap dark:border-white/10 ${align === 'right' ? 'text-right' : 'text-left'}`}
+			className={`border-b border-subtle px-3 py-2 font-medium whitespace-nowrap ${align === 'right' ? 'text-right' : 'text-left'}`}
 			aria-sort={active ? (dir === 'asc' ? 'ascending' : 'descending') : undefined}
 		>
 			<button
 				type="button"
 				onClick={() => onSort(k)}
-				className={`inline-flex items-center gap-1 rounded-sm transition-colors hover:text-(--legacy-text-primary) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--legacy-primary) ${
-					active ? 'text-(--legacy-text-primary)' : ''
+				className={`inline-flex items-center gap-1 rounded-sm transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+					active ? 'text-primary' : ''
 				}`}
 			>
 				{align === 'right' ? (
@@ -322,21 +324,21 @@ export function ScenarioByExit({
 	}
 
 	return (
-		<div className="flex flex-col gap-4">
+		<div className="flex flex-col gap-5">
 			<ChapterHead
-				title="How you could lose money"
+				title="Loss scenarios"
 				hint="Each row is a distinct failure. Possible loss is the share of your deposit at the selected collateral drop; Worst case is the ceiling if everything goes wrong — a conditional loss if it happens, not a likelihood. Price-scaling rows move with the drop selector; the rest are fixed. Enter a deposit to see the dollar figures as your own. Open a row for conditions, mitigations, and the math."
 			/>
 
-			<div className="overflow-hidden rounded-md border border-(--legacy-cards-border)">
+			<TokenPageTableShell>
 				{computed.length > 0 ? (
-					<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-(--legacy-cards-border) bg-(--legacy-bg-main)/40 px-3 py-2.5">
-						<span className="text-xs text-(--legacy-text-secondary) tabular-nums">
+					<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-subtle bg-surface-elevated-1 p-2">
+						<span className="body-sm text-secondary">
 							{computed.length} {computed.length === 1 ? 'scenario' : 'scenarios'}
 							{noEscape > 0 ? (
 								<>
 									{' · '}
-									<span className="font-semibold text-(--legacy-text-primary)">{noEscape}</span> with no time to exit
+									<span className="label-sm text-primary">{noEscape}</span> with no time to exit
 								</>
 							) : (
 								' · all have an exit window'
@@ -344,7 +346,7 @@ export function ScenarioByExit({
 							{position != null ? (
 								<>
 									{' · $ shown for your '}
-									<span className="font-semibold text-(--legacy-text-primary)">{formattedNum(position, true)}</span>
+									<span className="label-sm text-primary">{formattedNum(position, true)}</span>
 									{' deposit'}
 								</>
 							) : null}
@@ -352,35 +354,23 @@ export function ScenarioByExit({
 
 						{hasAnchors ? (
 							<div className="flex shrink-0 items-center gap-2">
-								<span className="text-xs text-(--legacy-text-secondary)">Collateral drop</span>
-								<div
-									role="group"
-									aria-label="Collateral price-drop stress level"
-									className="inline-flex items-center gap-0.5 rounded-lg bg-(--legacy-app-bg) p-0.5"
-								>
-									{STRESS_OPTS.map((opt) => (
-										<button
-											key={String(opt.v)}
-											type="button"
-											onClick={() => setStress(opt.v)}
-											aria-pressed={stress === opt.v}
-											className={`rounded-md px-2.5 py-1 text-xs font-medium tabular-nums transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--legacy-primary) ${
-												stress === opt.v
-													? 'bg-black/8 text-(--legacy-text-primary) dark:bg-white/8'
-													: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
-											}`}
-										>
-											{opt.label}
-										</button>
-									))}
-								</div>
+								<span className="body-sm text-secondary">Collateral drop</span>
+								<SegmentedControl
+									value={String(stress)}
+									onValueChange={(value) => setStress(stressFromControl(value))}
+									options={STRESS_CONTROL_OPTIONS}
+									label="Collateral price-drop stress level"
+									variant="default"
+									size="md"
+									buttonClassName="tabular-nums"
+								/>
 							</div>
 						) : null}
 					</div>
 				) : null}
 
 				<div className="overflow-x-auto">
-					<table className="w-full min-w-[880px] table-fixed text-sm">
+					<table className="w-full min-w-[880px] table-fixed">
 						{/* the numeric columns share one width so the header reads as an even rhythm */}
 						<colgroup>
 							<col />
@@ -390,7 +380,7 @@ export function ScenarioByExit({
 							<col className="w-36" />
 							<col className="w-8" />
 						</colgroup>
-						<thead className="bg-(--legacy-bg-main) text-xs text-(--legacy-text-secondary)">
+						<thead className="bg-surface text-sm font-medium text-secondary">
 							<tr>
 								<SortHeader k="title" label="Scenario" sort={sortKey} dir={sortDir} onSort={onSort} />
 								<SortHeader k="loss" label="Possible loss" align="right" sort={sortKey} dir={sortDir} onSort={onSort} />
@@ -406,18 +396,16 @@ export function ScenarioByExit({
 								) : null}
 								<SortHeader k="worst" label="Worst case" align="right" sort={sortKey} dir={sortDir} onSort={onSort} />
 								<SortHeader k="exit" label="Exit window" align="right" sort={sortKey} dir={sortDir} onSort={onSort} />
-								<th className="w-8 border-b border-black/10 px-2 py-2.5 dark:border-white/10" aria-hidden />
+								<th className="w-8 border-b border-subtle px-2 py-2" aria-hidden />
 							</tr>
 						</thead>
 						<tbody>
 							{groups.map((g) => (
 								<Fragment key={g.key}>
-									<tr className="border-t border-(--legacy-cards-border) bg-(--legacy-bg-main)">
+									<tr className="border-t border-subtle bg-surface">
 										<td colSpan={hasAnchors ? 6 : 5} className="px-4 py-1.5">
-											<span className="text-xs font-semibold text-(--legacy-text-primary)">{g.label}</span>
-											<span className="ml-1.5 text-xs text-(--legacy-text-secondary) tabular-nums">
-												({g.rows.length})
-											</span>
+											<span className="label-md text-primary">{g.label}</span>
+											<span className="ml-1.5 body-sm text-secondary">({g.rows.length})</span>
 										</td>
 									</tr>
 									{g.rows.map((s) => (
@@ -439,7 +427,7 @@ export function ScenarioByExit({
 						</tbody>
 					</table>
 				</div>
-			</div>
+			</TokenPageTableShell>
 		</div>
 	)
 }

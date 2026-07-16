@@ -4,8 +4,9 @@ import { asRoleEntity, humanizeDuration, roleEntityLabel } from '../format'
 import { toneClasses } from '../kindMeta'
 import { AddressActions } from '../primitives/AddressActions'
 import { MofNPips } from '../primitives/MofNPips'
+import { RiskCallout } from '../primitives/RiskCallout'
 import type { RoleCapability, RoleEntity, VaultRoles } from '../types'
-import { ExpandableLine, explorerUrl, MICRO_LABEL, operatorMarker, ReachLegend, ReachDot } from './trustShared'
+import { ExpandableLine, explorerUrl, operatorMarker, ReachLegend, ReachDot } from './trustShared'
 
 const ENTITY_ICON: Record<string, React.ComponentProps<typeof Icon>['name']> = {
 	safe: 'key',
@@ -18,14 +19,14 @@ const ENTITY_ICON: Record<string, React.ComponentProps<typeof Icon>['name']> = {
 function EntityBadge({ entity }: { entity: RoleEntity }) {
 	if (entity.kind === 'safe' && entity.threshold && entity.threshold.n > 0) {
 		return (
-			<span className="inline-flex items-center gap-1.5 text-xs text-(--legacy-text-secondary)">
+			<span className="inline-flex items-center gap-1.5 body-sm text-secondary">
 				<MofNPips m={entity.threshold.m} n={entity.threshold.n} />
 				<span>{roleEntityLabel(entity)}</span>
 			</span>
 		)
 	}
 	return (
-		<span className="inline-flex items-center gap-1 rounded-full border border-(--legacy-cards-border) bg-(--legacy-bg-main) px-1.5 py-0.5 text-[11px] text-(--legacy-text-secondary)">
+		<span className="inline-flex items-center gap-1 rounded-full border border-medium bg-surface px-1.5 py-0.5 body-xs text-secondary">
 			<Icon name={ENTITY_ICON[entity.kind] ?? 'help-circle'} className="size-3" aria-hidden />
 			{roleEntityLabel(entity)}
 		</span>
@@ -101,11 +102,11 @@ function OperatorLine({
 				) : undefined
 			}
 		>
-			<span className="w-20 shrink-0 text-sm font-medium text-(--legacy-text-primary)">{roleName}</span>
+			<span className="w-20 shrink-0 label-md text-primary">{roleName}</span>
 			{entity ? (
 				<EntityBadge entity={entity} />
 			) : (
-				<span className={`text-xs font-medium ${toneClasses('danger').text}`}>none appointed</span>
+				<span className={`label-sm ${toneClasses('danger').text}`}>none appointed</span>
 			)}
 		</ExpandableLine>
 	)
@@ -145,33 +146,28 @@ function RoleListDisclosure({
 	return (
 		<details className="group py-1">
 			<summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 py-1">
-				<span className="w-20 shrink-0 text-sm font-medium text-(--legacy-text-primary)">{roleName}</span>
-				<span className="text-xs text-(--legacy-text-secondary)">
+				<span className="w-20 shrink-0 label-md text-primary">{roleName}</span>
+				<span className="body-sm text-secondary">
 					{entities.length} · {entityBreakdown(entities)}
 				</span>
-				<span className="ml-auto flex items-center gap-2.5">
+				<span className="ml-auto flex items-center gap-2">
 					{/* same quiet grammar as the legend: tone dot + muted text, never alarm ink */}
 					{marker ? (
-						<span className="flex items-center gap-1.5 text-[11px] text-(--legacy-text-secondary)">
+						<span className="flex items-center gap-1.5 body-sm text-secondary">
 							<span className={`size-2 shrink-0 rounded-full ${toneClasses(marker.tone).bar}`} aria-hidden />
 							{marker.label}
 						</span>
 					) : null}
-					<Icon
-						name="chevron-down"
-						className="size-3.5 text-(--legacy-text-secondary) transition-transform group-open:rotate-180"
-					/>
+					<Icon name="chevron-down" className="size-3.5 text-secondary transition-transform group-open:rotate-180" />
 				</span>
 			</summary>
-			<div className="mt-1 border-t border-(--legacy-cards-border) pt-1.5">
-				{summary ? (
-					<p className="mb-1.5 max-w-prose text-xs leading-relaxed text-(--legacy-text-secondary)">{summary}</p>
-				) : null}
-				<ul className="flex flex-col divide-y divide-(--legacy-cards-border)">
+			<div className="mt-1 border-t border-subtle pt-1.5">
+				{summary ? <p className="mb-1.5 max-w-prose body-sm text-secondary">{summary}</p> : null}
+				<ul className="flex flex-col divide-y divide-(--border-subtle)">
 					{entities.map((a) => (
 						<li key={a.address} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-1.5">
 							<EntityBadge entity={a} />
-							<span className="flex items-center gap-2.5">
+							<span className="flex items-center gap-2">
 								<ReachDot marker={marker} />
 								<AddressActions
 									address={a.address}
@@ -215,11 +211,11 @@ export function VaultRolesBlock({
 	const nowSec = Number.isNaN(parsedNow) ? Math.floor(Date.now() / 1000) : Math.floor(parsedNow / 1000)
 	const pending = groupPending(roles, nowSec)
 	return (
-		<div className="flex flex-col gap-2">
+		<div className="flex flex-col gap-4">
 			<div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
 				<div className="flex flex-col gap-1">
-					<span className={MICRO_LABEL}>Vault operators</span>
-					<p className="text-xs text-(--legacy-text-secondary)">
+					<h4 className="label-lg text-primary">Vault operators</h4>
+					<p className="body-md text-secondary">
 						The roles that can actually move your deposit — the real principal-loss path.
 					</p>
 				</div>
@@ -227,8 +223,8 @@ export function VaultRolesBlock({
 			</div>
 
 			{roles.timelock_sec != null ? (
-				<p className="text-xs">
-					<span className="font-medium text-(--legacy-text-primary)">Role timelock</span>{' '}
+				<p className="body-md">
+					<span className="label-sm text-primary">Role timelock</span>{' '}
 					{roles.timelock_sec > 0 ? (
 						<span className={toneClasses('good').text}>
 							{humanizeDuration(roles.timelock_sec)} to exit before owner/curator actions land
@@ -240,18 +236,18 @@ export function VaultRolesBlock({
 			) : null}
 
 			{pending.length ? (
-				<div className="rounded-md border border-amber-500/25 bg-amber-500/6 p-2.5">
-					<p className="flex items-center gap-1.5 text-xs font-semibold text-(--warning)">
+				<RiskCallout padding="sm">
+					<p className="flex items-center gap-1.5 label-sm text-(--yield-warning-text)">
 						<Icon name="clock" className="size-3.5" />
 						{pending.length === 1 ? 'Curator change queued' : 'Curator changes queued'}
 					</p>
-					<p className="mt-0.5 text-[11px] text-(--legacy-text-secondary)">
+					<p className="mt-0.5 body-sm text-secondary">
 						The timelock is your window to exit before each one takes effect.
 					</p>
-					<ul className="mt-1 flex flex-col gap-1 text-xs text-(--legacy-text-secondary)">
+					<ul className="mt-1 flex flex-col gap-1 body-sm text-secondary">
 						{pending.map((g) => (
 							<li key={`${g.label}:${g.live ? 'live' : 'now'}`} className="flex flex-wrap items-baseline gap-x-1.5">
-								<span className="text-(--legacy-text-primary)">
+								<span className="text-primary">
 									{g.label}
 									{g.count > 1 ? ` ×${g.count}` : ''}
 								</span>
@@ -263,16 +259,16 @@ export function VaultRolesBlock({
 							</li>
 						))}
 					</ul>
-				</div>
+				</RiskCallout>
 			) : null}
 
 			{pendingOwner ? (
-				<div className="rounded-md border border-amber-500/25 bg-amber-500/6 p-2.5">
-					<p className="flex items-center gap-1.5 text-xs font-semibold text-(--warning)">
+				<RiskCallout padding="sm">
+					<p className="flex items-center gap-1.5 label-sm text-(--yield-warning-text)">
 						<Icon name="alert-triangle" className="size-3.5" />
 						Ownership transfer in flight
 					</p>
-					<p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-(--legacy-text-secondary)">
+					<p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 body-sm text-secondary">
 						<span>Once accepted, this address controls every role below:</span>
 						<AddressActions
 							address={pendingOwner.address}
@@ -280,11 +276,11 @@ export function VaultRolesBlock({
 							label="pending owner address"
 						/>
 					</p>
-				</div>
+				</RiskCallout>
 			) : null}
 
 			<div className="grid gap-x-10 sm:grid-cols-2">
-				<div className="flex flex-col divide-y divide-(--legacy-cards-border)">
+				<div className="flex flex-col divide-y divide-(--border-subtle)">
 					{owner ? (
 						<OperatorLine
 							roleName={caps.get('owner')?.role_label ?? 'Owner'}
@@ -306,7 +302,7 @@ export function VaultRolesBlock({
 						/>
 					) : null}
 				</div>
-				<div className="flex flex-col divide-y divide-(--legacy-cards-border)">
+				<div className="flex flex-col divide-y divide-(--border-subtle)">
 					{/* the veto slot: guardian OR sentinels (never both); neither = unguarded, the danger state */}
 					{guardian || !sentinels.length ? (
 						<OperatorLine

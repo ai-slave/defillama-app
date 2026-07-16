@@ -165,6 +165,7 @@ describe('TokenUsageSection', () => {
 		expect(html).toContain('Aave')
 		expect(html).toContain('/protocol/aave')
 		expect(html).toContain('Include CEXs')
+		expect(paginatedTableCalls[0]?.shell).toBe('none')
 	})
 
 	it('shows a sign-in gate for unauthenticated users', () => {

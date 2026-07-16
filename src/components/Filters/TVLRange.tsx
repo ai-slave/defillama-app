@@ -13,7 +13,8 @@ export function TVLRange({
 	placement,
 	onValueChange,
 	resetPageOnChange,
-	pushQueryUpdates
+	pushQueryUpdates,
+	label = 'TVL Range'
 }: {
 	variant?: 'primary' | 'secondary'
 	size?: 'sm' | 'md'
@@ -22,6 +23,7 @@ export function TVLRange({
 	onValueChange?: (min: number | null, max: number | null) => void
 	resetPageOnChange?: boolean
 	pushQueryUpdates?: (updates: QueryUpdates) => void
+	label?: string
 }) {
 	const router = useRouter()
 
@@ -75,11 +77,11 @@ export function TVLRange({
 								}`}</span>
 							</>
 						) : (
-							<span>TVL Range</span>
+							<span>{label}</span>
 						)}
 					</>
 				) : (
-					'TVL Range'
+					label
 				)
 			}
 			onSubmit={handleSubmit}
