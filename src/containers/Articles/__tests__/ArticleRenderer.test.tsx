@@ -205,3 +205,54 @@ describe('ArticleRenderer', () => {
 		expect(html).not.toMatch(/data-article-qa-answer="true"[^>]*>(?:(?!<\/dd>)[\s\S])*<dl data-article-qa="true"/)
 	})
 })
+
+describe('llamaaiChart figure captions', () => {
+	const chartNode = (caption: string) => ({
+		type: 'llamaaiChart',
+		attrs: {
+			chartConfig: { id: 'c1', type: 'bar', title: 'Top 10 Chains by TVL' },
+			chartData: [{ chain: 'eth', tvl: 1 }],
+			caption,
+			savedChartId: null
+		}
+	})
+
+	function renderWithCharts(nodes: unknown[]) {
+		const normalized = normalizeLocalArticleDocument(
+			{
+				title: 'Chart article',
+				slug: 'chart-article',
+				status: 'draft',
+				coverImage: null,
+				tags: [],
+				createdAt: '2026-01-01T00:00:00.000Z',
+				updatedAt: '2026-01-01T00:00:00.000Z',
+				publishedAt: null,
+				contentJson: { type: 'doc', content: nodes }
+			},
+			null,
+			'2026-01-01T00:00:00.000Z'
+		)
+		expect(normalized.ok).toBe(true)
+		if (!normalized.ok) throw new Error('normalize failed')
+		const client = new QueryClient()
+		return renderToStaticMarkup(
+			<QueryClientProvider client={client}>
+				<ArticleRenderer article={normalized.value} />
+			</QueryClientProvider>
+		)
+	}
+
+	it('renders no figcaption or figure number when the author wrote no caption', () => {
+		const html = renderWithCharts([chartNode('')])
+		expect(html).not.toContain('Figure 1')
+		expect(html).not.toContain('Source')
+	})
+
+	it('numbers only captioned charts, so published numbering has no gaps', () => {
+		const html = renderWithCharts([chartNode(''), chartNode('Weekly fees by chain')])
+		expect(html).toContain('Figure 1.')
+		expect(html).toContain('Weekly fees by chain')
+		expect(html).not.toContain('Figure 2.')
+	})
+})

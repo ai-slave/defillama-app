@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { Icon } from '~/components/Icon'
 
 interface PopupPosition {
 	top: number
@@ -11,10 +12,42 @@ function getElementFromNode(node: Node | null) {
 	return node instanceof Element ? node : node.parentElement
 }
 
-export function TextSelectionPopup({ onSelect }: { onSelect: (text: string) => void }) {
+// Messages render one .llamaai-prose block PER markdown segment, with charts,
+// logos, and other widgets between them — so drags routinely start in prose and
+// end on a non-prose element (or span several prose blocks). A selection
+// qualifies when AT LEAST ONE endpoint is in prose and neither endpoint is in
+// an editable surface; the export scrubber handles any non-prose content swept in.
+export function isSelectionInLlamaProse(selection: Selection | null): boolean {
+	if (!selection || selection.rangeCount === 0) return false
+	const anchor = getElementFromNode(selection.anchorNode)
+	const focus = getElementFromNode(selection.focusNode)
+	if (!anchor || !focus) return false
+	const editable = 'textarea, input, [contenteditable]'
+	if (anchor.closest(editable) || focus.closest(editable)) return false
+	if (anchor.closest('.llamaai-prose') || focus.closest('.llamaai-prose')) return true
+	// Both endpoints can land on widgets (charts, controls) while the drag sweeps
+	// prose between them — qualify if the range intersects any prose block.
+	const range = selection.getRangeAt(0)
+	for (const prose of Array.from(document.querySelectorAll('.llamaai-prose'))) {
+		try {
+			if (range.intersectsNode(prose)) return true
+		} catch {
+			// intersectsNode unavailable — endpoint checks above are the only signal
+		}
+	}
+	return false
+}
+
+export function TextSelectionPopup({
+	onSelect,
+	onAddToArticle
+}: {
+	onSelect: (text: string) => void
+	onAddToArticle?: (html: string) => void
+}) {
 	const [selectedText, setSelectedText] = useState('')
 	const [position, setPosition] = useState<PopupPosition | null>(null)
-	const popupRef = useRef<HTMLButtonElement>(null)
+	const popupRef = useRef<HTMLDivElement>(null)
 	const selectionTimeoutRef = useRef<number | null>(null)
 
 	useEffect(() => {
@@ -42,21 +75,13 @@ export function TextSelectionPopup({ onSelect }: { onSelect: (text: string) => v
 				return
 			}
 
-			const anchorElement = getElementFromNode(selection.anchorNode)
-			if (anchorElement?.closest('textarea, input, [contenteditable]')) {
+			if (!isSelectionInLlamaProse(selection)) {
 				setSelectedText('')
 				setPosition(null)
 				return
 			}
 
 			const range = selection.getRangeAt(0)
-			const rangeRoot = getElementFromNode(range.commonAncestorContainer)
-			if (!rangeRoot?.closest('.llamaai-prose')) {
-				setSelectedText('')
-				setPosition(null)
-				return
-			}
-
 			const rect = range.getBoundingClientRect()
 			const centeredLeft = rect.left + window.scrollX + rect.width / 2
 
@@ -100,19 +125,39 @@ export function TextSelectionPopup({ onSelect }: { onSelect: (text: string) => v
 		}
 	}, [])
 
-	const handleClick = () => {
-		onSelect(selectedText)
+	const dismiss = () => {
 		setSelectedText('')
 		setPosition(null)
 		window.getSelection()?.removeAllRanges()
 	}
 
+	const handleClick = () => {
+		onSelect(selectedText)
+		dismiss()
+	}
+
+	// Rich capture for article export: the rendered DOM slice, not the plain text —
+	// formatting, links, tables, and chart containers survive.
+	const handleAddToArticle = () => {
+		if (!onAddToArticle) return
+		const selection = window.getSelection()
+		if (!selection || selection.rangeCount === 0) return
+		const container = document.createElement('div')
+		container.appendChild(selection.getRangeAt(0).cloneContents())
+		onAddToArticle(container.innerHTML)
+		dismiss()
+	}
+
 	if (!selectedText || !position) return null
 
+	// Same surface recipe as the app's popover menus (ui/Popover), laid out
+	// horizontally — the popup should read as native chrome, not a foreign pill.
+	const actionButton =
+		'flex shrink-0 cursor-pointer items-center gap-1.5 px-3 py-2 body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row focus-visible:outline-hidden'
+
 	return createPortal(
-		<button
+		<div
 			ref={popupRef}
-			onClick={handleClick}
 			style={{
 				position: 'absolute',
 				top: position.top,
@@ -121,11 +166,19 @@ export function TextSelectionPopup({ onSelect }: { onSelect: (text: string) => v
 				zIndex: 9999,
 				animation: 'llama-popup-in 0.15s cubic-bezier(0.16, 1, 0.3, 1)'
 			}}
-			className="flex items-center gap-1.5 rounded-full border border-ai-line bg-ai-surface-card/90 px-3 py-1.5 text-xs font-medium text-ai-secondary shadow-ai-sm backdrop-blur-sm transition-all hover:shadow-ai-sm-hover active:scale-95"
+			className="flex items-stretch overflow-hidden rounded-xl border border-medium bg-overlay shadow-overlay-sm"
 		>
-			<img src="/assets/llamaai/llama-ai.svg" alt="" className="size-3.5" />
-			Ask LlamaAI
-		</button>,
+			<button type="button" onClick={handleClick} className={actionButton}>
+				<img src="/assets/llamaai/llama-ai.svg" alt="" className="size-3.5" />
+				Ask LlamaAI
+			</button>
+			{onAddToArticle ? (
+				<button type="button" onClick={handleAddToArticle} className={`${actionButton} border-l border-medium`}>
+					<Icon name="file-plus" height={13} width={13} className="opacity-70" />
+					Add to article
+				</button>
+			) : null}
+		</div>,
 		document.body
 	)
 }

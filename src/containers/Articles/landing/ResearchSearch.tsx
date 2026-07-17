@@ -43,7 +43,7 @@ function buildSearchUrl(pathname: string, params: { q?: string; tag?: string; se
 
 function ResultBadge({ children }: { children: React.ReactNode }) {
 	return (
-		<span className="rounded-[4px] border border-white px-2 py-0.75 text-[10px] font-semibold tracking-[0.04em] text-on-brand uppercase backdrop-blur-[2px]">
+		<span className="rounded-[4px] border border-ai-contrast px-2 py-0.75 text-[10px] font-semibold tracking-[0.04em] text-on-brand uppercase backdrop-blur-[2px]">
 			{children}
 		</span>
 	)
@@ -105,7 +105,7 @@ function SearchBar({ searchQuery, routePath }: { searchQuery: ResearchSearchQuer
 		<form
 			action={routePath}
 			onSubmit={handleSubmit}
-			className="group relative flex items-center border-b border-(--research-navy-soft)/20 transition-colors focus-within:border-(--research-blue-deep) dark:border-white/20 dark:focus-within:border-white"
+			className="group relative flex items-center border-b border-(--research-navy-soft)/20 transition-colors focus-within:border-(--research-blue-deep) dark:border-ai-contrast/20 dark:focus-within:border-ai-contrast"
 		>
 			<Icon
 				name="search"
@@ -161,7 +161,7 @@ function SectionsPills({ searchQuery, pathname }: { searchQuery: ResearchSearchQ
 			</span>
 			<Link
 				href={hrefForSection()}
-				className={`${linkBase} ${!activeSection ? `${active} relative after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:bg-(--research-blue-deep) dark:after:bg-white` : inactive}`}
+				className={`${linkBase} ${!activeSection ? `${active} relative after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:bg-(--research-blue-deep) dark:after:bg-ai-white` : inactive}`}
 			>
 				All
 			</Link>
@@ -171,7 +171,7 @@ function SectionsPills({ searchQuery, pathname }: { searchQuery: ResearchSearchQ
 					<Link
 						key={s.section}
 						href={hrefForSection(s.section)}
-						className={`${linkBase} ${isActive ? `${active} relative after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:bg-(--research-blue-deep) dark:after:bg-white` : inactive}`}
+						className={`${linkBase} ${isActive ? `${active} relative after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:bg-(--research-blue-deep) dark:after:bg-ai-white` : inactive}`}
 					>
 						{humanizeTag(s.section)}
 					</Link>
@@ -189,7 +189,7 @@ function ResultCard({ article }: { article: ArticleDocument }) {
 			<Link
 				href={articleHref(article)}
 				aria-label={article.title}
-				className="relative aspect-[16/10] w-full overflow-hidden rounded-[7.2px] bg-(--research-navy-soft)/5 dark:bg-white/5"
+				className="relative aspect-[16/10] w-full overflow-hidden rounded-[7.2px] bg-(--research-navy-soft)/5 dark:bg-ai-wash"
 			>
 				{cover ? (
 					<img
@@ -260,14 +260,14 @@ function Pagination({
 	const btnBase =
 		'inline-flex items-center gap-2 rounded-[4px] px-3.5 py-1.75 text-xs font-semibold tracking-[0.08em] uppercase transition-colors'
 	const enabledStyle =
-		'bg-(--research-blue-tint) text-(--research-blue) hover:bg-(--research-blue-tint-hover) dark:border dark:border-white/40 dark:bg-transparent dark:text-ai-primary dark:hover:bg-ai-wash-strong'
+		'bg-(--research-blue-tint) text-(--research-blue) hover:bg-(--research-blue-tint-hover) dark:border dark:border-ai-contrast/40 dark:bg-transparent dark:text-ai-primary dark:hover:bg-ai-wash-strong'
 	const disabledStyle =
-		'cursor-not-allowed bg-(--research-navy-soft)/5 text-(--research-navy-soft)/30 dark:border dark:border-white/15 dark:bg-transparent dark:text-on-brand/30'
+		'cursor-not-allowed bg-(--research-navy-soft)/5 text-(--research-navy-soft)/30 dark:border dark:border-ai-line-strong dark:bg-transparent dark:text-on-brand/30'
 
 	return (
 		<nav
 			aria-label="Search results pagination"
-			className="flex flex-wrap items-center justify-between gap-3 border-t border-(--research-navy-soft)/10 pt-5 dark:border-white/10"
+			className="flex flex-wrap items-center justify-between gap-3 border-t border-(--research-navy-soft)/10 pt-5 dark:border-ai-line-medium"
 		>
 			<span className="font-jetbrains text-[11px] tracking-[0.18em] text-(--research-navy-soft)/55 uppercase tabular-nums dark:text-on-brand/55">
 				{rangeStart}–{rangeEnd} of {totalItems.toLocaleString()}
@@ -415,7 +415,7 @@ export default function ResearchSearch() {
 					<span className="font-jetbrains text-[10px] tracking-[0.18em] uppercase tabular-nums">
 						{resultsLoading ? 'Loading…' : `${totalItems.toLocaleString()} ${totalItems === 1 ? 'result' : 'results'}`}
 					</span>
-					<div className="grow border-t border-(--research-navy-soft)/15 dark:border-white/15" />
+					<div className="grow border-t border-(--research-navy-soft)/15 dark:border-ai-line-strong" />
 				</div>
 
 				<SearchBar searchQuery={searchQuery} routePath={router.pathname} />

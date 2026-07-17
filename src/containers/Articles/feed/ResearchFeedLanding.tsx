@@ -116,7 +116,7 @@ export function ResearchFeedLanding({ items }: { items: ResearchFeedPreviewItem[
 						</p>
 
 						<div
-							className="dl-feed-reveal mt-9 flex max-w-2xl flex-col gap-3 rounded-xl bg-(--research-navy-soft) p-3 ring-1 ring-white/10 ring-inset sm:flex-row sm:items-center sm:gap-4 sm:py-3 sm:pr-3 sm:pl-5"
+							className="dl-feed-reveal mt-9 flex max-w-2xl flex-col gap-3 rounded-xl bg-(--research-navy-soft) p-3 ring-1 ring-ai-white/10 ring-inset sm:flex-row sm:items-center sm:gap-4 sm:py-3 sm:pr-3 sm:pl-5"
 							style={{ animationDelay: '140ms' }}
 						>
 							<span className="flex min-w-0 flex-1 items-center gap-3">

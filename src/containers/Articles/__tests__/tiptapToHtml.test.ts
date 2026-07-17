@@ -212,3 +212,31 @@ describe('imageFigureHtml', () => {
 		expect(imageFigureHtml({ src: null })).toBe('')
 	})
 })
+
+describe('llamaaiChart html fallback', () => {
+	it('renders a static placeholder with the caption, never the data', () => {
+		const html = tiptapJsonToHtml({
+			type: 'doc',
+			content: [
+				{
+					type: 'llamaaiChart',
+					attrs: {
+						chartConfig: { id: 'c1', type: 'bar', title: 'Uniswap Fees' },
+						chartData: [{ ts: 1, value: 42 }],
+						caption: 'Weekly fees by chain'
+					}
+				}
+			]
+		})
+		expect(html).toContain('[Chart: Weekly fees by chain]')
+		expect(html).not.toContain('42')
+	})
+
+	it('renders nothing for an invalid llamaaiChart node', () => {
+		const html = tiptapJsonToHtml({
+			type: 'doc',
+			content: [{ type: 'llamaaiChart', attrs: { chartConfig: 'garbage' } }]
+		})
+		expect(html).not.toContain('Chart')
+	})
+})

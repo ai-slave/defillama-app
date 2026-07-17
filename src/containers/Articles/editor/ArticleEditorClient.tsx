@@ -44,6 +44,7 @@ import { ArticleMetaDialog } from './ArticleMetaDialog'
 import { ArticleTitleFields } from './ArticleTitleFields'
 import { EmbedPicker } from './EmbedPicker'
 import { createArticleEditorExtensions } from './extensions'
+import { LlamaAIChartPickerDialog } from './LlamaAIChartPicker'
 import { triggerInlineImagePicker, type ArticleImageUploadFn } from './nodes/ArticleImage'
 import type { ArticlePeoplePanelConfig } from './peoplePanel'
 import { PeoplePanelDialog } from './PeoplePanelDialog'
@@ -75,6 +76,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		[]
 	)
 	const chartDialog = Ariakit.useDialogStore()
+	const llamaaiChartDialog = Ariakit.useDialogStore()
 	const embedDialog = Ariakit.useDialogStore()
 	const peoplePanelDialog = Ariakit.useDialogStore()
 	const metaDialog = Ariakit.useDialogStore()
@@ -461,6 +463,12 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 			document.removeEventListener('article:open-embed-picker', openHandler)
 		}
 	}, [embedDialog])
+
+	useEffect(() => {
+		const handler = () => llamaaiChartDialog.show()
+		document.addEventListener('article:open-llamaai-chart-picker', handler)
+		return () => document.removeEventListener('article:open-llamaai-chart-picker', handler)
+	}, [llamaaiChartDialog])
 
 	useEffect(() => {
 		const handler = () => {
@@ -1067,6 +1075,8 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 					onInsert={handleChartSubmit}
 				/>
 			) : null}
+
+			<LlamaAIChartPickerDialog dialogStore={llamaaiChartDialog} editor={editor} />
 
 			{embedDialogOpen ? (
 				<EmbedPicker

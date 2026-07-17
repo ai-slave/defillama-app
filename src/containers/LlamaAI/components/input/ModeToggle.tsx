@@ -88,6 +88,7 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 					<div className="flex max-w-[220px] flex-col gap-1.5">
 						<span className="font-medium text-ai-primary">Research Mode</span>
 						<span className="text-ai-tertiary">Comprehensive reports with in-depth analysis and citations</span>
+						<span className="text-[11px] text-ai-secondary">Usually takes 10–20 minutes</span>
 						<span className="border-t border-ai-line pt-1.5 text-[11px] text-ai-secondary">
 							{researchUsage?.period === 'unlimited'
 								? 'Unlimited reports'

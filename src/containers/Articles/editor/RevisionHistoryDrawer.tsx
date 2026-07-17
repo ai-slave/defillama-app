@@ -519,7 +519,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 				type="button"
 				aria-label="Close history"
 				onClick={onClose}
-				className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+				className="absolute inset-0 bg-ai-backdrop-soft backdrop-blur-sm transition-opacity"
 			/>
 			<div className="relative ml-auto flex size-full max-w-[1280px] flex-col border-l border-medium bg-surface shadow-2xl">
 				<header className="grid grid-cols-[1fr_auto] items-end gap-6 border-b border-medium px-7 pt-6 pb-4">
@@ -891,7 +891,7 @@ function PreviewSpecimenHeader({
 							>
 								<Icon name="repeat" className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
 								<span>Restore as pending</span>
-								<kbd className="hidden rounded-sm border border-white/30 px-1 py-px font-jetbrains text-[9px] tracking-tight md:inline">
+								<kbd className="hidden rounded-sm border border-ai-contrast/30 px-1 py-px font-jetbrains text-[9px] tracking-tight md:inline">
 									R
 								</kbd>
 							</button>
@@ -1160,7 +1160,7 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 		)
 	}
 	return (
-		<div className={`${baseClasses} bg-warning/4 text-primary ring-1 ring-amber-500/20 ring-inset`}>
+		<div className={`${baseClasses} bg-warning/4 text-primary ring-1 ring-ai-warning-bright/20 ring-inset`}>
 			<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[11px] font-medium text-warning">
 				~
 			</span>

@@ -23,6 +23,7 @@ import { ArticleEmbed } from './EmbedNode'
 import { ArticleEntitySuggestion } from './entitySuggestion'
 import { ArticleImage, type ArticleImageOptions } from './nodes/ArticleImage'
 import { ArticlePeoplePanel } from './nodes/ArticlePeoplePanel'
+import { LlamaAIChart } from './nodes/LlamaAIChart'
 import { QABlockNodes } from './nodes/QABlock'
 import { ArticleSlashCommand } from './slashCommand'
 
@@ -595,6 +596,7 @@ export function createArticleEditorExtensions(imageOptions?: Partial<ArticleImag
 		ArticleEntitySuggestion,
 		ArticleSlashCommand,
 		DefillamaChart,
+		LlamaAIChart,
 		ArticleEmbed,
 		ArticleImage.configure({
 			uploadRef: imageOptions?.uploadRef ?? null,

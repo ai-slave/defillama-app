@@ -414,7 +414,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 		<Ariakit.Dialog
 			store={store}
 			modal
-			backdrop={<div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm" />}
+			backdrop={<div className="fixed inset-0 z-[80] bg-ai-backdrop backdrop-blur-sm" />}
 			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[92vh] w-[min(1180px,96vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-medium bg-surface shadow-article-dialog outline-hidden"
 		>
 			<div className="flex flex-wrap items-center gap-3 border-b border-medium px-5 py-3">

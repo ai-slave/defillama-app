@@ -59,23 +59,41 @@ async function fileToBase64(file: File): Promise<string> {
 	return btoa(binary)
 }
 
+export function buildUploadPayload(args: {
+	scope: UploadScope
+	filename: string
+	mimeType: string
+	dataBase64: string
+	articleId?: string | null
+}) {
+	return {
+		scope: args.scope,
+		...(args.articleId ? { articleId: args.articleId } : {}),
+		filename: args.filename,
+		mimeType: args.mimeType,
+		dataBase64: args.dataBase64
+	}
+}
+
 export function useImageUpload(args: { scope: UploadScope; articleId?: string | null }) {
 	const { authorizedFetch } = useAuthContext()
 	const [isUploading, setIsUploading] = useState(false)
 
+	// articleIdOverride: callers that only learn the article id at upload time
+	// (e.g. the LlamaAI export modal, which may create the draft first) pass it here.
 	const uploadFile = useCallback(
-		async (file: File): Promise<UploadResult> => {
+		async (file: File, articleIdOverride?: string | null): Promise<UploadResult> => {
 			const clientError = validateClient(file)
 			if (clientError) throw new ImageUploadError(clientError, 400)
 
 			const dataBase64 = await fileToBase64(file)
-			const payload = {
+			const payload = buildUploadPayload({
 				scope: args.scope,
-				...(args.articleId ? { articleId: args.articleId } : {}),
+				articleId: articleIdOverride ?? args.articleId,
 				filename: file.name,
 				mimeType: file.type,
 				dataBase64
-			}
+			})
 
 			setIsUploading(true)
 			try {

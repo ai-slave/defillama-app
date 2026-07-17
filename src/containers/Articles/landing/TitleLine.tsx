@@ -15,7 +15,7 @@ export const TitleLine: React.FC<TitleLineProps> = (props) => {
 			<div
 				className={clsx(
 					'grow border-t lg:border-t-[2px]',
-					'border-(--research-navy-soft) dark:border-white',
+					'border-(--research-navy-soft) dark:border-ai-contrast',
 					hideOnMobile && 'max-md:hidden'
 				)}
 			/>

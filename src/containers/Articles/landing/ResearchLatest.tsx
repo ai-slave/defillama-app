@@ -98,7 +98,7 @@ const ContentCard = ({
 			) : null}
 		</div>
 
-		<span className="absolute top-[12px] left-[12px] rounded-[4px] border border-white px-2 py-0.5 text-[10px] font-semibold text-on-brand uppercase backdrop-blur-sm">
+		<span className="absolute top-[12px] left-[12px] rounded-[4px] border border-ai-contrast px-2 py-0.5 text-[10px] font-semibold text-on-brand uppercase backdrop-blur-sm">
 			{item.label}
 		</span>
 
@@ -173,7 +173,7 @@ export const ResearchLatest: React.FC<ResearchLatestProps> = ({ articles = [] })
 					<Link
 						key={cat.id}
 						href={cat.anchor}
-						className="w-full rounded-[4px] border border-(--research-blue)/35 bg-transparent px-3.75 py-0.75 text-center text-sm font-medium text-(--research-blue-deep) uppercase transition-[color,border-color,background-color,transform] duration-200 ease-out hover:border-(--research-blue) hover:text-(--research-blue-deep) focus-visible:border-(--research-blue) focus-visible:text-(--research-blue-deep) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--research-blue) motion-safe:hover:scale-[1.03] motion-safe:focus-visible:scale-[1.03] lg:w-auto dark:border-white dark:text-ai-primary dark:hover:border-(--research-blue) dark:hover:text-(--research-blue-soft) dark:focus-visible:border-(--research-blue) dark:focus-visible:text-(--research-blue-soft)"
+						className="w-full rounded-[4px] border border-(--research-blue)/35 bg-transparent px-3.75 py-0.75 text-center text-sm font-medium text-(--research-blue-deep) uppercase transition-[color,border-color,background-color,transform] duration-200 ease-out hover:border-(--research-blue) hover:text-(--research-blue-deep) focus-visible:border-(--research-blue) focus-visible:text-(--research-blue-deep) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--research-blue) motion-safe:hover:scale-[1.03] motion-safe:focus-visible:scale-[1.03] lg:w-auto dark:border-ai-contrast dark:text-ai-primary dark:hover:border-(--research-blue) dark:hover:text-(--research-blue-soft) dark:focus-visible:border-(--research-blue) dark:focus-visible:text-(--research-blue-soft)"
 					>
 						{cat.label}
 					</Link>

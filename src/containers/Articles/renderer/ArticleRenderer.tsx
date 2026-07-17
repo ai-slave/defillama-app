@@ -38,6 +38,7 @@ import {
 } from './ArticlePromoBanner'
 import { ArticleQAAnswer, ArticleQABlock, ArticleQAQuestion } from './ArticleQABlock'
 import { EntityPreviewLink } from './EntityPreviewLink'
+import { LlamaAIChartBlock } from './LlamaAIChartBlock'
 
 const lowlight = createLowlight(common)
 
@@ -142,7 +143,7 @@ function applyMark(children: ReactNode, mark: TiptapMark, key: string) {
 	if (mark.type === 'underline') return <u key={key}>{children}</u>
 	if (mark.type === 'highlight')
 		return (
-			<mark key={key} className="rounded-sm bg-(--research-highlight) px-0.5 text-black dark:text-(--research-gold)">
+			<mark key={key} className="rounded-sm bg-(--research-highlight) px-0.5 text-ai-black dark:text-(--research-gold)">
 				{children}
 			</mark>
 		)
@@ -354,6 +355,13 @@ function renderNode(node: TiptapJson, key: string, ctx: RenderContext): ReactNod
 		if (!config) return null
 		ctx.figureCount.value += 1
 		return <ArticleChartBlock key={key} config={config} index={ctx.figureCount.value} />
+	}
+	if (node.type === 'llamaaiChart') {
+		// Caption presence is the figure toggle: uncaptioned charts render bare and
+		// consume no figure number, so published numbering never shows gaps.
+		const hasCaption = typeof node.attrs?.caption === 'string' && node.attrs.caption.trim().length > 0
+		if (hasCaption) ctx.figureCount.value += 1
+		return <LlamaAIChartBlock key={key} attrs={node.attrs ?? {}} index={hasCaption ? ctx.figureCount.value : null} />
 	}
 	if (node.type === 'articleEmbed') {
 		const config = validateEmbedConfig(node.attrs?.config)

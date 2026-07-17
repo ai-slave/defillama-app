@@ -16,7 +16,7 @@ export function CoverDetailsDialog({ article, publishErrors, store, updateCoverF
 		<Ariakit.Dialog
 			store={store}
 			backdrop={
-				<div className="fixed inset-0 z-40 bg-black/40 opacity-0 backdrop-blur-sm transition-opacity duration-150 data-[enter]:opacity-100 data-[leave]:opacity-0" />
+				<div className="fixed inset-0 z-40 bg-ai-backdrop-soft opacity-0 backdrop-blur-sm transition-opacity duration-150 data-[enter]:opacity-100 data-[leave]:opacity-0" />
 			}
 			className="fixed top-1/2 left-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-medium bg-surface p-5 opacity-0 shadow-2xl transition-opacity duration-150 data-[enter]:opacity-100"
 		>
@@ -113,7 +113,7 @@ export function DeleteArticleDialog({
 		<Ariakit.Dialog
 			store={store}
 			backdrop={
-				<div className="fixed inset-0 z-40 bg-black/40 opacity-0 backdrop-blur-sm transition-opacity duration-150 data-[enter]:opacity-100 data-[leave]:opacity-0" />
+				<div className="fixed inset-0 z-40 bg-ai-backdrop-soft opacity-0 backdrop-blur-sm transition-opacity duration-150 data-[enter]:opacity-100 data-[leave]:opacity-0" />
 			}
 			className="fixed top-1/2 left-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-medium bg-surface p-5 opacity-0 shadow-2xl transition-opacity duration-150 data-[enter]:opacity-100"
 		>
@@ -151,7 +151,7 @@ export function DeleteArticleDialog({
 					type="button"
 					onClick={confirmDeleteArticle}
 					disabled={isPending}
-					className="flex h-9 items-center gap-1.5 rounded-md bg-red-600 px-3.5 text-xs font-medium text-on-brand shadow-danger transition-colors hover:bg-error disabled:cursor-not-allowed disabled:opacity-60"
+					className="flex h-9 items-center gap-1.5 rounded-md bg-ai-error px-3.5 text-xs font-medium text-on-brand shadow-danger transition-colors hover:bg-error disabled:cursor-not-allowed disabled:opacity-60"
 				>
 					<Icon name="trash" className="size-3.5" />
 					<span>{isPending ? 'Deleting…' : 'Delete'}</span>

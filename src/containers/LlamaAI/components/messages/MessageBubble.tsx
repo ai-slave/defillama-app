@@ -24,6 +24,7 @@ import {
 } from '~/containers/LlamaAI/renderModel'
 import type { DashboardArtifact } from '~/containers/LlamaAI/types'
 import type { Message, ToolExecution } from '~/containers/LlamaAI/types'
+import { buildMessageExportRequest } from '~/containers/LlamaAI/utils/articleExport'
 import { Tooltip } from '~/ui/Tooltip'
 
 function StreamingChartPlaceholder() {
@@ -647,6 +648,18 @@ export function MessageBubble({
 					readOnly={readOnly}
 					messageMetadata={message.messageMetadata}
 					isLatest={isLatestAssistant}
+					articleExportRequest={
+						message.content && message.id
+							? () =>
+									buildMessageExportRequest({
+										markdown: message.content ?? '',
+										messageId: message.id as string,
+										sessionId,
+										chartGroups: message.charts,
+										generatedImages: message.generatedImages
+									})
+							: undefined
+					}
 				/>
 			) : null}
 		</div>

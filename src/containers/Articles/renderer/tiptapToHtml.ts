@@ -5,6 +5,7 @@ import { validateArticlePeoplePanel } from '../editor/peoplePanel'
 import { getEmbedProviderLabel, validateEmbedConfig } from '../embedProviders'
 import { getArticleEntityRoute, isValidArticleEntityType } from '../entityLinks'
 import { getTiptapNodeText } from '../extractors'
+import { validateLlamaAIChartConfig } from '../llamaaiChart'
 import type { ArticleCalloutTone, ArticleEntityType, TiptapJson, TiptapMark } from '../types'
 
 const SITE_ORIGIN = SITEMAP_BASE_URL
@@ -135,6 +136,13 @@ function renderChart(node: TiptapJson): string {
 	return `<p><em>[Chart: ${escapeHtml(label)}]</em> — <a href="${escapeAttr(href)}">View on DefiLlama</a></p>`
 }
 
+function renderLlamaAIChart(node: TiptapJson): string {
+	const config = validateLlamaAIChartConfig(node.attrs?.chartConfig)
+	if (!config) return ''
+	const caption = typeof node.attrs?.caption === 'string' ? node.attrs.caption : ''
+	return `<p><em>[Chart: ${escapeHtml(caption || config.title || 'LlamaAI chart')}]</em></p>`
+}
+
 function renderEmbed(node: TiptapJson): string {
 	const config = validateEmbedConfig(node.attrs?.config)
 	if (!config) return ''
@@ -214,6 +222,7 @@ function renderNode(node: TiptapJson): string {
 	if (node.type === 'callout') return renderCallout(node)
 	if (node.type === 'citation') return renderCitation(node)
 	if (node.type === 'defillamaChart') return renderChart(node)
+	if (node.type === 'llamaaiChart') return renderLlamaAIChart(node)
 	if (node.type === 'articleEmbed') return renderEmbed(node)
 	if (node.type === 'articleImage') {
 		return imageFigureHtml({

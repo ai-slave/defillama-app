@@ -66,7 +66,7 @@ function ColumnButton({
 			title={metadata.description}
 		>
 			<div className="flex items-center gap-2">
-				<Icon name="check" className="text-success size-3" />
+				<Icon name="check" className="size-3 text-success" />
 				<span className="text-xs text-primary">{metadata.name}</span>
 			</div>
 			<div className="flex items-center gap-1">

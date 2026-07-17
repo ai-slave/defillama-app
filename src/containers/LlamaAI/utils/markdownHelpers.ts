@@ -192,7 +192,7 @@ export function wrapLegacyUrlCitations(citations: string[]): UnifiedCitationRefe
 	})
 }
 
-function normalizeCitationMarkerWhitespace(text: string): string {
+export function normalizeCitationMarkerWhitespace(text: string): string {
 	return text.replace(/[ \t]+([.,;:!?])/g, '$1').replace(/[ \t]{2,}/g, ' ')
 }
 

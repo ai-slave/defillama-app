@@ -73,7 +73,7 @@ function NavButton({ direction, disabled, onClick, onMouseEnter, onMouseLeave, c
 			onMouseEnter={onMouseEnter}
 			onMouseLeave={onMouseLeave}
 			className={clsx(
-				'flex h-[29px] w-[34px] cursor-pointer items-center justify-center rounded-xl border border-white bg-transparent transition-all duration-200 hover:bg-white/10',
+				'flex h-[29px] w-[34px] cursor-pointer items-center justify-center rounded-xl border border-ai-contrast bg-transparent transition-all duration-200 hover:bg-ai-white/10',
 				disabled && 'cursor-not-allowed opacity-50',
 				className
 			)}
@@ -103,7 +103,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 	const pdfUrl = article.reportPdf?.url ?? null
 
 	const imageBlock = (
-		<div className="space-y-3 bg-white" style={{ aspectRatio: `${IMG_ASPECT.w}/${IMG_ASPECT.h}` }}>
+		<div className="space-y-3 bg-ai-white" style={{ aspectRatio: `${IMG_ASPECT.w}/${IMG_ASPECT.h}` }}>
 			{imgUrl ? (
 				<img
 					src={imgUrl}
@@ -117,7 +117,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 	)
 
 	const sponsorBadge = sponsorLogoUrl ? (
-		<div className="pointer-events-none absolute top-[12px] right-[12px] flex items-center gap-2 rounded-full bg-black/55 px-2 py-1 text-on-brand backdrop-blur-sm">
+		<div className="pointer-events-none absolute top-[12px] right-[12px] flex items-center gap-2 rounded-full bg-ai-contrast/55 px-2 py-1 text-on-brand backdrop-blur-sm">
 			<span className="font-jetbrains text-[8px] tracking-[0.16em] uppercase opacity-80">Sponsored by</span>
 			<img src={sponsorLogoUrl} alt={article.sponsorLogo.alt} className="h-5 w-auto max-w-[80px] object-contain" />
 		</div>
@@ -136,7 +136,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 			</p>
 			{addOverlayLink ? (
 				<div className="grid gap-2">
-					<span className="inline-block w-full rounded-sm border border-white px-3 py-2 text-center text-xs leading-[120%] font-medium">
+					<span className="inline-block w-full rounded-sm border border-ai-contrast px-3 py-2 text-center text-xs leading-[120%] font-medium">
 						Read more
 					</span>
 					{pdfUrl ? (
@@ -145,7 +145,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 							pdfUrl={pdfUrl}
 							widgetLabel="Reports carousel"
 							stopPropagation
-							className="w-full rounded-sm bg-white px-3 py-2 text-center text-xs leading-[120%] font-medium text-(--research-navy-soft) transition-opacity hover:opacity-90"
+							className="w-full rounded-sm bg-ai-white px-3 py-2 text-center text-xs leading-[120%] font-medium text-(--research-navy-soft) transition-opacity hover:opacity-90"
 						/>
 					) : null}
 				</div>
@@ -158,7 +158,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 				>
 					<Link
 						href={href}
-						className="w-full rounded-sm border border-white px-3 py-2 text-center text-xs leading-[120%] font-medium text-on-brand transition-colors hover:bg-white/10"
+						className="w-full rounded-sm border border-ai-contrast px-3 py-2 text-center text-xs leading-[120%] font-medium text-on-brand transition-colors hover:bg-ai-white/10"
 					>
 						Read more
 					</Link>
@@ -167,7 +167,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 							article={article}
 							pdfUrl={pdfUrl}
 							widgetLabel="Reports carousel"
-							className="w-full rounded-sm bg-white px-3 py-2 text-center text-xs leading-[120%] font-medium text-(--research-navy-soft) transition-opacity hover:opacity-90"
+							className="w-full rounded-sm bg-ai-white px-3 py-2 text-center text-xs leading-[120%] font-medium text-(--research-navy-soft) transition-opacity hover:opacity-90"
 						/>
 					) : null}
 				</div>
@@ -204,7 +204,9 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 	)
 
 	return (
-		<div className={clsx('group relative overflow-hidden bg-white transition-all duration-200 ease-out', 'rounded-xl')}>
+		<div
+			className={clsx('group relative overflow-hidden bg-ai-white transition-all duration-200 ease-out', 'rounded-xl')}
+		>
 			{addOverlayLink ? (
 				<div
 					role="button"

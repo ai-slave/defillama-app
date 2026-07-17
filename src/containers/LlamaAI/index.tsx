@@ -13,6 +13,8 @@ import {
 	useRef,
 	useState
 } from 'react'
+import toast from 'react-hot-toast'
+import { ArticleExportProvider, useArticleExport } from '~/components/AddToArticle/ArticleExportContext'
 import { Icon } from '~/components/Icon'
 import {
 	consumePendingPrompt,
@@ -95,6 +97,7 @@ import {
 	type StreamBuffer
 } from '~/containers/LlamaAI/streamState'
 import type { AgenticAnswerMode, Message, UpgradeOffer } from '~/containers/LlamaAI/types'
+import { chartsMapFromGroups } from '~/containers/LlamaAI/utils/articleExport'
 import type { SettingsInitialState, SettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { setSignupSource } from '~/containers/Subscription/signupSource'
@@ -1494,6 +1497,18 @@ export function AgenticChat({
 			triggerPromptTransition(shouldShowLanding ? 'landing' : 'conversation')
 			promptSubmissionLockRef.current = true
 
+			if (mode === 'research') {
+				try {
+					if (!localStorage.getItem('llamaai-research-duration-toast')) {
+						localStorage.setItem('llamaai-research-duration-toast', '1')
+						toast(
+							'Research reports usually take 10–20 minutes. You can leave this page — the run continues and will be here when you come back.',
+							{ icon: '🔍', duration: 8000 }
+						)
+					}
+				} catch {}
+			}
+
 			void abortActiveRequest()
 				.then(() => {
 					setViewError(null)
@@ -2414,181 +2429,184 @@ export function AgenticChat({
 	return (
 		<TipActionProvider handlers={tipActionHandlers}>
 			<LlamaAIChromeContext.Provider value={chromeValue}>
-				<CitationSheetProvider value={citationSheet}>
-					<div
-						className="isolate flex flex-nowrap overflow-hidden max-lg:fixed max-lg:inset-x-0 max-lg:top-[68px] max-lg:bottom-0 max-lg:z-10 max-lg:flex-col lg:relative lg:h-[calc(100dvh-72px)]"
-						style={viewportHeight ? { height: `${viewportHeight - 68}px` } : undefined}
-					>
-						{!readOnly && sidebarVisible ? (
-							<>
-								<AgenticSidebar
-									sessions={sessions}
-									isLoading={isLoadingSessions}
-									loadError={sessionListError}
-									currentSessionId={routeSessionId ?? sessionId ?? null}
-									restoringSessionId={restoringSessionId}
-									onSessionSelect={(nextSessionId) => {
-										void navigate.toSession(nextSessionId)
-									}}
-									onNewChat={handleNewChat}
-									onDelete={deleteSession}
-									onUpdateTitle={updateSessionTitle}
-									isDeletingSession={isDeletingSession}
-									isUpdatingTitle={isUpdatingTitle}
-									shouldAnimate={shouldAnimateSidebar}
-									onOpenSettings={settingsModalStore.show}
-									hasCustomInstructions={settings.customInstructions.trim().length > 0}
-									onBulkDelete={bulkDeleteSessions}
-									onPinSession={pinSession}
-									onSearchMatchClick={handleSearchMatchClick}
-									hasMoreSessions={hasMoreSessions}
-									isFetchingMoreSessions={isFetchingMoreSessions}
-									loadMoreSessionsError={loadMoreSessionsError}
-									onLoadMoreSessions={loadMoreSessions}
-									currentProjectId={routeProjectId}
-									currentSessionProjectId={effectiveSessionProjectId}
-									alertsCount={alertsUsage?.count ?? null}
-									onOpenAlerts={alertsModalStore.show}
-								/>
-								<div className="flex min-h-11 lg:hidden" />
-							</>
-						) : null}
-
+				<ArticleExportProvider sessionTitle={effectiveSessionTitle ?? undefined}>
+					<CitationSheetProvider value={citationSheet}>
 						<div
-							className={`llamaai-chat-panel relative isolate flex flex-1 flex-col overflow-hidden rounded-lg border border-ai-line bg-surface ${sidebarVisible && shouldAnimateSidebar ? 'lg:animate-[shrinkToRight_0.1s_ease-out]' : ''}`}
+							className="isolate flex flex-nowrap overflow-hidden max-lg:fixed max-lg:inset-x-0 max-lg:top-[68px] max-lg:bottom-0 max-lg:z-10 max-lg:flex-col lg:relative lg:h-[calc(100dvh-72px)]"
+							style={viewportHeight ? { height: `${viewportHeight - 68}px` } : undefined}
 						>
-							{!readOnly && !sidebarVisible ? (
-								<ChatControls
-									handleNewChat={handleNewChat}
-									onOpenSettings={settingsModalStore.show}
-									hasCustomInstructions={settings.customInstructions.trim().length > 0}
-									sessionTitle={effectiveSessionTitle}
-									canShare={!isSharedView && effectiveMessages.length > 0}
-									onShare={() => openShareModal()}
+							{!readOnly && sidebarVisible ? (
+								<>
+									<AgenticSidebar
+										sessions={sessions}
+										isLoading={isLoadingSessions}
+										loadError={sessionListError}
+										currentSessionId={routeSessionId ?? sessionId ?? null}
+										restoringSessionId={restoringSessionId}
+										onSessionSelect={(nextSessionId) => {
+											void navigate.toSession(nextSessionId)
+										}}
+										onNewChat={handleNewChat}
+										onDelete={deleteSession}
+										onUpdateTitle={updateSessionTitle}
+										isDeletingSession={isDeletingSession}
+										isUpdatingTitle={isUpdatingTitle}
+										shouldAnimate={shouldAnimateSidebar}
+										onOpenSettings={settingsModalStore.show}
+										hasCustomInstructions={settings.customInstructions.trim().length > 0}
+										onBulkDelete={bulkDeleteSessions}
+										onPinSession={pinSession}
+										onSearchMatchClick={handleSearchMatchClick}
+										hasMoreSessions={hasMoreSessions}
+										isFetchingMoreSessions={isFetchingMoreSessions}
+										loadMoreSessionsError={loadMoreSessionsError}
+										onLoadMoreSessions={loadMoreSessions}
+										currentProjectId={routeProjectId}
+										currentSessionProjectId={effectiveSessionProjectId}
+										alertsCount={alertsUsage?.count ?? null}
+										onOpenAlerts={alertsModalStore.show}
+									/>
+									<div className="flex min-h-11 lg:hidden" />
+								</>
+							) : null}
+
+							<div
+								className={`llamaai-chat-panel relative isolate flex flex-1 flex-col overflow-hidden rounded-lg border border-ai-line bg-surface ${sidebarVisible && shouldAnimateSidebar ? 'lg:animate-[shrinkToRight_0.1s_ease-out]' : ''}`}
+							>
+								{!readOnly && !sidebarVisible ? (
+									<ChatControls
+										handleNewChat={handleNewChat}
+										onOpenSettings={settingsModalStore.show}
+										hasCustomInstructions={settings.customInstructions.trim().length > 0}
+										sessionTitle={effectiveSessionTitle}
+										canShare={!isSharedView && effectiveMessages.length > 0}
+										onShare={() => openShareModal()}
+									/>
+								) : null}
+								{!readOnly && !isSharedView && effectiveMessages.length > 0 ? (
+									<button
+										onClick={() => openShareModal()}
+										data-umami-event="llamaai-share-modal-open"
+										data-umami-event-source="header_controls"
+										className="absolute top-2.5 right-2.5 z-10 hidden items-center gap-1.5 rounded-md border border-ai-line bg-surface px-3 py-1.5 text-xs font-medium text-ai-secondary transition-colors hover:bg-ai-surface-muted lg:flex"
+									>
+										<Icon name="share" height={14} width={14} />
+										Share
+									</button>
+								) : null}
+								{restoringSessionId && !hasMessages ? (
+									<LoadingConversationState />
+								) : !hasMessages && visibleError ? (
+									<EmptyConversationErrorState
+										message={visibleError}
+										onRetry={lastFailedRequest ? handleRetryLastFailedPrompt : undefined}
+									/>
+								) : (
+									<ChatSurface
+										showLanding={!hasMessages && !visibleError}
+										animateLandingTransition={shouldAnimateLandingTransition}
+										animateConversationTransition={shouldAnimateConversationTransition}
+										landingOverride={landingOverride}
+										landingProps={landingProps}
+										conversationViewModel={conversationViewModel}
+										conversationKey={`conversation-${conversationViewResetKey}`}
+										transitionConversationKey={`shared-${effectiveSessionId ?? 'snapshot'}`}
+									/>
+								)}
+							</div>
+							{rightPanel ? (
+								<aside className="hidden w-[340px] shrink-0 flex-col overflow-y-auto rounded-lg border border-ai-line bg-surface lg:ml-2 lg:flex">
+									{rightPanel}
+								</aside>
+							) : null}
+							{citationSheet.isOpen ? (
+								<CitationDetailPanel
+									advancedProvenance={settings.advancedProvenance}
+									onBackToDashboard={
+										dashboardVersions.length > 0 && dashboardPanelIsOpen ? citationSheet.close : undefined
+									}
+								/>
+							) : dashboardVersions.length > 0 ? (
+								<Suspense fallback={null}>
+									<DashboardPanel
+										config={dashboardPanelMountedConfig}
+										isOpen={dashboardPanelIsOpen}
+										versions={dashboardVersions}
+										versionIndex={dashboardVersionIndex}
+										onVersionChange={handleDashboardVersionChange}
+										onClose={handleDashboardClose}
+										onExited={handleDashboardExited}
+										sessionId={sessionId}
+									/>
+								</Suspense>
+							) : null}
+							{!readOnly ? (
+								<ArticleSelectionPopup
+									messages={messages}
+									onSelect={(text) => {
+										setQuotedText(text)
+										promptInputRef.current?.focus()
+									}}
 								/>
 							) : null}
-							{!readOnly && !isSharedView && effectiveMessages.length > 0 ? (
-								<button
-									onClick={() => openShareModal()}
-									data-umami-event="llamaai-share-modal-open"
-									data-umami-event-source="header_controls"
-									className="absolute top-2.5 right-2.5 z-10 hidden items-center gap-1.5 rounded-md border border-ai-line bg-surface px-3 py-1.5 text-xs font-medium text-ai-secondary transition-colors hover:bg-ai-surface-muted lg:flex"
-								>
-									<Icon name="share" height={14} width={14} />
-									Share
-								</button>
+							{!readOnly && rateLimitDetails ? (
+								<ResearchLimitModal
+									dialogStore={researchModalStore}
+									period={rateLimitDetails.period}
+									limit={rateLimitDetails.limit}
+									resetTime={rateLimitDetails.resetTime}
+									feature={limitModalFeature}
+								/>
 							) : null}
-							{restoringSessionId && !hasMessages ? (
-								<LoadingConversationState />
-							) : !hasMessages && visibleError ? (
-								<EmptyConversationErrorState
-									message={visibleError}
-									onRetry={lastFailedRequest ? handleRetryLastFailedPrompt : undefined}
+							{!readOnly ? (
+								<TokenLimitModal isOpen={showTokenLimitModal} onClose={() => setShowTokenLimitModal(false)} />
+							) : null}
+							{!readOnly && showShareModal ? (
+								<ShareModal
+									open={true}
+									setOpen={setShareModalOpen}
+									sessionId={effectiveSessionId}
+									messageId={shareTargetMessageId}
 								/>
-							) : (
-								<ChatSurface
-									showLanding={!hasMessages && !visibleError}
-									animateLandingTransition={shouldAnimateLandingTransition}
-									animateConversationTransition={shouldAnimateConversationTransition}
-									landingOverride={landingOverride}
-									landingProps={landingProps}
-									conversationViewModel={conversationViewModel}
-									conversationKey={`conversation-${conversationViewResetKey}`}
-									transitionConversationKey={`shared-${effectiveSessionId ?? 'snapshot'}`}
+							) : null}
+							{!readOnly ? (
+								<DeepLinkPromptModal
+									isOpen={!!deepLinkConfirmationPrompt}
+									prompt={deepLinkConfirmationPrompt}
+									onClose={handleCloseDeepLinkPrompt}
+									onConfirm={handleConfirmDeepLinkPrompt}
 								/>
-							)}
+							) : null}
+							{!readOnly ? (
+								<AlertsModal
+									dialogStore={alertsModalStore}
+									alertsUsage={alertsUsage}
+									onPrefillPrompt={handleAlertPrefillPrompt}
+								/>
+							) : null}
+							{shouldRenderSubscribeModal ? (
+								<Suspense fallback={<></>}>
+									<SubscribeProModal dialogStore={subscribeModalStore} />
+								</Suspense>
+							) : null}
+							{!readOnly ? (
+								<SettingsModal
+									dialogStore={settingsModalStore}
+									settings={settings}
+									actions={actions}
+									availableModels={availableModels}
+									availableEfforts={availableEfforts}
+									telegramStatus={telegramStatus}
+									isSettingsLoading={
+										settingsQueryState.isLoading || (settingsQueryState.isFetching && !settingsQueryState.data)
+									}
+									initialState={initialIntegrationsState}
+									onInitialStateConsumed={() => setInitialIntegrationsState(null)}
+								/>
+							) : null}
 						</div>
-						{rightPanel ? (
-							<aside className="hidden w-[340px] shrink-0 flex-col overflow-y-auto rounded-lg border border-ai-line bg-surface lg:ml-2 lg:flex">
-								{rightPanel}
-							</aside>
-						) : null}
-						{citationSheet.isOpen ? (
-							<CitationDetailPanel
-								advancedProvenance={settings.advancedProvenance}
-								onBackToDashboard={
-									dashboardVersions.length > 0 && dashboardPanelIsOpen ? citationSheet.close : undefined
-								}
-							/>
-						) : dashboardVersions.length > 0 ? (
-							<Suspense fallback={null}>
-								<DashboardPanel
-									config={dashboardPanelMountedConfig}
-									isOpen={dashboardPanelIsOpen}
-									versions={dashboardVersions}
-									versionIndex={dashboardVersionIndex}
-									onVersionChange={handleDashboardVersionChange}
-									onClose={handleDashboardClose}
-									onExited={handleDashboardExited}
-									sessionId={sessionId}
-								/>
-							</Suspense>
-						) : null}
-						{!readOnly ? (
-							<TextSelectionPopup
-								onSelect={(text) => {
-									setQuotedText(text)
-									promptInputRef.current?.focus()
-								}}
-							/>
-						) : null}
-						{!readOnly && rateLimitDetails ? (
-							<ResearchLimitModal
-								dialogStore={researchModalStore}
-								period={rateLimitDetails.period}
-								limit={rateLimitDetails.limit}
-								resetTime={rateLimitDetails.resetTime}
-								feature={limitModalFeature}
-							/>
-						) : null}
-						{!readOnly ? (
-							<TokenLimitModal isOpen={showTokenLimitModal} onClose={() => setShowTokenLimitModal(false)} />
-						) : null}
-						{!readOnly && showShareModal ? (
-							<ShareModal
-								open={true}
-								setOpen={setShareModalOpen}
-								sessionId={effectiveSessionId}
-								messageId={shareTargetMessageId}
-							/>
-						) : null}
-						{!readOnly ? (
-							<DeepLinkPromptModal
-								isOpen={!!deepLinkConfirmationPrompt}
-								prompt={deepLinkConfirmationPrompt}
-								onClose={handleCloseDeepLinkPrompt}
-								onConfirm={handleConfirmDeepLinkPrompt}
-							/>
-						) : null}
-						{!readOnly ? (
-							<AlertsModal
-								dialogStore={alertsModalStore}
-								alertsUsage={alertsUsage}
-								onPrefillPrompt={handleAlertPrefillPrompt}
-							/>
-						) : null}
-						{shouldRenderSubscribeModal ? (
-							<Suspense fallback={<></>}>
-								<SubscribeProModal dialogStore={subscribeModalStore} />
-							</Suspense>
-						) : null}
-						{!readOnly ? (
-							<SettingsModal
-								dialogStore={settingsModalStore}
-								settings={settings}
-								actions={actions}
-								availableModels={availableModels}
-								availableEfforts={availableEfforts}
-								telegramStatus={telegramStatus}
-								isSettingsLoading={
-									settingsQueryState.isLoading || (settingsQueryState.isFetching && !settingsQueryState.data)
-								}
-								initialState={initialIntegrationsState}
-								onInitialStateConsumed={() => setInitialIntegrationsState(null)}
-							/>
-						) : null}
-					</div>
-				</CitationSheetProvider>
+					</CitationSheetProvider>
+				</ArticleExportProvider>
 			</LlamaAIChromeContext.Provider>
 		</TipActionProvider>
 	)
@@ -2700,3 +2718,18 @@ const ChatControls = memo(function ChatControls({
 		</div>
 	)
 })
+
+// Selection pill with the researcher-only "Add to article" action. Charts crossed
+// by the selection are resolved against every message's chart artifacts by id.
+function ArticleSelectionPopup({ messages, onSelect }: { messages: Message[]; onSelect: (text: string) => void }) {
+	const openArticleExport = useArticleExport()
+	const handleAddToArticle = useCallback(
+		(html: string) => {
+			if (!openArticleExport) return
+			const groups = messages.flatMap((m) => m.charts ?? [])
+			openArticleExport({ kind: 'selection', html, charts: chartsMapFromGroups(groups) })
+		},
+		[openArticleExport, messages]
+	)
+	return <TextSelectionPopup onSelect={onSelect} onAddToArticle={openArticleExport ? handleAddToArticle : undefined} />
+}

@@ -69,7 +69,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 		<Ariakit.Dialog
 			store={store}
 			modal
-			backdrop={<div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm" />}
+			backdrop={<div className="fixed inset-0 z-[80] bg-ai-backdrop backdrop-blur-sm" />}
 			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[88vh] w-[min(720px,94vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-medium bg-surface shadow-article-dialog outline-hidden"
 		>
 			<div className="flex items-center justify-between gap-3 border-b border-medium px-5 py-3">
@@ -201,7 +201,7 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 				{item.src ? (
 					<>
 						<img src={item.src} alt="" className="h-full w-full object-cover" />
-						<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 text-[10px] font-medium tracking-wide text-on-brand opacity-0 transition-opacity group-hover:bg-black/40 group-hover:opacity-100">
+						<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-ai-contrast/0 text-[10px] font-medium tracking-wide text-on-brand opacity-0 transition-opacity group-hover:bg-ai-backdrop-soft group-hover:opacity-100">
 							{isUploading ? '…' : 'Replace'}
 						</span>
 					</>

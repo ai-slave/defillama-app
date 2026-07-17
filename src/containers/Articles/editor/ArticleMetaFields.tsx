@@ -49,7 +49,7 @@ export function MetaSwitch({
 					>
 						<span
 							className={`absolute top-1/2 inline-block size-3 -translate-y-1/2 rounded-full shadow-sm transition-all duration-200 ease-out ${
-								checked ? 'left-[15px] bg-white' : 'left-[2px] bg-tertiary group-hover:bg-secondary'
+								checked ? 'left-[15px] bg-ai-white' : 'left-[2px] bg-tertiary group-hover:bg-secondary'
 							}`}
 						/>
 					</button>

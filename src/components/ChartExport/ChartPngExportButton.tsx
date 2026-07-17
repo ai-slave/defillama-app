@@ -14,7 +14,7 @@ import {
 	popoverMobileDismissStyles,
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
-import { downloadDataURL } from '~/utils/download'
+import { downloadCSV, downloadDataURL } from '~/utils/download'
 import { getChartExportIconFetchUrl } from './chartPngExportIcon'
 import {
 	BASE_TOP_PADDING,
@@ -1350,6 +1350,11 @@ interface ChartPngExportButtonProps {
 	expandLegend?: boolean
 	pngProfile?: PngExportProfile
 	onExport?: (info: { kind: 'download' | 'copy'; filename: string }) => void
+	/** Consolidated export menu: icon-only disclosure with a "Download CSV" item on top
+	 * of the image actions. Used by the LlamaAI chat toolbar; other pages keep the
+	 * separate .csv/.png buttons. */
+	csvMenuItem?: { prepareCsv: () => { filename: string; rows: Array<Array<string | number | boolean>> } }
+	iconOnly?: boolean
 }
 
 export function ChartPngExportButton({
@@ -1361,7 +1366,9 @@ export function ChartPngExportButton({
 	iconUrl,
 	expandLegend,
 	pngProfile = 'default',
-	onExport
+	onExport,
+	csvMenuItem,
+	iconOnly = false
 }: ChartPngExportButtonProps) {
 	const [isLoading, setIsLoading] = useState(false)
 	const router = useRouter()
@@ -1455,10 +1462,10 @@ export function ChartPngExportButton({
 				className={className}
 				data-loading={isLoading}
 				disabled={isLoading}
-				title="Export chart as image"
+				title={csvMenuItem ? 'Export chart' : 'Export chart as image'}
 			>
 				{isLoading ? <LoadingSpinner size={14} /> : <Icon name="download-paper" height={14} width={14} />}
-				<span>{smol ? '.png' : 'Image'}</span>
+				{iconOnly ? null : <span>{smol ? '.png' : 'Image'}</span>}
 			</Ariakit.PopoverDisclosure>
 
 			<Ariakit.Popover
@@ -1471,6 +1478,28 @@ export function ChartPngExportButton({
 				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 					<Icon name="x" className="size-5" />
 				</Ariakit.PopoverDismiss>
+				{csvMenuItem ? (
+					<button
+						data-umami-event="export-csv"
+						data-umami-event-page={router.pathname}
+						type="button"
+						className={popoverMenuItemStyles}
+						onClick={() => {
+							try {
+								const { filename: csvFilename, rows } = csvMenuItem.prepareCsv()
+								downloadCSV(csvFilename.endsWith('.csv') ? csvFilename : `${csvFilename}.csv`, rows, {
+									addTimestamp: false
+								})
+							} catch {
+								toast.error('Failed to export CSV')
+							}
+							popover.hide()
+						}}
+					>
+						<Icon name="download-paper" height={14} width={14} />
+						<span>Download CSV</span>
+					</button>
+				) : null}
 				<button
 					data-umami-event="export-image"
 					data-umami-event-page={router.pathname}

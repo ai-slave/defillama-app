@@ -1,9 +1,11 @@
 import * as Ariakit from '@ariakit/react'
 import { memo, useCallback, useEffect, useReducer, useRef } from 'react'
+import { useArticleExport } from '~/components/AddToArticle/ArticleExportContext'
 import { Icon } from '~/components/Icon'
 import { FeedbackForm } from '~/containers/LlamaAI/components/FeedbackForm'
 import { PDFExportButton } from '~/containers/LlamaAI/components/PDFExportButton'
 import type { MessageMetadata } from '~/containers/LlamaAI/types'
+import type { ArticleExportRequest } from '~/containers/LlamaAI/utils/articleExport'
 import { convertLlamaLinksToDefillama } from '~/containers/LlamaAI/utils/entityLinks'
 import { removeReportStartMarkers } from '~/containers/LlamaAI/utils/reportMarkers'
 import { Tooltip } from '~/ui/Tooltip'
@@ -12,6 +14,7 @@ import { trackUmamiEvent } from '~/utils/analytics/umami'
 interface ResponseControlsProps {
 	messageId?: string
 	content?: string
+	articleExportRequest?: () => ArticleExportRequest
 	initialRating?: 'good' | 'bad' | null
 	sessionId?: string | null
 	readOnly?: boolean
@@ -111,8 +114,10 @@ export function ResponseControls({
 	readOnly = false,
 	messageMetadata,
 	isLatest = false,
-	onShare
+	onShare,
+	articleExportRequest
 }: ResponseControlsProps) {
+	const openArticleExport = useArticleExport()
 	const [state, dispatch] = useReducer(responseControlsReducer, initialRating || null, createInitialState)
 	const { copied, showFeedback, selectedRating, submittedRating } = state
 	const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -290,6 +295,16 @@ export function ResponseControls({
 					>
 						<Icon name="share" height={16} width={16} />
 						<span className="sr-only">Share</span>
+					</Tooltip>
+				) : null}
+				{openArticleExport && articleExportRequest && !readOnly ? (
+					<Tooltip
+						content="Export to research article"
+						render={<button type="button" onClick={() => openArticleExport(articleExportRequest())} />}
+						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-secondary"
+					>
+						<Icon name="file-plus" height={16} width={16} />
+						<span className="sr-only">Export to research article</span>
 					</Tooltip>
 				) : null}
 			</div>

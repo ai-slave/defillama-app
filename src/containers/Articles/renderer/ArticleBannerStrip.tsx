@@ -153,7 +153,7 @@ export function ArticleBannerStrip({ scope, section, articleId, initialData }: P
 				type="button"
 				onClick={dismiss}
 				aria-label="Dismiss banner"
-				className="flex size-6 shrink-0 items-center justify-center rounded-full text-on-brand/80 transition-colors hover:bg-white/10 hover:text-on-brand"
+				className="flex size-6 shrink-0 items-center justify-center rounded-full text-on-brand/80 transition-colors hover:bg-ai-white/10 hover:text-on-brand"
 			>
 				<Icon name="x" height={14} width={14} />
 			</button>

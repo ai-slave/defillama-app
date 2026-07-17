@@ -138,7 +138,7 @@ export function ArticleMetaDialog({
 		<Ariakit.Dialog
 			store={store}
 			backdrop={
-				<div className="fixed inset-0 z-40 bg-black/30 opacity-0 backdrop-blur-sm transition-opacity duration-200 data-[enter]:opacity-100 data-[leave]:opacity-0" />
+				<div className="fixed inset-0 z-40 bg-ai-contrast/30 opacity-0 backdrop-blur-sm transition-opacity duration-200 data-[enter]:opacity-100 data-[leave]:opacity-0" />
 			}
 			className="fixed top-0 right-0 bottom-0 z-50 flex w-full max-w-md translate-x-full flex-col overflow-y-auto border-l border-medium bg-surface p-6 shadow-2xl transition-transform duration-300 data-[enter]:translate-x-0 data-[leave]:translate-x-full"
 		>

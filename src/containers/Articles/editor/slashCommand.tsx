@@ -159,6 +159,18 @@ const ALL_ITEMS: SlashCommandItem[] = [
 		}
 	},
 	{
+		id: 'llamaai-chart',
+		title: 'LlamaAI chart',
+		description: 'Insert a chart saved from LlamaAI (frozen data snapshot)',
+		icon: '🦙',
+		group: 'Blocks',
+		keywords: ['llamaai', 'llama', 'ai', 'chart', 'saved', 'snapshot'],
+		action: (editor, range) => {
+			editor.chain().focus().deleteRange(range).run()
+			document.dispatchEvent(new CustomEvent('article:open-llamaai-chart-picker'))
+		}
+	},
+	{
 		id: 'image',
 		title: 'Image',
 		description: 'Upload an image from your device',

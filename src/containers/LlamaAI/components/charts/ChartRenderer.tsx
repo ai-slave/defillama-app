@@ -11,8 +11,11 @@ import {
 	useState
 } from 'react'
 import { createPortal } from 'react-dom'
-import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import toast from 'react-hot-toast'
+import { useArticleExport } from '~/components/AddToArticle/ArticleExportContext'
+import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { Icon } from '~/components/Icon'
+import { saveChartToLibrary } from '~/containers/LlamaAI/api/saveChartToLibrary'
 import { updateChartStyle } from '~/containers/LlamaAI/api/updateChartStyle'
 import { ChartControls } from '~/containers/LlamaAI/components/charts/ChartControls'
 import { ChartStyleEditor } from '~/containers/LlamaAI/components/charts/ChartStyleEditor'
@@ -49,6 +52,9 @@ interface ChartRendererProps {
 	sessionId?: string | null
 	messageId?: string
 	readOnly?: boolean
+	/** Local persistence for style edits (e.g. research-article chart nodes). When set,
+	 * the style editor is enabled without a chat session and saves go here instead of the API. */
+	onLocalStyleSave?: (config: ChartConfiguration) => void
 }
 
 interface SingleChartProps {
@@ -59,6 +65,7 @@ interface SingleChartProps {
 	sessionId?: string | null
 	messageId?: string
 	readOnly?: boolean
+	onLocalStyleSave?: (config: ChartConfiguration) => void
 }
 
 type ChartAction =
@@ -209,17 +216,28 @@ function ChartExportButtonsSlot({
 		[chartId, chartTitle, sessionId, messageId]
 	)
 
+	// Chat-only consolidated export menu: one icon opens CSV + image actions.
+	// Other pages keep the separate .csv/.png buttons from ChartExportButtons.
 	return (
-		<ChartExportButtons
+		<ChartPngExportButton
 			chartInstance={chartInstance}
 			filename={renderPlan.filename}
 			title={chartTitle}
 			smol
-			showCsv={!!exportModel}
-			prepareCsvDirect={prepareCsvDirect}
+			iconOnly
+			csvMenuItem={
+				exportModel && prepareCsvDirect
+					? {
+							prepareCsv: () => {
+								const result = prepareCsvDirect()
+								onCsvExport(result)
+								return result
+							}
+						}
+					: undefined
+			}
 			pngProfile={exportModel?.pngProfile}
-			onCsvExport={onCsvExport}
-			onPngExport={onPngExport}
+			onExport={onPngExport}
 		/>
 	)
 }
@@ -239,7 +257,16 @@ function tryBuildPresentation(
 	}
 }
 
-function SingleChart({ config: baseConfig, data, isActive, title, sessionId, messageId, readOnly }: SingleChartProps) {
+function SingleChart({
+	config: baseConfig,
+	data,
+	isActive,
+	title,
+	sessionId,
+	messageId,
+	readOnly,
+	onLocalStyleSave
+}: SingleChartProps) {
 	// authorizedFetch/user come from the shared auth context — real under the LlamaAI provider, an
 	// empty object (→ no editor) in ProDashboard, so this is safe everywhere ChartRenderer renders.
 	const { authorizedFetch, user } = useAuthContext()
@@ -248,11 +275,50 @@ function SingleChart({ config: baseConfig, data, isActive, title, sessionId, mes
 	const [override, setOverride] = useState<ChartConfiguration | null>(null)
 	const [editing, setEditing] = useState(false)
 	const config = override ?? baseConfig
-	const canEdit =
-		!readOnly && !!authorizedFetch && !!user?.id && !!sessionId && !!messageId && config.type !== 'candlestick'
+	const chatEditContext = !!authorizedFetch && !!user?.id && !!sessionId && !!messageId
+	const canEdit = !readOnly && config.type !== 'candlestick' && (chatEditContext || !!onLocalStyleSave)
+
+	const openArticleExport = useArticleExport()
+	const [savingToLibrary, setSavingToLibrary] = useState(false)
+	const handleSaveToLibrary = useCallback(async () => {
+		if (!authorizedFetch || savingToLibrary) return
+		setSavingToLibrary(true)
+		try {
+			const id = await saveChartToLibrary(authorizedFetch, {
+				chartId: baseConfig.id,
+				sessionId,
+				messageId,
+				frozen: true
+			})
+			if (id) toast.success('Chart saved to your library (frozen)')
+			else toast.error('Failed to save chart')
+		} finally {
+			setSavingToLibrary(false)
+		}
+	}, [authorizedFetch, savingToLibrary, baseConfig.id, sessionId, messageId])
 
 	const handleSaveStyle = useCallback(
 		async (patch: ChartStylePatch) => {
+			if (onLocalStyleSave) {
+				// Local mode: the live-preview override already holds the fully edited
+				// config; only the view defaults arrive solely via the patch.
+				const base = override ?? baseConfig
+				const updated: ChartConfiguration = base.displayOptions
+					? {
+							...base,
+							displayOptions: {
+								...base.displayOptions,
+								defaultStacked: patch.defaultStacked,
+								defaultPercentage: patch.defaultPercentage,
+								defaultLogScale: patch.defaultLogScale,
+								showLabels: patch.showLabels
+							}
+						}
+					: base
+				setOverride(updated)
+				onLocalStyleSave(updated)
+				return
+			}
 			if (!authorizedFetch || !sessionId || !messageId) return
 			const updated = await updateChartStyle(authorizedFetch, {
 				sessionId,
@@ -262,7 +328,7 @@ function SingleChart({ config: baseConfig, data, isActive, title, sessionId, mes
 			})
 			setOverride(updated)
 		},
-		[authorizedFetch, sessionId, messageId, baseConfig.id]
+		[authorizedFetch, sessionId, messageId, onLocalStyleSave, override, baseConfig]
 	)
 
 	// category names (bars/slices) for per-category color pickers on single-series hbar & pie
@@ -360,7 +426,9 @@ function SingleChart({ config: baseConfig, data, isActive, title, sessionId, mes
 
 	const normalizedState = renderPlan.controls.state
 	const exportModel = renderPlan.exportModel
-	const chartTitle = title ?? config.title
+	// A live style override (post-edit) carries the freshest title; the title prop
+	// comes from message/node state, which in chat only refreshes on reload.
+	const chartTitle = override?.title ?? title ?? config.title
 	const chartKey = `${config.id}-${normalizedState.stacked}-${normalizedState.percentage}-${normalizedState.cumulative}-${normalizedState.grouping}-${normalizedState.showHallmarks}-${normalizedState.showLabels}-${normalizedState.logScale}`
 	const chartContent = renderChartContent(renderPlan, chartKey, handleChartReady)
 
@@ -387,12 +455,42 @@ function SingleChart({ config: baseConfig, data, isActive, title, sessionId, mes
 				/>
 				{canEdit ? (
 					<button
+						type="button"
 						onClick={() => setEditing((v) => !v)}
 						title="Edit chart style"
 						className="flex items-center gap-1 rounded-sm px-1.5 py-1 text-xs text-ai-tertiary hover:text-ai-primary"
 					>
 						<Icon name="settings" height={14} width={14} />
 					</button>
+				) : null}
+				{openArticleExport && messageId && !readOnly ? (
+					<>
+						<button
+							type="button"
+							onClick={() => void handleSaveToLibrary()}
+							disabled={savingToLibrary}
+							title="Save chart (frozen data)"
+							className="flex items-center gap-1 rounded-sm px-1.5 py-1 text-xs text-ai-tertiary hover:text-ai-primary disabled:opacity-50"
+						>
+							<Icon name="bookmark" height={14} width={14} />
+						</button>
+						<button
+							type="button"
+							onClick={() =>
+								openArticleExport({
+									kind: 'chart',
+									chartId: baseConfig.id,
+									charts: { [baseConfig.id]: { config: baseConfig, data } },
+									sessionId,
+									messageId
+								})
+							}
+							title="Add to research article"
+							className="flex items-center gap-1 rounded-sm px-1.5 py-1 text-xs text-ai-tertiary hover:text-ai-primary"
+						>
+							<Icon name="file-plus" height={14} width={14} />
+						</button>
+					</>
 				) : null}
 			</ChartControls>
 			{chartContent}
@@ -452,6 +550,7 @@ function ChartEditorModal({ title, onClose, children }: { title?: string; onClos
 				<div className="flex items-center justify-between border-b border-ai-line px-4 py-2.5 lg:hidden">
 					<span className="truncate text-sm font-semibold text-secondary">{title ?? 'Edit chart'}</span>
 					<button
+						type="button"
 						onClick={onClose}
 						aria-label="Close editor"
 						className="rounded-sm p-1 text-ai-muted hover:bg-ai-wash hover:text-ai-primary"
@@ -462,6 +561,7 @@ function ChartEditorModal({ title, onClose, children }: { title?: string; onClos
 					</button>
 				</div>
 				<button
+					type="button"
 					onClick={onClose}
 					aria-label="Close editor"
 					className="absolute top-2.5 right-2.5 z-10 hidden rounded-sm p-1 text-ai-muted hover:bg-ai-wash hover:text-ai-primary lg:block"
@@ -510,11 +610,23 @@ export function ChartRenderer({
 	resizeTrigger = 0,
 	sessionId,
 	messageId,
-	readOnly
+	readOnly,
+	onLocalStyleSave
 }: ChartRendererProps) {
 	return (
 		<ChartRendererMemoized
-			{...{ charts, chartData, isLoading, hasError, chartTypes, resizeTrigger, sessionId, messageId, readOnly }}
+			{...{
+				charts,
+				chartData,
+				isLoading,
+				hasError,
+				chartTypes,
+				resizeTrigger,
+				sessionId,
+				messageId,
+				readOnly,
+				onLocalStyleSave
+			}}
 		/>
 	)
 }
@@ -528,7 +640,8 @@ function ChartRendererImpl({
 	resizeTrigger = 0,
 	sessionId,
 	messageId,
-	readOnly
+	readOnly,
+	onLocalStyleSave
 }: ChartRendererProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const [activeTabIndex, setActiveTab] = useReducer((state: number, action: number) => action, 0)
@@ -610,6 +723,7 @@ function ChartRendererImpl({
 						sessionId={sessionId}
 						messageId={messageId}
 						readOnly={readOnly}
+						onLocalStyleSave={onLocalStyleSave}
 					/>
 				)
 			})}
@@ -625,6 +739,7 @@ const ChartRendererMemoized = memo(ChartRendererImpl, (prev, next) => {
 		prev.sessionId === next.sessionId &&
 		prev.messageId === next.messageId &&
 		prev.readOnly === next.readOnly &&
+		prev.onLocalStyleSave === next.onLocalStyleSave &&
 		areStringArraysEqual(prev.chartTypes, next.chartTypes) &&
 		areChartsEqual(prev.charts, next.charts) &&
 		areChartDataEqual(prev.chartData, next.chartData)
