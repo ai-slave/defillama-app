@@ -2,7 +2,8 @@
    Pro Dashboard product theme (ProDashboard, Downloads, AddToDashboard) and
    the embedded Investors dashboards (--sl-*).
 
-   A standing product palette, not design-system tokens. `pro-dashboard`
+   A standing product palette, separate from the design system's tokens in
+   semantics.css — add tokens here as the product evolves. `pro-dashboard`
    re-scopes the --pro-{app-bg,cards-*,form-control-border,old-blue,text-*}
    base tokens (defined at :root at the bottom of this file) with the
    product's own values; never rewrite those names' callsites to semantic

@@ -54,7 +54,7 @@
 	--text-warning: #a15d23;
 
 	/* Feedback roles keep their established public names. Unlike the
-	   quarantined application variables, these are semantic state tokens. */
+	   product-theme variables, these are semantic state tokens. */
 	--success: var(--text-data-up);
 	--error: var(--text-data-down);
 	--warning: var(--text-warning);

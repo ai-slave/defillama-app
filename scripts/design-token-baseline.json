@@ -17,15 +17,15 @@
 		"deprecated-tailwind-spelling": 0,
 		"conflicting-named-typography": 0
 	},
-	"excluded": {
+	"product": {
 		"hex-in-classname": 44,
 		"dark-hex-variant": 9,
-		"arbitrary-font-size": 990,
+		"arbitrary-font-size": 978,
 		"arbitrary-spacing": 1,
 		"explicit-thin-scrollbar": 0,
 		"interim-token": 0,
 		"product-token-leak": 0,
-		"builtin-palette-color": 224,
+		"builtin-palette-color": 217,
 		"arbitrary-color-function": 3,
 		"arbitrary-shadow": 0,
 		"product-utility-leak": 0,

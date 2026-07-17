@@ -1,10 +1,11 @@
 /* ----------------------------------------------------------------------------
-   LlamaAI product theme — role-named freeze of the surface's colors,
-   shadows, and animation tokens (containers/LlamaAI, pages/ai,
-   EntityQuestionsStrip, LlamaAIFloatingButton). Component CSS lives in
-   styles/llamaai.css; this file owns the palette.
+   LlamaAI product theme — the surface's role-named color, shadow, and
+   animation tokens (containers/LlamaAI, pages/ai, EntityQuestionsStrip,
+   LlamaAIFloatingButton). Component CSS lives in styles/llamaai.css; this
+   file owns the palette.
 
-   A standing product palette, not design-system tokens. Near-duplicate
+   A standing product palette, separate from the design system's tokens in
+   semantics.css — add tokens here as the product evolves. Near-duplicate
    greys were canonicalized to one role; brand/status colors kept verbatim.
    Mode handling: light values on :root, dark overrides under html.dark.
    ai-ink-*, ai-on-ink-*, backdrops, and brand/terminal colors are

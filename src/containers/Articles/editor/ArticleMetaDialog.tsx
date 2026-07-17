@@ -325,7 +325,7 @@ export function ArticleMetaDialog({
 					{!isPublished ? (
 						<>
 							{articleIsScheduled ? (
-								<div className="flex flex-wrap items-center gap-2 rounded-md border border-sky-500/30 bg-sky-500/5 px-3 py-2">
+								<div className="flex flex-wrap items-center gap-2 rounded-md border border-(--research-blue)/30 bg-(--research-blue)/5 px-3 py-2">
 									<span className="font-jetbrains text-[10px] tracking-[0.18em] text-link uppercase">Scheduled</span>
 									<span className="text-xs text-secondary">Goes live {formatArticleDate(article.goLiveAt)}</span>
 								</div>

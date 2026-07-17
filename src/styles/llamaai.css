@@ -3,8 +3,8 @@
    gold CTA glow, prose tweaks, and hacker mode. Component CSS only; the
    surface's color/shadow/animation tokens live in themes/llamaai.css.
 
-   Colors reference the quarantined --ai-* roles (no raw hex): these rules
-   repoint together with that palette in the design-token repoint pass.
+   Colors reference the --ai-* product-theme roles (no raw hex), so these
+   rules follow the palette wherever it goes.
 ---------------------------------------------------------------------------- */
 
 /* ------------------------------- Keyframes ------------------------------- */

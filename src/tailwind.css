@@ -5,6 +5,7 @@
 @import './styles/themes/subscription.css';
 @import './styles/themes/pro.css';
 @import './styles/themes/llamaai.css';
+@import './styles/themes/articles.css';
 @import './styles/llamaai.css';
 @import './styles/articles.css';
 @plugin '@tailwindcss/typography';

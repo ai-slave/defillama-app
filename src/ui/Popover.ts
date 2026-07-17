@@ -86,12 +86,12 @@ export const nestedPopoverMobileWrapperClassName = tw`max-sm:fixed! max-sm:top-a
 
 export const popoverMobileDismissStyles = tw`ml-auto flex size-10 shrink-0 items-center justify-center rounded-md text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary sm:hidden`
 
-/* Compatibility styles for quarantined surfaces that still consume shared menu/select components. */
+/* Compatibility styles for product surfaces that still consume shared menu/select components. */
 export const legacySelectPopoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 ${selectSurfaceHeightStyles}`
 
-export const excludedSurfaceComboboxPopoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 ${selectSurfaceHeightStyles}`
+export const productSurfaceComboboxPopoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-surface-elevated-1 ${selectSurfaceHeightStyles}`
 
-export const excludedSurfaceComboboxActionBarStyles = tw`sticky top-0 z-1 flex flex-wrap justify-between gap-1 border-b border-subtle bg-surface-elevated-1 text-xs text-link`
+export const productSurfaceComboboxActionBarStyles = tw`sticky top-0 z-1 flex flex-wrap justify-between gap-1 border-b border-subtle bg-surface-elevated-1 text-xs text-link`
 
 export const legacyMenuSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-surface-elevated-1 sm:max-w-md ${menuSurfaceHeightStyles}`
 

@@ -1,5 +1,5 @@
 // Rewrites hardcoded color/shadow/animation utility classes in the LlamaAI
-// surface to the quarantined --ai-* roles defined in styles/legacy-llama-ai.css.
+// surface to the --ai-* product-theme roles defined in styles/themes/llamaai.css.
 //
 //   node scripts/codemods/ai-color-sweep.mjs <dir-or-file>... [--write]
 //

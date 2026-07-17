@@ -1,9 +1,16 @@
 // Design-token ratchet (see design.md → Do's and Don'ts).
 //
-// Counts styling patterns that bypass the Llama Design System tokens and
-// compares them against scripts/design-token-baseline.json. Core application
-// debt and intentionally excluded product debt are ratcheted independently:
-// excluded surfaces do not hide core regressions, and neither bucket may grow.
+// Counts styling patterns that bypass the token system and compares them
+// against scripts/design-token-baseline.json. Everything is ratcheted; there
+// are two independent buckets so neither can hide the other's regressions:
+//
+//   core     — app code on the Llama Design System (semantics.css)
+//   product  — standing product surfaces with their own palettes in
+//              src/styles/themes/ (--pro/--sub/--sl/--ai/--research/--callout)
+//
+// Product themes are living palettes: adding tokens to a theme file as the
+// product evolves is the intended workflow. The surface map below also feeds
+// the *-leak rules, which flag product tokens/utilities used in core code.
 //
 //   bun run lint:tokens            # check
 //   bun run lint:tokens --update   # rewrite baseline after removing debt
@@ -14,7 +21,12 @@ import path from 'node:path'
 const ROOT = path.join(import.meta.dirname, '..')
 const BASELINE_PATH = path.join(import.meta.dirname, 'design-token-baseline.json')
 
-const EXCLUDED_PRODUCT_PREFIXES = [
+// The product-surface map: code under these paths belongs to a standing
+// product and consumes its own theme from src/styles/themes/. It is counted
+// in the `product` bucket (still ratcheted — separate baseline only) and is
+// where product tokens/utilities are legitimate; anywhere else they count as
+// a leak.
+const PRODUCT_SURFACE_PREFIXES = [
 	'src/components/EntityQuestionsStrip/',
 	'src/components/LlamaAIFloatingButton/',
 	'src/components/Newsletter/',
@@ -37,7 +49,7 @@ const EXCLUDED_PRODUCT_PREFIXES = [
 	'src/pages/subscription/'
 ]
 
-const EXCLUDED_PRODUCT_FILES = new Set([
+const PRODUCT_SURFACE_FILES = new Set([
 	'src/components/Modal/LlamaAIWelcomeModal.tsx',
 	'src/components/StripeCheckoutModal.tsx',
 	'src/components/TopupModal.tsx',
@@ -48,9 +60,9 @@ const EXCLUDED_PRODUCT_FILES = new Set([
 	'src/pages/reports.tsx'
 ])
 
-function isExcludedProductFile(file) {
-	if (EXCLUDED_PRODUCT_FILES.has(file)) return true
-	return EXCLUDED_PRODUCT_PREFIXES.some((prefix) => file.startsWith(prefix))
+function isProductSurfaceFile(file) {
+	if (PRODUCT_SURFACE_FILES.has(file)) return true
+	return PRODUCT_SURFACE_PREFIXES.some((prefix) => file.startsWith(prefix))
 }
 
 // Width-only border/divide utilities (className="border", "border-t", "divide-y")
@@ -227,7 +239,7 @@ const RULES = [
 	{
 		id: 'builtin-palette-color',
 		description:
-			'stock Tailwind palette color (red-500, black/[0.06], white, …) — use a semantic token or a quarantined surface variable',
+			'stock Tailwind palette color (red-500, black/[0.06], white, …) — use a semantic token or a product-theme token',
 		pattern:
 			/(?<![\w-])(?:text|bg|border|from|to|via|fill|stroke|ring|outline|decoration|accent|caret|divide|shadow|placeholder)-(?:(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-\d{2,3}|black|white)(?:\/(?:\d{1,3}|\[[^\]]+\]))?(?![\w-])/g
 	},
@@ -288,7 +300,11 @@ const files = execSync(
 	.filter(Boolean)
 	.filter((file) => fs.existsSync(path.join(ROOT, file)))
 
-const buckets = ['core', 'excluded']
+const buckets = ['core', 'product']
+const BUCKET_LABELS = {
+	core: 'core application bucket',
+	product: 'product surfaces bucket'
+}
 const counts = Object.fromEntries(buckets.map((bucket) => [bucket, Object.fromEntries(RULES.map((r) => [r.id, 0]))]))
 const offenders = Object.fromEntries(
 	buckets.map((bucket) => [bucket, Object.fromEntries(RULES.map((r) => [r.id, new Map()]))])
@@ -296,7 +312,7 @@ const offenders = Object.fromEntries(
 
 for (const file of files) {
 	const content = fs.readFileSync(path.join(ROOT, file), 'utf8')
-	const bucket = isExcludedProductFile(file) ? 'excluded' : 'core'
+	const bucket = isProductSurfaceFile(file) ? 'product' : 'core'
 	for (const rule of RULES) {
 		if (
 			file.endsWith('.css') &&
@@ -310,7 +326,7 @@ for (const file of files) {
 			continue
 		if (
 			rule.productLeak &&
-			(bucket === 'excluded' ||
+			(bucket === 'product' ||
 				file.startsWith('src/styles/') ||
 				file === 'src/tailwind.css' ||
 				file.startsWith('public/'))
@@ -331,11 +347,13 @@ if (process.argv.includes('--update')) {
 }
 
 const persistedBaseline = JSON.parse(fs.readFileSync(BASELINE_PATH, 'utf8'))
-const baseline = 'core' in persistedBaseline ? persistedBaseline : { core: persistedBaseline, excluded: {} }
+const baseline = 'core' in persistedBaseline ? persistedBaseline : { core: persistedBaseline, product: {} }
+// Baselines written before the bucket rename ('excluded' → 'product'): read the old key.
+if (!baseline.product && baseline.excluded) baseline.product = baseline.excluded
 let failed = false
 
 for (const bucket of buckets) {
-	console.log(`\n${bucket} application bucket`)
+	console.log(`\n${BUCKET_LABELS[bucket]}`)
 	for (const rule of RULES) {
 		const now = counts[bucket][rule.id]
 		const was = baseline[bucket]?.[rule.id] ?? 0

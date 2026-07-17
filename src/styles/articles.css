@@ -1,60 +1,10 @@
 /* ----------------------------------------------------------------------------
    Articles / Research surface styles — the research landing loader, the
    Tiptap/ProseMirror article editor, rendered-article prose (Q&A, tables,
-   marks, code highlighting), plus the quarantined research/callout palette.
+   marks, code highlighting).
 
-   The palette is a freeze of the surface's brand values, not design-system
-   tokens: repoint or retire with this surface (see token-sweep-plan.md).
+   The research/callout palette lives in src/styles/themes/articles.css.
 ---------------------------------------------------------------------------- */
-
-/* ------------------- Research/Articles palette (quarantined) ------------------- */
-@layer base {
-	:root {
-		--research-blue: #3a8bff;
-		--research-blue-deep: #237bff;
-		--research-navy: #000e41;
-		--research-navy-soft: #0c2956;
-		--research-paper: #f5f9fd;
-		--research-gold: #f4d28e;
-		--research-orange: #ee802f;
-		--research-banner: #0b1e6b;
-		--research-blue-soft: #6ba8ff;
-		--research-blue-tint: #d7e7fe;
-		--research-blue-tint-hover: #bcd6fb;
-		--research-highlight: #fff3a3;
-
-		/* Articles callout tint */
-		--callout-border: #d89b2a;
-		--callout-bg: #fff8e6;
-		--callout-text: #4d3606;
-		--callout-accent: #a17317;
-
-		/* Link-tint hovers/fills (shared with reports/newsletters pages) */
-		--research-link-hover-bg: #1f67d233;
-		--research-link-button-bg: oklch(0.533 0.18 259 / 0.12);
-		--research-link-button-hover-bg: oklch(0.533 0.18 259 / 0.24);
-	}
-
-	html.dark {
-		--research-highlight: #5a4a16;
-		--research-link-hover-bg: #1f67d24d;
-		--callout-bg: #30230b;
-		--callout-text: var(--research-gold);
-		--callout-accent: var(--research-gold);
-	}
-}
-
-@theme {
-	/* Frozen effect shadows for the editor/landing (value-preserving) */
-	--shadow-article-dialog: 0 30px 80px -20px rgb(0 0 0 / 0.5);
-	--shadow-publish: 0 4px 12px -4px rgb(16 185 129 / 0.4);
-	--shadow-publish-hover: 0 6px 16px -4px rgb(16 185 129 / 0.55);
-	--shadow-danger: 0 4px 12px -4px rgb(220 38 38 / 0.45);
-	--shadow-research-glow: 0 0 20px -5px rgb(35 123 255 / 0.1);
-	--shadow-research-glow-md: 0 0 25px -5px rgb(35 123 255 / 0.2);
-	--shadow-research-glow-strong: 0 0 25px -5px rgb(35 123 255 / 0.25);
-	--shadow-research-glow-wide: 0 0 30px -5px rgb(35 123 255 / 0.15);
-}
 
 /* --------------------------- Research page loader --------------------------- */
 .research-loader {

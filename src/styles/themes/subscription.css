@@ -1,11 +1,10 @@
 /* ----------------------------------------------------------------------------
    Subscription product theme (also Sheets, Account, Downloads surfaces).
 
-   A standing product palette, not design-system tokens: values were frozen
-   from what the surfaces shipped with. The ratchet tracks sub-* usage in
-   core app code so the theme never leaks outside its product. If these
-   surfaces ever adopt the Llama Design System, repoint the values here and
-   delete the file.
+   A standing product palette, separate from the design system's tokens in
+   semantics.css — add tokens here as the product evolves. The ratchet
+   tracks sub-* usage in core app code so the theme never leaks outside its
+   product.
 ---------------------------------------------------------------------------- */
 
 @theme {

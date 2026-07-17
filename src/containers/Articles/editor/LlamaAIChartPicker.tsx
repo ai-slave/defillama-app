@@ -123,7 +123,7 @@ export function LlamaAIChartPickerDialog({
 							{item.frozen ? (
 								<span
 									title="Data frozen at save time — never auto-refreshes"
-									className="shrink-0 rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] text-sky-600 dark:text-sky-400"
+									className="shrink-0 rounded-full bg-(--research-blue)/10 px-2 py-0.5 text-[10px] text-(--research-blue-deep) dark:text-(--research-blue-soft)"
 								>
 									frozen
 								</span>

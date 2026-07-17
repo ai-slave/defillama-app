@@ -7,8 +7,8 @@ import { Icon } from '~/components/Icon'
 import { NestedMenu, NestedMenuItem } from '~/components/NestedMenu'
 import { inputStyles } from '~/ui/Input'
 import {
-	excludedSurfaceComboboxActionBarStyles,
-	excludedSurfaceComboboxPopoverSurfaceStyles,
+	productSurfaceComboboxActionBarStyles,
+	productSurfaceComboboxPopoverSurfaceStyles,
 	legacyPopoverActionButtonStyles,
 	legacyPopoverSeeMoreStyles,
 	legacyPopoverSelectCheckStyles,
@@ -112,13 +112,13 @@ export function SelectWithCombobox({
 	const valuesAreAnArrayOfStrings = typeof allValues[0] === 'string'
 	const showCheckboxes = Array.isArray(selectedValues) && !singleSelect
 	const useLegacyPopover = popoverVariant === 'legacy' || variant === 'pro'
-	const actionBarStyles = useLegacyPopover ? excludedSurfaceComboboxActionBarStyles : popoverActionBarStyles
-	const nestedActionBarStyles = useLegacyPopover ? excludedSurfaceComboboxActionBarStyles : nestedMenuActionBarStyles
+	const actionBarStyles = useLegacyPopover ? productSurfaceComboboxActionBarStyles : popoverActionBarStyles
+	const nestedActionBarStyles = useLegacyPopover ? productSurfaceComboboxActionBarStyles : nestedMenuActionBarStyles
 	const actionButtonStyles = useLegacyPopover ? legacyPopoverActionButtonStyles : popoverActionButtonStyles
 	const nestedActionButtonStyles = useLegacyPopover ? legacyPopoverActionButtonStyles : nestedMenuActionButtonStyles
 	const searchWrapperStyles = useLegacyPopover ? 'relative mb-2 p-3' : popoverSearchBlockStyles
 	const nestedSearchWrapperStyles = useLegacyPopover ? 'relative mb-2 p-3' : nestedMenuSearchBlockStyles
-	const surfaceStyles = useLegacyPopover ? excludedSurfaceComboboxPopoverSurfaceStyles : popoverSurfaceStyles
+	const surfaceStyles = useLegacyPopover ? productSurfaceComboboxPopoverSurfaceStyles : popoverSurfaceStyles
 	const rowStyles = useLegacyPopover ? legacySelectPopoverRowStyles : popoverRowWithBorderStyles
 	const nestedRowStyles = useLegacyPopover ? legacySelectPopoverRowStyles : nestedMenuSelectRowStyles
 	const seeMoreStyles = useLegacyPopover ? legacyPopoverSeeMoreStyles : popoverSeeMoreStyles

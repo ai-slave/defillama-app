@@ -349,7 +349,11 @@ function MyArticlesContent() {
 									<span
 										aria-hidden
 										className={`absolute top-2 bottom-2 left-0 w-[2px] rounded-r ${
-											scheduled ? 'bg-sky-500/70' : article.status === 'draft' ? 'bg-warning/70' : 'bg-transparent'
+											scheduled
+												? 'bg-(--research-blue)/70'
+												: article.status === 'draft'
+													? 'bg-warning/70'
+													: 'bg-transparent'
 										}`}
 									/>
 									<Link href={`/research/edit/${article.id}`} className="grid min-w-0 gap-1">
@@ -360,7 +364,7 @@ function MyArticlesContent() {
 											</h3>
 											{scheduled ? (
 												<span
-													className="rounded-sm bg-sky-500/10 px-1.5 py-0.5 font-jetbrains text-[10px] tracking-[0.12em] text-link uppercase"
+													className="rounded-sm bg-(--research-link-button-bg) px-1.5 py-0.5 font-jetbrains text-[10px] tracking-[0.12em] text-link uppercase"
 													title={`Goes live ${formatArticleDate(article.goLiveAt)}`}
 												>
 													Scheduled
