@@ -54,12 +54,14 @@ function TVLChartProbe({
 	chartKey,
 	currency,
 	breakdownType,
+	tokensToExclude,
 	enabled
 }: {
 	protocol: string | null
 	chartKey?: string
 	currency?: string
 	breakdownType?: 'chain-breakdown' | 'token-breakdown'
+	tokensToExclude?: string[]
 	enabled?: boolean
 }) {
 	useFetchProtocolTVLChart({
@@ -67,6 +69,7 @@ function TVLChartProbe({
 		key: chartKey,
 		currency,
 		breakdownType,
+		tokensToExclude,
 		enabled
 	})
 
@@ -79,7 +82,8 @@ function ChartBatchProbe({
 	includeBase,
 	source,
 	inflows,
-	chainBreakdown
+	chainBreakdown,
+	tokensToExclude
 }: {
 	protocol: string | null
 	keys: string[]
@@ -87,6 +91,7 @@ function ChartBatchProbe({
 	source: 'tvl' | 'treasury'
 	inflows?: boolean
 	chainBreakdown?: boolean
+	tokensToExclude?: string[]
 }) {
 	useFetchProtocolChartsByKeys({
 		protocol,
@@ -94,7 +99,8 @@ function ChartBatchProbe({
 		includeBase,
 		source,
 		inflows,
-		chainBreakdown
+		chainBreakdown,
+		tokensToExclude
 	})
 
 	return null
@@ -128,6 +134,7 @@ describe('ProtocolOverview client chart queries', () => {
 			'curve-dex',
 			'pool2',
 			'ETH',
+			undefined,
 			undefined
 		])
 		expect(mocks.fetchJson).toHaveBeenCalledWith(
@@ -154,9 +161,29 @@ describe('ProtocolOverview client chart queries', () => {
 			'curve-dex',
 			'borrowed',
 			undefined,
-			breakdownType
+			breakdownType,
+			undefined
 		])
 		expect(mocks.fetchJson).toHaveBeenCalledWith(expectedUrl)
+	})
+
+	it('adds own-token exclusions to every TVL batch query and cache key', () => {
+		renderToStaticMarkup(<ChartBatchProbe protocol="gate" keys={[]} source="tvl" tokensToExclude={['GT']} />)
+
+		expect(mocks.queryGroups.flat().map((query) => query.queryKey.at(-1))).toEqual(['GT', 'GT', 'GT', 'GT'])
+		expect(mocks.fetchJson.mock.calls.map(([url]) => url)).toEqual([
+			'/api/public/protocols/charts?kind=tvl&protocol=gate&tokensToExclude=GT',
+			'/api/public/protocols/charts?kind=tvl&protocol=gate&breakdownType=chain-breakdown&tokensToExclude=GT',
+			'/api/public/protocols/charts?kind=tvl&protocol=gate&breakdownType=token-breakdown&tokensToExclude=GT',
+			'/api/public/protocols/charts?kind=tvl&protocol=gate&currency=token&breakdownType=token-breakdown&tokensToExclude=GT'
+		])
+	})
+
+	it('treats an empty exclusion list as the unfiltered own-token state', () => {
+		renderToStaticMarkup(<TVLChartProbe protocol="gate" tokensToExclude={[]} />)
+
+		expect(mocks.queryOptions[0].queryKey.at(-1)).toBeUndefined()
+		expect(mocks.fetchJson).toHaveBeenCalledWith('/api/public/protocols/charts?kind=tvl&protocol=gate')
 	})
 
 	it('builds the current protocol TVL batch queries for value and breakdown charts', () => {
@@ -191,7 +218,7 @@ describe('ProtocolOverview client chart queries', () => {
 
 		expect(mocks.queryGroups).toHaveLength(4)
 		expect(mocks.queryGroups[0].map((query) => query.queryKey)).toEqual([
-			['protocol-overview', 'treasury-chart', 'makerdao', 'ownTokens', undefined, undefined]
+			['protocol-overview', 'treasury-chart', 'makerdao', 'ownTokens', undefined, undefined, undefined]
 		])
 		expect(mocks.fetchJson.mock.calls.map(([url]) => url)).toEqual([
 			'/api/public/protocols/charts?kind=treasury&protocol=makerdao&key=ownTokens',

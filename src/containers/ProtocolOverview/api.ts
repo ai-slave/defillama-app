@@ -16,10 +16,14 @@ import type {
 const PROTOCOL_API_URL = `${SERVER_URL}/updatedProtocol`
 const PROTOCOL_API_MINI_URL = `${SERVER_URL}/_fe/updatedProtocol-mini`
 
-const appendOptionalQueryParams = (url: string, params: Pick<IProtocolChartV2Params, 'key' | 'currency'>) => {
+const appendOptionalQueryParams = (
+	url: string,
+	params: Pick<IProtocolChartV2Params, 'key' | 'currency' | 'tokensToExclude'>
+) => {
 	const parsedUrl = new URL(url, 'http://placeholder')
 	if (params.key) parsedUrl.searchParams.set('key', params.key)
 	if (params.currency) parsedUrl.searchParams.set('currency', params.currency)
+	if (params.tokensToExclude?.length) parsedUrl.searchParams.set('tokensToExclude', params.tokensToExclude.join(','))
 	const isAbsoluteUrl = /^https?:\/\//.test(url)
 	return isAbsoluteUrl
 		? `${parsedUrl.protocol}//${parsedUrl.host}${parsedUrl.pathname}${parsedUrl.search}`
@@ -74,14 +78,16 @@ const fetchProtocolValueChart = async ({
 	path,
 	key,
 	currency,
+	tokensToExclude,
 	timeout
 }: {
 	path: string
 	key?: string
 	currency?: string
+	tokensToExclude?: string[]
 	timeout?: number
 }): Promise<IProtocolValueChart | null> => {
-	const finalUrl = appendOptionalQueryParams(path, { key, currency })
+	const finalUrl = appendOptionalQueryParams(path, { key, currency, tokensToExclude })
 	const values = await fetchJson<IProtocolValueChartRaw>(finalUrl, timeout != null ? { timeout } : undefined)
 	return normalizeProtocolValueChart(values)
 }
@@ -93,14 +99,16 @@ const fetchProtocolChainBreakdownChart = async ({
 	path,
 	key,
 	currency,
+	tokensToExclude,
 	timeout
 }: {
 	path: string
 	key?: string
 	currency?: string
+	tokensToExclude?: string[]
 	timeout?: number
 }): Promise<IProtocolChainBreakdownChart | null> => {
-	const finalUrl = appendOptionalQueryParams(path, { key, currency })
+	const finalUrl = appendOptionalQueryParams(path, { key, currency, tokensToExclude })
 	const values = await fetchJson<IProtocolChainBreakdownChartRaw>(finalUrl, timeout != null ? { timeout } : undefined)
 	return normalizeProtocolChainBreakdownChart(values)
 }
@@ -112,14 +120,16 @@ const fetchProtocolTokenBreakdownChart = async ({
 	path,
 	key,
 	currency,
+	tokensToExclude,
 	timeout
 }: {
 	path: string
 	key?: string
 	currency?: string
+	tokensToExclude?: string[]
 	timeout?: number
 }): Promise<IProtocolTokenBreakdownChart | null> => {
-	const finalUrl = appendOptionalQueryParams(path, { key, currency })
+	const finalUrl = appendOptionalQueryParams(path, { key, currency, tokensToExclude })
 	const values = await fetchJson<IProtocolTokenBreakdownChartRaw>(finalUrl, timeout != null ? { timeout } : undefined)
 	return normalizeProtocolTokenBreakdownChart(values)
 }
@@ -147,8 +157,9 @@ const fetchProtocolMetricValueChart = async ({
 	protocol,
 	key,
 	currency,
+	tokensToExclude,
 	timeout
-}: Pick<IProtocolChartV2Params, 'protocol' | 'key' | 'currency'> & {
+}: Pick<IProtocolChartV2Params, 'protocol' | 'key' | 'currency' | 'tokensToExclude'> & {
 	namespace: ProtocolChartNamespace
 	timeout?: number
 }): Promise<IProtocolValueChart | null> => {
@@ -156,6 +167,7 @@ const fetchProtocolMetricValueChart = async ({
 		path: buildProtocolChartPath({ namespace, protocol }),
 		key,
 		currency,
+		tokensToExclude,
 		timeout
 	})
 }
@@ -168,14 +180,16 @@ const fetchProtocolMetricChainBreakdownChart = async ({
 	protocol,
 	key,
 	currency,
+	tokensToExclude,
 	timeout
-}: Pick<IProtocolChartV2Params, 'protocol' | 'key' | 'currency' | 'timeout'> & {
+}: Pick<IProtocolChartV2Params, 'protocol' | 'key' | 'currency' | 'tokensToExclude' | 'timeout'> & {
 	namespace: ProtocolChartNamespace
 }): Promise<IProtocolChainBreakdownChart | null> => {
 	return fetchProtocolChainBreakdownChart({
 		path: buildProtocolChartPath({ namespace, protocol, breakdownType: 'chain-breakdown' }),
 		key,
 		currency,
+		tokensToExclude,
 		timeout
 	})
 }
@@ -188,14 +202,16 @@ const fetchProtocolMetricTokenBreakdownChart = async ({
 	protocol,
 	key,
 	currency,
+	tokensToExclude,
 	timeout
-}: Pick<IProtocolChartV2Params, 'protocol' | 'key' | 'currency' | 'timeout'> & {
+}: Pick<IProtocolChartV2Params, 'protocol' | 'key' | 'currency' | 'tokensToExclude' | 'timeout'> & {
 	namespace: ProtocolChartNamespace
 }): Promise<IProtocolTokenBreakdownChart | null> => {
 	return fetchProtocolTokenBreakdownChart({
 		path: buildProtocolChartPath({ namespace, protocol, breakdownType: 'token-breakdown' }),
 		key,
 		currency,
+		tokensToExclude,
 		timeout
 	})
 }
@@ -207,13 +223,18 @@ const fetchProtocolTvlValueChart = async ({
 	protocol,
 	key,
 	currency,
+	tokensToExclude,
 	timeout
-}: Pick<IProtocolChartV2Params, 'protocol' | 'key' | 'currency' | 'timeout'>): Promise<IProtocolValueChart | null> => {
+}: Pick<
+	IProtocolChartV2Params,
+	'protocol' | 'key' | 'currency' | 'tokensToExclude' | 'timeout'
+>): Promise<IProtocolValueChart | null> => {
 	return fetchProtocolMetricValueChart({
 		namespace: 'tvl',
 		protocol,
 		key,
 		currency,
+		tokensToExclude,
 		timeout
 	})
 }
@@ -225,16 +246,18 @@ const fetchProtocolTvlChainBreakdownChart = async ({
 	protocol,
 	key,
 	currency,
+	tokensToExclude,
 	timeout
 }: Pick<
 	IProtocolChartV2Params,
-	'protocol' | 'key' | 'currency' | 'timeout'
+	'protocol' | 'key' | 'currency' | 'tokensToExclude' | 'timeout'
 >): Promise<IProtocolChainBreakdownChart | null> => {
 	return fetchProtocolMetricChainBreakdownChart({
 		namespace: 'tvl',
 		protocol,
 		key,
 		currency,
+		tokensToExclude,
 		timeout
 	})
 }
@@ -246,16 +269,18 @@ export const fetchProtocolTvlTokenBreakdownChart = async ({
 	protocol,
 	key,
 	currency,
+	tokensToExclude,
 	timeout
 }: Pick<
 	IProtocolChartV2Params,
-	'protocol' | 'key' | 'currency' | 'timeout'
+	'protocol' | 'key' | 'currency' | 'tokensToExclude' | 'timeout'
 >): Promise<IProtocolTokenBreakdownChart | null> => {
 	return fetchProtocolMetricTokenBreakdownChart({
 		namespace: 'tvl',
 		protocol,
 		key,
 		currency,
+		tokensToExclude,
 		timeout
 	})
 }
@@ -340,17 +365,18 @@ export async function fetchProtocolTvlChart({
 	key,
 	currency,
 	breakdownType,
+	tokensToExclude,
 	timeout
 }: IProtocolChartV2Params): Promise<
 	IProtocolValueChart | IProtocolChainBreakdownChart | IProtocolTokenBreakdownChart | null
 > {
 	if (breakdownType === 'chain-breakdown') {
-		return fetchProtocolTvlChainBreakdownChart({ protocol, key, currency, timeout })
+		return fetchProtocolTvlChainBreakdownChart({ protocol, key, currency, tokensToExclude, timeout })
 	}
 	if (breakdownType === 'token-breakdown') {
-		return fetchProtocolTvlTokenBreakdownChart({ protocol, key, currency, timeout })
+		return fetchProtocolTvlTokenBreakdownChart({ protocol, key, currency, tokensToExclude, timeout })
 	}
-	return fetchProtocolTvlValueChart({ protocol, key, currency, timeout })
+	return fetchProtocolTvlValueChart({ protocol, key, currency, tokensToExclude, timeout })
 }
 
 /**

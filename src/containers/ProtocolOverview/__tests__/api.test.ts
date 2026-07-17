@@ -39,10 +39,14 @@ describe('ProtocolOverview API chart fetchers', () => {
 			[1, { Ethereum: 10 }]
 		])
 
-		const result = await fetchProtocolTvlChart({ protocol: 'aave', breakdownType: 'chain-breakdown' })
+		const result = await fetchProtocolTvlChart({
+			protocol: 'aave',
+			breakdownType: 'chain-breakdown',
+			tokensToExclude: ['GT']
+		})
 
 		const url = String(fetchJsonMock.mock.calls[0][0])
-		expect(url).toContain('/chart/tvl/protocol/aave/chain-breakdown')
+		expect(url).toContain('/chart/tvl/protocol/aave/chain-breakdown?tokensToExclude=GT')
 		expect(url).not.toContain('/chart/treasury/')
 		expect(result).toEqual([
 			[1000, { Ethereum: 10 }],

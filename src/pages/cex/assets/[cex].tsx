@@ -40,6 +40,7 @@ interface CexAssetsPageProps {
 
 const INFLOWS_TOOLTIP_FORMATTER_USD = createInflowsTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
 const AGG_TOOLTIP_FORMATTER_USD = createAggregateTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
+const EMPTY_CHART_KEYS: string[] = []
 
 export const getStaticProps = withPerformanceLogging(
 	'cex/assets/[cex]',
@@ -439,9 +440,9 @@ export default function Protocols(props: CexAssetsPageProps) {
 	// Read query params only when router is ready to avoid hydration mismatch.
 	const includeOwnTokens = router.isReady && router.query.includeOwnTokens === 'true'
 	const protocol = slug(props.name ?? '')
-	const extraKeys = React.useMemo(() => {
-		if (!includeOwnTokens || !props.ownToken) return []
-		return ['OwnTokens']
+	const tokensToExclude = React.useMemo(() => {
+		if (includeOwnTokens || !props.ownToken) return []
+		return [props.ownToken]
 	}, [includeOwnTokens, props.ownToken])
 
 	const {
@@ -463,8 +464,9 @@ export default function Protocols(props: CexAssetsPageProps) {
 		tokenInflowsCharts
 	} = useProtocolBreakdownCharts({
 		protocol,
-		keys: extraKeys,
-		includeBase: true
+		keys: EMPTY_CHART_KEYS,
+		includeBase: true,
+		tokensToExclude
 	})
 
 	const toggleIncludeOwnTokens = (event: React.ChangeEvent<HTMLInputElement>) => {

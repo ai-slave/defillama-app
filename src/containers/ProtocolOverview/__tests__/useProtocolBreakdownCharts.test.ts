@@ -58,14 +58,12 @@ describe('ProtocolOverview breakdown chart computation', () => {
 			],
 			dimensions: ['timestamp', 'Ethereum', 'Arbitrum']
 		})
-		expect(result.usdInflowsDataset).toEqual({
-			source: [{ timestamp: DAY_MS * 2 + HOUR_MS, 'USD Inflows': 110 }],
-			dimensions: ['timestamp', 'USD Inflows']
-		})
 		expect(result.tokensUnique).toEqual(['ETH', 'USDC', 'UNKNOWN0'])
 		expect(result.tokenBreakdownLatest).toEqual({ USDC: 110, ETH: 220 })
 		expect(result.tokenInflowsDataset?.dimensions).toEqual(['timestamp', 'ETH', 'USDC', 'UNKNOWN0'])
 		expect(result.tokenInflowsDataset?.source).toEqual([{ timestamp: DAY_MS * 2, ETH: 44, USDC: 5.238095238095238 }])
+		expect(result.usdInflowsDataset?.source[0]?.timestamp).toBe(DAY_MS * 2)
+		expect(result.usdInflowsDataset?.source[0]?.['USD Inflows']).toBeCloseTo(49.23809523809524)
 		expect(result.tokenInflowsCharts.map((chart) => chart.name)).toEqual(['ETH', 'USDC', 'UNKNOWN0'])
 	})
 

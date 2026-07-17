@@ -24,6 +24,7 @@ interface IUseProtocolBreakdownChartsParams {
 	source?: 'tvl' | 'treasury'
 	inflows?: boolean
 	chainsUnique?: string[]
+	tokensToExclude?: string[]
 }
 
 type FailedQueryCategory = 'tvl' | 'chain-breakdown' | 'token-breakdown-usd' | 'token-breakdown-raw'
@@ -140,19 +141,21 @@ const aggregateBreakdownCharts = (charts: Array<BreakdownChart | null | undefine
 	return Array.from(summedByTimestamp.entries()).sort((a, b) => a[0] - b[0])
 }
 
-const buildUsdInflowsFromTvlChart = (
-	tvlChart: IProtocolValueChart | null | undefined
+const buildUsdInflowsFromTokenInflows = (
+	tokenInflows: TokenInflowsDataset['source'] | null | undefined
 ): Array<[number, number]> | null => {
-	if (!tvlChart || tvlChart.length < 2) return null
+	if (!tokenInflows?.length) return null
 
 	const inflows: Array<[number, number]> = []
-	for (let i = 1; i < tvlChart.length; i++) {
-		const [timestamp, value] = tvlChart[i]
-		const previousValue = tvlChart[i - 1][1]
-		inflows.push([timestamp, value - previousValue])
+	for (const point of tokenInflows) {
+		let total = 0
+		for (const token in point) {
+			if (token !== 'timestamp') total += point[token]
+		}
+		inflows.push([point.timestamp, total])
 	}
 
-	return inflows.length > 0 ? inflows : null
+	return inflows
 }
 
 const buildBreakdownSourceAndKeys = (
@@ -428,8 +431,8 @@ export const buildComputedBreakdownResult = ({
 			? EMPTY_TOKEN_BREAKDOWN_LATEST_KEY
 			: getTokenBreakdownKey(tokenBreakdownLatest)
 
-	const usdInflows = buildUsdInflowsFromTvlChart(tvlChart)
 	const tokenInflows = buildTokenInflowsFromBreakdowns(tokenBreakdownUSD, tokenBreakdown, tokensUnique)
+	const usdInflows = buildUsdInflowsFromTokenInflows(tokenInflows)
 
 	let usdInflowsDataset: InflowsDataset | null = null
 	if (usdInflows?.length) {
@@ -495,7 +498,8 @@ export function useProtocolBreakdownCharts({
 	includeBase = true,
 	source = 'tvl',
 	inflows = true,
-	chainsUnique: knownChains
+	chainsUnique: knownChains,
+	tokensToExclude
 }: IUseProtocolBreakdownChartsParams): IUseProtocolBreakdownChartsResult {
 	const chainBreakdown = !knownChains || knownChains.length >= 2
 
@@ -505,7 +509,15 @@ export function useProtocolBreakdownCharts({
 		chainBreakdownChartQueries,
 		tokenBreakdownUsdQueries,
 		tokenBreakdownRawQueries
-	} = useFetchProtocolChartsByKeys({ protocol, keys, includeBase, source, inflows, chainBreakdown })
+	} = useFetchProtocolChartsByKeys({
+		protocol,
+		keys,
+		includeBase,
+		source,
+		inflows,
+		chainBreakdown,
+		tokensToExclude
+	})
 
 	const isNetworkLoading =
 		tvlChartQueries.some((query) => query.isLoading) ||

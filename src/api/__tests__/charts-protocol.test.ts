@@ -113,8 +113,8 @@ describe('/api/public/protocols/charts', () => {
 		{
 			label: 'TVL value chart',
 			kind: 'tvl',
-			query: { key: 'pool2', currency: 'ETH' },
-			expected: { protocol: 'aave', key: 'pool2', currency: 'ETH' },
+			query: { key: 'pool2', currency: 'ETH', tokensToExclude: 'GT,MNT' },
+			expected: { protocol: 'aave', key: 'pool2', currency: 'ETH', tokensToExclude: ['GT', 'MNT'] },
 			fetcher: fetchProtocolTvlChartMock,
 			oppositeFetcher: fetchProtocolTreasuryChartMock
 		},

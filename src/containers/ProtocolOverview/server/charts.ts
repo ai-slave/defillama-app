@@ -186,6 +186,7 @@ export const protocolCharts = defineApiRoute({
 				const key = queryString(req.query, 'key')
 				const currency = queryString(req.query, 'currency')
 				const breakdownType = queryString(req.query, 'breakdownType')
+				const tokensToExclude = queryString(req.query, 'tokensToExclude')?.split(',').filter(Boolean)
 
 				if (!protocol) {
 					return badRequest('protocol parameter is required')
@@ -199,6 +200,7 @@ export const protocolCharts = defineApiRoute({
 					protocol: canonicalProtocol,
 					...(key ? { key } : {}),
 					...(currency ? { currency } : {}),
+					...(kind === 'tvl' && tokensToExclude?.length ? { tokensToExclude } : {}),
 					...(breakdownType
 						? {
 								breakdownType: breakdownType as NonNullable<

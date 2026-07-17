@@ -100,6 +100,7 @@ export interface IProtocolChartV2Params {
 	protocol: string
 	key?: string
 	currency?: string
+	tokensToExclude?: string[]
 	breakdownType?: ProtocolChartBreakdownType
 	timeout?: number
 }

@@ -8,7 +8,8 @@ export type ProtocolValueChartQueryKey = [
 	string | null,
 	string | undefined,
 	string | undefined,
-	IProtocolChartV2Params['breakdownType']
+	IProtocolChartV2Params['breakdownType'],
+	string | undefined
 ]
 
 const protocolValueChartSources = {
@@ -30,13 +31,15 @@ export const buildProtocolValueChartApiUrl = ({
 	protocol,
 	key,
 	currency,
-	breakdownType
+	breakdownType,
+	tokensToExclude
 }: {
 	source: ProtocolValueChartSource
 	protocol: string
 	key?: string
 	currency?: string
 	breakdownType?: IProtocolChartV2Params['breakdownType']
+	tokensToExclude?: string[]
 }) => {
 	const searchParams = new URLSearchParams()
 	searchParams.set('kind', protocolValueChartSources[source].apiKind)
@@ -44,6 +47,7 @@ export const buildProtocolValueChartApiUrl = ({
 	if (key != null) searchParams.set('key', key)
 	if (currency != null) searchParams.set('currency', currency)
 	if (breakdownType != null) searchParams.set('breakdownType', breakdownType)
+	if (tokensToExclude?.length) searchParams.set('tokensToExclude', tokensToExclude.join(','))
 	return `/api/public/protocols/charts?${searchParams.toString()}`
 }
 
@@ -52,18 +56,21 @@ export const buildProtocolValueChartQueryKey = ({
 	protocol,
 	key,
 	currency,
-	breakdownType
+	breakdownType,
+	tokensToExclude
 }: {
 	source: ProtocolValueChartSource
 	protocol: string | null
 	key?: string
 	currency?: string
 	breakdownType?: IProtocolChartV2Params['breakdownType']
+	tokensToExclude?: string[]
 }): ProtocolValueChartQueryKey => [
 	'protocol-overview',
 	protocolValueChartSources[source].queryKind,
 	protocol,
 	key,
 	currency,
-	breakdownType
+	breakdownType,
+	tokensToExclude?.length ? tokensToExclude.join(',') : undefined
 ]
