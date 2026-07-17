@@ -27,7 +27,10 @@ vi.mock('../snapshot', async (importOriginal) => ({
 }))
 // Mutable so a test can populate slug → valuation and assert the airdrop-hint stamping.
 const { raiseValuationsMap } = vi.hoisted(() => ({ raiseValuationsMap: new Map<string, number>() }))
-vi.mock('../server/raiseValuations', () => ({ getRaiseValuations: () => Promise.resolve(raiseValuationsMap) }))
+vi.mock('../server/raiseValuations', () => ({
+	getRaiseValuations: () => Promise.resolve(raiseValuationsMap),
+	getReferralUrls: () => Promise.resolve(new Map<string, string>())
+}))
 
 import {
 	getBorrowMarketsPage as getBorrowMarketsPageFromSnapshot,

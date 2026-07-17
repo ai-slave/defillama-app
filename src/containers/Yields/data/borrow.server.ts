@@ -15,7 +15,7 @@ import {
 	parseTokenPairFilters,
 	parseTriState
 } from './query'
-import { getRaiseValuations } from './server/raiseValuations'
+import { getRaiseValuations, getReferralUrls } from './server/raiseValuations'
 import { readYieldsDepegs, readYieldsMeta, type YieldsSnapshot } from './snapshot'
 import type {
 	ApyComponent,
@@ -141,9 +141,14 @@ function decorateRouteTableRow(
 	components: ApyComponent[],
 	depegByPool: Map<string, DepegRow>,
 	raiseValuations: Map<string, number>,
+	referralUrls: Map<string, string>,
 	riskCovered: Set<string>
 ): RouteTableRow {
 	const routeRow = toRouteTableRow(row, window, components)
+	// Outbound link: the protocol's referral URL wins over the leg's own URL (site-wide
+	// ref-link policy, same preference as the protocol pages' website link).
+	const referralUrl = row.protocolSlug ? referralUrls.get(row.protocolSlug) : undefined
+	if (referralUrl) routeRow.url = referralUrl
 	const collateralDepeg = depegByPool.get(row.collateral.id)
 	const borrowDepeg = depegByPool.get(row.borrow.id)
 	const worst =
@@ -179,11 +184,12 @@ export async function getBorrowMarketsPage(
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
-	const [rows, meta, depegs, raiseValuations, riskCovered] = await Promise.all([
+	const [rows, meta, depegs, raiseValuations, referralUrls, riskCovered] = await Promise.all([
 		getEnrichedMarkets(snapshot),
 		readYieldsMeta(snapshot),
 		readYieldsDepegs(snapshot),
 		getRaiseValuations(snapshot),
+		getReferralUrls(snapshot),
 		getRiskCoveredPoolIds()
 	])
 	const memePoolIds = common.includeMemeTokens ? null : new Set(meta.meme_pool_ids)
@@ -212,6 +218,10 @@ export async function getBorrowMarketsPage(
 		if (!matchesBorrow([row.tokenKeys?.borrow_token])) continue
 
 		const marketRow = toMarketTableRow(row, window, components)
+		// Outbound link: the protocol's referral URL wins over the market's own URL (site-wide
+		// ref-link policy, same preference as the protocol pages' website link).
+		const referralUrl = row.protocolSlug ? referralUrls.get(row.protocolSlug) : undefined
+		if (referralUrl) marketRow.url = referralUrl
 		const depeg = depegByPool.get(row.id)
 		if (depeg) {
 			marketRow.pegDeviation = depeg.deviation_pct
@@ -246,11 +256,12 @@ export async function getBorrowRoutesPage(
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
-	const [rows, meta, depegs, raiseValuations, riskCovered] = await Promise.all([
+	const [rows, meta, depegs, raiseValuations, referralUrls, riskCovered] = await Promise.all([
 		getEnrichedRoutes(snapshot),
 		readYieldsMeta(snapshot),
 		readYieldsDepegs(snapshot),
 		getRaiseValuations(snapshot),
+		getReferralUrls(snapshot),
 		getRiskCoveredPoolIds()
 	])
 	const memePoolIds = common.includeMemeTokens ? null : new Set(meta.meme_pool_ids)
@@ -277,7 +288,9 @@ export async function getBorrowRoutesPage(
 		if (!matchesCollateral([row.collateralTokenKeys])) continue
 		if (!matchesBorrow([row.borrowTokenKeys])) continue
 
-		pageRows.push(decorateRouteTableRow(row, window, components, depegByPool, raiseValuations, riskCovered))
+		pageRows.push(
+			decorateRouteTableRow(row, window, components, depegByPool, raiseValuations, referralUrls, riskCovered)
+		)
 	}
 
 	return paginateAndSortRows<RouteTableRow, RouteSortKey>({
@@ -289,10 +302,11 @@ export async function getBorrowRoutesPage(
 }
 
 export async function getBorrowRoutesForTokenKeys(snapshot: YieldsSnapshot, tokenKeys: string[]) {
-	const [rows, depegs, raiseValuations, riskCovered] = await Promise.all([
+	const [rows, depegs, raiseValuations, referralUrls, riskCovered] = await Promise.all([
 		getEnrichedRoutes(snapshot),
 		readYieldsDepegs(snapshot),
 		getRaiseValuations(snapshot),
+		getReferralUrls(snapshot),
 		getRiskCoveredPoolIds()
 	])
 	const depegByPool = new Map(depegs.map((depeg) => [depeg.pool_id, depeg]))
@@ -307,7 +321,15 @@ export async function getBorrowRoutesForTokenKeys(snapshot: YieldsSnapshot, toke
 		const borrowMatch = matchesToken([row.borrowTokenKeys])
 		if (!collateralMatch && !borrowMatch) continue
 
-		const route = decorateRouteTableRow(row, window, components, depegByPool, raiseValuations, riskCovered)
+		const route = decorateRouteTableRow(
+			row,
+			window,
+			components,
+			depegByPool,
+			raiseValuations,
+			referralUrls,
+			riskCovered
+		)
 		if (collateralMatch) useAsCollateral.push(route)
 		if (borrowMatch) borrowThis.push(route)
 	}

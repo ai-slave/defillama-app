@@ -1,5 +1,6 @@
 import type { GetServerSideProps } from 'next'
-import { resolveApy, resolveVariant, stabilityRatingFromScore } from '~/containers/Yields/data/apy'
+import { resolveApy } from '~/containers/Yields/data/apy'
+import { getReferralUrls } from '~/containers/Yields/data/server/raiseValuations'
 import { readYieldsMeta, type YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import type { ApyComponent } from '~/containers/Yields/data/types'
 import {
@@ -12,6 +13,7 @@ import {
 import { buildBorrowChart, buildSupplyChart } from '~/containers/Yields/poolDetail/poolCharts'
 import { PoolDetailView, type PoolDetailViewProps, type PoolSide } from '~/containers/Yields/poolDetail/PoolDetailView'
 import { getPoolHistoryRange } from '~/containers/Yields/poolDetail/queryState'
+import { getPoolStability } from '~/containers/Yields/poolDetail/stability'
 import type { BorrowMarketDetail, PoolHistoryRange } from '~/containers/Yields/poolDetail/types'
 import Layout from '~/layout'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
@@ -65,9 +67,10 @@ async function buildBorrowOnlyProps(
 ): Promise<Omit<PoolDetailViewProps, 'hasRisk'>> {
 	const available = market.available_history ?? { supply: false, borrow: true }
 	const metaPromise = readYieldsMeta(snapshot)
-	const [borrowHistory, meta] = await Promise.all([
+	const [borrowHistory, meta, referralUrls] = await Promise.all([
 		available.borrow ? optionalResource(() => fetchBorrowMarketDetailHistory(id, initialRange)) : Promise.resolve(null),
-		metaPromise
+		metaPromise,
+		getReferralUrls(snapshot)
 	])
 	const borrowChart = borrowHistory?.length ? buildBorrowChart(borrowHistory) : null
 
@@ -132,10 +135,10 @@ async function buildBorrowOnlyProps(
 		supplyChart: null,
 		borrowChart,
 		holders: market.holders ?? null,
-		stability: null,
+		stabilityAvailable: false,
 		details: {
 			poolTokenAddress: market.pool_token?.address ?? null,
-			url: market.url ?? null,
+			url: (protocolMeta?.slug ? referralUrls.get(protocolMeta.slug) : undefined) ?? market.url ?? null,
 			protocolName: market.protocol,
 			assets: []
 		}
@@ -170,11 +173,12 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 	// render the borrow APY chart alongside the supply one, as the old page did.
 	const available = pool.available_history ?? { supply: true, borrow: false }
 	const metaPromise = readYieldsMeta(snapshot)
-	const [history, borrowHistory, meta, borrowMarket] = await Promise.all([
+	const [history, borrowHistory, meta, borrowMarket, referralUrls] = await Promise.all([
 		available.supply ? optionalResource(() => fetchPoolDetailHistory(id, initialRange)) : Promise.resolve(null),
 		available.borrow ? optionalResource(() => fetchBorrowMarketDetailHistory(id, initialRange)) : Promise.resolve(null),
 		metaPromise,
-		available.borrow ? optionalResource(() => fetchBorrowMarketDetail(id)) : Promise.resolve(null)
+		available.borrow ? optionalResource(() => fetchBorrowMarketDetail(id)) : Promise.resolve(null),
+		getReferralUrls(snapshot)
 	])
 
 	// Rows carry plain protocol/chain NAME strings; join slug / category / audit from /v2/meta.
@@ -227,7 +231,7 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 		metrics: [{ label: usesSupplyLabel ? 'Total supplied' : 'TVL', value: pool.tvl_usd ?? null }]
 	}
 
-	const stabilityScore = resolveVariant<number>(pool.stability_30d, DETAIL_APY_COMPONENTS)
+	const stabilityAvailable = getPoolStability(pool) != null
 
 	res.setHeader('cache-control', 'public, s-maxage=300, stale-while-revalidate=600')
 
@@ -254,11 +258,10 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 			supplyChart,
 			borrowChart,
 			holders: pool.holders ?? null,
-			stability:
-				stabilityScore != null ? { score: stabilityScore, rating: stabilityRatingFromScore(stabilityScore) } : null,
+			stabilityAvailable,
 			details: {
 				poolTokenAddress: pool.pool_token?.address ?? null,
-				url: pool.url ?? null,
+				url: (protocolMeta?.slug ? referralUrls.get(protocolMeta.slug) : undefined) ?? pool.url ?? null,
 				protocolName: pool.protocol,
 				assets: assetSymbols(pool)
 			}

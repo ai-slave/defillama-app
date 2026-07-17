@@ -18,7 +18,7 @@ import {
 	parseTriState,
 	type TokenFilterInput
 } from './query'
-import { getRaiseValuations } from './server/raiseValuations'
+import { getRaiseValuations, getReferralUrls } from './server/raiseValuations'
 import { readYieldsDepegs, readYieldsExploits, readYieldsMeta, type YieldsSnapshot } from './snapshot'
 import type { DepegRow, EarnPageRow, EnrichedEarnRow, Token } from './types'
 
@@ -73,12 +73,13 @@ export async function getEarnPage(
 
 	const stablecoin = queryBoolean(query, 'stablecoin')
 	const halal = queryBoolean(query, 'halal')
-	const [rows, meta, depegs, exploits, raiseValuations, riskCovered] = await Promise.all([
+	const [rows, meta, depegs, exploits, raiseValuations, referralUrls, riskCovered] = await Promise.all([
 		getEnrichedEarn(snapshot),
 		readYieldsMeta(snapshot),
 		readYieldsDepegs(snapshot),
 		readYieldsExploits(snapshot),
 		getRaiseValuations(snapshot),
+		getReferralUrls(snapshot),
 		getRiskCoveredPoolIds()
 	])
 	common.tokens = normalizeLegacyTokens(common.tokens, meta)
@@ -121,6 +122,8 @@ export async function getEarnPage(
 		if (maxApy != null && !(resolvedApy.total != null && resolvedApy.total <= maxApy)) continue
 
 		const pageRow = toEarnPageRow(row, resolvedApy, window, components, depegByPool.get(row.id), raiseValuations)
+		const referralUrl = row.protocolSlug ? referralUrls.get(row.protocolSlug) : undefined
+		if (referralUrl) pageRow.url = referralUrl
 		if (riskCovered.has(row.id)) pageRow.hasRiskData = true
 		if (exploitedPoolIds.has(row.id)) pageRow.exploited = true
 		pageRows.push(pageRow)

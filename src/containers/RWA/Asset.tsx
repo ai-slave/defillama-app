@@ -980,7 +980,12 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 
 			{displayPools.length > 0 ? (
 				<SectionCard title={`DeFi Yield Opportunities (${displayPools.length})`}>
-					<PaginatedYieldsPoolTable data={displayPools} initialPageSize={10} appearance="embedded" />
+					<PaginatedYieldsPoolTable
+						data={displayPools}
+						initialPageSize={10}
+						appearance="embedded"
+						hydratePremiumStability
+					/>
 				</SectionCard>
 			) : null}
 

@@ -2,9 +2,10 @@ import { useRouter } from 'next/router'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { useEntityQuestions } from '~/containers/LlamaAI/hooks/useEntityQuestions'
+import { useAuthContext } from '~/containers/Subscription/auth'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
-import { fetchJson } from '~/utils/async'
-import { YIELD_EARN_DATASET_API } from '../constants'
+import { handleSimpleFetchResponse } from '~/utils/async'
+import { YIELD_EARN_DATASET_API, YIELD_EARN_PREMIUM_DATASET_API } from '../constants'
 import type { TokenOption } from '../data/types'
 import { prepareYieldPoolsCsv } from '../domain/poolCsv'
 import { YieldFilters } from '../Filters'
@@ -45,6 +46,7 @@ const EarnView = ({
 	entityQuestions?: string[]
 }) => {
 	const router = useRouter()
+	const { authorizedFetch } = useAuthContext()
 
 	// Rewrite legacy bookmark params to canonical before the first fetch (gates `enabled`).
 	const normalized = useLegacyYieldsUrlNormalizer({ page: 'earn', tokens })
@@ -116,7 +118,9 @@ const EarnView = ({
 	const questions = filteredQuestionsData?.questions?.length ? filteredQuestionsData.questions : baseQuestions
 
 	const prepareCsv = async () => {
-		const csvData = await fetchJson<EarnRowsResponse>(`${YIELD_EARN_DATASET_API}${buildAllRowsQueryString()}`)
+		const response = await authorizedFetch(`${YIELD_EARN_PREMIUM_DATASET_API}${buildAllRowsQueryString()}`)
+		if (!response) throw new Error('Authentication required')
+		const csvData = (await handleSimpleFetchResponse(response).then((value) => value.json())) as EarnRowsResponse
 		return prepareYieldPoolsCsv(csvData.rows, router.query)
 	}
 

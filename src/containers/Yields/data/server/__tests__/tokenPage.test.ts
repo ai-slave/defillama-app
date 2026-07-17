@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
+const { getEarnPageMock } = vi.hoisted(() => ({ getEarnPageMock: vi.fn() }))
+
 const meta = {
 	chains: [],
 	protocols: [],
@@ -23,8 +25,9 @@ vi.mock('../../snapshot', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../../snapshot')>()),
 	readYieldsMeta: vi.fn(() => Promise.resolve(meta))
 }))
+vi.mock('../../earn.server', () => ({ getEarnPage: getEarnPageMock }))
 
-import { resolveTokenOptionKeys as resolveTokenOptionKeysFromSnapshot } from '../tokenPage'
+import { getTokenEarnRows, resolveTokenOptionKeys as resolveTokenOptionKeysFromSnapshot } from '../tokenPage'
 
 const snapshot = {} as never
 const resolveTokenOptionKeys = (symbol: string) => resolveTokenOptionKeysFromSnapshot(snapshot, symbol)
@@ -50,5 +53,17 @@ describe('resolveTokenOptionKeys', () => {
 	it('returns no keys for an unknown symbol or blank input', async () => {
 		await expect(resolveTokenOptionKeys('NOPE')).resolves.toEqual([])
 		await expect(resolveTokenOptionKeys('   ')).resolves.toEqual([])
+	})
+})
+
+describe('getTokenEarnRows', () => {
+	it('redacts stability fields from public token page rows', async () => {
+		getEarnPageMock.mockResolvedValue({
+			rows: [{ id: 'pool-1', stabilityScore: 0.9, stabilityRating: 'stable', stabilityAvg30d: 4.2 }]
+		})
+
+		const result = await getTokenEarnRows(snapshot, 'BTC')
+
+		expect(result.rows).toEqual([{ id: 'pool-1', stabilityScore: null, stabilityRating: null, stabilityAvg30d: null }])
 	})
 })

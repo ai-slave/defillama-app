@@ -103,23 +103,60 @@ export function buildRaiseValuations(
 	return result
 }
 
+// A protocol-slug → referral URL map from the same protocols-lite blob. Mirrors the
+// protocol pages' website link (ProtocolOverview prefers `referralUrl` over `url`): a
+// protocol's own referral link wins, else it inherits its parent's (e.g. GMX markets).
+export function buildReferralUrls(
+	protocols: ProtocolIdentity[],
+	protocolsLite: { protocols?: ProtocolLite[]; parentProtocols?: ParentProtocolLite[] }
+): Map<string, string> {
+	const liteByName = new Map<string, ProtocolLite>()
+	for (const p of protocolsLite.protocols ?? []) {
+		if (p.name) liteByName.set(p.name.toLowerCase(), p)
+	}
+	const parentById = new Map<string, ParentProtocolLite>()
+	for (const pp of protocolsLite.parentProtocols ?? []) {
+		if (pp.id) parentById.set(pp.id, pp)
+	}
+
+	const result = new Map<string, string>()
+	for (const { slug, name } of protocols) {
+		if (!slug || !name) continue
+		const proto = liteByName.get(name.toLowerCase())
+		if (!proto) continue
+		const referralUrl =
+			proto.referralUrl?.trim() ||
+			(proto.parentProtocol ? parentById.get(proto.parentProtocol)?.referralUrl?.trim() : undefined)
+		if (referralUrl) result.set(slug, referralUrl)
+	}
+	return result
+}
+
 // Raises + protocols-lite are slow-moving external APIs (not the Yields snapshot), so the
-// built map is memoized at module level behind a TTL — mirrors Raises/api.ts'
+// built maps are memoized at module level behind a TTL — mirrors Raises/api.ts'
 // `fetchRaisesWithShortCache` (cache the promise, clear on failure). Keeps the SSR hot path
 // (every earn/borrow/loop request) free of per-request external fetches.
 const CACHE_TTL_MS = 10 * 60_000
 
-let cache: { meta: YieldsMeta; expiresAt: number; value: Promise<Map<string, number>> } | null = null
+interface ProtocolJoins {
+	raiseValuations: Map<string, number>
+	referralUrls: Map<string, string>
+}
 
-async function buildFromSources(meta: YieldsMeta): Promise<Map<string, number>> {
+let cache: { meta: YieldsMeta; expiresAt: number; value: Promise<ProtocolJoins> } | null = null
+
+async function buildFromSources(meta: YieldsMeta): Promise<ProtocolJoins> {
 	const [raisesResponse, protocolsLite] = await Promise.all([
 		fetchRaisesFromNetwork().catch((): { raises: RawRaise[] } => ({ raises: [] })),
 		fetchProtocols().catch((): ProtocolsResponse => ({ protocols: [], chains: [], parentProtocols: [] }))
 	])
-	return buildRaiseValuations(raisesResponse?.raises ?? [], meta.protocols, protocolsLite)
+	return {
+		raiseValuations: buildRaiseValuations(raisesResponse?.raises ?? [], meta.protocols, protocolsLite),
+		referralUrls: buildReferralUrls(meta.protocols, protocolsLite)
+	}
 }
 
-export async function getRaiseValuations(snapshot: YieldsSnapshot): Promise<Map<string, number>> {
+async function getProtocolJoins(snapshot: YieldsSnapshot): Promise<ProtocolJoins> {
 	const meta = await readYieldsMeta(snapshot)
 	const now = Date.now()
 	if (!cache || cache.meta !== meta || cache.expiresAt <= now) {
@@ -130,4 +167,12 @@ export async function getRaiseValuations(snapshot: YieldsSnapshot): Promise<Map<
 		cache = { meta, expiresAt: now + CACHE_TTL_MS, value }
 	}
 	return cache.value
+}
+
+export async function getRaiseValuations(snapshot: YieldsSnapshot): Promise<Map<string, number>> {
+	return (await getProtocolJoins(snapshot)).raiseValuations
+}
+
+export async function getReferralUrls(snapshot: YieldsSnapshot): Promise<Map<string, string>> {
+	return (await getProtocolJoins(snapshot)).referralUrls
 }

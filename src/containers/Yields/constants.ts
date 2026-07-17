@@ -10,6 +10,8 @@ export function getYieldsHistoryUrl(path: string): string {
 
 // Yields APIs
 export const YIELD_EARN_DATASET_API = '/api/public/yields/earn'
+export const YIELD_EARN_PREMIUM_DATASET_API = '/api/private/yields/earn-premium'
+export const YIELD_POOL_STABILITY_API = '/api/private/yields/pool'
 export const YIELD_BORROW_MARKETS_DATASET_API = '/api/public/yields/borrow-markets'
 export const YIELD_BORROW_ROUTES_DATASET_API = '/api/public/yields/borrow-routes'
 export const YIELD_LOOPS_DATASET_API = '/api/public/yields/loops'

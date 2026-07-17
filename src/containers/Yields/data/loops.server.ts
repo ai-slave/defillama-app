@@ -15,7 +15,7 @@ import {
 	parseNumber,
 	parseTriState
 } from './query'
-import { getRaiseValuations } from './server/raiseValuations'
+import { getRaiseValuations, getReferralUrls } from './server/raiseValuations'
 import { readYieldsDepegs, readYieldsMeta, type YieldsSnapshot } from './snapshot'
 import type { ApyComponent, ApyWindow, EnrichedLoopRow, LoopTableRow, Token } from './types'
 
@@ -81,11 +81,12 @@ export async function getLoopsPage(
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
-	const [rows, meta, depegs, raiseValuations, riskCovered] = await Promise.all([
+	const [rows, meta, depegs, raiseValuations, referralUrls, riskCovered] = await Promise.all([
 		getEnrichedLoops(snapshot),
 		readYieldsMeta(snapshot),
 		readYieldsDepegs(snapshot),
 		getRaiseValuations(snapshot),
+		getReferralUrls(snapshot),
 		getRiskCoveredPoolIds()
 	])
 	const memePoolIds = common.includeMemeTokens ? null : new Set(meta.meme_pool_ids)
@@ -111,6 +112,8 @@ export async function getLoopsPage(
 		if (!matchesToken([row.tokenKeys?.reference_asset])) continue
 
 		const loopRow = toLoopTableRow(row, window, components, loopCount)
+		const referralUrl = row.protocolSlug ? referralUrls.get(row.protocolSlug) : undefined
+		if (referralUrl) loopRow.url = referralUrl
 		const depeg = depegByPool.get(row.id)
 		if (depeg) {
 			loopRow.pegDeviation = depeg.deviation_pct

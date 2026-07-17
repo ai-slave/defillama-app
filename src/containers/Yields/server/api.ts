@@ -1,6 +1,9 @@
 import { ok, upstreamError } from '~/server/api/respond'
 import { defineApiRoute } from '~/server/api/types'
 import { recordRouteRuntimeError } from '~/utils/telemetry'
+import { redactEarnStability } from '../data/publicEarn'
+import type { EarnPageRow } from '../data/types'
+import type { YieldsPaginatedTableResponse } from '../yieldsTableQuery'
 
 // Public Yields v2 API entry points pin one immutable generation and memoize enrichment by artifact ref,
 // so per-request work is limited to query shaping.
@@ -8,6 +11,19 @@ import { recordRouteRuntimeError } from '~/utils/telemetry'
 // cache during code churn (a stale empty 200 then serves every client-side navigation).
 const YIELDS_DATASET_CACHE_CONTROL =
 	process.env.NODE_ENV === 'production' ? 'public, s-maxage=300, stale-while-revalidate=3600' : 'no-store'
+
+function withoutPremiumEarnFields(
+	page: YieldsPaginatedTableResponse<EarnPageRow>
+): YieldsPaginatedTableResponse<EarnPageRow> {
+	return {
+		...page,
+		rows: redactEarnStability(page.rows)
+	}
+}
+
+function withoutPremiumEarnSort(query: Record<string, string | string[] | undefined>) {
+	return query.sortBy === 'stabilityScore' ? { ...query, sortBy: undefined, sortDesc: undefined } : query
+}
 
 export const yieldsEarnDataset = defineApiRoute({
 	route: '/api/public/yields/earn',
@@ -18,7 +34,8 @@ export const yieldsEarnDataset = defineApiRoute({
 				import('~/containers/Yields/data/earn.server'),
 				import('~/containers/Yields/server/dataset.server')
 			])
-			return ok(await getEarnPage(await acquireYieldsSnapshot('background'), req.query))
+			const page = await getEarnPage(await acquireYieldsSnapshot('background'), withoutPremiumEarnSort(req.query))
+			return ok(withoutPremiumEarnFields(page))
 		} catch (error) {
 			recordRouteRuntimeError(error, 'apiRoute')
 			return upstreamError('Failed to fetch yields earn data')

@@ -13,7 +13,10 @@ vi.mock('../snapshot', async (importOriginal) => ({
 	readYieldsDepegs: () => getYieldsDepegs(),
 	readYieldsExploits: () => getYieldsExploits()
 }))
-vi.mock('../server/raiseValuations', () => ({ getRaiseValuations: () => Promise.resolve(new Map<string, number>()) }))
+vi.mock('../server/raiseValuations', () => ({
+	getRaiseValuations: () => Promise.resolve(new Map<string, number>()),
+	getReferralUrls: () => Promise.resolve(new Map<string, string>())
+}))
 
 import { getDepegWarningSeverity } from '../../domain/apyPresentation'
 import { getEarnPage as getEarnPageFromSnapshot } from '../earn.server'

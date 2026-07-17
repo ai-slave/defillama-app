@@ -19,7 +19,10 @@ vi.mock('../snapshot', async (importOriginal) => ({
 	readYieldsDepegs: () => Promise.resolve([]),
 	readYieldsExploits: () => Promise.resolve([])
 }))
-vi.mock('../server/raiseValuations', () => ({ getRaiseValuations: () => Promise.resolve(new Map<string, number>()) }))
+vi.mock('../server/raiseValuations', () => ({
+	getRaiseValuations: () => Promise.resolve(new Map<string, number>()),
+	getReferralUrls: () => Promise.resolve(new Map<string, string>())
+}))
 
 import { getEarnPage as getEarnPageFromSnapshot } from '../earn.server'
 
