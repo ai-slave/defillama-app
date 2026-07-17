@@ -244,14 +244,14 @@ export function CustomColumnModal({
 									</div>
 								) : null}
 								{state.error ? (
-									<div className="mb-2 flex items-center gap-2 rounded-sm border border-red-400 bg-red-100 px-3 py-2 text-sm font-semibold text-red-700">
+									<div className="mb-2 flex items-center gap-2 rounded-sm border border-error bg-red-100 px-3 py-2 text-sm font-semibold text-error">
 										<Icon name="alert-triangle" height={18} width={18} />
 										<span>{state.error}</span>
 									</div>
 								) : null}
 								<input
 									ref={inputRef}
-									className={`${inputStyles} w-full ${state.error ? 'border-red-400 focus:border-red-400' : ''}`}
+									className={`${inputStyles} w-full ${state.error ? 'border-error focus:border-error' : ''}`}
 									value={state.formula}
 									onChange={handleFormulaChange}
 									onKeyDown={handleKeyDown}
@@ -259,7 +259,7 @@ export function CustomColumnModal({
 									autoComplete="off"
 								/>
 								{state.showSuggestions ? (
-									<ul className="absolute right-0 left-0 z-10 mt-1 max-h-40 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]">
+									<ul className="absolute right-0 left-0 z-10 mt-1 max-h-40 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay shadow-overlay-sm">
 										{state.suggestions.map((s, i) => (
 											<li
 												key={s.name || s}

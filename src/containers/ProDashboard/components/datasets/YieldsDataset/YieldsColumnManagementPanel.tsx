@@ -188,7 +188,7 @@ export function YieldsColumnManagementPanel({
 							if (!columns.length) return null
 							return (
 								<div key={group.title}>
-									<p className="mb-1 text-[11px] text-tertiary">{group.title}</p>
+									<p className="mb-1 label-sm text-tertiary">{group.title}</p>
 									<div className="space-y-1">
 										{columns.map((columnKey) => (
 											<ColumnButton

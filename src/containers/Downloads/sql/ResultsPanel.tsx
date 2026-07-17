@@ -60,17 +60,17 @@ export function ResultsPanel({
 
 	if (!result && !busy) {
 		return (
-			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--legacy-divider) bg-surface/40 px-6 py-10 text-center">
-				<Icon name="bar-chart-2" className="size-5 text-(--legacy-text-tertiary)" />
-				<p className="text-sm text-(--legacy-text-secondary)">
+			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle bg-surface/40 px-6 py-10 text-center">
+				<Icon name="bar-chart-2" className="size-5 text-(--pro-text-tertiary)" />
+				<p className="text-sm text-(--pro-text-secondary)">
 					Run a query to see results here. Press{' '}
-					<kbd className="inline-flex h-[17px] items-center rounded-[3px] border border-(--legacy-divider) bg-(--legacy-app-bg) px-1 font-mono text-[10px] text-(--legacy-text-secondary)">
+					<kbd className="inline-flex h-[17px] items-center rounded-[3px] border border-subtle bg-(--pro-app-bg) px-1 font-mono text-[10px] text-(--pro-text-secondary)">
 						⌘
 					</kbd>{' '}
-					<kbd className="inline-flex h-[17px] items-center rounded-[3px] border border-(--legacy-divider) bg-(--legacy-app-bg) px-1 font-mono text-[10px] text-(--legacy-text-secondary)">
+					<kbd className="inline-flex h-[17px] items-center rounded-[3px] border border-subtle bg-(--pro-app-bg) px-1 font-mono text-[10px] text-(--pro-text-secondary)">
 						↵
 					</kbd>{' '}
-					or click <span className="font-medium text-(--legacy-text-primary)">Run query</span>.
+					or click <span className="font-medium text-(--pro-text-primary)">Run query</span>.
 				</p>
 			</div>
 		)
@@ -78,7 +78,7 @@ export function ResultsPanel({
 
 	if (!result && busy) {
 		return (
-			<div className="flex h-24 items-center justify-center gap-2.5 rounded-md border border-(--legacy-divider) bg-surface px-4 text-sm text-(--legacy-text-secondary)">
+			<div className="flex h-24 items-center justify-center gap-2.5 rounded-md border border-subtle bg-surface px-4 text-sm text-(--pro-text-secondary)">
 				<LoadingSpinner size={14} />
 				<span>{busyMessage}</span>
 			</div>
@@ -93,17 +93,15 @@ export function ResultsPanel({
 		<div className="flex flex-col gap-2">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex items-baseline gap-2">
-					<h3 className="text-sm font-semibold tracking-tight text-(--legacy-text-primary)">Results</h3>
-					<span className="text-xs text-(--legacy-text-tertiary) tabular-nums">
+					<h3 className="text-sm font-semibold tracking-tight text-(--pro-text-primary)">Results</h3>
+					<span className="text-xs text-(--pro-text-tertiary) tabular-nums">
 						{result.rows.length.toLocaleString()} row{result.rows.length === 1 ? '' : 's'} · {result.columns.length} col
 						{result.columns.length === 1 ? '' : 's'}
 						{durationMs != null ? ` · ${formatDuration(durationMs)}` : ''}
 					</span>
 				</div>
 				<div className="flex items-center gap-2">
-					{viewToggleLabel ? (
-						<span className="text-xs font-medium text-(--text-secondary)">{viewToggleLabel}</span>
-					) : null}
+					{viewToggleLabel ? <span className="text-xs font-medium text-secondary">{viewToggleLabel}</span> : null}
 					<ViewToggle view={view} onChange={setView} disabled={isEmpty} />
 					<FormatSplitButton
 						disabled={isEmpty}
@@ -134,7 +132,7 @@ function ViewToggle({
 		<div
 			role="tablist"
 			aria-label="Results view"
-			className={`inline-flex items-center gap-0.5 rounded-md border border-(--legacy-divider) bg-surface p-0.5 ${
+			className={`inline-flex items-center gap-0.5 rounded-md border border-subtle bg-surface p-0.5 ${
 				disabled ? 'pointer-events-none opacity-50' : ''
 			}`}
 		>
@@ -170,8 +168,8 @@ function ToggleButton({
 			onClick={onClick}
 			className={`flex items-center gap-1.5 rounded-sm px-2 py-1 text-[11px] font-medium transition-colors ${
 				active
-					? 'bg-(--legacy-primary) text-white shadow-sm'
-					: 'text-(--legacy-text-secondary) hover:bg-hover-row hover:text-(--legacy-text-primary)'
+					? 'bg-brand text-on-brand shadow-sm'
+					: 'text-(--pro-text-secondary) hover:bg-hover-row hover:text-(--pro-text-primary)'
 			}`}
 		>
 			<Icon name={icon} className="size-3" />

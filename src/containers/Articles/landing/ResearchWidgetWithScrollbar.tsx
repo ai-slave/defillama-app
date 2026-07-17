@@ -23,13 +23,13 @@ export function ResearchWidgetWithScrollbar({ id, title, articles, onHeightChang
 
 	return (
 		<div id={id}>
-			<div className="mb-[26px]">
+			<div className="mb-6.5">
 				<TitleLine title={title} />
 			</div>
 			<div className="flex flex-col gap-y-16">
 				<div>
 					<ResearchWidgetWithScrollbarScroller articles={articles} onHeightChange={onHeightChange} />
-					<div className="mt-auto shrink-0 pt-[18px] text-right">
+					<div className="mt-auto shrink-0 pt-4.5 text-right">
 						<ReadMoreLink url="/research#collections" title="Explore more" />
 					</div>
 				</div>
@@ -73,8 +73,8 @@ function ResearchWidgetWithScrollbarScroller({ articles, onHeightChange }: Resea
 								) : null}
 							</div>
 
-							<div className="flex grow flex-col justify-between gap-[7px] pr-5">
-								<div className="line-clamp-3 text-[16px] leading-[135%] font-semibold text-[#0d1e3b] group-hover:text-[#0c2956] group-hover:opacity-70 dark:text-white dark:group-hover:text-white/70">
+							<div className="flex grow flex-col justify-between gap-1.75 pr-5">
+								<div className="line-clamp-3 text-base leading-[135%] font-semibold text-(--research-navy-soft) group-hover:text-(--research-navy-soft) group-hover:opacity-70 dark:text-ai-primary dark:group-hover:text-on-brand/70">
 									{article.title}
 								</div>
 							</div>

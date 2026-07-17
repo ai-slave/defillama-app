@@ -33,7 +33,7 @@ const SCORE_TOOLTIPS = {
 function TooltipMark({ glyph, content }: { glyph: string; content: string }) {
 	return (
 		<Tooltip content={content}>
-			<span className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-full bg-brand label-xs leading-none font-bold text-on-brand">
+			<span className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-full bg-brand label-xs text-on-brand">
 				{glyph}
 			</span>
 		</Tooltip>

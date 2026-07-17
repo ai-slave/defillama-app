@@ -60,7 +60,7 @@ function StatusDot({ status }: { status: ArticleDocument['status'] }) {
 	return (
 		<span
 			aria-hidden
-			className={`inline-block size-1.5 shrink-0 rounded-full ${isPublished ? 'bg-emerald-500' : 'bg-amber-500'}`}
+			className={`inline-block size-1.5 shrink-0 rounded-full ${isPublished ? 'bg-success' : 'bg-warning'}`}
 		/>
 	)
 }
@@ -156,31 +156,29 @@ function MyArticlesContent() {
 
 	return (
 		<div className="mx-auto grid w-full max-w-5xl gap-8 px-3 pt-2 pb-20 lg:px-0">
-			<header className="grid gap-6 border-b border-(--legacy-cards-border) pb-6">
+			<header className="grid gap-6 border-b border-medium pb-6">
 				<div className="flex flex-wrap items-end justify-between gap-4">
 					<div className="grid gap-2">
-						<span className="font-jetbrains text-[10px] tracking-[0.22em] text-(--legacy-text-tertiary) uppercase">
+						<span className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
 							Research · Workspace
 						</span>
-						<h1 className="text-4xl font-semibold tracking-tight text-(--legacy-text-primary) sm:text-5xl">
-							My research
-						</h1>
+						<h1 className="text-4xl font-semibold tracking-tight text-primary sm:text-5xl">My research</h1>
 						{!showLoading ? (
-							<p className="text-sm text-(--legacy-text-secondary)">
-								<span className="text-(--legacy-text-primary) tabular-nums">{draftCount}</span> draft
+							<p className="text-sm text-secondary">
+								<span className="text-primary tabular-nums">{draftCount}</span> draft
 								{draftCount === 1 ? '' : 's'}
 								{scheduledCount > 0 ? (
 									<>
-										<span className="mx-2 text-(--legacy-text-tertiary)">·</span>
-										<span className="text-(--legacy-text-primary) tabular-nums">{scheduledCount}</span> scheduled
+										<span className="mx-2 text-tertiary">·</span>
+										<span className="text-primary tabular-nums">{scheduledCount}</span> scheduled
 									</>
 								) : null}
-								<span className="mx-2 text-(--legacy-text-tertiary)">·</span>
-								<span className="text-(--legacy-text-primary) tabular-nums">{publishedCount}</span> published
+								<span className="mx-2 text-tertiary">·</span>
+								<span className="text-primary tabular-nums">{publishedCount}</span> published
 								{capped ? (
 									<>
-										<span className="mx-2 text-(--legacy-text-tertiary)">·</span>
-										<span className="text-(--legacy-text-tertiary)">
+										<span className="mx-2 text-tertiary">·</span>
+										<span className="text-tertiary">
 											showing latest {FETCH_LIMIT} of {data?.totalItems.toLocaleString()}
 										</span>
 									</>
@@ -191,19 +189,19 @@ function MyArticlesContent() {
 					<div className="flex items-center gap-2">
 						<Link
 							href="/research/profile"
-							className="rounded-md border border-(--legacy-cards-border) px-3 py-2 text-sm text-(--legacy-text-secondary) hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary)"
+							className="rounded-md border border-medium px-3 py-2 text-sm text-secondary hover:border-link/40 hover:text-primary"
 						>
 							Edit profile
 						</Link>
 						<Link
 							href="/research"
-							className="rounded-md border border-(--legacy-cards-border) px-3 py-2 text-sm text-(--legacy-text-secondary) hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary)"
+							className="rounded-md border border-medium px-3 py-2 text-sm text-secondary hover:border-link/40 hover:text-primary"
 						>
 							Browse all
 						</Link>
 						<Link
 							href="/research/new"
-							className="inline-flex items-center gap-1.5 rounded-md bg-(--legacy-link-text) px-3 py-2 text-sm font-medium text-white hover:opacity-90"
+							className="inline-flex items-center gap-1.5 rounded-md bg-link px-3 py-2 text-sm font-medium text-on-brand hover:opacity-90"
 						>
 							<Icon name="plus" className="size-4" aria-hidden />
 							New
@@ -223,9 +221,7 @@ function MyArticlesContent() {
 									type="button"
 									onClick={() => setStatusFilter(value)}
 									className={`group relative -mb-px flex items-baseline gap-1.5 border-b-2 pb-2 transition-colors ${
-										active
-											? 'border-(--legacy-link-text) text-(--legacy-text-primary)'
-											: 'border-transparent text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'
+										active ? 'border-link text-primary' : 'border-transparent text-tertiary hover:text-primary'
 									}`}
 								>
 									<span className="font-medium">{label}</span>
@@ -239,20 +235,20 @@ function MyArticlesContent() {
 						<label className="relative flex items-center">
 							<Icon
 								name="search"
-								className="pointer-events-none absolute left-2.5 size-3.5 text-(--legacy-text-tertiary)"
+								className="pointer-events-none absolute left-2.5 size-3.5 text-tertiary"
 								aria-hidden
 							/>
 							<input
 								type="search"
 								onInput={(e) => setSearchInput(e.currentTarget.value)}
 								placeholder="Search title, slug…"
-								className="w-44 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1.5 pr-2 pl-8 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text)/50 focus:outline-hidden sm:w-56"
+								className="w-44 rounded-md border border-medium bg-surface py-1.5 pr-2 pl-8 text-sm text-primary placeholder:text-tertiary focus:border-link/50 focus:outline-hidden sm:w-56"
 							/>
 						</label>
 						<select
 							value={sortKey}
 							onChange={(e) => setSortKey(e.target.value as SortKey)}
-							className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1.5 pr-2 pl-2.5 text-sm text-(--legacy-text-primary) focus:border-(--legacy-link-text)/50 focus:outline-hidden"
+							className="rounded-md border border-medium bg-surface py-1.5 pr-2 pl-2.5 text-sm text-primary focus:border-link/50 focus:outline-hidden"
 							aria-label="Sort"
 						>
 							{(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
@@ -266,16 +262,14 @@ function MyArticlesContent() {
 
 				{availableSections.length > 0 ? (
 					<div className="-mt-2 flex flex-wrap items-center gap-1.5">
-						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
-							Section
-						</span>
+						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">Section</span>
 						<button
 							type="button"
 							onClick={() => setSectionFilter('all')}
 							className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${
 								sectionFilter === 'all'
-									? 'border-(--legacy-link-text)/40 bg-(--legacy-link-button) text-(--legacy-link-text)'
-									: 'border-(--legacy-cards-border) text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'
+									? 'border-link/40 bg-(--research-link-button-bg) text-link'
+									: 'border-medium text-tertiary hover:text-primary'
 							}`}
 						>
 							Any
@@ -289,8 +283,8 @@ function MyArticlesContent() {
 									onClick={() => setSectionFilter(active ? 'all' : section)}
 									className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${
 										active
-											? 'border-(--legacy-link-text)/40 bg-(--legacy-link-button) text-(--legacy-link-text)'
-											: 'border-(--legacy-cards-border) text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'
+											? 'border-link/40 bg-(--research-link-button-bg) text-link'
+											: 'border-medium text-tertiary hover:text-primary'
 									}`}
 								>
 									{ARTICLE_SECTION_LABELS[section]}
@@ -302,27 +296,27 @@ function MyArticlesContent() {
 			</header>
 
 			{error ? (
-				<div className="rounded-md border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-500">
+				<div className="rounded-md border border-error/30 bg-error/5 p-4 text-sm text-error">
 					{error instanceof Error ? error.message : 'Failed to load research'}
 				</div>
 			) : null}
 
 			{showLoading ? (
-				<ul className="grid divide-y divide-(--legacy-cards-border) overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
+				<ul className="grid divide-y divide-(--border-medium) overflow-hidden rounded-md border border-medium bg-surface">
 					{Array.from({ length: 6 }).map((_, i) => (
 						<li key={i} className="flex items-center gap-3 px-4 py-3.5">
-							<span className="size-1.5 shrink-0 rounded-full bg-(--legacy-cards-border)" />
-							<span className="h-3.5 w-2/3 animate-pulse rounded-sm bg-(--legacy-cards-border)" />
-							<span className="ml-auto h-3 w-20 animate-pulse rounded-sm bg-(--legacy-cards-border)" />
+							<span className="size-1.5 shrink-0 rounded-full bg-border-medium" />
+							<span className="h-3.5 w-2/3 animate-pulse rounded-sm bg-border-medium" />
+							<span className="ml-auto h-3 w-20 animate-pulse rounded-sm bg-border-medium" />
 						</li>
 					))}
 				</ul>
 			) : filtered.length === 0 ? (
 				<div className="grid gap-3 px-4 py-16 text-center">
-					<h2 className="text-2xl font-semibold tracking-tight text-(--legacy-text-primary)">
+					<h2 className="text-2xl font-semibold tracking-tight text-primary">
 						{totalCount === 0 ? 'Nothing here yet' : 'No matches'}
 					</h2>
-					<p className="mx-auto max-w-md text-sm text-(--legacy-text-secondary)">
+					<p className="mx-auto max-w-md text-sm text-secondary">
 						{totalCount === 0
 							? "Notes turn into drafts the moment you start typing. Publish when you're ready."
 							: search || sectionFilter !== 'all' || statusFilter !== 'all'
@@ -332,7 +326,7 @@ function MyArticlesContent() {
 					{totalCount === 0 ? (
 						<Link
 							href="/research/new"
-							className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-md bg-(--legacy-link-text) px-3 py-2 text-sm font-medium text-white"
+							className="mx-auto mt-3 inline-flex items-center gap-1.5 rounded-md bg-link px-3 py-2 text-sm font-medium text-on-brand"
 						>
 							Write your first
 						</Link>
@@ -340,7 +334,7 @@ function MyArticlesContent() {
 				</div>
 			) : (
 				<>
-					<ul className="grid divide-y divide-(--legacy-cards-border) overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
+					<ul className="grid divide-y divide-(--border-medium) overflow-hidden rounded-md border border-medium bg-surface">
 						{paged.map((article) => {
 							const updated = formatRelative(article.updatedAt)
 							const words = wordCount(article.plainText) || wordCount(article.excerpt)
@@ -350,40 +344,40 @@ function MyArticlesContent() {
 							return (
 								<li
 									key={article.id}
-									className="group relative grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3.5 transition-colors hover:bg-(--legacy-link-hover-bg)"
+									className="group relative grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3.5 transition-colors hover:bg-(--research-link-hover-bg)"
 								>
 									<span
 										aria-hidden
 										className={`absolute top-2 bottom-2 left-0 w-[2px] rounded-r ${
-											scheduled ? 'bg-sky-500/70' : article.status === 'draft' ? 'bg-amber-500/70' : 'bg-transparent'
+											scheduled ? 'bg-sky-500/70' : article.status === 'draft' ? 'bg-warning/70' : 'bg-transparent'
 										}`}
 									/>
 									<Link href={`/research/edit/${article.id}`} className="grid min-w-0 gap-1">
 										<div className="flex min-w-0 flex-wrap items-center gap-2">
 											<StatusDot status={article.status} />
-											<h3 className="truncate text-base font-semibold tracking-tight text-(--legacy-text-primary) group-hover:text-(--legacy-link-text)">
+											<h3 className="truncate text-base font-semibold tracking-tight text-primary group-hover:text-link">
 												{article.title || 'Untitled'}
 											</h3>
 											{scheduled ? (
 												<span
-													className="rounded-sm bg-sky-500/10 px-1.5 py-0.5 font-jetbrains text-[10px] tracking-[0.12em] text-sky-500 uppercase"
+													className="rounded-sm bg-sky-500/10 px-1.5 py-0.5 font-jetbrains text-[10px] tracking-[0.12em] text-link uppercase"
 													title={`Goes live ${formatArticleDate(article.goLiveAt)}`}
 												>
 													Scheduled
 												</span>
 											) : null}
 											{article.viewerRole === 'collaborator' ? (
-												<span className="rounded-sm bg-(--legacy-link-button) px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-(--legacy-link-text) uppercase">
+												<span className="rounded-sm bg-(--research-link-button-bg) px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-link uppercase">
 													Co-author
 												</span>
 											) : null}
 											{article.section ? (
-												<span className="font-jetbrains text-[10px] tracking-[0.14em] text-(--legacy-text-tertiary) uppercase">
+												<span className="font-jetbrains text-[10px] tracking-[0.14em] text-tertiary uppercase">
 													{ARTICLE_SECTION_LABELS[article.section]}
 												</span>
 											) : null}
 										</div>
-										<div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-(--legacy-text-tertiary)">
+										<div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-tertiary">
 											<span>
 												{scheduled
 													? `Scheduled ${formatArticleDate(article.goLiveAt)}`
@@ -410,13 +404,13 @@ function MyArticlesContent() {
 											}}
 											aria-label="Preview in editor"
 											title="Preview in editor"
-											className="flex size-8 items-center justify-center rounded-md text-(--legacy-text-tertiary) hover:bg-(--legacy-cards-bg) hover:text-(--legacy-text-primary)"
+											className="flex size-8 items-center justify-center rounded-md text-tertiary hover:bg-surface hover:text-primary"
 										>
 											<Icon name="eye" className="size-4" />
 										</Link>
 										<Link
 											href={`/research/edit/${article.id}`}
-											className="hidden h-8 items-center gap-1.5 rounded-md border border-(--legacy-cards-border) px-3 text-xs text-(--legacy-text-secondary) hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary) sm:flex"
+											className="hidden h-8 items-center gap-1.5 rounded-md border border-medium px-3 text-xs text-secondary hover:border-link/40 hover:text-primary sm:flex"
 										>
 											Edit
 										</Link>
@@ -427,7 +421,7 @@ function MyArticlesContent() {
 												title="Delete"
 												disabled={isDeleting}
 												onClick={() => handleDelete(article)}
-												className="flex size-8 items-center justify-center rounded-md text-(--legacy-text-tertiary) hover:bg-red-500/10 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+												className="flex size-8 items-center justify-center rounded-md text-tertiary hover:bg-error/10 hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
 											>
 												<Icon name="x" className="size-3.5" />
 											</button>
@@ -439,7 +433,7 @@ function MyArticlesContent() {
 					</ul>
 
 					{totalPages > 1 ? (
-						<div className="flex flex-wrap items-center justify-between gap-3 px-1 text-sm text-(--legacy-text-tertiary)">
+						<div className="flex flex-wrap items-center justify-between gap-3 px-1 text-sm text-tertiary">
 							<span className="font-jetbrains text-xs tabular-nums">
 								{rangeStart}–{rangeEnd} of {filtered.length.toLocaleString()}
 							</span>
@@ -448,7 +442,7 @@ function MyArticlesContent() {
 									type="button"
 									onClick={() => setPage((p) => Math.max(1, p - 1))}
 									disabled={safePage <= 1}
-									className="flex h-8 items-center gap-1 rounded-md border border-(--legacy-cards-border) px-2.5 text-xs text-(--legacy-text-secondary) hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-(--legacy-cards-border) disabled:hover:text-(--legacy-text-secondary)"
+									className="flex h-8 items-center gap-1 rounded-md border border-medium px-2.5 text-xs text-secondary hover:border-link/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-medium disabled:hover:text-secondary"
 								>
 									<span aria-hidden>←</span> Prev
 								</button>
@@ -459,7 +453,7 @@ function MyArticlesContent() {
 									type="button"
 									onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
 									disabled={safePage >= totalPages}
-									className="flex h-8 items-center gap-1 rounded-md border border-(--legacy-cards-border) px-2.5 text-xs text-(--legacy-text-secondary) hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-(--legacy-cards-border) disabled:hover:text-(--legacy-text-secondary)"
+									className="flex h-8 items-center gap-1 rounded-md border border-medium px-2.5 text-xs text-secondary hover:border-link/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-medium disabled:hover:text-secondary"
 								>
 									Next <span aria-hidden>→</span>
 								</button>

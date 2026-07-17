@@ -495,7 +495,7 @@ export function EquitiesFiltersDialog({ companies, filters, onFiltersChange }: E
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={handleOpenChange}>
 			<Ariakit.DialogDisclosure render={<Button type="button" size="md" />}>
-				<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 label-xs leading-none">
+				<span className="flex min-w-4 items-center justify-center rounded-full border border-medium px-1 py-0.25 label-xs">
 					{activeCount}
 				</span>
 				<span>Filters</span>

@@ -57,7 +57,7 @@ export function UnifiedVirtualTable({
 	return (
 		<div
 			ref={containerRef}
-			className="relative isolate min-h-0 w-full flex-1 overflow-auto rounded-md bg-(--legacy-cards-bg)"
+			className="relative isolate min-h-0 w-full flex-1 overflow-auto rounded-md bg-(--pro-cards-bg)"
 			style={{ maxWidth: '100%', WebkitOverflowScrolling: 'touch' }}
 		>
 			<div
@@ -67,7 +67,7 @@ export function UnifiedVirtualTable({
 					zIndex: 10,
 					display: 'flex',
 					flexDirection: 'column',
-					background: 'var(--legacy-cards-bg)'
+					background: 'var(--pro-cards-bg)'
 				}}
 			>
 				{headerGroups.map((headerGroup) => {
@@ -102,9 +102,9 @@ export function UnifiedVirtualTable({
 											position: isSticky ? 'sticky' : undefined,
 											left: isSticky ? 0 : undefined,
 											zIndex: isSticky ? 10 : undefined,
-											background: 'var(--legacy-cards-bg)'
+											background: 'var(--pro-cards-bg)'
 										}}
-										className={`truncate border-t border-r border-(--legacy-divider) p-3 last:border-r-0 ${
+										className={`truncate border-t border-r border-subtle p-3 last:border-r-0 ${
 											compact
 												? 'flex min-h-[50px] items-center border-t-black/10 border-r-transparent px-5 dark:border-t-white/10'
 												: ''
@@ -165,7 +165,7 @@ export function UnifiedVirtualTable({
 										<div
 											key={cell.id}
 											data-lighter={stripedBg && i % 2 === 0}
-											className={`truncate border-t border-r border-(--legacy-divider) p-3 ${
+											className={`truncate border-t border-r border-subtle p-3 ${
 												compact
 													? 'flex items-center border-t-black/10 border-r-transparent px-5 dark:border-t-white/10'
 													: ''
@@ -182,7 +182,7 @@ export function UnifiedVirtualTable({
 												position: isSticky ? 'sticky' : undefined,
 												left: isSticky ? 0 : undefined,
 												zIndex: isSticky ? 1 : undefined,
-												background: isSticky ? 'var(--legacy-cards-bg)' : undefined
+												background: isSticky ? 'var(--pro-cards-bg)' : undefined
 											}}
 										>
 											{flexRender(cell.column.columnDef.cell, cell.getContext())}

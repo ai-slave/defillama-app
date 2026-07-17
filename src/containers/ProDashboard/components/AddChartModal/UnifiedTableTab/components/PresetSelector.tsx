@@ -10,12 +10,12 @@ interface PresetSelectorProps {
 }
 
 const CATEGORY_CONFIG: Record<FilterPresetCategory, { label: string; color: string }> = {
-	quick: { label: 'Quick', color: 'bg-gray-500/20 text-gray-400' },
-	size: { label: 'Size', color: 'bg-blue-500/20 text-blue-400' },
-	growth: { label: 'Growth', color: 'bg-green-500/20 text-green-400' },
+	quick: { label: 'Quick', color: 'bg-gray-500/20 text-tertiary' },
+	size: { label: 'Size', color: 'bg-brand/20 text-link' },
+	growth: { label: 'Growth', color: 'bg-success/20 text-success' },
 	activity: { label: 'Activity', color: 'bg-purple-500/20 text-purple-400' },
-	revenue: { label: 'Revenue', color: 'bg-emerald-500/20 text-emerald-400' },
-	investment: { label: 'Investment', color: 'bg-amber-500/20 text-amber-400' },
+	revenue: { label: 'Revenue', color: 'bg-success/20 text-success' },
+	investment: { label: 'Investment', color: 'bg-warning/20 text-warning' },
 	category: { label: 'Category', color: 'bg-cyan-500/20 text-cyan-400' }
 }
 
@@ -98,8 +98,8 @@ export function PresetSelector({ currentFilters, onApplyPreset }: PresetSelector
 											onClick={() => onApplyPreset(preset)}
 											className={`rounded-md border px-2.5 py-1.5 text-xs transition ${
 												isActive
-													? 'border-(--legacy-primary) bg-(--legacy-primary)/10 text-(--legacy-primary)'
-													: 'border-(--legacy-cards-border) bg-(--legacy-cards-bg) text-(--legacy-text-secondary) hover:border-(--legacy-primary)/40 hover:text-(--legacy-text-primary)'
+													? 'border-brand bg-brand/10 text-brand'
+													: 'border-(--pro-cards-border) bg-(--pro-cards-bg) text-(--pro-text-secondary) hover:border-brand/40 hover:text-(--pro-text-primary)'
 											}`}
 										>
 											{preset.name}

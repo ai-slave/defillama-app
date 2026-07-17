@@ -73,7 +73,7 @@ function DashboardAuthorByline({ author }: { author?: PublicDashboardAuthor }) {
 	return (
 		<BasicLink
 			href={`/authors/${author.slug}`}
-			className="mt-3 inline-flex items-center gap-2 text-sm text-(--legacy-text-secondary) hover:text-(--legacy-link-text)"
+			className="mt-3 inline-flex items-center gap-2 text-sm text-(--pro-text-secondary) hover:text-link"
 		>
 			{author.avatarUrl ? (
 				// eslint-disable-next-line @next/next/no-img-element
@@ -98,12 +98,12 @@ function AuthorProfileSetupNotice() {
 	if (dismissed) return null
 
 	return (
-		<div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-(--legacy-link-text)/20 bg-(--legacy-link-button) px-3 py-2.5 text-sm">
+		<div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-link/20 bg-(--pro-link-button-bg) px-3 py-2.5 text-sm">
 			<div className="flex min-w-0 items-start gap-2">
-				<Icon name="users" className="mt-0.5 size-4 shrink-0 text-(--legacy-link-text)" />
+				<Icon name="users" className="mt-0.5 size-4 shrink-0 text-link" />
 				<div className="min-w-0">
-					<p className="font-medium text-(--legacy-text-primary)">Set up your dashboard author profile</p>
-					<p className="mt-0.5 text-xs leading-5 text-(--legacy-text-secondary)">
+					<p className="font-medium text-(--pro-text-primary)">Set up your dashboard author profile</p>
+					<p className="mt-0.5 text-xs leading-5 text-(--pro-text-secondary)">
 						Add your name, avatar, and links so visitors can see who built this dashboard.
 					</p>
 				</div>
@@ -111,7 +111,7 @@ function AuthorProfileSetupNotice() {
 			<div className="flex shrink-0 items-center gap-2">
 				<BasicLink
 					href="/account?tab=profile"
-					className="rounded-md bg-(--legacy-link-text) px-3 py-1.5 text-xs font-medium text-white"
+					className="rounded-md bg-link px-3 py-1.5 text-xs font-medium text-on-brand"
 				>
 					Open settings
 				</BasicLink>
@@ -119,7 +119,7 @@ function AuthorProfileSetupNotice() {
 					type="button"
 					onClick={() => setDismissed(true)}
 					aria-label="Dismiss profile setup notice"
-					className="flex size-7 items-center justify-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-(--legacy-cards-bg) hover:text-(--legacy-text-primary)"
+					className="flex size-7 items-center justify-center rounded-md text-(--pro-text-tertiary) transition-colors hover:bg-(--pro-cards-bg) hover:text-(--pro-text-primary)"
 				>
 					<Icon name="x" className="size-3.5" />
 				</button>
@@ -288,7 +288,7 @@ function ProDashboardContent() {
 		return (
 			<Suspense
 				fallback={
-					<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1" />
+					<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-1" />
 				}
 			>
 				<DemoPreview />
@@ -298,19 +298,16 @@ function ProDashboardContent() {
 
 	return (
 		<div className="flex flex-1 flex-col gap-2 pro-dashboard p-2 lg:px-0">
-			<BasicLink
-				href="/pro"
-				className="mr-auto mb-2 flex items-center gap-2 text-(--legacy-text-label) hover:text-(--legacy-link-text)"
-			>
+			<BasicLink href="/pro" className="mr-auto mb-2 flex items-center gap-2 text-(--pro-text-label) hover:text-link">
 				<Icon name="arrow-left" height={16} width={16} />
 				Back to Dashboards
 			</BasicLink>
 
-			<div className="overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
+			<div className="overflow-hidden rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg)">
 				<div className="grid gap-5 px-4 py-4 md:px-5 md:py-5 xl:grid-cols-[minmax(0,1fr)_minmax(280px,480px)] xl:items-start">
 					<div className="min-w-0">
 						<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-							<h1 className="text-[clamp(1.375rem,1.1rem+0.7vw,2rem)] leading-tight font-semibold text-(--legacy-text-primary)">
+							<h1 className="text-[clamp(1.375rem,1.1rem+0.7vw,2rem)] leading-tight font-semibold text-(--pro-text-primary)">
 								{dashboardName}
 							</h1>
 							{dashboardVisibility === 'public' ? (
@@ -334,14 +331,14 @@ function ProDashboardContent() {
 						<DashboardAuthorByline author={currentDashboard?.author} />
 						{shouldShowAuthorProfileSetup ? <AuthorProfileSetupNotice /> : null}
 						{dashboardDescription ? (
-							<p className="mt-2 max-w-3xl text-sm leading-6 text-(--legacy-text-form)">{dashboardDescription}</p>
+							<p className="mt-2 max-w-3xl text-sm leading-6 text-(--pro-text-form)">{dashboardDescription}</p>
 						) : null}
 						{dashboardTags.length > 0 ? (
 							<ul aria-label="Dashboard tags" className="mt-4 flex flex-wrap gap-1.5">
 								{dashboardTags.map((tag) => (
 									<li
 										key={tag}
-										className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-bg-secondary)/50 px-2 py-1 text-xs text-(--legacy-text-label)"
+										className="rounded-md border border-(--pro-cards-border) bg-surface-elevated-1/50 px-2 py-1 text-xs text-(--pro-text-label)"
 									>
 										{tag}
 									</li>
@@ -416,7 +413,7 @@ function ProDashboardContent() {
 							<Tooltip
 								content="Views"
 								render={<p />}
-								className="inline-flex items-center gap-1.5 rounded-md border border-(--legacy-cards-border) bg-(--legacy-bg-secondary)/45 px-2.5 py-1.5 text-xs font-medium text-(--legacy-text-label)"
+								className="inline-flex items-center gap-1.5 rounded-md border border-(--pro-cards-border) bg-surface-elevated-1/45 px-2.5 py-1.5 text-xs font-medium text-(--pro-text-label)"
 							>
 								<Icon name="eye" height={14} width={14} />
 								<span className="tabular-nums">{formatCount(currentDashboard?.viewCount)}</span>

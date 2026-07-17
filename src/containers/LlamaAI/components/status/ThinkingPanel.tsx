@@ -52,8 +52,8 @@ export function ThinkingPanel({ thinking, defaultOpen = false }: { thinking: str
 			<summary
 				className={
 					hackerMode
-						? 'flex items-center gap-1 text-xs text-[#00ff41] drop-shadow-[0_0_6px_rgba(0,255,65,0.5)]'
-						: 'flex items-center gap-1 text-xs text-[#555] dark:text-[#aaa]'
+						? 'flex items-center gap-1 text-xs text-ai-terminal drop-shadow-ai-terminal'
+						: 'flex items-center gap-1 text-xs text-ai-secondary'
 				}
 			>
 				<span className="inline-block transition-transform duration-150 group-open:rotate-90">&#9656;</span>
@@ -64,8 +64,8 @@ export function ThinkingPanel({ thinking, defaultOpen = false }: { thinking: str
 				onScroll={syncAutoScrollIntent}
 				className={
 					hackerMode
-						? 'mt-1 h-[160px] min-h-[40px] resize-y overflow-y-auto rounded-md border border-[#00ff41]/20 bg-[#0d0d0d] p-3 font-mono text-xs leading-[1.6] whitespace-pre-wrap text-[#00ff41] shadow-[inset_0_0_30px_rgba(0,255,65,0.03)] drop-shadow-[0_0_4px_rgba(0,255,65,0.3)]'
-						: 'mt-1 h-[120px] min-h-[40px] resize-y overflow-y-auto pl-3 font-mono text-xs leading-[1.6] whitespace-pre-wrap text-[#555] dark:text-[#aaa]'
+						? 'mt-1 h-[160px] min-h-[40px] resize-y overflow-y-auto rounded-md border border-ai-terminal/20 bg-ai-ink p-3 font-mono text-xs leading-[1.6] whitespace-pre-wrap text-ai-terminal shadow-ai-terminal-inset drop-shadow-ai-terminal-soft'
+						: 'mt-1 h-[120px] min-h-[40px] resize-y overflow-y-auto pl-3 font-mono text-xs leading-[1.6] whitespace-pre-wrap text-ai-secondary'
 				}
 				style={hackerMode ? HACKER_THINKING_STYLE : undefined}
 			>

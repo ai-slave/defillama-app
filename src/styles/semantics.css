@@ -8,8 +8,8 @@
    Naming: 1:1 with the Figma variable names, with the fixes agreed with
    design (Text/links+Text/branded → link; Background/bg-interactive → brand;
    bg-brand-transparent/-subtle → brand-muted/-faint). Design-system tokens
-   own the clean role names; quarantined application variables use the
-   --legacy-* namespace.
+   own the clean role names; product themes own their prefixed namespaces
+   (src/styles/themes/).
 
    Mode handling: light values on :root, dark overrides under html.dark.
    Never create *-light/*-dark suffixed pairs — the mode lives in the
@@ -226,6 +226,8 @@ html.dark {
 	--color-data-up-alt: var(--text-data-up-alt);
 	--color-data-down-alt: var(--text-data-down-alt);
 	--color-warning: var(--text-warning);
+	--color-error: var(--error);
+	--color-success: var(--success);
 	/* State overlays — painted over bg-surface; also used for focus-visible */
 	--color-hover-row: var(--hover-row);
 	--color-hover-card: var(--hover-card);

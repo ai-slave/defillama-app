@@ -293,7 +293,7 @@ export function RecentProtocols({
 																					target="_blank"
 																					rel="noopener noreferrer"
 																					key={`can-claim-${airdrop.name}`}
-																					className="shrink-0 rounded-md bg-(--legacy-link-button) px-1.5 py-0.5 hover:bg-(--legacy-link-button-hover)"
+																					className="shrink-0 rounded-md bg-brand-muted px-1.5 py-0.5 hover:bg-(--interim-brand-tint-hover)"
 																				>
 																					<Icon name="arrow-up-right" height={14} width={14} />
 																					<span className="sr-only">open in new tab</span>

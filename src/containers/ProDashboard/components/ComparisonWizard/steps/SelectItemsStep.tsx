@@ -197,21 +197,21 @@ export function SelectItemsStep() {
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="text-center">
-				<h2 className="text-lg font-semibold text-(--legacy-text-primary)">Select {typeLabel}</h2>
-				<p className="mt-1 text-sm text-(--legacy-text-secondary)">
+				<h2 className="text-lg font-semibold text-(--pro-text-primary)">Select {typeLabel}</h2>
+				<p className="mt-1 text-sm text-(--pro-text-secondary)">
 					Choose 1-10 {typeLabel.toLowerCase()} for your dashboard
 				</p>
 			</div>
 
 			<div className="flex flex-col gap-2">
 				<div className="flex items-center justify-between">
-					<span className="text-sm font-medium text-(--legacy-text-secondary)">
+					<span className="text-sm font-medium text-(--pro-text-secondary)">
 						Selected ({state.selectedItems.length}/10)
 					</span>
 					<button
 						type="button"
 						onClick={() => actions.setSelectedItems([])}
-						className={`text-xs text-(--legacy-text-tertiary) hover:text-(--legacy-primary) ${state.selectedItems.length === 0 ? 'invisible' : ''}`}
+						className={`text-xs text-(--pro-text-tertiary) hover:text-brand ${state.selectedItems.length === 0 ? 'invisible' : ''}`}
 					>
 						Clear all
 					</button>
@@ -222,31 +222,31 @@ export function SelectItemsStep() {
 							selectedLabels.map((item) => (
 								<div
 									key={item.value}
-									className="flex shrink-0 items-center gap-2 rounded-full border border-(--legacy-cards-border) bg-(--cards-bg-alt)/50 py-1 pr-1 pl-2 text-sm"
+									className="flex shrink-0 items-center gap-2 rounded-full border border-(--pro-cards-border) py-1 pr-1 pl-2 text-sm"
 								>
 									<TokenLogo src={item.logo} alt={`Logo of ${item.label}`} size={20} />
-									<span className="whitespace-nowrap text-(--legacy-text-primary)">{item.label}</span>
+									<span className="whitespace-nowrap text-(--pro-text-primary)">{item.label}</span>
 									<button
 										type="button"
 										onClick={() => handleRemoveItem(item.value)}
-										className="flex size-5 shrink-0 items-center justify-center rounded-full bg-(--cards-bg-alt) text-(--legacy-text-tertiary) transition-colors hover:bg-red-500/20 hover:text-red-500"
+										className="flex size-5 shrink-0 items-center justify-center rounded-full text-(--pro-text-tertiary) transition-colors hover:bg-error/20 hover:text-error"
 									>
 										<Icon name="x" height={12} width={12} />
 									</button>
 								</div>
 							))
 						) : (
-							<span className="text-sm text-(--legacy-text-tertiary)">No {typeLabel.toLowerCase()} selected</span>
+							<span className="text-sm text-(--pro-text-tertiary)">No {typeLabel.toLowerCase()} selected</span>
 						)}
 					</div>
 					{state.selectedItems.length > 2 ? (
-						<div className="pointer-events-none absolute top-0 right-0 h-full w-8 bg-linear-to-l from-(--legacy-cards-bg) to-transparent" />
+						<div className="pointer-events-none absolute top-0 right-0 h-full w-8 bg-linear-to-l from-(--pro-cards-bg) to-transparent" />
 					) : null}
 				</div>
 			</div>
 
-			<div className="flex flex-col overflow-hidden rounded-lg border border-(--legacy-cards-border)">
-				<div className="border-b border-(--legacy-cards-border) bg-(--cards-bg-alt)/30 p-2">
+			<div className="flex flex-col overflow-hidden rounded-lg border border-(--pro-cards-border)">
+				<div className="border-b border-(--pro-cards-border) p-2">
 					<div className="mb-2">
 						<AriakitMultiSelect
 							label="Filter by Category"
@@ -266,24 +266,24 @@ export function SelectItemsStep() {
 							name="search"
 							height={16}
 							width={16}
-							className="absolute top-1/2 left-3 -translate-y-1/2 text-(--legacy-text-tertiary)"
+							className="absolute top-1/2 left-3 -translate-y-1/2 text-(--pro-text-tertiary)"
 						/>
 						<input
 							type="text"
 							onInput={(e) => setSearch(e.currentTarget.value)}
 							placeholder={`Search ${typeLabel.toLowerCase()}...`}
-							className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) py-2 pr-3 pl-9 text-sm placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+							className="w-full rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 py-2 pr-3 pl-9 text-sm placeholder:text-(--pro-text-tertiary) focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>
 
-				<div ref={listRef} className="h-[280px] overflow-y-auto bg-(--legacy-cards-bg)">
+				<div ref={listRef} className="h-[280px] overflow-y-auto bg-(--pro-cards-bg)">
 					{protocolsLoading ? (
 						<div className="flex h-full items-center justify-center">
-							<div className="size-6 animate-spin rounded-full border-2 border-(--legacy-primary) border-t-transparent" />
+							<div className="size-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
 						</div>
 					) : filteredOptions.length === 0 ? (
-						<div className="flex h-full flex-col items-center justify-center gap-2 text-(--legacy-text-tertiary)">
+						<div className="flex h-full flex-col items-center justify-center gap-2 text-(--pro-text-tertiary)">
 							<Icon name="search" height={24} width={24} />
 							<span className="text-sm">No {typeLabel.toLowerCase()} found</span>
 						</div>
@@ -311,11 +311,7 @@ export function SelectItemsStep() {
 										onClick={() => !isDisabled && handleToggle(option.value)}
 										disabled={isDisabled}
 										className={`absolute top-0 left-0 flex w-full items-center gap-3 px-3 py-2 text-left transition-colors ${
-											isSelected
-												? 'bg-(--legacy-primary)/10'
-												: isDisabled
-													? 'cursor-not-allowed opacity-50'
-													: 'hover:bg-(--cards-bg-alt)'
+											isSelected ? 'bg-brand/10' : isDisabled ? 'cursor-not-allowed opacity-50' : ''
 										} ${option.isChild ? 'pl-8' : ''}`}
 										style={{
 											height: `${virtualRow.size}px`,
@@ -325,11 +321,11 @@ export function SelectItemsStep() {
 										<div
 											className={`flex size-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
 												isSelected
-													? 'border-(--legacy-primary) bg-(--legacy-primary)'
-													: 'border-(--legacy-form-control-border) bg-(--legacy-bg-input)'
+													? 'border-brand bg-brand'
+													: 'border-(--pro-form-control-border) bg-surface-elevated-1'
 											}`}
 										>
-											{isSelected ? <Icon name="check" height={10} width={10} className="text-white" /> : null}
+											{isSelected ? <Icon name="check" height={10} width={10} className="text-on-brand" /> : null}
 										</div>
 
 										<span className={option.isChild ? 'opacity-70' : undefined}>
@@ -338,7 +334,7 @@ export function SelectItemsStep() {
 
 										<div className="min-w-0 flex-1">
 											<span
-												className={`truncate ${option.isChild ? 'text-(--legacy-text-secondary)' : 'text-(--legacy-text-primary)'}`}
+												className={`truncate ${option.isChild ? 'text-(--pro-text-secondary)' : 'text-(--pro-text-primary)'}`}
 											>
 												{option.label}
 											</span>

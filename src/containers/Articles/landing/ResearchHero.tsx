@@ -13,9 +13,9 @@ interface ResearchHeroProps {
 
 export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, reports }) => {
 	return (
-		<div className="text-white">
+		<div className="text-on-brand">
 			<div>
-				<div className="relative isolate flex flex-col items-center pt-8 lg:pt-[45px]">
+				<div className="relative isolate flex flex-col items-center pt-8 lg:pt-11.25">
 					<div
 						aria-hidden
 						className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[calc(100%+clamp(160px,18vw,200px))] overflow-hidden select-none"
@@ -23,18 +23,16 @@ export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, rep
 						<ResearchHeaderWash />
 					</div>
 					<img src="/assets/research_logo_dark.webp" alt="DefiLlama" width={229} height={72} />
-					<h1 className="mt-[35px] mb-3 text-center text-[22px] leading-[130%] font-semibold lg:mb-4 lg:text-[32px]">
+					<h1 className="mt-8.75 mb-3 text-center text-[22px] leading-[130%] font-semibold lg:mb-4 lg:text-[32px]">
 						{title}
 					</h1>
-					<h2 className="mb-6 text-center text-[16px] leading-[130%] font-light lg:mb-[35px] lg:text-[20px]">
-						{subtitle}
-					</h2>
+					<h2 className="mb-6 text-center text-base leading-[130%] font-light lg:mb-8.75 lg:text-xl">{subtitle}</h2>
 
 					<div className="flex flex-col items-center gap-9 lg:flex-row">
 						<div className="flex gap-3">
 							<a
 								href="mailto:research@defillama.com"
-								className="flex items-center rounded-full bg-white px-3.5 py-3 text-[16px] leading-[50%] text-[#237BFF] md:px-6 md:py-3.5"
+								className="flex items-center rounded-full bg-white px-3.5 py-3 text-base leading-[50%] text-(--research-blue-deep) md:px-6 md:py-3.5"
 							>
 								Contact us
 							</a>
@@ -42,22 +40,22 @@ export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, rep
 								href="https://calendly.com/research-defillama/30min"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="flex items-center gap-2 rounded-full border border-white px-3.5 py-3 text-[16px] leading-[50%] text-white md:px-6 md:py-3.5"
+								className="flex items-center gap-2 rounded-full border border-white px-3.5 py-3 text-base leading-[50%] text-on-brand md:px-6 md:py-3.5"
 							>
 								<span>Book a call</span>
 
-								<ResearchIcon name="calendly-mark" width={28} height={29} className="text-white" aria-hidden />
+								<ResearchIcon name="calendly-mark" width={28} height={29} className="text-on-brand" aria-hidden />
 							</Link>
 						</div>
 
-						<div className="flex gap-[7px]">
+						<div className="flex gap-1.75">
 							<Link
 								href="https://x.com/defillama_res"
 								aria-label="Follow us on X"
 								rel="noopener noreferrer"
 								target="_blank"
 							>
-								<ResearchIcon name="x-social" width={36} height={36} className="text-white" aria-hidden />
+								<ResearchIcon name="x-social" width={36} height={36} className="text-on-brand" aria-hidden />
 							</Link>
 							<Link
 								href="https://t.me/defillama_research"
@@ -65,7 +63,7 @@ export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, rep
 								rel="noopener noreferrer"
 								target="_blank"
 							>
-								<ResearchIcon name="telegram" width={36} height={36} className="text-white" aria-hidden />
+								<ResearchIcon name="telegram" width={36} height={36} className="text-on-brand" aria-hidden />
 							</Link>
 							<Link
 								href="https://www.linkedin.com/company/defillama/"
@@ -73,20 +71,20 @@ export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, rep
 								rel="noopener noreferrer"
 								target="_blank"
 							>
-								<ResearchIcon name="linkedin" width={36} height={36} className="text-white" aria-hidden />
+								<ResearchIcon name="linkedin" width={36} height={36} className="text-on-brand" aria-hidden />
 							</Link>
 							<Link href="/research/feed" aria-label="Subscribe via RSS">
 								<ResearchIcon name="rss" width={36} height={36} aria-hidden />
 							</Link>
 							<Link href="/newsletters" aria-label="Subscribe to DefiLlama newsletters">
-								<ResearchIcon name="newsletter" width={36} height={36} className="text-white" aria-hidden />
+								<ResearchIcon name="newsletter" width={36} height={36} className="text-on-brand" aria-hidden />
 							</Link>
 						</div>
 					</div>
 				</div>
 
 				{reports.length > 0 ? (
-					<div className="mt-[45px] mb-8 w-full pb-6">
+					<div className="mt-11.25 mb-8 w-full pb-6">
 						<ReportsCarousel reports={reports} showButtons={false} />
 					</div>
 				) : null}

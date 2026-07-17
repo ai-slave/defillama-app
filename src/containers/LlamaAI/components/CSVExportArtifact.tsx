@@ -21,9 +21,9 @@ export function CSVExportArtifact({ csvExport, sessionId, messageId }: CSVExport
 
 	if (!hasActiveSubscription) {
 		return (
-			<div className="flex items-center gap-3 rounded-lg border border-[#e6e6e6] bg-white p-3 opacity-60 dark:border-[#222324] dark:bg-[#181A1C]">
-				<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
-					<Icon name="file-text" className="size-5 text-gray-400" />
+			<div className="flex items-center gap-3 rounded-lg border border-ai-line bg-ai-surface-card p-3 opacity-60">
+				<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-ai-skeleton">
+					<Icon name="file-text" className="size-5 text-ai-muted" />
 				</span>
 				<span className="flex min-w-0 flex-1 flex-col gap-0.5">
 					<span className="m-0 truncate text-sm font-medium text-(--text1)">{csvExport.title}</span>
@@ -31,7 +31,7 @@ export function CSVExportArtifact({ csvExport, sessionId, messageId }: CSVExport
 				</span>
 				<a
 					href="https://defillama.com/subscription"
-					className="flex shrink-0 items-center gap-1.5 rounded-md bg-[#2172E5] px-2.5 py-1 text-xs font-medium text-white hover:bg-[#1a5bbf]"
+					className="flex shrink-0 items-center gap-1.5 rounded-md bg-ai-old-blue px-2.5 py-1 text-xs font-medium text-ai-white hover:bg-ai-old-blue-deep"
 				>
 					Subscribe
 				</a>
@@ -53,16 +53,16 @@ export function CSVExportArtifact({ csvExport, sessionId, messageId }: CSVExport
 					messageId: messageId ?? ''
 				})
 			}
-			className="flex items-center gap-3 rounded-lg border border-[#e6e6e6] bg-white p-3 transition-colors hover:border-[#2172E5] hover:bg-[#2172E5]/5 dark:border-[#222324] dark:bg-[#181A1C] dark:hover:border-[#2172E5]"
+			className="flex items-center gap-3 rounded-lg border border-ai-line bg-ai-surface-card p-3 transition-colors hover:border-ai-old-blue hover:bg-ai-old-blue/5"
 		>
-			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#2172E5]/10">
-				<Icon name="file-text" className="size-5 text-[#2172E5]" />
+			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-ai-old-blue/10">
+				<Icon name="file-text" className="size-5 text-ai-old-blue" />
 			</span>
 			<span className="flex min-w-0 flex-1 flex-col gap-0.5">
 				<span className="m-0 truncate text-sm font-medium text-(--text1)">{csvExport.title}</span>
 				<span className="m-0 text-xs text-(--text3)">{csvExport.rowCount.toLocaleString()} rows</span>
 			</span>
-			<span className="flex shrink-0 items-center gap-1.5 text-[#2172E5]">
+			<span className="flex shrink-0 items-center gap-1.5 text-ai-old-blue">
 				<Icon name="download-paper" className="size-4" />
 				<span className="text-sm font-medium">.csv</span>
 			</span>

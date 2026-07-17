@@ -67,7 +67,7 @@ export function ArticlePageAssetPicker({
 
 	return (
 		<div className="grid gap-2.5">
-			<p className="-mt-1 text-[11px] leading-snug text-(--legacy-text-tertiary)">
+			<p className="-mt-1 text-[11px] leading-snug text-tertiary">
 				Pick the tokens this article covers. Live price and 24h change render in the sidebar — only the token identity
 				is saved.
 			</p>
@@ -80,18 +80,16 @@ export function ArticlePageAssetPicker({
 				resetValueOnHide
 			>
 				<div
-					className={`relative flex items-center rounded-md border bg-(--legacy-app-bg) ${
-						atLimit
-							? 'border-(--legacy-cards-border) opacity-60'
-							: 'border-(--legacy-cards-border) focus-within:border-(--legacy-link-text)/60'
+					className={`relative flex items-center rounded-md border bg-page ${
+						atLimit ? 'border-medium opacity-60' : 'border-medium focus-within:border-link/60'
 					}`}
 				>
-					<Icon name="search" height={14} width={14} className="absolute left-3 text-(--legacy-text-tertiary)" />
+					<Icon name="search" height={14} width={14} className="absolute left-3 text-tertiary" />
 					<Ariakit.Combobox
 						placeholder={atLimit ? `Limit reached (max ${MAX_PAGE_ASSETS})` : 'Search a token by symbol or name…'}
 						disabled={atLimit}
 						autoSelect
-						className="min-h-10 w-full rounded-md bg-transparent py-2 pr-3 pl-9 text-sm text-(--legacy-text-primary) outline-hidden placeholder:text-(--legacy-text-tertiary) disabled:cursor-not-allowed"
+						className="min-h-10 w-full rounded-md bg-transparent py-2 pr-3 pl-9 text-sm text-primary outline-hidden placeholder:text-tertiary disabled:cursor-not-allowed"
 					/>
 				</div>
 				<Ariakit.ComboboxPopover
@@ -99,13 +97,11 @@ export function ArticlePageAssetPicker({
 					sameWidth
 					portal
 					unmountOnHide
-					className="z-[90] flex max-h-64 flex-col overflow-auto overscroll-contain rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 text-sm shadow-xl outline-hidden"
+					className="z-[90] flex max-h-64 flex-col overflow-auto overscroll-contain rounded-md border border-medium bg-surface py-1 text-sm shadow-xl outline-hidden"
 				>
-					{isFetching && hits.length === 0 ? (
-						<p className="p-3 text-center text-xs text-(--legacy-text-tertiary)">Searching…</p>
-					) : null}
+					{isFetching && hits.length === 0 ? <p className="p-3 text-center text-xs text-tertiary">Searching…</p> : null}
 					{!isFetching && debouncedQuery.length > 0 && hits.length === 0 ? (
-						<p className="p-3 text-center text-xs text-(--legacy-text-tertiary)">No tokens found</p>
+						<p className="p-3 text-center text-xs text-tertiary">No tokens found</p>
 					) : null}
 					{hits.map((hit) => (
 						<Ariakit.ComboboxItem
@@ -113,11 +109,11 @@ export function ArticlePageAssetPicker({
 							value={hit.geckoId}
 							setValueOnClick={false}
 							onClick={() => addAsset(hit)}
-							className="flex cursor-pointer items-center gap-2.5 px-3 py-2 data-active-item:bg-(--legacy-link-button)"
+							className="flex cursor-pointer items-center gap-2.5 px-3 py-2 data-active-item:bg-(--research-link-button-bg)"
 						>
 							<TokenLogo src={hit.image ?? geckoTokenIconUrl(`coingecko:${hit.geckoId}`)} size={20} alt={hit.symbol} />
-							<span className="text-sm font-semibold text-(--legacy-text-primary)">{hit.symbol}</span>
-							<span className="truncate text-xs text-(--legacy-text-tertiary)">{hit.name}</span>
+							<span className="text-sm font-semibold text-primary">{hit.symbol}</span>
+							<span className="truncate text-xs text-tertiary">{hit.name}</span>
 						</Ariakit.ComboboxItem>
 					))}
 				</Ariakit.ComboboxPopover>
@@ -128,12 +124,12 @@ export function ArticlePageAssetPicker({
 					{value.map((asset, index) => (
 						<li
 							key={asset.geckoId}
-							className="group flex items-center gap-2.5 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-2.5 py-2 transition-colors hover:border-(--legacy-text-tertiary)/40"
+							className="group flex items-center gap-2.5 rounded-lg border border-medium bg-page px-2.5 py-2 transition-colors hover:border-tertiary/40"
 						>
 							<TokenLogo src={geckoTokenIconUrl(`coingecko:${asset.geckoId}`)} size={22} alt={asset.symbol} />
 							<div className="flex min-w-0 flex-col">
-								<span className="text-sm leading-tight font-semibold text-(--legacy-text-primary)">{asset.symbol}</span>
-								<span className="truncate text-[11px] leading-tight text-(--legacy-text-tertiary)">{asset.name}</span>
+								<span className="text-sm leading-tight font-semibold text-primary">{asset.symbol}</span>
+								<span className="truncate text-[11px] leading-tight text-tertiary">{asset.name}</span>
 							</div>
 							<div className="ml-auto flex items-center gap-0.5">
 								<button
@@ -141,7 +137,7 @@ export function ArticlePageAssetPicker({
 									onClick={() => moveAsset(index, -1)}
 									disabled={index === 0}
 									aria-label={`Move ${asset.symbol} up`}
-									className="grid size-6 place-items-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary) disabled:pointer-events-none disabled:opacity-30"
+									className="grid size-6 place-items-center rounded-md text-tertiary transition-colors hover:bg-(--research-link-hover-bg) hover:text-primary disabled:pointer-events-none disabled:opacity-30"
 								>
 									<Icon name="chevron-up" height={14} width={14} />
 								</button>
@@ -150,7 +146,7 @@ export function ArticlePageAssetPicker({
 									onClick={() => moveAsset(index, 1)}
 									disabled={index === value.length - 1}
 									aria-label={`Move ${asset.symbol} down`}
-									className="grid size-6 place-items-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary) disabled:pointer-events-none disabled:opacity-30"
+									className="grid size-6 place-items-center rounded-md text-tertiary transition-colors hover:bg-(--research-link-hover-bg) hover:text-primary disabled:pointer-events-none disabled:opacity-30"
 								>
 									<Icon name="chevron-down" height={14} width={14} />
 								</button>
@@ -158,7 +154,7 @@ export function ArticlePageAssetPicker({
 									type="button"
 									onClick={() => removeAsset(index)}
 									aria-label={`Remove ${asset.symbol}`}
-									className="grid size-6 place-items-center rounded-md text-(--legacy-text-tertiary) opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-(--legacy-link-hover-bg) hover:text-red-500 focus-visible:opacity-100"
+									className="grid size-6 place-items-center rounded-md text-tertiary opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-(--research-link-hover-bg) hover:text-error focus-visible:opacity-100"
 								>
 									<Icon name="x" height={13} width={13} />
 								</button>
@@ -167,7 +163,7 @@ export function ArticlePageAssetPicker({
 					))}
 				</ul>
 			) : (
-				<div className="rounded-lg border border-dashed border-(--legacy-cards-border) px-3 py-3 text-center text-[11px] leading-snug text-(--legacy-text-tertiary)">
+				<div className="rounded-lg border border-dashed border-medium px-3 py-3 text-center text-[11px] leading-snug text-tertiary">
 					<p>No assets yet. Search above to add the tokens this article covers.</p>
 				</div>
 			)}

@@ -77,7 +77,7 @@ function SocialLink({ kind, value }: { kind: string; value: string }) {
 			href={href}
 			target="_blank"
 			rel="noreferrer noopener"
-			className="inline-flex h-9 items-center gap-1.5 rounded-md border border-[#0c2956]/15 px-3 text-xs font-medium text-[#0c2956]/70 transition-colors hover:border-[#237BFF]/40 hover:text-[#237BFF] dark:border-white/15 dark:text-white/70 dark:hover:border-white/40 dark:hover:text-white"
+			className="inline-flex h-9 items-center gap-1.5 rounded-md border border-(--research-navy-soft)/15 px-3 text-xs font-medium text-(--research-navy-soft)/70 transition-colors hover:border-(--research-blue-deep)/40 hover:text-(--research-blue-deep) dark:border-white/15 dark:text-on-brand/70 dark:hover:border-white/40 dark:hover:text-ai-primary"
 		>
 			<span>{kind.replace(/-/g, ' ')}</span>
 			<Icon name="arrow-up-right" className="size-3" />
@@ -95,10 +95,10 @@ function AuthorPageState({
 	children?: React.ReactNode
 }) {
 	return (
-		<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-6 py-16">
+		<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface px-6 py-16">
 			<div className="grid max-w-md gap-3 text-center">
-				<h1 className="text-3xl font-bold text-(--legacy-text-primary)">{title}</h1>
-				{description ? <p className="text-base text-(--legacy-text-label)">{description}</p> : null}
+				<h1 className="text-3xl font-bold text-primary">{title}</h1>
+				{description ? <p className="text-base text-secondary">{description}</p> : null}
 				{children}
 			</div>
 		</div>
@@ -113,13 +113,13 @@ function OwnerChips({ authorPbUserId }: { authorPbUserId?: string }) {
 		<>
 			<BasicLink
 				href="/research/profile"
-				className="rounded-md border border-(--legacy-cards-border) px-2.5 py-1 text-xs text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-link-text)"
+				className="rounded-md border border-medium px-2.5 py-1 text-xs text-secondary transition-colors hover:border-link/40 hover:text-link"
 			>
 				Edit profile
 			</BasicLink>
 			<BasicLink
 				href="/research/mine"
-				className="rounded-md border border-(--legacy-cards-border) px-2.5 py-1 text-xs text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-link-text)"
+				className="rounded-md border border-medium px-2.5 py-1 text-xs text-secondary transition-colors hover:border-link/40 hover:text-link"
 			>
 				Your research
 			</BasicLink>
@@ -136,11 +136,11 @@ function getResearchArticleLabel(article: ArticleDocument) {
 
 function BrandHero() {
 	return (
-		<header className="relative text-white">
+		<header className="relative text-on-brand">
 			<ResearchAuthorHeaderGradient />
 			<div className="relative z-10 mx-auto grid w-full max-w-[1368px] gap-6 px-4 pt-8 pb-12 sm:px-6 lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)_minmax(0,249px)] lg:items-start lg:gap-10 lg:px-8 lg:pt-12 lg:pb-16">
 				<div className="grid gap-2">
-					<h1 className="text-[28px] leading-tight font-bold tracking-widest text-white sm:text-3xl dark:text-[#3A8BFF]">
+					<h1 className="text-[28px] leading-tight font-bold tracking-widest text-on-brand sm:text-3xl dark:text-(--research-blue)">
 						<BasicLink
 							href="/research"
 							className="text-inherit transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
@@ -148,11 +148,13 @@ function BrandHero() {
 							DefiLlama Research
 						</BasicLink>
 					</h1>
-					<p className="text-lg leading-tight font-semibold tracking-widest text-[#F5F9FD] italic sm:text-xl">Editor</p>
+					<p className="text-lg leading-tight font-semibold tracking-widest text-(--research-paper) italic sm:text-xl">
+						Editor
+					</p>
 				</div>
 
-				<p className="max-w-[60ch] text-base leading-relaxed font-medium text-white lg:text-2xl lg:leading-snug">
-					<span className="font-bold text-[#3A8BFF]">DefiLlama Research</span> is the research arm of{' '}
+				<p className="max-w-[60ch] text-base leading-relaxed font-medium text-on-brand lg:text-2xl lg:leading-snug">
+					<span className="font-bold text-(--research-blue)">DefiLlama Research</span> is the research arm of{' '}
 					<span className="font-semibold">DefiLlama</span>, delivering bespoke digital asset research, market
 					intelligence, and strategic advisory services powered by the DefiLlama ecosystem.
 				</p>
@@ -160,7 +162,7 @@ function BrandHero() {
 				<div className="grid w-full max-w-[280px] gap-6 justify-self-center pt-2 lg:justify-self-start lg:pt-0">
 					<a
 						href="mailto:research@defillama.com"
-						className="inline-flex h-13 items-center justify-center gap-2 rounded-full bg-white px-5 text-base font-medium whitespace-nowrap text-[#3A8BFF] transition-opacity hover:opacity-90"
+						className="inline-flex h-13 items-center justify-center gap-2 rounded-full bg-white px-5 text-base font-medium whitespace-nowrap text-(--research-blue) transition-opacity hover:opacity-90"
 					>
 						<span>Contact us</span>
 						<Icon name="mail" className="size-5 shrink-0" />
@@ -169,7 +171,7 @@ function BrandHero() {
 						href="https://calendly.com/research-defillama/30min"
 						target="_blank"
 						rel="noopener noreferrer"
-						className="inline-flex h-13 items-center justify-center gap-2 rounded-full border border-white px-6 text-base font-medium whitespace-nowrap text-white transition-colors hover:bg-white/10"
+						className="inline-flex h-13 items-center justify-center gap-2 rounded-full border border-white px-6 text-base font-medium whitespace-nowrap text-on-brand transition-colors hover:bg-white/10"
 					>
 						<span>Book a call</span>
 						<ResearchIcon name="calendly-mark" className="size-7 shrink-0" />
@@ -207,9 +209,9 @@ function ResearchArticleListRow({
 							className="h-16 w-full rounded-md object-cover"
 						/>
 					) : (
-						<div className="h-16 w-full rounded-md bg-[#000E41]/10 dark:bg-white/10" aria-hidden />
+						<div className="h-16 w-full rounded-md bg-(--research-navy)/10 dark:bg-ai-wash-strong" aria-hidden />
 					)}
-					<h3 className="line-clamp-3 text-base leading-snug font-medium text-[#000E41] transition-colors group-hover:text-[#3A8BFF] dark:text-white dark:group-hover:text-[#3A8BFF]">
+					<h3 className="line-clamp-3 text-base leading-snug font-medium text-(--research-navy) transition-colors group-hover:text-(--research-blue) dark:text-ai-primary dark:group-hover:text-(--research-blue)">
 						{article.title}
 					</h3>
 				</BasicLink>
@@ -223,7 +225,7 @@ function ResearchArticleListRow({
 				href={articleHref(article)}
 				className={`group grid min-h-[176px] grid-cols-[218px_minmax(0,1fr)] gap-3 border ${
 					index > 0 ? 'border-t-0' : ''
-				} border-[#000E41] bg-transparent p-3 text-[#000E41] transition-colors hover:border-[#3A8BFF] dark:border-white dark:text-white dark:hover:border-[#3A8BFF]`}
+				} border-(--research-navy) bg-transparent p-3 text-(--research-navy) transition-colors hover:border-(--research-blue) dark:border-white dark:text-ai-primary dark:hover:border-(--research-blue)`}
 			>
 				{article.coverImage?.url ? (
 					<img
@@ -236,13 +238,13 @@ function ResearchArticleListRow({
 						className="h-[152px] w-[218px] rounded-md object-cover"
 					/>
 				) : (
-					<div className="h-[152px] w-[218px] rounded-md bg-[#000E41]/10 dark:bg-white/10" aria-hidden />
+					<div className="h-[152px] w-[218px] rounded-md bg-(--research-navy)/10 dark:bg-ai-wash-strong" aria-hidden />
 				)}
 				<div className="grid min-w-0 content-between gap-4 py-0.5">
-					<h3 className="line-clamp-4 text-lg leading-7 font-bold text-[#000E41] transition-colors group-hover:text-[#3A8BFF] dark:text-white dark:group-hover:text-[#3A8BFF]">
+					<h3 className="line-clamp-4 text-lg leading-7 font-bold text-(--research-navy) transition-colors group-hover:text-(--research-blue) dark:text-ai-primary dark:group-hover:text-(--research-blue)">
 						{article.title}
 					</h3>
-					<p className="text-sm leading-tight font-bold text-[#3A8BFF]">{getResearchArticleLabel(article)}</p>
+					<p className="text-sm leading-tight font-bold text-(--research-blue)">{getResearchArticleLabel(article)}</p>
 				</div>
 			</BasicLink>
 		</li>
@@ -268,11 +270,11 @@ function ResearchArticleLists({ articles }: { articles: ArticleDocument[] }) {
 			<div className="flex items-center gap-2">
 				<h2
 					id="latest-research"
-					className="shrink-0 text-base font-medium text-[#000E41] lg:text-lg lg:uppercase dark:text-white"
+					className="shrink-0 text-base font-medium text-(--research-navy) lg:text-lg lg:uppercase dark:text-ai-primary"
 				>
 					Our Latest Research
 				</h2>
-				<div className="h-px min-w-0 flex-1 bg-[#000E41] dark:bg-white" aria-hidden />
+				<div className="h-px min-w-0 flex-1 bg-(--research-navy) dark:bg-white" aria-hidden />
 			</div>
 
 			{/* mobile + tablet: compact rows, single column then two-up */}
@@ -290,7 +292,7 @@ function ResearchArticleLists({ articles }: { articles: ArticleDocument[] }) {
 
 			<BasicLink
 				href="/research"
-				className="inline-flex items-center gap-2 justify-self-end text-sm font-bold text-[#237BFF] uppercase transition-colors hover:text-[#000E41] lg:text-lg dark:hover:text-white"
+				className="inline-flex items-center gap-2 justify-self-end text-sm font-bold text-(--research-blue-deep) uppercase transition-colors hover:text-(--research-navy) lg:text-lg dark:hover:text-ai-primary"
 			>
 				<span>View all</span>
 				<Icon name="arrow-right" className="size-4" />
@@ -301,7 +303,7 @@ function ResearchArticleLists({ articles }: { articles: ArticleDocument[] }) {
 
 function DefillamaResearchContent({ articles }: { articles: ArticleDocument[] }) {
 	return (
-		<div className="relative isolate col-span-full overflow-x-clip overflow-y-hidden bg-[#F5F5F5] text-[#000E41] dark:bg-[#1D1D1D] dark:text-white lg:dark:bg-black">
+		<div className="relative isolate col-span-full overflow-x-clip overflow-y-hidden bg-surface-elevated-1 text-(--research-navy) dark:text-ai-primary lg:dark:bg-black">
 			<ResearchAuthorBackground />
 			<BrandHero />
 			<ResearchArticleLists articles={articles} />
@@ -357,7 +359,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 	if (!data && !error) {
 		return (
 			<AuthorPageState title="Author not found">
-				<BasicLink href="/research" className="text-sm text-(--legacy-link-text) hover:underline">
+				<BasicLink href="/research" className="text-sm text-link hover:underline">
 					Browse all research
 				</BasicLink>
 			</AuthorPageState>
@@ -368,7 +370,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load author'
 		return (
 			<AuthorPageState title="Couldn't load author" description={message}>
-				<BasicLink href="/research" className="text-sm text-(--legacy-link-text) hover:underline">
+				<BasicLink href="/research" className="text-sm text-link hover:underline">
 					Browse all research
 				</BasicLink>
 			</AuthorPageState>
@@ -397,7 +399,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 				<div className="flex items-center justify-between gap-3">
 					<BasicLink
 						href="/research"
-						className="inline-flex items-center gap-1 text-xs text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-text-primary)"
+						className="inline-flex items-center gap-1 text-xs text-tertiary transition-colors hover:text-primary"
 					>
 						<Icon name="arrow-left" className="size-3.5" />
 						<span>All research</span>
@@ -407,31 +409,29 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 					</div>
 				</div>
 
-				<header className="grid gap-6 border-b border-(--legacy-cards-border) pb-10 md:grid-cols-[auto_minmax(0,1fr)] md:gap-8 md:pb-12">
+				<header className="grid gap-6 border-b border-medium pb-10 md:grid-cols-[auto_minmax(0,1fr)] md:gap-8 md:pb-12">
 					{author.avatarUrl ? (
 						<img
 							src={author.avatarUrl}
 							alt=""
-							className="size-24 shrink-0 rounded-full border border-(--legacy-cards-border) object-cover md:h-32 md:w-32"
+							className="size-24 shrink-0 rounded-full border border-medium object-cover md:h-32 md:w-32"
 						/>
 					) : (
-						<div className="flex size-24 shrink-0 items-center justify-center rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) text-2xl font-semibold text-(--legacy-text-secondary) md:h-32 md:w-32 md:text-3xl">
+						<div className="flex size-24 shrink-0 items-center justify-center rounded-full border border-medium bg-surface text-2xl font-semibold text-secondary md:h-32 md:w-32 md:text-3xl">
 							{author.displayName.slice(0, 2).toUpperCase()}
 						</div>
 					)}
 					<div className="grid min-w-0 gap-4">
 						<div className="grid gap-1.5">
-							<h1 className="text-3xl leading-tight font-semibold tracking-tight text-(--legacy-text-primary) md:text-5xl">
+							<h1 className="text-3xl leading-tight font-semibold tracking-tight text-primary md:text-5xl">
 								{author.displayName}
 							</h1>
-							<p className="font-jetbrains text-xs text-(--legacy-text-tertiary)">@{author.slug}</p>
+							<p className="font-jetbrains text-xs text-tertiary">@{author.slug}</p>
 						</div>
-						{author.bio ? (
-							<p className="max-w-prose text-base leading-relaxed text-(--legacy-text-secondary)">{author.bio}</p>
-						) : null}
-						<div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 text-xs text-(--legacy-text-tertiary)">
+						{author.bio ? <p className="max-w-prose text-base leading-relaxed text-secondary">{author.bio}</p> : null}
+						<div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 text-xs text-tertiary">
 							<span>
-								<strong className="font-semibold text-(--legacy-text-primary)">{articles.length}</strong>{' '}
+								<strong className="font-semibold text-primary">{articles.length}</strong>{' '}
 								{articles.length === 1 ? 'piece' : 'pieces'}
 							</span>
 							{yearsLabel ? (
@@ -444,7 +444,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 								<>
 									<span aria-hidden>/</span>
 									<span>
-										<strong className="font-semibold text-(--legacy-text-primary)">{totalMinutes}</strong> min reading
+										<strong className="font-semibold text-primary">{totalMinutes}</strong> min reading
 									</span>
 								</>
 							) : null}
@@ -460,8 +460,8 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 				</header>
 
 				{articles.length === 0 ? (
-					<div className="rounded-md border border-dashed border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-10 text-center">
-						<p className="text-sm text-(--legacy-text-secondary)">No published research yet.</p>
+					<div className="rounded-md border border-dashed border-medium bg-surface p-10 text-center">
+						<p className="text-sm text-secondary">No published research yet.</p>
 					</div>
 				) : (
 					<>
@@ -469,25 +469,23 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 							<section>
 								<BasicLink
 									href={articleHref(lead)}
-									className="group grid overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) transition-colors hover:border-(--legacy-link-text)/40 md:grid-cols-[minmax(0,1fr)_minmax(0,320px)]"
+									className="group grid overflow-hidden rounded-md border border-medium bg-surface transition-colors hover:border-link/40 md:grid-cols-[minmax(0,1fr)_minmax(0,320px)]"
 								>
 									<div className="order-2 grid content-start gap-3 p-6 md:order-1 md:p-8">
-										<div className="flex items-center gap-2 text-xs tracking-wide text-(--legacy-text-tertiary) uppercase">
+										<div className="flex items-center gap-2 text-xs tracking-wide text-tertiary uppercase">
 											<span className="font-jetbrains">Latest</span>
 											<span aria-hidden>/</span>
 											<span>{formatDate(lead.displayDate ?? lead.publishedAt)}</span>
 											<span aria-hidden>/</span>
 											<span>{readingMinutes(lead)} min read</span>
 										</div>
-										<h2 className="text-2xl leading-[1.15] font-semibold tracking-tight text-(--legacy-text-primary) group-hover:text-(--legacy-link-text) md:text-3xl">
+										<h2 className="text-2xl leading-[1.15] font-semibold tracking-tight text-primary group-hover:text-link md:text-3xl">
 											{lead.title}
 										</h2>
 										{lead.subtitle ? (
-											<p className="text-base leading-snug text-(--legacy-text-secondary)">{lead.subtitle}</p>
+											<p className="text-base leading-snug text-secondary">{lead.subtitle}</p>
 										) : lead.excerpt ? (
-											<p className="line-clamp-3 text-sm leading-relaxed text-(--legacy-text-secondary)">
-												{lead.excerpt}
-											</p>
+											<p className="line-clamp-3 text-sm leading-relaxed text-secondary">{lead.excerpt}</p>
 										) : null}
 									</div>
 									{lead.coverImage?.url ? (
@@ -505,11 +503,9 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 
 						{rest.length ? (
 							<section className="grid gap-4">
-								<div className="flex items-baseline justify-between gap-2 border-b border-(--legacy-cards-border) pb-3">
-									<h2 className="text-sm font-semibold tracking-[0.16em] text-(--legacy-text-tertiary) uppercase">
-										Archive
-									</h2>
-									<p className="font-jetbrains text-xs text-(--legacy-text-tertiary)">
+								<div className="flex items-baseline justify-between gap-2 border-b border-medium pb-3">
+									<h2 className="text-sm font-semibold tracking-[0.16em] text-tertiary uppercase">Archive</h2>
+									<p className="font-jetbrains text-xs text-tertiary">
 										{filteredArchive.length} {filteredArchive.length === 1 ? 'note' : 'notes'}
 									</p>
 								</div>
@@ -526,8 +522,8 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 													onClick={() => setArchiveFilter(tab)}
 													className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-jetbrains text-[10px] tracking-[0.16em] uppercase transition-colors ${
 														isActive
-															? 'border-(--legacy-link-text)/60 bg-(--legacy-link-button) text-(--legacy-link-text)'
-															: 'border-(--legacy-cards-border) bg-transparent text-(--legacy-text-secondary) hover:border-(--legacy-link-text)/40 hover:text-(--legacy-link-text)'
+															? 'border-link/60 bg-(--research-link-button-bg) text-link'
+															: 'border-medium bg-transparent text-secondary hover:border-link/40 hover:text-link'
 													}`}
 												>
 													<span>{label}</span>
@@ -541,9 +537,9 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 									{filteredArchive.map((article) => (
 										<li
 											key={article.id}
-											className="grid grid-cols-[64px_72px_minmax(0,1fr)] items-start gap-4 border-b border-(--legacy-cards-border) py-5 last:border-b-0 sm:grid-cols-[88px_96px_minmax(0,1fr)] sm:gap-6"
+											className="grid grid-cols-[64px_72px_minmax(0,1fr)] items-start gap-4 border-b border-medium py-5 last:border-b-0 sm:grid-cols-[88px_96px_minmax(0,1fr)] sm:gap-6"
 										>
-											<div className="pt-1 font-jetbrains text-xs tracking-tight text-(--legacy-text-tertiary) tabular-nums">
+											<div className="pt-1 font-jetbrains text-xs tracking-tight text-tertiary tabular-nums">
 												{formatShort(article.publishedAt)}
 											</div>
 											{article.coverImage?.url ? (
@@ -553,25 +549,20 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 														alt=""
 														loading="lazy"
 														decoding="async"
-														className="aspect-4/3 w-full rounded-sm border border-(--legacy-cards-border) object-cover"
+														className="aspect-4/3 w-full rounded-sm border border-medium object-cover"
 													/>
 												</BasicLink>
 											) : (
-												<div
-													className="aspect-4/3 w-full rounded-sm border border-(--legacy-cards-border) bg-(--legacy-app-bg)"
-													aria-hidden
-												/>
+												<div className="aspect-4/3 w-full rounded-sm border border-medium bg-page" aria-hidden />
 											)}
 											<BasicLink href={articleHref(article)} className="group grid gap-1.5">
-												<h3 className="text-base leading-tight font-semibold text-(--legacy-text-primary) transition-colors group-hover:text-(--legacy-link-text) md:text-lg">
+												<h3 className="text-base leading-tight font-semibold text-primary transition-colors group-hover:text-link md:text-lg">
 													{article.title}
 												</h3>
 												{article.excerpt ? (
-													<p className="line-clamp-2 text-sm leading-relaxed text-(--legacy-text-secondary)">
-														{article.excerpt}
-													</p>
+													<p className="line-clamp-2 text-sm leading-relaxed text-secondary">{article.excerpt}</p>
 												) : null}
-												<div className="flex items-center gap-2 text-xs text-(--legacy-text-tertiary)">
+												<div className="flex items-center gap-2 text-xs text-tertiary">
 													<span>{readingMinutes(article)} min read</span>
 													{article.tags && article.tags.length > 0 ? (
 														<>

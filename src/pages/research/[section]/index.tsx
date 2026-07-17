@@ -79,9 +79,9 @@ function InterviewCard({ article }: { article: ArticleDocument }) {
 	return (
 		<Link
 			href={articleHref(article)}
-			className="group grid content-start gap-3 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)/40 p-4 transition-colors hover:border-(--legacy-link-text)/40"
+			className="group grid content-start gap-3 rounded-md border border-medium bg-surface/40 p-4 transition-colors hover:border-link/40"
 		>
-			<div className="flex items-center justify-between gap-3 font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
+			<div className="flex items-center justify-between gap-3 font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">
 				<span>Interview</span>
 				<span className="tabular-nums">{readingMinutes(article)} min</span>
 			</div>
@@ -97,26 +97,22 @@ function InterviewCard({ article }: { article: ArticleDocument }) {
 						<img
 							src={firstInterviewee.avatarUrl}
 							alt=""
-							className="size-9 shrink-0 rounded-full border border-(--legacy-cards-border) object-cover"
+							className="size-9 shrink-0 rounded-full border border-medium object-cover"
 						/>
 					) : null}
 					<div className="grid">
-						<span className="text-sm font-semibold text-(--legacy-text-primary)">{interviewee}</span>
-						{firstInterviewee?.role ? (
-							<span className="text-[11px] text-(--legacy-text-tertiary)">{firstInterviewee.role}</span>
-						) : null}
+						<span className="text-sm font-semibold text-primary">{interviewee}</span>
+						{firstInterviewee?.role ? <span className="text-[11px] text-tertiary">{firstInterviewee.role}</span> : null}
 					</div>
 				</div>
 			) : null}
-			<h3 className="text-base leading-snug font-semibold tracking-tight text-(--legacy-text-primary) group-hover:text-(--legacy-link-text)">
+			<h3 className="text-base leading-snug font-semibold tracking-tight text-primary group-hover:text-link">
 				{article.title}
 			</h3>
 			{article.excerpt || article.subtitle ? (
-				<p className="line-clamp-3 text-sm leading-relaxed text-(--legacy-text-secondary)">
-					{article.excerpt || article.subtitle}
-				</p>
+				<p className="line-clamp-3 text-sm leading-relaxed text-secondary">{article.excerpt || article.subtitle}</p>
 			) : null}
-			<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase tabular-nums">
+			<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase tabular-nums">
 				{formatDate(article.displayDate ?? article.publishedAt)}
 			</span>
 		</Link>
@@ -143,9 +139,9 @@ function SectionLandingContent({
 	if (error) {
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load research'
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-red-500/30 bg-red-500/5 p-6">
-				<h1 className="heading-sm text-(--legacy-text-primary)">Couldn't load this section</h1>
-				<p className="text-sm text-(--legacy-text-secondary)">{message}</p>
+			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error/30 bg-error/5 p-6">
+				<h1 className="heading-sm text-primary">Couldn't load this section</h1>
+				<p className="text-sm text-secondary">{message}</p>
 			</div>
 		)
 	}
@@ -159,32 +155,30 @@ function SectionLandingContent({
 		<>
 			<ArticleBannerStrip scope="section" section={section} initialData={{ section: initialData.sectionBanner }} />
 			<div className="mx-auto grid w-full max-w-[1180px] gap-8 px-4 pt-8 pb-10 sm:px-6">
-				<header className="grid gap-3 border-b border-(--legacy-cards-border) pb-6">
+				<header className="grid gap-3 border-b border-medium pb-6">
 					<div className="flex items-center justify-between gap-3">
 						<Link
 							href="/research"
-							className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase hover:text-(--legacy-link-text)"
+							className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase hover:text-link"
 						>
 							← All research
 						</Link>
-						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase tabular-nums">
+						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase tabular-nums">
 							{total} {total === 1 ? 'story' : 'stories'}
 						</span>
 					</div>
-					<h1 className="text-3xl leading-tight font-bold tracking-tight text-(--legacy-text-primary) sm:text-4xl">
-						{sectionLabel}
-					</h1>
+					<h1 className="text-3xl leading-tight font-bold tracking-tight text-primary sm:text-4xl">{sectionLabel}</h1>
 					{isInterview ? (
-						<p className="max-w-2xl text-sm text-(--legacy-text-secondary)">
+						<p className="max-w-2xl text-sm text-secondary">
 							Conversations with the people building, funding, and using DeFi.
 						</p>
 					) : null}
 				</header>
 
 				{items.length === 0 ? (
-					<div className="mx-auto grid max-w-xl gap-2 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)/50 p-8 text-center">
-						<p className="text-sm text-(--legacy-text-secondary)">Nothing here yet.</p>
-						<Link href="/research" className="text-sm text-(--legacy-link-text) hover:underline">
+					<div className="mx-auto grid max-w-xl gap-2 rounded-md border border-medium bg-surface/50 p-8 text-center">
+						<p className="text-sm text-secondary">Nothing here yet.</p>
+						<Link href="/research" className="text-sm text-link hover:underline">
 							Browse all research →
 						</Link>
 					</div>

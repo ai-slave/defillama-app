@@ -74,13 +74,13 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 				resetValueOnHide
 			>
 				<div
-					className={`relative flex items-center rounded-md border bg-(--legacy-app-bg) ${error ? 'border-red-500/60' : 'border-(--legacy-cards-border) focus-within:border-(--legacy-link-text)/60'}`}
+					className={`relative flex items-center rounded-md border bg-page ${error ? 'border-error/60' : 'border-medium focus-within:border-link/60'}`}
 				>
-					<Icon name="search" height={14} width={14} className="absolute left-3 text-(--legacy-text-tertiary)" />
+					<Icon name="search" height={14} width={14} className="absolute left-3 text-tertiary" />
 					<Ariakit.Combobox
 						placeholder={selectedLabel ? selectedLabel : 'Search articles by title…'}
 						autoSelect
-						className="min-h-10 w-full rounded-md bg-transparent px-3 py-2 pr-9 pl-9 text-sm text-(--legacy-text-primary) outline-hidden placeholder:text-(--legacy-text-tertiary)"
+						className="min-h-10 w-full rounded-md bg-transparent px-3 py-2 pr-9 pl-9 text-sm text-primary outline-hidden placeholder:text-tertiary"
 					/>
 					{value ? (
 						<button
@@ -91,7 +91,7 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 								onChange(null)
 							}}
 							aria-label="Clear selection"
-							className="absolute right-2 flex size-6 items-center justify-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)"
+							className="absolute right-2 flex size-6 items-center justify-center rounded-md text-tertiary transition-colors hover:bg-(--research-link-hover-bg) hover:text-primary"
 						>
 							<Icon name="x" height={12} width={12} />
 						</button>
@@ -102,14 +102,10 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 					sameWidth
 					portal
 					unmountOnHide
-					className="z-[90] flex max-h-72 flex-col overflow-auto overscroll-contain rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 text-sm shadow-xl outline-hidden"
+					className="z-[90] flex max-h-72 flex-col overflow-auto overscroll-contain rounded-md border border-medium bg-surface py-1 text-sm shadow-xl outline-hidden"
 				>
-					{isFetching && !items.length ? (
-						<p className="p-3 text-center text-xs text-(--legacy-text-tertiary)">Searching…</p>
-					) : null}
-					{!isFetching && !items.length ? (
-						<p className="p-3 text-center text-xs text-(--legacy-text-tertiary)">No results</p>
-					) : null}
+					{isFetching && !items.length ? <p className="p-3 text-center text-xs text-tertiary">Searching…</p> : null}
+					{!isFetching && !items.length ? <p className="p-3 text-center text-xs text-tertiary">No results</p> : null}
 					{items.map((article) => (
 						<Ariakit.ComboboxItem
 							key={article.id}
@@ -121,10 +117,10 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 								onChange(article)
 								setOpen(false)
 							}}
-							className="flex cursor-pointer flex-col gap-0.5 px-3 py-2 text-(--legacy-text-secondary) data-active-item:bg-(--legacy-link-button) data-active-item:text-(--legacy-link-text)"
+							className="flex cursor-pointer flex-col gap-0.5 px-3 py-2 text-secondary data-active-item:bg-(--research-link-button-bg) data-active-item:text-link"
 						>
-							<span className="truncate text-sm text-(--legacy-text-primary)">{article.title}</span>
-							<span className="font-jetbrains text-[10px] tracking-[0.16em] text-(--legacy-text-tertiary) uppercase">
+							<span className="truncate text-sm text-primary">{article.title}</span>
+							<span className="font-jetbrains text-[10px] tracking-[0.16em] text-tertiary uppercase">
 								{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'No section'} · /{article.slug}
 							</span>
 						</Ariakit.ComboboxItem>
@@ -132,12 +128,12 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 				</Ariakit.ComboboxPopover>
 			</Ariakit.ComboboxProvider>
 			{value && selectedLabel ? (
-				<p className="font-jetbrains text-[10px] tracking-[0.16em] text-(--legacy-text-tertiary) uppercase">
-					Selected: <span className="tracking-normal text-(--legacy-text-secondary) normal-case">{selectedLabel}</span>
+				<p className="font-jetbrains text-[10px] tracking-[0.16em] text-tertiary uppercase">
+					Selected: <span className="tracking-normal text-secondary normal-case">{selectedLabel}</span>
 				</p>
 			) : null}
-			{hint ? <p className="text-xs text-(--legacy-text-tertiary)">{hint}</p> : null}
-			{error ? <p className="text-xs text-red-500">{error}</p> : null}
+			{hint ? <p className="text-xs text-tertiary">{hint}</p> : null}
+			{error ? <p className="text-xs text-error">{error}</p> : null}
 		</div>
 	)
 }

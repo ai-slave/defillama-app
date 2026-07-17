@@ -113,14 +113,14 @@ export function ChartTab(props: ChartTabProps) {
 
 	return (
 		<div className="flex h-full flex-col">
-			<div className="mb-3 rounded-xl border border-(--legacy-cards-border) bg-(--cards-bg-alt)/60 p-1 shadow-sm">
+			<div className="mb-3 rounded-xl border border-(--pro-cards-border) p-1 shadow-sm">
 				<div className="grid grid-cols-2 gap-1">
 					<button
 						onClick={() => onChartModeChange('builder')}
 						className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
 							chartMode === 'builder'
-								? 'bg-(--legacy-old-blue) text-white shadow-md ring-1 ring-black/10'
-								: 'text-(--legacy-text-secondary) hover:bg-(--legacy-cards-bg)/80 hover:text-(--legacy-text-primary) hover:shadow-sm'
+								? 'bg-(--pro-old-blue) text-on-brand shadow-md ring-1 ring-black/10'
+								: 'text-(--pro-text-secondary) hover:bg-(--pro-cards-bg)/80 hover:text-(--pro-text-primary) hover:shadow-sm'
 						}`}
 					>
 						<Icon
@@ -129,8 +129,8 @@ export function ChartTab(props: ChartTabProps) {
 							height={15}
 							className={
 								chartMode === 'builder'
-									? 'text-white'
-									: 'text-(--legacy-text-tertiary) group-hover:text-(--legacy-text-secondary)'
+									? 'text-on-brand'
+									: 'text-(--pro-text-tertiary) group-hover:text-(--pro-text-secondary)'
 							}
 						/>
 						<span>Builder</span>
@@ -139,8 +139,8 @@ export function ChartTab(props: ChartTabProps) {
 						onClick={() => onChartModeChange('manual')}
 						className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
 							chartMode === 'manual'
-								? 'bg-(--legacy-old-blue) text-white shadow-md ring-1 ring-black/10'
-								: 'text-(--legacy-text-secondary) hover:bg-(--legacy-cards-bg)/80 hover:text-(--legacy-text-primary) hover:shadow-sm'
+								? 'bg-(--pro-old-blue) text-on-brand shadow-md ring-1 ring-black/10'
+								: 'text-(--pro-text-secondary) hover:bg-(--pro-cards-bg)/80 hover:text-(--pro-text-primary) hover:shadow-sm'
 						}`}
 					>
 						<Icon
@@ -149,8 +149,8 @@ export function ChartTab(props: ChartTabProps) {
 							height={15}
 							className={
 								chartMode === 'manual'
-									? 'text-white'
-									: 'text-(--legacy-text-tertiary) group-hover:text-(--legacy-text-secondary)'
+									? 'text-on-brand'
+									: 'text-(--pro-text-tertiary) group-hover:text-(--pro-text-secondary)'
 							}
 						/>
 						<span>Manual</span>

@@ -14,24 +14,24 @@ const PLAN_TIER: Record<PlanKey, number> = { free: 0, pro: 1, api: 2, enterprise
 
 const cardWrapperStyles = {
 	highlighted:
-		'w-full flex-[1_1_280px] flex flex-col gap-2.5 rounded-[24px] bg-(--sub-brand-primary) px-0.5 pt-0.5 pb-3 sm:max-w-[330px]',
+		'w-full flex-[1_1_280px] flex flex-col gap-2.5 rounded-[24px] bg-sub-brand-primary px-0.5 pt-0.5 pb-3 sm:max-w-[330px]',
 	default: 'w-full flex-[1_1_280px] flex flex-col sm:max-w-[330px] sm:gap-2.5 sm:pb-3'
 }
 
 const cardShellStyles = {
 	highlighted: 'relative flex flex-1 flex-col',
 	default:
-		'relative flex flex-1 flex-col rounded-[24px] border border-(--sub-border-slate-100) bg-white dark:border-(--sub-border-strong) dark:bg-(--sub-surface-dark)'
+		'relative flex flex-1 flex-col rounded-[24px] border border-sub-border-slate-100 bg-white dark:border-sub-border-strong dark:bg-sub-surface-dark'
 }
 
 const cardInnerStyles = {
 	highlighted:
-		'flex h-full flex-1 flex-col justify-between overflow-hidden rounded-[22px] bg-white px-5 py-6 dark:bg-(--sub-surface-dark) sm:px-4',
+		'flex h-full flex-1 flex-col justify-between overflow-hidden rounded-[22px] bg-white px-5 py-6 dark:bg-sub-surface-dark sm:px-4',
 	default:
-		'flex h-full flex-1 flex-col justify-between overflow-hidden rounded-[24px] bg-white px-5 py-6 dark:bg-(--sub-surface-dark) sm:px-4'
+		'flex h-full flex-1 flex-col justify-between overflow-hidden rounded-[24px] bg-white px-5 py-6 dark:bg-sub-surface-dark sm:px-4'
 }
 
-export const SELECTED_COLUMN_HIGHLIGHT = 'bg-[rgba(31,103,210,0.06)] dark:bg-(--sub-brand-primary-alpha-5)'
+export const SELECTED_COLUMN_HIGHLIGHT = 'bg-brand/6 dark:bg-sub-brand-primary-alpha-5'
 
 const selectedColumnStyles = {
 	active: SELECTED_COLUMN_HIGHLIGHT,
@@ -69,30 +69,30 @@ function FeatureBullet({ item }: { item: FeatureItem }) {
 	return (
 		<li className={`flex items-start gap-2${item.isSubItem ? ' ml-7 sm:ml-5' : ''}`}>
 			{item.isSubItem ? (
-				<span className="inline-flex size-6 shrink-0 items-center justify-center text-[16px] leading-6 text-(--sub-text-secondary) sm:h-5 sm:w-5 sm:text-[13px] sm:leading-5 dark:text-(--sub-text-secondary-dark)">
+				<span className="inline-flex size-6 shrink-0 items-center justify-center text-base leading-6 text-sub-text-secondary sm:h-5 sm:w-5 sm:text-[13px] sm:leading-5 dark:text-sub-text-secondary-dark">
 					–
 				</span>
 			) : (
 				<span className="shrink-0">
 					{item.availability === 'check' ? (
-						<Icon name="check" height={24} width={24} className="text-(--sub-brand-secondary) sm:h-5 sm:w-5" />
+						<Icon name="check" height={24} width={24} className="text-sub-brand-secondary sm:h-5 sm:w-5" />
 					) : (
 						<Icon
 							name="minus"
 							height={24}
 							width={24}
-							className="text-(--sub-icon-muted) sm:h-5 sm:w-5 dark:text-(--sub-icon-muted-dark)"
+							className="text-sub-icon-muted sm:h-5 sm:w-5 dark:text-sub-icon-muted-dark"
 						/>
 					)}
 				</span>
 			)}
 			{item.highlightText ? (
-				<span className="bg-linear-to-r from-(--sub-brand-primary) to-(--sub-brand-soft) bg-clip-text text-[16px] leading-6 text-transparent sm:pt-0.5 sm:text-[13px] sm:leading-[18px] dark:from-(--sub-brand-secondary) dark:to-(--sub-brand-softest)">
+				<span className="bg-linear-to-r from-sub-brand-primary to-sub-brand-soft bg-clip-text text-base leading-6 text-transparent sm:pt-0.5 sm:text-[13px] sm:leading-[18px] dark:from-sub-brand-secondary dark:to-sub-brand-softest">
 					<FeatureLabel item={item} />
 				</span>
 			) : (
 				<span
-					className={`text-[16px] leading-6 sm:pt-0.5 sm:text-[13px] sm:leading-[18px] ${item.availability === 'check' ? 'text-(--sub-ink-primary) dark:text-(--sub-text-primary-dark)' : 'text-(--sub-text-muted) dark:text-(--sub-text-muted-dark)'}`}
+					className={`text-base leading-6 sm:pt-0.5 sm:text-[13px] sm:leading-[18px] ${item.availability === 'check' ? 'text-sub-ink-primary dark:text-sub-text-primary-dark' : 'text-sub-text-muted dark:text-sub-text-muted-dark'}`}
 				>
 					<FeatureLabel item={item} />
 				</span>
@@ -104,9 +104,9 @@ function FeatureBullet({ item }: { item: FeatureItem }) {
 /* ── PricingCardCta ────────────────────────────────────────────────── */
 
 const outlineBtnCls =
-	'h-14 w-full rounded-xl border border-(--sub-border-slate-100) bg-(--sub-surface-slate-10) text-[16px] leading-5 font-medium text-(--sub-text-slate-900) dark:border-(--sub-border-strong) dark:bg-transparent dark:text-white sm:h-10 sm:rounded-lg sm:border-(--sub-border-muted) sm:bg-white sm:text-sm sm:text-(--sub-ink-primary) dark:sm:border-(--sub-border-strong) dark:sm:bg-transparent dark:sm:text-white'
+	'h-14 w-full rounded-xl border border-sub-border-slate-100 bg-sub-surface-slate-10 text-base leading-5 font-medium text-sub-text-slate-900 dark:border-sub-border-strong dark:bg-transparent dark:text-ai-primary sm:h-10 sm:rounded-lg sm:border-sub-border-muted sm:bg-white sm:text-sm sm:text-sub-ink-primary dark:sm:border-sub-border-strong dark:sm:bg-transparent dark:sm:text-ai-primary'
 const filledBtnCls =
-	'h-14 w-full rounded-xl bg-(--sub-brand-primary) text-[16px] leading-5 font-medium text-white sm:h-10 sm:rounded-lg sm:text-sm'
+	'h-14 w-full rounded-xl bg-sub-brand-primary text-base leading-5 font-medium text-on-brand sm:h-10 sm:rounded-lg sm:text-sm'
 
 function PricingCardCta({
 	card,
@@ -148,10 +148,10 @@ function PricingCardCta({
 		if (!isCurrentPlan) return null
 		return (
 			<>
-				<p className="mt-4 text-center text-[16px] leading-5 font-medium text-(--sub-brand-primary) sm:text-sm dark:text-(--sub-brand-secondary)">
+				<p className="mt-4 text-center text-base leading-5 font-medium text-sub-brand-primary sm:text-sm dark:text-sub-brand-secondary">
 					Current Plan
 				</p>
-				<p className="text-center text-[13px] leading-5 text-(--sub-text-slate-400) dark:text-(--sub-text-muted)">
+				<p className="text-center text-[13px] leading-5 text-sub-text-slate-400 dark:text-sub-text-muted">
 					Your {card.title} plan was provided by the DefiLlama team. To make any changes, please contact the team.
 				</p>
 			</>
@@ -165,18 +165,18 @@ function PricingCardCta({
 	if (isCurrentPlan) {
 		return (
 			<>
-				<p className="mt-4 text-center text-[16px] leading-5 font-medium text-(--sub-brand-primary) sm:text-sm dark:text-(--sub-brand-secondary)">
+				<p className="mt-4 text-center text-base leading-5 font-medium text-sub-brand-primary sm:text-sm dark:text-sub-brand-secondary">
 					{isTrial ? 'Current Plan (trial)' : 'Current Plan'}
 				</p>
 				{isCancelPending ? (
-					<div className="flex flex-col gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3">
-						<p className="text-center text-[13px] leading-5 font-medium text-yellow-500">Cancellation scheduled</p>
-						<p className="text-center text-[12px] leading-4 text-(--sub-text-muted)">
+					<div className="flex flex-col gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3">
+						<p className="text-center text-[13px] leading-5 font-medium text-warning">Cancellation scheduled</p>
+						<p className="text-center text-xs leading-4 text-sub-text-muted">
 							Your plan stays active until the end of the billing period.
 						</p>
 						<button
 							type="button"
-							className="mt-1 text-[13px] leading-5 font-medium text-(--sub-brand-primary) underline hover:text-(--sub-brand-secondary)"
+							className="mt-1 text-[13px] leading-5 font-medium text-sub-brand-primary underline hover:text-sub-brand-secondary"
 							onClick={onRevertCancellation}
 						>
 							Revert Cancellation
@@ -193,7 +193,7 @@ function PricingCardCta({
 						<button type="button" className={filledBtnCls} onClick={() => onUpgradeToYearly?.(card.key)}>
 							Upgrade to Yearly
 						</button>
-						<p className="text-center text-[12px] leading-4 text-(--sub-text-slate-400) dark:text-(--sub-text-muted)">
+						<p className="text-center text-xs leading-4 text-sub-text-slate-400 dark:text-sub-text-muted">
 							Switch to annual billing — save {card.key === 'api' ? '$600' : '$98'}/year
 						</p>
 					</>
@@ -232,22 +232,22 @@ function PricingCardCta({
 					<div className="flex gap-2">
 						<button
 							type="button"
-							className="h-14 flex-1 rounded-xl bg-emerald-600 text-[16px] leading-5 font-medium text-white sm:h-10 sm:rounded-lg sm:text-sm"
+							className="h-14 flex-1 rounded-xl bg-emerald-600 text-base leading-5 font-medium text-on-brand sm:h-10 sm:rounded-lg sm:text-sm"
 							onClick={onStartTrial}
 						>
 							Start Free Trial
 						</button>
 						<button
 							type="button"
-							className="h-14 flex-1 rounded-xl bg-(--sub-brand-primary) text-[16px] leading-5 font-medium text-white sm:h-10 sm:rounded-lg sm:text-sm"
+							className="h-14 flex-1 rounded-xl bg-sub-brand-primary text-base leading-5 font-medium text-on-brand sm:h-10 sm:rounded-lg sm:text-sm"
 							onClick={() => onPrimaryCtaClick?.(card.key)}
 							disabled={loading === 'stripe'}
 						>
 							{loading === 'stripe' ? 'Processing...' : card.primaryCta}
 						</button>
 					</div>
-					<div className="rounded-[10px] border border-(--sub-border-slate-100) px-3 py-2.5 text-[12px] leading-4 text-(--sub-text-slate-600) sm:rounded-lg sm:px-2.5 sm:py-2 sm:text-[11px] dark:border-(--sub-border-strong) dark:text-(--sub-text-muted)">
-						<p className="font-medium text-emerald-600 dark:text-emerald-400">Free trial differences:</p>
+					<div className="rounded-[10px] border border-sub-border-slate-100 px-3 py-2.5 text-xs leading-4 text-sub-text-slate-600 sm:rounded-lg sm:px-2.5 sm:py-2 sm:text-[11px] dark:border-sub-border-strong dark:text-sub-text-muted">
+						<p className="font-medium text-success dark:text-success">Free trial differences:</p>
 						<ul className="mt-1 flex flex-col gap-0.5">
 							<li>• 3 deep research questions/day (vs 5)</li>
 							<li>• No CSV downloads — paid Pro only</li>
@@ -291,14 +291,14 @@ function PricingCardCta({
 				</>
 			)}
 			{card.ctaSubtext ? (
-				<p className="text-center text-[12px] leading-4 text-(--sub-text-slate-400) dark:text-(--sub-text-muted)">
+				<p className="text-center text-xs leading-4 text-sub-text-slate-400 dark:text-sub-text-muted">
 					{card.ctaSubtext}
 				</p>
 			) : null}
 			{!isAuthenticated && card.key !== 'free' && card.key !== 'enterprise' ? (
 				<button
 					type="button"
-					className="text-[13px] leading-5 text-(--sub-text-slate-400) underline hover:text-(--sub-brand-primary) dark:text-(--sub-text-muted) dark:hover:text-(--sub-brand-secondary)"
+					className="text-[13px] leading-5 text-sub-text-slate-400 underline hover:text-sub-brand-primary dark:text-sub-text-muted dark:hover:text-sub-brand-secondary"
 					onClick={() => onPrimaryCtaClick?.('free')}
 				>
 					Already a subscriber? Sign In
@@ -318,52 +318,52 @@ export function PricingCardContent({
 	return (
 		<div className="flex flex-col gap-7 sm:gap-5">
 			<div className="flex flex-col gap-2 sm:min-h-[140px] sm:gap-3">
-				<h3 className="text-[22px] leading-[28px] font-semibold text-(--sub-text-slate-950) sm:text-[20px] sm:leading-[26px] sm:text-(--sub-ink-primary) dark:text-white dark:sm:text-white">
+				<h3 className="text-[22px] leading-[28px] font-semibold text-sub-text-slate-950 sm:text-xl sm:leading-[26px] sm:text-sub-ink-primary dark:text-ai-primary dark:sm:text-ai-primary">
 					{card.title}
 				</h3>
 				{card.subtitle ? (
-					<p className="text-[15px] leading-5 font-medium text-(--sub-text-slate-600) sm:text-[14px] sm:leading-4 sm:text-(--sub-text-secondary) dark:text-(--sub-text-muted-dark)">
+					<p className="text-[15px] leading-5 font-medium text-sub-text-slate-600 sm:text-sm sm:leading-4 sm:text-sub-text-secondary dark:text-sub-text-muted-dark">
 						{card.subtitle}
 					</p>
 				) : null}
 				{card.priceMain ? (
 					<div className="flex flex-col gap-1 sm:gap-0">
 						<div className="flex items-end gap-0.5">
-							<p className="bg-linear-to-r from-(--sub-brand-primary) to-(--sub-text-navy-900) bg-clip-text text-[40px] leading-[40px] font-semibold text-transparent sm:text-[32px] sm:leading-[42px] dark:from-(--sub-brand-secondary) dark:to-(--sub-brand-softest)">
+							<p className="bg-linear-to-r from-sub-brand-primary to-sub-text-navy-900 bg-clip-text text-[40px] leading-[40px] font-semibold text-transparent sm:text-[32px] sm:leading-[42px] dark:from-sub-brand-secondary dark:to-sub-brand-softest">
 								{card.priceMain}
 							</p>
-							<p className="text-[16px] leading-6 text-(--sub-text-slate-600) sm:text-base sm:text-(--sub-text-secondary) dark:text-(--sub-text-secondary-dark) dark:sm:text-(--sub-text-secondary-dark)">
+							<p className="text-base leading-6 text-sub-text-slate-600 sm:text-base sm:text-sub-text-secondary dark:text-sub-text-secondary-dark dark:sm:text-sub-text-secondary-dark">
 								{card.priceUnit}
 							</p>
 						</div>
 						{card.key === 'pro' && isTrialAvailable ? (
 							<div className="mt-1 flex items-center gap-1.5">
-								<span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-[12px] leading-4 font-semibold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/30">
+								<span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs leading-4 font-semibold text-success ring-1 ring-emerald-200 dark:bg-success/10 dark:ring-emerald-500/30">
 									7-day free trial available
 								</span>
 							</div>
 						) : card.priceSecondary ? (
-							<p className="text-[22px] leading-6 text-(--sub-text-slate-400) sm:text-[16px] dark:text-(--sub-text-muted)">
+							<p className="text-[22px] leading-6 text-sub-text-slate-400 sm:text-base dark:text-sub-text-muted">
 								{card.priceSecondary}
 							</p>
 						) : null}
 					</div>
 				) : card.description ? (
-					<p className="text-[28px] leading-[36px] font-semibold text-(--sub-text-slate-950) sm:text-[24px] sm:leading-[32px] dark:text-white">
+					<p className="text-[28px] leading-[36px] font-semibold text-sub-text-slate-950 sm:text-2xl sm:leading-[32px] dark:text-ai-primary">
 						{card.description}
 					</p>
 				) : null}
 			</div>
 
 			{card.includedTierText ? (
-				<p className="text-[13px] leading-5 text-(--sub-text-slate-400) dark:text-(--sub-text-muted)">
+				<p className="text-[13px] leading-5 text-sub-text-slate-400 dark:text-sub-text-muted">
 					{card.includedTierText}
 				</p>
 			) : null}
 
 			{card.sections.map((section) => (
 				<div key={`${card.key}-${section.title}`} className="flex flex-col gap-3">
-					<h4 className="text-[20px] leading-7 font-semibold text-(--sub-text-slate-950) sm:text-[16px] sm:leading-5 sm:font-medium sm:text-(--sub-ink-primary) dark:text-white dark:sm:text-white">
+					<h4 className="text-xl leading-7 font-semibold text-sub-text-slate-950 sm:text-base sm:leading-5 sm:font-medium sm:text-sub-ink-primary dark:text-ai-primary dark:sm:text-ai-primary">
 						{section.title}
 					</h4>
 					<ul className="flex flex-col gap-3 sm:gap-2">
@@ -465,7 +465,7 @@ export function PricingCard({
 							loading={loading}
 						/>
 						{isLowerTier ? (
-							<p className="text-center text-[13px] leading-5 font-medium text-(--sub-brand-primary) dark:text-(--sub-brand-secondary)">
+							<p className="text-center text-[13px] leading-5 font-medium text-sub-brand-primary dark:text-sub-brand-secondary">
 								Included in your plan
 							</p>
 						) : null}
@@ -475,7 +475,7 @@ export function PricingCard({
 
 			{card.recommendedLabel ? (
 				<div className={badgeSlotClass}>
-					<div className="text-center text-[14px] leading-[17px] font-medium text-(--sub-brand-softest)">
+					<div className="text-center text-sm leading-[17px] font-medium text-sub-brand-softest">
 						{card.recommendedLabel}
 					</div>
 				</div>
@@ -512,15 +512,15 @@ export function ComparisonCell({
 		<div
 			role="cell"
 			aria-label={isIncluded ? 'Included' : isLimited ? 'Limited' : 'Not included'}
-			className={`box-border flex w-[132px] shrink-0 items-center justify-center self-stretch ${isSelected || hideBorderLeft ? '' : 'border-l'} border-(--sub-border-slate-150) text-center md:w-[146px] md:border-(--sub-border-light) dark:border-(--sub-surface-elevated-2) dark:md:border-(--sub-surface-elevated-2) ${selectedStyle} ${borderEnd} ${className}`}
+			className={`box-border flex w-[132px] shrink-0 items-center justify-center self-stretch ${isSelected || hideBorderLeft ? '' : 'border-l'} border-sub-border-slate-150 text-center md:w-[146px] md:border-sub-border-light dark:border-sub-surface-elevated-2 dark:md:border-sub-surface-elevated-2 ${selectedStyle} ${borderEnd} ${className}`}
 		>
 			{isIncluded ? (
-				<Icon name="check" height={24} width={24} className="text-(--sub-brand-secondary)" aria-hidden="true" />
+				<Icon name="check" height={24} width={24} className="text-sub-brand-secondary" aria-hidden="true" />
 			) : isLimited ? (
 				<span className="group relative cursor-help">
-					<span className="text-[13px] font-medium text-amber-500">Limited</span>
+					<span className="text-[13px] font-medium text-warning">Limited</span>
 					{tooltip ? (
-						<span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-[200px] -translate-x-1/2 rounded-lg bg-(--sub-ink-primary) px-3 py-2 text-[12px] leading-4 font-normal text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 dark:bg-(--sub-surface-elevated-2)">
+						<span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-max max-w-[200px] -translate-x-1/2 rounded-lg bg-sub-ink-primary px-3 py-2 text-xs leading-4 font-normal text-on-brand opacity-0 shadow-lg transition-opacity group-hover:opacity-100 dark:bg-sub-surface-elevated-2">
 							{tooltip}
 						</span>
 					) : null}
@@ -530,7 +530,7 @@ export function ComparisonCell({
 					name="minus"
 					height={24}
 					width={24}
-					className="text-(--sub-text-slate-300) md:text-(--sub-border-muted) dark:text-(--sub-border-strong-muted) dark:md:text-(--sub-border-strong-muted)"
+					className="text-sub-text-slate-300 md:text-sub-border-muted dark:text-sub-border-strong-muted dark:md:text-sub-border-strong-muted"
 					aria-hidden="true"
 				/>
 			)}

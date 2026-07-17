@@ -21,7 +21,7 @@ interface SparklineChartProps {
 
 export function SparklineChart({
 	data,
-	color = 'var(--legacy-primary)',
+	color = 'var(--bg-brand)',
 	areaColor,
 	className,
 	height = 48,

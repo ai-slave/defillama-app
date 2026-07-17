@@ -115,7 +115,7 @@ function DashboardSettingsModalInner({
 				}}
 			>
 				<Ariakit.Dialog
-					className="dialog w-full max-w-lg gap-0 border pro-dashboard border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-6 shadow-2xl"
+					className="dialog w-full max-w-lg gap-0 border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) p-6 shadow-2xl"
 					unmountOnHide
 					portal
 					hideOnInteractOutside
@@ -140,7 +140,7 @@ function DashboardSettingsModalInner({
 									type="text"
 									defaultValue={dashboardName}
 									placeholder="Enter dashboard name"
-									className="w-full rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+									className="w-full rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden"
 								/>
 							</div>
 
@@ -202,7 +202,7 @@ function DashboardSettingsModalInner({
 										type="text"
 										onKeyDown={handleTagInputKeyDown}
 										placeholder="Enter tag name"
-										className="flex-1 rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+										className="flex-1 rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden"
 									/>
 									<button
 										type="button"
@@ -252,7 +252,7 @@ function DashboardSettingsModalInner({
 									placeholder="Describe your dashboard..."
 									maxLength={200}
 									rows={3}
-									className="w-full resize-none rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+									className="w-full resize-none rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden"
 								/>
 								<p className="mt-1 text-xs pro-text3">
 									<span ref={charCountRef}>{description.length}</span>/200 characters
@@ -260,14 +260,14 @@ function DashboardSettingsModalInner({
 							</div>
 
 							{onDelete && dashboardId ? (
-								<div className="border-t border-(--legacy-cards-border) pt-6">
-									<p className="mb-3 block text-sm font-medium pro-text1 text-red-500">Danger Zone</p>
+								<div className="border-t border-(--pro-cards-border) pt-6">
+									<p className="mb-3 block text-sm font-medium pro-text1 text-error">Danger Zone</p>
 									<p className="mb-4 text-sm pro-text3">Once you delete a dashboard, there is no going back.</p>
 									<button
 										type="button"
 										onClick={handleDeleteClick}
 										disabled={isDeleting}
-										className="flex items-center gap-2 rounded-md bg-red-500/10 px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+										className="flex items-center gap-2 rounded-md bg-error/10 px-4 py-2 text-sm font-medium text-error transition-colors hover:bg-error/20 disabled:cursor-not-allowed disabled:opacity-50"
 									>
 										{isDeleting ? <LoadingSpinner size={16} /> : <Icon name="trash-2" height={16} width={16} />}
 										<span>Delete Dashboard</span>

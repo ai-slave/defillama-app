@@ -36,7 +36,7 @@ function PromoFrame({ banner, imageUrl }: { banner: Banner; imageUrl: string }) 
 	const linkUrl = banner.linkUrl?.trim() ?? ''
 
 	const frame = (
-		<div className="overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) transition-colors hover:border-(--legacy-link-text)/40">
+		<div className="overflow-hidden rounded-md border border-medium bg-surface transition-colors hover:border-link/40">
 			{/* eslint-disable-next-line @next/next/no-img-element */}
 			<img src={imageUrl} alt={alt} className="block h-auto w-full" loading="lazy" />
 		</div>

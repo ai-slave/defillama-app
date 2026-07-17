@@ -33,8 +33,9 @@ Visual contracts belong to recipe components and hand-rolled variant maps (`butt
 ## Color tokens
 
 Design-system CSS variables use clean role names such as `--bg-surface`,
-`--text-primary`, and `--chart-gridline`. Quarantined application variables use
-the explicit `--legacy-*` namespace.
+`--text-primary`, and `--chart-gridline`. Product themes own their prefixed
+namespaces (`--pro-*`, `--sub-*`, `--sl-*`, `--ai-*`, `--research-*`) in
+`src/styles/themes/`.
 
 ### Backgrounds
 
@@ -68,8 +69,8 @@ the explicit `--legacy-*` namespace.
 `text-disabled` is only for actual disabled controls. Do not use it for metadata,
 symbols, empty values, helper copy, or struck/excluded data; use `text-secondary`
 for readable support text and `text-tertiary` for de-emphasized/missing values.
-The legacy arbitrary class `text-(--legacy-text-disabled)` maps to tertiary for
-old callers only and should not be introduced in new in-scope UI.
+(The former `--legacy-text-disabled` alias was retired: its callers were
+converted to `text-tertiary` directly.)
 
 **Text-tier decision rule (owner decision, 2026-07-08):** if removing the text
 would change what the user knows or can do, it is `text-secondary` or better; if
@@ -300,10 +301,12 @@ compatibility props (`popoverVariant="legacy"`, `variant="pro"`) rather than pag
 style forks, and their ratchet bucket may not grow. Raises/investor-like list pages remain
 in scope unless they are part of the investor-relations dashboard product.
 
-Legacy application globals use the `--legacy-*` namespace and are quarantined in
-`src/styles/legacy-*.css` / `tailwind.css`. The separately owned `--sub-*`, `--pro-*`,
-`--sl-*`, and `--signin-*` product namespaces retain their names. Do not add new legacy
-consumers; `lint:tokens` ratchets their references while surfaces migrate to semantics.
+Product surfaces are standing products with their own palettes, kept in
+`src/styles/themes/{pro,subscription,llamaai}.css` and `articles.css` under the
+`--pro-*`, `--sub-*`, `--sl-*`, `--ai-*`, `--research-*`/`--callout-*` namespaces.
+`lint:tokens` treats them as leak detectors: product tokens and utilities must
+not appear in core app code (`product-token-leak` / `product-utility-leak`),
+while inside their own surfaces the themes may grow freely.
 Feedback roles (`--success`, `--error`, and `--warning`) are semantic state tokens rather
 than legacy application globals.
 

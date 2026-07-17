@@ -42,19 +42,19 @@ import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 export const AlertArtifactLoading = memo(function AlertArtifactLoading() {
 	return (
-		<div className="my-2 flex flex-col gap-3 rounded-xl border border-black/[0.06] bg-white p-3.5 dark:border-white/[0.06] dark:bg-[#181A1C]">
+		<div className="my-2 flex flex-col gap-3 rounded-xl border border-ai-line-subtle bg-ai-surface-card p-3.5">
 			<div className="flex items-center gap-3">
-				<div className="size-10 shrink-0 animate-pulse rounded-xl bg-gray-200 dark:bg-gray-700" />
+				<div className="size-10 shrink-0 animate-pulse rounded-xl bg-ai-skeleton" />
 				<div className="flex min-w-0 flex-1 flex-col gap-1.5">
-					<div className="h-4 w-28 animate-pulse rounded-sm bg-gray-200 dark:bg-gray-700" />
-					<div className="h-3 w-44 animate-pulse rounded-sm bg-gray-200 dark:bg-gray-700" />
+					<div className="h-4 w-28 animate-pulse rounded-sm bg-ai-skeleton" />
+					<div className="h-3 w-44 animate-pulse rounded-sm bg-ai-skeleton" />
 				</div>
 			</div>
-			<div className="h-10 w-full animate-pulse rounded-md bg-gray-200 dark:bg-gray-700" />
+			<div className="h-10 w-full animate-pulse rounded-md bg-ai-skeleton" />
 			<div className="flex flex-wrap items-center gap-2">
-				<div className="h-10 w-20 animate-pulse rounded-md bg-gray-200 dark:bg-gray-700" />
-				<div className="h-10 w-16 animate-pulse rounded-md bg-gray-200 dark:bg-gray-700" />
-				<div className="ml-auto h-10 w-28 animate-pulse rounded-md bg-gray-200 dark:bg-gray-700" />
+				<div className="h-10 w-20 animate-pulse rounded-md bg-ai-skeleton" />
+				<div className="h-10 w-16 animate-pulse rounded-md bg-ai-skeleton" />
+				<div className="ml-auto h-10 w-28 animate-pulse rounded-md bg-ai-skeleton" />
 			</div>
 		</div>
 	)
@@ -237,9 +237,9 @@ export const AlertArtifact = memo(function AlertArtifact({
 
 	if (!isAuthenticated) {
 		return (
-			<div className="my-2 flex items-center gap-3 rounded-xl border border-black/[0.06] bg-white p-3.5 dark:border-white/[0.06] dark:bg-[#181A1C]">
-				<div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-500/5 ring-1 ring-amber-500/20 ring-inset">
-					<Icon name="calendar-plus" className="size-[18px] text-amber-500" />
+			<div className="my-2 flex items-center gap-3 rounded-xl border border-ai-line-subtle bg-ai-surface-card p-3.5">
+				<div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-ai-warning-bright/20 to-ai-warning-bright/5 ring-1 ring-ai-warning-bright/20 ring-inset">
+					<Icon name="calendar-plus" className="size-[18px] text-ai-warning-bright" />
 				</div>
 				<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 					<h3 className="m-0 text-sm font-medium text-(--text1)">Sign in to save alerts</h3>
@@ -262,8 +262,8 @@ export const AlertArtifact = memo(function AlertArtifact({
 		<div
 			className={`my-2 flex flex-col gap-3 rounded-xl border p-3.5 ${
 				isSaved
-					? 'border-black/[0.06] bg-white dark:border-white/[0.06] dark:bg-[#181A1C]'
-					: 'animate-[alertPulse_2s_ease-in-out_infinite] border-amber-500/40 bg-white dark:bg-[#181A1C]'
+					? 'border-ai-line-subtle bg-ai-surface-card'
+					: 'animate-[alertPulse_2s_ease-in-out_infinite] border-ai-warning-bright/40 bg-ai-surface-card'
 			}`}
 			style={
 				!isSaved
@@ -281,8 +281,8 @@ export const AlertArtifact = memo(function AlertArtifact({
 				}
 			`}</style>
 			<div className="flex items-center gap-3">
-				<div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-500/5 ring-1 ring-amber-500/20 ring-inset">
-					<Icon name="calendar-plus" className="size-[18px] text-amber-500" />
+				<div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-ai-warning-bright/20 to-ai-warning-bright/5 ring-1 ring-ai-warning-bright/20 ring-inset">
+					<Icon name="calendar-plus" className="size-[18px] text-ai-warning-bright" />
 				</div>
 				<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 					<h3 className="m-0 truncate text-sm font-semibold tracking-tight text-(--text1)">
@@ -300,7 +300,7 @@ export const AlertArtifact = memo(function AlertArtifact({
 
 			{isSaved ? (
 				<>
-					<p className="m-0 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+					<p className="m-0 flex items-center gap-1.5 text-xs text-ai-success">
 						<Icon name="check" className="size-3.5 shrink-0" />
 						{isPriceAlert
 							? 'Watching continuously — fires within seconds of crossing'
@@ -309,20 +309,17 @@ export const AlertArtifact = memo(function AlertArtifact({
 								: 'Alert saved'}
 					</p>
 
-					<div className="flex flex-col gap-1.5 rounded-lg bg-black/[0.02] px-3 py-2.5 dark:bg-white/[0.03]">
-						<p className="m-0 flex items-center gap-2 text-xs text-[#666] dark:text-[#919296]">
-							<Icon
-								name={isPriceAlert ? 'trending-up' : 'calendar'}
-								className="size-3.5 shrink-0 text-[#999] dark:text-[#777]"
-							/>
+					<div className="flex flex-col gap-1.5 rounded-lg bg-ai-wash-faint px-3 py-2.5">
+						<p className="m-0 flex items-center gap-2 text-xs text-ai-tertiary">
+							<Icon name={isPriceAlert ? 'trending-up' : 'calendar'} className="size-3.5 shrink-0 text-ai-muted" />
 							<span className="truncate font-mono">
 								{isPriceAlert && editedTrigger
 									? formatPriceAlertSummary(editedTrigger, true, undefined, 0)
 									: scheduleSummary}
 							</span>
 						</p>
-						<p className="m-0 flex items-center gap-2 text-xs text-[#666] dark:text-[#919296]">
-							<Icon name="mail" className="size-3.5 shrink-0 text-[#999] dark:text-[#777]" />
+						<p className="m-0 flex items-center gap-2 text-xs text-ai-tertiary">
+							<Icon name="mail" className="size-3.5 shrink-0 text-ai-muted" />
 							<span className="truncate">{destinationLabel}</span>
 						</p>
 					</div>
@@ -331,7 +328,7 @@ export const AlertArtifact = memo(function AlertArtifact({
 						<button
 							onClick={handleTest}
 							disabled={alertDetailQuery.isLoading}
-							className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-black/[0.08] px-4 py-2 text-sm font-medium text-(--text1) transition-colors hover:bg-black/[0.03] disabled:opacity-50 dark:border-white/[0.08] dark:hover:bg-white/[0.04]"
+							className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-ai-line-medium px-4 py-2 text-sm font-medium text-(--text1) transition-colors hover:bg-ai-wash disabled:opacity-50"
 						>
 							<Icon name="mail" className="size-4" />
 							<span>Send test alert</span>
@@ -346,7 +343,7 @@ export const AlertArtifact = memo(function AlertArtifact({
 					) : null}
 
 					{testSent === 'sent' && !testMutation.isPending ? (
-						<p className="flex items-center justify-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+						<p className="flex items-center justify-center gap-1.5 text-xs text-ai-success">
 							<Icon name="check" className="size-3.5" />
 							{deliveryChannel === 'slack'
 								? slackChannelName
@@ -367,22 +364,22 @@ export const AlertArtifact = memo(function AlertArtifact({
 
 					{testMutation.isError && !hasRetriedTest ? (
 						<div className="flex flex-col items-center gap-1.5">
-							<p className="text-xs text-(--error)">{testMutation.error.message}</p>
-							<button onClick={handleTest} className="text-xs font-medium text-(--link-text) hover:underline">
+							<p className="text-xs text-error">{testMutation.error.message}</p>
+							<button onClick={handleTest} className="text-xs font-medium text-link hover:underline">
 								Retry
 							</button>
 						</div>
 					) : null}
 
 					{testMutation.isError && hasRetriedTest ? (
-						<p className="text-center text-xs text-(--error)">{testMutation.error.message}</p>
+						<p className="text-center text-xs text-error">{testMutation.error.message}</p>
 					) : null}
 
 					{openAlertsModal ? (
 						<button
 							type="button"
 							onClick={handleManageAlerts}
-							className="self-start text-xs text-[#777] transition-colors hover:text-(--link-text) dark:text-[#919296]"
+							className="self-start text-xs text-ai-tertiary transition-colors hover:text-link"
 						>
 							Manage alerts →
 						</button>
@@ -400,18 +397,14 @@ export const AlertArtifact = memo(function AlertArtifact({
 					{prompt ? (
 						<div className="flex flex-col gap-1">
 							<span className={alertFieldLabelClass}>What it will tell you</span>
-							<p
-								className={`m-0 text-sm leading-relaxed text-[#484848] dark:text-[#b4b7bc] ${
-									promptExpanded ? '' : 'line-clamp-2'
-								}`}
-							>
+							<p className={`m-0 text-sm leading-relaxed text-ai-secondary ${promptExpanded ? '' : 'line-clamp-2'}`}>
 								{prompt}
 							</p>
 							{prompt.length > 140 ? (
 								<button
 									type="button"
 									onClick={() => setPromptExpanded((v) => !v)}
-									className="self-start text-xs font-medium text-(--link-text) hover:underline"
+									className="self-start text-xs font-medium text-link hover:underline"
 								>
 									{promptExpanded ? 'Show less' : 'Show more'}
 								</button>
@@ -422,7 +415,7 @@ export const AlertArtifact = memo(function AlertArtifact({
 					{trigger ? (
 						<div className="flex flex-col gap-1.5">
 							<div className="flex flex-wrap items-center gap-2">
-								<span className="font-mono text-sm text-(--text-primary)">{formatTokenLabel(trigger.token_nk)}</span>
+								<span className="font-mono text-sm text-primary">{formatTokenLabel(trigger.token_nk)}</span>
 								<SegmentedToggle<'above' | 'below'>
 									value={priceOp}
 									onChange={setPriceOp}
@@ -433,9 +426,7 @@ export const AlertArtifact = memo(function AlertArtifact({
 								/>
 								<PriceInput value={priceValue} onValueChange={setPriceValue} />
 							</div>
-							<p className="m-0 text-xs text-[#999] dark:text-[#777]">
-								Fires once, then pauses — re-arm it anytime from your alerts.
-							</p>
+							<p className="m-0 text-xs text-ai-muted">Fires once, then pauses — re-arm it anytime from your alerts.</p>
 						</div>
 					) : (
 						<div className="flex flex-wrap items-center gap-2">
@@ -462,7 +453,7 @@ export const AlertArtifact = memo(function AlertArtifact({
 								</select>
 							) : null}
 
-							<span className="text-xs text-[#999] dark:text-[#777]">at</span>
+							<span className="text-xs text-ai-muted">at</span>
 
 							<select value={hour} onChange={(e) => setHour(Number(e.target.value))} className={alertSelectClass}>
 								{Array.from({ length: 24 }, (_, h) => (
@@ -523,7 +514,7 @@ export const AlertArtifact = memo(function AlertArtifact({
 										slackChannelsQuery.isLoading ? (
 											<span className="text-xs text-(--text3)">Loading channels…</span>
 										) : slackChannelsQuery.isError ? (
-											<span className="text-xs text-red-500">Failed to load channels</span>
+											<span className="text-xs text-ai-error-vivid">Failed to load channels</span>
 										) : (
 											<select
 												value={slackChannelId}
@@ -547,28 +538,28 @@ export const AlertArtifact = memo(function AlertArtifact({
 							) : null}
 						</div>
 						{readinessBlock ? (
-							<p className="m-0 text-xs text-amber-600 dark:text-amber-400">
+							<p className="m-0 text-xs text-ai-warning">
 								{readinessBlock.label} →{' '}
-								<span className="text-[#666] dark:text-[#919296]">
+								<span className="text-ai-tertiary">
 									<SettingsIntegrationsLink />
 								</span>
 							</p>
 						) : null}
 					</div>
 
-					<p className="m-0 flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+					<p className="m-0 flex items-center gap-1.5 text-xs text-ai-warning">
 						<Icon name="alert-triangle" className="size-3.5 shrink-0" />
 						Action required — confirm your alert settings and save
 					</p>
 
 					{saveBlockReason && !readinessBlock ? (
-						<p className="m-0 text-center text-xs text-[#999] dark:text-[#777]">{saveBlockReason}</p>
+						<p className="m-0 text-center text-xs text-ai-muted">{saveBlockReason}</p>
 					) : null}
 
 					<button
 						onClick={handleSave}
 						disabled={!messageId || isSaving || !!saveBlockReason}
-						className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-(--old-blue) px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#1a58b4] disabled:cursor-not-allowed disabled:opacity-50"
+						className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-ai-white transition-colors hover:bg-ai-old-blue-deep disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						{isSaving ? (
 							<span>Saving...</span>
@@ -583,13 +574,13 @@ export const AlertArtifact = memo(function AlertArtifact({
 					{saveError ? (
 						isCapHit ? (
 							<div className="flex flex-col items-center gap-1.5">
-								<p className="m-0 text-xs text-[#666] dark:text-[#919296]">{getUpsellCopy(null)}</p>
-								<BasicLink href="/subscription" className="text-xs font-medium text-(--link-text) hover:underline">
+								<p className="m-0 text-xs text-ai-tertiary">{getUpsellCopy(null)}</p>
+								<BasicLink href="/subscription" className="text-xs font-medium text-link hover:underline">
 									Upgrade to Pro
 								</BasicLink>
 							</div>
 						) : (
-							<p className="text-center text-xs text-(--error)">{saveError.message}</p>
+							<p className="text-center text-xs text-error">{saveError.message}</p>
 						)
 					) : null}
 				</>

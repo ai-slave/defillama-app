@@ -50,7 +50,7 @@ const RaisesContainer = ({ raises, investors, rounds, sectors, chains, investorN
 				<span>Are we missing any funding round?</span>{' '}
 				<a
 					href="https://airtable.com/shrON6sFMgyFGulaq"
-					className="font-medium text-(--legacy-blue) underline"
+					className="font-medium text-brand underline"
 					target="_blank"
 					rel="noopener noreferrer"
 				>
@@ -59,7 +59,7 @@ const RaisesContainer = ({ raises, investors, rounds, sectors, chains, investorN
 				<br />
 				<span>
 					Are you a VC and want to submit your investments in bulk? Email them to us at{' '}
-					<a href="mailto:support@defillama.com" className="text-(--legacy-blue) underline">
+					<a href="mailto:support@defillama.com" className="text-brand underline">
 						support@defillama.com
 					</a>
 				</span>

@@ -13,7 +13,7 @@ function RibbonBadge({ place, color }: { place: number; color: string }) {
 			<svg viewBox="0 0 32 42" width={32} height={42} className="absolute inset-0">
 				<path d="M0 4C0 1.79086 1.79086 0 4 0H28C30.2091 0 32 1.79086 32 4V42L16 32L0 42V4Z" fill={color} />
 			</svg>
-			<span className="relative -mt-2 text-sm font-bold text-white">{place}</span>
+			<span className="relative -mt-2 text-sm font-bold text-on-brand">{place}</span>
 		</span>
 	)
 }

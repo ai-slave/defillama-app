@@ -71,12 +71,12 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 				portal
 				unmountOnHide
 			>
-				<div className="flex flex-col gap-5 bg-white px-5 py-6 dark:bg-(--sub-surface-dark)">
+				<div className="flex flex-col gap-5 bg-white px-5 py-6 dark:bg-sub-surface-dark">
 					<div className="flex items-center justify-between">
-						<h2 className="text-base font-semibold text-(--sub-ink-primary) dark:text-white">
+						<h2 className="text-base font-semibold text-sub-ink-primary dark:text-ai-primary">
 							{checkoutClientSecret ? 'Complete Payment' : 'Purchase Seats'}
 						</h2>
-						<Ariakit.DialogDismiss className="rounded-full p-1 text-(--sub-text-muted) transition-colors hover:text-(--sub-ink-primary) dark:hover:text-white">
+						<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-muted transition-colors hover:text-sub-ink-primary dark:hover:text-ai-primary">
 							<Icon name="x" height={18} width={18} />
 						</Ariakit.DialogDismiss>
 					</div>
@@ -89,8 +89,8 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 								</EmbeddedCheckoutProvider>
 							) : (
 								<div className="flex flex-col items-center gap-2 py-8 text-center">
-									<Icon name="alert-triangle" height={24} width={24} className="text-(--error)" />
-									<p className="text-sm text-(--sub-text-muted)">
+									<Icon name="alert-triangle" height={24} width={24} className="text-error" />
+									<p className="text-sm text-sub-text-muted">
 										Stripe is not configured. Please set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in your environment.
 									</p>
 								</div>
@@ -100,14 +100,14 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 						<>
 							{/* Subscription Type */}
 							<div className="flex flex-col gap-2">
-								<label className="text-xs font-medium text-(--sub-text-muted)">Subscription Type</label>
+								<label className="text-xs font-medium text-sub-text-muted">Subscription Type</label>
 								<div className="flex gap-2">
 									<button
 										onClick={() => setSubscriptionType('llamafeed')}
 										className={`flex h-10 flex-1 items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
 											subscriptionType === 'llamafeed'
-												? 'border-(--sub-brand-primary) bg-(--sub-brand-primary)/5 text-(--sub-brand-primary)'
-												: 'border-(--sub-border-slate-100) text-(--sub-ink-primary) dark:border-(--sub-border-strong) dark:text-white'
+												? 'border-sub-brand-primary bg-sub-brand-primary/5 text-sub-brand-primary'
+												: 'border-sub-border-slate-100 text-sub-ink-primary dark:border-sub-border-strong dark:text-ai-primary'
 										}`}
 									>
 										Pro
@@ -116,8 +116,8 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 										onClick={() => setSubscriptionType('api')}
 										className={`flex h-10 flex-1 items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
 											subscriptionType === 'api'
-												? 'border-(--sub-brand-primary) bg-(--sub-brand-primary)/5 text-(--sub-brand-primary)'
-												: 'border-(--sub-border-slate-100) text-(--sub-ink-primary) dark:border-(--sub-border-strong) dark:text-white'
+												? 'border-sub-brand-primary bg-sub-brand-primary/5 text-sub-brand-primary'
+												: 'border-sub-border-slate-100 text-sub-ink-primary dark:border-sub-border-strong dark:text-ai-primary'
 										}`}
 									>
 										API
@@ -127,7 +127,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 
 							{/* Billing Interval */}
 							<div className="flex flex-col gap-2">
-								<label className="text-xs font-medium text-(--sub-text-muted)">Billing Interval</label>
+								<label className="text-xs font-medium text-sub-text-muted">Billing Interval</label>
 								<div className="flex gap-2">
 									<Tooltip
 										content={
@@ -143,8 +143,8 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 											disabled={lockedInterval === 'year'}
 											className={`flex h-10 w-full flex-1 items-center justify-center rounded-lg border text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
 												billingInterval === 'month'
-													? 'border-(--sub-brand-primary) bg-(--sub-brand-primary)/5 text-(--sub-brand-primary)'
-													: 'border-(--sub-border-slate-100) text-(--sub-ink-primary) dark:border-(--sub-border-strong) dark:text-white'
+													? 'border-sub-brand-primary bg-sub-brand-primary/5 text-sub-brand-primary'
+													: 'border-sub-border-slate-100 text-sub-ink-primary dark:border-sub-border-strong dark:text-ai-primary'
 											}`}
 										>
 											Monthly
@@ -164,8 +164,8 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 											disabled={lockedInterval === 'month'}
 											className={`flex h-10 w-full flex-1 items-center justify-center rounded-lg border text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
 												billingInterval === 'year'
-													? 'border-(--sub-brand-primary) bg-(--sub-brand-primary)/5 text-(--sub-brand-primary)'
-													: 'border-(--sub-border-slate-100) text-(--sub-ink-primary) dark:border-(--sub-border-strong) dark:text-white'
+													? 'border-sub-brand-primary bg-sub-brand-primary/5 text-sub-brand-primary'
+													: 'border-sub-border-slate-100 text-sub-ink-primary dark:border-sub-border-strong dark:text-ai-primary'
 											}`}
 										>
 											Yearly
@@ -176,14 +176,14 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 
 							{/* Seat Count */}
 							<div className="flex flex-col gap-2">
-								<label htmlFor="seat-count" className="text-xs font-medium text-(--sub-text-muted)">
+								<label htmlFor="seat-count" className="text-xs font-medium text-sub-text-muted">
 									Number of Seats
 								</label>
 								<div className="flex items-center gap-2">
 									<button
 										onClick={() => setSeatCount((c) => Math.max(1, c - 1))}
 										disabled={seatCount <= 1}
-										className="flex size-10 items-center justify-center rounded-lg border border-(--sub-border-slate-100) text-(--sub-ink-primary) disabled:opacity-30 dark:border-(--sub-border-strong) dark:text-white"
+										className="flex size-10 items-center justify-center rounded-lg border border-sub-border-slate-100 text-sub-ink-primary disabled:opacity-30 dark:border-sub-border-strong dark:text-ai-primary"
 									>
 										<Icon name="minus" height={16} width={16} />
 									</button>
@@ -197,11 +197,11 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 											const val = parseInt(e.target.value, 10)
 											if (!isNaN(val) && val >= 1) setSeatCount(val)
 										}}
-										className="h-10 w-20 rounded-lg border border-(--sub-border-slate-100) bg-white text-center text-sm text-(--sub-ink-primary) focus:border-(--sub-brand-primary) focus:outline-hidden dark:border-(--sub-border-strong) dark:bg-(--sub-surface-dark) dark:text-white"
+										className="h-10 w-20 rounded-lg border border-sub-border-slate-100 bg-white text-center text-sm text-sub-ink-primary focus:border-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark dark:text-ai-primary"
 									/>
 									<button
 										onClick={() => setSeatCount((c) => c + 1)}
-										className="flex size-10 items-center justify-center rounded-lg border border-(--sub-border-slate-100) text-(--sub-ink-primary) dark:border-(--sub-border-strong) dark:text-white"
+										className="flex size-10 items-center justify-center rounded-lg border border-sub-border-slate-100 text-sub-ink-primary dark:border-sub-border-strong dark:text-ai-primary"
 									>
 										<Icon name="plus" height={16} width={16} />
 									</button>
@@ -209,10 +209,10 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 							</div>
 
 							{/* Price Summary */}
-							<div className="rounded-lg bg-(--sub-brand-primary)/5 p-3">
+							<div className="rounded-lg bg-sub-brand-primary/5 p-3">
 								<div className="flex items-center justify-between">
-									<span className="text-sm text-(--sub-text-muted)">Estimated total</span>
-									<span className="text-sm font-semibold text-(--sub-ink-primary) dark:text-white">
+									<span className="text-sm text-sub-text-muted">Estimated total</span>
+									<span className="text-sm font-semibold text-sub-ink-primary dark:text-ai-primary">
 										{subscriptionType === 'api'
 											? billingInterval === 'year'
 												? `$${(3000 * seatCount).toLocaleString()}/year`
@@ -226,8 +226,8 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 
 							{billingInterval === 'month' && !lockedInterval && (
 								<div className="flex items-start gap-2">
-									<Icon name="sparkles" height={12} width={12} className="mt-1 shrink-0 text-(--sub-text-muted)" />
-									<p className="text-xs leading-5 text-(--sub-text-muted)">
+									<Icon name="sparkles" height={12} width={12} className="mt-1 shrink-0 text-sub-text-muted" />
+									<p className="text-xs leading-5 text-sub-text-muted">
 										Switch to yearly billing and get 2 months free — save $
 										{((subscriptionType === 'api' ? 300 * 12 - 3000 : 49 * 12 - 490) * seatCount).toLocaleString()}
 										/year on these seats.
@@ -238,7 +238,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 							<button
 								onClick={() => void handlePurchase()}
 								disabled={purchaseSeatsMutation.isPending}
-								className="flex h-10 w-full items-center justify-center rounded-lg bg-(--sub-brand-primary) text-sm font-medium text-white disabled:opacity-50"
+								className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-50"
 							>
 								{purchaseSeatsMutation.isPending ? 'Processing...' : 'Purchase Seats'}
 							</button>

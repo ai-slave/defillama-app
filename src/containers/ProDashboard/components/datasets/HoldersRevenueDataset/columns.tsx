@@ -33,10 +33,7 @@ export const holdersRevenueDatasetColumns: ColumnDef<IHoldersRevenueRow>[] = [
 				<span className="relative flex items-center gap-2 pl-6">
 					<span className="shrink-0">{index + 1}</span>
 					<TokenLogo size={20} src={row.original.logo} alt={`Logo of ${name}`} data-lgonly />
-					<BasicLink
-						href={`/holders-revenue/${row.original.slug}`}
-						className="truncate text-sm font-medium text-(--legacy-link-text)"
-					>
+					<BasicLink href={`/holders-revenue/${row.original.slug}`} className="truncate text-sm font-medium text-link">
 						{name}
 					</BasicLink>
 				</span>
@@ -49,7 +46,7 @@ export const holdersRevenueDatasetColumns: ColumnDef<IHoldersRevenueRow>[] = [
 		accessorKey: 'category',
 		cell: ({ getValue }) => {
 			const value = getValue() as string
-			return <span className="text-sm text-(--legacy-text-secondary)">{value || '-'}</span>
+			return <span className="text-sm text-(--pro-text-secondary)">{value || '-'}</span>
 		},
 		size: 120
 	},
@@ -96,7 +93,7 @@ export const holdersRevenueDatasetColumns: ColumnDef<IHoldersRevenueRow>[] = [
 		cell: ({ getValue }) => {
 			const value = getValue() as number
 			return (
-				<span className={` ${value > 0 ? 'text-green-500' : value < 0 ? 'text-red-500' : 'pro-text2'}`}>
+				<span className={` ${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'pro-text2'}`}>
 					{value ? <PercentChange percent={value} fontWeight={100} /> : '-'}
 				</span>
 			)
@@ -112,7 +109,7 @@ export const holdersRevenueDatasetColumns: ColumnDef<IHoldersRevenueRow>[] = [
 		cell: ({ getValue }) => {
 			const value = getValue() as number
 			return (
-				<span className={` ${value > 0 ? 'text-green-500' : value < 0 ? 'text-red-500' : 'pro-text2'}`}>
+				<span className={` ${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'pro-text2'}`}>
 					{value ? <PercentChange percent={value} fontWeight={100} /> : '-'}
 				</span>
 			)

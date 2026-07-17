@@ -20,7 +20,7 @@ export function ConfirmationModal({
 	message = 'Are you sure you want to proceed with this action?',
 	confirmText = 'Confirm',
 	cancelText = 'Cancel',
-	confirmButtonClass = 'bg-red-500 hover:bg-red-600 text-white'
+	confirmButtonClass = 'bg-error hover:bg-red-600 text-on-brand'
 }: ConfirmationModalProps) {
 	return (
 		<Ariakit.DialogProvider
@@ -30,7 +30,7 @@ export function ConfirmationModal({
 			}}
 		>
 			<Ariakit.Dialog
-				className="dialog w-full max-w-sm gap-0 border pro-dashboard border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-6 shadow-2xl"
+				className="dialog w-full max-w-sm gap-0 border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) p-6 shadow-2xl"
 				unmountOnHide
 				portal
 				hideOnInteractOutside

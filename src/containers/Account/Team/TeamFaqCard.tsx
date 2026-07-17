@@ -28,10 +28,10 @@ export function TeamFaqCard({ defaultOpenIndex = 0 }: { defaultOpenIndex?: numbe
 	const [expandedIndex, setExpandedIndex] = useState<number | null>(defaultOpenIndex)
 
 	return (
-		<div className="flex flex-col gap-3 rounded-2xl border border-(--sub-border-slate-100) bg-white p-4 dark:border-(--sub-border-strong) dark:bg-(--sub-surface-dark)">
+		<div className="flex flex-col gap-3 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex items-center gap-2">
-				<Icon name="help-circle" height={20} width={20} className="text-(--sub-ink-primary) dark:text-white" />
-				<span className="text-base leading-5 font-medium text-(--sub-ink-primary) dark:text-white">
+				<Icon name="help-circle" height={20} width={20} className="text-sub-ink-primary dark:text-ai-primary" />
+				<span className="text-base leading-5 font-medium text-sub-ink-primary dark:text-ai-primary">
 					Frequently Asked Questions
 				</span>
 			</div>
@@ -46,7 +46,7 @@ export function TeamFaqCard({ defaultOpenIndex = 0 }: { defaultOpenIndex?: numbe
 					return (
 						<div
 							key={index}
-							className={`py-3 ${!isLast ? 'border-b border-(--sub-border-slate-100) dark:border-(--sub-border-strong)' : ''}`}
+							className={`py-3 ${!isLast ? 'border-b border-sub-border-slate-100 dark:border-sub-border-strong' : ''}`}
 						>
 							<button
 								type="button"
@@ -56,12 +56,12 @@ export function TeamFaqCard({ defaultOpenIndex = 0 }: { defaultOpenIndex?: numbe
 								onClick={() => setExpandedIndex(isExpanded ? null : index)}
 								className="flex w-full items-center justify-between gap-4 text-left"
 							>
-								<p className="text-sm leading-5 text-(--sub-ink-primary) dark:text-white">{item.question}</p>
+								<p className="text-sm leading-5 text-sub-ink-primary dark:text-ai-primary">{item.question}</p>
 								<Icon
 									name={isExpanded ? 'x' : 'plus'}
 									height={16}
 									width={16}
-									className="shrink-0 text-(--sub-text-muted)"
+									className="shrink-0 text-sub-text-muted"
 								/>
 							</button>
 							<div
@@ -73,7 +73,7 @@ export function TeamFaqCard({ defaultOpenIndex = 0 }: { defaultOpenIndex?: numbe
 								}`}
 							>
 								<div className="overflow-hidden">
-									<p className="pt-2 text-xs leading-5 text-(--sub-text-muted)">{item.answer}</p>
+									<p className="pt-2 text-xs leading-5 text-sub-text-muted">{item.answer}</p>
 								</div>
 							</div>
 						</div>

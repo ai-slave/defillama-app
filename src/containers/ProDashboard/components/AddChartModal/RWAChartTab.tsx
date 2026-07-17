@@ -121,14 +121,14 @@ function RWAChartTabInner({
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="space-y-3">
-				<div className="flex rounded-md border border-(--legacy-cards-border) bg-(--cards-bg-alt)/40 p-0.5">
+				<div className="flex rounded-md border border-(--pro-cards-border) p-0.5">
 					<button
 						type="button"
 						onClick={() => onRwaModeChange('overview')}
 						className={`flex-1 rounded-sm px-3 py-1.5 text-xs font-medium transition-all ${
 							rwaMode === 'overview'
-								? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm'
-								: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
+								? 'bg-(--pro-cards-bg) text-(--pro-text-primary) shadow-sm'
+								: 'text-(--pro-text-secondary) hover:text-(--pro-text-primary)'
 						}`}
 					>
 						Chain
@@ -138,8 +138,8 @@ function RWAChartTabInner({
 						onClick={() => onRwaModeChange('asset')}
 						className={`flex-1 rounded-sm px-3 py-1.5 text-xs font-medium transition-all ${
 							rwaMode === 'asset'
-								? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm'
-								: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
+								? 'bg-(--pro-cards-bg) text-(--pro-text-primary) shadow-sm'
+								: 'text-(--pro-text-secondary) hover:text-(--pro-text-primary)'
 						}`}
 					>
 						By Asset
@@ -187,7 +187,7 @@ function RWAChartTabInner({
 				/>
 			)}
 
-			<div className="min-h-[320px] rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
+			<div className="min-h-[320px] rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg)">
 				{rwaMode === 'overview' ? (
 					<OverviewPreview
 						breakdown={selectedRwaBreakdown}
@@ -264,8 +264,8 @@ function AssetControls({
 							onClick={() => handleMetricToggle(metric)}
 							className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
 								isSelected
-									? 'bg-(--legacy-primary) text-white'
-									: 'border border-(--legacy-form-control-border) pro-text2 hover:border-(--legacy-primary)/40'
+									? 'bg-brand text-on-brand'
+									: 'border border-(--pro-form-control-border) pro-text2 hover:border-brand/40'
 							}`}
 						>
 							{METRIC_LABELS[metric]}

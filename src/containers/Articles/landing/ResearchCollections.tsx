@@ -72,12 +72,12 @@ export const ResearchCollections: React.FC<ResearchCollectionsProps> = ({ title,
 								{i === 0 && <InViewAnalytics eventParams={[article, 'widget_impression', pageWidget]} />}
 
 								<div className="flex min-w-0 grow flex-col pl-3">
-									<div className="line-clamp-4 text-[14px] leading-[150%] font-semibold text-[#0d1e3b] group-hover:text-[#0c2956] group-hover:opacity-70 dark:text-white dark:group-hover:text-white/70">
+									<div className="line-clamp-4 text-sm leading-[150%] font-semibold text-(--research-navy-soft) group-hover:text-(--research-navy-soft) group-hover:opacity-70 dark:text-ai-primary dark:group-hover:text-on-brand/70">
 										{article.title}
 									</div>
 
 									{article.section ? (
-										<div className="mt-[5px] text-[12px] font-bold text-white" style={{ color: '#3A8BFF' }}>
+										<div className="mt-1.25 text-xs font-bold text-on-brand" style={{ color: '#3A8BFF' }}>
 											{ARTICLE_SECTION_LABELS[article.section]}
 										</div>
 									) : null}
@@ -87,7 +87,7 @@ export const ResearchCollections: React.FC<ResearchCollectionsProps> = ({ title,
 					</div>
 				</div>
 			</div>
-			<div className="mt-auto shrink-0 pt-[18px] text-right">
+			<div className="mt-auto shrink-0 pt-4.5 text-right">
 				<ReadMoreLink url="/research?section=all" title="View all collection" />
 			</div>
 		</div>

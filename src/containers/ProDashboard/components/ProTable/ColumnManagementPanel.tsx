@@ -157,11 +157,9 @@ const ColumnButton = React.memo(function ColumnButton({
 			<Tooltip key={column.key} content={description} className="w-full">
 				<div className="flex w-full items-center justify-between rounded-md border pro-divider pro-bg2 pro-hover-bg p-2 transition-colors">
 					<div className="flex items-center gap-2">
-						<Icon name="check" height={12} width={12} className="text-(--success)" />
+						<Icon name="check" height={12} width={12} className="text-success" />
 						<span className="text-xs pro-text1">{column.name}</span>
-						{isCustom ? (
-							<span className="rounded-md bg-(--legacy-primary) px-1 py-0.5 text-xs text-white">Custom</span>
-						) : null}
+						{isCustom ? <span className="rounded-md bg-brand px-1 py-0.5 text-xs text-on-brand">Custom</span> : null}
 						{column.key?.endsWith('_share') ? (
 							<span className="rounded-md bg-pro-blue-100 px-1 py-0.5 text-xs text-pro-blue-400 dark:bg-pro-blue-300/20 dark:text-pro-blue-200">
 								%
@@ -320,7 +318,7 @@ export function ColumnManagementPanel({
 	if (!showColumnPanel) return null
 
 	return (
-		<div className="mb-4 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+		<div className="mb-4 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
 			<div className="mb-3 flex items-center justify-between">
 				<div className="flex items-center gap-4">
 					<h4 className="text-sm font-medium pro-text1">Customize Columns</h4>
@@ -329,7 +327,7 @@ export function ColumnManagementPanel({
 						<button
 							onClick={() => setActiveTab('columns')}
 							className={`px-3 py-1 text-xs transition-colors first:rounded-l-md last:rounded-r-md ${
-								activeTab === 'columns' ? 'bg-(--legacy-primary) text-white' : 'pro-hover-bg pro-text2'
+								activeTab === 'columns' ? 'bg-brand text-on-brand' : 'pro-hover-bg pro-text2'
 							}`}
 						>
 							Standard Columns
@@ -337,7 +335,7 @@ export function ColumnManagementPanel({
 						<button
 							onClick={() => setActiveTab('custom')}
 							className={`px-3 py-1 text-xs transition-colors first:rounded-l-md last:rounded-r-md ${
-								activeTab === 'custom' ? 'bg-(--legacy-primary) text-white' : 'pro-hover-bg pro-text2'
+								activeTab === 'custom' ? 'bg-brand text-on-brand' : 'pro-hover-bg pro-text2'
 							}`}
 						>
 							Custom Columns
@@ -345,7 +343,7 @@ export function ColumnManagementPanel({
 						<button
 							onClick={() => setActiveTab('views')}
 							className={`relative px-3 py-1 text-xs transition-colors first:rounded-l-md last:rounded-r-md ${
-								activeTab === 'views' ? 'bg-(--legacy-primary) text-white' : 'pro-hover-bg pro-text2'
+								activeTab === 'views' ? 'bg-brand text-on-brand' : 'pro-hover-bg pro-text2'
 							}`}
 						>
 							<span className="flex items-center gap-1">
@@ -395,7 +393,7 @@ export function ColumnManagementPanel({
 							placeholder="Search columns..."
 							defaultValue={searchTerm}
 							onInput={(e) => setSearchTerm(e.currentTarget.value)}
-							className="w-full border pro-divider pro-bg2 py-2 pr-3 pl-9 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-(--legacy-primary) focus:outline-hidden"
+							className="w-full border pro-divider pro-bg2 py-2 pr-3 pl-9 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 
@@ -496,7 +494,7 @@ export function ColumnManagementPanel({
 								<div
 									key={view.id}
 									className={`flex items-center justify-between border pro-divider pro-bg2 pro-hover-bg p-3 transition-colors ${
-										activeViewId === view.id ? 'border-(--legacy-primary)' : ''
+										activeViewId === view.id ? 'border-brand' : ''
 									}`}
 								>
 									<button onClick={() => onLoadView?.(view.id)} className="flex flex-1 flex-col items-start gap-1">
@@ -524,7 +522,7 @@ export function ColumnManagementPanel({
 														onDeleteView?.(view.id)
 													}
 												}}
-												className="rounded-md p-2 pro-text3 transition-colors hover:text-(--error)"
+												className="rounded-md p-2 pro-text3 transition-colors hover:text-error"
 											>
 												<Icon name="trash-2" height={16} width={16} />
 											</button>
@@ -547,7 +545,7 @@ export function ColumnManagementPanel({
 				</span>
 				<button
 					onClick={() => setShowColumnPanel(false)}
-					className="rounded-md border border-(--legacy-primary) bg-(--legacy-primary) px-3 py-1 text-white transition-colors hover:bg-(--legacy-primary-hover)"
+					className="rounded-md border border-brand bg-brand px-3 py-1 text-on-brand transition-colors hover:bg-brand-muted"
 				>
 					Done
 				</button>

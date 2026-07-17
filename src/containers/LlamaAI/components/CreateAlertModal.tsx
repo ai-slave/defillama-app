@@ -84,24 +84,20 @@ function AlertTypeCard({
 			onClick={onClick}
 			className={`flex items-start gap-2.5 rounded-xl border p-2.5 text-left transition-colors ${
 				active
-					? 'border-(--link-text)/40 bg-(--link-text)/[0.04] ring-1 ring-(--link-text)/30'
-					: 'border-black/[0.08] hover:border-black/[0.16] hover:bg-black/[0.015] dark:border-white/[0.08] dark:hover:border-white/[0.16] dark:hover:bg-white/[0.02]'
+					? 'border-link/40 bg-link/4 ring-1 ring-link/30'
+					: 'border-ai-line-medium hover:border-ai-line-strong hover:bg-ai-wash-faint'
 			}`}
 		>
 			<span
 				className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg ${
-					active
-						? 'bg-(--link-text)/10 text-(--link-text)'
-						: 'bg-black/[0.04] text-[#999] dark:bg-white/[0.05] dark:text-[#777]'
+					active ? 'bg-link/10 text-link' : 'bg-ai-wash text-ai-muted'
 				}`}
 			>
 				<Icon name={icon} className="size-3.5" />
 			</span>
 			<span className="flex min-w-0 flex-col gap-0.5">
-				<span className={`text-sm font-medium ${active ? 'text-(--link-text)' : 'text-(--text-primary)'}`}>
-					{title}
-				</span>
-				<span className="text-xs leading-snug text-[#777] dark:text-[#919296]">{description}</span>
+				<span className={`text-sm font-medium ${active ? 'text-link' : 'text-primary'}`}>{title}</span>
+				<span className="text-xs leading-snug text-ai-tertiary">{description}</span>
 			</span>
 		</button>
 	)
@@ -116,9 +112,7 @@ const TokenOptionRow = ({ innerProps, label, data }: any) => (
 		)}
 		<span className="text-sm">{label}</span>
 		{typeof data.price === 'number' ? (
-			<span className="ml-auto pl-3 font-mono text-xs text-[#999] dark:text-[#777]">
-				{formatPriceLabel(data.price)}
-			</span>
+			<span className="ml-auto pl-3 font-mono text-xs text-ai-muted">{formatPriceLabel(data.price)}</span>
 		) : null}
 	</div>
 )
@@ -321,14 +315,12 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 
 				<div className="flex min-h-0 flex-1 flex-col">
 					{isUpsell ? (
-						<div className="thin-scrollbar flex min-h-0 flex-1 flex-col items-center gap-3 overflow-y-auto px-5 py-14 text-center">
-							<div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-500/5 ring-1 ring-amber-500/20 ring-inset">
-								<Icon name="alert-triangle" className="size-6 text-amber-500" />
+						<div className="flex min-h-0 flex-1 flex-col items-center gap-3 overflow-y-auto px-5 py-14 text-center">
+							<div className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-ai-warning-bright/20 to-ai-warning-bright/5 ring-1 ring-ai-warning-bright/20 ring-inset">
+								<Icon name="alert-triangle" className="size-6 text-ai-warning-bright" />
 							</div>
-							<p className="m-0 text-base font-semibold tracking-tight text-black dark:text-white">
-								Alert limit reached
-							</p>
-							<p className="m-0 max-w-xs text-xs text-[#777] dark:text-[#919296]">{getUpsellCopy(alertsUsage)}</p>
+							<p className="m-0 text-base font-semibold tracking-tight text-ai-primary">Alert limit reached</p>
+							<p className="m-0 max-w-xs text-xs text-ai-tertiary">{getUpsellCopy(alertsUsage)}</p>
 							<BasicLink
 								href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
 								onClick={() => {
@@ -343,14 +335,14 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 							<button
 								type="button"
 								onClick={() => dialogStore.hide()}
-								className="text-xs text-[#666] hover:underline dark:text-[#919296]"
+								className="text-xs text-ai-tertiary hover:underline"
 							>
 								Maybe later
 							</button>
 						</div>
 					) : (
 						<form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-							<div className="thin-scrollbar flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 py-3.5">
+							<div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 py-3.5">
 								<div role="radiogroup" aria-label="Alert type" className="grid grid-cols-1 gap-2 sm:grid-cols-2">
 									<AlertTypeCard
 										active={triggerType === 'schedule'}
@@ -370,7 +362,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 
 								{triggerType === 'schedule' ? (
 									<div className="flex flex-col gap-2">
-										<label htmlFor="create-alert-prompt" className="text-sm font-medium text-(--text-primary)">
+										<label htmlFor="create-alert-prompt" className="text-sm font-medium text-primary">
 											What should it tell you?
 										</label>
 										<textarea
@@ -392,7 +384,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 														trackUmamiEvent('llamaai-alert-suggestion', { label: suggestion.label })
 													}}
 													data-active={prompt === suggestion.prompt}
-													className="rounded-full border border-black/[0.08] px-2.5 py-1 text-xs text-[#777] transition-colors hover:border-black/[0.16] hover:text-(--text-primary) data-[active=true]:border-(--link-text)/40 data-[active=true]:bg-(--link-text)/[0.06] data-[active=true]:text-(--link-text) dark:border-white/[0.08] dark:text-[#919296] dark:hover:border-white/[0.16] dark:hover:text-white"
+													className="rounded-full border border-ai-line-medium px-2.5 py-1 text-xs text-ai-tertiary transition-colors hover:border-ai-line-strong hover:text-primary data-[active=true]:border-link/40 data-[active=true]:bg-link/6 data-[active=true]:text-link dark:hover:text-ai-primary"
 												>
 													{suggestion.label}
 												</button>
@@ -401,7 +393,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 									</div>
 								) : (
 									<div className="flex flex-col gap-2">
-										<span className="text-sm font-medium text-(--text-primary)">When should it fire?</span>
+										<span className="text-sm font-medium text-primary">When should it fire?</span>
 										<ReactSelect
 											placeholder="Search tokens..."
 											value={priceToken ? { value: priceToken.symbol, label: priceToken.symbol.toUpperCase() } : null}
@@ -423,7 +415,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 											components={{ Option: TokenOptionRow }}
 										/>
 										<div className="flex flex-wrap items-center gap-2">
-											<span className="text-xs text-[#999] dark:text-[#777]">goes</span>
+											<span className="text-xs text-ai-muted">goes</span>
 											<SegmentedToggle<PriceOp>
 												value={priceOp}
 												onChange={setPriceOp}
@@ -438,23 +430,23 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 											<button
 												type="button"
 												onClick={() => setPriceValue(roundPriceValue(priceToken.currentPrice))}
-												className="self-start text-xs text-[#777] transition-colors hover:text-(--link-text) dark:text-[#919296]"
+												className="self-start text-xs text-ai-tertiary transition-colors hover:text-link"
 											>
 												{priceToken.symbol.toUpperCase()} is trading around{' '}
-												<span className="font-mono font-medium text-(--text-primary)">
+												<span className="font-mono font-medium text-primary">
 													{formatPriceLabel(priceToken.currentPrice)}
 												</span>{' '}
 												— tap to use
 											</button>
 										) : (
-											<p className="m-0 text-xs text-[#999] dark:text-[#777]">
+											<p className="m-0 text-xs text-ai-muted">
 												Fires once, then pauses — re-arm it anytime from your alerts.
 											</p>
 										)}
 									</div>
 								)}
 
-								<div className="overflow-hidden rounded-xl border border-black/[0.06] bg-black/[0.015] dark:border-white/[0.06] dark:bg-white/[0.015]">
+								<div className="overflow-hidden rounded-xl border border-ai-line-subtle bg-ai-wash-faint">
 									{triggerType === 'schedule' ? (
 										<div className="flex flex-col gap-1.5 px-4 py-2.5">
 											<span className={alertFieldLabelClass}>When should it arrive?</span>
@@ -480,7 +472,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 														))}
 													</select>
 												) : null}
-												<span className="text-xs text-[#999] dark:text-[#777]">at</span>
+												<span className="text-xs text-ai-muted">at</span>
 												<select
 													value={hour}
 													onChange={(e) => setHour(Number(e.target.value))}
@@ -508,7 +500,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 									) : (
 										<div className="flex flex-col gap-1.5 px-4 py-2.5">
 											<label htmlFor="create-alert-prompt" className={alertFieldLabelClass}>
-												Add context to the ping <span className="font-normal text-[#999]">(optional)</span>
+												Add context to the ping <span className="font-normal text-ai-muted">(optional)</span>
 											</label>
 											<textarea
 												id="create-alert-prompt"
@@ -520,7 +512,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 											/>
 										</div>
 									)}
-									<div className="mx-4 h-px bg-black/[0.05] dark:bg-white/[0.05]" />
+									<div className="mx-4 h-px bg-ai-wash" />
 									<div className="flex flex-col gap-1.5 px-4 py-2.5">
 										<span className={alertFieldLabelClass}>Where should it go?</span>
 										<div className="flex flex-wrap items-center gap-2">
@@ -536,7 +528,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 											{deliveryChannel === 'slack' ? (
 												<>
 													{slackWorkspacesQuery.isLoading ? (
-														<span className="text-xs text-[#999]">Loading workspaces…</span>
+														<span className="text-xs text-ai-muted">Loading workspaces…</span>
 													) : activeSlackWorkspaces.length > 0 ? (
 														<select
 															value={slackTeamId}
@@ -559,9 +551,9 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 													) : null}
 													{slackTeamId ? (
 														slackChannelsQuery.isLoading ? (
-															<span className="text-xs text-[#999]">Loading channels…</span>
+															<span className="text-xs text-ai-muted">Loading channels…</span>
 														) : slackChannelsQuery.isError ? (
-															<span className="text-xs text-red-500">Failed to load channels</span>
+															<span className="text-xs text-ai-error-vivid">Failed to load channels</span>
 														) : (
 															<select
 																value={slackChannelId}
@@ -585,18 +577,18 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 											) : null}
 										</div>
 										{readinessBlock ? (
-											<p className="text-xs text-amber-600 dark:text-amber-400">
+											<p className="text-xs text-ai-warning">
 												{readinessBlock.label} →{' '}
-												<span className="text-[#666] dark:text-[#919296]">
+												<span className="text-ai-tertiary">
 													<SettingsIntegrationsLink />
 												</span>
 											</p>
 										) : null}
 									</div>
-									<div className="mx-4 h-px bg-black/[0.05] dark:bg-white/[0.05]" />
+									<div className="mx-4 h-px bg-ai-wash" />
 									<div className="flex items-center justify-between gap-3 px-4 py-2.5">
 										<label htmlFor="create-alert-title" className={`shrink-0 ${alertFieldLabelClass}`}>
-											Name <span className="font-normal text-[#999]">(optional)</span>
+											Name <span className="font-normal text-ai-muted">(optional)</span>
 										</label>
 										<input
 											id="create-alert-title"
@@ -611,7 +603,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 									<button
 										type="button"
 										onClick={handleJustAsk}
-										className="flex items-center gap-1.5 self-start text-xs text-[#777] transition-colors hover:text-(--link-text) dark:text-[#919296]"
+										className="flex items-center gap-1.5 self-start text-xs text-ai-tertiary transition-colors hover:text-link"
 									>
 										<Icon name="chat" className="size-3.5" />
 										{triggerType === 'price'
@@ -620,19 +612,19 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 									</button>
 								) : null}
 
-								{otherErrorMessage ? <p className="text-xs text-red-500">{otherErrorMessage}</p> : null}
+								{otherErrorMessage ? <p className="text-xs text-ai-error-vivid">{otherErrorMessage}</p> : null}
 							</div>
 
-							<div className="flex shrink-0 items-center justify-between gap-3 border-t border-black/[0.06] px-5 py-3.5 dark:border-white/[0.05]">
+							<div className="flex shrink-0 items-center justify-between gap-3 border-t border-ai-line-subtle px-5 py-3.5">
 								{submitBlockReason ? (
-									<p className="m-0 min-w-0 truncate text-xs text-[#999] dark:text-[#666]">{submitBlockReason}</p>
+									<p className="m-0 min-w-0 truncate text-xs text-ai-muted">{submitBlockReason}</p>
 								) : (
 									<p className="m-0 flex min-w-0 items-center gap-2 text-xs">
 										<Icon
 											name={triggerType === 'price' ? 'trending-up' : 'calendar'}
-											className="size-3.5 shrink-0 text-[#999] dark:text-[#777]"
+											className="size-3.5 shrink-0 text-ai-muted"
 										/>
-										<span className="truncate font-mono text-[#666] dark:text-[#919296]">
+										<span className="truncate font-mono text-ai-tertiary">
 											{triggerSummary} → {channelSummary}
 										</span>
 									</p>

@@ -408,7 +408,7 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 						{row.original?.deprecated ? (
 							<BasicLink
 								href={`/protocol/${slug(value)}`}
-								className="flex items-center gap-1 truncate text-sm font-medium text-(--legacy-link-text) hover:underline"
+								className="flex items-center gap-1 truncate text-sm font-medium text-link hover:underline"
 							>
 								<span className="truncate hover:underline">{value}</span>
 								<DeprecatedProtocolMarker />
@@ -416,7 +416,7 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 						) : (
 							<BasicLink
 								href={`/protocol/${slug(value)}`}
-								className="truncate text-sm font-medium text-(--legacy-link-text) hover:underline"
+								className="truncate text-sm font-medium text-link hover:underline"
 							>{`${value}`}</BasicLink>
 						)}
 
@@ -443,7 +443,7 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 		cell: ({ getValue }) => {
 			const value = getValue<string | null>()
 			return value ? (
-				<BasicLink href={getCategoryRoute(slug(value))} className="text-sm font-medium text-(--legacy-link-text)">
+				<BasicLink href={getCategoryRoute(slug(value))} className="text-sm font-medium text-link">
 					{value}
 				</BasicLink>
 			) : (
@@ -475,11 +475,7 @@ const protocolsByChainColumns: ColumnDef<IProtocolRow>[] = [
 			return (
 				<span className="flex flex-wrap items-center justify-end gap-1">
 					{visible.map((o) => (
-						<BasicLink
-							key={o}
-							href={`/oracles/${slug(o)}`}
-							className="text-sm font-medium text-(--legacy-link-text) hover:underline"
-						>
+						<BasicLink key={o} href={`/oracles/${slug(o)}`} className="text-sm font-medium text-link hover:underline">
 							{o}
 						</BasicLink>
 					))}
@@ -1324,7 +1320,7 @@ const ProtocolTvlCell = ({ value, rowValues }: { value: unknown; rowValues: Prot
 			) : null}
 			<span
 				style={{
-					color: rowValues.strikeTvl ? 'var(--legacy-text-disabled)' : 'inherit'
+					color: rowValues.strikeTvl ? 'var(--text-tertiary)' : 'inherit'
 				}}
 			>
 				{tvlValue != null ? formattedNum(tvlValue, true) : null}
@@ -1501,8 +1497,8 @@ export function useProTableColumns({
 
 		const activeFilters = hasAnyActiveFilters(filters)
 		const filterButtonClassName = activeFilters
-			? 'rounded-md p-1 transition-colors hover:bg-(--legacy-bg-tertiary) text-pro-blue-400 dark:text-pro-blue-200'
-			: 'rounded-md p-1 transition-colors hover:bg-(--legacy-bg-tertiary) text-(--legacy-text-tertiary)'
+			? 'rounded-md p-1 transition-colors hover:bg-surface-elevated-2 text-pro-blue-400 dark:text-pro-blue-200'
+			: 'rounded-md p-1 transition-colors hover:bg-surface-elevated-2 text-(--pro-text-tertiary)'
 
 		const originalNameColumn = protocolsByChainColumns.find((column) => column.id === 'name')
 		const originalCategoryColumn = protocolsByChainColumns.find((column) => column.id === 'category')

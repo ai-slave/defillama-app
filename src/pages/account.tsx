@@ -97,17 +97,17 @@ export default function Account() {
 						portal
 						unmountOnHide
 					>
-						<div className="flex flex-col items-center gap-6 bg-white px-5 py-8 dark:bg-(--sub-surface-dark)">
-							<div className="flex size-16 items-center justify-center rounded-full bg-(--sub-brand-primary)/10">
-								<Icon name="check" height={32} width={32} className="text-(--sub-brand-primary)" />
+						<div className="flex flex-col items-center gap-6 bg-white px-5 py-8 dark:bg-sub-surface-dark">
+							<div className="flex size-16 items-center justify-center rounded-full bg-sub-brand-primary/10">
+								<Icon name="check" height={32} width={32} className="text-sub-brand-primary" />
 							</div>
 							<div className="flex flex-col gap-2 text-center">
-								<h2 className="text-xl font-semibold text-(--sub-ink-primary) dark:text-white">Payment Successful!</h2>
-								<p className="text-sm text-(--sub-text-muted)">
+								<h2 className="text-xl font-semibold text-sub-ink-primary dark:text-ai-primary">Payment Successful!</h2>
+								<p className="text-sm text-sub-text-muted">
 									Your subscription has been activated. Welcome to DefiLlama Pro!
 								</p>
 							</div>
-							<Ariakit.DialogDismiss className="flex h-10 w-full items-center justify-center rounded-lg bg-(--sub-brand-primary) text-sm font-medium text-white">
+							<Ariakit.DialogDismiss className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand">
 								Continue
 							</Ariakit.DialogDismiss>
 						</div>

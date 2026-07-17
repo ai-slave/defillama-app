@@ -124,7 +124,7 @@ function TableWrapper({
 	const tableRef = useRef<HTMLDivElement>(null)
 	const fullscreenDialogStore = Ariakit.useDialogStore()
 
-	const mergedTableClassName = `z-10 w-full border-collapse border border-[#e6e6e6] text-sm dark:border-[#222324] ${tableProps?.className ?? ''}`
+	const mergedTableClassName = `z-10 w-full border-collapse border border-ai-line text-sm ${tableProps?.className ?? ''}`
 	const inlineTableClassName = `llamaai-table-inline ${mergedTableClassName}`
 	const fullscreenTableClassName = `llamaai-table-fullscreen ${mergedTableClassName}`
 
@@ -159,19 +159,19 @@ function TableWrapper({
 	}
 
 	return (
-		<div className="flex flex-col gap-2 rounded-lg border border-[#e6e6e6] p-2 dark:border-[#222324]">
+		<div className="flex flex-col gap-2 rounded-lg border border-ai-line p-2">
 			<Ariakit.DialogProvider store={fullscreenDialogStore}>
 				<Ariakit.Dialog
 					modal
 					portal
 					unmountOnHide
-					backdrop={<div className="backdrop fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" />}
-					className="dialog fixed inset-0 z-50 m-auto flex max-h-[80dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col gap-3 overflow-hidden rounded-xl border border-[#e6e6e6] bg-(--legacy-cards-bg) shadow-2xl sm:w-[calc(100vw-2rem)] dark:border-[#222324]"
+					backdrop={<div className="backdrop fixed inset-0 z-40 bg-ai-backdrop backdrop-blur-sm" />}
+					className="dialog fixed inset-0 z-50 m-auto flex max-h-[80dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col gap-3 overflow-hidden rounded-xl border border-ai-line bg-surface shadow-2xl sm:w-[calc(100vw-2rem)]"
 				>
-					<div className="flex shrink-0 items-center justify-between gap-2 border-b border-[#e6e6e6] dark:border-[#222324]">
-						{/* <Ariakit.DialogHeading className="text-sm font-medium text-(--legacy-text-form)">Table</Ariakit.DialogHeading> */}
+					<div className="flex shrink-0 items-center justify-between gap-2 border-b border-ai-line">
+						{/* <Ariakit.DialogHeading className="text-sm font-medium text-secondary">Table</Ariakit.DialogHeading> */}
 						<Ariakit.DialogDismiss
-							className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-md text-(--legacy-text-form) hover:bg-(--legacy-link-hover-bg) focus-visible:bg-(--legacy-link-hover-bg)"
+							className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-md text-secondary hover:bg-(--ai-link-hover) focus-visible:bg-(--ai-link-hover)"
 							aria-label="Close fullscreen table"
 						>
 							<Icon name="x" height={16} width={16} />
@@ -206,7 +206,7 @@ function TableWrapper({
 				{isStreaming ? (
 					<button
 						type="button"
-						className="flex items-center justify-center gap-1 rounded-md border border-(--legacy-form-control-border) px-2 py-1.5 text-xs text-(--legacy-text-form) disabled:opacity-50"
+						className="flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-xs text-secondary disabled:opacity-50"
 						disabled
 						aria-label="View table fullscreen"
 					>
@@ -216,7 +216,7 @@ function TableWrapper({
 					<button
 						type="button"
 						onClick={openTableFullscreen}
-						className="flex items-center justify-center gap-1 rounded-md border border-(--legacy-form-control-border) px-2 py-1.5 text-xs text-(--legacy-text-form) hover:bg-(--legacy-link-hover-bg) focus-visible:bg-(--legacy-link-hover-bg)"
+						className="flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-xs text-secondary hover:bg-(--ai-link-hover) focus-visible:bg-(--ai-link-hover)"
 						aria-label="View table fullscreen"
 					>
 						<Icon name="expand" className="size-3 shrink-0" />
@@ -224,7 +224,7 @@ function TableWrapper({
 				)}
 				{isStreaming ? (
 					<button
-						className="flex items-center justify-center gap-1 rounded-md border border-(--legacy-form-control-border) px-2 py-1.5 text-xs text-(--legacy-text-form) hover:bg-(--legacy-link-hover-bg) focus-visible:bg-(--legacy-link-hover-bg)"
+						className="flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-xs text-secondary hover:bg-(--ai-link-hover) focus-visible:bg-(--ai-link-hover)"
 						disabled
 					>
 						<Icon name="download-paper" className="size-3 shrink-0" />
@@ -297,7 +297,7 @@ function EntityLinkRenderer({
 		return (
 			<a
 				href={entityUrl}
-				className="text-(--legacy-link-text) no-underline hover:underline"
+				className="text-link no-underline hover:underline"
 				target="_blank"
 				rel="noreferrer noopener"
 				onClick={onClick}
@@ -322,7 +322,7 @@ function EntityLinkRenderer({
 			href={href}
 			target="_blank"
 			rel={external ? 'noopener noreferrer nofollow ugc' : 'noreferrer noopener'}
-			className="text-(--legacy-link-text) no-underline hover:underline"
+			className="text-link no-underline hover:underline"
 			onClick={(event) => {
 				onClick?.(event)
 				if (event.defaultPrevented) return
@@ -371,7 +371,7 @@ function CodeBlock({ children, node: _node, className, ...props }: MarkdownPrePr
 	return (
 		<div className="group relative">
 			{language ? (
-				<span className="pointer-events-none absolute top-2 left-3 z-10 font-mono text-[11px] tracking-wide text-white/50 select-none">
+				<span className="pointer-events-none absolute top-2 left-3 z-10 font-mono text-[11px] tracking-wide text-ai-white/50 select-none">
 					{language}
 				</span>
 			) : null}
@@ -380,7 +380,7 @@ function CodeBlock({ children, node: _node, className, ...props }: MarkdownPrePr
 				onClick={handleCopy}
 				aria-label={copied ? 'Copied' : 'Copy code'}
 				data-copied={copied || undefined}
-				className="absolute top-1.5 right-1.5 z-10 flex size-7 items-center justify-center rounded-md text-white/60 opacity-0 transition-[opacity,background-color,color] group-hover:opacity-100 hover:bg-white/10 hover:text-white focus-visible:bg-white/10 focus-visible:text-white focus-visible:opacity-100 focus-visible:outline-hidden data-copied:opacity-100"
+				className="absolute top-1.5 right-1.5 z-10 flex size-7 items-center justify-center rounded-md text-ai-white/60 opacity-0 transition-[opacity,background-color,color] group-hover:opacity-100 hover:bg-ai-white/10 hover:text-ai-white focus-visible:bg-ai-white/10 focus-visible:text-ai-white focus-visible:opacity-100 focus-visible:outline-hidden data-copied:opacity-100"
 			>
 				<Icon name={copied ? 'check' : 'copy'} height={14} width={14} />
 			</button>
@@ -412,7 +412,7 @@ export function SourcesList({ citations, isStreaming = false }: { citations: str
 
 	return (
 		<details className="flex flex-col text-sm">
-			<summary className="mr-auto flex items-center gap-1 rounded-sm bg-[rgba(0,0,0,0.04)] px-2 py-1 text-(--legacy-old-blue) dark:bg-[rgba(145,146,150,0.12)]">
+			<summary className="mr-auto flex items-center gap-1 rounded-sm bg-ai-wash px-2 py-1 text-brand">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="14"
@@ -438,11 +438,9 @@ export function SourcesList({ citations, isStreaming = false }: { citations: str
 						href={normalizedUrl}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="group flex items-start gap-2.5 rounded-lg border border-[#e6e6e6] p-2 hover:border-(--legacy-old-blue) hover:bg-(--legacy-old-blue)/12 focus-visible:border-(--legacy-old-blue) focus-visible:bg-(--legacy-old-blue)/12 dark:border-[#222324]"
+						className="group flex items-start gap-2.5 rounded-lg border border-ai-line p-2 hover:border-brand hover:bg-brand/12 focus-visible:border-brand focus-visible:bg-brand/12"
 					>
-						<span className="rounded-sm bg-[rgba(0,0,0,0.04)] px-1.5 text-(--legacy-old-blue) dark:bg-[rgba(145,146,150,0.12)]">
-							{citationNumber}
-						</span>
+						<span className="rounded-sm bg-ai-wash px-1.5 text-brand">{citationNumber}</span>
 						<span className="truncate">{normalizedUrl}</span>
 					</a>
 				))}
@@ -570,7 +568,7 @@ export function ChatMarkdownRenderer({
 			th: ({ children, node: _node, ...props }: MarkdownCellProps) => (
 				<th
 					{...props}
-					className={`border border-[#e6e6e6] bg-(--legacy-app-bg) px-3 py-2 align-top whitespace-nowrap dark:border-[#222324] [.llamaai-table-fullscreen_&]:[overflow-wrap:anywhere] [.llamaai-table-fullscreen_&]:break-words [.llamaai-table-fullscreen_&]:whitespace-normal ${props.className ?? ''}`}
+					className={`border border-ai-line bg-page px-3 py-2 align-top whitespace-nowrap [.llamaai-table-fullscreen_&]:[overflow-wrap:anywhere] [.llamaai-table-fullscreen_&]:break-words [.llamaai-table-fullscreen_&]:whitespace-normal ${props.className ?? ''}`}
 				>
 					{children}
 				</th>
@@ -578,7 +576,7 @@ export function ChatMarkdownRenderer({
 			td: ({ children, node: _node, ...props }: MarkdownDataCellProps) => (
 				<td
 					{...props}
-					className={`border border-[#e6e6e6] bg-white px-3 py-2 align-top whitespace-nowrap dark:border-[#222324] dark:bg-[#181A1C] [.llamaai-table-fullscreen_&]:[overflow-wrap:anywhere] [.llamaai-table-fullscreen_&]:break-words [.llamaai-table-fullscreen_&]:whitespace-normal ${props.className ?? ''}`}
+					className={`border border-ai-line bg-ai-surface-card px-3 py-2 align-top whitespace-nowrap [.llamaai-table-fullscreen_&]:[overflow-wrap:anywhere] [.llamaai-table-fullscreen_&]:break-words [.llamaai-table-fullscreen_&]:whitespace-normal ${props.className ?? ''}`}
 				>
 					{children}
 				</td>

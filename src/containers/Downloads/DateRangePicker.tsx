@@ -65,8 +65,8 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 	const triggerLabel = isActive && value ? formatDateRangeLong(value) : 'Date range'
 
 	const triggerClass = isActive
-		? 'flex items-center gap-1.5 rounded-md rounded-r-none border border-(--legacy-primary)/40 bg-(--legacy-primary)/10 px-2.5 py-1.5 text-xs font-medium text-(--legacy-primary) transition-colors hover:bg-(--legacy-primary)/15 disabled:opacity-40'
-		: 'flex items-center gap-1.5 rounded-md border border-(--legacy-divider) px-2.5 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary) disabled:opacity-40'
+		? 'flex items-center gap-1.5 rounded-md rounded-r-none border border-brand/40 bg-brand/10 px-2.5 py-1.5 text-xs font-medium text-brand transition-colors hover:bg-brand/15 disabled:opacity-40'
+		: 'flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-(--pro-text-secondary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary) disabled:opacity-40'
 
 	return (
 		<>
@@ -84,7 +84,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 							disabled={disabled}
 							aria-label="Clear date range"
 							title="Clear date range"
-							className="-ml-px flex items-center justify-center rounded-md rounded-l-none border border-(--legacy-primary)/40 bg-(--legacy-primary)/10 px-1.5 text-(--legacy-primary) transition-colors hover:bg-(--legacy-primary)/20 disabled:opacity-40"
+							className="-ml-px flex items-center justify-center rounded-md rounded-l-none border border-brand/40 bg-brand/10 px-1.5 text-brand transition-colors hover:bg-brand/20 disabled:opacity-40"
 						>
 							<Icon name="x" className="size-3" />
 						</button>
@@ -98,7 +98,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 					className="z-[60] flex w-[320px] max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg border border-medium bg-surface-elevated-1 p-4 shadow-xl"
 				>
 					<section className="flex flex-col gap-2">
-						<h3 className="text-[11px] font-semibold tracking-wide text-(--legacy-text-tertiary) uppercase">
+						<h3 className="text-[11px] font-semibold tracking-wide text-(--pro-text-tertiary) uppercase">
 							Quick ranges
 						</h3>
 						<div className="flex flex-wrap gap-1">
@@ -113,8 +113,8 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 										aria-pressed={isSelected}
 										className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
 											isSelected
-												? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
-												: 'border-(--legacy-divider) text-(--legacy-text-secondary) hover:bg-hover-row hover:text-(--legacy-text-primary)'
+												? 'border-brand bg-brand text-on-brand'
+												: 'border-subtle text-(--pro-text-secondary) hover:bg-hover-row hover:text-(--pro-text-primary)'
 										}`}
 									>
 										{label}
@@ -124,7 +124,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 						</div>
 					</section>
 
-					<div className="border-t border-(--legacy-divider)" />
+					<div className="border-t border-subtle" />
 
 					<form
 						onSubmit={(e) => {
@@ -143,12 +143,12 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 						}}
 						className="flex flex-col gap-2"
 					>
-						<h3 className="text-[11px] font-semibold tracking-wide text-(--legacy-text-tertiary) uppercase">
+						<h3 className="text-[11px] font-semibold tracking-wide text-(--pro-text-tertiary) uppercase">
 							Custom range
 						</h3>
 						<div className="grid grid-cols-2 gap-2">
 							<label className="flex flex-col gap-1">
-								<span className="text-[11px] text-(--legacy-text-secondary)">From</span>
+								<span className="text-[11px] text-(--pro-text-secondary)">From</span>
 								<input
 									type="date"
 									value={customFrom}
@@ -158,11 +158,11 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 									}}
 									min={minDate}
 									max={customTo || maxAllowed}
-									className="rounded-md border border-(--legacy-divider) bg-transparent px-2 py-1 text-xs outline-hidden focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30"
+									className="rounded-md border border-subtle bg-transparent px-2 py-1 text-xs outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30"
 								/>
 							</label>
 							<label className="flex flex-col gap-1">
-								<span className="text-[11px] text-(--legacy-text-secondary)">To</span>
+								<span className="text-[11px] text-(--pro-text-secondary)">To</span>
 								<input
 									type="date"
 									value={customTo}
@@ -172,23 +172,23 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 									}}
 									min={customFrom || minDate}
 									max={maxAllowed}
-									className="rounded-md border border-(--legacy-divider) bg-transparent px-2 py-1 text-xs outline-hidden focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30"
+									className="rounded-md border border-subtle bg-transparent px-2 py-1 text-xs outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30"
 								/>
 							</label>
 						</div>
-						{error ? <p className="text-[11px] text-red-500">{error}</p> : null}
+						{error ? <p className="text-[11px] text-error">{error}</p> : null}
 						<div className="flex justify-end gap-1.5 pt-1">
 							<button
 								type="button"
 								onClick={handleClear}
-								className="rounded-md border border-(--legacy-divider) px-2.5 py-1 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary)"
+								className="rounded-md border border-subtle px-2.5 py-1 text-xs font-medium text-(--pro-text-secondary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary)"
 							>
 								Clear
 							</button>
 							<button
 								type="submit"
 								disabled={!customFrom || !customTo}
-								className="rounded-md bg-(--legacy-primary) px-2.5 py-1 text-xs font-medium text-white transition-colors hover:opacity-90 disabled:opacity-40"
+								className="rounded-md bg-brand px-2.5 py-1 text-xs font-medium text-on-brand transition-colors hover:opacity-90 disabled:opacity-40"
 							>
 								Apply
 							</button>

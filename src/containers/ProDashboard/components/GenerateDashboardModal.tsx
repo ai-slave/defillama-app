@@ -326,7 +326,7 @@ export function GenerateDashboardModal({
 			}}
 		>
 			<Ariakit.Dialog
-				className="dialog w-full max-w-lg gap-0 border pro-dashboard border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-6 shadow-2xl"
+				className="dialog w-full max-w-lg gap-0 border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) p-6 shadow-2xl"
 				unmountOnHide
 				portal
 				hideOnInteractOutside
@@ -361,7 +361,7 @@ export function GenerateDashboardModal({
 									type="text"
 									onInput={(e) => e.currentTarget.setCustomValidity('')}
 									placeholder="e.g., Ethereum vs Arbitrum Analysis"
-									className={`w-full rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
+									className={`w-full rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
 									disabled={isLoading}
 									required
 								/>
@@ -387,7 +387,7 @@ export function GenerateDashboardModal({
 										: 'e.g., Build a DeFi yields dashboard with top earning protocols, comparing different chains and showing historical performance...'
 								}
 								rows={4}
-								className={`w-full resize-none rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
+								className={`w-full resize-none rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
 								disabled={isLoading}
 								required
 							/>
@@ -446,7 +446,7 @@ export function GenerateDashboardModal({
 										type="text"
 										onKeyDown={handleTagInputKeyDown}
 										placeholder="Enter tag name"
-										className={`flex-1 rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
+										className={`flex-1 rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
 										disabled={isLoading}
 									/>
 									<button

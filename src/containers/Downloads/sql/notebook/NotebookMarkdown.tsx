@@ -18,13 +18,13 @@ const components: Components = {
 	th: ({ node: _node, children, ...props }: any) => (
 		<th
 			{...props}
-			className={`border border-(--legacy-divider) bg-(--legacy-app-bg) px-2 py-1.5 text-left font-semibold ${props.className ?? ''}`}
+			className={`border border-subtle bg-(--pro-app-bg) px-2 py-1.5 text-left font-semibold ${props.className ?? ''}`}
 		>
 			{children}
 		</th>
 	),
 	td: ({ node: _node, children, ...props }: any) => (
-		<td {...props} className={`border border-(--legacy-divider) px-2 py-1.5 ${props.className ?? ''}`}>
+		<td {...props} className={`border border-subtle px-2 py-1.5 ${props.className ?? ''}`}>
 			{children}
 		</td>
 	),
@@ -42,7 +42,7 @@ const components: Components = {
 		const isBlock = typeof className === 'string' && className.includes('language-')
 		if (isBlock) {
 			return (
-				<pre className="overflow-x-auto rounded-md border border-(--legacy-divider) bg-(--legacy-app-bg) p-2 font-mono text-[12px]">
+				<pre className="overflow-x-auto rounded-md border border-subtle bg-(--pro-app-bg) p-2 font-mono text-xs">
 					<code {...props} className={className}>
 						{children}
 					</code>
@@ -50,10 +50,7 @@ const components: Components = {
 			)
 		}
 		return (
-			<code
-				{...props}
-				className={`rounded-sm bg-(--legacy-app-bg) px-1 py-px font-mono text-[12px] ${className ?? ''}`}
-			>
+			<code {...props} className={`rounded-sm bg-(--pro-app-bg) px-1 py-px font-mono text-xs ${className ?? ''}`}>
 				{children}
 			</code>
 		)
@@ -62,10 +59,10 @@ const components: Components = {
 
 export function NotebookMarkdown({ content }: { content: string }) {
 	if (!content.trim()) {
-		return <div className="text-xs text-(--legacy-text-tertiary) italic">Empty markdown cell</div>
+		return <div className="text-xs text-(--pro-text-tertiary) italic">Empty markdown cell</div>
 	}
 	return (
-		<div className="prose prose-sm max-w-none text-(--legacy-text-primary) dark:prose-invert">
+		<div className="prose prose-sm max-w-none text-(--pro-text-primary) dark:prose-invert">
 			<ReactMarkdown remarkPlugins={REMARK_PLUGINS} rehypePlugins={REHYPE_PLUGINS} components={components}>
 				{content}
 			</ReactMarkdown>

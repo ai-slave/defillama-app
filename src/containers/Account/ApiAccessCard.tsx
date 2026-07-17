@@ -50,20 +50,20 @@ export function ApiAccessCard({
 
 	if (!apiKey) {
 		return (
-			<div className="flex flex-col gap-4 rounded-2xl border border-(--sub-border-slate-100) bg-white p-4 dark:border-(--sub-border-strong) dark:bg-(--sub-surface-dark)">
+			<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 				<div className="flex items-center gap-2">
-					<Icon name="cli" height={28} width={28} className="text-(--sub-ink-primary) dark:text-white" />
-					<span className="text-base leading-5 font-medium text-(--sub-ink-primary) dark:text-white">API Access</span>
+					<Icon name="cli" height={28} width={28} className="text-sub-ink-primary dark:text-ai-primary" />
+					<span className="text-base leading-5 font-medium text-sub-ink-primary dark:text-ai-primary">API Access</span>
 				</div>
 
-				<div className="flex flex-col items-center gap-4 rounded-lg bg-(--sub-surface-panel) px-4 py-8 text-center dark:bg-(--sub-ink-primary)">
-					<p className="max-w-sm text-sm text-(--sub-text-muted)">
+				<div className="flex flex-col items-center gap-4 rounded-lg bg-sub-surface-panel px-4 py-8 text-center dark:bg-sub-ink-primary">
+					<p className="max-w-sm text-sm text-sub-text-muted">
 						You don't have an API key yet. Generate one to start making requests to the DefiLlama API.
 					</p>
 					<button
 						onClick={onRegenerateKey}
 						disabled={isRegenerateLoading}
-						className="flex h-11 items-center gap-2 rounded-lg bg-(--sub-brand-primary) px-6 text-sm font-medium text-white disabled:opacity-50"
+						className="flex h-11 items-center gap-2 rounded-lg bg-sub-brand-primary px-6 text-sm font-medium text-on-brand disabled:opacity-50"
 					>
 						<Icon name="key" height={16} width={16} />
 						{isRegenerateLoading ? 'Generating...' : 'Generate API Key'}
@@ -74,22 +74,22 @@ export function ApiAccessCard({
 	}
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-(--sub-border-slate-100) bg-white p-4 dark:border-(--sub-border-strong) dark:bg-(--sub-surface-dark)">
+		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			{/* Header */}
 			<div className="flex items-center gap-2">
-				<Icon name="cli" height={28} width={28} className="text-(--sub-ink-primary) dark:text-white" />
-				<span className="text-base leading-5 font-medium text-(--sub-ink-primary) dark:text-white">API Access</span>
+				<Icon name="cli" height={28} width={28} className="text-sub-ink-primary dark:text-ai-primary" />
+				<span className="text-base leading-5 font-medium text-sub-ink-primary dark:text-ai-primary">API Access</span>
 			</div>
 
 			{/* API Key Section */}
 			<div className="flex flex-col gap-3">
 				<div className="flex items-center justify-between">
-					<span className="text-sm text-(--sub-ink-primary) dark:text-white">Your API Key</span>
+					<span className="text-sm text-sub-ink-primary dark:text-ai-primary">Your API Key</span>
 					<div className="flex gap-2">
 						<button
 							onClick={() => setShowKey((v) => !v)}
 							disabled={!apiKey}
-							className="flex h-6 items-center gap-1 rounded-md border border-(--sub-border-muted) px-2 text-[10px] leading-3 font-medium text-(--sub-ink-primary) disabled:opacity-50 dark:border-(--sub-border-strong) dark:text-white"
+							className="flex h-6 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-[10px] leading-3 font-medium text-sub-ink-primary disabled:opacity-50 dark:border-sub-border-strong dark:text-ai-primary"
 							aria-label={showKey ? 'Hide API key' : 'Show API key'}
 						>
 							<Icon name={showKey ? 'eye-off' : 'eye'} height={12} width={12} />
@@ -98,7 +98,7 @@ export function ApiAccessCard({
 						<button
 							onClick={handleCopy}
 							disabled={!apiKey}
-							className="flex h-6 items-center gap-1 rounded-md border border-(--sub-border-muted) px-2 text-[10px] leading-3 font-medium text-(--sub-ink-primary) disabled:opacity-50 dark:border-(--sub-border-strong) dark:text-white"
+							className="flex h-6 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-[10px] leading-3 font-medium text-sub-ink-primary disabled:opacity-50 dark:border-sub-border-strong dark:text-ai-primary"
 						>
 							<Icon name="copy" height={12} width={12} />
 							{copied ? 'Copied' : 'Copy'}
@@ -114,38 +114,38 @@ export function ApiAccessCard({
 								}
 							}}
 							disabled={isRegenerateLoading}
-							className="flex h-6 items-center gap-1 rounded-md border border-(--sub-border-muted) px-2 text-[10px] leading-3 font-medium text-(--sub-ink-primary) disabled:opacity-50 dark:border-(--sub-border-strong) dark:text-white"
+							className="flex h-6 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-[10px] leading-3 font-medium text-sub-ink-primary disabled:opacity-50 dark:border-sub-border-strong dark:text-ai-primary"
 						>
 							<Icon name="repeat" height={12} width={12} />
 							{isRegenerateLoading ? 'Regenerating...' : 'Regenerate'}
 						</button>
 					</div>
 				</div>
-				<div className="rounded-lg bg-(--sub-surface-panel) px-3 py-2.5 dark:bg-(--sub-ink-primary)">
-					<code className="font-mono text-xs leading-5 break-all text-(--sub-text-muted)">
+				<div className="rounded-lg bg-sub-surface-panel px-3 py-2.5 dark:bg-sub-ink-primary">
+					<code className="font-mono text-xs leading-5 break-all text-sub-text-muted">
 						{!apiKey ? '...' : showKey ? apiKey : '•'.repeat(apiKey.length)}
 					</code>
 				</div>
 			</div>
 
 			{/* API Usage */}
-			<div className="flex flex-col gap-4 rounded-lg bg-(--sub-surface-panel) p-3 dark:bg-(--sub-ink-primary)">
-				<span className="text-sm text-(--sub-ink-primary) dark:text-white">API Usage</span>
+			<div className="flex flex-col gap-4 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-ink-primary">
+				<span className="text-sm text-sub-ink-primary dark:text-ai-primary">API Usage</span>
 				<div className="flex flex-col gap-2">
 					<div className="flex items-center justify-between">
-						<span className="text-xs text-(--sub-text-muted)">Remaining API Calls: {usagePercentage}%</span>
-						<span className="text-xs text-(--sub-ink-primary) dark:text-white">
+						<span className="text-xs text-sub-text-muted">Remaining API Calls: {usagePercentage}%</span>
+						<span className="text-xs text-sub-ink-primary dark:text-ai-primary">
 							{remaining.toLocaleString()}{' '}
-							<span className="text-(--sub-text-muted)">/{API_CREDITS_LIMIT.toLocaleString()}</span>
+							<span className="text-sub-text-muted">/{API_CREDITS_LIMIT.toLocaleString()}</span>
 						</span>
 					</div>
-					<div className="h-2 overflow-hidden rounded-full bg-(--sub-border-light) dark:bg-white/[0.08]">
-						<div className="h-full rounded-full bg-(--sub-brand-primary)" style={{ width: `${usagePercentage}%` }} />
+					<div className="h-2 overflow-hidden rounded-full bg-sub-border-light dark:bg-white/[0.08]">
+						<div className="h-full rounded-full bg-sub-brand-primary" style={{ width: `${usagePercentage}%` }} />
 					</div>
 					<div className="flex items-center justify-between">
-						<span className="text-xs text-(--sub-text-muted)">Rate Limit:</span>
-						<span className="text-xs text-(--sub-ink-primary) dark:text-white">
-							1,000 Requests<span className="text-(--sub-text-muted)">/minute</span>
+						<span className="text-xs text-sub-text-muted">Rate Limit:</span>
+						<span className="text-xs text-sub-ink-primary dark:text-ai-primary">
+							1,000 Requests<span className="text-sub-text-muted">/minute</span>
 						</span>
 					</div>
 				</div>
@@ -153,11 +153,11 @@ export function ApiAccessCard({
 
 			{/* Overage */}
 			{canManageOverage && (
-				<div className="flex flex-col gap-2 rounded-lg bg-(--sub-surface-panel) p-3 dark:bg-(--sub-ink-primary)">
+				<div className="flex flex-col gap-2 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-ink-primary">
 					<div className="flex items-center justify-between gap-4">
-						<span className="text-sm text-(--sub-ink-primary) dark:text-white">
+						<span className="text-sm text-sub-ink-primary dark:text-ai-primary">
 							Allow extra usage charges{' '}
-							<span className="text-(--sub-text-muted)">({isOverageEnabled ? 'Enabled' : 'Disabled'})</span>
+							<span className="text-sub-text-muted">({isOverageEnabled ? 'Enabled' : 'Disabled'})</span>
 						</span>
 						<ToggleSwitch
 							checked={Boolean(isOverageEnabled)}
@@ -166,7 +166,7 @@ export function ApiAccessCard({
 							aria-label="Allow extra usage charges"
 						/>
 					</div>
-					<p className="text-xs leading-4 text-(--sub-text-muted)">
+					<p className="text-xs leading-4 text-sub-text-muted">
 						When enabled, API usage beyond your plan's included limits continues uninterrupted and the additional usage
 						is billed to your card. Pricing after included limits: $0.60 per 1,000 calls.
 						<br />

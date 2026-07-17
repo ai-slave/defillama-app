@@ -69,19 +69,19 @@ export function ChartControls({
 	if (!hasControls && !children && !controls.title) return null
 
 	return (
-		<div className="flex flex-wrap items-center justify-end gap-1 border-b border-[#e6e6e6] p-2 pt-0 dark:border-[#222324]">
+		<div className="flex flex-wrap items-center justify-end gap-1 border-b border-ai-line p-2 pt-0">
 			{controls.title ? (
 				<p className="w-full min-w-0 truncate text-base font-semibold" title={controls.title}>
 					{controls.title}
 				</p>
 			) : null}
 			{controls.showGrouping ? (
-				<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--legacy-form-control-border) text-(--legacy-text-form)">
+				<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-medium text-secondary">
 					{controls.groupingOptions.map((interval) => (
 						<Tooltip
 							content={capitalizeFirstLetter(interval)}
 							render={<button />}
-							className="inline-flex min-w-8 items-center justify-center px-3 py-1.5 text-xs whitespace-nowrap hover:not-disabled:pro-btn-blue focus-visible:not-disabled:pro-btn-blue data-[active=true]:bg-(--legacy-old-blue) data-[active=true]:font-medium data-[active=true]:text-white"
+							className="inline-flex min-w-8 items-center justify-center px-3 py-1.5 text-xs whitespace-nowrap hover:not-disabled:pro-btn-blue focus-visible:not-disabled:pro-btn-blue data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-ai-white"
 							data-active={controls.state.grouping === interval}
 							onClick={() => {
 								trackUmamiEvent('llamaai-chart-control', { control: 'grouping', selection: interval })

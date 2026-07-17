@@ -212,7 +212,7 @@ export function LlamaAIFloatingButton() {
 						</button>
 					}
 				/>
-				<Ariakit.Tooltip className="z-50 rounded-lg bg-[#222] px-3 py-2 text-sm text-white shadow-lg dark:bg-[#f5f5f5] dark:text-black">
+				<Ariakit.Tooltip className="z-50 rounded-lg bg-ai-contrast px-3 py-2 text-sm text-ai-on-contrast shadow-lg">
 					Ask LlamaAI
 				</Ariakit.Tooltip>
 			</Ariakit.TooltipProvider>
@@ -225,14 +225,14 @@ export function LlamaAIFloatingButton() {
 						textareaRef.current?.focus()
 						return false
 					}}
-					backdrop={<div className="fixed inset-0 z-40 bg-black/30" />}
+					backdrop={<div className="fixed inset-0 z-40 bg-ai-contrast/30" />}
 					className={
 						isDesktop
-							? 'fixed top-0 right-0 z-50 flex h-full w-[400px] flex-col border-l border-[#e6e6e6] bg-white shadow-2xl dark:border-[#39393E] dark:bg-[#222429]'
-							: 'fixed right-0 bottom-0 left-0 z-50 flex max-h-[70vh] flex-col rounded-t-2xl border-t border-[#e6e6e6] bg-white shadow-2xl dark:border-[#39393E] dark:bg-[#222429]'
+							? 'fixed top-0 right-0 z-50 flex h-full w-[400px] flex-col border-l border-ai-line bg-ai-white shadow-2xl dark:bg-ai-surface-muted'
+							: 'fixed right-0 bottom-0 left-0 z-50 flex max-h-[70vh] flex-col rounded-t-2xl border-t border-ai-line bg-ai-white shadow-2xl dark:bg-ai-surface-muted'
 					}
 				>
-					<div className="flex items-center gap-3 border-b border-[#e6e6e6] px-5 py-4 dark:border-[#39393E]">
+					<div className="flex items-center gap-3 border-b border-ai-line px-5 py-4">
 						<div
 							className="flex size-10 items-center justify-center rounded-full"
 							style={{ background: 'linear-gradient(135deg, #FDE0A9 0%, #FBEDCB 100%)' }}
@@ -240,10 +240,10 @@ export function LlamaAIFloatingButton() {
 							<img src="/assets/llamaai/llama-ai.svg" alt="" className="size-6 object-contain" />
 						</div>
 						<div className="flex-1">
-							<h3 className="text-base font-semibold text-black dark:text-white">Ask LlamaAI</h3>
-							<p className="text-sm text-[#666] dark:text-[#919296]">AI-powered DeFi insights</p>
+							<h3 className="text-base font-semibold text-ai-primary">Ask LlamaAI</h3>
+							<p className="text-sm text-ai-tertiary">AI-powered DeFi insights</p>
 						</div>
-						<Ariakit.DialogDismiss className="rounded-full p-2 text-[#666] transition-colors hover:bg-[#f7f7f7] hover:text-black dark:text-gray-400 dark:hover:bg-gray-700/50 dark:hover:text-white">
+						<Ariakit.DialogDismiss className="rounded-full p-2 text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary">
 							<svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
 								<path d="M18 6L6 18M6 6l12 12" />
 							</svg>
@@ -253,7 +253,7 @@ export function LlamaAIFloatingButton() {
 					<div className="flex flex-1 flex-col overflow-hidden">
 						<div className="flex-1 overflow-y-auto overscroll-contain p-5">
 							<div className="mb-4">
-								<p className="mb-3 text-sm text-[#666] dark:text-[#919296]">
+								<p className="mb-3 text-sm text-ai-tertiary">
 									{entityContext ? `Ask about ${entityContext.entitySlug}:` : 'Try one of these:'}
 								</p>
 								<div className="flex flex-col gap-2">
@@ -262,7 +262,7 @@ export function LlamaAIFloatingButton() {
 											key={suggestion}
 											type="button"
 											onClick={() => setValue(suggestion)}
-											className="rounded-lg border border-[#e6e6e6] bg-[#f9f9f9] px-3 py-2 text-left text-xs text-[#666] transition-colors hover:border-[#ccc] hover:bg-[#f0f0f0] dark:border-[#39393E] dark:bg-[#1a1a1d] dark:text-[#919296] dark:hover:border-[#555] dark:hover:bg-[#2a2a2d]"
+											className="rounded-lg border border-ai-line bg-ai-surface px-3 py-2 text-left text-xs text-ai-tertiary transition-colors hover:border-ai-handle hover:bg-ai-surface-muted dark:bg-ai-surface dark:hover:bg-ai-surface-muted"
 										>
 											{suggestion}
 										</button>
@@ -271,7 +271,7 @@ export function LlamaAIFloatingButton() {
 							</div>
 						</div>
 
-						<form onSubmit={handleSubmit} className="border-t border-[#e6e6e6] p-4 dark:border-[#39393E]">
+						<form onSubmit={handleSubmit} className="border-t border-ai-line p-4">
 							<div className="relative">
 								<textarea
 									ref={textareaRef}
@@ -279,7 +279,7 @@ export function LlamaAIFloatingButton() {
 									onChange={(e) => setValue(e.target.value)}
 									onKeyDown={handleKeyDown}
 									placeholder="Ask LlamaAI about TVL, fees, revenue, protocols..."
-									className="min-h-[100px] w-full resize-none rounded-lg border border-[#e6e6e6] bg-[#f9f9f9] p-3 pr-12 text-sm text-black placeholder-[#999] outline-hidden transition-colors focus:border-[#2172E5] dark:border-[#39393E] dark:bg-[#1a1a1d] dark:text-white dark:placeholder-[#666]"
+									className="min-h-[100px] w-full resize-none rounded-lg border border-ai-line bg-ai-surface p-3 pr-12 text-sm text-ai-primary placeholder-ai-muted outline-hidden transition-colors focus:border-ai-old-blue dark:bg-ai-surface"
 									rows={4}
 								/>
 								<button
@@ -291,7 +291,7 @@ export function LlamaAIFloatingButton() {
 									}}
 								>
 									<svg
-										className="size-5 text-black"
+										className="size-5 text-ai-black"
 										viewBox="0 0 24 24"
 										fill="none"
 										stroke="currentColor"
@@ -301,8 +301,10 @@ export function LlamaAIFloatingButton() {
 									</svg>
 								</button>
 							</div>
-							<p className="mt-2 text-xs text-[#999] dark:text-[#666]">
-								Press <kbd className="rounded-sm bg-[#eee] px-1 font-mono dark:bg-[#333]">Enter</kbd> to submit
+							<p className="mt-2 text-xs text-ai-muted">
+								Press{' '}
+								<kbd className="rounded-sm bg-ai-surface-muted px-1 font-mono dark:bg-ai-surface-muted">Enter</kbd> to
+								submit
 							</p>
 						</form>
 					</div>

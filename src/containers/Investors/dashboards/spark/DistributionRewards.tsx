@@ -28,9 +28,9 @@ function ChartCard({
 	children: React.ReactNode
 }) {
 	return (
-		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+		<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
 			<div className="mb-3 flex items-center justify-between gap-2">
-				<h3 className="text-sm font-medium text-(--legacy-text-label)">{title}</h3>
+				<h3 className="text-sm font-medium text-(--pro-text-label)">{title}</h3>
 				{actions}
 			</div>
 			{children}
@@ -49,10 +49,10 @@ function useChartInstance() {
 
 function CardSkeleton({ title }: { title: string }) {
 	return (
-		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">{title}</h3>
+		<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--pro-text-label)">{title}</h3>
 			<div className="flex h-[400px] items-center justify-center">
-				<div className="size-5 animate-spin rounded-full border-2 border-(--legacy-text-disabled) border-t-transparent" />
+				<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
 			</div>
 		</div>
 	)

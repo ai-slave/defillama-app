@@ -4,7 +4,7 @@ import { formattedNum } from '~/utils'
 
 const formatRatio = (value: number | null, suffix = 'x') =>
 	value == null ? (
-		<span className="text-(--legacy-text-tertiary)">-</span>
+		<span className="text-(--pro-text-tertiary)">-</span>
 	) : (
 		<span>
 			{value.toFixed(2)}
@@ -13,10 +13,10 @@ const formatRatio = (value: number | null, suffix = 'x') =>
 	)
 
 const formatPercent = (value: number | null) =>
-	value == null ? <span className="text-(--legacy-text-tertiary)">-</span> : <span>{value.toFixed(2)}%</span>
+	value == null ? <span className="text-(--pro-text-tertiary)">-</span> : <span>{value.toFixed(2)}%</span>
 
 const formatCurrency = (value: number | null) =>
-	value == null ? <span className="text-(--legacy-text-tertiary)">-</span> : <>{formattedNum(value, true)}</>
+	value == null ? <span className="text-(--pro-text-tertiary)">-</span> : <>{formattedNum(value, true)}</>
 
 export const cexAnalyticsColumns: ColumnDef<CexAnalyticsSnapshotRow>[] = [
 	{

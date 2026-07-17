@@ -36,8 +36,8 @@ export function GitHubConnectModal({ dialogStore, projectId }: GitHubConnectModa
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog
-				className="fixed top-1/2 left-1/2 z-50 w-[min(520px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#e6e6e6] bg-(--legacy-cards-bg) p-5 shadow-2xl dark:border-[#222324]"
-				backdrop={<div className="backdrop fixed inset-0 bg-black/60 backdrop-blur-md" />}
+				className="fixed top-1/2 left-1/2 z-50 w-[min(520px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-ai-line bg-surface p-5 shadow-2xl"
+				backdrop={<div className="backdrop fixed inset-0 bg-ai-backdrop backdrop-blur-md" />}
 			>
 				{isOpen ? <GitHubConnectForm key={projectId} dialogStore={dialogStore} projectId={projectId} /> : null}
 			</Ariakit.Dialog>
@@ -145,41 +145,41 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 				<div className="flex items-center gap-2">
 					<Icon name="github" height={18} width={18} />
 					<div>
-						<h2 className="text-base font-semibold text-(--legacy-text-primary)">Connect a GitHub repo</h2>
-						<p className="mt-0.5 text-xs text-[#666] dark:text-[#919296]">
+						<h2 className="text-base font-semibold text-primary">Connect a GitHub repo</h2>
+						<p className="mt-0.5 text-xs text-ai-tertiary">
 							Read-only access. Files are fetched on demand, never written back.
 						</p>
 					</div>
 				</div>
-				<Ariakit.DialogDismiss className="-mr-1.5 rounded-lg p-2 text-[#666] transition-colors hover:bg-black/[0.05] hover:text-black dark:text-gray-400 dark:hover:bg-white/[0.06] dark:hover:text-white">
+				<Ariakit.DialogDismiss className="-mr-1.5 rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-wash hover:text-ai-primary">
 					<Icon name="x" height={16} width={16} />
 				</Ariakit.DialogDismiss>
 			</header>
 
 			<div className="mt-4 flex flex-col gap-4">
 				{installs.isLoading ? (
-					<div className="flex items-center gap-2 text-xs text-[#666] dark:text-[#919296]">
+					<div className="flex items-center gap-2 text-xs text-ai-tertiary">
 						<LoadingSpinner size={12} /> Loading installations…
 					</div>
 				) : installs.isError ? (
-					<div className="flex flex-col gap-3 rounded-md border border-red-200 bg-red-50 p-4 text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+					<div className="flex flex-col gap-3 rounded-md border border-ai-error-border bg-ai-error-bg p-4 text-xs text-ai-error-strong">
 						<p>{installs.error instanceof Error ? installs.error.message : 'Failed to load GitHub installations.'}</p>
 						<button
 							type="button"
 							onClick={() => void installs.refetch()}
-							className="self-start rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-red-100 dark:border-red-800 dark:hover:bg-red-900/50"
+							className="self-start rounded-md border border-ai-error-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-ai-error-border"
 						>
 							Retry
 						</button>
 					</div>
 				) : !hasInstalls ? (
-					<div className="flex flex-col gap-3 rounded-md border border-dashed border-[#e6e6e6] p-4 text-xs text-[#666] dark:border-[#2a2b2c] dark:text-[#919296]">
+					<div className="flex flex-col gap-3 rounded-md border border-dashed border-ai-line p-4 text-xs text-ai-tertiary">
 						<p>No GitHub apps installed yet. Install LlamaAI Workspace on your GitHub account to grant repo access.</p>
 						<button
 							type="button"
 							onClick={() => void onStartInstall()}
 							disabled={installing}
-							className="flex items-center justify-center gap-2 self-start rounded-md border border-[#1a1a1a] bg-[#1a1a1a] px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50 dark:border-white dark:bg-white dark:text-black"
+							className="flex items-center justify-center gap-2 self-start rounded-md border border-ai-contrast bg-ai-contrast px-3 py-1.5 text-xs font-medium text-ai-on-contrast transition-opacity hover:opacity-90 disabled:opacity-50"
 						>
 							{installing ? <LoadingSpinner size={12} /> : <Icon name="github" height={14} width={14} />}
 							Install GitHub App
@@ -188,7 +188,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 				) : (
 					<>
 						<label className="flex flex-col gap-1.5">
-							<span className="text-xs font-medium text-[#444] dark:text-[#c5c5c5]">Installation</span>
+							<span className="text-xs font-medium text-ai-secondary">Installation</span>
 							<select
 								value={effectiveInstallId ?? ''}
 								onChange={(e) => {
@@ -196,7 +196,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 									setSelectedRepo('')
 									setRepoQuery('')
 								}}
-								className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 text-sm text-inherit focus:border-(--legacy-old-blue) focus:outline-hidden dark:border-[#2a2b2c]"
+								className="rounded-md border border-ai-line bg-surface px-3 py-2 text-sm text-inherit focus:border-brand focus:outline-hidden"
 							>
 								{installs.data?.map((i) => (
 									<option key={i.installation_id} value={i.installation_id}>
@@ -207,18 +207,18 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 						</label>
 
 						<div className="flex flex-col gap-1.5">
-							<span className="text-xs font-medium text-[#444] dark:text-[#c5c5c5]">Repository</span>
+							<span className="text-xs font-medium text-ai-secondary">Repository</span>
 							{repos.isLoading ? (
-								<div className="flex items-center gap-2 text-xs text-[#666] dark:text-[#919296]">
+								<div className="flex items-center gap-2 text-xs text-ai-tertiary">
 									<LoadingSpinner size={12} /> Loading repositories…
 								</div>
 							) : repos.isError ? (
-								<div className="flex flex-col gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+								<div className="flex flex-col gap-2 rounded-md border border-ai-error-border bg-ai-error-bg p-3 text-xs text-ai-error-strong">
 									<p>{repos.error instanceof Error ? repos.error.message : 'Failed to load repositories.'}</p>
 									<button
 										type="button"
 										onClick={() => void repos.refetch()}
-										className="self-start rounded-md border border-red-300 px-2.5 py-1 text-xs font-medium transition-colors hover:bg-red-100 dark:border-red-800 dark:hover:bg-red-900/50"
+										className="self-start rounded-md border border-ai-error-border px-2.5 py-1 text-xs font-medium transition-colors hover:bg-ai-error-border"
 									>
 										Retry
 									</button>
@@ -234,25 +234,25 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 								>
 									<Ariakit.Combobox
 										placeholder={selectedRepo || 'Search repositories…'}
-										className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 text-sm text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-hidden dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
+										className="rounded-md border border-ai-line bg-surface px-3 py-2 text-sm text-inherit placeholder:text-ai-muted focus:border-brand focus:outline-hidden"
 									/>
 									<Ariakit.ComboboxPopover
 										gutter={4}
 										sameWidth
-										className="z-[60] max-h-64 overflow-y-auto rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) py-1 shadow-lg dark:border-[#2a2b2c]"
+										className="z-[60] max-h-64 overflow-y-auto rounded-md border border-ai-line bg-surface py-1 shadow-lg"
 									>
 										{filteredRepos.length === 0 ? (
-											<div className="px-3 py-2 text-xs text-[#999] dark:text-[#666]">No repositories match.</div>
+											<div className="px-3 py-2 text-xs text-ai-muted">No repositories match.</div>
 										) : (
 											filteredRepos.map((r) => (
 												<Ariakit.ComboboxItem
 													key={r.full_name}
 													value={r.full_name}
-													className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm text-inherit data-[active-item]:bg-[#f0f0f0] dark:data-[active-item]:bg-[#222324]"
+													className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm text-inherit data-[active-item]:bg-ai-surface-muted"
 												>
 													<span className="truncate">{r.full_name}</span>
 													{r.private ? (
-														<span className="ml-auto rounded-sm bg-[#e6e6e6] px-1 py-0.5 text-[10px] text-[#666] dark:bg-[#222324] dark:text-[#919296]">
+														<span className="ml-auto rounded-sm bg-ai-surface-muted px-1 py-0.5 text-[10px] text-ai-tertiary">
 															private
 														</span>
 													) : null}
@@ -263,29 +263,27 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 								</Ariakit.ComboboxProvider>
 							)}
 							{repoSelectionIsStale ? (
-								<p className="text-xs text-red-600 dark:text-red-400">
-									Repository metadata is stale. Pick the repository again.
-								</p>
+								<p className="text-xs text-ai-error">Repository metadata is stale. Pick the repository again.</p>
 							) : null}
 						</div>
 
 						<div className="flex flex-col gap-1.5">
-							<span className="text-xs font-medium text-[#444] dark:text-[#c5c5c5]">Branch</span>
+							<span className="text-xs font-medium text-ai-secondary">Branch</span>
 							{!selectedRepo ? (
-								<div className="rounded-md border border-dashed border-[#e6e6e6] px-3 py-2 text-xs text-[#999] dark:border-[#2a2b2c] dark:text-[#555]">
+								<div className="rounded-md border border-dashed border-ai-line px-3 py-2 text-xs text-ai-muted">
 									Pick a repository first
 								</div>
 							) : branches.isLoading ? (
-								<div className="flex items-center gap-2 text-xs text-[#666] dark:text-[#919296]">
+								<div className="flex items-center gap-2 text-xs text-ai-tertiary">
 									<LoadingSpinner size={12} /> Loading branches…
 								</div>
 							) : branches.isError ? (
-								<div className="flex flex-col gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+								<div className="flex flex-col gap-2 rounded-md border border-ai-error-border bg-ai-error-bg p-3 text-xs text-ai-error-strong">
 									<p>{branches.error instanceof Error ? branches.error.message : 'Failed to load branches.'}</p>
 									<button
 										type="button"
 										onClick={() => void branches.refetch()}
-										className="self-start rounded-md border border-red-300 px-2.5 py-1 text-xs font-medium transition-colors hover:bg-red-100 dark:border-red-800 dark:hover:bg-red-900/50"
+										className="self-start rounded-md border border-ai-error-border px-2.5 py-1 text-xs font-medium transition-colors hover:bg-ai-error-border"
 									>
 										Retry
 									</button>
@@ -301,29 +299,29 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 								>
 									<Ariakit.Combobox
 										placeholder={selectedBranch || 'Search branches…'}
-										className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 text-sm text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-hidden dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
+										className="rounded-md border border-ai-line bg-surface px-3 py-2 text-sm text-inherit placeholder:text-ai-muted focus:border-brand focus:outline-hidden"
 									/>
 									<Ariakit.ComboboxPopover
 										gutter={4}
 										sameWidth
-										className="z-[60] max-h-64 overflow-y-auto rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) py-1 shadow-lg dark:border-[#2a2b2c]"
+										className="z-[60] max-h-64 overflow-y-auto rounded-md border border-ai-line bg-surface py-1 shadow-lg"
 									>
 										{filteredBranches.length === 0 ? (
-											<div className="px-3 py-2 text-xs text-[#999] dark:text-[#666]">No branches match.</div>
+											<div className="px-3 py-2 text-xs text-ai-muted">No branches match.</div>
 										) : (
 											filteredBranches.map((b) => (
 												<Ariakit.ComboboxItem
 													key={b.name}
 													value={b.name}
-													className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm text-inherit data-[active-item]:bg-[#f0f0f0] dark:data-[active-item]:bg-[#222324]"
+													className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm text-inherit data-[active-item]:bg-ai-surface-muted"
 												>
 													<span className="truncate">{b.name}</span>
 													{b.is_default ? (
-														<span className="ml-auto rounded-sm bg-[#e6e6e6] px-1 py-0.5 text-[10px] text-[#666] dark:bg-[#222324] dark:text-[#919296]">
+														<span className="ml-auto rounded-sm bg-ai-surface-muted px-1 py-0.5 text-[10px] text-ai-tertiary">
 															default
 														</span>
 													) : b.protected ? (
-														<span className="ml-auto rounded-sm bg-[#e6e6e6] px-1 py-0.5 text-[10px] text-[#666] dark:bg-[#222324] dark:text-[#919296]">
+														<span className="ml-auto rounded-sm bg-ai-surface-muted px-1 py-0.5 text-[10px] text-ai-tertiary">
 															protected
 														</span>
 													) : null}
@@ -339,7 +337,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 							type="button"
 							onClick={() => void onStartInstall()}
 							disabled={installing}
-							className="self-start text-xs text-(--legacy-old-blue) underline-offset-2 hover:underline disabled:opacity-50"
+							className="self-start text-xs text-brand underline-offset-2 hover:underline disabled:opacity-50"
 						>
 							Manage installations →
 						</button>
@@ -349,7 +347,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 				<footer className="mt-1 flex justify-end gap-2">
 					<Ariakit.DialogDismiss
 						type="button"
-						className="rounded-md px-3 py-1.5 text-xs text-[#666] hover:bg-[#f0f0f0] dark:text-[#919296] dark:hover:bg-[#222324]"
+						className="rounded-md px-3 py-1.5 text-xs text-ai-tertiary hover:bg-ai-surface-muted"
 					>
 						Cancel
 					</Ariakit.DialogDismiss>
@@ -358,7 +356,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 							type="button"
 							onClick={() => void onConnect()}
 							disabled={!repoMeta || !selectedBranch || !effectiveInstallId || connect.isPending}
-							className="flex items-center gap-1.5 rounded-md border border-(--legacy-old-blue) bg-(--legacy-old-blue) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-(--legacy-old-blue)/90 disabled:cursor-not-allowed disabled:opacity-50"
+							className="flex items-center gap-1.5 rounded-md border border-brand bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							{connect.isPending ? <LoadingSpinner size={12} /> : null}
 							Connect

@@ -254,7 +254,7 @@ function ReferenceRatesSummary({
 						label="Spread"
 						value={rates.spread.apy}
 						delta={delta?.spread ?? null}
-						markerClassName="bg-(--text-tertiary)"
+						markerClassName="bg-tertiary"
 					/>
 				</dl>
 			</TableToolbar>

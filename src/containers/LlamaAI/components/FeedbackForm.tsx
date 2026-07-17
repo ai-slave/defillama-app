@@ -67,8 +67,8 @@ export function FeedbackForm({
 						disabled={isSubmittingFeedback}
 						className={`flex flex-1 items-center justify-center gap-2 rounded-sm border p-3 transition-colors ${
 							selectedRating === 'good'
-								? 'border-(--success) bg-(--success)/12 text-(--success)'
-								: 'border-[#e6e6e6] text-[#666] hover:border-(--success) hover:bg-(--success)/5 dark:border-[#222324] dark:text-[#919296]'
+								? 'border-success bg-success/12 text-success'
+								: 'border-ai-line text-ai-tertiary hover:border-success hover:bg-success/5'
 						}`}
 					>
 						<Icon name="thumbs-up" height={16} width={16} />
@@ -80,8 +80,8 @@ export function FeedbackForm({
 						disabled={isSubmittingFeedback}
 						className={`flex flex-1 items-center justify-center gap-2 rounded-sm border p-3 transition-colors ${
 							selectedRating === 'bad'
-								? 'border-(--error) bg-(--error)/12 text-(--error)'
-								: 'border-[#e6e6e6] text-[#666] hover:border-(--error) hover:bg-(--error)/5 dark:border-[#222324] dark:text-[#919296]'
+								? 'border-error bg-error/12 text-error'
+								: 'border-ai-line text-ai-tertiary hover:border-error hover:bg-error/5'
 						}`}
 					>
 						<Icon name="thumbs-down" height={16} width={16} />
@@ -90,10 +90,10 @@ export function FeedbackForm({
 				</div>
 			</div>
 			<label className="flex flex-col gap-2">
-				<span className="text-sm text-[#666] dark:text-[#919296]">Additional feedback (optional)</span>
+				<span className="text-sm text-ai-tertiary">Additional feedback (optional)</span>
 				<textarea
 					placeholder="Share your thoughts..."
-					className="w-full rounded-sm border border-[#e6e6e6] bg-(--legacy-app-bg) p-3 dark:border-[#222324]"
+					className="w-full rounded-sm border border-ai-line bg-page p-3"
 					rows={3}
 					maxLength={500}
 					value={feedbackText}
@@ -102,11 +102,11 @@ export function FeedbackForm({
 				/>
 			</label>
 			<div className="flex items-center justify-between">
-				<p className="m-0 text-xs text-[#666] dark:text-[#919296]">{finalFeedbackText.length}/500</p>
+				<p className="m-0 text-xs text-ai-tertiary">{finalFeedbackText.length}/500</p>
 				<div className="flex gap-3">
 					<Ariakit.DialogDismiss
 						disabled={isSubmittingFeedback}
-						className="rounded-sm px-3 py-2 text-xs text-[#666] hover:bg-[#e6e6e6] disabled:opacity-50 dark:text-[#919296] dark:hover:bg-[#222324]"
+						className="rounded-sm px-3 py-2 text-xs text-ai-tertiary hover:bg-ai-surface-muted disabled:opacity-50"
 					>
 						Cancel
 					</Ariakit.DialogDismiss>
@@ -114,7 +114,7 @@ export function FeedbackForm({
 						type="button"
 						onClick={handleSubmitFeedback}
 						disabled={isSubmittingFeedback || !selectedRating}
-						className="rounded-sm bg-(--legacy-old-blue) px-3 py-2 text-xs text-white hover:opacity-90 disabled:opacity-50"
+						className="rounded-sm bg-brand px-3 py-2 text-xs text-ai-white hover:opacity-90 disabled:opacity-50"
 					>
 						{isSubmittingFeedback ? 'Submitting...' : 'Submit'}
 					</button>

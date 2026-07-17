@@ -173,7 +173,7 @@ function Support() {
 							<div className="flex flex-col gap-1">
 								<label htmlFor="support-name" className="flex items-center gap-1">
 									<span>Name</span>
-									<span className="mt-0.5 text-xs text-gray-500">(Optional)</span>
+									<span className="mt-0.5 text-xs text-tertiary">(Optional)</span>
 								</label>
 								<Input id="support-name" type="text" name="name" className="w-full" />
 							</div>
@@ -181,7 +181,7 @@ function Support() {
 							<div className="flex flex-col gap-1">
 								<label htmlFor="support-email" className="flex items-center gap-1">
 									<span>Email</span>
-									<span className="mt-0.5 text-xs text-gray-500">(Optional)</span>
+									<span className="mt-0.5 text-xs text-tertiary">(Optional)</span>
 								</label>
 								<Input id="support-email" type="email" name="email" className="w-full" />
 							</div>
@@ -199,7 +199,7 @@ function Support() {
 							<Button name="submit-btn" variant="primary" size="md" disabled={isPending} className="mt-3 w-full">
 								{isPending ? 'Submitting...' : 'Submit'}
 							</Button>
-							{error ? <small className="text-center text-red-500">{error.message}</small> : null}
+							{error ? <small className="text-center text-error">{error.message}</small> : null}
 						</Card>
 					)
 				) : null}
@@ -216,9 +216,9 @@ export default Support
 
 const SuccessScreen = ({ setIsSubmitted }: { setIsSubmitted: (isSubmitted: boolean) => void }) => (
 	<Card padding="md" className="flex w-full flex-col gap-4 text-center">
-		<div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+		<div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-success/15">
 			<svg
-				className="size-8 text-green-600 dark:text-green-400"
+				className="size-8 text-success"
 				fill="none"
 				stroke="currentColor"
 				viewBox="0 0 24 24"
@@ -227,7 +227,7 @@ const SuccessScreen = ({ setIsSubmitted }: { setIsSubmitted: (isSubmitted: boole
 				<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
 			</svg>
 		</div>
-		<h1 className="text-2xl font-semibold text-green-600 dark:text-green-400">Success!</h1>
+		<h1 className="text-2xl font-semibold text-success">Success!</h1>
 		<p className="text-secondary">
 			Your support request has been submitted successfully. We'll get back to you as soon as possible.
 		</p>

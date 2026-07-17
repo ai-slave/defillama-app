@@ -157,7 +157,7 @@ function OwnerEditChip({ article }: { article: PublicArticleDocument }) {
 		<div className="pointer-events-none fixed bottom-6 left-1/2 z-30 flex -translate-x-1/2 justify-center sm:bottom-8">
 			<Link
 				href={`/research/edit/${article.id}`}
-				className="pointer-events-auto flex items-center gap-2 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-2 text-sm font-medium text-(--legacy-text-primary) shadow-lg transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-link-text)"
+				className="pointer-events-auto flex items-center gap-2 rounded-md border border-medium bg-surface px-3 py-2 text-sm font-medium text-primary shadow-lg transition-colors hover:border-link/40 hover:text-link"
 			>
 				<Icon name="pencil" className="size-4" />
 				Edit research
@@ -207,9 +207,9 @@ function SectionArticleContent({
 
 	if (!expectedSection) {
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-6">
-				<h1 className="heading-sm text-(--legacy-text-primary)">Section not found</h1>
-				<Link href="/research" className="text-sm text-(--legacy-link-text) hover:underline">
+			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-medium bg-surface p-6">
+				<h1 className="heading-sm text-primary">Section not found</h1>
+				<Link href="/research" className="text-sm text-link hover:underline">
 					Browse all research →
 				</Link>
 			</div>
@@ -222,9 +222,9 @@ function SectionArticleContent({
 
 	if (!article && !error) {
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-6">
-				<h1 className="heading-sm text-(--legacy-text-primary)">Research not found</h1>
-				<Link href="/research" className="text-sm text-(--legacy-link-text) hover:underline">
+			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-medium bg-surface p-6">
+				<h1 className="heading-sm text-primary">Research not found</h1>
+				<Link href="/research" className="text-sm text-link hover:underline">
 					Browse all research →
 				</Link>
 			</div>
@@ -234,9 +234,9 @@ function SectionArticleContent({
 	if (error || !article) {
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load research'
 		return (
-			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-red-500/30 bg-red-500/5 p-6">
-				<h1 className="heading-sm text-(--legacy-text-primary)">Couldn't load research</h1>
-				<p className="text-sm text-(--legacy-text-secondary)">{message}</p>
+			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error/30 bg-error/5 p-6">
+				<h1 className="heading-sm text-primary">Couldn't load research</h1>
+				<p className="text-sm text-secondary">{message}</p>
 			</div>
 		)
 	}

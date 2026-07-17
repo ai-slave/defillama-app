@@ -18,7 +18,7 @@ export function ResearchAdminFab() {
 		<div className="pointer-events-none fixed top-[74px] right-3 z-30 lg:top-3 lg:right-4">
 			<Link
 				href="/research/admin"
-				className="pointer-events-auto flex items-center gap-2 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-2 text-sm font-medium text-(--legacy-text-primary) shadow-lg transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-link-text)"
+				className="pointer-events-auto flex items-center gap-2 rounded-md border border-medium bg-surface px-3 py-2 text-sm font-medium text-primary shadow-lg transition-colors hover:border-link/40 hover:text-link"
 				aria-label="Open research admin"
 			>
 				<ResearchIcon name="research-admin" className="size-4" aria-hidden />

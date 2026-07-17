@@ -98,10 +98,10 @@ const TokenButton = forwardRef<HTMLButtonElement, TokenButtonProps>(function Tok
 			onClick={onClick}
 			data-metric-token="true"
 			ref={ref}
-			className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium transition-all duration-150 focus:ring-2 focus:ring-(--legacy-primary)/40 focus:outline-hidden sm:px-2.5 sm:py-1 sm:text-sm ${
+			className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium transition-all duration-150 focus:ring-2 focus:ring-brand/40 focus:outline-hidden sm:px-2.5 sm:py-1 sm:text-sm ${
 				active
-					? 'border-(--legacy-primary) bg-(--legacy-primary)/12 text-(--legacy-primary) shadow-sm'
-					: 'border-(--legacy-cards-border) bg-(--legacy-cards-bg) text-(--legacy-text-secondary) hover:border-(--legacy-primary)/30 hover:bg-(--cards-bg-alt) hover:text-(--legacy-text-primary)'
+					? 'border-brand bg-brand/12 text-brand shadow-sm'
+					: 'border-(--pro-cards-border) bg-(--pro-cards-bg) text-(--pro-text-secondary) hover:border-brand/30 hover:text-(--pro-text-primary)'
 			}`}
 		>
 			<span className="max-w-[100px] truncate sm:max-w-[180px]">{label}</span>
@@ -408,14 +408,14 @@ export function MetricSentenceBuilder({
 								key={option.value}
 								type="button"
 								onClick={() => handleSelectAggregator(option.value)}
-								className={`w-full rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-(--cards-bg-alt) ${
+								className={`w-full rounded-md px-2.5 py-1.5 text-left text-sm transition-colors ${
 									option.value === aggregator
-										? 'bg-(--cards-bg-alt) font-semibold text-(--legacy-text-primary)'
-										: 'text-(--legacy-text-secondary)'
+										? 'font-semibold text-(--pro-text-primary)'
+										: 'text-(--pro-text-secondary)'
 								}`}
 							>
 								<div>{option.label}</div>
-								<div className="text-xs text-(--legacy-text-tertiary)">{option.description}</div>
+								<div className="text-xs text-(--pro-text-tertiary)">{option.description}</div>
 							</button>
 						))}
 					</div>
@@ -428,14 +428,14 @@ export function MetricSentenceBuilder({
 								key={option.value}
 								type="button"
 								onClick={() => handleSelectWindow(option.value)}
-								className={`w-full rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-(--cards-bg-alt) ${
+								className={`w-full rounded-md px-2.5 py-1.5 text-left text-sm transition-colors ${
 									option.value === metricWindow
-										? 'bg-(--cards-bg-alt) font-semibold text-(--legacy-text-primary)'
-										: 'text-(--legacy-text-secondary)'
+										? 'font-semibold text-(--pro-text-primary)'
+										: 'text-(--pro-text-secondary)'
 								}`}
 							>
 								<div>{option.label}</div>
-								<div className="text-xs text-(--legacy-text-tertiary)">{option.description}</div>
+								<div className="text-xs text-(--pro-text-tertiary)">{option.description}</div>
 							</button>
 						))}
 					</div>
@@ -443,13 +443,13 @@ export function MetricSentenceBuilder({
 			case 'metric':
 				return (
 					<div className="max-h-[320px] w-full overflow-y-auto overscroll-contain" data-metric-token="true">
-						<div className="sticky top-0 border-b border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1.5">
+						<div className="sticky top-0 border-b border-(--pro-cards-border) bg-(--pro-cards-bg) p-1.5">
 							<input
 								value={searchTerm}
 								onChange={(event) => setSearchTerm(event.target.value)}
 								aria-label="Search metrics"
 								placeholder="Search metrics..."
-								className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2 py-1.5 text-sm focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+								className="w-full rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-2 py-1.5 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
 							/>
 						</div>
 						<div className="p-1.5">
@@ -467,10 +467,8 @@ export function MetricSentenceBuilder({
 										key={value}
 										type="button"
 										onClick={() => handleSelectMetric(value)}
-										className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-(--cards-bg-alt) ${
-											isActive
-												? 'bg-(--cards-bg-alt) font-semibold text-(--legacy-text-primary)'
-												: 'text-(--legacy-text-secondary)'
+										className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-sm transition-colors ${
+											isActive ? 'font-semibold text-(--pro-text-primary)' : 'text-(--pro-text-secondary)'
 										}`}
 									>
 										<span>{label}</span>
@@ -486,10 +484,10 @@ export function MetricSentenceBuilder({
 					<ComboboxProvider store={subjectCombobox}>
 						<div className="w-full space-y-2.5 p-2.5 sm:space-y-3 sm:p-3" data-metric-token="true">
 							<div className="space-y-1.5">
-								<div className="text-[11px] font-semibold tracking-wide text-(--legacy-text-tertiary) uppercase">
+								<div className="text-[11px] font-semibold tracking-wide text-(--pro-text-tertiary) uppercase">
 									Select subject
 								</div>
-								<div className="rounded-lg border border-(--legacy-cards-border) bg-(--cards-bg-alt)/60 p-0.5 shadow-sm">
+								<div className="rounded-lg border border-(--pro-cards-border) p-0.5 shadow-sm">
 									<div className="grid grid-cols-2 gap-1">
 										<button
 											type="button"
@@ -499,8 +497,8 @@ export function MetricSentenceBuilder({
 											}}
 											className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors ${
 												subjectTab === 'chain'
-													? 'bg-(--legacy-primary)/12 text-(--legacy-primary) shadow-sm'
-													: 'text-(--legacy-text-secondary) hover:bg-(--legacy-cards-bg)'
+													? 'bg-brand/12 text-brand shadow-sm'
+													: 'text-(--pro-text-secondary) hover:bg-(--pro-cards-bg)'
 											}`}
 										>
 											<div className="flex items-center justify-center gap-2">
@@ -508,9 +506,7 @@ export function MetricSentenceBuilder({
 													name="chain"
 													width={14}
 													height={14}
-													className={
-														subjectTab === 'chain' ? 'text-(--legacy-primary)' : 'text-(--legacy-text-tertiary)'
-													}
+													className={subjectTab === 'chain' ? 'text-brand' : 'text-(--pro-text-tertiary)'}
 												/>
 												<span>Chains</span>
 											</div>
@@ -523,8 +519,8 @@ export function MetricSentenceBuilder({
 											}}
 											className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors ${
 												subjectTab === 'protocol'
-													? 'bg-(--legacy-primary)/12 text-(--legacy-primary) shadow-sm'
-													: 'text-(--legacy-text-secondary) hover:bg-(--legacy-cards-bg)'
+													? 'bg-brand/12 text-brand shadow-sm'
+													: 'text-(--pro-text-secondary) hover:bg-(--pro-cards-bg)'
 											}`}
 										>
 											<div className="flex items-center justify-center gap-2">
@@ -532,9 +528,7 @@ export function MetricSentenceBuilder({
 													name="protocol"
 													width={14}
 													height={14}
-													className={
-														subjectTab === 'protocol' ? 'text-(--legacy-primary)' : 'text-(--legacy-text-tertiary)'
-													}
+													className={subjectTab === 'protocol' ? 'text-brand' : 'text-(--pro-text-tertiary)'}
 												/>
 												<span>Protocols</span>
 											</div>
@@ -544,10 +538,10 @@ export function MetricSentenceBuilder({
 							</div>
 
 							<div className="space-y-2">
-								<div className="rounded-lg border border-dashed border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-2.5 shadow-inner">
+								<div className="rounded-lg border border-dashed border-(--pro-cards-border) bg-(--pro-cards-bg) p-2.5 shadow-inner">
 									<Combobox
 										placeholder={subjectTab === 'chain' ? 'Search chains...' : 'Search protocols...'}
-										className="mb-1.5 w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2.5 py-1.5 text-sm focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+										className="mb-1.5 w-full rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-2.5 py-1.5 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
 										aria-label="Search"
 									/>
 									{subjectTab === 'chain' ? (
@@ -568,10 +562,10 @@ export function MetricSentenceBuilder({
 																	handleChainSelect(option)
 																	closePopover()
 																}}
-																className={`flex items-center justify-between rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-(--cards-bg-alt) focus-visible:bg-(--cards-bg-alt) data-active-item:bg-(--cards-bg-alt) ${
+																className={`flex items-center justify-between rounded-md px-2.5 py-1.5 text-sm transition-colors ${
 																	isActive
-																		? 'bg-(--legacy-primary)/10 font-semibold text-(--legacy-text-primary)'
-																		: 'text-(--legacy-text-secondary)'
+																		? 'bg-brand/10 font-semibold text-(--pro-text-primary)'
+																		: 'text-(--pro-text-secondary)'
 																}`}
 																style={{
 																	position: 'absolute',
@@ -600,7 +594,7 @@ export function MetricSentenceBuilder({
 												</div>
 											</ComboboxList>
 										) : (
-											<p className="px-2 py-6 text-center text-sm text-(--legacy-text-tertiary)">No chains found.</p>
+											<p className="px-2 py-6 text-center text-sm text-(--pro-text-tertiary)">No chains found.</p>
 										)
 									) : filteredProtocolOptions.length > 0 ? (
 										<ComboboxList ref={protocolListRef} className="max-h-[240px] overflow-y-auto overscroll-contain">
@@ -619,10 +613,10 @@ export function MetricSentenceBuilder({
 																handleProtocolSelect(option)
 																closePopover()
 															}}
-															className={`flex items-center justify-between rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-(--cards-bg-alt) focus-visible:bg-(--cards-bg-alt) data-active-item:bg-(--cards-bg-alt) ${
+															className={`flex items-center justify-between rounded-md px-2.5 py-1.5 text-sm transition-colors ${
 																isActive
-																	? 'bg-(--legacy-primary)/10 font-semibold text-(--legacy-text-primary)'
-																	: 'text-(--legacy-text-secondary)'
+																	? 'bg-brand/10 font-semibold text-(--pro-text-primary)'
+																	: 'text-(--pro-text-secondary)'
 															}`}
 															style={{
 																position: 'absolute',
@@ -644,12 +638,12 @@ export function MetricSentenceBuilder({
 																) : null}
 																<div className="flex min-w-0 flex-col">
 																	<span
-																		className={`truncate ${option.isChild ? 'text-(--legacy-text-secondary)' : 'text-(--legacy-text-primary)'}`}
+																		className={`truncate ${option.isChild ? 'text-(--pro-text-secondary)' : 'text-(--pro-text-primary)'}`}
 																	>
 																		{option.label}
 																	</span>
 																	{option.isChild ? (
-																		<span className="text-[11px] text-(--legacy-text-tertiary)">Child protocol</span>
+																		<span className="text-[11px] text-(--pro-text-tertiary)">Child protocol</span>
 																	) : null}
 																</div>
 															</div>
@@ -660,7 +654,7 @@ export function MetricSentenceBuilder({
 											</div>
 										</ComboboxList>
 									) : (
-										<p className="px-2 py-6 text-center text-sm text-(--legacy-text-tertiary)">No protocols found.</p>
+										<p className="px-2 py-6 text-center text-sm text-(--pro-text-tertiary)">No protocols found.</p>
 									)}
 								</div>
 							</div>
@@ -678,20 +672,20 @@ export function MetricSentenceBuilder({
 
 	return (
 		<div className="flex flex-col gap-2.5 sm:gap-3">
-			<div className="rounded-lg border border-(--legacy-cards-border) bg-linear-to-br from-(--legacy-cards-bg) via-(--legacy-cards-bg) to-(--cards-bg-alt) p-2.5 shadow-sm sm:p-3">
+			<div className="rounded-lg border border-(--pro-cards-border) bg-linear-to-br from-(--pro-cards-bg) via-(--pro-cards-bg) to-(--pro-cards-bg) p-2.5 shadow-sm sm:p-3">
 				<div className="mb-4 flex items-center gap-2 sm:gap-2.5">
-					<div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-(--legacy-primary)/12 text-(--legacy-primary) sm:size-8">
+					<div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand/12 text-brand sm:size-8">
 						<Icon name="sparkles" width={14} height={14} className="sm:size-4" />
 					</div>
 					<div className="min-w-0">
-						<div className="text-xs font-semibold text-(--legacy-text-primary)">Metric sentence builder</div>
-						<div className="text-[10px] text-(--legacy-text-tertiary) sm:text-[11px]">
+						<div className="text-xs font-semibold text-(--pro-text-primary)">Metric sentence builder</div>
+						<div className="text-[10px] text-(--pro-text-tertiary) sm:text-[11px]">
 							Create metrics based on natural language
 						</div>
 					</div>
 				</div>
-				<div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-(--legacy-text-primary) sm:gap-x-2.5 sm:gap-y-2">
-					<span className="text-xs text-(--legacy-text-tertiary) sm:text-sm">Show</span>
+				<div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-(--pro-text-primary) sm:gap-x-2.5 sm:gap-y-2">
+					<span className="text-xs text-(--pro-text-tertiary) sm:text-sm">Show</span>
 					<TokenButton
 						label={aggregatorLabel}
 						onClick={handleTokenPress('aggregator')}
@@ -708,7 +702,7 @@ export function MetricSentenceBuilder({
 							anchorRefs.current.metric = node
 						}}
 					/>
-					<span className="text-xs text-(--legacy-text-tertiary) sm:text-sm">for</span>
+					<span className="text-xs text-(--pro-text-tertiary) sm:text-sm">for</span>
 					<TokenButton
 						label={subjectLabel}
 						onClick={handleTokenPress('subject')}
@@ -717,7 +711,7 @@ export function MetricSentenceBuilder({
 							anchorRefs.current.subject = node
 						}}
 					/>
-					<span className="text-xs text-(--legacy-text-tertiary) sm:text-sm">over</span>
+					<span className="text-xs text-(--pro-text-tertiary) sm:text-sm">over</span>
 					<TokenButton
 						label={windowLabel}
 						onClick={handleTokenPress('window')}
@@ -727,9 +721,9 @@ export function MetricSentenceBuilder({
 						}}
 					/>
 				</div>
-				<div className="mt-2.5 flex flex-wrap items-center gap-2 rounded-md border border-dashed border-(--legacy-cards-border) bg-(--cards-bg-alt)/50 px-2 py-1.5 sm:mt-3 sm:px-2.5">
-					<span className="text-[11px] font-medium text-(--legacy-text-secondary) sm:text-xs">Chart:</span>
-					<div className="flex flex-1 items-center gap-1 rounded-md bg-(--legacy-bg-input) p-0.5">
+				<div className="mt-2.5 flex flex-wrap items-center gap-2 rounded-md border border-dashed border-(--pro-cards-border) px-2 py-1.5 sm:mt-3 sm:px-2.5">
+					<span className="text-[11px] font-medium text-(--pro-text-secondary) sm:text-xs">Chart:</span>
+					<div className="flex flex-1 items-center gap-1 rounded-md bg-surface-elevated-1 p-0.5">
 						<button
 							type="button"
 							onClick={() => onChartTypeChange('sparkline')}
@@ -737,8 +731,8 @@ export function MetricSentenceBuilder({
 							title="Line chart"
 							className={`flex flex-1 items-center justify-center gap-1 rounded-sm px-2 py-1 text-[11px] font-medium transition-colors sm:text-xs ${
 								chartType === 'sparkline'
-									? 'bg-(--legacy-primary) text-white'
-									: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
+									? 'bg-brand text-on-brand'
+									: 'text-(--pro-text-secondary) hover:text-(--pro-text-primary)'
 							}`}
 						>
 							<Icon name="activity" width={12} height={12} />
@@ -751,8 +745,8 @@ export function MetricSentenceBuilder({
 							title="Bar chart"
 							className={`flex flex-1 items-center justify-center gap-1 rounded-sm px-2 py-1 text-[11px] font-medium transition-colors sm:text-xs ${
 								chartType === 'bar'
-									? 'bg-(--legacy-primary) text-white'
-									: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
+									? 'bg-brand text-on-brand'
+									: 'text-(--pro-text-secondary) hover:text-(--pro-text-primary)'
 							}`}
 						>
 							<Icon name="bar-chart-2" width={12} height={12} />
@@ -765,8 +759,8 @@ export function MetricSentenceBuilder({
 							title="No chart"
 							className={`flex flex-1 items-center justify-center gap-1 rounded-sm px-2 py-1 text-[11px] font-medium transition-colors sm:text-xs ${
 								chartType === 'none'
-									? 'bg-(--legacy-primary) text-white'
-									: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
+									? 'bg-brand text-on-brand'
+									: 'text-(--pro-text-secondary) hover:text-(--pro-text-primary)'
 							}`}
 						>
 							<Icon name="x" width={12} height={12} />
@@ -779,7 +773,7 @@ export function MetricSentenceBuilder({
 				store={popover}
 				modal={false}
 				data-metric-token="true"
-				className="z-50 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-lg"
+				className="z-50 rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) shadow-lg"
 				style={{
 					width: popoverWidth,
 					maxWidth: 'calc(100vw - 16px)',

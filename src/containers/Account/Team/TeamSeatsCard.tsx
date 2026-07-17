@@ -79,9 +79,9 @@ function isRenewingSub(sub: TeamSubscription): boolean {
 function InfoRow({ label, value, valueClassName }: { label: string; value: string; valueClassName?: string }) {
 	return (
 		<div className="flex items-center gap-2">
-			<span className="shrink-0 text-xs leading-4 text-(--sub-text-muted)">{label}</span>
-			<div className="h-0 min-w-0 flex-1 border-b border-dashed border-(--sub-border-slate-100) dark:border-(--sub-border-strong)" />
-			<span className={`shrink-0 text-xs leading-4 ${valueClassName || 'text-(--sub-ink-primary) dark:text-white'}`}>
+			<span className="shrink-0 text-xs leading-4 text-sub-text-muted">{label}</span>
+			<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border-slate-100 dark:border-sub-border-strong" />
+			<span className={`shrink-0 text-xs leading-4 ${valueClassName || 'text-sub-ink-primary dark:text-ai-primary'}`}>
 				{value}
 			</span>
 		</div>
@@ -118,27 +118,27 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 	}
 
 	return (
-		<div className="flex flex-col gap-3 rounded-lg border border-(--sub-border-slate-100) p-3 dark:border-(--sub-border-strong)">
+		<div className="flex flex-col gap-3 rounded-lg border border-sub-border-slate-100 p-3 dark:border-sub-border-strong">
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex flex-col">
-					<span className="text-sm font-medium text-(--sub-ink-primary) dark:text-white">
+					<span className="text-sm font-medium text-sub-ink-primary dark:text-ai-primary">
 						{label} — {subscription.billingInterval === 'year' ? 'Yearly' : 'Monthly'}
 					</span>
-					<span className="text-xs text-(--sub-text-muted)">
+					<span className="text-xs text-sub-text-muted">
 						{subscription.seats.seatCount} seat{subscription.seats.seatCount === 1 ? '' : 's'} × $
 						{unit.toLocaleString()}
 						{intervalSuffix}
 					</span>
 				</div>
 				<div className="flex items-center gap-2">
-					<span className="text-sm font-semibold text-(--sub-ink-primary) dark:text-white">
+					<span className="text-sm font-semibold text-sub-ink-primary dark:text-ai-primary">
 						{`$${total.toLocaleString()}${intervalSuffix}`}
 					</span>
 					{isMonthly && active && !isCanceling && (
 						<button
 							onClick={() => setShowUpgradeConfirm(true)}
 							disabled={upgradePending}
-							className="flex h-7 items-center gap-1.5 rounded-lg border border-(--sub-border-slate-100) px-2.5 text-xs font-medium text-(--sub-ink-primary) hover:bg-(--sub-brand-primary)/5 disabled:opacity-50 dark:border-(--sub-border-strong) dark:text-white"
+							className="flex h-7 items-center gap-1.5 rounded-lg border border-sub-border-slate-100 px-2.5 text-xs font-medium text-sub-ink-primary hover:bg-sub-brand-primary/5 disabled:opacity-50 dark:border-sub-border-strong dark:text-ai-primary"
 						>
 							<Icon name="sparkles" height={12} width={12} />
 							Upgrade to Yearly
@@ -147,7 +147,7 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 					<button
 						onClick={() => setShowManageModal(true)}
 						disabled={upgradePending}
-						className="flex h-7 items-center gap-1.5 rounded-lg border border-(--sub-border-slate-100) px-2.5 text-xs font-medium text-(--sub-ink-primary) hover:bg-(--sub-brand-primary)/5 disabled:opacity-50 dark:border-(--sub-border-strong) dark:text-white"
+						className="flex h-7 items-center gap-1.5 rounded-lg border border-sub-border-slate-100 px-2.5 text-xs font-medium text-sub-ink-primary hover:bg-sub-brand-primary/5 disabled:opacity-50 dark:border-sub-border-strong dark:text-ai-primary"
 					>
 						<Icon name="settings" height={12} width={12} />
 						Manage
@@ -162,17 +162,15 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 					label="Available"
 					value={String(subscription.seats.availableSeats)}
 					valueClassName={
-						subscription.seats.availableSeats > 0
-							? 'text-(--sub-green-600) dark:text-(--sub-green-400)'
-							: 'text-(--sub-text-muted)'
+						subscription.seats.availableSeats > 0 ? 'text-sub-green-600 dark:text-sub-green-400' : 'text-sub-text-muted'
 					}
 				/>
 				{isCanceling && cancelAtDate ? (
-					<InfoRow label="Cancels on" value={formatDate(cancelAtDate)} valueClassName="text-(--error)" />
+					<InfoRow label="Cancels on" value={formatDate(cancelAtDate)} valueClassName="text-error" />
 				) : nextDate ? (
 					<InfoRow label="Next billing" value={formatDate(nextDate)} />
 				) : subscription.status ? (
-					<InfoRow label="Status" value={subscription.status} valueClassName="capitalize text-(--sub-text-muted)" />
+					<InfoRow label="Status" value={subscription.status} valueClassName="capitalize text-sub-text-muted" />
 				) : null}
 			</div>
 
@@ -218,11 +216,11 @@ function BillingTotals({ subscriptions }: { subscriptions: TeamSubscription[] })
 	if (totals.yearly > 0) rows.push({ label: 'Total', value: `$${totals.yearly.toLocaleString()}/year` })
 
 	return (
-		<div className="flex flex-col gap-1.5 rounded-lg bg-(--sub-brand-primary)/5 p-3">
+		<div className="flex flex-col gap-1.5 rounded-lg bg-sub-brand-primary/5 p-3">
 			{rows.map((row, i) => (
 				<div key={i} className="flex items-center justify-between gap-2">
-					<span className="text-sm font-medium text-(--sub-ink-primary) dark:text-white">{row.label}</span>
-					<span className="text-sm font-semibold text-(--sub-ink-primary) dark:text-white">{row.value}</span>
+					<span className="text-sm font-medium text-sub-ink-primary dark:text-ai-primary">{row.label}</span>
+					<span className="text-sm font-semibold text-sub-ink-primary dark:text-ai-primary">{row.value}</span>
 				</div>
 			))}
 		</div>
@@ -239,8 +237,8 @@ function YearlyTip({ subscriptions }: { subscriptions: TeamSubscription[] }) {
 
 	return (
 		<div className="flex items-start gap-2">
-			<Icon name="sparkles" height={12} width={12} className="mt-1 shrink-0 text-(--sub-text-muted)" />
-			<p className="text-xs leading-5 text-(--sub-text-muted)">
+			<Icon name="sparkles" height={12} width={12} className="mt-1 shrink-0 text-sub-text-muted" />
+			<p className="text-xs leading-5 text-sub-text-muted">
 				Tip: switch to yearly billing and get 2 months free — save ${savings.toLocaleString()}/year on your current
 				seats.
 			</p>
@@ -257,11 +255,11 @@ export function TeamSeatsCard() {
 	const upgradePending = upgradeSeatsMutation.isPending
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-(--sub-border-slate-100) bg-white p-4 dark:border-(--sub-border-strong) dark:bg-(--sub-surface-dark)">
+		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex items-center gap-2">
-					<Icon name="receipt" height={20} width={20} className="text-(--sub-ink-primary) dark:text-white" />
-					<span className="text-base leading-5 font-medium text-(--sub-ink-primary) dark:text-white">
+					<Icon name="receipt" height={20} width={20} className="text-sub-ink-primary dark:text-ai-primary" />
+					<span className="text-base leading-5 font-medium text-sub-ink-primary dark:text-ai-primary">
 						Subscriptions & Billing
 					</span>
 				</div>
@@ -270,7 +268,7 @@ export function TeamSeatsCard() {
 						<button
 							onClick={() => void createPortalSession()}
 							disabled={isPortalSessionLoading}
-							className="flex h-8 items-center gap-1.5 rounded-lg border border-(--sub-border-slate-100) px-3 text-xs font-medium text-(--sub-ink-primary) hover:bg-(--sub-brand-primary)/5 disabled:opacity-50 dark:border-(--sub-border-strong) dark:text-white"
+							className="flex h-8 items-center gap-1.5 rounded-lg border border-sub-border-slate-100 px-3 text-xs font-medium text-sub-ink-primary hover:bg-sub-brand-primary/5 disabled:opacity-50 dark:border-sub-border-strong dark:text-ai-primary"
 						>
 							<Icon name="external-link" height={12} width={12} />
 							{isPortalSessionLoading ? 'Opening...' : 'Manage in Stripe'}
@@ -279,7 +277,7 @@ export function TeamSeatsCard() {
 					<button
 						onClick={() => setShowPurchaseModal(true)}
 						disabled={upgradePending}
-						className="flex h-8 items-center gap-1.5 rounded-lg bg-(--sub-brand-primary) px-3 text-xs font-medium text-white disabled:opacity-50"
+						className="flex h-8 items-center gap-1.5 rounded-lg bg-sub-brand-primary px-3 text-xs font-medium text-on-brand disabled:opacity-50"
 					>
 						<Icon name="plus" height={14} width={14} />
 						Purchase Seats
@@ -288,7 +286,7 @@ export function TeamSeatsCard() {
 			</div>
 
 			{teamSubscriptions.length === 0 ? (
-				<p className="text-sm text-(--sub-text-muted)">
+				<p className="text-sm text-sub-text-muted">
 					No seats purchased yet. Purchase seats to assign subscriptions to team members.
 				</p>
 			) : (

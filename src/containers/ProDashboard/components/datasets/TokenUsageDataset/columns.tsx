@@ -27,12 +27,9 @@ export const getColumns = (tokenSymbols: string[]): ColumnDef<TokenUsageRow>[] =
 
 				return (
 					<div className="flex items-center gap-2">
-						<span className="min-w-[30px] shrink-0 text-sm font-medium text-(--legacy-text-tertiary)">{index + 1}</span>
+						<span className="min-w-[30px] shrink-0 text-sm font-medium text-(--pro-text-tertiary)">{index + 1}</span>
 						<TokenLogo src={row.original.logo} alt={`Logo of ${value}`} data-lgonly />
-						<BasicLink
-							href={`/protocol/${slug(value)}`}
-							className="text-sm font-medium text-(--legacy-link-text) hover:underline"
-						>
+						<BasicLink href={`/protocol/${slug(value)}`} className="text-sm font-medium text-link hover:underline">
 							{value}
 						</BasicLink>
 					</div>
@@ -45,7 +42,7 @@ export const getColumns = (tokenSymbols: string[]): ColumnDef<TokenUsageRow>[] =
 			enableSorting: false,
 			cell: ({ getValue }) => {
 				const value = getValue() as string
-				return <span className="text-xs font-medium text-(--legacy-text-primary)">{value || 'Unknown'}</span>
+				return <span className="text-xs font-medium text-(--pro-text-primary)">{value || 'Unknown'}</span>
 			}
 		}
 	]
@@ -60,7 +57,7 @@ export const getColumns = (tokenSymbols: string[]): ColumnDef<TokenUsageRow>[] =
 					return value > 0 ? (
 						<span className="text-sm font-medium">{formattedNum(value, true)}</span>
 					) : (
-						<span className="text-sm text-(--legacy-text-tertiary)">-</span>
+						<span className="text-sm text-(--pro-text-tertiary)">-</span>
 					)
 				},
 				meta: {

@@ -59,7 +59,7 @@ export function ImageUploadButton({
 							onClick={open}
 							disabled={isUploading}
 							aria-label="Replace avatar"
-							className="group relative size-24 shrink-0 overflow-hidden rounded-full border border-(--legacy-cards-border) outline-hidden transition-[border-color] hover:border-(--legacy-link-text)/50 focus-visible:border-(--legacy-link-text)/70 disabled:cursor-not-allowed disabled:opacity-60"
+							className="group relative size-24 shrink-0 overflow-hidden rounded-full border border-medium outline-hidden transition-[border-color] hover:border-link/50 focus-visible:border-link/70 disabled:cursor-not-allowed disabled:opacity-60"
 						>
 							{/* eslint-disable-next-line @next/next/no-img-element */}
 							<img
@@ -67,7 +67,7 @@ export function ImageUploadButton({
 								alt=""
 								className="size-full object-cover transition-opacity group-hover:opacity-70"
 							/>
-							<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-(--legacy-app-bg)/0 text-[11px] font-medium tracking-wide text-white opacity-0 transition-opacity group-hover:bg-black/40 group-hover:opacity-100">
+							<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-page/0 text-[11px] font-medium tracking-wide text-on-brand opacity-0 transition-opacity group-hover:bg-black/40 group-hover:opacity-100">
 								{isUploading ? 'Uploading…' : 'Replace'}
 							</span>
 						</button>
@@ -76,7 +76,7 @@ export function ImageUploadButton({
 							type="button"
 							onClick={open}
 							disabled={isUploading}
-							className="group flex size-24 shrink-0 flex-col items-center justify-center gap-1 rounded-full border border-dashed border-(--legacy-cards-border) bg-(--legacy-app-bg) text-(--legacy-text-tertiary) transition-colors hover:border-(--legacy-link-text)/50 hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-50"
+							className="group flex size-24 shrink-0 flex-col items-center justify-center gap-1 rounded-full border border-dashed border-medium bg-page text-tertiary transition-colors hover:border-link/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							<Icon name="image-plus" className="size-5" />
 							<span className="text-[10px] font-medium tracking-wider uppercase">{isUploading ? '…' : 'Upload'}</span>
@@ -88,7 +88,7 @@ export function ImageUploadButton({
 								type="button"
 								disabled={isUploading}
 								onClick={open}
-								className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-50"
+								className="rounded-md border border-medium bg-surface px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:border-link/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
 							>
 								{isUploading ? 'Uploading…' : currentUrl ? 'Replace' : `Upload ${label.toLowerCase()}`}
 							</button>
@@ -97,15 +97,13 @@ export function ImageUploadButton({
 									type="button"
 									disabled={isUploading}
 									onClick={onCleared}
-									className="rounded-md px-2.5 py-1.5 text-xs text-(--legacy-text-tertiary) transition-colors hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+									className="rounded-md px-2.5 py-1.5 text-xs text-tertiary transition-colors hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
 								>
 									Remove
 								</button>
 							) : null}
 						</div>
-						{helperText ? (
-							<span className="text-[11px] leading-relaxed text-(--legacy-text-tertiary)">{helperText}</span>
-						) : null}
+						{helperText ? <span className="text-[11px] leading-relaxed text-tertiary">{helperText}</span> : null}
 					</div>
 				</>
 			) : (
@@ -117,7 +115,7 @@ export function ImageUploadButton({
 								onClick={open}
 								disabled={isUploading}
 								aria-label="Replace cover image"
-								className="group relative block h-36 w-full overflow-hidden rounded-md border border-(--legacy-cards-border) outline-hidden transition-[border-color] hover:border-(--legacy-link-text)/50 focus-visible:border-(--legacy-link-text)/70 disabled:cursor-not-allowed"
+								className="group relative block h-36 w-full overflow-hidden rounded-md border border-medium outline-hidden transition-[border-color] hover:border-link/50 focus-visible:border-link/70 disabled:cursor-not-allowed"
 							>
 								{/* eslint-disable-next-line @next/next/no-img-element */}
 								<img
@@ -125,7 +123,7 @@ export function ImageUploadButton({
 									alt=""
 									className="size-full object-cover transition-opacity group-hover:opacity-70"
 								/>
-								<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 text-xs font-medium text-white opacity-0 transition-opacity group-hover:bg-black/40 group-hover:opacity-100">
+								<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 text-xs font-medium text-on-brand opacity-0 transition-opacity group-hover:bg-black/40 group-hover:opacity-100">
 									{isUploading ? 'Uploading…' : 'Replace'}
 								</span>
 							</button>
@@ -134,7 +132,7 @@ export function ImageUploadButton({
 									type="button"
 									disabled={isUploading}
 									onClick={open}
-									className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-50"
+									className="rounded-md border border-medium bg-surface px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:border-link/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
 								>
 									{isUploading ? 'Uploading…' : 'Replace'}
 								</button>
@@ -143,7 +141,7 @@ export function ImageUploadButton({
 										type="button"
 										disabled={isUploading}
 										onClick={onCleared}
-										className="rounded-md px-2.5 py-1.5 text-xs text-(--legacy-text-tertiary) transition-colors hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+										className="rounded-md px-2.5 py-1.5 text-xs text-tertiary transition-colors hover:text-error disabled:cursor-not-allowed disabled:opacity-50"
 									>
 										Remove
 									</button>
@@ -155,7 +153,7 @@ export function ImageUploadButton({
 							type="button"
 							disabled={isUploading}
 							onClick={open}
-							className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-(--legacy-cards-border) bg-(--legacy-app-bg) text-(--legacy-text-tertiary) transition-colors hover:border-(--legacy-link-text)/50 hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-50"
+							className="group flex h-28 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors hover:border-link/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							<Icon name="image-plus" className="size-5" />
 							<span className="text-xs font-medium">
@@ -163,7 +161,7 @@ export function ImageUploadButton({
 							</span>
 						</button>
 					)}
-					{helperText ? <span className="text-[11px] text-(--legacy-text-tertiary)">{helperText}</span> : null}
+					{helperText ? <span className="text-[11px] text-tertiary">{helperText}</span> : null}
 				</>
 			)}
 		</div>

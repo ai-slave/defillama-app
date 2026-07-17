@@ -5,10 +5,7 @@ export function MofNPips({ m, n }: { m: number; n: number }) {
 	return (
 		<span className="inline-flex items-center gap-0.5" role="img" aria-label={`${m} of ${n} signatures required`}>
 			{Array.from({ length: n }, (_, i) => (
-				<span
-					key={i}
-					className={`size-1.5 rounded-full ${i < m ? 'bg-warning' : 'border border-(--text-secondary)/40'}`}
-				/>
+				<span key={i} className={`size-1.5 rounded-full ${i < m ? 'bg-warning' : 'border border-secondary/40'}`} />
 			))}
 		</span>
 	)

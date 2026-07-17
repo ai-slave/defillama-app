@@ -29,11 +29,11 @@ const FRESHNESS_RED_MS = 48 * 60 * 60 * 1000
 
 function freshness(iso: string): { dot: string; label: string } {
 	const computed = new Date(iso).getTime()
-	if (!Number.isFinite(computed)) return { dot: 'bg-red-500', label: 'Unknown data age' }
+	if (!Number.isFinite(computed)) return { dot: 'bg-error', label: 'Unknown data age' }
 	const age = Date.now() - computed
-	if (age < FRESHNESS_YELLOW_MS) return { dot: 'bg-green-500', label: 'Data is fresh (updated within 24h)' }
-	if (age < FRESHNESS_RED_MS) return { dot: 'bg-amber-500', label: 'Data is older than 24h' }
-	return { dot: 'bg-red-500', label: 'Data is older than 48h' }
+	if (age < FRESHNESS_YELLOW_MS) return { dot: 'bg-success', label: 'Data is fresh (updated within 24h)' }
+	if (age < FRESHNESS_RED_MS) return { dot: 'bg-warning', label: 'Data is older than 24h' }
+	return { dot: 'bg-error', label: 'Data is older than 48h' }
 }
 
 function timeAgo(iso: string): string {

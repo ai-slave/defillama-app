@@ -130,13 +130,13 @@ export function ProjectLanding({
 		return (
 			<div className="mx-auto flex h-full max-w-md flex-col items-center justify-center gap-2 px-4 text-center">
 				<p className="text-sm font-medium">Project unavailable</p>
-				<p className="text-xs text-[#666] dark:text-[#919296]">
+				<p className="text-xs text-ai-tertiary">
 					{project.error instanceof Error ? project.error.message : 'Failed to load project'}
 				</p>
 				<button
 					type="button"
 					onClick={() => void Router.push('/ai/projects')}
-					className="rounded-md border border-[#e6e6e6] px-3 py-1.5 text-xs hover:bg-[#f0f0f0] dark:border-[#222324] dark:hover:bg-[#222324]"
+					className="rounded-md border border-ai-line px-3 py-1.5 text-xs hover:bg-ai-surface-muted"
 				>
 					Back to projects
 				</button>
@@ -251,29 +251,29 @@ export function ProjectLanding({
 					<button
 						type="button"
 						onClick={() => void Router.push('/ai/projects')}
-						className="-ml-2 flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-[#666] transition-colors hover:bg-[#f0f0f0] hover:text-[#1a1a1a] dark:text-[#919296] dark:hover:bg-[#1c1d1e] dark:hover:text-white"
+						className="-ml-2 flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
 					>
 						<Icon name="chevron-left" height={14} width={14} />
 						All projects
 					</button>
 					<div className="flex items-center gap-1">
 						<Ariakit.MenuProvider placement="bottom-end">
-							<Ariakit.MenuButton className="rounded-md p-1.5 text-[#666] transition-colors hover:bg-[#f0f0f0] dark:text-[#919296] dark:hover:bg-[#1c1d1e]">
+							<Ariakit.MenuButton className="rounded-md p-1.5 text-ai-tertiary transition-colors hover:bg-ai-surface-muted">
 								<Icon name="ellipsis" height={16} width={16} />
 							</Ariakit.MenuButton>
 							<Ariakit.Menu
 								gutter={6}
-								className="z-50 min-w-[200px] rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) p-1 text-sm shadow-xl dark:border-[#222324]"
+								className="z-50 min-w-[200px] rounded-lg border border-ai-line bg-surface p-1 text-sm shadow-xl"
 							>
 								<Ariakit.MenuItem
 									onClick={renameStore.show}
-									className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-left transition-colors hover:bg-[#f0f0f0] dark:hover:bg-[#1c1d1e]"
+									className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-left transition-colors hover:bg-ai-surface-muted"
 								>
 									Rename project
 								</Ariakit.MenuItem>
 								<Ariakit.MenuItem
 									onClick={deleteStore.show}
-									className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-red-600 transition-colors hover:bg-red-500/10 dark:text-red-400"
+									className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-ai-error transition-colors hover:bg-ai-error-vivid/10"
 								>
 									Delete project
 								</Ariakit.MenuItem>
@@ -283,15 +283,13 @@ export function ProjectLanding({
 				</header>
 
 				<div className="flex items-center gap-3 pb-5">
-					<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-(--legacy-old-blue)/20 to-(--legacy-old-blue)/5 ring-1 ring-(--legacy-old-blue)/30 ring-inset">
-						<Icon name="folder-plus" height={15} width={15} className="text-(--legacy-old-blue)" />
+					<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-brand/20 to-brand/5 ring-1 ring-brand/30 ring-inset">
+						<Icon name="folder-plus" height={15} width={15} className="text-brand" />
 					</div>
 					<div className="min-w-0 flex-1">
 						<h1 className="truncate text-2xl leading-tight font-semibold tracking-tight">{project.data.name}</h1>
 						{project.data.description ? (
-							<p className="mt-1 line-clamp-1 text-[13px] text-[#666] dark:text-[#919296]">
-								{project.data.description}
-							</p>
+							<p className="mt-1 line-clamp-1 text-[13px] text-ai-tertiary">{project.data.description}</p>
 						) : null}
 					</div>
 				</div>
@@ -320,7 +318,7 @@ export function ProjectLanding({
 						/>
 					</div>
 					<PastedContentModal preview={imageUpload.pastedPreview} onClose={() => imageUpload.setPastedPreview(null)} />
-					<div className="group/composer flex items-center gap-2.5 rounded-3xl border border-[#e6e6e6] bg-(--legacy-cards-bg) py-2 pr-2 pl-3 shadow-sm transition-all focus-within:border-(--legacy-old-blue)/60 focus-within:shadow-md dark:border-[#222324] dark:bg-[#161718] dark:focus-within:border-(--legacy-old-blue)/60">
+					<div className="group/composer flex items-center gap-2.5 rounded-3xl border border-ai-line bg-surface py-2 pr-2 pl-3 shadow-sm transition-all focus-within:border-brand/60 focus-within:shadow-md dark:bg-ai-surface dark:focus-within:border-brand/60">
 						<AddSourcesMenu
 							projectId={projectId}
 							onAddPhotosFiles={imageUpload.openFilePicker}
@@ -328,7 +326,7 @@ export function ProjectLanding({
 								<button
 									type="button"
 									aria-label="Add files"
-									className="-ml-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-[#666] transition-colors hover:bg-[#f0f0f0] hover:text-(--legacy-old-blue) dark:text-[#919296] dark:hover:bg-[#1c1d1e]"
+									className="-ml-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-brand"
 								>
 									<Icon name="plus" height={15} width={15} />
 								</button>
@@ -342,21 +340,21 @@ export function ProjectLanding({
 							onPaste={handlePaste}
 							rows={1}
 							placeholder={`New chat in ${project.data.name}`}
-							className="block flex-1 resize-none self-center bg-transparent text-[13px] leading-5 text-inherit placeholder:text-[#999] focus:outline-hidden dark:placeholder:text-[#555]"
+							className="block flex-1 resize-none self-center bg-transparent text-[13px] leading-5 text-inherit placeholder:text-ai-muted focus:outline-hidden"
 							style={{ height: 20 }}
 						/>
 						<button
 							type="submit"
 							disabled={(!prompt.trim() && imageUpload.selectedImages.length === 0) || isStreaming}
 							aria-label="Send message"
-							className="flex size-7 shrink-0 items-center justify-center rounded-full bg-(--legacy-old-blue) text-white transition-all hover:scale-105 hover:bg-(--legacy-old-blue)/90 disabled:scale-100 disabled:cursor-not-allowed disabled:opacity-30"
+							className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand text-ai-white transition-all hover:scale-105 hover:bg-brand/90 disabled:scale-100 disabled:cursor-not-allowed disabled:opacity-30"
 						>
 							<Icon name="arrow-up" height={13} width={13} />
 						</button>
 					</div>
 				</form>
 
-				<div role="tablist" className="flex items-center gap-1 border-b border-[#e6e6e6] dark:border-[#222324]">
+				<div role="tablist" className="flex items-center gap-1 border-b border-ai-line">
 					{(['chats', 'sources'] as const).map((id, index) => (
 						<button
 							key={id}
@@ -365,15 +363,13 @@ export function ProjectLanding({
 							aria-selected={tab === id}
 							onClick={() => setTab(id)}
 							className={`relative py-2 text-xs font-medium capitalize transition-colors focus:outline-hidden ${index === 0 ? 'pr-2 pl-0' : 'px-2'} ${
-								tab === id
-									? 'text-(--legacy-old-blue)'
-									: 'text-[#666] hover:text-[#1a1a1a] dark:text-[#919296] dark:hover:text-white'
+								tab === id ? 'text-brand' : 'text-ai-tertiary hover:text-ai-primary'
 							}`}
 						>
 							{id}
 							{tab === id ? (
 								<span
-									className={`absolute -bottom-px h-0.5 rounded-full bg-(--legacy-old-blue) ${index === 0 ? 'right-2 left-0' : 'inset-x-2'}`}
+									className={`absolute -bottom-px h-0.5 rounded-full bg-brand ${index === 0 ? 'right-2 left-0' : 'inset-x-2'}`}
 								/>
 							) : null}
 						</button>
@@ -388,7 +384,7 @@ export function ProjectLanding({
 									<LoadingSpinner size={12} />
 								</div>
 							) : sessions.length === 0 ? (
-								<p className="py-10 text-center text-sm text-[#999] dark:text-[#555]">
+								<p className="py-10 text-center text-sm text-ai-muted">
 									Start a chat above to keep conversations organized in this project.
 								</p>
 							) : (
@@ -402,7 +398,7 @@ export function ProjectLanding({
 												<li key={s.sessionId}>
 													<form
 														onSubmit={(e) => void handleRenameSubmit(e, s)}
-														className="group/row -mx-2 flex w-[calc(100%+1rem)] items-center gap-1 rounded-lg bg-[#f6f6f7] px-2 py-1 dark:bg-[#161718]"
+														className="group/row -mx-2 flex w-[calc(100%+1rem)] items-center gap-1 rounded-lg bg-ai-surface-muted px-2 py-1"
 													>
 														<input
 															type="text"
@@ -422,7 +418,7 @@ export function ProjectLanding({
 														<button
 															type="submit"
 															disabled={isBusy}
-															className="flex size-7 items-center justify-center rounded-md bg-(--legacy-old-blue) text-white disabled:opacity-60"
+															className="flex size-7 items-center justify-center rounded-md bg-brand text-ai-white disabled:opacity-60"
 															aria-label="Save title"
 														>
 															{isBusy ? <LoadingSpinner size={12} /> : <Icon name="check" height={13} width={13} />}
@@ -431,7 +427,7 @@ export function ProjectLanding({
 															type="button"
 															onClick={() => setRenamingSessionId(null)}
 															disabled={isBusy}
-															className="flex size-7 items-center justify-center rounded-md bg-red-500/15 text-red-600 disabled:opacity-60 dark:text-red-400"
+															className="flex size-7 items-center justify-center rounded-md bg-ai-error-vivid/15 text-ai-error disabled:opacity-60"
 															aria-label="Cancel rename"
 														>
 															<Icon name="x" height={13} width={13} />
@@ -442,7 +438,7 @@ export function ProjectLanding({
 										}
 										return (
 											<li key={s.sessionId}>
-												<div className="group/row relative -mx-2 flex w-[calc(100%+1rem)] items-center gap-1 rounded-lg pr-1 transition-colors focus-within:bg-[#f6f6f7] hover:bg-[#f6f6f7] dark:focus-within:bg-[#161718] dark:hover:bg-[#161718]">
+												<div className="group/row relative -mx-2 flex w-[calc(100%+1rem)] items-center gap-1 rounded-lg pr-1 transition-colors focus-within:bg-ai-surface-muted hover:bg-ai-surface-muted">
 													<button
 														type="button"
 														onClick={() => handlePickSession(s)}
@@ -452,14 +448,14 @@ export function ProjectLanding({
 														{s.hasUnseenCompletion ? (
 															<Tooltip content="New response ready">
 																<span
-																	className="size-1.5 shrink-0 rounded-full bg-(--legacy-old-blue)"
+																	className="size-1.5 shrink-0 rounded-full bg-brand"
 																	aria-label="Unseen completion"
 																/>
 															</Tooltip>
 														) : null}
 														<span className="min-w-0 flex-1 truncate text-[13px]">{s.title || 'Untitled chat'}</span>
 													</button>
-													<span className="shrink-0 text-xs text-[#999] tabular-nums group-focus-within/row:hidden group-hover/row:hidden dark:text-[#555]">
+													<span className="shrink-0 text-xs text-ai-muted tabular-nums group-focus-within/row:hidden group-hover/row:hidden">
 														{relativeTime(s.lastActivity ?? s.createdAt)}
 													</span>
 													<div className="hidden shrink-0 items-center gap-0.5 group-focus-within/row:flex group-hover/row:flex">
@@ -476,7 +472,7 @@ export function ProjectLanding({
 																	}}
 																/>
 															}
-															className="flex size-7 items-center justify-center rounded-md text-[#999] transition-colors hover:bg-(--legacy-old-blue) hover:text-white focus-visible:bg-(--legacy-old-blue) focus-visible:text-white disabled:opacity-50 dark:text-[#666]"
+															className="flex size-7 items-center justify-center rounded-md text-ai-muted transition-colors hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white disabled:opacity-50"
 														>
 															<Icon name="pencil" height={13} width={13} />
 														</Tooltip>
@@ -493,7 +489,7 @@ export function ProjectLanding({
 																	}}
 																/>
 															}
-															className="flex size-7 items-center justify-center rounded-md text-[#999] transition-colors hover:bg-red-500/10 hover:text-red-600 focus-visible:bg-red-500/10 focus-visible:text-red-600 disabled:opacity-50 dark:text-[#666] dark:hover:text-red-400 dark:focus-visible:text-red-400"
+															className="flex size-7 items-center justify-center rounded-md text-ai-muted transition-colors hover:bg-ai-error-vivid/10 hover:text-ai-error focus-visible:bg-ai-error-vivid/10 focus-visible:text-ai-error disabled:opacity-50"
 														>
 															{isBusy && isDeletingSession ? (
 																<LoadingSpinner size={12} />

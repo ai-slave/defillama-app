@@ -69,7 +69,7 @@ export function ColumnManagementPanel({
 	if (!showColumnPanel) return null
 
 	return (
-		<div className="mb-4 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+		<div className="mb-4 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
 			<div className="mb-3 flex items-center justify-between">
 				<h4 className="text-sm font-medium pro-text1">Customize Columns</h4>
 				<div className="flex items-center gap-2">
@@ -112,7 +112,7 @@ export function ColumnManagementPanel({
 					placeholder="Search columns..."
 					defaultValue={searchTerm}
 					onInput={(e) => setSearchTerm(e.currentTarget.value)}
-					className="w-full rounded-md border pro-border bg-(--legacy-bg-glass) py-2 pr-3 pl-9 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-(--legacy-primary) focus:outline-hidden"
+					className="w-full rounded-md border pro-border bg-(--pro-glass-bg) py-2 pr-3 pl-9 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
 				/>
 			</div>
 
@@ -137,7 +137,7 @@ export function ColumnManagementPanel({
 									className="flex items-center justify-between rounded-md border pro-divider pro-bg2 pro-hover-bg p-2 transition-colors"
 								>
 									<div className="flex items-center gap-2">
-										<Icon name="check" height={12} width={12} className="text-(--success)" />
+										<Icon name="check" height={12} width={12} className="text-success" />
 										<span className="text-xs pro-text1">{column.name}</span>
 										{columnId.endsWith('_share') ? (
 											<span className="rounded-md bg-pro-blue-100 px-1 py-0.5 text-xs text-pro-blue-400 dark:bg-pro-blue-300/20 dark:text-pro-blue-200">
@@ -219,7 +219,7 @@ export function ColumnManagementPanel({
 				</span>
 				<button
 					onClick={() => setShowColumnPanel(false)}
-					className="rounded-md border border-(--legacy-primary) bg-(--legacy-primary) px-3 py-1 text-white transition-colors hover:bg-(--legacy-primary-hover)"
+					className="rounded-md border border-brand bg-brand px-3 py-1 text-on-brand transition-colors hover:bg-brand-muted"
 				>
 					Done
 				</button>

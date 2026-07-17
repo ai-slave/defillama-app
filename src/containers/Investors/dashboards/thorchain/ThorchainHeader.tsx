@@ -56,7 +56,7 @@ export default function ThorchainHeader() {
 	const links = data?.links ?? {}
 
 	return (
-		<header className="flex items-center gap-3 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-4 py-2.5">
+		<header className="flex items-center gap-3 rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) px-4 py-2.5">
 			{/* RUNE token mark, inlined so the dashboard owns it (no asset file dependency). */}
 			<svg viewBox="0 0 300 300" role="img" aria-label="THORChain" className="size-8 shrink-0">
 				<circle cx="150" cy="150" r="150" fill="url(#rune-logo)" />
@@ -72,7 +72,7 @@ export default function ThorchainHeader() {
 				</defs>
 			</svg>
 			<div className="leading-tight">
-				<span className="text-sm font-semibold text-(--legacy-text-primary)">{data?.projectName ?? 'THORChain'}</span>
+				<span className="text-sm font-semibold text-(--pro-text-primary)">{data?.projectName ?? 'THORChain'}</span>
 			</div>
 			<nav className="ml-auto flex items-center gap-0.5">
 				{Object.entries(LINK_LABELS).map(([key, label]) => {
@@ -84,7 +84,7 @@ export default function ThorchainHeader() {
 							href={url}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="hidden items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] text-(--legacy-text-secondary) transition-colors hover:bg-(--sl-hover-bg) hover:text-(--legacy-text-primary) sm:flex"
+							className="hidden items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] text-(--pro-text-secondary) transition-colors hover:bg-sl-hover-bg hover:text-(--pro-text-primary) sm:flex"
 						>
 							{LINK_ICONS[key]}
 							<span className="hidden lg:inline">{label}</span>

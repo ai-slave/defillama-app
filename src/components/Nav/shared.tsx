@@ -18,7 +18,7 @@ export const navActionStyles =
 	'rounded-md px-2 py-1 label-sm tracking-wide text-secondary uppercase hover:bg-hover-row focus-visible:bg-hover-row'
 
 export const freeTrialBadgeStyles =
-	'hover-wash relative inline-flex shrink-0 items-center rounded-full border border-medium bg-surface-elevated-1 px-2 py-0.5 label-xs font-semibold tracking-wide text-warning'
+	'hover-wash relative inline-flex shrink-0 items-center rounded-full border border-medium bg-surface-elevated-1 px-2 py-0.5 label-xs tracking-wide text-warning'
 
 export function SidebarDivider({ className = '' }: { className?: string }) {
 	return <hr className={`w-full max-w-53 border-t border-medium ${className}`} />
@@ -93,14 +93,11 @@ export function NavItemContent({
 			<span className="relative flex min-w-0 flex-1 flex-nowrap items-center gap-2 text-left leading-tight">
 				<span className="min-w-0 flex-1 truncate">{name}</span>
 				{attention ? (
-					<span
-						aria-hidden
-						className="inline-block size-2 shrink-0 rounded-full bg-data-down shadow-[0_0_0_2px_var(--bg-page)]"
-					/>
+					<span aria-hidden className="inline-block size-2 shrink-0 rounded-full bg-data-down shadow-page-ring" />
 				) : null}
 				{freeTrial ? <span className={freeTrialBadgeStyles}>Try free</span> : null}
 				{isNew ? (
-					<span className="flex shrink-0 items-center gap-1 rounded-md bg-brand px-1.5 py-0.5 label-xs font-semibold text-on-brand">
+					<span className="flex shrink-0 items-center gap-1 rounded-md bg-brand px-1.5 py-0.5 label-xs text-on-brand">
 						<Icon name="sparkles" height={10} width={10} />
 						<span>New</span>
 					</span>

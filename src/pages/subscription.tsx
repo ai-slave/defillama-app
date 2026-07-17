@@ -228,7 +228,7 @@ function SubscriptionContent() {
 	}
 
 	return (
-		<div className="relative col-span-full min-h-screen w-full [overflow-x:clip] [overflow-y:visible] bg-(--sub-surface-page) text-(--sub-ink-primary) dark:bg-(--sub-ink-primary) dark:text-white">
+		<div className="relative col-span-full min-h-screen w-full [overflow-x:clip] [overflow-y:visible] bg-sub-surface-page text-sub-ink-primary dark:bg-sub-ink-primary dark:text-ai-primary">
 			<SubscriptionBackground />
 			<SubscriptionHeader />
 

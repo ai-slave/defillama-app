@@ -51,7 +51,7 @@ export function ToolExecutionPanel({
 	return (
 		<details
 			ref={detailsRef}
-			className="group rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) dark:border-[#222324]"
+			className="group rounded-lg border border-ai-line bg-surface"
 			onToggle={() => {
 				if (!detailsRef.current?.open) return
 				requestAnimationFrame(() => {
@@ -67,29 +67,20 @@ export function ToolExecutionPanel({
 					fill="none"
 					stroke="currentColor"
 					strokeWidth="2"
-					className="shrink-0 text-[#999] transition-transform group-open:rotate-90 dark:text-[#666]"
+					className="shrink-0 text-ai-muted transition-transform group-open:rotate-90"
 				>
 					<path d="M9 18l6-6-6-6" />
 				</svg>
-				<span className="flex-1 text-xs text-[#666] dark:text-[#919296]">
+				<span className="flex-1 text-xs text-ai-tertiary">
 					{toolExecutions.length} step{toolExecutions.length !== 1 ? 's' : ''}
 				</span>
-				{failedCount > 0 ? (
-					<span className="text-[10px] text-amber-600 dark:text-amber-400">{failedCount} failed</span>
-				) : null}
-				<span className="font-mono text-[10px] text-[#999] tabular-nums dark:text-[#666]">
-					{formatStepDuration(totalTime)}
-				</span>
+				{failedCount > 0 ? <span className="text-[10px] text-ai-warning">{failedCount} failed</span> : null}
+				<span className="font-mono text-[10px] text-ai-muted tabular-nums">{formatStepDuration(totalTime)}</span>
 				{totalCost > 0 ? (
-					<span className="font-mono text-[10px] text-amber-600 tabular-nums dark:text-amber-400">
-						{formatStepCost(totalCost)}
-					</span>
+					<span className="font-mono text-[10px] text-ai-warning tabular-nums">{formatStepCost(totalCost)}</span>
 				) : null}
 			</summary>
-			<div
-				ref={contentRef}
-				className="flex flex-col gap-1 border-t border-[#e6e6e6] px-3 py-2 select-text dark:border-[#222324]"
-			>
+			<div ref={contentRef} className="flex flex-col gap-1 border-t border-ai-line px-3 py-2 select-text">
 				{toolExecutions.map((execution) => (
 					<ToolExecutionRow
 						key={getRowKey(getToolExecutionKey(execution))}
@@ -118,35 +109,35 @@ function ToolExecutionRow({ execution, showDetails = false }: { execution: ToolE
 				className="flex items-center gap-2 py-0.5 text-left"
 			>
 				<Icon name={meta.icon as never} height={12} width={12} className="shrink-0" style={{ color: meta.color }} />
-				<span className="flex-1 text-xs text-[#555] dark:text-[#ccc]">{label}</span>
+				<span className="flex-1 text-xs text-ai-secondary">{label}</span>
 				{execution.isPremium || execution.costUsd ? (
-					<span className="rounded-full bg-amber-100 px-1.5 py-px text-[9px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+					<span className="rounded-full bg-ai-warning-soft px-1.5 py-px text-[9px] font-medium text-ai-warning">
 						Premium{premiumCostLabel}
 					</span>
 				) : null}
 				<span
 					aria-label={execution.success ? 'succeeded' : 'failed'}
-					className={`size-1.5 shrink-0 rounded-full ${execution.success ? 'bg-green-500 dark:bg-green-400' : 'bg-red-500'}`}
+					className={`size-1.5 shrink-0 rounded-full ${execution.success ? 'bg-ai-success-vivid dark:bg-ai-success' : 'bg-ai-error-vivid'}`}
 				/>
-				<span className="font-mono text-[10px] text-[#999] tabular-nums dark:text-[#666]">
+				<span className="font-mono text-[10px] text-ai-muted tabular-nums">
 					{formatStepDuration(execution.executionTimeMs)}
 				</span>
 				{showDetails && execution.resultCount != null ? (
-					<span className="text-[10px] text-[#999] dark:text-[#666]">{execution.resultCount} results</span>
+					<span className="text-[10px] text-ai-muted">{execution.resultCount} results</span>
 				) : null}
 			</button>
 			{showPreview && execution.sqlQuery ? (
-				<pre className="mt-1 mb-1 overflow-x-auto rounded-sm border border-[#e6e6e6] bg-[#fafafa] p-1.5 font-mono text-[10px] text-[#444] dark:border-[#333] dark:bg-[#1a1a1a] dark:text-[#bbb]">
+				<pre className="mt-1 mb-1 overflow-x-auto rounded-sm border border-ai-line bg-ai-surface p-1.5 font-mono text-[10px] text-ai-secondary">
 					{execution.sqlQuery}
 				</pre>
 			) : null}
 			{showPreview && execution.resultPreview && execution.resultPreview.length > 0 ? (
-				<div className="mt-1 mb-1 overflow-x-auto rounded-sm border border-[#e6e6e6] bg-[#fafafa] p-1 dark:border-[#333] dark:bg-[#1a1a1a]">
+				<div className="mt-1 mb-1 overflow-x-auto rounded-sm border border-ai-line bg-ai-surface p-1">
 					<table className="text-[10px]">
 						<thead>
 							<tr>
 								{Object.keys(execution.resultPreview[0]).map((column) => (
-									<th key={column} className="px-1.5 py-0.5 text-left font-medium text-[#666] dark:text-[#999]">
+									<th key={column} className="px-1.5 py-0.5 text-left font-medium text-ai-tertiary">
 										{column}
 									</th>
 								))}
@@ -156,7 +147,7 @@ function ToolExecutionRow({ execution, showDetails = false }: { execution: ToolE
 							{execution.resultPreview.map((row, rowIndex) => (
 								<tr key={rowIndex}>
 									{Object.values(row).map((value, columnIndex) => (
-										<td key={columnIndex} className="px-1.5 py-0.5 text-[#444] dark:text-[#bbb]">
+										<td key={columnIndex} className="px-1.5 py-0.5 text-ai-secondary">
 											{String(value ?? '')}
 										</td>
 									))}
@@ -168,7 +159,7 @@ function ToolExecutionRow({ execution, showDetails = false }: { execution: ToolE
 			) : null}
 			{showPreview && execution.toolData ? <ToolDataView name={execution.name} data={execution.toolData} /> : null}
 			{!execution.success && execution.error ? (
-				<p className="mt-0.5 ml-5 text-[10px] text-red-500/80 dark:text-red-400/80">{execution.error}</p>
+				<p className="mt-0.5 ml-5 text-[10px] text-ai-error-vivid/80">{execution.error}</p>
 			) : null}
 		</div>
 	)

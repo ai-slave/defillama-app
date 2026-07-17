@@ -197,8 +197,8 @@ export function WelcomeOnboarding() {
 		return (
 			<div className="flex min-h-[60vh] items-center justify-center">
 				<div className="flex flex-col items-center gap-4">
-					<div className="size-8 animate-spin rounded-full border-2 border-[#39393E] border-t-[#5C5CF9]" />
-					<p className="text-[#8a8c90]">Loading your subscription...</p>
+					<div className="size-8 animate-spin rounded-full border-2 border-sub-line border-t-[#5C5CF9]" />
+					<p className="text-sub-text-muted">Loading your subscription...</p>
 				</div>
 			</div>
 		)
@@ -208,16 +208,16 @@ export function WelcomeOnboarding() {
 		return (
 			<div className="flex min-h-[60vh] items-center justify-center">
 				<div className="flex flex-col items-center gap-4 text-center">
-					<div className="flex size-16 items-center justify-center rounded-full bg-[#5C5CF9]/10">
-						<Icon name="clock" height={28} width={28} className="text-[#5C5CF9]" />
+					<div className="flex size-16 items-center justify-center rounded-full bg-sub-purple-500/10">
+						<Icon name="clock" height={28} width={28} className="text-sub-purple-500" />
 					</div>
-					<h2 className="text-xl font-bold text-white">Processing your payment...</h2>
-					<p className="max-w-sm text-[#8a8c90]">
+					<h2 className="text-xl font-bold text-on-brand">Processing your payment...</h2>
+					<p className="max-w-sm text-sub-text-muted">
 						This usually takes a few seconds. If it doesn&apos;t update, try refreshing.
 					</p>
 					<button
 						onClick={() => window.location.reload()}
-						className="rounded-lg border border-[#39393E] px-4 py-2 text-sm text-[#8a8c90] transition-colors hover:bg-[#2a2b30] hover:text-white"
+						className="rounded-lg border border-sub-line px-4 py-2 text-sm text-sub-text-muted transition-colors hover:bg-sub-card-raised hover:text-on-brand"
 					>
 						Refresh
 					</button>
@@ -229,23 +229,24 @@ export function WelcomeOnboarding() {
 	return (
 		<div className="mx-auto flex w-full max-w-[580px] animate-[fadein_0.3s_ease-out] flex-col items-center px-4 py-14">
 			<div className="mb-8 flex flex-col items-center gap-1.5 text-center">
-				<span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-[#5C5CF9]/25 bg-[#5C5CF9]/8 px-3 py-1 text-xs font-medium tracking-wide text-[#7B7BFF]">
+				<span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-sub-purple-500/25 bg-sub-purple-500/8 px-3 py-1 text-xs font-medium tracking-wide text-sub-purple-soft">
 					<Icon name="check-circle" height={13} width={13} />
 					Pro activated
 				</span>
-				<h1 className="text-2xl font-bold tracking-tight text-white">Welcome to DefiLlama Pro</h1>
-				<p className="text-sm text-[#8a8c90]">What brought you here? Pick all that apply.</p>
+				<h1 className="text-2xl font-bold tracking-tight text-on-brand">Welcome to DefiLlama Pro</h1>
+				<p className="text-sm text-sub-text-muted">What brought you here? Pick all that apply.</p>
 			</div>
 
 			{slackAcquisition ? (
-				<div className="mb-6 flex w-full items-start gap-3 rounded-xl border border-[#5C5CF9]/25 bg-[#5C5CF9]/8 px-4 py-3 text-left">
-					<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#5C5CF9]/15">
-						<Icon name="chat" height={16} width={16} className="text-[#7B7BFF]" />
+				<div className="mb-6 flex w-full items-start gap-3 rounded-xl border border-sub-purple-500/25 bg-sub-purple-500/8 px-4 py-3 text-left">
+					<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sub-purple-500/15">
+						<Icon name="chat" height={16} width={16} className="text-sub-purple-soft" />
 					</div>
 					<div className="flex min-w-0 flex-col gap-0.5">
-						<span className="text-sm font-medium text-white">LlamaAI is ready in Slack</span>
-						<span className="text-xs leading-snug text-[#8a8c90]">
-							Mention <span className="font-mono text-[#b4b7bc]">@LlamaAI</span> in any channel, or DM the bot directly.
+						<span className="text-sm font-medium text-on-brand">LlamaAI is ready in Slack</span>
+						<span className="text-xs leading-snug text-sub-text-muted">
+							Mention <span className="font-mono text-sub-text-soft">@LlamaAI</span> in any channel, or DM the bot
+							directly.
 						</span>
 					</div>
 				</div>
@@ -264,7 +265,7 @@ export function WelcomeOnboarding() {
 								...(isSelected ? { borderColor: `${c}66`, backgroundColor: `${c}0f` } : {})
 							}}
 							className={`group flex animate-[fadein_0.2s_ease-out_both] items-center gap-3.5 rounded-xl border px-4 py-3 text-left transition-all duration-200 ${
-								isSelected ? '' : 'border-[#2a2b30] bg-[#1a1b1f] hover:border-[#39393E] hover:bg-[#1e1f24]'
+								isSelected ? '' : 'border-sub-line bg-sub-ink hover:border-sub-line hover:bg-sub-card'
 							}`}
 							role="checkbox"
 							aria-checked={isSelected}
@@ -290,21 +291,23 @@ export function WelcomeOnboarding() {
 								)}
 							</div>
 							<div className="flex min-w-0 flex-col">
-								<span className={`text-sm leading-tight font-medium ${isSelected ? 'text-white' : 'text-[#e0e0e3]'}`}>
+								<span
+									className={`text-sm leading-tight font-medium ${isSelected ? 'text-on-brand' : 'text-sub-text-soft'}`}
+								>
 									{option.label}
 								</span>
 								{option.description ? (
-									<span className="mt-0.5 text-xs leading-tight text-[#6b6e73]">{option.description}</span>
+									<span className="mt-0.5 text-xs leading-tight text-sub-text-muted">{option.description}</span>
 								) : null}
 							</div>
 							<div className="ml-auto shrink-0">
 								<div
 									className={`flex size-[18px] items-center justify-center rounded-full border transition-all duration-200 ${
-										isSelected ? '' : 'border-[#39393E] group-hover:border-[#555]'
+										isSelected ? '' : 'border-sub-line group-hover:border-[#555]'
 									}`}
 									style={isSelected ? { borderColor: c, backgroundColor: c } : undefined}
 								>
-									{isSelected ? <Icon name="check" height={10} width={10} className="text-white" /> : null}
+									{isSelected ? <Icon name="check" height={10} width={10} className="text-on-brand" /> : null}
 								</div>
 							</div>
 						</button>
@@ -316,13 +319,13 @@ export function WelcomeOnboarding() {
 				<button
 					onClick={handleContinue}
 					disabled={selectedFeatures.size === 0}
-					className="w-full rounded-xl bg-[#5C5CF9] py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#4A4AF0] hover:shadow-[0_0_24px_rgba(92,92,249,0.2)] disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
+					className="w-full rounded-xl bg-sub-purple-500 py-3 text-sm font-semibold text-on-brand transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-sub-purple-glow disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
 				>
 					Get started
 				</button>
 				<button
 					onClick={() => void router.push('/account')}
-					className="py-1 text-xs text-[#6b6e73] transition-colors hover:text-[#b4b7bc]"
+					className="py-1 text-xs text-sub-text-muted transition-colors hover:text-sub-text-soft"
 				>
 					Skip
 				</button>

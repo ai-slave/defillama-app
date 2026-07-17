@@ -62,8 +62,8 @@ function ToggleButton({
 			onClick={onClick}
 			className={`rounded-md px-3 py-1 text-xs font-semibold tracking-wide transition-colors ${
 				active
-					? 'bg-(--sl-accent-muted) text-(--sl-accent)'
-					: 'text-(--legacy-text-secondary) hover:bg-(--sl-hover-bg) hover:text-(--legacy-text-primary)'
+					? 'bg-sl-accent-muted text-sl-accent'
+					: 'text-(--pro-text-secondary) hover:bg-sl-hover-bg hover:text-(--pro-text-primary)'
 			}`}
 		>
 			{children}
@@ -92,20 +92,20 @@ const FAQ_ITEMS: { q: string; a: React.ReactNode }[] = [
 
 function FaqItem({ q, a }: { q: string; a: React.ReactNode }) {
 	return (
-		<details className="group rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
-			<summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 text-sm font-medium text-(--legacy-text-primary)">
+		<details className="group rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg)">
+			<summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 text-sm font-medium text-(--pro-text-primary)">
 				{q}
 				<svg
 					viewBox="0 0 24 24"
 					fill="none"
 					stroke="currentColor"
 					strokeWidth="2"
-					className="size-4 shrink-0 text-(--legacy-text-label) transition-transform group-open:rotate-180"
+					className="size-4 shrink-0 text-(--pro-text-label) transition-transform group-open:rotate-180"
 				>
 					<path d="M6 9l6 6 6-6" />
 				</svg>
 			</summary>
-			<p className="px-4 pb-4 text-sm leading-relaxed text-(--legacy-text-secondary)">{a}</p>
+			<p className="px-4 pb-4 text-sm leading-relaxed text-(--pro-text-secondary)">{a}</p>
 		</details>
 	)
 }
@@ -195,15 +195,15 @@ export default function Tokenomics() {
 				<KpiCard label="Total Burned" value={bk.totalGasBurned.formatted} />
 			</div>
 
-			<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+			<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
 				<div className="mb-3 flex flex-wrap items-end justify-between gap-2">
 					<div className="min-w-0">
-						<h3 className="text-sm font-semibold text-(--legacy-text-primary)">{b.burnTitle}</h3>
-						<p className="mt-0.5 text-xs leading-relaxed text-(--legacy-text-label)">
+						<h3 className="text-sm font-semibold text-(--pro-text-primary)">{b.burnTitle}</h3>
+						<p className="mt-0.5 text-xs leading-relaxed text-(--pro-text-label)">
 							FLR removed from supply by gas burns - daily and cumulative.
 						</p>
 					</div>
-					<div className="flex gap-1 rounded-md border border-(--legacy-cards-border) p-0.5">
+					<div className="flex gap-1 rounded-md border border-(--pro-cards-border) p-0.5">
 						<ToggleButton active={burnView === 'daily'} onClick={() => setBurnView('daily')}>
 							Daily
 						</ToggleButton>
@@ -279,18 +279,18 @@ export default function Tokenomics() {
 				/>
 			</ChartCard>
 			{e.burnVsEmitSubtitle && (
-				<p className="text-xs leading-relaxed text-(--legacy-text-label)">{e.burnVsEmitSubtitle}</p>
+				<p className="text-xs leading-relaxed text-(--pro-text-label)">{e.burnVsEmitSubtitle}</p>
 			)}
 
 			<SectionHeader>FIRE Pool (FIP.16)</SectionHeader>
-			<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
+			<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-5">
 				<div className="flex items-center gap-2">
-					<span className="rounded-full border border-(--legacy-cards-border) bg-(--sl-btn-inactive-bg) px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-(--legacy-text-secondary) uppercase">
+					<span className="rounded-full border border-(--pro-cards-border) bg-sl-btn-inactive-bg px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-(--pro-text-secondary) uppercase">
 						Coming Soon
 					</span>
-					<span className="text-sm font-medium text-(--legacy-text-primary)">FIRE pool balance & burns</span>
+					<span className="text-sm font-medium text-(--pro-text-primary)">FIRE pool balance & burns</span>
 				</div>
-				<p className="mt-3 text-xs leading-relaxed text-(--legacy-text-label)">{b.firePool.note}</p>
+				<p className="mt-3 text-xs leading-relaxed text-(--pro-text-label)">{b.firePool.note}</p>
 			</div>
 
 			<SectionHeader>FAQ</SectionHeader>

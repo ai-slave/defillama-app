@@ -170,7 +170,7 @@ export function ChartTypePicker({ value, onChange, classified }: ChartTypePicker
 		<div
 			role="radiogroup"
 			aria-label="Chart type"
-			className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-(--legacy-divider) bg-(--legacy-app-bg)/50 p-0.5"
+			className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-subtle bg-(--pro-app-bg)/50 p-0.5"
 		>
 			{GROUPS.map((group, groupIndex) => (
 				<div key={group.key} className="flex items-center gap-0.5">
@@ -189,19 +189,17 @@ export function ChartTypePicker({ value, onChange, classified }: ChartTypePicker
 								onClick={() => onChange(opt.type)}
 								className={`relative flex h-6 w-7 items-center justify-center rounded-[4px] transition-colors ${
 									active
-										? 'bg-(--legacy-primary) text-white shadow-sm'
+										? 'bg-brand text-on-brand shadow-sm'
 										: available
-											? 'text-(--legacy-text-secondary) hover:bg-hover-row hover:text-(--legacy-text-primary)'
-											: 'cursor-not-allowed text-(--legacy-text-tertiary)/50'
+											? 'text-(--pro-text-secondary) hover:bg-hover-row hover:text-(--pro-text-primary)'
+											: 'cursor-not-allowed text-(--pro-text-tertiary)/50'
 								}`}
 							>
 								{opt.icon}
 							</button>
 						)
 					})}
-					{groupIndex < GROUPS.length - 1 ? (
-						<span aria-hidden className="mx-0.5 h-4 w-px bg-(--legacy-divider)" />
-					) : null}
+					{groupIndex < GROUPS.length - 1 ? <span aria-hidden className="mx-0.5 h-4 w-px bg-border-subtle" /> : null}
 				</div>
 			))}
 		</div>

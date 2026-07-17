@@ -70,7 +70,7 @@ export function CategoryFilterModal({
 			}}
 		>
 			<Ariakit.Dialog
-				className="dialog max-h-[80dvh] w-full max-w-lg gap-0 rounded-md border pro-dashboard border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-0 shadow-lg"
+				className="dialog max-h-[80dvh] w-full max-w-lg gap-0 rounded-md border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) p-0 shadow-lg"
 				unmountOnHide
 				portal
 				hideOnInteractOutside
@@ -153,7 +153,7 @@ export function CategoryFilterModal({
 								onApply(selectedInclude, selectedExclude)
 								onClose()
 							}}
-							className="rounded-md bg-(--legacy-primary) px-4 py-2 text-sm text-white transition-colors hover:bg-(--legacy-primary-hover)"
+							className="rounded-md bg-brand px-4 py-2 text-sm text-on-brand transition-colors hover:bg-brand-muted"
 						>
 							Apply Filters
 						</button>

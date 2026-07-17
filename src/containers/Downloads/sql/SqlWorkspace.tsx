@@ -1025,16 +1025,16 @@ function StatusStrip({
 	const runTone = error ? 'error' : busy ? 'busy' : lastRun ? 'ready' : 'muted'
 
 	return (
-		<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-(--legacy-divider) bg-surface px-3 py-2 text-xs text-(--legacy-text-secondary)">
+		<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-subtle bg-surface px-3 py-2 text-xs text-(--pro-text-secondary)">
 			<span className="flex items-center gap-1.5">
 				<StatusDot tone={envTone} />
-				<span className="text-(--legacy-text-tertiary)">LlamaSQL</span>
+				<span className="text-(--pro-text-tertiary)">LlamaSQL</span>
 				<span
 					className={
 						duckdbStatus === 'ready'
-							? 'text-(--legacy-text-primary)'
+							? 'text-(--pro-text-primary)'
 							: duckdbStatus === 'error'
-								? 'text-red-500'
+								? 'text-error'
 								: 'text-pro-gold-300'
 					}
 				>
@@ -1046,22 +1046,22 @@ function StatusStrip({
 
 			<span className="flex items-center gap-1.5">
 				<StatusDot tone={runTone} blink={busy} />
-				<span className="text-(--legacy-text-tertiary)">Last run</span>
+				<span className="text-(--pro-text-tertiary)">Last run</span>
 				{loadingStage ? (
 					<span className="text-pro-gold-300">{loadingStage}</span>
 				) : running ? (
 					<span className="text-pro-gold-300">running…</span>
 				) : error ? (
-					<span className="text-red-500">error</span>
+					<span className="text-error">error</span>
 				) : lastRun ? (
-					<span className="text-(--legacy-text-primary)">
+					<span className="text-(--pro-text-primary)">
 						<span className="tabular-nums">{formatDuration(lastRun.durationMs)}</span>
-						<span className="px-1 text-(--legacy-text-tertiary)">·</span>
+						<span className="px-1 text-(--pro-text-tertiary)">·</span>
 						<span className="tabular-nums">{lastRun.rows.toLocaleString()}</span>
-						<span className="text-(--legacy-text-tertiary)"> rows</span>
+						<span className="text-(--pro-text-tertiary)"> rows</span>
 					</span>
 				) : (
-					<span className="text-(--legacy-text-tertiary)/80">idle</span>
+					<span className="text-(--pro-text-tertiary)/80">idle</span>
 				)}
 			</span>
 		</div>
@@ -1069,7 +1069,7 @@ function StatusStrip({
 }
 
 function Divider() {
-	return <span aria-hidden className="h-3 w-px bg-(--legacy-divider)" />
+	return <span aria-hidden className="h-3 w-px bg-border-subtle" />
 }
 
 function TabNav({ tab, onChange, savedCount }: { tab: SqlTab; onChange: (next: SqlTab) => void; savedCount: number }) {
@@ -1077,7 +1077,7 @@ function TabNav({ tab, onChange, savedCount }: { tab: SqlTab; onChange: (next: S
 		<nav
 			role="tablist"
 			aria-label="SQL workspace section"
-			className="flex items-center gap-5 border-b border-(--legacy-divider) text-sm"
+			className="flex items-center gap-5 border-b border-subtle text-sm"
 		>
 			{SQL_TABS.map((t) => {
 				const active = tab === t.id
@@ -1090,18 +1090,16 @@ function TabNav({ tab, onChange, savedCount }: { tab: SqlTab; onChange: (next: S
 						aria-selected={active}
 						onClick={() => onChange(t.id)}
 						className={`group relative flex items-center gap-1.5 pb-2 font-medium transition-colors ${
-							active ? 'text-(--legacy-primary)' : 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
+							active ? 'text-brand' : 'text-(--pro-text-secondary) hover:text-(--pro-text-primary)'
 						}`}
 					>
 						{t.label}
 						{showCount ? (
-							<span className="rounded-sm bg-hover-row px-1.5 py-px text-[10px] font-semibold text-(--legacy-text-tertiary) tabular-nums">
+							<span className="rounded-sm bg-hover-row px-1.5 py-px text-[10px] font-semibold text-(--pro-text-tertiary) tabular-nums">
 								{savedCount}
 							</span>
 						) : null}
-						{active ? (
-							<span aria-hidden className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-(--legacy-primary)" />
-						) : null}
+						{active ? <span aria-hidden className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-brand" /> : null}
 					</button>
 				)
 			})}
@@ -1149,7 +1147,7 @@ function EditorRunBar({
 				type="button"
 				onClick={onSave}
 				disabled={!canRun}
-				className="inline-flex items-center gap-1.5 rounded-md border border-(--legacy-divider) bg-surface px-3 py-1.5 text-xs font-medium text-(--legacy-text-primary) transition-colors hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
+				className="inline-flex items-center gap-1.5 rounded-md border border-subtle bg-surface px-3 py-1.5 text-xs font-medium text-(--pro-text-primary) transition-colors hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
 			>
 				<Icon name="bookmark" className="size-3.5" />
 				Save
@@ -1159,7 +1157,7 @@ function EditorRunBar({
 					type="button"
 					onClick={onCancel}
 					title="Cancel query"
-					className="inline-flex items-center gap-2 rounded-md border border-red-500/50 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-500/20 dark:text-red-300"
+					className="inline-flex items-center gap-2 rounded-md border border-error/50 bg-error/10 px-3 py-1.5 text-xs font-medium text-error transition-colors hover:bg-error/20"
 				>
 					<LoadingSpinner size={12} />
 					<svg className="size-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -1172,7 +1170,7 @@ function EditorRunBar({
 					type="button"
 					onClick={onRun}
 					disabled={!canRun}
-					className="inline-flex items-center gap-2 rounded-md bg-(--legacy-primary) px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+					className="inline-flex items-center gap-2 rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-on-brand shadow-sm transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
 				>
 					<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
 						<path d="M8 5v14l11-7z" />
@@ -1205,10 +1203,10 @@ function SavedQueriesTab({
 
 	if (savedQueries.length === 0) {
 		return (
-			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--legacy-divider) bg-surface/40 px-6 py-12 text-center">
-				<Icon name="bookmark" className="size-6 text-(--legacy-text-tertiary)" />
-				<p className="text-sm text-(--legacy-text-secondary)">No saved queries yet.</p>
-				<p className="max-w-sm text-xs text-(--legacy-text-tertiary)">
+			<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle bg-surface/40 px-6 py-12 text-center">
+				<Icon name="bookmark" className="size-6 text-(--pro-text-tertiary)" />
+				<p className="text-sm text-(--pro-text-secondary)">No saved queries yet.</p>
+				<p className="max-w-sm text-xs text-(--pro-text-tertiary)">
 					Click Save in the editor to bookmark a query — saved queries survive across sessions.
 				</p>
 			</div>
@@ -1216,7 +1214,7 @@ function SavedQueriesTab({
 	}
 	const busy = !!busyTaskId
 	return (
-		<ul className="flex flex-col divide-y divide-(--legacy-divider) border-y border-(--legacy-divider)">
+		<ul className="flex flex-col divide-y divide-(--border-subtle) border-y border-subtle">
 			{savedQueries.map((q) => {
 				const isBusy = busyTaskId === `saved:${q.id}`
 				const isDim = busy && !isBusy
@@ -1235,7 +1233,7 @@ function SavedQueriesTab({
 							) : (
 								<Icon
 									name="arrow-right"
-									className="size-3.5 shrink-0 text-(--legacy-text-tertiary) transition-colors group-hover:text-(--legacy-primary)"
+									className="size-3.5 shrink-0 text-(--pro-text-tertiary) transition-colors group-hover:text-brand"
 								/>
 							)}
 							<span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -1250,11 +1248,11 @@ function SavedQueriesTab({
 										onCancel={() => setRenamingId(null)}
 									/>
 								) : (
-									<span className="truncate text-sm font-semibold text-(--legacy-text-primary) transition-colors group-hover:text-(--legacy-primary)">
+									<span className="truncate text-sm font-semibold text-(--pro-text-primary) transition-colors group-hover:text-brand">
 										{q.name}
 									</span>
 								)}
-								<span className="truncate font-mono text-xs text-(--legacy-text-tertiary)">
+								<span className="truncate font-mono text-xs text-(--pro-text-tertiary)">
 									{firstNonEmptyLine(q.sql)}
 								</span>
 							</span>
@@ -1265,7 +1263,7 @@ function SavedQueriesTab({
 								onClick={() => setRenamingId(q.id)}
 								aria-label={`Rename ${q.name}`}
 								disabled={busy}
-								className="flex size-7 items-center justify-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-40"
+								className="flex size-7 items-center justify-center rounded-md text-(--pro-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary) disabled:cursor-not-allowed disabled:opacity-40"
 							>
 								<Icon name="pencil" className="size-3.5" />
 							</button>
@@ -1274,7 +1272,7 @@ function SavedQueriesTab({
 								onClick={() => onDelete(q.id)}
 								aria-label={`Delete ${q.name}`}
 								disabled={busy}
-								className="flex size-7 items-center justify-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-40"
+								className="flex size-7 items-center justify-center rounded-md text-(--pro-text-tertiary) transition-colors hover:bg-error/10 hover:text-error disabled:cursor-not-allowed disabled:opacity-40"
 							>
 								<Icon name="trash-2" className="size-3.5" />
 							</button>
@@ -1322,7 +1320,7 @@ function InlineRenameInput({
 			onClick={(e) => e.stopPropagation()}
 			onDoubleClick={(e) => e.stopPropagation()}
 			onMouseDown={(e) => e.stopPropagation()}
-			className="min-w-0 rounded-sm bg-(--bg-primary) px-1 py-px text-sm font-semibold text-(--legacy-text-primary) ring-1 ring-(--legacy-primary) outline-hidden"
+			className="min-w-0 rounded-sm px-1 py-px text-sm font-semibold text-(--pro-text-primary) ring-1 ring-brand outline-hidden"
 		/>
 	)
 }

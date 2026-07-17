@@ -56,7 +56,7 @@ export function errorToast({ title, description }: { title: string; description:
 	return toast.error(
 		(t) => (
 			<div className="flex flex-col gap-2">
-				<p className="flex items-center gap-2 text-base font-semibold text-(--error)">
+				<p className="flex items-center gap-2 text-base font-semibold text-error">
 					<Icon name="alert-triangle" height={16} width={16} />
 					<span>{title}</span>
 					<button onClick={() => toast.dismiss(t.id)} className="ml-auto text-primary">

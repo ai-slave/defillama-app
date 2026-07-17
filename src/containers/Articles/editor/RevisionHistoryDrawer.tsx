@@ -44,15 +44,15 @@ const EVENT_LABELS: Record<ArticleRevisionEventType, string> = {
 }
 
 const EVENT_TONES: Record<ArticleRevisionEventType, string> = {
-	create: 'text-(--legacy-text-secondary)',
-	save: 'text-(--legacy-text-secondary)',
-	publish: 'text-emerald-500',
-	schedule: 'text-sky-500',
-	unpublish: 'text-amber-500',
-	delete: 'text-red-500',
-	pending_save: 'text-amber-500',
-	discard_pending: 'text-(--legacy-text-tertiary)',
-	restore_pending: 'text-(--legacy-link-text)'
+	create: 'text-secondary',
+	save: 'text-secondary',
+	publish: 'text-success',
+	schedule: 'text-link',
+	unpublish: 'text-warning',
+	delete: 'text-error',
+	pending_save: 'text-warning',
+	discard_pending: 'text-tertiary',
+	restore_pending: 'text-link'
 }
 
 const FILTER_LABELS: Record<FilterKey, string> = {
@@ -129,23 +129,23 @@ function formatRelative(iso: string): string {
 }
 
 function EventGlyph({ type, active }: { type: ArticleRevisionEventType; active: boolean }) {
-	const tone = EVENT_TONES[type] ?? 'text-(--legacy-text-secondary)'
+	const tone = EVENT_TONES[type] ?? 'text-secondary'
 	const ringTone = (() => {
 		switch (type) {
 			case 'publish':
 			case 'create':
-				return 'bg-emerald-500'
+				return 'bg-success'
 			case 'unpublish':
 			case 'pending_save':
-				return 'bg-amber-500'
+				return 'bg-warning'
 			case 'delete':
-				return 'bg-red-500'
+				return 'bg-error'
 			case 'restore_pending':
-				return 'bg-(--legacy-link-text)'
+				return 'bg-link'
 			case 'discard_pending':
-				return 'bg-(--legacy-text-tertiary)'
+				return 'bg-tertiary'
 			default:
-				return 'bg-(--legacy-text-tertiary)'
+				return 'bg-tertiary'
 		}
 	})()
 	const ringClass = `size-2 rounded-full ${ringTone}`
@@ -166,11 +166,11 @@ function EventGlyph({ type, active }: { type: ArticleRevisionEventType; active: 
 			) : isHollow ? (
 				<span className={`size-2 rounded-full ring-1 ring-inset ${tone.replace('text-', 'ring-')}`} />
 			) : isSquare ? (
-				<span className="size-1.5 rotate-45 bg-red-500" />
+				<span className="size-1.5 rotate-45 bg-error" />
 			) : isTriangle ? (
 				<span
 					className="size-0 border-x-[4px] border-b-[6px] border-x-transparent"
-					style={{ borderBottomColor: 'var(--legacy-link-text)' }}
+					style={{ borderBottomColor: 'var(--text-link)' }}
 				/>
 			) : (
 				<span className={`size-2 rounded-full ring-1 ring-inset ${tone.replace('text-', 'ring-')}`} />
@@ -182,15 +182,15 @@ function EventGlyph({ type, active }: { type: ArticleRevisionEventType; active: 
 function StatusBadge({ label, tone }: { label: string; tone: 'live' | 'pending' }) {
 	const styles =
 		tone === 'live'
-			? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-			: 'border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+			? 'border-emerald-500/40 bg-success/10 text-success dark:text-success'
+			: 'border-warning/40 bg-warning/10 text-warning dark:text-warning'
 	return (
 		<span
 			className={`inline-flex items-center gap-1 rounded-sm border px-1.5 py-px font-jetbrains text-[9px] font-medium tracking-[0.18em] uppercase ${styles}`}
 		>
 			<span
 				aria-hidden
-				className={`size-1 rounded-full ${tone === 'live' ? 'bg-emerald-500' : 'animate-pulse bg-amber-500'}`}
+				className={`size-1 rounded-full ${tone === 'live' ? 'bg-success' : 'animate-pulse bg-warning'}`}
 			/>
 			{label}
 		</span>
@@ -210,14 +210,14 @@ function ActorAvatar({ name, url, size = 16 }: { name: string; url?: string | nu
 				src={url}
 				alt=""
 				style={{ width: size, height: size }}
-				className="shrink-0 rounded-full object-cover ring-1 ring-(--legacy-cards-border)"
+				className="shrink-0 rounded-full object-cover ring-1 ring-(--border-medium)"
 			/>
 		)
 	}
 	return (
 		<span
 			style={{ width: size, height: size, fontSize: Math.max(8, size / 2.5) }}
-			className="grid shrink-0 place-items-center rounded-full bg-(--legacy-link-button) font-jetbrains font-medium text-(--legacy-link-text)"
+			className="grid shrink-0 place-items-center rounded-full bg-(--research-link-button-bg) font-jetbrains font-medium text-link"
 		>
 			{initials || '·'}
 		</span>
@@ -521,32 +521,24 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 				onClick={onClose}
 				className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
 			/>
-			<div className="relative ml-auto flex size-full max-w-[1280px] flex-col border-l border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-2xl">
-				<header className="grid grid-cols-[1fr_auto] items-end gap-6 border-b border-(--legacy-cards-border) px-7 pt-6 pb-4">
+			<div className="relative ml-auto flex size-full max-w-[1280px] flex-col border-l border-medium bg-surface shadow-2xl">
+				<header className="grid grid-cols-[1fr_auto] items-end gap-6 border-b border-medium px-7 pt-6 pb-4">
 					<div className="grid gap-1">
-						<div className="flex items-center gap-2 font-jetbrains text-[10px] tracking-[0.22em] text-(--legacy-text-tertiary) uppercase">
+						<div className="flex items-center gap-2 font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
 							<span aria-hidden>›</span>
 							<span>Article</span>
 							<span aria-hidden>·</span>
 							<span>Ledger</span>
 						</div>
-						<h2 className="text-2xl leading-tight font-semibold tracking-tight text-(--legacy-text-primary)">
-							Revision history
-						</h2>
-						<p className="font-jetbrains text-[11px] text-(--legacy-text-tertiary)">
-							<span className="text-(--legacy-text-secondary) tabular-nums">{counts.all}</span> entries
+						<h2 className="text-2xl leading-tight font-semibold tracking-tight text-primary">Revision history</h2>
+						<p className="font-jetbrains text-[11px] text-tertiary">
+							<span className="text-secondary tabular-nums">{counts.all}</span> entries
 							<span aria-hidden> · </span>
-							<kbd className="rounded-sm border border-(--legacy-cards-border) px-1 py-px text-[9px] tracking-tight">
-								J/K
-							</kbd>
+							<kbd className="rounded-sm border border-medium px-1 py-px text-[9px] tracking-tight">J/K</kbd>
 							<span> navigate </span>
-							<kbd className="rounded-sm border border-(--legacy-cards-border) px-1 py-px text-[9px] tracking-tight">
-								R
-							</kbd>
+							<kbd className="rounded-sm border border-medium px-1 py-px text-[9px] tracking-tight">R</kbd>
 							<span> restore </span>
-							<kbd className="rounded-sm border border-(--legacy-cards-border) px-1 py-px text-[9px] tracking-tight">
-								Esc
-							</kbd>
+							<kbd className="rounded-sm border border-medium px-1 py-px text-[9px] tracking-tight">Esc</kbd>
 							<span> close</span>
 						</p>
 					</div>
@@ -554,15 +546,15 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 						type="button"
 						onClick={onClose}
 						aria-label="Close"
-						className="flex size-9 items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary)"
+						className="flex size-9 items-center justify-center rounded-md border border-medium bg-surface text-secondary transition-colors hover:border-link/40 hover:text-primary"
 					>
 						<Icon name="x" className="size-4" />
 					</button>
 				</header>
 
 				<div className="grid min-h-0 flex-1 grid-cols-[360px_1fr]">
-					<aside className="flex min-h-0 flex-col border-r border-(--legacy-cards-border)">
-						<div className="flex flex-wrap items-center gap-1 border-b border-(--legacy-cards-border) px-3 py-2">
+					<aside className="flex min-h-0 flex-col border-r border-medium">
+						<div className="flex flex-wrap items-center gap-1 border-b border-medium px-3 py-2">
 							{(Object.keys(FILTER_LABELS) as FilterKey[]).map((key) => {
 								const isActive = filter === key
 								return (
@@ -572,14 +564,12 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 										onClick={() => setFilter(key)}
 										className={`flex items-center gap-1.5 rounded-sm px-2 py-1 font-jetbrains text-[10px] tracking-[0.14em] uppercase transition-colors ${
 											isActive
-												? 'bg-(--legacy-text-primary) text-(--legacy-cards-bg)'
-												: 'text-(--legacy-text-tertiary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-secondary)'
+												? 'bg-primary text-surface'
+												: 'text-tertiary hover:bg-(--research-link-hover-bg) hover:text-secondary'
 										}`}
 									>
 										<span>{FILTER_LABELS[key]}</span>
-										<span
-											className={`tabular-nums ${isActive ? 'text-(--legacy-cards-bg)/70' : 'text-(--legacy-text-tertiary)/60'}`}
-										>
+										<span className={`tabular-nums ${isActive ? 'text-surface/70' : 'text-tertiary/60'}`}>
 											{counts[key]}
 										</span>
 									</button>
@@ -596,24 +586,24 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 								<div className="relative">
 									{grouped.map((group) => (
 										<section key={group.key}>
-											<header className="sticky top-0 z-10 flex items-baseline justify-between gap-2 border-b border-(--legacy-cards-border) bg-(--legacy-cards-bg)/95 px-5 py-2 backdrop-blur">
-												<span className="font-jetbrains text-[10px] tracking-[0.22em] text-(--legacy-text-tertiary) uppercase">
+											<header className="sticky top-0 z-10 flex items-baseline justify-between gap-2 border-b border-medium bg-surface/95 px-5 py-2 backdrop-blur">
+												<span className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
 													{group.label}
 												</span>
-												<span className="font-jetbrains text-[10px] text-(--legacy-text-tertiary)/70 tabular-nums">
+												<span className="font-jetbrains text-[10px] text-tertiary/70 tabular-nums">
 													{group.items.length}
 												</span>
 											</header>
 											<ul className="relative">
 												<span
 													aria-hidden
-													className="pointer-events-none absolute top-2 bottom-2 left-[34px] w-px bg-(--legacy-cards-border)"
+													className="pointer-events-none absolute top-2 bottom-2 left-[34px] w-px bg-border-medium"
 												/>
 												{group.items.map((entry) => {
 													const isSelected = entry.id === selectedId
 													const isLive = entry.id === liveAnchorId
 													const isPendingAnchor = entry.id === pendingAnchorId
-													const tone = EVENT_TONES[entry.eventType] ?? 'text-(--legacy-text-secondary)'
+													const tone = EVENT_TONES[entry.eventType] ?? 'text-secondary'
 													const isDeleting = pendingDeleteId === entry.id
 													return (
 														<li
@@ -626,16 +616,15 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 																onClick={() => selectRevision(entry.id)}
 																aria-current={isSelected}
 																className={`relative flex w-full items-start gap-3 px-5 py-3 text-left transition-colors ${
-																	isSelected ? 'bg-(--legacy-link-button)' : 'hover:bg-(--legacy-link-hover-bg)/60'
+																	isSelected
+																		? 'bg-(--research-link-button-bg)'
+																		: 'hover:bg-(--research-link-hover-bg)/60'
 																}`}
 															>
 																{isSelected ? (
-																	<span
-																		aria-hidden
-																		className="absolute top-0 bottom-0 left-0 w-0.5 bg-(--legacy-link-text)"
-																	/>
+																	<span aria-hidden className="absolute top-0 bottom-0 left-0 w-0.5 bg-link" />
 																) : null}
-																<span className="relative z-10 mt-0.5 grid size-5 place-items-center rounded-full bg-(--legacy-cards-bg)">
+																<span className="relative z-10 mt-0.5 grid size-5 place-items-center rounded-full bg-surface">
 																	<EventGlyph type={entry.eventType} active={isSelected} />
 																</span>
 																<div className="min-w-0 flex-1">
@@ -649,15 +638,13 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 																		{isPendingAnchor ? <StatusBadge label="Pending" tone="pending" /> : null}
 																	</div>
 																	<div className="mt-1 flex items-baseline gap-2">
-																		<span className="font-jetbrains text-[12px] text-(--legacy-text-primary) tabular-nums">
+																		<span className="font-jetbrains text-xs text-primary tabular-nums">
 																			{formatTime(entry.createdAt)}
 																		</span>
-																		<span className="text-[11px] text-(--legacy-text-tertiary)">
-																			{formatRelative(entry.createdAt)}
-																		</span>
+																		<span className="text-[11px] text-tertiary">{formatRelative(entry.createdAt)}</span>
 																	</div>
 																	{entry.actor ? (
-																		<div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-(--legacy-text-tertiary)">
+																		<div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-tertiary">
 																			<ActorAvatar
 																				name={entry.actor.displayName}
 																				url={entry.actor.avatarUrl}
@@ -680,13 +667,13 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 												type="button"
 												onClick={loadMore}
 												disabled={isLoadingMore}
-												className="w-full rounded-sm border border-dashed border-(--legacy-cards-border) bg-transparent px-3 py-2 font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase transition-colors hover:border-(--legacy-text-secondary) hover:text-(--legacy-text-secondary) disabled:opacity-50"
+												className="w-full rounded-sm border border-dashed border-medium bg-transparent px-3 py-2 font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase transition-colors hover:border-secondary hover:text-secondary disabled:opacity-50"
 											>
 												{isLoadingMore ? 'Loading…' : '↓  Older revisions'}
 											</button>
 										</div>
 									) : items.length > 0 ? (
-										<div className="px-5 py-6 text-center font-jetbrains text-[10px] tracking-[0.22em] text-(--legacy-text-tertiary)/60 uppercase">
+										<div className="px-5 py-6 text-center font-jetbrains text-[10px] tracking-[0.22em] text-tertiary/60 uppercase">
 											· end of ledger ·
 										</div>
 									) : null}
@@ -695,7 +682,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 						</div>
 					</aside>
 
-					<section className="flex min-h-0 flex-col bg-(--legacy-app-bg)">
+					<section className="flex min-h-0 flex-col bg-page">
 						<PreviewSpecimenHeader
 							revision={selectedRevision}
 							isLoading={isLoadingRevision}
@@ -725,13 +712,13 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 							) : !previewArticle ? (
 								<div className="grid h-full place-items-center px-6">
 									<div className="max-w-sm text-center">
-										<div className="mx-auto mb-4 grid size-12 place-items-center rounded-full border border-dashed border-(--legacy-cards-border)">
-											<Icon name="clock" className="size-5 text-(--legacy-text-tertiary)" />
+										<div className="mx-auto mb-4 grid size-12 place-items-center rounded-full border border-dashed border-medium">
+											<Icon name="clock" className="size-5 text-tertiary" />
 										</div>
-										<p className="font-jetbrains text-[10px] tracking-[0.22em] text-(--legacy-text-tertiary) uppercase">
+										<p className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
 											No revision selected
 										</p>
-										<p className="mt-2 text-sm text-(--legacy-text-secondary)">
+										<p className="mt-2 text-sm text-secondary">
 											Pick an entry from the ledger to inspect its snapshot.
 										</p>
 									</div>
@@ -803,7 +790,7 @@ function PreviewSpecimenHeader({
 	diffStats: { added: number; removed: number } | null
 }) {
 	const eventType = revision?.eventType ?? 'save'
-	const tone = EVENT_TONES[eventType] ?? 'text-(--legacy-text-secondary)'
+	const tone = EVENT_TONES[eventType] ?? 'text-secondary'
 	const snapshot = (revision?.snapshot ?? {}) as { title?: string; slug?: string; status?: string }
 	const title = snapshot.title || (isLoading ? 'Loading…' : '—')
 	const slug = snapshot.slug ?? '—'
@@ -819,12 +806,12 @@ function PreviewSpecimenHeader({
 		: null
 
 	return (
-		<div className="border-b border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
+		<div className="border-b border-medium bg-surface">
 			<div className="grid grid-cols-[1fr_auto] items-start gap-6 px-7 py-5">
 				<div className="grid min-w-0 gap-2">
 					<div className="flex flex-wrap items-center gap-2">
 						<span
-							className={`inline-flex items-center gap-1.5 rounded-sm border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-2 py-0.5 font-jetbrains text-[10px] font-medium tracking-[0.18em] uppercase ${tone}`}
+							className={`inline-flex items-center gap-1.5 rounded-sm border border-medium bg-page px-2 py-0.5 font-jetbrains text-[10px] font-medium tracking-[0.18em] uppercase ${tone}`}
 						>
 							{revision ? <EventGlyph type={eventType} active={false} /> : null}
 							{revision ? EVENT_LABELS[eventType] : '—'}
@@ -832,39 +819,37 @@ function PreviewSpecimenHeader({
 						{isLive ? <StatusBadge label="Currently Live" tone="live" /> : null}
 						{isPendingAnchor ? <StatusBadge label="Currently Pending" tone="pending" /> : null}
 						{status ? (
-							<span className="font-jetbrains text-[10px] tracking-[0.22em] text-(--legacy-text-tertiary) uppercase">
-								{status}
-							</span>
+							<span className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">{status}</span>
 						) : null}
 					</div>
 					<h3
-						className="text-xl leading-tight font-semibold tracking-tight break-words text-(--legacy-text-primary)"
+						className="text-xl leading-tight font-semibold tracking-tight break-words text-primary"
 						style={{ fontFamily: "ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif" }}
 						title={title}
 					>
 						{title}
 					</h3>
-					<dl className="flex flex-wrap items-center gap-x-5 gap-y-1 font-jetbrains text-[11px] text-(--legacy-text-tertiary)">
+					<dl className="flex flex-wrap items-center gap-x-5 gap-y-1 font-jetbrains text-[11px] text-tertiary">
 						<div className="flex items-center gap-1.5">
-							<dt className="text-(--legacy-text-tertiary)/60">slug</dt>
-							<dd className="text-(--legacy-text-secondary)">{slug}</dd>
+							<dt className="text-tertiary/60">slug</dt>
+							<dd className="text-secondary">{slug}</dd>
 						</div>
 						<div className="flex items-center gap-1.5">
-							<dt className="text-(--legacy-text-tertiary)/60">words</dt>
-							<dd className="text-(--legacy-text-secondary) tabular-nums">{wordCount}</dd>
+							<dt className="text-tertiary/60">words</dt>
+							<dd className="text-secondary tabular-nums">{wordCount}</dd>
 						</div>
 						{revision ? (
 							<>
 								<div className="flex items-center gap-1.5">
-									<dt className="text-(--legacy-text-tertiary)/60">when</dt>
-									<dd className="text-(--legacy-text-secondary) tabular-nums" title={revision.createdAt}>
+									<dt className="text-tertiary/60">when</dt>
+									<dd className="text-secondary tabular-nums" title={revision.createdAt}>
 										{formatExact(revision.createdAt)}
 									</dd>
 								</div>
 								{revision.actor ? (
 									<div className="flex items-center gap-1.5">
-										<dt className="text-(--legacy-text-tertiary)/60">by</dt>
-										<dd className="flex items-center gap-1.5 text-(--legacy-text-secondary)">
+										<dt className="text-tertiary/60">by</dt>
+										<dd className="flex items-center gap-1.5 text-secondary">
 											<ActorAvatar name={revision.actor.displayName} url={revision.actor.avatarUrl} size={14} />
 											{revision.actor.displayName}
 										</dd>
@@ -902,7 +887,7 @@ function PreviewSpecimenHeader({
 								type="button"
 								onClick={onAskRestore}
 								disabled={!revision || isRestoring}
-								className="group flex h-9 items-center gap-2 rounded-md bg-(--legacy-link-text) px-3.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+								className="group flex h-9 items-center gap-2 rounded-md bg-link px-3.5 text-xs font-medium text-on-brand transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
 							>
 								<Icon name="repeat" className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
 								<span>Restore as pending</span>
@@ -915,7 +900,7 @@ function PreviewSpecimenHeader({
 								onClick={onAskDelete}
 								disabled={!revision || !canDelete || isDeleting}
 								title={canDelete ? 'Delete this revision' : 'The current live revision cannot be deleted'}
-								className="flex size-9 items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) text-(--legacy-text-secondary) transition-colors hover:border-red-500/50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-(--legacy-cards-border) disabled:hover:text-(--legacy-text-secondary)"
+								className="flex size-9 items-center justify-center rounded-md border border-medium bg-surface text-secondary transition-colors hover:border-error/50 hover:text-error disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-medium disabled:hover:text-secondary"
 							>
 								<Icon name="trash-2" className="size-3.5" />
 							</button>
@@ -924,8 +909,8 @@ function PreviewSpecimenHeader({
 				</div>
 			</div>
 
-			<div className="flex flex-wrap items-center justify-between gap-3 border-t border-(--legacy-cards-border) bg-(--legacy-app-bg)/50 px-7 py-2.5">
-				<div className="inline-flex items-center gap-px rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-0.5 font-jetbrains text-[10px] tracking-[0.16em] uppercase">
+			<div className="flex flex-wrap items-center justify-between gap-3 border-t border-medium bg-page/50 px-7 py-2.5">
+				<div className="inline-flex items-center gap-px rounded-md border border-medium bg-surface p-0.5 font-jetbrains text-[10px] tracking-[0.16em] uppercase">
 					{(['preview', 'diff'] as ViewMode[]).map((mode) => {
 						const isActive = viewMode === mode
 						return (
@@ -935,8 +920,8 @@ function PreviewSpecimenHeader({
 								onClick={() => onChangeView(mode)}
 								className={`rounded-sm px-3 py-1.5 transition-colors ${
 									isActive
-										? 'bg-(--legacy-text-primary) text-(--legacy-cards-bg)'
-										: 'text-(--legacy-text-tertiary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-secondary)'
+										? 'bg-primary text-surface'
+										: 'text-tertiary hover:bg-(--research-link-hover-bg) hover:text-secondary'
 								}`}
 							>
 								{mode}
@@ -947,10 +932,10 @@ function PreviewSpecimenHeader({
 
 				{viewMode === 'diff' ? (
 					<div className="flex flex-wrap items-center gap-3">
-						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary)/70 uppercase">
+						<span className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary/70 uppercase">
 							compare against
 						</span>
-						<div className="flex items-center gap-px rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-0.5">
+						<div className="flex items-center gap-px rounded-md border border-medium bg-surface p-0.5">
 							{(['previous', 'live', 'pending'] as BaseMode[]).map((mode) => {
 								const enabled = !!baseAvailability[mode]
 								const isActive = baseMode === mode
@@ -971,8 +956,8 @@ function PreviewSpecimenHeader({
 										}
 										className={`rounded-sm px-2.5 py-1 font-jetbrains text-[10px] tracking-[0.16em] uppercase transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
 											isActive
-												? 'bg-(--legacy-link-text) text-white'
-												: 'text-(--legacy-text-tertiary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-secondary)'
+												? 'bg-link text-on-brand'
+												: 'text-tertiary hover:bg-(--research-link-hover-bg) hover:text-secondary'
 										}`}
 									>
 										{baseLabels[mode]}
@@ -982,22 +967,22 @@ function PreviewSpecimenHeader({
 						</div>
 						{stats ? (
 							<div className="flex items-center gap-2 font-jetbrains text-[11px] tabular-nums">
-								<span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+								<span className="inline-flex items-center gap-1 text-success dark:text-success">
 									<span aria-hidden>+</span>
 									{stats.added}
 								</span>
-								<span aria-hidden className="text-(--legacy-text-tertiary)/40">
+								<span aria-hidden className="text-tertiary/40">
 									/
 								</span>
-								<span className="inline-flex items-center gap-1 text-red-500">
+								<span className="inline-flex items-center gap-1 text-error">
 									<span aria-hidden>−</span>
 									{stats.removed}
 								</span>
-								<span className="text-(--legacy-text-tertiary)/70">words</span>
+								<span className="text-tertiary/70">words</span>
 							</div>
 						) : null}
 						{baseRevisionLabel ? (
-							<span className="hidden truncate font-jetbrains text-[11px] text-(--legacy-text-tertiary) lg:inline">
+							<span className="hidden truncate font-jetbrains text-[11px] text-tertiary lg:inline">
 								base · {baseRevisionLabel}
 							</span>
 						) : null}
@@ -1024,9 +1009,7 @@ function DiffPane({
 	if (!selected) {
 		return (
 			<div className="grid h-full place-items-center px-6">
-				<p className="font-jetbrains text-[11px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
-					Select a revision
-				</p>
+				<p className="font-jetbrains text-[11px] tracking-[0.18em] text-tertiary uppercase">Select a revision</p>
 			</div>
 		)
 	}
@@ -1036,13 +1019,11 @@ function DiffPane({
 		return (
 			<div className="grid h-full place-items-center px-6">
 				<div className="max-w-sm text-center">
-					<div className="mx-auto mb-4 grid size-12 place-items-center rounded-full border border-dashed border-(--legacy-cards-border)">
-						<Icon name="code" className="size-5 text-(--legacy-text-tertiary)" />
+					<div className="mx-auto mb-4 grid size-12 place-items-center rounded-full border border-dashed border-medium">
+						<Icon name="code" className="size-5 text-tertiary" />
 					</div>
-					<p className="font-jetbrains text-[10px] tracking-[0.22em] text-(--legacy-text-tertiary) uppercase">
-						Nothing to compare
-					</p>
-					<p className="mt-2 text-sm text-(--legacy-text-secondary)">There is no {label} to diff against.</p>
+					<p className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">Nothing to compare</p>
+					<p className="mt-2 text-sm text-secondary">There is no {label} to diff against.</p>
 				</div>
 			</div>
 		)
@@ -1051,10 +1032,8 @@ function DiffPane({
 		return (
 			<div className="grid h-full place-items-center px-6 py-12">
 				<div className="text-center">
-					<div className="mx-auto mb-3 h-1 w-24 animate-pulse rounded-sm bg-(--legacy-cards-border)" />
-					<p className="font-jetbrains text-[10px] tracking-[0.22em] text-(--legacy-text-tertiary) uppercase">
-						computing diff
-					</p>
+					<div className="mx-auto mb-3 h-1 w-24 animate-pulse rounded-sm bg-border-medium" />
+					<p className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">computing diff</p>
 				</div>
 			</div>
 		)
@@ -1068,15 +1047,11 @@ function DiffPane({
 		return (
 			<div className="grid h-full place-items-center px-6">
 				<div className="max-w-sm text-center">
-					<div className="mx-auto mb-4 grid size-12 place-items-center rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
-						<Icon name="check" className="size-5 text-emerald-500" />
+					<div className="mx-auto mb-4 grid size-12 place-items-center rounded-full border border-medium bg-surface">
+						<Icon name="check" className="size-5 text-success" />
 					</div>
-					<p className="font-jetbrains text-[10px] tracking-[0.22em] text-(--legacy-text-tertiary) uppercase">
-						Identical
-					</p>
-					<p className="mt-2 text-sm text-(--legacy-text-secondary)">
-						No textual or metadata changes between these revisions.
-					</p>
+					<p className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">Identical</p>
+					<p className="mt-2 text-sm text-secondary">No textual or metadata changes between these revisions.</p>
 				</div>
 			</div>
 		)
@@ -1086,7 +1061,7 @@ function DiffPane({
 		<div className="mx-auto w-full max-w-[860px] px-6 py-8">
 			{!noMetadataChanges ? <MetadataDiffSection changes={diff.metadata} /> : null}
 			{noBodyChanges ? (
-				<div className="mt-2 rounded-md border border-dashed border-(--legacy-cards-border) bg-(--legacy-cards-bg)/50 px-4 py-3 font-jetbrains text-[11px] text-(--legacy-text-tertiary)">
+				<div className="mt-2 rounded-md border border-dashed border-medium bg-surface/50 px-4 py-3 font-jetbrains text-[11px] text-tertiary">
 					Body unchanged.
 				</div>
 			) : (
@@ -1100,22 +1075,17 @@ function MetadataDiffSection({ changes }: { changes: FieldChange[] }) {
 	return (
 		<section className="mb-8 grid gap-2">
 			<header className="flex items-baseline justify-between gap-2">
-				<h4 className="font-jetbrains text-[10px] tracking-[0.22em] text-(--legacy-text-tertiary) uppercase">
+				<h4 className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
 					Metadata · {changes.length} change{changes.length === 1 ? '' : 's'}
 				</h4>
 			</header>
-			<dl className="grid divide-y divide-(--legacy-cards-border) overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
+			<dl className="grid divide-y divide-(--border-medium) overflow-hidden rounded-md border border-medium bg-surface">
 				{changes.map((change) => (
 					<div key={change.key} className="grid grid-cols-[120px_1fr] gap-4 px-4 py-3">
-						<dt className="font-jetbrains text-[10px] tracking-[0.18em] text-(--legacy-text-tertiary) uppercase">
-							{change.label}
-						</dt>
+						<dt className="font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">{change.label}</dt>
 						<dd className="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
 							<MetaValue value={change.before} tone="remove" />
-							<span
-								aria-hidden
-								className="hidden font-jetbrains text-[10px] text-(--legacy-text-tertiary)/60 sm:inline"
-							>
+							<span aria-hidden className="hidden font-jetbrains text-[10px] text-tertiary/60 sm:inline">
 								→
 							</span>
 							<MetaValue value={change.after} tone="add" />
@@ -1129,16 +1099,14 @@ function MetadataDiffSection({ changes }: { changes: FieldChange[] }) {
 
 function MetaValue({ value, tone }: { value: string | null; tone: 'add' | 'remove' }) {
 	if (value == null) {
-		return <span className="font-jetbrains text-[11px] text-(--legacy-text-tertiary)/60 italic">empty</span>
+		return <span className="font-jetbrains text-[11px] text-tertiary/60 italic">empty</span>
 	}
 	const styles =
 		tone === 'remove'
-			? 'border-red-500/30 bg-red-500/5 text-red-600 dark:text-red-400 line-through'
-			: 'border-emerald-500/30 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400'
+			? 'border-error/30 bg-error/5 text-error dark:text-error line-through'
+			: 'border-emerald-500/30 bg-success/5 text-success dark:text-success'
 	return (
-		<span className={`inline-block max-w-full truncate rounded-sm border px-2 py-0.5 text-[12px] ${styles}`}>
-			{value}
-		</span>
+		<span className={`inline-block max-w-full truncate rounded-sm border px-2 py-0.5 text-xs ${styles}`}>{value}</span>
 	)
 }
 
@@ -1146,9 +1114,9 @@ function BodyDiffSection({ ops }: { ops: ParagraphDiffOp[] }) {
 	return (
 		<section className="grid gap-3">
 			<header>
-				<h4 className="font-jetbrains text-[10px] tracking-[0.22em] text-(--legacy-text-tertiary) uppercase">Body</h4>
+				<h4 className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">Body</h4>
 			</header>
-			<div className="grid gap-2 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-2">
+			<div className="grid gap-2 rounded-md border border-medium bg-surface p-2">
 				{ops.map((op, idx) => (
 					<DiffParagraph key={idx} op={op} />
 				))}
@@ -1161,59 +1129,52 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 	const baseClasses = 'group relative grid grid-cols-[18px_1fr] items-start gap-2 rounded-sm px-3 py-2 leading-relaxed'
 	if (op.type === 'equal') {
 		return (
-			<div className={`${baseClasses} text-(--legacy-text-secondary)`}>
-				<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[10px] text-(--legacy-text-tertiary)/60">
+			<div className={`${baseClasses} text-secondary`}>
+				<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[10px] text-tertiary/60">
 					·
 				</span>
-				<p className="text-[14px]">{op.value}</p>
+				<p className="text-sm">{op.value}</p>
 			</div>
 		)
 	}
 	if (op.type === 'add') {
 		return (
-			<div
-				className={`${baseClasses} bg-emerald-500/[0.07] text-(--legacy-text-primary) ring-1 ring-emerald-500/20 ring-inset`}
-			>
-				<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[11px] font-medium text-emerald-500">
+			<div className={`${baseClasses} bg-success/7.000000000000001 text-primary ring-1 ring-emerald-500/20 ring-inset`}>
+				<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[11px] font-medium text-success">
 					+
 				</span>
-				<p className="text-[14px]">{op.value}</p>
+				<p className="text-sm">{op.value}</p>
 			</div>
 		)
 	}
 	if (op.type === 'remove') {
 		return (
 			<div
-				className={`${baseClasses} bg-red-500/[0.06] text-red-500/85 line-through ring-1 ring-red-500/20 ring-inset dark:text-red-400/85`}
+				className={`${baseClasses} bg-error/6 text-error/85 line-through ring-1 ring-red-500/20 ring-inset dark:text-error/85`}
 			>
-				<span
-					aria-hidden
-					className="pt-0.5 text-center font-jetbrains text-[11px] font-medium text-red-500 no-underline"
-				>
+				<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[11px] font-medium text-error no-underline">
 					−
 				</span>
-				<p className="text-[14px]">{op.value}</p>
+				<p className="text-sm">{op.value}</p>
 			</div>
 		)
 	}
 	return (
-		<div
-			className={`${baseClasses} bg-amber-500/[0.04] text-(--legacy-text-primary) ring-1 ring-amber-500/20 ring-inset`}
-		>
-			<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[11px] font-medium text-amber-500">
+		<div className={`${baseClasses} bg-warning/4 text-primary ring-1 ring-amber-500/20 ring-inset`}>
+			<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[11px] font-medium text-warning">
 				~
 			</span>
-			<p className="text-[14px] [overflow-wrap:anywhere]">
+			<p className="text-sm [overflow-wrap:anywhere]">
 				{op.words.map((word, idx) => {
 					if (word.type === 'equal') return <span key={idx}>{word.value}</span>
 					if (word.type === 'add')
 						return (
-							<span key={idx} className="rounded-[2px] bg-emerald-500/15 px-0.5 text-emerald-700 dark:text-emerald-300">
+							<span key={idx} className="rounded-[2px] bg-success/15 px-0.5 text-emerald-700 dark:text-emerald-300">
 								{word.value}
 							</span>
 						)
 					return (
-						<span key={idx} className="rounded-[2px] bg-red-500/12 px-0.5 text-red-600 line-through dark:text-red-400">
+						<span key={idx} className="rounded-[2px] bg-error/12 px-0.5 text-error line-through dark:text-error">
 							{word.value}
 						</span>
 					)
@@ -1240,9 +1201,8 @@ function InlineConfirm({
 	onCancel: () => void
 	disabled: boolean
 }) {
-	const accent =
-		tone === 'danger' ? 'border-red-500/40 bg-red-500/5' : 'border-(--legacy-link-text)/40 bg-(--legacy-link-text)/5'
-	const button = tone === 'danger' ? 'bg-red-500 hover:bg-red-500/90' : 'bg-(--legacy-link-text) hover:opacity-90'
+	const accent = tone === 'danger' ? 'border-error/40 bg-error/5' : 'border-link/40 bg-link/5'
+	const button = tone === 'danger' ? 'bg-error hover:bg-error/90' : 'bg-link hover:opacity-90'
 	return (
 		<div
 			role="alertdialog"
@@ -1250,15 +1210,15 @@ function InlineConfirm({
 			className={`flex items-center gap-3 rounded-md border px-3 py-2 ${accent}`}
 		>
 			<div className="grid">
-				<div className="text-xs font-medium text-(--legacy-text-primary)">{title}</div>
-				<div className="text-[11px] text-(--legacy-text-tertiary)">{description}</div>
+				<div className="text-xs font-medium text-primary">{title}</div>
+				<div className="text-[11px] text-tertiary">{description}</div>
 			</div>
 			<div className="flex items-center gap-1.5">
 				<button
 					type="button"
 					onClick={onCancel}
 					disabled={disabled}
-					className="rounded-md px-2.5 py-1.5 text-xs text-(--legacy-text-secondary) transition-colors hover:bg-(--legacy-link-hover-bg) disabled:opacity-50"
+					className="rounded-md px-2.5 py-1.5 text-xs text-secondary transition-colors hover:bg-(--research-link-hover-bg) disabled:opacity-50"
 				>
 					Cancel
 				</button>
@@ -1267,7 +1227,7 @@ function InlineConfirm({
 					onClick={onConfirm}
 					disabled={disabled}
 					autoFocus
-					className={`rounded-md px-3 py-1.5 text-xs font-medium text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50 ${button}`}
+					className={`rounded-md px-3 py-1.5 text-xs font-medium text-on-brand transition-opacity disabled:cursor-not-allowed disabled:opacity-50 ${button}`}
 				>
 					{confirmLabel}
 				</button>
@@ -1281,18 +1241,14 @@ function TimelineSkeleton() {
 		<div className="grid gap-1 p-5">
 			{[0.9, 0.7, 0.55, 0.85, 0.6, 0.7].map((scale, idx) => (
 				<div key={idx} className="flex items-start gap-3 py-2">
-					<span aria-hidden className="mt-1 size-2 rounded-full bg-(--legacy-cards-border)" />
+					<span aria-hidden className="mt-1 size-2 rounded-full bg-border-medium" />
 					<div className="grid flex-1 gap-1.5">
-						<span
-							aria-hidden
-							className="h-2 rounded-sm bg-(--legacy-cards-border)"
-							style={{ width: `${scale * 100}%` }}
-						/>
-						<span aria-hidden className="h-2 w-24 rounded-sm bg-(--legacy-cards-border)/60" />
+						<span aria-hidden className="h-2 rounded-sm bg-border-medium" style={{ width: `${scale * 100}%` }} />
+						<span aria-hidden className="bg-border-medium/60 h-2 w-24 rounded-sm" />
 					</div>
 				</div>
 			))}
-			<div className="mt-2 text-center font-jetbrains text-[10px] tracking-[0.22em] text-(--legacy-text-tertiary)/60 uppercase">
+			<div className="mt-2 text-center font-jetbrains text-[10px] tracking-[0.22em] text-tertiary/60 uppercase">
 				· loading ·
 			</div>
 		</div>
@@ -1302,15 +1258,15 @@ function TimelineSkeleton() {
 function PreviewSkeleton() {
 	return (
 		<div className="mx-auto grid w-full max-w-[760px] gap-4 px-6 py-12">
-			<span aria-hidden className="h-3 w-32 rounded-sm bg-(--legacy-cards-border)/70" />
-			<span aria-hidden className="h-10 w-3/4 rounded-sm bg-(--legacy-cards-border)" />
-			<span aria-hidden className="h-5 w-2/3 rounded-sm bg-(--legacy-cards-border)/70" />
+			<span aria-hidden className="bg-border-medium/70 h-3 w-32 rounded-sm" />
+			<span aria-hidden className="h-10 w-3/4 rounded-sm bg-border-medium" />
+			<span aria-hidden className="bg-border-medium/70 h-5 w-2/3 rounded-sm" />
 			<div className="mt-6 grid gap-2">
 				{[1, 0.95, 0.9, 0.7, 0.85, 0.6].map((scale, idx) => (
 					<span
 						key={idx}
 						aria-hidden
-						className="h-3 rounded-sm bg-(--legacy-cards-border)/50"
+						className="bg-border-medium/50 h-3 rounded-sm"
 						style={{ width: `${scale * 100}%` }}
 					/>
 				))}
@@ -1323,13 +1279,13 @@ function EmptyState({ filter }: { filter: FilterKey }) {
 	return (
 		<div className="grid h-full place-items-center px-6 py-16">
 			<div className="max-w-xs text-center">
-				<div className="mx-auto mb-4 grid size-14 place-items-center rounded-full border border-dashed border-(--legacy-cards-border)">
-					<Icon name="file-text" className="size-6 text-(--legacy-text-tertiary)" />
+				<div className="mx-auto mb-4 grid size-14 place-items-center rounded-full border border-dashed border-medium">
+					<Icon name="file-text" className="size-6 text-tertiary" />
 				</div>
-				<p className="font-jetbrains text-[10px] tracking-[0.22em] text-(--legacy-text-tertiary) uppercase">
+				<p className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
 					{filter === 'all' ? 'No revisions yet' : 'No matches'}
 				</p>
-				<p className="mt-2 text-sm text-(--legacy-text-secondary)">
+				<p className="mt-2 text-sm text-secondary">
 					{filter === 'all'
 						? 'Save or publish to start writing the ledger.'
 						: 'Try another filter — or switch back to All.'}

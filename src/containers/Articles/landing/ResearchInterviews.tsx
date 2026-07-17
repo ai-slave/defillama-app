@@ -69,8 +69,8 @@ function ResearchInterviewsContent({ articles, pageWidget }: ResearchInterviewsC
 				{isFirst && <InViewAnalytics eventParams={[article, 'widget_impression', pageWidget]} />}
 				<div
 					className={clsx(
-						'line-clamp-3 leading-[120%] font-semibold text-[#0c2956] transition-all duration-500 ease-out group-hover:text-[#0c2956] group-hover:opacity-70 dark:text-white dark:group-hover:text-white/70',
-						isBig ? 'text-[16px] lg:text-[24px]' : 'text-[16px] lg:text-[18px]'
+						'line-clamp-3 leading-[120%] font-semibold text-(--research-navy-soft) transition-all duration-500 ease-out group-hover:text-(--research-navy-soft) group-hover:opacity-70 dark:text-ai-primary dark:group-hover:text-on-brand/70',
+						isBig ? 'text-base lg:text-2xl' : 'text-base lg:text-lg'
 					)}
 				>
 					{article.title}
@@ -109,7 +109,7 @@ function ResearchInterviewsContent({ articles, pageWidget }: ResearchInterviewsC
 									href={articleHref(article)}
 									onClick={() => pushResearchAnalyticsEvent(article, 'widget_click', pageWidget)}
 								>
-									<span className="line-clamp-2 min-w-0 flex-1 text-[16px] leading-snug font-medium text-[#0c2956] transition-colors group-hover:text-[#0c2956] lg:text-[18px] lg:font-semibold dark:text-white dark:group-hover:text-white/70">
+									<span className="line-clamp-2 min-w-0 flex-1 text-base leading-snug font-medium text-(--research-navy-soft) transition-colors group-hover:text-(--research-navy-soft) lg:text-lg lg:font-semibold dark:text-ai-primary dark:group-hover:text-on-brand/70">
 										{article.title}
 									</span>
 									{article.coverImage?.url ? (
@@ -123,14 +123,14 @@ function ResearchInterviewsContent({ articles, pageWidget }: ResearchInterviewsC
 											/>
 										</div>
 									) : (
-										<div className="h-[75px] w-[75px] shrink-0 rounded-full bg-[#e5e7eb] lg:h-[105px] lg:w-[105px] dark:bg-white/10" />
+										<div className="h-[75px] w-[75px] shrink-0 rounded-full bg-surface-elevated-1 lg:h-[105px] lg:w-[105px] dark:bg-ai-wash-strong" />
 									)}
 								</Link>
 							</li>
 						))}
 					</ul>
 				</div>
-				<div className="mt-auto shrink-0 pt-[18px] text-right">
+				<div className="mt-auto shrink-0 pt-4.5 text-right">
 					<ReadMoreLink url="/research?section=interview" title="View all interviews" />
 				</div>
 			</div>

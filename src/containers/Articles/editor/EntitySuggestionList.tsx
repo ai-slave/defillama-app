@@ -54,7 +54,7 @@ const fmtPctShort = (n?: number | null): string | null => {
 }
 
 const changeColor = (n?: number | null) =>
-	typeof n !== 'number' ? '' : n > 0 ? 'text-[#16a34a]' : n < 0 ? 'text-[#dc2626]' : ''
+	typeof n !== 'number' ? '' : n > 0 ? 'text-success' : n < 0 ? 'text-error' : ''
 
 function MetricChip({ item }: { item: ArticleEntitySuggestionItem }) {
 	const p = item.preview
@@ -65,7 +65,7 @@ function MetricChip({ item }: { item: ArticleEntitySuggestionItem }) {
 		if (!tvl && !change) return null
 		return (
 			<span className="ml-1 flex shrink-0 flex-col items-end gap-0.5 leading-none">
-				{tvl ? <span className="text-[11px] text-(--legacy-text-secondary) tabular-nums">{tvl}</span> : null}
+				{tvl ? <span className="text-[11px] text-secondary tabular-nums">{tvl}</span> : null}
 				{change ? <span className={`text-[10px] tabular-nums ${changeColor(p.change7d)}`}>{change}</span> : null}
 			</span>
 		)
@@ -156,7 +156,7 @@ export const EntitySuggestionList = forwardRef<EntitySuggestionListHandle, Props
 				role="option"
 				aria-selected={active}
 				className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left transition-colors ${
-					active ? 'bg-(--legacy-link-button)' : 'hover:bg-(--legacy-link-hover-bg)'
+					active ? 'bg-(--research-link-button-bg)' : 'hover:bg-(--research-link-hover-bg)'
 				}`}
 				onMouseEnter={() => setSelectedId(item.id)}
 				onMouseDown={(event) => {
@@ -164,24 +164,24 @@ export const EntitySuggestionList = forwardRef<EntitySuggestionListHandle, Props
 					command(item)
 				}}
 			>
-				<span className="relative flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-(--legacy-cards-border) bg-(--legacy-app-bg)">
+				<span className="relative flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-medium bg-page">
 					{item.logo ? (
 						<img src={item.logo} alt="" className="size-full object-cover" loading="lazy" />
 					) : (
-						<span className="text-[9px] font-medium tracking-wider text-(--legacy-text-tertiary)">
+						<span className="text-[9px] font-medium tracking-wider text-tertiary">
 							{item.label.slice(0, 2).toUpperCase()}
 						</span>
 					)}
 				</span>
 				<span className="flex min-w-0 flex-1 flex-col">
-					<span className="truncate text-sm text-(--legacy-text-primary)">{item.label}</span>
-					<span className="truncate text-[11px] text-(--legacy-text-tertiary)">
+					<span className="truncate text-sm text-primary">{item.label}</span>
+					<span className="truncate text-[11px] text-tertiary">
 						{opts?.recent ? 'Recent · ' : ''}
 						{item.subLabel || item.route}
 					</span>
 				</span>
 				<MetricChip item={item} />
-				<span className="ml-1 shrink-0 rounded-sm border border-(--legacy-cards-border) px-1.5 py-px text-[9px] font-medium tracking-wider text-(--legacy-text-tertiary)">
+				<span className="ml-1 shrink-0 rounded-sm border border-medium px-1.5 py-px text-[9px] font-medium tracking-wider text-tertiary">
 					{TYPE_BADGE[item.entityType] ?? item.entityType.toUpperCase()}
 				</span>
 			</button>
@@ -192,12 +192,12 @@ export const EntitySuggestionList = forwardRef<EntitySuggestionListHandle, Props
 	const filteredCount = filtered.length
 
 	return (
-		<div className="article-mention-pop w-[22rem] overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-xl">
-			<div className="flex items-center justify-between gap-2 border-b border-(--legacy-cards-border) px-3 py-1.5 text-[11px] text-(--legacy-text-tertiary)">
+		<div className="article-mention-pop w-[22rem] overflow-hidden rounded-md border border-medium bg-surface shadow-xl">
+			<div className="flex items-center justify-between gap-2 border-b border-medium px-3 py-1.5 text-[11px] text-tertiary">
 				<span className="truncate">
 					{query ? (
 						<>
-							Searching <span className="text-(--legacy-text-secondary)">"{query}"</span>
+							Searching <span className="text-secondary">"{query}"</span>
 						</>
 					) : (
 						'Type to search · Suggested'
@@ -213,7 +213,7 @@ export const EntitySuggestionList = forwardRef<EntitySuggestionListHandle, Props
 							: '—'}
 				</span>
 			</div>
-			<div className="flex items-center gap-1 overflow-x-auto border-b border-(--legacy-cards-border) px-2 py-1.5">
+			<div className="flex items-center gap-1 overflow-x-auto border-b border-medium px-2 py-1.5">
 				{FILTER_ORDER.map((f) => {
 					const enabled = f.key === 'all' || availableTypes.has(f.key)
 					const active = f.key === filter
@@ -228,10 +228,10 @@ export const EntitySuggestionList = forwardRef<EntitySuggestionListHandle, Props
 							}}
 							className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-wider uppercase transition-colors ${
 								active
-									? 'border-(--legacy-link-text) bg-(--legacy-link-text) text-white'
+									? 'border-link bg-link text-on-brand'
 									: enabled
-										? 'border-(--legacy-cards-border) text-(--legacy-text-secondary) hover:bg-(--legacy-link-hover-bg)'
-										: 'border-(--legacy-cards-border)/50 text-(--legacy-text-tertiary)/50'
+										? 'border-medium text-secondary hover:bg-(--research-link-hover-bg)'
+										: 'border-medium/50 text-tertiary/50'
 							}`}
 						>
 							{f.label}
@@ -241,26 +241,24 @@ export const EntitySuggestionList = forwardRef<EntitySuggestionListHandle, Props
 			</div>
 			<div ref={listRef} className="max-h-80 overflow-y-auto py-1" role="listbox">
 				{flat.length === 0 ? (
-					<div className="px-3 py-8 text-center text-xs text-(--legacy-text-tertiary)">
-						{loading ? 'Searching…' : 'No matches'}
-					</div>
+					<div className="px-3 py-8 text-center text-xs text-tertiary">{loading ? 'Searching…' : 'No matches'}</div>
 				) : (
 					<>
 						{showRecents ? recents.map((i) => renderItem(i, { recent: true })) : null}
-						{showRecents ? <div className="my-1 border-t border-(--legacy-cards-border)" /> : null}
+						{showRecents ? <div className="my-1 border-t border-medium" /> : null}
 						{filtered.map((i) => renderItem(i))}
 					</>
 				)}
 			</div>
-			<div className="flex items-center justify-between gap-2 border-t border-(--legacy-cards-border) px-3 py-1.5 text-[10px] text-(--legacy-text-tertiary)">
+			<div className="flex items-center justify-between gap-2 border-t border-medium px-3 py-1.5 text-[10px] text-tertiary">
 				<span>
-					<kbd className="rounded-sm border border-(--legacy-cards-border) px-1">↑</kbd>{' '}
-					<kbd className="rounded-sm border border-(--legacy-cards-border) px-1">↓</kbd> nav{' '}
-					<kbd className="ml-1 rounded-sm border border-(--legacy-cards-border) px-1">tab</kbd> filter
+					<kbd className="rounded-sm border border-medium px-1">↑</kbd>{' '}
+					<kbd className="rounded-sm border border-medium px-1">↓</kbd> nav{' '}
+					<kbd className="ml-1 rounded-sm border border-medium px-1">tab</kbd> filter
 				</span>
 				<span>
-					<kbd className="rounded-sm border border-(--legacy-cards-border) px-1">↵</kbd> insert{' '}
-					<kbd className="ml-1 rounded-sm border border-(--legacy-cards-border) px-1">esc</kbd> dismiss
+					<kbd className="rounded-sm border border-medium px-1">↵</kbd> insert{' '}
+					<kbd className="ml-1 rounded-sm border border-medium px-1">esc</kbd> dismiss
 				</span>
 			</div>
 		</div>

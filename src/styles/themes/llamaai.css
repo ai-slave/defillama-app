@@ -1,0 +1,311 @@
+/* ----------------------------------------------------------------------------
+   LlamaAI product theme — role-named freeze of the surface's colors,
+   shadows, and animation tokens (containers/LlamaAI, pages/ai,
+   EntityQuestionsStrip, LlamaAIFloatingButton). Component CSS lives in
+   styles/llamaai.css; this file owns the palette.
+
+   A standing product palette, not design-system tokens. Near-duplicate
+   greys were canonicalized to one role; brand/status colors kept verbatim.
+   Mode handling: light values on :root, dark overrides under html.dark.
+   ai-ink-*, ai-on-ink-*, backdrops, and brand/terminal colors are
+   deliberately mode-invariant (always-dark surfaces).
+---------------------------------------------------------------------------- */
+
+:root {
+	/* Text */
+	--ai-primary: #1a1a1a;
+	--ai-secondary: #444444;
+	--ai-tertiary: #666666;
+	--ai-muted: #999999;
+	--ai-faint: #aaaaaa;
+
+	/* Lines (borders/dividers/rings) */
+	--ai-line: #e6e6e6;
+	--ai-line-subtle: rgb(0 0 0 / 0.06);
+	--ai-line-medium: rgb(0 0 0 / 0.08);
+	--ai-line-strong: rgb(0 0 0 / 0.2);
+	--ai-line-inverse: #1a1a1a;
+	--ai-line-on-white: #e8e8e8;
+
+	/* Surfaces */
+	--ai-surface: #fafafa;
+	--ai-surface-muted: #f0f0f0;
+	--ai-surface-card: #ffffff;
+	--ai-skeleton: #e5e7eb;
+	--ai-handle: #cccccc;
+	--ai-handle-hover: #999999;
+
+	/* Washes (hover/selected fills) */
+	--ai-wash-faint: rgb(0 0 0 / 0.015);
+	--ai-wash: rgb(0 0 0 / 0.05);
+	--ai-wash-strong: rgb(0 0 0 / 0.12);
+
+	/* Inverted fill (black chip in light mode, white in dark) */
+	--ai-contrast: #1a1a1a;
+	--ai-on-contrast: #ffffff;
+
+	/* Always-dark surfaces (onboarding walkthrough, terminal, code) */
+	--ai-ink: #111214;
+	--ai-ink-raised: #1e2028;
+	--ai-ink-hover: #282c36;
+	--ai-ink-line: #222428;
+	--ai-on-ink: #d1d5db;
+	--ai-on-ink-muted: #8b8d93;
+
+	/* Overlays */
+	--ai-backdrop: rgb(0 0 0 / 0.6);
+	--ai-backdrop-soft: rgb(0 0 0 / 0.4);
+
+	/* Statics */
+	--ai-white: #ffffff;
+	--ai-black: #000000;
+
+	/* Brand — LlamaAI gold + landing bronze accents */
+	--ai-gold: #c99a4a;
+	--ai-gold-bright: #fde0a9;
+	--ai-gold-soft: #fbedcb;
+	--ai-on-gold: #5c4a1f;
+	--ai-on-gold-strong: #1a1200;
+	--ai-bronze: #a17f47;
+	--ai-bronze-deep: #86663a;
+	--ai-bronze-bright: #e8c089;
+	--ai-bronze-bg: #fff3e0;
+	--ai-gold-deep: #8b6914;
+	--ai-paper: #fdf8ef;
+	--ai-gold-gradient: linear-gradient(93.94deg, #fde0a9 24.73%, #fbedcb 57.42%, #fde0a9 99.73%);
+
+	/* Blues */
+	--ai-old-blue: #2172e5;
+	--ai-old-blue-deep: #1a58b4;
+	--ai-link-hover: #1f67d233;
+	--ai-blue: #2563eb;
+	--ai-blue-deep: #1853a8;
+	--ai-blue-vivid: #3b82f6;
+	--ai-blue-soft: #60a5fa;
+	--ai-steel: #4f8fba;
+
+	/* Purples + integrations */
+	--ai-purple: #5c5cf9;
+	--ai-purple-deep: #4a4af0;
+	--ai-purple-bright: #8a8aff;
+	--ai-violet: #8b5cf6;
+	--ai-slack: #4a154b;
+	--ai-slack-deep: #3a1140;
+
+	/* Status */
+	--ai-warning: #d97706;
+	--ai-warning-bright: #f59e0b;
+	--ai-warning-strong: #92400e;
+	--ai-warning-soft: #fde68a;
+	--ai-warning-soft-hover: #fcd34d;
+	--ai-error: #dc2626;
+	--ai-error-strong: #b91c1c;
+	--ai-error-vivid: #ef4444;
+	--ai-error-bg: #fef2f2;
+	--ai-error-border: #fecaca;
+	--ai-success: #059669;
+	--ai-success-vivid: #22c55e;
+	--ai-terminal: #00ff41;
+
+	/* Landing slate accents */
+	--ai-slate: #7b8597;
+	--ai-slate-muted: #9aa4b2;
+	--ai-slate-strong: #4b5563;
+	--ai-slate-line: #d7deea;
+	--ai-slate-line-strong: #c5cbd6;
+
+	/* Shadows */
+	--ai-shadow-xs: 0 1px 3px rgb(0 0 0 / 0.08);
+	--ai-shadow-sm: 0 2px 12px rgb(0 0 0 / 0.1);
+	--ai-shadow-sm-hover: 0 4px 16px rgb(0 0 0 / 0.15);
+	--ai-shadow-md: 0 12px 40px rgb(148 163 184 / 0.12);
+	--ai-shadow-lg: 0 30px 80px -20px rgb(0 0 0 / 0.35);
+	--ai-shadow-focus-inset: inset 0 0 0 1px rgb(59 130 246 / 0.35);
+}
+
+html.dark {
+	--ai-primary: #ffffff;
+	--ai-secondary: #bbbbbb;
+	--ai-tertiary: #919296;
+	--ai-muted: #777777;
+	--ai-faint: #555555;
+
+	--ai-line: #2a2b2c;
+	--ai-line-subtle: rgb(255 255 255 / 0.06);
+	--ai-line-medium: rgb(255 255 255 / 0.08);
+	--ai-line-strong: rgb(255 255 255 / 0.2);
+	--ai-line-inverse: #ffffff;
+
+	--ai-surface: #1a1a1a;
+	--ai-surface-muted: #222324;
+	--ai-surface-card: #181a1c;
+	--ai-skeleton: #374151;
+	--ai-handle: #444444;
+	--ai-handle-hover: #666666;
+
+	--ai-wash-faint: rgb(255 255 255 / 0.015);
+	--ai-wash: rgb(255 255 255 / 0.05);
+	--ai-wash-strong: rgb(255 255 255 / 0.12);
+
+	--ai-contrast: #ffffff;
+	--ai-on-contrast: #000000;
+
+	--ai-gold: #fde0a9;
+	--ai-bronze: #e8c089;
+	--ai-bronze-deep: #f3d6a3;
+	--ai-bronze-bg: #3d2f1f;
+
+	--ai-old-blue: #4190f7;
+	--ai-old-blue-deep: #3279de;
+	--ai-link-hover: #1f67d24d;
+	--ai-blue: #60a5fa;
+	--ai-blue-deep: #4b86db;
+	--ai-violet: #a78bfa;
+	--ai-paper: #252218;
+
+	--ai-warning: #fbbf24;
+	--ai-warning-strong: #fef3c7;
+	--ai-warning-soft: rgb(120 53 15 / 0.5);
+	--ai-warning-soft-hover: rgb(120 53 15 / 0.7);
+	--ai-error: #f87171;
+	--ai-error-strong: #fca5a5;
+	--ai-error-bg: #450a0a;
+	--ai-error-border: #7f1d1d;
+	--ai-success: #34d399;
+
+	--ai-slate: #a1a1aa;
+	--ai-slate-muted: #71717a;
+	--ai-slate-strong: #e4e4e7;
+	--ai-slate-line: rgb(255 255 255 / 0.07);
+	--ai-slate-line-strong: rgb(255 255 255 / 0.12);
+
+	--ai-shadow-xs: 0 1px 4px rgb(0 0 0 / 0.4);
+	--ai-shadow-sm: 0 2px 12px rgb(0 0 0 / 0.4);
+	--ai-shadow-sm-hover: 0 4px 16px rgb(0 0 0 / 0.5);
+	--ai-shadow-md: 0 20px 60px rgb(0 0 0 / 0.45);
+	--ai-shadow-lg: 0 30px 80px -20px rgb(0 0 0 / 0.7);
+	--ai-shadow-focus-inset: inset 0 0 0 1px rgb(96 165 250 / 0.3);
+}
+
+@theme inline {
+	--color-ai-primary: var(--ai-primary);
+	--color-ai-secondary: var(--ai-secondary);
+	--color-ai-tertiary: var(--ai-tertiary);
+	--color-ai-muted: var(--ai-muted);
+	--color-ai-faint: var(--ai-faint);
+	--color-ai-line: var(--ai-line);
+	--color-ai-line-subtle: var(--ai-line-subtle);
+	--color-ai-line-medium: var(--ai-line-medium);
+	--color-ai-line-strong: var(--ai-line-strong);
+	--color-ai-line-inverse: var(--ai-line-inverse);
+	--color-ai-line-on-white: var(--ai-line-on-white);
+	--color-ai-surface: var(--ai-surface);
+	--color-ai-surface-muted: var(--ai-surface-muted);
+	--color-ai-surface-card: var(--ai-surface-card);
+	--color-ai-skeleton: var(--ai-skeleton);
+	--color-ai-handle: var(--ai-handle);
+	--color-ai-handle-hover: var(--ai-handle-hover);
+	--color-ai-wash-faint: var(--ai-wash-faint);
+	--color-ai-wash: var(--ai-wash);
+	--color-ai-wash-strong: var(--ai-wash-strong);
+	--color-ai-contrast: var(--ai-contrast);
+	--color-ai-on-contrast: var(--ai-on-contrast);
+	--color-ai-ink: var(--ai-ink);
+	--color-ai-ink-raised: var(--ai-ink-raised);
+	--color-ai-ink-hover: var(--ai-ink-hover);
+	--color-ai-ink-line: var(--ai-ink-line);
+	--color-ai-on-ink: var(--ai-on-ink);
+	--color-ai-on-ink-muted: var(--ai-on-ink-muted);
+	--color-ai-backdrop: var(--ai-backdrop);
+	--color-ai-backdrop-soft: var(--ai-backdrop-soft);
+	--color-ai-white: var(--ai-white);
+	--color-ai-black: var(--ai-black);
+	--color-ai-gold: var(--ai-gold);
+	--color-ai-gold-bright: var(--ai-gold-bright);
+	--color-ai-gold-soft: var(--ai-gold-soft);
+	--color-ai-on-gold: var(--ai-on-gold);
+	--color-ai-on-gold-strong: var(--ai-on-gold-strong);
+	--color-ai-bronze: var(--ai-bronze);
+	--color-ai-bronze-deep: var(--ai-bronze-deep);
+	--color-ai-bronze-bright: var(--ai-bronze-bright);
+	--color-ai-bronze-bg: var(--ai-bronze-bg);
+	--color-ai-gold-deep: var(--ai-gold-deep);
+	--color-ai-paper: var(--ai-paper);
+	--color-ai-purple-bright: var(--ai-purple-bright);
+	--color-ai-old-blue: var(--ai-old-blue);
+	--color-ai-old-blue-deep: var(--ai-old-blue-deep);
+	--color-ai-blue: var(--ai-blue);
+	--color-ai-blue-deep: var(--ai-blue-deep);
+	--color-ai-blue-vivid: var(--ai-blue-vivid);
+	--color-ai-blue-soft: var(--ai-blue-soft);
+	--color-ai-steel: var(--ai-steel);
+	--color-ai-purple: var(--ai-purple);
+	--color-ai-purple-deep: var(--ai-purple-deep);
+	--color-ai-violet: var(--ai-violet);
+	--color-ai-slack: var(--ai-slack);
+	--color-ai-slack-deep: var(--ai-slack-deep);
+	--color-ai-warning: var(--ai-warning);
+	--color-ai-warning-bright: var(--ai-warning-bright);
+	--color-ai-warning-strong: var(--ai-warning-strong);
+	--color-ai-warning-soft: var(--ai-warning-soft);
+	--color-ai-warning-soft-hover: var(--ai-warning-soft-hover);
+	--color-ai-error: var(--ai-error);
+	--color-ai-error-strong: var(--ai-error-strong);
+	--color-ai-error-vivid: var(--ai-error-vivid);
+	--color-ai-error-bg: var(--ai-error-bg);
+	--color-ai-error-border: var(--ai-error-border);
+	--color-ai-success: var(--ai-success);
+	--color-ai-success-vivid: var(--ai-success-vivid);
+	--color-ai-terminal: var(--ai-terminal);
+	--color-ai-slate: var(--ai-slate);
+	--color-ai-slate-muted: var(--ai-slate-muted);
+	--color-ai-slate-strong: var(--ai-slate-strong);
+	--color-ai-slate-line: var(--ai-slate-line);
+	--color-ai-slate-line-strong: var(--ai-slate-line-strong);
+
+	--shadow-ai-xs: var(--ai-shadow-xs);
+	--shadow-ai-sm: var(--ai-shadow-sm);
+	--shadow-ai-sm-hover: var(--ai-shadow-sm-hover);
+	--shadow-ai-md: var(--ai-shadow-md);
+	--shadow-ai-lg: var(--ai-shadow-lg);
+	--shadow-ai-focus-inset: var(--ai-shadow-focus-inset);
+	--shadow-ai-modal: 0 24px 64px rgb(0 0 0 / 0.7);
+	--shadow-ai-overlay: 0 12px 40px rgb(0 0 0 / 0.5);
+	--shadow-ai-gold-glow: 0 4px 16px -4px rgb(232 168 71 / 0.45);
+	--shadow-ai-gold-btn: 0 2px 0 rgb(146 89 15 / 0.18), 0 8px 20px -6px rgb(253 224 169 / 0.55);
+	--shadow-ai-gold-btn-hover: 0 2px 0 rgb(146 89 15 / 0.22), 0 12px 28px -6px rgb(253 224 169 / 0.75);
+	--shadow-ai-gold-ring: 0 0 20px rgb(253 224 169 / 0.3);
+	--shadow-ai-gold-ring-hover: 0 0 28px rgb(253 224 169 / 0.5);
+	--shadow-ai-focus-gold: 0 0 0 3px rgb(201 154 74 / 0.1);
+	--shadow-ai-focus-gold-dark: 0 0 0 3px rgb(253 224 169 / 0.05);
+	--shadow-ai-halo-faint: 0 8px 24px rgb(253 224 169 / 0.08);
+	--shadow-ai-halo: 0 8px 24px rgb(253 224 169 / 0.15);
+	--shadow-ai-halo-strong: 0 8px 32px rgb(253 224 169 / 0.4);
+	--shadow-ai-halo-bright: 0 8px 32px rgb(253 224 169 / 0.5);
+	--shadow-ai-beacon-soft: 0px 0px 40px 0px rgb(253 224 169 / 0.7);
+	--shadow-ai-beacon: 0px 0px 50px 0px rgb(253 224 169 / 0.8);
+	--shadow-ai-gold-wash: 0 24px 64px rgb(253 224 169 / 0.2);
+	--shadow-ai-gold-wash-faint: 0 24px 64px rgb(253 224 169 / 0.1);
+	--shadow-ai-gold-spark: 0 2px 8px rgb(253 224 169 / 0.4);
+	--shadow-ai-gold-glow-lg: 0 12px 48px rgb(253 224 169 / 0.6);
+	--shadow-ai-gold-cta: 0px 0px 30px 0px rgb(253 224 169 / 0.5), 0px 0px 1px 2px rgb(255 255 255 / 0.1);
+	--shadow-ai-purple-glow: 0px 0px 32px 0px rgb(92 92 249 / 0.5);
+	--shadow-ai-terminal: 0 0 10px rgb(0 255 65 / 0.45);
+	--shadow-ai-terminal-glow: 0 0 40px rgb(0 255 65 / 0.08);
+	--shadow-ai-terminal-inset: inset 0 0 30px rgb(0 255 65 / 0.03);
+
+	--drop-shadow-ai-gold: 0 0 20px rgb(253 224 169 / 0.4);
+	--drop-shadow-ai-terminal: 0 0 6px rgb(0 255 65 / 0.5);
+	--drop-shadow-ai-terminal-soft: 0 0 4px rgb(0 255 65 / 0.3);
+
+	/* Keyframes live in styles/llamaai.css (fadeIn, llama*) */
+	--animate-ai-fade-in: fadeIn 0.25s ease-out;
+	--animate-ai-landing-exit: llamaLandingExit 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+	--animate-ai-conversation-enter: llamaConversationEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+	--animate-ai-exchange-enter: llamaActiveExchangeEnter 0.18s ease-out both;
+}
+
+/* The LlamaAI CTA gold gradient fill (nav buttons, landing CTAs) */
+@utility bg-ai-gold-cta {
+	background-image: var(--ai-gold-gradient);
+}

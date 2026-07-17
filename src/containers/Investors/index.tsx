@@ -26,7 +26,7 @@ function ProjectComingSoon() {
 			<div className="relative w-full max-w-2xl">
 				<SkeletonTable />
 				<div className="absolute inset-0 flex items-center justify-center">
-					<span className="rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-5 py-2.5 text-sm font-semibold tracking-wide text-(--legacy-text-secondary) shadow-lg">
+					<span className="rounded-full border border-(--pro-cards-border) bg-(--pro-cards-bg) px-5 py-2.5 text-sm font-semibold tracking-wide text-(--pro-text-secondary) shadow-lg">
 						Coming Soon
 					</span>
 				</div>
@@ -125,13 +125,13 @@ function InvestorsShell({
 
 	return (
 		<CustomServerDataContext.Provider value={customServerData ?? {}}>
-			<div className="investors-dashboard col-span-full flex min-h-screen flex-col pro-dashboard bg-(--legacy-app-bg) md:flex-row">
+			<div className="investors-dashboard col-span-full flex min-h-screen flex-col pro-dashboard bg-(--pro-app-bg) md:flex-row">
 				{sidebarOpen && <div className="fixed inset-0 z-20 bg-black/60 md:hidden" onClick={closeSidebar} />}
 
-				<div className="sticky top-0 z-10 flex items-center gap-3 bg-(--legacy-app-bg) px-4 py-3 md:hidden">
+				<div className="sticky top-0 z-10 flex items-center gap-3 bg-(--pro-app-bg) px-4 py-3 md:hidden">
 					<button
 						onClick={() => setSidebarOpen(true)}
-						className="flex size-8 items-center justify-center rounded-md text-(--legacy-text-secondary) hover:bg-(--sl-hover-bg) hover:text-(--legacy-text-primary)"
+						className="flex size-8 items-center justify-center rounded-md text-(--pro-text-secondary) hover:bg-sl-hover-bg hover:text-(--pro-text-primary)"
 					>
 						<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
 							<path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -148,7 +148,7 @@ function InvestorsShell({
 					<div className="hidden flex-col items-center pb-3 md:flex">
 						<Logo href="/" />
 					</div>
-					<div className="mb-3 hidden h-px bg-(--sl-divider) md:block" />
+					<div className="mb-3 hidden h-px bg-sl-divider md:block" />
 
 					<nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
 						{visibleProjects.map((project) => {
@@ -174,8 +174,8 @@ function InvestorsShell({
 										}}
 										className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] font-semibold tracking-wide transition-colors ${
 											isActive
-												? 'text-(--sl-accent)'
-												: 'text-(--legacy-text-secondary) hover:bg-(--sl-hover-bg) hover:text-(--legacy-text-primary)'
+												? 'text-sl-accent'
+												: 'text-(--pro-text-secondary) hover:bg-sl-hover-bg hover:text-(--pro-text-primary)'
 										}`}
 									>
 										{!isSingleProtocol && (
@@ -197,14 +197,14 @@ function InvestorsShell({
 										)}
 										{project.name}
 										{project.comingSoon && (
-											<span className="ml-auto rounded-full bg-(--sl-btn-inactive-bg) px-1.5 py-0.5 text-[10px] font-normal text-(--legacy-text-tertiary)">
+											<span className="ml-auto rounded-full bg-sl-btn-inactive-bg px-1.5 py-0.5 text-[10px] font-normal text-(--pro-text-tertiary)">
 												Soon
 											</span>
 										)}
 									</button>
 
 									{isExpanded && (
-										<div className="ml-3 flex flex-col gap-0.5 border-l border-(--sl-divider) pt-1 pl-2">
+										<div className="ml-3 flex flex-col gap-0.5 border-l border-sl-divider pt-1 pl-2">
 											{(tabsByProject[project.id] ?? DEFAULT_TABS).map((tab, idx, arr) => {
 												const isNewGroup = tab.group && (idx === 0 || arr[idx - 1]?.group !== tab.group)
 												const isSoloGroup = isNewGroup && arr.filter((t) => t.group === tab.group).length === 1
@@ -213,7 +213,7 @@ function InvestorsShell({
 													<div key={tab.id}>
 														{isNewGroup && !isSoloGroup && (
 															<div
-																className={`px-3 text-[10px] font-bold tracking-[0.15em] text-(--legacy-text-tertiary) uppercase${idx === 0 ? '' : ' mt-3'}`}
+																className={`px-3 text-[10px] font-bold tracking-[0.15em] text-(--pro-text-tertiary) uppercase${idx === 0 ? '' : ' mt-3'}`}
 															>
 																{tab.group}
 															</div>
@@ -225,7 +225,7 @@ function InvestorsShell({
 																rel="noopener noreferrer"
 																title={tab.externalTooltip ?? 'Opens in a new tab on a third-party site'}
 																onClick={closeSidebar}
-																className={`flex w-full items-center gap-1.5 rounded-md px-3 py-1.5 text-left text-[12px] tracking-wide transition-colors ${isSoloGroup ? `font-semibold${idx === 0 ? '' : ' mt-3'}` : 'font-medium'} text-(--legacy-text-secondary) hover:bg-(--sl-hover-bg) hover:text-(--legacy-text-primary)`}
+																className={`flex w-full items-center gap-1.5 rounded-md px-3 py-1.5 text-left text-xs tracking-wide transition-colors ${isSoloGroup ? `font-semibold${idx === 0 ? '' : ' mt-3'}` : 'font-medium'} text-(--pro-text-secondary) hover:bg-sl-hover-bg hover:text-(--pro-text-primary)`}
 															>
 																<span className="flex-1">{tab.label}</span>
 																<svg
@@ -249,10 +249,10 @@ function InvestorsShell({
 																	setActiveTab(tab.id)
 																	closeSidebar()
 																}}
-																className={`w-full rounded-md px-3 py-1.5 text-left text-[12px] tracking-wide transition-colors ${isSoloGroup ? `font-semibold${idx === 0 ? '' : ' mt-3'}` : 'font-medium'} ${
+																className={`w-full rounded-md px-3 py-1.5 text-left text-xs tracking-wide transition-colors ${isSoloGroup ? `font-semibold${idx === 0 ? '' : ' mt-3'}` : 'font-medium'} ${
 																	resolvedTab === tab.id
-																		? 'bg-(--sl-accent-muted) text-(--sl-accent)'
-																		: 'text-(--legacy-text-secondary) hover:bg-(--sl-hover-bg) hover:text-(--legacy-text-primary)'
+																		? 'bg-sl-accent-muted text-sl-accent'
+																		: 'text-(--pro-text-secondary) hover:bg-sl-hover-bg hover:text-(--pro-text-primary)'
 																}`}
 															>
 																{tab.label}
@@ -271,7 +271,7 @@ function InvestorsShell({
 					<div className="mt-auto flex items-center justify-end pt-4">
 						<button
 							onClick={toggleTheme}
-							className="flex size-8 items-center justify-center rounded-lg text-(--legacy-text-secondary) transition-colors hover:bg-(--sl-hover-bg) hover:text-(--legacy-text-primary)"
+							className="flex size-8 items-center justify-center rounded-lg text-(--pro-text-secondary) transition-colors hover:bg-sl-hover-bg hover:text-(--pro-text-primary)"
 						>
 							{isDark ? (
 								<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -300,7 +300,7 @@ function InvestorsShell({
 
 				<div className="relative flex flex-1 flex-col gap-4 p-5 md:ml-56">
 					{showGlobalLoader && (
-						<div className="fixed inset-0 z-50 flex items-center justify-center bg-(--legacy-app-bg) md:left-56">
+						<div className="fixed inset-0 z-50 flex items-center justify-center bg-(--pro-app-bg) md:left-56">
 							<Logo animate />
 						</div>
 					)}

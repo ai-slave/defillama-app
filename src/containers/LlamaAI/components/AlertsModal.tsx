@@ -140,7 +140,7 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 								<button
 									type="button"
 									onClick={() => openCreateModal('schedule')}
-									className="flex items-center gap-1 rounded-lg bg-(--old-blue)/10 px-2.5 py-1.5 text-xs font-medium text-(--link-text) transition-colors hover:bg-(--old-blue)/20"
+									className="flex items-center gap-1 rounded-lg bg-brand/10 px-2.5 py-1.5 text-xs font-medium text-link transition-colors hover:bg-brand/20"
 								>
 									<Icon name="plus" className="size-3" />
 									New alert
@@ -149,19 +149,19 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 						}
 					/>
 
-					<div className="thin-scrollbar min-h-0 flex-1 overflow-y-auto">
+					<div className="min-h-0 flex-1 overflow-y-auto">
 						{accessState === 'loading' ? (
 							<div className="flex items-center justify-center py-16">
 								<LoadingSpinner size={24} />
 							</div>
 						) : accessState === 'sign-in' ? (
 							<div className="flex flex-col items-center gap-3 px-5 py-16 text-center">
-								<div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-500/5 ring-1 ring-amber-500/20 ring-inset">
-									<Icon name="calendar-plus" className="size-6 text-amber-500" />
+								<div className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-ai-warning-bright/20 to-ai-warning-bright/5 ring-1 ring-ai-warning-bright/20 ring-inset">
+									<Icon name="calendar-plus" className="size-6 text-ai-warning-bright" />
 								</div>
 								<div>
-									<p className="m-0 text-sm font-semibold text-(--text-primary)">Sign in to use alerts</p>
-									<p className="m-0 mt-1 text-xs text-[#777] dark:text-[#919296]">
+									<p className="m-0 text-sm font-semibold text-primary">Sign in to use alerts</p>
+									<p className="m-0 mt-1 text-xs text-ai-tertiary">
 										Create alerts and manage their delivery from one place.
 									</p>
 								</div>
@@ -170,7 +170,7 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 								</button>
 							</div>
 						) : alertsError ? (
-							<div className="px-5 py-3 text-xs text-red-500">
+							<div className="px-5 py-3 text-xs text-ai-error-vivid">
 								{alertsError instanceof Error ? alertsError.message : 'Failed to fetch alerts'}
 							</div>
 						) : null}
@@ -181,10 +181,10 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 						) : !alerts || alerts.length === 0 ? (
 							alertsError ? null : upsellActive ? (
 								<div className="flex flex-col items-center gap-3 px-5 py-16 text-center">
-									<div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-500/5 ring-1 ring-amber-500/20 ring-inset">
-										<Icon name="alert-triangle" className="size-6 text-amber-500" />
+									<div className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-ai-warning-bright/20 to-ai-warning-bright/5 ring-1 ring-ai-warning-bright/20 ring-inset">
+										<Icon name="alert-triangle" className="size-6 text-ai-warning-bright" />
 									</div>
-									<p className="text-sm text-[#666] dark:text-[#919296]">{getUpsellCopy(alertsUsage ?? null)}</p>
+									<p className="text-sm text-ai-tertiary">{getUpsellCopy(alertsUsage ?? null)}</p>
 									<BasicLink href="/subscription" className={alertPrimaryButtonClass}>
 										Upgrade to Pro
 									</BasicLink>
@@ -195,13 +195,11 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 						) : (
 							<div className="flex flex-col gap-2 p-3">
 								{upsellActive ? (
-									<div className="flex items-center justify-between gap-3 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3">
-										<p className="m-0 text-xs text-amber-700 dark:text-amber-400">
-											{getUpsellCopy(alertsUsage ?? null)}
-										</p>
+									<div className="bg-ai-warning-bright/0.06 flex items-center justify-between gap-3 rounded-xl border border-ai-warning-bright/20 px-4 py-3">
+										<p className="m-0 text-xs text-ai-warning">{getUpsellCopy(alertsUsage ?? null)}</p>
 										<BasicLink
 											href="/subscription"
-											className="shrink-0 rounded-lg bg-(--old-blue) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1a58b4]"
+											className="shrink-0 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-old-blue-deep"
 										>
 											Upgrade
 										</BasicLink>
@@ -228,11 +226,7 @@ interface AlertRowProps {
 }
 
 function AlertCard({ children }: { children: React.ReactNode }) {
-	return (
-		<div className="rounded-xl border border-black/[0.06] bg-black/[0.015] px-4 py-3.5 dark:border-white/[0.06] dark:bg-white/[0.015]">
-			{children}
-		</div>
-	)
+	return <div className="rounded-xl border border-ai-line-subtle bg-ai-wash-faint px-4 py-3.5">{children}</div>
 }
 
 const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
@@ -459,16 +453,16 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					]}
 				/>
 				{deliveryChannel === 'telegram' && !telegramLinked && (
-					<span className="text-xs text-amber-600 dark:text-amber-400">
+					<span className="text-xs text-ai-warning">
 						Telegram isn't linked yet. Link it in <SettingsIntegrationsLink />
 					</span>
 				)}
 				{deliveryChannel === 'slack' && (
 					<>
 						{slackWorkspacesQuery.isLoading ? (
-							<span className="text-xs text-[#999]">Loading workspaces…</span>
+							<span className="text-xs text-ai-muted">Loading workspaces…</span>
 						) : slackWorkspaces.length === 0 ? (
-							<span className="text-xs text-amber-600 dark:text-amber-400">
+							<span className="text-xs text-ai-warning">
 								No Slack workspaces connected. Connect one from <SettingsIntegrationsLink />
 							</span>
 						) : (
@@ -494,9 +488,9 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						{slackTeamId && (
 							<>
 								{slackChannelsQuery.isLoading ? (
-									<span className="text-xs text-[#999]">Loading channels…</span>
+									<span className="text-xs text-ai-muted">Loading channels…</span>
 								) : slackChannelsQuery.isError ? (
-									<span className="text-xs text-red-500">Failed to load channels</span>
+									<span className="text-xs text-ai-error-vivid">Failed to load channels</span>
 								) : (
 									<select
 										value={slackChannelId}
@@ -525,30 +519,30 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 
 	if (mode === 'deleting') {
 		return (
-			<div className="rounded-xl border border-red-500/20 bg-red-500/[0.04] px-4 py-3.5">
+			<div className="bg-ai-error-vivid/0.04 rounded-xl border border-ai-error-vivid/20 px-4 py-3.5">
 				<div className="flex flex-wrap items-center justify-between gap-3">
-					<p className="m-0 min-w-0 text-sm text-(--text-primary)">
+					<p className="m-0 min-w-0 text-sm text-primary">
 						Delete “{alert.title}”?
-						<span className="ml-1.5 text-xs text-[#777] dark:text-[#919296]">This can’t be undone.</span>
+						<span className="ml-1.5 text-xs text-ai-tertiary">This can’t be undone.</span>
 					</p>
 					<div className="flex shrink-0 gap-2">
 						<button
 							onClick={() => switchMode('view')}
-							className="rounded-lg px-3 py-1.5 text-xs text-[#666] transition-colors hover:bg-black/[0.05] dark:text-[#919296] dark:hover:bg-white/[0.06]"
+							className="rounded-lg px-3 py-1.5 text-xs text-ai-tertiary transition-colors hover:bg-ai-wash"
 						>
 							Cancel
 						</button>
 						<button
 							onClick={() => deleteAlertMutation.mutate(alert.id)}
 							disabled={deleteAlertMutation.isPending}
-							className="flex items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+							className="flex items-center gap-1.5 rounded-lg bg-ai-error-vivid px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-error disabled:opacity-50"
 						>
 							{deleteAlertMutation.isPending ? <LoadingSpinner size={12} /> : null}
 							Delete
 						</button>
 					</div>
 				</div>
-				{deleteErrorMessage ? <p className="mt-2 text-xs text-red-500">{deleteErrorMessage}</p> : null}
+				{deleteErrorMessage ? <p className="mt-2 text-xs text-ai-error-vivid">{deleteErrorMessage}</p> : null}
 			</div>
 		)
 	}
@@ -576,15 +570,13 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 			<AlertCard>
 				<button
 					onClick={() => setSelectedExecId(null)}
-					className="mb-3 flex items-center gap-1 text-xs font-medium text-(--link-text) hover:underline"
+					className="mb-3 flex items-center gap-1 text-xs font-medium text-link hover:underline"
 				>
 					<Icon name="arrow-left" className="size-3" />
 					Back to history
 				</button>
 				<div className="mb-3 flex items-center justify-between">
-					<span className="font-mono text-xs text-[#777] dark:text-[#919296]">
-						{formatExecDate(selectedExec.executed_at)}
-					</span>
+					<span className="font-mono text-xs text-ai-tertiary">{formatExecDate(selectedExec.executed_at)}</span>
 					<StatusChip tone={execChipTone(selectedExec.status, !!selectedExec.error_message)}>
 						{execChipLabel(selectedExec.status)}
 					</StatusChip>
@@ -597,9 +589,9 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						/>
 					</div>
 				) : selectedExec.error_message ? (
-					<p className="text-xs text-red-500">{selectedExec.error_message}</p>
+					<p className="text-xs text-ai-error-vivid">{selectedExec.error_message}</p>
 				) : (
-					<p className="text-xs text-[#999]">No content available.</p>
+					<p className="text-xs text-ai-muted">No content available.</p>
 				)}
 				{charts.length > 0
 					? charts
@@ -614,7 +606,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 							))
 					: null}
 				{selectedExec.citations?.length ? (
-					<div className="mt-3 border-t border-black/[0.05] pt-3 dark:border-white/[0.05]">
+					<div className="mt-3 border-t border-ai-line-subtle pt-3">
 						<SourcesList citations={selectedExec.citations} />
 					</div>
 				) : null}
@@ -623,10 +615,10 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 	}
 
 	const typeTileClass = !alert.enabled
-		? 'bg-black/[0.04] text-[#999] dark:bg-white/[0.05] dark:text-[#777]'
+		? 'bg-ai-wash text-ai-muted'
 		: isPriceAlert
-			? 'bg-amber-500/10 text-amber-500'
-			: 'bg-(--link-text)/10 text-(--link-text)'
+			? 'bg-ai-warning-bright/10 text-ai-warning-bright'
+			: 'bg-link/10 text-link'
 
 	return (
 		<AlertCard>
@@ -639,9 +631,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					</div>
 					<div className="min-w-0 flex-1">
 						<div className="flex items-center gap-2">
-							<h3
-								className={`truncate text-sm font-medium ${alert.enabled ? 'text-(--text-primary)' : 'text-[#888] dark:text-[#919296]'}`}
-							>
+							<h3 className={`truncate text-sm font-medium ${alert.enabled ? 'text-primary' : 'text-ai-muted'}`}>
 								{alert.title}
 							</h3>
 							{alert.last_run_status === 'error' ? <StatusChip tone="error">Error</StatusChip> : null}
@@ -649,22 +639,20 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 								<StatusChip tone="neutral">Paused</StatusChip>
 							) : null}
 						</div>
-						<p className="mt-1 truncate font-mono text-xs text-[#777] dark:text-[#919296]">
+						<p className="mt-1 truncate font-mono text-xs text-ai-tertiary">
 							{isPriceAlert && alert.trigger
 								? formatPriceAlertSummary(alert.trigger, alert.enabled, alert.armed, alert.run_count)
 								: formatScheduleExpression(alert.schedule_expression)}
 						</p>
-						{alert.condition ? (
-							<p className="mt-0.5 truncate text-xs text-amber-600 dark:text-amber-400">If: {alert.condition}</p>
-						) : null}
-						<p className="mt-1 text-xs text-[#999] dark:text-[#666]">
+						{alert.condition ? <p className="mt-0.5 truncate text-xs text-ai-warning">If: {alert.condition}</p> : null}
+						<p className="mt-1 text-xs text-ai-muted">
 							{channelLabel}
 							{isPriceAlert
 								? ` · ${alert.run_count} ${alert.run_count === 1 ? 'run' : 'runs'}`
 								: ` · ${alert.enabled ? `next run ${formatNextRun(alert.next_run_at)}` : 'paused'} · ${alert.run_count} ${alert.run_count === 1 ? 'run' : 'runs'}`}
 						</p>
 						{alert.last_run_status === 'error' && alert.last_error ? (
-							<p className="mt-1 truncate text-xs text-red-500">{alert.last_error}</p>
+							<p className="mt-1 truncate text-xs text-ai-error-vivid">{alert.last_error}</p>
 						) : null}
 					</div>
 				</div>
@@ -672,7 +660,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					{isFiredOneTimePriceAlert(alert) ? (
 						<button
 							onClick={handleRearm}
-							className="mr-1 flex items-center gap-1 rounded-lg bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-600 transition-colors hover:bg-amber-500/20 dark:text-amber-400"
+							className="mr-1 flex items-center gap-1 rounded-lg bg-ai-warning-bright/10 px-2 py-1 text-xs font-medium text-ai-warning transition-colors hover:bg-ai-warning-bright/20"
 						>
 							<Icon name="repeat" className="size-3" />
 							Re-arm
@@ -681,7 +669,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					{alert.run_count > 0 ? (
 						<button
 							onClick={handleToggleExecutions}
-							className={`${alertIconButtonClass} ${showExecutions ? 'bg-black/[0.05] text-[#1a1a1a] dark:bg-white/[0.06] dark:text-white' : ''}`}
+							className={`${alertIconButtonClass} ${showExecutions ? 'bg-ai-wash text-ai-primary' : ''}`}
 							title="View history"
 						>
 							<Icon name="clock" className="size-3.5" />
@@ -689,14 +677,14 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					) : null}
 					<button
 						onClick={() => switchMode(mode === 'editing' ? 'view' : 'editing')}
-						className={`${alertIconButtonClass} ${mode === 'editing' ? 'bg-black/[0.05] text-[#1a1a1a] dark:bg-white/[0.06] dark:text-white' : ''}`}
+						className={`${alertIconButtonClass} ${mode === 'editing' ? 'bg-ai-wash text-ai-primary' : ''}`}
 						title="Edit"
 					>
 						<Icon name="pencil" className="size-3.5" />
 					</button>
 					<button
 						onClick={() => switchMode('deleting')}
-						className="flex size-7 items-center justify-center rounded-lg text-[#999] transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-[#777]"
+						className="flex size-7 items-center justify-center rounded-lg text-ai-muted transition-colors hover:bg-ai-error-vivid/10 hover:text-ai-error-vivid"
 						title="Delete"
 					>
 						<Icon name="trash-2" className="size-3.5" />
@@ -718,21 +706,21 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 				</div>
 			</div>
 
-			{toggleErrorMessage ? <p className="mt-2 text-xs text-red-500">{toggleErrorMessage}</p> : null}
+			{toggleErrorMessage ? <p className="mt-2 text-xs text-ai-error-vivid">{toggleErrorMessage}</p> : null}
 
 			{showExecutions ? (
-				<div className="mt-3 border-t border-black/[0.05] pt-3 dark:border-white/[0.05]">
-					<p className="mb-2 label-xs tracking-wide text-[#999] uppercase dark:text-[#777]">History</p>
+				<div className="mt-3 border-t border-ai-line-subtle pt-3">
+					<p className="mb-2 label-xs tracking-wide text-tertiary uppercase">History</p>
 					{executionsQuery.isLoading ? (
 						<div className="flex justify-center py-4">
 							<LoadingSpinner size={16} />
 						</div>
 					) : executionsQuery.isError ? (
-						<p className="text-center text-xs text-red-500">
+						<p className="text-center text-xs text-ai-error-vivid">
 							{executionsQuery.error.message || 'Failed to load executions.'}
 						</p>
 					) : !executionsQuery.data || executionsQuery.data.length === 0 ? (
-						<p className="text-center text-xs text-[#999]">No executions yet.</p>
+						<p className="text-center text-xs text-ai-muted">No executions yet.</p>
 					) : (
 						<div className="flex flex-col">
 							{executionsQuery.data.map((exec) => (
@@ -740,11 +728,11 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 									key={exec.id}
 									onClick={() => setSelectedExecId(exec.id)}
 									disabled={execDetailQuery.isLoading}
-									className="flex items-center justify-between rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
+									className="flex items-center justify-between rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-ai-wash"
 								>
 									<div className="flex items-baseline gap-2">
-										<span className="font-mono text-xs text-(--text-primary)">{formatExecDate(exec.executed_at)}</span>
-										<span className="font-mono label-xs text-[#999]">{formatDuration(exec.duration_ms)}</span>
+										<span className="font-mono text-xs text-primary">{formatExecDate(exec.executed_at)}</span>
+										<span className="font-mono label-xs text-tertiary">{formatDuration(exec.duration_ms)}</span>
 									</div>
 									<StatusChip tone={execChipTone(exec.status, !!exec.error_message)}>
 										{execChipLabel(exec.status)}
@@ -758,7 +746,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 							<LoadingSpinner size={16} />
 						</div>
 					) : execDetailQuery.isError ? (
-						<p className="mt-2 text-xs text-red-500">
+						<p className="mt-2 text-xs text-ai-error-vivid">
 							{execDetailQuery.error.message || 'Failed to load execution detail.'}
 						</p>
 					) : null}
@@ -766,9 +754,9 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 			) : null}
 
 			{mode === 'editing' && isPriceAlert && alert.trigger ? (
-				<div className="mt-3 flex flex-col gap-3 border-t border-black/[0.05] pt-3 dark:border-white/[0.05]">
+				<div className="mt-3 flex flex-col gap-3 border-t border-ai-line-subtle pt-3">
 					{showRearmNote ? (
-						<p className="m-0 text-xs text-amber-600 dark:text-amber-400">
+						<p className="m-0 text-xs text-ai-warning">
 							Re-armed — if the price is still past your level, it fires again within seconds. Adjust the level below to
 							wait for the next cross.
 						</p>
@@ -836,7 +824,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 							slack_channel_name: channelName
 						})
 					}}
-					className="mt-3 flex flex-col gap-3 border-t border-black/[0.05] pt-3 dark:border-white/[0.05]"
+					className="mt-3 flex flex-col gap-3 border-t border-ai-line-subtle pt-3"
 				>
 					<input
 						name="title"
@@ -868,7 +856,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 							) : (
 								<input type="hidden" name="dayOfWeek" value={1} />
 							)}
-							<span className="text-xs text-[#999] dark:text-[#777]">at</span>
+							<span className="text-xs text-ai-muted">at</span>
 							<select
 								key={`hour-${timezone}`}
 								name="hour"
@@ -913,14 +901,14 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						<button
 							type="button"
 							onClick={() => switchMode('view')}
-							className="rounded-lg px-3 py-1.5 text-xs text-[#666] transition-colors hover:bg-black/[0.05] dark:text-[#919296] dark:hover:bg-white/[0.06]"
+							className="rounded-lg px-3 py-1.5 text-xs text-ai-tertiary transition-colors hover:bg-ai-wash"
 						>
 							Cancel
 						</button>
 						<button
 							type="submit"
 							disabled={updateAlertMutation.isPending || !deliveryReady}
-							className="flex items-center gap-1.5 rounded-lg bg-(--old-blue) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1a58b4] disabled:opacity-50"
+							className="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-old-blue-deep disabled:opacity-50"
 						>
 							{updateAlertMutation.isPending ? (
 								<LoadingSpinner size={12} />
@@ -930,7 +918,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 							Save
 						</button>
 					</div>
-					{updateErrorMessage ? <p className="text-center text-xs text-red-500">{updateErrorMessage}</p> : null}
+					{updateErrorMessage ? <p className="text-center text-xs text-ai-error-vivid">{updateErrorMessage}</p> : null}
 				</form>
 			) : null}
 		</AlertCard>

@@ -5,7 +5,7 @@ export function SqlChartUpsell() {
 	return (
 		<div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
 			<Icon name="file-lock-2" height={32} width={32} className="pro-text3" />
-			<span className="rounded-full border border-(--border-brand)/30 bg-brand/10 px-2.5 py-0.5 label-xs text-brand">
+			<span className="rounded-full border border-brand/30 bg-brand/10 px-2.5 py-0.5 label-xs text-brand">
 				API plan
 			</span>
 			<h3 className="text-lg font-semibold pro-text1">Author charts from SQL</h3>

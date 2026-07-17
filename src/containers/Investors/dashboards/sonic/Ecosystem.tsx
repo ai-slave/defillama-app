@@ -25,12 +25,12 @@ function KpiCard({
 	change?: { value: number; formatted: string }
 }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
-			<span className="text-xs font-medium tracking-wide text-(--legacy-text-label)">{label}</span>
+		<div className="flex flex-col gap-1 rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
+			<span className="text-xs font-medium tracking-wide text-(--pro-text-label)">{label}</span>
 			<div className="flex items-baseline gap-2">
-				<span className="text-2xl font-semibold text-(--legacy-text-primary)">{value}</span>
+				<span className="text-2xl font-semibold text-(--pro-text-primary)">{value}</span>
 				{change && (
-					<span className={`text-xs font-medium ${change.value >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+					<span className={`text-xs font-medium ${change.value >= 0 ? 'text-success' : 'text-error'}`}>
 						{change.formatted}
 					</span>
 				)}
@@ -41,15 +41,15 @@ function KpiCard({
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">{title}</h3>
+		<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--pro-text-label)">{title}</h3>
 			{children}
 		</div>
 	)
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-(--legacy-text-label) uppercase">{children}</h2>
+	return <h2 className="text-xs font-semibold tracking-wider text-(--pro-text-label) uppercase">{children}</h2>
 }
 
 function formatUsd(n: number): string {
@@ -66,7 +66,7 @@ function makeProtocolColumns(valueLabel: string) {
 		protocolColumnHelper.display({
 			id: 'rank',
 			header: '#',
-			cell: (info) => <span className="text-(--legacy-text-label)">{info.row.index + 1}</span>,
+			cell: (info) => <span className="text-(--pro-text-label)">{info.row.index + 1}</span>,
 			size: 40
 		}),
 		protocolColumnHelper.accessor('name', {
@@ -86,7 +86,7 @@ function makeProtocolColumns(valueLabel: string) {
 								}}
 							/>
 						) : (
-							<span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-(--sl-accent-muted) text-[10px] font-bold text-(--sl-accent)">
+							<span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sl-accent-muted text-[10px] font-bold text-sl-accent">
 								{row.name.charAt(0)}
 							</span>
 						)}
@@ -98,7 +98,7 @@ function makeProtocolColumns(valueLabel: string) {
 		}),
 		protocolColumnHelper.accessor('category', {
 			header: 'Category',
-			cell: (info) => <span className="text-(--legacy-text-label)">{info.getValue() ?? '—'}</span>,
+			cell: (info) => <span className="text-(--pro-text-label)">{info.getValue() ?? '—'}</span>,
 			size: 120
 		}),
 		protocolColumnHelper.accessor('total24h', {
@@ -140,15 +140,15 @@ function ProtocolTable({ data, valueLabel }: { data: TopProtocolEntry[]; valueLa
 	})
 
 	return (
-		<div className="overflow-x-auto rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
+		<div className="overflow-x-auto rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg)">
 			<table className="w-full">
 				<thead>
 					{table.getHeaderGroups().map((headerGroup) => (
-						<tr key={headerGroup.id} className="border-b border-(--legacy-cards-border)">
+						<tr key={headerGroup.id} className="border-b border-(--pro-cards-border)">
 							{headerGroup.headers.map((header) => (
 								<th
 									key={header.id}
-									className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-(--legacy-text-label) uppercase"
+									className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-(--pro-text-label) uppercase"
 									style={{ width: header.getSize() }}
 									onClick={header.column.getToggleSortingHandler()}
 								>
@@ -167,12 +167,9 @@ function ProtocolTable({ data, valueLabel }: { data: TopProtocolEntry[]; valueLa
 				</thead>
 				<tbody>
 					{table.getRowModel().rows.map((row) => (
-						<tr
-							key={row.id}
-							className="border-b border-(--legacy-cards-border) last:border-b-0 hover:bg-(--sl-hover-bg)"
-						>
+						<tr key={row.id} className="border-b border-(--pro-cards-border) last:border-b-0 hover:bg-sl-hover-bg">
 							{row.getVisibleCells().map((cell) => (
-								<td key={cell.id} className="px-4 py-2.5 text-sm text-(--legacy-text-primary)">
+								<td key={cell.id} className="px-4 py-2.5 text-sm text-(--pro-text-primary)">
 									{typeof cell.column.columnDef.cell === 'function'
 										? cell.column.columnDef.cell(cell.getContext())
 										: (cell.getValue() as string)}
@@ -183,22 +180,22 @@ function ProtocolTable({ data, valueLabel }: { data: TopProtocolEntry[]; valueLa
 				</tbody>
 			</table>
 			{table.getPageCount() > 1 && (
-				<div className="flex items-center justify-between border-t border-(--legacy-cards-border) px-4 py-3">
-					<span className="text-xs text-(--legacy-text-label)">
+				<div className="flex items-center justify-between border-t border-(--pro-cards-border) px-4 py-3">
+					<span className="text-xs text-(--pro-text-label)">
 						Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
 					</span>
 					<div className="flex gap-1">
 						<button
 							onClick={() => table.previousPage()}
 							disabled={!table.getCanPreviousPage()}
-							className="rounded-md border border-(--legacy-cards-border) px-3 py-1 text-xs text-(--legacy-text-secondary) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-40"
+							className="rounded-md border border-(--pro-cards-border) px-3 py-1 text-xs text-(--pro-text-secondary) transition-colors hover:bg-sl-hover-bg disabled:opacity-40"
 						>
 							Prev
 						</button>
 						<button
 							onClick={() => table.nextPage()}
 							disabled={!table.getCanNextPage()}
-							className="rounded-md border border-(--legacy-cards-border) px-3 py-1 text-xs text-(--legacy-text-secondary) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-40"
+							className="rounded-md border border-(--pro-cards-border) px-3 py-1 text-xs text-(--pro-text-secondary) transition-colors hover:bg-sl-hover-bg disabled:opacity-40"
 						>
 							Next
 						</button>
@@ -234,8 +231,8 @@ function AssetBreakdownSection({
 	}
 
 	return (
-		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
-			<h3 className="mb-4 text-sm font-medium text-(--legacy-text-label)">{title}</h3>
+		<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
+			<h3 className="mb-4 text-sm font-medium text-(--pro-text-label)">{title}</h3>
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				<div className="min-h-[320px]">
 					<PieChart
@@ -254,25 +251,25 @@ function AssetBreakdownSection({
 							const isOpen = expandedRows.has(idx)
 							const color = pieColors[cat.name] || '#8b949e'
 							return (
-								<div key={cat.name} className="border-b border-(--legacy-cards-border) last:border-b-0">
+								<div key={cat.name} className="border-b border-(--pro-cards-border) last:border-b-0">
 									<div
 										className={`flex cursor-pointer items-center gap-2 py-2.5 ${hasChildren ? 'hover:opacity-80' : ''}`}
 										onClick={() => hasChildren && toggleRow(idx)}
 									>
-										<span className="w-4 shrink-0 text-[10px] text-(--legacy-text-label)">
+										<span className="w-4 shrink-0 text-[10px] text-(--pro-text-label)">
 											{hasChildren ? (isOpen ? '\u25BC' : '\u25B6') : ''}
 										</span>
 										<span className="inline-block size-2 shrink-0 rounded-full" style={{ background: color }} />
-										<span className="min-w-0 flex-1 truncate text-sm text-(--legacy-text-primary) capitalize">
+										<span className="min-w-0 flex-1 truncate text-sm text-(--pro-text-primary) capitalize">
 											{cat.name}
 										</span>
-										<span className="shrink-0 text-sm font-semibold text-(--legacy-text-primary)">{cat.formatted}</span>
-										<span className="w-12 shrink-0 text-right text-xs text-(--legacy-text-label)">{cat.pct}%</span>
+										<span className="shrink-0 text-sm font-semibold text-(--pro-text-primary)">{cat.formatted}</span>
+										<span className="w-12 shrink-0 text-right text-xs text-(--pro-text-label)">{cat.pct}%</span>
 									</div>
 									{isOpen && (
 										<div className="pb-2 pl-8">
 											{breakdownEntries.map(([symbol, value]) => (
-												<div key={symbol} className="flex items-center py-1.5 text-xs text-(--legacy-text-label)">
+												<div key={symbol} className="flex items-center py-1.5 text-xs text-(--pro-text-label)">
 													<span className="min-w-0 flex-1 truncate">{symbol}</span>
 													<span className="shrink-0">{formatUsd(value)}</span>
 												</div>
@@ -283,9 +280,9 @@ function AssetBreakdownSection({
 							)
 						})}
 					</div>
-					<div className="mt-3 flex items-center justify-between border-t border-(--legacy-cards-border) pt-3">
-						<span className="text-sm text-(--legacy-text-label)">Total</span>
-						<span className="text-sm font-bold text-(--legacy-text-primary)">{totalFormatted}</span>
+					<div className="mt-3 flex items-center justify-between border-t border-(--pro-cards-border) pt-3">
+						<span className="text-sm text-(--pro-text-label)">Total</span>
+						<span className="text-sm font-bold text-(--pro-text-primary)">{totalFormatted}</span>
 					</div>
 				</div>
 			</div>
@@ -408,8 +405,8 @@ export default function Ecosystem() {
 
 			{/* Stablecoin Supply Breakdown */}
 			{data.stablecoins.breakdown.length > 0 && (
-				<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
-					<h3 className="mb-4 text-sm font-medium text-(--legacy-text-label)">Stablecoin Supply Breakdown</h3>
+				<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
+					<h3 className="mb-4 text-sm font-medium text-(--pro-text-label)">Stablecoin Supply Breakdown</h3>
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div className="min-h-[320px]">
 							<PieChart
@@ -427,21 +424,19 @@ export default function Ecosystem() {
 									return (
 										<div
 											key={coin.name}
-											className="flex items-center gap-2 border-b border-(--legacy-cards-border) py-2.5 last:border-b-0"
+											className="flex items-center gap-2 border-b border-(--pro-cards-border) py-2.5 last:border-b-0"
 										>
 											<span className="inline-block size-2 shrink-0 rounded-full" style={{ background: color }} />
-											<span className="min-w-0 flex-1 truncate text-sm text-(--legacy-text-primary)">{coin.name}</span>
-											<span className="shrink-0 text-sm font-semibold text-(--legacy-text-primary)">
-												{coin.formatted}
-											</span>
-											<span className="w-12 shrink-0 text-right text-xs text-(--legacy-text-label)">{coin.pct}%</span>
+											<span className="min-w-0 flex-1 truncate text-sm text-(--pro-text-primary)">{coin.name}</span>
+											<span className="shrink-0 text-sm font-semibold text-(--pro-text-primary)">{coin.formatted}</span>
+											<span className="w-12 shrink-0 text-right text-xs text-(--pro-text-label)">{coin.pct}%</span>
 										</div>
 									)
 								})}
 							</div>
-							<div className="mt-3 flex items-center justify-between border-t border-(--legacy-cards-border) pt-3">
-								<span className="text-sm text-(--legacy-text-label)">Total</span>
-								<span className="text-sm font-bold text-(--legacy-text-primary)">
+							<div className="mt-3 flex items-center justify-between border-t border-(--pro-cards-border) pt-3">
+								<span className="text-sm text-(--pro-text-label)">Total</span>
+								<span className="text-sm font-bold text-(--pro-text-primary)">
 									{data.stablecoins.breakdownTotalFormatted}
 								</span>
 							</div>

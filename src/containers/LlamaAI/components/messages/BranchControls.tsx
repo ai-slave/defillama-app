@@ -15,7 +15,7 @@ export function BranchArrows({
 	const goPrev = currentVersion > 1 ? siblings[currentVersion - 2]?.leafMessageId : null
 	const goNext = currentVersion < totalVersions ? siblings[currentVersion]?.leafMessageId : null
 	const arrowClass =
-		'rounded-md p-1.5 text-[#999] transition-colors hover:bg-black/5 hover:text-[#444] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[#999] dark:text-[#666] dark:hover:bg-white/5 dark:hover:text-[#ccc] dark:disabled:hover:text-[#666]'
+		'rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-secondary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-ai-muted'
 	return (
 		<div className="flex items-center gap-0.5">
 			<Tooltip
@@ -32,7 +32,7 @@ export function BranchArrows({
 			>
 				<Icon name="chevron-left" height={14} width={14} />
 			</Tooltip>
-			<span className="px-0.5 text-[11px] text-[#999] tabular-nums dark:text-[#666]">
+			<span className="px-0.5 text-[11px] text-ai-muted tabular-nums">
 				{currentVersion}
 				<span className="opacity-50">/{totalVersions}</span>
 			</span>

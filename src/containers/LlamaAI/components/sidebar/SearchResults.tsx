@@ -17,10 +17,10 @@ function SourceBadge({ type }: { type: SearchMatch['source_type'] }) {
 	const label = type === 'user_message' ? 'You' : type === 'session_title' ? 'Title' : 'AI'
 	const colorClass =
 		type === 'user_message'
-			? 'bg-[#1853A8]/10 text-[#1853A8] dark:bg-[#4B86DB]/15 dark:text-[#4B86DB]'
+			? 'bg-ai-blue-deep/10 text-ai-blue-deep'
 			: type === 'session_title'
-				? 'bg-[#8B5CF6]/10 text-[#8B5CF6] dark:bg-[#A78BFA]/15 dark:text-[#A78BFA]'
-				: 'bg-[#666]/10 text-[#666] dark:bg-[#919296]/15 dark:text-[#919296]'
+				? 'bg-ai-violet/10 text-ai-violet'
+				: 'bg-ai-wash text-ai-tertiary'
 	return <span className={`shrink-0 rounded-sm px-1 py-0.5 text-[9px] font-medium ${colorClass}`}>{label}</span>
 }
 
@@ -39,7 +39,7 @@ export const SearchResults = memo(function SearchResults({
 }) {
 	if (isSearching && results.length === 0) {
 		return (
-			<div className="flex items-center justify-center p-6 text-xs text-[#999]">
+			<div className="flex items-center justify-center p-6 text-xs text-ai-muted">
 				<Icon name="search" height={12} width={12} className="mr-2 animate-pulse" />
 				Searching...
 			</div>
@@ -48,7 +48,7 @@ export const SearchResults = memo(function SearchResults({
 
 	if (!isSearching && results.length === 0 && query.trim()) {
 		return (
-			<p className="rounded-sm border border-dashed border-[#666]/50 p-4 text-center text-xs text-[#666] dark:border-[#919296]/50 dark:text-[#919296]">
+			<p className="rounded-sm border border-dashed border-ai-line-strong p-4 text-center text-xs text-ai-tertiary">
 				No results for &ldquo;{query}&rdquo;
 			</p>
 		)
@@ -57,16 +57,16 @@ export const SearchResults = memo(function SearchResults({
 	return (
 		<div className="flex flex-col gap-1.5">
 			{results.map((result) => (
-				<div key={result.session_id} className="flex flex-col rounded-md bg-[#f5f5f5] dark:bg-[#1a1a1b]">
+				<div key={result.session_id} className="flex flex-col rounded-md bg-ai-surface-muted">
 					<button
 						type="button"
 						onClick={() => onSessionClick(result.session_id)}
 						className="flex items-center justify-between px-2.5 py-1.5 text-left"
 					>
-						<span className="min-w-0 truncate text-[11px] font-medium text-[#333] dark:text-[#e0e0e0]">
+						<span className="min-w-0 truncate text-[11px] font-medium text-ai-secondary">
 							{result.session_title || 'Untitled'}
 						</span>
-						<span className="ml-2 shrink-0 text-[10px] text-[#999]">{formatTimeAgo(result.last_activity)}</span>
+						<span className="ml-2 shrink-0 text-[10px] text-ai-muted">{formatTimeAgo(result.last_activity)}</span>
 					</button>
 					<div className="flex flex-col gap-0.5 px-1.5 pb-1.5">
 						{result.matches
@@ -76,10 +76,10 @@ export const SearchResults = memo(function SearchResults({
 									key={`${result.session_id}-${match.message_id}-${i}`}
 									type="button"
 									onClick={() => match.message_id && onMatchClick(result.session_id, match.message_id)}
-									className="flex items-start gap-1.5 rounded-sm px-1.5 py-1 text-left transition-colors hover:bg-[#e8e8e8] dark:hover:bg-[#2a2a2b]"
+									className="flex items-start gap-1.5 rounded-sm px-1.5 py-1 text-left transition-colors hover:bg-ai-surface-muted"
 								>
 									<SourceBadge type={match.source_type} />
-									<span className="line-clamp-2 min-w-0 text-[10px] leading-relaxed text-[#555] dark:text-[#aaa]">
+									<span className="line-clamp-2 min-w-0 text-[10px] leading-relaxed text-ai-secondary">
 										{match.content_preview}
 									</span>
 								</button>
@@ -88,7 +88,7 @@ export const SearchResults = memo(function SearchResults({
 				</div>
 			))}
 			{isSearching ? (
-				<div className="flex items-center justify-center py-2 text-[10px] text-[#999]">
+				<div className="flex items-center justify-center py-2 text-[10px] text-ai-muted">
 					<Icon name="search" height={10} width={10} className="mr-1.5 animate-pulse" />
 					Loading more...
 				</div>

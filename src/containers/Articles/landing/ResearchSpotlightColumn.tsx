@@ -34,7 +34,7 @@ export function ResearchSpotlightColumn({ title, articles, sharedHeight }: Resea
 	return (
 		<div id="spotlight">
 			<div>
-				<div className="mb-[26px]">
+				<div className="mb-6.5">
 					<TitleLine title={title} />
 				</div>
 				<div className="flex flex-col gap-y-16">
@@ -62,9 +62,9 @@ export function ResearchSpotlightColumn({ title, articles, sharedHeight }: Resea
 											) : null}
 										</div>
 
-										<div className="flex grow flex-col justify-between gap-[7px] pr-3">
+										<div className="flex grow flex-col justify-between gap-1.75 pr-3">
 											<div
-												className={`line-clamp-3 leading-[135%] font-medium text-[#0d1e3b] group-hover:text-[#0c2956] group-hover:opacity-70 dark:text-white dark:group-hover:text-white/70 ${'text-[16px]'}`}
+												className={`line-clamp-3 leading-[135%] font-medium text-(--research-navy-soft) group-hover:text-(--research-navy-soft) group-hover:opacity-70 dark:text-ai-primary dark:group-hover:text-on-brand/70 ${'text-base'}`}
 											>
 												{i === 0 && (
 													<InViewAnalytics
@@ -73,7 +73,7 @@ export function ResearchSpotlightColumn({ title, articles, sharedHeight }: Resea
 												)}
 												{article.title}
 											</div>
-											<div className="text-[12px] font-bold text-[#3A8BFF] dark:text-white/80">
+											<div className="text-xs font-bold text-(--research-blue) dark:text-on-brand/80">
 												{formatDate(article.displayDate ?? article.publishedAt)}
 											</div>
 										</div>
@@ -81,7 +81,7 @@ export function ResearchSpotlightColumn({ title, articles, sharedHeight }: Resea
 								))}
 							</div>
 						</div>
-						<div className="mt-auto shrink-0 pt-[18px] text-right">
+						<div className="mt-auto shrink-0 pt-4.5 text-right">
 							<ReadMoreLink url="/research?section=spotlight" title="View all spotlight" />
 						</div>
 					</div>

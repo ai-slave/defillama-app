@@ -27,13 +27,13 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 	return (
 		<div
 			data-walkthrough="mode-toggle"
-			className="flex items-center rounded-lg border border-[#EEE] bg-white p-0.5 dark:border-[#232628] dark:bg-[#131516]"
+			className="flex items-center rounded-lg border border-ai-line bg-ai-surface-card p-0.5"
 		>
 			<Tooltip
 				content={
 					<div className="flex max-w-[200px] flex-col gap-1">
-						<span className="font-medium text-[#1a1a1a] dark:text-white">Quick Mode</span>
-						<span className="text-[#666] dark:text-[#999]">Fast responses for most queries</span>
+						<span className="font-medium text-ai-primary">Quick Mode</span>
+						<span className="text-ai-tertiary">Fast responses for most queries</span>
 					</div>
 				}
 				render={
@@ -44,7 +44,7 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 						data-active={mode === 'quick'}
 					/>
 				}
-				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-[#878787] data-[active=true]:bg-(--legacy-old-blue)/10 data-[active=true]:text-[#1853A8] dark:text-[#878787] dark:data-[active=true]:bg-(--legacy-old-blue)/15 dark:data-[active=true]:text-[#4B86DB]"
+				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ai-tertiary data-[active=true]:bg-brand/10 data-[active=true]:text-ai-blue-deep dark:data-[active=true]:bg-brand/15"
 			>
 				<Icon name="sparkles" height={12} width={12} />
 				<span>Quick</span>
@@ -52,9 +52,9 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 			<Tooltip
 				content={
 					<div className="flex max-w-[220px] flex-col gap-1.5">
-						<span className="font-medium text-[#1a1a1a] dark:text-white">Fact-checked</span>
-						<span className="text-[#666] dark:text-[#999]">Two-pass verification with cited evidence</span>
-						<span className="border-t border-[#eee] pt-1.5 text-[11px] text-[#555] dark:border-[#333] dark:text-[#aaa]">
+						<span className="font-medium text-ai-primary">Fact-checked</span>
+						<span className="text-ai-tertiary">Two-pass verification with cited evidence</span>
+						<span className="border-t border-ai-line pt-1.5 text-[11px] text-ai-secondary">
 							{factCheckedUsage?.period === 'unlimited'
 								? 'Unlimited answers'
 								: factCheckedBlocked
@@ -73,7 +73,7 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 						data-active={mode === 'fact_checked'}
 					/>
 				}
-				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-[#878787] data-[active=true]:bg-(--legacy-old-blue)/10 data-[active=true]:text-[#1853A8] dark:text-[#878787] dark:data-[active=true]:bg-(--legacy-old-blue)/15 dark:data-[active=true]:text-[#4B86DB]"
+				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ai-tertiary data-[active=true]:bg-brand/10 data-[active=true]:text-ai-blue-deep dark:data-[active=true]:bg-brand/15"
 			>
 				<Icon name="check" height={12} width={12} />
 				<span>Fact-checked</span>
@@ -86,11 +86,9 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 			<Tooltip
 				content={
 					<div className="flex max-w-[220px] flex-col gap-1.5">
-						<span className="font-medium text-[#1a1a1a] dark:text-white">Research Mode</span>
-						<span className="text-[#666] dark:text-[#999]">
-							Comprehensive reports with in-depth analysis and citations
-						</span>
-						<span className="border-t border-[#eee] pt-1.5 text-[11px] text-[#555] dark:border-[#333] dark:text-[#aaa]">
+						<span className="font-medium text-ai-primary">Research Mode</span>
+						<span className="text-ai-tertiary">Comprehensive reports with in-depth analysis and citations</span>
+						<span className="border-t border-ai-line pt-1.5 text-[11px] text-ai-secondary">
 							{researchUsage?.period === 'unlimited'
 								? 'Unlimited reports'
 								: researchUsage?.period === 'blocked'
@@ -111,7 +109,7 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 						data-active={mode === 'research'}
 					/>
 				}
-				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-[#878787] data-[active=true]:bg-(--legacy-old-blue)/10 data-[active=true]:text-[#1853A8] dark:text-[#878787] dark:data-[active=true]:bg-(--legacy-old-blue)/15 dark:data-[active=true]:text-[#4B86DB]"
+				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ai-tertiary data-[active=true]:bg-brand/10 data-[active=true]:text-ai-blue-deep dark:data-[active=true]:bg-brand/15"
 			>
 				<Icon name="search" height={12} width={12} />
 				<span>Research</span>

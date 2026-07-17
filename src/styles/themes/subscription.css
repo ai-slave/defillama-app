@@ -1,24 +1,92 @@
 /* ----------------------------------------------------------------------------
-   LEGACY — Subscription / Account palette (quarantined, do not extend)
+   Subscription product theme (also Sheets, Account, Downloads surfaces).
 
-   Pre-refresh tokens used only by subscription, account, sign-in and related
-   surfaces (containers/Subscription, containers/Account, Downloads, a few
-   modals). Values were copied from an older revision of the Figma palette
-   and have diverged from the current Llama Design System library — do not
-   treat them as design-system tokens and do not add new consumers.
-
-   These surfaces migrate to src/styles/semantics.css tokens in later PRs of
-   the theme refresh; this file is deleted when the last consumer is gone.
-
-   Moved verbatim from tailwind.css (no value changes).
+   A standing product palette, not design-system tokens: values were frozen
+   from what the surfaces shipped with. The ratchet tracks sub-* usage in
+   core app code so the theme never leaks outside its product. If these
+   surfaces ever adopt the Llama Design System, repoint the values here and
+   delete the file.
 ---------------------------------------------------------------------------- */
 
 @theme {
+	--shadow-sub-live: 0 0 6px rgb(74 222 128 / 0.55);
+	--shadow-sub-google: 0 4px 16px rgb(52 168 83 / 0.2);
+	--shadow-sub-google-deep: 0 4px 16px rgb(33 115 70 / 0.2);
+	--shadow-sub-purple-glow: 0 0 24px rgb(92 92 249 / 0.2);
+	--shadow-sub-purple-aura: 0 0 150px 75px rgb(92 92 249 / 0.15), 0 0 75px 25px rgb(123 123 255 / 0.1);
+	--shadow-sub-focus-ring: 0 0 0 3px color-mix(in srgb, var(--bg-brand) 15%, transparent);
+	--shadow-sub-brand-ring: 0 0 0 2px color-mix(in oklch, var(--sub-brand-primary) 10%, transparent);
 	--color-sub-warning-text-light: #a15d23;
 	--color-sub-warning-text-dark: #ffa455;
 	--color-sub-warning-border-light: #ffd2aa;
 	--color-sub-warning-border-dark: #422b1b;
 	--color-sub-warning-bg: #ff8e2b;
+
+	/* Registered so callsites use the text-sub-… and bg-sub-… utilities instead of the paren form */
+	--color-sub-blue: var(--sub-blue);
+	--color-sub-border-light: var(--sub-border-light);
+	--color-sub-border-muted: var(--sub-border-muted);
+	--color-sub-border-slate-100: var(--sub-border-slate-100);
+	--color-sub-border-slate-150: var(--sub-border-slate-150);
+	--color-sub-border-slate-200: var(--sub-border-slate-200);
+	--color-sub-border-strong: var(--sub-border-strong);
+	--color-sub-border-strong-muted: var(--sub-border-strong-muted);
+	--color-sub-brand-primary: var(--sub-brand-primary);
+	--color-sub-brand-primary-alpha-5: var(--sub-brand-primary-alpha-5);
+	--color-sub-brand-primary-alpha-8: var(--sub-brand-primary-alpha-8);
+	--color-sub-brand-secondary: var(--sub-brand-secondary);
+	--color-sub-brand-soft: var(--sub-brand-soft);
+	--color-sub-brand-softest: var(--sub-brand-softest);
+	--color-sub-card: var(--sub-card);
+	--color-sub-card-raised: var(--sub-card-raised);
+	--color-sub-desktop-table-border: var(--sub-desktop-table-border);
+	--color-sub-desktop-table-header-bg: var(--sub-desktop-table-header-bg);
+	--color-sub-desktop-table-section-bg: var(--sub-desktop-table-section-bg);
+	--color-sub-desktop-text-muted: var(--sub-desktop-text-muted);
+	--color-sub-footer-text: var(--sub-footer-text);
+	--color-sub-green-400: var(--sub-green-400);
+	--color-sub-green-600: var(--sub-green-600);
+	--color-sub-icon-muted: var(--sub-icon-muted);
+	--color-sub-icon-muted-dark: var(--sub-icon-muted-dark);
+	--color-sub-ink: var(--sub-ink);
+	--color-sub-ink-primary: var(--sub-ink-primary);
+	--color-sub-line: var(--sub-line);
+	--color-sub-mobile-table-border: var(--sub-mobile-table-border);
+	--color-sub-mobile-table-header-bg: var(--sub-mobile-table-header-bg);
+	--color-sub-mobile-table-section-bg: var(--sub-mobile-table-section-bg);
+	--color-sub-mobile-text-muted: var(--sub-mobile-text-muted);
+	--color-sub-navy: var(--sub-navy);
+	--color-sub-orange: var(--sub-orange);
+	--color-sub-orange-400: var(--sub-orange-400);
+	--color-sub-overlay-dark: var(--sub-overlay-dark);
+	--color-sub-overlay-light: var(--sub-overlay-light);
+	--color-sub-purple-500: var(--sub-purple-500);
+	--color-sub-purple-hover: var(--sub-purple-hover);
+	--color-sub-purple-soft: var(--sub-purple-soft);
+	--color-sub-social-icon: var(--sub-social-icon);
+	--color-sub-success: var(--sub-success);
+	--color-sub-surface-dark: var(--sub-surface-dark);
+	--color-sub-surface-elevated-2: var(--sub-surface-elevated-2);
+	--color-sub-surface-page: var(--sub-surface-page);
+	--color-sub-surface-panel: var(--sub-surface-panel);
+	--color-sub-surface-slate-10: var(--sub-surface-slate-10);
+	--color-sub-surface-slate-50: var(--sub-surface-slate-50);
+	--color-sub-text-muted: var(--sub-text-muted);
+	--color-sub-text-muted-dark: var(--sub-text-muted-dark);
+	--color-sub-text-navy-700: var(--sub-text-navy-700);
+	--color-sub-text-navy-900: var(--sub-text-navy-900);
+	--color-sub-text-primary-dark: var(--sub-text-primary-dark);
+	--color-sub-text-secondary: var(--sub-text-secondary);
+	--color-sub-text-secondary-dark: var(--sub-text-secondary-dark);
+	--color-sub-text-slate-300: var(--sub-text-slate-300);
+	--color-sub-text-slate-400: var(--sub-text-slate-400);
+	--color-sub-text-slate-500: var(--sub-text-slate-500);
+	--color-sub-text-slate-600: var(--sub-text-slate-600);
+	--color-sub-text-slate-900: var(--sub-text-slate-900);
+	--color-sub-text-slate-950: var(--sub-text-slate-950);
+	--color-sub-text-soft: var(--sub-text-soft);
+	--color-sub-violet: var(--sub-violet);
+	--color-sub-violet-bright: var(--sub-violet-bright);
 }
 
 @layer base {
@@ -37,6 +105,22 @@
 		--sub-neutral-100: #e0e0ee;
 		--sub-neutral-50: #eeeef4;
 		--sub-white: #ffffff;
+
+		/* Frozen residue of the subscription/sheets dark-surface values that
+		   were hardcoded in class names (value-preserving; not design tokens) */
+		--sub-line: #39393e;
+		--sub-text-soft: #b4b7bc;
+		--sub-card: #222429;
+		--sub-card-raised: #2a2b30;
+		--sub-ink: #1a1b1f;
+		--sub-navy: #0a1628;
+		--sub-orange: #f2994a;
+		--sub-success: #4ade80;
+		--sub-blue: #5a9fff;
+		--sub-purple-hover: #4a4af0;
+		--sub-purple-soft: #8a8aff;
+		--sub-violet: #6b4bd2;
+		--sub-violet-bright: #b794ff;
 
 		--sub-purple-950: #090919;
 		--sub-purple-900: #121232;

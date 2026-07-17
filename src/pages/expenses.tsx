@@ -91,7 +91,7 @@ const columns = [
 					<span className="flex items-center gap-1 overflow-hidden">
 						<BasicLink
 							href={`/protocol/${slug(value)}`}
-							className="min-w-0 truncate text-sm font-medium text-(--legacy-link-text) hover:underline"
+							className="min-w-0 truncate text-sm font-medium text-link hover:underline"
 						>
 							{value}
 						</BasicLink>

@@ -1,0 +1,16 @@
+{
+	"bg-(--bg-primary)": "",
+	"bg-(--bg-primary)/40": "",
+	"focus-visible:bg-(--bg-primary)": "",
+	"hover:bg-(--bg-primary)": "",
+	"bg-(--cards-bg-alt)": "",
+	"bg-(--cards-bg-alt)/30": "",
+	"bg-(--cards-bg-alt)/40": "",
+	"bg-(--cards-bg-alt)/50": "",
+	"bg-(--cards-bg-alt)/60": "",
+	"data-active-item:bg-(--cards-bg-alt)": "",
+	"focus-visible:bg-(--cards-bg-alt)": "",
+	"hover:bg-(--cards-bg-alt)": "",
+	"hover:bg-(--cards-bg-alt)/50": "",
+	"hover:bg-(--cards-bg-alt)/80": ""
+}

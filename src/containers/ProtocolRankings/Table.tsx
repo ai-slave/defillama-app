@@ -617,7 +617,7 @@ const columns = [
 						<span className="flex items-center gap-1 overflow-hidden">
 							<BasicLink
 								href={`/protocol/${row.original.slug}`}
-								className="min-w-0 truncate text-sm font-medium text-(--legacy-link-text) hover:underline"
+								className="min-w-0 truncate text-sm font-medium text-link hover:underline"
 							>
 								{value}
 							</BasicLink>
@@ -650,7 +650,7 @@ const columns = [
 			const href = getCategoryRoute(slug(category))
 
 			return (
-				<BasicLink href={href} className="text-sm font-medium text-(--legacy-link-text)">
+				<BasicLink href={href} className="text-sm font-medium text-link">
 					{category}
 				</BasicLink>
 			)

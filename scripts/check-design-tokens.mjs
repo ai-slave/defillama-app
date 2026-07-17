@@ -59,7 +59,7 @@ function isExcludedProductFile(file) {
 // such a utility now renders a currentColor border (near-white in dark mode)
 // unless a color source accompanies it. This matcher scans plain string
 // literals only: template literals with ${} interpolation and strings carrying
-// legacy pro-* classes (which set border-color) are assumed to supply a color,
+// pro-* theme classes (which set border-color) are assumed to supply a color,
 // zero-width utilities (border-0) render nothing, and class examples inside
 // block comments aren't consumers. The baseline covers audited sites whose
 // color arrives via an inline style={{ borderColor }} at the call site.
@@ -149,8 +149,10 @@ function matchDeprecatedTailwindSpelling(content) {
 
 const NAMED_TYPOGRAPHY_UTILITY =
 	/^(?:heading-(?:lg|sm|xs)|label-(?:xl|lg|md|sm|xs)|body-(?:xl|lg|md|sm|xs)|mono-(?:xl|md(?:-bold)?|sm(?:-bold)?))$/
+// text-[…] counts as typography only when the arbitrary value is not a color
+// (text-[#999], text-[rgba(…)], text-[var(--x)] set color, not size).
 const RAW_TYPOGRAPHY_UTILITY =
-	/^(?:text-(?:xs|sm|base|lg|xl|[2-9]xl|\[[^\]]+\])|font-(?:thin|extralight|light|normal|medium|semibold|bold|extrabold|black|jetbrains|inter|\[[^\]]+\])|leading-.+)$/
+	/^(?:text-(?:xs|sm|base|lg|xl|[2-9]xl|\[(?!#|rgba?\(|hsla?\(|oklch\(|var\(|--|color)[^\]]+\])|font-(?:thin|extralight|light|normal|medium|semibold|bold|extrabold|black|jetbrains|inter|\[[^\]]+\])|leading-.+)$/
 const VARIANT_UTILITY = /^((?:[\w[\]()&>~.*-]+:)*)((?:[^\s:]+))$/
 
 // A named typography utility owns family (where applicable), size, line-height,
@@ -210,9 +212,43 @@ const RULES = [
 		pattern: /\bthin-scrollbar\b/g
 	},
 	{
-		id: 'legacy-token-reference',
-		description: 'legacy token references are quarantined; use semantic utilities in new code',
-		pattern: /--legacy-[a-zA-Z0-9-]+/g
+		id: 'interim-token',
+		description:
+			'--interim-* app token (a value awaiting a design-library token) — do not introduce new ones; consume design-system or product-theme tokens instead',
+		pattern: /--interim-[a-z0-9-]+/g
+	},
+	{
+		id: 'product-token-leak',
+		description:
+			'product-theme token (--pro/--sub/--sl/--ai/--research/--callout) referenced in core app code — product palettes must not leak outside their surfaces',
+		pattern: /--(?:pro|sub|sl|ai|research|callout)-[a-zA-Z0-9-]+/g,
+		productLeak: true
+	},
+	{
+		id: 'builtin-palette-color',
+		description:
+			'stock Tailwind palette color (red-500, black/[0.06], white, …) — use a semantic token or a quarantined surface variable',
+		pattern:
+			/(?<![\w-])(?:text|bg|border|from|to|via|fill|stroke|ring|outline|decoration|accent|caret|divide|shadow|placeholder)-(?:(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-\d{2,3}|black|white)(?:\/(?:\d{1,3}|\[[^\]]+\]))?(?![\w-])/g
+	},
+	{
+		id: 'arbitrary-color-function',
+		description: 'arbitrary rgb()/hsl()/oklch() color in a utility class (same contract as hex-in-classname)',
+		pattern:
+			/(?:text|bg|border|from|to|via|fill|stroke|ring|shadow|outline|decoration|accent|caret|divide|placeholder)-\[(?:(?:rgba?|hsla?|oklch|oklab|color-mix)\(|color:)/g
+	},
+	{
+		id: 'arbitrary-shadow',
+		description: 'arbitrary box-shadow value (shadows come from the elevation/effect tokens)',
+		pattern: /(?<![\w-])shadow-\[(?!#|var\(|rgba?\(|hsla?\(|oklch\()[^\]]+\]/g
+	},
+	{
+		id: 'product-utility-leak',
+		description:
+			'product-theme utility class (pro-*/sub-*/sl-*/ai-*) used in core app code — product palettes must not leak outside their surfaces (`dialog` and `pro-dashboard` from themes/pro.css are not tracked: those names also appear as route slugs / aria roles)',
+		pattern:
+			/(?<![\w-])(?:(?:text|bg|border|from|to|via|fill|stroke|ring|outline|decoration|accent|caret|divide|shadow|placeholder)-(?:pro|sub|sl|ai)-[a-z0-9-]+|pro-(?:text[123]|bg[1237]|border|divider|glass|hover-bg|info-card|btn-(?:purple|blue)(?:-outline)?))(?![\w-])/g,
+		productLeak: true
 	},
 	{
 		id: 'prefixed-design-token',
@@ -270,6 +306,14 @@ for (const file of files) {
 				'prefixed-design-token',
 				'arbitrary-standard-radius'
 			].includes(rule.id)
+		)
+			continue
+		if (
+			rule.productLeak &&
+			(bucket === 'excluded' ||
+				file.startsWith('src/styles/') ||
+				file === 'src/tailwind.css' ||
+				file.startsWith('public/'))
 		)
 			continue
 		const matches = rule.match ? rule.match(content) : content.match(rule.pattern)

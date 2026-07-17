@@ -51,15 +51,13 @@ export function NotificationPermissionBanner() {
 	if (dismissed) return null
 
 	return (
-		<div className="flex items-center gap-3 rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3.5 py-2.5 dark:border-[#222324]">
-			<p className="m-0 flex-1 truncate text-[13px] text-[#444] dark:text-[#ddd]">
-				Want to be notified when LlamaAI responds?
-			</p>
+		<div className="flex items-center gap-3 rounded-lg border border-ai-line bg-surface px-3.5 py-2.5">
+			<p className="m-0 flex-1 truncate text-[13px] text-ai-secondary">Want to be notified when LlamaAI responds?</p>
 			<button
 				type="button"
 				onClick={handleEnable}
 				disabled={isRequesting}
-				className="shrink-0 rounded-md bg-black px-3 py-1 text-[12px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60 dark:bg-white dark:text-black"
+				className="shrink-0 rounded-md bg-ai-contrast px-3 py-1 text-xs font-medium text-ai-on-contrast transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
 			>
 				Notify
 			</button>
@@ -67,7 +65,7 @@ export function NotificationPermissionBanner() {
 				type="button"
 				onClick={handleDismiss}
 				aria-label="Dismiss notification prompt"
-				className="flex size-6 shrink-0 items-center justify-center rounded-full text-[#999] transition-colors hover:bg-black/5 hover:text-[#333] dark:text-[#666] dark:hover:bg-white/5 dark:hover:text-white"
+				className="flex size-6 shrink-0 items-center justify-center rounded-full text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-primary"
 			>
 				<Icon name="x" height={14} width={14} />
 			</button>

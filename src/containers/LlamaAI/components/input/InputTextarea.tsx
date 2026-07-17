@@ -62,7 +62,7 @@ export function InputTextarea({
 						onCompositionStart={onCompositionStart}
 						onCompositionEnd={onCompositionEnd}
 						name="prompt"
-						className="relative z-1 block min-h-4 w-full resize-none overflow-x-hidden overflow-y-hidden overscroll-contain border-0 bg-transparent p-0 leading-normal wrap-break-word whitespace-pre-wrap text-black caret-black outline-hidden placeholder:text-[#666] max-sm:text-base dark:text-white dark:caret-white placeholder:dark:text-[#919296]"
+						className="relative z-1 block min-h-4 w-full resize-none overflow-x-hidden overflow-y-hidden overscroll-contain border-0 bg-transparent p-0 leading-normal wrap-break-word whitespace-pre-wrap text-ai-primary caret-ai-primary outline-hidden placeholder:text-ai-tertiary max-sm:text-base"
 						autoCorrect="on"
 						autoCapitalize="none"
 						autoComplete="off"

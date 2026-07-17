@@ -48,7 +48,7 @@ export function EntityComboboxPopover({
 				if (!textarea) return null
 				return getAnchorRect(textarea)
 			}}
-			className="relative z-50 flex max-h-(--popover-available-height) max-w-[280px] min-w-[100px] flex-col overflow-auto overscroll-contain rounded-lg border border-[#e6e6e6] bg-(--legacy-app-bg) shadow-lg dark:border-[#222324]"
+			className="relative z-50 flex max-h-(--popover-available-height) max-w-[280px] min-w-[100px] flex-col overflow-auto overscroll-contain rounded-lg border border-ai-line bg-page shadow-lg"
 		>
 			{hasMatches && matches ? (
 				matches.map(({ id, name, logo, type }) => (
@@ -60,7 +60,7 @@ export function EntityComboboxPopover({
 							trackUmamiEvent('llamaai-entity-select', { type })
 							onItemClick({ id, name, type })
 						}}
-						className="flex cursor-pointer items-center gap-1.5 border-t border-[#e6e6e6] px-3 py-2 first:border-t-0 hover:bg-[#e6e6e6] focus-visible:bg-[#e6e6e6] data-active-item:bg-[#e6e6e6] dark:border-[#222324] dark:hover:bg-[#222324] dark:focus-visible:bg-[#222324] dark:data-active-item:bg-[#222324]"
+						className="flex cursor-pointer items-center gap-1.5 border-t border-ai-line px-3 py-2 first:border-t-0 hover:bg-ai-surface-muted focus-visible:bg-ai-surface-muted data-active-item:bg-ai-surface-muted"
 					>
 						{logo ? <TokenLogo src={logo} alt={`Logo of ${name}`} size={20} /> : null}
 						<span className="flex items-center gap-1.5">
@@ -70,7 +70,7 @@ export function EntityComboboxPopover({
 					</Ariakit.ComboboxItem>
 				))
 			) : (
-				<p className="px-3 py-2 text-sm text-[#666] dark:text-[#999]">Loading…</p>
+				<p className="px-3 py-2 text-sm text-ai-tertiary">Loading…</p>
 			)}
 		</Ariakit.ComboboxPopover>
 	)
@@ -79,10 +79,10 @@ export function EntityComboboxPopover({
 function EntityTypeBadge({ type }: { type: string }) {
 	const colorClass =
 		type === 'Chain'
-			? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+			? 'bg-ai-blue text-ai-blue'
 			: type === 'Protocol'
-				? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
-				: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+				? 'bg-ai-violet text-ai-violet'
+				: 'bg-ai-success text-ai-success'
 
 	return <span className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${colorClass}`}>{type}</span>
 }

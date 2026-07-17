@@ -29,8 +29,8 @@ export function VerifyEmailDialog({
 				unmountOnHide
 			>
 				<div className="mb-5 flex items-center justify-between">
-					<h2 className="text-xl font-semibold text-(--legacy-text-primary)">Verify your email</h2>
-					<Ariakit.DialogDismiss className="rounded-full p-1 text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-text-primary)">
+					<h2 className="text-xl font-semibold text-primary">Verify your email</h2>
+					<Ariakit.DialogDismiss className="rounded-full p-1 text-tertiary transition-colors hover:text-primary">
 						<Icon name="x" height={20} width={20} />
 						<span className="sr-only">Close</span>
 					</Ariakit.DialogDismiss>

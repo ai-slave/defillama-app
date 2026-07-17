@@ -99,19 +99,16 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 		if (persistedDismissed || dismissed) return null
 		return (
 			<div
-				className={`@container relative shrink-0 overflow-hidden rounded-xl border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-4 pr-10 pl-6 @5xl:py-5 @5xl:pr-12${
+				className={`@container relative shrink-0 overflow-hidden rounded-xl border border-medium bg-surface py-4 pr-10 pl-6 @5xl:py-5 @5xl:pr-12${
 					className ? ` ${className}` : ''
 				}`}
 			>
-				<div
-					aria-hidden
-					className="pointer-events-none absolute top-0 bottom-0 left-0 w-[3px] bg-(--sub-brand-primary)"
-				/>
+				<div aria-hidden className="pointer-events-none absolute top-0 bottom-0 left-0 w-[3px] bg-sub-brand-primary" />
 				<button
 					type="button"
 					onClick={handleDismiss}
 					aria-label="Dismiss newsletter signup"
-					className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-md text-(--legacy-text-secondary) hover:bg-(--legacy-bg-input)"
+					className="absolute top-2 right-2 flex size-6 items-center justify-center rounded-md text-secondary hover:bg-surface-elevated-1"
 				>
 					<Icon name="x" height={16} width={16} />
 				</button>
@@ -120,11 +117,11 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 				) : (
 					<div className="flex flex-col gap-4 @5xl:flex-row @5xl:items-center @5xl:justify-between @5xl:gap-8">
 						<div className="flex flex-col gap-1">
-							<span className="flex items-center gap-2 text-base font-bold tracking-tight text-(--legacy-text-primary) @sm:text-lg">
-								<Icon name="mail-rounded" height={20} width={20} className="shrink-0 text-(--sub-brand-primary)" />
+							<span className="flex items-center gap-2 text-base font-bold tracking-tight text-primary @sm:text-lg">
+								<Icon name="mail-rounded" height={20} width={20} className="shrink-0 text-sub-brand-primary" />
 								Subscribe to the DefiLlama Newsletter
 							</span>
-							<span className="max-w-md text-sm text-(--legacy-text-primary)/55">
+							<span className="max-w-md text-sm text-primary/55">
 								Get DefiLlama's newsletter, Research updates, or both, delivered to your inbox.
 							</span>
 						</div>
@@ -145,8 +142,8 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 											disabled={isPending}
 											className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
 												on
-													? 'border-(--sub-brand-primary) bg-(--sub-brand-primary)/10 text-(--sub-brand-primary)'
-													: 'border-(--legacy-cards-border) text-(--legacy-text-secondary) hover:border-(--sub-brand-primary)/50'
+													? 'border-sub-brand-primary bg-sub-brand-primary/10 text-sub-brand-primary'
+													: 'border-medium text-secondary hover:border-sub-brand-primary/50'
 											}`}
 										>
 											{on ? <Icon name="check" height={14} width={14} /> : null}
@@ -163,13 +160,13 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 									value={email}
 									onChange={onEmailChange}
 									placeholder="you@example.com"
-									className="h-10 min-w-0 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-bg-input) px-3 text-sm text-(--legacy-text-primary) outline-hidden focus-visible:border-(--sub-brand-primary) @sm:w-56"
+									className="h-10 min-w-0 rounded-lg border border-medium bg-surface-elevated-1 px-3 text-sm text-primary outline-hidden focus-visible:border-sub-brand-primary @sm:w-56"
 								/>
 								<button
 									type="submit"
 									aria-busy={isPending}
 									disabled={!canSubmit}
-									className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-(--sub-brand-primary) px-5 text-sm font-medium text-white transition-colors hover:bg-(--sub-brand-primary)/90 disabled:cursor-not-allowed disabled:opacity-50"
+									className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-sub-brand-primary px-5 text-sm font-medium text-on-brand transition-colors hover:bg-sub-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
 								>
 									{isPending ? (
 										spinner
@@ -189,10 +186,10 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 	}
 
 	return (
-		<div className="flex flex-col gap-4 rounded-2xl border border-(--sub-border-slate-100) bg-white p-4 dark:border-(--sub-border-strong) dark:bg-(--sub-surface-dark)">
+		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex items-center gap-2">
-				<Icon name="mail-rounded" height={28} width={28} className="text-(--sub-ink-primary) dark:text-white" />
-				<span className="text-base font-medium text-(--sub-ink-primary) dark:text-white">Newsletters</span>
+				<Icon name="mail-rounded" height={28} width={28} className="text-sub-ink-primary dark:text-ai-primary" />
+				<span className="text-base font-medium text-sub-ink-primary dark:text-ai-primary">Newsletters</span>
 			</div>
 
 			{succeeded ? (
@@ -200,14 +197,14 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 			) : (
 				<form onSubmit={handleSubmit} className="flex flex-col gap-4">
 					<label className="flex flex-col gap-1">
-						<span className="text-xs text-(--sub-text-muted)">Subscribing as</span>
+						<span className="text-xs text-sub-text-muted">Subscribing as</span>
 						<input
 							type="email"
 							required
 							value={email}
 							onChange={onEmailChange}
 							placeholder="you@example.com"
-							className="rounded-lg border border-(--sub-border-slate-100) bg-(--legacy-bg-input) px-3 py-2 text-sm text-(--sub-ink-primary) outline-hidden focus-visible:border-(--sub-brand-primary) dark:border-(--sub-border-strong) dark:text-white"
+							className="rounded-lg border border-sub-border-slate-100 bg-surface-elevated-1 px-3 py-2 text-sm text-sub-ink-primary outline-hidden focus-visible:border-sub-brand-primary dark:border-sub-border-strong dark:text-ai-primary"
 						/>
 					</label>
 
@@ -215,7 +212,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 						{NEWSLETTERS.map(({ key, label, description }) => (
 							<div key={key} className="flex flex-col gap-1">
 								<div className="flex items-center justify-between gap-4">
-									<span className="text-sm text-(--sub-ink-primary) dark:text-white">{label}</span>
+									<span className="text-sm text-sub-ink-primary dark:text-ai-primary">{label}</span>
 									<ToggleSwitch
 										checked={selected[key]}
 										onClick={() => toggle(key)}
@@ -223,7 +220,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 										aria-label={`Subscribe to ${label}`}
 									/>
 								</div>
-								<p className="max-w-[400px] text-xs leading-4 text-(--sub-text-muted)">{description}</p>
+								<p className="max-w-[400px] text-xs leading-4 text-sub-text-muted">{description}</p>
 							</div>
 						))}
 					</div>
@@ -234,7 +231,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 							aria-busy={isPending}
 							aria-describedby={noneSelected ? helperId : undefined}
 							disabled={!canSubmit}
-							className="flex h-10 w-fit items-center gap-2 rounded-lg bg-(--sub-brand-primary) px-5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+							className="flex h-10 w-fit items-center gap-2 rounded-lg bg-sub-brand-primary px-5 text-sm font-medium text-on-brand disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							{isPending ? (
 								<>
@@ -246,7 +243,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 							)}
 						</button>
 						{noneSelected ? (
-							<p id={helperId} className="text-xs text-(--sub-text-muted)">
+							<p id={helperId} className="text-xs text-sub-text-muted">
 								Choose at least one newsletter.
 							</p>
 						) : null}
@@ -268,8 +265,8 @@ function NewsletterSuccess({
 }) {
 	if (layout === 'strip') {
 		return (
-			<div role="status" className="flex items-center gap-2 text-sm text-(--legacy-text-primary)">
-				<Icon name="check-circle" height={20} width={20} className="shrink-0 text-(--sub-brand-primary)" />
+			<div role="status" className="flex items-center gap-2 text-sm text-primary">
+				<Icon name="check-circle" height={20} width={20} className="shrink-0 text-sub-brand-primary" />
 				<span>Subscribed to selected newsletters.</span>
 			</div>
 		)
@@ -277,20 +274,16 @@ function NewsletterSuccess({
 
 	return (
 		<div role="status" className="flex flex-col items-center gap-3 py-4 text-center">
-			<div className="flex size-12 items-center justify-center rounded-full bg-(--sub-brand-primary-alpha-8)">
-				<Icon name="check-circle" height={28} width={28} className="text-(--sub-brand-primary)" />
+			<div className="flex size-12 items-center justify-center rounded-full bg-sub-brand-primary-alpha-8">
+				<Icon name="check-circle" height={28} width={28} className="text-sub-brand-primary" />
 			</div>
 			<div className="flex flex-col gap-1">
-				<span className="text-base font-medium text-(--sub-ink-primary) dark:text-white">You are subscribed</span>
-				<p className="max-w-[360px] text-xs leading-4 text-(--sub-text-muted)">
+				<span className="text-base font-medium text-sub-ink-primary dark:text-ai-primary">You are subscribed</span>
+				<p className="max-w-[360px] text-xs leading-4 text-sub-text-muted">
 					<span className="font-medium">{email}</span> is subscribed to the selected newsletters.
 				</p>
 			</div>
-			<button
-				type="button"
-				onClick={onReset}
-				className="text-xs font-medium text-(--sub-brand-primary) hover:underline"
-			>
+			<button type="button" onClick={onReset} className="text-xs font-medium text-sub-brand-primary hover:underline">
 				Manage newsletters
 			</button>
 		</div>

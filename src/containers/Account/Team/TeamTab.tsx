@@ -26,8 +26,8 @@ export function TeamTab() {
 	if (inviteAcceptance.isFetching && token) {
 		return (
 			<div className="flex flex-col items-center gap-4 py-16">
-				<div className="size-8 animate-spin rounded-full border-2 border-(--sub-brand-primary) border-t-transparent" />
-				<p className="text-sm text-(--sub-text-muted)">Accepting invite...</p>
+				<div className="size-8 animate-spin rounded-full border-2 border-sub-brand-primary border-t-transparent" />
+				<p className="text-sm text-sub-text-muted">Accepting invite...</p>
 			</div>
 		)
 	}
@@ -35,16 +35,16 @@ export function TeamTab() {
 	if (inviteAcceptance.isError && token) {
 		return (
 			<div className="flex flex-col items-center gap-4 py-16">
-				<div className="flex size-16 items-center justify-center rounded-full bg-(--error)/10">
-					<Icon name="alert-triangle" height={32} width={32} className="text-(--error)" />
+				<div className="flex size-16 items-center justify-center rounded-full bg-error/10">
+					<Icon name="alert-triangle" height={32} width={32} className="text-error" />
 				</div>
 				<div className="flex flex-col gap-2 text-center">
-					<h2 className="text-lg font-semibold text-(--sub-ink-primary) dark:text-white">Unable to Accept Invite</h2>
-					<p className="text-sm text-(--sub-text-muted)">
+					<h2 className="text-lg font-semibold text-sub-ink-primary dark:text-ai-primary">Unable to Accept Invite</h2>
+					<p className="text-sm text-sub-text-muted">
 						{inviteAcceptance.error?.message ||
 							'Something went wrong. The invite may have expired or already been used.'}
 					</p>
-					<p className="text-sm text-(--sub-text-muted)">
+					<p className="text-sm text-sub-text-muted">
 						Make sure you&apos;re signed in with the email address the invite was sent to.
 					</p>
 				</div>
@@ -55,7 +55,7 @@ export function TeamTab() {
 	if (isTeamLoading) {
 		return (
 			<div className="flex h-64 items-center justify-center">
-				<div className="size-8 animate-spin rounded-full border-2 border-(--sub-brand-primary) border-t-transparent" />
+				<div className="size-8 animate-spin rounded-full border-2 border-sub-brand-primary border-t-transparent" />
 			</div>
 		)
 	}

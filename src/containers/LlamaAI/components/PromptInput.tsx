@@ -424,7 +424,7 @@ export function PromptInput({
 
 	return (
 		<form
-			className="relative flex w-full flex-col gap-4 rounded-lg border border-[#e6e6e6] bg-(--legacy-app-bg) p-4 has-[textarea:focus]:border-(--legacy-old-blue) dark:border-[#222324]"
+			className="relative flex w-full flex-col gap-4 rounded-lg border border-ai-line bg-page p-4 has-[textarea:focus]:border-brand"
 			onDragEnter={imageUpload.handleDragEnter}
 			onDragLeave={imageUpload.handleDragLeave}
 			onDragOver={(e) => e.preventDefault()}
@@ -447,9 +447,9 @@ export function PromptInput({
 			<PastedContentModal preview={imageUpload.pastedPreview} onClose={() => imageUpload.setPastedPreview(null)} />
 
 			{quotedText ? (
-				<div className="flex items-center gap-2.5 rounded-md border-l-2 border-[#2172e5]/40 bg-[#2172e5]/4 py-2 pr-2 pl-3 dark:border-[#4190f7]/40 dark:bg-[#4190f7]/4">
+				<div className="flex items-center gap-2.5 rounded-md border-l-2 border-ai-old-blue/40 bg-ai-old-blue/4 py-2 pr-2 pl-3">
 					<svg
-						className="size-3.5 shrink-0 -scale-x-100 text-[#2172e5]/50 dark:text-[#4190f7]/50"
+						className="size-3.5 shrink-0 -scale-x-100 text-ai-old-blue/50"
 						viewBox="0 0 24 24"
 						fill="none"
 						stroke="currentColor"
@@ -460,12 +460,12 @@ export function PromptInput({
 						<polyline points="9 14 4 9 9 4" />
 						<path d="M20 20v-7a4 4 0 0 0-4-4H4" />
 					</svg>
-					<p className="min-w-0 flex-1 truncate text-[13px] text-[#333] dark:text-[#bbb]">{quotedText}</p>
+					<p className="min-w-0 flex-1 truncate text-[13px] text-ai-secondary">{quotedText}</p>
 					<button
 						type="button"
 						onClick={onClearQuotedText}
 						aria-label="Clear quoted text"
-						className="flex size-5 shrink-0 items-center justify-center rounded-full text-[#999] transition-colors hover:bg-black/5 hover:text-[#333] dark:text-[#555] dark:hover:bg-white/5 dark:hover:text-white"
+						className="flex size-5 shrink-0 items-center justify-center rounded-full text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-primary"
 					>
 						<svg
 							className="size-3.5"
@@ -510,7 +510,7 @@ export function PromptInput({
 				onItemClick={entityCombobox.selectEntity}
 			/>
 
-			{submitError ? <p className="text-xs text-red-700 dark:text-red-300">{submitError}</p> : null}
+			{submitError ? <p className="text-xs text-ai-error-strong">{submitError}</p> : null}
 
 			<div className="flex items-center justify-between gap-4 p-0">
 				<div className="hidden items-center gap-2 sm:flex">
@@ -546,7 +546,7 @@ export function PromptInput({
 									data-walkthrough="alerts-button"
 								/>
 							}
-							className="flex h-7 items-center gap-1.5 rounded-md bg-amber-500/12 px-2 text-amber-500 hover:bg-amber-500 hover:text-white"
+							className="flex h-7 items-center gap-1.5 rounded-md bg-ai-warning-bright/12 px-2 text-ai-warning-bright hover:bg-ai-warning-bright hover:text-ai-white"
 						>
 							<Icon name="calendar-plus" height={14} width={14} />
 							<span className="text-xs font-medium">Alerts</span>

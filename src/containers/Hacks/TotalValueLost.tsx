@@ -40,10 +40,7 @@ const columns = [
 
 					<TokenLogo name={row.original.slug} kind="token" data-lgonly alt={`Logo of ${row.original.slug}`} />
 
-					<BasicLink
-						href={row.original.route}
-						className="truncate text-sm font-medium text-(--legacy-link-text) hover:underline"
-					>
+					<BasicLink href={row.original.route} className="truncate text-sm font-medium text-link hover:underline">
 						{name}
 					</BasicLink>
 				</span>

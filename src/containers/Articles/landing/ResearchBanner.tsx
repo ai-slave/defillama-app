@@ -26,7 +26,7 @@ export const ResearchBanner: React.FC<{ initialData?: BannerLookupResult | null 
 
 	const content = (
 		<div
-			className="flex aspect-[2/1] cursor-pointer flex-col items-center justify-between gap-4 bg-[#e4e4e4] bg-cover px-[22px] py-6 max-md:text-center md:aspect-[2745/380]"
+			className="flex aspect-[2/1] cursor-pointer flex-col items-center justify-between gap-4 bg-surface-elevated-1 bg-cover px-5.5 py-6 max-md:text-center md:aspect-[2745/380]"
 			style={{
 				backgroundImage: `url(${imageUrl})`
 			}}

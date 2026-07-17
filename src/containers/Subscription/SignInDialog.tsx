@@ -13,16 +13,16 @@ type Step = 'signin' | 'signup' | 'forgot'
 /* ── Shared styles ─────────────────────────────────────────────────── */
 
 const inputCls =
-	'h-10 w-full rounded-lg border border-(--legacy-form-control-border) bg-(--signin-input-bg) px-3 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:outline-hidden'
+	'h-10 w-full rounded-lg border border-medium bg-(--signin-input-bg) px-3 text-sm text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden'
 const primaryBtnCls =
-	'h-10 w-full rounded-lg bg-(--legacy-primary) text-sm font-medium text-white disabled:bg-(--signin-btn-disabled-bg) disabled:text-(--signin-btn-disabled-text)'
+	'h-10 w-full rounded-lg bg-brand text-sm font-medium text-on-brand disabled:bg-(--signin-btn-disabled-bg) disabled:text-(--signin-btn-disabled-text)'
 
 const WalletSignInButton = dynamic<WalletSignInButtonProps>(
 	() => import('./WalletSignInButton').then((module) => module.WalletSignInButton),
 	{
 		ssr: false,
 		loading: () => (
-			<button type="button" className="text-(--legacy-link)" disabled>
+			<button type="button" className="text-link" disabled>
 				Loading wallet...
 			</button>
 		)
@@ -165,31 +165,31 @@ export function SignInFlow({
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
 					<img src="/assets/logo_white.webp" alt="" className="size-7" />
-					<span className="text-sm font-semibold text-(--text-primary)">DefiLlama</span>
+					<span className="text-sm font-semibold text-primary">DefiLlama</span>
 				</div>
-				<Ariakit.DialogDismiss className="rounded-full p-1 text-(--text-tertiary) transition-colors hover:text-(--text-primary)">
+				<Ariakit.DialogDismiss className="rounded-full p-1 text-tertiary transition-colors hover:text-primary">
 					<Icon name="x" height={20} width={20} />
 					<span className="sr-only">Close</span>
 				</Ariakit.DialogDismiss>
 			</div>
-			{prompt ? <p className="mt-2.5 text-sm text-(--text-secondary)">{prompt}</p> : null}
+			{prompt ? <p className="mt-2.5 text-sm text-secondary">{prompt}</p> : null}
 		</div>
 	)
 
-	const errorEl = error ? <p className="text-center text-xs text-(--error)">{error}</p> : null
+	const errorEl = error ? <p className="text-center text-xs text-error">{error}</p> : null
 
 	const tabs = step !== 'forgot' && (
 		<div className="mb-6 flex gap-1 rounded-lg bg-(--signin-tab-bg) p-1">
 			<button
 				type="button"
-				className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${step === 'signin' ? 'bg-(--signin-bg) text-(--legacy-text-primary) shadow-sm' : 'text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'}`}
+				className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${step === 'signin' ? 'bg-(--signin-bg) text-primary shadow-sm' : 'text-tertiary hover:text-primary'}`}
 				onClick={() => goTo('signin')}
 			>
 				Sign In
 			</button>
 			<button
 				type="button"
-				className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${step === 'signup' ? 'bg-(--signin-bg) text-(--legacy-text-primary) shadow-sm' : 'text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)'}`}
+				className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${step === 'signup' ? 'bg-(--signin-bg) text-primary shadow-sm' : 'text-tertiary hover:text-primary'}`}
 				onClick={() => goTo('signup')}
 			>
 				Sign Up
@@ -231,7 +231,7 @@ export function SignInFlow({
 						</label>
 						<button
 							type="button"
-							className="absolute top-1/2 right-3 -translate-y-1/2 text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)"
+							className="absolute top-1/2 right-3 -translate-y-1/2 text-tertiary hover:text-primary"
 							onClick={() => setShowPassword(!showPassword)}
 							aria-label={showPassword ? 'Hide password' : 'Show password'}
 						>
@@ -244,23 +244,23 @@ export function SignInFlow({
 					{errorEl}
 				</form>
 
-				<p className="mt-4 text-center text-sm text-(--legacy-text-primary)">
+				<p className="mt-4 text-center text-sm text-primary">
 					Forgot your password?{' '}
-					<button type="button" className="text-(--legacy-link)" onClick={() => goTo('forgot')}>
+					<button type="button" className="text-link" onClick={() => goTo('forgot')}>
 						Reset password
 					</button>
 				</p>
 
 				<div className="my-6 flex items-center gap-5">
 					<div className="h-px flex-1 bg-(--signin-divider)" />
-					<span className="text-sm text-(--legacy-text-tertiary)">Or</span>
+					<span className="text-sm text-tertiary">Or</span>
 					<div className="h-px flex-1 bg-(--signin-divider)" />
 				</div>
 
 				<div className="flex flex-col gap-2">
 					<button
 						type="button"
-						className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-(--legacy-form-control-border) text-sm font-medium text-(--legacy-text-primary) transition-colors hover:bg-(--signin-outline-hover-bg)"
+						className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-medium text-sm font-medium text-primary transition-colors hover:bg-(--signin-outline-hover-bg)"
 						onClick={handleGoogleSignIn}
 						disabled={signInWithGoogleMutation.isPending}
 					>
@@ -269,7 +269,7 @@ export function SignInFlow({
 					</button>
 					<button
 						type="button"
-						className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-(--legacy-form-control-border) text-sm font-medium text-(--legacy-text-primary) transition-colors hover:bg-(--signin-outline-hover-bg)"
+						className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-medium text-sm font-medium text-primary transition-colors hover:bg-(--signin-outline-hover-bg)"
 						onClick={handleGithubSignIn}
 						disabled={signInWithGithubMutation.isPending}
 					>
@@ -278,14 +278,14 @@ export function SignInFlow({
 					</button>
 				</div>
 
-				<p className="mt-6 text-center text-xs text-(--legacy-text-primary)">
+				<p className="mt-6 text-center text-xs text-primary">
 					Registered with a wallet before?{' '}
 					{walletSignInRequested ? (
 						<WalletSignInButton dialogStore={dialogStore} setError={setError} autoStart />
 					) : (
 						<button
 							type="button"
-							className="text-(--legacy-link)"
+							className="text-link"
 							onClick={() => {
 								setError('')
 								setWalletSignInRequested(true)
@@ -305,7 +305,7 @@ export function SignInFlow({
 			<>
 				{header}
 				{tabs}
-				<p className="mb-4 text-sm leading-5 text-(--legacy-text-meta)">
+				<p className="mb-4 text-sm leading-5 text-tertiary">
 					Create an account with a password (must have at least 8 characters):
 				</p>
 
@@ -336,7 +336,7 @@ export function SignInFlow({
 						</label>
 						<button
 							type="button"
-							className="absolute top-1/2 right-3 -translate-y-1/2 text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)"
+							className="absolute top-1/2 right-3 -translate-y-1/2 text-tertiary hover:text-primary"
 							onClick={() => setShowPassword(!showPassword)}
 							aria-label={showPassword ? 'Hide password' : 'Show password'}
 						>
@@ -365,17 +365,17 @@ export function SignInFlow({
 					<label className="flex items-start gap-2">
 						<input
 							type="checkbox"
-							className="mt-0.5 size-4 shrink-0 rounded-sm accent-(--legacy-primary)"
+							className="mt-0.5 size-4 shrink-0 rounded-sm accent-brand"
 							checked={acceptedTerms}
 							onChange={(e) => setAcceptedTerms(e.target.checked)}
 						/>
-						<span className="text-xs leading-4 text-(--legacy-text-meta)">
+						<span className="text-xs leading-4 text-tertiary">
 							I agree to the{' '}
-							<BasicLink href="/terms" target="_blank" className="text-(--legacy-link) underline">
+							<BasicLink href="/terms" target="_blank" className="text-link underline">
 								Terms of Service
 							</BasicLink>{' '}
 							and{' '}
-							<BasicLink href="/privacy-policy" target="_blank" className="text-(--legacy-link) underline">
+							<BasicLink href="/privacy-policy" target="_blank" className="text-link underline">
 								Privacy Policy
 							</BasicLink>
 						</span>
@@ -384,11 +384,11 @@ export function SignInFlow({
 					<label className="flex items-start gap-2">
 						<input
 							type="checkbox"
-							className="mt-0.5 size-4 shrink-0 rounded-sm accent-(--legacy-primary)"
+							className="mt-0.5 size-4 shrink-0 rounded-sm accent-brand"
 							checked={promotionalEmails !== 'off'}
 							onChange={(e) => setPromotionalEmails(e.target.checked ? 'on' : 'off')}
 						/>
-						<span className="text-xs leading-4 text-(--legacy-text-meta)">
+						<span className="text-xs leading-4 text-tertiary">
 							Receive emails about upcoming DefiLlama products and new releases
 						</span>
 					</label>
@@ -410,10 +410,8 @@ export function SignInFlow({
 	return (
 		<>
 			{header}
-			<h2 className="text-xl font-semibold text-(--legacy-text-primary)">Reset Password</h2>
-			<p className="mt-1 mb-6 text-sm text-(--legacy-text-meta)">
-				Enter your email and we&apos;ll send you a reset link.
-			</p>
+			<h2 className="text-xl font-semibold text-primary">Reset Password</h2>
+			<p className="mt-1 mb-6 text-sm text-tertiary">Enter your email and we&apos;ll send you a reset link.</p>
 
 			<form className="flex flex-col gap-4" onSubmit={(e) => void handleForgotPassword(e)}>
 				<label>
@@ -434,11 +432,7 @@ export function SignInFlow({
 				{errorEl}
 			</form>
 
-			<button
-				type="button"
-				className="mt-6 w-full text-center text-sm text-(--legacy-link)"
-				onClick={() => goTo('signin')}
-			>
+			<button type="button" className="mt-6 w-full text-center text-sm text-link" onClick={() => goTo('signin')}>
 				Back to sign in
 			</button>
 		</>

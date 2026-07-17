@@ -13,7 +13,7 @@ function TodoStatusIcon({ status, animated = true }: { status: TodoItem['status'
 		return (
 			<span
 				aria-hidden="true"
-				className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-green-500 bg-green-500 text-[10px] font-bold text-white"
+				className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-ai-success-vivid bg-ai-success-vivid text-[10px] font-bold text-ai-white"
 			>
 				✓
 			</span>
@@ -23,9 +23,9 @@ function TodoStatusIcon({ status, animated = true }: { status: TodoItem['status'
 		return (
 			<span
 				aria-hidden="true"
-				className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-(--legacy-old-blue)"
+				className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-brand"
 			>
-				<span className={`size-1.5 rounded-full bg-(--legacy-old-blue) ${animated ? 'animate-pulse' : ''}`} />
+				<span className={`size-1.5 rounded-full bg-brand ${animated ? 'animate-pulse' : ''}`} />
 			</span>
 		)
 	}
@@ -33,7 +33,7 @@ function TodoStatusIcon({ status, animated = true }: { status: TodoItem['status'
 		return (
 			<span
 				aria-hidden="true"
-				className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-[#d1d5db] text-[10px] text-[#9ca3af] line-through dark:border-[#3f3f46]"
+				className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-ai-line text-[10px] text-ai-muted line-through"
 			>
 				✕
 			</span>
@@ -42,7 +42,7 @@ function TodoStatusIcon({ status, animated = true }: { status: TodoItem['status'
 	return (
 		<span
 			aria-hidden="true"
-			className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-[#d1d5db] dark:border-[#3f3f46]"
+			className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-ai-line"
 		/>
 	)
 }
@@ -72,20 +72,20 @@ export function TodoChecklistPanel({
 	const total = orderedTodos.filter((t) => t.status !== 'cancelled').length
 	return (
 		<section
-			className="flex flex-col gap-1.5 rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) p-2 sm:p-2.5 dark:border-[#222324]"
+			className="flex flex-col gap-1.5 rounded-lg border border-ai-line bg-surface p-2 sm:p-2.5"
 			aria-label="Progress"
 		>
 			<div className="flex items-center gap-2 px-0.5">
 				<span aria-hidden="true" className="text-sm">
 					📋
 				</span>
-				<p className="m-0 flex-1 truncate text-xs font-medium text-[#444] sm:text-sm dark:text-[#ccc]">Progress</p>
+				<p className="m-0 flex-1 truncate text-xs font-medium text-ai-secondary sm:text-sm">Progress</p>
 				{interrupted ? (
-					<p className="m-0 shrink-0 rounded-sm bg-[rgba(244,63,94,0.1)] px-1.5 py-0.5 text-[10px] text-[#e11d48] sm:text-xs dark:text-[#fb7185]">
+					<p className="m-0 shrink-0 rounded-sm bg-ai-error-vivid/10 px-1.5 py-0.5 text-[10px] text-ai-error sm:text-xs">
 						stopped early
 					</p>
 				) : null}
-				<p className="m-0 shrink-0 rounded-sm bg-[rgba(0,0,0,0.04)] px-1.5 py-0.5 text-[10px] text-[#666] sm:text-xs dark:bg-[rgba(145,146,150,0.12)] dark:text-[#919296]">
+				<p className="m-0 shrink-0 rounded-sm bg-ai-wash px-1.5 py-0.5 text-[10px] text-ai-tertiary sm:text-xs">
 					{completed}/{total} done
 				</p>
 			</div>
@@ -102,12 +102,12 @@ export function TodoChecklistPanel({
 							<p
 								className={`m-0 flex-1 text-xs leading-[1.45] sm:text-sm ${
 									isActive
-										? 'font-medium text-[#444] dark:text-[#e6e6e6]'
+										? 'font-medium text-ai-secondary dark:text-ai-slate-strong'
 										: isCompleted
-											? 'text-[#888] line-through dark:text-[#777]'
+											? 'text-ai-muted line-through'
 											: isCancelled
-												? 'text-[#aaa] line-through dark:text-[#666]'
-												: 'text-[#666] dark:text-[#919296]'
+												? 'text-ai-secondary line-through dark:text-ai-muted'
+												: 'text-ai-tertiary'
 								}`}
 							>
 								{todo.content}

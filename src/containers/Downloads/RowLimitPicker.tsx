@@ -43,8 +43,8 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 	const triggerLabel = isActive && value ? `Top ${value.toLocaleString()}` : 'Row limit'
 
 	const triggerClass = isActive
-		? 'flex items-center gap-1.5 rounded-md rounded-r-none border border-(--legacy-primary)/40 bg-(--legacy-primary)/10 px-2.5 py-1.5 text-xs font-medium text-(--legacy-primary) transition-colors hover:bg-(--legacy-primary)/15 disabled:opacity-40'
-		: 'flex items-center gap-1.5 rounded-md border border-(--legacy-divider) px-2.5 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary) disabled:opacity-40'
+		? 'flex items-center gap-1.5 rounded-md rounded-r-none border border-brand/40 bg-brand/10 px-2.5 py-1.5 text-xs font-medium text-brand transition-colors hover:bg-brand/15 disabled:opacity-40'
+		: 'flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-(--pro-text-secondary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary) disabled:opacity-40'
 
 	return (
 		<Ariakit.PopoverProvider store={popover}>
@@ -53,7 +53,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 					<Icon name="layers" className="size-3.5" />
 					<span className="truncate">{triggerLabel}</span>
 					{isActive && totalRows > 0 ? (
-						<span className="text-[10px] text-(--legacy-primary)/70">of {totalRows.toLocaleString()}</span>
+						<span className="text-[10px] text-brand/70">of {totalRows.toLocaleString()}</span>
 					) : null}
 					<Icon name="chevron-down" className="size-3" />
 				</Ariakit.PopoverDisclosure>
@@ -64,7 +64,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 						disabled={disabled}
 						aria-label="Clear row limit"
 						title="Clear row limit"
-						className="-ml-px flex items-center justify-center rounded-md rounded-l-none border border-(--legacy-primary)/40 bg-(--legacy-primary)/10 px-1.5 text-(--legacy-primary) transition-colors hover:bg-(--legacy-primary)/20 disabled:opacity-40"
+						className="-ml-px flex items-center justify-center rounded-md rounded-l-none border border-brand/40 bg-brand/10 px-1.5 text-brand transition-colors hover:bg-brand/20 disabled:opacity-40"
 					>
 						<Icon name="x" className="size-3" />
 					</button>
@@ -78,7 +78,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 				className="z-[60] flex w-[260px] max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg border border-medium bg-surface-elevated-1 p-4 shadow-xl"
 			>
 				<section className="flex flex-col gap-2">
-					<h3 className="text-[11px] font-semibold tracking-wide text-(--legacy-text-tertiary) uppercase">Top rows</h3>
+					<h3 className="text-[11px] font-semibold tracking-wide text-(--pro-text-tertiary) uppercase">Top rows</h3>
 					<div className="flex flex-wrap gap-1">
 						{PRESETS.map((n) => {
 							const isSelected = value === n
@@ -90,8 +90,8 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 									aria-pressed={isSelected}
 									className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
 										isSelected
-											? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
-											: 'border-(--legacy-divider) text-(--legacy-text-secondary) hover:bg-hover-row hover:text-(--legacy-text-primary)'
+											? 'border-brand bg-brand text-on-brand'
+											: 'border-subtle text-(--pro-text-secondary) hover:bg-hover-row hover:text-(--pro-text-primary)'
 									}`}
 								>
 									{n.toLocaleString()}
@@ -104,8 +104,8 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 							aria-pressed={!isActive}
 							className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
 								!isActive
-									? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
-									: 'border-(--legacy-divider) text-(--legacy-text-secondary) hover:bg-hover-row hover:text-(--legacy-text-primary)'
+									? 'border-brand bg-brand text-on-brand'
+									: 'border-subtle text-(--pro-text-secondary) hover:bg-hover-row hover:text-(--pro-text-primary)'
 							}`}
 						>
 							All
@@ -113,7 +113,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 					</div>
 				</section>
 
-				<div className="border-t border-(--legacy-divider)" />
+				<div className="border-t border-subtle" />
 
 				<form
 					onSubmit={(e) => {
@@ -129,7 +129,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 					}}
 					className="flex flex-col gap-2"
 				>
-					<h3 className="text-[11px] font-semibold tracking-wide text-(--legacy-text-tertiary) uppercase">Custom</h3>
+					<h3 className="text-[11px] font-semibold tracking-wide text-(--pro-text-tertiary) uppercase">Custom</h3>
 					<div className="flex items-center gap-2">
 						<input
 							type="number"
@@ -141,20 +141,20 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 								setError(null)
 							}}
 							placeholder="e.g. 250"
-							className="flex-1 rounded-md border border-(--legacy-divider) bg-transparent px-2 py-1 text-xs outline-hidden focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30"
+							className="flex-1 rounded-md border border-subtle bg-transparent px-2 py-1 text-xs outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30"
 						/>
 						<button
 							type="submit"
 							disabled={!customInput}
-							className="rounded-md bg-(--legacy-primary) px-2.5 py-1 text-xs font-medium text-white transition-colors hover:opacity-90 disabled:opacity-40"
+							className="rounded-md bg-brand px-2.5 py-1 text-xs font-medium text-on-brand transition-colors hover:opacity-90 disabled:opacity-40"
 						>
 							Apply
 						</button>
 					</div>
-					{error ? <p className="text-[11px] text-red-500">{error}</p> : null}
+					{error ? <p className="text-[11px] text-error">{error}</p> : null}
 				</form>
 
-				<p className="text-[11px] text-(--legacy-text-tertiary)">Applied after sort — top N by current sort order.</p>
+				<p className="text-[11px] text-(--pro-text-tertiary)">Applied after sort — top N by current sort order.</p>
 			</Ariakit.Popover>
 		</Ariakit.PopoverProvider>
 	)

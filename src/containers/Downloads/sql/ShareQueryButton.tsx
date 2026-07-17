@@ -71,7 +71,7 @@ export function ShareQueryButton({
 			type="button"
 			onClick={onClick}
 			disabled={disabled || !hasContent}
-			className="inline-flex items-center gap-1.5 rounded-md border border-(--legacy-divider) bg-surface px-3 py-1.5 text-xs font-medium text-(--legacy-text-primary) transition-colors hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
+			className="inline-flex items-center gap-1.5 rounded-md border border-subtle bg-surface px-3 py-1.5 text-xs font-medium text-(--pro-text-primary) transition-colors hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
 		>
 			<Icon name={copied ? 'check' : 'share'} className="size-3.5" />
 			{copied ? 'Copied' : 'Share'}

@@ -190,7 +190,7 @@ function TokenPriceAlertButton({
 						}}
 					/>
 				}
-				className="flex shrink-0 items-center gap-1.5 rounded-md bg-amber-500/12 px-2 py-1 text-xs font-medium text-amber-500 hover:bg-amber-500 hover:text-white"
+				className="flex shrink-0 items-center gap-1.5 rounded-md bg-warning/12 px-2 py-1 text-xs font-medium text-warning hover:bg-warning hover:text-on-brand"
 			>
 				<Icon name="calendar-plus" height={14} width={14} />
 				<span>Set alert</span>

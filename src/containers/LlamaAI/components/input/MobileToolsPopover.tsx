@@ -20,7 +20,7 @@ interface MobileToolsPopoverProps {
 }
 
 const itemClassName =
-	'flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-left text-[13.5px] text-[#333] transition-colors hover:bg-[#f5f5f5] focus-visible:bg-[#f5f5f5] data-active-item:bg-[#f5f5f5] dark:text-[#ccc] dark:hover:bg-white/5 dark:focus-visible:bg-white/5 dark:data-active-item:bg-white/5'
+	'flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-left text-[13.5px] text-ai-secondary transition-colors hover:bg-ai-surface-muted focus-visible:bg-ai-surface-muted data-active-item:bg-ai-surface-muted'
 
 export function MobileToolsPopover({
 	mode,
@@ -60,7 +60,7 @@ export function MobileToolsPopover({
 				data-walkthrough="mobile-tools-button"
 				disabled={disabled}
 				aria-label="Open mobile tools"
-				className="flex size-7 items-center justify-center rounded-full bg-[#f0f0f0] text-[#555] transition-colors hover:bg-[#e4e4e4] hover:text-[#333] disabled:pointer-events-none disabled:opacity-40 aria-expanded:bg-[#2563eb]/15 aria-expanded:text-[#2563eb] sm:hidden dark:bg-white/8 dark:text-[#a1a1aa] dark:hover:bg-white/12 dark:hover:text-[#e4e4e7] dark:aria-expanded:bg-[#60a5fa]/15 dark:aria-expanded:text-[#60a5fa]"
+				className="flex size-7 items-center justify-center rounded-full bg-ai-surface-muted text-ai-secondary transition-colors hover:bg-ai-skeleton hover:text-ai-primary disabled:pointer-events-none disabled:opacity-40 aria-expanded:bg-ai-blue/15 aria-expanded:text-ai-blue sm:hidden"
 			>
 				<Icon name="plus" height={16} width={16} />
 			</Ariakit.MenuButton>
@@ -74,15 +74,15 @@ export function MobileToolsPopover({
 				wrapperProps={{
 					className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
 				}}
-				className="z-10 flex flex-col gap-0.5 rounded-xl border border-black/8 bg-white p-1.5 shadow-2xl max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:overflow-auto max-sm:overscroll-contain max-sm:rounded-b-none sm:max-h-[60dvh] dark:border-[#2a2a2e] dark:bg-[#18181b]"
+				className="z-10 flex flex-col gap-0.5 rounded-xl border border-ai-line-medium bg-ai-surface-card p-1.5 shadow-2xl max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:overflow-auto max-sm:overscroll-contain max-sm:rounded-b-none sm:max-h-[60dvh]"
 			>
 				<div className="flex items-center justify-between px-3 pt-3 pb-1 sm:hidden">
-					{/* <Ariakit.MenuHeading className="text-[13px] font-semibold text-[#111] dark:text-[#f0f0f0]">
+					{/* <Ariakit.MenuHeading className="text-[13px] font-semibold text-ai-primary">
 						Tools
 					</Ariakit.MenuHeading> */}
 					<Ariakit.MenuDismiss
 						aria-label="Close mobile tools"
-						className="flex size-7 items-center justify-center rounded-full bg-[#f0f0f0] text-[#555] transition-colors hover:bg-[#e0e0e0] dark:bg-white/10 dark:text-[#aaa] dark:hover:bg-white/15"
+						className="flex size-7 items-center justify-center rounded-full bg-ai-surface-muted text-ai-secondary transition-colors hover:bg-ai-skeleton"
 					>
 						<Icon name="x" height={14} width={14} />
 					</Ariakit.MenuDismiss>
@@ -94,11 +94,11 @@ export function MobileToolsPopover({
 					hideOnClick={false}
 					onClick={handleImageUpload}
 				>
-					<Icon name="image-plus" height={16} width={16} className="shrink-0 text-[#777] dark:text-[#888]" />
+					<Icon name="image-plus" height={16} width={16} className="shrink-0 text-ai-tertiary" />
 					<span>Upload files</span>
 				</Ariakit.MenuItem>
 
-				<Ariakit.MenuSeparator className="mx-2 border-t border-black/6 dark:border-white/6" />
+				<Ariakit.MenuSeparator className="mx-2 border-t border-ai-line-subtle" />
 
 				<Ariakit.MenuItem
 					className={itemClassName}
@@ -106,11 +106,9 @@ export function MobileToolsPopover({
 					onClick={() => setMode('quick')}
 					data-umami-event="llamaai-quick-mode-toggle"
 				>
-					<Icon name="sparkles" height={16} width={16} className="shrink-0 text-[#777] dark:text-[#888]" />
+					<Icon name="sparkles" height={16} width={16} className="shrink-0 text-ai-tertiary" />
 					<span className="flex-1">Quick</span>
-					{mode === 'quick' ? (
-						<Icon name="check" height={14} width={14} className="shrink-0 text-[#2563eb] dark:text-[#60a5fa]" />
-					) : null}
+					{mode === 'quick' ? <Icon name="check" height={14} width={14} className="shrink-0 text-ai-blue" /> : null}
 				</Ariakit.MenuItem>
 
 				<Ariakit.MenuItem
@@ -125,16 +123,16 @@ export function MobileToolsPopover({
 					}}
 					data-umami-event="llamaai-fact-checked-mode-toggle"
 				>
-					<Icon name="check" height={16} width={16} className="shrink-0 text-[#777] dark:text-[#888]" />
+					<Icon name="check" height={16} width={16} className="shrink-0 text-ai-tertiary" />
 					<span className="flex-1">Fact-checked</span>
 					<span className="flex items-center gap-1.5">
 						{factCheckedUsage && factCheckedUsage.limit > 0 && factCheckedUsage.period !== 'unlimited' ? (
-							<span className="text-[11px] text-[#999] dark:text-[#666]">
+							<span className="text-[11px] text-ai-muted">
 								{factCheckedUsage.remainingUsage}/{factCheckedUsage.limit}
 							</span>
 						) : null}
 						{mode === 'fact_checked' ? (
-							<Icon name="check" height={14} width={14} className="shrink-0 text-[#2563eb] dark:text-[#60a5fa]" />
+							<Icon name="check" height={14} width={14} className="shrink-0 text-ai-blue" />
 						) : null}
 					</span>
 				</Ariakit.MenuItem>
@@ -146,27 +144,27 @@ export function MobileToolsPopover({
 					onClick={() => setMode('research')}
 					data-umami-event="llamaai-research-mode-toggle"
 				>
-					<Icon name="search" height={16} width={16} className="shrink-0 text-[#777] dark:text-[#888]" />
+					<Icon name="search" height={16} width={16} className="shrink-0 text-ai-tertiary" />
 					<span className="flex-1">Research</span>
 					<span className="flex items-center gap-1.5">
 						{researchUsage && researchUsage.limit > 0 && researchUsage.period !== 'unlimited' ? (
-							<span className="text-[11px] text-[#999] dark:text-[#666]">
+							<span className="text-[11px] text-ai-muted">
 								{researchUsage.remainingUsage}/{researchUsage.limit}
 							</span>
 						) : null}
 						{mode === 'research' ? (
-							<Icon name="check" height={14} width={14} className="shrink-0 text-[#2563eb] dark:text-[#60a5fa]" />
+							<Icon name="check" height={14} width={14} className="shrink-0 text-ai-blue" />
 						) : null}
 					</span>
 				</Ariakit.MenuItem>
 
-				<Ariakit.MenuSeparator className="mx-2 border-t border-black/6 dark:border-white/6" />
+				<Ariakit.MenuSeparator className="mx-2 border-t border-ai-line-subtle" />
 
 				<NestedMenu
 					data-walkthrough="mobile-explore-item"
 					label={
 						<span className="flex items-center gap-3">
-							<Icon name="layout-grid" height={16} width={16} className="shrink-0 text-[#777] dark:text-[#888]" />
+							<Icon name="layout-grid" height={16} width={16} className="shrink-0 text-ai-tertiary" />
 							<span>Explore</span>
 						</span>
 					}
@@ -183,7 +181,7 @@ export function MobileToolsPopover({
 						hideOnClick={false}
 						onClick={handleOpenAlerts}
 					>
-						<Icon name="calendar-plus" height={16} width={16} className="shrink-0 text-amber-500 dark:text-amber-400" />
+						<Icon name="calendar-plus" height={16} width={16} className="shrink-0 text-ai-warning-bright" />
 						<span>Alerts</span>
 					</Ariakit.MenuItem>
 				) : null}

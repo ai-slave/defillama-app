@@ -37,7 +37,7 @@ function seoFromRoute(route: LlamaAIRouteState) {
 
 function LoadingState() {
 	return (
-		<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1">
+		<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1">
 			<p className="flex items-center gap-1 text-center">
 				Loading
 				<LoadingDots />

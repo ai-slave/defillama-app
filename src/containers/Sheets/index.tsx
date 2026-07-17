@@ -8,7 +8,7 @@ const SubscribeProModal = lazy(() =>
 )
 
 const CheckIcon = () => (
-	<span className="mt-px flex size-5 shrink-0 items-center justify-center rounded-full bg-[#2172E5]/[0.12]">
+	<span className="mt-px flex size-5 shrink-0 items-center justify-center rounded-full bg-brand/12">
 		<svg
 			viewBox="0 0 24 24"
 			className="size-3"
@@ -30,18 +30,18 @@ const highlightFormula = (formula: string) => {
 			{parts.map((part, i) => {
 				if (part.startsWith('='))
 					return (
-						<span key={i} className="text-[#2172E5]">
+						<span key={i} className="text-brand">
 							{part}
 						</span>
 					)
 				if (part.startsWith('"'))
 					return (
-						<span key={i} className="text-[#4ade80]">
+						<span key={i} className="text-sub-success">
 							{part}
 						</span>
 					)
 				return (
-					<span key={i} className="text-[#8a8c90]">
+					<span key={i} className="text-sub-text-muted">
 						{part}
 					</span>
 				)
@@ -231,44 +231,44 @@ const templates = [
 	}
 ]
 
-const SectionSeparator = () => <hr className="mx-auto max-w-[1100px] border-[#39393E]/40" />
+const SectionSeparator = () => <hr className="mx-auto max-w-[1100px] border-sub-line/40" />
 
 const HeroMock = () => {
 	const heroGridCols = '36px minmax(0, 1fr) minmax(108px, 0.55fr)'
 
 	return (
-		<div className="overflow-hidden rounded-2xl border border-[#39393E]/40 bg-[#1a1b1f] shadow-[0_4px_20px_rgba(33,114,229,0.15),0_8px_32px_rgba(0,0,0,0.3)]">
-			<div className="flex items-center gap-2.5 border-b border-[#39393E]/40 px-4 py-2 text-xs">
-				<span className="min-w-[36px] rounded-sm border border-[#39393E] bg-[#222429] px-2 py-[3px] text-center font-mono text-[11px] text-[#8a8c90]">
+		<div className="overflow-hidden rounded-2xl border border-sub-line/40 bg-sub-ink shadow-brand-glow-combo">
+			<div className="flex items-center gap-2.5 border-b border-sub-line/40 px-4 py-2 text-xs">
+				<span className="min-w-[36px] rounded-sm border border-sub-line bg-sub-card px-2 py-0.75 text-center font-mono text-[11px] text-sub-text-muted">
 					B2
 				</span>
 				<span className="max-w-full min-w-0 truncate font-mono text-xs">
 					{highlightFormula('=DEFILLAMA("tvl", "ethereum")')}
 				</span>
 			</div>
-			<div className="grid border-b border-[#39393E]/40 bg-[#222429]/50" style={{ gridTemplateColumns: heroGridCols }}>
-				<div className="border-r border-[#39393E]/40 px-3 py-2.5" />
-				<div className="flex items-center border-r border-[#39393E]/40 px-3 py-2.5 text-[11px] font-semibold tracking-[0.5px] text-[#8a8c90] uppercase">
+			<div className="grid border-b border-sub-line/40 bg-sub-card/50" style={{ gridTemplateColumns: heroGridCols }}>
+				<div className="border-r border-sub-line/40 px-3 py-2.5" />
+				<div className="flex items-center border-r border-sub-line/40 px-3 py-2.5 text-[11px] font-semibold tracking-[0.5px] text-sub-text-muted uppercase">
 					A
 				</div>
-				<div className="flex items-center px-3 py-2.5 text-[11px] font-semibold tracking-[0.5px] text-[#8a8c90] uppercase">
+				<div className="flex items-center px-3 py-2.5 text-[11px] font-semibold tracking-[0.5px] text-sub-text-muted uppercase">
 					B
 				</div>
 			</div>
 			{heroRows.map((row) => (
 				<div
 					key={row.num}
-					className="grid border-b border-[#39393E]/40 last:border-b-0"
+					className="grid border-b border-sub-line/40 last:border-b-0"
 					style={{ gridTemplateColumns: heroGridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-[#39393E]/40 bg-[#222429]/30 px-3 py-2.5 font-mono text-[11px] text-[#8a8c90]">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-card/30 px-3 py-2.5 font-mono text-[11px] text-sub-text-muted">
 						{row.num}
 					</div>
-					<div className="flex min-w-0 items-center overflow-hidden border-r border-[#39393E]/40 px-3 py-2.5 font-mono text-xs">
+					<div className="flex min-w-0 items-center overflow-hidden border-r border-sub-line/40 px-3 py-2.5 font-mono text-xs">
 						<span className="block max-w-full min-w-0 truncate whitespace-nowrap">{highlightFormula(row.formula)}</span>
 					</div>
 					<div
-						className={`flex items-center px-3 py-2.5 font-mono text-xs font-semibold text-[#4ade80] ${row.selected ? 'rounded-sm ring-2 ring-[#2172E5] ring-inset' : ''}`}
+						className={`flex items-center px-3 py-2.5 font-mono text-xs font-semibold text-sub-success ${row.selected ? 'rounded-sm ring-2 ring-[#2172E5] ring-inset' : ''}`}
 					>
 						{row.value}
 					</div>
@@ -298,12 +298,12 @@ const ShowcaseSection = ({
 			className={`grid grid-cols-1 items-center gap-8 md:gap-15 ${reversed ? 'md:grid-cols-[45fr_55fr]' : 'md:grid-cols-[55fr_45fr]'}`}
 		>
 			<div className={reversed ? 'md:order-2' : ''}>
-				<p className="mb-3 text-[13px] font-semibold tracking-[2px] text-[#2172E5] uppercase">{overline}</p>
+				<p className="mb-3 text-[13px] font-semibold tracking-[2px] text-brand uppercase">{overline}</p>
 				<h2 className="mb-3.5 text-[28px] leading-[1.25] font-bold tracking-[-0.02em]">{heading}</h2>
-				<p className="mb-6 text-[15px] leading-relaxed text-[#b4b7bc]">{description}</p>
+				<p className="mb-6 text-[15px] leading-relaxed text-sub-text-soft">{description}</p>
 				<ul className="flex flex-col gap-3">
 					{bullets.map((bullet) => (
-						<li key={bullet} className="flex items-start gap-2.5 text-sm leading-normal text-[#b4b7bc]">
+						<li key={bullet} className="flex items-start gap-2.5 text-sm leading-normal text-sub-text-soft">
 							<CheckIcon />
 							{bullet}
 						</li>
@@ -319,7 +319,7 @@ type MockCell = { value: string; variant?: 'value' | 'formula'; colSpan?: number
 type MockRow = { num: string; cells: MockCell[] }
 
 const cellClass = (variant?: 'value' | 'formula') =>
-	variant === 'value' ? 'font-semibold text-[#4ade80]' : variant === 'formula' ? '' : 'text-[#b4b7bc]'
+	variant === 'value' ? 'font-semibold text-sub-success' : variant === 'formula' ? '' : 'text-sub-text-soft'
 
 const MockTable = ({
 	formulaBar,
@@ -345,25 +345,25 @@ const MockTable = ({
 	}
 
 	return (
-		<div className="overflow-hidden rounded-xl border border-[#39393E]/40 bg-[#1a1b1f] shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
+		<div className="overflow-hidden rounded-xl border border-sub-line/40 bg-sub-ink shadow-pop">
 			{formulaBar ? (
-				<div className="grid grid-cols-[28px_1fr] border-b border-[#39393E]/40">
-					<div className="border-r border-[#39393E]/40 bg-[#222429]/30 px-2.5 py-2" />
+				<div className="grid grid-cols-[28px_1fr] border-b border-sub-line/40">
+					<div className="border-r border-sub-line/40 bg-sub-card/30 px-2.5 py-2" />
 					<p className="flex items-center px-2.5 py-2 font-mono text-[11px]">{highlightFormula(formulaBar)}</p>
 				</div>
 			) : null}
 			{headers ? (
 				<div
-					className="border-b border-[#39393E]/40 bg-[#222429]/40"
+					className="border-b border-sub-line/40 bg-sub-card/40"
 					style={{ display: 'grid', gridTemplateColumns: gridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-[#39393E]/40 bg-[#222429]/30 px-2.5 py-[7px] font-mono text-[10px] text-[#8a8c90]">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-card/30 px-2.5 py-1.75 font-mono text-[10px] text-sub-text-muted">
 						{headers.num}
 					</div>
 					{headers.labels.map((label, i) => (
 						<div
 							key={label}
-							className={`flex items-center px-2.5 py-[7px] text-[10px] font-semibold tracking-[0.3px] text-[#8a8c90] uppercase ${i < colCount - 1 ? 'border-r border-[#39393E]/40' : ''}`}
+							className={`flex items-center px-2.5 py-1.75 text-[10px] font-semibold tracking-[0.3px] text-sub-text-muted uppercase ${i < colCount - 1 ? 'border-r border-sub-line/40' : ''}`}
 						>
 							{label}
 						</div>
@@ -373,16 +373,16 @@ const MockTable = ({
 			{rows.map((row) => (
 				<div
 					key={row.num}
-					className="border-b border-[#39393E]/40 last:border-b-0"
+					className="border-b border-sub-line/40 last:border-b-0"
 					style={{ display: 'grid', gridTemplateColumns: gridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-[#39393E]/40 bg-[#222429]/30 px-2.5 py-[7px] font-mono text-[10px] text-[#8a8c90]">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-card/30 px-2.5 py-1.75 font-mono text-[10px] text-sub-text-muted">
 						{row.num}
 					</div>
 					{row.cells.map((cell, i) => (
 						<div
 							key={i}
-							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-[7px] font-mono text-[11px] whitespace-nowrap ${cellClass(cell.variant)} ${hasRightSeparator(row.cells, i) ? 'border-r border-[#39393E]/40' : ''}`}
+							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 font-mono text-[11px] whitespace-nowrap ${cellClass(cell.variant)} ${hasRightSeparator(row.cells, i) ? 'border-r border-sub-line/40' : ''}`}
 							style={cell.colSpan ? { gridColumn: `span ${cell.colSpan}` } : undefined}
 						>
 							{cell.variant === 'formula' ? highlightFormula(cell.value) : cell.value}
@@ -391,14 +391,14 @@ const MockTable = ({
 				</div>
 			))}
 			{footer ? (
-				<div className="border-t border-[#39393E]/40" style={{ display: 'grid', gridTemplateColumns: gridCols }}>
-					<div className="flex items-center justify-center border-r border-[#39393E]/40 bg-[#222429]/30 px-2.5 py-[7px] font-mono text-[10px] text-[#8a8c90]">
+				<div className="border-t border-sub-line/40" style={{ display: 'grid', gridTemplateColumns: gridCols }}>
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-card/30 px-2.5 py-1.75 font-mono text-[10px] text-sub-text-muted">
 						{footer.num}
 					</div>
 					{footer.cells.map((cell, i) => (
 						<div
 							key={i}
-							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-[7px] font-mono text-[11px] whitespace-nowrap ${cellClass(cell.variant)} ${hasRightSeparator(footer.cells, i) ? 'border-r border-[#39393E]/40' : ''}`}
+							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 font-mono text-[11px] whitespace-nowrap ${cellClass(cell.variant)} ${hasRightSeparator(footer.cells, i) ? 'border-r border-sub-line/40' : ''}`}
 							style={cell.colSpan ? { gridColumn: `span ${cell.colSpan}` } : undefined}
 						>
 							{cell.variant === 'formula' ? highlightFormula(cell.value) : cell.value}
@@ -414,7 +414,7 @@ const TemplatesSection = () => (
 	<section className="mx-auto max-w-[1100px] px-4 py-12 sm:px-6 md:px-8 md:py-20">
 		<div className="mb-12 text-center">
 			<h2 className="mb-2.5 text-[32px] font-bold tracking-[-0.02em]">Templates</h2>
-			<p className="mx-auto max-w-[500px] text-base text-[#b4b7bc]">
+			<p className="mx-auto max-w-[500px] text-base text-sub-text-soft">
 				Pre-built spreadsheets to get you started. Clone and customize to fit your workflow.
 			</p>
 		</div>
@@ -427,14 +427,14 @@ const TemplatesSection = () => (
 					rel="noopener noreferrer"
 					data-umami-event="sheets-templates-click"
 					data-umami-event-template={tpl.title}
-					className="flex flex-col gap-2.5 rounded-2xl border border-[#39393E]/40 bg-[#1a1b1f] p-7 transition-all hover:border-[#2172E5] hover:shadow-[0_4px_20px_rgba(33,114,229,0.15)]"
+					className="flex flex-col gap-2.5 rounded-2xl border border-sub-line/40 bg-sub-ink p-7 transition-all hover:border-brand hover:shadow-brand-glow"
 				>
-					<div className="flex size-10 items-center justify-center rounded-lg bg-[#2172E5]/10 [&>svg]:size-5 [&>svg]:fill-none [&>svg]:stroke-[#2172E5] [&>svg]:[stroke-width:1.8] [&>svg]:[stroke-linecap:round] [&>svg]:[stroke-linejoin:round]">
+					<div className="flex size-10 items-center justify-center rounded-lg bg-brand/10 [&>svg]:size-5 [&>svg]:fill-none [&>svg]:stroke-[#2172E5] [&>svg]:[stroke-width:1.8] [&>svg]:[stroke-linecap:round] [&>svg]:[stroke-linejoin:round]">
 						{tpl.icon}
 					</div>
 					<h3 className="text-[15px] font-semibold">{tpl.title}</h3>
-					<p className="text-[13px] leading-normal text-[#8a8c90]">{tpl.desc}</p>
-					<span className="mt-auto flex items-center gap-1 text-[13px] font-medium text-[#2172E5]">
+					<p className="text-[13px] leading-normal text-sub-text-muted">{tpl.desc}</p>
+					<span className="mt-auto flex items-center gap-1 text-[13px] font-medium text-brand">
 						View template &rarr;
 					</span>
 				</a>
@@ -469,18 +469,18 @@ export default function SheetsContainer() {
 		<>
 			<section className="mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-4 pt-12 pb-15 sm:px-6 md:grid-cols-2 md:gap-15 md:px-8 md:pt-20">
 				<div className="flex flex-col gap-5">
-					<h2 className="text-[24px] font-bold tracking-[-0.02em] text-[#2172E5]">DefiLlama Sheets</h2>
+					<h2 className="text-2xl font-bold tracking-[-0.02em] text-brand">DefiLlama Sheets</h2>
 					<h1 className="text-[clamp(32px,4vw,48px)] leading-[1.15] font-extrabold tracking-[-0.03em]">
 						Your spreadsheet, powered by DeFi data
 					</h1>
-					<p className="max-w-[480px] text-[17px] leading-relaxed text-[#b4b7bc]">
+					<p className="max-w-[480px] text-[17px] leading-relaxed text-sub-text-soft">
 						Custom functions that pull TVL, fees, yields, stablecoin stats and historical data for 6,000+ protocols.
 					</p>
 					<div className="mt-1 flex flex-col gap-3 sm:flex-row">
 						<button
 							onClick={onGoogleSheetsButtonClick}
 							data-umami-event="sheets-google-sheets-click"
-							className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1a3a2a] px-6 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-px hover:bg-[#224a35] hover:shadow-[0_4px_16px_rgba(52,168,83,0.2)]"
+							className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1a3a2a] px-6 py-3 text-sm font-semibold text-on-brand transition-all hover:-translate-y-px hover:bg-[#224a35] hover:shadow-sub-google"
 						>
 							<img src="/assets/google-sheets.svg" alt="" className="size-[18px]" />
 							Google Sheets
@@ -488,7 +488,7 @@ export default function SheetsContainer() {
 						<button
 							onClick={onExcelButtonClick}
 							data-umami-event="sheets-excel-addin-click"
-							className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#162e22] px-6 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-px hover:bg-[#1e3d2d] hover:shadow-[0_4px_16px_rgba(33,115,70,0.2)]"
+							className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#162e22] px-6 py-3 text-sm font-semibold text-on-brand transition-all hover:-translate-y-px hover:bg-[#1e3d2d] hover:shadow-sub-google-deep"
 						>
 							<img src="/assets/microsoft-excel-v2.svg" alt="" className="size-[18px]" />
 							Excel Add-in

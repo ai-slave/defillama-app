@@ -47,30 +47,30 @@ export function IntegrationRow({
 	const [inlineError, setInlineError] = useState<string | null>(null)
 
 	return (
-		<div className="rounded-xl border border-black/[0.06] bg-black/[0.015] p-4 dark:border-white/[0.06] dark:bg-white/[0.015]">
+		<div className="rounded-xl border border-ai-line-subtle bg-ai-wash-faint p-4">
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="flex min-w-0 flex-1 items-center gap-3">
 					{glyph}
 					<div className="min-w-0">
-						<p className="m-0 text-[13.5px] font-medium text-[#1a1a1a] dark:text-white">{title}</p>
-						<p className="m-0 mt-0.5 text-xs text-[#777] dark:text-[#919296]">{description}</p>
+						<p className="m-0 text-[13.5px] font-medium text-ai-primary">{title}</p>
+						<p className="m-0 mt-0.5 text-xs text-ai-tertiary">{description}</p>
 					</div>
 				</div>
 				{link.state.status === 'linked' ? (
 					<div className="flex shrink-0 flex-col items-end gap-2">
-						<span className="text-[12px] whitespace-nowrap text-[#777] dark:text-[#919296]">
+						<span className="text-xs whitespace-nowrap text-ai-tertiary">
 							Linked as {formatHandle(link.state.username)}
 						</span>
 						<div className="flex gap-2">
 							<button
 								onClick={() => link.disconnect()}
-								className="shrink-0 rounded-lg border border-black/[0.08] px-3 py-1.5 text-xs whitespace-nowrap hover:bg-black/[0.04] dark:border-white/[0.08] dark:hover:bg-white/[0.04]"
+								className="shrink-0 rounded-lg border border-ai-line-medium px-3 py-1.5 text-xs whitespace-nowrap hover:bg-ai-wash"
 							>
 								Disconnect
 							</button>
 							<button
 								onClick={() => link.connect()}
-								className="shrink-0 rounded-lg bg-[#1853A8] px-3 py-1.5 text-xs whitespace-nowrap text-white hover:bg-[#1853A8]/90 dark:bg-[#4B86DB]"
+								className="shrink-0 rounded-lg bg-ai-blue-deep px-3 py-1.5 text-xs whitespace-nowrap text-ai-white hover:bg-ai-blue-deep/90"
 							>
 								Switch account
 							</button>
@@ -80,7 +80,7 @@ export function IntegrationRow({
 					<button
 						disabled={link.state.status === 'starting' || link.state.status === 'loading'}
 						onClick={() => link.connect()}
-						className="shrink-0 rounded-lg bg-[#1853A8] px-3 py-1.5 text-xs whitespace-nowrap text-white disabled:opacity-50 dark:bg-[#4B86DB]"
+						className="shrink-0 rounded-lg bg-ai-blue-deep px-3 py-1.5 text-xs whitespace-nowrap text-ai-white disabled:opacity-50"
 					>
 						{link.state.status === 'starting' ? 'Opening…' : link.state.status === 'loading' ? 'Loading…' : 'Connect'}
 					</button>
@@ -88,7 +88,7 @@ export function IntegrationRow({
 			</div>
 
 			{link.state.status === 'awaiting_tg' && (
-				<div className="mt-3 rounded-lg bg-black/[0.04] p-3 text-xs text-[#777] dark:bg-white/[0.04] dark:text-[#919296]">
+				<div className="mt-3 rounded-lg bg-ai-wash p-3 text-xs text-ai-tertiary">
 					Waiting for confirmation in Telegram…
 					<div className="mt-2">
 						Didn&apos;t see Telegram open?{' '}
@@ -101,9 +101,7 @@ export function IntegrationRow({
 			)}
 
 			{link.state.status === 'confirming' && (
-				<div className="mt-3 rounded-lg bg-black/[0.04] p-3 text-xs text-[#777] dark:bg-white/[0.04] dark:text-[#919296]">
-					Confirming Telegram link…
-				</div>
+				<div className="mt-3 rounded-lg bg-ai-wash p-3 text-xs text-ai-tertiary">Confirming Telegram link…</div>
 			)}
 
 			{link.state.status === 'awaiting_code' && (
@@ -128,12 +126,12 @@ export function IntegrationRow({
 						placeholder="6-digit code from Telegram"
 						maxLength={6}
 						inputMode="numeric"
-						className="flex-1 rounded-lg border border-black/[0.08] bg-white px-3 py-1.5 text-sm dark:border-white/[0.08] dark:bg-[#1a1b1c]"
+						className="flex-1 rounded-lg border border-ai-line-medium bg-ai-surface-card px-3 py-1.5 text-sm"
 					/>
 					<button
 						type="submit"
 						disabled={codeDraft.length !== 6}
-						className="rounded-lg bg-[#1853A8] px-3 py-1.5 text-xs text-white disabled:opacity-50 dark:bg-[#4B86DB]"
+						className="rounded-lg bg-ai-blue-deep px-3 py-1.5 text-xs text-ai-white disabled:opacity-50"
 					>
 						Confirm
 					</button>
@@ -141,11 +139,11 @@ export function IntegrationRow({
 			)}
 
 			{link.state.status === 'awaiting_code' && inlineError && (
-				<div className="mt-2 text-xs text-red-600 dark:text-red-400">{inlineError}</div>
+				<div className="mt-2 text-xs text-ai-error">{inlineError}</div>
 			)}
 
 			{link.state.status === 'switch_confirm' && (
-				<div className="mt-3 rounded-lg border border-amber-500/40 bg-amber-50 p-3 text-xs dark:bg-amber-900/20">
+				<div className="mt-3 rounded-lg border border-ai-warning-bright/40 bg-ai-warning-soft p-3 text-xs">
 					<p className="m-0 mb-2">
 						You&apos;re already linked to {formatHandle(link.state.currentTelegramUsername)}. Switch to this Telegram?
 					</p>
@@ -156,7 +154,7 @@ export function IntegrationRow({
 									if (consumed) onInitialStateConsumed?.()
 								})
 							}}
-							className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs text-white"
+							className="rounded-lg bg-ai-warning px-3 py-1.5 text-xs text-ai-white"
 						>
 							Yes, switch
 						</button>
@@ -165,7 +163,7 @@ export function IntegrationRow({
 								link.cancelSwitch()
 								onInitialStateConsumed?.()
 							}}
-							className="rounded-lg border border-black/[0.1] px-3 py-1.5 text-xs"
+							className="rounded-lg border border-ai-line-medium px-3 py-1.5 text-xs"
 						>
 							Cancel
 						</button>
@@ -174,7 +172,7 @@ export function IntegrationRow({
 			)}
 
 			{link.state.status === 'error' && (
-				<div className="mt-3 rounded-lg border border-red-500/40 bg-red-50 p-3 text-xs text-red-700 dark:bg-red-900/20 dark:text-red-200">
+				<div className="mt-3 rounded-lg border border-ai-error-vivid/40 bg-ai-error-bg p-3 text-xs text-ai-error-strong">
 					{link.state.message}
 				</div>
 			)}

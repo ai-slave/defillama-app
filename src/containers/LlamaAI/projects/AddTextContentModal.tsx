@@ -43,24 +43,24 @@ export function AddTextContentModal({ dialogStore, projectId }: AddTextContentMo
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog
-				className="fixed top-1/2 left-1/2 z-50 w-[min(640px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#e6e6e6] bg-(--legacy-cards-bg) p-5 shadow-2xl dark:border-[#222324]"
-				backdrop={<div className="backdrop fixed inset-0 bg-black/60 backdrop-blur-md" />}
+				className="fixed top-1/2 left-1/2 z-50 w-[min(640px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-ai-line bg-surface p-5 shadow-2xl"
+				backdrop={<div className="backdrop fixed inset-0 bg-ai-backdrop backdrop-blur-md" />}
 			>
 				<form onSubmit={submit} className="flex flex-col gap-4">
 					<header className="flex items-start justify-between">
 						<div>
-							<h2 className="text-base font-semibold text-(--legacy-text-primary)">Add text content</h2>
-							<p className="mt-0.5 text-xs text-[#666] dark:text-[#919296]">
+							<h2 className="text-base font-semibold text-primary">Add text content</h2>
+							<p className="mt-0.5 text-xs text-ai-tertiary">
 								Paste a note, prompt, or any plain-text content for this project.
 							</p>
 						</div>
-						<Ariakit.DialogDismiss className="-mr-1.5 rounded-lg p-2 text-[#666] transition-colors hover:bg-black/[0.05] hover:text-black dark:text-gray-400 dark:hover:bg-white/[0.06] dark:hover:text-white">
+						<Ariakit.DialogDismiss className="-mr-1.5 rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-wash hover:text-ai-primary">
 							<Icon name="x" height={16} width={16} />
 						</Ariakit.DialogDismiss>
 					</header>
 
 					<label className="flex flex-col gap-1.5">
-						<span className="text-xs font-medium text-[#444] dark:text-[#c5c5c5]">Filename</span>
+						<span className="text-xs font-medium text-ai-secondary">Filename</span>
 						<input
 							autoFocus
 							required
@@ -68,33 +68,33 @@ export function AddTextContentModal({ dialogStore, projectId }: AddTextContentMo
 							value={name}
 							onChange={(e) => setName(e.target.value)}
 							placeholder="notes.md"
-							className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 font-mono text-sm text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-hidden dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
+							className="rounded-md border border-ai-line bg-surface px-3 py-2 font-mono text-sm text-inherit placeholder:text-ai-muted focus:border-brand focus:outline-hidden"
 						/>
 					</label>
 
 					<label className="flex flex-col gap-1.5">
-						<span className="text-xs font-medium text-[#444] dark:text-[#c5c5c5]">Content</span>
+						<span className="text-xs font-medium text-ai-secondary">Content</span>
 						<textarea
 							required
 							rows={12}
 							value={content}
 							onChange={(e) => setContent(e.target.value)}
 							placeholder="# my note&#10;Anything goes here…"
-							className="resize-y rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-2 font-mono text-xs text-inherit placeholder:text-[#999] focus:border-(--legacy-old-blue) focus:outline-hidden dark:border-[#2a2b2c] dark:placeholder:text-[#555]"
+							className="resize-y rounded-md border border-ai-line bg-surface px-3 py-2 font-mono text-xs text-inherit placeholder:text-ai-muted focus:border-brand focus:outline-hidden"
 						/>
 					</label>
 
 					<footer className="mt-1 flex justify-end gap-2">
 						<Ariakit.DialogDismiss
 							type="button"
-							className="rounded-md px-3 py-1.5 text-xs text-[#666] hover:bg-[#f0f0f0] dark:text-[#919296] dark:hover:bg-[#222324]"
+							className="rounded-md px-3 py-1.5 text-xs text-ai-tertiary hover:bg-ai-surface-muted"
 						>
 							Cancel
 						</Ariakit.DialogDismiss>
 						<button
 							type="submit"
 							disabled={!name.trim() || !content || add.isPending}
-							className="flex items-center gap-1.5 rounded-md border border-(--legacy-old-blue) bg-(--legacy-old-blue) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-(--legacy-old-blue)/90 disabled:cursor-not-allowed disabled:opacity-50"
+							className="flex items-center gap-1.5 rounded-md border border-brand bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							{add.isPending ? <LoadingSpinner size={12} /> : null}
 							Save

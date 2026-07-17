@@ -55,7 +55,7 @@ function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle
 			}
 		>
 			{query.isLoading ? (
-				<div className="flex h-[320px] items-center justify-center text-xs text-(--legacy-text-tertiary)">Loading…</div>
+				<div className="flex h-[320px] items-center justify-center text-xs text-(--pro-text-tertiary)">Loading…</div>
 			) : hasData ? (
 				<IncomeStatement
 					name={NAME}
@@ -66,7 +66,7 @@ function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle
 					className="border-none bg-transparent p-0"
 				/>
 			) : (
-				<div className="flex h-[320px] items-center justify-center text-xs text-(--legacy-text-tertiary)">
+				<div className="flex h-[320px] items-center justify-center text-xs text-(--pro-text-tertiary)">
 					No income statement data
 				</div>
 			)}
@@ -175,8 +175,8 @@ export default function Financials() {
 						subtitle="Affiliate fees paid to integrating wallets and interfaces."
 					/>
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-						<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
-							<h3 className="mb-3 text-sm font-semibold text-(--legacy-text-primary)">
+						<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
+							<h3 className="mb-3 text-sm font-semibold text-(--pro-text-primary)">
 								{affiliate.leaderboard.title ?? 'Affiliate Leaderboard'}
 							</h3>
 							<ApiTable table={affiliate.leaderboard} maxHeight="360px" />

@@ -41,7 +41,7 @@ export function ArticleCoverImageEditor({
 			{article.coverImage?.url ? (
 				<figure className="grid gap-2">
 					<div
-						className="group relative aspect-[700/400] w-full overflow-hidden rounded-md border border-(--legacy-cards-border)"
+						className="group relative aspect-[700/400] w-full overflow-hidden rounded-md border border-medium"
 						onMouseEnter={() => setCoverHovered(true)}
 						onMouseLeave={() => setCoverHovered(false)}
 					>
@@ -59,7 +59,7 @@ export function ArticleCoverImageEditor({
 							<button
 								type="button"
 								onClick={onOpenCoverDetails}
-								className="pointer-events-auto flex h-8 items-center gap-1.5 rounded-md border border-white/30 bg-black/40 px-2.5 text-xs font-medium text-white backdrop-blur-sm transition-colors hover:bg-black/55"
+								className="pointer-events-auto flex h-8 items-center gap-1.5 rounded-md border border-white/30 bg-black/40 px-2.5 text-xs font-medium text-on-brand backdrop-blur-sm transition-colors hover:bg-black/55"
 							>
 								<Icon name="pencil" className="size-3.5" />
 								<span>Edit details</span>
@@ -68,7 +68,7 @@ export function ArticleCoverImageEditor({
 								type="button"
 								disabled={isUploadingCover}
 								onClick={openCoverPicker}
-								className="pointer-events-auto flex h-8 items-center gap-1.5 rounded-md border border-white/30 bg-black/40 px-2.5 text-xs font-medium text-white backdrop-blur-sm transition-colors hover:bg-black/55 disabled:cursor-not-allowed disabled:opacity-60"
+								className="pointer-events-auto flex h-8 items-center gap-1.5 rounded-md border border-white/30 bg-black/40 px-2.5 text-xs font-medium text-on-brand backdrop-blur-sm transition-colors hover:bg-black/55 disabled:cursor-not-allowed disabled:opacity-60"
 							>
 								{isUploadingCover ? 'Uploading…' : 'Replace'}
 							</button>
@@ -78,7 +78,7 @@ export function ArticleCoverImageEditor({
 								aria-label="Remove cover"
 								title="Remove cover"
 								onClick={() => updateArticle('coverImage', null)}
-								className="pointer-events-auto flex size-8 items-center justify-center rounded-md border border-white/30 bg-black/40 text-white backdrop-blur-sm transition-colors hover:border-red-400/60 hover:bg-red-500/70 disabled:cursor-not-allowed disabled:opacity-60"
+								className="pointer-events-auto flex size-8 items-center justify-center rounded-md border border-white/30 bg-black/40 text-on-brand backdrop-blur-sm transition-colors hover:border-error/60 hover:bg-error/70 disabled:cursor-not-allowed disabled:opacity-60"
 							>
 								<Icon name="trash" className="size-3.5" />
 							</button>
@@ -96,7 +96,7 @@ export function ArticleCoverImageEditor({
 								<button
 									type="button"
 									onClick={onOpenCoverDetails}
-									className="flex items-center gap-1.5 self-start rounded-md border border-dashed border-(--legacy-cards-border) px-2.5 py-1 text-[11px] font-medium text-(--legacy-text-tertiary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary)"
+									className="flex items-center gap-1.5 self-start rounded-md border border-dashed border-medium px-2.5 py-1 text-[11px] font-medium text-tertiary transition-colors hover:border-link/40 hover:text-primary"
 								>
 									<Icon name="plus" className="size-3" />
 									<span>Add caption & credits</span>
@@ -106,18 +106,16 @@ export function ArticleCoverImageEditor({
 						return (
 							<figcaption className="group/cap flex items-start justify-between gap-3">
 								<div className="grid gap-0.5 text-xs">
-									{headline ? <span className="font-medium text-(--legacy-text-secondary)">{headline}</span> : null}
-									{caption ? <span className="text-(--legacy-text-tertiary)">{caption}</span> : null}
-									{metaParts.length > 0 ? (
-										<span className="text-(--legacy-text-tertiary)/75">{metaParts.join(' · ')}</span>
-									) : null}
+									{headline ? <span className="font-medium text-secondary">{headline}</span> : null}
+									{caption ? <span className="text-tertiary">{caption}</span> : null}
+									{metaParts.length > 0 ? <span className="text-tertiary/75">{metaParts.join(' · ')}</span> : null}
 								</div>
 								<button
 									type="button"
 									onClick={onOpenCoverDetails}
 									aria-label="Edit cover details"
 									title="Edit cover details"
-									className="shrink-0 rounded-md p-1.5 text-(--legacy-text-tertiary) opacity-0 transition-opacity group-hover/cap:opacity-100 hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary) focus-visible:opacity-100"
+									className="shrink-0 rounded-md p-1.5 text-tertiary opacity-0 transition-opacity group-hover/cap:opacity-100 hover:bg-(--research-link-hover-bg) hover:text-primary focus-visible:opacity-100"
 								>
 									<Icon name="pencil" className="size-3.5" />
 								</button>
@@ -130,14 +128,14 @@ export function ArticleCoverImageEditor({
 					type="button"
 					disabled={isUploadingCover}
 					onClick={openCoverPicker}
-					className="group flex aspect-[700/400] w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed border-(--legacy-cards-border) bg-(--legacy-app-bg) text-(--legacy-text-tertiary) transition-colors hover:border-(--legacy-link-text)/50 hover:text-(--legacy-text-primary) disabled:cursor-not-allowed disabled:opacity-50"
+					className="group flex aspect-[700/400] w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed border-medium bg-page text-tertiary transition-colors hover:border-link/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					<SharedIcon name="image-plus" className="size-6" />
 					<span className="text-sm font-medium">{isUploadingCover ? 'Uploading…' : 'Add cover image'}</span>
-					<span className="text-[11px] text-(--legacy-text-tertiary)/80">PNG, JPEG, WebP, or GIF · up to 8 MB</span>
+					<span className="text-[11px] text-tertiary/80">PNG, JPEG, WebP, or GIF · up to 8 MB</span>
 				</button>
 			)}
-			{publishError ? <p className="mt-2 text-xs text-red-500">{publishError}</p> : null}
+			{publishError ? <p className="mt-2 text-xs text-error">{publishError}</p> : null}
 		</div>
 	)
 }

@@ -750,7 +750,7 @@ function TokenPills({ tokens }: { tokens: string[] }) {
 			{tokens.map((token) => (
 				<span
 					key={token}
-					className="rounded-md border border-green-600/40 bg-green-600/10 px-2 py-0.5 label-sm text-green-700 dark:text-green-400"
+					className="rounded-md border border-success/40 bg-success/10 px-2 py-0.5 label-sm text-success"
 				>
 					{token}
 				</span>
@@ -766,9 +766,7 @@ function RightsDots({ rights, labels }: { rights: [boolean, boolean, boolean]; l
 				<span key={labels[index]} className="flex items-center gap-2">
 					<span
 						className={
-							active
-								? 'size-2 rounded-full bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.55)]'
-								: 'size-2 rounded-full border border-green-600/40'
+							active ? 'size-2 rounded-full bg-success shadow-sub-live' : 'size-2 rounded-full border border-success/40'
 						}
 					/>
 					<span>
@@ -787,8 +785,8 @@ function RightsDots({ rights, labels }: { rights: [boolean, boolean, boolean]; l
 						key={labels[index]}
 						className={
 							active
-								? 'size-3 rounded-full bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.55)]'
-								: 'size-3 rounded-full border-2 border-green-600/40'
+								? 'size-3 rounded-full bg-success shadow-sub-live'
+								: 'size-3 rounded-full border-2 border-success/40'
 						}
 					/>
 				))}
@@ -838,11 +836,11 @@ type StatusPillTone = 'positive' | 'negative' | 'pending' | 'neutral'
 function getStatusPillClassName(tone: StatusPillTone, extraClassName = '') {
 	const toneClassName =
 		tone === 'positive'
-			? 'border-green-600/40 bg-green-600/10 text-green-700 dark:text-green-400'
+			? 'border-success/40 bg-success/10 text-success'
 			: tone === 'negative'
-				? 'border-red-600/40 bg-red-600/10 text-red-700 dark:text-red-400'
+				? 'border-red-600/40 bg-red-600/10 text-error dark:text-error'
 				: tone === 'pending'
-					? 'border-amber-600/40 bg-amber-600/10 text-amber-700 dark:text-amber-400'
+					? 'border-amber-600/40 bg-amber-600/10 text-warning'
 					: 'border-medium bg-page text-secondary'
 
 	return `mx-auto inline-flex items-center justify-center rounded-md border px-2 py-0.5 label-sm ${toneClassName} ${extraClassName}`
@@ -887,11 +885,11 @@ function TokenRightsLegend() {
 		<div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-subtle px-3 py-2.5 body-sm text-secondary">
 			<span className="mr-1 label-sm text-tertiary uppercase">Legend</span>
 			<span className="inline-flex items-center gap-2">
-				<span className="size-3 rounded-full bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.55)]" />
+				<span className="size-3 rounded-full bg-success shadow-sub-live" />
 				Active
 			</span>
 			<span className="inline-flex items-center gap-2">
-				<span className="size-3 rounded-full border-2 border-green-600/40" />
+				<span className="size-3 rounded-full border-2 border-success/40" />
 				Inactive
 			</span>
 			<span className="inline-flex items-center gap-2">

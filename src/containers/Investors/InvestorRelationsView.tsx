@@ -18,7 +18,7 @@ function PillStrip({
 	onSelect: (id: string) => void
 }) {
 	return (
-		<div className="flex items-center gap-1 overflow-x-auto border-b border-(--sl-divider) pb-2">
+		<div className="flex items-center gap-1 overflow-x-auto border-b border-sl-divider pb-2">
 			{tabs.map((tab) => {
 				if (tab.externalHref) {
 					return (
@@ -28,7 +28,7 @@ function PillStrip({
 							target="_blank"
 							rel="noopener noreferrer"
 							title={tab.externalTooltip ?? 'Opens in a new tab on a third-party site'}
-							className="flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-medium whitespace-nowrap text-(--legacy-text-secondary) transition-colors hover:bg-(--sl-hover-bg) hover:text-(--legacy-text-primary)"
+							className="flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap text-(--pro-text-secondary) transition-colors hover:bg-sl-hover-bg hover:text-(--pro-text-primary)"
 						>
 							{tab.label}
 							<svg
@@ -54,10 +54,10 @@ function PillStrip({
 					<button
 						key={tab.id}
 						onClick={() => onSelect(tab.id)}
-						className={`shrink-0 rounded-md px-3 py-1.5 text-[12px] font-medium whitespace-nowrap transition-colors ${
+						className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
 							isActive
-								? 'bg-(--sl-accent-muted) text-(--sl-accent)'
-								: 'text-(--legacy-text-secondary) hover:bg-(--sl-hover-bg) hover:text-(--legacy-text-primary)'
+								? 'bg-sl-accent-muted text-sl-accent'
+								: 'text-(--pro-text-secondary) hover:bg-sl-hover-bg hover:text-(--pro-text-primary)'
 						}`}
 					>
 						{tab.label}

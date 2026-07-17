@@ -141,7 +141,7 @@ const columns = [
 						<span className="-my-2 flex flex-col">
 							<BasicLink
 								href={`/protocol/${row.original.slug}`}
-								className="truncate text-sm font-medium text-(--legacy-link-text) hover:underline"
+								className="truncate text-sm font-medium text-link hover:underline"
 							>
 								{value}
 							</BasicLink>
@@ -151,7 +151,7 @@ const columns = [
 					) : (
 						<BasicLink
 							href={`/protocol/${row.original.slug}`}
-							className="truncate text-sm font-medium text-(--legacy-link-text) hover:underline"
+							className="truncate text-sm font-medium text-link hover:underline"
 						>
 							{value}
 						</BasicLink>
@@ -203,7 +203,7 @@ const columns = [
 				href={row.original.url}
 				target="_blank"
 				rel="noopener noreferrer"
-				className="flex shrink-0 items-center justify-center rounded-md bg-(--legacy-link-button) px-6 py-1.5 hover:bg-(--legacy-link-button-hover)"
+				className="flex shrink-0 items-center justify-center rounded-md bg-brand-muted px-6 py-1.5 hover:bg-(--interim-brand-tint-hover)"
 			>
 				<Icon name="arrow-up-right" height={14} width={14} />
 				<span className="sr-only">open in new tab</span>

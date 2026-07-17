@@ -358,7 +358,7 @@ export function OnboardingWalkthrough({
 				<button
 					type="button"
 					aria-label="Skip walkthrough"
-					className="pointer-events-auto absolute inset-0 bg-black/60"
+					className="pointer-events-auto absolute inset-0 bg-ai-backdrop"
 					onClick={handleSkip}
 				/>
 			) : null}
@@ -369,7 +369,7 @@ export function OnboardingWalkthrough({
 					<button
 						type="button"
 						aria-label="Skip walkthrough"
-						className="pointer-events-auto absolute inset-0 bg-black/60"
+						className="pointer-events-auto absolute inset-0 bg-ai-backdrop"
 						onClick={handleSkip}
 					/>
 					<div
@@ -377,8 +377,8 @@ export function OnboardingWalkthrough({
 							introExiting ? 'animate-[intro-exit_0.25s_ease-in_forwards]' : 'animate-[fadein_0.3s_ease-out]'
 						}`}
 					>
-						<div className="relative w-full max-w-[340px] overflow-hidden rounded-2xl border border-[#C99A4A]/15 bg-[#111214] shadow-[0_24px_64px_rgba(0,0,0,0.7)]">
-							<div className="h-px w-full bg-linear-to-r from-transparent via-[#C99A4A]/60 to-transparent" />
+						<div className="relative w-full max-w-[340px] overflow-hidden rounded-2xl border border-ai-gold/15 bg-ai-ink shadow-ai-modal">
+							<div className="h-px w-full bg-linear-to-r from-transparent via-ai-gold/60 to-transparent" />
 							<div className="p-6">
 								<div className="mb-5 flex flex-col items-center gap-3 text-center">
 									<div className="relative">
@@ -397,8 +397,8 @@ export function OnboardingWalkthrough({
 											height={56}
 										/>
 									</div>
-									<h2 className="text-lg font-bold tracking-tight text-white">Welcome to LlamaAI</h2>
-									<p className="text-[13px] leading-relaxed text-[#8b8d93]">
+									<h2 className="text-lg font-bold tracking-tight text-ai-white">Welcome to LlamaAI</h2>
+									<p className="text-[13px] leading-relaxed text-ai-on-ink-muted">
 										AI-powered research across DeFi, TradFi, and on-chain data. Charts, reports, forecasts, and alerts —
 										all in one conversation.
 									</p>
@@ -408,7 +408,7 @@ export function OnboardingWalkthrough({
 									{CAPABILITY_BADGES.map(([icon, label]) => (
 										<span
 											key={label}
-											className="flex items-center gap-1 rounded-md border border-[#C99A4A]/10 bg-[#C99A4A]/5 px-2 py-0.5 text-[10px] text-[#C99A4A]"
+											className="flex items-center gap-1 rounded-md border border-ai-gold/10 bg-ai-gold/5 px-2 py-0.5 text-[10px] text-ai-gold"
 										>
 											<Icon name={icon} height={9} width={9} className="opacity-70" />
 											{label}
@@ -418,7 +418,7 @@ export function OnboardingWalkthrough({
 
 								<button
 									onClick={nextStep}
-									className="w-full rounded-xl bg-[linear-gradient(94deg,#FDE0A9_25%,#FBEDCB_57%,#FDE0A9_100%)] py-2.5 text-[13px] font-semibold text-[#1a1200] shadow-[0_0_20px_rgba(253,224,169,0.3)] transition-all hover:shadow-[0_0_28px_rgba(253,224,169,0.5)]"
+									className="w-full rounded-xl bg-ai-gold-cta py-2.5 text-[13px] font-semibold text-ai-on-gold-strong shadow-ai-gold-ring transition-all hover:shadow-ai-gold-ring-hover"
 								>
 									Show me around
 								</button>
@@ -488,7 +488,7 @@ export function OnboardingWalkthrough({
 							</div>
 						) : null}
 
-						<div className="overflow-hidden rounded-xl border border-[#222428] bg-[#111214] shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
+						<div className="overflow-hidden rounded-xl border border-ai-ink-line bg-ai-ink shadow-ai-overlay">
 							<div
 								className="h-px w-full bg-linear-to-r from-transparent to-transparent"
 								style={{
@@ -504,8 +504,8 @@ export function OnboardingWalkthrough({
 										<Icon name={config.icon} height={14} width={14} style={{ color: config.iconColor }} />
 									</div>
 									<div className="flex flex-col gap-1">
-										<span className="text-[13px] font-semibold text-white">{config.title}</span>
-										<span className="text-[12px] leading-snug text-[#8b8d93]">
+										<span className="text-[13px] font-semibold text-ai-white">{config.title}</span>
+										<span className="text-xs leading-snug text-ai-on-ink-muted">
 											{RESEARCH_STEPS.has(currentStep) ? researchDescription : config.description}
 										</span>
 									</div>
@@ -514,7 +514,7 @@ export function OnboardingWalkthrough({
 								{!RESEARCH_STEPS.has(currentStep) ? (
 									<button
 										onClick={nextStep}
-										className="mt-3 w-full rounded-lg bg-[#1e2028] py-2 text-[12px] font-medium text-[#d1d5db] transition-colors hover:bg-[#282c36] hover:text-white"
+										className="mt-3 w-full rounded-lg bg-ai-ink-raised py-2 text-xs font-medium text-ai-on-ink transition-colors hover:bg-ai-ink-hover hover:text-ai-white"
 									>
 										Next
 									</button>
@@ -539,20 +539,20 @@ export function OnboardingWalkthrough({
 					<button
 						type="button"
 						aria-label="Skip walkthrough"
-						className="pointer-events-auto absolute inset-0 bg-black/60"
+						className="pointer-events-auto absolute inset-0 bg-ai-backdrop"
 						onClick={handleSkip}
 					/>
-					<div className="pointer-events-auto absolute inset-0 flex animate-[fadein_0.25s_ease-out] items-center justify-center p-4">
-						<div className="relative w-full max-w-[400px] overflow-hidden rounded-2xl border border-[#222428] bg-[#111214] shadow-[0_24px_64px_rgba(0,0,0,0.7)]">
-							<div className="h-px w-full bg-linear-to-r from-transparent via-green-400/50 to-transparent" />
+					<div className="pointer-events-auto absolute inset-0 flex animate-ai-fade-in items-center justify-center p-4">
+						<div className="relative w-full max-w-[400px] overflow-hidden rounded-2xl border border-ai-ink-line bg-ai-ink shadow-ai-modal">
+							<div className="h-px w-full bg-linear-to-r from-transparent via-ai-success-vivid/50 to-transparent" />
 
 							<div className="p-6">
 								<div className="mb-4 flex flex-col items-center gap-1 text-center">
-									<div className="mb-1 flex size-7 items-center justify-center rounded-full bg-green-500/12">
-										<Icon name="check" height={14} width={14} className="text-green-400" />
+									<div className="mb-1 flex size-7 items-center justify-center rounded-full bg-ai-success-vivid/12">
+										<Icon name="check" height={14} width={14} className="text-ai-success-vivid" />
 									</div>
-									<span className="text-[15px] font-bold text-white">Research mode is on</span>
-									<span className="text-[13px] text-[#8b8d93]">Unsure what to ask? Try one of these:</span>
+									<span className="text-[15px] font-bold text-ai-white">Research mode is on</span>
+									<span className="text-[13px] text-ai-on-ink-muted">Unsure what to ask? Try one of these:</span>
 								</div>
 
 								<div className="mb-4 flex flex-col gap-1.5">
@@ -560,32 +560,34 @@ export function OnboardingWalkthrough({
 										<button
 											key={p.label}
 											onClick={() => handlePromptClick(p.prompt)}
-											className="group flex items-center gap-3 rounded-xl border border-[#1e2028] bg-[#16181c] px-3.5 py-2.5 text-left transition-all duration-150 hover:border-[#2563eb]/20 hover:bg-[#2563eb]/5"
+											className="group flex items-center gap-3 rounded-xl border border-ai-ink-line bg-ai-ink px-3.5 py-2.5 text-left transition-all duration-150 hover:border-ai-blue/20 hover:bg-ai-blue/5"
 										>
 											<Icon
 												name={p.icon}
 												height={14}
 												width={14}
-												className="shrink-0 text-[#555] transition-colors group-hover:text-[#60a5fa]"
+												className="shrink-0 text-ai-secondary transition-colors group-hover:text-ai-blue-soft"
 											/>
-											<span className="text-[13px] font-medium text-[#d1d5db] group-hover:text-white">{p.label}</span>
+											<span className="text-[13px] font-medium text-ai-on-ink group-hover:text-ai-white">
+												{p.label}
+											</span>
 											<Icon
 												name="arrow-right"
 												height={12}
 												width={12}
-												className="ml-auto shrink-0 text-[#333] opacity-0 transition-all group-hover:text-[#60a5fa] group-hover:opacity-100"
+												className="ml-auto shrink-0 text-ai-secondary opacity-0 transition-all group-hover:text-ai-blue-soft group-hover:opacity-100"
 											/>
 										</button>
 									))}
 								</div>
 
-								<p className="mb-3 text-center text-[11px] text-[#555]">
+								<p className="mb-3 text-center text-[11px] text-ai-secondary">
 									Or type your own question in the input below.
 								</p>
 
 								<button
 									onClick={handleStartChatting}
-									className="w-full rounded-xl border border-[#222428] bg-[#16181c] py-2.5 text-[13px] font-medium text-[#d1d5db] transition-colors hover:bg-[#1e2028] hover:text-white"
+									className="w-full rounded-xl border border-ai-ink-line bg-ai-ink py-2.5 text-[13px] font-medium text-ai-on-ink transition-colors hover:bg-ai-ink-raised hover:text-ai-white"
 								>
 									Start chatting
 								</button>
@@ -611,12 +613,12 @@ function ProgressFooter({ currentStep, steps, onSkip }: { currentStep: Step; ste
 					<div
 						key={stepName}
 						className={`h-1 rounded-full transition-all duration-300 ${
-							index <= currentIndex ? 'w-3.5 bg-[#C99A4A]' : 'w-1 bg-[#2a2c30]'
+							index <= currentIndex ? 'w-3.5 bg-ai-gold' : 'w-1 bg-ai-ink-hover'
 						}`}
 					/>
 				))}
 			</div>
-			<button onClick={onSkip} className="text-[11px] text-[#555] transition-colors hover:text-[#8b8d93]">
+			<button onClick={onSkip} className="text-[11px] text-ai-secondary transition-colors hover:text-ai-on-ink-muted">
 				Skip
 			</button>
 		</div>

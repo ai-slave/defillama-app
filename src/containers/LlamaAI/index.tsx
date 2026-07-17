@@ -2386,7 +2386,7 @@ export function AgenticChat({
 	if (!user && !readOnly && !sharedSession) {
 		return (
 			<>
-				<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-1">
+				<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1">
 					<p className="flex items-center gap-1 text-center">
 						Please{' '}
 						<button
@@ -2455,7 +2455,7 @@ export function AgenticChat({
 						) : null}
 
 						<div
-							className={`llamaai-chat-panel relative isolate flex flex-1 flex-col overflow-hidden rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) dark:border-[#222324] ${sidebarVisible && shouldAnimateSidebar ? 'lg:animate-[shrinkToRight_0.1s_ease-out]' : ''}`}
+							className={`llamaai-chat-panel relative isolate flex flex-1 flex-col overflow-hidden rounded-lg border border-ai-line bg-surface ${sidebarVisible && shouldAnimateSidebar ? 'lg:animate-[shrinkToRight_0.1s_ease-out]' : ''}`}
 						>
 							{!readOnly && !sidebarVisible ? (
 								<ChatControls
@@ -2472,7 +2472,7 @@ export function AgenticChat({
 									onClick={() => openShareModal()}
 									data-umami-event="llamaai-share-modal-open"
 									data-umami-event-source="header_controls"
-									className="absolute top-2.5 right-2.5 z-10 hidden items-center gap-1.5 rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-3 py-1.5 text-xs font-medium text-[#444] transition-colors hover:bg-[#f7f7f7] lg:flex dark:border-[#333] dark:text-[#ccc] dark:hover:bg-[#222324]"
+									className="absolute top-2.5 right-2.5 z-10 hidden items-center gap-1.5 rounded-md border border-ai-line bg-surface px-3 py-1.5 text-xs font-medium text-ai-secondary transition-colors hover:bg-ai-surface-muted lg:flex"
 								>
 									<Icon name="share" height={14} width={14} />
 									Share
@@ -2499,7 +2499,7 @@ export function AgenticChat({
 							)}
 						</div>
 						{rightPanel ? (
-							<aside className="hidden w-[340px] shrink-0 flex-col overflow-y-auto rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) lg:ml-2 lg:flex dark:border-[#222324]">
+							<aside className="hidden w-[340px] shrink-0 flex-col overflow-y-auto rounded-lg border border-ai-line bg-surface lg:ml-2 lg:flex">
 								{rightPanel}
 							</aside>
 						) : null}
@@ -2642,7 +2642,7 @@ const ChatControls = memo(function ChatControls({
 							data-umami-event-source="collapsed_controls"
 						/>
 					}
-					className="flex size-6 items-center justify-center gap-2 rounded-sm bg-(--legacy-old-blue)/12 text-(--legacy-old-blue) hover:bg-(--legacy-old-blue) hover:text-white focus-visible:bg-(--legacy-old-blue) focus-visible:text-white"
+					className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
 				>
 					<Icon name="panel-left-open" height={16} width={16} />
 					<span className="sr-only">Open Chat History</span>
@@ -2650,7 +2650,7 @@ const ChatControls = memo(function ChatControls({
 				<Tooltip
 					content="New Chat"
 					render={<button onClick={handleNewChat} />}
-					className="flex size-6 items-center justify-center gap-2 rounded-sm bg-(--legacy-old-blue) text-white hover:bg-(--legacy-old-blue) focus-visible:bg-(--legacy-old-blue) max-lg:ml-auto"
+					className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand text-ai-white hover:bg-brand focus-visible:bg-brand max-lg:ml-auto"
 				>
 					<Icon name="message-square-plus" height={16} width={16} />
 					<span className="sr-only">New Chat</span>
@@ -2660,7 +2660,7 @@ const ChatControls = memo(function ChatControls({
 						onClick={onShare}
 						data-umami-event="llamaai-share-modal-open"
 						data-umami-event-source="header_controls"
-						className="flex h-6 items-center gap-1 rounded-sm bg-(--legacy-old-blue)/12 px-2 text-[11px] text-(--legacy-old-blue) transition-colors hover:bg-(--legacy-old-blue) hover:text-white focus-visible:bg-(--legacy-old-blue) focus-visible:text-white lg:hidden"
+						className="flex h-6 items-center gap-1 rounded-sm bg-brand/12 px-2 text-[11px] text-brand transition-colors hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white lg:hidden"
 					>
 						<Icon name="share" height={12} width={12} />
 						Share
@@ -2677,7 +2677,7 @@ const ChatControls = memo(function ChatControls({
 								data-umami-event-source="collapsed_controls"
 							/>
 						}
-						className="flex size-6 items-center justify-center gap-2 rounded-sm bg-(--legacy-old-blue)/12 text-(--legacy-old-blue) hover:bg-(--legacy-old-blue) hover:text-white focus-visible:bg-(--legacy-old-blue) focus-visible:text-white"
+						className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
 					>
 						<Icon name={isFullscreen ? 'shrink' : 'expand'} height={16} width={16} />
 						<span className="sr-only">{isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
@@ -2687,12 +2687,12 @@ const ChatControls = memo(function ChatControls({
 			<Tooltip
 				content="Settings"
 				render={<button onClick={onOpenSettings} />}
-				className="absolute bottom-2.5 left-2.5 z-10 flex size-6 items-center justify-center rounded-sm bg-(--legacy-old-blue)/12 text-(--legacy-old-blue) hover:bg-(--legacy-old-blue) hover:text-white focus-visible:bg-(--legacy-old-blue) focus-visible:text-white max-lg:hidden"
+				className="absolute bottom-2.5 left-2.5 z-10 flex size-6 items-center justify-center rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white max-lg:hidden"
 			>
 				<div className="relative">
 					<Icon name="settings" height={16} width={16} />
 					{hasCustomInstructions ? (
-						<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-[#1853A8] dark:bg-[#4B86DB]" />
+						<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-ai-blue-deep" />
 					) : null}
 				</div>
 				<span className="sr-only">Settings</span>

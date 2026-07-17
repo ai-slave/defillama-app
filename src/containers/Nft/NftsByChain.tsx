@@ -48,10 +48,7 @@ const columns = [
 
 					<TokenLogo src={row.original.logo} data-lgonly />
 
-					<BasicLink
-						href={`/chain/${slug(value)}`}
-						className="truncate text-sm font-medium text-(--legacy-link-text) hover:underline"
-					>
+					<BasicLink href={`/chain/${slug(value)}`} className="truncate text-sm font-medium text-link hover:underline">
 						{value}
 					</BasicLink>
 					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}

@@ -74,7 +74,7 @@ export function SectionsTOC({
 	return (
 		<div className="w-0 shrink-0">
 			<nav className="sticky top-0 hidden max-h-dvh w-56 -translate-x-full overflow-y-auto py-6 pr-4 min-[1428px]:block">
-				<p className="mb-3 px-2 text-sm font-semibold text-[#333] dark:text-[#ccc]">Sections</p>
+				<p className="mb-3 px-2 text-sm font-semibold text-ai-secondary">Sections</p>
 				<ol className="flex flex-col gap-0.5">
 					{sections.map((section, i) => {
 						const isActive = activeIndex === i
@@ -85,16 +85,16 @@ export function SectionsTOC({
 									onClick={() => handleClick(i)}
 									className={`flex w-full items-start gap-2.5 rounded-md px-2 py-1.5 text-left text-[13px] leading-snug transition-colors ${
 										isActive
-											? 'bg-[#f0f0f0] font-medium text-[#111] dark:bg-[#222324] dark:text-white'
-											: 'text-[#666] hover:bg-[#f7f7f7] hover:text-[#333] dark:text-[#919296] dark:hover:bg-[#1a1b1d] dark:hover:text-[#ccc]'
+											? 'bg-ai-surface-muted font-medium text-ai-primary'
+											: 'text-ai-tertiary hover:bg-ai-surface-muted hover:text-ai-secondary'
 									}`}
 									title={section.text}
 								>
 									<span
 										className={`mt-px flex size-5 shrink-0 items-center justify-center rounded-sm text-[11px] font-medium ${
 											isActive
-												? 'bg-[#4f8fba] text-white dark:bg-[#4f8fba]'
-												: 'bg-[#e8e8e8] text-[#666] dark:bg-[#2a2b2d] dark:text-[#919296]'
+												? 'bg-ai-steel text-ai-white dark:bg-ai-steel'
+												: 'bg-ai-surface-muted text-ai-tertiary dark:bg-ai-surface-muted'
 										}`}
 									>
 										{i + 1}

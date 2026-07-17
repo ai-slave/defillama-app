@@ -31,9 +31,9 @@ const columnHelper = createColumnHelper<TokensTableRow>()
 type RightsTone = 'positive' | 'negative' | 'warning' | 'neutral'
 
 const RIGHTS_CHIP_TONE_CLASSES: Record<RightsTone, string> = {
-	positive: 'border-green-600/30 bg-green-600/10 text-green-700 dark:text-green-400',
-	negative: 'border-red-600/30 bg-red-600/10 text-red-700 dark:text-red-400',
-	warning: 'border-amber-600/30 bg-amber-600/10 text-amber-700 dark:text-amber-400',
+	positive: 'border-success/30 bg-success/10 text-success',
+	negative: 'border-red-600/30 bg-red-600/10 text-error dark:text-error',
+	warning: 'border-amber-600/30 bg-amber-600/10 text-warning',
 	neutral: 'border-medium bg-surface text-secondary'
 }
 
@@ -85,7 +85,7 @@ function ProgressPercentValue({
 	return (
 		<span className="flex min-w-[92px] flex-col items-end gap-1">
 			<span className="text-sm font-semibold">{value}</span>
-			<span className="h-1.5 w-20 overflow-hidden rounded-full bg-(--legacy-bg-tertiary)">
+			<span className="h-1.5 w-20 overflow-hidden rounded-full bg-surface-elevated-2">
 				<span className={`block h-full rounded-full ${barClassName}`} style={{ width }} />
 			</span>
 		</span>
@@ -162,14 +162,12 @@ function RightsPopover({ rights, fullRightsHref }: { rights: TokensRightsSummary
 				</div>
 
 				{hasPrimaryValueAccrual ? (
-					<div className="flex flex-col gap-1 rounded-md border border-green-600/30 bg-green-600/10 p-2">
-						<div className="label-sm font-medium tracking-wider text-secondary uppercase">Primary Value Accrual</div>
+					<div className="flex flex-col gap-1 rounded-md border border-success/30 bg-success/10 p-2">
+						<div className="label-sm tracking-wider text-secondary uppercase">Primary Value Accrual</div>
 						{rights.primaryValue !== null ? (
-							<div className="text-sm font-semibold text-green-700 dark:text-green-400">{rights.primaryValue}</div>
+							<div className="text-sm font-semibold text-success">{rights.primaryValue}</div>
 						) : null}
-						{rights.primaryDetails ? (
-							<p className="label-sm leading-snug text-secondary">{rights.primaryDetails}</p>
-						) : null}
+						{rights.primaryDetails ? <p className="label-sm text-secondary">{rights.primaryDetails}</p> : null}
 					</div>
 				) : null}
 
@@ -179,7 +177,7 @@ function RightsPopover({ rights, fullRightsHref }: { rights: TokensRightsSummary
 
 				{rights.utilityItems.length > 0 ? (
 					<div className="flex flex-col items-center gap-1.5">
-						<div className="label-sm font-medium tracking-wider text-secondary uppercase">Utility</div>
+						<div className="label-sm tracking-wider text-secondary uppercase">Utility</div>
 						<RightsChipList items={rights.utilityItems} tone="neutral" wrap />
 					</div>
 				) : null}

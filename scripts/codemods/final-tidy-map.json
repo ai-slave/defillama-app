@@ -1,0 +1,14 @@
+{
+	"bg|(--old-blue)": "bg-brand",
+	"text|(--old-blue)": "text-brand",
+	"border|(--old-blue)": "border-brand",
+	"text|(--text-primary)": "text-primary",
+	"text|(--text-secondary)": "text-secondary",
+	"text|(--text-tertiary)": "text-tertiary",
+	"bg|(--text-primary)": "bg-primary",
+	"bg|(--text-secondary)": "bg-secondary",
+	"bg|(--text-tertiary)": "bg-tertiary",
+	"border|(--text-secondary)": "border-secondary",
+	"stroke|(--text-tertiary)": "stroke-tertiary",
+	"border|(--border-brand)": "border-brand"
+}

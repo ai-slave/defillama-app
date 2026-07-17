@@ -246,7 +246,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 						<ProTableCSVButton
 							onClick={handleCsvExport}
 							smol
-							className="flex items-center gap-1 rounded-md border border-(--legacy-form-control-border) px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-(--legacy-cards-border) disabled:text-(--legacy-text-disabled)"
+							className="flex items-center gap-1 rounded-md border border-(--pro-form-control-border) px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-(--pro-cards-border) disabled:text-tertiary"
 						/>
 					</div>
 				) : null}

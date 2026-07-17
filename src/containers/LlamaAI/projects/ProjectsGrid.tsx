@@ -88,19 +88,19 @@ export function ProjectsGrid() {
 	if (isLocked) {
 		return (
 			<div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-5 px-4 py-12 text-center">
-				<div className="flex size-16 items-center justify-center rounded-full bg-(--legacy-old-blue)/12">
-					<Icon name="folder-plus" height={28} width={28} className="text-(--legacy-old-blue)" />
+				<div className="flex size-16 items-center justify-center rounded-full bg-brand/12">
+					<Icon name="folder-plus" height={28} width={28} className="text-brand" />
 				</div>
 				<div className="flex flex-col gap-2">
 					<h1 className="text-2xl font-semibold">Projects are a paid feature</h1>
-					<p className="max-w-md text-sm text-[#666] dark:text-[#919296]">
+					<p className="max-w-md text-sm text-ai-tertiary">
 						Upload files or connect a GitHub repo, then chat with LlamaAI using that knowledge.
 					</p>
 				</div>
 				<button
 					type="button"
 					onClick={() => void Router.push('/subscription')}
-					className="rounded-md border border-(--legacy-old-blue) bg-(--legacy-old-blue) px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-(--legacy-old-blue)/90"
+					className="rounded-md border border-brand bg-brand px-4 py-2 text-sm font-medium text-ai-white transition-colors hover:bg-brand/90"
 				>
 					Upgrade to enable Projects
 				</button>
@@ -118,7 +118,7 @@ export function ProjectsGrid() {
 			type="button"
 			onClick={createStore.show}
 			disabled={reachedProjectCap}
-			className="flex items-center gap-1.5 rounded-md border border-(--legacy-old-blue) bg-(--legacy-old-blue) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-(--legacy-old-blue)/90 disabled:cursor-not-allowed disabled:opacity-50"
+			className="flex items-center gap-1.5 rounded-md border border-brand bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
 		>
 			<Icon name="plus" height={14} width={14} />
 			New project
@@ -131,7 +131,7 @@ export function ProjectsGrid() {
 				<div>
 					<h1 className="text-xl font-semibold">Projects</h1>
 					{hasProjects ? (
-						<p className="text-xs text-[#666] dark:text-[#919296]">
+						<p className="text-xs text-ai-tertiary">
 							{allProjects.length} project{allProjects.length === 1 ? '' : 's'}
 						</p>
 					) : null}
@@ -139,16 +139,16 @@ export function ProjectsGrid() {
 				{hasProjects ? (
 					<div className="flex items-center gap-2">
 						{hasProjectLimit ? (
-							<span className="text-xs text-[#666] tabular-nums dark:text-[#919296]">
+							<span className="text-xs text-ai-tertiary tabular-nums">
 								{allProjects.length} / {projectLimit} projects
 							</span>
 						) : null}
-						<label className="flex items-center gap-1.5 text-xs text-[#666] dark:text-[#919296]">
+						<label className="flex items-center gap-1.5 text-xs text-ai-tertiary">
 							Sort
 							<select
 								value={sortBy}
 								onChange={(e) => startTransition(() => setSortBy(e.target.value as SortBy))}
-								className="rounded-md border border-[#e6e6e6] bg-(--legacy-cards-bg) px-2 py-1 text-xs text-inherit focus:border-(--legacy-old-blue) focus:outline-hidden dark:border-[#2a2b2c]"
+								className="rounded-md border border-ai-line bg-surface px-2 py-1 text-xs text-inherit focus:border-brand focus:outline-hidden"
 							>
 								<option value="updated">Recently updated</option>
 								<option value="created">Recently created</option>
@@ -165,24 +165,24 @@ export function ProjectsGrid() {
 			</header>
 
 			{hasProjects ? (
-				<div className="group/search relative flex items-center rounded-md bg-[#f5f5f5] transition-colors focus-within:bg-[#ebebeb] dark:bg-[#1a1a1b] dark:focus-within:bg-[#222324]">
+				<div className="group/search relative flex items-center rounded-md bg-ai-surface-muted transition-colors focus-within:bg-ai-surface-muted">
 					<Icon
 						name="search"
 						height={14}
 						width={14}
-						className="pointer-events-none ml-3 shrink-0 text-[#999] group-focus-within/search:text-(--legacy-old-blue) dark:text-[#555]"
+						className="pointer-events-none ml-3 shrink-0 text-ai-muted group-focus-within/search:text-brand"
 					/>
 					<input
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 						placeholder="Search projects"
-						className="min-w-0 flex-1 bg-transparent p-2 text-xs text-inherit placeholder:text-[#aaa] focus:outline-hidden dark:placeholder:text-[#555]"
+						className="min-w-0 flex-1 bg-transparent p-2 text-xs text-inherit placeholder:text-ai-faint focus:outline-hidden"
 					/>
 					{query ? (
 						<button
 							type="button"
 							onClick={() => setQuery('')}
-							className="mr-2 flex size-4 items-center justify-center rounded-full bg-[#ccc] text-white hover:bg-[#999] dark:bg-[#444] dark:hover:bg-[#666]"
+							className="mr-2 flex size-4 items-center justify-center rounded-full bg-ai-handle text-ai-white hover:bg-ai-handle-hover"
 						>
 							<Icon name="x" height={8} width={8} />
 						</button>
@@ -195,20 +195,20 @@ export function ProjectsGrid() {
 					<LoadingSpinner size={16} />
 				</div>
 			) : error ? (
-				<div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-red-300 bg-red-50 py-12 text-center text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+				<div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-ai-error-border bg-ai-error-bg py-12 text-center text-sm text-ai-error-strong">
 					<Icon name="alert-triangle" height={24} width={24} />
 					<p>Couldn't load projects.</p>
 					<button
 						type="button"
 						onClick={() => void refetch()}
-						className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium hover:bg-red-100 dark:border-red-800 dark:hover:bg-red-900"
+						className="rounded-md border border-ai-error-border px-3 py-1.5 text-xs font-medium hover:bg-ai-error-bg"
 					>
 						Retry
 					</button>
 				</div>
 			) : !hasProjects ? (
-				<div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#e6e6e6] py-12 text-center text-sm text-[#666] dark:border-[#2a2b2c] dark:text-[#919296]">
-					<Icon name="folder-plus" height={28} width={28} className="text-[#999] dark:text-[#555]" />
+				<div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-ai-line py-12 text-center text-sm text-ai-tertiary">
+					<Icon name="folder-plus" height={28} width={28} className="text-ai-muted" />
 					<p>Create your first project to upload files or connect a GitHub repo.</p>
 					<Tooltip
 						content={reachedProjectCap ? `Project limit reached (${allProjects.length} / ${projectLimit}).` : null}
@@ -217,14 +217,14 @@ export function ProjectsGrid() {
 					</Tooltip>
 				</div>
 			) : visibleProjects.length === 0 ? (
-				<div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-[#e6e6e6] py-12 text-center text-sm text-[#666] dark:border-[#2a2b2c] dark:text-[#919296]">
-					<Icon name="search" height={24} width={24} className="text-[#999] dark:text-[#555]" />
+				<div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-ai-line py-12 text-center text-sm text-ai-tertiary">
+					<Icon name="search" height={24} width={24} className="text-ai-muted" />
 					<p>No projects match "{deferredQuery.trim()}".</p>
 					{hasSearchQuery ? (
 						<button
 							type="button"
 							onClick={() => setQuery('')}
-							className="rounded-md border border-[#e6e6e6] px-3 py-1.5 text-xs font-medium text-(--legacy-text-primary) hover:border-(--legacy-old-blue) dark:border-[#2a2b2c]"
+							className="rounded-md border border-ai-line px-3 py-1.5 text-xs font-medium text-primary hover:border-brand"
 						>
 							Clear search
 						</button>
@@ -239,17 +239,15 @@ export function ProjectsGrid() {
 								tabIndex={0}
 								onClick={() => goToProject(p.id)}
 								onKeyDown={(event) => onProjectCardKeyDown(event, p.id)}
-								className="group flex size-full cursor-pointer flex-col gap-2 rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) p-3 text-left transition-colors hover:border-(--legacy-old-blue) focus-visible:border-(--legacy-old-blue) focus-visible:outline-hidden dark:border-[#222324]"
+								className="group flex size-full cursor-pointer flex-col gap-2 rounded-lg border border-ai-line bg-surface p-3 text-left transition-colors hover:border-brand focus-visible:border-brand focus-visible:outline-hidden"
 							>
 								<header className="flex items-center gap-2">
-									<div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-(--legacy-old-blue)/12 text-(--legacy-old-blue) transition-colors group-hover:bg-(--legacy-old-blue) group-hover:text-white">
+									<div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-brand/12 text-brand transition-colors group-hover:bg-brand group-hover:text-ai-white">
 										<Icon name="folder-plus" height={13} width={13} />
 									</div>
 									<div className="min-w-0 flex-1">
 										<h3 className="truncate text-sm font-semibold">{p.name}</h3>
-										<p className="truncate text-xs text-[#999] dark:text-[#555]">
-											Updated {relativeTime(p.updated_at)}
-										</p>
+										<p className="truncate text-xs text-ai-muted">Updated {relativeTime(p.updated_at)}</p>
 									</div>
 									<div className="-mr-1 flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
 										<Tooltip
@@ -266,7 +264,7 @@ export function ProjectsGrid() {
 													}}
 												/>
 											}
-											className="flex size-7 items-center justify-center rounded-md text-[#999] transition-colors hover:bg-(--legacy-old-blue) hover:text-white focus-visible:bg-(--legacy-old-blue) focus-visible:text-white dark:text-[#666]"
+											className="flex size-7 items-center justify-center rounded-md text-ai-muted transition-colors hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
 										>
 											<Icon name="pencil" height={13} width={13} />
 										</Tooltip>
@@ -284,16 +282,14 @@ export function ProjectsGrid() {
 													}}
 												/>
 											}
-											className="flex size-7 items-center justify-center rounded-md text-[#999] transition-colors hover:bg-red-500/10 hover:text-red-600 focus-visible:bg-red-500/10 focus-visible:text-red-600 dark:text-[#666] dark:hover:text-red-400 dark:focus-visible:text-red-400"
+											className="flex size-7 items-center justify-center rounded-md text-ai-muted transition-colors hover:bg-ai-error-vivid/10 hover:text-ai-error focus-visible:bg-ai-error-vivid/10 focus-visible:text-ai-error"
 										>
 											<Icon name="trash-2" height={13} width={13} />
 										</Tooltip>
 									</div>
 								</header>
-								{p.description ? (
-									<p className="line-clamp-2 text-[13px] text-[#666] dark:text-[#919296]">{p.description}</p>
-								) : null}
-								<footer className="mt-auto flex items-center justify-between text-xs text-[#999] tabular-nums dark:text-[#555]">
+								{p.description ? <p className="line-clamp-2 text-[13px] text-ai-tertiary">{p.description}</p> : null}
+								<footer className="mt-auto flex items-center justify-between text-xs text-ai-muted tabular-nums">
 									<span>
 										{p.file_count} file{p.file_count === 1 ? '' : 's'}
 									</span>

@@ -286,7 +286,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 							{loadingStage ? <span className="text-xs pro-text3">{loadingStage}</span> : null}
 							{engineLoading ? <span className="text-xs pro-text3">Starting SQL engine…</span> : null}
 							{engineError ? (
-								<span className="text-xs text-red-500">
+								<span className="text-xs text-error">
 									SQL engine failed to load{duckdb.error ? `: ${duckdb.error}` : ''}.
 								</span>
 							) : null}
@@ -296,13 +296,13 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 						</div>
 
 						{error ? (
-							<div className="shrink-0 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-400">
+							<div className="shrink-0 rounded-md border border-error/40 bg-error/10 px-3 py-2 text-xs text-error">
 								{error}
 							</div>
 						) : null}
 
 						{oversized ? (
-							<div className="shrink-0 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs pro-text2">
+							<div className="shrink-0 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs pro-text2">
 								Result has {result!.rows.length.toLocaleString()} rows. Only the first {rowCap.toLocaleString()} will be
 								saved with this widget.
 							</div>

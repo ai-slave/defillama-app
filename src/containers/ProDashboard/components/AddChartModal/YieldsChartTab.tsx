@@ -476,7 +476,7 @@ export function YieldsChartTab({
 							<PopoverDisclosure
 								store={chainPopover}
 								onClick={handleChainPopoverToggle}
-								className="flex w-full items-center justify-between rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2 py-1.5 text-xs transition-colors hover:border-(--legacy-primary)/40 focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+								className="flex w-full items-center justify-between rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-2 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 							>
 								<span className={selectedYieldChains.length > 0 ? 'pro-text1' : 'pro-text3'}>
 									{selectedYieldChains.length > 0
@@ -491,7 +491,7 @@ export function YieldsChartTab({
 								portal={true}
 								gutter={4}
 								flip={false}
-								className="z-50 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-xl"
+								className="z-50 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) shadow-xl"
 								style={{ width: 'var(--popover-anchor-width)' }}
 							>
 								<div className="p-2.5">
@@ -500,15 +500,15 @@ export function YieldsChartTab({
 											name="search"
 											width={12}
 											height={12}
-											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-(--legacy-text-tertiary)"
+											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-(--pro-text-tertiary)"
 										/>
 										<input
 											onInput={(e) => dispatchUi({ type: 'set_chain_search', value: e.currentTarget.value })}
 											placeholder="Search chains..."
-											className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+											className="w-full rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 										/>
 									</div>
-									<div className="h-[240px] overflow-y-auto rounded-md bg-(--cards-bg-alt)/30" ref={chainListRef}>
+									<div className="h-[240px] overflow-y-auto rounded-md" ref={chainListRef}>
 										<div
 											className="p-1"
 											style={{
@@ -525,10 +525,10 @@ export function YieldsChartTab({
 													<button
 														key={option.value}
 														onClick={() => toggleChain(option.value)}
-														className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-all hover:bg-(--cards-bg-alt) ${
+														className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-all ${
 															isActive
-																? 'bg-(--legacy-primary)/10 font-semibold text-(--legacy-primary) shadow-sm'
-																: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
+																? 'bg-brand/10 font-semibold text-brand shadow-sm'
+																: 'text-(--pro-text-secondary) hover:text-(--pro-text-primary)'
 														}`}
 														style={{
 															position: 'absolute',
@@ -545,18 +545,13 @@ export function YieldsChartTab({
 																	alt={option.label}
 																	width={20}
 																	height={20}
-																	className="size-5 rounded-full object-cover ring-1 ring-(--legacy-cards-border)"
+																	className="size-5 rounded-full object-cover ring-1 ring-(--pro-cards-border)"
 																/>
 															) : null}
 															<span className="truncate">{option.label}</span>
 														</div>
 														{isActive ? (
-															<Icon
-																name="check"
-																width={14}
-																height={14}
-																className="ml-2 shrink-0 text-(--legacy-primary)"
-															/>
+															<Icon name="check" width={14} height={14} className="ml-2 shrink-0 text-brand" />
 														) : null}
 													</button>
 												)
@@ -564,14 +559,14 @@ export function YieldsChartTab({
 										</div>
 									</div>
 									{selectedYieldChains.length > 0 ? (
-										<div className="mt-2.5 flex items-center justify-between rounded-md border border-(--legacy-cards-border) bg-(--cards-bg-alt)/40 px-2.5 py-2">
-											<span className="text-[11px] font-medium text-(--legacy-text-secondary)">
+										<div className="mt-2.5 flex items-center justify-between rounded-md border border-(--pro-cards-border) px-2.5 py-2">
+											<span className="text-[11px] font-medium text-(--pro-text-secondary)">
 												{selectedYieldChains.length} selected
 											</span>
 											<button
 												type="button"
 												onClick={() => onSelectedYieldChainsChange([])}
-												className="text-[11px] font-medium text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-primary)"
+												className="text-[11px] font-medium text-(--pro-text-tertiary) transition-colors hover:text-brand"
 											>
 												Clear
 											</button>
@@ -586,7 +581,7 @@ export function YieldsChartTab({
 							<PopoverDisclosure
 								store={projectPopover}
 								onClick={handleProjectPopoverToggle}
-								className="flex w-full items-center justify-between rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2 py-1.5 text-xs transition-colors hover:border-(--legacy-primary)/40 focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+								className="flex w-full items-center justify-between rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-2 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 							>
 								<span className={selectedYieldProjects.length > 0 ? 'pro-text1' : 'pro-text3'}>
 									{selectedYieldProjects.length > 0
@@ -601,7 +596,7 @@ export function YieldsChartTab({
 								portal={true}
 								gutter={4}
 								flip={false}
-								className="z-50 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-xl"
+								className="z-50 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) shadow-xl"
 								style={{ width: 'var(--popover-anchor-width)' }}
 							>
 								<div className="p-2.5">
@@ -610,15 +605,15 @@ export function YieldsChartTab({
 											name="search"
 											width={12}
 											height={12}
-											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-(--legacy-text-tertiary)"
+											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-(--pro-text-tertiary)"
 										/>
 										<input
 											onInput={(e) => dispatchUi({ type: 'set_project_search', value: e.currentTarget.value })}
 											placeholder="Search projects..."
-											className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+											className="w-full rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 										/>
 									</div>
-									<div className="h-[240px] overflow-y-auto rounded-md bg-(--cards-bg-alt)/30" ref={projectListRef}>
+									<div className="h-[240px] overflow-y-auto rounded-md" ref={projectListRef}>
 										<div
 											className="p-1"
 											style={{
@@ -635,10 +630,10 @@ export function YieldsChartTab({
 													<button
 														key={option.value}
 														onClick={() => toggleProject(option.value)}
-														className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-all hover:bg-(--cards-bg-alt) ${
+														className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-all ${
 															isActive
-																? 'bg-(--legacy-primary)/10 font-semibold text-(--legacy-primary) shadow-sm'
-																: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
+																? 'bg-brand/10 font-semibold text-brand shadow-sm'
+																: 'text-(--pro-text-secondary) hover:text-(--pro-text-primary)'
 														}`}
 														style={{
 															position: 'absolute',
@@ -655,18 +650,13 @@ export function YieldsChartTab({
 																	alt={option.label}
 																	width={20}
 																	height={20}
-																	className="size-5 rounded-full object-cover ring-1 ring-(--legacy-cards-border)"
+																	className="size-5 rounded-full object-cover ring-1 ring-(--pro-cards-border)"
 																/>
 															) : null}
 															<span className="truncate">{option.label}</span>
 														</div>
 														{isActive ? (
-															<Icon
-																name="check"
-																width={14}
-																height={14}
-																className="ml-2 shrink-0 text-(--legacy-primary)"
-															/>
+															<Icon name="check" width={14} height={14} className="ml-2 shrink-0 text-brand" />
 														) : null}
 													</button>
 												)
@@ -674,14 +664,14 @@ export function YieldsChartTab({
 										</div>
 									</div>
 									{selectedYieldProjects.length > 0 ? (
-										<div className="mt-2.5 flex items-center justify-between rounded-md border border-(--legacy-cards-border) bg-(--cards-bg-alt)/40 px-2.5 py-2">
-											<span className="text-[11px] font-medium text-(--legacy-text-secondary)">
+										<div className="mt-2.5 flex items-center justify-between rounded-md border border-(--pro-cards-border) px-2.5 py-2">
+											<span className="text-[11px] font-medium text-(--pro-text-secondary)">
 												{selectedYieldProjects.length} selected
 											</span>
 											<button
 												type="button"
 												onClick={() => onSelectedYieldProjectsChange([])}
-												className="text-[11px] font-medium text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-primary)"
+												className="text-[11px] font-medium text-(--pro-text-tertiary) transition-colors hover:text-brand"
 											>
 												Clear
 											</button>
@@ -696,7 +686,7 @@ export function YieldsChartTab({
 							<PopoverDisclosure
 								store={tokenPopover}
 								onClick={handleTokenPopoverToggle}
-								className="flex w-full items-center justify-between rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2 py-1.5 text-xs transition-colors hover:border-(--legacy-primary)/40 focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+								className="flex w-full items-center justify-between rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-2 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 							>
 								<span className={selectedYieldTokens.length > 0 ? 'pro-text1' : 'pro-text3'}>
 									{selectedYieldTokens.length > 0
@@ -711,7 +701,7 @@ export function YieldsChartTab({
 								portal={true}
 								gutter={4}
 								flip={false}
-								className="z-50 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-xl"
+								className="z-50 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) shadow-xl"
 								style={{ width: 'var(--popover-anchor-width)' }}
 							>
 								<div className="p-2.5">
@@ -720,16 +710,16 @@ export function YieldsChartTab({
 											name="search"
 											width={12}
 											height={12}
-											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-(--legacy-text-tertiary)"
+											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-(--pro-text-tertiary)"
 										/>
 										<input
 											ref={tokenSearchInputRef}
 											onInput={(e) => dispatchUi({ type: 'set_token_search', value: e.currentTarget.value })}
 											placeholder="Search tokens..."
-											className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+											className="w-full rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 										/>
 									</div>
-									<div className="h-[240px] overflow-y-auto rounded-md bg-(--cards-bg-alt)/30" ref={tokenListRef}>
+									<div className="h-[240px] overflow-y-auto rounded-md" ref={tokenListRef}>
 										<div
 											className="p-1"
 											style={{
@@ -745,10 +735,10 @@ export function YieldsChartTab({
 													<button
 														key={option.value}
 														onClick={() => toggleToken(option.value)}
-														className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-all hover:bg-(--cards-bg-alt) ${
+														className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-all ${
 															isActive
-																? 'bg-(--legacy-primary)/10 font-semibold text-(--legacy-primary) shadow-sm'
-																: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
+																? 'bg-brand/10 font-semibold text-brand shadow-sm'
+																: 'text-(--pro-text-secondary) hover:text-(--pro-text-primary)'
 														}`}
 														style={{
 															position: 'absolute',
@@ -760,12 +750,7 @@ export function YieldsChartTab({
 													>
 														<span className="truncate">{option.label}</span>
 														{isActive ? (
-															<Icon
-																name="check"
-																width={14}
-																height={14}
-																className="ml-2 shrink-0 text-(--legacy-primary)"
-															/>
+															<Icon name="check" width={14} height={14} className="ml-2 shrink-0 text-brand" />
 														) : null}
 													</button>
 												)
@@ -773,8 +758,8 @@ export function YieldsChartTab({
 										</div>
 									</div>
 									{selectedYieldTokens.length > 0 ? (
-										<div className="mt-2.5 flex items-center justify-between rounded-md border border-(--legacy-cards-border) bg-(--cards-bg-alt)/40 px-2.5 py-2">
-											<span className="text-[11px] font-medium text-(--legacy-text-secondary)">
+										<div className="mt-2.5 flex items-center justify-between rounded-md border border-(--pro-cards-border) px-2.5 py-2">
+											<span className="text-[11px] font-medium text-(--pro-text-secondary)">
 												{selectedYieldTokens.length} selected
 											</span>
 											<button
@@ -784,7 +769,7 @@ export function YieldsChartTab({
 													if (tokenSearchInputRef.current) tokenSearchInputRef.current.value = ''
 													dispatchUi({ type: 'set_token_search', value: '' })
 												}}
-												className="text-[11px] font-medium text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-primary)"
+												className="text-[11px] font-medium text-(--pro-text-tertiary) transition-colors hover:text-brand"
 											>
 												Clear
 											</button>
@@ -810,21 +795,21 @@ export function YieldsChartTab({
 									placeholder="Min"
 									value={minTvl ?? ''}
 									onChange={(e) => onMinTvlChange(e.target.value ? Number(e.target.value) : null)}
-									className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2 py-1.5 text-xs pro-text1 placeholder:pro-text3 focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+									className="w-full rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-2 py-1.5 text-xs pro-text1 placeholder:pro-text3 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 								/>
 								<input
 									type="number"
 									placeholder="Max"
 									value={maxTvl ?? ''}
 									onChange={(e) => onMaxTvlChange(e.target.value ? Number(e.target.value) : null)}
-									className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2 py-1.5 text-xs pro-text1 placeholder:pro-text3 focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+									className="w-full rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-2 py-1.5 text-xs pro-text1 placeholder:pro-text3 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 								/>
 							</div>
 						</div>
 					</div>
 
 					{selectedYieldPool && !showPoolPicker ? (
-						<div className="overflow-hidden rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
+						<div className="overflow-hidden rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg)">
 							<div className="flex items-center justify-between px-3 py-2.5">
 								<div className="flex items-center gap-3">
 									{selectedPoolData ? (
@@ -833,23 +818,23 @@ export function YieldsChartTab({
 											alt={selectedPoolData.project}
 											width={32}
 											height={32}
-											className="size-8 rounded-full object-cover ring-1 ring-(--legacy-cards-border)"
+											className="size-8 rounded-full object-cover ring-1 ring-(--pro-cards-border)"
 										/>
 									) : null}
 									<div className="min-w-0">
 										<p className="text-sm font-semibold pro-text1">{selectedYieldPool.name}</p>
-										<div className="flex items-center gap-2 text-xs text-(--legacy-text-tertiary)">
+										<div className="flex items-center gap-2 text-xs text-(--pro-text-tertiary)">
 											<span>{selectedYieldPool.project}</span>
 											<span>•</span>
 											<span>{selectedYieldPool.chain}</span>
 											{selectedPoolData ? (
 												<>
 													<span>•</span>
-													<span className="font-medium text-(--legacy-text-secondary)">
+													<span className="font-medium text-(--pro-text-secondary)">
 														TVL: {formattedNum(selectedPoolData.tvl, true)}
 													</span>
 													<span>•</span>
-													<span className="font-medium text-(--legacy-text-secondary)">
+													<span className="font-medium text-(--pro-text-secondary)">
 														APY: {selectedPoolData.apy?.toFixed(2) || '0.00'}%
 													</span>
 												</>
@@ -861,7 +846,7 @@ export function YieldsChartTab({
 									<button
 										type="button"
 										onClick={() => dispatchUi({ type: 'set_show_pool_picker', value: true })}
-										className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2.5 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-primary)/40 hover:text-(--legacy-text-primary)"
+										className="rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-2.5 py-1.5 text-xs font-medium text-(--pro-text-secondary) transition-colors hover:border-brand/40 hover:text-(--pro-text-primary)"
 									>
 										Change pool
 									</button>
@@ -871,7 +856,7 @@ export function YieldsChartTab({
 											onSelectedYieldPoolChange(null)
 											dispatchUi({ type: 'set_show_pool_picker', value: true })
 										}}
-										className="rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2.5 py-1.5 text-xs font-medium text-(--legacy-text-tertiary) transition-colors hover:border-red-500/40 hover:text-red-500"
+										className="rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-2.5 py-1.5 text-xs font-medium text-(--pro-text-tertiary) transition-colors hover:border-error/40 hover:text-error"
 									>
 										Clear
 									</button>
@@ -879,20 +864,20 @@ export function YieldsChartTab({
 							</div>
 						</div>
 					) : (
-						<div className="overflow-hidden rounded-lg border border-(--legacy-cards-border)">
-							<div className="flex items-center justify-between border-b border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-2">
+						<div className="overflow-hidden rounded-lg border border-(--pro-cards-border)">
+							<div className="flex items-center justify-between border-b border-(--pro-cards-border) bg-(--pro-cards-bg) px-3 py-2">
 								<div className="flex items-center gap-3">
 									<div className="relative">
 										<Icon
 											name="search"
 											width={12}
 											height={12}
-											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-(--legacy-text-tertiary)"
+											className="absolute top-1/2 left-2.5 -translate-y-1/2 text-(--pro-text-tertiary)"
 										/>
 										<input
 											onInput={(e) => dispatchUi({ type: 'set_pool_search', value: e.currentTarget.value })}
 											placeholder="Search pools..."
-											className="w-48 rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+											className="w-48 rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 										/>
 									</div>
 									<span className="text-xs pro-text3">
@@ -903,19 +888,19 @@ export function YieldsChartTab({
 									<button
 										type="button"
 										onClick={() => dispatchUi({ type: 'set_show_pool_picker', value: false })}
-										className="text-xs font-medium text-(--legacy-primary) transition-colors hover:text-(--legacy-primary)/80"
+										className="text-xs font-medium text-brand transition-colors hover:text-brand/80"
 									>
 										Cancel
 									</button>
 								) : null}
 							</div>
 
-							<div className="grid grid-cols-[1fr_100px_100px_80px] gap-2 border-b border-(--legacy-cards-border) bg-(--cards-bg-alt)/50 px-3 py-2 text-[11px] font-medium">
+							<div className="grid grid-cols-[1fr_100px_100px_80px] gap-2 border-b border-(--pro-cards-border) px-3 py-2 text-[11px] font-medium">
 								<p className="pro-text3">Pool</p>
 								<button
 									onClick={() => toggleSort('tvl')}
 									className={`flex items-center justify-end gap-1 ${
-										sortColumn === 'tvl' ? 'text-(--legacy-primary)' : 'pro-text3 hover:text-(--legacy-text-primary)'
+										sortColumn === 'tvl' ? 'text-brand' : 'pro-text3 hover:text-(--pro-text-primary)'
 									}`}
 								>
 									TVL
@@ -929,7 +914,7 @@ export function YieldsChartTab({
 								<button
 									onClick={() => toggleSort('apy')}
 									className={`flex items-center justify-end gap-1 ${
-										sortColumn === 'apy' ? 'text-(--legacy-primary)' : 'pro-text3 hover:text-(--legacy-text-primary)'
+										sortColumn === 'apy' ? 'text-brand' : 'pro-text3 hover:text-(--pro-text-primary)'
 									}`}
 								>
 									APY
@@ -972,8 +957,8 @@ export function YieldsChartTab({
 														})
 														dispatchUi({ type: 'set_show_pool_picker', value: false })
 													}}
-													className={`grid w-full grid-cols-[1fr_100px_100px_80px] items-center gap-2 px-3 py-2 text-left text-xs transition-all hover:bg-(--cards-bg-alt) ${
-														isSelected ? 'bg-(--legacy-primary)/10' : ''
+													className={`grid w-full grid-cols-[1fr_100px_100px_80px] items-center gap-2 px-3 py-2 text-left text-xs transition-all ${
+														isSelected ? 'bg-brand/10' : ''
 													}`}
 													style={{
 														position: 'absolute',
@@ -990,33 +975,29 @@ export function YieldsChartTab({
 																alt={pool.project}
 																width={24}
 																height={24}
-																className="size-6 shrink-0 rounded-full object-cover ring-1 ring-(--legacy-cards-border)"
+																className="size-6 shrink-0 rounded-full object-cover ring-1 ring-(--pro-cards-border)"
 															/>
 														) : null}
 														<div className="min-w-0">
-															<div
-																className={`truncate font-medium ${isSelected ? 'text-(--legacy-primary)' : 'pro-text1'}`}
-															>
+															<div className={`truncate font-medium ${isSelected ? 'text-brand' : 'pro-text1'}`}>
 																{pool.pool}
 															</div>
-															<div className="truncate text-[10px] text-(--legacy-text-tertiary)">
+															<div className="truncate text-[10px] text-(--pro-text-tertiary)">
 																{pool.project} • {pool.chains[0]}
 															</div>
 														</div>
 													</div>
 
-													<div
-														className={`text-right font-medium ${isSelected ? 'text-(--legacy-primary)' : 'pro-text1'}`}
-													>
+													<div className={`text-right font-medium ${isSelected ? 'text-brand' : 'pro-text1'}`}>
 														{formattedNum(pool.tvl, true)}
 													</div>
 
 													<div className="text-right">
-														<div className={`font-medium ${isSelected ? 'text-(--legacy-primary)' : 'pro-text1'}`}>
+														<div className={`font-medium ${isSelected ? 'text-brand' : 'pro-text1'}`}>
 															{pool.apy?.toFixed(2) || '0.00'}%
 														</div>
 														{pool.apyMean30d != null ? (
-															<div className="text-[10px] text-(--legacy-text-tertiary)">
+															<div className="text-[10px] text-(--pro-text-tertiary)">
 																30d: {pool.apyMean30d.toFixed(2)}%
 															</div>
 														) : null}
@@ -1024,7 +1005,7 @@ export function YieldsChartTab({
 
 													<div className="text-right">
 														{pool.category ? (
-															<span className="inline-block truncate rounded-sm bg-(--cards-bg-alt) px-1.5 py-0.5 text-[10px] text-(--legacy-text-tertiary)">
+															<span className="inline-block truncate rounded-sm px-1.5 py-0.5 text-[10px] text-(--pro-text-tertiary)">
 																{pool.category}
 															</span>
 														) : null}
@@ -1039,8 +1020,8 @@ export function YieldsChartTab({
 					)}
 
 					{/* Chart Preview */}
-					<div className="overflow-hidden rounded-lg border border-(--legacy-cards-border)">
-						<div className="flex items-center justify-between border-b border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-2">
+					<div className="overflow-hidden rounded-lg border border-(--pro-cards-border)">
+						<div className="flex items-center justify-between border-b border-(--pro-cards-border) bg-(--pro-cards-bg) px-3 py-2">
 							<span className="text-xs font-medium pro-text2">
 								{selectedYieldPool ? selectedYieldPool.name : 'Preview'}
 							</span>
@@ -1048,7 +1029,7 @@ export function YieldsChartTab({
 
 						{/* Chart Type Pills */}
 						{selectedYieldPool ? (
-							<div className="flex flex-wrap gap-1.5 border-b border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-2">
+							<div className="flex flex-wrap gap-1.5 border-b border-(--pro-cards-border) bg-(--pro-cards-bg) px-3 py-2">
 								{availableChartTypes.map((type) => {
 									const isLoading = borrowChartLoading && ['borrow-apy', 'net-borrow-apy'].includes(type.value)
 									const isActive = selectedYieldChartType === type.value
@@ -1059,10 +1040,10 @@ export function YieldsChartTab({
 											disabled={!type.available || isLoading}
 											className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${
 												isActive
-													? 'bg-(--legacy-primary) text-white shadow-sm'
+													? 'bg-brand text-on-brand shadow-sm'
 													: type.available
-														? 'bg-(--cards-bg-alt) text-(--legacy-text-secondary) hover:bg-(--cards-bg-alt)/80 hover:text-(--legacy-text-primary)'
-														: 'cursor-not-allowed bg-(--cards-bg-alt)/50 text-(--legacy-text-tertiary) opacity-50'
+														? 'text-(--pro-text-secondary) hover:text-(--pro-text-primary)'
+														: 'cursor-not-allowed text-(--pro-text-tertiary) opacity-50'
 											}`}
 										>
 											{type.label}
@@ -1074,7 +1055,7 @@ export function YieldsChartTab({
 						) : null}
 
 						{selectedYieldPool ? (
-							<div className="bg-(--legacy-cards-bg) p-3">
+							<div className="bg-(--pro-cards-bg) p-3">
 								<div className="mb-2 flex items-center gap-2 text-xs">
 									<span className="pro-text3">{selectedYieldPool.project}</span>
 									<span className="pro-text3">•</span>
@@ -1166,7 +1147,7 @@ export function YieldsChartTab({
 								</div>
 							</div>
 						) : (
-							<div className="flex h-[280px] items-center justify-center bg-(--legacy-cards-bg) text-center pro-text3">
+							<div className="flex h-[280px] items-center justify-center bg-(--pro-cards-bg) text-center pro-text3">
 								<div>
 									<Icon name="bar-chart-2" height={32} width={32} className="mx-auto mb-1" />
 									<p className="text-xs">Select a yield pool to see preview</p>

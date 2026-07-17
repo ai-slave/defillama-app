@@ -115,7 +115,7 @@ function escape(s: string): string {
 
 function EmptyHint({ message }: { message: string }) {
 	return (
-		<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-(--legacy-divider) text-sm text-(--legacy-text-secondary)">
+		<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-subtle text-sm text-(--pro-text-secondary)">
 			{message}
 		</div>
 	)

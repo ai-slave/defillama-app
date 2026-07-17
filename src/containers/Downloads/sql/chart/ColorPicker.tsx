@@ -18,7 +18,7 @@ export function ColorPicker({ value, fallback, onChange }: ColorPickerProps) {
 		<Ariakit.PopoverProvider placement="bottom-start">
 			<Ariakit.PopoverDisclosure
 				aria-label="Series color"
-				className="size-3 shrink-0 rounded-sm border border-(--legacy-divider) shadow-sm transition-transform hover:scale-110"
+				className="size-3 shrink-0 rounded-sm border border-subtle shadow-sm transition-transform hover:scale-110"
 				style={{ background: active }}
 			/>
 			<Ariakit.Popover
@@ -33,9 +33,7 @@ export function ColorPicker({ value, fallback, onChange }: ColorPickerProps) {
 							aria-label={c}
 							onClick={() => onChange(c)}
 							className={`size-4 rounded-sm border transition-transform hover:scale-110 ${
-								active === c
-									? 'border-(--legacy-text-primary) ring-1 ring-(--legacy-primary)'
-									: 'border-(--legacy-divider)'
+								active === c ? 'border-(--pro-text-primary) ring-1 ring-brand' : 'border-subtle'
 							}`}
 							style={{ background: c }}
 						/>
@@ -50,12 +48,12 @@ export function ColorPicker({ value, fallback, onChange }: ColorPickerProps) {
 							if (HEX_RE.test(draft.trim())) onChange(draft.trim())
 						}}
 						placeholder="#2f73c6"
-						className="w-20 rounded-sm border border-(--legacy-divider) bg-(--legacy-app-bg) px-1.5 py-0.5 font-mono text-[10.5px] text-(--legacy-text-primary) focus:border-(--legacy-primary) focus:outline-hidden"
+						className="w-20 rounded-sm border border-subtle bg-(--pro-app-bg) px-1.5 py-0.5 font-mono text-[10.5px] text-(--pro-text-primary) focus:border-brand focus:outline-hidden"
 					/>
 					<button
 						type="button"
 						onClick={() => onChange(null)}
-						className="rounded-sm px-1.5 py-0.5 font-mono text-[10.5px] text-(--legacy-text-tertiary) hover:bg-hover-row hover:text-(--legacy-text-primary)"
+						className="rounded-sm px-1.5 py-0.5 font-mono text-[10.5px] text-(--pro-text-tertiary) hover:bg-hover-row hover:text-(--pro-text-primary)"
 					>
 						reset
 					</button>

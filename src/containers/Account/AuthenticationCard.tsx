@@ -69,37 +69,37 @@ export function AuthenticationCard() {
 
 	return (
 		<>
-			<div className="flex flex-col gap-4 rounded-2xl border border-(--sub-border-slate-100) bg-white p-4 dark:border-(--sub-border-strong) dark:bg-(--sub-surface-dark)">
+			<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 				<div className="flex items-center gap-2">
-					<Icon name="key-filled" height={28} width={28} className="text-(--sub-ink-primary) dark:text-white" />
-					<span className="text-base font-medium text-(--sub-ink-primary) dark:text-white">Authentication</span>
+					<Icon name="key-filled" height={28} width={28} className="text-sub-ink-primary dark:text-ai-primary" />
+					<span className="text-base font-medium text-sub-ink-primary dark:text-ai-primary">Authentication</span>
 				</div>
 
-				<p className="text-xs leading-4 text-(--sub-text-muted)">Manage your authentication methods.</p>
+				<p className="text-xs leading-4 text-sub-text-muted">Manage your authentication methods.</p>
 
 				{walletEmail ? (
 					<>
 						<div className="flex items-center gap-3">
-							<div className="flex items-center rounded-full bg-(--sub-surface-panel) p-2 dark:bg-(--sub-ink-primary)">
-								<Icon name="wallet" height={20} width={20} className="text-(--sub-ink-primary) dark:text-white" />
+							<div className="flex items-center rounded-full bg-sub-surface-panel p-2 dark:bg-sub-ink-primary">
+								<Icon name="wallet" height={20} width={20} className="text-sub-ink-primary dark:text-ai-primary" />
 							</div>
 							<div className="flex flex-col gap-1">
-								<span className="text-sm text-(--sub-ink-primary) dark:text-white">{walletDisplayName}</span>
-								<span className="text-xs text-(--sub-text-muted)">Wallet Address</span>
+								<span className="text-sm text-sub-ink-primary dark:text-ai-primary">{walletDisplayName}</span>
+								<span className="text-xs text-sub-text-muted">Wallet Address</span>
 							</div>
 						</div>
 
 						<div className="flex flex-col gap-1">
 							<div className="flex items-center justify-between">
-								<span className="text-sm text-(--sub-ink-primary) dark:text-white">Enable Email Auth</span>
+								<span className="text-sm text-sub-ink-primary dark:text-ai-primary">Enable Email Auth</span>
 								<button
 									onClick={() => setIsSwitchToEmailModalOpen(true)}
-									className="flex h-8 items-center rounded-lg border border-(--sub-border-muted) px-3 text-xs font-medium text-(--sub-ink-primary) disabled:opacity-50 dark:border-(--sub-border-strong) dark:text-white"
+									className="flex h-8 items-center rounded-lg border border-sub-border-muted px-3 text-xs font-medium text-sub-ink-primary disabled:opacity-50 dark:border-sub-border-strong dark:text-ai-primary"
 								>
 									Enable Email Auth
 								</button>
 							</div>
-							<p className="text-xs leading-4 text-(--sub-text-muted)">
+							<p className="text-xs leading-4 text-sub-text-muted">
 								Add email &amp; password as another way to log in to your account.
 							</p>
 						</div>
@@ -108,31 +108,31 @@ export function AuthenticationCard() {
 					<>
 						<div className="flex flex-wrap items-center justify-between gap-3">
 							<div className="flex items-center gap-3">
-								<div className="flex items-center rounded-full bg-(--sub-surface-panel) p-2 dark:bg-(--sub-ink-primary)">
+								<div className="flex items-center rounded-full bg-sub-surface-panel p-2 dark:bg-sub-ink-primary">
 									<Icon
 										name="mail-rounded"
 										height={20}
 										width={20}
-										className="text-(--sub-ink-primary) dark:text-white"
+										className="text-sub-ink-primary dark:text-ai-primary"
 									/>
 								</div>
 								<div className="flex flex-col gap-1">
-									<span className="text-sm text-(--sub-ink-primary) dark:text-white">{user?.email}</span>
-									<span className="text-xs text-(--sub-text-muted)">Email & Password</span>
+									<span className="text-sm text-sub-ink-primary dark:text-ai-primary">{user?.email}</span>
+									<span className="text-xs text-sub-text-muted">Email & Password</span>
 								</div>
 							</div>
 							<div className="flex gap-2">
 								<button
 									onClick={handleChangeEmail}
 									disabled={loaders.changeEmail}
-									className="flex h-8 items-center rounded-lg border border-(--sub-border-muted) px-3 text-xs font-medium text-(--sub-ink-primary) disabled:opacity-50 dark:border-(--sub-border-strong) dark:text-white"
+									className="flex h-8 items-center rounded-lg border border-sub-border-muted px-3 text-xs font-medium text-sub-ink-primary disabled:opacity-50 dark:border-sub-border-strong dark:text-ai-primary"
 								>
 									Change Email
 								</button>
 								<button
 									onClick={handleChangePassword}
 									disabled={resetPasswordMutation.isPending}
-									className="flex h-8 items-center rounded-lg border border-(--sub-border-muted) px-3 text-xs font-medium text-(--sub-ink-primary) disabled:opacity-50 dark:border-(--sub-border-strong) dark:text-white"
+									className="flex h-8 items-center rounded-lg border border-sub-border-muted px-3 text-xs font-medium text-sub-ink-primary disabled:opacity-50 dark:border-sub-border-strong dark:text-ai-primary"
 								>
 									Change Password
 								</button>
@@ -141,14 +141,14 @@ export function AuthenticationCard() {
 
 						{user?.walletAddress && (
 							<div className="flex items-center gap-3">
-								<div className="flex items-center rounded-full bg-(--sub-surface-panel) p-2 dark:bg-(--sub-ink-primary)">
-									<Icon name="wallet" height={20} width={20} className="text-(--sub-ink-primary) dark:text-white" />
+								<div className="flex items-center rounded-full bg-sub-surface-panel p-2 dark:bg-sub-ink-primary">
+									<Icon name="wallet" height={20} width={20} className="text-sub-ink-primary dark:text-ai-primary" />
 								</div>
 								<div className="flex flex-col gap-1">
-									<span className="text-sm text-(--sub-ink-primary) dark:text-white">
+									<span className="text-sm text-sub-ink-primary dark:text-ai-primary">
 										{truncateAddress(user.walletAddress)}
 									</span>
-									<span className="text-xs text-(--sub-text-muted)">Wallet Address</span>
+									<span className="text-xs text-sub-text-muted">Wallet Address</span>
 								</div>
 							</div>
 						)}

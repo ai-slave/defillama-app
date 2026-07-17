@@ -190,9 +190,8 @@ function ProtocolYieldsTab({
 	return (
 		<>
 			<div className="mt-1 mb-2 flex flex-wrap items-baseline gap-x-3 px-1">
-				<p className={`text-sm text-(--text-secondary) ${total ? '' : 'invisible'}`}>
-					Tracking <strong className="text-(--text-primary)">{total.toLocaleString()}</strong>{' '}
-					{total === 1 ? 'pool' : 'pools'}
+				<p className={`text-sm text-secondary ${total ? '' : 'invisible'}`}>
+					Tracking <strong className="text-primary">{total.toLocaleString()}</strong> {total === 1 ? 'pool' : 'pools'}
 				</p>
 			</div>
 			<div className="mb-3">

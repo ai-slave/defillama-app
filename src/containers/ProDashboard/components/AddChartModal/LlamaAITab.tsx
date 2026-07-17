@@ -72,7 +72,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 	if (isLoading) {
 		return (
 			<div className="flex min-h-[300px] items-center justify-center">
-				<div className="size-6 animate-spin rounded-full border-2 border-(--legacy-primary) border-t-transparent" />
+				<div className="size-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
 			</div>
 		)
 	}
@@ -80,7 +80,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 	if (error) {
 		return (
 			<div className="flex min-h-[300px] flex-col items-center justify-center gap-2">
-				<Icon name="alert-triangle" height={24} width={24} className="text-[#F2994A]" />
+				<Icon name="alert-triangle" height={24} width={24} className="text-sub-orange" />
 				<p className="text-sm pro-text2">Failed to load saved charts</p>
 			</div>
 		)
@@ -111,7 +111,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 					type="text"
 					placeholder="Search saved charts..."
 					onInput={(e) => setSearchQuery(e.currentTarget.value)}
-					className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-3 py-2 text-sm pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+					className="w-full rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-3 py-2 text-sm pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden"
 				/>
 			</div>
 
@@ -121,23 +121,21 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 						key={chart.id}
 						onClick={() => onChartSelect(selectedChart?.id === chart.id ? null : chart)}
 						className={`group flex flex-col gap-2 rounded-lg border p-3 text-left transition-all ${
-							selectedChart?.id === chart.id
-								? 'border-(--legacy-primary) bg-(--legacy-primary)/5'
-								: 'pro-border hover:border-(--legacy-primary)/50'
+							selectedChart?.id === chart.id ? 'border-brand bg-brand/5' : 'pro-border hover:border-brand/50'
 						}`}
 					>
 						<div className="flex items-start justify-between gap-2">
 							<h4 className="line-clamp-1 font-medium pro-text1">{chart.title}</h4>
 							<div className="flex shrink-0 items-center gap-1">
 								{selectedChart?.id === chart.id ? (
-									<Icon name="check" height={16} width={16} className="text-(--legacy-primary)" />
+									<Icon name="check" height={16} width={16} className="text-brand" />
 								) : null}
 								<button
 									onClick={(e) => {
 										e.stopPropagation()
 										setDeleteConfirmId(chart.id)
 									}}
-									className="rounded-sm p-1 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/10 dark:hover:bg-white/10"
+									className="rounded-sm p-1 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/10 dark:hover:bg-ai-wash-strong"
 								>
 									<Icon name="x" height={14} width={14} className="pro-text3" />
 								</button>
@@ -150,7 +148,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 								target="_blank"
 								rel="noopener noreferrer"
 								onClick={(e) => e.stopPropagation()}
-								className="text-xs pro-text3 text-(--legacy-primary) hover:underline"
+								className="text-xs pro-text3 text-brand hover:underline"
 							>
 								View chat →
 							</a>
@@ -188,7 +186,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 							<button
 								onClick={() => deleteMutation.mutate(deleteConfirmId)}
 								disabled={deleteMutation.isPending}
-								className="rounded-sm bg-red-500 px-3 py-1.5 text-sm text-white hover:bg-red-600 disabled:opacity-50"
+								className="rounded-sm bg-error px-3 py-1.5 text-sm text-on-brand hover:bg-red-600 disabled:opacity-50"
 							>
 								{deleteMutation.isPending ? 'Deleting...' : 'Delete'}
 							</button>

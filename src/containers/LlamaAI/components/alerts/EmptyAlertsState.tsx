@@ -14,10 +14,8 @@ export function EmptyAlertsState({ onOpenCreate, onChipSelect }: EmptyAlertsStat
 	return (
 		<div className="flex flex-col gap-5 px-5 py-6">
 			<div className="text-center">
-				<h3 className="m-0 text-sm font-semibold tracking-tight text-black dark:text-white">
-					Get pinged when things move
-				</h3>
-				<p className="m-0 mt-1 text-xs text-[#777] dark:text-[#919296]">
+				<h3 className="m-0 text-sm font-semibold tracking-tight text-ai-primary">Get pinged when things move</h3>
+				<p className="m-0 mt-1 text-xs text-ai-tertiary">
 					Price triggers fire instantly, scheduled reports arrive on your clock.
 				</p>
 			</div>
@@ -26,16 +24,16 @@ export function EmptyAlertsState({ onOpenCreate, onChipSelect }: EmptyAlertsStat
 				<button
 					type="button"
 					onClick={() => onOpenCreate('price')}
-					className="group flex flex-col items-start gap-2.5 rounded-xl border border-black/[0.06] bg-black/[0.015] p-4 text-left transition-all hover:border-amber-500/30 hover:bg-amber-500/[0.03] dark:border-white/[0.06] dark:bg-white/[0.015] dark:hover:border-amber-400/30"
+					className="group hover:bg-ai-warning-bright/0.03 flex flex-col items-start gap-2.5 rounded-xl border border-ai-line-subtle bg-ai-wash-faint p-4 text-left transition-all hover:border-ai-warning-bright/30"
 				>
-					<span className="flex size-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
+					<span className="flex size-9 items-center justify-center rounded-lg bg-ai-warning-bright/10 text-ai-warning-bright">
 						<Icon name="trending-up" className="size-4" />
 					</span>
-					<span className="text-sm font-medium text-(--text-primary)">Watch a price</span>
-					<span className="text-xs leading-relaxed text-[#777] dark:text-[#919296]">
+					<span className="text-sm font-medium text-primary">Watch a price</span>
+					<span className="text-xs leading-relaxed text-ai-tertiary">
 						Instant ping when a token crosses your level — checked continuously
 					</span>
-					<span className="mt-auto flex items-center gap-1 text-xs font-medium text-(--link-text)">
+					<span className="mt-auto flex items-center gap-1 text-xs font-medium text-link">
 						Set a price alert
 						<Icon name="arrow-right" className="size-3 transition-transform group-hover:translate-x-0.5" />
 					</span>
@@ -44,24 +42,24 @@ export function EmptyAlertsState({ onOpenCreate, onChipSelect }: EmptyAlertsStat
 				<button
 					type="button"
 					onClick={() => onOpenCreate('schedule')}
-					className="group flex flex-col items-start gap-2.5 rounded-xl border border-black/[0.06] bg-black/[0.015] p-4 text-left transition-all hover:border-(--link-text)/30 hover:bg-(--link-text)/[0.03] dark:border-white/[0.06] dark:bg-white/[0.015]"
+					className="group flex flex-col items-start gap-2.5 rounded-xl border border-ai-line-subtle bg-ai-wash-faint p-4 text-left transition-all hover:border-link/30 hover:bg-link/3"
 				>
-					<span className="flex size-9 items-center justify-center rounded-lg bg-(--link-text)/10 text-(--link-text)">
+					<span className="flex size-9 items-center justify-center rounded-lg bg-link/10 text-link">
 						<Icon name="calendar" className="size-4" />
 					</span>
-					<span className="text-sm font-medium text-(--text-primary)">Any question, on a schedule</span>
-					<span className="text-xs leading-relaxed text-[#777] dark:text-[#919296]">
+					<span className="text-sm font-medium text-primary">Any question, on a schedule</span>
+					<span className="text-xs leading-relaxed text-ai-tertiary">
 						No trigger needed — the agent answers a question of yours every day or week
 					</span>
-					<span className="mt-auto flex items-center gap-1 text-xs font-medium text-(--link-text)">
+					<span className="mt-auto flex items-center gap-1 text-xs font-medium text-link">
 						Ask on a schedule
 						<Icon name="arrow-right" className="size-3 transition-transform group-hover:translate-x-0.5" />
 					</span>
 				</button>
 			</div>
 
-			<div className="flex flex-col items-center gap-2.5 border-t border-black/[0.06] pt-4 dark:border-white/[0.05]">
-				<p className="m-0 flex items-center gap-1.5 text-xs text-[#777] dark:text-[#919296]">
+			<div className="flex flex-col items-center gap-2.5 border-t border-ai-line-subtle pt-4">
+				<p className="m-0 flex items-center gap-1.5 text-xs text-ai-tertiary">
 					<Icon name="chat" className="size-3.5" />
 					Or just describe it in chat
 				</p>
@@ -71,7 +69,7 @@ export function EmptyAlertsState({ onOpenCreate, onChipSelect }: EmptyAlertsStat
 							key={chip.text}
 							type="button"
 							onClick={() => onChipSelect(chip.text, chip.variant)}
-							className="rounded-full border border-black/[0.08] px-3 py-1.5 text-xs text-[#666] transition-colors hover:border-(--link-text)/40 hover:bg-(--link-text)/[0.04] hover:text-(--link-text) dark:border-white/[0.08] dark:text-[#919296]"
+							className="rounded-full border border-ai-line-medium px-3 py-1.5 text-xs text-ai-tertiary transition-colors hover:border-link/40 hover:bg-link/4 hover:text-link"
 						>
 							{chip.text}
 						</button>
@@ -80,7 +78,7 @@ export function EmptyAlertsState({ onOpenCreate, onChipSelect }: EmptyAlertsStat
 				<button
 					type="button"
 					onClick={() => onChipSelect(ALERT_ESCAPE_HATCH_PREFILL, 'freeform')}
-					className="mt-0.5 text-xs text-[#999] transition-colors hover:text-(--link-text) hover:underline dark:text-[#777]"
+					className="mt-0.5 text-xs text-ai-muted transition-colors hover:text-link hover:underline"
 				>
 					Continue in chat →
 				</button>

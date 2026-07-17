@@ -53,11 +53,11 @@ export function ChatSurface({
 				<div
 					ref={exitingLandingRef}
 					aria-hidden="true"
-					className="pointer-events-none absolute inset-0 motion-safe:animate-[llamaLandingExit_0.42s_cubic-bezier(0.22,1,0.36,1)_both] motion-reduce:opacity-0"
+					className="pointer-events-none absolute inset-0 motion-safe:animate-ai-landing-exit motion-reduce:opacity-0"
 				>
 					{renderLanding(landingOverride, landingProps)}
 				</div>
-				<div className="absolute inset-0 flex flex-col motion-safe:animate-[llamaConversationEnter_0.5s_cubic-bezier(0.16,1,0.3,1)_both] motion-reduce:animate-none">
+				<div className="absolute inset-0 flex flex-col motion-safe:animate-ai-conversation-enter motion-reduce:animate-none">
 					<ConversationView
 						key={transitionConversationKey}
 						viewModel={conversationViewModel}

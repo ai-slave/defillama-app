@@ -172,22 +172,22 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 				{step === 'email' && (
 					<div className="flex flex-col gap-5 px-5 py-6">
 						<div className="flex items-center justify-between">
-							<h3 className="text-xl leading-7 font-semibold text-(--sub-ink-primary) dark:text-white">
+							<h3 className="text-xl leading-7 font-semibold text-sub-ink-primary dark:text-ai-primary">
 								Switch to Email
 							</h3>
-							<Ariakit.DialogDismiss className="rounded-full p-1 text-(--sub-ink-primary) transition-colors dark:text-white">
+							<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-ink-primary transition-colors dark:text-ai-primary">
 								<Icon name="x" height={24} width={24} />
 							</Ariakit.DialogDismiss>
 						</div>
 
-						<p className="text-sm leading-5 text-(--sub-text-muted)">
+						<p className="text-sm leading-5 text-sub-text-muted">
 							Enter the email address you'd like to use for signing in. We'll send you a verification code.
 						</p>
 
 						{/* Form */}
 						<form onSubmit={handleRequestOtp} className="flex flex-col gap-5">
 							<div className="flex flex-col gap-2">
-								<label className="text-sm leading-[21px] text-(--sub-ink-primary) dark:text-white">Email</label>
+								<label className="text-sm leading-[21px] text-sub-ink-primary dark:text-ai-primary">Email</label>
 								<input
 									type="email"
 									required
@@ -197,19 +197,19 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 										if (error) setError('')
 									}}
 									placeholder="your.email@example.com"
-									className={`h-10 w-full rounded-lg border bg-(--sub-surface-panel) px-3 text-sm leading-[21px] text-(--sub-ink-primary) outline-hidden dark:bg-(--sub-ink-primary) dark:text-white ${
+									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] text-sub-ink-primary outline-hidden dark:bg-sub-ink-primary dark:text-ai-primary ${
 										error
-											? 'border-(--error)'
-											: 'border-(--sub-border-muted) focus:border-(--sub-brand-primary) dark:border-(--sub-border-strong) dark:focus:border-(--sub-brand-primary)'
+											? 'border-error'
+											: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
 									}`}
 								/>
-								{error && <p className="text-xs leading-4 text-(--error)">{error}</p>}
+								{error && <p className="text-xs leading-4 text-error">{error}</p>}
 							</div>
 
 							<button
 								type="submit"
 								disabled={!email || isLoading}
-								className="flex h-10 w-full items-center justify-center rounded-lg bg-(--sub-brand-primary) text-sm font-medium text-white disabled:opacity-25"
+								className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-25"
 							>
 								{isLoading ? 'Sending...' : 'Send Verification Code'}
 							</button>
@@ -220,23 +220,23 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 				{step === 'confirm' && (
 					<div className="flex flex-col gap-5 px-5 py-6">
 						<div className="flex items-center justify-between">
-							<h3 className="text-xl leading-7 font-semibold text-(--sub-ink-primary) dark:text-white">
+							<h3 className="text-xl leading-7 font-semibold text-sub-ink-primary dark:text-ai-primary">
 								Verify & Set Password
 							</h3>
-							<Ariakit.DialogDismiss className="rounded-full p-1 text-(--sub-ink-primary) transition-colors dark:text-white">
+							<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-ink-primary transition-colors dark:text-ai-primary">
 								<Icon name="x" height={24} width={24} />
 							</Ariakit.DialogDismiss>
 						</div>
 
-						<p className="text-sm leading-5 text-(--sub-text-muted)">
+						<p className="text-sm leading-5 text-sub-text-muted">
 							Enter the 6-digit code sent to{' '}
-							<span className="font-medium text-(--sub-ink-primary) dark:text-white">{email}</span> and choose a
+							<span className="font-medium text-sub-ink-primary dark:text-ai-primary">{email}</span> and choose a
 							password.
 						</p>
 
 						<form onSubmit={handleConfirm} className="flex flex-col gap-4">
 							<div className="flex flex-col gap-2">
-								<label className="text-sm leading-[21px] text-(--sub-ink-primary) dark:text-white">
+								<label className="text-sm leading-[21px] text-sub-ink-primary dark:text-ai-primary">
 									Verification Code
 								</label>
 								<input
@@ -251,16 +251,16 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 										if (error) setError('')
 									}}
 									placeholder="000000"
-									className={`h-10 w-full rounded-lg border bg-(--sub-surface-panel) px-3 text-sm leading-[21px] tracking-widest text-(--sub-ink-primary) outline-hidden dark:bg-(--sub-ink-primary) dark:text-white ${
+									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] tracking-widest text-sub-ink-primary outline-hidden dark:bg-sub-ink-primary dark:text-ai-primary ${
 										error
-											? 'border-(--error)'
-											: 'border-(--sub-border-muted) focus:border-(--sub-brand-primary) dark:border-(--sub-border-strong) dark:focus:border-(--sub-brand-primary)'
+											? 'border-error'
+											: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
 									}`}
 								/>
 							</div>
 
 							<div className="flex flex-col gap-2">
-								<label className="text-sm leading-[21px] text-(--sub-ink-primary) dark:text-white">Password</label>
+								<label className="text-sm leading-[21px] text-sub-ink-primary dark:text-ai-primary">Password</label>
 								<div className="relative">
 									<input
 										type={showPassword ? 'text' : 'password'}
@@ -271,16 +271,16 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 											if (error) setError('')
 										}}
 										placeholder="At least 8 characters"
-										className={`h-10 w-full rounded-lg border bg-(--sub-surface-panel) pr-10 pl-3 text-sm leading-[21px] text-(--sub-ink-primary) outline-hidden dark:bg-(--sub-ink-primary) dark:text-white ${
+										className={`h-10 w-full rounded-lg border bg-sub-surface-panel pr-10 pl-3 text-sm leading-[21px] text-sub-ink-primary outline-hidden dark:bg-sub-ink-primary dark:text-ai-primary ${
 											error
-												? 'border-(--error)'
-												: 'border-(--sub-border-muted) focus:border-(--sub-brand-primary) dark:border-(--sub-border-strong) dark:focus:border-(--sub-brand-primary)'
+												? 'border-error'
+												: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
 										}`}
 									/>
 									<button
 										type="button"
 										onClick={() => setShowPassword(!showPassword)}
-										className="absolute top-1/2 right-3 -translate-y-1/2 text-(--sub-text-muted)"
+										className="absolute top-1/2 right-3 -translate-y-1/2 text-sub-text-muted"
 									>
 										<Icon name={showPassword ? 'eye-off' : 'eye'} height={16} width={16} />
 									</button>
@@ -289,7 +289,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 
 							{/* Confirm Password */}
 							<div className="flex flex-col gap-2">
-								<label className="text-sm leading-[21px] text-(--sub-ink-primary) dark:text-white">
+								<label className="text-sm leading-[21px] text-sub-ink-primary dark:text-ai-primary">
 									Confirm Password
 								</label>
 								<div className="relative">
@@ -302,28 +302,28 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 											if (error) setError('')
 										}}
 										placeholder="Re-enter your password"
-										className={`h-10 w-full rounded-lg border bg-(--sub-surface-panel) pr-10 pl-3 text-sm leading-[21px] text-(--sub-ink-primary) outline-hidden dark:bg-(--sub-ink-primary) dark:text-white ${
+										className={`h-10 w-full rounded-lg border bg-sub-surface-panel pr-10 pl-3 text-sm leading-[21px] text-sub-ink-primary outline-hidden dark:bg-sub-ink-primary dark:text-ai-primary ${
 											error
-												? 'border-(--error)'
-												: 'border-(--sub-border-muted) focus:border-(--sub-brand-primary) dark:border-(--sub-border-strong) dark:focus:border-(--sub-brand-primary)'
+												? 'border-error'
+												: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
 										}`}
 									/>
 									<button
 										type="button"
 										onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
-										className="absolute top-1/2 right-3 -translate-y-1/2 text-(--sub-text-muted)"
+										className="absolute top-1/2 right-3 -translate-y-1/2 text-sub-text-muted"
 									>
 										<Icon name={showPasswordConfirm ? 'eye-off' : 'eye'} height={16} width={16} />
 									</button>
 								</div>
 							</div>
 
-							{error && <p className="text-xs leading-4 text-(--error)">{error}</p>}
+							{error && <p className="text-xs leading-4 text-error">{error}</p>}
 
 							<button
 								type="submit"
 								disabled={!otp || otp.length !== 6 || !password || !passwordConfirm || isLoading}
-								className="flex h-10 w-full items-center justify-center rounded-lg bg-(--sub-brand-primary) text-sm font-medium text-white disabled:opacity-25"
+								className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-25"
 							>
 								{isLoading ? 'Switching...' : 'Complete Switch'}
 							</button>
@@ -335,20 +335,20 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 
 				{step === 'success' && (
 					<div className="flex flex-col items-center gap-6 px-5 py-8">
-						<div className="flex size-16 items-center justify-center rounded-full bg-(--sub-brand-primary)/10">
-							<Icon name="check" height={32} width={32} className="text-(--sub-brand-primary)" />
+						<div className="flex size-16 items-center justify-center rounded-full bg-sub-brand-primary/10">
+							<Icon name="check" height={32} width={32} className="text-sub-brand-primary" />
 						</div>
 						<div className="flex flex-col gap-2 text-center">
-							<h2 className="text-xl font-semibold text-(--sub-ink-primary) dark:text-white">Switch Successful!</h2>
-							<p className="text-sm text-(--sub-text-muted)">
+							<h2 className="text-xl font-semibold text-sub-ink-primary dark:text-ai-primary">Switch Successful!</h2>
+							<p className="text-sm text-sub-text-muted">
 								Your account now uses email authentication. You can sign in with{' '}
-								<span className="font-medium text-(--sub-ink-primary) dark:text-white">{email}</span> and your password
+								<span className="font-medium text-sub-ink-primary dark:text-ai-primary">{email}</span> and your password
 								going forward.
 							</p>
 						</div>
 						<button
 							onClick={handleSuccessDone}
-							className="flex h-10 w-full items-center justify-center rounded-lg bg-(--sub-brand-primary) text-sm font-medium text-white"
+							className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand"
 						>
 							Done
 						</button>

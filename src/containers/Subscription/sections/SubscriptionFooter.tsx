@@ -11,7 +11,7 @@ function SocialIcons({ size }: { size: number }) {
 				target="_blank"
 				rel="noopener noreferrer"
 				aria-label="Discord"
-				className="rounded-full p-1 text-(--sub-social-icon)"
+				className="rounded-full p-1 text-sub-social-icon"
 			>
 				<Icon name="chat" height={size} width={size} aria-hidden="true" />
 			</a>
@@ -20,7 +20,7 @@ function SocialIcons({ size }: { size: number }) {
 				target="_blank"
 				rel="noopener noreferrer"
 				aria-label="Twitter"
-				className="rounded-full p-1 text-(--sub-social-icon)"
+				className="rounded-full p-1 text-sub-social-icon"
 			>
 				<Icon name="twitter" height={size} width={size} aria-hidden="true" />
 			</a>
@@ -29,7 +29,7 @@ function SocialIcons({ size }: { size: number }) {
 				target="_blank"
 				rel="noopener noreferrer"
 				aria-label="GitHub"
-				className="rounded-full p-1 text-(--sub-social-icon)"
+				className="rounded-full p-1 text-sub-social-icon"
 			>
 				<Icon name="github" height={size} width={size} aria-hidden="true" />
 			</a>
@@ -55,7 +55,7 @@ export function SubscriptionFooter() {
 		<>
 			{/* Mobile */}
 			<footer className="px-4 pb-6 md:hidden">
-				<div className="h-px w-full bg-(--sub-desktop-table-border)" />
+				<div className="h-px w-full bg-sub-desktop-table-border" />
 				<div className="mt-6 flex items-center justify-between">
 					<div className="flex flex-col items-start">
 						<img
@@ -71,17 +71,17 @@ export function SubscriptionFooter() {
 					</div>
 					<SocialIcons size={18} />
 				</div>
-				<div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[10px] leading-3 text-(--sub-footer-text)">
+				<div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[10px] leading-3 text-sub-footer-text">
 					<FooterLinks />
 				</div>
-				<p className="mt-4 text-[10px] leading-3 text-(--sub-footer-text)">
+				<p className="mt-4 text-[10px] leading-3 text-sub-footer-text">
 					&copy; {new Date().getFullYear()} DefiLlama. All rights reserved.
 				</p>
 			</footer>
 
 			{/* Desktop */}
 			<footer className="hidden px-32 pb-8 md:block">
-				<div className="h-px w-full bg-(--sub-desktop-table-border)" />
+				<div className="h-px w-full bg-sub-desktop-table-border" />
 				<div className="mt-8 flex flex-col gap-6">
 					<div className="flex items-center justify-between">
 						<div className="flex flex-col items-start">
@@ -98,7 +98,7 @@ export function SubscriptionFooter() {
 						</div>
 						<SocialIcons size={20} />
 					</div>
-					<div className="flex items-center justify-between text-xs text-(--sub-footer-text)">
+					<div className="flex items-center justify-between text-xs text-sub-footer-text">
 						<p>&copy; {new Date().getFullYear()} DefiLlama. All rights reserved.</p>
 						<div className="flex items-center gap-8">
 							<FooterLinks />

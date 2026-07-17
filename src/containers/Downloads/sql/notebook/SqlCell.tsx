@@ -92,7 +92,7 @@ export const SqlCell = forwardRef<SqlCellHandle, SqlCellProps>(function SqlCell(
 
 	return (
 		<div className="flex flex-col gap-2">
-			<div className="overflow-hidden rounded-md border border-(--legacy-divider) bg-surface">
+			<div className="overflow-hidden rounded-md border border-subtle bg-surface">
 				<MonacoEditor
 					height={`${editorHeight}px`}
 					language="sql"

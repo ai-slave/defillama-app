@@ -85,12 +85,12 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 				setValue={(next) => setSearchValue(next)}
 				resetValueOnHide
 			>
-				<div className="relative flex items-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-app-bg) focus-within:border-(--legacy-link-text)/60">
-					<Icon name="search" height={14} width={14} className="absolute left-3 text-(--legacy-text-tertiary)" />
+				<div className="relative flex items-center rounded-md border border-medium bg-page focus-within:border-link/60">
+					<Icon name="search" height={14} width={14} className="absolute left-3 text-tertiary" />
 					<Ariakit.Combobox
 						placeholder="Search articles by title…"
 						autoSelect
-						className="min-h-10 w-full rounded-md bg-transparent px-3 py-2 pr-3 pl-9 text-sm text-(--legacy-text-primary) outline-hidden placeholder:text-(--legacy-text-tertiary)"
+						className="min-h-10 w-full rounded-md bg-transparent px-3 py-2 pr-3 pl-9 text-sm text-primary outline-hidden placeholder:text-tertiary"
 					/>
 				</div>
 				<Ariakit.ComboboxPopover
@@ -98,14 +98,10 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 					sameWidth
 					portal
 					unmountOnHide
-					className="z-[90] flex max-h-72 flex-col overflow-auto overscroll-contain rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 text-sm shadow-xl outline-hidden"
+					className="z-[90] flex max-h-72 flex-col overflow-auto overscroll-contain rounded-md border border-medium bg-surface py-1 text-sm shadow-xl outline-hidden"
 				>
-					{isFetching && !items.length ? (
-						<p className="p-3 text-center text-xs text-(--legacy-text-tertiary)">Searching…</p>
-					) : null}
-					{!isFetching && !items.length ? (
-						<p className="p-3 text-center text-xs text-(--legacy-text-tertiary)">No results</p>
-					) : null}
+					{isFetching && !items.length ? <p className="p-3 text-center text-xs text-tertiary">Searching…</p> : null}
+					{!isFetching && !items.length ? <p className="p-3 text-center text-xs text-tertiary">No results</p> : null}
 					{items.map((article) => {
 						const selected = value.includes(article.id)
 						return (
@@ -114,17 +110,15 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 								value={article.title}
 								setValueOnClick={false}
 								onClick={() => addArticle(article)}
-								className="flex cursor-pointer items-start justify-between gap-3 px-3 py-2 text-(--legacy-text-secondary) data-active-item:bg-(--legacy-link-button) data-active-item:text-(--legacy-link-text)"
+								className="flex cursor-pointer items-start justify-between gap-3 px-3 py-2 text-secondary data-active-item:bg-(--research-link-button-bg) data-active-item:text-link"
 							>
 								<span className="grid min-w-0 gap-0.5">
-									<span className="truncate text-sm text-(--legacy-text-primary)">{article.title}</span>
-									<span className="font-jetbrains text-[10px] tracking-[0.16em] text-(--legacy-text-tertiary) uppercase">
+									<span className="truncate text-sm text-primary">{article.title}</span>
+									<span className="font-jetbrains text-[10px] tracking-[0.16em] text-tertiary uppercase">
 										{article.section ? ARTICLE_SECTION_LABELS[article.section] : 'No section'} · /{article.slug}
 									</span>
 								</span>
-								{selected ? (
-									<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-(--legacy-link-text)" />
-								) : null}
+								{selected ? <Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-link" /> : null}
 							</Ariakit.ComboboxItem>
 						)
 					})}
@@ -136,14 +130,14 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 					{value.map((id) => (
 						<span
 							key={id}
-							className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) py-1 pr-1 pl-2.5 text-xs text-(--legacy-text-primary)"
+							className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-medium bg-surface py-1 pr-1 pl-2.5 text-xs text-primary"
 						>
 							<span className="truncate">{titles[id] ?? id}</span>
 							<button
 								type="button"
 								onClick={() => removeArticle(id)}
 								aria-label="Remove article"
-								className="flex size-5 shrink-0 items-center justify-center rounded-sm text-(--legacy-text-tertiary) transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)"
+								className="flex size-5 shrink-0 items-center justify-center rounded-sm text-tertiary transition-colors hover:bg-(--research-link-hover-bg) hover:text-primary"
 							>
 								<Icon name="x" height={11} width={11} />
 							</button>
@@ -151,7 +145,7 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 					))}
 				</div>
 			) : null}
-			{hint ? <p className="text-xs text-(--legacy-text-tertiary)">{hint}</p> : null}
+			{hint ? <p className="text-xs text-tertiary">{hint}</p> : null}
 		</div>
 	)
 }

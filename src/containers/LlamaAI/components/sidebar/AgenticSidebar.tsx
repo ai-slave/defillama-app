@@ -106,7 +106,7 @@ const VirtualizedSidebarItem = memo(function VirtualizedSidebarItem({
 		return (
 			<h2
 				style={itemStyle}
-				className={`flex items-center gap-1 text-xs text-[#666] dark:text-[#919296] ${item.isFirst ? 'pt-0' : 'pt-2.5'}`}
+				className={`flex items-center gap-1 text-xs text-ai-tertiary ${item.isFirst ? 'pt-0' : 'pt-2.5'}`}
 			>
 				{item.groupName === 'Pinned' ? <Icon name="pin" height={10} width={10} className="shrink-0" /> : null}
 				{item.groupName}
@@ -121,7 +121,7 @@ const VirtualizedSidebarItem = memo(function VirtualizedSidebarItem({
 					<button
 						type="button"
 						onClick={() => item.onLoadMore?.()}
-						className="rounded-sm px-2 py-1 text-xs text-[#666] hover:bg-[#f7f7f7] dark:text-[#919296] dark:hover:bg-[#222324]"
+						className="rounded-sm px-2 py-1 text-xs text-ai-tertiary hover:bg-ai-surface-muted"
 					>
 						Retry loading chats
 					</button>
@@ -130,7 +130,7 @@ const VirtualizedSidebarItem = memo(function VirtualizedSidebarItem({
 		}
 
 		return (
-			<div style={itemStyle} className="flex items-center justify-center py-2 text-xs text-[#666] dark:text-[#919296]">
+			<div style={itemStyle} className="flex items-center justify-center py-2 text-xs text-ai-tertiary">
 				{item.isFetching ? <LoadingSpinner size={12} /> : null}
 			</div>
 		)
@@ -383,7 +383,7 @@ export function AgenticSidebar({
 	return (
 		<aside
 			ref={sidebarRef}
-			className={`llamaai-agentic-sidebar relative flex size-full max-w-[272px] flex-col rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) max-lg:absolute max-lg:top-0 max-lg:right-0 max-lg:bottom-0 max-lg:left-0 max-lg:z-10 lg:mr-2 dark:border-[#222324] ${shouldAnimate ? 'animate-[slideInRight_0.08s_ease-out]' : ''}`}
+			className={`llamaai-agentic-sidebar relative flex size-full max-w-[272px] flex-col rounded-lg border border-ai-line bg-surface max-lg:absolute max-lg:top-0 max-lg:right-0 max-lg:bottom-0 max-lg:left-0 max-lg:z-10 lg:mr-2 ${shouldAnimate ? 'animate-[slideInRight_0.08s_ease-out]' : ''}`}
 		>
 			<header className="flex flex-col gap-2 p-4 pb-2">
 				<div className="flex h-6 items-center">
@@ -392,9 +392,7 @@ export function AgenticSidebar({
 							onClick={selectMode ? exitSelectMode : () => setSelectMode(true)}
 							disabled={isLoading && !hasNonProjectSessions}
 							className={`flex h-6 items-center gap-1 rounded-sm px-1.5 text-[11px] transition-colors disabled:invisible ${
-								selectMode
-									? 'bg-(--legacy-old-blue)/12 text-(--legacy-old-blue)'
-									: 'text-[#666] hover:text-[#333] dark:text-[#919296] dark:hover:text-white'
+								selectMode ? 'bg-brand/12 text-brand' : 'text-ai-tertiary hover:text-ai-primary'
 							}`}
 						>
 							<Icon name={selectMode ? 'x' : 'check'} height={12} width={12} />
@@ -412,7 +410,7 @@ export function AgenticSidebar({
 									data-umami-event-source="sidebar_header"
 								/>
 							}
-							className="hidden size-6 items-center justify-center gap-2 rounded-sm bg-(--legacy-old-blue)/12 text-(--legacy-old-blue) hover:bg-(--legacy-old-blue) hover:text-white focus-visible:bg-(--legacy-old-blue) focus-visible:text-white lg:flex"
+							className="hidden size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white lg:flex"
 						>
 							<Icon name={isFullscreen ? 'shrink' : 'expand'} height={16} width={16} />
 							<span className="sr-only">{isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
@@ -428,7 +426,7 @@ export function AgenticSidebar({
 									data-umami-event-source="sidebar_header"
 								/>
 							}
-							className="flex size-6 items-center justify-center gap-2 rounded-sm bg-(--legacy-old-blue)/12 text-(--legacy-old-blue) hover:bg-(--legacy-old-blue) hover:text-white focus-visible:bg-(--legacy-old-blue) focus-visible:text-white"
+							className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
 						>
 							<Icon name="panel-left-close" height={16} width={16} />
 							<span className="sr-only">Close Chat History</span>
@@ -441,19 +439,19 @@ export function AgenticSidebar({
 						trackUmamiEvent('llamaai-new-chat')
 						onNewChat()
 					}}
-					className="flex items-center justify-center gap-2 rounded-sm border border-(--legacy-old-blue) bg-(--legacy-old-blue)/12 px-2 py-0.75 text-xs text-(--legacy-old-blue) hover:bg-(--legacy-old-blue) hover:text-white focus-visible:bg-(--legacy-old-blue) focus-visible:text-white"
+					className="flex items-center justify-center gap-2 rounded-sm border border-brand bg-brand/12 px-2 py-0.75 text-xs text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
 				>
 					<Icon name="message-square-plus" height={16} width={16} />
 					<span>New Chat</span>
 				</button>
 
 				{isLoading || hasNonProjectSessions ? (
-					<div className="group/search relative flex items-center rounded-md bg-[#f5f5f5] transition-colors focus-within:bg-[#ebebeb] dark:bg-[#1a1a1b] dark:focus-within:bg-[#222324]">
+					<div className="group/search relative flex items-center rounded-md bg-ai-surface-muted transition-colors focus-within:bg-ai-surface-muted">
 						<Icon
 							name="search"
 							height={13}
 							width={13}
-							className="pointer-events-none ml-2.5 shrink-0 text-[#999] transition-colors group-focus-within/search:text-(--legacy-old-blue) dark:text-[#555]"
+							className="pointer-events-none ml-2.5 shrink-0 text-ai-muted transition-colors group-focus-within/search:text-brand"
 						/>
 						<input
 							type="text"
@@ -461,15 +459,15 @@ export function AgenticSidebar({
 							onChange={(e) => setSearchQuery(e.target.value)}
 							placeholder="Search"
 							disabled={isLoading && !hasNonProjectSessions}
-							className="min-w-0 flex-1 bg-transparent py-1.5 pr-2 pl-2 text-[11px] text-inherit placeholder:text-[#aaa] focus:outline-hidden disabled:cursor-default dark:placeholder:text-[#555]"
+							className="min-w-0 flex-1 bg-transparent py-1.5 pr-2 pl-2 text-[11px] text-inherit placeholder:text-ai-faint focus:outline-hidden disabled:cursor-default"
 						/>
 						{isSearching ? (
-							<Icon name="search" height={11} width={11} className="mr-1.5 shrink-0 animate-pulse text-[#999]" />
+							<Icon name="search" height={11} width={11} className="mr-1.5 shrink-0 animate-pulse text-ai-muted" />
 						) : null}
 						{searchQuery ? (
 							<button
 								onClick={() => clearSearch()}
-								className="mr-1.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-[#ccc] text-white transition-colors hover:bg-[#999] dark:bg-[#444] dark:hover:bg-[#666]"
+								className="mr-1.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-ai-handle text-ai-white transition-colors hover:bg-ai-handle-hover"
 							>
 								<Icon name="x" height={8} width={8} />
 							</button>
@@ -479,7 +477,7 @@ export function AgenticSidebar({
 			</header>
 
 			<div ref={scrollContainerRef} className="flex-1 overflow-auto overscroll-contain">
-				<div ref={projectsSectionRef} className="border-b border-[#e6e6e6] pb-3 dark:border-[#222324]">
+				<div ref={projectsSectionRef} className="border-b border-ai-line pb-3">
 					<ProjectsSidebarSection
 						sessions={sessions}
 						currentProjectId={currentProjectId}
@@ -501,12 +499,12 @@ export function AgenticSidebar({
 									trackUmamiEvent('llamaai-alerts-open', { source: 'sidebar' })
 									onOpenAlerts()
 								}}
-								className="-mx-1.5 flex w-[calc(100%+0.75rem)] items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-xs text-[#666] transition-colors hover:bg-[#f0f0f0] hover:text-[#1a1a1a] dark:text-[#919296] dark:hover:bg-[#222324] dark:hover:text-white"
+								className="-mx-1.5 flex w-[calc(100%+0.75rem)] items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
 							>
-								<Icon name="calendar-plus" height={12} width={12} className="shrink-0 text-amber-500" />
+								<Icon name="calendar-plus" height={12} width={12} className="shrink-0 text-ai-warning-bright" />
 								<span className="min-w-0 flex-1 truncate">Alerts</span>
 								{typeof alertsCount === 'number' ? (
-									<span className="shrink-0 text-[11px] text-[#999] dark:text-[#666]">· {alertsCount}</span>
+									<span className="shrink-0 text-[11px] text-ai-muted">· {alertsCount}</span>
 								) : null}
 							</button>
 						</div>
@@ -515,15 +513,15 @@ export function AgenticSidebar({
 
 				<nav className="p-4 pt-3 pr-1" aria-label="Chat history">
 					{isLoading ? (
-						<div className="flex items-center justify-center rounded-sm border border-dashed border-[#666]/50 p-4 text-center text-xs text-[#666] dark:border-[#919296]/50 dark:text-[#919296]">
+						<div className="flex items-center justify-center rounded-sm border border-dashed border-ai-line-strong p-4 text-center text-xs text-ai-tertiary">
 							<LoadingSpinner size={12} />
 						</div>
 					) : loadError ? (
-						<p className="rounded-sm border border-dashed border-red-300 bg-red-50 p-4 text-center text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+						<p className="rounded-sm border border-dashed border-ai-error-border bg-ai-error-bg p-4 text-center text-xs text-ai-error-strong">
 							{loadError}
 						</p>
 					) : nonProjectSessions.length === 0 ? (
-						<p className="rounded-sm border border-dashed border-[#666]/50 p-4 text-center text-xs text-[#666] dark:border-[#919296]/50 dark:text-[#919296]">
+						<p className="rounded-sm border border-dashed border-ai-line-strong p-4 text-center text-xs text-ai-tertiary">
 							You don't have any chats yet
 						</p>
 					) : trimmedSearchQuery && (searchResults.length > 0 || isSearching) ? (
@@ -541,7 +539,7 @@ export function AgenticSidebar({
 							}}
 						/>
 					) : filteredSessions.length === 0 && trimmedSearchQuery && !isSearching && searchResults.length === 0 ? (
-						<p className="rounded-sm border border-dashed border-[#666]/50 p-4 text-center text-xs text-[#666] dark:border-[#919296]/50 dark:text-[#919296]">
+						<p className="rounded-sm border border-dashed border-ai-line-strong p-4 text-center text-xs text-ai-tertiary">
 							No chats matching &ldquo;{searchQuery}&rdquo;
 						</p>
 					) : (
@@ -601,14 +599,14 @@ export function AgenticSidebar({
 							: 'Subscribe to a plan to top up your external data balance.'
 					}
 					render={<button type="button" onClick={() => hasActiveSubscription && setIsTopupModalOpen(true)} />}
-					className="flex min-h-[52px] w-full shrink-0 items-center justify-between truncate border-t border-[#e6e6e6] bg-(--legacy-cards-bg) px-4 py-3 transition-colors hover:bg-[#f0f0f0] dark:border-[#222324] dark:hover:bg-[#222324]"
+					className="flex min-h-[52px] w-full shrink-0 items-center justify-between truncate border-t border-ai-line bg-surface px-4 py-3 transition-colors hover:bg-ai-surface-muted"
 				>
 					<div className="flex min-w-0 items-center gap-2">
-						<Icon name="package" height={14} width={14} className="shrink-0 text-[#5C5CF9]" />
-						<span className="text-xs text-[#666] dark:text-[#919296]">External Data Balance</span>
+						<Icon name="package" height={14} width={14} className="shrink-0 text-ai-purple" />
+						<span className="text-xs text-ai-tertiary">External Data Balance</span>
 					</div>
 					<span
-						className={`shrink-0 font-jetbrains text-xs font-semibold ${totalAvailable < 1 ? 'text-yellow-400' : 'text-[#666] dark:text-white'}`}
+						className={`shrink-0 font-jetbrains text-xs font-semibold ${totalAvailable < 1 ? 'text-ai-warning-bright' : 'text-ai-tertiary dark:text-ai-primary'}`}
 					>
 						${totalAvailable.toFixed(2)}
 					</span>
@@ -616,7 +614,7 @@ export function AgenticSidebar({
 			) : null}
 
 			{selectMode ? (
-				<footer className="flex min-h-[52px] shrink-0 items-center gap-2 border-t border-[#e6e6e6] px-4 py-2 dark:border-[#222324]">
+				<footer className="flex min-h-[52px] shrink-0 items-center gap-2 border-t border-ai-line px-4 py-2">
 					<button
 						type="button"
 						onClick={() => {
@@ -626,7 +624,7 @@ export function AgenticSidebar({
 								setSelectedSessionIds(new Set(filteredSessions.map((s) => s.sessionId)))
 							}
 						}}
-						className="flex min-h-0 flex-1 items-center justify-center rounded-md p-2 text-xs text-[#666] transition-colors hover:bg-[#f0f0f0] dark:text-[#919296] dark:hover:bg-[#222324]"
+						className="flex min-h-0 flex-1 items-center justify-center rounded-md p-2 text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted"
 					>
 						{selectedSessionIds.size === filteredSessions.length ? 'Deselect All' : 'Select All'}
 					</button>
@@ -634,7 +632,7 @@ export function AgenticSidebar({
 						type="button"
 						onClick={() => void handleBulkDelete()}
 						disabled={selectedSessionIds.size === 0 || !onBulkDelete}
-						className="flex min-h-0 items-center justify-center rounded-md bg-red-500/10 px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-500/20 disabled:opacity-40 dark:text-red-400"
+						className="flex min-h-0 items-center justify-center rounded-md bg-ai-error-vivid/10 px-3 py-2 text-xs font-medium text-ai-error transition-colors hover:bg-ai-error-vivid/20 disabled:opacity-40"
 					>
 						Delete{selectedSessionIds.size > 0 ? ` (${selectedSessionIds.size})` : ''}
 					</button>
@@ -643,12 +641,12 @@ export function AgenticSidebar({
 				<button
 					type="button"
 					onClick={onOpenSettings}
-					className="flex min-h-[52px] w-full shrink-0 items-center gap-2.5 border-t border-[#e6e6e6] px-4 py-3 text-left text-xs text-[#666] transition-colors hover:bg-[#f0f0f0] hover:text-[#1a1a1a] dark:border-[#222324] dark:text-[#919296] dark:hover:bg-[#222324] dark:hover:text-white"
+					className="flex min-h-[52px] w-full shrink-0 items-center gap-2.5 border-t border-ai-line px-4 py-3 text-left text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
 				>
 					<div className="relative">
 						<Icon name="settings" height={14} width={14} />
 						{hasCustomInstructions ? (
-							<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-[#1853A8] dark:bg-[#4B86DB]" />
+							<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-ai-blue-deep" />
 						) : null}
 					</div>
 					<span>Settings</span>

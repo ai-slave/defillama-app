@@ -53,12 +53,12 @@ export function SavePresetDialog({
 				<div className="flex items-start justify-between gap-3">
 					<div className="flex flex-col gap-1">
 						<h2 className="heading-xs">{title}</h2>
-						{description ? <p className="text-xs text-(--legacy-text-tertiary)">{description}</p> : null}
+						{description ? <p className="text-xs text-(--pro-text-tertiary)">{description}</p> : null}
 					</div>
 					<button
 						type="button"
 						onClick={onClose}
-						className="rounded-md p-1.5 text-(--legacy-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary)"
+						className="rounded-md p-1.5 text-(--pro-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary)"
 					>
 						<Icon name="x" className="size-4" />
 					</button>
@@ -73,33 +73,33 @@ export function SavePresetDialog({
 					className="flex flex-col gap-3"
 				>
 					<label className="flex flex-col gap-1">
-						<span className="text-xs font-medium text-(--legacy-text-secondary)">Name</span>
+						<span className="text-xs font-medium text-(--pro-text-secondary)">Name</span>
 						<input
 							type="text"
 							value={name}
 							onChange={(e) => setName(e.target.value)}
 							autoFocus
-							className="w-full rounded-md border border-(--legacy-divider) bg-transparent px-2.5 py-1.5 text-sm outline-hidden placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary)/30"
+							className="w-full rounded-md border border-subtle bg-transparent px-2.5 py-1.5 text-sm outline-hidden placeholder:text-(--pro-text-tertiary) focus:border-brand focus:ring-1 focus:ring-brand/30"
 							placeholder={placeholder}
 						/>
 					</label>
 
 					{isDuplicate ? (
-						<p className="text-xs text-amber-500">A preset named "{trimmed}" exists — saving will replace it.</p>
+						<p className="text-xs text-warning">A preset named "{trimmed}" exists — saving will replace it.</p>
 					) : null}
 
 					<div className="mt-1 flex justify-end gap-2">
 						<button
 							type="button"
 							onClick={onClose}
-							className="rounded-md border border-(--legacy-divider) px-3 py-1.5 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary)"
+							className="rounded-md border border-subtle px-3 py-1.5 text-xs font-medium text-(--pro-text-secondary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary)"
 						>
 							Cancel
 						</button>
 						<button
 							type="submit"
 							disabled={isEmpty}
-							className="flex items-center gap-1.5 rounded-md bg-(--legacy-primary) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:opacity-90 disabled:opacity-40"
+							className="flex items-center gap-1.5 rounded-md bg-brand px-3 py-1.5 text-xs font-medium text-on-brand transition-colors hover:opacity-90 disabled:opacity-40"
 						>
 							<Icon name="bookmark" className="size-3.5" />
 							{isDuplicate ? replaceLabel : submitLabel}

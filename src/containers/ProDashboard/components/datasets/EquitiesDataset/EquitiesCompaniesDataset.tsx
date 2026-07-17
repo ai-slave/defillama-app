@@ -98,7 +98,7 @@ const columns: ColumnDef<EquitiesCompanyRow, any>[] = [
 		header: '1d Change',
 		cell: (info) => {
 			const val = info.getValue()
-			const color = val >= 0 ? 'text-green-500' : 'text-red-500'
+			const color = val >= 0 ? 'text-success' : 'text-error'
 			return <span className={color}>{formatPercent(val)}</span>
 		},
 		meta: { align: 'end' },
@@ -109,7 +109,7 @@ const columns: ColumnDef<EquitiesCompanyRow, any>[] = [
 		header: '7d Change',
 		cell: (info) => {
 			const val = info.getValue()
-			const color = val >= 0 ? 'text-green-500' : 'text-red-500'
+			const color = val >= 0 ? 'text-success' : 'text-error'
 			return <span className={color}>{formatPercent(val)}</span>
 		},
 		meta: { align: 'end' },
@@ -120,7 +120,7 @@ const columns: ColumnDef<EquitiesCompanyRow, any>[] = [
 		header: '1m Change',
 		cell: (info) => {
 			const val = info.getValue()
-			const color = val >= 0 ? 'text-green-500' : 'text-red-500'
+			const color = val >= 0 ? 'text-success' : 'text-error'
 			return <span className={color}>{formatPercent(val)}</span>
 		},
 		meta: { align: 'end' },
@@ -321,7 +321,7 @@ export function EquitiesCompaniesDataset() {
 							type="text"
 							placeholder="Search companies..."
 							onInput={(e) => setSearchValue(e.currentTarget.value)}
-							className="rounded-md border pro-border bg-(--legacy-bg-glass) px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-(--legacy-primary) focus:outline-hidden"
+							className="rounded-md border pro-border bg-(--pro-glass-bg) px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>

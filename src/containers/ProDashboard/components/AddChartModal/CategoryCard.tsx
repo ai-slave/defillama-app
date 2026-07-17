@@ -80,11 +80,11 @@ function CategoryCard({ card, onClick }: CategoryCardProps) {
 	return (
 		<button
 			onClick={onClick}
-			className="flex h-full flex-col items-start justify-between rounded-lg border pro-border p-4 text-left transition-all hover:border-(--legacy-primary)/40 hover:bg-(--cards-bg-alt)"
+			className="flex h-full flex-col items-start justify-between rounded-lg border pro-border p-4 text-left transition-all hover:border-brand/40"
 		>
 			<div className="flex flex-col items-start gap-3">
-				<div className="flex size-10 items-center justify-center rounded-lg bg-(--legacy-primary)/10">
-					<Icon name={card.icon} height={22} width={22} className="text-(--legacy-primary)" />
+				<div className="flex size-10 items-center justify-center rounded-lg bg-brand/10">
+					<Icon name={card.icon} height={22} width={22} className="text-brand" />
 				</div>
 				<div>
 					<h3 className="text-base font-semibold pro-text1">{card.title}</h3>
@@ -95,7 +95,7 @@ function CategoryCard({ card, onClick }: CategoryCardProps) {
 				{card.tags.map((tag) => (
 					<span
 						key={tag}
-						className="rounded-full border border-(--legacy-switch-border) px-2.5 py-1 text-xs text-(--legacy-text-secondary)"
+						className="rounded-full border border-(--pro-switch-border) px-2.5 py-1 text-xs text-(--pro-text-secondary)"
 					>
 						{tag}
 					</span>

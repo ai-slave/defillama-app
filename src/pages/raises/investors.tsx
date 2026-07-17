@@ -52,7 +52,7 @@ const columns = [
 			return (
 				<BasicLink
 					href={`/raises/${slug(getValue())}`}
-					className="truncate text-sm font-medium text-(--legacy-link-text) hover:underline"
+					className="truncate text-sm font-medium text-link hover:underline"
 				>
 					{getValue()}
 				</BasicLink>

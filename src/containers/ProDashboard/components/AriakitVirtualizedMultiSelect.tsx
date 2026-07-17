@@ -103,7 +103,7 @@ export function AriakitVirtualizedMultiSelect({
 				) : null}
 			</label>
 			{isLoading ? (
-				<div className="flex h-9 items-center justify-center rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input)">
+				<div className="flex h-9 items-center justify-center rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1">
 					<LoadingSpinner size="sm" />
 				</div>
 			) : (
@@ -111,7 +111,7 @@ export function AriakitVirtualizedMultiSelect({
 					<PopoverDisclosure
 						id={disclosureId}
 						store={popover}
-						className="flex w-full items-center justify-between rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) px-2.5 py-1.5 text-xs transition-colors hover:border-(--legacy-primary)/40 focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+						className="flex w-full items-center justify-between rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-2.5 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					>
 						<span className={`truncate ${selectedValues.length > 0 ? 'pro-text1' : 'pro-text3'}`}>{buttonLabel}</span>
 						<Icon name="chevron-down" width={12} height={12} className="ml-2 shrink-0 opacity-70" />
@@ -122,7 +122,7 @@ export function AriakitVirtualizedMultiSelect({
 						portal={true}
 						flip={false}
 						gutter={4}
-						className="z-50 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-xl"
+						className="z-50 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) shadow-xl"
 						style={{ width: 'var(--popover-anchor-width)' }}
 					>
 						<div className="p-2">
@@ -131,18 +131,18 @@ export function AriakitVirtualizedMultiSelect({
 									name="search"
 									width={12}
 									height={12}
-									className="absolute top-1/2 left-2.5 -translate-y-1/2 text-(--legacy-text-tertiary)"
+									className="absolute top-1/2 left-2.5 -translate-y-1/2 text-(--pro-text-tertiary)"
 								/>
 								<input
 									value={search}
 									onChange={(e) => handleSearchChange(e.target.value)}
 									placeholder="Search..."
-									className="w-full rounded-md border border-(--legacy-form-control-border) bg-(--legacy-bg-input) py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-(--legacy-primary) focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden"
+									className="w-full rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 								/>
 							</div>
 							<div
 								ref={listRef}
-								className="max-h-[280px] overflow-y-auto overscroll-contain rounded-md border border-(--legacy-cards-border) bg-(--cards-bg-alt)/30"
+								className="max-h-[280px] overflow-y-auto overscroll-contain rounded-md border border-(--pro-cards-border)"
 							>
 								{filteredOptions.length === 0 ? (
 									<p className="px-3 py-2 text-center text-xs pro-text3">No results found.</p>
@@ -174,8 +174,8 @@ export function AriakitVirtualizedMultiSelect({
 														isDisabled
 															? 'cursor-not-allowed pro-text3 opacity-50'
 															: isActive
-																? 'bg-(--legacy-primary)/10 font-semibold text-(--legacy-primary)'
-																: 'pro-text2 hover:bg-(--cards-bg-alt) hover:pro-text1'
+																? 'bg-brand/10 font-semibold text-brand'
+																: 'pro-text2 hover:pro-text1'
 													}`}
 													style={{
 														position: 'absolute',
@@ -193,29 +193,24 @@ export function AriakitVirtualizedMultiSelect({
 																alt={option.label}
 																width={20}
 																height={20}
-																className={`size-5 shrink-0 rounded-full object-cover ring-1 ring-(--legacy-cards-border) ${
+																className={`size-5 shrink-0 rounded-full object-cover ring-1 ring-(--pro-cards-border) ${
 																	option.isChild ? 'opacity-70' : ''
 																}`}
 															/>
 														) : null}
 														<div className="flex min-w-0 flex-col gap-0.5">
-															<span className={`truncate ${option.isChild ? 'text-(--legacy-text-secondary)' : ''}`}>
+															<span className={`truncate ${option.isChild ? 'text-(--pro-text-secondary)' : ''}`}>
 																{option.label}
 															</span>
 															{option.isChild ? (
-																<span className="text-[10px] leading-none text-(--legacy-text-tertiary)">
+																<span className="text-[10px] leading-none text-(--pro-text-tertiary)">
 																	Child protocol
 																</span>
 															) : null}
 														</div>
 													</div>
 													{isActive ? (
-														<Icon
-															name="check"
-															width={14}
-															height={14}
-															className="ml-2 shrink-0 text-(--legacy-primary)"
-														/>
+														<Icon name="check" width={14} height={14} className="ml-2 shrink-0 text-brand" />
 													) : null}
 												</button>
 											)
@@ -224,19 +219,19 @@ export function AriakitVirtualizedMultiSelect({
 								)}
 							</div>
 							{selectedValues.length > 0 ? (
-								<div className="mt-2 flex items-center justify-between rounded-md border border-(--legacy-cards-border) bg-(--cards-bg-alt)/40 px-2.5 py-2">
+								<div className="mt-2 flex items-center justify-between rounded-md border border-(--pro-cards-border) px-2.5 py-2">
 									<div className="flex items-center gap-2">
-										<div className="flex size-5 items-center justify-center rounded-full bg-(--legacy-primary)/15">
-											<Icon name="check" width={10} height={10} className="text-(--legacy-primary)" />
+										<div className="flex size-5 items-center justify-center rounded-full bg-brand/15">
+											<Icon name="check" width={10} height={10} className="text-brand" />
 										</div>
-										<span className="text-[11px] font-medium text-(--legacy-text-secondary)">
+										<span className="text-[11px] font-medium text-(--pro-text-secondary)">
 											{selectedValues.length} selected
 										</span>
 									</div>
 									<button
 										type="button"
 										onClick={clearAll}
-										className="text-[11px] font-medium text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-primary)"
+										className="text-[11px] font-medium text-(--pro-text-tertiary) transition-colors hover:text-brand"
 									>
 										Clear All
 									</button>

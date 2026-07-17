@@ -45,12 +45,7 @@ function openUrl(reference: UnifiedCitationReference): string | null {
 
 function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
 	return (
-		<a
-			href={href}
-			target="_blank"
-			rel="noopener noreferrer"
-			className="text-xs text-(--legacy-link-text) hover:underline"
-		>
+		<a href={href} target="_blank" rel="noopener noreferrer" className="text-xs text-link hover:underline">
 			{children}
 		</a>
 	)
@@ -59,7 +54,7 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
 function CodePre({ text, className }: { text: string; className?: string }) {
 	return (
 		<pre
-			className={`m-0 max-h-48 overflow-auto rounded-sm border border-[#e6e6e6] bg-[#fafafa] p-1.5 font-mono text-[10px] whitespace-pre-wrap text-[#444] dark:border-[#333] dark:bg-[#1a1a1a] dark:text-[#bbb] ${className ?? ''}`}
+			className={`m-0 max-h-48 overflow-auto rounded-sm border border-ai-line bg-ai-surface p-1.5 font-mono text-[10px] whitespace-pre-wrap text-ai-secondary ${className ?? ''}`}
 		>
 			{text}
 		</pre>
@@ -78,7 +73,7 @@ function AdvancedDisclosure({
 	if (!text) return null
 	return (
 		<details open={defaultTierVisible(advancedProvenance)} className="group">
-			<summary className="cursor-pointer list-none text-[11px] font-medium text-[#777] hover:text-[#444] dark:text-[#888] dark:hover:text-[#bbb]">
+			<summary className="cursor-pointer list-none text-[11px] font-medium text-ai-tertiary hover:text-ai-secondary">
 				{label}
 			</summary>
 			<CodePre text={text} className="mt-1" />
@@ -90,19 +85,19 @@ function SourceMiniCard({ reference }: { reference: UnifiedCitationReference }) 
 	const safeUrl = openUrl(reference)
 	const hasRows = !!reference.rows && reference.rows.length > 0
 	return (
-		<div className="rounded-sm border border-[#eee] bg-[#fafafa] p-1.5 dark:border-[#222324] dark:bg-[#161618]">
+		<div className="rounded-sm border border-ai-line bg-ai-surface p-1.5">
 			<div className="flex items-center gap-1.5">
-				<span className="text-[10px] font-medium tracking-wide text-[#1f67d2] uppercase">
+				<span className="text-[10px] font-medium tracking-wide text-ai-blue uppercase">
 					{badgeFor(reference.sourceType)}
 				</span>
-				{reference.label ? <span className="text-[11px] text-[#666] dark:text-[#999]">{reference.label}</span> : null}
+				{reference.label ? <span className="text-[11px] text-ai-tertiary">{reference.label}</span> : null}
 				{reference.value ? (
-					<span className="ml-auto text-[11px] font-medium text-[#222] dark:text-[#ddd]">{reference.value}</span>
+					<span className="ml-auto text-[11px] font-medium text-ai-primary">{reference.value}</span>
 				) : null}
 			</div>
 			{hasRows ? (
 				<details className="group mt-1">
-					<summary className="cursor-pointer list-none text-[10px] font-medium text-[#888] hover:text-[#555] dark:text-[#888] dark:hover:text-[#bbb]">
+					<summary className="cursor-pointer list-none text-[10px] font-medium text-ai-muted hover:text-ai-secondary">
 						view data
 					</summary>
 					<CitationRowsTable rows={reference.rows} columns={reference.columns} />
@@ -145,34 +140,32 @@ function CitedRowCard({ reference, citedCell }: { reference: UnifiedCitationRefe
 		)
 		.slice(0, 6)
 	return (
-		<div className="flex flex-col gap-2 rounded-lg border border-[#e6e6e6] bg-[#fafafa] p-3 dark:border-[#222324] dark:bg-[#161618]">
+		<div className="flex flex-col gap-2 rounded-lg border border-ai-line bg-ai-surface p-3">
 			{entity || rowDate ? (
 				<div className="flex items-center justify-between gap-2">
 					{entity ? (
-						<span className="text-[11px] font-semibold tracking-wide text-[#888] uppercase dark:text-[#888]">
-							{entity}
-						</span>
+						<span className="text-[11px] font-semibold tracking-wide text-ai-muted uppercase">{entity}</span>
 					) : (
 						<span />
 					)}
 					{rowDate ? (
-						<span className="inline-flex items-center gap-1 rounded-full bg-[#eef2f7] px-2 py-0.5 text-[10px] font-medium text-[#1f67d2] dark:bg-[#1f2733] dark:text-[#7fb0ec]">
+						<span className="inline-flex items-center gap-1 rounded-full bg-ai-surface-muted px-2 py-0.5 text-[10px] font-medium text-ai-blue">
 							<Icon name="calendar" height={9} width={9} />
 							{rowDate}
 						</span>
 					) : null}
 				</div>
 			) : null}
-			<div className="flex items-baseline justify-between gap-3 border-b border-[#ececec] pb-2 dark:border-[#26262a]">
-				<span className="text-[12px] text-[#555] dark:text-[#aaa]">{metricLabel(citedCell.column)}</span>
-				<span className="text-[15px] font-semibold text-[#1f67d2] tabular-nums">
+			<div className="flex items-baseline justify-between gap-3 border-b border-ai-line pb-2">
+				<span className="text-xs text-ai-secondary">{metricLabel(citedCell.column)}</span>
+				<span className="text-[15px] font-semibold text-ai-blue tabular-nums">
 					{formatMetricValue(citedCell.column, row[citedCell.column])}
 				</span>
 			</div>
 			{others.map((c) => (
 				<div key={c} className="flex items-baseline justify-between gap-3">
-					<span className="text-[12px] text-[#777] dark:text-[#999]">{metricLabel(c)}</span>
-					<span className="text-[12px] text-[#444] tabular-nums dark:text-[#bbb]">{formatMetricValue(c, row[c])}</span>
+					<span className="text-xs text-ai-tertiary">{metricLabel(c)}</span>
+					<span className="text-xs text-ai-secondary tabular-nums">{formatMetricValue(c, row[c])}</span>
 				</div>
 			))}
 		</div>
@@ -197,14 +190,14 @@ function DataView({
 			{citedRow ? <CitedRowCard reference={reference} citedCell={citedCell} /> : null}
 			{hasRows ? (
 				<details open={!citedRow} className="group">
-					<summary className="cursor-pointer list-none text-[11px] font-medium text-[#1f67d2] hover:underline">
+					<summary className="cursor-pointer list-none text-[11px] font-medium text-ai-blue hover:underline">
 						<span className="group-open:hidden">{citedRow ? 'Show full table' : 'See the data'}</span>
 						<span className="hidden group-open:inline">Hide table</span>
 					</summary>
 					<CitationRowsTable rows={reference.rows} columns={reference.columns} citedCell={citedCell} />
 				</details>
 			) : hiddenLabel ? (
-				<p className="m-0 text-[10px] text-[#999] dark:text-[#777]">{hiddenLabel}</p>
+				<p className="m-0 text-[10px] text-ai-muted">{hiddenLabel}</p>
 			) : null}
 			<AdvancedDisclosure label="View query" text={sql} advancedProvenance={advancedProvenance} />
 		</>
@@ -220,16 +213,16 @@ function ComputedView({ reference }: { reference: UnifiedCitationReference }) {
 	return (
 		<>
 			{reference.formula ? (
-				<p className="m-0 font-mono text-[12px] text-[#444] dark:text-[#bbb]">{reference.formula}</p>
+				<p className="m-0 font-mono text-xs text-ai-secondary">{reference.formula}</p>
 			) : summary ? (
-				<p className="m-0 text-[12px] text-[#444] dark:text-[#bbb]">{summary}</p>
+				<p className="m-0 text-xs text-ai-secondary">{summary}</p>
 			) : null}
 			{outputs.length > 0 ? (
-				<div className="flex flex-col gap-1.5 rounded-lg border border-[#e6e6e6] bg-[#fafafa] p-3 dark:border-[#222324] dark:bg-[#161618]">
+				<div className="flex flex-col gap-1.5 rounded-lg border border-ai-line bg-ai-surface p-3">
 					{outputs.map((o) => (
 						<div key={o.key} className="flex items-baseline justify-between gap-3">
-							<span className="text-[12px] text-[#777] dark:text-[#999]">{humanizeColumn(o.key)}</span>
-							<span className="text-[12px] font-medium text-[#444] tabular-nums dark:text-[#bbb]">
+							<span className="text-xs text-ai-tertiary">{humanizeColumn(o.key)}</span>
+							<span className="text-xs font-medium text-ai-secondary tabular-nums">
 								{formatOutputValue(o.key, o.value)}
 							</span>
 						</div>
@@ -238,7 +231,7 @@ function ComputedView({ reference }: { reference: UnifiedCitationReference }) {
 			) : null}
 			{hasWork ? (
 				<details open className="group">
-					<summary className="cursor-pointer list-none text-[11px] font-medium text-[#1f67d2] hover:underline">
+					<summary className="cursor-pointer list-none text-[11px] font-medium text-ai-blue hover:underline">
 						<span className="group-open:hidden">How this was calculated</span>
 						<span className="hidden group-open:inline">Hide calculation</span>
 					</summary>
@@ -260,8 +253,8 @@ function WebView({ reference }: { reference: UnifiedCitationReference }) {
 	const excerpt = sanitizeExcerpt(reference.excerpt)
 	return (
 		<>
-			{domain ? <span className="text-[11px] text-[#888] dark:text-[#777]">{domain}</span> : null}
-			{excerpt ? <p className="m-0 text-[12px] leading-snug text-[#444] dark:text-[#ccc]">{excerpt}</p> : null}
+			{domain ? <span className="text-[11px] text-ai-muted">{domain}</span> : null}
+			{excerpt ? <p className="m-0 text-xs leading-snug text-ai-secondary">{excerpt}</p> : null}
 			{safeUrl ? <ExternalLink href={safeUrl}>Open link ↗</ExternalLink> : null}
 		</>
 	)
@@ -272,7 +265,7 @@ function XView({ reference }: { reference: UnifiedCitationReference }) {
 	const excerpt = sanitizeExcerpt(reference.excerpt)
 	return (
 		<>
-			{excerpt ? <p className="m-0 text-[12px] leading-snug text-[#444] dark:text-[#ccc]">{excerpt}</p> : null}
+			{excerpt ? <p className="m-0 text-xs leading-snug text-ai-secondary">{excerpt}</p> : null}
 			{safeUrl ? <ExternalLink href={safeUrl}>Open tweet ↗</ExternalLink> : null}
 		</>
 	)
@@ -284,17 +277,17 @@ function ToolView({ reference }: { reference: UnifiedCitationReference }) {
 	return (
 		<>
 			{rows.length > 0 ? (
-				<div className="flex flex-col gap-0.5 rounded-sm border border-[#eee] bg-[#fafafa] p-1.5 dark:border-[#222324] dark:bg-[#161618]">
+				<div className="flex flex-col gap-0.5 rounded-sm border border-ai-line bg-ai-surface p-1.5">
 					{rows.map((row) => (
 						<div key={row.key} className="flex items-baseline gap-2 text-[11px]">
-							<span className="shrink-0 font-medium text-[#666] dark:text-[#999]">{row.key}</span>
-							<span className="text-[#444] dark:text-[#bbb]">{row.value}</span>
+							<span className="shrink-0 font-medium text-ai-tertiary">{row.key}</span>
+							<span className="text-ai-secondary">{row.value}</span>
 						</div>
 					))}
 				</div>
 			) : null}
 			{isPrivacySentinel(resultText) ? (
-				<p className="m-0 text-[11px] text-[#888] dark:text-[#777]">Value hidden for privacy</p>
+				<p className="m-0 text-[11px] text-ai-muted">Value hidden for privacy</p>
 			) : resultText ? (
 				<CodePre text={resultText} />
 			) : null}
@@ -309,12 +302,12 @@ function FileView({ reference, citedCell }: { reference: UnifiedCitationReferenc
 	return (
 		<>
 			{name ? (
-				<p className="m-0 text-[11px] font-medium text-[#555] dark:text-[#aaa]">
+				<p className="m-0 text-[11px] font-medium text-ai-secondary">
 					{name}
 					{reference.locator ? ` · ${reference.locator}` : ''}
 				</p>
 			) : null}
-			{excerpt ? <p className="m-0 text-[11px] text-[#888] dark:text-[#777]">“{excerpt}”</p> : null}
+			{excerpt ? <p className="m-0 text-[11px] text-ai-muted">“{excerpt}”</p> : null}
 			{hasRows ? <CitationRowsTable rows={reference.rows} columns={reference.columns} citedCell={citedCell} /> : null}
 		</>
 	)
@@ -326,22 +319,22 @@ function FactCheckSection({ reference }: { reference: UnifiedCitationReference }
 	const hasDetail = !!reference.detail && reference.detail !== reference.value
 	if (!hasChecked && !hasEvidence && !hasDetail) return null
 	return (
-		<div className="flex flex-col gap-1 border-t border-[#eee] pt-1.5 dark:border-[#2a2a2a]">
+		<div className="flex flex-col gap-1 border-t border-ai-line pt-1.5">
 			{hasChecked ? (
-				<p className="m-0 text-[11px] text-[#555] dark:text-[#aaa]">
+				<p className="m-0 text-[11px] text-ai-secondary">
 					<span className="font-medium">Checked:</span> {reference.checked}
 				</p>
 			) : null}
 			{hasEvidence ? (
 				<ul className="m-0 flex flex-col gap-0.5 pl-3">
 					{reference.evidence!.map((item, i) => (
-						<li key={i} className="text-[11px] text-[#666] dark:text-[#999]">
+						<li key={i} className="text-[11px] text-ai-tertiary">
 							{item}
 						</li>
 					))}
 				</ul>
 			) : null}
-			{hasDetail ? <p className="m-0 text-[11px] text-[#888] dark:text-[#777]">{reference.detail}</p> : null}
+			{hasDetail ? <p className="m-0 text-[11px] text-ai-muted">{reference.detail}</p> : null}
 		</div>
 	)
 }
@@ -441,9 +434,9 @@ export function CitationPill({ reference }: CitationPillProps) {
 				portal
 				gutter={6}
 				overflowPadding={16}
-				className="z-50 flex max-h-[min(70vh,var(--popover-available-height))] w-96 max-w-(--popover-available-width) min-w-[min(18rem,var(--popover-available-width))] flex-col gap-2 overflow-y-auto overscroll-contain rounded-lg border border-[#e6e6e6] bg-white p-3 text-sm shadow-xl dark:border-[#222324] dark:bg-[#18181b]"
+				className="z-50 flex max-h-[min(70vh,var(--popover-available-height))] w-96 max-w-(--popover-available-width) min-w-[min(18rem,var(--popover-available-width))] flex-col gap-2 overflow-y-auto overscroll-contain rounded-lg border border-ai-line bg-ai-surface-card p-3 text-sm shadow-xl"
 			>
-				<div className="flex items-center gap-2 border-b border-[#ececec] pb-2 dark:border-[#26262a]">
+				<div className="flex items-center gap-2 border-b border-ai-line pb-2">
 					<span
 						className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md"
 						style={{ backgroundColor: `${accent}1f`, color: accent }}
@@ -453,28 +446,24 @@ export function CitationPill({ reference }: CitationPillProps) {
 					<span className="text-[10.5px] font-semibold tracking-[0.08em] uppercase" style={{ color: accent }}>
 						{badge}
 					</span>
-					{asOfText ? <span className="ml-auto text-[10px] text-[#999] dark:text-[#777]">as of {asOfText}</span> : null}
+					{asOfText ? <span className="ml-auto text-[10px] text-ai-muted">as of {asOfText}</span> : null}
 				</div>
 
 				{headline ? (
 					<div className="flex flex-col gap-0.5">
-						<p className="m-0 text-[15px] leading-tight font-semibold text-[#111] tabular-nums dark:text-white">
-							{headline}
-						</p>
+						<p className="m-0 text-[15px] leading-tight font-semibold text-ai-primary tabular-nums">{headline}</p>
 					</div>
 				) : null}
 
-				{description ? (
-					<p className="m-0 text-[11px] leading-snug text-[#666] dark:text-[#999]">{description}</p>
-				) : null}
+				{description ? <p className="m-0 text-[11px] leading-snug text-ai-tertiary">{description}</p> : null}
 
 				{mismatch ? (
-					<div className="flex items-start gap-1.5 text-[12px] text-amber-700 dark:text-amber-400">
+					<div className="flex items-start gap-1.5 text-xs text-ai-warning">
 						<Icon name="alert-triangle" height={13} width={13} className="mt-px shrink-0" />
 						<span>{mismatchLabel(reference)}</span>
 					</div>
 				) : unverified ? (
-					<div className="flex items-start gap-1.5 text-[12px] text-[#888] dark:text-[#888]">
+					<div className="flex items-start gap-1.5 text-xs text-ai-muted">
 						<Icon name="help-circle" height={13} width={13} className="mt-px shrink-0" />
 						<span>{unverifiedLabel()}</span>
 					</div>
@@ -483,19 +472,17 @@ export function CitationPill({ reference }: CitationPillProps) {
 				{isLink ? (
 					<>
 						{domainFromUrl(reference.url) ? (
-							<span className="text-[11px] text-[#888] dark:text-[#777]">{domainFromUrl(reference.url)}</span>
+							<span className="text-[11px] text-ai-muted">{domainFromUrl(reference.url)}</span>
 						) : null}
 						{sanitizeExcerpt(reference.excerpt) ? (
-							<p className="m-0 text-[11px] leading-snug text-[#666] dark:text-[#999]">
-								{sanitizeExcerpt(reference.excerpt)}
-							</p>
+							<p className="m-0 text-[11px] leading-snug text-ai-tertiary">{sanitizeExcerpt(reference.excerpt)}</p>
 						) : null}
 						{url ? (
 							<a
 								href={url}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="self-start text-[11px] font-medium text-[#1f67d2] hover:underline"
+								className="self-start text-[11px] font-medium text-ai-blue hover:underline"
 							>
 								Open link ↗
 							</a>
@@ -504,7 +491,7 @@ export function CitationPill({ reference }: CitationPillProps) {
 				) : (
 					<button
 						onClick={() => open(reference)}
-						className="self-start text-[11px] font-medium text-[#1f67d2] hover:underline"
+						className="self-start text-[11px] font-medium text-ai-blue hover:underline"
 					>
 						Click to see the source →
 					</button>

@@ -49,17 +49,13 @@ function AuthorNotFound({ canonicalPath }: { canonicalPath: string }) {
 		>
 			<div className="mx-auto flex min-h-[56vh] max-w-3xl flex-col items-start justify-center gap-5 px-4">
 				<div className="grid gap-2">
-					<p className="text-[10px] font-semibold tracking-[0.2em] text-(--legacy-text-tertiary) uppercase">
-						Author index
-					</p>
-					<h1 className="text-[clamp(2rem,1.4rem+2vw,3.25rem)] leading-tight font-semibold text-(--legacy-text-primary)">
+					<p className="text-[10px] font-semibold tracking-[0.2em] text-tertiary uppercase">Author index</p>
+					<h1 className="text-[clamp(2rem,1.4rem+2vw,3.25rem)] leading-tight font-semibold text-primary">
 						Author not found
 					</h1>
-					<p className="max-w-lg text-sm leading-6 text-(--legacy-text-secondary)">
-						This dashboard author profile is not available.
-					</p>
+					<p className="max-w-lg text-sm leading-6 text-secondary">This dashboard author profile is not available.</p>
 				</div>
-				<BasicLink href="/pro" className="rounded-md bg-(--legacy-link-text) px-4 py-2 text-sm font-medium text-white">
+				<BasicLink href="/pro" className="rounded-md bg-link px-4 py-2 text-sm font-medium text-on-brand">
 					Browse dashboards
 				</BasicLink>
 			</div>
@@ -136,10 +132,7 @@ export default function AuthorPage({ data, slug, status }: InferGetServerSidePro
 		>
 			<AuthorOgImage author={author} />
 			<div className="mx-auto grid w-full max-w-7xl gap-6 pro-dashboard px-3 py-5 lg:px-0">
-				<BasicLink
-					href="/pro"
-					className="mr-auto flex items-center gap-2 text-sm text-(--legacy-text-label) hover:text-(--legacy-link-text)"
-				>
+				<BasicLink href="/pro" className="mr-auto flex items-center gap-2 text-sm text-secondary hover:text-link">
 					<Icon name="arrow-left" className="size-4" />
 					Back to Dashboards
 				</BasicLink>

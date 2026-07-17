@@ -15,8 +15,7 @@ interface AddSourcesMenuProps {
 	onAddPhotosFiles?: () => void
 }
 
-const SECTION_LABEL_CLASS =
-	'px-3 pt-1.5 pb-1 text-[10px] font-medium uppercase tracking-wider text-[#999] dark:text-[#666]'
+const SECTION_LABEL_CLASS = 'px-3 pt-1.5 pb-1 text-[10px] font-medium uppercase tracking-wider text-ai-muted'
 
 export function AddSourcesMenu({
 	projectId,
@@ -39,7 +38,7 @@ export function AddSourcesMenu({
 					gutter={gutter}
 					className={
 						menuClassName ??
-						'z-50 min-w-[240px] rounded-xl border border-[#e6e6e6] bg-(--legacy-cards-bg) p-1 text-sm shadow-xl dark:border-[#222324] dark:bg-[#161718]'
+						'z-50 min-w-[240px] rounded-xl border border-ai-line bg-surface p-1 text-sm shadow-xl dark:bg-ai-surface'
 					}
 				>
 					{onAddPhotosFiles ? (
@@ -47,41 +46,41 @@ export function AddSourcesMenu({
 							<div className={SECTION_LABEL_CLASS}>This message</div>
 							<Ariakit.MenuItem
 								onClick={onAddPhotosFiles}
-								className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-[#f0f0f0] dark:hover:bg-[#1c1d1e]"
+								className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-ai-surface-muted"
 							>
-								<Icon name="image-plus" height={15} width={15} className="text-[#666] dark:text-[#919296]" />
+								<Icon name="image-plus" height={15} width={15} className="text-ai-tertiary" />
 								Add photos &amp; files
 							</Ariakit.MenuItem>
-							<div className="mx-2 my-1 h-px bg-[#e6e6e6] dark:bg-[#222324]" />
+							<div className="mx-2 my-1 h-px bg-ai-surface-muted" />
 							<div className={SECTION_LABEL_CLASS}>Add to project</div>
 						</>
 					) : null}
 					<Ariakit.MenuItem
 						onClick={() => fileInputRef.current?.click()}
-						className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-[#f0f0f0] dark:hover:bg-[#1c1d1e]"
+						className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-ai-surface-muted"
 					>
-						<Icon name="file-plus" height={15} width={15} className="text-[#666] dark:text-[#919296]" />
+						<Icon name="file-plus" height={15} width={15} className="text-ai-tertiary" />
 						Upload files
 					</Ariakit.MenuItem>
 					<Ariakit.MenuItem
 						onClick={() => folderInputRef.current?.click()}
-						className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-[#f0f0f0] dark:hover:bg-[#1c1d1e]"
+						className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-ai-surface-muted"
 					>
-						<Icon name="file-plus" height={15} width={15} className="text-[#666] dark:text-[#919296]" />
+						<Icon name="file-plus" height={15} width={15} className="text-ai-tertiary" />
 						Upload folder
 					</Ariakit.MenuItem>
 					<Ariakit.MenuItem
 						onClick={() => addTextStore.show()}
-						className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-[#f0f0f0] dark:hover:bg-[#1c1d1e]"
+						className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-ai-surface-muted"
 					>
-						<Icon name="file-text" height={15} width={15} className="text-[#666] dark:text-[#919296]" />
+						<Icon name="file-text" height={15} width={15} className="text-ai-tertiary" />
 						Add text content
 					</Ariakit.MenuItem>
 					<Ariakit.MenuItem
 						onClick={() => githubStore.show()}
-						className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-[#f0f0f0] dark:hover:bg-[#1c1d1e]"
+						className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-ai-surface-muted"
 					>
-						<Icon name="github" height={15} width={15} className="text-[#666] dark:text-[#919296]" />
+						<Icon name="github" height={15} width={15} className="text-ai-tertiary" />
 						Connect GitHub repo
 					</Ariakit.MenuItem>
 				</Ariakit.Menu>

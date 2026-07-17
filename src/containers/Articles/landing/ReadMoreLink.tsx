@@ -12,7 +12,7 @@ export const ReadMoreLink: React.FC<ReadMoreLinkProps> = ({ url, title }) => {
 	return (
 		<Link
 			href={url}
-			className="inline-flex items-center gap-x-2 text-[12px] font-medium uppercase"
+			className="inline-flex items-center gap-x-2 text-xs font-medium uppercase"
 			rel={isExternalLink ? 'noopener noreferrer' : undefined}
 			style={{ color: '#237BFF' }}
 			target={isExternalLink ? '_blank' : undefined}

@@ -286,7 +286,7 @@ function LinkItem({
 	return (
 		<BasicLink
 			href={option.to}
-			className="hover-wash rounded-sm bg-brand-muted px-2 py-1 body-sm font-medium whitespace-nowrap text-link-on-tint data-[active=true]:bg-brand data-[active=true]:text-on-brand"
+			className="hover-wash rounded-sm bg-brand-muted px-2 py-1 label-sm whitespace-nowrap text-link-on-tint data-[active=true]:bg-brand data-[active=true]:text-on-brand"
 			data-active={isActive}
 			{...props}
 		>

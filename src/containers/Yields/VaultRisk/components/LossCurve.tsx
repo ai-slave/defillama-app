@@ -413,7 +413,7 @@ export function LossCurve({
 						<span
 							data-annot
 							aria-hidden
-							className="pointer-events-none absolute inset-x-0 border-t border-dashed border-(--text-secondary)/40"
+							className="pointer-events-none absolute inset-x-0 border-t border-dashed border-secondary/40"
 							style={{ top: `${covY}%` }}
 						/>
 						<span
@@ -429,7 +429,7 @@ export function LossCurve({
 				{hot ? (
 					<span
 						aria-hidden
-						className="pointer-events-none absolute inset-y-0 w-px bg-(--text-secondary)/30"
+						className="pointer-events-none absolute inset-y-0 w-px bg-secondary/30"
 						style={{ left: `${hot.x}%` }}
 					/>
 				) : null}
@@ -440,7 +440,7 @@ export function LossCurve({
 						data-annot
 						aria-hidden
 						className={`pointer-events-none absolute size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-surface transition-transform duration-150 ${
-							i === active ? 'scale-[1.8] bg-(--text-primary)' : 'bg-brand'
+							i === active ? 'scale-[1.8] bg-primary' : 'bg-brand'
 						}`}
 						style={{ left: `${p.x}%`, top: `${p.y}%` }}
 					/>
@@ -470,7 +470,7 @@ export function LossCurve({
 								{hotBreakdown.map((e) => (
 									<span key={e.symbol} className="flex items-center gap-1.5 body-sm">
 										{e.symbol === 'Other' ? (
-											<span className="size-3.5 shrink-0 rounded-full bg-(--text-tertiary)/40" aria-hidden />
+											<span className="size-3.5 shrink-0 rounded-full bg-tertiary/40" aria-hidden />
 										) : (
 											<TokenLogo src={e.logoUrl} size={14} alt={e.symbol} />
 										)}

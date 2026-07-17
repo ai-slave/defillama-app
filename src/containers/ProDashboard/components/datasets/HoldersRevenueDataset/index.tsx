@@ -146,8 +146,8 @@ export function HoldersRevenueDataset({ chains, tableId, filters }: HoldersReven
 									event.stopPropagation()
 									setShowFilterModal(true)
 								}}
-								className={`ml-2 rounded-md p-1 transition-colors hover:bg-(--legacy-bg-tertiary) ${
-									filterButtonIsActive ? 'text-(--legacy-primary)' : 'text-(--legacy-text-tertiary)'
+								className={`ml-2 rounded-md p-1 transition-colors hover:bg-surface-elevated-2 ${
+									filterButtonIsActive ? 'text-brand' : 'text-(--pro-text-tertiary)'
 								}`}
 								title="Filter categories"
 							>
@@ -291,7 +291,7 @@ export function HoldersRevenueDataset({ chains, tableId, filters }: HoldersReven
 							type="text"
 							placeholder="Search protocols..."
 							onInput={(e) => setProtocolName(e.currentTarget.value)}
-							className="rounded-md border pro-border bg-(--legacy-bg-glass) px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-(--legacy-primary) focus:outline-hidden"
+							className="rounded-md border pro-border bg-(--pro-glass-bg) px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>

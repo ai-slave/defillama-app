@@ -478,10 +478,10 @@ function TokenRightsOverviewView({
 					) : null}
 
 					{hasPrimaryValueAccrual ? (
-						<div className="rounded-lg border border-green-600/30 bg-green-600/10 p-2">
+						<div className="rounded-lg border border-success/30 bg-success/10 p-2">
 							<div className="label-sm text-secondary uppercase">Primary Value Accrual</div>
 							{primaryValueLabel !== null ? (
-								<div className="mt-1.5 label-lg text-green-700 dark:text-green-400">{primaryValueLabel}</div>
+								<div className="mt-1.5 label-lg text-success">{primaryValueLabel}</div>
 							) : null}
 							{valueAccrual.details !== null ? <p className="mt-1.5 body-md">{valueAccrual.details}</p> : null}
 						</div>
@@ -560,23 +560,23 @@ type TokenRightsChipVariant = 'overview' | 'details'
 
 const CHIP_TONE_CLASSES: Record<TokenRightsChipVariant, Record<StatusTone, string>> = {
 	overview: {
-		positive: 'border-green-600/30 bg-green-600/10 text-green-700 dark:text-green-400',
-		negative: 'border-red-600/30 bg-red-600/10 text-red-700 dark:text-red-400',
-		warning: 'border-amber-600/30 bg-amber-600/10 text-amber-700 dark:text-amber-400',
+		positive: 'border-success/30 bg-success/10 text-success',
+		negative: 'border-red-600/30 bg-red-600/10 text-error dark:text-error',
+		warning: 'border-amber-600/30 bg-amber-600/10 text-warning',
 		neutral: 'border-medium bg-surface text-secondary'
 	},
 	details: {
-		positive: 'border-green-600/30 bg-green-600/10 text-green-700 dark:text-green-400',
-		negative: 'border-red-600/30 bg-red-600/10 text-red-700 dark:text-red-400',
-		warning: 'border-amber-600/30 bg-amber-600/10 text-amber-700 dark:text-amber-400',
+		positive: 'border-success/30 bg-success/10 text-success',
+		negative: 'border-red-600/30 bg-red-600/10 text-error dark:text-error',
+		warning: 'border-amber-600/30 bg-amber-600/10 text-warning',
 		neutral: 'border-medium bg-surface-elevated-1 text-secondary'
 	}
 }
 
 const TEXT_TONE_CLASSES: Record<StatusTone, string> = {
-	positive: 'text-green-700 dark:text-green-400',
-	negative: 'text-red-600 dark:text-red-400',
-	warning: 'text-amber-600 dark:text-amber-400',
+	positive: 'text-success',
+	negative: 'text-error',
+	warning: 'text-warning dark:text-warning',
 	neutral: 'text-secondary'
 }
 
@@ -638,12 +638,8 @@ function SectionCard({ title, badge, children }: { title: string; badge?: string
 
 function GreenCard({ title, tooltip, children }: { title: string; tooltip: string; children: ReactNode }) {
 	return (
-		<section className="flex flex-col gap-2 rounded-lg border border-green-600/30 bg-green-600/10 p-2">
-			<Tooltip
-				content={tooltip}
-				render={<h2 />}
-				className="w-fit label-lg text-green-700 underline decoration-dotted dark:text-green-400"
-			>
+		<section className="flex flex-col gap-2 rounded-lg border border-success/30 bg-success/10 p-2">
+			<Tooltip content={tooltip} render={<h2 />} className="w-fit label-lg text-success underline decoration-dotted">
 				{title}
 			</Tooltip>
 			{children}

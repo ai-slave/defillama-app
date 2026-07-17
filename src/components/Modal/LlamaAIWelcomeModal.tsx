@@ -11,14 +11,14 @@ export function LlamaAIWelcomeModal({ isOpen, onClose }: LlamaAIWelcomeModalProp
 	return (
 		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && onClose()}>
 			<Ariakit.Dialog
-				className="dialog fixed inset-0 z-50 m-auto h-fit w-full max-w-lg overflow-hidden rounded-2xl border border-[#E6E6E6] bg-[#FFFFFF] p-0 shadow-xl dark:border-[#39393E] dark:bg-[#222429]"
+				className="dialog fixed inset-0 z-50 m-auto h-fit w-full max-w-lg overflow-hidden rounded-2xl border border-[#E6E6E6] bg-[#FFFFFF] p-0 shadow-xl dark:border-sub-line dark:bg-sub-card"
 				backdrop={<div className="backdrop fixed inset-0 bg-black/60 backdrop-blur-sm" />}
 				portal
 				unmountOnHide
 			>
 				<Ariakit.DialogDismiss
 					data-umami-event="llamaai-welcome-dismiss"
-					className="absolute top-4 right-4 z-20 rounded-full p-1.5 text-[#666] transition-colors hover:bg-[#f7f7f7] hover:text-black dark:text-gray-400 dark:hover:bg-gray-700/50 dark:hover:text-white"
+					className="absolute top-4 right-4 z-20 rounded-full p-1.5 text-sub-text-muted transition-colors hover:bg-[#f7f7f7] hover:text-black dark:text-ai-tertiary dark:hover:bg-gray-700/50 dark:hover:text-ai-primary"
 				>
 					<Icon name="x" className="size-5" />
 				</Ariakit.DialogDismiss>
@@ -40,10 +40,10 @@ export function LlamaAIWelcomeModal({ isOpen, onClose }: LlamaAIWelcomeModalProp
 						</span>
 					</div>
 
-					<h2 className="mb-4 text-center text-2xl leading-snug font-bold text-black dark:text-white">
+					<h2 className="mb-4 text-center text-2xl leading-snug font-bold text-black dark:text-ai-primary">
 						Introducing LlamaAI 🚀
 					</h2>
-					<p className="mb-6 text-center text-base leading-6 text-[#666] dark:text-[#919296]">
+					<p className="mb-6 text-center text-base leading-6 text-sub-text-muted dark:text-ai-tertiary">
 						We're upgrading your subscription with LlamaAI. Turn data into deep, flexible analysis in a conversational
 						way.
 					</p>
@@ -51,7 +51,7 @@ export function LlamaAIWelcomeModal({ isOpen, onClose }: LlamaAIWelcomeModalProp
 					<BasicLink
 						href="/ai/chat"
 						data-umami-event="llamaai-welcome-goto-chat"
-						className="llamaai-glow relative mx-auto flex items-center justify-center gap-2.5 overflow-hidden rounded-md bg-[linear-gradient(93.94deg,#FDE0A9_24.73%,#FBEDCB_57.42%,#FDE0A9_99.73%)] px-6 py-3.5 text-center text-xl font-semibold text-black shadow-[0px_0px_30px_0px_rgba(253,224,169,0.5),_0px_0px_1px_2px_rgba(255,255,255,0.1)]"
+						className="llamaai-glow relative mx-auto flex items-center justify-center gap-2.5 overflow-hidden rounded-md bg-ai-gold-cta px-6 py-3.5 text-center text-xl font-semibold text-black shadow-ai-gold-cta"
 						onClick={onClose}
 					>
 						<svg className="size-4 shrink-0">

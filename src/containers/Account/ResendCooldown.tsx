@@ -45,15 +45,15 @@ export const ResendCooldown = forwardRef<ResendCooldownHandle, ResendCooldownPro
 
 	return (
 		<div className="flex items-center gap-1 text-sm leading-[21px]">
-			<span className="text-(--sub-text-muted)">Didn't receive the code?</span>
+			<span className="text-sub-text-muted">Didn't receive the code?</span>
 			{secondsLeft > 0 ? (
-				<span className="text-(--sub-text-muted)">Resend in {secondsLeft}s</span>
+				<span className="text-sub-text-muted">Resend in {secondsLeft}s</span>
 			) : (
 				<button
 					type="button"
 					onClick={onResend}
 					disabled={disabled}
-					className="text-(--sub-brand-secondary) underline disabled:opacity-50"
+					className="text-sub-brand-secondary underline disabled:opacity-50"
 				>
 					Resend
 				</button>

@@ -38,40 +38,42 @@ export function SubscribeAPICard({
 
 	return (
 		<>
-			<h2 className="relative z-10 text-center text-[2rem] font-extrabold whitespace-nowrap text-[#5C5CF9]">API</h2>
+			<h2 className="relative z-10 text-center text-[2rem] font-extrabold whitespace-nowrap text-sub-purple-500">
+				API
+			</h2>
 			<div className="relative z-10 mt-1 flex flex-col items-center justify-center">
 				<div className="flex items-center">
-					<span className="bg-linear-to-r from-[#5C5CF9] to-[#8a8aff] bg-clip-text text-center text-2xl font-medium text-transparent">
+					<span className="bg-linear-to-r from-sub-purple-500 to-sub-purple-soft bg-clip-text text-center text-2xl font-medium text-transparent">
 						{displayPrice} USD
 					</span>
-					<span className="ml-1 text-[#8a8c90]">{displayPeriod}</span>
+					<span className="ml-1 text-sub-text-muted">{displayPeriod}</span>
 				</div>
 				{billingInterval === 'year' ? (
-					<span className="text-sm text-[#8a8c90]">${yearlyPrice.toLocaleString('en-US')}/year</span>
+					<span className="text-sm text-sub-text-muted">${yearlyPrice.toLocaleString('en-US')}/year</span>
 				) : null}
 			</div>
 			{billingInterval === 'month' ? (
-				<p className="relative z-10 mt-1 text-center font-medium text-[#8a8c90]">Multiple payment options</p>
+				<p className="relative z-10 mt-1 text-center font-medium text-sub-text-muted">Multiple payment options</p>
 			) : null}
 			<ul className="mx-auto mb-auto flex w-full flex-col gap-3 py-6 max-sm:text-sm">
 				<li className="flex flex-nowrap items-start gap-2.5">
-					<Icon name="check" height={16} width={16} className="relative top-1 shrink-0 text-green-400" />
+					<Icon name="check" height={16} width={16} className="relative top-1 shrink-0 text-success" />
 					<span>All features included in Pro tier</span>
 				</li>
 				<li className="flex flex-nowrap items-start gap-2.5">
-					<Icon name="check" height={16} width={16} className="relative top-1 shrink-0 text-green-400" />
+					<Icon name="check" height={16} width={16} className="relative top-1 shrink-0 text-success" />
 					<span>Access to TVL, revenue/fees and prices API endpoints</span>
 				</li>
 				<li className="flex flex-nowrap items-start gap-2.5">
-					<Icon name="check" height={16} width={16} className="relative top-1 shrink-0 text-green-400" />
+					<Icon name="check" height={16} width={16} className="relative top-1 shrink-0 text-success" />
 					<span>Access to all data (unlocks, active users, token liq...)</span>
 				</li>
 				<li className="flex flex-nowrap items-start gap-2.5">
-					<Icon name="check" height={16} width={16} className="relative top-1 shrink-0 text-green-400" />
+					<Icon name="check" height={16} width={16} className="relative top-1 shrink-0 text-success" />
 					<span>Priority support</span>
 				</li>
 				<li className="flex flex-nowrap items-start gap-2.5">
-					<Icon name="check" height={16} width={16} className="relative top-1 shrink-0 text-green-400" />
+					<Icon name="check" height={16} width={16} className="relative top-1 shrink-0 text-success" />
 					<span>Access to DefiLlama MCP Server for AI agents</span>
 				</li>
 				<p className="px-6.5 font-medium">
@@ -93,24 +95,26 @@ export function SubscribeAPICard({
 			<div className="relative z-10 mx-auto flex w-full max-w-[408px] flex-col gap-3">
 				{active && !isLegacyActive ? (
 					<div className="flex flex-col gap-2">
-						<span className="text-center font-bold text-green-400">Current Plan</span>
+						<span className="text-center font-bold text-success">Current Plan</span>
 						{currentBillingInterval === 'month' || !currentBillingInterval ? (
 							<div className="flex flex-col gap-2">
 								<button
-									className="w-full rounded-lg border border-[#5C5CF9] bg-[#5C5CF9] px-4 py-3 font-medium text-white shadow-xs transition-all duration-200 hover:bg-[#4A4AF0] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70"
+									className="w-full rounded-lg border border-sub-purple-500 bg-sub-purple-500 px-4 py-3 font-medium text-on-brand shadow-xs transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70"
 									onClick={handleUpgradeToYearly}
 									disabled={loading === 'stripe'}
 								>
 									{loading === 'stripe' ? 'Processing...' : 'Upgrade to Yearly'}
 								</button>
-								<p className="text-center text-xs text-[#8a8c90]">Switch to annual billing and get 2 months free</p>
+								<p className="text-center text-xs text-sub-text-muted">
+									Switch to annual billing and get 2 months free
+								</p>
 							</div>
 						) : null}
 						{isCancelPending ? (
-							<p className="mt-2 text-center text-sm text-yellow-400">Cancellation scheduled</p>
+							<p className="mt-2 text-center text-sm text-warning">Cancellation scheduled</p>
 						) : onCancelSubscription ? (
 							<button
-								className="mt-2 w-full rounded-lg bg-[#222429] px-4 py-2 text-white transition-colors hover:bg-[#39393E]"
+								className="mt-2 w-full rounded-lg bg-sub-card px-4 py-2 text-on-brand transition-colors hover:bg-sub-line"
 								onClick={onCancelSubscription}
 							>
 								Cancel Subscription

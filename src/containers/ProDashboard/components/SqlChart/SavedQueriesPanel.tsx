@@ -99,7 +99,7 @@ export function SavedQueriesPanel({ queries, busyTaskId, onApply }: SavedQueries
 								onClick={() => deleteDownload(query.id)}
 								aria-label={`Delete ${query.name}`}
 								disabled={!!busyTaskId}
-								className="flex size-6 items-center justify-center rounded-md text-(--text-tertiary) transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-40"
+								className="flex size-6 items-center justify-center rounded-md text-tertiary transition-colors hover:bg-error/10 hover:text-error disabled:cursor-not-allowed disabled:opacity-40"
 							>
 								<Icon name="trash-2" className="size-3" />
 							</button>

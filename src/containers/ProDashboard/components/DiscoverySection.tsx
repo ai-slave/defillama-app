@@ -85,14 +85,14 @@ export function DiscoverySection({
 							</span>
 							{title}
 						</h3>
-						{subtitle ? <p className="ml-9 text-xs text-(--legacy-text-label)">{subtitle}</p> : null}
+						{subtitle ? <p className="ml-9 text-xs text-(--pro-text-label)">{subtitle}</p> : null}
 					</div>
 				</div>
 				<div className="flex gap-4 overflow-hidden">
 					{Array.from({ length: 5 }).map((_, i) => (
 						<div
 							key={`skeleton-${title}-${i}`}
-							className="relative isolate min-h-[220px] w-[300px] shrink-0 overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) md:w-[320px]"
+							className="relative isolate min-h-[220px] w-[300px] shrink-0 overflow-hidden rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) md:w-[320px]"
 						>
 							<div className="pointer-events-none absolute inset-y-0 -right-1/2 -left-1/2 animate-shimmer bg-[linear-gradient(99.97deg,transparent,rgba(0,0,0,0.08),transparent)] dark:bg-[linear-gradient(99.97deg,transparent,rgba(255,255,255,0.08),transparent)]" />
 						</div>
@@ -116,11 +116,11 @@ export function DiscoverySection({
 						</span>
 						{title}
 					</h3>
-					{subtitle ? <p className="ml-9 text-xs text-(--legacy-text-label)">{subtitle}</p> : null}
+					{subtitle ? <p className="ml-9 text-xs text-(--pro-text-label)">{subtitle}</p> : null}
 				</div>
 				<BasicLink
 					href={seeAllHref}
-					className="flex items-center gap-1.5 rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-1.5 text-sm font-medium text-(--legacy-old-blue) transition-colors duration-150 hover:border-(--legacy-old-blue)/30 hover:bg-(--legacy-old-blue)/10"
+					className="flex items-center gap-1.5 rounded-full border border-(--pro-cards-border) bg-(--pro-cards-bg) px-3 py-1.5 text-sm font-medium text-(--pro-old-blue) transition-colors duration-150 hover:border-(--pro-old-blue)/30 hover:bg-(--pro-old-blue)/10"
 				>
 					See all
 					<Icon name="arrow-right" height={14} width={14} />
@@ -130,10 +130,10 @@ export function DiscoverySection({
 			<div className="group relative">
 				{canScrollLeft ? (
 					<>
-						<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-16 bg-linear-to-r from-(--legacy-app-bg) to-transparent md:block" />
+						<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-16 bg-linear-to-r from-(--pro-app-bg) to-transparent md:block" />
 						<button
 							onClick={() => scroll('left')}
-							className="absolute top-1/2 left-2 z-10 hidden -translate-y-1/2 rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-2 shadow-md hover:bg-(--legacy-btn-hover-bg) md:block"
+							className="absolute top-1/2 left-2 z-10 hidden -translate-y-1/2 rounded-full border border-(--pro-cards-border) bg-(--pro-cards-bg) p-2 shadow-md hover:bg-surface-elevated-2 md:block"
 						>
 							<Icon name="chevron-left" height={20} width={20} />
 						</button>
@@ -157,10 +157,10 @@ export function DiscoverySection({
 
 				{canScrollRight && dashboards.length > 3 ? (
 					<>
-						<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-16 bg-linear-to-l from-(--legacy-app-bg) to-transparent md:block" />
+						<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-16 bg-linear-to-l from-(--pro-app-bg) to-transparent md:block" />
 						<button
 							onClick={() => scroll('right')}
-							className="absolute top-1/2 right-2 z-10 hidden -translate-y-1/2 rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-2 shadow-md hover:bg-(--legacy-btn-hover-bg) md:block"
+							className="absolute top-1/2 right-2 z-10 hidden -translate-y-1/2 rounded-full border border-(--pro-cards-border) bg-(--pro-cards-bg) p-2 shadow-md hover:bg-surface-elevated-2 md:block"
 						>
 							<Icon name="chevron-right" height={20} width={20} />
 						</button>

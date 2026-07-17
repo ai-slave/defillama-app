@@ -34,35 +34,32 @@ export function ArticleEditorPreview({
 	const canOpenLive = article.status === 'published' && article.section && article.slug
 
 	return (
-		<section className="article-editor-preview relative left-1/2 mt-5 -translate-x-1/2 border-t border-(--legacy-cards-border)">
-			<div className="sticky top-0 z-30 border-b border-(--legacy-cards-border) bg-(--legacy-app-bg)/95 backdrop-blur supports-[backdrop-filter]:bg-(--legacy-app-bg)/82">
+		<section className="article-editor-preview relative left-1/2 mt-5 -translate-x-1/2 border-t border-medium">
+			<div className="sticky top-0 z-30 border-b border-medium bg-page/95 backdrop-blur supports-[backdrop-filter]:bg-page/82">
 				<div className="mx-auto flex w-full max-w-[1300px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
 					<div className="flex min-w-[min(100%,18rem)] flex-1 items-start gap-3">
-						<div className="grid size-9 shrink-0 place-items-center rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
-							<Icon name="eye" className="size-4 text-(--legacy-link-text)" />
+						<div className="grid size-9 shrink-0 place-items-center rounded-md border border-medium bg-surface">
+							<Icon name="eye" className="size-4 text-link" />
 						</div>
 						<div className="min-w-0 flex-1">
-							<div className="font-jetbrains text-[10px] font-medium tracking-[0.24em] text-(--legacy-text-tertiary) uppercase">
+							<div className="font-jetbrains text-[10px] font-medium tracking-[0.24em] text-tertiary uppercase">
 								Rendered proof
 							</div>
-							<div
-								className="text-sm leading-snug font-medium break-words text-(--legacy-text-primary)"
-								title={article.title}
-							>
+							<div className="text-sm leading-snug font-medium break-words text-primary" title={article.title}>
 								{article.title || 'Untitled research'}
 							</div>
 						</div>
 					</div>
 
 					<div className="flex flex-wrap items-center gap-2">
-						<div className="hidden items-center gap-2 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-2.5 py-1.5 font-jetbrains text-[10px] tracking-wider whitespace-nowrap text-(--legacy-text-tertiary) uppercase sm:flex">
+						<div className="hidden items-center gap-2 rounded-md border border-medium bg-surface px-2.5 py-1.5 font-jetbrains text-[10px] tracking-wider whitespace-nowrap text-tertiary uppercase sm:flex">
 							<span>{wordCount.toLocaleString()} words</span>
-							<span aria-hidden className="h-3 w-px bg-(--legacy-cards-border)" />
+							<span aria-hidden className="h-3 w-px bg-border-medium" />
 							<span>{readMins} min</span>
 							{isDirty ? (
 								<>
-									<span aria-hidden className="h-3 w-px bg-(--legacy-cards-border)" />
-									<span className="text-amber-600 dark:text-amber-400">Unsaved</span>
+									<span aria-hidden className="h-3 w-px bg-border-medium" />
+									<span className="text-warning dark:text-warning">Unsaved</span>
 								</>
 							) : null}
 						</div>
@@ -72,7 +69,7 @@ export function ArticleEditorPreview({
 								href={articleViewHref}
 								target="_blank"
 								rel="noreferrer"
-								className="hidden h-9 items-center gap-1.5 rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 text-xs font-medium text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-link-text)/40 hover:text-(--legacy-text-primary) sm:flex"
+								className="hidden h-9 items-center gap-1.5 rounded-md border border-medium bg-surface px-3 text-xs font-medium text-secondary transition-colors hover:border-link/40 hover:text-primary sm:flex"
 							>
 								<Icon name="external" className="size-3.5" />
 								<span>Live</span>
@@ -82,7 +79,7 @@ export function ArticleEditorPreview({
 						<button
 							type="button"
 							onClick={onEdit}
-							className="flex h-9 items-center gap-1.5 rounded-md bg-(--legacy-link-text) px-3.5 text-xs font-medium text-white transition-opacity hover:opacity-90"
+							className="flex h-9 items-center gap-1.5 rounded-md bg-link px-3.5 text-xs font-medium text-on-brand transition-opacity hover:opacity-90"
 						>
 							<Icon name="pencil" className="size-3.5" />
 							<span>Edit</span>

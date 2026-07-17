@@ -82,9 +82,7 @@ export function TableHeader({
 										type="button"
 										onClick={() => applyPreset(preset.id)}
 										className={`flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm whitespace-nowrap transition-colors ${
-											isActive
-												? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
-												: 'pro-border pro-bg1 pro-hover-bg pro-text1'
+											isActive ? 'border-brand bg-brand text-on-brand' : 'pro-border pro-bg1 pro-hover-bg pro-text1'
 										}`}
 										title={preset.description}
 										aria-pressed={isActive}
@@ -99,7 +97,7 @@ export function TableHeader({
 										store={datasetPopover}
 										className={`flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm whitespace-nowrap transition-colors ${
 											moreDatasets.some((preset) => preset.id === activePreset)
-												? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
+												? 'border-brand bg-brand text-on-brand'
 												: 'pro-border pro-bg1 pro-hover-bg pro-text1'
 										}`}
 									>
@@ -111,7 +109,7 @@ export function TableHeader({
 										modal={false}
 										portal={true}
 										gutter={4}
-										className="z-50 w-[260px] rounded-lg border pro-dashboard border-(--legacy-cards-border) bg-(--legacy-cards-bg) shadow-xl"
+										className="z-50 w-[260px] rounded-lg border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) shadow-xl"
 									>
 										<div className="max-h-[420px] overflow-y-auto overscroll-contain p-1.5">
 											{moreDatasets.map((preset) => {
@@ -124,25 +122,18 @@ export function TableHeader({
 															applyPreset(preset.id)
 															datasetPopover.setOpen(false)
 														}}
-														className={`flex w-full items-start gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-(--cards-bg-alt) ${
-															isActive ? 'bg-(--legacy-primary)/10 ring-1 ring-(--legacy-primary)/20' : ''
+														className={`flex w-full items-start gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors ${
+															isActive ? 'bg-brand/10 ring-1 ring-brand/20' : ''
 														}`}
 													>
 														{preset.icon ? <span className="mt-0.5 text-xl leading-none">{preset.icon}</span> : null}
 														<div className="min-w-0 flex-1">
 															<div className="mb-1 flex items-center justify-between gap-2">
-																<span
-																	className={`text-sm font-semibold ${isActive ? 'text-(--legacy-primary)' : 'pro-text1'}`}
-																>
+																<span className={`text-sm font-semibold ${isActive ? 'text-brand' : 'pro-text1'}`}>
 																	{preset.label}
 																</span>
 																{isActive ? (
-																	<Icon
-																		name="check"
-																		width={14}
-																		height={14}
-																		className="shrink-0 text-(--legacy-primary)"
-																	/>
+																	<Icon name="check" width={14} height={14} className="shrink-0 text-brand" />
 																) : null}
 															</div>
 															<p className="text-xs leading-snug pro-text3 opacity-80">{preset.description}</p>
@@ -162,9 +153,7 @@ export function TableHeader({
 			<PopoverDisclosure
 				store={customViewsPopover}
 				className={`flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm transition-colors ${
-					activeCustomView
-						? 'border-(--legacy-primary) bg-(--legacy-primary) text-white'
-						: 'pro-border pro-bg1 pro-hover-bg pro-text1'
+					activeCustomView ? 'border-brand bg-brand text-on-brand' : 'pro-border pro-bg1 pro-hover-bg pro-text1'
 				}`}
 			>
 				<Icon name="eye" height={14} width={14} />
@@ -182,7 +171,7 @@ export function TableHeader({
 				modal={false}
 				portal={true}
 				gutter={4}
-				className="z-50 min-w-[220px] rounded-md border pro-divider bg-(--legacy-cards-bg) pro-bg3 shadow-lg"
+				className="z-50 min-w-[220px] rounded-md border pro-divider bg-(--pro-cards-bg) pro-bg3 shadow-lg"
 			>
 				{customViews.length > 0 ? (
 					<>
@@ -205,7 +194,7 @@ export function TableHeader({
 										className="flex flex-1 items-center gap-2 text-left text-sm pro-text1"
 									>
 										<span>{view.name}</span>
-										{isActive ? <Icon name="check" height={12} width={12} className="text-(--success)" /> : null}
+										{isActive ? <Icon name="check" height={12} width={12} className="text-success" /> : null}
 									</button>
 									<Tooltip content="Delete view">
 										<button
@@ -216,7 +205,7 @@ export function TableHeader({
 													onDeleteView?.(view.id)
 												}
 											}}
-											className="rounded-md p-1 pro-text3 transition-colors hover:text-(--error)"
+											className="rounded-md p-1 pro-text3 transition-colors hover:text-error"
 										>
 											<Icon name="trash-2" height={12} width={12} />
 										</button>
@@ -270,7 +259,7 @@ export function TableHeader({
 				<Icon name="settings" height={14} width={14} />
 				<span className="flex items-center gap-1">
 					Customize Table
-					<span className="rounded-md bg-(--legacy-primary) px-1.5 py-0.5 text-xs text-white">+ Custom Columns</span>
+					<span className="rounded-md bg-brand px-1.5 py-0.5 text-xs text-on-brand">+ Custom Columns</span>
 				</span>
 				<Icon name={showColumnPanel ? 'chevron-up' : 'chevron-down'} height={12} width={12} />
 			</Tooltip>

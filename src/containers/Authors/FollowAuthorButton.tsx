@@ -55,8 +55,8 @@ export function FollowAuthorButton({
 			}}
 			className={`inline-flex min-w-24 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
 				isFollowing
-					? 'border border-(--legacy-cards-border) bg-(--legacy-app-bg) text-(--legacy-text-secondary) hover:border-(--legacy-link-text)/50 hover:text-(--legacy-link-text)'
-					: 'bg-(--legacy-link-text) text-white hover:opacity-90'
+					? 'border border-medium bg-page text-secondary hover:border-link/50 hover:text-link'
+					: 'bg-link text-on-brand hover:opacity-90'
 			}`}
 		>
 			<Icon name={isFollowing ? 'check' : 'plus'} className="size-3.5" />

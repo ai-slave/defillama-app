@@ -13,7 +13,7 @@ export function ModeToggle({ mode, onChange, size = 'md' }: ModeToggleProps) {
 		<div
 			role="tablist"
 			aria-label="Downloads mode"
-			className={`inline-flex items-center gap-1 rounded-lg border border-(--legacy-divider) bg-surface ${
+			className={`inline-flex items-center gap-1 rounded-lg border border-subtle bg-surface ${
 				size === 'md' ? 'p-1' : 'p-0.5'
 			}`}
 		>
@@ -61,8 +61,8 @@ function ModeButton({
 			onClick={onClick}
 			className={`flex items-center font-medium transition-colors ${sizing} ${
 				active
-					? 'bg-(--legacy-primary) text-white shadow-sm'
-					: 'text-(--legacy-text-secondary) hover:bg-hover-row hover:text-(--legacy-text-primary)'
+					? 'bg-brand text-on-brand shadow-sm'
+					: 'text-(--pro-text-secondary) hover:bg-hover-row hover:text-(--pro-text-primary)'
 			}`}
 		>
 			<Icon name={icon} className={iconSize} />
@@ -70,7 +70,7 @@ function ModeButton({
 			{badge ? (
 				<span
 					className={`rounded-sm px-1.5 py-px text-[10px] font-bold tracking-wider ${
-						active ? 'bg-white/25 text-white' : 'bg-pro-green-200/15 text-pro-green-300'
+						active ? 'bg-white/25 text-on-brand' : 'bg-pro-green-200/15 text-pro-green-300'
 					}`}
 				>
 					{badge}

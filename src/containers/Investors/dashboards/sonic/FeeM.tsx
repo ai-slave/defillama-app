@@ -23,24 +23,24 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 
 function KpiCard({ label, value }: { label: string; value: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
-			<span className="text-xs font-medium tracking-wide text-(--legacy-text-label)">{label}</span>
-			<span className="text-2xl font-semibold text-(--legacy-text-primary)">{value}</span>
+		<div className="flex flex-col gap-1 rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
+			<span className="text-xs font-medium tracking-wide text-(--pro-text-label)">{label}</span>
+			<span className="text-2xl font-semibold text-(--pro-text-primary)">{value}</span>
 		</div>
 	)
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">{title}</h3>
+		<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--pro-text-label)">{title}</h3>
 			{children}
 		</div>
 	)
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-(--legacy-text-label) uppercase">{children}</h2>
+	return <h2 className="text-xs font-semibold tracking-wider text-(--pro-text-label) uppercase">{children}</h2>
 }
 
 function formatNumber(n: number): string {
@@ -175,7 +175,7 @@ const columns = [
 	columnHelper.display({
 		id: 'rank',
 		header: '#',
-		cell: (info) => <span className="text-(--legacy-text-label)">{info.row.index + 1}</span>,
+		cell: (info) => <span className="text-(--pro-text-label)">{info.row.index + 1}</span>,
 		size: 40
 	}),
 	columnHelper.accessor('name', {
@@ -199,13 +199,13 @@ const columns = [
 							}}
 						/>
 					) : (
-						<span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-(--sl-accent-muted) text-[10px] font-bold text-(--sl-accent)">
+						<span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sl-accent-muted text-[10px] font-bold text-sl-accent">
 							{displayName.charAt(0)}
 						</span>
 					)}
 					<span className="truncate font-medium">{displayName}</span>
 					{!row.isActive && (
-						<span className="shrink-0 rounded-sm bg-yellow-500/15 px-1.5 py-0.5 text-[10px] font-medium text-yellow-500">
+						<span className="shrink-0 rounded-sm bg-warning/15 px-1.5 py-0.5 text-[10px] font-medium text-warning">
 							Inactive
 						</span>
 					)}
@@ -278,33 +278,33 @@ export default function FeeM() {
 	return (
 		<div className="flex flex-col gap-6">
 			{/* FeeM Introduction */}
-			<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
-				<p className="text-sm leading-relaxed text-(--legacy-text-secondary)">
+			<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-5">
+				<p className="text-sm leading-relaxed text-(--pro-text-secondary)">
 					FeeM lets builders earn directly from the transaction activity they generate on Sonic. It creates a built-in
 					revenue stream at the network layer, allowing apps to capture value from usage without needing a separate
 					chain.
 				</p>
-				<h3 className="mt-4 text-xs font-semibold tracking-wider text-(--legacy-text-label) uppercase">
+				<h3 className="mt-4 text-xs font-semibold tracking-wider text-(--pro-text-label) uppercase">
 					Fee Distribution
 				</h3>
 				<div className="mt-3 flex h-10 overflow-hidden rounded-lg">
 					<div className="flex items-center justify-center" style={{ width: '90%', background: '#3b5d88' }}>
-						<span className="text-sm font-bold text-white">90%</span>
+						<span className="text-sm font-bold text-on-brand">90%</span>
 					</div>
 					<div className="flex items-center justify-center" style={{ width: '10%', background: '#7f6562' }}>
-						<span className="text-[10px] font-bold text-white">10%</span>
+						<span className="text-[10px] font-bold text-on-brand">10%</span>
 					</div>
 				</div>
 				<div className="mt-2.5 flex items-start text-sm">
 					<div className="flex-1">
-						<span className="font-medium text-(--legacy-text-primary)">App / Builder</span>
-						<span className="ml-2 text-xs text-(--legacy-text-label)">
+						<span className="font-medium text-(--pro-text-primary)">App / Builder</span>
+						<span className="ml-2 text-xs text-(--pro-text-label)">
 							Direct revenue, app incentives, or gas subsidies
 						</span>
 					</div>
 					<div className="text-right" style={{ minWidth: '80px' }}>
-						<span className="font-medium text-(--legacy-text-primary)">Validators</span>
-						<span className="ml-2 text-xs text-(--legacy-text-label)">50% burned</span>
+						<span className="font-medium text-(--pro-text-primary)">Validators</span>
+						<span className="ml-2 text-xs text-(--pro-text-label)">50% burned</span>
 					</div>
 				</div>
 			</div>
@@ -342,15 +342,15 @@ export default function FeeM() {
 			{/* FeeM Leaderboard */}
 			<div className="flex flex-col gap-4">
 				<SectionHeader>FeeM Leaderboard</SectionHeader>
-				<div className="overflow-x-auto rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
+				<div className="overflow-x-auto rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg)">
 					<table className="w-full">
 						<thead>
 							{table.getHeaderGroups().map((headerGroup) => (
-								<tr key={headerGroup.id} className="border-b border-(--legacy-cards-border)">
+								<tr key={headerGroup.id} className="border-b border-(--pro-cards-border)">
 									{headerGroup.headers.map((header) => (
 										<th
 											key={header.id}
-											className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-(--legacy-text-label) uppercase"
+											className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-(--pro-text-label) uppercase"
 											style={{ width: header.getSize() }}
 											onClick={header.column.getToggleSortingHandler()}
 										>
@@ -369,12 +369,9 @@ export default function FeeM() {
 						</thead>
 						<tbody>
 							{table.getRowModel().rows.map((row) => (
-								<tr
-									key={row.id}
-									className="border-b border-(--legacy-cards-border) last:border-b-0 hover:bg-(--sl-hover-bg)"
-								>
+								<tr key={row.id} className="border-b border-(--pro-cards-border) last:border-b-0 hover:bg-sl-hover-bg">
 									{row.getVisibleCells().map((cell) => (
-										<td key={cell.id} className="px-4 py-2.5 text-sm text-(--legacy-text-primary)">
+										<td key={cell.id} className="px-4 py-2.5 text-sm text-(--pro-text-primary)">
 											{typeof cell.column.columnDef.cell === 'function'
 												? cell.column.columnDef.cell(cell.getContext())
 												: (cell.getValue() as string)}
@@ -387,22 +384,22 @@ export default function FeeM() {
 
 					{/* Pagination */}
 					{table.getPageCount() > 1 && (
-						<div className="flex items-center justify-between border-t border-(--legacy-cards-border) px-4 py-3">
-							<span className="text-xs text-(--legacy-text-label)">
+						<div className="flex items-center justify-between border-t border-(--pro-cards-border) px-4 py-3">
+							<span className="text-xs text-(--pro-text-label)">
 								Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
 							</span>
 							<div className="flex gap-1">
 								<button
 									onClick={() => table.previousPage()}
 									disabled={!table.getCanPreviousPage()}
-									className="rounded-md border border-(--legacy-cards-border) px-3 py-1 text-xs text-(--legacy-text-secondary) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-40"
+									className="rounded-md border border-(--pro-cards-border) px-3 py-1 text-xs text-(--pro-text-secondary) transition-colors hover:bg-sl-hover-bg disabled:opacity-40"
 								>
 									Prev
 								</button>
 								<button
 									onClick={() => table.nextPage()}
 									disabled={!table.getCanNextPage()}
-									className="rounded-md border border-(--legacy-cards-border) px-3 py-1 text-xs text-(--legacy-text-secondary) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-40"
+									className="rounded-md border border-(--pro-cards-border) px-3 py-1 text-xs text-(--pro-text-secondary) transition-colors hover:bg-sl-hover-bg disabled:opacity-40"
 								>
 									Next
 								</button>

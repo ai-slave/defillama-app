@@ -371,7 +371,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 										<div className="flex flex-wrap gap-1">
 											{group.options.map((option) => {
 												const dotColor = option.active
-													? `color-mix(in oklch, ${getOptionColor(option)} 75%, var(--legacy-text-secondary))`
+													? `color-mix(in oklch, ${getOptionColor(option)} 75%, var(--text-secondary))`
 													: null
 												return (
 													<button

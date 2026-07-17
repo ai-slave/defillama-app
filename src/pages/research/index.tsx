@@ -146,9 +146,9 @@ function ArticlesLandingInner({ initialData }: { initialData: ArticlesPageProps 
 	if (error) {
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load articles'
 		return (
-			<div className="mx-auto grid w-full max-w-3xl gap-3 border border-red-500/30 bg-red-500/5 p-6">
-				<h1 className="heading-sm text-(--legacy-text-primary)">Couldn&apos;t load research</h1>
-				<p className="text-sm text-red-500">{message}</p>
+			<div className="mx-auto grid w-full max-w-3xl gap-3 border border-error/30 bg-error/5 p-6">
+				<h1 className="heading-sm text-primary">Couldn&apos;t load research</h1>
+				<p className="text-sm text-error">{message}</p>
 			</div>
 		)
 	}
@@ -198,7 +198,7 @@ function ArticlesLandingInner({ initialData }: { initialData: ArticlesPageProps 
 					}}
 				></div>
 
-				<div className="relative z-1 mx-auto w-full max-w-7xl space-y-[30px] px-4 sm:px-6 lg:space-y-[70px] lg:px-8">
+				<div className="relative z-1 mx-auto w-full max-w-7xl space-y-7.5 px-4 sm:px-6 lg:space-y-17.5 lg:px-8">
 					<ResearchLatest articles={landingData?.latest ?? []} />
 
 					<ResearchPromoBanner initialData={landingQuery.data?.landingBanner} />
@@ -287,7 +287,7 @@ export default function ArticlesPage({
 			</Head>
 			<style>{`main{padding:0}#__next{gap:0;}`}</style>
 			<ArticleProxyAuthProvider>
-				<div className="col-span-full min-h-screen w-full text-blue-950 dark:text-white">
+				<div className="col-span-full min-h-screen w-full text-(--research-navy) dark:text-ai-primary">
 					{showSearch ? (
 						<ResearchSearch />
 					) : (

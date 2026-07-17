@@ -81,22 +81,22 @@ export function ImagePreviewModal({ imageUrl, onClose, source, sessionId, messag
 	return (
 		<Ariakit.DialogProvider open={!!imageUrl} setOpen={(open) => !open && onClose()}>
 			<Ariakit.Dialog
-				className="data-[enter]:animate-in data-[leave]:animate-out data-[enter]:fade-in data-[leave]:fade-out fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md data-[enter]:duration-150"
+				className="data-[enter]:animate-in data-[leave]:animate-out data-[enter]:fade-in data-[leave]:fade-out fixed inset-0 z-50 flex items-center justify-center bg-ai-black/80 p-4 backdrop-blur-md data-[enter]:duration-150"
 				portal
 				unmountOnHide
 				onClick={handleBackdropClick}
 			>
 				{imageUrl ? (
 					<div className="relative flex max-h-full max-w-full flex-col items-center gap-3">
-						<div className="relative overflow-hidden rounded-xl shadow-2xl ring-1 ring-white/10">
+						<div className="relative overflow-hidden rounded-xl shadow-2xl ring-1 ring-ai-white/10">
 							<img src={imageUrl} alt="Preview" className="block max-h-[80vh] max-w-[90vw] object-contain" />
 						</div>
-						<div className="flex items-center gap-2 rounded-full bg-black/60 px-2 py-1.5 ring-1 ring-white/10 backdrop-blur-md">
+						<div className="flex items-center gap-2 rounded-full bg-ai-backdrop px-2 py-1.5 ring-1 ring-ai-white/10 backdrop-blur-md">
 							<button
 								type="button"
 								onClick={handleCopyUrl}
 								title={copied ? 'Copied!' : 'Copy URL'}
-								className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+								className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 transition-colors hover:bg-ai-white/10 hover:text-ai-white"
 							>
 								<Icon name={copied ? 'check' : 'copy'} height={14} width={14} />
 								<span>{copied ? 'Copied' : 'Copy URL'}</span>
@@ -106,7 +106,7 @@ export function ImagePreviewModal({ imageUrl, onClose, source, sessionId, messag
 								onClick={handleDownload}
 								disabled={downloading}
 								title="Download"
-								className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-white/80 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
+								className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 transition-colors hover:bg-ai-white/10 hover:text-ai-white disabled:opacity-50"
 							>
 								<Icon name="download-cloud" height={14} width={14} />
 								<span>{downloading ? 'Saving…' : 'Download'}</span>
@@ -116,7 +116,7 @@ export function ImagePreviewModal({ imageUrl, onClose, source, sessionId, messag
 								target="_blank"
 								rel="noopener noreferrer"
 								title="Open in new tab"
-								className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+								className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 transition-colors hover:bg-ai-white/10 hover:text-ai-white"
 							>
 								<Icon name="external-link" height={14} width={14} />
 								<span>Open</span>
@@ -126,7 +126,7 @@ export function ImagePreviewModal({ imageUrl, onClose, source, sessionId, messag
 				) : null}
 
 				<Ariakit.DialogDismiss
-					className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition-colors hover:bg-white/20"
+					className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-ai-white/10 text-ai-white backdrop-blur-md transition-colors hover:bg-ai-wash-strong"
 					title="Close"
 				>
 					<Icon name="x" height={18} width={18} />

@@ -47,7 +47,7 @@ export function CustomViewModal({ dialogStore, onSave, existingViewNames }: Cust
 			portal
 			unmountOnHide
 			modal
-			className="dialog w-full max-w-lg gap-0 rounded-md border pro-dashboard border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-0 shadow-lg"
+			className="dialog w-full max-w-lg gap-0 rounded-md border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) p-0 shadow-lg"
 		>
 			<form className="p-6" onSubmit={handleSave}>
 				<div className="mb-6 flex items-center justify-between">
@@ -70,7 +70,7 @@ export function CustomViewModal({ dialogStore, onSave, existingViewNames }: Cust
 							type="text"
 							onInput={(event) => event.currentTarget.setCustomValidity('')}
 							placeholder="Enter a name for this view..."
-							className="w-full rounded-md border pro-border bg-(--legacy-bg-glass)/50 px-3 py-2 pro-text1 placeholder:pro-text3 focus:border-(--legacy-primary) focus:outline-hidden"
+							className="w-full rounded-md border pro-border bg-(--pro-glass-bg)/50 px-3 py-2 pro-text1 placeholder:pro-text3 focus:border-brand focus:outline-hidden"
 							required
 						/>
 					</div>
@@ -88,7 +88,7 @@ export function CustomViewModal({ dialogStore, onSave, existingViewNames }: Cust
 					</Ariakit.DialogDismiss>
 					<button
 						type="submit"
-						className="rounded-md border border-(--legacy-primary) bg-(--legacy-primary) px-6 py-2.5 font-medium text-white transition-colors hover:bg-(--legacy-primary-hover)"
+						className="rounded-md border border-brand bg-brand px-6 py-2.5 font-medium text-on-brand transition-colors hover:bg-brand-muted"
 					>
 						Save View
 					</button>

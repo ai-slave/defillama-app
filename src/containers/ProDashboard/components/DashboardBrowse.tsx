@@ -24,8 +24,8 @@ const SECTIONS: SectionConfig[] = [
 		title: 'Trending Today',
 		subtitle: 'Hot dashboards in the last 24 hours',
 		icon: 'flame',
-		iconBg: 'bg-blue-500/15',
-		iconColor: 'text-blue-500',
+		iconBg: 'bg-brand/15',
+		iconColor: 'text-link',
 		seeAllHref: '/pro?tab=discover&sortBy=trending&timeFrame=1d'
 	},
 	{
@@ -33,8 +33,8 @@ const SECTIONS: SectionConfig[] = [
 		title: 'Trending This Week',
 		subtitle: 'Popular picks from the past 7 days',
 		icon: 'trending-up',
-		iconBg: 'bg-blue-500/15',
-		iconColor: 'text-blue-500',
+		iconBg: 'bg-brand/15',
+		iconColor: 'text-link',
 		seeAllHref: '/pro?tab=discover&sortBy=trending&timeFrame=7d'
 	},
 	{
@@ -42,8 +42,8 @@ const SECTIONS: SectionConfig[] = [
 		title: 'Most Popular',
 		subtitle: 'All-time community favorites',
 		icon: 'star',
-		iconBg: 'bg-blue-500/15',
-		iconColor: 'text-blue-500',
+		iconBg: 'bg-brand/15',
+		iconColor: 'text-link',
 		seeAllHref: '/pro?tab=discover&sortBy=popular'
 	},
 	{
@@ -51,8 +51,8 @@ const SECTIONS: SectionConfig[] = [
 		title: 'Recently Created',
 		subtitle: 'Fresh dashboards just published',
 		icon: 'clock',
-		iconBg: 'bg-blue-500/15',
-		iconColor: 'text-blue-500',
+		iconBg: 'bg-brand/15',
+		iconColor: 'text-link',
 		seeAllHref: '/pro?tab=discover&sortBy=recent'
 	}
 ]
@@ -68,9 +68,9 @@ export function DashboardBrowse({ onTagClick, initialCategories }: DashboardBrow
 	return (
 		<div className="flex flex-col gap-6">
 			<div>
-				<h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-(--legacy-text-primary)">
-					<span className="flex size-6 items-center justify-center rounded-md bg-blue-500/15">
-						<Icon name="tag" height={14} width={14} className="text-blue-500" />
+				<h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-(--pro-text-primary)">
+					<span className="flex size-6 items-center justify-center rounded-md bg-brand/15">
+						<Icon name="tag" height={14} width={14} className="text-link" />
 					</span>
 					Trending Tags
 				</h3>
@@ -79,7 +79,7 @@ export function DashboardBrowse({ onTagClick, initialCategories }: DashboardBrow
 						<button
 							key={tag}
 							onClick={() => onTagClick(tag)}
-							className="shrink-0 rounded-full border border-blue-500/20 bg-blue-500/15 px-3.5 py-1.5 text-xs font-medium text-blue-600 transition-all duration-150 hover:scale-105 hover:shadow-sm dark:text-blue-400"
+							className="shrink-0 rounded-full border border-brand/20 bg-brand/15 px-3.5 py-1.5 text-xs font-medium text-link transition-all duration-150 hover:scale-105 hover:shadow-sm"
 						>
 							{tag}
 						</button>

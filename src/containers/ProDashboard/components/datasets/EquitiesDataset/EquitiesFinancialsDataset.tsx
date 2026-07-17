@@ -125,7 +125,7 @@ function FinancialRow({
 	return (
 		<>
 			<tr className="group">
-				<th className="w-[28%] truncate border border-black/10 bg-(--legacy-cards-bg) p-2 text-left font-semibold group-hover:bg-(--legacy-link-hover-bg) dark:border-white/10">
+				<th className="w-[28%] truncate border border-medium bg-(--pro-cards-bg) p-2 text-left font-semibold group-hover:bg-(--pro-link-hover-bg)">
 					<div
 						className="flex items-center gap-1"
 						onClick={(event) => {
@@ -143,7 +143,7 @@ function FinancialRow({
 									event.stopPropagation()
 									setIsExpanded((expanded) => !expanded)
 								}}
-								className="-ml-1 flex size-5 shrink-0 items-center justify-center rounded-sm text-(--legacy-text-secondary) transition-transform hover:bg-(--legacy-link-hover-bg) focus-visible:bg-(--legacy-link-hover-bg)"
+								className="-ml-1 flex size-5 shrink-0 items-center justify-center rounded-sm text-(--pro-text-secondary) transition-transform hover:bg-(--pro-link-hover-bg) focus-visible:bg-(--pro-link-hover-bg)"
 							>
 								<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} height={14} width={14} />
 							</button>
@@ -156,7 +156,7 @@ function FinancialRow({
 				{headerIndexes.map((index) => (
 					<td
 						key={`${row.id}-${index}`}
-						className="truncate border border-black/10 p-2 text-left font-medium group-hover:bg-(--legacy-link-hover-bg) dark:border-white/10"
+						className="truncate border border-medium p-2 text-left font-medium group-hover:bg-(--pro-link-hover-bg)"
 					>
 						{formatEquitiesStatementCellValue(row.label, row.values[index] ?? null)}
 					</td>
@@ -164,14 +164,14 @@ function FinancialRow({
 			</tr>
 			{hasSubRows && isExpanded
 				? row.subRows?.map((subRow) => (
-						<tr key={subRow.id} className="group text-(--legacy-text-secondary)">
-							<th className="w-[28%] truncate border border-black/10 bg-(--legacy-cards-bg) p-2 pl-9 text-left font-normal italic group-hover:bg-(--legacy-link-hover-bg) dark:border-white/10">
+						<tr key={subRow.id} className="group text-(--pro-text-secondary)">
+							<th className="w-[28%] truncate border border-medium bg-(--pro-cards-bg) p-2 pl-9 text-left font-normal italic group-hover:bg-(--pro-link-hover-bg)">
 								<span className="truncate">{subRow.label}</span>
 							</th>
 							{headerIndexes.map((index) => (
 								<td
 									key={`${subRow.id}-${index}`}
-									className="truncate border border-black/10 p-2 text-left font-normal group-hover:bg-(--legacy-link-hover-bg) dark:border-white/10"
+									className="truncate border border-medium p-2 text-left font-normal group-hover:bg-(--pro-link-hover-bg)"
 								>
 									{formatEquitiesStatementCellValue(subRow.label, subRow.values[index] ?? null)}
 								</td>
@@ -275,9 +275,7 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 									type="button"
 									onClick={() => setStatementType(option)}
 									className={`rounded-sm px-2 py-1 text-xs font-medium transition ${
-										statementType === option
-											? 'bg-(--legacy-primary)/10 text-(--legacy-primary)'
-											: 'pro-text2 hover:pro-text1'
+										statementType === option ? 'bg-brand/10 text-brand' : 'pro-text2 hover:pro-text1'
 									}`}
 								>
 									{option}
@@ -291,9 +289,7 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 									type="button"
 									onClick={() => setPeriodType(option)}
 									className={`rounded-sm px-2 py-1 text-xs font-medium transition ${
-										periodType === option
-											? 'bg-(--legacy-primary)/10 text-(--legacy-primary)'
-											: 'pro-text2 hover:pro-text1'
+										periodType === option ? 'bg-brand/10 text-brand' : 'pro-text2 hover:pro-text1'
 									}`}
 								>
 									{option}
@@ -331,13 +327,13 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 				<table className="w-full border-collapse text-sm">
 					<thead>
 						<tr>
-							<th className="min-w-[220px] truncate border border-black/10 bg-(--legacy-app-bg) p-2 text-left font-semibold dark:border-white/10">
+							<th className="min-w-[220px] truncate border border-medium bg-(--pro-app-bg) p-2 text-left font-semibold">
 								Name
 							</th>
 							{headerIndexes.map((index) => (
 								<th
 									key={`${statementType}-${periodType}-${periodData!.periodEnding[index]}`}
-									className="min-w-[132px] truncate border border-black/10 bg-(--legacy-app-bg) p-2 text-left font-semibold dark:border-white/10"
+									className="min-w-[132px] truncate border border-medium bg-(--pro-app-bg) p-2 text-left font-semibold"
 								>
 									{formatStatementPeriodLabel(periodData!.periodEnding[index])}
 								</th>

@@ -433,7 +433,7 @@ function ProContent({
 					<AuthorProfileStrip />
 
 					{!isLoadingMyDashboards ? (
-						<p className="text-xs text-(--legacy-text-label)">
+						<p className="text-xs text-(--pro-text-label)">
 							Showing {myDashboards.length} of {myDashboardsTotalItems} dashboards
 						</p>
 					) : null}
@@ -453,7 +453,7 @@ function ProContent({
 								type="button"
 								onClick={() => goToPage(1)}
 								disabled={selectedPage < 3}
-								className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-(--legacy-text-label) disabled:hidden"
+								className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-(--pro-text-label) disabled:hidden"
 							>
 								<Icon name="chevrons-left" height={16} width={16} />
 							</button>
@@ -462,7 +462,7 @@ function ProContent({
 								type="button"
 								onClick={() => goToPage(Math.max(1, selectedPage - 1))}
 								disabled={selectedPage === 1}
-								className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-(--legacy-text-label) disabled:hidden"
+								className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-(--pro-text-label) disabled:hidden"
 							>
 								<Icon name="chevron-left" height={16} width={16} />
 							</button>
@@ -475,7 +475,7 @@ function ProContent({
 										key={`my-dashboard-page-${pageNum}`}
 										onClick={() => goToPage(pageNum)}
 										data-active={isActive}
-										className="h-[32px] min-w-[32px] shrink-0 rounded-md px-2 py-1.5 data-[active=true]:bg-(--legacy-old-blue) data-[active=true]:text-white"
+										className="h-[32px] min-w-[32px] shrink-0 rounded-md px-2 py-1.5 data-[active=true]:bg-(--pro-old-blue) data-[active=true]:text-on-brand"
 									>
 										{pageNum}
 									</button>
@@ -486,7 +486,7 @@ function ProContent({
 								type="button"
 								onClick={() => goToPage(Math.min(myDashboardsTotalPages, selectedPage + 1))}
 								disabled={selectedPage === myDashboardsTotalPages}
-								className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-(--legacy-text-label) disabled:hidden"
+								className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-(--pro-text-label) disabled:hidden"
 							>
 								<Icon name="chevron-right" height={16} width={16} />
 							</button>
@@ -494,7 +494,7 @@ function ProContent({
 								type="button"
 								onClick={() => goToPage(myDashboardsTotalPages)}
 								disabled={selectedPage > myDashboardsTotalPages - 2}
-								className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-(--legacy-text-label) disabled:hidden"
+								className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-(--pro-text-label) disabled:hidden"
 							>
 								<Icon name="chevrons-right" height={16} width={16} />
 							</button>

@@ -111,7 +111,7 @@ const skills = [
 function TerminalMock() {
 	return (
 		<Card padding="none" className="overflow-hidden">
-			<div className="mono-md leading-relaxed">
+			<div className="mono-md">
 				<div className="flex items-center gap-2 border-b border-subtle px-4 py-2.5">
 					<span className="size-3 rounded-full bg-[#ff5f57]" />
 					<span className="size-3 rounded-full bg-[#febc2e]" />
@@ -190,7 +190,7 @@ function CodeBlock({ children, label }: { children: string; label: string }) {
 					Copy
 				</Button>
 			</div>
-			<pre className="overflow-x-auto p-4 mono-md leading-relaxed text-secondary">{children}</pre>
+			<pre className="overflow-x-auto p-4 mono-md text-secondary">{children}</pre>
 		</Card>
 	)
 }
@@ -283,7 +283,7 @@ function ManualSetup() {
 					>
 						Copy
 					</Button>
-					<pre className="overflow-x-auto p-4 mono-md leading-relaxed text-secondary">{clientConfigs[active].code}</pre>
+					<pre className="overflow-x-auto p-4 mono-md text-secondary">{clientConfigs[active].code}</pre>
 				</div>
 			</Card>
 		</div>
@@ -307,7 +307,7 @@ function StepCard({ step, title, children }: { step: number; title: string; chil
 				{step}
 			</div>
 			<h3 className="mb-1.5 font-semibold text-primary">{title}</h3>
-			<p className="body-sm leading-relaxed text-secondary">{children}</p>
+			<p className="body-sm text-secondary">{children}</p>
 		</Card>
 	)
 }
@@ -315,7 +315,7 @@ function StepCard({ step, title, children }: { step: number; title: string; chil
 function SectionHeader({ overline, title, description }: { overline: string; title: string; description?: string }) {
 	return (
 		<div className="mb-8">
-			<p className="mb-2 label-sm font-semibold tracking-widest text-link uppercase">{overline}</p>
+			<p className="mb-2 label-sm tracking-widest text-link uppercase">{overline}</p>
 			<h2 className="mb-2 text-2xl font-bold tracking-tight sm:text-3xl">{title}</h2>
 			{description && <p className="max-w-2xl body-md text-secondary">{description}</p>}
 		</div>
@@ -362,7 +362,7 @@ function ToolCategoryGroup({
 				<div id={panelId} className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
 					{tools.map((t) => (
 						<Card key={t.name} padding="sm">
-							<code className="mono-md font-medium text-link">{t.name}</code>
+							<code className="mono-md text-link">{t.name}</code>
 							<p className="mt-0.5 text-xs leading-relaxed text-secondary">{t.desc}</p>
 						</Card>
 					))}
@@ -391,11 +391,11 @@ export default function MCPContainer() {
 			<section className="mx-auto max-w-[1100px] px-4 pt-14 pb-10 sm:px-6 md:px-8">
 				<div className="grid items-center gap-10 md:grid-cols-[1fr_1fr] md:gap-12">
 					<div>
-						<p className="mb-3 label-sm font-semibold tracking-widest text-link uppercase">DefiLlama MCP Server</p>
+						<p className="mb-3 label-sm tracking-widest text-link uppercase">DefiLlama MCP Server</p>
 						<h1 className="mb-4 text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-[2.75rem]">
 							DeFi Data for <span className="text-link">AI Agents</span>
 						</h1>
-						<p className="mb-2 max-w-lg body-md leading-relaxed text-secondary">
+						<p className="mb-2 max-w-lg body-md text-secondary">
 							Connect your AI agent to DefiLlama data. Ask questions about TVL, yields, token prices, protocol metrics,
 							stablecoins, bridges, ETFs, and more. Your agent gets the answers directly.
 						</p>
@@ -474,7 +474,7 @@ export default function MCPContainer() {
 				</div>
 
 				<Card padding="sm" className="mt-4">
-					<p className="body-sm leading-relaxed text-secondary">
+					<p className="body-sm text-secondary">
 						Note: each DefiLlama account can only be connected to one MCP client at a time. Connecting a new client will
 						disconnect the previous one.
 					</p>
@@ -546,7 +546,7 @@ export default function MCPContainer() {
 								</svg>
 							</span>
 							<div>
-								<code className="mono-md font-medium text-primary">{s.name}</code>
+								<code className="mono-md text-primary">{s.name}</code>
 								<p className="mt-0.5 text-xs text-secondary">{s.desc}</p>
 							</div>
 						</Card>
@@ -554,8 +554,8 @@ export default function MCPContainer() {
 				</div>
 
 				<div className="mt-8">
-					<h3 className="mb-3 label-md font-semibold text-secondary">Install skills manually</h3>
-					<p className="mb-4 body-sm leading-relaxed text-secondary">
+					<h3 className="mb-3 label-md text-secondary">Install skills manually</h3>
+					<p className="mb-4 body-sm text-secondary">
 						The quick start prompt installs these automatically. To install manually, run:
 					</p>
 					<div className="mx-auto max-w-2xl">

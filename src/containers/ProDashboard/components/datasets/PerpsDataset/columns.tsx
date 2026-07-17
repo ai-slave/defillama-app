@@ -29,7 +29,7 @@ export const perpsDatasetColumns: ColumnDef<any>[] = [
 		cell: ({ getValue }) => {
 			const value = getValue() as number
 			return (
-				<span className={`${value > 0 ? 'text-green-500' : value < 0 ? 'text-red-500' : 'pro-text2'}`}>
+				<span className={`${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'pro-text2'}`}>
 					{value ? <PercentChange percent={value} fontWeight={100} /> : '-'}
 				</span>
 			)
@@ -44,7 +44,7 @@ export const perpsDatasetColumns: ColumnDef<any>[] = [
 		cell: ({ getValue }) => {
 			const value = getValue() as number
 			return (
-				<span className={`${value > 0 ? 'text-green-500' : value < 0 ? 'text-red-500' : 'pro-text2'}`}>
+				<span className={`${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'pro-text2'}`}>
 					{value ? <PercentChange percent={value} fontWeight={100} /> : '-'}
 				</span>
 			)

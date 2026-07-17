@@ -17,7 +17,7 @@ function ConnectButton({ onClick, disabled, label }: { onClick: () => void; disa
 				if (!disabled) onClick()
 			}}
 			disabled={disabled}
-			className={`inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#4A154B] px-3 py-1.5 text-xs font-medium whitespace-nowrap text-white hover:bg-[#3a1140] ${
+			className={`inline-flex shrink-0 items-center gap-2 rounded-lg bg-ai-slack px-3 py-1.5 text-xs font-medium whitespace-nowrap text-ai-white hover:bg-ai-slack-deep ${
 				disabled ? 'opacity-50' : ''
 			}`}
 		>
@@ -63,18 +63,14 @@ function WorkspaceRow({
 }) {
 	const needsReconnect = !workspace.revoked && workspace.needs_reconnect === true
 	return (
-		<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-black/[0.06] bg-black/[0.02] p-3 dark:border-white/[0.06] dark:bg-white/[0.02]">
+		<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-ai-line-subtle bg-ai-wash-faint p-3">
 			<div className="min-w-0 flex-1">
-				<p className="m-0 text-[13px] font-medium text-[#1a1a1a] dark:text-white">{workspace.team_name}</p>
-				<p className="m-0 mt-0.5 text-xs text-[#777] dark:text-[#919296]">
+				<p className="m-0 text-[13px] font-medium text-ai-primary">{workspace.team_name}</p>
+				<p className="m-0 mt-0.5 text-xs text-ai-tertiary">
 					{workspace.revoked ? (
-						<span className="text-amber-600 dark:text-amber-400">
-							Disconnected by Slack. Reconnect to resume alerts.
-						</span>
+						<span className="text-ai-warning">Disconnected by Slack. Reconnect to resume alerts.</span>
 					) : needsReconnect ? (
-						<span className="text-amber-600 dark:text-amber-400">
-							Reconnect to enable LlamaAI chat in this workspace.
-						</span>
+						<span className="text-ai-warning">Reconnect to enable LlamaAI chat in this workspace.</span>
 					) : workspace.default_channel_name ? (
 						<>Default channel: #{workspace.default_channel_name}</>
 					) : (
@@ -82,7 +78,7 @@ function WorkspaceRow({
 					)}
 				</p>
 				{workspace.last_error && !workspace.revoked && (
-					<p className="m-0 mt-0.5 text-xs text-amber-600 dark:text-amber-400">{workspace.last_error}</p>
+					<p className="m-0 mt-0.5 text-xs text-ai-warning">{workspace.last_error}</p>
 				)}
 			</div>
 			<div className="flex shrink-0 gap-2">
@@ -90,7 +86,7 @@ function WorkspaceRow({
 					<button
 						type="button"
 						onClick={onReconnect}
-						className="rounded-lg bg-[#4A154B] px-3 py-1.5 text-xs font-medium whitespace-nowrap text-white hover:bg-[#3a1140]"
+						className="rounded-lg bg-ai-slack px-3 py-1.5 text-xs font-medium whitespace-nowrap text-ai-white hover:bg-ai-slack-deep"
 					>
 						Reconnect
 					</button>
@@ -99,7 +95,7 @@ function WorkspaceRow({
 						type="button"
 						onClick={onDisconnect}
 						disabled={isDisconnecting}
-						className="rounded-lg border border-black/[0.08] px-3 py-1.5 text-xs whitespace-nowrap hover:bg-black/[0.04] disabled:opacity-50 dark:border-white/[0.08] dark:hover:bg-white/[0.04]"
+						className="rounded-lg border border-ai-line-medium px-3 py-1.5 text-xs whitespace-nowrap hover:bg-ai-wash disabled:opacity-50"
 					>
 						{isDisconnecting ? 'Disconnecting…' : 'Disconnect'}
 					</button>
@@ -120,13 +116,13 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 	}
 
 	return (
-		<div className="rounded-xl border border-black/[0.06] bg-black/[0.015] p-4 dark:border-white/[0.06] dark:bg-white/[0.015]">
+		<div className="rounded-xl border border-ai-line-subtle bg-ai-wash-faint p-4">
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="flex min-w-0 flex-1 items-center gap-3">
 					{glyph}
 					<div className="min-w-0">
-						<p className="m-0 text-[13.5px] font-medium text-[#1a1a1a] dark:text-white">{title}</p>
-						<p className="m-0 mt-0.5 text-xs text-[#777] dark:text-[#919296]">{description}</p>
+						<p className="m-0 text-[13.5px] font-medium text-ai-primary">{title}</p>
+						<p className="m-0 mt-0.5 text-xs text-ai-tertiary">{description}</p>
 					</div>
 				</div>
 				{(link.state.status === 'idle' || link.state.status === 'starting' || link.state.status === 'loading') && (
@@ -145,7 +141,7 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 			</div>
 
 			{link.state.status === 'pending' && (
-				<div className="mt-3 rounded-lg bg-black/[0.04] p-3 text-xs text-[#777] dark:bg-white/[0.04] dark:text-[#919296]">
+				<div className="mt-3 rounded-lg bg-ai-wash p-3 text-xs text-ai-tertiary">
 					<div>
 						Waiting for confirmation in Slack. Once you finish in Slack, come back to this page to see your workspace
 						here.
@@ -155,7 +151,7 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 							type="button"
 							onClick={() => link.connect()}
 							disabled={link.isStarting}
-							className="rounded-lg bg-[#4A154B] px-3 py-1.5 text-xs font-medium whitespace-nowrap text-white hover:bg-[#3a1140] disabled:opacity-50"
+							className="rounded-lg bg-ai-slack px-3 py-1.5 text-xs font-medium whitespace-nowrap text-ai-white hover:bg-ai-slack-deep disabled:opacity-50"
 						>
 							{link.isStarting ? 'Opening…' : 'Start over'}
 						</button>
@@ -163,7 +159,7 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 							type="button"
 							onClick={() => link.cancelPending()}
 							disabled={link.isCancelingPending}
-							className="rounded-lg border border-black/[0.08] px-3 py-1.5 text-xs whitespace-nowrap hover:bg-black/[0.04] disabled:opacity-50 dark:border-white/[0.08] dark:hover:bg-white/[0.04]"
+							className="rounded-lg border border-ai-line-medium px-3 py-1.5 text-xs whitespace-nowrap hover:bg-ai-wash disabled:opacity-50"
 						>
 							{link.isCancelingPending ? 'Canceling…' : 'Cancel'}
 						</button>
@@ -189,26 +185,26 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 			)}
 
 			{link.state.status === 'error' && (
-				<div className="mt-3 rounded-lg border border-red-500/40 bg-red-50 p-3 text-xs text-red-700 dark:bg-red-900/20 dark:text-red-200">
+				<div className="mt-3 rounded-lg border border-ai-error-vivid/40 bg-ai-error-bg p-3 text-xs text-ai-error-strong">
 					{link.state.message}
 				</div>
 			)}
 			<Ariakit.DialogProvider open={!!disconnectTarget} setOpen={(open) => !open && setDisconnectTarget(null)}>
 				<Ariakit.Dialog
-					className="fixed top-1/2 left-1/2 z-50 w-[min(420px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[#e6e6e6] bg-(--legacy-cards-bg) p-5 shadow-2xl dark:border-[#222324]"
-					backdrop={<div className="backdrop fixed inset-0 bg-black/60 backdrop-blur-md" />}
+					className="fixed top-1/2 left-1/2 z-50 w-[min(420px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-ai-line bg-surface p-5 shadow-2xl"
+					backdrop={<div className="backdrop fixed inset-0 bg-ai-backdrop backdrop-blur-md" />}
 				>
-					<Ariakit.DialogHeading className="text-base font-semibold text-(--legacy-text-primary)">
+					<Ariakit.DialogHeading className="text-base font-semibold text-primary">
 						Disconnect Slack workspace?
 					</Ariakit.DialogHeading>
-					<p className="mt-1 text-sm text-[#666] dark:text-[#919296]">
+					<p className="mt-1 text-sm text-ai-tertiary">
 						{disconnectTarget?.team_name ?? 'This workspace'} will stop receiving LlamaAI alerts. Existing alerts
 						targeting this workspace will be paused.
 					</p>
 					<footer className="mt-5 flex justify-end gap-2">
 						<Ariakit.DialogDismiss
 							type="button"
-							className="rounded-md px-3 py-1.5 text-xs text-[#666] hover:bg-[#f0f0f0] dark:text-[#919296] dark:hover:bg-[#222324]"
+							className="rounded-md px-3 py-1.5 text-xs text-ai-tertiary hover:bg-ai-surface-muted"
 						>
 							Cancel
 						</Ariakit.DialogDismiss>
@@ -216,7 +212,7 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 							type="button"
 							onClick={confirmDisconnect}
 							disabled={!disconnectTarget || link.isDisconnecting}
-							className="rounded-md bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-500/20 disabled:opacity-50 dark:text-red-400"
+							className="rounded-md bg-ai-error-vivid/10 px-3 py-1.5 text-xs font-medium text-ai-error transition-colors hover:bg-ai-error-vivid/20 disabled:opacity-50"
 						>
 							Disconnect
 						</button>

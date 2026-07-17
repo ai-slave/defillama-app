@@ -22,7 +22,7 @@ function TitleOverlay({
 	title: string
 	placement: TitlePlacement
 }>) {
-	const base = 'absolute z-20 bg-[#0C2956]/70 p-4 text-[16px] font-semibold leading-[150%] text-white'
+	const base = 'absolute z-20 bg-(--research-navy-soft)/70 p-4 text-base font-semibold leading-[150%] text-on-brand'
 
 	const titleClamp = 'line-clamp-3 lg:line-clamp-4'
 
@@ -98,7 +98,7 @@ const ContentCard = ({
 			) : null}
 		</div>
 
-		<span className="absolute top-[12px] left-[12px] rounded-[4px] border border-white px-2 py-0.5 text-[10px] font-semibold text-white uppercase backdrop-blur-sm">
+		<span className="absolute top-[12px] left-[12px] rounded-[4px] border border-white px-2 py-0.5 text-[10px] font-semibold text-on-brand uppercase backdrop-blur-sm">
 			{item.label}
 		</span>
 
@@ -173,7 +173,7 @@ export const ResearchLatest: React.FC<ResearchLatestProps> = ({ articles = [] })
 					<Link
 						key={cat.id}
 						href={cat.anchor}
-						className="w-full rounded-[4px] border border-[#3A8BFF]/35 bg-transparent px-[15px] py-[3px] text-center text-[14px] font-medium text-[#0c56c5] uppercase transition-[color,border-color,background-color,transform] duration-200 ease-out hover:border-[#3A8BFF] hover:text-[#005dcc] focus-visible:border-[#3A8BFF] focus-visible:text-[#005dcc] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3A8BFF] motion-safe:hover:scale-[1.03] motion-safe:focus-visible:scale-[1.03] lg:w-auto dark:border-white dark:text-white dark:hover:border-[#3A8BFF] dark:hover:text-[#6ba8ff] dark:focus-visible:border-[#3A8BFF] dark:focus-visible:text-[#6ba8ff]"
+						className="w-full rounded-[4px] border border-(--research-blue)/35 bg-transparent px-3.75 py-0.75 text-center text-sm font-medium text-(--research-blue-deep) uppercase transition-[color,border-color,background-color,transform] duration-200 ease-out hover:border-(--research-blue) hover:text-(--research-blue-deep) focus-visible:border-(--research-blue) focus-visible:text-(--research-blue-deep) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--research-blue) motion-safe:hover:scale-[1.03] motion-safe:focus-visible:scale-[1.03] lg:w-auto dark:border-white dark:text-ai-primary dark:hover:border-(--research-blue) dark:hover:text-(--research-blue-soft) dark:focus-visible:border-(--research-blue) dark:focus-visible:text-(--research-blue-soft)"
 					>
 						{cat.label}
 					</Link>

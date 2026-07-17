@@ -127,7 +127,7 @@ export function VaultStress({
 							<span
 								key={a.drop_pct}
 								aria-hidden
-								className="absolute h-2.5 w-px -translate-x-1/2 bg-(--text-tertiary)/60"
+								className="absolute h-2.5 w-px -translate-x-1/2 bg-tertiary/60"
 								style={{ left: `${a.drop_pct}%` }}
 							/>
 						))}

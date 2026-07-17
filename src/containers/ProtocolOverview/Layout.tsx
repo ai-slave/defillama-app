@@ -85,7 +85,7 @@ const odysseyEnterpriseDashboardAnnouncement = {
 	className:
 		'border border-[#8ecae6] bg-[linear-gradient(90deg,rgba(236,249,255,0.98),rgba(228,245,242,0.98)_42%,rgba(236,242,255,0.95)_100%)] text-[#0f4f66] shadow-[0_8px_20px_rgba(42,157,143,0.12)] dark:border-[#2f6f83] dark:bg-[linear-gradient(90deg,rgba(20,48,58,0.96),rgba(24,57,52,0.94)_55%,rgba(28,46,72,0.94)_100%)] dark:text-[#d9f4ff]',
 	badgeClassName:
-		'border border-white/70 bg-white/70 text-[#12617a] shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-[#b7edff]',
+		'border border-white/70 bg-white/70 text-[#12617a] shadow-sm dark:border-white/10 dark:bg-ai-wash-strong dark:text-[#b7edff]',
 	logoName: 'Odyssey Finance'
 } satisfies ProtocolDashboardAnnouncement
 
@@ -101,7 +101,7 @@ const protocolDashboardAnnouncements: Record<string, ProtocolDashboardAnnounceme
 		className:
 			'border border-[#ffb27a] bg-[linear-gradient(90deg,rgba(255,244,234,0.98),rgba(255,232,213,0.98)_38%,rgba(255,219,225,0.95)_100%)] text-[#7a3d0c] shadow-[0_8px_20px_rgba(255,142,43,0.14)] dark:border-[#8f4e1e] dark:bg-[linear-gradient(90deg,rgba(66,43,27,0.96),rgba(81,35,33,0.94)_55%,rgba(94,26,40,0.94)_100%)] dark:text-[#ffe8d5]',
 		badgeClassName:
-			'border border-white/70 bg-white/70 text-[#8d4c12] shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-[#ffd2aa]',
+			'border border-white/70 bg-white/70 text-[#8d4c12] shadow-sm dark:border-white/10 dark:bg-ai-wash-strong dark:text-[#ffd2aa]',
 		includeReferrer: true
 	},
 	vesper: odysseyEnterpriseDashboardAnnouncement,
@@ -248,7 +248,7 @@ export function ProtocolOverviewLayout({
 			metricFiltersLabel={metricFiltersLabel ?? undefined}
 		>
 			{category === 'Uncollateralized Lending' || category === 'RWA Lending' ? (
-				<div className="relative rounded-md border border-(--bg-color) bg-(--legacy-btn-bg) p-2 text-center text-xs text-black dark:text-white">
+				<div className="relative rounded-md border border-(--bg-color) bg-surface-elevated-1 p-2 text-center text-xs text-black dark:text-ai-primary">
 					<p>
 						Active loans are not included in TVL by default, to include them toggle Active Loans. For more info on this
 						click{' '}
@@ -267,12 +267,12 @@ export function ProtocolOverviewLayout({
 
 			{warningBanners?.map((banner) => (
 				<div
-					className={`relative rounded-md border p-2 text-center text-xs text-black dark:text-white ${
+					className={`relative rounded-md border p-2 text-center text-xs text-black dark:text-ai-primary ${
 						banner.level === 'rug'
-							? 'border-(--error) bg-(--error)/20'
+							? 'border-error bg-error/20'
 							: banner.level === 'alert'
-								? 'border-(--warning) bg-(--warning)/20'
-								: 'border-(--bg-color) bg-(--legacy-btn-bg)'
+								? 'border-warning bg-warning/20'
+								: 'border-(--bg-color) bg-surface-elevated-1'
 					}`}
 					key={`${banner.message}-${banner.level}-${name}`}
 				>

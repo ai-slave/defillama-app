@@ -24,7 +24,7 @@ function ElapsedTimeLabel({ startedAt: serverStartedAt }: { startedAt?: number }
 	const startSecond = serverStartedAt ? Math.floor(serverStartedAt / 1000) : fallbackStartSecond
 	const elapsed = Math.max(0, currentSecond - startSecond)
 
-	return <span className="font-mono text-xs text-[#999] tabular-nums dark:text-[#666]">{elapsed}s</span>
+	return <span className="font-mono text-xs text-ai-muted tabular-nums">{elapsed}s</span>
 }
 export function ToolProgressIndicator({
 	toolCalls,
@@ -54,13 +54,13 @@ export function ToolProgressIndicator({
 
 	return (
 		<section
-			className={`flex gap-3 py-1.5 ${indentForActiveTodo ? 'border-l-2 border-[#e6e6e6] pl-4 dark:border-[#222324]' : ''}`}
+			className={`flex gap-3 py-1.5 ${indentForActiveTodo ? 'border-l-2 border-ai-line pl-4' : ''}`}
 			aria-label="LlamaAI progress"
 		>
 			<img
 				src={hackerMode ? LLAMA_AI_HACKER_ANIMATION_SRC : LLAMA_AI_ANIMATION_SRC}
 				alt=""
-				className={`size-16 shrink-0 ${hackerMode ? 'rounded-lg drop-shadow-[0_0_8px_rgba(0,255,65,0.4)]' : ''}`}
+				className={`size-16 shrink-0 ${hackerMode ? 'rounded-lg drop-shadow-ai-terminal' : ''}`}
 				loading="eager"
 				fetchPriority="high"
 			/>
@@ -69,8 +69,8 @@ export function ToolProgressIndicator({
 					<p
 						className={
 							hackerMode
-								? 'm-0 font-mono text-base font-semibold text-[#00ff41] drop-shadow-[0_0_6px_rgba(0,255,65,0.5)]'
-								: 'm-0 text-base font-semibold text-[#555] dark:text-[#919296]'
+								? 'm-0 font-mono text-base font-semibold text-ai-terminal drop-shadow-ai-terminal'
+								: 'm-0 text-base font-semibold text-ai-secondary'
 						}
 					>
 						{hackerMode ? (
@@ -89,7 +89,7 @@ export function ToolProgressIndicator({
 				</div>
 				{thinking ? <ThinkingPanel thinking={thinking} defaultOpen /> : null}
 				{isCompacting ? (
-					<p className="m-0 flex animate-[fadeIn_0.25s_ease-out] items-center gap-2">
+					<p className="m-0 flex animate-ai-fade-in items-center gap-2">
 						<Icon
 							name="layers"
 							height={14}
@@ -97,7 +97,7 @@ export function ToolProgressIndicator({
 							className="shrink-0 animate-pulse opacity-70"
 							style={{ color: '#8b5cf6' }}
 						/>
-						<span className="text-xs font-medium text-[#444] dark:text-[#ccc]">Optimizing context memory&hellip;</span>
+						<span className="text-xs font-medium text-ai-secondary">Optimizing context memory&hellip;</span>
 					</p>
 				) : null}
 				{toolCalls.length > 0 ? (
@@ -105,7 +105,7 @@ export function ToolProgressIndicator({
 						{toolCalls.map((toolCall) => {
 							const meta = TOOL_ICONS[toolCall.name] || { icon: 'sparkles', color: '#919296' }
 							return (
-								<li key={toolCall.id} className="flex animate-[fadeIn_0.25s_ease-out] items-center gap-2">
+								<li key={toolCall.id} className="flex animate-ai-fade-in items-center gap-2">
 									<Icon
 										name={meta.icon as never}
 										height={14}
@@ -113,9 +113,9 @@ export function ToolProgressIndicator({
 										className="shrink-0 opacity-70"
 										style={{ color: meta.color }}
 									/>
-									<p className="m-0 text-xs font-medium text-[#444] dark:text-[#ccc]">{toolCall.label}</p>
+									<p className="m-0 text-xs font-medium text-ai-secondary">{toolCall.label}</p>
 									{toolCall.isPremium ? (
-										<span className="rounded-full bg-amber-100 px-1.5 py-px text-[9px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+										<span className="rounded-full bg-ai-warning-soft px-1.5 py-px text-[9px] font-medium text-ai-warning">
 											Premium
 										</span>
 									) : null}
@@ -126,21 +126,21 @@ export function ToolProgressIndicator({
 				) : null}
 				{hasSpawn ? (
 					<div className="flex flex-col gap-1.5">
-						<p className="m-0 flex items-center gap-2 text-xs font-medium text-[#444] dark:text-[#ccc]">
+						<p className="m-0 flex items-center gap-2 text-xs font-medium text-ai-secondary">
 							<Icon name="users" height={14} width={14} className="shrink-0 opacity-70" style={{ color: '#f472b6' }} />
 							Working in herd&hellip;
 						</p>
 						<ul className="flex flex-col gap-1 pl-5">
 							{[...spawnProgress!.values()].map((agent) => (
-								<li key={agent.id} className="flex animate-[fadeIn_0.25s_ease-out] items-center gap-2">
+								<li key={agent.id} className="flex animate-ai-fade-in items-center gap-2">
 									{agent.status === 'completed' ? (
-										<span className="text-[10px] text-green-500">✓</span>
+										<span className="text-[10px] text-ai-success-vivid">✓</span>
 									) : agent.status === 'error' ? (
-										<span className="text-[10px] text-red-500">✗</span>
+										<span className="text-[10px] text-ai-error-vivid">✗</span>
 									) : (
-										<span className="size-1.5 shrink-0 animate-pulse rounded-full bg-(--legacy-old-blue)" />
+										<span className="size-1.5 shrink-0 animate-pulse rounded-full bg-brand" />
 									)}
-									<span className="text-xs text-[#666] dark:text-[#919296]">
+									<span className="text-xs text-ai-tertiary">
 										{agent.id}
 										{agent.status === 'tool_call' && agent.tool ? (
 											<span className="opacity-60"> — {getToolLabel(agent.tool)}</span>
@@ -183,7 +183,7 @@ export const SpawnProgressCard = memo(function SpawnProgressCard({
 
 	return (
 		<section
-			className={`flex flex-col gap-2 rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) p-2 sm:p-3 dark:border-[#222324] ${indentForActiveTodo ? 'ml-4 border-l-2' : ''}`}
+			className={`flex flex-col gap-2 rounded-lg border border-ai-line bg-surface p-2 sm:p-3 ${indentForActiveTodo ? 'ml-4 border-l-2' : ''}`}
 			aria-label={isResearchMode ? 'Parallel research progress' : 'Herd work progress'}
 		>
 			<button
@@ -193,15 +193,15 @@ export const SpawnProgressCard = memo(function SpawnProgressCard({
 			>
 				<img src={LLAMA_AI_ANIMATION_SRC} alt="" className="size-6 shrink-0" loading="eager" fetchPriority="high" />
 
-				<p className="m-0 flex-1 truncate text-xs text-[#666] sm:text-sm dark:text-[#919296]">
+				<p className="m-0 flex-1 truncate text-xs text-ai-tertiary sm:text-sm">
 					{isResearchMode ? <>Researching in parallel&hellip;</> : <>Working in herd&hellip;</>}
 				</p>
 
-				<p className="m-0 flex shrink-0 items-center gap-1 rounded-sm bg-[rgba(0,0,0,0.04)] px-1.5 py-0.5 text-[10px] text-[#666] sm:text-xs dark:bg-[rgba(145,146,150,0.12)] dark:text-[#919296]">
+				<p className="m-0 flex shrink-0 items-center gap-1 rounded-sm bg-ai-wash px-1.5 py-0.5 text-[10px] text-ai-tertiary sm:text-xs">
 					{completed}/{total} done
 				</p>
 
-				<time className="flex shrink-0 items-center gap-1 rounded-sm bg-[rgba(0,0,0,0.04)] px-1.5 py-0.5 font-mono text-[10px] text-[#666] tabular-nums sm:text-xs dark:bg-[rgba(145,146,150,0.12)] dark:text-[#919296]">
+				<time className="flex shrink-0 items-center gap-1 rounded-sm bg-ai-wash px-1.5 py-0.5 font-mono text-[10px] text-ai-tertiary tabular-nums sm:text-xs">
 					{formatTime(elapsed)}
 				</time>
 
@@ -215,14 +215,14 @@ export const SpawnProgressCard = memo(function SpawnProgressCard({
 					strokeWidth="2"
 					strokeLinecap="round"
 					strokeLinejoin="round"
-					className="hidden shrink-0 text-[#666] sm:block dark:text-[#919296]"
+					className="hidden shrink-0 text-ai-tertiary sm:block"
 				>
 					{isExpanded ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
 				</svg>
 			</button>
 
 			{isExpanded ? (
-				<ul className="flex flex-col gap-1 border-t border-[#e6e6e6] pt-2 dark:border-[#222324]">
+				<ul className="flex flex-col gap-1 border-t border-ai-line pt-2">
 					{agentList.map((agent) => (
 						<li key={agent.id} className="flex items-center gap-2 pl-1">
 							{agent.status === 'completed' ? (
@@ -236,7 +236,7 @@ export const SpawnProgressCard = memo(function SpawnProgressCard({
 									strokeWidth="3"
 									strokeLinecap="round"
 									strokeLinejoin="round"
-									className="shrink-0 text-green-500"
+									className="shrink-0 text-ai-success-vivid"
 								>
 									<polyline points="20 6 9 17 4 12" />
 								</svg>
@@ -251,15 +251,15 @@ export const SpawnProgressCard = memo(function SpawnProgressCard({
 									strokeWidth="3"
 									strokeLinecap="round"
 									strokeLinejoin="round"
-									className="shrink-0 text-red-500"
+									className="shrink-0 text-ai-error-vivid"
 								>
 									<line x1="18" y1="6" x2="6" y2="18" />
 									<line x1="6" y1="6" x2="18" y2="18" />
 								</svg>
 							) : (
-								<span className="size-1.5 shrink-0 animate-pulse rounded-full bg-(--legacy-old-blue)" />
+								<span className="size-1.5 shrink-0 animate-pulse rounded-full bg-brand" />
 							)}
-							<p className="m-0 text-xs text-[#666] dark:text-[#919296]">
+							<p className="m-0 text-xs text-ai-tertiary">
 								{agent.id}
 								{agent.status === 'tool_call' && agent.tool ? (
 									<span className="opacity-60"> - {getToolLabel(agent.tool)}</span>
@@ -289,7 +289,7 @@ export const SpawnProgressCard = memo(function SpawnProgressCard({
 			) : null}
 
 			{recovery?.status === 'reconnecting' ? (
-				<div className="flex items-center gap-2 border-t border-amber-200 pt-2 dark:border-amber-900/50">
+				<div className="flex items-center gap-2 border-t border-ai-warning-soft pt-2">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="14"
@@ -300,11 +300,11 @@ export const SpawnProgressCard = memo(function SpawnProgressCard({
 						strokeWidth="2"
 						strokeLinecap="round"
 						strokeLinejoin="round"
-						className="shrink-0 animate-spin text-amber-500"
+						className="shrink-0 animate-spin text-ai-warning-bright"
 					>
 						<path d="M21 12a9 9 0 1 1-6.219-8.56" />
 					</svg>
-					<p className="m-0 flex-1 text-xs text-amber-700 dark:text-amber-300">
+					<p className="m-0 flex-1 text-xs text-ai-warning-strong">
 						Connection lost. Reconnecting{recovery.attemptCount > 0 ? ` (attempt ${recovery.attemptCount})` : ''}
 						&hellip;
 					</p>
@@ -312,7 +312,7 @@ export const SpawnProgressCard = memo(function SpawnProgressCard({
 						<button
 							type="button"
 							onClick={onReconnect}
-							className="shrink-0 rounded-md bg-amber-200 px-2.5 py-1 text-xs font-medium text-amber-900 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-100 dark:hover:bg-amber-700"
+							className="shrink-0 rounded-md bg-ai-warning-soft px-2.5 py-1 text-xs font-medium text-ai-warning-strong hover:bg-ai-warning"
 						>
 							Reconnect now
 						</button>

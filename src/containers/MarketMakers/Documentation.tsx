@@ -458,18 +458,18 @@ function SubHeading({ children }: { children: ReactNode }) {
 
 function Lead({ label, children }: { label: string; children: ReactNode }) {
 	return (
-		<p className="body-sm leading-relaxed text-secondary">
+		<p className="body-sm text-secondary">
 			<span className="font-semibold text-primary">{label}</span> {children}
 		</p>
 	)
 }
 
 function P({ children }: { children: ReactNode }) {
-	return <p className="body-sm leading-relaxed text-secondary">{children}</p>
+	return <p className="body-sm text-secondary">{children}</p>
 }
 
 function Bullets({ items, ordered = false }: { items: ReactNode[]; ordered?: boolean }) {
-	const cls = 'ml-5 flex flex-col gap-2 body-sm leading-relaxed text-secondary'
+	const cls = 'ml-5 flex flex-col gap-2 body-sm text-secondary'
 	const inner = items.map((item, i) => (
 		<li key={i} className={ordered ? 'list-decimal' : 'list-disc'}>
 			{item}
@@ -512,7 +512,7 @@ function Divider() {
 function GlossaryItem({ entry }: { entry: GlossaryEntry }) {
 	return (
 		<div className="flex flex-col gap-2">
-			<p className="body-sm leading-relaxed text-secondary">
+			<p className="body-sm text-secondary">
 				<span className="font-semibold text-primary">{entry.term}:</span> {entry.def}
 			</p>
 			{entry.bullets ? <Bullets items={entry.bullets} /> : null}

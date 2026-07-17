@@ -35,10 +35,10 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 					<TokenLogo name={name} kind="pegged" alt={`Logo of ${name}`} data-lgonly />
 					<BasicLink
 						href={`/stablecoins/${row.original.gecko_id || name}`}
-						className="truncate text-sm font-medium text-(--legacy-link-text)"
+						className="truncate text-sm font-medium text-link"
 					>
 						{name}
-						{symbol && symbol !== '-' ? <span className="text-(--legacy-text-tertiary)"> ({symbol})</span> : null}
+						{symbol && symbol !== '-' ? <span className="text-(--pro-text-tertiary)"> ({symbol})</span> : null}
 					</BasicLink>
 				</span>
 			)
@@ -60,7 +60,7 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 								name="alert-triangle"
 								height={14}
 								width={14}
-								className={pegDeviation > 0 ? 'text-(--success)' : 'text-(--error)'}
+								className={pegDeviation > 0 ? 'text-success' : 'text-error'}
 							/>
 						</Tooltip>
 					) : null}
@@ -91,7 +91,7 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 		cell: ({ getValue }) => {
 			const value = getValue() as number
 			return (
-				<span className={` ${value < 0 ? 'text-(--error)' : 'text-(--success)'}`}>
+				<span className={` ${value < 0 ? 'text-error' : 'text-success'}`}>
 					<PercentChange percent={value} />
 				</span>
 			)
@@ -107,7 +107,7 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 		cell: ({ getValue }) => {
 			const value = getValue() as number
 			return (
-				<span className={` ${value < 0 ? 'text-(--error)' : 'text-(--success)'}`}>
+				<span className={` ${value < 0 ? 'text-error' : 'text-success'}`}>
 					<PercentChange percent={value} />
 				</span>
 			)
@@ -123,7 +123,7 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 		cell: ({ getValue }) => {
 			const value = getValue() as number
 			return (
-				<span className={` ${value < 0 ? 'text-(--error)' : 'text-(--success)'}`}>
+				<span className={` ${value < 0 ? 'text-error' : 'text-success'}`}>
 					<PercentChange percent={value} />
 				</span>
 			)
@@ -143,7 +143,7 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 
 			return (
 				<Tooltip content={chains.join(', ')}>
-					<span className="text-sm text-(--legacy-text-secondary)">
+					<span className="text-sm text-(--pro-text-secondary)">
 						{displayChains.join(', ')}
 						{remainingCount > 0 ? ` +${remainingCount}` : null}
 					</span>

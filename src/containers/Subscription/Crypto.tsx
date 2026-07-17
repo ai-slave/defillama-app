@@ -29,7 +29,7 @@ export const PaymentButton = ({
 		return (
 			<SignInModal
 				text={text}
-				className="group flex w-full items-center justify-center gap-2 rounded-lg border border-[#5C5CF9] bg-[#5C5CF9] py-3.5 font-medium text-white shadow-xs transition-all duration-200 hover:bg-[#4A4AF0] hover:shadow-md dark:border-[#5C5CF9] dark:bg-[#5C5CF9] dark:hover:bg-[#4A4AF0]"
+				className="group flex w-full items-center justify-center gap-2 rounded-lg border border-sub-purple-500 bg-sub-purple-500 py-3.5 font-medium text-on-brand shadow-xs transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-md dark:border-sub-purple-500 dark:bg-sub-purple-500 dark:hover:bg-sub-purple-hover"
 			/>
 		)
 	}
@@ -53,7 +53,7 @@ export const PaymentButton = ({
 			<button
 				onClick={handleClick}
 				disabled={loading === paymentMethod}
-				className={`group flex w-full items-center justify-center gap-2 rounded-lg border border-[#5C5CF9] bg-[#5C5CF9] py-3 text-sm font-medium text-white shadow-xs transition-all duration-200 hover:bg-[#4A4AF0] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70 sm:py-3.5 dark:border-[#5C5CF9] dark:bg-[#5C5CF9] dark:hover:bg-[#4A4AF0] ${type === 'api' && !isStripe ? 'shadow-[0px_0px_32px_0px_#5C5CF980]' : ''}`}
+				className={`group flex w-full items-center justify-center gap-2 rounded-lg border border-sub-purple-500 bg-sub-purple-500 py-3 text-sm font-medium text-on-brand shadow-xs transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70 sm:py-3.5 dark:border-sub-purple-500 dark:bg-sub-purple-500 dark:hover:bg-sub-purple-hover ${type === 'api' && !isStripe ? 'shadow-ai-purple-glow' : ''}`}
 				data-umami-event={`subscribe-${paymentMethod}-${type ?? ''}`}
 			>
 				{icon ? <Icon name={icon} height={14} width={14} className="sm:h-4 sm:w-4" /> : null}

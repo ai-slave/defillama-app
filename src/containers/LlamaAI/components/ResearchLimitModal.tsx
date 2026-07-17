@@ -61,30 +61,30 @@ export function ResearchLimitModal({
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog
-				className="dialog fixed inset-0 z-50 m-auto h-fit w-full max-w-md overflow-hidden rounded-2xl border border-[#E6E6E6] bg-[#FFFFFF] p-0 shadow-xl dark:border-[#39393E] dark:bg-[#222429]"
-				backdrop={<div className="backdrop fixed inset-0 bg-black/60 backdrop-blur-sm" />}
+				className="dialog fixed inset-0 z-50 m-auto h-fit w-full max-w-md overflow-hidden rounded-2xl border border-ai-line bg-ai-surface-card p-0 shadow-xl"
+				backdrop={<div className="backdrop fixed inset-0 bg-ai-backdrop backdrop-blur-sm" />}
 				portal
 				unmountOnHide
 			>
 				<button
 					type="button"
 					onClick={dialogStore.hide}
-					className="absolute top-4 right-4 z-20 rounded-full p-1.5 text-[#666] transition-colors hover:bg-[#f7f7f7] hover:text-black dark:text-gray-400 dark:hover:bg-gray-700/50 dark:hover:text-white"
+					className="absolute top-4 right-4 z-20 rounded-full p-1.5 text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
 				>
 					<Icon name="x" className="size-5" />
 				</button>
 
 				<div className="relative z-10 px-8 py-10">
 					<div className="mb-6 flex justify-center">
-						<div className="flex size-16 items-center justify-center rounded-full bg-[#FFF3E0] dark:bg-[#3D2F1F]">
-							<Icon name="circle-x" height={32} width={32} className="text-[#FF9800]" />
+						<div className="flex size-16 items-center justify-center rounded-full bg-ai-bronze-bg">
+							<Icon name="circle-x" height={32} width={32} className="text-ai-warning-bright" />
 						</div>
 					</div>
 
-					<h2 className="mb-4 text-center text-xl leading-snug font-bold text-black dark:text-white">
+					<h2 className="mb-4 text-center text-xl leading-snug font-bold text-ai-primary">
 						{COPY[feature].titleLimit}
 					</h2>
-					<p className="mb-6 text-center text-base leading-6 text-[#666] dark:text-[#919296]">
+					<p className="mb-6 text-center text-base leading-6 text-ai-tertiary">
 						{isBlocked ? COPY[feature].bodyBlocked : limitBody}
 					</p>
 
@@ -93,19 +93,19 @@ export function ResearchLimitModal({
 							<BasicLink
 								href="/subscription"
 								data-umami-event={COPY[feature].umamiUpgrade}
-								className="mx-auto flex w-full items-center justify-center gap-2 rounded-lg bg-[#5C5CF9] px-6 py-3.5 text-center text-base font-semibold text-white transition-colors hover:bg-[#4A4AF0]"
+								className="mx-auto flex w-full items-center justify-center gap-2 rounded-lg bg-ai-purple px-6 py-3.5 text-center text-base font-semibold text-ai-white transition-colors hover:bg-ai-purple-deep"
 								onClick={dialogStore.hide}
 							>
 								Upgrade to Pro
 							</BasicLink>
-							<p className="mt-4 text-center text-sm text-[#888] dark:text-[#777]">{COPY[feature].proPitch}</p>
+							<p className="mt-4 text-center text-sm text-ai-muted">{COPY[feature].proPitch}</p>
 						</>
 					) : (
 						// Already on a paid plan, just hit the daily cap — informational only, no upsell.
 						<button
 							type="button"
 							onClick={dialogStore.hide}
-							className="mx-auto flex w-full items-center justify-center gap-2 rounded-lg bg-[#5C5CF9] px-6 py-3.5 text-center text-base font-semibold text-white transition-colors hover:bg-[#4A4AF0]"
+							className="mx-auto flex w-full items-center justify-center gap-2 rounded-lg bg-ai-purple px-6 py-3.5 text-center text-base font-semibold text-ai-white transition-colors hover:bg-ai-purple-deep"
 						>
 							Got it
 						</button>

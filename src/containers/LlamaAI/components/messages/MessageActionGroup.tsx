@@ -82,8 +82,8 @@ function ActionLink({
 			{...getActionHrefProps(href, action.label)}
 			className={
 				variant === 'decision'
-					? 'inline-flex items-center gap-1.5 rounded-full border border-[#2172e5]/15 bg-[#2172e5]/3 px-4 py-2 text-sm font-medium text-[#2172e5] transition-all duration-150 hover:border-[#2172e5]/35 hover:bg-[#2172e5]/8 active:scale-[0.97] dark:border-[#4190f7]/15 dark:bg-[#4190f7]/3 dark:text-[#4190f7] dark:hover:border-[#4190f7]/35 dark:hover:bg-[#4190f7]/8'
-					: 'inline-flex items-center gap-1.5 rounded-full border border-[#2172e5]/10 bg-[#2172e5]/4 px-3 py-1.5 text-xs font-medium text-[#2172e5]/55 transition-all duration-150 hover:border-[#2172e5]/20 hover:bg-[#2172e5]/8 hover:text-[#2172e5]/75 active:scale-[0.97] dark:border-[#4190f7]/10 dark:bg-[#4190f7]/5 dark:text-[#4190f7]/50 dark:hover:border-[#4190f7]/20 dark:hover:bg-[#4190f7]/10 dark:hover:text-[#4190f7]/75'
+					? 'inline-flex items-center gap-1.5 rounded-full border border-ai-old-blue/15 bg-ai-old-blue/3 px-4 py-2 text-sm font-medium text-ai-old-blue transition-all duration-150 hover:border-ai-old-blue/35 hover:bg-ai-old-blue/8 active:scale-[0.97]'
+					: 'inline-flex items-center gap-1.5 rounded-full border border-ai-old-blue/10 bg-ai-old-blue/4 px-3 py-1.5 text-xs font-medium text-ai-old-blue/55 transition-all duration-150 hover:border-ai-old-blue/20 hover:bg-ai-old-blue/8 hover:text-ai-old-blue/75 active:scale-[0.97]'
 			}
 		>
 			{action.label}
@@ -177,9 +177,9 @@ export function ActionButtonGroup({
 								className={`rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-150 ${
 									!clickedIds.has(action.compositeId)
 										? onActionClick
-											? 'bg-[#2172e5] text-white hover:bg-[#1b5fbd] active:scale-[0.97] dark:bg-[#4190f7] dark:hover:bg-[#3279de]'
-											: 'bg-[#e6e6e6] text-[#999] dark:bg-[#333] dark:text-[#666]'
-										: 'bg-[#2172e5] text-white dark:bg-[#4190f7]'
+											? 'bg-ai-old-blue text-ai-white hover:bg-ai-old-blue-deep active:scale-[0.97] dark:bg-ai-old-blue dark:hover:bg-ai-old-blue-deep'
+											: 'bg-ai-surface-muted text-ai-muted dark:bg-ai-surface-muted'
+										: 'bg-ai-old-blue text-ai-white dark:bg-ai-old-blue'
 								}`}
 							>
 								{action.label}
@@ -196,9 +196,9 @@ export function ActionButtonGroup({
 							className={`rounded-full border px-5 py-2.5 text-sm font-medium transition-all duration-150 ${
 								!clickedIds.has(action.compositeId)
 									? onActionClick
-										? 'border-[#2172e5]/20 text-[#2172e5] hover:border-[#2172e5]/40 hover:bg-[#2172e5]/6 active:scale-[0.97] dark:border-[#4190f7]/20 dark:text-[#4190f7] dark:hover:border-[#4190f7]/40 dark:hover:bg-[#4190f7]/6'
-										: 'border-[#e6e6e6] text-[#999] dark:border-[#333] dark:text-[#666]'
-									: 'border-[#2172e5] bg-[#2172e5]/10 text-[#2172e5] dark:border-[#4190f7] dark:bg-[#4190f7]/10 dark:text-[#4190f7]'
+										? 'border-ai-old-blue/20 text-ai-old-blue hover:border-ai-old-blue/40 hover:bg-ai-old-blue/6 active:scale-[0.97] dark:hover:bg-ai-old-blue/6'
+										: 'border-ai-line text-ai-muted'
+									: 'border-ai-old-blue bg-ai-old-blue/10 text-ai-old-blue dark:border-ai-old-blue'
 							}`}
 						>
 							{action.label}
@@ -228,9 +228,9 @@ export function ActionButtonGroup({
 						className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-150 ${
 							!clickedIds.has(action.compositeId)
 								? onActionClick
-									? 'border-[#2172e5]/10 bg-[#2172e5]/4 text-[#2172e5]/55 hover:border-[#2172e5]/20 hover:bg-[#2172e5]/8 hover:text-[#2172e5]/75 active:scale-[0.97] dark:border-[#4190f7]/10 dark:bg-[#4190f7]/5 dark:text-[#4190f7]/50 dark:hover:border-[#4190f7]/20 dark:hover:bg-[#4190f7]/10 dark:hover:text-[#4190f7]/75'
-									: 'border-[#2172e5]/5 bg-[#2172e5]/2 text-[#2172e5]/30 dark:border-[#4190f7]/5 dark:bg-[#4190f7]/2 dark:text-[#4190f7]/25'
-								: 'border-[#2172e5]/25 bg-[#2172e5]/8 text-[#2172e5]/70 dark:border-[#4190f7]/25 dark:bg-[#4190f7]/8 dark:text-[#4190f7]/70'
+									? 'border-ai-old-blue/10 bg-ai-old-blue/4 text-ai-old-blue/55 hover:border-ai-old-blue/20 hover:bg-ai-old-blue/8 hover:text-ai-old-blue/75 active:scale-[0.97]'
+									: 'border-ai-old-blue/5 bg-ai-old-blue/2 text-ai-old-blue/30 dark:border-ai-old-blue/5 dark:text-ai-old-blue/25'
+								: 'border-ai-old-blue/25 bg-ai-old-blue/8 text-ai-old-blue/70 dark:border-ai-old-blue/25 dark:text-ai-old-blue/70'
 						}`}
 					>
 						{action.label}

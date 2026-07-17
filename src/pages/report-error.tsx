@@ -81,7 +81,7 @@ function ReportError() {
 							'Report'
 						)}
 					</Button>
-					{error ? <small className="text-center text-red-500">{error.message}</small> : null}
+					{error ? <small className="text-center text-error">{error.message}</small> : null}
 				</Card>
 				<Card padding="sm" className="flex w-full flex-col gap-4">
 					<p className="text-center text-base font-medium">

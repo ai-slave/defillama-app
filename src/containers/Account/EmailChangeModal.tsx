@@ -55,10 +55,10 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 				<div className="flex flex-col gap-5 px-5 py-6">
 					{/* Header */}
 					<div className="flex items-center justify-between">
-						<h3 className="text-xl leading-7 font-semibold text-(--sub-ink-primary) dark:text-white">
+						<h3 className="text-xl leading-7 font-semibold text-sub-ink-primary dark:text-ai-primary">
 							Change Your Email
 						</h3>
-						<Ariakit.DialogDismiss className="rounded-full p-1 text-(--sub-ink-primary) transition-colors dark:text-white">
+						<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-ink-primary transition-colors dark:text-ai-primary">
 							<Icon name="x" height={24} width={24} />
 						</Ariakit.DialogDismiss>
 					</div>
@@ -66,22 +66,22 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 					{isSuccess ? (
 						<div className="flex flex-col items-center gap-4 text-center">
 							<div className="flex items-center rounded-full bg-green-100 p-3 dark:bg-green-900/30">
-								<Icon name="mail-rounded" height={24} width={24} className="text-green-600 dark:text-green-400" />
+								<Icon name="mail-rounded" height={24} width={24} className="text-success" />
 							</div>
-							<p className="text-sm leading-5 text-(--sub-ink-primary) dark:text-white">
+							<p className="text-sm leading-5 text-sub-ink-primary dark:text-ai-primary">
 								A confirmation link has been sent to <strong>{email}</strong>. Please check your inbox to confirm the
 								change.
 							</p>
 							<button
 								onClick={handleClose}
-								className="flex h-10 w-full items-center justify-center rounded-lg bg-(--sub-brand-primary) text-sm font-medium text-white"
+								className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand"
 							>
 								Done
 							</button>
 						</div>
 					) : (
 						<form onSubmit={handleSubmit} className="flex flex-col gap-5">
-							<label className="text-sm leading-[21px] text-(--sub-ink-primary) dark:text-white">
+							<label className="text-sm leading-[21px] text-sub-ink-primary dark:text-ai-primary">
 								Enter your new email:
 							</label>
 
@@ -95,19 +95,19 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 										if (error) setError('')
 									}}
 									placeholder="your.new.email@example.com"
-									className={`h-10 w-full rounded-lg border bg-(--sub-surface-panel) px-3 text-sm leading-[21px] text-(--sub-ink-primary) outline-hidden dark:bg-(--sub-ink-primary) dark:text-white ${
+									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] text-sub-ink-primary outline-hidden dark:bg-sub-ink-primary dark:text-ai-primary ${
 										hasError
-											? 'border-(--error)'
-											: 'border-(--sub-border-muted) focus:border-(--sub-brand-primary) dark:border-(--sub-border-strong) dark:focus:border-(--sub-brand-primary)'
+											? 'border-error'
+											: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
 									}`}
 								/>
-								{hasError && <p className="text-xs leading-4 text-(--error)">{error}</p>}
+								{hasError && <p className="text-xs leading-4 text-error">{error}</p>}
 							</div>
 
 							<button
 								type="submit"
 								disabled={!canSubmit}
-								className="flex h-10 w-full items-center justify-center rounded-lg bg-(--sub-brand-primary) text-sm font-medium text-white disabled:opacity-25"
+								className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-25"
 							>
 								{isLoading ? 'Sending...' : 'Confirm Email'}
 							</button>

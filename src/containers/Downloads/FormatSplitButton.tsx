@@ -18,12 +18,12 @@ export function FormatSplitButton({ onDownload, disabled, label = 'Download' }: 
 	const [format, setFormat] = useState<DownloadFormat>('csv')
 
 	return (
-		<div className="inline-flex overflow-hidden rounded-md bg-(--legacy-primary) shadow-sm">
+		<div className="inline-flex overflow-hidden rounded-md bg-brand shadow-sm">
 			<button
 				type="button"
 				onClick={() => onDownload(format)}
 				disabled={disabled}
-				className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-black/10 disabled:opacity-40"
+				className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-on-brand transition-colors hover:bg-black/10 disabled:opacity-40"
 			>
 				<Icon name="download-cloud" className="size-3.5" />
 				<span className="hidden sm:inline">
@@ -34,7 +34,7 @@ export function FormatSplitButton({ onDownload, disabled, label = 'Download' }: 
 				<Ariakit.MenuButton
 					disabled={disabled}
 					aria-label="Choose download format"
-					className="flex items-center border-l border-white/20 px-1.5 text-white transition-colors hover:bg-black/10 disabled:opacity-40"
+					className="flex items-center border-l border-white/20 px-1.5 text-on-brand transition-colors hover:bg-black/10 disabled:opacity-40"
 				>
 					<Icon name="chevron-down" className="size-3.5" />
 				</Ariakit.MenuButton>
@@ -53,11 +53,11 @@ export function FormatSplitButton({ onDownload, disabled, label = 'Download' }: 
 								setFormat(fmt)
 								onDownload(fmt)
 							}}
-							className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-(--legacy-text-primary) hover:bg-hover-row data-active-item:bg-hover-row"
+							className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-(--pro-text-primary) hover:bg-hover-row data-active-item:bg-hover-row"
 						>
 							<span>{FORMAT_LABELS[fmt]}</span>
 							{format === fmt ? (
-								<Icon name="check" className="size-3.5 text-(--legacy-primary)" />
+								<Icon name="check" className="size-3.5 text-brand" />
 							) : (
 								<span className="size-3.5" aria-hidden="true" />
 							)}

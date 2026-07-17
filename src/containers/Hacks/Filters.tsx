@@ -171,7 +171,7 @@ const Filters = ({
 					minLostVal != null || maxLostVal != null ? (
 						<>
 							<span>Amount: </span>
-							<span className="text-(--legacy-link)">{`${minLostVal?.toLocaleString() ?? 'min'} - ${
+							<span className="text-link">{`${minLostVal?.toLocaleString() ?? 'min'} - ${
 								maxLostVal?.toLocaleString() ?? 'max'
 							}`}</span>
 						</>

@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
 
 const STATUS_STYLES: Record<'full' | 'partial' | 'none', string> = {
-	full: 'border-emerald-500 bg-emerald-500/10 text-emerald-500',
-	partial: 'border-amber-500 bg-amber-500/10 text-amber-500',
-	none: 'border-red-500 bg-red-500/10 text-red-500'
+	full: 'border-emerald-500 bg-success/10 text-success',
+	partial: 'border-warning bg-warning/10 text-warning',
+	none: 'border-error bg-error/10 text-error'
 }
 
 export function AccentBadge({ children, className = '' }: { children: ReactNode; className?: string }) {

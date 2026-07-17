@@ -70,7 +70,7 @@ export function PieChartAdapter({ config, result, classified, onReady }: PieChar
 
 	if (!nameCol || !valueCol)
 		return (
-			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-(--legacy-divider) text-sm text-(--legacy-text-secondary)">
+			<div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-subtle text-sm text-(--pro-text-secondary)">
 				Pie needs a category column and a numeric column.
 			</div>
 		)
@@ -96,7 +96,7 @@ export function PieChartAdapter({ config, result, classified, onReady }: PieChar
 				/>
 			</Suspense>
 			{truncated > 0 ? (
-				<p className="text-[11px] text-(--legacy-text-tertiary)">
+				<p className="text-[11px] text-(--pro-text-tertiary)">
 					Top {TOP_N_SLICES} slices. {truncated} folded into Other.
 				</p>
 			) : null}

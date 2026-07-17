@@ -51,12 +51,10 @@ const LEGAL_LINKS: FooterLink[] = [
 	{ label: 'Sitemap', href: '/research/sitemap.xml', external: true }
 ]
 
-const headingClassName = 'font-extrabold text-xs uppercase leading-tight tracking-widest text-(--legacy-text-primary)'
-const linkClassName =
-	'font-medium text-sm leading-snug text-(--legacy-text-primary) transition-opacity hover:opacity-60'
-const descriptionClassName = 'font-light text-sm leading-relaxed text-(--legacy-text-secondary)'
-const legalLinkClassName =
-	'font-light text-xs leading-tight text-(--legacy-text-tertiary) transition-opacity hover:opacity-60'
+const headingClassName = 'font-extrabold text-xs uppercase leading-tight tracking-widest text-primary'
+const linkClassName = 'font-medium text-sm leading-snug text-primary transition-opacity hover:opacity-60'
+const descriptionClassName = 'font-light text-sm leading-relaxed text-secondary'
+const legalLinkClassName = 'font-light text-xs leading-tight text-tertiary transition-opacity hover:opacity-60'
 
 function FooterLinkItem({ link }: { link: FooterLink }) {
 	if (link.external) {
@@ -79,7 +77,7 @@ function FooterLinkItem({ link }: { link: FooterLink }) {
 }
 
 function FooterSocials() {
-	const itemClassName = 'flex text-(--legacy-text-primary) transition-opacity hover:opacity-70'
+	const itemClassName = 'flex text-primary transition-opacity hover:opacity-70'
 	return (
 		<ul className="flex items-center gap-3">
 			{SOCIAL_LINKS.map((social) => (
@@ -156,7 +154,7 @@ function FooterAccordion({ title, links }: FooterColumnDef) {
 	const [open, setOpen] = useState(false)
 	const panelId = useId()
 	return (
-		<div className="border-b border-(--legacy-cards-border)">
+		<div className="border-b border-medium">
 			<h2>
 				<button
 					type="button"
@@ -170,7 +168,7 @@ function FooterAccordion({ title, links }: FooterColumnDef) {
 						name="chevron-down"
 						height={18}
 						width={18}
-						className={`shrink-0 text-(--legacy-text-tertiary) transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+						className={`shrink-0 text-tertiary transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
 					/>
 				</button>
 			</h2>
@@ -233,13 +231,13 @@ function FooterMediaKit() {
 					value={email}
 					onChange={onEmailChange}
 					placeholder="Email address"
-					className="min-w-0 flex-1 appearance-none border-x-0 border-t-0 border-b border-(--legacy-cards-border) bg-transparent pb-2 text-sm text-(--legacy-text-primary) placeholder:text-(--legacy-text-tertiary) focus:border-(--legacy-link-text) focus:outline-hidden"
+					className="min-w-0 flex-1 appearance-none border-x-0 border-t-0 border-b border-medium bg-transparent pb-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
 				/>
 				<button
 					type="submit"
 					aria-busy={isPending}
 					disabled={!canSubmit}
-					className={`flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-(--legacy-link-text) px-6 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-70 ${
+					className={`flex h-10 shrink-0 items-center justify-center gap-2 rounded-full bg-link px-6 text-sm font-semibold text-on-brand transition-opacity hover:opacity-90 disabled:opacity-70 ${
 						isPending ? 'disabled:cursor-wait' : 'disabled:cursor-not-allowed'
 					}`}
 				>
@@ -275,10 +273,8 @@ function FooterMediaKit() {
 
 function FooterLegalBar() {
 	return (
-		<div className="mt-10 flex flex-col items-center gap-4 border-t border-(--legacy-cards-border) pt-6 text-center sm:mt-6 sm:flex-row sm:items-center sm:justify-between sm:text-left">
-			<p className="text-xs leading-tight font-light text-(--legacy-text-tertiary)">
-				© DefiLlama Research. All rights reserved.
-			</p>
+		<div className="mt-10 flex flex-col items-center gap-4 border-t border-medium pt-6 text-center sm:mt-6 sm:flex-row sm:items-center sm:justify-between sm:text-left">
+			<p className="text-xs leading-tight font-light text-tertiary">© DefiLlama Research. All rights reserved.</p>
 			<ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:justify-start">
 				{LEGAL_LINKS.map((link) => (
 					<li key={link.label}>
@@ -300,9 +296,9 @@ function FooterLegalBar() {
 
 export function ResearchFooter({ maxWidthClassName = 'max-w-7xl' }: { maxWidthClassName?: string }) {
 	return (
-		<footer className="text-(--legacy-text-primary)">
+		<footer className="text-primary">
 			<div className={`mx-auto w-full ${maxWidthClassName} px-4 sm:px-6 lg:px-6`}>
-				<div className="border-t border-(--legacy-cards-border) py-8">
+				<div className="border-t border-medium py-8">
 					<div className="hidden gap-x-10 gap-y-12 md:flex md:flex-wrap md:justify-between">
 						<FooterBrand />
 						{FOOTER_COLUMNS.map((col) => (
@@ -315,7 +311,7 @@ export function ResearchFooter({ maxWidthClassName = 'max-w-7xl' }: { maxWidthCl
 
 					<div className="flex flex-col md:hidden">
 						<FooterMediaKit />
-						<nav aria-label="Footer links" className="mt-8 border-t border-(--legacy-cards-border)">
+						<nav aria-label="Footer links" className="mt-8 border-t border-medium">
 							{FOOTER_COLUMNS.map((col) => (
 								<FooterAccordion key={col.title} title={col.title} links={col.links} />
 							))}

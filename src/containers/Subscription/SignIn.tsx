@@ -183,8 +183,8 @@ export const SignInForm = ({
 						id="signin"
 						className={
 							selectedTabId === 'signin'
-								? 'border-b-2 border-[#5C5CF9] bg-linear-to-r from-[#5C5CF9] to-[#8A8AFF] bg-clip-text text-xl font-bold text-transparent'
-								: 'text-xl font-bold text-[#9a9da1]'
+								? 'border-b-2 border-sub-purple-500 bg-linear-to-r from-sub-purple-500 to-sub-purple-soft bg-clip-text text-xl font-bold text-transparent'
+								: 'text-xl font-bold text-sub-text-muted'
 						}
 					>
 						Sign In
@@ -193,15 +193,15 @@ export const SignInForm = ({
 						id="signup"
 						className={
 							selectedTabId === 'signup'
-								? 'border-b-2 border-[#5C5CF9] bg-linear-to-r from-[#5C5CF9] to-[#8A8AFF] bg-clip-text text-xl font-bold text-transparent'
-								: 'text-xl font-bold text-[#9a9da1]'
+								? 'border-b-2 border-sub-purple-500 bg-linear-to-r from-sub-purple-500 to-sub-purple-soft bg-clip-text text-xl font-bold text-transparent'
+								: 'text-xl font-bold text-sub-text-muted'
 						}
 					>
 						Register
 					</Ariakit.Tab>
 				</Ariakit.TabList>
 				{showOnlyAuthDialog ? null : (
-					<Ariakit.DialogDismiss className="rounded-full p-1.5 text-[#8a8c90] transition-colors hover:bg-[#39393E] hover:text-white">
+					<Ariakit.DialogDismiss className="rounded-full p-1.5 text-sub-text-muted transition-colors hover:bg-sub-line hover:text-on-brand">
 						<Icon name="x" height={18} width={18} />
 						<span className="sr-only">Close</span>
 					</Ariakit.DialogDismiss>
@@ -213,18 +213,18 @@ export const SignInForm = ({
 					<>
 						<form className="flex flex-col gap-3 sm:gap-4" onSubmit={(e) => void handleEmailSignIn(e)}>
 							<div className="space-y-1">
-								<label htmlFor={signInEmailInputId} className="text-xs font-medium text-[#b4b7bc] sm:text-sm">
+								<label htmlFor={signInEmailInputId} className="text-xs font-medium text-sub-text-soft sm:text-sm">
 									Email
 								</label>
 								<div className="relative">
-									<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#8a8c90]">
+									<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sub-text-muted">
 										<Icon name="mail" height={16} width={16} />
 									</div>
 									<input
 										id={signInEmailInputId}
 										type="email"
 										required
-										className="w-full rounded-lg border border-[#39393E] bg-[#222429] py-2 pr-2.5 pl-9 text-white transition-all duration-200 placeholder:text-[#8a8c90] focus:border-[#5C5CF9] focus:ring-1 focus:ring-[#5C5CF9] focus:outline-hidden sm:py-2.5"
+										className="w-full rounded-lg border border-sub-line bg-sub-card py-2 pr-2.5 pl-9 text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple-500 focus:ring-1 focus:ring-sub-purple-500 focus:outline-hidden sm:py-2.5"
 										value={email}
 										onChange={(e) => setEmail(e.target.value)}
 									/>
@@ -232,18 +232,18 @@ export const SignInForm = ({
 							</div>
 
 							<div className="space-y-1">
-								<label htmlFor={signInPasswordInputId} className="text-xs font-medium text-[#b4b7bc] sm:text-sm">
+								<label htmlFor={signInPasswordInputId} className="text-xs font-medium text-sub-text-soft sm:text-sm">
 									Password
 								</label>
 								<div className="relative">
-									<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#8a8c90]">
+									<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sub-text-muted">
 										<Icon name="key" height={16} width={16} />
 									</div>
 									<input
 										id={signInPasswordInputId}
 										type="password"
 										required
-										className="w-full rounded-lg border border-[#39393E] bg-[#222429] py-2 pr-2.5 pl-9 text-white transition-all duration-200 placeholder:text-[#8a8c90] focus:border-[#5C5C] focus:ring-1 focus:ring-[#5C5CF9] focus:outline-hidden sm:py-2.5"
+										className="w-full rounded-lg border border-sub-line bg-sub-card py-2 pr-2.5 pl-9 text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple-500 focus:ring-1 focus:ring-sub-purple-500 focus:outline-hidden sm:py-2.5"
 										value={password}
 										onChange={(e) => setPassword(e.target.value)}
 									/>
@@ -253,7 +253,7 @@ export const SignInForm = ({
 							<div className="-mt-1 flex justify-end">
 								<button
 									type="button"
-									className="text-xs text-[#5C5CF9] transition-colors hover:text-[#7C7CFF]"
+									className="text-xs text-sub-purple-500 transition-colors hover:text-sub-purple-soft"
 									onClick={() => setFlow('forgot')}
 								>
 									Forgot password?
@@ -261,13 +261,13 @@ export const SignInForm = ({
 							</div>
 
 							<button
-								className="mt-1 w-full rounded-lg bg-linear-to-r from-[#5C5CF9] to-[#6E6EFA] py-3 font-medium text-white shadow-lg transition-all duration-200 hover:from-[#4A4AF0] hover:to-[#5A5AF5] hover:shadow-[#5C5CF9]/20 disabled:cursor-not-allowed disabled:opacity-50"
+								className="mt-1 w-full rounded-lg bg-linear-to-r from-sub-purple-500 to-sub-purple-soft py-3 font-medium text-on-brand shadow-lg transition-all duration-200 hover:from-sub-purple-hover hover:to-sub-purple-500 hover:shadow-sub-purple-500/20 disabled:cursor-not-allowed disabled:opacity-50"
 								disabled={loaders.login}
 							>
 								{loaders.login ? (
 									<span className="flex items-center justify-center gap-2">
 										<svg
-											className="size-5 animate-spin text-white"
+											className="size-5 animate-spin text-on-brand"
 											xmlns="http://www.w3.org/2000/svg"
 											fill="none"
 											viewBox="0 0 24 24"
@@ -295,14 +295,14 @@ export const SignInForm = ({
 						</form>
 
 						<div className="relative my-2 flex items-center sm:my-3">
-							<div className="grow border-t border-[#39393E]"></div>
-							<span className="mx-3 shrink text-xs text-[#9a9da1] sm:mx-4 sm:text-sm">or</span>
-							<div className="grow border-t border-[#39393E]"></div>
+							<div className="grow border-t border-sub-line"></div>
+							<span className="mx-3 shrink text-xs text-sub-text-muted sm:mx-4 sm:text-sm">or</span>
+							<div className="grow border-t border-sub-line"></div>
 						</div>
 
 						<div className="flex w-full flex-col gap-2 sm:gap-3">
 							<button
-								className="relative flex w-full items-center justify-center gap-2 rounded-lg border border-[#39393E] bg-[#222429] py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-[#2a2b30] disabled:cursor-not-allowed disabled:opacity-50 sm:py-3"
+								className="relative flex w-full items-center justify-center gap-2 rounded-lg border border-sub-line bg-sub-card py-2.5 text-sm font-medium text-on-brand transition-all duration-200 hover:bg-sub-card-raised disabled:cursor-not-allowed disabled:opacity-50 sm:py-3"
 								onClick={() => void handleWalletSignIn()}
 								disabled={signInWithEthereumMutation.isPending}
 							>
@@ -311,13 +311,13 @@ export const SignInForm = ({
 							</button>
 
 							{signInWithEthereumMutation.error ? (
-								<div className="text-center text-xs text-red-500">
+								<div className="text-center text-xs text-error">
 									{signInWithEthereumMutation.error.message || 'Failed to sign in with Ethereum'}
 								</div>
 							) : null}
 
 							<button
-								className="relative flex w-full items-center justify-center gap-2 rounded-lg border border-[#39393E] bg-[#222429] py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-[#2a2b30] disabled:cursor-not-allowed disabled:opacity-50 sm:py-3"
+								className="relative flex w-full items-center justify-center gap-2 rounded-lg border border-sub-line bg-sub-card py-2.5 text-sm font-medium text-on-brand transition-all duration-200 hover:bg-sub-card-raised disabled:cursor-not-allowed disabled:opacity-50 sm:py-3"
 								onClick={() => {
 									void signInWithGoogleMutation.mutateAsync().then(() => dialogStore.hide())
 								}}
@@ -328,13 +328,13 @@ export const SignInForm = ({
 							</button>
 
 							{signInWithGoogleMutation.error ? (
-								<div className="text-center text-xs text-red-500">
+								<div className="text-center text-xs text-error">
 									{signInWithGoogleMutation.error.message?.slice(0, 100)}
 								</div>
 							) : null}
 
 							<button
-								className="relative flex w-full items-center justify-center gap-2 rounded-lg border border-[#39393E] bg-[#222429] py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-[#2a2b30] disabled:cursor-not-allowed disabled:opacity-50 sm:py-3"
+								className="relative flex w-full items-center justify-center gap-2 rounded-lg border border-sub-line bg-sub-card py-2.5 text-sm font-medium text-on-brand transition-all duration-200 hover:bg-sub-card-raised disabled:cursor-not-allowed disabled:opacity-50 sm:py-3"
 								onClick={() => {
 									void signInWithGithubMutation.mutateAsync().then(() => dialogStore.hide())
 								}}
@@ -345,39 +345,39 @@ export const SignInForm = ({
 							</button>
 
 							{signInWithGithubMutation.error ? (
-								<div className="text-center text-xs text-red-500">
+								<div className="text-center text-xs text-error">
 									{signInWithGithubMutation.error.message?.slice(0, 100)}
 								</div>
 							) : null}
 						</div>
 
 						{pendingActionMessage ? (
-							<div className="mt-3 mb-3 rounded-lg border border-[#5C5CF9]/30 bg-[#5C5CF9]/10 p-2.5 sm:mt-4 sm:mb-4 sm:p-3">
-								<p className="text-center text-xs text-[#b4b7bc] sm:text-sm">{pendingActionMessage}</p>
+							<div className="mt-3 mb-3 rounded-lg border border-sub-purple-500/30 bg-sub-purple-500/10 p-2.5 sm:mt-4 sm:mb-4 sm:p-3">
+								<p className="text-center text-xs text-sub-text-soft sm:text-sm">{pendingActionMessage}</p>
 							</div>
 						) : null}
 					</>
 				) : (
 					<form className="flex flex-col gap-4" onSubmit={(e) => void handleForgotPassword(e)}>
 						<div className="mb-1">
-							<p className="rounded-lg border border-[#39393E] bg-[#222429] p-3 text-xs text-[#b4b7bc]">
+							<p className="rounded-lg border border-sub-line bg-sub-card p-3 text-xs text-sub-text-soft">
 								Enter your email address and we'll send you a link to reset your password.
 							</p>
 						</div>
 
 						<div className="space-y-1.5">
-							<label htmlFor={forgotEmailInputId} className="text-sm font-medium text-[#b4b7bc]">
+							<label htmlFor={forgotEmailInputId} className="text-sm font-medium text-sub-text-soft">
 								Email
 							</label>
 							<div className="relative">
-								<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#8a8c90]">
+								<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sub-text-muted">
 									<Icon name="mail" height={16} width={16} />
 								</div>
 								<input
 									id={forgotEmailInputId}
 									type="email"
 									required
-									className="w-full rounded-lg border border-[#39393E] bg-[#222429] p-3 pl-10 text-white transition-all duration-200 placeholder:text-[#8a8c90] focus:border-[#5C5CF9] focus:ring-1 focus:ring-[#5C5CF9] focus:outline-hidden"
+									className="w-full rounded-lg border border-sub-line bg-sub-card p-3 pl-10 text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple-500 focus:ring-1 focus:ring-sub-purple-500 focus:outline-hidden"
 									value={email}
 									onChange={(e) => setEmail(e.target.value)}
 								/>
@@ -385,13 +385,13 @@ export const SignInForm = ({
 						</div>
 
 						<button
-							className="mt-1 w-full rounded-lg bg-linear-to-r from-[#5C5CF9] to-[#6E6EFA] py-3 font-medium text-white shadow-lg transition-all duration-200 hover:from-[#4A4AF0] hover:to-[#5A5AF5] hover:shadow-[#5C5CF9]/20 disabled:cursor-not-allowed disabled:opacity-50"
+							className="mt-1 w-full rounded-lg bg-linear-to-r from-sub-purple-500 to-sub-purple-soft py-3 font-medium text-on-brand shadow-lg transition-all duration-200 hover:from-sub-purple-hover hover:to-sub-purple-500 hover:shadow-sub-purple-500/20 disabled:cursor-not-allowed disabled:opacity-50"
 							disabled={resetPasswordMutation.isPending}
 						>
 							{resetPasswordMutation.isPending ? (
 								<span className="flex items-center justify-center gap-2">
 									<svg
-										className="size-5 animate-spin text-white"
+										className="size-5 animate-spin text-on-brand"
 										xmlns="http://www.w3.org/2000/svg"
 										fill="none"
 										viewBox="0 0 24 24"
@@ -418,14 +418,12 @@ export const SignInForm = ({
 						</button>
 
 						{resetPasswordMutation.error ? (
-							<div className="text-center text-xs text-red-500">
-								{resetPasswordMutation.error.message?.slice(0, 100)}
-							</div>
+							<div className="text-center text-xs text-error">{resetPasswordMutation.error.message?.slice(0, 100)}</div>
 						) : null}
 
 						<button
 							type="button"
-							className="mt-1 text-center text-xs font-medium text-[#5C5CF9] transition-colors hover:text-[#7C7CFF]"
+							className="mt-1 text-center text-xs font-medium text-sub-purple-500 transition-colors hover:text-sub-purple-soft"
 							onClick={() => setFlow('signin')}
 						>
 							Back to sign in
@@ -436,20 +434,20 @@ export const SignInForm = ({
 			<Ariakit.TabPanel tabId="signup">
 				<form className="flex flex-col gap-4" onSubmit={(e) => void handleEmailSignUp(e)}>
 					<div className="space-y-1.5">
-						<label htmlFor={signUpEmailInputId} className="text-sm font-medium text-[#b4b7bc]">
+						<label htmlFor={signUpEmailInputId} className="text-sm font-medium text-sub-text-soft">
 							Email
 						</label>
 						<div className="relative">
-							<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#8a8c90]">
+							<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sub-text-muted">
 								<Icon name="mail" height={16} width={16} />
 							</div>
 							<input
 								id={signUpEmailInputId}
 								type="email"
 								required
-								className={`w-full rounded-lg border bg-[#222429] p-3 pl-10 ${
-									emailError ? 'border-red-500' : 'border-[#39393E]'
-								} text-white transition-all duration-200 placeholder:text-[#8a8c90] focus:border-[#5C5CF9] focus:ring-1 focus:ring-[#5C5CF9] focus:outline-hidden`}
+								className={`w-full rounded-lg border bg-sub-card p-3 pl-10 ${
+									emailError ? 'border-error' : 'border-sub-line'
+								} text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple-500 focus:ring-1 focus:ring-sub-purple-500 focus:outline-hidden`}
 								value={email}
 								onChange={(e) => {
 									setEmail(e.target.value)
@@ -457,24 +455,24 @@ export const SignInForm = ({
 								}}
 							/>
 						</div>
-						{emailError ? <p className="mt-1 text-xs text-red-500">{emailError}</p> : null}
+						{emailError ? <p className="mt-1 text-xs text-error">{emailError}</p> : null}
 					</div>
 
 					<div className="space-y-1.5">
-						<label htmlFor={signUpPasswordInputId} className="text-sm font-medium text-[#b4b7bc]">
+						<label htmlFor={signUpPasswordInputId} className="text-sm font-medium text-sub-text-soft">
 							Password
 						</label>
 						<div className="relative">
-							<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#8a8c90]">
+							<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sub-text-muted">
 								<Icon name="key" height={16} width={16} />
 							</div>
 							<input
 								id={signUpPasswordInputId}
 								type="password"
 								required
-								className={`w-full rounded-lg border bg-[#222429] p-3 pl-10 ${
-									passwordError ? 'border-red-500' : 'border-[#39393E]'
-								} text-white transition-all duration-200 placeholder:text-[#8a8c90] focus:border-[#5C5CF9] focus:ring-1 focus:ring-[#5C5CF9] focus:outline-hidden`}
+								className={`w-full rounded-lg border bg-sub-card p-3 pl-10 ${
+									passwordError ? 'border-error' : 'border-sub-line'
+								} text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple-500 focus:ring-1 focus:ring-sub-purple-500 focus:outline-hidden`}
 								value={password}
 								onChange={(e) => {
 									setPassword(e.target.value)
@@ -489,24 +487,24 @@ export const SignInForm = ({
 								}}
 							/>
 						</div>
-						{passwordError ? <p className="mt-1 text-xs text-red-500">{passwordError}</p> : null}
+						{passwordError ? <p className="mt-1 text-xs text-error">{passwordError}</p> : null}
 					</div>
 
 					<div className="space-y-1.5">
-						<label htmlFor={signUpConfirmInputId} className="text-sm font-medium text-[#b4b7bc]">
+						<label htmlFor={signUpConfirmInputId} className="text-sm font-medium text-sub-text-soft">
 							Confirm Password
 						</label>
 						<div className="relative">
-							<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#8a8c90]">
+							<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sub-text-muted">
 								<Icon name="key" height={16} width={16} />
 							</div>
 							<input
 								id={signUpConfirmInputId}
 								type="password"
 								required
-								className={`w-full rounded-lg border bg-[#222429] p-3 pl-10 ${
-									confirmPasswordError ? 'border-red-500' : 'border-[#39393E]'
-								} text-white transition-all duration-200 placeholder:text-[#8a8c90] focus:border-[#5C5CF9] focus:ring-1 focus:ring-[#5C5CF9] focus:outline-hidden`}
+								className={`w-full rounded-lg border bg-sub-card p-3 pl-10 ${
+									confirmPasswordError ? 'border-error' : 'border-sub-line'
+								} text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple-500 focus:ring-1 focus:ring-sub-purple-500 focus:outline-hidden`}
 								value={confirmPassword}
 								onChange={(e) => {
 									setConfirmPassword(e.target.value)
@@ -514,17 +512,17 @@ export const SignInForm = ({
 								}}
 							/>
 						</div>
-						{confirmPasswordError ? <p className="mt-1 text-xs text-red-500">{confirmPasswordError}</p> : null}
+						{confirmPasswordError ? <p className="mt-1 text-xs text-error">{confirmPasswordError}</p> : null}
 					</div>
 
 					<label className="flex items-center gap-2">
 						<input type="checkbox" className="size-4" required />
-						<span className="text-sm text-[#b4b7bc]">
+						<span className="text-sm text-sub-text-soft">
 							I agree to the{' '}
 							<BasicLink
 								href="/terms"
 								target="_blank"
-								className="font-medium text-[#5C5CF9] transition-colors hover:text-[#7C7CFF]"
+								className="font-medium text-sub-purple-500 transition-colors hover:text-sub-purple-soft"
 							>
 								Terms of Service
 							</BasicLink>{' '}
@@ -532,7 +530,7 @@ export const SignInForm = ({
 							<BasicLink
 								href="/privacy-policy"
 								target="_blank"
-								className="font-medium text-[#5C5CF9] transition-colors hover:text-[#7C7CFF]"
+								className="font-medium text-sub-purple-500 transition-colors hover:text-sub-purple-soft"
 							>
 								Privacy Policy
 							</BasicLink>
@@ -547,7 +545,7 @@ export const SignInForm = ({
 							checked={promotionalEmails !== 'off'}
 							onChange={(e) => setPromotionalEmails(e.target.checked ? 'on' : 'off')}
 						/>
-						<label htmlFor={promotionalEmailsCheckboxId} className="text-sm text-[#b4b7bc]">
+						<label htmlFor={promotionalEmailsCheckboxId} className="text-sm text-sub-text-soft">
 							{PROMO_EMAILS_TEXT}
 						</label>
 					</div>
@@ -565,13 +563,13 @@ export const SignInForm = ({
 					</div>
 
 					<button
-						className="mt-4 w-full rounded-lg bg-linear-to-r from-[#5C5CF9] to-[#6E6EFA] py-3 font-medium text-white shadow-lg transition-all duration-200 hover:from-[#4A4AF0] hover:to-[#5A5AF5] hover:shadow-[#5C5CF9]/20 disabled:cursor-not-allowed disabled:opacity-50"
+						className="mt-4 w-full rounded-lg bg-linear-to-r from-sub-purple-500 to-sub-purple-soft py-3 font-medium text-on-brand shadow-lg transition-all duration-200 hover:from-sub-purple-hover hover:to-sub-purple-500 hover:shadow-sub-purple-500/20 disabled:cursor-not-allowed disabled:opacity-50"
 						disabled={loaders.signup || !turnstileToken}
 					>
 						{loaders.signup ? (
 							<span className="flex items-center justify-center gap-2">
 								<svg
-									className="size-5 animate-spin text-white"
+									className="size-5 animate-spin text-on-brand"
 									xmlns="http://www.w3.org/2000/svg"
 									fill="none"
 									viewBox="0 0 24 24"

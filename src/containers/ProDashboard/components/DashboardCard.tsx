@@ -24,7 +24,7 @@ function DashboardAuthorLink({ author }: { author: Dashboard['author'] }) {
 	return (
 		<BasicLink
 			href={`/authors/${author.slug}`}
-			className="relative z-10 mt-1 inline-flex max-w-full items-center gap-1.5 text-xs text-(--legacy-text-label) transition-colors hover:text-(--legacy-old-blue)"
+			className="relative z-10 mt-1 inline-flex max-w-full items-center gap-1.5 text-xs text-(--pro-text-label) transition-colors hover:text-(--pro-old-blue)"
 		>
 			{author.avatarUrl ? (
 				// eslint-disable-next-line @next/next/no-img-element
@@ -109,9 +109,9 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 
 	return (
 		<div
-			className={`relative isolate flex ${viewMode === 'grid' ? 'min-h-[220px]' : ''} flex-col overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) transition-[border-color,box-shadow,background-color] duration-200 ease-out hover:border-(--legacy-old-blue)/30 hover:bg-pro-blue-300/5 hover:shadow-lg hover:shadow-pro-blue-300/10 dark:hover:border-(--legacy-old-blue)/40 dark:hover:bg-pro-blue-300/10 ${className ?? ''}`}
+			className={`relative isolate flex ${viewMode === 'grid' ? 'min-h-[220px]' : ''} flex-col overflow-hidden rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) transition-[border-color,box-shadow,background-color] duration-200 ease-out hover:border-(--pro-old-blue)/30 hover:bg-pro-blue-300/5 hover:shadow-lg hover:shadow-pro-blue-300/10 dark:hover:border-(--pro-old-blue)/40 dark:hover:bg-pro-blue-300/10 ${className ?? ''}`}
 		>
-			<div className="h-1.5 w-full bg-linear-to-r from-(--legacy-old-blue)/20 via-(--legacy-old-blue)/10 to-transparent" />
+			<div className="h-1.5 w-full bg-linear-to-r from-(--pro-old-blue)/20 via-(--pro-old-blue)/10 to-transparent" />
 
 			<div className="flex flex-1 flex-col gap-1.5 p-3">
 				<div className="flex min-w-0 items-start gap-2">
@@ -147,7 +147,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 										onClick={handleDeleteClick}
 									/>
 								}
-								className="z-10 flex items-center justify-center gap-2 rounded-md bg-red-500/10 px-2 py-1.75 text-sm font-medium text-(--error)"
+								className="z-10 flex items-center justify-center gap-2 rounded-md bg-error/10 px-2 py-1.75 text-sm font-medium text-error"
 							>
 								{isDeleting ? <LoadingSpinner size={12} /> : <Icon name="trash-2" height={12} width={12} />}
 							</Tooltip>
@@ -158,7 +158,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 				{viewMode === 'grid' ? <Tags dashboard={dashboard} onTagClick={onTagClick} /> : null}
 
 				{dashboard.description ? (
-					<p className="mt-0.5 line-clamp-2 text-sm leading-snug text-(--legacy-text-label) opacity-80">
+					<p className="mt-0.5 line-clamp-2 text-sm leading-snug text-(--pro-text-label) opacity-80">
 						{dashboard.description}
 					</p>
 				) : null}
@@ -167,7 +167,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 					<div className="flex flex-wrap items-center gap-2">
 						{dashboard.data.items?.length ? (
 							<span
-								className="flex items-center gap-1.5 rounded-md bg-blue-500/15 px-2 py-1 text-xs font-medium text-blue-600 tabular-nums dark:text-blue-400"
+								className="flex items-center gap-1.5 rounded-md bg-brand/15 px-2 py-1 text-xs font-medium text-link tabular-nums"
 								title={itemTypes}
 							>
 								<Icon name="layers" height={12} width={12} />
@@ -175,7 +175,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 							</span>
 						) : null}
 						<span
-							className="flex items-center gap-1.5 rounded-md bg-blue-500/15 px-2 py-1 text-xs font-medium text-blue-600 tabular-nums dark:text-blue-400"
+							className="flex items-center gap-1.5 rounded-md bg-brand/15 px-2 py-1 text-xs font-medium text-link tabular-nums"
 							title="Views"
 						>
 							<Icon name="eye" height={12} width={12} />
@@ -184,7 +184,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 						<CardLikeButton dashboardId={dashboard.id} liked={dashboard.liked} likeCount={dashboard.likeCount} />
 					</div>
 					<p
-						className="flex items-center gap-1.5 text-xs text-(--legacy-text-form)"
+						className="flex items-center gap-1.5 text-xs text-(--pro-text-form)"
 						title={new Date(dashboard.editedAt || dashboard.updated).toLocaleString()}
 					>
 						<Icon name="clock" height={10} width={10} />
@@ -223,13 +223,13 @@ const Tags = ({ dashboard, onTagClick }: { dashboard: Dashboard; onTagClick?: (t
 						e.stopPropagation()
 						onTagClick?.(tag)
 					}}
-					className="z-10 max-w-[200px] truncate rounded-full border border-(--legacy-switch-border) bg-(--legacy-cards-bg) px-2.5 py-1 text-xs font-medium text-(--legacy-text-form) transition-all duration-150 hover:scale-105 hover:border-transparent hover:bg-(--legacy-link-active-bg) hover:text-white"
+					className="z-10 max-w-[200px] truncate rounded-full border border-(--pro-switch-border) bg-(--pro-cards-bg) px-2.5 py-1 text-xs font-medium text-(--pro-text-form) transition-all duration-150 hover:scale-105 hover:border-transparent hover:bg-brand hover:text-on-brand"
 				>
 					{tag}
 				</button>
 			))}
 			{dashboard.tags.length > 2 ? (
-				<span className="rounded-full bg-(--bg-hover) px-2 py-1 text-xs text-(--legacy-text-label)">
+				<span className="rounded-full bg-(--bg-hover) px-2 py-1 text-xs text-(--pro-text-label)">
 					+{dashboard.tags.length - 2}
 				</span>
 			) : null}

@@ -45,7 +45,7 @@ export const ResearchSpotlight: React.FC<ResearchSpotlightProps> = ({ title, art
 
 	return (
 		<div id="spotlight">
-			<div className="mb-[26px] flex items-center gap-x-[15px]">
+			<div className="mb-6.5 flex items-center gap-x-3.75">
 				<ResearchIcon name="spotlight" width={32} height={32} aria-hidden />
 				<TitleLine title={title} />
 			</div>
@@ -78,15 +78,15 @@ export const ResearchSpotlight: React.FC<ResearchSpotlightProps> = ({ title, art
 						<div className="flex grow flex-col py-4">
 							<div
 								className={clsx(
-									'font-semibold text-[#0d1e3b] group-hover:text-[#0c2956] group-hover:opacity-70 dark:text-white dark:group-hover:text-white/70',
+									'font-semibold text-(--research-navy-soft) group-hover:text-(--research-navy-soft) group-hover:opacity-70 dark:text-ai-primary dark:group-hover:text-on-brand/70',
 									count === 5 || count === 6
-										? 'line-clamp-4 text-[16px] leading-[120%]'
-										: 'line-clamp-3 text-[16px] leading-[150%] lg:text-[18px]'
+										? 'line-clamp-4 text-base leading-[120%]'
+										: 'line-clamp-3 text-base leading-[150%] lg:text-lg'
 								)}
 							>
 								{article.title}
 							</div>
-							<time className="mt-2.5 hidden text-[14px] font-medium text-[#787878] lg:block dark:text-white">
+							<time className="mt-2.5 hidden text-sm font-medium text-secondary lg:block dark:text-ai-primary">
 								{formatDate(article.displayDate ?? article.publishedAt)}
 							</time>
 						</div>

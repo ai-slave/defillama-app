@@ -50,7 +50,7 @@ function WalletSignInButtonInner({ dialogStore, setError, autoStart = false }: W
 	return (
 		<button
 			type="button"
-			className="text-(--legacy-link)"
+			className="text-link"
 			onClick={() => void handleWalletSignIn()}
 			disabled={signInWithEthereumMutation.isPending}
 		>

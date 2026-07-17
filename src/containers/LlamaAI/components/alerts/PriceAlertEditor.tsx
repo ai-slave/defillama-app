@@ -40,7 +40,7 @@ export function PriceAlertEditor({
 		>
 			<div className="flex flex-col gap-1">
 				<span className={alertFieldLabelClass}>Token</span>
-				<span className="font-mono text-sm text-(--text-primary)">{formatTokenLabel(trigger.token_nk)}</span>
+				<span className="font-mono text-sm text-primary">{formatTokenLabel(trigger.token_nk)}</span>
 			</div>
 			<div className="flex flex-wrap items-center gap-2">
 				<SegmentedToggle<'above' | 'below'>
@@ -57,20 +57,20 @@ export function PriceAlertEditor({
 				<button
 					type="button"
 					onClick={onCancel}
-					className="rounded-lg px-3 py-1.5 text-xs text-[#666] transition-colors hover:bg-black/[0.05] dark:text-[#919296] dark:hover:bg-white/[0.06]"
+					className="rounded-lg px-3 py-1.5 text-xs text-ai-tertiary transition-colors hover:bg-ai-wash"
 				>
 					Cancel
 				</button>
 				<button
 					type="submit"
 					disabled={isSaving || !isValueValid || !canSave}
-					className="flex items-center gap-1.5 rounded-lg bg-(--old-blue) px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1a58b4] disabled:opacity-50"
+					className="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-old-blue-deep disabled:opacity-50"
 				>
 					{isSaving ? <LoadingSpinner size={12} /> : <Icon name="check" className="size-3.5" />}
 					Save
 				</button>
 			</div>
-			{errorMessage ? <p className="text-center text-xs text-red-500">{errorMessage}</p> : null}
+			{errorMessage ? <p className="text-center text-xs text-ai-error-vivid">{errorMessage}</p> : null}
 		</form>
 	)
 }

@@ -38,7 +38,7 @@ export const trendingContractsColumns = (chain: string): ColumnDef<ITrendingCont
 					href={explorerUrl}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="flex items-center gap-3 text-blue-600 hover:underline dark:text-blue-400"
+					className="flex items-center gap-3 text-link hover:underline"
 				>
 					<span className="font-medium">{name || `${value.slice(0, 4)}...${value.slice(-4)}`}</span>
 				</a>
@@ -58,7 +58,7 @@ export const trendingContractsColumns = (chain: string): ColumnDef<ITrendingCont
 		cell: ({ getValue }) => {
 			const value = getValue() as number
 			return (
-				<span className={` ${value > 0 ? 'text-green-500' : value < 0 ? 'text-red-500' : 'pro-text2'}`}>
+				<span className={` ${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'pro-text2'}`}>
 					<PercentChange percent={value} />
 				</span>
 			)
@@ -77,7 +77,7 @@ export const trendingContractsColumns = (chain: string): ColumnDef<ITrendingCont
 		cell: ({ getValue }) => {
 			const value = getValue() as number
 			return (
-				<span className={` ${value > 0 ? 'text-green-500' : value < 0 ? 'text-red-500' : 'pro-text2'}`}>
+				<span className={` ${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'pro-text2'}`}>
 					<PercentChange percent={value} />
 				</span>
 			)
@@ -96,7 +96,7 @@ export const trendingContractsColumns = (chain: string): ColumnDef<ITrendingCont
 		cell: ({ getValue }) => {
 			const value = getValue() as number
 			return (
-				<span className={` ${value > 0 ? 'text-green-500' : value < 0 ? 'text-red-500' : 'pro-text2'}`}>
+				<span className={` ${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'pro-text2'}`}>
 					<PercentChange percent={value} />
 				</span>
 			)

@@ -66,33 +66,33 @@ export function DashboardPaywallModal({ dialogStore, reason = 'pro-feature' }: D
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog
-				className="dialog flex max-h-[85dvh] max-w-sm flex-col overflow-hidden rounded-xl border border-[#39393E] bg-[#1a1b1f] p-5 text-white shadow-2xl max-sm:drawer max-sm:rounded-b-none sm:p-6"
+				className="dialog flex max-h-[85dvh] max-w-sm flex-col overflow-hidden rounded-xl border border-sub-line bg-sub-ink p-5 text-on-brand shadow-2xl max-sm:drawer max-sm:rounded-b-none sm:p-6"
 				portal
 				unmountOnHide
 			>
-				<Ariakit.DialogDismiss className="ml-auto shrink-0 rounded-full p-1.5 text-[#8a8c90] transition-colors hover:bg-[#39393E] hover:text-white">
+				<Ariakit.DialogDismiss className="ml-auto shrink-0 rounded-full p-1.5 text-sub-text-muted transition-colors hover:bg-sub-line hover:text-on-brand">
 					<Icon name="x" height={18} width={18} />
 					<span className="sr-only">Close</span>
 				</Ariakit.DialogDismiss>
 
 				<div className="flex flex-col items-center gap-4 text-center">
-					<div className="flex size-14 items-center justify-center rounded-full bg-[#5C5CF9]/15">
-						<Icon name={config.icon} height={28} width={28} className="text-[#5C5CF9]" />
+					<div className="flex size-14 items-center justify-center rounded-full bg-sub-purple-500/15">
+						<Icon name={config.icon} height={28} width={28} className="text-sub-purple-500" />
 					</div>
 
 					<div className="space-y-1.5">
 						<Ariakit.DialogHeading className="text-lg font-semibold">{config.title}</Ariakit.DialogHeading>
-						<p className="text-sm leading-relaxed text-[#8a8c90]">{config.description}</p>
+						<p className="text-sm leading-relaxed text-sub-text-muted">{config.description}</p>
 					</div>
 
 					<div className="w-full rounded-lg bg-[#242529] p-4">
-						<p className="mb-2.5 text-left text-xs font-medium tracking-wide text-[#8a8c90] uppercase">
+						<p className="mb-2.5 text-left text-xs font-medium tracking-wide text-sub-text-muted uppercase">
 							Included with Pro
 						</p>
 						<ul className="space-y-2">
 							{config.features.map((feature) => (
-								<li key={feature} className="flex items-center gap-2.5 text-left text-sm text-[#c5c5c7]">
-									<Icon name="check" height={14} width={14} className="shrink-0 text-[#5C5CF9]" />
+								<li key={feature} className="flex items-center gap-2.5 text-left text-sm text-sub-text-soft">
+									<Icon name="check" height={14} width={14} className="shrink-0 text-sub-purple-500" />
 									{feature}
 								</li>
 							))}
@@ -102,7 +102,7 @@ export function DashboardPaywallModal({ dialogStore, reason = 'pro-feature' }: D
 					<BasicLink
 						href="/subscription"
 						data-umami-event="dashboard-paywall-upgrade"
-						className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#5C5CF9] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#4A4AF0]"
+						className="flex w-full items-center justify-center gap-2 rounded-lg bg-sub-purple-500 px-4 py-2.5 text-sm font-medium text-on-brand transition-colors hover:bg-sub-purple-hover"
 					>
 						<Icon name="sparkles" height={16} width={16} />
 						Upgrade to Pro

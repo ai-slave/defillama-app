@@ -126,16 +126,14 @@ function DashboardPanelInner({
 		>
 			{config ? (
 				<div
-					className="flex h-full flex-col rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) dark:border-[#222324]"
+					className="flex h-full flex-col rounded-lg border border-ai-line bg-surface"
 					style={{ width: 'min(50vw, 800px)', minWidth: '400px' }}
 				>
-					<div className="flex items-center justify-between border-b border-[#e6e6e6] px-4 py-3 dark:border-[#222324]">
+					<div className="flex items-center justify-between border-b border-ai-line px-4 py-3">
 						<div className="flex items-center gap-2 overflow-hidden">
-							<Icon name="layout-grid" className="size-4 shrink-0 text-[#2172e5] dark:text-[#4190f7]" />
-							<span className="truncate text-sm font-medium text-[#1a1a2e] dark:text-[#e2e8f0]">
-								{config.dashboardName}
-							</span>
-							<span className="shrink-0 text-xs text-[#636e72] dark:text-[#8a8f98]">
+							<Icon name="layout-grid" className="size-4 shrink-0 text-ai-old-blue" />
+							<span className="truncate text-sm font-medium text-ai-primary">{config.dashboardName}</span>
+							<span className="shrink-0 text-xs text-ai-tertiary">
 								{config.items.length} {config.items.length === 1 ? 'item' : 'items'}
 							</span>
 						</div>
@@ -143,14 +141,14 @@ function DashboardPanelInner({
 							<button
 								onClick={() => handleCreateDashboard()}
 								disabled={isPending || !config}
-								className="flex items-center gap-1.5 rounded-md bg-[#2172e5] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1a5bc4] disabled:opacity-50"
+								className="flex items-center gap-1.5 rounded-md bg-ai-old-blue px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-old-blue-deep disabled:opacity-50"
 							>
 								{isPending ? 'Creating...' : 'Create Dashboard'}
 							</button>
 							<button
 								onClick={onClose}
 								aria-label="Close"
-								className="flex size-7 items-center justify-center rounded-md text-[#636e72] transition-colors hover:bg-[#e6e6e6] dark:text-[#8a8f98] dark:hover:bg-[#222324]"
+								className="flex size-7 items-center justify-center rounded-md text-ai-tertiary transition-colors hover:bg-ai-surface-muted"
 							>
 								<Icon name="x" className="size-4" />
 							</button>
@@ -166,23 +164,23 @@ function DashboardPanelInner({
 					</div>
 
 					{hasMultipleVersions ? (
-						<div className="flex items-center justify-center gap-3 border-t border-[#e6e6e6] px-4 py-2.5 dark:border-[#222324]">
+						<div className="flex items-center justify-center gap-3 border-t border-ai-line px-4 py-2.5">
 							<button
 								onClick={() => onVersionChange(versionIndex - 1)}
 								disabled={versionIndex === 0}
 								aria-label="Previous version"
-								className="flex size-6 items-center justify-center rounded-sm text-[#636e72] transition-colors hover:bg-[#e6e6e6] disabled:opacity-30 dark:text-[#8a8f98] dark:hover:bg-[#222324]"
+								className="flex size-6 items-center justify-center rounded-sm text-ai-tertiary transition-colors hover:bg-ai-surface-muted disabled:opacity-30"
 							>
 								<Icon name="chevron-left" className="size-3.5" />
 							</button>
-							<span className="text-xs text-[#636e72] dark:text-[#8a8f98]">
+							<span className="text-xs text-ai-tertiary">
 								Version {versionIndex + 1} of {versions.length}
 							</span>
 							<button
 								onClick={() => onVersionChange(versionIndex + 1)}
 								disabled={versionIndex === versions.length - 1}
 								aria-label="Next version"
-								className="flex size-6 items-center justify-center rounded-sm text-[#636e72] transition-colors hover:bg-[#e6e6e6] disabled:opacity-30 dark:text-[#8a8f98] dark:hover:bg-[#222324]"
+								className="flex size-6 items-center justify-center rounded-sm text-ai-tertiary transition-colors hover:bg-ai-surface-muted disabled:opacity-30"
 							>
 								<Icon name="chevron-right" className="size-3.5" />
 							</button>

@@ -178,7 +178,7 @@ export const DimensionProtocolChartByType = ({
 		return (
 			<ChartPanelExportShellFallback role="alert" className="col-span-2 flex flex-col items-center justify-center">
 				<div className="flex flex-col gap-2 p-2">
-					<ul className="flex flex-col gap-4 text-xs text-(--error)">
+					<ul className="flex flex-col gap-4 text-xs text-error">
 						{failedApiErrors.map((apiError, index) => (
 							<li key={`${apiError}-${index}`} className="break-all">
 								{apiError}

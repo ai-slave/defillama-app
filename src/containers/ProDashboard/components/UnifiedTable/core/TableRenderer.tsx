@@ -23,7 +23,7 @@ export const TableRenderer = React.memo(function TableRenderer({
 }: TableRendererProps) {
 	if (isLoading) {
 		return (
-			<div className="relative isolate h-[450px] overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
+			<div className="relative isolate h-[450px] overflow-hidden rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg)">
 				<div className="flex h-full items-center justify-center">
 					<LoadingSpinner />
 				</div>
@@ -32,11 +32,11 @@ export const TableRenderer = React.memo(function TableRenderer({
 	}
 
 	return (
-		<div className="relative isolate flex h-[450px] flex-col overflow-hidden rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
+		<div className="relative isolate flex h-[450px] flex-col overflow-hidden rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg)">
 			<UnifiedVirtualTable table={table} rowStateVersion={rowStateVersion} />
 			{isEmpty ? (
-				<div className="pointer-events-none absolute inset-0 z-5 flex items-center justify-center bg-linear-to-b from-transparent via-(--legacy-cards-bg)/90 to-(--legacy-cards-bg)">
-					<div className="pointer-events-auto rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-4 py-3 text-sm text-(--legacy-text-secondary)">
+				<div className="pointer-events-none absolute inset-0 z-5 flex items-center justify-center bg-linear-to-b from-transparent via-(--pro-cards-bg)/90 to-(--pro-cards-bg)">
+					<div className="pointer-events-auto rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) px-4 py-3 text-sm text-(--pro-text-secondary)">
 						{emptyMessage}
 					</div>
 				</div>

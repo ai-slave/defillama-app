@@ -20,7 +20,7 @@ export function ExternalLinkInterstitial({ href, onClose, onAllowPermanently }: 
 			}}
 		>
 			<Ariakit.Dialog
-				className="dialog w-full max-w-md gap-0 border pro-dashboard border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-6 shadow-2xl"
+				className="dialog w-full max-w-md gap-0 border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) p-6 shadow-2xl"
 				unmountOnHide
 				portal
 				hideOnInteractOutside
@@ -35,7 +35,7 @@ export function ExternalLinkInterstitial({ href, onClose, onAllowPermanently }: 
 				<p className="mb-2 pro-text2">
 					You are about to visit an external site. DefiLlama is not responsible for its content.
 				</p>
-				<div className="mb-6 rounded-md border pro-border bg-(--legacy-bg-tertiary) p-3 text-sm break-all pro-text1">
+				<div className="mb-6 rounded-md border pro-border bg-surface-elevated-2 p-3 text-sm break-all pro-text1">
 					<div className="font-medium">{hostname}</div>
 					<div className="mt-1 text-xs break-all pro-text2">{href}</div>
 				</div>
@@ -69,7 +69,7 @@ export function ExternalLinkInterstitial({ href, onClose, onAllowPermanently }: 
 							if (href) window.open(href, '_blank', 'noopener,noreferrer')
 							onClose()
 						}}
-						className="rounded-md bg-(--legacy-old-blue) px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90"
+						className="rounded-md bg-(--pro-old-blue) px-4 py-2 text-sm font-medium text-on-brand transition-colors hover:opacity-90"
 					>
 						Continue
 					</a>

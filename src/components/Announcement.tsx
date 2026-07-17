@@ -46,8 +46,8 @@ export function Announcement(props: AnnouncementProps) {
 		setIsDismissed(true)
 	}
 
-	const wrapperStyle: React.CSSProperties & Record<'--legacy-link-bg', string> = {
-		'--legacy-link-bg': warning ? 'hsl(45deg 80% 50% / 18%)' : 'hsl(215deg 79% 51% / 12%)'
+	const wrapperStyle: React.CSSProperties & Record<'--announcement-bg', string> = {
+		'--announcement-bg': warning ? 'hsl(45deg 80% 50% / 18%)' : 'hsl(215deg 79% 51% / 12%)'
 	}
 
 	return (
@@ -56,7 +56,7 @@ export function Announcement(props: AnnouncementProps) {
 				'flex min-h-[38px] items-center justify-between gap-2 rounded-md p-1.5 text-sm',
 				className ??
 					clsx(
-						'border border-(--legacy-link-bg) bg-(--legacy-link-bg)',
+						'border border-(--announcement-bg) bg-(--announcement-bg)',
 						warning && 'text-amber-900 dark:text-amber-200'
 					),
 				dismissalToken ? `announcement-token--${dismissalToken}` : ''
@@ -66,7 +66,7 @@ export function Announcement(props: AnnouncementProps) {
 			<div className={clsx('flex-1 text-center', contentClassName)}>{children}</div>
 			{!notCancellable ? (
 				<button
-					className="flex size-6 shrink-0 items-center justify-center self-center rounded-md hover:bg-(--legacy-bg-input)"
+					className="flex size-6 shrink-0 items-center justify-center self-center rounded-md hover:bg-surface-elevated-1"
 					onClick={closeAnnouncement}
 				>
 					<Icon name="x" height={16} width={16} />

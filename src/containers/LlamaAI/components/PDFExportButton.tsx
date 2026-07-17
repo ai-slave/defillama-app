@@ -156,7 +156,7 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 						aria-label={isLoading ? 'Exporting PDF' : 'Export PDF options'}
 						className={
 							className ??
-							'flex items-center gap-1 rounded-md border border-(--legacy-form-control-border) px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-(--legacy-cards-border) disabled:text-(--legacy-text-disabled)'
+							'flex items-center gap-1 rounded-md border border-medium px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-medium disabled:text-tertiary'
 						}
 						disabled={loading}
 					>
@@ -167,7 +167,7 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 					portal
 					unmountOnHide
 					gutter={8}
-					className="z-50 flex min-w-[140px] flex-col rounded-md border border-[hsl(204,20%,88%)] bg-(--legacy-bg-main) text-(--legacy-text-primary) dark:border-[hsl(204,3%,32%)]"
+					className="z-50 flex min-w-[140px] flex-col rounded-md border border-ai-line bg-surface text-primary"
 				>
 					<Ariakit.MenuItem
 						data-umami-event="export-pdf"
@@ -176,7 +176,7 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 							void handlePDFExport(false)
 						}}
 						disabled={loading}
-						className="flex shrink-0 cursor-pointer items-center gap-2 px-3 py-2.5 text-sm first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--legacy-primary-hover) focus-visible:bg-(--legacy-primary-hover) aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-(--legacy-primary-hover)"
+						className="flex shrink-0 cursor-pointer items-center gap-2 px-3 py-2.5 text-sm first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-brand-muted focus-visible:bg-brand-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-brand-muted"
 					>
 						<Icon name="sun" height={14} width={14} className="shrink-0" />
 						Light Mode
@@ -188,7 +188,7 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 							void handlePDFExport(true)
 						}}
 						disabled={loading}
-						className="flex shrink-0 cursor-pointer items-center gap-2 px-3 py-2.5 text-sm first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--legacy-primary-hover) focus-visible:bg-(--legacy-primary-hover) aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-(--legacy-primary-hover)"
+						className="flex shrink-0 cursor-pointer items-center gap-2 px-3 py-2.5 text-sm first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-brand-muted focus-visible:bg-brand-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-brand-muted"
 					>
 						<Icon name="moon" height={14} width={14} className="shrink-0" />
 						Dark Mode

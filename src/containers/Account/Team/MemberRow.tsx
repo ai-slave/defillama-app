@@ -26,21 +26,21 @@ export function MemberRow({ member }: { member: TeamMember }) {
 
 	return (
 		<>
-			<div className="flex items-center gap-3 rounded-lg border border-(--sub-border-slate-100) p-3 dark:border-(--sub-border-strong)">
+			<div className="flex items-center gap-3 rounded-lg border border-sub-border-slate-100 p-3 dark:border-sub-border-strong">
 				<div className="min-w-0 flex-1">
 					<div className="flex items-center gap-2">
-						<span className="truncate text-sm text-(--sub-ink-primary) dark:text-white">{member.email}</span>
+						<span className="truncate text-sm text-sub-ink-primary dark:text-ai-primary">{member.email}</span>
 						{isAdminMember && (
-							<span className="shrink-0 rounded-full bg-(--sub-brand-primary)/10 px-2 py-0.5 text-[10px] font-medium text-(--sub-brand-primary)">
+							<span className="shrink-0 rounded-full bg-sub-brand-primary/10 px-2 py-0.5 text-[10px] font-medium text-sub-brand-primary">
 								Admin
 							</span>
 						)}
-						{isCurrentUser && <span className="shrink-0 text-[10px] text-(--sub-text-muted)">(you)</span>}
+						{isCurrentUser && <span className="shrink-0 text-[10px] text-sub-text-muted">(you)</span>}
 					</div>
 					<div className="mt-1 flex items-center gap-2">
 						<span
 							className={`text-xs ${
-								hasSubscription ? 'text-(--sub-green-600) dark:text-(--sub-green-400)' : 'text-(--sub-text-muted)'
+								hasSubscription ? 'text-sub-green-600 dark:text-sub-green-400' : 'text-sub-text-muted'
 							}`}
 						>
 							{getSubscriptionLabel(member.subscriptionType)}
@@ -54,7 +54,7 @@ export function MemberRow({ member }: { member: TeamMember }) {
 							hasAvailableSeats && (
 								<button
 									onClick={() => setShowAssignModal(true)}
-									className="flex h-7 items-center gap-1 rounded-md border border-(--sub-border-muted) px-2 text-xs font-medium text-(--sub-ink-primary) transition-colors hover:bg-(--sub-brand-primary)/5 dark:border-(--sub-border-strong) dark:text-white"
+									className="flex h-7 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-xs font-medium text-sub-ink-primary transition-colors hover:bg-sub-brand-primary/5 dark:border-sub-border-strong dark:text-ai-primary"
 									title="Assign subscription"
 								>
 									<Icon name="plus" height={12} width={12} />
@@ -64,7 +64,7 @@ export function MemberRow({ member }: { member: TeamMember }) {
 						) : (
 							<button
 								onClick={() => setShowUnassignConfirm(true)}
-								className="flex h-7 items-center gap-1 rounded-md border border-(--sub-border-muted) px-2 text-xs font-medium text-(--sub-text-muted) transition-colors hover:border-(--error) hover:text-(--error) dark:border-(--sub-border-strong)"
+								className="flex h-7 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-xs font-medium text-sub-text-muted transition-colors hover:border-error hover:text-error dark:border-sub-border-strong"
 								title="Unassign subscription"
 							>
 								<Icon name="x" height={12} width={12} />
@@ -74,7 +74,7 @@ export function MemberRow({ member }: { member: TeamMember }) {
 						{!isCurrentUser && !isAdminMember && (
 							<button
 								onClick={() => setShowRemoveConfirm(true)}
-								className="flex h-7 items-center justify-center rounded-md border border-(--sub-border-muted) px-2 text-(--sub-text-muted) transition-colors hover:border-(--error) hover:text-(--error) dark:border-(--sub-border-strong)"
+								className="flex h-7 items-center justify-center rounded-md border border-sub-border-muted px-2 text-sub-text-muted transition-colors hover:border-error hover:text-error dark:border-sub-border-strong"
 								title="Remove member"
 							>
 								<Icon name="trash-2" height={14} width={14} />

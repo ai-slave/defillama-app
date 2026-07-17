@@ -24,12 +24,12 @@ export function ResearchGridWithScrollbar({ id, title, articles, pageWidget }: R
 	return (
 		<div id={id}>
 			<div>
-				<div className="mb-[26px]">
+				<div className="mb-6.5">
 					<TitleLine title={title} />
 				</div>
 				<ResearchGridWithScrollbarScroller articles={articles} pageWidget={pageWidget} onHeightChange={setHeight} />
 
-				<div className="mt-auto shrink-0 pt-[18px] text-right">
+				<div className="mt-auto shrink-0 pt-4.5 text-right">
 					<ReadMoreLink url="/research?section=report" title="View all reports" />
 				</div>
 			</div>
@@ -85,10 +85,10 @@ function ResearchGridWithScrollbarScroller({ articles, pageWidget, onHeightChang
 							</div>
 							{i === 0 && <InViewAnalytics eventParams={[article, 'widget_impression', pageWidget]} />}
 							<div className="flex grow flex-col pt-4">
-								<div className="line-clamp-4 text-[16px] leading-[150%] font-semibold text-[#0d1e3b] group-hover:text-[#0c2956] group-hover:opacity-70 dark:text-white dark:group-hover:text-white/70">
+								<div className="line-clamp-4 text-base leading-[150%] font-semibold text-(--research-navy-soft) group-hover:text-(--research-navy-soft) group-hover:opacity-70 dark:text-ai-primary dark:group-hover:text-on-brand/70">
 									{article.title}
 								</div>
-								<div className="mt-[5px] text-[14px] font-medium text-[#787878] dark:text-white/80">
+								<div className="mt-1.25 text-sm font-medium text-secondary dark:text-on-brand/80">
 									{formatDate(article.displayDate ?? article.publishedAt)}
 								</div>
 							</div>

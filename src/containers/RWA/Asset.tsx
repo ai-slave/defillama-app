@@ -77,7 +77,7 @@ const ClassificationItem = ({ label, value, positive, description }: Classificat
 			className={`flex items-start justify-between gap-2 rounded-md border p-2 ${
 				isBoolean
 					? positive
-						? 'border-green-600/30 bg-green-600/10'
+						? 'border-success/30 bg-success/10'
 						: 'border-red-600/30 bg-red-600/10'
 					: 'border-subtle bg-surface'
 			}`}
@@ -85,11 +85,7 @@ const ClassificationItem = ({ label, value, positive, description }: Classificat
 			<p className="flex flex-col gap-1">
 				<span
 					className={`font-medium ${
-						isBoolean
-							? positive
-								? 'text-green-700 dark:text-green-400'
-								: 'text-red-700 dark:text-red-400'
-							: 'text-secondary'
+						isBoolean ? (positive ? 'text-success' : 'text-error dark:text-error') : 'text-secondary'
 					}`}
 				>
 					{label}
@@ -99,7 +95,7 @@ const ClassificationItem = ({ label, value, positive, description }: Classificat
 			{isBoolean ? (
 				<Icon
 					name={positive ? 'check-circle' : 'x'}
-					className={`size-5 shrink-0 ${positive ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}
+					className={`size-5 shrink-0 ${positive ? 'text-success' : 'text-error dark:text-error'}`}
 				/>
 			) : (
 				<span className="font-medium">{displayValue}</span>
@@ -123,20 +119,16 @@ const KYCItem = ({
 	return (
 		<div
 			className={`flex items-start justify-between gap-2 rounded-md border p-2 ${
-				required ? 'border-amber-600/30 bg-amber-600/10' : 'border-green-600/30 bg-green-600/10'
+				required ? 'border-amber-600/30 bg-amber-600/10' : 'border-success/30 bg-success/10'
 			}`}
 		>
 			<p className="flex flex-col gap-1">
-				<span
-					className={`font-medium ${required ? 'text-amber-700 dark:text-amber-400' : 'text-green-700 dark:text-green-400'}`}
-				>
-					{label}
-				</span>
+				<span className={`font-medium ${required ? 'text-warning' : 'text-success'}`}>{label}</span>
 				{description ? <span className="body-sm text-secondary">{description}</span> : null}
 			</p>
 			<Icon
 				name={required ? 'alert-triangle' : 'check-circle'}
-				className={`size-5 shrink-0 ${required ? 'text-amber-700 dark:text-amber-400' : 'text-green-700 dark:text-green-400'}`}
+				className={`size-5 shrink-0 ${required ? 'text-warning' : 'text-success'}`}
 			/>
 		</div>
 	)

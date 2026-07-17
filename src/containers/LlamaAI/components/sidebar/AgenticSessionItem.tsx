@@ -118,7 +118,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 			<form
 				ref={formRef}
 				onSubmit={(e) => void handleSave(e)}
-				className="group relative -mx-1.5 flex items-center gap-0.5 rounded-sm text-xs hover:bg-[#f7f7f7] data-[active=true]:bg-(--legacy-old-blue) data-[active=true]:text-white dark:hover:bg-[#222324]"
+				className="group relative -mx-1.5 flex items-center gap-0.5 rounded-sm text-xs hover:bg-ai-surface-muted data-[active=true]:bg-brand data-[active=true]:text-ai-white"
 				style={style}
 			>
 				<input
@@ -133,7 +133,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 				<div className="flex items-center justify-center gap-0.5">
 					<button
 						type="submit"
-						className="flex aspect-square items-center justify-center rounded-sm bg-(--legacy-old-blue) p-1.5 text-white"
+						className="flex aspect-square items-center justify-center rounded-sm bg-brand p-1.5 text-ai-white"
 						disabled={isUpdatingTitle}
 					>
 						{isUpdatingTitle ? (
@@ -145,7 +145,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					<button
 						type="button"
 						onClick={() => setIsEditing(false)}
-						className="flex aspect-square items-center justify-center rounded-sm bg-red-500/20 p-1.5 text-(--error)"
+						className="flex aspect-square items-center justify-center rounded-sm bg-ai-error-vivid/20 p-1.5 text-error"
 						disabled={isUpdatingTitle}
 					>
 						<Icon name="x" height={12} width={12} className="shrink-0" />
@@ -160,16 +160,16 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 			<button
 				type="button"
 				onClick={() => onToggleSelect?.(session.sessionId)}
-				className="group relative -mx-1.5 flex w-full items-center gap-2 rounded-sm p-1.5 text-left text-xs hover:bg-[#f7f7f7] dark:hover:bg-[#222324]"
+				className="group relative -mx-1.5 flex w-full items-center gap-2 rounded-sm p-1.5 text-left text-xs hover:bg-ai-surface-muted"
 				style={style}
 			>
 				<span
 					data-checked={isSelected}
-					className="flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-[#ccc] data-[checked=true]:border-(--legacy-old-blue) data-[checked=true]:bg-(--legacy-old-blue) dark:border-[#555] dark:data-[checked=true]:border-(--legacy-old-blue)"
+					className="flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-ai-line data-[checked=true]:border-brand data-[checked=true]:bg-brand dark:data-[checked=true]:border-brand"
 				>
 					{isSelected ? (
 						<svg
-							className="size-2.5 text-white"
+							className="size-2.5 text-ai-white"
 							viewBox="0 0 24 24"
 							fill="none"
 							stroke="currentColor"
@@ -189,7 +189,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 	return (
 		<div
 			data-active={isActive}
-			className="group relative -mx-1.5 flex items-center rounded-sm text-xs focus-within:bg-[#f7f7f7] hover:bg-[#f7f7f7] data-[active=true]:bg-(--legacy-old-blue) data-[active=true]:text-white dark:focus-within:bg-[#222324] dark:hover:bg-[#222324]"
+			className="group relative -mx-1.5 flex items-center rounded-sm text-xs focus-within:bg-ai-surface-muted hover:bg-ai-surface-muted data-[active=true]:bg-brand data-[active=true]:text-ai-white"
 			style={style}
 		>
 			<button
@@ -208,7 +208,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 				{session.isPinned ? <Icon name="pin" height={10} width={10} className="shrink-0 opacity-40" /> : null}
 				{session.hasUnseenCompletion ? (
 					<Tooltip content="New response ready">
-						<span className="size-1.5 shrink-0 rounded-full bg-(--legacy-old-blue)" aria-label="Unseen completion" />
+						<span className="size-1.5 shrink-0 rounded-full bg-brand" aria-label="Unseen completion" />
 					</Tooltip>
 				) : null}
 				<span className="truncate">{session.title}</span>
@@ -217,12 +217,12 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 				<Tooltip
 					content="Edit Session Title"
 					render={<button onClick={() => setIsEditing(true)} disabled={isUpdatingTitle || isDeleting || isRestoring} />}
-					className="flex aspect-square items-center justify-center rounded-sm p-1.5 hover:bg-(--legacy-old-blue) hover:text-white focus-visible:bg-(--legacy-old-blue) focus-visible:text-white"
+					className="flex aspect-square items-center justify-center rounded-sm p-1.5 hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
 				>
 					<Icon name="pencil" height={12} width={12} className="shrink-0" />
 				</Tooltip>
 				<Ariakit.MenuProvider>
-					<Ariakit.MenuButton className="flex aspect-square items-center justify-center rounded-sm p-1.5 hover:bg-(--legacy-old-blue) hover:text-white focus-visible:bg-(--legacy-old-blue) focus-visible:text-white">
+					<Ariakit.MenuButton className="flex aspect-square items-center justify-center rounded-sm p-1.5 hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white">
 						<Icon name="ellipsis" height={12} width={12} className="shrink-0" />
 						<span className="sr-only">Open menu</span>
 					</Ariakit.MenuButton>
@@ -234,7 +234,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						wrapperProps={{
 							className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
 						}}
-						className="z-50 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-[hsl(204,20%,88%)] bg-(--legacy-bg-main) text-(--legacy-text-primary) max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,60dvh)] sm:max-w-md lg:max-h-(--popover-available-height) dark:border-[hsl(204,3%,32%)]"
+						className="z-50 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-ai-line bg-surface text-primary max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,60dvh)] sm:max-w-md lg:max-h-(--popover-available-height)"
 					>
 						<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
 							<Icon name="x" className="size-5" />
@@ -243,7 +243,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 							onClick={() => {
 								void onPinSession?.(session.sessionId)
 							}}
-							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-(--legacy-form-control-border) px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--legacy-primary-hover) focus-visible:bg-(--legacy-primary-hover) data-active-item:bg-(--legacy-primary-hover)"
+							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-brand-muted focus-visible:bg-brand-muted data-active-item:bg-brand-muted"
 						>
 							<Icon name="pin" height={14} width={14} className="shrink-0" />
 							{session.isPinned ? 'Unpin' : 'Pin to Top'}
@@ -272,7 +272,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 							}}
 							hideOnClick={false}
 							disabled={!session.isPublic || !session.shareToken || isTogglingVisibility}
-							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-(--legacy-form-control-border) px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--legacy-primary-hover) focus-visible:bg-(--legacy-primary-hover) aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-(--legacy-primary-hover)"
+							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-brand-muted focus-visible:bg-brand-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-brand-muted"
 						>
 							{isCopyingLink ? (
 								<Icon name="check-circle" height={14} width={14} className="shrink-0" />
@@ -293,7 +293,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 							}}
 							hideOnClick={false}
 							disabled={isTogglingVisibility || isUpdatingTitle || isDeleting || isRestoring}
-							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-(--legacy-form-control-border) px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-(--legacy-primary-hover) focus-visible:bg-(--legacy-primary-hover) aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-(--legacy-primary-hover)"
+							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-brand-muted focus-visible:bg-brand-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-brand-muted"
 						>
 							{isTogglingVisibility ? (
 								<LoadingSpinner size={14} />
@@ -309,7 +309,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 							}}
 							disabled={isUpdatingTitle || isDeleting || isRestoring || isTogglingVisibility}
 							data-deleting={isDeleting}
-							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-(--legacy-form-control-border) px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-red-500/10 hover:text-(--error) focus-visible:bg-red-500/10 focus-visible:text-(--error) data-active-item:bg-red-500/10 data-active-item:text-(--error) data-[deleting=true]:bg-red-500/10 data-[deleting=true]:text-(--error)"
+							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-ai-error-vivid/10 hover:text-error focus-visible:bg-ai-error-vivid/10 focus-visible:text-error data-active-item:bg-ai-error-vivid/10 data-active-item:text-error data-[deleting=true]:bg-ai-error-vivid/10 data-[deleting=true]:text-error"
 						>
 							{isDeleting ? (
 								<LoadingSpinner size={14} />
@@ -322,7 +322,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 				</Ariakit.MenuProvider>
 			</div>
 			{isRestoring ? (
-				<span className="absolute top-0 right-0 bottom-0 left-0 flex items-center justify-center rounded-sm bg-(--legacy-cards-bg)/70">
+				<span className="absolute top-0 right-0 bottom-0 left-0 flex items-center justify-center rounded-sm bg-surface/70">
 					<LoadingSpinner size={12} />
 				</span>
 			) : null}

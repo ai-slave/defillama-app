@@ -22,22 +22,18 @@ function EmbedNodeView({ node, selected, deleteNode, getPos }: NodeViewProps) {
 	return (
 		<NodeViewWrapper
 			data-article-embed
-			className={`my-4 overflow-hidden rounded-md border bg-(--legacy-cards-bg) ${
-				selected ? 'border-(--legacy-link-text)' : 'border-(--legacy-cards-border)'
-			}`}
+			className={`my-4 overflow-hidden rounded-md border bg-surface ${selected ? 'border-link' : 'border-medium'}`}
 		>
 			<div className="flex items-start justify-between gap-3 px-4 py-3">
 				<div className="min-w-0">
-					<div className="flex items-center gap-2 text-xs text-(--legacy-text-tertiary)">
-						<span className="rounded-sm border border-(--legacy-cards-border) bg-(--legacy-app-bg) px-1.5 py-0.5 font-jetbrains text-[10px] tracking-wider text-(--legacy-text-secondary) uppercase">
+					<div className="flex items-center gap-2 text-xs text-tertiary">
+						<span className="rounded-sm border border-medium bg-page px-1.5 py-0.5 font-jetbrains text-[10px] tracking-wider text-secondary uppercase">
 							{providerLabel}
 						</span>
 						<span className="truncate">{config.sourceUrl}</span>
 					</div>
-					{config.title ? (
-						<div className="mt-1 truncate text-sm font-medium text-(--legacy-text-primary)">{config.title}</div>
-					) : null}
-					{config.caption ? <p className="mt-2 text-sm text-(--legacy-text-secondary)">{config.caption}</p> : null}
+					{config.title ? <div className="mt-1 truncate text-sm font-medium text-primary">{config.title}</div> : null}
+					{config.caption ? <p className="mt-2 text-sm text-secondary">{config.caption}</p> : null}
 				</div>
 				<div
 					contentEditable={false}
@@ -54,7 +50,7 @@ function EmbedNodeView({ node, selected, deleteNode, getPos }: NodeViewProps) {
 							e.stopPropagation()
 							handleEdit()
 						}}
-						className="rounded-md border border-(--legacy-cards-border) px-2 py-1 text-xs text-(--legacy-text-secondary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)"
+						className="rounded-md border border-medium px-2 py-1 text-xs text-secondary hover:bg-(--research-link-hover-bg) hover:text-primary"
 					>
 						Edit
 					</button>
@@ -68,7 +64,7 @@ function EmbedNodeView({ node, selected, deleteNode, getPos }: NodeViewProps) {
 							e.stopPropagation()
 							deleteNode()
 						}}
-						className="rounded-md border border-(--legacy-cards-border) px-2 py-1 text-xs text-(--legacy-text-tertiary) hover:bg-(--legacy-link-hover-bg) hover:text-(--legacy-text-primary)"
+						className="rounded-md border border-medium px-2 py-1 text-xs text-tertiary hover:bg-(--research-link-hover-bg) hover:text-primary"
 					>
 						Remove
 					</button>

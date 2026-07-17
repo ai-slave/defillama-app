@@ -80,14 +80,14 @@ const FeedbackDialog = memo(function FeedbackDialog({
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={setOpen}>
 			<Ariakit.Dialog
-				className="dialog w-full gap-0 border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4 shadow-2xl max-sm:drawer sm:max-w-md"
+				className="dialog w-full gap-0 border border-medium bg-surface p-4 shadow-2xl max-sm:drawer sm:max-w-md"
 				unmountOnHide
 				portal
 				hideOnInteractOutside
 			>
 				<div className="mb-4 flex items-center justify-between">
 					<Ariakit.DialogHeading className="text-lg font-semibold">Provide Feedback</Ariakit.DialogHeading>
-					<Ariakit.DialogDismiss className="-m-2 rounded-sm p-2 hover:bg-[#e6e6e6] dark:hover:bg-[#222324]">
+					<Ariakit.DialogDismiss className="-m-2 rounded-sm p-2 hover:bg-ai-surface-muted">
 						<Icon name="x" height={16} width={16} />
 					</Ariakit.DialogDismiss>
 				</div>
@@ -196,7 +196,7 @@ export function ResponseControls({
 								}}
 							/>
 						}
-						className="rounded-md p-1.5 text-[#999] transition-colors hover:bg-black/5 hover:text-[#444] dark:text-[#666] dark:hover:bg-white/5 dark:hover:text-[#ccc]"
+						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-secondary"
 					>
 						{copied ? (
 							<Icon name="check-circle" height={16} width={16} />
@@ -210,7 +210,7 @@ export function ResponseControls({
 						<Tooltip
 							content={isRatedAsGood ? 'Rated as good' : 'Rate as good'}
 							render={<button onClick={handleRateGood} disabled={showFeedback || isRatedAsGood || isRatedAsBad} />}
-							className={`rounded-md p-1.5 transition-colors hover:bg-black/5 hover:text-[#444] dark:hover:bg-white/5 dark:hover:text-[#ccc] ${isRatedAsGood ? 'text-(--success)' : 'text-[#999] dark:text-[#666]'}`}
+							className={`rounded-md p-1.5 transition-colors hover:bg-ai-wash hover:text-ai-secondary ${isRatedAsGood ? 'text-success' : 'text-ai-muted'}`}
 						>
 							<Icon name="thumbs-up" height={16} width={16} />
 							<span className="sr-only">Thumbs Up</span>
@@ -218,7 +218,7 @@ export function ResponseControls({
 						<Tooltip
 							content={isRatedAsBad ? 'Rated as bad' : 'Rate as bad'}
 							render={<button onClick={handleRateBad} disabled={showFeedback || isRatedAsGood || isRatedAsBad} />}
-							className={`rounded-md p-1.5 transition-colors hover:bg-black/5 hover:text-[#444] dark:hover:bg-white/5 dark:hover:text-[#ccc] ${isRatedAsBad ? 'text-(--error)' : 'text-[#999] dark:text-[#666]'}`}
+							className={`rounded-md p-1.5 transition-colors hover:bg-ai-wash hover:text-ai-secondary ${isRatedAsBad ? 'text-error' : 'text-ai-muted'}`}
 						>
 							<Icon name="thumbs-down" height={16} width={16} />
 							<span className="sr-only">Thumbs Down</span>
@@ -230,23 +230,23 @@ export function ResponseControls({
 						sessionId={sessionId}
 						messageId={messageId}
 						exportType="single_message"
-						className="flex items-center gap-1 rounded-md p-1.5 text-[#999] transition-colors hover:bg-black/5 hover:text-[#444] dark:text-[#666] dark:hover:bg-white/5 dark:hover:text-[#ccc]"
+						className="flex items-center gap-1 rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-secondary"
 					/>
 				) : null}
 				{messageMetadata && (messageMetadata.outputTokens != null || messageMetadata.x402CostUsd) ? (
 					<Ariakit.PopoverProvider placement="top">
-						<Ariakit.PopoverDisclosure className="rounded-md p-1.5 text-[#999] transition-colors hover:bg-black/5 hover:text-[#444] dark:text-[#666] dark:hover:bg-white/5 dark:hover:text-[#ccc]">
+						<Ariakit.PopoverDisclosure className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-secondary">
 							<Icon name="circle-help" height={16} width={16} />
 						</Ariakit.PopoverDisclosure>
 						<Ariakit.Popover
-							className="z-50 rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) p-3 shadow-lg dark:border-[#333]"
+							className="z-50 rounded-lg border border-ai-line bg-surface p-3 shadow-lg"
 							portal
 							gutter={8}
 						>
-							<div className="flex flex-col gap-1.5 text-xs text-[#555] dark:text-[#ccc]">
+							<div className="flex flex-col gap-1.5 text-xs text-ai-secondary">
 								{messageMetadata.outputTokens != null ? (
 									<div className="flex justify-between gap-4">
-										<span className="text-[#999] dark:text-[#666]">Output</span>
+										<span className="text-ai-muted">Output</span>
 										<span className="font-mono tabular-nums">
 											{messageMetadata.outputTokens.toLocaleString()} tokens
 										</span>
@@ -254,7 +254,7 @@ export function ResponseControls({
 								) : null}
 								{messageMetadata.executionTimeMs ? (
 									<div className="flex justify-between gap-4">
-										<span className="text-[#999] dark:text-[#666]">Time</span>
+										<span className="text-ai-muted">Time</span>
 										<span className="font-mono tabular-nums">
 											{(messageMetadata.executionTimeMs / 1000).toFixed(1)}s
 										</span>
@@ -262,8 +262,8 @@ export function ResponseControls({
 								) : null}
 								{messageMetadata.x402CostUsd ? (
 									<div className="flex justify-between gap-4">
-										<span className="text-[#999] dark:text-[#666]">Premium data</span>
-										<span className="font-mono text-amber-600 tabular-nums dark:text-amber-400">
+										<span className="text-ai-muted">Premium data</span>
+										<span className="font-mono text-ai-warning tabular-nums">
 											${parseFloat(messageMetadata.x402CostUsd).toFixed(3)}
 										</span>
 									</div>
@@ -276,7 +276,7 @@ export function ResponseControls({
 					<Tooltip
 						content="Provide Feedback"
 						render={<button onClick={handleOpenGeneralFeedback} disabled={showFeedback || !!submittedRating} />}
-						className="rounded-md p-1.5 text-[#999] transition-colors hover:bg-black/5 hover:text-[#444] dark:text-[#666] dark:hover:bg-white/5 dark:hover:text-[#ccc]"
+						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-secondary"
 					>
 						<Icon name="message-square-warning" height={16} width={16} />
 						<span className="sr-only">Provide Feedback</span>
@@ -286,7 +286,7 @@ export function ResponseControls({
 					<Tooltip
 						content="Share"
 						render={<button onClick={() => onShare(messageId)} />}
-						className="rounded-md p-1.5 text-[#999] transition-colors hover:bg-black/5 hover:text-[#444] dark:text-[#666] dark:hover:bg-white/5 dark:hover:text-[#ccc]"
+						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-secondary"
 					>
 						<Icon name="share" height={16} width={16} />
 						<span className="sr-only">Share</span>

@@ -56,7 +56,7 @@ export const ReorderableHeader = React.memo(function ReorderableHeader({
 								e.stopPropagation()
 								onMoveUp()
 							}}
-							className="rounded-md p-0.5 transition-colors hover:bg-(--legacy-bg-tertiary)"
+							className="rounded-md p-0.5 transition-colors hover:bg-surface-elevated-2"
 							title="Swap with left column"
 						>
 							<Icon name="chevron-left" height={10} width={10} />
@@ -83,7 +83,7 @@ export const ReorderableHeader = React.memo(function ReorderableHeader({
 								e.stopPropagation()
 								onMoveDown()
 							}}
-							className="rounded-md p-0.5 transition-colors hover:bg-(--legacy-bg-tertiary)"
+							className="rounded-md p-0.5 transition-colors hover:bg-surface-elevated-2"
 							title="Swap with right column"
 						>
 							<Icon name="chevron-right" height={10} width={10} />

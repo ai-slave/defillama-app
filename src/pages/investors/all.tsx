@@ -47,7 +47,7 @@ export default function InvestorsAllPage({ customServerData }: InferGetServerSid
 			<link rel="preload" href="/assets/defillama-dark.webp" as="image" />
 			<Suspense
 				fallback={
-					<div className="investors-dashboard col-span-full flex min-h-screen flex-col pro-dashboard bg-(--legacy-app-bg) md:flex-row">
+					<div className="investors-dashboard col-span-full flex min-h-screen flex-col pro-dashboard bg-(--pro-app-bg) md:flex-row">
 						<aside className="sl-sidebar fixed top-0 left-0 hidden h-screen w-56 md:block" />
 						<div className="flex flex-1 items-center justify-center p-5 md:ml-56">
 							<Logo animate />

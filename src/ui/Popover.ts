@@ -16,19 +16,19 @@ const menuSurfaceHeightStyles =
 const nestedMenuSurfaceHeightStyles =
 	'max-sm:h-[calc(100dvh-80px)] max-sm:w-full! max-sm:max-w-none! max-sm:rounded-b-none sm:max-h-[min(60dvh,var(--popover-available-height))]'
 
-export const popoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)] ${selectSurfaceHeightStyles}`
+export const popoverSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-overlay-sm ${selectSurfaceHeightStyles}`
 
-export const menuSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)] ${menuSurfaceHeightStyles}`
+export const menuSurfaceStyles = `z-10 flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-overlay-sm ${menuSurfaceHeightStyles}`
 
-export const nestedMenuSurfaceStyles = `flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)] ${nestedMenuSurfaceHeightStyles}`
+export const nestedMenuSurfaceStyles = `flex min-w-[180px] flex-col overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 sm:max-w-md shadow-overlay-sm ${nestedMenuSurfaceHeightStyles}`
 
-export const popoverSearchResultsSurfaceStyles = tw`z-10 overflow-y-auto rounded-b-lg border border-medium bg-overlay shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]`
+export const popoverSearchResultsSurfaceStyles = tw`z-10 overflow-y-auto rounded-b-lg border border-medium bg-overlay shadow-overlay-sm`
 
-export const popoverHovercardSurfaceStyles = tw`z-50 max-h-[min(calc(100dvh-80px),var(--popover-available-height))] max-w-(--popover-available-width) overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay body-sm shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]`
+export const popoverHovercardSurfaceStyles = tw`z-50 max-h-[min(calc(100dvh-80px),var(--popover-available-height))] max-w-(--popover-available-width) overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay body-sm shadow-overlay-sm`
 
 /* Text-only tooltips: same chrome as hovercards, but radius follows the
    component's size — 6px on a one-line bubble, not the popover 12px. */
-export const tooltipSurfaceStyles = tw`z-50 max-h-[calc(100dvh-80px)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-overlay body-sm shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)] lg:max-h-(--popover-available-height)`
+export const tooltipSurfaceStyles = tw`z-50 max-h-[calc(100dvh-80px)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-md border border-medium bg-overlay body-sm shadow-overlay-sm lg:max-h-(--popover-available-height)`
 
 export const popoverRowStyles = tw`flex shrink-0 cursor-pointer items-center justify-between gap-2 overflow-hidden px-3 py-2 body-sm text-primary cv-auto-37 hover:bg-hover-row focus-visible:bg-hover-row data-active-item:bg-hover-row data-focus-visible:focus-ring`
 

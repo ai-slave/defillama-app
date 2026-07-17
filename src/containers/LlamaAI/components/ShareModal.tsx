@@ -172,14 +172,14 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={setOpen}>
 			<Ariakit.Dialog
-				className="dialog w-full gap-0 border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4 shadow-2xl max-sm:drawer sm:max-w-sm"
+				className="dialog w-full gap-0 border border-medium bg-surface p-4 shadow-2xl max-sm:drawer sm:max-w-sm"
 				unmountOnHide
 				portal
 				hideOnInteractOutside
 			>
 				<div className="mb-4 flex items-center justify-between">
 					<Ariakit.DialogHeading className="text-lg font-semibold">{heading}</Ariakit.DialogHeading>
-					<Ariakit.DialogDismiss className="-m-2 rounded-sm p-2 hover:bg-[#e6e6e6] dark:hover:bg-[#222324]">
+					<Ariakit.DialogDismiss className="-m-2 rounded-sm p-2 hover:bg-ai-surface-muted">
 						<Icon name="x" height={16} width={16} />
 					</Ariakit.DialogDismiss>
 				</div>
@@ -187,19 +187,19 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 				{shareResult ? (
 					<div className="flex flex-col gap-4">
 						<div className="flex flex-col items-center gap-2 py-2 text-center">
-							<div className="flex size-10 items-center justify-center rounded-full bg-(--success)/12 text-(--success)">
+							<div className="flex size-10 items-center justify-center rounded-full bg-success/12 text-success">
 								<Icon name="check-circle" height={24} width={24} />
 							</div>
 							<p className="m-0 text-sm font-medium">
 								{copied ? 'Share link copied to clipboard' : 'Share link ready'}
 							</p>
-							<p className="m-0 text-xs text-[#666] dark:text-[#919296]">
+							<p className="m-0 text-xs text-ai-tertiary">
 								Anyone with the link can view this conversation. Paste it into your favorite social app or share it
 								directly below.
 							</p>
 						</div>
 						<div className="flex flex-col gap-2">
-							<label htmlFor={shareLinkInputId} className="text-xs text-[#666] dark:text-[#919296]">
+							<label htmlFor={shareLinkInputId} className="text-xs text-ai-tertiary">
 								Share Link
 							</label>
 							<div className="flex gap-2">
@@ -209,13 +209,13 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 									value={shareLink}
 									readOnly
 									onFocus={(event) => event.currentTarget.select()}
-									className="flex-1 rounded-sm border border-[#e6e6e6] bg-(--legacy-app-bg) px-3 py-2 text-sm dark:border-[#222324]"
+									className="flex-1 rounded-sm border border-ai-line bg-page px-3 py-2 text-sm"
 								/>
 								<button
 									type="button"
 									onClick={() => void handleCopyLink()}
 									data-umami-event="llamaai-copy-share-link"
-									className="rounded-sm border border-[#e6e6e6] px-3 py-2 text-sm hover:bg-[#f7f7f7] dark:border-[#222324] dark:hover:bg-[#222324]"
+									className="rounded-sm border border-ai-line px-3 py-2 text-sm hover:bg-ai-surface-muted"
 								>
 									{copied ? (
 										<Icon name="check-circle" height={16} width={16} />
@@ -226,7 +226,7 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 							</div>
 						</div>
 						<div className="flex items-center justify-end gap-3">
-							<Ariakit.DialogDismiss className="rounded-sm px-3 py-2 text-xs text-[#666] hover:bg-[#e6e6e6] dark:text-[#919296] dark:hover:bg-[#222324]">
+							<Ariakit.DialogDismiss className="rounded-sm px-3 py-2 text-xs text-ai-tertiary hover:bg-ai-surface-muted">
 								Close
 							</Ariakit.DialogDismiss>
 							{canNativeShare ? (
@@ -234,7 +234,7 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 									type="button"
 									onClick={() => void handleNativeShare()}
 									data-umami-event="llamaai-native-share"
-									className="rounded-sm border border-[#e6e6e6] px-3 py-2 text-xs hover:bg-[#f7f7f7] dark:border-[#222324] dark:hover:bg-[#222324]"
+									className="rounded-sm border border-ai-line px-3 py-2 text-xs hover:bg-ai-surface-muted"
 								>
 									Share&hellip;
 								</button>
@@ -243,7 +243,7 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 								type="button"
 								onClick={handleShareToX}
 								data-umami-event="llamaai-share-to-x"
-								className="rounded-sm bg-(--legacy-old-blue) px-3 py-2 text-xs text-white hover:opacity-90"
+								className="rounded-sm bg-brand px-3 py-2 text-xs text-ai-white hover:opacity-90"
 							>
 								Share to X
 							</button>
@@ -253,9 +253,9 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 					<>
 						{shareError ? (
 							<div className="flex flex-col gap-4">
-								<p className="m-0 text-sm text-[#666] dark:text-[#919296]">{shareError}</p>
+								<p className="m-0 text-sm text-ai-tertiary">{shareError}</p>
 								<div className="flex items-center justify-end gap-3">
-									<Ariakit.DialogDismiss className="rounded-sm px-3 py-2 text-xs text-[#666] hover:bg-[#e6e6e6] dark:text-[#919296] dark:hover:bg-[#222324]">
+									<Ariakit.DialogDismiss className="rounded-sm px-3 py-2 text-xs text-ai-tertiary hover:bg-ai-surface-muted">
 										Close
 									</Ariakit.DialogDismiss>
 									<button
@@ -265,7 +265,7 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 											createShareLink()
 										}}
 										disabled={isPending}
-										className="flex items-center gap-2 rounded-sm bg-(--legacy-old-blue) px-3 py-2 text-xs text-white hover:opacity-90 disabled:opacity-50"
+										className="flex items-center gap-2 rounded-sm bg-brand px-3 py-2 text-xs text-ai-white hover:opacity-90 disabled:opacity-50"
 									>
 										{isPending ? <LoadingSpinner size={14} /> : null}
 										<span>Retry</span>
@@ -273,7 +273,7 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 								</div>
 							</div>
 						) : (
-							<div className="flex items-center gap-3 py-2 text-sm text-[#666] dark:text-[#919296]">
+							<div className="flex items-center gap-3 py-2 text-sm text-ai-tertiary">
 								<LoadingSpinner size={16} />
 								<span>Creating and copying your share link&hellip;</span>
 							</div>

@@ -20,7 +20,7 @@ export function RWAFlowCoverageTag({ coverage }: { coverage: number }) {
 			content={`Flow data is available for ${pct}% of days in the selected period. Days without data are excluded from flows${
 				isLow ? ', so totals likely understate real activity' : ''
 			}.`}
-			className={`body-sm underline decoration-dotted ${isLow ? 'text-amber-700 dark:text-amber-400' : 'text-tertiary'}`}
+			className={`body-sm underline decoration-dotted ${isLow ? 'text-warning' : 'text-tertiary'}`}
 		>
 			Data coverage: {pct}%
 		</Tooltip>

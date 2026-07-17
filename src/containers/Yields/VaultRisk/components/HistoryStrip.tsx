@@ -325,7 +325,7 @@ function ProtocolIncidentDot({
 						aria-label={p.label}
 						data-hs-pt
 						className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed bg-surface outline-offset-2 outline-brand transition-colors duration-150 focus-visible:outline-2 ${
-							p.recovered ? 'border-data-up/60' : 'border-(--text-secondary)'
+							p.recovered ? 'border-data-up/60' : 'border-secondary'
 						} ${selected ? 'ring-2 ring-brand' : ''}`}
 						style={{
 							left: `${p.x}%`,
@@ -528,7 +528,7 @@ export function HistoryStrip({
 					{vm.years.map((y) => (
 						<span key={y.label} aria-hidden className="contents">
 							<span
-								className="absolute h-1 w-px -translate-x-1/2 bg-(--text-secondary)/40"
+								className="absolute h-1 w-px -translate-x-1/2 bg-secondary/40"
 								style={{ left: `${y.x}%`, top: `calc(${AXIS_Y}% - 4px)` }}
 							/>
 							<span className="absolute bottom-0 -translate-x-1/2 body-xs text-secondary" style={{ left: `${y.x}%` }}>

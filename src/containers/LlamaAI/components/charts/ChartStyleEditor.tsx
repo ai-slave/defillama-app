@@ -73,13 +73,13 @@ function toPatch(c: ChartConfiguration, view: Record<ViewKey, boolean>): ChartSt
 	}
 }
 
-const section = 'flex flex-col gap-2 border-t border-[#ececec] pt-3 first:border-t-0 first:pt-0 dark:border-[#232427]'
-const label = 'text-[10.5px] font-semibold uppercase tracking-[0.07em] text-[#888] dark:text-[#7c828c]'
+const section = 'flex flex-col gap-2 border-t border-ai-line pt-3 first:border-t-0 first:pt-0'
+const label = 'text-[10.5px] font-semibold uppercase tracking-[0.07em] text-ai-muted'
 const input =
-	'rounded-md border border-(--legacy-form-control-border) bg-transparent px-2.5 py-1.5 text-sm text-(--legacy-text-form) outline-hidden transition-colors focus:border-(--legacy-old-blue)'
+	'rounded-md border border-medium bg-transparent px-2.5 py-1.5 text-sm text-secondary outline-hidden transition-colors focus:border-brand'
 const swatch =
-	'size-7 shrink-0 cursor-pointer rounded-md border border-(--legacy-form-control-border) bg-transparent p-[3px] transition-transform hover:scale-105'
-const axisTag = 'w-3.5 shrink-0 text-center text-[11px] font-medium text-[#999] dark:text-[#6f757e]'
+	'size-7 shrink-0 cursor-pointer rounded-md border border-medium bg-transparent p-0.75 transition-transform hover:scale-105'
+const axisTag = 'w-3.5 shrink-0 text-center text-[11px] font-medium text-ai-muted'
 
 export function ChartStyleEditor({
 	config,
@@ -164,10 +164,8 @@ export function ChartStyleEditor({
 		.map(([, key, text]) => [key, text] as [ViewKey, string])
 
 	return (
-		<div className="flex min-h-full flex-col gap-3 p-4 text-(--legacy-text-form)">
-			<span className="text-[10.5px] font-semibold tracking-[0.07em] text-[#888] uppercase dark:text-[#7c828c]">
-				Style
-			</span>
+		<div className="flex min-h-full flex-col gap-3 p-4 text-secondary">
+			<span className="text-[10.5px] font-semibold tracking-[0.07em] text-ai-muted uppercase">Style</span>
 
 			<div className={section}>
 				<span className={label}>Type</span>
@@ -177,7 +175,7 @@ export function ChartStyleEditor({
 							key={t}
 							data-active={draft.type === t}
 							onClick={() => update((d) => (d.type = t))}
-							className="rounded-md border border-(--legacy-form-control-border) px-2.5 py-1 text-xs capitalize transition-colors hover:border-(--legacy-old-blue) data-[active=true]:border-(--legacy-old-blue) data-[active=true]:bg-(--legacy-old-blue) data-[active=true]:font-medium data-[active=true]:text-white"
+							className="rounded-md border border-medium px-2.5 py-1 text-xs capitalize transition-colors hover:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-ai-white"
 						>
 							{t}
 						</button>
@@ -282,7 +280,7 @@ export function ChartStyleEditor({
 								onChange={(e) => update((d) => (d.axes.yAxes[i].valueSymbol = e.target.value))}
 							/>
 						</div>
-						<div className="flex items-center gap-2 pl-[22px]">
+						<div className="flex items-center gap-2 pl-5.5">
 							<input
 								className={`${input} flex-1`}
 								placeholder="min"
@@ -366,7 +364,7 @@ export function ChartStyleEditor({
 										})
 									}
 									aria-label="Remove annotation"
-									className="shrink-0 rounded-md border border-(--legacy-form-control-border) px-2 py-1 text-sm text-[#999] transition-colors hover:border-red-400 hover:text-red-500"
+									className="shrink-0 rounded-md border border-medium px-2 py-1 text-sm text-ai-muted transition-colors hover:border-ai-error-vivid hover:text-ai-error-vivid"
 								>
 									×
 								</button>
@@ -379,7 +377,7 @@ export function ChartStyleEditor({
 								d.hallmarks = [...(d.hallmarks ?? []), [Math.floor(Date.now() / 1000), '']]
 							})
 						}
-						className="self-start rounded-md border border-(--legacy-form-control-border) px-2.5 py-1 text-xs text-(--legacy-text-form) transition-colors hover:border-(--legacy-old-blue)"
+						className="self-start rounded-md border border-medium px-2.5 py-1 text-xs text-secondary transition-colors hover:border-brand"
 					>
 						+ Add annotation
 					</button>
@@ -395,7 +393,7 @@ export function ChartStyleEditor({
 								key={s}
 								data-active={(draft.hallmarkStyle ?? 'mark-line') === s}
 								onClick={() => update((d) => (d.hallmarkStyle = s))}
-								className="rounded-md border border-(--legacy-form-control-border) px-2.5 py-1 text-xs transition-colors hover:border-(--legacy-old-blue) data-[active=true]:border-(--legacy-old-blue) data-[active=true]:bg-(--legacy-old-blue) data-[active=true]:font-medium data-[active=true]:text-white"
+								className="rounded-md border border-medium px-2.5 py-1 text-xs transition-colors hover:border-brand data-[active=true]:border-brand data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-ai-white"
 							>
 								{s === 'mark-line' ? 'Lines' : 'Event rail'}
 							</button>
@@ -411,7 +409,7 @@ export function ChartStyleEditor({
 							<label key={key} className="flex cursor-pointer items-center gap-1.5 text-xs">
 								<input
 									type="checkbox"
-									className="size-3.5 accent-(--legacy-old-blue)"
+									className="size-3.5 accent-brand"
 									checked={view[key]}
 									onChange={(e) => onView(key, e.target.checked)}
 								/>
@@ -422,7 +420,7 @@ export function ChartStyleEditor({
 							<label className="flex cursor-pointer items-center gap-1.5 text-xs">
 								<input
 									type="checkbox"
-									className="size-3.5 accent-(--legacy-old-blue)"
+									className="size-3.5 accent-brand"
 									checked={draft.legend?.show ?? true}
 									onChange={(e) => update((d) => (d.legend = { show: e.target.checked }))}
 								/>
@@ -433,20 +431,20 @@ export function ChartStyleEditor({
 				</div>
 			) : null}
 
-			<div className="sticky bottom-0 -mx-4 mt-auto -mb-4 flex items-center justify-end gap-2 border-t border-[#ececec] bg-[#f8f9fb] px-4 py-3 dark:border-[#232427] dark:bg-[#101114]">
+			<div className="sticky bottom-0 -mx-4 mt-auto -mb-4 flex items-center justify-end gap-2 border-t border-ai-line bg-ai-surface px-4 py-3">
 				{error ? (
-					<span className="mr-auto text-xs text-red-500">{error}</span>
+					<span className="mr-auto text-xs text-ai-error-vivid">{error}</span>
 				) : (
 					<button
 						onClick={reset}
-						className="mr-auto rounded-md px-2 py-1.5 text-xs font-medium text-[#888] transition-colors hover:text-black dark:text-[#8a8f98] dark:hover:text-white"
+						className="mr-auto rounded-md px-2 py-1.5 text-xs font-medium text-ai-muted transition-colors hover:text-ai-primary"
 					>
 						Reset
 					</button>
 				)}
 				<button
 					onClick={onClose}
-					className="rounded-md px-3 py-1.5 text-xs font-medium text-[#666] transition-colors hover:text-black dark:text-[#8a8f98] dark:hover:text-white"
+					className="rounded-md px-3 py-1.5 text-xs font-medium text-ai-tertiary transition-colors hover:text-ai-primary"
 				>
 					Cancel
 				</button>
@@ -454,7 +452,7 @@ export function ChartStyleEditor({
 					onClick={save}
 					disabled={saving || problems.length > 0}
 					title={problems.length > 0 ? problems[0] : undefined}
-					className="rounded-md bg-(--legacy-old-blue) px-4 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+					className="rounded-md bg-brand px-4 py-1.5 text-xs font-medium text-ai-white transition-opacity hover:opacity-90 disabled:opacity-50"
 				>
 					{saving ? 'Saving…' : 'Save'}
 				</button>

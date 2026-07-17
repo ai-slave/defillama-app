@@ -151,7 +151,7 @@ function renderChartContent(renderPlan: ChartRenderPlan, chartKey: string, onCha
 			)
 		default:
 			return (
-				<div className="flex flex-col items-center justify-center gap-2 rounded-md bg-red-50 p-1 py-8 text-red-700 dark:bg-red-900/10 dark:text-red-300">
+				<div className="flex flex-col items-center justify-center gap-2 rounded-md bg-ai-error-bg p-1 py-8 text-ai-error-strong">
 					<Icon name="alert-triangle" height={16} width={16} />
 					<p>Unsupported chart type</p>
 				</div>
@@ -340,7 +340,7 @@ function SingleChart({ config: baseConfig, data, isActive, title, sessionId, mes
 	if (presentation.ok === false) {
 		const errorMsg = presentation.error instanceof Error ? presentation.error.message : 'Unknown error'
 		return (
-			<div className="flex flex-col items-center justify-center gap-2 rounded-md bg-red-50 p-1 py-8 text-red-700 dark:bg-red-900/10 dark:text-red-300">
+			<div className="flex flex-col items-center justify-center gap-2 rounded-md bg-ai-error-bg p-1 py-8 text-ai-error-strong">
 				<Icon name="alert-triangle" height={16} width={16} />
 				<p>{errorMsg}</p>
 			</div>
@@ -351,7 +351,7 @@ function SingleChart({ config: baseConfig, data, isActive, title, sessionId, mes
 
 	if (!renderPlan.hasData) {
 		return (
-			<div className="flex flex-col items-center justify-center gap-2 p-1 py-8 text-[#666] dark:text-[#919296]">
+			<div className="flex flex-col items-center justify-center gap-2 p-1 py-8 text-ai-tertiary">
 				<Icon name="bar-chart" height={16} width={16} />
 				<p>No data available for chart</p>
 			</div>
@@ -389,7 +389,7 @@ function SingleChart({ config: baseConfig, data, isActive, title, sessionId, mes
 					<button
 						onClick={() => setEditing((v) => !v)}
 						title="Edit chart style"
-						className="flex items-center gap-1 rounded-sm px-1.5 py-1 text-xs text-[#666] hover:text-black dark:text-[#919296] dark:hover:text-white"
+						className="flex items-center gap-1 rounded-sm px-1.5 py-1 text-xs text-ai-tertiary hover:text-ai-primary"
 					>
 						<Icon name="settings" height={14} width={14} />
 					</button>
@@ -401,7 +401,7 @@ function SingleChart({ config: baseConfig, data, isActive, title, sessionId, mes
 					<div className="flex flex-1 items-center justify-center overflow-auto p-5">
 						<div className="w-full">{renderChartContent(renderPlan, `${chartKey}-edit`, noop)}</div>
 					</div>
-					<div className="flex w-full shrink-0 flex-col overflow-y-auto border-t border-[#ececec] bg-[#f8f9fb] lg:w-[340px] lg:border-t-0 lg:border-l dark:border-[#232427] dark:bg-[#101114]">
+					<div className="flex w-full shrink-0 flex-col overflow-y-auto border-t border-ai-line bg-ai-surface lg:w-[340px] lg:border-t-0 lg:border-l">
 						<ChartStyleEditor
 							config={config}
 							original={baseConfig}
@@ -447,14 +447,14 @@ function ChartEditorModal({ title, onClose, children }: { title?: string; onClos
 
 	return createPortal(
 		<div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-			<div className="absolute inset-0 bg-black/60" onClick={onClose} />
-			<div className="relative flex h-[85vh] max-h-[560px] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-[#ececec] bg-white shadow-2xl lg:flex-row dark:border-[#232427] dark:bg-[#0d0e11]">
-				<div className="flex items-center justify-between border-b border-[#ececec] px-4 py-2.5 lg:hidden dark:border-[#232427]">
-					<span className="truncate text-sm font-semibold text-(--legacy-text-form)">{title ?? 'Edit chart'}</span>
+			<div className="absolute inset-0 bg-ai-backdrop" onClick={onClose} />
+			<div className="relative flex h-[85vh] max-h-[560px] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-ai-line bg-ai-surface-card shadow-2xl lg:flex-row">
+				<div className="flex items-center justify-between border-b border-ai-line px-4 py-2.5 lg:hidden">
+					<span className="truncate text-sm font-semibold text-secondary">{title ?? 'Edit chart'}</span>
 					<button
 						onClick={onClose}
 						aria-label="Close editor"
-						className="rounded-sm p-1 text-[#999] hover:bg-black/5 hover:text-black dark:text-[#6f757e] dark:hover:bg-white/5 dark:hover:text-white"
+						className="rounded-sm p-1 text-ai-muted hover:bg-ai-wash hover:text-ai-primary"
 					>
 						<svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
 							<path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -464,7 +464,7 @@ function ChartEditorModal({ title, onClose, children }: { title?: string; onClos
 				<button
 					onClick={onClose}
 					aria-label="Close editor"
-					className="absolute top-2.5 right-2.5 z-10 hidden rounded-sm p-1 text-[#999] hover:bg-black/5 hover:text-black lg:block dark:text-[#6f757e] dark:hover:bg-white/5 dark:hover:text-white"
+					className="absolute top-2.5 right-2.5 z-10 hidden rounded-sm p-1 text-ai-muted hover:bg-ai-wash hover:text-ai-primary lg:block"
 				>
 					<svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
 						<path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -477,12 +477,12 @@ function ChartEditorModal({ title, onClose, children }: { title?: string; onClos
 	)
 }
 
-const ChartLoadingSpinner = () => <div className="size-4 animate-spin rounded-full border-b-2 border-blue-500"></div>
+const ChartLoadingSpinner = () => <div className="size-4 animate-spin rounded-full border-b-2 border-ai-blue"></div>
 
 const ChartLoadingPlaceholder = ({ chartTypes }: { chartTypes?: string[] }) => (
-	<div className="flex flex-col items-center justify-center gap-2 rounded-md border border-[#e6e6e6] px-1 py-8 dark:border-[#222324]">
+	<div className="flex flex-col items-center justify-center gap-2 rounded-md border border-ai-line px-1 py-8">
 		<ChartLoadingSpinner />
-		<p className="text-[#666] dark:text-[#919296]">
+		<p className="text-ai-tertiary">
 			{chartTypes?.length ? (
 				<>
 					Creating {chartTypes.join(', ')} visualization{chartTypes.length > 1 ? 's' : ''}&hellip;
@@ -495,7 +495,7 @@ const ChartLoadingPlaceholder = ({ chartTypes }: { chartTypes?: string[] }) => (
 )
 
 const ChartErrorPlaceholder = () => (
-	<div className="flex flex-col items-center justify-center gap-2 rounded-md bg-red-50 p-1 py-8 text-red-700 dark:bg-red-900/10 dark:text-red-300">
+	<div className="flex flex-col items-center justify-center gap-2 rounded-md bg-ai-error-bg p-1 py-8 text-ai-error-strong">
 		<Icon name="alert-triangle" height={16} width={16} />
 		<p>Chart generation encountered an issue</p>
 	</div>
@@ -578,17 +578,17 @@ function ChartRendererImpl({
 	const hasMultipleCharts = charts.length > 1
 
 	return (
-		<div ref={containerRef} className="flex flex-col gap-2 rounded-md border border-(--legacy-old-blue) pt-2">
+		<div ref={containerRef} className="flex flex-col gap-2 rounded-md border border-brand pt-2">
 			{hasMultipleCharts ? (
-				<div className="-mt-2 flex border-b border-[#e6e6e6] dark:border-[#222324]">
+				<div className="-mt-2 flex border-b border-ai-line">
 					{charts.map((chart, index) => (
 						<button
 							key={`toggle-${chart.id}`}
 							onClick={() => setActiveTab(index)}
 							className={`border-b-2 px-2 py-1.5 text-sm transition-colors ${
 								activeTabIndex === index
-									? 'border-(--legacy-old-blue) text-(--legacy-old-blue)'
-									: 'border-transparent text-[#666] hover:text-black dark:text-[#919296] dark:hover:text-white'
+									? 'border-brand text-brand'
+									: 'border-transparent text-ai-tertiary hover:text-ai-primary'
 							}`}
 						>
 							{chart.title}

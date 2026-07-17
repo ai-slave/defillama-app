@@ -25,7 +25,7 @@ export function TabNavigation({ selectedMainTab, editItem, onTabChange, isSqlAll
 	]
 
 	return (
-		<div className="rounded-xl border border-(--legacy-cards-border) bg-(--cards-bg-alt)/60 p-1 shadow-sm">
+		<div className="rounded-xl border border-(--pro-cards-border) p-1 shadow-sm">
 			<div className="grid grid-cols-6 gap-1">
 				{allTabs.map((tab) => {
 					const locked = (PRO_ONLY_TABS.has(tab.id) && !hasActiveSubscription) || (tab.id === 'sql' && !isSqlAllowed)
@@ -34,8 +34,8 @@ export function TabNavigation({ selectedMainTab, editItem, onTabChange, isSqlAll
 							key={tab.id}
 							className={`rounded-lg px-3 py-2.5 text-xs font-medium transition-all duration-200 md:text-sm ${
 								selectedMainTab === tab.id
-									? 'bg-(--legacy-old-blue) text-white shadow-md ring-1 ring-black/10'
-									: 'text-(--legacy-text-secondary) hover:bg-(--legacy-cards-bg)/80 hover:text-(--legacy-text-primary) hover:shadow-sm'
+									? 'bg-(--pro-old-blue) text-on-brand shadow-md ring-1 ring-black/10'
+									: 'text-(--pro-text-secondary) hover:bg-(--pro-cards-bg)/80 hover:text-(--pro-text-primary) hover:shadow-sm'
 							} ${editItem ? 'cursor-not-allowed opacity-50' : ''}`}
 							onClick={() => !editItem && onTabChange(tab.id)}
 							disabled={!!editItem}

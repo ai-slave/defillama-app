@@ -105,7 +105,7 @@ const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplor
 			return (
 				<span
 					className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 label-sm ${
-						deposit ? 'bg-(--success)/10 text-(--success)' : 'bg-(--error)/10 text-(--error)'
+						deposit ? 'bg-success/10 text-success' : 'bg-error/10 text-error'
 					}`}
 				>
 					<Icon name={deposit ? 'arrow-down' : 'arrow-up-right'} height={12} width={12} />
@@ -379,7 +379,7 @@ interface StatCardProps {
 }
 
 function StatCard({ label, value, sublabel, accent = 'default' }: StatCardProps) {
-	const accentClass = accent === 'success' ? 'text-(--success)' : accent === 'error' ? 'text-(--error)' : 'text-primary'
+	const accentClass = accent === 'success' ? 'text-success' : accent === 'error' ? 'text-error' : 'text-primary'
 	return (
 		<Card padding="md" className="flex flex-col gap-1">
 			<span className="label-sm text-secondary uppercase">{label}</span>
@@ -582,7 +582,7 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 				{formError ? (
 					<div
 						role="alert"
-						className="col-span-full flex items-center gap-2 rounded-md border border-(--error)/30 bg-(--error)/10 px-3 py-2 text-sm text-(--error)"
+						className="col-span-full flex items-center gap-2 rounded-md border border-error/30 bg-error/10 px-3 py-2 text-sm text-error"
 					>
 						<Icon name="alert-triangle" height={14} width={14} />
 						<p>{formError}</p>

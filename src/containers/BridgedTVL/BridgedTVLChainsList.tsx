@@ -66,7 +66,7 @@ const bridgedColumns = [
 					<TokenLogo name={value} kind="chain" alt={`Logo of ${value}`} />
 					<BasicLink
 						href={`/bridged/${slug(value)}`}
-						className="truncate text-sm font-medium text-(--legacy-link-text) hover:underline"
+						className="truncate text-sm font-medium text-link hover:underline"
 					>
 						{value}
 					</BasicLink>

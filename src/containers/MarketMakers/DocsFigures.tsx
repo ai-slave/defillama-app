@@ -8,7 +8,7 @@ export function docsAsset(name: string) {
 
 function FigureCaption({ caption }: { caption?: string }) {
 	if (!caption) return null
-	return <figcaption className="body-sm leading-relaxed text-secondary">{caption}</figcaption>
+	return <figcaption className="body-sm text-secondary">{caption}</figcaption>
 }
 
 export function FigureTable({ src, alt, caption }: { src: string; alt: string; caption?: string }) {

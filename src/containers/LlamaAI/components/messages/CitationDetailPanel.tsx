@@ -85,10 +85,10 @@ export function CitationDetailPanel({
 	const panel = (mode: 'mobile' | 'desktop') => {
 		const panelClass =
 			mode === 'mobile'
-				? `relative flex max-h-[85vh] w-full flex-col overflow-hidden rounded-t-2xl border border-[#e6e6e6] bg-(--legacy-cards-bg) transition-all duration-200 ease-out dark:border-[#222324] ${
+				? `relative flex max-h-[85vh] w-full flex-col overflow-hidden rounded-t-2xl border border-ai-line bg-surface transition-all duration-200 ease-out ${
 						entered ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
 					}`
-				: `relative flex h-full w-[min(26vw,420px)] min-w-[320px] flex-col overflow-hidden rounded-lg border border-[#e6e6e6] bg-(--legacy-cards-bg) transition-all duration-200 ease-out dark:border-[#222324] ${
+				: `relative flex h-full w-[min(26vw,420px)] min-w-[320px] flex-col overflow-hidden rounded-lg border border-ai-line bg-surface transition-all duration-200 ease-out ${
 						entered ? 'translate-x-0 opacity-100' : 'translate-x-3 opacity-0'
 					}`
 
@@ -98,11 +98,11 @@ export function CitationDetailPanel({
 
 				{mode === 'mobile' ? (
 					<div className="flex justify-center pt-2">
-						<span className="h-1 w-9 rounded-full bg-[#ccc] dark:bg-[#444]" />
+						<span className="h-1 w-9 rounded-full bg-ai-handle" />
 					</div>
 				) : null}
 
-				<div className="flex items-start gap-2.5 border-b border-[#e6e6e6] py-3 pr-3 pl-4 dark:border-[#222324]">
+				<div className="flex items-start gap-2.5 border-b border-ai-line py-3 pr-3 pl-4">
 					<span
 						className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md"
 						style={{ backgroundColor: `${accent}1f`, color: accent }}
@@ -114,19 +114,17 @@ export function CitationDetailPanel({
 							{badge}
 						</span>
 						{headline ? (
-							<span className="text-lg leading-tight font-semibold text-[#111] tabular-nums dark:text-white">
-								{headline}
-							</span>
+							<span className="text-lg leading-tight font-semibold text-ai-primary tabular-nums">{headline}</span>
 						) : null}
-						{description ? <span className="text-xs text-[#666] dark:text-[#999]">{description}</span> : null}
-						{asOfText ? <span className="text-[11px] text-[#999] dark:text-[#777]">as of {asOfText}</span> : null}
+						{description ? <span className="text-xs text-ai-tertiary">{description}</span> : null}
+						{asOfText ? <span className="text-[11px] text-ai-muted">as of {asOfText}</span> : null}
 					</div>
 					<div className="flex shrink-0 items-center gap-1">
 						{onBackToDashboard ? (
 							<button
 								type="button"
 								onClick={onBackToDashboard}
-								className="rounded-md px-2 py-1 text-[11px] font-medium text-[#666] transition-colors hover:bg-[#e6e6e6] dark:text-[#999] dark:hover:bg-[#222324]"
+								className="rounded-md px-2 py-1 text-[11px] font-medium text-ai-tertiary transition-colors hover:bg-ai-surface-muted"
 							>
 								‹ Dashboard
 							</button>
@@ -134,7 +132,7 @@ export function CitationDetailPanel({
 						{mode === 'mobile' ? (
 							<Ariakit.DialogDismiss
 								aria-label="Close"
-								className="flex size-7 items-center justify-center rounded-md text-[#636e72] transition-colors hover:bg-[#e6e6e6] dark:text-[#8a8f98] dark:hover:bg-[#222324]"
+								className="flex size-7 items-center justify-center rounded-md text-ai-tertiary transition-colors hover:bg-ai-surface-muted"
 							>
 								<Icon name="x" className="size-4" />
 							</Ariakit.DialogDismiss>
@@ -143,7 +141,7 @@ export function CitationDetailPanel({
 								type="button"
 								onClick={close}
 								aria-label="Close"
-								className="flex size-7 items-center justify-center rounded-md text-[#636e72] transition-colors hover:bg-[#e6e6e6] dark:text-[#8a8f98] dark:hover:bg-[#222324]"
+								className="flex size-7 items-center justify-center rounded-md text-ai-tertiary transition-colors hover:bg-ai-surface-muted"
 							>
 								<Icon name="x" className="size-4" />
 							</button>
@@ -153,12 +151,12 @@ export function CitationDetailPanel({
 
 				<div className="flex flex-1 flex-col gap-2.5 overflow-y-auto px-4 py-3.5">
 					{mismatch ? (
-						<div className="flex items-start gap-1.5 rounded-md bg-amber-50 px-2.5 py-2 text-[12px] text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
+						<div className="flex items-start gap-1.5 rounded-md bg-ai-warning-soft px-2.5 py-2 text-xs text-ai-warning">
 							<Icon name="alert-triangle" height={13} width={13} className="mt-px shrink-0" />
 							<span>{mismatchLabel(activeRef)}</span>
 						</div>
 					) : unverified ? (
-						<div className="flex items-start gap-1.5 rounded-md bg-[#f4f4f5] px-2.5 py-2 text-[12px] text-[#777] dark:bg-[#1f1f23] dark:text-[#999]">
+						<div className="flex items-start gap-1.5 rounded-md bg-ai-surface-muted px-2.5 py-2 text-xs text-ai-tertiary">
 							<Icon name="help-circle" height={13} width={13} className="mt-px shrink-0" />
 							<span>{unverifiedLabel()}</span>
 						</div>
@@ -183,7 +181,7 @@ export function CitationDetailPanel({
 					unmountOnHide
 					backdrop={
 						<div
-							className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-200 ${
+							className={`fixed inset-0 z-40 bg-ai-backdrop-soft transition-opacity duration-200 ${
 								entered ? 'opacity-100' : 'opacity-0'
 							}`}
 						/>

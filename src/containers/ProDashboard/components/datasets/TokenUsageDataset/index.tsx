@@ -50,7 +50,7 @@ const TokenOptionComponent = ({ innerProps, label, data }: any) => (
 		{data.logo ? (
 			<img src={data.logo?.replace('/0/', '')} alt="" width={20} height={20} className="size-5 rounded-full" />
 		) : (
-			<div className="size-5 rounded-full bg-(--legacy-bg-tertiary)" />
+			<div className="size-5 rounded-full bg-surface-elevated-2" />
 		)}
 		<span>{label}</span>
 	</div>
@@ -298,7 +298,7 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 							}
 						/>
 					</div>
-					<p className="mt-2 text-sm text-(--legacy-text-tertiary)">Select up to 4 tokens for comparison (max 4)</p>
+					<p className="mt-2 text-sm text-(--pro-text-tertiary)">Select up to 4 tokens for comparison (max 4)</p>
 				</div>
 			</div>
 		)
@@ -336,7 +336,7 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 						onClick={() => {
 							void refetch()
 						}}
-						className="rounded-sm bg-(--legacy-primary) px-4 py-2 text-white hover:bg-(--legacy-primary-hover)"
+						className="rounded-sm bg-brand px-4 py-2 text-on-brand hover:bg-brand-muted"
 					>
 						Try again
 					</button>
@@ -357,23 +357,23 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 
 			{tokenSymbols.length === 1 ? (
 				<div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-4">
-					<div className="border border-(--legacy-divider) p-3">
-						<div className="mb-1 text-xs text-(--legacy-text-tertiary)">Total Value</div>
+					<div className="border border-subtle p-3">
+						<div className="mb-1 text-xs text-(--pro-text-tertiary)">Total Value</div>
 						<div className="text-lg font-semibold pro-text1">{formattedNum(totalAmount, true)}</div>
 					</div>
-					<div className="border border-(--legacy-divider) p-3">
-						<div className="mb-1 text-xs text-(--legacy-text-tertiary)">Protocols</div>
+					<div className="border border-subtle p-3">
+						<div className="mb-1 text-xs text-(--pro-text-tertiary)">Protocols</div>
 						<div className="text-lg font-semibold pro-text1">{protocolCount}</div>
 					</div>
-					<div className="border border-(--legacy-divider) p-3">
-						<div className="mb-1 text-xs text-(--legacy-text-tertiary)">Top Category</div>
+					<div className="border border-subtle p-3">
+						<div className="mb-1 text-xs text-(--pro-text-tertiary)">Top Category</div>
 						<div className="text-lg font-semibold pro-text1">{topCategories[0] ? topCategories[0][0] : '-'}</div>
-						<div className="text-xs text-(--legacy-text-tertiary)">
+						<div className="text-xs text-(--pro-text-tertiary)">
 							{topCategories[0] ? `${topCategories[0][1].count} protocols` : ''}
 						</div>
 					</div>
-					<div className="border border-(--legacy-divider) p-3">
-						<div className="mb-1 text-xs text-(--legacy-text-tertiary)">Avg per Protocol</div>
+					<div className="border border-subtle p-3">
+						<div className="mb-1 text-xs text-(--pro-text-tertiary)">Avg per Protocol</div>
 						<div className="text-lg font-semibold pro-text1">
 							{protocolCount > 0 ? formattedNum(totalAmount / protocolCount, true) : '-'}
 						</div>
@@ -383,26 +383,26 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 				<>
 					<div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
 						{tokenSymbols.map((symbol) => (
-							<div key={symbol} className="border border-(--legacy-divider) p-3">
-								<div className="mb-1 text-xs text-(--legacy-text-tertiary)">{symbol.toUpperCase()} Value</div>
+							<div key={symbol} className="border border-subtle p-3">
+								<div className="mb-1 text-xs text-(--pro-text-tertiary)">{symbol.toUpperCase()} Value</div>
 								<div className="text-lg font-semibold pro-text1">
 									{tokenStats && tokenStats[symbol] ? formattedNum(tokenStats[symbol].total, true) : '$0'}
 								</div>
-								<div className="text-xs text-(--legacy-text-tertiary)">
+								<div className="text-xs text-(--pro-text-tertiary)">
 									{tokenStats && tokenStats[symbol] ? `${tokenStats[symbol].protocols} protocols` : '0 protocols'}
 								</div>
 								<div className="mt-2">
 									<div className="mb-1 flex items-center justify-between">
-										<span className="text-xs text-(--legacy-text-tertiary)">Share</span>
+										<span className="text-xs text-(--pro-text-tertiary)">Share</span>
 										<span className="text-xs font-medium">
 											{tokenStats && tokenStats[symbol] && totalAmount > 0
 												? `${((tokenStats[symbol].total / totalAmount) * 100).toFixed(1)}%`
 												: '0%'}
 										</span>
 									</div>
-									<div className="h-1.5 overflow-hidden bg-(--legacy-bg-secondary)">
+									<div className="h-1.5 overflow-hidden bg-surface-elevated-1">
 										<div
-											className="h-full bg-(--legacy-primary) transition-all duration-300"
+											className="h-full bg-brand transition-all duration-300"
 											style={{
 												width: `${
 													tokenStats && tokenStats[symbol] && totalAmount > 0
@@ -417,18 +417,18 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 						))}
 
 						{tokenSymbols.length <= 2 ? (
-							<div className="border border-(--legacy-divider) p-3">
-								<div className="mb-1 text-xs text-(--legacy-text-tertiary)">Total Combined</div>
+							<div className="border border-subtle p-3">
+								<div className="mb-1 text-xs text-(--pro-text-tertiary)">Total Combined</div>
 								<div className="text-lg font-semibold pro-text1">{formattedNum(totalAmount, true)}</div>
-								<div className="text-xs text-(--legacy-text-tertiary)">All tokens</div>
+								<div className="text-xs text-(--pro-text-tertiary)">All tokens</div>
 							</div>
 						) : null}
 
 						{tokenSymbols.length <= 3 ? (
-							<div className="border border-(--legacy-divider) p-3">
-								<div className="mb-1 text-xs text-(--legacy-text-tertiary)">Unique Protocols</div>
+							<div className="border border-subtle p-3">
+								<div className="mb-1 text-xs text-(--pro-text-tertiary)">Unique Protocols</div>
 								<div className="text-lg font-semibold pro-text1">{protocolCount}</div>
-								<div className="text-xs text-(--legacy-text-tertiary)">
+								<div className="text-xs text-(--pro-text-tertiary)">
 									{(() => {
 										const overlap = rawData.filter((p) => p.tokens && Object.keys(p.tokens).length > 1).length
 										return overlap > 0 ? `${overlap} use multiple` : 'Total count'
@@ -439,15 +439,15 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 					</div>
 
 					{protocolOverlap ? (
-						<div className="mb-4 border border-(--legacy-divider) p-3">
-							<div className="mb-2 text-xs text-(--legacy-text-tertiary)">Protocol Distribution</div>
+						<div className="mb-4 border border-subtle p-3">
+							<div className="mb-2 text-xs text-(--pro-text-tertiary)">Protocol Distribution</div>
 							<div className="flex flex-wrap items-center gap-4">
 								<div className="flex items-center gap-2">
-									<div className="size-3 bg-(--legacy-primary)" />
+									<div className="size-3 bg-brand" />
 									<span className="text-sm">
 										<span className="font-semibold">{protocolOverlap.shared}</span>
-										<span className="text-(--legacy-text-tertiary)"> shared</span>
-										<span className="text-xs text-(--legacy-text-tertiary)">
+										<span className="text-(--pro-text-tertiary)"> shared</span>
+										<span className="text-xs text-(--pro-text-tertiary)">
 											{' '}
 											({((protocolOverlap.shared / protocolCount) * 100).toFixed(0)}%)
 										</span>
@@ -457,7 +457,7 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 								{tokenSymbols.map((symbol, index) => (
 									<div key={symbol} className="flex items-center gap-2">
 										<div
-											className="size-3 border-2 border-(--legacy-divider)"
+											className="size-3 border-2 border-subtle"
 											style={{
 												backgroundColor: `hsl(${index * 90}, 50%, 50%)`,
 												opacity: 0.7
@@ -465,12 +465,12 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 										/>
 										<span className="text-sm">
 											<span className="font-semibold">{protocolOverlap[`${symbol}_only`] || 0}</span>
-											<span className="text-(--legacy-text-tertiary)"> {symbol.toUpperCase()} only</span>
+											<span className="text-(--pro-text-tertiary)"> {symbol.toUpperCase()} only</span>
 										</span>
 									</div>
 								))}
 
-								<div className="ml-auto text-sm text-(--legacy-text-tertiary)">Total: {protocolCount} protocols</div>
+								<div className="ml-auto text-sm text-(--pro-text-tertiary)">Total: {protocolCount} protocols</div>
 							</div>
 						</div>
 					) : null}
@@ -523,21 +523,19 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 						<div className="order-1 flex items-center gap-2 sm:order-2 sm:gap-3">
 							<button
 								type="button"
-								className="flex h-[38px] items-center gap-2 border border-(--legacy-divider) px-2 text-sm transition-colors hover:border-(--legacy-text-tertiary) sm:px-3"
+								className="flex h-[38px] items-center gap-2 border border-subtle px-2 text-sm transition-colors hover:border-(--pro-text-tertiary) sm:px-3"
 								onClick={handleIncludeCexChange}
 							>
 								<div className="relative size-4">
 									<input type="checkbox" checked={includeCex} readOnly className="sr-only" />
 									<div
 										className={`size-4 border-2 transition-all ${
-											includeCex
-												? 'border-(--legacy-primary) bg-(--legacy-primary)'
-												: 'border-(--legacy-text-tertiary) bg-transparent'
+											includeCex ? 'border-brand bg-brand' : 'border-(--pro-text-tertiary) bg-transparent'
 										}`}
 									>
 										{includeCex ? (
 											<svg
-												className="size-3 text-white"
+												className="size-3 text-on-brand"
 												fill="currentColor"
 												viewBox="0 0 20 20"
 												aria-hidden="true"
@@ -556,7 +554,7 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 							</button>
 							<ProTableCSVButton
 								onClick={downloadCSV}
-								className="flex h-[38px] items-center gap-2 border pro-border bg-(--legacy-bg-main) px-3 text-sm text-(--legacy-text-primary) transition-colors hover:bg-(--legacy-bg-tertiary) disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#070e0f]"
+								className="flex h-[38px] items-center gap-2 border pro-border bg-surface px-3 text-sm text-(--pro-text-primary) transition-colors hover:bg-surface-elevated-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#070e0f]"
 							/>
 						</div>
 					</div>
@@ -565,13 +563,13 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 					<input
 						placeholder="Search protocols..."
 						onInput={(e) => setSearch(e.currentTarget.value)}
-						className="w-full max-w-xs rounded-sm border pro-border pro-bg1 px-2 py-1.5 text-sm pro-text1 focus:ring-1 focus:ring-(--legacy-primary) focus:outline-hidden sm:w-auto sm:px-3"
+						className="w-full max-w-xs rounded-sm border pro-border pro-bg1 px-2 py-1.5 text-sm pro-text1 focus:ring-1 focus:ring-brand focus:outline-hidden sm:w-auto sm:px-3"
 					/>
 				</div>
 			</div>
 
 			<div className="relative min-h-0 w-full flex-1 overflow-x-auto overflow-y-auto" style={{ height: '100%' }}>
-				<table className="min-w-full border-collapse text-sm text-(--legacy-text-primary)">
+				<table className="min-w-full border-collapse text-sm text-(--pro-text-primary)">
 					<thead>
 						{table.getHeaderGroups().map((headerGroup) => (
 							<tr key={headerGroup.id}>
@@ -589,7 +587,7 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 																: 'none'
 												}
 											: {})}
-										className="border-r border-b border-(--legacy-divider) bg-transparent p-2 font-medium last:border-r-0"
+										className="border-r border-b border-subtle bg-transparent p-2 font-medium last:border-r-0"
 									>
 										{header.isPlaceholder ? null : header.column.getCanSort() ? (
 											<button
@@ -610,12 +608,9 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 					</thead>
 					<tbody>
 						{table.getRowModel().rows.map((row) => (
-							<tr key={row.id} className="border-b border-(--legacy-divider) hover:bg-(--legacy-bg-tertiary)">
+							<tr key={row.id} className="border-b border-subtle hover:bg-surface-elevated-2">
 								{row.getVisibleCells().map((cell) => (
-									<td
-										key={cell.id}
-										className="border-r border-(--legacy-divider) p-2 whitespace-nowrap last:border-r-0"
-									>
+									<td key={cell.id} className="border-r border-subtle p-2 whitespace-nowrap last:border-r-0">
 										{flexRender(cell.column.columnDef.cell, cell.getContext())}
 									</td>
 								))}

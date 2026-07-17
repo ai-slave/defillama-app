@@ -6,8 +6,8 @@ type StatusTone = 'ready' | 'busy' | 'error' | 'muted'
 const TONE_CLASS: Record<StatusTone, string> = {
 	ready: 'bg-pro-green-300',
 	busy: 'bg-pro-gold-300',
-	error: 'bg-red-500',
-	muted: 'bg-(--legacy-text-tertiary)/60'
+	error: 'bg-error',
+	muted: 'bg-(--pro-text-tertiary)/60'
 }
 
 export function StatusDot({ tone, blink = false }: { tone: StatusTone; blink?: boolean }) {
@@ -24,10 +24,10 @@ export function StatusDot({ tone, blink = false }: { tone: StatusTone; blink?: b
 export function Keycap({ children, muted = false }: { children: ReactNode; muted?: boolean }) {
 	return (
 		<kbd
-			className={`inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-[3px] border px-[3px] font-mono text-[10px] leading-none tabular-nums ${
+			className={`inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-[3px] border px-0.75 font-mono text-[10px] leading-none tabular-nums ${
 				muted
-					? 'border-white/20 bg-white/10 text-white/85'
-					: 'border-(--legacy-divider) bg-(--legacy-app-bg) text-(--legacy-text-secondary) shadow-[inset_0_-1px_0_var(--legacy-divider)]'
+					? 'border-white/20 bg-white/10 text-on-brand/85'
+					: 'border-subtle bg-(--pro-app-bg) text-(--pro-text-secondary) shadow-inset-divider'
 			}`}
 		>
 			{children}
@@ -39,9 +39,9 @@ export function SectionLabel({ label, count, action }: { label: string; count?: 
 	return (
 		<div className="flex items-baseline justify-between gap-2">
 			<div className="flex items-baseline gap-2">
-				<h3 className="text-xs font-semibold tracking-tight text-(--legacy-text-primary)">{label}</h3>
+				<h3 className="text-xs font-semibold tracking-tight text-(--pro-text-primary)">{label}</h3>
 				{count !== undefined ? (
-					<span className="text-[11px] text-(--legacy-text-tertiary) tabular-nums">{count}</span>
+					<span className="text-[11px] text-(--pro-text-tertiary) tabular-nums">{count}</span>
 				) : null}
 			</div>
 			{action ? <div className="shrink-0">{action}</div> : null}
@@ -63,19 +63,19 @@ const KIND_LABEL: Record<ColumnKind, string> = {
 
 const KIND_TONE: Record<ColumnKind, string> = {
 	date: 'text-pro-gold-300',
-	int: 'text-(--legacy-primary)',
-	float: 'text-(--legacy-primary)',
+	int: 'text-brand',
+	float: 'text-brand',
 	text: 'text-pro-green-300',
 	bool: 'text-pro-purple-300',
 	list: 'text-pro-purple-300',
-	other: 'text-(--legacy-text-tertiary)'
+	other: 'text-(--pro-text-tertiary)'
 }
 
 export function TypeBadge({ kind }: { kind: ColumnKind }) {
 	return (
 		<span
 			aria-label={`${kind} column`}
-			className={`inline-flex h-[14px] shrink-0 items-center rounded-[3px] bg-(--legacy-app-bg)/60 px-1 font-mono text-[9px] leading-none tracking-tight ${KIND_TONE[kind]}`}
+			className={`inline-flex h-[14px] shrink-0 items-center rounded-[3px] bg-(--pro-app-bg)/60 px-1 font-mono text-[9px] leading-none tracking-tight ${KIND_TONE[kind]}`}
 		>
 			{KIND_LABEL[kind]}
 		</span>

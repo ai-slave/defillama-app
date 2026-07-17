@@ -120,7 +120,7 @@ export function ArticleBannerStrip({ scope, section, articleId, initialData }: P
 	const hasLink = !!linkUrl
 
 	return (
-		<div className="flex w-full items-center gap-3 bg-[#0b1e6b] px-4 py-2.5 text-white">
+		<div className="flex w-full items-center gap-3 bg-(--research-banner) px-4 py-2.5 text-on-brand">
 			<div className="flex flex-1 items-center justify-center">
 				<p className="m-0 text-center font-jetbrains text-[11px] font-semibold tracking-[0.18em] uppercase">
 					<span>{banner.text}</span>
@@ -153,7 +153,7 @@ export function ArticleBannerStrip({ scope, section, articleId, initialData }: P
 				type="button"
 				onClick={dismiss}
 				aria-label="Dismiss banner"
-				className="flex size-6 shrink-0 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+				className="flex size-6 shrink-0 items-center justify-center rounded-full text-on-brand/80 transition-colors hover:bg-white/10 hover:text-on-brand"
 			>
 				<Icon name="x" height={14} width={14} />
 			</button>

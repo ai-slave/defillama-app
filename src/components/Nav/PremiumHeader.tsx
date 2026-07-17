@@ -14,7 +14,7 @@ export const PremiumHeader = () => {
 		<>
 			<SidebarDivider className="mt-1 mb-2 -ml-1.5 max-lg:hidden" />
 			<p className="mb-1 flex items-center gap-2">
-				<span className="label-sm font-medium tracking-wide text-secondary">PREMIUM</span>
+				<span className="label-sm tracking-wide text-secondary">PREMIUM</span>
 				<BasicLink
 					href="/subscription"
 					className={`${freeTrialBadgeStyles} ${showFreeTrial ? '' : 'invisible'}`.trim()}

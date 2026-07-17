@@ -79,7 +79,7 @@ export const IconsRow = ({ items = EMPTY_ITEMS, align = 'end' }: IIconsRowProps)
 						{`+${hiddenItems.length}`}
 					</Ariakit.HovercardAnchor>
 					<Ariakit.Hovercard
-						className="z-10 flex max-h-(--popover-available-height) max-w-[min(36rem,var(--popover-available-width))] flex-wrap items-center justify-start gap-1 overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay p-1 text-primary shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]"
+						className="z-10 flex max-h-(--popover-available-height) max-w-[min(36rem,var(--popover-available-width))] flex-wrap items-center justify-start gap-1 overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay p-1 text-primary shadow-overlay-sm"
 						overflowPadding={16}
 						unmountOnHide
 						portal

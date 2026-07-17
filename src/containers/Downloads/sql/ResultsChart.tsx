@@ -55,7 +55,7 @@ export function ResultsChart({ result, chartConfig, onChartConfigChange }: Resul
 		<div className="flex flex-col gap-3">
 			<ChartToolbar config={resolvedConfig} classified={classified} onChange={patch} />
 
-			<div className="flex flex-col gap-2 rounded-md border border-(--legacy-divider) bg-surface p-2">
+			<div className="flex flex-col gap-2 rounded-md border border-subtle bg-surface p-2">
 				<div className="flex items-center justify-end gap-1.5">
 					<ChartExportButton
 						chartInstance={getChartInstance}
@@ -76,10 +76,10 @@ export function ResultsChart({ result, chartConfig, onChartConfigChange }: Resul
 
 function EmptyState({ message, hint }: { message: string; hint?: string }) {
 	return (
-		<div className="flex flex-col items-center gap-1 rounded-md border border-dashed border-(--legacy-divider) bg-(--bg-primary)/40 px-6 py-10 text-center">
-			<Icon name="bar-chart-2" className="size-5 text-(--legacy-text-tertiary)" />
-			<p className="text-sm text-(--legacy-text-secondary)">{message}</p>
-			{hint ? <p className="text-xs text-(--legacy-text-tertiary)">{hint}</p> : null}
+		<div className="flex flex-col items-center gap-1 rounded-md border border-dashed border-subtle px-6 py-10 text-center">
+			<Icon name="bar-chart-2" className="size-5 text-(--pro-text-tertiary)" />
+			<p className="text-sm text-(--pro-text-secondary)">{message}</p>
+			{hint ? <p className="text-xs text-(--pro-text-tertiary)">{hint}</p> : null}
 		</div>
 	)
 }

@@ -20,33 +20,33 @@ export default function Stablecoins() {
 	return (
 		<div className="flex min-h-[calc(100vh-180px)] flex-col">
 			<div className="relative flex-1">
-				<div className="overflow-hidden rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg)">
+				<div className="overflow-hidden rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg)">
 					<div className="flex flex-col">
-						<div className="flex border-b border-(--legacy-divider)">
+						<div className="flex border-b border-subtle">
 							{Array.from({ length: 5 }).map((_, i) => (
 								<div key={i} className="flex-1 px-4 py-3.5">
-									<div className="h-2.5 w-16 rounded-full bg-(--legacy-text-disabled) opacity-40" />
+									<div className="h-2.5 w-16 rounded-full bg-tertiary opacity-40" />
 								</div>
 							))}
 						</div>
 						{SKELETON_WIDTHS.map((widths, r) => (
 							<div
 								key={r}
-								className="flex border-b border-(--legacy-divider) last:border-b-0"
+								className="flex border-b border-subtle last:border-b-0"
 								style={{ opacity: Math.max(0.15, 0.7 - r * 0.08) }}
 							>
 								{widths.map((w, c) => (
 									<div key={c} className="flex-1 px-4 py-3.5">
-										<div className={`${w} h-3 rounded-full bg-(--legacy-text-disabled)`} />
+										<div className={`${w} h-3 rounded-full bg-tertiary`} />
 									</div>
 								))}
 							</div>
 						))}
 					</div>
-					<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--legacy-cards-bg) via-transparent to-transparent" />
+					<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--pro-cards-bg) via-transparent to-transparent" />
 				</div>
 				<div className="absolute inset-0 flex items-center justify-center">
-					<span className="rounded-full border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-5 py-2.5 text-sm font-semibold tracking-wide text-(--legacy-text-secondary) shadow-lg">
+					<span className="rounded-full border border-(--pro-cards-border) bg-(--pro-cards-bg) px-5 py-2.5 text-sm font-semibold tracking-wide text-(--pro-text-secondary) shadow-lg">
 						Stablecoins — Coming Soon
 					</span>
 				</div>

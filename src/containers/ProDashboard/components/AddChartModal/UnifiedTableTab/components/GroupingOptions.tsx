@@ -51,10 +51,10 @@ export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptio
 
 	return (
 		<>
-			<div className="rounded-md border border-(--legacy-cards-border)/70 bg-(--cards-bg-alt)/50 px-2.5 py-1.5 text-[10px] text-(--legacy-text-tertiary)">
-				<strong className="text-(--legacy-text-secondary)">Grouping:</strong> {groupingSummary}
+			<div className="rounded-md border border-(--pro-cards-border)/70 px-2.5 py-1.5 text-[10px] text-(--pro-text-tertiary)">
+				<strong className="text-(--pro-text-secondary)">Grouping:</strong> {groupingSummary}
 			</div>
-			<div className="grid gap-2 border-t border-(--legacy-cards-border)/70 pt-2 sm:grid-cols-2">
+			<div className="grid gap-2 border-t border-(--pro-cards-border)/70 pt-2 sm:grid-cols-2">
 				{groupingOptions.map((option) => {
 					const active = rowHeaders.includes(option.value)
 					return (
@@ -63,10 +63,10 @@ export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptio
 							type="button"
 							onClick={() => onToggleRowHeader(option.value)}
 							aria-pressed={active}
-							className={`group flex h-full flex-col gap-1 rounded-lg border p-2 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--legacy-primary) ${
+							className={`group flex h-full flex-col gap-1 rounded-lg border p-2 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
 								active
-									? 'border-(--legacy-primary) bg-(--legacy-primary)/12 shadow-[0_2px_6px_rgba(91,133,255,0.1)]'
-									: 'border-(--legacy-cards-border) hover:border-(--legacy-primary) hover:bg-(--legacy-primary)/6'
+									? 'border-brand bg-brand/12 shadow-brand-soft'
+									: 'border-(--pro-cards-border) hover:border-brand hover:bg-brand/6'
 							}`}
 						>
 							<span className="flex items-center gap-1.5">
@@ -75,13 +75,13 @@ export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptio
 										height={13}
 										width={13}
 										name={option.icon}
-										className={active ? 'text-(--legacy-primary)' : 'text-(--legacy-text-tertiary)'}
+										className={active ? 'text-brand' : 'text-(--pro-text-tertiary)'}
 									/>
 								) : null}
-								<span className="text-[10px] font-semibold text-(--legacy-text-primary)">{option.label}</span>
-								{active ? <Icon name="check" height={11} width={11} className="text-(--legacy-primary)" /> : null}
+								<span className="text-[10px] font-semibold text-(--pro-text-primary)">{option.label}</span>
+								{active ? <Icon name="check" height={11} width={11} className="text-brand" /> : null}
 							</span>
-							<p className="text-[10px] leading-tight text-(--legacy-text-secondary)">{option.description}</p>
+							<p className="text-[10px] leading-tight text-(--pro-text-secondary)">{option.description}</p>
 						</button>
 					)
 				})}

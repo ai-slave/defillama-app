@@ -61,7 +61,7 @@ function ApyStabilityIndicator({
 					<span>{fmtPct(sigma)}%</span>
 				</span>
 			) : null}
-			<span className="text-[10px] opacity-50">Score = 100 / (1 + σ/avg)</span>
+			<span className="body-xs opacity-50">Score = 100 / (1 + σ/avg)</span>
 		</span>
 	)
 	return (

@@ -334,24 +334,24 @@ export const SettingsModal = memo(function SettingsModal({
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog
-				className="dialog max-h-[88vh] w-full max-w-[720px] gap-0 overflow-hidden rounded-2xl border border-black/5 bg-white p-0 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.35)] dark:border-white/[0.06] dark:bg-[#17181C] dark:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)]"
-				backdrop={<div className="backdrop fixed inset-0 bg-black/60 backdrop-blur-md" />}
+				className="dialog max-h-[88vh] w-full max-w-[720px] gap-0 overflow-hidden rounded-2xl border border-ai-line-subtle bg-ai-surface-card p-0 shadow-ai-lg"
+				backdrop={<div className="backdrop fixed inset-0 bg-ai-backdrop backdrop-blur-md" />}
 				portal
 				unmountOnHide
 			>
-				<header className="relative overflow-hidden border-b border-black/[0.06] dark:border-white/[0.05]">
-					<div className="pointer-events-none absolute inset-0 bg-linear-to-br from-[#1853A8]/[0.05] via-transparent to-transparent dark:from-[#4B86DB]/[0.07]" />
+				<header className="relative overflow-hidden border-b border-ai-line-subtle">
+					<div className="dark:from-ai-blue-deep/7.000000000000001 pointer-events-none absolute inset-0 bg-linear-to-br from-ai-blue-deep/5 via-transparent to-transparent" />
 					<div className="relative flex items-center justify-between gap-4 px-5 py-4 sm:px-6 sm:py-5">
 						<div className="flex items-center gap-3">
-							<div className="relative flex size-10 items-center justify-center overflow-hidden rounded-xl bg-linear-to-br from-[#1853A8]/15 to-[#1853A8]/5 ring-1 ring-[#1853A8]/15 ring-inset dark:from-[#4B86DB]/20 dark:to-[#4B86DB]/5 dark:ring-[#4B86DB]/20">
-								<Icon name="settings" className="size-[18px] text-[#1853A8] dark:text-[#4B86DB]" />
+							<div className="relative flex size-10 items-center justify-center overflow-hidden rounded-xl bg-linear-to-br from-ai-blue-deep/15 to-ai-blue-deep/5 ring-1 ring-ai-blue-deep/15 ring-inset">
+								<Icon name="settings" className="size-[18px] text-ai-blue-deep" />
 							</div>
 							<div className="flex flex-col leading-tight">
-								<h2 className="m-0 text-[15px] font-semibold tracking-tight text-black dark:text-white">Settings</h2>
-								<p className="m-0 mt-0.5 text-[11px] text-[#777] dark:text-[#919296]">Tune how LlamaAI works for you</p>
+								<h2 className="m-0 text-[15px] font-semibold tracking-tight text-ai-primary">Settings</h2>
+								<p className="m-0 mt-0.5 text-[11px] text-ai-tertiary">Tune how LlamaAI works for you</p>
 							</div>
 						</div>
-						<Ariakit.DialogDismiss className="-mr-1.5 rounded-lg p-2 text-[#666] transition-colors hover:bg-black/[0.05] hover:text-black dark:text-gray-400 dark:hover:bg-white/[0.06] dark:hover:text-white">
+						<Ariakit.DialogDismiss className="-mr-1.5 rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-wash hover:text-ai-primary">
 							<Icon name="x" className="size-4" />
 						</Ariakit.DialogDismiss>
 					</div>
@@ -360,7 +360,7 @@ export const SettingsModal = memo(function SettingsModal({
 				<div className="flex flex-col sm:min-h-[480px] sm:flex-row">
 					<nav
 						aria-label="Settings sections"
-						className="flex shrink-0 gap-1 overflow-x-auto border-b border-black/[0.06] p-2 sm:w-[180px] sm:flex-col sm:gap-0.5 sm:overflow-visible sm:border-r sm:border-b-0 sm:bg-black/[0.015] sm:p-3 dark:border-white/[0.05] dark:sm:bg-white/[0.012]"
+						className="flex shrink-0 gap-1 overflow-x-auto border-b border-ai-line-subtle p-2 sm:w-[180px] sm:flex-col sm:gap-0.5 sm:overflow-visible sm:border-r sm:border-b-0 sm:bg-ai-wash-faint sm:p-3"
 					>
 						{tabs.map((tab) => {
 							const isActive = activeTab === tab.id
@@ -371,15 +371,13 @@ export const SettingsModal = memo(function SettingsModal({
 									onClick={() => setActiveTab(tab.id)}
 									className={`group relative flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-medium transition-colors ${
 										isActive
-											? 'bg-white text-[#1853A8] shadow-[0_1px_2px_rgba(0,0,0,0.05)] ring-1 ring-black/[0.06] dark:bg-white/[0.06] dark:text-[#4B86DB] dark:shadow-none dark:ring-white/[0.06]'
-											: 'text-[#666] hover:bg-black/[0.03] hover:text-black dark:text-[#a0a0a5] dark:hover:bg-white/[0.03] dark:hover:text-white'
+											? 'bg-ai-white text-ai-blue-deep shadow-ai-xs ring-1 ring-ai-line-subtle dark:bg-ai-wash dark:shadow-none dark:ring-ai-line-subtle'
+											: 'text-ai-tertiary hover:bg-ai-wash hover:text-ai-primary'
 									}`}
 								>
 									<Icon
 										name={tab.icon}
-										className={`size-[14px] shrink-0 ${
-											isActive ? 'text-[#1853A8] dark:text-[#4B86DB]' : 'text-[#999] dark:text-[#777]'
-										}`}
+										className={`size-[14px] shrink-0 ${isActive ? 'text-ai-blue-deep' : 'text-ai-muted'}`}
 									/>
 									<span>{tab.label}</span>
 								</button>
@@ -412,20 +410,20 @@ export const SettingsModal = memo(function SettingsModal({
 														}
 													}}
 													placeholder="e.g., Be concise and lead with numbers. Always include % changes."
-													className="w-full resize-none rounded-xl border border-black/[0.08] bg-black/[0.015] p-3.5 text-sm text-[#1a1a1a] placeholder-[#aaa] outline-hidden transition-all focus:border-[#1853A8]/40 focus:bg-white focus:ring-4 focus:ring-[#1853A8]/[0.08] dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-white dark:placeholder-[#555] dark:focus:border-[#4B86DB]/40 dark:focus:bg-white/[0.04] dark:focus:ring-[#4B86DB]/[0.1]"
+													className="w-full resize-none rounded-xl border border-ai-line-medium bg-ai-wash-faint p-3.5 text-sm text-ai-primary placeholder-ai-faint outline-hidden transition-all focus:border-ai-blue-deep/40 focus:bg-ai-wash focus:ring-4 focus:ring-ai-blue-deep/8 dark:focus:ring-ai-blue-deep/10"
 													rows={5}
 												/>
 												{showClear ? (
 													<button
 														type="button"
 														onClick={handleClear}
-														className="absolute top-2.5 right-2.5 rounded-md px-2 py-1 text-[10px] font-medium text-[#999] transition-colors hover:bg-red-500/10 hover:text-red-500"
+														className="absolute top-2.5 right-2.5 rounded-md px-2 py-1 text-[10px] font-medium text-ai-muted transition-colors hover:bg-ai-error-vivid/10 hover:text-ai-error-vivid"
 													>
 														Clear
 													</button>
 												) : null}
 											</div>
-											<div className="flex items-center justify-between font-mono text-[10.5px] text-[#999] dark:text-[#666]">
+											<div className="flex items-center justify-between font-mono text-[10.5px] text-ai-muted">
 												<span>
 													{charCount}/{MAX_LENGTH}
 												</span>
@@ -509,19 +507,16 @@ export const SettingsModal = memo(function SettingsModal({
 												/>
 											</SettingsCard>
 											{settings.enablePremiumTools ? (
-												<div className="rounded-xl border border-black/[0.06] bg-black/[0.015] p-4 dark:border-white/[0.06] dark:bg-white/[0.015]">
-													<label
-														htmlFor="llamaai-spend-cap"
-														className="block text-[13px] font-medium text-[#1a1a1a] dark:text-white"
-													>
+												<div className="rounded-xl border border-ai-line-subtle bg-ai-wash-faint p-4">
+													<label htmlFor="llamaai-spend-cap" className="block text-[13px] font-medium text-ai-primary">
 														Spend cap per message
 													</label>
-													<p className="mt-1 text-xs text-[#777] dark:text-[#919296]">
+													<p className="mt-1 text-xs text-ai-tertiary">
 														Max external-data spend per message in USD. Each new message gets a fresh budget. Default
 														$0.50.
 													</p>
-													<div className="mt-3 flex items-center gap-1 rounded-lg border border-black/[0.08] bg-white px-3 py-2 transition-colors focus-within:border-[#1853A8]/40 focus-within:ring-4 focus-within:ring-[#1853A8]/[0.08] dark:border-white/[0.08] dark:bg-[#1a1b1c] dark:focus-within:border-[#4B86DB]/40 dark:focus-within:ring-[#4B86DB]/[0.1]">
-														<span className="font-mono text-sm text-[#999] dark:text-[#666]">$</span>
+													<div className="mt-3 flex items-center gap-1 rounded-lg border border-ai-line-medium bg-ai-surface-card px-3 py-2 transition-colors focus-within:border-ai-blue-deep/40 focus-within:ring-4 focus-within:ring-ai-blue-deep/8 dark:focus-within:ring-ai-blue-deep/10">
+														<span className="font-mono text-sm text-ai-muted">$</span>
 														<input
 															id="llamaai-spend-cap"
 															type="number"
@@ -532,7 +527,7 @@ export const SettingsModal = memo(function SettingsModal({
 															onChange={handleSpendCapChange}
 															onBlur={handleSpendCapBlur}
 															onKeyDown={handleSpendCapKeyDown}
-															className="w-full bg-transparent font-mono text-sm text-[#1a1a1a] outline-hidden dark:text-white"
+															className="w-full bg-transparent font-mono text-sm text-ai-primary outline-hidden"
 														/>
 													</div>
 												</div>
@@ -543,7 +538,7 @@ export const SettingsModal = memo(function SettingsModal({
 									{availableModels && availableModels.length > 0 ? (
 										<div>
 											<SectionHeading title="Model" subtitle="Override the AI model that powers your responses." />
-											<div className="mt-3 space-y-3 rounded-xl border border-black/[0.06] bg-black/[0.015] p-4 dark:border-white/[0.06] dark:bg-white/[0.015]">
+											<div className="mt-3 space-y-3 rounded-xl border border-ai-line-subtle bg-ai-wash-faint p-4">
 												<SelectField
 													id="llamaai-model-select"
 													label="Model"
@@ -589,13 +584,13 @@ export const SettingsModal = memo(function SettingsModal({
 										subtitle="Connect external accounts to chat and receive alerts."
 									/>
 									{isSettingsLoading ? (
-										<div className="rounded-xl border border-black/[0.06] bg-black/[0.015] p-4 dark:border-white/[0.06] dark:bg-white/[0.015]">
+										<div className="rounded-xl border border-ai-line-subtle bg-ai-wash-faint p-4">
 											<div className="flex items-center justify-between gap-3">
 												<div className="min-w-0 flex-1">
-													<div className="h-4 w-24 animate-pulse rounded-sm bg-black/[0.08] dark:bg-white/[0.08]" />
-													<div className="mt-2 h-3 w-full max-w-[360px] animate-pulse rounded-sm bg-black/[0.06] dark:bg-white/[0.06]" />
+													<div className="h-4 w-24 animate-pulse rounded-sm bg-ai-wash-strong" />
+													<div className="mt-2 h-3 w-full max-w-[360px] animate-pulse rounded-sm bg-ai-wash" />
 												</div>
-												<div className="h-8 w-20 shrink-0 animate-pulse rounded-lg bg-black/[0.08] dark:bg-white/[0.08]" />
+												<div className="h-8 w-20 shrink-0 animate-pulse rounded-lg bg-ai-wash-strong" />
 											</div>
 										</div>
 									) : (
@@ -622,9 +617,7 @@ export const SettingsModal = memo(function SettingsModal({
 								<div className="space-y-6">
 									{agentHome.memories.data?.available === false ? (
 										<SettingsCard>
-											<p className="px-4 py-3.5 text-xs text-[#777] dark:text-[#919296]">
-												Memory is available on paid plans.
-											</p>
+											<p className="px-4 py-3.5 text-xs text-ai-tertiary">Memory is available on paid plans.</p>
 										</SettingsCard>
 									) : (
 										<>
@@ -645,7 +638,7 @@ export const SettingsModal = memo(function SettingsModal({
 														type="button"
 														onClick={() => agentHome.clearMemoriesMutation.mutate('user')}
 														disabled={agentHome.clearMemoriesMutation.isPending}
-														className="text-xs font-medium text-[#999] transition-colors hover:text-red-500 disabled:opacity-50 dark:text-[#666]"
+														className="text-xs font-medium text-ai-muted transition-colors hover:text-ai-error-vivid disabled:opacity-50"
 													>
 														Clear all
 													</button>
@@ -669,7 +662,7 @@ export const SettingsModal = memo(function SettingsModal({
 														type="button"
 														onClick={() => agentHome.clearMemoriesMutation.mutate('memory')}
 														disabled={agentHome.clearMemoriesMutation.isPending}
-														className="text-xs font-medium text-[#999] transition-colors hover:text-red-500 disabled:opacity-50 dark:text-[#666]"
+														className="text-xs font-medium text-ai-muted transition-colors hover:text-ai-error-vivid disabled:opacity-50"
 													>
 														Clear all
 													</button>
@@ -683,35 +676,31 @@ export const SettingsModal = memo(function SettingsModal({
 												/>
 												<SettingsCard>
 													{agentHome.skills.isLoading ? (
-														<p className="px-4 py-3.5 text-xs text-[#777] dark:text-[#919296]">Loading…</p>
+														<p className="px-4 py-3.5 text-xs text-ai-tertiary">Loading…</p>
 													) : (agentHome.skills.data?.active.length ?? 0) === 0 ? (
-														<p className="px-4 py-3.5 text-xs text-[#777] dark:text-[#919296]">No skills yet.</p>
+														<p className="px-4 py-3.5 text-xs text-ai-tertiary">No skills yet.</p>
 													) : (
 														agentHome.skills.data!.active.map((skill, i) => (
 															<div key={skill.name}>
 																{i > 0 ? <RowDivider /> : null}
 																<div className="flex items-start justify-between gap-4 px-4 py-3.5">
 																	<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-																		<p className="m-0 flex items-center gap-2 text-[13.5px] font-medium text-[#1a1a1a] dark:text-white">
+																		<p className="m-0 flex items-center gap-2 text-[13.5px] font-medium text-ai-primary">
 																			{skill.name}
-																			<span className="rounded-sm bg-black/[0.05] px-1.5 py-0.5 text-[10px] font-normal text-[#777] dark:bg-white/[0.06] dark:text-[#919296]">
+																			<span className="rounded-sm bg-ai-wash px-1.5 py-0.5 text-[10px] font-normal text-ai-tertiary">
 																				{skill.createdBy === 'agent' ? 'learned by assistant' : 'added by you'}
 																			</span>
 																		</p>
-																		<p className="m-0 text-xs leading-relaxed text-[#777] dark:text-[#919296]">
-																			{skill.description}
-																		</p>
+																		<p className="m-0 text-xs leading-relaxed text-ai-tertiary">{skill.description}</p>
 																	</div>
 																	{skill.pinned ? (
-																		<span className="shrink-0 px-2 py-1 text-xs text-[#999] dark:text-[#666]">
-																			Pinned
-																		</span>
+																		<span className="shrink-0 px-2 py-1 text-xs text-ai-muted">Pinned</span>
 																	) : (
 																		<button
 																			type="button"
 																			onClick={() => agentHome.archiveSkillMutation.mutate(skill.name)}
 																			disabled={agentHome.archiveSkillMutation.isPending}
-																			className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-[#999] transition-colors hover:bg-black/[0.04] hover:text-red-500 disabled:opacity-50 dark:text-[#666] dark:hover:bg-white/[0.04]"
+																			className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-error-vivid disabled:opacity-50"
 																		>
 																			Archive
 																		</button>
@@ -723,20 +712,18 @@ export const SettingsModal = memo(function SettingsModal({
 												</SettingsCard>
 												{(agentHome.skills.data?.archived.length ?? 0) > 0 ? (
 													<details className="text-xs">
-														<summary className="cursor-pointer text-[#999] dark:text-[#666]">
+														<summary className="cursor-pointer text-ai-muted">
 															Archived ({agentHome.skills.data!.archived.length})
 														</summary>
 														<div className="mt-2 space-y-2">
 															{agentHome.skills.data!.archived.map((skill) => (
 																<div key={skill.name} className="flex items-center justify-between gap-4">
-																	<span className="min-w-0 flex-1 truncate text-[#777] dark:text-[#919296]">
-																		{skill.name}
-																	</span>
+																	<span className="min-w-0 flex-1 truncate text-ai-tertiary">{skill.name}</span>
 																	<button
 																		type="button"
 																		onClick={() => agentHome.restoreSkillMutation.mutate(skill.name)}
 																		disabled={agentHome.restoreSkillMutation.isPending}
-																		className="shrink-0 font-medium text-[#1853A8] disabled:opacity-50 dark:text-[#4B86DB]"
+																		className="shrink-0 font-medium text-ai-blue-deep disabled:opacity-50"
 																	>
 																		Restore
 																	</button>
@@ -762,8 +749,8 @@ export const SettingsModal = memo(function SettingsModal({
 										onClick={handleHackerToggle}
 										className={`group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-xl p-4 text-left transition-all ${
 											settings.hackerMode
-												? 'bg-[#0a0a0a] shadow-[0_0_40px_rgba(0,255,65,0.08)] ring-1 ring-[#00ff41]/30'
-												: 'bg-white/[0.02] ring-1 ring-white/[0.08] hover:ring-white/[0.16]'
+												? 'bg-ai-ink shadow-ai-terminal-glow ring-1 ring-ai-terminal/30'
+												: 'bg-ai-wash-faint ring-1 ring-ai-line-medium hover:ring-ai-line-strong'
 										}`}
 									>
 										{settings.hackerMode ? (
@@ -776,26 +763,24 @@ export const SettingsModal = memo(function SettingsModal({
 											<div className="flex flex-col gap-0.5">
 												<p
 													className={`m-0 text-sm font-medium ${
-														settings.hackerMode
-															? 'font-mono text-[#00ff41] drop-shadow-[0_0_6px_rgba(0,255,65,0.5)]'
-															: 'text-white'
+														settings.hackerMode ? 'font-mono text-ai-terminal drop-shadow-ai-terminal' : 'text-ai-white'
 													}`}
 												>
 													{settings.hackerMode ? '> hacker_mode --active' : 'Hacker Mode'}
 												</p>
-												<p className="m-0 text-xs text-[#919296]">
+												<p className="m-0 text-xs text-ai-muted">
 													Watch the llama hack through your questions in green.
 												</p>
 											</div>
 										</div>
 										<div
 											className={`relative ml-3 h-[22px] w-[38px] shrink-0 rounded-full transition-colors ${
-												settings.hackerMode ? 'bg-[#00ff41] shadow-[0_0_10px_rgba(0,255,65,0.45)]' : 'bg-white/15'
+												settings.hackerMode ? 'bg-ai-terminal shadow-ai-terminal' : 'bg-ai-surface-muted'
 											}`}
 										>
 											<div
 												className={`absolute top-[3px] size-4 rounded-full shadow transition-transform duration-200 ${
-													settings.hackerMode ? 'translate-x-[19px] bg-[#0d0d0d]' : 'translate-x-[3px] bg-white'
+													settings.hackerMode ? 'translate-x-[19px] bg-ai-ink' : 'translate-x-[3px] bg-ai-white'
 												}`}
 											/>
 										</div>
@@ -813,22 +798,18 @@ export const SettingsModal = memo(function SettingsModal({
 function SectionHeading({ title, subtitle }: { title: string; subtitle?: string }) {
 	return (
 		<div className="space-y-1">
-			<h3 className="m-0 text-[13px] font-semibold tracking-tight text-[#1a1a1a] dark:text-white">{title}</h3>
-			{subtitle ? <p className="m-0 text-xs text-[#777] dark:text-[#919296]">{subtitle}</p> : null}
+			<h3 className="m-0 text-[13px] font-semibold tracking-tight text-ai-primary">{title}</h3>
+			{subtitle ? <p className="m-0 text-xs text-ai-tertiary">{subtitle}</p> : null}
 		</div>
 	)
 }
 
 function SettingsCard({ children }: { children: React.ReactNode }) {
-	return (
-		<div className="overflow-hidden rounded-xl border border-black/[0.06] bg-black/[0.015] dark:border-white/[0.06] dark:bg-white/[0.015]">
-			{children}
-		</div>
-	)
+	return <div className="overflow-hidden rounded-xl border border-ai-line-subtle bg-ai-wash-faint">{children}</div>
 }
 
 function RowDivider() {
-	return <div className="mx-4 h-px bg-black/[0.05] dark:bg-white/[0.05]" />
+	return <div className="mx-4 h-px bg-ai-wash" />
 }
 
 function MemoryList({
@@ -847,22 +828,20 @@ function MemoryList({
 	return (
 		<SettingsCard>
 			{isLoading ? (
-				<p className="px-4 py-3.5 text-xs text-[#777] dark:text-[#919296]">Loading…</p>
+				<p className="px-4 py-3.5 text-xs text-ai-tertiary">Loading…</p>
 			) : (entries?.length ?? 0) === 0 ? (
-				<p className="px-4 py-3.5 text-xs text-[#777] dark:text-[#919296]">{emptyText}</p>
+				<p className="px-4 py-3.5 text-xs text-ai-tertiary">{emptyText}</p>
 			) : (
 				entries!.map((entry, i) => (
 					<div key={entry.id}>
 						{i > 0 ? <RowDivider /> : null}
 						<div className="flex items-start justify-between gap-4 px-4 py-3.5">
-							<p className="m-0 min-w-0 flex-1 text-[13px] whitespace-pre-wrap text-[#1a1a1a] dark:text-white">
-								{entry.text}
-							</p>
+							<p className="m-0 min-w-0 flex-1 text-[13px] whitespace-pre-wrap text-ai-primary">{entry.text}</p>
 							<button
 								type="button"
 								onClick={() => onDelete(entry.id)}
 								disabled={deleting}
-								className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-[#999] transition-colors hover:bg-black/[0.04] hover:text-red-500 disabled:opacity-50 dark:text-[#666] dark:hover:bg-white/[0.04]"
+								className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-error-vivid disabled:opacity-50"
 							>
 								Delete
 							</button>
@@ -895,19 +874,19 @@ function ToggleRow({
 			aria-label={label}
 			onClick={onClick}
 			disabled={!interactive}
-			className="group flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-black/[0.02] disabled:cursor-default disabled:hover:bg-transparent dark:hover:bg-white/[0.02]"
+			className="group flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-ai-wash-faint disabled:cursor-default disabled:hover:bg-transparent"
 		>
 			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-				<p className="m-0 text-[13.5px] font-medium text-[#1a1a1a] dark:text-white">{label}</p>
-				<p className="m-0 text-xs leading-relaxed text-[#777] dark:text-[#919296]">{description}</p>
+				<p className="m-0 text-[13.5px] font-medium text-ai-primary">{label}</p>
+				<p className="m-0 text-xs leading-relaxed text-ai-tertiary">{description}</p>
 			</div>
 			<div
 				className={`relative mt-0.5 h-[22px] w-[38px] shrink-0 rounded-full transition-colors ${
-					checked ? 'bg-[#1853A8] dark:bg-[#4B86DB]' : 'bg-black/15 dark:bg-white/15'
+					checked ? 'bg-ai-blue-deep' : 'bg-ai-black/15 dark:bg-ai-white/15'
 				}`}
 			>
 				<div
-					className={`absolute top-[3px] size-4 rounded-full bg-white shadow transition-transform duration-200 ${
+					className={`absolute top-[3px] size-4 rounded-full bg-ai-white shadow transition-transform duration-200 ${
 						checked ? 'translate-x-[19px]' : 'translate-x-[3px]'
 					}`}
 				/>
@@ -931,7 +910,7 @@ function SelectField({
 }) {
 	return (
 		<div className="flex flex-col gap-1.5">
-			<label htmlFor={id} className="text-[12px] font-medium text-[#666] dark:text-[#a0a0a5]">
+			<label htmlFor={id} className="text-xs font-medium text-ai-tertiary">
 				{label}
 			</label>
 			<div className="relative">
@@ -939,13 +918,13 @@ function SelectField({
 					id={id}
 					value={value}
 					onChange={onChange}
-					className="w-full appearance-none rounded-lg border border-black/[0.08] bg-white px-3 py-2 pr-9 text-sm text-[#1a1a1a] outline-hidden transition-colors focus:border-[#1853A8]/40 focus:ring-4 focus:ring-[#1853A8]/[0.08] dark:border-white/[0.08] dark:bg-[#1a1b1c] dark:text-white dark:focus:border-[#4B86DB]/40 dark:focus:ring-[#4B86DB]/[0.1]"
+					className="w-full appearance-none rounded-lg border border-ai-line-medium bg-ai-surface-card px-3 py-2 pr-9 text-sm text-ai-primary outline-hidden transition-colors focus:border-ai-blue-deep/40 focus:ring-4 focus:ring-ai-blue-deep/8 dark:focus:ring-ai-blue-deep/10"
 				>
 					{children}
 				</select>
 				<Icon
 					name="chevron-down"
-					className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-[#999] dark:text-[#666]"
+					className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-ai-muted"
 				/>
 			</div>
 		</div>

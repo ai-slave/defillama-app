@@ -289,18 +289,18 @@ function ConversationLiveStatus({
 			) : null}
 
 			{recovery.status === 'reconnecting' && !(spawnProgress.size > 0 && spawnIsResearchMode) ? (
-				<div className="flex flex-col gap-1 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
-					<p className="text-sm font-medium text-amber-900 dark:text-amber-100">Reconnecting&hellip;</p>
-					<p className="text-sm text-amber-800 dark:text-amber-200">
+				<div className="flex flex-col gap-1 rounded-lg border border-ai-warning-soft bg-ai-warning-soft p-4">
+					<p className="text-sm font-medium text-ai-warning-strong">Reconnecting&hellip;</p>
+					<p className="text-sm text-ai-warning-strong">
 						Trying to reconnect to the running {isResearchMode ? 'research session' : 'quick chat'}.
 					</p>
 					<div className="flex items-center justify-between">
-						<p className="text-xs text-amber-700 dark:text-amber-300">
+						<p className="text-xs text-ai-warning-strong">
 							Attempt {Math.max(recovery.attemptCount, 1)}. Connection lost temporarily.
 						</p>
 						<button
 							onClick={onReconnectNow}
-							className="shrink-0 rounded-md bg-amber-200 px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-100 dark:hover:bg-amber-700"
+							className="shrink-0 rounded-md bg-ai-warning-soft px-3 py-1 text-xs font-medium text-ai-warning-strong hover:bg-ai-warning"
 						>
 							Reconnect now
 						</button>
@@ -309,12 +309,12 @@ function ConversationLiveStatus({
 			) : null}
 
 			{recovery.status !== 'reconnecting' && error ? (
-				<div className="flex flex-col gap-2 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
-					<p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+				<div className="flex flex-col gap-2 rounded-lg border border-ai-error-border bg-ai-error-bg p-4">
+					<p className="text-sm text-ai-error-strong">{error}</p>
 					{lastFailedPrompt ? (
 						<button
 							onClick={onRetryLastFailedPrompt}
-							className="mt-1 w-fit rounded-md bg-red-100 px-3 py-1 text-sm text-red-700 hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-800"
+							className="mt-1 w-fit rounded-md bg-ai-error-bg px-3 py-1 text-sm text-ai-error-strong hover:bg-ai-error-border"
 						>
 							Reconnect
 						</button>
@@ -648,13 +648,13 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 							<div className="flex flex-col gap-2.5">
 								{paginationState.isLoadingMore ? (
 									<div className="flex justify-center py-2">
-										<p className="m-0 text-xs text-[#666] dark:text-[#919296]">Loading older messages&hellip;</p>
+										<p className="m-0 text-xs text-ai-tertiary">Loading older messages&hellip;</p>
 									</div>
 								) : null}
 
 								{paginationError ? (
-									<div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 dark:border-red-900 dark:bg-red-950">
-										<p className="text-xs text-red-700 dark:text-red-300">{paginationError}</p>
+									<div className="rounded-lg border border-ai-error-border bg-ai-error-bg px-3 py-2">
+										<p className="text-xs text-ai-error-strong">{paginationError}</p>
 									</div>
 								) : null}
 
@@ -687,16 +687,14 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 
 								{paginationState.isLoadingNewer ? (
 									<div className="flex justify-center py-2">
-										<p className="m-0 text-xs text-[#666] dark:text-[#919296]">Loading newer messages&hellip;</p>
+										<p className="m-0 text-xs text-ai-tertiary">Loading newer messages&hellip;</p>
 									</div>
 								) : null}
 
 								{shouldSpaceLastExchange ? (
 									<div
 										className={`flex flex-col gap-2.5 ${
-											animateActiveExchange && isLiveExchange
-												? 'motion-safe:animate-[llamaActiveExchangeEnter_0.18s_ease-out_both]'
-												: ''
+											animateActiveExchange && isLiveExchange ? 'motion-safe:animate-ai-exchange-enter' : ''
 										}`}
 										style={activeExchangeMinHeight != null ? { minHeight: activeExchangeMinHeight } : undefined}
 									>
@@ -798,7 +796,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 				<Tooltip
 					content="Scroll to bottom"
 					render={<button onClick={scrollToBottom} />}
-					className={`mx-auto flex size-8 items-center justify-center rounded-full border border-[#e6e6e6] bg-(--legacy-app-bg) shadow-md hover:bg-[#f7f7f7] focus-visible:bg-[#f7f7f7] dark:border-[#222324] dark:hover:bg-[#222324] dark:focus-visible:bg-[#222324] ${showScrollToBottom ? 'pointer-events-auto' : 'pointer-events-none'}`}
+					className={`mx-auto flex size-8 items-center justify-center rounded-full border border-ai-line bg-page shadow-md hover:bg-ai-surface-muted focus-visible:bg-ai-surface-muted ${showScrollToBottom ? 'pointer-events-auto' : 'pointer-events-none'}`}
 				>
 					<Icon name="arrow-down" height={16} width={16} />
 					<span className="sr-only">Scroll to bottom</span>
@@ -807,7 +805,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 
 			{!readOnly ? (
 				<div className="llamaai-chat-width relative mx-auto flex w-full flex-col gap-2 pb-2.5">
-					<div className="pointer-events-none absolute -top-8 right-0 left-0 h-8 bg-linear-to-b from-transparent to-[#fefefe] dark:to-[#131516]" />
+					<div className="pointer-events-none absolute -top-8 right-0 left-0 h-8 bg-linear-to-b from-transparent to-ai-surface" />
 					{!isSharedView && contextWarning && onStartNewChat && onDismissContextWarning ? (
 						<ContextWarningBanner
 							warning={contextWarning}
@@ -848,7 +846,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 export function LoadingConversationState() {
 	return (
 		<div className="flex flex-1 items-center justify-center">
-			<p className="flex items-center gap-1 text-[#666] dark:text-[#919296]">
+			<p className="flex items-center gap-1 text-ai-tertiary">
 				Loading
 				<LoadingDots />
 			</p>
@@ -859,11 +857,11 @@ export function LoadingConversationState() {
 export function EmptyConversationErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
 	return (
 		<div className="flex flex-1 flex-col items-center justify-center gap-2">
-			<p className="text-sm text-red-700 dark:text-red-300">{message}</p>
+			<p className="text-sm text-ai-error-strong">{message}</p>
 			{onRetry ? (
 				<button
 					onClick={onRetry}
-					className="rounded-md bg-red-100 px-3 py-1 text-sm text-red-700 hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-800"
+					className="rounded-md bg-ai-error-bg px-3 py-1 text-sm text-ai-error-strong hover:bg-ai-error-border"
 				>
 					Retry
 				</button>

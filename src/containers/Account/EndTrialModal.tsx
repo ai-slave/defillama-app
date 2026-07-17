@@ -68,7 +68,7 @@ export function EndTrialModal({
 			onClose={() => {
 				if (!isLoading) handleClose()
 			}}
-			className="dialog flex max-h-[90dvh] max-w-md flex-col gap-4 overflow-y-auto rounded-xl border border-gray-200 bg-white p-6 text-gray-900 shadow-2xl max-sm:drawer max-sm:rounded-b-none dark:border-[#39393E] dark:bg-[#1a1b1f] dark:text-white"
+			className="dialog flex max-h-[90dvh] max-w-md flex-col gap-4 overflow-y-auto rounded-xl border border-medium bg-white p-6 text-gray-900 shadow-2xl max-sm:drawer max-sm:rounded-b-none dark:border-sub-line dark:bg-sub-ink dark:text-ai-primary"
 			portal
 			unmountOnHide
 		>
@@ -76,7 +76,7 @@ export function EndTrialModal({
 				<h3 className="text-xl font-bold">{upgraded ? 'Upgrade Successful' : title}</h3>
 				<button
 					onClick={handleClose}
-					className="rounded-full p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-[#8a8c90] dark:hover:bg-[#39393E] dark:hover:text-white"
+					className="rounded-full p-1.5 text-tertiary transition-colors hover:bg-gray-100 hover:text-secondary dark:text-sub-text-muted dark:hover:bg-sub-line dark:hover:text-ai-primary"
 				>
 					<Icon name="x" height={18} width={18} />
 				</button>
@@ -84,10 +84,10 @@ export function EndTrialModal({
 
 			{upgraded ? (
 				<>
-					<div className="rounded-lg border border-green-500/30 bg-green-500/10 p-4">
+					<div className="rounded-lg border border-success/30 bg-success/10 p-4">
 						<div className="flex items-start gap-3">
-							<Icon name="check" height={20} width={20} className="mt-0.5 shrink-0 text-green-500" />
-							<p className="text-sm text-gray-600 dark:text-[#c5c5c5]">
+							<Icon name="check" height={20} width={20} className="mt-0.5 shrink-0 text-success" />
+							<p className="text-sm text-secondary dark:text-sub-text-soft">
 								Please wait a few minutes and refresh the page after upgrading, the upgrade might take a few minutes to
 								apply.
 							</p>
@@ -95,22 +95,22 @@ export function EndTrialModal({
 					</div>
 					<button
 						onClick={handleClose}
-						className="w-full rounded-lg bg-(--sub-brand-primary) px-4 py-3 font-medium text-white transition-colors hover:bg-(--sub-brand-primary)/90"
+						className="w-full rounded-lg bg-sub-brand-primary px-4 py-3 font-medium text-on-brand transition-colors hover:bg-sub-brand-primary/90"
 					>
 						Close
 					</button>
 				</>
 			) : (
 				<>
-					{description ? <p className="text-sm text-gray-500 dark:text-[#8a8c90]">{description}</p> : null}
+					{description ? <p className="text-sm text-tertiary dark:text-sub-text-muted">{description}</p> : null}
 
 					{/* Benefits */}
 					<div className="mt-2 flex flex-col gap-2">
-						<p className="text-sm text-gray-500 dark:text-[#8a8c90]">{benefitsTitle}</p>
+						<p className="text-sm text-tertiary dark:text-sub-text-muted">{benefitsTitle}</p>
 						<ul className="flex flex-col gap-1 text-sm">
 							{benefits.map((b) => (
 								<li key={b} className="flex items-center gap-2">
-									<Icon name="check" height={14} width={14} className="shrink-0 text-green-500 dark:text-green-400" />
+									<Icon name="check" height={14} width={14} className="shrink-0 text-success dark:text-success" />
 									<span>{b}</span>
 								</li>
 							))}
@@ -118,10 +118,10 @@ export function EndTrialModal({
 					</div>
 
 					{/* Warning — single source of truth for the instant-charge disclosure */}
-					<div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4">
+					<div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
 						<div className="flex items-start gap-3">
-							<Icon name="alert-triangle" height={20} width={20} className="mt-0.5 shrink-0 text-yellow-500" />
-							<p className="text-sm text-gray-600 dark:text-[#c5c5c5]">
+							<Icon name="alert-triangle" height={20} width={20} className="mt-0.5 shrink-0 text-warning" />
+							<p className="text-sm text-secondary dark:text-sub-text-soft">
 								By upgrading, you will end your free trial early and be charged the full subscription amount ($49/month)
 								immediately.
 							</p>
@@ -133,14 +133,14 @@ export function EndTrialModal({
 						<button
 							onClick={() => void handleConfirm()}
 							disabled={isLoading}
-							className="w-full rounded-lg bg-(--sub-brand-primary) px-4 py-3 font-medium text-white transition-colors hover:bg-(--sub-brand-primary)/90 disabled:cursor-not-allowed disabled:opacity-70"
+							className="w-full rounded-lg bg-sub-brand-primary px-4 py-3 font-medium text-on-brand transition-colors hover:bg-sub-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
 						>
 							{isLoading ? 'Processing...' : confirmLabel}
 						</button>
 						{secondaryHref ? (
 							<a
 								href={secondaryHref}
-								className="w-full rounded-lg border border-gray-200 px-4 py-2 text-center text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700 dark:border-[#39393E] dark:text-[#8a8c90] dark:hover:bg-[#2a2b30] dark:hover:text-white"
+								className="w-full rounded-lg border border-medium px-4 py-2 text-center text-tertiary transition-colors hover:bg-page hover:text-secondary dark:border-sub-line dark:text-sub-text-muted dark:hover:bg-sub-card-raised dark:hover:text-ai-primary"
 							>
 								{secondaryLabel ?? 'View all plans'}
 							</a>
@@ -148,7 +148,7 @@ export function EndTrialModal({
 							<button
 								onClick={handleClose}
 								disabled={isLoading}
-								className="w-full rounded-lg border border-gray-200 px-4 py-2 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#39393E] dark:text-[#8a8c90] dark:hover:bg-[#2a2b30] dark:hover:text-white"
+								className="w-full rounded-lg border border-medium px-4 py-2 text-tertiary transition-colors hover:bg-page hover:text-secondary disabled:cursor-not-allowed disabled:opacity-50 dark:border-sub-line dark:text-sub-text-muted dark:hover:bg-sub-card-raised dark:hover:text-ai-primary"
 							>
 								{secondaryLabel ?? 'Close'}
 							</button>

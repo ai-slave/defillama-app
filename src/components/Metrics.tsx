@@ -268,7 +268,7 @@ export function LinkToMetricOrToolPage({
 					{page.tags?.map((tag) =>
 						tag === 'Hot' ? (
 							<span
-								className="flex items-center gap-1 rounded-md bg-[#D24C1F] px-1.5 py-1 label-xs text-white"
+								className="flex items-center gap-1 rounded-md bg-[#D24C1F] px-1.5 py-1 label-xs text-on-brand"
 								key={`tag-${page.route}-${tag}`}
 							>
 								<Icon name="flame" height={10} width={10} />

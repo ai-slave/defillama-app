@@ -139,8 +139,8 @@ function LiquiditySection({ liquidity, tvlChart, tvl }: { liquidity: LiquidityDa
 			    "Token Breakdown" donut and "Token Values" table duplicated these two. */}
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<CategoryBarCard chart={liquidity.poolDepthChart} />
-				<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
-					<h3 className="mb-3 text-sm font-semibold text-(--legacy-text-primary)">
+				<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
+					<h3 className="mb-3 text-sm font-semibold text-(--pro-text-primary)">
 						{liquidity.pools.title ?? 'Pools by Depth'}
 					</h3>
 					<ApiTable table={liquidity.pools} maxHeight="420px" />

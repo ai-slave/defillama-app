@@ -303,7 +303,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 	)
 
 	return (
-		<div className="overflow-hidden rounded-[4px] border border-(--legacy-divider) bg-surface">
+		<div className="overflow-hidden rounded-[4px] border border-subtle bg-surface">
 			<MonacoEditor
 				height={fitContentHeight ? (contentHeight ?? height) : height}
 				language="sql"

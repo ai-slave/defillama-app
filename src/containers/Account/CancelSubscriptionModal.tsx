@@ -46,20 +46,20 @@ export function CancelSubscriptionModal({
 				<form onSubmit={handleConfirm} className="flex flex-col gap-5 px-5 py-6">
 					{/* Header */}
 					<div className="flex items-center justify-between">
-						<h3 className="text-xl leading-7 font-semibold text-(--sub-ink-primary) dark:text-white">
+						<h3 className="text-xl leading-7 font-semibold text-sub-ink-primary dark:text-ai-primary">
 							{isTrial ? 'Cancel Free Trial' : 'Cancel Subscription'}
 						</h3>
 						<Ariakit.DialogDismiss
 							type="button"
 							disabled={isLoading}
-							className="rounded-full p-1 text-(--sub-ink-primary) transition-colors disabled:opacity-50 dark:text-white"
+							className="rounded-full p-1 text-sub-ink-primary transition-colors disabled:opacity-50 dark:text-ai-primary"
 						>
 							<Icon name="x" height={24} width={24} />
 						</Ariakit.DialogDismiss>
 					</div>
 
 					{/* Body */}
-					<p className="text-sm leading-[21px] text-(--sub-ink-primary) dark:text-white">
+					<p className="text-sm leading-[21px] text-sub-ink-primary dark:text-ai-primary">
 						{isTrial
 							? "Your subscription will remain active until the end of your trial period. After that, it will not renew and you won't be charged."
 							: 'Your subscription will remain active until the end of your current billing period. After that, it will not renew.'}
@@ -67,7 +67,7 @@ export function CancelSubscriptionModal({
 
 					{/* Feedback */}
 					<div className="flex flex-col gap-2">
-						<label htmlFor="cancel-reason" className="text-xs font-medium text-(--sub-text-muted)">
+						<label htmlFor="cancel-reason" className="text-xs font-medium text-sub-text-muted">
 							Reason for cancelling (optional)
 						</label>
 						<textarea
@@ -75,7 +75,7 @@ export function CancelSubscriptionModal({
 							name="message"
 							placeholder="Let us know why you're cancelling..."
 							rows={3}
-							className="w-full resize-none rounded-lg border border-(--sub-border-muted) bg-transparent p-3 text-sm text-(--sub-ink-primary) outline-hidden placeholder:text-(--sub-text-muted) focus:border-(--sub-brand-primary) dark:border-(--sub-border-strong) dark:text-white"
+							className="w-full resize-none rounded-lg border border-sub-border-muted bg-transparent p-3 text-sm text-sub-ink-primary outline-hidden placeholder:text-sub-text-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:text-ai-primary"
 						/>
 					</div>
 
@@ -84,14 +84,14 @@ export function CancelSubscriptionModal({
 						<button
 							type="submit"
 							disabled={isLoading}
-							className="flex h-10 w-full items-center justify-center rounded-lg bg-(--error) text-sm font-medium text-white disabled:opacity-50"
+							className="flex h-10 w-full items-center justify-center rounded-lg bg-error text-sm font-medium text-on-brand disabled:opacity-50"
 						>
 							{isLoading ? 'Cancelling...' : 'Confirm Cancellation'}
 						</button>
 						<Ariakit.DialogDismiss
 							type="button"
 							disabled={isLoading}
-							className="flex h-10 w-full items-center justify-center rounded-lg border border-(--sub-border-muted) text-sm text-(--sub-text-muted) disabled:opacity-50 dark:border-(--sub-border-strong)"
+							className="flex h-10 w-full items-center justify-center rounded-lg border border-sub-border-muted text-sm text-sub-text-muted disabled:opacity-50 dark:border-sub-border-strong"
 						>
 							{isTrial ? 'Keep Trial' : 'Keep Subscription'}
 						</Ariakit.DialogDismiss>

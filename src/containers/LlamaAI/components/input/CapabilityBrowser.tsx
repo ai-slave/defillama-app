@@ -23,7 +23,7 @@ export function CapabilityBrowser({ onPromptSelect }: CapabilityBrowserProps) {
 			wrapperProps={{
 				className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
 			}}
-			className="z-50 flex w-[600px] overflow-hidden rounded-xl border border-black/8 bg-white shadow-2xl max-sm:h-[calc(100dvh-80px)] max-sm:w-full max-sm:max-w-full max-sm:drawer max-sm:flex-col max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:border-0 sm:max-h-[min(420px,50vh)] sm:capability-panel dark:border-[#2a2a2e] dark:bg-[#18181b]"
+			className="z-50 flex w-[600px] overflow-hidden rounded-xl border border-ai-line-medium bg-ai-surface-card shadow-2xl max-sm:h-[calc(100dvh-80px)] max-sm:w-full max-sm:max-w-full max-sm:drawer max-sm:flex-col max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:border-0 sm:max-h-[min(420px,50vh)] sm:capability-panel"
 		>
 			<BrowserContent onPromptSelect={onPromptSelect} />
 		</Ariakit.Popover>
@@ -81,8 +81,8 @@ export function BrowserContent({
 		<Ariakit.TabProvider store={tabs}>
 			{!hideDragHandle ? (
 				<div className="flex items-center justify-between px-3 pt-3 pb-1 sm:hidden">
-					<span className="text-[13px] font-semibold text-[#111] dark:text-[#f0f0f0]">Explore</span>
-					<Ariakit.PopoverDismiss className="flex size-7 items-center justify-center rounded-full bg-[#f0f0f0] text-[#555] transition-colors hover:bg-[#e0e0e0] dark:bg-white/10 dark:text-[#aaa] dark:hover:bg-white/15">
+					<span className="text-[13px] font-semibold text-ai-primary">Explore</span>
+					<Ariakit.PopoverDismiss className="flex size-7 items-center justify-center rounded-full bg-ai-surface-muted text-ai-secondary transition-colors hover:bg-ai-skeleton">
 						<Icon name="x" height={14} width={14} />
 					</Ariakit.PopoverDismiss>
 				</div>
@@ -101,10 +101,10 @@ export function BrowserContent({
 								tabs.setSelectedId(cap.key)
 								trackUmamiEvent('llamaai-capability-category-view', { category: cap.key })
 							}}
-							className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium whitespace-nowrap transition-colors ${
+							className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
 								isActive
-									? 'bg-[#111] text-white dark:bg-white dark:text-[#111]'
-									: 'bg-[#f0f0f0] text-[#555] dark:bg-[#252529] dark:text-[#999]'
+									? 'bg-ai-contrast text-ai-on-contrast'
+									: 'bg-ai-surface-muted text-ai-secondary dark:bg-ai-surface-card dark:text-ai-muted'
 							}`}
 						>
 							<Icon name={cap.icon} height={11} width={11} />
@@ -112,9 +112,7 @@ export function BrowserContent({
 							{cap.badge ? (
 								<span
 									className={`rounded-sm px-1 py-px text-[8px] leading-normal font-bold tracking-wide ${
-										isActive
-											? 'bg-white/20 text-white dark:bg-black/20 dark:text-[#111]'
-											: 'bg-[#2563eb]/12 text-[#2563eb] dark:bg-[#60a5fa]/15 dark:text-[#7db8ff]'
+										isActive ? 'bg-ai-white/20 text-ai-on-contrast dark:bg-ai-black/20' : 'bg-ai-blue/12 text-ai-blue'
 									}`}
 								>
 									{cap.badge}
@@ -126,14 +124,12 @@ export function BrowserContent({
 			</div>
 
 			{/* Mobile: description */}
-			<p className="px-4 pt-1 pb-2 text-[12px] leading-relaxed text-[#777] sm:hidden dark:text-[#888]">
-				{activeCategory.description}
-			</p>
+			<p className="px-4 pt-1 pb-2 text-xs leading-relaxed text-ai-tertiary sm:hidden">{activeCategory.description}</p>
 
 			{/* Main layout: desktop sidebar + content */}
 			<div className="flex min-h-0 flex-1">
 				{/* Desktop: sidebar */}
-				<Ariakit.TabList className="hidden w-[176px] shrink-0 flex-col gap-0.5 overflow-y-auto overscroll-contain border-r border-black/6 bg-[#f8f8f8] p-1.5 sm:flex dark:border-[#2a2a2e] dark:bg-[#131316]">
+				<Ariakit.TabList className="hidden w-[176px] shrink-0 flex-col gap-0.5 overflow-y-auto overscroll-contain border-r border-ai-line-subtle bg-ai-surface p-1.5 sm:flex">
 					{CAPABILITIES.map((cap) => (
 						<Ariakit.Tab
 							key={cap.key}
@@ -141,7 +137,7 @@ export function BrowserContent({
 							onClick={() => trackUmamiEvent('llamaai-capability-category-view', { category: cap.key })}
 							onMouseEnter={() => handleHoverIntent(cap.key)}
 							onMouseLeave={cancelHoverIntent}
-							className="group flex items-center gap-2 rounded-lg px-2.5 py-[7px] text-left text-[12.5px] font-medium text-[#555] hover:bg-black/4 hover:text-[#222] aria-selected:bg-white aria-selected:text-[#111] aria-selected:shadow-[0_1px_3px_rgba(0,0,0,0.08)] dark:text-[#9a9a9a] dark:hover:bg-white/4 dark:hover:text-[#ccc] dark:aria-selected:bg-[#252529] dark:aria-selected:text-white dark:aria-selected:shadow-[0_1px_4px_rgba(0,0,0,0.4)]"
+							className="group flex items-center gap-2 rounded-lg px-2.5 py-1.75 text-left text-[12.5px] font-medium text-ai-secondary hover:bg-ai-wash hover:text-ai-primary aria-selected:bg-ai-surface-card aria-selected:text-ai-primary aria-selected:shadow-ai-xs"
 						>
 							<Icon
 								name={cap.icon}
@@ -151,7 +147,7 @@ export function BrowserContent({
 							/>
 							<span className="truncate">{cap.name}</span>
 							{cap.badge ? (
-								<span className="ml-auto shrink-0 rounded-sm bg-[#2563eb]/12 px-1.5 py-px text-[9px] leading-normal font-bold tracking-wide text-[#2563eb] dark:bg-[#60a5fa]/15 dark:text-[#7db8ff]">
+								<span className="ml-auto shrink-0 rounded-sm bg-ai-blue/12 px-1.5 py-px text-[9px] leading-normal font-bold tracking-wide text-ai-blue">
 									{cap.badge}
 								</span>
 							) : null}
@@ -162,19 +158,17 @@ export function BrowserContent({
 				{/* Content panel */}
 				<Ariakit.TabPanel tabId={selectedId ?? undefined} className="flex flex-1 flex-col overflow-hidden">
 					{/* Desktop: category header */}
-					<div className="hidden shrink-0 border-b border-black/6 px-4 pt-3.5 pb-3 sm:block dark:border-[#2a2a2e]">
+					<div className="hidden shrink-0 border-b border-ai-line-subtle px-4 pt-3.5 pb-3 sm:block">
 						<div className="flex items-center gap-2">
-							<Icon name={activeCategory.icon} height={14} width={14} className="text-[#777] dark:text-[#888]" />
-							<h3 className="text-[13px] font-semibold text-[#111] dark:text-[#f0f0f0]">{activeCategory.name}</h3>
+							<Icon name={activeCategory.icon} height={14} width={14} className="text-ai-tertiary" />
+							<h3 className="text-[13px] font-semibold text-ai-primary">{activeCategory.name}</h3>
 							{activeCategory.badge ? (
-								<span className="rounded-sm bg-[#2563eb]/12 px-1.5 py-px text-[9px] leading-normal font-bold tracking-wide text-[#2563eb] dark:bg-[#60a5fa]/15 dark:text-[#7db8ff]">
+								<span className="rounded-sm bg-ai-blue/12 px-1.5 py-px text-[9px] leading-normal font-bold tracking-wide text-ai-blue">
 									{activeCategory.badge}
 								</span>
 							) : null}
 						</div>
-						<p className="mt-1 text-[12px] leading-relaxed text-[#777] dark:text-[#888]">
-							{activeCategory.description}
-						</p>
+						<p className="mt-1 text-xs leading-relaxed text-ai-tertiary">{activeCategory.description}</p>
 					</div>
 
 					{/* Prompt list */}
@@ -198,16 +192,16 @@ function PromptItem({ prompt, onClick }: { prompt: string; onClick: (prompt: str
 			<Ariakit.PopoverDismiss
 				render={<button type="button" />}
 				onClick={() => onClick(prompt)}
-				className="group flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-[#f0f0f0] focus-visible:bg-[#f0f0f0] dark:hover:bg-white/6 dark:focus-visible:bg-white/6"
+				className="group flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-ai-surface-muted focus-visible:bg-ai-surface-muted"
 			>
-				<p className="m-0 flex-1 text-[13px] leading-[1.55] text-[#333] group-hover:text-[#111] group-focus-visible:text-[#111] dark:text-[#bbb] dark:group-hover:text-[#f0f0f0] dark:group-focus-visible:text-[#f0f0f0]">
+				<p className="m-0 flex-1 text-[13px] leading-[1.55] text-ai-secondary group-hover:text-ai-primary group-focus-visible:text-ai-primary">
 					{prompt}
 				</p>
 				<Icon
 					name="arrow-right"
 					height={12}
 					width={12}
-					className="mt-1 shrink-0 text-[#bbb] opacity-0 group-hover:translate-x-0.5 group-hover:text-[#666] group-hover:opacity-100 group-focus-visible:translate-x-0.5 group-focus-visible:text-[#666] group-focus-visible:opacity-100 dark:text-[#555] dark:group-hover:text-[#999] dark:group-focus-visible:text-[#999]"
+					className="mt-1 shrink-0 text-ai-faint opacity-0 group-hover:translate-x-0.5 group-hover:text-ai-tertiary group-hover:opacity-100 group-focus-visible:translate-x-0.5 group-focus-visible:text-ai-tertiary group-focus-visible:opacity-100"
 				/>
 			</Ariakit.PopoverDismiss>
 		</li>

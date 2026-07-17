@@ -8,11 +8,7 @@ const ArticleEditorClient = dynamic(
 	() => import('~/containers/Articles/editor/ArticleEditorClient').then((mod) => mod.ArticleEditorClient),
 	{
 		ssr: false,
-		loading: () => (
-			<div className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
-				Loading research editor...
-			</div>
-		)
+		loading: () => <div className="rounded-md border border-medium bg-surface p-4">Loading research editor...</div>
 	}
 )
 

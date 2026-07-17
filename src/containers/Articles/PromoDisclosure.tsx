@@ -10,7 +10,7 @@ export function PromoDisclosure({ banner }: { banner: Banner }) {
 				href={disclosureUrl}
 				target="_blank"
 				rel="noopener noreferrer"
-				className="text-xs leading-none font-bold text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-text-primary) hover:underline"
+				className="text-xs leading-none font-bold text-tertiary transition-colors hover:text-primary hover:underline"
 			>
 				{banner.disclosureText?.trim() || 'Disclosure'}
 			</a>

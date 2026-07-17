@@ -28,8 +28,8 @@ import { Tooltip } from '~/ui/Tooltip'
 
 function StreamingChartPlaceholder() {
 	return (
-		<div className="my-4 flex h-[360px] animate-pulse items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
-			<p className="text-sm text-gray-500">Loading chart...</p>
+		<div className="my-4 flex h-[360px] animate-pulse items-center justify-center rounded-lg bg-ai-skeleton">
+			<p className="text-sm text-ai-muted">Loading chart...</p>
 		</div>
 	)
 }
@@ -37,10 +37,10 @@ function StreamingChartPlaceholder() {
 function StreamingImagePlaceholder() {
 	return (
 		<div
-			className="my-2 flex w-full max-w-[220px] animate-pulse items-center justify-center overflow-hidden rounded-lg border border-(--legacy-old-blue)/20 bg-(--legacy-old-blue)/5"
+			className="my-2 flex w-full max-w-[220px] animate-pulse items-center justify-center overflow-hidden rounded-lg border border-brand/20 bg-brand/5"
 			style={{ aspectRatio: '1 / 1' }}
 		>
-			<div className="flex flex-col items-center gap-1.5 text-(--legacy-old-blue)">
+			<div className="flex flex-col items-center gap-1.5 text-brand">
 				<Icon name="image-plus" height={24} width={24} />
 				<p className="text-xs">Generating image…</p>
 			</div>
@@ -76,7 +76,7 @@ function GeneratedImageBlock({
 			<div
 				role="img"
 				aria-label={prompt ? `Failed to load generated image for prompt: ${prompt}` : 'Failed to load generated image'}
-				className="my-2 flex w-full max-w-sm flex-col items-center justify-center gap-2 rounded-lg border border-red-500/20 bg-red-500/5 p-6 text-red-600 dark:text-red-400"
+				className="my-2 flex w-full max-w-sm flex-col items-center justify-center gap-2 rounded-lg border border-ai-error-vivid/20 bg-ai-error-vivid/5 p-6 text-ai-error"
 				style={aspect ? { aspectRatio: aspect } : undefined}
 			>
 				<Icon name="alert-triangle" height={24} width={24} />
@@ -100,13 +100,13 @@ function GeneratedImageBlock({
 			title={prompt}
 			aria-label={prompt || 'Generated image'}
 			disabled={!interactive}
-			className={`group/genimg relative my-2 block w-full max-w-sm overflow-hidden rounded-lg border border-black/10 bg-black/5 transition focus-visible:ring-2 focus-visible:ring-(--legacy-old-blue) focus-visible:outline-hidden dark:border-white/10 dark:bg-white/5 ${interactive ? 'cursor-pointer hover:border-black/20 dark:hover:border-white/20' : 'cursor-default'}`}
+			className={`group/genimg relative my-2 block w-full max-w-sm overflow-hidden rounded-lg border border-ai-line-medium bg-ai-wash transition focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-hidden ${interactive ? 'cursor-pointer hover:border-ai-line-strong dark:hover:border-ai-contrast/20' : 'cursor-default'}`}
 			style={aspect ? { aspectRatio: aspect } : undefined}
 		>
 			{!loaded ? (
 				<div
 					aria-hidden="true"
-					className="absolute inset-0 animate-pulse bg-linear-to-br from-(--legacy-old-blue)/10 via-(--legacy-old-blue)/5 to-transparent"
+					className="absolute inset-0 animate-pulse bg-linear-to-br from-brand/10 via-brand/5 to-transparent"
 				/>
 			) : null}
 			<img
@@ -345,9 +345,7 @@ function InlineContent({
 				</div>
 			))}
 
-			{isStreaming && message.content ? (
-				<span className="inline-block h-4 w-0.5 animate-pulse bg-(--legacy-old-blue)" />
-			) : null}
+			{isStreaming && message.content ? <span className="inline-block h-4 w-0.5 animate-pulse bg-brand" /> : null}
 
 			{!isStreaming && toolExecutions && toolExecutions.length > 0 ? (
 				<ToolExecutionPanel toolExecutions={toolExecutions} showDetails={showToolDetails} />
@@ -438,13 +436,13 @@ export function MessageBubble({
 				<div
 					className={`${isEditing ? 'w-full' : 'w-fit max-w-full'} rounded-lg rounded-tr-none px-3.5 py-2.5 wrap-break-word transition-[background-color,box-shadow] duration-150 ${
 						isEditing
-							? 'bg-white shadow-[inset_0_0_0_1px_rgba(59,130,246,0.35)] dark:bg-[#1a1c1d] dark:shadow-[inset_0_0_0_1px_rgba(96,165,250,0.3)]'
-							: 'bg-[#ececec] dark:bg-[#222425]'
+							? 'bg-ai-white shadow-ai-focus-inset dark:bg-ai-ink'
+							: 'bg-ai-surface-muted dark:bg-ai-surface-muted'
 					}`}
 				>
 					{message.quotedText ? (
-						<div className="mb-2 border-l-2 border-black/15 py-1 pl-2.5 dark:border-white/15">
-							<p className="line-clamp-3 text-[13px] text-[#666] dark:text-[#888]">{message.quotedText}</p>
+						<div className="mb-2 border-l-2 border-ai-line-strong py-1 pl-2.5">
+							<p className="line-clamp-3 text-[13px] text-ai-tertiary">{message.quotedText}</p>
 						</div>
 					) : null}
 					{message.images && message.images.length > 0 ? (
@@ -497,7 +495,7 @@ export function MessageBubble({
 										href={image.url}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="flex h-16 items-center gap-2 rounded-lg bg-black/10 px-3 hover:bg-black/15 dark:bg-white/10 dark:hover:bg-white/15"
+										className="flex h-16 items-center gap-2 rounded-lg bg-ai-wash-strong px-3 hover:bg-ai-black/15 dark:bg-ai-white/15"
 									>
 										<Icon name="file-text" height={18} width={18} />
 										<span className="max-w-[120px] truncate text-xs">{displayName}</span>
@@ -535,27 +533,27 @@ export function MessageBubble({
 
 				{isEditing ? (
 					<div className="mt-2 flex w-full items-center gap-3">
-						<p className="mr-auto text-[11px] text-[#999] dark:text-[#666]">
+						<p className="mr-auto text-[11px] text-ai-muted">
 							{isPersistedId ? 'Saving creates a new branch' : 'This will replace your message'}
 							<span className="hidden sm:inline">
 								{' · '}
 								{enterToSend ? (
-									<kbd className="rounded-sm border border-black/10 bg-white/70 px-1 py-px font-mono text-[10px] text-[#666] dark:border-white/10 dark:bg-white/5 dark:text-[#888]">
+									<kbd className="rounded-sm border border-ai-line-medium bg-ai-white/70 px-1 py-px font-mono text-[10px] text-ai-tertiary dark:bg-ai-white/5">
 										Enter
 									</kbd>
 								) : (
 									<>
-										<kbd className="rounded-sm border border-black/10 bg-white/70 px-1 py-px font-mono text-[10px] text-[#666] dark:border-white/10 dark:bg-white/5 dark:text-[#888]">
+										<kbd className="rounded-sm border border-ai-line-medium bg-ai-white/70 px-1 py-px font-mono text-[10px] text-ai-tertiary dark:bg-ai-white/5">
 											Shift
 										</kbd>
 										<span className="mx-0.5">+</span>
-										<kbd className="rounded-sm border border-black/10 bg-white/70 px-1 py-px font-mono text-[10px] text-[#666] dark:border-white/10 dark:bg-white/5 dark:text-[#888]">
+										<kbd className="rounded-sm border border-ai-line-medium bg-ai-white/70 px-1 py-px font-mono text-[10px] text-ai-tertiary dark:bg-ai-white/5">
 											Enter
 										</kbd>
 									</>
 								)}
 								<span className="mx-1">save</span>
-								<kbd className="rounded-sm border border-black/10 bg-white/70 px-1 py-px font-mono text-[10px] text-[#666] dark:border-white/10 dark:bg-white/5 dark:text-[#888]">
+								<kbd className="rounded-sm border border-ai-line-medium bg-ai-white/70 px-1 py-px font-mono text-[10px] text-ai-tertiary dark:bg-ai-white/5">
 									esc
 								</kbd>
 								<span className="ml-1">cancel</span>
@@ -565,7 +563,7 @@ export function MessageBubble({
 							type="button"
 							onClick={handleCancelEdit}
 							disabled={isSaving}
-							className="rounded-md px-2.5 py-1 text-[12px] text-[#666] transition-colors hover:bg-black/5 hover:text-[#222] disabled:cursor-not-allowed disabled:opacity-40 dark:text-[#999] dark:hover:bg-white/5 dark:hover:text-white"
+							className="rounded-md px-2.5 py-1 text-xs text-ai-tertiary transition-colors hover:bg-ai-wash hover:text-ai-primary disabled:cursor-not-allowed disabled:opacity-40"
 						>
 							Cancel
 						</button>
@@ -573,7 +571,7 @@ export function MessageBubble({
 							type="button"
 							onClick={handleSaveEdit}
 							disabled={isSaving || !draftText.trim() || draftText.trim() === message.content?.trim()}
-							className="rounded-md bg-blue-600 px-3 py-1 text-[12px] font-medium text-white transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-blue-600"
+							className="rounded-md bg-ai-blue px-3 py-1 text-xs font-medium text-ai-white transition-colors hover:bg-ai-blue-vivid disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ai-blue"
 						>
 							{isSaving ? 'Saving…' : 'Save'}
 						</button>
@@ -596,7 +594,7 @@ export function MessageBubble({
 										aria-label="Edit message"
 									/>
 								}
-								className="rounded-md p-1.5 text-[#999] transition-colors hover:bg-black/5 hover:text-[#444] dark:text-[#666] dark:hover:bg-white/5 dark:hover:text-[#ccc]"
+								className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-secondary"
 							>
 								<Icon name="pencil" height={14} width={14} />
 							</Tooltip>
@@ -688,21 +686,19 @@ function DashboardInlineCard({ dashboard }: { dashboard: DashboardArtifact }) {
 	return (
 		<button
 			onClick={toggleDashboardPanel}
-			className="my-2 flex w-full items-center gap-3 rounded-lg border border-[#2172e5]/30 bg-[#2172e5]/5 px-3.5 py-2.5 text-left transition-all hover:border-[#2172e5]/50 hover:bg-[#2172e5]/10"
+			className="my-2 flex w-full items-center gap-3 rounded-lg border border-ai-old-blue/30 bg-ai-old-blue/5 px-3.5 py-2.5 text-left transition-all hover:border-ai-old-blue/50 hover:bg-ai-old-blue/10"
 		>
-			<Icon name="layout-grid" className="size-4 shrink-0 text-[#2172e5] dark:text-[#4190f7]" />
+			<Icon name="layout-grid" className="size-4 shrink-0 text-ai-old-blue" />
 			<div className="min-w-0 flex-1">
 				<div className="flex items-center gap-2">
-					<span className="truncate text-sm font-semibold text-[#2172e5] dark:text-[#4190f7]">
-						{dashboard.dashboardName}
-					</span>
-					<span className="shrink-0 text-xs text-[#636e72] dark:text-[#8a8f98]">{dashboard.items.length} items</span>
+					<span className="truncate text-sm font-semibold text-ai-old-blue">{dashboard.dashboardName}</span>
+					<span className="shrink-0 text-xs text-ai-tertiary">{dashboard.items.length} items</span>
 				</div>
-				<div className="truncate text-xs text-[#636e72] dark:text-[#8a8f98]">{summary}</div>
+				<div className="truncate text-xs text-ai-tertiary">{summary}</div>
 			</div>
 			<Icon
 				name={isDashboardPanelOpen ? 'chevron-right' : 'chevron-left'}
-				className="size-4 shrink-0 text-[#636e72] dark:text-[#8a8f98]"
+				className="size-4 shrink-0 text-ai-tertiary"
 			/>
 		</button>
 	)

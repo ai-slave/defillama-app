@@ -71,29 +71,27 @@ export function TextChip({
 				type="button"
 				onClick={onOpen}
 				title={isPasted ? 'Open pasted content' : `Open ${name}`}
-				className="flex h-16 w-52 cursor-pointer flex-col justify-between rounded-lg border border-[#E6E6E6] bg-[#fafafa] px-3 py-2 text-left transition-colors hover:border-(--legacy-old-blue)/40 hover:bg-[#f0f0f0] dark:border-[#39393E] dark:bg-[#1a1b1c] dark:hover:border-(--legacy-old-blue)/40 dark:hover:bg-[#222324]"
+				className="flex h-16 w-52 cursor-pointer flex-col justify-between rounded-lg border border-ai-line bg-ai-surface px-3 py-2 text-left transition-colors hover:border-brand/40 hover:bg-ai-surface-muted dark:hover:border-brand/40"
 			>
 				<p
 					className={`truncate text-[11px] leading-tight ${
-						isPasted
-							? 'font-mono text-[#555] dark:text-[#9b9c9f]'
-							: 'font-sans font-medium text-[#1a1a1a] dark:text-white'
+						isPasted ? 'font-mono text-ai-secondary dark:text-ai-tertiary' : 'font-sans font-medium text-ai-primary'
 					}`}
 				>
 					{topLine}
 				</p>
 				<div className="flex items-center gap-1.5">
-					<span className="rounded-sm bg-(--legacy-old-blue)/15 px-1.5 py-px font-sans text-[9px] font-bold tracking-[0.12em] text-[#1853A8] uppercase dark:text-[#4B86DB]">
+					<span className="rounded-sm bg-brand/15 px-1.5 py-px font-sans text-[9px] font-bold tracking-[0.12em] text-ai-blue-deep uppercase">
 						{badgeLabel}
 					</span>
-					<span className="font-sans text-[10px] text-[#888] dark:text-[#666]">{size}</span>
+					<span className="font-sans text-[10px] text-ai-muted">{size}</span>
 				</div>
 			</button>
 			{onRemove ? (
 				<button
 					type="button"
 					onClick={onRemove}
-					className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/80 focus-visible:opacity-100"
+					className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-ai-backdrop text-ai-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-ai-black/80 focus-visible:opacity-100"
 				>
 					<Icon name="x" height={12} width={12} />
 					<span className="sr-only">{removeLabel}</span>
@@ -168,7 +166,7 @@ export function ImageUpload({
 										<img src={url} alt={file.name} className="size-full object-cover" />
 									</button>
 								) : (
-									<div className="flex h-full items-center gap-2 rounded-lg bg-[#f0f0f0] px-3 dark:bg-[#1a1a2e]">
+									<div className="flex h-full items-center gap-2 rounded-lg bg-ai-surface-muted px-3">
 										<Icon name="file-text" height={18} width={18} />
 										<span className="max-w-[120px] truncate text-xs">{file.name}</span>
 									</div>
@@ -176,7 +174,7 @@ export function ImageUpload({
 								<button
 									type="button"
 									onClick={() => removeImage(idx)}
-									className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+									className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-ai-backdrop text-ai-white hover:bg-ai-black/80"
 								>
 									<Icon name="x" height={12} width={12} />
 									<span className="sr-only">Remove file</span>
@@ -204,7 +202,7 @@ export function ImageUploadButton({ onClick }: ImageUploadButtonProps) {
 					type="button"
 					onClick={onClick}
 					aria-label="Attach file"
-					className="group flex size-7 items-center justify-center rounded-lg border border-[#DEDEDE] hover:bg-(--legacy-old-blue)/10 disabled:opacity-25 dark:border-[#2F3336] dark:hover:bg-(--legacy-old-blue)/15"
+					className="group flex size-7 items-center justify-center rounded-lg border border-ai-line hover:bg-brand/10 disabled:opacity-25 dark:hover:bg-brand/15"
 				/>
 			}
 		>
@@ -222,7 +220,7 @@ export function DragOverlay({ isDragging, externalDragging }: DragOverlayProps) 
 	if (!isDragging && !externalDragging) return null
 
 	return (
-		<div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center rounded-lg border-2 border-dashed border-(--legacy-old-blue) bg-(--legacy-old-blue)/10 backdrop-blur-[2px]">
+		<div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center rounded-lg border-2 border-dashed border-brand bg-brand/10 backdrop-blur-[2px]">
 			<div className="flex items-center gap-2">
 				<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36" fill="none">
 					<path

@@ -79,7 +79,7 @@ function NavButton({ direction, disabled, onClick, onMouseEnter, onMouseLeave, c
 			)}
 			aria-label={label}
 		>
-			<Icon name={direction === 'prev' ? 'chevron-left' : 'chevron-right'} className="size-4 text-white" />
+			<Icon name={direction === 'prev' ? 'chevron-left' : 'chevron-right'} className="size-4 text-on-brand" />
 		</button>
 	)
 }
@@ -117,7 +117,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 	)
 
 	const sponsorBadge = sponsorLogoUrl ? (
-		<div className="pointer-events-none absolute top-[12px] right-[12px] flex items-center gap-2 rounded-full bg-black/55 px-2 py-1 text-white backdrop-blur-sm">
+		<div className="pointer-events-none absolute top-[12px] right-[12px] flex items-center gap-2 rounded-full bg-black/55 px-2 py-1 text-on-brand backdrop-blur-sm">
 			<span className="font-jetbrains text-[8px] tracking-[0.16em] uppercase opacity-80">Sponsored by</span>
 			<img src={sponsorLogoUrl} alt={article.sponsorLogo.alt} className="h-5 w-auto max-w-[80px] object-contain" />
 		</div>
@@ -126,7 +126,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 	const overlay = (
 		<div
 			className={clsx(
-				'absolute inset-0 flex flex-col justify-end bg-linear-to-b from-transparent to-[#0D1E3BF2] p-[15px] text-white transition-transform duration-500 ease-in-out',
+				'absolute inset-0 flex flex-col justify-end bg-linear-to-b from-transparent to-(--research-navy-soft)/95 p-3.75 text-on-brand transition-transform duration-500 ease-in-out',
 				'translate-y-full',
 				!isMobile && 'md:group-hover:translate-y-0'
 			)}
@@ -136,7 +136,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 			</p>
 			{addOverlayLink ? (
 				<div className="grid gap-2">
-					<span className="inline-block w-full rounded-sm border border-white px-3 py-2 text-center text-[12px] leading-[120%] font-medium">
+					<span className="inline-block w-full rounded-sm border border-white px-3 py-2 text-center text-xs leading-[120%] font-medium">
 						Read more
 					</span>
 					{pdfUrl ? (
@@ -145,7 +145,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 							pdfUrl={pdfUrl}
 							widgetLabel="Reports carousel"
 							stopPropagation
-							className="w-full rounded-sm bg-white px-3 py-2 text-center text-[12px] leading-[120%] font-medium text-[#0D1E3B] transition-opacity hover:opacity-90"
+							className="w-full rounded-sm bg-white px-3 py-2 text-center text-xs leading-[120%] font-medium text-(--research-navy-soft) transition-opacity hover:opacity-90"
 						/>
 					) : null}
 				</div>
@@ -158,7 +158,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 				>
 					<Link
 						href={href}
-						className="w-full rounded-sm border border-white px-3 py-2 text-center text-[12px] leading-[120%] font-medium text-white transition-colors hover:bg-white/10"
+						className="w-full rounded-sm border border-white px-3 py-2 text-center text-xs leading-[120%] font-medium text-on-brand transition-colors hover:bg-white/10"
 					>
 						Read more
 					</Link>
@@ -167,7 +167,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 							article={article}
 							pdfUrl={pdfUrl}
 							widgetLabel="Reports carousel"
-							className="w-full rounded-sm bg-white px-3 py-2 text-center text-[12px] leading-[120%] font-medium text-[#0D1E3B] transition-opacity hover:opacity-90"
+							className="w-full rounded-sm bg-white px-3 py-2 text-center text-xs leading-[120%] font-medium text-(--research-navy-soft) transition-opacity hover:opacity-90"
 						/>
 					) : null}
 				</div>
@@ -450,7 +450,7 @@ export const ReportsCarousel: React.FC<ReportsCarouselProps> = (props) => {
 
 	const getSlideClasses = () => {
 		return clsx(
-			'absolute cursor-pointer rounded-xl border border-[#D9D9D9] text-white/80 shadow-xl transition-all duration-300 ease-out',
+			'absolute cursor-pointer rounded-xl border border-medium text-on-brand/80 shadow-xl transition-all duration-300 ease-out',
 			isMobile ? 'w-[266px]' : 'w-[294px]',
 			isTransitioning && 'pointer-events-none'
 		)

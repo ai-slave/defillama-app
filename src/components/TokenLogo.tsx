@@ -31,7 +31,7 @@ function resolveLogoUrl(props: NamedLogoProps): string {
 }
 
 export const FallbackLogo = () => (
-	<span className="inline-block aspect-square size-6 shrink-0 rounded-full bg-(--legacy-bg-tertiary) object-cover" />
+	<span className="inline-block aspect-square size-6 shrink-0 rounded-full bg-surface-elevated-2 object-cover" />
 )
 
 export function TokenLogo(props: TokenLogoProps) {
@@ -80,7 +80,7 @@ function TokenLogoImg({
 			width={size}
 			title={title}
 			data-lgonly={lgonly}
-			className="inline-block aspect-square max-w-none shrink-0 rounded-full bg-(--legacy-bg-tertiary) object-cover text-transparent data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block"
+			className="inline-block aspect-square max-w-none shrink-0 rounded-full bg-surface-elevated-2 object-cover text-transparent data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block"
 			loading="lazy"
 			onError={(e) => {
 				setSrc((prev) => {

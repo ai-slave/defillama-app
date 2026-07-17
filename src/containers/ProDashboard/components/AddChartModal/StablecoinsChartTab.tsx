@@ -397,14 +397,14 @@ export function StablecoinsChartTab({
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="space-y-3">
-				<div className="flex rounded-md border border-(--legacy-cards-border) bg-(--cards-bg-alt)/40 p-0.5">
+				<div className="flex rounded-md border border-(--pro-cards-border) p-0.5">
 					<button
 						type="button"
 						onClick={() => onStablecoinModeChange('chain')}
 						className={`flex-1 rounded-sm px-3 py-1.5 text-xs font-medium transition-all ${
 							stablecoinMode === 'chain'
-								? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm'
-								: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
+								? 'bg-(--pro-cards-bg) text-(--pro-text-primary) shadow-sm'
+								: 'text-(--pro-text-secondary) hover:text-(--pro-text-primary)'
 						}`}
 					>
 						By Chain
@@ -414,8 +414,8 @@ export function StablecoinsChartTab({
 						onClick={() => onStablecoinModeChange('asset')}
 						className={`flex-1 rounded-sm px-3 py-1.5 text-xs font-medium transition-all ${
 							stablecoinMode === 'asset'
-								? 'bg-(--legacy-cards-bg) text-(--legacy-text-primary) shadow-sm'
-								: 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
+								? 'bg-(--pro-cards-bg) text-(--pro-text-primary) shadow-sm'
+								: 'text-(--pro-text-secondary) hover:text-(--pro-text-primary)'
 						}`}
 					>
 						By Asset
@@ -477,10 +477,10 @@ export function StablecoinsChartTab({
 			</div>
 
 			<div className="overflow-hidden rounded-lg border pro-border">
-				<h4 className="border-b border-(--legacy-cards-border) px-3 py-2 text-xs font-medium pro-text2">Preview</h4>
+				<h4 className="border-b border-(--pro-cards-border) px-3 py-2 text-xs font-medium pro-text2">Preview</h4>
 
 				{(stablecoinMode === 'chain' && hasChainSelection) || (stablecoinMode === 'asset' && hasAssetSelection) ? (
-					<div className="bg-(--legacy-cards-bg) p-3">
+					<div className="bg-(--pro-cards-bg) p-3">
 						<div className="mb-3">
 							<h3 className="mb-1 text-sm font-semibold pro-text1">
 								{stablecoinMode === 'chain'

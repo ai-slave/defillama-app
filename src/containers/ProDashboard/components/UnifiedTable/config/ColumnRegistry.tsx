@@ -267,7 +267,7 @@ export const getUnifiedTableColumns = (customColumns?: CustomColumnDefinition[])
 							<button
 								type="button"
 								onClick={row.getToggleExpandedHandler()}
-								className="rounded-md p-1 transition-colors hover:bg-(--legacy-bg-tertiary)"
+								className="rounded-md p-1 transition-colors hover:bg-surface-elevated-2"
 							>
 								<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} height={12} width={12} />
 							</button>
@@ -289,9 +289,9 @@ export const getUnifiedTableColumns = (customColumns?: CustomColumnDefinition[])
 								<span className="inline-block size-6 shrink-0" />
 							)
 						) : null}
-						<span className="font-medium text-(--legacy-text-primary)">{display.label}</span>
+						<span className="font-medium text-(--pro-text-primary)">{display.label}</span>
 						{protocolCountValue && protocolCountValue > 1 ? (
-							<span className="text-xs text-(--legacy-text-tertiary)">{protocolCountValue} protocols</span>
+							<span className="text-xs text-(--pro-text-tertiary)">{protocolCountValue} protocols</span>
 						) : null}
 					</div>
 				)
@@ -318,10 +318,7 @@ export const getUnifiedTableColumns = (customColumns?: CustomColumnDefinition[])
 					return renderDash()
 				}
 				return (
-					<BasicLink
-						href={getCategoryRoute(slug(category))}
-						className="text-sm font-medium text-(--legacy-link-text) hover:underline"
-					>
+					<BasicLink href={getCategoryRoute(slug(category))} className="text-sm font-medium text-link hover:underline">
 						{category}
 					</BasicLink>
 				)
@@ -378,7 +375,7 @@ export const getUnifiedTableColumns = (customColumns?: CustomColumnDefinition[])
 							<BasicLink
 								key={oracle}
 								href={`/oracles/${slug(oracle)}`}
-								className="text-sm font-medium text-(--legacy-link-text) hover:underline"
+								className="text-sm font-medium text-link hover:underline"
 							>
 								{oracle}
 							</BasicLink>

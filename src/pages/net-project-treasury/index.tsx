@@ -59,7 +59,7 @@ const columns = [
 					<span className="-my-2 flex flex-col">
 						<BasicLink
 							href={`/protocol/treasury/${row.original.slug}`}
-							className="truncate text-sm font-medium text-(--legacy-link-text) hover:underline"
+							className="truncate text-sm font-medium text-link hover:underline"
 						>
 							{value}
 						</BasicLink>

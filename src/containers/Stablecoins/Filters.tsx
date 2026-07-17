@@ -142,7 +142,7 @@ function McapRange({
 					{min || max ? (
 						<>
 							<span>Mcap: </span>
-							<span className="text-(--legacy-link)">{`${min?.toLocaleString() ?? 'min'} - ${
+							<span className="text-link">{`${min?.toLocaleString() ?? 'min'} - ${
 								max?.toLocaleString() ?? 'max'
 							}`}</span>
 						</>

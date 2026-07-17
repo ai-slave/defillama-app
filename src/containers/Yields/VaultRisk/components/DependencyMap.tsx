@@ -152,7 +152,7 @@ export function DependencyMap({
 									selected?.d.id === n.d.id
 										? 'stroke-(--border-brand)'
 										: n.count
-											? 'stroke-(--text-tertiary)'
+											? 'stroke-tertiary'
 											: 'stroke-(--border-subtle)'
 								}
 								strokeWidth={selected?.d.id === n.d.id ? 1.5 : 1}

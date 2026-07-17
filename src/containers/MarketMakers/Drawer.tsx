@@ -20,7 +20,7 @@ export function Drawer({
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={(value) => !value && onClose()}>
 			<Ariakit.Dialog
-				className={`fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-full translate-x-full flex-col border-l border-medium bg-surface-elevated-1 shadow-[0_24px_64px_-16px_rgb(0_0_0/0.45)] transition-transform duration-300 ease-in-out data-enter:translate-x-0 data-leave:translate-x-full dark:shadow-[0_24px_64px_-16px_rgb(0_0_0/0.6)] ${widthClassName}`}
+				className={`fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-full translate-x-full flex-col border-l border-medium bg-surface-elevated-1 shadow-dialog transition-transform duration-300 ease-in-out data-enter:translate-x-0 data-leave:translate-x-full dark:shadow-dialog-deep ${widthClassName}`}
 				backdrop={
 					<div className="fixed inset-0 z-40 bg-screen-dim opacity-0 transition-opacity duration-300 ease-in-out data-enter:opacity-100" />
 				}

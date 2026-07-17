@@ -39,7 +39,7 @@ const reserveColumns: ColumnDef<FlatReserve>[] = [
 			if (reward && reward > 0) {
 				return (
 					<span>
-						{apy} <span className="text-green-500">+{formatPct(reward)}</span>
+						{apy} <span className="text-success">+{formatPct(reward)}</span>
 					</span>
 				)
 			}
@@ -57,7 +57,7 @@ const reserveColumns: ColumnDef<FlatReserve>[] = [
 			if (discount && discount > 0) {
 				return (
 					<span>
-						{apy} <span className="text-green-500">-{formatPct(discount)}</span>
+						{apy} <span className="text-success">-{formatPct(discount)}</span>
 					</span>
 				)
 			}
@@ -91,9 +91,9 @@ const reserveColumns: ColumnDef<FlatReserve>[] = [
 		header: 'Status',
 		accessorKey: 'isFrozen',
 		cell: ({ row }) => {
-			if (row.original.isPaused) return <span className="text-(--legacy-text-tertiary)">Paused</span>
-			if (row.original.isFrozen) return <span className="text-(--legacy-text-tertiary)">Frozen</span>
-			return <span className="text-green-500">Active</span>
+			if (row.original.isPaused) return <span className="text-(--pro-text-tertiary)">Paused</span>
+			if (row.original.isFrozen) return <span className="text-(--pro-text-tertiary)">Frozen</span>
+			return <span className="text-success">Active</span>
 		},
 		size: 70
 	}
@@ -121,13 +121,13 @@ function ReservesTable({ data }: { data: FlatReserve[] }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
+		<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-5">
 			<SectionHeader title="All Reserves" />
 			<div className="mt-4">
 				<InvestorsTable instance={instance} overrideRows={pagedRows} />
 			</div>
 			{totalPages > 1 && (
-				<div className="mt-3 flex items-center justify-between border-t border-(--legacy-divider) pt-3 text-[11px] text-(--legacy-text-tertiary)">
+				<div className="mt-3 flex items-center justify-between border-t border-subtle pt-3 text-[11px] text-(--pro-text-tertiary)">
 					<span className="tabular-nums">
 						{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, allRows.length)} of {allRows.length}
 					</span>
@@ -135,14 +135,14 @@ function ReservesTable({ data }: { data: FlatReserve[] }) {
 						<button
 							onClick={() => setPage((p) => p - 1)}
 							disabled={page === 0}
-							className="rounded-sm px-2 py-1 transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30"
+							className="rounded-sm px-2 py-1 transition-colors hover:bg-sl-hover-bg disabled:opacity-30"
 						>
 							Prev
 						</button>
 						<button
 							onClick={() => setPage((p) => p + 1)}
 							disabled={page >= totalPages - 1}
-							className="rounded-sm px-2 py-1 transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30"
+							className="rounded-sm px-2 py-1 transition-colors hover:bg-sl-hover-bg disabled:opacity-30"
 						>
 							Next
 						</button>

@@ -52,12 +52,12 @@ export function SchemaDrawer({
 				backdrop={
 					<div className="fixed inset-0 z-40 bg-black/20 opacity-0 transition-opacity duration-150 data-enter:opacity-100 dark:bg-black/40" />
 				}
-				className="fixed top-0 right-0 bottom-0 z-50 flex w-full max-w-[640px] drawer-to-left flex-col overflow-hidden border-l border-(--legacy-divider) bg-surface shadow-2xl sm:max-w-[560px] lg:max-w-[640px]"
+				className="fixed top-0 right-0 bottom-0 z-50 flex w-full max-w-[640px] drawer-to-left flex-col overflow-hidden border-l border-subtle bg-surface shadow-2xl sm:max-w-[560px] lg:max-w-[640px]"
 			>
-				<header className="flex items-start justify-between gap-3 border-b border-(--legacy-divider) bg-(--legacy-app-bg)/40 px-5 py-3.5">
+				<header className="flex items-start justify-between gap-3 border-b border-subtle bg-(--pro-app-bg)/40 px-5 py-3.5">
 					<div className="flex min-w-0 flex-col gap-0.5">
-						<h2 className="text-sm font-semibold tracking-tight text-(--legacy-text-primary)">SQL reference</h2>
-						<p className="text-[11.5px] leading-snug text-(--legacy-text-tertiary)">
+						<h2 className="text-sm font-semibold tracking-tight text-(--pro-text-primary)">SQL reference</h2>
+						<p className="text-[11.5px] leading-snug text-(--pro-text-tertiary)">
 							{tab === 'schema' ? (
 								<>
 									{totalDatasetCount} tables · {DESCRIPTIONS[tab]}
@@ -70,7 +70,7 @@ export function SchemaDrawer({
 					<Ariakit.DialogDismiss
 						onClick={onClose}
 						aria-label="Close SQL reference"
-						className="flex size-7 shrink-0 items-center justify-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary)"
+						className="flex size-7 shrink-0 items-center justify-center rounded-md text-(--pro-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary)"
 					>
 						<Icon name="x" className="size-4" />
 					</Ariakit.DialogDismiss>
@@ -102,7 +102,7 @@ function TabBar({ tab, onChange }: { tab: TabId; onChange: (next: TabId) => void
 		<nav
 			role="tablist"
 			aria-label="SQL reference section"
-			className="flex items-center gap-5 border-b border-(--legacy-divider) px-5 text-sm"
+			className="flex items-center gap-5 border-b border-subtle px-5 text-sm"
 		>
 			{TABS.map((t) => {
 				const active = tab === t.id
@@ -114,13 +114,11 @@ function TabBar({ tab, onChange }: { tab: TabId; onChange: (next: TabId) => void
 						aria-selected={active}
 						onClick={() => onChange(t.id)}
 						className={`group relative flex items-center gap-1.5 pt-2.5 pb-2 text-xs font-medium transition-colors ${
-							active ? 'text-(--legacy-primary)' : 'text-(--legacy-text-secondary) hover:text-(--legacy-text-primary)'
+							active ? 'text-brand' : 'text-(--pro-text-secondary) hover:text-(--pro-text-primary)'
 						}`}
 					>
 						{t.label}
-						{active ? (
-							<span aria-hidden className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-(--legacy-primary)" />
-						) : null}
+						{active ? <span aria-hidden className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-brand" /> : null}
 					</button>
 				)
 			})}

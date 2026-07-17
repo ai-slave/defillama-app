@@ -1,0 +1,318 @@
+/* ----------------------------------------------------------------------------
+   LlamaAI surface styles — chat shell, landing/conversation transitions, the
+   gold CTA glow, prose tweaks, and hacker mode. Component CSS only; the
+   surface's color/shadow/animation tokens live in themes/llamaai.css.
+
+   Colors reference the quarantined --ai-* roles (no raw hex): these rules
+   repoint together with that palette in the design-token repoint pass.
+---------------------------------------------------------------------------- */
+
+/* ------------------------------- Keyframes ------------------------------- */
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes llamaLandingExit {
+	from {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+	to {
+		opacity: 0;
+		transform: translateY(-72px) scale(0.985);
+	}
+}
+
+@keyframes llamaConversationEnter {
+	from {
+		opacity: 0;
+		transform: translateY(72px) scale(0.985);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+@keyframes llamaActiveExchangeEnter {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes llama-popup-in {
+	from {
+		opacity: 0;
+		transform: translateX(-50%) translateY(4px) scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(-50%) translateY(0) scale(1);
+	}
+}
+
+@keyframes slideInRight {
+	from {
+		transform: translateX(-100%);
+		opacity: 0;
+	}
+	to {
+		transform: translateX(0);
+		opacity: 1;
+	}
+}
+
+@keyframes shrinkToRight {
+	from {
+		transform: scaleX(1.1);
+		transform-origin: right;
+	}
+	to {
+		transform: scaleX(1);
+		transform-origin: right;
+	}
+}
+
+@keyframes anchorHighlight {
+	0% {
+		background-color: color-mix(in srgb, var(--ai-blue-vivid) 15%, transparent);
+	}
+	100% {
+		background-color: transparent;
+	}
+}
+
+/* -------------------------- Chat message anchors -------------------------- */
+.message-anchor {
+	scroll-margin-top: 5rem;
+}
+
+.anchor-highlight {
+	position: relative;
+	isolation: isolate;
+}
+
+.anchor-highlight::before {
+	content: '';
+	position: absolute;
+	inset: -4px -6px;
+	border-radius: 10px;
+	pointer-events: none;
+	z-index: -1;
+	animation: anchorHighlight 2s ease-out forwards;
+}
+
+/* ------------------------ Capability browser panel ------------------------ */
+@utility capability-panel {
+	opacity: 0;
+	transform: scale(0.96);
+	transition:
+		opacity 180ms cubic-bezier(0.16, 1, 0.3, 1),
+		transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+
+	&[data-enter] {
+		opacity: 1;
+		transform: scale(1);
+	}
+
+	&[data-leave] {
+		transition:
+			opacity 120ms ease-out,
+			transform 120ms ease-out;
+	}
+}
+
+/* ----------------------- Fullscreen chat shell layout ---------------------- */
+@layer base {
+	html[data-llamaai-fullscreen='true'] #__next,
+	html[data-llamaai-fullscreen='true'] #__next > [data-rk] {
+		@apply grid-cols-1;
+	}
+
+	@media (min-width: 1024px) {
+		html[data-llamaai-fullscreen='true'] .desktop-nav-shell {
+			display: none;
+		}
+
+		html[data-llamaai-fullscreen='true'] .app-main-shell {
+			padding-left: 1rem !important;
+		}
+	}
+
+	.llamaai-chat-panel {
+		container-type: inline-size;
+	}
+
+	.llamaai-chat-width {
+		max-width: 45rem;
+	}
+
+	@container (min-width: 1024px) {
+		.llamaai-chat-width {
+			max-width: 53rem;
+		}
+	}
+
+	@container (min-width: 1440px) {
+		.llamaai-chat-width {
+			max-width: 56rem;
+		}
+	}
+}
+
+/* ------------------------------ Gold CTA glow ------------------------------ */
+.llamaai-glow {
+	background: var(--ai-gold-gradient);
+	box-shadow:
+		0px 0px 60px color-mix(in srgb, var(--ai-gold-bright) 50%, transparent),
+		0px 0px 2px 4px rgba(255, 255, 255, 0.1);
+	transition:
+		transform 0.2s ease,
+		box-shadow 0.2s ease;
+}
+
+.llamaai-glow svg {
+	--animate-enabled: running;
+}
+
+.llamaai-glow::before {
+	content: '';
+	position: absolute;
+	top: -50%;
+	left: -50%;
+	width: 200%;
+	height: 200%;
+	background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+	transform: rotate(45deg);
+	opacity: 0;
+	pointer-events: none;
+}
+
+.llamaai-glow:hover::before {
+	opacity: 1;
+	animation: shimmer 3s;
+}
+
+.llamaai-glow:hover {
+	transform: translateY(-2px);
+	box-shadow:
+		0px 0px 80px color-mix(in srgb, var(--ai-gold-bright) 70%, transparent),
+		0px 0px 2px 4px rgba(255, 255, 255, 0.2);
+}
+
+.llamaai-glow:hover svg {
+	--star-1-animation: star-spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+	--star-2-animation: star-spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.llamaai-glow:active {
+	transform: translateY(0px);
+}
+
+.llamaai-glow .ai-icon {
+	width: 32px;
+	height: 32px;
+	position: relative;
+	z-index: 1;
+}
+
+/* Light mode uses the warning ambers; dark overrides every property below. */
+.llamaai-glow-text {
+	background: linear-gradient(
+		93.94deg,
+		var(--ai-warning) 24.73%,
+		var(--ai-warning-bright) 57.42%,
+		var(--ai-warning) 99.73%
+	);
+	background-clip: text;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	text-shadow: 0px 0px 20px color-mix(in srgb, var(--ai-warning) 40%, transparent);
+	text-decoration: underline;
+	text-decoration-color: var(--ai-warning);
+	transition: text-shadow 0.2s ease;
+}
+
+.llamaai-glow-text:hover {
+	text-shadow: 0px 0px 30px color-mix(in srgb, var(--ai-warning) 60%, transparent);
+}
+
+.dark .llamaai-glow-text {
+	background: var(--ai-gold-gradient);
+	background-clip: text;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	text-shadow: 0px 0px 20px color-mix(in srgb, var(--ai-gold-bright) 50%, transparent);
+	text-decoration: underline;
+	text-decoration-color: var(--ai-gold-bright);
+	transition: text-shadow 0.2s ease;
+}
+
+.dark .llamaai-glow-text:hover {
+	text-shadow: 0px 0px 30px color-mix(in srgb, var(--ai-gold-bright) 80%, transparent);
+}
+
+/* ----------------------------- Chat prose tweaks ----------------------------- */
+.prose.llamaai-prose p,
+.prose.llamaai-prose blockquote,
+.prose.llamaai-prose h1,
+.prose.llamaai-prose h2,
+.prose.llamaai-prose h3,
+.prose.llamaai-prose h4,
+.prose.llamaai-prose h5,
+.prose.llamaai-prose h6,
+.prose.llamaai-prose img,
+.prose.llamaai-prose picture,
+.prose.llamaai-prose video,
+.prose.llamaai-prose pre,
+.prose.llamaai-prose ol,
+.prose.llamaai-prose ul,
+.prose.llamaai-prose li,
+.prose.llamaai-prose dl,
+.prose.llamaai-prose dt,
+.prose.llamaai-prose dd,
+.prose.llamaai-prose hr,
+.prose.llamaai-prose figure,
+.prose.llamaai-prose figcaption,
+.prose.llamaai-prose table,
+.prose.llamaai-prose [class~='lead'] {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+/* ------------------------- Hacker mode: code blocks ------------------------- */
+.prose.llamaai-prose.hacker-mode pre {
+	background: var(--ai-ink);
+	border: 1px solid color-mix(in srgb, var(--ai-terminal) 20%, transparent);
+	box-shadow: inset 0 0 30px color-mix(in srgb, var(--ai-terminal) 3%, transparent);
+	border-radius: 0.5rem;
+}
+.prose.llamaai-prose.hacker-mode pre code {
+	color: var(--ai-terminal);
+	text-shadow: 0 0 8px color-mix(in srgb, var(--ai-terminal) 40%, transparent);
+	font-family: monospace;
+}
+.prose.llamaai-prose.hacker-mode :not(pre) > code {
+	color: var(--ai-terminal);
+	background: color-mix(in srgb, var(--ai-terminal) 8%, transparent);
+	text-shadow: 0 0 6px color-mix(in srgb, var(--ai-terminal) 30%, transparent);
+}
+
+/* Entity logos: wrapper uses leading-0; keep img optically centered with link text */
+.prose.llamaai-prose a img.inline-block {
+	vertical-align: middle;
+}
+
+/* Scale entity logos to match heading font size */
+.prose.llamaai-prose :is(h1, h2, h3, h4, h5, h6) a img {
+	height: 1em;
+	width: 1em;
+}

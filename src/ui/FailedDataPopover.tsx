@@ -29,7 +29,7 @@ export function FailedDataPopover<T extends string>({
 				unmountOnHide
 				hideOnInteractOutside
 				gutter={6}
-				className="z-10 mr-1 flex max-h-[calc(100dvh-80px)] w-[min(calc(100vw-16px),300px)] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-overlay body-sm text-primary shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)]"
+				className="z-10 mr-1 flex max-h-[calc(100dvh-80px)] w-[min(calc(100vw-16px),300px)] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-overlay body-sm text-primary shadow-overlay-sm"
 			>
 				<div className="flex flex-col gap-1 p-3">
 					<p className="label-sm text-data-down">{title}</p>

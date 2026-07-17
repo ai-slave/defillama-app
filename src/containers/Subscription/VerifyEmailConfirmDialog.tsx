@@ -19,23 +19,23 @@ export function VerifyEmailConfirmDialog({
 				unmountOnHide
 			>
 				<div className="mb-3 flex items-center justify-between">
-					<h2 className="text-xl font-semibold text-(--legacy-text-primary)">Verify your email</h2>
-					<Ariakit.DialogDismiss className="rounded-full p-1 text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-text-primary)">
+					<h2 className="text-xl font-semibold text-primary">Verify your email</h2>
+					<Ariakit.DialogDismiss className="rounded-full p-1 text-tertiary transition-colors hover:text-primary">
 						<Icon name="x" height={20} width={20} />
 						<span className="sr-only">Close</span>
 					</Ariakit.DialogDismiss>
 				</div>
-				<p className="mb-5 text-sm text-(--legacy-text-secondary)">
+				<p className="mb-5 text-sm text-secondary">
 					You need to verify your email before you can subscribe. Do you want to verify it now?
 				</p>
 				<div className="flex flex-col gap-2">
 					<button
 						onClick={onConfirm}
-						className="w-full rounded-lg border border-[#5C5CF9] bg-[#5C5CF9] py-3 text-sm font-medium text-white transition-colors hover:bg-[#4A4AF0]"
+						className="w-full rounded-lg border border-sub-purple-500 bg-sub-purple-500 py-3 text-sm font-medium text-on-brand transition-colors hover:bg-sub-purple-hover"
 					>
 						Verify now
 					</button>
-					<Ariakit.DialogDismiss className="w-full rounded-lg border border-(--legacy-cards-border) py-3 text-sm font-medium text-(--legacy-text-secondary) transition-colors hover:text-(--legacy-text-primary)">
+					<Ariakit.DialogDismiss className="w-full rounded-lg border border-medium py-3 text-sm font-medium text-secondary transition-colors hover:text-primary">
 						Not now
 					</Ariakit.DialogDismiss>
 				</div>

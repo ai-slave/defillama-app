@@ -20,7 +20,7 @@ function AuthActions({
 	if (!isClient || loaders.userLoading) {
 		return (
 			<div
-				className={`animate-pulse rounded-lg bg-(--sub-border-slate-100) dark:bg-(--sub-border-strong) ${skeletonClassName}`}
+				className={`animate-pulse rounded-lg bg-sub-border-slate-100 dark:bg-sub-border-strong ${skeletonClassName}`}
 			/>
 		)
 	}
@@ -42,7 +42,7 @@ export function SubscriptionHeader() {
 	return (
 		<>
 			{/* Mobile */}
-			<header className="relative z-20 flex h-16 items-center justify-between bg-(--sub-overlay-light) px-4 backdrop-blur-[12px] md:hidden dark:bg-(--sub-overlay-dark)">
+			<header className="relative z-20 flex h-16 items-center justify-between bg-sub-overlay-light px-4 backdrop-blur-[12px] md:hidden dark:bg-sub-overlay-dark">
 				<BasicLink href="/" aria-label="Back to home" className="flex size-10 items-center justify-center rounded-full">
 					<Icon name="chevron-left" height={28} width={28} />
 				</BasicLink>
@@ -50,15 +50,15 @@ export function SubscriptionHeader() {
 					<ThemeSwitch variant="pill" />
 					<AuthActions
 						skeletonClassName="h-10 w-[88px]"
-						signInClassName="h-10 rounded-lg bg-(--sub-brand-primary) px-4 text-[14px] leading-[17px] font-medium text-white"
-						accountClassName="text-sm text-(--sub-ink-primary) dark:text-white"
+						signInClassName="h-10 rounded-lg bg-sub-brand-primary px-4 text-sm leading-[17px] font-medium text-on-brand"
+						accountClassName="text-sm text-sub-ink-primary dark:text-ai-primary"
 					/>
 				</div>
 			</header>
 
 			{/* Desktop */}
-			<header className="relative z-20 hidden h-12 items-center justify-between bg-(--sub-overlay-light) px-[42px] backdrop-blur-[12px] md:flex dark:bg-(--sub-overlay-dark)">
-				<BasicLink href="/" className="flex items-center gap-2 text-xs text-(--sub-ink-primary) dark:text-white">
+			<header className="relative z-20 hidden h-12 items-center justify-between bg-sub-overlay-light px-10.5 backdrop-blur-[12px] md:flex dark:bg-sub-overlay-dark">
+				<BasicLink href="/" className="flex items-center gap-2 text-xs text-sub-ink-primary dark:text-ai-primary">
 					<Icon name="chevron-left" height={16} width={16} />
 					Back
 				</BasicLink>
@@ -66,8 +66,8 @@ export function SubscriptionHeader() {
 					<ThemeSwitch variant="pill" size="sm" />
 					<AuthActions
 						skeletonClassName="h-8 w-[72px]"
-						signInClassName="h-8 rounded-lg bg-(--sub-brand-primary) px-3 text-xs text-white"
-						accountClassName="text-xs text-(--sub-ink-primary) dark:text-white"
+						signInClassName="h-8 rounded-lg bg-sub-brand-primary px-3 text-xs text-on-brand"
+						accountClassName="text-xs text-sub-ink-primary dark:text-ai-primary"
 					/>
 				</div>
 			</header>

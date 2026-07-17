@@ -28,14 +28,14 @@ export const ResearchReportHighlight: React.FC<ResearchReportHighlightProps> = (
 
 	return (
 		<div className="flex flex-col">
-			<div className="pb-[15px] lg:pb-[26px]">
+			<div className="pb-3.75 lg:pb-6.5">
 				<TitleLine title="Report highlight" />
 			</div>
 			<div className="grid grow grid-cols-1 gap-8 lg:grid-cols-[397fr_719fr] lg:gap-12">
 				<div className="flex flex-col gap-6">
 					{sponsorLogoUrl ? (
 						<div className="space-y-2">
-							<div className="text-[9px] tracking-[0.18em] text-[#1D1D1D]/60 uppercase dark:text-white/60">
+							<div className="text-[9px] tracking-[0.18em] text-primary/60 uppercase dark:text-on-brand/60">
 								Sponsored by
 							</div>
 							<img
@@ -45,7 +45,9 @@ export const ResearchReportHighlight: React.FC<ResearchReportHighlightProps> = (
 							/>
 						</div>
 					) : null}
-					<h2 className="text-[24px] leading-[150%] font-medium text-[#0c2956] dark:text-white">{highlight.title}</h2>
+					<h2 className="text-2xl leading-[150%] font-medium text-(--research-navy-soft) dark:text-ai-primary">
+						{highlight.title}
+					</h2>
 					{coverUrl ? (
 						<div className="w-full">
 							<img
@@ -66,7 +68,7 @@ export const ResearchReportHighlight: React.FC<ResearchReportHighlightProps> = (
 					>
 						<div className="flex flex-col justify-between gap-6">
 							{excerpt ? (
-								<div className="text-[14px] leading-[150%] text-[#1D1D1D]/90 dark:text-white">
+								<div className="text-sm leading-[150%] text-primary/90 dark:text-ai-primary">
 									<p className="mb-2 whitespace-break-spaces last:mb-0">{excerpt}</p>
 								</div>
 							) : null}
@@ -79,7 +81,7 @@ export const ResearchReportHighlight: React.FC<ResearchReportHighlightProps> = (
 								article={highlight}
 								pdfUrl={pdfUrl}
 								widgetLabel="Report highlight"
-								className="text-[13px] font-medium text-[#0c2956] underline-offset-4 hover:underline dark:text-white"
+								className="text-[13px] font-medium text-(--research-navy-soft) underline-offset-4 hover:underline dark:text-ai-primary"
 							/>
 						) : null}
 						<ReadMoreLink url={articleHref(highlight)} title="Read this report" />

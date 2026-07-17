@@ -35,7 +35,7 @@ const columns = [
 					href={getValue()}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="flex shrink-0 items-center justify-center rounded-md bg-(--legacy-link-button) p-1.5 hover:bg-(--legacy-link-button-hover)"
+					className="flex shrink-0 items-center justify-center rounded-md bg-brand-muted p-1.5 hover:bg-(--interim-brand-tint-hover)"
 				>
 					<Icon name="arrow-up-right" height={14} width={14} />
 					<span className="sr-only">open in new tab</span>

@@ -81,7 +81,7 @@ const KYC_REQUIREMENT_BY_TOKEN: Record<string, KycRequirementIndicator> = {
 		key: 'poa',
 		label: 'Proof of address',
 		icon: 'house-plug',
-		className: 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+		className: 'border-warning/30 bg-warning/10 text-warning dark:text-warning'
 	},
 	'source-of-income': {
 		key: 'profile',

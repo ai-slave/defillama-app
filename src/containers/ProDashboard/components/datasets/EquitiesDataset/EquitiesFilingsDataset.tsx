@@ -69,7 +69,7 @@ const columns: ColumnDef<IEquitiesFilingApiItem, any>[] = [
 					href={info.getValue()}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="flex flex-1 items-center justify-center gap-4 rounded-md bg-(--legacy-btn2-bg) p-1.5 hover:bg-(--legacy-btn2-hover-bg)"
+					className="flex flex-1 items-center justify-center gap-4 rounded-md bg-brand-muted p-1.5 hover:bg-(--pro-btn2-hover-bg)"
 				>
 					<Icon name="arrow-up-right" height={14} width={14} />
 					<span className="sr-only">open in new tab</span>
@@ -218,7 +218,7 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 							<select
 								value={selectedForm}
 								onChange={(e) => setSelectedForm(e.currentTarget.value)}
-								className="rounded-md border pro-border bg-(--legacy-bg-glass) px-2 py-1 text-sm pro-text1"
+								className="rounded-md border pro-border bg-(--pro-glass-bg) px-2 py-1 text-sm pro-text1"
 							>
 								<option value="All">All</option>
 								{filingForms.map((form) => (
@@ -254,7 +254,7 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 							type="text"
 							placeholder="Search filings..."
 							onInput={(e) => setSearchValue(e.currentTarget.value)}
-							className="rounded-md border pro-border bg-(--legacy-bg-glass) px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-(--legacy-primary) focus:outline-hidden"
+							className="rounded-md border pro-border bg-(--pro-glass-bg) px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>

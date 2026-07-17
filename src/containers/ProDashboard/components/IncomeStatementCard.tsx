@@ -72,18 +72,18 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 					{iconUrl ? (
 						<img src={iconUrl} alt={displayName} width={20} height={20} className="size-5 shrink-0 rounded-full" />
 					) : (
-						<div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-gray-300 text-xs text-gray-600">
+						<div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-gray-300 text-xs text-secondary">
 							{displayName?.charAt(0)?.toUpperCase()}
 						</div>
 					)}
 					<h3 className="text-base font-semibold">{displayName} Income statement</h3>
 				</div>
-				<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--legacy-form-control-border) text-(--legacy-text-form)">
+				<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--pro-form-control-border) text-(--pro-text-form)">
 					{(['table', 'sankey'] as ViewMode[]).map((mode) => (
 						<button
 							key={mode}
 							type="button"
-							className="shrink-0 px-2 py-1 text-xs whitespace-nowrap hover:bg-(--legacy-link-hover-bg) focus-visible:bg-(--legacy-link-hover-bg) data-[active=true]:font-medium data-[active=true]:text-(--legacy-link-text)"
+							className="shrink-0 px-2 py-1 text-xs whitespace-nowrap hover:bg-(--pro-link-hover-bg) focus-visible:bg-(--pro-link-hover-bg) data-[active=true]:font-medium data-[active=true]:text-link"
 							data-active={view === mode}
 							onClick={() => setView(mode)}
 						>
@@ -99,11 +99,11 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 					</div>
 				) : isError ? (
 					<div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-						<Icon name="alert-triangle" height={24} width={24} className="text-[#F2994A]" />
-						<p className="text-sm text-(--legacy-text-form)">Error loading income statement</p>
+						<Icon name="alert-triangle" height={24} width={24} className="text-sub-orange" />
+						<p className="text-sm text-(--pro-text-form)">Error loading income statement</p>
 					</div>
 				) : !hasData ? (
-					<div className="flex flex-1 items-center justify-center text-(--legacy-text-form)">
+					<div className="flex flex-1 items-center justify-center text-(--pro-text-form)">
 						No income statement data available
 					</div>
 				) : (

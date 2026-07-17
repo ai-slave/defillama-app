@@ -30,10 +30,10 @@ const SingleSeriesChart = lazy(
 
 function MetricCard({ label, value, helper }: { label: string; value: string | number | null; helper?: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
-			<span className="text-xs font-medium tracking-wide text-(--legacy-text-label)">{label}</span>
-			<span className="text-2xl font-semibold text-(--legacy-text-primary)">{value ?? '—'}</span>
-			{helper ? <span className="text-[11px] text-(--legacy-text-label)">{helper}</span> : null}
+		<div className="flex flex-col gap-1 rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
+			<span className="text-xs font-medium tracking-wide text-(--pro-text-label)">{label}</span>
+			<span className="text-2xl font-semibold text-(--pro-text-primary)">{value ?? '—'}</span>
+			{helper ? <span className="text-[11px] text-(--pro-text-label)">{helper}</span> : null}
 		</div>
 	)
 }
@@ -46,21 +46,21 @@ function Pagination({ table }: { table: ReturnType<typeof useReactTable<any>> })
 
 	return (
 		<div className="flex items-center justify-between pt-3">
-			<span className="text-xs text-(--legacy-text-label)">
+			<span className="text-xs text-(--pro-text-label)">
 				{from}–{to} of {total}
 			</span>
 			<div className="flex gap-1">
 				<button
 					onClick={() => table.previousPage()}
 					disabled={!table.getCanPreviousPage()}
-					className="rounded-sm px-2.5 py-1 text-xs font-medium text-(--legacy-text-label) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30 disabled:hover:bg-transparent"
+					className="rounded-sm px-2.5 py-1 text-xs font-medium text-(--pro-text-label) transition-colors hover:bg-sl-hover-bg disabled:opacity-30 disabled:hover:bg-transparent"
 				>
 					Prev
 				</button>
 				<button
 					onClick={() => table.nextPage()}
 					disabled={!table.getCanNextPage()}
-					className="rounded-sm px-2.5 py-1 text-xs font-medium text-(--legacy-text-label) transition-colors hover:bg-(--sl-hover-bg) disabled:opacity-30 disabled:hover:bg-transparent"
+					className="rounded-sm px-2.5 py-1 text-xs font-medium text-(--pro-text-label) transition-colors hover:bg-sl-hover-bg disabled:opacity-30 disabled:hover:bg-transparent"
 				>
 					Next
 				</button>
@@ -70,12 +70,12 @@ function Pagination({ table }: { table: ReturnType<typeof useReactTable<any>> })
 }
 
 function PnlCell({ value }: { value: number }) {
-	const color = value > 0 ? 'text-green-400' : value < 0 ? 'text-red-400' : ''
+	const color = value > 0 ? 'text-success' : value < 0 ? 'text-error' : ''
 	return <span className={color}>{formattedNum(value, true)}</span>
 }
 
 function PercentCell({ value }: { value: number }) {
-	const color = value > 0 ? 'text-green-400' : value < 0 ? 'text-red-400' : ''
+	const color = value > 0 ? 'text-success' : value < 0 ? 'text-error' : ''
 	return (
 		<span className={color}>
 			{value >= 0 ? '+' : ''}
@@ -99,10 +99,10 @@ function PortfolioTrend({
 	const changePct = first ? ((last - first) / first) * 100 : 0
 
 	return (
-		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
+		<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
 			<div className="mb-3 flex items-center justify-between">
-				<h3 className="text-sm font-medium text-(--legacy-text-label)">Portfolio Trend ({window})</h3>
-				<span className={changePct >= 0 ? 'text-xs text-green-400' : 'text-xs text-red-400'}>
+				<h3 className="text-sm font-medium text-(--pro-text-label)">Portfolio Trend ({window})</h3>
+				<span className={changePct >= 0 ? 'text-xs text-success' : 'text-xs text-error'}>
 					{changePct >= 0 ? '+' : ''}
 					{changePct.toFixed(2)}%
 				</span>
@@ -117,7 +117,7 @@ function PortfolioTrend({
 					height="220px"
 				/>
 			</Suspense>
-			<div className="mt-2 flex items-center justify-between text-xs text-(--legacy-text-label)">
+			<div className="mt-2 flex items-center justify-between text-xs text-(--pro-text-label)">
 				<span>{new Date(points[0].time).toLocaleDateString()}</span>
 				<span>Last: {formattedNum(last, true)}</span>
 				<span>{new Date(points[points.length - 1].time).toLocaleDateString()}</span>
@@ -139,7 +139,7 @@ const positionColumns: ColumnDef<HlpPosition>[] = [
 		accessorKey: 'side',
 		cell: ({ getValue }) => {
 			const value = getValue<string>()
-			return <span className={value === 'Long' ? 'text-green-400' : 'text-red-400'}>{value}</span>
+			return <span className={value === 'Long' ? 'text-success' : 'text-error'}>{value}</span>
 		},
 		size: 80
 	},
@@ -223,7 +223,7 @@ const fillColumns: ColumnDef<HlpFill>[] = [
 		accessorKey: 'side',
 		cell: ({ getValue }) => {
 			const value = getValue<string>()
-			return <span className={value === 'Buy' ? 'text-green-400' : 'text-red-400'}>{value}</span>
+			return <span className={value === 'Buy' ? 'text-success' : 'text-error'}>{value}</span>
 		},
 		size: 80
 	},
@@ -288,7 +288,7 @@ const openOrderColumns: ColumnDef<HlpOpenOrder>[] = [
 		accessorKey: 'side',
 		cell: ({ getValue }) => {
 			const value = getValue<string>()
-			return <span className={value === 'Buy' ? 'text-green-400' : 'text-red-400'}>{value}</span>
+			return <span className={value === 'Buy' ? 'text-success' : 'text-error'}>{value}</span>
 		},
 		size: 80
 	},
@@ -337,8 +337,8 @@ function DataTable<T>({
 	})
 
 	return (
-		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--legacy-text-label)">{title}</h3>
+		<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
+			<h3 className="mb-3 text-sm font-medium text-(--pro-text-label)">{title}</h3>
 			<VirtualTable instance={instance} skipVirtualization />
 			{data.length > pageSize ? <Pagination table={instance} /> : null}
 		</div>
@@ -403,18 +403,18 @@ export default function Positions() {
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="flex flex-wrap items-center gap-2">
-				<div className="text-xs font-medium tracking-wide text-(--legacy-text-label)">Vault:</div>
+				<div className="text-xs font-medium tracking-wide text-(--pro-text-label)">Vault:</div>
 				{(['All', 'A', 'B'] as VaultFilter[]).map((value) => (
 					<button
 						key={value}
 						onClick={() => setVaultFilter(value)}
-						className={`rounded-sm px-3 py-1.5 text-xs ${vaultFilter === value ? 'bg-[#2172e5] text-white' : 'bg-(--sl-btn-inactive-bg) text-(--legacy-text-label)'}`}
+						className={`rounded-sm px-3 py-1.5 text-xs ${vaultFilter === value ? 'bg-brand text-on-brand' : 'bg-sl-btn-inactive-bg text-(--pro-text-label)'}`}
 					>
 						{value}
 					</button>
 				))}
 
-				<div className="ml-auto text-xs text-(--legacy-text-label)">Snapshot: {kpis.snapshotTime}</div>
+				<div className="ml-auto text-xs text-(--pro-text-label)">Snapshot: {kpis.snapshotTime}</div>
 			</div>
 
 			<div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
@@ -429,12 +429,12 @@ export default function Positions() {
 			</div>
 
 			<div className="flex flex-wrap items-center gap-2">
-				<div className="text-xs font-medium tracking-wide text-(--legacy-text-label)">Portfolio Window:</div>
+				<div className="text-xs font-medium tracking-wide text-(--pro-text-label)">Portfolio Window:</div>
 				{(['day', 'week', 'month', 'allTime'] as const).map((value) => (
 					<button
 						key={value}
 						onClick={() => setPortfolioWindow(value)}
-						className={`rounded-sm px-3 py-1.5 text-xs ${portfolioWindow === value ? 'bg-[#2172e5] text-white' : 'bg-(--sl-btn-inactive-bg) text-(--legacy-text-label)'}`}
+						className={`rounded-sm px-3 py-1.5 text-xs ${portfolioWindow === value ? 'bg-brand text-on-brand' : 'bg-sl-btn-inactive-bg text-(--pro-text-label)'}`}
 					>
 						{value}
 					</button>
@@ -444,12 +444,12 @@ export default function Positions() {
 			<PortfolioTrend points={portfolio.points} window={portfolioWindow} />
 
 			<div className="flex flex-wrap items-center gap-2">
-				<div className="text-xs font-medium tracking-wide text-(--legacy-text-label)">Funding Window:</div>
+				<div className="text-xs font-medium tracking-wide text-(--pro-text-label)">Funding Window:</div>
 				{(['24h', '7d', '30d'] as const).map((value) => (
 					<button
 						key={value}
 						onClick={() => setFundingWindow(value)}
-						className={`rounded-sm px-3 py-1.5 text-xs ${fundingWindow === value ? 'bg-[#2172e5] text-white' : 'bg-(--sl-btn-inactive-bg) text-(--legacy-text-label)'}`}
+						className={`rounded-sm px-3 py-1.5 text-xs ${fundingWindow === value ? 'bg-brand text-on-brand' : 'bg-sl-btn-inactive-bg text-(--pro-text-label)'}`}
 					>
 						{value}
 					</button>

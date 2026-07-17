@@ -79,14 +79,14 @@ const QuoteBlock: React.FC<{
 }> = ({ quote, variant = 'primary', size = 'large', mobile }) => {
 	if (!quote.quote && !quote.username) return null
 
-	const bgColor = variant === 'secondary' ? 'bg-[#E1EAF2]' : 'bg-[#237bff]'
-	const textColor = variant === 'secondary' ? 'text-[#237bff]' : 'text-white'
+	const bgColor = variant === 'secondary' ? 'bg-(--research-blue-tint)' : 'bg-(--research-blue-deep)'
+	const textColor = variant === 'secondary' ? 'text-(--research-blue-deep)' : 'text-on-brand'
 
 	const textStyles = mobile
-		? 'text-[16px] leading-[20px] text-center px-[26px] py-3'
+		? 'text-base leading-[20px] text-center px-6.5 py-3'
 		: size === 'small'
-			? 'text-[20px] leading-[28px] text-center px-[45px] py-5'
-			: 'text-[20px] leading-[24px] px-[30px] py-5'
+			? 'text-xl leading-[28px] text-center px-11.25 py-5'
+			: 'text-xl leading-[24px] px-7.5 py-5'
 
 	const containerHeight = mobile ? 'h-[160px] min-h-[160px]' : 'h-[215px]'
 
@@ -95,7 +95,7 @@ const QuoteBlock: React.FC<{
 			href={quote.social_media_link || '#'}
 			target="_blank"
 			rel="noopener noreferrer"
-			className={`flex grow flex-col gap-4 rounded-[4px] p-[13px] ${bgColor} ${containerHeight}`}
+			className={`flex grow flex-col gap-4 rounded-[4px] p-3.25 ${bgColor} ${containerHeight}`}
 		>
 			{quote.quote && (
 				<blockquote className={`relative font-semibold ${textStyles} ${textColor}`}>
@@ -109,7 +109,7 @@ const QuoteBlock: React.FC<{
 				</blockquote>
 			)}
 			{quote.username && quote.social_media_name && (
-				<div className={`mt-auto pl-[30px] text-[14px] font-bold uppercase ${textColor}`}>
+				<div className={`mt-auto pl-7.5 text-sm font-bold uppercase ${textColor}`}>
 					@{quote.username} via {quote.social_media_name}
 				</div>
 			)}
@@ -282,7 +282,7 @@ const AutoplayCarousel: React.FC<AutoplayCarouselProps> = ({
 							aria-label={`Go to slide ${idx + 1}`}
 							onClick={() => setSelectedIndex(idx)}
 							className={`h-[8px] w-[8px] rounded-full transition-colors ${
-								idx === selectedIndex ? 'bg-[#237bff]' : 'bg-[#8D8D8D]'
+								idx === selectedIndex ? 'bg-(--research-blue-deep)' : 'bg-tertiary'
 							}`}
 						/>
 					))}

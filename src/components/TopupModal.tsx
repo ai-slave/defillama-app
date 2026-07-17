@@ -90,31 +90,31 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 				{step === 'stripe' ? (
 					<>
 						{/* Stripe step header */}
-						<div className="flex items-center gap-3 border-b border-(--sub-border-slate-100) px-5 py-4">
+						<div className="flex items-center gap-3 border-b border-sub-border-slate-100 px-5 py-4">
 							<button
 								onClick={() => {
 									setStep('select')
 									topupMutation.reset()
 								}}
-								className="rounded-full p-1 text-(--sub-ink-primary) transition-colors"
+								className="rounded-full p-1 text-sub-ink-primary transition-colors"
 							>
 								<Icon name="arrow-left" height={18} width={18} />
 							</button>
 							<div className="flex-1">
-								<h3 className="text-xl leading-7 font-semibold text-(--sub-ink-primary)">Complete Payment</h3>
-								<p className="text-xs text-(--sub-text-muted)">
-									Top up <span className="font-semibold text-(--sub-brand-primary)">${parsedAmount.toFixed(2)}</span> to
+								<h3 className="text-xl leading-7 font-semibold text-sub-ink-primary">Complete Payment</h3>
+								<p className="text-xs text-sub-text-muted">
+									Top up <span className="font-semibold text-sub-brand-primary">${parsedAmount.toFixed(2)}</span> to
 									your External Data Balance
 								</p>
 							</div>
-							<Ariakit.DialogDismiss className="rounded-full p-1 text-(--sub-ink-primary) transition-colors">
+							<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-ink-primary transition-colors">
 								<Icon name="x" height={24} width={24} />
 							</Ariakit.DialogDismiss>
 						</div>
 
 						{errorMessage ? (
-							<div className="border-b border-(--sub-border-slate-100) bg-(--sub-orange-400)/10 p-4">
-								<div className="flex items-center gap-2 text-(--error)">
+							<div className="border-b border-sub-border-slate-100 bg-sub-orange-400/10 p-4">
+								<div className="flex items-center gap-2 text-error">
 									<Icon name="alert-warning" height={18} width={18} className="shrink-0" />
 									<p className="text-sm">{errorMessage}</p>
 								</div>
@@ -126,7 +126,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 								</EmbeddedCheckoutProvider>
 							</div>
 						) : (
-							<div className="py-12 text-center text-(--sub-text-muted)">
+							<div className="py-12 text-center text-sub-text-muted">
 								<p>Stripe is not configured.</p>
 								<p className="mt-1 text-sm">Please set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in your environment.</p>
 							</div>
@@ -136,21 +136,21 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 					<div className="flex flex-col gap-5 px-5 py-6">
 						{/* Header */}
 						<div className="flex items-center justify-between">
-							<h3 className="text-xl leading-7 font-semibold text-(--sub-ink-primary) dark:text-white">
+							<h3 className="text-xl leading-7 font-semibold text-sub-ink-primary dark:text-ai-primary">
 								Top Up Balance
 							</h3>
-							<Ariakit.DialogDismiss className="rounded-full p-1 text-(--sub-ink-primary) transition-colors dark:text-white">
+							<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-ink-primary transition-colors dark:text-ai-primary">
 								<Icon name="x" height={24} width={24} />
 							</Ariakit.DialogDismiss>
 						</div>
 
-						<p className="text-xs leading-4 text-(--sub-text-muted)">Add credits for LlamaAI to access premium data</p>
+						<p className="text-xs leading-4 text-sub-text-muted">Add credits for LlamaAI to access premium data</p>
 
 						{/* Amount input */}
 						<div className="flex flex-col gap-2">
-							<label className="text-sm text-(--sub-ink-primary) dark:text-white">Amount (USD)</label>
+							<label className="text-sm text-sub-ink-primary dark:text-ai-primary">Amount (USD)</label>
 							<div className="relative">
-								<span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-(--sub-text-muted)">
+								<span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-sub-text-muted">
 									$
 								</span>
 								<input
@@ -160,11 +160,11 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 									onChange={(e) => handleAmountInput(e.target.value)}
 									placeholder="0.00"
 									autoFocus
-									className="h-10 w-full rounded-lg border border-(--sub-border-muted) bg-(--sub-surface-panel) pr-3 pl-7 text-sm text-(--sub-ink-primary) outline-hidden focus:border-(--sub-brand-primary) dark:border-(--sub-border-strong) dark:bg-(--sub-ink-primary) dark:text-white dark:focus:border-(--sub-brand-primary)"
+									className="h-10 w-full rounded-lg border border-sub-border-muted bg-sub-surface-panel pr-3 pl-7 text-sm text-sub-ink-primary outline-hidden focus:border-sub-brand-primary dark:border-sub-border-strong dark:bg-sub-ink-primary dark:text-ai-primary dark:focus:border-sub-brand-primary"
 								/>
 							</div>
 							{amount && !isValidAmount && (
-								<p className="text-xs text-(--error)">
+								<p className="text-xs text-error">
 									Enter an amount between ${TOPUP_CONFIG.minAmount} and ${TOPUP_CONFIG.maxAmount}
 								</p>
 							)}
@@ -178,8 +178,8 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 									onClick={() => setAmount(String(qa))}
 									className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
 										amount === String(qa)
-											? 'border-(--sub-brand-primary) bg-(--sub-brand-primary) text-white'
-											: 'border-(--sub-border-muted) text-(--sub-ink-primary) hover:border-(--sub-brand-primary) dark:border-(--sub-border-strong) dark:text-white dark:hover:border-(--sub-brand-primary)'
+											? 'border-sub-brand-primary bg-sub-brand-primary text-on-brand'
+											: 'border-sub-border-muted text-sub-ink-primary hover:border-sub-brand-primary dark:border-sub-border-strong dark:text-ai-primary dark:hover:border-sub-brand-primary'
 									}`}
 								>
 									${qa}
@@ -189,27 +189,27 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 
 						{/* Payment methods */}
 						<div className="flex flex-col gap-3">
-							<label className="text-sm text-(--sub-ink-primary) dark:text-white">Payment Method</label>
+							<label className="text-sm text-sub-ink-primary dark:text-ai-primary">Payment Method</label>
 							<div className="grid grid-cols-2 gap-3">
 								<button
 									onClick={handleStripe}
 									disabled={!isValidAmount || topupMutation.isPending}
-									className="flex flex-col items-center gap-2 rounded-xl border border-(--sub-border-muted) p-4 transition-colors hover:border-(--sub-brand-primary) disabled:opacity-40 dark:border-(--sub-border-strong) dark:hover:border-(--sub-brand-primary)"
+									className="flex flex-col items-center gap-2 rounded-xl border border-sub-border-muted p-4 transition-colors hover:border-sub-brand-primary disabled:opacity-40 dark:border-sub-border-strong dark:hover:border-sub-brand-primary"
 								>
-									<Icon name="credit-card" height={22} width={22} className="text-(--sub-brand-primary)" />
-									<span className="text-sm font-medium text-(--sub-ink-primary) dark:text-white">Pay with Card</span>
+									<Icon name="credit-card" height={22} width={22} className="text-sub-brand-primary" />
+									<span className="text-sm font-medium text-sub-ink-primary dark:text-ai-primary">Pay with Card</span>
 								</button>
 								<button
 									onClick={() => void handleLlamaPay()}
 									disabled={!isValidAmount || topupMutation.isPending || isRedirecting}
-									className="flex flex-col items-center gap-2 rounded-xl border border-(--sub-border-muted) p-4 transition-colors hover:border-(--sub-brand-primary) disabled:opacity-40 dark:border-(--sub-border-strong) dark:hover:border-(--sub-brand-primary)"
+									className="flex flex-col items-center gap-2 rounded-xl border border-sub-border-muted p-4 transition-colors hover:border-sub-brand-primary disabled:opacity-40 dark:border-sub-border-strong dark:hover:border-sub-brand-primary"
 								>
 									{isRedirecting ? (
-										<span className="block size-[22px] animate-spin rounded-full border-2 border-(--sub-brand-primary)/30 border-t-(--sub-brand-primary)" />
+										<span className="block size-[22px] animate-spin rounded-full border-2 border-sub-brand-primary/30 border-t-sub-brand-primary" />
 									) : (
-										<Icon name="wallet" height={22} width={22} className="text-(--sub-brand-primary)" />
+										<Icon name="wallet" height={22} width={22} className="text-sub-brand-primary" />
 									)}
-									<span className="text-sm font-medium text-(--sub-ink-primary) dark:text-white">
+									<span className="text-sm font-medium text-sub-ink-primary dark:text-ai-primary">
 										{isRedirecting ? 'Redirecting...' : 'Pay with Crypto'}
 									</span>
 								</button>
@@ -217,7 +217,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 						</div>
 
 						{errorMessage && (
-							<div className="flex items-center gap-2 rounded-lg bg-(--sub-orange-400)/10 p-3 text-(--error)">
+							<div className="flex items-center gap-2 rounded-lg bg-sub-orange-400/10 p-3 text-error">
 								<Icon name="alert-warning" height={16} width={16} className="shrink-0" />
 								<p className="text-sm">{errorMessage}</p>
 							</div>

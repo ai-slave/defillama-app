@@ -85,7 +85,7 @@ function RateComparisonTable({ data }: { data: RateComparisonRow[] }) {
 	if (data.length === 0) return null
 
 	return (
-		<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
+		<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-5">
 			<SectionHeader title="Rate Comparison Across Chains" />
 			<div className="mt-4">
 				<InvestorsTable instance={instance} />
@@ -218,7 +218,7 @@ export default function Rates() {
 				<select
 					value={activeAsset}
 					onChange={(e) => setSelectedAsset(e.target.value)}
-					className="rounded-md border border-(--legacy-cards-border) bg-(--legacy-cards-bg) px-3 py-1.5 text-sm font-medium text-(--legacy-text-primary) outline-hidden transition-colors focus:border-(--sl-accent)"
+					className="rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) px-3 py-1.5 text-sm font-medium text-(--pro-text-primary) outline-hidden transition-colors focus:border-sl-accent"
 				>
 					{assetOptions.map((a) => (
 						<option key={a} value={a}>
@@ -277,28 +277,26 @@ export default function Rates() {
 			</div>
 
 			{rateCurveData ? (
-				<div className="rounded-lg border border-(--legacy-cards-border) bg-(--legacy-cards-bg) p-5">
+				<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-5">
 					<div className="mb-4 flex flex-wrap items-baseline gap-x-6 gap-y-1">
-						<h3 className="text-[11px] font-semibold tracking-wider text-(--legacy-text-tertiary) uppercase">
+						<h3 className="text-[11px] font-semibold tracking-wider text-(--pro-text-tertiary) uppercase">
 							{activeAsset} Interest Rate Model{' '}
 							<span className="font-normal normal-case">\u00b7 {primaryReserve?.chain}</span>
 						</h3>
 						{kpis?.optimalUtil && (
-							<span className="text-[11px] text-(--legacy-text-tertiary)">
+							<span className="text-[11px] text-(--pro-text-tertiary)">
 								Optimal{' '}
-								<span className="font-jetbrains font-semibold text-(--legacy-text-secondary)">{kpis.optimalUtil}</span>
+								<span className="font-jetbrains font-semibold text-(--pro-text-secondary)">{kpis.optimalUtil}</span>
 							</span>
 						)}
 						{kpis?.slope1 && (
-							<span className="text-[11px] text-(--legacy-text-tertiary)">
-								Slope 1{' '}
-								<span className="font-jetbrains font-semibold text-(--legacy-text-secondary)">{kpis.slope1}</span>
+							<span className="text-[11px] text-(--pro-text-tertiary)">
+								Slope 1 <span className="font-jetbrains font-semibold text-(--pro-text-secondary)">{kpis.slope1}</span>
 							</span>
 						)}
 						{kpis?.slope2 && (
-							<span className="text-[11px] text-(--legacy-text-tertiary)">
-								Slope 2{' '}
-								<span className="font-jetbrains font-semibold text-(--legacy-text-secondary)">{kpis.slope2}</span>
+							<span className="text-[11px] text-(--pro-text-tertiary)">
+								Slope 2 <span className="font-jetbrains font-semibold text-(--pro-text-secondary)">{kpis.slope2}</span>
 							</span>
 						)}
 					</div>

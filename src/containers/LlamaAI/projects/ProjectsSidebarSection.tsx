@@ -122,11 +122,11 @@ export function ProjectsSidebarSection({
 	return (
 		<div className="flex flex-col gap-1 px-4">
 			<div className="flex items-center justify-between pt-1 pb-0.5">
-				<h2 className="text-xs font-normal tracking-normal text-[#666] normal-case dark:text-[#919296]">Projects</h2>
+				<h2 className="text-xs font-normal tracking-normal text-ai-tertiary normal-case">Projects</h2>
 				<button
 					type="button"
 					onClick={() => goTo('/ai/projects')}
-					className="text-[11px] text-[#999] hover:text-(--legacy-old-blue) dark:text-[#555]"
+					className="text-[11px] text-ai-muted hover:text-brand"
 				>
 					View all
 				</button>
@@ -136,7 +136,7 @@ export function ProjectsSidebarSection({
 				<button
 					type="button"
 					onClick={() => goTo('/subscription')}
-					className="flex items-center justify-between gap-2 rounded-md border border-dashed border-[#e6e6e6] px-2 py-1.5 text-left text-[11px] text-[#666] transition-colors hover:border-(--legacy-old-blue) hover:text-(--legacy-old-blue) dark:border-[#2a2b2c] dark:text-[#919296]"
+					className="flex items-center justify-between gap-2 rounded-md border border-dashed border-ai-line px-2 py-1.5 text-left text-[11px] text-ai-tertiary transition-colors hover:border-brand hover:text-brand"
 				>
 					<span className="flex items-center gap-1.5">
 						<Icon name="folder-plus" height={12} width={12} />
@@ -149,9 +149,9 @@ export function ProjectsSidebarSection({
 					<button
 						type="button"
 						onClick={createStore.show}
-						className="-mx-1.5 grid grid-cols-[1rem_minmax(0,1fr)] items-center gap-1 rounded-md px-1.5 py-1 text-left text-xs text-[#666] transition-colors hover:bg-[#f0f0f0] hover:text-[#1a1a1a] dark:text-[#919296] dark:hover:bg-[#222324] dark:hover:text-white"
+						className="-mx-1.5 grid grid-cols-[1rem_minmax(0,1fr)] items-center gap-1 rounded-md px-1.5 py-1 text-left text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
 					>
-						<span className="inline-flex justify-center font-medium text-(--legacy-old-blue)" aria-hidden>
+						<span className="inline-flex justify-center font-medium text-brand" aria-hidden>
 							+
 						</span>
 						<span className="min-w-0 truncate">New project</span>
@@ -165,13 +165,13 @@ export function ProjectsSidebarSection({
 									className="-mx-1.5 flex h-[26px] items-center gap-1.5 px-1.5 py-1"
 									style={{ opacity: 1 - i * 0.25 }}
 								>
-									<span className="size-3 shrink-0 rounded-sm bg-[#e6e6e6] dark:bg-[#222324]" />
-									<span className="h-3 flex-1 rounded-sm bg-[#e6e6e6] dark:bg-[#222324]" />
+									<span className="size-3 shrink-0 rounded-sm bg-ai-surface-muted" />
+									<span className="h-3 flex-1 rounded-sm bg-ai-surface-muted" />
 								</li>
 							))}
 						</ul>
 					) : visible.length === 0 ? (
-						<p className="-mx-1.5 px-1.5 py-1 text-[10px] text-[#999] dark:text-[#555]">No projects yet</p>
+						<p className="-mx-1.5 px-1.5 py-1 text-[10px] text-ai-muted">No projects yet</p>
 					) : (
 						<ul className="flex flex-col">
 							{visible.map((p) => {
@@ -184,18 +184,18 @@ export function ProjectsSidebarSection({
 										<button
 											type="button"
 											onClick={() => goToProject(p.id)}
-											className={`-mx-1.5 flex items-center gap-1.5 rounded-md px-1.5 py-[5px] text-left text-xs transition-colors ${
+											className={`-mx-1.5 flex items-center gap-1.5 rounded-md px-1.5 py-1.25 text-left text-xs transition-colors ${
 												isActive
-													? 'bg-(--legacy-old-blue)/12 text-(--legacy-old-blue)'
+													? 'bg-brand/12 text-brand'
 													: isSessionContext
-														? 'font-medium text-(--legacy-old-blue) hover:bg-[#f0f0f0] dark:hover:bg-[#222324]'
-														: 'text-[#666] hover:bg-[#f0f0f0] hover:text-[#1a1a1a] dark:text-[#919296] dark:hover:bg-[#222324] dark:hover:text-white'
+														? 'font-medium text-brand hover:bg-ai-surface-muted'
+														: 'text-ai-tertiary hover:bg-ai-surface-muted hover:text-ai-primary'
 											}`}
 										>
 											<span className="min-w-0 flex-1 truncate">{p.name}</span>
 										</button>
 										{isExpanded && nestedSessions.length > 0 ? (
-											<ul className="mt-0.5 mb-1 ml-0.5 flex flex-col border-l border-[#e6e6e6] pl-1.5 dark:border-[#222324]">
+											<ul className="mt-0.5 mb-1 ml-0.5 flex flex-col border-l border-ai-line pl-1.5">
 												{nestedSessions.map((s) => {
 													const sidebarSession = toSidebarSession(s, p.id)
 													return (
@@ -222,7 +222,7 @@ export function ProjectsSidebarSection({
 																goToProject(p.id)
 																if (isDrawer) hideSidebar()
 															}}
-															className="rounded-md px-2 py-1 text-left text-[10px] text-[#999] hover:underline dark:text-[#555]"
+															className="rounded-md px-2 py-1 text-left text-[10px] text-ai-muted hover:underline"
 														>
 															Show more
 														</button>
@@ -240,7 +240,7 @@ export function ProjectsSidebarSection({
 						<button
 							type="button"
 							onClick={() => goTo('/ai/projects')}
-							className="rounded-md px-2 py-1 text-left text-xs text-(--legacy-old-blue) hover:underline"
+							className="rounded-md px-2 py-1 text-left text-xs text-brand hover:underline"
 						>
 							All projects ({projects.length}) →
 						</button>

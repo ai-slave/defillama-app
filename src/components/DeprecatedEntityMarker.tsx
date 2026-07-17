@@ -13,7 +13,7 @@ export function DeprecatedEntityMarker({
 	content = 'Deprecated'
 }: DeprecatedEntityMarkerProps) {
 	return (
-		<Tooltip content={content} className={`text-(--error) ${className}`}>
+		<Tooltip content={content} className={`text-error ${className}`}>
 			<Icon name="alert-triangle" height={size} width={size} aria-hidden="true" />
 			<span className="sr-only">{content}</span>
 		</Tooltip>
@@ -21,5 +21,5 @@ export function DeprecatedEntityMarker({
 }
 
 export function DeprecatedEntityText({ label = 'Deprecated', className = '' }: { label?: string; className?: string }) {
-	return <span className={`shrink-0 label-md text-(--error) ${className}`.trim()}>{label}</span>
+	return <span className={`shrink-0 label-md text-error ${className}`.trim()}>{label}</span>
 }

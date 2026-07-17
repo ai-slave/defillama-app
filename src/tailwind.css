@@ -2,8 +2,11 @@
 @import './styles/primitives.css';
 @import './styles/semantics.css';
 @import './styles/typography.css';
-@import './styles/legacy-subscription.css';
-@import './styles/legacy-pro.css';
+@import './styles/themes/subscription.css';
+@import './styles/themes/pro.css';
+@import './styles/themes/llamaai.css';
+@import './styles/llamaai.css';
+@import './styles/articles.css';
 @plugin '@tailwindcss/typography';
 
 /* Documentation mentions utility names; it must not drive codegen. */
@@ -27,6 +30,26 @@
 	--animate-fadein: fadein 180ms ease-out;
 	--animate-ai-glow: ai-glow 3s ease-in-out infinite;
 	--animate-shimmer: shimmer 2s ease-in-out infinite;
+
+	/* Elevation/effect shadows frozen from the audited arbitrary values */
+	--shadow-overlay-sm: 0 12px 32px -12px rgb(0 0 0 / 0.25);
+	--shadow-dialog: 0 24px 64px -16px rgb(0 0 0 / 0.45);
+	--shadow-dialog-deep: 0 24px 64px -16px rgb(0 0 0 / 0.6);
+	--shadow-raised: 0 18px 36px -18px rgb(0 0 0 / 0.45);
+	--shadow-modal-soft: 0 20px 60px rgb(0 0 0 / 0.4);
+	--shadow-modal: 0 24px 60px -24px rgb(0 0 0 / 0.55);
+	--shadow-pop: 0 4px 24px rgb(0 0 0 / 0.2);
+	--shadow-card-lg: 0 20px 60px rgb(0 0 0 / 0.15);
+	--shadow-card-soft: 0 20px 60px rgb(0 0 0 / 0.08);
+	--shadow-top-edge: 0 -4px 12px -6px rgb(0 0 0 / 0.25);
+	--shadow-brand-glow: 0 4px 20px rgb(33 114 229 / 0.15);
+	--shadow-brand-glow-combo: 0 4px 20px rgb(33 114 229 / 0.15), 0 8px 32px rgb(0 0 0 / 0.3);
+	--shadow-brand-glow-strong: 0 4px 24px -8px rgb(31 103 210 / 0.5);
+	--shadow-brand-soft: 0 2px 6px rgb(91 133 255 / 0.1);
+	--shadow-brand-ring: 0 0 10px var(--bg-brand), 0 0 5px var(--bg-brand);
+	--shadow-brand-outline: 0 0 0 1px var(--bg-brand);
+	--shadow-page-ring: 0 0 0 2px var(--bg-page);
+	--shadow-inset-divider: inset 0 -1px 0 var(--border-subtle);
 
 	@keyframes loader {
 		0% {
@@ -283,25 +306,6 @@
 	}
 }
 
-@utility capability-panel {
-	opacity: 0;
-	transform: scale(0.96);
-	transition:
-		opacity 180ms cubic-bezier(0.16, 1, 0.3, 1),
-		transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
-
-	&[data-enter] {
-		opacity: 1;
-		transform: scale(1);
-	}
-
-	&[data-leave] {
-		transition:
-			opacity 120ms ease-out,
-			transform 120ms ease-out;
-	}
-}
-
 @utility cv-auto-40 {
 	content-visibility: auto;
 	contain-intrinsic-size: auto 40px;
@@ -380,78 +384,20 @@
 	}
 
 	/*
-	  Legacy variables, re-pointed at the Llama Design System semantics
-	  (src/styles/semantics.css). Semantic tokens flip under html.dark, so
-	  aliased variables need no dark override — only the remaining literals
-	  are re-declared in html.dark below. Do not add new consumers of these
-	  names: new code uses the registered utilities (bg-surface, text-primary,
-	  border-medium, …) directly. See design.md.
+	  App tokens OUTSIDE the design system. The design system is
+	  src/styles/semantics.css; product palettes live in src/styles/themes/.
+	  --interim-* marks a value awaiting a library token (ratcheted by
+	  lint:tokens — don't add more); the rest are domain tokens documented
+	  in design.md. --announcement-bg has no global default: the Announcement
+	  component sets it inline per variant.
 	*/
 	:root {
-		/* Text Colors */
-		--legacy-text-primary: var(--text-primary); /* Main text */
-		--legacy-text-secondary: var(--text-secondary); /* Secondary text */
-		--legacy-text-tertiary: var(--text-tertiary); /* Tertiary text */
-		--legacy-text-form: var(--text-secondary); /* Form controls & buttons */
-		--legacy-text-label: var(--text-secondary); /* Labels & descriptions */
-		--legacy-text-meta: var(--text-tertiary); /* Metadata & governance */
-		/*
-		  Deliberately NOT --text-disabled: Figma's Text/disabled is for
-		  disabled controls. This legacy variable means "dimmed but readable"
-		  while old callsites migrate to text-secondary/text-tertiary.
-		*/
-		--legacy-text-disabled: var(--text-tertiary); /* Legacy dimmed-readable alias */
+		/* dlnews partner logo mark (consumed inside public/assets/dlnews*.svg) */
+		--dlnews-logo: oklch(0.241 0.056 240.6);
 
-		/* Background Colors */
-		/*
-		  Surface, not elevated-1: consumers are floating surfaces (tooltips,
-		  menus, dropdowns) that were near-white in light mode; elevated-1
-		  made them visibly gray. In dark they now match card color and rely
-		  on the border for separation — the Figma overlay pattern.
-		*/
-		--legacy-bg-main: var(--bg-surface); /* Main background */
-		--legacy-bg-secondary: var(--bg-surface-elevated-1); /* Secondary background */
-		--legacy-bg-tertiary: var(--bg-surface-elevated-2); /* Tertiary background */
-		--legacy-bg-border: var(--border-medium); /* Border background */
-		--legacy-bg-muted: var(--text-tertiary); /* Muted background */
-		--legacy-bg-card: var(--bg-surface); /* Card background */
-		--legacy-bg-glass: oklch(0.991 0.001 106.4); /* Glass background */
-		--legacy-bg-surface: var(--bg-surface-elevated-1); /* Surface highlight (was dark-only) */
-		--legacy-bg-input: var(--bg-surface-elevated-1); /* Input/form background */
-
-		/* Brand Colors */
-		--legacy-primary: var(--bg-brand);
-		--legacy-primary-hover: var(--bg-brand-muted);
-
-		/* Utility Colors */
-		--legacy-divider: var(--border-subtle);
-		--legacy-link: var(--text-link);
-		--legacy-blue: var(--bg-brand);
-		--legacy-dlnews: oklch(0.241 0.056 240.6);
-		--legacy-apy-pink: oklch(0.673 0.237 356.7);
-		--legacy-apy-blue: oklch(0.65 0.152 257.5);
-
-		/* Link Colors */
-		--legacy-link-bg: var(--bg-brand-muted); /* Figma bg-brand-transparent: 12% light / 20% dark */
-		/*
-		  Interim literals: hover needs one alpha step above --legacy-link-bg and the
-		  library has no token for it yet (flagged to design). Dark override
-		  below.
-		*/
-		--legacy-link-hover-bg: #1f67d233;
-		--legacy-link-text: var(--text-link);
-		--legacy-link-active-bg: var(--bg-brand);
-
-		/* Button Colors */
-		--legacy-btn-bg: var(--bg-surface-elevated-1);
-		--legacy-btn-hover-bg: var(--bg-surface-elevated-2);
-		--legacy-btn2-bg: var(--bg-brand-muted);
-		--legacy-btn2-hover-bg: oklch(0.571 0.191 258.5 / 0.2);
-		--legacy-btn2-text: var(--bg-brand);
-		--legacy-switch-bg: oklch(0.533 0.18 259 / 0.25);
-		--legacy-switch-border: oklch(0.533 0.18 259 / 0.5);
-		--legacy-link-button: oklch(0.533 0.18 259 / 0.12);
-		--legacy-link-button-hover: oklch(0.533 0.18 259 / 0.24);
+		/* One alpha step above bg-brand-muted for hover states — the library
+		   has no brand-tint-hover token yet (flagged to design) */
+		--interim-brand-tint-hover: #1f67d233;
 
 		/* Yields v2 APY tiers (light). The top tier is intentionally red: a very-high APY reads as a risk signal. */
 		--apy-zero: #9c9c9c;
@@ -466,13 +412,6 @@
 		--yield-negative-text: #b53b35;
 		--yield-warning-text: #9b5000;
 		--yield-reward-text: #9b5000;
-
-		/* Layout Colors */
-		--legacy-app-bg: var(--bg-page);
-		--legacy-cards-bg: var(--bg-surface);
-		--legacy-cards-border: var(--border-medium);
-		--legacy-form-control-border: var(--border-medium);
-		--legacy-old-blue: var(--bg-brand);
 	}
 
 	* {
@@ -499,27 +438,17 @@
 		--yield-warning-text: #ffa455;
 		--yield-reward-text: #ffa726;
 
-		/*
-		  Everything aliased to semantic tokens in :root flips automatically;
-		  only variables that still carry a literal dark value live here.
-		*/
-		--legacy-bg-glass: oklch(0.157 0.012 206.6 / 0.7); /* Glass background */
-		--legacy-dlnews: oklch(1 0 0);
-		--legacy-link-hover-bg: #1f67d24d; /* one alpha step above dark --legacy-link-bg (20%) */
+		--dlnews-logo: oklch(1 0 0);
+		--interim-brand-tint-hover: #1f67d24d;
 	}
 
 	body {
-		@apply bg-(--legacy-app-bg) font-inter text-sm text-primary;
+		@apply bg-page font-inter text-sm text-primary;
 	}
 
 	#__next,
 	#__next > [data-rk] {
 		@apply relative isolate col-span-full grid min-h-full grid-cols-[228px_1fr] lg:gap-4;
-	}
-
-	html[data-llamaai-fullscreen='true'] #__next,
-	html[data-llamaai-fullscreen='true'] #__next > [data-rk] {
-		@apply grid-cols-1;
 	}
 
 	#__next > *:only-child,
@@ -584,36 +513,6 @@
 	hr {
 		@apply border-medium;
 	}
-
-	@media (min-width: 1024px) {
-		html[data-llamaai-fullscreen='true'] .desktop-nav-shell {
-			display: none;
-		}
-
-		html[data-llamaai-fullscreen='true'] .app-main-shell {
-			padding-left: 1rem !important;
-		}
-	}
-
-	.llamaai-chat-panel {
-		container-type: inline-size;
-	}
-
-	.llamaai-chat-width {
-		max-width: 45rem;
-	}
-
-	@container (min-width: 1024px) {
-		.llamaai-chat-width {
-			max-width: 53rem;
-		}
-	}
-
-	@container (min-width: 1440px) {
-		.llamaai-chat-width {
-			max-width: 56rem;
-		}
-	}
 }
 
 /* ------------------------------- Components ------------------------------- */
@@ -647,134 +546,15 @@
 	}
 
 	.highlighted-text .highlight {
-		@apply bg-(--legacy-link-bg);
+		@apply bg-brand-muted;
 		color: transparent;
 		-webkit-text-fill-color: transparent;
 		box-decoration-break: clone;
 		-webkit-box-decoration-break: clone;
 	}
-
-	.message-sent::before {
-		content: '';
-		width: 0px;
-		height: 0px;
-		position: absolute;
-		border-left: 6px solid #ececec;
-		border-right: 6px solid transparent;
-		border-top: 6px solid #ececec;
-		border-bottom: 6px solid transparent;
-		right: -6px;
-		top: 0;
-	}
-
-	.dark .message-sent::before {
-		border-left: 6px solid #222425;
-		border-top: 6px solid #222425;
-	}
 }
 
 /* ------------------------------- Animations ------------------------------- */
-@keyframes slideInRight {
-	from {
-		transform: translateX(-100%);
-		opacity: 0;
-	}
-	to {
-		transform: translateX(0);
-		opacity: 1;
-	}
-}
-
-@keyframes shrinkToRight {
-	from {
-		transform: scaleX(1.1);
-		transform-origin: right;
-	}
-	to {
-		transform: scaleX(1);
-		transform-origin: right;
-	}
-}
-
-@keyframes fadeIn {
-	from {
-		opacity: 0;
-	}
-	to {
-		opacity: 1;
-	}
-}
-
-@keyframes llamaLandingExit {
-	from {
-		opacity: 1;
-		transform: translateY(0) scale(1);
-	}
-	to {
-		opacity: 0;
-		transform: translateY(-72px) scale(0.985);
-	}
-}
-
-@keyframes llamaConversationEnter {
-	from {
-		opacity: 0;
-		transform: translateY(72px) scale(0.985);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0) scale(1);
-	}
-}
-
-@keyframes anchorHighlight {
-	0% {
-		background-color: rgba(59, 130, 246, 0.15);
-	}
-	100% {
-		background-color: transparent;
-	}
-}
-
-.message-anchor {
-	scroll-margin-top: 5rem;
-}
-
-.anchor-highlight {
-	position: relative;
-	isolation: isolate;
-}
-
-.anchor-highlight::before {
-	content: '';
-	position: absolute;
-	inset: -4px -6px;
-	border-radius: 10px;
-	pointer-events: none;
-	z-index: -1;
-	animation: anchorHighlight 2s ease-out forwards;
-}
-
-@keyframes llamaActiveExchangeEnter {
-	from {
-		opacity: 0;
-	}
-	to {
-		opacity: 1;
-	}
-}
-
-@keyframes llama-popup-in {
-	from {
-		opacity: 0;
-		transform: translateX(-50%) translateY(4px) scale(0.95);
-	}
-	to {
-		opacity: 1;
-		transform: translateX(-50%) translateY(0) scale(1);
-	}
-}
-
 @keyframes shimmer {
 	0% {
 		transform: translateX(-100%) translateY(-100%) rotate(45deg);
@@ -782,521 +562,4 @@
 	100% {
 		transform: translateX(100%) translateY(100%) rotate(45deg);
 	}
-}
-
-/* -------------------------- Llama AI UI Classes -------------------------- */
-.llamaai-glow {
-	background: linear-gradient(93.94deg, #fde0a9 24.73%, #fbedcb 57.42%, #fde0a9 99.73%);
-	box-shadow:
-		0px 0px 60px rgba(253, 224, 169, 0.5),
-		0px 0px 2px 4px rgba(255, 255, 255, 0.1);
-	transition:
-		transform 0.2s ease,
-		box-shadow 0.2s ease;
-}
-
-.llamaai-glow svg {
-	--animate-enabled: running;
-}
-
-.llamaai-glow::before {
-	content: '';
-	position: absolute;
-	top: -50%;
-	left: -50%;
-	width: 200%;
-	height: 200%;
-	background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-	transform: rotate(45deg);
-	opacity: 0;
-	pointer-events: none;
-}
-
-.llamaai-glow:hover::before {
-	opacity: 1;
-	animation: shimmer 3s;
-}
-
-.llamaai-glow:hover {
-	transform: translateY(-2px);
-	box-shadow:
-		0px 0px 80px rgba(253, 224, 169, 0.7),
-		0px 0px 2px 4px rgba(255, 255, 255, 0.2);
-}
-
-.llamaai-glow:hover svg {
-	--star-1-animation: star-spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-	--star-2-animation: star-spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-.llamaai-glow:active {
-	transform: translateY(0px);
-}
-
-.llamaai-glow .ai-icon {
-	width: 32px;
-	height: 32px;
-	position: relative;
-	z-index: 1;
-}
-
-.llamaai-glow-text {
-	background: linear-gradient(93.94deg, #d97706 24.73%, #f59e0b 57.42%, #d97706 99.73%);
-	background-clip: text;
-	-webkit-background-clip: text;
-	-webkit-text-fill-color: transparent;
-	text-shadow: 0px 0px 20px rgba(217, 119, 6, 0.4);
-	text-decoration: underline;
-	text-decoration-color: #d97706;
-	transition: text-shadow 0.2s ease;
-}
-
-.llamaai-glow-text:hover {
-	text-shadow: 0px 0px 30px rgba(217, 119, 6, 0.6);
-}
-
-.dark .llamaai-glow-text {
-	background: linear-gradient(93.94deg, #fde0a9 24.73%, #fbedcb 57.42%, #fde0a9 99.73%);
-	background-clip: text;
-	-webkit-background-clip: text;
-	-webkit-text-fill-color: transparent;
-	text-shadow: 0px 0px 20px rgba(253, 224, 169, 0.5);
-	text-decoration: underline;
-	text-decoration-color: #fde0a9;
-	transition: text-shadow 0.2s ease;
-}
-
-.dark .llamaai-glow-text:hover {
-	text-shadow: 0px 0px 30px rgba(253, 224, 169, 0.8);
-}
-
-/* ----------------------------- Typography Tweaks ----------------------------- */
-.prose.llamaai-prose p,
-.prose.llamaai-prose blockquote,
-.prose.llamaai-prose h1,
-.prose.llamaai-prose h2,
-.prose.llamaai-prose h3,
-.prose.llamaai-prose h4,
-.prose.llamaai-prose h5,
-.prose.llamaai-prose h6,
-.prose.llamaai-prose img,
-.prose.llamaai-prose picture,
-.prose.llamaai-prose video,
-.prose.llamaai-prose pre,
-.prose.llamaai-prose ol,
-.prose.llamaai-prose ul,
-.prose.llamaai-prose li,
-.prose.llamaai-prose dl,
-.prose.llamaai-prose dt,
-.prose.llamaai-prose dd,
-.prose.llamaai-prose hr,
-.prose.llamaai-prose figure,
-.prose.llamaai-prose figcaption,
-.prose.llamaai-prose table,
-.prose.llamaai-prose [class~='lead'] {
-	margin-top: 0;
-	margin-bottom: 0;
-}
-
-/* ----------------------------- Hacker Mode: Code Blocks ----------------------------- */
-.prose.llamaai-prose.hacker-mode pre {
-	background: #0d0d0d;
-	border: 1px solid rgba(0, 255, 65, 0.2);
-	box-shadow: inset 0 0 30px rgba(0, 255, 65, 0.03);
-	border-radius: 0.5rem;
-}
-.prose.llamaai-prose.hacker-mode pre code {
-	color: #00ff41;
-	text-shadow: 0 0 8px rgba(0, 255, 65, 0.4);
-	font-family: monospace;
-}
-.prose.llamaai-prose.hacker-mode :not(pre) > code {
-	color: #00ff41;
-	background: rgba(0, 255, 65, 0.08);
-	text-shadow: 0 0 6px rgba(0, 255, 65, 0.3);
-}
-
-/* Entity logos: wrapper uses leading-0; keep img optically centered with link text */
-.prose.llamaai-prose a img.inline-block {
-	vertical-align: middle;
-}
-
-/* Scale entity logos to match heading font size */
-.prose.llamaai-prose :is(h1, h2, h3, h4, h5, h6) a img {
-	height: 1em;
-	width: 1em;
-}
-
-/* Articles surface */
-
-.research-loader {
-	display: grid;
-	place-items: center;
-	min-height: clamp(480px, 72vh, 800px);
-	padding: 4rem 1.5rem;
-}
-
-.rl {
-	--rl-size: clamp(200px, 22vw, 280px);
-	position: relative;
-	width: var(--rl-size);
-	aspect-ratio: 620 / 196;
-	isolation: isolate;
-	display: block;
-}
-
-.rl__layer {
-	position: absolute;
-	inset: 0;
-	background-size: contain;
-	background-repeat: no-repeat;
-	background-position: center;
-	will-change: transform, filter;
-	animation: rl-soft 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
-}
-.rl__layer--light {
-	background-image: url('/assets/research_logo.webp');
-}
-.rl__layer--dark {
-	background-image: url('/assets/research_logo_dark.webp');
-	display: none;
-}
-html.dark .rl__layer--light {
-	display: none;
-}
-html.dark .rl__layer--dark {
-	display: block;
-}
-
-@keyframes rl-soft {
-	0% {
-		filter: drop-shadow(0 0 5px color-mix(in oklch, var(--legacy-link-text) 40%, transparent))
-			drop-shadow(0 0 17px color-mix(in oklch, var(--legacy-link-text) 18%, transparent));
-		transform: scale(1);
-	}
-	100% {
-		filter: drop-shadow(0 0 17px color-mix(in oklch, var(--legacy-link-text) 85%, transparent))
-			drop-shadow(0 0 41px color-mix(in oklch, var(--legacy-link-text) 55%, transparent));
-		transform: scale(1.018);
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.rl__layer {
-		animation: none;
-	}
-}
-
-.article-editor-prose {
-	max-width: 68ch;
-	margin-inline: auto;
-}
-
-/* Tiptap empty-doc placeholder */
-.article-editor-prose p.is-editor-empty:first-child::before,
-.article-editor-prose .is-empty::before {
-	content: attr(data-placeholder);
-	color: var(--legacy-text-tertiary);
-	float: left;
-	height: 0;
-	pointer-events: none;
-}
-
-/* Entity link inserted by mention command */
-.article-editor-prose a[data-article-entity-link] {
-	color: var(--legacy-link-text);
-	font-weight: 500;
-}
-
-/* Active mention query decoration in editor */
-.ProseMirror .article-entity-suggestion-query {
-	background: color-mix(in oklch, var(--legacy-link-text) 12%, transparent);
-	border-radius: 3px;
-	padding: 0 2px;
-}
-
-/* Entity hover popover */
-.article-entity-popover {
-	white-space: normal;
-}
-
-.article-title-input {
-	min-height: 1.2em;
-}
-
-.article-editor-preview {
-	width: 100vw;
-	max-width: 100vw;
-}
-
-.article-editor-preview-stage {
-	padding-block: clamp(1.5rem, 3vw, 2.75rem);
-	background: var(--legacy-app-bg);
-}
-
-.article-editor-preview-proof {
-	background: var(--legacy-app-bg);
-}
-
-@media (min-width: 1024px) {
-	.article-editor-preview {
-		width: calc(100vw - 260px);
-		max-width: calc(100vw - 260px);
-	}
-
-	html[data-llamaai-fullscreen='true'] .article-editor-preview {
-		width: calc(100vw - 32px);
-		max-width: calc(100vw - 32px);
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.article-entity-popover {
-		transition: none;
-	}
-}
-
-/* Article code-block syntax highlighting (lowlight + highlight.js classes) */
-.article-prose pre.hljs,
-.ProseMirror pre {
-	background: var(--legacy-cards-bg);
-	border: 1px solid var(--legacy-cards-border);
-	border-radius: 6px;
-	padding: 14px 16px;
-	overflow-x: auto;
-	font-size: 12.5px;
-	line-height: 1.55;
-}
-.article-prose pre code,
-.ProseMirror pre code {
-	background: transparent;
-	padding: 0;
-	color: var(--legacy-text-primary);
-	font-family: var(--font-jetbrains, ui-monospace, SFMono-Regular, Menlo, monospace);
-}
-.hljs-comment,
-.hljs-quote {
-	color: color-mix(in oklch, var(--legacy-text-tertiary) 90%, transparent);
-	font-style: italic;
-}
-.hljs-keyword,
-.hljs-selector-tag,
-.hljs-built_in,
-.hljs-name,
-.hljs-tag {
-	color: #c678dd;
-}
-.hljs-string,
-.hljs-title,
-.hljs-section,
-.hljs-attribute,
-.hljs-literal,
-.hljs-template-tag,
-.hljs-template-variable,
-.hljs-type,
-.hljs-addition {
-	color: #98c379;
-}
-.hljs-deletion,
-.hljs-selector-attr,
-.hljs-selector-pseudo,
-.hljs-meta {
-	color: #e06c75;
-}
-.hljs-doctag,
-.hljs-attr {
-	color: #d19a66;
-}
-.hljs-symbol,
-.hljs-bullet,
-.hljs-link {
-	color: #56b6c2;
-}
-.hljs-number {
-	color: #d19a66;
-}
-.hljs-emphasis {
-	font-style: italic;
-}
-.hljs-strong {
-	font-weight: 600;
-}
-
-/* Task list checkboxes inside ProseMirror */
-.ProseMirror ul[data-type='taskList'] {
-	list-style: none;
-	padding: 0;
-}
-.ProseMirror ul[data-type='taskList'] li {
-	display: flex;
-	gap: 0.5rem;
-	align-items: flex-start;
-}
-.ProseMirror ul[data-type='taskList'] li > label {
-	margin-top: 0.35rem;
-	flex-shrink: 0;
-}
-.ProseMirror ul[data-type='taskList'] li > div {
-	flex: 1 1 auto;
-	min-width: 0;
-}
-.ProseMirror ul[data-type='taskList'] li[data-checked='true'] > div {
-	color: var(--legacy-text-tertiary);
-	text-decoration: line-through;
-}
-
-/* Highlight mark in editor */
-.ProseMirror mark {
-	background: #fff3a3;
-	color: black;
-	padding: 0 2px;
-	border-radius: 2px;
-}
-.dark .ProseMirror mark {
-	background: #5a4a16;
-	color: #fde9a0;
-}
-
-/* Tables inside the article editor */
-.ProseMirror .tableWrapper {
-	overflow-x: auto;
-	margin: 1.5rem 0;
-	border: 1px solid var(--legacy-cards-border);
-	border-radius: 6px;
-}
-.ProseMirror table {
-	border-collapse: collapse;
-	margin: 0;
-	width: 100%;
-	table-layout: auto;
-	font-size: 13.5px;
-	line-height: 1.5;
-}
-.ProseMirror table td,
-.ProseMirror table th {
-	border-right: 1px solid var(--legacy-cards-border);
-	border-bottom: 1px solid var(--legacy-cards-border);
-	padding: 10px 14px;
-	vertical-align: top;
-	min-width: 9rem;
-	position: relative;
-	box-sizing: border-box;
-}
-.ProseMirror table tr:last-child td,
-.ProseMirror table tr:last-child th {
-	border-bottom: 0;
-}
-.ProseMirror table td:last-child,
-.ProseMirror table th:last-child {
-	border-right: 0;
-}
-.ProseMirror table th {
-	background: color-mix(in oklch, var(--legacy-app-bg) 80%, var(--legacy-text-primary) 4%);
-	font-weight: 600;
-	color: var(--legacy-text-primary);
-	text-align: left;
-	letter-spacing: 0.01em;
-}
-.ProseMirror table p {
-	margin: 0;
-}
-.ProseMirror table p.is-empty::before {
-	content: '';
-	display: inline-block;
-	width: 0;
-	height: 1.4em;
-}
-.ProseMirror table .selectedCell {
-	background: color-mix(in oklch, var(--legacy-link-text) 14%, transparent);
-}
-.ProseMirror table .selectedCell::after {
-	content: '';
-	pointer-events: none;
-	position: absolute;
-	inset: 0;
-	background: transparent;
-	box-shadow: inset 0 0 0 1px var(--legacy-link-text);
-}
-.ProseMirror table .column-resize-handle {
-	background: var(--legacy-link-text);
-	bottom: -2px;
-	pointer-events: none;
-	position: absolute;
-	right: -2px;
-	top: 0;
-	width: 3px;
-}
-.ProseMirror.resize-cursor {
-	cursor: ew-resize;
-	cursor: col-resize;
-}
-
-.article-prose,
-.ProseMirror {
-	counter-reset: qa-counter;
-}
-
-.article-qa,
-.ProseMirror dl[data-article-qa] {
-	counter-increment: qa-counter;
-	display: block;
-	margin: 3.25rem 0;
-	padding-top: 2rem;
-	border-top: 1px solid var(--legacy-cards-border);
-	break-inside: avoid;
-	position: relative;
-}
-
-.article-qa::before,
-.ProseMirror dl[data-article-qa]::before {
-	content: 'Q · ' counter(qa-counter, decimal-leading-zero);
-	display: block;
-	margin-bottom: 1.125rem;
-	font-family: var(--font-jetbrains, ui-monospace, monospace);
-	font-size: 0.6875rem;
-	font-weight: 600;
-	letter-spacing: 0.22em;
-	color: var(--legacy-link-text);
-	text-transform: uppercase;
-}
-
-.article-qa:first-child,
-.ProseMirror dl[data-article-qa]:first-child {
-	margin-top: 0.5rem;
-}
-
-.article-qa-question,
-.ProseMirror dt[data-article-qa-question] {
-	margin: 0 0 1rem 0;
-	font-size: clamp(1.1875rem, 0.4vw + 1.125rem, 1.3125rem);
-	line-height: 1.32;
-	font-weight: 600;
-	color: var(--legacy-text-primary);
-	letter-spacing: -0.014em;
-	text-wrap: balance;
-}
-
-.article-qa-answer,
-.ProseMirror dd[data-article-qa-answer] {
-	margin: 0;
-	color: var(--legacy-text-secondary);
-	font-size: 1rem;
-	line-height: 1.72;
-}
-
-.article-qa-answer > p,
-.ProseMirror dd[data-article-qa-answer] > p {
-	margin: 0 0 0.875rem 0;
-}
-.article-qa-answer > p:last-child,
-.ProseMirror dd[data-article-qa-answer] > p:last-child {
-	margin: 0;
-}
-
-.article-qa-answer > p:first-child:not(.is-empty)::before,
-.ProseMirror dd[data-article-qa-answer] > p:first-child:not(.is-empty)::before {
-	content: '— ';
-	color: color-mix(in oklch, var(--legacy-link-text) 70%, transparent);
-	font-weight: 500;
-	margin-right: 0.05em;
 }

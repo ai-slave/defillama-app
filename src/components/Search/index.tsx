@@ -60,7 +60,7 @@ export const MobileSearch = () => {
 		<>
 			<BasicLink
 				href={isClient && shouldSkipLanding ? '/ai/chat' : '/ai'}
-				className="llamaai-glow relative -my-0.5 overflow-hidden rounded-md bg-[linear-gradient(93.94deg,#FDE0A9_24.73%,#FBEDCB_57.42%,#FDE0A9_99.73%)] p-3 text-black shadow-[0px_0px_30px_0px_rgba(253,224,169,0.5),0px_0px_1px_2px_rgba(255,255,255,0.1)] lg:hidden"
+				className="llamaai-glow relative -my-0.5 overflow-hidden rounded-md bg-ai-gold-cta p-3 text-black shadow-ai-gold-cta lg:hidden"
 				data-umami-event="llamaai-mobile-nav-link"
 				data-umami-event-subscribed={isClient && hasActiveSubscription ? 'true' : 'false'}
 			>
@@ -125,9 +125,7 @@ function MobileSearchResults({ searchValue, onSelect }: { searchValue: string; o
 			)
 		}
 		if (error) {
-			return (
-				<p role="alert" className="flex items-center justify-center p-4 text-(--error)">{`Error: ${error.message}`}</p>
-			)
+			return <p role="alert" className="flex items-center justify-center p-4 text-error">{`Error: ${error.message}`}</p>
 		}
 		if (!data.length) {
 			return (
@@ -158,7 +156,7 @@ function MobileSearchResults({ searchValue, onSelect }: { searchValue: string; o
 		return (
 			<p
 				role="alert"
-				className="flex items-center justify-center p-4 text-(--error)"
+				className="flex items-center justify-center p-4 text-error"
 			>{`Error: ${errorDefaultSearchList.message}`}</p>
 		)
 	}
@@ -266,7 +264,7 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 					hideOnInteractOutside
 					gutter={6}
 					sameWidth
-					className="z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-[0_12px_32px_-12px_rgb(0_0_0/0.25)] max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(var(--popover-available-height),60vh)]"
+					className="z-10 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-xl border border-medium bg-overlay px-0 py-0 shadow-overlay-sm max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(var(--popover-available-height),60vh)]"
 					portal
 				>
 					<Ariakit.ComboboxList alwaysVisible>
@@ -279,7 +277,7 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 							) : error ? (
 								<p
 									role="alert"
-									className="flex items-center justify-center p-4 text-(--error)"
+									className="flex items-center justify-center p-4 text-error"
 								>{`Error: ${error.message}`}</p>
 							) : !data.length ? (
 								<p role="status" className="flex items-center justify-center p-4 body-sm text-tertiary">
@@ -303,7 +301,7 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 						) : errorDefaultSearchList ? (
 							<p
 								role="alert"
-								className="flex items-center justify-center p-4 text-(--error)"
+								className="flex items-center justify-center p-4 text-error"
 							>{`Error: ${errorDefaultSearchList.message}`}</p>
 						) : !defaultSearchList?.length ? (
 							<p role="status" className="flex items-center justify-center p-4 body-sm text-tertiary">
@@ -325,7 +323,7 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 			{!hideLlamaAiCta ? (
 				<BasicLink
 					href={isClient && shouldSkipLanding ? '/ai/chat' : '/ai'}
-					className="llamaai-glow relative mr-auto hidden items-center justify-between gap-2.5 overflow-hidden rounded-md bg-[linear-gradient(93.94deg,#FDE0A9_24.73%,#FBEDCB_57.42%,#FDE0A9_99.73%)] px-4 py-2 text-xs font-semibold text-black shadow-[0px_0px_30px_0px_rgba(253,224,169,0.5),0px_0px_1px_2px_rgba(255,255,255,0.1)] lg:flex"
+					className="llamaai-glow relative mr-auto hidden items-center justify-between gap-2.5 overflow-hidden rounded-md bg-ai-gold-cta px-4 py-2 text-xs font-semibold text-black shadow-ai-gold-cta lg:flex"
 					data-umami-event="llamaai-nav-link"
 					data-umami-event-subscribed={isClient && hasActiveSubscription ? 'true' : 'false'}
 				>

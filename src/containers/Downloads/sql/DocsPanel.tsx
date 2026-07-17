@@ -47,8 +47,8 @@ export function CookbookTab({ onApplyAndRun }: CookbookProps) {
 	return (
 		<div className="flex flex-col gap-6">
 			<header className="flex flex-col gap-1">
-				<h3 className="text-sm font-semibold tracking-tight text-(--legacy-text-primary)">Cookbook</h3>
-				<p className="text-[11.5px] leading-snug text-(--legacy-text-tertiary)">
+				<h3 className="text-sm font-semibold tracking-tight text-(--pro-text-primary)">Cookbook</h3>
+				<p className="text-[11.5px] leading-snug text-(--pro-text-tertiary)">
 					Pragmatic idioms against DefiLlama tables — hover a technique to see what it does. Try it: swaps the editor
 					and runs the query.
 				</p>
@@ -69,7 +69,7 @@ export function CookbookTab({ onApplyAndRun }: CookbookProps) {
 					{grouped.map(({ tag, items }) => (
 						<section key={tag} className="flex flex-col gap-4">
 							<TagHeader tag={tag} count={items.length} />
-							<ul className="flex flex-col divide-y divide-(--legacy-divider)/60">
+							<ul className="flex flex-col divide-y divide-(--border-subtle)/60">
 								{items.map((s) => (
 									<li key={s.title} className="flex flex-col gap-3 py-4 first:pt-0">
 										<Snippet snippet={s} onApplyAndRun={onApplyAndRun} />
@@ -87,10 +87,10 @@ export function CookbookTab({ onApplyAndRun }: CookbookProps) {
 function TagHeader({ tag, count }: { tag: CookbookTag; count: number }) {
 	return (
 		<div className="flex items-baseline gap-2.5">
-			<span aria-hidden className="h-px flex-1 bg-(--legacy-divider)" />
-			<span className="text-[10px] font-semibold tracking-[0.16em] text-(--legacy-text-tertiary) uppercase">{tag}</span>
-			<span className="text-[10px] text-(--legacy-text-tertiary) tabular-nums">{count}</span>
-			<span aria-hidden className="h-px flex-1 bg-(--legacy-divider)" />
+			<span aria-hidden className="h-px flex-1 bg-border-subtle" />
+			<span className="text-[10px] font-semibold tracking-[0.16em] text-(--pro-text-tertiary) uppercase">{tag}</span>
+			<span className="text-[10px] text-(--pro-text-tertiary) tabular-nums">{count}</span>
+			<span aria-hidden className="h-px flex-1 bg-border-subtle" />
 		</div>
 	)
 }
@@ -100,8 +100,8 @@ function Snippet({ snippet, onApplyAndRun }: { snippet: CookbookSnippet; onApply
 		<div className="flex flex-col gap-2.5">
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="flex min-w-0 flex-1 flex-col gap-1">
-					<h4 className="text-[13.5px] font-semibold text-(--legacy-text-primary)">{snippet.title}</h4>
-					<p className="text-xs leading-snug text-(--legacy-text-secondary)">{snippet.blurb}</p>
+					<h4 className="text-[13.5px] font-semibold text-(--pro-text-primary)">{snippet.title}</h4>
+					<p className="text-xs leading-snug text-(--pro-text-secondary)">{snippet.blurb}</p>
 				</div>
 				<div className="flex shrink-0 items-center gap-1.5">
 					<button
@@ -109,7 +109,7 @@ function Snippet({ snippet, onApplyAndRun }: { snippet: CookbookSnippet; onApply
 						onClick={() => copy(snippet.sql)}
 						aria-label="Copy SQL"
 						title="Copy SQL"
-						className="flex size-7 items-center justify-center rounded-md text-(--legacy-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--legacy-text-primary)"
+						className="flex size-7 items-center justify-center rounded-md text-(--pro-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary)"
 					>
 						<Icon name="copy" className="size-3.5" />
 					</button>
@@ -117,7 +117,7 @@ function Snippet({ snippet, onApplyAndRun }: { snippet: CookbookSnippet; onApply
 						type="button"
 						onClick={() => onApplyAndRun(`${snippet.sql}\n`)}
 						title="Replace editor and run"
-						className="group inline-flex items-center gap-1.5 rounded-md bg-(--legacy-primary) px-2.5 py-1 text-xs font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+						className="group inline-flex items-center gap-1.5 rounded-md bg-brand px-2.5 py-1 text-xs font-medium text-on-brand shadow-sm transition-opacity hover:opacity-90"
 					>
 						<svg className="size-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
 							<path d="M8 5v14l11-7z" />
@@ -143,7 +143,7 @@ function TechniqueChips({ techniques }: { techniques: TechniqueName[] }) {
 					<span
 						tabIndex={0}
 						title={TECHNIQUE_DOCS[t]}
-						className="inline-flex cursor-help items-center gap-1 rounded-sm border border-(--legacy-divider) bg-(--legacy-app-bg)/60 px-1.5 py-0.5 font-mono text-[10.5px] tracking-tight text-(--legacy-text-secondary) transition-colors hover:border-(--legacy-primary)/50 hover:text-(--legacy-primary) focus:border-(--legacy-primary)/60 focus:outline-hidden"
+						className="inline-flex cursor-help items-center gap-1 rounded-sm border border-subtle bg-(--pro-app-bg)/60 px-1.5 py-0.5 font-mono text-[10.5px] tracking-tight text-(--pro-text-secondary) transition-colors hover:border-brand/50 hover:text-brand focus:border-brand/60 focus:outline-hidden"
 					>
 						{t}
 					</span>
@@ -384,20 +384,20 @@ function tokenize(sql: string): Token[] {
 }
 
 const TOKEN_CLASS: Record<TokenType, string> = {
-	kw: 'font-semibold text-[#1d4ed8] dark:text-[#7aa2ff]',
-	type: 'text-[#6b4bd2] dark:text-[#b794ff]',
-	fn: 'text-[#6b4bd2] dark:text-[#b794ff]',
-	str: 'text-[#a35a1a] dark:text-[#f2c78d]',
-	num: 'text-[#0f7a4a] dark:text-[#9eddb2]',
-	cmt: 'italic text-(--legacy-text-tertiary)',
-	punct: 'text-(--legacy-text-tertiary)',
+	kw: 'font-semibold text-link',
+	type: 'text-sub-violet dark:text-sub-violet-bright',
+	fn: 'text-sub-violet dark:text-sub-violet-bright',
+	str: 'text-sub-warning-text-light dark:text-sub-warning-text-dark',
+	num: 'text-success',
+	cmt: 'italic text-(--pro-text-tertiary)',
+	punct: 'text-(--pro-text-tertiary)',
 	plain: ''
 }
 
 function CodeBlock({ sql }: { sql: string }) {
 	const tokens = useMemo(() => tokenize(sql), [sql])
 	return (
-		<pre className="overflow-x-auto rounded-md border border-l-2 border-(--legacy-divider) border-l-(--legacy-primary)/40 bg-(--legacy-app-bg)/70 px-3 py-2.5 font-mono text-[12px] leading-relaxed text-(--legacy-text-primary)">
+		<pre className="overflow-x-auto rounded-md border border-l-2 border-subtle border-l-brand/40 bg-(--pro-app-bg)/70 px-3 py-2.5 font-mono text-xs leading-relaxed text-(--pro-text-primary)">
 			<code>
 				{tokens.map((t, i) => {
 					const cls = TOKEN_CLASS[t.type]
@@ -419,16 +419,16 @@ export function ShortcutsTab() {
 	return (
 		<div className="flex flex-col gap-6">
 			<section className="flex flex-col">
-				<div className="flex items-baseline gap-2 border-b border-(--legacy-divider) pb-1.5">
-					<h3 className="text-sm font-semibold tracking-tight text-(--legacy-text-primary)">Keyboard</h3>
-					<span className="text-[11px] text-(--legacy-text-tertiary) tabular-nums">{SHORTCUTS.length}</span>
+				<div className="flex items-baseline gap-2 border-b border-subtle pb-1.5">
+					<h3 className="text-sm font-semibold tracking-tight text-(--pro-text-primary)">Keyboard</h3>
+					<span className="text-[11px] text-(--pro-text-tertiary) tabular-nums">{SHORTCUTS.length}</span>
 				</div>
-				<ul className="flex flex-col divide-y divide-(--legacy-divider)/50">
+				<ul className="flex flex-col divide-y divide-(--border-subtle)/50">
 					{SHORTCUTS.map((s) => (
 						<li key={s.action} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
 							<div className="flex min-w-0 flex-1 flex-col">
-								<span className="text-sm text-(--legacy-text-primary)">{s.action}</span>
-								{s.note ? <span className="text-[11px] text-(--legacy-text-tertiary)">{s.note}</span> : null}
+								<span className="text-sm text-(--pro-text-primary)">{s.action}</span>
+								{s.note ? <span className="text-[11px] text-(--pro-text-tertiary)">{s.note}</span> : null}
 							</div>
 							<div className="flex shrink-0 items-center gap-1">
 								{s.keys.map((k, i) => (
@@ -441,15 +441,15 @@ export function ShortcutsTab() {
 			</section>
 
 			<section className="flex flex-col">
-				<div className="flex items-baseline gap-2 border-b border-(--legacy-divider) pb-1.5">
-					<h3 className="text-sm font-semibold tracking-tight text-(--legacy-text-primary)">Dialect tips</h3>
-					<span className="text-[11px] text-(--legacy-text-tertiary) tabular-nums">{DIALECT_TIPS.length}</span>
+				<div className="flex items-baseline gap-2 border-b border-subtle pb-1.5">
+					<h3 className="text-sm font-semibold tracking-tight text-(--pro-text-primary)">Dialect tips</h3>
+					<span className="text-[11px] text-(--pro-text-tertiary) tabular-nums">{DIALECT_TIPS.length}</span>
 				</div>
-				<ul className="flex flex-col divide-y divide-(--legacy-divider)/50">
+				<ul className="flex flex-col divide-y divide-(--border-subtle)/50">
 					{DIALECT_TIPS.map((t) => (
 						<li key={t.title} className="flex flex-col gap-1 py-3">
-							<h4 className="text-xs font-semibold tracking-tight text-(--legacy-text-primary)">{t.title}</h4>
-							<p className="text-xs leading-relaxed text-(--legacy-text-secondary)">{t.body}</p>
+							<h4 className="text-xs font-semibold tracking-tight text-(--pro-text-primary)">{t.title}</h4>
+							<p className="text-xs leading-relaxed text-(--pro-text-secondary)">{t.body}</p>
 						</li>
 					))}
 				</ul>
@@ -493,13 +493,13 @@ function SearchBar({
 						type="button"
 						onClick={() => onChange('')}
 						aria-label="Clear search"
-						className="absolute top-1/2 right-1 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-(--legacy-text-tertiary) hover:text-(--legacy-text-primary)"
+						className="absolute top-1/2 right-1 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-(--pro-text-tertiary) hover:text-(--pro-text-primary)"
 					>
 						<Icon name="x" className="size-3" />
 					</button>
 				) : null}
 			</label>
-			<p className="text-[11px] text-(--legacy-text-tertiary) tabular-nums">
+			<p className="text-[11px] text-(--pro-text-tertiary) tabular-nums">
 				{resultCount === totalCount ? `${totalCount}` : `${resultCount} of ${totalCount}`}
 			</p>
 		</div>
@@ -508,9 +508,9 @@ function SearchBar({
 
 function EmptyResults({ label }: { label: string }) {
 	return (
-		<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-(--legacy-divider) bg-surface/40 px-6 py-12 text-center">
-			<Icon name="search" className="size-5 text-(--legacy-text-tertiary)" />
-			<p className="text-sm text-(--legacy-text-secondary)">{label}</p>
+		<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle bg-surface/40 px-6 py-12 text-center">
+			<Icon name="search" className="size-5 text-(--pro-text-tertiary)" />
+			<p className="text-sm text-(--pro-text-secondary)">{label}</p>
 		</div>
 	)
 }
@@ -521,7 +521,7 @@ function ExternalDocsLink() {
 			href={DUCKDB_DOCS_URL}
 			target="_blank"
 			rel="noreferrer"
-			className="inline-flex items-center gap-1.5 self-start text-xs text-(--legacy-text-tertiary) transition-colors hover:text-(--legacy-primary)"
+			className="inline-flex items-center gap-1.5 self-start text-xs text-(--pro-text-tertiary) transition-colors hover:text-brand"
 		>
 			Full LlamaSQL reference
 			<Icon name="external-link" className="size-3" />
