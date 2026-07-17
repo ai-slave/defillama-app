@@ -114,9 +114,9 @@ const howSteps = [
 	},
 	{
 		number: '04',
-		label: 'Public proof',
-		title: 'Publish on DefiLlama',
-		desc: 'Expose the verified total, coverage, source scope, freshness, and exceptions without publishing private positions or account details.'
+		label: 'Public record',
+		title: 'Publish the verification record',
+		desc: 'Publish the verified total, coverage, source scope, freshness, and exceptions without exposing private positions or account details.'
 	}
 ]
 
@@ -127,7 +127,7 @@ const faqs = [
 	},
 	{
 		q: 'Will you expose our positions?',
-		a: 'Only what you agree to publish. We verify the total, publish the total, and keep the rest between us and the auditor.'
+		a: 'Only what you agree to publish. We verify the total, publish the agreed metrics, and keep the underlying records private.'
 	},
 	{
 		q: "What if part of our backing can't be verified?",
@@ -136,6 +136,10 @@ const faqs = [
 	{
 		q: 'How long does it take?',
 		a: 'Usually one to two weeks. The main variable is how quickly your counterparties can provide the documentation we verify against.'
+	},
+	{
+		q: 'Is this a financial audit or guarantee?',
+		a: 'No. Verification covers the sources and metrics listed in the public record. It is not a statutory audit or a guarantee of future solvency.'
 	}
 ]
 
@@ -155,6 +159,15 @@ function CheckIcon({ className }: { className?: string }) {
 	)
 }
 
+function VerifiedByDefiLlamaMark() {
+	return (
+		<span className="inline-flex items-center gap-1.5 label-xs font-semibold text-link">
+			<Image src="/assets/llama.webp" alt="" width={14} height={14} className="rounded-full" />
+			Verified by DefiLlama
+		</span>
+	)
+}
+
 const primaryCtaStyles =
 	'inline-flex items-center justify-center rounded-lg bg-brand px-7 py-3.5 text-sm font-semibold text-on-brand transition-[filter] hover:brightness-110 focus-visible:brightness-110 focus-visible:focus-ring-on-brand'
 
@@ -162,17 +175,25 @@ function SiteHeader() {
 	return (
 		<header className="sticky top-0 z-50 border-b border-subtle bg-surface/80 backdrop-blur-md">
 			<div className="mx-auto flex h-16 w-full max-w-[1140px] items-center justify-between gap-4 px-4 sm:px-6 md:px-8">
-				<div className="flex min-w-0 items-center gap-3">
-					<BasicLink href="/" className="flex items-center gap-2.5">
-						<Image src="/assets/llama.webp" alt="DefiLlama" width={30} height={30} className="rounded-full" />
-						<span className="text-base font-bold tracking-tight">DefiLlama</span>
-					</BasicLink>
-					<span className="h-5 w-px bg-border-medium" aria-hidden />
-					<span className="truncate text-base font-semibold text-secondary">Attestation</span>
-				</div>
+				<BasicLink
+					href="/"
+					aria-label="Verified by DefiLlama"
+					className="flex min-w-0 items-center gap-2.5 whitespace-nowrap"
+				>
+					<Image src="/assets/llama.webp" alt="" width={38} height={38} className="rounded-full" />
+					<span className="flex min-w-0 items-center gap-2">
+						<span className="text-[21px] leading-none font-semibold tracking-[-0.025em] text-primary">Verified</span>
+						<span className="hidden items-center gap-1 min-[400px]:inline-flex">
+							<span className="text-2xl leading-none font-light text-link" aria-hidden>
+								/
+							</span>
+							<span className="text-lg leading-none font-medium tracking-[-0.02em] text-secondary">DefiLlama</span>
+						</span>
+					</span>
+				</BasicLink>
 				<nav className="hidden items-center gap-1 md:flex">
 					{[
-						['#reconcile', 'Proof'],
+						['#reconcile', 'Public record'],
 						['#who', "Who it's for"],
 						['#how', 'How it works'],
 						['#faq', 'FAQ']
@@ -180,14 +201,14 @@ function SiteHeader() {
 						<a
 							key={href}
 							href={href}
-							className="rounded-md px-3.5 py-2 label-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary"
+							className="rounded-md px-3.5 py-2 label-md font-medium text-secondary transition-colors hover:bg-hover-row hover:text-primary"
 						>
 							{label}
 						</a>
 					))}
 				</nav>
 				<Button as="a" href="#get" variant="primary" size="md">
-					Get verified
+					<span className="font-semibold">Get verified</span>
 				</Button>
 			</div>
 		</header>
@@ -509,7 +530,7 @@ function LedgerColumn({
 								{isRechecking
 									? 'Read-only · checking'
 									: isFresh
-										? 'Verified · just now'
+										? 'Current · just now'
 										: isChecking
 											? privateData
 												? 'Read-only · checking'
@@ -571,7 +592,7 @@ function ReconciliationLedger() {
 			stage={stage}
 			replay={replay}
 			frameRef={frameRef}
-			completionText="Complete · public proof updated"
+			completionText="Complete · public record updated"
 			activityText={activityText}
 			isRechecking={heartbeat === 'checking'}
 		>
@@ -870,7 +891,7 @@ const registerSources: Array<{
 		name: 'Fund admin NAV',
 		kind: 'Private asset source',
 		method: 'Signed NAV report',
-		access: 'Administrator verified',
+		access: 'Administrator confirmed',
 		freshness: '6h ago',
 		cadence: 'Daily'
 	},
@@ -901,9 +922,9 @@ type ProofStateConfig = {
 
 const proofStates: Record<ProofState, ProofStateConfig> = {
 	verified: {
-		label: 'Verified',
+		label: 'Current',
 		detail: 'All disclosed sources are current',
-		headline: 'Verified · checked 12s ago',
+		headline: 'Current · checked 12s ago',
 		dotTone: 'bg-data-up',
 		textTone: 'text-data-up',
 		scope: '9 / 9 in scope',
@@ -912,7 +933,7 @@ const proofStates: Record<ProofState, ProofStateConfig> = {
 	},
 	partial: {
 		label: 'Partial',
-		detail: 'Some sources are outside the proof',
+		detail: 'Some sources are outside the verification scope',
 		headline: 'Partial · 8 of 9 sources covered',
 		dotTone: 'bg-(--bg-brand)',
 		textTone: 'text-link',
@@ -921,7 +942,7 @@ const proofStates: Record<ProofState, ProofStateConfig> = {
 		nextCheck: 'Scope review open',
 		affectedSource: 'fund-admin',
 		affectedStatus: 'Partial',
-		affectedFreshness: 'Outside proof'
+		affectedFreshness: 'Outside scope'
 	},
 	stale: {
 		label: 'Stale',
@@ -938,7 +959,7 @@ const proofStates: Record<ProofState, ProofStateConfig> = {
 	},
 	unverified: {
 		label: 'Unverified',
-		detail: 'A claim could not be independently checked',
+		detail: 'A metric could not be independently checked',
 		headline: 'Unverified · bank cash not confirmed',
 		dotTone: 'bg-data-down',
 		textTone: 'text-data-down',
@@ -998,8 +1019,8 @@ function SourceRegister({
 	const playbackLabel = autoplayDisabled
 		? 'Autoplay disabled by reduced motion preference'
 		: isPlaying
-			? 'Pause public proof slideshow'
-			: 'Play public proof slideshow'
+			? 'Pause verification record slideshow'
+			: 'Play verification record slideshow'
 	return (
 		<div className="overflow-hidden rounded-xl border border-medium bg-surface dark:bg-surface-elevated-1">
 			<div className="flex flex-wrap items-center justify-between gap-3 border-b border-subtle px-5 py-4 sm:px-6">
@@ -1007,9 +1028,12 @@ function SourceRegister({
 					<span className="flex size-8 items-center justify-center rounded-full bg-brand-muted label-sm font-semibold text-link-on-tint">
 						AC
 					</span>
-					<div>
-						<p className="label-md font-semibold text-primary">Acme Protocol source register</p>
-						<p className="label-xs text-tertiary">Example public record</p>
+					<div className="min-w-0">
+						<div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+							<p className="label-md font-semibold text-primary">Acme Protocol</p>
+							<VerifiedByDefiLlamaMark />
+						</div>
+						<p className="label-xs text-tertiary">Public verification record · Example data</p>
 					</div>
 				</div>
 				<div className="flex items-center gap-2">
@@ -1042,7 +1066,7 @@ function SourceRegister({
 			<ul className="divide-y divide-(--border-very-subtle)">
 				{registerSources.map((source) => {
 					const isAffected = state.affectedSource === source.id
-					const statusLabel = isAffected ? (state.affectedStatus ?? state.label) : 'Verified'
+					const statusLabel = isAffected ? (state.affectedStatus ?? state.label) : 'Current'
 					const freshness = isAffected ? (state.affectedFreshness ?? source.freshness) : source.freshness
 					const statusState = isAffected ? state : proofStates.verified
 
@@ -1200,7 +1224,9 @@ function PublicProofSection() {
 		const nextIsPlaying = !isPlaying
 		setIsPlaying(nextIsPlaying)
 		setIsManualPaused(false)
-		setManualAnnouncement(nextIsPlaying ? 'Public proof slideshow playing' : 'Public proof slideshow paused')
+		setManualAnnouncement(
+			nextIsPlaying ? 'Verification record slideshow playing' : 'Verification record slideshow paused'
+		)
 	}
 
 	return (
@@ -1220,13 +1246,14 @@ function PublicProofSection() {
 			<div className="mx-auto max-w-[1140px] px-4 py-24 sm:px-6 md:px-8 lg:py-32">
 				<div className="grid gap-8 lg:grid-cols-[minmax(0,330px)_1fr] lg:gap-16">
 					<div>
-						<p className="label-sm font-semibold tracking-[0.08em] text-link uppercase">The public output</p>
+						<p className="label-sm font-semibold tracking-[0.08em] text-link uppercase">The public record</p>
 						<h2 className="mt-4 text-[clamp(1.95rem,3.8vw,2.9rem)] leading-[1.07] font-bold tracking-tight">
-							Every claim shows its source, method, and freshness
+							Every published metric shows its source, method, and freshness
 						</h2>
 						<p className="mt-5 body-lg leading-relaxed text-secondary">
 							Investors see how each source was checked, when it was last confirmed, what cadence to expect, and whether
-							anything sits outside the proof. Private records and positions stay private.
+							anything sits outside the verification scope. Private records and positions stay private. Verification
+							covers only the sources and metrics listed in the record; it is not a financial audit or guarantee.
 						</p>
 					</div>
 					<SourceRegister
@@ -1240,7 +1267,7 @@ function PublicProofSection() {
 				<div
 					className="mt-10 grid gap-x-8 gap-y-4 border-t border-subtle sm:grid-cols-2 lg:grid-cols-4"
 					role="group"
-					aria-label="Public proof state slideshow"
+					aria-label="Public verification record state slideshow"
 				>
 					{proofStateOrder.map((key) => {
 						const state = proofStates[key]
@@ -1284,14 +1311,14 @@ function PublicProofSection() {
 	)
 }
 
-export default function AttestationLanding() {
+export default function VerifiedLanding() {
 	return (
 		<>
 			<Head>
-				<title>Offchain Metrics, Verified by DefiLlama</title>
+				<title>Verified by DefiLlama | Independent Offchain Verification</title>
 				<meta
 					name="description"
-					content="DefiLlama independently verifies private offchain assets through read-only access, reconciles them with public liabilities, and publishes a current coverage view."
+					content="DefiLlama independently verifies private offchain assets through read-only access, reconciles them with public liabilities, and publishes a current verification record."
 				/>
 				<link rel="icon" type="image/png" href="/icons/favicon-32x32.png" />
 			</Head>
@@ -1307,21 +1334,21 @@ export default function AttestationLanding() {
 								<div className="grid items-center gap-x-14 gap-y-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,560px)]">
 									<div className="max-w-[560px]">
 										<p className="label-sm font-semibold tracking-[0.08em] text-link uppercase">
-											Independent continuous verification
+											Verified by DefiLlama
 										</p>
 										<h1 className="mt-4 max-w-[17ch] text-[clamp(2.45rem,5vw,4.15rem)] leading-[1.02] font-extrabold tracking-[-0.035em]">
-											Your offchain metrics, <span className="text-link">verified</span> and published on DefiLlama
+											Your offchain metrics, <span className="text-link">verified</span> and published by DefiLlama
 										</h1>
 										<p className="mt-7 max-w-[52ch] body-xl leading-relaxed text-secondary">
 											DefiLlama verifies private reserves and financial statements through read-only access, reconciles
-											them with public liabilities, and publishes a current coverage view.
+											them with public liabilities, and publishes a current verification record.
 										</p>
 										<div className="mt-8 flex flex-wrap items-center gap-5">
 											<a href="#get" className={primaryCtaStyles}>
 												Start a verification review
 											</a>
 											<a href="#reconcile" className="label-sm font-semibold text-link hover:underline">
-												See the public output ↓
+												See the public record ↓
 											</a>
 										</div>
 										<ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3 body-sm text-secondary">
@@ -1339,8 +1366,11 @@ export default function AttestationLanding() {
 
 						<PublicProofSection />
 
-						<section id="who" className="mx-auto max-w-[1140px] scroll-mt-24 px-4 py-24 sm:px-6 md:px-8">
-							<h2 className="max-w-[24ch] text-[clamp(1.9rem,3.6vw,2.75rem)] leading-[1.08] font-bold tracking-tight">
+						<section className="mx-auto max-w-[1140px] px-4 py-24 sm:px-6 md:px-8">
+							<h2
+								id="who"
+								className="max-w-[24ch] scroll-mt-20 text-[clamp(1.9rem,3.6vw,2.75rem)] leading-[1.08] font-bold tracking-tight"
+							>
 								Built for the teams investors ask the hardest questions
 							</h2>
 							<div className="mt-10">
@@ -1352,7 +1382,7 @@ export default function AttestationLanding() {
 							<div className="mx-auto max-w-[1140px] px-4 py-24 sm:px-6 md:px-8">
 								<p className="label-sm font-semibold tracking-[0.08em] text-link uppercase">How it works</p>
 								<h2 className="mt-4 max-w-xl text-[clamp(1.9rem,3.6vw,2.75rem)] leading-[1.08] font-bold tracking-tight">
-									From private source to public proof
+									From private source to public verification record
 								</h2>
 								<div className="mt-12 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
 									{howSteps.map((step) => (
@@ -1393,7 +1423,7 @@ export default function AttestationLanding() {
 							<div className="mx-auto flex max-w-[1140px] flex-wrap items-center justify-between gap-x-12 gap-y-8 px-4 py-24 sm:px-6 md:px-8">
 								<div>
 									<h2 className="max-w-[22ch] text-[clamp(2rem,4.2vw,3rem)] leading-[1.06] font-extrabold tracking-tight">
-										Turn a private financial claim into a public proof.
+										Get your offchain metrics verified by DefiLlama.
 									</h2>
 									<p className="mt-4 max-w-xl body-lg text-secondary">
 										Tell us where your assets and liabilities live. We'll map the sources, verification scope, and
