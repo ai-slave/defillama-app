@@ -172,10 +172,8 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 				{step === 'email' && (
 					<div className="flex flex-col gap-5 px-5 py-6">
 						<div className="flex items-center justify-between">
-							<h3 className="text-xl leading-7 font-semibold text-sub-ink-primary dark:text-ai-primary">
-								Switch to Email
-							</h3>
-							<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-ink-primary transition-colors dark:text-ai-primary">
+							<h3 className="text-xl leading-7 font-semibold text-sub-text-primary">Switch to Email</h3>
+							<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-primary transition-colors">
 								<Icon name="x" height={24} width={24} />
 							</Ariakit.DialogDismiss>
 						</div>
@@ -187,7 +185,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 						{/* Form */}
 						<form onSubmit={handleRequestOtp} className="flex flex-col gap-5">
 							<div className="flex flex-col gap-2">
-								<label className="text-sm leading-[21px] text-sub-ink-primary dark:text-ai-primary">Email</label>
+								<label className="text-sm leading-[21px] text-sub-text-primary">Email</label>
 								<input
 									type="email"
 									required
@@ -197,7 +195,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 										if (error) setError('')
 									}}
 									placeholder="your.email@example.com"
-									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] text-sub-ink-primary outline-hidden dark:bg-sub-ink-primary dark:text-ai-primary ${
+									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] text-sub-text-primary outline-hidden dark:bg-sub-ink-primary ${
 										error
 											? 'border-error'
 											: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
@@ -220,25 +218,20 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 				{step === 'confirm' && (
 					<div className="flex flex-col gap-5 px-5 py-6">
 						<div className="flex items-center justify-between">
-							<h3 className="text-xl leading-7 font-semibold text-sub-ink-primary dark:text-ai-primary">
-								Verify & Set Password
-							</h3>
-							<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-ink-primary transition-colors dark:text-ai-primary">
+							<h3 className="text-xl leading-7 font-semibold text-sub-text-primary">Verify & Set Password</h3>
+							<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-primary transition-colors">
 								<Icon name="x" height={24} width={24} />
 							</Ariakit.DialogDismiss>
 						</div>
 
 						<p className="text-sm leading-5 text-sub-text-muted">
-							Enter the 6-digit code sent to{' '}
-							<span className="font-medium text-sub-ink-primary dark:text-ai-primary">{email}</span> and choose a
-							password.
+							Enter the 6-digit code sent to <span className="font-medium text-sub-text-primary">{email}</span> and
+							choose a password.
 						</p>
 
 						<form onSubmit={handleConfirm} className="flex flex-col gap-4">
 							<div className="flex flex-col gap-2">
-								<label className="text-sm leading-[21px] text-sub-ink-primary dark:text-ai-primary">
-									Verification Code
-								</label>
+								<label className="text-sm leading-[21px] text-sub-text-primary">Verification Code</label>
 								<input
 									type="text"
 									inputMode="numeric"
@@ -251,7 +244,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 										if (error) setError('')
 									}}
 									placeholder="000000"
-									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] tracking-widest text-sub-ink-primary outline-hidden dark:bg-sub-ink-primary dark:text-ai-primary ${
+									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] tracking-widest text-sub-text-primary outline-hidden dark:bg-sub-ink-primary ${
 										error
 											? 'border-error'
 											: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
@@ -260,7 +253,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 							</div>
 
 							<div className="flex flex-col gap-2">
-								<label className="text-sm leading-[21px] text-sub-ink-primary dark:text-ai-primary">Password</label>
+								<label className="text-sm leading-[21px] text-sub-text-primary">Password</label>
 								<div className="relative">
 									<input
 										type={showPassword ? 'text' : 'password'}
@@ -271,7 +264,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 											if (error) setError('')
 										}}
 										placeholder="At least 8 characters"
-										className={`h-10 w-full rounded-lg border bg-sub-surface-panel pr-10 pl-3 text-sm leading-[21px] text-sub-ink-primary outline-hidden dark:bg-sub-ink-primary dark:text-ai-primary ${
+										className={`h-10 w-full rounded-lg border bg-sub-surface-panel pr-10 pl-3 text-sm leading-[21px] text-sub-text-primary outline-hidden dark:bg-sub-ink-primary ${
 											error
 												? 'border-error'
 												: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
@@ -289,9 +282,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 
 							{/* Confirm Password */}
 							<div className="flex flex-col gap-2">
-								<label className="text-sm leading-[21px] text-sub-ink-primary dark:text-ai-primary">
-									Confirm Password
-								</label>
+								<label className="text-sm leading-[21px] text-sub-text-primary">Confirm Password</label>
 								<div className="relative">
 									<input
 										type={showPasswordConfirm ? 'text' : 'password'}
@@ -302,7 +293,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 											if (error) setError('')
 										}}
 										placeholder="Re-enter your password"
-										className={`h-10 w-full rounded-lg border bg-sub-surface-panel pr-10 pl-3 text-sm leading-[21px] text-sub-ink-primary outline-hidden dark:bg-sub-ink-primary dark:text-ai-primary ${
+										className={`h-10 w-full rounded-lg border bg-sub-surface-panel pr-10 pl-3 text-sm leading-[21px] text-sub-text-primary outline-hidden dark:bg-sub-ink-primary ${
 											error
 												? 'border-error'
 												: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
@@ -339,11 +330,10 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 							<Icon name="check" height={32} width={32} className="text-sub-brand-primary" />
 						</div>
 						<div className="flex flex-col gap-2 text-center">
-							<h2 className="text-xl font-semibold text-sub-ink-primary dark:text-ai-primary">Switch Successful!</h2>
+							<h2 className="text-xl font-semibold text-sub-text-primary">Switch Successful!</h2>
 							<p className="text-sm text-sub-text-muted">
 								Your account now uses email authentication. You can sign in with{' '}
-								<span className="font-medium text-sub-ink-primary dark:text-ai-primary">{email}</span> and your password
-								going forward.
+								<span className="font-medium text-sub-text-primary">{email}</span> and your password going forward.
 							</p>
 						</div>
 						<button

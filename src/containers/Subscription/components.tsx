@@ -92,7 +92,7 @@ function FeatureBullet({ item }: { item: FeatureItem }) {
 				</span>
 			) : (
 				<span
-					className={`text-base leading-6 sm:pt-0.5 sm:text-[13px] sm:leading-[18px] ${item.availability === 'check' ? 'text-sub-ink-primary dark:text-sub-text-primary-dark' : 'text-sub-text-muted dark:text-sub-text-muted-dark'}`}
+					className={`text-base leading-6 sm:pt-0.5 sm:text-[13px] sm:leading-[18px] ${item.availability === 'check' ? 'text-sub-text-primary' : 'text-sub-text-muted dark:text-sub-text-muted-dark'}`}
 				>
 					<FeatureLabel item={item} />
 				</span>
@@ -104,7 +104,7 @@ function FeatureBullet({ item }: { item: FeatureItem }) {
 /* ── PricingCardCta ────────────────────────────────────────────────── */
 
 const outlineBtnCls =
-	'h-14 w-full rounded-xl border border-sub-border-slate-100 bg-sub-surface-slate-10 text-base leading-5 font-medium text-sub-text-slate-900 dark:border-sub-border-strong dark:bg-transparent dark:text-ai-primary sm:h-10 sm:rounded-lg sm:border-sub-border-muted sm:bg-white sm:text-sm sm:text-sub-ink-primary dark:sm:border-sub-border-strong dark:sm:bg-transparent dark:sm:text-ai-primary'
+	'h-14 w-full rounded-xl border border-sub-border-slate-100 bg-sub-surface-slate-10 text-base leading-5 font-medium text-sub-text-slate-900 dark:border-sub-border-strong dark:bg-transparent dark:text-sub-text-primary-dark sm:h-10 sm:rounded-lg sm:border-sub-border-muted sm:bg-white sm:text-sm sm:text-sub-text-primary dark:sm:border-sub-border-strong dark:sm:bg-transparent'
 const filledBtnCls =
 	'h-14 w-full rounded-xl bg-sub-brand-primary text-base leading-5 font-medium text-on-brand sm:h-10 sm:rounded-lg sm:text-sm'
 
@@ -318,7 +318,7 @@ export function PricingCardContent({
 	return (
 		<div className="flex flex-col gap-7 sm:gap-5">
 			<div className="flex flex-col gap-2 sm:min-h-[140px] sm:gap-3">
-				<h3 className="text-[22px] leading-[28px] font-semibold text-sub-text-slate-950 sm:text-xl sm:leading-[26px] sm:text-sub-ink-primary dark:text-ai-primary dark:sm:text-ai-primary">
+				<h3 className="text-[22px] leading-[28px] font-semibold text-sub-text-slate-950 sm:text-xl sm:leading-[26px] sm:text-sub-text-primary dark:text-sub-text-primary-dark">
 					{card.title}
 				</h3>
 				{card.subtitle ? (
@@ -349,7 +349,7 @@ export function PricingCardContent({
 						) : null}
 					</div>
 				) : card.description ? (
-					<p className="text-[28px] leading-[36px] font-semibold text-sub-text-slate-950 sm:text-2xl sm:leading-[32px] dark:text-ai-primary">
+					<p className="text-[28px] leading-[36px] font-semibold text-sub-text-slate-950 sm:text-2xl sm:leading-[32px] dark:text-sub-text-primary-dark">
 						{card.description}
 					</p>
 				) : null}
@@ -363,7 +363,7 @@ export function PricingCardContent({
 
 			{card.sections.map((section) => (
 				<div key={`${card.key}-${section.title}`} className="flex flex-col gap-3">
-					<h4 className="text-xl leading-7 font-semibold text-sub-text-slate-950 sm:text-base sm:leading-5 sm:font-medium sm:text-sub-ink-primary dark:text-ai-primary dark:sm:text-ai-primary">
+					<h4 className="text-xl leading-7 font-semibold text-sub-text-slate-950 sm:text-base sm:leading-5 sm:font-medium sm:text-sub-text-primary dark:text-sub-text-primary-dark">
 						{section.title}
 					</h4>
 					<ul className="flex flex-col gap-3 sm:gap-2">

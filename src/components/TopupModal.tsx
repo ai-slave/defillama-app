@@ -136,10 +136,8 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 					<div className="flex flex-col gap-5 px-5 py-6">
 						{/* Header */}
 						<div className="flex items-center justify-between">
-							<h3 className="text-xl leading-7 font-semibold text-sub-ink-primary dark:text-ai-primary">
-								Top Up Balance
-							</h3>
-							<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-ink-primary transition-colors dark:text-ai-primary">
+							<h3 className="text-xl leading-7 font-semibold text-sub-text-primary">Top Up Balance</h3>
+							<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-primary transition-colors">
 								<Icon name="x" height={24} width={24} />
 							</Ariakit.DialogDismiss>
 						</div>
@@ -148,7 +146,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 
 						{/* Amount input */}
 						<div className="flex flex-col gap-2">
-							<label className="text-sm text-sub-ink-primary dark:text-ai-primary">Amount (USD)</label>
+							<label className="text-sm text-sub-text-primary">Amount (USD)</label>
 							<div className="relative">
 								<span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-sub-text-muted">
 									$
@@ -160,7 +158,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 									onChange={(e) => handleAmountInput(e.target.value)}
 									placeholder="0.00"
 									autoFocus
-									className="h-10 w-full rounded-lg border border-sub-border-muted bg-sub-surface-panel pr-3 pl-7 text-sm text-sub-ink-primary outline-hidden focus:border-sub-brand-primary dark:border-sub-border-strong dark:bg-sub-ink-primary dark:text-ai-primary dark:focus:border-sub-brand-primary"
+									className="h-10 w-full rounded-lg border border-sub-border-muted bg-sub-surface-panel pr-3 pl-7 text-sm text-sub-text-primary outline-hidden focus:border-sub-brand-primary dark:border-sub-border-strong dark:bg-sub-ink-primary dark:focus:border-sub-brand-primary"
 								/>
 							</div>
 							{amount && !isValidAmount && (
@@ -179,7 +177,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 									className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
 										amount === String(qa)
 											? 'border-sub-brand-primary bg-sub-brand-primary text-on-brand'
-											: 'border-sub-border-muted text-sub-ink-primary hover:border-sub-brand-primary dark:border-sub-border-strong dark:text-ai-primary dark:hover:border-sub-brand-primary'
+											: 'border-sub-border-muted text-sub-text-primary hover:border-sub-brand-primary dark:border-sub-border-strong dark:hover:border-sub-brand-primary'
 									}`}
 								>
 									${qa}
@@ -189,7 +187,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 
 						{/* Payment methods */}
 						<div className="flex flex-col gap-3">
-							<label className="text-sm text-sub-ink-primary dark:text-ai-primary">Payment Method</label>
+							<label className="text-sm text-sub-text-primary">Payment Method</label>
 							<div className="grid grid-cols-2 gap-3">
 								<button
 									onClick={handleStripe}
@@ -197,7 +195,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 									className="flex flex-col items-center gap-2 rounded-xl border border-sub-border-muted p-4 transition-colors hover:border-sub-brand-primary disabled:opacity-40 dark:border-sub-border-strong dark:hover:border-sub-brand-primary"
 								>
 									<Icon name="credit-card" height={22} width={22} className="text-sub-brand-primary" />
-									<span className="text-sm font-medium text-sub-ink-primary dark:text-ai-primary">Pay with Card</span>
+									<span className="text-sm font-medium text-sub-text-primary">Pay with Card</span>
 								</button>
 								<button
 									onClick={() => void handleLlamaPay()}
@@ -209,7 +207,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 									) : (
 										<Icon name="wallet" height={22} width={22} className="text-sub-brand-primary" />
 									)}
-									<span className="text-sm font-medium text-sub-ink-primary dark:text-ai-primary">
+									<span className="text-sm font-medium text-sub-text-primary">
 										{isRedirecting ? 'Redirecting...' : 'Pay with Crypto'}
 									</span>
 								</button>

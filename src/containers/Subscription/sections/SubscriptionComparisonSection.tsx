@@ -13,7 +13,7 @@ const planHeadStyles = {
 const planHeadButtonStyles = {
 	selected: 'border-sub-brand-primary bg-sub-brand-primary text-on-brand',
 	default:
-		'border-sub-border-slate-200 bg-white text-sub-text-slate-900 dark:border-sub-border-strong dark:bg-transparent dark:text-ai-primary md:border-sub-border-muted md:text-sub-ink-primary dark:md:border-sub-border-strong dark:md:bg-transparent dark:md:text-ai-primary'
+		'border-sub-border-slate-200 bg-white text-sub-text-slate-900 dark:border-sub-border-strong dark:bg-transparent dark:text-sub-text-primary-dark md:border-sub-border-muted md:text-sub-text-primary dark:md:border-sub-border-strong dark:md:bg-transparent'
 }
 
 function SelectedColumnRails({
@@ -82,7 +82,7 @@ function ComparisonPlanHead({
 		>
 			<div className="flex h-full flex-col justify-between p-3 md:p-5">
 				<div>
-					<p className="text-sm leading-4 font-medium text-sub-text-navy-900 md:text-lg md:leading-5 md:text-sub-ink-primary dark:text-ai-primary dark:md:text-ai-primary">
+					<p className="text-sm leading-4 font-medium text-sub-text-navy-900 md:text-lg md:leading-5 md:text-sub-text-primary dark:text-sub-text-primary-dark">
 						{meta.title}
 					</p>
 					<div className="mt-1 flex items-end gap-px">
@@ -206,7 +206,7 @@ export function SubscriptionComparisonSection({
 							role="columnheader"
 							className="sticky left-0 z-30 box-border flex h-[132px] w-[233px] shrink-0 items-center bg-white px-2 md:h-[129px] md:w-[400px] md:rounded-tl-[24px] md:px-4 dark:bg-sub-mobile-table-section-bg dark:md:bg-sub-desktop-table-section-bg"
 						>
-							<h2 className="text-xl leading-7 font-semibold text-sub-text-navy-900 md:w-[220px] md:text-2xl md:leading-[34px] md:text-sub-ink-primary dark:text-ai-primary dark:md:text-ai-primary">
+							<h2 className="text-xl leading-7 font-semibold text-sub-text-navy-900 md:w-[220px] md:text-2xl md:leading-[34px] md:text-sub-text-primary dark:text-sub-text-primary-dark">
 								Compare Plans and Features
 							</h2>
 						</div>
@@ -254,7 +254,7 @@ export function SubscriptionComparisonSection({
 										>
 											<div
 												role="rowheader"
-												className="sticky left-0 z-30 box-border flex w-[233px] shrink-0 items-center bg-sub-mobile-table-header-bg px-2 text-sm leading-[21px] font-medium text-sub-text-navy-900 md:w-[400px] md:bg-sub-desktop-table-header-bg md:px-4 md:text-base md:leading-5 md:text-sub-ink-primary dark:text-ai-primary dark:md:text-ai-primary"
+												className="sticky left-0 z-30 box-border flex w-[233px] shrink-0 items-center bg-sub-mobile-table-header-bg px-2 text-sm leading-[21px] font-medium text-sub-text-navy-900 md:w-[400px] md:bg-sub-desktop-table-header-bg md:px-4 md:text-base md:leading-5 md:text-sub-text-primary dark:text-sub-text-primary-dark"
 											>
 												{section.title}
 											</div>
@@ -293,7 +293,7 @@ export function SubscriptionComparisonSection({
 														{row.link ? (
 															<a
 																href={row.link}
-																className={`${rowLabelClassName} text-current no-underline underline-offset-2 hover:text-sub-text-navy-900 hover:underline md:hover:text-sub-ink-primary dark:hover:text-ai-primary`}
+																className={`${rowLabelClassName} text-current no-underline underline-offset-2 hover:text-sub-text-navy-900 hover:underline md:hover:text-sub-ink-primary dark:hover:text-sub-text-primary-dark`}
 															>
 																{row.label}
 															</a>

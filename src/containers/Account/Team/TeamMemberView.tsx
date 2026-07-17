@@ -18,7 +18,7 @@ function ReadOnlyMemberRow({ member, isCurrentUser }: { member: TeamMember; isCu
 		<div className="flex items-center gap-3 rounded-lg border border-sub-border-slate-100 p-3 dark:border-sub-border-strong">
 			<div className="min-w-0 flex-1">
 				<div className="flex items-center gap-2">
-					<span className="truncate text-sm text-sub-ink-primary dark:text-ai-primary">{member.email}</span>
+					<span className="truncate text-sm text-sub-text-primary">{member.email}</span>
 					{member.isAdmin && (
 						<span className="shrink-0 rounded-full bg-sub-brand-primary/10 px-2 py-0.5 text-[10px] font-medium text-sub-brand-primary">
 							Admin
@@ -51,21 +51,21 @@ export function TeamMemberView() {
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 				<div className="flex items-center gap-2">
-					<Icon name="users" height={28} width={28} className="text-sub-ink-primary dark:text-ai-primary" />
-					<span className="text-base leading-5 font-medium text-sub-ink-primary dark:text-ai-primary">Team</span>
+					<Icon name="users" height={28} width={28} className="text-sub-text-primary" />
+					<span className="text-base leading-5 font-medium text-sub-text-primary">Team</span>
 				</div>
 
 				<div className="flex flex-col gap-3">
 					<div className="flex items-center gap-2">
 						<span className="shrink-0 text-xs leading-4 text-sub-text-muted">Team name</span>
 						<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border-slate-100 dark:border-sub-border-strong" />
-						<span className="shrink-0 text-xs leading-4 text-sub-ink-primary dark:text-ai-primary">{team.name}</span>
+						<span className="shrink-0 text-xs leading-4 text-sub-text-primary">{team.name}</span>
 					</div>
 
 					<div className="flex items-center gap-2">
 						<span className="shrink-0 text-xs leading-4 text-sub-text-muted">Your role</span>
 						<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border-slate-100 dark:border-sub-border-strong" />
-						<span className="shrink-0 text-xs leading-4 text-sub-ink-primary dark:text-ai-primary">
+						<span className="shrink-0 text-xs leading-4 text-sub-text-primary">
 							{team.isAdmin ? 'Admin' : 'Member'}
 						</span>
 					</div>
@@ -95,10 +95,8 @@ export function TeamMemberView() {
 			{members.length > 0 && (
 				<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 					<div className="flex items-center gap-2">
-						<Icon name="users" height={20} width={20} className="text-sub-ink-primary dark:text-ai-primary" />
-						<span className="text-base leading-5 font-medium text-sub-ink-primary dark:text-ai-primary">
-							Members ({members.length})
-						</span>
+						<Icon name="users" height={20} width={20} className="text-sub-text-primary" />
+						<span className="text-base leading-5 font-medium text-sub-text-primary">Members ({members.length})</span>
 					</div>
 					<div className="flex flex-col gap-2">
 						{members.map((member) => (

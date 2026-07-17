@@ -53,27 +53,25 @@ export function ReferralCard() {
 	return (
 		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex items-center gap-2">
-				<Icon name="share" height={28} width={28} className="text-sub-ink-primary dark:text-ai-primary" />
-				<span className="text-base leading-5 font-medium text-sub-ink-primary dark:text-ai-primary">Referrals</span>
+				<Icon name="share" height={28} width={28} className="text-sub-text-primary" />
+				<span className="text-base leading-5 font-medium text-sub-text-primary">Referrals</span>
 			</div>
 
 			<div className="flex flex-col gap-3">
 				<div className="flex items-center justify-between">
-					<span className="text-sm text-sub-ink-primary dark:text-ai-primary">Your Referral Link</span>
+					<span className="text-sm text-sub-text-primary">Your Referral Link</span>
 					<button
 						onClick={handleCopy}
-						className="flex h-6 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-[10px] leading-3 font-medium text-sub-ink-primary dark:border-sub-border-strong dark:text-ai-primary"
+						className="flex h-6 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-[10px] leading-3 font-medium text-sub-text-primary dark:border-sub-border-strong"
 					>
 						<Icon name="copy" height={12} width={12} />
 						{copied ? 'Copied' : 'Copy'}
 					</button>
 				</div>
 				<div className="rounded-lg bg-sub-surface-panel px-3 py-2.5 dark:bg-sub-ink-primary">
-					<code className="font-mono text-xs leading-5 break-all text-sub-ink-primary dark:text-ai-primary">
-						{referralLink}
-					</code>
+					<code className="font-mono text-xs leading-5 break-all text-sub-text-primary">{referralLink}</code>
 				</div>
-				<p className="text-xs leading-4 text-sub-ink-primary dark:text-ai-primary">
+				<p className="text-xs leading-4 text-sub-text-primary">
 					Share this link to refer new users. You can also add{' '}
 					<button
 						onClick={handleCopyRefParam}
@@ -88,23 +86,19 @@ export function ReferralCard() {
 
 			<div className="flex flex-col gap-3 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-ink-primary">
 				<div className="flex items-center justify-between">
-					<span className="text-xs text-sub-ink-primary dark:text-ai-primary">Sign-ups</span>
+					<span className="text-xs text-sub-text-primary">Sign-ups</span>
 					{isStatsLoading ? (
 						<div className="h-4 w-8 animate-pulse rounded-sm bg-sub-border-light dark:bg-sub-border-strong" />
 					) : (
-						<span className="text-xs font-medium text-sub-ink-primary dark:text-ai-primary">
-							{stats?.referralsCount ?? 0}
-						</span>
+						<span className="text-xs font-medium text-sub-text-primary">{stats?.referralsCount ?? 0}</span>
 					)}
 				</div>
 				<div className="flex items-center justify-between">
-					<span className="text-xs text-sub-ink-primary dark:text-ai-primary">Paid Subscriptions</span>
+					<span className="text-xs text-sub-text-primary">Paid Subscriptions</span>
 					{isStatsLoading ? (
 						<div className="h-4 w-8 animate-pulse rounded-sm bg-sub-border-light dark:bg-sub-border-strong" />
 					) : (
-						<span className="text-xs font-medium text-sub-ink-primary dark:text-ai-primary">
-							{stats?.paidReferralsCount ?? 0}
-						</span>
+						<span className="text-xs font-medium text-sub-text-primary">{stats?.paidReferralsCount ?? 0}</span>
 					)}
 				</div>
 			</div>

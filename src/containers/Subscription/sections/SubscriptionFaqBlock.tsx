@@ -27,7 +27,7 @@ export function SubscriptionFaqBlock({ faqItems, onStartTrial }: { faqItems: Faq
 
 	return (
 		<div className="mt-16 w-full md:mt-12 md:w-[384px]">
-			<h2 className="text-center text-2xl leading-8 font-semibold text-sub-text-navy-900 md:text-[22px] md:leading-7 md:text-sub-ink-primary dark:text-ai-primary dark:md:text-ai-primary">
+			<h2 className="text-center text-2xl leading-8 font-semibold text-sub-text-navy-900 md:text-[22px] md:leading-7 md:text-sub-text-primary dark:text-sub-text-primary-dark">
 				Frequently Asked Questions
 			</h2>
 			<div className="mt-7 md:mt-9 md:flex md:flex-col md:gap-4">
@@ -49,14 +49,14 @@ export function SubscriptionFaqBlock({ faqItems, onStartTrial }: { faqItems: Faq
 								onClick={() => setExpandedIndex(isExpanded ? null : index)}
 								className="flex w-full items-center justify-between gap-4 text-left"
 							>
-								<p className="text-base leading-6 text-sub-text-navy-900 md:text-[15px] md:leading-5 md:text-sub-ink-primary dark:text-ai-primary dark:md:text-ai-primary">
+								<p className="text-base leading-6 text-sub-text-navy-900 md:text-[15px] md:leading-5 md:text-sub-text-primary dark:text-sub-text-primary-dark">
 									{item.question}
 								</p>
 								<Icon
 									name={isExpanded ? 'x' : 'plus'}
 									height={18}
 									width={18}
-									className="shrink-0 text-sub-text-navy-900 md:text-sub-ink-primary dark:text-ai-primary dark:md:text-ai-primary"
+									className="shrink-0 text-sub-text-navy-900 md:text-sub-text-primary dark:text-sub-text-primary-dark"
 								/>
 							</button>
 							<div

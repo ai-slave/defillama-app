@@ -23,8 +23,8 @@ export function TeamInfoCard() {
 	return (
 		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex items-center gap-2">
-				<Icon name="users" height={28} width={28} className="text-sub-ink-primary dark:text-ai-primary" />
-				<span className="text-base leading-5 font-medium text-sub-ink-primary dark:text-ai-primary">Team</span>
+				<Icon name="users" height={28} width={28} className="text-sub-text-primary" />
+				<span className="text-base leading-5 font-medium text-sub-text-primary">Team</span>
 			</div>
 
 			<div className="flex flex-col gap-3">
@@ -41,7 +41,7 @@ export function TeamInfoCard() {
 									if (e.key === 'Enter') void handleSave()
 									if (e.key === 'Escape') setIsEditing(false)
 								}}
-								className="w-40 rounded-sm border border-sub-border-slate-100 bg-white px-2 py-1 text-xs text-sub-ink-primary focus:border-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark dark:text-ai-primary"
+								className="w-40 rounded-sm border border-sub-border-slate-100 bg-white px-2 py-1 text-xs text-sub-text-primary focus:border-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark"
 								autoFocus
 							/>
 							<button
@@ -57,11 +57,11 @@ export function TeamInfoCard() {
 						</div>
 					) : (
 						<div className="flex items-center gap-2">
-							<span className="shrink-0 text-xs leading-4 text-sub-ink-primary dark:text-ai-primary">{team.name}</span>
+							<span className="shrink-0 text-xs leading-4 text-sub-text-primary">{team.name}</span>
 							{isAdmin && (
 								<button
 									onClick={startEditing}
-									className="text-sub-text-muted transition-colors hover:text-sub-ink-primary dark:hover:text-ai-primary"
+									className="text-sub-text-muted transition-colors hover:text-sub-text-primary"
 								>
 									<Icon name="pencil" height={14} width={14} />
 								</button>
@@ -73,9 +73,7 @@ export function TeamInfoCard() {
 				<div className="flex items-center gap-2">
 					<span className="shrink-0 text-xs leading-4 text-sub-text-muted">Your role</span>
 					<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border-slate-100 dark:border-sub-border-strong" />
-					<span className="shrink-0 text-xs leading-4 text-sub-ink-primary dark:text-ai-primary">
-						{team.isAdmin ? 'Admin' : 'Member'}
-					</span>
+					<span className="shrink-0 text-xs leading-4 text-sub-text-primary">{team.isAdmin ? 'Admin' : 'Member'}</span>
 				</div>
 			</div>
 		</div>

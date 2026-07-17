@@ -10,7 +10,7 @@ export function UserHeader({ displayName, onLogout }: UserHeaderProps) {
 		<div className="flex items-center justify-between">
 			<div className="flex items-center gap-4">
 				<img src="/assets/account_avatar.png" alt="" className="size-12 shrink-0 rounded-full" />
-				<span className="text-sm font-medium text-sub-ink-primary dark:text-ai-primary">{displayName}</span>
+				<span className="text-sm font-medium text-sub-text-primary">{displayName}</span>
 			</div>
 			<button
 				onClick={onLogout}

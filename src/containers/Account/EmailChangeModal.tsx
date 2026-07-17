@@ -55,10 +55,8 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 				<div className="flex flex-col gap-5 px-5 py-6">
 					{/* Header */}
 					<div className="flex items-center justify-between">
-						<h3 className="text-xl leading-7 font-semibold text-sub-ink-primary dark:text-ai-primary">
-							Change Your Email
-						</h3>
-						<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-ink-primary transition-colors dark:text-ai-primary">
+						<h3 className="text-xl leading-7 font-semibold text-sub-text-primary">Change Your Email</h3>
+						<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-primary transition-colors">
 							<Icon name="x" height={24} width={24} />
 						</Ariakit.DialogDismiss>
 					</div>
@@ -68,7 +66,7 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 							<div className="flex items-center rounded-full bg-green-100 p-3 dark:bg-green-900/30">
 								<Icon name="mail-rounded" height={24} width={24} className="text-success" />
 							</div>
-							<p className="text-sm leading-5 text-sub-ink-primary dark:text-ai-primary">
+							<p className="text-sm leading-5 text-sub-text-primary">
 								A confirmation link has been sent to <strong>{email}</strong>. Please check your inbox to confirm the
 								change.
 							</p>
@@ -81,9 +79,7 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 						</div>
 					) : (
 						<form onSubmit={handleSubmit} className="flex flex-col gap-5">
-							<label className="text-sm leading-[21px] text-sub-ink-primary dark:text-ai-primary">
-								Enter your new email:
-							</label>
+							<label className="text-sm leading-[21px] text-sub-text-primary">Enter your new email:</label>
 
 							<div className="flex flex-col gap-2">
 								<input
@@ -95,7 +91,7 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 										if (error) setError('')
 									}}
 									placeholder="your.new.email@example.com"
-									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] text-sub-ink-primary outline-hidden dark:bg-sub-ink-primary dark:text-ai-primary ${
+									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] text-sub-text-primary outline-hidden dark:bg-sub-ink-primary ${
 										hasError
 											? 'border-error'
 											: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'

@@ -24,7 +24,7 @@ export function TrialUpgradeBanner({ onUpgrade, isLoading }: TrialUpgradeBannerP
 						{BENEFITS.map((b) => (
 							<li key={b} className="flex items-start gap-1.5">
 								<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-sub-brand-primary" />
-								<span className="text-xs leading-4 text-sub-ink-primary dark:text-ai-primary">{b}</span>
+								<span className="text-xs leading-4 text-sub-text-primary">{b}</span>
 							</li>
 						))}
 					</ul>

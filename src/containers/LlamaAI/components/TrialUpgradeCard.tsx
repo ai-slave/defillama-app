@@ -63,7 +63,7 @@ export function TrialUpgradeCard({ offer }: { offer: UpgradeOffer }) {
 					</span>
 					{canStartTrial ? (
 						<>
-							<h3 className="text-xl leading-7 font-semibold text-sub-ink-primary sm:text-2xl sm:leading-8 dark:text-ai-primary">
+							<h3 className="text-xl leading-7 font-semibold text-sub-text-primary sm:text-2xl sm:leading-8">
 								Start your 7-day free trial
 							</h3>
 							<p className="text-[13px] leading-5 text-sub-text-secondary dark:text-sub-text-muted-dark">
@@ -89,9 +89,7 @@ export function TrialUpgradeCard({ offer }: { offer: UpgradeOffer }) {
 					{PRO_FEATURES.map((feature) => (
 						<li key={feature} className="flex items-start gap-2">
 							<Icon name="check" height={18} width={18} className="mt-px shrink-0 text-sub-brand-secondary" />
-							<span className="text-[13px] leading-[18px] text-sub-ink-primary dark:text-sub-text-primary-dark">
-								{feature}
-							</span>
+							<span className="text-[13px] leading-[18px] text-sub-text-primary">{feature}</span>
 						</li>
 					))}
 				</ul>

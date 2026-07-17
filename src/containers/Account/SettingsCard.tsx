@@ -34,8 +34,8 @@ export function SettingsCard() {
 	return (
 		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex items-center gap-2">
-				<Icon name="gear-settings" height={28} width={28} className="text-sub-ink-primary dark:text-ai-primary" />
-				<span className="text-base font-medium text-sub-ink-primary dark:text-ai-primary">Settings</span>
+				<Icon name="gear-settings" height={28} width={28} className="text-sub-text-primary" />
+				<span className="text-base font-medium text-sub-text-primary">Settings</span>
 			</div>
 
 			<div className="flex flex-col gap-4">
@@ -60,7 +60,7 @@ export function SettingsCard() {
 
 				<div className="flex flex-col gap-1">
 					<div className="flex items-center justify-between">
-						<span className="text-sm text-sub-ink-primary dark:text-ai-primary">Receive promotional emails</span>
+						<span className="text-sm text-sub-text-primary">Receive promotional emails</span>
 						<ToggleSwitch
 							checked={promoEmailsOn}
 							onClick={handleTogglePromoEmails}

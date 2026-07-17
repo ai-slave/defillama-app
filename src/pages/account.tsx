@@ -102,7 +102,7 @@ export default function Account() {
 								<Icon name="check" height={32} width={32} className="text-sub-brand-primary" />
 							</div>
 							<div className="flex flex-col gap-2 text-center">
-								<h2 className="text-xl font-semibold text-sub-ink-primary dark:text-ai-primary">Payment Successful!</h2>
+								<h2 className="text-xl font-semibold text-sub-text-primary">Payment Successful!</h2>
 								<p className="text-sm text-sub-text-muted">
 									Your subscription has been activated. Welcome to DefiLlama Pro!
 								</p>

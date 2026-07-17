@@ -100,8 +100,8 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 			>
 				<div className="flex flex-col gap-5 bg-white px-5 py-6 dark:bg-sub-surface-dark">
 					<div className="flex items-center justify-between">
-						<h2 className="text-base font-semibold text-sub-ink-primary dark:text-ai-primary">Manage {label} Seats</h2>
-						<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-muted transition-colors hover:text-sub-ink-primary dark:hover:text-ai-primary">
+						<h2 className="text-base font-semibold text-sub-text-primary">Manage {label} Seats</h2>
+						<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-muted transition-colors hover:text-sub-text-primary">
 							<Icon name="x" height={18} width={18} />
 						</Ariakit.DialogDismiss>
 					</div>
@@ -109,7 +109,7 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 					{isCanceling && cancelAt ? (
 						<div className="flex items-start gap-2 rounded-lg border border-error/30 bg-error/5 p-3">
 							<Icon name="alert-triangle" height={14} width={14} className="mt-0.5 shrink-0 text-error" />
-							<p className="text-xs leading-5 text-sub-ink-primary dark:text-ai-primary">
+							<p className="text-xs leading-5 text-sub-text-primary">
 								This subscription is scheduled to cancel on {formatCancelDate(cancelAt)}. Increasing the seat count will
 								resume billing and undo the pending cancellation.
 							</p>
@@ -119,11 +119,11 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 					<div className="flex flex-col gap-2 rounded-lg border border-sub-border-slate-100 p-3 dark:border-sub-border-strong">
 						<div className="flex items-center justify-between text-xs text-sub-text-muted">
 							<span>Current seats</span>
-							<span className="text-sub-ink-primary dark:text-ai-primary">{subscription.seats.seatCount}</span>
+							<span className="text-sub-text-primary">{subscription.seats.seatCount}</span>
 						</div>
 						<div className="flex items-center justify-between text-xs text-sub-text-muted">
 							<span>Occupied</span>
-							<span className="text-sub-ink-primary dark:text-ai-primary">{subscription.seats.occupiedSeats}</span>
+							<span className="text-sub-text-primary">{subscription.seats.occupiedSeats}</span>
 						</div>
 					</div>
 
@@ -145,7 +145,7 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 								<button
 									onClick={() => setSeatCount((c) => Math.max(minSeats, c - 1))}
 									disabled={decrementDisabled}
-									className="flex size-10 items-center justify-center rounded-lg border border-sub-border-slate-100 text-sub-ink-primary disabled:opacity-30 dark:border-sub-border-strong dark:text-ai-primary"
+									className="flex size-10 items-center justify-center rounded-lg border border-sub-border-slate-100 text-sub-text-primary disabled:opacity-30 dark:border-sub-border-strong"
 								>
 									<Icon name="minus" height={16} width={16} />
 								</button>
@@ -160,11 +160,11 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 									const val = parseInt(e.target.value, 10)
 									if (!isNaN(val) && val >= minSeats) setSeatCount(val)
 								}}
-								className="h-10 w-20 rounded-lg border border-sub-border-slate-100 bg-white text-center text-sm text-sub-ink-primary focus:border-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark dark:text-ai-primary"
+								className="h-10 w-20 rounded-lg border border-sub-border-slate-100 bg-white text-center text-sm text-sub-text-primary focus:border-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark"
 							/>
 							<button
 								onClick={() => setSeatCount((c) => c + 1)}
-								className="flex size-10 items-center justify-center rounded-lg border border-sub-border-slate-100 text-sub-ink-primary dark:border-sub-border-strong dark:text-ai-primary"
+								className="flex size-10 items-center justify-center rounded-lg border border-sub-border-slate-100 text-sub-text-primary dark:border-sub-border-strong"
 							>
 								<Icon name="plus" height={16} width={16} />
 							</button>
@@ -179,14 +179,14 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 										? `Adding ${diff} seat${diff === 1 ? '' : 's'}`
 										: `Removing ${-diff} seat${-diff === 1 ? '' : 's'}`}
 								</span>
-								<span className="text-sm font-semibold text-sub-ink-primary dark:text-ai-primary">
+								<span className="text-sm font-semibold text-sub-text-primary">
 									{diff > 0 ? '+' : '−'}${(unitPrice.amount * Math.abs(diff)).toLocaleString()}
 									{unitPrice.suffix}
 								</span>
 							</div>
 							<div className="flex items-center justify-between border-t border-sub-border-slate-100 pt-2 dark:border-sub-border-strong">
 								<span className="text-sm text-sub-text-muted">Bill after update</span>
-								<span className="text-sm font-semibold text-sub-ink-primary dark:text-ai-primary">
+								<span className="text-sm font-semibold text-sub-text-primary">
 									{`$${(unitPrice.amount * seatCount).toLocaleString()}${unitPrice.suffix}`}
 								</span>
 							</div>
@@ -196,7 +196,7 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 					{diff < 0 && (
 						<div className="flex items-start gap-2 rounded-lg border border-error/30 bg-error/5 p-3">
 							<Icon name="alert-triangle" height={14} width={14} className="mt-0.5 shrink-0 text-error" />
-							<p className="text-xs leading-5 text-sub-ink-primary dark:text-ai-primary">
+							<p className="text-xs leading-5 text-sub-text-primary">
 								Seats will be removed immediately and the payment for the current billing period will not be refunded.
 							</p>
 						</div>

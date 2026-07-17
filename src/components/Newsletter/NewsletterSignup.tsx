@@ -188,8 +188,8 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 	return (
 		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex items-center gap-2">
-				<Icon name="mail-rounded" height={28} width={28} className="text-sub-ink-primary dark:text-ai-primary" />
-				<span className="text-base font-medium text-sub-ink-primary dark:text-ai-primary">Newsletters</span>
+				<Icon name="mail-rounded" height={28} width={28} className="text-sub-text-primary" />
+				<span className="text-base font-medium text-sub-text-primary">Newsletters</span>
 			</div>
 
 			{succeeded ? (
@@ -204,7 +204,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 							value={email}
 							onChange={onEmailChange}
 							placeholder="you@example.com"
-							className="rounded-lg border border-sub-border-slate-100 bg-surface-elevated-1 px-3 py-2 text-sm text-sub-ink-primary outline-hidden focus-visible:border-sub-brand-primary dark:border-sub-border-strong dark:text-ai-primary"
+							className="rounded-lg border border-sub-border-slate-100 bg-surface-elevated-1 px-3 py-2 text-sm text-sub-text-primary outline-hidden focus-visible:border-sub-brand-primary dark:border-sub-border-strong"
 						/>
 					</label>
 
@@ -212,7 +212,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 						{NEWSLETTERS.map(({ key, label, description }) => (
 							<div key={key} className="flex flex-col gap-1">
 								<div className="flex items-center justify-between gap-4">
-									<span className="text-sm text-sub-ink-primary dark:text-ai-primary">{label}</span>
+									<span className="text-sm text-sub-text-primary">{label}</span>
 									<ToggleSwitch
 										checked={selected[key]}
 										onClick={() => toggle(key)}
@@ -278,7 +278,7 @@ function NewsletterSuccess({
 				<Icon name="check-circle" height={28} width={28} className="text-sub-brand-primary" />
 			</div>
 			<div className="flex flex-col gap-1">
-				<span className="text-base font-medium text-sub-ink-primary dark:text-ai-primary">You are subscribed</span>
+				<span className="text-base font-medium text-sub-text-primary">You are subscribed</span>
 				<p className="max-w-[360px] text-xs leading-4 text-sub-text-muted">
 					<span className="font-medium">{email}</span> is subscribed to the selected newsletters.
 				</p>

@@ -29,7 +29,7 @@ export function MemberRow({ member }: { member: TeamMember }) {
 			<div className="flex items-center gap-3 rounded-lg border border-sub-border-slate-100 p-3 dark:border-sub-border-strong">
 				<div className="min-w-0 flex-1">
 					<div className="flex items-center gap-2">
-						<span className="truncate text-sm text-sub-ink-primary dark:text-ai-primary">{member.email}</span>
+						<span className="truncate text-sm text-sub-text-primary">{member.email}</span>
 						{isAdminMember && (
 							<span className="shrink-0 rounded-full bg-sub-brand-primary/10 px-2 py-0.5 text-[10px] font-medium text-sub-brand-primary">
 								Admin
@@ -54,7 +54,7 @@ export function MemberRow({ member }: { member: TeamMember }) {
 							hasAvailableSeats && (
 								<button
 									onClick={() => setShowAssignModal(true)}
-									className="flex h-7 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-xs font-medium text-sub-ink-primary transition-colors hover:bg-sub-brand-primary/5 dark:border-sub-border-strong dark:text-ai-primary"
+									className="flex h-7 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-xs font-medium text-sub-text-primary transition-colors hover:bg-sub-brand-primary/5 dark:border-sub-border-strong"
 									title="Assign subscription"
 								>
 									<Icon name="plus" height={12} width={12} />

@@ -29,8 +29,8 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 			>
 				<div className="flex flex-col gap-5 bg-white px-5 py-6 dark:bg-sub-surface-dark">
 					<div className="flex items-center justify-between">
-						<h2 className="text-base font-semibold text-sub-ink-primary dark:text-ai-primary">Invite Member</h2>
-						<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-muted transition-colors hover:text-sub-ink-primary dark:hover:text-ai-primary">
+						<h2 className="text-base font-semibold text-sub-text-primary">Invite Member</h2>
+						<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-muted transition-colors hover:text-sub-text-primary">
 							<Icon name="x" height={18} width={18} />
 						</Ariakit.DialogDismiss>
 					</div>
@@ -55,7 +55,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 								onKeyDown={(e) => {
 									if (e.key === 'Enter') void handleInvite()
 								}}
-								className="w-full rounded-lg border border-sub-border-slate-100 bg-white py-2 pr-3 pl-9 text-sm text-sub-ink-primary placeholder:text-sub-text-muted focus:border-sub-brand-primary focus:ring-1 focus:ring-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark dark:text-ai-primary"
+								className="w-full rounded-lg border border-sub-border-slate-100 bg-white py-2 pr-3 pl-9 text-sm text-sub-text-primary placeholder:text-sub-text-muted focus:border-sub-brand-primary focus:ring-1 focus:ring-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark"
 								autoFocus
 							/>
 						</div>
@@ -63,7 +63,7 @@ export function InviteMemberModal({ isOpen, onClose }: InviteMemberModalProps) {
 					<div className="flex gap-3">
 						<button
 							onClick={onClose}
-							className="flex h-9 flex-1 items-center justify-center rounded-lg border border-sub-border-muted text-sm font-medium text-sub-ink-primary dark:border-sub-border-strong dark:text-ai-primary"
+							className="flex h-9 flex-1 items-center justify-center rounded-lg border border-sub-border-muted text-sm font-medium text-sub-text-primary dark:border-sub-border-strong"
 						>
 							Cancel
 						</button>

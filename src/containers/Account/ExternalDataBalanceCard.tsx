@@ -44,10 +44,8 @@ export function ExternalDataBalanceCard({
 			{/* Header */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
-					<Icon name="box" height={28} width={28} className="text-sub-ink-primary dark:text-ai-primary" />
-					<span className="text-base leading-5 font-medium text-sub-ink-primary dark:text-ai-primary">
-						External Data Balance
-					</span>
+					<Icon name="box" height={28} width={28} className="text-sub-text-primary" />
+					<span className="text-base leading-5 font-medium text-sub-text-primary">External Data Balance</span>
 				</div>
 				<button
 					onClick={onTopUp}
@@ -69,7 +67,7 @@ export function ExternalDataBalanceCard({
 				<div className="flex flex-col gap-2">
 					<div className="flex items-center justify-between">
 						<span className="text-xs text-sub-text-muted">Free This Month</span>
-						<span className="text-xs text-sub-ink-primary dark:text-ai-primary">
+						<span className="text-xs text-sub-text-primary">
 							{formatUsd(freeRemaining)} <span className="text-sub-text-muted">/ {formatUsd(freeLimit)}</span>
 						</span>
 					</div>
@@ -88,18 +86,14 @@ export function ExternalDataBalanceCard({
 				{/* Topped Up */}
 				<div className="flex items-center justify-between">
 					<span className="text-xs text-sub-text-muted">Topped Up</span>
-					<span className="text-xs font-medium text-sub-ink-primary dark:text-ai-primary">
-						{formatUsd(toppedUpBalance)}
-					</span>
+					<span className="text-xs font-medium text-sub-text-primary">{formatUsd(toppedUpBalance)}</span>
 				</div>
 			</div>
 
 			{/* Total */}
 			<div className="flex items-center justify-between">
 				<span className="text-sm text-sub-text-muted">Total Available</span>
-				<span
-					className={`text-sm font-semibold ${isLowBalance ? 'text-sub-orange-400' : 'text-sub-ink-primary dark:text-ai-primary'}`}
-				>
+				<span className={`text-sm font-semibold ${isLowBalance ? 'text-sub-orange-400' : 'text-sub-text-primary'}`}>
 					${totalAvailable.toFixed(2)}
 				</span>
 			</div>

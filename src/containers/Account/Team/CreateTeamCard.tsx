@@ -20,7 +20,7 @@ export function CreateTeamCard() {
 				<Icon name="users" height={32} width={32} className="text-sub-brand-primary" />
 			</div>
 			<div className="flex flex-col gap-2">
-				<h2 className="text-lg font-semibold text-sub-ink-primary dark:text-ai-primary">Team Management</h2>
+				<h2 className="text-lg font-semibold text-sub-text-primary">Team Management</h2>
 				<p className="max-w-sm text-sm text-sub-text-muted">
 					Create a team to manage subscriptions for your organization. Purchase seats and invite members.
 				</p>
@@ -36,7 +36,7 @@ export function CreateTeamCard() {
 						onKeyDown={(e) => {
 							if (e.key === 'Enter') void handleCreate()
 						}}
-						className="w-full rounded-lg border border-sub-border-slate-100 bg-white px-3 py-2 text-sm text-sub-ink-primary placeholder:text-sub-text-muted focus:border-sub-brand-primary focus:ring-1 focus:ring-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark dark:text-ai-primary"
+						className="w-full rounded-lg border border-sub-border-slate-100 bg-white px-3 py-2 text-sm text-sub-text-primary placeholder:text-sub-text-muted focus:border-sub-brand-primary focus:ring-1 focus:ring-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark"
 						autoFocus
 					/>
 					<div className="flex gap-2">
@@ -52,7 +52,7 @@ export function CreateTeamCard() {
 								setIsCreating(false)
 								setTeamName('')
 							}}
-							className="flex h-9 flex-1 items-center justify-center rounded-lg border border-sub-border-muted text-sm font-medium text-sub-ink-primary dark:border-sub-border-strong dark:text-ai-primary"
+							className="flex h-9 flex-1 items-center justify-center rounded-lg border border-sub-border-muted text-sm font-medium text-sub-text-primary dark:border-sub-border-strong"
 						>
 							Cancel
 						</button>

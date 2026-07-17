@@ -43,7 +43,7 @@ function InviteRow({ invite }: { invite: TeamInvite }) {
 		<>
 			<div className="flex items-center gap-3 rounded-lg border border-sub-border-slate-100 p-3 dark:border-sub-border-strong">
 				<div className="min-w-0 flex-1">
-					<span className="truncate text-sm text-sub-ink-primary dark:text-ai-primary">{invite.email}</span>
+					<span className="truncate text-sm text-sub-text-primary">{invite.email}</span>
 					<div className="mt-1 flex items-center gap-2">
 						<span className={`text-xs ${isExpired ? 'text-error' : 'text-sub-text-muted'}`}>
 							{isExpired ? 'Expired' : `Expires ${formatDate(invite.expiresAt)}`}
@@ -93,10 +93,8 @@ export function TeamInvitesCard() {
 		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
-					<Icon name="mail" height={20} width={20} className="text-sub-ink-primary dark:text-ai-primary" />
-					<span className="text-base leading-5 font-medium text-sub-ink-primary dark:text-ai-primary">
-						Pending Invites
-					</span>
+					<Icon name="mail" height={20} width={20} className="text-sub-text-primary" />
+					<span className="text-base leading-5 font-medium text-sub-text-primary">Pending Invites</span>
 				</div>
 				<button
 					onClick={() => setShowInviteModal(true)}

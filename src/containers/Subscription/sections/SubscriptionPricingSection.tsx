@@ -37,7 +37,7 @@ export function SubscriptionPricingSection({
 					<span className="hidden text-2xl font-bold text-on-brand md:text-xl dark:inline">DefiLlama</span>
 				</div>
 				<div className="flex w-full flex-col items-center gap-7">
-					<h1 className="text-4xl leading-[44px] font-semibold text-sub-ink-primary md:text-[40px] md:leading-[50px] dark:text-sub-text-primary-dark">
+					<h1 className="text-4xl leading-[44px] font-semibold text-sub-text-primary md:text-[40px] md:leading-[50px]">
 						The Smartest Way to Navigate <br className="hidden md:inline" />
 						Onchain Data
 					</h1>
@@ -66,7 +66,7 @@ export function SubscriptionPricingSection({
 						className={`relative z-10 h-14 flex-1 rounded-full text-base leading-5 font-medium transition-colors duration-300 md:h-12 md:text-sm ${
 							isMonthly
 								? 'text-on-brand'
-								: 'text-sub-text-navy-700 md:text-sub-ink-primary dark:text-ai-primary dark:md:text-ai-primary'
+								: 'text-sub-text-navy-700 md:text-sub-text-primary dark:text-sub-text-primary-dark'
 						}`}
 					>
 						Monthly
@@ -78,7 +78,7 @@ export function SubscriptionPricingSection({
 						className={`relative z-10 flex h-14 flex-1 flex-col items-center justify-center rounded-full text-base leading-5 font-medium transition-colors duration-300 md:h-12 md:text-sm ${
 							isYearly
 								? 'text-on-brand'
-								: 'text-sub-text-navy-700 md:text-sub-ink-primary dark:text-ai-primary dark:md:text-ai-primary'
+								: 'text-sub-text-navy-700 md:text-sub-text-primary dark:text-sub-text-primary-dark'
 						}`}
 					>
 						<span>Yearly</span>

@@ -81,9 +81,7 @@ function InfoRow({ label, value, valueClassName }: { label: string; value: strin
 		<div className="flex items-center gap-2">
 			<span className="shrink-0 text-xs leading-4 text-sub-text-muted">{label}</span>
 			<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border-slate-100 dark:border-sub-border-strong" />
-			<span className={`shrink-0 text-xs leading-4 ${valueClassName || 'text-sub-ink-primary dark:text-ai-primary'}`}>
-				{value}
-			</span>
+			<span className={`shrink-0 text-xs leading-4 ${valueClassName || 'text-sub-text-primary'}`}>{value}</span>
 		</div>
 	)
 }
@@ -121,7 +119,7 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 		<div className="flex flex-col gap-3 rounded-lg border border-sub-border-slate-100 p-3 dark:border-sub-border-strong">
 			<div className="flex items-center justify-between gap-2">
 				<div className="flex flex-col">
-					<span className="text-sm font-medium text-sub-ink-primary dark:text-ai-primary">
+					<span className="text-sm font-medium text-sub-text-primary">
 						{label} — {subscription.billingInterval === 'year' ? 'Yearly' : 'Monthly'}
 					</span>
 					<span className="text-xs text-sub-text-muted">
@@ -131,14 +129,14 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 					</span>
 				</div>
 				<div className="flex items-center gap-2">
-					<span className="text-sm font-semibold text-sub-ink-primary dark:text-ai-primary">
+					<span className="text-sm font-semibold text-sub-text-primary">
 						{`$${total.toLocaleString()}${intervalSuffix}`}
 					</span>
 					{isMonthly && active && !isCanceling && (
 						<button
 							onClick={() => setShowUpgradeConfirm(true)}
 							disabled={upgradePending}
-							className="flex h-7 items-center gap-1.5 rounded-lg border border-sub-border-slate-100 px-2.5 text-xs font-medium text-sub-ink-primary hover:bg-sub-brand-primary/5 disabled:opacity-50 dark:border-sub-border-strong dark:text-ai-primary"
+							className="flex h-7 items-center gap-1.5 rounded-lg border border-sub-border-slate-100 px-2.5 text-xs font-medium text-sub-text-primary hover:bg-sub-brand-primary/5 disabled:opacity-50 dark:border-sub-border-strong"
 						>
 							<Icon name="sparkles" height={12} width={12} />
 							Upgrade to Yearly
@@ -147,7 +145,7 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 					<button
 						onClick={() => setShowManageModal(true)}
 						disabled={upgradePending}
-						className="flex h-7 items-center gap-1.5 rounded-lg border border-sub-border-slate-100 px-2.5 text-xs font-medium text-sub-ink-primary hover:bg-sub-brand-primary/5 disabled:opacity-50 dark:border-sub-border-strong dark:text-ai-primary"
+						className="flex h-7 items-center gap-1.5 rounded-lg border border-sub-border-slate-100 px-2.5 text-xs font-medium text-sub-text-primary hover:bg-sub-brand-primary/5 disabled:opacity-50 dark:border-sub-border-strong"
 					>
 						<Icon name="settings" height={12} width={12} />
 						Manage
@@ -219,8 +217,8 @@ function BillingTotals({ subscriptions }: { subscriptions: TeamSubscription[] })
 		<div className="flex flex-col gap-1.5 rounded-lg bg-sub-brand-primary/5 p-3">
 			{rows.map((row, i) => (
 				<div key={i} className="flex items-center justify-between gap-2">
-					<span className="text-sm font-medium text-sub-ink-primary dark:text-ai-primary">{row.label}</span>
-					<span className="text-sm font-semibold text-sub-ink-primary dark:text-ai-primary">{row.value}</span>
+					<span className="text-sm font-medium text-sub-text-primary">{row.label}</span>
+					<span className="text-sm font-semibold text-sub-text-primary">{row.value}</span>
 				</div>
 			))}
 		</div>
@@ -258,17 +256,15 @@ export function TeamSeatsCard() {
 		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex items-center gap-2">
-					<Icon name="receipt" height={20} width={20} className="text-sub-ink-primary dark:text-ai-primary" />
-					<span className="text-base leading-5 font-medium text-sub-ink-primary dark:text-ai-primary">
-						Subscriptions & Billing
-					</span>
+					<Icon name="receipt" height={20} width={20} className="text-sub-text-primary" />
+					<span className="text-base leading-5 font-medium text-sub-text-primary">Subscriptions & Billing</span>
 				</div>
 				<div className="flex items-center gap-2">
 					{teamSubscriptions.length > 0 && hasStripe && (
 						<button
 							onClick={() => void createPortalSession()}
 							disabled={isPortalSessionLoading}
-							className="flex h-8 items-center gap-1.5 rounded-lg border border-sub-border-slate-100 px-3 text-xs font-medium text-sub-ink-primary hover:bg-sub-brand-primary/5 disabled:opacity-50 dark:border-sub-border-strong dark:text-ai-primary"
+							className="flex h-8 items-center gap-1.5 rounded-lg border border-sub-border-slate-100 px-3 text-xs font-medium text-sub-text-primary hover:bg-sub-brand-primary/5 disabled:opacity-50 dark:border-sub-border-strong"
 						>
 							<Icon name="external-link" height={12} width={12} />
 							{isPortalSessionLoading ? 'Opening...' : 'Manage in Stripe'}

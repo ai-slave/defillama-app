@@ -105,7 +105,7 @@ function YearlyUpgradeBanner({ onUpgrade, planType = 'pro' }: { onUpgrade: () =>
 					<p className="bg-linear-to-r from-sub-brand-primary to-sub-brand-soft bg-clip-text text-lg leading-[22px] font-semibold text-transparent dark:from-sub-brand-secondary dark:to-sub-brand-softest dark:to-[64%]">
 						Save {savings} with annual billing
 					</p>
-					<p className="text-xs leading-4 text-sub-ink-primary dark:text-ai-primary">
+					<p className="text-xs leading-4 text-sub-text-primary">
 						Switch to yearly and get 12 months of {subscriptionLabel} for the price of 10.
 					</p>
 				</div>
@@ -128,7 +128,7 @@ function FreeUpgradeBanner() {
 					<p className="bg-linear-to-r from-sub-brand-primary to-sub-brand-soft bg-clip-text text-lg leading-[22px] font-semibold text-transparent dark:from-sub-brand-secondary dark:to-sub-brand-softest dark:to-77%">
 						Unlock the full power of DefiLlama
 					</p>
-					<p className="text-xs leading-4 text-sub-ink-primary dark:text-ai-primary">
+					<p className="text-xs leading-4 text-sub-text-primary">
 						Upgrade to Pro for advanced analytics tools, or get the API plan to power your own applications.
 					</p>
 				</div>
@@ -212,7 +212,7 @@ function PastDueSubscriptionCard({
 				<button
 					onClick={onCancel}
 					disabled={isCancelLoading}
-					className="flex h-9 items-center rounded-lg border border-sub-border-muted px-3 text-sm font-medium whitespace-nowrap text-sub-ink-primary disabled:opacity-50 dark:border-sub-border-strong dark:text-ai-primary"
+					className="flex h-9 items-center rounded-lg border border-sub-border-muted px-3 text-sm font-medium whitespace-nowrap text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
 				>
 					{isCancelLoading ? 'Cancelling...' : 'Cancel Subscription'}
 				</button>
@@ -253,23 +253,19 @@ function TeamSubscriptionBanner({ teamName, subscriptionType }: { teamName: stri
 	return (
 		<div className="flex flex-col gap-3 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex items-center gap-2">
-				<Icon name="users" height={20} width={20} className="text-sub-ink-primary dark:text-ai-primary" />
-				<span className="text-sm font-medium text-sub-ink-primary dark:text-ai-primary">Team Subscription</span>
+				<Icon name="users" height={20} width={20} className="text-sub-text-primary" />
+				<span className="text-sm font-medium text-sub-text-primary">Team Subscription</span>
 			</div>
 			{hasAssigned ? (
 				<p className="text-sm text-sub-text-muted">
-					Your{' '}
-					<span className="font-medium text-sub-ink-primary dark:text-ai-primary">
-						{getTeamSubLabel(subscriptionType)}
-					</span>{' '}
-					subscription is managed by{' '}
-					<span className="font-medium text-sub-ink-primary dark:text-ai-primary">{teamName}</span>. Billing and seat
-					changes are handled by your team admin.
+					Your <span className="font-medium text-sub-text-primary">{getTeamSubLabel(subscriptionType)}</span>{' '}
+					subscription is managed by <span className="font-medium text-sub-text-primary">{teamName}</span>. Billing and
+					seat changes are handled by your team admin.
 				</p>
 			) : (
 				<p className="text-sm text-sub-text-muted">
-					You're a member of <span className="font-medium text-sub-ink-primary dark:text-ai-primary">{teamName}</span>.
-					Contact your team admin to be assigned a subscription.
+					You're a member of <span className="font-medium text-sub-text-primary">{teamName}</span>. Contact your team
+					admin to be assigned a subscription.
 				</p>
 			)}
 		</div>

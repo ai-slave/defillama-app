@@ -229,16 +229,16 @@ export function ApiUsageBreakdown({ usageStats, isLoading, isError }: ApiUsageBr
 			{/* Header */}
 			<div className="flex items-start justify-between gap-4">
 				<div className="flex flex-col gap-1">
-					<span className="text-sm text-sub-ink-primary dark:text-ai-primary">API Usage Breakdown</span>
+					<span className="text-sm text-sub-text-primary">API Usage Breakdown</span>
 					<span className="text-xs text-sub-text-muted">Last {windowDays} days</span>
 				</div>
 				<div className="flex items-center gap-6">
 					<div className="flex flex-col items-end">
-						<span className="text-sm font-semibold text-sub-ink-primary dark:text-ai-primary">{totalLabel}</span>
+						<span className="text-sm font-semibold text-sub-text-primary">{totalLabel}</span>
 						<span className="text-[10px] text-sub-text-muted">Total Requests</span>
 					</div>
 					<div className="flex flex-col items-end">
-						<span className="text-sm font-semibold text-sub-ink-primary dark:text-ai-primary">{avgLabel}</span>
+						<span className="text-sm font-semibold text-sub-text-primary">{avgLabel}</span>
 						<span className="text-[10px] text-sub-text-muted">Ave/Day</span>
 					</div>
 				</div>

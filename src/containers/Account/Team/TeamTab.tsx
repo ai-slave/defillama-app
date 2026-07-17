@@ -39,7 +39,7 @@ export function TeamTab() {
 					<Icon name="alert-triangle" height={32} width={32} className="text-error" />
 				</div>
 				<div className="flex flex-col gap-2 text-center">
-					<h2 className="text-lg font-semibold text-sub-ink-primary dark:text-ai-primary">Unable to Accept Invite</h2>
+					<h2 className="text-lg font-semibold text-sub-text-primary">Unable to Accept Invite</h2>
 					<p className="text-sm text-sub-text-muted">
 						{inviteAcceptance.error?.message ||
 							'Something went wrong. The invite may have expired or already been used.'}

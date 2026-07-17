@@ -8,10 +8,8 @@ export function TeamMembersCard() {
 	return (
 		<div className="flex flex-col gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex items-center gap-2">
-				<Icon name="users" height={20} width={20} className="text-sub-ink-primary dark:text-ai-primary" />
-				<span className="text-base leading-5 font-medium text-sub-ink-primary dark:text-ai-primary">
-					Members ({members.length})
-				</span>
+				<Icon name="users" height={20} width={20} className="text-sub-text-primary" />
+				<span className="text-base leading-5 font-medium text-sub-text-primary">Members ({members.length})</span>
 			</div>
 
 			{members.length === 0 ? (

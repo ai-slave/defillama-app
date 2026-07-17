@@ -73,10 +73,10 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 			>
 				<div className="flex flex-col gap-5 bg-white px-5 py-6 dark:bg-sub-surface-dark">
 					<div className="flex items-center justify-between">
-						<h2 className="text-base font-semibold text-sub-ink-primary dark:text-ai-primary">
+						<h2 className="text-base font-semibold text-sub-text-primary">
 							{checkoutClientSecret ? 'Complete Payment' : 'Purchase Seats'}
 						</h2>
-						<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-muted transition-colors hover:text-sub-ink-primary dark:hover:text-ai-primary">
+						<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-muted transition-colors hover:text-sub-text-primary">
 							<Icon name="x" height={18} width={18} />
 						</Ariakit.DialogDismiss>
 					</div>
@@ -107,7 +107,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 										className={`flex h-10 flex-1 items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
 											subscriptionType === 'llamafeed'
 												? 'border-sub-brand-primary bg-sub-brand-primary/5 text-sub-brand-primary'
-												: 'border-sub-border-slate-100 text-sub-ink-primary dark:border-sub-border-strong dark:text-ai-primary'
+												: 'border-sub-border-slate-100 text-sub-text-primary dark:border-sub-border-strong'
 										}`}
 									>
 										Pro
@@ -117,7 +117,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 										className={`flex h-10 flex-1 items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
 											subscriptionType === 'api'
 												? 'border-sub-brand-primary bg-sub-brand-primary/5 text-sub-brand-primary'
-												: 'border-sub-border-slate-100 text-sub-ink-primary dark:border-sub-border-strong dark:text-ai-primary'
+												: 'border-sub-border-slate-100 text-sub-text-primary dark:border-sub-border-strong'
 										}`}
 									>
 										API
@@ -144,7 +144,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 											className={`flex h-10 w-full flex-1 items-center justify-center rounded-lg border text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
 												billingInterval === 'month'
 													? 'border-sub-brand-primary bg-sub-brand-primary/5 text-sub-brand-primary'
-													: 'border-sub-border-slate-100 text-sub-ink-primary dark:border-sub-border-strong dark:text-ai-primary'
+													: 'border-sub-border-slate-100 text-sub-text-primary dark:border-sub-border-strong'
 											}`}
 										>
 											Monthly
@@ -165,7 +165,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 											className={`flex h-10 w-full flex-1 items-center justify-center rounded-lg border text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
 												billingInterval === 'year'
 													? 'border-sub-brand-primary bg-sub-brand-primary/5 text-sub-brand-primary'
-													: 'border-sub-border-slate-100 text-sub-ink-primary dark:border-sub-border-strong dark:text-ai-primary'
+													: 'border-sub-border-slate-100 text-sub-text-primary dark:border-sub-border-strong'
 											}`}
 										>
 											Yearly
@@ -183,7 +183,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 									<button
 										onClick={() => setSeatCount((c) => Math.max(1, c - 1))}
 										disabled={seatCount <= 1}
-										className="flex size-10 items-center justify-center rounded-lg border border-sub-border-slate-100 text-sub-ink-primary disabled:opacity-30 dark:border-sub-border-strong dark:text-ai-primary"
+										className="flex size-10 items-center justify-center rounded-lg border border-sub-border-slate-100 text-sub-text-primary disabled:opacity-30 dark:border-sub-border-strong"
 									>
 										<Icon name="minus" height={16} width={16} />
 									</button>
@@ -197,11 +197,11 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 											const val = parseInt(e.target.value, 10)
 											if (!isNaN(val) && val >= 1) setSeatCount(val)
 										}}
-										className="h-10 w-20 rounded-lg border border-sub-border-slate-100 bg-white text-center text-sm text-sub-ink-primary focus:border-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark dark:text-ai-primary"
+										className="h-10 w-20 rounded-lg border border-sub-border-slate-100 bg-white text-center text-sm text-sub-text-primary focus:border-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark"
 									/>
 									<button
 										onClick={() => setSeatCount((c) => c + 1)}
-										className="flex size-10 items-center justify-center rounded-lg border border-sub-border-slate-100 text-sub-ink-primary dark:border-sub-border-strong dark:text-ai-primary"
+										className="flex size-10 items-center justify-center rounded-lg border border-sub-border-slate-100 text-sub-text-primary dark:border-sub-border-strong"
 									>
 										<Icon name="plus" height={16} width={16} />
 									</button>
@@ -212,7 +212,7 @@ export function PurchaseSeatsModal({ isOpen, onClose }: PurchaseSeatsModalProps)
 							<div className="rounded-lg bg-sub-brand-primary/5 p-3">
 								<div className="flex items-center justify-between">
 									<span className="text-sm text-sub-text-muted">Estimated total</span>
-									<span className="text-sm font-semibold text-sub-ink-primary dark:text-ai-primary">
+									<span className="text-sm font-semibold text-sub-text-primary">
 										{subscriptionType === 'api'
 											? billingInterval === 'year'
 												? `$${(3000 * seatCount).toLocaleString()}/year`

@@ -51,7 +51,7 @@ export function ManageAccount() {
 			<div className="flex flex-col items-center gap-6 py-16">
 				<img src="/assets/account_avatar.png" alt="" className="size-16 rounded-full" />
 				<div className="flex flex-col gap-2 text-center">
-					<h2 className="text-xl font-semibold text-sub-ink-primary dark:text-ai-primary">Account Access Required</h2>
+					<h2 className="text-xl font-semibold text-sub-text-primary">Account Access Required</h2>
 					<p className="max-w-md text-sm text-sub-text-muted">
 						Please sign in to view and manage your account information and subscription details.
 					</p>
@@ -68,7 +68,7 @@ export function ManageAccount() {
 
 	return (
 		<div className="flex flex-col gap-8">
-			<h1 className="text-xl font-semibold text-sub-ink-primary dark:text-ai-primary">Manage Account</h1>
+			<h1 className="text-xl font-semibold text-sub-text-primary">Manage Account</h1>
 			<UserHeader displayName={displayName} onLogout={logout} />
 
 			<Ariakit.TabProvider store={tabStore}>
@@ -78,7 +78,7 @@ export function ManageAccount() {
 						className={`pb-2.5 text-sm font-semibold transition-colors ${
 							selectedTabId === 'account'
 								? 'border-b-2 border-sub-brand-primary text-sub-brand-primary'
-								: 'text-sub-text-muted hover:text-sub-ink-primary dark:hover:text-ai-primary'
+								: 'text-sub-text-muted hover:text-sub-text-primary'
 						}`}
 					>
 						Account
@@ -88,7 +88,7 @@ export function ManageAccount() {
 						className={`pb-2.5 text-sm font-semibold transition-colors ${
 							selectedTabId === 'team'
 								? 'border-b-2 border-sub-brand-primary text-sub-brand-primary'
-								: 'text-sub-text-muted hover:text-sub-ink-primary dark:hover:text-ai-primary'
+								: 'text-sub-text-muted hover:text-sub-text-primary'
 						}`}
 					>
 						Team
@@ -98,7 +98,7 @@ export function ManageAccount() {
 						className={`pb-2.5 text-sm font-semibold transition-colors ${
 							selectedTabId === 'profile'
 								? 'border-b-2 border-sub-brand-primary text-sub-brand-primary'
-								: 'text-sub-text-muted hover:text-sub-ink-primary dark:hover:text-ai-primary'
+								: 'text-sub-text-muted hover:text-sub-text-primary'
 						}`}
 					>
 						Profile

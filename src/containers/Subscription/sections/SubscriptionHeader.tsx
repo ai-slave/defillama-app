@@ -51,14 +51,14 @@ export function SubscriptionHeader() {
 					<AuthActions
 						skeletonClassName="h-10 w-[88px]"
 						signInClassName="h-10 rounded-lg bg-sub-brand-primary px-4 text-sm leading-[17px] font-medium text-on-brand"
-						accountClassName="text-sm text-sub-ink-primary dark:text-ai-primary"
+						accountClassName="text-sm text-sub-text-primary"
 					/>
 				</div>
 			</header>
 
 			{/* Desktop */}
 			<header className="relative z-20 hidden h-12 items-center justify-between bg-sub-overlay-light px-10.5 backdrop-blur-[12px] md:flex dark:bg-sub-overlay-dark">
-				<BasicLink href="/" className="flex items-center gap-2 text-xs text-sub-ink-primary dark:text-ai-primary">
+				<BasicLink href="/" className="flex items-center gap-2 text-xs text-sub-text-primary">
 					<Icon name="chevron-left" height={16} width={16} />
 					Back
 				</BasicLink>
@@ -67,7 +67,7 @@ export function SubscriptionHeader() {
 					<AuthActions
 						skeletonClassName="h-8 w-[72px]"
 						signInClassName="h-8 rounded-lg bg-sub-brand-primary px-3 text-xs text-on-brand"
-						accountClassName="text-xs text-sub-ink-primary dark:text-ai-primary"
+						accountClassName="text-xs text-sub-text-primary"
 					/>
 				</div>
 			</header>

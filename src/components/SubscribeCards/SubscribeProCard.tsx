@@ -37,12 +37,12 @@ export function SubscribeProModal({ dialogStore }: SubscribeProModalProps) {
 		<WalletProvider>
 			<Ariakit.DialogProvider store={dialogStore}>
 				<Ariakit.Dialog
-					className="dialog flex max-h-[85dvh] max-w-md flex-col overflow-hidden rounded-xl border border-sub-border-slate-100 bg-white p-4 text-sub-ink-primary shadow-2xl max-sm:drawer max-sm:rounded-b-none sm:p-6 dark:border-sub-border-strong dark:bg-sub-surface-dark dark:text-ai-primary"
+					className="dialog flex max-h-[85dvh] max-w-md flex-col overflow-hidden rounded-xl border border-sub-border-slate-100 bg-white p-4 text-sub-text-primary shadow-2xl max-sm:drawer max-sm:rounded-b-none sm:p-6 dark:border-sub-border-strong dark:bg-sub-surface-dark"
 					portal
 					unmountOnHide
 				>
 					<span className="mx-auto flex h-full w-full max-w-[440px] flex-col overflow-hidden">
-						<Ariakit.DialogDismiss className="ml-auto shrink-0 rounded-full p-1.5 text-sub-text-muted transition-colors hover:bg-sub-surface-slate-50 hover:text-sub-ink-primary dark:text-sub-text-muted-dark dark:hover:bg-sub-surface-elevated-2 dark:hover:text-ai-primary">
+						<Ariakit.DialogDismiss className="ml-auto shrink-0 rounded-full p-1.5 text-sub-text-muted transition-colors hover:bg-sub-surface-slate-50 hover:text-sub-text-primary dark:text-sub-text-muted-dark dark:hover:bg-sub-surface-elevated-2">
 							<Icon name="x" height={18} width={18} />
 							<span className="sr-only">Close</span>
 						</Ariakit.DialogDismiss>
@@ -61,7 +61,7 @@ export function SubscribeProModal({ dialogStore }: SubscribeProModalProps) {
 							{!isAuthenticated ? (
 								<button
 									type="button"
-									className="mx-auto w-full flex-1 rounded-lg border border-sub-border-slate-100 py-2 text-center font-medium text-sub-text-secondary transition-colors hover:bg-sub-surface-slate-50 hover:text-sub-ink-primary disabled:cursor-not-allowed dark:border-sub-border-strong dark:text-sub-text-muted-dark dark:hover:bg-sub-surface-elevated-2 dark:hover:text-ai-primary"
+									className="mx-auto w-full flex-1 rounded-lg border border-sub-border-slate-100 py-2 text-center font-medium text-sub-text-secondary transition-colors hover:bg-sub-surface-slate-50 hover:text-sub-text-primary disabled:cursor-not-allowed dark:border-sub-border-strong dark:text-sub-text-muted-dark dark:hover:bg-sub-surface-elevated-2"
 									onClick={() => {
 										signInDialogStore.show()
 									}}

@@ -74,6 +74,7 @@
 	--color-sub-text-muted-dark: var(--sub-text-muted-dark);
 	--color-sub-text-navy-700: var(--sub-text-navy-700);
 	--color-sub-text-navy-900: var(--sub-text-navy-900);
+	--color-sub-text-primary: var(--sub-text-primary);
 	--color-sub-text-primary-dark: var(--sub-text-primary-dark);
 	--color-sub-text-secondary: var(--sub-text-secondary);
 	--color-sub-text-secondary-dark: var(--sub-text-secondary-dark);
@@ -299,6 +300,11 @@
 	}
 
 	html.dark {
+		/* Adaptive body ink: sub-ink-primary in light, the surface's dark ink in
+		   dark — replaces per-callsite `dark:text-*` forks. Bare sub-ink-primary
+		   stays static for always-light cards. */
+		--sub-text-primary: var(--sub-text-primary-dark);
+
 		/* Sign-in Modal */
 		--signin-bg: var(--sub-surface-dark-row);
 		--signin-input-bg: var(--sub-ink-primary);

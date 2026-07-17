@@ -34,8 +34,8 @@ export function ConfirmActionModal({
 			>
 				<div className="flex flex-col gap-5 bg-white px-5 py-6 dark:bg-sub-surface-dark">
 					<div className="flex items-center justify-between">
-						<h2 className="text-base font-semibold text-sub-ink-primary dark:text-ai-primary">{title}</h2>
-						<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-muted transition-colors hover:text-sub-ink-primary dark:hover:text-ai-primary">
+						<h2 className="text-base font-semibold text-sub-text-primary">{title}</h2>
+						<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-muted transition-colors hover:text-sub-text-primary">
 							<Icon name="x" height={18} width={18} />
 						</Ariakit.DialogDismiss>
 					</div>
@@ -43,7 +43,7 @@ export function ConfirmActionModal({
 					<div className="flex gap-3">
 						<button
 							onClick={onClose}
-							className="flex h-9 flex-1 items-center justify-center rounded-lg border border-sub-border-muted text-sm font-medium text-sub-ink-primary dark:border-sub-border-strong dark:text-ai-primary"
+							className="flex h-9 flex-1 items-center justify-center rounded-lg border border-sub-border-muted text-sm font-medium text-sub-text-primary dark:border-sub-border-strong"
 						>
 							Cancel
 						</button>

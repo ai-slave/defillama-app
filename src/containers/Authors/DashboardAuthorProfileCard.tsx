@@ -123,7 +123,7 @@ function ProfileCompletenessMeter({ state }: { state: FormState }) {
 	return (
 		<div className="mt-4 grid gap-2 border-t border-sub-border-slate-100 pt-4 dark:border-sub-border-strong">
 			<div className="flex items-center justify-between gap-2">
-				<span className="text-xs font-medium text-sub-ink-primary dark:text-ai-primary">Profile completeness</span>
+				<span className="text-xs font-medium text-sub-text-primary">Profile completeness</span>
 				<span className="text-xs font-semibold text-sub-brand-primary tabular-nums">{percent}%</span>
 			</div>
 			<div className="h-1.5 overflow-hidden rounded-full bg-sub-border-slate-100 dark:bg-sub-border-strong">
@@ -261,8 +261,8 @@ export function DashboardAuthorProfileCard() {
 		<div className="grid gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div className="flex items-center gap-2">
-					<Icon name="users" height={24} width={24} className="text-sub-ink-primary dark:text-ai-primary" />
-					<span className="text-base font-medium text-sub-ink-primary dark:text-ai-primary">Public Profile</span>
+					<Icon name="users" height={24} width={24} className="text-sub-text-primary" />
+					<span className="text-base font-medium text-sub-text-primary">Public Profile</span>
 				</div>
 				{profile?.slug ? (
 					<BasicLink href={publicHref} className="text-sm font-medium text-link hover:underline">
@@ -284,7 +284,7 @@ export function DashboardAuthorProfileCard() {
 					/>
 
 					<label className="grid gap-1.5">
-						<span className="text-sm font-medium text-sub-ink-primary dark:text-ai-primary">Display name</span>
+						<span className="text-sm font-medium text-sub-text-primary">Display name</span>
 						<input
 							value={state.displayName}
 							maxLength={DISPLAY_NAME_MAX}
@@ -300,26 +300,26 @@ export function DashboardAuthorProfileCard() {
 										: prev
 								)
 							}}
-							className="rounded-lg border border-sub-border-slate-100 bg-transparent px-3 py-2 text-sm text-sub-ink-primary outline-hidden focus:border-sub-brand-primary dark:border-sub-border-strong dark:text-ai-primary"
+							className="rounded-lg border border-sub-border-slate-100 bg-transparent px-3 py-2 text-sm text-sub-text-primary outline-hidden focus:border-sub-brand-primary dark:border-sub-border-strong"
 						/>
 					</label>
 
 					<label className="grid gap-1.5">
 						<div className="flex items-center justify-between gap-2">
-							<span className="text-sm font-medium text-sub-ink-primary dark:text-ai-primary">Handle</span>
+							<span className="text-sm font-medium text-sub-text-primary">Handle</span>
 							<CharCount value={state.slug} max={SLUG_MAX} />
 						</div>
 						<input
 							value={state.slug}
 							maxLength={SLUG_MAX}
 							onChange={(e) => setState((prev) => (prev ? { ...prev, slug: slugify(e.target.value) } : prev))}
-							className="rounded-lg border border-sub-border-slate-100 bg-transparent px-3 py-2 text-sm text-sub-ink-primary outline-hidden focus:border-sub-brand-primary dark:border-sub-border-strong dark:text-ai-primary"
+							className="rounded-lg border border-sub-border-slate-100 bg-transparent px-3 py-2 text-sm text-sub-text-primary outline-hidden focus:border-sub-brand-primary dark:border-sub-border-strong"
 						/>
 					</label>
 
 					<label className="grid gap-1.5">
 						<div className="flex items-center justify-between gap-2">
-							<span className="text-sm font-medium text-sub-ink-primary dark:text-ai-primary">Bio</span>
+							<span className="text-sm font-medium text-sub-text-primary">Bio</span>
 							<CharCount value={state.bio} max={BIO_MAX} />
 						</div>
 						<textarea
@@ -327,12 +327,12 @@ export function DashboardAuthorProfileCard() {
 							maxLength={BIO_MAX}
 							rows={4}
 							onChange={(e) => setState((prev) => (prev ? { ...prev, bio: e.target.value } : prev))}
-							className="resize-y rounded-lg border border-sub-border-slate-100 bg-transparent px-3 py-2 text-sm leading-6 text-sub-ink-primary outline-hidden focus:border-sub-brand-primary dark:border-sub-border-strong dark:text-ai-primary"
+							className="resize-y rounded-lg border border-sub-border-slate-100 bg-transparent px-3 py-2 text-sm leading-6 text-sub-text-primary outline-hidden focus:border-sub-brand-primary dark:border-sub-border-strong"
 						/>
 					</label>
 
 					<div className="grid gap-3">
-						<span className="text-sm font-medium text-sub-ink-primary dark:text-ai-primary">Links</span>
+						<span className="text-sm font-medium text-sub-text-primary">Links</span>
 						<div className="grid gap-3 md:grid-cols-2">
 							{SOCIALS.map((social) => (
 								<label key={social.id} className="grid gap-1.5">
@@ -351,7 +351,7 @@ export function DashboardAuthorProfileCard() {
 													: prev
 											)
 										}
-										className="rounded-lg border border-sub-border-slate-100 bg-transparent px-3 py-2 text-sm text-sub-ink-primary outline-hidden placeholder:text-sub-text-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:text-ai-primary"
+										className="rounded-lg border border-sub-border-slate-100 bg-transparent px-3 py-2 text-sm text-sub-text-primary outline-hidden placeholder:text-sub-text-muted focus:border-sub-brand-primary dark:border-sub-border-strong"
 									/>
 								</label>
 							))}
@@ -373,7 +373,7 @@ export function DashboardAuthorProfileCard() {
 							</div>
 						)}
 						<div className="min-w-0">
-							<p className="truncate text-sm font-semibold text-sub-ink-primary dark:text-ai-primary">{displayName}</p>
+							<p className="truncate text-sm font-semibold text-sub-text-primary">{displayName}</p>
 							<p className="truncate text-xs text-sub-text-muted">@{state.slug || 'handle'}</p>
 						</div>
 					</div>

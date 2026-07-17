@@ -30,7 +30,7 @@ const targets = process.argv
 	.filter((a) => a !== '--write' && !a.startsWith('--map=') && !a.startsWith('--exact='))
 
 const COLOR_UTIL =
-	/^((?:[\w[\]()&>~.*/=-]+:)*)(text|bg|border-[trblxyse]|border|from|to|via|fill|stroke|ring|outline|decoration|accent|caret|divide|shadow|placeholder)-((?:\[#[0-9a-fA-F]+\](?:\/(?:[\d.]+|\[[^\]]+\]))?)|(?:\[(?:rgba?|hsla?|oklch)\([^\]]*\)\])|(?:\(--[a-z0-9-]+\)(?:\/(?:[\d.]+|\[[^\]]+\]))?)|(?:(?:black|white)(?:\/(?:[\d.]+|\[[^\]]+\]))?)|(?:(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-\d{2,3}(?:\/(?:[\d.]+|\[[^\]]+\]))?))$/
+	/^((?:[\w[\]()&>~.*/=-]+:)*)(text|bg|border-[trblxyse]|border|from|to|via|fill|stroke|ring|outline|decoration|accent|caret|divide|shadow|placeholder)-((?:\[#[0-9a-fA-F]+\](?:\/(?:[\d.]+|\[[^\]]+\]))?)|(?:\[(?:rgba?|hsla?|oklch)\([^\]]*\)\])|(?:\(--[a-z0-9-]+\)(?:\/(?:[\d.]+|\[[^\]]+\]))?)|(?:(?:black|white)(?:\/(?:[\d.]+|\[[^\]]+\]))?)|(?:(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-\d{2,3}(?:\/(?:[\d.]+|\[[^\]]+\]))?)|(?:(?:ai|sub|pro|sl)-[a-z0-9-]+(?:\/(?:[\d.]+|\[[^\]]+\]))?))$/
 
 const lcHex = (k) => k.replace(/\[#([0-9a-fA-F]+)\]/g, (_, h) => '[#' + h.toLowerCase() + ']')
 const report = new Map() // unmapped token -> count
