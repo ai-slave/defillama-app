@@ -1,6 +1,5 @@
 import { getBorrowRoutesForTokenKeys } from '../borrow.server'
 import { getEarnPage } from '../earn.server'
-import { redactEarnStability } from '../publicEarn'
 import { readYieldsMeta, type YieldsSnapshot } from '../snapshot'
 import type { EarnPageRow, RouteTableRow } from '../types'
 
@@ -73,5 +72,5 @@ export async function getTokenEarnRows(snapshot: YieldsSnapshot, symbol: string)
 	// Token pages include meme pools: the page's token selection already scopes the noise,
 	// and hiding a meme token's own pools on its own page serves nobody.
 	const page = await getEarnPage(snapshot, { token: tokenKeys, pageSize: 'all', includeMemeTokens: 'true' })
-	return { rows: redactEarnStability(page.rows), tokenKeys }
+	return { rows: page.rows, tokenKeys }
 }

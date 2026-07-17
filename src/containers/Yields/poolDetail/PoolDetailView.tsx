@@ -1,16 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
-import { useAuthContext } from '~/containers/Subscription/auth'
-import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
-import { handleSimpleFetchResponse } from '~/utils/async'
-import { YIELD_POOL_STABILITY_API } from '../constants'
 import { hasPart } from '../domain/apyPresentation'
-import { LockedStabilityCell } from '../Tables/StabilityCell'
-import { useYieldsUpgradePrompt } from '../Tables/useYieldsUpgradePrompt'
 import { fmtLtv, fmtPct, fmtUsd, scoreValue } from './format'
 import { HoldersPanel } from './HoldersPanel'
 import { PoolApyChart } from './PoolApyChart'
@@ -62,7 +55,7 @@ export interface PoolDetailViewProps {
 	chain: DetailChain
 	supply: PoolSide | null
 	borrow: PoolSide | null
-	stabilityAvailable: boolean
+	stability: StabilityInfo | null
 	supplyChart: PoolChartModel | null
 	borrowChart: PoolChartModel | null
 	holders: DetailHolders | null
@@ -153,33 +146,12 @@ export function PoolDetailView({
 	chain,
 	supply,
 	borrow,
+	stability,
 	supplyChart,
 	borrowChart,
 	holders,
-	stabilityAvailable,
 	details
 }: PoolDetailViewProps) {
-	// The stability score is a Pro feature: non-subscribers get a blurred lock pill that
-	// opens the subscribe modal (mirrors the pools table's gated column).
-	const { authorizedFetch, hasActiveSubscription } = useAuthContext()
-	const isClient = useIsClient()
-	const { onRequestUpgrade, modal } = useYieldsUpgradePrompt()
-	const hasPremiumAccess = isClient && hasActiveSubscription
-	const stabilityQuery = useQuery<{ stability: StabilityInfo | null }>({
-		queryKey: ['yield-pool-stability', poolId],
-		queryFn: async () => {
-			const response = await authorizedFetch(`${YIELD_POOL_STABILITY_API}/${encodeURIComponent(poolId)}/stability`)
-			if (!response) throw new Error('Authentication required')
-			return handleSimpleFetchResponse(response).then(
-				(value) => value.json() as Promise<{ stability: StabilityInfo | null }>
-			)
-		},
-		enabled: hasPremiumAccess && stabilityAvailable,
-		staleTime: 5 * 60 * 1000,
-		refetchOnWindowFocus: false
-	})
-	const stability = stabilityQuery.data?.stability ?? null
-
 	const stabilityRating = stability?.rating ?? null
 	const stabilityScore = stability?.score ?? null
 	const stabilityColor =
@@ -188,22 +160,8 @@ export function PoolDetailView({
 			: stabilityRating === 'volatile'
 				? ' text-(--yield-negative-text)'
 				: ''
-	const stabilityRow = stabilityAvailable ? (
-		!hasPremiumAccess ? (
-			<MetricRow
-				label="30d Stability"
-				tooltip="How consistent this pool's supply-side APY has been over the last 30 days. Available with a Pro subscription."
-				valueClassName={VALUE_CLS}
-				value={<LockedStabilityCell onRequestUpgrade={onRequestUpgrade} />}
-			/>
-		) : stabilityQuery.isPending ? (
-			<MetricRow
-				label="30d Stability"
-				tooltip="Loading the 30-day stability score."
-				valueClassName={`${VALUE_CLS} text-secondary`}
-				value="Loading…"
-			/>
-		) : stabilityRating != null && stabilityScore != null ? (
+	const stabilityRow =
+		stabilityRating != null && stabilityScore != null ? (
 			<MetricRow
 				label="30d Stability"
 				tooltip="How consistent this pool's supply-side APY has been over the last 30 days. Higher score is more stable."
@@ -215,15 +173,7 @@ export function PoolDetailView({
 					</>
 				}
 			/>
-		) : (
-			<MetricRow
-				label="30d Stability"
-				tooltip="The 30-day stability score is currently unavailable."
-				valueClassName={`${VALUE_CLS} text-secondary`}
-				value="Unavailable"
-			/>
-		)
-	) : null
+		) : null
 
 	// The donut needs the pool's headline dollar figure (TVL / Total supplied) to derive
 	// per-holder USD. Only earn pools carry that as their first supply metric; borrow-only
@@ -240,7 +190,6 @@ export function PoolDetailView({
 	// on a summary rail once the pool content itself is wide enough for both regions.
 	return (
 		<div className="@container flex w-full flex-col gap-2">
-			{modal}
 			<div className="grid grid-cols-1 gap-2 @min-[90rem]:grid-cols-[minmax(320px,360px)_minmax(0,1fr)]">
 				<Card padding="sm" className="flex flex-col gap-3">
 					<PoolHeader symbol={symbol} name={name} protocol={protocol} chain={chain} />

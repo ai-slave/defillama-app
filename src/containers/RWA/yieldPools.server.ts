@@ -1,5 +1,4 @@
 import { getEarnPage } from '~/containers/Yields/data/earn.server'
-import { redactEarnStability } from '~/containers/Yields/data/publicEarn'
 import { resolveTokenOptionKeys } from '~/containers/Yields/data/server/tokenPage'
 import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import type { EarnPageRow } from '~/containers/Yields/data/types'
@@ -84,7 +83,7 @@ export async function getRWAYieldPools(snapshot: YieldsSnapshot, asset: IFetched
 	}
 
 	return {
-		yieldPools: defiPools.length > 0 ? redactEarnStability(defiPools) : null,
+		yieldPools: defiPools.length > 0 ? defiPools : null,
 		yieldPoolsTotal: defiPools.length > 0 ? defiPools.length : null,
 		nativeYieldPoolId: nativePool?.id ?? null,
 		nativeYieldCurrent: nativePool?.apyBase ?? null

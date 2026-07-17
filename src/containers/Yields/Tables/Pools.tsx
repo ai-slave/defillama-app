@@ -1,33 +1,18 @@
-import { useQuery } from '@tanstack/react-query'
 import { type ColumnDef, createColumnHelper, type SortingState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
-import { useMemo } from 'react'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
-import { useAuthContext } from '~/containers/Subscription/auth'
-import { useIsClient } from '~/hooks/useIsClient'
 import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
-import { handleSimpleFetchResponse } from '~/utils/async'
-import { YIELD_EARN_PREMIUM_DATASET_API } from '../constants'
 import { parseSelectedEarnColumns } from '../Filters/columnOptions'
 import { fmtPct } from '../poolDetail/format'
 import { NameYield, PoolNameLockup } from './Name'
 import { PaginatedYieldsTable } from './PaginatedYieldsTable'
 import { Sparkline } from './Sparkline'
 import { hasSparkline } from './sparklineModel'
-import { LockedStabilityCell } from './StabilityCell'
 import type { IYieldsTableProps, IYieldTableRow, YieldsTableAppearance } from './types'
-import { useYieldsUpgradePrompt } from './useYieldsUpgradePrompt'
 import { EarnApyCell, EmptyCell, RewardApyCell } from './YieldsCells'
-
-// The stability score is a Pro feature: non-subscribers get a blurred lock pill that
-// opens the subscribe modal, and the column's sort control is disabled.
-interface StabilityGate {
-	hasPremiumAccess: boolean
-	onRequestUpgrade: (source: 'header' | 'cell') => void
-}
 
 const STABILITY_RATING_STYLES: Record<string, string> = {
 	stable: 'bg-(--apy-mid)/10 text-(--yield-positive-text)',
@@ -115,10 +100,7 @@ function apyHeader(query: Record<string, unknown>, label: string) {
 	return `${label}${suffix}`
 }
 
-function createEarnColumns(
-	query: Record<string, unknown>,
-	gate: StabilityGate
-): Array<ColumnDef<IYieldTableRow, unknown>> {
+function createEarnColumns(query: Record<string, unknown>): Array<ColumnDef<IYieldTableRow, unknown>> {
 	const selected = new Set(parseSelectedEarnColumns(query.column as string | string[] | undefined))
 	const columns: Array<ColumnDef<IYieldTableRow, unknown>> = [
 		columnHelper.accessor('pool', {
@@ -271,17 +253,14 @@ function createEarnColumns(
 		columnHelper.accessor((row) => row.stabilityScore ?? undefined, {
 			id: 'stabilityScore',
 			header: '30d Stability',
-			enableSorting: gate.hasPremiumAccess,
-			cell: ({ row }) =>
-				gate.hasPremiumAccess ? (
-					<ApyStabilityIndicator
-						score={row.original.stabilityScore}
-						rating={row.original.stabilityRating}
-						avg30d={row.original.stabilityAvg30d}
-					/>
-				) : (
-					<LockedStabilityCell onRequestUpgrade={gate.onRequestUpgrade} className="w-full justify-center" />
-				),
+			enableSorting: true,
+			cell: ({ row }) => (
+				<ApyStabilityIndicator
+					score={row.original.stabilityScore}
+					rating={row.original.stabilityRating}
+					avg30d={row.original.stabilityAvg30d}
+				/>
+			),
 			meta: {
 				headerClassName: 'w-[120px] min-w-[120px]',
 				align: 'center',
@@ -388,76 +367,28 @@ export function PaginatedYieldsPoolTable({
 	onSortingChange,
 	interactionDisabled = false,
 	loadingLabel,
-	appearance = 'standalone',
-	hydratePremiumStability = false
-}: IYieldsTableProps & { appearance?: YieldsTableAppearance; hydratePremiumStability?: boolean }) {
+	appearance = 'standalone'
+}: IYieldsTableProps & { appearance?: YieldsTableAppearance }) {
 	const { query } = useRouter()
-	const { authorizedFetch, hasActiveSubscription } = useAuthContext()
-	const isClient = useIsClient()
-	const { onRequestUpgrade, modal } = useYieldsUpgradePrompt()
-	const columns = createEarnColumns(query, { hasPremiumAccess: isClient && hasActiveSubscription, onRequestUpgrade })
-	const poolIds = useMemo(() => [...new Set(data.map((row) => row.id))].sort(), [data])
-	const premiumRowsQuery = useQuery<{ rows: IYieldTableRow[] }>({
-		queryKey: ['yield-premium-stability', poolIds],
-		queryFn: async () => {
-			const requests: Array<Promise<{ rows: IYieldTableRow[] }>> = []
-			for (let index = 0; index < poolIds.length; index += 100) {
-				const params = new URLSearchParams({ pageSize: 'all' })
-				for (const id of poolIds.slice(index, index + 100)) params.append('id', id)
-				requests.push(
-					authorizedFetch(`${YIELD_EARN_PREMIUM_DATASET_API}?${params.toString()}`)
-						.then((response) => {
-							if (!response) throw new Error('Authentication required')
-							return handleSimpleFetchResponse(response)
-						})
-						.then((response) => response.json() as Promise<{ rows: IYieldTableRow[] }>)
-				)
-			}
-			const pages = await Promise.all(requests)
-			const rows: IYieldTableRow[] = []
-			for (const page of pages) rows.push(...page.rows)
-			return { rows }
-		},
-		enabled: hydratePremiumStability && hasActiveSubscription && poolIds.length > 0,
-		staleTime: 5 * 60 * 1000,
-		refetchOnWindowFocus: false
-	})
-	const resolvedData = useMemo(() => {
-		if (!premiumRowsQuery.data) return data
-		const premiumById = new Map(premiumRowsQuery.data.rows.map((row) => [row.id, row]))
-		return data.map((row) => {
-			const premium = premiumById.get(row.id)
-			return premium
-				? {
-						...row,
-						stabilityScore: premium.stabilityScore,
-						stabilityRating: premium.stabilityRating,
-						stabilityAvg30d: premium.stabilityAvg30d
-					}
-				: row
-		})
-	}, [data, premiumRowsQuery.data])
+	const columns = createEarnColumns(query)
 
 	return (
-		<>
-			<PaginatedYieldsTable
-				data={resolvedData}
-				columns={columns}
-				tableClassName="min-w-[1180px] [&_td]:py-1.5"
-				initialPageSize={initialPageSize}
-				initialPageIndex={initialPageIndex}
-				rowCount={rowCount}
-				manualPagination={manualPagination}
-				manualSorting={manualSorting}
-				paginationState={paginationState}
-				sortingState={sortingState}
-				onPaginationChange={onPaginationChange}
-				onSortingChange={onSortingChange}
-				interactionDisabled={interactionDisabled}
-				loadingLabel={loadingLabel}
-				shell={appearance === 'embedded' ? 'none' : 'default'}
-			/>
-			{modal}
-		</>
+		<PaginatedYieldsTable
+			data={data}
+			columns={columns}
+			tableClassName="min-w-[1180px] [&_td]:py-1.5"
+			initialPageSize={initialPageSize}
+			initialPageIndex={initialPageIndex}
+			rowCount={rowCount}
+			manualPagination={manualPagination}
+			manualSorting={manualSorting}
+			paginationState={paginationState}
+			sortingState={sortingState}
+			onPaginationChange={onPaginationChange}
+			onSortingChange={onSortingChange}
+			interactionDisabled={interactionDisabled}
+			loadingLabel={loadingLabel}
+			shell={appearance === 'embedded' ? 'none' : 'default'}
+		/>
 	)
 }

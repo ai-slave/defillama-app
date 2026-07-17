@@ -202,7 +202,7 @@ describe('YieldPoolPage', () => {
 		// Borrow-only markets have no supply history or stability, but do carry a borrow chart.
 		expect(props.supplyChart).toBeNull()
 		expect(props.borrowChart).not.toBeNull()
-		expect(props.stabilityAvailable).toBe(false)
+		expect(props.stability).toBeNull()
 		expect(props.holders).toBeNull()
 		expect(fetchBorrowMarketDetailMock).toHaveBeenCalledWith(poolId)
 		expect(fetchPoolDetailHistoryMock).not.toHaveBeenCalled()
@@ -226,8 +226,7 @@ describe('YieldPoolPage', () => {
 		expect(props.chain).toEqual({ slug: 'ethereum', name: 'Ethereum' })
 		expect(props.supply.apy.base).toBe(2.3)
 		expect(props.supply.metrics[0].label).toBe('TVL')
-		expect(props.stabilityAvailable).toBe(true)
-		expect(props).not.toHaveProperty('stability')
+		expect(props.stability).toEqual({ score: 0.9, rating: 'stable' })
 		// available_history.supply is false → no history fetch, no supply chart.
 		expect(fetchPoolDetailHistoryMock).not.toHaveBeenCalled()
 		expect(props.supplyChart).toBeNull()

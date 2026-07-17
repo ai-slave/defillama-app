@@ -31,9 +31,7 @@ export const privateApiRoutePaths = [
 	'revalidate-instances',
 	'token-liquidations/[symbol]',
 	'token-unlocks/[protocol]',
-	'token-usage/[symbol]',
-	'yields/earn-premium',
-	'yields/pool/[pool]/stability'
+	'token-usage/[symbol]'
 ] as const
 
 export const dynamicApiRoutePaths = [
@@ -194,9 +192,7 @@ export const allApiRoutePaths = [
 	'yields/borrow-markets',
 	'yields/borrow-routes',
 	'yields/earn',
-	'yields/earn-premium',
 	'yields/loops',
-	'yields/pool/[pool]/stability',
 	'yields/proxy/[...path]'
 ] as const
 

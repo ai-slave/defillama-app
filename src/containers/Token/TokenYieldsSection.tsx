@@ -240,7 +240,6 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 									interactionDisabled={showBackgroundLoading}
 									loadingLabel="Loading full dataset..."
 									appearance="embedded"
-									hydratePremiumStability
 								/>
 								{hasPartialData && !hasActiveFilters ? (
 									<div className={showBackgroundLoading ? 'opacity-60' : ''}>

@@ -1,5 +1,5 @@
 import type { GetServerSideProps } from 'next'
-import { resolveApy } from '~/containers/Yields/data/apy'
+import { resolveApy, resolveVariant, stabilityRatingFromScore } from '~/containers/Yields/data/apy'
 import { getReferralUrls } from '~/containers/Yields/data/server/raiseValuations'
 import { readYieldsMeta, type YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import type { ApyComponent } from '~/containers/Yields/data/types'
@@ -13,7 +13,6 @@ import {
 import { buildBorrowChart, buildSupplyChart } from '~/containers/Yields/poolDetail/poolCharts'
 import { PoolDetailView, type PoolDetailViewProps, type PoolSide } from '~/containers/Yields/poolDetail/PoolDetailView'
 import { getPoolHistoryRange } from '~/containers/Yields/poolDetail/queryState'
-import { getPoolStability } from '~/containers/Yields/poolDetail/stability'
 import type { BorrowMarketDetail, PoolHistoryRange } from '~/containers/Yields/poolDetail/types'
 import Layout from '~/layout'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
@@ -135,7 +134,7 @@ async function buildBorrowOnlyProps(
 		supplyChart: null,
 		borrowChart,
 		holders: market.holders ?? null,
-		stabilityAvailable: false,
+		stability: null,
 		details: {
 			poolTokenAddress: market.pool_token?.address ?? null,
 			url: (protocolMeta?.slug ? referralUrls.get(protocolMeta.slug) : undefined) ?? market.url ?? null,
@@ -231,7 +230,7 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 		metrics: [{ label: usesSupplyLabel ? 'Total supplied' : 'TVL', value: pool.tvl_usd ?? null }]
 	}
 
-	const stabilityAvailable = getPoolStability(pool) != null
+	const stabilityScore = resolveVariant<number>(pool.stability_30d, DETAIL_APY_COMPONENTS)
 
 	res.setHeader('cache-control', 'public, s-maxage=300, stale-while-revalidate=600')
 
@@ -258,7 +257,8 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 			supplyChart,
 			borrowChart,
 			holders: pool.holders ?? null,
-			stabilityAvailable,
+			stability:
+				stabilityScore != null ? { score: stabilityScore, rating: stabilityRatingFromScore(stabilityScore) } : null,
 			details: {
 				poolTokenAddress: pool.pool_token?.address ?? null,
 				url: (protocolMeta?.slug ? referralUrls.get(protocolMeta.slug) : undefined) ?? pool.url ?? null,
