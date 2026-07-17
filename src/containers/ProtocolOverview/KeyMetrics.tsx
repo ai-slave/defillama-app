@@ -2,11 +2,11 @@ import dayjs from 'dayjs'
 import { useMemo, useRef, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
+import { ReportIncorrectData } from '~/components/ReportIncorrectData'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { definitions } from '~/public/definitions'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { formattedNum } from '~/utils'
-import { Flag } from './Flag'
 import { getAdjustedTotals, getPrimaryValueLabelType } from './helpers'
 import { KeyMetricsPngExportButton } from './KeyMetricsPngExport'
 import type { IProtocolOverviewPageData } from './types'
@@ -327,7 +327,7 @@ export const KeyMetrics = (props: IKeyMetricsProps) => {
 				<Raises {...props} />
 				<Expenses {...props} />
 			</div>
-			<Flag protocol={props.name} isLending={props.category === 'Lending'} />
+			<ReportIncorrectData subject={{ type: 'protocol', name: props.name, isLending: props.category === 'Lending' }} />
 		</div>
 	)
 }

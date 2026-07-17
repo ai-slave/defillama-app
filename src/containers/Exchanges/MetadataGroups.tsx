@@ -115,6 +115,8 @@ function formatScalar(value: ExchangeMetadataCell | undefined, type: ExchangeMet
 }
 
 export function MetadataFieldValue({ field }: { field: ExchangeMetadataFieldModel }) {
+	// A founding year is a calendar value, not a quantity that needs digit grouping.
+	if (field.key === 'founded' && field.type === 'number') return <>{String(field.value)}</>
 	if (field.type === 'links') {
 		return (
 			<span className="flex flex-wrap gap-2">

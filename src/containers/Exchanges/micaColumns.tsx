@@ -2,6 +2,8 @@ import { type CellContext, type ColumnDef, createColumnHelper, flexRender } from
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import { buttonStyles } from '~/ui/Button'
+import { Tooltip } from '~/ui/Tooltip'
 import { letterLogoDataUri } from '~/utils/icons'
 import { KycRequirementValue } from './ComplianceCells'
 import { FeeValue, feeLabel } from './feePresentation'
@@ -83,9 +85,25 @@ export function buildMicaColumns(asOfDate: string): ColumnDef<MicaVenueModel, an
 								alt={`${venue.name} logo`}
 							/>
 							<span className="min-w-0 flex-1">
-								<BasicLink href={venue.profileHref} className="block truncate label-md text-link hover:underline">
-									{venue.name}
-								</BasicLink>
+								{venueDestination ? (
+									<a
+										href={venueDestination.url}
+										target="_blank"
+										rel="noopener noreferrer"
+										data-umami-event="mica-exchange-click"
+										data-umami-event-exchange={venue.exchange}
+										data-umami-event-type={venueDestination.kind === 'referral' ? 'ref' : 'website'}
+										data-umami-event-placement="name"
+										data-umami-event-url={venueDestination.url}
+										className="block truncate label-md text-link hover:underline"
+									>
+										{venue.name}
+									</a>
+								) : (
+									<BasicLink href={venue.profileHref} className="block truncate label-md text-link hover:underline">
+										{venue.name}
+									</BasicLink>
+								)}
 							</span>
 							<span className="ml-auto flex shrink-0 items-center gap-1.5">
 								{promotion ? <PromotionGift promotion={promotion} venue={venue} /> : null}
@@ -113,7 +131,7 @@ export function buildMicaColumns(asOfDate: string): ColumnDef<MicaVenueModel, an
 				meta: { headerClassName: 'w-[280px] min-w-[280px]', csvValue: (row) => row.name }
 			}
 		),
-		columnHelper.accessor((row) => pairTotal(row.depth.spotBid2Usd, row.depth.spotAsk2Usd), {
+		columnHelper.accessor((row) => pairTotal(row.depth.spotBid2Usd, row.depth.spotAsk2Usd) ?? undefined, {
 			id: 'spotDepth2',
 			header: 'Spot ±2%',
 			cell: ({ row, getValue }) => (
@@ -132,7 +150,7 @@ export function buildMicaColumns(asOfDate: string): ColumnDef<MicaVenueModel, an
 				headerHelperText: SPOT_DEPTH_2_HELP
 			}
 		}),
-		columnHelper.accessor((row) => pairTotal(row.depth.spotBid05Usd, row.depth.spotAsk05Usd), {
+		columnHelper.accessor((row) => pairTotal(row.depth.spotBid05Usd, row.depth.spotAsk05Usd) ?? undefined, {
 			id: 'spotDepth05',
 			header: 'Spot ±0.5%',
 			cell: ({ row, getValue }) => (
@@ -151,7 +169,7 @@ export function buildMicaColumns(asOfDate: string): ColumnDef<MicaVenueModel, an
 				headerHelperText: SPOT_DEPTH_05_HELP
 			}
 		}),
-		columnHelper.accessor((row) => pairTotal(row.depth.perpBid2Usd, row.depth.perpAsk2Usd), {
+		columnHelper.accessor((row) => pairTotal(row.depth.perpBid2Usd, row.depth.perpAsk2Usd) ?? undefined, {
 			id: 'perpDepth2',
 			header: 'Perp ±2%',
 			cell: ({ row, getValue }) => (
@@ -170,7 +188,7 @@ export function buildMicaColumns(asOfDate: string): ColumnDef<MicaVenueModel, an
 				headerHelperText: PERP_DEPTH_2_HELP
 			}
 		}),
-		columnHelper.accessor((row) => pairTotal(row.depth.perpBid05Usd, row.depth.perpAsk05Usd), {
+		columnHelper.accessor((row) => pairTotal(row.depth.perpBid05Usd, row.depth.perpAsk05Usd) ?? undefined, {
 			id: 'perpDepth05',
 			header: 'Perp ±0.5%',
 			cell: ({ row, getValue }) => (
@@ -221,27 +239,28 @@ export function buildMicaColumns(asOfDate: string): ColumnDef<MicaVenueModel, an
 				csvValue: (row) => feeLabel(row.perpFee)
 			}
 		}),
-		columnHelper.accessor((row) => row.rampCost?.onRamp.totalUsd, {
+		columnHelper.accessor((row) => row.rampCost?.onRamp.totalUsd ?? undefined, {
 			id: 'onRampCost',
 			header: '€1k on-ramp',
 			cell: ({ row }) => <RampCostValue row={row.original} direction="onRamp" />,
 			meta: {
-				headerClassName: 'w-[124px] min-w-[110px] whitespace-nowrap',
+				headerClassName: 'w-[124px] min-w-[124px] whitespace-nowrap',
 				align: 'end',
 				headerHelperText: ON_RAMP_COST_HELP
 			}
 		}),
-		columnHelper.accessor((row) => row.rampCost?.offRamp.totalUsd, {
+		columnHelper.accessor((row) => row.rampCost?.offRamp.totalUsd ?? undefined, {
 			id: 'offRampCost',
 			header: '€1k off-ramp',
 			cell: ({ row }) => <RampCostValue row={row.original} direction="offRamp" />,
 			meta: {
-				headerClassName: 'w-[124px] min-w-[110px] whitespace-nowrap',
+				headerClassName: 'w-[124px] min-w-[124px] whitespace-nowrap',
 				align: 'end',
 				headerHelperText: OFF_RAMP_COST_HELP
 			}
 		}),
-		columnHelper.accessor('marketCount', {
+		columnHelper.accessor((row) => row.marketCount ?? undefined, {
+			id: 'marketCount',
 			header: 'Markets',
 			cell: ({ getValue }) => getValue() ?? <span className="text-tertiary">–</span>,
 			meta: {
@@ -258,6 +277,28 @@ export function buildMicaColumns(asOfDate: string): ColumnDef<MicaVenueModel, an
 			meta: {
 				headerClassName: 'w-[240px] min-w-[200px]',
 				headerHelperText: 'Documents and verification steps required to use the exchange.'
+			}
+		}),
+		columnHelper.display({
+			id: 'profile',
+			header: () => <span className="sr-only">Exchange page</span>,
+			enableSorting: false,
+			cell: ({ row }) => (
+				<Tooltip content="View exchange page" placement="top-end">
+					<BasicLink
+						href={row.original.profileHref}
+						aria-label={`View ${row.original.name} exchange page`}
+						className={buttonStyles({ variant: 'ghost', size: 'sm', square: true })}
+					>
+						<Icon name="bar-chart-2" className="size-4" />
+					</BasicLink>
+				</Tooltip>
+			),
+			meta: {
+				headerClassName: 'w-[52px] min-w-[52px]',
+				align: 'end',
+				csvHeader: 'Exchange page',
+				csvValue: (row) => row.profileHref
 			}
 		})
 	])

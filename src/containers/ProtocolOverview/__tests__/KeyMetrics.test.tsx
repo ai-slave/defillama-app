@@ -34,8 +34,8 @@ vi.mock('~/ui/Tooltip', () => ({
 	Tooltip: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children)
 }))
 
-vi.mock('../Flag', () => ({
-	Flag: () => null
+vi.mock('~/components/ReportIncorrectData', () => ({
+	ReportIncorrectData: () => null
 }))
 
 vi.mock('../KeyMetricsPngExport', () => ({

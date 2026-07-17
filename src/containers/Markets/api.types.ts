@@ -1,7 +1,7 @@
+import type { MasterExchangePair } from '~/containers/Exchanges/master.types'
 import type { Segment } from './segments'
 
 export type MarketVenue = 'dex' | 'cex'
-export type MarketType = 'spot' | 'perpetual'
 
 export interface MarketSegmentSummary {
 	exchange_count: number
@@ -17,36 +17,10 @@ export interface MarketSegmentSummary {
 	volume_prev_24h: number | null
 }
 
-export interface MarketPair {
-	exchange?: string
-	exchange_type?: MarketVenue
-	market_type: MarketType
-	contract_type: '' | 'linear' | 'inverse'
-	base: string
-	quote: string
-	settle_asset: string
-	pair_id: string
-	market_id: string
-	pair_url: string
-	symbol: string
-	price: number | null
-	price_change_24h: number | null
-	volume_24h: number | null
-	volume_prev_24h: number | null
-	oi: number | null
-	oi_usd: number | null
-	oi_prev_usd: number | null
-	funding_rate_8h: number | null
-	funding_period_h: number | null
-	max_leverage: number | null
-	maker_fee: number | null
-	taker_fee: number | null
-	amount_precision: number | null
-	price_precision: number | null
-	contract_size: number
-	expiry_ts: number | null
-	listed_ts: number | null
-	min_order_cost: number | null
+export interface MarketPair extends MasterExchangePair {
+	slug: string
+	display_name: string
+	type: MarketVenue
 }
 
 export interface MarketCategoryTotals {
@@ -76,6 +50,7 @@ export interface TokenMarketsListResponse {
 export interface TokenMarketsResponse {
 	symbol: string
 	last_updated: string
+	depth_bands: number[]
 	exchange_count: number
 	market_count: number
 	segments: Partial<Record<Segment, MarketSegmentSummary>>

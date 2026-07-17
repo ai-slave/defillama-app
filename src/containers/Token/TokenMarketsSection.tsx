@@ -3,6 +3,7 @@ import type { SortingState } from '@tanstack/react-table'
 import dayjs from 'dayjs'
 import { type KeyboardEvent, useMemo, useReducer, useRef } from 'react'
 import { Icon } from '~/components/Icon'
+import { mapExchangePair } from '~/containers/Exchanges/master.mappers'
 import { PairTable, type PairTableRow } from '~/containers/Exchanges/PairTable'
 import type {
 	MarketCategoryTotals,
@@ -12,7 +13,6 @@ import type {
 } from '~/containers/Markets/api.types'
 import { MaterialChangeCell, MetricStat, MetricStatStrip } from '~/containers/Markets/marketMetrics'
 import type { Segment } from '~/containers/Markets/segments'
-import { pctChange } from '~/containers/Markets/utils'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TabLink } from '~/ui/Tab'
@@ -40,52 +40,44 @@ const CATEGORY_TABS: ReadonlyArray<{ id: Segment; label: string }> = [
 
 const EMPTY_TOTALS: MarketCategoryTotals = { pair_count: 0, total_volume_24h: 0, total_oi_usd: null }
 
-// Token markets rows reuse the exchange-page PairTable; these venue-page columns have no
-// backing data in tokens/*.json rows, so they are dropped from the table entirely.
-const TOKEN_PAGE_OMITTED_COLUMNS = [
-	'token',
-	'normalizedVolume',
+// The token is implied by the page, so omit the redundant exchange-profile token column.
+const TOKEN_PAGE_OMITTED_COLUMNS = ['token'] as const
+
+export const TOKEN_PAGE_COLUMN_ORDER = [
+	'venue',
+	'pair',
+	'price',
+	'priceChange24h',
 	'depth2Usd',
-	'spreadFraction',
-	'markPrice',
-	'indexPrice',
-	'basis',
-	'nextFundingAt',
-	'volumeFreshness'
+	'openInterestUsd',
+	'openInterestChange24h',
+	'volume24h',
+	'volumeChange24h',
+	'normalizedVolume'
 ] as const
 
-const TOKEN_PAGE_CAPABILITIES = { openInterest: true, funding: true, depth: false }
+export const TOKEN_PAGE_VISIBLE_COLUMNS: Record<Segment, readonly string[]> = {
+	spot: ['venue', 'pair', 'price', 'priceChange24h', 'depth2Usd', 'volume24h', 'volumeChange24h', 'normalizedVolume'],
+	linear_perp: TOKEN_PAGE_COLUMN_ORDER,
+	inverse_perp: [
+		'venue',
+		'pair',
+		'price',
+		'priceChange24h',
+		'depth2Usd',
+		'openInterestUsd',
+		'openInterestChange24h',
+		'volume24h',
+		'volumeChange24h'
+	]
+}
 
-function toPairTableRow(row: MarketPair): PairTableRow {
+export function toPairTableRow(row: MarketPair, depthBands: number[], segment: Segment): PairTableRow {
 	return {
-		venue: row.exchange,
-		pairUrl: row.pair_url,
-		symbol: row.symbol,
-		base: row.base,
-		quote: row.quote,
-		price: row.price,
-		markPrice: null,
-		indexPrice: null,
-		basis: null,
-		priceChange24h: row.price_change_24h,
-		volume24h: row.volume_24h,
-		volumeChange24h: pctChange(row.volume_24h, row.volume_prev_24h),
-		openInterestUsd: row.oi_usd,
-		openInterestChange24h: pctChange(row.oi_usd, row.oi_prev_usd),
-		fundingRate8h: row.funding_rate_8h,
-		fundingPeriodHours: row.funding_period_h,
-		nextFundingAt: null,
-		maxLeverage: row.max_leverage,
-		makerFee: row.maker_fee,
-		takerFee: row.taker_fee,
-		listedAt: row.listed_ts,
-		volumeUpdatedAt: null,
-		spreadFraction: null,
-		depthBid2Usd: null,
-		depthAsk2Usd: null,
-		depthBidMaxDistance: null,
-		depthAskMaxDistance: null,
-		normalizedVolume: null
+		...mapExchangePair(row, depthBands, segment),
+		venue: row.display_name,
+		venueSlug: row.slug,
+		venueUrl: `/exchange/${row.slug}`
 	}
 }
 
@@ -131,7 +123,7 @@ const byVolumeDesc = (a: MarketPair, b: MarketPair) => (b.volume_24h ?? 0) - (a.
  *  Only applies while no column sort is active; clicking a header sorts all rows evenly.
  *  Exported for testing. */
 export function rankRowsBybitFirst(rows: MarketPair[]): MarketPair[] {
-	const topBybit = rows.filter((row) => row.exchange === 'bybit').sort(byVolumeDesc)[0]
+	const topBybit = rows.filter((row) => row.slug === 'bybit').sort(byVolumeDesc)[0]
 	if (!topBybit) return [...rows].sort(byVolumeDesc)
 	const rest = rows.filter((row) => row !== topBybit)
 	return [topBybit, ...rest.sort(byVolumeDesc)]
@@ -308,7 +300,10 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 	)
 	// Rows arrive pre-ranked from getCategoryRows (bybit's top pair first on CEX/All via
 	// rankRowsBybitFirst); the mapping below preserves that order 1:1.
-	const tableRows = useMemo(() => rows.map(toPairTableRow), [rows])
+	const tableRows = useMemo(
+		() => (data ? rows.map((row) => toPairTableRow(row, data.depth_bands, selectedCategoryTab)) : []),
+		[data, rows, selectedCategoryTab]
+	)
 
 	const isPerpCategory = selectedCategoryTab !== 'spot'
 
@@ -386,10 +381,12 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 				key={`${selectedVenueTab}-${selectedCategoryTab}`}
 				pairs={tableRows}
 				segment={selectedCategoryTab}
-				capabilities={TOKEN_PAGE_CAPABILITIES}
+				capabilities={{ openInterest: isPerpCategory, funding: isPerpCategory, depth: true }}
 				csvFileName={`token-markets-${tokenSymbol}-${selectedVenueTab}-${selectedCategoryTab}`}
 				showVenue
 				omitColumns={TOKEN_PAGE_OMITTED_COLUMNS}
+				columnOrder={TOKEN_PAGE_COLUMN_ORDER}
+				initialVisibleColumns={TOKEN_PAGE_VISIBLE_COLUMNS[selectedCategoryTab]}
 				sorting={selectedVenueTab === 'dex' ? DEFAULT_SORTING : NO_SORTING}
 				columnToSearch="venue"
 				placeholder="Search exchanges..."

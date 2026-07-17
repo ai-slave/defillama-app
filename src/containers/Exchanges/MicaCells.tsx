@@ -45,7 +45,7 @@ export function MicaDepthValue({
 }: {
 	row: MicaVenueModel
 	product: 'spot' | 'perp'
-	value: number | null
+	value: number | undefined
 	bid: number | null
 	ask: number | null
 	helperText: string
@@ -171,6 +171,7 @@ export function RampCostValue({ row, direction }: { row: MicaVenueModel; directi
 	const cost = row.rampCost
 	if (!cost) return <span className="text-tertiary">–</span>
 	const leg = cost[direction]
+	if (leg.totalUsd == null) return <span className="text-tertiary">–</span>
 	const transferBtc = formatBtcAmount(
 		direction === 'onRamp' ? cost.assumptions.btcWithdrawalFeeBtc : cost.assumptions.btcNetworkFeeBtc
 	)
@@ -196,14 +197,10 @@ export function RampCostValue({ row, direction }: { row: MicaVenueModel; directi
 			<Ariakit.HovercardAnchor
 				render={<button />}
 				type="button"
-				className={
-					leg.totalUsd == null
-						? 'inline-flex rounded-md border border-subtle px-2 py-0.5 label-sm whitespace-nowrap text-tertiary'
-						: `inline-flex rounded-md border px-2 py-0.5 label-sm whitespace-nowrap ${tone ? FEE_TONE_CLASS[tone] : 'border-subtle text-primary'}`
-				}
+				className={`inline-flex rounded-md border px-2 py-0.5 label-sm whitespace-nowrap ${tone ? FEE_TONE_CLASS[tone] : 'border-subtle text-primary'}`}
 				aria-label={`${row.name} €${cost.notionalUsd.toLocaleString('en-US')} ${directionLabel} cost breakdown`}
 			>
-				{leg.totalUsd == null ? '?' : `€${leg.totalUsd.toFixed(2)}`}
+				€{leg.totalUsd.toFixed(2)}
 			</Ariakit.HovercardAnchor>
 			<Ariakit.Hovercard
 				unmountOnHide
@@ -227,16 +224,12 @@ export function RampCostValue({ row, direction }: { row: MicaVenueModel; directi
 					</span>
 					<span className="flex items-baseline justify-between gap-3 border-t border-subtle pt-2 label-md">
 						<span>Total</span>
-						{leg.totalUsd == null ? (
-							<span className="text-tertiary">unavailable — a component is unknown</span>
-						) : (
-							<span>
-								€{leg.totalUsd.toFixed(2)}
-								{leg.totalFraction == null ? null : (
-									<span className="text-tertiary"> ({formatPercentage(leg.totalFraction * 100)}%)</span>
-								)}
-							</span>
-						)}
+						<span>
+							€{leg.totalUsd.toFixed(2)}
+							{leg.totalFraction == null ? null : (
+								<span className="text-tertiary"> ({formatPercentage(leg.totalFraction * 100)}%)</span>
+							)}
+						</span>
 					</span>
 				</div>
 			</Ariakit.Hovercard>

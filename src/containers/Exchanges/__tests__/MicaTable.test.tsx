@@ -98,7 +98,8 @@ describe('mica table columns', () => {
 			'onRampCost',
 			'offRampCost',
 			'marketCount',
-			'kyc'
+			'kyc',
+			'profile'
 		])
 
 		const venue = micaVenue({ rampCost: RAMP_COST })

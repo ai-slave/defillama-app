@@ -3,6 +3,14 @@ import { describe, expect, it } from 'vitest'
 import { MetadataFieldValue } from '../MetadataGroups'
 
 describe('MetadataFieldValue', () => {
+	it('renders a founding year without numeric grouping', () => {
+		const html = renderToStaticMarkup(
+			<MetadataFieldValue field={{ key: 'founded', label: 'Founded', type: 'number', value: 2017, comparable: true }} />
+		)
+
+		expect(html).toBe('2017')
+	})
+
 	it('renders canonical link fields as active external links', () => {
 		const html = renderToStaticMarkup(
 			<MetadataFieldValue

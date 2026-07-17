@@ -50,7 +50,7 @@ function ratio(value: number | null | undefined): string {
 	return `${value >= 100 ? Math.round(value).toLocaleString() : value.toFixed(1)}×`
 }
 
-function Change({ value }: { value: number | null }) {
+function Change({ value }: { value: number | undefined }) {
 	if (value == null) return <span className="text-tertiary">–</span>
 	return (
 		<span
@@ -180,7 +180,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 			cell: ({ getValue }) => <KindBadge kind={getValue()} />,
 			meta: { headerClassName: 'w-[71px] min-w-[71px]', headerHelperText: definitions.kind.description }
 		}),
-		columnHelper.accessor((row) => activityForScope(row, scope)?.volume24h, {
+		columnHelper.accessor((row) => activityForScope(row, scope)?.volume24h ?? undefined, {
 			id: 'volume24h',
 			header: definitions.volume24h.label,
 			cell: ({ row, getValue }) =>
@@ -194,7 +194,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 		columnHelper.accessor(
 			(row) => {
 				const activity = activityForScope(row, scope)
-				return fractionChange(activity?.volume24h, activity?.volumePrevious24h)
+				return fractionChange(activity?.volume24h, activity?.volumePrevious24h) ?? undefined
 			},
 			{
 				id: 'volumeChange24h',
@@ -207,7 +207,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				}
 			}
 		),
-		columnHelper.accessor((row) => activityForScope(row, scope)?.openInterestUsd, {
+		columnHelper.accessor((row) => activityForScope(row, scope)?.openInterestUsd ?? undefined, {
 			id: 'openInterestUsd',
 			header: definitions.openInterestUsd.label,
 			cell: ({ row, getValue }) => {
@@ -224,7 +224,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 		columnHelper.accessor(
 			(row) => {
 				const activity = activityForScope(row, scope)
-				return fractionChange(activity?.openInterestUsd, activity?.openInterestPreviousUsd)
+				return fractionChange(activity?.openInterestUsd, activity?.openInterestPreviousUsd) ?? undefined
 			},
 			{
 				id: 'openInterestChange24h',
@@ -242,7 +242,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				}
 			}
 		),
-		columnHelper.accessor((row) => volumeToOpenInterest(activityForScope(row, scope)), {
+		columnHelper.accessor((row) => volumeToOpenInterest(activityForScope(row, scope)) ?? undefined, {
 			id: 'volumeToOi',
 			header: definitions.volumeToOi.label,
 			cell: ({ row, getValue }) =>
@@ -253,7 +253,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				headerHelperText: definitions.volumeToOi.description
 			}
 		}),
-		columnHelper.accessor((row) => volumeToDepth(activityForScope(row, scope)), {
+		columnHelper.accessor((row) => volumeToDepth(activityForScope(row, scope)) ?? undefined, {
 			id: 'volumeToDepth',
 			header: definitions.volumeToDepth.label,
 			cell: ({ row, getValue }) =>
@@ -264,7 +264,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				headerHelperText: definitions.volumeToDepth.description
 			}
 		}),
-		columnHelper.accessor((row) => activityForScope(row, scope)?.marketCount, {
+		columnHelper.accessor((row) => activityForScope(row, scope)?.marketCount ?? undefined, {
 			id: 'marketCount',
 			header: definitions.marketCount.label,
 			cell: ({ getValue }) => getValue() ?? '–',
@@ -274,7 +274,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				headerHelperText: definitions.marketCount.description
 			}
 		}),
-		columnHelper.accessor((row) => activityForScope(row, scope)?.coinCount, {
+		columnHelper.accessor((row) => activityForScope(row, scope)?.coinCount ?? undefined, {
 			id: 'coinCount',
 			header: definitions.coinCount.label,
 			cell: ({ getValue }) => getValue() ?? '–',
@@ -284,7 +284,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				headerHelperText: definitions.coinCount.description
 			}
 		}),
-		columnHelper.accessor((row) => normalizedVolumeForScope(row, scope)?.normalized, {
+		columnHelper.accessor((row) => normalizedVolumeForScope(row, scope)?.normalized ?? undefined, {
 			id: 'normalizedVolume',
 			header: definitions.normalizedVolume.label,
 			cell: ({ row, getValue }) => {
@@ -306,7 +306,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				headerHelperText: definitions.normalizedVolume.description
 			}
 		}),
-		columnHelper.accessor((row) => depthTotal(activityForScope(row, scope)), {
+		columnHelper.accessor((row) => depthTotal(activityForScope(row, scope)) ?? undefined, {
 			id: 'depth2Usd',
 			header: definitions.depth2Usd.label,
 			cell: ({ row, getValue }) => {
@@ -341,7 +341,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				headerHelperText: definitions.sparkline.description
 			}
 		}),
-		columnHelper.accessor((row) => row.reserves?.totalUsd, {
+		columnHelper.accessor((row) => row.reserves?.totalUsd ?? undefined, {
 			id: 'reservesUsd',
 			header: definitions.reservesUsd.label,
 			cell: ({ getValue }) => money(getValue()),
@@ -355,7 +355,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 			(row) =>
 				row.reserves?.cleanUsd != null && row.reserves.totalUsd != null && row.reserves.totalUsd > 0
 					? row.reserves.cleanUsd / row.reserves.totalUsd
-					: null,
+					: undefined,
 			{
 				id: 'cleanRatio',
 				header: definitions.cleanRatio.label,
@@ -367,7 +367,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				}
 			}
 		),
-		columnHelper.accessor((row) => row.reserves?.inflows24hUsd, {
+		columnHelper.accessor((row) => row.reserves?.inflows24hUsd ?? undefined, {
 			id: 'inflows24hUsd',
 			header: definitions.inflows24hUsd.label,
 			cell: ({ getValue }) => money(getValue()),
@@ -377,7 +377,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				headerHelperText: definitions.inflows24hUsd.description
 			}
 		}),
-		columnHelper.accessor((row) => row.reserves?.inflows7dUsd, {
+		columnHelper.accessor((row) => row.reserves?.inflows7dUsd ?? undefined, {
 			id: 'inflows7dUsd',
 			header: definitions.inflows7dUsd.label,
 			cell: ({ getValue }) => money(getValue()),
@@ -387,7 +387,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				headerHelperText: definitions.inflows7dUsd.description
 			}
 		}),
-		columnHelper.accessor((row) => row.reserves?.inflows1mUsd, {
+		columnHelper.accessor((row) => row.reserves?.inflows1mUsd ?? undefined, {
 			id: 'inflows1mUsd',
 			header: definitions.inflows1mUsd.label,
 			cell: ({ getValue }) => money(getValue()),
@@ -397,7 +397,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				headerHelperText: definitions.inflows1mUsd.description
 			}
 		}),
-		columnHelper.accessor((row) => row.reserves?.ownTokenFraction, {
+		columnHelper.accessor((row) => row.reserves?.ownTokenFraction ?? undefined, {
 			id: 'ownTokenFraction',
 			header: definitions.ownTokenFraction.label,
 			cell: ({ getValue }) => percentage(getValue()),
@@ -527,7 +527,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 			cell: ({ getValue }) => (getValue() == null ? '–' : getValue() ? 'Yes' : 'No'),
 			meta: { headerClassName: 'w-[124px] min-w-[124px]', headerHelperText: definitions.fiatOnramp.description }
 		}),
-		columnHelper.accessor((row) => row.funding?.rampCost?.onRamp.totalUsd, {
+		columnHelper.accessor((row) => row.funding?.rampCost?.onRamp.totalUsd ?? undefined, {
 			id: 'rampCost',
 			header: definitions.rampCost.label,
 			cell: ({ getValue }) => money(getValue()),
@@ -604,7 +604,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				}
 			}
 		}),
-		columnHelper.accessor((row) => row.compliance?.licenseCount, {
+		columnHelper.accessor((row) => row.compliance?.licenseCount ?? undefined, {
 			id: 'licenseCount',
 			header: definitions.licenseCount.label,
 			cell: ({ getValue }) => getValue() ?? '–',
@@ -640,7 +640,7 @@ export function buildDirectoryColumns(scope: ExchangeSegment): ColumnDef<Exchang
 				headerHelperText: definitions.restrictedRegions.description
 			}
 		}),
-		columnHelper.accessor((row) => row.profile?.founded, {
+		columnHelper.accessor((row) => row.profile?.founded ?? undefined, {
 			id: 'founded',
 			header: definitions.founded.label,
 			cell: ({ getValue }) => getValue() ?? '–',

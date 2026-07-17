@@ -357,7 +357,11 @@ function spreadFraction(pair: MasterExchangePair): number | null {
 	return mid > 0 ? (pair.best_ask - pair.best_bid) / mid : null
 }
 
-function mapPair(pair: MasterExchangePair, depthBands: number[], segment: ExchangeSegment): ExchangePairModel {
+export function mapExchangePair(
+	pair: MasterExchangePair,
+	depthBands: number[],
+	segment: ExchangeSegment
+): ExchangePairModel {
 	const twoPercentIndex = depthBands.indexOf(0.02)
 	if (twoPercentIndex < 0) throw new Error('Profile depth_bands omits the required ±2% band')
 	return {
@@ -505,7 +509,7 @@ export function mapMasterProfile(
 		if (!stats) continue
 		const capability = index.capabilities[segment]
 		if (!capability) throw new Error(`Missing ${segment} capabilities for ${index.slug}`)
-		const pairs = stats.pairs.map((pair) => mapPair(pair, index.depth_bands, segment))
+		const pairs = stats.pairs.map((pair) => mapExchangePair(pair, index.depth_bands, segment))
 		segments[segment] = {
 			segment,
 			marketCount: stats.markets,

@@ -92,6 +92,7 @@ describe('metadata-only profile presentation', () => {
 
 		expect(html).toContain('Coinbase EU promotion')
 		expect(html).toContain('Regulation')
+		expect(html).toContain('Report incorrect data')
 		expect(html).not.toContain('History')
 		expect(html).not.toContain('No market segments')
 	})

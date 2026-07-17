@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import type { KeyboardEvent, ReactNode } from 'react'
 import { BasicLink } from '~/components/Link'
+import { ReportIncorrectData } from '~/components/ReportIncorrectData'
 import { Card } from '~/ui/Card'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { pushShallowQuery } from '~/utils/routerQuery'
@@ -60,8 +61,9 @@ export function ExchangeProfile({
 function MetadataOnlyExchangeProfile({ profile, asOfDate }: { profile: ExchangeProfileModel; asOfDate: string }) {
 	return (
 		<>
-			<Card as="header" padding="sm">
+			<Card as="header" padding="sm" className="flex flex-col gap-6">
 				<ProfileIdentity profile={profile} />
+				<ReportIncorrectData subject={{ type: 'exchange', name: profile.name, slug: profile.slug }} />
 			</Card>
 			<ProfilePromotions promotions={profile.metadata.promotions} asOfDate={asOfDate} />
 			<MetadataGroups groups={profile.metadata.groups} />

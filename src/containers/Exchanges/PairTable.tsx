@@ -10,9 +10,12 @@ import { exchangeDefinitions } from './definitions'
 import { sumNullable } from './modelHelpers'
 import type { ExchangePairModel, ExchangeSegment } from './models'
 
-/** Rows rendered by PairTable. The optional `venue` field only exists on surfaces that mix
- *  venues in one table (e.g. the token page markets section). */
-export type PairTableRow = ExchangePairModel & { venue?: string | null }
+/** Venue fields only exist on surfaces that mix venues in one table, such as token markets. */
+export type PairTableRow = ExchangePairModel & {
+	venue?: string | null
+	venueSlug?: string | null
+	venueUrl?: string | null
+}
 
 const columnHelper = createColumnHelper<PairTableRow>()
 
@@ -20,7 +23,7 @@ function money(value: number | null | undefined) {
 	return value == null ? '–' : formattedNum(value, true)
 }
 
-export function formatPairPrice(price: number | null, quote: string) {
+export function formatPairPrice(price: number | null | undefined, quote: string) {
 	return price == null ? '–' : `${formattedNum(price)} ${quote.toUpperCase()}`
 }
 
@@ -28,7 +31,7 @@ function percentage(value: number | null | undefined, digits = 2) {
 	return value == null ? '–' : `${(value * 100).toFixed(digits)}%`
 }
 
-function Change({ value }: { value: number | null }) {
+function Change({ value }: { value: number | undefined }) {
 	return value == null ? (
 		<span className="text-tertiary">–</span>
 	) : (
@@ -121,13 +124,13 @@ function buildColumns(
 			),
 			meta: { headerClassName: 'w-[135px]', headerHelperText: definitions.pair.description }
 		}),
-		columnHelper.accessor('price', {
+		columnHelper.accessor((row) => row.price ?? undefined, {
 			id: 'price',
 			header: definitions.price.label,
 			cell: ({ row, getValue }) => formatPairPrice(getValue(), row.original.quote),
 			meta: { headerClassName: 'w-[150px]', align: 'end', headerHelperText: definitions.price.description }
 		}),
-		columnHelper.accessor('priceChange24h', {
+		columnHelper.accessor((row) => row.priceChange24h ?? undefined, {
 			id: 'priceChange24h',
 			header: definitions.priceChange24h.label,
 			cell: ({ getValue }) => <Change value={getValue()} />,
@@ -137,13 +140,13 @@ function buildColumns(
 				headerHelperText: definitions.priceChange24h.description
 			}
 		}),
-		columnHelper.accessor('volume24h', {
+		columnHelper.accessor((row) => row.volume24h ?? undefined, {
 			id: 'volume24h',
 			header: definitions.volume24h.label,
 			cell: ({ getValue }) => money(getValue()),
 			meta: { headerClassName: 'w-[120px]', align: 'end', headerHelperText: definitions.volume24h.description }
 		}),
-		columnHelper.accessor('volumeChange24h', {
+		columnHelper.accessor((row) => row.volumeChange24h ?? undefined, {
 			id: 'volumeChange24h',
 			header: definitions.volumeChange24h.label,
 			cell: ({ getValue }) => <Change value={getValue()} />,
@@ -153,7 +156,7 @@ function buildColumns(
 				headerHelperText: definitions.volumeChange24h.description
 			}
 		}),
-		columnHelper.accessor((row) => row.normalizedVolume?.normalized, {
+		columnHelper.accessor((row) => row.normalizedVolume?.normalized ?? undefined, {
 			id: 'normalizedVolume',
 			header: definitions.normalizedVolume.label,
 			cell: ({ row, getValue }) => {
@@ -176,7 +179,7 @@ function buildColumns(
 				headerHelperText: definitions.normalizedVolume.description
 			}
 		}),
-		columnHelper.accessor((row) => pairDepthTotal(row.depthBid2Usd, row.depthAsk2Usd), {
+		columnHelper.accessor((row) => pairDepthTotal(row.depthBid2Usd, row.depthAsk2Usd) ?? undefined, {
 			id: 'depth2Usd',
 			header: definitions.depth2Usd.label,
 			cell: ({ row, getValue }) =>
@@ -201,7 +204,7 @@ function buildColumns(
 				),
 			meta: { headerClassName: 'w-[115px]', align: 'end', headerHelperText: definitions.depth2Usd.description }
 		}),
-		columnHelper.accessor('spreadFraction', {
+		columnHelper.accessor((row) => row.spreadFraction ?? undefined, {
 			id: 'spreadFraction',
 			header: definitions.spreadFraction.label,
 			cell: ({ getValue }) => percentage(getValue(), 3),
@@ -215,25 +218,25 @@ function buildColumns(
 
 	if (isPerp) {
 		columns.push(
-			columnHelper.accessor('markPrice', {
+			columnHelper.accessor((row) => row.markPrice ?? undefined, {
 				id: 'markPrice',
 				header: definitions.markPrice.label,
 				cell: ({ row, getValue }) => formatPairPrice(getValue(), row.original.quote),
 				meta: { headerClassName: 'w-[115px]', align: 'end', headerHelperText: definitions.markPrice.description }
 			}),
-			columnHelper.accessor('indexPrice', {
+			columnHelper.accessor((row) => row.indexPrice ?? undefined, {
 				id: 'indexPrice',
 				header: definitions.indexPrice.label,
 				cell: ({ row, getValue }) => formatPairPrice(getValue(), row.original.quote),
 				meta: { headerClassName: 'w-[115px]', align: 'end', headerHelperText: definitions.indexPrice.description }
 			}),
-			columnHelper.accessor('basis', {
+			columnHelper.accessor((row) => row.basis ?? undefined, {
 				id: 'basis',
 				header: definitions.basis.label,
 				cell: ({ getValue }) => percentage(getValue(), 3),
 				meta: { headerClassName: 'w-[90px]', align: 'end', headerHelperText: definitions.basis.description }
 			}),
-			columnHelper.accessor('openInterestUsd', {
+			columnHelper.accessor((row) => row.openInterestUsd ?? undefined, {
 				id: 'openInterestUsd',
 				header: definitions.openInterestUsd.label,
 				cell: ({ getValue }) => (capabilities.openInterest ? money(getValue()) : <UnsupportedMetric />),
@@ -243,7 +246,7 @@ function buildColumns(
 					headerHelperText: definitions.openInterestUsd.description
 				}
 			}),
-			columnHelper.accessor('openInterestChange24h', {
+			columnHelper.accessor((row) => row.openInterestChange24h ?? undefined, {
 				id: 'openInterestChange24h',
 				header: definitions.openInterestChange24h.label,
 				cell: ({ getValue }) => (capabilities.openInterest ? <Change value={getValue()} /> : <UnsupportedMetric />),
@@ -253,7 +256,7 @@ function buildColumns(
 					headerHelperText: definitions.openInterestChange24h.description
 				}
 			}),
-			columnHelper.accessor('fundingRate8h', {
+			columnHelper.accessor((row) => row.fundingRate8h ?? undefined, {
 				id: 'fundingRate8h',
 				header: definitions.fundingRate8h.label,
 				cell: ({ row, getValue }) => {
@@ -270,7 +273,7 @@ function buildColumns(
 				},
 				meta: { headerClassName: 'w-[105px]', align: 'end', headerHelperText: definitions.fundingRate8h.description }
 			}),
-			columnHelper.accessor('nextFundingAt', {
+			columnHelper.accessor((row) => row.nextFundingAt ?? undefined, {
 				id: 'nextFundingAt',
 				header: definitions.nextFundingAt.label,
 				cell: ({ getValue }) =>
@@ -285,7 +288,7 @@ function buildColumns(
 					),
 				meta: { headerClassName: 'w-[115px]', align: 'end', headerHelperText: definitions.nextFundingAt.description }
 			}),
-			columnHelper.accessor('maxLeverage', {
+			columnHelper.accessor((row) => row.maxLeverage ?? undefined, {
 				id: 'maxLeverage',
 				header: definitions.maxLeverage.label,
 				cell: ({ getValue }) => (getValue() == null ? '–' : `${getValue()}×`),
@@ -301,19 +304,19 @@ function buildColumns(
 			cell: ({ getValue }) => getValue()?.slice(0, 10) ?? '–',
 			meta: { headerClassName: 'w-[115px]', align: 'end', headerHelperText: definitions.volumeFreshness.description }
 		}),
-		columnHelper.accessor('makerFee', {
+		columnHelper.accessor((row) => row.makerFee ?? undefined, {
 			id: 'makerFee',
 			header: definitions.makerFee.label,
 			cell: ({ getValue }) => percentage(getValue(), 3),
 			meta: { headerClassName: 'w-[100px]', align: 'end', headerHelperText: definitions.makerFee.description }
 		}),
-		columnHelper.accessor('takerFee', {
+		columnHelper.accessor((row) => row.takerFee ?? undefined, {
 			id: 'takerFee',
 			header: definitions.takerFee.label,
 			cell: ({ getValue }) => percentage(getValue(), 3),
 			meta: { headerClassName: 'w-[100px]', align: 'end', headerHelperText: definitions.takerFee.description }
 		}),
-		columnHelper.accessor('listedAt', {
+		columnHelper.accessor((row) => row.listedAt ?? undefined, {
 			id: 'listedAt',
 			header: definitions.listedAt.label,
 			cell: ({ getValue }) => (getValue() == null ? '–' : UTC_DATE.format(new Date(getValue() * 1000))),
@@ -327,15 +330,27 @@ function buildColumns(
 				id: 'venue',
 				header: definitions.venue.label,
 				enableSorting: false,
-				cell: ({ getValue }) => {
+				cell: ({ getValue, row }) => {
 					const venue = getValue()
-					return venue ? (
-						<span className="flex min-w-0 items-center gap-2">
-							<TokenLogo name={venue} kind="token" size={20} fallbackSrc={letterLogoDataUri(venue)} alt="" />
-							<span className="truncate label-md capitalize">{venue}</span>
-						</span>
+					if (!venue) return <span className="text-tertiary">–</span>
+					const venueSlug = row.original.venueSlug ?? venue
+
+					const content = (
+						<>
+							<TokenLogo name={venueSlug} kind="token" size={20} fallbackSrc={letterLogoDataUri(venueSlug)} alt="" />
+							<span className="truncate label-md">{venue}</span>
+						</>
+					)
+
+					return row.original.venueUrl ? (
+						<BasicLink
+							href={row.original.venueUrl}
+							className="flex min-w-0 items-center gap-2 text-link hover:underline"
+						>
+							{content}
+						</BasicLink>
 					) : (
-						<span className="text-tertiary">–</span>
+						<span className="flex min-w-0 items-center gap-2">{content}</span>
 					)
 				},
 				meta: { headerClassName: 'w-[160px]', headerHelperText: definitions.venue.description }
@@ -355,6 +370,8 @@ export function PairTable({
 	csvFileName,
 	showVenue = false,
 	omitColumns,
+	columnOrder,
+	initialVisibleColumns,
 	sorting,
 	columnToSearch = 'pair',
 	placeholder = 'Search pairs...',
@@ -370,6 +387,10 @@ export function PairTable({
 	showVenue?: boolean
 	/** Column ids that do not apply on this surface; dropped entirely (column selector + CSV included). */
 	omitColumns?: readonly string[]
+	/** Preferred column order; unlisted columns follow in their definition order. */
+	columnOrder?: readonly string[]
+	/** Columns visible on first render; other applicable columns remain available in the selector. */
+	initialVisibleColumns?: readonly string[]
 	/** Initial sorting. Pass [] to preserve the caller's pre-ranked row order (e.g. bybit-first). */
 	sorting?: SortingState
 	columnToSearch?: string
@@ -381,10 +402,20 @@ export function PairTable({
 	const { openInterest, funding, depth: supportsDepth } = capabilities
 	const columns = React.useMemo(() => {
 		const omit = new Set(omitColumns ?? [])
-		return buildColumns(segment, { openInterest, funding, depth: supportsDepth }, showVenue).filter(
+		const filtered = buildColumns(segment, { openInterest, funding, depth: supportsDepth }, showVenue).filter(
 			(column) => !omit.has(column.id as string)
 		)
-	}, [segment, openInterest, funding, supportsDepth, showVenue, omitColumns])
+		if (!columnOrder) return filtered
+		const position = new Map(columnOrder.map((id, index) => [id, index]))
+		return filtered.sort(
+			(a, b) => (position.get(a.id as string) ?? position.size) - (position.get(b.id as string) ?? position.size)
+		)
+	}, [segment, openInterest, funding, supportsDepth, showVenue, omitColumns, columnOrder])
+	const columnVisibility = React.useMemo(() => {
+		if (!initialVisibleColumns) return pairColumnVisibility()
+		const visible = new Set(initialVisibleColumns)
+		return Object.fromEntries(columns.map((column) => [column.id as string, visible.has(column.id as string)]))
+	}, [columns, initialVisibleColumns])
 	return (
 		<TableWithSearch
 			key={segment}
@@ -394,7 +425,7 @@ export function PairTable({
 			placeholder={placeholder}
 			header={header}
 			leadingControls={leadingControls}
-			columnVisibility={pairColumnVisibility()}
+			columnVisibility={columnVisibility}
 			showColumnSelect
 			csvExportAllColumns
 			csvFileName={csvFileName}

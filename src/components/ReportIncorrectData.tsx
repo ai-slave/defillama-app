@@ -9,15 +9,57 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { fetchJson } from '~/utils/async'
 
-export function Flag({
-	protocol,
+export type ReportSubject =
+	| { type: 'protocol'; name: string; isLending: boolean }
+	| { type: 'exchange'; name: string; slug: string }
+
+const PROTOCOL_DATA_TYPES = [
+	'TVL',
+	'Mcap',
+	'Token Price',
+	'Token Volume',
+	'Token Liquidity',
+	'FDV',
+	'Volume',
+	'Fees',
+	'Revenue',
+	'Treasury',
+	'Unlocks',
+	'Active Addresses',
+	'New Addresses',
+	'Transactions',
+	'Gas Used',
+	'Staking',
+	'Active Loans',
+	'Median APY',
+	'USD Inflows',
+	'Governance',
+	'Bridge Volume',
+	'Events',
+	'Raises'
+] as const
+
+const EXCHANGE_DATA_TYPES = [
+	'Profile Information',
+	'Markets',
+	'Volume',
+	'Normalized Volume',
+	'Open Interest',
+	'Depth',
+	'Fees',
+	'Reserves',
+	'Compliance / Licensing',
+	'Fiat On/Off-Ramp',
+	'Other'
+] as const
+
+export function ReportIncorrectData({
+	subject,
 	dataType,
-	isLending,
 	className
 }: {
-	protocol: string
+	subject: ReportSubject
 	dataType?: string
-	isLending?: boolean
 	className?: string
 }) {
 	const [loading, setLoading] = useState(false)
@@ -25,6 +67,8 @@ export function Flag({
 
 	const dialogStore = Ariakit.useDialogStore()
 	const successDialogStore = Ariakit.useDialogStore()
+	const subjectLabel = subject.type === 'exchange' ? 'Exchange' : 'Protocol'
+	const dataTypes = subject.type === 'exchange' ? EXCHANGE_DATA_TYPES : PROTOCOL_DATA_TYPES
 
 	const onSubmit = async (e: FormSubmitEvent) => {
 		e.preventDefault()
@@ -38,11 +82,13 @@ export function Flag({
 		const correctSourceValue = (form.elements.namedItem('correctSource') as HTMLTextAreaElement | null)?.value ?? ''
 		const contactValue = (form.elements.namedItem('contact') as HTMLInputElement | null)?.value ?? ''
 
+		const subjectPayload = subject.type === 'exchange' ? { subject } : { protocol: subject.name }
+
 		const data = await fetchJson('https://api.llama.fi/reportError', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				protocol,
+				...subjectPayload,
 				dataType: dataType ?? dataTypeValue,
 				message: messageValue,
 				correctSource: correctSourceValue,
@@ -103,17 +149,17 @@ export function Flag({
 				>
 					<div className="flex items-center gap-2 border-b border-subtle p-3">
 						<DialogHeading>Report incorrect data</DialogHeading>
-						<DialogCloseButton ariaLabel="Close report dialog" />
+						<DialogCloseButton className="-mr-1 ml-auto" ariaLabel="Close report dialog" />
 					</div>
 					<div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3">
-						{isLending ? (
+						{subject.type === 'protocol' && subject.isLending ? (
 							<p className="text-center body-sm text-warning">
 								For lending protocols TVL doesn't include active loans by default
 							</p>
 						) : null}
 						<label className="flex flex-col gap-1 label-sm text-secondary">
-							<span>Protocol</span>
-							<input name="protocol" value={protocol} disabled className={`${inputStyles} disabled:opacity-50`} />
+							<span>{subjectLabel}</span>
+							<input name="subject" value={subject.name} disabled className={`${inputStyles} disabled:opacity-50`} />
 						</label>
 						<label className="flex flex-col gap-1 label-sm text-secondary">
 							<span>Data Type</span>
@@ -121,29 +167,11 @@ export function Flag({
 								<input name="dataType" value={dataType} disabled className={`${inputStyles} disabled:opacity-50`} />
 							) : (
 								<select name="dataType" className={`${inputStyles} disabled:opacity-50`}>
-									<option value="TVL">TVL</option>
-									<option value="Mcap">Mcap</option>
-									<option value="Token Price">Token Price</option>
-									<option value="Token Volume">Token Volume</option>
-									<option value="Token Liquidity">Token Liquidity</option>
-									<option value="FDV">FDV</option>
-									<option value="Volume">Volume</option>
-									<option value="Fees">Fees</option>
-									<option value="Revenue">Revenue</option>
-									<option value="Treasury">Treasury</option>
-									<option value="Unlocks">Unlocks</option>
-									<option value="Active Addresses">Active Addresses</option>
-									<option value="New Addresses">New Addresses</option>
-									<option value="Transactions">Transactions</option>
-									<option value="Gas Used">Gas Used</option>
-									<option value="Staking">Staking</option>
-									<option value="Active Loans">Active Loans</option>
-									<option value="Median APY">Median APY</option>
-									<option value="USD Inflows">USD Inflows</option>
-									<option value="Governance">Governance</option>
-									<option value="Bridge Volume">Bridge Volume</option>
-									<option value="Events">Events</option>
-									<option value="Raises">Raises</option>
+									{dataTypes.map((option) => (
+										<option key={option} value={option}>
+											{option}
+										</option>
+									))}
 								</select>
 							)}
 						</label>

@@ -1102,8 +1102,7 @@
     {
       "name": "Exchanges",
       "route": "/exchanges",
-      "icon": "bar-chart-2",
-      "isNew": true
+      "icon": "bar-chart-2"
     },
     {
       "name": "Tokens",

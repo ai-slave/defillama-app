@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { ReportIncorrectData } from '~/components/ReportIncorrectData'
 import { Card } from '~/ui/Card'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { formattedNum } from '~/utils'
@@ -134,6 +135,8 @@ export function ProfileMetrics({ profile }: { profile: ExchangeProfileModel }) {
 					/>
 				) : null}
 			</div>
+
+			<ReportIncorrectData subject={{ type: 'exchange', name: profile.name, slug: profile.slug }} />
 		</Card>
 	)
 }
