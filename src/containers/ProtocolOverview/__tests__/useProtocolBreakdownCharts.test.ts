@@ -67,6 +67,41 @@ describe('ProtocolOverview breakdown chart computation', () => {
 		expect(result.tokenInflowsCharts.map((chart) => chart.name)).toEqual(['ETH', 'USDC', 'UNKNOWN0'])
 	})
 
+	it('derives USD inflows from token balances instead of TVL value changes', () => {
+		const result = buildComputedBreakdownResult({
+			tvlCharts: [
+				[
+					[DAY_MS, 100],
+					[DAY_MS * 2, 100],
+					[DAY_MS * 3, 150]
+				]
+			],
+			chainBreakdownCharts: [],
+			tokenBreakdownUsdCharts: [
+				[
+					[DAY_MS, { TOKEN: 100 }],
+					[DAY_MS * 2, { TOKEN: 200 }],
+					[DAY_MS * 3, { TOKEN: 300 }]
+				]
+			],
+			tokenBreakdownRawCharts: [
+				[
+					[DAY_MS, { TOKEN: 10 }],
+					[DAY_MS * 2, { TOKEN: 20 }],
+					[DAY_MS * 3, { TOKEN: 20 }]
+				]
+			],
+			valueSeriesName: 'Total'
+		})
+
+		// A deposit counts even when total TVL is flat; the later price-only gain does not.
+		expect(result.tokenInflowsDataset?.source).toEqual([{ timestamp: DAY_MS * 2, TOKEN: 100 }])
+		expect(result.usdInflowsDataset).toEqual({
+			source: [{ timestamp: DAY_MS * 2, 'USD Inflows': 100 }],
+			dimensions: ['timestamp', 'USD Inflows']
+		})
+	})
+
 	it('omits token and inflow datasets when inflows are disabled', () => {
 		const result = buildComputedBreakdownResult({
 			tvlCharts: [
