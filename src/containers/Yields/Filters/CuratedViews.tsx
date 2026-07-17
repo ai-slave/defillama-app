@@ -2,6 +2,7 @@ import { useRouter } from 'next/router'
 import { Icon, type IIcon } from '~/components/Icon'
 import { Hovercard } from '~/ui/Hovercard'
 import { metricOptionChipMdStyles } from '~/ui/MetricChip'
+import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
 
 // Curated Views: preset filter chips. Clicking a preset pushes the equivalent URL
@@ -195,6 +196,7 @@ export function CuratedViews({
 		const updates: Record<string, string | number | string[] | undefined> = {}
 		for (const key of clearedKeys) updates[key] = undefined
 		if (!active) {
+			trackYieldsEvent(YIELDS_EVENTS.FILTER_PRESET, { preset: preset.id })
 			for (const key of ARRAY_PARAM_KEYS) {
 				const value = preset.params[key]
 				if (value) updates[key] = value

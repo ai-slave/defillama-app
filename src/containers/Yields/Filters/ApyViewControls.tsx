@@ -2,6 +2,7 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { Button } from '~/ui/Button'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import type { ApyWindow } from '../data/types'
 import { pushYieldsQuery } from '../queryUpdates.client'
 import { HelpDefs, HelpIcon } from './ui'
@@ -55,6 +56,14 @@ function decodeComponents(value: string | string[] | undefined): { reward: boole
 // (reward on, intrinsic off) returns undefined so the param is dropped; base-only
 // (both off) uses a `base` sentinel so the server doesn't fall back to its reward
 // default.
+// Analytics label for the resulting composition (base is always included).
+function describeComponents(reward: boolean, intrinsic: boolean): string {
+	let view = 'base'
+	if (reward) view += '+reward'
+	if (intrinsic) view += '+intrinsic'
+	return view
+}
+
 function encodeComponents(reward: boolean, intrinsic: boolean): string | undefined {
 	if (reward && !intrinsic) return undefined
 	const parts: string[] = []
@@ -69,12 +78,23 @@ export function ApyViewControls() {
 	const { reward, intrinsic } = decodeComponents(router.query.apyComponents)
 
 	const setWindow = (next: ApyWindow) => {
+		if (next !== window) trackYieldsEvent(YIELDS_EVENTS.APY_WINDOW, { window: next })
 		void pushYieldsQuery(router, { apyWindow: next === 'current' ? undefined : next })
 	}
 	const toggleReward = () => {
+		trackYieldsEvent(YIELDS_EVENTS.APY_COMPONENT_TOGGLE, {
+			component: 'reward',
+			enabled: !reward,
+			view: describeComponents(!reward, intrinsic)
+		})
 		void pushYieldsQuery(router, { apyComponents: encodeComponents(!reward, intrinsic) })
 	}
 	const toggleIntrinsic = () => {
+		trackYieldsEvent(YIELDS_EVENTS.APY_COMPONENT_TOGGLE, {
+			component: 'intrinsic',
+			enabled: !intrinsic,
+			view: describeComponents(reward, !intrinsic)
+		})
 		void pushYieldsQuery(router, { apyComponents: encodeComponents(reward, !intrinsic) })
 	}
 

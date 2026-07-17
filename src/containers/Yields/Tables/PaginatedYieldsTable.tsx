@@ -10,6 +10,7 @@ import {
 import { startTransition, useState } from 'react'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { Panel } from '~/ui/Panel'
+import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import type { IYieldsTableProps } from './types'
 
 const PAGE_SIZE_OPTIONS = [10, 20, 30, 50, 100, 200] as const
@@ -56,6 +57,7 @@ export function PaginatedYieldsTable<TRow>({
 		onSortingChange: (updater) =>
 			startTransition(() => {
 				const next = typeof updater === 'function' ? updater(sorting) : updater
+				if (next.length > 0) trackYieldsEvent(YIELDS_EVENTS.TABLE_SORT, { column: next[0].id, desc: next[0].desc })
 				if (!onSortingChange) setLocalSorting(next)
 				onSortingChange?.(next)
 			}),

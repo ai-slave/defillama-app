@@ -87,10 +87,12 @@ export function IncludeTokens({
 				mode: draftMode,
 				on: draftOn,
 				onModeChange: (next) => {
+					if (next !== draftMode) trackYieldsEvent(YIELDS_EVENTS.SEARCH_TOKEN_MATCH, { match: next })
 					setDraftMode(next)
 					if (hasSelection) void pushYieldsQuery(router, { tokenMatch: next === 'exact' ? undefined : next })
 				},
 				onOnChange: (next) => {
+					if (next !== draftOn) trackYieldsEvent(YIELDS_EVENTS.SEARCH_TOKEN_ON, { on: next })
 					setDraftOn(next)
 					if (hasSelection) void pushYieldsQuery(router, { tokenOn: next === 'reference' ? undefined : next })
 				}
