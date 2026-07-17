@@ -136,7 +136,6 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 	const isOpen = Ariakit.useStoreState(dialogStore, 'open')
 	const { alertsUsage } = useSessionList()
 
-	const [title, setTitle] = useState('')
 	const [triggerType, setTriggerType] = useState<TriggerType>(initialTab ?? (prefill ? 'price' : 'schedule'))
 	const [prompt, setPrompt] = useState('')
 
@@ -216,7 +215,6 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 		if (!isOpen) return
 		generationRef.current += 1
 		const openTab = initialTab ?? (prefill ? 'price' : 'schedule')
-		setTitle('')
 		setTriggerType(openTab)
 		setPrompt('')
 		setFrequency('daily')
@@ -268,12 +266,13 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 		value: priceValue
 	})
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		if (submitBlockReason || createAlertMutation.isPending) return
+		const titleValue = new FormData(e.currentTarget).get('title')
 		const slackChannelName = slackChannels?.find((c) => c.id === slackChannelId)?.name ?? null
 		const body = buildCreateAlertBody({
-			title: title.trim() || derivedTitle,
+			title: (typeof titleValue === 'string' ? titleValue.trim() : '') || derivedTitle,
 			triggerType,
 			prompt,
 			schedule: { frequency, hour, dayOfWeek, timezone },
@@ -601,8 +600,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 										</label>
 										<input
 											id="create-alert-title"
-											value={title}
-											onChange={(e) => setTitle(e.target.value)}
+											name="title"
 											placeholder={derivedTitle}
 											className={`${alertInputClass} max-w-64`}
 										/>

@@ -540,7 +540,9 @@ export function SelectWithCombobox({
 							aria-live="polite"
 							className={`px-3 py-6 text-center body-sm ${useLegacyPopover ? 'text-primary' : 'text-tertiary'}`}
 						>
-							{emptyLabel}
+							<Ariakit.ComboboxValue>
+								{(value) => (value && typeof emptyLabel === 'string' ? `${emptyLabel} for "${value}"` : emptyLabel)}
+							</Ariakit.ComboboxValue>
 						</p>
 					)}
 				</Ariakit.SelectPopover>

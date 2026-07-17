@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { memo, useMemo, useState } from 'react'
+import { memo, useMemo, useRef, useState } from 'react'
 import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import {
@@ -250,7 +250,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 	const [deliveryChannel, setDeliveryChannel] = useState<DeliveryChannel>(alert.delivery_channel ?? 'email')
 	const [slackTeamId, setSlackTeamId] = useState<string>(alert.slack_team_id ?? '')
 	const [slackChannelId, setSlackChannelId] = useState<string>(alert.slack_channel_id ?? '')
-	const [priceEditTitle, setPriceEditTitle] = useState(alert.title)
+	const priceEditTitleRef = useRef<HTMLInputElement>(null)
 	const [mode, setMode] = useState<'view' | 'editing' | 'deleting'>('view')
 	const [showRearmNote, setShowRearmNote] = useState(false)
 	const [showExecutions, setShowExecutions] = useState(false)
@@ -313,7 +313,6 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 		setDeliveryChannel(alert.delivery_channel ?? 'email')
 		setSlackTeamId(alert.slack_team_id ?? '')
 		setSlackChannelId(alert.slack_channel_id ?? '')
-		setPriceEditTitle(alert.title)
 	}
 
 	const getConditionUpdate = (nextCondition: string) => {
@@ -775,8 +774,8 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						</p>
 					) : null}
 					<input
-						value={priceEditTitle}
-						onChange={(e) => setPriceEditTitle(e.target.value)}
+						ref={priceEditTitleRef}
+						defaultValue={alert.title}
 						required
 						placeholder="Alert title"
 						className={alertInputClass}
@@ -789,7 +788,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						errorMessage={updateAlertMutation.error?.message}
 						onCancel={() => switchMode('view')}
 						onSave={(trigger) => {
-							const titleValue = priceEditTitle.trim()
+							const titleValue = priceEditTitleRef.current?.value.trim() ?? ''
 							if (!titleValue) return
 							if (deliveryChannel === 'telegram' && !telegramLinked) return
 							if (deliveryChannel === 'slack' && (!slackTeamId || !slackChannelId)) return
