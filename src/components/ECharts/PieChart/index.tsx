@@ -11,7 +11,7 @@ import { useMedia } from '~/hooks/useMedia'
 import { formattedNum } from '~/utils'
 import { ChartContainer } from '../ChartContainer'
 import { ChartHeader } from '../ChartHeader'
-import { CHART_INSET, CHART_LEGEND_RIGHT_INSET, chartLegendScrollStyle } from '../chartSpacing'
+import { CHART_INSET, CHART_VERTICAL_LEGEND_RIGHT_INSET, chartLegendScrollStyle } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
 import { formatTooltipValue } from '../formatters'
 import type { IPieChartProps } from '../types'
@@ -318,7 +318,7 @@ export default function PieChart({
 				show: showLegend,
 				type: 'scroll',
 				top: CHART_INSET,
-				right: CHART_LEGEND_RIGHT_INSET,
+				right: CHART_VERTICAL_LEGEND_RIGHT_INSET,
 				orient: 'vertical', // Default
 				data: chartData.map((item) => item.name),
 				icon: 'circle',

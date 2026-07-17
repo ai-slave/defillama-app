@@ -1,6 +1,6 @@
 import * as echarts from 'echarts'
 import { describe, expect, it } from 'vitest'
-import { chartHorizontalScrollLegendGeometry } from './chartSpacing'
+import { chartHorizontalScrollLegend, chartHorizontalScrollLegendGeometry } from './chartSpacing'
 
 type Rect = { x: number; width: number }
 type Group = { x: number; getBoundingRect: () => Rect }
@@ -41,6 +41,21 @@ function getLegendBounds(names: string[]) {
 }
 
 describe('horizontal scroll legend geometry', () => {
+	it('applies shared defaults while preserving intentional placement overrides', () => {
+		expect(chartHorizontalScrollLegend({ data: ['Volume'] })).toMatchObject({
+			type: 'scroll',
+			orient: 'horizontal',
+			pageButtonPosition: 'end',
+			top: 8,
+			right: 8,
+			padding: [5, 0, 5, 8]
+		})
+		expect(chartHorizontalScrollLegend({ right: 108, top: 12 })).toMatchObject({
+			right: 108,
+			top: 12
+		})
+	})
+
 	it('keeps a short legend right-aligned with 8px visible spacing', () => {
 		const bounds = getLegendBounds(['Inflows', 'Outflows', 'Onchain Mcap'])
 

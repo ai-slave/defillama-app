@@ -54,7 +54,9 @@ export const LIQUIDATIONS_SERVER_URL_V2 =
 	(API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/liquidations` : 'https://api.llama.fi/liquidations')
 export const RISK_SERVER_URL =
 	getDirectUrlEnv('RISK_SERVER_URL') ?? (API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/risks` : 'https://risks.llama.fi')
-export const MARKETS_SERVER_URL = API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/markets` : 'https://markets.llama.fi'
+export const MARKETS_SERVER_URL =
+	getDirectUrlEnv('MARKETS_SERVER_URL') ??
+	(API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/markets` : 'https://markets.llama.fi')
 export const VAULT_RISK_SERVER_URL =
 	getDirectUrlEnv('VAULT_RISK_SERVER_URL') ??
 	(API_KEY ? `${PRO_API_BASE_URL}/${API_KEY}/vault-risk` : 'https://vault-risk.llama.fi')

@@ -4,7 +4,7 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartCleanup } from '~/hooks/useChartCleanup'
 import { useChartResize } from '~/hooks/useChartResize'
 import { ChartContainer } from '../ChartContainer'
-import { CHART_INSET, CHART_ZOOM_RESERVE, chartGrid } from '../chartSpacing'
+import { CHART_INSET, CHART_ZOOM_RESERVE, chartGrid, chartHorizontalScrollLegend } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
 import { formatTooltipValue } from '../formatters'
 import { METRIC_UNIT_GROUP_SYMBOL, resolveSeriesAxisLayout } from '../metricGroups'
@@ -223,7 +223,6 @@ export default function MultiSeriesChart({
 			}))
 		}
 
-		const legendRightPadding = needMultipleAxes ? 40 : legend.right
 		const gridLeftPadding = CHART_INSET
 
 		const shouldHideDataZoom = seriesWithHallmarks.every((s: any) => s.data.length < 2) || hideDataZoom
@@ -257,9 +256,8 @@ export default function MultiSeriesChart({
 			xAxis,
 			yAxis: finalYAxis,
 			legend: {
-				...legend,
-				data: series?.map((s: any) => s.name) || [],
-				...(legendRightPadding !== undefined ? { right: legendRightPadding } : {})
+				...chartHorizontalScrollLegend(legend),
+				data: series?.map((s: any) => s.name) || []
 			},
 			dataZoom: shouldHideDataZoom ? [] : [...dataZoom],
 			series: seriesWithHallmarks

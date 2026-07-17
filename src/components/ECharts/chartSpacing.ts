@@ -25,7 +25,7 @@ const CHART_SLIDER_BOTTOM_INSET = 12
 export const CHART_ZOOM_RESERVE =
 	CHART_SLIDER_BOTTOM_INSET + CHART_SLIDER_HEIGHT + CHART_SLIDER_MOVE_HANDLE_SIZE + CHART_INSET // 57
 export const CHART_LEGEND_RESERVE = 40
-export const CHART_LEGEND_RIGHT_INSET = 16
+export const CHART_VERTICAL_LEGEND_RIGHT_INSET = 16
 
 /**
  * Keep horizontal scroll-legend ink 8px from both edges without forcing `left`.
@@ -35,6 +35,22 @@ export const CHART_LEGEND_RIGHT_INSET = 16
 export const chartHorizontalScrollLegendGeometry = {
 	right: CHART_INSET,
 	padding: [5, 0, 5, CHART_INSET]
+}
+
+export function chartHorizontalScrollLegend(
+	legend: Record<string, unknown>,
+	scrollStyle: Record<string, unknown> = {}
+) {
+	return {
+		...scrollStyle,
+		...legend,
+		type: 'scroll',
+		orient: legend.orient ?? 'horizontal',
+		pageButtonPosition: legend.pageButtonPosition ?? 'end',
+		top: legend.top ?? CHART_INSET,
+		padding: legend.padding ?? chartHorizontalScrollLegendGeometry.padding,
+		right: legend.right ?? chartHorizontalScrollLegendGeometry.right
+	}
 }
 
 /** Standard cartesian grid; spread and override top/bottom for legend/zoom reserves. */

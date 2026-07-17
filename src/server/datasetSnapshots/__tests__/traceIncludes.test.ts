@@ -75,6 +75,16 @@ describe('dataset snapshot output tracing', () => {
 		expect(getStaticGenerationConfig(undefined)).toBeUndefined()
 	})
 
+	it('permanently redirects the retired Markets page to Exchanges', async () => {
+		const redirects = await nextConfig.redirects?.()
+
+		expect(redirects).toContainEqual({
+			source: '/markets',
+			destination: '/exchanges',
+			permanent: true
+		})
+	})
+
 	it('assigns composed and transitive consumers every domain they require', () => {
 		expect(DATASET_SNAPSHOT_ROUTE_DOMAINS['/token/*']).toEqual([
 			'markets',

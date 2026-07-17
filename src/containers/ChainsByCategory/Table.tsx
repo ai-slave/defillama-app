@@ -67,7 +67,7 @@ export function ChainsByCategoryTable({
 
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'tvl', desc: true }])
-	const [expanded, setExpanded] = React.useState<ExpandedState>({})
+	const [expanded, setExpanded] = React.useState<ExpandedState>(showByGroup ? true : {})
 
 	const instance = useReactTable({
 		data,
@@ -103,6 +103,7 @@ export function ChainsByCategoryTable({
 	const setAggrOptions: React.Dispatch<React.SetStateAction<Array<string>>> = (selectedKeys) => {
 		const nextSelectedKeys = typeof selectedKeys === 'function' ? selectedKeys(selectedAggregateTypes) : selectedKeys
 		const selectedKeysSet = new Set(nextSelectedKeys)
+		React.startTransition(() => setExpanded(true))
 		for (const item of CHAINS_CATEGORY_GROUP_SETTINGS) {
 			const shouldEnable = selectedKeysSet.has(item.key)
 			if (groupTvls[item.key] !== shouldEnable) {

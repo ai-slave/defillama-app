@@ -1,23 +1,23 @@
 /** Builds unpublished Markets artifacts; the snapshot store owns publication. */
 import { DATASET_SNAPSHOT_CONTRACT } from '~/server/datasetSnapshots/contract'
 import type { DatasetSnapshotWriter } from '~/server/datasetSnapshots/store'
-import { buildCexMarketsSlugIndex, buildTokenMarketsSymbolIndex } from './dataset.index'
-import { fetchExchangeMarketsListFromNetwork, fetchTokenMarketsListFromNetwork } from './upstream'
+import { buildCexExchangeSlugIndex, buildTokenMarketsSymbolIndex } from './dataset.index'
+import { fetchExchangeDirectoryFromNetwork, fetchTokenMarketsListFromNetwork } from './upstream'
 
 const MARKETS_DOMAIN = 'markets'
 
 export async function buildMarketsDomain(writer: DatasetSnapshotWriter): Promise<void> {
 	const files = DATASET_SNAPSHOT_CONTRACT[MARKETS_DOMAIN].files
 
-	const [tokensList, exchangesList] = await Promise.all([
+	const [tokensList, exchangeDirectory] = await Promise.all([
 		fetchTokenMarketsListFromNetwork(),
-		fetchExchangeMarketsListFromNetwork()
+		fetchExchangeDirectoryFromNetwork()
 	])
 
 	await Promise.all([
 		writer.writeJson(files.tokensList, tokensList),
-		writer.writeJson(files.exchangesList, exchangesList),
+		writer.writeJson(files.exchangeDirectory, exchangeDirectory),
 		writer.writeJson(files.tokenSymbols, buildTokenMarketsSymbolIndex(tokensList)),
-		writer.writeJson(files.cexByDefillamaSlug, buildCexMarketsSlugIndex(exchangesList))
+		writer.writeJson(files.cexByDefillamaSlug, buildCexExchangeSlugIndex(exchangeDirectory))
 	])
 }

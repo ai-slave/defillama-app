@@ -2,6 +2,7 @@ import { getBridgeSitemapRoutes } from '~/containers/Bridges/server/routes'
 import { getCexSitemapRoutes } from '~/containers/Cexs/server/routes'
 import { getChainSitemapRoutes } from '~/containers/ChainOverview/server/routes'
 import { getDATSitemapRoutes } from '~/containers/DAT/server/routes'
+import { getExchangeSitemapRoutes } from '~/containers/Exchanges/server/routes'
 import { getLiquidationsSitemapRoutes } from '~/containers/LiquidationsV2/server/routes'
 import { getNarrativeSitemapRoutes } from '~/containers/NarrativeTracker/server/routes'
 import { getOracleSitemapRoutes } from '~/containers/Oracles/server/routes'
@@ -25,6 +26,7 @@ export const SITEMAP_SECTION_IDS = [
 	'protocols',
 	'protocols-by-category',
 	'stablecoins',
+	'exchanges',
 	'cexs',
 	'bridges',
 	'rwa',
@@ -123,6 +125,8 @@ async function buildBaseSitemapSection(
 			}
 		case 'stablecoins':
 			return { id: sectionId, entries: toEntries(await getStablecoinSitemapRoutes(metadataCache)) }
+		case 'exchanges':
+			return { id: sectionId, entries: toEntries(await getExchangeSitemapRoutes()) }
 		case 'cexs':
 			return { id: sectionId, entries: toEntries(await getCexSitemapRoutes(metadataCache)) }
 		case 'bridges':

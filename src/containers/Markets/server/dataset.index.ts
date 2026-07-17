@@ -1,10 +1,10 @@
-import type { ExchangeMarketsListResponse, TokenMarketsListResponse } from '~/containers/Markets/api.types'
-import { SEGMENT_IDS } from '~/containers/Markets/segments'
+import type { MasterDirectoryResponse } from '~/containers/Exchanges/master.types'
+import type { TokenMarketsListResponse } from '~/containers/Markets/api.types'
 import { slug } from '~/utils'
 
 export type TokenMarketsSymbolIndex = Record<string, true>
-export type CexMarketsSlugIndexEntry = { exchange: string; defillama_slug: string }
-export type CexMarketsSlugIndex = Record<string, CexMarketsSlugIndexEntry>
+export type CexExchangeSlugIndexEntry = { exchange: string; defillama_slug: string }
+export type CexExchangeSlugIndex = Record<string, CexExchangeSlugIndexEntry>
 
 export function buildTokenMarketsSymbolIndex(tokensList: TokenMarketsListResponse): TokenMarketsSymbolIndex {
 	const index = Object.create(null) as TokenMarketsSymbolIndex
@@ -12,39 +12,21 @@ export function buildTokenMarketsSymbolIndex(tokensList: TokenMarketsListRespons
 	return index
 }
 
-export function buildCexMarketsSlugIndex(exchangesList: ExchangeMarketsListResponse): CexMarketsSlugIndex {
-	const index = Object.create(null) as CexMarketsSlugIndex
-	for (const segment of SEGMENT_IDS) {
-		for (const entry of exchangesList.cex[segment]) {
-			if (!entry.defillama_slug) continue
-			const key = slug(entry.defillama_slug)
-			if (!Object.hasOwn(index, key)) index[key] = { exchange: entry.exchange, defillama_slug: entry.defillama_slug }
-		}
+export function buildCexExchangeSlugIndex(directory: MasterDirectoryResponse): CexExchangeSlugIndex {
+	const index = Object.create(null) as CexExchangeSlugIndex
+	for (const venue of directory.venues) {
+		const defillama = venue.links.defillama
+		if (venue.type !== 'cex' || !defillama || defillama.type !== 'cex') continue
+		const key = slug(defillama.slug)
+		index[key] = { exchange: venue.slug, defillama_slug: defillama.slug }
 	}
 	return index
 }
 
-export function resolveMarketsExchangeFromList(
-	exchange: string,
-	exchangesList: ExchangeMarketsListResponse
-): string | null {
-	const normalizedExchange = exchange.toLowerCase()
-
-	for (const venue of [exchangesList.cex, exchangesList.dex]) {
-		for (const category in venue) {
-			for (const entry of venue[category as keyof typeof venue]) {
-				if (entry.exchange.toLowerCase() === normalizedExchange) return entry.exchange
-			}
-		}
-	}
-
-	return null
-}
-
-export function resolveCexMarketsBySlug(
-	index: CexMarketsSlugIndex,
+export function resolveExchangeByDefillamaCexSlug(
+	index: CexExchangeSlugIndex,
 	defillamaSlug: string
-): CexMarketsSlugIndexEntry | null {
+): CexExchangeSlugIndexEntry | null {
 	const key = slug(defillamaSlug)
 	return Object.hasOwn(index, key) ? index[key] : null
 }

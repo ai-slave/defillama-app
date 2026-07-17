@@ -97,7 +97,7 @@ export const DateFilter = ({
 		setLocalEndHour('0')
 		void router.push(
 			{
-				pathname: '/cexs'
+				pathname: router.pathname
 			},
 			undefined,
 			{
@@ -176,7 +176,7 @@ export const DateFilter = ({
 
 								void router.push(
 									{
-										pathname: '/cexs',
+										pathname: router.pathname,
 										query: { startDate: startTimestamp, endDate: endTimestamp }
 									},
 									undefined,

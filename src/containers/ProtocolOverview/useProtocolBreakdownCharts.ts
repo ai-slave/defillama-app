@@ -51,7 +51,6 @@ interface IUseProtocolBreakdownChartsResult {
 	tokenRawCharts: MultiSeriesCharts
 	tokenBreakdownUSD: BreakdownChart | null
 	tokenBreakdownLatest: TokenBreakdownLatest
-	tokenBreakdownLatestKey: string
 	tokenBreakdownPieChart: Array<{ name: string; value: number }>
 	usdInflowsDataset: InflowsDataset | null
 	tokenInflowsDataset: MultiSeriesChart2Dataset | null
@@ -260,21 +259,7 @@ type TokenInflowsDataset = {
 
 const EMPTY_MULTI_SERIES_CHARTS: MultiSeriesCharts = []
 const EMPTY_TOKEN_BREAKDOWN_LATEST: TokenBreakdownLatest = {}
-const EMPTY_TOKEN_BREAKDOWN_LATEST_KEY = 'tokens-breakdown-empty'
 const EMPTY_PIE_CHART_DATA: Array<{ name: string; value: number }> = []
-
-const getTokenBreakdownKey = (tokens: TokenBreakdownLatest) => {
-	let hash = 0
-	let count = 0
-	const names = Object.keys(tokens).sort()
-	for (const name of names) {
-		count++
-		for (let i = 0; i < name.length; i++) {
-			hash = (hash * 31 + name.charCodeAt(i)) | 0
-		}
-	}
-	return `tokens-breakdown-${count}-${(hash >>> 0).toString(36)}`
-}
 
 const buildChartsForKeys = (keys: string[], type: 'line' | 'bar', stack?: string): MultiSeriesCharts => {
 	if (keys.length === 0) return EMPTY_MULTI_SERIES_CHARTS
@@ -302,7 +287,6 @@ const EMPTY_COMPUTED_RESULT: IUseProtocolBreakdownChartsComputed = {
 	tokenRawCharts: EMPTY_MULTI_SERIES_CHARTS,
 	tokenBreakdownUSD: null,
 	tokenBreakdownLatest: EMPTY_TOKEN_BREAKDOWN_LATEST,
-	tokenBreakdownLatestKey: EMPTY_TOKEN_BREAKDOWN_LATEST_KEY,
 	tokenBreakdownPieChart: EMPTY_PIE_CHART_DATA,
 	usdInflowsDataset: null,
 	tokenInflowsDataset: null,
@@ -371,7 +355,6 @@ export const buildComputedBreakdownResult = ({
 			tokenRawCharts: EMPTY_MULTI_SERIES_CHARTS,
 			tokenBreakdownUSD: null,
 			tokenBreakdownLatest: EMPTY_TOKEN_BREAKDOWN_LATEST,
-			tokenBreakdownLatestKey: EMPTY_TOKEN_BREAKDOWN_LATEST_KEY,
 			tokenBreakdownPieChart: EMPTY_PIE_CHART_DATA,
 			usdInflowsDataset: null,
 			tokenInflowsDataset: null,
@@ -426,10 +409,6 @@ export const buildComputedBreakdownResult = ({
 		tokenBreakdownUSD?.length && hasTokenBreakdownPieSource
 			? preparePieChartData({ data: tokenBreakdownPieSource, limit: 15 })
 			: EMPTY_PIE_CHART_DATA
-	const tokenBreakdownLatestKey =
-		tokenBreakdownLatest === EMPTY_TOKEN_BREAKDOWN_LATEST
-			? EMPTY_TOKEN_BREAKDOWN_LATEST_KEY
-			: getTokenBreakdownKey(tokenBreakdownLatest)
 
 	const tokenInflows = buildTokenInflowsFromBreakdowns(tokenBreakdownUSD, tokenBreakdown, tokensUnique)
 	const usdInflows = buildUsdInflowsFromTokenInflows(tokenInflows)
@@ -465,7 +444,6 @@ export const buildComputedBreakdownResult = ({
 		tokenRawCharts,
 		tokenBreakdownUSD,
 		tokenBreakdownLatest,
-		tokenBreakdownLatestKey,
 		tokenBreakdownPieChart,
 		usdInflowsDataset,
 		tokenInflowsDataset,

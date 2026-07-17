@@ -20,7 +20,7 @@ beforeEach(() => {
 	mocks.fetchJson.mockResolvedValue(null)
 })
 
-describe('markets upstream api', () => {
+describe('shared markets upstream data', () => {
 	it('requests the token markets list', async () => {
 		const upstream = await import('../server/upstream')
 
@@ -29,35 +29,11 @@ describe('markets upstream api', () => {
 		expect(mocks.fetchJson).toHaveBeenCalledWith('https://markets.example.com/tokens/list.json')
 	})
 
-	it('requests the exchange markets list', async () => {
+	it('requests the exchange directory used by CEX and exchange routes', async () => {
 		const upstream = await import('../server/upstream')
 
-		await upstream.fetchExchangeMarketsListFromNetwork()
+		await upstream.fetchExchangeDirectoryFromNetwork()
 
-		expect(mocks.fetchJson).toHaveBeenCalledWith('https://markets.example.com/exchanges/list.json')
-	})
-
-	it('requests the exchange metadata list', async () => {
-		const upstream = await import('../server/upstream')
-
-		await upstream.fetchExchangeMetadataListFromNetwork()
-
-		expect(mocks.fetchJson).toHaveBeenCalledWith('https://markets.example.com/exchanges/metadata-list.json')
-	})
-
-	it('requests an exchange markets index from the upstream markets server', async () => {
-		const upstream = await import('../server/upstream')
-
-		await upstream.fetchExchangeMarketsFromNetwork('Binance')
-
-		expect(mocks.fetchJson).toHaveBeenCalledWith('https://markets.example.com/exchanges/binance/index.json')
-	})
-
-	it('requests exchange metadata from the upstream markets server', async () => {
-		const upstream = await import('../server/upstream')
-
-		await upstream.fetchExchangeMetadataFromNetwork('Binance')
-
-		expect(mocks.fetchJson).toHaveBeenCalledWith('https://markets.example.com/exchanges/binance/metadata.json')
+		expect(mocks.fetchJson).toHaveBeenCalledWith('https://markets.example.com/exchanges/directory.json')
 	})
 })

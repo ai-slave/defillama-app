@@ -45,12 +45,6 @@ export function normalizeSeriesToMilliseconds(series: ReadonlyArray<[number, num
 	return normalized
 }
 
-export function reconcileChartSelection(selected: string[], all: string[]) {
-	if (all.length === 0 || selected.length === 0) return []
-	const next = selected.filter((x) => all.includes(x))
-	return next.length > 0 ? next : all
-}
-
 export function normalizeBridgeVolumeToChartMs(
 	bridgeVolumeData: IProtocolOverviewPageData['bridgeVolume']
 ): IProtocolNumericSeries | null {

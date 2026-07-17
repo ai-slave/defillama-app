@@ -1,5 +1,4 @@
 import { SERVER_URL } from '~/constants'
-import type { ExchangeMarketsResponse } from '~/containers/Markets/api.types'
 import { fetchJson } from '~/utils/async'
 import type { RawCexInflowsResponse, RawCexsResponse } from './api.types'
 
@@ -57,10 +56,4 @@ export async function fetchCexInflowsBatchProxy(
 		throw new Error(`Inflows batch API returned ${res?.status ?? 'no response'}`)
 	}
 	return res.json()
-}
-
-export async function fetchExchangeMarkets(exchange: string): Promise<ExchangeMarketsResponse> {
-	return fetchJson<ExchangeMarketsResponse>(
-		`/api/public/markets/exchanges/${encodeURIComponent(exchange.toLowerCase())}`
-	)
 }

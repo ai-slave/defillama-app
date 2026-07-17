@@ -30,7 +30,10 @@ export const MetricRow = ({
 		className={`group flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b ${dashed ? 'border-dashed' : ''} border-subtle py-1 last:border-none ${className}`.trim()}
 	>
 		{tooltip ? (
-			<Tooltip content={tooltip} className="body-md text-secondary underline decoration-dotted">
+			<Tooltip
+				content={tooltip}
+				render={<button type="button" className="body-md text-secondary underline decoration-dotted" />}
+			>
 				<span data-metric-label>{label}</span>
 			</Tooltip>
 		) : (

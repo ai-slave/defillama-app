@@ -1,131 +1,55 @@
-import { Announcement } from '~/components/Announcement'
-import type { ExchangeMetadataListEntry } from '~/containers/Markets/api.types'
-import { MicaFinder, type MicaExchange } from '~/containers/Markets/MicaFinder'
-import { fetchExchangeMetadataListFromNetwork } from '~/containers/Markets/server/upstream'
+import { Icon } from '~/components/Icon'
+import { ExchangesNav } from '~/containers/Exchanges/ExchangesNav'
+import { MicaTable } from '~/containers/Exchanges/MicaTable'
+import type { MicaVenueModel } from '~/containers/Exchanges/models'
+import { selectActivePromotion } from '~/containers/Exchanges/promotions'
+import { loadMasterMicaVenues } from '~/containers/Exchanges/server/master.loaders'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
-type MicaPageProps = {
-	exchanges: MicaExchange[]
-}
-
-const SPOT_PRODUCT = 'spot'
-const PERP_PRODUCT = 'perp'
-const MICA_REF_LINKS_BY_EXCHANGE: Partial<Record<string, string>> = {
-	coinbase: 'https://coinbase-consumer.sjv.io/JkBQRQ',
-	cryptocom: 'https://cryptocom.sjv.io/E02YKK',
-	gate: 'https://eu.gate.com/signup?ref_type=103&ref=VFVMVL5EUQ',
-	okx: 'https://okx.com/join/DEFILLAMA',
-	kraken: 'https://proinvite.kraken.com/9f1e/ygb8jngg',
-	bybit: 'https://www.bybit.eu/en-EU/MoveYourFunds/?affiliate_id=163070&group_id=1964335&group_type=1',
-	backpack: 'https://backpack.exchange/join/tnk6icla',
-	nexo: 'https://nexo.sjv.io/c/7455292/918878/12544',
-	'revolut-x': 'https://revolut.ngih.net/c/7454895/583783/9626'
-}
-
-function shouldShowMicaExchange(exchange: ExchangeMetadataListEntry) {
-	if (!exchange.mica_licensed) return false
-	if (exchange.eu_status && exchange.eu_status !== 'available') return false
-	return true
-}
-
-function getMicaProducts(exchange: ExchangeMetadataListEntry) {
-	return exchange.products.includes(PERP_PRODUCT) ? [PERP_PRODUCT] : []
-}
-
-function getMicaPromotions(exchange: ExchangeMetadataListEntry): MicaExchange['promotions'] {
-	if (exchange.exchange === 'kraken') return []
-	return (exchange.promotions ?? []).map((promotion) => ({
-		ends_at: promotion.ends_at ?? null,
-		label: promotion.label,
-		priority: promotion.priority ?? null,
-		source: promotion.source ? { url: promotion.source.url } : null,
-		starts_at: promotion.starts_at ?? null,
-		subtitle: promotion.subtitle ?? null,
-		terms_url: promotion.terms_url ?? null,
-		title: promotion.title,
-		url: promotion.url ?? null
-	}))
-}
-
-function getMicaExchange(exchange: ExchangeMetadataListEntry): MicaExchange {
-	const hasSpot = exchange.products.includes(SPOT_PRODUCT)
-	const hasPerps = exchange.products.includes(PERP_PRODUCT)
-	const depth = exchange.depth_summary
-
-	return {
-		depth_summary: {
-			isPartialCoverage: depth.isPartialCoverage,
-			spot_ask_depth_05pct_usd: hasSpot ? (depth.spot_ask_depth_05pct_usd ?? 0) : 0,
-			spot_ask_depth_2pct_usd: hasSpot ? depth.spot_ask_depth_2pct_usd : 0,
-			spot_bid_depth_05pct_usd: hasSpot ? (depth.spot_bid_depth_05pct_usd ?? 0) : 0,
-			spot_bid_depth_2pct_usd: hasSpot ? depth.spot_bid_depth_2pct_usd : 0,
-			perp_ask_depth_05pct_usd: hasPerps ? (depth.perp_ask_depth_05pct_usd ?? 0) : 0,
-			perp_ask_depth_2pct_usd: hasPerps ? depth.perp_ask_depth_2pct_usd : 0,
-			perp_bid_depth_05pct_usd: hasPerps ? (depth.perp_bid_depth_05pct_usd ?? 0) : 0,
-			perp_bid_depth_2pct_usd: hasPerps ? depth.perp_bid_depth_2pct_usd : 0
-		},
-		display_name: exchange.exchange === 'cryptocom' ? 'Crypto.com' : exchange.display_name,
-		eu_status: exchange.eu_status,
-		exchange: exchange.exchange,
-		kyc_required: exchange.kyc_required,
-		kyc_short: exchange.kyc_short,
-		kyc_summary: exchange.kyc_summary ?? null,
-		market_count: exchange.market_count,
-		mica_licensed: exchange.mica_licensed,
-		own_eu_orderbook: exchange.own_eu_orderbook,
-		perp_fee: hasPerps ? exchange.perp_fee : { maker: null, taker: null },
-		products: getMicaProducts(exchange),
-		promotions: getMicaPromotions(exchange),
-		ramp_cost_1k: exchange.ramp_cost_1k ?? null,
-		ref_link: MICA_REF_LINKS_BY_EXCHANGE[exchange.exchange] ?? exchange.ref_link,
-		secondary: exchange.secondary,
-		spot_fee: hasSpot ? exchange.spot_fee : { maker: null, taker: null },
-		website: exchange.website
-	}
+interface MicaPageProps {
+	exchanges: MicaVenueModel[]
+	asOfDate: string
 }
 
 export const getStaticProps = withPerformanceLogging<MicaPageProps>('mica', async () => {
-	let exchanges: MicaExchange[] = []
-	try {
-		const res = await fetchExchangeMetadataListFromNetwork()
-		for (const exchange of res?.exchanges ?? []) {
-			if (!shouldShowMicaExchange(exchange)) continue
-			exchanges.push(getMicaExchange(exchange))
-		}
-	} catch (e) {
-		// The metadata origin may be unavailable at build time — never fail the
-		// build over the directory; render the empty state instead.
-		console.warn('[mica] metadata-list fetch failed, rendering empty state:', (e as Error).message)
-	}
-
+	const exchanges = await loadMasterMicaVenues()
 	return {
-		props: { exchanges },
+		props: { exchanges, asOfDate: new Date().toISOString().slice(0, 10) },
 		revalidate: maxAgeForNext([22])
 	}
 })
 
-const pageName = ['MiCA-regulated exchanges']
+export const MICA_PAGE_METADATA = {
+	title: 'MiCA-regulated exchanges - DefiLlama',
+	description:
+		'Compare MiCA-licensed crypto exchanges available in the EU by liquidity, trading fees, perps availability, and KYC requirements.',
+	canonicalUrl: '/mica',
+	pageName: ['Exchanges']
+}
 
-export default function MicaPage({ exchanges }: MicaPageProps) {
+export default function MicaPage({ exchanges, asOfDate }: MicaPageProps) {
+	const promotionCount = exchanges.filter((exchange) => selectActivePromotion(exchange.promotions, asOfDate)).length
 	return (
-		<Layout
-			title="MiCA-regulated exchanges - DefiLlama"
-			description="Compare MiCA-licensed crypto exchanges available in the EU by liquidity, trading fees, perps availability, and KYC requirements."
-			canonicalUrl="/mica"
-			pageName={pageName}
-		>
-			<Announcement notCancellable>
-				We have negotiated deals with some exchanges to offer 20% fee discounts to users that sign up through our links
-			</Announcement>
+		<Layout {...MICA_PAGE_METADATA}>
+			<ExchangesNav activePage="mica" />
+			{promotionCount > 0 ? (
+				<Card as="aside" padding="sm" className="flex items-center gap-2 body-sm text-secondary">
+					<Icon name="gift" className="size-4 shrink-0 text-link" />
+					<p>
+						Negotiated offers are active on {promotionCount} {promotionCount === 1 ? 'exchange' : 'exchanges'}. Use the
+						gift buttons to review each campaign and its terms.
+					</p>
+				</Card>
+			) : null}
 
 			{exchanges.length ? (
-				<MicaFinder exchanges={exchanges} />
+				<MicaTable venues={exchanges} asOfDate={asOfDate} />
 			) : (
 				<Card padding="md" className="text-center body-sm text-secondary">
-					<p>Exchange directory is being updated. Please check back shortly.</p>
+					<p>No MiCA-licensed exchanges are present in the current catalog.</p>
 				</Card>
 			)}
 		</Layout>

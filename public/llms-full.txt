@@ -164,8 +164,11 @@ Common usage examples:
 - [Protocols by Market Cap](https://defillama.com/mcaps): Token price multiplied by circulating supply of each protocol Category: Token.
 - [Protocols by FDV](https://defillama.com/fdv): Token price multiplied by fully diluted supply of each protocol Category: Token.
 - [Protocols by Outstanding FDV](https://defillama.com/outstanding-fdv): Token price multiplied by outstanding supply of each protocol. Outstanding supply is the total supply minus the supply that is not yet allocated to anything (e.g., coins in treasury or reserve) Category: Token.
-- [Markets](https://defillama.com/markets): Spot and perpetual markets by token, exchange, and category Category: Token.
 - [Tokens](https://defillama.com/tokens): Token rankings by market cap, price performance, volume, revenue, unlocks, and token rights Category: Token.
+- [Exchanges](https://defillama.com/exchanges): Centralized and decentralized exchange volume, open interest, liquidity, fees, reserves, and compliance metadata Category: Exchanges.
+- [Exchange Reserves](https://defillama.com/cexs): Assets held in tracked centralized exchange wallets, clean reserves, and net inflows Category: Exchanges.
+- [Exchange Charts](https://defillama.com/exchanges/charts): Historical volume, open interest, depth, and normalized volume across exchanges Category: Exchanges.
+- [MiCA Exchanges](https://defillama.com/mica): MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements Category: Exchanges.
 - [RWA: Overview](https://defillama.com/rwa): Overview of all Real World Assets (RWAs) Category: RWA.
 - [RWA by Chain](https://defillama.com/rwa/chains): Overview of all Real World Assets (RWAs) by chain Category: RWA.
 - [RWA by Platform](https://defillama.com/rwa/platforms): Overview of all Real World Assets (RWAs) by platform Category: RWA.
@@ -192,8 +195,6 @@ Common usage examples:
 - [Treasuries](https://defillama.com/treasuries): Value of tokens owned by a protocol, including its own token and breakdown of assets held Category: Treasury.
 - [Net Project Treasury](https://defillama.com/net-project-treasury): Value of tokens owned by a protocol, excluding its own token Category: Treasury.
 - [Treasury: Entities](https://defillama.com/entities): Treasury by entity Category: Treasury.
-- [CEXs](https://defillama.com/cexs): Sum of assets held on centralized exchanges Category: Others.
-- [MiCA Exchanges](https://defillama.com/mica): MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements Category: Others.
 - [Recently Listed Protocols](https://defillama.com/recent): List of recently listed protocols Category: Others.
 - [Narrative Tracker](https://defillama.com/narrative-tracker): MCap-Weighted category performance to track narrative changes in the ecosystem Category: Others.
 - [Staked ETH by Protocol](https://defillama.com/lst): Total value of ETH staked on LSTs Category: Others.

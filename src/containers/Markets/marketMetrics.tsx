@@ -4,7 +4,7 @@ import { Card } from '~/ui/Card'
 import { materialChange, toPercent } from './utils'
 
 /** Fractional change rendered as a signed, coloured percent. */
-export function ChangeCell({ fraction }: { fraction: number | null | undefined }) {
+function ChangeCell({ fraction }: { fraction: number | null | undefined }) {
 	const pct = toPercent(fraction ?? null)
 	if (pct == null) return <span className="text-tertiary">–</span>
 	return <PercentChange percent={pct} />
@@ -51,12 +51,4 @@ export function MetricStat({ label, value, sub }: { label: string; value: ReactN
 export function MetricStatStrip({ children, surface = true }: { children: ReactNode; surface?: boolean }) {
 	const content = <div className="flex w-full flex-wrap items-center gap-x-5 gap-y-1.5">{children}</div>
 	return surface ? <Card padding="strip">{content}</Card> : content
-}
-
-/** Funding rate with positive/negative coloring. */
-export function FundingCell({ rate }: { rate: number | null | undefined }) {
-	if (rate == null) return <span className="text-tertiary">–</span>
-	const pct = rate * 100
-	const colorClass = pct > 0 ? 'text-data-up' : pct < 0 ? 'text-data-down' : ''
-	return <span className={colorClass}>{pct.toFixed(4)}%</span>
 }

@@ -21,14 +21,6 @@ beforeEach(() => {
 })
 
 describe('cex api', () => {
-	it('requests an exchange markets index through the local proxy', async () => {
-		const api = await import('../api')
-
-		await api.fetchExchangeMarkets('Binance')
-
-		expect(mocks.fetchJson).toHaveBeenCalledWith('/api/public/markets/exchanges/binance')
-	})
-
 	it('requests exchange inflows through the batch proxy', async () => {
 		const api = await import('../api')
 		const authorizedFetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ Binance: { outflows: 100 } })))

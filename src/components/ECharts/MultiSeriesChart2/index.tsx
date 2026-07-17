@@ -36,7 +36,7 @@ import {
 	CHART_LEGEND_RESERVE,
 	chartDataZoomSliderGeometry,
 	chartGrid,
-	chartHorizontalScrollLegendGeometry,
+	chartHorizontalScrollLegend,
 	chartLegendScrollStyle
 } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
@@ -836,16 +836,7 @@ export default function MultiSeriesChart2(props: IMultiSeriesChart2Props) {
 			legendTheme.legendPageInactive,
 			legendTheme.axisLabel
 		)
-		const getScrollLegend = (legendOption: any) => ({
-			...legendScrollStyle,
-			...legendOption,
-			type: 'scroll',
-			orient: legendOption?.orient ?? 'horizontal',
-			pageButtonPosition: legendOption?.pageButtonPosition ?? 'end',
-			top: legendOption?.top ?? CHART_INSET,
-			padding: legendOption?.padding ?? chartHorizontalScrollLegendGeometry.padding,
-			right: legendOption?.right ?? chartHorizontalScrollLegendGeometry.right
-		})
+		const getScrollLegend = (legendOption: any) => chartHorizontalScrollLegend(legendOption, legendScrollStyle)
 		const finalLegend = hideDefaultLegend
 			? undefined
 			: Array.isArray(legend)

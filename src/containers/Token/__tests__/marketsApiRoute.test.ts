@@ -75,6 +75,21 @@ describe('/api/public/markets/[token]', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Token not found' })
 	})
 
+	it.each(['categories', 'exchanges'])('does not treat the retired %s API path as a token', async (token) => {
+		const req = {
+			method: 'GET',
+			query: { token },
+			url: `/api/public/markets/${token}`
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await handler(req, res)
+
+		expect(fetchJsonMock).not.toHaveBeenCalled()
+		expect(res.status).toHaveBeenCalledWith(404)
+		expect(res.json).toHaveBeenCalledWith({ error: 'Token not found' })
+	})
+
 	it('does not cache token market failures', async () => {
 		fetchJsonMock
 			.mockRejectedValueOnce(new Error('temporary upstream failure'))

@@ -20,4 +20,11 @@ describe('MetricPrimitives export markers', () => {
 		expect(html).toContain('data-metric-label="true">Perp Volume 30d</span>')
 		expect(html).toContain('data-metric-value="true"><strong>$1.33m</strong></span>')
 	})
+
+	it('uses a keyboard-focusable trigger for ordinary metric help', () => {
+		const html = renderToStaticMarkup(<MetricRow label="Reserves" tooltip="Assets, not liabilities" value="$1m" />)
+
+		expect(html).toContain('<button type="button"')
+		expect(html).toContain('data-metric-label="true">Reserves</span>')
+	})
 })

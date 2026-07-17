@@ -12,7 +12,8 @@ const metadataCache = vi.hoisted(
 		protocolMetadata: {
 			aave: { name: 'aave', displayName: 'Aave', tvl: true, fees: true, emissions: true },
 			uniswap: { name: 'uniswap', displayName: 'Uniswap', dexs: true },
-			binance: { name: 'binance-cex', displayName: 'Binance CEX', tvl: true, stablecoins: true, cex: true }
+			binance: { name: 'binance-cex', displayName: 'Binance CEX', tvl: true, stablecoins: true, cex: true },
+			'no-markets': { name: 'no-markets-cex', displayName: 'No Markets CEX', tvl: true, cex: true }
 		},
 		protocolRouteIdBySlug: {
 			aave: 'aave',
@@ -23,13 +24,18 @@ const metadataCache = vi.hoisted(
 			lending: 'Lending'
 		},
 		protocolTagBySlug: {},
-		cexs: [{ name: 'Binance', slug: 'binance-cex' }],
+		cexs: [
+			{ name: 'Binance', slug: 'binance-cex' },
+			{ name: 'No Markets', slug: 'no-markets-cex' }
+		],
 		cexRouteIdBySlug: {
 			binance: 'binance',
-			'binance-cex': 'binance'
+			'binance-cex': 'binance',
+			'no-markets-cex': 'no-markets'
 		},
 		cexMetadataBySlug: {
-			'binance-cex': { name: 'Binance', slug: 'binance-cex' }
+			'binance-cex': { name: 'Binance', slug: 'binance-cex' },
+			'no-markets-cex': { name: 'No Markets', slug: 'no-markets-cex' }
 		},
 		rwaList: {
 			canonicalMarketIds: ['ondo/usdy'],
@@ -95,12 +101,15 @@ vi.mock('~/containers/LiquidationsV2/server/routeData', () => ({
 		.mockResolvedValue([{ protocolId: 'aave', chainIds: ['ethereum'] }])
 }))
 
-vi.mock('~/containers/Cexs/server/routeData', () => ({
-	getCexMarketSlugsFromSnapshot: vi.fn().mockResolvedValue(['binance'])
-}))
-
 vi.mock('~/containers/Raises/server/routeData', () => ({
 	getRaisesInvestorSlugsFromSnapshot: vi.fn().mockResolvedValue(['paradigm', 'a16z'])
+}))
+
+vi.mock('~/containers/Markets/server/dataset.server', () => ({
+	fetchExchangeDirectory: vi.fn().mockResolvedValue({ venues: [{ slug: 'binance' }, { slug: 'coinbase' }] }),
+	fetchCexExchangeSlugIndex: vi.fn().mockResolvedValue({
+		'binance-cex': { exchange: 'binance', defillama_slug: 'binance-cex' }
+	})
 }))
 
 import { buildAppSitemapSections, getSitemapSection, getSitemapSectionPath } from '~/server/routeRegistry/sitemap'
@@ -156,14 +165,17 @@ describe('cache-backed sitemap sections', () => {
 		expect(entriesBySection.get('stablecoins')).toEqual(
 			expect.arrayContaining(['stablecoin/tether', 'stablecoins/ethereum'])
 		)
+		expect(entriesBySection.get('exchanges')).toEqual(expect.arrayContaining(['exchange/binance', 'exchange/coinbase']))
+		// Listing pages (/exchanges, /cexs, /exchanges/charts, /mica) come from the nav data.
+		expect(entriesBySection.get('static')).toEqual(expect.arrayContaining(['exchanges/charts', 'cexs']))
+		expect(entriesBySection.get('static')).not.toContain('markets')
+		// binance-cex maps to an exchange profile so its /cex URLs now redirect
+		// and must stay out of the sitemap; unmapped venues remain listed.
 		expect(entriesBySection.get('cexs')).toEqual(
-			expect.arrayContaining([
-				'cex/binance-cex',
-				'cex/assets/binance-cex',
-				'cex/stablecoins/binance-cex',
-				'cex/markets/binance-cex'
-			])
+			expect.arrayContaining(['cex/no-markets-cex', 'cex/assets/no-markets-cex', 'cex/stablecoins/no-markets-cex'])
 		)
+		expect(entriesBySection.get('cexs')).not.toContain('cex/binance-cex')
+		expect(entriesBySection.get('cexs')).not.toContain('cex/markets/binance-cex')
 		expect(entriesBySection.get('bridges')).toEqual(expect.arrayContaining(['bridge/stargate', 'bridges/ethereum']))
 		expect(getSitemapSectionPath('protocols-by-category')).toBe('sitemap/protocols-by-category.xml')
 		expect(entriesBySection.get('dat')).toEqual(
@@ -210,17 +222,17 @@ describe('cache-backed sitemap sections', () => {
 	})
 
 	it('serves the previous sitemap snapshot while an expired cache refresh fails', async () => {
-		const { getCexMarketSlugsFromSnapshot } = await import('~/containers/Cexs/server/routeData')
+		const { getRaisesInvestorSlugsFromSnapshot } = await import('~/containers/Raises/server/routeData')
 		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
 		await buildAppSitemapSections()
 		vi.useFakeTimers({ now: Date.now() + 60 * 60 * 1000 + 1 })
-		vi.mocked(getCexMarketSlugsFromSnapshot).mockRejectedValueOnce(new Error('refresh failed'))
+		vi.mocked(getRaisesInvestorSlugsFromSnapshot).mockRejectedValueOnce(new Error('refresh failed'))
 
-		const section = await getSitemapSection('cexs.xml')
+		const section = await getSitemapSection('raises.xml')
 
 		expect(section?.entries.map((entry) => entry.path)).toEqual(
-			expect.arrayContaining(['cex/binance-cex', 'cex/markets/binance-cex'])
+			expect.arrayContaining(['raises/paradigm', 'raises/a16z'])
 		)
 		await Promise.resolve()
 		await Promise.resolve()
@@ -228,9 +240,9 @@ describe('cache-backed sitemap sections', () => {
 	})
 
 	it('keeps building other sitemap sections when one cold section fails', async () => {
-		const { getCexMarketSlugsFromSnapshot } = await import('~/containers/Cexs/server/routeData')
+		const { getRaisesInvestorSlugsFromSnapshot } = await import('~/containers/Raises/server/routeData')
 		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-		vi.mocked(getCexMarketSlugsFromSnapshot).mockRejectedValueOnce(new Error('snapshot unavailable'))
+		vi.mocked(getRaisesInvestorSlugsFromSnapshot).mockRejectedValueOnce(new Error('snapshot unavailable'))
 		vi.resetModules()
 		const sitemapModule = await import('~/server/routeRegistry/sitemap')
 
@@ -240,8 +252,8 @@ describe('cache-backed sitemap sections', () => {
 		)
 
 		expect(entriesBySection.get('chains')).toEqual(expect.arrayContaining(['chain/ethereum']))
-		expect(entriesBySection.get('cexs')).toEqual([])
-		expect(warnSpy).toHaveBeenCalledWith('[sitemap] failed to build cexs section', expect.any(Error))
+		expect(entriesBySection.get('raises')).toEqual([])
+		expect(warnSpy).toHaveBeenCalledWith('[sitemap] failed to build raises section', expect.any(Error))
 		warnSpy.mockRestore()
 	})
 })

@@ -16,8 +16,9 @@ const columnHelper = createColumnHelper<TestRow>()
 const columns = [
 	columnHelper.accessor('name', {
 		header: 'Name',
+		enableSorting: false,
 		cell: (info) => info.getValue(),
-		meta: { headerClassName: 'w-[180px]' }
+		meta: { headerClassName: 'w-[180px]', headerHelperText: 'Venue identity help' }
 	}),
 	columnHelper.accessor('mcap', {
 		header: 'Market Cap',
@@ -72,5 +73,11 @@ describe('VirtualTable SSR', () => {
 		expect(normalHtml).toContain('height:50px')
 		expect(compactHtml).toContain('height:40px')
 		expect(overriddenHtml).toContain('height:64px')
+	})
+
+	it('makes helper text on a non-sortable header keyboard reachable', () => {
+		const html = renderToStaticMarkup(<TestVirtualTable />)
+
+		expect(html).toMatch(/<button[^>]*type="button"[^>]*>Name<\/button>/)
 	})
 })

@@ -1,20 +1,20 @@
 /** Typed Markets reads and pure lookups over the current immutable snapshot. */
-import type { ExchangeMarketsListResponse, TokenMarketsListResponse } from '~/containers/Markets/api.types'
+import type { MasterDirectoryResponse } from '~/containers/Exchanges/master.types'
+import type { TokenMarketsListResponse } from '~/containers/Markets/api.types'
 import { DATASET_SNAPSHOT_CONTRACT } from '~/server/datasetSnapshots/contract'
 import { datasetSnapshotReader } from '~/server/datasetSnapshots/reader.server'
 import {
 	hasTokenMarketsSymbol,
-	resolveCexMarketsBySlug,
-	resolveMarketsExchangeFromList,
-	type CexMarketsSlugIndex,
-	type CexMarketsSlugIndexEntry,
+	resolveExchangeByDefillamaCexSlug as resolveExchangeByDefillamaCexSlugFromIndex,
+	type CexExchangeSlugIndex,
+	type CexExchangeSlugIndexEntry,
 	type TokenMarketsSymbolIndex
 } from './dataset.index'
 
 const MARKET_FILES = DATASET_SNAPSHOT_CONTRACT.markets.files
 
-export function fetchExchangeMarketsList(): Promise<ExchangeMarketsListResponse> {
-	return datasetSnapshotReader.readJson<ExchangeMarketsListResponse>('markets', MARKET_FILES.exchangesList)
+export function fetchExchangeDirectory(): Promise<MasterDirectoryResponse> {
+	return datasetSnapshotReader.readJson<MasterDirectoryResponse>('markets', MARKET_FILES.exchangeDirectory)
 }
 
 export function fetchTokenMarketsList(): Promise<TokenMarketsListResponse> {
@@ -25,19 +25,15 @@ function fetchTokenMarketsSymbolIndex(): Promise<TokenMarketsSymbolIndex> {
 	return datasetSnapshotReader.readJson<TokenMarketsSymbolIndex>('markets', MARKET_FILES.tokenSymbols)
 }
 
-function fetchCexMarketsSlugIndex(): Promise<CexMarketsSlugIndex> {
-	return datasetSnapshotReader.readJson<CexMarketsSlugIndex>('markets', MARKET_FILES.cexByDefillamaSlug)
+export function fetchCexExchangeSlugIndex(): Promise<CexExchangeSlugIndex> {
+	return datasetSnapshotReader.readJson<CexExchangeSlugIndex>('markets', MARKET_FILES.cexByDefillamaSlug)
 }
 
-export async function resolveCexMarketsByDefillamaSlug(
+export async function resolveExchangeByDefillamaCexSlug(
 	defillamaSlug: string
-): Promise<CexMarketsSlugIndexEntry | null> {
-	const index = await fetchCexMarketsSlugIndex()
-	return resolveCexMarketsBySlug(index, defillamaSlug)
-}
-
-export async function resolveMarketsExchangeByParam(exchange: string): Promise<string | null> {
-	return resolveMarketsExchangeFromList(exchange, await fetchExchangeMarketsList())
+): Promise<CexExchangeSlugIndexEntry | null> {
+	const index = await fetchCexExchangeSlugIndex()
+	return resolveExchangeByDefillamaCexSlugFromIndex(index, defillamaSlug)
 }
 
 export async function hasTokenMarkets(symbol: string): Promise<boolean> {

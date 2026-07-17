@@ -1,148 +1,29 @@
-import type { GetStaticPropsContext } from 'next'
-import * as React from 'react'
-import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
-import { CexMarketsSection } from '~/containers/Cexs/CexMarketsSection'
-import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
-import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
-import type { IProtocolPageMetrics } from '~/containers/ProtocolOverview/types'
-import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import type { GetStaticPaths, GetStaticPropsContext } from 'next'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 
-interface CexMarketsPageProps {
-	name: string
-	otherProtocols: string[]
-	category: string | null
-	metrics: IProtocolPageMetrics
-	cexMarketsExchange: string
-	cexMarketsSlug: string
-}
-
-const CEX_MARKETS_METRICS: IProtocolPageMetrics = {
-	tvl: true,
-	stablecoins: true,
-	dexs: false,
-	dexsNotionalVolume: false,
-	perps: false,
-	openInterest: false,
-	optionsPremiumVolume: false,
-	optionsNotionalVolume: false,
-	dexAggregators: false,
-	perpsAggregators: false,
-	bridgeAggregators: false,
-	bridge: false,
-	treasury: false,
-	unlocks: false,
-	incentives: false,
-	yields: false,
-	fees: false,
-	revenue: false,
-	bribes: false,
-	tokenTax: false,
-	forks: false,
-	governance: false,
-	nfts: false,
-	dev: false,
-	inflows: false,
-	liquidity: false,
-	activeUsers: false,
-	newUsers: false,
-	txCount: false,
-	gasUsed: false,
-	liquidationVolume: false,
-	collateralLiquidated: false,
-	borrowed: false,
-	tokenRights: false
-}
-
 export const getStaticProps = withPerformanceLogging(
-	'cex/markets/[cex]',
+	'cex/markets/[cex]:redirect',
 	async ({ params }: GetStaticPropsContext<{ cex: string }>) => {
 		if (!params?.cex) {
 			return { notFound: true }
 		}
 
-		const exchangeName = params.cex
 		const [{ default: metadataCache }, { resolveCexParamFromMetadata }] = await Promise.all([
 			import('~/utils/metadata'),
 			import('~/containers/Cexs/server/routes')
 		])
+		const cexRoute = resolveCexParamFromMetadata(params.cex, metadataCache)
+		if (!cexRoute) return { notFound: true }
 
-		const cexRoute = resolveCexParamFromMetadata(exchangeName, metadataCache)
-		if (!cexRoute) {
-			return { notFound: true }
-		}
-		if (exchangeName !== cexRoute.canonicalSlug) {
-			return canonicalRouteRedirect(`/cex/markets/${cexRoute.canonicalSlug}`, true)
-		}
-
-		const { resolveCexMarketsByDefillamaSlug } = await import('~/containers/Markets/server/dataset.server')
-		const cexMarkets = await resolveCexMarketsByDefillamaSlug(cexRoute.canonicalSlug).catch((error) => {
-			console.warn(`[cex/markets/[cex]] Failed to resolve markets exchange for ${exchangeName}`, error)
-			return null
-		})
-
-		if (!cexMarkets) {
-			return { notFound: true }
-		}
-
-		const protocolData = await fetchProtocolOverviewMetrics(cexRoute.canonicalSlug)
-
-		if (!protocolData) {
-			return { notFound: true }
-		}
-
-		return {
-			props: {
-				name: protocolData.name,
-				otherProtocols: protocolData.otherProtocols ?? [],
-				category: protocolData.category ?? null,
-				metrics: {
-					...CEX_MARKETS_METRICS,
-					tvl: Boolean(cexRoute.metadata.tvl),
-					stablecoins: Boolean(cexRoute.metadata.stablecoins)
-				},
-				cexMarketsExchange: cexMarkets.exchange,
-				cexMarketsSlug: cexMarkets.defillama_slug
-			},
-			revalidate: maxAgeForNext([22])
-		}
+		const { resolveExchangeByDefillamaCexSlug } = await import('~/containers/Markets/server/dataset.server')
+		const exchange = await resolveExchangeByDefillamaCexSlug(cexRoute.canonicalSlug)
+		return exchange ? canonicalRouteRedirect(`/exchange/${exchange.exchange}`) : { notFound: true }
 	}
 )
 
-export const getStaticPaths = () => {
-	if (SKIP_BUILD_STATIC_GENERATION) {
-		return {
-			paths: [],
-			fallback: 'blocking'
-		}
-	}
+export const getStaticPaths: GetStaticPaths = () => ({ paths: [], fallback: 'blocking' })
 
-	return { paths: [], fallback: 'blocking' }
-}
-
-export default function CexMarketsPage({
-	name,
-	otherProtocols,
-	category,
-	metrics,
-	cexMarketsExchange,
-	cexMarketsSlug
-}: CexMarketsPageProps) {
-	return (
-		<ProtocolOverviewLayout
-			isCEX
-			name={name}
-			category={category ?? ''}
-			otherProtocols={otherProtocols}
-			metrics={metrics}
-			tab="markets"
-			cexMarketsExchange={cexMarketsExchange}
-			cexMarketsSlug={cexMarketsSlug}
-			seoTitle={`${name} Markets - DefiLlama`}
-			seoDescription={`Track ${name} spot and perpetual markets on DefiLlama.`}
-		>
-			<CexMarketsSection exchange={cexMarketsExchange} name={name} />
-		</ProtocolOverviewLayout>
-	)
+export default function CexMarketsRedirect() {
+	return null
 }

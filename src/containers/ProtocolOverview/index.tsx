@@ -58,8 +58,6 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 			seoTitle={props.seoTitle}
 			seoDescription={props.seoDescription}
 			entityQuestions={props.entityQuestions}
-			cexMarketsExchange={props.cexMarketsExchange}
-			cexMarketsSlug={props.cexMarketsSlug}
 		>
 			<LinkPreviewCard
 				cardName={props.name}

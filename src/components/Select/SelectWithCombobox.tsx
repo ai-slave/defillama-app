@@ -78,6 +78,17 @@ interface ISelectWithComboboxState extends ISelectWithComboboxBase {
 
 type ISelectWithCombobox = ISelectWithComboboxUrlParams | ISelectWithComboboxState
 
+export function getSelectOptionLabel(allValues: SelectValues, selectedValue: string): string {
+	for (const option of allValues) {
+		if (typeof option === 'string') {
+			if (option === selectedValue) return option
+		} else if (option.key === selectedValue) {
+			return option.name
+		}
+	}
+	return selectedValue
+}
+
 export function SelectWithCombobox({
 	allValues,
 	selectedValues,
@@ -409,7 +420,7 @@ export function SelectWithCombobox({
 							<span>{label}: </span>
 							<span className="text-link">
 								{singleSelect
-									? selectedValues[0]
+									? getSelectOptionLabel(allValues, selectedValues[0])
 									: selectedValues.length > 2
 										? `${selectedValues[0]} + ${selectedValues.length - 1} others`
 										: selectedValues.join(', ')}
@@ -453,24 +464,20 @@ export function SelectWithCombobox({
 								{visibleMatches.map((option) => {
 									const isCustom = typeof option === 'object' && option.isCustom
 									const customIndex = typeof option === 'object' ? option.customIndex : undefined
-									return (
-										<Ariakit.SelectItem
-											key={`${label}-${getOptionKey(option)}`}
-											value={getOptionKey(option)}
-											className={`${rowStyles} group gap-2`}
-											render={<Ariakit.ComboboxItem />}
-										>
+									const optionKey = getOptionKey(option)
+									const optionContent = (
+										<>
 											{isStringValue(option) ? (
 												<span>{option}</span>
-											) : !isStringValue(option) && option.help ? (
-												<Tooltip content={option.help}>
+											) : option.help ? (
+												<span className="inline-flex items-center">
 													<span className="mr-1">{option.name}</span>
 													<Icon name="help-circle" height={15} width={15} />
-												</Tooltip>
+												</span>
 											) : (
 												<span className="inline-flex items-center gap-1.5">
-													{isStringValue(option) ? option : option.name}
-													{isStringValue(option) ? null : option.icon}
+													{option.name}
+													{option.icon}
 												</span>
 											)}
 											{isCustom && typeof customIndex === 'number' ? (
@@ -507,15 +514,33 @@ export function SelectWithCombobox({
 												<button
 													onClick={(e) => {
 														e.stopPropagation()
-														selectOnlyOne(getOptionKey(option))
+														selectOnlyOne(optionKey)
 													}}
 													className="invisible body-sm text-link underline group-hover:visible group-focus-visible:visible"
 												>
 													Only
 												</button>
 											) : null}
-											{renderCheck(getOptionKey(option))}
+											{renderCheck(optionKey)}
+										</>
+									)
+									const selectItem = (
+										<Ariakit.SelectItem
+											key={`${label}-${optionKey}`}
+											value={optionKey}
+											className={`${rowStyles} group gap-2`}
+											render={<Ariakit.ComboboxItem />}
+										>
+											{optionContent}
 										</Ariakit.SelectItem>
+									)
+
+									return !isStringValue(option) && option.help ? (
+										<Tooltip key={`${label}-${optionKey}`} content={option.help} render={selectItem}>
+											{optionContent}
+										</Tooltip>
+									) : (
+										selectItem
 									)
 								})}
 

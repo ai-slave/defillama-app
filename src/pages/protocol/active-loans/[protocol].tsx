@@ -7,13 +7,13 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
-import { reconcileChartSelection } from '~/containers/ProtocolOverview/chartSeries.utils'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import { useProtocolBreakdownCharts } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { TVL_SETTINGS_KEYS_SET } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useSelectedValues } from '~/hooks/useSelectedValues'
 import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
@@ -52,11 +52,7 @@ function MultiSeriesChartCard({
 	valueSymbol?: string
 	exportIconUrl?: string
 }) {
-	const [selectedSeriesRaw, setSelectedSeriesRaw] = React.useState<string[]>(() => allSeries)
-	const selectedSeries = React.useMemo(
-		() => reconcileChartSelection(selectedSeriesRaw, allSeries),
-		[selectedSeriesRaw, allSeries]
-	)
+	const [selectedSeries, setSelectedSeries] = useSelectedValues(allSeries)
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -71,7 +67,7 @@ function MultiSeriesChartCard({
 					<SelectWithCombobox
 						allValues={allSeries}
 						selectedValues={selectedSeries}
-						setSelectedValues={setSelectedSeriesRaw}
+						setSelectedValues={setSelectedSeries}
 						label={seriesLabel}
 						labelType="smol"
 						variant="filter"
@@ -108,11 +104,7 @@ function TokensBreakdownPieChartCard({
 	exportIconUrl?: string
 }) {
 	const allTokens = React.useMemo(() => chartData.map((d) => d.name), [chartData])
-	const [selectedTokensRaw, setSelectedTokensRaw] = React.useState<string[]>(() => allTokens)
-	const selectedTokens = React.useMemo(
-		() => reconcileChartSelection(selectedTokensRaw, allTokens),
-		[selectedTokensRaw, allTokens]
-	)
+	const [selectedTokens, setSelectedTokens] = useSelectedValues(allTokens)
 
 	const selectedTokensSet = React.useMemo(() => new Set(selectedTokens), [selectedTokens])
 	const filteredChartData = React.useMemo(() => {
@@ -133,7 +125,7 @@ function TokensBreakdownPieChartCard({
 					<SelectWithCombobox
 						allValues={allTokens}
 						selectedValues={selectedTokens}
-						setSelectedValues={setSelectedTokensRaw}
+						setSelectedValues={setSelectedTokens}
 						label="Token"
 						labelType="smol"
 						variant="filter"
@@ -282,7 +274,6 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 				<div className="grid grid-cols-2 gap-2">
 					{borrowedByChainDataset && chainsUnique.length > 1 ? (
 						<MultiSeriesChartCard
-							key={`${chainsUnique.join('|')}:borrowed-by-chain`}
 							title="Active Loans by Chain"
 							protocolName={props.name}
 							allSeries={chainsUnique}
@@ -297,7 +288,6 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 
 					{tokenUSDDataset && tokensUnique?.length > 0 ? (
 						<MultiSeriesChartCard
-							key={`${tokensUnique.join('|')}:borrowed-by-token-usd`}
 							title="Active Loans by Token (USD)"
 							protocolName={props.name}
 							allSeries={tokensUnique}
@@ -312,7 +302,6 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 
 					{tokenBreakdownPieChart?.length > 0 ? (
 						<TokensBreakdownPieChartCard
-							key={tokenBreakdownPieChart.map((d) => d.name).join('|')}
 							protocolName={props.name}
 							chartData={tokenBreakdownPieChart}
 							exportIconUrl={protocolIconUrl}
@@ -321,7 +310,6 @@ export default function ActiveLoansProtocol(props: InferGetStaticPropsType<typeo
 
 					{tokenRawDataset && tokensUnique?.length > 0 ? (
 						<MultiSeriesChartCard
-							key={`${tokensUnique.join('|')}:borrowed-by-token-raw`}
 							title="Active Loans by Token (Raw Quantities)"
 							protocolName={props.name}
 							allSeries={tokensUnique}

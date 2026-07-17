@@ -1,46 +1,26 @@
 import { useQuery } from '@tanstack/react-query'
-import {
-	type ColumnDef,
-	type SortingState,
-	createColumnHelper,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	useReactTable
-} from '@tanstack/react-table'
+import type { SortingState } from '@tanstack/react-table'
 import dayjs from 'dayjs'
-import { type KeyboardEvent, useEffect, useMemo, useReducer, useRef } from 'react'
-import { CSVDownloadButton } from '~/components/CsvDownloadButton'
+import { type KeyboardEvent, useMemo, useReducer, useRef } from 'react'
 import { Icon } from '~/components/Icon'
-import { PaginatedTable } from '~/components/Table/PaginatedTable'
-import { prepareTableCsv } from '~/components/Table/utils'
-import { TokenLogo } from '~/components/TokenLogo'
+import { PairTable, type PairTableRow } from '~/containers/Exchanges/PairTable'
 import type {
 	MarketCategoryTotals,
 	MarketPair,
 	MarketVenue,
 	TokenMarketsResponse
 } from '~/containers/Markets/api.types'
-import {
-	ChangeCell,
-	FundingCell,
-	MaterialChangeCell,
-	MetricStat,
-	MetricStatStrip
-} from '~/containers/Markets/marketMetrics'
+import { MaterialChangeCell, MetricStat, MetricStatStrip } from '~/containers/Markets/marketMetrics'
 import type { Segment } from '~/containers/Markets/segments'
 import { pctChange } from '~/containers/Markets/utils'
-import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TabLink } from '~/ui/Tab'
-import { TableToolbar } from '~/ui/Toolbar'
 import { formattedNum } from '~/utils'
 import { fetchTokenMarkets } from './api'
-import { DEFAULT_TABLE_PAGE_SIZE, TABLE_PAGE_SIZE_OPTIONS } from './tableUtils'
 
-const DEFAULT_SORTING: SortingState = [{ id: 'volume_24h', desc: true }]
+const DEFAULT_SORTING: SortingState = [{ id: 'volume24h', desc: true }]
+const NO_SORTING: SortingState = []
 
 const TOKEN_MARKETS_SECTION_ID = 'token-markets'
 
@@ -60,11 +40,53 @@ const CATEGORY_TABS: ReadonlyArray<{ id: Segment; label: string }> = [
 
 const EMPTY_TOTALS: MarketCategoryTotals = { pair_count: 0, total_volume_24h: 0, total_oi_usd: null }
 
-const columnHelper = createColumnHelper<MarketPair>()
+// Token markets rows reuse the exchange-page PairTable; these venue-page columns have no
+// backing data in tokens/*.json rows, so they are dropped from the table entirely.
+const TOKEN_PAGE_OMITTED_COLUMNS = [
+	'token',
+	'normalizedVolume',
+	'depth2Usd',
+	'spreadFraction',
+	'markPrice',
+	'indexPrice',
+	'basis',
+	'nextFundingAt',
+	'volumeFreshness'
+] as const
 
-function renderNullableNum(value: number | null | undefined, isUsd = false): string {
-	if (value == null) return '–'
-	return formattedNum(value, isUsd)
+const TOKEN_PAGE_CAPABILITIES = { openInterest: true, funding: true, depth: false }
+
+function toPairTableRow(row: MarketPair): PairTableRow {
+	return {
+		venue: row.exchange,
+		pairUrl: row.pair_url,
+		symbol: row.symbol,
+		base: row.base,
+		quote: row.quote,
+		price: row.price,
+		markPrice: null,
+		indexPrice: null,
+		basis: null,
+		priceChange24h: row.price_change_24h,
+		volume24h: row.volume_24h,
+		volumeChange24h: pctChange(row.volume_24h, row.volume_prev_24h),
+		openInterestUsd: row.oi_usd,
+		openInterestChange24h: pctChange(row.oi_usd, row.oi_prev_usd),
+		fundingRate8h: row.funding_rate_8h,
+		fundingPeriodHours: row.funding_period_h,
+		nextFundingAt: null,
+		maxLeverage: row.max_leverage,
+		makerFee: row.maker_fee,
+		takerFee: row.taker_fee,
+		listedAt: row.listed_ts,
+		volumeUpdatedAt: null,
+		spreadFraction: null,
+		depthBid2Usd: null,
+		depthAsk2Usd: null,
+		depthBidMaxDistance: null,
+		depthAskMaxDistance: null,
+		normalizedVolume: null
+	}
 }
 
 function sumPairMetrics(rows: MarketPair[]) {
@@ -99,177 +121,6 @@ function sumPairMetrics(rows: MarketPair[]) {
 		oiPrev: hasOiPrev ? oiPrev : null
 	}
 }
-
-function renderFeeRate(value: number | null | undefined): string {
-	if (value == null) return '–'
-	return `${(value * 100).toFixed(3)}%`
-}
-
-function renderLeverage(value: number | null | undefined): string {
-	if (value == null) return '–'
-	return `${value}x`
-}
-
-const venueColumn = columnHelper.accessor('exchange', {
-	id: 'exchange',
-	header: 'Venue',
-	enableSorting: false,
-	cell: ({ getValue, row }) => {
-		const exchange = getValue()
-		const url = row.original.pair_url
-		const label = (
-			<span className="flex items-center gap-2">
-				<TokenLogo name={exchange} kind="token" alt={`Logo of ${exchange}`} size={20} />
-				<span className="body-sm capitalize">{exchange}</span>
-			</span>
-		)
-		return url ? (
-			<a href={url} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
-				{label}
-			</a>
-		) : (
-			label
-		)
-	},
-	meta: {
-		headerClassName: 'w-[min(180px,40vw)]'
-	}
-})
-
-const pairColumn = columnHelper.accessor('symbol', {
-	id: 'symbol',
-	header: 'Pair',
-	enableSorting: false,
-	cell: ({ getValue }) => <span className="body-sm uppercase">{getValue()}</span>,
-	meta: {
-		headerClassName: 'w-[140px]'
-	}
-})
-
-const priceColumn = columnHelper.accessor((row) => row.price ?? undefined, {
-	id: 'price',
-	header: 'Price',
-	cell: ({ getValue }) => renderNullableNum(getValue() ?? null, true),
-	meta: {
-		headerClassName: 'w-[110px]',
-		align: 'end'
-	}
-})
-
-const priceChangeColumn = columnHelper.accessor((row) => row.price_change_24h ?? undefined, {
-	id: 'price_change_24h',
-	header: '24h',
-	cell: ({ row }) => <ChangeCell fraction={row.original.price_change_24h} />,
-	meta: {
-		headerClassName: 'w-[100px]',
-		align: 'end'
-	}
-})
-
-const volumeColumn = columnHelper.accessor((row) => row.volume_24h ?? undefined, {
-	id: 'volume_24h',
-	header: '24h Volume',
-	cell: ({ getValue }) => renderNullableNum(getValue() ?? null, true),
-	meta: {
-		headerClassName: 'w-[120px]',
-		align: 'end'
-	}
-})
-
-const volumeChangeColumn = columnHelper.accessor((row) => pctChange(row.volume_24h, row.volume_prev_24h) ?? undefined, {
-	id: 'volume_change_24h',
-	header: 'Vol Δ',
-	cell: ({ row }) => <MaterialChangeCell current={row.original.volume_24h} previous={row.original.volume_prev_24h} />,
-	meta: {
-		headerClassName: 'w-[100px]',
-		align: 'end'
-	}
-})
-
-const oiColumn = columnHelper.accessor((row) => row.oi_usd ?? undefined, {
-	id: 'oi_usd',
-	header: 'Open Interest',
-	cell: ({ getValue }) => renderNullableNum(getValue() ?? null, true),
-	meta: {
-		headerClassName: 'w-[140px]',
-		align: 'end'
-	}
-})
-
-const oiChangeColumn = columnHelper.accessor((row) => pctChange(row.oi_usd, row.oi_prev_usd) ?? undefined, {
-	id: 'oi_change_24h',
-	header: 'OI Δ',
-	cell: ({ row }) => <MaterialChangeCell current={row.original.oi_usd} previous={row.original.oi_prev_usd} />,
-	meta: {
-		headerClassName: 'w-[100px]',
-		align: 'end'
-	}
-})
-
-const fundingColumn = columnHelper.accessor((row) => row.funding_rate_8h ?? undefined, {
-	id: 'funding_rate_8h',
-	header: 'Funding (8h)',
-	cell: ({ row }) => <FundingCell rate={row.original.funding_rate_8h} />,
-	meta: {
-		headerClassName: 'w-[130px]',
-		align: 'end'
-	}
-})
-
-const maxLeverageColumn = columnHelper.accessor((row) => row.max_leverage ?? undefined, {
-	id: 'max_leverage',
-	header: 'Max Leverage',
-	cell: ({ row }) => renderLeverage(row.original.max_leverage),
-	meta: {
-		headerClassName: 'w-[130px]',
-		align: 'end'
-	}
-})
-
-const makerFeeColumn = columnHelper.accessor((row) => row.maker_fee ?? undefined, {
-	id: 'maker_fee',
-	header: 'Maker Fee',
-	cell: ({ row }) => renderFeeRate(row.original.maker_fee),
-	meta: {
-		headerClassName: 'w-[110px]',
-		align: 'end'
-	}
-})
-
-const takerFeeColumn = columnHelper.accessor((row) => row.taker_fee ?? undefined, {
-	id: 'taker_fee',
-	header: 'Taker Fee',
-	cell: ({ row }) => renderFeeRate(row.original.taker_fee),
-	meta: {
-		headerClassName: 'w-[110px]',
-		align: 'end'
-	}
-})
-
-const SPOT_COLUMNS: ColumnDef<MarketPair, any>[] = [
-	venueColumn,
-	pairColumn,
-	priceColumn,
-	priceChangeColumn,
-	volumeColumn,
-	volumeChangeColumn,
-	makerFeeColumn,
-	takerFeeColumn
-]
-const PERP_COLUMNS: ColumnDef<MarketPair, any>[] = [
-	venueColumn,
-	pairColumn,
-	priceColumn,
-	priceChangeColumn,
-	volumeColumn,
-	volumeChangeColumn,
-	oiColumn,
-	oiChangeColumn,
-	fundingColumn,
-	maxLeverageColumn,
-	makerFeeColumn,
-	takerFeeColumn
-]
 
 const byVolumeDesc = (a: MarketPair, b: MarketPair) => (b.volume_24h ?? 0) - (a.volume_24h ?? 0)
 
@@ -455,37 +306,11 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 		() => (data ? getCategoryTotals(data, selectedVenueTab, selectedCategoryTab) : EMPTY_TOTALS),
 		[data, selectedVenueTab, selectedCategoryTab]
 	)
+	// Rows arrive pre-ranked from getCategoryRows (bybit's top pair first on CEX/All via
+	// rankRowsBybitFirst); the mapping below preserves that order 1:1.
+	const tableRows = useMemo(() => rows.map(toPairTableRow), [rows])
 
 	const isPerpCategory = selectedCategoryTab !== 'spot'
-	const columns = isPerpCategory ? PERP_COLUMNS : SPOT_COLUMNS
-
-	const table = useReactTable({
-		data: rows,
-		columns,
-		initialState: {
-			sorting: DEFAULT_SORTING,
-			pagination: { pageIndex: 0, pageSize: DEFAULT_TABLE_PAGE_SIZE }
-		},
-		defaultColumn: {
-			sortUndefined: 'last'
-		},
-		enableSortingRemoval: false,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
-	})
-
-	// Reset sort + search whenever the user switches venue or category.
-	// Pagination auto-resets when the `data` reference changes via
-	// TanStack's default autoResetPageIndex.
-	// CEX and All start with no active sort — rows already come pre-ranked (bybit's top pair
-	// first, then volume) from rankRowsBybitFirst — so no header shows a sort indicator until
-	// the user picks a column. DEX keeps the plain volume-desc default sort.
-	useEffect(() => {
-		table.setSorting(selectedVenueTab === 'dex' ? DEFAULT_SORTING : [])
-		table.resetColumnFilters()
-	}, [selectedVenueTab, selectedCategoryTab, table])
 
 	const lastUpdated = useMemo(() => {
 		if (!data?.last_updated) return null
@@ -553,37 +378,32 @@ export function TokenMarketsSection({ tokenSymbol, variant = 'section' }: TokenM
 
 			<HeaderStrip rows={rows} totals={totals} showOi={isPerpCategory} />
 
-			<TableToolbar>
-				<div className="mr-auto flex items-center overflow-x-auto">
+			{/* Remount per venue/category tab so sorting and search reset, matching the prior behavior.
+			    CEX and All start with no active sort — rows already come pre-ranked (bybit's top pair
+			    first, then volume) from rankRowsBybitFirst — so no header shows a sort indicator until
+			    the user picks a column. DEX keeps the plain volume-desc default sort. */}
+			<PairTable
+				key={`${selectedVenueTab}-${selectedCategoryTab}`}
+				pairs={tableRows}
+				segment={selectedCategoryTab}
+				capabilities={TOKEN_PAGE_CAPABILITIES}
+				csvFileName={`token-markets-${tokenSymbol}-${selectedVenueTab}-${selectedCategoryTab}`}
+				showVenue
+				omitColumns={TOKEN_PAGE_OMITTED_COLUMNS}
+				sorting={selectedVenueTab === 'dex' ? DEFAULT_SORTING : NO_SORTING}
+				columnToSearch="venue"
+				placeholder="Search exchanges..."
+				header={null}
+				embedded
+				leadingControls={
 					<Tabs
 						tabs={visibleCategoryTabs}
 						activeTab={selectedCategoryTab}
 						onChange={(id) => setCategoryTab(id)}
 						ariaLabel="Market category"
 					/>
-				</div>
-				<label className={searchFieldInlineWrapperStyles}>
-					<span className="sr-only">Search exchanges</span>
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<input
-						value={(table.getColumn('exchange')?.getFilterValue() as string | undefined) ?? ''}
-						onChange={(event) => table.getColumn('exchange')?.setFilterValue(event.currentTarget.value || undefined)}
-						placeholder="Search exchanges..."
-						className={searchFieldInputStyles}
-					/>
-				</label>
-				<CSVDownloadButton
-					prepareCsv={() =>
-						prepareTableCsv({
-							instance: table,
-							filename: `token-markets-${tokenSymbol}-${selectedVenueTab}-${selectedCategoryTab}`
-						})
-					}
-					smol
-					size="md"
-				/>
-			</TableToolbar>
-			<PaginatedTable table={table} pageSizeOptions={TABLE_PAGE_SIZE_OPTIONS} shell="none" />
+				}
+			/>
 		</>
 	)
 

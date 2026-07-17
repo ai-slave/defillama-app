@@ -16,6 +16,7 @@ import { useProtocolBreakdownCharts } from '~/containers/ProtocolOverview/usePro
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { TVL_SETTINGS_KEYS_SET, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useSelectedValues } from '~/hooks/useSelectedValues'
 import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
@@ -137,7 +138,7 @@ function ChainsChartCard({
 	exportTitle: string
 	exportIconUrl?: string
 }) {
-	const [selected, setSelected] = React.useState<string[]>(() => allValues)
+	const [selected, setSelected] = useSelectedValues(allValues)
 
 	const selectedChartsSet = React.useMemo(() => new Set(selected), [selected])
 
@@ -200,7 +201,7 @@ function TokenLineChartCard({
 	exportTitle: string
 	exportIconUrl?: string
 }) {
-	const [selected, setSelected] = React.useState<string[]>(() => allValues)
+	const [selected, setSelected] = useSelectedValues(allValues)
 
 	const selectedChartsSet = React.useMemo(() => new Set(selected), [selected])
 
@@ -262,7 +263,7 @@ function TokensBreakdownPieChartCard({
 			Object.keys(tokenBreakdownLatest).sort((a, b) => (tokenBreakdownLatest[b] ?? 0) - (tokenBreakdownLatest[a] ?? 0)),
 		[tokenBreakdownLatest]
 	)
-	const [selectedTokens, setSelectedTokens] = React.useState<string[]>(() => allTokens)
+	const [selectedTokens, setSelectedTokens] = useSelectedValues(allTokens)
 
 	const chartData = React.useMemo(() => {
 		if (selectedTokens.length === 0) return []
@@ -364,7 +365,7 @@ function InflowsByTokenChartCard({
 	exportTitle: string
 	exportIconUrl?: string
 }) {
-	const [selected, setSelected] = React.useState<string[]>(allValues)
+	const [selected, setSelected] = useSelectedValues(allValues)
 
 	const selectedChartsSet = React.useMemo(() => new Set(selected), [selected])
 
@@ -432,7 +433,6 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 		tokenRawCharts,
 		tokenBreakdownUSD,
 		tokenBreakdownLatest,
-		tokenBreakdownLatestKey,
 		tokenBreakdownPieChart,
 		usdInflowsDataset,
 		tokenInflowsDataset,
@@ -478,7 +478,6 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 				<div className="grid grid-cols-2 gap-2">
 					{chainsDataset && chainsUnique?.length > 1 ? (
 						<ChainsChartCard
-							key={chainsUnique.join('|')}
 							title="TVL by Chain"
 							allValues={chainsUnique}
 							dataset={chainsDataset}
@@ -491,7 +490,6 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 
 					{tokenUSDDataset && tokensUnique?.length > 0 ? (
 						<TokenLineChartCard
-							key={tokensUnique.join('|')}
 							title="Token Values (USD)"
 							allValues={tokensUnique}
 							dataset={tokenUSDDataset}
@@ -505,7 +503,6 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 
 					{tokenBreakdownUSD?.length > 1 && tokensUnique?.length > 0 && tokenBreakdownPieChart?.length > 0 ? (
 						<TokensBreakdownPieChartCard
-							key={tokenBreakdownLatestKey}
 							title="Tokens Breakdown (USD)"
 							tokenBreakdownLatest={tokenBreakdownLatest}
 							exportFilenameBase={buildFilename('tokens-breakdown-usd')}
@@ -516,7 +513,6 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 
 					{tokenRawDataset && tokensUnique?.length > 0 ? (
 						<TokenLineChartCard
-							key={`${tokensUnique.join('|')}:raw`}
 							title="Token Balances (Raw Quantities)"
 							allValues={tokensUnique}
 							dataset={tokenRawDataset}
@@ -540,7 +536,6 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 
 					{tokenInflowsDataset && tokensUnique?.length > 0 ? (
 						<InflowsByTokenChartCard
-							key={tokensUnique.join('|')}
 							title="Inflows by Token"
 							allValues={tokensUnique}
 							dataset={tokenInflowsDataset}

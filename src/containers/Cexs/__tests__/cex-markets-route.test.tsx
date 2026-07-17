@@ -1,16 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getStaticProps as getCexStaticProps } from '~/pages/cex/[cex]'
 import { getStaticProps as getCexAssetsStaticProps } from '~/pages/cex/assets/[cex]'
-import { getStaticProps as getCexMarketsStaticProps } from '~/pages/cex/markets/[cex]'
+import { getStaticProps as getRetiredCexMarketsStaticProps } from '~/pages/cex/markets/[cex]'
 import { getStaticProps as getCexStablecoinsStaticProps } from '~/pages/cex/stablecoins/[cex]'
 import { cryptoComCexMetadataCache } from './metadataFixture'
 
-const { resolveCexMarketsByDefillamaSlugMock } = vi.hoisted(() => ({
-	resolveCexMarketsByDefillamaSlugMock: vi.fn()
+const { resolveExchangeByDefillamaCexSlugMock } = vi.hoisted(() => ({
+	resolveExchangeByDefillamaCexSlugMock: vi.fn()
 }))
 
 vi.mock('~/containers/Markets/server/dataset.server', () => ({
-	resolveCexMarketsByDefillamaSlug: resolveCexMarketsByDefillamaSlugMock
+	resolveExchangeByDefillamaCexSlug: resolveExchangeByDefillamaCexSlugMock
 }))
 
 vi.mock('~/constants', async (importOriginal) => {
@@ -38,112 +38,80 @@ vi.mock('~/utils/metadata', () => ({
 vi.mock('~/containers/ProtocolOverview/queries', () => ({
 	getProtocolOverviewPageData: vi.fn(({ protocolId }: { protocolId: string }) =>
 		Promise.resolve({
-			name: protocolId === 'no-markets' ? 'No Markets' : 'Crypto.com',
+			name: protocolId,
 			category: 'CEX',
 			metrics: { tvl: true, stablecoins: true },
-			seoTitle: protocolId === 'no-markets' ? 'No Markets' : 'Crypto.com',
+			seoTitle: protocolId,
 			seoDescription: 'CEX overview'
 		})
 	)
 }))
 
-vi.mock('~/containers/ProtocolOverview/api', () => ({
-	fetchProtocolOverviewMetrics: vi.fn((exchangeSlug: string) =>
-		exchangeSlug === 'no-markets'
-			? Promise.resolve({ name: 'No Markets', category: 'CEX', otherProtocols: [] })
-			: Promise.resolve({ name: 'Crypto.com', category: 'CEX', otherProtocols: [] })
-	)
-}))
+vi.mock('~/containers/ProtocolOverview/api', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('~/containers/ProtocolOverview/api')>()
+	return {
+		...actual,
+		fetchProtocolOverviewMetrics: vi.fn((slug: string) =>
+			Promise.resolve({ name: slug, parentProtocol: null, otherProtocols: [], category: 'CEX' })
+		)
+	}
+})
 
-describe('CEX markets routes', () => {
+describe('CEX routes', () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
-		resolveCexMarketsByDefillamaSlugMock.mockImplementation((defillamaSlug: string) =>
-			defillamaSlug === 'crypto-com'
-				? Promise.resolve({ exchange: 'cryptocom', defillama_slug: 'Crypto-com' })
+		resolveExchangeByDefillamaCexSlugMock.mockImplementation((defillamaSlug: string) => {
+			const key = defillamaSlug.toLowerCase()
+			return key === 'crypto-com' || key === 'crypto.com'
+				? Promise.resolve({ exchange: 'crypto-com', defillama_slug: 'Crypto.com' })
 				: Promise.resolve(null)
-		)
-	})
-
-	it('adds the markets exchange to the CEX overview props when the cached list matches', async () => {
-		await expect(getCexStaticProps({ params: { cex: 'crypto-com' } } as never)).resolves.toMatchObject({
-			props: {
-				name: 'Crypto.com',
-				cexMarketsExchange: 'cryptocom',
-				cexMarketsSlug: 'Crypto-com'
-			},
-			revalidate: 123
 		})
 	})
 
-	it('redirects CEX aliases to canonical slugs permanently', async () => {
+	it('redirects mapped venues to the exchange profile Reserves tab without permanent caching', async () => {
+		await expect(getCexStaticProps({ params: { cex: 'crypto-com' } } as never)).resolves.toEqual({
+			redirect: { destination: '/exchange/crypto-com?section=reserves', permanent: false }
+		})
+		await expect(getCexAssetsStaticProps({ params: { cex: 'crypto-com' } } as never)).resolves.toEqual({
+			redirect: { destination: '/exchange/crypto-com?section=reserves', permanent: false }
+		})
+		await expect(getCexStablecoinsStaticProps({ params: { cex: 'crypto-com' } } as never)).resolves.toEqual({
+			redirect: { destination: '/exchange/crypto-com?section=reserves&reservesView=stablecoins', permanent: false }
+		})
+	})
+
+	it('keeps rendering the legacy pages for venues without an exchange mapping', async () => {
+		const overview = await getCexStaticProps({ params: { cex: 'no-markets' } } as never)
+		expect(overview).toMatchObject({ props: { name: 'no-markets' }, revalidate: 123 })
+
+		const assets = await getCexAssetsStaticProps({ params: { cex: 'no-markets' } } as never)
+		expect(assets).toMatchObject({ props: { name: 'no-markets' }, revalidate: 123 })
+
+		const stablecoins = await getCexStablecoinsStaticProps({ params: { cex: 'no-markets' } } as never)
+		expect(stablecoins).toMatchObject({ props: { name: 'no-markets' }, revalidate: 123 })
+	})
+
+	it('redirects CEX aliases to canonical slugs before the exchange mapping check', async () => {
 		await expect(getCexStaticProps({ params: { cex: 'Crypto.com' } } as never)).resolves.toEqual({
-			redirect: {
-				destination: '/cex/crypto-com',
-				permanent: true
-			}
+			redirect: { destination: '/cex/crypto-com', permanent: true }
 		})
 		await expect(getCexAssetsStaticProps({ params: { cex: 'Crypto.com' } } as never)).resolves.toEqual({
-			redirect: {
-				destination: '/cex/assets/crypto-com',
-				permanent: true
-			}
-		})
-		await expect(getCexMarketsStaticProps({ params: { cex: 'Crypto.com' } } as never)).resolves.toEqual({
-			redirect: {
-				destination: '/cex/markets/crypto-com',
-				permanent: true
-			}
+			redirect: { destination: '/cex/assets/crypto-com', permanent: true }
 		})
 		await expect(getCexStablecoinsStaticProps({ params: { cex: 'Crypto.com' } } as never)).resolves.toEqual({
-			redirect: {
-				destination: '/cex/stablecoins/crypto-com',
-				permanent: true
-			}
+			redirect: { destination: '/cex/stablecoins/crypto-com', permanent: true }
 		})
 	})
 
-	it('leaves the CEX overview markets exchange null when the cached list has no match', async () => {
-		await expect(getCexStaticProps({ params: { cex: 'no-markets' } } as never)).resolves.toMatchObject({
-			props: {
-				name: 'No Markets',
-				cexMarketsExchange: null
-			},
-			revalidate: 123
+	it('redirects a retired CEX Markets URL to its canonical exchange profile', async () => {
+		await expect(getRetiredCexMarketsStaticProps({ params: { cex: 'Crypto.com' } } as never)).resolves.toEqual({
+			redirect: { destination: '/exchange/crypto-com', permanent: false }
 		})
+		expect(resolveExchangeByDefillamaCexSlugMock).toHaveBeenCalledWith('crypto-com')
 	})
 
-	it('keeps the CEX overview page when the optional markets lookup fails', async () => {
-		resolveCexMarketsByDefillamaSlugMock.mockRejectedValueOnce(new Error('markets unavailable'))
-		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-		try {
-			await expect(getCexStaticProps({ params: { cex: 'crypto-com' } } as never)).resolves.toMatchObject({
-				props: {
-					name: 'Crypto.com',
-					cexMarketsExchange: null,
-					cexMarketsSlug: null
-				},
-				revalidate: 123
-			})
-		} finally {
-			warnSpy.mockRestore()
-		}
-	})
-
-	it('returns props for the standalone markets tab when cached markets exist', async () => {
-		await expect(getCexMarketsStaticProps({ params: { cex: 'crypto-com' } } as never)).resolves.toMatchObject({
-			props: {
-				name: 'Crypto.com',
-				cexMarketsExchange: 'cryptocom',
-				cexMarketsSlug: 'Crypto-com'
-			},
-			revalidate: 123
-		})
-	})
-
-	it('returns notFound for the standalone markets tab when cached markets are missing', async () => {
-		await expect(getCexMarketsStaticProps({ params: { cex: 'no-markets' } } as never)).resolves.toEqual({
+	it('returns notFound when a retired CEX Markets URL has no exchange mapping', async () => {
+		await expect(getRetiredCexMarketsStaticProps({ params: { cex: 'missing' } } as never)).resolves.toEqual({
 			notFound: true
 		})
 	})

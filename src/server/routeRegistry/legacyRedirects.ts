@@ -6,6 +6,11 @@ export type LegacyRedirect = {
 
 export const legacyRedirects = [
 	{
+		source: '/markets',
+		destination: '/exchanges',
+		permanent: true
+	},
+	{
 		source: '/home',
 		destination: '/',
 		permanent: true

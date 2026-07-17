@@ -32,39 +32,37 @@ export const getStaticProps = withPerformanceLogging(
 			return canonicalRouteRedirect(`/cex/${cexRoute.canonicalSlug}`, true)
 		}
 
-		const { resolveCexMarketsByDefillamaSlug } = await import('~/containers/Markets/server/dataset.server')
-		const cexMarketsPromise = resolveCexMarketsByDefillamaSlug(cexRoute.canonicalSlug).catch((error) => {
-			console.warn(`[cex/[cex]] Failed to resolve markets exchange for ${exchangeName}`, error)
-			return null
-		})
+		// Venues with a markets-server profile are served by the canonical
+		// /exchange page; the legacy page keeps rendering for the rest.
+		const { resolveExchangeByDefillamaCexSlug } = await import('~/containers/Markets/server/dataset.server')
+		const exchange = await resolveExchangeByDefillamaCexSlug(cexRoute.canonicalSlug)
+		if (exchange) {
+			return canonicalRouteRedirect(`/exchange/${exchange.exchange}?section=reserves`)
+		}
+
 		const yieldsSnapshot =
 			protocolMetadata.yields || protocolMetadata.liquidity
 				? await import('~/containers/Yields/server/dataset.server').then(({ acquireOptionalYieldsSnapshot }) =>
 						acquireOptionalYieldsSnapshot()
 					)
 				: null
-		const [cexMarkets, data] = await Promise.all([
-			cexMarketsPromise,
-			getProtocolOverviewPageData({
-				protocolId: cexRoute.id,
-				currentProtocolMetadata: protocolMetadata,
-				isCEX: true,
-				chainMetadata: metadataCache.chainMetadata,
-				tokenlist: metadataCache.tokenlist,
-				cgExchangeIdentifiers: metadataCache.cgExchangeIdentifiers,
-				emissionsSupplyMetrics: metadataCache.emissionsSupplyMetrics,
-				yieldsSnapshot
-			})
-		])
-		const cexMarketsExchange = cexMarkets?.exchange ?? null
-		const cexMarketsSlug = cexMarkets?.defillama_slug ?? null
+		const data = await getProtocolOverviewPageData({
+			protocolId: cexRoute.id,
+			currentProtocolMetadata: protocolMetadata,
+			isCEX: true,
+			chainMetadata: metadataCache.chainMetadata,
+			tokenlist: metadataCache.tokenlist,
+			cgExchangeIdentifiers: metadataCache.cgExchangeIdentifiers,
+			emissionsSupplyMetrics: metadataCache.emissionsSupplyMetrics,
+			yieldsSnapshot
+		})
 
 		if (!data) {
 			console.warn(`[cex/[cex]] ${exchangeName} matched metadata but overview data was unavailable`)
 			return { notFound: true }
 		}
 
-		return { props: { ...data, cexMarketsExchange, cexMarketsSlug }, revalidate: maxAgeForNext([22]) }
+		return { props: data, revalidate: maxAgeForNext([22]) }
 	}
 )
 

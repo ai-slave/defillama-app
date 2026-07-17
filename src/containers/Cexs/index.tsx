@@ -5,8 +5,10 @@ import { useMemo } from 'react'
 import { BasicLink } from '~/components/Link'
 import { QuestionHelper } from '~/components/QuestionHelper'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { TokenLogo } from '~/components/TokenLogo'
 import { useAuthContext } from '~/containers/Subscription/auth'
 import { formattedNum, slug, toNiceDayMonthAndYear } from '~/utils'
+import { letterLogoDataUri } from '~/utils/icons'
 import { fetchCexInflowsBatchProxy } from './api'
 import { DateFilter } from './DateFilter'
 import type { ICex } from './types'
@@ -87,8 +89,7 @@ export const Cexs = ({ cexs }: { cexs: Array<ICex> }) => {
 			columns={columns}
 			columnToSearch={'name'}
 			placeholder={'Search exchange...'}
-			header={'CEX Transparency'}
-			headingAs="h1"
+			header={null}
 			customFilters={() => (
 				<DateFilter
 					startDate={startDate}
@@ -110,14 +111,19 @@ const columns = [
 		header: 'Name',
 		enableSorting: false,
 		cell: ({ getValue, row }) => {
+			const name = getValue()
 			return (
 				<span className="relative flex items-center gap-2">
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
+					<TokenLogo name={name} kind="token" fallbackSrc={letterLogoDataUri(name)} alt={`${name} logo`} />
 					{row.original.slug == null ? (
-						getValue()
+						name
 					) : (
-						<BasicLink href={`/cex/${slug(row.original.slug)}`} className="truncate label-md text-link hover:underline">
-							{getValue()}
+						<BasicLink
+							href={row.original.profileUrl ?? `/cex/${slug(row.original.slug)}`}
+							className="truncate label-md text-link hover:underline"
+						>
+							{name}
 						</BasicLink>
 					)}
 				</span>

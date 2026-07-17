@@ -8,13 +8,13 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
 import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
-import { reconcileChartSelection } from '~/containers/ProtocolOverview/chartSeries.utils'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import type { IProtocolPageMetrics } from '~/containers/ProtocolOverview/types'
 import { useProtocolBreakdownCharts } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { useSelectedValues } from '~/hooks/useSelectedValues'
 import { ChartPanelToolbar, ChartPanel, ChartPanelBodyFallback } from '~/ui/ChartPanel'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
@@ -55,11 +55,7 @@ function TokensBreakdownPieChartCard({
 	exportIconUrl?: string
 }) {
 	const allTokens = React.useMemo(() => chartData.map((d) => d.name), [chartData])
-	const [selectedTokensRaw, setSelectedTokensRaw] = React.useState<string[]>(() => allTokens)
-	const selectedTokens = React.useMemo(
-		() => reconcileChartSelection(selectedTokensRaw, allTokens),
-		[selectedTokensRaw, allTokens]
-	)
+	const [selectedTokens, setSelectedTokens] = useSelectedValues(allTokens)
 
 	const selectedTokensSet = React.useMemo(() => new Set(selectedTokens), [selectedTokens])
 	const filteredChartData = React.useMemo(() => {
@@ -80,7 +76,7 @@ function TokensBreakdownPieChartCard({
 					<SelectWithCombobox
 						allValues={allTokens}
 						selectedValues={selectedTokens}
-						setSelectedValues={setSelectedTokensRaw}
+						setSelectedValues={setSelectedTokens}
 						label="Token"
 						labelType="smol"
 						variant="filter"
@@ -162,11 +158,7 @@ function TokensMultiSeriesChartCard({
 	valueSymbol?: string
 	exportIconUrl?: string
 }) {
-	const [selectedTokensRaw, setSelectedTokensRaw] = React.useState<string[]>(() => allTokens)
-	const selectedTokens = React.useMemo(
-		() => reconcileChartSelection(selectedTokensRaw, allTokens),
-		[selectedTokensRaw, allTokens]
-	)
+	const [selectedTokens, setSelectedTokens] = useSelectedValues(allTokens)
 
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
@@ -181,7 +173,7 @@ function TokensMultiSeriesChartCard({
 					<SelectWithCombobox
 						allValues={allTokens}
 						selectedValues={selectedTokens}
-						setSelectedValues={setSelectedTokensRaw}
+						setSelectedValues={setSelectedTokens}
 						label="Token"
 						labelType="smol"
 						variant="filter"
@@ -360,7 +352,6 @@ export default function Protocols(props: TreasuryPageProps) {
 				<div className="grid grid-cols-2 gap-2">
 					{tokenBreakdownPieChart?.length ? (
 						<TokensBreakdownPieChartCard
-							key={tokenBreakdownPieChart.map((d) => d.name).join('|')}
 							protocolName={props.name}
 							chartData={tokenBreakdownPieChart}
 							exportIconUrl={protocolIconUrl}
@@ -379,7 +370,6 @@ export default function Protocols(props: TreasuryPageProps) {
 
 					{tokenRawDataset && tokensUnique.length > 0 ? (
 						<TokensMultiSeriesChartCard
-							key={`${tokensUnique.join('|')}:treasury-tokens-breakdown-raw`}
 							title="Tokens Breakdown"
 							protocolName={props.name}
 							allTokens={tokensUnique}
@@ -393,7 +383,6 @@ export default function Protocols(props: TreasuryPageProps) {
 
 					{tokenUSDDataset && tokensUnique.length > 0 ? (
 						<TokensMultiSeriesChartCard
-							key={`${tokensUnique.join('|')}:treasury-tokens-usd`}
 							title="Tokens (USD)"
 							protocolName={props.name}
 							allTokens={tokensUnique}

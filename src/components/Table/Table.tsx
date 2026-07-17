@@ -712,7 +712,10 @@ const HeaderWithTooltip = ({
 	}
 	if (!content) return children
 	return (
-		<Tooltip content={content} className="underline decoration-dotted">
+		<Tooltip
+			content={content}
+			render={<button type="button" tabIndex={tabIndex} className="underline decoration-dotted" />}
+		>
 			{children}
 		</Tooltip>
 	)

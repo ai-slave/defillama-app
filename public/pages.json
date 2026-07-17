@@ -489,18 +489,6 @@
       "tab": "Protocols"
     },
     {
-      "name": "Markets",
-      "route": "/markets",
-      "category": "Token",
-      "description": "Spot and perpetual markets by token, exchange, and category",
-      "searchKeywords": [
-        "markets",
-        "token markets",
-        "crypto markets",
-        "perp markets"
-      ]
-    },
-    {
       "name": "Tokens",
       "route": "/tokens",
       "category": "Token",
@@ -510,6 +498,61 @@
         "crypto tokens",
         "token rankings",
         "token market cap"
+      ]
+    },
+    {
+      "name": "Exchanges",
+      "route": "/exchanges",
+      "category": "Exchanges",
+      "description": "Centralized and decentralized exchange volume, open interest, liquidity, fees, reserves, and compliance metadata",
+      "searchKeywords": [
+        "exchange",
+        "exchanges",
+        "cex",
+        "dex",
+        "orderbook",
+        "open interest"
+      ]
+    },
+    {
+      "name": "Exchange Reserves",
+      "route": "/cexs",
+      "category": "Exchanges",
+      "description": "Assets held in tracked centralized exchange wallets, clean reserves, and net inflows",
+      "totalTrackedKey": "cexs.protocols",
+      "oldName": "CEX Transparency",
+      "searchKeywords": [
+        "cexs",
+        "cex reserves",
+        "exchange reserves",
+        "proof of reserves"
+      ]
+    },
+    {
+      "name": "Exchange Charts",
+      "route": "/exchanges/charts",
+      "category": "Exchanges",
+      "description": "Historical volume, open interest, depth, and normalized volume across exchanges",
+      "searchKeywords": [
+        "exchange charts",
+        "exchange volume",
+        "exchange open interest",
+        "exchange depth",
+        "normalized volume"
+      ]
+    },
+    {
+      "name": "MiCA Exchanges",
+      "route": "/mica",
+      "category": "Exchanges",
+      "description": "MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements",
+      "isNew": true,
+      "searchKeywords": [
+        "mica",
+        "mica licensed exchanges",
+        "eu crypto exchanges",
+        "mica casp",
+        "regulated exchanges"
       ]
     },
     {
@@ -791,28 +834,6 @@
       "totalTrackedKey": "treasury.entities"
     },
     {
-      "name": "CEXs",
-      "route": "/cexs",
-      "category": "Others",
-      "description": "Sum of assets held on centralized exchanges",
-      "totalTrackedKey": "cexs.protocols",
-      "oldName": "CEX Transparency"
-    },
-    {
-      "name": "MiCA Exchanges",
-      "route": "/mica",
-      "category": "Others",
-      "description": "MiCA-regulated crypto exchanges in the EU: liquidity, trading fees, perps availability, and KYC requirements",
-      "isNew": true,
-      "searchKeywords": [
-        "mica",
-        "mica licensed exchanges",
-        "eu crypto exchanges",
-        "mica casp",
-        "regulated exchanges"
-      ]
-    },
-    {
       "name": "Recently Listed Protocols",
       "route": "/recent",
       "category": "Others",
@@ -1076,6 +1097,12 @@
       "name": "MiCA",
       "route": "/mica",
       "icon": "clipboard-check",
+      "isNew": true
+    },
+    {
+      "name": "Exchanges",
+      "route": "/exchanges",
+      "icon": "bar-chart-2",
       "isNew": true
     },
     {

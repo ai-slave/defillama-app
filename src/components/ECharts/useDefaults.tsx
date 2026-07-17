@@ -15,10 +15,10 @@ import { useMedia } from '~/hooks/useMedia'
 import {
 	CHART_INSET,
 	CHART_LEGEND_RESERVE,
-	CHART_LEGEND_RIGHT_INSET,
 	CHART_ZOOM_RESERVE,
 	chartDataZoomSliderGeometry,
 	chartGrid,
+	chartHorizontalScrollLegendGeometry,
 	chartLegendScrollStyle
 } from './chartSpacing'
 import { useChartTheme } from './chartTheme'
@@ -428,6 +428,7 @@ export function useDefaults({
 
 		const legend = {
 			...chartLegendScrollStyle(chartTheme.legendPageActive, chartTheme.legendPageInactive, chartTheme.axisLabel),
+			...chartHorizontalScrollLegendGeometry,
 			textStyle: {
 				fontFamily: 'sans-serif',
 				fontSize: 12,
@@ -435,7 +436,7 @@ export function useDefaults({
 				color: chartTheme.text
 			},
 			top: !hideLegend && isSmall && title ? 38 : CHART_INSET,
-			right: !hideLegend && isSmall && title ? null : CHART_LEGEND_RIGHT_INSET
+			right: !hideLegend && isSmall && title ? null : chartHorizontalScrollLegendGeometry.right
 		}
 
 		const dataZoom = [

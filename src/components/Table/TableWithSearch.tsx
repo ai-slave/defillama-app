@@ -31,6 +31,7 @@ import { prepareTableCsv, useSortColumnOrders, useTableSearch } from './utils'
 import type { ColumnOrdersByBreakpoint } from './utils'
 
 const EMPTY_SORTING: SortingState = []
+const EMPTY_EXPANDED: ExpandedState = {}
 
 type CustomFiltersProp = React.ReactNode | (() => React.ReactNode)
 
@@ -52,6 +53,7 @@ interface ITableWithSearchBaseProps<T extends RowData> {
 	skipVirtualization?: boolean
 	tableLayout?: VirtualTableLayout
 	getSubRows?: (row: T) => T[] | undefined
+	initialExpanded?: ExpandedState
 	showColumnSelect?: boolean
 	columnSelectLabel?: string
 	csvExportAllColumns?: boolean
@@ -91,11 +93,12 @@ export function TableWithSearch<T extends RowData>({
 	columnSelectLabel = 'Columns',
 	csvExportAllColumns = false,
 	csvFileName = null,
-	getSubRows: getSubRowsProp
+	getSubRows: getSubRowsProp,
+	initialExpanded = EMPTY_EXPANDED
 }: ITableWithSearchProps<T>) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = React.useState<SortingState>(sortingState)
-	const [expanded, setExpanded] = React.useState<ExpandedState>({})
+	const [expanded, setExpanded] = React.useState<ExpandedState>(initialExpanded)
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
 	const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(columnVisibilityProp ?? {})
 

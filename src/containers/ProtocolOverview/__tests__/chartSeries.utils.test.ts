@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-	normalizeChartPointsToMs,
-	normalizeSeriesToMilliseconds,
-	normalizeSeriesToSeconds,
-	reconcileChartSelection
-} from '../chartSeries.utils'
+import { normalizeChartPointsToMs, normalizeSeriesToMilliseconds, normalizeSeriesToSeconds } from '../chartSeries.utils'
 
 describe('ProtocolOverview chart series normalization', () => {
 	it('keeps raw boundary normalization for seconds, milliseconds, and invalid points', () => {
@@ -45,14 +40,5 @@ describe('ProtocolOverview chart series normalization', () => {
 			[1_700_000_000_000, 1],
 			[1_700_000_100_000, 2]
 		])
-	})
-
-	it('keeps an explicit empty chart selection empty', () => {
-		expect(reconcileChartSelection([], ['Ethereum', 'Arbitrum'])).toEqual([])
-	})
-
-	it('repairs stale non-empty chart selections when available series change', () => {
-		expect(reconcileChartSelection(['Ethereum'], ['Base', 'Arbitrum'])).toEqual(['Base', 'Arbitrum'])
-		expect(reconcileChartSelection(['Ethereum', 'Base'], ['Base', 'Arbitrum'])).toEqual(['Base'])
 	})
 })

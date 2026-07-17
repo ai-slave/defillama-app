@@ -391,7 +391,6 @@ const TEMPLATES = [
 	{ pattern: '/bridges/{x}', source: 'bridgeChains' },
 
 	{ pattern: '/cex/{x}', source: 'cexs' },
-	{ pattern: '/cex/markets/{x}', source: 'cexs' },
 	{ pattern: '/cex/assets/{x}', source: 'cexs' },
 	{ pattern: '/cex/stablecoins/{x}', source: 'cexs' },
 

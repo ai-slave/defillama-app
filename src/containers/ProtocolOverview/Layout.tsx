@@ -27,7 +27,6 @@ const tabs = {
 	tvl: { id: 'tvl', name: 'TVL', route: '/protocol/tvl' },
 	borrowed: { id: 'borrowed', name: 'Active Loans', route: '/protocol/active-loans' },
 	stablecoins: { id: 'stablecoins', name: 'Stablecoin Info', route: '/protocol/stablecoins' },
-	markets: { id: 'markets', name: 'Markets', route: '/cex/markets' },
 	bridges: { id: 'bridges', name: 'Bridge Info', route: '/protocol/bridges' },
 	treasury: { id: 'treasury', name: 'Treasury', route: '/protocol/treasury' },
 	unlocks: { id: 'unlocks', name: 'Unlocks', route: '/protocol/unlocks' },
@@ -51,7 +50,6 @@ const tabs = {
 
 const standaloneCanonicals: Partial<Record<keyof typeof tabs, string>> = {
 	information: '/protocol',
-	markets: '/cex/markets',
 	borrowed: '/protocol/active-loans',
 	unlocks: '/unlocks',
 	governance: '/governance',
@@ -122,9 +120,7 @@ export function ProtocolOverviewLayout({
 	warningBanners,
 	seoTitle,
 	seoDescription,
-	entityQuestions,
-	cexMarketsExchange,
-	cexMarketsSlug
+	entityQuestions
 }: {
 	children: React.ReactNode
 	isCEX?: boolean
@@ -145,8 +141,6 @@ export function ProtocolOverviewLayout({
 	seoTitle?: string
 	seoDescription?: string
 	entityQuestions?: string[]
-	cexMarketsExchange?: string | null
-	cexMarketsSlug?: string | null
 }) {
 	const { user } = useAuthContext()
 
@@ -208,18 +202,13 @@ export function ProtocolOverviewLayout({
 	const entitySlug = slug(name)
 	const irDashboard = isCEX ? undefined : getMainSiteIrDashboard('protocol', entitySlug)
 	const showInvestorRelations = !!irDashboard && user?.flags?.is_llama === true
-	const cexMarketsRouteSlug = cexMarketsSlug ? slug(cexMarketsSlug) : null
 	const shouldNoIndex = !standaloneCanonicals[tab] || noIndexProtocolSlugs.has(entitySlug)
 	const canonicalUrl = isCEX
 		? tab === 'assets'
 			? `/cex/assets/${entitySlug}`
 			: tab === 'stablecoins'
 				? `/cex/stablecoins/${entitySlug}`
-				: tab === 'markets'
-					? cexMarketsRouteSlug
-						? `/cex/markets/${cexMarketsRouteSlug}`
-						: null
-					: `/cex/${entitySlug}`
+				: `/cex/${entitySlug}`
 		: !tab || tab === 'information'
 			? `/protocol/${entitySlug}`
 			: tab === 'tvl'
@@ -244,6 +233,7 @@ export function ProtocolOverviewLayout({
 			description={resolvedDescription}
 			canonicalUrl={standaloneCanonicals[tab] ? canonicalUrl : null}
 			noIndex={shouldNoIndex}
+			pageName={isCEX ? ['Exchanges'] : undefined}
 			metricFilters={toggleOptions}
 			metricFiltersLabel={metricFiltersLabel ?? undefined}
 		>
@@ -375,11 +365,6 @@ export function ProtocolOverviewLayout({
 							{metrics.stablecoins ? (
 								<TabLink as={ButtonLink} href={`/cex/stablecoins/${slug(name)}`} data-active={tab === 'stablecoins'}>
 									Stablecoin Info
-								</TabLink>
-							) : null}
-							{cexMarketsExchange && cexMarketsRouteSlug ? (
-								<TabLink as={ButtonLink} href={`/cex/markets/${cexMarketsRouteSlug}`} data-active={tab === 'markets'}>
-									Markets
 								</TabLink>
 							) : null}
 						</>
