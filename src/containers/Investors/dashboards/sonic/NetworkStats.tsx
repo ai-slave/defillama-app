@@ -104,7 +104,7 @@ function timeAgo(ts: number): string {
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-(--pro-text-label) uppercase">{children}</h2>
+	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
 }
 
 function BurnCounter({ totalBurnedS, price }: { totalBurnedS: number; price: number | null }) {
@@ -144,13 +144,13 @@ function BurnCounter({ totalBurnedS, price }: { totalBurnedS: number; price: num
 
 	return (
 		<div>
-			<div className="text-4xl font-bold text-(--pro-text-primary) tabular-nums sm:text-5xl">
+			<div className="text-4xl font-bold text-pro-text-primary tabular-nums sm:text-5xl">
 				{intPart}
-				<span className="text-(--pro-text-secondary)">.{decPart}</span>
-				<span className="ml-2 text-xl font-semibold text-(--pro-text-label)">S</span>
+				<span className="text-pro-text-secondary">.{decPart}</span>
+				<span className="ml-2 text-xl font-semibold text-pro-text-label">S</span>
 			</div>
 			{price != null && displayValue > 0 && (
-				<span className="mt-1 block text-sm text-(--pro-text-label) tabular-nums">
+				<span className="mt-1 block text-sm text-pro-text-label tabular-nums">
 					${(displayValue * price).toLocaleString('en-US', { maximumFractionDigits: 0 })} USD
 				</span>
 			)}
@@ -179,13 +179,11 @@ export default function NetworkStats() {
 	return (
 		<div className="flex flex-col gap-6">
 			{/* Live Burn Counter */}
-			<div className="rounded-xl border border-(--pro-cards-border) bg-(--pro-cards-bg) p-6">
+			<div className="rounded-xl border border-pro-cards-border bg-pro-cards-bg p-6">
 				<div className="flex items-start justify-between gap-4">
 					<div>
 						<div className="flex items-center gap-3">
-							<span className="text-xs font-semibold tracking-wider text-(--pro-text-label) uppercase">
-								Total S Burned
-							</span>
+							<span className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">Total S Burned</span>
 							{stream.connected && (
 								<span className="flex items-center gap-1.5 text-[11px] text-success">
 									<span className="inline-block size-1.5 animate-pulse rounded-full bg-success" />
@@ -207,10 +205,10 @@ export default function NetworkStats() {
 							return (
 								<div
 									key={key}
-									className="flex items-baseline gap-1.5 rounded-md border border-(--pro-cards-border) px-3 py-1.5"
+									className="flex items-baseline gap-1.5 rounded-md border border-pro-cards-border px-3 py-1.5"
 								>
-									<span className="text-xs text-(--pro-text-label)">{key}</span>
-									<span className="text-sm font-semibold text-(--pro-text-primary) tabular-nums">
+									<span className="text-xs text-pro-text-label">{key}</span>
+									<span className="text-sm font-semibold text-pro-text-primary tabular-nums">
 										{formatBurnValue(w.burned_s)} S
 									</span>
 								</div>
@@ -224,24 +222,22 @@ export default function NetworkStats() {
 			<div className="flex flex-col gap-4">
 				<SectionHeader>Network</SectionHeader>
 				<div className="grid grid-cols-3 gap-4">
-					<div className="flex flex-col gap-1 rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
-						<span className="text-xs font-medium tracking-wide text-(--pro-text-label)">Latest Block</span>
-						<span className="text-2xl font-semibold text-(--pro-text-primary) tabular-nums">
+					<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+						<span className="text-xs font-medium tracking-wide text-pro-text-label">Latest Block</span>
+						<span className="text-2xl font-semibold text-pro-text-primary tabular-nums">
 							{liveBlock ? liveBlock.toLocaleString('en-US') : '—'}
 						</span>
 					</div>
 					{data.network.gasPrice && (
-						<div className="flex flex-col gap-1 rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
-							<span className="text-xs font-medium tracking-wide text-(--pro-text-label)">Gas Price</span>
-							<span className="text-2xl font-semibold text-(--pro-text-primary)">
-								{data.network.gasPrice.formatted}
-							</span>
+						<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+							<span className="text-xs font-medium tracking-wide text-pro-text-label">Gas Price</span>
+							<span className="text-2xl font-semibold text-pro-text-primary">{data.network.gasPrice.formatted}</span>
 						</div>
 					)}
 					{data.network.price && (
-						<div className="flex flex-col gap-1 rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
-							<span className="text-xs font-medium tracking-wide text-(--pro-text-label)">S Price</span>
-							<span className="text-2xl font-semibold text-(--pro-text-primary)">{data.network.price.formatted}</span>
+						<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+							<span className="text-xs font-medium tracking-wide text-pro-text-label">S Price</span>
+							<span className="text-2xl font-semibold text-pro-text-primary">{data.network.price.formatted}</span>
 						</div>
 					)}
 				</div>
@@ -251,23 +247,23 @@ export default function NetworkStats() {
 			{stream.recentBlocks.length > 0 && (
 				<div className="flex flex-col gap-4">
 					<SectionHeader>Recent Blocks</SectionHeader>
-					<div className="overflow-x-auto rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg)">
+					<div className="overflow-x-auto rounded-lg border border-pro-cards-border bg-pro-cards-bg">
 						<table className="w-full">
 							<thead>
-								<tr className="border-b border-(--pro-cards-border)">
-									<th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-(--pro-text-label) uppercase">
+								<tr className="border-b border-pro-cards-border">
+									<th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-pro-text-label uppercase">
 										Block
 									</th>
-									<th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-(--pro-text-label) uppercase">
+									<th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-pro-text-label uppercase">
 										Txs
 									</th>
-									<th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-(--pro-text-label) uppercase">
+									<th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-pro-text-label uppercase">
 										Gas Used
 									</th>
-									<th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-(--pro-text-label) uppercase">
+									<th className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-pro-text-label uppercase">
 										Burned
 									</th>
-									<th className="hidden px-4 py-3 text-right text-xs font-semibold tracking-wide text-(--pro-text-label) uppercase sm:table-cell">
+									<th className="hidden px-4 py-3 text-right text-xs font-semibold tracking-wide text-pro-text-label uppercase sm:table-cell">
 										Time
 									</th>
 								</tr>
@@ -276,19 +272,19 @@ export default function NetworkStats() {
 								{stream.recentBlocks.map((block) => (
 									<tr
 										key={block.block_number}
-										className="border-b border-(--pro-cards-border) last:border-b-0 hover:bg-sl-hover-bg"
+										className="border-b border-pro-cards-border last:border-b-0 hover:bg-sl-hover-bg"
 									>
-										<td className="px-4 py-2.5 text-sm font-medium text-(--pro-text-primary) tabular-nums">
+										<td className="px-4 py-2.5 text-sm font-medium text-pro-text-primary tabular-nums">
 											{block.block_number.toLocaleString('en-US')}
 										</td>
-										<td className="px-4 py-2.5 text-sm text-(--pro-text-primary) tabular-nums">{block.tx_count}</td>
-										<td className="px-4 py-2.5 text-sm text-(--pro-text-primary) tabular-nums">
+										<td className="px-4 py-2.5 text-sm text-pro-text-primary tabular-nums">{block.tx_count}</td>
+										<td className="px-4 py-2.5 text-sm text-pro-text-primary tabular-nums">
 											{formatGas(block.gas_used)}
 										</td>
-										<td className="px-4 py-2.5 text-sm text-(--pro-text-primary) tabular-nums">
+										<td className="px-4 py-2.5 text-sm text-pro-text-primary tabular-nums">
 											{parseFloat(block.block_burn_s).toFixed(6)} S
 										</td>
-										<td className="hidden px-4 py-2.5 text-right text-xs text-(--pro-text-label) sm:table-cell">
+										<td className="hidden px-4 py-2.5 text-right text-xs text-pro-text-label sm:table-cell">
 											{timeAgo(block.timestamp)}
 										</td>
 									</tr>
@@ -303,8 +299,8 @@ export default function NetworkStats() {
 			{(data.fees || data.epoch) && (
 				<div className="flex flex-col gap-4">
 					<SectionHeader>Fees & Epoch</SectionHeader>
-					<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg)">
-						<div className="flex flex-col divide-y divide-(--pro-cards-border)">
+					<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+						<div className="flex flex-col divide-y divide-pro-cards-border">
 							{data.fees && (
 								<>
 									<InfoRow label="Fees / Day" value={data.fees.feesPerDay.formatted} />
@@ -329,18 +325,18 @@ export default function NetworkStats() {
 				href={data.uptimeUrl}
 				target="_blank"
 				rel="noopener noreferrer"
-				className="group flex items-center justify-between rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4 transition-colors hover:bg-sl-hover-bg"
+				className="group flex items-center justify-between rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4 transition-colors hover:bg-sl-hover-bg"
 			>
 				<div>
-					<span className="text-sm font-medium text-(--pro-text-primary)">Network Uptime</span>
-					<span className="ml-2 text-xs text-(--pro-text-label)">uptime.soniclabs.com</span>
+					<span className="text-sm font-medium text-pro-text-primary">Network Uptime</span>
+					<span className="ml-2 text-xs text-pro-text-label">uptime.soniclabs.com</span>
 				</div>
 				<svg
 					viewBox="0 0 24 24"
 					fill="none"
 					stroke="currentColor"
 					strokeWidth="2"
-					className="size-4 text-(--pro-text-label) transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+					className="size-4 text-pro-text-label transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
 				>
 					<path d="M7 17L17 7M17 7H7M17 7v10" />
 				</svg>
@@ -352,8 +348,8 @@ export default function NetworkStats() {
 function InfoRow({ label, value }: { label: string; value: string }) {
 	return (
 		<div className="flex items-center justify-between px-4 py-3">
-			<span className="text-sm text-(--pro-text-label)">{label}</span>
-			<span className="text-sm font-semibold text-(--pro-text-primary) tabular-nums">{value}</span>
+			<span className="text-sm text-pro-text-label">{label}</span>
+			<span className="text-sm font-semibold text-pro-text-primary tabular-nums">{value}</span>
 		</div>
 	)
 }

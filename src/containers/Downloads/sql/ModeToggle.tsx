@@ -62,7 +62,7 @@ function ModeButton({
 			className={`flex items-center font-medium transition-colors ${sizing} ${
 				active
 					? 'bg-brand text-on-brand shadow-sm'
-					: 'text-(--pro-text-secondary) hover:bg-hover-row hover:text-(--pro-text-primary)'
+					: 'text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
 			}`}
 		>
 			<Icon name={icon} className={iconSize} />

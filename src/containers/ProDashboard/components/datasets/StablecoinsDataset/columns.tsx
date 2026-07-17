@@ -38,7 +38,7 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 						className="truncate text-sm font-medium text-link"
 					>
 						{name}
-						{symbol && symbol !== '-' ? <span className="text-(--pro-text-tertiary)"> ({symbol})</span> : null}
+						{symbol && symbol !== '-' ? <span className="text-pro-text-tertiary"> ({symbol})</span> : null}
 					</BasicLink>
 				</span>
 			)
@@ -143,7 +143,7 @@ export const stablecoinsDatasetColumns: ColumnDef<IPeggedAssetRow>[] = [
 
 			return (
 				<Tooltip content={chains.join(', ')}>
-					<span className="text-sm text-(--pro-text-secondary)">
+					<span className="text-sm text-pro-text-secondary">
 						{displayChains.join(', ')}
 						{remainingCount > 0 ? ` +${remainingCount}` : null}
 					</span>

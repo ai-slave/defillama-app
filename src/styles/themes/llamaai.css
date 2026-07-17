@@ -25,7 +25,6 @@
 	--ai-line-subtle: rgb(0 0 0 / 0.06);
 	--ai-line-medium: rgb(0 0 0 / 0.08);
 	--ai-line-strong: rgb(0 0 0 / 0.2);
-	--ai-line-inverse: #1a1a1a;
 	--ai-line-on-white: #e8e8e8;
 
 	/* Surfaces */
@@ -98,7 +97,6 @@
 	--ai-warning-bright: #f59e0b;
 	--ai-warning-strong: #92400e;
 	--ai-warning-soft: #fde68a;
-	--ai-warning-soft-hover: #fcd34d;
 	--ai-error: #dc2626;
 	--ai-error-strong: #b91c1c;
 	--ai-error-vivid: #ef4444;
@@ -135,7 +133,6 @@ html.dark {
 	--ai-line-subtle: rgb(255 255 255 / 0.06);
 	--ai-line-medium: rgb(255 255 255 / 0.08);
 	--ai-line-strong: rgb(255 255 255 / 0.2);
-	--ai-line-inverse: #ffffff;
 
 	--ai-surface: #1a1a1a;
 	--ai-surface-muted: #222324;
@@ -167,7 +164,6 @@ html.dark {
 	--ai-warning: #fbbf24;
 	--ai-warning-strong: #fef3c7;
 	--ai-warning-soft: rgb(120 53 15 / 0.5);
-	--ai-warning-soft-hover: rgb(120 53 15 / 0.7);
 	--ai-error: #f87171;
 	--ai-error-strong: #fca5a5;
 	--ai-error-bg: #450a0a;
@@ -198,7 +194,6 @@ html.dark {
 	--color-ai-line-subtle: var(--ai-line-subtle);
 	--color-ai-line-medium: var(--ai-line-medium);
 	--color-ai-line-strong: var(--ai-line-strong);
-	--color-ai-line-inverse: var(--ai-line-inverse);
 	--color-ai-line-on-white: var(--ai-line-on-white);
 	--color-ai-surface: var(--ai-surface);
 	--color-ai-surface-muted: var(--ai-surface-muted);
@@ -235,6 +230,7 @@ html.dark {
 	--color-ai-purple-bright: var(--ai-purple-bright);
 	--color-ai-old-blue: var(--ai-old-blue);
 	--color-ai-old-blue-deep: var(--ai-old-blue-deep);
+	--color-ai-link-hover: var(--ai-link-hover);
 	--color-ai-blue: var(--ai-blue);
 	--color-ai-blue-deep: var(--ai-blue-deep);
 	--color-ai-blue-vivid: var(--ai-blue-vivid);
@@ -249,7 +245,6 @@ html.dark {
 	--color-ai-warning-bright: var(--ai-warning-bright);
 	--color-ai-warning-strong: var(--ai-warning-strong);
 	--color-ai-warning-soft: var(--ai-warning-soft);
-	--color-ai-warning-soft-hover: var(--ai-warning-soft-hover);
 	--color-ai-error: var(--ai-error);
 	--color-ai-error-strong: var(--ai-error-strong);
 	--color-ai-error-vivid: var(--ai-error-vivid);

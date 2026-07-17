@@ -608,10 +608,10 @@ export function ColumnManager({
 
 	return (
 		<div className="flex flex-col gap-4">
-			<section className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-3">
+			<section className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-3">
 				<div className="mb-2 flex items-center justify-between">
 					<div className="flex items-center gap-2">
-						<h4 className="text-xs font-semibold text-(--pro-text-primary) uppercase">Selected</h4>
+						<h4 className="text-xs font-semibold text-pro-text-primary uppercase">Selected</h4>
 						<span className="rounded-sm bg-brand/10 px-1.5 py-0.5 text-[10px] font-medium text-brand">
 							{selectedColumns.length}
 						</span>
@@ -635,7 +635,7 @@ export function ColumnManager({
 				>
 					<div className="max-h-[100px] overflow-y-auto">
 						{selectedColumns.length === 0 ? (
-							<div className="flex h-12 items-center justify-center rounded-md border border-dashed border-(--pro-cards-border) text-xs text-(--pro-text-tertiary)">
+							<div className="flex h-12 items-center justify-center rounded-md border border-dashed border-pro-cards-border text-xs text-pro-text-tertiary">
 								No columns selected
 							</div>
 						) : (
@@ -668,7 +668,7 @@ export function ColumnManager({
 					</DragOverlay>
 				</DndContext>
 
-				<p className="mt-2 text-[10px] text-(--pro-text-tertiary)">Drag to reorder. First column pinned left.</p>
+				<p className="mt-2 text-[10px] text-pro-text-tertiary">Drag to reorder. First column pinned left.</p>
 			</section>
 
 			{sorting !== undefined && onSortingChange ? (
@@ -682,8 +682,8 @@ export function ColumnManager({
 				/>
 			) : null}
 
-			<section className="flex flex-col rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg)">
-				<div className="flex flex-wrap gap-1 border-b border-(--pro-cards-border) p-2">
+			<section className="flex flex-col rounded-lg border border-pro-cards-border bg-pro-cards-bg">
+				<div className="flex flex-wrap gap-1 border-b border-pro-cards-border p-2">
 					{GROUP_FILTERS.map((filter) => (
 						<button
 							key={filter.id}
@@ -692,7 +692,7 @@ export function ColumnManager({
 							className={`rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${
 								groupFilter === filter.id
 									? 'bg-brand/15 text-brand'
-									: 'text-(--pro-text-tertiary) hover:text-(--pro-text-secondary)'
+									: 'text-pro-text-tertiary hover:text-pro-text-secondary'
 							}`}
 						>
 							{filter.label}
@@ -700,25 +700,25 @@ export function ColumnManager({
 					))}
 				</div>
 
-				<div className="border-b border-(--pro-cards-border) p-2">
+				<div className="border-b border-pro-cards-border p-2">
 					<div className="relative">
 						<Icon
 							name="search"
 							width={12}
 							height={12}
-							className="absolute top-1/2 left-2.5 -translate-y-1/2 text-(--pro-text-tertiary)"
+							className="absolute top-1/2 left-2.5 -translate-y-1/2 text-pro-text-tertiary"
 						/>
 						<input
 							onInput={(e) => setSearch(e.currentTarget.value)}
 							placeholder="Search columns..."
-							className="w-full rounded-md border border-(--pro-cards-border) py-1.5 pr-2.5 pl-8 text-xs text-(--pro-text-primary) placeholder:text-(--pro-text-tertiary) focus:border-brand focus:outline-hidden"
+							className="w-full rounded-md border border-pro-cards-border py-1.5 pr-2.5 pl-8 text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>
 
 				<div className="max-h-[240px] overflow-y-auto p-2">
 					{filteredColumns.length === 0 ? (
-						<p className="flex h-16 items-center justify-center text-xs text-(--pro-text-tertiary)">No columns match</p>
+						<p className="flex h-16 items-center justify-center text-xs text-pro-text-tertiary">No columns match</p>
 					) : (
 						<div className="flex flex-col gap-1">
 							{filteredColumns.map((column) => {
@@ -729,24 +729,24 @@ export function ColumnManager({
 										type="button"
 										onClick={() => handleToggleColumn(column.id)}
 										className={`group flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 text-left transition-all ${
-											isSelected ? 'border-brand/30 bg-brand/5' : 'border-transparent hover:border-(--pro-cards-border)'
+											isSelected ? 'border-brand/30 bg-brand/5' : 'border-transparent hover:border-pro-cards-border'
 										}`}
 									>
 										<div
 											className={`flex size-3.5 shrink-0 items-center justify-center rounded-sm border transition-colors ${
 												isSelected
 													? 'border-brand bg-brand text-on-brand'
-													: 'border-(--pro-cards-border) group-hover:border-brand/50'
+													: 'border-pro-cards-border group-hover:border-brand/50'
 											}`}
 										>
 											{isSelected ? <Icon name="check" width={8} height={8} /> : null}
 										</div>
 										<span
-											className={`flex-1 truncate text-xs ${isSelected ? 'font-medium text-(--pro-text-primary)' : 'text-(--pro-text-secondary)'}`}
+											className={`flex-1 truncate text-xs ${isSelected ? 'font-medium text-pro-text-primary' : 'text-pro-text-secondary'}`}
 										>
 											{column.header}
 										</span>
-										<span className="rounded-sm px-1 py-0.5 text-[9px] text-(--pro-text-tertiary) uppercase">
+										<span className="rounded-sm px-1 py-0.5 text-[9px] text-pro-text-tertiary uppercase">
 											{GROUP_LABELS[column.group]}
 										</span>
 									</button>
@@ -757,7 +757,7 @@ export function ColumnManager({
 				</div>
 			</section>
 
-			<section className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-3">
+			<section className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-3">
 				<button
 					type="button"
 					onClick={() => {
@@ -778,7 +778,7 @@ export function ColumnManager({
 							height={14}
 							className="text-brand"
 						/>
-						<span className="text-xs font-semibold text-(--pro-text-primary)">
+						<span className="text-xs font-semibold text-pro-text-primary">
 							{editingId ? 'Edit Custom Column' : 'Custom Column'}
 							{!hasActiveSubscription ? <span className="ml-1 text-[10px] font-normal opacity-60">(Pro)</span> : null}
 						</span>
@@ -792,7 +792,7 @@ export function ColumnManager({
 						name="chevron-down"
 						width={14}
 						height={14}
-						className={`text-(--pro-text-tertiary) transition-transform ${customColumnExpanded ? 'rotate-180' : ''}`}
+						className={`text-pro-text-tertiary transition-transform ${customColumnExpanded ? 'rotate-180' : ''}`}
 					/>
 				</button>
 
@@ -802,7 +802,7 @@ export function ColumnManager({
 							key={preset.name}
 							type="button"
 							onClick={() => handleApplyPreset(preset)}
-							className="rounded-md border border-(--pro-cards-border) px-2 py-1 text-[10px] font-medium text-(--pro-text-secondary) transition-colors hover:border-brand hover:text-brand"
+							className="rounded-md border border-pro-cards-border px-2 py-1 text-[10px] font-medium text-pro-text-secondary transition-colors hover:border-brand hover:text-brand"
 						>
 							{preset.name}
 						</button>
@@ -810,10 +810,10 @@ export function ColumnManager({
 				</div>
 
 				{customColumnExpanded ? (
-					<div className="mt-3 space-y-3 border-t border-(--pro-cards-border) pt-3">
+					<div className="mt-3 space-y-3 border-t border-pro-cards-border pt-3">
 						{editingId ? (
 							<div className="flex items-center justify-between">
-								<span className="text-xs text-(--pro-text-secondary)">Editing: {customName || 'Custom Column'}</span>
+								<span className="text-xs text-pro-text-secondary">Editing: {customName || 'Custom Column'}</span>
 								<button type="button" onClick={handleCancelEdit} className="text-xs text-brand hover:underline">
 									Cancel
 								</button>
@@ -826,7 +826,7 @@ export function ColumnManager({
 								value={customName}
 								onChange={(e) => setCustomName(e.target.value)}
 								placeholder="Column name"
-								className="flex-1 rounded-md border border-(--pro-cards-border) px-2 py-1.5 text-xs text-(--pro-text-primary) placeholder:text-(--pro-text-tertiary) focus:border-brand focus:outline-hidden"
+								className="flex-1 rounded-md border border-pro-cards-border px-2 py-1.5 text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 							/>
 						</div>
 
@@ -839,12 +839,12 @@ export function ColumnManager({
 								onKeyDown={handleExpressionKeyDown}
 								onFocus={() => customExpression && setShowAutocomplete(true)}
 								placeholder="e.g., tvl / mcap, fees24h * 365"
-								className={`w-full rounded-md border px-2 py-1.5 pr-8 font-mono text-xs text-(--pro-text-primary) placeholder:text-(--pro-text-tertiary) focus:outline-hidden ${
+								className={`w-full rounded-md border px-2 py-1.5 pr-8 font-mono text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:outline-hidden ${
 									customExpression && !expressionValidation.isValid
 										? 'border-error'
 										: customExpression && expressionValidation.isValid
 											? 'border-success'
-											: 'border-(--pro-cards-border) focus:border-brand'
+											: 'border-pro-cards-border focus:border-brand'
 								}`}
 							/>
 							{customExpression ? (
@@ -857,7 +857,7 @@ export function ColumnManager({
 								</div>
 							) : null}
 							{showAutocomplete && filteredSuggestions.length > 0 ? (
-								<div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto overscroll-contain rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) shadow-lg">
+								<div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto overscroll-contain rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-lg">
 									{filteredSuggestions.map((suggestion, index) => (
 										<button
 											key={`${suggestion.type}-${suggestion.value}`}
@@ -865,7 +865,7 @@ export function ColumnManager({
 											onClick={() => insertSuggestion(suggestion)}
 											onMouseEnter={() => setAutocompleteIndex(index)}
 											className={`flex cursor-pointer items-center gap-2 px-2 py-1 text-xs ${
-												index === autocompleteIndex ? 'bg-brand text-on-brand' : 'text-(--pro-text-primary)'
+												index === autocompleteIndex ? 'bg-brand text-on-brand' : 'text-pro-text-primary'
 											}`}
 										>
 											<span
@@ -878,17 +878,17 @@ export function ColumnManager({
 												}`}
 											/>
 											<code className="shrink-0">{suggestion.display}</code>
-											<span className="ml-auto truncate text-(--pro-text-tertiary)">{suggestion.description}</span>
+											<span className="ml-auto truncate text-pro-text-tertiary">{suggestion.description}</span>
 										</button>
 									))}
 								</div>
 							) : null}
 						</div>
-						<p className="text-[9px] text-(--pro-text-tertiary)">Ctrl+Space to show all · ↑↓ navigate · Enter select</p>
+						<p className="text-[9px] text-pro-text-tertiary">Ctrl+Space to show all · ↑↓ navigate · Enter select</p>
 
 						<div className="flex flex-wrap gap-2">
 							<div className="flex-1">
-								<p className="mb-1 text-[10px] font-medium text-(--pro-text-secondary)">Format</p>
+								<p className="mb-1 text-[10px] font-medium text-pro-text-secondary">Format</p>
 								<div className="flex gap-1">
 									{FORMAT_OPTIONS.map((opt) => (
 										<Tooltip key={opt.id} content={opt.description} placement="bottom">
@@ -898,7 +898,7 @@ export function ColumnManager({
 												className={`flex-1 rounded-md border px-2 py-1 text-[10px] font-medium transition-colors ${
 													customFormat === opt.id
 														? 'border-brand bg-brand/15 text-brand'
-														: 'border-(--pro-cards-border) text-(--pro-text-tertiary) hover:border-brand/50'
+														: 'border-pro-cards-border text-pro-text-tertiary hover:border-brand/50'
 												}`}
 											>
 												{opt.label}
@@ -908,7 +908,7 @@ export function ColumnManager({
 								</div>
 							</div>
 							<div className="flex-1">
-								<p className="mb-1 text-[10px] font-medium text-(--pro-text-secondary)">Aggregation</p>
+								<p className="mb-1 text-[10px] font-medium text-pro-text-secondary">Aggregation</p>
 								<div className="flex gap-1">
 									{AGGREGATION_OPTIONS.map((opt) => (
 										<Tooltip key={opt.id} content={opt.description} placement="bottom">
@@ -921,7 +921,7 @@ export function ColumnManager({
 												className={`flex-1 rounded-md border px-1 py-1 text-[10px] font-medium transition-colors ${
 													resolvedCustomAggregation === opt.id
 														? 'border-brand bg-brand/15 text-brand'
-														: 'border-(--pro-cards-border) text-(--pro-text-tertiary) hover:border-brand/50'
+														: 'border-pro-cards-border text-pro-text-tertiary hover:border-brand/50'
 												}`}
 											>
 												{opt.label}
@@ -939,7 +939,7 @@ export function ColumnManager({
 								}`}
 							>
 								<div className="flex items-center justify-between">
-									<span className="text-(--pro-text-secondary)">Result:</span>
+									<span className="text-pro-text-secondary">Result:</span>
 									{preview !== null ? (
 										<span className="font-mono font-semibold text-success">{preview}</span>
 									) : (
@@ -949,7 +949,7 @@ export function ColumnManager({
 								{usedVariables.length > 0 ? (
 									<div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 border-t border-success/20 pt-1">
 										{usedVariables.map((v) => (
-											<span key={v.key} className="text-[10px] text-(--pro-text-tertiary)">
+											<span key={v.key} className="text-[10px] text-pro-text-tertiary">
 												<code>{v.key}</code>={v.formatted}
 											</span>
 										))}
@@ -970,36 +970,36 @@ export function ColumnManager({
 				) : null}
 
 				{(customColumns?.length ?? 0) > 0 ? (
-					<div className="mt-3 space-y-1.5 border-t border-(--pro-cards-border) pt-3">
+					<div className="mt-3 space-y-1.5 border-t border-pro-cards-border pt-3">
 						{customColumns?.map((col) => (
 							<div
 								key={col.id}
-								className={`flex items-center justify-between rounded-md border p-2 ${editingId === col.id ? 'border-brand bg-brand/5' : 'border-(--pro-cards-border)'}`}
+								className={`flex items-center justify-between rounded-md border p-2 ${editingId === col.id ? 'border-brand bg-brand/5' : 'border-pro-cards-border'}`}
 							>
 								<div className="min-w-0 flex-1">
 									<div className="flex items-center gap-1.5">
-										<span className="truncate text-xs font-medium text-(--pro-text-primary)">{col.name}</span>
-										<span className="rounded-sm border border-(--pro-cards-border) bg-(--pro-cards-bg) px-1 py-0.5 text-[9px] uppercase">
+										<span className="truncate text-xs font-medium text-pro-text-primary">{col.name}</span>
+										<span className="rounded-sm border border-pro-cards-border bg-pro-cards-bg px-1 py-0.5 text-[9px] uppercase">
 											{col.format}
 										</span>
-										<span className="rounded-sm border border-(--pro-cards-border) bg-(--pro-cards-bg) px-1 py-0.5 text-[9px] text-(--pro-text-tertiary)">
+										<span className="rounded-sm border border-pro-cards-border bg-pro-cards-bg px-1 py-0.5 text-[9px] text-pro-text-tertiary">
 											{AGGREGATION_OPTIONS.find((a) => a.id === col.aggregation)?.label}
 										</span>
 									</div>
-									<code className="block truncate text-[10px] text-(--pro-text-tertiary)">{col.expression}</code>
+									<code className="block truncate text-[10px] text-pro-text-tertiary">{col.expression}</code>
 								</div>
 								<div className="ml-2 flex shrink-0 items-center gap-1">
 									<button
 										type="button"
 										onClick={() => handleEditCustomColumn(col)}
-										className="rounded-sm p-1 text-(--pro-text-tertiary) hover:text-brand"
+										className="rounded-sm p-1 text-pro-text-tertiary hover:text-brand"
 									>
 										<Icon name="pencil" height={12} width={12} />
 									</button>
 									<button
 										type="button"
 										onClick={() => onRemoveCustomColumn?.(col.id)}
-										className="rounded-sm p-1 text-(--pro-text-tertiary) hover:bg-error/10 hover:text-error"
+										className="rounded-sm p-1 text-pro-text-tertiary hover:bg-error/10 hover:text-error"
 									>
 										<Icon name="trash-2" height={12} width={12} />
 									</button>
@@ -1048,17 +1048,17 @@ function SortableChip({
 					? 'border-brand/50 bg-brand/10'
 					: isCustom
 						? 'border-purple-500/30 bg-purple-500/5'
-						: 'border-(--pro-cards-border)'
+						: 'border-pro-cards-border'
 			}`}
 		>
 			<span
 				{...attributes}
 				{...listeners}
-				className="cursor-grab touch-none text-(--pro-text-tertiary) hover:text-(--pro-text-secondary) active:cursor-grabbing"
+				className="cursor-grab touch-none text-pro-text-tertiary hover:text-pro-text-secondary active:cursor-grabbing"
 			>
 				<Icon name="menu" width={10} height={10} />
 			</span>
-			<span className="max-w-[80px] truncate font-medium text-(--pro-text-primary)" title={label}>
+			<span className="max-w-[80px] truncate font-medium text-pro-text-primary" title={label}>
 				{label}
 			</span>
 			{isFirst ? <Icon name="pin" width={8} height={8} className="text-brand" /> : null}
@@ -1068,7 +1068,7 @@ function SortableChip({
 					e.stopPropagation()
 					onRemove()
 				}}
-				className="rounded-sm text-(--pro-text-tertiary) transition-colors hover:text-error"
+				className="rounded-sm text-pro-text-tertiary transition-colors hover:text-error"
 			>
 				<Icon name="x" width={10} height={10} />
 			</button>
@@ -1100,17 +1100,15 @@ function SortingSection({
 	}, [currentSortColumn, selectableColumns])
 
 	return (
-		<section className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-3">
-			<h4 className="mb-2 text-xs font-semibold text-(--pro-text-primary) uppercase">Sorting</h4>
+		<section className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-3">
+			<h4 className="mb-2 text-xs font-semibold text-pro-text-primary uppercase">Sorting</h4>
 			<div className="flex flex-wrap items-center gap-2">
 				<div className="min-w-[140px] flex-1">
 					<PopoverDisclosure
 						store={popover}
-						className="flex w-full items-center justify-between rounded-md border border-(--pro-cards-border) px-2 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="flex w-full items-center justify-between rounded-md border border-pro-cards-border px-2 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					>
-						<span
-							className={`truncate ${currentSortColumn ? 'text-(--pro-text-primary)' : 'text-(--pro-text-tertiary)'}`}
-						>
+						<span className={`truncate ${currentSortColumn ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}`}>
 							{selectedLabel}
 						</span>
 						<Icon name="chevron-down" width={12} height={12} className="ml-2 shrink-0 opacity-70" />
@@ -1121,7 +1119,7 @@ function SortingSection({
 						portal={true}
 						flip={false}
 						gutter={4}
-						className="z-50 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) shadow-lg"
+						className="z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-lg"
 						style={{ width: 'var(--popover-anchor-width)' }}
 					>
 						<div className="max-h-[280px] overflow-y-auto p-1">
@@ -1132,7 +1130,7 @@ function SortingSection({
 									popover.setOpen(false)
 								}}
 								className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-colors ${
-									!currentSortColumn ? 'bg-brand/10 font-semibold text-brand' : 'text-(--pro-text-secondary)'
+									!currentSortColumn ? 'bg-brand/10 font-semibold text-brand' : 'text-pro-text-secondary'
 								}`}
 							>
 								<span>No sorting</span>
@@ -1151,7 +1149,7 @@ function SortingSection({
 											popover.setOpen(false)
 										}}
 										className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-colors ${
-											isActive ? 'bg-brand/10 font-semibold text-brand' : 'text-(--pro-text-secondary)'
+											isActive ? 'bg-brand/10 font-semibold text-brand' : 'text-pro-text-secondary'
 										}`}
 									>
 										<span className="truncate">{col.header}</span>
@@ -1164,17 +1162,17 @@ function SortingSection({
 						</div>
 					</Popover>
 				</div>
-				<div className="flex overflow-hidden rounded-md border border-(--pro-cards-border)">
+				<div className="flex overflow-hidden rounded-md border border-pro-cards-border">
 					<button
 						type="button"
 						onClick={() => onDirectionChange(false)}
 						disabled={!currentSortColumn}
 						className={`px-2 py-1 text-[10px] font-medium transition ${
 							!currentSortColumn
-								? 'cursor-not-allowed text-(--pro-text-tertiary)'
+								? 'cursor-not-allowed text-pro-text-tertiary'
 								: !isDescending
 									? 'bg-brand text-on-brand'
-									: 'text-(--pro-text-secondary)'
+									: 'text-pro-text-secondary'
 						}`}
 					>
 						Asc
@@ -1183,12 +1181,12 @@ function SortingSection({
 						type="button"
 						onClick={() => onDirectionChange(true)}
 						disabled={!currentSortColumn}
-						className={`border-l border-(--pro-cards-border) px-2 py-1 text-[10px] font-medium transition ${
+						className={`border-l border-pro-cards-border px-2 py-1 text-[10px] font-medium transition ${
 							!currentSortColumn
-								? 'cursor-not-allowed text-(--pro-text-tertiary)'
+								? 'cursor-not-allowed text-pro-text-tertiary'
 								: isDescending
 									? 'bg-brand text-on-brand'
-									: 'text-(--pro-text-secondary)'
+									: 'text-pro-text-secondary'
 						}`}
 					>
 						Desc

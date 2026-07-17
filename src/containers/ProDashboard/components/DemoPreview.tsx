@@ -53,7 +53,7 @@ const DemoChartCard = ({ chart }: { chart: ChartConfig }) => {
 	return (
 		<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]">
 			<div className="mr-auto flex items-center gap-1 p-1 md:p-3">
-				<div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-(--pro-old-blue) text-xs text-on-brand">
+				<div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-pro-old-blue text-xs text-on-brand">
 					{itemName.charAt(0).toUpperCase()}
 				</div>
 				<h2 className="text-base font-semibold">
@@ -428,8 +428,8 @@ export const DemoPreview = () => {
 			<div className="border-b border-subtle bg-(--bg) py-6">
 				<div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6">
 					<div className="text-center">
-						<h1 className="mb-2 text-3xl font-bold text-(--pro-text-primary)">Pro Dashboard Preview</h1>
-						<p className="text-lg text-(--pro-text-secondary)">See what you'll get with Pro access:</p>
+						<h1 className="mb-2 text-3xl font-bold text-pro-text-primary">Pro Dashboard Preview</h1>
+						<p className="text-lg text-pro-text-secondary">See what you'll get with Pro access:</p>
 					</div>
 
 					<div className="flex items-center justify-center">
@@ -437,7 +437,7 @@ export const DemoPreview = () => {
 							{features.map((feature) => (
 								<div
 									key={feature.title}
-									className="flex flex-wrap items-center justify-center gap-2 pro-info-card px-8 py-15 text-sm text-(--pro-text-secondary)"
+									className="flex flex-wrap items-center justify-center gap-2 pro-info-card px-8 py-15 text-sm text-pro-text-secondary"
 								>
 									<div className="align-center flex gap-2">
 										<Icon name={feature.icon as any} height={32} width={32} className="shrink-0 text-brand" />
@@ -450,26 +450,26 @@ export const DemoPreview = () => {
 
 					<div className="mx-auto max-w-5xl">
 						<div className="grid items-stretch gap-8 md:grid-cols-2">
-							<div className="flex flex-col rounded-sm border border-medium bg-page/50 px-6 py-8 text-center dark:border-subtle dark:bg-(--pro-glass-bg)">
-								<h3 className="mb-3 text-2xl font-bold text-secondary dark:text-(--pro-text-primary)">Free Account</h3>
-								<div className="mb-6 text-3xl font-bold text-gray-800 dark:text-(--pro-text-primary)">
+							<div className="flex flex-col rounded-sm border border-medium bg-page/50 px-6 py-8 text-center dark:border-subtle dark:bg-pro-glass-bg">
+								<h3 className="mb-3 text-2xl font-bold text-secondary dark:text-pro-text-primary">Free Account</h3>
+								<div className="mb-6 text-3xl font-bold text-gray-800 dark:text-pro-text-primary">
 									$0
-									<span className="text-base font-normal text-secondary dark:text-(--pro-text-secondary)">/month</span>
+									<span className="text-base font-normal text-secondary dark:text-pro-text-secondary">/month</span>
 								</div>
 								<ul className="mb-8 flex-1 space-y-3 text-left text-sm">
 									<li className="flex items-start gap-2">
 										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
-										<span className="text-secondary dark:text-(--pro-text-secondary)">Access to public dashboards</span>
+										<span className="text-secondary dark:text-pro-text-secondary">Access to public dashboards</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
-										<span className="text-secondary dark:text-(--pro-text-secondary)">
+										<span className="text-secondary dark:text-pro-text-secondary">
 											View community-created dashboards
 										</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
-										<span className="text-secondary dark:text-(--pro-text-secondary)">Basic DeFi data access</span>
+										<span className="text-secondary dark:text-pro-text-secondary">Basic DeFi data access</span>
 									</li>
 								</ul>
 								<Link href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}>
@@ -484,7 +484,7 @@ export const DemoPreview = () => {
 									Pro
 								</h3>
 								<div className="mb-6 text-4xl font-bold text-brand">
-									$49<span className="text-base font-normal text-(--pro-text-secondary)">/month</span>
+									$49<span className="text-base font-normal text-pro-text-secondary">/month</span>
 								</div>
 								<ul className="mb-8 flex-1 space-y-3 text-left text-sm">
 									<li className="flex items-start gap-2">
@@ -525,12 +525,12 @@ export const DemoPreview = () => {
 			</div>
 
 			<div className="mx-auto grid w-full max-w-7xl grid-flow-dense grid-cols-1 gap-2 lg:grid-cols-2">
-				<p className="col-span-full p-2 text-center text-xs text-(--pro-text-form) italic">
+				<p className="col-span-full p-2 text-center text-xs text-pro-text-form italic">
 					Demo Preview - All data shown below is simulated for demonstration purposes
 				</p>
 
 				<div
-					className={`${demoTextCard.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg)`}
+					className={`${demoTextCard.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
 				>
 					<TextCard text={demoTextCard} />
 				</div>
@@ -538,14 +538,14 @@ export const DemoPreview = () => {
 				{demoCharts.slice(0, 2).map((chart) => (
 					<div
 						key={chart.id}
-						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg)`}
+						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
 					>
 						<DemoChartCard chart={chart} />
 					</div>
 				))}
 
 				<div
-					className={`${demoMultiCharts[0].colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg)`}
+					className={`${demoMultiCharts[0].colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
 				>
 					<DemoMultiChartCard multi={demoMultiCharts[0]} />
 				</div>
@@ -553,30 +553,30 @@ export const DemoPreview = () => {
 				{demoCharts.slice(2, 4).map((chart) => (
 					<div
 						key={chart.id}
-						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg)`}
+						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
 					>
 						<DemoChartCard chart={chart} />
 					</div>
 				))}
 
-				<div className={`col-span-2 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg)`}>
+				<div className={`col-span-2 rounded-md border border-pro-cards-border bg-pro-cards-bg`}>
 					<ProtocolsByChainTable tableId="demo-ethereum-protocols" chains={DEMO_CHAINS} colSpan={2} />
 				</div>
 
 				<div
-					className={`${demoTextCard2.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg)`}
+					className={`${demoTextCard2.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
 				>
 					<TextCard text={demoTextCard2} />
 				</div>
 
 				<div
-					className={`${demoTextCard3.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg)`}
+					className={`${demoTextCard3.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
 				>
 					<TextCard text={demoTextCard3} />
 				</div>
 
 				<div
-					className={`${demoMultiCharts[1].colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg)`}
+					className={`${demoMultiCharts[1].colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
 				>
 					<DemoMultiChartCard multi={demoMultiCharts[1]} />
 				</div>
@@ -584,20 +584,20 @@ export const DemoPreview = () => {
 				{demoCharts.slice(4).map((chart) => (
 					<div
 						key={chart.id}
-						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg)`}
+						className={`${chart.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
 					>
 						<DemoChartCard chart={chart} />
 					</div>
 				))}
 
 				<div
-					className={`${demoTextCard4.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg)`}
+					className={`${demoTextCard4.colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
 				>
 					<TextCard text={demoTextCard4} />
 				</div>
 
 				<div
-					className={`${demoMultiCharts[2].colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg)`}
+					className={`${demoMultiCharts[2].colSpan === 1 ? 'col-span-1' : 'col-span-full'} rounded-md border border-pro-cards-border bg-pro-cards-bg`}
 				>
 					<DemoMultiChartCard multi={demoMultiCharts[2]} />
 				</div>

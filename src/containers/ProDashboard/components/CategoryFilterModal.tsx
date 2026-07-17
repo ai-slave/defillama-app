@@ -70,7 +70,7 @@ export function CategoryFilterModal({
 			}}
 		>
 			<Ariakit.Dialog
-				className="dialog max-h-[80dvh] w-full max-w-lg gap-0 rounded-md border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) p-0 shadow-lg"
+				className="dialog max-h-[80dvh] w-full max-w-lg gap-0 rounded-md border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-0 shadow-lg"
 				unmountOnHide
 				portal
 				hideOnInteractOutside

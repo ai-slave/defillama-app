@@ -21,7 +21,7 @@ export function InvestorsTable<T extends RowData>({
 						return (
 							<div key={header.id} className="truncate border-b border-subtle px-3 py-2.5" style={{ textAlign: align }}>
 								<span
-									className="relative inline-flex cursor-pointer flex-nowrap items-center gap-1 text-[11px] font-semibold tracking-wider text-(--pro-text-tertiary) uppercase"
+									className="relative inline-flex cursor-pointer flex-nowrap items-center gap-1 text-[11px] font-semibold tracking-wider text-pro-text-tertiary uppercase"
 									onClick={header.column.getCanSort() ? () => header.column.toggleSorting() : undefined}
 								>
 									{flexRender(header.column.columnDef.header, header.getContext())}
@@ -37,8 +37,8 @@ export function InvestorsTable<T extends RowData>({
 						return (
 							<div
 								key={cell.id}
-								className={`truncate border-b border-subtle px-3 py-2.5 text-[13px] text-(--pro-text-primary) transition-colors ${
-									rowIdx % 2 === 1 ? 'bg-(--pro-cards-bg)' : ''
+								className={`truncate border-b border-subtle px-3 py-2.5 text-[13px] text-pro-text-primary transition-colors ${
+									rowIdx % 2 === 1 ? 'bg-pro-cards-bg' : ''
 								}`}
 								style={{ textAlign: align }}
 							>
@@ -62,8 +62,8 @@ export function PageLoader() {
 
 export function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-5">
-			<h3 className="mb-4 text-[11px] font-semibold tracking-wider text-(--pro-text-tertiary) uppercase">{title}</h3>
+		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5">
+			<h3 className="mb-4 text-[11px] font-semibold tracking-wider text-pro-text-tertiary uppercase">{title}</h3>
 			{children}
 		</div>
 	)
@@ -71,8 +71,8 @@ export function ChartCard({ title, children }: { title: string; children: React.
 
 export function CardSkeleton({ title }: { title: string }) {
 	return (
-		<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-5">
-			<h3 className="mb-4 text-[11px] font-semibold tracking-wider text-(--pro-text-tertiary) uppercase">{title}</h3>
+		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5">
+			<h3 className="mb-4 text-[11px] font-semibold tracking-wider text-pro-text-tertiary uppercase">{title}</h3>
 			<div className="flex h-[400px] items-center justify-center">
 				<div className="size-5 animate-spin rounded-full border-2 border-tertiary border-t-transparent" />
 			</div>
@@ -83,10 +83,8 @@ export function CardSkeleton({ title }: { title: string }) {
 export function KpiCard({ label, value }: { label: string; value: string | number | null }) {
 	return (
 		<div className="flex min-w-0 flex-1 flex-col gap-1 py-1">
-			<span className="text-[11px] font-medium tracking-wide text-(--pro-text-tertiary)">{label}</span>
-			<span className="font-jetbrains text-xl font-semibold text-(--pro-text-primary) tabular-nums">
-				{value ?? '—'}
-			</span>
+			<span className="text-[11px] font-medium tracking-wide text-pro-text-tertiary">{label}</span>
+			<span className="font-jetbrains text-xl font-semibold text-pro-text-primary tabular-nums">{value ?? '—'}</span>
 		</div>
 	)
 }
@@ -94,7 +92,7 @@ export function KpiCard({ label, value }: { label: string; value: string | numbe
 export function KpiSkeleton({ label }: { label: string }) {
 	return (
 		<div className="flex min-w-0 flex-1 flex-col gap-1 py-1">
-			<span className="text-[11px] font-medium tracking-wide text-(--pro-text-tertiary)">{label}</span>
+			<span className="text-[11px] font-medium tracking-wide text-pro-text-tertiary">{label}</span>
 			<div className="h-7 w-20 animate-pulse rounded-sm bg-tertiary opacity-20" />
 		</div>
 	)
@@ -103,7 +101,7 @@ export function KpiSkeleton({ label }: { label: string }) {
 /** Full-width metric strip — items stretch evenly, separated by vertical dividers */
 export function MetricStrip({ children }: { children: React.ReactNode }) {
 	return (
-		<div className="flex gap-0 overflow-x-auto rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg)">
+		<div className="flex gap-0 overflow-x-auto rounded-lg border border-pro-cards-border bg-pro-cards-bg">
 			{Array.isArray(children) ? (
 				children.map((child, i) => (
 					<div
@@ -125,7 +123,7 @@ export function MetricStrip({ children }: { children: React.ReactNode }) {
 export function SectionHeader({ title, actions }: { title: string; actions?: React.ReactNode }) {
 	return (
 		<div className="flex items-center justify-between">
-			<h3 className="text-[11px] font-semibold tracking-wider text-(--pro-text-tertiary) uppercase">{title}</h3>
+			<h3 className="text-[11px] font-semibold tracking-wider text-pro-text-tertiary uppercase">{title}</h3>
 			{actions}
 		</div>
 	)
@@ -152,8 +150,8 @@ export function WindowToggle({
 					}${i === options.length - 1 ? 'rounded-r-md' : ''} ${
 						value === w.value
 							? 'bg-sl-accent text-on-brand'
-							: 'bg-(--pro-cards-bg) text-(--pro-text-tertiary) hover:text-(--pro-text-primary)'
-					} ${value !== w.value ? 'border border-(--pro-cards-border)' : ''}`}
+							: 'bg-pro-cards-bg text-pro-text-tertiary hover:text-pro-text-primary'
+					} ${value !== w.value ? 'border border-pro-cards-border' : ''}`}
 					style={i > 0 && value !== w.value ? { marginLeft: '-1px' } : undefined}
 				>
 					{w.label}
@@ -168,7 +166,7 @@ export function Pagination<T>({ table }: { table: Table<T> }) {
 	const total = table.getPrePaginationRowModel().rows.length
 
 	return (
-		<div className="mt-3 flex items-center justify-between border-t border-subtle pt-3 text-[11px] text-(--pro-text-tertiary)">
+		<div className="mt-3 flex items-center justify-between border-t border-subtle pt-3 text-[11px] text-pro-text-tertiary">
 			<span className="tabular-nums">
 				{pageIndex * pageSize + 1}–{Math.min((pageIndex + 1) * pageSize, total)} of {total}
 			</span>

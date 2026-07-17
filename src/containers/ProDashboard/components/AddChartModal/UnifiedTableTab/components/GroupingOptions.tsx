@@ -51,10 +51,10 @@ export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptio
 
 	return (
 		<>
-			<div className="rounded-md border border-(--pro-cards-border)/70 px-2.5 py-1.5 text-[10px] text-(--pro-text-tertiary)">
-				<strong className="text-(--pro-text-secondary)">Grouping:</strong> {groupingSummary}
+			<div className="rounded-md border border-pro-cards-border/70 px-2.5 py-1.5 text-[10px] text-pro-text-tertiary">
+				<strong className="text-pro-text-secondary">Grouping:</strong> {groupingSummary}
 			</div>
-			<div className="grid gap-2 border-t border-(--pro-cards-border)/70 pt-2 sm:grid-cols-2">
+			<div className="grid gap-2 border-t border-pro-cards-border/70 pt-2 sm:grid-cols-2">
 				{groupingOptions.map((option) => {
 					const active = rowHeaders.includes(option.value)
 					return (
@@ -66,7 +66,7 @@ export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptio
 							className={`group flex h-full flex-col gap-1 rounded-lg border p-2 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
 								active
 									? 'border-brand bg-brand/12 shadow-brand-soft'
-									: 'border-(--pro-cards-border) hover:border-brand hover:bg-brand/6'
+									: 'border-pro-cards-border hover:border-brand hover:bg-brand/6'
 							}`}
 						>
 							<span className="flex items-center gap-1.5">
@@ -75,13 +75,13 @@ export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptio
 										height={13}
 										width={13}
 										name={option.icon}
-										className={active ? 'text-brand' : 'text-(--pro-text-tertiary)'}
+										className={active ? 'text-brand' : 'text-pro-text-tertiary'}
 									/>
 								) : null}
-								<span className="text-[10px] font-semibold text-(--pro-text-primary)">{option.label}</span>
+								<span className="text-[10px] font-semibold text-pro-text-primary">{option.label}</span>
 								{active ? <Icon name="check" height={11} width={11} className="text-brand" /> : null}
 							</span>
-							<p className="text-[10px] leading-tight text-(--pro-text-secondary)">{option.description}</p>
+							<p className="text-[10px] leading-tight text-pro-text-secondary">{option.description}</p>
 						</button>
 					)
 				})}

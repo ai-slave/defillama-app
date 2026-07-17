@@ -25,7 +25,7 @@ function CollapsedExamplesRail({ onExpand }: { onExpand?: () => void }) {
 				onClick={onExpand}
 				title="Expand playbook"
 				aria-label="Expand playbook"
-				className="flex size-7 items-center justify-center rounded-md text-(--pro-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary)"
+				className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
 			>
 				<Icon name="panel-left-open" className="size-3.5 rotate-180" />
 			</button>
@@ -34,12 +34,9 @@ function CollapsedExamplesRail({ onExpand }: { onExpand?: () => void }) {
 				onClick={onExpand}
 				title={`Playbook · ${EXAMPLE_QUERIES.length} queries`}
 				aria-label={`Playbook · ${EXAMPLE_QUERIES.length} queries`}
-				className="group flex flex-1 flex-col items-center gap-2 rounded-md px-1 py-3 text-[11px] font-medium text-(--pro-text-tertiary) transition-colors hover:text-brand"
+				className="group flex flex-1 flex-col items-center gap-2 rounded-md px-1 py-3 text-[11px] font-medium text-pro-text-tertiary transition-colors hover:text-brand"
 			>
-				<Icon
-					name="sparkles"
-					className="size-3.5 text-(--pro-text-tertiary) transition-colors group-hover:text-brand"
-				/>
+				<Icon name="sparkles" className="size-3.5 text-pro-text-tertiary transition-colors group-hover:text-brand" />
 				<span
 					className="font-semibold tracking-[0.16em] uppercase [writing-mode:vertical-rl]"
 					style={{ transform: 'rotate(180deg)' }}
@@ -104,18 +101,18 @@ function ExpandedExamplesPanel({
 		<aside className="flex max-h-[min(38rem,calc(100vh-11rem))] flex-col gap-3 rounded-md border border-subtle bg-surface p-3">
 			<header className="flex items-baseline justify-between gap-2">
 				<div className="flex items-baseline gap-2">
-					<h3 className="text-sm font-semibold tracking-tight text-(--pro-text-primary)">Playbook</h3>
-					<span className="text-[11px] text-(--pro-text-tertiary) tabular-nums">{EXAMPLE_QUERIES.length}</span>
+					<h3 className="text-sm font-semibold tracking-tight text-pro-text-primary">Playbook</h3>
+					<span className="text-[11px] text-pro-text-tertiary tabular-nums">{EXAMPLE_QUERIES.length}</span>
 				</div>
 				<div className="flex items-center gap-1">
-					<Icon name="sparkles" className="size-3.5 text-(--pro-text-tertiary)" />
+					<Icon name="sparkles" className="size-3.5 text-pro-text-tertiary" />
 					{onCollapse ? (
 						<button
 							type="button"
 							onClick={onCollapse}
 							title="Collapse playbook"
 							aria-label="Collapse playbook"
-							className="flex size-5 items-center justify-center rounded-sm text-(--pro-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary)"
+							className="flex size-5 items-center justify-center rounded-sm text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
 						>
 							<Icon name="panel-left-close" className="size-3 rotate-180" />
 						</button>
@@ -126,21 +123,21 @@ function ExpandedExamplesPanel({
 			<div className="relative">
 				<Icon
 					name="search"
-					className="pointer-events-none absolute top-1/2 left-0 size-3 -translate-y-1/2 text-(--pro-text-tertiary)"
+					className="pointer-events-none absolute top-1/2 left-0 size-3 -translate-y-1/2 text-pro-text-tertiary"
 				/>
 				<input
 					type="text"
 					value={filter}
 					onChange={(e) => setFilter(e.target.value)}
 					placeholder="Filter queries…"
-					className="w-full border-b border-subtle bg-transparent pr-5 pb-1.5 pl-5 text-xs text-(--pro-text-primary) transition-colors placeholder:text-(--pro-text-tertiary)/80 focus:border-brand focus:outline-hidden"
+					className="w-full border-b border-subtle bg-transparent pr-5 pb-1.5 pl-5 text-xs text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary/80 focus:border-brand focus:outline-hidden"
 				/>
 				{filter ? (
 					<button
 						type="button"
 						onClick={() => setFilter('')}
 						aria-label="Clear filter"
-						className="absolute top-1/2 right-0 flex size-4 -translate-y-1/2 items-center justify-center rounded-sm text-(--pro-text-tertiary) hover:text-(--pro-text-primary)"
+						className="absolute top-1/2 right-0 flex size-4 -translate-y-1/2 items-center justify-center rounded-sm text-pro-text-tertiary hover:text-pro-text-primary"
 					>
 						<Icon name="x" className="size-3" />
 					</button>
@@ -149,15 +146,15 @@ function ExpandedExamplesPanel({
 
 			<div className="-mr-1 flex flex-col gap-4 overflow-y-auto pr-1" onMouseLeave={() => setHoveredGroup(null)}>
 				{filteredGroups.length === 0 ? (
-					<p className="py-8 text-center text-xs text-(--pro-text-tertiary)">
-						No queries match <span className="font-mono text-(--pro-text-secondary)">"{filter}"</span>
+					<p className="py-8 text-center text-xs text-pro-text-tertiary">
+						No queries match <span className="font-mono text-pro-text-secondary">"{filter}"</span>
 					</p>
 				) : null}
 
 				{filteredGroups.map(({ meta, items }, groupIndex) => (
 					<section key={meta.name} onMouseEnter={() => setHoveredGroup(meta.name)} className="flex flex-col gap-1">
 						<header className="flex items-baseline justify-between">
-							<h4 className="flex items-center gap-1.5 text-[11px] font-semibold text-(--pro-text-secondary)">
+							<h4 className="flex items-center gap-1.5 text-[11px] font-semibold text-pro-text-secondary">
 								<span
 									aria-hidden
 									className="inline-block size-1.5 shrink-0 rounded-full"
@@ -165,7 +162,7 @@ function ExpandedExamplesPanel({
 								/>
 								{meta.name}
 							</h4>
-							<span className="text-[11px] text-(--pro-text-tertiary) tabular-nums">{items.length}</span>
+							<span className="text-[11px] text-pro-text-tertiary tabular-nums">{items.length}</span>
 						</header>
 						<ul className="border-subtle/60 flex flex-col border-t">
 							{items.map((ex, itemIndex) => {
@@ -191,17 +188,17 @@ function ExpandedExamplesPanel({
 			</div>
 
 			<footer className="border-t border-subtle pt-2">
-				<p className="flex items-baseline gap-1.5 text-[11px] leading-snug text-(--pro-text-tertiary)">
+				<p className="flex items-baseline gap-1.5 text-[11px] leading-snug text-pro-text-tertiary">
 					<span
 						aria-hidden
 						className="inline-block size-1 shrink-0 translate-y-[-1px] rounded-full"
 						style={{ background: activeBlurb.color }}
 					/>
 					<span>
-						<span className="font-semibold text-(--pro-text-secondary)">{activeBlurb.name}.</span> {activeBlurb.blurb}
+						<span className="font-semibold text-pro-text-secondary">{activeBlurb.name}.</span> {activeBlurb.blurb}
 					</span>
 				</p>
-				<p className="mt-1 text-[11px] text-(--pro-text-tertiary)/80">
+				<p className="mt-1 text-[11px] text-pro-text-tertiary/80">
 					Click an example to load tables and run it.
 					{totalVisible !== EXAMPLE_QUERIES.length ? ` · ${totalVisible} shown` : ''}
 				</p>
@@ -254,14 +251,14 @@ function PlaybookItem({
 					{isBusy ? (
 						<LoadingSpinner size={10} />
 					) : (
-						<span className="text-[11px] text-(--pro-text-tertiary) tabular-nums transition-colors group-hover/item:text-(--pro-text-primary)">
+						<span className="text-[11px] text-pro-text-tertiary tabular-nums transition-colors group-hover/item:text-pro-text-primary">
 							{String(ordinal).padStart(2, '0')}
 						</span>
 					)}
 				</span>
 				<span
 					className={`truncate text-[12.5px] leading-snug transition-colors ${
-						isBusy ? 'text-brand' : 'text-(--pro-text-primary) group-hover/item:text-brand'
+						isBusy ? 'text-brand' : 'text-pro-text-primary group-hover/item:text-brand'
 					}`}
 				>
 					{example.title}
@@ -271,7 +268,7 @@ function PlaybookItem({
 					className={`size-3 transition-all duration-200 ${
 						isBusy
 							? 'translate-x-0 text-brand opacity-100'
-							: '-translate-x-1 text-(--pro-text-tertiary) opacity-0 group-hover/item:translate-x-0 group-hover/item:text-brand group-hover/item:opacity-100'
+							: '-translate-x-1 text-pro-text-tertiary opacity-0 group-hover/item:translate-x-0 group-hover/item:text-brand group-hover/item:opacity-100'
 					}`}
 				/>
 			</button>

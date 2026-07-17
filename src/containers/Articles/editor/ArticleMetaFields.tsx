@@ -43,13 +43,13 @@ export function MetaSwitch({
 						type="button"
 						role="switch"
 						aria-checked={checked}
-						className={`relative mt-0.5 inline-flex h-[18px] w-8 shrink-0 items-center rounded-full border transition-colors focus-visible:ring-2 focus-visible:ring-link/40 focus-visible:ring-offset-1 focus-visible:ring-offset-(--pro-cards-bg) focus-visible:outline-hidden ${
+						className={`relative mt-0.5 inline-flex h-[18px] w-8 shrink-0 items-center rounded-full border transition-colors focus-visible:ring-2 focus-visible:ring-link/40 focus-visible:ring-offset-1 focus-visible:ring-offset-pro-cards-bg focus-visible:outline-hidden ${
 							checked ? 'border-link/60 bg-link' : 'border-medium bg-page group-hover:border-tertiary'
 						}`}
 					>
 						<span
 							className={`absolute top-1/2 inline-block size-3 -translate-y-1/2 rounded-full shadow-sm transition-all duration-200 ease-out ${
-								checked ? 'left-[15px] bg-ai-white' : 'left-[2px] bg-tertiary group-hover:bg-secondary'
+								checked ? 'left-[15px] bg-research-white' : 'left-[2px] bg-tertiary group-hover:bg-secondary'
 							}`}
 						/>
 					</button>

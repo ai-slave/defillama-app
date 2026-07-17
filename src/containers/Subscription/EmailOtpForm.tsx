@@ -96,7 +96,7 @@ export function EmailOtpForm({
 					maxLength={6}
 					required
 					placeholder="000000"
-					className="h-10 w-full rounded-lg border border-medium bg-(--signin-input-bg) px-3 text-center text-base tracking-[0.4em] text-primary placeholder:tracking-normal placeholder:text-tertiary focus:border-brand focus:outline-hidden"
+					className="h-10 w-full rounded-lg border border-medium bg-signin-input-bg px-3 text-center text-base tracking-[0.4em] text-primary placeholder:tracking-normal placeholder:text-tertiary focus:border-brand focus:outline-hidden"
 					value={otp}
 					onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
 					autoFocus
@@ -106,7 +106,7 @@ export function EmailOtpForm({
 			<button
 				type="submit"
 				disabled={loaders.verifyOtp || otp.length !== 6}
-				className="h-10 w-full rounded-lg bg-brand text-sm font-medium text-on-brand disabled:bg-(--signin-btn-disabled-bg) disabled:text-(--signin-btn-disabled-text)"
+				className="h-10 w-full rounded-lg bg-brand text-sm font-medium text-on-brand disabled:bg-signin-btn-disabled-bg disabled:text-signin-btn-disabled-text"
 			>
 				{loaders.verifyOtp ? 'Verifying...' : 'Verify email'}
 			</button>

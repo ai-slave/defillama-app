@@ -195,7 +195,7 @@ export default function NewslettersPage() {
 											disabled={isPending}
 											className={`group relative flex w-full flex-col gap-4 overflow-hidden rounded-lg border p-5 text-left transition-[border-color,background-color,transform] duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${
 												!isPending ? 'motion-safe:hover:-translate-y-0.5' : ''
-											} ${on ? 'border-link bg-(--research-link-button-bg)' : 'border-medium bg-surface hover:border-link/50'}`}
+											} ${on ? 'border-link bg-research-link-button-bg' : 'border-medium bg-surface hover:border-link/50'}`}
 										>
 											<span className="flex min-h-16 items-center justify-start">
 												<img

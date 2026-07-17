@@ -115,7 +115,7 @@ function DashboardSettingsModalInner({
 				}}
 			>
 				<Ariakit.Dialog
-					className="dialog w-full max-w-lg gap-0 border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) p-6 shadow-2xl"
+					className="dialog w-full max-w-lg gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-6 shadow-2xl"
 					unmountOnHide
 					portal
 					hideOnInteractOutside
@@ -260,7 +260,7 @@ function DashboardSettingsModalInner({
 							</div>
 
 							{onDelete && dashboardId ? (
-								<div className="border-t border-(--pro-cards-border) pt-6">
+								<div className="border-t border-pro-cards-border pt-6">
 									<p className="mb-3 block text-sm font-medium pro-text1 text-error">Danger Zone</p>
 									<p className="mb-4 text-sm pro-text3">Once you delete a dashboard, there is no going back.</p>
 									<button

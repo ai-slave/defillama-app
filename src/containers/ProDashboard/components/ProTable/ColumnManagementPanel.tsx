@@ -318,7 +318,7 @@ export function ColumnManagementPanel({
 	if (!showColumnPanel) return null
 
 	return (
-		<div className="mb-4 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
+		<div className="mb-4 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4">
 			<div className="mb-3 flex items-center justify-between">
 				<div className="flex items-center gap-4">
 					<h4 className="text-sm font-medium pro-text1">Customize Columns</h4>

@@ -106,9 +106,9 @@ function DashboardEditPageContent({ dashboardId }: { dashboardId: string }) {
 
 	if (!currentDashboard && loadError?.status === 401) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-1">
+			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
 				<h1 className="text-3xl font-bold">Sign In Required</h1>
-				<p className="text-center text-base text-(--pro-text-label)">Please sign in to edit this dashboard</p>
+				<p className="text-center text-base text-pro-text-label">Please sign in to edit this dashboard</p>
 				<BasicLink
 					href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
 					className="mt-7 rounded-md pro-btn-purple px-6 py-3 font-medium"
@@ -121,7 +121,7 @@ function DashboardEditPageContent({ dashboardId }: { dashboardId: string }) {
 
 	if (!currentDashboard && loadError && loadError.status >= 500) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-1">
+			<div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
 				<h1 className="text-3xl font-bold">Failed to load dashboard</h1>
 				<BasicLink href={`/pro/${dashboardId}`} className="mt-2 rounded-md pro-btn-purple px-6 py-3 font-medium">
 					Back to dashboard
@@ -132,7 +132,7 @@ function DashboardEditPageContent({ dashboardId }: { dashboardId: string }) {
 
 	if (!currentDashboard) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-1">
+			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
 				<h1 className="text-3xl font-bold">Dashboard Not Found</h1>
 				<BasicLink href="/pro" className="mt-7 rounded-md pro-btn-purple px-6 py-3 font-medium">
 					Browse Dashboards
@@ -148,7 +148,7 @@ function DashboardEditPageContent({ dashboardId }: { dashboardId: string }) {
 			</Head>
 			<Suspense
 				fallback={
-					<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-1" />
+					<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1" />
 				}
 			>
 				<ProDashboard />

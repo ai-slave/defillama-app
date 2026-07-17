@@ -100,9 +100,9 @@ export function IncomeStatementChartTab({
 			</div>
 
 			<div className="overflow-hidden rounded-lg border pro-border">
-				<h4 className="border-b border-(--pro-cards-border) px-3 py-2 text-xs font-medium pro-text2">Preview</h4>
+				<h4 className="border-b border-pro-cards-border px-3 py-2 text-xs font-medium pro-text2">Preview</h4>
 				{hasSelection ? (
-					<div className="bg-(--pro-cards-bg) p-3">
+					<div className="bg-pro-cards-bg p-3">
 						{isLoading ? (
 							<div className="flex h-[360px] items-center justify-center">
 								<LocalLoader />

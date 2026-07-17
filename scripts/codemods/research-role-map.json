@@ -1,0 +1,20 @@
+{
+	"text|ai-primary": "text-research-ink",
+	"text|ai-black": "text-research-black",
+	"text|ai-white": "text-research-white",
+	"bg|ai-white": "bg-research-white",
+	"bg|ai-black": "bg-research-black",
+	"from|ai-black": "from-research-black",
+	"via|ai-black": "via-research-black",
+	"ring|ai-white": "ring-research-white",
+	"ring|ai-warning-bright": "ring-research-warning-bright",
+	"bg|ai-contrast": "bg-research-contrast",
+	"border|ai-contrast": "border-research-contrast",
+	"bg|ai-backdrop": "bg-research-backdrop",
+	"bg|ai-backdrop-soft": "bg-research-backdrop-soft",
+	"bg|ai-wash": "bg-research-wash",
+	"bg|ai-wash-strong": "bg-research-wash-strong",
+	"border|ai-line-medium": "border-research-line-medium",
+	"border|ai-line-strong": "border-research-line-strong",
+	"bg|ai-error": "bg-research-error"
+}

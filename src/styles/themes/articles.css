@@ -31,7 +31,22 @@
 		/* Link-tint hovers/fills (shared with reports/newsletters pages) */
 		--research-link-hover-bg: #1f67d233;
 		--research-link-button-bg: oklch(0.533 0.18 259 / 0.12);
-		--research-link-button-hover-bg: oklch(0.533 0.18 259 / 0.24);
+
+		/* Surface roles — mode-adaptive ones get html.dark overrides below */
+		--research-ink: #1a1a1a;
+		--research-contrast: #1a1a1a;
+		--research-wash: rgb(0 0 0 / 0.05);
+		--research-wash-strong: rgb(0 0 0 / 0.12);
+		--research-line-medium: rgb(0 0 0 / 0.08);
+		--research-line-strong: rgb(0 0 0 / 0.2);
+		--research-error: #dc2626;
+
+		/* Statics (media overlays, always-light chips, warning ring) */
+		--research-white: #ffffff;
+		--research-black: #000000;
+		--research-backdrop: rgb(0 0 0 / 0.6);
+		--research-backdrop-soft: rgb(0 0 0 / 0.4);
+		--research-warning-bright: #f59e0b;
 	}
 
 	html.dark {
@@ -40,10 +55,52 @@
 		--callout-bg: #30230b;
 		--callout-text: var(--research-gold);
 		--callout-accent: var(--research-gold);
+
+		--research-ink: #ffffff;
+		--research-contrast: #ffffff;
+		--research-wash: rgb(255 255 255 / 0.05);
+		--research-wash-strong: rgb(255 255 255 / 0.12);
+		--research-line-medium: rgb(255 255 255 / 0.08);
+		--research-line-strong: rgb(255 255 255 / 0.2);
+		--research-error: #f87171;
 	}
 }
 
 @theme {
+	/* Palette utilities */
+	--color-research-blue: var(--research-blue);
+	--color-research-blue-deep: var(--research-blue-deep);
+	--color-research-blue-soft: var(--research-blue-soft);
+	--color-research-blue-tint: var(--research-blue-tint);
+	--color-research-blue-tint-hover: var(--research-blue-tint-hover);
+	--color-research-navy: var(--research-navy);
+	--color-research-navy-soft: var(--research-navy-soft);
+	--color-research-paper: var(--research-paper);
+	--color-research-gold: var(--research-gold);
+	--color-research-orange: var(--research-orange);
+	--color-research-banner: var(--research-banner);
+	--color-research-highlight: var(--research-highlight);
+	--color-research-link-hover-bg: var(--research-link-hover-bg);
+	--color-research-link-button-bg: var(--research-link-button-bg);
+	--color-callout-border: var(--callout-border);
+	--color-callout-bg: var(--callout-bg);
+	--color-callout-text: var(--callout-text);
+	--color-callout-accent: var(--callout-accent);
+
+	/* Surface-role utilities */
+	--color-research-ink: var(--research-ink);
+	--color-research-contrast: var(--research-contrast);
+	--color-research-wash: var(--research-wash);
+	--color-research-wash-strong: var(--research-wash-strong);
+	--color-research-line-medium: var(--research-line-medium);
+	--color-research-line-strong: var(--research-line-strong);
+	--color-research-error: var(--research-error);
+	--color-research-white: var(--research-white);
+	--color-research-black: var(--research-black);
+	--color-research-backdrop: var(--research-backdrop);
+	--color-research-backdrop-soft: var(--research-backdrop-soft);
+	--color-research-warning-bright: var(--research-warning-bright);
+
 	/* Effect shadows for the editor/landing */
 	--shadow-article-dialog: 0 30px 80px -20px rgb(0 0 0 / 0.5);
 	--shadow-publish: 0 4px 12px -4px rgb(16 185 129 / 0.4);

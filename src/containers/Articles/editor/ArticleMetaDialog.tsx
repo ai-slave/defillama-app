@@ -138,7 +138,7 @@ export function ArticleMetaDialog({
 		<Ariakit.Dialog
 			store={store}
 			backdrop={
-				<div className="fixed inset-0 z-40 bg-ai-contrast/30 opacity-0 backdrop-blur-sm transition-opacity duration-200 data-[enter]:opacity-100 data-[leave]:opacity-0" />
+				<div className="fixed inset-0 z-40 bg-research-contrast/30 opacity-0 backdrop-blur-sm transition-opacity duration-200 data-[enter]:opacity-100 data-[leave]:opacity-0" />
 			}
 			className="fixed top-0 right-0 bottom-0 z-50 flex w-full max-w-md translate-x-full flex-col overflow-y-auto border-l border-medium bg-surface p-6 shadow-2xl transition-transform duration-300 data-[enter]:translate-x-0 data-[leave]:translate-x-full"
 		>
@@ -155,7 +155,7 @@ export function ArticleMetaDialog({
 				</div>
 				<Ariakit.DialogDismiss
 					aria-label="Close"
-					className="rounded-md p-1.5 text-secondary hover:bg-(--research-link-hover-bg)"
+					className="rounded-md p-1.5 text-secondary hover:bg-research-link-hover-bg"
 				>
 					<Icon name="x" className="size-4" />
 				</Ariakit.DialogDismiss>
@@ -197,7 +197,7 @@ export function ArticleMetaDialog({
 									<Ariakit.SelectItem
 										key={section}
 										value={section}
-										className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-secondary data-active-item:bg-(--research-link-button-bg) data-active-item:text-link"
+										className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-secondary data-active-item:bg-research-link-button-bg data-active-item:text-link"
 									>
 										<span className="truncate">{ARTICLE_SECTION_LABELS[section]}</span>
 										<Ariakit.SelectItemCheck className="shrink-0 text-link" />
@@ -325,7 +325,7 @@ export function ArticleMetaDialog({
 					{!isPublished ? (
 						<>
 							{articleIsScheduled ? (
-								<div className="flex flex-wrap items-center gap-2 rounded-md border border-(--research-blue)/30 bg-(--research-blue)/5 px-3 py-2">
+								<div className="flex flex-wrap items-center gap-2 rounded-md border border-research-blue/30 bg-research-blue/5 px-3 py-2">
 									<span className="font-jetbrains text-[10px] tracking-[0.18em] text-link uppercase">Scheduled</span>
 									<span className="text-xs text-secondary">Goes live {formatArticleDate(article.goLiveAt)}</span>
 								</div>
@@ -408,7 +408,7 @@ export function ArticleMetaDialog({
 								{article.editorialTags.filter(isEditorialTagSlug).map((slug) => (
 									<span
 										key={slug}
-										className="inline-flex items-center gap-1 rounded-full bg-(--research-link-button-bg) px-2 py-0.5 font-jetbrains text-[10px] tracking-[0.18em] text-link uppercase"
+										className="inline-flex items-center gap-1 rounded-full bg-research-link-button-bg px-2 py-0.5 font-jetbrains text-[10px] tracking-[0.18em] text-link uppercase"
 									>
 										{EDITORIAL_TAGS[slug].label}
 									</span>
@@ -520,7 +520,7 @@ export function ArticleMetaDialog({
 												const next = Array.from(new Set([...(article.tags ?? []), label]))
 												updateArticle('tags', next.slice(0, 12))
 											}}
-											className="group inline-flex items-center gap-1 rounded-full border border-medium bg-page px-2 py-0.5 text-[11px] text-secondary transition-colors hover:border-link/50 hover:bg-(--research-link-button-bg) hover:text-link"
+											className="group inline-flex items-center gap-1 rounded-full border border-medium bg-page px-2 py-0.5 text-[11px] text-secondary transition-colors hover:border-link/50 hover:bg-research-link-button-bg hover:text-link"
 										>
 											<span aria-hidden className="text-tertiary transition-colors group-hover:text-link">
 												+
@@ -586,7 +586,7 @@ export function ArticleMetaDialog({
 										// eslint-disable-next-line @next/next/no-img-element
 										<img src={entry.profile.avatarUrl} alt="" className="size-7 shrink-0 rounded-full object-cover" />
 									) : (
-										<span className="grid size-7 shrink-0 place-items-center rounded-full bg-(--research-link-button-bg) text-[11px] font-medium text-link">
+										<span className="grid size-7 shrink-0 place-items-center rounded-full bg-research-link-button-bg text-[11px] font-medium text-link">
 											{entry.profile.displayName.slice(0, 2).toUpperCase()}
 										</span>
 									)}
@@ -696,7 +696,7 @@ export function ArticleMetaDialog({
 													aria-pressed={active}
 													title={type}
 													className={`grid size-6 place-items-center rounded-full transition-colors ${
-														active ? 'bg-(--research-link-button-bg) text-link' : 'text-tertiary hover:text-secondary'
+														active ? 'bg-research-link-button-bg text-link' : 'text-tertiary hover:text-secondary'
 													}`}
 												>
 													<Icon name={type === 'Organization' ? 'building' : 'user'} className="size-3.5" />
@@ -718,7 +718,7 @@ export function ArticleMetaDialog({
 												type="button"
 												onClick={() => removeGuestAuthor(index)}
 												aria-label="Remove co-author"
-												className="grid size-6 shrink-0 place-items-center rounded-md text-tertiary opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-(--research-link-hover-bg) hover:text-error focus-visible:opacity-100"
+												className="grid size-6 shrink-0 place-items-center rounded-md text-tertiary opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-research-link-hover-bg hover:text-error focus-visible:opacity-100"
 											>
 												<Icon name="x" className="size-3.5" />
 											</button>
@@ -745,7 +745,7 @@ export function ArticleMetaDialog({
 					<button
 						type="button"
 						onClick={addGuestAuthor}
-						className="inline-flex w-fit items-center gap-1.5 rounded-md border border-dashed border-medium px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:border-link/50 hover:bg-(--research-link-button-bg) hover:text-link"
+						className="inline-flex w-fit items-center gap-1.5 rounded-md border border-dashed border-medium px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:border-link/50 hover:bg-research-link-button-bg hover:text-link"
 					>
 						<Icon name="plus" className="size-3.5" />
 						Add co-author

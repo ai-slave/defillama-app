@@ -110,7 +110,7 @@ function SortableEditorialTagRow({
 				<button
 					type="button"
 					disabled={disabled}
-					className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-ai-wash focus-visible:bg-ai-wash disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-ai-wash-strong dark:focus-visible:bg-ai-wash-strong ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+					className={`flex size-8 shrink-0 touch-none items-center justify-center rounded-md text-tertiary hover:bg-research-wash focus-visible:bg-research-wash disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-research-wash-strong dark:focus-visible:bg-research-wash-strong ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
 					aria-label={`Drag ${article.title}`}
 					{...attributes}
 					{...listeners}

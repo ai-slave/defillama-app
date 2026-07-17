@@ -111,7 +111,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 					type="text"
 					placeholder="Search saved charts..."
 					onInput={(e) => setSearchQuery(e.currentTarget.value)}
-					className="w-full rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-3 py-2 text-sm pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden"
+					className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-3 py-2 text-sm pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden"
 				/>
 			</div>
 

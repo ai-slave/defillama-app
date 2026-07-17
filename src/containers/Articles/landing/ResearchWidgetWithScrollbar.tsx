@@ -74,7 +74,7 @@ function ResearchWidgetWithScrollbarScroller({ articles, onHeightChange }: Resea
 							</div>
 
 							<div className="flex grow flex-col justify-between gap-1.75 pr-5">
-								<div className="line-clamp-3 text-base leading-[135%] font-semibold text-(--research-navy-soft) group-hover:text-(--research-navy-soft) group-hover:opacity-70 dark:text-ai-primary dark:group-hover:text-on-brand/70">
+								<div className="line-clamp-3 text-base leading-[135%] font-semibold text-research-navy-soft group-hover:text-research-navy-soft group-hover:opacity-70 dark:text-research-ink dark:group-hover:text-on-brand/70">
 									{article.title}
 								</div>
 							</div>

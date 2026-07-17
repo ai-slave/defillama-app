@@ -143,7 +143,7 @@ function applyMark(children: ReactNode, mark: TiptapMark, key: string) {
 	if (mark.type === 'underline') return <u key={key}>{children}</u>
 	if (mark.type === 'highlight')
 		return (
-			<mark key={key} className="rounded-sm bg-(--research-highlight) px-0.5 text-ai-black dark:text-(--research-gold)">
+			<mark key={key} className="rounded-sm bg-research-highlight px-0.5 text-research-black dark:text-research-gold">
 				{children}
 			</mark>
 		)
@@ -217,7 +217,7 @@ function renderCitation(node: TiptapJson, key: string) {
 		...(stringAttr(node.attrs, 'title') ? { title: stringAttr(node.attrs, 'title') } : {})
 	}
 	const className =
-		'mx-0.5 inline-flex items-baseline rounded-[3px] border border-medium bg-(--research-link-button-bg) px-1 text-[11px] leading-4 text-link no-underline'
+		'mx-0.5 inline-flex items-baseline rounded-[3px] border border-medium bg-research-link-button-bg px-1 text-[11px] leading-4 text-link no-underline'
 	if (citation.url) {
 		return (
 			<a
@@ -255,7 +255,7 @@ function renderCallout(node: TiptapJson, key: string, ctx: RenderContext) {
 		return (
 			<aside
 				key={key}
-				className="article-bio my-6 rounded-md rounded-l-none border-l-4 border-link bg-(--research-link-button-bg) px-5 py-4 leading-[1.65] text-secondary [&_p]:my-0 [&_p+p]:mt-2"
+				className="article-bio my-6 rounded-md rounded-l-none border-l-4 border-link bg-research-link-button-bg px-5 py-4 leading-[1.65] text-secondary [&_p]:my-0 [&_p+p]:mt-2"
 			>
 				{renderChildren(node, key, ctx)}
 			</aside>
@@ -263,16 +263,12 @@ function renderCallout(node: TiptapJson, key: string, ctx: RenderContext) {
 	}
 	const wrap =
 		tone === 'warning'
-			? 'border-(--callout-border)/60 bg-(--callout-bg) text-(--callout-text) dark:text-(--research-gold)'
+			? 'border-callout-border/60 bg-callout-bg text-callout-text dark:text-research-gold'
 			: tone === 'data'
-				? 'border-link/40 bg-(--research-link-button-bg)'
+				? 'border-link/40 bg-research-link-button-bg'
 				: 'border-medium bg-surface'
 	const toneText =
-		tone === 'warning'
-			? 'text-(--callout-accent) dark:text-(--research-gold)'
-			: tone === 'data'
-				? 'text-link'
-				: 'text-tertiary'
+		tone === 'warning' ? 'text-callout-accent dark:text-research-gold' : tone === 'data' ? 'text-link' : 'text-tertiary'
 	return (
 		<aside key={key} className={`my-6 rounded-md border p-4 ${wrap}`}>
 			<div className={`mb-1.5 text-xs font-medium capitalize ${toneText}`}>{tone}</div>
@@ -1072,7 +1068,7 @@ export function ArticleRenderer({
 				<div ref={sentinelRef} aria-hidden className="h-0 w-full" />
 
 				<div className="article-prose [overflow-wrap:anywhere] break-words">
-					<div className="prose max-w-none prose-neutral dark:prose-invert prose-headings:font-semibold prose-headings:tracking-tight prose-h1:mt-8 prose-h1:mb-3 prose-h2:mt-6 prose-h2:mb-2 prose-h2:text-2xl prose-h3:mt-5 prose-h3:mb-1.5 prose-h3:text-lg prose-h4:mt-4 prose-h4:mb-1.5 prose-h4:text-base prose-h5:mt-3 prose-h5:mb-1 prose-h5:text-sm prose-h6:mt-3 prose-h6:mb-1 prose-h6:text-sm prose-p:my-3 prose-p:leading-[1.65] prose-a:font-medium prose-a:text-link prose-a:no-underline hover:prose-a:underline prose-blockquote:my-4 prose-blockquote:border-l-2 prose-blockquote:border-link prose-blockquote:bg-transparent prose-blockquote:px-4 prose-blockquote:py-1 prose-blockquote:text-secondary prose-blockquote:not-italic prose-figure:my-4 prose-strong:text-primary prose-code:rounded prose-code:bg-(--research-link-button-bg) prose-code:px-1.5 prose-code:py-0.5 prose-code:text-[0.92em] prose-code:text-link prose-code:before:hidden prose-code:after:hidden prose-pre:my-4 prose-pre:border prose-pre:border-medium prose-pre:bg-surface prose-pre:text-primary prose-ol:my-3 prose-ul:my-3 prose-li:my-1 prose-img:my-4 prose-hr:my-6 prose-hr:border-medium [&_.article-table_p]:my-0 [&_.article-table_td]:border [&_.article-table_td]:border-medium [&_.article-table_td]:px-3 [&_.article-table_td]:py-2 [&_.article-table_td]:align-top [&_.article-table_td]:text-secondary [&_.article-table_th]:border [&_.article-table_th]:border-medium [&_.article-table_th]:bg-page [&_.article-table_th]:px-3 [&_.article-table_th]:py-2 [&_.article-table_th]:text-left [&_.article-table_th]:font-semibold [&_.article-table_th]:text-primary [&_:where(h1,h2,h3,h4,h5,h6):first-child]:mt-0 [&_li>p]:my-0 [&_li>p]:leading-[1.55]">
+					<div className="prose max-w-none prose-neutral dark:prose-invert prose-headings:font-semibold prose-headings:tracking-tight prose-h1:mt-8 prose-h1:mb-3 prose-h2:mt-6 prose-h2:mb-2 prose-h2:text-2xl prose-h3:mt-5 prose-h3:mb-1.5 prose-h3:text-lg prose-h4:mt-4 prose-h4:mb-1.5 prose-h4:text-base prose-h5:mt-3 prose-h5:mb-1 prose-h5:text-sm prose-h6:mt-3 prose-h6:mb-1 prose-h6:text-sm prose-p:my-3 prose-p:leading-[1.65] prose-a:font-medium prose-a:text-link prose-a:no-underline hover:prose-a:underline prose-blockquote:my-4 prose-blockquote:border-l-2 prose-blockquote:border-link prose-blockquote:bg-transparent prose-blockquote:px-4 prose-blockquote:py-1 prose-blockquote:text-secondary prose-blockquote:not-italic prose-figure:my-4 prose-strong:text-primary prose-code:rounded prose-code:bg-research-link-button-bg prose-code:px-1.5 prose-code:py-0.5 prose-code:text-[0.92em] prose-code:text-link prose-code:before:hidden prose-code:after:hidden prose-pre:my-4 prose-pre:border prose-pre:border-medium prose-pre:bg-surface prose-pre:text-primary prose-ol:my-3 prose-ul:my-3 prose-li:my-1 prose-img:my-4 prose-hr:my-6 prose-hr:border-medium [&_.article-table_p]:my-0 [&_.article-table_td]:border [&_.article-table_td]:border-medium [&_.article-table_td]:px-3 [&_.article-table_td]:py-2 [&_.article-table_td]:align-top [&_.article-table_td]:text-secondary [&_.article-table_th]:border [&_.article-table_th]:border-medium [&_.article-table_th]:bg-page [&_.article-table_th]:px-3 [&_.article-table_th]:py-2 [&_.article-table_th]:text-left [&_.article-table_th]:font-semibold [&_.article-table_th]:text-primary [&_:where(h1,h2,h3,h4,h5,h6):first-child]:mt-0 [&_li>p]:my-0 [&_li>p]:leading-[1.55]">
 						{(() => {
 							const docContent = contentJson.content ?? []
 							const nodes = docContent.map((child, idx) => renderNode(child, `article-root-${idx}`, ctx))

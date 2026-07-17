@@ -27,7 +27,7 @@ export function ArticlePeoplePanelNodeView({ node, selected, deleteNode, getPos,
 				<button
 					type="button"
 					onClick={handleEdit}
-					className="w-full rounded-md py-6 text-center text-sm text-tertiary transition-colors hover:bg-(--research-link-hover-bg) hover:text-primary"
+					className="w-full rounded-md py-6 text-center text-sm text-tertiary transition-colors hover:bg-research-link-hover-bg hover:text-primary"
 				>
 					Empty people panel — click to configure
 				</button>
@@ -42,7 +42,7 @@ export function ArticlePeoplePanelNodeView({ node, selected, deleteNode, getPos,
 					<button
 						type="button"
 						onClick={handleEdit}
-						className="rounded-md px-2 py-1 text-xs font-medium text-secondary transition-colors hover:bg-(--research-link-hover-bg) hover:text-primary"
+						className="rounded-md px-2 py-1 text-xs font-medium text-secondary transition-colors hover:bg-research-link-hover-bg hover:text-primary"
 					>
 						Edit
 					</button>

@@ -69,7 +69,7 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 		return (
 			<form
 				onSubmit={(e) => void handleSubmit(e)}
-				className="relative isolate col-span-full flex animate-ai-glow flex-col gap-6 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4"
+				className="relative isolate col-span-full flex animate-pro-glow flex-col gap-6 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4"
 			>
 				<div className="flex items-center gap-4">
 					<h3 className="text-lg font-semibold">{currentTexts.title}</h3>
@@ -89,7 +89,7 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 									height={20}
 									width={20}
 									className={`${
-										star <= (hoveredRating || rating) ? 'fill-current text-warning' : 'text-(--pro-text-form)'
+										star <= (hoveredRating || rating) ? 'fill-current text-warning' : 'text-pro-text-form'
 									} transition-colors`}
 								/>
 							</button>
@@ -110,11 +110,11 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 					) : null}
 				</div>
 
-				<p className="text-sm text-(--pro-text-label)">{currentTexts.subtitle}</p>
+				<p className="text-sm text-pro-text-label">{currentTexts.subtitle}</p>
 
 				{prompt ? (
-					<div className="flex flex-col items-center gap-2 rounded-md border border-(--pro-cards-border) bg-(--pro-app-bg) p-3">
-						<p className="text-xs text-(--pro-text-label)">Prompt used:</p>
+					<div className="flex flex-col items-center gap-2 rounded-md border border-pro-cards-border bg-pro-app-bg p-3">
+						<p className="text-xs text-pro-text-label">Prompt used:</p>
 						<p className="text-center text-sm">{prompt}</p>
 					</div>
 				) : null}
@@ -123,7 +123,7 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 					<div className="flex w-full flex-col gap-1">
 						<label
 							htmlFor={bannerFeedbackId}
-							className="text-xs font-semibold tracking-wide text-(--pro-text-label) uppercase"
+							className="text-xs font-semibold tracking-wide text-pro-text-label uppercase"
 						>
 							Your Feedback (Optional)
 						</label>
@@ -132,7 +132,7 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 							name="feedback"
 							placeholder="Share your thoughts about the AI-generated dashboard..."
 							rows={3}
-							className="w-full rounded-md border border-(--pro-form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-ai-primary"
+							className="w-full rounded-md border border-pro-form-control-border bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-pro-text-primary"
 							disabled={isSubmitting}
 						/>
 					</div>
@@ -152,7 +152,7 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 						<button
 							type="submit"
 							disabled={isSubmitting}
-							className={`flex items-center gap-2 rounded-md bg-(--pro-old-blue) px-6 py-2 font-medium text-on-brand`}
+							className={`flex items-center gap-2 rounded-md bg-pro-old-blue px-6 py-2 font-medium text-on-brand`}
 						>
 							{isSubmitting ? <LoadingSpinner size={16} /> : <Icon name="sparkles" height={16} width={16} />}
 							Submit Rating
@@ -168,11 +168,11 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 			<Icon name="sparkles" height={24} width={24} className="shrink-0 text-pro-blue-400 dark:text-pro-blue-200" />
 
 			<h3 className="-mt-5 text-xl font-semibold">{currentTexts.title}</h3>
-			<p className="-mt-5 text-sm text-(--pro-text-label)">{currentTexts.subtitle}</p>
+			<p className="-mt-5 text-sm text-pro-text-label">{currentTexts.subtitle}</p>
 
 			{prompt ? (
-				<div className="flex w-full max-w-xl flex-col items-center gap-2 rounded-md border border-(--pro-cards-border) bg-(--pro-app-bg) p-3">
-					<h4 className="text-xs text-(--pro-text-label)">Prompt used:</h4>
+				<div className="flex w-full max-w-xl flex-col items-center gap-2 rounded-md border border-pro-cards-border bg-pro-app-bg p-3">
+					<h4 className="text-xs text-pro-text-label">Prompt used:</h4>
 					<p className="text-center text-sm">{prompt}</p>
 				</div>
 			) : null}
@@ -193,7 +193,7 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 							height={24}
 							width={24}
 							className={`${
-								star <= (hoveredRating || rating) ? 'fill-current text-warning' : 'text-(--pro-text-form)'
+								star <= (hoveredRating || rating) ? 'fill-current text-warning' : 'text-pro-text-form'
 							} transition-colors`}
 						/>
 					</button>
@@ -205,7 +205,7 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 					<div className="flex w-full flex-col items-center gap-1">
 						<label
 							htmlFor={inlineFeedbackId}
-							className="text-center text-xs font-semibold tracking-wide text-(--pro-text-label) uppercase"
+							className="text-center text-xs font-semibold tracking-wide text-pro-text-label uppercase"
 						>
 							Your Feedback (Optional)
 						</label>
@@ -214,7 +214,7 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 							name="feedback"
 							placeholder="Share your thoughts about the AI-generated dashboard..."
 							rows={3}
-							className="w-full rounded-md border border-(--pro-form-control-border) bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-ai-primary"
+							className="w-full rounded-md border border-pro-form-control-border bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-pro-text-primary"
 							disabled={isSubmitting}
 						/>
 					</div>
@@ -224,14 +224,14 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 							type="button"
 							onClick={handleSkip}
 							disabled={isSubmitting}
-							className="px-4 py-2 text-sm text-(--pro-text-form) hover:text-link"
+							className="px-4 py-2 text-sm text-pro-text-form hover:text-link"
 						>
 							Skip
 						</button>
 						<button
 							type="submit"
 							disabled={isSubmitting}
-							className={`flex items-center gap-2 rounded-md bg-(--pro-old-blue) px-6 py-2 font-medium text-on-brand`}
+							className={`flex items-center gap-2 rounded-md bg-pro-old-blue px-6 py-2 font-medium text-on-brand`}
 						>
 							{isSubmitting ? <LoadingSpinner size={16} /> : <Icon name="sparkles" height={16} width={16} />}
 							Submit Rating
@@ -240,9 +240,7 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 				</div>
 			) : (
 				<>
-					<p className="-mt-5 text-center text-xs text-(--pro-text-form)">
-						Click the stars above to rate your experience
-					</p>
+					<p className="-mt-5 text-center text-xs text-pro-text-form">Click the stars above to rate your experience</p>
 
 					<button
 						type="button"

@@ -66,7 +66,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 
 	const triggerClass = isActive
 		? 'flex items-center gap-1.5 rounded-md rounded-r-none border border-brand/40 bg-brand/10 px-2.5 py-1.5 text-xs font-medium text-brand transition-colors hover:bg-brand/15 disabled:opacity-40'
-		: 'flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-(--pro-text-secondary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary) disabled:opacity-40'
+		: 'flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:opacity-40'
 
 	return (
 		<>
@@ -98,9 +98,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 					className="z-[60] flex w-[320px] max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg border border-medium bg-surface-elevated-1 p-4 shadow-xl"
 				>
 					<section className="flex flex-col gap-2">
-						<h3 className="text-[11px] font-semibold tracking-wide text-(--pro-text-tertiary) uppercase">
-							Quick ranges
-						</h3>
+						<h3 className="text-[11px] font-semibold tracking-wide text-pro-text-tertiary uppercase">Quick ranges</h3>
 						<div className="flex flex-wrap gap-1">
 							{PRESET_LABELS.map(({ label, preset }) => {
 								const isSelected =
@@ -114,7 +112,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 										className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
 											isSelected
 												? 'border-brand bg-brand text-on-brand'
-												: 'border-subtle text-(--pro-text-secondary) hover:bg-hover-row hover:text-(--pro-text-primary)'
+												: 'border-subtle text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
 										}`}
 									>
 										{label}
@@ -143,12 +141,10 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 						}}
 						className="flex flex-col gap-2"
 					>
-						<h3 className="text-[11px] font-semibold tracking-wide text-(--pro-text-tertiary) uppercase">
-							Custom range
-						</h3>
+						<h3 className="text-[11px] font-semibold tracking-wide text-pro-text-tertiary uppercase">Custom range</h3>
 						<div className="grid grid-cols-2 gap-2">
 							<label className="flex flex-col gap-1">
-								<span className="text-[11px] text-(--pro-text-secondary)">From</span>
+								<span className="text-[11px] text-pro-text-secondary">From</span>
 								<input
 									type="date"
 									value={customFrom}
@@ -162,7 +158,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 								/>
 							</label>
 							<label className="flex flex-col gap-1">
-								<span className="text-[11px] text-(--pro-text-secondary)">To</span>
+								<span className="text-[11px] text-pro-text-secondary">To</span>
 								<input
 									type="date"
 									value={customTo}
@@ -181,7 +177,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 							<button
 								type="button"
 								onClick={handleClear}
-								className="rounded-md border border-subtle px-2.5 py-1 text-xs font-medium text-(--pro-text-secondary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary)"
+								className="rounded-md border border-subtle px-2.5 py-1 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
 							>
 								Clear
 							</button>

@@ -204,7 +204,7 @@ export function MetricCard({ metric }: MetricCardProps) {
 
 		if (isError) {
 			return (
-				<div className="flex flex-1 flex-col items-center justify-center gap-1 text-(--pro-text-form)">
+				<div className="flex flex-1 flex-col items-center justify-center gap-1 text-pro-text-form">
 					<Icon name="alert-triangle" height={18} width={18} />
 					<span className="text-sm">Error</span>
 				</div>
@@ -228,13 +228,13 @@ export function MetricCard({ metric }: MetricCardProps) {
 				{deltaText && metric.aggregator !== 'growth' ? (
 					<p
 						className={`text-xs font-semibold tracking-wide uppercase ${
-							deltaPositive ? 'text-success' : deltaNegative ? 'text-error' : 'text-(--pro-text-form)'
+							deltaPositive ? 'text-success' : deltaNegative ? 'text-error' : 'text-pro-text-form'
 						}`}
 					>
 						{deltaText}
 					</p>
 				) : null}
-				<p className="max-w-[420px] text-sm text-(--pro-text-secondary)">{summaryText}</p>
+				<p className="max-w-[420px] text-sm text-pro-text-secondary">{summaryText}</p>
 			</div>
 		)
 	}, [
@@ -263,12 +263,12 @@ export function MetricCard({ metric }: MetricCardProps) {
 						</div>
 					)}
 					<div className="flex flex-col">
-						<h2 className="text-base leading-tight font-semibold text-(--pro-text-primary)">{displayTitle}</h2>
+						<h2 className="text-base leading-tight font-semibold text-pro-text-primary">{displayTitle}</h2>
 						{hasCustomLabel ? <p className="text-[11px] leading-tight pro-text3">{baseTitle}</p> : null}
 					</div>
 				</div>
 				{!isReadOnly ? (
-					<div className="text-[11px] tracking-wide text-(--pro-text-form)">
+					<div className="text-[11px] tracking-wide text-pro-text-form">
 						{windowBadge} · {aggregatorBadge}
 					</div>
 				) : null}

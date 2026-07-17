@@ -53,7 +53,7 @@ export function FormatSplitButton({ onDownload, disabled, label = 'Download' }: 
 								setFormat(fmt)
 								onDownload(fmt)
 							}}
-							className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-(--pro-text-primary) hover:bg-hover-row data-active-item:bg-hover-row"
+							className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-pro-text-primary hover:bg-hover-row data-active-item:bg-hover-row"
 						>
 							<span>{FORMAT_LABELS[fmt]}</span>
 							{format === fmt ? (

@@ -60,7 +60,7 @@ export function DashboardSearch({ defaultValue }: { defaultValue?: string }) {
 					name="search"
 					height={16}
 					width={16}
-					className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-(--pro-text-tertiary)"
+					className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-pro-text-tertiary"
 				/>
 				<input
 					ref={inputRef}
@@ -68,12 +68,12 @@ export function DashboardSearch({ defaultValue }: { defaultValue?: string }) {
 					value={inputValue}
 					onChange={(e) => handleChange(e.target.value)}
 					placeholder="Search dashboards…"
-					className="w-full rounded-md border border-(--pro-form-control-border) bg-(--pro-cards-bg) py-2.5 pr-9 pl-9 text-sm transition-shadow duration-150 focus:border-brand focus:shadow-sub-focus-ring focus:outline-hidden"
+					className="w-full rounded-md border border-pro-form-control-border bg-pro-cards-bg py-2.5 pr-9 pl-9 text-sm transition-shadow duration-150 focus:border-brand focus:shadow-sub-focus-ring focus:outline-hidden"
 				/>
 				{inputValue ? (
 					<button
 						onClick={handleClear}
-						className="absolute top-1/2 right-3 -translate-y-1/2 rounded-sm p-1 text-(--pro-text-tertiary) transition-colors hover:bg-(--bg-hover) hover:text-(--pro-text-primary)"
+						className="absolute top-1/2 right-3 -translate-y-1/2 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-(--bg-hover) hover:text-pro-text-primary"
 						type="button"
 					>
 						<Icon name="x" height={14} width={14} />

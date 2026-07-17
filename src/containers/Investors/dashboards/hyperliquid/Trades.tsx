@@ -56,10 +56,10 @@ function LiveOrderBook({ bids, asks }: { bids: BookLevel[]; asks: BookLevel[] })
 	const reversedAsks = [...topAsks].reverse()
 
 	return (
-		<div className="flex flex-col rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
-			<h3 className="mb-3 text-sm font-medium text-(--pro-text-label)">Order Book</h3>
+		<div className="flex flex-col rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Order Book</h3>
 
-			<div className="mb-2 grid grid-cols-3 text-[11px] font-medium text-(--pro-text-label)">
+			<div className="mb-2 grid grid-cols-3 text-[11px] font-medium text-pro-text-label">
 				<span>Price</span>
 				<span className="text-right">Size</span>
 				<span className="text-right">Orders</span>
@@ -72,16 +72,16 @@ function LiveOrderBook({ bids, asks }: { bids: BookLevel[]; asks: BookLevel[] })
 						<div key={`a-${level.px}`} className="relative grid grid-cols-3 py-0.75">
 							<div className="absolute inset-y-0 right-0 bg-error/10" style={{ width: `${pct}%` }} />
 							<span className="relative text-error">{level.px.toLocaleString()}</span>
-							<span className="relative text-right text-(--pro-text-primary)">{formattedNum(level.sz)}</span>
-							<span className="relative text-right text-(--pro-text-label)">{level.n}</span>
+							<span className="relative text-right text-pro-text-primary">{formattedNum(level.sz)}</span>
+							<span className="relative text-right text-pro-text-label">{level.n}</span>
 						</div>
 					)
 				})}
 
 				{midPrice > 0 && (
-					<div className="my-1 flex items-center justify-center gap-2 border-y border-(--pro-cards-border) py-2">
-						<span className="text-sm font-semibold text-(--pro-text-primary)">{formattedNum(midPrice, true)}</span>
-						<span className="text-[10px] text-(--pro-text-label)">Spread: {spread.toFixed(4)}%</span>
+					<div className="my-1 flex items-center justify-center gap-2 border-y border-pro-cards-border py-2">
+						<span className="text-sm font-semibold text-pro-text-primary">{formattedNum(midPrice, true)}</span>
+						<span className="text-[10px] text-pro-text-label">Spread: {spread.toFixed(4)}%</span>
 					</div>
 				)}
 
@@ -91,15 +91,15 @@ function LiveOrderBook({ bids, asks }: { bids: BookLevel[]; asks: BookLevel[] })
 						<div key={`b-${level.px}`} className="relative grid grid-cols-3 py-0.75">
 							<div className="absolute inset-y-0 right-0 bg-success/10" style={{ width: `${pct}%` }} />
 							<span className="relative text-success">{level.px.toLocaleString()}</span>
-							<span className="relative text-right text-(--pro-text-primary)">{formattedNum(level.sz)}</span>
-							<span className="relative text-right text-(--pro-text-label)">{level.n}</span>
+							<span className="relative text-right text-pro-text-primary">{formattedNum(level.sz)}</span>
+							<span className="relative text-right text-pro-text-label">{level.n}</span>
 						</div>
 					)
 				})}
 			</div>
 
 			{bids.length === 0 && asks.length === 0 ? (
-				<div className="flex flex-1 items-center justify-center py-10 text-sm text-(--pro-text-label)">
+				<div className="flex flex-1 items-center justify-center py-10 text-sm text-pro-text-label">
 					Waiting for order book data...
 				</div>
 			) : null}
@@ -109,10 +109,10 @@ function LiveOrderBook({ bids, asks }: { bids: BookLevel[]; asks: BookLevel[] })
 
 function LiveTradeFeed({ trades }: { trades: Trade[] }) {
 	return (
-		<div className="flex max-h-[800px] flex-col rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
-			<h3 className="mb-3 shrink-0 text-sm font-medium text-(--pro-text-label)">Recent Trades</h3>
+		<div className="flex max-h-[800px] flex-col rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+			<h3 className="mb-3 shrink-0 text-sm font-medium text-pro-text-label">Recent Trades</h3>
 
-			<div className="mb-2 grid shrink-0 grid-cols-4 text-[11px] font-medium text-(--pro-text-label)">
+			<div className="mb-2 grid shrink-0 grid-cols-4 text-[11px] font-medium text-pro-text-label">
 				<span>Time</span>
 				<span className="text-right">Price</span>
 				<span className="text-right">Size</span>
@@ -127,7 +127,7 @@ function LiveTradeFeed({ trades }: { trades: Trade[] }) {
 							key={`${trade.tid}-${trade.time}`}
 							className={`grid grid-cols-4 py-0.75 ${isBuy ? 'text-success' : 'text-error'}`}
 						>
-							<span className="text-(--pro-text-label)">{formatTime(trade.time)}</span>
+							<span className="text-pro-text-label">{formatTime(trade.time)}</span>
 							<span className="text-right">{trade.px.toLocaleString()}</span>
 							<span className="text-right">{formattedNum(trade.sz)}</span>
 							<span className="text-right font-medium">{isBuy ? 'Buy' : 'Sell'}</span>
@@ -135,7 +135,7 @@ function LiveTradeFeed({ trades }: { trades: Trade[] }) {
 					)
 				})}
 				{trades.length === 0 ? (
-					<div className="flex items-center justify-center py-10 text-sm text-(--pro-text-label)">
+					<div className="flex items-center justify-center py-10 text-sm text-pro-text-label">
 						Waiting for trades...
 					</div>
 				) : null}
@@ -160,30 +160,30 @@ function MetricStrip({
 	depth1: number
 }) {
 	return (
-		<div className="grid grid-cols-2 gap-3 rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4 md:grid-cols-6">
+		<div className="grid grid-cols-2 gap-3 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4 md:grid-cols-6">
 			<div>
-				<div className="text-[11px] text-(--pro-text-label)">Spread</div>
-				<div className="text-sm text-(--pro-text-primary)">{spreadPct.toFixed(4)}%</div>
+				<div className="text-[11px] text-pro-text-label">Spread</div>
+				<div className="text-sm text-pro-text-primary">{spreadPct.toFixed(4)}%</div>
 			</div>
 			<div>
-				<div className="text-[11px] text-(--pro-text-label)">Buy Ratio 1m</div>
-				<div className="text-sm text-(--pro-text-primary)">{(buyRatio1m * 100).toFixed(1)}%</div>
+				<div className="text-[11px] text-pro-text-label">Buy Ratio 1m</div>
+				<div className="text-sm text-pro-text-primary">{(buyRatio1m * 100).toFixed(1)}%</div>
 			</div>
 			<div>
-				<div className="text-[11px] text-(--pro-text-label)">Buy Ratio 5m</div>
-				<div className="text-sm text-(--pro-text-primary)">{(buyRatio5m * 100).toFixed(1)}%</div>
+				<div className="text-[11px] text-pro-text-label">Buy Ratio 5m</div>
+				<div className="text-sm text-pro-text-primary">{(buyRatio5m * 100).toFixed(1)}%</div>
 			</div>
 			<div>
-				<div className="text-[11px] text-(--pro-text-label)">CVD 5m</div>
+				<div className="text-[11px] text-pro-text-label">CVD 5m</div>
 				<div className={cvd5m >= 0 ? 'text-sm text-success' : 'text-sm text-error'}>{formattedNum(cvd5m)}</div>
 			</div>
 			<div>
-				<div className="text-[11px] text-(--pro-text-label)">Depth ±0.25%</div>
-				<div className="text-sm text-(--pro-text-primary)">{formattedNum(depth025, true)}</div>
+				<div className="text-[11px] text-pro-text-label">Depth ±0.25%</div>
+				<div className="text-sm text-pro-text-primary">{formattedNum(depth025, true)}</div>
 			</div>
 			<div>
-				<div className="text-[11px] text-(--pro-text-label)">Depth ±1%</div>
-				<div className="text-sm text-(--pro-text-primary)">{formattedNum(depth1, true)}</div>
+				<div className="text-[11px] text-pro-text-label">Depth ±1%</div>
+				<div className="text-sm text-pro-text-primary">{formattedNum(depth1, true)}</div>
 			</div>
 		</div>
 	)
@@ -318,7 +318,7 @@ export default function Trades() {
 				<select
 					value={coin}
 					onChange={(e) => setCoin(e.target.value)}
-					className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) px-3 py-2 text-sm font-medium text-(--pro-text-primary) outline-hidden"
+					className="rounded-lg border border-pro-cards-border bg-pro-cards-bg px-3 py-2 text-sm font-medium text-pro-text-primary outline-hidden"
 				>
 					{coinOptions.length > 0
 						? coinOptions.map((value) => (
@@ -336,7 +336,7 @@ export default function Trades() {
 				<select
 					value={nSigFigs}
 					onChange={(e) => setNSigFigs(Number(e.target.value))}
-					className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) px-3 py-2 text-sm font-medium text-(--pro-text-primary) outline-hidden"
+					className="rounded-lg border border-pro-cards-border bg-pro-cards-bg px-3 py-2 text-sm font-medium text-pro-text-primary outline-hidden"
 				>
 					{[2, 3, 4, 5].map((value) => (
 						<option key={value} value={value}>
@@ -347,7 +347,7 @@ export default function Trades() {
 
 				<div className="ml-auto flex items-center gap-1.5">
 					<div className={`size-2 rounded-full ${isConnected ? 'bg-success' : 'bg-error'}`} />
-					<span className="text-xs text-(--pro-text-label)">{isConnected ? 'Connected' : 'Reconnecting...'}</span>
+					<span className="text-xs text-pro-text-label">{isConnected ? 'Connected' : 'Reconnecting...'}</span>
 				</div>
 			</div>
 

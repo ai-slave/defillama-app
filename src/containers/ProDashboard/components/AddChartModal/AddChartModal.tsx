@@ -79,7 +79,7 @@ export function AddChartModal({
 			}}
 		>
 			<Ariakit.Dialog
-				className="add-chart-dialog fixed top-0 right-0 bottom-0 z-50 flex h-full w-full max-w-6xl animate-slidein flex-col gap-3 overflow-hidden border-l pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) p-3 shadow-xl md:p-4"
+				className="add-chart-dialog fixed top-0 right-0 bottom-0 z-50 flex h-full w-full max-w-6xl animate-slidein flex-col gap-3 overflow-hidden border-l pro-dashboard border-pro-cards-border bg-pro-cards-bg p-3 shadow-xl md:p-4"
 				unmountOnHide
 				portal
 			>

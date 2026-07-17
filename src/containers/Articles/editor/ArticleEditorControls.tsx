@@ -24,8 +24,8 @@ export function RailButton({
 			disabled={disabled}
 			className={`flex size-9 shrink-0 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
 				active
-					? 'bg-(--research-link-button-bg) text-link'
-					: 'text-secondary hover:bg-(--research-link-hover-bg) hover:text-primary'
+					? 'bg-research-link-button-bg text-link'
+					: 'text-secondary hover:bg-research-link-hover-bg hover:text-primary'
 			}`}
 		>
 			{children}
@@ -45,7 +45,7 @@ function TableRailButton({ label, onClick, children }: { label: string; onClick:
 			title={label}
 			onClick={onClick}
 			onMouseDown={(e) => e.preventDefault()}
-			className="flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-secondary transition-colors hover:bg-(--research-link-hover-bg) hover:text-primary"
+			className="flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-secondary transition-colors hover:bg-research-link-hover-bg hover:text-primary"
 		>
 			{children}
 		</button>

@@ -22,13 +22,13 @@ export default function VerticalIntegration() {
 	return (
 		<div className="flex min-h-[calc(100vh-180px)] flex-col gap-6">
 			<div className="max-w-2xl">
-				<h2 className="heading-xs text-(--pro-text-primary)">Vertical Integration</h2>
-				<p className="mt-3 text-base leading-relaxed text-(--pro-text-secondary)">
+				<h2 className="heading-xs text-pro-text-primary">Vertical Integration</h2>
+				<p className="mt-3 text-base leading-relaxed text-pro-text-secondary">
 					Vertical integration is Sonic's strategy of building and aligning core applications, infrastructure, and
 					liquidity so that economic activity on the network compounds back into the S token rather than leaking to
 					disconnected teams or external tokens.
 				</p>
-				<p className="mt-3 text-base leading-relaxed text-(--pro-text-secondary)">
+				<p className="mt-3 text-base leading-relaxed text-pro-text-secondary">
 					Rather than depending on gas fees alone, the goal is to own or integrate the key economic primitives across
 					the network so that adoption, usage, and revenue translate into more durable value creation for Sonic.
 				</p>
@@ -46,12 +46,12 @@ export default function VerticalIntegration() {
 			</div>
 
 			<div className="flex flex-1 flex-col gap-4">
-				<h3 className="text-xs font-semibold tracking-wider text-(--pro-text-label) uppercase">Product Breakdown</h3>
+				<h3 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">Product Breakdown</h3>
 				<div className="flex flex-wrap items-center gap-2">
 					{PRODUCTS.map((name) => (
 						<span
 							key={name}
-							className="rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) px-3 py-1.5 text-sm text-(--pro-text-secondary)"
+							className="rounded-md border border-pro-cards-border bg-pro-cards-bg px-3 py-1.5 text-sm text-pro-text-secondary"
 						>
 							{name}
 						</span>
@@ -59,7 +59,7 @@ export default function VerticalIntegration() {
 				</div>
 
 				<div className="relative flex-1">
-					<div className="overflow-hidden rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg)">
+					<div className="overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg">
 						<div className="flex flex-col">
 							<div className="flex border-b border-subtle">
 								{Array.from({ length: 5 }).map((_, i) => (
@@ -82,10 +82,10 @@ export default function VerticalIntegration() {
 								</div>
 							))}
 						</div>
-						<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--pro-cards-bg) via-transparent to-transparent" />
+						<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-pro-cards-bg via-transparent to-transparent" />
 					</div>
 					<div className="absolute inset-0 flex items-center justify-center">
-						<span className="rounded-full border border-(--pro-cards-border) bg-(--pro-cards-bg) px-5 py-2.5 text-sm font-semibold tracking-wide text-(--pro-text-secondary) shadow-lg">
+						<span className="rounded-full border border-pro-cards-border bg-pro-cards-bg px-5 py-2.5 text-sm font-semibold tracking-wide text-pro-text-secondary shadow-lg">
 							Dashboard — Coming Soon
 						</span>
 					</div>

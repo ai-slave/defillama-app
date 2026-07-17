@@ -260,8 +260,8 @@ export function NotebookView({
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex items-baseline gap-2">
-					<h3 className="text-sm font-semibold tracking-tight text-(--pro-text-primary)">{tab.title}</h3>
-					<span className="text-[11px] text-(--pro-text-tertiary) tabular-nums">
+					<h3 className="text-sm font-semibold tracking-tight text-pro-text-primary">{tab.title}</h3>
+					<span className="text-[11px] text-pro-text-tertiary tabular-nums">
 						{cells.length} cell{cells.length === 1 ? '' : 's'}
 						{hasRunnableSql ? ` · ${runnableSqlCount} SQL` : ''}
 						{chartCount > 0 ? ` · ${chartCount} chart${chartCount === 1 ? '' : 's'}` : ''}
@@ -269,12 +269,12 @@ export function NotebookView({
 				</div>
 				<div className="flex items-center gap-2">
 					{promoteRunAll && hasRunnableSql ? (
-						<span className="hidden text-[11px] text-(--pro-text-tertiary) sm:inline">
-							Not yet run — <span className="text-(--pro-text-secondary) tabular-nums">{runnableSqlCount}</span>{' '}
+						<span className="hidden text-[11px] text-pro-text-tertiary sm:inline">
+							Not yet run — <span className="text-pro-text-secondary tabular-nums">{runnableSqlCount}</span>{' '}
 							{runnableSqlCount === 1 ? 'query' : 'queries'}
 							{chartCount > 0 ? (
 								<>
-									, <span className="text-(--pro-text-secondary) tabular-nums">{chartCount}</span>{' '}
+									, <span className="text-pro-text-secondary tabular-nums">{chartCount}</span>{' '}
 									{chartCount === 1 ? 'chart' : 'charts'}
 								</>
 							) : null}
@@ -287,7 +287,7 @@ export function NotebookView({
 						className={`inline-flex items-center gap-1.5 rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
 							promoteRunAll
 								? 'bg-brand px-3 py-1.5 text-sm font-semibold text-on-brand hover:opacity-90'
-								: 'border border-subtle bg-surface px-2.5 py-1.5 text-xs font-medium text-(--pro-text-primary) hover:border-brand/40 hover:text-brand'
+								: 'border border-subtle bg-surface px-2.5 py-1.5 text-xs font-medium text-pro-text-primary hover:border-brand/40 hover:text-brand'
 						}`}
 					>
 						{runningAny ? (
@@ -433,8 +433,8 @@ function AddCellBar({
 function AddMenu({ onAdd, variant }: { onAdd: (type: NotebookCellType) => void; variant: 'between' | 'end' }) {
 	const triggerCls =
 		variant === 'between'
-			? 'relative z-10 inline-flex size-5 items-center justify-center rounded-full border border-subtle bg-(--pro-app-bg) text-(--pro-text-tertiary) opacity-0 transition-all group-hover:opacity-100 group-focus-within:opacity-100 hover:border-brand/50 hover:text-brand aria-expanded:opacity-100 aria-expanded:border-brand/50 aria-expanded:text-brand'
-			: 'inline-flex items-center gap-1.5 rounded-md border border-subtle bg-surface px-2.5 py-1 text-[11.5px] font-medium text-(--pro-text-secondary) transition-colors hover:border-brand/40 hover:text-brand'
+			? 'relative z-10 inline-flex size-5 items-center justify-center rounded-full border border-subtle bg-pro-app-bg text-pro-text-tertiary opacity-0 transition-all group-hover:opacity-100 group-focus-within:opacity-100 hover:border-brand/50 hover:text-brand aria-expanded:opacity-100 aria-expanded:border-brand/50 aria-expanded:text-brand'
+			: 'inline-flex items-center gap-1.5 rounded-md border border-subtle bg-surface px-2.5 py-1 text-[11.5px] font-medium text-pro-text-secondary transition-colors hover:border-brand/40 hover:text-brand'
 	return (
 		<Ariakit.MenuProvider>
 			<Ariakit.MenuButton className={triggerCls} aria-label="Add cell">
@@ -444,7 +444,7 @@ function AddMenu({ onAdd, variant }: { onAdd: (type: NotebookCellType) => void; 
 			<Ariakit.Menu
 				gutter={4}
 				unmountOnHide
-				className="z-40 min-w-[160px] rounded-lg border border-medium bg-surface-elevated-1 p-1 text-xs text-(--pro-text-primary) shadow-lg"
+				className="z-40 min-w-[160px] rounded-lg border border-medium bg-surface-elevated-1 p-1 text-xs text-pro-text-primary shadow-lg"
 			>
 				<AddMenuItem onClick={() => onAdd('sql')} label="SQL" hint="Query" tone="primary" />
 				<AddMenuItem onClick={() => onAdd('chart')} label="Chart" hint="Visualize" tone="gold" />
@@ -473,7 +473,7 @@ function AddMenuItem({
 		>
 			<span aria-hidden className={`size-1.5 shrink-0 rounded-full ${dot}`} />
 			<span className="flex-1 font-medium">{label}</span>
-			<span className="text-[10.5px] text-(--pro-text-tertiary)">{hint}</span>
+			<span className="text-[10.5px] text-pro-text-tertiary">{hint}</span>
 		</Ariakit.MenuItem>
 	)
 }

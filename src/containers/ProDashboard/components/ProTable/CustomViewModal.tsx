@@ -47,7 +47,7 @@ export function CustomViewModal({ dialogStore, onSave, existingViewNames }: Cust
 			portal
 			unmountOnHide
 			modal
-			className="dialog w-full max-w-lg gap-0 rounded-md border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) p-0 shadow-lg"
+			className="dialog w-full max-w-lg gap-0 rounded-md border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-0 shadow-lg"
 		>
 			<form className="p-6" onSubmit={handleSave}>
 				<div className="mb-6 flex items-center justify-between">
@@ -70,7 +70,7 @@ export function CustomViewModal({ dialogStore, onSave, existingViewNames }: Cust
 							type="text"
 							onInput={(event) => event.currentTarget.setCustomValidity('')}
 							placeholder="Enter a name for this view..."
-							className="w-full rounded-md border pro-border bg-(--pro-glass-bg)/50 px-3 py-2 pro-text1 placeholder:pro-text3 focus:border-brand focus:outline-hidden"
+							className="w-full rounded-md border pro-border bg-pro-glass-bg/50 px-3 py-2 pro-text1 placeholder:pro-text3 focus:border-brand focus:outline-hidden"
 							required
 						/>
 					</div>

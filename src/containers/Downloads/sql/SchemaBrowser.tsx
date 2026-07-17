@@ -221,7 +221,7 @@ function BrowserHeader({
 						type="button"
 						onClick={() => onSearchChange('')}
 						aria-label="Clear search"
-						className="absolute top-1/2 right-1 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-(--pro-text-tertiary) hover:text-(--pro-text-primary)"
+						className="absolute top-1/2 right-1 flex size-5 -translate-y-1/2 items-center justify-center rounded-sm text-pro-text-tertiary hover:text-pro-text-primary"
 					>
 						<Icon name="x" className="size-3" />
 					</button>
@@ -246,7 +246,7 @@ function BrowserHeader({
 								className={`rounded-sm px-2.5 py-1 text-xs font-medium transition-colors ${
 									active
 										? 'bg-brand text-on-brand shadow-sm'
-										: 'text-(--pro-text-secondary) hover:bg-hover-row hover:text-(--pro-text-primary)'
+										: 'text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
 								}`}
 							>
 								{FILTER_LABELS[k]}
@@ -254,7 +254,7 @@ function BrowserHeader({
 						)
 					})}
 				</div>
-				<p className="text-[11px] text-(--pro-text-tertiary) tabular-nums">
+				<p className="text-[11px] text-pro-text-tertiary tabular-nums">
 					{totalVisible === totalAvailable ? `${totalAvailable} tables` : `${totalVisible} of ${totalAvailable}`}
 				</p>
 			</div>
@@ -265,11 +265,11 @@ function BrowserHeader({
 function EmptyResults({ search }: { search: string }) {
 	return (
 		<div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-subtle bg-surface/40 px-6 py-12 text-center">
-			<Icon name="search" className="size-5 text-(--pro-text-tertiary)" />
-			<p className="text-sm text-(--pro-text-secondary)">
+			<Icon name="search" className="size-5 text-pro-text-tertiary" />
+			<p className="text-sm text-pro-text-secondary">
 				{search ? (
 					<>
-						No tables match <span className="font-mono text-(--pro-text-primary)">"{search}"</span>.
+						No tables match <span className="font-mono text-pro-text-primary">"{search}"</span>.
 					</>
 				) : (
 					'No tables match these filters.'
@@ -312,12 +312,12 @@ function CategorySection({
 			>
 				<Icon
 					name="chevron-right"
-					className={`size-3 shrink-0 text-(--pro-text-tertiary) transition-transform duration-150 group-hover:text-(--pro-text-primary) ${
+					className={`size-3 shrink-0 text-pro-text-tertiary transition-transform duration-150 group-hover:text-pro-text-primary ${
 						collapsed ? '' : 'rotate-90'
 					}`}
 				/>
-				<h3 className="text-sm font-semibold tracking-tight text-(--pro-text-primary)">{category}</h3>
-				<span className="text-[11px] text-(--pro-text-tertiary) tabular-nums">{items.length}</span>
+				<h3 className="text-sm font-semibold tracking-tight text-pro-text-primary">{category}</h3>
+				<span className="text-[11px] text-pro-text-tertiary tabular-nums">{items.length}</span>
 			</button>
 
 			{!collapsed && (
@@ -385,13 +385,13 @@ function FlatRow({
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="flex min-w-0 flex-1 flex-col gap-1">
 					<div className="flex min-w-0 flex-wrap items-center gap-2">
-						<span className="font-mono text-[13.5px] font-semibold break-all text-(--pro-text-primary)">
+						<span className="font-mono text-[13.5px] font-semibold break-all text-pro-text-primary">
 							{entry.tableName}
 						</span>
 						<KindTag kind="flat" />
 						{loaded ? <LoadedPill rowCount={loaded.rowCount} /> : <AutoLoadHint />}
 					</div>
-					<p className="text-xs text-(--pro-text-secondary)">{entry.description}</p>
+					<p className="text-xs text-pro-text-secondary">{entry.description}</p>
 				</div>
 				<RowActions
 					onInsert={() => onReplaceSql(snippet)}
@@ -408,7 +408,7 @@ function FlatRow({
 			{columns.length > 0 ? (
 				<ColumnChips columns={columns} onInsertColumn={(name) => onInsertAtCursor(name)} />
 			) : (
-				<p className="text-[11px] text-(--pro-text-tertiary) italic">Columns resolved on load.</p>
+				<p className="text-[11px] text-pro-text-tertiary italic">Columns resolved on load.</p>
 			)}
 		</div>
 	)
@@ -453,13 +453,13 @@ function TsRow({
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="flex min-w-0 flex-1 flex-col gap-1">
 					<div className="flex min-w-0 flex-wrap items-center gap-2">
-						<span className="font-mono text-[13.5px] font-semibold break-all text-(--pro-text-primary)">
-							{param ? resolvedName : <span className="text-(--pro-text-secondary)">{entry.displayName}</span>}
+						<span className="font-mono text-[13.5px] font-semibold break-all text-pro-text-primary">
+							{param ? resolvedName : <span className="text-pro-text-secondary">{entry.displayName}</span>}
 						</span>
 						<KindTag kind="ts" />
 						{loaded ? <LoadedPill rowCount={loaded.rowCount} /> : null}
 					</div>
-					<p className="text-xs text-(--pro-text-secondary)">{entry.description}</p>
+					<p className="text-xs text-pro-text-secondary">{entry.description}</p>
 				</div>
 				<RowActions
 					onInsert={() => onReplaceSql(snippet)}
@@ -487,7 +487,7 @@ function TsRow({
 			{columns.length > 0 ? (
 				<ColumnChips columns={columns} onInsertColumn={(name) => onInsertAtCursor(name)} />
 			) : shape === 'dynamic' ? (
-				<p className="text-[11px] text-(--pro-text-tertiary) italic">Columns depend on response — load to see.</p>
+				<p className="text-[11px] text-pro-text-tertiary italic">Columns depend on response — load to see.</p>
 			) : null}
 		</div>
 	)
@@ -513,7 +513,7 @@ function ColumnChips({
 						className="group inline-flex items-center gap-1 rounded-sm border border-subtle bg-surface px-1.5 py-0.5 transition-colors hover:border-brand/50 hover:bg-brand/5"
 					>
 						<TypeBadge kind={inferColumnKind(c.type)} />
-						<span className="font-mono text-[11.5px] text-(--pro-text-primary) group-hover:text-brand">{c.name}</span>
+						<span className="font-mono text-[11.5px] text-pro-text-primary group-hover:text-brand">{c.name}</span>
 					</button>
 				</li>
 			))}
@@ -544,14 +544,14 @@ function RowActions({
 }) {
 	return (
 		<div className="flex shrink-0 items-center gap-1.5">
-			{disabledHint ? <span className="mr-1 text-[10px] text-(--pro-text-tertiary)">{disabledHint}</span> : null}
+			{disabledHint ? <span className="mr-1 text-[10px] text-pro-text-tertiary">{disabledHint}</span> : null}
 			<button
 				type="button"
 				onClick={onCopy}
 				disabled={!canCopy}
 				aria-label="Copy table name"
 				title="Copy table name"
-				className="flex size-7 items-center justify-center rounded-md text-(--pro-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary) disabled:cursor-not-allowed disabled:opacity-40"
+				className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:cursor-not-allowed disabled:opacity-40"
 			>
 				<Icon name="copy" className="size-3.5" />
 			</button>
@@ -560,7 +560,7 @@ function RowActions({
 				onClick={onLoad}
 				disabled={!canLoad || alreadyLoaded}
 				title={alreadyLoaded ? 'Already loaded in this session' : 'Load CSV into session'}
-				className="inline-flex items-center gap-1.5 rounded-md border border-subtle bg-surface px-2.5 py-1 text-xs font-medium text-(--pro-text-primary) transition-colors hover:border-brand/40 hover:text-brand disabled:cursor-not-allowed disabled:opacity-40"
+				className="inline-flex items-center gap-1.5 rounded-md border border-subtle bg-surface px-2.5 py-1 text-xs font-medium text-pro-text-primary transition-colors hover:border-brand/40 hover:text-brand disabled:cursor-not-allowed disabled:opacity-40"
 			>
 				{isLoading ? <LoadingSpinner size={10} /> : <Icon name="download-cloud" className="size-3" />}
 				{alreadyLoaded ? 'Loaded' : 'Load'}
@@ -603,14 +603,12 @@ function ParamCombobox({
 	const current = options.find((o) => o.value === value)
 
 	if (options.length === 0) {
-		return (
-			<p className="text-[11px] text-(--pro-text-tertiary) italic">No {paramLabel.toLowerCase()} options available.</p>
-		)
+		return <p className="text-[11px] text-pro-text-tertiary italic">No {paramLabel.toLowerCase()} options available.</p>
 	}
 
 	return (
 		<div className="flex items-center gap-2 text-xs">
-			<span className="shrink-0 text-(--pro-text-tertiary)">{paramLabel}:</span>
+			<span className="shrink-0 text-pro-text-tertiary">{paramLabel}:</span>
 			<Ariakit.ComboboxProvider
 				resetValueOnHide
 				setValue={(v) => {
@@ -627,7 +625,7 @@ function ParamCombobox({
 						className={`inline-flex max-w-[220px] min-w-[160px] items-center justify-between gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors ${
 							value
 								? 'border-brand/50 bg-brand/5 text-brand'
-								: 'border-subtle bg-surface text-(--pro-text-secondary) hover:border-brand/40 hover:text-(--pro-text-primary)'
+								: 'border-subtle bg-surface text-pro-text-secondary hover:border-brand/40 hover:text-pro-text-primary'
 						}`}
 					>
 						<span className="truncate font-mono">{current?.label ?? `Pick ${paramLabel.toLowerCase()}…`}</span>
@@ -650,15 +648,15 @@ function ParamCombobox({
 						</div>
 						<Ariakit.ComboboxList className="overflow-y-auto">
 							{matches.length === 0 ? (
-								<p className="px-3 py-4 text-center text-xs text-(--pro-text-tertiary)">No matches.</p>
+								<p className="px-3 py-4 text-center text-xs text-pro-text-tertiary">No matches.</p>
 							) : (
 								matches.map((opt) => (
 									<Ariakit.SelectItem
 										key={opt.value}
 										value={opt.value}
 										render={<Ariakit.ComboboxItem />}
-										className={`flex cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-xs text-(--pro-text-primary) data-active-item:bg-hover-row ${
-											opt.isChild ? 'pl-6 text-(--pro-text-secondary)' : ''
+										className={`flex cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-xs text-pro-text-primary data-active-item:bg-hover-row ${
+											opt.isChild ? 'pl-6 text-pro-text-secondary' : ''
 										}`}
 									>
 										<span className="truncate">{opt.label}</span>
@@ -675,12 +673,12 @@ function ParamCombobox({
 					type="button"
 					onClick={() => onChange('')}
 					aria-label="Clear selection"
-					className="text-[11px] text-(--pro-text-tertiary) underline-offset-2 hover:text-(--pro-text-primary) hover:underline"
+					className="text-[11px] text-pro-text-tertiary underline-offset-2 hover:text-pro-text-primary hover:underline"
 				>
 					clear
 				</button>
 			) : null}
-			<span className="ml-auto text-[10px] text-(--pro-text-tertiary) tabular-nums">
+			<span className="ml-auto text-[10px] text-pro-text-tertiary tabular-nums">
 				{options.length.toLocaleString()} option{options.length === 1 ? '' : 's'}
 			</span>
 		</div>
@@ -689,7 +687,7 @@ function ParamCombobox({
 
 function KindTag({ kind }: { kind: 'flat' | 'ts' }) {
 	return (
-		<span className="rounded-sm bg-hover-row px-1.5 py-px text-[9px] font-semibold tracking-wider text-(--pro-text-tertiary) uppercase">
+		<span className="rounded-sm bg-hover-row px-1.5 py-px text-[9px] font-semibold tracking-wider text-pro-text-tertiary uppercase">
 			{kind === 'flat' ? 'Dataset' : 'Time series'}
 		</span>
 	)
@@ -699,9 +697,9 @@ function AutoLoadHint() {
 	return (
 		<span
 			title="Referenced tables are auto-loaded when you run a query that references them."
-			className="inline-flex items-center gap-1 text-[10px] text-(--pro-text-tertiary)"
+			className="inline-flex items-center gap-1 text-[10px] text-pro-text-tertiary"
 		>
-			<span aria-hidden className="inline-block size-1 rounded-full bg-(--pro-text-tertiary)/60" />
+			<span aria-hidden className="inline-block size-1 rounded-full bg-pro-text-tertiary/60" />
 			auto-loads on run
 		</span>
 	)

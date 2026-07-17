@@ -387,7 +387,7 @@ export function CustomColumnPanel({
 			style={{ userSelect: 'none' }}
 		>
 			{/* Add New Custom Column */}
-			<div className="rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
+			<div className="rounded-md border border-pro-cards-border bg-pro-cards-bg p-4">
 				<h5 className="mb-3 text-sm font-medium pro-text1">Create Custom Column</h5>
 
 				<div className="space-y-3">
@@ -401,7 +401,7 @@ export function CustomColumnPanel({
 							value={newColumnName}
 							onChange={(e) => setNewColumnName(e.target.value)}
 							placeholder="e.g., P/E Ratio, Custom Metric"
-							className="w-full rounded-md border pro-border bg-(--pro-glass-bg) px-3 py-2 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
+							className="w-full rounded-md border pro-border bg-pro-glass-bg px-3 py-2 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
 							onPointerDown={(e) => e.stopPropagation()}
 							onDragStart={(e) => e.preventDefault()}
 							draggable={false}
@@ -425,7 +425,7 @@ export function CustomColumnPanel({
 									setTimeout(() => setShowAutocomplete(false), 150)
 								}}
 								placeholder="e.g., tvl / mcap, (fees_24h + revenue_24h) * 365, tvl * 0.1"
-								className={`w-full rounded-md border bg-(--pro-glass-bg) px-3 py-2 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:outline-hidden ${
+								className={`w-full rounded-md border bg-pro-glass-bg px-3 py-2 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:outline-hidden ${
 									newColumnExpression && !liveValidation.isValid
 										? 'border-error focus:border-error'
 										: newColumnExpression && liveValidation.isValid
@@ -440,7 +440,7 @@ export function CustomColumnPanel({
 							{/* Autocomplete dropdown */}
 							{showAutocomplete && filteredSuggestions.length > 0 ? (
 								<div
-									className="absolute z-50 mt-1 max-h-64 overflow-y-auto overscroll-contain rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) shadow-lg"
+									className="absolute z-50 mt-1 max-h-64 overflow-y-auto overscroll-contain rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-lg"
 									style={{
 										width: '320px',
 										minWidth: '280px',
@@ -467,7 +467,7 @@ export function CustomColumnPanel({
 														? 'bg-pro-blue-400'
 														: suggestion.type === 'function'
 															? 'bg-pro-purple-400'
-															: 'bg-(--pro-text-tertiary)'
+															: 'bg-pro-text-tertiary'
 												}`}
 											/>
 											<code className="min-w-0 shrink-0 text-sm">{suggestion.display}</code>
@@ -529,7 +529,7 @@ export function CustomColumnPanel({
 									key={operator}
 									type="button"
 									onClick={() => insertOperator(operator)}
-									className="rounded-md border pro-border bg-(--pro-glass-bg) pro-hover-bg px-2 py-1 text-xs pro-text2 transition-colors"
+									className="rounded-md border pro-border bg-pro-glass-bg pro-hover-bg px-2 py-1 text-xs pro-text2 transition-colors"
 									onPointerDown={(e) => e.stopPropagation()}
 									onDragStart={(e) => e.preventDefault()}
 									draggable={false}
@@ -558,7 +558,7 @@ export function CustomColumnPanel({
 			</div>
 
 			{/* Available Variables Reference - Compact */}
-			<div className="rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-3">
+			<div className="rounded-md border border-pro-cards-border bg-pro-cards-bg p-3">
 				<h5 className="mb-2 text-sm font-medium pro-text2">Available Variables</h5>
 				<p className="mb-2 text-xs pro-text3">Click any variable to add it to your expression</p>
 				<div className="grid max-h-32 grid-cols-3 gap-1 overflow-y-auto md:grid-cols-4 lg:grid-cols-6">
@@ -568,7 +568,7 @@ export function CustomColumnPanel({
 							type="button"
 							onClick={() => insertVariable(variable.key)}
 							title={variable.name}
-							className="rounded-md border pro-border bg-(--pro-glass-bg) pro-hover-bg p-1 text-center text-xs transition-colors"
+							className="rounded-md border pro-border bg-pro-glass-bg pro-hover-bg p-1 text-center text-xs transition-colors"
 							onPointerDown={(e) => e.stopPropagation()}
 							onDragStart={(e) => e.preventDefault()}
 							draggable={false}
@@ -591,7 +591,7 @@ export function CustomColumnPanel({
 				<div className="space-y-3">
 					<h5 className="text-sm font-medium pro-text2">Custom Columns ({customColumns.length})</h5>
 					{customColumns.map((column) => (
-						<div key={column.id} className="rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-3">
+						<div key={column.id} className="rounded-md border border-pro-cards-border bg-pro-cards-bg p-3">
 							<div className="flex items-center justify-between">
 								<div className="flex-1">
 									<div className="mb-1 flex items-center gap-2">
@@ -602,7 +602,7 @@ export function CustomColumnPanel({
 											<Icon name="x" height={12} width={12} className="text-error" />
 										)}
 									</div>
-									<div className="rounded-md border pro-border bg-(--pro-glass-bg) px-2 py-1 text-xs pro-text2">
+									<div className="rounded-md border pro-border bg-pro-glass-bg px-2 py-1 text-xs pro-text2">
 										{column.expression}
 									</div>
 									{!column.isValid && column.errorMessage ? (
@@ -625,7 +625,7 @@ export function CustomColumnPanel({
 			) : null}
 
 			{/* Examples */}
-			<div className="rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
+			<div className="rounded-md border border-pro-cards-border bg-pro-cards-bg p-4">
 				<h5 className="mb-3 text-sm font-medium pro-text2">Example Expressions</h5>
 				<div className="space-y-2 text-xs">
 					<div>

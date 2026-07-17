@@ -223,7 +223,7 @@ function ProtocolFilterDialogContent({
 	return (
 		<Ariakit.DialogProvider open={true} setOpen={(open) => (open ? undefined : onClose())}>
 			<Ariakit.Dialog
-				className="dialog max-h-[80dvh] w-full max-w-xl gap-0 rounded-md border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) p-0 shadow-lg"
+				className="dialog max-h-[80dvh] w-full max-w-xl gap-0 rounded-md border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-0 shadow-lg"
 				unmountOnHide
 				portal
 				portalElement={portalTarget ?? undefined}

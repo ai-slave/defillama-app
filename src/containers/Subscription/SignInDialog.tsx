@@ -13,9 +13,9 @@ type Step = 'signin' | 'signup' | 'forgot'
 /* ── Shared styles ─────────────────────────────────────────────────── */
 
 const inputCls =
-	'h-10 w-full rounded-lg border border-medium bg-(--signin-input-bg) px-3 text-sm text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden'
+	'h-10 w-full rounded-lg border border-medium bg-signin-input-bg px-3 text-sm text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden'
 const primaryBtnCls =
-	'h-10 w-full rounded-lg bg-brand text-sm font-medium text-on-brand disabled:bg-(--signin-btn-disabled-bg) disabled:text-(--signin-btn-disabled-text)'
+	'h-10 w-full rounded-lg bg-brand text-sm font-medium text-on-brand disabled:bg-signin-btn-disabled-bg disabled:text-signin-btn-disabled-text'
 
 const WalletSignInButton = dynamic<WalletSignInButtonProps>(
 	() => import('./WalletSignInButton').then((module) => module.WalletSignInButton),
@@ -45,7 +45,7 @@ export function SignInDialog({
 	return (
 		<Ariakit.Dialog
 			store={store}
-			className="dialog top-1/2 right-auto bottom-auto left-1/2 m-0 max-h-[90dvh] min-h-0 w-[calc(100vw-32px)] max-w-[331px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-(--signin-bg) px-5 pt-6 pb-5 shadow-2xl max-sm:max-h-[calc(100dvh-48px)] max-sm:rounded-[20px] max-sm:px-4 max-sm:pt-5 max-sm:pb-6"
+			className="dialog top-1/2 right-auto bottom-auto left-1/2 m-0 max-h-[90dvh] min-h-0 w-[calc(100vw-32px)] max-w-[331px] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-signin-bg px-5 pt-6 pb-5 shadow-2xl max-sm:max-h-[calc(100dvh-48px)] max-sm:rounded-[20px] max-sm:px-4 max-sm:pt-5 max-sm:pb-6"
 			unmountOnHide
 		>
 			<div>
@@ -179,17 +179,17 @@ export function SignInFlow({
 	const errorEl = error ? <p className="text-center text-xs text-error">{error}</p> : null
 
 	const tabs = step !== 'forgot' && (
-		<div className="mb-6 flex gap-1 rounded-lg bg-(--signin-tab-bg) p-1">
+		<div className="mb-6 flex gap-1 rounded-lg bg-signin-tab-bg p-1">
 			<button
 				type="button"
-				className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${step === 'signin' ? 'bg-(--signin-bg) text-primary shadow-sm' : 'text-tertiary hover:text-primary'}`}
+				className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${step === 'signin' ? 'bg-signin-bg text-primary shadow-sm' : 'text-tertiary hover:text-primary'}`}
 				onClick={() => goTo('signin')}
 			>
 				Sign In
 			</button>
 			<button
 				type="button"
-				className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${step === 'signup' ? 'bg-(--signin-bg) text-primary shadow-sm' : 'text-tertiary hover:text-primary'}`}
+				className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${step === 'signup' ? 'bg-signin-bg text-primary shadow-sm' : 'text-tertiary hover:text-primary'}`}
 				onClick={() => goTo('signup')}
 			>
 				Sign Up
@@ -252,15 +252,15 @@ export function SignInFlow({
 				</p>
 
 				<div className="my-6 flex items-center gap-5">
-					<div className="h-px flex-1 bg-(--signin-divider)" />
+					<div className="h-px flex-1 bg-signin-divider" />
 					<span className="text-sm text-tertiary">Or</span>
-					<div className="h-px flex-1 bg-(--signin-divider)" />
+					<div className="h-px flex-1 bg-signin-divider" />
 				</div>
 
 				<div className="flex flex-col gap-2">
 					<button
 						type="button"
-						className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-medium text-sm font-medium text-primary transition-colors hover:bg-(--signin-outline-hover-bg)"
+						className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-medium text-sm font-medium text-primary transition-colors hover:bg-signin-outline-hover-bg"
 						onClick={handleGoogleSignIn}
 						disabled={signInWithGoogleMutation.isPending}
 					>
@@ -269,7 +269,7 @@ export function SignInFlow({
 					</button>
 					<button
 						type="button"
-						className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-medium text-sm font-medium text-primary transition-colors hover:bg-(--signin-outline-hover-bg)"
+						className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-medium text-sm font-medium text-primary transition-colors hover:bg-signin-outline-hover-bg"
 						onClick={handleGithubSignIn}
 						disabled={signInWithGithubMutation.isPending}
 					>

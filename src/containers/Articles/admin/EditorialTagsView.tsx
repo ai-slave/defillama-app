@@ -129,7 +129,7 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 				<div>
 					<div className="flex items-center gap-2">
 						<h2 className="text-xl font-semibold text-primary">{definition.label}</h2>
-						<span className="inline-flex items-center rounded-full bg-(--research-link-button-bg) px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-link uppercase">
+						<span className="inline-flex items-center rounded-full bg-research-link-button-bg px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-link uppercase">
 							{definition.cardinality === 'singleton' ? '1 article' : 'Many articles'}
 						</span>
 					</div>

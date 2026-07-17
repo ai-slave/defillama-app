@@ -326,7 +326,7 @@ export function GenerateDashboardModal({
 			}}
 		>
 			<Ariakit.Dialog
-				className="dialog w-full max-w-lg gap-0 border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) p-6 shadow-2xl"
+				className="dialog w-full max-w-lg gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-6 shadow-2xl"
 				unmountOnHide
 				portal
 				hideOnInteractOutside
@@ -499,7 +499,7 @@ export function GenerateDashboardModal({
 							type="submit"
 							disabled={isLoading}
 							className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 transition-colors ${
-								!isLoading ? 'animate-ai-glow pro-btn-blue' : 'cursor-not-allowed border pro-border pro-text3'
+								!isLoading ? 'animate-pro-glow pro-btn-blue' : 'cursor-not-allowed border pro-border pro-text3'
 							}`}
 						>
 							{isLoading ? (

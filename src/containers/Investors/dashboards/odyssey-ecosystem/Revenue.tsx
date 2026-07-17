@@ -18,13 +18,13 @@ function Toggle<T extends string>({
 	options: { id: T; label: string }[]
 }) {
 	return (
-		<div className="flex w-fit items-center rounded-md border border-(--pro-cards-border) text-(--pro-text-secondary)">
+		<div className="flex w-fit items-center rounded-md border border-pro-cards-border text-pro-text-secondary">
 			{options.map((o) => (
 				<button
 					key={o.id}
 					type="button"
 					onClick={() => onChange(o.id)}
-					className="px-3 py-1 text-xs transition-colors data-[active=true]:font-medium data-[active=true]:text-(--pro-text-primary)"
+					className="px-3 py-1 text-xs transition-colors data-[active=true]:font-medium data-[active=true]:text-pro-text-primary"
 					data-active={value === o.id}
 				>
 					{o.label}
@@ -103,16 +103,16 @@ function SubSectionCard({
 	children: React.ReactNode
 }) {
 	return (
-		<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
+		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
 				<div>
-					<h3 className="text-sm font-semibold text-(--pro-text-primary)">{title}</h3>
-					{subtitle && <p className="mt-0.5 text-xs text-(--pro-text-secondary)">{subtitle}</p>}
+					<h3 className="text-sm font-semibold text-pro-text-primary">{title}</h3>
+					{subtitle && <p className="mt-0.5 text-xs text-pro-text-secondary">{subtitle}</p>}
 				</div>
 				{total != null && (
 					<div className="text-right">
-						<div className="text-[10px] font-medium tracking-wider text-(--pro-text-label) uppercase">Subtotal</div>
-						<div className="text-lg font-semibold text-(--pro-text-primary) tabular-nums">{fmtUsd(total)}</div>
+						<div className="text-[10px] font-medium tracking-wider text-pro-text-label uppercase">Subtotal</div>
+						<div className="text-lg font-semibold text-pro-text-primary tabular-nums">{fmtUsd(total)}</div>
 					</div>
 				)}
 			</div>
@@ -235,12 +235,12 @@ export default function Revenue() {
 						holdersByMonthSeries ? (
 							<MultiSeriesChart key="hb-monthly" series={holdersByMonthSeries as any} valueSymbol="$" height="300px" />
 						) : (
-							<div className="px-2 py-6 text-xs text-(--pro-text-secondary)">No monthly holder data</div>
+							<div className="px-2 py-6 text-xs text-pro-text-secondary">No monthly holder data</div>
 						)
 					) : holderSeries ? (
 						<MultiSeriesChart key="hb-daily" series={holderSeries as any} valueSymbol="$" height="300px" />
 					) : (
-						<div className="px-2 py-6 text-xs text-(--pro-text-secondary)">No daily holder data</div>
+						<div className="px-2 py-6 text-xs text-pro-text-secondary">No daily holder data</div>
 					)}
 				</ChartCard>
 			)}
@@ -266,7 +266,7 @@ export default function Revenue() {
 								]}
 							/>
 						) : (
-							<div className="px-2 py-3 text-xs text-(--pro-text-secondary)">
+							<div className="px-2 py-3 text-xs text-pro-text-secondary">
 								Per-source breakdown not yet available for this month — only the total is reported.
 							</div>
 						)}
@@ -279,15 +279,13 @@ export default function Revenue() {
 
 			{/* 3 · Unclaimed pipeline */}
 			<SectionHeader>Unclaimed Pipeline · Overview</SectionHeader>
-			<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-5">
+			<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-5">
 				<div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
 					<div>
-						<div className="text-xs font-medium tracking-wide text-(--pro-text-label) uppercase">Pipeline Total</div>
-						<div className="mt-1 text-3xl font-bold text-(--pro-text-primary)">
-							{k.unclaimedPipeline?.formatted || '—'}
-						</div>
+						<div className="text-xs font-medium tracking-wide text-pro-text-label uppercase">Pipeline Total</div>
+						<div className="mt-1 text-3xl font-bold text-pro-text-primary">{k.unclaimedPipeline?.formatted || '—'}</div>
 					</div>
-					{up.asOf && <span className="text-[11px] text-(--pro-text-secondary)">As of {up.asOf}</span>}
+					{up.asOf && <span className="text-[11px] text-pro-text-secondary">As of {up.asOf}</span>}
 				</div>
 				{up.pie && (
 					<PieChart
@@ -397,15 +395,15 @@ export default function Revenue() {
 			>
 				<div className="flex flex-col gap-4">
 					{(data?.synthInterestDetail || []).map((r) => (
-						<div key={r.asset} className="rounded-md border border-(--pro-cards-border)/60 p-3">
+						<div key={r.asset} className="rounded-md border border-pro-cards-border/60 p-3">
 							<div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
 								<div>
-									<span className="text-sm font-semibold text-(--pro-text-primary)">{r.asset}</span>
-									<span className="ml-2 text-xs text-(--pro-text-secondary)">
+									<span className="text-sm font-semibold text-pro-text-primary">{r.asset}</span>
+									<span className="ml-2 text-xs text-pro-text-secondary">
 										{r.annualRatePct}% APR · debt {fmtUsd(r.totalDebtUsd)}
 									</span>
 								</div>
-								<div className="text-xs text-(--pro-text-secondary)">
+								<div className="text-xs text-pro-text-secondary">
 									<span className="mr-3">Daily {fmtUsd(r.estimatedDailyUsd)}</span>
 									<span>Monthly {fmtUsd(r.estimatedMonthlyUsd)}</span>
 								</div>

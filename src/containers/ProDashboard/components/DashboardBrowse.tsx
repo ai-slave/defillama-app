@@ -68,7 +68,7 @@ export function DashboardBrowse({ onTagClick, initialCategories }: DashboardBrow
 	return (
 		<div className="flex flex-col gap-6">
 			<div>
-				<h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-(--pro-text-primary)">
+				<h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-pro-text-primary">
 					<span className="flex size-6 items-center justify-center rounded-md bg-brand/15">
 						<Icon name="tag" height={14} width={14} className="text-link" />
 					</span>

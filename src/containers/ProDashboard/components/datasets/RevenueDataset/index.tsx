@@ -148,7 +148,7 @@ export function RevenueDataset({ chains, tableId, filters }: RevenueDatasetProps
 									setShowFilterModal(true)
 								}}
 								className={`ml-2 rounded-md p-1 transition-colors hover:bg-surface-elevated-2 ${
-									filterButtonIsActive ? 'text-brand' : 'text-(--pro-text-tertiary)'
+									filterButtonIsActive ? 'text-brand' : 'text-pro-text-tertiary'
 								}`}
 								title="Filter categories"
 							>

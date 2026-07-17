@@ -48,7 +48,7 @@ function CopyFeedUrlButton({ value }: { value: string }) {
 			type="button"
 			onClick={() => void copy()}
 			aria-label="Copy feed URL"
-			className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-(--research-orange) px-5 py-2.5 text-sm font-semibold text-(--research-navy-soft) transition-[background-color,transform] duration-150 hover:bg-(--research-orange)/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--research-orange) motion-safe:active:scale-[0.97] sm:w-auto"
+			className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-research-orange px-5 py-2.5 text-sm font-semibold text-research-navy-soft transition-[background-color,transform] duration-150 hover:bg-research-orange/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-research-orange motion-safe:active:scale-[0.97] sm:w-auto"
 		>
 			<Icon name={copied ? 'check' : 'copy'} height={15} width={15} />
 			{copied ? 'Copied' : 'Copy'}
@@ -116,13 +116,13 @@ export function ResearchFeedLanding({ items }: { items: ResearchFeedPreviewItem[
 						</p>
 
 						<div
-							className="dl-feed-reveal mt-9 flex max-w-2xl flex-col gap-3 rounded-xl bg-(--research-navy-soft) p-3 ring-1 ring-ai-white/10 ring-inset sm:flex-row sm:items-center sm:gap-4 sm:py-3 sm:pr-3 sm:pl-5"
+							className="dl-feed-reveal mt-9 flex max-w-2xl flex-col gap-3 rounded-xl bg-research-navy-soft p-3 ring-1 ring-research-white/10 ring-inset sm:flex-row sm:items-center sm:gap-4 sm:py-3 sm:pr-3 sm:pl-5"
 							style={{ animationDelay: '140ms' }}
 						>
 							<span className="flex min-w-0 flex-1 items-center gap-3">
 								<span className="relative flex size-2.5 shrink-0 items-center justify-center">
-									<span className="dl-feed-pulse absolute inline-flex size-full rounded-full bg-(--research-orange)" />
-									<span className="relative inline-flex size-2.5 rounded-full bg-(--research-orange)" />
+									<span className="dl-feed-pulse absolute inline-flex size-full rounded-full bg-research-orange" />
+									<span className="relative inline-flex size-2.5 rounded-full bg-research-orange" />
 								</span>
 								<code className="truncate font-jetbrains text-sm text-on-brand sm:text-[15px]">
 									{RESEARCH_FEED_URL}

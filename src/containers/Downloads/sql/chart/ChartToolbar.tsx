@@ -73,7 +73,7 @@ export function ChartToolbar({ config, classified, onChange }: ChartToolbarProps
 				</div>
 			</div>
 
-			<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-(--pro-text-secondary)">
+			<div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-pro-text-secondary">
 				<PickerChip
 					label="x"
 					value={config.xCol}
@@ -118,7 +118,7 @@ export function ChartToolbar({ config, classified, onChange }: ChartToolbarProps
 					/>
 				) : null}
 
-				<span className="ml-auto text-[11px] text-(--pro-text-tertiary)">{seriesSummary(config)}</span>
+				<span className="ml-auto text-[11px] text-pro-text-tertiary">{seriesSummary(config)}</span>
 			</div>
 		</div>
 	)
@@ -146,7 +146,7 @@ function SegmentedControl<T extends string>({
 		<div
 			role="radiogroup"
 			aria-label={ariaLabel}
-			className="inline-flex items-center gap-0.5 rounded-md border border-subtle bg-(--pro-app-bg)/50 p-0.5"
+			className="inline-flex items-center gap-0.5 rounded-md border border-subtle bg-pro-app-bg/50 p-0.5"
 		>
 			{options.map((opt) => {
 				const active = value === opt.value
@@ -160,7 +160,7 @@ function SegmentedControl<T extends string>({
 						className={`rounded-[3px] px-2 py-1 font-mono text-[10.5px] transition-colors ${
 							active
 								? 'bg-brand text-on-brand'
-								: 'text-(--pro-text-secondary) hover:bg-hover-row hover:text-(--pro-text-primary)'
+								: 'text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
 						}`}
 					>
 						{opt.label}
@@ -188,11 +188,11 @@ function PickerChip({
 }) {
 	return (
 		<div className="flex items-center gap-1.5">
-			<span className="text-(--pro-text-tertiary)">{label}</span>
+			<span className="text-pro-text-tertiary">{label}</span>
 			<Ariakit.MenuProvider>
 				<Ariakit.MenuButton
 					aria-label={label}
-					className="inline-flex max-w-[200px] items-center gap-1 rounded-md border border-subtle px-2 py-1 font-mono text-[11px] text-(--pro-text-primary) hover:bg-hover-row"
+					className="inline-flex max-w-[200px] items-center gap-1 rounded-md border border-subtle px-2 py-1 font-mono text-[11px] text-pro-text-primary hover:bg-hover-row"
 				>
 					<span className="truncate">{value == null ? '—' : optionLabel ? optionLabel(value) : value}</span>
 					<Icon name="chevron-down" className="size-3 shrink-0" />
@@ -202,13 +202,13 @@ function PickerChip({
 					className="z-50 max-h-64 overflow-auto rounded-lg border border-medium bg-surface-elevated-1 p-1 shadow-lg"
 				>
 					{options.length === 0 ? (
-						<div className="px-2 py-1 text-[11px] text-(--pro-text-tertiary)">No options</div>
+						<div className="px-2 py-1 text-[11px] text-pro-text-tertiary">No options</div>
 					) : (
 						options.map((opt) => (
 							<Ariakit.MenuItem
 								key={opt}
 								onClick={() => onChange(opt)}
-								className={`flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 font-mono text-[11px] text-(--pro-text-primary) hover:bg-hover-row ${
+								className={`flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 font-mono text-[11px] text-pro-text-primary hover:bg-hover-row ${
 									opt === value ? 'bg-hover-row' : ''
 								}`}
 							>
@@ -218,7 +218,7 @@ function PickerChip({
 					)}
 				</Ariakit.Menu>
 			</Ariakit.MenuProvider>
-			{hint ? <span className="text-[10px] text-(--pro-text-tertiary)">{hint}</span> : null}
+			{hint ? <span className="text-[10px] text-pro-text-tertiary">{hint}</span> : null}
 		</div>
 	)
 }
@@ -254,12 +254,12 @@ function YSeriesPicker({
 
 	return (
 		<div className="flex items-center gap-1.5">
-			<span className="text-(--pro-text-tertiary)">y</span>
+			<span className="text-pro-text-tertiary">y</span>
 			<Ariakit.MenuProvider>
 				<Ariakit.MenuButton
 					aria-label="Y series"
 					disabled={splitByActive}
-					className="inline-flex max-w-[240px] items-center gap-1 rounded-md border border-subtle px-2 py-1 font-mono text-[11px] text-(--pro-text-primary) hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60"
+					className="inline-flex max-w-[240px] items-center gap-1 rounded-md border border-subtle px-2 py-1 font-mono text-[11px] text-pro-text-primary hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60"
 				>
 					<span className="truncate">{label}</span>
 					<Icon name="chevron-down" className="size-3 shrink-0" />
@@ -270,7 +270,7 @@ function YSeriesPicker({
 				>
 					{yCols.length > 0 ? (
 						<div className="flex flex-col gap-1">
-							<span className="px-1 text-[10px] font-semibold tracking-wide text-(--pro-text-tertiary) uppercase">
+							<span className="px-1 text-[10px] font-semibold tracking-wide text-pro-text-tertiary uppercase">
 								selected
 							</span>
 							{yCols.map((name, i) => (
@@ -290,9 +290,9 @@ function YSeriesPicker({
 						</div>
 					) : null}
 
-					<span className="px-1 text-[10px] font-semibold tracking-wide text-(--pro-text-tertiary) uppercase">add</span>
+					<span className="px-1 text-[10px] font-semibold tracking-wide text-pro-text-tertiary uppercase">add</span>
 					{available.filter((n) => !yCols.includes(n)).length === 0 ? (
-						<div className="px-2 py-1 text-[11px] text-(--pro-text-tertiary)">No more numeric columns</div>
+						<div className="px-2 py-1 text-[11px] text-pro-text-tertiary">No more numeric columns</div>
 					) : (
 						available
 							.filter((n) => !yCols.includes(n))
@@ -301,9 +301,9 @@ function YSeriesPicker({
 									key={name}
 									hideOnClick={false}
 									onClick={() => onToggle(name)}
-									className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 font-mono text-[11px] text-(--pro-text-primary) hover:bg-hover-row"
+									className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 font-mono text-[11px] text-pro-text-primary hover:bg-hover-row"
 								>
-									<Icon name="plus" className="size-3 text-(--pro-text-tertiary)" />
+									<Icon name="plus" className="size-3 text-pro-text-tertiary" />
 									<span className="truncate">{name}</span>
 								</Ariakit.MenuItem>
 							))

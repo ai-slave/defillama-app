@@ -46,7 +46,7 @@ export function AriakitSelect({
 				</label>
 			) : null}
 			{isLoading ? (
-				<div className="flex h-9 items-center justify-center rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1">
+				<div className="flex h-9 items-center justify-center rounded-md border border-pro-form-control-border bg-surface-elevated-1">
 					<LoadingSpinner size="sm" />
 				</div>
 			) : (
@@ -54,7 +54,7 @@ export function AriakitSelect({
 					<PopoverDisclosure
 						id={disclosureId}
 						store={popover}
-						className="flex w-full items-center justify-between rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-2.5 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="flex w-full items-center justify-between rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					>
 						<span className={`truncate ${selectedValue ? 'pro-text1' : 'pro-text3'}`}>{selectedLabel}</span>
 						<Icon name="chevron-down" width={12} height={12} className="ml-2 shrink-0 opacity-70" />
@@ -65,7 +65,7 @@ export function AriakitSelect({
 						portal={true}
 						flip={false}
 						gutter={4}
-						className="z-50 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) shadow-lg"
+						className="z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-lg"
 						style={{ minWidth: 'var(--popover-anchor-width)', width: 'max-content' }}
 					>
 						<div className="max-h-[280px] overflow-y-auto overscroll-contain p-1">

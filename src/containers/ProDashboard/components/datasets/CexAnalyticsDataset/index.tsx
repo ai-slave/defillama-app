@@ -147,7 +147,7 @@ function SummaryCards({ data }: { data: CexAnalyticsSnapshotResponse }) {
 			</div>
 			<div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
 				{cards.map((card) => (
-					<div key={card.label} className="rounded-lg border border-(--pro-cards-border) p-3">
+					<div key={card.label} className="rounded-lg border border-pro-cards-border p-3">
 						<p className="text-xs font-medium tracking-wide pro-text3 uppercase">{card.label}</p>
 						<p className="mt-2 text-2xl font-semibold pro-text1">{card.value}</p>
 					</div>
@@ -263,7 +263,7 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 							type="text"
 							placeholder="Search CEXs..."
 							onInput={(event) => setVenueName(event.currentTarget.value)}
-							className="rounded-md border pro-border bg-(--pro-glass-bg) px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-brand focus:outline-hidden"
+							className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>

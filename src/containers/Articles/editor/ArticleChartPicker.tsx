@@ -77,7 +77,7 @@ function ChartTypeSelect({
 					<Ariakit.SelectItem
 						key={option}
 						value={option}
-						className="flex shrink-0 cursor-pointer items-center justify-between gap-3 px-2.5 py-1.5 text-secondary hover:bg-(--research-link-hover-bg) hover:text-primary data-active-item:bg-(--research-link-hover-bg) data-active-item:text-primary"
+						className="flex shrink-0 cursor-pointer items-center justify-between gap-3 px-2.5 py-1.5 text-secondary hover:bg-research-link-hover-bg hover:text-primary data-active-item:bg-research-link-hover-bg data-active-item:text-primary"
 					>
 						<span className="truncate">{labelFor(option)}</span>
 						<Ariakit.SelectItemCheck className="shrink-0 text-link" />
@@ -414,7 +414,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 		<Ariakit.Dialog
 			store={store}
 			modal
-			backdrop={<div className="fixed inset-0 z-[80] bg-ai-backdrop backdrop-blur-sm" />}
+			backdrop={<div className="fixed inset-0 z-[80] bg-research-backdrop backdrop-blur-sm" />}
 			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[92vh] w-[min(1180px,96vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-medium bg-surface shadow-article-dialog outline-hidden"
 		>
 			<div className="flex flex-wrap items-center gap-3 border-b border-medium px-5 py-3">
@@ -505,8 +505,8 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 											aria-pressed={checked}
 											className={`group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
 												checked
-													? 'bg-(--research-link-button-bg) text-link'
-													: 'text-primary hover:bg-(--research-link-hover-bg)'
+													? 'bg-research-link-button-bg text-link'
+													: 'text-primary hover:bg-research-link-hover-bg'
 											}`}
 										>
 											<span
@@ -574,7 +574,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 													type="button"
 													onClick={() => removeSeries(id)}
 													aria-label={`Remove ${s.name}`}
-													className="flex size-6 items-center justify-center rounded-sm text-tertiary hover:bg-(--research-link-hover-bg) hover:text-primary"
+													className="flex size-6 items-center justify-center rounded-sm text-tertiary hover:bg-research-link-hover-bg hover:text-primary"
 												>
 													×
 												</button>
@@ -661,7 +661,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 										type="button"
 										onClick={addAnnotation}
 										disabled={annotations.length >= MAX_ANNOTATIONS}
-										className="rounded-sm border border-medium px-2 py-0.5 text-[11px] text-secondary transition-colors hover:bg-(--research-link-hover-bg) hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+										className="rounded-sm border border-medium px-2 py-0.5 text-[11px] text-secondary transition-colors hover:bg-research-link-hover-bg hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
 									>
 										+ Add
 									</button>
@@ -696,7 +696,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 													type="button"
 													onClick={() => removeAnnotation(i)}
 													aria-label="Remove annotation"
-													className="flex size-6 items-center justify-center rounded-sm text-tertiary hover:bg-(--research-link-hover-bg) hover:text-primary"
+													className="flex size-6 items-center justify-center rounded-sm text-tertiary hover:bg-research-link-hover-bg hover:text-primary"
 												>
 													×
 												</button>
@@ -722,7 +722,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 					/>
 				</label>
 				<div className="flex items-center justify-end gap-2">
-					<Ariakit.DialogDismiss className="rounded-md border border-medium px-3 py-2 text-xs text-secondary hover:bg-(--research-link-hover-bg)">
+					<Ariakit.DialogDismiss className="rounded-md border border-medium px-3 py-2 text-xs text-secondary hover:bg-research-link-hover-bg">
 						Cancel
 					</Ariakit.DialogDismiss>
 					<button

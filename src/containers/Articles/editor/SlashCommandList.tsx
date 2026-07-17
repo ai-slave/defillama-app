@@ -73,7 +73,7 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, Props>(functi
 									command(item)
 								}}
 								className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left transition-colors ${
-									active ? 'bg-(--research-link-button-bg)' : 'hover:bg-(--research-link-hover-bg)'
+									active ? 'bg-research-link-button-bg' : 'hover:bg-research-link-hover-bg'
 								}`}
 							>
 								<span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-medium bg-page font-jetbrains text-[11px] text-secondary">

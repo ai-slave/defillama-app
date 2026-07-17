@@ -14,7 +14,7 @@ export function VerifyEmailConfirmDialog({
 		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && onClose()}>
 			<Ariakit.Dialog
 				backdrop={<div className="bg-black/60" />}
-				className="dialog top-1/2 right-auto bottom-auto left-1/2 m-0 max-h-[90dvh] min-h-0 w-[calc(100vw-32px)] max-w-[360px] -translate-x-1/2 -translate-y-1/2 gap-0 overflow-y-auto rounded-2xl bg-(--signin-bg) px-5 pt-6 pb-5 shadow-2xl"
+				className="dialog top-1/2 right-auto bottom-auto left-1/2 m-0 max-h-[90dvh] min-h-0 w-[calc(100vw-32px)] max-w-[360px] -translate-x-1/2 -translate-y-1/2 gap-0 overflow-y-auto rounded-2xl bg-signin-bg px-5 pt-6 pb-5 shadow-2xl"
 				portal
 				unmountOnHide
 			>

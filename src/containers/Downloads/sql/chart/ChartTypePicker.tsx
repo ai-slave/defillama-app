@@ -170,7 +170,7 @@ export function ChartTypePicker({ value, onChange, classified }: ChartTypePicker
 		<div
 			role="radiogroup"
 			aria-label="Chart type"
-			className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-subtle bg-(--pro-app-bg)/50 p-0.5"
+			className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-subtle bg-pro-app-bg/50 p-0.5"
 		>
 			{GROUPS.map((group, groupIndex) => (
 				<div key={group.key} className="flex items-center gap-0.5">
@@ -191,8 +191,8 @@ export function ChartTypePicker({ value, onChange, classified }: ChartTypePicker
 									active
 										? 'bg-brand text-on-brand shadow-sm'
 										: available
-											? 'text-(--pro-text-secondary) hover:bg-hover-row hover:text-(--pro-text-primary)'
-											: 'cursor-not-allowed text-(--pro-text-tertiary)/50'
+											? 'text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
+											: 'cursor-not-allowed text-pro-text-tertiary/50'
 								}`}
 							>
 								{opt.icon}

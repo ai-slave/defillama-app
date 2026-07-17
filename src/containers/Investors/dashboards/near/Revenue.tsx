@@ -9,38 +9,38 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 
 function KpiCard({ label, value, tooltip }: { label: string; value: string; tooltip?: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
+		<div className="flex flex-col gap-1 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<div className="flex items-center gap-1">
-				<span className="text-xs font-medium tracking-wide text-(--pro-text-label)">{label}</span>
+				<span className="text-xs font-medium tracking-wide text-pro-text-label">{label}</span>
 				{tooltip && (
 					<span className="group relative cursor-help">
-						<svg className="size-3.5 text-(--pro-text-label)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<svg className="size-3.5 text-pro-text-label" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<circle cx="12" cy="12" r="10" strokeWidth="2" />
 							<path d="M12 16v-4M12 8h.01" strokeWidth="2" strokeLinecap="round" />
 						</svg>
-						<span className="pointer-events-none absolute top-5 left-0 z-10 hidden w-64 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-2 text-xs text-(--pro-text-secondary) shadow-lg group-hover:block">
+						<span className="pointer-events-none absolute top-5 left-0 z-10 hidden w-64 rounded-md border border-pro-cards-border bg-pro-cards-bg p-2 text-xs text-pro-text-secondary shadow-lg group-hover:block">
 							{tooltip}
 						</span>
 					</span>
 				)}
 			</div>
-			<span className="text-2xl font-semibold text-(--pro-text-primary)">{value}</span>
+			<span className="text-2xl font-semibold text-pro-text-primary">{value}</span>
 		</div>
 	)
 }
 
 function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
 	return (
-		<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
-			<h3 className="mb-1 text-sm font-medium text-(--pro-text-label)">{title}</h3>
-			{subtitle && <p className="mb-3 text-xs text-(--pro-text-secondary)">{subtitle}</p>}
+		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
+			<h3 className="mb-1 text-sm font-medium text-pro-text-label">{title}</h3>
+			{subtitle && <p className="mb-3 text-xs text-pro-text-secondary">{subtitle}</p>}
 			{children}
 		</div>
 	)
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
-	return <h2 className="text-xs font-semibold tracking-wider text-(--pro-text-label) uppercase">{children}</h2>
+	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
 }
 
 function TimeframeToggle({
@@ -53,7 +53,7 @@ function TimeframeToggle({
 	options: Array<{ value: string; label: string }>
 }) {
 	return (
-		<div className="inline-flex gap-0.5 rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-0.5">
+		<div className="inline-flex gap-0.5 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-0.5">
 			{options.map((option) => (
 				<button
 					key={option.value}
@@ -61,7 +61,7 @@ function TimeframeToggle({
 					className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
 						value === option.value
 							? 'bg-sl-accent text-on-brand'
-							: 'text-(--pro-text-secondary) hover:bg-sl-hover-bg hover:text-(--pro-text-primary)'
+							: 'text-pro-text-secondary hover:bg-sl-hover-bg hover:text-pro-text-primary'
 					}`}
 				>
 					{option.label}
@@ -292,11 +292,11 @@ export default function Revenue() {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<details className="group rounded-xl border border-(--pro-cards-border) bg-(--pro-cards-bg) transition-all hover:border-(--pro-text-label)">
-				<summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 text-base font-semibold text-(--pro-text-primary)">
+			<details className="group rounded-xl border border-pro-cards-border bg-pro-cards-bg transition-all hover:border-pro-text-label">
+				<summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 text-base font-semibold text-pro-text-primary">
 					<span>Quick Investment Thesis</span>
 					<svg
-						className="size-5 shrink-0 text-(--pro-text-label) transition-transform duration-200 group-open:rotate-180"
+						className="size-5 shrink-0 text-pro-text-label transition-transform duration-200 group-open:rotate-180"
 						fill="none"
 						stroke="currentColor"
 						viewBox="0 0 24 24"
@@ -304,7 +304,7 @@ export default function Revenue() {
 						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
 					</svg>
 				</summary>
-				<div className="flex flex-col gap-4 border-t border-(--pro-cards-border) px-5 pt-4 pb-5 text-sm leading-relaxed text-(--pro-text-secondary)">
+				<div className="flex flex-col gap-4 border-t border-pro-cards-border px-5 pt-4 pb-5 text-sm leading-relaxed text-pro-text-secondary">
 					<p>
 						The standard way to evaluate NEAR understates its traction. Base-chain metrics alone miss the majority of
 						fee-generating activity. When NEAR Intents volume is included, the annualized fee run rate as of early 2026
@@ -486,15 +486,15 @@ export default function Revenue() {
 			{data.walletBreakdown && data.walletBreakdown.length > 0 && (
 				<div className="flex flex-col gap-4">
 					<SectionHeader>Wallet Breakdown</SectionHeader>
-					<div className="overflow-x-auto rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg)">
+					<div className="overflow-x-auto rounded-lg border border-pro-cards-border bg-pro-cards-bg">
 						<table className="w-full">
 							<thead>
 								{walletTable.getHeaderGroups().map((headerGroup) => (
-									<tr key={headerGroup.id} className="border-b border-(--pro-cards-border)">
+									<tr key={headerGroup.id} className="border-b border-pro-cards-border">
 										{headerGroup.headers.map((header) => (
 											<th
 												key={header.id}
-												className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-(--pro-text-label) uppercase"
+												className="px-4 py-3 text-left text-xs font-semibold tracking-wide text-pro-text-label uppercase"
 												style={{ width: header.getSize() }}
 												onClick={header.column.getToggleSortingHandler()}
 											>
@@ -513,12 +513,9 @@ export default function Revenue() {
 							</thead>
 							<tbody>
 								{walletTable.getRowModel().rows.map((row) => (
-									<tr
-										key={row.id}
-										className="border-b border-(--pro-cards-border) last:border-b-0 hover:bg-sl-hover-bg"
-									>
+									<tr key={row.id} className="border-b border-pro-cards-border last:border-b-0 hover:bg-sl-hover-bg">
 										{row.getVisibleCells().map((cell) => (
-											<td key={cell.id} className="px-4 py-2.5 text-sm text-(--pro-text-primary)">
+											<td key={cell.id} className="px-4 py-2.5 text-sm text-pro-text-primary">
 												{typeof cell.column.columnDef.cell === 'function'
 													? cell.column.columnDef.cell(cell.getContext())
 													: (cell.getValue() as string)}
@@ -539,17 +536,17 @@ export default function Revenue() {
 						{data.metadata.faq.map((item, idx) => (
 							<details
 								key={idx}
-								className="group overflow-hidden rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) transition-all hover:border-(--pro-text-label)"
+								className="group overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg transition-all hover:border-pro-text-label"
 							>
-								<summary className="flex cursor-pointer list-none items-start justify-between gap-4 p-5 text-sm font-medium text-(--pro-text-primary) transition-colors hover:bg-sl-hover-bg">
+								<summary className="flex cursor-pointer list-none items-start justify-between gap-4 p-5 text-sm font-medium text-pro-text-primary transition-colors hover:bg-sl-hover-bg">
 									<span className="flex items-start gap-3">
-										<span className="flex size-6 shrink-0 items-center justify-center rounded-sm bg-(--pro-text-label) text-xs font-bold text-(--pro-cards-bg)">
+										<span className="flex size-6 shrink-0 items-center justify-center rounded-sm bg-pro-text-label text-xs font-bold text-pro-cards-bg">
 											{idx + 1}
 										</span>
 										<span className="pt-0.5">{item.question}</span>
 									</span>
 									<svg
-										className="mt-1 size-5 shrink-0 text-(--pro-text-label) transition-transform duration-200 group-open:rotate-180"
+										className="mt-1 size-5 shrink-0 text-pro-text-label transition-transform duration-200 group-open:rotate-180"
 										fill="none"
 										stroke="currentColor"
 										viewBox="0 0 24 24"
@@ -557,8 +554,8 @@ export default function Revenue() {
 										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
 									</svg>
 								</summary>
-								<div className="border-t border-(--pro-cards-border) bg-sl-hover-bg px-5 pt-4 pb-5">
-									<p className="pl-9 text-sm leading-relaxed text-(--pro-text-secondary)">{item.answer}</p>
+								<div className="border-t border-pro-cards-border bg-sl-hover-bg px-5 pt-4 pb-5">
+									<p className="pl-9 text-sm leading-relaxed text-pro-text-secondary">{item.answer}</p>
 								</div>
 							</details>
 						))}
@@ -567,7 +564,7 @@ export default function Revenue() {
 			)}
 
 			{data.metadata && (
-				<div className="rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4 text-xs text-(--pro-text-label)">
+				<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4 text-xs text-pro-text-label">
 					<p>
 						Data via{' '}
 						{Object.entries(data.metadata.links || {}).map(([key, url], idx, arr) => (

@@ -289,9 +289,9 @@ export const getUnifiedTableColumns = (customColumns?: CustomColumnDefinition[])
 								<span className="inline-block size-6 shrink-0" />
 							)
 						) : null}
-						<span className="font-medium text-(--pro-text-primary)">{display.label}</span>
+						<span className="font-medium text-pro-text-primary">{display.label}</span>
 						{protocolCountValue && protocolCountValue > 1 ? (
-							<span className="text-xs text-(--pro-text-tertiary)">{protocolCountValue} protocols</span>
+							<span className="text-xs text-pro-text-tertiary">{protocolCountValue} protocols</span>
 						) : null}
 					</div>
 				)

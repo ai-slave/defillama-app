@@ -268,7 +268,7 @@ function MyArticlesContent() {
 							onClick={() => setSectionFilter('all')}
 							className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${
 								sectionFilter === 'all'
-									? 'border-link/40 bg-(--research-link-button-bg) text-link'
+									? 'border-link/40 bg-research-link-button-bg text-link'
 									: 'border-medium text-tertiary hover:text-primary'
 							}`}
 						>
@@ -283,7 +283,7 @@ function MyArticlesContent() {
 									onClick={() => setSectionFilter(active ? 'all' : section)}
 									className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${
 										active
-											? 'border-link/40 bg-(--research-link-button-bg) text-link'
+											? 'border-link/40 bg-research-link-button-bg text-link'
 											: 'border-medium text-tertiary hover:text-primary'
 									}`}
 								>
@@ -344,13 +344,13 @@ function MyArticlesContent() {
 							return (
 								<li
 									key={article.id}
-									className="group relative grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3.5 transition-colors hover:bg-(--research-link-hover-bg)"
+									className="group relative grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3.5 transition-colors hover:bg-research-link-hover-bg"
 								>
 									<span
 										aria-hidden
 										className={`absolute top-2 bottom-2 left-0 w-[2px] rounded-r ${
 											scheduled
-												? 'bg-(--research-blue)/70'
+												? 'bg-research-blue/70'
 												: article.status === 'draft'
 													? 'bg-warning/70'
 													: 'bg-transparent'
@@ -364,14 +364,14 @@ function MyArticlesContent() {
 											</h3>
 											{scheduled ? (
 												<span
-													className="rounded-sm bg-(--research-link-button-bg) px-1.5 py-0.5 font-jetbrains text-[10px] tracking-[0.12em] text-link uppercase"
+													className="rounded-sm bg-research-link-button-bg px-1.5 py-0.5 font-jetbrains text-[10px] tracking-[0.12em] text-link uppercase"
 													title={`Goes live ${formatArticleDate(article.goLiveAt)}`}
 												>
 													Scheduled
 												</span>
 											) : null}
 											{article.viewerRole === 'collaborator' ? (
-												<span className="rounded-sm bg-(--research-link-button-bg) px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-link uppercase">
+												<span className="rounded-sm bg-research-link-button-bg px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-link uppercase">
 													Co-author
 												</span>
 											) : null}

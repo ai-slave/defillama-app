@@ -16,7 +16,7 @@ export function CoverDetailsDialog({ article, publishErrors, store, updateCoverF
 		<Ariakit.Dialog
 			store={store}
 			backdrop={
-				<div className="fixed inset-0 z-40 bg-ai-backdrop-soft opacity-0 backdrop-blur-sm transition-opacity duration-150 data-[enter]:opacity-100 data-[leave]:opacity-0" />
+				<div className="fixed inset-0 z-40 bg-research-backdrop-soft opacity-0 backdrop-blur-sm transition-opacity duration-150 data-[enter]:opacity-100 data-[leave]:opacity-0" />
 			}
 			className="fixed top-1/2 left-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-medium bg-surface p-5 opacity-0 shadow-2xl transition-opacity duration-150 data-[enter]:opacity-100"
 		>
@@ -29,7 +29,7 @@ export function CoverDetailsDialog({ article, publishErrors, store, updateCoverF
 				</div>
 				<Ariakit.DialogDismiss
 					aria-label="Close"
-					className="rounded-md p-1.5 text-secondary hover:bg-(--research-link-hover-bg)"
+					className="rounded-md p-1.5 text-secondary hover:bg-research-link-hover-bg"
 				>
 					<Icon name="x" className="size-4" />
 				</Ariakit.DialogDismiss>
@@ -113,7 +113,7 @@ export function DeleteArticleDialog({
 		<Ariakit.Dialog
 			store={store}
 			backdrop={
-				<div className="fixed inset-0 z-40 bg-ai-backdrop-soft opacity-0 backdrop-blur-sm transition-opacity duration-150 data-[enter]:opacity-100 data-[leave]:opacity-0" />
+				<div className="fixed inset-0 z-40 bg-research-backdrop-soft opacity-0 backdrop-blur-sm transition-opacity duration-150 data-[enter]:opacity-100 data-[leave]:opacity-0" />
 			}
 			className="fixed top-1/2 left-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-medium bg-surface p-5 opacity-0 shadow-2xl transition-opacity duration-150 data-[enter]:opacity-100"
 		>
@@ -143,7 +143,7 @@ export function DeleteArticleDialog({
 			<div className="mt-5 flex justify-end gap-2">
 				<Ariakit.DialogDismiss
 					disabled={isPending}
-					className="flex h-9 items-center rounded-md border border-medium bg-transparent px-3 text-xs font-medium text-secondary transition-colors hover:bg-(--research-link-hover-bg) hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+					className="flex h-9 items-center rounded-md border border-medium bg-transparent px-3 text-xs font-medium text-secondary transition-colors hover:bg-research-link-hover-bg hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					Cancel
 				</Ariakit.DialogDismiss>
@@ -151,7 +151,7 @@ export function DeleteArticleDialog({
 					type="button"
 					onClick={confirmDeleteArticle}
 					disabled={isPending}
-					className="flex h-9 items-center gap-1.5 rounded-md bg-ai-error px-3.5 text-xs font-medium text-on-brand shadow-danger transition-colors hover:bg-error disabled:cursor-not-allowed disabled:opacity-60"
+					className="flex h-9 items-center gap-1.5 rounded-md bg-research-error px-3.5 text-xs font-medium text-on-brand shadow-danger transition-colors hover:bg-error disabled:cursor-not-allowed disabled:opacity-60"
 				>
 					<Icon name="trash" className="size-3.5" />
 					<span>{isPending ? 'Deleting…' : 'Delete'}</span>

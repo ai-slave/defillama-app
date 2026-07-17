@@ -133,17 +133,17 @@ export function CreateDashboardPicker({ dialogStore, onCreate, comparisonPreset 
 		return (
 			<Ariakit.Dialog
 				store={dialogStore}
-				className="dialog w-full max-w-lg gap-0 border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) p-0 shadow-2xl"
+				className="dialog w-full max-w-lg gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-0 shadow-2xl"
 			>
-				<div className="flex items-center gap-2 border-b border-(--pro-cards-border) px-6 py-4">
+				<div className="flex items-center gap-2 border-b border-pro-cards-border px-6 py-4">
 					<button
 						type="button"
 						onClick={handleBackToPicker}
-						className="rounded-md p-1 text-(--pro-text-tertiary) transition-colors hover:text-(--pro-text-primary)"
+						className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
 					>
 						<Icon name="arrow-left" height={18} width={18} />
 					</button>
-					<h2 className="text-lg font-semibold text-(--pro-text-primary)">Create New Dashboard</h2>
+					<h2 className="text-lg font-semibold text-pro-text-primary">Create New Dashboard</h2>
 				</div>
 				<CreateDashboardModalContent onCreate={handleCreateFromScratch} />
 			</Ariakit.Dialog>
@@ -154,22 +154,22 @@ export function CreateDashboardPicker({ dialogStore, onCreate, comparisonPreset 
 		return (
 			<Ariakit.Dialog
 				store={dialogStore}
-				className="dialog w-full max-w-4xl gap-0 border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) p-0 shadow-2xl"
+				className="dialog w-full max-w-4xl gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-0 shadow-2xl"
 			>
-				<div className="flex items-center justify-between border-b border-(--pro-cards-border) px-6 py-4">
+				<div className="flex items-center justify-between border-b border-pro-cards-border px-6 py-4">
 					<div className="flex items-center gap-2">
 						<button
 							type="button"
 							onClick={handleBackToPicker}
-							className="rounded-md p-1 text-(--pro-text-tertiary) transition-colors hover:text-(--pro-text-primary)"
+							className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
 						>
 							<Icon name="arrow-left" height={18} width={18} />
 						</button>
-						<h2 className="text-lg font-semibold text-(--pro-text-primary)">Create Comparison Dashboard</h2>
+						<h2 className="text-lg font-semibold text-pro-text-primary">Create Comparison Dashboard</h2>
 					</div>
 					<Ariakit.DialogDismiss
 						onClick={handleClose}
-						className="rounded-md p-1 text-(--pro-text-tertiary) transition-colors hover:text-(--pro-text-primary)"
+						className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
 					>
 						<Icon name="x" height={20} width={20} />
 					</Ariakit.DialogDismiss>
@@ -190,20 +190,20 @@ export function CreateDashboardPicker({ dialogStore, onCreate, comparisonPreset 
 	return (
 		<Ariakit.Dialog
 			store={dialogStore}
-			className="dialog w-full max-w-3xl gap-0 border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) p-6 shadow-2xl"
+			className="dialog w-full max-w-3xl gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-6 shadow-2xl"
 		>
 			<div className="mb-6 flex items-center justify-between">
-				<h2 className="text-xl font-semibold text-(--pro-text-primary)">Create New Dashboard</h2>
+				<h2 className="text-xl font-semibold text-pro-text-primary">Create New Dashboard</h2>
 				<Ariakit.DialogDismiss
 					onClick={handleClose}
-					className="rounded-md p-1 text-(--pro-text-tertiary) transition-colors hover:text-(--pro-text-primary)"
+					className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
 				>
 					<Icon name="x" height={20} width={20} />
 					<span className="sr-only">Close dialog</span>
 				</Ariakit.DialogDismiss>
 			</div>
 
-			<p className="mb-6 text-sm text-(--pro-text-secondary)">How would you like to create your dashboard?</p>
+			<p className="mb-6 text-sm text-pro-text-secondary">How would you like to create your dashboard?</p>
 
 			<div className="grid gap-4 sm:grid-cols-2">
 				<button
@@ -212,14 +212,14 @@ export function CreateDashboardPicker({ dialogStore, onCreate, comparisonPreset 
 						setComparisonPresetHandled(true)
 						setMode('scratch')
 					}}
-					className="flex flex-col items-center gap-4 rounded-xl border-2 border-(--pro-cards-border) bg-(--pro-cards-bg) p-6 text-center transition-all hover:border-brand/40"
+					className="flex flex-col items-center gap-4 rounded-xl border-2 border-pro-cards-border bg-pro-cards-bg p-6 text-center transition-all hover:border-brand/40"
 				>
-					<div className="flex size-14 items-center justify-center rounded-2xl text-(--pro-text-secondary)">
+					<div className="flex size-14 items-center justify-center rounded-2xl text-pro-text-secondary">
 						<Icon name="file-plus" height={28} width={28} />
 					</div>
 					<div>
-						<h3 className="text-base font-semibold text-(--pro-text-primary)">From Scratch</h3>
-						<p className="mt-1 text-sm text-(--pro-text-tertiary)">Create an empty dashboard and add charts manually</p>
+						<h3 className="text-base font-semibold text-pro-text-primary">From Scratch</h3>
+						<p className="mt-1 text-sm text-pro-text-tertiary">Create an empty dashboard and add charts manually</p>
 					</div>
 				</button>
 
@@ -229,30 +229,30 @@ export function CreateDashboardPicker({ dialogStore, onCreate, comparisonPreset 
 						setComparisonPresetHandled(true)
 						setMode('comparison')
 					}}
-					className="flex flex-col items-center gap-4 rounded-xl border-2 border-(--pro-cards-border) bg-(--pro-cards-bg) p-6 text-center transition-all hover:border-brand/40"
+					className="flex flex-col items-center gap-4 rounded-xl border-2 border-pro-cards-border bg-pro-cards-bg p-6 text-center transition-all hover:border-brand/40"
 				>
 					<div className="flex size-14 items-center justify-center rounded-2xl bg-brand/10 text-brand">
 						<Icon name="bar-chart-2" height={28} width={28} />
 					</div>
 					<div>
-						<h3 className="text-base font-semibold text-(--pro-text-primary)">Comparison</h3>
-						<p className="mt-1 text-sm text-(--pro-text-tertiary)">Compare chains or protocols with pre-built charts</p>
+						<h3 className="text-base font-semibold text-pro-text-primary">Comparison</h3>
+						<p className="mt-1 text-sm text-pro-text-tertiary">Compare chains or protocols with pre-built charts</p>
 					</div>
 				</button>
 			</div>
 
-			<div className="mt-6 border-t border-(--pro-cards-border) pt-6">
-				<h3 className="mb-3 text-sm font-medium text-(--pro-text-secondary)">Or use a template</h3>
+			<div className="mt-6 border-t border-pro-cards-border pt-6">
+				<h3 className="mb-3 text-sm font-medium text-pro-text-secondary">Or use a template</h3>
 				<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
 					{DASHBOARD_TEMPLATES.map((template) => (
 						<button
 							key={template.id}
 							type="button"
 							onClick={() => handleCreateFromTemplate(template)}
-							className="rounded-lg border border-(--pro-cards-border) p-2.5 text-left transition-colors hover:border-brand/40"
+							className="rounded-lg border border-pro-cards-border p-2.5 text-left transition-colors hover:border-brand/40"
 						>
-							<div className="text-sm font-medium text-(--pro-text-primary)">{template.name}</div>
-							<div className="mt-0.5 line-clamp-1 text-xs text-(--pro-text-tertiary)">{template.description}</div>
+							<div className="text-sm font-medium text-pro-text-primary">{template.name}</div>
+							<div className="mt-0.5 line-clamp-1 text-xs text-pro-text-tertiary">{template.description}</div>
 						</button>
 					))}
 				</div>
@@ -319,7 +319,7 @@ function CreateDashboardModalContent({
 		<form className="p-6" onSubmit={handleCreate}>
 			<div className="space-y-6">
 				<div>
-					<label htmlFor="create-dashboard-name" className="mb-3 block text-sm font-medium text-(--pro-text-primary)">
+					<label htmlFor="create-dashboard-name" className="mb-3 block text-sm font-medium text-pro-text-primary">
 						Dashboard Name
 					</label>
 					<input
@@ -328,13 +328,13 @@ function CreateDashboardModalContent({
 						type="text"
 						onInput={(e) => e.currentTarget.setCustomValidity('')}
 						placeholder="Enter dashboard name"
-						className="w-full rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-3 py-2 placeholder:text-(--pro-text-tertiary) focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-3 py-2 placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 						required
 					/>
 				</div>
 
 				<div>
-					<p id="create-dashboard-visibility" className="mb-3 block text-sm font-medium text-(--pro-text-primary)">
+					<p id="create-dashboard-visibility" className="mb-3 block text-sm font-medium text-pro-text-primary">
 						Visibility
 					</p>
 					<div className="flex gap-3" role="group" aria-labelledby="create-dashboard-visibility">
@@ -344,7 +344,7 @@ function CreateDashboardModalContent({
 							className={`flex flex-1 items-center justify-center gap-2 rounded-md border px-4 py-3 transition-colors ${
 								visibility === 'public'
 									? 'border-brand bg-brand/10 font-medium text-brand'
-									: 'border-(--pro-form-control-border) text-(--pro-text-secondary) hover:border-brand/40'
+									: 'border-pro-form-control-border text-pro-text-secondary hover:border-brand/40'
 							}`}
 						>
 							<Icon name="earth" height={16} width={16} />
@@ -358,8 +358,8 @@ function CreateDashboardModalContent({
 								visibility === 'private'
 									? 'border-brand bg-brand/10 font-medium text-brand'
 									: !hasActiveSubscription
-										? 'cursor-not-allowed border-(--pro-form-control-border) text-(--pro-text-tertiary) opacity-50'
-										: 'border-(--pro-form-control-border) text-(--pro-text-secondary) hover:border-brand/40'
+										? 'cursor-not-allowed border-pro-form-control-border text-pro-text-tertiary opacity-50'
+										: 'border-pro-form-control-border text-pro-text-secondary hover:border-brand/40'
 							}`}
 						>
 							<Icon name={hasActiveSubscription ? 'key' : 'file-lock-2'} height={16} width={16} />
@@ -368,18 +368,15 @@ function CreateDashboardModalContent({
 						</button>
 					</div>
 					{visibility === 'public' ? (
-						<p className="mt-2 text-sm text-(--pro-text-tertiary)">Public dashboards are visible in the Discover tab</p>
+						<p className="mt-2 text-sm text-pro-text-tertiary">Public dashboards are visible in the Discover tab</p>
 					) : null}
 					{!hasActiveSubscription ? (
-						<p className="mt-2 text-xs text-(--pro-text-tertiary)">Upgrade to Pro to create private dashboards</p>
+						<p className="mt-2 text-xs text-pro-text-tertiary">Upgrade to Pro to create private dashboards</p>
 					) : null}
 				</div>
 
 				<div>
-					<label
-						htmlFor="create-dashboard-tag-input"
-						className="mb-3 block text-sm font-medium text-(--pro-text-primary)"
-					>
+					<label htmlFor="create-dashboard-tag-input" className="mb-3 block text-sm font-medium text-pro-text-primary">
 						Tags
 					</label>
 					<div className="flex gap-2">
@@ -389,7 +386,7 @@ function CreateDashboardModalContent({
 							type="text"
 							onKeyDown={handleTagInputKeyDown}
 							placeholder="Enter tag name"
-							className="flex-1 rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-3 py-2 placeholder:text-(--pro-text-tertiary) focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+							className="flex-1 rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-3 py-2 placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 						/>
 						<button
 							type="button"
@@ -399,20 +396,20 @@ function CreateDashboardModalContent({
 							Add Tag
 						</button>
 					</div>
-					<p className="mt-2 text-xs text-(--pro-text-tertiary)">Press Enter to add tag</p>
+					<p className="mt-2 text-xs text-pro-text-tertiary">Press Enter to add tag</p>
 					{tags.length > 0 ? (
 						<div className="mt-3 flex flex-wrap gap-2">
 							{tags.map((tag) => (
 								<span
 									key={tag}
-									className="flex items-center gap-1 rounded-md border border-(--pro-cards-border) px-3 py-1 text-sm text-(--pro-text-secondary)"
+									className="flex items-center gap-1 rounded-md border border-pro-cards-border px-3 py-1 text-sm text-pro-text-secondary"
 								>
 									{tag}
 									<button
 										type="button"
 										onClick={() => handleRemoveTag(tag)}
 										aria-label={`Remove tag ${tag}`}
-										className="text-(--pro-text-tertiary) hover:text-brand"
+										className="text-pro-text-tertiary hover:text-brand"
 									>
 										<Icon name="x" height={12} width={12} />
 									</button>
@@ -425,7 +422,7 @@ function CreateDashboardModalContent({
 				<div>
 					<label
 						htmlFor="create-dashboard-description"
-						className="mb-3 block text-sm font-medium text-(--pro-text-primary)"
+						className="mb-3 block text-sm font-medium text-pro-text-primary"
 					>
 						Description
 					</label>
@@ -438,9 +435,9 @@ function CreateDashboardModalContent({
 						placeholder="Describe your dashboard..."
 						maxLength={200}
 						rows={3}
-						className="w-full resize-none rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-3 py-2 placeholder:text-(--pro-text-tertiary) focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="w-full resize-none rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-3 py-2 placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					/>
-					<p className="mt-1 text-xs text-(--pro-text-tertiary)">
+					<p className="mt-1 text-xs text-pro-text-tertiary">
 						<span ref={charCountRef}>0</span>/200 characters
 					</p>
 				</div>
@@ -449,7 +446,7 @@ function CreateDashboardModalContent({
 			<div className="mt-8 flex gap-3">
 				<Ariakit.DialogDismiss
 					type="button"
-					className="flex-1 rounded-md border border-(--pro-form-control-border) px-4 py-2 text-(--pro-text-secondary) transition-colors hover:text-(--pro-text-primary)"
+					className="flex-1 rounded-md border border-pro-form-control-border px-4 py-2 text-pro-text-secondary transition-colors hover:text-pro-text-primary"
 				>
 					Cancel
 				</Ariakit.DialogDismiss>

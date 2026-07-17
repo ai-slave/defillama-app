@@ -29,7 +29,6 @@
 	--animate-wiggle: wiggle 300ms ease-out;
 	--animate-slidein: slidein 300ms ease-out;
 	--animate-fadein: fadein 180ms ease-out;
-	--animate-ai-glow: ai-glow 3s ease-in-out infinite;
 	--animate-shimmer: shimmer 2s ease-in-out infinite;
 
 	/* Elevation/effect shadows frozen from the audited arbitrary values */
@@ -130,21 +129,6 @@
 		to {
 			opacity: 1;
 			transform: translateY(-100%);
-		}
-	}
-	@keyframes ai-glow {
-		0%,
-		100% {
-			box-shadow:
-				0 0 4px rgba(91, 133, 255, 0.2),
-				0 0 8px rgba(91, 133, 255, 0.15),
-				0 0 12px rgba(91, 133, 255, 0.1);
-		}
-		50% {
-			box-shadow:
-				0 0 8px rgba(91, 133, 255, 0.3),
-				0 0 16px rgba(91, 133, 255, 0.2),
-				0 0 20px rgba(91, 133, 255, 0.15);
 		}
 	}
 }
@@ -401,12 +385,8 @@
 		--interim-brand-tint-hover: #1f67d233;
 
 		/* Yields v2 APY tiers (light). The top tier is intentionally red: a very-high APY reads as a risk signal. */
-		--apy-zero: #9c9c9c;
-		--apy-low: #636363;
 		--apy-mid: #089981;
-		--apy-high: #22ab94;
 		--apy-very: #f23645;
-		--apy-reward: #f57f17; /* token incentives */
 		/* Text counterparts stay in the same product hues but meet AA on page,
 		   surface, and elevated-1. Chart accents above remain unchanged. */
 		--yield-positive-text: #067565;
@@ -428,12 +408,8 @@
 
 	html.dark {
 		/* Yields v2 APY tiers (dark) */
-		--apy-zero: #707070;
-		--apy-low: #9c9c9c;
 		--apy-mid: #22ab94;
-		--apy-high: #70ccbd;
 		--apy-very: #f7525f;
-		--apy-reward: #ffa726;
 		--yield-positive-text: #22ab94;
 		--yield-negative-text: #f7525f;
 		--yield-warning-text: #ffa455;

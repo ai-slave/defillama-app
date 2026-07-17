@@ -111,7 +111,7 @@ export function LlamaAIChartPickerDialog({
 							type="button"
 							disabled={!!insertingId}
 							onClick={() => void handleInsert(item)}
-							className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm transition-colors hover:bg-ai-wash disabled:opacity-60"
+							className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm transition-colors hover:bg-research-wash disabled:opacity-60"
 						>
 							<Icon name="bar-chart-2" height={15} width={15} className="shrink-0 opacity-60" />
 							<span className="min-w-0 flex-1">
@@ -123,7 +123,7 @@ export function LlamaAIChartPickerDialog({
 							{item.frozen ? (
 								<span
 									title="Data frozen at save time — never auto-refreshes"
-									className="shrink-0 rounded-full bg-(--research-blue)/10 px-2 py-0.5 text-[10px] text-(--research-blue-deep) dark:text-(--research-blue-soft)"
+									className="shrink-0 rounded-full bg-research-blue/10 px-2 py-0.5 text-[10px] text-research-blue-deep dark:text-research-blue-soft"
 								>
 									frozen
 								</span>

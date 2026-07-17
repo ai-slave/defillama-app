@@ -43,7 +43,7 @@ function TabBtns({
 					className={`rounded-sm px-3 py-1 text-xs font-medium transition-colors ${
 						active === o.id
 							? 'bg-sl-accent text-on-brand'
-							: 'border border-(--pro-cards-border) bg-(--pro-cards-bg) text-(--pro-text-secondary) hover:text-(--pro-text-primary)'
+							: 'border border-pro-cards-border bg-pro-cards-bg text-pro-text-secondary hover:text-pro-text-primary'
 					}`}
 				>
 					{o.label}
@@ -133,7 +133,7 @@ export default function Incentives() {
 				{poolSeries.length ? (
 					<MultiSeriesChart key={poolTab} series={poolSeries as any} valueSymbol="$" height="360px" />
 				) : (
-					<div className="px-2 py-6 text-xs text-(--pro-text-secondary)">No weekly pool data</div>
+					<div className="px-2 py-6 text-xs text-pro-text-secondary">No weekly pool data</div>
 				)}
 			</ChartCard>
 

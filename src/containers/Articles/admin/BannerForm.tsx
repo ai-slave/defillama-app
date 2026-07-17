@@ -328,9 +328,7 @@ export function BannerForm({ banner }: Props) {
 						<label
 							key={kind}
 							className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
-								state.kind === kind
-									? 'border-link/60 bg-(--research-link-button-bg)'
-									: 'border-medium hover:border-link/40'
+								state.kind === kind ? 'border-link/60 bg-research-link-button-bg' : 'border-medium hover:border-link/40'
 							}`}
 						>
 							<input
@@ -384,7 +382,7 @@ export function BannerForm({ banner }: Props) {
 								key={scope}
 								className={`flex cursor-pointer items-start gap-3 rounded-md border px-4 py-3 transition-colors ${
 									state.scope === scope
-										? 'border-link/60 bg-(--research-link-button-bg)'
+										? 'border-link/60 bg-research-link-button-bg'
 										: 'border-medium hover:border-link/40'
 								}`}
 							>
@@ -448,7 +446,7 @@ export function BannerForm({ banner }: Props) {
 										<Ariakit.SelectItem
 											key={section}
 											value={section}
-											className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-secondary data-active-item:bg-(--research-link-button-bg) data-active-item:text-link"
+											className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-secondary data-active-item:bg-research-link-button-bg data-active-item:text-link"
 										>
 											<span className="truncate">{ARTICLE_SECTION_LABELS[section]}</span>
 											<Ariakit.SelectItemCheck className="shrink-0 text-link" />
@@ -837,7 +835,7 @@ function ImagePreview({ banner }: { banner: Banner }) {
 
 function TextPreviewInner({ banner }: { banner: Banner }) {
 	return (
-		<div className="flex w-full items-center gap-3 bg-(--research-banner) px-4 py-2.5 text-on-brand">
+		<div className="flex w-full items-center gap-3 bg-research-banner px-4 py-2.5 text-on-brand">
 			<div className="flex flex-1 items-center justify-center">
 				<p className="m-0 text-center font-jetbrains text-[11px] font-semibold tracking-[0.18em] uppercase">
 					<span>{banner.text}</span>

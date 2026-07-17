@@ -298,7 +298,7 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 							}
 						/>
 					</div>
-					<p className="mt-2 text-sm text-(--pro-text-tertiary)">Select up to 4 tokens for comparison (max 4)</p>
+					<p className="mt-2 text-sm text-pro-text-tertiary">Select up to 4 tokens for comparison (max 4)</p>
 				</div>
 			</div>
 		)
@@ -358,22 +358,22 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 			{tokenSymbols.length === 1 ? (
 				<div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-4">
 					<div className="border border-subtle p-3">
-						<div className="mb-1 text-xs text-(--pro-text-tertiary)">Total Value</div>
+						<div className="mb-1 text-xs text-pro-text-tertiary">Total Value</div>
 						<div className="text-lg font-semibold pro-text1">{formattedNum(totalAmount, true)}</div>
 					</div>
 					<div className="border border-subtle p-3">
-						<div className="mb-1 text-xs text-(--pro-text-tertiary)">Protocols</div>
+						<div className="mb-1 text-xs text-pro-text-tertiary">Protocols</div>
 						<div className="text-lg font-semibold pro-text1">{protocolCount}</div>
 					</div>
 					<div className="border border-subtle p-3">
-						<div className="mb-1 text-xs text-(--pro-text-tertiary)">Top Category</div>
+						<div className="mb-1 text-xs text-pro-text-tertiary">Top Category</div>
 						<div className="text-lg font-semibold pro-text1">{topCategories[0] ? topCategories[0][0] : '-'}</div>
-						<div className="text-xs text-(--pro-text-tertiary)">
+						<div className="text-xs text-pro-text-tertiary">
 							{topCategories[0] ? `${topCategories[0][1].count} protocols` : ''}
 						</div>
 					</div>
 					<div className="border border-subtle p-3">
-						<div className="mb-1 text-xs text-(--pro-text-tertiary)">Avg per Protocol</div>
+						<div className="mb-1 text-xs text-pro-text-tertiary">Avg per Protocol</div>
 						<div className="text-lg font-semibold pro-text1">
 							{protocolCount > 0 ? formattedNum(totalAmount / protocolCount, true) : '-'}
 						</div>
@@ -384,16 +384,16 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 					<div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
 						{tokenSymbols.map((symbol) => (
 							<div key={symbol} className="border border-subtle p-3">
-								<div className="mb-1 text-xs text-(--pro-text-tertiary)">{symbol.toUpperCase()} Value</div>
+								<div className="mb-1 text-xs text-pro-text-tertiary">{symbol.toUpperCase()} Value</div>
 								<div className="text-lg font-semibold pro-text1">
 									{tokenStats && tokenStats[symbol] ? formattedNum(tokenStats[symbol].total, true) : '$0'}
 								</div>
-								<div className="text-xs text-(--pro-text-tertiary)">
+								<div className="text-xs text-pro-text-tertiary">
 									{tokenStats && tokenStats[symbol] ? `${tokenStats[symbol].protocols} protocols` : '0 protocols'}
 								</div>
 								<div className="mt-2">
 									<div className="mb-1 flex items-center justify-between">
-										<span className="text-xs text-(--pro-text-tertiary)">Share</span>
+										<span className="text-xs text-pro-text-tertiary">Share</span>
 										<span className="text-xs font-medium">
 											{tokenStats && tokenStats[symbol] && totalAmount > 0
 												? `${((tokenStats[symbol].total / totalAmount) * 100).toFixed(1)}%`
@@ -418,17 +418,17 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 
 						{tokenSymbols.length <= 2 ? (
 							<div className="border border-subtle p-3">
-								<div className="mb-1 text-xs text-(--pro-text-tertiary)">Total Combined</div>
+								<div className="mb-1 text-xs text-pro-text-tertiary">Total Combined</div>
 								<div className="text-lg font-semibold pro-text1">{formattedNum(totalAmount, true)}</div>
-								<div className="text-xs text-(--pro-text-tertiary)">All tokens</div>
+								<div className="text-xs text-pro-text-tertiary">All tokens</div>
 							</div>
 						) : null}
 
 						{tokenSymbols.length <= 3 ? (
 							<div className="border border-subtle p-3">
-								<div className="mb-1 text-xs text-(--pro-text-tertiary)">Unique Protocols</div>
+								<div className="mb-1 text-xs text-pro-text-tertiary">Unique Protocols</div>
 								<div className="text-lg font-semibold pro-text1">{protocolCount}</div>
-								<div className="text-xs text-(--pro-text-tertiary)">
+								<div className="text-xs text-pro-text-tertiary">
 									{(() => {
 										const overlap = rawData.filter((p) => p.tokens && Object.keys(p.tokens).length > 1).length
 										return overlap > 0 ? `${overlap} use multiple` : 'Total count'
@@ -440,14 +440,14 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 
 					{protocolOverlap ? (
 						<div className="mb-4 border border-subtle p-3">
-							<div className="mb-2 text-xs text-(--pro-text-tertiary)">Protocol Distribution</div>
+							<div className="mb-2 text-xs text-pro-text-tertiary">Protocol Distribution</div>
 							<div className="flex flex-wrap items-center gap-4">
 								<div className="flex items-center gap-2">
 									<div className="size-3 bg-brand" />
 									<span className="text-sm">
 										<span className="font-semibold">{protocolOverlap.shared}</span>
-										<span className="text-(--pro-text-tertiary)"> shared</span>
-										<span className="text-xs text-(--pro-text-tertiary)">
+										<span className="text-pro-text-tertiary"> shared</span>
+										<span className="text-xs text-pro-text-tertiary">
 											{' '}
 											({((protocolOverlap.shared / protocolCount) * 100).toFixed(0)}%)
 										</span>
@@ -465,12 +465,12 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 										/>
 										<span className="text-sm">
 											<span className="font-semibold">{protocolOverlap[`${symbol}_only`] || 0}</span>
-											<span className="text-(--pro-text-tertiary)"> {symbol.toUpperCase()} only</span>
+											<span className="text-pro-text-tertiary"> {symbol.toUpperCase()} only</span>
 										</span>
 									</div>
 								))}
 
-								<div className="ml-auto text-sm text-(--pro-text-tertiary)">Total: {protocolCount} protocols</div>
+								<div className="ml-auto text-sm text-pro-text-tertiary">Total: {protocolCount} protocols</div>
 							</div>
 						</div>
 					) : null}
@@ -523,14 +523,14 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 						<div className="order-1 flex items-center gap-2 sm:order-2 sm:gap-3">
 							<button
 								type="button"
-								className="flex h-[38px] items-center gap-2 border border-subtle px-2 text-sm transition-colors hover:border-(--pro-text-tertiary) sm:px-3"
+								className="flex h-[38px] items-center gap-2 border border-subtle px-2 text-sm transition-colors hover:border-pro-text-tertiary sm:px-3"
 								onClick={handleIncludeCexChange}
 							>
 								<div className="relative size-4">
 									<input type="checkbox" checked={includeCex} readOnly className="sr-only" />
 									<div
 										className={`size-4 border-2 transition-all ${
-											includeCex ? 'border-brand bg-brand' : 'border-(--pro-text-tertiary) bg-transparent'
+											includeCex ? 'border-brand bg-brand' : 'border-pro-text-tertiary bg-transparent'
 										}`}
 									>
 										{includeCex ? (
@@ -554,7 +554,7 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 							</button>
 							<ProTableCSVButton
 								onClick={downloadCSV}
-								className="flex h-[38px] items-center gap-2 border pro-border bg-surface px-3 text-sm text-(--pro-text-primary) transition-colors hover:bg-surface-elevated-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#070e0f]"
+								className="flex h-[38px] items-center gap-2 border pro-border bg-surface px-3 text-sm text-pro-text-primary transition-colors hover:bg-surface-elevated-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#070e0f]"
 							/>
 						</div>
 					</div>
@@ -569,7 +569,7 @@ export default function TokenUsageDataset({ config, onConfigChange }: TokenUsage
 			</div>
 
 			<div className="relative min-h-0 w-full flex-1 overflow-x-auto overflow-y-auto" style={{ height: '100%' }}>
-				<table className="min-w-full border-collapse text-sm text-(--pro-text-primary)">
+				<table className="min-w-full border-collapse text-sm text-pro-text-primary">
 					<thead>
 						{table.getHeaderGroups().map((headerGroup) => (
 							<tr key={headerGroup.id}>

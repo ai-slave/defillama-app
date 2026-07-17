@@ -78,7 +78,7 @@ export const ResearchSpotlight: React.FC<ResearchSpotlightProps> = ({ title, art
 						<div className="flex grow flex-col py-4">
 							<div
 								className={clsx(
-									'font-semibold text-(--research-navy-soft) group-hover:text-(--research-navy-soft) group-hover:opacity-70 dark:text-ai-primary dark:group-hover:text-on-brand/70',
+									'font-semibold text-research-navy-soft group-hover:text-research-navy-soft group-hover:opacity-70 dark:text-research-ink dark:group-hover:text-on-brand/70',
 									count === 5 || count === 6
 										? 'line-clamp-4 text-base leading-[120%]'
 										: 'line-clamp-3 text-base leading-[150%] lg:text-lg'
@@ -86,7 +86,7 @@ export const ResearchSpotlight: React.FC<ResearchSpotlightProps> = ({ title, art
 							>
 								{article.title}
 							</div>
-							<time className="mt-2.5 hidden text-sm font-medium text-secondary lg:block dark:text-ai-primary">
+							<time className="mt-2.5 hidden text-sm font-medium text-secondary lg:block dark:text-research-ink">
 								{formatDate(article.displayDate ?? article.publishedAt)}
 							</time>
 						</div>

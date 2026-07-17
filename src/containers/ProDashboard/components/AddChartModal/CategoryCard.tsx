@@ -95,7 +95,7 @@ function CategoryCard({ card, onClick }: CategoryCardProps) {
 				{card.tags.map((tag) => (
 					<span
 						key={tag}
-						className="rounded-full border border-(--pro-switch-border) px-2.5 py-1 text-xs text-(--pro-text-secondary)"
+						className="rounded-full border border-pro-switch-border px-2.5 py-1 text-xs text-pro-text-secondary"
 					>
 						{tag}
 					</span>

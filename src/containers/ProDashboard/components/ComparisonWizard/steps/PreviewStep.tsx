@@ -80,10 +80,7 @@ export function PreviewStep() {
 		<div className="grid grid-cols-2 items-start gap-5">
 			<div className="flex flex-col gap-3">
 				<div>
-					<label
-						htmlFor="comparison-dashboard-name"
-						className="mb-1 block text-sm font-medium text-(--pro-text-primary)"
-					>
+					<label htmlFor="comparison-dashboard-name" className="mb-1 block text-sm font-medium text-pro-text-primary">
 						Dashboard Name <span className="text-error">*</span>
 					</label>
 					<input
@@ -92,13 +89,13 @@ export function PreviewStep() {
 						value={state.dashboardName}
 						onChange={(e) => actions.setDashboardName(e.target.value)}
 						placeholder="Enter dashboard name"
-						className="w-full rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-3 py-1.5 text-sm placeholder:text-(--pro-text-tertiary) focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-3 py-1.5 text-sm placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					/>
 				</div>
 
 				<div className="flex items-center gap-3">
 					<div className="flex-1">
-						<p className="mb-1 block text-sm font-medium text-(--pro-text-primary)">Visibility</p>
+						<p className="mb-1 block text-sm font-medium text-pro-text-primary">Visibility</p>
 						<div className="flex gap-1.5">
 							<button
 								type="button"
@@ -106,7 +103,7 @@ export function PreviewStep() {
 								className={`flex flex-1 items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors ${
 									state.visibility === 'public'
 										? 'border-brand bg-brand/10 text-brand'
-										: 'border-(--pro-form-control-border) text-(--pro-text-secondary) hover:border-brand/40'
+										: 'border-pro-form-control-border text-pro-text-secondary hover:border-brand/40'
 								}`}
 							>
 								<Icon name="earth" height={12} width={12} />
@@ -120,8 +117,8 @@ export function PreviewStep() {
 									state.visibility === 'private'
 										? 'border-brand bg-brand/10 text-brand'
 										: !hasActiveSubscription
-											? 'cursor-not-allowed border-(--pro-form-control-border) text-(--pro-text-tertiary) opacity-50'
-											: 'border-(--pro-form-control-border) text-(--pro-text-secondary) hover:border-brand/40'
+											? 'cursor-not-allowed border-pro-form-control-border text-pro-text-tertiary opacity-50'
+											: 'border-pro-form-control-border text-pro-text-secondary hover:border-brand/40'
 								}`}
 							>
 								<Icon name={hasActiveSubscription ? 'key' : 'file-lock-2'} height={12} width={12} />
@@ -148,10 +145,7 @@ export function PreviewStep() {
 				</div>
 
 				<div>
-					<label
-						htmlFor="comparison-dashboard-tags"
-						className="mb-1 block text-sm font-medium text-(--pro-text-primary)"
-					>
+					<label htmlFor="comparison-dashboard-tags" className="mb-1 block text-sm font-medium text-pro-text-primary">
 						Tags
 					</label>
 					<div className="flex gap-1.5">
@@ -162,13 +156,13 @@ export function PreviewStep() {
 							onChange={(e) => setTagInput(e.target.value)}
 							onKeyDown={handleTagKeyDown}
 							placeholder="Add tags..."
-							className="flex-1 rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-2 py-1.5 text-sm placeholder:text-(--pro-text-tertiary) focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+							className="flex-1 rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2 py-1.5 text-sm placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 						/>
 						<button
 							type="button"
 							onClick={handleAddTag}
 							disabled={!tagInput.trim()}
-							className="rounded-md border border-(--pro-form-control-border) px-2 py-1.5 text-xs font-medium text-(--pro-text-secondary) transition-colors hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-50"
+							className="rounded-md border border-pro-form-control-border px-2 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:border-brand/40 disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							Add
 						</button>
@@ -178,13 +172,13 @@ export function PreviewStep() {
 							{state.tags.map((tag) => (
 								<span
 									key={tag}
-									className="flex items-center gap-1 rounded-full border border-(--pro-cards-border) px-2 py-0.5 text-xs"
+									className="flex items-center gap-1 rounded-full border border-pro-cards-border px-2 py-0.5 text-xs"
 								>
 									{tag}
 									<button
 										type="button"
 										onClick={() => handleRemoveTag(tag)}
-										className="text-(--pro-text-tertiary) hover:text-error"
+										className="text-pro-text-tertiary hover:text-error"
 									>
 										<Icon name="x" height={10} width={10} />
 									</button>
@@ -197,9 +191,9 @@ export function PreviewStep() {
 				<div>
 					<label
 						htmlFor="comparison-dashboard-description"
-						className="mb-1 block text-sm font-medium text-(--pro-text-primary)"
+						className="mb-1 block text-sm font-medium text-pro-text-primary"
 					>
-						Description <span className="text-xs font-normal text-(--pro-text-tertiary)">(optional)</span>
+						Description <span className="text-xs font-normal text-pro-text-tertiary">(optional)</span>
 					</label>
 					<input
 						id="comparison-dashboard-description"
@@ -207,19 +201,19 @@ export function PreviewStep() {
 						value={state.description}
 						onChange={(e) => actions.setDescription(e.target.value)}
 						placeholder="Brief description..."
-						className="w-full rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-3 py-1.5 text-sm placeholder:text-(--pro-text-tertiary) focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-3 py-1.5 text-sm placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					/>
 				</div>
 			</div>
 
 			<div className="flex flex-col gap-3">
-				<div className="rounded-lg border border-(--pro-cards-border) p-3">
+				<div className="rounded-lg border border-pro-cards-border p-3">
 					<div className="mb-2 flex items-center justify-between">
-						<h3 className="flex items-center gap-1.5 text-sm font-semibold text-(--pro-text-primary)">
+						<h3 className="flex items-center gap-1.5 text-sm font-semibold text-pro-text-primary">
 							<Icon name="activity" height={14} width={14} />
 							Add Metric Cards
 						</h3>
-						<span className="text-xs text-(--pro-text-tertiary)">Optional</span>
+						<span className="text-xs text-pro-text-tertiary">Optional</span>
 					</div>
 					<div className="flex flex-wrap gap-1.5">
 						{state.selectedMetrics.map((metric) => {
@@ -232,7 +226,7 @@ export function PreviewStep() {
 									className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors ${
 										isSelected
 											? 'border-brand bg-brand/10 text-brand'
-											: 'border-(--pro-form-control-border) text-(--pro-text-secondary) hover:border-brand/40'
+											: 'border-pro-form-control-border text-pro-text-secondary hover:border-brand/40'
 									}`}
 								>
 									<input
@@ -248,7 +242,7 @@ export function PreviewStep() {
 						})}
 					</div>
 					{state.metricsForCards.length > 0 ? (
-						<div className="mt-2 flex items-center gap-2 border-t border-(--pro-cards-border) pt-2">
+						<div className="mt-2 flex items-center gap-2 border-t border-pro-cards-border pt-2">
 							<AriakitSelect
 								options={AGGREGATOR_OPTIONS}
 								selectedValue={state.metricSettings.aggregator}
@@ -265,12 +259,12 @@ export function PreviewStep() {
 					) : null}
 				</div>
 
-				<div className="rounded-lg border border-(--pro-cards-border) p-3">
+				<div className="rounded-lg border border-pro-cards-border p-3">
 					<AriakitCheckbox
 						checked={state.includeTable}
 						onChange={(checked) => actions.setIncludeTable(checked)}
 						label={
-							<span className="flex items-center gap-1.5 text-sm font-medium text-(--pro-text-primary)">
+							<span className="flex items-center gap-1.5 text-sm font-medium text-pro-text-primary">
 								<Icon name="layout-grid" height={14} width={14} />
 								Include Comparison Table
 							</span>
@@ -279,18 +273,18 @@ export function PreviewStep() {
 					/>
 				</div>
 
-				<div className="rounded-lg border border-(--pro-cards-border) p-3">
-					<h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-(--pro-text-primary)">
+				<div className="rounded-lg border border-pro-cards-border p-3">
+					<h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-pro-text-primary">
 						<Icon name="file-text" height={14} width={14} />
 						Summary
 					</h3>
 					<div className="space-y-1.5 text-xs">
 						<div className="flex items-center justify-between">
-							<span className="text-(--pro-text-tertiary)">Comparing</span>
-							<span className="font-medium text-(--pro-text-primary)">{selectedItemLabels.join(', ')}</span>
+							<span className="text-pro-text-tertiary">Comparing</span>
+							<span className="font-medium text-pro-text-primary">{selectedItemLabels.join(', ')}</span>
 						</div>
 						<div className="flex items-center justify-between">
-							<span className="text-(--pro-text-tertiary)">Output</span>
+							<span className="text-pro-text-tertiary">Output</span>
 							<span className="font-medium text-brand">
 								{metricCardsCount > 0 ? `${metricCardsCount} cards + ` : null}
 								{state.selectedMetrics.length} charts

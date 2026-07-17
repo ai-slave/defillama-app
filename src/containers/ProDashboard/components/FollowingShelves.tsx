@@ -55,11 +55,11 @@ function ShelfRail({ children, itemCount }: { children: ReactNode; itemCount: nu
 		<div className="relative">
 			{canScrollLeft ? (
 				<>
-					<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-16 bg-linear-to-r from-(--pro-app-bg) to-transparent md:block" />
+					<div className="pointer-events-none absolute inset-y-0 left-0 z-5 hidden w-16 bg-linear-to-r from-pro-app-bg to-transparent md:block" />
 					<button
 						type="button"
 						onClick={() => scroll('left')}
-						className="absolute top-1/2 left-2 z-10 hidden -translate-y-1/2 rounded-full border border-(--pro-cards-border) bg-(--pro-cards-bg) p-2 shadow-md hover:bg-surface-elevated-2 md:block"
+						className="absolute top-1/2 left-2 z-10 hidden -translate-y-1/2 rounded-full border border-pro-cards-border bg-pro-cards-bg p-2 shadow-md hover:bg-surface-elevated-2 md:block"
 					>
 						<Icon name="chevron-left" height={20} width={20} />
 					</button>
@@ -76,11 +76,11 @@ function ShelfRail({ children, itemCount }: { children: ReactNode; itemCount: nu
 
 			{canScrollRight && itemCount > 3 ? (
 				<>
-					<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-16 bg-linear-to-l from-(--pro-app-bg) to-transparent md:block" />
+					<div className="pointer-events-none absolute inset-y-0 right-0 z-5 hidden w-16 bg-linear-to-l from-pro-app-bg to-transparent md:block" />
 					<button
 						type="button"
 						onClick={() => scroll('right')}
-						className="absolute top-1/2 right-2 z-10 hidden -translate-y-1/2 rounded-full border border-(--pro-cards-border) bg-(--pro-cards-bg) p-2 shadow-md hover:bg-surface-elevated-2 md:block"
+						className="absolute top-1/2 right-2 z-10 hidden -translate-y-1/2 rounded-full border border-pro-cards-border bg-pro-cards-bg p-2 shadow-md hover:bg-surface-elevated-2 md:block"
 					>
 						<Icon name="chevron-right" height={20} width={20} />
 					</button>
@@ -113,11 +113,11 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 				<div className="min-w-0 flex-1">
 					<BasicLink
 						href={`/authors/${author.slug}`}
-						className="block truncate text-base font-semibold text-(--pro-text-primary) hover:text-(--pro-old-blue)"
+						className="block truncate text-base font-semibold text-pro-text-primary hover:text-pro-old-blue"
 					>
 						{author.displayName}
 					</BasicLink>
-					<p className="truncate text-xs text-(--pro-text-label)">
+					<p className="truncate text-xs text-pro-text-label">
 						{shelf.dashboardCount} {shelf.dashboardCount === 1 ? 'dashboard' : 'dashboards'}
 					</p>
 				</div>
@@ -125,7 +125,7 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 			</div>
 
 			{shelf.dashboards.length === 0 ? (
-				<p className="rounded-md border border-dashed border-(--pro-cards-border) px-4 py-6 text-center text-sm text-(--pro-text-label)">
+				<p className="rounded-md border border-dashed border-pro-cards-border px-4 py-6 text-center text-sm text-pro-text-label">
 					No public dashboards yet
 				</p>
 			) : (
@@ -141,7 +141,7 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 					{hasMore ? (
 						<BasicLink
 							href={`/authors/${author.slug}`}
-							className="flex w-[160px] shrink-0 snap-start items-center justify-center gap-1 rounded-md border border-dashed border-(--pro-cards-border) text-sm text-(--pro-text-label) transition-colors hover:border-(--pro-old-blue)/40 hover:text-(--pro-old-blue) md:snap-align-none"
+							className="flex w-[160px] shrink-0 snap-start items-center justify-center gap-1 rounded-md border border-dashed border-pro-cards-border text-sm text-pro-text-label transition-colors hover:border-pro-old-blue/40 hover:text-pro-old-blue md:snap-align-none"
 						>
 							View all {shelf.dashboardCount}
 							<Icon name="chevron-right" height={14} width={14} />
@@ -158,7 +158,7 @@ export function FollowingShelves() {
 
 	if (isLoading && shelves.length === 0) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) px-1 py-12">
+			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg px-1 py-12">
 				<LoadingSpinner />
 			</div>
 		)
@@ -166,10 +166,10 @@ export function FollowingShelves() {
 
 	if (shelves.length === 0) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) px-1 py-12">
-				<Icon name="users" height={48} width={48} className="text-(--pro-text-label)" />
+			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg px-1 py-12">
+				<Icon name="users" height={48} width={48} className="text-pro-text-label" />
 				<h1 className="text-center text-2xl font-bold">You're not following anyone yet</h1>
-				<p className="text-center text-(--pro-text-label)">
+				<p className="text-center text-pro-text-label">
 					Follow dashboard authors and their latest public dashboards will appear here. Find authors from the Discover
 					tab!
 				</p>
@@ -188,7 +188,7 @@ export function FollowingShelves() {
 					<button
 						onClick={() => goToPage(Math.max(1, page - 1))}
 						disabled={page === 1}
-						className={`px-3 py-1 ${page === 1 ? 'cursor-not-allowed pro-text3' : 'pro-text1 hover:bg-(--pro-glass-bg)'}`}
+						className={`px-3 py-1 ${page === 1 ? 'cursor-not-allowed pro-text3' : 'pro-text1 hover:bg-pro-glass-bg'}`}
 					>
 						<Icon name="chevron-left" height={16} width={16} />
 					</button>
@@ -208,7 +208,7 @@ export function FollowingShelves() {
 								key={pageNum}
 								onClick={() => goToPage(pageNum)}
 								className={`px-3 py-1 ${
-									page === pageNum ? 'bg-brand text-on-brand' : 'pro-text1 hover:bg-(--pro-glass-bg)'
+									page === pageNum ? 'bg-brand text-on-brand' : 'pro-text1 hover:bg-pro-glass-bg'
 								}`}
 							>
 								{pageNum}
@@ -220,7 +220,7 @@ export function FollowingShelves() {
 						onClick={() => goToPage(Math.min(totalPages, page + 1))}
 						disabled={page === totalPages}
 						className={`px-3 py-1 ${
-							page === totalPages ? 'cursor-not-allowed pro-text3' : 'pro-text1 hover:bg-(--pro-glass-bg)'
+							page === totalPages ? 'cursor-not-allowed pro-text3' : 'pro-text1 hover:bg-pro-glass-bg'
 						}`}
 					>
 						<Icon name="chevron-right" height={16} width={16} />

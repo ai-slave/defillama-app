@@ -304,7 +304,7 @@ export function ReportsAdminView() {
 							type="button"
 							onClick={() => setFilter(value)}
 							className={`px-3 py-1.5 transition-colors ${
-								filter === value ? 'bg-(--research-link-button-bg) text-link' : 'text-secondary hover:text-primary'
+								filter === value ? 'bg-research-link-button-bg text-link' : 'text-secondary hover:text-primary'
 							}`}
 						>
 							{value === 'all' ? 'All' : value === 'published' ? 'Published' : 'Drafts'}

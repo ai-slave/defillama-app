@@ -26,13 +26,11 @@ export function PresetPicker({
 						key={preset.id}
 						onClick={() => onSelect(preset.id)}
 						className={`flex flex-col items-start gap-1 rounded-lg border px-3 py-3 text-left transition ${
-							isActive ? 'border-brand bg-brand/10' : 'border-(--pro-cards-border) hover:border-brand'
+							isActive ? 'border-brand bg-brand/10' : 'border-pro-cards-border hover:border-brand'
 						}`}
 					>
-						<span className="text-sm font-semibold text-(--pro-text-primary)">{preset.name}</span>
-						{preset.description ? (
-							<span className="text-xs text-(--pro-text-secondary)">{preset.description}</span>
-						) : null}
+						<span className="text-sm font-semibold text-pro-text-primary">{preset.name}</span>
+						{preset.description ? <span className="text-xs text-pro-text-secondary">{preset.description}</span> : null}
 						{isActive ? (
 							<span className="rounded-sm bg-brand/10 px-2 py-0.5 text-[10px] font-medium text-brand">Active</span>
 						) : null}

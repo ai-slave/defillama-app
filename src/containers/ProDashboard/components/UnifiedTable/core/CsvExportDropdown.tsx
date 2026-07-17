@@ -78,15 +78,15 @@ export const CsvExportDropdown = memo(function CsvExportDropdown({
 				}`}
 			/>
 			{isOpen ? (
-				<div className="absolute top-full right-0 z-50 mt-1 min-w-[180px] rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) py-1 shadow-lg">
+				<div className="absolute top-full right-0 z-50 mt-1 min-w-[180px] rounded-md border border-pro-cards-border bg-pro-cards-bg py-1 shadow-lg">
 					{exportOptions.map((level) => (
 						<button
 							key={level}
 							type="button"
 							onClick={() => handleOptionClick(level)}
-							className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-(--pro-text-primary) transition-colors hover:bg-border-subtle"
+							className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-pro-text-primary transition-colors hover:bg-border-subtle"
 						>
-							<Icon name="download-paper" className="size-3 shrink-0 text-(--pro-text-tertiary)" />
+							<Icon name="download-paper" className="size-3 shrink-0 text-pro-text-tertiary" />
 							{EXPORT_LEVEL_LABELS[level]}
 						</button>
 					))}

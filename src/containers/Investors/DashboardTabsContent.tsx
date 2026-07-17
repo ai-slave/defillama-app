@@ -26,7 +26,7 @@ const PLACEHOLDER_COLS = ['', '', '', '', '']
 
 export function SkeletonTable() {
 	return (
-		<div className="relative overflow-hidden rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg)">
+		<div className="relative overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg">
 			<div className="flex flex-col">
 				<div className="flex border-b border-subtle">
 					{PLACEHOLDER_COLS.map((_, i) => (
@@ -49,7 +49,7 @@ export function SkeletonTable() {
 					</div>
 				))}
 			</div>
-			<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--pro-cards-bg) via-transparent to-transparent" />
+			<div className="pointer-events-none absolute inset-0 bg-linear-to-t from-pro-cards-bg via-transparent to-transparent" />
 		</div>
 	)
 }
@@ -59,7 +59,7 @@ function ComingSoonSection({ label }: { label: string }) {
 		<div className="relative">
 			<SkeletonTable />
 			<div className="absolute inset-0 flex items-center justify-center">
-				<span className="rounded-full border border-(--pro-cards-border) bg-(--pro-cards-bg) px-5 py-2.5 text-sm font-semibold tracking-wide text-(--pro-text-secondary) shadow-lg">
+				<span className="rounded-full border border-pro-cards-border bg-pro-cards-bg px-5 py-2.5 text-sm font-semibold tracking-wide text-pro-text-secondary shadow-lg">
 					{label} — Coming Soon
 				</span>
 			</div>

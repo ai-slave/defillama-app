@@ -27,7 +27,7 @@ export function CategoryCardsGrid({ onSelectCategory }: CategoryCardsGridProps) 
 						name="arrow-right"
 						height={18}
 						width={18}
-						className="text-(--pro-text-secondary) transition-transform group-hover:translate-x-1 group-hover:text-brand"
+						className="text-pro-text-secondary transition-transform group-hover:translate-x-1 group-hover:text-brand"
 					/>
 				</div>
 				<p className="mb-4 line-clamp-1 text-sm pro-text2">{heroCard.description}</p>
@@ -35,7 +35,7 @@ export function CategoryCardsGrid({ onSelectCategory }: CategoryCardsGridProps) 
 					{heroCard.tags.map((tag) => (
 						<span
 							key={tag}
-							className="rounded-full px-2.5 py-1 text-xs font-medium text-(--pro-text-secondary) transition-colors group-hover:bg-brand/10 group-hover:text-brand"
+							className="rounded-full px-2.5 py-1 text-xs font-medium text-pro-text-secondary transition-colors group-hover:bg-brand/10 group-hover:text-brand"
 						>
 							{tag}
 						</span>
@@ -57,7 +57,7 @@ export function CategoryCardsGrid({ onSelectCategory }: CategoryCardsGridProps) 
 									name={card.icon}
 									height={16}
 									width={16}
-									className="text-(--pro-text-secondary) group-hover:text-brand"
+									className="text-pro-text-secondary group-hover:text-brand"
 								/>
 							</div>
 							<div className="min-w-0 flex-1">

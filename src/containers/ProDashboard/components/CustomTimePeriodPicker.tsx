@@ -121,7 +121,7 @@ export function CustomTimePeriodPicker({
 
 			<Ariakit.Popover
 				gutter={8}
-				className="z-50 rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4 shadow-lg"
+				className="z-50 rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4 shadow-lg"
 				style={{ minWidth: '300px' }}
 			>
 				<form onSubmit={handleApply} className="flex flex-col gap-4">
@@ -132,7 +132,7 @@ export function CustomTimePeriodPicker({
 							className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
 								mode === 'relative'
 									? 'bg-brand text-on-brand'
-									: 'border pro-border bg-surface-elevated-1 text-(--pro-text-secondary) hover:bg-(--cards-hover)'
+									: 'border pro-border bg-surface-elevated-1 text-pro-text-secondary hover:bg-(--cards-hover)'
 							}`}
 						>
 							Relative
@@ -143,7 +143,7 @@ export function CustomTimePeriodPicker({
 							className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
 								mode === 'absolute'
 									? 'bg-brand text-on-brand'
-									: 'border pro-border bg-surface-elevated-1 text-(--pro-text-secondary) hover:bg-(--cards-hover)'
+									: 'border pro-border bg-surface-elevated-1 text-pro-text-secondary hover:bg-(--cards-hover)'
 							}`}
 						>
 							Absolute
@@ -152,7 +152,7 @@ export function CustomTimePeriodPicker({
 
 					{mode === 'relative' ? (
 						<div className="flex flex-col gap-2">
-							<label htmlFor="custom-period-relative-days" className="text-sm font-medium text-(--pro-text-label)">
+							<label htmlFor="custom-period-relative-days" className="text-sm font-medium text-pro-text-label">
 								Days ago
 							</label>
 							<div className="flex items-center gap-2">
@@ -166,13 +166,13 @@ export function CustomTimePeriodPicker({
 									className="flex-1 rounded-md border pro-border bg-surface-elevated-1 px-3 py-2 text-sm focus:ring-1 focus:ring-brand focus:outline-hidden"
 									placeholder="Enter days"
 								/>
-								<span className="text-sm text-(--pro-text-secondary)">days ago → Now</span>
+								<span className="text-sm text-pro-text-secondary">days ago → Now</span>
 							</div>
 						</div>
 					) : (
 						<div className="flex flex-col gap-3">
 							<div className="flex flex-col gap-2">
-								<label htmlFor="custom-period-start-date" className="text-sm font-medium text-(--pro-text-label)">
+								<label htmlFor="custom-period-start-date" className="text-sm font-medium text-pro-text-label">
 									From
 								</label>
 								<input
@@ -186,7 +186,7 @@ export function CustomTimePeriodPicker({
 								/>
 							</div>
 							<div className="flex flex-col gap-2">
-								<label htmlFor="custom-period-end-date" className="text-sm font-medium text-(--pro-text-label)">
+								<label htmlFor="custom-period-end-date" className="text-sm font-medium text-pro-text-label">
 									To
 								</label>
 								<input
@@ -202,7 +202,7 @@ export function CustomTimePeriodPicker({
 						</div>
 					)}
 
-					<div className="flex gap-2 border-t border-(--pro-cards-border) pt-2">
+					<div className="flex gap-2 border-t border-pro-cards-border pt-2">
 						<button
 							type="button"
 							onClick={handleClear}

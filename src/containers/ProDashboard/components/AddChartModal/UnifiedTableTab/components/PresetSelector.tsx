@@ -99,7 +99,7 @@ export function PresetSelector({ currentFilters, onApplyPreset }: PresetSelector
 											className={`rounded-md border px-2.5 py-1.5 text-xs transition ${
 												isActive
 													? 'border-brand bg-brand/10 text-brand'
-													: 'border-(--pro-cards-border) bg-(--pro-cards-bg) text-(--pro-text-secondary) hover:border-brand/40 hover:text-(--pro-text-primary)'
+													: 'border-pro-cards-border bg-pro-cards-bg text-pro-text-secondary hover:border-brand/40 hover:text-pro-text-primary'
 											}`}
 										>
 											{preset.name}

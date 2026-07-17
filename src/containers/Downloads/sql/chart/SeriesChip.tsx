@@ -47,7 +47,7 @@ export function SeriesChip({
 	return (
 		<div className="group flex items-center gap-1.5 rounded-md bg-hover-row/60 px-1.5 py-0.5">
 			<ColorPicker value={color} fallback={paletteColor} onChange={setColor} />
-			<span className="truncate font-mono text-[10.5px] text-(--pro-text-primary)" style={{ maxWidth: '14ch' }}>
+			<span className="truncate font-mono text-[10.5px] text-pro-text-primary" style={{ maxWidth: '14ch' }}>
 				{name}
 			</span>
 			{seriesKindEligible ? (
@@ -56,7 +56,7 @@ export function SeriesChip({
 					onClick={toggleKind}
 					aria-label={`Series ${name} type: ${kind}`}
 					title={`Series type: ${kind}`}
-					className="flex h-4 w-5 items-center justify-center rounded-sm border border-subtle bg-(--pro-app-bg) font-mono label-sm text-(--pro-text-secondary) hover:bg-hover-row hover:text-(--pro-text-primary)"
+					className="flex h-4 w-5 items-center justify-center rounded-sm border border-subtle bg-pro-app-bg font-mono label-sm text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary"
 				>
 					{kind === 'line' ? '—' : '▮'}
 				</button>
@@ -70,7 +70,7 @@ export function SeriesChip({
 					className={`flex h-4 w-5 items-center justify-center rounded-sm border font-mono label-sm transition-colors ${
 						isRight
 							? 'border-brand bg-brand text-on-brand'
-							: 'border-subtle bg-(--pro-app-bg) text-(--pro-text-secondary) hover:bg-hover-row hover:text-(--pro-text-primary)'
+							: 'border-subtle bg-pro-app-bg text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
 					}`}
 				>
 					{isRight ? 'R' : 'L'}
@@ -80,7 +80,7 @@ export function SeriesChip({
 				type="button"
 				onClick={onRemove}
 				aria-label={`Remove ${name}`}
-				className="flex size-4 items-center justify-center rounded-sm text-(--pro-text-tertiary) opacity-0 transition-opacity group-hover:opacity-100 hover:bg-error/10 hover:text-error focus:opacity-100"
+				className="flex size-4 items-center justify-center rounded-sm text-pro-text-tertiary opacity-0 transition-opacity group-hover:opacity-100 hover:bg-error/10 hover:text-error focus:opacity-100"
 			>
 				<Icon name="x" className="size-2.5" />
 			</button>

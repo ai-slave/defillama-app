@@ -108,7 +108,7 @@ const FilterModeToggle = ({
 	value: 'include' | 'exclude'
 	onChange: (mode: 'include' | 'exclude') => void
 }) => (
-	<div className="rounded-lg border border-(--pro-cards-border) p-0.5">
+	<div className="rounded-lg border border-pro-cards-border p-0.5">
 		<div className="grid grid-cols-2 gap-0.5">
 			{FILTER_MODE_OPTIONS.map((option) => (
 				<button
@@ -116,8 +116,8 @@ const FilterModeToggle = ({
 					onClick={() => onChange(option.value as 'include' | 'exclude')}
 					className={`rounded-md px-2 py-1 text-[10px] font-medium transition-all duration-200 ${
 						value === option.value
-							? 'bg-(--pro-old-blue) text-on-brand shadow-sm'
-							: 'text-(--pro-text-secondary) hover:bg-(--pro-cards-bg)/80 hover:text-(--pro-text-primary)'
+							? 'bg-pro-old-blue text-on-brand shadow-sm'
+							: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
 					}`}
 				>
 					{option.label}
@@ -614,12 +614,12 @@ export function ChartBuilderTab({
 					value={chartBuilderName}
 					onChange={(e) => onChartBuilderNameChange(e.target.value)}
 					placeholder="Enter chart name..."
-					className="w-full rounded-md border border-(--pro-form-control-border) bg-surface-elevated-1 px-2 py-1.5 text-sm pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden"
+					className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2 py-1.5 text-sm pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden"
 				/>
 			</div>
 
 			<div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row">
-				<div className="max-h-[calc(100vh-200px)] w-full shrink-0 space-y-1.5 overflow-x-visible overflow-y-auto rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-2 lg:w-[320px] xl:w-[360px]">
+				<div className="max-h-[calc(100vh-200px)] w-full shrink-0 space-y-1.5 overflow-x-visible overflow-y-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-2 lg:w-[320px] xl:w-[360px]">
 					<h3 className="text-[11px] font-semibold pro-text1">Chart Configuration</h3>
 
 					<div>
@@ -635,7 +635,7 @@ export function ChartBuilderTab({
 
 					<div className="border-t pro-border pt-1.5">
 						<h4 className="mb-1 text-[11px] font-medium pro-text2">Mode</h4>
-						<div className="mb-1.5 rounded-lg border border-(--pro-cards-border) p-0.5">
+						<div className="mb-1.5 rounded-lg border border-pro-cards-border p-0.5">
 							<div className="grid grid-cols-2 gap-0.5">
 								{MODE_OPTIONS.map((option) => (
 									<button
@@ -643,8 +643,8 @@ export function ChartBuilderTab({
 										onClick={() => handleModeChange(option.value as any)}
 										className={`rounded-md px-2 py-1.5 text-xs font-medium transition-all duration-200 ${
 											chartBuilder.mode === option.value
-												? 'bg-(--pro-old-blue) text-on-brand shadow-sm'
-												: 'text-(--pro-text-secondary) hover:bg-(--pro-cards-bg)/80 hover:text-(--pro-text-primary)'
+												? 'bg-pro-old-blue text-on-brand shadow-sm'
+												: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
 										}`}
 									>
 										{option.label}
@@ -745,7 +745,7 @@ export function ChartBuilderTab({
 						) : (
 							<>
 								{isProtocolUnsupportedMetric ? (
-									<div className="mb-1.5 rounded-md border border-(--pro-cards-border) px-2 py-1.5">
+									<div className="mb-1.5 rounded-md border border-pro-cards-border px-2 py-1.5">
 										<p className="text-[10px] pro-text3">This metric is available only for All Protocols.</p>
 									</div>
 								) : (
@@ -898,7 +898,7 @@ export function ChartBuilderTab({
 
 					<div className="border-t pro-border pt-1.5">
 						<h4 className="mb-1 text-[11px] font-medium pro-text2">Display value as</h4>
-						<div className="rounded-lg border border-(--pro-cards-border) p-0.5">
+						<div className="rounded-lg border border-pro-cards-border p-0.5">
 							<div className="grid grid-cols-2 gap-0.5">
 								{DISPLAY_OPTIONS.map((option) => (
 									<button
@@ -906,8 +906,8 @@ export function ChartBuilderTab({
 										onClick={() => handleDisplayChange(option.value as any)}
 										className={`rounded-md px-2 py-1.5 text-xs font-medium transition-all duration-200 ${
 											chartBuilder.displayAs === option.value
-												? 'bg-(--pro-old-blue) text-on-brand shadow-sm'
-												: 'text-(--pro-text-secondary) hover:bg-(--pro-cards-bg)/80 hover:text-(--pro-text-primary)'
+												? 'bg-pro-old-blue text-on-brand shadow-sm'
+												: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
 										}`}
 									>
 										{option.label}
@@ -918,7 +918,7 @@ export function ChartBuilderTab({
 					</div>
 				</div>
 
-				<div className="flex min-h-0 flex-1 flex-col rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-3">
+				<div className="flex min-h-0 flex-1 flex-col rounded-md border border-pro-cards-border bg-pro-cards-bg p-3">
 					<div className="mb-2 flex shrink-0 items-center justify-between">
 						<h3 className="text-xs font-semibold pro-text1">Preview</h3>
 						<div className="flex items-center gap-1 text-[10px] pro-text3">
@@ -928,7 +928,7 @@ export function ChartBuilderTab({
 					</div>
 
 					<div
-						className="relative flex flex-1 items-center justify-center rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg)"
+						className="relative flex flex-1 items-center justify-center rounded-md border border-pro-cards-border bg-pro-cards-bg"
 						style={{ minHeight: '450px' }}
 					>
 						{previewLoading ? (
@@ -940,7 +940,7 @@ export function ChartBuilderTab({
 							<div className="absolute inset-0 p-2">
 								<Suspense
 									fallback={
-										<div className="size-full animate-pulse rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg)"></div>
+										<div className="size-full animate-pulse rounded-md border border-pro-cards-border bg-pro-cards-bg"></div>
 									}
 								>
 									{chartBuilder.chartType === 'treemap' ? (
@@ -1046,14 +1046,14 @@ export function ChartBuilderTab({
 									Reset All
 								</button>
 							</div>
-							<div className="flex items-center gap-2 overflow-x-auto rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-2">
+							<div className="flex items-center gap-2 overflow-x-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-2">
 								{visibleSeries.map((series) => {
 									const activeColor = resolveSeriesColor(series.name, series.color)
 									const hasOverride = !!seriesColors?.[series.name]
 									return (
 										<div
 											key={series.name}
-											className="flex shrink-0 items-center gap-1.5 rounded-sm border border-(--pro-cards-border) bg-surface-elevated-1 px-2 py-1 text-xs"
+											className="flex shrink-0 items-center gap-1.5 rounded-sm border border-pro-cards-border bg-surface-elevated-1 px-2 py-1 text-xs"
 										>
 											<span className="max-w-[140px] truncate pro-text2" title={series.name}>
 												{series.name}
@@ -1062,7 +1062,7 @@ export function ChartBuilderTab({
 												type="color"
 												value={activeColor}
 												onChange={(event) => handleSeriesColorChange(series.name, event.target.value)}
-												className="size-5 cursor-pointer rounded-sm border border-(--pro-cards-border) bg-transparent p-0"
+												className="size-5 cursor-pointer rounded-sm border border-pro-cards-border bg-transparent p-0"
 												aria-label={`Select color for ${series.name}`}
 											/>
 											<button

@@ -61,7 +61,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 			<div style={{ width: Math.max(totalWidth, 0), minWidth: '100%' }}>
 				<div
 					role="row"
-					className="sticky top-0 z-20 grid border-b border-subtle font-mono text-[11px] text-(--pro-text-secondary)"
+					className="sticky top-0 z-20 grid border-b border-subtle font-mono text-[11px] text-pro-text-secondary"
 					style={{
 						gridTemplateColumns: gridTemplate,
 						height: HEADER_HEIGHT,
@@ -80,9 +80,9 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 							>
 								<div className="flex items-center gap-1.5">
 									<TypeBadge kind={col.kind} />
-									<span className="truncate font-mono font-semibold text-(--pro-text-primary)">{col.name}</span>
+									<span className="truncate font-mono font-semibold text-pro-text-primary">{col.name}</span>
 								</div>
-								<span className="truncate font-mono text-[10px] font-normal tracking-tight text-(--pro-text-tertiary)/80">
+								<span className="truncate font-mono text-[10px] font-normal tracking-tight text-pro-text-tertiary/80">
 									{col.type}
 								</span>
 							</div>
@@ -98,7 +98,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 								role="row"
 								key={v.index}
 								className={`absolute inset-x-0 grid font-mono text-[11.5px] tabular-nums transition-colors hover:bg-brand/5 ${
-									zebra ? 'bg-(--pro-app-bg)/25' : ''
+									zebra ? 'bg-pro-app-bg/25' : ''
 								}`}
 								style={{
 									transform: `translateY(${v.start}px)`,
@@ -116,12 +116,12 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 											role="cell"
 											key={col.name + i}
 											className={`border-subtle/30 flex items-center truncate border-l px-2.5 first:border-l-0 ${
-												isNumeric ? 'justify-end text-(--pro-text-primary)' : 'text-(--pro-text-primary)'
-											} ${isNull ? 'text-(--pro-text-tertiary)/50' : ''}`}
+												isNumeric ? 'justify-end text-pro-text-primary' : 'text-pro-text-primary'
+											} ${isNull ? 'text-pro-text-tertiary/50' : ''}`}
 											title={isNull || isList ? '' : cellToTitle(value)}
 										>
 											{isList ? (
-												<Suspense fallback={<span className="text-[10px] text-(--pro-text-tertiary)">…</span>}>
+												<Suspense fallback={<span className="text-[10px] text-pro-text-tertiary">…</span>}>
 													<SparklineChart
 														data={(value as Array<number | null>).map(
 															(n, idx) => [idx, n ?? null] as [number, number | null]
@@ -141,7 +141,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 						)
 					})}
 					{result.rows.length === 0 ? (
-						<div className="flex items-center justify-center py-8 font-mono text-[11px] text-(--pro-text-tertiary)">
+						<div className="flex items-center justify-center py-8 font-mono text-[11px] text-pro-text-tertiary">
 							0 rows
 						</div>
 					) : null}

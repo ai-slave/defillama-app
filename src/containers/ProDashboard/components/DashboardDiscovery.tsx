@@ -152,12 +152,12 @@ export function DashboardDiscovery({
 									{ shallow: true }
 								)
 							}}
-							className="text-(--pro-old-blue) hover:underline"
+							className="text-pro-old-blue hover:underline"
 						>
 							Discover
 						</button>
-						<Icon name="chevron-right" height={14} width={14} className="text-(--pro-text-label)" />
-						<span className="text-(--pro-text-label)">
+						<Icon name="chevron-right" height={14} width={14} className="text-pro-text-label" />
+						<span className="text-pro-text-label">
 							{selectedSortBy.name}
 							{selectedSortBy.key === 'trending' ? ` (${selectedTimeFrame.name})` : ''}
 						</span>
@@ -177,7 +177,7 @@ export function DashboardDiscovery({
 								setSelectedValues={handleItemsPerPageChange}
 								label={
 									<>
-										<span className="text-(--pro-text-label)">Items per page:</span>
+										<span className="text-pro-text-label">Items per page:</span>
 										<span className="truncate">{itemsPerPage}</span>
 									</>
 								}
@@ -185,7 +185,7 @@ export function DashboardDiscovery({
 								popoverVariant="legacy"
 								triggerProps={{
 									className:
-										'flex items-center justify-between gap-1 rounded-md border border-(--pro-form-control-border) px-2 py-1.5'
+										'flex items-center justify-between gap-1 rounded-md border border-pro-form-control-border px-2 py-1.5'
 								}}
 								aria-label="Items per page"
 							/>
@@ -206,7 +206,7 @@ export function DashboardDiscovery({
 								}}
 								label={
 									<>
-										<span className="text-(--pro-text-label)">Sort by:</span>
+										<span className="text-pro-text-label">Sort by:</span>
 										<span className="truncate">{selectedSortBy.name}</span>
 									</>
 								}
@@ -214,7 +214,7 @@ export function DashboardDiscovery({
 								popoverVariant="legacy"
 								triggerProps={{
 									className:
-										'flex items-center justify-between gap-1 rounded-md border border-(--pro-form-control-border) px-2 py-1.5'
+										'flex items-center justify-between gap-1 rounded-md border border-pro-form-control-border px-2 py-1.5'
 								}}
 								aria-label="Sort by"
 							/>
@@ -232,7 +232,7 @@ export function DashboardDiscovery({
 									}}
 									label={
 										<>
-											<span className="text-(--pro-text-label)">Time:</span>
+											<span className="text-pro-text-label">Time:</span>
 											<span className="truncate">{selectedTimeFrame.name}</span>
 										</>
 									}
@@ -240,19 +240,19 @@ export function DashboardDiscovery({
 									popoverVariant="legacy"
 									triggerProps={{
 										className:
-											'flex items-center justify-between gap-1 rounded-md border border-(--pro-form-control-border) px-2 py-1.5'
+											'flex items-center justify-between gap-1 rounded-md border border-pro-form-control-border px-2 py-1.5'
 									}}
 									aria-label="Time frame"
 								/>
 							) : null}
 
-							<div className="flex items-center rounded-md border border-(--pro-form-control-border) bg-(--pro-cards-bg)">
+							<div className="flex items-center rounded-md border border-pro-form-control-border bg-pro-cards-bg">
 								<button
 									onClick={() => {
 										pushProQuery({ view: 'grid' })
 									}}
 									data-active={viewMode === 'grid'}
-									className="rounded-l-md border-r border-(--pro-form-control-border) p-2 text-(--pro-text-label) transition-colors duration-150 data-[active=false]:hover:bg-(--bg-hover) data-[active=true]:bg-(--pro-old-blue) data-[active=true]:text-on-brand"
+									className="rounded-l-md border-r border-pro-form-control-border p-2 text-pro-text-label transition-colors duration-150 data-[active=false]:hover:bg-(--bg-hover) data-[active=true]:bg-pro-old-blue data-[active=true]:text-on-brand"
 								>
 									<Icon name="layout-grid" height={16} width={16} />
 									<span className="sr-only">View as grid</span>
@@ -262,7 +262,7 @@ export function DashboardDiscovery({
 										pushProQuery({ view: 'list' })
 									}}
 									data-active={viewMode === 'list'}
-									className="rounded-r-md p-2 text-(--pro-text-label) transition-colors duration-150 data-[active=false]:hover:bg-(--bg-hover) data-[active=true]:bg-(--pro-old-blue) data-[active=true]:text-on-brand"
+									className="rounded-r-md p-2 text-pro-text-label transition-colors duration-150 data-[active=false]:hover:bg-(--bg-hover) data-[active=true]:bg-pro-old-blue data-[active=true]:text-on-brand"
 								>
 									<Icon name="menu" height={16} width={16} />
 									<span className="sr-only">View as list</span>
@@ -274,7 +274,7 @@ export function DashboardDiscovery({
 
 				{selectedTags.length > 0 ? (
 					<div className="mt-2 flex items-center gap-3 text-xs">
-						<h2 className="font-medium text-(--pro-text-label)">Active filters:</h2>
+						<h2 className="font-medium text-pro-text-label">Active filters:</h2>
 						<div className="flex flex-wrap gap-2">
 							{selectedTags.map((tag) => (
 								<button
@@ -292,7 +292,7 @@ export function DashboardDiscovery({
 										}
 										pushProQuery({ tag: nextTag })
 									}}
-									className="flex items-center gap-1.5 rounded-full bg-(--pro-old-blue)/15 px-2.5 py-1 text-xs font-medium text-(--pro-old-blue) transition-all duration-150 hover:scale-105 hover:bg-(--pro-old-blue) hover:text-on-brand"
+									className="flex items-center gap-1.5 rounded-full bg-pro-old-blue/15 px-2.5 py-1 text-xs font-medium text-pro-old-blue transition-all duration-150 hover:scale-105 hover:bg-pro-old-blue hover:text-on-brand"
 								>
 									<span>{tag}</span>
 									<Icon name="x" height={12} width={12} />
@@ -304,7 +304,7 @@ export function DashboardDiscovery({
 							onClick={() => {
 								pushProQuery({ tag: undefined })
 							}}
-							className="font-medium text-(--pro-text-label) underline-offset-2 transition-colors hover:text-error hover:underline"
+							className="font-medium text-pro-text-label underline-offset-2 transition-colors hover:text-error hover:underline"
 						>
 							Clear all
 						</button>
@@ -316,18 +316,18 @@ export function DashboardDiscovery({
 				<DashboardBrowse onTagClick={handleTagClick} initialCategories={initialCategories} />
 			) : isLoading ? (
 				<>
-					<p className="-mb-2 text-xs text-(--pro-text-label)">Loading dashboards…</p>
+					<p className="-mb-2 text-xs text-pro-text-label">Loading dashboards…</p>
 					<LoadingSkeleton viewMode={viewMode} items={DEFAULT_PAGE_LIMIT} />
 				</>
 			) : dashboards.length === 0 ? (
-				<div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) px-6 py-16">
+				<div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-6 py-16">
 					<div className="flex size-20 items-center justify-center rounded-full bg-(--bg-hover)">
-						<Icon name="search" height={40} width={40} className="text-(--pro-text-label)" />
+						<Icon name="search" height={40} width={40} className="text-pro-text-label" />
 					</div>
 
 					<div className="flex flex-col items-center gap-1.5">
 						<h1 className="text-center text-2xl font-bold">No Dashboards Found</h1>
-						<p className="max-w-md text-center text-(--pro-text-label)">
+						<p className="max-w-md text-center text-pro-text-label">
 							{searchQuery || selectedTags.length > 0
 								? "We couldn't find any dashboards matching your search. Try different keywords or explore popular tags below."
 								: 'Be the first to share a public dashboard with the community!'}
@@ -336,13 +336,13 @@ export function DashboardDiscovery({
 
 					{searchQuery || selectedTags.length > 0 ? (
 						<div className="flex flex-col items-center gap-3">
-							<p className="text-sm font-medium text-(--pro-text-label)">Try these popular tags:</p>
+							<p className="text-sm font-medium text-pro-text-label">Try these popular tags:</p>
 							<div className="flex flex-wrap justify-center gap-2">
 								{SUGGESTED_TAGS.map((tag) => (
 									<button
 										key={tag}
 										onClick={() => handleTagClick(tag)}
-										className="rounded-full border border-(--pro-switch-border) bg-(--pro-cards-bg) px-3 py-1.5 text-sm font-medium text-(--pro-text-form) transition-all duration-150 hover:scale-105 hover:border-transparent hover:bg-brand hover:text-on-brand"
+										className="rounded-full border border-pro-switch-border bg-pro-cards-bg px-3 py-1.5 text-sm font-medium text-pro-text-form transition-all duration-150 hover:scale-105 hover:border-transparent hover:bg-brand hover:text-on-brand"
 									>
 										{tag}
 									</button>
@@ -352,14 +352,14 @@ export function DashboardDiscovery({
 					) : null}
 
 					<div className="mt-2 flex items-center gap-3">
-						<div className="h-px w-12 bg-(--pro-cards-border)" />
-						<span className="text-xs text-(--pro-text-label)">or</span>
-						<div className="h-px w-12 bg-(--pro-cards-border)" />
+						<div className="h-px w-12 bg-pro-cards-border" />
+						<span className="text-xs text-pro-text-label">or</span>
+						<div className="h-px w-12 bg-pro-cards-border" />
 					</div>
 
 					<BasicLink
 						href="/pro?tab=dashboard"
-						className="flex items-center gap-2 rounded-md bg-(--pro-old-blue) px-4 py-2.5 text-sm font-semibold text-on-brand transition-opacity hover:opacity-90"
+						className="flex items-center gap-2 rounded-md bg-pro-old-blue px-4 py-2.5 text-sm font-semibold text-on-brand transition-opacity hover:opacity-90"
 					>
 						<Icon name="plus" height={16} width={16} />
 						Create Your First Dashboard
@@ -367,7 +367,7 @@ export function DashboardDiscovery({
 				</div>
 			) : (
 				<>
-					<p className="-mb-2 text-xs text-(--pro-text-label)">
+					<p className="-mb-2 text-xs text-pro-text-label">
 						Showing {dashboards.length} of {totalItems} dashboards
 					</p>
 
@@ -390,7 +390,7 @@ export function DashboardDiscovery({
 										pushProQuery({ page: toPageQueryValue(targetPage) })
 									}}
 									disabled={selectedPage < 3}
-									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-(--pro-text-label) transition-colors hover:bg-surface-elevated-1 disabled:hidden"
+									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label transition-colors hover:bg-surface-elevated-1 disabled:hidden"
 								>
 									<Icon name="chevrons-left" height={16} width={16} />
 								</button>
@@ -400,7 +400,7 @@ export function DashboardDiscovery({
 										pushProQuery({ page: toPageQueryValue(targetPage) })
 									}}
 									disabled={selectedPage === 1}
-									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-(--pro-text-label) transition-colors hover:bg-surface-elevated-1 disabled:hidden"
+									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label transition-colors hover:bg-surface-elevated-1 disabled:hidden"
 								>
 									<Icon name="chevron-left" height={16} width={16} />
 								</button>
@@ -414,7 +414,7 @@ export function DashboardDiscovery({
 												pushProQuery({ page: toPageQueryValue(targetPage) })
 											}}
 											data-active={isActive}
-											className="h-[32px] min-w-[32px] shrink-0 rounded-md px-2 py-1.5 transition-colors hover:bg-surface-elevated-1 data-[active=true]:bg-(--pro-old-blue) data-[active=true]:text-on-brand"
+											className="h-[32px] min-w-[32px] shrink-0 rounded-md px-2 py-1.5 transition-colors hover:bg-surface-elevated-1 data-[active=true]:bg-pro-old-blue data-[active=true]:text-on-brand"
 										>
 											{pageNum}
 										</button>
@@ -426,7 +426,7 @@ export function DashboardDiscovery({
 										pushProQuery({ page: toPageQueryValue(targetPage) })
 									}}
 									disabled={selectedPage === totalPages}
-									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-(--pro-text-label) transition-colors hover:bg-surface-elevated-1 disabled:hidden"
+									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label transition-colors hover:bg-surface-elevated-1 disabled:hidden"
 								>
 									<Icon name="chevron-right" height={16} width={16} />
 								</button>
@@ -436,12 +436,12 @@ export function DashboardDiscovery({
 										pushProQuery({ page: toPageQueryValue(targetPage) })
 									}}
 									disabled={selectedPage > totalPages - 2}
-									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-(--pro-text-label) transition-colors hover:bg-surface-elevated-1 disabled:hidden"
+									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label transition-colors hover:bg-surface-elevated-1 disabled:hidden"
 								>
 									<Icon name="chevrons-right" height={16} width={16} />
 								</button>
 							</div>
-							<p className="text-xs text-(--pro-text-label)">
+							<p className="text-xs text-pro-text-label">
 								Page {selectedPage} of {totalPages}
 							</p>
 						</div>

@@ -148,7 +148,7 @@ export function EarningsDataset({ chains, tableId, filters }: EarningsDatasetPro
 									setShowFilterModal(true)
 								}}
 								className={`ml-2 rounded-md p-1 transition-colors hover:bg-surface-elevated-2 ${
-									filterButtonIsActive ? 'text-brand' : 'text-(--pro-text-tertiary)'
+									filterButtonIsActive ? 'text-brand' : 'text-pro-text-tertiary'
 								}`}
 								title="Filter categories"
 							>
@@ -285,7 +285,7 @@ export function EarningsDataset({ chains, tableId, filters }: EarningsDatasetPro
 							type="text"
 							placeholder="Search protocols..."
 							onInput={(e) => setProtocolName(e.currentTarget.value)}
-							className="rounded-md border pro-border bg-(--pro-glass-bg) px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-brand focus:outline-hidden"
+							className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>

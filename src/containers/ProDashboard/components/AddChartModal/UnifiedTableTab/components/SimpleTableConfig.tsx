@@ -255,7 +255,7 @@ function CexAnalyticsPreview({
 					return (
 						<div
 							key={config.id}
-							className={`${view === 'starter' && isSummary ? 'xl:col-span-2' : ''} overflow-hidden rounded-xl border border-(--pro-cards-border)`}
+							className={`${view === 'starter' && isSummary ? 'xl:col-span-2' : ''} overflow-hidden rounded-xl border border-pro-cards-border`}
 						>
 							<div className={`${heightClass} overflow-auto`}>
 								<CexAnalyticsDataset config={config} />

@@ -30,7 +30,7 @@ export function ConfirmationModal({
 			}}
 		>
 			<Ariakit.Dialog
-				className="dialog w-full max-w-sm gap-0 border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) p-6 shadow-2xl"
+				className="dialog w-full max-w-sm gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-6 shadow-2xl"
 				unmountOnHide
 				portal
 				hideOnInteractOutside

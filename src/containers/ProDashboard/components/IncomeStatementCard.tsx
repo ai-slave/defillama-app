@@ -78,12 +78,12 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 					)}
 					<h3 className="text-base font-semibold">{displayName} Income statement</h3>
 				</div>
-				<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--pro-form-control-border) text-(--pro-text-form)">
+				<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-pro-form-control-border text-pro-text-form">
 					{(['table', 'sankey'] as ViewMode[]).map((mode) => (
 						<button
 							key={mode}
 							type="button"
-							className="shrink-0 px-2 py-1 text-xs whitespace-nowrap hover:bg-(--pro-link-hover-bg) focus-visible:bg-(--pro-link-hover-bg) data-[active=true]:font-medium data-[active=true]:text-link"
+							className="shrink-0 px-2 py-1 text-xs whitespace-nowrap hover:bg-pro-link-hover-bg focus-visible:bg-pro-link-hover-bg data-[active=true]:font-medium data-[active=true]:text-link"
 							data-active={view === mode}
 							onClick={() => setView(mode)}
 						>
@@ -100,10 +100,10 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 				) : isError ? (
 					<div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
 						<Icon name="alert-triangle" height={24} width={24} className="text-sub-orange" />
-						<p className="text-sm text-(--pro-text-form)">Error loading income statement</p>
+						<p className="text-sm text-pro-text-form">Error loading income statement</p>
 					</div>
 				) : !hasData ? (
-					<div className="flex flex-1 items-center justify-center text-(--pro-text-form)">
+					<div className="flex flex-1 items-center justify-center text-pro-text-form">
 						No income statement data available
 					</div>
 				) : (

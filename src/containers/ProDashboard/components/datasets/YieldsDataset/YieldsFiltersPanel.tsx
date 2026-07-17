@@ -82,7 +82,7 @@ export function YieldsFiltersPanel({
 	return (
 		<form
 			onSubmit={handleApply}
-			className="relative mb-4 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4"
+			className="relative mb-4 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4"
 			style={{ zIndex: 50, pointerEvents: 'auto' }}
 		>
 			<div className="mb-3 flex items-center justify-between">
@@ -114,7 +114,7 @@ export function YieldsFiltersPanel({
 									placeholder="Min %"
 									value={localFilters.apyMin || ''}
 									onChange={(e) => updateFilter('apyMin', e.target.value ? Number(e.target.value) : undefined)}
-									className="flex-1 rounded-md border pro-border bg-(--pro-glass-bg) px-2 py-1.5 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border pro-border bg-pro-glass-bg px-2 py-1.5 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
 								/>
 								<span className="pro-text3">-</span>
 								<input
@@ -123,7 +123,7 @@ export function YieldsFiltersPanel({
 									placeholder="Max %"
 									value={localFilters.apyMax || ''}
 									onChange={(e) => updateFilter('apyMax', e.target.value ? Number(e.target.value) : undefined)}
-									className="flex-1 rounded-md border pro-border bg-(--pro-glass-bg) px-2 py-1.5 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border pro-border bg-pro-glass-bg px-2 py-1.5 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
 								/>
 							</div>
 						</div>
@@ -137,7 +137,7 @@ export function YieldsFiltersPanel({
 									placeholder="Min %"
 									value={localFilters.baseApyMin || ''}
 									onChange={(e) => updateFilter('baseApyMin', e.target.value ? Number(e.target.value) : undefined)}
-									className="flex-1 rounded-md border pro-border bg-(--pro-glass-bg) px-2 py-1.5 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border pro-border bg-pro-glass-bg px-2 py-1.5 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
 								/>
 								<span className="pro-text3">-</span>
 								<input
@@ -146,7 +146,7 @@ export function YieldsFiltersPanel({
 									placeholder="Max %"
 									value={localFilters.baseApyMax || ''}
 									onChange={(e) => updateFilter('baseApyMax', e.target.value ? Number(e.target.value) : undefined)}
-									className="flex-1 rounded-md border pro-border bg-(--pro-glass-bg) px-2 py-1.5 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border pro-border bg-pro-glass-bg px-2 py-1.5 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
 								/>
 							</div>
 						</div>
@@ -163,7 +163,7 @@ export function YieldsFiltersPanel({
 									className={`size-4 rounded-sm border-2 transition-all duration-150 ${
 										localFilters.hasRewards
 											? 'border-brand bg-brand'
-											: 'border-(--pro-text-tertiary) bg-transparent group-hover:border-(--pro-text-secondary)'
+											: 'border-pro-text-tertiary bg-transparent group-hover:border-pro-text-secondary'
 									}`}
 								>
 									{localFilters.hasRewards ? (
@@ -195,7 +195,7 @@ export function YieldsFiltersPanel({
 									placeholder="Min"
 									value={formatNumberWithCommas(localFilters.tvlMin)}
 									onChange={(e) => updateFilter('tvlMin', parseFormattedNumber(e.target.value))}
-									className="flex-1 rounded-md border pro-border bg-(--pro-glass-bg) px-2 py-1.5 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border pro-border bg-pro-glass-bg px-2 py-1.5 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
 								/>
 								<span className="pro-text3">-</span>
 								<input
@@ -204,7 +204,7 @@ export function YieldsFiltersPanel({
 									placeholder="Max"
 									value={formatNumberWithCommas(localFilters.tvlMax)}
 									onChange={(e) => updateFilter('tvlMax', parseFormattedNumber(e.target.value))}
-									className="flex-1 rounded-md border pro-border bg-(--pro-glass-bg) px-2 py-1.5 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
+									className="flex-1 rounded-md border pro-border bg-pro-glass-bg px-2 py-1.5 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
 								/>
 							</div>
 						</div>
@@ -227,7 +227,7 @@ export function YieldsFiltersPanel({
 									className={`size-4 border-2 transition-all duration-150 ${
 										localFilters.stablesOnly
 											? 'border-brand bg-brand'
-											: 'border-(--pro-text-tertiary) bg-transparent group-hover:border-(--pro-text-secondary)'
+											: 'border-pro-text-tertiary bg-transparent group-hover:border-pro-text-secondary'
 									}`}
 								>
 									{localFilters.stablesOnly ? (
@@ -268,7 +268,7 @@ export function YieldsFiltersPanel({
 												className={`size-4 rounded-sm border-2 transition-all duration-150 ${
 													selectedCategories.has(category)
 														? 'border-brand bg-brand'
-														: 'border-(--pro-text-tertiary) bg-transparent group-hover:border-(--pro-text-secondary)'
+														: 'border-pro-text-tertiary bg-transparent group-hover:border-pro-text-secondary'
 												}`}
 											>
 												{selectedCategories.has(category) ? (

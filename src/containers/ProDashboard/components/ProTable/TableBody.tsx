@@ -28,7 +28,7 @@ export function TableBody<TData>({
 		return (
 			<div className="relative min-h-0 w-full flex-1 overflow-x-auto overflow-y-auto" style={{ height: '100%' }}>
 				<div className="flex h-32 items-center justify-center">
-					<p className="text-(--pro-text-tertiary)">Loading table...</p>
+					<p className="text-pro-text-tertiary">Loading table...</p>
 				</div>
 			</div>
 		)
@@ -38,7 +38,7 @@ export function TableBody<TData>({
 
 	return (
 		<div className="relative -mx-2 min-h-0 w-full flex-1 overflow-auto px-2 sm:mx-0 sm:px-0" style={{ height: '100%' }}>
-			<table className="w-full min-w-[600px] border-collapse text-xs text-(--pro-text-primary) sm:text-sm">
+			<table className="w-full min-w-[600px] border-collapse text-xs text-pro-text-primary sm:text-sm">
 				<thead className="sticky top-0 z-10">
 					{table.getHeaderGroups().map((headerGroup) => {
 						const visibleColumns = headerGroup.headers.filter((h) => !h.isPlaceholder)
@@ -54,7 +54,7 @@ export function TableBody<TData>({
 										<th
 											key={header.id}
 											colSpan={header.colSpan}
-											className={`relative border-r border-b border-subtle bg-(--pro-cards-bg) px-1 py-2 font-medium first:rounded-l-md last:rounded-r-md last:border-r-0 sm:px-2 ${
+											className={`relative border-r border-b border-subtle bg-pro-cards-bg px-1 py-2 font-medium first:rounded-l-md last:rounded-r-md last:border-r-0 sm:px-2 ${
 												header.column.columnDef.meta?.align === 'end' ? 'text-right' : 'text-left'
 											}`}
 											style={{
@@ -90,10 +90,10 @@ export function TableBody<TData>({
 								{isLoading ? (
 									<div className="flex items-center justify-center gap-2">
 										<div className="size-5 animate-spin rounded-full border-b-2 border-brand" />
-										<span className="text-(--pro-text-tertiary)">Loading data...</span>
+										<span className="text-pro-text-tertiary">Loading data...</span>
 									</div>
 								) : (
-									<span className="text-(--pro-text-tertiary)">
+									<span className="text-pro-text-tertiary">
 										{isEmptyProtocols ? 'No protocols found' : 'No protocols match current filters'}
 									</span>
 								)}

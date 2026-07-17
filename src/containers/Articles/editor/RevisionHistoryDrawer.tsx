@@ -217,7 +217,7 @@ function ActorAvatar({ name, url, size = 16 }: { name: string; url?: string | nu
 	return (
 		<span
 			style={{ width: size, height: size, fontSize: Math.max(8, size / 2.5) }}
-			className="grid shrink-0 place-items-center rounded-full bg-(--research-link-button-bg) font-jetbrains font-medium text-link"
+			className="grid shrink-0 place-items-center rounded-full bg-research-link-button-bg font-jetbrains font-medium text-link"
 		>
 			{initials || '·'}
 		</span>
@@ -519,7 +519,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 				type="button"
 				aria-label="Close history"
 				onClick={onClose}
-				className="absolute inset-0 bg-ai-backdrop-soft backdrop-blur-sm transition-opacity"
+				className="absolute inset-0 bg-research-backdrop-soft backdrop-blur-sm transition-opacity"
 			/>
 			<div className="relative ml-auto flex size-full max-w-[1280px] flex-col border-l border-medium bg-surface shadow-2xl">
 				<header className="grid grid-cols-[1fr_auto] items-end gap-6 border-b border-medium px-7 pt-6 pb-4">
@@ -565,7 +565,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 										className={`flex items-center gap-1.5 rounded-sm px-2 py-1 font-jetbrains text-[10px] tracking-[0.14em] uppercase transition-colors ${
 											isActive
 												? 'bg-primary text-surface'
-												: 'text-tertiary hover:bg-(--research-link-hover-bg) hover:text-secondary'
+												: 'text-tertiary hover:bg-research-link-hover-bg hover:text-secondary'
 										}`}
 									>
 										<span>{FILTER_LABELS[key]}</span>
@@ -616,9 +616,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 																onClick={() => selectRevision(entry.id)}
 																aria-current={isSelected}
 																className={`relative flex w-full items-start gap-3 px-5 py-3 text-left transition-colors ${
-																	isSelected
-																		? 'bg-(--research-link-button-bg)'
-																		: 'hover:bg-(--research-link-hover-bg)/60'
+																	isSelected ? 'bg-research-link-button-bg' : 'hover:bg-research-link-hover-bg/60'
 																}`}
 															>
 																{isSelected ? (
@@ -891,7 +889,7 @@ function PreviewSpecimenHeader({
 							>
 								<Icon name="repeat" className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
 								<span>Restore as pending</span>
-								<kbd className="hidden rounded-sm border border-ai-contrast/30 px-1 py-px font-jetbrains text-[9px] tracking-tight md:inline">
+								<kbd className="hidden rounded-sm border border-research-contrast/30 px-1 py-px font-jetbrains text-[9px] tracking-tight md:inline">
 									R
 								</kbd>
 							</button>
@@ -921,7 +919,7 @@ function PreviewSpecimenHeader({
 								className={`rounded-sm px-3 py-1.5 transition-colors ${
 									isActive
 										? 'bg-primary text-surface'
-										: 'text-tertiary hover:bg-(--research-link-hover-bg) hover:text-secondary'
+										: 'text-tertiary hover:bg-research-link-hover-bg hover:text-secondary'
 								}`}
 							>
 								{mode}
@@ -957,7 +955,7 @@ function PreviewSpecimenHeader({
 										className={`rounded-sm px-2.5 py-1 font-jetbrains text-[10px] tracking-[0.16em] uppercase transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
 											isActive
 												? 'bg-link text-on-brand'
-												: 'text-tertiary hover:bg-(--research-link-hover-bg) hover:text-secondary'
+												: 'text-tertiary hover:bg-research-link-hover-bg hover:text-secondary'
 										}`}
 									>
 										{baseLabels[mode]}
@@ -1160,7 +1158,7 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 		)
 	}
 	return (
-		<div className={`${baseClasses} bg-warning/4 text-primary ring-1 ring-ai-warning-bright/20 ring-inset`}>
+		<div className={`${baseClasses} bg-warning/4 text-primary ring-1 ring-research-warning-bright/20 ring-inset`}>
 			<span aria-hidden className="pt-0.5 text-center font-jetbrains text-[11px] font-medium text-warning">
 				~
 			</span>
@@ -1218,7 +1216,7 @@ function InlineConfirm({
 					type="button"
 					onClick={onCancel}
 					disabled={disabled}
-					className="rounded-md px-2.5 py-1.5 text-xs text-secondary transition-colors hover:bg-(--research-link-hover-bg) disabled:opacity-50"
+					className="rounded-md px-2.5 py-1.5 text-xs text-secondary transition-colors hover:bg-research-link-hover-bg disabled:opacity-50"
 				>
 					Cancel
 				</button>

@@ -3,7 +3,7 @@ import { LoadingDots } from '~/ui/Loaders'
 
 export function ProDashboardLoader({ heading }: { heading?: string | null }) {
 	return (
-		<div className="isolate flex flex-1 flex-col items-center justify-center gap-6 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-1">
+		<div className="isolate flex flex-1 flex-col items-center justify-center gap-6 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
 			<div className="relative size-24">
 				<div className="absolute inset-0 rounded-full border border-pro-purple-400 opacity-10" />
 
@@ -50,8 +50,8 @@ export function ProDashboardLoader({ heading }: { heading?: string | null }) {
 			</div>
 
 			<div className="flex flex-col items-center gap-1 text-center">
-				{heading ? <h1 className="text-lg font-semibold text-(--pro-text-primary)">{heading}</h1> : null}
-				<p className="flex items-center gap-1 text-(--pro-text-label)">
+				{heading ? <h1 className="text-lg font-semibold text-pro-text-primary">{heading}</h1> : null}
+				<p className="flex items-center gap-1 text-pro-text-label">
 					Loading
 					<LoadingDots />
 				</p>

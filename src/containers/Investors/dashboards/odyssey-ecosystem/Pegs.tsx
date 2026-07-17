@@ -14,36 +14,36 @@ function PegPill({ ratio, bps }: { ratio: number; bps?: number }) {
 	const color = dev <= 30 ? 'text-success' : dev <= 100 ? 'text-warning' : 'text-error'
 	return (
 		<span className={`tabular-nums ${color}`}>
-			{ratio.toFixed(4)} <span className="text-[10px] text-(--pro-text-secondary)">({dev.toFixed(0)} bps)</span>
+			{ratio.toFixed(4)} <span className="text-[10px] text-pro-text-secondary">({dev.toFixed(0)} bps)</span>
 		</span>
 	)
 }
 
 function SynthTable({ rows }: { rows: PegRow[] }) {
-	if (!rows?.length) return <div className="px-2 py-4 text-xs text-(--pro-text-secondary)">No data</div>
+	if (!rows?.length) return <div className="px-2 py-4 text-xs text-pro-text-secondary">No data</div>
 	return (
 		<div className="overflow-x-auto">
 			<table className="w-full text-sm">
 				<thead>
-					<tr className="border-b border-(--pro-cards-border) bg-(--pro-app-bg)/40">
-						<th className="px-3 py-2.5 text-left text-[11px] font-semibold tracking-wider text-(--pro-text-label) uppercase">
+					<tr className="border-b border-pro-cards-border bg-pro-app-bg/40">
+						<th className="px-3 py-2.5 text-left text-[11px] font-semibold tracking-wider text-pro-text-label uppercase">
 							Chain
 						</th>
-						<th className="px-3 py-2.5 text-left text-[11px] font-semibold tracking-wider text-(--pro-text-label) uppercase">
+						<th className="px-3 py-2.5 text-left text-[11px] font-semibold tracking-wider text-pro-text-label uppercase">
 							Counter
 						</th>
-						<th className="px-3 py-2.5 text-right text-[11px] font-semibold tracking-wider text-(--pro-text-label) uppercase">
+						<th className="px-3 py-2.5 text-right text-[11px] font-semibold tracking-wider text-pro-text-label uppercase">
 							Spot Peg
 						</th>
 						{SIZES.map((s) => (
 							<th
 								key={s}
-								className="px-3 py-2.5 text-right text-[11px] font-semibold tracking-wider text-(--pro-text-label) uppercase"
+								className="px-3 py-2.5 text-right text-[11px] font-semibold tracking-wider text-pro-text-label uppercase"
 							>
 								{fmtSize(s)}
 							</th>
 						))}
-						<th className="px-3 py-2.5 text-right text-[11px] font-semibold tracking-wider text-(--pro-text-label) uppercase">
+						<th className="px-3 py-2.5 text-right text-[11px] font-semibold tracking-wider text-pro-text-label uppercase">
 							Kyber
 						</th>
 					</tr>
@@ -52,10 +52,10 @@ function SynthTable({ rows }: { rows: PegRow[] }) {
 					{rows.map((r) => (
 						<tr
 							key={r.chain + r.counter}
-							className="border-b border-(--pro-cards-border)/60 last:border-0 hover:bg-sl-hover-bg"
+							className="border-b border-pro-cards-border/60 last:border-0 hover:bg-sl-hover-bg"
 						>
-							<td className="px-3 py-2.5 text-(--pro-text-primary) capitalize">{r.chain}</td>
-							<td className="px-3 py-2.5 text-(--pro-text-secondary)">{r.counter}</td>
+							<td className="px-3 py-2.5 text-pro-text-primary capitalize">{r.chain}</td>
+							<td className="px-3 py-2.5 text-pro-text-secondary">{r.counter}</td>
 							<td className="px-3 py-2.5 text-right">
 								<PegPill ratio={r.pegRatio} />
 							</td>
@@ -70,9 +70,7 @@ function SynthTable({ rows }: { rows: PegRow[] }) {
 							<td className="px-3 py-2.5 text-right">
 								<span
 									className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold ${
-										r.kyberSupported
-											? 'bg-success/15 text-success'
-											: 'bg-(--pro-cards-border) text-(--pro-text-secondary)'
+										r.kyberSupported ? 'bg-success/15 text-success' : 'bg-pro-cards-border text-pro-text-secondary'
 									}`}
 								>
 									{r.kyberSupported ? 'yes' : 'no'}
@@ -95,7 +93,7 @@ export default function Pegs() {
 	return (
 		<div className="flex flex-col gap-6">
 			{data?.asOf && (
-				<p className="text-[11px] text-(--pro-text-secondary)">
+				<p className="text-[11px] text-pro-text-secondary">
 					As of {new Date(data.asOf).toLocaleString()} — {data.methodology}
 				</p>
 			)}

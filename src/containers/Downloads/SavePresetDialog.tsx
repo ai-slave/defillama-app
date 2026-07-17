@@ -53,12 +53,12 @@ export function SavePresetDialog({
 				<div className="flex items-start justify-between gap-3">
 					<div className="flex flex-col gap-1">
 						<h2 className="heading-xs">{title}</h2>
-						{description ? <p className="text-xs text-(--pro-text-tertiary)">{description}</p> : null}
+						{description ? <p className="text-xs text-pro-text-tertiary">{description}</p> : null}
 					</div>
 					<button
 						type="button"
 						onClick={onClose}
-						className="rounded-md p-1.5 text-(--pro-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary)"
+						className="rounded-md p-1.5 text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
 					>
 						<Icon name="x" className="size-4" />
 					</button>
@@ -73,13 +73,13 @@ export function SavePresetDialog({
 					className="flex flex-col gap-3"
 				>
 					<label className="flex flex-col gap-1">
-						<span className="text-xs font-medium text-(--pro-text-secondary)">Name</span>
+						<span className="text-xs font-medium text-pro-text-secondary">Name</span>
 						<input
 							type="text"
 							value={name}
 							onChange={(e) => setName(e.target.value)}
 							autoFocus
-							className="w-full rounded-md border border-subtle bg-transparent px-2.5 py-1.5 text-sm outline-hidden placeholder:text-(--pro-text-tertiary) focus:border-brand focus:ring-1 focus:ring-brand/30"
+							className="w-full rounded-md border border-subtle bg-transparent px-2.5 py-1.5 text-sm outline-hidden placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand/30"
 							placeholder={placeholder}
 						/>
 					</label>
@@ -92,7 +92,7 @@ export function SavePresetDialog({
 						<button
 							type="button"
 							onClick={onClose}
-							className="rounded-md border border-subtle px-3 py-1.5 text-xs font-medium text-(--pro-text-secondary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary)"
+							className="rounded-md border border-subtle px-3 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
 						>
 							Cancel
 						</button>

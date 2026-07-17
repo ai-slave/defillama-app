@@ -287,7 +287,7 @@ export default function ArticlesPage({
 			</Head>
 			<style>{`main{padding:0}#__next{gap:0;}`}</style>
 			<ArticleProxyAuthProvider>
-				<div className="col-span-full min-h-screen w-full text-(--research-navy) dark:text-ai-primary">
+				<div className="col-span-full min-h-screen w-full text-research-navy dark:text-research-ink">
 					{showSearch ? (
 						<ResearchSearch />
 					) : (

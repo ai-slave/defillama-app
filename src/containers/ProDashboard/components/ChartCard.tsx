@@ -71,7 +71,7 @@ function ChartRenderer({
 		return (
 			<div className="flex flex-1 flex-col items-center justify-center">
 				<Icon name="alert-triangle" height={24} width={24} className="text-sub-orange" />
-				<p className="text-(--pro-text-form)">Error loading data</p>
+				<p className="text-pro-text-form">Error loading data</p>
 				<button className="text-sm text-link hover:underline" onClick={() => refetch()}>
 					Try again
 				</button>
@@ -80,7 +80,7 @@ function ChartRenderer({
 	}
 
 	if (!data || data.length === 0) {
-		return <p className="flex flex-1 items-center justify-center text-(--pro-text-form)">No data available</p>
+		return <p className="flex flex-1 items-center justify-center text-pro-text-form">No data available</p>
 	}
 
 	const valueSymbol =
@@ -207,12 +207,12 @@ export function ChartCard({ chart }: ChartCardProps) {
 					{!isReadOnly ? (
 						<>
 							{isGroupable ? (
-								<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-(--pro-form-control-border) text-(--pro-text-form)">
+								<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-pro-form-control-border text-pro-text-form">
 									{groupingOptions.map((dataInterval) => (
 										<Tooltip
 											content={capitalizeFirstLetter(dataInterval)}
 											render={<button />}
-											className="shrink-0 px-2 py-1 text-xs whitespace-nowrap hover:not-disabled:pro-btn-blue focus-visible:not-disabled:pro-btn-blue data-[active=true]:bg-(--pro-old-blue) data-[active=true]:font-medium data-[active=true]:text-on-brand"
+											className="shrink-0 px-2 py-1 text-xs whitespace-nowrap hover:not-disabled:pro-btn-blue focus-visible:not-disabled:pro-btn-blue data-[active=true]:bg-pro-old-blue data-[active=true]:font-medium data-[active=true]:text-on-brand"
 											data-active={chart.grouping === dataInterval}
 											onClick={() => handleGroupingChange(chart.id, dataInterval)}
 											key={`${chart.id}-options-groupBy-${dataInterval}`}
@@ -243,7 +243,7 @@ export function ChartCard({ chart }: ChartCardProps) {
 							<ProTableCSVButton
 								onClick={handleCsvExport}
 								smol
-								className="flex items-center gap-1 rounded-md border border-(--pro-form-control-border) px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-(--pro-cards-border) disabled:text-tertiary"
+								className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-pro-cards-border disabled:text-tertiary"
 							/>
 						</>
 					) : null}

@@ -119,13 +119,13 @@ export const NotebookCell = forwardRef<SqlCellHandle, NotebookCellProps>(functio
 						onMouseDown={() => setDraggable(true)}
 						onMouseUp={() => setDraggable(false)}
 						onMouseLeave={() => setDraggable(false)}
-						className="flex h-5 w-4 shrink-0 cursor-grab items-center justify-center text-(--pro-text-tertiary) opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 active:cursor-grabbing"
+						className="flex h-5 w-4 shrink-0 cursor-grab items-center justify-center text-pro-text-tertiary opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 active:cursor-grabbing"
 					>
 						<Icon name="menu" className="size-3" />
 					</button>
 				) : null}
-				<span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-(--pro-text-tertiary)">
-					<span className="text-(--pro-text-secondary)">{cellName}</span>
+				<span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-pro-text-tertiary">
+					<span className="text-pro-text-secondary">{cellName}</span>
 					<CellTypeBadge type={cell.type} />
 				</span>
 				{cell.running && cell.loadingStage ? (
@@ -257,14 +257,14 @@ function CellMenu({
 	return (
 		<Ariakit.MenuProvider>
 			<Ariakit.MenuButton
-				className="flex size-6 items-center justify-center rounded-md text-(--pro-text-tertiary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary)"
+				className="flex size-6 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
 				aria-label="Cell actions"
 			>
 				<Icon name="ellipsis" className="size-3.5" />
 			</Ariakit.MenuButton>
 			<Ariakit.Menu
 				gutter={4}
-				className="z-40 min-w-[180px] rounded-lg border border-medium bg-surface-elevated-1 p-1 text-xs text-(--pro-text-primary) shadow-lg"
+				className="z-40 min-w-[180px] rounded-lg border border-medium bg-surface-elevated-1 p-1 text-xs text-pro-text-primary shadow-lg"
 			>
 				{cellType === 'sql' ? (
 					<>
@@ -273,7 +273,7 @@ function CellMenu({
 							onClick={onRunAbove}
 							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
 						>
-							<Icon name="chevron-up" className="size-3 text-(--pro-text-tertiary)" />
+							<Icon name="chevron-up" className="size-3 text-pro-text-tertiary" />
 							Run cells above
 						</Ariakit.MenuItem>
 						<Ariakit.MenuItem
@@ -281,7 +281,7 @@ function CellMenu({
 							onClick={onRunBelow}
 							className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
 						>
-							<Icon name="chevron-down" className="size-3 text-(--pro-text-tertiary)" />
+							<Icon name="chevron-down" className="size-3 text-pro-text-tertiary" />
 							Run cells below
 						</Ariakit.MenuItem>
 						<div className="my-1 h-px bg-border-subtle" />
@@ -292,7 +292,7 @@ function CellMenu({
 					onClick={onMoveUp}
 					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
 				>
-					<Icon name="arrow-up" className="size-3 text-(--pro-text-tertiary)" />
+					<Icon name="arrow-up" className="size-3 text-pro-text-tertiary" />
 					Move up
 				</Ariakit.MenuItem>
 				<Ariakit.MenuItem
@@ -300,7 +300,7 @@ function CellMenu({
 					onClick={onMoveDown}
 					className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-40"
 				>
-					<Icon name="arrow-down" className="size-3 text-(--pro-text-tertiary)" />
+					<Icon name="arrow-down" className="size-3 text-pro-text-tertiary" />
 					Move down
 				</Ariakit.MenuItem>
 				<div className="my-1 h-px bg-border-subtle" />
@@ -310,7 +310,7 @@ function CellMenu({
 						onClick={() => onConvertType(t)}
 						className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-hover-row"
 					>
-						<Icon name="repeat" className="size-3 text-(--pro-text-tertiary)" />
+						<Icon name="repeat" className="size-3 text-pro-text-tertiary" />
 						Convert to {t === 'sql' ? 'SQL' : t === 'markdown' ? 'Markdown' : 'Chart'}
 					</Ariakit.MenuItem>
 				))}

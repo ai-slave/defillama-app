@@ -85,7 +85,7 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 		return (
 			<div className="flex min-h-[300px] flex-col items-center justify-center gap-2">
 				<Icon name="alert-triangle" height={24} width={24} className="text-sub-orange" />
-				<p className="text-(--pro-text-form)">Failed to load chart</p>
+				<p className="text-pro-text-form">Failed to load chart</p>
 				<button
 					className="text-sm text-link hover:underline"
 					onClick={() => {
@@ -99,7 +99,7 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 	}
 
 	if (!data) {
-		return <p className="flex min-h-[300px] items-center justify-center text-(--pro-text-form)">Chart not found</p>
+		return <p className="flex min-h-[300px] items-center justify-center text-pro-text-form">Chart not found</p>
 	}
 
 	const isStale = !data.dataFreshness?.isFresh
@@ -113,7 +113,7 @@ export default function LlamaAIChartCard({ config }: LlamaAIChartCardProps) {
 				{data.dataFreshness && isStale ? (
 					<div className="flex items-center gap-2">
 						{data.dataFreshness?.cachedAt ? (
-							<span className="text-xs text-(--pro-text-form)">
+							<span className="text-xs text-pro-text-form">
 								Updated {new Date(data.dataFreshness.cachedAt).toLocaleDateString()}
 							</span>
 						) : null}

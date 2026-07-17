@@ -20,7 +20,7 @@ export function ExternalLinkInterstitial({ href, onClose, onAllowPermanently }: 
 			}}
 		>
 			<Ariakit.Dialog
-				className="dialog w-full max-w-md gap-0 border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) p-6 shadow-2xl"
+				className="dialog w-full max-w-md gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-6 shadow-2xl"
 				unmountOnHide
 				portal
 				hideOnInteractOutside
@@ -69,7 +69,7 @@ export function ExternalLinkInterstitial({ href, onClose, onAllowPermanently }: 
 							if (href) window.open(href, '_blank', 'noopener,noreferrer')
 							onClose()
 						}}
-						className="rounded-md bg-(--pro-old-blue) px-4 py-2 text-sm font-medium text-on-brand transition-colors hover:opacity-90"
+						className="rounded-md bg-pro-old-blue px-4 py-2 text-sm font-medium text-on-brand transition-colors hover:opacity-90"
 					>
 						Continue
 					</a>

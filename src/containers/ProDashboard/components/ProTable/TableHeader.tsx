@@ -109,7 +109,7 @@ export function TableHeader({
 										modal={false}
 										portal={true}
 										gutter={4}
-										className="z-50 w-[260px] rounded-lg border pro-dashboard border-(--pro-cards-border) bg-(--pro-cards-bg) shadow-xl"
+										className="z-50 w-[260px] rounded-lg border pro-dashboard border-pro-cards-border bg-pro-cards-bg shadow-xl"
 									>
 										<div className="max-h-[420px] overflow-y-auto overscroll-contain p-1.5">
 											{moreDatasets.map((preset) => {
@@ -171,7 +171,7 @@ export function TableHeader({
 				modal={false}
 				portal={true}
 				gutter={4}
-				className="z-50 min-w-[220px] rounded-md border pro-divider bg-(--pro-cards-bg) pro-bg3 shadow-lg"
+				className="z-50 min-w-[220px] rounded-md border pro-divider bg-pro-cards-bg pro-bg3 shadow-lg"
 			>
 				{customViews.length > 0 ? (
 					<>

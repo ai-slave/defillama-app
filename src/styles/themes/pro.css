@@ -11,6 +11,44 @@
 ---------------------------------------------------------------------------- */
 
 @theme {
+	/* ProDashboard AI-action glow (dashboard generator, rating card) */
+	--animate-pro-glow: pro-glow 3s ease-in-out infinite;
+
+	@keyframes pro-glow {
+		0%,
+		100% {
+			box-shadow:
+				0 0 4px rgba(91, 133, 255, 0.2),
+				0 0 8px rgba(91, 133, 255, 0.15),
+				0 0 12px rgba(91, 133, 255, 0.1);
+		}
+		50% {
+			box-shadow:
+				0 0 8px rgba(91, 133, 255, 0.3),
+				0 0 16px rgba(91, 133, 255, 0.2),
+				0 0 20px rgba(91, 133, 255, 0.15);
+		}
+	}
+
+	/* Pro base tokens registered as utilities (definitions at the bottom of
+	   this file: :root fallbacks + pro-dashboard / investors re-scopes; the
+	   var chain resolves per element, so scoped overrides keep working) */
+	--color-pro-text-primary: var(--pro-text-primary);
+	--color-pro-text-secondary: var(--pro-text-secondary);
+	--color-pro-text-tertiary: var(--pro-text-tertiary);
+	--color-pro-text-label: var(--pro-text-label);
+	--color-pro-text-form: var(--pro-text-form);
+	--color-pro-cards-bg: var(--pro-cards-bg);
+	--color-pro-cards-border: var(--pro-cards-border);
+	--color-pro-app-bg: var(--pro-app-bg);
+	--color-pro-form-control-border: var(--pro-form-control-border);
+	--color-pro-old-blue: var(--pro-old-blue);
+	--color-pro-glass-bg: var(--pro-glass-bg);
+	--color-pro-link-hover-bg: var(--pro-link-hover-bg);
+	--color-pro-link-button-bg: var(--pro-link-button-bg);
+	--color-pro-btn2-hover-bg: var(--pro-btn2-hover-bg);
+	--color-pro-switch-border: var(--pro-switch-border);
+
 	/* Investors (smart list) palette registered as utilities */
 	--color-sl-accent: var(--sl-accent);
 	--color-sl-accent-hover: var(--sl-accent-hover);
@@ -50,9 +88,7 @@
 	--pro-bg1: #ffffff;
 	--pro-bg2: #f0f0f0;
 	--pro-bg3: #e0e0e0;
-	--pro-bg4: #cccccc;
 	--pro-bg7: rgba(255, 255, 255, 0.95);
-	--pro-bg8: rgba(35, 91, 255, 0.1);
 
 	--pro-divider: rgba(0, 0, 0, 0.3);
 	--pro-border: rgba(0, 0, 0, 0.3);
@@ -66,9 +102,7 @@
 		--pro-bg1: #070e0f;
 		--pro-bg2: #0a1011;
 		--pro-bg3: #0d1516;
-		--pro-bg4: #101a1c;
 		--pro-bg7: rgba(7, 14, 15, 0.7);
-		--pro-bg8: rgba(35, 91, 255, 0.1);
 
 		--pro-divider: rgba(255, 255, 255, 0.1);
 		--pro-border: rgba(255, 255, 255, 0.2);
@@ -125,9 +159,7 @@
 	--pro-bg1: #ffffff;
 	--pro-bg2: #f5f6f8;
 	--pro-bg3: #ebedf0;
-	--pro-bg4: #dfe1e6;
 	--pro-bg7: rgba(255, 255, 255, 0.92);
-	--pro-bg8: rgba(33, 114, 229, 0.06);
 
 	--pro-divider: rgba(0, 0, 0, 0.06);
 	--pro-border: rgba(0, 0, 0, 0.08);
@@ -164,9 +196,7 @@
 		--pro-bg1: #08090c;
 		--pro-bg2: #0c0e13;
 		--pro-bg3: #12141a;
-		--pro-bg4: #181a22;
 		--pro-bg7: rgba(8, 9, 12, 0.85);
-		--pro-bg8: rgba(33, 114, 229, 0.07);
 
 		--pro-divider: rgba(255, 255, 255, 0.04);
 		--pro-border: rgba(255, 255, 255, 0.06);

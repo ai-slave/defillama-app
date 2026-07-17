@@ -69,7 +69,7 @@ export function ColumnManagementPanel({
 	if (!showColumnPanel) return null
 
 	return (
-		<div className="mb-4 rounded-md border border-(--pro-cards-border) bg-(--pro-cards-bg) p-4">
+		<div className="mb-4 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4">
 			<div className="mb-3 flex items-center justify-between">
 				<h4 className="text-sm font-medium pro-text1">Customize Columns</h4>
 				<div className="flex items-center gap-2">
@@ -112,7 +112,7 @@ export function ColumnManagementPanel({
 					placeholder="Search columns..."
 					defaultValue={searchTerm}
 					onInput={(e) => setSearchTerm(e.currentTarget.value)}
-					className="w-full rounded-md border pro-border bg-(--pro-glass-bg) py-2 pr-3 pl-9 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
+					className="w-full rounded-md border pro-border bg-pro-glass-bg py-2 pr-3 pl-9 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
 				/>
 			</div>
 

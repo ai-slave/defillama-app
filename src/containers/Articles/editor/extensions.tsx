@@ -58,19 +58,19 @@ const calloutToneStyles: Record<ArticleCalloutTone, { wrap: string; tone: string
 		tone: 'text-tertiary'
 	},
 	data: {
-		wrap: 'border-link/40 bg-(--research-link-button-bg)',
+		wrap: 'border-link/40 bg-research-link-button-bg',
 		tone: 'text-link'
 	},
 	warning: {
-		wrap: 'border-(--callout-border) bg-(--callout-bg) text-(--callout-text) dark:text-(--research-gold)',
-		tone: 'text-(--callout-accent) dark:text-(--research-gold)'
+		wrap: 'border-callout-border bg-callout-bg text-callout-text dark:text-research-gold',
+		tone: 'text-callout-accent dark:text-research-gold'
 	},
 	pullquote: {
 		wrap: 'border-y border-x-0 border-link/30 bg-transparent rounded-none px-2',
 		tone: 'text-link'
 	},
 	bio: {
-		wrap: 'border-y-0 border-r-0 border-l-4 rounded-l-none border-link bg-(--research-link-button-bg)',
+		wrap: 'border-y-0 border-r-0 border-l-4 rounded-l-none border-link bg-research-link-button-bg',
 		tone: 'text-link'
 	}
 }
@@ -210,7 +210,7 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes }:
 							e.stopPropagation()
 							handleEdit()
 						}}
-						className="flex items-center gap-1.5 px-2.5 py-1 font-jetbrains text-[10px] tracking-[0.2em] text-secondary uppercase transition-colors hover:bg-(--research-link-hover-bg) hover:text-link"
+						className="flex items-center gap-1.5 px-2.5 py-1 font-jetbrains text-[10px] tracking-[0.2em] text-secondary uppercase transition-colors hover:bg-research-link-hover-bg hover:text-link"
 					>
 						<Icon name="pencil" className="size-3" />
 						Edit
@@ -227,7 +227,7 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes }:
 							e.stopPropagation()
 							deleteNode()
 						}}
-						className="flex items-center gap-1.5 px-2.5 py-1 font-jetbrains text-[10px] tracking-[0.2em] text-tertiary uppercase transition-colors hover:bg-(--research-link-hover-bg) hover:text-error"
+						className="flex items-center gap-1.5 px-2.5 py-1 font-jetbrains text-[10px] tracking-[0.2em] text-tertiary uppercase transition-colors hover:bg-research-link-hover-bg hover:text-error"
 					>
 						<Icon name="trash-2" className="size-3" />
 						Remove
@@ -278,7 +278,7 @@ function CalloutNodeView({ node, updateAttributes }: NodeViewProps) {
 								type="button"
 								onClick={() => updateAttributes({ tone: value })}
 								className={`rounded-sm px-2 py-0.5 text-xs transition-colors ${
-									active ? 'bg-(--research-link-button-bg) text-link' : 'text-tertiary hover:text-primary'
+									active ? 'bg-research-link-button-bg text-link' : 'text-tertiary hover:text-primary'
 								}`}
 							>
 								{calloutToneLabels[value]}
@@ -314,9 +314,7 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 		<NodeViewWrapper
 			as="span"
 			className={`relative mx-0.5 inline-flex items-center gap-1 rounded-[3px] border align-baseline font-jetbrains text-[10px] leading-none ${
-				selected
-					? 'border-link bg-(--research-link-button-bg)'
-					: 'border-medium bg-(--research-link-button-bg)/60 text-link'
+				selected ? 'border-link bg-research-link-button-bg' : 'border-medium bg-research-link-button-bg/60 text-link'
 			}`}
 		>
 			<button type="button" onClick={() => editable && setOpen((o) => !o)} className="px-1 py-0.5 tracking-wider">

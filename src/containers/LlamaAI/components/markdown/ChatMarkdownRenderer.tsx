@@ -171,7 +171,7 @@ function TableWrapper({
 					<div className="flex shrink-0 items-center justify-between gap-2 border-b border-ai-line">
 						{/* <Ariakit.DialogHeading className="text-sm font-medium text-secondary">Table</Ariakit.DialogHeading> */}
 						<Ariakit.DialogDismiss
-							className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-md text-secondary hover:bg-(--ai-link-hover) focus-visible:bg-(--ai-link-hover)"
+							className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-md text-secondary hover:bg-ai-link-hover focus-visible:bg-ai-link-hover"
 							aria-label="Close fullscreen table"
 						>
 							<Icon name="x" height={16} width={16} />
@@ -216,7 +216,7 @@ function TableWrapper({
 					<button
 						type="button"
 						onClick={openTableFullscreen}
-						className="flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-xs text-secondary hover:bg-(--ai-link-hover) focus-visible:bg-(--ai-link-hover)"
+						className="flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-xs text-secondary hover:bg-ai-link-hover focus-visible:bg-ai-link-hover"
 						aria-label="View table fullscreen"
 					>
 						<Icon name="expand" className="size-3 shrink-0" />
@@ -224,7 +224,7 @@ function TableWrapper({
 				)}
 				{isStreaming ? (
 					<button
-						className="flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-xs text-secondary hover:bg-(--ai-link-hover) focus-visible:bg-(--ai-link-hover)"
+						className="flex items-center justify-center gap-1 rounded-md border border-medium px-2 py-1.5 text-xs text-secondary hover:bg-ai-link-hover focus-visible:bg-ai-link-hover"
 						disabled
 					>
 						<Icon name="download-paper" className="size-3 shrink-0" />

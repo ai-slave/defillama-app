@@ -87,7 +87,7 @@ const LINKS: Record<string, string> = {
 
 export default function SparkHeader() {
 	return (
-		<header className="flex items-center gap-4 rounded-lg border border-(--pro-cards-border) bg-(--pro-cards-bg) px-4 py-2.5">
+		<header className="flex items-center gap-4 rounded-lg border border-pro-cards-border bg-pro-cards-bg px-4 py-2.5">
 			<SparkLogo />
 			<nav className="ml-auto flex items-center gap-0.5">
 				{Object.entries(LINKS).map(([key, url]) => (
@@ -96,7 +96,7 @@ export default function SparkHeader() {
 						href={url}
 						target="_blank"
 						rel="noopener noreferrer"
-						className={`items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] text-(--pro-text-secondary) transition-colors hover:bg-sl-hover-bg hover:text-(--pro-text-primary) ${
+						className={`items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] text-pro-text-secondary transition-colors hover:bg-sl-hover-bg hover:text-pro-text-primary ${
 							key === 'website' ? 'flex' : 'hidden sm:flex'
 						}`}
 					>

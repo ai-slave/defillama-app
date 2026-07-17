@@ -69,7 +69,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 		<Ariakit.Dialog
 			store={store}
 			modal
-			backdrop={<div className="fixed inset-0 z-[80] bg-ai-backdrop backdrop-blur-sm" />}
+			backdrop={<div className="fixed inset-0 z-[80] bg-research-backdrop backdrop-blur-sm" />}
 			className="fixed top-1/2 left-1/2 z-[81] flex max-h-[88vh] w-[min(720px,94vw)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-medium bg-surface shadow-article-dialog outline-hidden"
 		>
 			<div className="flex items-center justify-between gap-3 border-b border-medium px-5 py-3">
@@ -133,14 +133,14 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 			</div>
 
 			<div className="flex items-center justify-end gap-2 border-t border-medium bg-page/30 px-5 py-3">
-				<Ariakit.DialogDismiss className="rounded-md border border-medium px-3 py-2 text-xs text-secondary hover:bg-(--research-link-hover-bg)">
+				<Ariakit.DialogDismiss className="rounded-md border border-medium px-3 py-2 text-xs text-secondary hover:bg-research-link-hover-bg">
 					Cancel
 				</Ariakit.DialogDismiss>
 				<button
 					type="button"
 					disabled={!canSubmit}
 					onClick={submit}
-					className="rounded-md bg-(--research-link-button-bg) px-3 py-2 text-xs font-medium text-link shadow-sm transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+					className="rounded-md bg-research-link-button-bg px-3 py-2 text-xs font-medium text-link shadow-sm transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					{initialConfig ? 'Update panel' : 'Insert panel'}
 				</button>
@@ -201,7 +201,7 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 				{item.src ? (
 					<>
 						<img src={item.src} alt="" className="h-full w-full object-cover" />
-						<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-ai-contrast/0 text-[10px] font-medium tracking-wide text-on-brand opacity-0 transition-opacity group-hover:bg-ai-backdrop-soft group-hover:opacity-100">
+						<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-research-contrast/0 text-[10px] font-medium tracking-wide text-on-brand opacity-0 transition-opacity group-hover:bg-research-backdrop-soft group-hover:opacity-100">
 							{isUploading ? '…' : 'Replace'}
 						</span>
 					</>

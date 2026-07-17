@@ -194,7 +194,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 		<div className="flex flex-col gap-6">
 			<div className="flex flex-col gap-1">
 				<h1 className="text-2xl font-semibold">Downloads</h1>
-				<p className="text-sm text-(--pro-text-secondary)">
+				<p className="text-sm text-pro-text-secondary">
 					Download CSV datasets from DefiLlama. Click a dataset to preview and choose columns.
 				</p>
 			</div>
@@ -215,7 +215,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 						className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
 							activeTab === tab
 								? 'bg-brand text-on-brand shadow-sm'
-								: 'text-(--pro-text-secondary) hover:bg-hover-row hover:text-(--pro-text-primary)'
+								: 'text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
 						}`}
 					>
 						{tab}
@@ -245,12 +245,12 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 						className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
 							selectedCategory === ALL_CATEGORY
 								? 'bg-brand text-on-brand shadow-sm'
-								: 'border border-subtle text-(--pro-text-secondary) hover:border-brand/40 hover:text-(--pro-text-primary)'
+								: 'border border-subtle text-pro-text-secondary hover:border-brand/40 hover:text-pro-text-primary'
 						}`}
 					>
 						All
 						<span
-							className={`ml-1.5 ${selectedCategory === ALL_CATEGORY ? 'text-on-brand/70' : 'text-(--pro-text-tertiary)'}`}
+							className={`ml-1.5 ${selectedCategory === ALL_CATEGORY ? 'text-on-brand/70' : 'text-pro-text-tertiary'}`}
 						>
 							{totalCount}
 						</span>
@@ -263,12 +263,12 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 							className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
 								selectedCategory === category
 									? 'bg-brand text-on-brand shadow-sm'
-									: 'border border-subtle text-(--pro-text-secondary) hover:border-brand/40 hover:text-(--pro-text-primary)'
+									: 'border border-subtle text-pro-text-secondary hover:border-brand/40 hover:text-pro-text-primary'
 							}`}
 						>
 							{category}
 							<span
-								className={`ml-1.5 ${selectedCategory === category ? 'text-on-brand/70' : 'text-(--pro-text-tertiary)'}`}
+								className={`ml-1.5 ${selectedCategory === category ? 'text-on-brand/70' : 'text-pro-text-tertiary'}`}
 							>
 								{categoryCounts[category] ?? 0}
 							</span>
@@ -278,7 +278,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 			) : null}
 
 			{activeTab !== 'Saved' && (deferredSearch || selectedCategory !== ALL_CATEGORY) && (
-				<p className="text-xs text-(--pro-text-tertiary)">
+				<p className="text-xs text-pro-text-tertiary">
 					Showing {totalFilteredCount} of {totalCount} datasets
 					{selectedCategory !== ALL_CATEGORY ? ` in ${selectedCategory}` : ''}
 					{deferredSearch ? ` matching "${deferredSearch}"` : ''}
@@ -289,7 +289,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 				<div className="flex flex-col gap-8">
 					{filteredDatasetsByCategory.map(({ category, items }) => (
 						<section key={category} className="flex flex-col gap-3">
-							<h2 className="heading-xs text-(--pro-text-primary)">{category}</h2>
+							<h2 className="heading-xs text-pro-text-primary">{category}</h2>
 							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 								{items.map((dataset) => {
 									const disabled = !!isUserLoading
@@ -314,10 +314,10 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 												</div>
 												<Icon
 													name="arrow-up-right"
-													className="mt-0.5 size-4 shrink-0 text-(--pro-text-secondary) transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand"
+													className="mt-0.5 size-4 shrink-0 text-pro-text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand"
 												/>
 											</div>
-											<p className="text-sm text-(--pro-text-secondary)">{dataset.description}</p>
+											<p className="text-sm text-pro-text-secondary">{dataset.description}</p>
 										</button>
 									)
 								})}
@@ -325,7 +325,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 						</section>
 					))}
 					{filteredDatasetsByCategory.length === 0 && (
-						<p className="py-8 text-center text-sm text-(--pro-text-tertiary)">No datasets match your search.</p>
+						<p className="py-8 text-center text-sm text-pro-text-tertiary">No datasets match your search.</p>
 					)}
 				</div>
 			) : activeTab === 'Time Series' ? (
@@ -346,8 +346,8 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 								<Icon name="layers" className="size-5 text-brand" />
 							</div>
 							<div className="flex flex-col gap-0.5">
-								<p className="font-medium text-(--pro-text-primary)">Combine multiple metrics</p>
-								<p className="text-sm text-(--pro-text-secondary)">
+								<p className="font-medium text-pro-text-primary">Combine multiple metrics</p>
+								<p className="text-sm text-pro-text-secondary">
 									Pick a protocol or chain, mix any of its metrics — TVL, fees, volume, revenue — into a single CSV.
 								</p>
 							</div>
@@ -360,7 +360,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 
 					{filteredChartsByCategory.map(({ category, items }) => (
 						<section key={`chart-${category}`} className="flex flex-col gap-3">
-							<h2 className="heading-xs text-(--pro-text-primary)">{category}</h2>
+							<h2 className="heading-xs text-pro-text-primary">{category}</h2>
 							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 								{items.map((dataset) => {
 									const disabled = !!isUserLoading
@@ -385,11 +385,11 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 												</div>
 												<Icon
 													name="arrow-up-right"
-													className="mt-0.5 size-4 shrink-0 text-(--pro-text-secondary) transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand"
+													className="mt-0.5 size-4 shrink-0 text-pro-text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand"
 												/>
 											</div>
-											<p className="text-sm text-(--pro-text-secondary)">{dataset.description}</p>
-											<span className="inline-flex w-fit items-center gap-1 rounded-full bg-hover-row px-2 py-0.5 text-xs text-(--pro-text-tertiary)">
+											<p className="text-sm text-pro-text-secondary">{dataset.description}</p>
+											<span className="inline-flex w-fit items-center gap-1 rounded-full bg-hover-row px-2 py-0.5 text-xs text-pro-text-tertiary">
 												Select {dataset.paramLabel}
 											</span>
 										</button>
@@ -397,7 +397,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 								})}
 							</div>
 							{category === 'RWA' ? (
-								<p className="text-sm text-(--pro-text-secondary)">
+								<p className="text-sm text-pro-text-secondary">
 									Download more RWA data{' '}
 									<a href="https://defillama.com/rwa" className="text-brand underline hover:opacity-80">
 										here
@@ -408,7 +408,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 						</section>
 					))}
 					{filteredChartsByCategory.length === 0 && (
-						<p className="py-8 text-center text-sm text-(--pro-text-tertiary)">No datasets match your search.</p>
+						<p className="py-8 text-center text-sm text-pro-text-tertiary">No datasets match your search.</p>
 					)}
 				</div>
 			) : (
@@ -465,7 +465,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 			{trialLimitOpen ? <TrialCsvLimitModal isOpen={trialLimitOpen} onClose={() => setTrialLimitOpen(false)} /> : null}
 
 			<section className="mt-8 flex flex-col gap-4 border-t border-subtle pt-8">
-				<h2 className="heading-xs text-(--pro-text-primary)">FAQ</h2>
+				<h2 className="heading-xs text-pro-text-primary">FAQ</h2>
 				<div className="divide-y divide-(--border-subtle) border-y border-subtle">
 					<FaqItem question="How do I subscribe to download data from DefiLlama?">
 						DefiLlama data is available to subscribers of our Pro and API plans. Learn more about these plans{' '}
@@ -512,15 +512,15 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 const FaqItem = ({ question, children }: { question: string; children: React.ReactNode }) => (
 	<details className="group">
 		<summary className="flex cursor-pointer items-center gap-4 py-4">
-			<span className="flex-1 text-sm font-medium text-(--pro-text-primary)">{question}</span>
+			<span className="flex-1 text-sm font-medium text-pro-text-primary">{question}</span>
 			<Icon
 				name="chevron-down"
 				height={16}
 				width={16}
-				className="shrink-0 text-(--pro-text-secondary) transition-transform duration-200 group-open:rotate-180"
+				className="shrink-0 text-pro-text-secondary transition-transform duration-200 group-open:rotate-180"
 			/>
 		</summary>
-		<div className="pb-4 text-sm text-(--pro-text-secondary)">{children}</div>
+		<div className="pb-4 text-sm text-pro-text-secondary">{children}</div>
 	</details>
 )
 
@@ -592,16 +592,16 @@ function RecentDownloadsStrip({
 		<section aria-label="Recent downloads" className="flex flex-col gap-2">
 			<header className="flex items-baseline justify-between gap-3 px-0.5">
 				<div className="flex items-baseline gap-2">
-					<Icon name="clock" className="size-3 self-center text-(--pro-text-tertiary)" />
-					<h2 className="text-[11px] font-semibold tracking-[0.14em] text-(--pro-text-tertiary) uppercase">Recent</h2>
-					<span className="text-[11px] text-(--pro-text-tertiary)/70 tabular-nums">
+					<Icon name="clock" className="size-3 self-center text-pro-text-tertiary" />
+					<h2 className="text-[11px] font-semibold tracking-[0.14em] text-pro-text-tertiary uppercase">Recent</h2>
+					<span className="text-[11px] text-pro-text-tertiary/70 tabular-nums">
 						{items.length === 1 ? '1 run' : `${items.length} runs`}
 					</span>
 				</div>
 				<button
 					type="button"
 					onClick={onClear}
-					className="text-[11px] font-medium text-(--pro-text-tertiary) transition-colors hover:text-(--pro-text-primary)"
+					className="text-[11px] font-medium text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
 				>
 					Clear all
 				</button>
@@ -639,12 +639,12 @@ function RecentDownloadsStrip({
 											</span>
 										) : null}
 									</span>
-									<span className="truncate text-xs font-medium text-(--pro-text-primary)">{preset.name}</span>
-									<span className="flex items-center justify-between gap-2 text-[11px] text-(--pro-text-tertiary) tabular-nums">
+									<span className="truncate text-xs font-medium text-pro-text-primary">{preset.name}</span>
+									<span className="flex items-center justify-between gap-2 text-[11px] text-pro-text-tertiary tabular-nums">
 										<span className="truncate">{dayjs(preset.createdAt).fromNow()}</span>
 										<Icon
 											name="arrow-up-right"
-											className="size-3 shrink-0 -translate-x-1 text-(--pro-text-tertiary) opacity-0 transition-all group-hover:translate-x-0 group-hover:text-brand group-hover:opacity-100"
+											className="size-3 shrink-0 -translate-x-1 text-pro-text-tertiary opacity-0 transition-all group-hover:translate-x-0 group-hover:text-brand group-hover:opacity-100"
 										/>
 									</span>
 								</button>
@@ -699,10 +699,10 @@ function SavedDownloadsContent({
 	return (
 		<>
 			<div className="flex items-baseline justify-between gap-3 px-0.5">
-				<p className="text-[11px] font-semibold tracking-[0.14em] text-(--pro-text-tertiary) uppercase">
+				<p className="text-[11px] font-semibold tracking-[0.14em] text-pro-text-tertiary uppercase">
 					{savedDownloads.length} {savedDownloads.length === 1 ? 'preset' : 'presets'}
 				</p>
-				<p className="flex items-center gap-3 text-[11px] text-(--pro-text-tertiary) tabular-nums">
+				<p className="flex items-center gap-3 text-[11px] text-pro-text-tertiary tabular-nums">
 					{bucketCounts.dataset > 0 ? (
 						<span className="flex items-center gap-1.5">
 							<span className={`size-1.5 rounded-full ${KIND_STYLES.dataset.accent}`} aria-hidden="true" />
@@ -783,14 +783,14 @@ function SavedEmptyState() {
 				</svg>
 			</div>
 			<div className="flex flex-col gap-1.5">
-				<h3 className="text-base font-semibold text-(--pro-text-primary)">Pin your first preset</h3>
-				<p className="max-w-sm text-sm text-(--pro-text-secondary)">
+				<h3 className="text-base font-semibold text-pro-text-primary">Pin your first preset</h3>
+				<p className="max-w-sm text-sm text-pro-text-secondary">
 					Save any dataset or chart configuration to run it again from here.
 				</p>
 			</div>
-			<p className="text-xs text-(--pro-text-tertiary)">
+			<p className="text-xs text-pro-text-tertiary">
 				Open a dataset, tweak your columns and filters, then click{' '}
-				<span className="inline-flex items-center gap-1 rounded-sm border border-subtle px-1.5 py-0.5 text-[11px] font-medium text-(--pro-text-primary)">
+				<span className="inline-flex items-center gap-1 rounded-sm border border-subtle px-1.5 py-0.5 text-[11px] font-medium text-pro-text-primary">
 					<Icon name="bookmark" className="size-3" />
 					Save preset
 				</span>
@@ -851,13 +851,13 @@ function SavedDownloadRow({
 					>
 						{style.label}
 					</span>
-					<span className="truncate text-[15px] font-semibold text-(--pro-text-primary)">{preset.name}</span>
+					<span className="truncate text-[15px] font-semibold text-pro-text-primary">{preset.name}</span>
 				</div>
-				<div className="flex min-w-0 items-center gap-2 text-[11.5px] text-(--pro-text-tertiary)">
-					<span className="truncate text-(--pro-text-secondary)">{sourceLabel}</span>
+				<div className="flex min-w-0 items-center gap-2 text-[11.5px] text-pro-text-tertiary">
+					<span className="truncate text-pro-text-secondary">{sourceLabel}</span>
 					{description ? (
 						<>
-							<span aria-hidden="true" className="text-(--pro-text-tertiary)/50">
+							<span aria-hidden="true" className="text-pro-text-tertiary/50">
 								·
 							</span>
 							<span className="truncate">{description}</span>
@@ -867,8 +867,8 @@ function SavedDownloadRow({
 			</div>
 
 			<div className="relative flex h-8 shrink-0 items-center justify-end pl-2 sm:min-w-[12rem]">
-				<span className="text-[11px] text-(--pro-text-tertiary) tabular-nums transition-opacity sm:group-focus-within:opacity-0 sm:group-hover:opacity-0">
-					<span className="hidden text-(--pro-text-tertiary)/60 sm:inline">{timestamp.prefix} </span>
+				<span className="text-[11px] text-pro-text-tertiary tabular-nums transition-opacity sm:group-focus-within:opacity-0 sm:group-hover:opacity-0">
+					<span className="hidden text-pro-text-tertiary/60 sm:inline">{timestamp.prefix} </span>
 					{timestamp.value}
 				</span>
 
@@ -880,7 +880,7 @@ function SavedDownloadRow({
 							e.stopPropagation()
 							onRenameRequest(preset)
 						}}
-						className="flex size-7 items-center justify-center rounded-md text-(--pro-text-tertiary) transition-colors hover:text-(--pro-text-primary) focus-visible:text-(--pro-text-primary) focus-visible:outline-hidden"
+						className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:text-pro-text-primary focus-visible:text-pro-text-primary focus-visible:outline-hidden"
 						aria-label={`Rename ${preset.name}`}
 						title="Rename"
 					>
@@ -893,7 +893,7 @@ function SavedDownloadRow({
 							e.stopPropagation()
 							onDeleteRequest(preset.id)
 						}}
-						className="flex size-7 items-center justify-center rounded-md text-(--pro-text-tertiary) transition-colors hover:bg-error/10 hover:text-error focus-visible:bg-error/10 focus-visible:text-error focus-visible:outline-hidden"
+						className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary transition-colors hover:bg-error/10 hover:text-error focus-visible:bg-error/10 focus-visible:text-error focus-visible:outline-hidden"
 						aria-label={`Delete ${preset.name}`}
 						title="Delete"
 					>
@@ -916,7 +916,7 @@ function SavedDownloadRow({
 							e.stopPropagation()
 							onRenameRequest(preset)
 						}}
-						className="flex size-7 items-center justify-center rounded-md text-(--pro-text-tertiary)"
+						className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary"
 						aria-label={`Rename ${preset.name}`}
 					>
 						<Icon name="pencil" className="size-3.5" />
@@ -928,7 +928,7 @@ function SavedDownloadRow({
 							e.stopPropagation()
 							onDeleteRequest(preset.id)
 						}}
-						className="flex size-7 items-center justify-center rounded-md text-(--pro-text-tertiary)"
+						className="flex size-7 items-center justify-center rounded-md text-pro-text-tertiary"
 						aria-label={`Delete ${preset.name}`}
 					>
 						<Icon name="trash-2" className="size-3.5" />
@@ -966,12 +966,12 @@ function DeletePresetDialog({
 						<Icon name="trash-2" className="size-4 text-error" />
 					</div>
 					<div className="flex flex-col gap-1">
-						<h3 id="delete-preset-title" className="text-sm font-semibold text-(--pro-text-primary)">
+						<h3 id="delete-preset-title" className="text-sm font-semibold text-pro-text-primary">
 							Delete preset?
 						</h3>
-						<p className="text-xs text-(--pro-text-secondary)">
-							<span className="font-medium text-(--pro-text-primary)">"{preset.name}"</span> will be removed. This can't
-							be undone.
+						<p className="text-xs text-pro-text-secondary">
+							<span className="font-medium text-pro-text-primary">"{preset.name}"</span> will be removed. This can't be
+							undone.
 						</p>
 					</div>
 				</div>
@@ -979,7 +979,7 @@ function DeletePresetDialog({
 					<button
 						type="button"
 						onClick={onClose}
-						className="rounded-md border border-subtle px-3 py-1.5 text-xs font-medium text-(--pro-text-secondary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary)"
+						className="rounded-md border border-subtle px-3 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
 					>
 						Cancel
 					</button>

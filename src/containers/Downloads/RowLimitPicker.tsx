@@ -44,7 +44,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 
 	const triggerClass = isActive
 		? 'flex items-center gap-1.5 rounded-md rounded-r-none border border-brand/40 bg-brand/10 px-2.5 py-1.5 text-xs font-medium text-brand transition-colors hover:bg-brand/15 disabled:opacity-40'
-		: 'flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-(--pro-text-secondary) transition-colors hover:bg-hover-row hover:text-(--pro-text-primary) disabled:opacity-40'
+		: 'flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary disabled:opacity-40'
 
 	return (
 		<Ariakit.PopoverProvider store={popover}>
@@ -78,7 +78,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 				className="z-[60] flex w-[260px] max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-lg border border-medium bg-surface-elevated-1 p-4 shadow-xl"
 			>
 				<section className="flex flex-col gap-2">
-					<h3 className="text-[11px] font-semibold tracking-wide text-(--pro-text-tertiary) uppercase">Top rows</h3>
+					<h3 className="text-[11px] font-semibold tracking-wide text-pro-text-tertiary uppercase">Top rows</h3>
 					<div className="flex flex-wrap gap-1">
 						{PRESETS.map((n) => {
 							const isSelected = value === n
@@ -91,7 +91,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 									className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
 										isSelected
 											? 'border-brand bg-brand text-on-brand'
-											: 'border-subtle text-(--pro-text-secondary) hover:bg-hover-row hover:text-(--pro-text-primary)'
+											: 'border-subtle text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
 									}`}
 								>
 									{n.toLocaleString()}
@@ -105,7 +105,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 							className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
 								!isActive
 									? 'border-brand bg-brand text-on-brand'
-									: 'border-subtle text-(--pro-text-secondary) hover:bg-hover-row hover:text-(--pro-text-primary)'
+									: 'border-subtle text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
 							}`}
 						>
 							All
@@ -129,7 +129,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 					}}
 					className="flex flex-col gap-2"
 				>
-					<h3 className="text-[11px] font-semibold tracking-wide text-(--pro-text-tertiary) uppercase">Custom</h3>
+					<h3 className="text-[11px] font-semibold tracking-wide text-pro-text-tertiary uppercase">Custom</h3>
 					<div className="flex items-center gap-2">
 						<input
 							type="number"
@@ -154,7 +154,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 					{error ? <p className="text-[11px] text-error">{error}</p> : null}
 				</form>
 
-				<p className="text-[11px] text-(--pro-text-tertiary)">Applied after sort — top N by current sort order.</p>
+				<p className="text-[11px] text-pro-text-tertiary">Applied after sort — top N by current sort order.</p>
 			</Ariakit.Popover>
 		</Ariakit.PopoverProvider>
 	)
