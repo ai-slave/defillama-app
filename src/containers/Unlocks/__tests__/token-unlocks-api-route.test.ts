@@ -35,7 +35,7 @@ vi.mock('~/utils/metadata', () => ({
 	__esModule: true,
 	default: {
 		emissionsProtocolsList: ['aave'],
-		emissionsProtocolBySlug: { aave: 'aave' },
+		emissionsProtocolBySlug: { aave: 'aave', 'aave-alias': 'aave-alias', nvda: 'nvda' },
 		tokenlist: { aave: { symbol: 'AAVE' } }
 	},
 	refreshMetadataInBackgroundIfStale: refreshMetadataInBackgroundIfStaleMock
@@ -158,6 +158,43 @@ describe('/api/private/token-unlocks/[protocol]', () => {
 		})
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith({ protocol: 'aave' })
+	})
+
+	it('prefers the canonical protocol route when a direct normalized slug also exists', async () => {
+		const req = {
+			method: 'GET',
+			headers: { authorization: 'Bearer ok' },
+			query: { protocol: 'Aave Alias' }
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await tokenUnlocksHandler(req, res)
+
+		expect(getProtocolEmissonsMock).toHaveBeenCalledWith('aave', {
+			skipAvailabilityCheck: true,
+			tokenlist: { aave: { symbol: 'AAVE' } }
+		})
+		expect(res.status).toHaveBeenCalledWith(200)
+	})
+
+	it('falls back to a normalized emissions slug when no protocol route matches', async () => {
+		resolveProtocolParamFromMetadataMock.mockReturnValue(null)
+		getProtocolEmissonsMock.mockResolvedValue({ protocol: 'nvda' })
+		const req = {
+			method: 'GET',
+			headers: { authorization: 'Bearer ok' },
+			query: { protocol: 'NVDA' }
+		} as unknown as NextApiRequest
+		const res = createMockNextApiResponse()
+
+		await tokenUnlocksHandler(req, res)
+
+		expect(getProtocolEmissonsMock).toHaveBeenCalledWith('nvda', {
+			skipAvailabilityCheck: true,
+			tokenlist: { aave: { symbol: 'AAVE' } }
+		})
+		expect(res.status).toHaveBeenCalledWith(200)
+		expect(res.json).toHaveBeenCalledWith({ protocol: 'nvda' })
 	})
 
 	it('returns 500 with private no-store when auth validation throws', async () => {

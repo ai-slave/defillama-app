@@ -85,6 +85,7 @@ function addEquitiesOnchainDisplayNames({
 interface EquitiesTickerPageMetadata {
 	protocolDisplayNames: Map<string, string>
 	rwaPlatforms: string[]
+	emissionsProtocolBySlug: Record<string, string>
 }
 
 export async function getEquitiesTickerPageData(
@@ -111,6 +112,10 @@ export async function getEquitiesTickerPageData(
 		if (filing.form) filingForms.add(filing.form)
 	}
 
+	// Equities unlocks are keyed by lowercased ticker in the emissions list
+	const tickerSlug = ticker.toLowerCase()
+	const unlocksSlug = pageMetadata.emissionsProtocolBySlug[tickerSlug] ? tickerSlug : null
+
 	return {
 		ticker,
 		country,
@@ -127,7 +132,8 @@ export async function getEquitiesTickerPageData(
 			onchain: rawOnchain,
 			protocolDisplayNames: pageMetadata.protocolDisplayNames,
 			rwaPlatforms: pageMetadata.rwaPlatforms
-		})
+		}),
+		unlocksSlug
 	}
 }
 

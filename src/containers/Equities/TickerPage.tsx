@@ -1,3 +1,4 @@
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
@@ -27,6 +28,10 @@ import type { IEquityTickerPageProps } from './types'
 import { formatEquitiesDate, formatEquitiesDateTime } from './utils'
 
 const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const TokenUnlocksSection = dynamic(
+	() => import('~/containers/Token/TokenUnlocksSection').then((mod) => mod.TokenUnlocksSection),
+	{ loading: () => <div className="min-h-[572px]" /> }
+)
 
 const EQUITIES_PRICE_HISTORY_TIMEFRAMES: readonly EquitiesPriceHistoryTimeframe[] = [
 	'1W',
@@ -38,7 +43,7 @@ const EQUITIES_PRICE_HISTORY_TIMEFRAMES: readonly EquitiesPriceHistoryTimeframe[
 ]
 const DEFAULT_PRICE_HISTORY_TIMEFRAME: EquitiesPriceHistoryTimeframe = 'MAX'
 
-const TABS = ['financials', 'overview', 'filings', 'tokens', 'markets'] as const
+const TABS = ['financials', 'overview', 'filings', 'tokens', 'markets', 'unlocks'] as const
 type EquityTab = (typeof TABS)[number]
 
 const EQUITY_FUNDAMENTAL_CHART_OPTIONS = ['Revenue', 'Holders Revenue', 'Earnings'] as const
@@ -81,7 +86,8 @@ const TAB_LABELS: Record<EquityTab, string> = {
 	financials: 'Financials',
 	filings: 'Filings',
 	tokens: 'Tokens',
-	markets: 'Markets'
+	markets: 'Markets',
+	unlocks: 'Unlocks'
 }
 
 function formatMetricValue(value: unknown, symbol?: string): string {
@@ -199,11 +205,15 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 	const { chartInstance: priceChartInstance, handleChartReady: handlePriceChartReady } = useGetChartInstance()
 	const { chartInstance: fundamentalsChartInstance, handleChartReady: handleFundamentalsChartReady } =
 		useGetChartInstance()
+	const availableTabs = useMemo<readonly EquityTab[]>(
+		() => (props.unlocksSlug ? TABS : TABS.filter((tab) => tab !== 'unlocks')),
+		[props.unlocksSlug]
+	)
 
 	const activeTab = useMemo<EquityTab>(() => {
 		const tab = readSingleQueryValue(router.query.tab)
-		return tab && TABS.includes(tab as EquityTab) ? (tab as EquityTab) : 'financials'
-	}, [router.query.tab])
+		return tab && availableTabs.includes(tab as EquityTab) ? (tab as EquityTab) : 'financials'
+	}, [router.query.tab, availableTabs])
 
 	const activeTimeframe = useMemo<EquitiesPriceHistoryTimeframe>(() => {
 		return (
@@ -365,7 +375,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 			</div>
 
 			<nav className={tabTrackStyles} role="tablist" aria-label="Ticker sections">
-				{TABS.map((tab) => (
+				{availableTabs.map((tab) => (
 					<TabLink
 						as="button"
 						key={tab}
@@ -638,6 +648,9 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 			) : null}
 			{activeTab === 'tokens' ? <EquitiesTokensTable tokens={props.onchain.tokens} ticker={props.ticker} /> : null}
 			{activeTab === 'markets' ? <EquitiesMarketsTable markets={props.onchain.perps} ticker={props.ticker} /> : null}
+			{activeTab === 'unlocks' && props.unlocksSlug ? (
+				<TokenUnlocksSection resolvedUnlocksSlug={props.unlocksSlug} />
+			) : null}
 
 			<Card as="footer" padding="sm">
 				<h2 className="label-md text-primary">Attribution</h2>

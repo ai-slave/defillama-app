@@ -61,7 +61,8 @@ export const getStaticProps = withPerformanceLogging(
 
 		const props = await getEquitiesTickerPageData(tickerCountry.ticker, tickerCountry.country, {
 			protocolDisplayNames: metadata.protocolDisplayNames,
-			rwaPlatforms: metadata.rwaList.platforms
+			rwaPlatforms: metadata.rwaList.platforms,
+			emissionsProtocolBySlug: metadata.emissionsProtocolBySlug
 		})
 
 		if (!props) {

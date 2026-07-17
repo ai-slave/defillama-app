@@ -45,6 +45,7 @@ import { buildHallmarksMarkLine } from '../hallmarks'
 import type { IMultiSeriesChart2Props } from '../types'
 import { mergeDeep } from '../utils'
 import { applyLogScaleToYAxes } from './logScale'
+import { getTooltipRawYValue } from './tooltipValue'
 
 echarts.use([
 	CanvasRenderer,
@@ -380,20 +381,6 @@ function getAxisValueFromTooltipParams(first: any): number {
 	if (Number.isFinite(numeric)) return numeric
 	const parsed = Date.parse(String(axisValue))
 	return Number.isFinite(parsed) ? parsed : Number.NaN
-}
-
-function getTooltipRawYValue(item: any, seriesName: string): any {
-	const data = item?.data
-
-	if (isTooltipDataRecord(data) && seriesName in data) return data[seriesName]
-
-	// 2) Fallback: value array (e.g. [ts, y]).
-	if (Array.isArray(item?.value)) {
-		return item.value[1]
-	}
-
-	// 3) Final fallback: direct value.
-	return item?.value
 }
 
 type TooltipValueRow = readonly [marker: string, name: string, value: number, symbol: string, hasOverride: boolean]

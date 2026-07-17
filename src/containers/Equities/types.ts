@@ -59,4 +59,5 @@ export interface IEquityTickerPageProps {
 	filings: IEquitiesFilingApiItem[]
 	filingForms: string[]
 	onchain: IEquitiesOnchainPageData
+	unlocksSlug: string | null
 }

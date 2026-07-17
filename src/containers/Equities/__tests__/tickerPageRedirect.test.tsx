@@ -9,7 +9,7 @@ afterEach(() => {
 function setupPageModule({
 	routes = [{ ticker: 'NVDA', country: 'US' }],
 	redirectSlug = 'NVDA:US',
-	pageData = { ticker: 'NVDA', country: 'US', slug: 'NVDA:US', name: 'NVIDIA Corporation' }
+	pageData = { ticker: 'NVDA', country: 'US', slug: 'NVDA:US', name: 'NVIDIA Corporation', unlocksSlug: 'nvda' }
 }: {
 	routes?: Array<{ ticker: string; country: string }>
 	redirectSlug?: string | null
@@ -22,6 +22,7 @@ function setupPageModule({
 		rwaList: {
 			platforms: ['Felix', 'Robinhood']
 		},
+		emissionsProtocolBySlug: { nvda: 'nvda' },
 		equitiesCompanyRoutes: routes,
 		equitiesCompanySlugsSet: new Set(routes.map((route) => `${route.ticker}:${route.country}`))
 	}
@@ -65,10 +66,20 @@ describe('equities ticker page routing', () => {
 		await expect(
 			page.getStaticProps({ params: { ticker: 'NVDA:US' } } as GetStaticPropsContext<{ ticker: string }>)
 		).resolves.toEqual({
-			props: { ticker: 'NVDA', country: 'US', slug: 'NVDA:US', name: 'NVIDIA Corporation' },
+			props: {
+				ticker: 'NVDA',
+				country: 'US',
+				slug: 'NVDA:US',
+				name: 'NVIDIA Corporation',
+				unlocksSlug: 'nvda'
+			},
 			revalidate: 123
 		})
-		expect(setup.getEquitiesTickerPageData.mock.calls[0]?.slice(0, 2)).toEqual(['NVDA', 'US'])
+		expect(setup.getEquitiesTickerPageData).toHaveBeenCalledWith('NVDA', 'US', {
+			protocolDisplayNames: new Map([['hyperliquid-perps', 'Hyperliquid Perps']]),
+			rwaPlatforms: ['Felix', 'Robinhood'],
+			emissionsProtocolBySlug: { nvda: 'nvda' }
+		})
 		expect(setup.getEquitiesTickerRedirectSlug).not.toHaveBeenCalled()
 	})
 
