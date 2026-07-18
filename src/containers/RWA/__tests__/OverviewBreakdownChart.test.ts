@@ -213,8 +213,8 @@ describe('getOverviewBreakdownRequestState', () => {
 		expect(lastChartProps?.charts?.every((chart) => chart.type === 'bar')).toBe(true)
 	})
 
-	it('renders a sized net-flow treemap for the selected listing entities', async () => {
-		routerQuery = { chartType: 'flows', flowRotationView: 'treemap', flowTreemapSize: 'activeMcap' }
+	it('renders a sized net-flow heatmap for the selected listing entities', async () => {
+		routerQuery = { chartType: 'flows', flowRotationView: 'heatmap', flowHeatmapSize: 'activeMcap' }
 		queryState = {
 			data: [{ timestamp: 1, Ethereum: 10, Solana: -4 }],
 			isLoading: false,

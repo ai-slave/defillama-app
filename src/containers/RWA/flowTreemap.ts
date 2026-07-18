@@ -9,7 +9,7 @@ import { normalizeRwaAssetGroup } from './assetGroup'
 import type { RWAFlowGrouping } from './flows'
 import { getPrimaryRwaCategory, getRwaPlatforms, UNKNOWN_PLATFORM } from './grouping'
 
-export type RWAFlowTreemapView = 'bar' | 'treemap'
+export type RWAFlowTreemapView = 'bar' | 'heatmap'
 export type RWAFlowTreemapSizeMetric = RWAChartMetricKey
 
 export type RWAFlowTreemapSizeRow = {
@@ -47,11 +47,12 @@ export const RWA_FLOW_TREEMAP_SIZE_OPTIONS: Array<{ key: RWAFlowTreemapSizeMetri
 
 export const RWA_FLOW_TREEMAP_VIEW_OPTIONS = [
 	{ key: 'bar', name: 'Bar Chart' },
-	{ key: 'treemap', name: 'Treemap Chart' }
+	{ key: 'heatmap', name: 'Heatmap Chart' }
 ]
 
 export function parseRWAFlowTreemapView(value: string | undefined): RWAFlowTreemapView {
-	return value === 'treemap' ? value : 'bar'
+	// Keep existing shared links working while emitting the renamed public value.
+	return value === 'heatmap' || value === 'treemap' ? 'heatmap' : 'bar'
 }
 
 export function parseRWAFlowTreemapSizeMetric(value: string | undefined): RWAFlowTreemapSizeMetric {

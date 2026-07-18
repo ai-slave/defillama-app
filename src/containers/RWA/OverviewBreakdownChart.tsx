@@ -221,7 +221,9 @@ export function RWAOverviewBreakdownChart({
 	const isFlowChart = chartType === 'flows'
 	const flowFrequency = getOverviewBreakdownFlowGrouping(readSingleQueryValue(router.query.flowRotationFrequency))
 	const flowChartView = parseRWAFlowTreemapView(readSingleQueryValue(router.query.flowRotationView))
-	const flowTreemapSizeMetric = parseRWAFlowTreemapSizeMetric(readSingleQueryValue(router.query.flowTreemapSize))
+	const flowTreemapSizeMetric = parseRWAFlowTreemapSizeMetric(
+		readSingleQueryValue(router.query.flowHeatmapSize) ?? readSingleQueryValue(router.query.flowTreemapSize)
+	)
 	const metricChartType = isFlowChart ? DEFAULT_CHART_TYPE : chartType
 	const { request, isDefaultState } = getOverviewBreakdownRequestState(page, metricChartType, router.query)
 	const { data, isLoading, error } = useQuery({
@@ -250,7 +252,7 @@ export function RWAOverviewBreakdownChart({
 	const chartError = isFlowChart ? flowError : error
 	const stackOptions = useMemo(() => {
 		const options = dataset.dimensions.filter((dimension) => dimension !== 'timestamp')
-		if (!isFlowChart || flowChartView !== 'treemap') return options
+		if (!isFlowChart || flowChartView !== 'heatmap') return options
 		const available = new Set(options)
 		for (const row of treemapSizeRows) {
 			if (!available.has(row.name)) {
@@ -287,7 +289,7 @@ export function RWAOverviewBreakdownChart({
 	)
 	const flowTreemapFlows = useMemo(
 		() =>
-			isFlowChart && flowChartView === 'treemap' ? aggregateRWAFlowTreemapWindow(flowData ?? [], flowFrequency) : null,
+			isFlowChart && flowChartView === 'heatmap' ? aggregateRWAFlowTreemapWindow(flowData ?? [], flowFrequency) : null,
 		[flowChartView, flowData, flowFrequency, isFlowChart]
 	)
 	const flowTreemap = useMemo(
@@ -333,19 +335,20 @@ export function RWAOverviewBreakdownChart({
 						setSelectedValues={(view) => {
 							void pushShallowQuery(router, { flowRotationView: view === 'bar' ? undefined : view })
 						}}
-						label={flowChartView === 'treemap' ? 'Treemap Chart' : 'Bar Chart'}
+						label={flowChartView === 'heatmap' ? 'Heatmap Chart' : 'Bar Chart'}
 						labelType="none"
 						variant="filter"
 						size="md"
 					/>
 				) : null}
-				{isFlowChart && flowChartView === 'treemap' ? (
+				{isFlowChart && flowChartView === 'heatmap' ? (
 					<Select
 						allValues={RWA_FLOW_TREEMAP_SIZE_OPTIONS}
 						selectedValues={flowTreemapSizeMetric}
 						setSelectedValues={(metric) => {
 							void pushShallowQuery(router, {
-								flowTreemapSize: metric === 'onChainMcap' ? undefined : metric
+								flowHeatmapSize: metric === 'onChainMcap' ? undefined : metric,
+								flowTreemapSize: undefined
 							})
 						}}
 						label={`Size: ${flowTreemapSizeLabel}`}
@@ -378,14 +381,14 @@ export function RWAOverviewBreakdownChart({
 						size="md"
 					/>
 				) : null}
-				{isFlowChart && flowChartView === 'treemap' ? <ChartRestoreButton chartInstance={exportChartInstance} /> : null}
+				{isFlowChart && flowChartView === 'heatmap' ? <ChartRestoreButton chartInstance={exportChartInstance} /> : null}
 				<ChartExportButtons
 					chartInstance={exportChartInstance}
 					filename={exportFilename}
 					title={`RWA ${CHART_TYPE_OPTIONS.find((option) => option.key === chartType)?.label ?? 'Breakdown'}`}
 					smol
 					prepareCsvDirect={
-						isFlowChart && flowChartView === 'treemap'
+						isFlowChart && flowChartView === 'heatmap'
 							? () =>
 									prepareRWAFlowTreemapCsv({
 										nodes: flowTreemap.nodes,
@@ -395,7 +398,7 @@ export function RWAOverviewBreakdownChart({
 									})
 							: undefined
 					}
-					pngProfile={isFlowChart && flowChartView === 'treemap' ? 'treemapNormalized' : undefined}
+					pngProfile={isFlowChart && flowChartView === 'heatmap' ? 'treemapNormalized' : undefined}
 				/>
 			</ChartPanelToolbar>
 			{chartError ? (
@@ -407,13 +410,13 @@ export function RWAOverviewBreakdownChart({
 					Loading
 					<LoadingDots />
 				</ChartPanelBodyFallback>
-			) : isFlowChart && flowChartView === 'treemap' && flowTreemap.nodes.length === 0 ? (
+			) : isFlowChart && flowChartView === 'heatmap' && flowTreemap.nodes.length === 0 ? (
 				<ChartPanelBodyFallback className="body-sm text-secondary">
 					No sized net-flow data available.
 				</ChartPanelBodyFallback>
 			) : (
 				<Suspense fallback={<ChartPanelBodyFallback />}>
-					{isFlowChart && flowChartView === 'treemap' ? (
+					{isFlowChart && flowChartView === 'heatmap' ? (
 						<>
 							<RWAFlowTreemapChart
 								nodes={flowTreemap.nodes}

@@ -290,7 +290,9 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	const flowRotationSplitBy = getRwaFlowRotationSplitBy(readSingleQueryValue(router.query.flowRotationBy))
 	const flowRotationFrequency = getRwaFlowRotationFrequency(readSingleQueryValue(router.query.flowRotationFrequency))
 	const flowRotationView = parseRWAFlowTreemapView(readSingleQueryValue(router.query.flowRotationView))
-	const flowTreemapSizeMetric = parseRWAFlowTreemapSizeMetric(readSingleQueryValue(router.query.flowTreemapSize))
+	const flowTreemapSizeMetric = parseRWAFlowTreemapSizeMetric(
+		readSingleQueryValue(router.query.flowHeatmapSize) ?? readSingleQueryValue(router.query.flowTreemapSize)
+	)
 	const {
 		data: flowAssetRows,
 		isLoading: isFlowLoading,
@@ -321,12 +323,12 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	const effectiveFlowRotationLoading = isFlowRotationLoading || (activeFilters && isFlowLoading)
 	const flowTreemapSizeRows = useMemo(
 		() =>
-			flowRotationView === 'treemap' ? buildRWAFlowTreemapSizeRowsFromAssets(filteredAssets, flowRotationSplitBy) : [],
+			flowRotationView === 'heatmap' ? buildRWAFlowTreemapSizeRowsFromAssets(filteredAssets, flowRotationSplitBy) : [],
 		[filteredAssets, flowRotationSplitBy, flowRotationView]
 	)
 	const flowTreemapFlows = useMemo(
 		() =>
-			flowRotationView === 'treemap'
+			flowRotationView === 'heatmap'
 				? aggregateRWAFlowTreemapWindow(flowRotationData ?? [], flowRotationFrequency)
 				: null,
 		[flowRotationData, flowRotationFrequency, flowRotationView]
@@ -1123,7 +1125,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 									flowRotationView: nextView === 'bar' ? undefined : nextView
 								})
 							}}
-							label={flowRotationView === 'treemap' ? 'Treemap Chart' : 'Bar Chart'}
+							label={flowRotationView === 'heatmap' ? 'Heatmap Chart' : 'Bar Chart'}
 							labelType="none"
 							variant="filter"
 							size="md"
@@ -1144,13 +1146,14 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 							variant="filter"
 							size="md"
 						/>
-						{flowRotationView === 'treemap' ? (
+						{flowRotationView === 'heatmap' ? (
 							<Select
 								allValues={RWA_FLOW_TREEMAP_SIZE_OPTIONS}
 								selectedValues={flowTreemapSizeMetric}
 								setSelectedValues={(metric) => {
 									void pushShallowQuery(router, {
-										flowTreemapSize: metric === 'onChainMcap' ? undefined : metric
+										flowHeatmapSize: metric === 'onChainMcap' ? undefined : metric,
+										flowTreemapSize: undefined
 									})
 								}}
 								label={`Size: ${flowTreemapSizeLabel}`}
@@ -1168,12 +1171,12 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 							}}
 							options={DWMC_GROUPING_OPTIONS_LOWERCASE}
 						/>
-						{flowRotationView === 'treemap' ? <ChartRestoreButton chartInstance={flowRotationChartInstance} /> : null}
+						{flowRotationView === 'heatmap' ? <ChartRestoreButton chartInstance={flowRotationChartInstance} /> : null}
 						<ChartCsvExportButton
 							chartInstance={flowRotationChartInstance}
 							filename={flowRotationFilename}
 							prepareCsvDirect={
-								flowRotationView === 'treemap'
+								flowRotationView === 'heatmap'
 									? () =>
 											prepareRWAFlowTreemapCsv({
 												nodes: flowTreemap.nodes,
@@ -1188,7 +1191,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 							chartInstance={flowRotationChartInstance}
 							filename={flowRotationFilename}
 							title="RWA Net Flow"
-							pngProfile={flowRotationView === 'treemap' ? 'treemapNormalized' : undefined}
+							pngProfile={flowRotationView === 'heatmap' ? 'treemapNormalized' : undefined}
 						/>
 					</ChartPanelToolbar>
 					{effectiveFlowRotationError ? (
@@ -1202,13 +1205,13 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 							Loading
 							<LoadingDots />
 						</ChartPanelBodyFallback>
-					) : flowRotationView === 'treemap' && hasFlowRotationData && flowTreemap.nodes.length === 0 ? (
+					) : flowRotationView === 'heatmap' && hasFlowRotationData && flowTreemap.nodes.length === 0 ? (
 						<ChartPanelBodyFallback className="body-sm text-secondary">
 							No sized net-flow data available.
 						</ChartPanelBodyFallback>
 					) : hasFlowRotationData && flowRotationData ? (
 						<Suspense fallback={<ChartPanelBodyFallback />}>
-							{flowRotationView === 'treemap' ? (
+							{flowRotationView === 'heatmap' ? (
 								<>
 									<RWAFlowTreemapChart
 										nodes={flowTreemap.nodes}
