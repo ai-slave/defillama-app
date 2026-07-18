@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { BasicLink } from '~/components/Link'
-import { PercentChange } from '~/components/PercentChange'
 import { TokenLogo } from '~/components/TokenLogo'
+import { PercentChange } from '~/ui/PercentChange'
 import { formattedNum } from '~/utils'
 import { percentageSortingFn } from '../../../utils/tableSorting'
 

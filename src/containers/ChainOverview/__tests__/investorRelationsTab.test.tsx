@@ -7,7 +7,7 @@ function setupChainMocks({ user, query }: { user: unknown; query: Record<string,
 	vi.doMock('next/router', () => ({
 		useRouter: () => ({ query, pathname: '/chain/[chain]', push: vi.fn() })
 	}))
-	vi.doMock('~/containers/Subscription/auth', () => ({
+	vi.doMock('~/auth', () => ({
 		useAuthContext: () => ({ user })
 	}))
 	vi.doMock('~/containers/Investors/InvestorRelationsView', () => ({
@@ -19,7 +19,7 @@ function setupChainMocks({ user, query }: { user: unknown; query: Record<string,
 	vi.doMock('~/components/EntityQuestionsStrip', () => ({
 		EntityQuestionsStrip: () => React.createElement('div', null, 'QUESTIONS-MARKER')
 	}))
-	vi.doMock('~/components/Icon', () => ({
+	vi.doMock('~/ui/Icon', () => ({
 		Icon: () => null
 	}))
 	vi.doMock('~/components/Newsletter/NewsletterSignup', () => ({
@@ -37,7 +37,7 @@ function setupChainMocks({ user, query }: { user: unknown; query: Record<string,
 	vi.doMock('../SmolStats', () => ({
 		SmolStats: () => null
 	}))
-	vi.doMock('~/components/QuestionHelper', () => ({
+	vi.doMock('~/ui/QuestionHelper', () => ({
 		QuestionHelper: () => null
 	}))
 }

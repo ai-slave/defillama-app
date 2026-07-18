@@ -12,11 +12,11 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
-import { useArticleExport } from '~/components/AddToArticle/ArticleExportContext'
+import { useAuthContext } from '~/auth'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
-import { Icon } from '~/components/Icon'
 import { saveChartToLibrary } from '~/containers/LlamaAI/api/saveChartToLibrary'
 import { updateChartStyle } from '~/containers/LlamaAI/api/updateChartStyle'
+import { useArticleExport } from '~/containers/LlamaAI/components/AddToArticle/ArticleExportContext'
 import { ChartControls } from '~/containers/LlamaAI/components/charts/ChartControls'
 import { ChartStyleEditor } from '~/containers/LlamaAI/components/charts/ChartStyleEditor'
 import type { ChartConfiguration, ChartDataByKey, ChartDataSeries, ChartStylePatch } from '~/containers/LlamaAI/types'
@@ -30,8 +30,8 @@ import {
 import { areChartDataEqual, areChartsEqual, areStringArraysEqual } from '~/containers/LlamaAI/utils/chartComparison'
 import { ChartDataTransformer } from '~/containers/LlamaAI/utils/chartDataTransformer'
 import { buildRenderPlan, type ChartRenderPlan } from '~/containers/LlamaAI/utils/chartRenderPlan'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const noop = () => {}

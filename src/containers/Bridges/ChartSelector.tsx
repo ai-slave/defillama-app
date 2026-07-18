@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import * as React from 'react'
-import { Icon } from '~/components/Icon'
 import { selectTriggerStyles } from '~/components/Select/types'
+import { Icon } from '~/ui/Icon'
 import {
 	popoverRowWithBorderStyles,
 	popoverSurfaceStyles,

@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import {
 	deleteArticleRevision,
 	getArticleRevision,

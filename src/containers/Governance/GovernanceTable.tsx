@@ -9,9 +9,9 @@ import {
 	useReactTable
 } from '@tanstack/react-table'
 import * as React from 'react'
-import { Icon } from '~/components/Icon'
 import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
+import { Icon } from '~/ui/Icon'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { Switch } from '~/ui/Switch'

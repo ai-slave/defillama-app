@@ -1,5 +1,5 @@
-import { CopyHelper } from '~/components/Copy'
-import { Icon } from '~/components/Icon'
+import { CopyHelper } from '~/ui/Copy'
+import { Icon } from '~/ui/Icon'
 
 // The section's one address grammar: mono address, then copy + explorer-link icons.
 export function AddressActions({

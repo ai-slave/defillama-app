@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
 import { useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { iconHitTargetStyles } from '~/ui/IconHitTarget'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { TOKEN_MATCHES, TOKEN_ONS, type TokenMatch, type TokenOn } from '../data/tokenMatch'

@@ -2,9 +2,9 @@ import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useCallback } from 'react'
 import toast from 'react-hot-toast'
+import { useAuthContext } from '~/auth'
 import { dashboardAPI, dashboardUrlKey } from '~/containers/ProDashboard/services/DashboardAPI'
 import { generateItemId } from '~/containers/ProDashboard/utils/dashboardUtils'
-import { useAuthContext } from '~/containers/Subscription/auth'
 
 type DatasetType = 'dexs' | 'perps' | 'options' | 'aggregators' | 'bridge-aggregators'
 

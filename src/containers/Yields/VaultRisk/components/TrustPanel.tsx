@@ -1,6 +1,6 @@
 import type { BlockExplorersResponse } from '~/api/types'
-import { Icon } from '~/components/Icon'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import { toneClasses } from '../kindMeta'
 import { ChapterHead } from '../primitives/ChapterHead'
 import type { ExternalDependency, PoolType, ProtocolRiskFixture, ScenarioVM, VaultRoles } from '../types'

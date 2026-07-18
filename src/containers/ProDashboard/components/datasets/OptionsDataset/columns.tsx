@@ -1,6 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { PercentChange } from '~/components/PercentChange'
 import { TokenLogo } from '~/components/TokenLogo'
+import { PercentChange } from '~/ui/PercentChange'
 import { formattedNum } from '~/utils'
 
 export const optionsDatasetColumns: ColumnDef<any>[] = [

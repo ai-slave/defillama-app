@@ -1,4 +1,4 @@
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import type { ChartTabType } from './types'
 
 const CATEGORY_TITLES: Record<ChartTabType, string> = {

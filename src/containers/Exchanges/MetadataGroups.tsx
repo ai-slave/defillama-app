@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
-import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
 import {

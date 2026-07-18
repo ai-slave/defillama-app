@@ -1,9 +1,9 @@
-import { Icon } from '~/components/Icon'
 import {
 	ALERT_EMPTY_STATE_CHIPS,
 	ALERT_ESCAPE_HATCH_PREFILL
 } from '~/containers/LlamaAI/components/alerts/alertsListHelpers'
 import type { TriggerType } from '~/containers/LlamaAI/components/alerts/createAlertForm'
+import { Icon } from '~/ui/Icon'
 
 interface EmptyAlertsStateProps {
 	onOpenCreate: (tab: TriggerType) => void

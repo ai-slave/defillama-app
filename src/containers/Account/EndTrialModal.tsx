@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useCallback, useState } from 'react'
-import { Icon } from '~/components/Icon'
-import { useSubscribe } from '~/containers/Subscription/useSubscribe'
+import { useSubscribe } from '~/auth/useSubscribe'
+import { Icon } from '~/ui/Icon'
 
 const DEFAULT_BENEFITS = [
 	'Unlimited CSV downloads',

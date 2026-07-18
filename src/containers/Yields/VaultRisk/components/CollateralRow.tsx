@@ -1,7 +1,7 @@
 import type { BlockExplorersResponse } from '~/api/types'
-import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum, slug } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'

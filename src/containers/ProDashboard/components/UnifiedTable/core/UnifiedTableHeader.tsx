@@ -1,7 +1,7 @@
 'use no memo'
 
 import * as React from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import type { UnifiedRowHeaderType } from '../../../types'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 import type { ActiveFilterChip } from '../utils/filterChips'

@@ -1,4 +1,4 @@
-import { QuestionHelper } from '~/components/QuestionHelper'
+import { QuestionHelper } from '~/ui/QuestionHelper'
 import { exchangeDefinitions, type ExchangeDefinition } from './definitions'
 import { EXCHANGE_SEGMENT_LABELS, type ExchangeSegment } from './models'
 

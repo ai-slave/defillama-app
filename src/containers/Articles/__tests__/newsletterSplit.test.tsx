@@ -7,7 +7,7 @@ import { ResearchHero } from '~/containers/Articles/landing/ResearchHero'
 import NewslettersPage from '~/pages/newsletters'
 import defillamaPages from '~/public/pages.json'
 
-vi.mock('~/containers/Subscription/auth', () => ({
+vi.mock('~/auth', () => ({
 	useAuthContext: () => ({ user: null })
 }))
 

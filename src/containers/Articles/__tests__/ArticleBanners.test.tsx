@@ -17,7 +17,7 @@ vi.mock('@tanstack/react-query', () => ({
 	}))
 }))
 
-vi.mock('~/containers/Subscription/auth', () => ({
+vi.mock('~/auth', () => ({
 	useAuthContext: () => ({
 		authorizedFetch: vi.fn(),
 		isAuthenticated: true,

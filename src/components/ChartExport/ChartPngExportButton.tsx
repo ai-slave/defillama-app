@@ -4,9 +4,9 @@ import { useRouter } from 'next/router'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { getChartTheme } from '~/components/ECharts/chartTheme'
-import { Icon } from '~/components/Icon'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { buttonStyles } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import {
 	menuSurfaceStyles,

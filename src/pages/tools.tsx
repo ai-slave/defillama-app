@@ -1,10 +1,10 @@
 import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useId, useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { LinkToMetricOrToolPage, usePinnedRoutes } from '~/components/Metrics'
 import Layout from '~/layout'
 import defillamaPages from '~/public/pages.json'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 
 export default function Tools() {

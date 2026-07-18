@@ -1,10 +1,12 @@
 import * as Ariakit from '@ariakit/react'
 import { lazy, Suspense, type ReactNode } from 'react'
-import { useAuthContext } from '../Subscription/auth'
-import { setSignupSource } from '../Subscription/signupSource'
+import { useAuthContext } from '~/auth'
+import { setSignupSource } from '~/auth/signupSource'
 
 const SubscribeProModal = lazy(() =>
-	import('~/components/SubscribeCards/SubscribeProCard').then((m) => ({ default: m.SubscribeProModal }))
+	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
+		default: m.SubscribeProModal
+	}))
 )
 
 const CheckIcon = () => (

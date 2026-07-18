@@ -1,10 +1,10 @@
+import { useAuthContext } from '~/auth'
 import { Announcement } from '~/components/Announcement'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { getMainSiteIrDashboard } from '../Investors/mainSiteDashboards'
-import { useAuthContext } from '../Subscription/auth'
 
 const NEAR_CHAIN_ICON = chainIconUrl('near')
 

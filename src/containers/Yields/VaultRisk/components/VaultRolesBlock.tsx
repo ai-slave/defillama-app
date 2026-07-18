@@ -1,5 +1,5 @@
 import type { BlockExplorersResponse } from '~/api/types'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { asRoleEntity, humanizeDuration, roleEntityLabel } from '../format'
 import { toneClasses } from '../kindMeta'
 import { AddressActions } from '../primitives/AddressActions'

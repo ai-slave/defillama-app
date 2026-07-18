@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
 import type { ReactNode } from 'react'
 import { useEffect } from 'react'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { useAuthContext } from '~/auth'
 import { useIsClient } from '~/hooks/useIsClient'
 import type { AuthModel } from '~/utils/pocketbase'
 

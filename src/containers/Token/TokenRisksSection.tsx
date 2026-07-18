@@ -8,10 +8,10 @@ import {
 	useReactTable
 } from '@tanstack/react-table'
 import { startTransition, useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { formattedNum } from '~/utils'

@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useEffect, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 
 export const CopyDashboardLinkButton = ({

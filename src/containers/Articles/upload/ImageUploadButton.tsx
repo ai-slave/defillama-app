@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { type UploadResult, type UploadScope, useImageUpload } from './useImageUpload'
 
 type Props = {

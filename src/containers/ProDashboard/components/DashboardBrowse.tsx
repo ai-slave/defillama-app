@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Icon, type IIcon } from '~/components/Icon'
+import { Icon, type IIcon } from '~/ui/Icon'
 import { type DiscoveryCategoriesInitialData, useDiscoveryCategories } from '../hooks/useDiscoveryCategories'
 import type { Dashboard } from '../services/DashboardAPI'
 import { DiscoverySection } from './DiscoverySection'

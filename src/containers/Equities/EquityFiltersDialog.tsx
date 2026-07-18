@@ -1,12 +1,12 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { selectTriggerStyles } from '~/components/Select/types'
 import { useMedia } from '~/hooks/useMedia'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
 import {
 	popoverMobileDismissStyles,

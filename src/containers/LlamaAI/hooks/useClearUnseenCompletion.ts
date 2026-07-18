@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
+import { useAuthContext } from '~/auth'
 import {
 	SESSIONS_QUERY_KEY,
 	type SessionListInfiniteData,
@@ -7,7 +8,6 @@ import {
 } from '~/containers/LlamaAI/hooks/sessionListCache'
 import { projectSessionsKey } from '~/containers/LlamaAI/projects/queryKeys'
 import type { ProjectChatSession } from '~/containers/LlamaAI/projects/types'
-import { useAuthContext } from '~/containers/Subscription/auth'
 
 export function useClearUnseenCompletion() {
 	const queryClient = useQueryClient()

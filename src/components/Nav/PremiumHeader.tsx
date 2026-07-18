@@ -1,5 +1,5 @@
+import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { useIsClient } from '~/hooks/useIsClient'
 import { freeTrialBadgeStyles, SidebarDivider } from './shared'
 

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { Icon } from '~/components/Icon'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { useAuthContext } from '~/auth'
+import { Icon } from '~/ui/Icon'
 import { followAuthor } from './api'
 import type { AuthorPageResponse } from './types'
 

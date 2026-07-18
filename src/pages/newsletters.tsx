@@ -1,9 +1,9 @@
 import { type ChangeEvent, type FormEvent, useId, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { isWalletEmail } from '~/containers/Account/utils'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { NEWSLETTERS, type NewsletterKey, useNewsletterSubscription } from '~/hooks/useNewsletterSubscription'
 import Layout from '~/layout'
+import { Icon } from '~/ui/Icon'
 
 const initialSelected: Record<NewsletterKey, boolean> = {
 	newsletter: true,

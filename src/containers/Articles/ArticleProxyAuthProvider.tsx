@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
+import { useAuthContext } from '~/auth'
 import { ProxyAuthTokenContext } from '~/containers/ProDashboard/queries'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import pb from '~/utils/pocketbase'
 import { ResearchAdminFab } from './ResearchAdminFab'
 

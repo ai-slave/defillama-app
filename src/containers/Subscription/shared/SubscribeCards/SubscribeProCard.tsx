@@ -1,14 +1,14 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
+import { useSubscribe } from '~/auth/useSubscribe'
 import { BasicLink } from '~/components/Link'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { PricingCardContent } from '~/containers/Subscription/components'
 import { MONTHLY_PRICING_CARDS } from '~/containers/Subscription/data'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
-import { useSubscribe } from '~/containers/Subscription/useSubscribe'
 import { WalletProvider } from '~/layout/WalletProvider'
+import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const PRO_CARD = MONTHLY_PRICING_CARDS.find((c) => c.key === 'pro')!

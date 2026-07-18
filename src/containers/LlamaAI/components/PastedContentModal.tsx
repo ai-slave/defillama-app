@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 
 interface PastedContentModalProps {
 	preview: { content: string; filename: string; isPasted?: boolean } | null

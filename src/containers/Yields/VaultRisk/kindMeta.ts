@@ -1,4 +1,4 @@
-import type { IIcon } from '~/components/Icon'
+import type { IIcon } from '~/ui/Icon'
 import type { OracleType, RiskKind } from './types'
 
 // Small tone enum so the colour language stays consistent across the section.

@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
-import { Icon, type IIcon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
+import { Icon, type IIcon } from '~/ui/Icon'
 import { FREE_TIER_MAX_DASHBOARDS } from '../hooks/useFreeTierStatus'
 
 export type PaywallReason = 'dashboard-limit' | 'llamaai' | 'private-dashboard' | 'pro-feature'

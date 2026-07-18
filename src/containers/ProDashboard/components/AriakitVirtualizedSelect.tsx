@@ -2,7 +2,7 @@ import { Popover, PopoverDisclosure, usePopoverStore, useStoreState } from '@ari
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useEffect, useId, useMemo, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from './LoadingSpinner'
 
 export interface VirtualizedSelectOption {

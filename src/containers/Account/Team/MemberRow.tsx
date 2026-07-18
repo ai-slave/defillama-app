@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Icon } from '~/components/Icon'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { useAuthContext } from '~/auth'
+import { Icon } from '~/ui/Icon'
 import { AssignSubscriptionModal } from './AssignSubscriptionModal'
 import { ConfirmActionModal } from './ConfirmActionModal'
 import type { TeamMember } from './types'

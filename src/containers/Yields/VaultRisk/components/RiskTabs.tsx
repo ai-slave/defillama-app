@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { EASE_OUT_EXPO } from '../primitives/motion'
 

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useState } from 'react'
+import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import {
 	LLAMA_AI_SETTINGS_QUERY_KEY,
@@ -7,7 +8,6 @@ import {
 	type SettingsQueryResult,
 	type TipDTO
 } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const seenTipIds = new Set<string>()

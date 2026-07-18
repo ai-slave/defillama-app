@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import type { ArticlePdf } from '../types'
 import { type PdfUploadResult, usePdfUpload } from './usePdfUpload'
 

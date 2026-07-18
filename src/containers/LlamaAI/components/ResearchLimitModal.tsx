@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { EndTrialModal } from '~/containers/Account/EndTrialModal'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { Icon } from '~/ui/Icon'
 
 interface ResearchLimitModalProps {
 	dialogStore: Ariakit.DialogStore

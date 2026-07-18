@@ -2,11 +2,11 @@ import clsx from 'clsx'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { DownloadPdfLink } from '~/containers/Articles/landing/DownloadPdfLink'
 import { articleHref } from '~/containers/Articles/landing/utils'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { useMedia } from '~/hooks/useMedia'
+import { Icon } from '~/ui/Icon'
 
 const MOBILE_QUERY = '(max-width: 767px)'
 const IMG_ASPECT = { w: 294, h: 394 }

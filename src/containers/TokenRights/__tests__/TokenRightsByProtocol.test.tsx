@@ -4,11 +4,11 @@ import type { IRawTokenRightsEntry } from '../api.types'
 import { TokenRightsByProtocol } from '../TokenRightsByProtocol'
 import { parseTokenRightsEntry } from '../utils'
 
-vi.mock('~/components/Copy', () => ({
+vi.mock('~/ui/Copy', () => ({
 	CopyHelper: () => null
 }))
 
-vi.mock('~/components/Icon', () => ({
+vi.mock('~/ui/Icon', () => ({
 	Icon: () => null
 }))
 

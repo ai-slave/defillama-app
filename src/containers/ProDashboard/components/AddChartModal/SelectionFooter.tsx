@@ -1,4 +1,4 @@
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { CHART_TYPES, type ChartConfig } from '../../types'
 
 interface SelectionFooterProps {

@@ -11,11 +11,11 @@ import {
 	useSyncExternalStore
 } from 'react'
 import toast from 'react-hot-toast'
+import { getReferrer } from '~/auth/referrer'
+import { clearSignupSource, getSignupSource } from '~/auth/signupSource'
+import { VerifyEmailConfirmDialog } from '~/auth/VerifyEmailConfirmDialog'
+import { VerifyEmailDialog } from '~/auth/VerifyEmailDialog'
 import { AUTH_SERVER } from '~/constants'
-import { getReferrer } from '~/containers/Subscription/referrer'
-import { clearSignupSource, getSignupSource } from '~/containers/Subscription/signupSource'
-import { VerifyEmailConfirmDialog } from '~/containers/Subscription/VerifyEmailConfirmDialog'
-import { VerifyEmailDialog } from '~/containers/Subscription/VerifyEmailDialog'
 import { fetchJson, handleSimpleFetchResponse } from '~/utils/async'
 import pb, { type AuthModel } from '~/utils/pocketbase'
 

@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import * as React from 'react'
 import { useContext, useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import type { IEquitiesStatementsResponse } from '~/containers/Equities/api.types'
 import { formatEquitiesStatementCellValue } from '~/containers/Equities/financialsFormatting'
 import {
@@ -11,6 +10,7 @@ import {
 } from '~/containers/Equities/utils'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchEquitiesStatementsViaProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
+import { Icon } from '~/ui/Icon'
 import { downloadCSV } from '~/utils/download'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'

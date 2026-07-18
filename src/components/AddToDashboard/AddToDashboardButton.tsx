@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { lazy, Suspense, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
+import { setSignupSource } from '~/auth/signupSource'
 import type {
 	ChartBuilderConfig,
 	MultiChartConfig,
@@ -8,14 +9,13 @@ import type {
 	StablecoinsChartConfig,
 	YieldsChartConfig
 } from '~/containers/ProDashboard/types'
-import { useAuthContext } from '~/containers/Subscription/auth'
-import { setSignupSource } from '~/containers/Subscription/signupSource'
 import { useIsClient } from '~/hooks/useIsClient'
 import { buttonStyles } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { AddToDashboardModal } from './AddToDashboardModal'
 
 const SubscribeProModal = lazy(() =>
-	import('~/components/SubscribeCards/SubscribeProCard').then((m) => ({
+	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
 		default: m.SubscribeProModal
 	}))
 )

@@ -1,5 +1,5 @@
-import { useAuthContext } from '~/containers/Subscription/auth'
-import { useSubscribe } from '~/containers/Subscription/useSubscribe'
+import { useAuthContext } from '~/auth'
+import { useSubscribe } from '~/auth/useSubscribe'
 import { useIsClient } from '~/hooks/useIsClient'
 import type { BillingCycle, PlanKey } from './types'
 

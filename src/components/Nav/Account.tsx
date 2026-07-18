@@ -1,9 +1,9 @@
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
 import { buttonStyles } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { LoadingDots } from '~/ui/Loaders'
 
 export function Account({ asPath: _asPath }: { asPath: string }) {

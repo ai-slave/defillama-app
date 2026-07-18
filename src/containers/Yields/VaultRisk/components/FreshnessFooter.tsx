@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { formatVerified, relativeTimeFromTs } from '../format'
 import { RiskCallout } from '../primitives/RiskCallout'
 import type { DriftEntry, Freshness } from '../types'

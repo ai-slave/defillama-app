@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import {
 	popoverMultiSelectCheckStyles,

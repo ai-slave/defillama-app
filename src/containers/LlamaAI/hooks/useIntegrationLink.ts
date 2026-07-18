@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
+import { useAuthContext } from '~/auth'
 import {
 	confirmTelegramLink,
 	getTelegramStatus,
@@ -8,7 +9,6 @@ import {
 	type TelegramStatus
 } from '~/containers/LlamaAI/api/telegram'
 import { LLAMA_AI_SETTINGS_QUERY_KEY, type SettingsQueryResult } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
-import { useAuthContext } from '~/containers/Subscription/auth'
 
 export const LLAMA_AI_TELEGRAM_STATUS_QUERY_KEY = ['llama-ai', 'telegram-status'] as const
 

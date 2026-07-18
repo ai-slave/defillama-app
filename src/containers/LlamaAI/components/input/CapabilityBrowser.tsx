@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { useCallback, useEffect, useRef } from 'react'
-import { Icon } from '~/components/Icon'
 import { CAPABILITIES } from '~/containers/LlamaAI/capabilities'
 import { useMedia } from '~/hooks/useMedia'
+import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface CapabilityBrowserProps {

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 
 interface Column {
 	id: string

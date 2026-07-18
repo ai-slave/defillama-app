@@ -3,9 +3,9 @@ import { useQueries } from '@tanstack/react-query'
 import Link from 'next/link'
 import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { Icon, type IIcon } from '~/components/Icon'
-import { setSignupSource } from '~/containers/Subscription/signupSource'
+import { setSignupSource } from '~/auth/signupSource'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
+import { Icon, type IIcon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { slug as toSlug } from '~/utils'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
@@ -28,7 +28,9 @@ import { SavePresetDialog } from './SavePresetDialog'
 import { buildShareUrl } from './urlState'
 
 const SubscribeProModal = lazy(() =>
-	import('~/components/SubscribeCards/SubscribeProCard').then((m) => ({ default: m.SubscribeProModal }))
+	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
+		default: m.SubscribeProModal
+	}))
 )
 
 const MAX_METRICS = 25

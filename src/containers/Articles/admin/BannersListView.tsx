@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
+import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { ArticleApiError, deleteBanner, listBanners, updateBanner } from '~/containers/Articles/api'
 import type { Banner } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS, BANNER_KIND_LABELS, BANNER_SCOPE_LABELS } from '~/containers/Articles/types'
-import { useAuthContext } from '~/containers/Subscription/auth'
 
 export function BannersListView() {
 	const { authorizedFetch } = useAuthContext()

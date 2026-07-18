@@ -1,6 +1,6 @@
 import type { ChartTimeGrouping, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
 import { formatBarChart, formatLineChart } from '~/components/ECharts/utils'
-import { formatPercentChangeText } from '~/components/PercentChange'
+import { formatPercentChangeText } from '~/ui/PercentChange'
 import { formattedNum, toNiceDayMonthAndYearAndTime } from '~/utils'
 import { perpsDefinitions as d } from './definitions'
 import type {

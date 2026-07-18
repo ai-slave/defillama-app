@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { useComparisonWizardContext } from '../ComparisonWizardContext'
 import { MetricCard } from '../components/MetricCard'
 

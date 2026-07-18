@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { setReferrer } from '~/containers/Subscription/referrer'
+import { setReferrer } from '~/auth/referrer'
 
 export function useReferrer() {
 	useEffect(() => {

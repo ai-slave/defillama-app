@@ -1,11 +1,11 @@
 import { lazy, Suspense, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
+import { useSubscribe } from '~/auth/useSubscribe'
+import type { Subscription } from '~/auth/useSubscribe'
 import { BasicLink } from '~/components/Link'
-import { useAuthContext } from '~/containers/Subscription/auth'
-import { useSubscribe } from '~/containers/Subscription/useSubscribe'
-import type { Subscription } from '~/containers/Subscription/useSubscribe'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
+import { Icon } from '~/ui/Icon'
 import { ApiAccessCard } from './ApiAccessCard'
 import { CancelSubscriptionModal } from './CancelSubscriptionModal'
 import { EndTrialModal } from './EndTrialModal'
@@ -15,9 +15,11 @@ import { useTeam } from './Team/useTeam'
 import { TrialSubscriptionCard } from './TrialSubscriptionCard'
 import { TrialUpgradeBanner } from './TrialUpgradeBanner'
 
-const TopupModal = lazy(() => import('~/components/TopupModal').then((m) => ({ default: m.TopupModal })))
+const TopupModal = lazy(() =>
+	import('~/containers/Subscription/shared/TopupModal').then((m) => ({ default: m.TopupModal }))
+)
 const StripeCheckoutModal = lazy(() =>
-	import('~/components/StripeCheckoutModal').then((m) => ({ default: m.StripeCheckoutModal }))
+	import('~/containers/Subscription/shared/StripeCheckoutModal').then((m) => ({ default: m.StripeCheckoutModal }))
 )
 
 function parseExpiryDate(raw: string): string | null {

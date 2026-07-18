@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useEffect, useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { PillBody } from './CitationPill'
 import {
 	accentFor,

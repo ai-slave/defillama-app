@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { NextRouter } from 'next/router'
 import { useCallback, useEffect, useRef } from 'react'
 import { toast } from 'react-hot-toast'
+import { useAuthContext } from '~/auth'
 import { consumeSlackLogin } from '~/containers/LlamaAI/api/slack'
 import { LLAMA_AI_SLACK_STATUS_QUERY_KEY } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
 import {
@@ -11,7 +12,6 @@ import {
 	type SettingsInitialState,
 	type SlackResult
 } from '~/containers/LlamaAI/utils/settingsIntent'
-import { useAuthContext } from '~/containers/Subscription/auth'
 
 function emitSlackToast(result: SlackResult, teamName: string | null, detail: string | null) {
 	switch (result) {

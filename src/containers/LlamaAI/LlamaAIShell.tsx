@@ -1,7 +1,7 @@
 import { type ReactElement, type ReactNode } from 'react'
+import { useAuthContext } from '~/auth'
 import { AgenticChat } from '~/containers/LlamaAI'
 import { LlamaAIAnimationPreloads } from '~/containers/LlamaAI/components/status/LlamaAIAnimationPreloads'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { LlamaAINavigateProvider } from '~/contexts/LlamaAINavigate'
 import { LlamaAIRouteProvider, useLlamaAIRouteState, type LlamaAIRouteState } from '~/contexts/LlamaAIRouteState'
 import { SessionAliasProvider } from '~/contexts/SessionAliasRegistry'

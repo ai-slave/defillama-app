@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom'
 import toast, { Toaster } from 'react-hot-toast'
 import { useIsClient } from '~/hooks/useIsClient'
-import { Icon } from './Icon'
+import { Icon } from '~/ui/Icon'
 
 export function Toast() {
 	const isClient = useIsClient()

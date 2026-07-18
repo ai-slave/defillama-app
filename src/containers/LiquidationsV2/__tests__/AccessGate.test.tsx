@@ -38,7 +38,7 @@ vi.mock('~/components/RowLinksWithDropdown', () => ({
 	)
 }))
 
-vi.mock('~/containers/Subscription/auth', () => ({
+vi.mock('~/auth', () => ({
 	useAuthContext: () => authState
 }))
 

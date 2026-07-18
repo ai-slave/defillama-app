@@ -1,12 +1,12 @@
 import * as React from 'react'
 import { formatTooltipChartDate, formatTooltipValue } from '~/components/ECharts/formatters'
 import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
-import { TagGroup } from '~/components/TagGroup'
 import { NftsMarketplaceTable } from '~/containers/Nft/NftsMarketplaceTable'
 import { getNFTMarketplacesData } from '~/containers/Nft/queries'
 import Layout from '~/layout'
 import { ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
+import { TagGroup } from '~/ui/SegmentedControl'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 

@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from 'react'
 import type { BlockExplorersResponse } from '~/api/types'
-import { Icon } from '~/components/Icon'
 import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { type Tone, toneClasses } from '../kindMeta'
 import type { RoleCapability } from '../types'

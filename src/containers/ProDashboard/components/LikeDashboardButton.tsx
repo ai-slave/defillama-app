@@ -1,5 +1,5 @@
-import { Icon } from '~/components/Icon'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { useAuthContext } from '~/auth'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { useDashboardEngagement } from '../hooks/useDashboardEngagement'

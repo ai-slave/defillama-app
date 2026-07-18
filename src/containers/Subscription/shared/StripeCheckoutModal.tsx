@@ -10,10 +10,10 @@ import {
 import { loadStripe } from '@stripe/stripe-js'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { AUTH_SERVER, STRIPE_PUBLISHABLE_KEY } from '~/constants'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import type { FormSubmitEvent } from '~/types/forms'
+import { Icon } from '~/ui/Icon'
 import { handleSimpleFetchResponse } from '~/utils/async'
 
 const stripeInstance = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY) : null

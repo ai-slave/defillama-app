@@ -1,9 +1,9 @@
 import dynamic from 'next/dynamic'
 import { type ComponentProps, useEffect, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { AccentBadge, SecondaryBadge, StatusBadge, TimeframeBadge } from './badges'
 import { BreakdownTables, BreakdownTablesSkeleton } from './BreakdownTable'
 import {

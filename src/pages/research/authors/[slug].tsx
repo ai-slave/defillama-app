@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import { useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { ArticleApiError, getAuthorBySlug, type ArticleAuthorResponse } from '~/containers/Articles/api'
@@ -14,8 +14,8 @@ import {
 	ResearchAuthorHeaderGradient
 } from '~/containers/Articles/profile/ResearchAuthorBackground'
 import { ARTICLE_SECTION_LABELS, type ArticleDocument, type ArticleSection } from '~/containers/Articles/types'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import Layout from '~/layout'
+import { Icon } from '~/ui/Icon'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 type ArchiveFilter = ArticleSection | 'all'

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
+import { useAuthContext } from '~/auth'
 import { listSlackChannels } from '~/containers/LlamaAI/api/slack'
-import { useAuthContext } from '~/containers/Subscription/auth'
 
 export function useSlackChannels(teamId: string | null | undefined) {
 	const { authorizedFetch, user } = useAuthContext()

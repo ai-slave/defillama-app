@@ -2,8 +2,6 @@ import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useEffect, useEffectEvent, useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
-import { TagGroup } from '~/components/TagGroup'
 import {
 	getGeckoIdFromSearchId,
 	getTokenSearchFallback,
@@ -13,6 +11,8 @@ import { TokenSearchDialog, toTokenSearchOption } from '~/containers/TokenSearch
 import type { TokenSearchResult } from '~/containers/TokenSearch/types'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
+import { TagGroup } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { FAQ } from './Faq'

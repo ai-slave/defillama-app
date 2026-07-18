@@ -1,4 +1,4 @@
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { useComparisonWizardContext } from '../ComparisonWizardContext'
 import type { ComparisonType } from '../types'
 

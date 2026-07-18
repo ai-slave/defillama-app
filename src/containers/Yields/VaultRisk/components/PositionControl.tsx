@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 
 // "Your deposit" — pro-rata scaling happens in the consumers; this only owns the amount.

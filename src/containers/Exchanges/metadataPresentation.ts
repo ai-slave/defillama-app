@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react'
-import type { Icon } from '~/components/Icon'
+import type { Icon } from '~/ui/Icon'
 import type { ExchangeMetadataGroupKey, ExchangeMetadataTone } from './models'
 
 type IconName = ComponentProps<typeof Icon>['name']

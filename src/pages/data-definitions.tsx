@@ -1,8 +1,8 @@
-import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { PageTitleStrip } from '~/ui/EntityTitleStrip'
+import { Icon } from '~/ui/Icon'
 
 const Definition = ({ header, id, children }: { header: string; id: string; children: React.ReactNode }) => {
 	return (

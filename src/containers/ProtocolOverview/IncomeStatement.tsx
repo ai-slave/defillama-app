@@ -2,7 +2,6 @@ import dayjs from 'dayjs'
 import { lazy, startTransition, Suspense, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
-import { Icon } from '~/components/Icon'
 import { Select } from '~/components/Select/Select'
 import {
 	TokenPageTable,
@@ -11,9 +10,10 @@ import {
 	TokenPageTableScroller,
 	TokenPageTableShell
 } from '~/components/Table/helpers'
-import { TagGroup } from '~/components/TagGroup'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
+import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
+import { TagGroup } from '~/ui/SegmentedControl'
 import { TableToolbarControlGroup } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { abbreviateNumber } from '~/utils'

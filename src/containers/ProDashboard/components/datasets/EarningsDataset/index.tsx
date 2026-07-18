@@ -12,9 +12,9 @@ import {
 	useReactTable
 } from '@tanstack/react-table'
 import * as React from 'react'
-import { Icon } from '~/components/Icon'
 import { useTableSearch } from '~/components/Table/utils'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
+import { Icon } from '~/ui/Icon'
 import { downloadCSV } from '~/utils/download'
 import { useProDashboardEditorActions } from '../../../ProDashboardAPIContext'
 import type { TableFilters } from '../../../types'

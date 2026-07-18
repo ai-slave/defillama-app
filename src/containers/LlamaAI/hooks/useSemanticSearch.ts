@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import type { SearchResult } from '~/containers/LlamaAI/types'
-import { useAuthContext } from '~/containers/Subscription/auth'
 
 export function useSemanticSearch() {
 	const { authorizedFetch, isAuthenticated } = useAuthContext()

@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { useAuthContext } from '~/auth'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { ConfirmationModal } from './ConfirmationModal'
 

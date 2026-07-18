@@ -2,18 +2,20 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { lazy, type ReactNode, Suspense, useCallback, useReducer } from 'react'
 import { toast } from 'react-hot-toast'
-import { Icon } from '~/components/Icon'
-import { TrialCsvLimitModal } from '~/components/TrialCsvLimitModal'
-import { useAuthContext } from '~/containers/Subscription/auth'
-import { setSignupSource } from '~/containers/Subscription/signupSource'
+import { useAuthContext } from '~/auth'
+import { setSignupSource } from '~/auth/signupSource'
+import { TrialCsvLimitModal } from '~/containers/Subscription/shared/TrialCsvLimitModal'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { slug } from '~/utils'
 import { downloadCSV } from '~/utils/download'
 
 const SubscribeProModal = lazy(() =>
-	import('~/components/SubscribeCards/SubscribeProCard').then((m) => ({ default: m.SubscribeProModal }))
+	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
+		default: m.SubscribeProModal
+	}))
 )
 
 interface CSVDownloadButtonProps {

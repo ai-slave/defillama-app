@@ -27,7 +27,7 @@ vi.mock('@tanstack/react-virtual', () => ({
 	}
 }))
 
-vi.mock('~/components/Icon', () => ({ Icon: () => null }))
+vi.mock('~/ui/Icon', () => ({ Icon: () => null }))
 vi.mock('~/ui/Dialog', async () => {
 	const { createElement } = await import('react')
 	return {

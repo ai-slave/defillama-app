@@ -1,7 +1,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useMemo, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { getItemIconUrl } from '../../utils'
 

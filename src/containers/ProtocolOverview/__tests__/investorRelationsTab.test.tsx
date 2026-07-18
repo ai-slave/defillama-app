@@ -55,7 +55,7 @@ function setupLayoutMocks(user: unknown) {
 	vi.doMock('~/components/EntityQuestionsStrip', () => ({
 		EntityQuestionsStrip: () => React.createElement('div', null, 'QUESTIONS-MARKER')
 	}))
-	vi.doMock('~/components/Icon', () => ({
+	vi.doMock('~/ui/Icon', () => ({
 		Icon: () => null
 	}))
 	vi.doMock('~/components/Link', () => ({
@@ -67,10 +67,10 @@ function setupLayoutMocks(user: unknown) {
 	vi.doMock('~/components/TokenLogo', () => ({
 		TokenLogo: () => null
 	}))
-	vi.doMock('~/components/QuestionHelper', () => ({
+	vi.doMock('~/ui/QuestionHelper', () => ({
 		QuestionHelper: () => null
 	}))
-	vi.doMock('~/containers/Subscription/auth', () => ({
+	vi.doMock('~/auth', () => ({
 		useAuthContext: () => ({ user })
 	}))
 	vi.doMock('~/layout', () => ({

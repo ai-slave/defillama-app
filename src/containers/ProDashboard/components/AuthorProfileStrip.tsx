@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { getMyDashboardAuthorProfile } from '~/containers/Authors/api'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
 import { hasCustomizedAuthorProfile } from '~/containers/Authors/profileDefaults'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { Icon } from '~/ui/Icon'
 
 export function AuthorProfileStrip() {
 	const { authorizedFetch, isAuthenticated, loaders, user } = useAuthContext()

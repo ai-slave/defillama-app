@@ -1,8 +1,8 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
-import { PercentChange } from '~/components/PercentChange'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Icon } from '~/ui/Icon'
+import { PercentChange } from '~/ui/PercentChange'
 import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
 

@@ -1,12 +1,12 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import { Icon } from '~/components/Icon'
 import { useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { FEE_EXTRA_CONFIGS } from '~/metrics/feeExtras'
 import { buttonStyles } from '~/ui/Button'
+import { CopyHelper } from '~/ui/Copy'
+import { Icon } from '~/ui/Icon'
 import { popoverMobileDismissStyles, popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
-import { CopyHelper } from './Copy'
 
 export function EmbedChart() {
 	const router = useRouter()

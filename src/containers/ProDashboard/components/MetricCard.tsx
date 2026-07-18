@@ -4,7 +4,7 @@ const SparklineChart = lazy(() =>
 	import('~/components/ECharts/SparklineChart').then((m) => ({ default: m.SparklineChart }))
 )
 const BarSparkline = lazy(() => import('~/components/ECharts/BarSparkline').then((m) => ({ default: m.BarSparkline })))
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { formattedNum } from '~/utils'
 import { useMetricData } from '../hooks/useMetricData'
 import { useProDashboardCatalog, useProDashboardPermissions } from '../ProDashboardAPIContext'

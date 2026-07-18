@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
-import { Icon } from '~/components/Icon'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { tooltipSurfaceStyles } from '~/ui/Popover'
 import { formattedNum } from '~/utils'

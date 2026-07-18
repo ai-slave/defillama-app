@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { useAuthContext } from '~/auth'
 import { SignInDialog } from '~/containers/Subscription/SignInDialog'
 
 export function SignInModal({

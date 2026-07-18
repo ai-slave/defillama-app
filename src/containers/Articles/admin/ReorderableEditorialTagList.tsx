@@ -9,10 +9,10 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type * as React from 'react'
-import { Icon } from '~/components/Icon'
 import { EditorialTagRow } from '~/containers/Articles/admin/EditorialTagRow'
 import { buildEditorialTagReorderPayload, type EditorialTagOrderItem } from '~/containers/Articles/editorialTagOrder'
 import type { ArticleDocument } from '~/containers/Articles/types'
+import { Icon } from '~/ui/Icon'
 
 const VERTICAL_SORTING_MODIFIERS = [restrictToVerticalAxis, restrictToParentElement]
 

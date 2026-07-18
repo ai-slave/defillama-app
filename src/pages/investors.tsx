@@ -1,6 +1,5 @@
 import type { GetServerSideProps } from 'next'
 import { useEffect, useState, type ReactNode } from 'react'
-import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { ThemeSwitch } from '~/components/Nav/ThemeSwitch'
 import { SEO } from '~/components/SEO'
@@ -16,6 +15,7 @@ import {
 	type InvestorsProjectId
 } from '~/containers/Investors/config'
 import { Logo } from '~/containers/Investors/Logo'
+import { Icon } from '~/ui/Icon'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 
 function SonicIcon() {

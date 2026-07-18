@@ -1,6 +1,6 @@
 import type { ChangeEventHandler } from 'react'
-import { QuestionHelper } from '~/components/QuestionHelper'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { QuestionHelper } from '~/ui/QuestionHelper'
 
 /* ----------------------------------------------------------------------------
    Switch — design.md form-control recipe (Figma node 6298:54913).

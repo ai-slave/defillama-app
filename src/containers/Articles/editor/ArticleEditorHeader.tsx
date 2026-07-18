@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import Link from 'next/link'
 import type { Dispatch, SetStateAction } from 'react'
-import { Icon as SharedIcon } from '~/components/Icon'
+import { Icon as SharedIcon } from '~/ui/Icon'
 import type { LocalArticleDocument } from '../types'
 import { Icon } from './ArticleEditorIcon'
 import type { SavePillState } from './ArticleEditorTypes'

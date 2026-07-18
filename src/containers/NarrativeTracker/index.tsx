@@ -3,11 +3,11 @@ import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { BasicLink } from '~/components/Link'
-import { PercentChange } from '~/components/PercentChange'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
-import { TagGroup } from '~/components/TagGroup'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
+import { PercentChange } from '~/ui/PercentChange'
+import { TagGroup } from '~/ui/SegmentedControl'
 import { formattedNum } from '~/utils'
 import {
 	buildNarrativeTreemapTreeData,

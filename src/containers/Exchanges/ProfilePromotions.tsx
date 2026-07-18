@@ -1,6 +1,6 @@
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
-import { Icon } from '~/components/Icon'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import type { ExchangeProfileModel } from './models'
 import { activePromotions, promotionLinks } from './promotions'
 

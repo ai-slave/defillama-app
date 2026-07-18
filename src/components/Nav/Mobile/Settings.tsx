@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { useProtocolsFilterState } from '~/components/Filters/useProtocolFilterState'
-import { Icon } from '~/components/Icon'
 import { SelectCheckIcon } from '~/components/Select/SelectCheckIcon'
 import { DARK_MODE, useDarkModeManager } from '~/contexts/LocalStorage'
+import { Icon } from '~/ui/Icon'
 import {
 	popoverMultiSelectCheckStyles,
 	popoverMobileDismissStyles,

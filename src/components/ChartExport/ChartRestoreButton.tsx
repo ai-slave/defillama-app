@@ -1,7 +1,7 @@
 import type * as echarts from 'echarts/core'
 import { useRouter } from 'next/router'
-import { Icon } from '~/components/Icon'
 import { buttonStyles } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 
 const DEFAULT_CLASSNAME = buttonStyles({ size: 'md' })
 

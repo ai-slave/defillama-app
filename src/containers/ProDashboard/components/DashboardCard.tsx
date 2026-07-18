@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { type Dashboard, dashboardUrlKey } from '../services/DashboardAPI'

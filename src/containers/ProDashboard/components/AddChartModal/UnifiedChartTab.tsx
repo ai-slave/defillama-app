@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { CHART_TYPES, type ChartConfig, getChainChartTypes, getProtocolChartTypes } from '../../types'

@@ -1,5 +1,5 @@
-import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
+import { Icon } from '~/ui/Icon'
 
 export function SqlChartUpsell() {
 	return (

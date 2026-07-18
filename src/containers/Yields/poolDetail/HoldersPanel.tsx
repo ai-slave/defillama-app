@@ -2,9 +2,7 @@ import type { ECharts } from 'echarts/core'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { useBlockExplorers } from '~/api/client'
-import { CopyHelper } from '~/components/Copy'
 import type { IPieChartProps } from '~/components/ECharts/types'
-import { Icon } from '~/components/Icon'
 import {
 	TokenPageTable,
 	TokenPageTableBodyCell,
@@ -12,6 +10,8 @@ import {
 	TokenPageTableScroller
 } from '~/components/Table/helpers'
 import { Card } from '~/ui/Card'
+import { CopyHelper } from '~/ui/Copy'
+import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'

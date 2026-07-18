@@ -8,11 +8,11 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { useBlockExplorers } from '~/api/client'
-import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useSortColumnOrders } from '~/components/Table/utils'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
+import { Icon } from '~/ui/Icon'
 import { formattedNum, slug, toNiceDayAndHour } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 

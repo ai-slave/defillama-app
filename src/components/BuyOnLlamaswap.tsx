@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
-import { Icon } from '~/components/Icon'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Icon } from '~/ui/Icon'
 import { popoverHovercardSurfaceStyles, popoverMenuItemStyles } from '~/ui/Popover'
 import type { IProtocolLlamaswapChain } from '~/utils/metadata/types'
 

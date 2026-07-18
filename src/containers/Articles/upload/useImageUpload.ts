@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import toast from 'react-hot-toast'
+import { useAuthContext } from '~/auth'
 import { FEATURES_SERVER } from '~/constants'
-import { useAuthContext } from '~/containers/Subscription/auth'
 
 export type UploadScope =
 	| 'avatar'

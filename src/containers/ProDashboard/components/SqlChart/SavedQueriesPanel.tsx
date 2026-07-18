@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import type { QuerySavedConfig } from '~/containers/Downloads/savedDownloads'
 import { useSavedDownloads } from '~/contexts/LocalStorage'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 

@@ -1,8 +1,8 @@
 'use no memo'
 
 import * as React from 'react'
-import { Icon } from '~/components/Icon'
 import { SortIcon } from '~/components/Table/SortIcon'
+import { Icon } from '~/ui/Icon'
 
 interface ReorderableHeaderProps {
 	children: React.ReactNode

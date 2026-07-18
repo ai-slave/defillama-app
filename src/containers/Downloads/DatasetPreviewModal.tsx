@@ -4,10 +4,10 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import Link from 'next/link'
 import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { Icon } from '~/components/Icon'
+import { setSignupSource } from '~/auth/signupSource'
 import { SortIcon } from '~/components/Table/SortIcon'
-import { setSignupSource } from '~/containers/Subscription/signupSource'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import type { DatasetDefinition, DatasetExcludeToggle } from './datasets'
@@ -25,7 +25,9 @@ import { SavePresetDialog } from './SavePresetDialog'
 import { buildShareUrl } from './urlState'
 
 const SubscribeProModal = lazy(() =>
-	import('~/components/SubscribeCards/SubscribeProCard').then((m) => ({ default: m.SubscribeProModal }))
+	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
+		default: m.SubscribeProModal
+	}))
 )
 
 const ROW_HEIGHT = 36

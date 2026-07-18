@@ -15,7 +15,7 @@ vi.mock('~/contexts/LocalStorage', () => ({
 	useLocalStorageSettingsManager: () => [mocks.feesSettings]
 }))
 
-vi.mock('~/components/Icon', () => ({
+vi.mock('~/ui/Icon', () => ({
 	Icon: () => null
 }))
 

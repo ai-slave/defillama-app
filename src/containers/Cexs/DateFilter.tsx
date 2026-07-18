@@ -1,17 +1,19 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useState } from 'react'
-import { Icon } from '~/components/Icon'
-import { useAuthContext } from '~/containers/Subscription/auth'
-import { setSignupSource } from '~/containers/Subscription/signupSource'
+import { useAuthContext } from '~/auth'
+import { setSignupSource } from '~/auth/signupSource'
 import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { popoverMobileDismissStyles, popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
 import { toNiceDayMonthAndYear, toNiceDayMonthAndYearAndTime } from '~/utils'
 
 const SubscribeProModal = lazy(() =>
-	import('~/components/SubscribeCards/SubscribeProCard').then((m) => ({ default: m.SubscribeProModal }))
+	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
+		default: m.SubscribeProModal
+	}))
 )
 
 const formatDateForInput = (timestamp: number | null) => {

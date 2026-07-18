@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { useLlamaAINotifyBannerDismissed } from '~/contexts/LocalStorage'
+import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 type Permission = NotificationPermission | 'unsupported'

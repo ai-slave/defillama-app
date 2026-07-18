@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 
 // The section's one external-link grammar: dotted underline + trailing ↗, new tab.
 export function ExternalLink({ href, children }: { href: string; children: ReactNode }) {

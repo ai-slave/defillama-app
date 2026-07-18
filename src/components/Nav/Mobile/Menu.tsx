@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import * as React from 'react'
 import { lazy, Suspense, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { Account } from '../Account'
 import { PremiumHeader } from '../PremiumHeader'
 import { LinkToPage, navActionStyles, navSummaryStyles } from '../shared'

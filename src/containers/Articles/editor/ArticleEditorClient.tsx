@@ -4,9 +4,9 @@ import { useEditor } from '@tiptap/react'
 import { useRouter } from 'next/router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { canManageResearchArticle } from '~/containers/Articles/ArticlesAccessGate'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import {
 	ArticleApiError,

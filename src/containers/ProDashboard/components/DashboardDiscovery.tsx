@@ -1,15 +1,15 @@
 import { useRouter } from 'next/router'
 import { useMemo } from 'react'
-import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
-import { LoadingSkeleton } from '~/components/LoadingSkeleton'
 import { Select } from '~/components/Select/Select'
+import { Icon } from '~/ui/Icon'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { useDashboardDiscovery } from '../hooks/useDashboardDiscovery'
 import type { DiscoveryCategoriesInitialData } from '../hooks/useDiscoveryCategories'
 import { DashboardBrowse } from './DashboardBrowse'
 import { DashboardCard } from './DashboardCard'
 import { DashboardSearch } from './DashboardSearch'
+import { LoadingSkeleton } from './LoadingSkeleton'
 
 const SUGGESTED_TAGS = ['DeFi', 'NFT', 'Analytics', 'DEX', 'Lending', 'L2']
 

@@ -1,6 +1,6 @@
-import { Icon } from '~/components/Icon'
 import { TokenLogo } from '~/components/TokenLogo'
 import { buttonStyles } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { letterLogoDataUri } from '~/utils/icons'
 import type { ExchangeProfileModel } from './models'

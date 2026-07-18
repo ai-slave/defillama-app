@@ -1,6 +1,6 @@
 import { matchSorter } from 'match-sorter'
 import { useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { datasets } from '../datasets'
 import { identifierize, type RegisteredTable } from './useTableRegistry'
 

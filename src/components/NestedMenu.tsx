@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { buttonStyles } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import {
 	legacyNestedMenuButtonStyles,
 	legacyNestedMenuRootButtonStyles,
@@ -13,7 +14,6 @@ import {
 	nestedMenuRootRowStyles,
 	popoverMobileDismissStyles
 } from '~/ui/Popover'
-import { Icon } from './Icon'
 
 interface NestedMenuItemProps extends Ariakit.MenuItemProps {
 	ref?: React.Ref<HTMLDivElement>

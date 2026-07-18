@@ -6,11 +6,11 @@ vi.mock('~/containers/ProDashboard/hooks/useDashboardCreation', () => ({
 	useDashboardCreation: () => ({ createDashboardWithDataset: vi.fn(), isLoading: false })
 }))
 
-vi.mock('~/containers/Subscription/auth', () => ({
+vi.mock('~/auth', () => ({
 	useAuthContext: () => ({ loaders: { userLoading: false }, isAuthenticated: true, hasActiveSubscription: true })
 }))
 
-vi.mock('~/containers/Subscription/signupSource', () => ({ setSignupSource: vi.fn() }))
+vi.mock('~/auth/signupSource', () => ({ setSignupSource: vi.fn() }))
 vi.mock('~/hooks/useIsClient', () => ({ useIsClient: () => true }))
 
 describe('FullOldViewButton', () => {

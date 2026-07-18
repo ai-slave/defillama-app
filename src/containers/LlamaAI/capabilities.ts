@@ -1,4 +1,4 @@
-import type { IIcon } from '~/components/Icon'
+import type { IIcon } from '~/ui/Icon'
 
 export interface Capability {
 	key: string

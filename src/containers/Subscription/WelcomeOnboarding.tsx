@@ -1,15 +1,15 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import {
 	persistSlackAcquisitionIfFirst,
 	readSlackAcquisition,
 	type SlackAcquisition
 } from '~/containers/Subscription/utils/slackAcquisition'
 import { readAppStorage, setLlamaAIWalkthroughState, writeAppStorage } from '~/contexts/LocalStorage'
+import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const ONBOARDING_OPTIONS = [

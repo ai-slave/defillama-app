@@ -14,7 +14,7 @@ import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, type NodeViewP
 import StarterKit from '@tiptap/starter-kit'
 import { common, createLowlight } from 'lowlight'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { validateArticleChartConfig } from '../chartAdapters'
 import { getArticleEntityRoute } from '../entityLinks'
 import { ArticleChartBlock } from '../renderer/ArticleChartBlock'

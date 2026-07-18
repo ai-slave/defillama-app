@@ -11,21 +11,23 @@ import {
 	useRef,
 	useState
 } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { AgenticSessionItem } from '~/containers/LlamaAI/components/sidebar/AgenticSessionItem'
 import { SearchResults } from '~/containers/LlamaAI/components/sidebar/SearchResults'
 import { useSemanticSearch } from '~/containers/LlamaAI/hooks/useSemanticSearch'
 import { ProjectsSidebarSection } from '~/containers/LlamaAI/projects/ProjectsSidebarSection'
 import type { ChatSession } from '~/containers/LlamaAI/types'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { useStableCallback } from '~/hooks/useStableCallback'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
-const TopupModal = lazy(() => import('~/components/TopupModal').then((m) => ({ default: m.TopupModal })))
+const TopupModal = lazy(() =>
+	import('~/containers/Subscription/shared/TopupModal').then((m) => ({ default: m.TopupModal }))
+)
 
 interface AgenticSidebarProps {
 	sessions: ChatSession[]

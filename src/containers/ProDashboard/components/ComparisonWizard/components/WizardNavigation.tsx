@@ -1,4 +1,4 @@
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import type { WizardStep } from '../types'
 import { getStepIndex, WIZARD_STEPS } from '../types'
 

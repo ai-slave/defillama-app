@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
+import { useAuthContext } from '~/auth'
 import { llamaAIRequest } from '~/containers/LlamaAI/api/transport'
 import {
 	prependSessionToInfiniteData,
@@ -13,7 +14,6 @@ import {
 import { isProjectSessionsQueryKey, projectSessionsKey } from '~/containers/LlamaAI/projects/queryKeys'
 import type { ProjectChatSession } from '~/containers/LlamaAI/projects/types'
 import type { ChatSession } from '~/containers/LlamaAI/types'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { getErrorMessage } from '~/utils/error'
 
 type SwitchActiveLeafResponse = {

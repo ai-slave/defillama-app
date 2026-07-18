@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { PercentChange } from '~/components/PercentChange'
 import { Card } from '~/ui/Card'
+import { PercentChange } from '~/ui/PercentChange'
 import { materialChange, toPercent } from './utils'
 
 /** Fractional change rendered as a signed, coloured percent. */

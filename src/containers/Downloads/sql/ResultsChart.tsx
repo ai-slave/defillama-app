@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { ChartRouter } from './chart'
 import { ChartExportButton } from './chart/ChartExportButton'
 import { ChartToolbar } from './chart/ChartToolbar'

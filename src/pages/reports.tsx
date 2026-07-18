@@ -1,5 +1,5 @@
-import { Icon } from '~/components/Icon'
 import Layout from '~/layout'
+import { Icon } from '~/ui/Icon'
 
 const dlResearchReports = [
 	{

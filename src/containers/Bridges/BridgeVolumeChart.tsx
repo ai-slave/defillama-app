@@ -4,9 +4,9 @@ import {
 	DWM_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmGrouping
 } from '~/components/ECharts/ChartGroupingSelector'
-import { TagGroup } from '~/components/TagGroup'
 import { ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
+import { TagGroup } from '~/ui/SegmentedControl'
 import {
 	BRIDGE_VOLUME_METRIC_TYPES,
 	BRIDGE_VOLUME_VIEW_TYPES,

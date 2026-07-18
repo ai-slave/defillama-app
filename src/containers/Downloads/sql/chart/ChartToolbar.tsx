@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
-import { Icon } from '~/components/Icon'
 import { CHART_COLORS } from '~/constants/colors'
+import { Icon } from '~/ui/Icon'
 import { canUseChartType, type ChartConfig, type ChartType, type NumberFormat, type StackMode } from '../chartConfig'
 import type { ClassifiedColumn } from '../columnKind'
 import { ChartTypePicker } from './ChartTypePicker'

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
+import { useAuthContext } from '~/auth'
 import {
 	cancelSlackLink,
 	getSlackStatus,
@@ -9,7 +10,6 @@ import {
 	type SlackLink,
 	type SlackStatus
 } from '~/containers/LlamaAI/api/slack'
-import { useAuthContext } from '~/containers/Subscription/auth'
 
 export const LLAMA_AI_SLACK_STATUS_QUERY_KEY = ['llama-ai', 'slack-status'] as const
 

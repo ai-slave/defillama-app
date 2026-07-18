@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
+import { useAuthContext } from '~/auth'
 import { LlamaAIShell } from '~/containers/LlamaAI/LlamaAIShell'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 
 function ProjectDetailPage() {

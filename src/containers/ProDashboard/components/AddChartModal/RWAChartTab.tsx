@@ -1,4 +1,5 @@
 import { lazy, Suspense, useMemo } from 'react'
+import { useAuthContext } from '~/auth'
 import type {
 	IHBarChartProps,
 	IMultiSeriesChart2Props,
@@ -16,7 +17,6 @@ import { isRwaTotalSeriesLabel } from '~/containers/RWA/chartAggregation'
 import { toFiniteRwaChartValue } from '~/containers/RWA/chartDataset'
 import { getChartMetricOptions, getChartViewOptions, getChartMetricLabel } from '~/containers/RWA/chartState'
 import { buildRwaTreemapTreeData } from '~/containers/RWA/treemap'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { LocalLoader } from '~/ui/Loaders'
 import { formattedNum } from '~/utils'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric, RWAOverviewChartView } from '../../types'

@@ -1,11 +1,11 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { listArticles, type ArticleListResponse } from '~/containers/Articles/api'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { Icon } from '~/ui/Icon'
 
 type ListArticlesParams = NonNullable<Parameters<typeof listArticles>[0]>
 

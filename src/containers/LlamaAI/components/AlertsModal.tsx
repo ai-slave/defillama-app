@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { memo, useMemo, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import {
 	applyAlertUpdateToList,
@@ -61,8 +61,8 @@ import { SESSIONS_QUERY_KEY } from '~/containers/LlamaAI/hooks/useSessionList'
 import { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
 import { useSlackWorkspaces } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
 import { prepareAlertSummaryMarkdown, sanitizeUrl } from '~/containers/LlamaAI/utils/markdownHelpers'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 

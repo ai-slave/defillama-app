@@ -1,6 +1,6 @@
 import type { BlockExplorersResponse } from '~/api/types'
-import { Icon } from '~/components/Icon'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { AddressActions } from '../primitives/AddressActions'
 import type { MarketOracle } from '../types'

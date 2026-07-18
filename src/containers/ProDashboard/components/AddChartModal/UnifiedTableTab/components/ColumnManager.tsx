@@ -21,13 +21,15 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import type { ColumnOrderState, SortingState, VisibilityState } from '@tanstack/react-table'
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
-import { useAuthContext } from '~/containers/Subscription/auth'
-import { setSignupSource } from '~/containers/Subscription/signupSource'
+import { useAuthContext } from '~/auth'
+import { setSignupSource } from '~/auth/signupSource'
+import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 
 const SubscribeProModal = lazy(() =>
-	import('~/components/SubscribeCards/SubscribeProCard').then((m) => ({ default: m.SubscribeProModal }))
+	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
+		default: m.SubscribeProModal
+	}))
 )
 import {
 	COLUMN_DICTIONARY_BY_ID,

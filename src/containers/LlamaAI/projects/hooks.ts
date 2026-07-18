@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
+import { useAuthContext } from '~/auth'
 import { SESSIONS_QUERY_KEY } from '~/containers/LlamaAI/hooks/sessionListCache'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import {
 	addTextFile,
 	connectGithubSource,

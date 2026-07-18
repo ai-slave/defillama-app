@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import { PercentChange } from '~/components/PercentChange'
+import { PercentChange } from '~/ui/PercentChange'
 
 interface ITrendingContracts {
 	accounts_percentage_growth: number

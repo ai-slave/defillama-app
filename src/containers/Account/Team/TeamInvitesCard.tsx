@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { ConfirmActionModal } from './ConfirmActionModal'
 import { InviteMemberModal } from './InviteMemberModal'
 import type { TeamInvite } from './types'

@@ -1,8 +1,8 @@
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
 import { useEffect, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { ChartRenderer } from '~/containers/LlamaAI/components/charts/ChartRenderer'
 import type { ChartConfiguration } from '~/containers/LlamaAI/types'
+import { Icon } from '~/ui/Icon'
 import { validateLlamaAIChartConfig, type LlamaAIChartData } from '../../llamaaiChart'
 
 function CaptionEditor({ caption, onChange }: { caption: string; onChange: (caption: string) => void }) {

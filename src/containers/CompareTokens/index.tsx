@@ -4,9 +4,9 @@ import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
 import type { IResponseCGMarketsAPI } from '~/api/coingecko.types'
 import { fetchCoinPrices } from '~/api/pricing'
-import { Icon } from '~/components/Icon'
 import { TokenSearchDialog } from '~/containers/TokenSearch/TokenSearchDialog'
 import { buttonStyles } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import {
 	menuSurfaceStyles,

@@ -4,7 +4,7 @@ import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { listMyArticles } from '~/containers/Articles/api'
 import { appendBlocksToArticle, createArticleWithBlocks } from '~/containers/Articles/import/appendToArticle'
 import type { LlamaAIImportImage } from '~/containers/Articles/import/llamaaiToTiptap'
@@ -16,9 +16,9 @@ import {
 	type ArticleExportInclude,
 	type ArticleExportRequest
 } from '~/containers/LlamaAI/utils/articleExport'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { Button } from '~/ui/Button'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 

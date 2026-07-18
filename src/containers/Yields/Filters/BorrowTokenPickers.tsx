@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
 import { useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { iconHitTargetStyles } from '~/ui/IconHitTarget'
 import { Tooltip } from '~/ui/Tooltip'
 import type { TokenOption } from '../data/types'

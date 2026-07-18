@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
-import { Icon, type IIcon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
+import { Icon, type IIcon } from '~/ui/Icon'
 import type { Dashboard } from '../services/DashboardAPI'
 import { DashboardCard } from './DashboardCard'
 

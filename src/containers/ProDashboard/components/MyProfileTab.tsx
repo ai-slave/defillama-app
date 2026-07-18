@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
+import { useAuthContext } from '~/auth'
 import { getAuthorBySlug, getMyDashboardAuthorProfile } from '~/containers/Authors/api'
 import { AuthorProfileView } from '~/containers/Authors/AuthorProfileView'
 import type { AuthorDashboardSort } from '~/containers/Authors/types'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { LoadingSpinner } from './LoadingSpinner'
 
 const DASHBOARD_LIMIT = 24

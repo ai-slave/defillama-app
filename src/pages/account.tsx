@@ -3,12 +3,12 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
+import { useSubscribe } from '~/auth/useSubscribe'
 import { ManageAccount } from '~/containers/Account/ManageAccount'
-import { useAuthContext } from '~/containers/Subscription/auth'
-import { useSubscribe } from '~/containers/Subscription/useSubscribe'
 import Layout from '~/layout'
 import { WalletProvider } from '~/layout/WalletProvider'
+import { Icon } from '~/ui/Icon'
 
 export default function Account() {
 	const router = useRouter()

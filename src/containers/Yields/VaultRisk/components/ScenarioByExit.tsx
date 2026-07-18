@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { TokenPageTableShell } from '~/components/Table/helpers'
+import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formattedNum } from '~/utils'
 import { scenarioTone } from '../derive'

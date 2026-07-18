@@ -56,7 +56,7 @@ vi.mock('../Filters/TokenSearchDialog', () => ({
 	}
 }))
 
-vi.mock('~/components/Icon', () => ({ Icon: () => null }))
+vi.mock('~/ui/Icon', () => ({ Icon: () => null }))
 vi.mock('~/utils/analytics/yields', () => ({
 	YIELDS_EVENTS: {
 		SEARCH_TOKEN_INCLUDE: 'search_token_include',

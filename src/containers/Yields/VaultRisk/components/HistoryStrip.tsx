@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum } from '~/utils'
 import { formatVerified } from '../format'

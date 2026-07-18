@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
-import { Icon, type IIcon } from '~/components/Icon'
 import { Hovercard } from '~/ui/Hovercard'
+import { Icon, type IIcon } from '~/ui/Icon'
 import { metricOptionChipMdStyles } from '~/ui/MetricChip'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'

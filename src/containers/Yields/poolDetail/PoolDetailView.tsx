@@ -1,7 +1,7 @@
-import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { hasPart } from '../domain/apyPresentation'
 import { fmtLtv, fmtPct, fmtUsd, scoreValue } from './format'

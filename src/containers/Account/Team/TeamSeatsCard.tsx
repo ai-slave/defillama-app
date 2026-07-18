@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from 'react'
-import { Icon } from '~/components/Icon'
-import { useSubscribe } from '~/containers/Subscription/useSubscribe'
+import { useSubscribe } from '~/auth/useSubscribe'
+import { Icon } from '~/ui/Icon'
 import { ConfirmActionModal } from './ConfirmActionModal'
 import type { TeamSubscription } from './types'
 import { useTeam } from './useTeam'

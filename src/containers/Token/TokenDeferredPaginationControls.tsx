@@ -1,5 +1,5 @@
-import { Icon } from '~/components/Icon'
 import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { DEFAULT_TABLE_PAGE_SIZE } from './tableUtils'
 

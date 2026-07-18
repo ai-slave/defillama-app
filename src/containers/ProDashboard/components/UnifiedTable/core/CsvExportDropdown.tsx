@@ -1,7 +1,7 @@
 'use no memo'
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import type { UnifiedRowHeaderType } from '../../../types'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'
 

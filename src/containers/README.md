@@ -103,6 +103,12 @@ and build orchestration. Domain-specific builders remain with their product owne
   `/protocols`, chain overview, watchlist, forks, and compare pages.
 - `ProtocolOverview/` owns protocol detail behavior. Do not move list/table code into
   it unless the route is about a single protocol entity.
+- `Subscription/shared/` is the public upsell/checkout surface other products
+  lazy-import (`SubscribeCards`, `StripeCheckoutModal`, `TopupModal`,
+  `TrialCsvLimitModal`). Paywall gates in shared components and other containers
+  import from here; the rest of `Subscription/` (pricing data, payment machinery,
+  sign-in surfaces) is internal to the subscription product. Identity/session state
+  is not here — that lives in `src/auth/`.
 
 ## Metric Semantics
 

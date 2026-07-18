@@ -13,8 +13,8 @@ import {
 	useSyncExternalStore
 } from 'react'
 import toast from 'react-hot-toast'
+import { useAuthContext } from '~/auth'
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import pb from '~/utils/pocketbase'
 import { type CustomTimePeriod, dashboardReducer, initDashboardState, type TimePeriod } from './dashboardReducer'
 import { useAutoSave, useDashboardAPI, useDashboardPermissions, useFreeTierStatus } from './hooks'

@@ -1,12 +1,12 @@
 import * as Ariakit from '@ariakit/react'
 import { useState, type ReactNode } from 'react'
-import { SubscribeAPICard } from '~/components/SubscribeCards/SubscribeAPICard'
+import { useAuthContext } from '~/auth'
+import { SubscribeAPICard } from '~/containers/Subscription/shared/SubscribeCards/SubscribeAPICard'
 import { WalletProvider } from '~/layout/WalletProvider'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { DialogCloseButton, dialogSurfaceStyles } from '~/ui/Dialog'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
-import { useAuthContext } from '../Subscription/auth'
 
 const toolCategories = [
 	{

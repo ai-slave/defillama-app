@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { Icon } from '~/ui/Icon'
 import { PremiumFeatureGate } from '../PremiumFeatureGate'
 
 interface SavedChart {

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { EXAMPLE_QUERIES, SUBCATEGORY_META, type ExampleQuery, type ExampleSubcategory } from './examples'
 

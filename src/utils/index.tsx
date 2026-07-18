@@ -1,8 +1,8 @@
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import utc from 'dayjs/plugin/utc'
-import { renderPercentChange } from '~/components/PercentChange'
 import { CHART_COLORS } from '~/constants/colors'
+import { renderPercentChange } from '~/ui/PercentChange'
 import { fetchJson } from './async'
 export { getPrevTvlFromChart } from './tvlChart'
 

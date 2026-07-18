@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
 import { useEffect, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
 export function DashboardSearch({ defaultValue }: { defaultValue?: string }) {

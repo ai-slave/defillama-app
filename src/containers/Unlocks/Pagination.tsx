@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { buttonStyles } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 
 interface PaginationProps {
 	items: React.ReactNode[]

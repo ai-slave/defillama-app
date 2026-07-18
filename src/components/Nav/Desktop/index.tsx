@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
+import { Icon } from '~/ui/Icon'
 import { Account } from '../Account'
 import { PremiumHeader } from '../PremiumHeader'
 import { LinkToPage, navSummaryStyles, SidebarDivider } from '../shared'

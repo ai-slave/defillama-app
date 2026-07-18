@@ -2,7 +2,7 @@
 
 import type { Table } from '@tanstack/react-table'
 import * as React from 'react'
-import { TagGroup } from '~/components/TagGroup'
+import { TagGroup } from '~/ui/SegmentedControl'
 import type { NormalizedRow } from '../types'
 
 interface UnifiedTablePaginationProps {

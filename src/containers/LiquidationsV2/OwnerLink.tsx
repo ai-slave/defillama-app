@@ -1,6 +1,6 @@
 import * as React from 'react'
 import type { BlockExplorersResponse } from '~/api/types'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import type { LiquidationPosition } from './api.types'
 

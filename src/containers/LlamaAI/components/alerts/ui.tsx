@@ -1,10 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
-import { Icon, type IIcon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { formatPriceDisplay, normalizePriceInput } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
+import { Icon, type IIcon } from '~/ui/Icon'
 
 const settingsIntegrationsLinkClass =
 	'cursor-pointer underline decoration-dotted underline-offset-2 transition-colors hover:text-link'

@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import dayjs from 'dayjs'
 import { useState } from 'react'
-import { Icon } from '~/components/Icon'
 import type { FormSubmitEvent } from '~/types/forms'
+import { Icon } from '~/ui/Icon'
 import type { CustomTimePeriod } from '../ProDashboardAPIContext'
 
 interface CustomTimePeriodPickerProps {

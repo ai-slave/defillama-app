@@ -1,4 +1,4 @@
-import { Icon, type IIcon } from '~/components/Icon'
+import { Icon, type IIcon } from '~/ui/Icon'
 import type { ChartTabType } from './types'
 
 type IconName = IIcon['name']

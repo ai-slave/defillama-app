@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { Icon } from '~/components/Icon'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import { docsAsset, FigureDualTable, FigureRadar, FigureTable } from './DocsFigures'
 import { MarketMakersOutro } from './MarketMakersOutro'
 import { MarketMakersTabs } from './MarketMakersTabs'

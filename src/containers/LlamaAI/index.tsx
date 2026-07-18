@@ -14,8 +14,8 @@ import {
 	useState
 } from 'react'
 import toast from 'react-hot-toast'
-import { ArticleExportProvider, useArticleExport } from '~/components/AddToArticle/ArticleExportContext'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
+import { setSignupSource } from '~/auth/signupSource'
 import {
 	consumePendingPrompt,
 	consumePendingPageContext,
@@ -23,6 +23,10 @@ import {
 } from '~/components/LlamaAIFloatingButton'
 import { authorizedFetchAsFetch } from '~/containers/LlamaAI/authorizedFetchAdapter'
 import { LlamaAIChromeContext, useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
+import {
+	ArticleExportProvider,
+	useArticleExport
+} from '~/containers/LlamaAI/components/AddToArticle/ArticleExportContext'
 import { AlertsModal } from '~/containers/LlamaAI/components/AlertsModal'
 import { ChatSurface, type LandingOverrideApi } from '~/containers/LlamaAI/components/ChatSurface'
 import {
@@ -99,14 +103,13 @@ import {
 import type { AgenticAnswerMode, Message, UpgradeOffer } from '~/containers/LlamaAI/types'
 import { chartsMapFromGroups } from '~/containers/LlamaAI/utils/articleExport'
 import type { SettingsInitialState, SettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
-import { useAuthContext } from '~/containers/Subscription/auth'
-import { setSignupSource } from '~/containers/Subscription/signupSource'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { useLlamaAINavigate, useProjectHomeSignal } from '~/contexts/LlamaAINavigate'
 import { useLlamaAIRouteContext } from '~/contexts/LlamaAIRouteState'
 import { useOptionalSessionAliases } from '~/contexts/SessionAliasRegistry'
 import { useMedia } from '~/hooks/useMedia'
 import { useStableCallback } from '~/hooks/useStableCallback'
+import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import {
@@ -116,7 +119,9 @@ import {
 } from './routeTransition'
 
 const SubscribeProModal = lazy(() =>
-	import('~/components/SubscribeCards/SubscribeProCard').then((m) => ({ default: m.SubscribeProModal }))
+	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
+		default: m.SubscribeProModal
+	}))
 )
 
 const DashboardPanel = lazy(() =>

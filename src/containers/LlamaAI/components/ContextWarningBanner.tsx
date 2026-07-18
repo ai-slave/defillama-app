@@ -1,5 +1,5 @@
-import { Icon } from '~/components/Icon'
 import type { ContextWarningPayload } from '~/containers/LlamaAI/fetchAgenticResponse'
+import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface ContextWarningBannerProps {

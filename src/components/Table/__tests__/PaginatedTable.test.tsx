@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { PaginatedTable } from '../PaginatedTable'
 
-vi.mock('~/components/Icon', () => ({
+vi.mock('~/ui/Icon', () => ({
 	Icon: ({ name }: { name: string }) => <span>{name}</span>
 }))
 

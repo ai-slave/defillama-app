@@ -1,5 +1,5 @@
-import { Icon } from '~/components/Icon'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { useAuthContext } from '~/auth'
+import { Icon } from '~/ui/Icon'
 import type { DashboardItemConfig } from '../../types'
 import type { MainTabType } from './types'
 

@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo } from 'react'
 import { buttonStyles } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import {
 	legacyMenuSurfaceStyles,
 	legacyPopoverExternalRowStyles,
@@ -10,7 +11,6 @@ import {
 	popoverMobileDismissStyles,
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
-import { Icon } from './Icon'
 import { BasicLink } from './Link'
 
 interface IMenuProps {

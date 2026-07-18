@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { YIELDS_COLUMN_IDS, YIELDS_COLUMN_ID_SET, type YieldColumnId } from './columns'
 
 const yieldsColumnMetadata: Record<YieldColumnId, { name: string; description: string }> = {

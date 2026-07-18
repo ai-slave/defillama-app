@@ -1,6 +1,6 @@
 import type { ComponentPropsWithRef } from 'react'
-import { Icon, type IIcon } from '~/components/Icon'
 import { buttonStyles } from '~/ui/Button'
+import { Icon, type IIcon } from '~/ui/Icon'
 
 /* ----------------------------------------------------------------------------
    ExternalLinkButton — the app-wide grammar for external link pills

@@ -1,9 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { Icon } from '~/ui/Icon'
 import type { DashboardItemConfig } from '../types'
 import { sanitizeItemsForAPI } from '../utils/dashboardUtils'
 

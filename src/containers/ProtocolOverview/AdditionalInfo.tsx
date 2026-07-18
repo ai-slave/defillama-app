@@ -1,18 +1,18 @@
 import * as Ariakit from '@ariakit/react'
 import dayjs from 'dayjs'
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { useAuthContext } from '~/auth'
+import { setSignupSource } from '~/auth/signupSource'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
-import { Icon } from '~/components/Icon'
 import { BasicLink, ButtonLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
-import { QuestionHelper } from '~/components/QuestionHelper'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
-import { useAuthContext } from '~/containers/Subscription/auth'
-import { setSignupSource } from '~/containers/Subscription/signupSource'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import { MetricRow } from '~/ui/MetricPrimitives'
+import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
 import { formattedNum, slug } from '~/utils'
 import type { IProtocolOverviewPageData } from './types'
@@ -21,7 +21,9 @@ const EMPTY_COMPETITORS: Array<{ name: string; tvl: number }> = []
 const INFO_ACTION_STYLES = buttonStyles({ size: 'md' })
 
 const SubscribeProModal = lazy(() =>
-	import('~/components/SubscribeCards/SubscribeProCard').then((module) => ({ default: module.SubscribeProModal }))
+	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((module) => ({
+		default: module.SubscribeProModal
+	}))
 )
 
 interface SectionHeaderProps {

@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { forwardRef, useCallback, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../chartConfig'
 import { Keycap } from '../primitives'

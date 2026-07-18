@@ -14,10 +14,10 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
-import { Icon } from '~/components/Icon'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { VirtualTable, type VirtualTableLayout } from '~/components/Table/Table'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import {
 	searchFieldFlexibleWrapperStyles,
 	searchFieldIconStyles,

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { useAuthContext } from '~/auth'
 import { LiquidationsAccessGate, LiquidationsShellError, LiquidationsShellLoader } from './AccessGate'
 import { fetchLiquidationsChainClient, fetchLiquidationsOverviewClient, fetchLiquidationsProtocolClient } from './api'
 import type { LiquidationsChainShell, LiquidationsOverviewShell, LiquidationsProtocolShell } from './api.types'

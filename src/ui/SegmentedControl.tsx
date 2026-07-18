@@ -158,3 +158,46 @@ export function SegmentedControl<T extends string>({
 		</div>
 	)
 }
+
+type TagGroupProps<V extends readonly string[] = readonly string[]> = React.ComponentProps<'div'> & {
+	selectedValue: V[number] | null
+	setValue: (value: V[number]) => void
+	values: V
+	variant: TagGroupVariant
+	size: TagGroupSize
+	label?: string
+	disabledValues?: readonly V[number][]
+}
+
+/** SegmentedControl adapter for plain string-list options; labels are the capitalized values. */
+export function TagGroup<V extends readonly string[]>({
+	selectedValue,
+	setValue,
+	values,
+	style,
+	className,
+	variant,
+	size,
+	label,
+	disabledValues,
+	...props
+}: TagGroupProps<V>) {
+	return (
+		<SegmentedControl
+			value={selectedValue}
+			onValueChange={setValue}
+			options={values.map((value) => ({
+				value,
+				label: `${value.slice(0, 1).toUpperCase()}${value.slice(1)}`,
+				disabled: disabledValues?.includes(value)
+			}))}
+			label={label ?? 'Options'}
+			leading={label}
+			variant={variant}
+			size={size}
+			className={className}
+			style={style}
+			{...props}
+		/>
+	)
+}

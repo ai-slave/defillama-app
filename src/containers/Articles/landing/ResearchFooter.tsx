@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { type ChangeEvent, type FormEvent, useId, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { useMediaKitEmail } from '~/hooks/useNewsletterSubscription'
+import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const BRAND_KIT_URL = 'https://defillama.com/defillama-press-kit.zip'

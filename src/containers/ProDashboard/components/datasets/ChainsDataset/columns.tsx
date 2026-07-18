@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
-import { PercentChange } from '~/components/PercentChange'
 import { TokenLogo } from '~/components/TokenLogo'
+import { PercentChange } from '~/ui/PercentChange'
 import { formattedNum } from '~/utils'
 
 export const chainsDatasetColumns: ColumnDef<any>[] = [

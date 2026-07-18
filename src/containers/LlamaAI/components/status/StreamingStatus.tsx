@@ -1,5 +1,4 @@
 import { memo, useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import {
 	LLAMA_AI_ANIMATION_SRC,
 	LLAMA_AI_HACKER_ANIMATION_SRC
@@ -15,6 +14,7 @@ import { useHackerMode } from '~/containers/LlamaAI/components/status/useHackerM
 import type { RecoveryState } from '~/containers/LlamaAI/streamState'
 import { getToolLabel, TOOL_ICONS } from '~/containers/LlamaAI/toolMetadata'
 import type { SpawnAgentStatus, ToolCall } from '~/containers/LlamaAI/types'
+import { Icon } from '~/ui/Icon'
 
 export { ThinkingPanel, TodoChecklistPanel, deriveTodosFromToolExecutions, useHackerMode }
 

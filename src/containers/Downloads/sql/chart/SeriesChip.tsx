@@ -1,4 +1,4 @@
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import type { ChartConfig, ChartType } from '../chartConfig'
 import { ColorPicker } from './ColorPicker'
 

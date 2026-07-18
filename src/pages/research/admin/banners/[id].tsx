@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import { useAuthContext } from '~/auth'
 import { BannerForm } from '~/containers/Articles/admin/BannerForm'
 import { ArticleApiError, getBanner } from '~/containers/Articles/api'
 import { ArticleProxyAuthProvider } from '~/containers/Articles/ArticleProxyAuthProvider'
 import { ArticlesAccessGate } from '~/containers/Articles/ArticlesAccessGate'
 import type { Banner } from '~/containers/Articles/types'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import Layout from '~/layout'
 
 function EditBannerInner({ id }: { id: string }) {

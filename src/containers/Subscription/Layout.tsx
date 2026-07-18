@@ -2,12 +2,12 @@ import * as Ariakit from '@ariakit/react'
 import Head from 'next/head'
 import * as React from 'react'
 import { useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { LinkPreviewCard, SEO } from '~/components/SEO'
 import { Toast } from '~/components/Toast'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { Icon } from '~/ui/Icon'
 
 export function SubscribeLayout({
 	children,

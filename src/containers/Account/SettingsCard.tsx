@@ -1,8 +1,8 @@
+import { useAuthContext } from '~/auth'
+import { PROMO_EMAILS_TEXT } from '~/containers/Subscription/constants'
 // import { useConnectModal } from '@rainbow-me/rainbowkit'
 // import { useAccount, useSignMessage } from 'wagmi'
-import { Icon } from '~/components/Icon'
-import { useAuthContext } from '~/containers/Subscription/auth'
-import { PROMO_EMAILS_TEXT } from '~/containers/Subscription/constants'
+import { Icon } from '~/ui/Icon'
 import { ToggleSwitch } from './ToggleSwitch'
 
 export function SettingsCard() {

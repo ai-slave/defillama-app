@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useState, type ReactNode } from 'react'
-import { Icon, type IIcon } from '~/components/Icon'
-import { setSignupSource } from '~/containers/Subscription/signupSource'
+import { setSignupSource } from '~/auth/signupSource'
+import { Icon, type IIcon } from '~/ui/Icon'
 import { Keycap, TypeBadge, type ColumnKind } from './primitives'
 
 interface UpsellGateProps {

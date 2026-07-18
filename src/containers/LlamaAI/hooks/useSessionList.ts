@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
+import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import {
 	flattenSessionListData,
@@ -13,7 +14,6 @@ import {
 	type SessionListResponse
 } from '~/containers/LlamaAI/hooks/sessionListCache'
 import { assertResponse } from '~/containers/LlamaAI/utils/assertResponse'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { handleSimpleFetchResponse } from '~/utils/async'
 
 export { SESSIONS_QUERY_KEY }

@@ -1,4 +1,4 @@
-import { TagGroup } from '~/components/TagGroup'
+import { TagGroup } from '~/ui/SegmentedControl'
 import { Switch } from '~/ui/Switch'
 import { TIMEFRAMES, type Timeframe } from '../constants'
 import { Drawer } from '../Drawer'

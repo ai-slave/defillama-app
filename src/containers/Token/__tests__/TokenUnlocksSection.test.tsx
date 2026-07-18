@@ -36,7 +36,7 @@ vi.mock('@ariakit/react', () => ({
 	useDialogStore: () => ({ show: vi.fn() })
 }))
 
-vi.mock('~/components/Icon', () => ({
+vi.mock('~/ui/Icon', () => ({
 	Icon: () => <span>icon</span>
 }))
 
@@ -73,7 +73,7 @@ vi.mock('~/containers/Subscription/SignInModal', () => ({
 	SignInModal: () => <div>sign-in-modal</div>
 }))
 
-vi.mock('~/containers/Subscription/auth', () => ({
+vi.mock('~/auth', () => ({
 	useAuthContext: () => authState
 }))
 

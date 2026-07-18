@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useEffectEvent, useRef } from 'react'
+import { useAuthContext } from '~/auth'
 import { AUTH_SERVER } from '~/constants'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import {
 	readAppStorage,
 	readAppStorageRaw,

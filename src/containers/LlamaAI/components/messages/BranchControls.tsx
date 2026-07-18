@@ -1,5 +1,5 @@
-import { Icon } from '~/components/Icon'
 import type { Message } from '~/containers/LlamaAI/types'
+import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 
 export function BranchArrows({

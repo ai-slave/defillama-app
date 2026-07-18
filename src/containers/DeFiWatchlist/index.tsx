@@ -2,11 +2,11 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { lazy, startTransition, Suspense, useMemo, useState } from 'react'
 import { toast } from 'react-hot-toast'
+import { useAuthContext } from '~/auth'
+import { setSignupSource } from '~/auth/signupSource'
 import { DialogForm } from '~/components/DialogForm'
-import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
-import { formatPercentChangeText } from '~/components/PercentChange'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
@@ -14,8 +14,6 @@ import { useGroupAndFormatChains } from '~/containers/ChainsByCategory'
 import { ChainsByCategoryTable } from '~/containers/ChainsByCategory/Table'
 import { applyProtocolTvlSettings } from '~/containers/ProtocolLists/utils'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
-import { useAuthContext } from '~/containers/Subscription/auth'
-import { setSignupSource } from '~/containers/Subscription/signupSource'
 import { WatchListTabs } from '~/containers/Yields/views/WatchlistView'
 import { DEFAULT_PORTFOLIO_NAME, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useBookmarks } from '~/hooks/useBookmarks'
@@ -24,6 +22,8 @@ import { useIsClient } from '~/hooks/useIsClient'
 import { Button, buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
+import { Icon } from '~/ui/Icon'
+import { formatPercentChangeText } from '~/ui/PercentChange'
 import { PanelLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { mapAPIMetricToUI, mapUIMetricToAPI } from '~/utils/notificationMetrics'
 import { parseNumberQueryParam } from '~/utils/routerQuery'
@@ -31,7 +31,9 @@ import type { IChainsByCategoryData } from '../ChainsByCategory/types'
 import { chainMetrics, protocolMetrics } from './constants'
 
 const SubscribeProModal = lazy(() =>
-	import('~/components/SubscribeCards/SubscribeProCard').then((m) => ({ default: m.SubscribeProModal }))
+	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
+		default: m.SubscribeProModal
+	}))
 )
 
 export function DefiWatchlistContainer({

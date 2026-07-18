@@ -12,11 +12,11 @@ import * as React from 'react'
 import { IconsRow } from '~/components/IconsRow'
 import { toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
-import { PercentChange } from '~/components/PercentChange'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useSortColumnOrders } from '~/components/Table/utils'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
+import { PercentChange } from '~/ui/PercentChange'
 import { formattedNum, slug } from '~/utils'
 
 type BridgesTableRow = {

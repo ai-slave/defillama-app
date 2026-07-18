@@ -1,8 +1,7 @@
 import { type ChangeEvent, type FormEvent, useId, useState, useSyncExternalStore } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { ToggleSwitch } from '~/containers/Account/ToggleSwitch'
 import { isWalletEmail } from '~/containers/Account/utils'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { useIsClient } from '~/hooks/useIsClient'
 import {
 	NEWSLETTERS,
@@ -10,6 +9,7 @@ import {
 	shouldShowNewsletterSignup,
 	useNewsletterSubscription
 } from '~/hooks/useNewsletterSubscription'
+import { Icon } from '~/ui/Icon'
 interface NewsletterSignupProps {
 	layout: 'card' | 'strip'
 	className?: string

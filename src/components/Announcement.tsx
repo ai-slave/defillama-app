@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import * as React from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { createAnnouncementDismissalToken, dismissAnnouncement, isAnnouncementDismissed } from '~/utils/cookies'
 
 type DismissibleAnnouncementProps = {

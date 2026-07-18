@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { BlockExplorersResponse } from '~/api/types'
-import { Icon } from '~/components/Icon'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { CollateralView } from './components/CollateralView'
 import { FreshnessFooter } from './components/FreshnessFooter'

@@ -1,10 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import type { ReactNode } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
 

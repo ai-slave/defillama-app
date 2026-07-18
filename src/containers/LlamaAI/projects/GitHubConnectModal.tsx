@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import {
 	useConnectGithubSource,

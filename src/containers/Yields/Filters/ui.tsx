@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { Icon } from '~/components/Icon'
 import { Hovercard } from '~/ui/Hovercard'
+import { Icon } from '~/ui/Icon'
 
 // Help affordances for structured definitions in the Yields control panel.
 

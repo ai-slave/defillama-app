@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { useAuthContext } from '~/auth'
 import { type FollowingShelf, dashboardAPI } from '../services/DashboardAPI'
 
 const EMPTY_SHELVES: FollowingShelf[] = []

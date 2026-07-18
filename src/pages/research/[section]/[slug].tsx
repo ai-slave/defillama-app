@@ -4,7 +4,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import {
 	ArticleApiError,
 	getAllArticlesBanner,
@@ -25,8 +25,8 @@ import { ResearchLoader } from '~/containers/Articles/ResearchLoader'
 import type { ArticleAuthor, ArticleDocument, ArticlePublicAuthorProfile } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_FROM_SLUG, ARTICLE_SECTION_SLUGS } from '~/containers/Articles/types'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import Layout from '~/layout'
+import { Icon } from '~/ui/Icon'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 const ARTICLE_CACHE_CONTROL = 'public, s-maxage=60'

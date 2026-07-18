@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 
 interface ChartTypeOption {

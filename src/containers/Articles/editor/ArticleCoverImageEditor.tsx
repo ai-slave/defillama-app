@@ -1,5 +1,5 @@
 import type { Dispatch, RefObject, SetStateAction } from 'react'
-import { Icon as SharedIcon } from '~/components/Icon'
+import { Icon as SharedIcon } from '~/ui/Icon'
 import type { LocalArticleDocument } from '../types'
 import { Icon } from './ArticleEditorIcon'
 import type { ArticleFieldUpdater } from './ArticleEditorTypes'

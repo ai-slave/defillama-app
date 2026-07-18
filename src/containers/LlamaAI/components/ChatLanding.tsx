@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import Router from 'next/router'
 import { type RefObject, useCallback, useEffect, useRef } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { CAPABILITIES } from '~/containers/LlamaAI/capabilities'
 import { OnboardingWalkthrough } from '~/containers/LlamaAI/components/OnboardingWalkthrough'
 import { PromptInput } from '~/containers/LlamaAI/components/PromptInput'
@@ -10,9 +10,9 @@ import { TipOrNotifyBanner } from '~/containers/LlamaAI/components/TipOrNotifyBa
 import { useActiveTip } from '~/containers/LlamaAI/hooks/useLlamaAITip'
 import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
 import { isSettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { useLlamaAIWelcome } from '~/contexts/LocalStorage'
 import { useMedia } from '~/hooks/useMedia'
+import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const FEATURED_KEYS = ['trade_thesis', 'x_data', 'tradfi', 'yields', 'onchain_analytics'] as const

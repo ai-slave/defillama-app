@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import { prettyProtocolSlug } from '../format'
 import type { ConditionNode, ExternalDependency, ScenarioVM } from '../types'
 

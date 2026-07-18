@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { TokenRiskExposureRow, TokenRiskResponse } from '../tokenRisk.types'
 import { buildTokenRiskProtocolSummaries } from '../tokenRisk.utils'
 
-vi.mock('~/components/Icon', () => ({
+vi.mock('~/ui/Icon', () => ({
 	Icon: ({ name }: { name: string }) => <span>{name}</span>
 }))
 

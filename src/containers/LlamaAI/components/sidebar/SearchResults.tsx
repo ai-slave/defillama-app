@@ -1,6 +1,6 @@
 import { memo } from 'react'
-import { Icon } from '~/components/Icon'
 import type { SearchMatch, SearchResult } from '~/containers/LlamaAI/types'
+import { Icon } from '~/ui/Icon'
 
 function formatTimeAgo(dateStr: string | null) {
 	if (!dateStr) return ''

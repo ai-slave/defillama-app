@@ -3,8 +3,8 @@ import clsx from 'clsx'
 import { matchSorter } from 'match-sorter'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import { Icon } from '~/components/Icon'
 import { NestedMenu, NestedMenuItem } from '~/components/NestedMenu'
+import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import {
 	productSurfaceComboboxActionBarStyles,

@@ -9,7 +9,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type * as React from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { mutatePinnedMetrics } from '../pinnedUtils'
 import { NavItemContent, navSortableRowStyles } from '../shared'

@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo } from 'react'
+import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { removeStorageItem, setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { getErrorMessage } from '~/utils/error'
 

@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { getAllArticlesBanner, getArticleBanner, getLandingBanner, getSectionBanner } from '~/containers/Articles/api'
 import { allArticlesBannerForArticle } from '~/containers/Articles/renderer/bannerExclusion'
 import type { ArticleSection, Banner, BannerLookupResult } from '~/containers/Articles/types'
+import { Icon } from '~/ui/Icon'
 
 type Props = {
 	scope: 'landing' | 'section' | 'article'

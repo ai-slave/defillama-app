@@ -1,7 +1,7 @@
 import { matchSorter } from 'match-sorter'
 import { Fragment, useDeferredValue, useMemo, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles } from '~/ui/Input'
 import {
 	COOKBOOK_SNIPPETS,

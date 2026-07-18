@@ -1,7 +1,7 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { DashboardSeoSummary } from '~/containers/ProDashboard/components/DashboardSeoSummary'
 import { ProDashboardLoader } from '~/containers/ProDashboard/components/ProDashboardLoader'
@@ -15,8 +15,8 @@ import {
 	type DashboardSeoPublicDashboard,
 	toDashboardSeoPublicDashboard
 } from '~/containers/ProDashboard/utils/seo'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import Layout from '~/layout'
+import { Icon } from '~/ui/Icon'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 const ProDashboard = lazy(() => import('~/containers/ProDashboard'))

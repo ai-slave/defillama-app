@@ -11,7 +11,6 @@ import {
 	type CSSProperties,
 	type ReactNode
 } from 'react'
-import { Icon } from '~/components/Icon'
 import {
 	TokenPageTable,
 	TokenPageTableBodyCell,
@@ -20,6 +19,7 @@ import {
 	TokenPageTableShell
 } from '~/components/Table/helpers'
 import { SortIcon } from '~/components/Table/SortIcon'
+import { Icon } from '~/ui/Icon'
 import { SurfaceLoadingOverlay } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 

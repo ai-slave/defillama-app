@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
+import { useAuthContext } from '~/auth'
 import { revalidateResearchLanding } from '~/containers/Articles/api'
-import { useAuthContext } from '~/containers/Subscription/auth'
 
 export function useResearchLandingRevalidation() {
 	const { authorizedFetch } = useAuthContext()

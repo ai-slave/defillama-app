@@ -7,8 +7,8 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { useBlockExplorers } from '~/api/client'
-import { Icon } from '~/components/Icon'
 import { VirtualTable } from '~/components/Table/Table'
+import { Icon } from '~/ui/Icon'
 import { formattedNum } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 

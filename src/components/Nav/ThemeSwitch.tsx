@@ -1,5 +1,5 @@
-import { Icon } from '~/components/Icon'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { Icon } from '~/ui/Icon'
 
 interface ThemeSwitchProps {
 	className?: string

@@ -1,8 +1,8 @@
 import { useIsFetching } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import { useAuthContext } from '~/auth'
 import { ResearchIcon } from '~/components/ResearchIcon'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { isResearcher } from './ArticlesAccessGate'
 
 export function ResearchAdminFab() {

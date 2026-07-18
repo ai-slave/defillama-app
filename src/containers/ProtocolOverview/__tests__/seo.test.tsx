@@ -104,7 +104,7 @@ describe('ProtocolOverview final page SEO', () => {
 		vi.doMock('~/components/EntityQuestionsStrip', () => ({
 			EntityQuestionsStrip: () => null
 		}))
-		vi.doMock('~/components/Icon', () => ({
+		vi.doMock('~/ui/Icon', () => ({
 			Icon: () => null
 		}))
 		vi.doMock('~/components/Link', () => ({
@@ -127,7 +127,7 @@ describe('ProtocolOverview final page SEO', () => {
 		vi.doMock('~/ui/Tooltip', () => ({
 			Tooltip: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children)
 		}))
-		vi.doMock('~/containers/Subscription/auth', () => ({
+		vi.doMock('~/auth', () => ({
 			useAuthContext: () => ({ user: null })
 		}))
 		vi.doMock('../AdditionalInfo', () => ({
@@ -179,7 +179,7 @@ function setupLayoutMocks() {
 	vi.doMock('~/components/EntityQuestionsStrip', () => ({
 		EntityQuestionsStrip: () => null
 	}))
-	vi.doMock('~/components/Icon', () => ({
+	vi.doMock('~/ui/Icon', () => ({
 		Icon: () => null
 	}))
 	vi.doMock('~/components/Link', () => ({
@@ -191,7 +191,7 @@ function setupLayoutMocks() {
 	vi.doMock('~/components/TokenLogo', () => ({
 		TokenLogo: () => null
 	}))
-	vi.doMock('~/containers/Subscription/auth', () => ({
+	vi.doMock('~/auth', () => ({
 		useAuthContext: () => ({ user: null })
 	}))
 	vi.doMock('~/layout', async () => {
@@ -361,7 +361,7 @@ describe('ProtocolOverview SEO contract', () => {
 		vi.doMock('~/components/Bookmark', () => ({
 			Bookmark: () => null
 		}))
-		vi.doMock('~/components/Icon', () => ({
+		vi.doMock('~/ui/Icon', () => ({
 			Icon: () => null
 		}))
 		vi.doMock('~/components/SEO', () => ({
@@ -434,7 +434,7 @@ describe('ProtocolOverview SEO contract', () => {
 		vi.doMock('~/components/Bookmark', () => ({
 			Bookmark: () => null
 		}))
-		vi.doMock('~/components/Icon', () => ({
+		vi.doMock('~/ui/Icon', () => ({
 			Icon: () => null
 		}))
 		vi.doMock('~/components/SEO', () => ({
@@ -487,7 +487,7 @@ describe('ProtocolOverview SEO contract', () => {
 
 describe('ProtocolInfo category links', () => {
 	it('renders a category CTA linking back to the category page', async () => {
-		vi.doMock('~/components/Icon', () => ({
+		vi.doMock('~/ui/Icon', () => ({
 			Icon: () => null
 		}))
 		vi.doMock('~/components/Link', () => ({
@@ -507,16 +507,16 @@ describe('ProtocolInfo category links', () => {
 		vi.doMock('~/ui/MetricPrimitives', () => ({
 			MetricRow: () => null
 		}))
-		vi.doMock('~/components/QuestionHelper', () => ({
+		vi.doMock('~/ui/QuestionHelper', () => ({
 			QuestionHelper: () => null
 		}))
 		vi.doMock('~/ui/Tooltip', () => ({
 			Tooltip: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children)
 		}))
-		vi.doMock('~/containers/Subscription/auth', () => ({
+		vi.doMock('~/auth', () => ({
 			useAuthContext: () => ({ activePlan: null })
 		}))
-		vi.doMock('~/containers/Subscription/signupSource', () => ({
+		vi.doMock('~/auth/signupSource', () => ({
 			setSignupSource: () => undefined
 		}))
 

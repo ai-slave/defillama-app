@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 
 interface CollapsibleSectionProps {
 	title: string

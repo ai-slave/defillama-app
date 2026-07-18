@@ -1,4 +1,3 @@
-import { Icon } from '~/components/Icon'
 import { ExchangesNav } from '~/containers/Exchanges/ExchangesNav'
 import { MicaTable } from '~/containers/Exchanges/MicaTable'
 import type { MicaVenueModel } from '~/containers/Exchanges/models'
@@ -6,6 +5,7 @@ import { selectActivePromotion } from '~/containers/Exchanges/promotions'
 import { loadMasterMicaVenues } from '~/containers/Exchanges/server/master.loaders'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 

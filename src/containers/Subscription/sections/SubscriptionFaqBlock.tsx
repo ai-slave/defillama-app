@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Icon } from '~/components/Icon'
 import type { FaqItem } from '~/containers/Subscription/types'
+import { Icon } from '~/ui/Icon'
 
 function FaqAnswer({ text, onStartTrial }: { text: string; onStartTrial?: () => void }) {
 	const phrase = '7-day free trials'

@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import { Icon } from '~/components/Icon'
 import { NestedMenu, NestedMenuItem } from '~/components/NestedMenu'
+import { Icon } from '~/ui/Icon'
 import {
 	legacyPopoverActionButtonStyles,
 	legacyPopoverActionBarStyles,

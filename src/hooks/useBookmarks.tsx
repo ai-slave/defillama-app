@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { useAuthContext } from '~/auth'
 import { readAppStorage, useWatchlistManager } from '~/contexts/LocalStorage'
 import { useDebouncedCallback } from './useDebounce'
 import { useUserConfig } from './useUserConfig'

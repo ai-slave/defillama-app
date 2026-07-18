@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
-import { Icon } from '~/components/Icon'
 import { sanitizeUrl } from '~/containers/LlamaAI/utils/markdownHelpers'
+import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface MarkdownExportArtifactProps {

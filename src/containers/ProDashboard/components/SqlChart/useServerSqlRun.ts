@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { useAuthContext } from '~/auth'
 import { useProDashboardDashboard } from '../../ProDashboardAPIContext'
 import type { SqlSnapshot } from '../../types'
 

@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useRef } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { AddTextContentModal } from './AddTextContentModal'
 import { GitHubConnectModal } from './GitHubConnectModal'
 import { PROJECT_FILE_ACCEPT, useProjectFileUpload } from './useProjectFileUpload'

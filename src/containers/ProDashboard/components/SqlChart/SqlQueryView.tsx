@@ -1,9 +1,9 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import type { QueryInput } from '~/containers/Downloads/savedDownloads'
 import { tableNameFor, type RegisteredTable } from '~/containers/Downloads/sql/useTableRegistry'
 import { buildShareUrl } from '~/containers/Downloads/urlState'
 import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import type { SqlChartConfig, SqlSnapshot } from '../../types'
 

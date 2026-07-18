@@ -1,4 +1,4 @@
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import type { Dashboard } from '../services/DashboardAPI'
 import { DashboardCard } from './DashboardCard'
 import { LoadingSpinner } from './LoadingSpinner'

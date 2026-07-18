@@ -3,7 +3,7 @@
 import { Parser } from 'expr-eval'
 import { matchSorter } from 'match-sorter'
 import * as React from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { formatPreviewNumber } from '../UnifiedTable/utils/customColumns'
 import { protocolsByChainTableColumns } from './useProTableColumns'
 

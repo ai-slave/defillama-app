@@ -1,10 +1,10 @@
 import { lazy, Suspense, useEffect, useMemo, type ReactElement } from 'react'
 import type { IChartProps, IPieChartProps } from '~/components/ECharts/types'
-import { Icon } from '~/components/Icon'
 import {
 	formatProtocolV1TvlsByChain,
 	useFetchProtocolV1AddlChartsData
 } from '~/containers/ProtocolOverview/protocolV1AddlChartsData'
+import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { BORROWED_CHART_OPTIONS, BORROWED_CHART_TYPES } from '../../borrowedChartConstants'

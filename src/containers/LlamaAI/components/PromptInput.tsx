@@ -1,5 +1,4 @@
 import { type RefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { CapabilityChips } from '~/containers/LlamaAI/components/input/CapabilityChips'
 import { EntityComboboxPopover } from '~/containers/LlamaAI/components/input/EntityCombobox'
 import { DragOverlay, ImageUpload, ImageUploadButton } from '~/containers/LlamaAI/components/input/ImageUpload'
@@ -15,6 +14,7 @@ import { setInputSize, syncHighlightScroll } from '~/containers/LlamaAI/utils/sc
 import { highlightWord } from '~/containers/LlamaAI/utils/textUtils'
 import { useMedia } from '~/hooks/useMedia'
 import type { FormSubmitEvent } from '~/types/forms'
+import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 

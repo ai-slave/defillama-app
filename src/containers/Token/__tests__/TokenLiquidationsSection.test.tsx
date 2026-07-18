@@ -95,7 +95,7 @@ vi.mock('@tanstack/react-query', () => ({
 	useQuery: () => queryState
 }))
 
-vi.mock('~/containers/Subscription/auth', () => ({
+vi.mock('~/auth', () => ({
 	useAuthContext: () => authState
 }))
 
@@ -107,7 +107,7 @@ vi.mock('~/ui/Loaders', () => ({
 	LocalLoader: () => <div>loader</div>
 }))
 
-vi.mock('~/components/Icon', () => ({
+vi.mock('~/ui/Icon', () => ({
 	Icon: ({ name }: { name: string }) => <span>{name}</span>
 }))
 

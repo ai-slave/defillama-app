@@ -2,12 +2,14 @@ import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import type { ColumnOrderState, SortingState, VisibilityState } from '@tanstack/react-table'
 import { lazy, Suspense, useCallback, useContext, useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
-import { useAuthContext } from '~/containers/Subscription/auth'
-import { setSignupSource } from '~/containers/Subscription/signupSource'
+import { useAuthContext } from '~/auth'
+import { setSignupSource } from '~/auth/signupSource'
+import { Icon } from '~/ui/Icon'
 
 const SubscribeProModal = lazy(() =>
-	import('~/components/SubscribeCards/SubscribeProCard').then((m) => ({ default: m.SubscribeProModal }))
+	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
+		default: m.SubscribeProModal
+	}))
 )
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import type { IEquitiesCompanyApiItem } from '~/containers/Equities/api.types'

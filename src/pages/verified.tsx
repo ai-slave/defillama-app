@@ -1,6 +1,6 @@
+import { useAuthContext } from '~/auth'
 import { NotFoundPage } from '~/components/NotFoundPage'
 import VerifiedLanding from '~/containers/AttestationLanding'
-import { useAuthContext } from '~/containers/Subscription/auth'
 
 export default function VerifiedPage() {
 	const { user, loaders } = useAuthContext()

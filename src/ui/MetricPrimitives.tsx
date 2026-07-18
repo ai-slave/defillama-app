@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import type { ReactNode } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { tooltipSurfaceStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 

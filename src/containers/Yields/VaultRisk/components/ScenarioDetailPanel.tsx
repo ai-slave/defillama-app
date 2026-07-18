@@ -1,6 +1,6 @@
-import { Icon } from '~/components/Icon'
 import { TokenPageTableShell } from '~/components/Table/helpers'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import { formattedNum } from '~/utils'
 import { scenarioTone } from '../derive'
 import { guardianText } from '../format'

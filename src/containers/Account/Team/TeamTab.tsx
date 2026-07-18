@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { CreateTeamCard } from './CreateTeamCard'
 import { TeamFaqCard } from './TeamFaqCard'
 import { TeamInfoCard } from './TeamInfoCard'

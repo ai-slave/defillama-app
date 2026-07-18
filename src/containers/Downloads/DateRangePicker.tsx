@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { type DateRangeConfig, type DateRangePreset, formatDateRangeLong } from './savedDownloads'
 
 const PRESET_LABELS: Array<{ label: string; preset: DateRangePreset }> = [

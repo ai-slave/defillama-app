@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import type { ReactNode } from 'react'
-import { Icon } from '~/components/Icon'
 import { Button } from '~/ui/Button'
 import { DialogHeading } from '~/ui/Dialog'
+import { Icon } from '~/ui/Icon'
 
 export function Drawer({
 	open,

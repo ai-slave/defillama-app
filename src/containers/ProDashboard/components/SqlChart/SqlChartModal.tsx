@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { type ChartOptionsMap } from '~/containers/Downloads/chart-datasets'
 import {
 	defaultPresetName,
@@ -18,8 +18,8 @@ import { Keycap } from '~/containers/Downloads/sql/primitives'
 import { ResultsPanel } from '~/containers/Downloads/sql/ResultsPanel'
 import { useDuckDB } from '~/containers/Downloads/sql/useDuckDB'
 import { tableNameFor, useTableRegistry, type TableSource } from '~/containers/Downloads/sql/useTableRegistry'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { useSavedDownloads } from '~/contexts/LocalStorage'
+import { Icon } from '~/ui/Icon'
 import { useProDashboardEditorActions } from '../../ProDashboardAPIContext'
 import type { SqlChartConfig } from '../../types'
 import { buildSqlChartConfig } from './buildSqlChartConfig'

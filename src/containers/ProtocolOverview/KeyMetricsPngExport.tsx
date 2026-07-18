@@ -1,7 +1,7 @@
 import { useState, type RefObject } from 'react'
-import { Icon } from '~/components/Icon'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { buttonStyles } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { METRIC_LABEL_SELECTOR, METRIC_VALUE_SELECTOR } from '~/ui/MetricPrimitives'
 import { downloadDataURL } from '~/utils/download'

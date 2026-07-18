@@ -1,11 +1,11 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { useSubscribe } from '~/auth/useSubscribe'
 import type { UpgradeOffer } from '~/containers/LlamaAI/types'
-import { useSubscribe } from '~/containers/Subscription/useSubscribe'
+import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const StripeCheckoutModal = lazy(() =>
-	import('~/components/StripeCheckoutModal').then((m) => ({ default: m.StripeCheckoutModal }))
+	import('~/containers/Subscription/shared/StripeCheckoutModal').then((m) => ({ default: m.StripeCheckoutModal }))
 )
 
 const PRO_FEATURES = [

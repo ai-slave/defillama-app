@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect, useRef } from 'react'
-import { Icon } from '~/components/Icon'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import {
 	ArticleApiError,
@@ -22,6 +21,7 @@ import {
 } from '~/containers/Articles/landing/utils'
 import { ResearchLoader } from '~/containers/Articles/ResearchLoader'
 import type { ArticleDocument, ArticleSection } from '~/containers/Articles/types'
+import { Icon } from '~/ui/Icon'
 
 function humanizeTag(tag: string) {
 	return tag.replace(/-/g, ' ')

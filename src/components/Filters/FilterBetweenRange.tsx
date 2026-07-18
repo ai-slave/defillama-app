@@ -1,10 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import clsx from 'clsx'
 import type { InputHTMLAttributes, ReactNode } from 'react'
-import { Icon } from '~/components/Icon'
 import { NestedMenu } from '~/components/NestedMenu'
 import type { FormSubmitHandler } from '~/types/forms'
 import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { Input } from '~/ui/Input'
 import { popoverMobileDismissStyles, popoverMobileWrapperClassName, popoverSurfaceStyles } from '~/ui/Popover'
 

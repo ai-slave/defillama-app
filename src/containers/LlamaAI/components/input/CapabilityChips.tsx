@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
-import { Icon } from '~/components/Icon'
 import { CapabilityBrowser } from '~/containers/LlamaAI/components/input/CapabilityBrowser'
+import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface CapabilityChipsProps {

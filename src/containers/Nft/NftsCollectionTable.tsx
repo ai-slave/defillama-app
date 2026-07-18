@@ -8,14 +8,14 @@ import {
 	useReactTable
 } from '@tanstack/react-table'
 import * as React from 'react'
-import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
-import { PercentChange } from '~/components/PercentChange'
 import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { PercentChange } from '~/ui/PercentChange'
 import { slug } from '~/utils'
 
 interface INftCollection {

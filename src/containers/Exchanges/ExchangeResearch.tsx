@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { QuestionHelper } from '~/components/QuestionHelper'
+import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { ExchangeResearchReportModel, ExchangeResearchView } from './models'

@@ -1,6 +1,5 @@
 import * as Ariakit from '@ariakit/react'
 import { memo, useCallback, useEffect, useReducer, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import type { MemoryEntry } from '~/containers/LlamaAI/api/agentHome'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
 import { getIntegrationRowResetKey, IntegrationRow } from '~/containers/LlamaAI/components/IntegrationRow'
@@ -18,6 +17,7 @@ import {
 	type SettingsTabId
 } from '~/containers/LlamaAI/utils/settingsIntent'
 import { useDarkModeManager, useLlamaAINotifyBannerDismissed } from '~/contexts/LocalStorage'
+import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const MAX_LENGTH = 500

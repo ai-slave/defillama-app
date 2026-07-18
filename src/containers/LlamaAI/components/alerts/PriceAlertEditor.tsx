@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { formatTokenLabel } from '~/containers/LlamaAI/components/alerts/alertsListHelpers'
 import { roundPriceValue } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import type { PriceTrigger } from '~/containers/LlamaAI/components/alerts/types'
 import { alertFieldLabelClass, PriceInput, SegmentedToggle } from '~/containers/LlamaAI/components/alerts/ui'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 
 interface PriceAlertEditorProps {

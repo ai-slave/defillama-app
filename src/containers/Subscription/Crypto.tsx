@@ -1,11 +1,11 @@
 import { lazy, Suspense, useState } from 'react'
-import { Icon } from '~/components/Icon'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { useAuthContext } from '~/auth'
+import { useSubscribe } from '~/auth/useSubscribe'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
-import { useSubscribe } from '~/containers/Subscription/useSubscribe'
+import { Icon } from '~/ui/Icon'
 
 const StripeCheckoutModal = lazy(() =>
-	import('~/components/StripeCheckoutModal').then((m) => ({ default: m.StripeCheckoutModal }))
+	import('~/containers/Subscription/shared/StripeCheckoutModal').then((m) => ({ default: m.StripeCheckoutModal }))
 )
 
 export const PaymentButton = ({

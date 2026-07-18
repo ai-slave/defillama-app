@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import type { ComponentProps } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import { EXCHANGE_SEGMENT_LABELS, type ExchangeEeaOrderbookOwnership } from './models'

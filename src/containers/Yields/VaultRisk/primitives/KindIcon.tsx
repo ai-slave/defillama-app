@@ -1,4 +1,4 @@
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { kindMeta } from '../kindMeta'
 import type { RiskKind } from '../types'
 

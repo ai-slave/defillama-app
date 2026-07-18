@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 
 const FAQ_ITEMS: { question: string; answer: string }[] = [
 	{

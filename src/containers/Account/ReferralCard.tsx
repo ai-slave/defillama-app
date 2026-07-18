@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { FEATURES_SERVER } from '~/constants'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { Icon } from '~/ui/Icon'
 import { handleSimpleFetchResponse } from '~/utils/async'
 
 interface ReferralStats {

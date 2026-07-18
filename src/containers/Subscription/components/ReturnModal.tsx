@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
-import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
+import { Icon } from '~/ui/Icon'
 
 interface ReturnModalProps {
 	isOpen: boolean

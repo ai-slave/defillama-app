@@ -1,6 +1,6 @@
 import { Popover, PopoverDisclosure, usePopoverStore } from '@ariakit/react'
 import { useId, useMemo } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from './LoadingSpinner'
 
 export interface SelectOption {

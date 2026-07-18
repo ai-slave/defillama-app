@@ -59,7 +59,7 @@ vi.mock('~/components/Filters/TVLRange', () => ({
 	TVLRange: () => <div>TVL Range</div>
 }))
 
-vi.mock('~/components/Icon', () => ({
+vi.mock('~/ui/Icon', () => ({
 	Icon: ({ name }: { name: string }) => <span>{name}</span>
 }))
 

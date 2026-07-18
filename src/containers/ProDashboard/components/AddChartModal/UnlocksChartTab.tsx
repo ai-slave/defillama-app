@@ -6,8 +6,8 @@ import type {
 	ISingleSeriesChartProps,
 	MultiSeriesChart2Dataset
 } from '~/components/ECharts/types'
-import { Icon } from '~/components/Icon'
 import { getAllProtocolEmissions, getProtocolEmissons } from '~/containers/Unlocks/queries'
+import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { slug, toNiceDayMonthYear } from '~/utils'
 import { AriakitSelect } from '../AriakitSelect'

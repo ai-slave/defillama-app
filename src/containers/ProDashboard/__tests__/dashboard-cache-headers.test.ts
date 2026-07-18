@@ -25,7 +25,7 @@ vi.mock('next/router', () => ({
 	useRouter: () => ({ asPath: '/pro/dashboard-1' })
 }))
 
-vi.mock('~/components/Icon', () => ({
+vi.mock('~/ui/Icon', () => ({
 	Icon: () => null
 }))
 
@@ -51,7 +51,7 @@ vi.mock('~/containers/ProDashboard/ProDashboardAPIContext', () => ({
 	})
 }))
 
-vi.mock('~/containers/Subscription/auth', () => ({
+vi.mock('~/auth', () => ({
 	useAuthContext: () => ({
 		isAuthenticated: false,
 		loaders: { userLoading: false },

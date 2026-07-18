@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { externalLinkHostname } from './externalLink'
 
 interface ExternalLinkInterstitialProps {

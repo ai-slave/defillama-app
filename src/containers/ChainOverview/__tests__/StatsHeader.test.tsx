@@ -16,7 +16,7 @@ function setupStatsMocks() {
 	vi.doMock('~/components/CsvDownloadButton', () => ({
 		CSVDownloadButton: () => null
 	}))
-	vi.doMock('~/components/Icon', () => ({
+	vi.doMock('~/ui/Icon', () => ({
 		Icon: () => null
 	}))
 	vi.doMock('~/components/TokenLogo', () => ({
@@ -25,7 +25,7 @@ function setupStatsMocks() {
 	vi.doMock('~/ui/Tooltip', () => ({
 		Tooltip: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children)
 	}))
-	vi.doMock('~/containers/Subscription/auth', () => ({
+	vi.doMock('~/auth', () => ({
 		useAuthContext: () => ({ isAuthenticated: true })
 	}))
 	vi.doMock('~/contexts/LocalStorage', () => ({

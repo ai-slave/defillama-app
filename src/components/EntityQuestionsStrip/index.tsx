@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useState } from 'react'
+import { useAuthContext } from '~/auth'
 import { setPendingPrompt, setPendingPageContext, setPendingSuggestedFlag } from '~/components/LlamaAIFloatingButton'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface Props {

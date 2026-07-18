@@ -101,7 +101,7 @@ vi.mock('~/containers/Subscription/SignInModal', () => ({
 	SignInModal: () => <div>sign-in-modal</div>
 }))
 
-vi.mock('~/containers/Subscription/auth', () => ({
+vi.mock('~/auth', () => ({
 	useAuthContext: () => ({
 		authorizedFetch: vi.fn(),
 		hasActiveSubscription: true,

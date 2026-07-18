@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
 import type { TopAuthorEntry } from '~/containers/Authors/types'
+import { Icon } from '~/ui/Icon'
 import { useTopAuthors } from '../hooks/useTopAuthors'
 
 const COUNT_FORMATTER = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 })

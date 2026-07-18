@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 
 interface PopupPosition {
 	top: number

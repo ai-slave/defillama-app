@@ -2,7 +2,7 @@ import type * as Ariakit from '@ariakit/react'
 import { useConnectModal } from '@rainbow-me/rainbowkit'
 import { useCallback, useEffect, useRef } from 'react'
 import { useAccount, useSignMessage } from 'wagmi'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { useAuthContext } from '~/auth'
 import { WalletProvider } from '~/layout/WalletProvider'
 
 export type WalletSignInButtonProps = {

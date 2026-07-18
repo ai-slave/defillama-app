@@ -1,6 +1,6 @@
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
 import { useEffect, useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { normalizeImageHref, type ArticleImageAttrs } from './ArticleImage.shared'
 
 function ToolbarButton({

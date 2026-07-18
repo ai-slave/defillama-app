@@ -1,4 +1,4 @@
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { CATEGORY_CARDS } from './CategoryCard'
 import type { ChartTabType } from './types'
 

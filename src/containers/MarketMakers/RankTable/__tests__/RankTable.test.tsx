@@ -1,7 +1,10 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('~/components/TagGroup', () => ({ TagGroup: () => <div>tag-group</div> }))
+vi.mock('~/ui/SegmentedControl', async (importOriginal) => ({
+	...(await importOriginal<typeof import('~/ui/SegmentedControl')>()),
+	TagGroup: () => <div>tag-group</div>
+}))
 
 import { VOLUME_COLUMNS } from '../../constants'
 import { RankTable } from '../index'

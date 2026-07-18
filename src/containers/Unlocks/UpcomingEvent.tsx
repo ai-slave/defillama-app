@@ -1,10 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import dayjs from 'dayjs'
 import { useEffect, useEffectEvent, useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { TokenLogo } from '~/components/TokenLogo'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { Icon } from '~/ui/Icon'
 import {
 	menuSurfaceStyles,
 	popoverMenuItemStyles,

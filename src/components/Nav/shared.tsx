@@ -1,7 +1,7 @@
-import { Icon } from '~/components/Icon'
-import type { IIcon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { ResearchIcon } from '~/components/ResearchIcon'
+import { Icon } from '~/ui/Icon'
+import type { IIcon } from '~/ui/Icon'
 
 type NavIconName = IIcon['name']
 

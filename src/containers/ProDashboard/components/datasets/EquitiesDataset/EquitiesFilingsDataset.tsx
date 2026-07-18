@@ -15,7 +15,6 @@ import {
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { useContext, useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { useTableSearch } from '~/components/Table/utils'
 import type { IEquitiesFilingApiItem } from '~/containers/Equities/api.types'
 import {
@@ -26,6 +25,7 @@ import {
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchEquitiesFilingsViaProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
 import { useBreakpointWidth } from '~/hooks/useBreakpointWidth'
+import { Icon } from '~/ui/Icon'
 import { downloadCSV } from '~/utils/download'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { ProTableCSVButton } from '../../ProTable/CsvButton'

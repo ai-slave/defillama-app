@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { FormatSplitButton } from '../FormatSplitButton'
 import type { ChartConfig } from './chartConfig'

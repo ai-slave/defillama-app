@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
+import { useAuthContext } from '~/auth'
 import { ArticlePicker } from '~/containers/Articles/admin/ArticlePicker'
 import { EditorialTagRow } from '~/containers/Articles/admin/EditorialTagRow'
 import { ReorderableEditorialTagList } from '~/containers/Articles/admin/ReorderableEditorialTagList'
@@ -25,7 +26,6 @@ import {
 } from '~/containers/Articles/editorialTags'
 import type { ArticleDocument, ArticleImage } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
-import { useAuthContext } from '~/containers/Subscription/auth'
 
 export function EditorialTagsView() {
 	return (

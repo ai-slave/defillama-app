@@ -1,10 +1,10 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
-import { Icon } from '~/components/Icon'
 import { BasicLink } from '~/components/Link'
 import { Select } from '~/components/Select/Select'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Icon } from '~/ui/Icon'
 import { formattedNum } from '~/utils'
 import type { IProtocolTotalValueLostInHacksByProtocol } from './types'
 

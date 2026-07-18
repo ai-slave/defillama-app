@@ -1,8 +1,8 @@
 import Router from 'next/router'
-import { Icon } from '~/components/Icon'
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
 import { useActiveTip } from '~/containers/LlamaAI/hooks/useLlamaAITip'
 import { isSettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
+import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 

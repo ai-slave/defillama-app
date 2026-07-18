@@ -1,9 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import * as React from 'react'
-import { Icon } from '~/components/Icon'
 import type { ISearchItem } from '~/components/Search/types'
 import { selectTriggerStyles } from '~/components/Select/types'
+import { Icon } from '~/ui/Icon'
 import { inputStyles } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
 import {

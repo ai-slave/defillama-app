@@ -1,7 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueries } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { useAppMetadata } from '~/containers/ProDashboard/AppMetadataContext'
 import { ChartTypePills } from '~/containers/ProDashboard/components/AddChartModal/ChartTypePills'
 import type { TimePeriod } from '~/containers/ProDashboard/dashboardReducer'
@@ -12,6 +11,7 @@ import {
 	useProtocolsAndChains
 } from '~/containers/ProDashboard/queries'
 import { CHART_TYPES, getChainChartTypes, getProtocolChartTypes } from '~/containers/ProDashboard/types'
+import { Icon } from '~/ui/Icon'
 import { tokenIconUrl, chainIconUrl } from '~/utils/icons'
 import { validateArticleChartConfig } from '../chartAdapters'
 import type {

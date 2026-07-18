@@ -1,16 +1,16 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo } from 'react'
+import { useAuthContext } from '~/auth'
 import { Announcement } from '~/components/Announcement'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { getMetricFiltersLabel } from '~/components/Filters/options'
-import { Icon } from '~/components/Icon'
 import { BasicLink, ButtonLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { IrTabLabel } from '~/containers/Investors/IrTabLabel'
 import { getMainSiteIrDashboard } from '~/containers/Investors/mainSiteDashboards'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import {
 	menuSurfaceStyles,
 	popoverMobileDismissStyles,

@@ -2,11 +2,11 @@ import { useRouter } from 'next/router'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { TagGroup } from '~/components/TagGroup'
 import { useRangeFilter } from '~/hooks/useRangeFilter'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { nestedMenuActionStyles } from '~/ui/Popover'
+import { TagGroup } from '~/ui/SegmentedControl'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
 type FormSubmitHandler = NonNullable<React.ComponentProps<'form'>['onSubmit']>

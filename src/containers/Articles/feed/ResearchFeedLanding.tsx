@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { Icon } from '~/components/Icon'
 import { ResearchFooter } from '~/containers/Articles/landing/ResearchFooter'
 import { TitleLine } from '~/containers/Articles/landing/TitleLine'
 import { RESEARCH_FEED_URL } from '~/containers/Articles/researchFeed'
+import { Icon } from '~/ui/Icon'
 import { feedSchemeUrl } from './readers'
 import { RssMark } from './RssMark'
 

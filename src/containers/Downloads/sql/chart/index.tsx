@@ -1,4 +1,4 @@
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import type { ChartConfig } from '../chartConfig'
 import type { ClassifiedColumn } from '../columnKind'
 import type { QueryResult } from '../exportResults'

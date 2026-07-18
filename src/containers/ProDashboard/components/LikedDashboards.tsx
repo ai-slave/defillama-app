@@ -1,4 +1,4 @@
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { useLikedDashboards } from '../hooks/useLikedDashboards'
 import { DashboardCard } from './DashboardCard'
 import { LoadingSpinner } from './LoadingSpinner'

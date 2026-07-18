@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
 import toast from 'react-hot-toast'
-import { Icon } from '~/components/Icon'
 import { useBookmarks } from '~/hooks/useBookmarks'
+import { Icon } from '~/ui/Icon'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { BasicLink } from './Link'
 

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useAuthContext } from '~/auth'
 import {
 	getMemories,
 	deleteMemory,
@@ -7,7 +8,6 @@ import {
 	archiveSkill,
 	restoreSkill
 } from '~/containers/LlamaAI/api/agentHome'
-import { useAuthContext } from '~/containers/Subscription/auth'
 
 export const AGENT_HOME_MEMORIES_KEY = ['agent-home-memories'] as const
 export const AGENT_HOME_SKILLS_KEY = ['agent-home-skills'] as const

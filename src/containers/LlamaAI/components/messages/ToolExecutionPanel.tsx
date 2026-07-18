@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
-import { Icon } from '~/components/Icon'
 import { ToolDataView } from '~/containers/LlamaAI/components/messages/ToolDataView'
 import { getToolLabel, TOOL_ICONS } from '~/containers/LlamaAI/toolMetadata'
 import type { ToolExecution } from '~/containers/LlamaAI/types'
+import { Icon } from '~/ui/Icon'
 
 function createOccurrenceKeyFactory() {
 	const counts = new Map<string, number>()

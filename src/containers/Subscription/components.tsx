@@ -1,4 +1,3 @@
-import { Icon } from '~/components/Icon'
 import type {
 	Availability,
 	BillingCycle,
@@ -7,6 +6,7 @@ import type {
 	PricingCardCallbacks,
 	PricingCardData
 } from '~/containers/Subscription/types'
+import { Icon } from '~/ui/Icon'
 
 const PLAN_TIER: Record<PlanKey, number> = { free: 0, pro: 1, api: 2, enterprise: 3 }
 

@@ -1,17 +1,19 @@
 import * as Ariakit from '@ariakit/react'
 import { lazy, Suspense, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const SubscribeProModal = lazy(() =>
-	import('~/components/SubscribeCards/SubscribeProCard').then((m) => ({ default: m.SubscribeProModal }))
+	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
+		default: m.SubscribeProModal
+	}))
 )
+import { useAuthContext } from '~/auth'
+import { setSignupSource } from '~/auth/signupSource'
 import { AI_SERVER } from '~/constants'
-import { useAuthContext } from '~/containers/Subscription/auth'
-import { setSignupSource } from '~/containers/Subscription/signupSource'
 
 function formatPdfError(error: unknown): string {
 	if (!error) return 'Failed to generate PDF'

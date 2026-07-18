@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import toast from 'react-hot-toast'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import {
 	ArticleApiError,
 	type AuthorProfileUpdate,
@@ -11,8 +11,8 @@ import {
 } from '~/containers/Articles/api'
 import type { ArticleAuthorProfile } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { Icon } from '~/ui/Icon'
 
 const DISPLAY_NAME_MAX = 120
 const SLUG_MAX = 60

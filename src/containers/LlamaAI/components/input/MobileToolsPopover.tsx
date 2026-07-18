@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
-import { Icon } from '~/components/Icon'
 import { NestedMenu } from '~/components/NestedMenu'
 import { BrowserContent } from '~/containers/LlamaAI/components/input/CapabilityBrowser'
 import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
+import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface MobileToolsPopoverProps {

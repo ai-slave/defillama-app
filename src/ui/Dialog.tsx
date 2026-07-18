@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import type { ComponentPropsWithoutRef } from 'react'
-import { Icon } from '~/components/Icon'
 import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
 import { tw } from './tw'
 
 /* ----------------------------------------------------------------------------

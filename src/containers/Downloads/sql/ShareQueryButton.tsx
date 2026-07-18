@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { Icon } from '~/components/Icon'
+import { Icon } from '~/ui/Icon'
 import type { QueryTableRef } from '../savedDownloads'
 import { extractQueryConfig } from '../savedDownloads'
 import { buildNotebookShareUrl, buildShareUrl, type NotebookShareCell } from '../urlState'

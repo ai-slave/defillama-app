@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { memo, useEffect, useMemo, useState } from 'react'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { AI_SERVER } from '~/constants'
 import { formatPriceAlertSummary, formatTokenLabel } from '~/containers/LlamaAI/components/alerts/alertsListHelpers'
@@ -37,7 +37,7 @@ import { useIntegrationLink } from '~/containers/LlamaAI/hooks/useIntegrationLin
 import { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
 import { useSlackWorkspaces } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
 import type { AlertIntent } from '~/containers/LlamaAI/types'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 export const AlertArtifactLoading = memo(function AlertArtifactLoading() {

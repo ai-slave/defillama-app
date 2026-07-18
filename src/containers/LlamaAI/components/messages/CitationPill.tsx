@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo, type ReactNode } from 'react'
-import { Icon } from '~/components/Icon'
 import type { UnifiedCitationReference } from '~/containers/LlamaAI/types'
 import { sanitizeUrl } from '~/containers/LlamaAI/utils/markdownHelpers'
+import { Icon } from '~/ui/Icon'
 import {
 	accentFor,
 	badgeFor,

@@ -1,9 +1,9 @@
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { ThemeSwitch } from '~/components/Nav/ThemeSwitch'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import { useIsClient } from '~/hooks/useIsClient'
+import { Icon } from '~/ui/Icon'
 
 function AuthActions({
 	skeletonClassName,

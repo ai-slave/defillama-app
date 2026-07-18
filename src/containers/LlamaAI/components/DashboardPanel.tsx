@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query'
 import Router from 'next/router'
 import { memo, useMemo } from 'react'
 import toast from 'react-hot-toast'
-import { Icon } from '~/components/Icon'
+import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import type { DashboardArtifact } from '~/containers/LlamaAI/types'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
@@ -10,7 +10,7 @@ import { ChartGrid } from '~/containers/ProDashboard/components/ChartGrid'
 import { ProDashboardAPIProvider } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { dashboardAPI } from '~/containers/ProDashboard/services/DashboardAPI'
 import type { DashboardItemConfig } from '~/containers/ProDashboard/types'
-import { useAuthContext } from '~/containers/Subscription/auth'
+import { Icon } from '~/ui/Icon'
 
 interface DashboardPanelProps {
 	config: DashboardArtifact | null

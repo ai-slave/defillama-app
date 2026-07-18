@@ -2,10 +2,11 @@ import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+import { useAuthContext } from '~/auth'
+import { useSubscribe } from '~/auth/useSubscribe'
 import { SEO } from '~/components/SEO'
 import { Toast } from '~/components/Toast'
 import { EndTrialModal } from '~/containers/Account/EndTrialModal'
-import { useAuthContext } from '~/containers/Subscription/auth'
 import { ReturnModal } from '~/containers/Subscription/components/ReturnModal'
 import {
 	COMPARISON_SECTIONS,
@@ -26,13 +27,12 @@ import {
 import { SignInModal } from '~/containers/Subscription/SignInModal'
 import type { BillingCycle, PlanKey } from '~/containers/Subscription/types'
 import { useSubscriptionPageState } from '~/containers/Subscription/usePageState'
-import { useSubscribe } from '~/containers/Subscription/useSubscribe'
 import { applySlackAcquisitionFromQuery } from '~/containers/Subscription/utils/slackAcquisition'
 import { WalletProvider } from '~/layout/WalletProvider'
 import { safeInternalPath } from '~/utils/routerQuery'
 
 const StripeCheckoutModal = lazy(() =>
-	import('~/components/StripeCheckoutModal').then((m) => ({ default: m.StripeCheckoutModal }))
+	import('~/containers/Subscription/shared/StripeCheckoutModal').then((m) => ({ default: m.StripeCheckoutModal }))
 )
 
 function SubscriptionContent() {
