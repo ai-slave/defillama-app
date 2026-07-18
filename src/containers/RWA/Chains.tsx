@@ -12,6 +12,7 @@ import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWAChainsOverviewRow, RWAOverviewPage } from './api.types'
 import type { RWAChartDataset } from './chartDataset'
 import { definitions } from './definitions'
+import type { RWAFlowTreemapSizeRow } from './flowTreemap'
 import { RWAOverviewBreakdownChart } from './OverviewBreakdownChart'
 import { rwaSlug } from './rwaSlug'
 
@@ -189,6 +190,12 @@ export function RWAChains({
 			}
 		})
 	}, [chains, includeGovernance, includeStablecoins])
+	const treemapSizeRows: RWAFlowTreemapSizeRow[] = data.map((row) => ({
+		name: row.chain,
+		activeMcap: row.totalActiveMcap,
+		onChainMcap: row.totalOnChainMcap,
+		defiActiveTvl: row.totalDefiActiveTvl
+	}))
 	const csvFileName = (() => {
 		const parts = ['rwa-chains']
 		if (includeStablecoins) parts.push('stablecoins')
@@ -211,7 +218,12 @@ export function RWAChains({
 					<span className="whitespace-nowrap">Governance Tokens</span>
 				</Checkbox>
 			</Card>
-			<RWAOverviewBreakdownChart page={page} initialChartDataset={initialChartDataset} stackLabel="Chains" />
+			<RWAOverviewBreakdownChart
+				page={page}
+				initialChartDataset={initialChartDataset}
+				stackLabel="Chains"
+				treemapSizeRows={treemapSizeRows}
+			/>
 			<TableWithSearch
 				data={data}
 				columns={columns}

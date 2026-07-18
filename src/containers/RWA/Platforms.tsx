@@ -10,6 +10,7 @@ import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWAPlatformsOverviewRow } from './api.types'
 import type { RWAChartDataset } from './chartDataset'
 import { definitions } from './definitions'
+import type { RWAFlowTreemapSizeRow } from './flowTreemap'
 import { RWAOverviewBreakdownChart } from './OverviewBreakdownChart'
 import { getRWAOverviewCsvFileName, getRWAOverviewInclusion, getRWAOverviewTableData } from './overviewTableData'
 import { rwaSlug } from './rwaSlug'
@@ -112,6 +113,12 @@ export function RWAPlatforms({
 		platform: row.platform,
 		...getRWAOverviewTableData(row, inclusion)
 	}))
+	const treemapSizeRows: RWAFlowTreemapSizeRow[] = data.map((row) => ({
+		name: row.platform,
+		activeMcap: row.activeMcap,
+		onChainMcap: row.onChainMcap,
+		defiActiveTvl: row.defiActiveTvl
+	}))
 	const csvFileName = getRWAOverviewCsvFileName('rwa-platforms', inclusion)
 
 	return (
@@ -133,6 +140,7 @@ export function RWAPlatforms({
 				page={{ kind: 'platform' }}
 				initialChartDataset={initialChartDataset}
 				stackLabel="Platforms"
+				treemapSizeRows={treemapSizeRows}
 			/>
 			<TableWithSearch
 				data={data}

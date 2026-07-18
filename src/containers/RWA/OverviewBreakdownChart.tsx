@@ -3,8 +3,10 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
 import { ChartGroupingSelector, DWMC_GROUPING_OPTIONS_LOWERCASE } from '~/components/ECharts/ChartGroupingSelector'
 import type { MultiSeriesChart2Dataset, MultiSeriesChart2SeriesConfig } from '~/components/ECharts/types'
+import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { type ExcludeQueryKey } from '~/components/Select/types'
 import { CHART_COLORS } from '~/constants/colors'
@@ -26,8 +28,23 @@ import type { RWAChartDataset } from './chartDataset'
 import { definitions } from './definitions'
 import { buildRWAFlowRotationChart, parseRWAFlowGrouping, type RWAFlowGrouping } from './flows'
 import { useRWAFlowOverviewSplitWithFilters } from './flows.hooks'
+import {
+	aggregateRWAFlowTreemapWindow,
+	buildRWAFlowTreemap,
+	getRWAFlowTreemapPeriodLabel,
+	getRWAFlowTreemapSizeLabel,
+	parseRWAFlowTreemapSizeMetric,
+	parseRWAFlowTreemapView,
+	prepareRWAFlowTreemapCsv,
+	RWA_FLOW_TREEMAP_SIZE_OPTIONS,
+	RWA_FLOW_TREEMAP_VIEW_OPTIONS,
+	type RWAFlowTreemapSizeRow
+} from './flowTreemap'
 
 const MultiSeriesChart2 = lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
+const RWAFlowTreemapChart = lazy(() =>
+	import('./FlowTreemapChart').then((module) => ({ default: module.RWAFlowTreemapChart }))
+)
 
 type RWAOverviewBreakdownChartType = RWAChartMetricKey | 'flows'
 
@@ -43,6 +60,7 @@ const DEFAULT_CHART_TYPE: RWAChartMetricKey = 'activeMcap'
 const EMPTY_DATASET: RWAChartDataset = { source: [], dimensions: ['timestamp'] }
 const STACKS_QUERY_KEY = 'stacks'
 const EXCLUDE_STACKS_QUERY_KEY: ExcludeQueryKey = 'excludeStacks'
+const EMPTY_FLOW_TREEMAP = { nodes: [], excludedSizeCount: 0 }
 function assertNever(value: never): never {
 	throw new Error(`Unknown page kind: ${value}`)
 }
@@ -184,11 +202,13 @@ export function getOverviewBreakdownChartDatasetForSelectedStacks(
 export function RWAOverviewBreakdownChart({
 	page,
 	initialChartDataset,
-	stackLabel
+	stackLabel,
+	treemapSizeRows = []
 }: {
 	page: RWAOverviewPage
 	initialChartDataset: RWAChartDataset
 	stackLabel: string
+	treemapSizeRows?: RWAFlowTreemapSizeRow[]
 }) {
 	const router = useRouter()
 	const chartTypeQuery = readSingleQueryValue(router.query.chartType)
@@ -200,6 +220,8 @@ export function RWAOverviewBreakdownChart({
 				: DEFAULT_CHART_TYPE
 	const isFlowChart = chartType === 'flows'
 	const flowFrequency = getOverviewBreakdownFlowGrouping(readSingleQueryValue(router.query.flowRotationFrequency))
+	const flowChartView = parseRWAFlowTreemapView(readSingleQueryValue(router.query.flowRotationView))
+	const flowTreemapSizeMetric = parseRWAFlowTreemapSizeMetric(readSingleQueryValue(router.query.flowTreemapSize))
 	const metricChartType = isFlowChart ? DEFAULT_CHART_TYPE : chartType
 	const { request, isDefaultState } = getOverviewBreakdownRequestState(page, metricChartType, router.query)
 	const { data, isLoading, error } = useQuery({
@@ -226,7 +248,18 @@ export function RWAOverviewBreakdownChart({
 	const dataset = isFlowChart ? flowChart.dataset : isDefaultState ? initialChartDataset : (data ?? EMPTY_DATASET)
 	const showLoadingState = isFlowChart ? isFlowLoading : !isDefaultState && isLoading
 	const chartError = isFlowChart ? flowError : error
-	const stackOptions = useMemo(() => dataset.dimensions.filter((dimension) => dimension !== 'timestamp'), [dataset])
+	const stackOptions = useMemo(() => {
+		const options = dataset.dimensions.filter((dimension) => dimension !== 'timestamp')
+		if (!isFlowChart || flowChartView !== 'treemap') return options
+		const available = new Set(options)
+		for (const row of treemapSizeRows) {
+			if (!available.has(row.name)) {
+				available.add(row.name)
+				options.push(row.name)
+			}
+		}
+		return options
+	}, [dataset.dimensions, flowChartView, isFlowChart, treemapSizeRows])
 	const chartSeries = useMemo(
 		() => (isFlowChart ? flowChart.charts : buildOverviewBreakdownChartSeries(dataset.dimensions)),
 		[dataset.dimensions, flowChart.charts, isFlowChart]
@@ -252,7 +285,26 @@ export function RWAOverviewBreakdownChart({
 		() => getOverviewBreakdownChartDatasetForSelectedStacks(dataset, selectedStacks, stackOptions),
 		[dataset, selectedStacks, stackOptions]
 	)
+	const flowTreemapFlows = useMemo(
+		() =>
+			isFlowChart && flowChartView === 'treemap' ? aggregateRWAFlowTreemapWindow(flowData ?? [], flowFrequency) : null,
+		[flowChartView, flowData, flowFrequency, isFlowChart]
+	)
+	const flowTreemap = useMemo(
+		() =>
+			flowTreemapFlows
+				? buildRWAFlowTreemap({
+						flows: flowTreemapFlows,
+						sizeRows: treemapSizeRows,
+						sizeMetric: flowTreemapSizeMetric,
+						selectedNames: selectedStacksSet
+					})
+				: EMPTY_FLOW_TREEMAP,
+		[flowTreemapFlows, flowTreemapSizeMetric, selectedStacksSet, treemapSizeRows]
+	)
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
+	const flowTreemapSizeLabel = getRWAFlowTreemapSizeLabel(flowTreemapSizeMetric)
+	const exportFilename = `rwa-overview-breakdown-${chartType}-${isFlowChart ? flowChartView : 'time-series'}`
 
 	const onSelectChartType = (nextChartType: RWAOverviewBreakdownChartType) => {
 		void pushShallowQuery(router, { chartType: nextChartType === DEFAULT_CHART_TYPE ? undefined : nextChartType })
@@ -274,6 +326,34 @@ export function RWAOverviewBreakdownChart({
 					size="md"
 					className="mr-auto"
 				/>
+				{isFlowChart ? (
+					<Select
+						allValues={RWA_FLOW_TREEMAP_VIEW_OPTIONS}
+						selectedValues={flowChartView}
+						setSelectedValues={(view) => {
+							void pushShallowQuery(router, { flowRotationView: view === 'bar' ? undefined : view })
+						}}
+						label={flowChartView === 'treemap' ? 'Treemap Chart' : 'Bar Chart'}
+						labelType="none"
+						variant="filter"
+						size="md"
+					/>
+				) : null}
+				{isFlowChart && flowChartView === 'treemap' ? (
+					<Select
+						allValues={RWA_FLOW_TREEMAP_SIZE_OPTIONS}
+						selectedValues={flowTreemapSizeMetric}
+						setSelectedValues={(metric) => {
+							void pushShallowQuery(router, {
+								flowTreemapSize: metric === 'onChainMcap' ? undefined : metric
+							})
+						}}
+						label={`Size: ${flowTreemapSizeLabel}`}
+						labelType="none"
+						variant="filter"
+						size="md"
+					/>
+				) : null}
 				{isFlowChart ? (
 					<ChartGroupingSelector
 						value={flowFrequency}
@@ -298,11 +378,24 @@ export function RWAOverviewBreakdownChart({
 						size="md"
 					/>
 				) : null}
+				{isFlowChart && flowChartView === 'treemap' ? <ChartRestoreButton chartInstance={exportChartInstance} /> : null}
 				<ChartExportButtons
 					chartInstance={exportChartInstance}
-					filename={`rwa-overview-breakdown-${chartType}`}
+					filename={exportFilename}
 					title={`RWA ${CHART_TYPE_OPTIONS.find((option) => option.key === chartType)?.label ?? 'Breakdown'}`}
 					smol
+					prepareCsvDirect={
+						isFlowChart && flowChartView === 'treemap'
+							? () =>
+									prepareRWAFlowTreemapCsv({
+										nodes: flowTreemap.nodes,
+										sizeMetric: flowTreemapSizeMetric,
+										groupBy: flowFrequency,
+										filename: exportFilename
+									})
+							: undefined
+					}
+					pngProfile={isFlowChart && flowChartView === 'treemap' ? 'treemapNormalized' : undefined}
 				/>
 			</ChartPanelToolbar>
 			{chartError ? (
@@ -314,17 +407,38 @@ export function RWAOverviewBreakdownChart({
 					Loading
 					<LoadingDots />
 				</ChartPanelBodyFallback>
+			) : isFlowChart && flowChartView === 'treemap' && flowTreemap.nodes.length === 0 ? (
+				<ChartPanelBodyFallback className="body-sm text-secondary">
+					No sized net-flow data available.
+				</ChartPanelBodyFallback>
 			) : (
 				<Suspense fallback={<ChartPanelBodyFallback />}>
-					<MultiSeriesChart2
-						dataset={selectedDataset}
-						charts={chartSeries}
-						hideDefaultLegend={false}
-						showTotalInTooltip={!dataset.dimensions.some(isRwaTotalSeriesLabel)}
-						groupBy={isFlowChart ? flowFrequency : undefined}
-						selectedCharts={selectedStacksSet}
-						onReady={handleChartReady}
-					/>
+					{isFlowChart && flowChartView === 'treemap' ? (
+						<>
+							<RWAFlowTreemapChart
+								nodes={flowTreemap.nodes}
+								sizeLabel={flowTreemapSizeLabel}
+								periodLabel={getRWAFlowTreemapPeriodLabel(flowFrequency)}
+								onReady={handleChartReady}
+							/>
+							{flowTreemap.excludedSizeCount > 0 ? (
+								<p className="px-3 pb-2 body-sm text-tertiary">
+									{flowTreemap.excludedSizeCount} {flowTreemap.excludedSizeCount === 1 ? 'tile' : 'tiles'} hidden (zero
+									or missing {flowTreemapSizeLabel})
+								</p>
+							) : null}
+						</>
+					) : (
+						<MultiSeriesChart2
+							dataset={selectedDataset}
+							charts={chartSeries}
+							hideDefaultLegend={false}
+							showTotalInTooltip={!dataset.dimensions.some(isRwaTotalSeriesLabel)}
+							groupBy={isFlowChart ? flowFrequency : undefined}
+							selectedCharts={selectedStacksSet}
+							onReady={handleChartReady}
+						/>
+					)}
 				</Suspense>
 			)}
 		</ChartPanel>

@@ -17,6 +17,11 @@ let queryState: { data: any; isLoading: boolean; error: any } = {
 	error: null
 }
 let lastChartProps: IMultiSeriesChart2Props | null = null
+let lastTreemapProps: {
+	nodes: Array<{ name: string; netFlowUsd: number | null }>
+	sizeLabel: string
+	periodLabel: string
+} | null = null
 
 vi.mock('next/router', () => ({
 	useRouter: () => ({ query: routerQuery })
@@ -33,6 +38,13 @@ vi.mock('~/components/ChartExport/ChartExportButtons', () => ({
 vi.mock('~/components/ECharts/MultiSeriesChart2', () => ({
 	default: (props: IMultiSeriesChart2Props) => {
 		lastChartProps = props
+		return null
+	}
+}))
+
+vi.mock('../FlowTreemapChart', () => ({
+	RWAFlowTreemapChart: (props: typeof lastTreemapProps) => {
+		lastTreemapProps = props
 		return null
 	}
 }))
@@ -81,6 +93,7 @@ beforeEach(() => {
 	routerQuery = {}
 	queryState = { data: null, isLoading: false, error: null }
 	lastChartProps = null
+	lastTreemapProps = null
 })
 
 describe('getOverviewBreakdownRequestState', () => {
@@ -198,6 +211,36 @@ describe('getOverviewBreakdownRequestState', () => {
 		expect(lastChartProps?.groupBy).toBe('monthly')
 		expect(lastChartProps?.charts?.map((chart) => chart.name)).toEqual(['Ethereum', 'Solana'])
 		expect(lastChartProps?.charts?.every((chart) => chart.type === 'bar')).toBe(true)
+	})
+
+	it('renders a sized net-flow treemap for the selected listing entities', async () => {
+		routerQuery = { chartType: 'flows', flowRotationView: 'treemap', flowTreemapSize: 'activeMcap' }
+		queryState = {
+			data: [{ timestamp: 1, Ethereum: 10, Solana: -4 }],
+			isLoading: false,
+			error: null
+		}
+
+		await renderAll(
+			createElement(RWAOverviewBreakdownChart, {
+				page: { kind: 'chain' },
+				initialChartDataset: { source: [], dimensions: ['timestamp'] },
+				stackLabel: 'Chains',
+				treemapSizeRows: [
+					{ name: 'Ethereum', activeMcap: 100, onChainMcap: 120, defiActiveTvl: 10 },
+					{ name: 'Solana', activeMcap: 50, onChainMcap: 60, defiActiveTvl: 5 },
+					{ name: 'No Coverage', activeMcap: 25, onChainMcap: 30, defiActiveTvl: 0 }
+				]
+			})
+		)
+
+		expect(lastChartProps).toBeNull()
+		expect(lastTreemapProps).toMatchObject({ sizeLabel: 'Active Mcap', periodLabel: '30d' })
+		expect(lastTreemapProps?.nodes.map(({ name, netFlowUsd }) => ({ name, netFlowUsd }))).toEqual([
+			{ name: 'Ethereum', netFlowUsd: 10 },
+			{ name: 'Solana', netFlowUsd: -4 },
+			{ name: 'No Coverage', netFlowUsd: null }
+		])
 	})
 
 	it('slices selected stack charts to the first non-null selected value', async () => {

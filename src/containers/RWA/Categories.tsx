@@ -10,6 +10,7 @@ import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWACategoriesOverviewRow, RWAOverviewPage } from './api.types'
 import type { RWAChartDataset } from './chartDataset'
 import { definitions } from './definitions'
+import type { RWAFlowTreemapSizeRow } from './flowTreemap'
 import { RWAOverviewBreakdownChart } from './OverviewBreakdownChart'
 import { getRWAOverviewCsvFileName, getRWAOverviewInclusion, getRWAOverviewTableData } from './overviewTableData'
 import { rwaSlug } from './rwaSlug'
@@ -125,6 +126,12 @@ export function RWACategories({
 		category: row.category,
 		...getRWAOverviewTableData(row, inclusion)
 	}))
+	const treemapSizeRows: RWAFlowTreemapSizeRow[] = data.map((row) => ({
+		name: row.category,
+		activeMcap: row.activeMcap,
+		onChainMcap: row.onChainMcap,
+		defiActiveTvl: row.defiActiveTvl
+	}))
 	const csvFileName = getRWAOverviewCsvFileName('rwa-categories', inclusion)
 
 	return (
@@ -142,7 +149,12 @@ export function RWACategories({
 					<span className="whitespace-nowrap">Governance Tokens</span>
 				</Checkbox>
 			</Card>
-			<RWAOverviewBreakdownChart page={page} initialChartDataset={initialChartDataset} stackLabel="Categories" />
+			<RWAOverviewBreakdownChart
+				page={page}
+				initialChartDataset={initialChartDataset}
+				stackLabel="Categories"
+				treemapSizeRows={treemapSizeRows}
+			/>
 			<TableWithSearch
 				data={data}
 				columns={columns}

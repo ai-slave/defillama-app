@@ -76,6 +76,18 @@ import {
 } from './flows'
 import { type RWAFlowScope, useRWAFlowAssetBreakdown, useRWAFlowOverviewSplitWithFilters } from './flows.hooks'
 import {
+	aggregateRWAFlowTreemapWindow,
+	buildRWAFlowTreemap,
+	buildRWAFlowTreemapSizeRowsFromAssets,
+	getRWAFlowTreemapPeriodLabel,
+	getRWAFlowTreemapSizeLabel,
+	parseRWAFlowTreemapSizeMetric,
+	parseRWAFlowTreemapView,
+	prepareRWAFlowTreemapCsv,
+	RWA_FLOW_TREEMAP_SIZE_OPTIONS,
+	RWA_FLOW_TREEMAP_VIEW_OPTIONS
+} from './flowTreemap'
+import {
 	useFilteredRwaAssets,
 	useRWATableQueryParams,
 	useRWAAssetCategoryPieChartData,
@@ -101,6 +113,9 @@ const RWAFlowsChart = lazy(() => import('./FlowsChart').then((module) => ({ defa
 const RWAFlowRotationChart = lazy(() =>
 	import('./FlowRotationChart').then((module) => ({ default: module.RWAFlowRotationChart }))
 )
+const RWAFlowTreemapChart = lazy(() =>
+	import('./FlowTreemapChart').then((module) => ({ default: module.RWAFlowTreemapChart }))
+)
 const EMPTY_INITIAL_CHART_DATASET = emptyChartDatasets()
 
 type RWAOverviewChartMetric = RWAChartState['metric'] | 'flows'
@@ -108,18 +123,21 @@ type RWAOverviewChartMetric = RWAChartState['metric'] | 'flows'
 const RWA_NON_PLATFORM_FLOW_MODE_OPTIONS = RWA_FLOW_MODE_OPTIONS.filter((option) => option.value !== 'flowVsPrice')
 
 const RWA_FLOW_ROTATION_SPLIT_OPTIONS: Array<{
-	value: RWAFlowOverviewSplitBy
-	label: string
-	tooltip: string
+	key: RWAFlowOverviewSplitBy
+	name: string
+	help: string
 }> = [
-	{ value: 'assetGroup', label: 'Asset Groups', tooltip: definitions.flows.rotationGrouping.description },
-	{ value: 'category', label: 'Categories', tooltip: definitions.flows.rotationGrouping.description },
+	{ key: 'assetGroup', name: 'Asset Groups', help: definitions.flows.rotationGrouping.description },
+	{ key: 'category', name: 'Categories', help: definitions.flows.rotationGrouping.description },
+	{ key: 'platform', name: 'Asset Platforms', help: definitions.flows.rotationGrouping.description },
 	{
-		value: 'chain',
-		label: definitions.flows.rotationChains.label,
-		tooltip: definitions.flows.rotationChains.description
+		key: 'chain',
+		name: definitions.flows.rotationChains.label,
+		help: definitions.flows.rotationChains.description
 	}
 ]
+
+const EMPTY_FLOW_TREEMAP = { nodes: [], excludedSizeCount: 0 }
 
 function getRwaFlowRotationSplitBy(value: string | undefined): RWAFlowOverviewSplitBy {
 	if (value === 'category' || value === 'chain') return value
@@ -271,6 +289,8 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	const showFlowRotation = chartTarget.kind === 'all'
 	const flowRotationSplitBy = getRwaFlowRotationSplitBy(readSingleQueryValue(router.query.flowRotationBy))
 	const flowRotationFrequency = getRwaFlowRotationFrequency(readSingleQueryValue(router.query.flowRotationFrequency))
+	const flowRotationView = parseRWAFlowTreemapView(readSingleQueryValue(router.query.flowRotationView))
+	const flowTreemapSizeMetric = parseRWAFlowTreemapSizeMetric(readSingleQueryValue(router.query.flowTreemapSize))
 	const {
 		data: flowAssetRows,
 		isLoading: isFlowLoading,
@@ -299,6 +319,29 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	)
 	const effectiveFlowRotationError = flowRotationError ?? (activeFilters ? flowError : null)
 	const effectiveFlowRotationLoading = isFlowRotationLoading || (activeFilters && isFlowLoading)
+	const flowTreemapSizeRows = useMemo(
+		() =>
+			flowRotationView === 'treemap' ? buildRWAFlowTreemapSizeRowsFromAssets(filteredAssets, flowRotationSplitBy) : [],
+		[filteredAssets, flowRotationSplitBy, flowRotationView]
+	)
+	const flowTreemapFlows = useMemo(
+		() =>
+			flowRotationView === 'treemap'
+				? aggregateRWAFlowTreemapWindow(flowRotationData ?? [], flowRotationFrequency)
+				: null,
+		[flowRotationData, flowRotationFrequency, flowRotationView]
+	)
+	const flowTreemap = useMemo(
+		() =>
+			flowTreemapFlows
+				? buildRWAFlowTreemap({
+						flows: flowTreemapFlows,
+						sizeRows: flowTreemapSizeRows,
+						sizeMetric: flowTreemapSizeMetric
+					})
+				: EMPTY_FLOW_TREEMAP,
+		[flowTreemapFlows, flowTreemapSizeMetric, flowTreemapSizeRows]
+	)
 	const flowModeQuery = readSingleQueryValue(router.query.flowMode)
 	const selectedFlowOverlayMetrics = useMemo(
 		() => parseRWAFlowOverlayMetrics(toNonEmptyArrayParam(router.query.flowOverlays)),
@@ -577,6 +620,8 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			) ?? false,
 		[flowRotationData]
 	)
+	const flowTreemapSizeLabel = getRWAFlowTreemapSizeLabel(flowTreemapSizeMetric)
+	const flowRotationFilename = `rwa-net-flow-${flowRotationSplitBy}-${flowRotationFrequency}-${flowRotationView}`
 	const chartMetricLabel = isFlowMetric ? 'Net Flows' : getChartMetricLabel(chartTypeKey)
 	const chartMetricOptions = [
 		...getChartMetricOptions(),
@@ -1070,18 +1115,50 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 						>
 							{definitions.flows.capitalRotation.label}
 						</Tooltip>
-						<SegmentedControl<RWAFlowOverviewSplitBy>
-							value={flowRotationSplitBy}
-							onValueChange={(nextSplitBy) => {
+						<Select
+							allValues={RWA_FLOW_TREEMAP_VIEW_OPTIONS}
+							selectedValues={flowRotationView}
+							setSelectedValues={(nextView) => {
+								void pushShallowQuery(router, {
+									flowRotationView: nextView === 'bar' ? undefined : nextView
+								})
+							}}
+							label={flowRotationView === 'treemap' ? 'Treemap Chart' : 'Bar Chart'}
+							labelType="none"
+							variant="filter"
+							size="md"
+						/>
+						<Select
+							allValues={RWA_FLOW_ROTATION_SPLIT_OPTIONS}
+							selectedValues={flowRotationSplitBy}
+							setSelectedValues={(nextSplitBy) => {
 								void pushShallowQuery(router, {
 									flowRotationBy: nextSplitBy === 'assetGroup' ? undefined : nextSplitBy
 								})
 							}}
-							options={RWA_FLOW_ROTATION_SPLIT_OPTIONS}
-							label="Net flow breakdown"
-							variant="default"
+							label={
+								RWA_FLOW_ROTATION_SPLIT_OPTIONS.find((option) => option.key === flowRotationSplitBy)?.name ??
+								'Asset Groups'
+							}
+							labelType="none"
+							variant="filter"
 							size="md"
 						/>
+						{flowRotationView === 'treemap' ? (
+							<Select
+								allValues={RWA_FLOW_TREEMAP_SIZE_OPTIONS}
+								selectedValues={flowTreemapSizeMetric}
+								setSelectedValues={(metric) => {
+									void pushShallowQuery(router, {
+										flowTreemapSize: metric === 'onChainMcap' ? undefined : metric
+									})
+								}}
+								label={`Size: ${flowTreemapSizeLabel}`}
+								labelType="none"
+								variant="filter"
+								size="md"
+							/>
+						) : null}
 						<ChartGroupingSelector
 							value={flowRotationFrequency}
 							onValueChange={(nextFrequency) => {
@@ -1091,14 +1168,27 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 							}}
 							options={DWMC_GROUPING_OPTIONS_LOWERCASE}
 						/>
+						{flowRotationView === 'treemap' ? <ChartRestoreButton chartInstance={flowRotationChartInstance} /> : null}
 						<ChartCsvExportButton
 							chartInstance={flowRotationChartInstance}
-							filename={`rwa-net-flow-${flowRotationSplitBy}-${flowRotationFrequency}`}
+							filename={flowRotationFilename}
+							prepareCsvDirect={
+								flowRotationView === 'treemap'
+									? () =>
+											prepareRWAFlowTreemapCsv({
+												nodes: flowTreemap.nodes,
+												sizeMetric: flowTreemapSizeMetric,
+												groupBy: flowRotationFrequency,
+												filename: flowRotationFilename
+											})
+									: undefined
+							}
 						/>
 						<ChartPngExportButton
 							chartInstance={flowRotationChartInstance}
-							filename={`rwa-net-flow-${flowRotationSplitBy}-${flowRotationFrequency}`}
+							filename={flowRotationFilename}
 							title="RWA Net Flow"
+							pngProfile={flowRotationView === 'treemap' ? 'treemapNormalized' : undefined}
 						/>
 					</ChartPanelToolbar>
 					{effectiveFlowRotationError ? (
@@ -1112,13 +1202,34 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 							Loading
 							<LoadingDots />
 						</ChartPanelBodyFallback>
+					) : flowRotationView === 'treemap' && hasFlowRotationData && flowTreemap.nodes.length === 0 ? (
+						<ChartPanelBodyFallback className="body-sm text-secondary">
+							No sized net-flow data available.
+						</ChartPanelBodyFallback>
 					) : hasFlowRotationData && flowRotationData ? (
 						<Suspense fallback={<ChartPanelBodyFallback />}>
-							<RWAFlowRotationChart
-								points={flowRotationData}
-								groupBy={flowRotationFrequency}
-								onReady={handleFlowRotationChartReady}
-							/>
+							{flowRotationView === 'treemap' ? (
+								<>
+									<RWAFlowTreemapChart
+										nodes={flowTreemap.nodes}
+										sizeLabel={flowTreemapSizeLabel}
+										periodLabel={getRWAFlowTreemapPeriodLabel(flowRotationFrequency)}
+										onReady={handleFlowRotationChartReady}
+									/>
+									{flowTreemap.excludedSizeCount > 0 ? (
+										<p className="px-3 pb-2 body-sm text-tertiary">
+											{flowTreemap.excludedSizeCount} {flowTreemap.excludedSizeCount === 1 ? 'tile' : 'tiles'} hidden
+											(zero or missing {flowTreemapSizeLabel})
+										</p>
+									) : null}
+								</>
+							) : (
+								<RWAFlowRotationChart
+									points={flowRotationData}
+									groupBy={flowRotationFrequency}
+									onReady={handleFlowRotationChartReady}
+								/>
+							)}
 						</Suspense>
 					) : (
 						<ChartPanelBodyFallback className="body-sm text-secondary">No flow data available.</ChartPanelBodyFallback>
