@@ -311,18 +311,18 @@ function ProDashboardContent() {
 								{dashboardName}
 							</h1>
 							{dashboardVisibility === 'public' ? (
-								<p className="inline-flex items-center gap-1.5 rounded-md border border-pro-green-400/20 bg-pro-green-100 px-2 py-1 text-xs font-medium text-pro-green-400 dark:bg-pro-green-300/12 dark:text-pro-green-200">
+								<p className="inline-flex items-center gap-1.5 rounded-md border border-pro-success-400/20 bg-pro-success-100 px-2 py-1 text-xs font-medium text-pro-success-400 dark:bg-pro-success-300/12 dark:text-pro-success-200">
 									<span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
 									Public
 								</p>
 							) : (
-								<p className="inline-flex items-center gap-1.5 rounded-md border border-pro-gold-400/20 bg-pro-gold-100 px-2 py-1 text-xs font-medium text-pro-gold-400 dark:bg-pro-gold-300/12 dark:text-pro-gold-200">
+								<p className="inline-flex items-center gap-1.5 rounded-md border border-pro-premium-400/20 bg-pro-premium-100 px-2 py-1 text-xs font-medium text-pro-premium-400 dark:bg-pro-premium-300/12 dark:text-pro-premium-200">
 									<Icon name="key" height={12} width={12} />
 									Private
 								</p>
 							)}
 							{currentDashboard?.aiGenerated && Object.keys(currentDashboard.aiGenerated).length > 0 ? (
-								<p className="inline-flex items-center gap-1.5 rounded-md border border-pro-blue-400/20 bg-pro-blue-100 px-2 py-1 text-xs font-medium text-pro-blue-400 dark:bg-pro-blue-300/12 dark:text-pro-blue-200">
+								<p className="inline-flex items-center gap-1.5 rounded-md border border-pro-info-400/20 bg-pro-info-100 px-2 py-1 text-xs font-medium text-pro-info-400 dark:bg-pro-info-300/12 dark:text-pro-info-200">
 									<Icon name="sparkles" height={13} width={13} />
 									AI Generated
 								</p>
@@ -356,7 +356,7 @@ function ProDashboardContent() {
 											onClick={() => {
 												void router.push(`/pro/${currentDashboard?.slug ?? dashboardId}/edit`)
 											}}
-											className="flex items-center gap-1 rounded-md pro-btn-purple px-3 py-1.5 text-sm"
+											className="flex items-center gap-1 rounded-md pro-btn-ai px-3 py-1.5 text-sm"
 										>
 											<Icon name="pencil" height={16} width={16} />
 											<span>Edit</span>
@@ -370,7 +370,7 @@ function ProDashboardContent() {
 											}}
 											disabled={sqlRefreshActive}
 											title={sqlRefreshActive ? 'Wait for SQL widgets to finish refreshing' : undefined}
-											className="flex items-center gap-1 rounded-md pro-btn-purple px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+											className="flex items-center gap-1 rounded-md pro-btn-ai px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
 										>
 											{sqlRefreshActive ? <LoadingSpinner size={16} /> : <Icon name="check" height={16} width={16} />}
 											<span>Done</span>
@@ -386,7 +386,7 @@ function ProDashboardContent() {
 													showPaywall('dashboard-limit')
 												}
 											}}
-											className="flex items-center gap-1 rounded-md pro-btn-blue-outline px-3 py-1.5 text-sm"
+											className="flex items-center gap-1 rounded-md pro-btn-primary-outline px-3 py-1.5 text-sm"
 										>
 											<Icon name="copy" height={16} width={16} />
 											<span>Copy Dashboard</span>
@@ -401,7 +401,7 @@ function ProDashboardContent() {
 												showPaywall('dashboard-limit')
 											}
 										}}
-										className="flex items-center gap-1 rounded-md pro-btn-purple-outline px-3 py-1.5 text-sm"
+										className="flex items-center gap-1 rounded-md pro-btn-ai-outline px-3 py-1.5 text-sm"
 									>
 										<Icon name="plus" height={16} width={16} />
 										<span>New Dashboard</span>
@@ -465,8 +465,8 @@ function ProDashboardContent() {
 									key={period.value}
 									className={`-ml-px flex-1 rounded-none border px-3 py-1.5 text-sm font-medium transition-colors duration-200 first:ml-0 first:rounded-l-md md:flex-initial md:px-4 md:py-2 ${
 										timePeriod === period.value
-											? 'pro-border pro-btn-blue'
-											: 'pro-border pro-hover-bg pro-text2 hover:pro-text1'
+											? 'pro-border pro-btn-primary'
+											: 'pro-border pro-hover-bg text-pro-text-secondary hover:text-pro-text-primary'
 									} ${!hasChartItems ? 'cursor-not-allowed opacity-50' : ''}`}
 									onClick={() => hasChartItems && setTimePeriod(period.value)}
 									disabled={!hasChartItems}
@@ -487,7 +487,7 @@ function ProDashboardContent() {
 						{dashboardId && items.some((item) => item.kind === 'sql') ? (
 							<button
 								type="button"
-								className="flex items-center gap-2 rounded-md border pro-border pro-hover-bg px-3 py-2 text-sm whitespace-nowrap pro-text2 transition-colors hover:pro-text1 disabled:cursor-not-allowed disabled:opacity-60 md:px-4 md:text-base"
+								className="flex items-center gap-2 rounded-md border pro-border pro-hover-bg px-3 py-2 text-sm whitespace-nowrap text-pro-text-secondary transition-colors hover:text-pro-text-primary disabled:cursor-not-allowed disabled:opacity-60 md:px-4 md:text-base"
 								onClick={() => refreshAllSqlCharts()}
 								disabled={sqlRefreshActive}
 								title="Re-run every SQL chart and table on this dashboard and update the results for everyone."
@@ -505,13 +505,13 @@ function ProDashboardContent() {
 								className="hidden rounded-md pro-glass pro-hover-bg p-2 transition-colors md:flex"
 								title="Dashboard Settings"
 							>
-								<Icon name="settings" height={20} width={20} className="pro-text1" />
+								<Icon name="settings" height={20} width={20} className="text-pro-text-primary" />
 							</button>
 						) : null}
 						{!isReadOnly && items.length > 0 ? (
 							<button
 								type="button"
-								className="hidden animate-pro-glow items-center gap-2 rounded-md pro-btn-blue-outline px-4 py-2 text-base whitespace-nowrap md:flex"
+								className="hidden animate-pro-glow items-center gap-2 rounded-md pro-btn-primary-outline px-4 py-2 text-base whitespace-nowrap md:flex"
 								onClick={() => {
 									if (hasActiveSubscription) {
 										setShowIterateDashboardModal(true)
@@ -528,7 +528,7 @@ function ProDashboardContent() {
 						{!isReadOnly && canUndo ? (
 							<button
 								type="button"
-								className="hidden items-center gap-2 rounded-md border pro-border pro-hover-bg px-4 py-2 text-base whitespace-nowrap pro-text2 transition-colors hover:pro-text1 md:flex"
+								className="hidden items-center gap-2 rounded-md border pro-border pro-hover-bg px-4 py-2 text-base whitespace-nowrap text-pro-text-secondary transition-colors hover:text-pro-text-primary md:flex"
 								onClick={() => {
 									void undoAIGeneration()
 								}}
@@ -542,7 +542,7 @@ function ProDashboardContent() {
 						{!isReadOnly ? (
 							<button
 								type="button"
-								className="hidden items-center gap-2 rounded-md pro-btn-blue px-4 py-2 text-base whitespace-nowrap md:flex"
+								className="hidden items-center gap-2 rounded-md pro-btn-primary px-4 py-2 text-base whitespace-nowrap md:flex"
 								onClick={openAddModal}
 								disabled={isReadOnly}
 							>

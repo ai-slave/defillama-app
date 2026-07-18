@@ -72,7 +72,7 @@ export function ManageAccount() {
 			<UserHeader displayName={displayName} onLogout={logout} />
 
 			<Ariakit.TabProvider store={tabStore}>
-				<Ariakit.TabList className="flex gap-4 border-b border-sub-border-slate-100 dark:border-sub-border-strong">
+				<Ariakit.TabList className="flex gap-4 border-b border-sub-border">
 					<Ariakit.Tab
 						id="account"
 						className={`pb-2.5 text-sm font-semibold transition-colors ${

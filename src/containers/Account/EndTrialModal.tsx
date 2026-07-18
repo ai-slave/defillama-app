@@ -68,7 +68,7 @@ export function EndTrialModal({
 			onClose={() => {
 				if (!isLoading) handleClose()
 			}}
-			className="dialog flex max-h-[90dvh] max-w-md flex-col gap-4 overflow-y-auto rounded-xl border border-medium bg-white p-6 text-gray-900 shadow-2xl max-sm:drawer max-sm:rounded-b-none dark:border-sub-line dark:bg-sub-ink dark:text-sub-text-primary-dark"
+			className="dialog flex max-h-[90dvh] max-w-md flex-col gap-4 overflow-y-auto rounded-xl border border-medium bg-white p-6 text-gray-900 shadow-2xl max-sm:drawer max-sm:rounded-b-none dark:border-sub-line dark:bg-sub-dark-panel dark:text-sub-text-primary"
 			portal
 			unmountOnHide
 		>
@@ -76,7 +76,7 @@ export function EndTrialModal({
 				<h3 className="text-xl font-bold">{upgraded ? 'Upgrade Successful' : title}</h3>
 				<button
 					onClick={handleClose}
-					className="rounded-full p-1.5 text-tertiary transition-colors hover:bg-gray-100 hover:text-secondary dark:text-sub-text-muted dark:hover:bg-sub-line dark:hover:text-sub-text-primary-dark"
+					className="rounded-full p-1.5 text-tertiary transition-colors hover:bg-gray-100 hover:text-secondary dark:text-sub-text-muted dark:hover:bg-sub-line dark:hover:text-sub-text-primary"
 				>
 					<Icon name="x" height={18} width={18} />
 				</button>
@@ -140,7 +140,7 @@ export function EndTrialModal({
 						{secondaryHref ? (
 							<a
 								href={secondaryHref}
-								className="w-full rounded-lg border border-medium px-4 py-2 text-center text-tertiary transition-colors hover:bg-page hover:text-secondary dark:border-sub-line dark:text-sub-text-muted dark:hover:bg-sub-card-raised dark:hover:text-sub-text-primary-dark"
+								className="w-full rounded-lg border border-medium px-4 py-2 text-center text-tertiary transition-colors hover:bg-page hover:text-secondary dark:border-sub-line dark:text-sub-text-muted dark:hover:bg-sub-dark-card-raised dark:hover:text-sub-text-primary"
 							>
 								{secondaryLabel ?? 'View all plans'}
 							</a>
@@ -148,7 +148,7 @@ export function EndTrialModal({
 							<button
 								onClick={handleClose}
 								disabled={isLoading}
-								className="w-full rounded-lg border border-medium px-4 py-2 text-tertiary transition-colors hover:bg-page hover:text-secondary disabled:cursor-not-allowed disabled:opacity-50 dark:border-sub-line dark:text-sub-text-muted dark:hover:bg-sub-card-raised dark:hover:text-sub-text-primary-dark"
+								className="w-full rounded-lg border border-medium px-4 py-2 text-tertiary transition-colors hover:bg-page hover:text-secondary disabled:cursor-not-allowed disabled:opacity-50 dark:border-sub-line dark:text-sub-text-muted dark:hover:bg-sub-dark-card-raised dark:hover:text-sub-text-primary"
 							>
 								{secondaryLabel ?? 'Close'}
 							</button>

@@ -351,28 +351,30 @@ export function AdvancedTvlChartTab({
 				</Tooltip>
 
 				{hasProtocolSelection && isAddlLoading ? (
-					<p className="text-xs pro-text3">Loading available chart types...</p>
+					<p className="text-xs text-pro-text-tertiary">Loading available chart types...</p>
 				) : null}
 
 				{hasProtocolSelection && !isAddlLoading ? (
-					<div className="text-xs pro-text3">
+					<div className="text-xs text-pro-text-tertiary">
 						<p>
-							Available charts: <span className="font-semibold pro-text1">{availableChartTypes.size}</span>
+							Available charts: <span className="font-semibold text-pro-text-primary">{availableChartTypes.size}</span>
 						</p>
 					</div>
 				) : null}
 			</div>
 
 			<div className="overflow-hidden rounded-lg border pro-border">
-				<h4 className="border-b border-pro-cards-border px-3 py-2 text-xs font-medium pro-text2">Preview</h4>
+				<h4 className="border-b border-pro-cards-border px-3 py-2 text-xs font-medium text-pro-text-secondary">
+					Preview
+				</h4>
 
 				{hasProtocolSelection ? (
 					<div className="bg-pro-cards-bg p-3">
 						<div className="mb-3">
-							<h3 className="mb-1 text-sm font-semibold pro-text1">
+							<h3 className="mb-1 text-sm font-semibold text-pro-text-primary">
 								{selectedAdvancedTvlProtocolName} - {chartTypeLabel}
 							</h3>
-							<p className="text-xs pro-text2">Advanced TVL Chart</p>
+							<p className="text-xs text-pro-text-secondary">Advanced TVL Chart</p>
 						</div>
 
 						<div className="h-[320px]" key={selectedAdvancedTvlChartType}>
@@ -380,7 +382,7 @@ export function AdvancedTvlChartTab({
 						</div>
 					</div>
 				) : (
-					<div className="flex h-[320px] items-center justify-center text-center pro-text3">
+					<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
 						<div>
 							<Icon name="trending-up" height={32} width={32} className="mx-auto mb-1" />
 							<p className="text-xs">Select a protocol to see available TVL charts</p>

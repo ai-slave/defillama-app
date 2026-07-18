@@ -65,15 +65,18 @@ export function SqlQueryView({ config, snapshot }: SqlQueryViewProps) {
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				{sourceNames.length > 0 ? (
 					<div className="flex min-w-0 flex-wrap items-center gap-1.5">
-						<span className="body-xs pro-text3">Sources</span>
+						<span className="body-xs text-pro-text-tertiary">Sources</span>
 						{sourceNames.map((source) => (
-							<span key={source} className="rounded-sm border pro-border bg-page px-1.5 py-0.5 mono-sm pro-text2">
+							<span
+								key={source}
+								className="rounded-sm border pro-border bg-page px-1.5 py-0.5 mono-sm text-pro-text-secondary"
+							>
 								{source}
 							</span>
 						))}
 					</div>
 				) : (
-					<span className="body-xs pro-text3">No registered data sources</span>
+					<span className="body-xs text-pro-text-tertiary">No registered data sources</span>
 				)}
 				<div className="flex shrink-0 items-center gap-2">
 					<Button type="button" size="sm" onClick={copySql}>
@@ -107,7 +110,7 @@ export function SqlQueryView({ config, snapshot }: SqlQueryViewProps) {
 				</Suspense>
 			</div>
 
-			<div className="flex flex-wrap items-center gap-x-2 gap-y-1 body-xs pro-text3">
+			<div className="flex flex-wrap items-center gap-x-2 gap-y-1 body-xs text-pro-text-tertiary">
 				<span>{rowSummary}</span>
 				{snapshot ? <span>{snapshot.columns.length.toLocaleString()} columns</span> : null}
 				{snapshot ? <span>{snapshot.engine === 'server' ? 'Server result' : 'Browser result'}</span> : null}

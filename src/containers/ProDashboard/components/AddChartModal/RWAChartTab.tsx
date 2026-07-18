@@ -255,7 +255,7 @@ function AssetControls({
 				placeholder={isLoading ? 'Loading assets...' : 'Search for an RWA asset...'}
 			/>
 			<div className="flex flex-wrap gap-2">
-				<span className="text-sm pro-text2">Metrics:</span>
+				<span className="text-sm text-pro-text-secondary">Metrics:</span>
 				{ALL_METRICS.map((metric) => {
 					const isSelected = selectedMetrics.includes(metric)
 					return (
@@ -265,7 +265,7 @@ function AssetControls({
 							className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
 								isSelected
 									? 'bg-brand text-on-brand'
-									: 'border border-pro-form-control-border pro-text2 hover:border-brand/40'
+									: 'border border-pro-form-control-border text-pro-text-secondary hover:border-brand/40'
 							}`}
 						>
 							{METRIC_LABELS[metric]}
@@ -364,7 +364,9 @@ function OverviewPreview({
 			) : chartView === 'treemap' && treemapData.length > 0 ? (
 				<TreemapChart treeData={treemapData} variant="rwa" height="320px" valueLabel={getChartMetricLabel(metric)} />
 			) : (
-				<div className="flex h-[320px] items-center justify-center text-sm pro-text2">No data available</div>
+				<div className="flex h-[320px] items-center justify-center text-sm text-pro-text-secondary">
+					No data available
+				</div>
 			)}
 		</Suspense>
 	)
@@ -396,7 +398,9 @@ function AssetPreview({ assetId, metrics }: { assetId: string | null; metrics: R
 
 	if (!assetId) {
 		return (
-			<div className="flex h-[320px] items-center justify-center text-sm pro-text2">Select an asset to see preview</div>
+			<div className="flex h-[320px] items-center justify-center text-sm text-pro-text-secondary">
+				Select an asset to see preview
+			</div>
 		)
 	}
 

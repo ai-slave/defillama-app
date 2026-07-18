@@ -388,11 +388,11 @@ export function CustomColumnPanel({
 		>
 			{/* Add New Custom Column */}
 			<div className="rounded-md border border-pro-cards-border bg-pro-cards-bg p-4">
-				<h5 className="mb-3 text-sm font-medium pro-text1">Create Custom Column</h5>
+				<h5 className="mb-3 text-sm font-medium text-pro-text-primary">Create Custom Column</h5>
 
 				<div className="space-y-3">
 					<div>
-						<label htmlFor="custom-column-name" className="mb-1 block text-xs font-medium pro-text2">
+						<label htmlFor="custom-column-name" className="mb-1 block text-xs font-medium text-pro-text-secondary">
 							Column Name
 						</label>
 						<input
@@ -401,7 +401,7 @@ export function CustomColumnPanel({
 							value={newColumnName}
 							onChange={(e) => setNewColumnName(e.target.value)}
 							placeholder="e.g., P/E Ratio, Custom Metric"
-							className="w-full rounded-md border pro-border bg-pro-glass-bg px-3 py-2 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
+							className="w-full rounded-md border pro-border bg-pro-glass-bg px-3 py-2 text-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 							onPointerDown={(e) => e.stopPropagation()}
 							onDragStart={(e) => e.preventDefault()}
 							draggable={false}
@@ -409,7 +409,10 @@ export function CustomColumnPanel({
 					</div>
 
 					<div>
-						<label htmlFor="custom-column-expression" className="mb-1 block text-xs font-medium pro-text2">
+						<label
+							htmlFor="custom-column-expression"
+							className="mb-1 block text-xs font-medium text-pro-text-secondary"
+						>
 							Expression
 						</label>
 						<div className="relative">
@@ -425,7 +428,7 @@ export function CustomColumnPanel({
 									setTimeout(() => setShowAutocomplete(false), 150)
 								}}
 								placeholder="e.g., tvl / mcap, (fees_24h + revenue_24h) * 365, tvl * 0.1"
-								className={`w-full rounded-md border bg-pro-glass-bg px-3 py-2 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:outline-hidden ${
+								className={`w-full rounded-md border bg-pro-glass-bg px-3 py-2 text-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:outline-hidden ${
 									newColumnExpression && !liveValidation.isValid
 										? 'border-error focus:border-error'
 										: newColumnExpression && liveValidation.isValid
@@ -457,25 +460,27 @@ export function CustomColumnPanel({
 											onClick={() => insertSuggestion(suggestion)}
 											tabIndex={autocompleteIndex === index ? 0 : -1}
 											className={`flex w-full items-center gap-2 border-0 px-3 py-1.5 text-left text-sm ${
-												index === autocompleteIndex ? 'bg-brand text-on-brand' : 'pro-hover-bg pro-text1'
+												index === autocompleteIndex ? 'bg-brand text-on-brand' : 'pro-hover-bg text-pro-text-primary'
 											}`}
 											onPointerEnter={() => setAutocompleteIndex(index)}
 										>
 											<span
 												className={`size-1 shrink-0 rounded-full ${
 													suggestion.type === 'variable'
-														? 'bg-pro-blue-400'
+														? 'bg-pro-info-400'
 														: suggestion.type === 'function'
-															? 'bg-pro-purple-400'
+															? 'bg-pro-ai-400'
 															: 'bg-pro-text-tertiary'
 												}`}
 											/>
 											<code className="min-w-0 shrink-0 text-sm">{suggestion.display}</code>
-											<span className="ml-auto truncate text-xs pro-text3">{suggestion.description}</span>
+											<span className="ml-auto truncate text-xs text-pro-text-tertiary">{suggestion.description}</span>
 										</button>
 									))}
 									{filteredSuggestions.length === 0 && autocompleteFilter ? (
-										<div className="px-3 py-2 text-sm pro-text3">No suggestions found for "{autocompleteFilter}"</div>
+										<div className="px-3 py-2 text-sm text-pro-text-tertiary">
+											No suggestions found for "{autocompleteFilter}"
+										</div>
 									) : null}
 								</div>
 							) : null}
@@ -491,7 +496,7 @@ export function CustomColumnPanel({
 							) : null}
 						</div>
 
-						<p className="mt-1 text-xs pro-text3">
+						<p className="mt-1 text-xs text-pro-text-tertiary">
 							💡 Start typing to see autocomplete suggestions. Use ↑↓ to navigate, Enter/Tab to select, Esc to close, or
 							Ctrl+Space to open.
 						</p>
@@ -506,30 +511,30 @@ export function CustomColumnPanel({
 								}`}
 							>
 								<div className="flex items-center justify-between">
-									<span className="font-medium pro-text2">Live Preview:</span>
+									<span className="font-medium text-pro-text-secondary">Live Preview:</span>
 									{liveValidation.isValid ? (
 										<span className="text-success">{formatPreviewNumber(liveValidation.result ?? null, 'number')}</span>
 									) : liveValidation.isEmpty ? (
-										<span className="pro-text3">Enter an expression</span>
+										<span className="text-pro-text-tertiary">Enter an expression</span>
 									) : (
 										<span className="text-error">{liveValidation.error}</span>
 									)}
 								</div>
 								{liveValidation.isValid ? (
-									<div className="mt-1 text-xs pro-text3">Using sample data: {sampleDataPreview}...</div>
+									<div className="mt-1 text-xs text-pro-text-tertiary">Using sample data: {sampleDataPreview}...</div>
 								) : null}
 							</div>
 						) : null}
 
 						{/* Quick Operator Buttons - Compact */}
 						<div className="mt-2 flex flex-wrap gap-1">
-							<span className="mr-2 text-xs pro-text3">Quick operators:</span>
+							<span className="mr-2 text-xs text-pro-text-tertiary">Quick operators:</span>
 							{['+', '-', '*', '/', '(', ')'].map((operator) => (
 								<button
 									key={operator}
 									type="button"
 									onClick={() => insertOperator(operator)}
-									className="rounded-md border pro-border bg-pro-glass-bg pro-hover-bg px-2 py-1 text-xs pro-text2 transition-colors"
+									className="rounded-md border pro-border bg-pro-glass-bg pro-hover-bg px-2 py-1 text-xs text-pro-text-secondary transition-colors"
 									onPointerDown={(e) => e.stopPropagation()}
 									onDragStart={(e) => e.preventDefault()}
 									draggable={false}
@@ -559,8 +564,8 @@ export function CustomColumnPanel({
 
 			{/* Available Variables Reference - Compact */}
 			<div className="rounded-md border border-pro-cards-border bg-pro-cards-bg p-3">
-				<h5 className="mb-2 text-sm font-medium pro-text2">Available Variables</h5>
-				<p className="mb-2 text-xs pro-text3">Click any variable to add it to your expression</p>
+				<h5 className="mb-2 text-sm font-medium text-pro-text-secondary">Available Variables</h5>
+				<p className="mb-2 text-xs text-pro-text-tertiary">Click any variable to add it to your expression</p>
 				<div className="grid max-h-32 grid-cols-3 gap-1 overflow-y-auto md:grid-cols-4 lg:grid-cols-6">
 					{availableVariables.map((variable) => (
 						<button
@@ -577,7 +582,7 @@ export function CustomColumnPanel({
 						</button>
 					))}
 				</div>
-				<div className="mt-2 text-xs pro-text3">
+				<div className="mt-2 text-xs text-pro-text-tertiary">
 					Sample values:{' '}
 					{Object.entries(sampleData)
 						.slice(0, 4)
@@ -589,20 +594,20 @@ export function CustomColumnPanel({
 			{/* Existing Custom Columns - Read Only */}
 			{customColumns.length > 0 ? (
 				<div className="space-y-3">
-					<h5 className="text-sm font-medium pro-text2">Custom Columns ({customColumns.length})</h5>
+					<h5 className="text-sm font-medium text-pro-text-secondary">Custom Columns ({customColumns.length})</h5>
 					{customColumns.map((column) => (
 						<div key={column.id} className="rounded-md border border-pro-cards-border bg-pro-cards-bg p-3">
 							<div className="flex items-center justify-between">
 								<div className="flex-1">
 									<div className="mb-1 flex items-center gap-2">
-										<span className="text-sm font-medium pro-text1">{column.name}</span>
+										<span className="text-sm font-medium text-pro-text-primary">{column.name}</span>
 										{column.isValid ? (
 											<Icon name="check" height={12} width={12} className="text-success" />
 										) : (
 											<Icon name="x" height={12} width={12} className="text-error" />
 										)}
 									</div>
-									<div className="rounded-md border pro-border bg-pro-glass-bg px-2 py-1 text-xs pro-text2">
+									<div className="rounded-md border pro-border bg-pro-glass-bg px-2 py-1 text-xs text-pro-text-secondary">
 										{column.expression}
 									</div>
 									{!column.isValid && column.errorMessage ? (
@@ -613,7 +618,7 @@ export function CustomColumnPanel({
 									type="button"
 									onClick={() => onRemoveCustomColumn(column.id)}
 									aria-label={`Delete column ${column.name}`}
-									className="ml-3 rounded-md pro-text3 transition-colors hover:text-error"
+									className="ml-3 rounded-md text-pro-text-tertiary transition-colors hover:text-error"
 									title="Delete custom column"
 								>
 									<Icon name="trash-2" height={14} width={14} />
@@ -626,19 +631,19 @@ export function CustomColumnPanel({
 
 			{/* Examples */}
 			<div className="rounded-md border border-pro-cards-border bg-pro-cards-bg p-4">
-				<h5 className="mb-3 text-sm font-medium pro-text2">Example Expressions</h5>
+				<h5 className="mb-3 text-sm font-medium text-pro-text-secondary">Example Expressions</h5>
 				<div className="space-y-2 text-xs">
 					<div>
 						<code className="text-brand">(fees_24h + revenue_24h) * 365</code>
-						<span className="ml-2 pro-text3">24h run-rate fees + revenue</span>
+						<span className="ml-2 text-pro-text-tertiary">24h run-rate fees + revenue</span>
 					</div>
 					<div>
 						<code className="text-brand">volume_24h / tvl</code>
-						<span className="ml-2 pro-text3">Volume to TVL ratio</span>
+						<span className="ml-2 text-pro-text-tertiary">Volume to TVL ratio</span>
 					</div>
 					<div>
 						<code className="text-brand">(change_1d + change_7d) / 2</code>
-						<span className="ml-2 pro-text3">Average price change</span>
+						<span className="ml-2 text-pro-text-tertiary">Average price change</span>
 					</div>
 				</div>
 			</div>

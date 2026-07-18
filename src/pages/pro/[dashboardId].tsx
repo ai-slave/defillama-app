@@ -208,7 +208,7 @@ function DashboardPageContent({
 			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
 				<h1 className="text-3xl font-bold">Dashboard Not Found</h1>
 				<p className="text-center text-base text-pro-text-label">This dashboard does not exist.</p>
-				<BasicLink href="/pro" className="mt-7 rounded-md pro-btn-purple px-6 py-3 font-medium">
+				<BasicLink href="/pro" className="mt-7 rounded-md pro-btn-ai px-6 py-3 font-medium">
 					Browse Dashboards
 				</BasicLink>
 			</div>
@@ -222,7 +222,7 @@ function DashboardPageContent({
 				<p className="text-center text-base text-pro-text-label">Please sign in to view this dashboard</p>
 				<BasicLink
 					href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
-					className="mt-7 rounded-md pro-btn-purple px-6 py-3 font-medium"
+					className="mt-7 rounded-md pro-btn-ai px-6 py-3 font-medium"
 				>
 					Sign In
 				</BasicLink>
@@ -237,11 +237,7 @@ function DashboardPageContent({
 				<p className="text-center text-base text-pro-text-label">
 					Something went wrong while loading this dashboard. Please try again.
 				</p>
-				<button
-					type="button"
-					onClick={reloadDashboard}
-					className="mt-2 rounded-md pro-btn-purple px-6 py-3 font-medium"
-				>
+				<button type="button" onClick={reloadDashboard} className="mt-2 rounded-md pro-btn-ai px-6 py-3 font-medium">
 					Retry
 				</button>
 			</div>
@@ -255,7 +251,7 @@ function DashboardPageContent({
 				<p className="text-center text-base text-pro-text-label">
 					This dashboard does not exist or you don't have permission to view it
 				</p>
-				<BasicLink href="/pro" className="mt-7 rounded-md pro-btn-purple px-6 py-3 font-medium">
+				<BasicLink href="/pro" className="mt-7 rounded-md pro-btn-ai px-6 py-3 font-medium">
 					Browse Dashboards
 				</BasicLink>
 			</div>
@@ -269,7 +265,7 @@ function DashboardPageContent({
 				<p className="text-center text-base text-pro-text-label">Please sign in to create a new dashboard</p>
 				<BasicLink
 					href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
-					className="mt-7 rounded-md pro-btn-purple px-6 py-3 font-medium"
+					className="mt-7 rounded-md pro-btn-ai px-6 py-3 font-medium"
 				>
 					Sign In
 				</BasicLink>
@@ -296,7 +292,7 @@ function DashboardPageContent({
 				<p className="text-center text-base text-pro-text-label">Please sign in to view this dashboard</p>
 				<BasicLink
 					href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
-					className="mt-7 rounded-md pro-btn-purple px-6 py-3 font-medium"
+					className="mt-7 rounded-md pro-btn-ai px-6 py-3 font-medium"
 				>
 					Sign In
 				</BasicLink>
@@ -314,30 +310,30 @@ function DashboardPageContent({
 
 				<div className="mx-auto flex flex-wrap items-center justify-center gap-4">
 					<div className="flex items-center gap-2 text-sm">
-						<Icon name="bar-chart-2" height={16} width={16} className="shrink-0 text-pro-old-blue" />
+						<Icon name="bar-chart-2" height={16} width={16} className="shrink-0 text-pro-accent" />
 						<span>Customizable Charts</span>
 					</div>
 					<div className="flex items-center gap-2 text-sm">
-						<Icon name="activity" height={16} width={16} className="shrink-0 text-pro-old-blue" />
+						<Icon name="activity" height={16} width={16} className="shrink-0 text-pro-accent" />
 						<span>Multiple Dashboards</span>
 					</div>
 					<div className="flex items-center gap-2 text-sm">
-						<Icon name="percent" height={16} width={16} className="shrink-0 text-pro-old-blue" />
+						<Icon name="percent" height={16} width={16} className="shrink-0 text-pro-accent" />
 						<span>Advanced Analytics</span>
 					</div>
 					<div className="flex items-center gap-2 text-sm">
-						<Icon name="layers" height={16} width={16} className="shrink-0 text-pro-old-blue" />
+						<Icon name="layers" height={16} width={16} className="shrink-0 text-pro-accent" />
 						<span>Multi-Charts</span>
 					</div>
 				</div>
 
-				<h2 className="text-3xl font-bold pro-text1">
-					$49<span className="text-lg font-normal pro-text2">/month</span>
+				<h2 className="text-3xl font-bold text-pro-text-primary">
+					$49<span className="text-lg font-normal text-pro-text-secondary">/month</span>
 				</h2>
 
 				<BasicLink
 					href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
-					className="rounded-md pro-btn-purple px-6 py-3 font-medium"
+					className="rounded-md pro-btn-ai px-6 py-3 font-medium"
 				>
 					Subscribe Now
 				</BasicLink>

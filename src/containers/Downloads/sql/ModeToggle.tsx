@@ -70,7 +70,7 @@ function ModeButton({
 			{badge ? (
 				<span
 					className={`rounded-sm px-1.5 py-px text-[10px] font-bold tracking-wider ${
-						active ? 'bg-white/25 text-on-brand' : 'bg-pro-green-200/15 text-pro-green-300'
+						active ? 'bg-white/25 text-on-brand' : 'bg-pro-success-200/15 text-pro-success-300'
 					}`}
 				>
 					{badge}

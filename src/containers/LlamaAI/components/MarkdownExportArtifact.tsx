@@ -59,10 +59,10 @@ export function MarkdownExportArtifact({ mdExport, sessionId, messageId }: Markd
 				})
 				downloadMarkdownMutation.mutate({ url: safeUrl, filename: mdExport.filename })
 			}}
-			className="flex w-full items-center gap-3 rounded-lg border border-ai-line bg-ai-surface-card p-3 text-left transition-colors hover:border-ai-old-blue hover:bg-ai-old-blue/5 disabled:cursor-not-allowed disabled:opacity-70"
+			className="flex w-full items-center gap-3 rounded-lg border border-ai-line bg-ai-surface-card p-3 text-left transition-colors hover:border-ai-action hover:bg-ai-action/5 disabled:cursor-not-allowed disabled:opacity-70"
 		>
-			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-ai-old-blue/10">
-				<Icon name="file-text" className="size-5 text-ai-old-blue" />
+			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-ai-action/10">
+				<Icon name="file-text" className="size-5 text-ai-action" />
 			</span>
 			<span className="flex min-w-0 flex-1 flex-col gap-0.5">
 				<span className="m-0 truncate text-sm font-medium text-(--text1)">{mdExport.title}</span>
@@ -75,7 +75,7 @@ export function MarkdownExportArtifact({ mdExport, sessionId, messageId }: Markd
 					</span>
 				) : null}
 			</span>
-			<span className="flex shrink-0 items-center gap-1.5 text-ai-old-blue">
+			<span className="flex shrink-0 items-center gap-1.5 text-ai-action">
 				<Icon name="download-paper" className="size-4" />
 				<span className="text-sm font-medium">.md</span>
 			</span>

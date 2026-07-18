@@ -62,7 +62,7 @@ export const CopyDashboardLinkButton = ({
 
 	return (
 		<Ariakit.PopoverProvider store={popover}>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-pro-cards-border disabled:text-tertiary">
+			<Ariakit.PopoverDisclosure className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary">
 				<Icon name="share" height={14} width={14} />
 				<span>Share</span>
 			</Ariakit.PopoverDisclosure>
@@ -86,7 +86,7 @@ export const CopyDashboardLinkButton = ({
 								onClick={() => {
 									void handleCopyLink()
 								}}
-								className="flex items-center gap-1.5 rounded-md border pro-border pro-hover-bg px-2.5 py-1.5 text-xs pro-text2 transition-colors hover:pro-text1"
+								className="flex items-center gap-1.5 rounded-md border pro-border pro-hover-bg px-2.5 py-1.5 text-xs text-pro-text-secondary transition-colors hover:text-pro-text-primary"
 								title="Copy link"
 							>
 								{copied ? (
@@ -103,7 +103,7 @@ export const CopyDashboardLinkButton = ({
 						<div className="flex gap-2">
 							<button
 								onClick={() => handleShareTo('twitter')}
-								className="flex flex-1 items-center justify-center gap-2 rounded-md border pro-border pro-hover-bg px-3 py-2 text-xs pro-text2 transition-colors hover:pro-text1"
+								className="flex flex-1 items-center justify-center gap-2 rounded-md border pro-border pro-hover-bg px-3 py-2 text-xs text-pro-text-secondary transition-colors hover:text-pro-text-primary"
 								title="Share on Twitter/X"
 							>
 								<Icon name="twitter" height={16} width={16} />
@@ -111,7 +111,7 @@ export const CopyDashboardLinkButton = ({
 							</button>
 							<button
 								onClick={() => handleShareTo('telegram')}
-								className="flex flex-1 items-center justify-center gap-2 rounded-md border pro-border pro-hover-bg px-3 py-2 text-xs pro-text2 transition-colors hover:pro-text1"
+								className="flex flex-1 items-center justify-center gap-2 rounded-md border pro-border pro-hover-bg px-3 py-2 text-xs text-pro-text-secondary transition-colors hover:text-pro-text-primary"
 								title="Share on Telegram"
 							>
 								<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">

@@ -260,8 +260,8 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 		<div className="flex h-full flex-col p-2">
 			<div className="mb-2 flex items-start justify-between gap-2">
 				<div className="flex flex-col gap-1">
-					<h3 className="text-sm font-semibold pro-text1">{chartTypeLabel}</h3>
-					<p className="text-xs pro-text2">{protocolName}</p>
+					<h3 className="text-sm font-semibold text-pro-text-primary">{chartTypeLabel}</h3>
+					<p className="text-xs text-pro-text-secondary">{protocolName}</p>
 				</div>
 				{hasChartData ? (
 					<div className="flex gap-2">
@@ -271,7 +271,7 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 						<ProTableCSVButton
 							onClick={handleCsvExport}
 							smol
-							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-pro-cards-border disabled:text-tertiary"
+							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
 						/>
 					</div>
 				) : null}

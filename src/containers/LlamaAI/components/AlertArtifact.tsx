@@ -309,7 +309,7 @@ export const AlertArtifact = memo(function AlertArtifact({
 								: 'Alert saved'}
 					</p>
 
-					<div className="flex flex-col gap-1.5 rounded-lg bg-ai-wash-faint px-3 py-2.5">
+					<div className="flex flex-col gap-1.5 rounded-lg bg-ai-hover-faint px-3 py-2.5">
 						<p className="m-0 flex items-center gap-2 text-xs text-ai-tertiary">
 							<Icon name={isPriceAlert ? 'trending-up' : 'calendar'} className="size-3.5 shrink-0 text-ai-muted" />
 							<span className="truncate font-mono">
@@ -328,7 +328,7 @@ export const AlertArtifact = memo(function AlertArtifact({
 						<button
 							onClick={handleTest}
 							disabled={alertDetailQuery.isLoading}
-							className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-ai-line-medium px-4 py-2 text-sm font-medium text-(--text1) transition-colors hover:bg-ai-wash disabled:opacity-50"
+							className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-ai-line-medium px-4 py-2 text-sm font-medium text-(--text1) transition-colors hover:bg-ai-hover disabled:opacity-50"
 						>
 							<Icon name="mail" className="size-4" />
 							<span>Send test alert</span>
@@ -559,7 +559,7 @@ export const AlertArtifact = memo(function AlertArtifact({
 					<button
 						onClick={handleSave}
 						disabled={!messageId || isSaving || !!saveBlockReason}
-						className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-ai-white transition-colors hover:bg-ai-old-blue-deep disabled:cursor-not-allowed disabled:opacity-50"
+						className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-ai-white transition-colors hover:bg-ai-action-hover disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						{isSaving ? (
 							<span>Saving...</span>

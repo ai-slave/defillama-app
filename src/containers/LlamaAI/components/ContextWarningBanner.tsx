@@ -37,7 +37,7 @@ export function ContextWarningBanner({ warning, onStartNewChat, onDismiss }: Con
 			<button
 				type="button"
 				onClick={handleStartNewChat}
-				className="shrink-0 rounded-md bg-ai-warning px-3 py-1 text-xs font-medium text-ai-on-contrast transition-opacity hover:opacity-90"
+				className="shrink-0 rounded-md bg-ai-warning px-3 py-1 text-xs font-medium text-ai-on-inverse transition-opacity hover:opacity-90"
 			>
 				Start new chat
 			</button>

@@ -207,11 +207,11 @@ export function RWAAssetsDataset() {
 		return (
 			<div className="flex h-full w-full flex-col p-4">
 				<div className="mb-3">
-					<h3 className="text-lg font-semibold pro-text1">RWA Assets</h3>
+					<h3 className="text-lg font-semibold text-pro-text-primary">RWA Assets</h3>
 				</div>
 				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
 					<LoadingSpinner />
-					<p className="text-sm pro-text2">Loading RWA assets data...</p>
+					<p className="text-sm text-pro-text-secondary">Loading RWA assets data...</p>
 				</div>
 			</div>
 		)
@@ -221,10 +221,10 @@ export function RWAAssetsDataset() {
 		return (
 			<div className="flex h-full w-full flex-col p-4">
 				<div className="mb-3">
-					<h3 className="text-lg font-semibold pro-text1">RWA Assets</h3>
+					<h3 className="text-lg font-semibold text-pro-text-primary">RWA Assets</h3>
 				</div>
 				<div className="flex min-h-[500px] flex-1 items-center justify-center">
-					<div className="text-center pro-text2">Failed to load RWA assets data</div>
+					<div className="text-center text-pro-text-secondary">Failed to load RWA assets data</div>
 				</div>
 			</div>
 		)
@@ -234,7 +234,7 @@ export function RWAAssetsDataset() {
 		<div className="flex h-full w-full flex-col p-4">
 			<div className="mb-3">
 				<div className="flex flex-wrap items-center justify-end gap-4">
-					<h3 className="mr-auto text-lg font-semibold pro-text1">RWA Assets</h3>
+					<h3 className="mr-auto text-lg font-semibold text-pro-text-primary">RWA Assets</h3>
 					<div className="flex flex-wrap items-center justify-end gap-2">
 						<ProTableCSVButton
 							onClick={() => {
@@ -274,7 +274,7 @@ export function RWAAssetsDataset() {
 							type="text"
 							placeholder="Search assets..."
 							onInput={(e) => setProjectName(e.currentTarget.value)}
-							className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-brand focus:outline-hidden"
+							className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>

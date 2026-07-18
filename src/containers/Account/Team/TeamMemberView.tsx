@@ -27,11 +27,7 @@ function ReadOnlyMemberRow({ member, isCurrentUser }: { member: TeamMember; isCu
 					{isCurrentUser && <span className="shrink-0 text-[10px] text-sub-text-muted">(you)</span>}
 				</div>
 				<div className="mt-1">
-					<span
-						className={`text-xs ${
-							hasSubscription ? 'text-sub-green-600 dark:text-sub-green-400' : 'text-sub-text-muted'
-						}`}
-					>
+					<span className={`text-xs ${hasSubscription ? 'text-sub-success' : 'text-sub-text-muted'}`}>
 						{getSubscriptionLabel(member.subscriptionType)}
 					</span>
 				</div>
@@ -58,13 +54,13 @@ export function TeamMemberView() {
 				<div className="flex flex-col gap-3">
 					<div className="flex items-center gap-2">
 						<span className="shrink-0 text-xs leading-4 text-sub-text-muted">Team name</span>
-						<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border-slate-100 dark:border-sub-border-strong" />
+						<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border" />
 						<span className="shrink-0 text-xs leading-4 text-sub-text-primary">{team.name}</span>
 					</div>
 
 					<div className="flex items-center gap-2">
 						<span className="shrink-0 text-xs leading-4 text-sub-text-muted">Your role</span>
-						<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border-slate-100 dark:border-sub-border-strong" />
+						<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border" />
 						<span className="shrink-0 text-xs leading-4 text-sub-text-primary">
 							{team.isAdmin ? 'Admin' : 'Member'}
 						</span>
@@ -72,10 +68,10 @@ export function TeamMemberView() {
 
 					<div className="flex items-center gap-2">
 						<span className="shrink-0 text-xs leading-4 text-sub-text-muted">Subscription</span>
-						<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border-slate-100 dark:border-sub-border-strong" />
+						<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border" />
 						<span
 							className={`shrink-0 text-xs leading-4 ${
-								team.subscriptionType ? 'text-sub-green-600 dark:text-sub-green-400' : 'text-sub-text-muted'
+								team.subscriptionType ? 'text-sub-success' : 'text-sub-text-muted'
 							}`}
 						>
 							{getSubscriptionLabel(team.subscriptionType)}

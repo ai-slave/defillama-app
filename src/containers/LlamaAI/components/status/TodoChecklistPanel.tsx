@@ -85,7 +85,7 @@ export function TodoChecklistPanel({
 						stopped early
 					</p>
 				) : null}
-				<p className="m-0 shrink-0 rounded-sm bg-ai-wash px-1.5 py-0.5 text-[10px] text-ai-tertiary sm:text-xs">
+				<p className="m-0 shrink-0 rounded-sm bg-ai-hover px-1.5 py-0.5 text-[10px] text-ai-tertiary sm:text-xs">
 					{completed}/{total} done
 				</p>
 			</div>
@@ -102,7 +102,7 @@ export function TodoChecklistPanel({
 							<p
 								className={`m-0 flex-1 text-xs leading-[1.45] sm:text-sm ${
 									isActive
-										? 'font-medium text-ai-secondary dark:text-ai-slate-strong'
+										? 'font-medium text-ai-secondary dark:text-ai-landing-text-strong'
 										: isCompleted
 											? 'text-ai-muted line-through'
 											: isCancelled

@@ -24,7 +24,7 @@ export function EmptyAlertsState({ onOpenCreate, onChipSelect }: EmptyAlertsStat
 				<button
 					type="button"
 					onClick={() => onOpenCreate('price')}
-					className="group hover:bg-ai-warning-bright/0.03 flex flex-col items-start gap-2.5 rounded-xl border border-ai-line-subtle bg-ai-wash-faint p-4 text-left transition-all hover:border-ai-warning-bright/30"
+					className="group hover:bg-ai-warning-bright/0.03 flex flex-col items-start gap-2.5 rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4 text-left transition-all hover:border-ai-warning-bright/30"
 				>
 					<span className="flex size-9 items-center justify-center rounded-lg bg-ai-warning-bright/10 text-ai-warning-bright">
 						<Icon name="trending-up" className="size-4" />
@@ -42,7 +42,7 @@ export function EmptyAlertsState({ onOpenCreate, onChipSelect }: EmptyAlertsStat
 				<button
 					type="button"
 					onClick={() => onOpenCreate('schedule')}
-					className="group flex flex-col items-start gap-2.5 rounded-xl border border-ai-line-subtle bg-ai-wash-faint p-4 text-left transition-all hover:border-link/30 hover:bg-link/3"
+					className="group flex flex-col items-start gap-2.5 rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4 text-left transition-all hover:border-link/30 hover:bg-link/3"
 				>
 					<span className="flex size-9 items-center justify-center rounded-lg bg-link/10 text-link">
 						<Icon name="calendar" className="size-4" />

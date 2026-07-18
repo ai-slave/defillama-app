@@ -770,7 +770,7 @@ function TabContent({
 				<button
 					type="button"
 					onClick={handleBackToTypeSelector}
-					className="flex items-center gap-1 text-sm pro-text2 transition-colors hover:pro-text1"
+					className="flex items-center gap-1 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary"
 				>
 					<span>←</span>
 					<span>Back to table type selection</span>
@@ -831,7 +831,7 @@ function TabContent({
 				<button
 					type="button"
 					onClick={handleBackToTypeSelector}
-					className="flex items-center gap-1 text-sm pro-text2 transition-colors hover:pro-text1"
+					className="flex items-center gap-1 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary"
 				>
 					<span>←</span>
 					<span>Back to table type selection</span>
@@ -899,7 +899,7 @@ function TabContent({
 							<div className="flex size-10 items-center justify-center rounded-lg bg-brand/10">
 								<Icon name={heroCard.icon} height={22} width={22} className="text-brand" />
 							</div>
-							<h3 className="text-lg font-semibold pro-text1">{heroCard.label}</h3>
+							<h3 className="text-lg font-semibold text-pro-text-primary">{heroCard.label}</h3>
 						</div>
 						<Icon
 							name="arrow-right"
@@ -908,7 +908,7 @@ function TabContent({
 							className="text-pro-text-secondary transition-transform group-hover:translate-x-1 group-hover:text-brand"
 						/>
 					</div>
-					<p className="mb-4 text-sm pro-text2">{heroCard.description}</p>
+					<p className="mb-4 text-sm text-pro-text-secondary">{heroCard.description}</p>
 					<div className="flex flex-wrap gap-1.5">
 						{heroCard.tags.map((tag) => (
 							<span
@@ -922,7 +922,9 @@ function TabContent({
 				</button>
 
 				<div className="mt-4">
-					<span className="mb-2.5 block text-xs font-medium tracking-wide pro-text2 uppercase">Other datasets</span>
+					<span className="mb-2.5 block text-xs font-medium tracking-wide text-pro-text-secondary uppercase">
+						Other datasets
+					</span>
 					<div className="grid grid-cols-2 gap-2">
 						{otherCards.map((card) => {
 							const isProLocked =
@@ -964,11 +966,11 @@ function TabContent({
 										/>
 									</div>
 									<div className="min-w-0 flex-1">
-										<span className="text-sm font-medium pro-text1">
+										<span className="text-sm font-medium text-pro-text-primary">
 											{card.label}
 											{isProLocked ? <span className="ml-1 text-xs font-normal opacity-60">(Pro)</span> : null}
 										</span>
-										<p className="mt-0.5 line-clamp-1 text-xs pro-text2">{card.description}</p>
+										<p className="mt-0.5 line-clamp-1 text-xs text-pro-text-secondary">{card.description}</p>
 									</div>
 								</button>
 							)
@@ -1022,7 +1024,7 @@ function TabContent({
 					<button
 						type="button"
 						onClick={() => setShowTypeSelector(true)}
-						className="mb-2 flex items-center gap-1 text-sm pro-text2 transition-colors hover:pro-text1"
+						className="mb-2 flex items-center gap-1 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary"
 					>
 						<span>←</span>
 						<span>Back to table type selection</span>
@@ -1076,14 +1078,14 @@ function TabContent({
 				<button
 					type="button"
 					onClick={onClose}
-					className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm pro-text2 transition hover:pro-text1"
+					className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm text-pro-text-secondary transition hover:text-pro-text-primary"
 				>
 					Cancel
 				</button>
 				<button
 					type="button"
 					onClick={handleAdd}
-					className="flex items-center gap-2 rounded-md pro-btn-blue px-4 py-2 text-sm font-semibold"
+					className="flex items-center gap-2 rounded-md pro-btn-primary px-4 py-2 text-sm font-semibold"
 				>
 					{isEditing ? 'Save Changes' : 'Add Table'}
 					<Icon name={isEditing ? 'check' : 'plus'} height={14} width={14} />

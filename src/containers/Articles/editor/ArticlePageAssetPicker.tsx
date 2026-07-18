@@ -109,7 +109,7 @@ export function ArticlePageAssetPicker({
 							value={hit.geckoId}
 							setValueOnClick={false}
 							onClick={() => addAsset(hit)}
-							className="flex cursor-pointer items-center gap-2.5 px-3 py-2 data-active-item:bg-research-link-button-bg"
+							className="flex cursor-pointer items-center gap-2.5 px-3 py-2 data-active-item:bg-research-tint"
 						>
 							<TokenLogo src={hit.image ?? geckoTokenIconUrl(`coingecko:${hit.geckoId}`)} size={20} alt={hit.symbol} />
 							<span className="text-sm font-semibold text-primary">{hit.symbol}</span>
@@ -137,7 +137,7 @@ export function ArticlePageAssetPicker({
 									onClick={() => moveAsset(index, -1)}
 									disabled={index === 0}
 									aria-label={`Move ${asset.symbol} up`}
-									className="grid size-6 place-items-center rounded-md text-tertiary transition-colors hover:bg-research-link-hover-bg hover:text-primary disabled:pointer-events-none disabled:opacity-30"
+									className="grid size-6 place-items-center rounded-md text-tertiary transition-colors hover:bg-research-tint-hover hover:text-primary disabled:pointer-events-none disabled:opacity-30"
 								>
 									<Icon name="chevron-up" height={14} width={14} />
 								</button>
@@ -146,7 +146,7 @@ export function ArticlePageAssetPicker({
 									onClick={() => moveAsset(index, 1)}
 									disabled={index === value.length - 1}
 									aria-label={`Move ${asset.symbol} down`}
-									className="grid size-6 place-items-center rounded-md text-tertiary transition-colors hover:bg-research-link-hover-bg hover:text-primary disabled:pointer-events-none disabled:opacity-30"
+									className="grid size-6 place-items-center rounded-md text-tertiary transition-colors hover:bg-research-tint-hover hover:text-primary disabled:pointer-events-none disabled:opacity-30"
 								>
 									<Icon name="chevron-down" height={14} width={14} />
 								</button>
@@ -154,7 +154,7 @@ export function ArticlePageAssetPicker({
 									type="button"
 									onClick={() => removeAsset(index)}
 									aria-label={`Remove ${asset.symbol}`}
-									className="grid size-6 place-items-center rounded-md text-tertiary opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-research-link-hover-bg hover:text-error focus-visible:opacity-100"
+									className="grid size-6 place-items-center rounded-md text-tertiary opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-research-tint-hover hover:text-error focus-visible:opacity-100"
 								>
 									<Icon name="x" height={13} width={13} />
 								</button>

@@ -291,7 +291,7 @@ function ExampleShowcase() {
 					<span className="mb-1 block text-[11px] font-bold tracking-wider text-ai-gold uppercase dark:text-ai-gold-bright">
 						{example.category}
 					</span>
-					<span className="text-sm leading-snug font-medium text-ai-secondary dark:text-ai-slate-strong">
+					<span className="text-sm leading-snug font-medium text-ai-secondary dark:text-ai-landing-text-strong">
 						&ldquo;{example.prompt}&rdquo;
 					</span>
 				</div>
@@ -648,7 +648,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 											<p className="truncate text-[11px] font-medium text-ai-secondary">Daily Crypto Price Check</p>
 											<p className="text-[10px] text-ai-muted">Daily at 9 AM UTC</p>
 										</div>
-										<div className="h-3.5 w-6 shrink-0 rounded-full bg-ai-blue-vivid p-0.5">
+										<div className="h-3.5 w-6 shrink-0 rounded-full bg-ai-accent-blue-bright p-0.5">
 											<div className="size-2.5 translate-x-2.5 rounded-full bg-ai-white shadow-sm" />
 										</div>
 									</div>
@@ -667,7 +667,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 								<div className="overflow-hidden rounded-lg border border-ai-line bg-ai-surface dark:bg-ai-surface-card">
 									<div className="border-b border-ai-line px-3 py-2">
 										<div className="flex items-center gap-2">
-											<div className="flex size-5 items-center justify-center rounded-sm bg-ai-blue-vivid/15">
+											<div className="flex size-5 items-center justify-center rounded-sm bg-ai-accent-blue-bright/15">
 												<svg
 													xmlns="http://www.w3.org/2000/svg"
 													width="11"
@@ -678,7 +678,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 													strokeWidth="2.5"
 													strokeLinecap="round"
 													strokeLinejoin="round"
-													className="text-ai-blue-vivid"
+													className="text-ai-accent-blue-bright"
 												>
 													<circle cx="12" cy="12" r="3" />
 													<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
@@ -696,7 +696,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 											<div className="min-w-0 flex-1">
 												<p className="text-[11px] font-medium text-ai-secondary">Remember my preferences</p>
 											</div>
-											<div className="h-3.5 w-6 shrink-0 rounded-full bg-ai-blue-vivid p-0.5">
+											<div className="h-3.5 w-6 shrink-0 rounded-full bg-ai-accent-blue-bright p-0.5">
 												<div className="size-2.5 translate-x-2.5 rounded-full bg-ai-white shadow-sm" />
 											</div>
 										</div>
@@ -742,14 +742,14 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 											</span>
 										</div>
 										<div className="flex items-center gap-2">
-											<div className="size-2.5 shrink-0 rounded-full bg-ai-blue-vivid" />
+											<div className="size-2.5 shrink-0 rounded-full bg-ai-accent-blue-bright" />
 											<span className="text-[11px] text-ai-secondary dark:text-ai-muted">
 												<span className="font-medium text-ai-secondary">market_dynamics</span>{' '}
 												{TOOL_LABELS.generate_chart}
 											</span>
 										</div>
 										<div className="flex items-center gap-2">
-											<div className="size-2.5 shrink-0 rounded-full bg-ai-blue-vivid" />
+											<div className="size-2.5 shrink-0 rounded-full bg-ai-accent-blue-bright" />
 											<span className="text-[11px] text-ai-secondary dark:text-ai-muted">
 												<span className="font-medium text-ai-secondary">competitive_positioning</span>{' '}
 												{TOOL_LABELS.web_search}
@@ -897,18 +897,18 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 						<BasicLink
 							href="/mcp"
 							onClick={() => trackUmamiEvent('llamaai-mcp-upsell-click')}
-							className="group flex flex-col gap-4 rounded-2xl border border-ai-purple/20 bg-linear-to-r from-ai-purple/5 to-ai-purple-bright/5 p-5 transition-colors hover:border-ai-purple/40 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+							className="group flex flex-col gap-4 rounded-2xl border border-ai-research/20 bg-linear-to-r from-ai-research/5 to-ai-research-bright/5 p-5 transition-colors hover:border-ai-research/40 sm:flex-row sm:items-center sm:justify-between sm:p-6"
 						>
 							<div>
 								<h3 className="font-semibold text-ai-primary">
-									Building with AI agents? <span className="text-ai-purple">Try our MCP Server</span>
+									Building with AI agents? <span className="text-ai-research">Try our MCP Server</span>
 								</h3>
 								<p className="mt-1 max-w-lg text-sm text-ai-secondary dark:text-ai-tertiary">
 									Connect Claude, Cursor, OpenClaw, or any MCP-compatible agent directly to DefiLlama's data. 23 tools
 									for TVL, yields, prices, protocol metrics, and more.
 								</p>
 							</div>
-							<span className="shrink-0 self-start rounded-lg border border-ai-purple/30 px-4 py-2 text-sm font-medium text-ai-purple transition-colors group-hover:bg-ai-purple/10 sm:self-center">
+							<span className="shrink-0 self-start rounded-lg border border-ai-research/30 px-4 py-2 text-sm font-medium text-ai-research transition-colors group-hover:bg-ai-research/10 sm:self-center">
 								Explore MCP
 							</span>
 						</BasicLink>
@@ -918,7 +918,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 				{/* Final CTA */}
 				<section className="relative z-10 px-4 pb-16 md:px-8 md:pb-24">
 					<div className="mx-auto max-w-3xl">
-						<div className="relative overflow-hidden rounded-2xl border border-ai-line bg-linear-to-br from-ai-surface-card via-ai-surface-card to-ai-paper">
+						<div className="relative overflow-hidden rounded-2xl border border-ai-line bg-linear-to-br from-ai-surface-card via-ai-surface-card to-ai-gold-tint">
 							<div className="pointer-events-none absolute inset-0 overflow-hidden">
 								<div
 									className="absolute -right-16 -bottom-16 size-48 rounded-full opacity-30"

@@ -111,7 +111,7 @@ function DashboardEditPageContent({ dashboardId }: { dashboardId: string }) {
 				<p className="text-center text-base text-pro-text-label">Please sign in to edit this dashboard</p>
 				<BasicLink
 					href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
-					className="mt-7 rounded-md pro-btn-purple px-6 py-3 font-medium"
+					className="mt-7 rounded-md pro-btn-ai px-6 py-3 font-medium"
 				>
 					Sign In
 				</BasicLink>
@@ -123,7 +123,7 @@ function DashboardEditPageContent({ dashboardId }: { dashboardId: string }) {
 		return (
 			<div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
 				<h1 className="text-3xl font-bold">Failed to load dashboard</h1>
-				<BasicLink href={`/pro/${dashboardId}`} className="mt-2 rounded-md pro-btn-purple px-6 py-3 font-medium">
+				<BasicLink href={`/pro/${dashboardId}`} className="mt-2 rounded-md pro-btn-ai px-6 py-3 font-medium">
 					Back to dashboard
 				</BasicLink>
 			</div>
@@ -134,7 +134,7 @@ function DashboardEditPageContent({ dashboardId }: { dashboardId: string }) {
 		return (
 			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg p-1">
 				<h1 className="text-3xl font-bold">Dashboard Not Found</h1>
-				<BasicLink href="/pro" className="mt-7 rounded-md pro-btn-purple px-6 py-3 font-medium">
+				<BasicLink href="/pro" className="mt-7 rounded-md pro-btn-ai px-6 py-3 font-medium">
 					Browse Dashboards
 				</BasicLink>
 			</div>

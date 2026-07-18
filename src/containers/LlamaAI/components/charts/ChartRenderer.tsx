@@ -553,7 +553,7 @@ function ChartEditorModal({ title, onClose, children }: { title?: string; onClos
 						type="button"
 						onClick={onClose}
 						aria-label="Close editor"
-						className="rounded-sm p-1 text-ai-muted hover:bg-ai-wash hover:text-ai-primary"
+						className="rounded-sm p-1 text-ai-muted hover:bg-ai-hover hover:text-ai-primary"
 					>
 						<svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
 							<path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -564,7 +564,7 @@ function ChartEditorModal({ title, onClose, children }: { title?: string; onClos
 					type="button"
 					onClick={onClose}
 					aria-label="Close editor"
-					className="absolute top-2.5 right-2.5 z-10 hidden rounded-sm p-1 text-ai-muted hover:bg-ai-wash hover:text-ai-primary lg:block"
+					className="absolute top-2.5 right-2.5 z-10 hidden rounded-sm p-1 text-ai-muted hover:bg-ai-hover hover:text-ai-primary lg:block"
 				>
 					<svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden>
 						<path d="M1 1L13 13M13 1L1 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -577,7 +577,9 @@ function ChartEditorModal({ title, onClose, children }: { title?: string; onClos
 	)
 }
 
-const ChartLoadingSpinner = () => <div className="size-4 animate-spin rounded-full border-b-2 border-ai-blue"></div>
+const ChartLoadingSpinner = () => (
+	<div className="size-4 animate-spin rounded-full border-b-2 border-ai-accent-blue"></div>
+)
 
 const ChartLoadingPlaceholder = ({ chartTypes }: { chartTypes?: string[] }) => (
 	<div className="flex flex-col items-center justify-center gap-2 rounded-md border border-ai-line px-1 py-8">

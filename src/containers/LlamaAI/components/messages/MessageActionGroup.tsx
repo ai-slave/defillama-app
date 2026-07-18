@@ -82,8 +82,8 @@ function ActionLink({
 			{...getActionHrefProps(href, action.label)}
 			className={
 				variant === 'decision'
-					? 'inline-flex items-center gap-1.5 rounded-full border border-ai-old-blue/15 bg-ai-old-blue/3 px-4 py-2 text-sm font-medium text-ai-old-blue transition-all duration-150 hover:border-ai-old-blue/35 hover:bg-ai-old-blue/8 active:scale-[0.97]'
-					: 'inline-flex items-center gap-1.5 rounded-full border border-ai-old-blue/10 bg-ai-old-blue/4 px-3 py-1.5 text-xs font-medium text-ai-old-blue/55 transition-all duration-150 hover:border-ai-old-blue/20 hover:bg-ai-old-blue/8 hover:text-ai-old-blue/75 active:scale-[0.97]'
+					? 'inline-flex items-center gap-1.5 rounded-full border border-ai-action/15 bg-ai-action/3 px-4 py-2 text-sm font-medium text-ai-action transition-all duration-150 hover:border-ai-action/35 hover:bg-ai-action/8 active:scale-[0.97]'
+					: 'inline-flex items-center gap-1.5 rounded-full border border-ai-action/10 bg-ai-action/4 px-3 py-1.5 text-xs font-medium text-ai-action/55 transition-all duration-150 hover:border-ai-action/20 hover:bg-ai-action/8 hover:text-ai-action/75 active:scale-[0.97]'
 			}
 		>
 			{action.label}
@@ -177,9 +177,9 @@ export function ActionButtonGroup({
 								className={`rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-150 ${
 									!clickedIds.has(action.compositeId)
 										? onActionClick
-											? 'bg-ai-old-blue text-ai-white hover:bg-ai-old-blue-deep active:scale-[0.97] dark:bg-ai-old-blue dark:hover:bg-ai-old-blue-deep'
+											? 'bg-ai-action text-ai-white hover:bg-ai-action-hover active:scale-[0.97] dark:bg-ai-action dark:hover:bg-ai-action-hover'
 											: 'bg-ai-surface-muted text-ai-muted dark:bg-ai-surface-muted'
-										: 'bg-ai-old-blue text-ai-white dark:bg-ai-old-blue'
+										: 'bg-ai-action text-ai-white dark:bg-ai-action'
 								}`}
 							>
 								{action.label}
@@ -196,9 +196,9 @@ export function ActionButtonGroup({
 							className={`rounded-full border px-5 py-2.5 text-sm font-medium transition-all duration-150 ${
 								!clickedIds.has(action.compositeId)
 									? onActionClick
-										? 'border-ai-old-blue/20 text-ai-old-blue hover:border-ai-old-blue/40 hover:bg-ai-old-blue/6 active:scale-[0.97] dark:hover:bg-ai-old-blue/6'
+										? 'border-ai-action/20 text-ai-action hover:border-ai-action/40 hover:bg-ai-action/6 active:scale-[0.97] dark:hover:bg-ai-action/6'
 										: 'border-ai-line text-ai-muted'
-									: 'border-ai-old-blue bg-ai-old-blue/10 text-ai-old-blue dark:border-ai-old-blue'
+									: 'border-ai-action bg-ai-action/10 text-ai-action dark:border-ai-action'
 							}`}
 						>
 							{action.label}
@@ -228,9 +228,9 @@ export function ActionButtonGroup({
 						className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-150 ${
 							!clickedIds.has(action.compositeId)
 								? onActionClick
-									? 'border-ai-old-blue/10 bg-ai-old-blue/4 text-ai-old-blue/55 hover:border-ai-old-blue/20 hover:bg-ai-old-blue/8 hover:text-ai-old-blue/75 active:scale-[0.97]'
-									: 'border-ai-old-blue/5 bg-ai-old-blue/2 text-ai-old-blue/30 dark:border-ai-old-blue/5 dark:text-ai-old-blue/25'
-								: 'border-ai-old-blue/25 bg-ai-old-blue/8 text-ai-old-blue/70 dark:border-ai-old-blue/25 dark:text-ai-old-blue/70'
+									? 'border-ai-action/10 bg-ai-action/4 text-ai-action/55 hover:border-ai-action/20 hover:bg-ai-action/8 hover:text-ai-action/75 active:scale-[0.97]'
+									: 'border-ai-action/5 bg-ai-action/2 text-ai-action/30 dark:border-ai-action/5 dark:text-ai-action/25'
+								: 'border-ai-action/25 bg-ai-action/8 text-ai-action/70 dark:border-ai-action/25 dark:text-ai-action/70'
 						}`}
 					>
 						{action.label}

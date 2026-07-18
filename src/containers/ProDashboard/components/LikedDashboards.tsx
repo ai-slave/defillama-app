@@ -39,7 +39,7 @@ export function LikedDashboards() {
 					<button
 						onClick={() => goToPage(Math.max(1, page - 1))}
 						disabled={page === 1}
-						className={`px-3 py-1 ${page === 1 ? 'cursor-not-allowed pro-text3' : 'pro-text1 hover:bg-pro-glass-bg'}`}
+						className={`px-3 py-1 ${page === 1 ? 'cursor-not-allowed text-pro-text-tertiary' : 'text-pro-text-primary hover:bg-pro-glass-bg'}`}
 					>
 						<Icon name="chevron-left" height={16} width={16} />
 					</button>
@@ -59,7 +59,7 @@ export function LikedDashboards() {
 								key={pageNum}
 								onClick={() => goToPage(pageNum)}
 								className={`px-3 py-1 ${
-									page === pageNum ? 'bg-brand text-on-brand' : 'pro-text1 hover:bg-pro-glass-bg'
+									page === pageNum ? 'bg-brand text-on-brand' : 'text-pro-text-primary hover:bg-pro-glass-bg'
 								}`}
 							>
 								{pageNum}
@@ -71,7 +71,9 @@ export function LikedDashboards() {
 						onClick={() => goToPage(Math.min(totalPages, page + 1))}
 						disabled={page === totalPages}
 						className={`px-3 py-1 ${
-							page === totalPages ? 'cursor-not-allowed pro-text3' : 'pro-text1 hover:bg-pro-glass-bg'
+							page === totalPages
+								? 'cursor-not-allowed text-pro-text-tertiary'
+								: 'text-pro-text-primary hover:bg-pro-glass-bg'
 						}`}
 					>
 						<Icon name="chevron-right" height={16} width={16} />

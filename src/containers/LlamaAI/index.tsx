@@ -2710,7 +2710,7 @@ const ChatControls = memo(function ChatControls({
 				<div className="relative">
 					<Icon name="settings" height={16} width={16} />
 					{hasCustomInstructions ? (
-						<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-ai-blue-deep" />
+						<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-ai-accent-blue-deep" />
 					) : null}
 				</div>
 				<span className="sr-only">Settings</span>

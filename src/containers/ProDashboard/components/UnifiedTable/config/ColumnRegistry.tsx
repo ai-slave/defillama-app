@@ -26,13 +26,13 @@ import { createCustomColumnDef, validateCustomColumnOnLoad } from '../utils/cust
 import { COLUMN_DICTIONARY_BY_ID } from './ColumnDictionary'
 import { isColumnSupported } from './metricCapabilities'
 
-const renderDash = () => <span className="pro-text3">-</span>
+const renderDash = () => <span className="text-pro-text-tertiary">-</span>
 
 const renderUsd = (value: number | null | undefined) => {
 	if (value == null) {
 		return renderDash()
 	}
-	return <span className="pro-text2">{formattedNum(value, true)}</span>
+	return <span className="text-pro-text-secondary">{formattedNum(value, true)}</span>
 }
 
 // oxlint-disable-next-line no-unused-vars
@@ -40,7 +40,7 @@ const renderNumber = (value: number | null | undefined) => {
 	if (value == null) {
 		return renderDash()
 	}
-	return <span className="pro-text2">{formattedNum(value, false)}</span>
+	return <span className="text-pro-text-secondary">{formattedNum(value, false)}</span>
 }
 
 const renderPercent = (value: number | null | undefined) => {
@@ -48,7 +48,7 @@ const renderPercent = (value: number | null | undefined) => {
 		return renderDash()
 	}
 	return (
-		<span className="pro-text2">
+		<span className="text-pro-text-secondary">
 			<PercentChange percent={value} noSign />
 		</span>
 	)
@@ -59,7 +59,7 @@ const renderPercentChangeCell = (value: number | null | undefined) => {
 		return renderDash()
 	}
 	return (
-		<span className="pro-text2">
+		<span className="text-pro-text-secondary">
 			<PercentChange percent={value} />
 		</span>
 	)
@@ -69,7 +69,7 @@ const renderRatio = (value: number | null | undefined) => {
 	if (value == null) {
 		return renderDash()
 	}
-	return <span className="pro-text2">{`${formattedNum(value, false)}x`}</span>
+	return <span className="text-pro-text-secondary">{`${formattedNum(value, false)}x`}</span>
 }
 
 type MetricKey = keyof NumericMetrics

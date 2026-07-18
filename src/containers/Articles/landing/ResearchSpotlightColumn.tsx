@@ -64,7 +64,7 @@ export function ResearchSpotlightColumn({ title, articles, sharedHeight }: Resea
 
 										<div className="flex grow flex-col justify-between gap-1.75 pr-3">
 											<div
-												className={`line-clamp-3 leading-[135%] font-medium text-research-navy-soft group-hover:text-research-navy-soft group-hover:opacity-70 dark:text-research-ink dark:group-hover:text-on-brand/70 ${'text-base'}`}
+												className={`line-clamp-3 leading-[135%] font-medium text-research-heading group-hover:text-research-heading group-hover:opacity-70 dark:text-research-ink dark:group-hover:text-on-brand/70 ${'text-base'}`}
 											>
 												{i === 0 && (
 													<InViewAnalytics
@@ -73,7 +73,7 @@ export function ResearchSpotlightColumn({ title, articles, sharedHeight }: Resea
 												)}
 												{article.title}
 											</div>
-											<div className="text-xs font-bold text-research-blue dark:text-on-brand/80">
+											<div className="text-xs font-bold text-research-accent dark:text-on-brand/80">
 												{formatDate(article.displayDate ?? article.publishedAt)}
 											</div>
 										</div>

@@ -66,7 +66,7 @@ export function DashboardPaywallModal({ dialogStore, reason = 'pro-feature' }: D
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog
-				className="dialog flex max-h-[85dvh] max-w-sm flex-col overflow-hidden rounded-xl border border-sub-line bg-sub-ink p-5 text-on-brand shadow-2xl max-sm:drawer max-sm:rounded-b-none sm:p-6"
+				className="dialog flex max-h-[85dvh] max-w-sm flex-col overflow-hidden rounded-xl border border-sub-line bg-sub-dark-panel p-5 text-on-brand shadow-2xl max-sm:drawer max-sm:rounded-b-none sm:p-6"
 				portal
 				unmountOnHide
 			>
@@ -76,8 +76,8 @@ export function DashboardPaywallModal({ dialogStore, reason = 'pro-feature' }: D
 				</Ariakit.DialogDismiss>
 
 				<div className="flex flex-col items-center gap-4 text-center">
-					<div className="flex size-14 items-center justify-center rounded-full bg-sub-purple-500/15">
-						<Icon name={config.icon} height={28} width={28} className="text-sub-purple-500" />
+					<div className="flex size-14 items-center justify-center rounded-full bg-sub-purple/15">
+						<Icon name={config.icon} height={28} width={28} className="text-sub-purple" />
 					</div>
 
 					<div className="space-y-1.5">
@@ -92,7 +92,7 @@ export function DashboardPaywallModal({ dialogStore, reason = 'pro-feature' }: D
 						<ul className="space-y-2">
 							{config.features.map((feature) => (
 								<li key={feature} className="flex items-center gap-2.5 text-left text-sm text-sub-text-soft">
-									<Icon name="check" height={14} width={14} className="shrink-0 text-sub-purple-500" />
+									<Icon name="check" height={14} width={14} className="shrink-0 text-sub-purple" />
 									{feature}
 								</li>
 							))}
@@ -102,7 +102,7 @@ export function DashboardPaywallModal({ dialogStore, reason = 'pro-feature' }: D
 					<BasicLink
 						href="/subscription"
 						data-umami-event="dashboard-paywall-upgrade"
-						className="flex w-full items-center justify-center gap-2 rounded-lg bg-sub-purple-500 px-4 py-2.5 text-sm font-medium text-on-brand transition-colors hover:bg-sub-purple-hover"
+						className="flex w-full items-center justify-center gap-2 rounded-lg bg-sub-purple px-4 py-2.5 text-sm font-medium text-on-brand transition-colors hover:bg-sub-purple-hover"
 					>
 						<Icon name="sparkles" height={16} width={16} />
 						Upgrade to Pro

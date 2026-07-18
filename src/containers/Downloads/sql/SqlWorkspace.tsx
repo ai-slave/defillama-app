@@ -1035,7 +1035,7 @@ function StatusStrip({
 							? 'text-pro-text-primary'
 							: duckdbStatus === 'error'
 								? 'text-error'
-								: 'text-pro-gold-300'
+								: 'text-pro-premium-300'
 					}
 				>
 					{duckdbStatus === 'ready' ? 'ready' : duckdbStatus === 'error' ? 'failed' : 'loading'}
@@ -1048,9 +1048,9 @@ function StatusStrip({
 				<StatusDot tone={runTone} blink={busy} />
 				<span className="text-pro-text-tertiary">Last run</span>
 				{loadingStage ? (
-					<span className="text-pro-gold-300">{loadingStage}</span>
+					<span className="text-pro-premium-300">{loadingStage}</span>
 				) : running ? (
-					<span className="text-pro-gold-300">running…</span>
+					<span className="text-pro-premium-300">running…</span>
 				) : error ? (
 					<span className="text-error">error</span>
 				) : lastRun ? (

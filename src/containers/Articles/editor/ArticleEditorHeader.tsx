@@ -117,7 +117,7 @@ export function ArticleEditorHeader({
 						title="Click to edit slug"
 						className={`group flex ${
 							hasPendingEdits ? 'max-w-[18ch] sm:max-w-[24ch] lg:max-w-[32ch]' : 'max-w-[24ch] sm:max-w-[32ch]'
-						} items-center gap-1 truncate rounded-sm px-1 py-0.5 font-jetbrains text-xs tracking-tight text-secondary hover:bg-research-link-hover-bg hover:text-primary`}
+						} items-center gap-1 truncate rounded-sm px-1 py-0.5 font-jetbrains text-xs tracking-tight text-secondary hover:bg-research-tint-hover hover:text-primary`}
 					>
 						<span className="truncate">{article.slug}</span>
 						<span aria-hidden className="text-tertiary opacity-0 transition-opacity group-hover:opacity-100">
@@ -163,7 +163,7 @@ export function ArticleEditorHeader({
 							? 'border-error/40 bg-error/5 text-error hover:bg-error/10'
 							: pillState === 'unsaved'
 								? 'border-warning/35 bg-warning/5 text-warning hover:bg-warning/10 dark:text-warning'
-								: 'border-transparent text-secondary hover:border-medium hover:bg-research-link-hover-bg disabled:hover:border-transparent disabled:hover:bg-transparent'
+								: 'border-transparent text-secondary hover:border-medium hover:bg-research-tint-hover disabled:hover:border-transparent disabled:hover:bg-transparent'
 					}`}
 				>
 					<span aria-hidden className={`size-1.5 rounded-full ${pillDot}`} />
@@ -201,8 +201,8 @@ export function ArticleEditorHeader({
 								onClick={() => onViewModeChange(item.mode)}
 								className={`flex h-8 items-center gap-1.5 rounded-sm px-2.5 text-xs font-medium transition-colors ${
 									active
-										? 'bg-research-link-button-bg text-link'
-										: 'text-tertiary hover:bg-research-link-hover-bg hover:text-primary'
+										? 'bg-research-tint text-link'
+										: 'text-tertiary hover:bg-research-tint-hover hover:text-primary'
 								}`}
 							>
 								<Icon name={item.icon} className="size-3.5" />
@@ -269,7 +269,7 @@ export function ArticleEditorHeader({
 											href={articleViewHref}
 											target="_blank"
 											rel="noreferrer"
-											className="flex items-center justify-between rounded-sm px-2.5 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+											className="flex items-center justify-between rounded-sm px-2.5 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 										/>
 									}
 								>
@@ -281,14 +281,14 @@ export function ArticleEditorHeader({
 								</Ariakit.MenuItem>
 								<Ariakit.MenuItem
 									onClick={onOpenMeta}
-									className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+									className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 								>
 									<Icon name="sliders" className="size-3.5" />
 									Edit listing
 								</Ariakit.MenuItem>
 								<Ariakit.MenuItem
 									onClick={onOpenHistory}
-									className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+									className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 								>
 									<Icon name="check" className="size-3.5" />
 									Revision history
@@ -296,7 +296,7 @@ export function ArticleEditorHeader({
 								<Ariakit.MenuItem
 									onClick={handleUnpublish}
 									disabled={isPublishing}
-									className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+									className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 								>
 									<Icon name="undo" className="size-3.5" />
 									Move to drafts

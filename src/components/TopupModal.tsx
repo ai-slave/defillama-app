@@ -96,24 +96,24 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 									setStep('select')
 									topupMutation.reset()
 								}}
-								className="rounded-full p-1 text-sub-ink-primary transition-colors"
+								className="rounded-full p-1 text-sub-dark-page transition-colors"
 							>
 								<Icon name="arrow-left" height={18} width={18} />
 							</button>
 							<div className="flex-1">
-								<h3 className="text-xl leading-7 font-semibold text-sub-ink-primary">Complete Payment</h3>
+								<h3 className="text-xl leading-7 font-semibold text-sub-dark-page">Complete Payment</h3>
 								<p className="text-xs text-sub-text-muted">
 									Top up <span className="font-semibold text-sub-brand-primary">${parsedAmount.toFixed(2)}</span> to
 									your External Data Balance
 								</p>
 							</div>
-							<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-ink-primary transition-colors">
+							<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-dark-page transition-colors">
 								<Icon name="x" height={24} width={24} />
 							</Ariakit.DialogDismiss>
 						</div>
 
 						{errorMessage ? (
-							<div className="border-b border-sub-border-slate-100 bg-sub-orange-400/10 p-4">
+							<div className="border-b border-sub-border-slate-100 bg-sub-warning-text-dark/10 p-4">
 								<div className="flex items-center gap-2 text-error">
 									<Icon name="alert-warning" height={18} width={18} className="shrink-0" />
 									<p className="text-sm">{errorMessage}</p>
@@ -158,7 +158,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 									onChange={(e) => handleAmountInput(e.target.value)}
 									placeholder="0.00"
 									autoFocus
-									className="h-10 w-full rounded-lg border border-sub-border-muted bg-sub-surface-panel pr-3 pl-7 text-sm text-sub-text-primary outline-hidden focus:border-sub-brand-primary dark:border-sub-border-strong dark:bg-sub-ink-primary dark:focus:border-sub-brand-primary"
+									className="h-10 w-full rounded-lg border border-sub-border-muted bg-sub-surface-panel pr-3 pl-7 text-sm text-sub-text-primary outline-hidden focus:border-sub-brand-primary dark:border-sub-border-strong dark:bg-sub-dark-page dark:focus:border-sub-brand-primary"
 								/>
 							</div>
 							{amount && !isValidAmount && (
@@ -215,7 +215,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 						</div>
 
 						{errorMessage && (
-							<div className="flex items-center gap-2 rounded-lg bg-sub-orange-400/10 p-3 text-error">
+							<div className="flex items-center gap-2 rounded-lg bg-sub-warning-text-dark/10 p-3 text-error">
 								<Icon name="alert-warning" height={16} width={16} className="shrink-0" />
 								<p className="text-sm">{errorMessage}</p>
 							</div>

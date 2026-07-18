@@ -133,10 +133,10 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 		<div className="flex h-full flex-col p-2">
 			<div className="mb-2 flex items-start justify-between gap-2">
 				<div className="flex flex-col gap-1">
-					<h3 className="text-sm font-semibold pro-text1">
+					<h3 className="text-sm font-semibold text-pro-text-primary">
 						RWA {metricLabel} - {viewLabel}
 					</h3>
-					<p className="text-xs pro-text2">
+					<p className="text-xs text-pro-text-secondary">
 						{chainLabel}
 						{!chain ? ` by ${breakdownLabel}` : ''}
 					</p>
@@ -179,7 +179,9 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 							valueLabel={metricLabel}
 						/>
 					) : (
-						<div className="flex h-[320px] items-center justify-center text-sm pro-text2">No data available</div>
+						<div className="flex h-[320px] items-center justify-center text-sm text-pro-text-secondary">
+							No data available
+						</div>
 					)}
 				</Suspense>
 			</div>

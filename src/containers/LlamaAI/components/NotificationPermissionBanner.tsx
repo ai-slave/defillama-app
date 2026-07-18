@@ -57,7 +57,7 @@ export function NotificationPermissionBanner() {
 				type="button"
 				onClick={handleEnable}
 				disabled={isRequesting}
-				className="shrink-0 rounded-md bg-ai-contrast px-3 py-1 text-xs font-medium text-ai-on-contrast transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+				className="shrink-0 rounded-md bg-ai-inverse px-3 py-1 text-xs font-medium text-ai-on-inverse transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
 			>
 				Notify
 			</button>
@@ -65,7 +65,7 @@ export function NotificationPermissionBanner() {
 				type="button"
 				onClick={handleDismiss}
 				aria-label="Dismiss notification prompt"
-				className="flex size-6 shrink-0 items-center justify-center rounded-full text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-primary"
+				className="flex size-6 shrink-0 items-center justify-center rounded-full text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-primary"
 			>
 				<Icon name="x" height={14} width={14} />
 			</button>

@@ -30,7 +30,7 @@ export function SubscribeLayout({
 				<link rel="icon" type="image/png" href="/favicon-32x32.png" />
 			</Head>
 			<LinkPreviewCard />
-			<div className="col-span-full flex min-h-screen w-full flex-col bg-sub-ink text-on-brand">
+			<div className="col-span-full flex min-h-screen w-full flex-col bg-sub-dark-panel text-on-brand">
 				<header className="sticky top-0 z-50 h-12 bg-transparent">
 					<div className="mx-auto flex h-full max-w-6xl items-center justify-between px-4 xl:max-w-7xl 2xl:max-w-[1440px]">
 						<div className="flex items-center gap-3">
@@ -46,20 +46,20 @@ export function SubscribeLayout({
 						<div className="flex items-center gap-2">
 							{!isAuthenticated ? (
 								<SignInModal
-									className="rounded-lg bg-sub-purple-500 px-3 py-1.5 text-sm font-medium text-on-brand transition-all duration-200 hover:bg-sub-purple-hover"
+									className="rounded-lg bg-sub-purple px-3 py-1.5 text-sm font-medium text-on-brand transition-all duration-200 hover:bg-sub-purple-hover"
 									hideWhenAuthenticated={false}
 								/>
 							) : (
 								<Ariakit.MenuProvider open={isMenuOpen} setOpen={setIsMenuOpen}>
-									<Ariakit.MenuButton className="flex size-8 items-center justify-center rounded-lg text-sub-text-soft transition-colors hover:bg-sub-card-raised hover:text-on-brand">
+									<Ariakit.MenuButton className="flex size-8 items-center justify-center rounded-lg text-sub-text-soft transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand">
 										<Icon name="menu" height={18} width={18} />
 									</Ariakit.MenuButton>
 									<Ariakit.Menu
-										className="z-50 min-w-[180px] rounded-lg border border-sub-line bg-sub-ink py-2 shadow-xl backdrop-blur-md"
+										className="z-50 min-w-[180px] rounded-lg border border-sub-line bg-sub-dark-panel py-2 shadow-xl backdrop-blur-md"
 										gutter={8}
 									>
 										<Ariakit.MenuItem
-											className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm text-on-brand transition-colors hover:bg-sub-card-raised focus:bg-sub-card-raised focus:outline-hidden"
+											className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm text-on-brand transition-colors hover:bg-sub-dark-card-raised focus:bg-sub-dark-card-raised focus:outline-hidden"
 											render={<BasicLink href="/" />}
 										>
 											<Icon name="arrow-left" height={14} width={14} className="text-sub-text-muted" />
@@ -67,7 +67,7 @@ export function SubscribeLayout({
 										</Ariakit.MenuItem>
 										<div className="my-1 h-px bg-sub-line" />
 										<Ariakit.MenuItem
-											className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm text-on-brand transition-colors hover:bg-sub-card-raised focus:bg-sub-card-raised focus:outline-hidden"
+											className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm text-on-brand transition-colors hover:bg-sub-dark-card-raised focus:bg-sub-dark-card-raised focus:outline-hidden"
 											onClick={logout}
 										>
 											<Icon name="x" height={14} width={14} className="text-error" />

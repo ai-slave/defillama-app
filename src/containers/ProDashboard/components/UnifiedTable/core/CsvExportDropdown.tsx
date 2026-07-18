@@ -73,7 +73,7 @@ export const CsvExportDropdown = memo(function CsvExportDropdown({
 			<ProTableCSVButton
 				onClick={handleButtonClick}
 				isLoading={isLoading}
-				className={`flex items-center gap-2 rounded-md border pro-border pro-bg1 pro-hover-bg px-3 py-1.5 text-sm pro-text1 transition-colors ${
+				className={`flex items-center gap-2 rounded-md border pro-border pro-hover-bg pro-panel-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors ${
 					disabled ? 'cursor-not-allowed opacity-60' : ''
 				}`}
 			/>

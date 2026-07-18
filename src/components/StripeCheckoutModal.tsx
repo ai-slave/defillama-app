@@ -21,8 +21,8 @@ const checkoutBackdrop = <div className="fixed inset-0 bg-black/80" />
 const checkoutDialogClassName =
 	'dialog fixed inset-0 z-50 m-auto flex max-h-[90vh] w-[calc(100vw-2rem)] max-w-[600px] flex-col gap-0 overflow-y-auto rounded-2xl border border-sub-border-slate-100 bg-white p-0 shadow-xl'
 const checkoutHeaderClassName = 'flex items-center justify-between border-b border-sub-border-slate-100 px-5 py-4'
-const checkoutTitleClassName = 'text-xl leading-7 font-semibold text-sub-ink-primary'
-const checkoutCloseButtonClassName = 'rounded-full p-1 text-sub-ink-primary transition-colors disabled:opacity-50'
+const checkoutTitleClassName = 'text-xl leading-7 font-semibold text-sub-dark-page'
+const checkoutCloseButtonClassName = 'rounded-full p-1 text-sub-dark-page transition-colors disabled:opacity-50'
 const amountFormatters = new Map<string, Intl.NumberFormat>()
 
 const formatAmount = (cents: number, currency: string) => {
@@ -176,7 +176,7 @@ export function StripeCheckoutModal({
 						</Ariakit.DialogDismiss>
 					</div>
 					<div className="px-5 py-8 text-center text-sub-text-muted">
-						<p className="mb-2 text-base text-sub-ink-primary">Stripe is not configured.</p>
+						<p className="mb-2 text-base text-sub-dark-page">Stripe is not configured.</p>
 						<p className="text-sm">Please set `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` in your environment.</p>
 					</div>
 				</Ariakit.Dialog>
@@ -199,10 +199,10 @@ export function StripeCheckoutModal({
 					</div>
 
 					<div className="border-b border-sub-border-slate-100 bg-sub-surface-panel px-5 py-4">
-						<div className="space-y-3 text-sub-ink-primary">
+						<div className="space-y-3 text-sub-dark-page">
 							<div>
 								<h3 className="text-xs font-medium text-sub-text-muted">Upgrading to</h3>
-								<p className="text-lg font-semibold text-sub-ink-primary">
+								<p className="text-lg font-semibold text-sub-dark-page">
 									{planName} - {billingPeriod}
 								</p>
 							</div>
@@ -211,7 +211,7 @@ export function StripeCheckoutModal({
 								<div className="space-y-2 pt-2">
 									<div className="flex justify-between text-sm">
 										<span className="text-sub-text-muted">New subscription price</span>
-										<span className="font-medium text-sub-ink-primary">
+										<span className="font-medium text-sub-dark-page">
 											{formatAmount(result.pricing.newSubscriptionPrice, result.pricing.currency)}
 											<span className="text-sub-text-muted">/{billingInterval === 'year' ? 'year' : 'month'}</span>
 										</span>
@@ -228,7 +228,7 @@ export function StripeCheckoutModal({
 
 									<div className="border-t border-sub-border-slate-100 pt-2">
 										<div className="flex justify-between">
-											<span className="font-semibold text-sub-ink-primary">Amount due today</span>
+											<span className="font-semibold text-sub-dark-page">Amount due today</span>
 											<span className="text-lg font-semibold text-sub-brand-primary">
 												{formatAmount(result.pricing.amount, result.pricing.currency)}
 											</span>
@@ -271,7 +271,7 @@ export function StripeCheckoutModal({
 				</div>
 
 				{errorMessage ? (
-					<div className="border-b border-sub-border-slate-100 bg-sub-orange-400/10 p-4">
+					<div className="border-b border-sub-border-slate-100 bg-sub-warning-text-dark/10 p-4">
 						<div className="flex items-center gap-2 text-error">
 							<Icon name="alert-warning" height={20} width={20} className="shrink-0" />
 							<p className="text-sm">{errorMessage}</p>
@@ -337,7 +337,7 @@ function UpgradePaymentForm({ postCheckoutPath }: { postCheckoutPath: string }) 
 	return (
 		<form onSubmit={handleSubmit} className="flex flex-col gap-5">
 			{paymentMutation.error ? (
-				<div className="rounded-lg bg-sub-orange-400/10 p-3">
+				<div className="rounded-lg bg-sub-warning-text-dark/10 p-3">
 					<div className="flex items-center gap-2 text-error">
 						<Icon name="alert-warning" height={16} width={16} className="shrink-0" />
 						<p className="text-sm">{paymentMutation.error.message}</p>

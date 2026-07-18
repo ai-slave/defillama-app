@@ -183,7 +183,7 @@ export function SubmitButton({
 		<div className="mt-2 border-t pro-border pt-2">
 			<button
 				className={`w-full rounded-md px-3 py-1.5 text-xs font-medium transition-colors duration-200 md:px-4 md:py-2 md:text-sm ${
-					isDisabled ? 'cursor-not-allowed border pro-border pro-text3 opacity-50' : 'pro-btn-blue'
+					isDisabled ? 'cursor-not-allowed border pro-border text-pro-text-tertiary opacity-50' : 'pro-btn-primary'
 				}`}
 				onClick={onSubmit}
 				disabled={isDisabled}

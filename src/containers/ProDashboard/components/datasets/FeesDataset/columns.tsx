@@ -96,7 +96,7 @@ export const feesDatasetColumns: ColumnDef<IFeesRow>[] = [
 		cell: ({ getValue }) => {
 			const value = getValue() as number
 			return (
-				<span className={` ${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'pro-text2'}`}>
+				<span className={` ${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'text-pro-text-secondary'}`}>
 					{value ? <PercentChange percent={value} fontWeight={100} /> : '-'}
 				</span>
 			)
@@ -114,7 +114,7 @@ export const feesDatasetColumns: ColumnDef<IFeesRow>[] = [
 		cell: ({ getValue }) => {
 			const value = getValue() as number
 			return (
-				<span className={` ${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'pro-text2'}`}>
+				<span className={` ${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'text-pro-text-secondary'}`}>
 					{value ? <PercentChange percent={value} fontWeight={100} /> : '-'}
 				</span>
 			)

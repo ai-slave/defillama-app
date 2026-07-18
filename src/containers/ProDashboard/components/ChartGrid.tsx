@@ -496,7 +496,7 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 															disabled={disableShrink}
 														/>
 													}
-													className="px-3 py-2 hover:pro-btn-blue disabled:cursor-not-allowed disabled:opacity-50"
+													className="px-3 py-2 hover:pro-btn-primary disabled:cursor-not-allowed disabled:opacity-50"
 												>
 													<Icon name="minus" height={14} width={14} />
 													<span className="sr-only">Shrink width</span>
@@ -509,7 +509,7 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 															disabled={disableExpand}
 														/>
 													}
-													className="px-3 py-2 hover:pro-btn-blue disabled:cursor-not-allowed disabled:opacity-50"
+													className="px-3 py-2 hover:pro-btn-primary disabled:cursor-not-allowed disabled:opacity-50"
 												>
 													<Icon name="plus" height={14} width={14} />
 													<span className="sr-only">Expand width</span>
@@ -520,7 +520,7 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 											<Tooltip
 												content="Edit item"
 												render={<button onClick={() => onEditItem(item)} />}
-												className="px-3 py-2 hover:pro-btn-blue"
+												className="px-3 py-2 hover:pro-btn-primary"
 											>
 												<Icon name="pencil" height={14} width={14} />
 												<span className="sr-only">Edit item</span>
@@ -555,7 +555,7 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 						) : null}
 						<button
 							onClick={onAddChartClick}
-							className="relative isolate flex min-h-[340px] flex-col items-center justify-center gap-1 rounded-md border border-dashed border-pro-cards-border bg-pro-cards-bg p-2.5 text-link hover:bg-pro-blue-300/5 dark:hover:bg-pro-blue-300/10"
+							className="relative isolate flex min-h-[340px] flex-col items-center justify-center gap-1 rounded-md border border-dashed border-pro-cards-border bg-pro-cards-bg p-2.5 text-link hover:bg-pro-info-300/5 dark:hover:bg-pro-info-300/10"
 						>
 							<svg
 								width="40"

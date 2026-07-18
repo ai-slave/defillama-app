@@ -26,7 +26,7 @@ export const reactSelectStyles = {
 	menuList: (provided: any) => ({
 		...provided,
 		padding: 0,
-		backgroundColor: 'var(--pro-bg1)'
+		backgroundColor: 'var(--pro-panel-bg)'
 	}),
 	option: (provided: any, state: any) => ({
 		...provided,
@@ -35,7 +35,7 @@ export const reactSelectStyles = {
 			: state.isFocused
 				? 'var(--bg-surface-elevated-2)'
 				: 'transparent',
-		color: state.isSelected ? 'white' : 'var(--pro-text1)',
+		color: state.isSelected ? 'white' : 'var(--pro-text-primary)',
 		padding: '8px 12px',
 		'&:hover': {
 			backgroundColor: state.isSelected ? 'var(--bg-brand)' : 'var(--bg-surface-elevated-2)'
@@ -43,24 +43,24 @@ export const reactSelectStyles = {
 	}),
 	singleValue: (provided: any) => ({
 		...provided,
-		color: 'var(--pro-text1)'
+		color: 'var(--pro-text-primary)'
 	}),
 	placeholder: (provided: any) => ({
 		...provided,
-		color: 'var(--pro-text3)'
+		color: 'var(--pro-text-tertiary)'
 	}),
 	input: (provided: any) => ({
 		...provided,
-		color: 'var(--pro-text1)'
+		color: 'var(--pro-text-primary)'
 	}),
 	indicatorSeparator: () => ({
 		display: 'none'
 	}),
 	dropdownIndicator: (provided: any) => ({
 		...provided,
-		color: 'var(--pro-text3)',
+		color: 'var(--pro-text-tertiary)',
 		'&:hover': {
-			color: 'var(--pro-text1)'
+			color: 'var(--pro-text-primary)'
 		}
 	})
 }

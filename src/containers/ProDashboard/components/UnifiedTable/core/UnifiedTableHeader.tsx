@@ -107,7 +107,7 @@ export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
 								value={groupingSelectValue}
 								onChange={handleGroupingSelectChange}
 								disabled={!isGroupingInteractive}
-								className={`appearance-none rounded-md border pro-border pro-bg1 px-3 py-1.5 pr-8 text-sm pro-text1 transition-colors ${
+								className={`appearance-none rounded-md border pro-border pro-panel-bg px-3 py-1.5 pr-8 text-sm text-pro-text-primary transition-colors ${
 									isGroupingInteractive ? 'pro-hover-bg' : 'cursor-not-allowed opacity-60'
 								}`}
 							>
@@ -130,7 +130,9 @@ export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
 							type="button"
 							onClick={onFiltersClick}
 							className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm transition-colors ${
-								activeFilterCount ? 'border-brand bg-brand/10 text-brand' : 'pro-border pro-bg1 pro-hover-bg pro-text1'
+								activeFilterCount
+									? 'border-brand bg-brand/10 text-brand'
+									: 'pro-border pro-hover-bg pro-panel-bg text-pro-text-primary'
 							}`}
 						>
 							<span>Filters</span>
@@ -146,7 +148,7 @@ export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
 						className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm transition-colors ${
 							customizeDisabled
 								? 'cursor-not-allowed border-pro-cards-border text-pro-text-tertiary'
-								: 'pro-border pro-bg1 pro-hover-bg pro-text1'
+								: 'pro-border pro-hover-bg pro-panel-bg text-pro-text-primary'
 						}`}
 					>
 						<Icon name="settings" height={14} width={14} />
@@ -163,7 +165,7 @@ export const UnifiedTableHeader = React.memo(function UnifiedTableHeader({
 						<ProTableCSVButton
 							onClick={handleCsvExportClick}
 							isLoading={isLoading}
-							className={`flex items-center gap-2 rounded-md border pro-border pro-bg1 pro-hover-bg px-3 py-1.5 text-sm pro-text1 transition-colors ${
+							className={`flex items-center gap-2 rounded-md border pro-border pro-hover-bg pro-panel-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors ${
 								csvDisabled ? 'cursor-not-allowed opacity-60' : ''
 							}`}
 						/>

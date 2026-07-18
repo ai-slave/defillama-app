@@ -156,7 +156,7 @@ export const EntitySuggestionList = forwardRef<EntitySuggestionListHandle, Props
 				role="option"
 				aria-selected={active}
 				className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left transition-colors ${
-					active ? 'bg-research-link-button-bg' : 'hover:bg-research-link-hover-bg'
+					active ? 'bg-research-tint' : 'hover:bg-research-tint-hover'
 				}`}
 				onMouseEnter={() => setSelectedId(item.id)}
 				onMouseDown={(event) => {
@@ -230,7 +230,7 @@ export const EntitySuggestionList = forwardRef<EntitySuggestionListHandle, Props
 								active
 									? 'border-link bg-link text-on-brand'
 									: enabled
-										? 'border-medium text-secondary hover:bg-research-link-hover-bg'
+										? 'border-medium text-secondary hover:bg-research-tint-hover'
 										: 'border-medium/50 text-tertiary/50'
 							}`}
 						>

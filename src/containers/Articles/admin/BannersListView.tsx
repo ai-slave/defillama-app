@@ -108,7 +108,7 @@ export function BannersListView() {
 										{banner.scope === 'section' && banner.section ? ` · ${ARTICLE_SECTION_LABELS[banner.section]}` : ''}
 										{banner.scope === 'article' && banner.articleId ? ` · #${banner.articleId.slice(0, 8)}` : ''}
 									</span>
-									<span className="inline-flex items-center rounded-full bg-research-link-button-bg px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-link uppercase">
+									<span className="inline-flex items-center rounded-full bg-research-tint px-2 py-0.5 font-jetbrains text-[9px] tracking-[0.18em] text-link uppercase">
 										{BANNER_KIND_LABELS[banner.type]}
 									</span>
 									<span

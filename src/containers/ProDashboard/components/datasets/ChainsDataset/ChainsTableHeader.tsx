@@ -33,7 +33,9 @@ export function ChainsTableHeader({
 	return (
 		<div className="mb-4">
 			<div className="flex flex-wrap items-center justify-between gap-3">
-				<h3 className="text-lg font-semibold pro-text1">{category ? `${category} Chains` : 'All Chains'}</h3>
+				<h3 className="text-lg font-semibold text-pro-text-primary">
+					{category ? `${category} Chains` : 'All Chains'}
+				</h3>
 
 				<div className="flex flex-wrap items-center gap-2">
 					<div className="flex items-center gap-2">
@@ -47,7 +49,7 @@ export function ChainsTableHeader({
 								className={`flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm capitalize transition-colors ${
 									selectedPreset === preset.key
 										? 'border-brand bg-brand text-on-brand'
-										: 'pro-border pro-bg1 pro-hover-bg pro-text1'
+										: 'pro-border pro-hover-bg pro-panel-bg text-pro-text-primary'
 								}`}
 							>
 								{preset.label}
@@ -60,7 +62,7 @@ export function ChainsTableHeader({
 
 						<button
 							onClick={() => setShowColumnSelector(!showColumnSelector)}
-							className="flex items-center gap-2 rounded-md border pro-border pro-bg1 pro-hover-bg px-3 py-1.5 text-sm pro-text1 transition-colors"
+							className="flex items-center gap-2 rounded-md border pro-border pro-hover-bg pro-panel-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors"
 						>
 							<Icon name="settings" height={14} width={14} />
 							Customize Table

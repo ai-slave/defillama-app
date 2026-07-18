@@ -42,11 +42,11 @@ export function SettingsCard() {
 				{/* Airdrop Eligibility — hidden for now, we don't want to force users to add wallets yet
 				<div className="flex flex-col gap-1">
 					<div className="flex items-center justify-between">
-						<span className="text-sm text-sub-ink-primary dark:text-white">Airdrop Eligibility</span>
+						<span className="text-sm text-sub-dark-page dark:text-white">Airdrop Eligibility</span>
 						<button
 							onClick={handleConnectWallet}
 							disabled={loaders.addWallet}
-							className="rounded-lg border border-sub-border-muted px-3 py-2 text-xs font-medium text-sub-ink-primary disabled:opacity-50 dark:border-sub-border-strong dark:text-white"
+							className="rounded-lg border border-sub-border-muted px-3 py-2 text-xs font-medium text-sub-dark-page disabled:opacity-50 dark:border-sub-border-strong dark:text-white"
 						>
 							{loaders.addWallet ? 'Connecting...' : 'Connect Wallet'}
 						</button>

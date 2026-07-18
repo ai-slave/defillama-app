@@ -39,7 +39,7 @@ export function TextCard({ text }: TextCardProps) {
 						<pre className="m-0! overflow-x-auto rounded-sm bg-surface-elevated-2 p-2">{children}</pre>
 					),
 					blockquote: ({ children }) => (
-						<blockquote className="m-0! overflow-x-auto border-l-3 border-pro-old-blue pl-2 text-pro-text-label italic">
+						<blockquote className="m-0! overflow-x-auto border-l-3 border-pro-accent pl-2 text-pro-text-label italic">
 							{children}
 						</blockquote>
 					),

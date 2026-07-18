@@ -32,7 +32,7 @@ export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, rep
 						<div className="flex gap-3">
 							<a
 								href="mailto:research@defillama.com"
-								className="flex items-center rounded-full bg-research-white px-3.5 py-3 text-base leading-[50%] text-research-blue-deep md:px-6 md:py-3.5"
+								className="flex items-center rounded-full bg-research-white px-3.5 py-3 text-base leading-[50%] text-research-accent-strong md:px-6 md:py-3.5"
 							>
 								Contact us
 							</a>
@@ -40,7 +40,7 @@ export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, rep
 								href="https://calendly.com/research-defillama/30min"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="flex items-center gap-2 rounded-full border border-research-contrast px-3.5 py-3 text-base leading-[50%] text-on-brand md:px-6 md:py-3.5"
+								className="flex items-center gap-2 rounded-full border border-research-invert px-3.5 py-3 text-base leading-[50%] text-on-brand md:px-6 md:py-3.5"
 							>
 								<span>Book a call</span>
 

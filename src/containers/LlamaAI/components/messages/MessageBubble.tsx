@@ -101,7 +101,7 @@ function GeneratedImageBlock({
 			title={prompt}
 			aria-label={prompt || 'Generated image'}
 			disabled={!interactive}
-			className={`group/genimg relative my-2 block w-full max-w-sm overflow-hidden rounded-lg border border-ai-line-medium bg-ai-wash transition focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-hidden ${interactive ? 'cursor-pointer hover:border-ai-line-strong dark:hover:border-ai-contrast/20' : 'cursor-default'}`}
+			className={`group/genimg relative my-2 block w-full max-w-sm overflow-hidden rounded-lg border border-ai-line-medium bg-ai-hover transition focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-hidden ${interactive ? 'cursor-pointer hover:border-ai-line-strong dark:hover:border-ai-inverse/20' : 'cursor-default'}`}
 			style={aspect ? { aspectRatio: aspect } : undefined}
 		>
 			{!loaded ? (
@@ -496,7 +496,7 @@ export function MessageBubble({
 										href={image.url}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="flex h-16 items-center gap-2 rounded-lg bg-ai-wash-strong px-3 hover:bg-ai-black/15 dark:bg-ai-white/15"
+										className="flex h-16 items-center gap-2 rounded-lg bg-ai-hover-strong px-3 hover:bg-ai-black/15 dark:bg-ai-white/15"
 									>
 										<Icon name="file-text" height={18} width={18} />
 										<span className="max-w-[120px] truncate text-xs">{displayName}</span>
@@ -564,7 +564,7 @@ export function MessageBubble({
 							type="button"
 							onClick={handleCancelEdit}
 							disabled={isSaving}
-							className="rounded-md px-2.5 py-1 text-xs text-ai-tertiary transition-colors hover:bg-ai-wash hover:text-ai-primary disabled:cursor-not-allowed disabled:opacity-40"
+							className="rounded-md px-2.5 py-1 text-xs text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary disabled:cursor-not-allowed disabled:opacity-40"
 						>
 							Cancel
 						</button>
@@ -572,7 +572,7 @@ export function MessageBubble({
 							type="button"
 							onClick={handleSaveEdit}
 							disabled={isSaving || !draftText.trim() || draftText.trim() === message.content?.trim()}
-							className="rounded-md bg-ai-blue px-3 py-1 text-xs font-medium text-ai-white transition-colors hover:bg-ai-blue-vivid disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ai-blue"
+							className="rounded-md bg-ai-accent-blue px-3 py-1 text-xs font-medium text-ai-white transition-colors hover:bg-ai-accent-blue-bright disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ai-accent-blue"
 						>
 							{isSaving ? 'Saving…' : 'Save'}
 						</button>
@@ -595,7 +595,7 @@ export function MessageBubble({
 										aria-label="Edit message"
 									/>
 								}
-								className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-secondary"
+								className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary"
 							>
 								<Icon name="pencil" height={14} width={14} />
 							</Tooltip>
@@ -699,12 +699,12 @@ function DashboardInlineCard({ dashboard }: { dashboard: DashboardArtifact }) {
 	return (
 		<button
 			onClick={toggleDashboardPanel}
-			className="my-2 flex w-full items-center gap-3 rounded-lg border border-ai-old-blue/30 bg-ai-old-blue/5 px-3.5 py-2.5 text-left transition-all hover:border-ai-old-blue/50 hover:bg-ai-old-blue/10"
+			className="my-2 flex w-full items-center gap-3 rounded-lg border border-ai-action/30 bg-ai-action/5 px-3.5 py-2.5 text-left transition-all hover:border-ai-action/50 hover:bg-ai-action/10"
 		>
-			<Icon name="layout-grid" className="size-4 shrink-0 text-ai-old-blue" />
+			<Icon name="layout-grid" className="size-4 shrink-0 text-ai-action" />
 			<div className="min-w-0 flex-1">
 				<div className="flex items-center gap-2">
-					<span className="truncate text-sm font-semibold text-ai-old-blue">{dashboard.dashboardName}</span>
+					<span className="truncate text-sm font-semibold text-ai-action">{dashboard.dashboardName}</span>
 					<span className="shrink-0 text-xs text-ai-tertiary">{dashboard.items.length} items</span>
 				</div>
 				<div className="truncate text-xs text-ai-tertiary">{summary}</div>

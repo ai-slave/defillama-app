@@ -152,7 +152,7 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 						<button
 							type="submit"
 							disabled={isSubmitting}
-							className={`flex items-center gap-2 rounded-md bg-pro-old-blue px-6 py-2 font-medium text-on-brand`}
+							className={`flex items-center gap-2 rounded-md bg-pro-accent px-6 py-2 font-medium text-on-brand`}
 						>
 							{isSubmitting ? <LoadingSpinner size={16} /> : <Icon name="sparkles" height={16} width={16} />}
 							Submit Rating
@@ -165,7 +165,7 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 
 	return (
 		<form onSubmit={(e) => void handleSubmit(e)} className="contents">
-			<Icon name="sparkles" height={24} width={24} className="shrink-0 text-pro-blue-400 dark:text-pro-blue-200" />
+			<Icon name="sparkles" height={24} width={24} className="shrink-0 text-pro-info-400 dark:text-pro-info-200" />
 
 			<h3 className="-mt-5 text-xl font-semibold">{currentTexts.title}</h3>
 			<p className="-mt-5 text-sm text-pro-text-label">{currentTexts.subtitle}</p>
@@ -231,7 +231,7 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 						<button
 							type="submit"
 							disabled={isSubmitting}
-							className={`flex items-center gap-2 rounded-md bg-pro-old-blue px-6 py-2 font-medium text-on-brand`}
+							className={`flex items-center gap-2 rounded-md bg-pro-accent px-6 py-2 font-medium text-on-brand`}
 						>
 							{isSubmitting ? <LoadingSpinner size={16} /> : <Icon name="sparkles" height={16} width={16} />}
 							Submit Rating

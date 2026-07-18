@@ -307,7 +307,7 @@ function TabPill({
 				{running ? (
 					<LoadingSpinner size={10} />
 				) : dirty ? (
-					<span className="size-1.5 rounded-full bg-pro-gold-300" />
+					<span className="size-1.5 rounded-full bg-pro-premium-300" />
 				) : null}
 			</span>
 			{isNotebook ? (

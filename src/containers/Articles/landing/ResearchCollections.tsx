@@ -72,7 +72,7 @@ export const ResearchCollections: React.FC<ResearchCollectionsProps> = ({ title,
 								{i === 0 && <InViewAnalytics eventParams={[article, 'widget_impression', pageWidget]} />}
 
 								<div className="flex min-w-0 grow flex-col pl-3">
-									<div className="line-clamp-4 text-sm leading-[150%] font-semibold text-research-navy-soft group-hover:text-research-navy-soft group-hover:opacity-70 dark:text-research-ink dark:group-hover:text-on-brand/70">
+									<div className="line-clamp-4 text-sm leading-[150%] font-semibold text-research-heading group-hover:text-research-heading group-hover:opacity-70 dark:text-research-ink dark:group-hover:text-on-brand/70">
 										{article.title}
 									</div>
 

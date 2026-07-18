@@ -15,8 +15,8 @@ export default function Sheets() {
 				<link rel="icon" type="image/png" href="/favicon-32x32.png" />
 			</Head>
 			<LinkPreviewCard />
-			<div className="col-span-full flex min-h-screen w-full flex-col bg-sub-ink text-on-brand">
-				<header className="sticky top-0 z-50 border-b border-sub-line/40 bg-sub-ink/80 backdrop-blur-md">
+			<div className="col-span-full flex min-h-screen w-full flex-col bg-sub-dark-panel text-on-brand">
+				<header className="sticky top-0 z-50 border-b border-sub-line/40 bg-sub-dark-panel/80 backdrop-blur-md">
 					<div className="mx-auto flex h-14 max-w-[1200px] items-center justify-between px-4 sm:px-6 md:px-8">
 						<BasicLink href="/" className="flex items-center gap-2.5">
 							<img src="/assets/llama.webp" alt="DefiLlama" width={32} height={32} className="rounded-full" />
@@ -27,20 +27,20 @@ export default function Sheets() {
 							<BasicLink
 								href="https://docs.llama.fi/spreadsheet-functions/function-reference"
 								data-umami-event="sheets-functions-reference-click"
-								className="rounded-lg px-3.5 py-1.5 text-[13px] font-medium text-sub-text-soft transition-colors hover:bg-sub-card hover:text-on-brand"
+								className="rounded-lg px-3.5 py-1.5 text-[13px] font-medium text-sub-text-soft transition-colors hover:bg-sub-dark-card hover:text-on-brand"
 							>
 								Functions Reference
 							</BasicLink>
 							<BasicLink
 								href="https://docs.llama.fi/spreadsheet-functions/templates"
 								data-umami-event="sheets-templates-click-header"
-								className="rounded-lg px-3.5 py-1.5 text-[13px] font-medium text-sub-text-soft transition-colors hover:bg-sub-card hover:text-on-brand"
+								className="rounded-lg px-3.5 py-1.5 text-[13px] font-medium text-sub-text-soft transition-colors hover:bg-sub-dark-card hover:text-on-brand"
 							>
 								Templates
 							</BasicLink>
 							<BasicLink
 								href="/"
-								className="rounded-lg px-3.5 py-1.5 text-[13px] font-medium text-sub-text-soft transition-colors hover:bg-sub-card hover:text-on-brand"
+								className="rounded-lg px-3.5 py-1.5 text-[13px] font-medium text-sub-text-soft transition-colors hover:bg-sub-dark-card hover:text-on-brand"
 							>
 								Return to Main Page
 							</BasicLink>

@@ -197,11 +197,11 @@ export const SpawnProgressCard = memo(function SpawnProgressCard({
 					{isResearchMode ? <>Researching in parallel&hellip;</> : <>Working in herd&hellip;</>}
 				</p>
 
-				<p className="m-0 flex shrink-0 items-center gap-1 rounded-sm bg-ai-wash px-1.5 py-0.5 text-[10px] text-ai-tertiary sm:text-xs">
+				<p className="m-0 flex shrink-0 items-center gap-1 rounded-sm bg-ai-hover px-1.5 py-0.5 text-[10px] text-ai-tertiary sm:text-xs">
 					{completed}/{total} done
 				</p>
 
-				<time className="flex shrink-0 items-center gap-1 rounded-sm bg-ai-wash px-1.5 py-0.5 font-mono text-[10px] text-ai-tertiary tabular-nums sm:text-xs">
+				<time className="flex shrink-0 items-center gap-1 rounded-sm bg-ai-hover px-1.5 py-0.5 font-mono text-[10px] text-ai-tertiary tabular-nums sm:text-xs">
 					{formatTime(elapsed)}
 				</time>
 

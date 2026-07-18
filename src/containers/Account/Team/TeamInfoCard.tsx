@@ -30,7 +30,7 @@ export function TeamInfoCard() {
 			<div className="flex flex-col gap-3">
 				<div className="flex items-center gap-2">
 					<span className="shrink-0 text-xs leading-4 text-sub-text-muted">Name</span>
-					<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border-slate-100 dark:border-sub-border-strong" />
+					<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border" />
 					{isEditing ? (
 						<div className="flex items-center gap-2">
 							<input
@@ -72,7 +72,7 @@ export function TeamInfoCard() {
 
 				<div className="flex items-center gap-2">
 					<span className="shrink-0 text-xs leading-4 text-sub-text-muted">Your role</span>
-					<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border-slate-100 dark:border-sub-border-strong" />
+					<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border" />
 					<span className="shrink-0 text-xs leading-4 text-sub-text-primary">{team.isAdmin ? 'Admin' : 'Member'}</span>
 				</div>
 			</div>

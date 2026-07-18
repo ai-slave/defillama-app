@@ -59,9 +59,7 @@ export function AssignSubscriptionModal({ isOpen, onClose, member }: AssignSubsc
 								<label
 									key={sub.id}
 									className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
-										selectedType === sub.type
-											? 'border-sub-brand-primary bg-sub-brand-primary/5'
-											: 'border-sub-border-slate-100 dark:border-sub-border-strong'
+										selectedType === sub.type ? 'border-sub-brand-primary bg-sub-brand-primary/5' : 'border-sub-border'
 									}`}
 								>
 									<input

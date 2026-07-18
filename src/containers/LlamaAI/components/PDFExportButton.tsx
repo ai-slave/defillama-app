@@ -156,7 +156,7 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 						aria-label={isLoading ? 'Exporting PDF' : 'Export PDF options'}
 						className={
 							className ??
-							'flex items-center gap-1 rounded-md border border-medium px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-medium disabled:text-tertiary'
+							'flex items-center gap-1 rounded-md border border-medium px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-medium disabled:text-tertiary'
 						}
 						disabled={loading}
 					>

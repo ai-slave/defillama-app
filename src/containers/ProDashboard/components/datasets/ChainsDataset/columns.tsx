@@ -14,7 +14,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 			return (
 				<div className="flex items-center gap-2">
 					<TokenLogo name={row.original.name} kind="chain" alt={`Logo of ${row.original.name}`} size={24} />
-					<span className="font-medium pro-text1">{row.original.name}</span>
+					<span className="font-medium text-pro-text-primary">{row.original.name}</span>
 					{row.original.deprecated ? <DeprecatedEntityMarker content="Deprecated chain" /> : null}
 				</div>
 			)
@@ -26,7 +26,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 100,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="pro-text1">{value || 0}</span>
+			return <span className="text-pro-text-primary">{value || 0}</span>
 		}
 	},
 	{
@@ -35,7 +35,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 130,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="pro-text1">{value ? formattedNum(value) : ''}</span>
+			return <span className="text-pro-text-primary">{value ? formattedNum(value) : ''}</span>
 		}
 	},
 	{
@@ -45,7 +45,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		cell: ({ getValue }) => {
 			const value = getValue() as number
 			return (
-				<span className={`${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'pro-text2'}`}>
+				<span className={`${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'text-pro-text-secondary'}`}>
 					{value ? <PercentChange percent={value} fontWeight={100} /> : '-'}
 				</span>
 			)
@@ -58,7 +58,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		cell: ({ getValue }) => {
 			const value = getValue() as number
 			return (
-				<span className={`${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'pro-text2'}`}>
+				<span className={`${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'text-pro-text-secondary'}`}>
 					{value ? <PercentChange percent={value} fontWeight={100} /> : '-'}
 				</span>
 			)
@@ -71,7 +71,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		cell: ({ getValue }) => {
 			const value = getValue() as number
 			return (
-				<span className={`${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'pro-text2'}`}>
+				<span className={`${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'text-pro-text-secondary'}`}>
 					{value ? <PercentChange percent={value} fontWeight={100} /> : '-'}
 				</span>
 			)
@@ -81,7 +81,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		header: 'DeFi TVL',
 		accessorKey: 'tvl',
 		size: 140,
-		cell: ({ getValue }) => <span className="pro-text1">{formattedNum(getValue() as number, true)}</span>
+		cell: ({ getValue }) => <span className="text-pro-text-primary">{formattedNum(getValue() as number, true)}</span>
 	},
 	{
 		header: 'Bridged TVL',
@@ -89,7 +89,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 120,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="pro-text2">{value ? formattedNum(value, true) : '-'}</span>
+			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
 		}
 	},
 	{
@@ -98,7 +98,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 120,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="pro-text2">{value ? formattedNum(value, true) : '-'}</span>
+			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
 		}
 	},
 	{
@@ -107,7 +107,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 150,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="pro-text2">{value ? formattedNum(value, true) : '-'}</span>
+			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
 		}
 	},
 	{
@@ -116,7 +116,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 150,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="pro-text2">{value ? formattedNum(value, true) : '-'}</span>
+			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
 		}
 	},
 	{
@@ -125,7 +125,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 130,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="pro-text2">{value ? formattedNum(value, true) : '-'}</span>
+			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
 		}
 	},
 	{
@@ -134,7 +134,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 130,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="pro-text2">{value ? formattedNum(value, true) : '-'}</span>
+			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
 		}
 	},
 	{
@@ -143,7 +143,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 120,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="pro-text2">{value ? formattedNum(value, true) : '-'}</span>
+			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
 		}
 	},
 	{
@@ -152,7 +152,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 140,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="pro-text2">{value ? formattedNum(value, true) : '-'}</span>
+			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
 		}
 	},
 	{
@@ -161,7 +161,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 140,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="pro-text2">{value ? formattedNum(value, true) : '-'}</span>
+			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
 		}
 	},
 	{
@@ -170,7 +170,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 120,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="pro-text2">{value ? value.toFixed(2) : '-'}</span>
+			return <span className="text-pro-text-secondary">{value ? value.toFixed(2) : '-'}</span>
 		}
 	},
 	{
@@ -179,7 +179,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 140,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="pro-text2">{value ? formattedNum(value, true) : '-'}</span>
+			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
 		}
 	},
 	{
@@ -188,7 +188,7 @@ export const chainsDatasetColumns: ColumnDef<any>[] = [
 		size: 120,
 		cell: ({ getValue }) => {
 			const value = getValue() as number
-			return <span className="pro-text2">{value ? formattedNum(value, true) : '-'}</span>
+			return <span className="text-pro-text-secondary">{value ? formattedNum(value, true) : '-'}</span>
 		}
 	}
 ]

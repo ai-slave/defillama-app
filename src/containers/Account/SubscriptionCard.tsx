@@ -19,7 +19,7 @@ function InfoRow({ label, value, valueClassName }: { label: string; value: strin
 	return (
 		<div className="flex items-center gap-2">
 			<span className="shrink-0 text-xs leading-4 text-sub-text-muted">{label}</span>
-			<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border-slate-100 dark:border-sub-border-strong" />
+			<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border" />
 			<span className={`shrink-0 text-xs leading-4 ${valueClassName || 'text-sub-text-primary'}`}>{value}</span>
 		</div>
 	)
@@ -82,14 +82,14 @@ export function SubscriptionCard({
 				<InfoRow
 					label={isCancelPending ? 'Cancels on' : 'Renewal Date'}
 					value={renewalDate}
-					valueClassName={isCancelPending ? 'text-sub-orange-400' : undefined}
+					valueClassName={isCancelPending ? 'text-sub-warning-text-dark' : undefined}
 				/>
 				<InfoRow label="Subscription Type" value={subscriptionType} />
 				<InfoRow label="Payment Provider" value={subscriptionPayment} />
 			</div>
 
 			{isCancelPending ? (
-				<p className="text-xs font-medium text-sub-orange-400">Cancellation scheduled</p>
+				<p className="text-xs font-medium text-sub-warning-text-dark">Cancellation scheduled</p>
 			) : isManageable ? (
 				<div className="flex gap-2">
 					{onTopup && (

@@ -161,9 +161,9 @@ export function ChainsDataset({
 				},
 				cell: ({ getValue }) => {
 					const value = getValue() as number | null
-					if (value == null) return <span className="pro-text2">-</span>
+					if (value == null) return <span className="text-pro-text-secondary">-</span>
 
-					return <span className="pro-text2">{value.toFixed(2)}%</span>
+					return <span className="text-pro-text-secondary">{value.toFixed(2)}%</span>
 				},
 				sortingFn: (rowA, rowB, columnId) => {
 					const a = rowA.getValue(columnId) as number | null
@@ -407,7 +407,7 @@ export function ChainsDataset({
 				/>
 				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
 					<LoadingSpinner />
-					<p className="text-sm pro-text2">Loading chains data...</p>
+					<p className="text-sm text-pro-text-secondary">Loading chains data...</p>
 				</div>
 			</div>
 		)
@@ -427,7 +427,7 @@ export function ChainsDataset({
 					category={category}
 				/>
 				<div className="flex min-h-[500px] flex-1 items-center justify-center">
-					<div className="text-center pro-text2">Failed to load chains data</div>
+					<div className="text-center text-pro-text-secondary">Failed to load chains data</div>
 				</div>
 			</div>
 		)
@@ -466,25 +466,25 @@ export function ChainsDataset({
 					<button
 						onClick={() => instance.previousPage()}
 						disabled={!instance.getCanPreviousPage()}
-						className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm pro-text1 transition-colors hover:bg-surface-elevated-2 disabled:cursor-not-allowed disabled:opacity-50"
+						className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors hover:bg-surface-elevated-2 disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						Previous
 					</button>
 					<button
 						onClick={() => instance.nextPage()}
 						disabled={!instance.getCanNextPage()}
-						className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm pro-text1 transition-colors hover:bg-surface-elevated-2 disabled:cursor-not-allowed disabled:opacity-50"
+						className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors hover:bg-surface-elevated-2 disabled:cursor-not-allowed disabled:opacity-50"
 					>
 						Next
 					</button>
 				</div>
 
 				<div className="flex items-center gap-2">
-					<span className="text-sm pro-text2">Rows per page:</span>
+					<span className="text-sm text-pro-text-secondary">Rows per page:</span>
 					<select
 						value={pagination.pageSize}
 						onChange={(e) => setPagination((prev) => ({ ...prev, pageSize: Number(e.target.value), pageIndex: 0 }))}
-						className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-brand focus:outline-hidden"
+						className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
 					>
 						<option value="10">10</option>
 						<option value="30">30</option>

@@ -45,7 +45,7 @@ export const ResearchReportHighlight: React.FC<ResearchReportHighlightProps> = (
 							/>
 						</div>
 					) : null}
-					<h2 className="text-2xl leading-[150%] font-medium text-research-navy-soft dark:text-research-ink">
+					<h2 className="text-2xl leading-[150%] font-medium text-research-heading dark:text-research-ink">
 						{highlight.title}
 					</h2>
 					{coverUrl ? (
@@ -81,7 +81,7 @@ export const ResearchReportHighlight: React.FC<ResearchReportHighlightProps> = (
 								article={highlight}
 								pdfUrl={pdfUrl}
 								widgetLabel="Report highlight"
-								className="text-[13px] font-medium text-research-navy-soft underline-offset-4 hover:underline dark:text-research-ink"
+								className="text-[13px] font-medium text-research-heading underline-offset-4 hover:underline dark:text-research-ink"
 							/>
 						) : null}
 						<ReadMoreLink url={articleHref(highlight)} title="Read this report" />

@@ -217,7 +217,7 @@ function ActorAvatar({ name, url, size = 16 }: { name: string; url?: string | nu
 	return (
 		<span
 			style={{ width: size, height: size, fontSize: Math.max(8, size / 2.5) }}
-			className="grid shrink-0 place-items-center rounded-full bg-research-link-button-bg font-jetbrains font-medium text-link"
+			className="grid shrink-0 place-items-center rounded-full bg-research-tint font-jetbrains font-medium text-link"
 		>
 			{initials || '·'}
 		</span>
@@ -565,7 +565,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 										className={`flex items-center gap-1.5 rounded-sm px-2 py-1 font-jetbrains text-[10px] tracking-[0.14em] uppercase transition-colors ${
 											isActive
 												? 'bg-primary text-surface'
-												: 'text-tertiary hover:bg-research-link-hover-bg hover:text-secondary'
+												: 'text-tertiary hover:bg-research-tint-hover hover:text-secondary'
 										}`}
 									>
 										<span>{FILTER_LABELS[key]}</span>
@@ -616,7 +616,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 																onClick={() => selectRevision(entry.id)}
 																aria-current={isSelected}
 																className={`relative flex w-full items-start gap-3 px-5 py-3 text-left transition-colors ${
-																	isSelected ? 'bg-research-link-button-bg' : 'hover:bg-research-link-hover-bg/60'
+																	isSelected ? 'bg-research-tint' : 'hover:bg-research-tint-hover/60'
 																}`}
 															>
 																{isSelected ? (
@@ -889,7 +889,7 @@ function PreviewSpecimenHeader({
 							>
 								<Icon name="repeat" className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
 								<span>Restore as pending</span>
-								<kbd className="hidden rounded-sm border border-research-contrast/30 px-1 py-px font-jetbrains text-[9px] tracking-tight md:inline">
+								<kbd className="hidden rounded-sm border border-research-invert/30 px-1 py-px font-jetbrains text-[9px] tracking-tight md:inline">
 									R
 								</kbd>
 							</button>
@@ -919,7 +919,7 @@ function PreviewSpecimenHeader({
 								className={`rounded-sm px-3 py-1.5 transition-colors ${
 									isActive
 										? 'bg-primary text-surface'
-										: 'text-tertiary hover:bg-research-link-hover-bg hover:text-secondary'
+										: 'text-tertiary hover:bg-research-tint-hover hover:text-secondary'
 								}`}
 							>
 								{mode}
@@ -955,7 +955,7 @@ function PreviewSpecimenHeader({
 										className={`rounded-sm px-2.5 py-1 font-jetbrains text-[10px] tracking-[0.16em] uppercase transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
 											isActive
 												? 'bg-link text-on-brand'
-												: 'text-tertiary hover:bg-research-link-hover-bg hover:text-secondary'
+												: 'text-tertiary hover:bg-research-tint-hover hover:text-secondary'
 										}`}
 									>
 										{baseLabels[mode]}
@@ -1216,7 +1216,7 @@ function InlineConfirm({
 					type="button"
 					onClick={onCancel}
 					disabled={disabled}
-					className="rounded-md px-2.5 py-1.5 text-xs text-secondary transition-colors hover:bg-research-link-hover-bg disabled:opacity-50"
+					className="rounded-md px-2.5 py-1.5 text-xs text-secondary transition-colors hover:bg-research-tint-hover disabled:opacity-50"
 				>
 					Cancel
 				</button>

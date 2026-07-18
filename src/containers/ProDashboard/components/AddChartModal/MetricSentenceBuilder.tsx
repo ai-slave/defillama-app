@@ -450,10 +450,10 @@ export function MetricSentenceBuilder({
 						</div>
 						<div className="p-1.5">
 							{baseMetricTypes.length === 0 ? (
-								<p className="px-2 py-3 text-sm pro-text3">No metrics available.</p>
+								<p className="px-2 py-3 text-sm text-pro-text-tertiary">No metrics available.</p>
 							) : null}
 							{baseMetricTypes.length > 0 && filteredMetrics.length === 0 ? (
-								<p className="px-2 py-3 text-sm pro-text3">No metrics match that search.</p>
+								<p className="px-2 py-3 text-sm text-pro-text-tertiary">No metrics match that search.</p>
 							) : null}
 							{filteredMetrics.map((value) => {
 								const label = CHART_TYPES[value as keyof typeof CHART_TYPES]?.title || value

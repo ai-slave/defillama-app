@@ -209,7 +209,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 	if (hasError) {
 		return (
 			<div className="flex h-full min-h-[360px] flex-col items-center justify-center gap-2 text-center">
-				<span className="text-sm pro-text3">Failed to load chart data</span>
+				<span className="text-sm text-pro-text-tertiary">Failed to load chart data</span>
 			</div>
 		)
 	}
@@ -217,7 +217,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 	if (!hasRequiredData) {
 		return (
 			<div className="flex h-full min-h-[360px] flex-col items-center justify-center gap-2 text-center">
-				<span className="text-sm pro-text3">No data available for this chart type</span>
+				<span className="text-sm text-pro-text-tertiary">No data available for this chart type</span>
 			</div>
 		)
 	}
@@ -235,9 +235,10 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 		<div className="flex h-full flex-col p-2">
 			<div className="mb-2 flex items-start justify-between gap-2">
 				<div className="flex flex-col gap-1">
-					<h3 className="text-sm font-semibold pro-text1">{poolName}</h3>
-					<p className="text-xs pro-text2">
-						{project} - {chain} {chartType !== 'tvl-apy' ? <span className="pro-text3">({chartTitle})</span> : null}
+					<h3 className="text-sm font-semibold text-pro-text-primary">{poolName}</h3>
+					<p className="text-xs text-pro-text-secondary">
+						{project} - {chain}{' '}
+						{chartType !== 'tvl-apy' ? <span className="text-pro-text-tertiary">({chartTitle})</span> : null}
 					</p>
 				</div>
 				{currentChartData && currentChartData.length > 0 ? (
@@ -246,7 +247,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 						<ProTableCSVButton
 							onClick={handleCsvExport}
 							smol
-							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-pro-cards-border disabled:text-tertiary"
+							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
 						/>
 					</div>
 				) : null}
@@ -255,13 +256,13 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 			{chartType === 'tvl-apy' && latestData.apy !== null && latestData.tvl !== null ? (
 				<div className="mb-2 flex gap-4">
 					<div className="flex flex-col">
-						<span className="text-[10px] pro-text3 uppercase">Latest Supply APY</span>
+						<span className="text-[10px] text-pro-text-tertiary uppercase">Latest Supply APY</span>
 						<span className="font-jetbrains text-sm font-semibold" style={{ color: '#cc3e82' }}>
 							{latestData.apy}%
 						</span>
 					</div>
 					<div className="flex flex-col">
-						<span className="text-[10px] pro-text3 uppercase">TVL</span>
+						<span className="text-[10px] text-pro-text-tertiary uppercase">TVL</span>
 						<span className="font-jetbrains text-sm font-semibold" style={{ color: '#3e79cc' }}>
 							{formattedNum(latestData.tvl, true)}
 						</span>

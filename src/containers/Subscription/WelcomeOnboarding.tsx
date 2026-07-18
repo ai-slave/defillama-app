@@ -208,8 +208,8 @@ export function WelcomeOnboarding() {
 		return (
 			<div className="flex min-h-[60vh] items-center justify-center">
 				<div className="flex flex-col items-center gap-4 text-center">
-					<div className="flex size-16 items-center justify-center rounded-full bg-sub-purple-500/10">
-						<Icon name="clock" height={28} width={28} className="text-sub-purple-500" />
+					<div className="flex size-16 items-center justify-center rounded-full bg-sub-purple/10">
+						<Icon name="clock" height={28} width={28} className="text-sub-purple" />
 					</div>
 					<h2 className="text-xl font-bold text-on-brand">Processing your payment...</h2>
 					<p className="max-w-sm text-sub-text-muted">
@@ -217,7 +217,7 @@ export function WelcomeOnboarding() {
 					</p>
 					<button
 						onClick={() => window.location.reload()}
-						className="rounded-lg border border-sub-line px-4 py-2 text-sm text-sub-text-muted transition-colors hover:bg-sub-card-raised hover:text-on-brand"
+						className="rounded-lg border border-sub-line px-4 py-2 text-sm text-sub-text-muted transition-colors hover:bg-sub-dark-card-raised hover:text-on-brand"
 					>
 						Refresh
 					</button>
@@ -229,7 +229,7 @@ export function WelcomeOnboarding() {
 	return (
 		<div className="mx-auto flex w-full max-w-[580px] animate-[fadein_0.3s_ease-out] flex-col items-center px-4 py-14">
 			<div className="mb-8 flex flex-col items-center gap-1.5 text-center">
-				<span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-sub-purple-500/25 bg-sub-purple-500/8 px-3 py-1 text-xs font-medium tracking-wide text-sub-purple-soft">
+				<span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-sub-purple/25 bg-sub-purple/8 px-3 py-1 text-xs font-medium tracking-wide text-sub-purple-soft">
 					<Icon name="check-circle" height={13} width={13} />
 					Pro activated
 				</span>
@@ -238,8 +238,8 @@ export function WelcomeOnboarding() {
 			</div>
 
 			{slackAcquisition ? (
-				<div className="mb-6 flex w-full items-start gap-3 rounded-xl border border-sub-purple-500/25 bg-sub-purple-500/8 px-4 py-3 text-left">
-					<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sub-purple-500/15">
+				<div className="mb-6 flex w-full items-start gap-3 rounded-xl border border-sub-purple/25 bg-sub-purple/8 px-4 py-3 text-left">
+					<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sub-purple/15">
 						<Icon name="chat" height={16} width={16} className="text-sub-purple-soft" />
 					</div>
 					<div className="flex min-w-0 flex-col gap-0.5">
@@ -265,7 +265,7 @@ export function WelcomeOnboarding() {
 								...(isSelected ? { borderColor: `${c}66`, backgroundColor: `${c}0f` } : {})
 							}}
 							className={`group flex animate-[fadein_0.2s_ease-out_both] items-center gap-3.5 rounded-xl border px-4 py-3 text-left transition-all duration-200 ${
-								isSelected ? '' : 'border-sub-line bg-sub-ink hover:border-sub-line hover:bg-sub-card'
+								isSelected ? '' : 'border-sub-line bg-sub-dark-panel hover:border-sub-line hover:bg-sub-dark-card'
 							}`}
 							role="checkbox"
 							aria-checked={isSelected}
@@ -319,7 +319,7 @@ export function WelcomeOnboarding() {
 				<button
 					onClick={handleContinue}
 					disabled={selectedFeatures.size === 0}
-					className="w-full rounded-xl bg-sub-purple-500 py-3 text-sm font-semibold text-on-brand transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-sub-purple-glow disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
+					className="w-full rounded-xl bg-sub-purple py-3 text-sm font-semibold text-on-brand transition-all duration-200 hover:bg-sub-purple-hover hover:shadow-sub-purple-glow disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
 				>
 					Get started
 				</button>

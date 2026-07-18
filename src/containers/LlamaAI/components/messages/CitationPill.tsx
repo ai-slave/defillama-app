@@ -87,7 +87,7 @@ function SourceMiniCard({ reference }: { reference: UnifiedCitationReference }) 
 	return (
 		<div className="rounded-sm border border-ai-line bg-ai-surface p-1.5">
 			<div className="flex items-center gap-1.5">
-				<span className="text-[10px] font-medium tracking-wide text-ai-blue uppercase">
+				<span className="text-[10px] font-medium tracking-wide text-ai-accent-blue uppercase">
 					{badgeFor(reference.sourceType)}
 				</span>
 				{reference.label ? <span className="text-[11px] text-ai-tertiary">{reference.label}</span> : null}
@@ -149,7 +149,7 @@ function CitedRowCard({ reference, citedCell }: { reference: UnifiedCitationRefe
 						<span />
 					)}
 					{rowDate ? (
-						<span className="inline-flex items-center gap-1 rounded-full bg-ai-surface-muted px-2 py-0.5 text-[10px] font-medium text-ai-blue">
+						<span className="inline-flex items-center gap-1 rounded-full bg-ai-surface-muted px-2 py-0.5 text-[10px] font-medium text-ai-accent-blue">
 							<Icon name="calendar" height={9} width={9} />
 							{rowDate}
 						</span>
@@ -158,7 +158,7 @@ function CitedRowCard({ reference, citedCell }: { reference: UnifiedCitationRefe
 			) : null}
 			<div className="flex items-baseline justify-between gap-3 border-b border-ai-line pb-2">
 				<span className="text-xs text-ai-secondary">{metricLabel(citedCell.column)}</span>
-				<span className="text-[15px] font-semibold text-ai-blue tabular-nums">
+				<span className="text-[15px] font-semibold text-ai-accent-blue tabular-nums">
 					{formatMetricValue(citedCell.column, row[citedCell.column])}
 				</span>
 			</div>
@@ -190,7 +190,7 @@ function DataView({
 			{citedRow ? <CitedRowCard reference={reference} citedCell={citedCell} /> : null}
 			{hasRows ? (
 				<details open={!citedRow} className="group">
-					<summary className="cursor-pointer list-none text-[11px] font-medium text-ai-blue hover:underline">
+					<summary className="cursor-pointer list-none text-[11px] font-medium text-ai-accent-blue hover:underline">
 						<span className="group-open:hidden">{citedRow ? 'Show full table' : 'See the data'}</span>
 						<span className="hidden group-open:inline">Hide table</span>
 					</summary>
@@ -231,7 +231,7 @@ function ComputedView({ reference }: { reference: UnifiedCitationReference }) {
 			) : null}
 			{hasWork ? (
 				<details open className="group">
-					<summary className="cursor-pointer list-none text-[11px] font-medium text-ai-blue hover:underline">
+					<summary className="cursor-pointer list-none text-[11px] font-medium text-ai-accent-blue hover:underline">
 						<span className="group-open:hidden">How this was calculated</span>
 						<span className="hidden group-open:inline">Hide calculation</span>
 					</summary>
@@ -482,7 +482,7 @@ export function CitationPill({ reference }: CitationPillProps) {
 								href={url}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="self-start text-[11px] font-medium text-ai-blue hover:underline"
+								className="self-start text-[11px] font-medium text-ai-accent-blue hover:underline"
 							>
 								Open link ↗
 							</a>
@@ -491,7 +491,7 @@ export function CitationPill({ reference }: CitationPillProps) {
 				) : (
 					<button
 						onClick={() => open(reference)}
-						className="self-start text-[11px] font-medium text-ai-blue hover:underline"
+						className="self-start text-[11px] font-medium text-ai-accent-blue hover:underline"
 					>
 						Click to see the source →
 					</button>

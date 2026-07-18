@@ -121,9 +121,9 @@ function DashboardSettingsModalInner({
 					hideOnInteractOutside
 				>
 					<div className="mb-6 flex items-center justify-between">
-						<h2 className="text-xl font-semibold pro-text1">Dashboard Settings</h2>
+						<h2 className="text-xl font-semibold text-pro-text-primary">Dashboard Settings</h2>
 						<Ariakit.DialogDismiss className="rounded-md pro-hover-bg p-1 transition-colors">
-							<Icon name="x" height={20} width={20} className="pro-text2" />
+							<Icon name="x" height={20} width={20} className="text-pro-text-secondary" />
 							<span className="sr-only">Close dialog</span>
 						</Ariakit.DialogDismiss>
 					</div>
@@ -131,7 +131,10 @@ function DashboardSettingsModalInner({
 					<form onSubmit={handleSave}>
 						<div className="space-y-6">
 							<div>
-								<label htmlFor="dashboard-settings-name" className="mb-3 block text-sm font-medium pro-text1">
+								<label
+									htmlFor="dashboard-settings-name"
+									className="mb-3 block text-sm font-medium text-pro-text-primary"
+								>
 									Dashboard Name
 								</label>
 								<input
@@ -140,12 +143,12 @@ function DashboardSettingsModalInner({
 									type="text"
 									defaultValue={dashboardName}
 									placeholder="Enter dashboard name"
-									className="w-full rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden"
+									className="w-full rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 								/>
 							</div>
 
 							<div>
-								<p id="dashboard-settings-visibility" className="mb-3 block text-sm font-medium pro-text1">
+								<p id="dashboard-settings-visibility" className="mb-3 block text-sm font-medium text-pro-text-primary">
 									Visibility
 								</p>
 								<div className="flex gap-3" aria-labelledby="dashboard-settings-visibility">
@@ -154,7 +157,9 @@ function DashboardSettingsModalInner({
 										onClick={() => setLocalVisibility('public')}
 										aria-pressed={localVisibility === 'public'}
 										className={`flex-1 rounded-md border px-4 py-3 transition-colors ${
-											localVisibility === 'public' ? 'pro-btn-blue' : 'pro-border pro-text2 hover:pro-text1'
+											localVisibility === 'public'
+												? 'pro-btn-primary'
+												: 'pro-border text-pro-text-secondary hover:text-pro-text-primary'
 										}`}
 									>
 										<Icon name="earth" height={16} width={16} className="mr-2 inline" />
@@ -167,10 +172,10 @@ function DashboardSettingsModalInner({
 										aria-pressed={localVisibility === 'private'}
 										className={`flex-1 rounded-md border px-4 py-3 transition-colors ${
 											localVisibility === 'private'
-												? 'pro-btn-blue'
+												? 'pro-btn-primary'
 												: !hasActiveSubscription
-													? 'cursor-not-allowed pro-border pro-text2 opacity-50'
-													: 'pro-border pro-text2 hover:pro-text1'
+													? 'cursor-not-allowed pro-border text-pro-text-secondary opacity-50'
+													: 'pro-border text-pro-text-secondary hover:text-pro-text-primary'
 										}`}
 									>
 										<Icon
@@ -184,15 +189,20 @@ function DashboardSettingsModalInner({
 									</button>
 								</div>
 								{localVisibility === 'public' ? (
-									<p className="mt-2 text-sm pro-text3">Public dashboards are visible in the Discover tab</p>
+									<p className="mt-2 text-sm text-pro-text-tertiary">
+										Public dashboards are visible in the Discover tab
+									</p>
 								) : null}
 								{!hasActiveSubscription ? (
-									<p className="mt-2 text-xs pro-text3">Upgrade to Pro to make dashboards private</p>
+									<p className="mt-2 text-xs text-pro-text-tertiary">Upgrade to Pro to make dashboards private</p>
 								) : null}
 							</div>
 
 							<div>
-								<label htmlFor="dashboard-settings-tag-input" className="mb-3 block text-sm font-medium pro-text1">
+								<label
+									htmlFor="dashboard-settings-tag-input"
+									className="mb-3 block text-sm font-medium text-pro-text-primary"
+								>
 									Tags
 								</label>
 								<div className="flex gap-2">
@@ -202,25 +212,25 @@ function DashboardSettingsModalInner({
 										type="text"
 										onKeyDown={handleTagInputKeyDown}
 										placeholder="Enter tag name"
-										className="flex-1 rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden"
+										className="flex-1 rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 									/>
 									<button
 										type="button"
 										onClick={handleAddTag}
-										className="rounded-md pro-btn-blue-outline border px-4 py-2 transition-colors"
+										className="rounded-md pro-btn-primary-outline border px-4 py-2 transition-colors"
 									>
 										Add Tag
 									</button>
 								</div>
 
-								<p className="mt-2 text-xs pro-text3">Press Enter to add tag</p>
+								<p className="mt-2 text-xs text-pro-text-tertiary">Press Enter to add tag</p>
 
 								{localTags.length > 0 ? (
 									<div className="mt-3 flex flex-wrap gap-2">
 										{localTags.map((tag) => (
 											<span
 												key={tag}
-												className="flex items-center gap-1 rounded-md border pro-border px-3 py-1 text-sm pro-text2"
+												className="flex items-center gap-1 rounded-md border pro-border px-3 py-1 text-sm text-pro-text-secondary"
 											>
 												{tag}
 												<button
@@ -228,7 +238,7 @@ function DashboardSettingsModalInner({
 													onClick={() => handleRemoveTag(tag)}
 													aria-label={`Remove tag ${tag}`}
 													title={`Remove tag ${tag}`}
-													className="hover:text-pro-blue-400"
+													className="hover:text-pro-info-400"
 												>
 													<Icon name="x" height={12} width={12} />
 												</button>
@@ -239,7 +249,10 @@ function DashboardSettingsModalInner({
 							</div>
 
 							<div>
-								<label htmlFor="dashboard-settings-description" className="mb-3 block text-sm font-medium pro-text1">
+								<label
+									htmlFor="dashboard-settings-description"
+									className="mb-3 block text-sm font-medium text-pro-text-primary"
+								>
 									Description
 								</label>
 								<textarea
@@ -252,17 +265,19 @@ function DashboardSettingsModalInner({
 									placeholder="Describe your dashboard..."
 									maxLength={200}
 									rows={3}
-									className="w-full resize-none rounded-md border pro-border px-3 py-2 pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden"
+									className="w-full resize-none rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 								/>
-								<p className="mt-1 text-xs pro-text3">
+								<p className="mt-1 text-xs text-pro-text-tertiary">
 									<span ref={charCountRef}>{description.length}</span>/200 characters
 								</p>
 							</div>
 
 							{onDelete && dashboardId ? (
 								<div className="border-t border-pro-cards-border pt-6">
-									<p className="mb-3 block text-sm font-medium pro-text1 text-error">Danger Zone</p>
-									<p className="mb-4 text-sm pro-text3">Once you delete a dashboard, there is no going back.</p>
+									<p className="mb-3 block text-sm font-medium text-error text-pro-text-primary">Danger Zone</p>
+									<p className="mb-4 text-sm text-pro-text-tertiary">
+										Once you delete a dashboard, there is no going back.
+									</p>
 									<button
 										type="button"
 										onClick={handleDeleteClick}
@@ -279,11 +294,11 @@ function DashboardSettingsModalInner({
 						<div className="mt-8 flex gap-3">
 							<Ariakit.DialogDismiss
 								type="button"
-								className="flex-1 rounded-md border pro-border pro-hover-bg px-4 py-2 pro-text2 transition-colors hover:pro-text1"
+								className="flex-1 rounded-md border pro-border pro-hover-bg px-4 py-2 text-pro-text-secondary transition-colors hover:text-pro-text-primary"
 							>
 								Cancel
 							</Ariakit.DialogDismiss>
-							<button type="submit" className="flex-1 rounded-md pro-btn-blue px-4 py-2 transition-colors">
+							<button type="submit" className="flex-1 rounded-md pro-btn-primary px-4 py-2 transition-colors">
 								Save Changes
 							</button>
 						</div>

@@ -459,7 +459,7 @@ export function AgenticSidebar({
 							onChange={(e) => setSearchQuery(e.target.value)}
 							placeholder="Search"
 							disabled={isLoading && !hasNonProjectSessions}
-							className="min-w-0 flex-1 bg-transparent py-1.5 pr-2 pl-2 text-[11px] text-inherit placeholder:text-ai-faint focus:outline-hidden disabled:cursor-default"
+							className="min-w-0 flex-1 bg-transparent py-1.5 pr-2 pl-2 text-[11px] text-inherit placeholder:text-ai-muted focus:outline-hidden disabled:cursor-default"
 						/>
 						{isSearching ? (
 							<Icon name="search" height={11} width={11} className="mr-1.5 shrink-0 animate-pulse text-ai-muted" />
@@ -602,7 +602,7 @@ export function AgenticSidebar({
 					className="flex min-h-[52px] w-full shrink-0 items-center justify-between truncate border-t border-ai-line bg-surface px-4 py-3 transition-colors hover:bg-ai-surface-muted"
 				>
 					<div className="flex min-w-0 items-center gap-2">
-						<Icon name="package" height={14} width={14} className="shrink-0 text-ai-purple" />
+						<Icon name="package" height={14} width={14} className="shrink-0 text-ai-research" />
 						<span className="text-xs text-ai-tertiary">External Data Balance</span>
 					</div>
 					<span
@@ -646,7 +646,7 @@ export function AgenticSidebar({
 					<div className="relative">
 						<Icon name="settings" height={14} width={14} />
 						{hasCustomInstructions ? (
-							<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-ai-blue-deep" />
+							<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-ai-accent-blue-deep" />
 						) : null}
 					</div>
 					<span>Settings</span>

@@ -34,31 +34,29 @@
 	/* Registered so callsites use the text-sub-… and bg-sub-… utilities instead of the paren form */
 	--color-sub-blue: var(--sub-blue);
 	--color-sub-border-light: var(--sub-border-light);
+	--color-sub-border: var(--sub-border);
+	--color-sub-heading: var(--sub-heading);
+	--color-sub-text-cool: var(--sub-text-cool);
+	--color-sub-text-cool-muted: var(--sub-text-cool-muted);
+	--color-sub-overlay: var(--sub-overlay);
 	--color-sub-border-muted: var(--sub-border-muted);
 	--color-sub-border-slate-100: var(--sub-border-slate-100);
-	--color-sub-border-slate-150: var(--sub-border-slate-150);
-	--color-sub-border-slate-200: var(--sub-border-slate-200);
 	--color-sub-border-strong: var(--sub-border-strong);
 	--color-sub-border-strong-muted: var(--sub-border-strong-muted);
 	--color-sub-brand-primary: var(--sub-brand-primary);
-	--color-sub-brand-primary-alpha-5: var(--sub-brand-primary-alpha-5);
-	--color-sub-brand-primary-alpha-8: var(--sub-brand-primary-alpha-8);
 	--color-sub-brand-secondary: var(--sub-brand-secondary);
 	--color-sub-brand-soft: var(--sub-brand-soft);
 	--color-sub-brand-softest: var(--sub-brand-softest);
-	--color-sub-card: var(--sub-card);
-	--color-sub-card-raised: var(--sub-card-raised);
+	--color-sub-dark-card: var(--sub-dark-card);
+	--color-sub-dark-card-raised: var(--sub-dark-card-raised);
 	--color-sub-desktop-table-border: var(--sub-desktop-table-border);
 	--color-sub-desktop-table-header-bg: var(--sub-desktop-table-header-bg);
 	--color-sub-desktop-table-section-bg: var(--sub-desktop-table-section-bg);
 	--color-sub-desktop-text-muted: var(--sub-desktop-text-muted);
 	--color-sub-footer-text: var(--sub-footer-text);
-	--color-sub-green-400: var(--sub-green-400);
-	--color-sub-green-600: var(--sub-green-600);
 	--color-sub-icon-muted: var(--sub-icon-muted);
-	--color-sub-icon-muted-dark: var(--sub-icon-muted-dark);
-	--color-sub-ink: var(--sub-ink);
-	--color-sub-ink-primary: var(--sub-ink-primary);
+	--color-sub-dark-panel: var(--sub-dark-panel);
+	--color-sub-dark-page: var(--sub-dark-page);
 	--color-sub-line: var(--sub-line);
 	--color-sub-mobile-table-border: var(--sub-mobile-table-border);
 	--color-sub-mobile-table-header-bg: var(--sub-mobile-table-header-bg);
@@ -66,34 +64,20 @@
 	--color-sub-mobile-text-muted: var(--sub-mobile-text-muted);
 	--color-sub-navy: var(--sub-navy);
 	--color-sub-orange: var(--sub-orange);
-	--color-sub-orange-400: var(--sub-orange-400);
-	--color-sub-overlay-dark: var(--sub-overlay-dark);
-	--color-sub-overlay-light: var(--sub-overlay-light);
-	--color-sub-purple-500: var(--sub-purple-500);
+	--color-sub-purple: var(--sub-purple);
 	--color-sub-purple-hover: var(--sub-purple-hover);
 	--color-sub-purple-soft: var(--sub-purple-soft);
 	--color-sub-social-icon: var(--sub-social-icon);
 	--color-sub-success: var(--sub-success);
+	--color-sub-live: var(--sub-live);
 	--color-sub-surface-dark: var(--sub-surface-dark);
-	--color-sub-surface-elevated-2: var(--sub-surface-elevated-2);
 	--color-sub-surface-page: var(--sub-surface-page);
 	--color-sub-surface-panel: var(--sub-surface-panel);
 	--color-sub-surface-slate-10: var(--sub-surface-slate-10);
 	--color-sub-surface-slate-50: var(--sub-surface-slate-50);
 	--color-sub-text-muted: var(--sub-text-muted);
-	--color-sub-text-muted-dark: var(--sub-text-muted-dark);
-	--color-sub-text-navy-700: var(--sub-text-navy-700);
-	--color-sub-text-navy-900: var(--sub-text-navy-900);
 	--color-sub-text-primary: var(--sub-text-primary);
-	--color-sub-text-primary-dark: var(--sub-text-primary-dark);
 	--color-sub-text-secondary: var(--sub-text-secondary);
-	--color-sub-text-secondary-dark: var(--sub-text-secondary-dark);
-	--color-sub-text-slate-300: var(--sub-text-slate-300);
-	--color-sub-text-slate-400: var(--sub-text-slate-400);
-	--color-sub-text-slate-500: var(--sub-text-slate-500);
-	--color-sub-text-slate-600: var(--sub-text-slate-600);
-	--color-sub-text-slate-900: var(--sub-text-slate-900);
-	--color-sub-text-slate-950: var(--sub-text-slate-950);
 	--color-sub-text-soft: var(--sub-text-soft);
 	--color-sub-violet: var(--sub-violet);
 	--color-sub-violet-bright: var(--sub-violet-bright);
@@ -108,41 +92,40 @@
 		   were hardcoded in class names (value-preserving; not design tokens) */
 		--sub-line: #39393e;
 		--sub-text-soft: #b4b7bc;
-		--sub-card: #222429;
-		--sub-card-raised: #2a2b30;
-		--sub-ink: #1a1b1f;
+		--sub-dark-card: #222429;
+		--sub-dark-card-raised: #2a2b30;
+		--sub-dark-panel: #1a1b1f;
 		--sub-navy: #0a1628;
 		--sub-orange: #f2994a;
-		--sub-success: #4ade80;
+		--sub-live: #4ade80;
 		--sub-blue: #5a9fff;
 		--sub-purple-hover: #4a4af0;
 		--sub-purple-soft: #8a8aff;
 		--sub-violet: #6b4bd2;
 		--sub-violet-bright: #b794ff;
 
-		--sub-purple-500: #5c5cf9;
+		--sub-purple: #5c5cf9;
 
-		--sub-green-600: #32bc71;
-		--sub-green-400: #65efa4;
-
-		--sub-orange-400: #ffa455;
+		--sub-success: #32bc71;
 
 		/* Subscription Brand + Extended Tokens */
 		--sub-brand-primary: #1f67d2;
 		--sub-brand-secondary: #4b86db;
 		--sub-brand-soft: #6e9ddf;
 		--sub-brand-softest: #a5c3ed;
-		--sub-brand-primary-alpha-8: #1f67d214;
-		--sub-brand-primary-alpha-5: #1f67d20d;
 
-		--sub-ink-primary: #090b0c;
+		--sub-dark-page: #090b0c;
+		--sub-heading: #111f34;
+		--sub-text-cool: #64758c;
+		--sub-text-cool-muted: #8a97aa;
+		--sub-border: #ced8e6;
+		--sub-overlay: #fbfbfbcc;
 		--sub-surface-page: #f7f7f7;
 		--sub-surface-panel: #f6f7f9;
 		--sub-surface-dark: #131516;
 		--sub-surface-dark-deep: #090e13;
 		--sub-surface-dark-section: #151a1d;
 		--sub-surface-dark-row: #181a1b;
-		--sub-surface-elevated-2: #232628;
 
 		--sub-surface-slate-10: #f8fafd;
 		--sub-surface-slate-25: #f5f7fb;
@@ -153,29 +136,12 @@
 		--sub-border-strong: #2f3336;
 		--sub-border-strong-muted: #4d5158;
 		--sub-border-slate-100: #ced8e6;
-		--sub-border-slate-150: #cad6e4;
-		--sub-border-slate-200: #c8d4e4;
 
-		--sub-text-primary: var(--sub-ink-primary);
-		--sub-text-primary-dark: #f6f7f9;
+		--sub-text-primary: var(--sub-dark-page);
 		--sub-text-secondary: #484848;
-		--sub-text-secondary-dark: #c6c6c6;
 		--sub-text-muted: #878787;
-		--sub-text-muted-dark: #71757c;
-		--sub-text-slate-600: #64758c;
-		--sub-text-slate-500: #617389;
-		--sub-text-slate-400: #8a97aa;
-		--sub-text-slate-300: #90a0b6;
-		--sub-text-slate-900: #1e293b;
-		--sub-text-slate-950: #0f172a;
-		--sub-text-navy-900: #111f34;
-		--sub-text-navy-700: #25364e;
 
 		--sub-icon-muted: #8c9aaf;
-		--sub-icon-muted-dark: #5f6369;
-
-		--sub-overlay-light: #fbfbfbcc;
-		--sub-overlay-dark: #090b0ccc;
 
 		/* Chart palette */
 		--sub-chart-1: var(--sub-brand-primary);
@@ -233,10 +199,10 @@
 		--sub-top-gradient-light: linear-gradient(180deg, rgba(247, 247, 247, 0) 0%, #f7f7f7 100%);
 		--sub-top-gradient-dark: linear-gradient(180deg, rgba(9, 11, 12, 0) 0%, #090b0c 100%);
 
-		--sub-mobile-table-border: var(--sub-border-slate-150);
+		--sub-mobile-table-border: var(--sub-border-slate-100);
 		--sub-mobile-table-header-bg: var(--sub-surface-slate-25);
 		--sub-mobile-table-section-bg: var(--sub-surface-slate-50);
-		--sub-mobile-text-muted: var(--sub-text-slate-500);
+		--sub-mobile-text-muted: var(--sub-text-cool);
 		--sub-desktop-table-border: var(--sub-border-light);
 		--sub-desktop-table-header-bg: var(--sub-surface-slate-25);
 		--sub-desktop-table-section-bg: var(--sub-white);
@@ -246,14 +212,19 @@
 	}
 
 	html.dark {
-		/* Adaptive body ink: sub-ink-primary in light, the surface's dark ink in
-		   dark — replaces per-callsite `dark:text-*` forks. Bare sub-ink-primary
+		/* Adaptive body ink: sub-dark-page in light, the surface's dark ink in
+		   dark — replaces per-callsite `dark:text-*` forks. Bare sub-dark-page
 		   stays static for always-light cards. */
-		--sub-text-primary: var(--sub-text-primary-dark);
+		--sub-text-primary: #f6f7f9;
+		--sub-text-secondary: #c6c6c6;
+		--sub-icon-muted: #5f6369;
+		--sub-success: #65efa4;
+		--sub-border: #2f3336;
+		--sub-overlay: #090b0ccc;
 
 		/* Sign-in Modal */
 		--signin-bg: var(--sub-surface-dark-row);
-		--signin-input-bg: var(--sub-ink-primary);
+		--signin-input-bg: var(--sub-dark-page);
 		--signin-divider: rgba(255, 255, 255, 0.06);
 		--signin-btn-disabled-bg: rgba(31, 103, 210, 0.4);
 		--signin-btn-disabled-text: rgba(255, 255, 255, 0.4);
@@ -263,14 +234,14 @@
 		--sub-chart-split: rgba(255, 255, 255, 0.06);
 		--sub-chart-axis: var(--sub-border-strong);
 
-		--sub-mobile-table-border: var(--sub-surface-elevated-2);
+		--sub-mobile-table-border: var(--sub-dark-card);
 		--sub-mobile-table-header-bg: var(--sub-surface-dark-section);
 		--sub-mobile-table-section-bg: var(--sub-surface-dark-deep);
-		--sub-mobile-text-muted: var(--sub-text-secondary-dark);
-		--sub-desktop-table-border: var(--sub-surface-elevated-2);
+		--sub-mobile-text-muted: var(--sub-text-secondary);
+		--sub-desktop-table-border: var(--sub-dark-card);
 		--sub-desktop-table-header-bg: var(--sub-surface-dark-section);
 		--sub-desktop-table-section-bg: var(--sub-surface-dark-section);
-		--sub-desktop-text-muted: var(--sub-text-secondary-dark);
+		--sub-desktop-text-muted: var(--sub-text-secondary);
 		--sub-footer-text: var(--sub-text-muted);
 		--sub-social-icon: var(--sub-text-muted);
 	}

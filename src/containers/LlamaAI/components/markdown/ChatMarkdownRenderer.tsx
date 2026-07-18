@@ -412,7 +412,7 @@ export function SourcesList({ citations, isStreaming = false }: { citations: str
 
 	return (
 		<details className="flex flex-col text-sm">
-			<summary className="mr-auto flex items-center gap-1 rounded-sm bg-ai-wash px-2 py-1 text-brand">
+			<summary className="mr-auto flex items-center gap-1 rounded-sm bg-ai-hover px-2 py-1 text-brand">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="14"
@@ -440,7 +440,7 @@ export function SourcesList({ citations, isStreaming = false }: { citations: str
 						rel="noopener noreferrer"
 						className="group flex items-start gap-2.5 rounded-lg border border-ai-line p-2 hover:border-brand hover:bg-brand/12 focus-visible:border-brand focus-visible:bg-brand/12"
 					>
-						<span className="rounded-sm bg-ai-wash px-1.5 text-brand">{citationNumber}</span>
+						<span className="rounded-sm bg-ai-hover px-1.5 text-brand">{citationNumber}</span>
 						<span className="truncate">{normalizedUrl}</span>
 					</a>
 				))}

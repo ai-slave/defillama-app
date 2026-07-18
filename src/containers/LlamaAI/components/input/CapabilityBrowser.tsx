@@ -103,7 +103,7 @@ export function BrowserContent({
 							}}
 							className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
 								isActive
-									? 'bg-ai-contrast text-ai-on-contrast'
+									? 'bg-ai-inverse text-ai-on-inverse'
 									: 'bg-ai-surface-muted text-ai-secondary dark:bg-ai-surface-card dark:text-ai-muted'
 							}`}
 						>
@@ -112,7 +112,9 @@ export function BrowserContent({
 							{cap.badge ? (
 								<span
 									className={`rounded-sm px-1 py-px text-[8px] leading-normal font-bold tracking-wide ${
-										isActive ? 'bg-ai-white/20 text-ai-on-contrast dark:bg-ai-black/20' : 'bg-ai-blue/12 text-ai-blue'
+										isActive
+											? 'bg-ai-white/20 text-ai-on-inverse dark:bg-ai-black/20'
+											: 'bg-ai-accent-blue/12 text-ai-accent-blue'
 									}`}
 								>
 									{cap.badge}
@@ -137,7 +139,7 @@ export function BrowserContent({
 							onClick={() => trackUmamiEvent('llamaai-capability-category-view', { category: cap.key })}
 							onMouseEnter={() => handleHoverIntent(cap.key)}
 							onMouseLeave={cancelHoverIntent}
-							className="group flex items-center gap-2 rounded-lg px-2.5 py-1.75 text-left text-[12.5px] font-medium text-ai-secondary hover:bg-ai-wash hover:text-ai-primary aria-selected:bg-ai-surface-card aria-selected:text-ai-primary aria-selected:shadow-ai-xs"
+							className="group flex items-center gap-2 rounded-lg px-2.5 py-1.75 text-left text-[12.5px] font-medium text-ai-secondary hover:bg-ai-hover hover:text-ai-primary aria-selected:bg-ai-surface-card aria-selected:text-ai-primary aria-selected:shadow-ai-xs"
 						>
 							<Icon
 								name={cap.icon}
@@ -147,7 +149,7 @@ export function BrowserContent({
 							/>
 							<span className="truncate">{cap.name}</span>
 							{cap.badge ? (
-								<span className="ml-auto shrink-0 rounded-sm bg-ai-blue/12 px-1.5 py-px text-[9px] leading-normal font-bold tracking-wide text-ai-blue">
+								<span className="ml-auto shrink-0 rounded-sm bg-ai-accent-blue/12 px-1.5 py-px text-[9px] leading-normal font-bold tracking-wide text-ai-accent-blue">
 									{cap.badge}
 								</span>
 							) : null}
@@ -163,7 +165,7 @@ export function BrowserContent({
 							<Icon name={activeCategory.icon} height={14} width={14} className="text-ai-tertiary" />
 							<h3 className="text-[13px] font-semibold text-ai-primary">{activeCategory.name}</h3>
 							{activeCategory.badge ? (
-								<span className="rounded-sm bg-ai-blue/12 px-1.5 py-px text-[9px] leading-normal font-bold tracking-wide text-ai-blue">
+								<span className="rounded-sm bg-ai-accent-blue/12 px-1.5 py-px text-[9px] leading-normal font-bold tracking-wide text-ai-accent-blue">
 									{activeCategory.badge}
 								</span>
 							) : null}
@@ -201,7 +203,7 @@ function PromptItem({ prompt, onClick }: { prompt: string; onClick: (prompt: str
 					name="arrow-right"
 					height={12}
 					width={12}
-					className="mt-1 shrink-0 text-ai-faint opacity-0 group-hover:translate-x-0.5 group-hover:text-ai-tertiary group-hover:opacity-100 group-focus-visible:translate-x-0.5 group-focus-visible:text-ai-tertiary group-focus-visible:opacity-100"
+					className="mt-1 shrink-0 text-ai-muted opacity-0 group-hover:translate-x-0.5 group-hover:text-ai-tertiary group-hover:opacity-100 group-focus-visible:translate-x-0.5 group-focus-visible:text-ai-tertiary group-focus-visible:opacity-100"
 				/>
 			</Ariakit.PopoverDismiss>
 		</li>

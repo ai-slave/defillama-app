@@ -526,7 +526,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 							<Tooltip
 								content={capitalizeFirstLetter(dataInterval)}
 								render={<button />}
-								className="shrink-0 px-2 py-1 text-xs whitespace-nowrap hover:not-disabled:pro-btn-blue focus-visible:not-disabled:pro-btn-blue data-[active=true]:bg-pro-old-blue data-[active=true]:font-medium data-[active=true]:text-on-brand"
+								className="shrink-0 px-2 py-1 text-xs whitespace-nowrap hover:not-disabled:pro-btn-primary focus-visible:not-disabled:pro-btn-primary data-[active=true]:bg-pro-accent data-[active=true]:font-medium data-[active=true]:text-on-brand"
 								data-active={multi.grouping === dataInterval}
 								onClick={() => handleGroupingChange(multi.id, dataInterval)}
 								key={`${multi.id}-options-groupBy-${dataInterval}`}
@@ -598,7 +598,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 					<button
 						type="button"
 						onClick={() => setShowDuplicateConfirm(true)}
-						className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-pro-cards-border disabled:text-tertiary"
+						className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
 					>
 						<Icon name="copy" height={14} width={14} />
 						<span>Duplicate</span>
@@ -615,7 +615,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 						<ProTableCSVButton
 							onClick={handleCsvExport}
 							smol
-							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-pro-cards-border disabled:text-tertiary"
+							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
 						/>
 					</>
 				) : null}
@@ -678,7 +678,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 				message="Create a duplicate of this chart in the dashboard?"
 				confirmText="Duplicate"
 				cancelText="Cancel"
-				confirmButtonClass="pro-btn-blue"
+				confirmButtonClass="pro-btn-primary"
 			/>
 		</div>
 	)

@@ -4,8 +4,8 @@ import { inferFineKindFromArrowType, type FineKind } from './columnKind'
 type StatusTone = 'ready' | 'busy' | 'error' | 'muted'
 
 const TONE_CLASS: Record<StatusTone, string> = {
-	ready: 'bg-pro-green-300',
-	busy: 'bg-pro-gold-300',
+	ready: 'bg-pro-success-300',
+	busy: 'bg-pro-premium-300',
 	error: 'bg-error',
 	muted: 'bg-pro-text-tertiary/60'
 }
@@ -60,12 +60,12 @@ const KIND_LABEL: Record<ColumnKind, string> = {
 }
 
 const KIND_TONE: Record<ColumnKind, string> = {
-	date: 'text-pro-gold-300',
+	date: 'text-pro-premium-300',
 	int: 'text-brand',
 	float: 'text-brand',
-	text: 'text-pro-green-300',
-	bool: 'text-pro-purple-300',
-	list: 'text-pro-purple-300',
+	text: 'text-pro-success-300',
+	bool: 'text-pro-ai-300',
+	list: 'text-pro-ai-300',
 	other: 'text-pro-text-tertiary'
 }
 

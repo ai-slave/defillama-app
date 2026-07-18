@@ -60,7 +60,7 @@ export function MobileToolsPopover({
 				data-walkthrough="mobile-tools-button"
 				disabled={disabled}
 				aria-label="Open mobile tools"
-				className="flex size-7 items-center justify-center rounded-full bg-ai-surface-muted text-ai-secondary transition-colors hover:bg-ai-skeleton hover:text-ai-primary disabled:pointer-events-none disabled:opacity-40 aria-expanded:bg-ai-blue/15 aria-expanded:text-ai-blue sm:hidden"
+				className="flex size-7 items-center justify-center rounded-full bg-ai-surface-muted text-ai-secondary transition-colors hover:bg-ai-skeleton hover:text-ai-primary disabled:pointer-events-none disabled:opacity-40 aria-expanded:bg-ai-accent-blue/15 aria-expanded:text-ai-accent-blue sm:hidden"
 			>
 				<Icon name="plus" height={16} width={16} />
 			</Ariakit.MenuButton>
@@ -108,7 +108,9 @@ export function MobileToolsPopover({
 				>
 					<Icon name="sparkles" height={16} width={16} className="shrink-0 text-ai-tertiary" />
 					<span className="flex-1">Quick</span>
-					{mode === 'quick' ? <Icon name="check" height={14} width={14} className="shrink-0 text-ai-blue" /> : null}
+					{mode === 'quick' ? (
+						<Icon name="check" height={14} width={14} className="shrink-0 text-ai-accent-blue" />
+					) : null}
 				</Ariakit.MenuItem>
 
 				<Ariakit.MenuItem
@@ -132,7 +134,7 @@ export function MobileToolsPopover({
 							</span>
 						) : null}
 						{mode === 'fact_checked' ? (
-							<Icon name="check" height={14} width={14} className="shrink-0 text-ai-blue" />
+							<Icon name="check" height={14} width={14} className="shrink-0 text-ai-accent-blue" />
 						) : null}
 					</span>
 				</Ariakit.MenuItem>
@@ -153,7 +155,7 @@ export function MobileToolsPopover({
 							</span>
 						) : null}
 						{mode === 'research' ? (
-							<Icon name="check" height={14} width={14} className="shrink-0 text-ai-blue" />
+							<Icon name="check" height={14} width={14} className="shrink-0 text-ai-accent-blue" />
 						) : null}
 					</span>
 				</Ariakit.MenuItem>

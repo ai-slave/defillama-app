@@ -18,7 +18,6 @@
 	--ai-secondary: #444444;
 	--ai-tertiary: #666666;
 	--ai-muted: #999999;
-	--ai-faint: #aaaaaa;
 
 	/* Lines (borders/dividers/rings) */
 	--ai-line: #e6e6e6;
@@ -36,13 +35,13 @@
 	--ai-handle-hover: #999999;
 
 	/* Washes (hover/selected fills) */
-	--ai-wash-faint: rgb(0 0 0 / 0.015);
-	--ai-wash: rgb(0 0 0 / 0.05);
-	--ai-wash-strong: rgb(0 0 0 / 0.12);
+	--ai-hover-faint: rgb(0 0 0 / 0.015);
+	--ai-hover: rgb(0 0 0 / 0.05);
+	--ai-hover-strong: rgb(0 0 0 / 0.12);
 
 	/* Inverted fill (black chip in light mode, white in dark) */
-	--ai-contrast: #1a1a1a;
-	--ai-on-contrast: #ffffff;
+	--ai-inverse: #1a1a1a;
+	--ai-on-inverse: #ffffff;
 
 	/* Always-dark surfaces (onboarding walkthrough, terminal, code) */
 	--ai-ink: #111214;
@@ -71,24 +70,24 @@
 	--ai-bronze-bright: #e8c089;
 	--ai-bronze-bg: #fff3e0;
 	--ai-gold-deep: #8b6914;
-	--ai-paper: #fdf8ef;
+	--ai-gold-tint: #fdf8ef;
 	--ai-gold-gradient: linear-gradient(93.94deg, #fde0a9 24.73%, #fbedcb 57.42%, #fde0a9 99.73%);
 
 	/* Blues */
-	--ai-old-blue: #2172e5;
-	--ai-old-blue-deep: #1a58b4;
+	--ai-action: #2172e5;
+	--ai-action-hover: #1a58b4;
 	--ai-link-hover: #1f67d233;
-	--ai-blue: #2563eb;
-	--ai-blue-deep: #1853a8;
-	--ai-blue-vivid: #3b82f6;
-	--ai-blue-soft: #60a5fa;
-	--ai-steel: #4f8fba;
+	--ai-accent-blue: #2563eb;
+	--ai-accent-blue-deep: #1853a8;
+	--ai-accent-blue-bright: #3b82f6;
+	--ai-accent-blue-soft: #60a5fa;
+	--ai-nav-active: #4f8fba;
 
 	/* Purples + integrations */
-	--ai-purple: #5c5cf9;
-	--ai-purple-deep: #4a4af0;
-	--ai-purple-bright: #8a8aff;
-	--ai-violet: #8b5cf6;
+	--ai-research: #5c5cf9;
+	--ai-research-hover: #4a4af0;
+	--ai-research-bright: #8a8aff;
+	--ai-mention: #8b5cf6;
 	--ai-slack: #4a154b;
 	--ai-slack-deep: #3a1140;
 
@@ -107,11 +106,11 @@
 	--ai-terminal: #00ff41;
 
 	/* Landing slate accents */
-	--ai-slate: #7b8597;
-	--ai-slate-muted: #9aa4b2;
-	--ai-slate-strong: #4b5563;
-	--ai-slate-line: #d7deea;
-	--ai-slate-line-strong: #c5cbd6;
+	--ai-landing-text: #7b8597;
+	--ai-landing-muted: #9aa4b2;
+	--ai-landing-text-strong: #4b5563;
+	--ai-landing-line: #d7deea;
+	--ai-landing-line-strong: #c5cbd6;
 
 	/* Shadows */
 	--ai-shadow-xs: 0 1px 3px rgb(0 0 0 / 0.08);
@@ -127,7 +126,6 @@ html.dark {
 	--ai-secondary: #bbbbbb;
 	--ai-tertiary: #919296;
 	--ai-muted: #777777;
-	--ai-faint: #555555;
 
 	--ai-line: #2a2b2c;
 	--ai-line-subtle: rgb(255 255 255 / 0.06);
@@ -141,25 +139,25 @@ html.dark {
 	--ai-handle: #444444;
 	--ai-handle-hover: #666666;
 
-	--ai-wash-faint: rgb(255 255 255 / 0.015);
-	--ai-wash: rgb(255 255 255 / 0.05);
-	--ai-wash-strong: rgb(255 255 255 / 0.12);
+	--ai-hover-faint: rgb(255 255 255 / 0.015);
+	--ai-hover: rgb(255 255 255 / 0.05);
+	--ai-hover-strong: rgb(255 255 255 / 0.12);
 
-	--ai-contrast: #ffffff;
-	--ai-on-contrast: #000000;
+	--ai-inverse: #ffffff;
+	--ai-on-inverse: #000000;
 
 	--ai-gold: #fde0a9;
 	--ai-bronze: #e8c089;
 	--ai-bronze-deep: #f3d6a3;
 	--ai-bronze-bg: #3d2f1f;
 
-	--ai-old-blue: #4190f7;
-	--ai-old-blue-deep: #3279de;
+	--ai-action: #4190f7;
+	--ai-action-hover: #3279de;
 	--ai-link-hover: #1f67d24d;
-	--ai-blue: #60a5fa;
-	--ai-blue-deep: #4b86db;
-	--ai-violet: #a78bfa;
-	--ai-paper: #252218;
+	--ai-accent-blue: #60a5fa;
+	--ai-accent-blue-deep: #4b86db;
+	--ai-mention: #a78bfa;
+	--ai-gold-tint: #252218;
 
 	--ai-warning: #fbbf24;
 	--ai-warning-strong: #fef3c7;
@@ -170,11 +168,11 @@ html.dark {
 	--ai-error-border: #7f1d1d;
 	--ai-success: #34d399;
 
-	--ai-slate: #a1a1aa;
-	--ai-slate-muted: #71717a;
-	--ai-slate-strong: #e4e4e7;
-	--ai-slate-line: rgb(255 255 255 / 0.07);
-	--ai-slate-line-strong: rgb(255 255 255 / 0.12);
+	--ai-landing-text: #a1a1aa;
+	--ai-landing-muted: #71717a;
+	--ai-landing-text-strong: #e4e4e7;
+	--ai-landing-line: rgb(255 255 255 / 0.07);
+	--ai-landing-line-strong: rgb(255 255 255 / 0.12);
 
 	--ai-shadow-xs: 0 1px 4px rgb(0 0 0 / 0.4);
 	--ai-shadow-sm: 0 2px 12px rgb(0 0 0 / 0.4);
@@ -189,7 +187,6 @@ html.dark {
 	--color-ai-secondary: var(--ai-secondary);
 	--color-ai-tertiary: var(--ai-tertiary);
 	--color-ai-muted: var(--ai-muted);
-	--color-ai-faint: var(--ai-faint);
 	--color-ai-line: var(--ai-line);
 	--color-ai-line-subtle: var(--ai-line-subtle);
 	--color-ai-line-medium: var(--ai-line-medium);
@@ -201,11 +198,11 @@ html.dark {
 	--color-ai-skeleton: var(--ai-skeleton);
 	--color-ai-handle: var(--ai-handle);
 	--color-ai-handle-hover: var(--ai-handle-hover);
-	--color-ai-wash-faint: var(--ai-wash-faint);
-	--color-ai-wash: var(--ai-wash);
-	--color-ai-wash-strong: var(--ai-wash-strong);
-	--color-ai-contrast: var(--ai-contrast);
-	--color-ai-on-contrast: var(--ai-on-contrast);
+	--color-ai-hover-faint: var(--ai-hover-faint);
+	--color-ai-hover: var(--ai-hover);
+	--color-ai-hover-strong: var(--ai-hover-strong);
+	--color-ai-inverse: var(--ai-inverse);
+	--color-ai-on-inverse: var(--ai-on-inverse);
 	--color-ai-ink: var(--ai-ink);
 	--color-ai-ink-raised: var(--ai-ink-raised);
 	--color-ai-ink-hover: var(--ai-ink-hover);
@@ -226,19 +223,19 @@ html.dark {
 	--color-ai-bronze-bright: var(--ai-bronze-bright);
 	--color-ai-bronze-bg: var(--ai-bronze-bg);
 	--color-ai-gold-deep: var(--ai-gold-deep);
-	--color-ai-paper: var(--ai-paper);
-	--color-ai-purple-bright: var(--ai-purple-bright);
-	--color-ai-old-blue: var(--ai-old-blue);
-	--color-ai-old-blue-deep: var(--ai-old-blue-deep);
+	--color-ai-gold-tint: var(--ai-gold-tint);
+	--color-ai-research-bright: var(--ai-research-bright);
+	--color-ai-action: var(--ai-action);
+	--color-ai-action-hover: var(--ai-action-hover);
 	--color-ai-link-hover: var(--ai-link-hover);
-	--color-ai-blue: var(--ai-blue);
-	--color-ai-blue-deep: var(--ai-blue-deep);
-	--color-ai-blue-vivid: var(--ai-blue-vivid);
-	--color-ai-blue-soft: var(--ai-blue-soft);
-	--color-ai-steel: var(--ai-steel);
-	--color-ai-purple: var(--ai-purple);
-	--color-ai-purple-deep: var(--ai-purple-deep);
-	--color-ai-violet: var(--ai-violet);
+	--color-ai-accent-blue: var(--ai-accent-blue);
+	--color-ai-accent-blue-deep: var(--ai-accent-blue-deep);
+	--color-ai-accent-blue-bright: var(--ai-accent-blue-bright);
+	--color-ai-accent-blue-soft: var(--ai-accent-blue-soft);
+	--color-ai-nav-active: var(--ai-nav-active);
+	--color-ai-research: var(--ai-research);
+	--color-ai-research-hover: var(--ai-research-hover);
+	--color-ai-mention: var(--ai-mention);
 	--color-ai-slack: var(--ai-slack);
 	--color-ai-slack-deep: var(--ai-slack-deep);
 	--color-ai-warning: var(--ai-warning);
@@ -253,11 +250,11 @@ html.dark {
 	--color-ai-success: var(--ai-success);
 	--color-ai-success-vivid: var(--ai-success-vivid);
 	--color-ai-terminal: var(--ai-terminal);
-	--color-ai-slate: var(--ai-slate);
-	--color-ai-slate-muted: var(--ai-slate-muted);
-	--color-ai-slate-strong: var(--ai-slate-strong);
-	--color-ai-slate-line: var(--ai-slate-line);
-	--color-ai-slate-line-strong: var(--ai-slate-line-strong);
+	--color-ai-landing-text: var(--ai-landing-text);
+	--color-ai-landing-muted: var(--ai-landing-muted);
+	--color-ai-landing-text-strong: var(--ai-landing-text-strong);
+	--color-ai-landing-line: var(--ai-landing-line);
+	--color-ai-landing-line-strong: var(--ai-landing-line-strong);
 
 	--shadow-ai-xs: var(--ai-shadow-xs);
 	--shadow-ai-sm: var(--ai-shadow-sm);
@@ -285,7 +282,6 @@ html.dark {
 	--shadow-ai-gold-spark: 0 2px 8px rgb(253 224 169 / 0.4);
 	--shadow-ai-gold-glow-lg: 0 12px 48px rgb(253 224 169 / 0.6);
 	--shadow-ai-gold-cta: 0px 0px 30px 0px rgb(253 224 169 / 0.5), 0px 0px 1px 2px rgb(255 255 255 / 0.1);
-	--shadow-ai-purple-glow: 0px 0px 32px 0px rgb(92 92 249 / 0.5);
 	--shadow-ai-terminal: 0 0 10px rgb(0 255 65 / 0.45);
 	--shadow-ai-terminal-glow: 0 0 40px rgb(0 255 65 / 0.08);
 	--shadow-ai-terminal-inset: inset 0 0 30px rgb(0 255 65 / 0.03);

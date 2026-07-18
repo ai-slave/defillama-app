@@ -81,7 +81,7 @@ export function AriakitVirtualizedSelect({
 
 	return (
 		<div className={className}>
-			<label htmlFor={disclosureId} className="mb-1 block text-[11px] font-medium pro-text2">
+			<label htmlFor={disclosureId} className="mb-1 block text-[11px] font-medium text-pro-text-secondary">
 				{label}
 			</label>
 			{isLoading ? (
@@ -95,7 +95,9 @@ export function AriakitVirtualizedSelect({
 						store={popover}
 						className="flex w-full items-center justify-between rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					>
-						<span className={`flex min-w-0 items-center gap-2 truncate ${selectedOption ? 'pro-text1' : 'pro-text3'}`}>
+						<span
+							className={`flex min-w-0 items-center gap-2 truncate ${selectedOption ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}`}
+						>
 							{selectedOption?.icon ? (
 								<span className="text-sm" aria-hidden>
 									{selectedOption.icon}
@@ -134,7 +136,7 @@ export function AriakitVirtualizedSelect({
 								className="max-h-[280px] overflow-y-auto overscroll-contain rounded-md border border-pro-cards-border"
 							>
 								{filteredOptions.length === 0 ? (
-									<p className="px-3 py-2 text-center text-xs pro-text3">No results found.</p>
+									<p className="px-3 py-2 text-center text-xs text-pro-text-tertiary">No results found.</p>
 								) : (
 									<div
 										className="p-1"
@@ -155,10 +157,10 @@ export function AriakitVirtualizedSelect({
 													disabled={option.disabled}
 													className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-all ${
 														option.disabled
-															? 'cursor-not-allowed pro-text3 opacity-50'
+															? 'cursor-not-allowed text-pro-text-tertiary opacity-50'
 															: isActive
 																? 'bg-brand/10 font-semibold text-brand shadow-sm'
-																: 'pro-text2 hover:pro-text1'
+																: 'text-pro-text-secondary hover:text-pro-text-primary'
 													}`}
 													style={{
 														position: 'absolute',

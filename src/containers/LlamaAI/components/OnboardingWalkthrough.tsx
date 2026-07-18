@@ -560,13 +560,13 @@ export function OnboardingWalkthrough({
 										<button
 											key={p.label}
 											onClick={() => handlePromptClick(p.prompt)}
-											className="group flex items-center gap-3 rounded-xl border border-ai-ink-line bg-ai-ink px-3.5 py-2.5 text-left transition-all duration-150 hover:border-ai-blue/20 hover:bg-ai-blue/5"
+											className="group flex items-center gap-3 rounded-xl border border-ai-ink-line bg-ai-ink px-3.5 py-2.5 text-left transition-all duration-150 hover:border-ai-accent-blue/20 hover:bg-ai-accent-blue/5"
 										>
 											<Icon
 												name={p.icon}
 												height={14}
 												width={14}
-												className="shrink-0 text-ai-secondary transition-colors group-hover:text-ai-blue-soft"
+												className="shrink-0 text-ai-secondary transition-colors group-hover:text-ai-accent-blue-soft"
 											/>
 											<span className="text-[13px] font-medium text-ai-on-ink group-hover:text-ai-white">
 												{p.label}
@@ -575,7 +575,7 @@ export function OnboardingWalkthrough({
 												name="arrow-right"
 												height={12}
 												width={12}
-												className="ml-auto shrink-0 text-ai-secondary opacity-0 transition-all group-hover:text-ai-blue-soft group-hover:opacity-100"
+												className="ml-auto shrink-0 text-ai-secondary opacity-0 transition-all group-hover:text-ai-accent-blue-soft group-hover:opacity-100"
 											/>
 										</button>
 									))}

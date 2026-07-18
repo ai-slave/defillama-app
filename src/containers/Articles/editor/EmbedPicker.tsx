@@ -119,14 +119,14 @@ export function EmbedPicker({ store, onInsert, initialConfig }: Props) {
 			</div>
 
 			<div className="flex items-center justify-end gap-2 border-t border-medium bg-page/30 px-5 py-3">
-				<Ariakit.DialogDismiss className="rounded-md border border-medium px-3 py-2 text-xs text-secondary hover:bg-research-link-hover-bg">
+				<Ariakit.DialogDismiss className="rounded-md border border-medium px-3 py-2 text-xs text-secondary hover:bg-research-tint-hover">
 					Cancel
 				</Ariakit.DialogDismiss>
 				<button
 					type="button"
 					disabled={!detection}
 					onClick={submit}
-					className="rounded-md bg-research-link-button-bg px-3 py-2 text-xs font-medium text-link shadow-sm transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+					className="rounded-md bg-research-tint px-3 py-2 text-xs font-medium text-link shadow-sm transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					{initialConfig ? 'Update embed' : 'Insert embed'}
 				</button>

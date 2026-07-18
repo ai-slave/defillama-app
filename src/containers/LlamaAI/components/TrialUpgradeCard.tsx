@@ -58,7 +58,7 @@ export function TrialUpgradeCard({ offer }: { offer: UpgradeOffer }) {
 		<div className={`my-2.5 w-full transition-opacity duration-300 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
 			<div className="flex flex-col gap-5 rounded-xl border border-sub-border-slate-100 bg-ai-white p-5 dark:border-sub-border-strong dark:bg-sub-surface-dark">
 				<div className="flex flex-col gap-1.5">
-					<span className="text-[11px] font-semibold tracking-wider text-sub-text-secondary uppercase dark:text-sub-text-muted-dark">
+					<span className="text-[11px] font-semibold tracking-wider text-sub-text-secondary uppercase dark:text-sub-text-muted">
 						DefiLlama Pro
 					</span>
 					{canStartTrial ? (
@@ -66,19 +66,19 @@ export function TrialUpgradeCard({ offer }: { offer: UpgradeOffer }) {
 							<h3 className="text-xl leading-7 font-semibold text-sub-text-primary sm:text-2xl sm:leading-8">
 								Start your 7-day free trial
 							</h3>
-							<p className="text-[13px] leading-5 text-sub-text-secondary dark:text-sub-text-muted-dark">
+							<p className="text-[13px] leading-5 text-sub-text-secondary dark:text-sub-text-muted">
 								Free for 7 days, then $49/month · cancel anytime
 							</p>
 						</>
 					) : (
 						<>
 							<div className="flex items-end gap-1">
-								<span className="bg-linear-to-r from-sub-brand-primary to-sub-text-navy-900 bg-clip-text text-[32px] leading-[38px] font-semibold text-transparent dark:from-sub-brand-secondary dark:to-sub-brand-softest">
+								<span className="bg-linear-to-r from-sub-brand-primary to-sub-heading bg-clip-text text-[32px] leading-[38px] font-semibold text-transparent dark:from-sub-brand-secondary dark:to-sub-brand-softest">
 									$49
 								</span>
-								<span className="pb-1 text-base text-sub-text-secondary dark:text-sub-text-secondary-dark">/month</span>
+								<span className="pb-1 text-base text-sub-text-secondary">/month</span>
 							</div>
-							<p className="text-[13px] leading-5 text-sub-text-secondary dark:text-sub-text-muted-dark">
+							<p className="text-[13px] leading-5 text-sub-text-secondary dark:text-sub-text-muted">
 								The full research suite — unlock everything below
 							</p>
 						</>

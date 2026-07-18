@@ -50,7 +50,7 @@ function EmbedNodeView({ node, selected, deleteNode, getPos }: NodeViewProps) {
 							e.stopPropagation()
 							handleEdit()
 						}}
-						className="rounded-md border border-medium px-2 py-1 text-xs text-secondary hover:bg-research-link-hover-bg hover:text-primary"
+						className="rounded-md border border-medium px-2 py-1 text-xs text-secondary hover:bg-research-tint-hover hover:text-primary"
 					>
 						Edit
 					</button>
@@ -64,7 +64,7 @@ function EmbedNodeView({ node, selected, deleteNode, getPos }: NodeViewProps) {
 							e.stopPropagation()
 							deleteNode()
 						}}
-						className="rounded-md border border-medium px-2 py-1 text-xs text-tertiary hover:bg-research-link-hover-bg hover:text-primary"
+						className="rounded-md border border-medium px-2 py-1 text-xs text-tertiary hover:bg-research-tint-hover hover:text-primary"
 					>
 						Remove
 					</button>

@@ -28,7 +28,7 @@ export function CategoryFormHeader({ category, onBack }: CategoryFormHeaderProps
 			>
 				<Icon name="arrow-left" height={18} width={18} />
 			</button>
-			<span className="text-sm font-medium pro-text1">{CATEGORY_TITLES[category]}</span>
+			<span className="text-sm font-medium text-pro-text-primary">{CATEGORY_TITLES[category]}</span>
 		</div>
 	)
 }

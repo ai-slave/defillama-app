@@ -59,7 +59,7 @@ export function ArticleCoverImageEditor({
 							<button
 								type="button"
 								onClick={onOpenCoverDetails}
-								className="pointer-events-auto flex h-8 items-center gap-1.5 rounded-md border border-research-contrast/30 bg-research-backdrop-soft px-2.5 text-xs font-medium text-on-brand backdrop-blur-sm transition-colors hover:bg-research-contrast/55"
+								className="pointer-events-auto flex h-8 items-center gap-1.5 rounded-md border border-research-invert/30 bg-research-backdrop-soft px-2.5 text-xs font-medium text-on-brand backdrop-blur-sm transition-colors hover:bg-research-invert/55"
 							>
 								<Icon name="pencil" className="size-3.5" />
 								<span>Edit details</span>
@@ -68,7 +68,7 @@ export function ArticleCoverImageEditor({
 								type="button"
 								disabled={isUploadingCover}
 								onClick={openCoverPicker}
-								className="pointer-events-auto flex h-8 items-center gap-1.5 rounded-md border border-research-contrast/30 bg-research-backdrop-soft px-2.5 text-xs font-medium text-on-brand backdrop-blur-sm transition-colors hover:bg-research-contrast/55 disabled:cursor-not-allowed disabled:opacity-60"
+								className="pointer-events-auto flex h-8 items-center gap-1.5 rounded-md border border-research-invert/30 bg-research-backdrop-soft px-2.5 text-xs font-medium text-on-brand backdrop-blur-sm transition-colors hover:bg-research-invert/55 disabled:cursor-not-allowed disabled:opacity-60"
 							>
 								{isUploadingCover ? 'Uploading…' : 'Replace'}
 							</button>
@@ -78,7 +78,7 @@ export function ArticleCoverImageEditor({
 								aria-label="Remove cover"
 								title="Remove cover"
 								onClick={() => updateArticle('coverImage', null)}
-								className="pointer-events-auto flex size-8 items-center justify-center rounded-md border border-research-contrast/30 bg-research-backdrop-soft text-on-brand backdrop-blur-sm transition-colors hover:border-error/60 hover:bg-error/70 disabled:cursor-not-allowed disabled:opacity-60"
+								className="pointer-events-auto flex size-8 items-center justify-center rounded-md border border-research-invert/30 bg-research-backdrop-soft text-on-brand backdrop-blur-sm transition-colors hover:border-error/60 hover:bg-error/70 disabled:cursor-not-allowed disabled:opacity-60"
 							>
 								<Icon name="trash" className="size-3.5" />
 							</button>
@@ -115,7 +115,7 @@ export function ArticleCoverImageEditor({
 									onClick={onOpenCoverDetails}
 									aria-label="Edit cover details"
 									title="Edit cover details"
-									className="shrink-0 rounded-md p-1.5 text-tertiary opacity-0 transition-opacity group-hover/cap:opacity-100 hover:bg-research-link-hover-bg hover:text-primary focus-visible:opacity-100"
+									className="shrink-0 rounded-md p-1.5 text-tertiary opacity-0 transition-opacity group-hover/cap:opacity-100 hover:bg-research-tint-hover hover:text-primary focus-visible:opacity-100"
 								>
 									<Icon name="pencil" className="size-3.5" />
 								</button>

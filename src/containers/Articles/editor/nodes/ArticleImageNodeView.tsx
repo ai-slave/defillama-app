@@ -24,8 +24,8 @@ function ToolbarButton({
 				? 'bg-error/10 text-error'
 				: 'text-secondary hover:bg-error/10 hover:text-error'
 			: active
-				? 'bg-research-link-button-bg text-link'
-				: 'text-secondary hover:bg-research-link-hover-bg hover:text-primary'
+				? 'bg-research-tint text-link'
+				: 'text-secondary hover:bg-research-tint-hover hover:text-primary'
 	return (
 		<button
 			type="button"
@@ -287,7 +287,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 										setLinkDraft(attrs.href ?? '')
 										setLinkOpen(false)
 									}}
-									className="rounded-md px-2 py-1 text-xs text-secondary transition-colors hover:bg-research-link-hover-bg hover:text-primary"
+									className="rounded-md px-2 py-1 text-xs text-secondary transition-colors hover:bg-research-tint-hover hover:text-primary"
 								>
 									Cancel
 								</button>
@@ -295,7 +295,7 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 							<button
 								type="button"
 								onClick={commitLink}
-								className="rounded-md bg-research-link-button-bg px-3 py-1.5 text-xs font-medium text-link transition-colors hover:brightness-110"
+								className="rounded-md bg-research-tint px-3 py-1.5 text-xs font-medium text-link transition-colors hover:brightness-110"
 							>
 								Save
 							</button>
@@ -363,14 +363,14 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 							<button
 								type="button"
 								onClick={cancelCredit}
-								className="rounded-md px-2 py-1 text-xs text-secondary transition-colors hover:bg-research-link-hover-bg hover:text-primary"
+								className="rounded-md px-2 py-1 text-xs text-secondary transition-colors hover:bg-research-tint-hover hover:text-primary"
 							>
 								Cancel
 							</button>
 							<button
 								type="button"
 								onClick={commitCredit}
-								className="rounded-md bg-research-link-button-bg px-3 py-1.5 text-xs font-medium text-link transition-colors hover:brightness-110"
+								className="rounded-md bg-research-tint px-3 py-1.5 text-xs font-medium text-link transition-colors hover:brightness-110"
 							>
 								Save
 							</button>
@@ -413,14 +413,14 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 									setAltDraft(attrs.alt ?? '')
 									setAltOpen(false)
 								}}
-								className="rounded-md px-2 py-1 text-xs text-secondary transition-colors hover:bg-research-link-hover-bg hover:text-primary"
+								className="rounded-md px-2 py-1 text-xs text-secondary transition-colors hover:bg-research-tint-hover hover:text-primary"
 							>
 								Cancel
 							</button>
 							<button
 								type="button"
 								onClick={commitAlt}
-								className="rounded-md bg-research-link-button-bg px-3 py-1.5 text-xs font-medium text-link transition-colors hover:brightness-110"
+								className="rounded-md bg-research-tint px-3 py-1.5 text-xs font-medium text-link transition-colors hover:brightness-110"
 							>
 								Save
 							</button>

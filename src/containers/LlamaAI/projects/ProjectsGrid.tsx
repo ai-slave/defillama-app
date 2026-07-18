@@ -176,7 +176,7 @@ export function ProjectsGrid() {
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 						placeholder="Search projects"
-						className="min-w-0 flex-1 bg-transparent p-2 text-xs text-inherit placeholder:text-ai-faint focus:outline-hidden"
+						className="min-w-0 flex-1 bg-transparent p-2 text-xs text-inherit placeholder:text-ai-muted focus:outline-hidden"
 					/>
 					{query ? (
 						<button

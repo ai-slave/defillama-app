@@ -27,7 +27,7 @@ export function SubscriptionFaqBlock({ faqItems, onStartTrial }: { faqItems: Faq
 
 	return (
 		<div className="mt-16 w-full md:mt-12 md:w-[384px]">
-			<h2 className="text-center text-2xl leading-8 font-semibold text-sub-text-navy-900 md:text-[22px] md:leading-7 md:text-sub-text-primary dark:text-sub-text-primary-dark">
+			<h2 className="text-center text-2xl leading-8 font-semibold text-sub-heading md:text-[22px] md:leading-7 md:text-sub-text-primary dark:text-sub-text-primary">
 				Frequently Asked Questions
 			</h2>
 			<div className="mt-7 md:mt-9 md:flex md:flex-col md:gap-4">
@@ -49,14 +49,14 @@ export function SubscriptionFaqBlock({ faqItems, onStartTrial }: { faqItems: Faq
 								onClick={() => setExpandedIndex(isExpanded ? null : index)}
 								className="flex w-full items-center justify-between gap-4 text-left"
 							>
-								<p className="text-base leading-6 text-sub-text-navy-900 md:text-[15px] md:leading-5 md:text-sub-text-primary dark:text-sub-text-primary-dark">
+								<p className="text-base leading-6 text-sub-heading md:text-[15px] md:leading-5 md:text-sub-text-primary dark:text-sub-text-primary">
 									{item.question}
 								</p>
 								<Icon
 									name={isExpanded ? 'x' : 'plus'}
 									height={18}
 									width={18}
-									className="shrink-0 text-sub-text-navy-900 md:text-sub-text-primary dark:text-sub-text-primary-dark"
+									className="shrink-0 text-sub-heading md:text-sub-text-primary dark:text-sub-text-primary"
 								/>
 							</button>
 							<div
@@ -66,7 +66,7 @@ export function SubscriptionFaqBlock({ faqItems, onStartTrial }: { faqItems: Faq
 								className={`grid transition-[grid-template-rows] duration-250 ease-in-out ${isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
 							>
 								<div className="overflow-hidden">
-									<p className="pt-2 text-[15px] leading-6 text-sub-text-secondary md:text-sm md:leading-5 dark:text-sub-text-secondary-dark">
+									<p className="pt-2 text-[15px] leading-6 text-sub-text-secondary md:text-sm md:leading-5">
 										<FaqAnswer text={item.answer} onStartTrial={onStartTrial} />
 									</p>
 								</div>

@@ -274,7 +274,7 @@ function NewsletterSuccess({
 
 	return (
 		<div role="status" className="flex flex-col items-center gap-3 py-4 text-center">
-			<div className="flex size-12 items-center justify-center rounded-full bg-sub-brand-primary-alpha-8">
+			<div className="flex size-12 items-center justify-center rounded-full bg-sub-brand-primary/8">
 				<Icon name="check-circle" height={28} width={28} className="text-sub-brand-primary" />
 			</div>
 			<div className="flex flex-col gap-1">

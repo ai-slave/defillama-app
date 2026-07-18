@@ -21,7 +21,7 @@ export function CategoryCardsGrid({ onSelectCategory }: CategoryCardsGridProps) 
 						<div className="flex size-10 items-center justify-center rounded-lg bg-brand/10">
 							<Icon name={heroCard.icon} height={22} width={22} className="text-brand" />
 						</div>
-						<h3 className="text-lg font-semibold pro-text1">{heroCard.title}</h3>
+						<h3 className="text-lg font-semibold text-pro-text-primary">{heroCard.title}</h3>
 					</div>
 					<Icon
 						name="arrow-right"
@@ -30,7 +30,7 @@ export function CategoryCardsGrid({ onSelectCategory }: CategoryCardsGridProps) 
 						className="text-pro-text-secondary transition-transform group-hover:translate-x-1 group-hover:text-brand"
 					/>
 				</div>
-				<p className="mb-4 line-clamp-1 text-sm pro-text2">{heroCard.description}</p>
+				<p className="mb-4 line-clamp-1 text-sm text-pro-text-secondary">{heroCard.description}</p>
 				<div className="flex flex-wrap gap-1.5">
 					{heroCard.tags.map((tag) => (
 						<span
@@ -44,7 +44,9 @@ export function CategoryCardsGrid({ onSelectCategory }: CategoryCardsGridProps) 
 			</button>
 
 			<div className="mt-4">
-				<span className="mb-2.5 block text-xs font-medium tracking-wide pro-text2 uppercase">Other datasets</span>
+				<span className="mb-2.5 block text-xs font-medium tracking-wide text-pro-text-secondary uppercase">
+					Other datasets
+				</span>
 				<div className="grid grid-cols-2 gap-2">
 					{otherCards.map((card) => (
 						<button
@@ -61,8 +63,8 @@ export function CategoryCardsGrid({ onSelectCategory }: CategoryCardsGridProps) 
 								/>
 							</div>
 							<div className="min-w-0 flex-1">
-								<span className="text-sm font-medium pro-text1">{card.title}</span>
-								<p className="mt-0.5 line-clamp-1 text-xs pro-text2">{card.description}</p>
+								<span className="text-sm font-medium text-pro-text-primary">{card.title}</span>
+								<p className="mt-0.5 line-clamp-1 text-xs text-pro-text-secondary">{card.description}</p>
 							</div>
 						</button>
 					))}

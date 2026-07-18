@@ -32,11 +32,11 @@ export function SelectionFooter({
 					value={unifiedChartName}
 					onChange={(e) => onUnifiedChartNameChange(e.target.value)}
 					placeholder="Chart name..."
-					className="w-full rounded-sm border border-pro-form-control-border bg-surface-elevated-1 px-2 py-1.5 text-xs pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden"
+					className="w-full rounded-sm border border-pro-form-control-border bg-surface-elevated-1 px-2 py-1.5 text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 				/>
 			) : null}
 			<div className="flex flex-wrap items-center gap-2">
-				<label className="flex shrink-0 cursor-pointer items-center gap-1.5 text-xs pro-text2">
+				<label className="flex shrink-0 cursor-pointer items-center gap-1.5 text-xs text-pro-text-secondary">
 					<input
 						type="checkbox"
 						checked={chartCreationMode === 'combined'}
@@ -50,7 +50,7 @@ export function SelectionFooter({
 						key={item.id}
 						className="flex shrink-0 items-center gap-1.5 rounded-md border border-pro-cards-border bg-pro-cards-bg px-2 py-1 text-xs"
 					>
-						<span className="pro-text1">
+						<span className="text-pro-text-primary">
 							{item.protocol || item.chain} - {CHART_TYPES[item.type]?.title || item.type}
 						</span>
 						<input
@@ -62,7 +62,7 @@ export function SelectionFooter({
 						/>
 						<button
 							onClick={() => onRemoveFromComposer(item.id)}
-							className="pro-text3 transition-colors hover:text-error"
+							className="text-pro-text-tertiary transition-colors hover:text-error"
 							title="Remove from selection"
 						>
 							<Icon name="x" height={12} width={12} />
@@ -70,7 +70,7 @@ export function SelectionFooter({
 					</div>
 				))}
 			</div>
-			<div className="text-[10px] pro-text3">
+			<div className="text-[10px] text-pro-text-tertiary">
 				{chartCreationMode === 'combined'
 					? `Create 1 multi-chart with ${composerItems.length} chart${composerItems.length !== 1 ? 's' : ''}`
 					: `Create ${composerItems.length} separate chart${composerItems.length !== 1 ? 's' : ''}`}

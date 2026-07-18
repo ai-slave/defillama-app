@@ -614,7 +614,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 									className={`px-2 py-1 text-xs font-medium transition-colors duration-150 ease-in-out sm:px-3 ${index > 0 ? 'border-l border-pro-form-control-border' : ''} ${
 										builder.grouping === option || (!builder.grouping && option === 'day')
 											? 'bg-brand text-on-brand focus:ring-2 focus:ring-brand/50 focus:outline-hidden'
-											: 'bg-transparent pro-hover-bg pro-text2 focus:ring-1 focus:ring-pro-form-control-border focus:outline-hidden'
+											: 'bg-transparent pro-hover-bg text-pro-text-secondary focus:ring-1 focus:ring-pro-form-control-border focus:outline-hidden'
 									}`}
 								>
 									{option.slice(0, 1).toUpperCase()}
@@ -677,7 +677,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 							className={`flex items-center gap-1 rounded-md border px-1.5 py-1 text-xs transition-colors disabled:cursor-not-allowed ${
 								effectiveShowColors
 									? 'border-transparent bg-brand text-on-brand'
-									: 'border-pro-form-control-border hover:not-disabled:pro-btn-blue focus-visible:not-disabled:pro-btn-blue'
+									: 'border-pro-form-control-border hover:not-disabled:pro-btn-primary focus-visible:not-disabled:pro-btn-primary'
 							} disabled:border-pro-cards-border disabled:text-tertiary`}
 						>
 							Colors
@@ -701,7 +701,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 						<button
 							type="button"
 							onClick={() => setShowDuplicateConfirm(true)}
-							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-pro-cards-border disabled:text-tertiary"
+							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
 						>
 							<Icon name="copy" height={14} width={14} />
 							<span>Duplicate</span>
@@ -719,7 +719,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 							<ProTableCSVButton
 								onClick={handleCsvExport}
 								smol
-								className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-blue focus-visible:border-transparent focus-visible:not-disabled:pro-btn-blue disabled:border-pro-cards-border disabled:text-tertiary"
+								className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
 							/>
 						</>
 					) : null}
@@ -864,7 +864,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 				message="Create a duplicate of this chart in the dashboard?"
 				confirmText="Duplicate"
 				cancelText="Cancel"
-				confirmButtonClass="pro-btn-blue"
+				confirmButtonClass="pro-btn-primary"
 			/>
 		</div>
 	)

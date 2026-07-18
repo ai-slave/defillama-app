@@ -447,9 +447,9 @@ export function PromptInput({
 			<PastedContentModal preview={imageUpload.pastedPreview} onClose={() => imageUpload.setPastedPreview(null)} />
 
 			{quotedText ? (
-				<div className="flex items-center gap-2.5 rounded-md border-l-2 border-ai-old-blue/40 bg-ai-old-blue/4 py-2 pr-2 pl-3">
+				<div className="flex items-center gap-2.5 rounded-md border-l-2 border-ai-action/40 bg-ai-action/4 py-2 pr-2 pl-3">
 					<svg
-						className="size-3.5 shrink-0 -scale-x-100 text-ai-old-blue/50"
+						className="size-3.5 shrink-0 -scale-x-100 text-ai-action/50"
 						viewBox="0 0 24 24"
 						fill="none"
 						stroke="currentColor"
@@ -465,7 +465,7 @@ export function PromptInput({
 						type="button"
 						onClick={onClearQuotedText}
 						aria-label="Clear quoted text"
-						className="flex size-5 shrink-0 items-center justify-center rounded-full text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-primary"
+						className="flex size-5 shrink-0 items-center justify-center rounded-full text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-primary"
 					>
 						<svg
 							className="size-3.5"

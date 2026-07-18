@@ -70,8 +70,8 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 		<div className="flex h-full flex-col p-2">
 			<div className="mb-2 flex items-start justify-between gap-2">
 				<div className="flex flex-col gap-1">
-					<h3 className="text-sm font-semibold pro-text1">{assetName}</h3>
-					<p className="text-xs pro-text2">{metricsLabel}</p>
+					<h3 className="text-sm font-semibold text-pro-text-primary">{assetName}</h3>
+					<p className="text-xs text-pro-text-secondary">{metricsLabel}</p>
 				</div>
 				{hasData ? (
 					<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
@@ -88,7 +88,9 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 					{filteredDataset ? (
 						<MultiSeriesChart2 dataset={filteredDataset} hideDefaultLegend={false} onReady={handleChartReady} />
 					) : (
-						<div className="flex h-[320px] items-center justify-center text-sm pro-text2">No data available</div>
+						<div className="flex h-[320px] items-center justify-center text-sm text-pro-text-secondary">
+							No data available
+						</div>
 					)}
 				</Suspense>
 			</div>

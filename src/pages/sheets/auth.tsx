@@ -73,9 +73,9 @@ function AuthContent() {
 				<link rel="icon" type="image/png" href="/favicon-32x32.png" />
 				<meta name="robots" content="noindex, nofollow" />
 			</Head>
-			<div className="col-span-full flex min-h-screen w-full items-center justify-center bg-sub-ink px-5">
+			<div className="col-span-full flex min-h-screen w-full items-center justify-center bg-sub-dark-panel px-5">
 				{isAuthenticated ? (
-					<div className="w-full max-w-md rounded-xl border border-sub-line bg-sub-ink p-8 text-center">
+					<div className="w-full max-w-md rounded-xl border border-sub-line bg-sub-dark-panel p-8 text-center">
 						<div className="mb-6">
 							<div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-success/10">
 								<Icon name="check" height={24} width={24} className="text-success" />
@@ -90,7 +90,7 @@ function AuthContent() {
 						<div className="space-y-3">
 							<button
 								onClick={logout}
-								className="w-full rounded-lg border border-sub-line bg-transparent py-3 font-medium text-on-brand transition-colors hover:bg-sub-card-raised"
+								className="w-full rounded-lg border border-sub-line bg-transparent py-3 font-medium text-on-brand transition-colors hover:bg-sub-dark-card-raised"
 							>
 								Sign Out
 							</button>

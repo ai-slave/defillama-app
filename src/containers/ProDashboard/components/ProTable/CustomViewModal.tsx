@@ -51,17 +51,17 @@ export function CustomViewModal({ dialogStore, onSave, existingViewNames }: Cust
 		>
 			<form className="p-6" onSubmit={handleSave}>
 				<div className="mb-6 flex items-center justify-between">
-					<Ariakit.DialogHeading id="save-custom-view-title" className="text-xl font-semibold pro-text1">
+					<Ariakit.DialogHeading id="save-custom-view-title" className="text-xl font-semibold text-pro-text-primary">
 						Save Custom View
 					</Ariakit.DialogHeading>
 					<Ariakit.DialogDismiss className="pro-hover-bg p-1 transition-colors" aria-label="Close">
-						<Icon name="x" height={20} width={20} className="pro-text2" />
+						<Icon name="x" height={20} width={20} className="text-pro-text-secondary" />
 					</Ariakit.DialogDismiss>
 				</div>
 
 				<div className="space-y-6">
 					<div>
-						<label htmlFor="view-name" className="mb-3 block text-sm font-medium pro-text1">
+						<label htmlFor="view-name" className="mb-3 block text-sm font-medium text-pro-text-primary">
 							View Name
 						</label>
 						<input
@@ -70,20 +70,20 @@ export function CustomViewModal({ dialogStore, onSave, existingViewNames }: Cust
 							type="text"
 							onInput={(event) => event.currentTarget.setCustomValidity('')}
 							placeholder="Enter a name for this view..."
-							className="w-full rounded-md border pro-border bg-pro-glass-bg/50 px-3 py-2 pro-text1 placeholder:pro-text3 focus:border-brand focus:outline-hidden"
+							className="w-full rounded-md border pro-border bg-pro-glass-bg/50 px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 							required
 						/>
 					</div>
 
-					<div className="bg-(--pro-bg2)/50 p-4">
-						<p className="text-sm pro-text3">
+					<div className="bg-(--pro-panel-raised)/50 p-4">
+						<p className="text-sm text-pro-text-tertiary">
 							This will save your current column configuration including visibility, order, and any custom columns.
 						</p>
 					</div>
 				</div>
 
 				<div className="mt-8 flex justify-end gap-3">
-					<Ariakit.DialogDismiss className="rounded-md border pro-border pro-hover-bg px-6 py-2.5 font-medium pro-text2 transition-colors">
+					<Ariakit.DialogDismiss className="rounded-md border pro-border pro-hover-bg px-6 py-2.5 font-medium text-pro-text-secondary transition-colors">
 						Cancel
 					</Ariakit.DialogDismiss>
 					<button

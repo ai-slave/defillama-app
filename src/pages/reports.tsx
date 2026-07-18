@@ -55,7 +55,7 @@ export default function ReportsPage() {
 			canonicalUrl="/reports"
 		>
 			{/* DL Research Section */}
-			<div className="relative overflow-hidden rounded-lg border border-research-blue-deep/20 bg-surface p-4 shadow-research-glow-wide">
+			<div className="relative overflow-hidden rounded-lg border border-research-accent-strong/20 bg-surface p-4 shadow-research-glow-wide">
 				{/* Dot pattern decorations */}
 				<div
 					className="pointer-events-none absolute top-0 left-0 h-full w-16"
@@ -75,7 +75,7 @@ export default function ReportsPage() {
 				/>
 
 				{/* Glow orb behind logo */}
-				<div className="pointer-events-none absolute -top-20 -left-20 size-40 rounded-full bg-research-blue-deep/10 blur-3xl" />
+				<div className="pointer-events-none absolute -top-20 -left-20 size-40 rounded-full bg-research-accent-strong/10 blur-3xl" />
 
 				<div className="relative flex flex-col gap-5">
 					{/* Header */}
@@ -128,14 +128,14 @@ interface Report {
 function DLReportCard({ report }: { report: Report }) {
 	if (report.comingSoon) {
 		return (
-			<div className="relative flex flex-col overflow-hidden rounded-md border border-research-blue-deep/15 bg-surface shadow-research-glow transition-shadow duration-300 hover:shadow-research-glow-md">
+			<div className="relative flex flex-col overflow-hidden rounded-md border border-research-accent-strong/15 bg-surface shadow-research-glow transition-shadow duration-300 hover:shadow-research-glow-md">
 				{report.image && (
 					<div className="relative h-36 w-full overflow-hidden bg-sub-navy">
 						<img src={report.image} alt="" className="size-full object-cover opacity-40" />
 						<div className="absolute inset-0 bg-linear-to-t from-sub-navy via-sub-navy/60 to-transparent" />
 						<div className="absolute bottom-3 left-4 flex items-center gap-2">
 							<h3 className="text-lg font-semibold text-on-brand">{report.title}</h3>
-							<span className="animate-pulse rounded-md bg-research-blue-deep px-2 py-0.5 text-[11px] font-semibold text-on-brand">
+							<span className="animate-pulse rounded-md bg-research-accent-strong px-2 py-0.5 text-[11px] font-semibold text-on-brand">
 								Coming Soon
 							</span>
 						</div>
@@ -145,7 +145,7 @@ function DLReportCard({ report }: { report: Report }) {
 					{!report.image && (
 						<div className="flex items-center gap-2">
 							<h3 className="text-lg font-semibold">{report.title}</h3>
-							<span className="animate-pulse rounded-md bg-research-blue-deep px-2 py-0.5 text-[11px] font-semibold text-on-brand">
+							<span className="animate-pulse rounded-md bg-research-accent-strong px-2 py-0.5 text-[11px] font-semibold text-on-brand">
 								Coming Soon
 							</span>
 						</div>
@@ -167,7 +167,7 @@ function DLReportCard({ report }: { report: Report }) {
 						{report.topics.map((topic) => (
 							<span
 								key={topic}
-								className="rounded-full bg-research-blue-deep/10 px-2.5 py-0.5 text-[11px] font-medium text-research-blue-deep dark:bg-research-blue-deep/15 dark:text-sub-blue"
+								className="rounded-full bg-research-accent-strong/10 px-2.5 py-0.5 text-[11px] font-medium text-research-accent-strong dark:bg-research-accent-strong/15 dark:text-sub-blue"
 							>
 								{topic}
 							</span>
@@ -178,7 +178,7 @@ function DLReportCard({ report }: { report: Report }) {
 							href={report.spotlightHref}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="mt-1 flex items-center gap-1.5 rounded-md border border-research-blue-deep/20 bg-research-blue-deep/5 px-3 py-2 text-sm text-research-blue-deep transition-colors hover:bg-research-blue-deep/10 dark:text-sub-blue"
+							className="mt-1 flex items-center gap-1.5 rounded-md border border-research-accent-strong/20 bg-research-accent-strong/5 px-3 py-2 text-sm text-research-accent-strong transition-colors hover:bg-research-accent-strong/10 dark:text-sub-blue"
 						>
 							<Icon name="file-text" height={14} width={14} />
 							<span className="flex-1">Spotlight: {report.spotlightTitle}</span>
@@ -195,7 +195,7 @@ function DLReportCard({ report }: { report: Report }) {
 			href={report.href}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group relative flex flex-col overflow-hidden rounded-md border border-research-blue-deep/15 bg-surface shadow-research-glow transition-all duration-300 hover:border-research-blue-deep/30 hover:shadow-research-glow-strong"
+			className="group relative flex flex-col overflow-hidden rounded-md border border-research-accent-strong/15 bg-surface shadow-research-glow transition-all duration-300 hover:border-research-accent-strong/30 hover:shadow-research-glow-strong"
 		>
 			{report.image && (
 				<div className="relative h-36 w-full overflow-hidden bg-sub-navy">
@@ -239,7 +239,7 @@ function DLReportCard({ report }: { report: Report }) {
 					{report.topics.map((topic) => (
 						<span
 							key={topic}
-							className="rounded-full bg-research-blue-deep/10 px-2.5 py-0.5 text-[11px] font-medium text-research-blue-deep dark:bg-research-blue-deep/15 dark:text-sub-blue"
+							className="rounded-full bg-research-accent-strong/10 px-2.5 py-0.5 text-[11px] font-medium text-research-accent-strong dark:bg-research-accent-strong/15 dark:text-sub-blue"
 						>
 							{topic}
 						</span>
@@ -256,7 +256,7 @@ function ReportCard({ report }: { report: Report }) {
 			href={report.href}
 			target="_blank"
 			rel="noopener noreferrer"
-			className="group relative flex flex-col overflow-hidden rounded-md border border-medium bg-surface transition-colors hover:bg-research-link-button-bg"
+			className="group relative flex flex-col overflow-hidden rounded-md border border-medium bg-surface transition-colors hover:bg-research-tint"
 		>
 			{report.image && (
 				<div className="relative h-36 w-full overflow-hidden bg-sub-navy">

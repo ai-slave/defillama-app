@@ -132,8 +132,8 @@ export function ArticleEditorCanvas({
 										onClick={() => setLinkEdit({ url: linkEdit.url, newTab: !linkEdit.newTab })}
 										className={`flex h-7 items-center gap-1 rounded-md px-1.5 font-jetbrains text-[10px] tracking-[0.16em] uppercase transition-colors ${
 											linkEdit.newTab
-												? 'bg-research-link-button-bg text-link'
-												: 'text-tertiary hover:bg-research-link-hover-bg hover:text-primary'
+												? 'bg-research-tint text-link'
+												: 'text-tertiary hover:bg-research-tint-hover hover:text-primary'
 										}`}
 									>
 										<Icon name="external" className="size-3" />
@@ -143,7 +143,7 @@ export function ArticleEditorCanvas({
 									<button
 										type="submit"
 										aria-label="Save link"
-										className="rounded-md p-1 text-secondary hover:bg-research-link-hover-bg hover:text-primary"
+										className="rounded-md p-1 text-secondary hover:bg-research-tint-hover hover:text-primary"
 									>
 										<Icon name="check" className="size-4" />
 									</button>
@@ -151,7 +151,7 @@ export function ArticleEditorCanvas({
 										type="button"
 										onClick={() => applyLink('', linkEdit.newTab)}
 										aria-label="Remove link"
-										className="rounded-md p-1 text-secondary hover:bg-research-link-hover-bg hover:text-primary"
+										className="rounded-md p-1 text-secondary hover:bg-research-tint-hover hover:text-primary"
 									>
 										<Icon name="x" className="size-4" />
 									</button>
@@ -161,7 +161,7 @@ export function ArticleEditorCanvas({
 											target="_blank"
 											rel="noreferrer"
 											aria-label="Open link"
-											className="rounded-md p-1 text-secondary hover:bg-research-link-hover-bg hover:text-primary"
+											className="rounded-md p-1 text-secondary hover:bg-research-tint-hover hover:text-primary"
 										>
 											<Icon name="external" className="size-4" />
 										</a>
@@ -199,7 +199,7 @@ export function ArticleEditorCanvas({
 										aria-label="Change entity"
 										title="Change entity"
 										onClick={changeActiveEntityLink}
-										className="flex h-7 items-center gap-1 rounded-md px-2 font-jetbrains text-[10px] tracking-[0.16em] text-secondary uppercase transition-colors hover:bg-research-link-hover-bg hover:text-primary"
+										className="flex h-7 items-center gap-1 rounded-md px-2 font-jetbrains text-[10px] tracking-[0.16em] text-secondary uppercase transition-colors hover:bg-research-tint-hover hover:text-primary"
 									>
 										<Icon name="pencil" className="size-3" />
 										<span>Change</span>
@@ -209,7 +209,7 @@ export function ArticleEditorCanvas({
 										aria-label="Unlink entity"
 										title="Unlink entity"
 										onClick={unsetActiveEntityLink}
-										className="flex h-7 items-center gap-1 rounded-md px-2 font-jetbrains text-[10px] tracking-[0.16em] text-tertiary uppercase transition-colors hover:bg-research-link-hover-bg hover:text-primary"
+										className="flex h-7 items-center gap-1 rounded-md px-2 font-jetbrains text-[10px] tracking-[0.16em] text-tertiary uppercase transition-colors hover:bg-research-tint-hover hover:text-primary"
 									>
 										<Icon name="x" className="size-3" />
 										<span>Unlink</span>
@@ -220,7 +220,7 @@ export function ArticleEditorCanvas({
 											aria-label="Open entity"
 											title="Open entity in new tab"
 											onClick={openActiveEntityLink}
-											className="flex h-7 items-center gap-1 rounded-md px-2 font-jetbrains text-[10px] tracking-[0.16em] text-tertiary uppercase transition-colors hover:bg-research-link-hover-bg hover:text-primary"
+											className="flex h-7 items-center gap-1 rounded-md px-2 font-jetbrains text-[10px] tracking-[0.16em] text-tertiary uppercase transition-colors hover:bg-research-tint-hover hover:text-primary"
 										>
 											<Icon name="external" className="size-3" />
 											<span>Open</span>
@@ -238,8 +238,8 @@ export function ArticleEditorCanvas({
 											onClick={b.toggle}
 											className={`flex size-7 items-center justify-center rounded-md transition-colors ${
 												b.isActive()
-													? 'bg-research-link-button-bg text-link'
-													: 'text-secondary hover:bg-research-link-hover-bg hover:text-primary'
+													? 'bg-research-tint text-link'
+													: 'text-secondary hover:bg-research-tint-hover hover:text-primary'
 											}`}
 										>
 											<Icon name={b.icon} className="size-3.5" />
@@ -253,8 +253,8 @@ export function ArticleEditorCanvas({
 										onClick={openLinkEditor}
 										className={`flex size-7 items-center justify-center rounded-md transition-colors ${
 											flags.link
-												? 'bg-research-link-button-bg text-link'
-												: 'text-secondary hover:bg-research-link-hover-bg hover:text-primary'
+												? 'bg-research-tint text-link'
+												: 'text-secondary hover:bg-research-tint-hover hover:text-primary'
 										}`}
 									>
 										<Icon name="link" className="size-3.5" />
@@ -275,7 +275,7 @@ export function ArticleEditorCanvas({
 					>
 						<Ariakit.MenuProvider>
 							<Ariakit.MenuButton
-								className="flex size-6 items-center justify-center rounded-full text-tertiary/50 transition-all hover:bg-research-link-hover-bg hover:text-primary data-[active]:bg-research-link-button-bg data-[active]:text-link"
+								className="flex size-6 items-center justify-center rounded-full text-tertiary/50 transition-all hover:bg-research-tint-hover hover:text-primary data-[active]:bg-research-tint data-[active]:text-link"
 								aria-label="Insert block"
 							>
 								<Icon name="plus" className="size-3.5" />
@@ -288,7 +288,7 @@ export function ArticleEditorCanvas({
 									<Ariakit.MenuItem
 										key={item.label}
 										onClick={item.run}
-										className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+										className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 									>
 										<span>{item.label}</span>
 										{item.hint ? <span className="font-jetbrains text-[10px] text-tertiary">{item.hint}</span> : null}
@@ -297,35 +297,35 @@ export function ArticleEditorCanvas({
 								<span aria-hidden className="my-1 h-px bg-border-medium" />
 								<Ariakit.MenuItem
 									onClick={onOpenChartPicker}
-									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 								>
 									<span>DefiLlama chart</span>
 									<span className="font-jetbrains text-[10px] text-tertiary">↗</span>
 								</Ariakit.MenuItem>
 								<Ariakit.MenuItem
 									onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 								>
 									<span>Table</span>
 									<span className="font-jetbrains text-[10px] text-tertiary">3×3</span>
 								</Ariakit.MenuItem>
 								<Ariakit.MenuItem
 									onClick={onOpenEmbedPicker}
-									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 								>
 									<span>Embed</span>
 									<span className="font-jetbrains text-[10px] text-tertiary">URL</span>
 								</Ariakit.MenuItem>
 								<Ariakit.MenuItem
 									onClick={() => document.dispatchEvent(new CustomEvent('article:trigger-image-upload'))}
-									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 								>
 									<span>Image</span>
 									<span className="font-jetbrains text-[10px] text-tertiary">Upload</span>
 								</Ariakit.MenuItem>
 								<Ariakit.MenuItem
 									onClick={() => document.dispatchEvent(new CustomEvent('article:open-people-panel-picker'))}
-									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 								>
 									<span>People panel</span>
 									<span className="font-jetbrains text-[10px] text-tertiary">Bios</span>
@@ -333,7 +333,7 @@ export function ArticleEditorCanvas({
 								<Ariakit.MenuProvider>
 									<Ariakit.MenuItem
 										render={
-											<Ariakit.MenuButton className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link">
+											<Ariakit.MenuButton className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link">
 												<span>Callout</span>
 												<span aria-hidden className="text-tertiary">
 													›
@@ -349,7 +349,7 @@ export function ArticleEditorCanvas({
 											<Ariakit.MenuItem
 												key={tone}
 												onClick={() => insertCallout(tone)}
-												className="rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+												className="rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 											>
 												{CALLOUT_TONE_LABELS[tone]}
 											</Ariakit.MenuItem>
@@ -358,7 +358,7 @@ export function ArticleEditorCanvas({
 								</Ariakit.MenuProvider>
 								<Ariakit.MenuItem
 									onClick={insertCitation}
-									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+									className="flex items-center justify-between rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 								>
 									<span>Citation</span>
 									<span className="font-jetbrains text-[10px] text-tertiary">[n]</span>
@@ -436,7 +436,7 @@ export function ArticleEditorCanvas({
 							<button
 								type="button"
 								onClick={onOpenChartPicker}
-								className="flex h-9 items-center gap-1.5 rounded-md bg-research-link-button-bg px-3 text-xs font-medium text-link transition-colors hover:opacity-90"
+								className="flex h-9 items-center gap-1.5 rounded-md bg-research-tint px-3 text-xs font-medium text-link transition-colors hover:opacity-90"
 							>
 								<Icon name="chart" className="size-4" />
 								Chart
@@ -445,7 +445,7 @@ export function ArticleEditorCanvas({
 								<Ariakit.MenuButton
 									aria-label="Insert block"
 									title="Insert"
-									className="flex h-9 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-secondary transition-colors hover:bg-research-link-hover-bg hover:text-primary"
+									className="flex h-9 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-secondary transition-colors hover:bg-research-tint-hover hover:text-primary"
 								>
 									<Icon name="more" className="size-4" />
 									<span className="hidden sm:inline">Insert</span>
@@ -456,7 +456,7 @@ export function ArticleEditorCanvas({
 								>
 									<Ariakit.MenuItem
 										onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 									>
 										<span className="flex items-center gap-2">
 											<Icon name="table" className="size-3.5" />
@@ -466,7 +466,7 @@ export function ArticleEditorCanvas({
 									</Ariakit.MenuItem>
 									<Ariakit.MenuItem
 										onClick={onOpenEmbedPicker}
-										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 									>
 										<span className="flex items-center gap-2">
 											<Icon name="embed" className="size-3.5" />
@@ -476,7 +476,7 @@ export function ArticleEditorCanvas({
 									</Ariakit.MenuItem>
 									<Ariakit.MenuItem
 										onClick={() => document.dispatchEvent(new CustomEvent('article:trigger-image-upload'))}
-										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 									>
 										<span className="flex items-center gap-2">
 											<Icon name="image" className="size-3.5" />
@@ -486,7 +486,7 @@ export function ArticleEditorCanvas({
 									</Ariakit.MenuItem>
 									<Ariakit.MenuItem
 										onClick={() => document.dispatchEvent(new CustomEvent('article:open-people-panel-picker'))}
-										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 									>
 										<span className="flex items-center gap-2">
 											<Icon name="people" className="size-3.5" />
@@ -498,7 +498,7 @@ export function ArticleEditorCanvas({
 									<Ariakit.MenuProvider>
 										<Ariakit.MenuItem
 											render={
-												<Ariakit.MenuButton className="flex w-full items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link">
+												<Ariakit.MenuButton className="flex w-full items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link">
 													<span className="flex items-center gap-2">
 														<Icon name="callout" className="size-3.5" />
 														Callout
@@ -517,7 +517,7 @@ export function ArticleEditorCanvas({
 												<Ariakit.MenuItem
 													key={tone}
 													onClick={() => insertCallout(tone)}
-													className="rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+													className="rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 												>
 													{CALLOUT_TONE_LABELS[tone]}
 												</Ariakit.MenuItem>
@@ -526,7 +526,7 @@ export function ArticleEditorCanvas({
 									</Ariakit.MenuProvider>
 									<Ariakit.MenuItem
 										onClick={insertCitation}
-										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-link-button-bg data-[active-item]:text-link"
+										className="flex items-center justify-between gap-3 rounded-sm px-2 py-1.5 text-xs text-secondary data-[active-item]:bg-research-tint data-[active-item]:text-link"
 									>
 										<span className="flex items-center gap-2">
 											<Icon name="cite" className="size-3.5" />

@@ -116,7 +116,7 @@ const FilterModeToggle = ({
 					onClick={() => onChange(option.value as 'include' | 'exclude')}
 					className={`rounded-md px-2 py-1 text-[10px] font-medium transition-all duration-200 ${
 						value === option.value
-							? 'bg-pro-old-blue text-on-brand shadow-sm'
+							? 'bg-pro-accent text-on-brand shadow-sm'
 							: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
 					}`}
 				>
@@ -614,13 +614,13 @@ export function ChartBuilderTab({
 					value={chartBuilderName}
 					onChange={(e) => onChartBuilderNameChange(e.target.value)}
 					placeholder="Enter chart name..."
-					className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2 py-1.5 text-sm pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden"
+					className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2 py-1.5 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 				/>
 			</div>
 
 			<div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row">
 				<div className="max-h-[calc(100vh-200px)] w-full shrink-0 space-y-1.5 overflow-x-visible overflow-y-auto rounded-md border border-pro-cards-border bg-pro-cards-bg p-2 lg:w-[320px] xl:w-[360px]">
-					<h3 className="text-[11px] font-semibold pro-text1">Chart Configuration</h3>
+					<h3 className="text-[11px] font-semibold text-pro-text-primary">Chart Configuration</h3>
 
 					<div>
 						<AriakitSelect
@@ -634,7 +634,7 @@ export function ChartBuilderTab({
 					</div>
 
 					<div className="border-t pro-border pt-1.5">
-						<h4 className="mb-1 text-[11px] font-medium pro-text2">Mode</h4>
+						<h4 className="mb-1 text-[11px] font-medium text-pro-text-secondary">Mode</h4>
 						<div className="mb-1.5 rounded-lg border border-pro-cards-border p-0.5">
 							<div className="grid grid-cols-2 gap-0.5">
 								{MODE_OPTIONS.map((option) => (
@@ -643,7 +643,7 @@ export function ChartBuilderTab({
 										onClick={() => handleModeChange(option.value as any)}
 										className={`rounded-md px-2 py-1.5 text-xs font-medium transition-all duration-200 ${
 											chartBuilder.mode === option.value
-												? 'bg-pro-old-blue text-on-brand shadow-sm'
+												? 'bg-pro-accent text-on-brand shadow-sm'
 												: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
 										}`}
 									>
@@ -655,13 +655,13 @@ export function ChartBuilderTab({
 					</div>
 
 					<div className="border-t pro-border pt-1.5">
-						<h4 className="mb-1 text-[11px] font-medium pro-text2">Filters</h4>
+						<h4 className="mb-1 text-[11px] font-medium text-pro-text-secondary">Filters</h4>
 
 						{chartBuilder.mode === 'chains' ? (
 							<>
 								<div className="mb-1.5">
 									<div className="mb-1 flex items-center justify-between">
-										<span className="text-[10px] font-medium pro-text2">Chains Filter</span>
+										<span className="text-[10px] font-medium text-pro-text-secondary">Chains Filter</span>
 										<FilterModeToggle value={chainFilterMode} onChange={handleChainFilterModeChange} />
 									</div>
 									<AriakitVirtualizedMultiSelect
@@ -687,7 +687,7 @@ export function ChartBuilderTab({
 
 								<div className="mb-1.5">
 									<div className="mb-1 flex items-center justify-between">
-										<span className="text-[10px] font-medium pro-text2">Categories Filter</span>
+										<span className="text-[10px] font-medium text-pro-text-secondary">Categories Filter</span>
 										<FilterModeToggle value={categoryFilterMode} onChange={handleCategoryFilterModeChange} />
 									</div>
 									<AriakitMultiSelect
@@ -719,9 +719,11 @@ export function ChartBuilderTab({
 										<label className="flex cursor-pointer items-center gap-1.5">
 											<Ariakit.Checkbox
 												onChange={(e) => onChartBuilderChange({ hideOthers: e.target.checked })}
-												className="flex size-3 shrink-0 items-center justify-center rounded-[2px] border pro-border data-checked:border-pro-blue-100 data-checked:bg-pro-blue-400 dark:data-checked:border-pro-blue-300/20 dark:data-checked:bg-pro-blue-300/20"
+												className="flex size-3 shrink-0 items-center justify-center rounded-[2px] border pro-border data-checked:border-pro-info-100 data-checked:bg-pro-info-400 dark:data-checked:border-pro-info-300/20 dark:data-checked:bg-pro-info-300/20"
 											/>
-											<span className="text-[10px] pro-text2">Hide "Others" (show only top {chartBuilder.limit})</span>
+											<span className="text-[10px] text-pro-text-secondary">
+												Hide "Others" (show only top {chartBuilder.limit})
+											</span>
 										</label>
 									</Ariakit.CheckboxProvider>
 								</div>
@@ -735,9 +737,9 @@ export function ChartBuilderTab({
 														groupByParent: e.target.checked
 													})
 												}
-												className="flex size-3 shrink-0 items-center justify-center rounded-[2px] border pro-border data-checked:border-pro-blue-100 data-checked:bg-pro-blue-400 dark:data-checked:border-pro-blue-300/20 dark:data-checked:bg-pro-blue-300/20"
+												className="flex size-3 shrink-0 items-center justify-center rounded-[2px] border pro-border data-checked:border-pro-info-100 data-checked:bg-pro-info-400 dark:data-checked:border-pro-info-300/20 dark:data-checked:bg-pro-info-300/20"
 											/>
-											<span className="text-[10px] pro-text2">Group by parent protocol</span>
+											<span className="text-[10px] text-pro-text-secondary">Group by parent protocol</span>
 										</div>
 									</Ariakit.CheckboxProvider>
 								</div>
@@ -746,7 +748,9 @@ export function ChartBuilderTab({
 							<>
 								{isProtocolUnsupportedMetric ? (
 									<div className="mb-1.5 rounded-md border border-pro-cards-border px-2 py-1.5">
-										<p className="text-[10px] pro-text3">This metric is available only for All Protocols.</p>
+										<p className="text-[10px] text-pro-text-tertiary">
+											This metric is available only for All Protocols.
+										</p>
 									</div>
 								) : (
 									<div className="mb-1.5">
@@ -764,7 +768,7 @@ export function ChartBuilderTab({
 
 								<div className="mb-1.5">
 									<div className="mb-1 flex items-center justify-between">
-										<span className="text-[10px] font-medium pro-text2">Chains Filter</span>
+										<span className="text-[10px] font-medium text-pro-text-secondary">Chains Filter</span>
 										<FilterModeToggle value={chainFilterMode} onChange={handleChainFilterModeChange} />
 									</div>
 									<AriakitVirtualizedMultiSelect
@@ -790,7 +794,9 @@ export function ChartBuilderTab({
 								{!isProtocolUnsupportedMetric && chartBuilder.metric !== 'tvl' && !chartBuilder.protocol ? (
 									<div className="mb-1.5">
 										<div className="mb-1 flex items-center justify-between">
-											<span className="text-[10px] font-medium pro-text2">Protocol Categories Filter</span>
+											<span className="text-[10px] font-medium text-pro-text-secondary">
+												Protocol Categories Filter
+											</span>
 											<FilterModeToggle
 												value={protocolCategoryFilterMode}
 												onChange={handleProtocolCategoryFilterModeChange}
@@ -813,7 +819,7 @@ export function ChartBuilderTab({
 								) : null}
 								<div className="mb-1.5">
 									<div className="mb-1 flex items-center justify-between">
-										<span className="text-[10px] font-medium pro-text2">Chain Categories Filter</span>
+										<span className="text-[10px] font-medium text-pro-text-secondary">Chain Categories Filter</span>
 										<FilterModeToggle value={chainCategoryFilterMode} onChange={handleChainCategoryFilterModeChange} />
 									</div>
 									<AriakitMultiSelect
@@ -852,7 +858,7 @@ export function ChartBuilderTab({
 													}
 													className="flex size-3 shrink-0 items-center justify-center rounded-xs border border-[#28a2b5] data-checked:bg-[#28a2b5]"
 												/>
-												<span className="text-[10px] pro-text2">
+												<span className="text-[10px] text-pro-text-secondary">
 													Hide "Others" (show only top {chartBuilder.limit})
 												</span>
 											</label>
@@ -864,7 +870,7 @@ export function ChartBuilderTab({
 					</div>
 
 					<div className="border-t pro-border pt-1.5">
-						<h4 className="mb-1 text-[11px] font-medium pro-text2">Chart type</h4>
+						<h4 className="mb-1 text-[11px] font-medium text-pro-text-secondary">Chart type</h4>
 						<div className="grid grid-cols-4 gap-1">
 							{CHART_TYPE_OPTIONS.map((option) => (
 								<button
@@ -872,8 +878,8 @@ export function ChartBuilderTab({
 									onClick={() => handleChartTypeChange(option.value as any)}
 									className={`flex flex-col items-center gap-0.5 rounded-md border p-1 transition-colors ${
 										chartBuilder.chartType === option.value
-											? 'border-pro-blue-100 bg-pro-blue-300/20 text-pro-blue-400 dark:border-pro-blue-300/20 dark:bg-pro-blue-300/20 dark:text-pro-blue-200'
-											: 'pro-border pro-hover-bg pro-text2 hover:pro-text1'
+											? 'border-pro-info-100 bg-pro-info-300/20 text-pro-info-400 dark:border-pro-info-300/20 dark:bg-pro-info-300/20 dark:text-pro-info-200'
+											: 'pro-border pro-hover-bg text-pro-text-secondary hover:text-pro-text-primary'
 									}`}
 								>
 									<Icon name={option.icon as any} height={14} width={14} />
@@ -897,7 +903,7 @@ export function ChartBuilderTab({
 					) : null}
 
 					<div className="border-t pro-border pt-1.5">
-						<h4 className="mb-1 text-[11px] font-medium pro-text2">Display value as</h4>
+						<h4 className="mb-1 text-[11px] font-medium text-pro-text-secondary">Display value as</h4>
 						<div className="rounded-lg border border-pro-cards-border p-0.5">
 							<div className="grid grid-cols-2 gap-0.5">
 								{DISPLAY_OPTIONS.map((option) => (
@@ -906,7 +912,7 @@ export function ChartBuilderTab({
 										onClick={() => handleDisplayChange(option.value as any)}
 										className={`rounded-md px-2 py-1.5 text-xs font-medium transition-all duration-200 ${
 											chartBuilder.displayAs === option.value
-												? 'bg-pro-old-blue text-on-brand shadow-sm'
+												? 'bg-pro-accent text-on-brand shadow-sm'
 												: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
 										}`}
 									>
@@ -920,8 +926,8 @@ export function ChartBuilderTab({
 
 				<div className="flex min-h-0 flex-1 flex-col rounded-md border border-pro-cards-border bg-pro-cards-bg p-3">
 					<div className="mb-2 flex shrink-0 items-center justify-between">
-						<h3 className="text-xs font-semibold pro-text1">Preview</h3>
-						<div className="flex items-center gap-1 text-[10px] pro-text3">
+						<h3 className="text-xs font-semibold text-pro-text-primary">Preview</h3>
+						<div className="flex items-center gap-1 text-[10px] text-pro-text-tertiary">
 							<span>ⓘ</span>
 							<span>Updates as you configure</span>
 						</div>
@@ -933,8 +939,8 @@ export function ChartBuilderTab({
 					>
 						{previewLoading ? (
 							<div className="text-center">
-								<div className="mx-auto mb-2 size-8 animate-spin rounded-full border-b-2 border-pro-blue-100 dark:border-pro-blue-300/20"></div>
-								<p className="text-sm pro-text2">Loading preview...</p>
+								<div className="mx-auto mb-2 size-8 animate-spin rounded-full border-b-2 border-pro-info-100 dark:border-pro-info-300/20"></div>
+								<p className="text-sm text-pro-text-secondary">Loading preview...</p>
 							</div>
 						) : previewData && previewData.series.length > 0 ? (
 							<div className="absolute inset-0 p-2">
@@ -1024,9 +1030,11 @@ export function ChartBuilderTab({
 							</div>
 						) : (
 							<div className="text-center">
-								<Icon name="bar-chart-2" height={48} width={48} className="mx-auto mb-2 pro-text3" />
-								<p className="text-sm pro-text2">Configure chart settings to see preview</p>
-								<p className="mt-1 text-xs pro-text3">Select a metric to generate chart (all chains by default)</p>
+								<Icon name="bar-chart-2" height={48} width={48} className="mx-auto mb-2 text-pro-text-tertiary" />
+								<p className="text-sm text-pro-text-secondary">Configure chart settings to see preview</p>
+								<p className="mt-1 text-xs text-pro-text-tertiary">
+									Select a metric to generate chart (all chains by default)
+								</p>
 							</div>
 						)}
 					</div>
@@ -1034,13 +1042,15 @@ export function ChartBuilderTab({
 					{visibleSeries.length > 0 ? (
 						<div className="mt-2 flex flex-col gap-1">
 							<div className="flex items-center justify-between gap-2">
-								<h4 className="text-[11px] font-medium pro-text2">Series Colors</h4>
+								<h4 className="text-[11px] font-medium text-pro-text-secondary">Series Colors</h4>
 								<button
 									type="button"
 									onClick={handleResetAllSeriesColors}
 									disabled={!hasCustomSeriesColors}
 									className={`text-[10px] font-medium transition-colors disabled:cursor-not-allowed ${
-										hasCustomSeriesColors ? 'pro-text2 hover:pro-text1' : 'cursor-not-allowed pro-text3'
+										hasCustomSeriesColors
+											? 'text-pro-text-secondary hover:text-pro-text-primary'
+											: 'cursor-not-allowed text-pro-text-tertiary'
 									}`}
 								>
 									Reset All
@@ -1055,7 +1065,7 @@ export function ChartBuilderTab({
 											key={series.name}
 											className="flex shrink-0 items-center gap-1.5 rounded-sm border border-pro-cards-border bg-surface-elevated-1 px-2 py-1 text-xs"
 										>
-											<span className="max-w-[140px] truncate pro-text2" title={series.name}>
+											<span className="max-w-[140px] truncate text-pro-text-secondary" title={series.name}>
 												{series.name}
 											</span>
 											<input
@@ -1070,7 +1080,9 @@ export function ChartBuilderTab({
 												onClick={() => handleSeriesColorReset(series.name)}
 												disabled={!hasOverride}
 												className={`text-[10px] font-medium transition-colors disabled:cursor-not-allowed ${
-													hasOverride ? 'pro-text3 hover:pro-text1' : 'pro-text4 cursor-not-allowed'
+													hasOverride
+														? 'text-pro-text-tertiary hover:text-pro-text-primary'
+														: 'pro-text4 cursor-not-allowed'
 												}`}
 											>
 												Reset
@@ -1082,10 +1094,10 @@ export function ChartBuilderTab({
 						</div>
 					) : null}
 
-					<div className="mt-2 shrink-0 rounded-sm pro-bg2 p-2">
+					<div className="mt-2 shrink-0 rounded-sm pro-panel-raised p-2">
 						<div className="flex items-start gap-1">
-							<span className="text-[10px] pro-text3">ⓘ</span>
-							<p className="text-[10px] leading-relaxed pro-text3">
+							<span className="text-[10px] text-pro-text-tertiary">ⓘ</span>
+							<p className="text-[10px] leading-relaxed text-pro-text-tertiary">
 								This chart shows {chartBuilder.metric}
 								{chartBuilder.mode === 'protocol'
 									? ` for ${

@@ -396,7 +396,7 @@ export function SimpleTableConfig({
 			<button
 				type="button"
 				onClick={onBackToTypeSelector}
-				className="flex items-center gap-1 text-sm pro-text2 transition-colors hover:pro-text1"
+				className="flex items-center gap-1 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary"
 			>
 				<span>←</span>
 				<span>Back to table type selection</span>
@@ -519,7 +519,10 @@ export function SimpleTableConfig({
 							{selectedTokens.map((token) => {
 								const option = tokenOptionMap.get(token)
 								return (
-									<div key={token} className="inline-flex items-center gap-1.5 rounded-md bg-(--pro-bg3) px-2.5 py-1">
+									<div
+										key={token}
+										className="inline-flex items-center gap-1.5 rounded-md bg-(--pro-hover-fill) px-2.5 py-1"
+									>
 										{option?.logo ? (
 											<img
 												src={option.logo}
@@ -534,11 +537,11 @@ export function SimpleTableConfig({
 										) : (
 											<div className="size-4 rounded-full bg-surface-elevated-2" />
 										)}
-										<span className="text-sm pro-text1">{option?.label ?? token}</span>
+										<span className="text-sm text-pro-text-primary">{option?.label ?? token}</span>
 										<button
 											type="button"
 											onClick={() => onTokensChange(selectedTokens.filter((t) => t !== token))}
-											className="ml-1 text-xs pro-text3 transition-colors hover:pro-text1"
+											className="ml-1 text-xs text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
 											aria-label={`Remove ${option?.label ?? token}`}
 										>
 											✕
@@ -550,7 +553,7 @@ export function SimpleTableConfig({
 					) : null}
 					<button
 						type="button"
-						className="flex w-full items-center gap-2 rounded-md border pro-border pro-hover-bg px-3 py-1.5 text-left pro-text2 transition-colors hover:pro-text1"
+						className="flex w-full items-center gap-2 rounded-md border pro-border pro-hover-bg px-3 py-1.5 text-left text-pro-text-secondary transition-colors hover:text-pro-text-primary"
 						onClick={() => onIncludeCexChange(!includeCex)}
 					>
 						<div className="relative size-4">
@@ -558,7 +561,7 @@ export function SimpleTableConfig({
 							<div
 								className={`size-4 border-2 transition-all ${
 									includeCex
-										? 'border-pro-blue-100 bg-pro-blue-100 dark:border-pro-blue-300/20 dark:bg-pro-blue-300/20'
+										? 'border-pro-info-100 bg-pro-info-100 dark:border-pro-info-300/20 dark:bg-pro-info-300/20'
 										: 'pro-border bg-transparent'
 								}`}
 							>
@@ -573,7 +576,7 @@ export function SimpleTableConfig({
 								) : null}
 							</div>
 						</div>
-						<span className="text-sm font-medium pro-text2">Include CEXs</span>
+						<span className="text-sm font-medium text-pro-text-secondary">Include CEXs</span>
 					</button>
 				</>
 			) : selectedTableType === 'rwa-selected-chain' ? (

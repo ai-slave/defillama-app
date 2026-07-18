@@ -113,7 +113,7 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 				<div className="min-w-0 flex-1">
 					<BasicLink
 						href={`/authors/${author.slug}`}
-						className="block truncate text-base font-semibold text-pro-text-primary hover:text-pro-old-blue"
+						className="block truncate text-base font-semibold text-pro-text-primary hover:text-pro-accent"
 					>
 						{author.displayName}
 					</BasicLink>
@@ -141,7 +141,7 @@ function AuthorShelf({ shelf }: { shelf: FollowingShelf }) {
 					{hasMore ? (
 						<BasicLink
 							href={`/authors/${author.slug}`}
-							className="flex w-[160px] shrink-0 snap-start items-center justify-center gap-1 rounded-md border border-dashed border-pro-cards-border text-sm text-pro-text-label transition-colors hover:border-pro-old-blue/40 hover:text-pro-old-blue md:snap-align-none"
+							className="flex w-[160px] shrink-0 snap-start items-center justify-center gap-1 rounded-md border border-dashed border-pro-cards-border text-sm text-pro-text-label transition-colors hover:border-pro-accent/40 hover:text-pro-accent md:snap-align-none"
 						>
 							View all {shelf.dashboardCount}
 							<Icon name="chevron-right" height={14} width={14} />
@@ -188,7 +188,7 @@ export function FollowingShelves() {
 					<button
 						onClick={() => goToPage(Math.max(1, page - 1))}
 						disabled={page === 1}
-						className={`px-3 py-1 ${page === 1 ? 'cursor-not-allowed pro-text3' : 'pro-text1 hover:bg-pro-glass-bg'}`}
+						className={`px-3 py-1 ${page === 1 ? 'cursor-not-allowed text-pro-text-tertiary' : 'text-pro-text-primary hover:bg-pro-glass-bg'}`}
 					>
 						<Icon name="chevron-left" height={16} width={16} />
 					</button>
@@ -208,7 +208,7 @@ export function FollowingShelves() {
 								key={pageNum}
 								onClick={() => goToPage(pageNum)}
 								className={`px-3 py-1 ${
-									page === pageNum ? 'bg-brand text-on-brand' : 'pro-text1 hover:bg-pro-glass-bg'
+									page === pageNum ? 'bg-brand text-on-brand' : 'text-pro-text-primary hover:bg-pro-glass-bg'
 								}`}
 							>
 								{pageNum}
@@ -220,7 +220,9 @@ export function FollowingShelves() {
 						onClick={() => goToPage(Math.min(totalPages, page + 1))}
 						disabled={page === totalPages}
 						className={`px-3 py-1 ${
-							page === totalPages ? 'cursor-not-allowed pro-text3' : 'pro-text1 hover:bg-pro-glass-bg'
+							page === totalPages
+								? 'cursor-not-allowed text-pro-text-tertiary'
+								: 'text-pro-text-primary hover:bg-pro-glass-bg'
 						}`}
 					>
 						<Icon name="chevron-right" height={16} width={16} />

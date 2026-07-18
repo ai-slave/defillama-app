@@ -36,7 +36,7 @@ const highlightFormula = (formula: string) => {
 					)
 				if (part.startsWith('"'))
 					return (
-						<span key={i} className="text-sub-success">
+						<span key={i} className="text-sub-live">
 							{part}
 						</span>
 					)
@@ -237,16 +237,19 @@ const HeroMock = () => {
 	const heroGridCols = '36px minmax(0, 1fr) minmax(108px, 0.55fr)'
 
 	return (
-		<div className="overflow-hidden rounded-2xl border border-sub-line/40 bg-sub-ink shadow-brand-glow-combo">
+		<div className="overflow-hidden rounded-2xl border border-sub-line/40 bg-sub-dark-panel shadow-brand-glow-combo">
 			<div className="flex items-center gap-2.5 border-b border-sub-line/40 px-4 py-2 text-xs">
-				<span className="min-w-[36px] rounded-sm border border-sub-line bg-sub-card px-2 py-0.75 text-center font-mono text-[11px] text-sub-text-muted">
+				<span className="min-w-[36px] rounded-sm border border-sub-line bg-sub-dark-card px-2 py-0.75 text-center font-mono text-[11px] text-sub-text-muted">
 					B2
 				</span>
 				<span className="max-w-full min-w-0 truncate font-mono text-xs">
 					{highlightFormula('=DEFILLAMA("tvl", "ethereum")')}
 				</span>
 			</div>
-			<div className="grid border-b border-sub-line/40 bg-sub-card/50" style={{ gridTemplateColumns: heroGridCols }}>
+			<div
+				className="grid border-b border-sub-line/40 bg-sub-dark-card/50"
+				style={{ gridTemplateColumns: heroGridCols }}
+			>
 				<div className="border-r border-sub-line/40 px-3 py-2.5" />
 				<div className="flex items-center border-r border-sub-line/40 px-3 py-2.5 text-[11px] font-semibold tracking-[0.5px] text-sub-text-muted uppercase">
 					A
@@ -261,14 +264,14 @@ const HeroMock = () => {
 					className="grid border-b border-sub-line/40 last:border-b-0"
 					style={{ gridTemplateColumns: heroGridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-card/30 px-3 py-2.5 font-mono text-[11px] text-sub-text-muted">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-3 py-2.5 font-mono text-[11px] text-sub-text-muted">
 						{row.num}
 					</div>
 					<div className="flex min-w-0 items-center overflow-hidden border-r border-sub-line/40 px-3 py-2.5 font-mono text-xs">
 						<span className="block max-w-full min-w-0 truncate whitespace-nowrap">{highlightFormula(row.formula)}</span>
 					</div>
 					<div
-						className={`flex items-center px-3 py-2.5 font-mono text-xs font-semibold text-sub-success ${row.selected ? 'rounded-sm ring-2 ring-[#2172E5] ring-inset' : ''}`}
+						className={`flex items-center px-3 py-2.5 font-mono text-xs font-semibold text-sub-live ${row.selected ? 'rounded-sm ring-2 ring-[#2172E5] ring-inset' : ''}`}
 					>
 						{row.value}
 					</div>
@@ -319,7 +322,7 @@ type MockCell = { value: string; variant?: 'value' | 'formula'; colSpan?: number
 type MockRow = { num: string; cells: MockCell[] }
 
 const cellClass = (variant?: 'value' | 'formula') =>
-	variant === 'value' ? 'font-semibold text-sub-success' : variant === 'formula' ? '' : 'text-sub-text-soft'
+	variant === 'value' ? 'font-semibold text-sub-live' : variant === 'formula' ? '' : 'text-sub-text-soft'
 
 const MockTable = ({
 	formulaBar,
@@ -345,19 +348,19 @@ const MockTable = ({
 	}
 
 	return (
-		<div className="overflow-hidden rounded-xl border border-sub-line/40 bg-sub-ink shadow-pop">
+		<div className="overflow-hidden rounded-xl border border-sub-line/40 bg-sub-dark-panel shadow-pop">
 			{formulaBar ? (
 				<div className="grid grid-cols-[28px_1fr] border-b border-sub-line/40">
-					<div className="border-r border-sub-line/40 bg-sub-card/30 px-2.5 py-2" />
+					<div className="border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-2" />
 					<p className="flex items-center px-2.5 py-2 font-mono text-[11px]">{highlightFormula(formulaBar)}</p>
 				</div>
 			) : null}
 			{headers ? (
 				<div
-					className="border-b border-sub-line/40 bg-sub-card/40"
+					className="border-b border-sub-line/40 bg-sub-dark-card/40"
 					style={{ display: 'grid', gridTemplateColumns: gridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-card/30 px-2.5 py-1.75 font-mono text-[10px] text-sub-text-muted">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 font-mono text-[10px] text-sub-text-muted">
 						{headers.num}
 					</div>
 					{headers.labels.map((label, i) => (
@@ -376,7 +379,7 @@ const MockTable = ({
 					className="border-b border-sub-line/40 last:border-b-0"
 					style={{ display: 'grid', gridTemplateColumns: gridCols }}
 				>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-card/30 px-2.5 py-1.75 font-mono text-[10px] text-sub-text-muted">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 font-mono text-[10px] text-sub-text-muted">
 						{row.num}
 					</div>
 					{row.cells.map((cell, i) => (
@@ -392,7 +395,7 @@ const MockTable = ({
 			))}
 			{footer ? (
 				<div className="border-t border-sub-line/40" style={{ display: 'grid', gridTemplateColumns: gridCols }}>
-					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-card/30 px-2.5 py-1.75 font-mono text-[10px] text-sub-text-muted">
+					<div className="flex items-center justify-center border-r border-sub-line/40 bg-sub-dark-card/30 px-2.5 py-1.75 font-mono text-[10px] text-sub-text-muted">
 						{footer.num}
 					</div>
 					{footer.cells.map((cell, i) => (
@@ -427,7 +430,7 @@ const TemplatesSection = () => (
 					rel="noopener noreferrer"
 					data-umami-event="sheets-templates-click"
 					data-umami-event-template={tpl.title}
-					className="flex flex-col gap-2.5 rounded-2xl border border-sub-line/40 bg-sub-ink p-7 transition-all hover:border-brand hover:shadow-brand-glow"
+					className="flex flex-col gap-2.5 rounded-2xl border border-sub-line/40 bg-sub-dark-panel p-7 transition-all hover:border-brand hover:shadow-brand-glow"
 				>
 					<div className="flex size-10 items-center justify-center rounded-lg bg-brand/10 [&>svg]:size-5 [&>svg]:fill-none [&>svg]:stroke-[#2172E5] [&>svg]:[stroke-width:1.8] [&>svg]:[stroke-linecap:round] [&>svg]:[stroke-linejoin:round]">
 						{tpl.icon}

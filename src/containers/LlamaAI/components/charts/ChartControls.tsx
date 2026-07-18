@@ -81,7 +81,7 @@ export function ChartControls({
 						<Tooltip
 							content={capitalizeFirstLetter(interval)}
 							render={<button />}
-							className="inline-flex min-w-8 items-center justify-center px-3 py-1.5 text-xs whitespace-nowrap hover:not-disabled:pro-btn-blue focus-visible:not-disabled:pro-btn-blue data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-ai-white"
+							className="inline-flex min-w-8 items-center justify-center px-3 py-1.5 text-xs whitespace-nowrap hover:not-disabled:pro-btn-primary focus-visible:not-disabled:pro-btn-primary data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-ai-white"
 							data-active={controls.state.grouping === interval}
 							onClick={() => {
 								trackUmamiEvent('llamaai-chart-control', { control: 'grouping', selection: interval })

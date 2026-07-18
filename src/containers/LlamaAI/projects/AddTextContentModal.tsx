@@ -54,7 +54,7 @@ export function AddTextContentModal({ dialogStore, projectId }: AddTextContentMo
 								Paste a note, prompt, or any plain-text content for this project.
 							</p>
 						</div>
-						<Ariakit.DialogDismiss className="-mr-1.5 rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-wash hover:text-ai-primary">
+						<Ariakit.DialogDismiss className="-mr-1.5 rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary">
 							<Icon name="x" height={16} width={16} />
 						</Ariakit.DialogDismiss>
 					</header>

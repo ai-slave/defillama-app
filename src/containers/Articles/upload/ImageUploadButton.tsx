@@ -123,7 +123,7 @@ export function ImageUploadButton({
 									alt=""
 									className="size-full object-cover transition-opacity group-hover:opacity-70"
 								/>
-								<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-research-contrast/0 text-xs font-medium text-on-brand opacity-0 transition-opacity group-hover:bg-research-backdrop-soft group-hover:opacity-100">
+								<span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-research-invert/0 text-xs font-medium text-on-brand opacity-0 transition-opacity group-hover:bg-research-backdrop-soft group-hover:opacity-100">
 									{isUploading ? 'Uploading…' : 'Replace'}
 								</span>
 							</button>

@@ -79,9 +79,9 @@ export function EntityComboboxPopover({
 function EntityTypeBadge({ type }: { type: string }) {
 	const colorClass =
 		type === 'Chain'
-			? 'bg-ai-blue text-ai-blue'
+			? 'bg-ai-accent-blue text-ai-accent-blue'
 			: type === 'Protocol'
-				? 'bg-ai-violet text-ai-violet'
+				? 'bg-ai-mention text-ai-mention'
 				: 'bg-ai-success text-ai-success'
 
 	return <span className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${colorClass}`}>{type}</span>

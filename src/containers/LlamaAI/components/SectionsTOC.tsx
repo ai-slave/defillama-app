@@ -93,7 +93,7 @@ export function SectionsTOC({
 									<span
 										className={`mt-px flex size-5 shrink-0 items-center justify-center rounded-sm text-[11px] font-medium ${
 											isActive
-												? 'bg-ai-steel text-ai-white dark:bg-ai-steel'
+												? 'bg-ai-nav-active text-ai-white dark:bg-ai-nav-active'
 												: 'bg-ai-surface-muted text-ai-tertiary dark:bg-ai-surface-muted'
 										}`}
 									>

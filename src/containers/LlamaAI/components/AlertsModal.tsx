@@ -199,7 +199,7 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 										<p className="m-0 text-xs text-ai-warning">{getUpsellCopy(alertsUsage ?? null)}</p>
 										<BasicLink
 											href="/subscription"
-											className="shrink-0 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-old-blue-deep"
+											className="shrink-0 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-action-hover"
 										>
 											Upgrade
 										</BasicLink>
@@ -226,7 +226,7 @@ interface AlertRowProps {
 }
 
 function AlertCard({ children }: { children: React.ReactNode }) {
-	return <div className="rounded-xl border border-ai-line-subtle bg-ai-wash-faint px-4 py-3.5">{children}</div>
+	return <div className="rounded-xl border border-ai-line-subtle bg-ai-hover-faint px-4 py-3.5">{children}</div>
 }
 
 const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
@@ -528,7 +528,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					<div className="flex shrink-0 gap-2">
 						<button
 							onClick={() => switchMode('view')}
-							className="rounded-lg px-3 py-1.5 text-xs text-ai-tertiary transition-colors hover:bg-ai-wash"
+							className="rounded-lg px-3 py-1.5 text-xs text-ai-tertiary transition-colors hover:bg-ai-hover"
 						>
 							Cancel
 						</button>
@@ -615,7 +615,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 	}
 
 	const typeTileClass = !alert.enabled
-		? 'bg-ai-wash text-ai-muted'
+		? 'bg-ai-hover text-ai-muted'
 		: isPriceAlert
 			? 'bg-ai-warning-bright/10 text-ai-warning-bright'
 			: 'bg-link/10 text-link'
@@ -669,7 +669,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					{alert.run_count > 0 ? (
 						<button
 							onClick={handleToggleExecutions}
-							className={`${alertIconButtonClass} ${showExecutions ? 'bg-ai-wash text-ai-primary' : ''}`}
+							className={`${alertIconButtonClass} ${showExecutions ? 'bg-ai-hover text-ai-primary' : ''}`}
 							title="View history"
 						>
 							<Icon name="clock" className="size-3.5" />
@@ -677,7 +677,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					) : null}
 					<button
 						onClick={() => switchMode(mode === 'editing' ? 'view' : 'editing')}
-						className={`${alertIconButtonClass} ${mode === 'editing' ? 'bg-ai-wash text-ai-primary' : ''}`}
+						className={`${alertIconButtonClass} ${mode === 'editing' ? 'bg-ai-hover text-ai-primary' : ''}`}
 						title="Edit"
 					>
 						<Icon name="pencil" className="size-3.5" />
@@ -728,7 +728,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 									key={exec.id}
 									onClick={() => setSelectedExecId(exec.id)}
 									disabled={execDetailQuery.isLoading}
-									className="flex items-center justify-between rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-ai-wash"
+									className="flex items-center justify-between rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-ai-hover"
 								>
 									<div className="flex items-baseline gap-2">
 										<span className="font-mono text-xs text-primary">{formatExecDate(exec.executed_at)}</span>
@@ -901,14 +901,14 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						<button
 							type="button"
 							onClick={() => switchMode('view')}
-							className="rounded-lg px-3 py-1.5 text-xs text-ai-tertiary transition-colors hover:bg-ai-wash"
+							className="rounded-lg px-3 py-1.5 text-xs text-ai-tertiary transition-colors hover:bg-ai-hover"
 						>
 							Cancel
 						</button>
 						<button
 							type="submit"
 							disabled={updateAlertMutation.isPending || !deliveryReady}
-							className="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-old-blue-deep disabled:opacity-50"
+							className="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-action-hover disabled:opacity-50"
 						>
 							{updateAlertMutation.isPending ? (
 								<LoadingSpinner size={12} />

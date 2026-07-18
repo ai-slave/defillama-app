@@ -42,7 +42,7 @@ export function SubscribeProModal({ dialogStore }: SubscribeProModalProps) {
 					unmountOnHide
 				>
 					<span className="mx-auto flex h-full w-full max-w-[440px] flex-col overflow-hidden">
-						<Ariakit.DialogDismiss className="ml-auto shrink-0 rounded-full p-1.5 text-sub-text-muted transition-colors hover:bg-sub-surface-slate-50 hover:text-sub-text-primary dark:text-sub-text-muted-dark dark:hover:bg-sub-surface-elevated-2">
+						<Ariakit.DialogDismiss className="ml-auto shrink-0 rounded-full p-1.5 text-sub-text-muted transition-colors hover:bg-sub-surface-slate-50 hover:text-sub-text-primary dark:text-sub-text-muted dark:hover:bg-sub-dark-card">
 							<Icon name="x" height={18} width={18} />
 							<span className="sr-only">Close</span>
 						</Ariakit.DialogDismiss>
@@ -61,7 +61,7 @@ export function SubscribeProModal({ dialogStore }: SubscribeProModalProps) {
 							{!isAuthenticated ? (
 								<button
 									type="button"
-									className="mx-auto w-full flex-1 rounded-lg border border-sub-border-slate-100 py-2 text-center font-medium text-sub-text-secondary transition-colors hover:bg-sub-surface-slate-50 hover:text-sub-text-primary disabled:cursor-not-allowed dark:border-sub-border-strong dark:text-sub-text-muted-dark dark:hover:bg-sub-surface-elevated-2"
+									className="mx-auto w-full flex-1 rounded-lg border border-sub-border-slate-100 py-2 text-center font-medium text-sub-text-secondary transition-colors hover:bg-sub-surface-slate-50 hover:text-sub-text-primary disabled:cursor-not-allowed dark:border-sub-border-strong dark:text-sub-text-muted dark:hover:bg-sub-dark-card"
 									onClick={() => {
 										signInDialogStore.show()
 									}}

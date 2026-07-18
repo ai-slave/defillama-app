@@ -155,13 +155,13 @@ const ColumnButton = React.memo(function ColumnButton({
 
 		return (
 			<Tooltip key={column.key} content={description} className="w-full">
-				<div className="flex w-full items-center justify-between rounded-md border pro-divider pro-bg2 pro-hover-bg p-2 transition-colors">
+				<div className="flex w-full items-center justify-between rounded-md border pro-divider pro-hover-bg pro-panel-raised p-2 transition-colors">
 					<div className="flex items-center gap-2">
 						<Icon name="check" height={12} width={12} className="text-success" />
-						<span className="text-xs pro-text1">{column.name}</span>
+						<span className="text-xs text-pro-text-primary">{column.name}</span>
 						{isCustom ? <span className="rounded-md bg-brand px-1 py-0.5 text-xs text-on-brand">Custom</span> : null}
 						{column.key?.endsWith('_share') ? (
-							<span className="rounded-md bg-pro-blue-100 px-1 py-0.5 text-xs text-pro-blue-400 dark:bg-pro-blue-300/20 dark:text-pro-blue-200">
+							<span className="rounded-md bg-pro-info-100 px-1 py-0.5 text-xs text-pro-info-400 dark:bg-pro-info-300/20 dark:text-pro-info-200">
 								%
 							</span>
 						) : null}
@@ -170,7 +170,7 @@ const ColumnButton = React.memo(function ColumnButton({
 						{moveColumnUp && !isFirst ? (
 							<button
 								onClick={() => moveColumnUp(column.key)}
-								className="rounded-md p-1 pro-text3 transition-colors hover:pro-text1"
+								className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
 								title="Move up"
 							>
 								<Icon name="chevron-up" height={10} width={10} />
@@ -179,7 +179,7 @@ const ColumnButton = React.memo(function ColumnButton({
 						{moveColumnDown && !isLast ? (
 							<button
 								onClick={() => moveColumnDown(column.key)}
-								className="rounded-md p-1 pro-text3 transition-colors hover:pro-text1"
+								className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
 								title="Move down"
 							>
 								<Icon name="chevron-down" height={10} width={10} />
@@ -187,7 +187,7 @@ const ColumnButton = React.memo(function ColumnButton({
 						) : null}
 						<button
 							onClick={() => toggleColumnVisibility(column.key, false)}
-							className="rounded-md p-1 pro-text3 transition-colors hover:pro-text1"
+							className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
 						>
 							<Icon name="x" height={12} width={12} />
 						</button>
@@ -201,12 +201,12 @@ const ColumnButton = React.memo(function ColumnButton({
 		<Tooltip key={column.key} content={description}>
 			<button
 				onClick={() => toggleColumnVisibility(column.key, true)}
-				className="flex w-full items-center gap-2 rounded-md border pro-divider pro-bg2 pro-hover-bg p-2 text-left transition-colors"
+				className="flex w-full items-center gap-2 rounded-md border pro-divider pro-hover-bg pro-panel-raised p-2 text-left transition-colors"
 			>
-				<Icon name="plus" height={10} width={10} className="pro-text3" />
-				<span className="text-xs pro-text1">{column.name}</span>
+				<Icon name="plus" height={10} width={10} className="text-pro-text-tertiary" />
+				<span className="text-xs text-pro-text-primary">{column.name}</span>
 				{column.key?.endsWith('_share') ? (
-					<span className="ml-auto rounded-md bg-pro-blue-100 px-1 py-0.5 text-xs text-pro-blue-400 dark:bg-pro-blue-300/20 dark:text-pro-blue-200">
+					<span className="ml-auto rounded-md bg-pro-info-100 px-1 py-0.5 text-xs text-pro-info-400 dark:bg-pro-info-300/20 dark:text-pro-info-200">
 						%
 					</span>
 				) : null}
@@ -321,13 +321,13 @@ export function ColumnManagementPanel({
 		<div className="mb-4 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4">
 			<div className="mb-3 flex items-center justify-between">
 				<div className="flex items-center gap-4">
-					<h4 className="text-sm font-medium pro-text1">Customize Columns</h4>
+					<h4 className="text-sm font-medium text-pro-text-primary">Customize Columns</h4>
 					{/* Tab Navigation */}
-					<div className="flex rounded-md border pro-divider pro-bg2">
+					<div className="flex rounded-md border pro-divider pro-panel-raised">
 						<button
 							onClick={() => setActiveTab('columns')}
 							className={`px-3 py-1 text-xs transition-colors first:rounded-l-md last:rounded-r-md ${
-								activeTab === 'columns' ? 'bg-brand text-on-brand' : 'pro-hover-bg pro-text2'
+								activeTab === 'columns' ? 'bg-brand text-on-brand' : 'pro-hover-bg text-pro-text-secondary'
 							}`}
 						>
 							Standard Columns
@@ -335,7 +335,7 @@ export function ColumnManagementPanel({
 						<button
 							onClick={() => setActiveTab('custom')}
 							className={`px-3 py-1 text-xs transition-colors first:rounded-l-md last:rounded-r-md ${
-								activeTab === 'custom' ? 'bg-brand text-on-brand' : 'pro-hover-bg pro-text2'
+								activeTab === 'custom' ? 'bg-brand text-on-brand' : 'pro-hover-bg text-pro-text-secondary'
 							}`}
 						>
 							Custom Columns
@@ -343,13 +343,13 @@ export function ColumnManagementPanel({
 						<button
 							onClick={() => setActiveTab('views')}
 							className={`relative px-3 py-1 text-xs transition-colors first:rounded-l-md last:rounded-r-md ${
-								activeTab === 'views' ? 'bg-brand text-on-brand' : 'pro-hover-bg pro-text2'
+								activeTab === 'views' ? 'bg-brand text-on-brand' : 'pro-hover-bg text-pro-text-secondary'
 							}`}
 						>
 							<span className="flex items-center gap-1">
 								Saved Views
 								{customViews.length > 0 ? (
-									<span className="ml-1 rounded-full bg-pro-blue-100 px-1.5 py-0.5 text-[10px] text-pro-blue-400 dark:bg-pro-blue-300/20 dark:text-pro-blue-200">
+									<span className="ml-1 rounded-full bg-pro-info-100 px-1.5 py-0.5 text-[10px] text-pro-info-400 dark:bg-pro-info-300/20 dark:text-pro-info-200">
 										{customViews.length}
 									</span>
 								) : null}
@@ -364,13 +364,13 @@ export function ColumnManagementPanel({
 								const allKeys = protocolsByChainTableColumns.map((col) => col.key)
 								addOption(allKeys, true)
 							}}
-							className="rounded-md border pro-divider pro-bg2 pro-hover-bg px-2 py-1 text-xs pro-text2 transition-colors"
+							className="rounded-md border pro-divider pro-hover-bg pro-panel-raised px-2 py-1 text-xs text-pro-text-secondary transition-colors"
 						>
 							Show All
 						</button>
 						<button
 							onClick={() => addOption(['name', 'category'], true)}
-							className="rounded-md border pro-divider pro-bg2 pro-hover-bg px-2 py-1 text-xs pro-text2 transition-colors"
+							className="rounded-md border pro-divider pro-hover-bg pro-panel-raised px-2 py-1 text-xs text-pro-text-secondary transition-colors"
 						>
 							Hide All
 						</button>
@@ -386,25 +386,25 @@ export function ColumnManagementPanel({
 							name="search"
 							height={14}
 							width={14}
-							className="absolute top-1/2 left-3 -translate-y-1/2 transform pro-text3"
+							className="absolute top-1/2 left-3 -translate-y-1/2 transform text-pro-text-tertiary"
 						/>
 						<input
 							type="text"
 							placeholder="Search columns..."
 							defaultValue={searchTerm}
 							onInput={(e) => setSearchTerm(e.currentTarget.value)}
-							className="w-full border pro-divider pro-bg2 py-2 pr-3 pl-9 text-sm pro-text1 transition-colors placeholder:pro-text3 focus:border-brand focus:outline-hidden"
+							className="w-full border pro-divider pro-panel-raised py-2 pr-3 pl-9 text-sm text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 
 					<div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
 						{/* Active Columns */}
 						<div>
-							<h5 className="mb-2 flex items-center gap-2 text-xs font-medium tracking-wide pro-text2 uppercase">
+							<h5 className="mb-2 flex items-center gap-2 text-xs font-medium tracking-wide text-pro-text-secondary uppercase">
 								<Icon name="eye" height={12} width={12} />
 								Active Columns ({visibleColumnCount})
 							</h5>
-							<p className="mb-3 text-xs pro-text3">Use arrows to reorder • Click × to hide</p>
+							<p className="mb-3 text-xs text-pro-text-tertiary">Use arrows to reorder • Click × to hide</p>
 							<div className="max-h-60 space-y-1 overflow-y-auto">
 								{visibleColumnOrder.map((columnKey) => {
 									const column = columnsByKey.get(columnKey)
@@ -430,15 +430,15 @@ export function ColumnManagementPanel({
 
 						{/* Available Columns - Grouped */}
 						<div>
-							<h5 className="mb-2 flex items-center gap-2 text-xs font-medium tracking-wide pro-text2 uppercase">
+							<h5 className="mb-2 flex items-center gap-2 text-xs font-medium tracking-wide text-pro-text-secondary uppercase">
 								<Icon name="plus" height={12} width={12} />
 								Available Columns
 							</h5>
-							<p className="mb-3 text-xs pro-text3">Click to add to table</p>
+							<p className="mb-3 text-xs text-pro-text-tertiary">Click to add to table</p>
 							<div className="max-h-60 space-y-3 overflow-y-auto">
 								{columnGroups.map((group) => (
 									<div key={group.title}>
-										<h6 className="mb-1 text-xs font-medium pro-text2">{group.title}</h6>
+										<h6 className="mb-1 text-xs font-medium text-pro-text-secondary">{group.title}</h6>
 										<div className="space-y-1">
 											{group.columns
 												.filter((col) => !currentColumns[col.key])
@@ -480,7 +480,7 @@ export function ColumnManagementPanel({
 			{activeTab === 'views' ? (
 				<div className="space-y-4">
 					{customViews.length === 0 ? (
-						<div className="py-8 text-center pro-text3">
+						<div className="py-8 text-center text-pro-text-tertiary">
 							<Icon name="eye" height={32} width={32} className="mx-auto mb-2 opacity-50" />
 							<p className="text-sm">No saved views yet</p>
 							<p className="mt-1 text-xs">
@@ -489,24 +489,26 @@ export function ColumnManagementPanel({
 						</div>
 					) : (
 						<div className="space-y-2">
-							<p className="mb-3 text-xs pro-text3">Click on a view to load it, or use the icons to manage views</p>
+							<p className="mb-3 text-xs text-pro-text-tertiary">
+								Click on a view to load it, or use the icons to manage views
+							</p>
 							{customViews.map((view) => (
 								<div
 									key={view.id}
-									className={`flex items-center justify-between border pro-divider pro-bg2 pro-hover-bg p-3 transition-colors ${
+									className={`flex items-center justify-between border pro-divider pro-hover-bg pro-panel-raised p-3 transition-colors ${
 										activeViewId === view.id ? 'border-brand' : ''
 									}`}
 								>
 									<button onClick={() => onLoadView?.(view.id)} className="flex flex-1 flex-col items-start gap-1">
 										<div className="flex items-center gap-2">
-											<span className="text-sm font-medium pro-text1">{view.name}</span>
+											<span className="text-sm font-medium text-pro-text-primary">{view.name}</span>
 											{activeViewId === view.id ? (
-												<span className="rounded-md bg-pro-green-100 px-1.5 py-0.5 text-xs text-pro-green-400 dark:bg-pro-green-300/20 dark:text-pro-green-200">
+												<span className="rounded-md bg-pro-success-100 px-1.5 py-0.5 text-xs text-pro-success-400 dark:bg-pro-success-300/20 dark:text-pro-success-200">
 													Active
 												</span>
 											) : null}
 										</div>
-										<div className="flex items-center gap-3 text-xs pro-text3">
+										<div className="flex items-center gap-3 text-xs text-pro-text-tertiary">
 											<span>{view.columnOrder?.length || 0} columns</span>
 											{view.customColumns && view.customColumns.length > 0 ? (
 												<span>{view.customColumns.length} custom columns</span>
@@ -522,7 +524,7 @@ export function ColumnManagementPanel({
 														onDeleteView?.(view.id)
 													}
 												}}
-												className="rounded-md p-2 pro-text3 transition-colors hover:text-error"
+												className="rounded-md p-2 text-pro-text-tertiary transition-colors hover:text-error"
 											>
 												<Icon name="trash-2" height={16} width={16} />
 											</button>
@@ -536,7 +538,7 @@ export function ColumnManagementPanel({
 			) : null}
 
 			<div className="mt-4 flex items-center justify-between border-t pro-divider pt-3 text-xs">
-				<span className="pro-text3">
+				<span className="text-pro-text-tertiary">
 					{activeTab === 'columns'
 						? `${visibleColumnCount} of ${protocolsByChainTableColumns.length} columns visible`
 						: activeTab === 'custom'

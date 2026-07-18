@@ -159,7 +159,7 @@ export function MetricTab(props: MetricTabProps) {
 					{previewMetric ? (
 						<MetricCard metric={previewMetric} />
 					) : (
-						<div className="flex h-full items-center justify-center text-xs pro-text3 sm:text-sm">
+						<div className="flex h-full items-center justify-center text-xs text-pro-text-tertiary sm:text-sm">
 							<div className="text-center">
 								<Icon name="activity" height={28} width={28} className="mx-auto mb-1 sm:size-8" />
 								<p>Select subject and metric to preview</p>

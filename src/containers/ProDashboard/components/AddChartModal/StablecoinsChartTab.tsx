@@ -462,32 +462,36 @@ export function StablecoinsChartTab({
 					</>
 				)}
 
-				<div className="text-xs pro-text3">
+				<div className="text-xs text-pro-text-tertiary">
 					{stablecoinMode === 'chain' && totalMcapCurrent !== null ? (
 						<p>
-							Total Market Cap: <span className="font-semibold pro-text1">{formattedNum(totalMcapCurrent, true)}</span>
+							Total Market Cap:{' '}
+							<span className="font-semibold text-pro-text-primary">{formattedNum(totalMcapCurrent, true)}</span>
 						</p>
 					) : null}
 					{stablecoinMode === 'asset' && totalCirculating !== null ? (
 						<p>
-							Total Circulating: <span className="font-semibold pro-text1">{formattedNum(totalCirculating, true)}</span>
+							Total Circulating:{' '}
+							<span className="font-semibold text-pro-text-primary">{formattedNum(totalCirculating, true)}</span>
 						</p>
 					) : null}
 				</div>
 			</div>
 
 			<div className="overflow-hidden rounded-lg border pro-border">
-				<h4 className="border-b border-pro-cards-border px-3 py-2 text-xs font-medium pro-text2">Preview</h4>
+				<h4 className="border-b border-pro-cards-border px-3 py-2 text-xs font-medium text-pro-text-secondary">
+					Preview
+				</h4>
 
 				{(stablecoinMode === 'chain' && hasChainSelection) || (stablecoinMode === 'asset' && hasAssetSelection) ? (
 					<div className="bg-pro-cards-bg p-3">
 						<div className="mb-3">
-							<h3 className="mb-1 text-sm font-semibold pro-text1">
+							<h3 className="mb-1 text-sm font-semibold text-pro-text-primary">
 								{stablecoinMode === 'chain'
 									? `${selectedStablecoinChain === 'All' ? 'All Chains' : selectedStablecoinChain} - ${chartTypeLabel}`
 									: `${stablecoinName || selectedStablecoinAsset}${stablecoinSymbol ? ` (${stablecoinSymbol})` : ''} - ${chartTypeLabel}`}
 							</h3>
-							<p className="text-xs pro-text2">
+							<p className="text-xs text-pro-text-secondary">
 								{stablecoinMode === 'chain' ? 'Stablecoins Market Cap' : 'Circulating by Chain'}
 							</p>
 						</div>
@@ -500,7 +504,7 @@ export function StablecoinsChartTab({
 						</div>
 					</div>
 				) : (
-					<div className="flex h-[320px] items-center justify-center text-center pro-text3">
+					<div className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">
 						<div>
 							<Icon name="dollar-sign" height={32} width={32} className="mx-auto mb-1" />
 							<div className="text-xs">

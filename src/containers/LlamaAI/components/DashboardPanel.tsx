@@ -131,7 +131,7 @@ function DashboardPanelInner({
 				>
 					<div className="flex items-center justify-between border-b border-ai-line px-4 py-3">
 						<div className="flex items-center gap-2 overflow-hidden">
-							<Icon name="layout-grid" className="size-4 shrink-0 text-ai-old-blue" />
+							<Icon name="layout-grid" className="size-4 shrink-0 text-ai-action" />
 							<span className="truncate text-sm font-medium text-ai-primary">{config.dashboardName}</span>
 							<span className="shrink-0 text-xs text-ai-tertiary">
 								{config.items.length} {config.items.length === 1 ? 'item' : 'items'}
@@ -141,7 +141,7 @@ function DashboardPanelInner({
 							<button
 								onClick={() => handleCreateDashboard()}
 								disabled={isPending || !config}
-								className="flex items-center gap-1.5 rounded-md bg-ai-old-blue px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-old-blue-deep disabled:opacity-50"
+								className="flex items-center gap-1.5 rounded-md bg-ai-action px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-action-hover disabled:opacity-50"
 							>
 								{isPending ? 'Creating...' : 'Create Dashboard'}
 							</button>

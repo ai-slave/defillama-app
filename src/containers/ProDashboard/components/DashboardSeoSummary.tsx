@@ -62,7 +62,7 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 						>
 							{dashboard.data.dashboardName || 'Untitled Dashboard'}
 						</h1>
-						<p className="inline-flex items-center gap-1.5 rounded-md border border-pro-green-400/20 bg-pro-green-100 px-2 py-1 text-xs font-medium text-pro-green-400 dark:bg-pro-green-300/12 dark:text-pro-green-200">
+						<p className="inline-flex items-center gap-1.5 rounded-md border border-pro-success-400/20 bg-pro-success-100 px-2 py-1 text-xs font-medium text-pro-success-400 dark:bg-pro-success-300/12 dark:text-pro-success-200">
 							<span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
 							Public
 						</p>

@@ -109,7 +109,9 @@ export function CustomTimePeriodPicker({
 		<Ariakit.PopoverProvider store={popover}>
 			<Ariakit.PopoverDisclosure
 				className={`-ml-px flex-1 rounded-none rounded-r-md border px-3 py-1.5 text-sm font-medium transition-colors duration-200 md:flex-initial md:px-4 md:py-2 ${
-					isActive ? 'pro-border pro-btn-blue' : 'pro-border pro-hover-bg pro-text2 hover:pro-text1'
+					isActive
+						? 'pro-border pro-btn-primary'
+						: 'pro-border pro-hover-bg text-pro-text-secondary hover:text-pro-text-primary'
 				} ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
 				disabled={disabled}
 			>
@@ -206,13 +208,13 @@ export function CustomTimePeriodPicker({
 						<button
 							type="button"
 							onClick={handleClear}
-							className="flex-1 rounded-md border pro-border pro-hover-bg px-3 py-2 text-sm font-medium pro-text2 transition-colors hover:pro-text1"
+							className="flex-1 rounded-md border pro-border pro-hover-bg px-3 py-2 text-sm font-medium text-pro-text-secondary transition-colors hover:text-pro-text-primary"
 						>
 							Clear
 						</button>
 						<button
 							type="submit"
-							className="flex-1 rounded-md pro-btn-blue px-3 py-2 text-sm font-medium transition-colors"
+							className="flex-1 rounded-md pro-btn-primary px-3 py-2 text-sm font-medium transition-colors"
 						>
 							Apply
 						</button>

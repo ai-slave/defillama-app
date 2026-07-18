@@ -212,7 +212,7 @@ export function LlamaAIFloatingButton() {
 						</button>
 					}
 				/>
-				<Ariakit.Tooltip className="z-50 rounded-lg bg-ai-contrast px-3 py-2 text-sm text-ai-on-contrast shadow-lg">
+				<Ariakit.Tooltip className="z-50 rounded-lg bg-ai-inverse px-3 py-2 text-sm text-ai-on-inverse shadow-lg">
 					Ask LlamaAI
 				</Ariakit.Tooltip>
 			</Ariakit.TooltipProvider>
@@ -225,7 +225,7 @@ export function LlamaAIFloatingButton() {
 						textareaRef.current?.focus()
 						return false
 					}}
-					backdrop={<div className="fixed inset-0 z-40 bg-ai-contrast/30" />}
+					backdrop={<div className="fixed inset-0 z-40 bg-ai-inverse/30" />}
 					className={
 						isDesktop
 							? 'fixed top-0 right-0 z-50 flex h-full w-[400px] flex-col border-l border-ai-line bg-ai-white shadow-2xl dark:bg-ai-surface-muted'
@@ -279,7 +279,7 @@ export function LlamaAIFloatingButton() {
 									onChange={(e) => setValue(e.target.value)}
 									onKeyDown={handleKeyDown}
 									placeholder="Ask LlamaAI about TVL, fees, revenue, protocols..."
-									className="min-h-[100px] w-full resize-none rounded-lg border border-ai-line bg-ai-surface p-3 pr-12 text-sm text-ai-primary placeholder-ai-muted outline-hidden transition-colors focus:border-ai-old-blue dark:bg-ai-surface"
+									className="min-h-[100px] w-full resize-none rounded-lg border border-ai-line bg-ai-surface p-3 pr-12 text-sm text-ai-primary placeholder-ai-muted outline-hidden transition-colors focus:border-ai-action dark:bg-ai-surface"
 									rows={4}
 								/>
 								<button

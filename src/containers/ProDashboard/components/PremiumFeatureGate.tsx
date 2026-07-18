@@ -27,15 +27,17 @@ export function PremiumFeatureGate({ featureName, paywallReason = 'pro-feature',
 					<Icon name="file-lock-2" height={24} width={24} className="text-brand" />
 				</div>
 				<div className="space-y-2">
-					<h3 className="text-lg font-semibold pro-text1">{featureName}</h3>
-					<p className="max-w-sm text-sm pro-text2">This feature requires a Pro subscription. Upgrade to unlock it.</p>
+					<h3 className="text-lg font-semibold text-pro-text-primary">{featureName}</h3>
+					<p className="max-w-sm text-sm text-pro-text-secondary">
+						This feature requires a Pro subscription. Upgrade to unlock it.
+					</p>
 				</div>
 				<button
 					onClick={() => {
 						setSignupSource('pro-dashboard')
 						setPaywallOpen(true)
 					}}
-					className="flex items-center gap-2 rounded-md pro-btn-blue px-6 py-2.5 text-sm font-medium transition-opacity hover:opacity-90"
+					className="flex items-center gap-2 rounded-md pro-btn-primary px-6 py-2.5 text-sm font-medium transition-opacity hover:opacity-90"
 				>
 					<Icon name="sparkles" height={16} width={16} />
 					Upgrade to Pro

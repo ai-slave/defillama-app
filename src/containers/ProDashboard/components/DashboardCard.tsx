@@ -24,7 +24,7 @@ function DashboardAuthorLink({ author }: { author: Dashboard['author'] }) {
 	return (
 		<BasicLink
 			href={`/authors/${author.slug}`}
-			className="relative z-10 mt-1 inline-flex max-w-full items-center gap-1.5 text-xs text-pro-text-label transition-colors hover:text-pro-old-blue"
+			className="relative z-10 mt-1 inline-flex max-w-full items-center gap-1.5 text-xs text-pro-text-label transition-colors hover:text-pro-accent"
 		>
 			{author.avatarUrl ? (
 				// eslint-disable-next-line @next/next/no-img-element
@@ -109,9 +109,9 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 
 	return (
 		<div
-			className={`relative isolate flex ${viewMode === 'grid' ? 'min-h-[220px]' : ''} flex-col overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg transition-[border-color,box-shadow,background-color] duration-200 ease-out hover:border-pro-old-blue/30 hover:bg-pro-blue-300/5 hover:shadow-lg hover:shadow-pro-blue-300/10 dark:hover:border-pro-old-blue/40 dark:hover:bg-pro-blue-300/10 ${className ?? ''}`}
+			className={`relative isolate flex ${viewMode === 'grid' ? 'min-h-[220px]' : ''} flex-col overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg transition-[border-color,box-shadow,background-color] duration-200 ease-out hover:border-pro-accent/30 hover:bg-pro-info-300/5 hover:shadow-lg hover:shadow-pro-info-300/10 dark:hover:border-pro-accent/40 dark:hover:bg-pro-info-300/10 ${className ?? ''}`}
 		>
-			<div className="h-1.5 w-full bg-linear-to-r from-pro-old-blue/20 via-pro-old-blue/10 to-transparent" />
+			<div className="h-1.5 w-full bg-linear-to-r from-pro-accent/20 via-pro-accent/10 to-transparent" />
 
 			<div className="flex flex-1 flex-col gap-1.5 p-3">
 				<div className="flex min-w-0 items-start gap-2">
@@ -127,12 +127,12 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 					{onDelete ? (
 						<div className="flex shrink-0 items-center gap-2">
 							{dashboard.visibility === 'public' ? (
-								<p className="flex items-center gap-1 rounded-md bg-pro-green-100 px-2 py-1.25 text-xs text-pro-green-400 dark:bg-pro-green-300/20 dark:text-pro-green-200">
+								<p className="flex items-center gap-1 rounded-md bg-pro-success-100 px-2 py-1.25 text-xs text-pro-success-400 dark:bg-pro-success-300/20 dark:text-pro-success-200">
 									<Icon name="earth" height={12} width={12} />
 									<span>Public</span>
 								</p>
 							) : (
-								<p className="flex items-center gap-1 rounded-md bg-pro-gold-100 px-2 py-1.25 text-xs text-pro-gold-400 dark:bg-pro-gold-300/20 dark:text-pro-gold-200">
+								<p className="flex items-center gap-1 rounded-md bg-pro-premium-100 px-2 py-1.25 text-xs text-pro-premium-400 dark:bg-pro-premium-300/20 dark:text-pro-premium-200">
 									<Icon name="key" height={12} width={12} />
 									<span>Private</span>
 								</p>

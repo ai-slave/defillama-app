@@ -73,11 +73,11 @@ function DatasetState({
 		return (
 			<div className="flex h-full w-full flex-col p-4">
 				<div className="mb-3">
-					<h3 className="text-lg font-semibold pro-text1">{title}</h3>
+					<h3 className="text-lg font-semibold text-pro-text-primary">{title}</h3>
 				</div>
 				<div className="flex min-h-[320px] flex-1 flex-col items-center justify-center gap-4">
 					<LoadingSpinner />
-					<p className="text-sm pro-text2">Loading CEX analytics...</p>
+					<p className="text-sm text-pro-text-secondary">Loading CEX analytics...</p>
 				</div>
 			</div>
 		)
@@ -87,10 +87,10 @@ function DatasetState({
 		return (
 			<div className="flex h-full w-full flex-col p-4">
 				<div className="mb-3">
-					<h3 className="text-lg font-semibold pro-text1">{title}</h3>
+					<h3 className="text-lg font-semibold text-pro-text-primary">{title}</h3>
 				</div>
 				<div className="flex min-h-[320px] flex-1 items-center justify-center">
-					<div className="text-center pro-text2">{errorMessage}</div>
+					<div className="text-center text-pro-text-secondary">{errorMessage}</div>
 				</div>
 			</div>
 		)
@@ -136,11 +136,11 @@ function SummaryCards({ data }: { data: CexAnalyticsSnapshotResponse }) {
 		<div className="flex h-full w-full flex-col gap-4 p-4">
 			<div className="flex flex-wrap items-start justify-between gap-2">
 				<div>
-					<h3 className="text-lg font-semibold pro-text1">CEX Summary</h3>
-					<p className="text-sm pro-text2">Snapshot metrics across centralized exchanges.</p>
+					<h3 className="text-lg font-semibold text-pro-text-primary">CEX Summary</h3>
+					<p className="text-sm text-pro-text-secondary">Snapshot metrics across centralized exchanges.</p>
 				</div>
 				{data.summary.loadedAt ? (
-					<span className="text-xs tracking-wide pro-text3 uppercase">
+					<span className="text-xs tracking-wide text-pro-text-tertiary uppercase">
 						Loaded {new Date(data.summary.loadedAt).toLocaleString()}
 					</span>
 				) : null}
@@ -148,8 +148,8 @@ function SummaryCards({ data }: { data: CexAnalyticsSnapshotResponse }) {
 			<div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
 				{cards.map((card) => (
 					<div key={card.label} className="rounded-lg border border-pro-cards-border p-3">
-						<p className="text-xs font-medium tracking-wide pro-text3 uppercase">{card.label}</p>
-						<p className="mt-2 text-2xl font-semibold pro-text1">{card.value}</p>
+						<p className="text-xs font-medium tracking-wide text-pro-text-tertiary uppercase">{card.label}</p>
+						<p className="mt-2 text-2xl font-semibold text-pro-text-primary">{card.value}</p>
 					</div>
 				))}
 			</div>
@@ -218,8 +218,10 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 			<div className="mb-3">
 				<div className="flex flex-wrap items-center justify-end gap-4">
 					<div className="mr-auto">
-						<h3 className="text-lg font-semibold pro-text1">CEX Comparison</h3>
-						<p className="text-sm pro-text2">Spot, derivatives, OI, leverage, and efficiency across CEXs.</p>
+						<h3 className="text-lg font-semibold text-pro-text-primary">CEX Comparison</h3>
+						<p className="text-sm text-pro-text-secondary">
+							Spot, derivatives, OI, leverage, and efficiency across CEXs.
+						</p>
 					</div>
 					<div className="flex flex-wrap items-center justify-end gap-2">
 						<ProTableCSVButton
@@ -263,7 +265,7 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 							type="text"
 							placeholder="Search CEXs..."
 							onInput={(event) => setVenueName(event.currentTarget.value)}
-							className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-brand focus:outline-hidden"
+							className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>
@@ -287,7 +289,7 @@ function SpotVsDerivativesChart({ data }: { data: CexAnalyticsTotalsPoint[] }) {
 
 	if (chartData.length === 0) {
 		return (
-			<div className="flex min-h-[320px] items-center justify-center p-4 text-sm pro-text2">
+			<div className="flex min-h-[320px] items-center justify-center p-4 text-sm text-pro-text-secondary">
 				No volume data available.
 			</div>
 		)
@@ -350,7 +352,7 @@ function VenueMarketShareChart({
 
 	if (chartData.length === 0 || venueOrder.length === 0) {
 		return (
-			<div className="flex min-h-[320px] items-center justify-center p-4 text-sm pro-text2">
+			<div className="flex min-h-[320px] items-center justify-center p-4 text-sm text-pro-text-secondary">
 				No market share data available.
 			</div>
 		)

@@ -91,7 +91,7 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 										if (error) setError('')
 									}}
 									placeholder="your.new.email@example.com"
-									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] text-sub-text-primary outline-hidden dark:bg-sub-ink-primary ${
+									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] text-sub-text-primary outline-hidden dark:bg-sub-dark-page ${
 										hasError
 											? 'border-error'
 											: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'

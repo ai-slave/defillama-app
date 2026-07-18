@@ -79,8 +79,8 @@ const QuoteBlock: React.FC<{
 }> = ({ quote, variant = 'primary', size = 'large', mobile }) => {
 	if (!quote.quote && !quote.username) return null
 
-	const bgColor = variant === 'secondary' ? 'bg-research-blue-tint' : 'bg-research-blue-deep'
-	const textColor = variant === 'secondary' ? 'text-research-blue-deep' : 'text-on-brand'
+	const bgColor = variant === 'secondary' ? 'bg-research-accent-tint' : 'bg-research-accent-strong'
+	const textColor = variant === 'secondary' ? 'text-research-accent-strong' : 'text-on-brand'
 
 	const textStyles = mobile
 		? 'text-base leading-[20px] text-center px-6.5 py-3'
@@ -282,7 +282,7 @@ const AutoplayCarousel: React.FC<AutoplayCarouselProps> = ({
 							aria-label={`Go to slide ${idx + 1}`}
 							onClick={() => setSelectedIndex(idx)}
 							className={`h-[8px] w-[8px] rounded-full transition-colors ${
-								idx === selectedIndex ? 'bg-research-blue-deep' : 'bg-tertiary'
+								idx === selectedIndex ? 'bg-research-accent-strong' : 'bg-tertiary'
 							}`}
 						/>
 					))}

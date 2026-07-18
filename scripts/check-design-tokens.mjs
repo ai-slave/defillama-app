@@ -259,7 +259,7 @@ const RULES = [
 		description:
 			'product-theme utility class (pro-*/sub-*/sl-*/ai-*) used in core app code — product palettes must not leak outside their surfaces (`dialog` and `pro-dashboard` from themes/pro.css are not tracked: those names also appear as route slugs / aria roles)',
 		pattern:
-			/(?<![\w-])(?:(?:text|bg|border|from|to|via|fill|stroke|ring|outline|decoration|accent|caret|divide|shadow|placeholder)-(?:pro|sub|sl|ai)-[a-z0-9-]+|pro-(?:text[123]|bg[1237]|border|divider|glass|hover-bg|info-card|btn-(?:purple|blue)(?:-outline)?))(?![\w-])/g,
+			/(?<![\w-])(?:(?:text|bg|border|from|to|via|fill|stroke|ring|outline|decoration|accent|caret|divide|shadow|placeholder)-(?:pro|sub|sl|ai)-[a-z0-9-]+|pro-(?:panel-bg|panel-raised|hover-fill|glass-fill|border|divider|glass|hover-bg|info-card|btn-(?:ai|primary)(?:-outline)?))(?![\w-])/g,
 		productLeak: true
 	},
 	{

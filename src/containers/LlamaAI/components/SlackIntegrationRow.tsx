@@ -63,7 +63,7 @@ function WorkspaceRow({
 }) {
 	const needsReconnect = !workspace.revoked && workspace.needs_reconnect === true
 	return (
-		<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-ai-line-subtle bg-ai-wash-faint p-3">
+		<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-ai-line-subtle bg-ai-hover-faint p-3">
 			<div className="min-w-0 flex-1">
 				<p className="m-0 text-[13px] font-medium text-ai-primary">{workspace.team_name}</p>
 				<p className="m-0 mt-0.5 text-xs text-ai-tertiary">
@@ -95,7 +95,7 @@ function WorkspaceRow({
 						type="button"
 						onClick={onDisconnect}
 						disabled={isDisconnecting}
-						className="rounded-lg border border-ai-line-medium px-3 py-1.5 text-xs whitespace-nowrap hover:bg-ai-wash disabled:opacity-50"
+						className="rounded-lg border border-ai-line-medium px-3 py-1.5 text-xs whitespace-nowrap hover:bg-ai-hover disabled:opacity-50"
 					>
 						{isDisconnecting ? 'Disconnecting…' : 'Disconnect'}
 					</button>
@@ -116,7 +116,7 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 	}
 
 	return (
-		<div className="rounded-xl border border-ai-line-subtle bg-ai-wash-faint p-4">
+		<div className="rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="flex min-w-0 flex-1 items-center gap-3">
 					{glyph}
@@ -141,7 +141,7 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 			</div>
 
 			{link.state.status === 'pending' && (
-				<div className="mt-3 rounded-lg bg-ai-wash p-3 text-xs text-ai-tertiary">
+				<div className="mt-3 rounded-lg bg-ai-hover p-3 text-xs text-ai-tertiary">
 					<div>
 						Waiting for confirmation in Slack. Once you finish in Slack, come back to this page to see your workspace
 						here.
@@ -159,7 +159,7 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 							type="button"
 							onClick={() => link.cancelPending()}
 							disabled={link.isCancelingPending}
-							className="rounded-lg border border-ai-line-medium px-3 py-1.5 text-xs whitespace-nowrap hover:bg-ai-wash disabled:opacity-50"
+							className="rounded-lg border border-ai-line-medium px-3 py-1.5 text-xs whitespace-nowrap hover:bg-ai-hover disabled:opacity-50"
 						>
 							{link.isCancelingPending ? 'Canceling…' : 'Cancel'}
 						</button>

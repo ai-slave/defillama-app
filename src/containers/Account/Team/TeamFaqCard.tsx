@@ -42,10 +42,7 @@ export function TeamFaqCard({ defaultOpenIndex = 0 }: { defaultOpenIndex?: numbe
 					const isLast = index === FAQ_ITEMS.length - 1
 
 					return (
-						<div
-							key={index}
-							className={`py-3 ${!isLast ? 'border-b border-sub-border-slate-100 dark:border-sub-border-strong' : ''}`}
-						>
+						<div key={index} className={`py-3 ${!isLast ? 'border-b border-sub-border' : ''}`}>
 							<button
 								type="button"
 								id={questionId}

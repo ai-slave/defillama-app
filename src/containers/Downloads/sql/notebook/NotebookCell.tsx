@@ -106,7 +106,7 @@ export const NotebookCell = forwardRef<SqlCellHandle, NotebookCellProps>(functio
 				<span
 					aria-hidden
 					title="Upstream cell was edited — re-run to refresh"
-					className="pointer-events-none absolute inset-y-1 left-0 w-0.5 rounded-full bg-pro-gold-300/70"
+					className="pointer-events-none absolute inset-y-1 left-0 w-0.5 rounded-full bg-pro-premium-300/70"
 				/>
 			) : null}
 
@@ -129,7 +129,7 @@ export const NotebookCell = forwardRef<SqlCellHandle, NotebookCellProps>(functio
 					<CellTypeBadge type={cell.type} />
 				</span>
 				{cell.running && cell.loadingStage ? (
-					<span className="inline-flex items-center gap-1 text-[11px] text-pro-gold-300">
+					<span className="inline-flex items-center gap-1 text-[11px] text-pro-premium-300">
 						<LoadingSpinner size={10} />
 						{cell.loadingStage}
 					</span>
@@ -221,8 +221,8 @@ function CellTypeBadge({ type }: { type: CellType }) {
 		type === 'sql'
 			? 'bg-brand/15 text-brand'
 			: type === 'markdown'
-				? 'bg-pro-purple-300/15 text-pro-purple-300'
-				: 'bg-pro-gold-300/15 text-pro-gold-300'
+				? 'bg-pro-ai-300/15 text-pro-ai-300'
+				: 'bg-pro-premium-300/15 text-pro-premium-300'
 	return (
 		<span className={`inline-flex h-[14px] items-center rounded-[3px] px-1 font-mono text-[9px] leading-none ${tone}`}>
 			{label}

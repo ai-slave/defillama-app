@@ -36,19 +36,19 @@ export function ConfirmationModal({
 				hideOnInteractOutside
 			>
 				<div className="mb-6 flex items-center justify-between">
-					<h2 className="text-xl font-semibold pro-text1">{title}</h2>
+					<h2 className="text-xl font-semibold text-pro-text-primary">{title}</h2>
 					<Ariakit.DialogDismiss
-						className="rounded-md pro-hover-bg p-1 pro-text1 transition-colors"
+						className="rounded-md pro-hover-bg p-1 text-pro-text-primary transition-colors"
 						aria-label="Close modal"
 					>
 						<Icon name="x" height={20} width={20} />
 					</Ariakit.DialogDismiss>
 				</div>
 
-				<p className="mb-6 pro-text2">{message}</p>
+				<p className="mb-6 text-pro-text-secondary">{message}</p>
 
 				<div className="flex justify-end gap-3">
-					<Ariakit.DialogDismiss className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm pro-text2 transition-colors hover:pro-text1">
+					<Ariakit.DialogDismiss className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary">
 						{cancelText}
 					</Ariakit.DialogDismiss>
 					<button

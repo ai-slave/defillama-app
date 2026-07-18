@@ -11,7 +11,7 @@ export function LlamaAIWelcomeModal({ isOpen, onClose }: LlamaAIWelcomeModalProp
 	return (
 		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && onClose()}>
 			<Ariakit.Dialog
-				className="dialog fixed inset-0 z-50 m-auto h-fit w-full max-w-lg overflow-hidden rounded-2xl border border-[#E6E6E6] bg-[#FFFFFF] p-0 shadow-xl dark:border-sub-line dark:bg-sub-card"
+				className="dialog fixed inset-0 z-50 m-auto h-fit w-full max-w-lg overflow-hidden rounded-2xl border border-[#E6E6E6] bg-[#FFFFFF] p-0 shadow-xl dark:border-sub-line dark:bg-sub-dark-card"
 				backdrop={<div className="backdrop fixed inset-0 bg-black/60 backdrop-blur-sm" />}
 				portal
 				unmountOnHide

@@ -246,11 +246,11 @@ export function EquitiesCompaniesDataset() {
 		return (
 			<div className="flex h-full w-full flex-col p-4">
 				<div className="mb-3">
-					<h3 className="text-lg font-semibold pro-text1">Equities</h3>
+					<h3 className="text-lg font-semibold text-pro-text-primary">Equities</h3>
 				</div>
 				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
 					<LoadingSpinner />
-					<p className="text-sm pro-text2">Loading equities data...</p>
+					<p className="text-sm text-pro-text-secondary">Loading equities data...</p>
 				</div>
 			</div>
 		)
@@ -260,10 +260,10 @@ export function EquitiesCompaniesDataset() {
 		return (
 			<div className="flex h-full w-full flex-col p-4">
 				<div className="mb-3">
-					<h3 className="text-lg font-semibold pro-text1">Equities</h3>
+					<h3 className="text-lg font-semibold text-pro-text-primary">Equities</h3>
 				</div>
 				<div className="flex min-h-[500px] flex-1 items-center justify-center">
-					<div className="text-center pro-text2">Failed to load equities data</div>
+					<div className="text-center text-pro-text-secondary">Failed to load equities data</div>
 				</div>
 			</div>
 		)
@@ -273,7 +273,7 @@ export function EquitiesCompaniesDataset() {
 		<div className="flex h-full w-full flex-col p-4">
 			<div className="mb-3">
 				<div className="flex flex-wrap items-center justify-end gap-4">
-					<h3 className="mr-auto text-lg font-semibold pro-text1">Equities</h3>
+					<h3 className="mr-auto text-lg font-semibold text-pro-text-primary">Equities</h3>
 					<div className="flex flex-wrap items-center justify-end gap-2">
 						<ProTableCSVButton
 							onClick={() => {
@@ -321,7 +321,7 @@ export function EquitiesCompaniesDataset() {
 							type="text"
 							placeholder="Search companies..."
 							onInput={(e) => setSearchValue(e.currentTarget.value)}
-							className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-brand focus:outline-hidden"
+							className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>

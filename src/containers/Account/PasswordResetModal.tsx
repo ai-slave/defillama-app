@@ -51,7 +51,7 @@ export function PasswordResetModal({
 									Resend email
 								</button>
 							</div>
-							{cooldownMessage && <p className="text-xs text-sub-orange-400">{cooldownMessage}</p>}
+							{cooldownMessage && <p className="text-xs text-sub-warning-text-dark">{cooldownMessage}</p>}
 						</div>
 					</div>
 				</div>

@@ -31,7 +31,7 @@ export function VerifyEmailConfirmDialog({
 				<div className="flex flex-col gap-2">
 					<button
 						onClick={onConfirm}
-						className="w-full rounded-lg border border-sub-purple-500 bg-sub-purple-500 py-3 text-sm font-medium text-on-brand transition-colors hover:bg-sub-purple-hover"
+						className="w-full rounded-lg border border-sub-purple bg-sub-purple py-3 text-sm font-medium text-on-brand transition-colors hover:bg-sub-purple-hover"
 					>
 						Verify now
 					</button>

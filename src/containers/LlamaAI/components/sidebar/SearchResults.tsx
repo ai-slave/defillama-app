@@ -17,10 +17,10 @@ function SourceBadge({ type }: { type: SearchMatch['source_type'] }) {
 	const label = type === 'user_message' ? 'You' : type === 'session_title' ? 'Title' : 'AI'
 	const colorClass =
 		type === 'user_message'
-			? 'bg-ai-blue-deep/10 text-ai-blue-deep'
+			? 'bg-ai-accent-blue-deep/10 text-ai-accent-blue-deep'
 			: type === 'session_title'
-				? 'bg-ai-violet/10 text-ai-violet'
-				: 'bg-ai-wash text-ai-tertiary'
+				? 'bg-ai-mention/10 text-ai-mention'
+				: 'bg-ai-hover text-ai-tertiary'
 	return <span className={`shrink-0 rounded-sm px-1 py-0.5 text-[9px] font-medium ${colorClass}`}>{label}</span>
 }
 

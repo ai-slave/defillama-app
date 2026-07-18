@@ -120,7 +120,7 @@ export function DiscoverySection({
 				</div>
 				<BasicLink
 					href={seeAllHref}
-					className="flex items-center gap-1.5 rounded-full border border-pro-cards-border bg-pro-cards-bg px-3 py-1.5 text-sm font-medium text-pro-old-blue transition-colors duration-150 hover:border-pro-old-blue/30 hover:bg-pro-old-blue/10"
+					className="flex items-center gap-1.5 rounded-full border border-pro-cards-border bg-pro-cards-bg px-3 py-1.5 text-sm font-medium text-pro-accent transition-colors duration-150 hover:border-pro-accent/30 hover:bg-pro-accent/10"
 				>
 					See all
 					<Icon name="arrow-right" height={14} width={14} />

@@ -119,7 +119,7 @@ export function ChartTab(props: ChartTabProps) {
 						onClick={() => onChartModeChange('builder')}
 						className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
 							chartMode === 'builder'
-								? 'bg-pro-old-blue text-on-brand shadow-md ring-1 ring-black/10'
+								? 'bg-pro-accent text-on-brand shadow-md ring-1 ring-black/10'
 								: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary hover:shadow-sm'
 						}`}
 					>
@@ -137,7 +137,7 @@ export function ChartTab(props: ChartTabProps) {
 						onClick={() => onChartModeChange('manual')}
 						className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
 							chartMode === 'manual'
-								? 'bg-pro-old-blue text-on-brand shadow-md ring-1 ring-black/10'
+								? 'bg-pro-accent text-on-brand shadow-md ring-1 ring-black/10'
 								: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary hover:shadow-sm'
 						}`}
 					>

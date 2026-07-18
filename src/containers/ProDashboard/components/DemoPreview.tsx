@@ -53,7 +53,7 @@ const DemoChartCard = ({ chart }: { chart: ChartConfig }) => {
 	return (
 		<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]">
 			<div className="mr-auto flex items-center gap-1 p-1 md:p-3">
-				<div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-pro-old-blue text-xs text-on-brand">
+				<div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-pro-accent text-xs text-on-brand">
 					{itemName.charAt(0).toUpperCase()}
 				</div>
 				<h2 className="text-base font-semibold">
@@ -489,27 +489,27 @@ export const DemoPreview = () => {
 								<ul className="mb-8 flex-1 space-y-3 text-left text-sm">
 									<li className="flex items-start gap-2">
 										<Icon name="star" height={14} width={14} className="mt-0.5 shrink-0 text-brand" />
-										<span className="font-semibold pro-text1">Everything in Free, plus:</span>
+										<span className="font-semibold text-pro-text-primary">Everything in Free, plus:</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
-										<span className="pro-text1">Create unlimited custom dashboards</span>
+										<span className="text-pro-text-primary">Create unlimited custom dashboards</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
-										<span className="pro-text1">CSV data downloads</span>
+										<span className="text-pro-text-primary">CSV data downloads</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
-										<span className="pro-text1">Advanced analytics & custom columns</span>
+										<span className="text-pro-text-primary">Advanced analytics & custom columns</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
-										<span className="pro-text1">Full LlamaFeed access with AI summaries</span>
+										<span className="text-pro-text-primary">Full LlamaFeed access with AI summaries</span>
 									</li>
 									<li className="flex items-start gap-2">
 										<Icon name="check" height={14} width={14} className="mt-0.5 shrink-0 text-success" />
-										<span className="pro-text1">Priority access to new features</span>
+										<span className="text-pro-text-primary">Priority access to new features</span>
 									</li>
 								</ul>
 								<Link href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}>

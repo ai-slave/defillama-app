@@ -117,7 +117,7 @@ export function CitationRowsTable({
 							<th
 								key={c}
 								className={`px-2 py-1 text-left font-medium ${
-									citedCell && citedCell.column === c ? 'text-ai-blue' : 'text-ai-tertiary'
+									citedCell && citedCell.column === c ? 'text-ai-accent-blue' : 'text-ai-tertiary'
 								}`}
 							>
 								{humanizeColumn(c)}
@@ -136,14 +136,14 @@ export function CitationRowsTable({
 										ref={isCited ? citedCellRef : null}
 										className={
 											isCited
-												? 'rounded-[3px] border border-ai-blue/45 bg-ai-blue/12 px-2 py-1 font-medium text-ai-blue'
+												? 'rounded-[3px] border border-ai-accent-blue/45 bg-ai-accent-blue/12 px-2 py-1 font-medium text-ai-accent-blue'
 												: 'px-2 py-1 text-ai-secondary'
 										}
 									>
 										{isCited ? (
 											<span className="inline-flex items-center gap-1">
 												{formatCellValue(row[c])}
-												<span className="rounded-[2px] bg-ai-blue px-1 py-px text-[8px] leading-none font-semibold tracking-wide text-ai-white uppercase">
+												<span className="rounded-[2px] bg-ai-accent-blue px-1 py-px text-[8px] leading-none font-semibold tracking-wide text-ai-white uppercase">
 													cited
 												</span>
 											</span>

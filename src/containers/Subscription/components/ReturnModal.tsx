@@ -42,7 +42,7 @@ export function ReturnModal({ isOpen, onClose, returnUrl }: ReturnModalProps) {
 					<div className="flex flex-col gap-3">
 						<BasicLink
 							href={returnUrl}
-							className="w-full rounded-lg bg-sub-purple-500 px-4 py-3 text-center font-medium text-on-brand transition-colors hover:bg-sub-purple-hover"
+							className="w-full rounded-lg bg-sub-purple px-4 py-3 text-center font-medium text-on-brand transition-colors hover:bg-sub-purple-hover"
 						>
 							Yes, take me back
 						</BasicLink>

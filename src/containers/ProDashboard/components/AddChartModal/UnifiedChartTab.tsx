@@ -718,7 +718,7 @@ export function UnifiedChartTab({
 								onClick={() => handleChainProtocolTabChange('chain')}
 								className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold transition-all duration-200 ${
 									selectedChartTab === 'chain'
-										? 'bg-pro-old-blue text-on-brand shadow-md ring-1 ring-black/10'
+										? 'bg-pro-accent text-on-brand shadow-md ring-1 ring-black/10'
 										: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary hover:shadow-sm'
 								}`}
 							>
@@ -739,7 +739,7 @@ export function UnifiedChartTab({
 								onClick={() => handleChainProtocolTabChange('protocol')}
 								className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold transition-all duration-200 ${
 									selectedChartTab === 'protocol'
-										? 'bg-pro-old-blue text-on-brand shadow-md ring-1 ring-black/10'
+										? 'bg-pro-accent text-on-brand shadow-md ring-1 ring-black/10'
 										: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary hover:shadow-sm'
 								}`}
 							>
@@ -759,7 +759,7 @@ export function UnifiedChartTab({
 					</div>
 
 					<div className="shrink-0">
-						<span className="mb-2 block text-xs font-medium pro-text2">Select Chart Type</span>
+						<span className="mb-2 block text-xs font-medium text-pro-text-secondary">Select Chart Type</span>
 						<ChartTypePills
 							chartTypes={chartTypeOptions}
 							selectedType={selectedChartTypeSingle}
@@ -787,12 +787,12 @@ export function UnifiedChartTab({
 						value={unifiedChartName}
 						onChange={(e) => onUnifiedChartNameChange(e.target.value)}
 						placeholder="Chart name..."
-						className="w-full shrink-0 rounded-sm border border-pro-form-control-border bg-surface-elevated-1 px-2 py-1.5 text-xs pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden"
+						className="w-full shrink-0 rounded-sm border border-pro-form-control-border bg-surface-elevated-1 px-2 py-1.5 text-xs text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 					/>
 
 					{(selectedChartTab === 'chain' || selectedChartTab === 'protocol') && bulkChartType ? (
 						<div className="shrink-0">
-							<span className="mb-2 block text-xs font-medium pro-text2">Change All Chart Types</span>
+							<span className="mb-2 block text-xs font-medium text-pro-text-secondary">Change All Chart Types</span>
 							<ChartTypePills
 								chartTypes={bulkChartTypeOptions}
 								selectedType={bulkChartType}
@@ -826,12 +826,12 @@ export function UnifiedChartTab({
 										onChange={(e) => onComposerItemColorChange(item.id, e.target.value)}
 										className="size-4 cursor-pointer rounded-sm border-0 bg-transparent p-0"
 									/>
-									<span className="whitespace-nowrap pro-text1">
+									<span className="whitespace-nowrap text-pro-text-primary">
 										{item.protocol || item.chain} - {CHART_TYPES[item.type]?.title || item.type}
 									</span>
 									<button
 										onClick={() => onRemoveFromComposer(item.id)}
-										className="pro-text3 transition-colors hover:text-error"
+										className="text-pro-text-tertiary transition-colors hover:text-error"
 									>
 										<Icon name="x" height={12} width={12} />
 									</button>

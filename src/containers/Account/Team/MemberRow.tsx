@@ -38,11 +38,7 @@ export function MemberRow({ member }: { member: TeamMember }) {
 						{isCurrentUser && <span className="shrink-0 text-[10px] text-sub-text-muted">(you)</span>}
 					</div>
 					<div className="mt-1 flex items-center gap-2">
-						<span
-							className={`text-xs ${
-								hasSubscription ? 'text-sub-green-600 dark:text-sub-green-400' : 'text-sub-text-muted'
-							}`}
-						>
+						<span className={`text-xs ${hasSubscription ? 'text-sub-success' : 'text-sub-text-muted'}`}>
 							{getSubscriptionLabel(member.subscriptionType)}
 						</span>
 					</div>

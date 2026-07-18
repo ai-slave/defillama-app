@@ -127,7 +127,7 @@ export function InvestorsContent({
 		<>
 			{!hasCustomHeader && (
 				<header className="hidden items-center gap-3 md:flex">
-					<h1 className="heading-sm tracking-tight pro-text1">
+					<h1 className="heading-sm tracking-tight text-pro-text-primary">
 						{activeTab === 'dashboard' ? displayName || 'Dashboard' : tabs.find((t) => t.id === activeTab)?.label}
 					</h1>
 				</header>
@@ -201,7 +201,7 @@ export function CustomOnlyContent({
 		<>
 			{!hasCustomHeader && (
 				<header className="hidden items-center gap-3 md:flex">
-					<h1 className="heading-sm tracking-tight pro-text1">
+					<h1 className="heading-sm tracking-tight text-pro-text-primary">
 						{tabs.find((t) => t.id === activeTab)?.label ?? displayName}
 					</h1>
 				</header>

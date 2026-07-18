@@ -52,7 +52,7 @@ export function ChartCell({ cell, availableSources, onSourceChange, onChartConfi
 					</select>
 				)}
 				{selected && !selected.hasRun ? (
-					<span className="inline-flex items-center gap-1 text-pro-gold-300">
+					<span className="inline-flex items-center gap-1 text-pro-premium-300">
 						<Icon name="alert-triangle" className="size-3" />
 						source not yet run
 					</span>

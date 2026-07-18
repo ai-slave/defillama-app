@@ -15,7 +15,7 @@ export function BranchArrows({
 	const goPrev = currentVersion > 1 ? siblings[currentVersion - 2]?.leafMessageId : null
 	const goNext = currentVersion < totalVersions ? siblings[currentVersion]?.leafMessageId : null
 	const arrowClass =
-		'rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-secondary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-ai-muted'
+		'rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-ai-muted'
 	return (
 		<div className="flex items-center gap-0.5">
 			<Tooltip

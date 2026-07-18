@@ -151,7 +151,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 						</p>
 					</div>
 				</div>
-				<Ariakit.DialogDismiss className="-mr-1.5 rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-wash hover:text-ai-primary">
+				<Ariakit.DialogDismiss className="-mr-1.5 rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary">
 					<Icon name="x" height={16} width={16} />
 				</Ariakit.DialogDismiss>
 			</header>
@@ -179,7 +179,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 							type="button"
 							onClick={() => void onStartInstall()}
 							disabled={installing}
-							className="flex items-center justify-center gap-2 self-start rounded-md border border-ai-contrast bg-ai-contrast px-3 py-1.5 text-xs font-medium text-ai-on-contrast transition-opacity hover:opacity-90 disabled:opacity-50"
+							className="flex items-center justify-center gap-2 self-start rounded-md border border-ai-inverse bg-ai-inverse px-3 py-1.5 text-xs font-medium text-ai-on-inverse transition-opacity hover:opacity-90 disabled:opacity-50"
 						>
 							{installing ? <LoadingSpinner size={12} /> : <Icon name="github" height={14} width={14} />}
 							Install GitHub App

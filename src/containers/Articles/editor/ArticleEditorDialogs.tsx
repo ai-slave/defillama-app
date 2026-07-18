@@ -29,7 +29,7 @@ export function CoverDetailsDialog({ article, publishErrors, store, updateCoverF
 				</div>
 				<Ariakit.DialogDismiss
 					aria-label="Close"
-					className="rounded-md p-1.5 text-secondary hover:bg-research-link-hover-bg"
+					className="rounded-md p-1.5 text-secondary hover:bg-research-tint-hover"
 				>
 					<Icon name="x" className="size-4" />
 				</Ariakit.DialogDismiss>
@@ -143,7 +143,7 @@ export function DeleteArticleDialog({
 			<div className="mt-5 flex justify-end gap-2">
 				<Ariakit.DialogDismiss
 					disabled={isPending}
-					className="flex h-9 items-center rounded-md border border-medium bg-transparent px-3 text-xs font-medium text-secondary transition-colors hover:bg-research-link-hover-bg hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+					className="flex h-9 items-center rounded-md border border-medium bg-transparent px-3 text-xs font-medium text-secondary transition-colors hover:bg-research-tint-hover hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					Cancel
 				</Ariakit.DialogDismiss>

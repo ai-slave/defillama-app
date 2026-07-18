@@ -12,7 +12,7 @@ function AuthorCard({ entry }: { entry: TopAuthorEntry }) {
 	return (
 		<BasicLink
 			href={`/authors/${author.slug}`}
-			className="group flex h-full flex-col gap-3 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4 transition-colors hover:border-pro-old-blue/40"
+			className="group flex h-full flex-col gap-3 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4 transition-colors hover:border-pro-accent/40"
 		>
 			<div className="flex items-center gap-3">
 				{author.avatarUrl ? (
@@ -27,7 +27,7 @@ function AuthorCard({ entry }: { entry: TopAuthorEntry }) {
 					</span>
 				)}
 				<div className="min-w-0">
-					<p className="truncate text-sm font-semibold text-pro-text-primary group-hover:text-pro-old-blue">
+					<p className="truncate text-sm font-semibold text-pro-text-primary group-hover:text-pro-accent">
 						{author.displayName}
 					</p>
 					<p className="truncate text-xs text-pro-text-label">@{author.slug}</p>

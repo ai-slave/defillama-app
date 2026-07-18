@@ -99,11 +99,11 @@ export function YieldsDataset({
 			{isLoading ? (
 				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
 					<LoadingSpinner />
-					<p className="text-sm pro-text2">Loading yields data...</p>
+					<p className="text-sm text-pro-text-secondary">Loading yields data...</p>
 				</div>
 			) : error ? (
 				<div className="flex min-h-[500px] flex-1 items-center justify-center">
-					<div className="text-center pro-text2">Failed to load yields data</div>
+					<div className="text-center text-pro-text-secondary">Failed to load yields data</div>
 				</div>
 			) : (
 				<>

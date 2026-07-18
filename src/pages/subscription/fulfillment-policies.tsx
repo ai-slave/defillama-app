@@ -53,7 +53,7 @@ export function SubscribeLayout2({
 			</Head>
 			<LinkPreviewCard />
 			<div className="col-span-full flex min-h-screen w-full flex-col bg-[oklch(0.148_0.004_228.8)] text-on-brand">
-				<header className="sticky top-0 z-50 border-b border-sub-line/40 bg-sub-ink/80 backdrop-blur-md">
+				<header className="sticky top-0 z-50 border-b border-sub-line/40 bg-sub-dark-panel/80 backdrop-blur-md">
 					<div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 xl:max-w-7xl 2xl:max-w-[1440px]">
 						<BasicLink href="/" className="flex items-center gap-3">
 							<img src="/assets/llama.webp" alt="DefiLlama" width={32} height={32} className="rounded-full" />

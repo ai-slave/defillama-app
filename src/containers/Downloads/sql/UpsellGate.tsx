@@ -334,7 +334,7 @@ function TabStrip({ activeTab, onTabChange }: { activeTab: TabKey; onTabChange: 
 						}`}
 					>
 						<span className="flex size-3 shrink-0 items-center justify-center" aria-hidden>
-							{t.dirty ? <span className="size-1.5 rounded-full bg-pro-gold-300" /> : null}
+							{t.dirty ? <span className="size-1.5 rounded-full bg-pro-premium-300" /> : null}
 						</span>
 						<Icon
 							name={t.kind === 'notebook' ? 'layers' : 'file-text'}
@@ -504,8 +504,8 @@ function SqlNotebookCell() {
 
 				<div className="mt-2.5 flex items-center justify-between gap-2 text-[10.5px]">
 					<span className="font-mono text-pro-text-tertiary tabular-nums">7 rows · 5 cols · 412ms</span>
-					<span className="flex items-center gap-1.5 font-mono text-pro-green-300">
-						<span aria-hidden className="inline-block size-1.5 rounded-full bg-pro-green-300" />
+					<span className="flex items-center gap-1.5 font-mono text-pro-success-300">
+						<span aria-hidden className="inline-block size-1.5 rounded-full bg-pro-success-300" />
 						<span className="tracking-[0.12em] uppercase">cached</span>
 					</span>
 				</div>
@@ -581,8 +581,8 @@ function CellHeader({ name, badge, action }: { name: string; badge: 'sql' | 'md'
 function CellTypeBadge({ kind }: { kind: 'sql' | 'md' | 'chart' }) {
 	const map = {
 		sql: { label: 'SQL', cls: 'bg-sub-brand-primary/15 text-sub-brand-primary' },
-		md: { label: 'MD', cls: 'bg-pro-purple-300/15 text-pro-purple-300' },
-		chart: { label: 'CHART', cls: 'bg-pro-gold-300/15 text-pro-gold-300' }
+		md: { label: 'MD', cls: 'bg-pro-ai-300/15 text-pro-ai-300' },
+		chart: { label: 'CHART', cls: 'bg-pro-premium-300/15 text-pro-premium-300' }
 	}[kind]
 	return (
 		<span
@@ -599,8 +599,8 @@ function AddCellBar() {
 			<span aria-hidden className="h-px flex-1 bg-border-subtle" />
 			<span className="inline-flex items-center gap-3 rounded-md text-[11px] text-pro-text-tertiary">
 				<AddCellChip dot="bg-sub-brand-primary" label="Query" />
-				<AddCellChip dot="bg-pro-gold-300" label="Visualize" />
-				<AddCellChip dot="bg-pro-purple-300" label="Narrate" />
+				<AddCellChip dot="bg-pro-premium-300" label="Visualize" />
+				<AddCellChip dot="bg-pro-ai-300" label="Narrate" />
 			</span>
 			<span aria-hidden className="h-px flex-1 bg-border-subtle" />
 		</div>
@@ -629,8 +629,8 @@ function QueryBody() {
 					<span className="truncate font-mono text-xs font-medium text-pro-text-secondary">fees-vs-revenue.sql</span>
 				</div>
 				<span className="flex shrink-0 items-center gap-2 text-[11px]">
-					<span aria-hidden className="inline-block size-1.5 rounded-full bg-pro-green-300" />
-					<span className="font-mono tracking-[0.12em] text-pro-green-300 uppercase">ready</span>
+					<span aria-hidden className="inline-block size-1.5 rounded-full bg-pro-success-300" />
+					<span className="font-mono tracking-[0.12em] text-pro-success-300 uppercase">ready</span>
 					<span aria-hidden className="text-pro-text-tertiary/40">
 						·
 					</span>
@@ -698,8 +698,8 @@ function AltQueryBody() {
 				<div className="flex items-center gap-2 truncate">
 					<Icon name="file-text" className="size-3.5 shrink-0 text-pro-text-tertiary" />
 					<span className="truncate font-mono text-xs font-medium text-pro-text-secondary">chains-tvl.sql</span>
-					<span aria-hidden className="ml-1 inline-block size-1.5 rounded-full bg-pro-gold-300" />
-					<span className="font-mono text-[10px] tracking-[0.12em] text-pro-gold-300 uppercase">unsaved</span>
+					<span aria-hidden className="ml-1 inline-block size-1.5 rounded-full bg-pro-premium-300" />
+					<span className="font-mono text-[10px] tracking-[0.12em] text-pro-premium-300 uppercase">unsaved</span>
 				</div>
 				<span className="flex shrink-0 items-center gap-2 text-[11px]">
 					<span className="font-mono text-pro-text-tertiary tabular-nums">86ms</span>
@@ -866,7 +866,7 @@ function KW({ children }: { children: ReactNode }) {
 }
 
 function NUM({ children }: { children: ReactNode }) {
-	return <span className="text-pro-green-300">{children}</span>
+	return <span className="text-pro-success-300">{children}</span>
 }
 
 function COMMENT({ children }: { children: ReactNode }) {

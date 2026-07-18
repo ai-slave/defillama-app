@@ -56,7 +56,7 @@ export function ApiAccessCard({
 					<span className="text-base leading-5 font-medium text-sub-text-primary">API Access</span>
 				</div>
 
-				<div className="flex flex-col items-center gap-4 rounded-lg bg-sub-surface-panel px-4 py-8 text-center dark:bg-sub-ink-primary">
+				<div className="flex flex-col items-center gap-4 rounded-lg bg-sub-surface-panel px-4 py-8 text-center dark:bg-sub-dark-page">
 					<p className="max-w-sm text-sm text-sub-text-muted">
 						You don't have an API key yet. Generate one to start making requests to the DefiLlama API.
 					</p>
@@ -121,7 +121,7 @@ export function ApiAccessCard({
 						</button>
 					</div>
 				</div>
-				<div className="rounded-lg bg-sub-surface-panel px-3 py-2.5 dark:bg-sub-ink-primary">
+				<div className="rounded-lg bg-sub-surface-panel px-3 py-2.5 dark:bg-sub-dark-page">
 					<code className="font-mono text-xs leading-5 break-all text-sub-text-muted">
 						{!apiKey ? '...' : showKey ? apiKey : '•'.repeat(apiKey.length)}
 					</code>
@@ -129,7 +129,7 @@ export function ApiAccessCard({
 			</div>
 
 			{/* API Usage */}
-			<div className="flex flex-col gap-4 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-ink-primary">
+			<div className="flex flex-col gap-4 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-dark-page">
 				<span className="text-sm text-sub-text-primary">API Usage</span>
 				<div className="flex flex-col gap-2">
 					<div className="flex items-center justify-between">
@@ -153,7 +153,7 @@ export function ApiAccessCard({
 
 			{/* Overage */}
 			{canManageOverage && (
-				<div className="flex flex-col gap-2 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-ink-primary">
+				<div className="flex flex-col gap-2 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-dark-page">
 					<div className="flex items-center justify-between gap-4">
 						<span className="text-sm text-sub-text-primary">
 							Allow extra usage charges{' '}

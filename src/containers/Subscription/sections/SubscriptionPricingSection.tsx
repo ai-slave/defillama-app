@@ -41,7 +41,7 @@ export function SubscriptionPricingSection({
 						The Smartest Way to Navigate <br className="hidden md:inline" />
 						Onchain Data
 					</h1>
-					<p className="text-lg leading-7 text-sub-text-slate-500 md:w-[540px] md:text-base md:leading-6 md:text-sub-text-secondary dark:text-sub-text-secondary-dark dark:md:text-sub-text-secondary-dark">
+					<p className="text-lg leading-7 text-sub-text-cool md:w-[540px] md:text-base md:leading-6 md:text-sub-text-secondary dark:md:text-sub-text-secondary">
 						Analyze 6,000+ protocols across 400+ chains with AI, custom dashboards, live data feeds and premium API
 						endpoints.
 					</p>
@@ -64,9 +64,7 @@ export function SubscriptionPricingSection({
 						aria-pressed={isMonthly}
 						onClick={() => onBillingCycleChange('monthly')}
 						className={`relative z-10 h-14 flex-1 rounded-full text-base leading-5 font-medium transition-colors duration-300 md:h-12 md:text-sm ${
-							isMonthly
-								? 'text-on-brand'
-								: 'text-sub-text-navy-700 md:text-sub-text-primary dark:text-sub-text-primary-dark'
+							isMonthly ? 'text-on-brand' : 'text-sub-heading md:text-sub-text-primary dark:text-sub-text-primary'
 						}`}
 					>
 						Monthly
@@ -76,9 +74,7 @@ export function SubscriptionPricingSection({
 						aria-pressed={isYearly}
 						onClick={() => onBillingCycleChange('yearly')}
 						className={`relative z-10 flex h-14 flex-1 flex-col items-center justify-center rounded-full text-base leading-5 font-medium transition-colors duration-300 md:h-12 md:text-sm ${
-							isYearly
-								? 'text-on-brand'
-								: 'text-sub-text-navy-700 md:text-sub-text-primary dark:text-sub-text-primary-dark'
+							isYearly ? 'text-on-brand' : 'text-sub-heading md:text-sub-text-primary dark:text-sub-text-primary'
 						}`}
 					>
 						<span>Yearly</span>
@@ -89,7 +85,7 @@ export function SubscriptionPricingSection({
 						</span>
 					</button>
 				</div>
-				<p className="text-xs leading-4 text-sub-text-slate-500 md:text-sub-text-secondary dark:text-sub-text-secondary-dark dark:md:text-sub-text-secondary-dark">
+				<p className="text-xs leading-4 text-sub-text-cool md:text-sub-text-secondary dark:md:text-sub-text-secondary">
 					Cancel Anytime, Crypto &amp; Card Payments
 				</p>
 			</div>

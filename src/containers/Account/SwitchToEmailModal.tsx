@@ -195,7 +195,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 										if (error) setError('')
 									}}
 									placeholder="your.email@example.com"
-									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] text-sub-text-primary outline-hidden dark:bg-sub-ink-primary ${
+									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] text-sub-text-primary outline-hidden dark:bg-sub-dark-page ${
 										error
 											? 'border-error'
 											: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
@@ -244,7 +244,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 										if (error) setError('')
 									}}
 									placeholder="000000"
-									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] tracking-widest text-sub-text-primary outline-hidden dark:bg-sub-ink-primary ${
+									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] tracking-widest text-sub-text-primary outline-hidden dark:bg-sub-dark-page ${
 										error
 											? 'border-error'
 											: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
@@ -264,7 +264,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 											if (error) setError('')
 										}}
 										placeholder="At least 8 characters"
-										className={`h-10 w-full rounded-lg border bg-sub-surface-panel pr-10 pl-3 text-sm leading-[21px] text-sub-text-primary outline-hidden dark:bg-sub-ink-primary ${
+										className={`h-10 w-full rounded-lg border bg-sub-surface-panel pr-10 pl-3 text-sm leading-[21px] text-sub-text-primary outline-hidden dark:bg-sub-dark-page ${
 											error
 												? 'border-error'
 												: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
@@ -293,7 +293,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 											if (error) setError('')
 										}}
 										placeholder="Re-enter your password"
-										className={`h-10 w-full rounded-lg border bg-sub-surface-panel pr-10 pl-3 text-sm leading-[21px] text-sub-text-primary outline-hidden dark:bg-sub-ink-primary ${
+										className={`h-10 w-full rounded-lg border bg-sub-surface-panel pr-10 pl-3 text-sm leading-[21px] text-sub-text-primary outline-hidden dark:bg-sub-dark-page ${
 											error
 												? 'border-error'
 												: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'

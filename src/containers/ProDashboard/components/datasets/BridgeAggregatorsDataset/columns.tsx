@@ -13,7 +13,7 @@ export const bridgeAggregatorsDatasetColumns: ColumnDef<any>[] = [
 			return (
 				<div className="flex items-center gap-3">
 					<TokenLogo src={row.original.logo} alt={`Logo of ${row.original.name}`} size={28} />
-					<span className="font-medium pro-text1">{row.original.name}</span>
+					<span className="font-medium text-pro-text-primary">{row.original.name}</span>
 				</div>
 			)
 		}
@@ -25,7 +25,7 @@ export const bridgeAggregatorsDatasetColumns: ColumnDef<any>[] = [
 		cell: ({ getValue }) => {
 			const value = getValue() as number
 			return (
-				<span className={` ${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'pro-text2'}`}>
+				<span className={` ${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'text-pro-text-secondary'}`}>
 					{value ? <PercentChange percent={value} fontWeight={100} /> : '-'}
 				</span>
 			)
@@ -38,7 +38,7 @@ export const bridgeAggregatorsDatasetColumns: ColumnDef<any>[] = [
 		cell: ({ getValue }) => {
 			const value = getValue() as number
 			return (
-				<span className={` ${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'pro-text2'}`}>
+				<span className={` ${value > 0 ? 'text-success' : value < 0 ? 'text-error' : 'text-pro-text-secondary'}`}>
 					{value ? <PercentChange percent={value} fontWeight={100} /> : '-'}
 				</span>
 			)
@@ -48,19 +48,19 @@ export const bridgeAggregatorsDatasetColumns: ColumnDef<any>[] = [
 		header: '24h Volume',
 		accessorKey: 'total24h',
 		size: 145,
-		cell: ({ getValue }) => <span className="pro-text1">{formattedNum(getValue() as number, true)}</span>
+		cell: ({ getValue }) => <span className="text-pro-text-primary">{formattedNum(getValue() as number, true)}</span>
 	},
 	{
 		header: '7d Volume',
 		accessorKey: 'total7d',
 		size: 120,
-		cell: ({ getValue }) => <span className="pro-text2">{formattedNum(getValue() as number, true)}</span>
+		cell: ({ getValue }) => <span className="text-pro-text-secondary">{formattedNum(getValue() as number, true)}</span>
 	},
 	{
 		header: '30d Volume',
 		accessorKey: 'total30d',
 		size: 120,
-		cell: ({ getValue }) => <span className="pro-text2">{formattedNum(getValue() as number, true)}</span>
+		cell: ({ getValue }) => <span className="text-pro-text-secondary">{formattedNum(getValue() as number, true)}</span>
 	},
 	{
 		header: '% of Total',
@@ -70,7 +70,7 @@ export const bridgeAggregatorsDatasetColumns: ColumnDef<any>[] = [
 			const total24h = table.getFilteredRowModel().rows.reduce((sum, r) => sum + (r.original.total24h || 0), 0)
 			const percentage = total24h > 0 ? (row.original.total24h / total24h) * 100 : 0
 			return (
-				<span className="pro-text2">
+				<span className="text-pro-text-secondary">
 					<PercentChange percent={percentage} noSign />
 				</span>
 			)

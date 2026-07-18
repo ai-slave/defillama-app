@@ -110,7 +110,7 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 								value={article.title}
 								setValueOnClick={false}
 								onClick={() => addArticle(article)}
-								className="flex cursor-pointer items-start justify-between gap-3 px-3 py-2 text-secondary data-active-item:bg-research-link-button-bg data-active-item:text-link"
+								className="flex cursor-pointer items-start justify-between gap-3 px-3 py-2 text-secondary data-active-item:bg-research-tint data-active-item:text-link"
 							>
 								<span className="grid min-w-0 gap-0.5">
 									<span className="truncate text-sm text-primary">{article.title}</span>
@@ -137,7 +137,7 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 								type="button"
 								onClick={() => removeArticle(id)}
 								aria-label="Remove article"
-								className="flex size-5 shrink-0 items-center justify-center rounded-sm text-tertiary transition-colors hover:bg-research-link-hover-bg hover:text-primary"
+								className="flex size-5 shrink-0 items-center justify-center rounded-sm text-tertiary transition-colors hover:bg-research-tint-hover hover:text-primary"
 							>
 								<Icon name="x" height={11} width={11} />
 							</button>

@@ -91,7 +91,7 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 								onChange(null)
 							}}
 							aria-label="Clear selection"
-							className="absolute right-2 flex size-6 items-center justify-center rounded-md text-tertiary transition-colors hover:bg-research-link-hover-bg hover:text-primary"
+							className="absolute right-2 flex size-6 items-center justify-center rounded-md text-tertiary transition-colors hover:bg-research-tint-hover hover:text-primary"
 						>
 							<Icon name="x" height={12} width={12} />
 						</button>
@@ -117,7 +117,7 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 								onChange(article)
 								setOpen(false)
 							}}
-							className="flex cursor-pointer flex-col gap-0.5 px-3 py-2 text-secondary data-active-item:bg-research-link-button-bg data-active-item:text-link"
+							className="flex cursor-pointer flex-col gap-0.5 px-3 py-2 text-secondary data-active-item:bg-research-tint data-active-item:text-link"
 						>
 							<span className="truncate text-sm text-primary">{article.title}</span>
 							<span className="font-jetbrains text-[10px] tracking-[0.16em] text-tertiary uppercase">

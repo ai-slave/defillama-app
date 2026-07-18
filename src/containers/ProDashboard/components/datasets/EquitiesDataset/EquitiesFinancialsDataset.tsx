@@ -226,10 +226,10 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 		return (
 			<div className="flex size-full flex-col p-4">
 				<div className="mb-3">
-					<h3 className="text-lg font-semibold pro-text1">Equities Financials</h3>
+					<h3 className="text-lg font-semibold text-pro-text-primary">Equities Financials</h3>
 				</div>
 				<div className="flex min-h-[500px] flex-1 items-center justify-center">
-					<div className="text-center pro-text2">No ticker specified</div>
+					<div className="text-center text-pro-text-secondary">No ticker specified</div>
 				</div>
 			</div>
 		)
@@ -239,11 +239,11 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 		return (
 			<div className="flex size-full flex-col p-4">
 				<div className="mb-3">
-					<h3 className="text-lg font-semibold pro-text1">Financials — {ticker}</h3>
+					<h3 className="text-lg font-semibold text-pro-text-primary">Financials — {ticker}</h3>
 				</div>
 				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
 					<LoadingSpinner />
-					<p className="text-sm pro-text2">Loading financial statements...</p>
+					<p className="text-sm text-pro-text-secondary">Loading financial statements...</p>
 				</div>
 			</div>
 		)
@@ -253,10 +253,10 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 		return (
 			<div className="flex size-full flex-col p-4">
 				<div className="mb-3">
-					<h3 className="text-lg font-semibold pro-text1">Financials — {ticker}</h3>
+					<h3 className="text-lg font-semibold text-pro-text-primary">Financials — {ticker}</h3>
 				</div>
 				<div className="flex min-h-[500px] flex-1 items-center justify-center">
-					<div className="text-center pro-text2">Failed to load financial statements</div>
+					<div className="text-center text-pro-text-secondary">Failed to load financial statements</div>
 				</div>
 			</div>
 		)
@@ -266,7 +266,7 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 		<div className="flex size-full flex-col p-4">
 			<div className="mb-3">
 				<div className="flex flex-wrap items-center justify-end gap-4">
-					<h3 className="mr-auto text-lg font-semibold pro-text1">Financials — {ticker}</h3>
+					<h3 className="mr-auto text-lg font-semibold text-pro-text-primary">Financials — {ticker}</h3>
 					<div className="flex flex-wrap items-center justify-end gap-2">
 						<div className="flex items-center gap-1 rounded-md border pro-border p-0.5">
 							{STATEMENT_OPTIONS.map((option) => (
@@ -275,7 +275,9 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 									type="button"
 									onClick={() => setStatementType(option)}
 									className={`rounded-sm px-2 py-1 text-xs font-medium transition ${
-										statementType === option ? 'bg-brand/10 text-brand' : 'pro-text2 hover:pro-text1'
+										statementType === option
+											? 'bg-brand/10 text-brand'
+											: 'text-pro-text-secondary hover:text-pro-text-primary'
 									}`}
 								>
 									{option}
@@ -289,7 +291,9 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 									type="button"
 									onClick={() => setPeriodType(option)}
 									className={`rounded-sm px-2 py-1 text-xs font-medium transition ${
-										periodType === option ? 'bg-brand/10 text-brand' : 'pro-text2 hover:pro-text1'
+										periodType === option
+											? 'bg-brand/10 text-brand'
+											: 'text-pro-text-secondary hover:text-pro-text-primary'
 									}`}
 								>
 									{option}

@@ -109,17 +109,17 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 								<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
 								<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
 							</svg>
-							<p className="text-xs pro-text3">Loading chart data…</p>
+							<p className="text-xs text-pro-text-tertiary">Loading chart data…</p>
 						</>
 					) : (
 						<>
-							<p className="mb-2 text-sm pro-text2">Chart Preview</p>
-							<p className="text-xs pro-text3">
+							<p className="mb-2 text-sm text-pro-text-secondary">Chart Preview</p>
+							<p className="text-xs text-pro-text-tertiary">
 								{composerItems.length} chart{composerItems.length > 1 ? 's' : ''} selected
 							</p>
 							<div className="mt-3 space-y-1">
 								{composerItems.map((item) => (
-									<div key={item.id} className="text-xs pro-text3">
+									<div key={item.id} className="text-xs text-pro-text-tertiary">
 										• {item.protocol || item.chain} - {CHART_TYPES[item.type]?.title || item.type}
 									</div>
 								))}

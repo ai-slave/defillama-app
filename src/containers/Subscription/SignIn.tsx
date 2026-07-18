@@ -183,7 +183,7 @@ export const SignInForm = ({
 						id="signin"
 						className={
 							selectedTabId === 'signin'
-								? 'border-b-2 border-sub-purple-500 bg-linear-to-r from-sub-purple-500 to-sub-purple-soft bg-clip-text text-xl font-bold text-transparent'
+								? 'border-b-2 border-sub-purple bg-linear-to-r from-sub-purple to-sub-purple-soft bg-clip-text text-xl font-bold text-transparent'
 								: 'text-xl font-bold text-sub-text-muted'
 						}
 					>
@@ -193,7 +193,7 @@ export const SignInForm = ({
 						id="signup"
 						className={
 							selectedTabId === 'signup'
-								? 'border-b-2 border-sub-purple-500 bg-linear-to-r from-sub-purple-500 to-sub-purple-soft bg-clip-text text-xl font-bold text-transparent'
+								? 'border-b-2 border-sub-purple bg-linear-to-r from-sub-purple to-sub-purple-soft bg-clip-text text-xl font-bold text-transparent'
 								: 'text-xl font-bold text-sub-text-muted'
 						}
 					>
@@ -224,7 +224,7 @@ export const SignInForm = ({
 										id={signInEmailInputId}
 										type="email"
 										required
-										className="w-full rounded-lg border border-sub-line bg-sub-card py-2 pr-2.5 pl-9 text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple-500 focus:ring-1 focus:ring-sub-purple-500 focus:outline-hidden sm:py-2.5"
+										className="w-full rounded-lg border border-sub-line bg-sub-dark-card py-2 pr-2.5 pl-9 text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple focus:ring-1 focus:ring-sub-purple focus:outline-hidden sm:py-2.5"
 										value={email}
 										onChange={(e) => setEmail(e.target.value)}
 									/>
@@ -243,7 +243,7 @@ export const SignInForm = ({
 										id={signInPasswordInputId}
 										type="password"
 										required
-										className="w-full rounded-lg border border-sub-line bg-sub-card py-2 pr-2.5 pl-9 text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple-500 focus:ring-1 focus:ring-sub-purple-500 focus:outline-hidden sm:py-2.5"
+										className="w-full rounded-lg border border-sub-line bg-sub-dark-card py-2 pr-2.5 pl-9 text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple focus:ring-1 focus:ring-sub-purple focus:outline-hidden sm:py-2.5"
 										value={password}
 										onChange={(e) => setPassword(e.target.value)}
 									/>
@@ -253,7 +253,7 @@ export const SignInForm = ({
 							<div className="-mt-1 flex justify-end">
 								<button
 									type="button"
-									className="text-xs text-sub-purple-500 transition-colors hover:text-sub-purple-soft"
+									className="text-xs text-sub-purple transition-colors hover:text-sub-purple-soft"
 									onClick={() => setFlow('forgot')}
 								>
 									Forgot password?
@@ -261,7 +261,7 @@ export const SignInForm = ({
 							</div>
 
 							<button
-								className="mt-1 w-full rounded-lg bg-linear-to-r from-sub-purple-500 to-sub-purple-soft py-3 font-medium text-on-brand shadow-lg transition-all duration-200 hover:from-sub-purple-hover hover:to-sub-purple-500 hover:shadow-sub-purple-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+								className="mt-1 w-full rounded-lg bg-linear-to-r from-sub-purple to-sub-purple-soft py-3 font-medium text-on-brand shadow-lg transition-all duration-200 hover:from-sub-purple-hover hover:to-sub-purple hover:shadow-sub-purple/20 disabled:cursor-not-allowed disabled:opacity-50"
 								disabled={loaders.login}
 							>
 								{loaders.login ? (
@@ -302,7 +302,7 @@ export const SignInForm = ({
 
 						<div className="flex w-full flex-col gap-2 sm:gap-3">
 							<button
-								className="relative flex w-full items-center justify-center gap-2 rounded-lg border border-sub-line bg-sub-card py-2.5 text-sm font-medium text-on-brand transition-all duration-200 hover:bg-sub-card-raised disabled:cursor-not-allowed disabled:opacity-50 sm:py-3"
+								className="relative flex w-full items-center justify-center gap-2 rounded-lg border border-sub-line bg-sub-dark-card py-2.5 text-sm font-medium text-on-brand transition-all duration-200 hover:bg-sub-dark-card-raised disabled:cursor-not-allowed disabled:opacity-50 sm:py-3"
 								onClick={() => void handleWalletSignIn()}
 								disabled={signInWithEthereumMutation.isPending}
 							>
@@ -317,7 +317,7 @@ export const SignInForm = ({
 							) : null}
 
 							<button
-								className="relative flex w-full items-center justify-center gap-2 rounded-lg border border-sub-line bg-sub-card py-2.5 text-sm font-medium text-on-brand transition-all duration-200 hover:bg-sub-card-raised disabled:cursor-not-allowed disabled:opacity-50 sm:py-3"
+								className="relative flex w-full items-center justify-center gap-2 rounded-lg border border-sub-line bg-sub-dark-card py-2.5 text-sm font-medium text-on-brand transition-all duration-200 hover:bg-sub-dark-card-raised disabled:cursor-not-allowed disabled:opacity-50 sm:py-3"
 								onClick={() => {
 									void signInWithGoogleMutation.mutateAsync().then(() => dialogStore.hide())
 								}}
@@ -334,7 +334,7 @@ export const SignInForm = ({
 							) : null}
 
 							<button
-								className="relative flex w-full items-center justify-center gap-2 rounded-lg border border-sub-line bg-sub-card py-2.5 text-sm font-medium text-on-brand transition-all duration-200 hover:bg-sub-card-raised disabled:cursor-not-allowed disabled:opacity-50 sm:py-3"
+								className="relative flex w-full items-center justify-center gap-2 rounded-lg border border-sub-line bg-sub-dark-card py-2.5 text-sm font-medium text-on-brand transition-all duration-200 hover:bg-sub-dark-card-raised disabled:cursor-not-allowed disabled:opacity-50 sm:py-3"
 								onClick={() => {
 									void signInWithGithubMutation.mutateAsync().then(() => dialogStore.hide())
 								}}
@@ -352,7 +352,7 @@ export const SignInForm = ({
 						</div>
 
 						{pendingActionMessage ? (
-							<div className="mt-3 mb-3 rounded-lg border border-sub-purple-500/30 bg-sub-purple-500/10 p-2.5 sm:mt-4 sm:mb-4 sm:p-3">
+							<div className="mt-3 mb-3 rounded-lg border border-sub-purple/30 bg-sub-purple/10 p-2.5 sm:mt-4 sm:mb-4 sm:p-3">
 								<p className="text-center text-xs text-sub-text-soft sm:text-sm">{pendingActionMessage}</p>
 							</div>
 						) : null}
@@ -360,7 +360,7 @@ export const SignInForm = ({
 				) : (
 					<form className="flex flex-col gap-4" onSubmit={(e) => void handleForgotPassword(e)}>
 						<div className="mb-1">
-							<p className="rounded-lg border border-sub-line bg-sub-card p-3 text-xs text-sub-text-soft">
+							<p className="rounded-lg border border-sub-line bg-sub-dark-card p-3 text-xs text-sub-text-soft">
 								Enter your email address and we'll send you a link to reset your password.
 							</p>
 						</div>
@@ -377,7 +377,7 @@ export const SignInForm = ({
 									id={forgotEmailInputId}
 									type="email"
 									required
-									className="w-full rounded-lg border border-sub-line bg-sub-card p-3 pl-10 text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple-500 focus:ring-1 focus:ring-sub-purple-500 focus:outline-hidden"
+									className="w-full rounded-lg border border-sub-line bg-sub-dark-card p-3 pl-10 text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple focus:ring-1 focus:ring-sub-purple focus:outline-hidden"
 									value={email}
 									onChange={(e) => setEmail(e.target.value)}
 								/>
@@ -385,7 +385,7 @@ export const SignInForm = ({
 						</div>
 
 						<button
-							className="mt-1 w-full rounded-lg bg-linear-to-r from-sub-purple-500 to-sub-purple-soft py-3 font-medium text-on-brand shadow-lg transition-all duration-200 hover:from-sub-purple-hover hover:to-sub-purple-500 hover:shadow-sub-purple-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+							className="mt-1 w-full rounded-lg bg-linear-to-r from-sub-purple to-sub-purple-soft py-3 font-medium text-on-brand shadow-lg transition-all duration-200 hover:from-sub-purple-hover hover:to-sub-purple hover:shadow-sub-purple/20 disabled:cursor-not-allowed disabled:opacity-50"
 							disabled={resetPasswordMutation.isPending}
 						>
 							{resetPasswordMutation.isPending ? (
@@ -423,7 +423,7 @@ export const SignInForm = ({
 
 						<button
 							type="button"
-							className="mt-1 text-center text-xs font-medium text-sub-purple-500 transition-colors hover:text-sub-purple-soft"
+							className="mt-1 text-center text-xs font-medium text-sub-purple transition-colors hover:text-sub-purple-soft"
 							onClick={() => setFlow('signin')}
 						>
 							Back to sign in
@@ -445,9 +445,9 @@ export const SignInForm = ({
 								id={signUpEmailInputId}
 								type="email"
 								required
-								className={`w-full rounded-lg border bg-sub-card p-3 pl-10 ${
+								className={`w-full rounded-lg border bg-sub-dark-card p-3 pl-10 ${
 									emailError ? 'border-error' : 'border-sub-line'
-								} text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple-500 focus:ring-1 focus:ring-sub-purple-500 focus:outline-hidden`}
+								} text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple focus:ring-1 focus:ring-sub-purple focus:outline-hidden`}
 								value={email}
 								onChange={(e) => {
 									setEmail(e.target.value)
@@ -470,9 +470,9 @@ export const SignInForm = ({
 								id={signUpPasswordInputId}
 								type="password"
 								required
-								className={`w-full rounded-lg border bg-sub-card p-3 pl-10 ${
+								className={`w-full rounded-lg border bg-sub-dark-card p-3 pl-10 ${
 									passwordError ? 'border-error' : 'border-sub-line'
-								} text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple-500 focus:ring-1 focus:ring-sub-purple-500 focus:outline-hidden`}
+								} text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple focus:ring-1 focus:ring-sub-purple focus:outline-hidden`}
 								value={password}
 								onChange={(e) => {
 									setPassword(e.target.value)
@@ -502,9 +502,9 @@ export const SignInForm = ({
 								id={signUpConfirmInputId}
 								type="password"
 								required
-								className={`w-full rounded-lg border bg-sub-card p-3 pl-10 ${
+								className={`w-full rounded-lg border bg-sub-dark-card p-3 pl-10 ${
 									confirmPasswordError ? 'border-error' : 'border-sub-line'
-								} text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple-500 focus:ring-1 focus:ring-sub-purple-500 focus:outline-hidden`}
+								} text-on-brand transition-all duration-200 placeholder:text-sub-text-muted focus:border-sub-purple focus:ring-1 focus:ring-sub-purple focus:outline-hidden`}
 								value={confirmPassword}
 								onChange={(e) => {
 									setConfirmPassword(e.target.value)
@@ -522,7 +522,7 @@ export const SignInForm = ({
 							<BasicLink
 								href="/terms"
 								target="_blank"
-								className="font-medium text-sub-purple-500 transition-colors hover:text-sub-purple-soft"
+								className="font-medium text-sub-purple transition-colors hover:text-sub-purple-soft"
 							>
 								Terms of Service
 							</BasicLink>{' '}
@@ -530,7 +530,7 @@ export const SignInForm = ({
 							<BasicLink
 								href="/privacy-policy"
 								target="_blank"
-								className="font-medium text-sub-purple-500 transition-colors hover:text-sub-purple-soft"
+								className="font-medium text-sub-purple transition-colors hover:text-sub-purple-soft"
 							>
 								Privacy Policy
 							</BasicLink>
@@ -563,7 +563,7 @@ export const SignInForm = ({
 					</div>
 
 					<button
-						className="mt-4 w-full rounded-lg bg-linear-to-r from-sub-purple-500 to-sub-purple-soft py-3 font-medium text-on-brand shadow-lg transition-all duration-200 hover:from-sub-purple-hover hover:to-sub-purple-500 hover:shadow-sub-purple-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+						className="mt-4 w-full rounded-lg bg-linear-to-r from-sub-purple to-sub-purple-soft py-3 font-medium text-on-brand shadow-lg transition-all duration-200 hover:from-sub-purple-hover hover:to-sub-purple hover:shadow-sub-purple/20 disabled:cursor-not-allowed disabled:opacity-50"
 						disabled={loaders.signup || !turnstileToken}
 					>
 						{loaders.signup ? (

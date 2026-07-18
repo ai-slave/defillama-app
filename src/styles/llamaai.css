@@ -83,7 +83,7 @@
 
 @keyframes anchorHighlight {
 	0% {
-		background-color: color-mix(in srgb, var(--ai-blue-vivid) 15%, transparent);
+		background-color: color-mix(in srgb, var(--ai-accent-blue-bright) 15%, transparent);
 	}
 	100% {
 		background-color: transparent;

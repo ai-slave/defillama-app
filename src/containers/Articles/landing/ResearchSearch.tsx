@@ -43,7 +43,7 @@ function buildSearchUrl(pathname: string, params: { q?: string; tag?: string; se
 
 function ResultBadge({ children }: { children: React.ReactNode }) {
 	return (
-		<span className="rounded-[4px] border border-research-contrast px-2 py-0.75 text-[10px] font-semibold tracking-[0.04em] text-on-brand uppercase backdrop-blur-[2px]">
+		<span className="rounded-[4px] border border-research-invert px-2 py-0.75 text-[10px] font-semibold tracking-[0.04em] text-on-brand uppercase backdrop-blur-[2px]">
 			{children}
 		</span>
 	)
@@ -57,13 +57,13 @@ function ByLine({ article }: { article: ArticleDocument }) {
 			: null)
 
 	return (
-		<div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-research-navy-soft/60 dark:text-on-brand/55">
+		<div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-research-heading/60 dark:text-on-brand/55">
 			{authorEntries?.length ? (
-				<span className="flex flex-wrap items-center gap-1 font-medium text-research-navy-soft/80 dark:text-on-brand/75">
+				<span className="flex flex-wrap items-center gap-1 font-medium text-research-heading/80 dark:text-on-brand/75">
 					{authorEntries.map((entry, index) => (
 						<span key={`${entry.name}-${index}`} className="inline-flex items-center gap-1">
 							{entry.href ? (
-								<Link href={entry.href} className="transition-colors hover:text-research-blue-deep">
+								<Link href={entry.href} className="transition-colors hover:text-research-accent-strong">
 									{entry.name}
 								</Link>
 							) : (
@@ -105,13 +105,13 @@ function SearchBar({ searchQuery, routePath }: { searchQuery: ResearchSearchQuer
 		<form
 			action={routePath}
 			onSubmit={handleSubmit}
-			className="group relative flex items-center border-b border-research-navy-soft/20 transition-colors focus-within:border-research-blue-deep dark:border-research-contrast/20 dark:focus-within:border-research-contrast"
+			className="group relative flex items-center border-b border-research-heading/20 transition-colors focus-within:border-research-accent-strong dark:border-research-invert/20 dark:focus-within:border-research-invert"
 		>
 			<Icon
 				name="search"
 				height={14}
 				width={14}
-				className="pointer-events-none mr-3 text-research-navy-soft/55 dark:text-on-brand/55"
+				className="pointer-events-none mr-3 text-research-heading/55 dark:text-on-brand/55"
 			/>
 			<label className="flex-1">
 				<span className="sr-only">Search research</span>
@@ -120,12 +120,12 @@ function SearchBar({ searchQuery, routePath }: { searchQuery: ResearchSearchQuer
 					name="q"
 					defaultValue={query}
 					placeholder="Search reports, interviews, authors…"
-					className="w-full bg-transparent py-2.5 text-sm text-research-navy-soft placeholder:text-research-navy-soft/40 focus:outline-hidden dark:text-research-ink dark:placeholder:text-on-brand/40"
+					className="w-full bg-transparent py-2.5 text-sm text-research-heading placeholder:text-research-heading/40 focus:outline-hidden dark:text-research-ink dark:placeholder:text-on-brand/40"
 				/>
 			</label>
 			<button
 				type="submit"
-				className="ml-2 inline-flex items-center gap-1 p-1 font-jetbrains text-[11px] tracking-[0.18em] text-research-blue-deep uppercase transition-colors hover:text-research-navy-soft dark:hover:text-research-ink"
+				className="ml-2 inline-flex items-center gap-1 p-1 font-jetbrains text-[11px] tracking-[0.18em] text-research-accent-strong uppercase transition-colors hover:text-research-heading dark:hover:text-research-ink"
 			>
 				<span>Search</span>
 				<span aria-hidden>→</span>
@@ -151,17 +151,17 @@ function SectionsPills({ searchQuery, pathname }: { searchQuery: ResearchSearchQ
 
 	const linkBase = 'inline-flex items-center font-jetbrains text-[11px] tracking-[0.18em] uppercase transition-colors'
 	const inactive =
-		'text-research-navy-soft/55 hover:text-research-blue-deep dark:text-on-brand/55 dark:hover:text-research-ink'
-	const active = 'text-research-blue-deep dark:text-research-ink'
+		'text-research-heading/55 hover:text-research-accent-strong dark:text-on-brand/55 dark:hover:text-research-ink'
+	const active = 'text-research-accent-strong dark:text-research-ink'
 
 	return (
 		<div className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
-			<span className="font-jetbrains text-[10px] tracking-[0.24em] text-research-navy-soft/40 uppercase dark:text-on-brand/40">
+			<span className="font-jetbrains text-[10px] tracking-[0.24em] text-research-heading/40 uppercase dark:text-on-brand/40">
 				Sections
 			</span>
 			<Link
 				href={hrefForSection()}
-				className={`${linkBase} ${!activeSection ? `${active} relative after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:bg-research-blue-deep dark:after:bg-research-white` : inactive}`}
+				className={`${linkBase} ${!activeSection ? `${active} relative after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:bg-research-accent-strong dark:after:bg-research-white` : inactive}`}
 			>
 				All
 			</Link>
@@ -171,7 +171,7 @@ function SectionsPills({ searchQuery, pathname }: { searchQuery: ResearchSearchQ
 					<Link
 						key={s.section}
 						href={hrefForSection(s.section)}
-						className={`${linkBase} ${isActive ? `${active} relative after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:bg-research-blue-deep dark:after:bg-research-white` : inactive}`}
+						className={`${linkBase} ${isActive ? `${active} relative after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-full after:bg-research-accent-strong dark:after:bg-research-white` : inactive}`}
 					>
 						{humanizeTag(s.section)}
 					</Link>
@@ -189,7 +189,7 @@ function ResultCard({ article }: { article: ArticleDocument }) {
 			<Link
 				href={articleHref(article)}
 				aria-label={article.title}
-				className="relative aspect-[16/10] w-full overflow-hidden rounded-[7.2px] bg-research-navy-soft/5 dark:bg-research-wash"
+				className="relative aspect-[16/10] w-full overflow-hidden rounded-[7.2px] bg-research-heading/5 dark:bg-research-wash"
 			>
 				{cover ? (
 					<img
@@ -200,7 +200,7 @@ function ResultCard({ article }: { article: ArticleDocument }) {
 						className="size-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
 					/>
 				) : (
-					<div className="grid size-full place-items-center text-research-navy-soft/20 dark:text-on-brand/20">
+					<div className="grid size-full place-items-center text-research-heading/20 dark:text-on-brand/20">
 						<ResearchIcon name="research-placeholder" className="size-6" aria-hidden />
 					</div>
 				)}
@@ -212,11 +212,11 @@ function ResultCard({ article }: { article: ArticleDocument }) {
 			</Link>
 			<div className="grid content-start gap-2.5">
 				<Link href={articleHref(article)} className="block">
-					<h3 className="text-[19px] leading-[130%] font-semibold tracking-tight text-research-navy-soft transition-colors group-hover:text-research-blue-deep sm:text-[22px] dark:text-research-ink dark:group-hover:text-research-blue-soft">
+					<h3 className="text-[19px] leading-[130%] font-semibold tracking-tight text-research-heading transition-colors group-hover:text-research-accent-strong sm:text-[22px] dark:text-research-ink dark:group-hover:text-research-accent-soft">
 						{article.title}
 					</h3>
 					{article.excerpt || article.subtitle ? (
-						<p className="mt-2.5 line-clamp-2 text-sm leading-[150%] text-research-navy-soft/70 dark:text-on-brand/70">
+						<p className="mt-2.5 line-clamp-2 text-sm leading-[150%] text-research-heading/70 dark:text-on-brand/70">
 							{article.excerpt || article.subtitle}
 						</p>
 					) : null}
@@ -260,16 +260,16 @@ function Pagination({
 	const btnBase =
 		'inline-flex items-center gap-2 rounded-[4px] px-3.5 py-1.75 text-xs font-semibold tracking-[0.08em] uppercase transition-colors'
 	const enabledStyle =
-		'bg-research-blue-tint text-research-blue hover:bg-research-blue-tint-hover dark:border dark:border-research-contrast/40 dark:bg-transparent dark:text-research-ink dark:hover:bg-research-wash-strong'
+		'bg-research-accent-tint text-research-accent hover:bg-research-accent-tint-hover dark:border dark:border-research-invert/40 dark:bg-transparent dark:text-research-ink dark:hover:bg-research-wash-strong'
 	const disabledStyle =
-		'cursor-not-allowed bg-research-navy-soft/5 text-research-navy-soft/30 dark:border dark:border-research-line-strong dark:bg-transparent dark:text-on-brand/30'
+		'cursor-not-allowed bg-research-heading/5 text-research-heading/30 dark:border dark:border-research-line dark:bg-transparent dark:text-on-brand/30'
 
 	return (
 		<nav
 			aria-label="Search results pagination"
-			className="flex flex-wrap items-center justify-between gap-3 border-t border-research-navy-soft/10 pt-5 dark:border-research-line-medium"
+			className="flex flex-wrap items-center justify-between gap-3 border-t border-research-heading/10 pt-5 dark:border-research-line"
 		>
-			<span className="font-jetbrains text-[11px] tracking-[0.18em] text-research-navy-soft/55 uppercase tabular-nums dark:text-on-brand/55">
+			<span className="font-jetbrains text-[11px] tracking-[0.18em] text-research-heading/55 uppercase tabular-nums dark:text-on-brand/55">
 				{rangeStart}–{rangeEnd} of {totalItems.toLocaleString()}
 			</span>
 			<div className="flex items-center gap-2">
@@ -282,7 +282,7 @@ function Pagination({
 					<span aria-hidden>←</span>
 					<span>Prev</span>
 				</button>
-				<span className="px-2 font-jetbrains text-xs tracking-[0.12em] text-research-navy-soft/80 tabular-nums dark:text-on-brand/80">
+				<span className="px-2 font-jetbrains text-xs tracking-[0.12em] text-research-heading/80 tabular-nums dark:text-on-brand/80">
 					{page} / {totalPages}
 				</span>
 				<button
@@ -306,13 +306,13 @@ function EmptyState({ query, tag, section }: { query: string; tag: string; secti
 			<div className="grid max-w-md gap-3">
 				<ResearchIcon
 					name="research-search-empty"
-					className="mx-auto size-12 text-research-navy-soft/25 dark:text-on-brand/25"
+					className="mx-auto size-12 text-research-heading/25 dark:text-on-brand/25"
 					aria-hidden
 				/>
-				<h2 className="text-[22px] leading-[130%] font-semibold tracking-tight text-research-navy-soft dark:text-research-ink">
+				<h2 className="text-[22px] leading-[130%] font-semibold tracking-tight text-research-heading dark:text-research-ink">
 					{hasFilters ? 'Nothing matches that.' : 'No research yet.'}
 				</h2>
-				<p className="text-sm leading-[150%] text-research-navy-soft/65 dark:text-on-brand/65">
+				<p className="text-sm leading-[150%] text-research-heading/65 dark:text-on-brand/65">
 					{hasFilters
 						? 'Try a different keyword, drop a filter, or browse the sections below.'
 						: 'Once research is published, you can search across reports, interviews, and more from here.'}
@@ -324,11 +324,11 @@ function EmptyState({ query, tag, section }: { query: string; tag: string; secti
 
 function ResultsTitle({ query, tag }: { query: string; tag: string }) {
 	const cls =
-		'text-[clamp(22px,2.6vw,30px)] leading-[120%] font-medium tracking-tight text-research-navy-soft dark:text-research-ink'
+		'text-[clamp(22px,2.6vw,30px)] leading-[120%] font-medium tracking-tight text-research-heading dark:text-research-ink'
 	if (query) {
 		return (
 			<h1 className={cls}>
-				<span className="text-research-navy-soft/45 dark:text-on-brand/45">Results for </span>
+				<span className="text-research-heading/45 dark:text-on-brand/45">Results for </span>
 				<span>"{query}"</span>
 			</h1>
 		)
@@ -336,7 +336,7 @@ function ResultsTitle({ query, tag }: { query: string; tag: string }) {
 	if (tag) {
 		return (
 			<h1 className={cls}>
-				<span className="text-research-navy-soft/45 dark:text-on-brand/45">Tagged </span>
+				<span className="text-research-heading/45 dark:text-on-brand/45">Tagged </span>
 				<span>#{tag}</span>
 			</h1>
 		)
@@ -381,7 +381,7 @@ export default function ResearchSearch() {
 		const message = error instanceof ArticleApiError ? error.message : 'Failed to load articles'
 		return (
 			<div className="mx-auto grid w-full max-w-3xl gap-3 border border-error/30 bg-error/5 p-6">
-				<h1 className="text-xl font-semibold text-research-navy-soft dark:text-research-ink">Couldn't load research</h1>
+				<h1 className="text-xl font-semibold text-research-heading dark:text-research-ink">Couldn't load research</h1>
 				<p className="text-sm text-error">{message}</p>
 			</div>
 		)
@@ -391,13 +391,13 @@ export default function ResearchSearch() {
 		<div className="mx-auto grid w-full max-w-6xl gap-7 px-3 pt-4 pb-20 sm:px-6 lg:px-8">
 			<header className="grid gap-4 pr-16 lg:pr-0">
 				<div className="flex items-baseline justify-between gap-6">
-					<span className="font-jetbrains text-[10px] tracking-[0.22em] text-research-blue-deep uppercase">
+					<span className="font-jetbrains text-[10px] tracking-[0.22em] text-research-accent-strong uppercase">
 						Research / Archive
 					</span>
 					<button
 						type="button"
 						onClick={clearSearchParams}
-						className="shrink-0 font-jetbrains text-[10px] tracking-[0.22em] text-research-navy-soft/50 uppercase transition-colors hover:text-research-blue-deep dark:text-on-brand/50 dark:hover:text-research-ink"
+						className="shrink-0 font-jetbrains text-[10px] tracking-[0.22em] text-research-heading/50 uppercase transition-colors hover:text-research-accent-strong dark:text-on-brand/50 dark:hover:text-research-ink"
 						aria-label="Close search"
 					>
 						<span className="hidden sm:inline">← Back</span>
@@ -409,11 +409,11 @@ export default function ResearchSearch() {
 
 				<ResultsTitle query={query} tag={tag} />
 
-				<div className="flex items-center gap-x-3 text-research-navy-soft/55 dark:text-on-brand/55">
+				<div className="flex items-center gap-x-3 text-research-heading/55 dark:text-on-brand/55">
 					<span className="font-jetbrains text-[10px] tracking-[0.18em] uppercase tabular-nums">
 						{resultsLoading ? 'Loading…' : `${totalItems.toLocaleString()} ${totalItems === 1 ? 'result' : 'results'}`}
 					</span>
-					<div className="grow border-t border-research-navy-soft/15 dark:border-research-line-strong" />
+					<div className="grow border-t border-research-heading/15 dark:border-research-line" />
 				</div>
 
 				<SearchBar searchQuery={searchQuery} routePath={router.pathname} />
@@ -426,7 +426,7 @@ export default function ResearchSearch() {
 				</div>
 			) : response.items.length ? (
 				<>
-					<ul className="grid divide-y divide-research-navy-soft/10 dark:divide-white/10">
+					<ul className="grid divide-y divide-research-heading/10 dark:divide-white/10">
 						{response.items.map((article) => (
 							<ResultCard key={article.id} article={article} />
 						))}

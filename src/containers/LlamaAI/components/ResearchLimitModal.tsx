@@ -93,7 +93,7 @@ export function ResearchLimitModal({
 							<BasicLink
 								href="/subscription"
 								data-umami-event={COPY[feature].umamiUpgrade}
-								className="mx-auto flex w-full items-center justify-center gap-2 rounded-lg bg-ai-purple px-6 py-3.5 text-center text-base font-semibold text-ai-white transition-colors hover:bg-ai-purple-deep"
+								className="mx-auto flex w-full items-center justify-center gap-2 rounded-lg bg-ai-research px-6 py-3.5 text-center text-base font-semibold text-ai-white transition-colors hover:bg-ai-research-hover"
 								onClick={dialogStore.hide}
 							>
 								Upgrade to Pro
@@ -105,7 +105,7 @@ export function ResearchLimitModal({
 						<button
 							type="button"
 							onClick={dialogStore.hide}
-							className="mx-auto flex w-full items-center justify-center gap-2 rounded-lg bg-ai-purple px-6 py-3.5 text-center text-base font-semibold text-ai-white transition-colors hover:bg-ai-purple-deep"
+							className="mx-auto flex w-full items-center justify-center gap-2 rounded-lg bg-ai-research px-6 py-3.5 text-center text-base font-semibold text-ai-white transition-colors hover:bg-ai-research-hover"
 						>
 							Got it
 						</button>

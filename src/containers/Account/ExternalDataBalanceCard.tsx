@@ -62,7 +62,7 @@ export function ExternalDataBalanceCard({
 			</p>
 
 			{/* Balances */}
-			<div className="flex flex-col gap-4 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-ink-primary">
+			<div className="flex flex-col gap-4 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-dark-page">
 				{/* Free This Month */}
 				<div className="flex flex-col gap-2">
 					<div className="flex items-center justify-between">
@@ -93,7 +93,9 @@ export function ExternalDataBalanceCard({
 			{/* Total */}
 			<div className="flex items-center justify-between">
 				<span className="text-sm text-sub-text-muted">Total Available</span>
-				<span className={`text-sm font-semibold ${isLowBalance ? 'text-sub-orange-400' : 'text-sub-text-primary'}`}>
+				<span
+					className={`text-sm font-semibold ${isLowBalance ? 'text-sub-warning-text-dark' : 'text-sub-text-primary'}`}
+				>
 					${totalAvailable.toFixed(2)}
 				</span>
 			</div>

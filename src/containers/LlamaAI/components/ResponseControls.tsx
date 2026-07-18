@@ -201,7 +201,7 @@ export function ResponseControls({
 								}}
 							/>
 						}
-						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-secondary"
+						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary"
 					>
 						{copied ? (
 							<Icon name="check-circle" height={16} width={16} />
@@ -215,7 +215,7 @@ export function ResponseControls({
 						<Tooltip
 							content={isRatedAsGood ? 'Rated as good' : 'Rate as good'}
 							render={<button onClick={handleRateGood} disabled={showFeedback || isRatedAsGood || isRatedAsBad} />}
-							className={`rounded-md p-1.5 transition-colors hover:bg-ai-wash hover:text-ai-secondary ${isRatedAsGood ? 'text-success' : 'text-ai-muted'}`}
+							className={`rounded-md p-1.5 transition-colors hover:bg-ai-hover hover:text-ai-secondary ${isRatedAsGood ? 'text-success' : 'text-ai-muted'}`}
 						>
 							<Icon name="thumbs-up" height={16} width={16} />
 							<span className="sr-only">Thumbs Up</span>
@@ -223,7 +223,7 @@ export function ResponseControls({
 						<Tooltip
 							content={isRatedAsBad ? 'Rated as bad' : 'Rate as bad'}
 							render={<button onClick={handleRateBad} disabled={showFeedback || isRatedAsGood || isRatedAsBad} />}
-							className={`rounded-md p-1.5 transition-colors hover:bg-ai-wash hover:text-ai-secondary ${isRatedAsBad ? 'text-error' : 'text-ai-muted'}`}
+							className={`rounded-md p-1.5 transition-colors hover:bg-ai-hover hover:text-ai-secondary ${isRatedAsBad ? 'text-error' : 'text-ai-muted'}`}
 						>
 							<Icon name="thumbs-down" height={16} width={16} />
 							<span className="sr-only">Thumbs Down</span>
@@ -235,12 +235,12 @@ export function ResponseControls({
 						sessionId={sessionId}
 						messageId={messageId}
 						exportType="single_message"
-						className="flex items-center gap-1 rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-secondary"
+						className="flex items-center gap-1 rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary"
 					/>
 				) : null}
 				{messageMetadata && (messageMetadata.outputTokens != null || messageMetadata.x402CostUsd) ? (
 					<Ariakit.PopoverProvider placement="top">
-						<Ariakit.PopoverDisclosure className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-secondary">
+						<Ariakit.PopoverDisclosure className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary">
 							<Icon name="circle-help" height={16} width={16} />
 						</Ariakit.PopoverDisclosure>
 						<Ariakit.Popover
@@ -281,7 +281,7 @@ export function ResponseControls({
 					<Tooltip
 						content="Provide Feedback"
 						render={<button onClick={handleOpenGeneralFeedback} disabled={showFeedback || !!submittedRating} />}
-						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-secondary"
+						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary"
 					>
 						<Icon name="message-square-warning" height={16} width={16} />
 						<span className="sr-only">Provide Feedback</span>
@@ -291,7 +291,7 @@ export function ResponseControls({
 					<Tooltip
 						content="Share"
 						render={<button onClick={() => onShare(messageId)} />}
-						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-secondary"
+						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary"
 					>
 						<Icon name="share" height={16} width={16} />
 						<span className="sr-only">Share</span>
@@ -301,7 +301,7 @@ export function ResponseControls({
 					<Tooltip
 						content="Export to research article"
 						render={<button type="button" onClick={() => openArticleExport(articleExportRequest())} />}
-						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-secondary"
+						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary"
 					>
 						<Icon name="file-plus" height={16} width={16} />
 						<span className="sr-only">Export to research article</span>

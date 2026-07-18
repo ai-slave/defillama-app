@@ -34,7 +34,7 @@ export function TabNavigation({ selectedMainTab, editItem, onTabChange, isSqlAll
 							key={tab.id}
 							className={`rounded-lg px-3 py-2.5 text-xs font-medium transition-all duration-200 md:text-sm ${
 								selectedMainTab === tab.id
-									? 'bg-pro-old-blue text-on-brand shadow-md ring-1 ring-black/10'
+									? 'bg-pro-accent text-on-brand shadow-md ring-1 ring-black/10'
 									: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary hover:shadow-sm'
 							} ${editItem ? 'cursor-not-allowed opacity-50' : ''}`}
 							onClick={() => !editItem && onTabChange(tab.id)}

@@ -77,18 +77,18 @@ export function CategoryFilterModal({
 			>
 				<div
 					className="flex items-center justify-between border-b pro-divider p-4"
-					style={{ backgroundColor: 'var(--pro-bg1)' }}
+					style={{ backgroundColor: 'var(--pro-panel-bg)' }}
 				>
-					<h2 className="text-lg font-semibold pro-text1">Filter Categories</h2>
+					<h2 className="text-lg font-semibold text-pro-text-primary">Filter Categories</h2>
 					<Ariakit.DialogDismiss className="rounded-md pro-hover-bg p-2 transition-colors">
 						<Icon name="x" height={20} width={20} />
 						<span className="sr-only">Close dialog</span>
 					</Ariakit.DialogDismiss>
 				</div>
 
-				<div className="flex-1 space-y-6 overflow-y-auto p-4" style={{ backgroundColor: 'var(--pro-bg1)' }}>
+				<div className="flex-1 space-y-6 overflow-y-auto p-4" style={{ backgroundColor: 'var(--pro-panel-bg)' }}>
 					<div>
-						<label htmlFor="category-filter-include" className="mb-2 block text-sm font-medium pro-text2">
+						<label htmlFor="category-filter-include" className="mb-2 block text-sm font-medium text-pro-text-secondary">
 							Include Categories
 						</label>
 						<ReactSelect
@@ -108,7 +108,7 @@ export function CategoryFilterModal({
 					</div>
 
 					<div>
-						<label htmlFor="category-filter-exclude" className="mb-2 block text-sm font-medium pro-text2">
+						<label htmlFor="category-filter-exclude" className="mb-2 block text-sm font-medium text-pro-text-secondary">
 							Exclude Categories
 						</label>
 						<ReactSelect
@@ -130,7 +130,7 @@ export function CategoryFilterModal({
 
 				<div
 					className="flex items-center justify-between border-t pro-divider p-4"
-					style={{ backgroundColor: 'var(--pro-bg1)' }}
+					style={{ backgroundColor: 'var(--pro-panel-bg)' }}
 				>
 					<button
 						onClick={() => {
@@ -139,13 +139,13 @@ export function CategoryFilterModal({
 							onClear()
 							onClose()
 						}}
-						className="pro-text-dimmed px-4 py-2 text-sm transition-colors hover:pro-text1 disabled:opacity-50"
+						className="pro-text-dimmed px-4 py-2 text-sm transition-colors hover:text-pro-text-primary disabled:opacity-50"
 						disabled={!hasSelections}
 					>
 						Clear all
 					</button>
 					<div className="flex gap-2">
-						<Ariakit.DialogDismiss className="rounded-md border pro-divider pro-hover-bg px-4 py-2 text-sm pro-text1 transition-colors">
+						<Ariakit.DialogDismiss className="rounded-md border pro-divider pro-hover-bg px-4 py-2 text-sm text-pro-text-primary transition-colors">
 							Cancel
 						</Ariakit.DialogDismiss>
 						<button

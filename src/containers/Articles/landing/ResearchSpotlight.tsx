@@ -78,7 +78,7 @@ export const ResearchSpotlight: React.FC<ResearchSpotlightProps> = ({ title, art
 						<div className="flex grow flex-col py-4">
 							<div
 								className={clsx(
-									'font-semibold text-research-navy-soft group-hover:text-research-navy-soft group-hover:opacity-70 dark:text-research-ink dark:group-hover:text-on-brand/70',
+									'font-semibold text-research-heading group-hover:text-research-heading group-hover:opacity-70 dark:text-research-ink dark:group-hover:text-on-brand/70',
 									count === 5 || count === 6
 										? 'line-clamp-4 text-base leading-[120%]'
 										: 'line-clamp-3 text-base leading-[150%] lg:text-lg'

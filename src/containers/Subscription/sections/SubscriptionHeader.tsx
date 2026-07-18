@@ -42,7 +42,7 @@ export function SubscriptionHeader() {
 	return (
 		<>
 			{/* Mobile */}
-			<header className="relative z-20 flex h-16 items-center justify-between bg-sub-overlay-light px-4 backdrop-blur-[12px] md:hidden dark:bg-sub-overlay-dark">
+			<header className="relative z-20 flex h-16 items-center justify-between bg-sub-overlay px-4 backdrop-blur-[12px] md:hidden">
 				<BasicLink href="/" aria-label="Back to home" className="flex size-10 items-center justify-center rounded-full">
 					<Icon name="chevron-left" height={28} width={28} />
 				</BasicLink>
@@ -57,7 +57,7 @@ export function SubscriptionHeader() {
 			</header>
 
 			{/* Desktop */}
-			<header className="relative z-20 hidden h-12 items-center justify-between bg-sub-overlay-light px-10.5 backdrop-blur-[12px] md:flex dark:bg-sub-overlay-dark">
+			<header className="relative z-20 hidden h-12 items-center justify-between bg-sub-overlay px-10.5 backdrop-blur-[12px] md:flex">
 				<BasicLink href="/" className="flex items-center gap-2 text-xs text-sub-text-primary">
 					<Icon name="chevron-left" height={16} width={16} />
 					Back

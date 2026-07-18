@@ -80,7 +80,7 @@ function InfoRow({ label, value, valueClassName }: { label: string; value: strin
 	return (
 		<div className="flex items-center gap-2">
 			<span className="shrink-0 text-xs leading-4 text-sub-text-muted">{label}</span>
-			<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border-slate-100 dark:border-sub-border-strong" />
+			<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border" />
 			<span className={`shrink-0 text-xs leading-4 ${valueClassName || 'text-sub-text-primary'}`}>{value}</span>
 		</div>
 	)
@@ -159,9 +159,7 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 				<InfoRow
 					label="Available"
 					value={String(subscription.seats.availableSeats)}
-					valueClassName={
-						subscription.seats.availableSeats > 0 ? 'text-sub-green-600 dark:text-sub-green-400' : 'text-sub-text-muted'
-					}
+					valueClassName={subscription.seats.availableSeats > 0 ? 'text-sub-success' : 'text-sub-text-muted'}
 				/>
 				{isCanceling && cancelAtDate ? (
 					<InfoRow label="Cancels on" value={formatDate(cancelAtDate)} valueClassName="text-error" />

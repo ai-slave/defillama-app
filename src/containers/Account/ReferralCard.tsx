@@ -68,7 +68,7 @@ export function ReferralCard() {
 						{copied ? 'Copied' : 'Copy'}
 					</button>
 				</div>
-				<div className="rounded-lg bg-sub-surface-panel px-3 py-2.5 dark:bg-sub-ink-primary">
+				<div className="rounded-lg bg-sub-surface-panel px-3 py-2.5 dark:bg-sub-dark-page">
 					<code className="font-mono text-xs leading-5 break-all text-sub-text-primary">{referralLink}</code>
 				</div>
 				<p className="text-xs leading-4 text-sub-text-primary">
@@ -84,7 +84,7 @@ export function ReferralCard() {
 				</p>
 			</div>
 
-			<div className="flex flex-col gap-3 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-ink-primary">
+			<div className="flex flex-col gap-3 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-dark-page">
 				<div className="flex items-center justify-between">
 					<span className="text-xs text-sub-text-primary">Sign-ups</span>
 					{isStatsLoading ? (

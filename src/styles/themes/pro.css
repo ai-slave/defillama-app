@@ -4,10 +4,10 @@
 
    A standing product palette, separate from the design system's tokens in
    semantics.css — add tokens here as the product evolves. `pro-dashboard`
-   re-scopes the --pro-{app-bg,cards-*,form-control-border,old-blue,text-*}
-   base tokens (defined at :root at the bottom of this file) with the
-   product's own values; never rewrite those names' callsites to semantic
-   utilities — the alias→semantic identity does not hold inside this scope.
+   and `.investors-dashboard` re-scope the --pro-* base tokens (defined at
+   :root at the bottom of this file) with the product's own values; never
+   rewrite those names' callsites to semantic utilities — the alias→semantic
+   identity does not hold inside those scopes.
 ---------------------------------------------------------------------------- */
 
 @theme {
@@ -42,11 +42,11 @@
 	--color-pro-cards-border: var(--pro-cards-border);
 	--color-pro-app-bg: var(--pro-app-bg);
 	--color-pro-form-control-border: var(--pro-form-control-border);
-	--color-pro-old-blue: var(--pro-old-blue);
+	--color-pro-accent: var(--pro-accent);
 	--color-pro-glass-bg: var(--pro-glass-bg);
 	--color-pro-link-hover-bg: var(--pro-link-hover-bg);
 	--color-pro-link-button-bg: var(--pro-link-button-bg);
-	--color-pro-btn2-hover-bg: var(--pro-btn2-hover-bg);
+	--color-pro-btn-secondary-hover: var(--pro-btn-secondary-hover);
 	--color-pro-switch-border: var(--pro-switch-border);
 
 	/* Investors (smart list) palette registered as utilities */
@@ -58,78 +58,69 @@
 	--color-sl-hover-bg: var(--sl-hover-bg);
 	--color-sl-text-brand: var(--sl-text-brand);
 
-	--color-pro-purple-100: oklch(0.935 0.02 286); /* Grayish/off-white */
-	--color-pro-purple-200: oklch(0.78 0.12 283.45); /* Muted purple */
-	--color-pro-purple-300: oklch(0.612 0.213 278.1); /* Vibrant purple */
-	--color-pro-purple-400: oklch(0.41 0.13 279.09); /* Deep purple */
+	--color-pro-ai-100: oklch(0.935 0.02 286); /* Grayish/off-white */
+	--color-pro-ai-200: oklch(0.78 0.12 283.45); /* Muted purple */
+	--color-pro-ai-300: oklch(0.612 0.213 278.1); /* Vibrant purple */
+	--color-pro-ai-400: oklch(0.41 0.13 279.09); /* Deep purple */
 
-	--color-pro-blue-100: oklch(0.935 0.02 257); /* Light blue/gray */
-	--color-pro-blue-200: oklch(0.78 0.12 257); /* Muted blue */
-	--color-pro-blue-300: oklch(0.612 0.213 257); /* Vibrant blue */
-	--color-pro-blue-400: oklch(0.41 0.13 257); /* Deep blue */
+	--color-pro-info-100: oklch(0.935 0.02 257); /* Light blue/gray */
+	--color-pro-info-200: oklch(0.78 0.12 257); /* Muted blue */
+	--color-pro-info-300: oklch(0.612 0.213 257); /* Vibrant blue */
+	--color-pro-info-400: oklch(0.41 0.13 257); /* Deep blue */
 
-	--color-pro-green-100: oklch(0.935 0.02 143); /* Light green/gray */
-	--color-pro-green-200: oklch(0.78 0.12 143); /* Muted green */
-	--color-pro-green-300: oklch(0.612 0.213 143); /* Vibrant green */
-	--color-pro-green-400: oklch(0.41 0.13 143); /* Deep green */
+	--color-pro-success-100: oklch(0.935 0.02 143); /* Light green/gray */
+	--color-pro-success-200: oklch(0.78 0.12 143); /* Muted green */
+	--color-pro-success-300: oklch(0.612 0.213 143); /* Vibrant green */
+	--color-pro-success-400: oklch(0.41 0.13 143); /* Deep green */
 
-	--color-pro-gold-100: oklch(0.94 0.01 71.72); /* Light version of pro-gold-400 */
-	--color-pro-gold-200: oklch(0.78 0.08 60); /* Medium gold */
-	--color-pro-gold-300: oklch(0.612 0.15 60); /* Vibrant gold */
-	--color-pro-gold-400: oklch(0.41 0.12 60); /* Deep gold */
+	--color-pro-premium-100: oklch(0.94 0.01 71.72); /* Light version of pro-premium-400 */
+	--color-pro-premium-200: oklch(0.78 0.08 60); /* Medium gold */
+	--color-pro-premium-300: oklch(0.612 0.15 60); /* Vibrant gold */
+	--color-pro-premium-400: oklch(0.41 0.12 60); /* Deep gold */
 }
 
 /* ------------------------- Pro Dashboard Utilities ------------------------- */
 @utility pro-dashboard {
-	--pro-text1: #0a0a0a;
-	--pro-text2: #2d2d2d;
-	--pro-text3: #4a4a4a;
+	/* Product light text tiers; dark aliases the app semantics */
+	--pro-text-primary: #0a0a0a;
+	--pro-text-secondary: #2d2d2d;
+	--pro-text-tertiary: #4a4a4a;
 
-	--pro-bg1: #ffffff;
-	--pro-bg2: #f0f0f0;
-	--pro-bg3: #e0e0e0;
-	--pro-bg7: rgba(255, 255, 255, 0.95);
+	--pro-panel-bg: #ffffff;
+	--pro-panel-raised: #f0f0f0;
+	--pro-hover-fill: #e0e0e0;
+	--pro-glass-fill: rgba(255, 255, 255, 0.95);
 
 	--pro-divider: rgba(0, 0, 0, 0.3);
 	--pro-border: rgba(0, 0, 0, 0.3);
 	--pro-glass-border: rgba(0, 0, 0, 0.3);
 
 	html.dark & {
-		--pro-text1: var(--text-primary);
-		--pro-text2: var(--text-secondary);
-		--pro-text3: var(--text-tertiary);
+		--pro-text-primary: var(--text-primary);
+		--pro-text-secondary: var(--text-secondary);
+		--pro-text-tertiary: var(--text-tertiary);
 
-		--pro-bg1: #070e0f;
-		--pro-bg2: #0a1011;
-		--pro-bg3: #0d1516;
-		--pro-bg7: rgba(7, 14, 15, 0.7);
+		--pro-panel-bg: #070e0f;
+		--pro-panel-raised: #0a1011;
+		--pro-hover-fill: #0d1516;
+		--pro-glass-fill: rgba(7, 14, 15, 0.7);
 
 		--pro-divider: rgba(255, 255, 255, 0.1);
 		--pro-border: rgba(255, 255, 255, 0.2);
 		--pro-glass-border: rgba(255, 255, 255, 0.3);
 	}
 
-	& .pro-text1 {
-		color: var(--pro-text1);
+	& .pro-panel-bg {
+		background-color: var(--pro-panel-bg);
 	}
-	& .pro-text2 {
-		color: var(--pro-text2);
+	& .pro-panel-raised {
+		background-color: var(--pro-panel-raised);
 	}
-	& .pro-text3 {
-		color: var(--pro-text3);
+	& .pro-hover-fill {
+		background-color: var(--pro-hover-fill);
 	}
-
-	& .pro-bg1 {
-		background-color: var(--pro-bg1);
-	}
-	& .pro-bg2 {
-		background-color: var(--pro-bg2);
-	}
-	& .pro-bg3 {
-		background-color: var(--pro-bg3);
-	}
-	& .pro-bg7 {
-		background-color: var(--pro-bg7);
+	& .pro-glass-fill {
+		background-color: var(--pro-glass-fill);
 	}
 
 	& .pro-border {
@@ -140,26 +131,22 @@
 	}
 
 	& .pro-glass {
-		background-color: var(--pro-bg7);
+		background-color: var(--pro-glass-fill);
 		backdrop-filter: blur(10px);
 		-webkit-backdrop-filter: blur(10px);
 		border: 1px solid var(--pro-glass-border);
 	}
 
 	& .pro-hover-bg:hover {
-		background-color: var(--pro-bg3);
+		background-color: var(--pro-hover-fill);
 	}
 }
 
 .investors-dashboard {
-	--pro-text1: #1a1d23;
-	--pro-text2: #555962;
-	--pro-text3: #8b8f99;
-
-	--pro-bg1: #ffffff;
-	--pro-bg2: #f5f6f8;
-	--pro-bg3: #ebedf0;
-	--pro-bg7: rgba(255, 255, 255, 0.92);
+	--pro-panel-bg: #ffffff;
+	--pro-panel-raised: #f5f6f8;
+	--pro-hover-fill: #ebedf0;
+	--pro-glass-fill: rgba(255, 255, 255, 0.92);
 
 	--pro-divider: rgba(0, 0, 0, 0.06);
 	--pro-border: rgba(0, 0, 0, 0.08);
@@ -169,7 +156,7 @@
 	--pro-cards-bg: #ffffff;
 	--pro-cards-border: rgba(0, 0, 0, 0.06);
 	--pro-form-control-border: rgba(0, 0, 0, 0.1);
-	--pro-old-blue: #2172e5;
+	--pro-accent: #2172e5;
 	--pro-text-primary: #1a1d23;
 	--pro-text-secondary: #555962;
 	--pro-text-tertiary: #8b8f99;
@@ -189,14 +176,10 @@
 	--sl-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
 
 	html.dark & {
-		--pro-text1: #cdd0d5;
-		--pro-text2: #6e727c;
-		--pro-text3: #3e4148;
-
-		--pro-bg1: #08090c;
-		--pro-bg2: #0c0e13;
-		--pro-bg3: #12141a;
-		--pro-bg7: rgba(8, 9, 12, 0.85);
+		--pro-panel-bg: #08090c;
+		--pro-panel-raised: #0c0e13;
+		--pro-hover-fill: #12141a;
+		--pro-glass-fill: rgba(8, 9, 12, 0.85);
 
 		--pro-divider: rgba(255, 255, 255, 0.04);
 		--pro-border: rgba(255, 255, 255, 0.06);
@@ -232,7 +215,7 @@ html.dark .investors-dashboard.investors-dashboard-embedded {
 	--pro-cards-bg: inherit;
 	--pro-cards-border: inherit;
 	--pro-form-control-border: inherit;
-	--pro-old-blue: inherit;
+	--pro-accent: inherit;
 	--pro-text-primary: inherit;
 	--pro-text-secondary: inherit;
 	--pro-text-tertiary: inherit;
@@ -367,45 +350,27 @@ html.dark .investors-dashboard.investors-dashboard-embedded {
 	}
 }
 
-@utility pro-text1 {
+@utility pro-panel-bg {
 	.pro-dashboard & {
-		color: var(--pro-text1);
+		background-color: var(--pro-panel-bg);
 	}
 }
 
-@utility pro-text2 {
+@utility pro-panel-raised {
 	.pro-dashboard & {
-		color: var(--pro-text2);
+		background-color: var(--pro-panel-raised);
 	}
 }
 
-@utility pro-text3 {
+@utility pro-hover-fill {
 	.pro-dashboard & {
-		color: var(--pro-text3);
+		background-color: var(--pro-hover-fill);
 	}
 }
 
-@utility pro-bg1 {
+@utility pro-glass-fill {
 	.pro-dashboard & {
-		background-color: var(--pro-bg1);
-	}
-}
-
-@utility pro-bg2 {
-	.pro-dashboard & {
-		background-color: var(--pro-bg2);
-	}
-}
-
-@utility pro-bg3 {
-	.pro-dashboard & {
-		background-color: var(--pro-bg3);
-	}
-}
-
-@utility pro-bg7 {
-	.pro-dashboard & {
-		background-color: var(--pro-bg7);
+		background-color: var(--pro-glass-fill);
 	}
 }
 
@@ -423,7 +388,7 @@ html.dark .investors-dashboard.investors-dashboard-embedded {
 
 @utility pro-glass {
 	.pro-dashboard & {
-		background-color: var(--pro-bg7);
+		background-color: var(--pro-glass-fill);
 		backdrop-filter: blur(10px);
 		-webkit-backdrop-filter: blur(10px);
 		border: 1px solid var(--pro-glass-border);
@@ -432,7 +397,7 @@ html.dark .investors-dashboard.investors-dashboard-embedded {
 
 @utility pro-hover-bg {
 	.pro-dashboard &:hover {
-		background-color: var(--pro-bg3);
+		background-color: var(--pro-hover-fill);
 	}
 }
 
@@ -446,20 +411,20 @@ html.dark .investors-dashboard.investors-dashboard-embedded {
 	}
 }
 
-@utility pro-btn-purple {
-	@apply bg-pro-purple-100 text-pro-purple-400 hover:bg-pro-purple-300/20 focus-visible:bg-pro-purple-300/20 dark:bg-pro-purple-300/20 dark:text-pro-purple-200 hover:dark:bg-pro-purple-300/30 focus-visible:dark:bg-pro-purple-300/30;
+@utility pro-btn-ai {
+	@apply bg-pro-ai-100 text-pro-ai-400 hover:bg-pro-ai-300/20 focus-visible:bg-pro-ai-300/20 dark:bg-pro-ai-300/20 dark:text-pro-ai-200 hover:dark:bg-pro-ai-300/30 focus-visible:dark:bg-pro-ai-300/30;
 }
 
-@utility pro-btn-purple-outline {
-	@apply border border-pro-purple-100 text-pro-purple-400 hover:bg-pro-purple-300/20 focus-visible:bg-pro-purple-300/20 dark:border-pro-purple-300/20 dark:text-pro-purple-200 hover:dark:bg-pro-purple-300/30 focus-visible:dark:bg-pro-purple-300/30;
+@utility pro-btn-ai-outline {
+	@apply border border-pro-ai-100 text-pro-ai-400 hover:bg-pro-ai-300/20 focus-visible:bg-pro-ai-300/20 dark:border-pro-ai-300/20 dark:text-pro-ai-200 hover:dark:bg-pro-ai-300/30 focus-visible:dark:bg-pro-ai-300/30;
 }
 
-@utility pro-btn-blue {
-	@apply bg-pro-blue-100 text-pro-blue-400 hover:bg-pro-blue-300/20 focus-visible:bg-pro-blue-300/20 dark:bg-pro-blue-300/20 dark:text-pro-blue-200 hover:dark:bg-pro-blue-300/30 focus-visible:dark:bg-pro-blue-300/30;
+@utility pro-btn-primary {
+	@apply bg-pro-info-100 text-pro-info-400 hover:bg-pro-info-300/20 focus-visible:bg-pro-info-300/20 dark:bg-pro-info-300/20 dark:text-pro-info-200 hover:dark:bg-pro-info-300/30 focus-visible:dark:bg-pro-info-300/30;
 }
 
-@utility pro-btn-blue-outline {
-	@apply border border-pro-blue-100 text-pro-blue-400 hover:bg-pro-blue-300/20 focus-visible:bg-pro-blue-300/20 dark:border-pro-blue-300/20 dark:text-pro-blue-200 hover:dark:bg-pro-blue-300/30 focus-visible:dark:bg-pro-blue-300/30;
+@utility pro-btn-primary-outline {
+	@apply border border-pro-info-100 text-pro-info-400 hover:bg-pro-info-300/20 focus-visible:bg-pro-info-300/20 dark:border-pro-info-300/20 dark:text-pro-info-200 hover:dark:bg-pro-info-300/30 focus-visible:dark:bg-pro-info-300/30;
 }
 
 /* Legacy dialog shell — consumed ONLY by excluded surfaces (ProDashboard,
@@ -485,13 +450,13 @@ html.dark .investors-dashboard.investors-dashboard-embedded {
 	--pro-cards-bg: var(--bg-surface);
 	--pro-cards-border: var(--border-medium);
 	--pro-form-control-border: var(--border-medium);
-	--pro-old-blue: var(--bg-brand);
+	--pro-accent: var(--bg-brand);
 	/* Floating "glass" surfaces; no library token yet */
 	--pro-glass-bg: oklch(0.991 0.001 106.4);
 	/* Link-tint hovers/fills and switch chrome carried over from the app shell */
 	--pro-link-hover-bg: #1f67d233;
 	--pro-link-button-bg: oklch(0.533 0.18 259 / 0.12);
-	--pro-btn2-hover-bg: oklch(0.571 0.191 258.5 / 0.2);
+	--pro-btn-secondary-hover: oklch(0.571 0.191 258.5 / 0.2);
 	--pro-switch-border: oklch(0.533 0.18 259 / 0.5);
 }
 

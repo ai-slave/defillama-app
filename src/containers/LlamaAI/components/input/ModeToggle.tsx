@@ -44,7 +44,7 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 						data-active={mode === 'quick'}
 					/>
 				}
-				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ai-tertiary data-[active=true]:bg-brand/10 data-[active=true]:text-ai-blue-deep dark:data-[active=true]:bg-brand/15"
+				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ai-tertiary data-[active=true]:bg-brand/10 data-[active=true]:text-ai-accent-blue-deep dark:data-[active=true]:bg-brand/15"
 			>
 				<Icon name="sparkles" height={12} width={12} />
 				<span>Quick</span>
@@ -73,7 +73,7 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 						data-active={mode === 'fact_checked'}
 					/>
 				}
-				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ai-tertiary data-[active=true]:bg-brand/10 data-[active=true]:text-ai-blue-deep dark:data-[active=true]:bg-brand/15"
+				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ai-tertiary data-[active=true]:bg-brand/10 data-[active=true]:text-ai-accent-blue-deep dark:data-[active=true]:bg-brand/15"
 			>
 				<Icon name="check" height={12} width={12} />
 				<span>Fact-checked</span>
@@ -110,7 +110,7 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 						data-active={mode === 'research'}
 					/>
 				}
-				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ai-tertiary data-[active=true]:bg-brand/10 data-[active=true]:text-ai-blue-deep dark:data-[active=true]:bg-brand/15"
+				className="flex min-h-6 items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ai-tertiary data-[active=true]:bg-brand/10 data-[active=true]:text-ai-accent-blue-deep dark:data-[active=true]:bg-brand/15"
 			>
 				<Icon name="search" height={12} width={12} />
 				<span>Research</span>

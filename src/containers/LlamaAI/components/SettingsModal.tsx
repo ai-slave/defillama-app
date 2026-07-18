@@ -340,18 +340,18 @@ export const SettingsModal = memo(function SettingsModal({
 				unmountOnHide
 			>
 				<header className="relative overflow-hidden border-b border-ai-line-subtle">
-					<div className="dark:from-ai-blue-deep/7.000000000000001 pointer-events-none absolute inset-0 bg-linear-to-br from-ai-blue-deep/5 via-transparent to-transparent" />
+					<div className="dark:from-ai-accent-blue-deep/7.000000000000001 pointer-events-none absolute inset-0 bg-linear-to-br from-ai-accent-blue-deep/5 via-transparent to-transparent" />
 					<div className="relative flex items-center justify-between gap-4 px-5 py-4 sm:px-6 sm:py-5">
 						<div className="flex items-center gap-3">
-							<div className="relative flex size-10 items-center justify-center overflow-hidden rounded-xl bg-linear-to-br from-ai-blue-deep/15 to-ai-blue-deep/5 ring-1 ring-ai-blue-deep/15 ring-inset">
-								<Icon name="settings" className="size-[18px] text-ai-blue-deep" />
+							<div className="relative flex size-10 items-center justify-center overflow-hidden rounded-xl bg-linear-to-br from-ai-accent-blue-deep/15 to-ai-accent-blue-deep/5 ring-1 ring-ai-accent-blue-deep/15 ring-inset">
+								<Icon name="settings" className="size-[18px] text-ai-accent-blue-deep" />
 							</div>
 							<div className="flex flex-col leading-tight">
 								<h2 className="m-0 text-[15px] font-semibold tracking-tight text-ai-primary">Settings</h2>
 								<p className="m-0 mt-0.5 text-[11px] text-ai-tertiary">Tune how LlamaAI works for you</p>
 							</div>
 						</div>
-						<Ariakit.DialogDismiss className="-mr-1.5 rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-wash hover:text-ai-primary">
+						<Ariakit.DialogDismiss className="-mr-1.5 rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary">
 							<Icon name="x" className="size-4" />
 						</Ariakit.DialogDismiss>
 					</div>
@@ -360,7 +360,7 @@ export const SettingsModal = memo(function SettingsModal({
 				<div className="flex flex-col sm:min-h-[480px] sm:flex-row">
 					<nav
 						aria-label="Settings sections"
-						className="flex shrink-0 gap-1 overflow-x-auto border-b border-ai-line-subtle p-2 sm:w-[180px] sm:flex-col sm:gap-0.5 sm:overflow-visible sm:border-r sm:border-b-0 sm:bg-ai-wash-faint sm:p-3"
+						className="flex shrink-0 gap-1 overflow-x-auto border-b border-ai-line-subtle p-2 sm:w-[180px] sm:flex-col sm:gap-0.5 sm:overflow-visible sm:border-r sm:border-b-0 sm:bg-ai-hover-faint sm:p-3"
 					>
 						{tabs.map((tab) => {
 							const isActive = activeTab === tab.id
@@ -371,13 +371,13 @@ export const SettingsModal = memo(function SettingsModal({
 									onClick={() => setActiveTab(tab.id)}
 									className={`group relative flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-medium transition-colors ${
 										isActive
-											? 'bg-ai-white text-ai-blue-deep shadow-ai-xs ring-1 ring-ai-line-subtle dark:bg-ai-wash dark:shadow-none dark:ring-ai-line-subtle'
-											: 'text-ai-tertiary hover:bg-ai-wash hover:text-ai-primary'
+											? 'bg-ai-white text-ai-accent-blue-deep shadow-ai-xs ring-1 ring-ai-line-subtle dark:bg-ai-hover dark:shadow-none dark:ring-ai-line-subtle'
+											: 'text-ai-tertiary hover:bg-ai-hover hover:text-ai-primary'
 									}`}
 								>
 									<Icon
 										name={tab.icon}
-										className={`size-[14px] shrink-0 ${isActive ? 'text-ai-blue-deep' : 'text-ai-muted'}`}
+										className={`size-[14px] shrink-0 ${isActive ? 'text-ai-accent-blue-deep' : 'text-ai-muted'}`}
 									/>
 									<span>{tab.label}</span>
 								</button>
@@ -410,7 +410,7 @@ export const SettingsModal = memo(function SettingsModal({
 														}
 													}}
 													placeholder="e.g., Be concise and lead with numbers. Always include % changes."
-													className="w-full resize-none rounded-xl border border-ai-line-medium bg-ai-wash-faint p-3.5 text-sm text-ai-primary placeholder-ai-faint outline-hidden transition-all focus:border-ai-blue-deep/40 focus:bg-ai-wash focus:ring-4 focus:ring-ai-blue-deep/8 dark:focus:ring-ai-blue-deep/10"
+													className="w-full resize-none rounded-xl border border-ai-line-medium bg-ai-hover-faint p-3.5 text-sm text-ai-primary placeholder-ai-muted outline-hidden transition-all focus:border-ai-accent-blue-deep/40 focus:bg-ai-hover focus:ring-4 focus:ring-ai-accent-blue-deep/8 dark:focus:ring-ai-accent-blue-deep/10"
 													rows={5}
 												/>
 												{showClear ? (
@@ -507,7 +507,7 @@ export const SettingsModal = memo(function SettingsModal({
 												/>
 											</SettingsCard>
 											{settings.enablePremiumTools ? (
-												<div className="rounded-xl border border-ai-line-subtle bg-ai-wash-faint p-4">
+												<div className="rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
 													<label htmlFor="llamaai-spend-cap" className="block text-[13px] font-medium text-ai-primary">
 														Spend cap per message
 													</label>
@@ -515,7 +515,7 @@ export const SettingsModal = memo(function SettingsModal({
 														Max external-data spend per message in USD. Each new message gets a fresh budget. Default
 														$0.50.
 													</p>
-													<div className="mt-3 flex items-center gap-1 rounded-lg border border-ai-line-medium bg-ai-surface-card px-3 py-2 transition-colors focus-within:border-ai-blue-deep/40 focus-within:ring-4 focus-within:ring-ai-blue-deep/8 dark:focus-within:ring-ai-blue-deep/10">
+													<div className="mt-3 flex items-center gap-1 rounded-lg border border-ai-line-medium bg-ai-surface-card px-3 py-2 transition-colors focus-within:border-ai-accent-blue-deep/40 focus-within:ring-4 focus-within:ring-ai-accent-blue-deep/8 dark:focus-within:ring-ai-accent-blue-deep/10">
 														<span className="font-mono text-sm text-ai-muted">$</span>
 														<input
 															id="llamaai-spend-cap"
@@ -538,7 +538,7 @@ export const SettingsModal = memo(function SettingsModal({
 									{availableModels && availableModels.length > 0 ? (
 										<div>
 											<SectionHeading title="Model" subtitle="Override the AI model that powers your responses." />
-											<div className="mt-3 space-y-3 rounded-xl border border-ai-line-subtle bg-ai-wash-faint p-4">
+											<div className="mt-3 space-y-3 rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
 												<SelectField
 													id="llamaai-model-select"
 													label="Model"
@@ -584,13 +584,13 @@ export const SettingsModal = memo(function SettingsModal({
 										subtitle="Connect external accounts to chat and receive alerts."
 									/>
 									{isSettingsLoading ? (
-										<div className="rounded-xl border border-ai-line-subtle bg-ai-wash-faint p-4">
+										<div className="rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
 											<div className="flex items-center justify-between gap-3">
 												<div className="min-w-0 flex-1">
-													<div className="h-4 w-24 animate-pulse rounded-sm bg-ai-wash-strong" />
-													<div className="mt-2 h-3 w-full max-w-[360px] animate-pulse rounded-sm bg-ai-wash" />
+													<div className="h-4 w-24 animate-pulse rounded-sm bg-ai-hover-strong" />
+													<div className="mt-2 h-3 w-full max-w-[360px] animate-pulse rounded-sm bg-ai-hover" />
 												</div>
-												<div className="h-8 w-20 shrink-0 animate-pulse rounded-lg bg-ai-wash-strong" />
+												<div className="h-8 w-20 shrink-0 animate-pulse rounded-lg bg-ai-hover-strong" />
 											</div>
 										</div>
 									) : (
@@ -687,7 +687,7 @@ export const SettingsModal = memo(function SettingsModal({
 																	<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 																		<p className="m-0 flex items-center gap-2 text-[13.5px] font-medium text-ai-primary">
 																			{skill.name}
-																			<span className="rounded-sm bg-ai-wash px-1.5 py-0.5 text-[10px] font-normal text-ai-tertiary">
+																			<span className="rounded-sm bg-ai-hover px-1.5 py-0.5 text-[10px] font-normal text-ai-tertiary">
 																				{skill.createdBy === 'agent' ? 'learned by assistant' : 'added by you'}
 																			</span>
 																		</p>
@@ -700,7 +700,7 @@ export const SettingsModal = memo(function SettingsModal({
 																			type="button"
 																			onClick={() => agentHome.archiveSkillMutation.mutate(skill.name)}
 																			disabled={agentHome.archiveSkillMutation.isPending}
-																			className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-error-vivid disabled:opacity-50"
+																			className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-error-vivid disabled:opacity-50"
 																		>
 																			Archive
 																		</button>
@@ -723,7 +723,7 @@ export const SettingsModal = memo(function SettingsModal({
 																		type="button"
 																		onClick={() => agentHome.restoreSkillMutation.mutate(skill.name)}
 																		disabled={agentHome.restoreSkillMutation.isPending}
-																		className="shrink-0 font-medium text-ai-blue-deep disabled:opacity-50"
+																		className="shrink-0 font-medium text-ai-accent-blue-deep disabled:opacity-50"
 																	>
 																		Restore
 																	</button>
@@ -750,7 +750,7 @@ export const SettingsModal = memo(function SettingsModal({
 										className={`group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-xl p-4 text-left transition-all ${
 											settings.hackerMode
 												? 'bg-ai-ink shadow-ai-terminal-glow ring-1 ring-ai-terminal/30'
-												: 'bg-ai-wash-faint ring-1 ring-ai-line-medium hover:ring-ai-line-strong'
+												: 'bg-ai-hover-faint ring-1 ring-ai-line-medium hover:ring-ai-line-strong'
 										}`}
 									>
 										{settings.hackerMode ? (
@@ -805,11 +805,11 @@ function SectionHeading({ title, subtitle }: { title: string; subtitle?: string 
 }
 
 function SettingsCard({ children }: { children: React.ReactNode }) {
-	return <div className="overflow-hidden rounded-xl border border-ai-line-subtle bg-ai-wash-faint">{children}</div>
+	return <div className="overflow-hidden rounded-xl border border-ai-line-subtle bg-ai-hover-faint">{children}</div>
 }
 
 function RowDivider() {
-	return <div className="mx-4 h-px bg-ai-wash" />
+	return <div className="mx-4 h-px bg-ai-hover" />
 }
 
 function MemoryList({
@@ -841,7 +841,7 @@ function MemoryList({
 								type="button"
 								onClick={() => onDelete(entry.id)}
 								disabled={deleting}
-								className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-ai-muted transition-colors hover:bg-ai-wash hover:text-ai-error-vivid disabled:opacity-50"
+								className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-error-vivid disabled:opacity-50"
 							>
 								Delete
 							</button>
@@ -874,7 +874,7 @@ function ToggleRow({
 			aria-label={label}
 			onClick={onClick}
 			disabled={!interactive}
-			className="group flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-ai-wash-faint disabled:cursor-default disabled:hover:bg-transparent"
+			className="group flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-ai-hover-faint disabled:cursor-default disabled:hover:bg-transparent"
 		>
 			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
 				<p className="m-0 text-[13.5px] font-medium text-ai-primary">{label}</p>
@@ -882,7 +882,7 @@ function ToggleRow({
 			</div>
 			<div
 				className={`relative mt-0.5 h-[22px] w-[38px] shrink-0 rounded-full transition-colors ${
-					checked ? 'bg-ai-blue-deep' : 'bg-ai-black/15 dark:bg-ai-white/15'
+					checked ? 'bg-ai-accent-blue-deep' : 'bg-ai-black/15 dark:bg-ai-white/15'
 				}`}
 			>
 				<div
@@ -918,7 +918,7 @@ function SelectField({
 					id={id}
 					value={value}
 					onChange={onChange}
-					className="w-full appearance-none rounded-lg border border-ai-line-medium bg-ai-surface-card px-3 py-2 pr-9 text-sm text-ai-primary outline-hidden transition-colors focus:border-ai-blue-deep/40 focus:ring-4 focus:ring-ai-blue-deep/8 dark:focus:ring-ai-blue-deep/10"
+					className="w-full appearance-none rounded-lg border border-ai-line-medium bg-ai-surface-card px-3 py-2 pr-9 text-sm text-ai-primary outline-hidden transition-colors focus:border-ai-accent-blue-deep/40 focus:ring-4 focus:ring-ai-accent-blue-deep/8 dark:focus:ring-ai-accent-blue-deep/10"
 				>
 					{children}
 				</select>

@@ -308,7 +308,7 @@ export function NotebookView({
 			</div>
 
 			{tab.cellsDirty || firstStaleName ? (
-				<div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-pro-gold-300/40 bg-pro-gold-300/5 px-3 py-1.5 text-[11.5px] text-pro-gold-300">
+				<div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-pro-premium-300/40 bg-pro-premium-300/5 px-3 py-1.5 text-[11.5px] text-pro-premium-300">
 					<span className="inline-flex items-center gap-1.5">
 						<Icon name="alert-triangle" className="size-3.5" />
 						{tab.cellsDirty
@@ -323,7 +323,7 @@ export function NotebookView({
 								type="button"
 								onClick={runAll}
 								disabled={!canRun || runningAny}
-								className="rounded-md border border-pro-gold-300/40 px-2 py-0.5 text-[11px] font-medium text-pro-gold-300 hover:bg-pro-gold-300/10 disabled:cursor-not-allowed disabled:opacity-40"
+								className="rounded-md border border-pro-premium-300/40 px-2 py-0.5 text-[11px] font-medium text-pro-premium-300 hover:bg-pro-premium-300/10 disabled:cursor-not-allowed disabled:opacity-40"
 							>
 								Re-run all
 							</button>
@@ -332,7 +332,7 @@ export function NotebookView({
 							type="button"
 							onClick={onDismissCellsDirty}
 							aria-label="Dismiss"
-							className="rounded-md px-1.5 py-0.5 hover:bg-pro-gold-300/20"
+							className="rounded-md px-1.5 py-0.5 hover:bg-pro-premium-300/20"
 						>
 							<Icon name="x" className="size-3" />
 						</button>
@@ -465,7 +465,7 @@ function AddMenuItem({
 	hint: string
 	tone: 'primary' | 'gold' | 'purple'
 }) {
-	const dot = tone === 'primary' ? 'bg-brand' : tone === 'gold' ? 'bg-pro-gold-300' : 'bg-pro-purple-300'
+	const dot = tone === 'primary' ? 'bg-brand' : tone === 'gold' ? 'bg-pro-premium-300' : 'bg-pro-ai-300'
 	return (
 		<Ariakit.MenuItem
 			onClick={onClick}

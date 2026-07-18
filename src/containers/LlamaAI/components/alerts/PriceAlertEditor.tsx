@@ -57,14 +57,14 @@ export function PriceAlertEditor({
 				<button
 					type="button"
 					onClick={onCancel}
-					className="rounded-lg px-3 py-1.5 text-xs text-ai-tertiary transition-colors hover:bg-ai-wash"
+					className="rounded-lg px-3 py-1.5 text-xs text-ai-tertiary transition-colors hover:bg-ai-hover"
 				>
 					Cancel
 				</button>
 				<button
 					type="submit"
 					disabled={isSaving || !isValueValid || !canSave}
-					className="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-old-blue-deep disabled:opacity-50"
+					className="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-action-hover disabled:opacity-50"
 				>
 					{isSaving ? <LoadingSpinner size={12} /> : <Icon name="check" className="size-3.5" />}
 					Save

@@ -135,11 +135,11 @@ export function ChatLanding({
 								className="transition-transform duration-200 group-hover:translate-x-0.5"
 							/>
 						</button>
-						<span className="h-3 w-px bg-ai-slate-muted/30" aria-hidden />
+						<span className="h-3 w-px bg-ai-landing-muted/30" aria-hidden />
 						<button
 							type="button"
 							onClick={() => void dismissTip(greetingTip)}
-							className="text-ai-slate-muted/75 transition-colors hover:text-ai-slate-strong"
+							className="text-ai-landing-muted/75 transition-colors hover:text-ai-landing-text-strong"
 						>
 							Not now
 						</button>
@@ -226,7 +226,7 @@ const SetAlertChip = ({ onOpenAlerts }: { onOpenAlerts: () => void }) => {
 				trackUmamiEvent('llamaai-alerts-open', { source: 'landing' })
 				onOpenAlerts()
 			}}
-			className="flex items-center gap-1.5 rounded-lg border border-ai-slate-line bg-ai-wash px-3 py-1.5 text-[13px] font-[450] text-ai-slate duration-150 hover:border-ai-slate-line-strong hover:bg-ai-surface-muted hover:text-ai-slate-strong"
+			className="flex items-center gap-1.5 rounded-lg border border-ai-landing-line bg-ai-hover px-3 py-1.5 text-[13px] font-[450] text-ai-landing-text duration-150 hover:border-ai-landing-line-strong hover:bg-ai-surface-muted hover:text-ai-landing-text-strong"
 		>
 			<Icon name="calendar-plus" height={14} width={14} className="text-ai-warning-bright" />
 			Set an alert
@@ -267,12 +267,12 @@ const Capability = ({
 		<Ariakit.PopoverProvider store={popoverStore}>
 			<Ariakit.PopoverDisclosure
 				onClick={() => trackUmamiEvent('llamaai-landing-capability-click', { category: cap.key })}
-				className="flex items-center gap-1.5 rounded-lg border border-ai-slate-line bg-ai-wash px-3 py-1.5 text-[13px] font-[450] text-ai-slate duration-150 hover:border-ai-slate-line-strong hover:bg-ai-surface-muted hover:text-ai-slate-strong aria-expanded:border-ai-blue/30 aria-expanded:bg-ai-blue/15 aria-expanded:text-ai-blue"
+				className="flex items-center gap-1.5 rounded-lg border border-ai-landing-line bg-ai-hover px-3 py-1.5 text-[13px] font-[450] text-ai-landing-text duration-150 hover:border-ai-landing-line-strong hover:bg-ai-surface-muted hover:text-ai-landing-text-strong aria-expanded:border-ai-accent-blue/30 aria-expanded:bg-ai-accent-blue/15 aria-expanded:text-ai-accent-blue"
 			>
 				<Icon name={cap.icon} height={14} width={14} />
 				{cap.name}
 				{cap.badge ? (
-					<span className="rounded-sm bg-ai-blue/15 px-1 py-px text-[9px] font-semibold tracking-wide text-ai-blue uppercase">
+					<span className="rounded-sm bg-ai-accent-blue/15 px-1 py-px text-[9px] font-semibold tracking-wide text-ai-accent-blue uppercase">
 						{cap.badge}
 					</span>
 				) : null}
@@ -288,15 +288,15 @@ const Capability = ({
 				wrapperProps={{
 					className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
 				}}
-				className="z-50 flex min-h-0 w-[min(calc(100vw-32px),42rem)] max-w-xl flex-col overflow-hidden rounded-xl border border-ai-slate-line bg-ai-surface-card shadow-ai-md max-sm:h-[calc(100dvh-80px)] max-sm:w-full max-sm:max-w-full max-sm:drawer max-sm:rounded-xl max-sm:rounded-b-none sm:max-h-[min(420px,60dvh)] lg:max-h-(--popover-available-height)"
+				className="z-50 flex min-h-0 w-[min(calc(100vw-32px),42rem)] max-w-xl flex-col overflow-hidden rounded-xl border border-ai-landing-line bg-ai-surface-card shadow-ai-md max-sm:h-[calc(100dvh-80px)] max-sm:w-full max-sm:max-w-full max-sm:drawer max-sm:rounded-xl max-sm:rounded-b-none sm:max-h-[min(420px,60dvh)] lg:max-h-(--popover-available-height)"
 			>
 				<div className="flex shrink-0 items-center gap-2 border-b border-ai-line px-4 py-2.5">
-					<Icon name={cap.icon} height={14} width={14} className="text-ai-blue-soft" />
-					<Ariakit.PopoverHeading className="text-[13px] font-medium text-ai-slate-strong">
+					<Icon name={cap.icon} height={14} width={14} className="text-ai-accent-blue-soft" />
+					<Ariakit.PopoverHeading className="text-[13px] font-medium text-ai-landing-text-strong">
 						{cap.name}
 					</Ariakit.PopoverHeading>
 					<Ariakit.PopoverDismiss
-						className="ml-auto text-ai-slate-muted hover:text-ai-slate-strong"
+						className="ml-auto text-ai-landing-muted hover:text-ai-landing-text-strong"
 						aria-label={`Close ${cap.name} prompts`}
 					>
 						<Icon name="x" height={14} width={14} />
@@ -307,7 +307,7 @@ const Capability = ({
 						<button
 							key={`${cap.key}:${prompt}`}
 							type="button"
-							className={`group flex w-full items-center justify-between px-4 py-3 text-left text-[13.5px] text-ai-slate hover:bg-ai-surface hover:text-ai-slate-strong ${
+							className={`group flex w-full items-center justify-between px-4 py-3 text-left text-[13.5px] text-ai-landing-text hover:bg-ai-surface hover:text-ai-landing-text-strong ${
 								i < cap.prompts.length - 1 ? 'border-b border-ai-line dark:border-ai-line-subtle' : ''
 							}`}
 							onClick={() => handlePromptClick(prompt)}
@@ -317,7 +317,7 @@ const Capability = ({
 								name="chevron-right"
 								height={14}
 								width={14}
-								className="shrink-0 text-ai-slate-muted opacity-0 group-hover:opacity-100 dark:text-current dark:opacity-0 dark:group-hover:opacity-60"
+								className="shrink-0 text-ai-landing-muted opacity-0 group-hover:opacity-100 dark:text-current dark:opacity-0 dark:group-hover:opacity-60"
 							/>
 						</button>
 					))}

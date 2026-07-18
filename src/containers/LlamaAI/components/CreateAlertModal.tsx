@@ -85,12 +85,12 @@ function AlertTypeCard({
 			className={`flex items-start gap-2.5 rounded-xl border p-2.5 text-left transition-colors ${
 				active
 					? 'border-link/40 bg-link/4 ring-1 ring-link/30'
-					: 'border-ai-line-medium hover:border-ai-line-strong hover:bg-ai-wash-faint'
+					: 'border-ai-line-medium hover:border-ai-line-strong hover:bg-ai-hover-faint'
 			}`}
 		>
 			<span
 				className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg ${
-					active ? 'bg-link/10 text-link' : 'bg-ai-wash text-ai-muted'
+					active ? 'bg-link/10 text-link' : 'bg-ai-hover text-ai-muted'
 				}`}
 			>
 				<Icon name={icon} className="size-3.5" />
@@ -446,7 +446,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 									</div>
 								)}
 
-								<div className="overflow-hidden rounded-xl border border-ai-line-subtle bg-ai-wash-faint">
+								<div className="overflow-hidden rounded-xl border border-ai-line-subtle bg-ai-hover-faint">
 									{triggerType === 'schedule' ? (
 										<div className="flex flex-col gap-1.5 px-4 py-2.5">
 											<span className={alertFieldLabelClass}>When should it arrive?</span>
@@ -512,7 +512,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 											/>
 										</div>
 									)}
-									<div className="mx-4 h-px bg-ai-wash" />
+									<div className="mx-4 h-px bg-ai-hover" />
 									<div className="flex flex-col gap-1.5 px-4 py-2.5">
 										<span className={alertFieldLabelClass}>Where should it go?</span>
 										<div className="flex flex-wrap items-center gap-2">
@@ -585,7 +585,7 @@ export const CreateAlertModal = memo(function CreateAlertModal({
 											</p>
 										) : null}
 									</div>
-									<div className="mx-4 h-px bg-ai-wash" />
+									<div className="mx-4 h-px bg-ai-hover" />
 									<div className="flex items-center justify-between gap-3 px-4 py-2.5">
 										<label htmlFor="create-alert-title" className={`shrink-0 ${alertFieldLabelClass}`}>
 											Name <span className="font-normal text-ai-muted">(optional)</span>

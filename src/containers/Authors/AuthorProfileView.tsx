@@ -341,7 +341,7 @@ function AuthorHero({
 			<div className="relative grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]">
 				<div className="grid gap-6 p-5 sm:p-6 lg:p-8">
 					<div className="flex flex-wrap items-center gap-3">
-						<span className="rounded-md border border-link/25 bg-research-link-button-bg px-2.5 py-1 text-[10px] font-semibold tracking-[0.2em] text-link uppercase">
+						<span className="rounded-md border border-link/25 bg-research-tint px-2.5 py-1 text-[10px] font-semibold tracking-[0.2em] text-link uppercase">
 							Dashboard author
 						</span>
 						<span className="text-sm text-tertiary">@{author.slug}</span>
@@ -363,7 +363,7 @@ function AuthorHero({
 						{isOwnProfile ? (
 							<BasicLink
 								href="/account?tab=profile"
-								className="inline-flex items-center gap-1.5 rounded-md border border-link/30 bg-research-link-button-bg px-3 py-2 text-xs font-medium text-link transition-colors hover:border-link/60 hover:bg-research-link-hover-bg"
+								className="inline-flex items-center gap-1.5 rounded-md border border-link/30 bg-research-tint px-3 py-2 text-xs font-medium text-link transition-colors hover:border-link/60 hover:bg-research-tint-hover"
 							>
 								<Icon name="settings" className="size-3.5" />
 								Edit profile
@@ -426,7 +426,7 @@ function SortControl({ sort, nav }: { sort: AuthorDashboardSort; nav: AuthorProf
 					nav={nav}
 					ariaCurrent={sort === option.value ? 'page' : undefined}
 					className={`rounded-sm px-2.5 py-1.5 text-xs font-medium transition-colors ${
-						sort === option.value ? 'bg-research-link-button-bg text-link' : 'text-secondary hover:text-primary'
+						sort === option.value ? 'bg-research-tint text-link' : 'text-secondary hover:text-primary'
 					}`}
 				>
 					{option.label}
@@ -481,7 +481,7 @@ function Pagination({
 				nav={nav}
 				ariaDisabled={page <= 1}
 				className={`rounded-md border border-medium px-3 py-2 text-sm ${
-					page <= 1 ? 'pointer-events-none opacity-40' : 'hover:bg-research-link-hover-bg'
+					page <= 1 ? 'pointer-events-none opacity-40' : 'hover:bg-research-tint-hover'
 				}`}
 			>
 				Previous
@@ -494,7 +494,7 @@ function Pagination({
 				nav={nav}
 				ariaDisabled={page >= totalPages}
 				className={`rounded-md border border-medium px-3 py-2 text-sm ${
-					page >= totalPages ? 'pointer-events-none opacity-40' : 'hover:bg-research-link-hover-bg'
+					page >= totalPages ? 'pointer-events-none opacity-40' : 'hover:bg-research-tint-hover'
 				}`}
 			>
 				Next

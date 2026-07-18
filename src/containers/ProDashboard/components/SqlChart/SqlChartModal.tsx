@@ -239,8 +239,10 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 				className="fixed inset-0 z-50 flex flex-col gap-3 overflow-hidden pro-dashboard bg-surface p-3 md:inset-4 md:rounded-md md:border md:border-medium md:p-4 md:shadow-xl"
 			>
 				<div className="flex shrink-0 items-center justify-between">
-					<h2 className="text-xl font-semibold pro-text1">{editItem ? 'Edit SQL chart' : 'New SQL chart'}</h2>
-					<Ariakit.DialogDismiss className="rounded-md pro-hover-bg p-1 pro-text3 transition-colors hover:pro-text1">
+					<h2 className="text-xl font-semibold text-pro-text-primary">
+						{editItem ? 'Edit SQL chart' : 'New SQL chart'}
+					</h2>
+					<Ariakit.DialogDismiss className="rounded-md pro-hover-bg p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary">
 						<Icon name="x" height={20} width={20} />
 						<span className="sr-only">Close dialog</span>
 					</Ariakit.DialogDismiss>
@@ -253,7 +255,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 							value={name}
 							onChange={(e) => setName(e.target.value)}
 							placeholder="Widget name (optional)"
-							className="shrink-0 rounded-md border pro-border bg-page px-3 py-2 text-sm pro-text1 placeholder:pro-text3 focus:ring-1 focus:ring-brand focus:outline-hidden"
+							className="shrink-0 rounded-md border pro-border bg-page px-3 py-2 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 						/>
 
 						<div className="shrink-0">
@@ -283,15 +285,15 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 									<Keycap muted>↵</Keycap>
 								</span>
 							</button>
-							{loadingStage ? <span className="text-xs pro-text3">{loadingStage}</span> : null}
-							{engineLoading ? <span className="text-xs pro-text3">Starting SQL engine…</span> : null}
+							{loadingStage ? <span className="text-xs text-pro-text-tertiary">{loadingStage}</span> : null}
+							{engineLoading ? <span className="text-xs text-pro-text-tertiary">Starting SQL engine…</span> : null}
 							{engineError ? (
 								<span className="text-xs text-error">
 									SQL engine failed to load{duckdb.error ? `: ${duckdb.error}` : ''}.
 								</span>
 							) : null}
 							{isDirty && result ? (
-								<span className="text-xs pro-text3">Query changed — Save will run it again.</span>
+								<span className="text-xs text-pro-text-tertiary">Query changed — Save will run it again.</span>
 							) : null}
 						</div>
 
@@ -302,7 +304,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 						) : null}
 
 						{oversized ? (
-							<div className="shrink-0 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs pro-text2">
+							<div className="shrink-0 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-pro-text-secondary">
 								Result has {result!.rows.length.toLocaleString()} rows. Only the first {rowCap.toLocaleString()} will be
 								saved with this widget.
 							</div>
@@ -345,10 +347,10 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 
 				<div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-medium pt-3">
 					<div className="flex flex-wrap items-center gap-4">
-						<span className="text-xs pro-text3">
+						<span className="text-xs text-pro-text-tertiary">
 							{displayMode === 'table' ? 'Widget shows the result as a table.' : 'Widget shows the result as a chart.'}
 						</span>
-						<label className="flex items-center gap-2 text-xs pro-text3">
+						<label className="flex items-center gap-2 text-xs text-pro-text-tertiary">
 							Rows to store
 							<input
 								type="number"
@@ -362,7 +364,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 								}}
 								onBlur={() => setRowCap((prev) => clampRowCap(prev))}
 								title={`How many result rows are stored with the widget (${SQL_SNAPSHOT_ROW_CAP_MIN}–${SQL_SNAPSHOT_ROW_CAP_MAX}). Larger snapshots make the dashboard heavier.`}
-								className="w-20 rounded-md border pro-border bg-page px-2 py-1 text-xs pro-text1 focus:ring-1 focus:ring-brand focus:outline-hidden"
+								className="w-20 rounded-md border pro-border bg-page px-2 py-1 text-xs text-pro-text-primary focus:ring-1 focus:ring-brand focus:outline-hidden"
 							/>
 						</label>
 					</div>
@@ -370,7 +372,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 						<button
 							type="button"
 							onClick={onClose}
-							className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm pro-text2 transition-colors hover:pro-text1"
+							className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary"
 						>
 							Cancel
 						</button>

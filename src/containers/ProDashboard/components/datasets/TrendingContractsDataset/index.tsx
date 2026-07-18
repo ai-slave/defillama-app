@@ -129,12 +129,12 @@ export function TrendingContractsDataset({
 			<div className="flex h-full w-full flex-col p-4">
 				<div className="mb-3">
 					<div className="flex items-center justify-between gap-4">
-						<h3 className="text-lg font-semibold pro-text1">Trending Contracts</h3>
+						<h3 className="text-lg font-semibold text-pro-text-primary">Trending Contracts</h3>
 					</div>
 				</div>
 				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
 					<LoadingSpinner />
-					<p className="text-sm pro-text2">Loading trending contracts...</p>
+					<p className="text-sm text-pro-text-secondary">Loading trending contracts...</p>
 				</div>
 			</div>
 		)
@@ -145,11 +145,11 @@ export function TrendingContractsDataset({
 			<div className="flex h-full w-full flex-col p-4">
 				<div className="mb-3">
 					<div className="flex items-center justify-between gap-4">
-						<h3 className="text-lg font-semibold pro-text1">Trending Contracts</h3>
+						<h3 className="text-lg font-semibold text-pro-text-primary">Trending Contracts</h3>
 					</div>
 				</div>
 				<div className="flex min-h-[500px] flex-1 items-center justify-center">
-					<div className="text-center pro-text2">Failed to load trending contracts</div>
+					<div className="text-center text-pro-text-secondary">Failed to load trending contracts</div>
 				</div>
 			</div>
 		)
@@ -159,7 +159,7 @@ export function TrendingContractsDataset({
 		<div className="flex h-full w-full flex-col p-4">
 			<div className="mb-3">
 				<div className="flex flex-wrap items-center justify-end gap-4">
-					<h3 className="mr-auto text-lg font-semibold pro-text1">Trending Contracts</h3>
+					<h3 className="mr-auto text-lg font-semibold text-pro-text-primary">Trending Contracts</h3>
 					<div className="flex flex-wrap items-center justify-end gap-2">
 						<TagGroup
 							size="md"
@@ -219,7 +219,7 @@ export function TrendingContractsDataset({
 							type="text"
 							placeholder="Search contracts..."
 							onInput={(e) => setContractSearch(e.currentTarget.value)}
-							className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-brand focus:outline-hidden"
+							className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>

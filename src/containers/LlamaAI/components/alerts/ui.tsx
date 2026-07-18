@@ -36,21 +36,21 @@ export const alertDialogClass =
 export const alertBackdropClass = 'backdrop fixed inset-0 bg-ai-backdrop backdrop-blur-md'
 
 export const alertInputClass =
-	'w-full rounded-lg border border-ai-line-medium bg-ai-wash-faint px-3 py-2 text-sm text-ai-primary placeholder-ai-faint transition-all outline-hidden focus:border-link/40 focus:bg-ai-wash focus:ring-4 focus:ring-link/8'
+	'w-full rounded-lg border border-ai-line-medium bg-ai-hover-faint px-3 py-2 text-sm text-ai-primary placeholder-ai-muted transition-all outline-hidden focus:border-link/40 focus:bg-ai-hover focus:ring-4 focus:ring-link/8'
 
 export const alertSelectClass =
-	'rounded-lg border border-ai-line-medium bg-ai-wash-faint px-2.5 py-2 text-sm text-ai-primary transition-all outline-hidden focus:border-link/40 focus:bg-ai-surface-card focus:ring-4 focus:ring-link/8'
+	'rounded-lg border border-ai-line-medium bg-ai-hover-faint px-2.5 py-2 text-sm text-ai-primary transition-all outline-hidden focus:border-link/40 focus:bg-ai-surface-card focus:ring-4 focus:ring-link/8'
 
 export const alertFieldLabelClass = 'text-xs font-medium text-ai-tertiary'
 
 export const alertPrimaryButtonClass =
-	'flex items-center justify-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-ai-white transition-colors hover:bg-ai-old-blue-deep disabled:cursor-not-allowed disabled:opacity-50'
+	'flex items-center justify-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-ai-white transition-colors hover:bg-ai-action-hover disabled:cursor-not-allowed disabled:opacity-50'
 
 export const alertGhostButtonClass =
-	'rounded-lg px-3 py-2 text-sm text-ai-tertiary transition-colors hover:bg-ai-wash hover:text-ai-primary'
+	'rounded-lg px-3 py-2 text-sm text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary'
 
 export const alertIconButtonClass =
-	'flex size-7 items-center justify-center rounded-lg text-ai-muted transition-colors hover:bg-ai-wash hover:text-primary dark:hover:text-ai-primary'
+	'flex size-7 items-center justify-center rounded-lg text-ai-muted transition-colors hover:bg-ai-hover hover:text-primary dark:hover:text-ai-primary'
 
 export function AlertsDialogHeader({
 	title,
@@ -78,7 +78,7 @@ export function AlertsDialogHeader({
 				</div>
 				<div className="flex shrink-0 items-center gap-1.5">
 					{right}
-					<Ariakit.DialogDismiss className="rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-wash hover:text-ai-primary">
+					<Ariakit.DialogDismiss className="rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary">
 						<Icon name="x" className="size-4" />
 					</Ariakit.DialogDismiss>
 				</div>
@@ -169,7 +169,7 @@ export function SegmentedToggle<T extends string>({
 	disabled?: boolean
 }) {
 	return (
-		<div className="flex w-fit items-center gap-0.5 rounded-lg bg-ai-wash p-0.5">
+		<div className="flex w-fit items-center gap-0.5 rounded-lg bg-ai-hover p-0.5">
 			{options.map((option) => (
 				<button
 					key={option.value}
@@ -177,7 +177,7 @@ export function SegmentedToggle<T extends string>({
 					disabled={disabled}
 					onClick={() => onChange(option.value)}
 					data-active={value === option.value}
-					className="rounded-md px-3 py-1.5 text-xs font-medium text-ai-tertiary capitalize transition-colors hover:text-primary disabled:opacity-50 data-[active=true]:bg-ai-white data-[active=true]:text-link data-[active=true]:shadow-ai-xs data-[active=true]:ring-1 data-[active=true]:ring-ai-line-subtle dark:hover:text-ai-primary dark:data-[active=true]:bg-ai-wash-strong dark:data-[active=true]:shadow-none dark:data-[active=true]:ring-ai-line-medium"
+					className="rounded-md px-3 py-1.5 text-xs font-medium text-ai-tertiary capitalize transition-colors hover:text-primary disabled:opacity-50 data-[active=true]:bg-ai-white data-[active=true]:text-link data-[active=true]:shadow-ai-xs data-[active=true]:ring-1 data-[active=true]:ring-ai-line-subtle dark:hover:text-ai-primary dark:data-[active=true]:bg-ai-hover-strong dark:data-[active=true]:shadow-none dark:data-[active=true]:ring-ai-line-medium"
 				>
 					{option.label}
 				</button>
@@ -200,7 +200,7 @@ export function StatusChip({
 				? 'bg-ai-error-vivid/10 text-ai-error'
 				: tone === 'warning'
 					? 'bg-ai-warning-bright/10 text-ai-warning'
-					: 'bg-ai-wash text-ai-tertiary'
+					: 'bg-ai-hover text-ai-tertiary'
 	return (
 		<span className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 label-xs capitalize ${toneClass}`}>
 			{children}

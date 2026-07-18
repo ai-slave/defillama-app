@@ -109,14 +109,14 @@ export function AggregatorsDataset({ chains }: { chains?: string[] }) {
 			<div className="flex h-full w-full flex-col p-4">
 				<div className="mb-3">
 					<div className="flex items-center justify-between gap-4">
-						<h3 className="text-lg font-semibold pro-text1">
+						<h3 className="text-lg font-semibold text-pro-text-primary">
 							{chains && chains.length > 0 ? `${chains.join(', ')} DEX Aggregators` : 'DEX Aggregators Volume'}
 						</h3>
 					</div>
 				</div>
 				<div className="flex min-h-[500px] flex-1 flex-col items-center justify-center gap-4">
 					<LoadingSpinner />
-					<p className="text-sm pro-text2">Loading aggregators data...</p>
+					<p className="text-sm text-pro-text-secondary">Loading aggregators data...</p>
 				</div>
 			</div>
 		)
@@ -127,13 +127,13 @@ export function AggregatorsDataset({ chains }: { chains?: string[] }) {
 			<div className="flex h-full w-full flex-col p-4">
 				<div className="mb-3">
 					<div className="flex items-center justify-between gap-4">
-						<h3 className="text-lg font-semibold pro-text1">
+						<h3 className="text-lg font-semibold text-pro-text-primary">
 							{chains && chains.length > 0 ? `${chains.join(', ')} DEX Aggregators` : 'DEX Aggregators Volume'}
 						</h3>
 					</div>
 				</div>
 				<div className="flex min-h-[500px] flex-1 items-center justify-center">
-					<div className="text-center pro-text2">Failed to load aggregators data</div>
+					<div className="text-center text-pro-text-secondary">Failed to load aggregators data</div>
 				</div>
 			</div>
 		)
@@ -143,7 +143,7 @@ export function AggregatorsDataset({ chains }: { chains?: string[] }) {
 		<div className="flex h-full w-full flex-col p-4">
 			<div className="mb-3">
 				<div className="flex flex-wrap items-center justify-end gap-4">
-					<h3 className="mr-auto text-lg font-semibold pro-text1">
+					<h3 className="mr-auto text-lg font-semibold text-pro-text-primary">
 						{chains && chains.length > 0 ? `${chains.join(', ')} DEX Aggregators` : 'DEX Aggregators Volume'}
 					</h3>
 					<div className="flex flex-wrap items-center justify-end gap-2">
@@ -190,7 +190,7 @@ export function AggregatorsDataset({ chains }: { chains?: string[] }) {
 							type="text"
 							placeholder="Search protocols..."
 							onInput={(e) => setProtocolName(e.currentTarget.value)}
-							className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm pro-text1 transition-colors focus:border-brand focus:outline-hidden"
+							className="rounded-md border pro-border bg-pro-glass-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors focus:border-brand focus:outline-hidden"
 						/>
 					</div>
 				</div>

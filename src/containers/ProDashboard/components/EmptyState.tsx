@@ -23,17 +23,14 @@ export function EmptyState({ onAddChart, onGenerateWithAI, isReadOnly = false }:
 				<div className="mt-7 flex flex-col justify-center gap-4 sm:flex-row">
 					{showAIGeneration ? (
 						<button
-							className="flex items-center gap-1 rounded-md pro-btn-blue px-6 py-3 font-medium"
+							className="flex items-center gap-1 rounded-md pro-btn-primary px-6 py-3 font-medium"
 							onClick={onGenerateWithAI}
 						>
 							<Icon name="sparkles" height={20} width={20} />
 							Generate with LlamaAI
 						</button>
 					) : null}
-					<button
-						className="flex items-center gap-1 rounded-md pro-btn-purple px-6 py-3 font-medium"
-						onClick={onAddChart}
-					>
+					<button className="flex items-center gap-1 rounded-md pro-btn-ai px-6 py-3 font-medium" onClick={onAddChart}>
 						<Icon name="plus" height={20} width={20} />
 						Add Your First Chart
 					</button>

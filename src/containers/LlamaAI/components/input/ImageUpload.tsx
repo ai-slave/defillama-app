@@ -81,7 +81,7 @@ export function TextChip({
 					{topLine}
 				</p>
 				<div className="flex items-center gap-1.5">
-					<span className="rounded-sm bg-brand/15 px-1.5 py-px font-sans text-[9px] font-bold tracking-[0.12em] text-ai-blue-deep uppercase">
+					<span className="rounded-sm bg-brand/15 px-1.5 py-px font-sans text-[9px] font-bold tracking-[0.12em] text-ai-accent-blue-deep uppercase">
 						{badgeLabel}
 					</span>
 					<span className="font-sans text-[10px] text-ai-muted">{size}</span>

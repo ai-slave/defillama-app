@@ -391,7 +391,7 @@ function ProContent({
 										: () => showPaywall('llamaai')
 							}
 							data-umami-event="dashboard-llamaai-generate"
-							className="flex items-center gap-1 rounded-md pro-btn-blue px-4 py-2"
+							className="flex items-center gap-1 rounded-md pro-btn-primary px-4 py-2"
 						>
 							<Icon name="sparkles" height={16} width={16} />
 							Generate with LlamaAI
@@ -407,7 +407,7 @@ function ProContent({
 									: () => showPaywall('dashboard-limit')
 						}
 						data-umami-event="dashboard-create"
-						className="flex items-center gap-1 rounded-md pro-btn-purple px-4 py-2"
+						className="flex items-center gap-1 rounded-md pro-btn-ai px-4 py-2"
 					>
 						<Icon name="plus" height={16} width={16} />
 						<span className="sm:hidden">Create</span>
@@ -475,7 +475,7 @@ function ProContent({
 										key={`my-dashboard-page-${pageNum}`}
 										onClick={() => goToPage(pageNum)}
 										data-active={isActive}
-										className="h-[32px] min-w-[32px] shrink-0 rounded-md px-2 py-1.5 data-[active=true]:bg-pro-old-blue data-[active=true]:text-on-brand"
+										className="h-[32px] min-w-[32px] shrink-0 rounded-md px-2 py-1.5 data-[active=true]:bg-pro-accent data-[active=true]:text-on-brand"
 									>
 										{pageNum}
 									</button>

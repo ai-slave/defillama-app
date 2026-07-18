@@ -10,9 +10,11 @@
 @import './styles/articles.css';
 @plugin '@tailwindcss/typography';
 
-/* Documentation mentions utility names; it must not drive codegen. */
+/* Documentation and codemod maps mention utility names; they must not
+   drive codegen. */
 @source not '../design.md';
 @source not '../design-decision-audit.md';
+@source not '../scripts';
 
 @custom-variant dark (&:where(.dark, .dark *));
 

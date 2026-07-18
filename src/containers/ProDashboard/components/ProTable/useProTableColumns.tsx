@@ -1497,7 +1497,7 @@ export function useProTableColumns({
 
 		const activeFilters = hasAnyActiveFilters(filters)
 		const filterButtonClassName = activeFilters
-			? 'rounded-md p-1 transition-colors hover:bg-surface-elevated-2 text-pro-blue-400 dark:text-pro-blue-200'
+			? 'rounded-md p-1 transition-colors hover:bg-surface-elevated-2 text-pro-info-400 dark:text-pro-info-200'
 			: 'rounded-md p-1 transition-colors hover:bg-surface-elevated-2 text-pro-text-tertiary'
 
 		const originalNameColumn = protocolsByChainColumns.find((column) => column.id === 'name')

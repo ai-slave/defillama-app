@@ -93,10 +93,10 @@ export function AriakitVirtualizedMultiSelect({
 
 	return (
 		<div className={className}>
-			<label htmlFor={disclosureId} className="mb-1 block text-[11px] font-medium pro-text2">
+			<label htmlFor={disclosureId} className="mb-1 block text-[11px] font-medium text-pro-text-secondary">
 				{label}
 				{selectedValues.length > 0 ? (
-					<span className="ml-1 text-xs pro-text3">
+					<span className="ml-1 text-xs text-pro-text-tertiary">
 						({selectedValues.length}
 						{maxSelections < 100 ? `/${maxSelections}` : null})
 					</span>
@@ -113,7 +113,11 @@ export function AriakitVirtualizedMultiSelect({
 						store={popover}
 						className="flex w-full items-center justify-between rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2.5 py-1.5 text-xs transition-colors hover:border-brand/40 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 					>
-						<span className={`truncate ${selectedValues.length > 0 ? 'pro-text1' : 'pro-text3'}`}>{buttonLabel}</span>
+						<span
+							className={`truncate ${selectedValues.length > 0 ? 'text-pro-text-primary' : 'text-pro-text-tertiary'}`}
+						>
+							{buttonLabel}
+						</span>
 						<Icon name="chevron-down" width={12} height={12} className="ml-2 shrink-0 opacity-70" />
 					</PopoverDisclosure>
 					<Popover
@@ -145,7 +149,7 @@ export function AriakitVirtualizedMultiSelect({
 								className="max-h-[280px] overflow-y-auto overscroll-contain rounded-md border border-pro-cards-border"
 							>
 								{filteredOptions.length === 0 ? (
-									<p className="px-3 py-2 text-center text-xs pro-text3">No results found.</p>
+									<p className="px-3 py-2 text-center text-xs text-pro-text-tertiary">No results found.</p>
 								) : (
 									<div
 										key={`virtual-${filteredOptions.length}`}
@@ -172,10 +176,10 @@ export function AriakitVirtualizedMultiSelect({
 													disabled={isDisabled}
 													className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-colors ${
 														isDisabled
-															? 'cursor-not-allowed pro-text3 opacity-50'
+															? 'cursor-not-allowed text-pro-text-tertiary opacity-50'
 															: isActive
 																? 'bg-brand/10 font-semibold text-brand'
-																: 'pro-text2 hover:pro-text1'
+																: 'text-pro-text-secondary hover:text-pro-text-primary'
 													}`}
 													style={{
 														position: 'absolute',

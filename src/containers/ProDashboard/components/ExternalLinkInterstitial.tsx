@@ -26,22 +26,25 @@ export function ExternalLinkInterstitial({ href, onClose, onAllowPermanently }: 
 				hideOnInteractOutside
 			>
 				<div className="mb-4 flex items-center justify-between">
-					<h2 className="text-xl font-semibold pro-text1">Leaving DefiLlama</h2>
-					<Ariakit.DialogDismiss className="rounded-md pro-hover-bg p-1 pro-text1 transition-colors" aria-label="Close">
+					<h2 className="text-xl font-semibold text-pro-text-primary">Leaving DefiLlama</h2>
+					<Ariakit.DialogDismiss
+						className="rounded-md pro-hover-bg p-1 text-pro-text-primary transition-colors"
+						aria-label="Close"
+					>
 						<Icon name="x" height={20} width={20} />
 					</Ariakit.DialogDismiss>
 				</div>
 
-				<p className="mb-2 pro-text2">
+				<p className="mb-2 text-pro-text-secondary">
 					You are about to visit an external site. DefiLlama is not responsible for its content.
 				</p>
-				<div className="mb-6 rounded-md border pro-border bg-surface-elevated-2 p-3 text-sm break-all pro-text1">
+				<div className="mb-6 rounded-md border pro-border bg-surface-elevated-2 p-3 text-sm break-all text-pro-text-primary">
 					<div className="font-medium">{hostname}</div>
-					<div className="mt-1 text-xs break-all pro-text2">{href}</div>
+					<div className="mt-1 text-xs break-all text-pro-text-secondary">{href}</div>
 				</div>
 
 				<div className="flex justify-end gap-3">
-					<Ariakit.DialogDismiss className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm pro-text2 transition-colors hover:pro-text1">
+					<Ariakit.DialogDismiss className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary">
 						Cancel
 					</Ariakit.DialogDismiss>
 					{hostname && href && onAllowPermanently ? (
@@ -51,7 +54,7 @@ export function ExternalLinkInterstitial({ href, onClose, onAllowPermanently }: 
 								onAllowPermanently(hostname, href)
 								onClose()
 							}}
-							className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm pro-text2 transition-colors hover:pro-text1"
+							className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary"
 						>
 							Always allow
 						</button>
@@ -69,7 +72,7 @@ export function ExternalLinkInterstitial({ href, onClose, onAllowPermanently }: 
 							if (href) window.open(href, '_blank', 'noopener,noreferrer')
 							onClose()
 						}}
-						className="rounded-md bg-pro-old-blue px-4 py-2 text-sm font-medium text-on-brand transition-colors hover:opacity-90"
+						className="rounded-md bg-pro-accent px-4 py-2 text-sm font-medium text-on-brand transition-colors hover:opacity-90"
 					>
 						Continue
 					</a>

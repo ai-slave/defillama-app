@@ -87,8 +87,8 @@ function CategoryCard({ card, onClick }: CategoryCardProps) {
 					<Icon name={card.icon} height={22} width={22} className="text-brand" />
 				</div>
 				<div>
-					<h3 className="text-base font-semibold pro-text1">{card.title}</h3>
-					<p className="mt-1 text-sm leading-relaxed pro-text2">{card.description}</p>
+					<h3 className="text-base font-semibold text-pro-text-primary">{card.title}</h3>
+					<p className="mt-1 text-sm leading-relaxed text-pro-text-secondary">{card.description}</p>
 				</div>
 			</div>
 			<div className="flex flex-wrap gap-1.5 pt-3">

@@ -77,7 +77,7 @@ function SocialLink({ kind, value }: { kind: string; value: string }) {
 			href={href}
 			target="_blank"
 			rel="noreferrer noopener"
-			className="inline-flex h-9 items-center gap-1.5 rounded-md border border-research-navy-soft/15 px-3 text-xs font-medium text-research-navy-soft/70 transition-colors hover:border-research-blue-deep/40 hover:text-research-blue-deep dark:border-white/15 dark:text-on-brand/70 dark:hover:border-white/40 dark:hover:text-research-ink"
+			className="inline-flex h-9 items-center gap-1.5 rounded-md border border-research-heading/15 px-3 text-xs font-medium text-research-heading/70 transition-colors hover:border-research-accent-strong/40 hover:text-research-accent-strong dark:border-white/15 dark:text-on-brand/70 dark:hover:border-white/40 dark:hover:text-research-ink"
 		>
 			<span>{kind.replace(/-/g, ' ')}</span>
 			<Icon name="arrow-up-right" className="size-3" />
@@ -140,7 +140,7 @@ function BrandHero() {
 			<ResearchAuthorHeaderGradient />
 			<div className="relative z-10 mx-auto grid w-full max-w-[1368px] gap-6 px-4 pt-8 pb-12 sm:px-6 lg:grid-cols-[minmax(0,220px)_minmax(0,1fr)_minmax(0,249px)] lg:items-start lg:gap-10 lg:px-8 lg:pt-12 lg:pb-16">
 				<div className="grid gap-2">
-					<h1 className="text-[28px] leading-tight font-bold tracking-widest text-on-brand sm:text-3xl dark:text-research-blue">
+					<h1 className="text-[28px] leading-tight font-bold tracking-widest text-on-brand sm:text-3xl dark:text-research-accent">
 						<BasicLink
 							href="/research"
 							className="text-inherit transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
@@ -148,13 +148,13 @@ function BrandHero() {
 							DefiLlama Research
 						</BasicLink>
 					</h1>
-					<p className="text-lg leading-tight font-semibold tracking-widest text-research-paper italic sm:text-xl">
+					<p className="text-lg leading-tight font-semibold tracking-widest text-research-white italic sm:text-xl">
 						Editor
 					</p>
 				</div>
 
 				<p className="max-w-[60ch] text-base leading-relaxed font-medium text-on-brand lg:text-2xl lg:leading-snug">
-					<span className="font-bold text-research-blue">DefiLlama Research</span> is the research arm of{' '}
+					<span className="font-bold text-research-accent">DefiLlama Research</span> is the research arm of{' '}
 					<span className="font-semibold">DefiLlama</span>, delivering bespoke digital asset research, market
 					intelligence, and strategic advisory services powered by the DefiLlama ecosystem.
 				</p>
@@ -162,7 +162,7 @@ function BrandHero() {
 				<div className="grid w-full max-w-[280px] gap-6 justify-self-center pt-2 lg:justify-self-start lg:pt-0">
 					<a
 						href="mailto:research@defillama.com"
-						className="inline-flex h-13 items-center justify-center gap-2 rounded-full bg-white px-5 text-base font-medium whitespace-nowrap text-research-blue transition-opacity hover:opacity-90"
+						className="inline-flex h-13 items-center justify-center gap-2 rounded-full bg-white px-5 text-base font-medium whitespace-nowrap text-research-accent transition-opacity hover:opacity-90"
 					>
 						<span>Contact us</span>
 						<Icon name="mail" className="size-5 shrink-0" />
@@ -209,9 +209,9 @@ function ResearchArticleListRow({
 							className="h-16 w-full rounded-md object-cover"
 						/>
 					) : (
-						<div className="h-16 w-full rounded-md bg-research-navy/10 dark:bg-research-wash-strong" aria-hidden />
+						<div className="h-16 w-full rounded-md bg-research-heading/10 dark:bg-research-wash-strong" aria-hidden />
 					)}
-					<h3 className="line-clamp-3 text-base leading-snug font-medium text-research-navy transition-colors group-hover:text-research-blue dark:text-research-ink dark:group-hover:text-research-blue">
+					<h3 className="line-clamp-3 text-base leading-snug font-medium text-research-heading transition-colors group-hover:text-research-accent dark:text-research-ink dark:group-hover:text-research-accent">
 						{article.title}
 					</h3>
 				</BasicLink>
@@ -225,7 +225,7 @@ function ResearchArticleListRow({
 				href={articleHref(article)}
 				className={`group grid min-h-[176px] grid-cols-[218px_minmax(0,1fr)] gap-3 border ${
 					index > 0 ? 'border-t-0' : ''
-				} border-research-navy bg-transparent p-3 text-research-navy transition-colors hover:border-research-blue dark:border-white dark:text-research-ink dark:hover:border-research-blue`}
+				} border-research-heading bg-transparent p-3 text-research-heading transition-colors hover:border-research-accent dark:border-white dark:text-research-ink dark:hover:border-research-accent`}
 			>
 				{article.coverImage?.url ? (
 					<img
@@ -239,15 +239,15 @@ function ResearchArticleListRow({
 					/>
 				) : (
 					<div
-						className="h-[152px] w-[218px] rounded-md bg-research-navy/10 dark:bg-research-wash-strong"
+						className="h-[152px] w-[218px] rounded-md bg-research-heading/10 dark:bg-research-wash-strong"
 						aria-hidden
 					/>
 				)}
 				<div className="grid min-w-0 content-between gap-4 py-0.5">
-					<h3 className="line-clamp-4 text-lg leading-7 font-bold text-research-navy transition-colors group-hover:text-research-blue dark:text-research-ink dark:group-hover:text-research-blue">
+					<h3 className="line-clamp-4 text-lg leading-7 font-bold text-research-heading transition-colors group-hover:text-research-accent dark:text-research-ink dark:group-hover:text-research-accent">
 						{article.title}
 					</h3>
-					<p className="text-sm leading-tight font-bold text-research-blue">{getResearchArticleLabel(article)}</p>
+					<p className="text-sm leading-tight font-bold text-research-accent">{getResearchArticleLabel(article)}</p>
 				</div>
 			</BasicLink>
 		</li>
@@ -273,11 +273,11 @@ function ResearchArticleLists({ articles }: { articles: ArticleDocument[] }) {
 			<div className="flex items-center gap-2">
 				<h2
 					id="latest-research"
-					className="shrink-0 text-base font-medium text-research-navy lg:text-lg lg:uppercase dark:text-research-ink"
+					className="shrink-0 text-base font-medium text-research-heading lg:text-lg lg:uppercase dark:text-research-ink"
 				>
 					Our Latest Research
 				</h2>
-				<div className="h-px min-w-0 flex-1 bg-research-navy dark:bg-white" aria-hidden />
+				<div className="h-px min-w-0 flex-1 bg-research-heading dark:bg-white" aria-hidden />
 			</div>
 
 			{/* mobile + tablet: compact rows, single column then two-up */}
@@ -295,7 +295,7 @@ function ResearchArticleLists({ articles }: { articles: ArticleDocument[] }) {
 
 			<BasicLink
 				href="/research"
-				className="inline-flex items-center gap-2 justify-self-end text-sm font-bold text-research-blue-deep uppercase transition-colors hover:text-research-navy lg:text-lg dark:hover:text-research-ink"
+				className="inline-flex items-center gap-2 justify-self-end text-sm font-bold text-research-accent-strong uppercase transition-colors hover:text-research-heading lg:text-lg dark:hover:text-research-ink"
 			>
 				<span>View all</span>
 				<Icon name="arrow-right" className="size-4" />
@@ -306,7 +306,7 @@ function ResearchArticleLists({ articles }: { articles: ArticleDocument[] }) {
 
 function DefillamaResearchContent({ articles }: { articles: ArticleDocument[] }) {
 	return (
-		<div className="relative isolate col-span-full overflow-x-clip overflow-y-hidden bg-surface-elevated-1 text-research-navy dark:text-research-ink lg:dark:bg-black">
+		<div className="relative isolate col-span-full overflow-x-clip overflow-y-hidden bg-surface-elevated-1 text-research-heading dark:text-research-ink lg:dark:bg-black">
 			<ResearchAuthorBackground />
 			<BrandHero />
 			<ResearchArticleLists articles={articles} />
@@ -525,7 +525,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 													onClick={() => setArchiveFilter(tab)}
 													className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-jetbrains text-[10px] tracking-[0.16em] uppercase transition-colors ${
 														isActive
-															? 'border-link/60 bg-research-link-button-bg text-link'
+															? 'border-link/60 bg-research-tint text-link'
 															: 'border-medium bg-transparent text-secondary hover:border-link/40 hover:text-link'
 													}`}
 												>

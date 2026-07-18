@@ -104,7 +104,10 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 						size="sm"
 					/>
 					{snapshot ? (
-						<span className="flex items-center gap-1.5 text-xs pro-text3" title={freshness(snapshot.computedAt).label}>
+						<span
+							className="flex items-center gap-1.5 text-xs text-pro-text-tertiary"
+							title={freshness(snapshot.computedAt).label}
+						>
 							<span
 								aria-hidden
 								className={`inline-block size-1.5 shrink-0 rounded-full ${freshness(snapshot.computedAt).dot}`}
@@ -125,7 +128,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 								{isRefreshing ? 'Refreshing…' : 'Refresh'}
 							</button>
 							<Tooltip content={REFRESH_HINT} className="flex items-center">
-								<Icon name="help-circle" height={13} width={13} className="pro-text3" />
+								<Icon name="help-circle" height={13} width={13} className="text-pro-text-tertiary" />
 							</Tooltip>
 						</>
 					) : null}
@@ -153,7 +156,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 			{cardView === 'query' ? (
 				<SqlQueryView config={config} snapshot={snapshot} />
 			) : !snapshot || !result ? (
-				<div className="flex flex-1 items-center justify-center text-sm pro-text3">
+				<div className="flex flex-1 items-center justify-center text-sm text-pro-text-tertiary">
 					{isRefreshing ? <LoadingSpinner size={20} /> : 'No data yet.'}
 				</div>
 			) : displayMode === 'table' ? (
@@ -161,7 +164,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 					<ResultsGrid result={result} />
 				</div>
 			) : !hasNumeric ? (
-				<div className="flex flex-1 items-center justify-center px-6 text-center text-sm pro-text3">
+				<div className="flex flex-1 items-center justify-center px-6 text-center text-sm text-pro-text-tertiary">
 					No numeric columns in this result to chart.
 				</div>
 			) : (
@@ -176,7 +179,7 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 			)}
 
 			{cardView === 'output' && snapshot?.truncated ? (
-				<span className="body-xs pro-text3">
+				<span className="body-xs text-pro-text-tertiary">
 					Showing first {snapshot.rows.length.toLocaleString()} of {snapshot.rowCount.toLocaleString()} rows.
 				</span>
 			) : null}

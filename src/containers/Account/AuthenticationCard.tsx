@@ -80,7 +80,7 @@ export function AuthenticationCard() {
 				{walletEmail ? (
 					<>
 						<div className="flex items-center gap-3">
-							<div className="flex items-center rounded-full bg-sub-surface-panel p-2 dark:bg-sub-ink-primary">
+							<div className="flex items-center rounded-full bg-sub-surface-panel p-2 dark:bg-sub-dark-page">
 								<Icon name="wallet" height={20} width={20} className="text-sub-text-primary" />
 							</div>
 							<div className="flex flex-col gap-1">
@@ -108,7 +108,7 @@ export function AuthenticationCard() {
 					<>
 						<div className="flex flex-wrap items-center justify-between gap-3">
 							<div className="flex items-center gap-3">
-								<div className="flex items-center rounded-full bg-sub-surface-panel p-2 dark:bg-sub-ink-primary">
+								<div className="flex items-center rounded-full bg-sub-surface-panel p-2 dark:bg-sub-dark-page">
 									<Icon name="mail-rounded" height={20} width={20} className="text-sub-text-primary" />
 								</div>
 								<div className="flex flex-col gap-1">
@@ -136,7 +136,7 @@ export function AuthenticationCard() {
 
 						{user?.walletAddress && (
 							<div className="flex items-center gap-3">
-								<div className="flex items-center rounded-full bg-sub-surface-panel p-2 dark:bg-sub-ink-primary">
+								<div className="flex items-center rounded-full bg-sub-surface-panel p-2 dark:bg-sub-dark-page">
 									<Icon name="wallet" height={20} width={20} className="text-sub-text-primary" />
 								</div>
 								<div className="flex flex-col gap-1">

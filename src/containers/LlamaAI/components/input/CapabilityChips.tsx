@@ -22,7 +22,7 @@ export function CapabilityChips({ onPromptSelect, isPending, isStreaming }: Capa
 			<Ariakit.PopoverDisclosure
 				data-walkthrough="explore-button"
 				disabled={disabled}
-				className="group flex h-7 items-center justify-center gap-1 rounded-md bg-ai-blue/8 px-2 text-ai-blue/70 transition-colors duration-150 hover:bg-ai-blue/15 hover:text-ai-blue disabled:pointer-events-none disabled:opacity-40 aria-expanded:bg-ai-blue/15 aria-expanded:text-ai-blue"
+				className="group flex h-7 items-center justify-center gap-1 rounded-md bg-ai-accent-blue/8 px-2 text-ai-accent-blue/70 transition-colors duration-150 hover:bg-ai-accent-blue/15 hover:text-ai-accent-blue disabled:pointer-events-none disabled:opacity-40 aria-expanded:bg-ai-accent-blue/15 aria-expanded:text-ai-accent-blue"
 			>
 				<Icon name="layout-grid" height={14} width={14} className="group-aria-expanded:hidden" />
 				<Icon name="x" height={14} width={14} className="hidden group-aria-expanded:block" />
