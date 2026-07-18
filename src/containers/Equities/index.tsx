@@ -701,12 +701,14 @@ function buildInitialTableState(preset: EquitiesPreset): EquitiesTableState {
 
 function EquitiesRankingsTable({
 	preset,
-	companies,
+	filteredCompanies,
+	allCompanies,
 	filters,
 	onFiltersChange
 }: {
 	preset: EquitiesPreset
-	companies: IEquitiesListCompanyRow[]
+	filteredCompanies: IEquitiesListCompanyRow[]
+	allCompanies: IEquitiesListCompanyRow[]
 	filters: EquityActiveFilter[]
 	onFiltersChange: (filters: EquityActiveFilter[]) => void
 }) {
@@ -717,14 +719,13 @@ function EquitiesRankingsTable({
 	const deferredSearchValue = useDeferredValue(searchValue)
 	const searchQuery = deferredSearchValue.trim()
 
-	const filteredCompanies = useMemo(() => {
-		const companiesForFilters = filterEquityCompanies(companies, filters)
+	const searchedCompanies = useMemo(() => {
 		const normalizedSearchQuery = searchQuery.toLowerCase()
 		if (normalizedSearchQuery) {
 			const tickerMatches: EquitiesTableCompanyRow[] = []
 			const companyMatches: EquitiesTableCompanyRow[] = []
 
-			for (const company of companiesForFilters) {
+			for (const company of filteredCompanies) {
 				if (company.ticker.toLowerCase().includes(normalizedSearchQuery)) {
 					tickerMatches.push({ ...company, searchPriority: 0 })
 				} else if (company.name.toLowerCase().includes(normalizedSearchQuery)) {
@@ -735,8 +736,8 @@ function EquitiesRankingsTable({
 			return tickerMatches.concat(companyMatches)
 		}
 
-		return companiesForFilters
-	}, [companies, filters, searchQuery])
+		return filteredCompanies
+	}, [filteredCompanies, searchQuery])
 	const tableSorting = searchQuery
 		? [{ id: 'searchPriority', desc: false }, ...sorting.filter((sort) => sort.id !== 'searchPriority')]
 		: sorting
@@ -746,7 +747,7 @@ function EquitiesRankingsTable({
 	)
 
 	const table = useReactTable({
-		data: filteredCompanies,
+		data: searchedCompanies,
 		columns,
 		state: {
 			sorting: tableSorting,
@@ -886,7 +887,7 @@ function EquitiesRankingsTable({
 							className={searchFieldInputStyles}
 						/>
 					</label>
-					<EquitiesFiltersDialog companies={companies} filters={filters} onFiltersChange={applyFilters} />
+					<EquitiesFiltersDialog companies={allCompanies} filters={filters} onFiltersChange={applyFilters} />
 					<SelectWithCombobox
 						allValues={columnOptions}
 						selectedValues={selectedColumns}
@@ -925,6 +926,7 @@ export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProp
 		[router.query.rankBy]
 	)
 	const filters = useMemo(() => parseEquityFiltersQuery(filtersQueryParam), [filtersQueryParam])
+	const filteredCompanies = useMemo(() => filterEquityCompanies(companies, filters), [companies, filters])
 	const [isMorePresetsManuallyOpen, setIsMorePresetsManuallyOpen] = useState(false)
 
 	const selectPreset = useCallback(
@@ -965,7 +967,7 @@ export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProp
 
 	return (
 		<div className="flex flex-col gap-2">
-			<EquitiesTreemapSection companies={companies} filters={filters} />
+			<EquitiesTreemapSection companies={filteredCompanies} />
 
 			{/* Mobile: collapsible drawer toggled purely by the native <details> element */}
 			<details className="group rounded-xl border border-subtle bg-surface sm:hidden">
@@ -1019,7 +1021,8 @@ export function EquitiesOverview({ companies, updatedAt }: IEquitiesListPageProp
 			<EquitiesRankingsTable
 				key={selectedPreset}
 				preset={selectedPreset}
-				companies={companies}
+				filteredCompanies={filteredCompanies}
+				allCompanies={companies}
 				filters={filters}
 				onFiltersChange={setFilters}
 			/>

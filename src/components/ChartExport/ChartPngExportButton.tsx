@@ -91,6 +91,33 @@ function formatTreemapExportLabel(params: any, total: number, sourceFormatter: a
 	return `{name|${String(params?.name ?? '')}}\n{value|${formatTreemapCurrency(rawValue)} (${pct}%)}`
 }
 
+export function sanitizeRichImagesForExport(rich: any) {
+	if (!rich || typeof rich !== 'object') return rich
+	let sanitized = rich
+
+	for (const key in rich) {
+		const style = rich[key]
+		const backgroundColor = style?.backgroundColor
+		const image = backgroundColor?.image
+		if (typeof image?.toDataURL !== 'function') continue
+
+		let dataUrl: string | undefined
+		try {
+			dataUrl = image.toDataURL('image/png')
+		} catch {
+			// Cross-origin logos taint their source canvas. Keep the text label exportable without that image.
+		}
+
+		if (sanitized === rich) sanitized = { ...rich }
+		sanitized[key] = {
+			...style,
+			backgroundColor: dataUrl ? { ...backgroundColor, image: dataUrl } : undefined
+		}
+	}
+
+	return sanitized
+}
+
 function applyTreemapDataExportLabels(data: any[], label: any, upperLabel: any): any[] {
 	return data.map((item) => {
 		if (!item || typeof item !== 'object' || Array.isArray(item)) return item
@@ -102,12 +129,14 @@ function applyTreemapDataExportLabels(data: any[], label: any, upperLabel: any):
 				...label,
 				...itemLabel,
 				show: true,
+				rich: sanitizeRichImagesForExport(itemLabel.rich ?? label.rich),
 				formatter: typeof itemLabel.formatter === 'function' ? itemLabel.formatter : label.formatter
 			},
 			upperLabel: {
 				...upperLabel,
 				...itemUpperLabel,
 				show: itemUpperLabel.show ?? upperLabel.show,
+				rich: sanitizeRichImagesForExport(itemUpperLabel.rich ?? upperLabel.rich),
 				formatter: typeof itemUpperLabel.formatter === 'function' ? itemUpperLabel.formatter : upperLabel.formatter
 			},
 			...(Array.isArray(item.children)

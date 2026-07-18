@@ -1,22 +1,27 @@
 import { TreemapChart as EChartTreemap } from 'echarts/charts'
-import { GraphicComponent, TooltipComponent } from 'echarts/components'
+import { GraphicComponent, ToolboxComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { LabelLayout } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useCallback, useEffect, useId, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
+import type {
+	EquitiesTreemapNode,
+	IEquitiesTreemapGroup,
+	IEquitiesTreemapLeaf
+} from '~/containers/Equities/treemapData'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { formattedNum } from '~/utils'
 import { equityIconUrl } from '~/utils/icons'
 import { CHART_INSET } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
-import { normalizeTreemapNodes } from '../TreemapChart/utils'
 import { buildWatermarkGraphic } from '../utils'
+import { EQUITIES_TREEMAP_COLORS } from './colors'
 
-echarts.use([TooltipComponent, EChartTreemap, CanvasRenderer, GraphicComponent, LabelLayout])
+echarts.use([TooltipComponent, ToolboxComponent, EChartTreemap, CanvasRenderer, GraphicComponent, LabelLayout])
 
 export interface IEquitiesTreemapChartProps {
-	treeData: any[]
+	treeData: EquitiesTreemapNode[]
 	sizeLabel: string
 	colorLabel: string
 	valueSymbol?: string
@@ -24,10 +29,6 @@ export interface IEquitiesTreemapChartProps {
 	showMarketCapRow?: boolean
 	onReady?: (instance: echarts.ECharts | null) => void
 }
-
-const NEGATIVE_COLOR = '#942e38'
-const NEUTRAL_COLOR = '#aaaaaa'
-const POSITIVE_COLOR = '#269f3c'
 
 function hexToRgb(hex: string): [number, number, number] {
 	const normalized = hex.replace('#', '')
@@ -51,9 +52,11 @@ function lerpHex(from: string, to: string, t: number): string {
 const COLOR_CAP_PCT = 3
 
 function changeToColor(pct: number | null | undefined): string {
-	if (pct == null || !isFinite(pct) || pct === 0) return NEUTRAL_COLOR
+	if (pct == null || !isFinite(pct) || pct === 0) return EQUITIES_TREEMAP_COLORS.neutral
 	const t = Math.min(Math.abs(pct) / COLOR_CAP_PCT, 1)
-	return pct > 0 ? lerpHex(NEUTRAL_COLOR, POSITIVE_COLOR, t) : lerpHex(NEGATIVE_COLOR, NEUTRAL_COLOR, 1 - t)
+	return pct > 0
+		? lerpHex(EQUITIES_TREEMAP_COLORS.neutral, EQUITIES_TREEMAP_COLORS.positive, t)
+		: lerpHex(EQUITIES_TREEMAP_COLORS.negative, EQUITIES_TREEMAP_COLORS.neutral, 1 - t)
 }
 
 const LEAF_TEXT_STYLE = {
@@ -145,6 +148,41 @@ const failedIconUrls = new Set<string>()
 const pendingIconUrls = new Set<string>()
 const iconSettleCallbacks = new Map<string, Set<() => void>>()
 const ICON_CANVAS_SIZE = 96
+// One chart renders at most 500 logos. Keep enough transition headroom for a
+// metric change without retaining every logo visited during the page session.
+const ICON_CACHE_LIMIT = 750
+
+function trimIconCache() {
+	while (iconImages.size > ICON_CACHE_LIMIT) {
+		let evicted = false
+		for (const url of iconImages.keys()) {
+			if (pendingIconUrls.has(url)) continue
+			iconImages.delete(url)
+			evicted = true
+			break
+		}
+		if (!evicted) return
+	}
+}
+
+function getIconCanvas(url: string): HTMLCanvasElement | undefined {
+	const canvas = iconImages.get(url)
+	if (!canvas) return
+	iconImages.delete(url)
+	iconImages.set(url, canvas)
+	return canvas
+}
+
+function setIconCanvas(url: string, canvas: HTMLCanvasElement) {
+	iconImages.set(url, canvas)
+	trimIconCache()
+}
+
+function markIconFailed(url: string) {
+	failedIconUrls.add(url)
+	if (failedIconUrls.size <= ICON_CACHE_LIMIT) return
+	failedIconUrls.delete(failedIconUrls.values().next().value!)
+}
 
 // Hand zrender a per-icon canvas, not the URL: URL strings go through zrender's
 // global LRU(50) image cache which thrashes with 500 logos. The canvas also
@@ -152,7 +190,7 @@ const ICON_CANVAS_SIZE = 96
 function preloadLeafIcon(url: string, onSettled: () => void) {
 	if (typeof window === 'undefined') return
 	if (failedIconUrls.has(url)) return
-	if (iconImages.has(url)) {
+	if (getIconCanvas(url)) {
 		iconSettleCallbacks.get(url)?.add(onSettled)
 		return
 	}
@@ -162,10 +200,11 @@ function preloadLeafIcon(url: string, onSettled: () => void) {
 	const canvas = document.createElement('canvas')
 	canvas.width = ICON_CANVAS_SIZE
 	canvas.height = ICON_CANVAS_SIZE
-	iconImages.set(url, canvas)
+	setIconCanvas(url, canvas)
 	const settle = () => {
 		pendingIconUrls.delete(url)
 		iconSettleCallbacks.delete(url)
+		trimIconCache()
 		for (const callback of callbacks) callback()
 	}
 	const img = new Image()
@@ -185,7 +224,7 @@ function preloadLeafIcon(url: string, onSettled: () => void) {
 		settle()
 	}
 	img.onerror = () => {
-		failedIconUrls.add(url)
+		markIconFailed(url)
 		iconImages.delete(url)
 		settle()
 	}
@@ -209,7 +248,7 @@ function buildLeafRich(iconUrl: string) {
 	const rich: Record<string, any> = { ...LEAF_TEXT_RICH }
 	for (const iconSize of ICON_SIZES) {
 		rich[`icon${iconSize}`] = {
-			backgroundColor: { image: iconImages.get(iconUrl) as any },
+			backgroundColor: { image: getIconCanvas(iconUrl) as any },
 			width: iconSize,
 			height: iconSize,
 			lineHeight: iconLineHeightOf(iconSize)
@@ -218,25 +257,46 @@ function buildLeafRich(iconUrl: string) {
 	return rich
 }
 
-function leafIconUrl(node: any): string {
-	return equityIconUrl(node?.name ?? '', node?.country || 'US')
+function leafIconUrl(node: Pick<IEquitiesTreemapLeaf, 'name' | 'country'>): string {
+	return equityIconUrl(node.name, node.country)
 }
 
-function decorateLeaves(nodes: any[], onIconSettled: () => void) {
-	for (const node of nodes ?? []) {
-		if (!node) continue
-		if (Array.isArray(node.children) && node.children.length > 0) {
-			decorateLeaves(node.children, onIconSettled)
-		} else {
-			node.itemStyle = { ...node.itemStyle, color: changeToColor(node.value?.[1]) }
-			const iconUrl = leafIconUrl(node)
-			preloadLeafIcon(iconUrl, onIconSettled)
-			node.label = {
-				padding: LEAF_LABEL_PADDING,
-				rich: buildLeafRich(iconUrl)
-			}
+type EquitiesTreemapChartLeaf = IEquitiesTreemapLeaf & {
+	itemStyle: { color: string }
+	label: { padding: number; rich: Record<string, any> }
+}
+
+type EquitiesTreemapChartGroup = Omit<IEquitiesTreemapGroup, 'children'> & {
+	children: EquitiesTreemapChartLeaf[]
+}
+
+type EquitiesTreemapChartNode = EquitiesTreemapChartLeaf | EquitiesTreemapChartGroup
+
+function prepareLeaf(node: IEquitiesTreemapLeaf, onIconSettled: () => void): EquitiesTreemapChartLeaf {
+	const iconUrl = leafIconUrl(node)
+	preloadLeafIcon(iconUrl, onIconSettled)
+	return {
+		...node,
+		itemStyle: { color: changeToColor(node.value[1]) },
+		label: {
+			padding: LEAF_LABEL_PADDING,
+			rich: buildLeafRich(iconUrl)
 		}
 	}
+}
+
+function prepareChartData(nodes: EquitiesTreemapNode[], onIconSettled: () => void): EquitiesTreemapChartNode[] {
+	const prepared: EquitiesTreemapChartNode[] = []
+	for (const node of nodes) {
+		if ('children' in node) {
+			const children: EquitiesTreemapChartLeaf[] = []
+			for (const child of node.children) children.push(prepareLeaf(child, onIconSettled))
+			prepared.push({ ...node, children })
+		} else {
+			prepared.push(prepareLeaf(node, onIconSettled))
+		}
+	}
+	return prepared
 }
 
 function formatChangePct(value: number | null | undefined): string {
@@ -297,8 +357,8 @@ export default function EquitiesTreemapChart({
 	showMarketCapRow = true,
 	onReady
 }: IEquitiesTreemapChartProps) {
-	const id = useId()
 	const [isDark] = useDarkModeManager()
+	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const onReadyRef = useRef(onReady)
 	useEffect(() => {
@@ -324,15 +384,10 @@ export default function EquitiesTreemapChart({
 	}, [])
 
 	const chartDataTree = useMemo(() => {
-		const cloned = normalizeTreemapNodes(treeData ?? [])
-		decorateLeaves(cloned, scheduleIconRefresh)
-		return cloned
+		return prepareChartData(treeData, scheduleIconRefresh)
 	}, [scheduleIconRefresh, treeData])
 
-	const hasGroups = useMemo(
-		() => (chartDataTree ?? []).some((node) => Array.isArray(node?.children) && node.children.length > 0),
-		[chartDataTree]
-	)
+	const hasGroups = useMemo(() => chartDataTree.some((node) => 'children' in node), [chartDataTree])
 
 	const formatSizeValue = useMemo(
 		() => (value: number) => formattedNum(value, valueSymbol.length > 0 ? valueSymbol : false),
@@ -340,12 +395,23 @@ export default function EquitiesTreemapChart({
 	)
 
 	useEffect(() => {
-		const el = document.getElementById(id)
+		const el = containerRef.current
 		if (!el) return
-		const instance = echarts.getInstanceByDom(el) || echarts.init(el, null, { renderer: 'canvas' })
+		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
 		onReadyRef.current?.(instance)
 
+		return () => {
+			applyOptionRef.current = null
+			chartRef.current = null
+			onReadyRef.current?.(null)
+			instance.dispose()
+		}
+	}, [])
+
+	useEffect(() => {
+		const instance = chartRef.current
+		if (!instance) return
 		const option = {
 			graphic: [buildWatermarkGraphic(isDark)],
 			tooltip: {
@@ -381,7 +447,7 @@ export default function EquitiesTreemapChart({
 					top: 0,
 					left: 0,
 					right: 0,
-					bottom: 22,
+					bottom: 0,
 					roam: true,
 					nodeClick: 'zoomToNode',
 					zoomToNodeRatio: ZOOM_TO_NODE_RATIO,
@@ -447,11 +513,8 @@ export default function EquitiesTreemapChart({
 
 		return () => {
 			applyOptionRef.current = null
-			chartRef.current = null
-			onReadyRef.current?.(null)
-			instance.dispose()
 		}
-	}, [chartDataTree, colorLabel, formatSizeValue, hasGroups, id, isDark, showMarketCapRow, sizeLabel])
+	}, [chartDataTree, colorLabel, formatSizeValue, hasGroups, isDark, showMarketCapRow, sizeLabel])
 
 	useEffect(() => {
 		const instance = chartRef.current
@@ -466,7 +529,7 @@ export default function EquitiesTreemapChart({
 
 	return (
 		<div className="w-full overflow-hidden" style={{ height, padding: CHART_INSET, boxSizing: 'border-box' }}>
-			<div id={id} className="h-full w-full" />
+			<div ref={containerRef} className="h-full w-full" />
 		</div>
 	)
 }

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { buildEquitiesTreemap, type IEquitiesTreemapGroup, type IEquitiesTreemapLeaf } from '../treemapData'
+import {
+	buildEquitiesTreemap,
+	prepareEquitiesTreemapCsv,
+	type IEquitiesTreemapGroup,
+	type IEquitiesTreemapLeaf
+} from '../treemapData'
 import type { IEquitiesListCompanyRow } from '../types'
 
 function makeRow(overrides: Partial<IEquitiesListCompanyRow>): IEquitiesListCompanyRow {
@@ -179,6 +184,45 @@ describe('buildEquitiesTreemap', () => {
 			sector: 'Technology',
 			industry: 'Semiconductors',
 			marketCap: 900
+		})
+	})
+})
+
+describe('prepareEquitiesTreemapCsv', () => {
+	it('exports the displayed leaves from grouped chart data', () => {
+		const { treeData } = buildEquitiesTreemap(
+			[
+				makeRow({ ticker: 'BIG', name: 'Big Co', marketCap: 200, priceChangePercentage1d: 2 }),
+				makeRow({ ticker: 'SMALL', name: 'Small Co', marketCap: 100, priceChangePercentage1d: null })
+			],
+			{ ...baseOptions, groupBy: 'sector' }
+		)
+
+		expect(
+			prepareEquitiesTreemapCsv({
+				nodes: treeData,
+				sizeLabel: 'Market Cap',
+				colorLabel: 'Price 1D',
+				filename: 'equities-market-map'
+			})
+		).toEqual({
+			filename: 'equities-market-map',
+			rows: [
+				[
+					'Ticker',
+					'Company',
+					'Country',
+					'Sector',
+					'Industry',
+					'Size Metric',
+					'Size',
+					'Color Metric',
+					'Change %',
+					'Market Cap'
+				],
+				['BIG', 'Big Co', 'US', 'Technology', 'Software', 'Market Cap', 200, 'Price 1D', 2, 200],
+				['SMALL', 'Small Co', 'US', 'Technology', 'Software', 'Market Cap', 100, 'Price 1D', '', 100]
+			]
 		})
 	})
 })

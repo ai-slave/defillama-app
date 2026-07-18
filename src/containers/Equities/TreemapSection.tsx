@@ -1,15 +1,19 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
+import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
+import { EQUITIES_TREEMAP_COLORS } from '~/components/ECharts/EquitiesTreemapChart/colors'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import defs from '~/public/equities-definitions.json'
-import { Button } from '~/ui/Button'
+import { Button, buttonStyles } from '~/ui/Button'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
-import { filterEquityCompanies, type EquityActiveFilter } from './filters'
 import {
 	buildEquitiesTreemap,
 	EQUITIES_TREEMAP_COLOR_METRICS,
 	EQUITIES_TREEMAP_DEFAULT_LIMIT,
 	EQUITIES_TREEMAP_SIZE_METRICS,
+	prepareEquitiesTreemapCsv,
 	type EquitiesTreemapColorMetric,
 	type EquitiesTreemapGroupBy,
 	type EquitiesTreemapSizeMetric
@@ -19,6 +23,8 @@ import type { IEquitiesListCompanyRow } from './types'
 const EquitiesTreemapChart = lazy(() => import('~/components/ECharts/EquitiesTreemapChart'))
 
 const CHART_HEIGHT = '600px'
+const EXPORT_FILENAME = 'equities-market-map'
+const CHART_ACTION_BUTTON_CLASSNAME = buttonStyles({ size: 'sm' })
 
 const GROUP_OPTIONS: Array<{ key: EquitiesTreemapGroupBy; label: string }> = [
 	{ key: 'sector', label: 'Sector' },
@@ -42,26 +48,27 @@ const SIZE_METRIC_OPTIONS = EQUITIES_TREEMAP_SIZE_METRICS.map((metric) => ({
 	name: getMetricLabel(metric)
 }))
 
-export function EquitiesTreemapSection({
-	companies,
-	filters
-}: {
-	companies: IEquitiesListCompanyRow[]
-	filters: EquityActiveFilter[]
-}) {
+export function EquitiesTreemapSection({ companies }: { companies: IEquitiesListCompanyRow[] }) {
 	const [groupBy, setGroupBy] = useState<EquitiesTreemapGroupBy>('sector')
 	const [sizeMetric, setSizeMetric] = useState<EquitiesTreemapSizeMetric>('marketCap')
 	const [colorMetric, setColorMetric] = useState<EquitiesTreemapColorMetric>('priceChangePercentage1d')
-
-	const filteredCompanies = useMemo(() => filterEquityCompanies(companies, filters), [companies, filters])
+	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const { treeData, excludedCount, truncatedCount } = useMemo(
-		() => buildEquitiesTreemap(filteredCompanies, { groupBy, sizeMetric, colorMetric }),
-		[colorMetric, filteredCompanies, groupBy, sizeMetric]
+		() => buildEquitiesTreemap(companies, { groupBy, sizeMetric, colorMetric }),
+		[colorMetric, companies, groupBy, sizeMetric]
 	)
 
 	const sizeLabel = getMetricLabel(sizeMetric)
 	const colorLabel = COLOR_METRIC_LABELS[colorMetric]
+	const chartNote = [
+		excludedCount > 0 ? `${excludedCount} companies hidden (zero, negative or missing ${sizeLabel})` : '',
+		truncatedCount > 0
+			? `showing top ${EQUITIES_TREEMAP_DEFAULT_LIMIT} by ${sizeLabel} (${truncatedCount} more not shown)`
+			: ''
+	]
+		.filter(Boolean)
+		.join(' · ')
 
 	return (
 		<Panel padding="none">
@@ -112,6 +119,27 @@ export function EquitiesTreemapSection({
 							</Button>
 						))}
 					</div>
+					{treeData.length > 0 ? (
+						<>
+							<ChartRestoreButton chartInstance={chartInstance} className={CHART_ACTION_BUTTON_CLASSNAME} />
+							<ChartExportButtons
+								chartInstance={chartInstance}
+								className={CHART_ACTION_BUTTON_CLASSNAME}
+								filename={EXPORT_FILENAME}
+								title="Equities Market Map"
+								prepareCsvDirect={() =>
+									prepareEquitiesTreemapCsv({
+										nodes: treeData,
+										sizeLabel,
+										colorLabel,
+										filename: EXPORT_FILENAME
+									})
+								}
+								pngProfile="treemapNormalized"
+								smol
+							/>
+						</>
+					) : null}
 				</TableToolbarControlGroup>
 			</TableToolbar>
 			<Suspense fallback={<div style={{ height: CHART_HEIGHT }} />}>
@@ -122,19 +150,32 @@ export function EquitiesTreemapSection({
 					valueSymbol={sizeMetric === 'employeeCount' ? '' : '$'}
 					height={CHART_HEIGHT}
 					showMarketCapRow={sizeMetric !== 'marketCap'}
+					onReady={handleChartReady}
 				/>
 			</Suspense>
-			{excludedCount > 0 || truncatedCount > 0 ? (
-				<p className="px-3 pb-2 body-sm text-tertiary">
-					{[
-						excludedCount > 0 ? `${excludedCount} companies hidden (zero, negative or missing ${sizeLabel})` : '',
-						truncatedCount > 0
-							? `showing top ${EQUITIES_TREEMAP_DEFAULT_LIMIT} by ${sizeLabel} (${truncatedCount} more not shown)`
-							: ''
-					]
-						.filter(Boolean)
-						.join(' · ')}
-				</p>
+			{treeData.length > 0 || chartNote ? (
+				<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 pb-2 body-sm text-tertiary">
+					{chartNote ? <p>{chartNote}</p> : null}
+					{treeData.length > 0 ? (
+						<div
+							className="ml-auto w-40 shrink-0 text-xs"
+							role="img"
+							aria-label={`Treemap color scale: loss through zero to gain for ${colorLabel}`}
+						>
+							<div
+								className="h-1.5 rounded-full border border-subtle"
+								style={{
+									background: `linear-gradient(to right, ${EQUITIES_TREEMAP_COLORS.negative}, ${EQUITIES_TREEMAP_COLORS.neutral}, ${EQUITIES_TREEMAP_COLORS.positive})`
+								}}
+							/>
+							<div className="flex justify-between pt-0.5">
+								<span>Loss</span>
+								<span>0%</span>
+								<span>Gain</span>
+							</div>
+						</div>
+					) : null}
+				</div>
 			) : null}
 		</Panel>
 	)

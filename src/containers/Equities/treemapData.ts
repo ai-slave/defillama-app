@@ -60,6 +60,57 @@ export interface IEquitiesTreemapResult {
 	truncatedCount: number
 }
 
+export function prepareEquitiesTreemapCsv({
+	nodes,
+	sizeLabel,
+	colorLabel,
+	filename
+}: {
+	nodes: readonly EquitiesTreemapNode[]
+	sizeLabel: string
+	colorLabel: string
+	filename: string
+}) {
+	const rows: Array<Array<string | number>> = [
+		[
+			'Ticker',
+			'Company',
+			'Country',
+			'Sector',
+			'Industry',
+			'Size Metric',
+			'Size',
+			'Color Metric',
+			'Change %',
+			'Market Cap'
+		]
+	]
+	const addLeaf = (leaf: IEquitiesTreemapLeaf) => {
+		rows.push([
+			leaf.name,
+			leaf.companyName,
+			leaf.country,
+			leaf.sector,
+			leaf.industry,
+			sizeLabel,
+			leaf.value[0],
+			colorLabel,
+			leaf.value[1] ?? '',
+			leaf.marketCap ?? ''
+		])
+	}
+
+	for (const node of nodes) {
+		if ('children' in node) {
+			for (const child of node.children) addLeaf(child)
+		} else {
+			addLeaf(node)
+		}
+	}
+
+	return { filename, rows }
+}
+
 export function buildEquitiesTreemap(
 	rows: IEquitiesListCompanyRow[],
 	{ groupBy, sizeMetric, colorMetric, limit = EQUITIES_TREEMAP_DEFAULT_LIMIT }: IEquitiesTreemapOptions

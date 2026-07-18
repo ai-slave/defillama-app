@@ -1,5 +1,28 @@
 import { describe, expect, it } from 'vitest'
-import { scaleXAxisForExport, scaleYAxisForExport } from '../ChartPngExportButton'
+import { sanitizeRichImagesForExport, scaleXAxisForExport, scaleYAxisForExport } from '../ChartPngExportButton'
+
+describe('sanitizeRichImagesForExport', () => {
+	it('converts readable canvases to data URLs and removes tainted canvases without mutating the source', () => {
+		const safeCanvas = { toDataURL: () => 'data:image/png;base64,safe' }
+		const taintedCanvas = {
+			toDataURL: () => {
+				throw new DOMException('The canvas has been tainted', 'SecurityError')
+			}
+		}
+		const rich = {
+			safe: { backgroundColor: { image: safeCanvas } },
+			tainted: { backgroundColor: { image: taintedCanvas } },
+			text: { fontSize: 12 }
+		}
+
+		const sanitized = sanitizeRichImagesForExport(rich)
+
+		expect(sanitized.safe.backgroundColor.image).toBe('data:image/png;base64,safe')
+		expect(sanitized.tainted.backgroundColor).toBeUndefined()
+		expect(sanitized.text).toBe(rich.text)
+		expect(rich.tainted.backgroundColor.image).toBe(taintedCanvas)
+	})
+})
 
 describe('scaleXAxisForExport', () => {
 	it('keeps every rotated category label in the export instead of re-hiding overlaps', () => {
