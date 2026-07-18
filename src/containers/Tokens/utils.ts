@@ -3,8 +3,10 @@ import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { abbreviateNumber } from '~/utils'
 import { parseNumberQueryParam, readSingleQueryValue, toQueryString } from '~/utils/routerQuery'
 import {
+	TOKENS_NUMERIC_FILTER_FIELDS,
 	TOKENS_PAGE_RESPONSE_SCHEMA_VERSION,
 	TOKENS_SORT_KEYS,
+	type TokensNumericFilter,
 	type TokensPageQuery,
 	type TokensPageResponse,
 	type TokensPageStats,
@@ -28,12 +30,37 @@ function parsePositiveIntegerQueryParam(value: ParsedUrlQuery[string], fallback:
 	return parsed != null && parsed > 0 ? Math.floor(parsed) : fallback
 }
 
+function parseOptionalRankQueryParam(value: ParsedUrlQuery[string]): number | null {
+	const parsed = parseNumberQueryParam(value)
+	return parsed != null && parsed > 0 ? Math.floor(parsed) : null
+}
+
+export function parseRankRangeQueryParams(query: ParsedUrlQuery): { rankFrom: number | null; rankTo: number | null } {
+	let rankFrom = parseOptionalRankQueryParam(query.rankFrom)
+	let rankTo = parseOptionalRankQueryParam(query.rankTo)
+	if (rankFrom != null && rankTo != null && rankFrom > rankTo) [rankFrom, rankTo] = [rankTo, rankFrom]
+	return { rankFrom, rankTo }
+}
+
+export function parseNumericFiltersQueryParams(query: ParsedUrlQuery): TokensNumericFilter[] {
+	const filters: TokensNumericFilter[] = []
+	for (const field of TOKENS_NUMERIC_FILTER_FIELDS) {
+		let min = parseNumberQueryParam(query[`min_${field}`])
+		let max = parseNumberQueryParam(query[`max_${field}`])
+		if (min == null && max == null) continue
+		if (min != null && max != null && min > max) [min, max] = [max, min]
+		filters.push({ field, min, max })
+	}
+	return filters
+}
+
 export function getTokensPageQuery(query: ParsedUrlQuery): TokensPageQuery {
 	const rawSortBy = readSingleQueryValue(query.sortBy)
 	const pageSize = Math.min(
 		parsePositiveIntegerQueryParam(query.pageSize, DEFAULT_TOKENS_TABLE_PAGE_SIZE),
 		MAX_TOKENS_TABLE_PAGE_SIZE
 	)
+	const { rankFrom, rankTo } = parseRankRangeQueryParams(query)
 
 	return {
 		page: parsePositiveIntegerQueryParam(query.page, 1),
@@ -43,7 +70,10 @@ export function getTokensPageQuery(query: ParsedUrlQuery): TokensPageQuery {
 				? (rawSortBy as TokensSortBy)
 				: DEFAULT_TOKENS_SORT_BY,
 		sortDesc: readSingleQueryValue(query.sortDesc) !== 'false',
-		search: readSingleQueryValue(query.search)?.trim() ?? ''
+		search: readSingleQueryValue(query.search)?.trim() ?? '',
+		rankFrom,
+		rankTo,
+		numericFilters: parseNumericFiltersQueryParams(query)
 	}
 }
 
@@ -72,12 +102,20 @@ export function buildTokensTableQueryString({
 	const sort = sorting[0]
 	const pageSize = Math.min(pagination.pageSize, MAX_TOKENS_TABLE_PAGE_SIZE)
 	const pageQuery = getTokensPageQuery(query)
+	const numericFilterParams: Record<string, string | undefined> = {}
+	for (const filter of pageQuery.numericFilters) {
+		if (filter.min != null) numericFilterParams[`min_${filter.field}`] = String(filter.min)
+		if (filter.max != null) numericFilterParams[`max_${filter.field}`] = String(filter.max)
+	}
 	return toQueryString({
 		page: pagination.pageIndex > 0 ? String(pagination.pageIndex + 1) : undefined,
 		pageSize: pageSize === DEFAULT_TOKENS_TABLE_PAGE_SIZE ? undefined : String(pageSize),
 		sortBy: sort?.id === DEFAULT_TOKENS_SORT_BY ? undefined : sort?.id,
 		sortDesc: sort ? (sort.desc ? undefined : 'false') : undefined,
-		search: pageQuery.search || undefined
+		search: pageQuery.search || undefined,
+		rankFrom: pageQuery.rankFrom != null ? String(pageQuery.rankFrom) : undefined,
+		rankTo: pageQuery.rankTo != null ? String(pageQuery.rankTo) : undefined,
+		...numericFilterParams
 	})
 }
 
@@ -204,30 +242,48 @@ export function getTokensStatsDisplay(stats: TokensPageStats): TokensPageStatsDi
 	}
 }
 
-function rowMatches(row: TokensSourceRow, search: string, requestedIds: Set<string> | null): boolean {
-	if (requestedIds != null && !requestedIds.has(row.id.toLowerCase())) return false
-	return search === '' || row.searchKey.includes(search)
+interface TokensRowFilter {
+	search: string
+	requestedIds: Set<string> | null
+	rankFrom: number | null
+	rankTo: number | null
+	numericFilters: TokensNumericFilter[]
 }
 
-function countMatchingRows(rows: TokensSourceRow[], search: string, requestedIds: Set<string> | null): number {
+function rowMatches(row: TokensSourceRow, filter: TokensRowFilter): boolean {
+	if (filter.requestedIds != null && !filter.requestedIds.has(row.id.toLowerCase())) return false
+	if (filter.rankFrom != null || filter.rankTo != null) {
+		if (row.rank == null) return false
+		if (filter.rankFrom != null && row.rank < filter.rankFrom) return false
+		if (filter.rankTo != null && row.rank > filter.rankTo) return false
+	}
+	for (const numericFilter of filter.numericFilters) {
+		const value = row[numericFilter.field]
+		if (value == null) return false
+		if (numericFilter.min != null && value < numericFilter.min) return false
+		if (numericFilter.max != null && value > numericFilter.max) return false
+	}
+	return filter.search === '' || row.searchKey.includes(filter.search)
+}
+
+function countMatchingRows(rows: TokensSourceRow[], filter: TokensRowFilter): number {
 	let total = 0
 	for (const row of rows) {
-		if (rowMatches(row, search, requestedIds)) total++
+		if (rowMatches(row, filter)) total++
 	}
 	return total
 }
 
 function collectSortedRows(
 	sortedRows: TokensSourceRow[],
-	search: string,
-	requestedIds: Set<string> | null,
+	filter: TokensRowFilter,
 	start: number,
 	end: number,
 	pageRows: TokensTableRow[]
 ): void {
 	let matched = 0
 	for (const row of sortedRows) {
-		if (!rowMatches(row, search, requestedIds)) continue
+		if (!rowMatches(row, filter)) continue
 		if (matched >= start) pageRows.push(toTableRow(row, matched + 1))
 		matched++
 		if (matched >= end) return
@@ -240,8 +296,7 @@ function hasSameSortValue(a: TokensSourceRow, b: TokensSourceRow, sortBy: Tokens
 
 function collectDescendingRows(
 	index: TokensSortIndex,
-	search: string,
-	requestedIds: Set<string> | null,
+	filter: TokensRowFilter,
 	start: number,
 	end: number,
 	pageRows: TokensTableRow[]
@@ -257,7 +312,7 @@ function collectDescendingRows(
 
 		for (let j = groupStart; j <= i; j++) {
 			const row = index.rows[j]
-			if (!rowMatches(row, search, requestedIds)) continue
+			if (!rowMatches(row, filter)) continue
 			if (matched >= start) pageRows.push(toTableRow(row, matched + 1))
 			matched++
 			if (matched >= end) return
@@ -268,7 +323,7 @@ function collectDescendingRows(
 
 	for (let j = index.nullStart; j < index.rows.length; j++) {
 		const row = index.rows[j]
-		if (!rowMatches(row, search, requestedIds)) continue
+		if (!rowMatches(row, filter)) continue
 		if (matched >= start) pageRows.push(toTableRow(row, matched + 1))
 		matched++
 		if (matched >= end) return
@@ -278,16 +333,15 @@ function collectDescendingRows(
 function collectPageRows(
 	index: TokensSortIndex,
 	sortDesc: boolean,
-	search: string,
-	requestedIds: Set<string> | null,
+	filter: TokensRowFilter,
 	start: number,
 	end: number
 ): TokensTableRow[] {
 	const pageRows: TokensTableRow[] = []
 	if (sortDesc) {
-		collectDescendingRows(index, search, requestedIds, start, end, pageRows)
+		collectDescendingRows(index, filter, start, end, pageRows)
 	} else {
-		collectSortedRows(index.rows, search, requestedIds, start, end, pageRows)
+		collectSortedRows(index.rows, filter, start, end, pageRows)
 	}
 	return pageRows
 }
@@ -311,12 +365,20 @@ export function getTokensPageFromRows(
 	base: Omit<TokensPageResponse, 'schemaVersion' | 'rows' | 'total' | 'page' | 'pageSize' | 'hasMore' | 'statsDisplay'>
 ): TokensPageResponse {
 	const pageQuery = getTokensPageQuery(query)
-	const normalizedSearch = pageQuery.search.toLowerCase()
-	const requestedIds = parseRequestedIds(query.ids)
-	const total =
-		normalizedSearch === '' && requestedIds == null
-			? rows.length
-			: countMatchingRows(rows, normalizedSearch, requestedIds)
+	const filter: TokensRowFilter = {
+		search: pageQuery.search.toLowerCase(),
+		requestedIds: parseRequestedIds(query.ids),
+		rankFrom: pageQuery.rankFrom,
+		rankTo: pageQuery.rankTo,
+		numericFilters: pageQuery.numericFilters
+	}
+	const hasFilter =
+		filter.search !== '' ||
+		filter.requestedIds != null ||
+		filter.rankFrom != null ||
+		filter.rankTo != null ||
+		filter.numericFilters.length > 0
+	const total = hasFilter ? countMatchingRows(rows, filter) : rows.length
 	const pageCount = Math.max(1, Math.ceil(total / pageQuery.pageSize))
 	const page = Math.min(pageQuery.page, pageCount)
 	const start = (page - 1) * pageQuery.pageSize
@@ -325,14 +387,7 @@ export function getTokensPageFromRows(
 	return {
 		...base,
 		schemaVersion: TOKENS_PAGE_RESPONSE_SCHEMA_VERSION,
-		rows: collectPageRows(
-			sortIndexes[pageQuery.sortBy],
-			pageQuery.sortDesc,
-			normalizedSearch,
-			requestedIds,
-			start,
-			end
-		),
+		rows: collectPageRows(sortIndexes[pageQuery.sortBy], pageQuery.sortDesc, filter, start, end),
 		total,
 		page,
 		pageSize: pageQuery.pageSize,

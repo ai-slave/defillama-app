@@ -33,10 +33,11 @@ export interface IEquitiesTreemapLeaf {
 	name: string
 	value: [number, number | null]
 	companyName: string
-	country: string
-	sector: string
-	industry: string
+	country?: string
+	sector?: string
+	industry?: string
 	marketCap: number | null
+	iconUrl?: string
 }
 
 export interface IEquitiesTreemapGroup {

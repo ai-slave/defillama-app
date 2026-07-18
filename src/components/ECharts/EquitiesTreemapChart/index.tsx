@@ -27,6 +27,7 @@ export interface IEquitiesTreemapChartProps {
 	valueSymbol?: string
 	height?: string
 	showMarketCapRow?: boolean
+	groupItemsLabel?: string
 	onReady?: (instance: echarts.ECharts | null) => void
 }
 
@@ -189,6 +190,10 @@ function markIconFailed(url: string) {
 // lets us clip the logo into a circle (rich text has no border-radius).
 function preloadLeafIcon(url: string, onSettled: () => void) {
 	if (typeof window === 'undefined') return
+	if (!url) {
+		failedIconUrls.add(url)
+		return
+	}
 	if (failedIconUrls.has(url)) return
 	if (getIconCanvas(url)) {
 		iconSettleCallbacks.get(url)?.add(onSettled)
@@ -257,8 +262,9 @@ function buildLeafRich(iconUrl: string) {
 	return rich
 }
 
-function leafIconUrl(node: Pick<IEquitiesTreemapLeaf, 'name' | 'country'>): string {
-	return equityIconUrl(node.name, node.country)
+function leafIconUrl(node: Pick<IEquitiesTreemapLeaf, 'name' | 'country' | 'iconUrl'>): string {
+	if (typeof node.iconUrl === 'string') return node.iconUrl
+	return equityIconUrl(node.name, node.country || 'US')
 }
 
 type EquitiesTreemapChartLeaf = IEquitiesTreemapLeaf & {
@@ -355,6 +361,7 @@ export default function EquitiesTreemapChart({
 	valueSymbol = '$',
 	height = '600px',
 	showMarketCapRow = true,
+	groupItemsLabel = 'Companies',
 	onReady
 }: IEquitiesTreemapChartProps) {
 	const [isDark] = useDarkModeManager()
@@ -424,7 +431,7 @@ export default function EquitiesTreemapChart({
 						return [
 							`<strong>${info.name}</strong><br>`,
 							`${sizeLabel}: ${formatSizeValue(info.value?.[0] ?? 0)}<br>`,
-							`Companies: ${data.children.length}`
+							`${groupItemsLabel}: ${data.children.length}`
 						].join('')
 					}
 					const rows = [
@@ -514,7 +521,7 @@ export default function EquitiesTreemapChart({
 		return () => {
 			applyOptionRef.current = null
 		}
-	}, [chartDataTree, colorLabel, formatSizeValue, hasGroups, isDark, showMarketCapRow, sizeLabel])
+	}, [chartDataTree, colorLabel, formatSizeValue, groupItemsLabel, hasGroups, isDark, showMarketCapRow, sizeLabel])
 
 	useEffect(() => {
 		const instance = chartRef.current

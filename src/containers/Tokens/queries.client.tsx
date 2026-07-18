@@ -4,7 +4,7 @@ import { toQueryString } from '~/utils/routerQuery'
 import { TOKENS_PAGE_RESPONSE_SCHEMA_VERSION, type TokensPageResponse } from './types'
 import { MAX_TOKENS_TABLE_PAGE_SIZE } from './utils'
 
-const TOKENS_API = '/api/public/tokens'
+export const TOKENS_API = '/api/public/tokens'
 
 export function useTokensPaginatedTable(queryString: string | null, initialData: TokensPageResponse) {
 	const hasCurrentInitialData = initialData.schemaVersion === TOKENS_PAGE_RESPONSE_SCHEMA_VERSION
@@ -20,6 +20,19 @@ export function useTokensPaginatedTable(queryString: string | null, initialData:
 		refetchOnWindowFocus: false,
 		retry: 1,
 		enabled: !!url && !shouldUseInitialData
+	})
+}
+
+const TOKENS_CHART_QUERY_STRING = '?pageSize=300'
+
+export function useTokensChartData() {
+	return useQuery<TokensPageResponse>({
+		queryKey: ['tokens-chart', TOKENS_PAGE_RESPONSE_SCHEMA_VERSION, TOKENS_CHART_QUERY_STRING],
+		queryFn: async ({ signal }) =>
+			fetchJson<TokensPageResponse>(`${TOKENS_API}${TOKENS_CHART_QUERY_STRING}`, { signal }),
+		staleTime: 5 * 60 * 1000,
+		refetchOnWindowFocus: false,
+		retry: 1
 	})
 }
 

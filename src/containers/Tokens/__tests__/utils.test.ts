@@ -27,6 +27,7 @@ function row(overrides: Partial<TokensSourceRow> & Pick<TokensSourceRow, 'id' | 
 		rights: null,
 		unlock30dUsd: null,
 		upcomingUnlockUsd: null,
+		isStablecoin: false,
 		searchKey: `${overrides.name} ${overrides.symbol}`.toLowerCase(),
 		...overrides
 	}
@@ -66,7 +67,10 @@ describe('getTokensPageQuery', () => {
 			pageSize: 50,
 			sortBy: 'marketCap',
 			sortDesc: true,
-			search: 'ethena'
+			search: 'ethena',
+			rankFrom: null,
+			rankTo: null,
+			numericFilters: []
 		})
 	})
 
@@ -84,8 +88,17 @@ describe('getTokensPageQuery', () => {
 			pageSize: 500,
 			sortBy: 'priceChange7d',
 			sortDesc: false,
-			search: ''
+			search: '',
+			rankFrom: null,
+			rankTo: null,
+			numericFilters: []
 		})
+	})
+
+	it('parses the rank range, swapping inverted bounds and dropping garbage', () => {
+		expect(getTokensPageQuery({ rankFrom: '500', rankTo: '100' })).toMatchObject({ rankFrom: 100, rankTo: 500 })
+		expect(getTokensPageQuery({ rankFrom: 'abc', rankTo: '-3' })).toMatchObject({ rankFrom: null, rankTo: null })
+		expect(getTokensPageQuery({ rankFrom: '10.9' })).toMatchObject({ rankFrom: 10, rankTo: null })
 	})
 })
 
@@ -96,6 +109,25 @@ describe('getTokensPageFromRows', () => {
 		row({ id: 'aave', name: 'Aave', symbol: 'AAVE', marketCap: 800 }),
 		row({ id: 'curve', name: 'Curve', symbol: 'CRV', marketCap: 800 })
 	]
+
+	it('filters by rank range and sorts within it', () => {
+		const rankedRows = [
+			row({ id: 'first', name: 'First', symbol: 'F', rank: 1, priceChange7d: 1, marketCap: 1000 }),
+			row({ id: 'second', name: 'Second', symbol: 'S', rank: 150, priceChange7d: 9, marketCap: 900 }),
+			row({ id: 'third', name: 'Third', symbol: 'T', rank: 300, priceChange7d: 5, marketCap: 800 }),
+			row({ id: 'unranked', name: 'Unranked', symbol: 'U', rank: null, priceChange7d: 99, marketCap: 700 })
+		]
+		const result = getPage(rankedRows, {
+			rankFrom: '100',
+			rankTo: '500',
+			sortBy: 'priceChange7d',
+			pageSize: '20'
+		})
+
+		expect(result.rows.map((item) => item.id)).toEqual(['second', 'third'])
+		expect(result.total).toBe(2)
+		expect(result.rows.map((item) => item.rank)).toEqual([150, 300])
+	})
 
 	it('filters by search before sorting and pagination', () => {
 		const result = getPage(rows, {
@@ -186,5 +218,37 @@ describe('getTokensPageFromRows', () => {
 
 		expect(result.rows).toEqual([])
 		expect(result.total).toBe(0)
+	})
+
+	it('applies numeric min/max filters and drops rows with missing values', () => {
+		const rowsWithChange = [
+			row({ id: 'up', name: 'Up', symbol: 'UP', marketCap: 900, priceChange7d: 25 }),
+			row({ id: 'down', name: 'Down', symbol: 'DOWN', marketCap: 800, priceChange7d: -30 }),
+			row({ id: 'flat', name: 'Flat', symbol: 'FLAT', marketCap: 700, priceChange7d: 1 }),
+			row({ id: 'unknown', name: 'Unknown', symbol: 'NONE', marketCap: 600, priceChange7d: null })
+		]
+
+		const result = getPage(rowsWithChange, { min_priceChange7d: '-5', max_priceChange7d: '30', pageSize: '20' })
+		expect(result.rows.map((item) => item.id)).toEqual(['up', 'flat'])
+		expect(result.total).toBe(2)
+
+		const swapped = getPage(rowsWithChange, { min_priceChange7d: '30', max_priceChange7d: '-5', pageSize: '20' })
+		expect(swapped.rows.map((item) => item.id)).toEqual(['up', 'flat'])
+	})
+
+	it('combines numeric filters with rank range', () => {
+		const ranked = [
+			row({ id: 'a', name: 'A', symbol: 'A', rank: 1, marketCap: 1000, revenue24h: 50 }),
+			row({ id: 'b', name: 'B', symbol: 'B', rank: 2, marketCap: 900, revenue24h: 5 }),
+			row({ id: 'c', name: 'C', symbol: 'C', rank: 3, marketCap: 800, revenue24h: 60 })
+		]
+
+		const result = getPage(ranked, { rankFrom: '1', rankTo: '2', min_revenue24h: '10', pageSize: '20' })
+		expect(result.rows.map((item) => item.id)).toEqual(['a'])
+	})
+
+	it('ignores unknown filter fields', () => {
+		const result = getPage(rows, { min_notAField: '5', pageSize: '20' })
+		expect(result.total).toBe(4)
 	})
 })

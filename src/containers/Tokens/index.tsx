@@ -1,7 +1,17 @@
-import { createColumnHelper, getCoreRowModel, useReactTable, type ColumnDef } from '@tanstack/react-table'
+import {
+	createColumnHelper,
+	functionalUpdate,
+	getCoreRowModel,
+	useReactTable,
+	type ColumnDef,
+	type VisibilityState
+} from '@tanstack/react-table'
+import { useRouter } from 'next/router'
 import * as React from 'react'
 import { Bookmark } from '~/components/Bookmark'
+import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
+import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { TokenRightsPieChart } from '~/containers/TokenRights/TokenRightsPieChart'
@@ -13,6 +23,18 @@ import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInput
 import { Panel } from '~/ui/Panel'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
+import { pushShallowQuery } from '~/utils/routerQuery'
+import { NAME_COLUMN_WIDTH, TOKENS_HIDEABLE_COLUMN_SPECS, TOKENS_HIDEABLE_COLUMNS_WIDTH } from './columnSpecs'
+import { prepareTokensCsv } from './csv'
+import {
+	buildTokensFiltersQueryUpdate,
+	getTokensFiltersDefaultSorting,
+	parseTokensFiltersFromQuery,
+	shouldApplyTokensFilterSorting,
+	type TokensActiveFilter
+} from './filters'
+import { TokensChartsSection } from './TokensChartsSection'
+import { TokensActiveFilterPills, TokensFiltersDialog } from './TokensFiltersDialog'
 import type {
 	TokensDisplayTone,
 	TokensPageProps,
@@ -23,7 +45,7 @@ import type {
 import { useTokensServerTable } from './useTokensServerTable'
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200] as const
-export const TOKENS_TABLE_WIDTH_EXCLUDING_RANK = 2274
+export const TOKENS_TABLE_WIDTH_EXCLUDING_RANK = NAME_COLUMN_WIDTH + TOKENS_HIDEABLE_COLUMNS_WIDTH
 // Width of the optional "Markets" expander column (added only in the expandable/watchlist variant).
 export const TOKENS_MARKETS_EXPANDER_COLUMN_WIDTH = 104
 const columnHelper = createColumnHelper<TokensTableRow>()
@@ -217,6 +239,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		id: 'rank',
 		header: '#',
 		cell: ({ row }) => <span className="text-secondary">{row.original.rowNumber}</span>,
+		enableHiding: false,
 		meta: {
 			headerClassName:
 				'sticky left-0 z-20 w-(--tokens-rank-column-width) min-w-(--tokens-rank-column-width) bg-surface px-1!',
@@ -229,6 +252,7 @@ const baseColumns: ColumnDef<TokensTableRow>[] = [
 		id: 'name',
 		header: 'Coin',
 		cell: ({ row }) => <TokenCell row={row} />,
+		enableHiding: false,
 		meta: {
 			headerClassName: 'sticky left-(--tokens-rank-column-width) z-20 w-[184px] min-w-[184px] bg-surface pl-1!',
 			cellClassName: 'sticky left-(--tokens-rank-column-width) z-10 bg-surface pl-1!',
@@ -488,7 +512,23 @@ function TokensStats({ stats }: { stats: TokensPageStatsDisplay }) {
 	return <InlineStatStrip items={items} />
 }
 
-function TokensControls({ search, updateSearch }: { search: string; updateSearch: (search: string) => void }) {
+function TokensControls({
+	search,
+	updateSearch,
+	filters,
+	onFiltersChange,
+	selectedColumns,
+	setSelectedColumns,
+	prepareCsv
+}: {
+	search: string
+	updateSearch: (search: string) => void
+	filters: TokensActiveFilter[]
+	onFiltersChange: (filters: TokensActiveFilter[]) => void
+	selectedColumns: string[]
+	setSelectedColumns: (updater: string[] | ((old: string[]) => string[])) => void
+	prepareCsv: () => Promise<{ filename: string; rows: Array<Array<string | number>> }>
+}) {
 	const searchInputRef = React.useRef<HTMLInputElement>(null)
 	const debouncedUpdateSearch = useDebouncedCallback(updateSearch, 300)
 
@@ -515,6 +555,7 @@ function TokensControls({ search, updateSearch }: { search: string; updateSearch
 
 	return (
 		<TableToolbar>
+			<h2 className="label-md">Token Rankings</h2>
 			<form onSubmit={handleSubmit} className={`${searchFieldInlineWrapperStyles} ml-auto`}>
 				<label className="relative block min-w-0">
 					<span className="sr-only">Search tokens</span>
@@ -529,23 +570,121 @@ function TokensControls({ search, updateSearch }: { search: string; updateSearch
 					/>
 				</label>
 			</form>
+			<TokensFiltersDialog filters={filters} onFiltersChange={onFiltersChange} />
+			<SelectWithCombobox
+				allValues={COLUMN_PICKER_OPTIONS}
+				selectedValues={selectedColumns}
+				setSelectedValues={setSelectedColumns}
+				nestedMenu={false}
+				label="Columns"
+				labelType="smol"
+				variant="filter-responsive"
+				size="md"
+			/>
+			<CSVDownloadButton prepareCsv={prepareCsv} smol size="md" />
 		</TableToolbar>
 	)
 }
 
+const TOKENS_COLUMN_VISIBILITY_STORAGE_KEY = 'tokens-table-column-visibility-v2'
+const HIDEABLE_COLUMNS = TOKENS_HIDEABLE_COLUMN_SPECS
+const COLUMN_PICKER_OPTIONS = HIDEABLE_COLUMNS.map((column) => ({ key: column.id, name: column.header }))
+
+const DEFAULT_VISIBLE_COLUMN_IDS = new Set([
+	'price',
+	'priceChange24h',
+	'priceChange7d',
+	'priceChange30d',
+	'marketCap',
+	'fdv',
+	'spotVolume24h',
+	'revenue24h'
+])
+
+const DEFAULT_COLUMN_VISIBILITY: VisibilityState = Object.fromEntries(
+	HIDEABLE_COLUMNS.map((column) => [column.id, DEFAULT_VISIBLE_COLUMN_IDS.has(column.id)])
+)
+
+function readStoredColumnVisibility(): VisibilityState | null {
+	try {
+		const stored = window.localStorage.getItem(TOKENS_COLUMN_VISIBILITY_STORAGE_KEY)
+		const parsed = stored ? JSON.parse(stored) : null
+		return parsed && typeof parsed === 'object' ? parsed : null
+	} catch {
+		return null
+	}
+}
+
 export default function TokensPage({ initialData }: TokensPageProps) {
+	const router = useRouter()
 	const serverTable = useTokensServerTable(initialData)
+	const filters = React.useMemo(() => parseTokensFiltersFromQuery(router.query), [router.query])
+	const pendingFiltersRef = React.useRef<TokensActiveFilter[] | null>(null)
+	React.useEffect(() => {
+		pendingFiltersRef.current = null
+	}, [router.query])
+	const currentSorting = serverTable.sorting[0]
+	const applyFilters = React.useCallback(
+		(nextFilters: TokensActiveFilter[]) => {
+			const update = buildTokensFiltersQueryUpdate(nextFilters)
+			if (shouldApplyTokensFilterSorting(currentSorting, pendingFiltersRef.current ?? filters)) {
+				const nextSorting = getTokensFiltersDefaultSorting(nextFilters)
+				update.sortBy =
+					nextSorting && !(nextSorting.id === 'marketCap' && nextSorting.desc) ? nextSorting.id : undefined
+				update.sortDesc = nextSorting && !nextSorting.desc ? 'false' : undefined
+			}
+			pendingFiltersRef.current = nextFilters
+			void pushShallowQuery(router, update)
+		},
+		[currentSorting, filters, router]
+	)
+	const removeFilter = React.useCallback(
+		(id: TokensActiveFilter['id']) => {
+			const baseFilters = pendingFiltersRef.current ?? filters
+			applyFilters(baseFilters.filter((filter) => filter.id !== id))
+		},
+		[applyFilters, filters]
+	)
 	const rankColumnWidth = getRankColumnWidth(serverTable.rows)
+	const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(DEFAULT_COLUMN_VISIBILITY)
+	const effectiveColumnVisibility = React.useMemo(() => {
+		const next = { ...columnVisibility }
+		for (const filter of filters) {
+			if (filter.id !== 'rank') next[filter.id] = true
+		}
+		return next
+	}, [columnVisibility, filters])
+	const visibleColumnsWidth = HIDEABLE_COLUMNS.reduce(
+		(sum, column) => (effectiveColumnVisibility[column.id] === false ? sum : sum + column.width),
+		rankColumnWidth + NAME_COLUMN_WIDTH
+	)
 	const tableStyle: TokensTableStyle = {
 		'--tokens-rank-column-width': `${rankColumnWidth}px`,
-		'--tokens-table-min-width': `${TOKENS_TABLE_WIDTH_EXCLUDING_RANK + rankColumnWidth}px`
+		'--tokens-table-min-width': `${visibleColumnsWidth}px`
 	}
+	React.useEffect(() => {
+		const stored = readStoredColumnVisibility()
+		if (stored) setColumnVisibility(stored)
+	}, [])
+	const handleColumnVisibilityChange = React.useCallback(
+		(updater: VisibilityState | ((old: VisibilityState) => VisibilityState)) => {
+			setColumnVisibility((old) => {
+				const next = functionalUpdate(updater, old)
+				try {
+					window.localStorage.setItem(TOKENS_COLUMN_VISIBILITY_STORAGE_KEY, JSON.stringify(next))
+				} catch {}
+				return next
+			})
+		},
+		[]
+	)
 	const table = useReactTable({
 		data: serverTable.rows,
 		columns: buildTokensColumns(),
 		state: {
 			pagination: serverTable.pagination,
-			sorting: serverTable.sorting
+			sorting: serverTable.sorting,
+			columnVisibility: effectiveColumnVisibility
 		},
 		enableSortingRemoval: false,
 		manualPagination: true,
@@ -553,14 +692,57 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 		rowCount: serverTable.total,
 		onPaginationChange: serverTable.onPaginationChange,
 		onSortingChange: serverTable.onSortingChange,
+		onColumnVisibilityChange: handleColumnVisibilityChange,
 		getCoreRowModel: getCoreRowModel()
 	})
+	const selectedColumns = HIDEABLE_COLUMNS.filter((column) => columnVisibility[column.id] !== false).map(
+		(column) => column.id
+	)
+	const setSelectedColumns = React.useCallback(
+		(updater: string[] | ((old: string[]) => string[])) => {
+			handleColumnVisibilityChange((old) => {
+				const current = HIDEABLE_COLUMNS.filter((column) => old[column.id] !== false).map((column) => column.id)
+				const next = typeof updater === 'function' ? updater(current) : updater
+				const visibility: VisibilityState = { ...old }
+				for (const column of HIDEABLE_COLUMNS) {
+					visibility[column.id] = next.includes(column.id)
+				}
+				return visibility
+			})
+		},
+		[handleColumnVisibilityChange]
+	)
+	const prepareCsv = React.useCallback(
+		() =>
+			prepareTokensCsv({
+				query: serverTable.query,
+				sorting: serverTable.sorting,
+				hiddenColumnIds: new Set(
+					HIDEABLE_COLUMNS.filter((c) => effectiveColumnVisibility[c.id] === false).map((c) => c.id)
+				)
+			}),
+		[effectiveColumnVisibility, serverTable.query, serverTable.sorting]
+	)
 
 	return (
 		<div className="flex flex-col gap-2">
 			<TokensStats stats={serverTable.data.statsDisplay} />
+			<TokensChartsSection />
 			<Panel padding="none">
-				<TokensControls search={serverTable.pageQuery.search} updateSearch={serverTable.updateSearch} />
+				<TokensControls
+					search={serverTable.pageQuery.search}
+					updateSearch={serverTable.updateSearch}
+					filters={filters}
+					onFiltersChange={applyFilters}
+					selectedColumns={selectedColumns}
+					setSelectedColumns={setSelectedColumns}
+					prepareCsv={prepareCsv}
+				/>
+				{filters.length > 0 ? (
+					<div className="px-2 pb-2">
+						<TokensActiveFilterPills filters={filters} onRemove={removeFilter} />
+					</div>
+				) : null}
 				<PaginatedTable
 					table={table}
 					pageSizeOptions={PAGE_SIZE_OPTIONS}

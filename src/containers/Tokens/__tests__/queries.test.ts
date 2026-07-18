@@ -279,6 +279,33 @@ describe('buildTokensSourceRows', () => {
 		})
 	})
 
+	it('flags stablecoins by gecko id and defaults to false without the set', () => {
+		const tokens = [
+			{ id: 'Tether', name: 'Tether', symbol: 'usdt', current_price: 1, market_cap: 100 },
+			{ id: 'ethena', name: 'Ethena', symbol: 'ena', current_price: 1, market_cap: 50 }
+		]
+		const base = {
+			markets: { last_updated: '', tokens: [] },
+			tokenRightsEntries: [],
+			fees: [],
+			revenue: [],
+			holdersRevenue: [],
+			unlocks: [],
+			metadata: {
+				tokenDirectory: {},
+				protocolMetadata: {},
+				emissionsSupplyMetrics: {}
+			} as unknown as MetadataCache,
+			nowSec: 1_800_000_000
+		}
+
+		const flagged = buildTokensSourceRows({ ...base, tokens, stablecoinGeckoIds: new Set(['tether']) })
+		expect(flagged.rows.map((row) => row.isStablecoin)).toEqual([true, false])
+
+		const unflagged = buildTokensSourceRows({ ...base, tokens })
+		expect(unflagged.rows.map((row) => row.isStablecoin)).toEqual([false, false])
+	})
+
 	it('links rights to the protocol page when no token-directory route exists', () => {
 		const result = buildTokensSourceRows({
 			tokens: [

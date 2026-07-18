@@ -3,6 +3,7 @@ import { fetchCoinGeckoTokensListFromDataset } from '~/api/coingecko'
 import { fetchAdapterChainMetrics } from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { fetchTokenMarketsList } from '~/containers/Markets/server/dataset.server'
+import { fetchStablecoinAssetsApi } from '~/containers/Stablecoins/api'
 import type { TokenOverviewCurrentMetrics } from '~/containers/Token/tokenOverview'
 import { fetchTokenRightsEntries } from '~/containers/TokenRights/server/dataset.server'
 import type { ITokenRightsData } from '~/containers/TokenRights/types'
@@ -411,33 +412,43 @@ export async function fetchTokensSourceRows(revision: number): Promise<TokensSou
 	metadataModule.refreshMetadataInBackgroundIfStale('tokens')
 	const metadata = metadataModule.default
 
-	const [marketSnapshot, tokenRightsEntries, fees, revenue, holdersRevenue, unlocks] = await Promise.all([
-		getTokensMarketSnapshot(revision),
-		fetchTokenRightsEntries().catch(() => []),
-		fetchAdapterChainMetrics({ adapterType: ADAPTER_TYPES.FEES, chain: 'All' })
-			.then((data) => data.protocols)
-			.catch(() => []),
-		fetchAdapterChainMetrics({
-			adapterType: ADAPTER_TYPES.FEES,
-			chain: 'All',
-			dataType: ADAPTER_DATA_TYPES.DAILY_REVENUE
-		})
-			.then((data) => data.protocols)
-			.catch(() => []),
-		fetchAdapterChainMetrics({
-			adapterType: ADAPTER_TYPES.FEES,
-			chain: 'All',
-			dataType: ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE
-		})
-			.then((data) => data.protocols)
-			.catch(() => []),
-		getAllProtocolEmissions({
-			startDate: nowSec - THIRTY_DAYS_SECONDS,
-			endDate: nowSec,
-			getHistoricalPrices: false,
-			tokenlist: metadata.tokenlist
-		}).catch(() => [])
-	])
+	const [marketSnapshot, tokenRightsEntries, stablecoinGeckoIds, fees, revenue, holdersRevenue, unlocks] =
+		await Promise.all([
+			getTokensMarketSnapshot(revision),
+			fetchTokenRightsEntries().catch(() => []),
+			fetchStablecoinAssetsApi({ includePrices: false })
+				.then((data) => {
+					const geckoIds = new Set<string>()
+					for (const asset of data.peggedAssets) {
+						if (asset.gecko_id) geckoIds.add(asset.gecko_id.toLowerCase())
+					}
+					return geckoIds
+				})
+				.catch(() => new Set<string>()),
+			fetchAdapterChainMetrics({ adapterType: ADAPTER_TYPES.FEES, chain: 'All' })
+				.then((data) => data.protocols)
+				.catch(() => []),
+			fetchAdapterChainMetrics({
+				adapterType: ADAPTER_TYPES.FEES,
+				chain: 'All',
+				dataType: ADAPTER_DATA_TYPES.DAILY_REVENUE
+			})
+				.then((data) => data.protocols)
+				.catch(() => []),
+			fetchAdapterChainMetrics({
+				adapterType: ADAPTER_TYPES.FEES,
+				chain: 'All',
+				dataType: ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE
+			})
+				.then((data) => data.protocols)
+				.catch(() => []),
+			getAllProtocolEmissions({
+				startDate: nowSec - THIRTY_DAYS_SECONDS,
+				endDate: nowSec,
+				getHistoricalPrices: false,
+				tokenlist: metadata.tokenlist
+			}).catch(() => [])
+		])
 
 	return {
 		...buildTokensSourceRows({
@@ -445,6 +456,7 @@ export async function fetchTokensSourceRows(revision: number): Promise<TokensSou
 			markets: marketSnapshot.markets,
 			currentMetricsById: marketSnapshot.currentMetricsById,
 			tokenRightsEntries,
+			stablecoinGeckoIds,
 			fees,
 			revenue,
 			holdersRevenue,
@@ -461,6 +473,7 @@ export function buildTokensSourceRows({
 	markets,
 	currentMetricsById,
 	tokenRightsEntries,
+	stablecoinGeckoIds,
 	fees,
 	revenue,
 	holdersRevenue,
@@ -472,6 +485,7 @@ export function buildTokensSourceRows({
 	markets: TokensRawMarketsList
 	currentMetricsById?: Record<string, TokenOverviewCurrentMetrics>
 	tokenRightsEntries: TokensRawTokenRightsEntry[]
+	stablecoinGeckoIds?: Set<string>
 	fees: AdapterProtocolMetric[]
 	revenue: AdapterProtocolMetric[]
 	holdersRevenue: AdapterProtocolMetric[]
@@ -569,6 +583,7 @@ export function buildTokensSourceRows({
 			rights,
 			unlock30dUsd: unlockMetrics?.unlock30dUsd ?? null,
 			upcomingUnlockUsd: unlockMetrics?.upcomingUnlockUsd ?? null,
+			isStablecoin: stablecoinGeckoIds?.has(geckoId) ?? false,
 			searchKey: getSearchKey(token, record)
 		}
 		addStats(stats, row)
@@ -594,7 +609,7 @@ export async function getTokensSourceData(): Promise<TokensSourceData> {
 		const revision = getTokensCacheRevision()
 		const data = await cachedResult(
 			'tokens-source-rows',
-			`v9:${revision}`,
+			`v10:${revision}`,
 			{ ttlMs: TOKENS_SOURCE_CACHE_TTL_MS, maxEntries: 1 },
 			() => fetchTokensSourceRows(revision)
 		)

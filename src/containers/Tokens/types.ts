@@ -1,6 +1,6 @@
 import type { TokenRightsPieTone } from '~/containers/TokenRights/utils'
 
-export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 10
+export const TOKENS_PAGE_RESPONSE_SCHEMA_VERSION = 11
 
 export const TOKENS_SORT_KEYS = [
 	'rank',
@@ -26,6 +26,34 @@ export const TOKENS_SORT_KEYS = [
 ] as const
 
 export type TokensSortBy = (typeof TOKENS_SORT_KEYS)[number]
+
+export const TOKENS_NUMERIC_FILTER_FIELDS = [
+	'price',
+	'priceChange24h',
+	'priceChange7d',
+	'priceChange30d',
+	'marketCap',
+	'fdv',
+	'outstandingFdv',
+	'unlockedPercent',
+	'spotVolume24h',
+	'perpsVolume24h',
+	'openInterest24h',
+	'fees24h',
+	'revenue24h',
+	'holdersRevenue24h',
+	'trsPercent',
+	'unlock30dUsd',
+	'upcomingUnlockUsd'
+] as const
+
+export type TokensNumericFilterField = (typeof TOKENS_NUMERIC_FILTER_FIELDS)[number]
+
+export interface TokensNumericFilter {
+	field: TokensNumericFilterField
+	min: number | null
+	max: number | null
+}
 export type TokensDisplayTone = 'positive' | 'negative' | 'neutral'
 
 export interface TokensRightsSummary {
@@ -105,6 +133,7 @@ interface TokensRowCore {
 	rights: TokensRightsSummary | null
 	unlock30dUsd: number | null
 	upcomingUnlockUsd: number | null
+	isStablecoin: boolean
 }
 
 export interface TokensTableRow extends TokensRowCore {
@@ -163,6 +192,9 @@ export interface TokensPageQuery {
 	sortBy: TokensSortBy
 	sortDesc: boolean
 	search: string
+	rankFrom: number | null
+	rankTo: number | null
+	numericFilters: TokensNumericFilter[]
 }
 
 export interface TokensPageProps {

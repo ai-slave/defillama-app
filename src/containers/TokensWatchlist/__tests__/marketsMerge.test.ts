@@ -47,6 +47,7 @@ function row(overrides: Partial<TokensTableRow> & Pick<TokensTableRow, 'id' | 's
 		rights: null,
 		unlock30dUsd: null,
 		upcomingUnlockUsd: null,
+		isStablecoin: false,
 		display: {} as TokensTableRow['display'],
 		...overrides
 	}
