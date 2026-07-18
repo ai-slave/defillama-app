@@ -2,7 +2,7 @@ import { LineChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useId, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useChartResize } from '~/hooks/useChartResize'
 
 echarts.use([LineChart, GridComponent, TooltipComponent, CanvasRenderer])
@@ -28,7 +28,7 @@ export function SparklineChart({
 	smooth = true,
 	focusable
 }: SparklineChartProps) {
-	const id = useId()
+	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 
 	// Stable resize listener - never re-attaches when dependencies change
@@ -40,22 +40,24 @@ export function SparklineChart({
 			.filter((point) => Array.isArray(point) && Number.isFinite(point[1] ?? NaN))
 			.map(([timestamp, value]) => [timestamp * 1000, Number(value)])
 	}, [data])
+	const hasData = seriesData.length > 0
 
 	useEffect(() => {
-		const dom = document.getElementById(id)
-		if (!dom) {
-			if (chartRef.current && !chartRef.current.isDisposed()) {
-				chartRef.current.dispose()
-			}
-			chartRef.current = null
-			return
-		}
-
-		let instance = echarts.getInstanceByDom(dom)
-		if (!instance) {
-			instance = echarts.init(dom, undefined, { renderer: 'canvas' })
-		}
+		if (!hasData) return
+		const dom = containerRef.current
+		if (!dom) return
+		const instance = echarts.init(dom, undefined, { renderer: 'canvas' })
 		chartRef.current = instance
+
+		return () => {
+			chartRef.current = null
+			instance.dispose()
+		}
+	}, [hasData])
+
+	useEffect(() => {
+		const instance = chartRef.current
+		if (!instance) return
 
 		const resolveColor = (input?: string) => {
 			if (!input) return undefined
@@ -138,99 +140,86 @@ export function SparklineChart({
 
 		if (instance.isDisposed()) return
 
-		if (!seriesData.length) {
-			instance.clear()
-		} else {
-			instance.setOption(
-				{
-					grid: {
-						left: 0,
-						right: 0,
-						top: 2,
-						bottom: 0,
-						containLabel: false
-					},
-					animation: false,
-					tooltip: {
-						show: false
-					},
-					xAxis: {
-						type: 'time',
-						boundaryGap: false,
-						axisLine: { show: false },
-						axisTick: { show: false },
-						axisLabel: { show: false },
-						splitLine: { show: false },
-						min: seriesData[0]?.[0],
-						max: seriesData[seriesData.length - 1]?.[0]
-					},
-					yAxis: {
-						type: 'value',
-						axisLine: { show: false },
-						axisTick: { show: false },
-						axisLabel: { show: false },
-						splitLine: { show: false },
-						min: (value) => {
-							if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
-							if (value.min === value.max) {
-								const pad = Math.abs(value.min) * 0.05 || 1
-								return value.min - pad
-							}
-							const pad = (value.max - value.min) * 0.08
+		instance.setOption(
+			{
+				grid: {
+					left: 0,
+					right: 0,
+					top: 2,
+					bottom: 0,
+					containLabel: false
+				},
+				animation: false,
+				tooltip: {
+					show: false
+				},
+				xAxis: {
+					type: 'time',
+					boundaryGap: false,
+					axisLine: { show: false },
+					axisTick: { show: false },
+					axisLabel: { show: false },
+					splitLine: { show: false },
+					min: seriesData[0]?.[0],
+					max: seriesData[seriesData.length - 1]?.[0]
+				},
+				yAxis: {
+					type: 'value',
+					axisLine: { show: false },
+					axisTick: { show: false },
+					axisLabel: { show: false },
+					splitLine: { show: false },
+					min: (value) => {
+						if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
+						if (value.min === value.max) {
+							const pad = Math.abs(value.min) * 0.05 || 1
 							return value.min - pad
-						},
-						max: (value) => {
-							if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
-							if (value.min === value.max) {
-								const pad = Math.abs(value.max) * 0.05 || 1
-								return value.max + pad
-							}
-							const pad = (value.max - value.min) * 0.08
+						}
+						const pad = (value.max - value.min) * 0.08
+						return value.min - pad
+					},
+					max: (value) => {
+						if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
+						if (value.min === value.max) {
+							const pad = Math.abs(value.max) * 0.05 || 1
 							return value.max + pad
 						}
-					},
-					series: [
-						{
-							type: 'line',
-							data: seriesData,
-							showSymbol: false,
-							lineStyle: {
-								color: resolvedLine,
-								width: 2,
-								cap: 'round',
-								join: 'round',
-								shadowBlur: rgb ? 6 : 0,
-								shadowColor
-							},
-							smooth,
-							smoothMonotone: 'x',
-							areaStyle: {
-								color: areaFill
-							}
-						}
-					]
+						const pad = (value.max - value.min) * 0.08
+						return value.max + pad
+					}
 				},
-				true
-			)
-		}
-	}, [id, seriesData, color, areaColor, smooth])
+				series: [
+					{
+						type: 'line',
+						data: seriesData,
+						showSymbol: false,
+						lineStyle: {
+							color: resolvedLine,
+							width: 2,
+							cap: 'round',
+							join: 'round',
+							shadowBlur: rgb ? 6 : 0,
+							shadowColor
+						},
+						smooth,
+						smoothMonotone: 'x',
+						areaStyle: {
+							color: areaFill
+						}
+					}
+				]
+			},
+			true
+		)
+	}, [seriesData, color, areaColor, smooth])
 
-	useEffect(() => {
-		return () => {
-			if (chartRef.current) {
-				chartRef.current.dispose()
-				chartRef.current = null
-			}
-		}
-	}, [])
-
-	if (!seriesData.length) {
+	if (!hasData) {
 		return null
 	}
 
 	return (
 		<div
-			id={id}
+			ref={containerRef}
 			className={className}
 			style={{ width: '100%', height, outline: 'none', pointerEvents: 'none' }}
 			tabIndex={focusable ? 0 : -1}

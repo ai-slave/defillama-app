@@ -14,7 +14,7 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { TextLoader } from '../../Logo'
 
 echarts.use([CanvasRenderer, BarChart, EPieChart, EScatterChart, GridComponent, TooltipComponent])
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { VirtualTable } from '~/components/Table/Table'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { formattedNum } from '~/utils'
@@ -41,6 +41,29 @@ const CHART_COLORS = {
 		label: '#cdd0d5',
 		labelLine: 'rgba(255,255,255,0.2)'
 	}
+}
+
+function usePersistentChart(enabled: boolean) {
+	const containerRef = useRef<HTMLDivElement>(null)
+	const chartRef = useRef<echarts.ECharts | null>(null)
+
+	useEffect(() => {
+		if (!enabled) return
+		const container = containerRef.current
+		if (!container) return
+		const instance = echarts.init(container)
+		chartRef.current = instance
+		const onResize = () => instance.resize()
+		window.addEventListener('resize', onResize)
+
+		return () => {
+			window.removeEventListener('resize', onResize)
+			chartRef.current = null
+			instance.dispose()
+		}
+	}, [enabled])
+
+	return { containerRef, chartRef }
 }
 
 function formatPct(value: number | null | undefined) {
@@ -211,70 +234,63 @@ function MetricCard({ label, value, helper }: { label: string; value: string | n
 }
 
 function FundingChart({ data }: { data: { name: string; value: number }[] }) {
-	const id = useId()
 	const [isDark] = useDarkModeManager()
 	const c = isDark ? CHART_COLORS.dark : CHART_COLORS.light
+	const { containerRef, chartRef } = usePersistentChart(data.length > 0)
 
 	useEffect(() => {
-		const dom = document.getElementById(id)
-		if (!dom || data.length === 0) return
-
-		let instance = echarts.getInstanceByDom(dom)
-		if (!instance) instance = echarts.init(dom)
+		const instance = chartRef.current
+		if (!instance) return
 
 		const sorted = data.toSorted((a, b) => a.value - b.value)
 
-		instance.setOption({
-			grid: { left: 70, right: 16, top: 8, bottom: 8, containLabel: false },
-			tooltip: {
-				trigger: 'axis',
-				axisPointer: { type: 'shadow' },
-				formatter: (params: any) => {
-					const p = params[0]
-					return `<b>${p.name}</b><br/>Funding (ann.): ${p.value >= 0 ? '+' : ''}${p.value.toFixed(2)}%`
-				}
+		instance.setOption(
+			{
+				grid: { left: 70, right: 16, top: 8, bottom: 8, containLabel: false },
+				tooltip: {
+					trigger: 'axis',
+					axisPointer: { type: 'shadow' },
+					formatter: (params: any) => {
+						const p = params[0]
+						return `<b>${p.name}</b><br/>Funding (ann.): ${p.value >= 0 ? '+' : ''}${p.value.toFixed(2)}%`
+					}
+				},
+				xAxis: {
+					type: 'value',
+					axisLabel: { formatter: '{value}%', color: c.axisLabel, fontSize: 11 },
+					splitLine: { lineStyle: { color: c.splitLine } }
+				},
+				yAxis: {
+					type: 'category',
+					data: sorted.map((d) => d.name),
+					axisLabel: { color: c.label, fontSize: 11 },
+					axisLine: { show: false },
+					axisTick: { show: false }
+				},
+				series: [
+					{
+						type: 'bar',
+						data: sorted.map((d) => ({
+							value: d.value,
+							itemStyle: {
+								color: d.value >= 0 ? '#10b981' : '#ef4444'
+							}
+						})),
+						barMaxWidth: 18
+					}
+				],
+				animation: false
 			},
-			xAxis: {
-				type: 'value',
-				axisLabel: { formatter: '{value}%', color: c.axisLabel, fontSize: 11 },
-				splitLine: { lineStyle: { color: c.splitLine } }
-			},
-			yAxis: {
-				type: 'category',
-				data: sorted.map((d) => d.name),
-				axisLabel: { color: c.label, fontSize: 11 },
-				axisLine: { show: false },
-				axisTick: { show: false }
-			},
-			series: [
-				{
-					type: 'bar',
-					data: sorted.map((d) => ({
-						value: d.value,
-						itemStyle: {
-							color: d.value >= 0 ? '#10b981' : '#ef4444'
-						}
-					})),
-					barMaxWidth: 18
-				}
-			],
-			animation: false
-		})
-
-		const onResize = () => instance?.resize()
-		window.addEventListener('resize', onResize)
-		return () => {
-			window.removeEventListener('resize', onResize)
-			instance?.dispose()
-		}
-	}, [id, data, c])
+			{ notMerge: true }
+		)
+	}, [data, c, chartRef])
 
 	if (data.length === 0) return null
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Funding Rates (Annualized) — Top 20 by OI</h3>
-			<div id={id} style={{ width: '100%', height: `${Math.max(300, data.length * 28)}px` }} />
+			<div ref={containerRef} style={{ width: '100%', height: `${Math.max(300, data.length * 28)}px` }} />
 		</div>
 	)
 }
@@ -488,128 +504,115 @@ const predictedFundingColumns: ColumnDef<PredictedFunding>[] = [
 ]
 
 function OIDistributionChart({ data }: { data: { name: string; value: number }[] }) {
-	const id = useId()
 	const [isDark] = useDarkModeManager()
 	const c = isDark ? CHART_COLORS.dark : CHART_COLORS.light
+	const { containerRef, chartRef } = usePersistentChart(data.length > 0)
 
 	useEffect(() => {
-		const dom = document.getElementById(id)
-		if (!dom || data.length === 0) return
-
-		let instance = echarts.getInstanceByDom(dom)
-		if (!instance) instance = echarts.init(dom)
+		const instance = chartRef.current
+		if (!instance) return
 
 		const colors = ['#2172e5', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#a78bfa', '#94a3b8']
 
-		instance.setOption({
-			tooltip: {
-				trigger: 'item',
-				formatter: (params: any) =>
-					`<b>${params.name}</b><br/>OI: $${formattedNum(params.value)}<br/>${params.percent}%`
+		instance.setOption(
+			{
+				tooltip: {
+					trigger: 'item',
+					formatter: (params: any) =>
+						`<b>${params.name}</b><br/>OI: $${formattedNum(params.value)}<br/>${params.percent}%`
+				},
+				series: [
+					{
+						type: 'pie',
+						radius: ['45%', '70%'],
+						center: ['50%', '50%'],
+						data: data.map((d, i) => ({
+							name: d.name,
+							value: d.value,
+							itemStyle: { color: colors[i % colors.length] }
+						})),
+						label: { color: c.label, fontSize: 11, formatter: '{b}: {d}%' },
+						labelLine: { lineStyle: { color: c.labelLine } },
+						emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.3)' } }
+					}
+				],
+				animation: false
 			},
-			series: [
-				{
-					type: 'pie',
-					radius: ['45%', '70%'],
-					center: ['50%', '50%'],
-					data: data.map((d, i) => ({
-						name: d.name,
-						value: d.value,
-						itemStyle: { color: colors[i % colors.length] }
-					})),
-					label: { color: c.label, fontSize: 11, formatter: '{b}: {d}%' },
-					labelLine: { lineStyle: { color: c.labelLine } },
-					emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.3)' } }
-				}
-			],
-			animation: false
-		})
-
-		const onResize = () => instance?.resize()
-		window.addEventListener('resize', onResize)
-		return () => {
-			window.removeEventListener('resize', onResize)
-			instance?.dispose()
-		}
-	}, [data, id, c])
+			{ notMerge: true }
+		)
+	}, [data, c, chartRef])
 
 	if (data.length === 0) return null
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Open Interest Distribution</h3>
-			<div id={id} style={{ width: '100%', height: '400px' }} />
+			<div ref={containerRef} style={{ width: '100%', height: '400px' }} />
 		</div>
 	)
 }
 
 function VolumeOIScatter({ data }: { data: PerpMarket[] }) {
-	const id = useId()
 	const [isDark] = useDarkModeManager()
 	const c = isDark ? CHART_COLORS.dark : CHART_COLORS.light
+	const { containerRef, chartRef } = usePersistentChart(data.length > 0)
 
 	useEffect(() => {
-		const dom = document.getElementById(id)
-		if (!dom || data.length === 0) return
-		let instance = echarts.getInstanceByDom(dom)
-		if (!instance) instance = echarts.init(dom)
+		const instance = chartRef.current
+		if (!instance) return
 
-		instance.setOption({
-			grid: { left: 80, right: 30, top: 20, bottom: 50, containLabel: false },
-			tooltip: {
-				trigger: 'item',
-				formatter: (params: any) => {
-					const d = params.data
-					return `<b>${d[3]}</b><br/>Volume: $${formattedNum(d[0])}<br/>OI: $${formattedNum(d[1])}<br/>Funding: ${d[2] >= 0 ? '+' : ''}${d[2].toFixed(2)}%`
-				}
-			},
-			xAxis: {
-				type: 'log',
-				name: '24h Volume ($)',
-				nameLocation: 'center',
-				nameGap: 30,
-				nameTextStyle: { color: c.axisLabel, fontSize: 11 },
-				axisLabel: { color: c.axisLabel, fontSize: 11 },
-				splitLine: { lineStyle: { color: c.splitLine } }
-			},
-			yAxis: {
-				type: 'log',
-				name: 'Open Interest ($)',
-				nameLocation: 'center',
-				nameGap: 55,
-				nameTextStyle: { color: c.axisLabel, fontSize: 11 },
-				axisLabel: { color: c.axisLabel, fontSize: 11 },
-				splitLine: { lineStyle: { color: c.splitLine } }
-			},
-			series: [
-				{
-					type: 'scatter',
-					data: (() => {
-						const points: Array<[number, number, number, string]> = []
-						for (const market of data) {
-							if (market.dayNtlVlm > 0 && market.openInterest > 0) {
-								points.push([market.dayNtlVlm, market.openInterest, market.fundingAnnualized, market.name])
-							}
-						}
-						return points
-					})(),
-					symbolSize: (val: number[]) => Math.max(6, Math.min(24, Math.abs(val[2]) * 2)),
-					itemStyle: {
-						color: (params: any) => (params.data[2] >= 0 ? '#10b981' : '#ef4444'),
-						opacity: 0.75
+		instance.setOption(
+			{
+				grid: { left: 80, right: 30, top: 20, bottom: 50, containLabel: false },
+				tooltip: {
+					trigger: 'item',
+					formatter: (params: any) => {
+						const d = params.data
+						return `<b>${d[3]}</b><br/>Volume: $${formattedNum(d[0])}<br/>OI: $${formattedNum(d[1])}<br/>Funding: ${d[2] >= 0 ? '+' : ''}${d[2].toFixed(2)}%`
 					}
-				}
-			],
-			animation: false
-		})
-
-		const onResize = () => instance?.resize()
-		window.addEventListener('resize', onResize)
-		return () => {
-			window.removeEventListener('resize', onResize)
-			instance?.dispose()
-		}
-	}, [id, data, c])
+				},
+				xAxis: {
+					type: 'log',
+					name: '24h Volume ($)',
+					nameLocation: 'center',
+					nameGap: 30,
+					nameTextStyle: { color: c.axisLabel, fontSize: 11 },
+					axisLabel: { color: c.axisLabel, fontSize: 11 },
+					splitLine: { lineStyle: { color: c.splitLine } }
+				},
+				yAxis: {
+					type: 'log',
+					name: 'Open Interest ($)',
+					nameLocation: 'center',
+					nameGap: 55,
+					nameTextStyle: { color: c.axisLabel, fontSize: 11 },
+					axisLabel: { color: c.axisLabel, fontSize: 11 },
+					splitLine: { lineStyle: { color: c.splitLine } }
+				},
+				series: [
+					{
+						type: 'scatter',
+						data: (() => {
+							const points: Array<[number, number, number, string]> = []
+							for (const market of data) {
+								if (market.dayNtlVlm > 0 && market.openInterest > 0) {
+									points.push([market.dayNtlVlm, market.openInterest, market.fundingAnnualized, market.name])
+								}
+							}
+							return points
+						})(),
+						symbolSize: (val: number[]) => Math.max(6, Math.min(24, Math.abs(val[2]) * 2)),
+						itemStyle: {
+							color: (params: any) => (params.data[2] >= 0 ? '#10b981' : '#ef4444'),
+							opacity: 0.75
+						}
+					}
+				],
+				animation: false
+			},
+			{ notMerge: true }
+		)
+	}, [data, c, chartRef])
 
 	if (data.length === 0) return null
 
@@ -618,7 +621,7 @@ function VolumeOIScatter({ data }: { data: PerpMarket[] }) {
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">
 				Volume vs Open Interest (bubble size = funding magnitude)
 			</h3>
-			<div id={id} style={{ width: '100%', height: '450px' }} />
+			<div ref={containerRef} style={{ width: '100%', height: '450px' }} />
 		</div>
 	)
 }

@@ -244,7 +244,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 						<Suspense fallback={<div className="h-[480px]" />}>
 							<CandlestickChart data={props.ohlcvChartData} />
 						</Suspense>
-						<p className="p-2 body-sm text-secondary">Source: Yahoo Finance</p>
+						<p className="p-2 pt-0 body-sm text-tertiary">Source: Yahoo Finance</p>
 					</Panel>
 				) : null}
 				{props.totalAssetValueChart != null ? (

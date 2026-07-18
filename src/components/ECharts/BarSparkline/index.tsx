@@ -2,7 +2,7 @@ import { BarChart } from 'echarts/charts'
 import { GridComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useId, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useChartResize } from '~/hooks/useChartResize'
 
 echarts.use([BarChart, GridComponent, CanvasRenderer])
@@ -22,7 +22,7 @@ const SUCCESS_RGB: [number, number, number] = [34, 197, 94] // green-500
 const ERROR_RGB: [number, number, number] = [239, 68, 68] // red-500
 
 export function BarSparkline({ data, className, height = 48, focusable, maxBars = 60 }: BarSparklineProps) {
-	const id = useId()
+	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 
 	useChartResize(chartRef)
@@ -69,111 +69,100 @@ export function BarSparkline({ data, className, height = 48, focusable, maxBars 
 			}
 		})
 	}, [seriesData])
+	const hasData = seriesData.length > 0
 
 	useEffect(() => {
-		const dom = document.getElementById(id)
-		if (!dom) {
-			if (chartRef.current && !chartRef.current.isDisposed()) {
-				chartRef.current.dispose()
-			}
-			chartRef.current = null
-			return
-		}
-
-		let instance = echarts.getInstanceByDom(dom)
-		if (!instance) {
-			instance = echarts.init(dom, undefined, { renderer: 'canvas' })
-		}
+		if (!hasData) return
+		const dom = containerRef.current
+		if (!dom) return
+		const instance = echarts.init(dom, undefined, { renderer: 'canvas' })
 		chartRef.current = instance
+
+		return () => {
+			chartRef.current = null
+			instance.dispose()
+		}
+	}, [hasData])
+
+	useEffect(() => {
+		const instance = chartRef.current
+		if (!instance) return
 
 		if (instance.isDisposed()) return
 
-		if (!seriesData.length) {
-			instance.clear()
-		} else {
-			// Dynamic bar sizing based on number of data points
-			const barCount = seriesData.length
-			// For fewer bars, use thicker bars with less gap
-			const barMaxWidth = barCount <= 7 ? 20 : barCount <= 15 ? 14 : barCount <= 30 ? 8 : barCount <= 60 ? 5 : 3
-			const barCategoryGap = barCount <= 7 ? '25%' : barCount <= 15 ? '35%' : barCount <= 30 ? '40%' : '50%'
+		// Dynamic bar sizing based on number of data points
+		const barCount = seriesData.length
+		// For fewer bars, use thicker bars with less gap
+		const barMaxWidth = barCount <= 7 ? 20 : barCount <= 15 ? 14 : barCount <= 30 ? 8 : barCount <= 60 ? 5 : 3
+		const barCategoryGap = barCount <= 7 ? '25%' : barCount <= 15 ? '35%' : barCount <= 30 ? '40%' : '50%'
 
-			instance.setOption(
-				{
-					grid: {
-						left: 0,
-						right: 0,
-						top: 2,
-						bottom: 0,
-						containLabel: false
+		instance.setOption(
+			{
+				grid: {
+					left: 0,
+					right: 0,
+					top: 2,
+					bottom: 0,
+					containLabel: false
+				},
+				animation: false,
+				tooltip: {
+					show: false
+				},
+				xAxis: {
+					type: 'category',
+					data: seriesData.map(([ts]) => ts),
+					axisLine: { show: false },
+					axisTick: { show: false },
+					axisLabel: { show: false },
+					splitLine: { show: false }
+				},
+				yAxis: {
+					type: 'value',
+					axisLine: { show: false },
+					axisTick: { show: false },
+					axisLabel: { show: false },
+					splitLine: { show: false },
+					min: (value) => {
+						if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
+						if (value.min === value.max) {
+							const pad = Math.abs(value.min) * 0.05 || 1
+							return value.min - pad
+						}
+						const pad = (value.max - value.min) * 0.08
+						return Math.max(0, value.min - pad)
 					},
-					animation: false,
-					tooltip: {
-						show: false
-					},
-					xAxis: {
-						type: 'category',
-						data: seriesData.map(([ts]) => ts),
-						axisLine: { show: false },
-						axisTick: { show: false },
-						axisLabel: { show: false },
-						splitLine: { show: false }
-					},
-					yAxis: {
-						type: 'value',
-						axisLine: { show: false },
-						axisTick: { show: false },
-						axisLabel: { show: false },
-						splitLine: { show: false },
-						min: (value) => {
-							if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
-							if (value.min === value.max) {
-								const pad = Math.abs(value.min) * 0.05 || 1
-								return value.min - pad
-							}
-							const pad = (value.max - value.min) * 0.08
-							return Math.max(0, value.min - pad)
-						},
-						max: (value) => {
-							if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
-							if (value.min === value.max) {
-								const pad = Math.abs(value.max) * 0.05 || 1
-								return value.max + pad
-							}
-							const pad = (value.max - value.min) * 0.08
+					max: (value) => {
+						if (typeof value.min !== 'number' || typeof value.max !== 'number') return undefined
+						if (value.min === value.max) {
+							const pad = Math.abs(value.max) * 0.05 || 1
 							return value.max + pad
 						}
-					},
-					series: [
-						{
-							type: 'bar',
-							data: barDataWithColors,
-							barMaxWidth,
-							barMinWidth: 4,
-							barCategoryGap
-						}
-					]
+						const pad = (value.max - value.min) * 0.08
+						return value.max + pad
+					}
 				},
-				true
-			)
-		}
-	}, [id, seriesData, barDataWithColors])
+				series: [
+					{
+						type: 'bar',
+						data: barDataWithColors,
+						barMaxWidth,
+						barMinWidth: 4,
+						barCategoryGap
+					}
+				]
+			},
+			true
+		)
+	}, [seriesData, barDataWithColors])
 
-	useEffect(() => {
-		return () => {
-			if (chartRef.current) {
-				chartRef.current.dispose()
-				chartRef.current = null
-			}
-		}
-	}, [])
-
-	if (!seriesData.length) {
+	if (!hasData) {
 		return null
 	}
 
 	return (
 		<div
-			id={id}
+			ref={containerRef}
 			className={className}
 			style={{ width: '100%', height, outline: 'none', pointerEvents: 'none' }}
 			tabIndex={focusable ? 0 : -1}

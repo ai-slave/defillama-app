@@ -2,7 +2,7 @@ import { BarChart } from 'echarts/charts'
 import { GraphicComponent, GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useEffectEvent, useId, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '../chartSpacing'
 import { getChartTheme } from '../chartTheme'
@@ -48,8 +48,8 @@ export default function HBarChart({
 	onReady
 }: IHBarChartProps) {
 	const grouped = series != null && series.length > 1
-	const id = useId()
 	const [isThemeDark] = useDarkModeManager()
+	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const overlayRef = useRef<HTMLDivElement>(null)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
@@ -85,17 +85,91 @@ export default function HBarChart({
 	}, [logos, categories])
 
 	const hasLogos = logosAllLoaded
+	const textColor = getChartTheme(isThemeDark).axisLabel
+	let overlayLabelWidth = 0
+	if (hasLogos) {
+		for (const category of categories) overlayLabelWidth = Math.max(overlayLabelWidth, measureLabelWidth(category))
+		overlayLabelWidth = Math.min(LABEL_MAX_WIDTH, overlayLabelWidth)
+	}
+
+	const syncLogos = useEffectEvent(() => {
+		const layer = overlayRef.current
+		const instance = chartRef.current
+		if (!layer) return
+		layer.innerHTML = ''
+		if (!instance || instance.isDisposed() || !hasLogos) return
+
+		for (let i = 0; i < categories.length; i++) {
+			const y = instance.convertToPixel({ yAxisIndex: 0 }, i)
+			if (typeof y !== 'number' || !Number.isFinite(y)) continue
+			const url = logos![i]
+			const row = document.createElement('div')
+			row.style.cssText = `position:absolute;left:${LEFT_PAD}px;top:${y - LOGO_SIZE / 2}px;height:${LOGO_SIZE}px;pointer-events:none;white-space:nowrap;`
+			const spacerCss = `display:inline-block;width:${LOGO_SIZE}px;height:${LOGO_SIZE}px;vertical-align:middle;`
+			if (url) {
+				const img = document.createElement('img')
+				img.src = url
+				img.alt = ''
+				img.loading = 'lazy'
+				img.decoding = 'async'
+				img.style.cssText = `width:${LOGO_SIZE}px;height:${LOGO_SIZE}px;border-radius:50%;object-fit:cover;background:${getChartTheme(isThemeDark).logoBg};display:inline-block;vertical-align:middle;`
+				img.onerror = () => {
+					const spacer = document.createElement('span')
+					spacer.style.cssText = spacerCss
+					img.replaceWith(spacer)
+				}
+				row.appendChild(img)
+			} else {
+				const spacer = document.createElement('span')
+				spacer.style.cssText = spacerCss
+				row.appendChild(spacer)
+			}
+			const text = document.createElement('span')
+			text.textContent = categories[i]
+			text.title = categories[i]
+			text.style.cssText = `display:inline-block;vertical-align:middle;color:${textColor};font-size:12px;line-height:${LOGO_SIZE}px;margin-left:${LOGO_GAP}px;max-width:${overlayLabelWidth}px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`
+			row.appendChild(text)
+			layer.appendChild(row)
+		}
+	})
+
+	const handleResize = useEffectEvent((width: number) => {
+		const instance = chartRef.current
+		if (!instance || instance.isDisposed()) return
+		instance.resize()
+		if (!hasLogos) {
+			instance.setOption({ yAxis: { axisLabel: { width: getYAxisLabelWidth(width) } } })
+		}
+		syncLogos()
+	})
 
 	useEffect(() => {
-		const chartDom = document.getElementById(id)
+		const chartDom = containerRef.current
 		if (!chartDom) return
-
-		let instance = echarts.getInstanceByDom(chartDom)
-		if (!instance) {
-			instance = echarts.init(chartDom, null, { renderer: 'canvas' })
-		}
+		const instance = echarts.init(chartDom, null, { renderer: 'canvas' })
 		chartRef.current = instance
 		emitReady(instance)
+		instance.on('finished', syncLogos)
+
+		const observer = new ResizeObserver((entries) => {
+			const entry = entries[0]
+			if (entry) handleResize(entry.contentRect.width)
+		})
+		observer.observe(chartDom)
+
+		return () => {
+			observer.disconnect()
+			instance.off('finished', syncLogos)
+			chartRef.current = null
+			emitReady(null)
+			instance.dispose()
+		}
+	}, [])
+
+	useEffect(() => {
+		const chartDom = containerRef.current
+		const instance = chartRef.current
+		if (!chartDom || !instance) return
 
 		const seriesData = values.map((v, i) => {
 			const item: { value: number; itemStyle?: { color: string } } = { value: v }
@@ -114,16 +188,9 @@ export default function HBarChart({
 				}))
 			: [{ type: 'bar' as const, data: seriesData, emphasis: { focus: 'series' as const } }]
 
-		const textColor = getChartTheme(isThemeDark).axisLabel
 		const yAxisLabelWidth = getYAxisLabelWidth(chartDom.clientWidth || 600)
 		const watermarkHeight = 40
 		const watermarkWidth = Math.round((389 / 133) * watermarkHeight)
-		const overlayLabelWidth = hasLogos
-			? Math.min(
-					LABEL_MAX_WIDTH,
-					categories.reduce((m, c) => Math.max(m, measureLabelWidth(c)), 0)
-				)
-			: 0
 		const leftGridWidth = hasLogos ? LEFT_PAD + LOGO_SIZE + LOGO_GAP + overlayLabelWidth + 8 : CHART_INSET
 
 		instance.setOption(
@@ -214,77 +281,12 @@ export default function HBarChart({
 			delete (instance as any).__llamaChartLogos
 		}
 
-		const syncLogos = () => {
-			const layer = overlayRef.current
-			const inst = chartRef.current
-			if (!layer) return
-			layer.innerHTML = ''
-			if (!inst || inst.isDisposed() || !hasLogos) return
-			for (let i = 0; i < categories.length; i++) {
-				const y = inst.convertToPixel({ yAxisIndex: 0 }, i)
-				if (typeof y !== 'number' || !Number.isFinite(y)) continue
-				const url = logos![i]
-				const row = document.createElement('div')
-				row.style.cssText = `position:absolute;left:${LEFT_PAD}px;top:${y - LOGO_SIZE / 2}px;height:${LOGO_SIZE}px;pointer-events:none;white-space:nowrap;`
-				const spacerCss = `display:inline-block;width:${LOGO_SIZE}px;height:${LOGO_SIZE}px;vertical-align:middle;`
-				if (url) {
-					const img = document.createElement('img')
-					img.src = url
-					img.alt = ''
-					img.loading = 'lazy'
-					img.decoding = 'async'
-					img.style.cssText = `width:${LOGO_SIZE}px;height:${LOGO_SIZE}px;border-radius:50%;object-fit:cover;background:${getChartTheme(isThemeDark).logoBg};display:inline-block;vertical-align:middle;`
-					img.onerror = () => {
-						const spacer = document.createElement('span')
-						spacer.style.cssText = spacerCss
-						img.replaceWith(spacer)
-					}
-					row.appendChild(img)
-				} else {
-					const spacer = document.createElement('span')
-					spacer.style.cssText = spacerCss
-					row.appendChild(spacer)
-				}
-				const text = document.createElement('span')
-				text.textContent = categories[i]
-				text.title = categories[i]
-				text.style.cssText = `display:inline-block;vertical-align:middle;color:${textColor};font-size:12px;line-height:${LOGO_SIZE}px;margin-left:${LOGO_GAP}px;max-width:${overlayLabelWidth}px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`
-				row.appendChild(text)
-				layer.appendChild(row)
-			}
-		}
-
-		if (!instance.isDisposed()) {
-			instance.on('finished', syncLogos)
-		}
 		const syncLogosFrame = requestAnimationFrame(syncLogos)
-
-		const observer = new ResizeObserver((entries) => {
-			const inst = chartRef.current
-			if (!inst || inst.isDisposed()) return
-			const entry = entries[0]
-			if (!entry) return
-			const width = entry.contentRect.width
-			inst.resize()
-			if (!hasLogos) {
-				inst.setOption({ yAxis: { axisLabel: { width: getYAxisLabelWidth(width) } } })
-			}
-			syncLogos()
-		})
-		observer.observe(chartDom)
 
 		return () => {
 			cancelAnimationFrame(syncLogosFrame)
-			observer.disconnect()
-			chartRef.current = null
-			emitReady(null)
-			if (!instance.isDisposed()) {
-				instance.off('finished', syncLogos)
-				instance.dispose()
-			}
 		}
 	}, [
-		id,
 		categories,
 		values,
 		valueSymbol,
@@ -297,12 +299,14 @@ export default function HBarChart({
 		valueAxisMax,
 		valueAxisInterval,
 		hasLogos,
-		isThemeDark
+		isThemeDark,
+		overlayLabelWidth,
+		textColor
 	])
 
 	return (
 		<div style={{ position: 'relative', height }}>
-			<div id={id} style={{ width: '100%', height: '100%' }} />
+			<div ref={containerRef} style={{ width: '100%', height: '100%' }} />
 			<div ref={overlayRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} aria-hidden />
 		</div>
 	)

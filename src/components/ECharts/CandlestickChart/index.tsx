@@ -10,7 +10,7 @@ import {
 } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useId, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { oldBlue } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -47,9 +47,9 @@ export default function CandleStickAndVolumeChart({
 	height,
 	indicators = EMPTY_INDICATORS
 }: ICandlestickChartProps) {
-	const id = useId()
 	const [isThemeDark] = useDarkModeManager()
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
+	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 
 	// Stable resize listener - never re-attaches when dependencies change
@@ -384,10 +384,20 @@ export default function CandleStickAndVolumeChart({
 	}, [isThemeDark, overlays, panels])
 
 	useEffect(() => {
-		const el = document.getElementById(id)
+		const el = containerRef.current
 		if (!el) return
-		const instance = echarts.getInstanceByDom(el) || echarts.init(el, null, { renderer: 'canvas' })
+		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
+
+		return () => {
+			chartRef.current = null
+			instance.dispose()
+		}
+	}, [])
+
+	useEffect(() => {
+		const instance = chartRef.current
+		if (!instance) return
 
 		instance.setOption(
 			{
@@ -400,12 +410,7 @@ export default function CandleStickAndVolumeChart({
 			// (making grid.left/right look like they "don't apply"). Replace-merge fixes that.
 			{ replaceMerge: ['grid', 'xAxis', 'yAxis', 'series', 'dataZoom', 'dataset'] }
 		)
+	}, [series, data, defaultChartSettings])
 
-		return () => {
-			chartRef.current = null
-			instance.dispose()
-		}
-	}, [id, series, data, defaultChartSettings])
-
-	return <div id={id} style={{ height: height ?? `${chartHeight}px` }}></div>
+	return <div ref={containerRef} style={{ height: height ?? `${chartHeight}px` }}></div>
 }

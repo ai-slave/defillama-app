@@ -9,7 +9,7 @@ import { TreemapChart as EChartsTreemap } from 'echarts/charts'
 import { TooltipComponent, GraphicComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { lazy, useEffect, useId, useMemo, useRef } from 'react'
+import { lazy, useEffect, useMemo, useRef } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
@@ -88,7 +88,7 @@ const TREEMAP_COLORS = [
 ]
 
 function FeeMTreemap({ leaderboard }: { leaderboard: FeeMLeaderboardEntry[] }) {
-	const id = useId()
+	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const [isDark] = useDarkModeManager()
 
@@ -103,10 +103,20 @@ function FeeMTreemap({ leaderboard }: { leaderboard: FeeMLeaderboardEntry[] }) {
 	}, [leaderboard])
 
 	useEffect(() => {
-		const el = document.getElementById(id)
+		const el = containerRef.current
 		if (!el) return
-		const instance = echarts.getInstanceByDom(el) || echarts.init(el, null, { renderer: 'canvas' })
+		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
+
+		return () => {
+			chartRef.current = null
+			instance.dispose()
+		}
+	}, [])
+
+	useEffect(() => {
+		const instance = chartRef.current
+		if (!instance) return
 
 		instance.setOption(
 			{
@@ -153,12 +163,7 @@ function FeeMTreemap({ leaderboard }: { leaderboard: FeeMLeaderboardEntry[] }) {
 			},
 			{ notMerge: true }
 		)
-
-		return () => {
-			chartRef.current = null
-			instance.dispose()
-		}
-	}, [id, treeData, isDark])
+	}, [treeData, isDark])
 
 	useEffect(() => {
 		const handleResize = () => chartRef.current?.resize()
@@ -166,7 +171,7 @@ function FeeMTreemap({ leaderboard }: { leaderboard: FeeMLeaderboardEntry[] }) {
 		return () => window.removeEventListener('resize', handleResize)
 	}, [])
 
-	return <div id={id} className="w-full" style={{ height: '400px' }} />
+	return <div ref={containerRef} className="w-full" style={{ height: '400px' }} />
 }
 
 const columnHelper = createColumnHelper<FeeMLeaderboardEntry>()

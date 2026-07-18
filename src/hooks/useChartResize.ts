@@ -20,11 +20,14 @@ import { useEffect } from 'react'
  *   useEffect(() => {
  *     const instance = echarts.init(ref.current, null, { renderer: 'canvas' })
  *     chartRef.current = instance
- *     instance.setOption(getOptions(data))
  *     return () => {
  *       chartRef.current = null
  *       instance.dispose()
  *     }
+ *   }, [])
+ *
+ *   useEffect(() => {
+ *     chartRef.current?.setOption(getOptions(data))
  *   }, [data])
  * }
  * ```

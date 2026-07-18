@@ -3,7 +3,7 @@ import { RadarComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import type { EChartsOption } from 'echarts/types/dist/shared'
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useChartResize } from '~/hooks/useChartResize'
 
 echarts.use([ERadarChart, RadarComponent, TooltipComponent, CanvasRenderer])
@@ -61,29 +61,30 @@ export function buildRadarOption(scores: RadarScores, axisColor?: string): EChar
 }
 
 export function RadarChart({ scores }: { scores: RadarScores }) {
-	const id = useId()
+	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 
 	useChartResize(chartRef)
 
 	useEffect(() => {
-		const chartDom = document.getElementById(id)
+		const chartDom = containerRef.current
 		if (!chartDom) return
-
-		let instance = echarts.getInstanceByDom(chartDom)
-		if (!instance) {
-			instance = echarts.init(chartDom, null, { renderer: 'canvas' })
-		}
+		const instance = echarts.init(chartDom, null, { renderer: 'canvas' })
 		chartRef.current = instance
 
-		const axisColor = getComputedStyle(chartDom).getPropertyValue('--text-tertiary').trim() || undefined
-		instance.setOption(buildRadarOption(scores, axisColor))
-
 		return () => {
-			instance?.dispose()
 			chartRef.current = null
+			instance.dispose()
 		}
-	}, [id, scores])
+	}, [])
 
-	return <div id={id} className="h-[280px] w-full" />
+	useEffect(() => {
+		const chartDom = containerRef.current
+		const instance = chartRef.current
+		if (!chartDom || !instance) return
+		const axisColor = getComputedStyle(chartDom).getPropertyValue('--text-tertiary').trim() || undefined
+		instance.setOption(buildRadarOption(scores, axisColor), { notMerge: true })
+	}, [scores])
+
+	return <div ref={containerRef} className="h-[280px] w-full" />
 }

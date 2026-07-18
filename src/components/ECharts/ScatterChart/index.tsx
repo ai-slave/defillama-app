@@ -12,7 +12,7 @@ import {
 } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useEffectEvent, useId, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { formattedNum } from '~/utils'
@@ -59,9 +59,8 @@ export default function ScatterChart({
 	logScale = false,
 	onReady
 }: IScatterChartProps) {
-	const id = useId()
-
 	const [isDark] = useDarkModeManager()
+	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const emitReady = useEffectEvent((instance: echarts.ECharts | null) => {
 		onReady?.(instance)
@@ -94,11 +93,22 @@ export default function ScatterChart({
 	}, [chartData, entityType, showLabels])
 
 	useEffect(() => {
-		const el = document.getElementById(id)
-		if (!el) return
-		const instance = echarts.getInstanceByDom(el) || echarts.init(el, null, { renderer: 'canvas' })
+		const chartDom = containerRef.current
+		if (!chartDom) return
+		const instance = echarts.init(chartDom, null, { renderer: 'canvas' })
 		chartRef.current = instance
 		emitReady(instance)
+
+		return () => {
+			chartRef.current = null
+			emitReady(null)
+			instance.dispose()
+		}
+	}, [])
+
+	useEffect(() => {
+		const instance = chartRef.current
+		if (!instance) return
 
 		let series = []
 		const isYieldData = chartData.length > 0 && chartData[0].projectName !== undefined
@@ -362,14 +372,7 @@ export default function ScatterChart({
 		}
 
 		instance.setOption(option, { notMerge: true })
-
-		return () => {
-			chartRef.current = null
-			emitReady(null)
-			instance.dispose()
-		}
 	}, [
-		id,
 		chartData,
 		isDark,
 		tooltipFormatter,
@@ -385,7 +388,7 @@ export default function ScatterChart({
 
 	return (
 		<div>
-			<div id={id} className="h-[360px]" style={height ? { height } : undefined} />
+			<div ref={containerRef} className="h-[360px]" style={height ? { height } : undefined} />
 		</div>
 	)
 }

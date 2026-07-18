@@ -549,7 +549,7 @@ function TokenRightsPage({ protocols }: { protocols: TokenRightsListItem[] }) {
 
 					<TokenRightsLegend />
 
-					<footer className="flex flex-wrap items-center justify-between gap-2 border-t border-subtle p-2 body-sm text-secondary">
+					<footer className="flex flex-wrap items-center justify-between gap-2 border-t border-subtle p-2 body-sm text-tertiary">
 						<span>
 							{latestUpdated ? `Last updated: ${latestUpdated} - ` : null}
 							{filteredProtocols.length} protocols shown

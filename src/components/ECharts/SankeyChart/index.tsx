@@ -2,7 +2,7 @@ import { SankeyChart as ESankeyChart } from 'echarts/charts'
 import { GraphicComponent, GridComponent, TitleComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useCallback, useEffect, useEffectEvent, useId, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
@@ -33,12 +33,12 @@ export default function SankeyChart({
 	imageExportTitle,
 	...props
 }: ISankeyChartProps) {
-	const id = useId()
 	const [isDark] = useDarkModeManager()
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 	const { chartInstance: exportChartInstance, handleChartReady } = useChartImageExport()
 	const exportFilename = imageExportFilename || (title ? title.replace(/\s+/g, '-').toLowerCase() : 'sankey-chart')
 	const exportTitle = imageExportTitle || title
+	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const formatSankeyValue = useCallback(
 		(value: number): string => {
@@ -147,10 +147,24 @@ export default function SankeyChart({
 	}, [nodes, links, nodeColors, nodeAlign, orient, isDark, isSmall, formatSankeyValue, nodeMetadata])
 
 	useEffect(() => {
-		const el = document.getElementById(id)
+		const el = containerRef.current
 		if (!el) return
-		const instance = echarts.getInstanceByDom(el) || echarts.init(el, null, { renderer: 'canvas' })
+		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
+		handleChartReady(instance)
+		emitReady(instance)
+
+		return () => {
+			chartRef.current = null
+			handleChartReady(null)
+			emitReady(null)
+			instance.dispose()
+		}
+	}, [handleChartReady])
+
+	useEffect(() => {
+		const instance = chartRef.current
+		if (!instance) return
 
 		const graphic = {
 			type: 'image',
@@ -164,54 +178,47 @@ export default function SankeyChart({
 			top: '50%'
 		}
 
-		instance.setOption({
-			graphic,
-			tooltip: {
-				trigger: 'item',
-				triggerOn: 'mousemove',
-				confine: true,
-				className: 'defillama-echarts-tooltip',
-				backgroundColor: 'transparent',
-				borderWidth: 0,
-				formatter: (params: any) => {
-					if (params.dataType === 'edge') {
-						return `${params.data.source} → ${params.data.target}<br/>${formatSankeyValue(params.data.value)}`
+		instance.setOption(
+			{
+				graphic,
+				tooltip: {
+					trigger: 'item',
+					triggerOn: 'mousemove',
+					confine: true,
+					className: 'defillama-echarts-tooltip',
+					backgroundColor: 'transparent',
+					borderWidth: 0,
+					formatter: (params: any) => {
+						if (params.dataType === 'edge') {
+							return `${params.data.source} → ${params.data.target}<br/>${formatSankeyValue(params.data.value)}`
+						}
+						// Use displayValue if provided for tooltip value
+						const displayValue = nodeMetadata.displayValues[params.name]
+						const valueToShow =
+							displayValue !== undefined
+								? typeof displayValue === 'string'
+									? displayValue
+									: formatSankeyValue(displayValue)
+								: formatSankeyValue(params.value)
+						// Add percentage label if provided
+						const percentageLabel = nodeMetadata.percentageLabels[params.name]
+						const valueWithPercent = percentageLabel ? `${valueToShow} (${percentageLabel})` : valueToShow
+						const description = nodeMetadata.descriptions[params.name]
+						if (description) {
+							return `<strong>${params.name}</strong><br/>${valueWithPercent}<br/><span style="color: var(--text-secondary); font-size: 11px;">${description}</span>`
+						}
+						return `${params.name}<br/>${valueWithPercent}`
 					}
-					// Use displayValue if provided for tooltip value
-					const displayValue = nodeMetadata.displayValues[params.name]
-					const valueToShow =
-						displayValue !== undefined
-							? typeof displayValue === 'string'
-								? displayValue
-								: formatSankeyValue(displayValue)
-							: formatSankeyValue(params.value)
-					// Add percentage label if provided
-					const percentageLabel = nodeMetadata.percentageLabels[params.name]
-					const valueWithPercent = percentageLabel ? `${valueToShow} (${percentageLabel})` : valueToShow
-					const description = nodeMetadata.descriptions[params.name]
-					if (description) {
-						return `<strong>${params.name}</strong><br/>${valueWithPercent}<br/><span style="color: var(--text-secondary); font-size: 11px;">${description}</span>`
-					}
-					return `${params.name}<br/>${valueWithPercent}`
-				}
+				},
+				series
 			},
-			series
-		})
-
-		handleChartReady(instance)
-		emitReady(instance)
-
-		return () => {
-			chartRef.current = null
-			instance.dispose()
-			handleChartReady(null)
-			emitReady(null)
-		}
-	}, [id, series, isDark, title, valueSymbol, isSmall, handleChartReady, nodeMetadata, formatSankeyValue])
+			{ notMerge: true }
+		)
+	}, [series, isDark, isSmall, nodeMetadata, formatSankeyValue])
 
 	return (
 		<ChartContainer
-			id={id}
+			chartRef={containerRef}
 			chartClassName=""
 			chartStyle={{ height }}
 			header={

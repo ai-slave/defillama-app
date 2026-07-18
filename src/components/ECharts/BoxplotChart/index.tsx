@@ -13,7 +13,7 @@ import {
 import * as echarts from 'echarts/core'
 import { UniversalTransition } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useId, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { getChartTheme } from '../chartTheme'
@@ -40,9 +40,8 @@ interface IChartProps {
 }
 
 export default function BoxplotChart({ chartData }: IChartProps) {
-	const id = useId()
-
 	const [isDark] = useDarkModeManager()
+	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 
 	// Stable resize listener - never re-attaches when dependencies change
@@ -56,10 +55,20 @@ export default function BoxplotChart({ chartData }: IChartProps) {
 	}, [chartData])
 
 	useEffect(() => {
-		const el = document.getElementById(id)
+		const el = containerRef.current
 		if (!el) return
-		const instance = echarts.getInstanceByDom(el) || echarts.init(el, null, { renderer: 'canvas' })
+		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
+
+		return () => {
+			chartRef.current = null
+			instance.dispose()
+		}
+	}, [])
+
+	useEffect(() => {
+		const instance = chartRef.current
+		if (!instance) return
 
 		const option = {
 			dataset: [
@@ -219,17 +228,12 @@ export default function BoxplotChart({ chartData }: IChartProps) {
 				}
 			]
 		}
-		instance.setOption(option)
-
-		return () => {
-			chartRef.current = null
-			instance.dispose()
-		}
-	}, [id, data, isDark])
+		instance.setOption(option, { notMerge: true })
+	}, [data, isDark])
 
 	return (
 		<div className="relative flex flex-col items-end rounded-md bg-surface p-3">
-			<div id={id} className="min-h-[800px] w-full" />
+			<div ref={containerRef} className="min-h-[800px] w-full" />
 		</div>
 	)
 }

@@ -32,19 +32,29 @@ echarts.use([
 ])
 
 export default function CollectionScatterChart({ height, sales, salesMedian1d, volume }: ICollectionScatterChartProps) {
-	const id = React.useId()
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 
 	const [isDark] = useDarkModeManager()
+	const containerRef = React.useRef<HTMLDivElement>(null)
 	const chartRef = React.useRef<echarts.ECharts | null>(null)
 
 	useChartResize(chartRef)
 
 	React.useEffect(() => {
-		const el = document.getElementById(id)
+		const el = containerRef.current
 		if (!el) return
-		const instance = echarts.getInstanceByDom(el) ?? echarts.init(el, null, { renderer: 'canvas' })
+		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
+
+		return () => {
+			chartRef.current = null
+			instance.dispose()
+		}
+	}, [])
+
+	React.useEffect(() => {
+		const instance = chartRef.current
+		if (!instance) return
 
 		const series =
 			sales.length > 0
@@ -222,15 +232,10 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 			series: series
 		}
 
-		instance.setOption(option)
+		instance.setOption(option, { notMerge: true })
+	}, [sales, volume, isDark, isSmall, salesMedian1d])
 
-		return () => {
-			chartRef.current = null
-			instance.dispose()
-		}
-	}, [id, sales, volume, isDark, isSmall, salesMedian1d])
-
-	return <div id={id} className="h-[360px]" style={height ? { height } : undefined} />
+	return <div ref={containerRef} className="h-[360px]" style={height ? { height } : undefined} />
 }
 
 const findClosest = (arr: Array<[number, number]>, n: number, target: number, isDateInSeconds: boolean): string => {

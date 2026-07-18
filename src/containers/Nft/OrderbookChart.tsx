@@ -29,21 +29,32 @@ echarts.use([
 ])
 
 export default function OrderBookChart({ height, chartData }: IOrderBookChartProps) {
-	const id = React.useId()
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 
 	const [isDark] = useDarkModeManager()
+	const containerRef = React.useRef<HTMLDivElement>(null)
 	const chartRef = React.useRef<echarts.ECharts | null>(null)
+	const hasData = Array.isArray(chartData) && chartData.length > 0
 
 	// Stable resize listener - never re-attaches when dependencies change
 	useChartResize(chartRef)
 
 	React.useEffect(() => {
-		if (!Array.isArray(chartData) || chartData.length === 0) return
-		const el = document.getElementById(id)
+		if (!hasData) return
+		const el = containerRef.current
 		if (!el) return
-		const instance = echarts.getInstanceByDom(el) || echarts.init(el, null, { renderer: 'canvas' })
+		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
+
+		return () => {
+			chartRef.current = null
+			instance.dispose()
+		}
+	}, [hasData])
+
+	React.useEffect(() => {
+		const instance = chartRef.current
+		if (!instance) return
 
 		const series = [
 			{
@@ -224,13 +235,8 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 			series: series
 		}
 
-		instance.setOption(option)
+		instance.setOption(option, { notMerge: true })
+	}, [chartData, isDark, isSmall])
 
-		return () => {
-			chartRef.current = null
-			instance.dispose()
-		}
-	}, [id, chartData, isDark, isSmall])
-
-	return <div id={id} className="h-[360px]" style={height ? { height } : undefined} />
+	return <div ref={containerRef} className="h-[360px]" style={height ? { height } : undefined} />
 }

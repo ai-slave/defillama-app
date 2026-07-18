@@ -8,7 +8,7 @@ import {
 } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useCallback, useEffect, useId, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { CHART_COLORS } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -44,13 +44,13 @@ export default function TreemapChart({
 	valueLabel = 'Market Cap',
 	valueSymbol = '$'
 }: ITreemapChartProps) {
-	const id = useId()
 	const isNarrativeVariant = variant === 'narrative'
 	const isRwaVariant = variant === 'rwa'
 	const isNarrativeLike = isNarrativeVariant || isRwaVariant
 	const isCategoricalColor = colorMode === 'categorical'
 
 	const [isDark] = useDarkModeManager()
+	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const onReadyRef = useRef(onReady)
 	useEffect(() => {
@@ -82,11 +82,50 @@ export default function TreemapChart({
 	}, [chartDataTree, isRwaVariant])
 
 	useEffect(() => {
-		const el = document.getElementById(id)
+		const el = containerRef.current
 		if (!el) return
-		const instance = echarts.getInstanceByDom(el) || echarts.init(el, null, { renderer: 'canvas' })
+		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
 		onReadyRef.current?.(instance)
+
+		const handleTreemapClick = (params: any) => {
+			if (params?.seriesType !== 'treemap') return
+			const seriesModel = (instance as any).getModel?.()?.getSeriesByIndex?.(params.seriesIndex ?? 0)
+			const node = seriesModel?.getData?.()?.tree?.getNodeByDataIndex?.(params.dataIndex)
+			const nodeId = node?.getId?.()
+			const nodePath = node
+				?.getAncestors?.(true)
+				?.map((ancestor: any) => ancestor?.name)
+				?.filter((name: any) => typeof name === 'string' && name)
+			if (typeof nodeId === 'string' && nodeId) {
+				const chartWithTreemapFocus = instance as echarts.ECharts & {
+					__llamaTreemapFocusNode?: { id: string; path?: string[] }
+				}
+				chartWithTreemapFocus.__llamaTreemapFocusNode = {
+					id: nodeId,
+					...(Array.isArray(nodePath) && nodePath.length > 0 ? { path: nodePath } : {})
+				}
+			}
+		}
+		const handleRestore = () => {
+			delete (instance as any).__llamaTreemapFocusNode
+			delete (instance as any).__llamaTreemapFocusNodeId
+		}
+		instance.on('click', handleTreemapClick)
+		instance.on('restore', handleRestore)
+
+		return () => {
+			instance.off('click', handleTreemapClick)
+			instance.off('restore', handleRestore)
+			chartRef.current = null
+			onReadyRef.current?.(null)
+			instance.dispose()
+		}
+	}, [])
+
+	useEffect(() => {
+		const instance = chartRef.current
+		if (!instance) return
 
 		const option = {
 			...(isNarrativeLike
@@ -359,44 +398,12 @@ export default function TreemapChart({
 				}
 			]
 		}
+		delete (instance as any).__llamaTreemapFocusNode
+		delete (instance as any).__llamaTreemapFocusNodeId
 		instance.setOption(option, { notMerge: true, lazyUpdate: true })
-		const handleTreemapClick = (params: any) => {
-			if (params?.seriesType !== 'treemap') return
-			const seriesModel = (instance as any).getModel?.()?.getSeriesByIndex?.(params.seriesIndex ?? 0)
-			const node = seriesModel?.getData?.()?.tree?.getNodeByDataIndex?.(params.dataIndex)
-			const nodeId = node?.getId?.()
-			const nodePath = node
-				?.getAncestors?.(true)
-				?.map((ancestor: any) => ancestor?.name)
-				?.filter((name: any) => typeof name === 'string' && name)
-			if (typeof nodeId === 'string' && nodeId) {
-				const chartWithTreemapFocus = instance as echarts.ECharts & {
-					__llamaTreemapFocusNode?: { id: string; path?: string[] }
-				}
-				chartWithTreemapFocus.__llamaTreemapFocusNode = {
-					id: nodeId,
-					...(Array.isArray(nodePath) && nodePath.length > 0 ? { path: nodePath } : {})
-				}
-			}
-		}
-		const handleRestore = () => {
-			delete (instance as any).__llamaTreemapFocusNode
-			delete (instance as any).__llamaTreemapFocusNodeId
-		}
-		instance.on('click', handleTreemapClick)
-		instance.on('restore', handleRestore)
-
-		return () => {
-			instance.off('click', handleTreemapClick)
-			instance.off('restore', handleRestore)
-			chartRef.current = null
-			onReadyRef.current?.(null)
-			instance.dispose()
-		}
 	}, [
 		chartDataTree,
 		formatTreemapMetricValue,
-		id,
 		isCategoricalColor,
 		isDark,
 		isNarrativeLike,
@@ -428,7 +435,7 @@ export default function TreemapChart({
 			className="w-full overflow-hidden"
 			style={{ height: resolvedHeight, padding: CHART_INSET, boxSizing: 'border-box' }}
 		>
-			<div id={id} className="h-full w-full" />
+			<div ref={containerRef} className="h-full w-full" />
 		</div>
 	)
 

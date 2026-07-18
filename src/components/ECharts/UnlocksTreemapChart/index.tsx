@@ -3,7 +3,7 @@ import { TreemapChart as EChartTreemap } from 'echarts/charts'
 import { TitleComponent, ToolboxComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { startTransition, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { startTransition, useEffect, useMemo, useRef, useState } from 'react'
 import { TagGroup } from '~/components/TagGroup'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -50,10 +50,10 @@ type TimeView = (typeof TIME_VIEWS)[number]
 const TREEMAP_CHART_INSET_PX = 8
 
 export default function UnlocksTreemapChart({ unlocksData, height = '600px', filterYear }: UnlocksTreemapProps) {
-	const id = useId()
 	const [isDark] = useDarkModeManager()
 	const [timeView, setTimeView] = useState<TimeView>('Current Year')
 	const [selectedDate, setSelectedDate] = useState(() => dayjs())
+	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 
 	// Stable resize listener - never re-attaches when dependencies change
@@ -251,10 +251,20 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 	}, [unlocksData, currentYear, timeView, isDark, selectedDate])
 
 	useEffect(() => {
-		const el = document.getElementById(id)
+		const el = containerRef.current
 		if (!el) return
-		const instance = echarts.getInstanceByDom(el) || echarts.init(el, null, { renderer: 'canvas' })
+		const instance = echarts.init(el, null, { renderer: 'canvas' })
 		chartRef.current = instance
+
+		return () => {
+			chartRef.current = null
+			instance.dispose()
+		}
+	}, [])
+
+	useEffect(() => {
+		const instance = chartRef.current
+		if (!instance) return
 
 		const option = {
 			title: {
@@ -409,13 +419,8 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 			]
 		}
 
-		instance.setOption(option)
-
-		return () => {
-			chartRef.current = null
-			instance.dispose()
-		}
-	}, [id, chartDataTree, isDark, timeView, selectedDate])
+		instance.setOption(option, { notMerge: true })
+	}, [chartDataTree, isDark, timeView, selectedDate])
 
 	const goToPrevMonth = () => setSelectedDate((d) => d.subtract(1, 'month'))
 	const goToNextMonth = () => setSelectedDate((d) => d.add(1, 'month'))
@@ -453,7 +458,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 			</div>
 
 			<div className="w-full overflow-hidden" style={{ height, padding: TREEMAP_CHART_INSET_PX }}>
-				<div id={id} className="h-full w-full" />
+				<div ref={containerRef} className="h-full w-full" />
 			</div>
 		</div>
 	)
