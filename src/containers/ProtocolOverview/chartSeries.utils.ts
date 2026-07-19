@@ -51,7 +51,7 @@ export function normalizeBridgeVolumeToChartMs(
 	const chart: IProtocolNumericSeries = []
 	for (const item of bridgeVolumeData) {
 		const timestampMs = Number(item.date) * 1e3
-		const value = (item.depositUSD + item.withdrawUSD) / 2
+		const value = ((item.depositUSD ?? 0) + (item.withdrawUSD ?? 0)) / 2
 		if (!Number.isFinite(timestampMs) || !Number.isFinite(value)) continue
 		const last = chart[chart.length - 1]
 		if (last?.[0] === timestampMs) last[1] += value

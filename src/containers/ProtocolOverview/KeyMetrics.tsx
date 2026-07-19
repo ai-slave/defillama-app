@@ -669,7 +669,7 @@ function BridgeVolume(props: IKeyMetricsProps) {
 	let totalAllTime = 0
 
 	for (const item of props.bridgeVolume) {
-		const volume = (item.depositUSD + item.withdrawUSD) / 2
+		const volume = ((item.depositUSD ?? 0) + (item.withdrawUSD ?? 0)) / 2
 		const timestamp = Number(item.date) * 1000
 
 		totalAllTime += volume

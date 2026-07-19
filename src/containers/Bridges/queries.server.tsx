@@ -25,6 +25,7 @@ import type {
 	RawBridgeNetflowsResponse,
 	RawBridgeVolumePoint
 } from './api.types'
+import { formatBridgeOverviewVolumeData } from './bridgeOverviewVolumeData'
 import type {
 	BridgeNetflowChartData,
 	BridgeNetflowChartPoint,
@@ -165,7 +166,7 @@ export function buildVolumeDataByChain({
 
 		for (const item of chainVolume) {
 			const date = Number(item.date)
-			chartData.push({ date, Deposited: item.depositUSD, Withdrawn: -item.withdrawUSD })
+			chartData.push({ date, Deposited: item.depositUSD ?? 0, Withdrawn: -(item.withdrawUSD ?? 0) })
 
 			if (!volumeOnAllChains[date]) {
 				volumeOnAllChains[date] = { date, Deposited: 0, Withdrawn: 0 }
@@ -421,15 +422,9 @@ const getChainVolumeData = async (chain: string, chainCoingeckoIds: LlamaConfigR
 				throwOnFailure: true,
 				onFailureError: () => new Error(`bridge volume for chain ${chain} is broken`)
 			})
-			const formattedChart = chart.map((point) => {
-				// This is confusing, stats from the endpoint use "deposit" to mean deposit in bridge contract,
-				// i.e., a withdrawal from the chain. Will eventually change that.
-				return {
-					date: point.date,
-					Deposits: point.depositUSD,
-					Withdrawals: -point.withdrawUSD
-				}
-			})
+			// This is confusing, stats from the endpoint use "deposit" to mean deposit in bridge contract,
+			// i.e., a withdrawal from the chain. Will eventually change that.
+			const formattedChart = formatBridgeOverviewVolumeData(chart)
 			return { formatted: formattedChart, raw: chart }
 		} else return { formatted: null, raw: [] }
 	} else {
@@ -437,8 +432,8 @@ const getChainVolumeData = async (chain: string, chainCoingeckoIds: LlamaConfigR
 		const formattedChart = chart.map((point) => {
 			return {
 				date: point.date,
-				volume: (point.withdrawUSD + point.depositUSD) / 2,
-				txs: point.depositTxs + point.withdrawTxs
+				volume: ((point.withdrawUSD ?? 0) + (point.depositUSD ?? 0)) / 2,
+				txs: (point.depositTxs ?? 0) + (point.withdrawTxs ?? 0)
 			}
 		})
 		return { formatted: formattedChart, raw: chart }
@@ -512,8 +507,8 @@ export async function getBridgeOverviewPageData(chain, options: { includeBridgeT
 			)
 			return charts.map((chart) => ({
 				date: chart.date,
-				volume: (chart.withdrawUSD + chart.depositUSD) / 2,
-				txs: chart.depositTxs + chart.withdrawTxs
+				volume: ((chart.withdrawUSD ?? 0) + (chart.depositUSD ?? 0)) / 2,
+				txs: (chart.depositTxs ?? 0) + (chart.withdrawTxs ?? 0)
 			}))
 		})
 	)
@@ -630,7 +625,7 @@ export async function getBridgeChainsPageData() {
 		for (const chart of charts) {
 			const date = Number(chart.date)
 			if (!Number.isFinite(date)) continue
-			const netFlow = chart.depositUSD - chart.withdrawUSD
+			const netFlow = (chart.depositUSD ?? 0) - (chart.withdrawUSD ?? 0)
 			let row = chartData.get(date)
 			if (!row) {
 				row = createChartRecord<number>() as { date: number } & Record<string, number>

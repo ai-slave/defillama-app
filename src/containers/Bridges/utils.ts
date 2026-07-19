@@ -1,5 +1,11 @@
 import { getPercentChange, getPrevVolumeFromChart, keepNeededProperties, slug } from '~/utils'
-import { getCompleteTimeSeriesDailyWindow, getTimeSeriesPeriodPair } from '~/utils/timeSeries'
+import {
+	DAY_MS,
+	getCompleteTimeSeriesDailyWindow,
+	getTimeSeriesPeriodPair,
+	getUtcStartOfDay,
+	toUnixMsTimestamp
+} from '~/utils/timeSeries'
 import { BRIDGE_PROPERTIES_TO_KEEP } from './constants'
 
 interface ITokenData {
@@ -65,6 +71,45 @@ export function getCompletedBridgeVolumeTotal(
 		total += value
 	}
 	return total
+}
+
+export function getCompletedBridgeVolumeTotals(
+	chart: BridgeDailyVolumePoint[] | null | undefined,
+	days: readonly number[],
+	useDepositAndWithdrawalVolume = false,
+	currentTimeMs: number = Date.now()
+): Map<number, number | null> {
+	const totals = new Map<number, number | null>()
+	let maxDays = 0
+	for (const periodDays of days) {
+		totals.set(periodDays, null)
+		if (Number.isInteger(periodDays) && periodDays > maxDays) maxDays = periodDays
+	}
+	if (!chart?.length || maxDays <= 0) return totals
+
+	const latestPointByDay = new Map<number, { point: BridgeDailyVolumePoint; timestamp: number }>()
+	for (const point of chart) {
+		const timestamp = toUnixMsTimestamp(point.date)
+		if (!Number.isFinite(timestamp)) continue
+		const dayStart = getUtcStartOfDay(timestamp)
+		const existing = latestPointByDay.get(dayStart)
+		if (!existing || timestamp > existing.timestamp) latestPointByDay.set(dayStart, { point, timestamp })
+	}
+
+	const latestCompletedDay = getUtcStartOfDay(currentTimeMs) - DAY_MS
+	let runningTotal = 0
+	let isComplete = true
+	for (let dayOffset = 0; dayOffset < maxDays; dayOffset++) {
+		const point = latestPointByDay.get(latestCompletedDay - dayOffset * DAY_MS)?.point
+		const value = point ? getBridgeDailyVolume(point, useDepositAndWithdrawalVolume) : null
+		if (value == null) isComplete = false
+		if (isComplete) runningTotal += value as number
+
+		const periodDays = dayOffset + 1
+		if (totals.has(periodDays)) totals.set(periodDays, isComplete ? runningTotal : null)
+	}
+
+	return totals
 }
 
 export function getCompletedBridgeVolumePair(
@@ -177,16 +222,16 @@ export const formatChainsData = ({
 				prevDayNetFlow =
 					chainNetflowDay.net_flow !== undefined
 						? Number(chainNetflowDay.net_flow)
-						: prevDayUsdDeposits - prevDayUsdWithdrawals
+						: (prevDayUsdDeposits ?? 0) - (prevDayUsdWithdrawals ?? 0)
 			} else {
 				prevDayUsdDeposits = prevDayChart?.depositUSD
 				prevDayUsdWithdrawals = prevDayChart?.withdrawUSD
-				prevDayNetFlow = prevDayUsdDeposits - prevDayUsdWithdrawals
+				prevDayNetFlow = (prevDayUsdDeposits ?? 0) - (prevDayUsdWithdrawals ?? 0)
 			}
 		} else {
 			prevDayUsdDeposits = prevDayChart?.depositUSD
 			prevDayUsdWithdrawals = prevDayChart?.withdrawUSD
-			prevDayNetFlow = prevDayUsdDeposits - prevDayUsdWithdrawals
+			prevDayNetFlow = (prevDayUsdDeposits ?? 0) - (prevDayUsdWithdrawals ?? 0)
 		}
 
 		let prevWeekUsdDeposits, prevWeekUsdWithdrawals, prevWeekNetFlow
@@ -207,8 +252,8 @@ export const formatChainsData = ({
 				prevWeekUsdDeposits = 0
 				prevWeekUsdWithdrawals = 0
 				for (const chart of prevWeekCharts) {
-					prevWeekUsdDeposits += chart.depositUSD
-					prevWeekUsdWithdrawals += chart.withdrawUSD
+					prevWeekUsdDeposits += chart.depositUSD ?? 0
+					prevWeekUsdWithdrawals += chart.withdrawUSD ?? 0
 				}
 				prevWeekNetFlow = prevWeekUsdDeposits - prevWeekUsdWithdrawals
 			}
@@ -217,8 +262,8 @@ export const formatChainsData = ({
 			prevWeekUsdDeposits = 0
 			prevWeekUsdWithdrawals = 0
 			for (const chart of prevWeekCharts) {
-				prevWeekUsdDeposits += chart.depositUSD
-				prevWeekUsdWithdrawals += chart.withdrawUSD
+				prevWeekUsdDeposits += chart.depositUSD ?? 0
+				prevWeekUsdWithdrawals += chart.withdrawUSD ?? 0
 			}
 			prevWeekNetFlow = prevWeekUsdDeposits - prevWeekUsdWithdrawals
 		}

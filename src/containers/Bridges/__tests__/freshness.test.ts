@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { formatBridgesData, getCompletedBridgeVolumePair, getCompletedBridgeVolumeTotal } from '../utils'
+import {
+	formatBridgesData,
+	formatChainsData,
+	getCompletedBridgeVolumePair,
+	getCompletedBridgeVolumeTotal,
+	getCompletedBridgeVolumeTotals
+} from '../utils'
 
 const NOW = Date.parse('2026-07-14T12:00:00Z')
 const day = (date: string, volume: number) => ({ date: `${date}T00:00:00Z`, volume })
@@ -21,6 +27,47 @@ describe('bridge volume freshness', () => {
 			{ date: '2026-07-13T00:00:00Z', Deposits: 10, Withdrawals: -3 }
 		]
 		expect(getCompletedBridgeVolumeTotal(chart, 2, true, NOW)).toBe(20)
+	})
+
+	it('calculates multiple completed windows in one daily-series pass', () => {
+		const chart = Array.from({ length: 30 }, (_, index) => ({
+			date: new Date(Date.parse('2026-06-14T00:00:00Z') + index * 86_400_000).toISOString(),
+			Deposits: 10,
+			Withdrawals: -2
+		}))
+		expect(getCompletedBridgeVolumeTotals(chart, [1, 7, 30], true, NOW)).toEqual(
+			new Map([
+				[1, 12],
+				[7, 84],
+				[30, 360]
+			])
+		)
+	})
+
+	it('keeps shorter completed windows when a longer window has a missing day', () => {
+		const chart = Array.from({ length: 7 }, (_, index) => ({
+			date: new Date(Date.parse('2026-07-07T00:00:00Z') + index * 86_400_000).toISOString(),
+			Deposits: 10,
+			Withdrawals: -2
+		})).filter((point) => !point.date.startsWith('2026-07-10'))
+
+		expect(getCompletedBridgeVolumeTotals(chart, [1, 7, 30], true, NOW)).toEqual(
+			new Map([
+				[1, 12],
+				[7, null],
+				[30, null]
+			])
+		)
+	})
+
+	it('treats an omitted chain-volume direction as zero', () => {
+		expect(
+			formatChainsData({
+				chains: [{ name: 'Test Chain' }],
+				chartDataByChain: [[{ date: '1', depositUSD: 10 }]],
+				chainToChartDataIndex: { 'Test Chain': 0 }
+			})
+		).toMatchObject([{ prevDayUsdDeposits: 10, prevDayUsdWithdrawals: 0, prevDayNetFlow: 10 }])
 	})
 
 	it('keeps backend rolling volumes on the global bridge overview', () => {

@@ -1,5 +1,6 @@
 import type * as echarts from 'echarts/core'
 import type { ChartTimeGrouping, ChartTimeGroupingWithCumulative } from '~/components/ECharts/types'
+import type { RawBridgeVolumePoint } from '~/containers/Bridges/api.types'
 import type { IHackApiItem } from '~/containers/Hacks/api.types'
 import type { IProtocolLlamaswapChain as BuyOnLlamaswapChain } from '~/utils/metadata/types'
 import type { IProtocolMetricsV2, IProtocolRaise } from './api.types'
@@ -106,7 +107,7 @@ export interface IProtocolOverviewPageData {
 	optionsNotionalVolume: IAdapterOverview | null
 	liquidationVolume: IAdapterOverview | null
 	collateralLiquidated: IAdapterOverview | null
-	bridgeVolume: Array<{ date: string; depositUSD: number; withdrawUSD: number }> | null
+	bridgeVolume: RawBridgeVolumePoint[] | null
 	incentives?: {
 		emissions24h: number
 		emissions7d: number

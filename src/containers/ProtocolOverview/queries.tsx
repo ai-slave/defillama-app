@@ -9,6 +9,7 @@ import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import { listArticles } from '~/containers/Articles/api'
 import { articleHref } from '~/containers/Articles/landing/utils'
 import { fetchBridgeVolumeBySlug } from '~/containers/Bridges/api'
+import type { RawBridgeVolumePoint } from '~/containers/Bridges/api.types'
 import { governanceIdsToApis } from '~/containers/Governance/api'
 import { getProtocolIncentivesFromAggregatedEmissions } from '~/containers/Incentives/queries'
 import { fetchOracleMetrics, fetchOracleProtocolChart } from '~/containers/Oracles/api'
@@ -112,7 +113,7 @@ export const getProtocolMetricFlags = ({
 	}
 }
 
-type IBridgeVolumeResult = Array<{ date: string; depositUSD: number; withdrawUSD: number }> | null
+type IBridgeVolumeResult = RawBridgeVolumePoint[] | null
 type IProtocolTvlChartSeedResult = { data: IProtocolValueChart; failed: boolean }
 
 export const getProtocolOverviewPageData = async ({

@@ -7,7 +7,6 @@ import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { BridgesTable, type BridgesTableHandle } from '~/containers/Bridges/BridgesTable'
 import { BridgeVolumeChart } from '~/containers/Bridges/BridgeVolumeChart'
 import { ChartSelector } from '~/containers/Bridges/ChartSelector'
-import { getCompletedBridgeVolumeTotal } from '~/containers/Bridges/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
@@ -19,7 +18,11 @@ import { Switch } from '~/ui/Switch'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formattedNum, slug, toNiceCsvDate } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
-import { buildBridgeOverviewActiveChart, type BridgeOverviewChartType } from './bridgeOverviewChartData'
+import {
+	buildBridgeOverviewActiveChart,
+	getBridgeOverviewSummaryTotals,
+	type BridgeOverviewChartType
+} from './bridgeOverviewChartData'
 import { BridgesLargeTxsTable, type BridgesLargeTxsTableHandle } from './BridgesLargeTxsTable'
 
 const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
@@ -193,29 +196,7 @@ export function BridgesOverviewByChain({
 
 	const { dayTotalVolume, weekTotalVolume, monthTotalVolume } = React.useMemo(() => {
 		const bridgesToCalculate = activeTab === 'bridges' ? bridgesTableData : messagingProtocols
-		const sumBridgeField = (field: 'lastDailyVolume' | 'weeklyVolume' | 'monthlyVolume'): number | null => {
-			if (!bridgesToCalculate?.length) return null
-			let total = 0
-			for (const bridge of bridgesToCalculate) {
-				const value = bridge?.[field]
-				if (value == null) return null
-				total += value
-			}
-			return total
-		}
-
-		const useDepositAndWithdrawalVolume = selectedChain !== 'All'
-		const hasBridgeRows = Boolean(bridgesToCalculate?.length)
-		const dayTotalVolume = hasBridgeRows
-			? sumBridgeField('lastDailyVolume')
-			: getCompletedBridgeVolumeTotal(chainVolumeData, 1, useDepositAndWithdrawalVolume)
-		const weekTotalVolume = hasBridgeRows
-			? sumBridgeField('weeklyVolume')
-			: getCompletedBridgeVolumeTotal(chainVolumeData, 7, useDepositAndWithdrawalVolume)
-		const monthTotalVolume = hasBridgeRows
-			? sumBridgeField('monthlyVolume')
-			: getCompletedBridgeVolumeTotal(chainVolumeData, 30, useDepositAndWithdrawalVolume)
-		return { dayTotalVolume, weekTotalVolume, monthTotalVolume }
+		return getBridgeOverviewSummaryTotals({ selectedChain, bridges: bridgesToCalculate, chainVolumeData })
 	}, [chainVolumeData, selectedChain, bridgesTableData, messagingProtocols, activeTab])
 
 	const prepareActiveTabCsv = React.useCallback(() => {

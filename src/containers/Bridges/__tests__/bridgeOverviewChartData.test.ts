@@ -1,12 +1,70 @@
 import { describe, expect, it } from 'vitest'
-import { buildBridgeOverviewActiveChart, type BridgeOverviewChartType } from '../bridgeOverviewChartData'
+import {
+	buildBridgeOverviewActiveChart,
+	getBridgeOverviewSummaryTotals,
+	type BridgeOverviewChartType
+} from '../bridgeOverviewChartData'
+import { formatBridgeOverviewVolumeData } from '../bridgeOverviewVolumeData'
 
 const chainVolumeData = [
-	{ date: 1, Deposited: 10, Withdrawn: -4 },
-	{ date: 2, Deposited: 0, Withdrawn: 0 }
+	{ date: 1, Deposits: 10, Withdrawals: -4 },
+	{ date: 2, Deposits: 0, Withdrawals: 0 }
 ]
 
 describe('buildBridgeOverviewActiveChart', () => {
+	it('builds net flow from the production raw bridge-volume contract', () => {
+		const formatted = formatBridgeOverviewVolumeData([
+			{ date: '1', depositUSD: 10, withdrawUSD: 4, depositTxs: 2, withdrawTxs: 1 },
+			{ date: '2', depositUSD: 5, depositTxs: 1 }
+		])
+
+		expect(
+			buildBridgeOverviewActiveChart({ selectedChain: 'Ethereum', chartType: 'Net Flow', chainVolumeData: formatted })
+		).toEqual({
+			kind: 'Net Flow',
+			dataset: {
+				dimensions: ['timestamp', 'Net Flow'],
+				source: [
+					{ timestamp: 1_000, 'Net Flow': 6 },
+					{ timestamp: 2_000, 'Net Flow': 5 }
+				]
+			}
+		})
+	})
+
+	it('preserves filtered row totals on the all-chains overview', () => {
+		expect(
+			getBridgeOverviewSummaryTotals({
+				selectedChain: 'All',
+				bridges: [{ lastDailyVolume: 3, weeklyVolume: 12, monthlyVolume: 40 }],
+				chainVolumeData: []
+			})
+		).toEqual({ dayTotalVolume: 3, weekTotalVolume: 12, monthTotalVolume: 40 })
+	})
+
+	it('uses normalized chain-wide aggregate totals on a chain overview', () => {
+		const currentTimeMs = Date.parse('2026-07-14T12:00:00Z')
+		const aggregate = [
+			...Array.from({ length: 30 }, (_, index) => ({
+				date: new Date(Date.parse('2026-06-14T00:00:00Z') + index * 86_400_000).toISOString(),
+				Deposits: 10,
+				Withdrawals: -2
+			}))
+		]
+
+		expect(
+			getBridgeOverviewSummaryTotals({
+				selectedChain: 'Ethereum',
+				bridges: [
+					{ lastDailyVolume: 3, weeklyVolume: 12, monthlyVolume: 40 },
+					{ lastDailyVolume: 2, weeklyVolume: null, monthlyVolume: null }
+				],
+				chainVolumeData: aggregate,
+				currentTimeMs
+			})
+		).toEqual({ dayTotalVolume: 6, weekTotalVolume: 42, monthTotalVolume: 180 })
+	})
+
 	it('skips derived construction for overview and raw volume views', () => {
 		for (const [selectedChain, chartType] of [
 			['All', 'Net Flow'],

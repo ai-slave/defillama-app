@@ -59,4 +59,16 @@ describe('ProtocolOverview chart series normalization', () => {
 			[2_000, 5]
 		])
 	})
+
+	it('treats omitted bridge directions as zero', () => {
+		expect(
+			normalizeBridgeVolumeToChartMs([
+				{ date: '1', depositUSD: 10 },
+				{ date: '2', withdrawUSD: 4 }
+			])
+		).toEqual([
+			[1_000, 5],
+			[2_000, 2]
+		])
+	})
 })

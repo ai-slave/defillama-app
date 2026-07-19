@@ -1,5 +1,6 @@
 import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
-import type { BridgePieChartSlice, BridgeVolumeChartPoint } from './types'
+import type { BridgeOverviewVolumeChartPoint, BridgePieChartSlice } from './types'
+import { getCompletedBridgeVolumeTotals } from './utils'
 
 export type BridgeOverviewChartType =
 	| 'Volumes'
@@ -27,6 +28,63 @@ export type BridgeOverviewActiveChart =
 	| { kind: '24h Tokens Deposited'; data: BridgePieChartSlice[] }
 	| { kind: '24h Tokens Withdrawn'; data: BridgePieChartSlice[] }
 	| null
+
+const BRIDGE_OVERVIEW_SUMMARY_PERIODS = [
+	{ field: 'lastDailyVolume', days: 1, total: 'dayTotalVolume' },
+	{ field: 'weeklyVolume', days: 7, total: 'weekTotalVolume' },
+	{ field: 'monthlyVolume', days: 30, total: 'monthTotalVolume' }
+] as const
+
+type BridgeOverviewSummaryField = (typeof BRIDGE_OVERVIEW_SUMMARY_PERIODS)[number]['field']
+type BridgeOverviewSummaryRow = Partial<Record<BridgeOverviewSummaryField, number | null>>
+type BridgeOverviewSummaryTotals = Record<(typeof BRIDGE_OVERVIEW_SUMMARY_PERIODS)[number]['total'], number | null>
+
+export function getBridgeOverviewSummaryTotals({
+	selectedChain,
+	bridges,
+	chainVolumeData,
+	currentTimeMs
+}: {
+	selectedChain: string
+	bridges: BridgeOverviewSummaryRow[] | null | undefined
+	chainVolumeData: BridgeOverviewVolumeChartPoint[]
+	currentTimeMs?: number
+}): BridgeOverviewSummaryTotals {
+	if (selectedChain !== 'All') {
+		const aggregateTotals = getCompletedBridgeVolumeTotals(
+			chainVolumeData,
+			BRIDGE_OVERVIEW_SUMMARY_PERIODS.map((period) => period.days),
+			true,
+			currentTimeMs
+		)
+		const chainTotals: BridgeOverviewSummaryTotals = {
+			dayTotalVolume: null,
+			weekTotalVolume: null,
+			monthTotalVolume: null
+		}
+		for (const period of BRIDGE_OVERVIEW_SUMMARY_PERIODS) {
+			const grossVolume = aggregateTotals.get(period.days)
+			chainTotals[period.total] = grossVolume == null ? null : grossVolume / 2
+		}
+		return chainTotals
+	}
+
+	const rowTotals: BridgeOverviewSummaryTotals = {
+		dayTotalVolume: bridges?.length ? 0 : null,
+		weekTotalVolume: bridges?.length ? 0 : null,
+		monthTotalVolume: bridges?.length ? 0 : null
+	}
+
+	for (const bridge of bridges ?? []) {
+		for (const period of BRIDGE_OVERVIEW_SUMMARY_PERIODS) {
+			if (rowTotals[period.total] == null) continue
+			const value = bridge[period.field]
+			rowTotals[period.total] = value == null ? null : rowTotals[period.total] + value
+		}
+	}
+
+	return rowTotals
+}
 
 function buildTokenPieData(tokens: Record<string, BridgeTokenData>): BridgePieChartSlice[] {
 	const totalsBySymbol: Record<string, number> = Object.create(null)
@@ -65,7 +123,7 @@ export function buildBridgeOverviewActiveChart({
 }: {
 	selectedChain: string
 	chartType: BridgeOverviewChartType
-	chainVolumeData: BridgeVolumeChartPoint[]
+	chainVolumeData: BridgeOverviewVolumeChartPoint[]
 	bridgeStatsCurrentDay?: BridgeDailyTokenStats | null
 }): BridgeOverviewActiveChart {
 	if (selectedChain === 'All' || chartType === 'Volumes' || chartType === 'Bridge Volume') return null
@@ -75,9 +133,9 @@ export function buildBridgeOverviewActiveChart({
 			kind: chartType,
 			dataset: {
 				dimensions: ['timestamp', 'Net Flow'],
-				source: chainVolumeData.map(({ date, Deposited, Withdrawn }) => ({
-					timestamp: date * 1e3,
-					'Net Flow': Deposited + Withdrawn
+				source: chainVolumeData.map(({ date, Deposits, Withdrawals }) => ({
+					timestamp: Number(date) * 1e3,
+					'Net Flow': Deposits + Withdrawals
 				}))
 			}
 		}
@@ -88,12 +146,12 @@ export function buildBridgeOverviewActiveChart({
 			kind: chartType,
 			dataset: {
 				dimensions: ['timestamp', 'Inflows', 'Outflows'],
-				source: chainVolumeData.map(({ date, Deposited, Withdrawn }) => {
-					const volume = Deposited + Math.abs(Withdrawn)
+				source: chainVolumeData.map(({ date, Deposits, Withdrawals }) => {
+					const volume = Deposits + Math.abs(Withdrawals)
 					return {
-						timestamp: date * 1e3,
-						Inflows: (Deposited / volume) * 100 || 0,
-						Outflows: (Math.abs(Withdrawn) / volume) * 100 || 0
+						timestamp: Number(date) * 1e3,
+						Inflows: (Deposits / volume) * 100 || 0,
+						Outflows: (Math.abs(Withdrawals) / volume) * 100 || 0
 					}
 				})
 			}
@@ -105,10 +163,10 @@ export function buildBridgeOverviewActiveChart({
 			kind: chartType,
 			dataset: {
 				dimensions: ['timestamp', 'Deposits', 'Withdrawals'],
-				source: chainVolumeData.map(({ date, Deposited, Withdrawn }) => ({
-					timestamp: date * 1e3,
-					Deposits: Deposited ?? 0,
-					Withdrawals: Withdrawn ?? 0
+				source: chainVolumeData.map(({ date, Deposits, Withdrawals }) => ({
+					timestamp: Number(date) * 1e3,
+					Deposits,
+					Withdrawals
 				}))
 			}
 		}

@@ -13,6 +13,12 @@ export interface BridgeVolumeChartPoint {
 	Withdrawn: number
 }
 
+export interface BridgeOverviewVolumeChartPoint {
+	date: string | number
+	Deposits: number
+	Withdrawals: number
+}
+
 export interface BridgeTokenTableRow {
 	symbol: string
 	deposited: number

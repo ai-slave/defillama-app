@@ -37,10 +37,10 @@ export interface RawBridgesWithChainsResponse extends RawBridgesResponse {
 
 export interface RawBridgeVolumePoint {
 	date: string
-	depositUSD: number
-	withdrawUSD: number
-	depositTxs: number
-	withdrawTxs: number
+	depositUSD?: number
+	withdrawUSD?: number
+	depositTxs?: number
+	withdrawTxs?: number
 }
 
 export type RawBridgeVolumeResponse = RawBridgeVolumePoint[]
