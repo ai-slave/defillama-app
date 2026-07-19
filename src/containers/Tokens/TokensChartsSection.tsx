@@ -10,7 +10,13 @@ import { buttonStyles } from '~/ui/Button'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { pushShallowQuery } from '~/utils/routerQuery'
-import { buildTokensMovers, buildTokensTreemap, prepareTokensTreemapCsv, type TokensMoverEntry } from './chartData'
+import {
+	buildTokensMovers,
+	buildTokensTreemap,
+	prepareTokensMoversCsv,
+	prepareTokensTreemapCsv,
+	type TokensMoverEntry
+} from './chartData'
 import {
 	getTokensChartQueryValue,
 	parseTokensChartState,
@@ -99,7 +105,7 @@ export function TokensChartsSection({ data }: { data: TokensChartDataset }) {
 					options={UNIVERSE_OPTIONS}
 					label="Tokens by market cap"
 					variant="default"
-					size="sm"
+					size="md"
 				/>
 				{view === 'map' && treemap ? (
 					<>
@@ -109,7 +115,7 @@ export function TokensChartsSection({ data }: { data: TokensChartDataset }) {
 							options={CHANGE_WINDOW_OPTIONS}
 							label="Price change window"
 							variant="default"
-							size="sm"
+							size="md"
 						/>
 						<SegmentedControl
 							value={mapMode}
@@ -117,7 +123,7 @@ export function TokensChartsSection({ data }: { data: TokensChartDataset }) {
 							options={MAP_MODE_OPTIONS}
 							label="Stablecoins display"
 							variant="default"
-							size="sm"
+							size="md"
 						/>
 						{treemap.treeData.length > 0 ? (
 							<>
@@ -137,14 +143,32 @@ export function TokensChartsSection({ data }: { data: TokensChartDataset }) {
 						) : null}
 					</>
 				) : (
-					<SegmentedControl
-						value={moversWindow}
-						onValueChange={(next: TokensMoversWindow) => setChartQuery({ moversWindow: next })}
-						options={MOVERS_WINDOW_OPTIONS}
-						label="Price change window"
-						variant="default"
-						size="sm"
-					/>
+					<>
+						<SegmentedControl
+							value={moversWindow}
+							onValueChange={(next: TokensMoversWindow) => setChartQuery({ moversWindow: next })}
+							options={MOVERS_WINDOW_OPTIONS}
+							label="Price change window"
+							variant="default"
+							size="md"
+						/>
+						{movers && (movers.gainers.length > 0 || movers.losers.length > 0) ? (
+							<ChartExportButtons
+								chartInstance={chartInstance}
+								className={CHART_ACTION_BUTTON_CLASSNAME}
+								filename={`tokens-movers-${moversWindow}-top-${universe}`}
+								prepareCsvDirect={() =>
+									prepareTokensMoversCsv({
+										movers,
+										window: moversWindow,
+										filename: `tokens-movers-${moversWindow}-top-${universe}`
+									})
+								}
+								showPng={false}
+								smol
+							/>
+						) : null}
+					</>
 				)}
 			</ChartPanelToolbar>
 			{data.marketCaps.length === 0 ? (

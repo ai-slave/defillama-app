@@ -300,7 +300,7 @@ export function TokenSearchDialog({
 								onValueChange={match.onModeChange}
 								options={TOKEN_MATCHES.map((m) => ({ value: m, label: MATCH_LABELS[m] }))}
 								variant="default"
-								size="sm"
+								size="md"
 							/>
 						</div>
 						<div className="flex items-center gap-2">
@@ -314,7 +314,7 @@ export function TokenSearchDialog({
 								onValueChange={match.onOnChange}
 								options={TOKEN_ONS.map((o) => ({ value: o, label: ON_LABELS[o] }))}
 								variant="default"
-								size="sm"
+								size="md"
 							/>
 						</div>
 					</div>

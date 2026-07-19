@@ -91,7 +91,7 @@ function ResearchChartCard({
 				})}
 				label="Chart view"
 				variant="responsive"
-				size="sm"
+				size="md"
 			/>
 		) : null
 

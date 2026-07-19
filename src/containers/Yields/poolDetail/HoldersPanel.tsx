@@ -223,7 +223,7 @@ function HoldersTable({
 					onValueChange={onModeChange}
 					label="Holder value mode"
 					variant="default"
-					size="sm"
+					size="md"
 				/>
 				<div className="flex flex-wrap items-center gap-1.5">
 					{flowChips.map((chip) => (

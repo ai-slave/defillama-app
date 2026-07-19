@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
 	buildTokensMovers,
 	buildTokensTreemap,
+	prepareTokensMoversCsv,
 	prepareTokensTreemapCsv,
 	resolveTokensChartLogo,
 	toExportSafeIconUrl,
@@ -198,6 +199,29 @@ describe('buildTokensMovers', () => {
 		const capped = buildTokensMovers(many, { window: '24h', universe: 100 })
 		expect(capped.gainers).toHaveLength(10)
 		expect(capped.gainers[0].name).toBe('T29')
+	})
+})
+
+describe('tokens movers export', () => {
+	it('exports the visible mover order and selected change window', () => {
+		const movers = buildTokensMovers(
+			chartData([
+				row({ name: 'Alpha', symbol: 'AAA', priceChange7d: 2.5 }),
+				row({ name: 'Beta', symbol: 'BBB', priceChange7d: 8 }),
+				row({ name: 'Gamma', symbol: 'CCC', priceChange7d: -3 })
+			]),
+			{ window: '7d', universe: 100 }
+		)
+
+		expect(prepareTokensMoversCsv({ movers, window: '7d', filename: 'tokens-movers' })).toEqual({
+			filename: 'tokens-movers',
+			rows: [
+				['Direction', 'Rank', 'Token', 'Price Change 7D (%)'],
+				['Gainer', 1, 'BBB', 8],
+				['Gainer', 2, 'AAA', 2.5],
+				['Loser', 1, 'CCC', -3]
+			]
+		})
 	})
 })
 

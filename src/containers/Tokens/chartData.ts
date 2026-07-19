@@ -120,6 +120,30 @@ export interface TokensMoversResult {
 	losers: TokensMoverEntry[]
 }
 
+export function prepareTokensMoversCsv({
+	movers,
+	window,
+	filename
+}: {
+	movers: TokensMoversResult
+	window: TokensMoversWindow
+	filename: string
+}) {
+	const rows: Array<Array<string | number>> = [
+		['Direction', 'Rank', 'Token', `Price Change ${window.toUpperCase()} (%)`]
+	]
+	for (const [direction, entries] of [
+		['Gainer', movers.gainers],
+		['Loser', movers.losers]
+	] as const) {
+		for (let index = 0; index < entries.length; index++) {
+			const entry = entries[index]
+			rows.push([direction, index + 1, entry.name, entry.value])
+		}
+	}
+	return { filename, rows }
+}
+
 export function buildTokensMovers(
 	data: TokensChartDataset,
 	{ window, universe }: { window: TokensMoversWindow; universe: number }
