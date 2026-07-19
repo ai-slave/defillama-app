@@ -320,6 +320,18 @@ function buildUpdatedQuery(
 	return nextQuery
 }
 
+function removeResolvedDynamicRouteParams(query: ParsedUrlQueryInput, routePathname: string) {
+	for (const segment of routePathname.split('/')) {
+		if (!segment.startsWith('[') || !segment.endsWith(']')) continue
+
+		let paramName = segment
+		while (paramName.startsWith('[')) paramName = paramName.slice(1)
+		while (paramName.endsWith(']')) paramName = paramName.slice(0, -1)
+		if (paramName.startsWith('...')) paramName = paramName.slice(3)
+		if (paramName) delete query[paramName]
+	}
+}
+
 /**
  * Pushes a shallow, patch-style query update.
  * Merges `updates` into the current query and removes keys set to `undefined` or an empty array.
@@ -336,11 +348,12 @@ function buildUpdatedQuery(
 export function pushShallowQuery(
 	router: NextRouter,
 	updates: Record<string, QueryUpdateValue>,
-	// Dynamic routes default to the resolved path: the raw template fails href
-	// interpolation when the route param is missing from `query`.
 	pathname: string = router.pathname.includes('[') ? router.asPath.split('?')[0] : router.pathname
 ) {
 	const nextQuery = buildUpdatedQuery(router.query as Record<string, unknown>, updates)
+	// A resolved pathname already contains its dynamic segments. Keeping those keys in
+	// `query` would serialize them again, e.g. `/equities/AAPL:US?ticker=AAPL%3AUS`.
+	if (!pathname.includes('[')) removeResolvedDynamicRouteParams(nextQuery, router.pathname)
 	return router.push({ pathname, query: nextQuery }, undefined, { shallow: true })
 }
 
