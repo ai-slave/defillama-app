@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { chainIconUrl, equityIconUrl, peggedAssetIconUrl, tokenIconUrl } from '~/utils/icons'
 
 export type LogoKind = 'token' | 'chain' | 'pegged' | 'equities'
@@ -30,19 +29,22 @@ function resolveLogoUrl(props: NamedLogoProps): string {
 	}
 }
 
-export const FallbackLogo = () => (
-	<span className="inline-block aspect-square size-6 shrink-0 rounded-full bg-surface-elevated-2 object-cover" />
+export const FallbackLogo = ({ size = 24, 'data-lgonly': lgonly }: { size?: number; 'data-lgonly'?: boolean }) => (
+	<span
+		aria-hidden="true"
+		data-lgonly={lgonly}
+		className="inline-block shrink-0 rounded-full bg-surface-elevated-2 data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block"
+		style={{ height: size, width: size }}
+	/>
 )
 
 export function TokenLogo(props: TokenLogoProps) {
 	const { size = 24, fallbackSrc, alt, title, 'data-lgonly': lgonly, ...rest } = props
 	const resolvedSrc = 'kind' in rest && rest.kind ? resolveLogoUrl(rest) : (rest.src ?? null)
 
-	const sourcesKey = `${resolvedSrc ?? ''}|${fallbackSrc ?? ''}`
-
 	return (
 		<TokenLogoImg
-			key={sourcesKey}
+			key={`${resolvedSrc ?? ''}|${fallbackSrc ?? ''}`}
 			resolvedSrc={resolvedSrc}
 			size={size}
 			fallbackSrc={fallbackSrc}
@@ -69,28 +71,40 @@ function TokenLogoImg({
 	'data-lgonly'?: boolean
 }) {
 	const placeholderSrc = '/assets/placeholder.png'
-	const initialSrc = resolvedSrc || fallbackSrc || placeholderSrc
-	const [src, setSrc] = React.useState<string>(initialSrc)
+	const sources = [
+		...new Set([resolvedSrc, fallbackSrc, placeholderSrc].filter((source): source is string => !!source))
+	]
 
 	return (
-		<img
-			alt={alt ?? ''}
-			src={src}
-			height={size}
-			width={size}
-			title={title}
+		<span
 			data-lgonly={lgonly}
-			className="inline-block aspect-square max-w-none shrink-0 rounded-full bg-surface-elevated-2 object-cover text-transparent data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block"
-			loading="lazy"
-			onError={(e) => {
-				setSrc((prev) => {
-					if (prev === resolvedSrc && fallbackSrc && fallbackSrc !== resolvedSrc) return fallbackSrc
-					if (prev !== placeholderSrc) return placeholderSrc
-					return prev
-				})
+			className="inline-block shrink-0 overflow-hidden rounded-full bg-surface-elevated-2 data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block"
+			style={{ height: size, width: size }}
+			title={title}
+		>
+			<img
+				alt={alt ?? ''}
+				src={sources[0]}
+				height={size}
+				width={size}
+				data-logo-source-index="0"
+				className="block size-full object-cover text-transparent"
+				loading="lazy"
+				onError={(event) => {
+					const image = event.currentTarget
+					const sourceIndex = Number(image.dataset.logoSourceIndex)
+					const nextSourceIndex = sourceIndex + 1
 
-				if (src === placeholderSrc) e.currentTarget.onerror = null
-			}}
-		/>
+					if (nextSourceIndex < sources.length) {
+						image.dataset.logoSourceIndex = String(nextSourceIndex)
+						image.src = sources[nextSourceIndex]
+						return
+					}
+
+					image.removeAttribute('src')
+					image.classList.add('hidden')
+				}}
+			/>
+		</span>
 	)
 }
