@@ -998,8 +998,9 @@ function PlaybackIcon({ isPlaying }: { isPlaying: boolean }) {
 
 function RegisterStatus({ state, label }: { state: ProofStateConfig; label: string }) {
 	return (
-		<span className={`flex shrink-0 items-center gap-2 label-sm font-semibold ${state.textTone}`}>
-			<span className={`size-2 rounded-full ${state.dotTone}`} aria-hidden /> {label}
+		<span className={`flex min-w-0 items-center gap-2 label-sm font-semibold whitespace-nowrap ${state.textTone}`}>
+			<span className={`size-2 shrink-0 rounded-full ${state.dotTone}`} aria-hidden />
+			<span className="min-w-0">{label}</span>
 		</span>
 	)
 }
@@ -1056,11 +1057,11 @@ function SourceRegister({
 				</div>
 			</div>
 
-			<div className="hidden grid-cols-[minmax(0,1.2fr)_minmax(0,1.05fr)_minmax(0,.72fr)_auto] gap-4 border-b border-very-subtle px-6 py-2.5 label-xs font-semibold tracking-[0.08em] text-tertiary uppercase sm:grid">
+			<div className="hidden grid-cols-[minmax(0,1.2fr)_minmax(0,1.05fr)_minmax(7rem,.72fr)_minmax(6rem,.55fr)] gap-4 border-b border-very-subtle px-6 py-2.5 label-xs font-semibold tracking-[0.08em] text-tertiary uppercase sm:grid">
 				<span>Source</span>
 				<span>Verification method</span>
 				<span>Freshness</span>
-				<span>Status</span>
+				<span className="pl-4">Status</span>
 			</div>
 
 			<ul className="divide-y divide-(--border-very-subtle)">
@@ -1073,12 +1074,12 @@ function SourceRegister({
 					return (
 						<li
 							key={source.id}
-							className={`grid gap-3 px-5 py-4 transition-colors sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1.05fr)_minmax(0,.72fr)_auto] sm:items-center sm:gap-4 sm:px-6 ${
+							className={`grid gap-3 px-5 py-4 transition-colors sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1.05fr)_minmax(7rem,.72fr)_minmax(6rem,.55fr)] sm:items-center sm:gap-4 sm:px-6 ${
 								isAffected ? 'bg-surface-elevated-1/60' : ''
 							}`}
 						>
-							<div className="flex items-start justify-between gap-4 sm:block">
-								<div>
+							<div className="flex min-w-0 items-start justify-between gap-4 sm:block">
+								<div className="min-w-0">
 									<p className="label-sm font-semibold text-primary">{source.name}</p>
 									<p className="mt-0.5 label-xs text-tertiary">{source.kind}</p>
 								</div>
@@ -1086,20 +1087,20 @@ function SourceRegister({
 									<RegisterStatus state={statusState} label={statusLabel} />
 								</span>
 							</div>
-							<div>
+							<div className="min-w-0">
 								<p className="label-sm text-secondary">{source.method}</p>
 								<p className="mt-0.5 label-xs text-tertiary">{source.access}</p>
 							</div>
-							<div>
+							<div className="min-w-0">
 								<p
 									key={freshness}
-									className={`attn-register-change label-sm font-medium ${isAffected ? statusState.textTone : 'text-secondary'}`}
+									className={`attn-register-change label-sm font-medium whitespace-nowrap ${isAffected ? statusState.textTone : 'text-secondary'}`}
 								>
 									{freshness}
 								</p>
 								<p className="mt-0.5 label-xs text-tertiary">{source.cadence}</p>
 							</div>
-							<span key={statusLabel} className="attn-register-change hidden sm:block">
+							<span key={statusLabel} className="attn-register-change hidden min-w-0 sm:block">
 								<RegisterStatus state={statusState} label={statusLabel} />
 							</span>
 						</li>
@@ -1244,7 +1245,7 @@ function PublicProofSection() {
 			}}
 		>
 			<div className="mx-auto max-w-[1140px] px-4 py-24 sm:px-6 md:px-8 lg:py-32">
-				<div className="grid gap-8 lg:grid-cols-[minmax(0,330px)_1fr] lg:gap-16">
+				<div className="grid gap-8 lg:grid-cols-[minmax(0,330px)_1fr] lg:items-start lg:gap-16">
 					<div>
 						<p className="label-sm font-semibold tracking-[0.08em] text-link uppercase">The public record</p>
 						<h2 className="mt-4 text-[clamp(1.95rem,3.8vw,2.9rem)] leading-[1.07] font-bold tracking-tight">
