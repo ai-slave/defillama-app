@@ -10,8 +10,10 @@ import { Icon } from '~/ui/Icon'
 import { formattedNum, slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { tokenIconUrl } from '~/utils/icons'
+import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import { withPerformanceLogging } from '~/utils/perf'
 
-export async function getStaticProps() {
+export const getStaticProps = withPerformanceLogging('safe-harbor-agreements', async () => {
 	const metadataCache = await import('~/utils/metadata').then((m) => m.default)
 	const protocolMetadata = metadataCache.protocolMetadata
 
@@ -58,9 +60,10 @@ export async function getStaticProps() {
 	return {
 		props: {
 			protocols: finalProtocols.sort((a, b) => b.tvl - a.tvl)
-		}
+		},
+		revalidate: maxAgeForNext([22])
 	}
-}
+})
 
 const pageName = ['Safe Harbor Agreements']
 const DEFAULT_SORTING_STATE = [{ id: 'tvl', desc: true }]

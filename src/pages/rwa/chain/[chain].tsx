@@ -57,7 +57,7 @@ export const getStaticProps = withPerformanceLogging(
 		const props = await getRWAAssetsOverview({ chain: chainSlug, rwaList })
 
 		if (!props) {
-			return { notFound: true }
+			return { notFound: true, revalidate: maxAgeForNext([22]) }
 		}
 
 		return {

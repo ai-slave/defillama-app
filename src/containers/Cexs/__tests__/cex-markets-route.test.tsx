@@ -105,14 +105,16 @@ describe('CEX routes', () => {
 
 	it('redirects a retired CEX Markets URL to its canonical exchange profile', async () => {
 		await expect(getRetiredCexMarketsStaticProps({ params: { cex: 'Crypto.com' } } as never)).resolves.toEqual({
-			redirect: { destination: '/exchange/crypto-com', permanent: false }
+			redirect: { destination: '/exchange/crypto-com', permanent: false },
+			revalidate: 123
 		})
 		expect(resolveExchangeByDefillamaCexSlugMock).toHaveBeenCalledWith('crypto-com')
 	})
 
 	it('returns notFound when a retired CEX Markets URL has no exchange mapping', async () => {
 		await expect(getRetiredCexMarketsStaticProps({ params: { cex: 'missing' } } as never)).resolves.toEqual({
-			notFound: true
+			notFound: true,
+			revalidate: 123
 		})
 	})
 })

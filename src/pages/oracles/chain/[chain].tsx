@@ -28,7 +28,7 @@ export const getStaticProps = withPerformanceLogging('oracles/[chain]', async ({
 	const data = await getOraclesListPageData({ chain })
 
 	if (!data) {
-		return { notFound: true }
+		return { notFound: true, revalidate: maxAgeForNext([22]) }
 	}
 
 	return {

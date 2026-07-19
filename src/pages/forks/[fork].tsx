@@ -19,7 +19,7 @@ export const getStaticProps = withPerformanceLogging('forks/[fork]', async ({ pa
 	const data = await getForksByProtocolPageData({ fork: forkParam })
 
 	if (!data) {
-		return { notFound: true }
+		return { notFound: true, revalidate: maxAgeForNext([22]) }
 	}
 
 	return {

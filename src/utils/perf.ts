@@ -1,6 +1,11 @@
 import type { ParsedUrlQuery } from 'querystring'
 import type { GetStaticProps, GetStaticPropsContext, GetStaticPropsResult } from 'next'
-import { attachCacheJitterMeta, jitterCacheSeconds, maxAgeForNext } from '~/utils/maxAgeForNext'
+import {
+	attachCacheJitterMeta,
+	jitterCacheSeconds,
+	jitterStaticPropsCacheSeconds,
+	maxAgeForNext
+} from '~/utils/maxAgeForNext'
 import { sleep, getJitteredDelay, isTransientError, getEnvNumber } from './async'
 import { getCache, type RedisCachePayload, setCache, setPageBuildTimes } from './cache-client'
 import { normalizeError } from './error'
@@ -83,7 +88,7 @@ function jitterStaticPropsRevalidate<T extends { [key: string]: any }>(
 	if (options.jitterRevalidate === false) return result
 	if (typeof result.revalidate !== 'number') return result
 
-	const jittered = jitterCacheSeconds(result.revalidate, key)
+	const jittered = jitterStaticPropsCacheSeconds(result.revalidate, key)
 	const next = { ...result, revalidate: jittered.seconds }
 	return attachCacheJitterMeta(next, { cache_jitter_seconds: jittered.offsetSeconds })
 }

@@ -37,7 +37,7 @@ export const getStaticProps = withPerformanceLogging('oracles/[oracle]/[chain]',
 	const data = await getOracleDetailPageData({ oracle, chain })
 
 	if (!data) {
-		return { notFound: true }
+		return { notFound: true, revalidate: maxAgeForNext([22]) }
 	}
 
 	return {

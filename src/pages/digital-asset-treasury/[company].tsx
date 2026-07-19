@@ -30,7 +30,7 @@ export const getStaticProps = withPerformanceLogging(
 		const props = await getDATCompanyData(company)
 
 		if (!props) {
-			return { notFound: true }
+			return { notFound: true, revalidate: maxAgeForNext([22]) }
 		}
 
 		return {

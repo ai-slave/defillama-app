@@ -60,7 +60,7 @@ export const getStaticProps = withPerformanceLogging(
 		const props = await getRWAAssetsOverview({ category: categorySlug, rwaList })
 
 		if (!props) {
-			return { notFound: true }
+			return { notFound: true, revalidate: maxAgeForNext([22]) }
 		}
 
 		return {

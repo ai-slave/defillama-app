@@ -229,7 +229,7 @@ export const getStaticProps = withPerformanceLogging(
 		const protocolData = await fetchProtocolOverviewMetrics(canonicalProtocol)
 
 		if (!protocolData) {
-			return { notFound: true }
+			return { notFound: true, revalidate: maxAgeForNext([22]) }
 		}
 
 		const metrics = getProtocolMetricFlags({ protocolData, metadata })

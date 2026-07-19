@@ -3,6 +3,8 @@ import {
 	cacheJitterOffsetSeconds,
 	jitterCacheControlHeader,
 	jitterCacheSeconds,
+	jitterStaticPropsCacheSeconds,
+	maxAgeForNext,
 	readCacheJitterMeta,
 	attachCacheJitterMeta
 } from '../maxAgeForNext'
@@ -10,6 +12,7 @@ import {
 describe('cache lifetime jitter', () => {
 	afterEach(() => {
 		vi.unstubAllEnvs()
+		vi.useRealTimers()
 	})
 
 	it('returns a deterministic centered offset', () => {
@@ -21,6 +24,11 @@ describe('cache lifetime jitter', () => {
 		expect(first).toBe(second)
 		expect(first).toBeGreaterThanOrEqual(-600)
 		expect(first).toBeLessThanOrEqual(600)
+	})
+
+	it('does not jitter an unkeyed cache entry', () => {
+		expect(cacheJitterOffsetSeconds('', 1200)).toBe(0)
+		expect(jitterStaticPropsCacheSeconds(300, '')).toEqual({ seconds: 300, offsetSeconds: 0 })
 	})
 
 	it('changes the deterministic offset across build ids', () => {
@@ -58,6 +66,7 @@ describe('cache lifetime jitter', () => {
 		vi.stubEnv('NEXT_STATIC_REVALIDATE_JITTER_SECONDS', '0')
 
 		expect(jitterCacheSeconds(30, 'short-cache')).toEqual({ seconds: 30, offsetSeconds: 0 })
+		expect(jitterStaticPropsCacheSeconds(30, 'static-page')).toEqual({ seconds: 30, offsetSeconds: 0 })
 		expect(jitterCacheControlHeader('public, s-maxage=300, stale-while-revalidate=600', 'route')).toBe(
 			'public, s-maxage=300, stale-while-revalidate=600'
 		)
@@ -76,6 +85,37 @@ describe('cache lifetime jitter', () => {
 		expect(sMaxage).not.toBeNaN()
 		expect(sMaxage).toBeGreaterThanOrEqual(60)
 		expect(sMaxage).toBeLessThanOrEqual(1500)
+	})
+
+	it('keeps short static-page intervals close to their intended duration', () => {
+		vi.stubEnv('NEXT_STATIC_REVALIDATE_JITTER_SECONDS', '1200')
+		vi.stubEnv('NEXT_BUILD_ID', 'build-a')
+
+		const jittered = jitterStaticPropsCacheSeconds(300, 'etfs')
+		expect(jittered.seconds).toBeGreaterThanOrEqual(300)
+		expect(jittered.seconds).toBeLessThanOrEqual(420)
+	})
+
+	it('schedules every hourly static route once after the data-ready boundary', () => {
+		vi.useFakeTimers()
+		vi.stubEnv('NEXT_STATIC_REVALIDATE_JITTER_SECONDS', '1200')
+		vi.stubEnv('NEXT_BUILD_ID', 'build-a')
+		const firstBoundary = new Date(2026, 0, 1, 1, 22, 0)
+
+		for (let route = 0; route < 1_000; route++) {
+			vi.setSystemTime(new Date(2026, 0, 1, 0, 22, 0))
+
+			for (let hour = 0; hour < 24; hour++) {
+				const baseSeconds = maxAgeForNext([22])
+				const { seconds } = jitterStaticPropsCacheSeconds(baseSeconds, `route-${route}`)
+				vi.advanceTimersByTime(seconds * 1_000)
+
+				const expectedBoundary = new Date(firstBoundary.getTime() + hour * 60 * 60 * 1_000)
+				const regeneratedAt = Date.now()
+				expect(regeneratedAt).toBeGreaterThanOrEqual(expectedBoundary.getTime())
+				expect(regeneratedAt).toBeLessThanOrEqual(expectedBoundary.getTime() + 20 * 60 * 1_000)
+			}
+		}
 	})
 
 	it('stores jitter metadata without making it enumerable', () => {

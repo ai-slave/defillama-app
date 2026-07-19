@@ -1,6 +1,6 @@
 import type { GetStaticPropsContext } from 'next'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { jitterCacheSeconds, readCacheJitterMeta } from '../maxAgeForNext'
+import { jitterStaticPropsCacheSeconds, readCacheJitterMeta } from '../maxAgeForNext'
 
 describe('withPerformanceLogging', () => {
 	afterEach(() => {
@@ -21,7 +21,7 @@ describe('withPerformanceLogging', () => {
 		}))
 		const context = { params: { protocol: 'uniswap' } } satisfies GetStaticPropsContext
 		const result = await wrapped(context)
-		const expected = jitterCacheSeconds(3600, 'protocol/[protocol]:/protocol/uniswap')
+		const expected = jitterStaticPropsCacheSeconds(3600, 'protocol/[protocol]:/protocol/uniswap')
 
 		expect(result).toMatchObject({ props: { ok: true }, revalidate: expected.seconds })
 		expect(readCacheJitterMeta(result)).toEqual({ cache_jitter_seconds: expected.offsetSeconds })
@@ -38,7 +38,7 @@ describe('withPerformanceLogging', () => {
 		}))
 		const context = { params: { protocol: 'missing' } } satisfies GetStaticPropsContext
 		const result = await wrapped(context)
-		const expected = jitterCacheSeconds(3600, 'protocol/[protocol]:/protocol/missing')
+		const expected = jitterStaticPropsCacheSeconds(3600, 'protocol/[protocol]:/protocol/missing')
 
 		expect(result).toEqual({ notFound: true, revalidate: expected.seconds })
 		expect(readCacheJitterMeta(result)).toEqual({ cache_jitter_seconds: expected.offsetSeconds })

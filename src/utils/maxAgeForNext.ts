@@ -45,12 +45,16 @@ function hashString(value: string): number {
 	return hash >>> 0
 }
 
+function cacheJitterBucketSeconds(key: string, jitterWindowSeconds: number): number {
+	const windowSeconds = Math.floor(jitterWindowSeconds)
+	if (windowSeconds <= 0 || !key) return 0
+	return hashString(`${buildIdSegment()}:${key}`) % (windowSeconds + 1)
+}
+
 export function cacheJitterOffsetSeconds(key: string, jitterWindowSeconds = cacheJitterWindowSeconds()): number {
 	const windowSeconds = Math.floor(jitterWindowSeconds)
 	if (windowSeconds <= 0 || !key) return 0
-	const bucketCount = windowSeconds + 1
-	const bucket = hashString(`${buildIdSegment()}:${key}`) % bucketCount
-	return bucket - Math.floor(windowSeconds / 2)
+	return cacheJitterBucketSeconds(key, windowSeconds) - Math.floor(windowSeconds / 2)
 }
 
 // Cap the jitter window at this fraction of the base lifetime so short TTLs
@@ -67,6 +71,26 @@ export function jitterCacheSeconds(baseSeconds: number, key: string): { seconds:
 	}
 	const offsetSeconds = cacheJitterOffsetSeconds(key, jitterWindowSeconds)
 	return {
+		seconds: Math.max(MIN_JITTERED_CACHE_SECONDS, Math.floor(baseSeconds + offsetSeconds)),
+		offsetSeconds
+	}
+}
+
+export function jitterStaticPropsCacheSeconds(
+	baseSeconds: number,
+	key: string
+): { seconds: number; offsetSeconds: number } {
+	const jitterWindowSeconds = Math.min(
+		cacheJitterWindowSeconds(),
+		Math.floor(baseSeconds * MAX_JITTER_FRACTION_OF_BASE)
+	)
+	if (jitterWindowSeconds <= 0) {
+		return { seconds: Math.floor(baseSeconds), offsetSeconds: 0 }
+	}
+	const offsetSeconds = cacheJitterBucketSeconds(key, jitterWindowSeconds)
+	return {
+		// Static pages target a data-ready boundary. Delaying after that boundary
+		// spreads regeneration without triggering another cycle before it.
 		seconds: Math.max(MIN_JITTERED_CACHE_SECONDS, Math.floor(baseSeconds + offsetSeconds)),
 		offsetSeconds
 	}
