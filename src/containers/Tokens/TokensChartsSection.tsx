@@ -34,7 +34,7 @@ const MOVERS_HEIGHT = '360px'
 const GAINER_COLOR = '#269f3c'
 const LOSER_COLOR = '#942e38'
 const EXPORT_FILENAME = 'tokens-market-map'
-const CHART_ACTION_BUTTON_CLASSNAME = buttonStyles({ size: 'sm' })
+const CHART_ACTION_BUTTON_CLASSNAME = buttonStyles({ size: 'md' })
 
 const VIEW_OPTIONS: Array<{ value: TokensChartView; label: string }> = [
 	{ value: 'map', label: 'Market Map' },
