@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProtocolLite, ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 import type { ILsdRateApiItem, IProtocolDetailApiItem, IYieldPoolApiItem } from '../api.types'
+import { buildLstInflowsData, buildLstInflowsSeriesData } from '../chartData'
 import { getLSTPageData } from '../queries'
 
 const mocks = vi.hoisted(() => ({
@@ -170,6 +171,26 @@ describe('getLSTPageData', () => {
 			expectedRate: 1,
 			fee: 10
 		})
+
+		const inflowsData = buildLstInflowsData({ inflowsChartData: result.inflowsChartData, groupBy: 'daily' })
+		const inflowsChart = buildLstInflowsSeriesData({
+			inflowsData,
+			tokens: result.tokens,
+			lsdColors: result.lsdColors,
+			barChartStacks: result.barChartStacks
+		})
+		expect(inflowsChart.dataset).toEqual({
+			dimensions: ['timestamp', 'Lido', 'Rocket Pool', 'diva'],
+			source: [
+				{ timestamp: missingLidoDate * 1_000, 'Rocket Pool': 20 },
+				{ timestamp: latestDate * 1_000, Lido: 10, 'Rocket Pool': 10 }
+			]
+		})
+		expect(inflowsChart.barCharts.map(({ name, encode, stack }) => ({ name, encode, stack }))).toEqual([
+			{ name: 'Lido', encode: { x: 'timestamp', y: 'Lido' }, stack: 'A' },
+			{ name: 'Rocket Pool', encode: { x: 'timestamp', y: 'Rocket Pool' }, stack: 'A' },
+			{ name: 'diva', encode: { x: 'timestamp', y: 'diva' }, stack: undefined }
+		])
 
 		mocks.fetchLsdRates.mockRejectedValueOnce(new Error('legacy rates unavailable'))
 		const resultWithoutLegacyRates = await getLSTPageData({ readJson: vi.fn() })

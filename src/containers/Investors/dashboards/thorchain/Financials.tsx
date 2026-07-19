@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import ProtocolCharts from '~/containers/ProDashboard/services/ProtocolCharts'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
+import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
+import { readInvestorApiJson } from '../../api.types'
 import { ApiTrendChart, ChainBreakdownChart } from './ChainBreakdownChart'
 import type { ApiTableData, Chart, Distribution, Kpi as KpiT } from './transform'
 import {
@@ -30,7 +32,12 @@ function ThorchainIncomeStatement({ title, subtitle }: { title: string; subtitle
 	const [view, setView] = useState<'table' | 'sankey'>('table')
 	const query = useQuery({
 		queryKey: ['thorchain-income-statement', DEX],
-		queryFn: () => fetch(`/api/public/income-statement?protocol=${DEX}`).then((r) => (r.ok ? r.json() : null)),
+		queryFn: async () => {
+			const response = await fetch(`/api/public/income-statement?protocol=${DEX}`)
+			return response.ok
+				? readInvestorApiJson<NonNullable<IProtocolOverviewPageData['incomeStatement']>>(response)
+				: null
+		},
 		retry: 2,
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false

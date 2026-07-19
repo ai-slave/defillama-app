@@ -6,10 +6,10 @@ import {
 	type SortingState,
 	useReactTable
 } from '@tanstack/react-table'
-import type { ColumnDef } from '@tanstack/react-table'
+import type { ColumnDef, Table } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/timeSeriesChartOptions'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { VirtualTable } from '~/components/Table/Table'
 import { formattedNum } from '~/utils'
 import { TextLoader } from '../../Logo'
@@ -23,13 +23,13 @@ import {
 	useHyperliquidHlpPortfolio,
 	useHyperliquidHlpPositions
 } from './api'
+import { buildPortfolioTrendDataset, PORTFOLIO_SERIES_NAME } from './chartData'
 
 type VaultFilter = 'All' | 'A' | 'B'
 const MultiSeriesChart2 = lazy(
 	() => import('~/components/ECharts/MultiSeriesChart2')
 ) as React.FC<IMultiSeriesChart2Props>
 
-const PORTFOLIO_SERIES_NAME = 'Portfolio Value'
 const PORTFOLIO_CHARTS: NonNullable<IMultiSeriesChart2Props['charts']> = [
 	{
 		type: 'line',
@@ -51,7 +51,7 @@ function MetricCard({ label, value, helper }: { label: string; value: string | n
 	)
 }
 
-function Pagination({ table }: { table: ReturnType<typeof useReactTable<any>> }) {
+function Pagination<Row>({ table }: { table: Table<Row> }) {
 	const { pageIndex, pageSize } = table.getState().pagination
 	const total = table.getFilteredRowModel().rows.length
 	const from = total === 0 ? 0 : pageIndex * pageSize + 1
@@ -104,14 +104,7 @@ function PortfolioTrend({
 	points: Array<{ time: number; accountValue: number; pnl: number }>
 	window: 'day' | 'week' | 'month' | 'allTime'
 }) {
-	const dataset = useMemo<MultiSeriesChart2Dataset>(() => {
-		const source = new Array<Record<string, number>>(points.length)
-		for (let i = 0; i < points.length; i++) {
-			const point = points[i]
-			source[i] = { timestamp: point.time, [PORTFOLIO_SERIES_NAME]: point.accountValue }
-		}
-		return { source, dimensions: ['timestamp', PORTFOLIO_SERIES_NAME] }
-	}, [points])
+	const dataset = useMemo(() => buildPortfolioTrendDataset(points), [points])
 
 	if (points.length < 2) return null
 

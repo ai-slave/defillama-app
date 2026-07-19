@@ -13,6 +13,7 @@ import { YIELD_EARN_DATASET_API } from '~/containers/Yields/constants'
 import type { EarnPageRow } from '~/containers/Yields/data/types'
 import type { YieldsPaginatedTableResponse } from '~/containers/Yields/yieldsTableQuery'
 import { fetchJson } from '~/utils/async'
+import { readInvestorApiJson } from '../../api.types'
 import { createSeriesConfigs } from './chartDefaults'
 
 const PROTOCOL_SLUG = 'sparklend'
@@ -20,6 +21,11 @@ const STALE_TIME = 10 * 60 * 1000
 const EMPTY_TVL_DATASET: MultiSeriesChart2Dataset = { source: [], dimensions: ['timestamp', 'TVL'] }
 const EMPTY_INFLOWS_DATASET: MultiSeriesChart2Dataset = { source: [], dimensions: ['timestamp', 'USD Inflows'] }
 const EMPTY_BORROWED_DATASET: MultiSeriesChart2Dataset = { source: [], dimensions: ['timestamp', 'Borrowed'] }
+
+interface SparklendTvlResponse {
+	chainTvls?: Record<string, { tvl?: Array<{ date: number | string; totalLiquidityUSD?: number | string | null }> }>
+	currentChainTvls?: { borrowed?: number | null }
+}
 
 export function useSparklendMetrics() {
 	const fees = useQuery({
@@ -107,7 +113,7 @@ export function useSparklendBorrowedChart() {
 		queryFn: async () => {
 			const res = await fetch(`${V2_SERVER_URL}/metrics/tvl/protocol/${PROTOCOL_SLUG}`)
 			if (!res.ok) return { dataset: EMPTY_BORROWED_DATASET, current: null }
-			const data = await res.json()
+			const data = await readInvestorApiJson<SparklendTvlResponse>(res)
 			const chainTvls = data?.chainTvls || {}
 			const store: Record<number, number> = {}
 			for (const key in chainTvls) {

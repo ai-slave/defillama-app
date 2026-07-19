@@ -8,6 +8,42 @@ import { fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
 const PROTOCOL_SLUG = 'etherfi-cash-liquid'
 const STALE_TIME = 10 * 60 * 1000
 
+export function buildEtherfiCashTvlData(raw: Array<readonly [number, number]>) {
+	// fetchProtocolTvlChart has already normalized its tuple timestamps to Unix milliseconds.
+	if (raw.length === 0) {
+		return {
+			tvlDataset: { source: [], dimensions: ['timestamp', 'TVL'] } satisfies MultiSeriesChart2Dataset,
+			inflowsDataset: {
+				source: [],
+				dimensions: ['timestamp', 'USD Inflows']
+			} satisfies MultiSeriesChart2Dataset,
+			previousTvl: null,
+			previousInflow: null
+		}
+	}
+
+	const tvlSource = new Array<{ timestamp: number; TVL: number }>(raw.length)
+	const inflowsSource: Array<{ timestamp: number; 'USD Inflows': number }> = []
+	for (let i = 0; i < raw.length; i++) {
+		const [ts, value] = raw[i]
+		tvlSource[i] = { timestamp: ts, TVL: value }
+		if (i === 0) continue
+		const prevValue = raw[i - 1][1]
+		if (!Number.isFinite(value) || !Number.isFinite(prevValue)) continue
+		inflowsSource.push({ timestamp: ts, 'USD Inflows': value - prevValue })
+	}
+
+	return {
+		tvlDataset: { source: tvlSource, dimensions: ['timestamp', 'TVL'] } satisfies MultiSeriesChart2Dataset,
+		inflowsDataset: {
+			source: inflowsSource,
+			dimensions: ['timestamp', 'USD Inflows']
+		} satisfies MultiSeriesChart2Dataset,
+		previousTvl: tvlSource.length >= 2 ? tvlSource[tvlSource.length - 2].TVL : null,
+		previousInflow: inflowsSource.length >= 2 ? inflowsSource[inflowsSource.length - 2]['USD Inflows'] : null
+	}
+}
+
 export function useEtherfiCashMetrics() {
 	const fees = useQuery({
 		queryKey: ['etherfi-cash-fees-metrics'],
@@ -42,44 +78,9 @@ export function useEtherfiCashTvlChart() {
 	return useMemo(() => {
 		const raw = query.data
 		if (!raw || !Array.isArray(raw) || raw.length === 0) {
-			return {
-				tvlDataset: { source: [], dimensions: ['timestamp', 'TVL'] } satisfies MultiSeriesChart2Dataset,
-				inflowsDataset: {
-					source: [],
-					dimensions: ['timestamp', 'USD Inflows']
-				} satisfies MultiSeriesChart2Dataset,
-				previousTvl: null,
-				previousInflow: null,
-				isLoading: query.isLoading
-			}
+			return { ...buildEtherfiCashTvlData([]), isLoading: query.isLoading }
 		}
-
-		const tvlSource = new Array<{ timestamp: number; TVL: number }>(raw.length)
-		const inflowsSource: Array<{ timestamp: number; 'USD Inflows': number }> = []
-		for (let i = 0; i < raw.length; i++) {
-			const [ts, value] = raw[i]
-			tvlSource[i] = { timestamp: ts, TVL: value }
-			if (i === 0) continue
-			const prevValue = raw[i - 1][1]
-			if (value == null || prevValue == null || !Number.isFinite(value) || !Number.isFinite(prevValue)) continue
-			inflowsSource.push({
-				timestamp: ts,
-				'USD Inflows': value - prevValue
-			})
-		}
-
-		const tvlDataset = { source: tvlSource, dimensions: ['timestamp', 'TVL'] } satisfies MultiSeriesChart2Dataset
-		const inflowsDataset = {
-			source: inflowsSource,
-			dimensions: ['timestamp', 'USD Inflows']
-		} satisfies MultiSeriesChart2Dataset
-		return {
-			tvlDataset,
-			inflowsDataset,
-			previousTvl: tvlSource.length >= 2 ? tvlSource[tvlSource.length - 2].TVL : null,
-			previousInflow: inflowsSource.length >= 2 ? inflowsSource[inflowsSource.length - 2]['USD Inflows'] : null,
-			isLoading: query.isLoading
-		}
+		return { ...buildEtherfiCashTvlData(raw), isLoading: query.isLoading }
 	}, [query.data, query.isLoading])
 }
 

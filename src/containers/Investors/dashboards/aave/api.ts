@@ -1,12 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import { readInvestorApiJson, type ApiIsoTimestamp, type ApiNumericString } from '../../api.types'
+
+// Aave GraphQL serializes monetary values and decimal rates as strings; normalization happens below.
 
 export interface AaveReserveSupplyInfo {
-	apy: { value: string }
-	maxLTV: { value: string }
-	liquidationThreshold: { value: string }
-	liquidationBonus: { value: string }
+	apy: { value: ApiNumericString }
+	maxLTV: { value: ApiNumericString }
+	liquidationThreshold: { value: ApiNumericString }
+	liquidationBonus: { value: ApiNumericString }
 	canBeCollateral: boolean
 	supplyCap: { usd: string }
 	supplyCapReached: boolean
@@ -44,14 +47,14 @@ export interface AaveEmodeInfo {
 export interface AaveReserve {
 	underlyingToken: { symbol: string; name: string; address: string; decimals: number }
 	size: { usd: string }
-	usdExchangeRate?: string
+	usdExchangeRate?: ApiNumericString | null
 	isFrozen: boolean
 	isPaused: boolean
-	flashLoanEnabled?: boolean
+	flashLoanEnabled?: boolean | null
 	supplyInfo: AaveReserveSupplyInfo
 	borrowInfo: AaveReserveBorrowInfo | null
-	incentives?: AaveIncentive[]
-	eModeInfo?: AaveEmodeInfo[]
+	incentives?: AaveIncentive[] | null
+	eModeInfo?: AaveEmodeInfo[] | null
 }
 
 export interface AaveMarket {
@@ -97,8 +100,9 @@ export interface FlatReserve {
 }
 
 export interface APYSample {
-	date: string
-	avgRate: { value: string }
+	// Aave returns full ISO timestamps and orders APY history newest-first.
+	date: ApiIsoTimestamp
+	avgRate: { value: ApiNumericString }
 }
 
 export interface GHOReserveData {
@@ -127,7 +131,7 @@ async function fetchAaveQuery<T>(queryName: string, params?: Record<string, unkn
 		body: JSON.stringify({ queryName, ...(params ? { params } : {}) })
 	})
 	if (!response.ok) throw new Error(`Aave API error: ${response.status}`)
-	return response.json()
+	return readInvestorApiJson<T>(response)
 }
 
 export function pct(value: string | undefined): number {
@@ -140,7 +144,61 @@ export function num(value: string | undefined): number {
 	return parseFloat(value)
 }
 
-function extractRewardSupplyApr(incentives?: AaveIncentive[]): number | null {
+export function formatAaveMarkets(markets: AaveMarket[]): FlatReserve[] {
+	return markets.flatMap((m) =>
+		m.reserves
+			.filter((r) => num(r.size.usd) >= 1000)
+			.map((r) => ({
+				symbol: r.underlyingToken.symbol,
+				name: r.underlyingToken.name,
+				chain: m.chain.name,
+				chainId: m.chain.chainId,
+				market: m.name,
+				marketAddress: m.address,
+				tokenAddress: r.underlyingToken.address,
+				sizeUsd: num(r.size.usd),
+				oraclePrice: r.usdExchangeRate ? num(r.usdExchangeRate) : null,
+				supplyApy: pct(r.supplyInfo.apy.value),
+				borrowApy: r.borrowInfo ? pct(r.borrowInfo.apy.value) : null,
+				utilization: r.borrowInfo ? pct(r.borrowInfo.utilizationRate.value) : null,
+				maxLTV: pct(r.supplyInfo.maxLTV.value),
+				liquidationThreshold: pct(r.supplyInfo.liquidationThreshold.value),
+				liquidationBonus: pct(r.supplyInfo.liquidationBonus.value),
+				canBeCollateral: r.supplyInfo.canBeCollateral,
+				isFrozen: r.isFrozen,
+				isPaused: r.isPaused,
+				flashLoanEnabled: r.flashLoanEnabled ?? false,
+				borrowingEnabled: r.borrowInfo?.borrowingState === 'ENABLED',
+				totalBorrowedUsd: r.borrowInfo ? num(r.borrowInfo.total.usd) : 0,
+				availableLiquidityUsd: r.borrowInfo ? num(r.borrowInfo.availableLiquidity.usd) : 0,
+				rewardSupplyApr: extractRewardSupplyApr(r.incentives),
+				rewardBorrowDiscount: extractRewardBorrowDiscount(r.incentives),
+				eModeCategories: (r.eModeInfo ?? []).map((e) => e.label),
+				baseVariableBorrowRate: r.borrowInfo?.baseVariableBorrowRate
+					? pct(r.borrowInfo.baseVariableBorrowRate.value)
+					: null,
+				variableRateSlope1: r.borrowInfo?.variableRateSlope1 ? pct(r.borrowInfo.variableRateSlope1.value) : null,
+				variableRateSlope2: r.borrowInfo?.variableRateSlope2 ? pct(r.borrowInfo.variableRateSlope2.value) : null,
+				optimalUsageRate: r.borrowInfo?.optimalUsageRate ? pct(r.borrowInfo.optimalUsageRate.value) : null
+			}))
+	)
+}
+
+export function buildAaveApyDataset(samples: APYSample[], type: 'supply' | 'borrow'): MultiSeriesChart2Dataset {
+	const dimension = type === 'supply' ? 'Supply APY' : 'Borrow APY'
+	type ApyRow = Record<string, number> & { timestamp: number }
+	const source = new Array<ApyRow>(samples.length)
+	for (let i = 0; i < samples.length; i++) {
+		const sample = samples[i]
+		source[samples.length - i - 1] = {
+			timestamp: Math.floor(Date.parse(sample.date) / 1000) * 1000,
+			[dimension]: pct(sample.avgRate.value)
+		}
+	}
+	return { source, dimensions: ['timestamp', dimension] }
+}
+
+function extractRewardSupplyApr(incentives?: AaveIncentive[] | null): number | null {
 	if (!incentives) return null
 	for (const inc of incentives) {
 		if (inc.extraSupplyApr) return pct(inc.extraSupplyApr.value)
@@ -148,7 +206,7 @@ function extractRewardSupplyApr(incentives?: AaveIncentive[]): number | null {
 	return null
 }
 
-function extractRewardBorrowDiscount(incentives?: AaveIncentive[]): number | null {
+function extractRewardBorrowDiscount(incentives?: AaveIncentive[] | null): number | null {
 	if (!incentives) return null
 	for (const inc of incentives) {
 		if (inc.borrowAprDiscount) return pct(inc.borrowAprDiscount.value)
@@ -167,43 +225,7 @@ export function useAaveMarkets() {
 	return useMemo(() => {
 		const markets = query.data?.data?.markets ?? []
 
-		const reserves: FlatReserve[] = markets.flatMap((m) =>
-			m.reserves
-				.filter((r) => num(r.size.usd) >= 1000)
-				.map((r) => ({
-					symbol: r.underlyingToken.symbol,
-					name: r.underlyingToken.name,
-					chain: m.chain.name,
-					chainId: m.chain.chainId,
-					market: m.name,
-					marketAddress: m.address,
-					tokenAddress: r.underlyingToken.address,
-					sizeUsd: num(r.size.usd),
-					oraclePrice: r.usdExchangeRate ? num(r.usdExchangeRate) : null,
-					supplyApy: pct(r.supplyInfo.apy.value),
-					borrowApy: r.borrowInfo ? pct(r.borrowInfo.apy.value) : null,
-					utilization: r.borrowInfo ? pct(r.borrowInfo.utilizationRate.value) : null,
-					maxLTV: pct(r.supplyInfo.maxLTV.value),
-					liquidationThreshold: pct(r.supplyInfo.liquidationThreshold.value),
-					liquidationBonus: pct(r.supplyInfo.liquidationBonus.value),
-					canBeCollateral: r.supplyInfo.canBeCollateral,
-					isFrozen: r.isFrozen,
-					isPaused: r.isPaused,
-					flashLoanEnabled: r.flashLoanEnabled ?? false,
-					borrowingEnabled: r.borrowInfo?.borrowingState === 'ENABLED',
-					totalBorrowedUsd: r.borrowInfo ? num(r.borrowInfo.total.usd) : 0,
-					availableLiquidityUsd: r.borrowInfo ? num(r.borrowInfo.availableLiquidity.usd) : 0,
-					rewardSupplyApr: extractRewardSupplyApr(r.incentives),
-					rewardBorrowDiscount: extractRewardBorrowDiscount(r.incentives),
-					eModeCategories: (r.eModeInfo ?? []).map((e) => e.label),
-					baseVariableBorrowRate: r.borrowInfo?.baseVariableBorrowRate
-						? pct(r.borrowInfo.baseVariableBorrowRate.value)
-						: null,
-					variableRateSlope1: r.borrowInfo?.variableRateSlope1 ? pct(r.borrowInfo.variableRateSlope1.value) : null,
-					variableRateSlope2: r.borrowInfo?.variableRateSlope2 ? pct(r.borrowInfo.variableRateSlope2.value) : null,
-					optimalUsageRate: r.borrowInfo?.optimalUsageRate ? pct(r.borrowInfo.optimalUsageRate.value) : null
-				}))
-		)
+		const reserves = formatAaveMarkets(markets)
 
 		return { markets, reserves, isLoading: query.isLoading }
 	}, [query.data, query.isLoading])
@@ -236,18 +258,7 @@ export function useAaveAPYHistory(
 	return useMemo(() => {
 		const key = type === 'supply' ? 'supplyAPYHistory' : 'borrowAPYHistory'
 		const samples = query.data?.data?.[key] ?? []
-		const dimension = type === 'supply' ? 'Supply APY' : 'Borrow APY'
-		type ApyRow = Record<string, number> & { timestamp: number }
-		const source = new Array<ApyRow>(samples.length)
-		for (let i = 0; i < samples.length; i++) {
-			const sample = samples[i]
-			// Aave returns newest-first samples; reverse-fill the canonical ascending dataset.
-			source[samples.length - i - 1] = {
-				timestamp: Math.floor(Date.parse(sample.date) / 1000) * 1000,
-				[dimension]: pct(sample.avgRate.value)
-			}
-		}
-		const dataset = { source, dimensions: ['timestamp', dimension] } satisfies MultiSeriesChart2Dataset
+		const dataset = buildAaveApyDataset(samples, type)
 		return { dataset, isLoading: query.isLoading }
 	}, [query.data, query.isLoading, type])
 }

@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { createChartRecord } from '~/components/ECharts/dynamicRow'
+import type { IMultiSeriesChartProps } from '~/components/ECharts/types'
 import { EXTENDED_COLOR_PALETTE } from '~/containers/ProDashboard/utils/colorManager'
+import { readInvestorApiJson, type ApiDate, type ApiIsoTimestamp, type ApiUnixSeconds } from '../../api.types'
 
 const BASE = '/api/public/odyssey-ecosystem'
 const STALE_MS = 10 * 60 * 1000
@@ -11,7 +13,7 @@ function useTab<T>(tab: string) {
 		queryFn: async () => {
 			const res = await fetch(`${BASE}/${tab}`)
 			if (!res.ok) throw new Error(`Odyssey ${tab} ${res.status}`)
-			return res.json()
+			return readInvestorApiJson<T>(res)
 		},
 		staleTime: STALE_MS,
 		refetchOnWindowFocus: false
@@ -29,22 +31,27 @@ export interface Series {
 	name: string
 	data: Array<number | null>
 	color?: string
+	type?: 'line' | 'bar'
+	stack?: string
+	yAxisIndex?: number
 }
 
 export interface ChartData {
-	dates: string[]
+	// IR-server chart builders normalize calendar axes to UTC YYYY-MM-DD.
+	dates: ApiDate[]
 	series: Series[]
 }
 
 /* ──────────────────────────── chart helpers ──────────────────────────── */
 
-export function chartToTs(
-	c: ChartData | undefined
-): Array<{ name: string; data: Array<[number, number | null]>; color?: string }> {
+export function chartToTs(c: ChartData | undefined): NonNullable<IMultiSeriesChartProps['series']> {
 	if (!c?.dates) return []
 	return c.series.map((s) => ({
 		name: s.name,
-		color: s.color,
+		type: s.type ?? 'line',
+		color: s.color ?? '#6366f1',
+		...(s.stack != null ? { stack: s.stack } : {}),
+		...(s.yAxisIndex != null ? { yAxisIndex: s.yAxisIndex } : {}),
 		data: c.dates.map(
 			(d, i) => [Math.floor(Date.parse(d + 'T00:00:00Z') / 1000), s.data[i] ?? null] as [number, number | null]
 		)
@@ -68,7 +75,7 @@ export function zoomStartPct(dates: string[] | undefined, fromDate: string): num
 	return (idx / (dates.length - 1)) * 100
 }
 
-export function defaultZoomOptions(start: number): any {
+export function defaultZoomOptions(start: number) {
 	if (start <= 0) return undefined
 	return {
 		dataZoom: [
@@ -92,8 +99,8 @@ export function assignColors(names: string[]): Record<string, string> {
 export interface MetadataResponse {
 	projectId: number
 	projectName: string
-	updatedAt: string
-	dataLastUpdated?: string
+	updatedAt: ApiIsoTimestamp
+	dataLastUpdated?: ApiIsoTimestamp
 	description: string
 	protocols: Array<{ id: string; name: string; llamaSlug: string; docs: string }>
 	chains: Array<{ name: string; chainId: number }>
@@ -143,7 +150,7 @@ interface PoolRow {
 }
 
 export interface MorphoMarketHistoryPoint {
-	date: string
+	date: ApiDate
 	supplyUsd: number
 	borrowUsd: number
 	utilization: number
@@ -249,11 +256,11 @@ interface UnclaimedPipeline {
 		feeRate: number
 		pnlUsd: number
 		allTimeHarvestedUsd: number
-		lastHarvestDate: string | null
+		lastHarvestDate: ApiDate | null
 		lastHarvestUsd: number
 	}>
-	aeroLocks: Array<{ nft: string; locked: string; rewards: string; usd: number; unlock: string | null }>
-	convex: Array<{ type: string; status: string; usd: number; unlock: string | null; isClaimable: boolean }>
+	aeroLocks: Array<{ nft: string; locked: string; rewards: string; usd: number; unlock: ApiDate | null }>
+	convex: Array<{ type: string; status: string; usd: number; unlock: ApiDate | null; isClaimable: boolean }>
 }
 
 export interface RevenueResponse {
@@ -411,8 +418,8 @@ export interface YieldsResponse {
 	lpApyHistory: Record<string, { venue: string; pools: LpApyPool[] }>
 	lpPools: { rows: Array<{ venue: string; chain: string; pool: string; tvl: string; apy: string; apyPct: number }> }
 	kpis: {
-		topLooperApy: FormattedValue & { label?: string }
-		topOdysseyApy: FormattedValue & { label?: string }
+		topLooperApy: (FormattedValue & { label?: string }) | null
+		topOdysseyApy: (FormattedValue & { label?: string }) | null
 		topVesperApy: FormattedValue & { label?: string }
 		odysseyStrategyCount: FormattedValue
 	}
@@ -490,12 +497,12 @@ export interface LooprStrategy {
 	users: number
 	totalDepositedUsd: number
 	totalDepositedFormatted: string
-	performanceFeePct: number
+	performanceFeePct: number | null
 	chains: Record<string, { users: number; usd: number }>
 }
 
 interface TokenPriceBlock {
-	history: Array<{ price: number; timestamp: number }>
+	history: Array<{ price: number; timestamp: ApiUnixSeconds }>
 }
 
 export interface GrowthResponse {

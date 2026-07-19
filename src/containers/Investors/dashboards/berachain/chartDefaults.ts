@@ -18,7 +18,7 @@ export function createChartOptions(valueSymbol: string, reverseSeries = false) {
 		...(reverseSeries
 			? {
 					tooltip: {
-						formatter(params: any[]) {
+						formatter(params: Array<{ data: Record<string, number>; seriesName: string; marker: string }>) {
 							if (params.length === 0) return ''
 
 							let content = formatTooltipChartDate(params[0].data.timestamp, 'daily')

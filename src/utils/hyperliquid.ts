@@ -20,10 +20,10 @@ export function nullableNum(value: unknown): number | null {
 	return Number.isFinite(parsed) ? parsed : null
 }
 
-export function annualizeFunding(rate: unknown, interval: 'hourly' | '8h' = '8h'): number | null {
+export function annualizeFunding(rate: unknown, intervalHours = 8): number | null {
 	const parsed = nullableNum(rate)
-	if (parsed == null) return null
-	return interval === 'hourly' ? parsed * 24 * 365 * 100 : parsed * 3 * 365 * 100
+	if (parsed == null || !Number.isFinite(intervalHours) || intervalHours <= 0) return null
+	return parsed * (24 / intervalHours) * 365 * 100
 }
 
 export async function postInfo<T>(payload: Record<string, unknown>, timeout = 8000): Promise<T> {

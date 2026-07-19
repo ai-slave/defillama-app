@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { createChartRow } from '~/components/ECharts/dynamicRow'
 import type { MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import { readInvestorApiJson, type ApiIsoTimestamp, type ApiUnixSeconds } from '../../api.types'
 import { assignColors } from './api'
 import { createSeriesConfigs } from './chartDefaults'
 
-type ChartRow = { date: number } & Record<string, number | undefined>
+// Dune-backed distribution rows use Unix seconds, unlike the string dates in the other Spark endpoints.
+type ChartRow = { date: ApiUnixSeconds } & Record<string, number | undefined>
 
 export interface SparkDistributionChartPayload {
 	data: ChartRow[]
@@ -12,7 +14,7 @@ export interface SparkDistributionChartPayload {
 }
 
 export interface DistributionResponse {
-	meta: { updatedAt: string }
+	meta: { updatedAt: ApiIsoTimestamp }
 	charts: {
 		actualRevenue: SparkDistributionChartPayload
 		revenueProjection: SparkDistributionChartPayload
@@ -113,7 +115,7 @@ export function useDistributionData() {
 		queryFn: async () => {
 			const res = await fetch('/api/public/spark/distribution-rewards')
 			if (!res.ok) throw new Error(`Distribution API error: ${res.status}`)
-			const response: DistributionResponse = await res.json()
+			const response = await readInvestorApiJson<DistributionResponse>(res)
 			return buildDistributionViewModel(response)
 		},
 		staleTime: 10 * 60 * 1000,

@@ -1,5 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import { readInvestorApiJson, type ApiNumericString, type ApiUnixSecondsString } from '../../api.types'
+
+// Maple GraphQL serializes token amounts/rates as decimal strings and timestamps as Unix-second strings.
 
 export interface MapleAsset {
 	symbol: string
@@ -7,8 +10,8 @@ export interface MapleAsset {
 }
 
 export interface MapleLoanManager {
-	principalOut: string
-	accountedInterest: string
+	principalOut: ApiNumericString
+	accountedInterest: ApiNumericString
 }
 
 export interface MaplePoolMeta {
@@ -22,30 +25,30 @@ export interface MaplePoolMeta {
 
 export interface MapleWithdrawalManager {
 	id: string
-	cycleDuration: string
-	windowDuration: string
+	cycleDuration: ApiNumericString
+	windowDuration: ApiNumericString
 }
 
 export interface MaplePool {
 	id: string
 	name: string
 	asset: MapleAsset
-	tvlUsd: string
-	spotApy: string
-	numOpenTermLoans: string
-	unrealizedLosses: string
-	liquidityCap: string
+	tvlUsd: ApiNumericString
+	spotApy: ApiNumericString
+	numOpenTermLoans: ApiNumericString
+	unrealizedLosses: ApiNumericString
+	liquidityCap: ApiNumericString
 	loanManager: MapleLoanManager
-	totalAssets: string
-	principalOut: string
-	numPositions: string
-	numActiveLoans: string
+	totalAssets: ApiNumericString
+	principalOut: ApiNumericString
+	numPositions: ApiNumericString
+	numActiveLoans: ApiNumericString
 	numDefaultedLoans: number
-	depositedAssets: string
-	withdrawnAssets: string
-	coverLiquidated: string
-	delegateManagementFeeRate: string
-	platformManagementFeeRate: string
+	depositedAssets: ApiNumericString
+	withdrawnAssets: ApiNumericString
+	coverLiquidated: ApiNumericString
+	delegateManagementFeeRate: ApiNumericString
+	platformManagementFeeRate: ApiNumericString
 	openToPublic: boolean
 	symbol: string
 	poolMeta: MaplePoolMeta | null
@@ -55,69 +58,70 @@ export interface MaplePool {
 export interface MapleOpenTermLoan {
 	id: string
 	borrower: { id: string }
-	principalOwed: string
-	interestRate: string
+	principalOwed: ApiNumericString
+	interestRate: ApiNumericString
 	isCalled: boolean
 	isImpaired: boolean
-	interestPaid: string
-	fundingDate: string
-	startDate: string
+	interestPaid: ApiNumericString
+	// Maple GraphQL timestamps are Unix seconds encoded as strings.
+	fundingDate: ApiUnixSecondsString
+	startDate: ApiUnixSecondsString
 	state: string
-	paymentIntervalDays: string
-	gracePeriodSeconds: string
-	delegateServiceFeeRate: string
-	platformServiceFeeRate: string
-	lateInterestPremium: string
-	lateFeeRate: string
+	paymentIntervalDays: ApiNumericString
+	gracePeriodSeconds: ApiNumericString
+	delegateServiceFeeRate: ApiNumericString
+	platformServiceFeeRate: ApiNumericString
+	lateInterestPremium: ApiNumericString
+	lateFeeRate: ApiNumericString
 }
 
 export interface MaplePoolWithLoans {
 	id: string
 	name: string
 	asset: MapleAsset
-	tvlUsd: string
-	spotApy: string
-	numOpenTermLoans: string
+	tvlUsd: ApiNumericString
+	spotApy: ApiNumericString
+	numOpenTermLoans: ApiNumericString
 	openTermLoans: MapleOpenTermLoan[]
 }
 
 export interface StSyrupTx {
 	id: string
-	timestamp: string
+	timestamp: ApiUnixSecondsString
 	type: 'deposit' | 'withdraw'
-	sharesAmount: string
-	assetsAmount: string
+	sharesAmount: ApiNumericString
+	assetsAmount: ApiNumericString
 	account: { id: string }
 }
 
 export interface SyrupTx {
 	id: string
-	timestamp: string
-	tokensMigrated: string
+	timestamp: ApiUnixSecondsString
+	tokensMigrated: ApiNumericString
 	account: { id: string }
 }
 
 export interface SyrupGlobals {
-	apy: string
-	tvl: string
+	apy: ApiNumericString
+	tvl: ApiNumericString
 }
 
 export interface StSyrup {
 	id: string
-	totalSupply: string
-	freeAssets: string
-	issuanceRate: string
-	vestingPeriodFinish: string
-	lastUpdated: string
+	totalSupply: ApiNumericString
+	freeAssets: ApiNumericString
+	issuanceRate: ApiNumericString
+	vestingPeriodFinish: ApiUnixSecondsString
+	lastUpdated: ApiUnixSecondsString
 	precision: number
 	asset: { id: string }
 }
 
 export interface SyrupDripTx {
 	id: string
-	timestamp: string
+	timestamp: ApiUnixSecondsString
 	type: string
-	amount: string
+	amount: ApiNumericString
 	account: { id: string }
 }
 
@@ -130,7 +134,7 @@ async function fetchMapleQuery<T>(queryName: string): Promise<T> {
 		body: JSON.stringify({ queryName })
 	})
 	if (!response.ok) throw new Error(`Maple API error: ${response.status}`)
-	return response.json()
+	return readInvestorApiJson<T>(response)
 }
 
 export function parseWad(value: string, decimals = 27): number {

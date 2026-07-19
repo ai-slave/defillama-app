@@ -41,6 +41,14 @@ describe('buildReserveStablecoinChartData', () => {
 			{ timestamp: 2_000, peggedUSD: 10 }
 		])
 		expect(result.currentTotal).toBe(10)
+		for (const spec of [
+			result.totalStablecoins,
+			result.stablecoinsByPegMechanism,
+			result.stablecoinsByPegType,
+			result.stablecoinsByToken
+		]) {
+			for (const chart of spec?.charts ?? []) expect(spec?.dataset.dimensions).toContain(chart.encode.y)
+		}
 	})
 
 	it('aggregates duplicate timestamps and uses the last metadata entry for duplicate symbols', () => {

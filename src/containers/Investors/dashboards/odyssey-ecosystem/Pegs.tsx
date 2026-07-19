@@ -1,5 +1,5 @@
-import { usePegsData, type PegRow } from './api'
-import { KpiCard, ChartCard, SectionHeader, SimpleTable } from './ui'
+import { usePegsData, type PegRow, type PegSupplyCap } from './api'
+import { KpiCard, ChartCard, SectionHeader, SimpleTable, type Col } from './ui'
 
 const SIZES = [10_000, 50_000, 100_000, 500_000, 1_000_000]
 
@@ -135,36 +135,36 @@ export default function Pegs() {
 
 			<SectionHeader>Supply Caps · On-chain + Bridges</SectionHeader>
 			{(() => {
-				const capCols = [
+				const capCols: Array<Col<PegSupplyCap>> = [
 					{ key: 'chain', label: 'Chain' },
 					{ key: 'synth', label: 'Synth' },
 					{
 						key: 'supply',
 						label: 'Supply',
 						right: true,
-						render: (r: any) => r.supply?.toLocaleString(undefined, { maximumFractionDigits: 2 })
+						render: (r) => r.supply.toLocaleString(undefined, { maximumFractionDigits: 2 })
 					},
 					{
 						key: 'maxSupply',
 						label: 'Max Supply',
 						right: true,
-						render: (r: any) => r.maxSupply?.toLocaleString(undefined, { maximumFractionDigits: 2 })
+						render: (r) => r.maxSupply.toLocaleString(undefined, { maximumFractionDigits: 2 })
 					},
-					{ key: 'usagePct', label: 'Usage', right: true, render: (r: any) => `${(r.usagePct ?? 0).toFixed(1)}%` }
+					{ key: 'usagePct', label: 'Usage', right: true, render: (r) => `${r.usagePct.toFixed(1)}%` }
 				]
 				return (
 					<>
 						<ChartCard title="Mint Caps" subtitle="totalSupply / maxTotalSupply">
-							<SimpleTable rows={data?.supplyCaps} cols={capCols as any} />
+							<SimpleTable<PegSupplyCap> rows={data?.supplyCaps} cols={capCols} />
 						</ChartCard>
 						{data?.bridgeInCaps?.length ? (
 							<ChartCard title="Bridge-In Caps" subtitle="Per-chain bridged-in supply vs cap">
-								<SimpleTable rows={data.bridgeInCaps} cols={capCols as any} />
+								<SimpleTable<PegSupplyCap> rows={data.bridgeInCaps} cols={capCols} />
 							</ChartCard>
 						) : null}
 						{data?.bridgeOutCaps?.length ? (
 							<ChartCard title="Bridge-Out Caps" subtitle="Per-chain bridged-out supply vs cap">
-								<SimpleTable rows={data.bridgeOutCaps} cols={capCols as any} />
+								<SimpleTable<PegSupplyCap> rows={data.bridgeOutCaps} cols={capCols} />
 							</ChartCard>
 						) : null}
 					</>

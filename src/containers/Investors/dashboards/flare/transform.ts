@@ -1,3 +1,5 @@
+import type { ApiDate } from '../../api.types'
+
 export interface UpstreamSeries {
 	name: string
 	type?: 'bar' | 'line'
@@ -7,7 +9,8 @@ export interface UpstreamSeries {
 export interface UpstreamChart {
 	title?: string
 	subtitle?: string
-	dates: string[]
+	// Flare cache adapters normalize daily and epoch observations to UTC YYYY-MM-DD.
+	dates: ApiDate[]
 	series: UpstreamSeries[]
 }
 

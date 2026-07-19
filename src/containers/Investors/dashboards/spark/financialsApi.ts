@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { buildColumnarTimeSeriesDataset } from '~/components/ECharts/timeSeriesDataset'
+import { readInvestorApiJson, type ApiDate, type ApiDateOrMonth, type ApiIsoTimestamp } from '../../api.types'
 import { assignColors } from './api'
 import { createSeriesConfigs } from './chartDefaults'
 
@@ -37,7 +38,8 @@ interface TimeSeriesItem {
 
 interface TimeSeriesData {
 	title: string
-	dates: string[]
+	// Returns are monthly YYYY-MM; the remaining Spark charts are daily YYYY-MM-DD.
+	dates: ApiDateOrMonth[]
 	series: TimeSeriesItem[]
 	products?: string[]
 	chains?: string[]
@@ -52,7 +54,7 @@ interface AllocatedAssetsEntry {
 }
 
 interface AllocatedAssetsHistorical {
-	dates: string[]
+	dates: ApiDate[]
 	byProtocol: TimeSeriesItem[]
 	byNetwork: TimeSeriesItem[]
 	byAsset: TimeSeriesItem[]
@@ -62,7 +64,7 @@ interface AllocatedAssetsAPIData {
 	title: string
 	total: number
 	totalFormatted: string
-	date: string
+	date: ApiDate
 	byProtocol: AllocatedAssetsEntry[]
 	byNetwork: AllocatedAssetsEntry[]
 	byAsset: AllocatedAssetsEntry[]
@@ -92,7 +94,7 @@ interface BuybackSeriesItem {
 
 interface BuybacksData {
 	title: string
-	dates: string[]
+	dates: ApiDate[]
 	series: BuybackSeriesItem[]
 }
 
@@ -105,7 +107,7 @@ export interface FinancialsAPIResponse {
 	meta: {
 		projectId: number
 		projectName: string
-		updatedAt: string
+		updatedAt: ApiIsoTimestamp
 		links: Record<string, string>
 		quarterlyReports?: QuarterlyReport[]
 	}
@@ -290,7 +292,7 @@ export function useFinancialsData() {
 		queryFn: async () => {
 			const res = await fetch(API_URL)
 			if (!res.ok) throw new Error(`Financials API error: ${res.status}`)
-			const response: FinancialsAPIResponse = await res.json()
+			const response = await readInvestorApiJson<FinancialsAPIResponse>(res)
 			return buildFinancialsViewModel(response)
 		},
 		staleTime: 10 * 60 * 1000,

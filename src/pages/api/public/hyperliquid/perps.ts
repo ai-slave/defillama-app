@@ -64,7 +64,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 				dayNtlVlm: num(ctx?.dayNtlVlm),
 				openInterest: openInterestBase * markPx,
 				funding,
-				fundingAnnualized: annualizeFunding(funding, '8h') ?? 0,
+				// Hyperliquid perpetual funding settles hourly.
+				fundingAnnualized: annualizeFunding(funding, 1) ?? 0,
 				change24hPct: prevDayPx ? ((markPx - prevDayPx) / prevDayPx) * 100 : 0,
 				midPx: num(ctx?.midPx),
 				oraclePx: num(ctx?.oraclePx),

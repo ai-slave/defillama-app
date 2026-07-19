@@ -10,6 +10,13 @@ import type {
 	MultiSeriesChart2Dataset
 } from '~/components/ECharts/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import {
+	aggregateTimeSeries,
+	filterTimeSeries,
+	timeframeStartIndex,
+	type Aggregation,
+	type Timeframe
+} from './chartData'
 import { useRevenueData, getValidTimeframeForAggregation, type WalletEntry } from './revenueApi'
 
 const MultiSeriesChart2 = lazy(
@@ -20,9 +27,6 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 const EMISSIONS_PERCENTAGE_CHART_OPTIONS = createSingleSeriesChartOptions('%')
 const EMISSIONS_ABSOLUTE_CHART_OPTIONS = createTimeSeriesChartOptions(' NEAR')
 const BAR_MAX_WIDTH_40_CHART_OPTIONS = { series: { barMaxWidth: 40 } }
-
-type Timeframe = '7d' | '30d' | 'ytd' | '1y' | 'all'
-type Aggregation = 'daily' | 'weekly' | 'monthly'
 
 const EMISSIONS_PERCENTAGE_CHART: IMultiSeriesChart2Props['charts'] = [
 	{
@@ -46,73 +50,6 @@ const EMISSIONS_ABSOLUTE_CHARTS: IMultiSeriesChart2Props['charts'] = [
 		encode: { x: 'timestamp', y: 'Cumulative Emissions' }
 	}
 ]
-
-function timeframeStartIndex(dates: string[], timeframe: Timeframe): number {
-	let count: number
-	switch (timeframe) {
-		case '7d':
-			count = 7
-			break
-		case '30d':
-			count = 30
-			break
-		case '1y':
-			count = 365
-			break
-		case 'all':
-			count = dates.length
-			break
-		case 'ytd': {
-			const now = new Date()
-			const startOfYear = new Date(now.getFullYear(), 0, 1)
-			const daysSinceYearStart = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24))
-			count = Math.min(daysSinceYearStart, dates.length)
-			break
-		}
-	}
-	return Math.max(0, dates.length - count)
-}
-
-function filterTimeSeries(dates: string[], series: number[], timeframe: Timeframe): Array<[number, number]> {
-	const start = timeframeStartIndex(dates, timeframe)
-	const result = new Array<[number, number]>(dates.length - start)
-	for (let index = start; index < dates.length; index++) {
-		result[index - start] = [Math.floor(Date.parse(`${dates[index]}T00:00:00Z`) / 1000), series[index] || 0]
-	}
-	return result
-}
-
-function aggregateTimeSeries(
-	dates: string[],
-	series: number[],
-	timeframe: Timeframe,
-	aggregation: Aggregation
-): Array<[number, number]> {
-	if (aggregation === 'daily') return filterTimeSeries(dates, series, timeframe)
-
-	const start = timeframeStartIndex(dates, timeframe)
-	const result: Array<[number, number]> = []
-	for (let index = start; index < dates.length; index++) {
-		const dateStr = dates[index]
-		const date = new Date(`${dateStr}T00:00:00Z`)
-		let key: string
-
-		if (aggregation === 'weekly') {
-			const day = date.getDay()
-			const diff = date.getDate() - day + (day === 0 ? -6 : 1)
-			key = new Date(date.setDate(diff)).toISOString().split('T')[0]
-		} else {
-			key = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-01`
-		}
-
-		const timestamp = Math.floor(Date.parse(`${key}T00:00:00Z`) / 1000)
-		const previous = result[result.length - 1]
-		if (previous?.[0] === timestamp) previous[1] += series[index] || 0
-		else result.push([timestamp, series[index] || 0])
-	}
-
-	return result
-}
 
 function KpiCard({ label, value, tooltip }: { label: string; value: string; tooltip?: string }) {
 	return (

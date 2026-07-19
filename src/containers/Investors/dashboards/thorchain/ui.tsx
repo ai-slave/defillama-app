@@ -9,6 +9,7 @@ import type {
 } from '~/components/ECharts/types'
 import { useMedia } from '~/hooks/useMedia'
 import { formattedNum } from '~/utils'
+import { readInvestorApiJson } from '../../api.types'
 import {
 	chartToDataset,
 	unitSymbol,
@@ -30,7 +31,7 @@ export function useThorchainData<T>(fn: string) {
 		queryFn: async () => {
 			const res = await fetch(`/api/public/thorchain/${fn}`)
 			if (!res.ok) throw new Error(`THORChain ${fn} error: ${res.status}`)
-			return res.json()
+			return readInvestorApiJson<T>(res)
 		},
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false
@@ -100,7 +101,7 @@ const colorMap = (names: string[]): Record<string, string> =>
 
 const THREE_MONTHS = 90
 const CSV_ONLY_EXPORT = { csv: true, png: false } as const
-function lastNDaysZoom(len: number, days = THREE_MONTHS): any {
+function lastNDaysZoom(len: number, days = THREE_MONTHS): { dataZoom: { start: number; end: number } } | undefined {
 	if (len <= days) return undefined
 	const start = ((len - days) / len) * 100
 	return { dataZoom: { start, end: 100 } }

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { buildColumnarTimeSeriesDataset } from '~/components/ECharts/timeSeriesDataset'
+import { readInvestorApiJson, type ApiDate } from '../../api.types'
 import { assignColors } from '../spark/api'
 import { multiSeriesCharts } from './chartDefaults'
 
@@ -56,7 +57,7 @@ interface YieldsEmissionsAPIResponse {
 	emissions: {
 		emissionsChart: {
 			title: string
-			dates: string[]
+			dates: ApiDate[]
 			categories: string[]
 			series: Array<{ name: string; data: number[] }>
 		}
@@ -86,7 +87,7 @@ export function useYieldsEmissionsData() {
 		queryFn: async () => {
 			const res = await fetch('/api/public/sonic/yields-emissions')
 			if (!res.ok) throw new Error(`Yields-Emissions API error: ${res.status}`)
-			return res.json()
+			return readInvestorApiJson<YieldsEmissionsAPIResponse>(res)
 		},
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false

@@ -6,7 +6,7 @@ import {
 	type SortingState,
 	useReactTable
 } from '@tanstack/react-table'
-import type { ColumnDef } from '@tanstack/react-table'
+import type { ColumnDef, Table } from '@tanstack/react-table'
 import { BarChart, PieChart as EPieChart, ScatterChart as EScatterChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
@@ -23,7 +23,7 @@ import {
 	useHyperliquidPerps,
 	useHyperliquidPredictedFundings,
 	useHyperliquidSpot,
-	useHyperliquidWs,
+	useHyperliquidWsChannels,
 	type WsSubscription
 } from './api'
 
@@ -114,11 +114,12 @@ function PriceTickerTape({ coins }: { coins: string[] }) {
 		itemEls.current = nextItems
 	}, [coins])
 
-	useHyperliquidWs(ALL_MIDS_SUB, (msg) => {
-		if (msg.channel !== 'allMids') return
-		const mids = msg.data?.mids as Record<string, string> | undefined
-		if (!mids) return
-		latestMidsRef.current = mids
+	useHyperliquidWsChannels(ALL_MIDS_SUB, {
+		allMids: (msg) => {
+			const mids = msg.data?.mids
+			if (!mids) return
+			latestMidsRef.current = mids
+		}
 	})
 
 	useEffect(() => {
@@ -252,7 +253,7 @@ function FundingChart({ data }: { data: { name: string; value: number }[] }) {
 				tooltip: {
 					trigger: 'axis',
 					axisPointer: { type: 'shadow' },
-					formatter: (params: any) => {
+					formatter: (params: Array<{ name: string; value: number }>) => {
 						const p = params[0]
 						return `<b>${p.name}</b><br/>Funding (ann.): ${p.value >= 0 ? '+' : ''}${p.value.toFixed(2)}%`
 					}
@@ -297,7 +298,7 @@ function FundingChart({ data }: { data: { name: string; value: number }[] }) {
 	)
 }
 
-function Pagination({ table }: { table: ReturnType<typeof useReactTable<any>> }) {
+function Pagination<Row>({ table }: { table: Table<Row> }) {
 	const { pageIndex, pageSize } = table.getState().pagination
 	const total = table.getFilteredRowModel().rows.length
 	const from = total === 0 ? 0 : pageIndex * pageSize + 1
@@ -520,7 +521,7 @@ function OIDistributionChart({ data }: { data: { name: string; value: number }[]
 			{
 				tooltip: {
 					trigger: 'item',
-					formatter: (params: any) =>
+					formatter: (params: { name: string; value: number; percent: number }) =>
 						`<b>${params.name}</b><br/>OI: $${formattedNum(params.value)}<br/>${params.percent}%`
 				},
 				series: [
@@ -568,7 +569,7 @@ function VolumeOIScatter({ data }: { data: PerpMarket[] }) {
 				grid: { left: 80, right: 30, top: 20, bottom: 50, containLabel: false },
 				tooltip: {
 					trigger: 'item',
-					formatter: (params: any) => {
+					formatter: (params: { data: [number, number, number, string] }) => {
 						const d = params.data
 						return `<b>${d[3]}</b><br/>Volume: $${formattedNum(d[0])}<br/>OI: $${formattedNum(d[1])}<br/>Funding: ${d[2] >= 0 ? '+' : ''}${d[2].toFixed(2)}%`
 					}
@@ -605,7 +606,8 @@ function VolumeOIScatter({ data }: { data: PerpMarket[] }) {
 						})(),
 						symbolSize: (val: number[]) => Math.max(6, Math.min(24, Math.abs(val[2]) * 2)),
 						itemStyle: {
-							color: (params: any) => (params.data[2] >= 0 ? '#10b981' : '#ef4444'),
+							color: (params: { data: [number, number, number, string] }) =>
+								params.data[2] >= 0 ? '#10b981' : '#ef4444',
 							opacity: 0.75
 						}
 					}

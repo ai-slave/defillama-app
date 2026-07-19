@@ -617,24 +617,7 @@ export async function getBridgeChainsPageData() {
 		})
 	)
 
-	const chartData = new Map<number, { date: number } & Record<string, number>>()
-
-	for (let i = 0; i < chains.length; i++) {
-		const chain = chains[i]
-		const charts = chartDataByChain[i]
-		for (const chart of charts) {
-			const date = Number(chart.date)
-			if (!Number.isFinite(date)) continue
-			const netFlow = (chart.depositUSD ?? 0) - (chart.withdrawUSD ?? 0)
-			let row = chartData.get(date)
-			if (!row) {
-				row = createChartRecord<number>() as { date: number } & Record<string, number>
-				row.date = date
-				chartData.set(date, row)
-			}
-			row[chain.name] = netFlow
-		}
-	}
+	const chartRows = buildBridgeChainsChartRows({ chains, chartDataByChain })
 
 	// order of chains will update every 24 hrs, can consider changing metric sorted by here
 	const chainList = chains
@@ -685,13 +668,41 @@ export async function getBridgeChainsPageData() {
 		...(isDeprecatedChain(metadataCache.chainMetadata, chain.name) ? { deprecated: true } : {})
 	}))
 
-	const chart = buildBridgeChainsMultiSeriesChart({ chartRows: Array.from(chartData.values()), chains: chainList })
+	const chart = buildBridgeChainsMultiSeriesChart({ chartRows, chains: chainList })
 
 	return {
 		allChains: chainList,
 		tableData: filteredChains,
 		chart
 	}
+}
+
+export function buildBridgeChainsChartRows({
+	chains,
+	chartDataByChain
+}: {
+	chains: Array<{ name: string }>
+	chartDataByChain: RawBridgeVolumePoint[][]
+}): Array<{ date: number } & Record<string, number>> {
+	const chartData = new Map<number, { date: number } & Record<string, number>>()
+
+	for (let i = 0; i < chains.length; i++) {
+		const chain = chains[i]
+		const charts = chartDataByChain[i] ?? []
+		for (const chart of charts) {
+			const date = Number(chart.date)
+			if (!Number.isFinite(date)) continue
+			let row = chartData.get(date)
+			if (!row) {
+				row = createChartRecord<number>() as { date: number } & Record<string, number>
+				row.date = date
+				chartData.set(date, row)
+			}
+			row[chain.name] = (chart.depositUSD ?? 0) - (chart.withdrawUSD ?? 0)
+		}
+	}
+
+	return Array.from(chartData.values())
 }
 
 export function buildBridgeChainsMultiSeriesChart({

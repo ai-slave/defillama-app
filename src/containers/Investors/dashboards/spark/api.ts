@@ -1,5 +1,6 @@
 import { createChartRecord } from '~/components/ECharts/dynamicRow'
 import { EXTENDED_COLOR_PALETTE } from '~/containers/ProDashboard/utils/colorManager'
+import { readInvestorApiJson } from '../../api.types'
 
 interface DuneResponse<T> {
 	result: {
@@ -15,7 +16,7 @@ interface DuneResponse<T> {
 export async function fetchDuneQuery<T>(queryId: string): Promise<DuneResponse<T>> {
 	const response = await fetch(`/api/public/dune/query/${queryId}`)
 	if (!response.ok) throw new Error(`Dune API error: ${response.status}`)
-	return response.json()
+	return readInvestorApiJson<DuneResponse<T>>(response)
 }
 
 export function assignColors(names: string[]): Record<string, string> {

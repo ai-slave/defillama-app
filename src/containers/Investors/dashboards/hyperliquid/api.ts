@@ -9,6 +9,7 @@ import type { HyperliquidL2Book } from '~/pages/api/public/hyperliquid/l2-book'
 import type { PerpMarket } from '~/pages/api/public/hyperliquid/perps'
 import type { PredictedFunding } from '~/pages/api/public/hyperliquid/predicted-fundings'
 import type { SpotMarket } from '~/pages/api/public/hyperliquid/spot'
+import { readInvestorApiJson, type ApiUnixMilliseconds } from '../../api.types'
 
 const HL_WS = 'wss://api.hyperliquid.xyz/ws'
 const HEARTBEAT_TIMEOUT_MS = 20_000
@@ -23,10 +24,97 @@ export interface WsSubscription {
 	mantissa?: number | null
 }
 
-type HyperliquidWsMessage = {
-	channel?: string
-	data?: any
-	isSnapshot?: boolean
+export interface HyperliquidWsTrade {
+	coin: string
+	side: 'B' | 'A' | 'S'
+	px: string
+	sz: string
+	// Hyperliquid websocket timestamps are Unix milliseconds.
+	time: ApiUnixMilliseconds
+	tid: number
+}
+
+export interface HyperliquidWsBookLevel {
+	px: string
+	sz: string
+	n: number
+}
+
+interface HyperliquidWsDataMap {
+	allMids: { mids: Record<string, string> }
+	trades: HyperliquidWsTrade[]
+	l2Book: {
+		coin: string
+		time: ApiUnixMilliseconds
+		levels: [HyperliquidWsBookLevel[], HyperliquidWsBookLevel[]]
+	}
+}
+
+export type HyperliquidWsMessage<K extends keyof HyperliquidWsDataMap = keyof HyperliquidWsDataMap> =
+	K extends keyof HyperliquidWsDataMap
+		? {
+				channel: K
+				data?: HyperliquidWsDataMap[K]
+				isSnapshot?: boolean
+			}
+		: never
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null
+}
+
+function isBookLevel(value: unknown): value is HyperliquidWsBookLevel {
+	return isRecord(value) && typeof value.px === 'string' && typeof value.sz === 'string' && typeof value.n === 'number'
+}
+
+function isTrade(value: unknown): value is HyperliquidWsTrade {
+	return (
+		isRecord(value) &&
+		typeof value.coin === 'string' &&
+		(value.side === 'B' || value.side === 'A' || value.side === 'S') &&
+		typeof value.px === 'string' &&
+		typeof value.sz === 'string' &&
+		typeof value.time === 'number' &&
+		typeof value.tid === 'number'
+	)
+}
+
+/** Validate the channel discriminator and its corresponding websocket payload before dispatch. */
+export function parseHyperliquidWsMessage(value: unknown): HyperliquidWsMessage | null {
+	if (!isRecord(value) || typeof value.channel !== 'string') return null
+	const isSnapshot = typeof value.isSnapshot === 'boolean' ? value.isSnapshot : undefined
+
+	if (value.channel === 'allMids') {
+		if (!isRecord(value.data) || !isRecord(value.data.mids)) return null
+		if (!Object.values(value.data.mids).every((mid) => typeof mid === 'string')) return null
+		return { channel: 'allMids', data: { mids: value.data.mids as Record<string, string> }, isSnapshot }
+	}
+	if (value.channel === 'trades') {
+		if (!Array.isArray(value.data) || !value.data.every(isTrade)) return null
+		return { channel: 'trades', data: value.data, isSnapshot }
+	}
+	if (value.channel === 'l2Book') {
+		if (
+			!isRecord(value.data) ||
+			typeof value.data.coin !== 'string' ||
+			typeof value.data.time !== 'number' ||
+			!Array.isArray(value.data.levels) ||
+			value.data.levels.length !== 2 ||
+			!value.data.levels.every((side) => Array.isArray(side) && side.every(isBookLevel))
+		) {
+			return null
+		}
+		return {
+			channel: 'l2Book',
+			data: {
+				coin: value.data.coin,
+				time: value.data.time,
+				levels: value.data.levels as [HyperliquidWsBookLevel[], HyperliquidWsBookLevel[]]
+			},
+			isSnapshot
+		}
+	}
+	return null
 }
 
 function subscriptionKey(subscription: WsSubscription) {
@@ -43,7 +131,7 @@ export function pushBounded<T>(prev: T[], incoming: T[] | T, limit: number): T[]
 	return next.length <= limit ? next : next.slice(0, limit)
 }
 
-export function useHyperliquidWs(subscriptions: WsSubscription[], onMessage: (msg: HyperliquidWsMessage) => void) {
+export function useHyperliquidWs(subscriptions: WsSubscription[], onMessage: (msg: unknown) => void) {
 	const [isConnected, setIsConnected] = useState(false)
 	const wsRef = useRef<WebSocket | null>(null)
 	const subsRef = useRef(subscriptions)
@@ -120,8 +208,8 @@ export function useHyperliquidWs(subscriptions: WsSubscription[], onMessage: (ms
 		ws.onmessage = (event) => {
 			lastMessageAtRef.current = Date.now()
 			try {
-				const message = JSON.parse(event.data) as HyperliquidWsMessage
-				if (message.channel === 'subscriptionResponse') return
+				const message: unknown = JSON.parse(event.data)
+				if (isRecord(message) && message.channel === 'subscriptionResponse') return
 				cbRef.current(message)
 			} catch {
 				// ignore non-json frames
@@ -170,15 +258,18 @@ export function useHyperliquidWs(subscriptions: WsSubscription[], onMessage: (ms
 
 export function useHyperliquidWsChannels(
 	subscriptions: WsSubscription[],
-	handlers: Partial<Record<string, (message: HyperliquidWsMessage) => void>>
+	handlers: Partial<{
+		[K in keyof HyperliquidWsDataMap]: (message: HyperliquidWsMessage<K>) => void
+	}>
 ) {
 	const handlersRef = useRef(handlers)
 	handlersRef.current = handlers
 
 	return useHyperliquidWs(subscriptions, (message) => {
-		const channel = message.channel
-		if (!channel) return
-		handlersRef.current[channel]?.(message)
+		const parsed = parseHyperliquidWsMessage(message)
+		if (!parsed) return
+		const handler = handlersRef.current[parsed.channel] as ((message: HyperliquidWsMessage) => void) | undefined
+		handler?.(parsed)
 	})
 }
 
@@ -199,7 +290,7 @@ export type {
 async function fetchJson<T>(url: string): Promise<T> {
 	const response = await fetch(url)
 	if (!response.ok) throw new Error(`API ${response.status}`)
-	return response.json()
+	return readInvestorApiJson<T>(response)
 }
 
 export function useHyperliquidPerps() {

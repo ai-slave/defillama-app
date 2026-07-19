@@ -3,19 +3,17 @@ import { buildBridgedInflowsChartData } from './inflowChart'
 
 describe('buildBridgedInflowsChartData', () => {
 	it('keeps missing token observations sparse and drops unselected fields', () => {
-		const result = buildBridgedInflowsChartData(
-			[
-				{ date: 1, USDC: 10, ignored: 100 },
-				{ date: 2, USDT: 20 }
-			],
-			['USDC', 'USDT']
-		)
+		const inflows = [
+			{ date: 1, USDC: 10, ignored: 100 },
+			{ date: 2, USDT: -20 }
+		]
+		const result = buildBridgedInflowsChartData(inflows, ['USDC', 'USDT'])
 
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'USDC', 'USDT'],
 			source: [
 				{ timestamp: 1_000, USDC: 10 },
-				{ timestamp: 2_000, USDT: 20 }
+				{ timestamp: 2_000, USDT: -20 }
 			]
 		})
 		expect(Object.hasOwn(result.dataset.source[0], 'USDT')).toBe(false)
@@ -36,5 +34,17 @@ describe('buildBridgedInflowsChartData', () => {
 				large: false
 			}
 		])
+		for (const chart of result.charts) expect(result.dataset.dimensions).toContain(chart.encode.y)
+		expect(inflows).toEqual([
+			{ date: 1, USDC: 10, ignored: 100 },
+			{ date: 2, USDT: -20 }
+		])
+	})
+
+	it('returns a dimensioned empty dataset for no selected tokens', () => {
+		expect(buildBridgedInflowsChartData([{ date: 1, USDC: 10 }], [])).toEqual({
+			dataset: { dimensions: ['timestamp'], source: [{ timestamp: 1_000 }] },
+			charts: []
+		})
 	})
 })

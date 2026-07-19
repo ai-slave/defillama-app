@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import { readInvestorApiJson, type ApiDate, type ApiIsoTimestamp } from '../../api.types'
 
 interface FormattedValue {
 	value: number
@@ -8,7 +9,7 @@ interface FormattedValue {
 
 interface Metadata {
 	projectName: string
-	updatedAt: string
+	updatedAt: ApiIsoTimestamp
 	links?: Record<string, string>
 	feeWallets?: Record<string, string>
 	faq?: Array<{
@@ -20,17 +21,21 @@ interface Metadata {
 interface ChartSeries {
 	name: string
 	data: number[]
+	type?: 'bar' | 'line'
+	stack?: string
 }
 
 interface ChartData {
 	title: string
-	dates: string[]
+	subtitle?: string
+	// Daily IR charts use UTC calendar dates, e.g. "2026-07-18".
+	dates: ApiDate[]
 	series: ChartSeries[]
 }
 
 interface WalletEntry {
 	wallet: string
-	address: string
+	address: string | null
 	link: string | null
 	total: number
 	totalFormatted: string
@@ -46,11 +51,11 @@ interface WalletBreakdownData {
 
 interface SupplyChartData {
 	title: string
-	dates: string[]
+	dates: ApiDate[]
 	series: ChartSeries[]
 }
 
-interface RevenueAPIResponse {
+export interface RevenueAPIResponse {
 	metadata: Metadata
 	fees: {
 		feesChart: ChartData
@@ -113,6 +118,43 @@ function getCumulativeData(data: number[]): number[] {
 	return cumulative
 }
 
+function findSeries(chart: ChartData, name: string): number[] {
+	return chart.series.find((series) => series.name === name)?.data ?? []
+}
+
+function sumSeries(...series: number[][]): number[] {
+	const length = Math.max(0, ...series.map((values) => values.length))
+	return Array.from({ length }, (_, index) => series.reduce((sum, values) => sum + (values[index] ?? 0), 0))
+}
+
+export function extractNearRevenueSeries(response: RevenueAPIResponse) {
+	const intentFees = findSeries(response.fees.feesChart, 'Intent Fees')
+	const protocolFees = findSeries(response.fees.feesChart, 'Protocol Fees')
+	const cumulativeFees = findSeries(response.fees.feesChart, 'Cumulative Total')
+
+	// The current API exposes the combined series directly. Keep the wallet-name fallback for cached legacy responses.
+	const currentIntentRevenue = findSeries(response.revenue.revenueChart, 'Intents Revenue')
+	const legacyIntentRevenue = sumSeries(
+		findSeries(response.revenue.revenueChart, 'fefundsadmin'),
+		findSeries(response.revenue.revenueChart, '1csfundsadmin')
+	)
+	const intentRevenue = currentIntentRevenue.length > 0 ? currentIntentRevenue : legacyIntentRevenue
+	const protocolRevenue = findSeries(response.revenue.revenueChart, 'Protocol Revenue (70% Burned)')
+	const cumulativeRevenue = findSeries(response.revenue.revenueChart, 'Cumulative Total')
+
+	return {
+		intentFees,
+		protocolFees,
+		cumulativeFees,
+		totalFees: sumSeries(intentFees, protocolFees),
+		intentRevenue,
+		protocolRevenue,
+		cumulativeRevenue,
+		totalRevenue: sumSeries(intentRevenue, protocolRevenue),
+		dailyEmissions: findSeries(response.emissions.revenueVsEmissionsChart, 'Daily Emissions')
+	}
+}
+
 export type { FormattedValue, WalletEntry, Metadata }
 
 export function getValidTimeframeForAggregation(timeframe: string, aggregation: string): string {
@@ -137,7 +179,7 @@ export function useRevenueData() {
 		queryFn: async () => {
 			const res = await fetch('/api/public/near/revenue')
 			if (!res.ok) throw new Error(`NEAR Revenue API error: ${res.status}`)
-			return res.json()
+			return readInvestorApiJson<RevenueAPIResponse>(res)
 		},
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false
@@ -150,28 +192,16 @@ export function useRevenueData() {
 
 		const { metadata, fees, revenue, emissions } = query.data
 
-		// Extract fees series from fees endpoint
-		const intentFeesSeries = fees.feesChart.series.find((s) => s.name === 'Intent Fees')?.data || []
-		const protocolFeesSeries = fees.feesChart.series.find((s) => s.name === 'Protocol Fees')?.data || []
-		const cumulativeFeesSeries = fees.feesChart.series.find((s) => s.name === 'Cumulative Total')?.data || []
-		const totalFeesSeries = intentFeesSeries.map((intent, i) => intent + (protocolFeesSeries[i] || 0))
-
-		// Extract revenue series from revenue endpoint
-		const fefundsSeries = revenue.revenueChart.series.find((s) => s.name === 'fefundsadmin')?.data || []
-		const oneCSFundsSeries = revenue.revenueChart.series.find((s) => s.name === '1csfundsadmin')?.data || []
-		const maxLen = Math.max(fefundsSeries.length, oneCSFundsSeries.length)
-		const intentRevenueSeries = Array.from(
-			{ length: maxLen },
-			(_, i) => (fefundsSeries[i] || 0) + (oneCSFundsSeries[i] || 0)
-		)
-		const protocolRevenueSeries =
-			revenue.revenueChart.series.find((s) => s.name === 'Protocol Revenue (70% Burned)')?.data || []
-		const cumulativeRevenueSeries = revenue.revenueChart.series.find((s) => s.name === 'Cumulative Total')?.data || []
-		const totalRevenueSeries = intentRevenueSeries.map((intent, i) => intent + (protocolRevenueSeries[i] || 0))
-
-		// Extract emissions data
-		const emissionsSeriesData =
-			emissions.revenueVsEmissionsChart.series.find((s) => s.name === 'Daily Emissions')?.data || []
+		const extracted = extractNearRevenueSeries(query.data)
+		const intentFeesSeries = extracted.intentFees
+		const protocolFeesSeries = extracted.protocolFees
+		const cumulativeFeesSeries = extracted.cumulativeFees
+		const totalFeesSeries = extracted.totalFees
+		const intentRevenueSeries = extracted.intentRevenue
+		const protocolRevenueSeries = extracted.protocolRevenue
+		const cumulativeRevenueSeries = extracted.cumulativeRevenue
+		const totalRevenueSeries = extracted.totalRevenue
+		const emissionsSeriesData = extracted.dailyEmissions
 
 		// Calculate cumulative data
 		const cumulativeFees = cumulativeFeesSeries.length > 0 ? cumulativeFeesSeries : getCumulativeData(totalFeesSeries)

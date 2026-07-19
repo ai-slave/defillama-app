@@ -5,6 +5,7 @@ import {
 	useHyperliquidL2Book,
 	useHyperliquidPerps,
 	useHyperliquidWsChannels,
+	type HyperliquidWsBookLevel,
 	type WsSubscription
 } from './api'
 
@@ -224,14 +225,7 @@ export default function Trades() {
 
 	const { isConnected } = useHyperliquidWsChannels(subs, {
 		trades: (message) => {
-			const incoming = (message.data ?? []) as Array<{
-				coin: string
-				side: 'B' | 'A' | 'S'
-				px: string
-				sz: string
-				time: number
-				tid: number
-			}>
+			const incoming = message.data ?? []
 			if (!Array.isArray(incoming) || incoming.length === 0) return
 			const mapped = incoming.map((trade) => ({
 				coin: trade.coin,
@@ -244,9 +238,7 @@ export default function Trades() {
 			setTrades((prev) => pushBounded(prev, mapped, MAX_TRADES))
 		},
 		l2Book: (message) => {
-			const levels = message.data?.levels as
-				| [Array<{ px: string; sz: string; n: number }>, Array<{ px: string; sz: string; n: number }>]
-				| undefined
+			const levels: [HyperliquidWsBookLevel[], HyperliquidWsBookLevel[]] | undefined = message.data?.levels
 			if (!levels) return
 			setBook({
 				bids: (levels[0] ?? []).map(toBookLevel),

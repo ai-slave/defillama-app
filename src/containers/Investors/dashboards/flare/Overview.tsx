@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, useEffect } from 'react'
 import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { readInvestorApiJson } from '../../api.types'
 import { buildFlareOverviewData, type OverviewAPIResponse } from './data'
 import { ChartCard, KpiCard, SectionHeader } from './ui'
 
@@ -15,7 +16,7 @@ export default function Overview() {
 		queryFn: async () => {
 			const res = await fetch('/api/public/flare/overview')
 			if (!res.ok) throw new Error(`Flare overview API error: ${res.status}`)
-			return buildFlareOverviewData((await res.json()) as OverviewAPIResponse)
+			return buildFlareOverviewData(await readInvestorApiJson<OverviewAPIResponse>(res))
 		},
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false

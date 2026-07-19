@@ -1,7 +1,7 @@
 import { lazy, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/types'
-import { useIncentivesData, chartToTs } from './api'
-import { KpiCard, ChartCard, SectionHeader, SimpleTable, fmtUsd } from './ui'
+import { useIncentivesData, chartToTs, type EpochRow, type SpendWindowRow } from './api'
+import { KpiCard, ChartCard, SectionHeader, SimpleTable, fmtUsd, type Col } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -23,16 +23,19 @@ const VENUES = [
 	{ id: 'votemarket', label: 'VoteMarket' },
 	{ id: 'merkl', label: 'Merkl' },
 	{ id: 'lithos', label: 'Lithos' }
-]
+] as const
 
-function TabBtns({
+type VenueId = (typeof VENUES)[number]['id']
+type EpochTableRow = EpochRow | SpendWindowRow
+
+function TabBtns<T extends string>({
 	active,
 	onChange,
 	options
 }: {
-	active: string
-	onChange: (v: string) => void
-	options: { id: string; label: string }[]
+	active: T
+	onChange: (v: T) => void
+	options: ReadonlyArray<{ id: T; label: string }>
 }) {
 	return (
 		<div className="mb-3 flex flex-wrap gap-1">
@@ -53,25 +56,55 @@ function TabBtns({
 	)
 }
 
-function epochCols(id: string) {
+function epochCols(id: VenueId): Array<Col<EpochTableRow>> {
 	if (id === 'aerodrome' || id === 'velodrome')
 		return [
 			{ key: 'pool', label: 'Pool' },
 			{ key: 'period', label: 'Period' },
 			{ key: 'emissions', label: 'Emissions' },
 			{ key: 'incentiveSpend', label: 'Incentive Spend', right: true },
-			{ key: 'currentEpochUsd', label: 'Current Epoch', right: true, render: (r: any) => fmtUsd(r.currentEpochUsd) },
-			{ key: 'monthSoFarUsd', label: 'MTD', right: true, render: (r: any) => fmtUsd(r.monthSoFarUsd) },
-			{ key: 'previousMonthUsd', label: 'Prev Month', right: true, render: (r: any) => fmtUsd(r.previousMonthUsd) }
+			{
+				key: 'currentEpochUsd',
+				label: 'Current Epoch',
+				right: true,
+				render: (r) => fmtUsd('currentEpochUsd' in r ? r.currentEpochUsd : undefined)
+			},
+			{
+				key: 'monthSoFarUsd',
+				label: 'MTD',
+				right: true,
+				render: (r) => fmtUsd('monthSoFarUsd' in r ? r.monthSoFarUsd : undefined)
+			},
+			{
+				key: 'previousMonthUsd',
+				label: 'Prev Month',
+				right: true,
+				render: (r) => fmtUsd('previousMonthUsd' in r ? r.previousMonthUsd : undefined)
+			}
 		]
 	if (id === 'votemarket')
 		return [
 			{ key: 'pool', label: 'Pool / Gauge' },
 			{ key: 'period', label: 'Period' },
 			{ key: 'latestCycle', label: 'Latest Cycle', right: true },
-			{ key: 'currentEpochUsd', label: 'Current', right: true, render: (r: any) => fmtUsd(r.currentEpochUsd) },
-			{ key: 'monthSoFarUsd', label: 'MTD', right: true, render: (r: any) => fmtUsd(r.monthSoFarUsd) },
-			{ key: 'previousMonthUsd', label: 'Prev Month', right: true, render: (r: any) => fmtUsd(r.previousMonthUsd) }
+			{
+				key: 'currentEpochUsd',
+				label: 'Current',
+				right: true,
+				render: (r) => fmtUsd('currentEpochUsd' in r ? r.currentEpochUsd : undefined)
+			},
+			{
+				key: 'monthSoFarUsd',
+				label: 'MTD',
+				right: true,
+				render: (r) => fmtUsd('monthSoFarUsd' in r ? r.monthSoFarUsd : undefined)
+			},
+			{
+				key: 'previousMonthUsd',
+				label: 'Prev Month',
+				right: true,
+				render: (r) => fmtUsd('previousMonthUsd' in r ? r.previousMonthUsd : undefined)
+			}
 		]
 	if (id === 'merkl')
 		return [
@@ -87,8 +120,8 @@ function epochCols(id: string) {
 export default function Incentives() {
 	const { data } = useIncentivesData()
 	const k = data?.kpis ?? ({} as Partial<NonNullable<typeof data>['kpis']>)
-	const [poolTab, setPoolTab] = useState('aerodrome')
-	const [epochTab, setEpochTab] = useState('aerodrome')
+	const [poolTab, setPoolTab] = useState<VenueId>('aerodrome')
+	const [epochTab, setEpochTab] = useState<VenueId>('aerodrome')
 
 	const poolChart = data?.weeklyPoolCharts?.[poolTab]
 	const poolSeries = poolChart
@@ -129,9 +162,9 @@ export default function Incentives() {
 
 			<SectionHeader>Weekly Spend per Pool</SectionHeader>
 			<ChartCard title="Per-pool weekly spend">
-				<TabBtns active={poolTab} onChange={setPoolTab} options={VENUES} />
+				<TabBtns<VenueId> active={poolTab} onChange={setPoolTab} options={VENUES} />
 				{poolSeries.length ? (
-					<MultiSeriesChart key={poolTab} series={poolSeries as any} valueSymbol="$" height="360px" />
+					<MultiSeriesChart key={poolTab} series={poolSeries} valueSymbol="$" height="360px" />
 				) : (
 					<div className="px-2 py-6 text-xs text-pro-text-secondary">No weekly pool data</div>
 				)}
@@ -139,9 +172,9 @@ export default function Incentives() {
 
 			<SectionHeader>Epochs & Spend</SectionHeader>
 			<ChartCard title="Epoch breakdown">
-				<TabBtns active={epochTab} onChange={setEpochTab} options={VENUES} />
+				<TabBtns<VenueId> active={epochTab} onChange={setEpochTab} options={VENUES} />
 				<div key={epochTab}>
-					<SimpleTable rows={data?.epochTables?.[epochTab]} cols={epochCols(epochTab) as any} />
+					<SimpleTable<EpochTableRow> rows={data?.epochTables?.[epochTab]} cols={epochCols(epochTab)} />
 				</div>
 			</ChartCard>
 

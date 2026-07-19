@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, useEffect, useState } from 'react'
 import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { readInvestorApiJson } from '../../api.types'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { buildFlareTokenomicsData, type TokenomicsAPIResponse } from './data'
 import { ChartCard, KpiCard, NarrativeCallout, SectionHeader } from './ui'
@@ -80,7 +81,7 @@ export default function Tokenomics() {
 		queryFn: async () => {
 			const res = await fetch('/api/public/flare/tokenomics')
 			if (!res.ok) throw new Error(`Flare tokenomics API error: ${res.status}`)
-			return buildFlareTokenomicsData((await res.json()) as TokenomicsAPIResponse)
+			return buildFlareTokenomicsData(await readInvestorApiJson<TokenomicsAPIResponse>(res))
 		},
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false
@@ -93,9 +94,9 @@ export default function Tokenomics() {
 		queryFn: async () => {
 			const res = await fetch('/api/public/flare/supply')
 			if (!res.ok) throw new Error(`Flare supply API error: ${res.status}`)
-			const data = (await res.json()) as {
+			const data = await readInvestorApiJson<{
 				kpis?: { maxSupply?: { value: number; formatted: string } }
-			}
+			}>(res)
 			return data.kpis?.maxSupply?.formatted ?? null
 		},
 		staleTime: 10 * 60 * 1000,

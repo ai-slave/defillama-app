@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, useEffect } from 'react'
 import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { readInvestorApiJson } from '../../api.types'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
 import { buildFlareNetworkData, type NetworkAPIResponse } from './data'
 import { ChartCard, KpiCard, SectionHeader } from './ui'
@@ -16,7 +17,7 @@ export default function Network() {
 		queryFn: async () => {
 			const res = await fetch('/api/public/flare/network')
 			if (!res.ok) throw new Error(`Flare network API error: ${res.status}`)
-			return buildFlareNetworkData((await res.json()) as NetworkAPIResponse)
+			return buildFlareNetworkData(await readInvestorApiJson<NetworkAPIResponse>(res))
 		},
 		staleTime: 5 * 60 * 1000,
 		refetchOnWindowFocus: false

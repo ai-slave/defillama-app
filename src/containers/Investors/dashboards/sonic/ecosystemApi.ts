@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { buildColumnarTimeSeriesDataset } from '~/components/ECharts/timeSeriesDataset'
+import { readInvestorApiJson, type ApiDate } from '../../api.types'
 import { assignColors } from '../spark/api'
 import { datasetChartOptions, multiSeriesCharts } from './chartDefaults'
 
@@ -10,7 +11,7 @@ interface FormattedValue {
 
 interface TimeSeriesData {
 	title: string
-	dates: string[]
+	dates: ApiDate[]
 	series: Array<{ name: string; data: number[] }>
 }
 
@@ -49,7 +50,7 @@ export interface EcosystemAPIResponse {
 			title: string
 			current: number
 			currentFormatted: string
-			dates: string[]
+			dates: ApiDate[]
 			series: Array<{ name: string; data: number[] }>
 		}
 	}
@@ -197,7 +198,7 @@ export function useEcosystemData() {
 		queryFn: async () => {
 			const res = await fetch('/api/public/sonic/ecosystem')
 			if (!res.ok) throw new Error(`Ecosystem API error: ${res.status}`)
-			const response: EcosystemAPIResponse = await res.json()
+			const response = await readInvestorApiJson<EcosystemAPIResponse>(res)
 			return buildEcosystemViewModel(response)
 		},
 		staleTime: 10 * 60 * 1000,

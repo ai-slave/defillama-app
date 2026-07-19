@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { buildColumnarTimeSeriesDataset, type TimestampDataset } from '~/components/ECharts/timeSeriesDataset'
+import { readInvestorApiJson, type ApiDate, type ApiIsoTimestamp } from '../../api.types'
 
 interface FormattedValue {
 	value: number
@@ -13,7 +14,7 @@ interface ChartSeries {
 
 interface ChartData {
 	title: string
-	dates: string[]
+	dates: ApiDate[]
 	series: ChartSeries[]
 }
 
@@ -29,7 +30,7 @@ interface TopToken {
 interface BlockchainAPIResponse {
 	metadata: {
 		projectName: string
-		updatedAt: string
+		updatedAt: ApiIsoTimestamp
 		links?: Record<string, string>
 	}
 	blockchain: {
@@ -129,7 +130,7 @@ export function useBlockchainData() {
 		queryFn: async () => {
 			const res = await fetch('/api/public/berachain/blockchain')
 			if (!res.ok) throw new Error(`Berachain Blockchain API error: ${res.status}`)
-			const response: BlockchainAPIResponse = await res.json()
+			const response = await readInvestorApiJson<BlockchainAPIResponse>(res)
 			return buildBlockchainViewModel(response)
 		},
 		staleTime: 10 * 60 * 1000,

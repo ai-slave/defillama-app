@@ -126,7 +126,7 @@ function FeeMTreemap({ leaderboard }: { leaderboard: FeeMLeaderboardEntry[] }) {
 		instance.setOption(
 			{
 				tooltip: {
-					formatter(info: any) {
+					formatter(info: { name: string; value: number }) {
 						return `<b>${info.name}</b><br/>Collected: ${formatS(info.value)}`
 					}
 				},
@@ -146,7 +146,7 @@ function FeeMTreemap({ leaderboard }: { leaderboard: FeeMLeaderboardEntry[] }) {
 							color: '#fff',
 							textBorderColor: 'rgba(0,0,0,0.3)',
 							textBorderWidth: 2,
-							formatter(params: any) {
+							formatter(params: { name: string; value: number }) {
 								return `{name|${params.name}}\n{val|${formatS(params.value)}}`
 							},
 							rich: {

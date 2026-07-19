@@ -91,7 +91,7 @@ export default function Tvl() {
 					title="Ecosystem TVL"
 					subtitle="Metronome, Vesper, Odyssey and Morpho markets — drag the slider for full history"
 				>
-					<MultiSeriesChart series={ecoSeries as any} valueSymbol="$" height="400px" chartOptions={ecoZoom} />
+					<MultiSeriesChart series={ecoSeries} valueSymbol="$" height="400px" chartOptions={ecoZoom} />
 				</ChartCard>
 			)}
 
@@ -101,7 +101,7 @@ export default function Tvl() {
 			) : (
 				<ChartCard title="Ecosystem TVL vs ETH/USD" subtitle="Correlation overlay">
 					<MultiSeriesChart
-						series={ethOverlay as any}
+						series={ethOverlay}
 						valueSymbol="$"
 						yAxisSymbols={['$', '$']}
 						height="350px"
@@ -112,7 +112,7 @@ export default function Tvl() {
 
 			<SectionHeader>TVL by Chain</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-				{(data?.protocolByChain || []).map((p: any) => {
+				{(data?.protocolByChain || []).map((p) => {
 					const series = chartToTs(p).map((s) => ({
 						name: s.name,
 						type: 'bar' as const,
@@ -123,7 +123,7 @@ export default function Tvl() {
 					const z = defaultZoomOptions(zoomStartPct(p.dates, fromDate))
 					return (
 						<ChartCard key={p.protocol} title={p.protocol} subtitle="Stacked by chain">
-							<MultiSeriesChart series={series as any} valueSymbol="$" height="280px" chartOptions={z} />
+							<MultiSeriesChart series={series} valueSymbol="$" height="280px" chartOptions={z} />
 						</ChartCard>
 					)
 				})}
@@ -150,7 +150,7 @@ export default function Tvl() {
 							]}
 						/>
 					</ChartCard>
-					{(u.marketsByChain || []).map((g: any) => (
+					{(u.marketsByChain || []).map((g) => (
 						<ChartCard key={g.chain} title={`${g.chain} — Markets`}>
 							<SimpleTable
 								rows={g.markets}
@@ -240,7 +240,7 @@ export default function Tvl() {
 									subtitle={`${m.chain}${m.source ? ` · ${m.source}` : ''}`}
 								>
 									<MultiSeriesChart
-										series={series as any}
+										series={series}
 										valueSymbol="$"
 										yAxisSymbols={['$', '%']}
 										height="300px"

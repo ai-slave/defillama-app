@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { readInvestorApiJson, type ApiDate } from '../../api.types'
 
 interface FormattedValue {
 	value: number
@@ -12,7 +13,8 @@ interface ChartSeries {
 
 interface ChartData {
 	title: string
-	dates: string[]
+	// Daily IR charts use UTC calendar dates, e.g. "2026-07-18".
+	dates: ApiDate[]
 	series: ChartSeries[]
 }
 
@@ -105,7 +107,7 @@ export function useEcosystemData() {
 		queryFn: async () => {
 			const res = await fetch('/api/public/near/ecosystem')
 			if (!res.ok) throw new Error(`NEAR Ecosystem API error: ${res.status}`)
-			return res.json()
+			return readInvestorApiJson<EcosystemResponse>(res)
 		},
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false

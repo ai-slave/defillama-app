@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { readInvestorApiJson, type ApiUnixMillisecondsString } from '../../api.types'
 
-interface ParagraphPost {
+export interface ParagraphPost {
 	id: string
 	title: string
 	subtitle?: string
 	slug: string
-	publishedAt: string
+	// Paragraph returns Unix milliseconds as a decimal string.
+	publishedAt: ApiUnixMillisecondsString
 	imageUrl?: string
 	categories?: string[]
 }
@@ -138,7 +140,10 @@ export default function PressReleases() {
 
 	useEffect(() => {
 		fetch('/api/public/spark/reports')
-			.then((res) => res.json())
+			.then((response) => {
+				if (!response.ok) throw new Error(`Spark reports API error: ${response.status}`)
+				return readInvestorApiJson<{ items?: ParagraphPost[] }>(response)
+			})
 			.then((apiData) => {
 				const posts = dedupePosts(apiData.items || [])
 

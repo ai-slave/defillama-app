@@ -1,4 +1,5 @@
 import type { LowercaseDwmcGrouping } from '~/components/ECharts/ChartGroupingSelector'
+import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
 import { getBucketTimestampSec } from '~/components/ECharts/utils'
 import type { IProcessedFlows } from './types'
 
@@ -7,6 +8,15 @@ type ETFFlowChartRow = {
 	Bitcoin: number
 	Ethereum: number | null
 	Solana: number | null
+}
+
+export const ETF_ASSET_NAMES = ['Bitcoin', 'Ethereum', 'Solana'] as const
+export type ETFAssetName = (typeof ETF_ASSET_NAMES)[number]
+
+const ETF_CHART_COLORS: Record<ETFAssetName, string> = {
+	Bitcoin: '#F7931A',
+	Ethereum: '#6B7280',
+	Solana: '#9945FF'
 }
 
 export function buildETFFlowChartData(flows: IProcessedFlows, groupBy: LowercaseDwmcGrouping): ETFFlowChartRow[] {
@@ -48,4 +58,34 @@ export function buildETFFlowChartData(flows: IProcessedFlows, groupBy: Lowercase
 	}
 
 	return source
+}
+
+export function buildETFChartSpec({
+	flows,
+	groupBy,
+	assets
+}: {
+	flows: IProcessedFlows
+	groupBy: LowercaseDwmcGrouping
+	assets: ETFAssetName[]
+}): {
+	dataset: MultiSeriesChart2Dataset
+	charts: NonNullable<IMultiSeriesChart2Props['charts']>
+} {
+	const type: 'line' | 'bar' = groupBy === 'cumulative' ? 'line' : 'bar'
+	const charts = assets.map((name) => ({
+		type,
+		name,
+		encode: { x: 'timestamp', y: name },
+		stack: name,
+		color: ETF_CHART_COLORS[name]
+	}))
+
+	return {
+		dataset: {
+			source: buildETFFlowChartData(flows, groupBy),
+			dimensions: ['timestamp', ...assets]
+		},
+		charts
+	}
 }

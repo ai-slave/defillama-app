@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, useEffect } from 'react'
 import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { readInvestorApiJson } from '../../api.types'
 import { buildFlareStakingData, type StakingAPIResponse } from './data'
 import { ChartCard, KpiCard, NarrativeCallout, SectionHeader } from './ui'
 
@@ -15,7 +16,7 @@ export default function Staking() {
 		queryFn: async () => {
 			const res = await fetch('/api/public/flare/staking')
 			if (!res.ok) throw new Error(`Flare staking API error: ${res.status}`)
-			return buildFlareStakingData((await res.json()) as StakingAPIResponse)
+			return buildFlareStakingData(await readInvestorApiJson<StakingAPIResponse>(res))
 		},
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false

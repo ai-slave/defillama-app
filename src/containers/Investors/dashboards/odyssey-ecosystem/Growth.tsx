@@ -6,7 +6,16 @@ import type {
 	MultiSeriesChart2Dataset
 } from '~/components/ECharts/types'
 import { useGrowthData, chartToTs, type LooprDailyRow } from './api'
-import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd, dollarPctChartOptions } from './ui'
+import {
+	KpiCard,
+	ChartCard,
+	SectionHeader,
+	ChartSkeleton,
+	SimpleTable,
+	fmtUsd,
+	dollarPctChartOptions,
+	formatNullablePercent
+} from './ui'
 
 const MultiSeriesChart2 = lazy(
 	() => import('~/components/ECharts/MultiSeriesChart2')
@@ -206,7 +215,7 @@ export default function Growth() {
 			}))
 		: undefined
 
-	const morphoMarkets = (cs.morphoMarkets || []) as any[]
+	const morphoMarkets = cs.morphoMarkets ?? []
 	const spendVsTvlBlock = (cs.spendVsTvl || []).find((s) => s.venue === spendVenue)
 	const spendVsTvlSeries = spendVsTvlBlock
 		? chartToTs(spendVsTvlBlock).map((s, i) => ({
@@ -283,12 +292,12 @@ export default function Growth() {
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				{perChainActiveUsers && (
 					<ChartCard title="Active Users by Chain">
-						<MultiSeriesChart series={perChainActiveUsers as any} height="280px" />
+						<MultiSeriesChart series={perChainActiveUsers} height="280px" />
 					</ChartCard>
 				)}
 				{perChainActivePositions && (
 					<ChartCard title="Active Positions by Chain">
-						<MultiSeriesChart series={perChainActivePositions as any} height="280px" />
+						<MultiSeriesChart series={perChainActivePositions} height="280px" />
 					</ChartCard>
 				)}
 			</div>
@@ -297,7 +306,7 @@ export default function Growth() {
 				<>
 					<SectionHeader>Loopr · Deposits by Chain</SectionHeader>
 					<ChartCard title="Total deposits over time" subtitle="USD deposits per chain">
-						<MultiSeriesChart series={deposits as any} valueSymbol="$" height="320px" />
+						<MultiSeriesChart series={deposits} valueSymbol="$" height="320px" />
 					</ChartCard>
 				</>
 			)}
@@ -322,14 +331,14 @@ export default function Growth() {
 									key: 'performanceFeePct',
 									label: 'Perf Fee',
 									right: true,
-									render: (r) => `${r.performanceFeePct}%`
+									render: (r) => formatNullablePercent(r.performanceFeePct)
 								},
 								{
 									key: 'chains',
 									label: 'Chains',
 									render: (r) =>
 										Object.entries(r.chains)
-											.map(([c, v]: any) => `${capitalize(c)}: ${v.users}u · ${fmtUsd(v.usd)}`)
+											.map(([c, v]) => `${capitalize(c)}: ${v.users}u · ${fmtUsd(v.usd)}`)
 											.join(' · ')
 								}
 							]}
@@ -371,7 +380,7 @@ export default function Growth() {
 						title="Cumulative % change since baseline"
 						subtitle="Combined ecosystem TVL change vs ETH/USD change — 2y window"
 					>
-						<MultiSeriesChart series={marketComboSeries as any} valueSymbol="%" height="320px" />
+						<MultiSeriesChart series={marketComboSeries} valueSymbol="%" height="320px" />
 					</ChartCard>
 				</>
 			)}
@@ -381,7 +390,7 @@ export default function Growth() {
 					<SectionHeader>Morpho Market · Supply / Borrow / Utilization</SectionHeader>
 					<ChartCard title="Featured Morpho market" subtitle="Daily supply / borrow / utilization">
 						<MultiSeriesChart
-							series={morphoMarket as any}
+							series={morphoMarket}
 							valueSymbol="$"
 							yAxisSymbols={['$', '%']}
 							height="340px"
@@ -395,7 +404,7 @@ export default function Growth() {
 				<>
 					<SectionHeader>Metronome Morpho Markets</SectionHeader>
 					<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-						{morphoMarkets.map((m: any) => {
+						{morphoMarkets.map((m) => {
 							const series = chartToTs(m).map((s, i) => ({
 								name: s.name,
 								type: 'line' as const,
@@ -406,7 +415,7 @@ export default function Growth() {
 							return (
 								<ChartCard key={m.id} title={m.title || m.label} subtitle="Daily supply / borrow / utilization">
 									<MultiSeriesChart
-										series={series as any}
+										series={series}
 										valueSymbol="$"
 										yAxisSymbols={['$', '%']}
 										height="300px"
@@ -429,7 +438,7 @@ export default function Growth() {
 						<TabBtns active={spendVenue} onChange={setSpendVenue} options={SPEND_VENUES} />
 						<MultiSeriesChart
 							key={spendVenue}
-							series={spendVsTvlSeries as any}
+							series={spendVsTvlSeries}
 							valueSymbol="$"
 							yAxisSymbols={['$', '$']}
 							height="340px"

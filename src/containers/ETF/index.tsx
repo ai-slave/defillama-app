@@ -16,7 +16,7 @@ import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/Char
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formattedNum } from '~/utils'
 import { tokenIconUrl } from '~/utils/icons'
-import { buildETFFlowChartData } from './chartData'
+import { buildETFChartSpec, ETF_ASSET_NAMES, type ETFAssetName } from './chartData'
 import type { ETFOverviewProps, IETFSnapshotRow } from './types'
 
 const MultiSeriesChart2 = React.lazy(() => import('~/components/ECharts/MultiSeriesChart2'))
@@ -29,63 +29,27 @@ const ASSETS = [
 
 type GroupBy = LowercaseDwmcGrouping
 
-const ASSET_VALUES = ['Bitcoin', 'Ethereum', 'Solana'] as const
 const DEFAULT_SORTING_STATE = [{ id: 'aum', desc: true }]
 
 export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETFOverviewProps) => {
 	const [groupBy, setGroupBy] = React.useState<GroupBy>('weekly')
-	const [tickers, setTickers] = React.useState<string[]>(['Bitcoin', 'Ethereum', 'Solana'])
+	const [tickers, setTickers] = React.useState<ETFAssetName[]>([...ETF_ASSET_NAMES])
 	const setTickersFromSelect: React.Dispatch<React.SetStateAction<Array<string> | string>> = React.useCallback(
 		(next) => {
 			setTickers((prev) => {
 				const resolved = typeof next === 'function' ? next(prev) : next
-				if (Array.isArray(resolved)) return resolved
-				return resolved ? [resolved] : []
+				if (Array.isArray(resolved))
+					return resolved.filter((value): value is ETFAssetName => ETF_ASSET_NAMES.includes(value as ETFAssetName))
+				return ETF_ASSET_NAMES.includes(resolved as ETFAssetName) ? [resolved as ETFAssetName] : []
 			})
 		},
 		[]
 	)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
-	const chartData = React.useMemo(() => {
-		const seriesType: 'line' | 'bar' = groupBy === 'cumulative' ? 'line' : 'bar'
-
-		return {
-			source: buildETFFlowChartData(flows, groupBy),
-			allCharts: [
-				{
-					type: seriesType,
-					name: 'Bitcoin',
-					encode: { x: 'timestamp', y: 'Bitcoin' },
-					stack: 'Bitcoin',
-					color: '#F7931A'
-				},
-				{
-					type: seriesType,
-					name: 'Ethereum',
-					encode: { x: 'timestamp', y: 'Ethereum' },
-					stack: 'Ethereum',
-					color: '#6B7280'
-				},
-				{
-					type: seriesType,
-					name: 'Solana',
-					encode: { x: 'timestamp', y: 'Solana' },
-					stack: 'Solana',
-					color: '#9945FF'
-				}
-			]
-		}
-	}, [flows, groupBy])
-
 	const finalCharts = React.useMemo(() => {
-		const filteredCharts = chartData.allCharts.filter((c) => tickers.includes(c.name))
-		const dimensions = ['timestamp', ...filteredCharts.map((c) => c.name)]
-		return {
-			dataset: { source: chartData.source, dimensions },
-			charts: filteredCharts
-		}
-	}, [chartData, tickers])
+		return buildETFChartSpec({ flows, groupBy, assets: tickers })
+	}, [flows, groupBy, tickers])
 
 	return (
 		<>
@@ -128,7 +92,7 @@ export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 						<h2 className="mr-auto heading-xs">Flows (Source: Farside)</h2>
 						<ChartGroupingSelector value={groupBy} setValue={setGroupBy} options={DWMC_GROUPING_OPTIONS_LOWERCASE} />
 						<Select
-							allValues={ASSET_VALUES}
+							allValues={ETF_ASSET_NAMES}
 							selectedValues={tickers}
 							setSelectedValues={setTickersFromSelect}
 							label={'ETF'}

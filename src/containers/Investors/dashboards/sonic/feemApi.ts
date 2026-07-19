@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/types'
+import { readInvestorApiJson, type ApiDate, type ApiIsoTimestamp } from '../../api.types'
 
 interface FormattedValue {
 	value: number
@@ -31,7 +32,7 @@ export interface FeeMLeaderboardEntry {
 
 interface TimeSeriesData {
 	title: string
-	dates: string[]
+	dates: ApiDate[]
 	series: Array<{ name: string; data: number[] }>
 }
 
@@ -39,7 +40,7 @@ export interface FeeMAPIResponse {
 	metadata: {
 		projectId: number
 		projectName: string
-		updatedAt: string
+		updatedAt: ApiIsoTimestamp
 		links: Record<string, string>
 	}
 	feem: {
@@ -94,7 +95,7 @@ export function useFeeMData() {
 		queryFn: async () => {
 			const res = await fetch('/api/public/sonic/feem')
 			if (!res.ok) throw new Error(`FeeM API error: ${res.status}`)
-			const response: FeeMAPIResponse = await res.json()
+			const response = await readInvestorApiJson<FeeMAPIResponse>(res)
 			return buildFeeMViewModel(response)
 		},
 		staleTime: 10 * 60 * 1000,

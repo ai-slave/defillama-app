@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { createChartRecord, createChartRow } from '~/components/ECharts/dynamicRow'
 import { fetchAdapterProtocolChartData } from '~/containers/AdapterMetrics/api'
 import ChainCharts from '~/containers/ProDashboard/services/ChainCharts'
+import { readInvestorApiJson } from '../../api.types'
 
 const STALE_TIME = 10 * 60 * 1000
 
@@ -29,7 +30,11 @@ export interface HoneyRevenueData {
 export function useHoneyRevenueData() {
 	return useQuery<HoneyRevenueData>({
 		queryKey: ['berachain-honey-revenue'],
-		queryFn: () => fetch('/api/public/berachain/revenue').then((r) => r.json()),
+		queryFn: async () => {
+			const response = await fetch('/api/public/berachain/revenue')
+			if (!response.ok) throw new Error(`Berachain revenue API error: ${response.status}`)
+			return readInvestorApiJson<HoneyRevenueData>(response)
+		},
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false
 	})

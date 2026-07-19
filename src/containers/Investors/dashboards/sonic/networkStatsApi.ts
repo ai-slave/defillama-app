@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import { readInvestorApiJson, type ApiNumericString } from '../../api.types'
 
 interface BurnData {
 	price: number
@@ -27,7 +28,7 @@ interface BurnData {
 interface NetworkStatsAPIResponse {
 	blockNumber: number | null
 	gasPrice: { gwei: number; wei: number } | null
-	totalSupplyWei: string | null
+	totalSupplyWei: ApiNumericString | null
 	burnData: BurnData | null
 	uptimeUrl: string
 }
@@ -49,7 +50,7 @@ export function useNetworkStatsData() {
 		queryFn: async () => {
 			const res = await fetch('/api/public/sonic/network-stats')
 			if (!res.ok) throw new Error(`Network stats API error: ${res.status}`)
-			return res.json()
+			return readInvestorApiJson<NetworkStatsAPIResponse>(res)
 		},
 		staleTime: 2 * 60 * 1000,
 		refetchOnWindowFocus: false

@@ -42,7 +42,7 @@ interface RawSeries {
 const CHART_OPTIONS = {
 	legend: { type: 'scroll', top: CHART_INSET },
 	grid: { top: CHART_LEGEND_RESERVE }
-} as any
+} satisfies NonNullable<IMultiSeriesChartProps['chartOptions']>
 const QUERY_OPTS = { staleTime: 10 * 60 * 1000, refetchOnWindowFocus: false } as const
 
 function aggregate(series: RawSeries[], view: View, stacked: boolean) {
@@ -97,7 +97,7 @@ function TrendCard({
 	valueSymbol: string
 	view: View
 	setView: (v: View) => void
-	chartSeries: any[]
+	chartSeries: ReturnType<typeof aggregate>
 	isLoading: boolean
 	isError?: boolean
 }) {
@@ -146,7 +146,7 @@ export function ChainBreakdownChart({
 	limit?: number
 }) {
 	const [view, setView] = useState<View>('day')
-	const { data, isLoading, isError } = useQuery({
+	const { data, isLoading, isError } = useQuery<{ series: RawSeries[] }>({
 		queryKey: ['thorchain-breakdown', protocol, metric, limit],
 		queryFn: () => ProtocolChartBuilderData.getProtocolChainData(protocol, metric, undefined, limit),
 		...QUERY_OPTS
@@ -155,7 +155,7 @@ export function ChainBreakdownChart({
 	// legend by lifetime size (catch-all "Others" bucket last) and fix the casing.
 	const series = useMemo(() => {
 		const total = (s: RawSeries) => s.data.reduce((t, [, v]) => t + (v || 0), 0)
-		return ((data?.series ?? []) as RawSeries[])
+		return (data?.series ?? [])
 			.map((s) => (s.name === 'Thorchain' ? { ...s, name: 'THORChain' } : s))
 			.sort((a, b) => {
 				const aOthers = a.name.startsWith('Others'),
@@ -283,7 +283,7 @@ export function FeeRevenueChart({
 			[
 				fees.data?.length ? { name: 'Fees', data: fees.data, color: THOR_TEAL } : null,
 				revenue.data?.length ? { name: 'Revenue', data: revenue.data, color: GOLD } : null
-			].filter(Boolean) as RawSeries[],
+			].filter((series) => series != null),
 		[fees.data, revenue.data]
 	)
 	const chartSeries = useMemo(() => aggregate(rawSeries, view, false), [rawSeries, view])

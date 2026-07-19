@@ -13,6 +13,7 @@ import {
 	parseWad,
 	parseTokenAmount
 } from './api'
+import { aggregateByMonth, aggregateDripByMonth, monthTimestampMs, type DripRow, type TxRow } from './chartData'
 import {
 	ChartCard,
 	CardSkeleton,
@@ -62,22 +63,6 @@ const DRIP_CLAIMS_CHART: IMultiSeriesChart2Props['charts'] = [
 		stack: 'a'
 	}
 ]
-
-interface TxRow {
-	id: string
-	timestamp: number
-	type: 'deposit' | 'withdraw'
-	assetsAmount: number
-	account: string
-}
-
-interface DripRow {
-	id: string
-	timestamp: number
-	type: string
-	amount: number
-	account: string
-}
 
 const txColumns: ColumnDef<TxRow>[] = [
 	{
@@ -208,51 +193,6 @@ function DripTable({ data }: { data: DripRow[] }) {
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>
 	)
-}
-
-function monthTimestampMs(ts: number): number {
-	const d = new Date(ts * 1000)
-	return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)
-}
-
-function aggregateByMonth(txes: TxRow[]): MultiSeriesChart2Dataset {
-	const map = new Map<number, { deposits: number; withdrawals: number }>()
-
-	for (const tx of txes) {
-		const mk = monthTimestampMs(tx.timestamp)
-		const entry = map.get(mk) ?? { deposits: 0, withdrawals: 0 }
-		if (tx.type === 'deposit') {
-			entry.deposits += tx.assetsAmount
-		} else {
-			entry.withdrawals += tx.assetsAmount
-		}
-		map.set(mk, entry)
-	}
-
-	const entries = Array.from(map.entries()).sort(([a], [b]) => a - b)
-	const source = new Array<MultiSeriesChart2Dataset['source'][number]>(entries.length)
-	for (let index = 0; index < entries.length; index++) {
-		const [timestamp, value] = entries[index]
-		source[index] = { timestamp, Deposits: value.deposits, Withdrawals: value.withdrawals }
-	}
-	return { dimensions: ['timestamp', 'Deposits', 'Withdrawals'], source }
-}
-
-function aggregateDripByMonth(txes: DripRow[]): MultiSeriesChart2Dataset {
-	const map = new Map<number, number>()
-
-	for (const tx of txes) {
-		const mk = monthTimestampMs(tx.timestamp)
-		map.set(mk, (map.get(mk) ?? 0) + tx.amount)
-	}
-
-	const entries = Array.from(map.entries()).sort(([a], [b]) => a - b)
-	const source = new Array<MultiSeriesChart2Dataset['source'][number]>(entries.length)
-	for (let index = 0; index < entries.length; index++) {
-		const [timestamp, amount] = entries[index]
-		source[index] = { timestamp, Claimed: amount }
-	}
-	return { dimensions: ['timestamp', 'Claimed'], source }
 }
 
 export default function SyrupActivity() {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { getBucketTimestampSec } from '~/components/ECharts/utils'
-import { buildETFFlowChartData } from './chartData'
+import { buildETFChartSpec, buildETFFlowChartData } from './chartData'
 import type { IProcessedFlows } from './types'
 
 const DAY = 86_400
@@ -50,5 +50,43 @@ describe('buildETFFlowChartData', () => {
 		expect(buildETFFlowChartData(flows, groupBy)).toEqual([
 			{ timestamp: bucket * 1e3, Bitcoin: 3, Ethereum: 7, Solana: null }
 		])
+	})
+
+	it('builds the exact filtered dataset and chart contract used by the overview', () => {
+		const flows: IProcessedFlows = {
+			[jan1]: { date: jan1, Bitcoin: 1, Ethereum: -2, Solana: 3 }
+		}
+		const result = buildETFChartSpec({ flows, groupBy: 'daily', assets: ['Ethereum', 'Solana'] })
+
+		expect(result.dataset).toEqual({
+			dimensions: ['timestamp', 'Ethereum', 'Solana'],
+			source: [{ timestamp: jan1 * 1e3, Bitcoin: 1, Ethereum: -2, Solana: 3 }]
+		})
+		expect(result.charts).toEqual([
+			{
+				type: 'bar',
+				name: 'Ethereum',
+				encode: { x: 'timestamp', y: 'Ethereum' },
+				stack: 'Ethereum',
+				color: '#6B7280'
+			},
+			{
+				type: 'bar',
+				name: 'Solana',
+				encode: { x: 'timestamp', y: 'Solana' },
+				stack: 'Solana',
+				color: '#9945FF'
+			}
+		])
+		for (const chart of result.charts) expect(result.dataset.dimensions).toContain(chart.encode.y)
+	})
+
+	it('uses line series for cumulative flows and supports an empty selection', () => {
+		const flows: IProcessedFlows = { [jan1]: { date: jan1, Bitcoin: 1 } }
+		expect(buildETFChartSpec({ flows, groupBy: 'cumulative', assets: ['Bitcoin'] }).charts[0]?.type).toBe('line')
+		expect(buildETFChartSpec({ flows, groupBy: 'weekly', assets: [] })).toMatchObject({
+			dataset: { dimensions: ['timestamp'] },
+			charts: []
+		})
 	})
 })

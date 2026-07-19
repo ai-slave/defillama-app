@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, useState } from 'react'
 import type { IMultiSeriesChartProps, IPieChartProps } from '~/components/ECharts/types'
 import { IncomeStatement } from '~/containers/ProtocolOverview/IncomeStatement'
+import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
+import { readInvestorApiJson } from '../../api.types'
 import { useRevenueData, chartToTs } from './api'
 import { KpiCard, ChartCard, SectionHeader, ChartSkeleton, SimpleTable, fmtUsd } from './ui'
 
@@ -40,8 +42,12 @@ const INCOME_STATEMENT_NAME = 'Metronome Synth'
 function useMetronomeIncomeStatement() {
 	return useQuery({
 		queryKey: ['odyssey-ecosystem', 'income-statement', INCOME_STATEMENT_PROTOCOL],
-		queryFn: () =>
-			fetch(`/api/public/income-statement?protocol=${INCOME_STATEMENT_PROTOCOL}`).then((r) => (r.ok ? r.json() : null)),
+		queryFn: async () => {
+			const response = await fetch(`/api/public/income-statement?protocol=${INCOME_STATEMENT_PROTOCOL}`)
+			return response.ok
+				? readInvestorApiJson<NonNullable<IProtocolOverviewPageData['incomeStatement']>>(response)
+				: null
+		},
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false
 	})
@@ -86,9 +92,9 @@ function MetronomeIncomeStatement() {
 const PROTO_COLORS: Record<string, string> = { Metronome: '#fb923c', Vesper: '#a78bfa', Odyssey: '#60a5fa' }
 const PIE_COLORS = ['#6366f1', '#22d3ee', '#34d399', '#fbbf24', '#f472b6', '#fb923c', '#a78bfa']
 
-function sumUsd(rows: any[] | undefined, key: string): number {
+function sumUsd<Row>(rows: Row[] | undefined, getValue: (row: Row) => number): number {
 	if (!rows) return 0
-	return rows.reduce((s, r) => s + (Number(r[key]) || 0), 0)
+	return rows.reduce((sum, row) => sum + (getValue(row) || 0), 0)
 }
 
 function SubSectionCard({
@@ -175,11 +181,11 @@ export default function Revenue() {
 			]
 		: undefined
 
-	const lpTotal = sumUsd(up.treasuryLps as any[], 'rewardsUsd')
-	const ethUniv3Total = sumUsd(up.ethUniv3 as any[], 'usd')
-	const plasmaTotal = sumUsd(up.plasmaUniv3 as any[], 'usd')
-	const amoTotal = sumUsd(up.amoPositions as any[], 'pnlUsd')
-	const veAeroTotal = sumUsd(up.aeroLocks as any[], 'usd')
+	const lpTotal = sumUsd(up.treasuryLps, (row) => row.rewardsUsd)
+	const ethUniv3Total = sumUsd(up.ethUniv3, (row) => row.usd)
+	const plasmaTotal = sumUsd(up.plasmaUniv3, (row) => row.usd)
+	const amoTotal = sumUsd(up.amoPositions, (row) => row.pnlUsd)
+	const veAeroTotal = sumUsd(up.aeroLocks, (row) => row.usd)
 	const convexClaimable = (up.convex || []).filter((r) => r.isClaimable).reduce((s, r) => s + (r.usd || 0), 0)
 	const synthDaily = (data?.synthInterestDetail || []).reduce((s, r) => s + (r.estimatedDailyUsd || 0), 0)
 	const synthMonthly = (data?.synthInterestDetail || []).reduce((s, r) => s + (r.estimatedMonthlyUsd || 0), 0)
@@ -214,7 +220,7 @@ export default function Revenue() {
 				<ChartSkeleton title="Daily Revenue" />
 			) : (
 				<ChartCard title="Daily Claimed Revenue" subtitle="Stacked by protocol">
-					<MultiSeriesChart series={dailySeries as any} valueSymbol="$" height="320px" />
+					<MultiSeriesChart series={dailySeries} valueSymbol="$" height="320px" />
 				</ChartCard>
 			)}
 			{isLoading || (!holderSeries && !holdersByMonthSeries) ? (
@@ -233,12 +239,12 @@ export default function Revenue() {
 					</div>
 					{holderMode === 'monthly' ? (
 						holdersByMonthSeries ? (
-							<MultiSeriesChart key="hb-monthly" series={holdersByMonthSeries as any} valueSymbol="$" height="300px" />
+							<MultiSeriesChart key="hb-monthly" series={holdersByMonthSeries} valueSymbol="$" height="300px" />
 						) : (
 							<div className="px-2 py-6 text-xs text-pro-text-secondary">No monthly holder data</div>
 						)
 					) : holderSeries ? (
-						<MultiSeriesChart key="hb-daily" series={holderSeries as any} valueSymbol="$" height="300px" />
+						<MultiSeriesChart key="hb-daily" series={holderSeries} valueSymbol="$" height="300px" />
 					) : (
 						<div className="px-2 py-6 text-xs text-pro-text-secondary">No daily holder data</div>
 					)}

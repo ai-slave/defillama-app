@@ -106,11 +106,12 @@ describe('LST chart data helpers', () => {
 	})
 
 	it('keeps sparse token rows sparse instead of materializing false zeroes', () => {
+		const inflowsData = [
+			{ date: 1, Lido: 10 },
+			{ date: 2, RocketPool: 5 }
+		]
 		const result = buildLstInflowsSeriesData({
-			inflowsData: [
-				{ date: 1, Lido: 10 },
-				{ date: 2, RocketPool: 5 }
-			],
+			inflowsData,
 			tokens: ['Lido', 'RocketPool'],
 			lsdColors: { Lido: '#111', RocketPool: '#222' },
 			barChartStacks: { Lido: 'A', RocketPool: 'A' }
@@ -122,5 +123,12 @@ describe('LST chart data helpers', () => {
 		])
 		expect(Object.hasOwn(result.dataset.source[0], 'RocketPool')).toBe(false)
 		expect(Object.hasOwn(result.dataset.source[1], 'Lido')).toBe(false)
+		for (const chart of [...result.barCharts, ...result.cumulativeCharts]) {
+			expect(result.dataset.dimensions).toContain(chart.encode.y)
+		}
+		expect(inflowsData).toEqual([
+			{ date: 1, Lido: 10 },
+			{ date: 2, RocketPool: 5 }
+		])
 	})
 })

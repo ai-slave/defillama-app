@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, useEffect } from 'react'
 import type { IMultiSeriesChart2Props, IPieChartProps } from '~/components/ECharts/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { readInvestorApiJson } from '../../api.types'
 import { buildFlareFAssetsData, type FAssetsAPIResponse } from './data'
 import { ChartCard, KpiCard, NarrativeCallout, SectionHeader } from './ui'
 
@@ -16,7 +17,7 @@ export default function FAssets() {
 		queryFn: async () => {
 			const res = await fetch('/api/public/flare/fAssets')
 			if (!res.ok) throw new Error(`Flare fAssets API error: ${res.status}`)
-			return buildFlareFAssetsData((await res.json()) as FAssetsAPIResponse)
+			return buildFlareFAssetsData(await readInvestorApiJson<FAssetsAPIResponse>(res))
 		},
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false

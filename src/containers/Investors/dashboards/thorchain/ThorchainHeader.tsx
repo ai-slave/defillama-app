@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { readInvestorApiJson } from '../../api.types'
 
 interface Metadata {
 	projectName: string
@@ -47,7 +48,7 @@ export default function ThorchainHeader() {
 		queryFn: async () => {
 			const res = await fetch('/api/public/thorchain/metadata')
 			if (!res.ok) throw new Error(`THORChain metadata error: ${res.status}`)
-			return res.json()
+			return readInvestorApiJson<Metadata>(res)
 		},
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false

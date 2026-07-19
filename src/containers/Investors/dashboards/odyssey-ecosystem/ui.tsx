@@ -8,14 +8,14 @@ import { Tooltip } from '~/ui/Tooltip'
 // their name (e.g. "Utilization %") render as a percentage; everything else as USD.
 export const dollarPctChartOptions = {
 	tooltip: {
-		formatter: (params: any[]) => {
+		formatter: (params: Array<{ value: [number, number | null | '-']; marker: string; seriesName: string }>) => {
 			const date = formatTooltipChartDate(params[0].value[0], 'daily')
 			const rows = params
-				.filter((p: any) => p.value[1] != null && p.value[1] !== '-')
+				.filter((p) => p.value[1] != null && p.value[1] !== '-')
 				.map(
-					(p: any) =>
+					(p) =>
 						`<li style="list-style:none">${p.marker}${p.seriesName}&nbsp;&nbsp;${formatTooltipValue(
-							p.value[1],
+							Number(p.value[1]),
 							p.seriesName.includes('%') ? '%' : '$'
 						)}</li>`
 				)
@@ -79,6 +79,10 @@ export function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
 }
 
+export function formatNullablePercent(value: number | null): string {
+	return value == null ? '—' : `${value}%`
+}
+
 export function ChartSkeleton({ title, height = 'h-[350px]' }: { title: string; height?: string }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
@@ -90,20 +94,26 @@ export function ChartSkeleton({ title, height = 'h-[350px]' }: { title: string; 
 	)
 }
 
-export interface Col {
+export interface Col<Row> {
 	key: string
 	label: string
 	right?: boolean
-	render?: (row: any) => React.ReactNode
+	render?: (row: Row) => React.ReactNode
 }
 
-export function SimpleTable({
+function renderTableValue(value: unknown): React.ReactNode {
+	if (value == null || value === '') return '—'
+	if (React.isValidElement(value) || typeof value === 'string' || typeof value === 'number') return value
+	return String(value)
+}
+
+export function SimpleTable<Row extends object>({
 	rows,
 	cols,
 	empty = 'No data'
 }: {
-	rows: any[] | undefined
-	cols: Col[]
+	rows: Row[] | undefined
+	cols: Array<Col<Row>>
 	empty?: string
 }) {
 	if (!rows || rows.length === 0) return <div className="px-2 py-4 text-xs text-pro-text-secondary">{empty}</div>
@@ -129,13 +139,13 @@ export function SimpleTable({
 							className="border-b border-pro-cards-border/60 transition-colors last:border-0 hover:bg-sl-hover-bg"
 						>
 							{cols.map((c) => {
-								const v = c.render ? c.render(r) : r[c.key]
+								const value: unknown = c.render ? c.render(r) : Reflect.get(r, c.key)
 								return (
 									<td
 										key={c.key}
 										className={`px-3 py-2.5 ${c.right ? 'text-right font-medium text-pro-text-primary tabular-nums' : 'text-pro-text-secondary'}`}
 									>
-										{v == null || v === '' ? '—' : v}
+										{renderTableValue(value)}
 									</td>
 								)
 							})}

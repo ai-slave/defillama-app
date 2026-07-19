@@ -4,17 +4,11 @@ import type {
 	IHBarChartProps,
 	IMultiSeriesChart2Props,
 	IMultiSeriesChartProps,
-	IPieChartProps,
-	MultiSeriesChart2Dataset
+	IPieChartProps
 } from '~/components/ECharts/types'
 import { formattedNum } from '~/utils'
-import {
-	useEcosystemData,
-	chartToTimeSeries,
-	type BreakdownChart,
-	type ChannelBreakdown,
-	type ChartData
-} from './ecosystemApi'
+import { aggregateBreakdown, channelsToBars, lastSeriesValue, singleSeriesDataset } from './chartData'
+import { useEcosystemData, chartToTimeSeries } from './ecosystemApi'
 import { NearIcon } from './NearHeader'
 
 const MultiSeriesChart2 = lazy(
@@ -89,53 +83,6 @@ const NEAR_PRICE_CHART: IMultiSeriesChart2Props['charts'] = [
 		color: '#00C1DE'
 	}
 ]
-
-function singleSeriesDataset(chart: ChartData, dimension: string): MultiSeriesChart2Dataset | undefined {
-	const values = chart.series[0]?.data
-	if (!values) return undefined
-	return {
-		dimensions: ['timestamp', dimension],
-		source: chart.dates.map((date, index) => ({
-			timestamp: Date.parse(`${date}T00:00:00Z`),
-			[dimension]: values[index]
-		}))
-	}
-}
-
-function aggregateBreakdown(chart: BreakdownChart, topN: number): { name: string; value: number }[] {
-	const totals = chart.series.map((s) => ({
-		name: s.name,
-		value: s.data.reduce((a, b) => a + (b ?? 0), 0)
-	}))
-	totals.sort((a, b) => b.value - a.value)
-	if (totals.length <= topN) return totals
-	const top = totals.slice(0, topN)
-	const othersValue = totals.slice(topN).reduce((acc, t) => acc + t.value, 0)
-	if (othersValue > 0) top.push({ name: 'Others', value: othersValue })
-	return top
-}
-
-function channelsToBars(breakdown: ChannelBreakdown): {
-	categories: string[]
-	values: number[]
-} {
-	const sorted = breakdown.channels.toSorted((a, b) => b.fees - a.fees)
-	return {
-		categories: sorted.map((c) => c.referral || 'unknown'),
-		values: sorted.map((c) => c.fees)
-	}
-}
-
-function lastSeriesValue(chart: ChartData | undefined, seriesName: string): number | undefined {
-	if (!chart) return undefined
-	const series = chart.series.find((s) => s.name === seriesName)
-	if (!series || series.data.length === 0) return undefined
-	for (let i = series.data.length - 1; i >= 0; i--) {
-		const v = series.data[i]
-		if (v != null && !Number.isNaN(v)) return v
-	}
-	return undefined
-}
 
 const PROTOCOL_STATS = [
 	{

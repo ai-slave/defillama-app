@@ -1,10 +1,11 @@
 import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
-import type { IMultiSeriesChart2Props, MultiSeriesChart2Dataset } from '~/components/ECharts/types'
+import type { IMultiSeriesChart2Props } from '~/components/ECharts/types'
 import { VirtualTable } from '~/components/Table/Table'
 import { formattedNum } from '~/utils'
-import { useMapleActivePools, parseWad, parseFeeRate } from './api'
+import { useMapleActivePools } from './api'
+import { buildMaplePoolsData, type PoolRow } from './chartData'
 import {
 	ChartCard,
 	CardSkeleton,
@@ -48,19 +49,6 @@ const APY_CHART: IMultiSeriesChart2Props['charts'] = [
 		stack: 'a'
 	}
 ]
-
-interface PoolRow {
-	name: string
-	asset: string
-	tvlUsd: number
-	spotApy: number
-	numOpenTermLoans: number
-	utilization: number
-	numPositions: number
-	feeRate: number
-	openToPublic: boolean
-	unrealizedLosses: number
-}
 
 const poolColumns: ColumnDef<PoolRow>[] = [
 	{ header: 'Pool', accessorKey: 'name', size: 220 },
@@ -138,83 +126,29 @@ function PoolsTable({ data }: { data: PoolRow[] }) {
 export default function PoolsOverview() {
 	const { pools, isLoading } = useMapleActivePools()
 
-	const poolRows = useMemo<PoolRow[]>(() => {
-		return pools
-			.map((p) => {
-				const totalAssets = parseFloat(p.totalAssets)
-				const principalOut = parseFloat(p.principalOut)
-				const utilization = totalAssets > 0 ? (principalOut / totalAssets) * 100 : 0
-				const delegateFee = parseFeeRate(p.delegateManagementFeeRate)
-				const platformFee = parseFeeRate(p.platformManagementFeeRate)
-				return {
-					name: p.name,
-					asset: p.asset.symbol,
-					tvlUsd: parseFloat(p.tvlUsd),
-					spotApy: parseWad(p.spotApy, 28),
-					numOpenTermLoans: parseInt(p.numOpenTermLoans),
-					utilization,
-					numPositions: parseInt(p.numPositions),
-					feeRate: delegateFee + platformFee,
-					openToPublic: p.openToPublic,
-					unrealizedLosses: parseFloat(p.unrealizedLosses)
+	const data = useMemo(() => buildMaplePoolsData(pools), [pools])
+	const poolRows = data.rows
+	const kpis =
+		isLoading || pools.length === 0
+			? null
+			: {
+					totalTvl: formattedNum(data.totals.totalTvl, true),
+					activePools: pools.length,
+					totalDepositors: formattedNum(data.totals.totalDepositors, false),
+					avgApy: `${data.totals.weightedAverageApy.toFixed(2)}%`,
+					avgUtil: `${data.totals.weightedAverageUtilization.toFixed(1)}%`
 				}
-			})
-			.sort((a, b) => b.tvlUsd - a.tvlUsd)
-	}, [pools])
-
-	const view = useMemo(() => {
-		let totalTvl = 0
-		let totalDepositors = 0
-		let weightedApySum = 0
-		let weightedUtilSum = 0
-		const tvlSource: Array<{ Name: string; TVL: number }> = []
-		const utilizationSource: Array<{ Name: string; Utilization: number }> = []
-		const apySource: Array<{ Name: string; 'Spot APY': number }> = []
-
-		for (const pool of poolRows) {
-			totalTvl += pool.tvlUsd
-			totalDepositors += pool.numPositions
-			weightedApySum += pool.spotApy * pool.tvlUsd
-			weightedUtilSum += pool.utilization * pool.tvlUsd
-			if (pool.tvlUsd >= 10000) {
-				tvlSource.push({ Name: pool.name, TVL: pool.tvlUsd })
-				if (pool.utilization > 0) utilizationSource.push({ Name: pool.name, Utilization: pool.utilization })
-			}
-			if (pool.spotApy > 0) apySource.push({ Name: pool.name, 'Spot APY': pool.spotApy })
-		}
-
-		utilizationSource.sort((a, b) => b.Utilization - a.Utilization)
-		apySource.sort((a, b) => b['Spot APY'] - a['Spot APY'])
-		return {
-			kpis:
-				isLoading || pools.length === 0
-					? null
-					: {
-							totalTvl: formattedNum(totalTvl, true),
-							activePools: pools.length,
-							totalDepositors: formattedNum(totalDepositors, false),
-							avgApy: `${(totalTvl > 0 ? weightedApySum / totalTvl : 0).toFixed(2)}%`,
-							avgUtil: `${(totalTvl > 0 ? weightedUtilSum / totalTvl : 0).toFixed(1)}%`
-						},
-			tvl: { dimensions: ['Name', 'TVL'], source: tvlSource } satisfies MultiSeriesChart2Dataset,
-			utilization: {
-				dimensions: ['Name', 'Utilization'],
-				source: utilizationSource
-			} satisfies MultiSeriesChart2Dataset,
-			apy: { dimensions: ['Name', 'Spot APY'], source: apySource } satisfies MultiSeriesChart2Dataset
-		}
-	}, [isLoading, poolRows, pools.length])
 
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-				{view.kpis ? (
+				{kpis ? (
 					<>
-						<KpiCard label="Total TVL" value={view.kpis.totalTvl} />
-						<KpiCard label="Active Pools" value={view.kpis.activePools} />
-						<KpiCard label="Total Depositors" value={view.kpis.totalDepositors} />
-						<KpiCard label="Avg Pool APY" value={view.kpis.avgApy} />
-						<KpiCard label="Avg Utilization" value={view.kpis.avgUtil} />
+						<KpiCard label="Total TVL" value={kpis.totalTvl} />
+						<KpiCard label="Active Pools" value={kpis.activePools} />
+						<KpiCard label="Total Depositors" value={kpis.totalDepositors} />
+						<KpiCard label="Avg Pool APY" value={kpis.avgApy} />
+						<KpiCard label="Avg Utilization" value={kpis.avgUtil} />
 					</>
 				) : (
 					<>
@@ -233,7 +167,7 @@ export default function PoolsOverview() {
 				) : (
 					<ChartCard title="TVL by Pool">
 						<MultiSeriesChart2
-							dataset={view.tvl}
+							dataset={data.tvl}
 							charts={TVL_CHART}
 							valueSymbol="$"
 							height="400px"
@@ -245,10 +179,10 @@ export default function PoolsOverview() {
 
 				{isLoading ? (
 					<CardSkeleton title="Pool Utilization" />
-				) : view.utilization.source.length > 0 ? (
+				) : data.utilization.source.length > 0 ? (
 					<ChartCard title="Pool Utilization">
 						<MultiSeriesChart2
-							dataset={view.utilization}
+							dataset={data.utilization}
 							charts={UTILIZATION_CHART}
 							valueSymbol="%"
 							height="400px"
@@ -261,10 +195,10 @@ export default function PoolsOverview() {
 
 			{isLoading ? (
 				<CardSkeleton title="Spot APY by Pool" />
-			) : view.apy.source.length > 0 ? (
+			) : data.apy.source.length > 0 ? (
 				<ChartCard title="Spot APY by Pool">
 					<MultiSeriesChart2
-						dataset={view.apy}
+						dataset={data.apy}
 						charts={APY_CHART}
 						valueSymbol="%"
 						height="400px"
